@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.49 2017/01/21 23:03:36 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.50 2017/02/02 20:00:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.49 2017/01/21 23:03:36 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.50 2017/02/02 20:00:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: redir.c,v 1.49 2017/01/21 23:03:36 christos Exp $");
  */
 
 #include "main.h"
+#include "builtins.h"
 #include "shell.h"
 #include "nodes.h"
 #include "jobs.h"
@@ -551,4 +552,202 @@ to_upper_fd(int fd)
 	 */
 	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	return fd;
+}
+
+static const struct {
+	const char *name;
+	uint32_t value;
+} nv[] = {
+#ifdef O_APPEND
+	{ "append",	O_APPEND 	},
+#endif
+#ifdef O_ASYNC
+	{ "async",	O_ASYNC		},
+#endif
+#ifdef O_SYNC
+	{ "sync",	O_SYNC		},
+#endif
+#ifdef O_NONBLOCK
+	{ "nonblock",	O_NONBLOCK	},
+#endif
+#ifdef O_FSYNC
+	{ "fsync",	O_FSYNC		},
+#endif
+#ifdef O_DSYNC
+	{ "dsync",	O_DSYNC		},
+#endif
+#ifdef O_RSYNC
+	{ "rsync",	O_RSYNC		},
+#endif
+#ifdef O_ALTIO
+	{ "altio",	O_ALT_IO	},
+#endif
+#ifdef O_DIRECT
+	{ "direct",	O_DIRECT	},
+#endif
+#ifdef O_NOSIGPIPE
+	{ "nosigpipe",	O_NOSIGPIPE	},
+#endif
+#ifdef O_CLOEXEC
+	{ "cloexec",	O_CLOEXEC	},
+#endif
+};
+#define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
+    O_ALT_IO|O_DIRECT|O_NOSIGPIPE|O_CLOEXEC)
+
+static int
+getflags(int fd, int p)
+{
+	int c, f;
+
+	if ((c = fcntl(fd, F_GETFD)) == -1) {
+		if (!p)
+			return -1;
+		error("Can't get status for fd=%d (%s)", fd, strerror(errno));
+	}
+	if ((f = fcntl(fd, F_GETFL)) == -1) {
+		if (!p)
+			return -1;
+		error("Can't get flags for fd=%d (%s)", fd, strerror(errno));
+	}
+	if (c)
+		f |= O_CLOEXEC;
+	return f & ALLFLAGS;
+}
+
+static void
+printone(int fd, int p, int verbose)
+{
+	int f = getflags(fd, p);
+
+	if (f == -1)
+		return;
+
+	outfmt(out1, "%d:", fd);
+	for (size_t i = 0; i < __arraycount(nv); i++) {
+		if (f & nv[i].value) {
+			outfmt(out1, "%s%s", verbose ? "+" : "", nv[i].name);
+			f &= ~nv[i].value;
+		} else if (verbose)
+			outfmt(out1, "-%s", nv[i].name);
+		else
+			continue;
+		if (f || (verbose && i != __arraycount(nv) - 1))
+			outfmt(out1, ",");
+	}
+	outfmt(out1, "\n");
+}
+
+static int
+parseflags(char *s, int *p, int *n)
+{
+	int f = 0, *v;
+
+	*p = 0;
+	*n = 0;
+	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
+		size_t i;
+		switch (*s) {
+		case '+':
+			v = p;
+			s++;
+			break;
+		case '-':
+			v = n;
+			s++;
+			break;
+		default:
+			v = &f;
+			break;
+		}
+			
+		for (i = 0; i < __arraycount(nv); i++)
+			if (strcmp(s, nv[i].name) == 0) {
+				*v |= nv[i].value;
+				break;
+			}
+		if (i == __arraycount(nv))
+			error("Bad flag `%s'", s);
+	}
+	return f;
+}
+
+static void
+setone(int fd, int pos, int neg, int verbose)
+{
+	int f = getflags(fd, 1);
+	if (f == -1)
+		return;
+
+	int cloexec = -1;
+	if ((pos & O_CLOEXEC) && !(f & O_CLOEXEC))
+		cloexec = FD_CLOEXEC;
+	if ((neg & O_CLOEXEC) && (f & O_CLOEXEC))
+		cloexec = 0;
+
+	if (cloexec != -1 && fcntl(fd, F_SETFD, cloexec) == -1)
+		error("Can't set status for fd=%d (%s)", fd, strerror(errno));
+
+	pos &= ~O_CLOEXEC;
+	neg &= ~O_CLOEXEC;
+	f &= ~O_CLOEXEC;
+	int n = f;
+	n |= pos;
+	n &= ~neg;
+	if (n != f && fcntl(fd, F_SETFL, n) == -1)
+		error("Can't set flags for fd=%d (%s)", fd, strerror(errno));
+	if (verbose)
+		printone(fd, 1, verbose);
+}
+
+int
+fdflagscmd(int argc, char *argv[])
+{
+	char *num;
+	int verbose = 0, ch, pos = 0, neg = 0;
+	char *setflags = NULL;
+
+	optreset = 1; optind = 1; /* initialize getopt */
+	while ((ch = getopt(argc, argv, ":vs:")) != -1)
+		switch ((char)ch) {
+		case 'v':
+			verbose = 1;
+			break;
+		case 's':
+			setflags = optarg;
+			break;
+		case '?':
+		default:
+		msg:
+			error("Usage: fdflags [-v] [-s <flags>] [fd...]");
+			/* NOTREACHED */
+		}
+
+	argc -= optind, argv += optind;
+
+	if (setflags && parseflags(setflags, &pos, &neg))
+		error("Need + or - before flags");
+
+	if (argc == 0) {
+		if (setflags)
+			goto msg;
+		int maxfd = fcntl(0, F_MAXFD);
+		if (maxfd == -1)
+			error("Can't get max fd (%s)", strerror(errno));
+		for (int i = 0; i <= maxfd; i++)
+			printone(i, 0, verbose);
+		return 0;
+	}
+
+	while ((num = *argv++) != NULL) {
+		int e;
+		int fd = (int)strtoi(num, NULL, 0, 0, INT_MAX, &e);
+		if (e)
+			error("Can't parse `%s' (%s)", num, strerror(e));
+		if (setflags)
+			setone(fd, pos, neg, verbose);
+		else
+			printone(fd, 1, verbose);
+	}
+	return 0;
 }
