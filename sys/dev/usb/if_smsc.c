@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.24 2017/02/02 07:16:03 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.25 2017/02/02 07:23:03 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -259,7 +259,7 @@ smsc_wait_for_bits(struct smsc_softc *sc, uint32_t reg, uint32_t bits)
 int
 smsc_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct smsc_softc *sc = device_private(dev);
+	struct smsc_softc * const sc = device_private(dev);
 	uint32_t addr;
 	uint32_t val = 0;
 
@@ -286,7 +286,7 @@ done:
 void
 smsc_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct smsc_softc *sc = device_private(dev);
+	struct smsc_softc * const sc = device_private(dev);
 	uint32_t addr;
 
 	if (sc->sc_phyno != phy)
@@ -312,8 +312,8 @@ smsc_miibus_writereg(device_t dev, int phy, int reg, int val)
 void
 smsc_miibus_statchg(struct ifnet *ifp)
 {
-	struct smsc_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_mii;
+	struct smsc_softc * const sc = ifp->if_softc;
+	struct mii_data * const mii = &sc->sc_mii;
 	int err;
 	uint32_t flow;
 	uint32_t afc_cfg;
@@ -386,8 +386,8 @@ smsc_miibus_statchg(struct ifnet *ifp)
 int
 smsc_ifmedia_upd(struct ifnet *ifp)
 {
-	struct smsc_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_mii;
+	struct smsc_softc * const sc = ifp->if_softc;
+	struct mii_data * const mii = &sc->sc_mii;
 	int err;
 
 	if (mii->mii_instance) {
@@ -403,8 +403,8 @@ smsc_ifmedia_upd(struct ifnet *ifp)
 void
 smsc_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-	struct smsc_softc *sc = ifp->if_softc;
-	struct mii_data *mii = &sc->sc_mii;
+	struct smsc_softc * const sc = ifp->if_softc;
+	struct mii_data * const mii = &sc->sc_mii;
 
 	mii_pollstat(mii);
 
@@ -421,7 +421,7 @@ smsc_hash(uint8_t addr[ETHER_ADDR_LEN])
 void
 smsc_setmulti(struct smsc_softc *sc)
 {
-	struct ifnet		*ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct ether_multi	*enm;
 	struct ether_multistep	 step;
 	uint32_t		 hashtbl[2] = { 0, 0 };
@@ -470,7 +470,7 @@ allmulti:
 int
 smsc_sethwcsum(struct smsc_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t val;
 	int err;
 
@@ -545,7 +545,7 @@ smsc_reset(struct smsc_softc *sc)
 int
 smsc_init(struct ifnet *ifp)
 {
-	struct smsc_softc *sc = ifp->if_softc;
+	struct smsc_softc * const sc = ifp->if_softc;
 
 	mutex_enter(&sc->sc_lock);
 	int ret = smsc_init_locked(ifp);
