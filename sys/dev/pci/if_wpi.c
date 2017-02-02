@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.75 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.76 2017/02/02 03:41:22 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.75 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.76 2017/02/02 03:41:22 jakllsch Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -206,7 +206,6 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	const char *intrstr;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
-	pci_intr_handle_t ih;
 	pcireg_t data;
 	int ac, error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -256,13 +255,15 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, wpi_intr, sc);
+	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
+	    wpi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
@@ -431,6 +432,10 @@ wpi_detach(device_t self, int flags __unused)
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 		sc->sc_ih = NULL;
+	}
+	if (sc->sc_pihp != NULL) {
+		pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
+		sc->sc_pihp = NULL;
 	}
 	mutex_enter(&sc->sc_rsw_mtx);
 	sc->sc_dying = 1;
