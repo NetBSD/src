@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2017/01/20 00:29:28 maya Exp $	*/
+/*	$NetBSD: param.h,v 1.21 2017/02/02 19:09:08 maxv Exp $	*/
 
 #ifdef __x86_64__
 
@@ -34,11 +34,11 @@
  * config info into account.
  */
 #define	KERNBASE	0xffffffff80000000 /* start of kernel virtual space */
-#define	KERNTEXTOFF	0xffffffff80100000 /* start of kernel text */
+#define	KERNTEXTOFF	0xffffffff80200000 /* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define KERNTEXTOFF_HI	0xffffffff
-#define KERNTEXTOFF_LO	0x80100000
+#define KERNTEXTOFF_LO	0x80200000
 
 #define KERNBASE_HI	0xffffffff
 #define KERNBASE_LO	0x80000000
