@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.82 2017/01/04 03:05:24 nonaka Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.83 2017/02/02 03:20:19 nonaka Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.82 2017/01/04 03:05:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.83 2017/02/02 03:20:19 nonaka Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -362,7 +362,6 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
-	pci_intr_handle_t ih;
 	pcireg_t memtype, reg;
 	int i, error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -395,14 +394,10 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	if (reg & 0xff00)
 		pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg & ~0xff00);
 
-	/* Enable bus-mastering and hardware bug workaround. */
+	/* Enable bus-mastering. */
 	/* XXX verify the bus-mastering is really needed (not in OpenBSD) */
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE;
-	if (reg & PCI_COMMAND_INTERRUPT_DISABLE) {
-		DPRINTF(("PCIe INTx Disable set\n"));
-		reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
-	}
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, reg);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, IWN_PCI_BAR0);
@@ -414,18 +409,27 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	}
 
 	/* Install interrupt handler. */
-	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(self, "can't map interrupt\n");
-		return;
+	error = pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0);
+	if (error) {
+		aprint_error_dev(self, "can't allocate interrupt\n");
+		goto unmap;
 	}
-	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
+	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	if (pci_intr_type(sc->sc_pct, sc->sc_pihp[0]) == PCI_INTR_TYPE_INTX)
+		CLR(reg, PCI_COMMAND_INTERRUPT_DISABLE);
+	else
+		SET(reg, PCI_COMMAND_INTERRUPT_DISABLE);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, reg);
+	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish_xname(sc->sc_pct, sc->sc_pihp[0],
+	    IPL_NET, iwn_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto failia;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -439,25 +443,25 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		error = iwn5000_attach(sc, PCI_PRODUCT(pa->pa_id));
 	if (error != 0) {
 		aprint_error_dev(self, "could not attach device\n");
-		return;
+		goto failih;
 	}	
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error_dev(self, "hardware not ready\n");
-		return;
+		goto failih;
 	}
 
 	/* Read MAC address, channels, etc from EEPROM. */
 	if ((error = iwn_read_eeprom(sc)) != 0) {
 		aprint_error_dev(self, "could not read EEPROM\n");
-		return;
+		goto failih;
 	}
 
 	/* Allocate DMA memory for firmware transfers. */
 	if ((error = iwn_alloc_fwmem(sc)) != 0) {
 		aprint_error_dev(self,
 		    "could not allocate memory for firmware\n");
-		return;
+		goto failih;
 	}
 
 	/* Allocate "Keep Warm" page. */
@@ -638,6 +642,11 @@ fail3:	if (sc->ict != NULL)
 		iwn_free_ict(sc);
 fail2:	iwn_free_kw(sc);
 fail1:	iwn_free_fwmem(sc);
+failih:	pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+	sc->sc_ih = NULL;
+failia:	pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
+	sc->sc_pihp = NULL;
+unmap:	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 }
 
 int
@@ -825,6 +834,8 @@ iwn_detach(device_t self, int flags __unused)
 	/* Uninstall interrupt handler. */
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+	if (sc->sc_pihp != NULL)
+		pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
 
 	/* Free DMA resources. */
 	iwn_free_rx_ring(sc, &sc->rxq);

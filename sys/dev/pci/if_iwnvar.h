@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.17 2015/09/22 23:23:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.18 2017/02/02 03:20:20 nonaka Exp $	*/
 /*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
@@ -264,6 +264,7 @@ struct iwn_softc {
 
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
+	pci_intr_handle_t	*sc_pihp;
 	void 			*sc_ih;
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
