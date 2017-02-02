@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.29 2014/07/26 13:24:34 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30 2017/02/02 21:50:22 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,13 +81,6 @@
 #endif
 
 /*
- * Sizes of the system and user portions of the system page table.
- */
-/* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
-#define	SYSPTSIZE	(2 * NPTEPG)	/* 16mb */
-#define	USRPTSIZE 	(1 * NPTEPG)	/* 16mb */
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * One page is enough to handle 16Mb of simultaneous raw IO operations.
  */
@@ -133,5 +126,5 @@ struct pmap_physseg {
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vsize_t)4)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vsize_t)4)
 #endif /* !_MACHINE_VMPARAM_H_ */
