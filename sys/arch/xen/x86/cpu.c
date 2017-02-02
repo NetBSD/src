@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.106 2017/01/22 19:42:48 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.107 2017/02/02 08:57:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106 2017/01/22 19:42:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2017/02/02 08:57:04 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -171,7 +171,7 @@ struct cpu_info phycpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 
-uint32_t cpu_feature[7]; /* X86 CPUID feature bits
+uint32_t cpu_feature[7] __read_mostly; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
 			  *	[1] basic features %ecx
 			  *	[2] extended features %edx

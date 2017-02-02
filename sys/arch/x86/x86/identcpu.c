@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51 2016/12/17 15:23:08 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.52 2017/02/02 08:57:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51 2016/12/17 15:23:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.52 2017/02/02 08:57:04 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -61,9 +61,9 @@ static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] =
 int cpu_vendor;
 char cpu_brand_string[49];
 
-int x86_fpu_save = FPU_SAVE_FSAVE;
-unsigned int x86_fpu_save_size = 512;
-uint64_t x86_xsave_features = 0;
+int x86_fpu_save __read_mostly = FPU_SAVE_FSAVE;
+unsigned int x86_fpu_save_size __read_mostly = 512;
+uint64_t x86_xsave_features __read_mostly = 0;
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.

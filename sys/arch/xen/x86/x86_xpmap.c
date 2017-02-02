@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.70 2017/01/22 19:24:51 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.71 2017/02/02 08:57:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.70 2017/01/22 19:24:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.71 2017/02/02 08:57:04 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -105,7 +105,7 @@ unsigned long *xpmap_phys_to_machine_mapping;
 kmutex_t pte_lock;
 vaddr_t xen_dummy_page;
 
-pt_entry_t xpmap_pg_nx;
+pt_entry_t xpmap_pg_nx __read_mostly;
 
 void xen_failsafe_handler(void);
 
