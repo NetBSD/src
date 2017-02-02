@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.237 2017/01/22 20:04:35 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.238 2017/02/02 08:57:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.237 2017/01/22 20:04:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.238 2017/02/02 08:57:04 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -480,8 +480,8 @@ static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 /*
  * LAPIC virtual address, and fake physical address.
  */
-volatile vaddr_t local_apic_va;
-paddr_t local_apic_pa;
+volatile vaddr_t local_apic_va __read_mostly;
+paddr_t local_apic_pa __read_mostly;
 #endif
 
 /*
