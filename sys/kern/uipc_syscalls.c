@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.184 2016/12/03 22:28:16 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.185 2017/02/02 15:37:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.184 2016/12/03 22:28:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.185 2017/02/02 15:37:42 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.184 2016/12/03 22:28:16 christos
 extern const struct fileops socketops;
 
 static int	sockargs_sb(struct sockaddr_big *, const void *, socklen_t);
-static int	copyout_sockname_sb(struct sockaddr *, unsigned int *,
-		    int , struct sockaddr_big *);
 
 int
 sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
