@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.12 2017/02/02 19:55:05 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.13 2017/02/03 20:09:49 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.12 2017/02/02 19:55:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.13 2017/02/03 20:09:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,7 @@ chipsfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct chipsfb_softc *sc = scr->scr_cookie;
 	uint32_t bg, latch = 0, bg8, fg8, pixel, dst, stride, size;
 	int i, l, x, y, wi, he, r, g, b, aval;
-	int r1, g1, b1, r0, g0, b0, fgo, bgo, off;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo, off, pad;
 	uint8_t *data8;
 	int rv;
 
@@ -664,8 +664,11 @@ chipsfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	bg8 = R3G3B2(r0, g0, b0);
 	fg8 = R3G3B2(r1, g1, b1);
 
+	/* see if we need to pad lines to 64bit */
+	pad = (wi + 3) & 4;
 	for (l = 0; l < he; l++) {
 		off = 0;
+		latch = 0;
 		for (i = 0; i < wi; i++) {
 			aval = *data8;
 			if (aval == 0) {
@@ -684,7 +687,8 @@ chipsfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			off += 8;
 			/* write in 32bit chunks */
 			if ((i & 3) == 3) {
-				chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, latch);
+				chipsfb_write32(sc,
+				    CT_OFF_DATA - CT_OFF_BITBLT, latch);
 				latch = 0;
 				off = 0;
 			}
@@ -695,7 +699,7 @@ chipsfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, latch);
 		}
 		/* this chip needs scanlines 64bit aligned */
-		if (wi & 7) chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, 0);
+		if (pad) chipsfb_write32(sc, CT_OFF_DATA - CT_OFF_BITBLT, 0);
 	}
 
 	if (rv == GC_ADD) {
