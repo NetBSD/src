@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.143 2017/02/02 18:01:16 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.144 2017/02/03 16:06:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -354,11 +354,17 @@ void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
 int	do_sys_getpeername(int, struct sockaddr *);
 int	do_sys_getsockname(int, struct sockaddr *);
+
 int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int,
 	    const void *, size_t, register_t *);
+int	do_sys_sendmsg_so(struct lwp *, int, struct socket *, file_t *,
+	    struct msghdr *, int, const void *, size_t, register_t *);
+
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *,
-	    const void *, size_t,
-	    struct mbuf **, struct mbuf **, register_t *);
+	    const void *, size_t, struct mbuf **, struct mbuf **, register_t *);
+int	do_sys_recvmsg_so(struct lwp *, int, struct socket *,
+	    struct msghdr *mp, const void *, size_t, struct mbuf **,
+	    struct mbuf **, register_t *);
 
 int	do_sys_bind(struct lwp *, int, struct sockaddr *);
 int	do_sys_connect(struct lwp *, int, struct sockaddr *);
