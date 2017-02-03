@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.65 2017/02/02 15:36:12 christos Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.66 2017/02/03 16:18:19 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -1025,6 +1025,23 @@ struct linux_sys_pipe2_args {
 };
 check_syscall_args(linux_sys_pipe2)
 
+struct linux_sys_recvmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_mmsghdr *) msgvec;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+	syscallarg(struct timespec *) timeout;
+};
+check_syscall_args(linux_sys_recvmmsg)
+
+struct linux_sys_sendmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_mmsghdr *) msgvec;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+};
+check_syscall_args(linux_sys_sendmmsg)
+
 /*
  * System call prototypes.
  */
@@ -1461,6 +1478,10 @@ int	linux_sys_accept4(struct lwp *, const struct linux_sys_accept4_args *, regis
 int	linux_sys_dup3(struct lwp *, const struct linux_sys_dup3_args *, register_t *);
 
 int	linux_sys_pipe2(struct lwp *, const struct linux_sys_pipe2_args *, register_t *);
+
+int	linux_sys_recvmmsg(struct lwp *, const struct linux_sys_recvmmsg_args *, register_t *);
+
+int	linux_sys_sendmmsg(struct lwp *, const struct linux_sys_sendmmsg_args *, register_t *);
 
 int	linux_sys_nosys(struct lwp *, const void *, register_t *);
 

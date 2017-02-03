@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.65 2017/02/02 15:36:12 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.66 2017/02/03 16:18:19 christos Exp $ */
 
 /*
  * System call numbers.
@@ -653,6 +653,12 @@
 
 /* syscall: "pipe2" ret: "int" args: "int *" "int" */
 #define	LINUX_SYS_pipe2	293
+
+/* syscall: "recvmmsg" ret: "int" args: "int" "struct linux_mmsghdr *" "unsigned int" "unsigned int" "struct timespec *" */
+#define	LINUX_SYS_recvmmsg	299
+
+/* syscall: "sendmmsg" ret: "int" args: "int" "struct linux_mmsghdr *" "unsigned int" "unsigned int" */
+#define	LINUX_SYS_sendmmsg	307
 
 /* syscall: "nosys" ret: "int" args: */
 #define	LINUX_SYS_nosys	314
