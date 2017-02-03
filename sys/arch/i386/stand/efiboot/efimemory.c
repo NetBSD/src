@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.2 2017/02/03 16:42:26 roy Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -288,7 +288,7 @@ efi_memory_show_map(bool sorted)
 		    md->Type >= __arraycount(efimemtypes) ?
 		      efimemstr : efimemtypes[md->Type]);
 
-		if (rows >= 0 && ++row >= rows) {
+		if (++row >= rows) {
 			row = 0;
 			Print(L"Press Any Key to continue :");
 			(void) awaitkey(-1, 0);
