@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.299 2017/02/03 20:07:55 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.300 2017/02/03 20:13:52 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.299 2017/02/03 20:07:55 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.300 2017/02/03 20:13:52 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5965,8 +5965,6 @@ vchan_autoconfig(struct audio_softc *sc)
 				if (vc->sc_npfilters > 0 &&
 				    (vc->sc_mpr.s.param.
 					sample_rate != sc->sc_iffreq ||
-				    vc->sc_mpr.s.param.
-				       precision != sc->sc_precision ||
 				    vc->sc_mpr.s.param.
 					 channels != sc->sc_channels))
 					error = EINVAL;
