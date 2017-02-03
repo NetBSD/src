@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.91 2017/01/02 16:32:09 manu Exp $
+	$NetBSD: syscalls.master,v 1.92 2017/02/03 07:54:26 martin Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -558,3 +558,31 @@
 334	UNIMPL		get_thread_area
 335	UNIMPL		atomic_cmpxchg_32
 336	UNIMPL		atomic_barrier
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
+340	UNIMPL
+341	UNIMPL
+342	UNIMPL
+343	UNIMPL
+344	UNIMPL
+345	UNIMPL
+346	UNIMPL
+347	UNIMPL
+348	UNIMPL
+349	UNIMPL
+350	UNIMPL
+351	UNIMPL
+352	UNIMPL
+353	UNIMPL
+354	UNIMPL
+355	UNIMPL
+356	UNIMPL
+357	UNIMPL
+358	UNIMPL
+359	UNIMPL
+360	UNIMPL
+361	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+
