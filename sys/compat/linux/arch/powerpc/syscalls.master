@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.70 2017/01/02 16:32:10 manu Exp $  
+	$NetBSD: syscalls.master,v 1.71 2017/02/03 07:57:11 martin Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -542,3 +542,28 @@
 320	UNIMPL		preadv
 321	UNIMPL		pwritev
 322	UNIMPL		rt_tgsigqueueinfo
+323	UNIMPL
+324	UNIMPL
+325	UNIMPL
+326	UNIMPL
+327	UNIMPL
+328	UNIMPL
+329	UNIMPL
+330	UNIMPL
+331	UNIMPL
+332	UNIMPL
+333	UNIMPL
+334	UNIMPL
+335	UNIMPL
+336	UNIMPL
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
+340	UNIMPL
+341	UNIMPL
+342	UNIMPL
+343	UNIMPL
+344	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+
