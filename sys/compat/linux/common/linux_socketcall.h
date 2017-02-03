@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.17 2013/12/27 15:10:53 njoly Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.18 2017/02/03 13:08:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -91,8 +91,11 @@
 #define LINUX_SYS_GETSOCKOPT	15
 #define LINUX_SYS_SENDMSG	16
 #define LINUX_SYS_RECVMSG	17
+#define LINUX_SYS_ACCEPT4	18
+#define LINUX_SYS_RECVMMSG	19
+#define LINUX_SYS_SENDMMSG	20
 
-#define LINUX_MAX_SOCKETCALL	17
+#define LINUX_MAX_SOCKETCALL	18	/* no send/recv mmsg yet */
 
 
 /*
@@ -221,6 +224,13 @@ struct linux_sys_shutdown_args {
 	syscallarg(int) how;
 };
 
+struct linux_sys_accept4_args {
+	syscallarg(int) s;
+	syscallarg(struct osockaddr *) name;
+	syscallarg(int *) anamelen;
+	syscallarg(int) flags;
+};
+
 # ifdef _KERNEL
 __BEGIN_DECLS
 #define SYS_DEF(foo) int foo(struct lwp *, const struct foo##_args *, register_t *);
@@ -239,6 +249,7 @@ SYS_DEF(linux_sys_recvmsg)
 SYS_DEF(linux_sys_recv)
 SYS_DEF(linux_sys_send)
 SYS_DEF(linux_sys_accept)
+SYS_DEF(linux_sys_accept4)
 #undef SYS_DEF
 __END_DECLS
 # endif /* !_KERNEL */
