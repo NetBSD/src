@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.13 2016/12/12 13:15:39 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.14 2017/02/03 07:48:05 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.13 2016/12/12 13:15:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.14 2017/02/03 07:48:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1877,12 +1877,12 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	if (error == ENETRESET) {
 		error = 0;
-		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			mutex_enter(&sc->axe_lock);
-			axe_setmulti(sc);
-			mutex_exit(&sc->axe_lock);
+		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
+			if (ifp->if_flags & IFF_RUNNING) {
+				mutex_enter(&sc->axe_lock);
+				axe_setmulti(sc);
+				mutex_exit(&sc->axe_lock);
+			}
 		}
 	}
 

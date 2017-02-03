@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.29 2017/02/02 07:40:51 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.30 2017/02/03 07:48:05 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -978,12 +978,12 @@ smsc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	if (error == ENETRESET) {
 		error = 0;
-		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			mutex_enter(&sc->sc_lock);
-			smsc_setmulti(sc);
-			mutex_exit(&sc->sc_lock);
+		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
+			if (ifp->if_flags & IFF_RUNNING) {
+				mutex_enter(&sc->sc_lock);
+				smsc_setmulti(sc);
+				mutex_exit(&sc->sc_lock);
+			}
 		}
 	}
 	return error;
