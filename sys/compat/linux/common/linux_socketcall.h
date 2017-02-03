@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.18 2017/02/03 13:08:08 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.19 2017/02/03 16:57:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #define LINUX_SYS_RECVMMSG	19
 #define LINUX_SYS_SENDMMSG	20
 
-#define LINUX_MAX_SOCKETCALL	18	/* no send/recv mmsg yet */
+#define LINUX_MAX_SOCKETCALL	20
 
 
 /*
@@ -231,6 +231,21 @@ struct linux_sys_accept4_args {
 	syscallarg(int) flags;
 };
 
+struct linux_sys_recvmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_mmsghdr *) msgvec;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+	syscallarg(struct linux_timespec *) timeout;
+};
+
+struct linux_sys_sendmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_mmsghdr *) msgvec;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+};
+
 # ifdef _KERNEL
 __BEGIN_DECLS
 #define SYS_DEF(foo) int foo(struct lwp *, const struct foo##_args *, register_t *);
@@ -250,6 +265,8 @@ SYS_DEF(linux_sys_recv)
 SYS_DEF(linux_sys_send)
 SYS_DEF(linux_sys_accept)
 SYS_DEF(linux_sys_accept4)
+SYS_DEF(linux_sys_recvmmsg)
+SYS_DEF(linux_sys_sendmmsg)
 #undef SYS_DEF
 __END_DECLS
 # endif /* !_KERNEL */
