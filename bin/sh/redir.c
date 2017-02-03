@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.50 2017/02/02 20:00:40 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.51 2017/02/03 23:16:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.50 2017/02/02 20:00:40 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.51 2017/02/03 23:16:38 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: redir.c,v 1.50 2017/02/02 20:00:40 christos Exp $");
 #include "redir.h"
 #include "output.h"
 #include "memalloc.h"
+#include "mystring.h"
 #include "error.h"
 
 
@@ -554,7 +555,7 @@ to_upper_fd(int fd)
 	return fd;
 }
 
-static const struct {
+static const struct flgnames {
 	const char *name;
 	uint32_t value;
 } nv[] = {
@@ -591,6 +592,7 @@ static const struct {
 #ifdef O_CLOEXEC
 	{ "cloexec",	O_CLOEXEC	},
 #endif
+	{ 0, 0 }
 };
 #define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
     O_ALT_IO|O_DIRECT|O_NOSIGPIPE|O_CLOEXEC)
@@ -610,76 +612,81 @@ getflags(int fd, int p)
 			return -1;
 		error("Can't get flags for fd=%d (%s)", fd, strerror(errno));
 	}
-	if (c)
+	if (c & FD_CLOEXEC)
 		f |= O_CLOEXEC;
 	return f & ALLFLAGS;
 }
 
 static void
-printone(int fd, int p, int verbose)
+printone(int fd, int p, int verbose, int pfd)
 {
 	int f = getflags(fd, p);
+	const struct flgnames *fn;
 
 	if (f == -1)
 		return;
 
-	outfmt(out1, "%d:", fd);
-	for (size_t i = 0; i < __arraycount(nv); i++) {
-		if (f & nv[i].value) {
-			outfmt(out1, "%s%s", verbose ? "+" : "", nv[i].name);
-			f &= ~nv[i].value;
+	if (pfd)
+		outfmt(out1, "%d: ", fd);
+	for (fn = nv; fn->name; fn++) {
+		if (f & fn->value) {
+			outfmt(out1, "%s%s", verbose ? "+" : "", fn->name);
+			f &= ~fn->value;
 		} else if (verbose)
-			outfmt(out1, "-%s", nv[i].name);
+			outfmt(out1, "-%s", fn->name);
 		else
 			continue;
-		if (f || (verbose && i != __arraycount(nv) - 1))
+		if (f || (verbose && fn[1].name))
 			outfmt(out1, ",");
 	}
+	if (verbose && f)		/* f should be normally be 0 */
+		outfmt(out1, " +%#x", f);
 	outfmt(out1, "\n");
 }
 
-static int
+static void
 parseflags(char *s, int *p, int *n)
 {
-	int f = 0, *v;
+	int *v, *w;
+	const struct flgnames *fn;
 
 	*p = 0;
 	*n = 0;
 	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
-		size_t i;
-		switch (*s) {
+		switch (*s++) {
 		case '+':
 			v = p;
-			s++;
+			w = n;
 			break;
 		case '-':
 			v = n;
-			s++;
+			w = p;
 			break;
 		default:
-			v = &f;
-			break;
+			error("Missing +/- indicator before flag %s", s-1);
 		}
 			
-		for (i = 0; i < __arraycount(nv); i++)
-			if (strcmp(s, nv[i].name) == 0) {
-				*v |= nv[i].value;
+		for (fn = nv; fn->name; fn++)
+			if (strcmp(s, fn->name) == 0) {
+				*v |= fn->value;
+				*w &=~ fn->value;
 				break;
 			}
-		if (i == __arraycount(nv))
+		if (fn->name == 0)
 			error("Bad flag `%s'", s);
 	}
-	return f;
 }
 
 static void
 setone(int fd, int pos, int neg, int verbose)
 {
 	int f = getflags(fd, 1);
+	int n, cloexec;
+
 	if (f == -1)
 		return;
 
-	int cloexec = -1;
+	cloexec = -1;
 	if ((pos & O_CLOEXEC) && !(f & O_CLOEXEC))
 		cloexec = FD_CLOEXEC;
 	if ((neg & O_CLOEXEC) && (f & O_CLOEXEC))
@@ -691,13 +698,13 @@ setone(int fd, int pos, int neg, int verbose)
 	pos &= ~O_CLOEXEC;
 	neg &= ~O_CLOEXEC;
 	f &= ~O_CLOEXEC;
-	int n = f;
+	n = f;
 	n |= pos;
 	n &= ~neg;
 	if (n != f && fcntl(fd, F_SETFL, n) == -1)
 		error("Can't set flags for fd=%d (%s)", fd, strerror(errno));
 	if (verbose)
-		printone(fd, 1, verbose);
+		printone(fd, 1, verbose, 1);
 }
 
 int
@@ -714,40 +721,53 @@ fdflagscmd(int argc, char *argv[])
 			verbose = 1;
 			break;
 		case 's':
+			if (setflags)
+				goto msg;
 			setflags = optarg;
 			break;
 		case '?':
 		default:
 		msg:
-			error("Usage: fdflags [-v] [-s <flags>] [fd...]");
+			error("Usage: fdflags [-v] [-s <flags> fd] [fd...]");
 			/* NOTREACHED */
 		}
 
 	argc -= optind, argv += optind;
 
-	if (setflags && parseflags(setflags, &pos, &neg))
-		error("Need + or - before flags");
+	if (setflags)
+		parseflags(setflags, &pos, &neg);
 
 	if (argc == 0) {
+		int maxfd;
+
 		if (setflags)
 			goto msg;
-		int maxfd = fcntl(0, F_MAXFD);
+
+		/*
+		 * XXX  this has to go, maxfd might be 700 (or something)
+		 *
+		 * XXX  we should only ever operate on user defined fds
+		 * XXX  not on sh internal fds that might be open.
+		 * XXX  but for that we need to know their range (later)
+		 */
+		maxfd = fcntl(0, F_MAXFD);
 		if (maxfd == -1)
 			error("Can't get max fd (%s)", strerror(errno));
 		for (int i = 0; i <= maxfd; i++)
-			printone(i, 0, verbose);
+			printone(i, 0, verbose, 1);
 		return 0;
 	}
 
 	while ((num = *argv++) != NULL) {
-		int e;
-		int fd = (int)strtoi(num, NULL, 0, 0, INT_MAX, &e);
-		if (e)
-			error("Can't parse `%s' (%s)", num, strerror(e));
+		int fd = number(num);
+
+		if (strlen(num) > 5)
+			error("%s too big to be a file descriptor", num);
+
 		if (setflags)
 			setone(fd, pos, neg, verbose);
 		else
-			printone(fd, 1, verbose);
+			printone(fd, 1, verbose, argc > 1);
 	}
 	return 0;
 }
