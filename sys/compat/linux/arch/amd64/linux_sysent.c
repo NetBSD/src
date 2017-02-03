@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.65 2017/02/02 15:36:12 christos Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.66 2017/02/03 16:18:19 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.65 2017/02/02 15:36:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.66 2017/02/03 16:18:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1326,8 +1326,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 298 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 299 = filler */
+		ns(struct linux_sys_recvmmsg_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_recvmmsg
+	},		/* 299 = recvmmsg */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 300 = filler */
@@ -1350,8 +1352,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 306 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 307 = filler */
+		ns(struct linux_sys_sendmmsg_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_sendmmsg
+	},		/* 307 = sendmmsg */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 308 = filler */
