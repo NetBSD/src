@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.10 2017/02/03 06:07:29 martin Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.11 2017/02/03 16:28:42 christos Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1859,6 +1859,17 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+	/* linux_sys_recvmmsg */
+	case 365: {
+		const struct linux_sys_recvmmsg_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		uarg[1] = (intptr_t) SCARG(p, msgvec); /* struct linux_mmsghdr * */
+		uarg[2] = SCARG(p, vlen); /* unsigned int */
+		uarg[3] = SCARG(p, flags); /* unsigned int */
+		uarg[4] = (intptr_t) SCARG(p, timeout); /* struct timespec * */
+		*n_args = 5;
+		break;
+	}
 	/* linux_sys_accept4 */
 	case 366: {
 		const struct linux_sys_accept4_args *p = params;
@@ -1866,6 +1877,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, name); /* struct osockaddr * */
 		uarg[2] = (intptr_t) SCARG(p, anamelen); /* int * */
 		iarg[3] = SCARG(p, flags); /* int */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_sendmmsg */
+	case 374: {
+		const struct linux_sys_sendmmsg_args *p = params;
+		iarg[0] = SCARG(p, s); /* int */
+		uarg[1] = (intptr_t) SCARG(p, msgvec); /* struct linux_mmsghdr * */
+		uarg[2] = SCARG(p, vlen); /* unsigned int */
+		uarg[3] = SCARG(p, flags); /* unsigned int */
 		*n_args = 4;
 		break;
 	}
@@ -4915,6 +4936,28 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_recvmmsg */
+	case 365:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_mmsghdr *";
+			break;
+		case 2:
+			p = "unsigned int";
+			break;
+		case 3:
+			p = "unsigned int";
+			break;
+		case 4:
+			p = "struct timespec *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_accept4 */
 	case 366:
 		switch(ndx) {
@@ -4929,6 +4972,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 3:
 			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_sendmmsg */
+	case 374:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_mmsghdr *";
+			break;
+		case 2:
+			p = "unsigned int";
+			break;
+		case 3:
+			p = "unsigned int";
 			break;
 		default:
 			break;
@@ -6050,8 +6112,18 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_recvmmsg */
+	case 365:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_accept4 */
 	case 366:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_sendmmsg */
+	case 374:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
