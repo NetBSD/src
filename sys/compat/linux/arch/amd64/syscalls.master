@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.59 2017/02/02 15:35:46 christos Exp $
+	$NetBSD: syscalls.master,v 1.60 2017/02/03 16:18:19 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -529,7 +529,9 @@
 296	UNIMPL		pwritev
 297	UNIMPL		rt_tgsigqueueinfo
 298	UNIMPL		perf_counter_open
-299	UNIMPL		recvmmsg
+299	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
 300	UNIMPL		fanotify_init
 301	UNIMPL		fanotify_mark
 302	UNIMPL		prlimit64
@@ -537,7 +539,9 @@
 304	UNIMPL		open_by_handle_at
 305	UNIMPL		clock_adjtime
 306	UNIMPL		syncfs
-307	UNIMPL		sendmmsg
+307	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
 308	UNIMPL		setns
 309	UNIMPL		getcpu
 310	UNIMPL		process_vm_readv
