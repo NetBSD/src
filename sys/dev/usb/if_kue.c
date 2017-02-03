@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.11 2016/12/05 10:55:18 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.12 2017/02/03 07:54:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.11 2016/12/05 10:55:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.12 2017/02/03 07:54:44 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -500,7 +500,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = kue_ioctl;
 	ifp->if_start = kue_start;
 	ifp->if_watchdog = kue_watchdog;
-	strncpy(ifp->if_xname, device_xname(sc->kue_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->kue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
