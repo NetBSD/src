@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/01/24 11:09:14 nonaka Exp $
+#	$NetBSD: Makefile,v 1.6 2017/02/03 17:28:58 roy Exp $
 
 LIB=	gnuefi
 LIBISPRIVATE?= yes
@@ -56,14 +56,13 @@ SRCS+=	boxdraw.c smbios.c console.c crc.c data.c debug.c dpath.c \
 	rtlock.c efirtlib.c rtstr.c vm.c rtdata.c \
 	initplat.c math.c
 
+CWARNFLAGS.gcc+= -Wno-unused-but-set-variable
 COPTS.boxdraw.c= -Wno-missing-field-initializers
 COPTS.guid.c= -Wno-missing-field-initializers
 COPTS.smbios.c= -Wno-int-to-pointer-cast
-COPTS.dpath.c= -Wno-missing-prototypes -Wno-unused-but-set-variable
+COPTS.dpath.c= -Wno-missing-prototypes
 COPTS.print.c= -Wno-missing-prototypes
-COPTS.hw.c= -Wno-shadow -Wno-unused-but-set-variable
-COPTS.event.c= -Wno-unused-but-set-variable
-COPTS.hand.c= -Wno-unused-but-set-variable
+COPTS.hw.c= -Wno-shadow
 
 .include <bsd.lib.mk>
 
