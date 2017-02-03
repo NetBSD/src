@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.65 2017/02/02 15:36:12 christos Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.66 2017/02/03 16:18:19 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.65 2017/02/02 15:36:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.66 2017/02/03 16:18:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -365,7 +365,7 @@ const char *const linux_syscallnames[] = {
 	/* 296 */	"#296 (unimplemented pwritev)",
 	/* 297 */	"#297 (unimplemented rt_tgsigqueueinfo)",
 	/* 298 */	"#298 (unimplemented perf_counter_open)",
-	/* 299 */	"#299 (unimplemented recvmmsg)",
+	/* 299 */	"recvmmsg",
 	/* 300 */	"#300 (unimplemented fanotify_init)",
 	/* 301 */	"#301 (unimplemented fanotify_mark)",
 	/* 302 */	"#302 (unimplemented prlimit64)",
@@ -373,7 +373,7 @@ const char *const linux_syscallnames[] = {
 	/* 304 */	"#304 (unimplemented open_by_handle_at)",
 	/* 305 */	"#305 (unimplemented clock_adjtime)",
 	/* 306 */	"#306 (unimplemented syncfs)",
-	/* 307 */	"#307 (unimplemented sendmmsg)",
+	/* 307 */	"sendmmsg",
 	/* 308 */	"#308 (unimplemented setns)",
 	/* 309 */	"#309 (unimplemented getcpu)",
 	/* 310 */	"#310 (unimplemented process_vm_readv)",
@@ -909,7 +909,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 296 */	NULL, /* unimplemented pwritev */
 	/* 297 */	NULL, /* unimplemented rt_tgsigqueueinfo */
 	/* 298 */	NULL, /* unimplemented perf_counter_open */
-	/* 299 */	NULL, /* unimplemented recvmmsg */
+	/* 299 */	NULL, /* recvmmsg */
 	/* 300 */	NULL, /* unimplemented fanotify_init */
 	/* 301 */	NULL, /* unimplemented fanotify_mark */
 	/* 302 */	NULL, /* unimplemented prlimit64 */
@@ -917,7 +917,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 304 */	NULL, /* unimplemented open_by_handle_at */
 	/* 305 */	NULL, /* unimplemented clock_adjtime */
 	/* 306 */	NULL, /* unimplemented syncfs */
-	/* 307 */	NULL, /* unimplemented sendmmsg */
+	/* 307 */	NULL, /* sendmmsg */
 	/* 308 */	NULL, /* unimplemented setns */
 	/* 309 */	NULL, /* unimplemented getcpu */
 	/* 310 */	NULL, /* unimplemented process_vm_readv */
