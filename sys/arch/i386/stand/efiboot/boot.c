@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2017/02/03 16:42:26 roy Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -540,7 +540,7 @@ command_devpath(char *arg)
 			Print(L"%d:%d:%s\n", DevicePathType(dp), DevicePathSubType(dp), path);
 			FreePool(path);
 
-			if (rows >= 0 && ++row >= rows) {
+			if (++row >= rows) {
 				row = 0;
 				Print(L"Press Any Key to continue :");
 				(void) awaitkey(-1, 0);
@@ -607,7 +607,7 @@ command_efivar(char *arg)
 		    val ? val : L"(null)");
 		FreePool(val);
 
-		if (rows >= 0 && ++row >= rows) {
+		if (++row >= rows) {
 			row = 0;
 			Print(L"Press Any Key to continue :");
 			(void) awaitkey(-1, 0);
