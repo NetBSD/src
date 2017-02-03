@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.135 2017/02/03 08:43:02 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.136 2017/02/03 13:08:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.135 2017/02/03 08:43:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.136 2017/02/03 13:08:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1708,7 +1708,6 @@ linux_sys_accept(struct lwp *l, const struct linux_sys_accept_args *uap, registe
 	return (0);
 }
 
-#ifndef __i386__	/* Linux/i386 does not have this syscall */
 int
 linux_sys_accept4(struct lwp *l, const struct linux_sys_accept4_args *uap, register_t *retval)
 {
@@ -1743,5 +1742,3 @@ linux_sys_accept4(struct lwp *l, const struct linux_sys_accept4_args *uap, regis
 
 	return 0;
 }
-#endif
-
