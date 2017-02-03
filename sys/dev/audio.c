@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.298 2017/01/27 05:05:51 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.299 2017/02/03 20:07:55 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.298 2017/01/27 05:05:51 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.299 2017/02/03 20:07:55 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1761,7 +1761,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp,
 	rp->copying = false;
 	rp->needfill = false;
 	rp->mmapped = false;
-	memset(rp->s.start, 0, AU_RING_SIZE);
+	memset(rp->s.start, 0, blksize * 2);
 }
 
 int
@@ -2084,9 +2084,11 @@ audio_drain(struct audio_softc *sc, int n)
 		return 0;
 
 	used = audio_stream_get_used(&cb->s);
+	if (n == 0)
+		used += audio_stream_get_used(&sc->sc_pr.s);
 	for (i = 0; i < sc->sc_vchan[n]->sc_npfilters; i++)
 		used += audio_stream_get_used(&sc->sc_vchan[n]->sc_pstreams[i]);
-	if (used <= 0)
+	if (used <= 0 || (n == 0 && sc->hw_if->trigger_output == NULL))
 		return 0;
 
 	if (n != 0 && !sc->sc_vchan[n]->sc_pbus) {
@@ -2101,8 +2103,19 @@ audio_drain(struct audio_softc *sc, int n)
 		error = audiostartp(sc, n);
 		if (error)
 			return error;
-	} else if (n == 0)
-		goto silence_buffer;
+	} else if (n == 0) {
+		used = cb->blksize * 2;
+		while (used > 0) {
+			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+			if (cc > used)
+				cc = used;
+			audio_fill_silence(&cb->s.param, sc->sc_pr.s.inp, cc);
+			sc->sc_pr.s.inp = audio_stream_add_inp(&sc->sc_pr.s,
+			    sc->sc_pr.s.inp, cc);
+			used -= cc;
+		}
+		mix_write(sc);
+	}
 	/*
 	 * Play until a silence block has been played, then we
 	 * know all has been drained.
@@ -2116,6 +2129,9 @@ audio_drain(struct audio_softc *sc, int n)
 	}
 #endif
 	sc->sc_vchan[n]->sc_draining = true;
+
+	i = 0;
+drain_again:
 	drops = cb->drops;
 	error = 0;
 	while (cb->drops == drops && !error) {
@@ -2128,21 +2144,12 @@ audio_drain(struct audio_softc *sc, int n)
 		if (sc->sc_dying)
 			error = EIO;
 	}
+	i++;
+	if (n == 0 && i < 2)
+		goto drain_again;
 
-silence_buffer:
-
-	used = 0;
-	if (sc->sc_opens == 1) {
-		cb = &sc->sc_pr;
-		cc = cb->blksize;
-		
-		while (used < cb->s.bufsize) {
-			memset(sc->sc_pr.s.start, 0, cc);
-			mix_write(sc);
-			used += cc;
-		}
-	}
 	sc->sc_vchan[n]->sc_draining = false;
+
 	return error;
 }
 
@@ -3368,18 +3375,30 @@ audio_pint(void *v)
 {
 	struct audio_softc *sc;
 	struct virtual_channel *vc;
+	int blksize, i, used;
 
 	sc = v;
 	vc = sc->sc_vchan[0];
+	blksize = vc->sc_mpr.blksize;
 
 	if (sc->sc_dying == true)
 		return;
 
-	if (audio_stream_get_used(&sc->sc_pr.s) < vc->sc_mpr.blksize)
+	used = audio_stream_get_used(&vc->sc_mpr.s);
+	for (i = 0; i < vc->sc_npfilters; i++)
+		used += audio_stream_get_used(&vc->sc_pstreams[i]);
+
+	if (audio_stream_get_used(&sc->sc_pr.s) <blksize)
 		goto wake_mix;
 
+	if (vc->sc_draining == true && used <= 0) {
+		vc->sc_mpr.drops += blksize;
+		cv_broadcast(&sc->sc_wchan);
+	}
+
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
-	    vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
+	    vc->sc_mpr.s.outp, blksize);
+
 	mix_write(sc);
 
 wake_mix:
@@ -5767,7 +5786,6 @@ audio_play_thread(void *v)
 
 		audio_mix(sc);
 	}
-
 }
 
 void
