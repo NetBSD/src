@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.1.2.2 2017/01/16 18:04:27 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.1.2.3 2017/02/04 22:26:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,12 +32,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.1.2.2 2017/01/16 18:04:27 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.1.2.3 2017/02/04 22:26:16 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/resource.h>
-#include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/sockio.h>
 #include <sys/param.h>
@@ -49,7 +48,6 @@ __RCSID("$NetBSD: t_can.c,v 1.1.2.2 2017/01/16 18:04:27 bouyer Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <signal.h>
 
 #include <net/if.h>
 #include <netcan/can.h>
@@ -58,37 +56,7 @@ __RCSID("$NetBSD: t_can.c,v 1.1.2.2 2017/01/16 18:04:27 bouyer Exp $");
 #include <rump/rump_syscalls.h>
 
 #include "h_macros.h"
-
-static void
-cancfg_rump_createif(const char *ifname)
-{
-	int s, rv;
-	struct ifreq ifr;
-
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("if config socket");
-	}
-
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-
-	if ((rv = rump_sys_ioctl(s, SIOCIFCREATE, &ifr)) < 0) {
-		atf_tc_fail_errno("if config create");
-	}
-
-	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-
-	if ((rv = rump_sys_ioctl(s, SIOCGIFFLAGS, &ifr)) < 0) {
-		atf_tc_fail_errno("if config get flags");
-	}
-
-	ifr.ifr_flags |= IFF_UP;
-	if ((rv = rump_sys_ioctl(s, SIOCSIFFLAGS, &ifr)) < 0) {
-		atf_tc_fail_errno("if config set flags");
-	}
-}
+#include "h_canutils.h"
 
 ATF_TC(canlocreate);
 ATF_TC_HEAD(canlocreate, tc)
@@ -197,38 +165,12 @@ ATF_TC_BODY(cannoown, tc)
 	}
 
 	/* now try to read */
-
-	memset(&cf_receive, 0, sizeof(cf_receive));
-	FD_ZERO(&rfds);
-	FD_SET(s, &rfds);
-	/* we should receive no message; wait for 2 seconds */
-	tmout.tv_sec = 2;
-	tmout.tv_usec = 0;
-	rv = rump_sys_select(s + 1, &rfds, NULL, NULL, &tmout);
-	switch(rv) {
-	case -1:
-		atf_tc_fail_errno("select");
-		break;
-	case 0:
-		/* timeout: expected case */
-		return;
-	default: break;
-	}
-	salen = sizeof(sa);
-	ATF_CHECK_MSG(FD_ISSET(s, &rfds), "select returns but s not in set");
-	if (( rv = rump_sys_recvfrom(s, &cf_receive, sizeof(cf_receive),
-	    0, (struct sockaddr *)&sa, &salen)) < 0) {
-		atf_tc_fail_errno("recvfrom");
+	if (can_recvfrom(s, &cf_receive, &rv, &sa) < 0) {
+		if (errno ==  EWOULDBLOCK)
+			return; /* expected timeout */
+		atf_tc_fail_errno("can_recvfrom");
 	}
 
-	ATF_CHECK_MSG(rv > 0, "short read on socket");
-
-	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive, sizeof(cf_send)) == 0,
-	    "recvfrom packet is not what we sent");
-	ATF_CHECK_MSG(sa.can_family == AF_CAN,
-	    "recvfrom provided wrong %d family", sa.can_family);
-	ATF_CHECK_MSG(salen == sizeof(sa),
-	    "recvfrom provided wrong size %d (!= %d)", salen, sizeof(sa));
 	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
 	   "recvfrom provided wrong ifindex %d (!= %d)",
 	    sa.can_ifindex, ifr.ifr_ifindex);
@@ -320,12 +262,9 @@ ATF_TC_BODY(canwritelo, tc)
 		atf_tc_fail_errno("write");
 	}
 
-	memset(&cf_receive, 0, sizeof(cf_receive));
-	if (( rv = rump_sys_read(s, &cf_receive, sizeof(cf_receive))) < 0) {
-		atf_tc_fail_errno("read");
+	if (can_read(s, &cf_receive, &rv) < 0) {
+		atf_tc_fail_errno("can_read");
 	}
-
-	ATF_CHECK_MSG(rv > 0, "short read on socket");
 
 	memset(&cf_send, 0, sizeof(cf_send));
 	cf_send.can_id = 1;
@@ -433,12 +372,9 @@ ATF_TC_BODY(cansendtolo, tc)
 		atf_tc_fail_errno("sendto");
 	}
 
-	memset(&cf_receive, 0, sizeof(cf_receive));
-	if (( rv = rump_sys_read(s, &cf_receive, sizeof(cf_receive))) < 0) {
+	if (can_read(s, &cf_receive, &rv) < 0) {
 		atf_tc_fail_errno("read");
 	}
-
-	ATF_CHECK_MSG(rv > 0, "short read on socket");
 
 	memset(&cf_send, 0, sizeof(cf_send));
 	cf_send.can_id = 1;
@@ -504,12 +440,9 @@ ATF_TC_BODY(cansendtowrite, tc)
 		atf_tc_fail_errno("sendto");
 	}
 
-	memset(&cf_receive, 0, sizeof(cf_receive));
-	if (( rv = rump_sys_read(s, &cf_receive, sizeof(cf_receive))) < 0) {
+	if (can_read(s, &cf_receive, &rv) < 0) {
 		atf_tc_fail_errno("read");
 	}
-
-	ATF_CHECK_MSG(rv > 0, "short read on socket");
 
 	memset(&cf_send, 0, sizeof(cf_send));
 	cf_send.can_id = 1;
@@ -595,23 +528,17 @@ ATF_TC_BODY(canreadlocal, tc)
 		atf_tc_fail_errno("write");
 	}
 
-	memset(&cf_receive2, 0, sizeof(cf_receive2));
-	if (( rv2 = rump_sys_read(s2, &cf_receive2, sizeof(cf_receive2))) < 0) {
-		atf_tc_fail_errno("read");
+	if (can_read(s2, &cf_receive2, &rv2) < 0) {
+		atf_tc_fail_errno("can_read");
 	}
-
-	ATF_CHECK_MSG(rv2 > 0, "short read on socket");
 
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive2, sizeof(cf_send)) == 0,
 	    "received (2) packet is not what we sent");
 
 	/* now check first socket */
-	memset(&cf_receive1, 0, sizeof(cf_receive1));
-	if (( rv1 = rump_sys_read(s1, &cf_receive1, sizeof(cf_receive1))) < 0) {
-		atf_tc_fail_errno("read");
+	if (can_read(s1, &cf_receive1, &rv1) < 0) {
+		atf_tc_fail_errno("can_read");
 	}
-
-	ATF_CHECK_MSG(rv1 > 0, "short read on socket");
 
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive1, sizeof(cf_send)) == 0,
 	    "received (1) packet is not what we sent");
@@ -683,33 +610,21 @@ ATF_TC_BODY(canrecvfrom, tc)
 		atf_tc_fail_errno("write");
 	}
 
-	memset(&cf_receive2, 0, sizeof(cf_receive2));
-	if (( rv2 = rump_sys_read(s2, &cf_receive2, sizeof(cf_receive2))) < 0) {
-		atf_tc_fail_errno("read");
+	if (can_read(s2, &cf_receive2, &rv2) < 0) {
+		atf_tc_fail_errno("can_read");
 	}
-
-	ATF_CHECK_MSG(rv2 > 0, "short read on socket");
 
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive2, sizeof(cf_send)) == 0,
 	    "received (2) packet is not what we sent");
 
 	/* now check first socket */
-	memset(&cf_receive1, 0, sizeof(cf_receive1));
 	memset(&sa, 0, sizeof(sa));
-	salen = sizeof(sa);
-	if (( rv1 = rump_sys_recvfrom(s1, &cf_receive1, sizeof(cf_receive1),
-	    0, (struct sockaddr *)&sa, &salen)) < 0) {
-		atf_tc_fail_errno("recvfrom");
+	if (can_recvfrom(s1, &cf_receive1, &rv1, &sa) < 0) {
+		atf_tc_fail_errno("can_recvfrom");
 	}
-
-	ATF_CHECK_MSG(rv1 > 0, "short read on socket");
 
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive1, sizeof(cf_send)) == 0,
 	    "recvfrom (1) packet is not what we sent");
-	ATF_CHECK_MSG(sa.can_family == AF_CAN,
-	    "recvfrom provided wrong %d family", sa.can_family);
-	ATF_CHECK_MSG(salen == sizeof(sa),
-	    "recvfrom provided wrong size %d (!= %d)", salen, sizeof(sa));
 	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
 	   "recvfrom provided wrong ifindex %d (!= %d)",
 	    sa.can_ifindex, ifr.ifr_ifindex);
@@ -719,7 +634,7 @@ ATF_TC(canbindfilter);
 ATF_TC_HEAD(canbindfilter, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "check that  socket bound to an interface doens't get other interface's messages");
+	atf_tc_set_md_var(tc, "descr", "check that socket bound to an interface doens't get other interface's messages");
 	atf_tc_set_md_var(tc, "timeout", "5");
 }
 
@@ -804,48 +719,23 @@ ATF_TC_BODY(canbindfilter, tc)
 		atf_tc_fail_errno("write");
 	}
 
-	memset(&cf_receive2, 0, sizeof(cf_receive2));
-	if (( rv2 = rump_sys_read(s2, &cf_receive2, sizeof(cf_receive2))) < 0) {
+	if (can_read(s2, &cf_receive2, &rv2) < 0) {
 		atf_tc_fail_errno("read");
 	}
-
-	ATF_CHECK_MSG(rv2 > 0, "short read on socket");
 
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive2, sizeof(cf_send)) == 0,
 	    "received (2) packet is not what we sent");
 
 	/* now check first socket */
-	memset(&cf_receive1, 0, sizeof(cf_receive1));
-	FD_ZERO(&rfds);
-	FD_SET(s1, &rfds);
-	/* we should receive no message; wait for 2 seconds */
-	tmout.tv_sec = 2;
-	tmout.tv_usec = 0;
-	rv1 = rump_sys_select(s1 + 1, &rfds, NULL, NULL, &tmout);
-	switch(rv1) {
-	case -1:
-		atf_tc_fail_errno("select");
-		break;
-	case 0:
-		/* timeout: expected case */
-		return;
-	default: break;
+	if (can_recvfrom(s1, &cf_receive1, &rv1, &sa) < 0) {
+		if (errno == EWOULDBLOCK) {
+			/* expected case */
+			return;
+		}
+		atf_tc_fail_errno("can_recvfrom");
 	}
-	salen = sizeof(sa);
-	ATF_CHECK_MSG(FD_ISSET(s1, &rfds), "select returns but s1 not in set");
-	if (( rv1 = rump_sys_recvfrom(s1, &cf_receive1, sizeof(cf_receive1),
-	    0, (struct sockaddr *)&sa, &salen)) < 0) {
-		atf_tc_fail_errno("recvfrom");
-	}
-
-	ATF_CHECK_MSG(rv1 > 0, "short read on socket");
-
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive1, sizeof(cf_send)) == 0,
 	    "recvfrom (1) packet is not what we sent");
-	ATF_CHECK_MSG(sa.can_family == AF_CAN,
-	    "recvfrom provided wrong %d family", sa.can_family);
-	ATF_CHECK_MSG(salen == sizeof(sa),
-	    "recvfrom provided wrong size %d (!= %d)", salen, sizeof(sa));
 	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
 	   "recvfrom provided wrong ifindex %d (!= %d)",
 	    sa.can_ifindex, ifr.ifr_ifindex);
@@ -1022,4 +912,3 @@ ATF_TP_ADD_TCS(tp)
         ATF_TP_ADD_TC(tp, cannoloop);
 	return atf_no_error();
 }
-

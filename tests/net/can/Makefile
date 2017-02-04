@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.2.1 2017/01/15 20:29:01 bouyer Exp $
+# $NetBSD: Makefile,v 1.1.2.2 2017/02/04 22:26:16 bouyer Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,6 +6,7 @@
 TESTSDIR=	${TESTSBASE}/net/can
 
 TESTS_C=	t_can
+SRCS.t_can=	t_can.c h_canutils.c
 
 # XXX we don't use INET here, but we need rumpnet_netinet anyway:
 # common code in if.c is compiled with -DINET and will dereference ip_pktq,
