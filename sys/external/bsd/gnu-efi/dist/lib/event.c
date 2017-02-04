@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.1.1.1 2014/04/01 16:16:06 jakllsch Exp $	*/
+/*	$NetBSD: event.c,v 1.2 2017/02/04 18:08:29 mlelstv Exp $	*/
 
 /*++
 
@@ -29,7 +29,11 @@ LibCreateProtocolNotifyEvent (
     OUT VOID                *Registration
     )
 {
+#ifdef EFI_DEBUG
     EFI_STATUS              Status;
+#else
+    EFI_STATUS              Status __unused;
+#endif
     EFI_EVENT               Event;
 
     //
