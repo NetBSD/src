@@ -25,9 +25,9 @@ shopt -s nullglob
 MYDIR="`dirname \"$0\"`"
 cd "$MYDIR"
 MYDIR="`pwd`"
-XMLWF="`dirname \"$MYDIR\"`/xmlwf/xmlwf"
-# XMLWF=/usr/local/bin/xmlwf
-TS="$MYDIR"
+# XMLWF="`dirname \"$MYDIR\"`/xmlwf/xmlwf"
+XMLWF=/usr/bin/xmlwf
+TS="$MYDIR/XML-Test-Suite"
 # OUTPUT must terminate with the directory separator.
 OUTPUT="$TS/out/"
 # OUTPUT=/home/tmp/xml-testsuite-out/

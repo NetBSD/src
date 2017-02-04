@@ -838,6 +838,24 @@ case $basic_machine in
 		basic_machine=m68k-atari
 		os=-mint
 		;;
+	mipsEE* | ee | ps2)
+		basic_machine=mips64r5900el-scei
+		case $os in
+		    -linux*)
+			;;
+		    *)
+			os=-elf
+			;;
+		esac
+		;;
+	iop)
+		basic_machine=mipsel-scei
+		os=-irx
+		;;
+	dvp)
+		basic_machine=dvp-scei
+		os=-elf
+		;;
 	mips3*-*)
 		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`
 		;;
@@ -1404,7 +1422,7 @@ case $os in
 	      | -uxpv* | -beos* | -mpeix* | -udk* | -moxiebox* \
 	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
 	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
-	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
+	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* | -irx* \
 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
