@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_copyin_ioctl.9,v 1.12 2017/01/29 01:38:02 pgoyette Exp $
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.13 2017/02/04 23:32:43 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@ The functions
 .Nm prop_dictionary_copyin_ioctl_size ,
 .Nm prop_array_copyin_size ,
 and
-.Nm prop_dictionary_copyin_size ,
+.Nm prop_dictionary_copyin_size
 take an explicit limit argument
 .Ar lim
 while
@@ -121,7 +121,7 @@ while
 .Nm prop_dictionary_copyin_ioctl ,
 .Nm prop_array_copyin ,
 and
-.Nm prop_dictionary_copyin ,
+.Nm prop_dictionary_copyin
 have an implicit size limit of 128KB.
 Attempts to transfer objects larger than the limit result in an
 .Er E2BIG
