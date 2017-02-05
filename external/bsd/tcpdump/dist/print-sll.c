@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sll.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Linux cooked sockets capture printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -300,7 +302,7 @@ recurse:
 		hdrlen += 4;
 		goto recurse;
 	} else {
-		if (ethertype_print(ndo, ether_type, p, length, caplen) == 0) {
+		if (ethertype_print(ndo, ether_type, p, length, caplen, NULL, NULL) == 0) {
 			/* ether_type not known, print raw packet */
 			if (!ndo->ndo_eflag)
 				sll_print(ndo, sllp, length + SLL_HDR_LEN);

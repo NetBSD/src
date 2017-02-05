@@ -23,8 +23,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-nsh.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-nsh.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Network Service Header (NSH) printer */
+
+/* specification: draft-ietf-sfc-nsh-01 */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -44,11 +48,7 @@ static const struct tok nsh_flags [] = {
 
 #define NSH_BASE_HDR_LEN 4
 #define NSH_SERVICE_PATH_HDR_LEN 4
-#define NSH_HDR_WORD_SIZE 4
-
-/*
- * NSH, draft-ietf-sfc-nsh-01 Network Service Header
- */
+#define NSH_HDR_WORD_SIZE 4U
 
 void
 nsh_print(netdissect_options *ndo, const u_char *bp, u_int len)
@@ -175,7 +175,7 @@ nsh_print(netdissect_options *ndo, const u_char *bp, u_int len)
         ip6_print(ndo, bp, next_len);
         break;
     case 0x3:
-        ether_print(ndo, bp, next_len, next_len, NULL, NULL);
+        ether_print(ndo, bp, next_len, ndo->ndo_snapend - bp, NULL, NULL);
         break;
     default:
         ND_PRINT((ndo, "ERROR: unknown-next-protocol"));

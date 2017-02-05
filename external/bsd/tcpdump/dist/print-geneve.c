@@ -17,8 +17,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-geneve.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-geneve.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Generic Network Virtualization Encapsulation (Geneve) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -226,9 +228,9 @@ geneve_print(netdissect_options *ndo, const u_char *bp, u_int len)
     else
         ND_PRINT((ndo, "\n\t"));
 
-    if (ethertype_print(ndo, prot, bp, len, len) == 0) {
+    if (ethertype_print(ndo, prot, bp, len, ndo->ndo_snapend - bp, NULL, NULL) == 0) {
         if (prot == ETHERTYPE_TEB)
-            ether_print(ndo, bp, len, len, NULL, NULL);
+            ether_print(ndo, bp, len, ndo->ndo_snapend - bp, NULL, NULL);
         else
             ND_PRINT((ndo, "geneve-proto-0x%x", prot));
     }

@@ -1,9 +1,4 @@
 /*
- * This module implements decoding of the Loopback Protocol, originally
- * defined as the Configuration Testing Protocol. It is based on the following
- * specification:
- * http://www.mit.edu/people/jhawk/ctp.pdf
- *
  * Copyright (c) 2014 The TCPDUMP project
  * All rights reserved.
  *
@@ -32,8 +27,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-loopback.c,v 1.3 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-loopback.c,v 1.4 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Loopback Protocol printer */
+
+/*
+ * originally defined as the Ethernet Configuration Testing Protocol.
+ * specification: http://www.mit.edu/people/jhawk/ctp.pdf
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

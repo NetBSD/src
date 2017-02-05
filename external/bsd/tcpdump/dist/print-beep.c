@@ -11,8 +11,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-beep.c,v 1.5 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: print-beep.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Blocks Extensible Exchange Protocol (BEEP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
