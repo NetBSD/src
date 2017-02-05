@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.32 2016/12/25 06:55:28 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.33 2017/02/05 12:05:46 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1489,6 +1489,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 		xs->error = XS_SELTIMEOUT;
 		DEBC(conn, 10, ("run_xfer on dead connection\n"));
 		scsipi_done(xs);
+		unref_session(session);
 		return;
 	}
 
@@ -1496,6 +1497,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 		if (send_task_management(conn, NULL, xs, TARGET_WARM_RESET)) {
 			xs->error = XS_SELTIMEOUT;
 			scsipi_done(xs);
+			unref_session(session);
 		}
 		return;
 	}
@@ -1505,6 +1507,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 		xs->error = XS_BUSY;
 		DEBC(conn, 5, ("No CCB in run_xfer, %d in use.\n", conn->usecount));
 		scsipi_done(xs);
+		unref_session(session);
 		return;
 	}
 	/* copy parameters into CCB for easier access */
