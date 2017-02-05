@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.5 2017/02/05 17:37:10 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.6 2017/02/05 19:44:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.5 2017/02/05 17:37:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.6 2017/02/05 19:44:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,6 +493,13 @@ can_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	if (control && control->m_len) {
 		return EINVAL;
 	}
+	if (m->m_len > sizeof(struct can_frame) ||
+	   m->m_len < offsetof(struct can_frame, can_dlc))
+		return EINVAL;
+
+	/* we expect all data in the first mbuf */
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len == m->m_pkthdr.len);
 
 	if (nam) {
 		if ((so->so_state & SS_ISCONNECTED) != 0) {
