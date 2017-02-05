@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.63.14.1 2012/10/23 16:19:47 riz Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.63.14.2 2017/02/05 05:48:00 snj Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.63.14.1 2012/10/23 16:19:47 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.63.14.2 2017/02/05 05:48:00 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -196,8 +196,10 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			adst = arcbroadcastaddr;
 		else {
 			uint8_t *tha = ar_tha(arph);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			adst = *tha;
 		}
 
