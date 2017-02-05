@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.250 2017/02/05 08:19:05 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.251 2017/02/05 08:36:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2017/02/05 08:19:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2017/02/05 08:36:08 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -319,8 +319,6 @@ int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
 void init_x86_64(paddr_t);
-
-static int valid_user_selector(struct lwp *, uint64_t);
 
 /*
  * Machine-dependent startup code
@@ -1902,12 +1900,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
-	const __greg_t *gr;
-	uint16_t sel;
-	int error;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
+	const __greg_t *gr;
+	uint16_t sel;
 
 	gr = mcp->__gregs;
 
@@ -1915,31 +1912,12 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		return EINVAL;
 
 	if (__predict_false(pmap->pm_ldt != NULL)) {
-		error = valid_user_selector(l, gr[_REG_ES]);
-		if (error != 0)
-			return error;
-
-		error = valid_user_selector(l, gr[_REG_FS]);
-		if (error != 0)
-			return error;
-
-		error = valid_user_selector(l, gr[_REG_GS]);
-		if (error != 0)
-			return error;
-
+		/* Only when the LDT is user-set (with USER_LDT) */
 		if ((gr[_REG_DS] & 0xffff) == 0)
 			return EINVAL;
-		error = valid_user_selector(l, gr[_REG_DS]);
-		if (error != 0)
-			return error;
-
 #ifndef XEN
 		if ((gr[_REG_SS] & 0xffff) == 0)
 			return EINVAL;
-		error = valid_user_selector(l, gr[_REG_SS]);
-		if (error != 0)
-			return error;
-
 		if (!USERMODE(gr[_REG_CS], gr[_REG_RFLAGS]))
 			return EINVAL;
 #endif
@@ -1989,27 +1967,6 @@ void
 cpu_initclocks(void)
 {
 	(*initclock_func)();
-}
-
-/*
- * Called only when the LDT is user-set (USER_LDT).
- */
-static int
-valid_user_selector(struct lwp *l, uint64_t seg)
-{
-	seg &= 0xffff;
-	if (seg == 0)
-		return 0;
-
-	if (!(seg & SEL_LDT)) {
-		CTASSERT(GUDATA_SEL & SEL_LDT);
-		KASSERT(seg != GUDATA_SEL);
-		CTASSERT(GUDATA32_SEL & SEL_LDT);
-		KASSERT(seg != GUDATA32_SEL);
-		return EINVAL;
-	}
-
-	return 0;
 }
 
 int
