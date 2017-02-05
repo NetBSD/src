@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.21 2017/01/29 05:25:27 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.22 2017/02/05 19:20:06 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -329,4 +329,18 @@ sys/external/bsd/drm2/dist/drm/ttm/ttm_tt.c	1.8
 
 	Guarantee no zero-size uao/kmem allocations via ttm.
 	[maya, ticket #1350]
+
+sys/net/if_arcsubr.c				1.76 via patch
+sys/net/if_ecosubr.c				1.50 via patch
+sys/net/if_ethersubr.c				1.236 via patch
+sys/net/if_fddisubr.c				1.104 via patch
+sys/net/if_tokensubr.c				1.80 via patch
+
+	Don't leak an mbuf in the ARP reply
+	[maxv, ticket #1355]
+
+sys/netinet/if_arp.c				1.238, 1.239 via patch
+
+	Add checks on the ARP header
+	[maxv, ticket #1356]
 
