@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.248 2017/02/05 06:13:53 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.249 2017/02/05 06:26:06 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2017/02/05 06:13:53 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2017/02/05 06:26:06 maya Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -802,9 +802,6 @@ sparse_dump_mark(void)
 	     uvm_physseg_valid_p(upm);
 	     upm = uvm_physseg_get_next(upm)) {
 		paddr_t pfn;
-
-		if (uvm_physseg_valid_p(upm) == false)
-			break;
 
 		/*
 		 * We assume that seg->start to seg->end are
