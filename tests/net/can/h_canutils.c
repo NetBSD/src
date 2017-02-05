@@ -1,4 +1,4 @@
-/*	$NetBSD: h_canutils.c,v 1.1.2.3 2017/02/05 12:03:23 bouyer Exp $	*/
+/*	$NetBSD: h_canutils.c,v 1.1.2.4 2017/02/05 12:18:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: h_canutils.c,v 1.1.2.3 2017/02/05 12:03:23 bouyer Exp $");
+__RCSID("$NetBSD: h_canutils.c,v 1.1.2.4 2017/02/05 12:18:20 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,4 +180,21 @@ can_bind(int s, const char *ifname)
 		atf_tc_fail_errno("bind");
 	}
 	return ifr.ifr_ifindex;
+}
+
+int
+can_socket_with_own(void)
+{
+	int s;
+	int v;
+
+	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+		atf_tc_fail_errno("CAN socket");
+	}
+	v = 1;
+	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
+	    &v, sizeof(v)) < 0) {
+		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
+	}
+	return s;
 }
