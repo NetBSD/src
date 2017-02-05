@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.48 2014/02/19 20:50:56 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.49 2017/02/05 08:42:49 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48 2014/02/19 20:50:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.49 2017/02/05 08:42:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,6 +83,10 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
+
+#ifdef USER_LDT
+	pmap_ldt_cleanup(l);
+#endif
 
 	fpu_save_area_clear(l, __NetBSD_NPXCW__);
 	pcb->pcb_flags = 0;
