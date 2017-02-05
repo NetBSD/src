@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.99.40.1 2017/02/05 13:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.99 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.99.40.1 2017/02/05 13:40:27 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -279,7 +279,7 @@ aicattach(struct aic_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");

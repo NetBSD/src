@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.6.2 2016/10/05 20:55:34 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.6.3 2017/02/05 13:40:18 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include <sys/cpu.h>
 #include <sys/kcore.h>
 #include <uvm/uvm_page.h>
+#include <uvm/uvm_physseg.h>
 #ifdef __PMAP_PRIVATE
 #include <powerpc/booke/cpuvar.h>
 #endif
@@ -151,7 +152,7 @@ pmap_md_tlb_asid_max(void)
 
 struct vm_physseg;
 static inline bool
-pmap_md_ok_to_steal_p(const struct vm_physseg *seg, size_t npgs)
+pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 {
 	return true;
 }

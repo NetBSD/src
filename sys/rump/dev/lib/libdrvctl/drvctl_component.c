@@ -1,4 +1,4 @@
-/*	$NetBSD: drvctl_component.c,v 1.1.12.1 2016/03/19 11:30:34 skrll Exp $	*/
+/*	$NetBSD: drvctl_component.c,v 1.1.12.2 2017/02/05 13:41:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,16 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drvctl_component.c,v 1.1.12.1 2016/03/19 11:30:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drvctl_component.c,v 1.1.12.2 2017/02/05 13:41:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include "ioconf.c"
-
 #include <rump-sys/kern.h>
+#include <rump-sys/vfs.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
@@ -43,13 +42,16 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	devmajor_t bmaj, cmaj;
 	int error;
 
-	drvctl_init();
-
-	config_init_component(cfdriver_ioconf_drvctl,
-	    cfattach_ioconf_drvctl, cfdata_ioconf_drvctl);
-
 	bmaj = cmaj = NODEVMAJOR;
-	if ((error = devsw_attach("drvctl", NULL, &bmaj,
-	    &drvctl_cdevsw, &cmaj)) != 0)
+	error = devsw_attach("drvctl", NULL, &bmaj, &drvctl_cdevsw, &cmaj);
+	if (error != 0)
 		panic("drvctl devsw attach failed: %d", error);
+
+	error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/drvctl", cmaj, 0);
+	if ( error !=0)
+		panic("cannot create drvctl device node: %d", error);
+
+	error = devsw_detach(NULL, &drvctl_cdevsw);
+	if (error != 0)
+		panic("cannot detach drvctl devsw: %d", error);
 }

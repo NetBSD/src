@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.346.2.1 2016/12/05 10:54:48 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.346.2.2 2017/02/05 13:40:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.2.1 2016/12/05 10:54:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.2.2 2017/02/05 13:40:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,6 @@ alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
 	struct mddt *mddtp;
 	struct mddt_cluster *memc;
 	int i, mddtweird;
-	struct vm_physseg *vps;
 	struct pcb *pcb0;
 	vaddr_t kernstart, kernend, v;
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
@@ -372,7 +371,7 @@ nobootinfo:
 		panic("page size %lu != %d?!", hwrpb->rpb_page_size,
 		    ALPHA_PGBYTES);
 	uvmexp.pagesize = hwrpb->rpb_page_size;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Find out what hardware we're on, and do basic initialization.
@@ -611,23 +610,24 @@ nobootinfo:
 	 * Initialize error message buffer (at end of core).
 	 */
 	{
+		paddr_t end;
 		vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
 		vsize_t reqsz = sz;
+		uvm_physseg_t bank;
 
-		vps = VM_PHYSMEM_PTR(vm_nphysseg - 1);
+		bank = uvm_physseg_get_last();
 
 		/* shrink so that it'll fit in the last segment */
-		if ((vps->avail_end - vps->avail_start) < atop(sz))
-			sz = ptoa(vps->avail_end - vps->avail_start);
+		if (uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank) < atop(sz))
+			sz = ptoa(uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank));
 
-		vps->end -= atop(sz);
-		vps->avail_end -= atop(sz);
-		msgbufaddr = (void *) ALPHA_PHYS_TO_K0SEG(ptoa(vps->end));
+		end = uvm_physseg_get_end(bank);
+		end -= atop(sz);
+
+		uvm_physseg_unplug(end, atop(sz));
+		msgbufaddr = (void *) ALPHA_PHYS_TO_K0SEG(ptoa(end));
+
 		initmsgbuf(msgbufaddr, sz);
-
-		/* Remove the last segment if it now has no pages. */
-		if (vps->start == vps->end)
-			vm_nphysseg--;
 
 		/* warn if the message buffer had to be shrunk */
 		if (sz != reqsz)

@@ -1,4 +1,4 @@
-#	$NetBSD: EB7500ATX,v 1.57.2.1 2015/09/22 12:05:35 skrll Exp $
+#	$NetBSD: EB7500ATX,v 1.57.2.2 2017/02/05 13:40:00 skrll Exp $
 #
 #	EB7500ATX --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"EB7500ATX-$Revision: 1.57.2.1 $"
+#ident		"EB7500ATX-$Revision: 1.57.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -136,7 +136,7 @@ options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 makeoptions	COPY_SYMTAB=1
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -222,6 +222,8 @@ pseudo-device	wsmux
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 rsbus0	at mainbus?
 
 wdc*	at rsbus? 		# eb7500atx build in ide
@@ -233,7 +235,7 @@ atapibus* at atapi?
 cs*	at rsbus?
 
 # Builtin DS1687 clock
-# Not functioning (yet) 
+# Not functioning (yet)
 #ds1687rtc*	at rsbus?
 
 pseudo-device	loop			# network loopback

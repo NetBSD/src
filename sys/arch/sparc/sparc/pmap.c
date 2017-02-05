@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.358.4.1 2015/12/27 12:09:43 skrll Exp $ */
+/*	$NetBSD: pmap.c,v 1.358.4.2 2017/02/05 13:40:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.358.4.1 2015/12/27 12:09:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.358.4.2 2017/02/05 13:40:21 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -3035,7 +3035,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	extern char *kernel_top;
 
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M) || defined(SUN4D))
 	/* In this case NPTESG is a variable */

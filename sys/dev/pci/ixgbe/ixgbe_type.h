@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe_type.h,v 1.2.4.4 2016/12/05 10:55:17 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
+/*$NetBSD: ixgbe_type.h,v 1.2.4.5 2017/02/05 13:40:45 skrll Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -54,7 +54,7 @@
  *
  * - IXGBE_ERROR_POLLING
  * This category is for errors related to polling/timeout issues and should be
- * used in any case where the timeout occured, or a failure to obtain a lock, or
+ * used in any case where the timeout occurred, or a failure to obtain a lock, or
  * failure to receive data within the time limit.
  *
  * - IXGBE_ERROR_CAUTION
@@ -79,13 +79,6 @@
  * invalid argument, but for when something has occurred that is unsupported
  * (Ex: Flow control autonegotiation or an unsupported SFP+ module.)
  */
-
-#define IXGBE_ERROR_INVALID_STATE "invalid state: "
-#define IXGBE_ERROR_POLLING	"polling: "
-#define IXGBE_ERROR_CAUTION	"caution: "
-#define IXGBE_ERROR_SOFTWARE	"software: "
-#define IXGBE_ERROR_ARGUMENT	"arg: "
-#define IXGBE_ERROR_UNSUPPORTED	"unsupported: "
 
 #include "ixgbe_osdep.h"
 
@@ -128,10 +121,10 @@
 #define IXGBE_SUBDEV_ID_82599_SFP_LOM		0x06EE
 #define IXGBE_DEV_ID_82599_BACKPLANE_FCOE	0x152A
 #define IXGBE_DEV_ID_82599_SFP_FCOE		0x1529
+#define IXGBE_DEV_ID_82599_SFP_EM		0x1507
 #define IXGBE_DEV_ID_82599_SFP_SF2		0x154D
 #define IXGBE_DEV_ID_82599_SFP_SF_QP		0x154A
 #define IXGBE_DEV_ID_82599_QSFP_SF_QP		0x1558
-#define IXGBE_DEV_ID_82599_SFP_EM		0x1507
 #define IXGBE_DEV_ID_82599EN_SFP		0x1557
 #define IXGBE_SUBDEV_ID_82599EN_SFP_OCP1	0x0001
 #define IXGBE_DEV_ID_82599_XAUI_LOM		PCI_PRODUCT_INTEL_82599_XAUI_LOM
@@ -1493,7 +1486,10 @@ struct ixgbe_dmac_config {
 #define IXGBE_MDIO_GLOBAL_INT_CHIP_VEN_MASK	0xFF01 /* int chip-wide mask */
 #define IXGBE_MDIO_GLOBAL_INT_CHIP_VEN_FLAG	0xFC01 /* int chip-wide mask */
 #define IXGBE_MDIO_GLOBAL_ALARM_1		0xCC00 /* Global alarm 1 */
+#define IXGBE_MDIO_GLOBAL_ALM_1_DEV_FAULT	0x0010 /* device fault */
 #define IXGBE_MDIO_GLOBAL_ALM_1_HI_TMP_FAIL	0x4000 /* high temp failure */
+#define IXGBE_MDIO_GLOBAL_FAULT_MSG		0xC850 /* Global Fault Message */
+#define IXGBE_MDIO_GLOBAL_FAULT_MSG_HI_TMP	0x8007 /* high temp failure */
 #define IXGBE_MDIO_GLOBAL_INT_MASK		0xD400 /* Global int mask */
 #define IXGBE_MDIO_GLOBAL_AN_VEN_ALM_INT_EN	0x1000 /* autoneg vendor alarm int enable */
 #define IXGBE_MDIO_GLOBAL_ALARM_1_INT		0x4 /* int in Global alarm 1 */
@@ -2089,7 +2085,7 @@ enum {
 #define IXGBE_MACC_FS		0x00040000
 #define IXGBE_MAC_RX2TX_LPBK	0x00000002
 
-/* Veto Bit definiton */
+/* Veto Bit definition */
 #define IXGBE_MMNGC_MNG_VETO	0x00000001
 
 /* LINKS Bit Masks */

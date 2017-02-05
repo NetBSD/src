@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.39.4.3 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.39.4.4 2017/02/05 13:40:28 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39.4.3 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39.4.4 2017/02/05 13:40:28 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -366,6 +366,8 @@ struct mvgbe_port {
 	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+
+	{ MARVELL_DOVE_88AP510,		0, 1, { 29 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 
 	{ MARVELL_ARMADAXP_MV78130,	0, 1, { 66 }, FLAGS_HAS_PV },
 	{ MARVELL_ARMADAXP_MV78130,	1, 1, { 70 }, FLAGS_HAS_PV },
@@ -909,6 +911,7 @@ mvgbe_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, mvgbe_ifflags_cb);
@@ -1050,8 +1053,7 @@ mvgbe_intr(void *arg)
 			mvgbe_txeof(sc);
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		mvgbe_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->sc_rnd_source, datum);
 
@@ -2079,10 +2081,6 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 
 		/* Skip on first 2byte (HW header) */
 		m_adj(m,  MVGBE_HWHEADER_SIZE);
-
-		ifp->if_ipackets++;
-
-		bpf_mtap(ifp, m);
 
 		/* pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

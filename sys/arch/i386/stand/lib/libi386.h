@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.40 2013/11/24 17:20:00 jakllsch Exp $	*/
+/*	$NetBSD: libi386.h,v 1.40.6.1 2017/02/05 13:40:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef	__I386_STAND_LIBI386_H__
+#define	__I386_STAND_LIBI386_H__
 
 typedef unsigned long physaddr_t;
 
@@ -144,3 +147,5 @@ void userconf_add(char *);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);
+
+#endif	/* __I386_STAND_LIBI386_H__ */

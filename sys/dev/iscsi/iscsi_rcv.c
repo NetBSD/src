@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.6.2.2 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.6.2.3 2017/02/05 13:40:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -578,7 +578,9 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		connection_timeout_stop(conn);
 
 		/* let send thread take over next step of cleanup */
+		mutex_enter(&conn->lock);
 		cv_broadcast(&conn->conn_cv);
+		mutex_exit(&conn->lock);
 	}
 
 	return !otherconn;

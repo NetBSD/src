@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.8.30.1 2015/06/06 14:40:02 skrll Exp $
+#	$NetBSD: majors.powerpc,v 1.8.30.2 2017/02/05 13:40:18 skrll Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -83,7 +83,6 @@ device-major	dmoverio	char 75			dmoverio
 device-major	twe		char 76			twe
 device-major	altq		char 77			altq
 device-major	joy		char 78			joy
-device-major	spkr		char 79			spkr
 
 device-major	gtmpsc		char 80			gtmpsc
 device-major	satlink		char 81			satlink

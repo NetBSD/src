@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.25.2.1 2015/04/06 15:17:55 skrll Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.25.2.2 2017/02/05 13:40:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.25.2.1 2015/04/06 15:17:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.25.2.2 2017/02/05 13:40:08 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -777,7 +777,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);

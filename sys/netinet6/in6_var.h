@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.71.2.7 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.71.2.8 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -783,8 +783,7 @@ struct in6_multi_mship *in6_joingroup(struct ifnet *, struct in6_addr *,
 int	in6_leavegroup(struct in6_multi_mship *);
 int	in6_mask2len(struct in6_addr *, u_char *);
 int	in6_control(struct socket *, u_long, void *, struct ifnet *);
-int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *,
-	struct in6_ifaddr *, int);
+int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *, int);
 void	in6_purgeaddr(struct ifaddr *);
 void	in6_purgeif(struct ifnet *);
 void	in6_savemkludge(struct in6_ifaddr *);
@@ -807,7 +806,6 @@ struct in6_ifaddr *
 	in6ifa_ifpwithaddr_psref(const struct ifnet *, const struct in6_addr *,
 	    struct psref *);
 struct in6_ifaddr *in6ifa_ifwithaddr(const struct in6_addr *, uint32_t);
-char	*ip6_sprintf(const struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);
@@ -820,6 +818,8 @@ int	in6_is_addr_deprecated(struct sockaddr_in6 *);
 struct in6pcb;
 
 #define	LLTABLE6(ifp)	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->lltable)
+
+void	in6_sysctl_multicast_setup(struct sysctllog **);
 
 #endif /* _KERNEL */
 

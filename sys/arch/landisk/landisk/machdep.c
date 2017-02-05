@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17.6.1 2015/12/27 12:09:37 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.6.2 2017/02/05 13:40:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.6.1 2015/12/27 12:09:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.6.2 2017/02/05 13:40:14 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -219,7 +219,7 @@ landisk_startup(int howto, void *bi)
 	physmem = atop(IOM_RAM_SIZE);
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(kernend)));
 	uvm_page_physload(
-		physmem, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
 		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
 		VM_FREELIST_DEFAULT);
 
@@ -367,11 +367,7 @@ haltsys:
 
 	printf("rebooting...\n");
 	machine_reset();
-
 	/*NOTREACHED*/
-	for (;;) {
-		continue;
-	}
 }
 
 void
@@ -379,8 +375,7 @@ machine_reset(void)
 {
 
 	_cpu_exception_suspend();
-	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);
-	(void)*(volatile uint32_t *)0x80000001;	/* CPU shutdown */
+	asm("trapa #0");
 
 	/*NOTREACHED*/
 	for (;;) {

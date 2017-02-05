@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.5.2.4 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.5.2.5 2017/02/05 13:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -824,9 +824,6 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 			} else if (rx_status & DM9000_RSR_LCS) {
 				ifp->if_collisions++;
 			} else {
-				if (ifp->if_bpf)
-					bpf_mtap(ifp, m);
-				ifp->if_ipackets++;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 

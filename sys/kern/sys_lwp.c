@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.56.12.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.56.12.2 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.56.12.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.56.12.2 2017/02/05 13:40:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap,
 
 	/*
 	 * Suspend the LWP.  XXX If it's on a different CPU, we should wait
-	 * for it to be preempted, where it will put itself to sleep. 
+	 * for it to be preempted, where it will put itself to sleep.
 	 *
 	 * Suspension of the current LWP will happen on return to userspace.
 	 */
@@ -822,7 +822,7 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
 	if (t->l_name == NULL)
 		name[0] = '\0';
 	else
-		strcpy(name, t->l_name);
+		strlcpy(name, t->l_name, sizeof(name));
 	lwp_unlock(t);
 	mutex_exit(p->p_lock);
 

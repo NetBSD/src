@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.120.2.4 2016/04/22 15:44:12 skrll Exp $ */
+/*	$NetBSD: cpu.c,v 1.120.2.5 2017/02/05 13:40:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120.2.4 2016/04/22 15:44:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120.2.5 2017/02/05 13:40:21 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -720,8 +720,9 @@ cpu_hatch(void)
 	char *v = (char*)CPUINFO_VA;
 	int i;
 
+	/* XXX - why flush the icache here? but should be harmless */
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
-		flush(v + i);
+		sparc_flush_icache(v + i);
 
 	cpu_pmap_init(curcpu());
 	CPUSET_ADD(cpus_active, cpu_number());

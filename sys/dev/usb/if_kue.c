@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.12 2017/02/03 07:54:44 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.13 2017/02/05 13:40:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.12 2017/02/03 07:54:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.13 2017/02/05 13:40:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -706,19 +706,10 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	/* copy data to mbuf */
 	memcpy(mtod(m, uint8_t *), c->kue_buf + 2, pktlen);
 
-	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = pktlen;
 	m_set_rcvif(m, ifp);
 
 	s = splnet();
-
-	/*
-	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 * don't pass it up to the ether_input() layer unless it's
-	 * a broadcast packet, multicast packet, matches our ethernet
-	 * address or the interface is in promiscuous mode.
-	 */
-	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->kue_dev),
 		    __func__, m->m_len));

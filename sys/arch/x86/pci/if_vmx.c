@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.5.4.3 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.5.4.4 2017/02/05 13:40:23 skrll Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5.4.3 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5.4.4 2017/02/05 13:40:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -97,22 +97,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5.4.3 2016/12/05 10:54:59 skrll Exp $")
 #define VMXNET3_CORE_LOCK(_sc)		mutex_enter((_sc)->vmx_mtx)
 #define VMXNET3_CORE_UNLOCK(_sc)	mutex_exit((_sc)->vmx_mtx)
 #define VMXNET3_CORE_LOCK_ASSERT(_sc)	mutex_owned((_sc)->vmx_mtx)
-#define VMXNET3_CORE_LOCK_ASSERT_NOTOWNED(_sc) \
-    (!mutex_owned((_sc)->vmx_mtx))
 
 #define VMXNET3_RXQ_LOCK(_rxq)		mutex_enter((_rxq)->vxrxq_mtx)
 #define VMXNET3_RXQ_UNLOCK(_rxq)	mutex_exit((_rxq)->vxrxq_mtx)
 #define VMXNET3_RXQ_LOCK_ASSERT(_rxq)		\
     mutex_owned((_rxq)->vxrxq_mtx)
-#define VMXNET3_RXQ_LOCK_ASSERT_NOTOWNED(_rxq)	\
-    (!mutex_owned((_rxq)->vxrxq_mtx))
 
 #define VMXNET3_TXQ_LOCK(_txq)		mutex_enter((_txq)->vxtxq_mtx)
 #define VMXNET3_TXQ_UNLOCK(_txq)	mutex_exit((_txq)->vxtxq_mtx)
 #define VMXNET3_TXQ_LOCK_ASSERT(_txq)		\
     mutex_owned((_txq)->vxtxq_mtx)
-#define VMXNET3_TXQ_LOCK_ASSERT_NOTOWNED(_txq)	\
-    (!mutex_owned((_txq)->vxtxq_mtx))
 
 struct vmxnet3_dma_alloc {
 	bus_addr_t dma_paddr;
@@ -1717,6 +1711,7 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	ifmedia_set(&sc->vmx_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->vmx_lladdr);
 	ether_set_ifflags_cb(&sc->vmx_ethercom, vmxnet3_ifflags_cb);
 	vmxnet3_link_status(sc);
@@ -1747,7 +1742,7 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 	if (event & VMXNET3_EVENT_LINK) {
 		vmxnet3_link_status(sc);
 		if (sc->vmx_link_active != 0)
-			vmxnet3_start(&sc->vmx_ethercom.ec_if);
+			if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
 	}
 
 	if (event & (VMXNET3_EVENT_TQERROR | VMXNET3_EVENT_RQERROR)) {
@@ -1993,8 +1988,6 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 
 	rxq->vxrxq_stats.vmrxs_ipackets++;
 	rxq->vxrxq_stats.vmrxs_ibytes += m->m_pkthdr.len;
-
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
@@ -2538,6 +2531,7 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 	default:
+		m_free(m);
 		return (EINVAL);
 	}
 
@@ -2560,6 +2554,10 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 
 	*csum_start = *start + csum_off;
 	mp = m_pulldown(m, 0, *csum_start + 2, &offp);
+	if (!mp) {
+		/* m is already freed */
+		return ENOBUFS;
+	}
 
 	if (m->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
 		struct tcphdr *tcp;
@@ -2667,9 +2665,9 @@ vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 	} else if (m->m_pkthdr.csum_flags & VMXNET3_CSUM_ALL_OFFLOAD) {
 		error = vmxnet3_txq_offload_ctx(txq, m, &start, &csum_start);
 		if (error) {
+			/* m is already freed */
 			txq->vxtxq_stats.vmtxs_offload_failed++;
 			vmxnet3_txq_unload_mbuf(txq, dmap);
-			m_freem(m);
 			*m0 = NULL;
 			return (error);
 		}
@@ -2814,13 +2812,16 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 	 */
 	mode = VMXNET3_RXMODE_BCAST | VMXNET3_RXMODE_UCAST;
 
-	if (ISSET(ifp->if_flags, IFF_PROMISC) || ec->ec_multicnt > 682)
+	if (ISSET(ifp->if_flags, IFF_PROMISC) ||
+	    ec->ec_multicnt > VMXNET3_MULTICAST_MAX)
 		goto allmulti;
 
 	p = sc->vmx_mcast;
+	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ETHER_UNLOCK(ec);
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -2837,6 +2838,7 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ETHER_UNLOCK(ec);
 
 	if (ec->ec_multicnt > 0) {
 		SET(mode, VMXNET3_RXMODE_MCAST);

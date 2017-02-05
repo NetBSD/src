@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.319.6.5 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.319.6.6 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.319.6.5 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.319.6.6 2017/02/05 13:40:56 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1240,8 +1240,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 
 	/* XXX for core dump/debugger */
 	p->p_sigctx.ps_lwp = ksi->ksi_lid;
-	p->p_sigctx.ps_signo = ksi->ksi_signo;
-	p->p_sigctx.ps_code = ksi->ksi_trap;
+	p->p_sigctx.ps_info = ksi->ksi_info;
 
 	/*
 	 * Notify any interested parties of the signal.
@@ -1860,8 +1859,16 @@ postsig(int signo)
 	l->l_ru.ru_nsignals++;
 	if (l->l_sigpendset == NULL) {
 		/* From the debugger */
-		if (!siggetinfo(&l->l_sigpend, &ksi, signo))
-			(void)siggetinfo(&p->p_sigpend, &ksi, signo);
+		if (p->p_sigctx.ps_faked &&
+		    signo == p->p_sigctx.ps_info._signo) {
+			KSI_INIT(&ksi);
+			ksi.ksi_info = p->p_sigctx.ps_info;
+			ksi.ksi_lid = p->p_sigctx.ps_lwp;
+			p->p_sigctx.ps_faked = false;
+		} else {
+			if (!siggetinfo(&l->l_sigpend, &ksi, signo))
+				(void)siggetinfo(&p->p_sigpend, &ksi, signo);
+		}
 	} else
 		sigget(l->l_sigpendset, &ksi, signo, NULL);
 
@@ -1947,8 +1954,7 @@ sendsig_reset(struct lwp *l, int signo)
 	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_sigctx.ps_lwp = 0;
-	p->p_sigctx.ps_code = 0;
-	p->p_sigctx.ps_signo = 0;
+	memset(&p->p_sigctx.ps_info, 0, sizeof(p->p_sigctx.ps_info));
 
 	mutex_enter(&ps->sa_mutex);
 	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, &l->l_sigmask);
@@ -2053,7 +2059,9 @@ sigexit(struct lwp *l, int signo)
 
 	exitsig = signo;
 	p->p_acflag |= AXSIG;
-	p->p_sigctx.ps_signo = signo;
+	memset(&p->p_sigctx.ps_info, 0, sizeof(p->p_sigctx.ps_info));
+	p->p_sigctx.ps_info._signo = signo;
+	p->p_sigctx.ps_info._code = SI_NOINFO;
 
 	if (docore) {
 		mutex_exit(p->p_lock);

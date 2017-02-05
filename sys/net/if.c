@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300.2.10 2016/12/05 10:55:27 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.300.2.11 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.10 2016/12/05 10:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.11 2017/02/05 13:40:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.10 2016/12/05 10:55:27 skrll Exp $");
 #ifndef IPSEC
 #include <netinet/ip_encap.h>
 #endif
+#include <net/bpf.h>
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -193,7 +194,7 @@ static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 static int if_cloners_count;
 
 /* Packet filtering hook for interfaces. */
-pfil_head_t *	if_pfil;
+pfil_head_t *			if_pfil __read_mostly;
 
 static kauth_listener_t if_listener;
 
@@ -223,9 +224,21 @@ static int sysctl_percpuq_drops_handler(SYSCTLFN_PROTO);
 static void sysctl_percpuq_setup(struct sysctllog **, const char *,
     struct if_percpuq *);
 
+struct if_deferred_start {
+	struct ifnet	*ids_ifp;
+	void		(*ids_if_start)(struct ifnet *);
+	void		*ids_si;
+};
+
+static void if_deferred_start_softint(void *);
+static void if_deferred_start_common(struct ifnet *);
+static void if_deferred_start_destroy(struct ifnet *);
+
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
 #endif
+
+static void if_sysctl_setup(struct sysctllog **);
 
 /*
  * Pointer to stub or real compat_cvtcmd() depending on presence of
@@ -275,13 +288,8 @@ if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 void
 ifinit(void)
 {
-#if defined(INET)
-	sysctl_net_pktq_setup(NULL, PF_INET);
-#endif
-#ifdef INET6
-	if (in6_present)
-		sysctl_net_pktq_setup(NULL, PF_INET6);
-#endif
+
+	if_sysctl_setup(NULL);
 
 #if (defined(INET) || defined(INET6)) && !defined(IPSEC)
 	encapinit();
@@ -518,7 +526,7 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
 	struct ifaddr *ifa;
 	int bound = curlwp_bind();
 
-	s = splnet();
+	s = splsoftnet();
 
 	if_deactivate_sadl(ifp);
 
@@ -559,7 +567,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splnet();
+	s = splsoftnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
@@ -679,8 +687,7 @@ if_initialize(ifnet_t *ifp)
 	IFQ_LOCK_INIT(&ifp->if_snd);
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
-	(void)pfil_run_hooks(if_pfil,
-	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_ATTACH, ifp);
 
 	IF_AFDATA_LOCK_INIT(ifp);
 
@@ -765,8 +772,18 @@ if_percpuq_softint(void *arg)
 	struct ifnet *ifp = ipq->ipq_ifp;
 	struct mbuf *m;
 
-	while ((m = if_percpuq_dequeue(ipq)) != NULL)
+	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
+		ifp->if_ipackets++;
+#ifndef NET_MPSAFE
+		KERNEL_LOCK(1, NULL);
+#endif
+		bpf_mtap(ifp, m);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+#endif
+
 		ifp->_if_input(ifp, m);
+	}
 }
 
 static void
@@ -833,6 +850,7 @@ if_percpuq_destroy(struct if_percpuq *ipq)
 	softint_disestablish(ipq->ipq_si);
 	percpu_foreach(ipq->ipq_ifqs, &if_percpuq_purge_ifq, NULL);
 	percpu_free(ipq->ipq_ifqs, sizeof(struct ifqueue));
+	kmem_free(ipq, sizeof(*ipq));
 }
 
 void
@@ -952,6 +970,94 @@ bad:
 	return;
 }
 
+/*
+ * The deferred if_start framework
+ *
+ * The common APIs to defer if_start to softint when if_start is requested
+ * from a device driver running in hardware interrupt context.
+ */
+/*
+ * Call ifp->if_start (or equivalent) in a dedicated softint for
+ * deferred if_start.
+ */
+static void
+if_deferred_start_softint(void *arg)
+{
+	struct if_deferred_start *ids = arg;
+	struct ifnet *ifp = ids->ids_ifp;
+
+	ids->ids_if_start(ifp);
+}
+
+/*
+ * The default callback function for deferred if_start.
+ */
+static void
+if_deferred_start_common(struct ifnet *ifp)
+{
+
+	if_start_lock(ifp);
+}
+
+static inline bool
+if_snd_is_used(struct ifnet *ifp)
+{
+
+	return ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit ||
+	    ALTQ_IS_ENABLED(&ifp->if_snd);
+}
+
+/*
+ * Schedule deferred if_start.
+ */
+void
+if_schedule_deferred_start(struct ifnet *ifp)
+{
+
+	KASSERT(ifp->if_deferred_start != NULL);
+
+	if (if_snd_is_used(ifp) && IFQ_IS_EMPTY(&ifp->if_snd))
+		return;
+
+	softint_schedule(ifp->if_deferred_start->ids_si);
+}
+
+/*
+ * Create an instance of deferred if_start. A driver should call the function
+ * only if the driver needs deferred if_start. Drivers can setup their own
+ * deferred if_start function via 2nd argument.
+ */
+void
+if_deferred_start_init(struct ifnet *ifp, void (*func)(struct ifnet *))
+{
+	struct if_deferred_start *ids;
+
+	ids = kmem_zalloc(sizeof(*ids), KM_SLEEP);
+	if (ids == NULL)
+		panic("kmem_zalloc failed");
+
+	ids->ids_ifp = ifp;
+	ids->ids_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	    if_deferred_start_softint, ids);
+	if (func != NULL)
+		ids->ids_if_start = func;
+	else
+		ids->ids_if_start = if_deferred_start_common;
+
+	ifp->if_deferred_start = ids;
+}
+
+static void
+if_deferred_start_destroy(struct ifnet *ifp)
+{
+
+	if (ifp->if_deferred_start == NULL)
+		return;
+
+	softint_disestablish(ifp->if_deferred_start->ids_si);
+	kmem_free(ifp->if_deferred_start, sizeof(*ifp->if_deferred_start));
+	ifp->if_deferred_start = NULL;
+}
 
 /*
  * The common interface input routine that is called by device drivers,
@@ -964,6 +1070,15 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 
 	KASSERT(ifp->if_percpuq == NULL);
 	KASSERT(!cpu_intr_p());
+
+	ifp->if_ipackets++;
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
+	bpf_mtap(ifp, m);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 
 	ifp->_if_input(ifp, m);
 }
@@ -1011,7 +1126,7 @@ if_attachdomain1(struct ifnet *ifp)
 	struct domain *dp;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
@@ -1033,7 +1148,7 @@ if_deactivate(struct ifnet *ifp)
 {
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->_if_input	 = if_nullinput;
@@ -1052,7 +1167,7 @@ if_deactivate(struct ifnet *ifp)
 }
 
 bool
-if_is_deactivated(struct ifnet *ifp)
+if_is_deactivated(const struct ifnet *ifp)
 {
 
 	return ifp->if_output == if_nulloutput;
@@ -1193,6 +1308,7 @@ if_detach(struct ifnet *ifp)
 		callout_destroy(ifp->if_slowtimo_ch);
 		kmem_free(ifp->if_slowtimo_ch, sizeof(*ifp->if_slowtimo_ch));
 	}
+	if_deferred_start_destroy(ifp);
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
@@ -1313,8 +1429,7 @@ again:
 		}
 	}
 
-	(void)pfil_run_hooks(if_pfil,
-	    (struct mbuf **)PFIL_IFNET_DETACH, ifp, PFIL_IFNET);
+	pfil_run_ifhooks(if_pfil, PFIL_IFNET_DETACH, ifp);
 	(void)pfil_head_destroy(ifp->if_pfil);
 
 	/* Announce that the interface is gone. */
@@ -1422,6 +1537,8 @@ if_clone_create(const char *name)
 	struct ifnet *ifp;
 	struct psref psref;
 
+	KASSERT(mutex_owned(&if_clone_mtx));
+
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return EINVAL;
@@ -1444,6 +1561,8 @@ if_clone_destroy(const char *name)
 	struct if_clone *ifc;
 	struct ifnet *ifp;
 	struct psref psref;
+
+	KASSERT(mutex_owned(&if_clone_mtx));
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -1481,6 +1600,8 @@ if_clone_lookup(const char *name, int *unitp)
 	char *dp, ifname[IFNAMSIZ + 3];
 	int unit;
 
+	KASSERT(mutex_owned(&if_clone_mtx));
+
 	strcpy(ifname, "if_");
 	/* separate interface name from unit */
 	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
@@ -1498,8 +1619,13 @@ again:
 	}
 
 	if (ifc == NULL) {
-		if (*ifname == '\0' ||
-		    module_autoload(ifname, MODULE_CLASS_DRIVER))
+		int error;
+		if (*ifname == '\0')
+			return NULL;
+		mutex_exit(&if_clone_mtx);
+		error = module_autoload(ifname, MODULE_CLASS_DRIVER);
+		mutex_enter(&if_clone_mtx);
+		if (error)
 			return NULL;
 		*ifname = '\0';
 		goto again;
@@ -1526,8 +1652,10 @@ void
 if_clone_attach(struct if_clone *ifc)
 {
 
+	mutex_enter(&if_clone_mtx);
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
+	mutex_exit(&if_clone_mtx);
 }
 
 /*
@@ -1537,6 +1665,7 @@ void
 if_clone_detach(struct if_clone *ifc)
 {
 
+	KASSERT(mutex_owned(&if_clone_mtx));
 	LIST_REMOVE(ifc, ifc_list);
 	if_cloners_count--;
 }
@@ -1551,14 +1680,17 @@ if_clone_list(int buf_count, char *buffer, int *total)
 	struct if_clone *ifc;
 	int count, error = 0;
 
+	mutex_enter(&if_clone_mtx);
 	*total = if_cloners_count;
 	if ((dst = buffer) == NULL) {
 		/* Just asking how many there are. */
-		return 0;
+		goto out;
 	}
 
-	if (buf_count < 0)
-		return EINVAL;
+	if (buf_count < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	count = (if_cloners_count < buf_count) ?
 	    if_cloners_count : buf_count;
@@ -1566,13 +1698,17 @@ if_clone_list(int buf_count, char *buffer, int *total)
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
 		(void)strncpy(outbuf, ifc->ifc_name, sizeof(outbuf));
-		if (outbuf[sizeof(outbuf) - 1] != '\0')
-			return ENAMETOOLONG;
+		if (outbuf[sizeof(outbuf) - 1] != '\0') {
+			error = ENAMETOOLONG;
+			goto out;
+		}
 		error = copyout(outbuf, dst, sizeof(outbuf));
 		if (error != 0)
 			break;
 	}
 
+out:
+	mutex_exit(&if_clone_mtx);
 	return error;
 }
 
@@ -1586,6 +1722,7 @@ ifa_psref_init(struct ifaddr *ifa)
 void
 ifaref(struct ifaddr *ifa)
 {
+	KASSERT(!ISSET(ifa->ifa_flags, IFA_DESTROYING));
 	ifa->ifa_refcnt++;
 }
 
@@ -1598,6 +1735,13 @@ ifafree(struct ifaddr *ifa)
 	if (--ifa->ifa_refcnt == 0) {
 		free(ifa, M_IFADDR);
 	}
+}
+
+bool
+ifa_is_destroying(struct ifaddr *ifa)
+{
+
+	return ISSET(ifa->ifa_flags, IFA_DESTROYING);
 }
 
 void
@@ -2149,6 +2293,10 @@ if_link_state_change_si(void *arg)
 	int s;
 	uint8_t state;
 
+#ifndef NET_MPSAFE
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+#endif
 	s = splnet();
 
 	/* Pop a link state change from the queue and process it. */
@@ -2160,6 +2308,10 @@ if_link_state_change_si(void *arg)
 		softint_schedule(ifp->if_link_si);
 
 	splx(s);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -2573,12 +2725,12 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		ifr = data;
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			s = splnet();
+			s = splsoftnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			s = splnet();
+			s = splsoftnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -2879,7 +3031,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splnet();
+			int s = splsoftnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -3429,7 +3581,8 @@ out0:
 	return error;
 }
 
-SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")
+static void
+if_sysctl_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *rnode = NULL;
 
@@ -3439,4 +3592,12 @@ SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")
 		       SYSCTL_DESCR("Get active link-layer address"),
 		       if_sdl_sysctl, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
+
+#if defined(INET)
+	sysctl_net_pktq_setup(NULL, PF_INET);
+#endif
+#ifdef INET6
+	if (in6_present)
+		sysctl_net_pktq_setup(NULL, PF_INET6);
+#endif
 }

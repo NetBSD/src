@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.7.30.2 2016/10/05 20:55:55 skrll Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.7.30.3 2017/02/05 13:40:45 skrll Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -96,7 +96,8 @@ pwdog_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	pmf_device_register(self, pwdog_suspend, pwdog_resume);
+	if (!pmf_device_register(self, pwdog_suspend, pwdog_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PWDOG_DISABLE, 0);
 
 	sc->sc_smw.smw_name = device_xname(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.36.6.2 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.36.6.3 2017/02/05 13:40:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,8 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.2 2016/07/09 20:25:02 skrll Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.3 2017/02/05 13:40:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -833,14 +832,8 @@ sonic_rxintr(struct sonic_softc *sc)
 			}
 		}
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

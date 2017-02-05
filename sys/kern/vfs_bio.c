@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.252.2.5 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.252.2.6 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,11 +123,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.5 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.6 2017/02/05 13:40:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
 #include "opt_dtrace.h"
+#include "opt_biohist.h"
 #endif
 
 #include <sys/param.h>
@@ -195,6 +196,19 @@ static void bref(buf_t *);
 static void brele(buf_t *);
 static void sysctl_kern_buf_setup(void);
 static void sysctl_vm_buf_setup(void);
+
+/* Initialization for biohist */
+
+#include <sys/biohist.h>
+
+BIOHIST_DEFINE(biohist);
+
+void
+biohist_init(void)
+{
+
+	BIOHIST_INIT(biohist, BIOHIST_SIZE);
+}
 
 /*
  * Definitions for the buffer hash lists.
@@ -726,6 +740,8 @@ bread(struct vnode *vp, daddr_t blkno, int size, int flags, buf_t **bpp)
 	buf_t *bp;
 	int error;
 
+	BIOHIST_FUNC(__func__); BIOHIST_CALLED(biohist);
+
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
@@ -753,6 +769,8 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 {
 	buf_t *bp;
 	int error, i;
+
+	BIOHIST_FUNC(__func__); BIOHIST_CALLED(biohist);
 
 	bp = *bpp = bio_doread(vp, blkno, size, 0);
 	if (bp == NULL)
@@ -795,6 +813,9 @@ bwrite(buf_t *bp)
 	int rv, sync, wasdelayed;
 	struct vnode *vp;
 	struct mount *mp;
+
+	BIOHIST_FUNC(__func__); BIOHIST_CALLARGS(biohist, "bp=%p",
+	    bp, 0, 0, 0);
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 	KASSERT(!cv_has_waiters(&bp->b_done));
@@ -917,6 +938,9 @@ vn_bwrite(void *v)
 void
 bdwrite(buf_t *bp)
 {
+
+	BIOHIST_FUNC(__func__); BIOHIST_CALLARGS(biohist, "bp=%p",
+	    bp, 0, 0, 0);
 
 	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
 	    bp->b_vp->v_type == VBLK || ISSET(bp->b_flags, B_COWDONE));
@@ -1497,17 +1521,27 @@ int
 biowait(buf_t *bp)
 {
 
+	BIOHIST_FUNC(__func__);
+
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 	KASSERT(bp->b_refcnt > 0);
 
 	SDT_PROBE1(io, kernel, , wait__start, bp);
 
 	mutex_enter(bp->b_objlock);
-	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI))
+
+	BIOHIST_CALLARGS(biohist, "bp=%p, oflags=0x%x",
+	    bp, bp->b_oflags, 0, 0);
+
+	while (!ISSET(bp->b_oflags, BO_DONE | BO_DELWRI)) {
+		BIOHIST_LOG(biohist, "waiting bp=%p", bp, 0, 0, 0);
 		cv_wait(&bp->b_done, bp->b_objlock);
+	}
 	mutex_exit(bp->b_objlock);
 
 	SDT_PROBE1(io, kernel, , wait__done, bp);
+
+	BIOHIST_LOG(biohist, "return %d", bp->b_error, 0, 0, 0);
 
 	return bp->b_error;
 }
@@ -1524,7 +1558,7 @@ biowait(buf_t *bp)
  *	process, invokes a procedure specified in the buffer structure" ]
  *
  * In real life, the pagedaemon (or other system processes) wants
- * to do async stuff to, and doesn't want the buffer brelse()'d.
+ * to do async stuff too, and doesn't want the buffer brelse()'d.
  * (for swap pager, that puts swap buffers on the free lists (!!!),
  * for the vn device, that puts allocated buffers on the free lists!)
  */
@@ -1533,12 +1567,17 @@ biodone(buf_t *bp)
 {
 	int s;
 
+	BIOHIST_FUNC(__func__);
+
 	KASSERT(!ISSET(bp->b_oflags, BO_DONE));
 
 	if (cpu_intr_p()) {
 		/* From interrupt mode: defer to a soft interrupt. */
 		s = splvm();
 		TAILQ_INSERT_TAIL(&curcpu()->ci_data.cpu_biodone, bp, b_actq);
+
+		BIOHIST_CALLARGS(biohist, "bp=%p, softint scheduled",
+		    bp, 0, 0, 0);
 		softint_schedule(biodone_sih);
 		splx(s);
 	} else {
@@ -1556,6 +1595,9 @@ biodone2(buf_t *bp)
 
 	SDT_PROBE1(io, kernel, ,done, bp);
 
+	BIOHIST_FUNC(__func__);
+	BIOHIST_CALLARGS(biohist, "bp=%p", bp, 0, 0, 0);
+
 	mutex_enter(bp->b_objlock);
 	/* Note that the transfer is done. */
 	if (ISSET(bp->b_oflags, BO_DONE))
@@ -1569,6 +1611,8 @@ biodone2(buf_t *bp)
 		vwakeup(bp);
 
 	if ((callout = bp->b_iodone) != NULL) {
+		BIOHIST_LOG(biohist, "callout %p", callout, 0, 0, 0);
+
 		/* Note callout done, then call out. */
 		KASSERT(!cv_has_waiters(&bp->b_done));
 		KERNEL_LOCK(1, NULL);		/* XXXSMP */
@@ -1578,11 +1622,13 @@ biodone2(buf_t *bp)
 		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release. */
+		BIOHIST_LOG(biohist, "async", 0, 0, 0, 0);
 		KASSERT(!cv_has_waiters(&bp->b_done));
 		mutex_exit(bp->b_objlock);
 		brelse(bp, 0);
 	} else {
 		/* Otherwise just wake up waiters in biowait(). */
+		BIOHIST_LOG(biohist, "wake-up", 0, 0, 0, 0);
 		cv_broadcast(&bp->b_done);
 		mutex_exit(bp->b_objlock);
 	}
@@ -1595,18 +1641,24 @@ biointr(void *cookie)
 	buf_t *bp;
 	int s;
 
+	BIOHIST_FUNC(__func__); BIOHIST_CALLED(biohist);
+
 	ci = curcpu();
 
+	s = splvm();
 	while (!TAILQ_EMPTY(&ci->ci_data.cpu_biodone)) {
 		KASSERT(curcpu() == ci);
 
-		s = splvm();
 		bp = TAILQ_FIRST(&ci->ci_data.cpu_biodone);
 		TAILQ_REMOVE(&ci->ci_data.cpu_biodone, bp, b_actq);
 		splx(s);
 
+		BIOHIST_LOG(biohist, "bp=%p", bp, 0, 0, 0);
 		biodone2(bp);
+
+		s = splvm();
 	}
+	splx(s);
 }
 
 /*
@@ -1618,6 +1670,8 @@ buf_syncwait(void)
 {
 	buf_t *bp;
 	int iter, nbusy, nbusy_prev = 0, ihash;
+
+	BIOHIST_FUNC(__func__); BIOHIST_CALLED(biohist);
 
 	for (iter = 0; iter < 20;) {
 		mutex_enter(&bufcache_lock);
@@ -1914,10 +1968,11 @@ getiobuf(struct vnode *vp, bool waitok)
 
 	buf_init(bp);
 
-	if ((bp->b_vp = vp) == NULL)
-		bp->b_objlock = &buffer_lock;
-	else
+	if ((bp->b_vp = vp) != NULL) {
 		bp->b_objlock = vp->v_interlock;
+	} else {
+		KASSERT(bp->b_objlock == &buffer_lock);
+	}
 
 	return bp;
 }

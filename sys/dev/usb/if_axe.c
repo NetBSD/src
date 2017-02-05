@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.14 2017/02/03 07:48:05 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.15 2017/02/05 13:40:46 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.14 2017/02/03 07:48:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.15 2017/02/05 13:40:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1024,7 +1024,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	/* Initialize interface info.*/
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
-	strncpy(ifp->if_xname, devname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_extflags = IFEF_START_MPSAFE;
 	ifp->if_ioctl = axe_ioctl;
@@ -1431,7 +1431,6 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		}
 		m->m_data += ETHER_ALIGN;
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pktlen;
 		m->m_pkthdr.csum_flags = flags;
@@ -1441,10 +1440,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 		DPRINTFN(10, "deliver %d (%#x)", m->m_len, m->m_len, 0, 0);
 
-		bpf_mtap(ifp, m);
-
 		if_percpuq_enqueue(sc->axe_ipq, (m));
-
 	} while (total_len > 0);
 
  done:

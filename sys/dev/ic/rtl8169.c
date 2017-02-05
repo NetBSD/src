@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.143.2.4 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.143.2.5 2017/02/05 13:40:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143.2.4 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143.2.5 2017/02/05 13:40:28 skrll Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1293,7 +1293,6 @@ re_rxeof(struct rtk_softc *sc)
 			m->m_pkthdr.len = m->m_len =
 			    (total_len - ETHER_CRC_LEN);
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 
 		/* Do RX checksumming */
@@ -1357,7 +1356,6 @@ re_rxeof(struct rtk_softc *sc)
 			     bswap16(rxvlan & RE_RDESC_VLANCTL_DATA),
 			     continue);
 		}
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 

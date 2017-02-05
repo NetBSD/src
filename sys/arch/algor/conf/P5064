@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.82.2.1 2015/09/22 12:05:35 skrll Exp $
+#	$NetBSD: P5064,v 1.82.2.2 2017/02/05 13:40:00 skrll Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.82.2.1 $"
+#ident 		"P5064-$Revision: 1.82.2.2 $"
 
 maxusers 32
 
@@ -217,7 +217,7 @@ mcclock* at	isa? port 0x70
 #pms*	at	pckbc?				# PS/2-style mouse (aux port)
 #attimer*	at	isa?			# AT Timer
 #pcppi*	at	isa?				# PC prog. periph. interface
-#spkr0	at	pcppi?				# IBM BASIC emulation
+#spkr*	at	pcppi?				# IBM BASIC emulation
 #isabeep0 at	pcppi?				# "keyboard" beep
 #midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
@@ -244,6 +244,7 @@ fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 #audio*	at	wss?
+#spkr*	at	audio?               		# PC speaker (synthesized)
 #midi*	at	wss?
 #sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.45.6.2 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.45.6.3 2017/02/05 13:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.45.6.2 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.45.6.3 2017/02/05 13:40:30 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -505,6 +505,7 @@ ste_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -912,7 +913,7 @@ ste_intr(void *arg)
 	    sc->sc_IntEnable);
 
 	/* Try to get more packets going. */
-	ste_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (1);
 }
@@ -1047,12 +1048,6 @@ ste_rxintr(struct ste_softc *sc)
 
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

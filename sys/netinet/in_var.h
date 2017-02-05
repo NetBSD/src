@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.70.4.5 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: in_var.h,v 1.70.4.6 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,8 +147,6 @@ struct	in_aliasreq {
  * return a pointer to the addr as a sockaddr_in.
  */
 #define	IA_SIN(ia) (&(((struct in_ifaddr *)(ia))->ia_addr))
-
-#define iatoifa(ia)	(struct ifaddr *)(ia)
 
 #ifdef _KERNEL
 
@@ -382,10 +380,16 @@ extern pktqueue_t *ip_pktq;
 extern int ip_dad_count;		/* Duplicate Address Detection probes */
 #if defined(INET) && NARP > 0
 extern int arp_debug;
-#define arplog(level, fmt, args...) \
-	do { if (arp_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
+#define ARPLOGADDR(a) in_fmtaddr(_ipbuf, a)
+#define ARPLOG(level, fmt, args...) 					\
+	do {								\
+		char _ipbuf[INET_ADDRSTRLEN];	 			\
+		(void)_ipbuf;						\
+		if (arp_debug) 						\
+			log(level, "%s: " fmt, __func__, ##args);	\
+	} while (/*CONSTCOND*/0)
 #else
-#define arplog(level, fmt, args...)
+#define ARPLOG(level, fmt, args...)
 #endif
 
 /*
@@ -416,10 +420,12 @@ void	in_savemkludge(struct in_ifaddr *);
 void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
 void	in_purgemkludge(struct ifnet *);
 void	in_setmaxmtu(void);
-const char *in_fmtaddr(struct in_addr);
+const char *in_fmtaddr(char *, struct in_addr);
 int	in_control(struct socket *, u_long, void *, struct ifnet *);
 void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);
+void	in_addrhash_insert(struct in_ifaddr *);
+void	in_addrhash_remove(struct in_ifaddr *);
 int	ipflow_fastforward(struct mbuf *);
 
 struct ipid_state;

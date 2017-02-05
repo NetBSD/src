@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.77.4.6 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.77.4.7 2017/02/05 13:40:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.6 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.7 2017/02/05 13:40:23 skrll Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -950,12 +950,14 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	if (chained == NULL) {
 		if (msipic_is_msi_pic(pic)) {
 			mutex_exit(&cpu_lock);
+			kmem_free(ih, sizeof(*ih));
 			printf("%s: %s has no intrsource\n", __func__, intrstr);
 			return NULL;
 		}
 		chained = intr_allocate_io_intrsource(intrstr);
 		if (chained == NULL) {
 			mutex_exit(&cpu_lock);
+			kmem_free(ih, sizeof(*ih));
 			printf("%s: can't allocate io_intersource\n", __func__);
 			return NULL;
 		}

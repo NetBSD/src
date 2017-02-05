@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.10.2.3 2016/03/19 11:29:55 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.10.2.4 2017/02/05 13:40:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10.2.3 2016/03/19 11:29:55 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.10.2.4 2017/02/05 13:40:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -231,7 +231,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #ifdef VERBOSE_INIT_ARM
 	printf("page ");
 #endif
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap_physload ");

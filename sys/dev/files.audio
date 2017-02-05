@@ -1,4 +1,4 @@
-#	$NetBSD: files.audio,v 1.3 2014/11/18 01:53:17 jmcneill Exp $
+#	$NetBSD: files.audio,v 1.3.2.1 2017/02/05 13:40:26 skrll Exp $
 
 define	audiobus	{ }
 define	midibus		{ }
@@ -13,10 +13,11 @@ define	auvolconv
 
 # audio and midi devices, attaches to audio hardware driver
 #
-device	audio: audiodev
+device	audio {}: audiodev, auconv, aurateconv, mulaw
 attach	audio at audiobus
 device	midi: audio
 attach	midi at midibus
+attach	spkr at audio with spkr_audio
 
 # console bell via audio device
 #
@@ -24,10 +25,11 @@ define	audiobell
 
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio			needs-flag
-file	dev/audiobell.c			audiobell
+file	dev/audiobell.c			spkr_audio		needs-flag
 file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/auvolconv.c			auvolconv
 file	dev/midi.c			midi			needs-flag
 file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
 file	dev/mulaw.c			mulaw			needs-flag
+file	dev/spkr_audio.c		spkr_audio		needs-flag

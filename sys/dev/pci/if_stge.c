@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.57.6.2 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.57.6.3 2017/02/05 13:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.57.6.2 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.57.6.3 2017/02/05 13:40:30 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -658,6 +658,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 #ifdef STGE_EVENT_COUNTERS
@@ -1141,7 +1142,7 @@ stge_intr(void *arg)
 	    sc->sc_IntEnable);
 
 	/* Try to get more packets going. */
-	stge_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (1);
 }
@@ -1352,7 +1353,6 @@ stge_rxintr(struct stge_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		bpf_mtap(ifp, m);
 #ifdef	STGE_VLAN_UNTAG
 		/*
 		 * Check for VLAN tagged packets

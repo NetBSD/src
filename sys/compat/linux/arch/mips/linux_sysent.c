@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.61.2.3 2016/10/05 20:55:38 skrll Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.61.2.4 2017/02/05 13:40:25 skrll Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.61.2.3 2016/10/05 20:55:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.61.2.4 2017/02/05 13:40:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -1290,8 +1290,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)linux_sys_faccessat
 	},		/* 300 = faccessat */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 301 = filler */
+		ns(struct linux_sys_pselect6_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_pselect6
+	},		/* 301 = pselect6 */
 	{
 		ns(struct linux_sys_ppoll_args),
 		.sy_flags = SYCALL_ARG_PTR,
@@ -1400,11 +1402,15 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 333 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 334 = filler */
+		ns(struct linux_sys_accept4_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_accept4
+	},		/* 334 = accept4 */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 335 = filler */
+		ns(struct linux_sys_recvmmsg_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_recvmmsg
+	},		/* 335 = recvmmsg */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 336 = filler */
@@ -1430,8 +1436,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 343 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 344 = filler */
+		ns(struct linux_sys_sendmmsg_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_sendmmsg
+	},		/* 344 = sendmmsg */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 345 = filler */

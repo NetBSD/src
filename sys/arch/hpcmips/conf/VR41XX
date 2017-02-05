@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.63.2.2 2016/04/22 15:44:09 skrll Exp $
+# $NetBSD: VR41XX,v 1.63.2.3 2017/02/05 13:40:11 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.63.2.2 $"
+#ident 		"GENERIC-$Revision: 1.63.2.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -514,6 +514,8 @@ uyap* at uhub? port ?
 ugen*	at uhub? port ?
 
 audio*	at uaudio?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# serial-line IP ports

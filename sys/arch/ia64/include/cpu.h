@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2013/11/10 00:50:13 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.6.1 2017/02/05 13:40:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -149,13 +149,14 @@ struct clockframe {
 #define	TRAPF_CPL(tf)		((tf)->tf_special.psr & IA64_PSR_CPL)
 #define	TRAPF_USERMODE(tf)	(TRAPF_CPL(tf) != IA64_PSR_CPL_KERN)
 
+#define __empty do { } while (/*CONSTCOND*/0)
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid. XXX:Fixme.... On the ia64 I haven't yet figured 
  * out what to do about this.. XXX.
  */
 /* extern void	cpu_need_proftick(struct lwp *l); */
-#define cpu_need_proftick(l)
+#define cpu_need_proftick(l) __empty
 
 /*
  * Notify the LWP l that it has a signal pending, process as soon as possible.
@@ -168,14 +169,14 @@ struct clockframe {
 	__USE(f);			\
 } while(/*CONSTCOND*/0)
 
-#define setsoftclock()              /*XXX: FIXME */
+#define setsoftclock()        __empty       /*XXX: FIXME */
 
 /* machdep.c */
 int cpu_maxproc(void); /*XXX: Fill in machdep.c */
 
-#define	cpu_proc_fork(p1, p2) /* XXX: Look into this. */
+#define	cpu_proc_fork(p1, p2)  __empty	/* XXX: Look into this. */
 
-#define DELAY(x)		/* XXX: FIXME */
+#define DELAY(x)	 __empty	/* XXX: FIXME */
 
 static inline void cpu_idle(void);
 static inline

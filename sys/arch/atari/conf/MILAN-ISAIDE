@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.84 2014/11/24 08:29:26 tsutsui Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.84.2.1 2017/02/05 13:40:04 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -89,6 +89,9 @@ ep* at pci? dev ? function ? # 3Com 3c59x
 fxp* at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
 eso* at pci? dev ? function ? # ESS Solo-1 PCI AudioDrive
 audio* at eso?
+
+spkr*	at audio?		# PC speaker (synthesized)
+
 options WSEMUL_VT100 # VT100 / VT220 emulation
 options WS_KERNEL_FG=WSCOL_WHITE
 options WS_KERNEL_BG=WSCOL_BLACK

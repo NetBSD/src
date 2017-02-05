@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.18.2.1 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.18.2.2 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -44,6 +44,7 @@ struct tun_softc {
 	struct	selinfo	tun_wsel;	/* write select (not used) */
 	int	tun_unit;		/* the tunnel unit number */
 	kmutex_t tun_lock;		/* lock for this tunnel */
+	kcondvar_t tun_cv;		/* condition variable for tunnel */
 	LIST_ENTRY(tun_softc) tun_list;	/* list of all tuns */
 	void	*tun_osih;		/* soft interrupt handle */
 	void	*tun_isih;		/* soft interrupt handle */

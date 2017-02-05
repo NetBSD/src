@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.54 2013/11/04 16:54:56 christos Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.54.6.1 2017/02/05 13:40:28 skrll Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.54 2013/11/04 16:54:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.54.6.1 2017/02/05 13:40:28 skrll Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -293,7 +293,7 @@ spc_attach(struct spc_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");

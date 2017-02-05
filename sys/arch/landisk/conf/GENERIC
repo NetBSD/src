@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45.2.5 2016/12/05 10:54:54 skrll Exp $
+# $NetBSD: GENERIC,v 1.45.2.6 2017/02/05 13:40:14 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.45.2.5 $"
+#ident          "GENERIC-$Revision: 1.45.2.6 $"
 
 maxusers	16		# estimated number of users
 
@@ -394,6 +394,8 @@ ugen*	at uhub? port ?
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 # MIDI support
 midi*	at midibus?

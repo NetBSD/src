@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.38.6.1 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.38.6.2 2017/02/05 13:40:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.38.6.1 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.38.6.2 2017/02/05 13:40:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* no suspend/resume support yet */
-	pmf_device_register(sc->sc_dev, NULL, NULL);
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	DPRINTF("R128_LVDS_GEN_CNTL: %08x\n", reg);

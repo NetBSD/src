@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.130.2.4 2016/10/05 20:56:10 skrll Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.130.2.5 2017/02/05 13:41:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.4 2016/10/05 20:56:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.5 2017/02/05 13:41:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -216,6 +216,7 @@ struct rumpfs_node {
 
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
+	bool rfsmp_rdonly;
 };
 
 #define INO_WHITEOUT 1
@@ -1012,6 +1013,7 @@ rump_vop_rmdir(void *v)
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 	rn->rn_parent = NULL;
+	rn->rn_va.va_nlink = 0;
 
 out:
 	vput(dvp);
@@ -1040,6 +1042,7 @@ rump_vop_remove(void *v)
 
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+	rn->rn_va.va_nlink = 0;
 
 	vput(dvp);
 	vput(vp);
@@ -1803,6 +1806,7 @@ rumpfs_mountfs(struct mount *mp)
 	}
 
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
+	rfsmp->rfsmp_rdonly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	mp->mnt_data = rfsmp;
 	mp->mnt_stat.f_namemax = RUMPFS_MAXNAMLEN;
@@ -1818,9 +1822,27 @@ rumpfs_mountfs(struct mount *mp)
 int
 rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
-	int error;
+	struct rumpfs_mount *rfsmp = mp->mnt_data;
+	int error, flags;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		return 0;
+	}
 	if (mp->mnt_flag & MNT_UPDATE) {
+		if (!rfsmp->rfsmp_rdonly && (mp->mnt_flag & MNT_RDONLY)) {
+			/* Changing from read/write to read-only. */
+			flags = WRITECLOSE;
+			if ((mp->mnt_flag & MNT_FORCE))
+				flags |= FORCECLOSE;
+			error = vflush(mp, NULL, flags);
+			if (error)
+				return error;
+			rfsmp->rfsmp_rdonly = true;
+		}
+		if (rfsmp->rfsmp_rdonly && (mp->mnt_flag & IMNT_WANTRDWR)) {
+			/* Changing from read-only to read/write. */
+			rfsmp->rfsmp_rdonly = false;
+		}
 		return 0;
 	}
 
@@ -1944,6 +1966,7 @@ int
 rumpfs_mountroot()
 {
 	struct mount *mp;
+	struct rumpfs_mount *rfsmp;
 	int error;
 
 	if ((error = vfs_rootmountalloc(MOUNT_RUMPFS, "rootdev", &mp)) != 0) {
@@ -1961,7 +1984,9 @@ rumpfs_mountroot()
 	if (error)
 		panic("set_statvfs_info failed for rootfs: %d", error);
 
+	rfsmp = mp->mnt_data;
 	mp->mnt_flag &= ~MNT_RDONLY;
+	rfsmp->rfsmp_rdonly = false;
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;

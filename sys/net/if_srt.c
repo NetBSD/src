@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.19.4.4 2016/10/05 20:56:08 skrll Exp $ */
+/* $NetBSD: if_srt.c,v 1.19.4.5 2017/02/05 13:40:58 skrll Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.19.4.4 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.19.4.5 2017/02/05 13:40:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -402,7 +402,7 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		dr->af = scr->af;
 		dr->srcmatch = scr->srcmatch;
 		dr->srcmask = scr->srcmask;
-		strncpy(&dr->u.dstifn[0],&scr->u.dstifp->if_xname[0],IFNAMSIZ);
+		strlcpy(&dr->u.dstifn[0],&scr->u.dstifp->if_xname[0],IFNAMSIZ);
 		memcpy(&dr->dst,&scr->dst,scr->dst.sa.sa_len);
 		return 0;
 	case SRT_SETRT:
@@ -411,7 +411,7 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		dr = (struct srt_rt *) data;
 		if (dr->inx > sc->nrt)
 			return EDOM;
-		strncpy(&nbuf[0],&dr->u.dstifn[0],IFNAMSIZ);
+		strlcpy(&nbuf[0],&dr->u.dstifn[0],IFNAMSIZ);
 		nbuf[IFNAMSIZ-1] = '\0';
 		if (dr->dst.sa.sa_family != dr->af)
 			return EIO;

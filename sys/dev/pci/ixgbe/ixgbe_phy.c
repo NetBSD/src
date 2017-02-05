@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe_phy.c,v 1.2.4.4 2016/12/05 10:55:17 skrll Exp $*/
+/*$NetBSD: ixgbe_phy.c,v 1.2.4.5 2017/02/05 13:40:45 skrll Exp $*/
+/*$NetBSD: ixgbe_phy.c,v 1.2.4.5 2017/02/05 13:40:45 skrll Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -1535,14 +1535,7 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				hw->phy.type = ixgbe_phy_sfp_intel;
 				break;
 			default:
-				if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE)
-					hw->phy.type =
-						 ixgbe_phy_sfp_passive_unknown;
-				else if (cable_tech & IXGBE_SFF_DA_ACTIVE_CABLE)
-					hw->phy.type =
-						ixgbe_phy_sfp_active_unknown;
-				else
-					hw->phy.type = ixgbe_phy_sfp_unknown;
+				hw->phy.type = ixgbe_phy_sfp_unknown;
 				break;
 			}
 		}
@@ -1550,6 +1543,10 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 		/* Allow any DA cable vendor */
 		if (cable_tech & (IXGBE_SFF_DA_PASSIVE_CABLE |
 		    IXGBE_SFF_DA_ACTIVE_CABLE)) {
+			if (cable_tech & IXGBE_SFF_DA_PASSIVE_CABLE)
+				hw->phy.type = ixgbe_phy_sfp_passive_unknown;
+			else if (cable_tech & IXGBE_SFF_DA_ACTIVE_CABLE)
+				hw->phy.type = ixgbe_phy_sfp_active_unknown;
 			status = IXGBE_SUCCESS;
 			goto out;
 		}
@@ -2734,6 +2731,9 @@ s32 ixgbe_set_copper_phy_power(struct ixgbe_hw *hw, bool on)
 {
 	u32 status;
 	u16 reg;
+
+	if (!on && ixgbe_mng_present(hw))
+		return 0;
 
 	status = hw->phy.ops.read_reg(hw, IXGBE_MDIO_VENDOR_SPECIFIC_1_CONTROL,
 				      IXGBE_MDIO_VENDOR_SPECIFIC_1_DEV_TYPE,

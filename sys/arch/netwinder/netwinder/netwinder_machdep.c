@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.83 2014/09/13 18:08:39 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.83.2.1 2017/02/05 13:40:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.83 2014/09/13 18:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.83.2.1 2017/02/05 13:40:16 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -477,7 +477,7 @@ initarm(void *arg)
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %"PRIxPSIZE" pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 
 	/*
@@ -738,7 +738,7 @@ initarm(void *arg)
 
 	/* Load memory into UVM. */
 	printf("page ");
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 	/* XXX Always one RAM block -- nuke the loop. */
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {

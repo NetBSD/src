@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.45 2014/11/09 17:48:08 maxv Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.45.2.1 2017/02/05 13:40:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.45 2014/11/09 17:48:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.45.2.1 2017/02/05 13:40:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -107,6 +107,7 @@ static const struct {
 	{L("getsockopt"),sizeof(struct linux_sys_getsockopt_args)},	/* 15 */
 	{L("sendmsg"),	sizeof(struct linux_sys_sendmsg_args)},		/* 16 */
 	{L("recvmsg"),	sizeof(struct linux_sys_recvmsg_args)},		/* 17 */
+	{L("accept4"),	sizeof(struct linux_sys_accept4_args)},		/* 18 */
 #undef L
 };
 
@@ -214,6 +215,15 @@ linux_sys_socketcall(struct lwp *l, const struct linux_sys_socketcall_args *uap,
 		break;
 	case LINUX_SYS_RECVMSG:
 		error = linux_sys_recvmsg(l, (void *)&lda, retval);
+		break;
+	case LINUX_SYS_ACCEPT4:
+		error = linux_sys_accept4(l, (void *)&lda, retval);
+		break;
+	case LINUX_SYS_RECVMMSG:
+		error = linux_sys_recvmmsg(l, (void *)&lda, retval);
+		break;
+	case LINUX_SYS_SENDMMSG:
+		error = linux_sys_sendmmsg(l, (void *)&lda, retval);
 		break;
 	default:
 		error = ENOSYS;

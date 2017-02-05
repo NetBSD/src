@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -862,19 +862,8 @@ AnAnalyzeStoreOperator (
     case PARSEOP_DEREFOF:
     case PARSEOP_REFOF:
     case PARSEOP_INDEX:
+    case PARSEOP_STORE:
 
-        return;
-
-    case PARSEOP_METHODCALL:
-        /*
-         * A target is not allowed to be a method call.
-         * It is not supported by the ACPICA interpreter, nor is it
-         * supported by the MS ASL compiler or the MS interpreter.
-         * Although legal syntax up until ACPI 6.1, support for this
-         * will be removed for ACPI 6.2 (02/2016)
-         */
-        AslError (ASL_ERROR, ASL_MSG_SYNTAX,
-            TargetOperandOp, "Illegal method invocation as a target operand");
         return;
 
     default:

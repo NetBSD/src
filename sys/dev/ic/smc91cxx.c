@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.88.4.4 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.88.4.5 2017/02/05 13:40:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88.4.4 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.88.4.5 2017/02/05 13:40:28 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1219,8 +1219,6 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 		}
 	}
 
-	ifp->if_ipackets++;
-
 	/*
 	 * Make sure to behave as IFF_SIMPLEX in all cases.
 	 * This is to cope with SMC91C92 (Megahertz XJ10BT), which
@@ -1238,11 +1236,6 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	}
 
 	m->m_pkthdr.len = m->m_len = packetlen;
-
-	/*
-	 * Hand the packet off to bpf listeners.
-	 */
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 

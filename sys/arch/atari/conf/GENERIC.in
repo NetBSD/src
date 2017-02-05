@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.109 2014/11/24 08:23:48 tsutsui Exp $
+#	$NetBSD: GENERIC.in,v 1.109.2.1 2017/02/05 13:40:04 skrll Exp $
 #
 # Generic atari
 #
@@ -318,6 +318,8 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 audio*	at eso?
+
+spkr*	at audio?			# PC speaker (synthesized)
 
 #endif /* defined(HADES_KERNEL) || defined(MILAN_KERNEL) */
 

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -626,23 +626,8 @@ AcpiDsLoad2EndOp (
                 }
             }
 
-            AcpiExExitInterpreter ();
             Status = AcpiEvInitializeRegion (
-                AcpiNsGetAttachedObject (Node), FALSE);
-            AcpiExEnterInterpreter ();
-
-            if (ACPI_FAILURE (Status))
-            {
-                /*
-                 *  If AE_NOT_EXIST is returned, it is not fatal
-                 *  because many regions get created before a handler
-                 *  is installed for said region.
-                 */
-                if (AE_NOT_EXIST == Status)
-                {
-                    Status = AE_OK;
-                }
-            }
+                AcpiNsGetAttachedObject (Node));
             break;
 
         case AML_NAME_OP:

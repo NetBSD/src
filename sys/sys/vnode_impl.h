@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.2.4.2 2016/12/05 10:55:30 skrll Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.2.4.3 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/vnode.h>
 
+struct namecache;
+
 enum vnode_state {
 	VS_MARKER,	/* Stable, used as marker. Will not change. */
 	VS_LOADING,	/* Intermediate, initialising the fs node. */
@@ -42,20 +44,44 @@ enum vnode_state {
 	VS_RECLAIMING,	/* Intermediate, detaching the fs node. */
 	VS_RECLAIMED	/* Stable, no fs node attached. */
 };
+
+TAILQ_HEAD(vnodelst, vnode_impl);
+typedef struct vnodelst vnodelst_t;
+
 struct vcache_key {
 	struct mount *vk_mount;
 	const void *vk_key;
 	size_t vk_key_len;
 };
+
+/*
+ * Reading or writing any of these items requires holding the appropriate
+ * lock.  Field markings and the corresponding locks:
+ *
+ *	c	vcache_lock
+ *	d	vdrain_lock
+ *	i	v_interlock
+ *	m	mntvnode_lock
+ *	n	namecache_lock
+ *	s	syncer_data_lock
+ */
 struct vnode_impl {
 	struct vnode vi_vnode;
-	enum vnode_state vi_state;
-	SLIST_ENTRY(vnode_impl) vi_hash;
-	struct vcache_key vi_key;
+	enum vnode_state vi_state;		/* i: current state */
+	struct vnodelst *vi_lrulisthd;		/* d: current lru list head */
+	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
+	LIST_HEAD(, namecache) vi_dnclist;	/* n: namecaches (children) */
+	LIST_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
+	int vi_synclist_slot;			/* s: synclist slot index */
+	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */
+	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m: vnodes for mount point */
+	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
+	krwlock_t vi_lock;			/* -: lock for this vnode */
+	struct vcache_key vi_key;		/* c: vnode cache key */
 };
 typedef struct vnode_impl vnode_impl_t;
 
-#define VIMPL_TO_VNODE(node)	((vnode_t *)(node))
+#define VIMPL_TO_VNODE(vip)	((vnode_t *)(vip))
 #define VNODE_TO_VIMPL(vp)	((vnode_impl_t *)(vp))
 
 /*
@@ -67,5 +93,8 @@ vnode_t *
 	vnalloc_marker(struct mount *);
 void	vnfree_marker(vnode_t *);
 bool	vnis_marker(vnode_t *);
+int	vcache_vget(vnode_t *);
+int	vcache_tryvget(vnode_t *);
+int	vfs_drainvnodes(void);
 
 #endif /* !_SYS_VNODE_IMPL_H_ */

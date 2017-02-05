@@ -1,6 +1,8 @@
-# $NetBSD: XEN3_DOM0,v 1.112.2.7 2016/10/05 20:55:23 skrll Exp $
+# $NetBSD: XEN3_DOM0,v 1.112.2.8 2017/02/05 13:40:02 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
+
+#options 	MULTIPROCESSOR	# (experimental)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -34,12 +36,13 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-options		CPU_UCODE	# cpu ucode loading support
+options 	CPU_UCODE	# cpu ucode loading support
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 
+options 	MODULAR		# new style module(7) framework
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
@@ -82,29 +85,29 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
-options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
 
 # File systems
-file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	NTFS		# Windows/NT file system (experimental)
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	OVERLAY		# overlay file system
+file-system	FFS		# UFS
+file-system	EXT2FS		# second extended file system (linux)
+file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
 file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system 	PROCFS		# /proc
-file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
-file-system 	CODA		# Coda File System; also needs vcoda (below)
-file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system 	PTYFS		# /dev/pts/N support
-file-system 	TMPFS		# Efficient memory file-system
+file-system	PROCFS		# /proc
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 options 	QUOTA		# legacy UFS quotas
@@ -295,7 +298,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 # Hardware monitors
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
-amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
+amdtemp* at amdnb_misc? 		# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -648,7 +651,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
-urndis* at uhub? port ?		# Microsoft RNDIS specification
+urndis* at uhub? port ? 	# Microsoft RNDIS specification
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
@@ -747,6 +750,8 @@ hdafg*		at hdaudiobus?
 # Audio support
 audio*	at audiobus?
 
+spkr*	at audio?		# PC speaker (synthesized)
+
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
 mpu*	at cmpci?
@@ -797,6 +802,7 @@ hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 cinclude "arch/amd64/conf/GENERIC.local"
+cinclude "arch/amd64/conf/XEN3_DOM0.local"
 
 # Pseudo-Devices
 

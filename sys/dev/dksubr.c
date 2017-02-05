@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.54.2.8 2016/12/05 10:55:01 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.54.2.9 2017/02/05 13:40:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.8 2016/12/05 10:55:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.9 2017/02/05 13:40:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,9 +378,16 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	if (bp != NULL)
 		bufq_put(dksc->sc_bufq, bp);
 
-	if (dksc->sc_busy)
+	/*
+	 * If another thread is running the queue, increment
+	 * busy counter to 2 so that the queue is retried,
+	 * because the driver may now accept additional
+	 * requests.
+	 */
+	if (dksc->sc_busy < 2)
+		dksc->sc_busy++;
+	if (dksc->sc_busy > 1)
 		goto done;
-	dksc->sc_busy = true;
 
 	/*
 	 * Peeking at the buffer queue and committing the operation
@@ -393,34 +400,37 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	 * This keeps order of I/O operations, unlike bufq_put.
 	 */
 
-	bp = dksc->sc_deferred;
-	dksc->sc_deferred = NULL;
+	while (dksc->sc_busy > 0) {
 
-	if (bp == NULL)
-		bp = bufq_get(dksc->sc_bufq);
+		bp = dksc->sc_deferred;
+		dksc->sc_deferred = NULL;
 
-	while (bp != NULL) {
+		if (bp == NULL)
+			bp = bufq_get(dksc->sc_bufq);
 
-		disk_busy(&dksc->sc_dkdev);
-		mutex_exit(&dksc->sc_iolock);
-		error = dkd->d_diskstart(dksc->sc_dev, bp);
-		mutex_enter(&dksc->sc_iolock);
-		if (error == EAGAIN) {
-			dksc->sc_deferred = bp;
-			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-			break;
+		while (bp != NULL) {
+
+			disk_busy(&dksc->sc_dkdev);
+			mutex_exit(&dksc->sc_iolock);
+			error = dkd->d_diskstart(dksc->sc_dev, bp);
+			mutex_enter(&dksc->sc_iolock);
+			if (error == EAGAIN) {
+				dksc->sc_deferred = bp;
+				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+				break;
+			}
+
+			if (error != 0) {
+				bp->b_error = error;
+				bp->b_resid = bp->b_bcount;
+				dk_done1(dksc, bp, false);
+			}
+
+			bp = bufq_get(dksc->sc_bufq);
 		}
 
-		if (error != 0) {
-			bp->b_error = error;
-			bp->b_resid = bp->b_bcount;
-			dk_done1(dksc, bp, false);
-		}
-
-		bp = bufq_get(dksc->sc_bufq);
+		dksc->sc_busy--;
 	}
-
-	dksc->sc_busy = false;
 done:
 	mutex_exit(&dksc->sc_iolock);
 }
@@ -815,6 +825,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 void
 dk_getdefaultlabel(struct dk_softc *dksc, struct disklabel *lp)
 {
+	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
 	memset(lp, 0, sizeof(*lp));
@@ -843,7 +854,11 @@ dk_getdefaultlabel(struct dk_softc *dksc, struct disklabel *lp)
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
-	lp->d_checksum = dkcksum(dksc->sc_dkdev.dk_label);
+
+	if (dkd->d_label)
+		dkd->d_label(dksc->sc_dev, lp);
+
+	lp->d_checksum = dkcksum(lp);
 }
 
 /* ARGSUSED */

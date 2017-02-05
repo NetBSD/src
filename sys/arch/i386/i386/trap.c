@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.273.2.3 2016/10/05 20:55:28 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.273.2.4 2017/02/05 13:40:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,14 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.273.2.3 2016/10/05 20:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.273.2.4 2017/02/05 13:40:12 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
-#include "opt_kstack_dr0.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
 
@@ -233,24 +232,6 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	    l, l->l_proc->p_pid, l->l_lid, KSTACK_LOWEST_ADDR(l));
 }
 
-static void
-check_dr0(void)
-{
-#ifdef KSTACK_CHECK_DR0
-	u_int mask, dr6 = rdr6();
-
-	mask = 1 << 0; /* dr0 */
-	if (dr6 & mask) {
-		panic("trap on DR0: maybe kernel stack overflow\n");
-#if 0
-		dr6 &= ~mask;
-		ldr6(dr6);
-		return;
-#endif
-	}
-#endif
-}
-
 /*
  * trap(frame): exception, fault, and trap interface to BSD kernel.
  *
@@ -270,7 +251,7 @@ trap(struct trapframe *frame)
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
-	int type, error;
+	int type, error, wptnfo;
 	uint32_t cr2;
 	bool pfail;
 
@@ -323,9 +304,7 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
-		if (type == T_TRCTRAP)
-			check_dr0();
-		else
+		if (type != T_TRCTRAP)
 			trap_print(frame, l);
 
 		if (kdb_trap(type, 0, frame))
@@ -721,7 +700,11 @@ faultcommon:
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
-			if (type == (T_BPTFLT|T_USER))
+			if ((wptnfo = user_trap_x86_hw_watchpoint())) {
+				ksi.ksi_code = TRAP_HWWPT;
+				ksi.ksi_trap2 = x86_hw_watchpoint_reg(wptnfo);
+				ksi.ksi_trap3 = x86_hw_watchpoint_type(wptnfo);
+			} else if (type == (T_BPTFLT|T_USER))
 				ksi.ksi_code = TRAP_BRKPT;
 			else
 				ksi.ksi_code = TRAP_TRACE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.179.2.3 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.179.2.4 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -98,11 +98,11 @@
  *	LSSTOP:
  *
  *		Stopped: the LWP has been stopped as a result of a job
- *		control signal, or as a result of the ptrace() interface. 
+ *		control signal, or as a result of the ptrace() interface.
  *
  *		Stopped LWPs may run briefly within the kernel to handle
  *		signals that they receive, but will not return to user space
- *		until their process' state is changed away from stopped. 
+ *		until their process' state is changed away from stopped.
  *
  *		Single LWPs within a process can not be set stopped
  *		selectively: all actions that can stop or continue LWPs
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.179.2.3 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.179.2.4 2017/02/05 13:40:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -665,7 +665,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		}
 
 		/*
-		 * Sit around and wait for something to happen.  We'll be 
+		 * Sit around and wait for something to happen.  We'll be
 		 * awoken if any of the conditions examined change: if an
 		 * LWP exits, is collected, or is detached.
 		 */
@@ -674,7 +674,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 	}
 
 	/*
-	 * We didn't find any LWPs to collect, we may have received a 
+	 * We didn't find any LWPs to collect, we may have received a
 	 * signal, or some other condition has caused us to bail out.
 	 *
 	 * If waiting on a specific LWP, clear the waiters marker: some
@@ -730,7 +730,7 @@ lwp_find_free_lid(lwpid_t try_lid, lwp_t * new_lwp, proc_t *p)
 			free_before = scan;
 			if (try_lid > scan->l_lid)
 				break;
-		} 
+		}
 		if (try_lid == scan->l_lid) {
 			/* The ideal lid is busy, take a higher one */
 			if (free_before != NULL) {
@@ -967,6 +967,24 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
+	/* If the process is traced, report lwp creation to a debugger */
+	if ((p2->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
+		ksiginfo_t ksi;
+
+		/* Tracing */
+		KASSERT((l2->l_flag & LW_SYSTEM) == 0);
+
+		p2->p_lwp_created = l2->l_lid;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_LWP;
+		mutex_enter(proc_lock);
+		kpsignal(p2, &ksi, NULL);
+		mutex_exit(proc_lock);
+	}
+
 	return (0);
 }
 
@@ -1029,6 +1047,24 @@ lwp_exit(struct lwp *l)
 	 * Verify that we hold no locks other than the kernel lock.
 	 */
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
+
+	/* If the process is traced, report lwp termination to a debugger */
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
+		ksiginfo_t ksi;
+
+		/* Tracing */
+		KASSERT((l->l_flag & LW_SYSTEM) == 0);
+
+		p->p_lwp_exited = l->l_lid;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_LWP;
+		mutex_enter(proc_lock);
+		kpsignal(p, &ksi, NULL);
+		mutex_exit(proc_lock);
+	}
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
@@ -1535,7 +1571,7 @@ lwp_userret(struct lwp *l)
 		 * We also need to save any PCU resources that we have so that
 		 * they accessible for coredump().  We issue a wakeup on
 		 * p->p_lwpcv so that sigexit() will write the core file out
-		 * once all other LWPs are suspended.  
+		 * once all other LWPs are suspended.
 		 */
 		if ((l->l_flag & LW_WSUSPEND) != 0) {
 			pcu_save_all(l);

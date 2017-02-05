@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.8.1 2015/09/22 12:05:49 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.8.2 2017/02/05 13:40:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.8.1 2015/09/22 12:05:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.8.2 2017/02/05 13:40:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -114,7 +114,8 @@ mach_init(void)
 #ifdef DEBUG
 	bootinfo_dump();
 #endif
-	uvm_setpagesize();
+	uvm_md_init();
+
 	physmem = atop(PS2_MEMORY_SIZE);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.85 2017/01/31 07:25:34 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.86 2017/02/05 13:40:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.85 2017/01/31 07:25:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.86 2017/02/05 13:40:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -659,15 +659,15 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		cur->xfer = xfer;
 	 	ohci_hash_add_td(sc, cur);
 
-		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
 		curoffs += curlen;
 		len -= curlen;
 
 		if (len != 0) {
 			KASSERT(next != NULL);
 			DPRINTFN(10, "extend chain", 0, 0, 0, 0);
+			usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 			cur = next;
 		}
 	}
@@ -677,6 +677,10 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	if (!rd &&
 	    (flags & USBD_FORCE_SHORT_XFER) &&
 	    alen % mps == 0) {
+		/* We're adding a ZLP so sync the previous TD */
+		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
 		/* Force a 0 length transfer at the end. */
 
 		KASSERT(next != NULL);
@@ -692,10 +696,10 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		cur->xfer = xfer;
 	 	ohci_hash_add_td(sc, cur);
 
-		usb_syncmem(&cur->dma, cur->offs, sizeof(cur->td),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(2, "add 0 xfer", 0, 0, 0, 0);
 	}
+
+	/* Last TD gets usb_syncmem'ed by caller */
 	*ep = cur;
 }
 
@@ -2878,9 +2882,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 		end->td.td_nexttd = HTOO32(stat->physaddr);
 		end->nexttd = stat;
 
-		usb_syncmem(&end->dma,
-		    end->offs + offsetof(ohci_td_t, td_nexttd),
-		    sizeof(end->td.td_nexttd),
+		usb_syncmem(&end->dma, end->offs, sizeof(end->td),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 		usb_syncmem(&xfer->ux_dmabuf, 0, len,
@@ -3128,7 +3130,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	tail->xfer = NULL;
 	DPRINTFN(10, "xfer=%p new tail=%p held at %p", ox, tail, tail->held, 0);
 	usb_syncmem(&tail->dma, tail->offs, sizeof(tail->td),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	xfer->ux_hcpriv = data;
 
 	DPRINTFN(8, "xfer %p data %p tail %p", xfer, ox->ox_stds[0], tail, 0);
@@ -3331,7 +3333,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	tail->xfer = NULL;
 	DPRINTFN(10, "xfer=%p new tail=%p held at %p", ox, tail, tail->held, 0);
 	usb_syncmem(&tail->dma, tail->offs, sizeof(tail->td),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	xfer->ux_hcpriv = data;
 
 	DPRINTFN(8, "data %p tail %p", ox->ox_stds[0], tail, 0, 0);
@@ -3669,6 +3671,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 			ncur = 0;
 		}
 		sitd->itd.itd_offset[ncur] = HTOO16(OHCI_ITD_MK_OFFS(offs));
+		/* XXX Sync */
 		offs = noffs;
 	}
 	KASSERT(j <= ox->ox_nsitd);

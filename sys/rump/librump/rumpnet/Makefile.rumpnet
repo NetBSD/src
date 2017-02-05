@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.15.4.3 2015/12/27 12:10:16 skrll Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.15.4.4 2017/02/05 13:41:00 skrll Exp $
 #
 
 LIB=		rumpnet
@@ -23,7 +23,7 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 	uipc_socket.c uipc_socket2.c uipc_syscalls.c
 
 # sys/net
-SRCS+=	pktqueue.c
+SRCS+=	pktqueue.c pfil.c
 
 # formatters
 SRCS+= at_print.c dl_print.c in_print.c in6_print.c
@@ -37,6 +37,9 @@ SRCS+=
 
 # bpf stubs, required for all kernels
 SRCS+=	bpf_stub.c
+
+# workqueue-based pr_input (required by inet and inet6)
+SRCS+=	wqinput.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 

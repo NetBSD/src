@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.31.6.3 2016/07/09 20:24:50 skrll Exp $	*/
+/*	$NetBSD: epe.c,v 1.31.6.4 2017/02/05 13:40:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.31.6.3 2016/07/09 20:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.31.6.4 2017/02/05 13:40:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -230,7 +230,6 @@ begin:
 				m_set_rcvif(sc->rxq[bi].m, ifp);
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-				bpf_mtap(ifp, sc->rxq[bi].m);
 				if_percpuq_enqueue(ifp->if_percpuq,
 				    sc->rxq[bi].m);
 				sc->rxq[bi].m = m;

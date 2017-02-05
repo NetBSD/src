@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77.2.6 2016/12/05 10:54:49 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.2.7 2017/02/05 13:40:01 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -592,12 +592,14 @@ no_NOX:
  *
  * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
  *
+ * ISA I/O MEM has no physical page allocated here, just virtual addresses.
+ *
  * Important note: the kernel segments are properly 4k-aligned
  * (see kern.ldscript), so there's no need to enforce alignment.
  */
 
 	/* Find end of kernel image; brings us on (1). */
-	movl	$RELOC(end),%edi
+	movl	$RELOC(__kernel_end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	/* Save the symbols (if loaded); brinds us on (2). */
@@ -645,7 +647,7 @@ no_NOX:
 	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Skip the first MB. */
+	/* Skip the area below the kernel text. */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%ecx
 	shrl	$PGSHIFT,%ecx
 	fillkpt_blank
@@ -864,8 +866,8 @@ longmode_hi:
 	movw	%ax,%gs
 	movw	%ax,%fs
 
-	/* XXX merge these */
-	leaq	(TABLESIZE+IOM_SIZE)(%rsi),%rdi
+	/* The first physical page available. */
+	leaq	(TABLESIZE)(%rsi),%rdi
 
 #else	/* XEN */
 	/* First, reset the PSL. */
@@ -946,9 +948,9 @@ longmode_hi:
 	movw	%ax,%gs
 	movw	%ax,%fs
 
-	/* Set first_avail after the UAREA. */
+	/* Set first_avail after the DUMMY PAGE (see xen_locore). */
 	movq	%rsi,%rdi
-	addq	$USPACE,%rdi
+	addq	$(USPACE+PAGE_SIZE),%rdi
 	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */
 #endif	/* XEN */
 
@@ -1139,9 +1141,9 @@ skip_CR0:
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
-	jne	lwp_64bit
+	jnz	lwp_32bit
 
-lwp_32bit:
+lwp_64bit:
 	/* Zero out %fs/%gs registers. */
 	xorq	%rax,%rax
 	movw	%ax,%fs
@@ -1168,7 +1170,7 @@ lwp_32bit:
 
 	jmp	switch_return
 
-lwp_64bit:
+lwp_32bit:
 	/* Reload %fs/%gs GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
 	movq	PCB_FS(%r14),%rax

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.59.2.5 2016/12/05 10:54:52 skrll Exp $
+#	$NetBSD: RPI,v 1.59.2.6 2017/02/05 13:40:07 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -67,6 +67,8 @@ vchiq0		at obio?
 # AUDS
 vcaudio0	at vchiq0
 audio0		at vcaudio0
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 # PL011 uart
 plcom0		at obio?

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.63.24.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.63.24.2 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.63.24.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.63.24.2 2017/02/05 13:41:01 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -127,7 +127,7 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 		return (NULL);
 	}
 	mapfn = cdev->d_mmap;
-	if (mapfn == NULL || mapfn == nommap || mapfn == nullmmap) {
+	if (mapfn == NULL || mapfn == nommap) {
 		return(NULL);
 	}
 

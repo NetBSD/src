@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.53.4.3 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.53.4.4 2017/02/05 13:40:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53.4.3 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53.4.4 2017/02/05 13:40:23 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -103,6 +103,9 @@ volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union __aligned(PAGE_SIZE);
 unsigned long *xpmap_phys_to_machine_mapping;
 kmutex_t pte_lock;
+vaddr_t xen_dummy_page;
+
+pt_entry_t xpmap_pg_nx __read_mostly;
 
 void xen_failsafe_handler(void);
 
@@ -588,12 +591,27 @@ static const int l2_4_count = PTP_LEVELS - 1;
 /*
  * Xen locore: get rid of the Xen bootstrap tables. Build and switch to new page
  * tables.
+ *
+ * Virtual address space of the kernel when leaving this function:
+ * +--------------+------------------+-------------+------------+---------------
+ * | KERNEL IMAGE | BOOTSTRAP TABLES | PROC0 UAREA | DUMMY PAGE | HYPER. SHARED 
+ * +--------------+------------------+-------------+------------+---------------
+ *
+ * ------+-----------------+-------------+
+ *  INFO | EARLY ZERO PAGE | ISA I/O MEM |
+ * ------+-----------------+-------------+
+ *
+ * DUMMY PAGE is either a PDG for amd64 or a GDT for i386.
+ *
+ * (HYPER. SHARED INFO + EARLY ZERO PAGE + ISA I/O MEM) have no physical
+ * addresses preallocated.
  */
 vaddr_t
 xen_locore(void)
 {
 	size_t count, oldcount, mapsize;
 	vaddr_t bootstrap_tables, init_tables;
+	u_int descs[4];
 
 	xen_init_features();
 
@@ -601,6 +619,10 @@ xen_locore(void)
 
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
+
+	/* Set the NX/XD bit, if available. descs[3] = %edx. */
+	x86_cpuid(0x80000001, descs);
+	xpmap_pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
 
 	/* Space after Xen boostrap tables should be free */
 	init_tables = xen_start_info.pt_base;
@@ -649,7 +671,7 @@ xen_locore(void)
 		count++;
 	}
 
-#ifndef __x86_64__
+#ifdef i386
 	/*
 	 * One more L2 page: we'll allocate several pages after kva_start
 	 * in pmap_bootstrap() before pmap_growkernel(), which have not been
@@ -694,7 +716,7 @@ bootstrap_again:
 	xen_bootstrap_tables(bootstrap_tables, init_tables,
 	    oldcount + l2_4_count, count, true);
 
-	/* Zero out free space after tables */
+	/* Zero out PROC0 UAREA and DUMMY PAGE. */
 	memset((void *)(init_tables + ((count + l2_4_count) * PAGE_SIZE)), 0,
 	    (UPAGES + 1) * PAGE_SIZE);
 
@@ -723,14 +745,6 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	extern char __data_start;
 	extern char __kernel_end;
 	extern char *early_zerop; /* from pmap.c */
-	pt_entry_t pg_nx;
-	u_int descs[4];
-
-	/*
-	 * Set the NX/XD bit, if available. descs[3] = %edx.
-	 */
-	x86_cpuid(0x80000001, descs);
-	pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
 
 	/*
 	 * Layout of RW area after the kernel image:
@@ -746,7 +760,9 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	 */
 	map_end = new_pgd + ((new_count + l2_4_count) * PAGE_SIZE);
 	if (final) {
-		map_end += (UPAGES + 1) * PAGE_SIZE;
+		map_end += UPAGES * PAGE_SIZE;
+		xen_dummy_page = (vaddr_t)map_end;
+		map_end += PAGE_SIZE;
 		HYPERVISOR_shared_info = (shared_info_t *)map_end;
 		map_end += PAGE_SIZE;
 		early_zerop = (char *)map_end;
@@ -815,21 +831,24 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 #elif defined(PAE)
-	/* Our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
+	/*
+	 * Our PAE-style level 2, 5 contiguous pages (4 L2 + 1 shadow).
+	 *                  +-----------------+----------------+---------+
+	 * Physical layout: | 3 * USERLAND L2 | L2 KERN SHADOW | L2 KERN |
+	 *                  +-----------------+----------------+---------+
+	 * However, we enter pdtpte[3] into L2 KERN, and not L2 KERN SHADOW.
+	 * This way, pde[L2_SLOT_KERN] always points to the shadow.
+	 */
 	pde = (pd_entry_t *)avail;
 	memset(pde, 0, PAGE_SIZE * 5);
 	avail += PAGE_SIZE * 5;
-	addr = ((u_long)pde) - KERNBASE;
 
 	/*
-	 * Enter L2 pages in L3. The real L2 kernel PD will be the last one
-	 * (so that pde[L2_SLOT_KERN] always points to the shadow).
+	 * Link L2 pages in L3, with a special case for L2 KERN. Xen doesn't
+	 * want RW permissions in L3 entries, it'll add them itself.
 	 */
+	addr = ((u_long)pde) - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
-		/*
-		 * Xen doesn't want RW mappings in L3 entries, it'll add it
-		 * itself.
-		 */
 		pdtpe[i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
 	}
 	addr += PAGE_SIZE;
@@ -875,7 +894,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			    page < (vaddr_t)atdevbase + IOM_SIZE) {
 				pte[pl1_pi(page)] =
 				    IOM_BEGIN + (page - (vaddr_t)atdevbase);
-				pte[pl1_pi(page)] |= pg_nx;
+				pte[pl1_pi(page)] |= xpmap_pg_nx;
 			}
 #endif
 
@@ -886,15 +905,15 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			} else if (page >= (vaddr_t)&__rodata_start &&
 			    page < (vaddr_t)&__data_start) {
 				/* Map the kernel rodata R. */
-				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
 			} else if (page >= old_pgd &&
 			    page < old_pgd + (old_count * PAGE_SIZE)) {
 				/* Map the old page tables R. */
-				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
 			} else if (page >= new_pgd &&
 			    page < new_pgd + ((new_count + l2_4_count) * PAGE_SIZE)) {
 				/* Map the new page tables R. */
-				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+				pte[pl1_pi(page)] |= PG_RO | xpmap_pg_nx;
 #ifdef i386
 			} else if (page == (vaddr_t)tmpgdt) {
 				/*
@@ -908,10 +927,10 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 			} else if (page >= (vaddr_t)&__data_start &&
 			    page < (vaddr_t)&__kernel_end) {
 				/* Map the kernel data+bss RW. */
-				pte[pl1_pi(page)] |= PG_RW | pg_nx;
+				pte[pl1_pi(page)] |= PG_RW | xpmap_pg_nx;
 			} else {
 				/* Map the page RW. */
-				pte[pl1_pi(page)] |= PG_RW | pg_nx;
+				pte[pl1_pi(page)] |= PG_RW | xpmap_pg_nx;
 			}
 
 			page += PAGE_SIZE;
@@ -927,15 +946,11 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 
 	/* Install recursive page tables mapping */
 #ifdef PAE
-	/*
-	 * We need a shadow page for the kernel's L2 page.
-	 * The real L2 kernel PD will be the last one (so that
-	 * pde[L2_SLOT_KERN] always points to the shadow).
-	 */
+	/* Copy L2 KERN into L2 KERN SHADOW, and reference the latter in cpu0. */
 	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
 	cpu_info_primary.ci_kpm_pdir = &pde[L2_SLOT_KERN + NPDPG];
 	cpu_info_primary.ci_kpm_pdirpa =
-	    (vaddr_t) cpu_info_primary.ci_kpm_pdir - KERNBASE;
+	    (vaddr_t)cpu_info_primary.ci_kpm_pdir - KERNBASE;
 
 	/*
 	 * We don't enter a recursive entry from the L3 PD. Instead, we enter
@@ -946,44 +961,33 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
 		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V |
-		    pg_nx;
+		    xpmap_pg_nx;
 	}
-#if 0
-	addr += PAGE_SIZE; /* point to shadow L2 */
-	pde[PDIR_SLOT_PTE + 3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
-#endif
-	/* Mark tables RO, and pin the kernel's shadow as L2 */
+
+	/* Mark tables RO, and pin L2 KERN SHADOW. */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 5; i++, addr += PAGE_SIZE) {
 		xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * i);
-#if 0
-		if (i == 2 || i == 3)
-			continue;
-		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
-#endif
 	}
 	if (final) {
 		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
 		xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 	}
-#if 0
-	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
-	xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
-#endif
 #else /* PAE */
 
 	/* Recursive entry in pmap_kernel(). */
 	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
-	    | PG_k | PG_RO | PG_V | pg_nx;
+	    | PG_k | PG_RO | PG_V | xpmap_pg_nx;
 #ifdef __x86_64__
 	/* Recursive entry in higher-level per-cpu PD. */
 	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
-	    | PG_k | PG_RO | PG_V | pg_nx;
+	    | PG_k | PG_RO | PG_V | xpmap_pg_nx;
 #endif
 
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t)pde);
-#endif
+#endif /* PAE */
+
 #if PTP_LEVELS > 2 || defined(PAE)
 	xen_bt_set_readonly((vaddr_t)pdtpe);
 #endif
@@ -1056,23 +1060,16 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd, size_t old_count,
 	xpq_flush_queue();
 }
 
-
 /*
- * Bootstrap helper functions
+ * Mark a page read-only, assuming vaddr = paddr + KERNBASE.
  */
-
-/*
- * Mark a page readonly
- * XXX: assuming vaddr = paddr + KERNBASE
- */
-
 static void
 xen_bt_set_readonly(vaddr_t page)
 {
 	pt_entry_t entry;
 
 	entry = xpmap_ptom_masked(page - KERNBASE);
-	entry |= PG_k | PG_V;
+	entry |= PG_k | PG_V | xpmap_pg_nx;
 
 	HYPERVISOR_update_va_mapping(page, entry, UVMF_INVLPG);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.30.2.1 2015/06/06 14:39:58 skrll Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.30.2.2 2017/02/05 13:40:08 skrll Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30.2.1 2015/06/06 14:39:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30.2.2 2017/02/05 13:40:08 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30.2.1 2015/06/06 14:39:58 skr
 #include <arm/marvell/orionreg.h>
 #include <arm/marvell/kirkwoodreg.h>
 #include <arm/marvell/mv78xx0reg.h>
+#include <arm/marvell/dovereg.h>
 #include <arm/marvell/armadaxpreg.h>
 #include <arm/marvell/armadaxpvar.h>
 #include <arm/marvell/mvsocgppvar.h>
@@ -169,7 +170,7 @@ marvell_fixup_mbus_pex(int memtag, int iotag)
 #endif
 }
 
-#if defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0)
+#if defined(ORION) || defined(KIRKWOOD) || defined(MV78XX0) || defined(DOVE)
 static void
 marvell_system_reset(void)
 {
@@ -260,7 +261,7 @@ static struct pmap_devmap marvell_devmap[] = {
 	{
 		MARVELL_INTERREGS_VBASE,
 		_A(MARVELL_INTERREGS_PBASE),
-		_S(MARVELL_INTERREGS_SIZE),
+		_S(MVSOC_INTERREGS_SIZE),
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
@@ -328,7 +329,7 @@ initarm(void *arg)
 	case MARVELL_ORION_2_88F5281:
 		cpu_reset_address = marvell_system_reset;
 
-		orion_intr_bootstrap();
+		orion_bootstrap(MARVELL_INTERREGS_VBASE);
 
 		memtag = ORION_TAG_PEX0_MEM;
 		iotag = ORION_TAG_PEX0_IO;
@@ -338,7 +339,6 @@ initarm(void *arg)
 		cs = MARVELL_TAG_SDRAM_CS0;
 		cs_end = MARVELL_TAG_SDRAM_CS3;
 
-		orion_getclks(MARVELL_INTERREGS_VBASE);
 		marvell_fixup_mbus(memtag, iotag);
 		break;
 #endif	/* ORION */
@@ -350,7 +350,7 @@ initarm(void *arg)
 	case MARVELL_KIRKWOOD_88F6282:
 		cpu_reset_address = marvell_system_reset;
 
-		kirkwood_intr_bootstrap();
+		kirkwood_bootstrap(MARVELL_INTERREGS_VBASE);
 
 		memtag = KIRKWOOD_TAG_PEX_MEM;
 		iotag = KIRKWOOD_TAG_PEX_IO;
@@ -360,8 +360,6 @@ initarm(void *arg)
 		cs = MARVELL_TAG_SDRAM_CS0;
 		cs_end = MARVELL_TAG_SDRAM_CS3;
 
-		kirkwood_getclks(MARVELL_INTERREGS_VBASE);
-		mvsoc_clkgating = kirkwood_clkgating;
 		marvell_fixup_mbus(memtag, iotag);
 		break;
 #endif	/* KIRKWOOD */
@@ -371,7 +369,7 @@ initarm(void *arg)
 	case MARVELL_MV78XX0_MV78200:
 		cpu_reset_address = marvell_system_reset;
 
-		mv78xx0_intr_bootstrap();
+		mv78xx0_bootstrap(MARVELL_INTERREGS_VBASE);
 
 		memtag = MV78XX0_TAG_PEX0_MEM;
 		iotag = MV78XX0_TAG_PEX0_IO;
@@ -381,10 +379,27 @@ initarm(void *arg)
 		cs = MARVELL_TAG_SDRAM_CS0;
 		cs_end = MARVELL_TAG_SDRAM_CS3;
 
-		mv78xx0_getclks(MARVELL_INTERREGS_VBASE);
 		marvell_fixup_mbus(memtag, iotag);
 		break;
 #endif	/* MV78XX0 */
+
+#ifdef DOVE
+	case MARVELL_DOVE_88AP510:
+		cpu_reset_address = marvell_system_reset;
+
+		dove_bootstrap(MARVELL_INTERREGS_VBASE);
+
+		memtag = DOVE_TAG_PEX0_MEM;
+		iotag = DOVE_TAG_PEX0_IO;
+		nwindow = DOVE_DB_NWINDOW;
+		nremap = DOVE_DB_NREMAP;
+
+		cs = MARVELL_TAG_AXI_CS0;
+		cs_end = MARVELL_TAG_AXI_CS1;
+
+		marvell_fixup_mbus(memtag, iotag);
+		break;
+#endif	/* DOVE */
 
 #ifdef ARMADAXP
 	case MARVELL_ARMADAXP_MV78130:
@@ -392,41 +407,14 @@ initarm(void *arg)
 	case MARVELL_ARMADAXP_MV78230:
 	case MARVELL_ARMADAXP_MV78260:
 	case MARVELL_ARMADAXP_MV78460:
-		cpu_reset_address = armadaxp_system_reset;
-
-		armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
-
-		memtag = ARMADAXP_TAG_PEX00_MEM;
-		iotag = ARMADAXP_TAG_PEX00_IO;
-		nwindow = ARMADAXP_MLMB_NWINDOW;
-		nremap = ARMADAXP_MLMB_NREMAP;
-
-		cs = MARVELL_TAG_DDR3_CS0;
-		cs_end = MARVELL_TAG_DDR3_CS3;
-
-		extern vaddr_t misc_base;
-	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
-		armadaxp_getclks();
-		mvsoc_clkgating = armadaxp_clkgating;
-		armadaxp_fixup_mbus(memtag, iotag);
-
-#ifdef L2CACHE_ENABLE
-		/* Initialize L2 Cache */
-		armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-#endif
-
-#ifdef AURORA_IO_CACHE_COHERENCY
-		/* Initialize cache coherency */
-		armadaxp_io_coherency_init();
-#endif
-		break;
-
 	case MARVELL_ARMADA370_MV6707:
 	case MARVELL_ARMADA370_MV6710:
 	case MARVELL_ARMADA370_MV6W11:
 		cpu_reset_address = armadaxp_system_reset;
 
-		armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
+		armadaxp_bootstrap(
+		    MARVELL_INTERREGS_VBASE,
+		    MARVELL_INTERREGS_PBASE);
 
 		memtag = ARMADAXP_TAG_PEX00_MEM;
 		iotag = ARMADAXP_TAG_PEX00_IO;
@@ -436,21 +424,7 @@ initarm(void *arg)
 		cs = MARVELL_TAG_DDR3_CS0;
 		cs_end = MARVELL_TAG_DDR3_CS3;
 
-		extern vaddr_t misc_base;
-	        misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
-		armada370_getclks();
-		mvsoc_clkgating = armadaxp_clkgating;
 		armadaxp_fixup_mbus(memtag, iotag);
-
-#ifdef L2CACHE_ENABLE
-		/* Initialize L2 Cache */
-		(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-#endif
-
-#ifdef AURORA_IO_CACHE_COHERENCY
-		/* Initialize cache coherency */
-		armadaxp_io_coherency_init();
-#endif
 		break;
 #endif	/* ARMADAXP */
 
@@ -483,9 +457,9 @@ initarm(void *arg)
 	paddr_t segment_end;
 	segment_end = physmem = 0;
 	for ( ; cs <= cs_end; cs++) {
-		uint32_t target, attr, base, size;
+		uint32_t base, size;
 
-		mvsoc_target(cs, &target, &attr, &base, &size);
+		mvsoc_target(cs, NULL, NULL, &base, &size);
 		if (size == 0)
 			continue;
 
@@ -652,6 +626,11 @@ marvell_device_register(device_t dev, void *aux)
 		    kirkwood_pex_io_bs_tag, kirkwood_pex_mem_bs_tag,
 		    kirkwood_pex1_io_bs_tag, kirkwood_pex1_mem_bs_tag;
 #endif
+#ifdef DOVE
+		extern struct bus_space
+		    dove_pex0_io_bs_tag, dove_pex0_mem_bs_tag,
+		    dove_pex1_io_bs_tag, dove_pex1_mem_bs_tag;
+#endif
 #ifdef ARMADAXP
 		extern struct bus_space
 		    armadaxp_pex00_io_bs_tag, armadaxp_pex00_mem_bs_tag,
@@ -716,6 +695,24 @@ marvell_device_register(device_t dev, void *aux)
 			arm32_mvpex_chipset = &arm32_mvpex0_chipset;
 			iotag = KIRKWOOD_TAG_PEX_IO;
 			memtag = KIRKWOOD_TAG_PEX_MEM;
+			break;
+#endif
+
+#ifdef DOVE
+		case MARVELL_DOVE_88AP510:
+			if (mva->mva_offset == MVSOC_PEX_BASE) {
+				mvpex_io_bs_tag = &dove_pex0_io_bs_tag;
+				mvpex_mem_bs_tag = &dove_pex0_mem_bs_tag;
+				arm32_mvpex_chipset = &arm32_mvpex0_chipset;
+				iotag = DOVE_TAG_PEX0_IO;
+				memtag = DOVE_TAG_PEX0_MEM;
+			} else {
+				mvpex_io_bs_tag = &dove_pex1_io_bs_tag;
+				mvpex_mem_bs_tag = &dove_pex1_mem_bs_tag;
+				arm32_mvpex_chipset = &arm32_mvpex1_chipset;
+				iotag = DOVE_TAG_PEX1_IO;
+				memtag = DOVE_TAG_PEX1_MEM;
+			}
 			break;
 #endif
 

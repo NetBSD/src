@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43.6.2 2016/10/05 20:55:27 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43.6.3 2017/02/05 13:40:10 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.6.2 2016/10/05 20:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43.6.3 2017/02/05 13:40:10 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -181,8 +181,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	mips_vector_init(NULL, false);
 
-	/* set the VM page size */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	physmem = btoc(memsize);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdcache.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: nfs_nfsdcache.c,v 1.2.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdcache.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdcache.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $");
+__RCSID("$NetBSD: nfs_nfsdcache.c,v 1.2.12.2 2017/02/05 13:40:55 skrll Exp $");
 
 /*
  * Here is the basic algorithm:
@@ -159,7 +159,7 @@ __RCSID("$NetBSD: nfs_nfsdcache.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $");
  *	never happens.
  */
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 extern struct nfsstatsv1 nfsstatsv1;
 extern struct mtx nfsrc_udpmtx;
