@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.30 2016/09/24 21:13:44 dholland Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.31 2017/02/05 10:42:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.30 2016/09/24 21:13:44 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.31 2017/02/05 10:42:21 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -175,7 +175,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 		lp = pmap->pm_ldt;
 	} else {
 		nldt = NLDT;
-		lp = ldt;
+		lp = ldtstore;
 	}
 
 	if (ua->start > nldt) {
@@ -272,7 +272,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 			if (desc->gd.gd_p != 0 &&
 			    !ISLDT(desc->gd.gd_selector) &&
 			    ((IDXSEL(desc->gd.gd_selector) >= NGDT) ||
-			     (gdt[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
+			     (gdtstore[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
 				 SEL_UPL))) {
 				return EACCES;
 			}
@@ -347,7 +347,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		old_ldt = NULL;
 		old_len = 0;
 		old_sel = -1;
-		memcpy(new_ldt, ldt, NLDT * sizeof(union descriptor));
+		memcpy(new_ldt, ldtstore, NLDT * sizeof(union descriptor));
 	}
 
 	/* Apply requested changes. */

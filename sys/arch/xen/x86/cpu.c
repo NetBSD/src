@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.107 2017/02/02 08:57:04 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.108 2017/02/05 10:42:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2017/02/02 08:57:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2017/02/05 10:42:21 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -863,7 +863,7 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
 	return;
 }
 #else /* i386 */
-extern union descriptor *ldt;
+extern union descriptor *ldtstore;
 extern void Xsyscall(void);
 
 static void
@@ -941,7 +941,7 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
 	initctx->gdt_ents = gdt_ents;
 
 	/* LDT */
-	initctx->ldt_base = (unsigned long)ldt;
+	initctx->ldt_base = (unsigned long)ldtstore;
 	initctx->ldt_ents = NLDT;
 
 	/* Kernel context state */

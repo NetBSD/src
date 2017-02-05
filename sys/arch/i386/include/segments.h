@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.57 2016/09/02 08:28:06 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.58 2017/02/05 10:42:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -190,7 +190,7 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern union descriptor *gdt, *ldt;
+extern union descriptor *gdtstore, *ldtstore;
 extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
