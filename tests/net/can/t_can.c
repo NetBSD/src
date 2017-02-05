@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.1.2.4 2017/02/05 11:44:17 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.1.2.5 2017/02/05 12:03:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.1.2.4 2017/02/05 11:44:17 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.1.2.5 2017/02/05 12:03:23 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,8 +101,8 @@ ATF_TC_BODY(cannoown, tc)
 	const char ifname[] = "canlo0";
 	int s, rv, v, vlen;
 	struct sockaddr_can sa;
-	int salen;
-	struct ifreq ifr;
+	socklen_t salen;
+	int ifindex;
 	struct can_frame cf_send, cf_receive;
 	fd_set rfds;
 	struct timeval tmout;
@@ -110,24 +110,11 @@ ATF_TC_BODY(cannoown, tc)
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
 	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	ifindex = can_bind(s, ifname);
 
 	/* check sockopt CAN_RAW_LOOPBACK */
 	vlen = sizeof(v);
@@ -171,9 +158,9 @@ ATF_TC_BODY(cannoown, tc)
 		atf_tc_fail_errno("can_recvfrom");
 	}
 
-	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+	ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 	   "recvfrom provided wrong ifindex %d (!= %d)",
-	    sa.can_ifindex, ifr.ifr_ifindex);
+	    sa.can_ifindex, ifindex);
 	atf_tc_fail("we got our own message");
 }
 
@@ -189,8 +176,6 @@ ATF_TC_BODY(canwritelo, tc)
 {
 	const char ifname[] = "canlo0";
 	int s, rv, v, vlen;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
 
 	rump_init();
@@ -201,19 +186,7 @@ ATF_TC_BODY(canwritelo, tc)
 		atf_tc_fail_errno("CAN socket");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	can_bind(s, ifname);
 
 	/* check sockopt CAN_RAW_LOOPBACK */
 	vlen = sizeof(v);
@@ -472,8 +445,6 @@ ATF_TC_BODY(canreadlocal, tc)
 	int s1, rv1;
 	int s2, rv2;
 	int v;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
 
 	rump_init();
@@ -505,19 +476,7 @@ ATF_TC_BODY(canreadlocal, tc)
 		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if ((rv2 = rump_sys_ioctl(s2, SIOCGIFINDEX, &ifr)) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if ((rv2 = rump_sys_bind(s2, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	can_bind(s2, ifname);
 
 	/*
 	 * send a single byte message, but make sure remaining payload is
@@ -558,10 +517,10 @@ ATF_TC_BODY(canrecvfrom, tc)
 	int s1, rv1;
 	int s2, rv2;
 	int v;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
 	socklen_t salen;
+	int ifindex;
+	struct sockaddr_can sa;
 
 	rump_init();
 	cancfg_rump_createif(ifname);
@@ -592,19 +551,7 @@ ATF_TC_BODY(canrecvfrom, tc)
 		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if ((rv2 = rump_sys_ioctl(s2, SIOCGIFINDEX, &ifr)) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if ((rv2 = rump_sys_bind(s2, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	ifindex = can_bind(s2, ifname);
 
 	if (rump_sys_write(s2, &cf_send, sizeof(cf_send)) < 0) {
 		atf_tc_fail_errno("write");
@@ -625,9 +572,9 @@ ATF_TC_BODY(canrecvfrom, tc)
 
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive1, sizeof(cf_send)) == 0,
 	    "recvfrom (1) packet is not what we sent");
-	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+	ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 	   "recvfrom provided wrong ifindex %d (!= %d)",
-	    sa.can_ifindex, ifr.ifr_ifindex);
+	    sa.can_ifindex, ifindex);
 }
 
 ATF_TC(canbindfilter);
@@ -646,6 +593,7 @@ ATF_TC_BODY(canbindfilter, tc)
 	int s2, rv2;
 	int v;
 	struct sockaddr_can sa;
+	int ifindex2;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
 	socklen_t salen;
@@ -675,19 +623,7 @@ ATF_TC_BODY(canbindfilter, tc)
 		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if ((rv1 = rump_sys_ioctl(s1, SIOCGIFINDEX, &ifr)) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX (1)");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if ((rv1 = rump_sys_bind(s1, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
-		atf_tc_fail_errno("bind (1)");
-	}
+	can_bind(s1, ifname);
 
 	/* create a second socket */
 
@@ -701,19 +637,7 @@ ATF_TC_BODY(canbindfilter, tc)
 		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
 	}
 
-	strcpy(ifr.ifr_name, ifname2);
-	if ((rv2 = rump_sys_ioctl(s2, SIOCGIFINDEX, &ifr)) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if ((rv2 = rump_sys_bind(s2, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	ifindex2 = can_bind(s2, ifname2);
 
 	if (rump_sys_write(s2, &cf_send, sizeof(cf_send)) < 0) {
 		atf_tc_fail_errno("write");
@@ -736,9 +660,9 @@ ATF_TC_BODY(canbindfilter, tc)
 	}
 	ATF_CHECK_MSG(memcmp(&cf_send, &cf_receive1, sizeof(cf_send)) == 0,
 	    "recvfrom (1) packet is not what we sent");
-	ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+	ATF_CHECK_MSG(sa.can_ifindex == ifindex2,
 	   "recvfrom provided wrong ifindex %d (!= %d)",
-	    sa.can_ifindex, ifr.ifr_ifindex);
+	    sa.can_ifindex, ifindex2);
 	atf_tc_fail("we got message from other interface");
 }
 
@@ -760,6 +684,7 @@ ATF_TC_BODY(cannoloop, tc)
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
 	socklen_t salen;
+	int ifindex;
 	fd_set rfds;
 	struct timeval tmout;
 
@@ -798,19 +723,7 @@ ATF_TC_BODY(cannoloop, tc)
 	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_LOOPBACK) returns wrong len %d", vlen);
 	ATF_CHECK_MSG(v == 0, "CAN_RAW_LOOPBACK is not off");
 
-	strcpy(ifr.ifr_name, ifname );
-	if ((rv1 = rump_sys_ioctl(s1, SIOCGIFINDEX, &ifr)) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX (1)");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if ((rv1 = rump_sys_bind(s1, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
-		atf_tc_fail_errno("bind (1)");
-	}
+	ifindex = can_bind(s1, ifname);
 
 	/* create a second socket */
 
@@ -868,9 +781,9 @@ ATF_TC_BODY(cannoloop, tc)
 		ATF_CHECK_MSG(salen == sizeof(sa),
 		    "recvfrom provided wrong size %d (!= %d)",
 		    salen, sizeof(sa));
-		ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+		ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 		   "recvfrom provided wrong ifindex %d (!= %d)",
-		    sa.can_ifindex, ifr.ifr_ifindex);
+		    sa.can_ifindex, ifindex);
 		atf_tc_fail_nonfatal("we got message on s1");
 	}
 	if (FD_ISSET(s2, &rfds)) {
@@ -890,9 +803,9 @@ ATF_TC_BODY(cannoloop, tc)
 		ATF_CHECK_MSG(salen == sizeof(sa),
 		    "recvfrom provided wrong size %d (!= %d)",
 		    salen, sizeof(sa));
-		ATF_CHECK_MSG(sa.can_ifindex == ifr.ifr_ifindex,
+		ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 		   "recvfrom provided wrong ifindex %d (!= %d)",
-		    sa.can_ifindex, ifr.ifr_ifindex);
+		    sa.can_ifindex, ifindex);
 		atf_tc_fail_nonfatal("we got message on s2");
 	}
 }

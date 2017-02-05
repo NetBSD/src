@@ -1,4 +1,4 @@
-/*	$NetBSD: h_canutils.h,v 1.1.2.1 2017/02/04 22:26:16 bouyer Exp $	*/
+/*	$NetBSD: h_canutils.h,v 1.1.2.2 2017/02/05 12:03:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,4 +33,4 @@
 void cancfg_rump_createif(const char *);
 int can_recvfrom(int, struct can_frame *, int *, struct sockaddr_can *);
 int can_read(int, struct can_frame *, int *);
-
+int can_bind(int s, const char *);
