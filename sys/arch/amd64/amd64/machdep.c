@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.249 2017/02/05 06:26:06 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.250 2017/02/05 08:19:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.249 2017/02/05 06:26:06 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.250 2017/02/05 08:19:05 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1939,23 +1939,28 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		error = valid_user_selector(l, gr[_REG_SS]);
 		if (error != 0)
 			return error;
+
+		if (!USERMODE(gr[_REG_CS], gr[_REG_RFLAGS]))
+			return EINVAL;
 #endif
 	} else {
 #define VUD(sel) \
     ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUF(sel) /* XXX: Shouldn't this be FSEL32? */ \
+    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUG(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUC(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
+
 		sel = gr[_REG_ES] & 0xffff;
 		if (sel != 0 && !VUD(sel))
 			return EINVAL;
 
-/* XXX: Shouldn't this be FSEL32? */
-#define VUF(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_FS] & 0xffff;
 		if (sel != 0 && !VUF(sel))
 			return EINVAL;
 
-#define VUG(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_GS] & 0xffff;
 		if (sel != 0 && !VUG(sel))
 			return EINVAL;
@@ -1968,17 +1973,12 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		sel = gr[_REG_SS] & 0xffff;
 		if (!VUD(sel))
 			return EINVAL;
-#endif
 
+		sel = gr[_REG_CS] & 0xffff;
+		if (!VUC(sel))
+			return EINVAL;
+#endif
 	}
-
-#ifndef XEN
-#define VUC(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
-	sel = gr[_REG_CS] & 0xffff;
-	if (!VUC(sel))
-		return EINVAL;
-#endif
 
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
@@ -1991,51 +1991,23 @@ cpu_initclocks(void)
 	(*initclock_func)();
 }
 
+/*
+ * Called only when the LDT is user-set (USER_LDT).
+ */
 static int
 valid_user_selector(struct lwp *l, uint64_t seg)
 {
-	int off, len;
-	char *dt;
-	struct mem_segment_descriptor *sdp;
-	struct proc *p = l->l_proc;
-	struct pmap *pmap= p->p_vmspace->vm_map.pmap;
-	uint64_t base;
-
 	seg &= 0xffff;
-
 	if (seg == 0)
 		return 0;
 
-	off = (seg & 0xfff8);
-	if (seg & SEL_LDT) {
-		if (pmap->pm_ldt != NULL) {
-			len = pmap->pm_ldt_len; /* XXX broken */
-			dt = (char *)pmap->pm_ldt;
-		} else {
-			dt = ldtstore;
-			len = LDT_SIZE;
-		}
-
-		if (off > (len - 8))
-			return EINVAL;
-	} else {
+	if (!(seg & SEL_LDT)) {
 		CTASSERT(GUDATA_SEL & SEL_LDT);
 		KASSERT(seg != GUDATA_SEL);
 		CTASSERT(GUDATA32_SEL & SEL_LDT);
 		KASSERT(seg != GUDATA32_SEL);
 		return EINVAL;
 	}
-
-	sdp = (struct mem_segment_descriptor *)(dt + off);
-	if (sdp->sd_type < SDT_MEMRO || sdp->sd_p == 0)
-		return EINVAL;
-
-	base = ((uint64_t)sdp->sd_hibase << 32) | ((uint64_t)sdp->sd_lobase);
-	if (sdp->sd_gran == 1)
-		base <<= PAGE_SHIFT;
-
-	if (base >= VM_MAXUSER_ADDRESS)
-		return EINVAL;
 
 	return 0;
 }
