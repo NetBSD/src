@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.154.2.2 2015/11/15 17:51:52 bouyer Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.154.2.3 2017/02/05 06:07:36 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154.2.2 2015/11/15 17:51:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.154.2.3 2017/02/05 06:07:36 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -975,6 +975,9 @@ in_arpinput(struct mbuf *m)
 		break;
 	}
 
+	if (ah->ar_pln != sizeof(struct in_addr))
+		goto out;
+
 	memcpy(&isaddr, ar_spa(ah), sizeof (isaddr));
 	memcpy(&itaddr, ar_tpa(ah), sizeof (itaddr));
 
@@ -1005,7 +1008,10 @@ in_arpinput(struct mbuf *m)
 		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING))) {
 			index++;
+
+			/* XXX: ar_hln? */
 			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
+			    (ah->ar_hln >= 6) &&
 			    carp_iamatch(ia, ar_sha(ah),
 			    &count, index)) {
 				break;
@@ -1036,6 +1042,14 @@ in_arpinput(struct mbuf *m)
 		ifp = bridge_ia->ia_ifp;
 	}
 #endif
+
+	if (ah->ar_hln != ifp->if_addrlen) {
+		ARP_STATINC(ARP_STAT_RCVBADLEN);
+		log(LOG_WARNING,
+		    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
+		    in_fmtaddr(isaddr), ah->ar_hln, ifp->if_addrlen);
+		goto out;
+	}
 
 	if (ia == NULL) {
 		INADDR_TO_IA(isaddr, ia);
@@ -1131,14 +1145,7 @@ in_arpinput(struct mbuf *m)
 			    "arp from %s: new addr len %d, was %d\n",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
-		if (ifp->if_addrlen != ah->ar_hln) {
-			ARP_STATINC(ARP_STAT_RCVBADLEN);
-			log(LOG_WARNING,
-			    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
-			    in_fmtaddr(isaddr), ah->ar_hln,
-			    ifp->if_addrlen);
-			goto reply;
-		}
+
 #if NTOKEN > 0
 		/*
 		 * XXX uses m_data and assumes the complete answer including
@@ -1436,6 +1443,10 @@ in_revarpinput(struct mbuf *m)
 		goto wake;
 	tha = ar_tha(ah);
 	if (tha == NULL)
+		goto out;
+	if (ah->ar_pln != sizeof(struct in_addr))
+		goto out;
+	if (ah->ar_hln != ifp->if_sadl->sdl_alen)
 		goto out;
 	if (memcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
