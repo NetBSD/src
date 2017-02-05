@@ -1,4 +1,4 @@
-/*	$NetBSD: t_canfilter.c,v 1.1.2.2 2017/02/05 12:03:23 bouyer Exp $	*/
+/*	$NetBSD: t_canfilter.c,v 1.1.2.3 2017/02/05 12:18:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_canfilter.c,v 1.1.2.2 2017/02/05 12:03:23 bouyer Exp $");
+__RCSID("$NetBSD: t_canfilter.c,v 1.1.2.3 2017/02/05 12:18:20 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,25 +69,16 @@ ATF_TC_HEAD(canfilter_basic, tc)
 ATF_TC_BODY(canfilter_basic, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v, vlen;
+	int s, rv;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi;
 
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
+	s = can_socket_with_own();
 
 	can_bind(s, ifname);
-
-	v = 1;
-	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
 
 	/* set filter */
 #define MY_ID	1
@@ -204,7 +195,7 @@ ATF_TC_HEAD(canfilter_null, tc)
 ATF_TC_BODY(canfilter_null, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v, vlen;
+	int s, rv;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi[2];
 	int cfilen;
@@ -212,18 +203,8 @@ ATF_TC_BODY(canfilter_null, tc)
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-
+	s = can_socket_with_own();
 	can_bind(s, ifname);
-
-	v = 1;
-	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
 
 	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_FILTER,
 	    NULL,  0) < 0) {
@@ -287,25 +268,16 @@ ATF_TC_HEAD(canfilter_multiple, tc)
 ATF_TC_BODY(canfilter_multiple, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v, vlen;
+	int s, rv;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi[2];
 
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
+	s = can_socket_with_own();
 
 	can_bind(s, ifname);
-
-	v = 1;
-	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
 
 	/* set filter: accept MY_ID and MY_ID+1 */
 #define MY_ID	1
@@ -424,7 +396,7 @@ ATF_TC_HEAD(canfilter_get, tc)
 ATF_TC_BODY(canfilter_get, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v, vlen;
+	int s, rv;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;

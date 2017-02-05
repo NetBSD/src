@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.1.2.5 2017/02/05 12:03:23 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.1.2.6 2017/02/05 12:18:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.1.2.5 2017/02/05 12:03:23 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.1.2.6 2017/02/05 12:18:20 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -181,10 +181,7 @@ ATF_TC_BODY(canwritelo, tc)
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
+	s = can_socket_with_own();
 
 	can_bind(s, ifname);
 
@@ -197,20 +194,7 @@ ATF_TC_BODY(canwritelo, tc)
 	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_LOOPBACK) returns wrong len %d", vlen);
 	ATF_CHECK_MSG(v == 1, "CAN_RAW_LOOPBACK is not on by default");
 
-	/* check sockopt CAN_RAW_RECV_OWN_MSGS, and set it */
-	vlen = sizeof(v);
-	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, &vlen) < 0) {
-		atf_tc_fail_errno("getsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
-	ATF_CHECK_MSG(vlen == sizeof(v), "getsockopt(CAN_RAW_RECV_OWN_MSGS) returns wrong len %d", vlen);
-	ATF_CHECK_MSG(v == 0, "CAN_RAW_RECV_OWN_MSGS is not off by default");
-	v = 1;
-	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
-	/* check sockopt CAN_RAW_RECV_OWN_MSGS again */
+	/* check that sockopt CAN_RAW_RECV_OWN_MSGS is on */
 	vlen = sizeof(v);
 	if (rump_sys_getsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
 	    &v, &vlen) < 0) {
@@ -306,16 +290,7 @@ ATF_TC_BODY(cansendtolo, tc)
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-
-	v = 1;
-	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s = can_socket_with_own();
 
 	strcpy(ifr.ifr_name, ifname );
 	if ((rv = rump_sys_ioctl(s, SIOCGIFINDEX, &ifr)) < 0) {
@@ -378,15 +353,7 @@ ATF_TC_BODY(cansendtowrite, tc)
 	rump_init();
 	cancfg_rump_createif(ifname);
 
-	s = -1;
-	if ((s = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s = can_socket_with_own();
 
 	strcpy(ifr.ifr_name, ifname );
 	if ((rv = rump_sys_ioctl(s, SIOCGIFINDEX, &ifr)) < 0) {
@@ -459,22 +426,13 @@ ATF_TC_BODY(canreadlocal, tc)
 	cf_send.data[3] = 0xef;
 
 
-	s1 = -1;
 	if ((s1 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		atf_tc_fail_errno("CAN socket");
 	}
 
 	/* create a second socket */
 
-	s2 = -1;
-	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s2 = can_socket_with_own();
 
 	can_bind(s2, ifname);
 
@@ -541,15 +499,7 @@ ATF_TC_BODY(canrecvfrom, tc)
 
 	/* create a second socket */
 
-	s2 = -1;
-	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s2 = can_socket_with_own();
 
 	ifindex = can_bind(s2, ifname);
 
@@ -613,29 +563,13 @@ ATF_TC_BODY(canbindfilter, tc)
 	cf_send.data[3] = 0xef;
 
 
-	s1 = -1;
-	if ((s1 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s1, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s1 = can_socket_with_own();
 
 	can_bind(s1, ifname);
 
 	/* create a second socket */
 
-	s2 = -1;
-	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s2 = can_socket_with_own();
 
 	ifindex2 = can_bind(s2, ifname2);
 
@@ -700,15 +634,7 @@ ATF_TC_BODY(cannoloop, tc)
 	cf_send.data[3] = 0xef;
 
 
-	s1 = -1;
-	if ((s1 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s1, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s1 = can_socket_with_own();
 	v = 0;
 	if (rump_sys_setsockopt(s1, SOL_CAN_RAW, CAN_RAW_LOOPBACK,
 	    &v, sizeof(v)) < 0) {
@@ -726,16 +652,7 @@ ATF_TC_BODY(cannoloop, tc)
 	ifindex = can_bind(s1, ifname);
 
 	/* create a second socket */
-
-	s2 = -1;
-	if ((s2 = rump_sys_socket(AF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		atf_tc_fail_errno("CAN socket");
-	}
-	v = 1;
-	if (rump_sys_setsockopt(s2, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
-	    &v, sizeof(v)) < 0) {
-		atf_tc_fail_errno("setsockopt(CAN_RAW_RECV_OWN_MSGS)");
-	}
+	s2 = can_socket_with_own();
 
 	if (rump_sys_write(s1, &cf_send, sizeof(cf_send)) < 0) {
 		atf_tc_fail_errno("write");
