@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.247 2017/02/05 06:12:33 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2017/02/05 06:12:33 maya Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -806,17 +806,15 @@ sparse_dump_mark(void)
 		if (uvm_physseg_valid_p(upm) == false)
 			break;
 
-		const paddr_t startpfn = uvm_physseg_get_start(upm);
-		const paddr_t endpfn = uvm_physseg_get_end(upm);
-
-		KASSERT(startpfn != -1 && endpfn != -1);
-
 		/*
 		 * We assume that seg->start to seg->end are
 		 * uvm_page_physload()ed
 		 */
-		for (pfn = startpfn; pfn <= endpfn; pfn++) {
+		for (pfn = uvm_physseg_get_start(upm);
+		     pfn <= uvm_physseg_get_end(upm);
+		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
+
 			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
 			    (pg->uobject && pg->uobject->pgops)) {
 				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
