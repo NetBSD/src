@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.1.2.2 2017/02/05 10:56:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.1.2.2 2017/02/05 10:56:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -84,16 +85,27 @@ can_pcballoc(struct socket *so, void *v)
 {
 	struct canpcbtable *table = v;
 	struct canpcb *canp;
+	struct can_filter *can_init_filter;
 	int s;
+
+	can_init_filter = kmem_alloc(sizeof(struct can_filter), KM_NOSLEEP);
+	if (can_init_filter == NULL)
+		return (ENOBUFS);
+	can_init_filter->can_id = 0;
+	can_init_filter->can_mask = 0; /* accept all by default */
 
 	s = splnet();
 	canp = pool_get(&canpcb_pool, PR_NOWAIT);
 	splx(s);
-	if (canp == NULL)
+	if (canp == NULL) {
+		kmem_free(can_init_filter, sizeof(struct can_filter));
 		return (ENOBUFS);
+	}
 	memset(canp, 0, sizeof(*canp));
 	canp->canp_table = table;
 	canp->canp_socket = so;
+	canp->canp_filters = can_init_filter;
+	canp->canp_nfilters = 1;
 
 	so->so_pcb = canp;
 	s = splnet();
@@ -169,6 +181,7 @@ can_pcbdetach(void *v)
 	TAILQ_REMOVE(&canp->canp_table->canpt_queue, canp, canp_queue);
 	splx(s);
 	sofree(so); /* sofree drops the lock */
+	can_pcbsetfilter(canp, NULL, 0);
 	pool_put(&canpcb_pool, canp);
 	mutex_enter(softnet_lock);
 }
@@ -182,6 +195,32 @@ can_setsockaddr(struct canpcb *canp, struct sockaddr_can *scan)
 	scan->can_len = sizeof(*scan);
 	scan->can_ifindex = canp->canp_ifp->if_index;
 }
+
+int
+can_pcbsetfilter(struct canpcb *canp, struct can_filter *fp, int nfilters)
+{
+
+	struct can_filter *newf;
+
+	if (nfilters > 0) {
+		newf =
+		    kmem_alloc(sizeof(struct can_filter) * nfilters, KM_SLEEP);
+		if (newf == NULL)
+			return ENOMEM;
+		memcpy(newf, fp, sizeof(struct can_filter) * nfilters);
+	} else {
+		newf = NULL;
+	}
+	if (canp->canp_filters != NULL) {
+		kmem_free(canp->canp_filters,
+		    sizeof(struct can_filter) * canp->canp_nfilters);
+	}
+	canp->canp_filters = newf;
+	canp->canp_nfilters = nfilters;
+	return 0;
+}
+
+
 
 #if 0
 /*
@@ -280,4 +319,25 @@ can_pcbstate(struct canpcb *canp, int state)
 	}
 
 	canp->canp_state = state;
+}
+
+/*
+ * check mbuf against socket accept filter.
+ * returns true if mbuf is accepted, false otherwise
+ */
+bool
+can_pcbfilter(struct canpcb *canp, struct mbuf *m)
+{
+	int i;
+	struct can_frame *fmp;
+	struct can_filter *fip;
+
+	fmp = mtod(m, struct can_frame *);
+	for (i = 0; i < canp->canp_nfilters; i++) {
+		fip = &canp->canp_filters[i];
+		if ((fmp->can_id & fip->can_mask) == fip->can_id)
+			return true;
+	}
+	/* no match */
+	return false;
 }
