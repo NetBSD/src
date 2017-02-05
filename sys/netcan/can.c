@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.3 2017/02/05 10:56:12 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.4 2017/02/05 11:45:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.3 2017/02/05 10:56:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.4 2017/02/05 11:45:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,20 @@ can_output(struct mbuf *m, struct canpcb *canp)
 bad:
 	m_freem(m);
 	return (error);
+}
+
+/*
+ * cleanup mbuf tag, keeping the PACKET_TAG_SO tag
+ */
+void
+can_mbuf_tag_clean(struct mbuf *m)
+{
+	struct m_tag *sotag;
+
+	sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
+	m_tag_delete_nonpersistent(m);
+	if (sotag)
+		m_tag_prepend(m, sotag);
 }
 
 /*
