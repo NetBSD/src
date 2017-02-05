@@ -12,14 +12,16 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * UNIDIRECTIONAL LINK DETECTION (UDLD) as per RFC5171
- *
  * Original code by Carles Kishimoto <carles.kishimoto@gmail.com>
  */
 
+/* \summary: Cisco UniDirectional Link Detection (UDLD) protocol printer */
+
+/* specification: RFC 5171 */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-udld.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-udld.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H

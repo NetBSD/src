@@ -17,13 +17,13 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Format and print AppleTalk packets.
  */
+
+/* \summary: AppleTalk printer */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-atalk.c,v 1.6 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -82,7 +82,14 @@ u_int
 ltalk_if_print(netdissect_options *ndo,
                const struct pcap_pkthdr *h, const u_char *p)
 {
-	return (llap_print(ndo, p, h->caplen));
+	u_int hdrlen;
+
+	hdrlen = llap_print(ndo, p, h->len);
+	if (hdrlen == 0) {
+		/* Cut short by the snapshot length. */
+		return (h->caplen);
+	}
+	return (hdrlen);
 }
 
 /*
@@ -102,6 +109,10 @@ llap_print(netdissect_options *ndo,
 		ND_PRINT((ndo, " [|llap %u]", length));
 		return (length);
 	}
+	if (!ND_TTEST2(*bp, sizeof(*lp))) {
+		ND_PRINT((ndo, " [|llap]"));
+		return (0);	/* cut short by the snapshot length */
+	}
 	lp = (const struct LAP *)bp;
 	bp += sizeof(*lp);
 	length -= sizeof(*lp);
@@ -112,6 +123,10 @@ llap_print(netdissect_options *ndo,
 		if (length < ddpSSize) {
 			ND_PRINT((ndo, " [|sddp %u]", length));
 			return (length);
+		}
+		if (!ND_TTEST2(*bp, ddpSSize)) {
+			ND_PRINT((ndo, " [|sddp]"));
+			return (0);	/* cut short by the snapshot length */
 		}
 		sdp = (const struct atShortDDP *)bp;
 		ND_PRINT((ndo, "%s.%s",
@@ -128,6 +143,10 @@ llap_print(netdissect_options *ndo,
 		if (length < ddpSize) {
 			ND_PRINT((ndo, " [|ddp %u]", length));
 			return (length);
+		}
+		if (!ND_TTEST2(*bp, ddpSize)) {
+			ND_PRINT((ndo, " [|ddp]"));
+			return (0);	/* cut short by the snapshot length */
 		}
 		dp = (const struct atDDP *)bp;
 		snet = EXTRACT_16BITS(&dp->srcNet);
@@ -175,6 +194,10 @@ atalk_print(netdissect_options *ndo,
 		ND_PRINT((ndo, " [|ddp %u]", length));
 		return;
 	}
+	if (!ND_TTEST2(*bp, ddpSize)) {
+		ND_PRINT((ndo, " [|ddp]"));
+		return;
+	}
 	dp = (const struct atDDP *)bp;
 	snet = EXTRACT_16BITS(&dp->srcNet);
 	ND_PRINT((ndo, "%s.%s", ataddr_string(ndo, snet, dp->srcNode),
@@ -198,6 +221,15 @@ aarp_print(netdissect_options *ndo,
 
 	ND_PRINT((ndo, "aarp "));
 	ap = (const struct aarp *)bp;
+	if (!ND_TTEST(*ap)) {
+		/* Just bail if we don't have the whole chunk. */
+		ND_PRINT((ndo, " [|aarp]"));
+		return;
+	}
+	if (length < sizeof(*ap)) {
+		ND_PRINT((ndo, " [|aarp %u]", length));
+		return;
+	}
 	if (EXTRACT_16BITS(&ap->htype) == 1 &&
 	    EXTRACT_16BITS(&ap->ptype) == ETHERTYPE_ATALK &&
 	    ap->halen == 6 && ap->palen == 4 )

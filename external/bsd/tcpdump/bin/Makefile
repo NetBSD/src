@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2017/01/24 23:29:13 christos Exp $	
+#	$NetBSD: Makefile,v 1.18 2017/02/05 04:05:05 spz Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -16,7 +16,7 @@ PROG=	tcpdump
 MAN=	tcpdump.8 
 
 SRCS=	addrtoname.c cpack.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
-	setsignal.c smbutil.c tcpdump.c util.c checksum.c signature.c \
+	setsignal.c smbutil.c tcpdump.c netdissect.c checksum.c signature.c \
 	l2vpn.c nlpid.c ipproto.c af.c in_cksum.c pf_print_state.c \
 	util-print.c addrtostr.c ascii_strcasecmp.c print.c strtoaddr.c
 

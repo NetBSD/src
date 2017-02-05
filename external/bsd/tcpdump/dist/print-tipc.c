@@ -21,8 +21,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-tipc.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-tipc.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Transparent Inter-Process Communication (TIPC) protocol printer */
+
+/*
+ * specification:
+ *	http://tipc.sourceforge.net/doc/draft-spec-tipc-07.html
+ *	http://tipc.sourceforge.net/doc/tipc_message_formats.html
+ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -36,13 +44,6 @@ __RCSID("$NetBSD: print-tipc.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
 #include "extract.h"
 
 static const char tstr[] = "[|TIPC]";
-
-/*
- * Transparent Inter-Process Communication (TIPC) protocol.
- *
- *	http://tipc.sourceforge.net/doc/draft-spec-tipc-07.html
- *	http://tipc.sourceforge.net/doc/tipc_message_formats.html
- */
 
 #define TIPC_USER_LOW_IMPORTANCE	0
 #define TIPC_USER_MEDIUM_IMPORTANCE	1

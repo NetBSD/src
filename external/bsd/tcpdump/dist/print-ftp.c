@@ -13,13 +13,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ftp.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-ftp.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
 
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header";
-#endif
+/* \summary: File Transfer Protocol (FTP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

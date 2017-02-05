@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip.c,v 1.10 2017/01/25 08:20:15 martin Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.11 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: IP printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -333,6 +335,10 @@ again:
 	switch (ipds->nh) {
 
 	case IPPROTO_AH:
+		if (!ND_TTEST(*ipds->cp)) {
+			ND_PRINT((ndo, "[|AH]"));
+			break;
+		}
 		ipds->nh = *ipds->cp;
 		ipds->advance = ah_print(ndo, ipds->cp);
 		if (ipds->advance <= 0)
@@ -357,14 +363,14 @@ again:
 
 	case IPPROTO_IPCOMP:
 	{
-		int enh;
-		ipds->advance = ipcomp_print(ndo, ipds->cp, &enh);
-		if (ipds->advance <= 0)
-			break;
-		ipds->cp += ipds->advance;
-		ipds->len -= ipds->advance;
-		ipds->nh = enh & 0xff;
-		goto again;
+		ipcomp_print(ndo, ipds->cp);
+		/*
+		 * Either this has decompressed the payload and
+		 * printed it, in which case there's nothing more
+		 * to do, or it hasn't, in which case there's
+		 * nothing more to do.
+		 */
+		break;
 	}
 
 	case IPPROTO_SCTP:
@@ -533,13 +539,14 @@ ip_print(netdissect_options *ndo,
 
 	ipds->ip = (const struct ip *)bp;
 	ND_TCHECK(ipds->ip->ip_vhl);
-	if (IP_V(ipds->ip) != 4) { /* print version if != 4 */
+	if (IP_V(ipds->ip) != 4) { /* print version and fail if != 4 */
 	    if (IP_V(ipds->ip) == 6)
 	      ND_PRINT((ndo, "IP6, wrong link-layer encapsulation "));
 	    else
 	      ND_PRINT((ndo, "IP%u ", IP_V(ipds->ip)));
+	    return;
 	}
-	else if (!ndo->ndo_eflag)
+	if (!ndo->ndo_eflag)
 		ND_PRINT((ndo, "IP "));
 
 	ND_TCHECK(*ipds->ip);
@@ -587,17 +594,22 @@ ip_print(netdissect_options *ndo,
         if (ndo->ndo_vflag) {
             ND_PRINT((ndo, "(tos 0x%x", (int)ipds->ip->ip_tos));
             /* ECN bits */
-            if (ipds->ip->ip_tos & 0x03) {
-                switch (ipds->ip->ip_tos & 0x03) {
-                case 1:
-                    ND_PRINT((ndo, ",ECT(1)"));
-                    break;
-                case 2:
-                    ND_PRINT((ndo, ",ECT(0)"));
-                    break;
-                case 3:
-                    ND_PRINT((ndo, ",CE"));
-                }
+            switch (ipds->ip->ip_tos & 0x03) {
+
+            case 0:
+                break;
+
+            case 1:
+                ND_PRINT((ndo, ",ECT(1)"));
+                break;
+
+            case 2:
+                ND_PRINT((ndo, ",ECT(0)"));
+                break;
+
+            case 3:
+                ND_PRINT((ndo, ",CE"));
+                break;
             }
 
             if (ipds->ip->ip_ttl >= 1)
@@ -654,22 +666,24 @@ ip_print(netdissect_options *ndo,
 		}
 		ip_print_demux(ndo, ipds);
 	} else {
-	    /* Ultra quiet now means that all this stuff should be suppressed */
-	    if (ndo->ndo_qflag > 1) return;
+		/*
+		 * Ultra quiet now means that all this stuff should be
+		 * suppressed.
+		 */
+		if (ndo->ndo_qflag > 1)
+			return;
 
-	    /*
-	     * if this isn't the first frag, we're missing the
-	     * next level protocol header.  print the ip addr
-	     * and the protocol.
-	     */
-		if (ipds->off & 0x1fff) {
-			ND_PRINT((ndo, "%s > %s:", ipaddr_string(ndo, &ipds->ip->ip_src),
-			          ipaddr_string(ndo, &ipds->ip->ip_dst)));
-			if (!ndo->ndo_nflag && (proto = getprotobynumber(ipds->ip->ip_p)) != NULL)
-				ND_PRINT((ndo, " %s", proto->p_name));
-			else
-				ND_PRINT((ndo, " ip-proto-%d", ipds->ip->ip_p));
-		}
+		/*
+		 * This isn't the first frag, so we're missing the
+		 * next level protocol header.  print the ip addr
+		 * and the protocol.
+		 */
+		ND_PRINT((ndo, "%s > %s:", ipaddr_string(ndo, &ipds->ip->ip_src),
+		          ipaddr_string(ndo, &ipds->ip->ip_dst)));
+		if (!ndo->ndo_nflag && (proto = getprotobynumber(ipds->ip->ip_p)) != NULL)
+			ND_PRINT((ndo, " %s", proto->p_name));
+		else
+			ND_PRINT((ndo, " ip-proto-%d", ipds->ip->ip_p));
 	}
 	return;
 
@@ -681,24 +695,28 @@ trunc:
 void
 ipN_print(netdissect_options *ndo, register const u_char *bp, register u_int length)
 {
-	struct ip hdr;
-
-	if (length < 4) {
+	if (length < 1) {
 		ND_PRINT((ndo, "truncated-ip %d", length));
 		return;
 	}
-	memcpy (&hdr, bp, 4);
-	switch (IP_V(&hdr)) {
-	case 4:
+
+	ND_TCHECK(*bp);
+	switch (*bp & 0xF0) {
+	case 0x40:
 		ip_print (ndo, bp, length);
-		return;
-	case 6:
+		break;
+	case 0x60:
 		ip6_print (ndo, bp, length);
-		return;
+		break;
 	default:
-		ND_PRINT((ndo, "unknown ip %d", IP_V(&hdr)));
-		return;
+		ND_PRINT((ndo, "unknown ip %d", (*bp & 0xF0) >> 4));
+		break;
 	}
+	return;
+
+trunc:
+	ND_PRINT((ndo, "%s", tstr));
+	return;
 }
 
 /*
