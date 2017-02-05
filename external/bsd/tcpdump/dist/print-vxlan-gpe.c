@@ -23,8 +23,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vxlan-gpe.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-vxlan-gpe.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Generic Protocol Extension for VXLAN (VXLAN GPE) printer */
+
+/* specification: draft-ietf-nvo3-vxlan-gpe-01 */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -93,7 +97,7 @@ vxlan_gpe_print(netdissect_options *ndo, const u_char *bp, u_int len)
         ip6_print(ndo, bp, len - 8);
         break;
     case 0x3:
-        ether_print(ndo, bp, len - 8, len - 8, NULL, NULL);
+        ether_print(ndo, bp, len - 8, ndo->ndo_snapend - bp, NULL, NULL);
         break;
     case 0x4:
         nsh_print(ndo, bp, len - 8);
