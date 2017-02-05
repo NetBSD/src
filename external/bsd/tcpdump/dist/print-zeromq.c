@@ -1,7 +1,4 @@
 /*
- * This file implements decoding of ZeroMQ network protocol(s).
- *
- *
  * Copyright (c) 2013 The TCPDUMP project
  * All rights reserved.
  *
@@ -27,6 +24,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* \summary: ZeroMQ Message Transport Protocol (ZMTP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -126,8 +125,15 @@ zmtp1_print_frame(netdissect_options *ndo, const u_char *cp, const u_char *ep)
 		}
 	}
 
-	ND_TCHECK2(*cp, header_len + body_len_declared); /* Next frame within the buffer ? */
-	return cp + header_len + body_len_declared;
+	/*
+	 * Do not advance cp by the sum of header_len and body_len_declared
+	 * before each offset has successfully passed ND_TCHECK2() as the
+	 * sum can roll over (9 + 0xfffffffffffffff7 = 0) and cause an
+	 * infinite loop.
+	 */
+	cp += header_len;
+	ND_TCHECK2(*cp, body_len_declared); /* Next frame within the buffer ? */
+	return cp + body_len_declared;
 
 trunc:
 	ND_PRINT((ndo, "%s", tstr));

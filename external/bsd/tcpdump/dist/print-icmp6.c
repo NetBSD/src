@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: IPv6 Internet Control Message Protocol (ICMPv6) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -282,13 +284,13 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_DNSSL			31
 
 struct nd_opt_prefix_info {	/* prefix information */
-	uint8_t		nd_opt_pi_type;
-	uint8_t		nd_opt_pi_len;
-	uint8_t		nd_opt_pi_prefix_len;
-	uint8_t		nd_opt_pi_flags_reserved;
-	uint8_t		nd_opt_pi_valid_time[4];
-	uint8_t		nd_opt_pi_preferred_time[4];
-	uint8_t		nd_opt_pi_reserved2[4];
+	nd_uint8_t		nd_opt_pi_type;
+	nd_uint8_t		nd_opt_pi_len;
+	nd_uint8_t		nd_opt_pi_prefix_len;
+	nd_uint8_t		nd_opt_pi_flags_reserved;
+	nd_uint32_t		nd_opt_pi_valid_time;
+	nd_uint32_t		nd_opt_pi_preferred_time;
+	nd_uint32_t		nd_opt_pi_reserved2;
 	struct in6_addr	nd_opt_pi_prefix;
 };
 
@@ -627,7 +629,7 @@ static int icmp6_cksum(netdissect_options *ndo, const struct ip6_hdr *ip6,
 				IPPROTO_ICMPV6);
 }
 
-const struct tok rpl_mop_values[] = {
+static const struct tok rpl_mop_values[] = {
         { RPL_DIO_NONSTORING,         "nonstoring"},
         { RPL_DIO_STORING,            "storing"},
         { RPL_DIO_NONSTORING_MULTICAST, "nonstoring-multicast"},
@@ -635,7 +637,7 @@ const struct tok rpl_mop_values[] = {
         { 0, NULL},
 };
 
-const struct tok rpl_subopt_values[] = {
+static const struct tok rpl_subopt_values[] = {
         { RPL_OPT_PAD0, "pad0"},
         { RPL_OPT_PADN, "padN"},
         { RPL_DIO_METRICS, "metrics"},
@@ -647,12 +649,6 @@ const struct tok rpl_subopt_values[] = {
         { RPL_DAO_RPLTARGET_DESC, "rpltargetdesc"},
         { 0, NULL},
 };
-
-static void
-rpl_format_dagid(char dagid_str[65], const u_char *dagid)
-{
-        inet_ntop(AF_INET6, dagid, dagid_str, 64);
-}
 
 static void
 rpl_dio_printopt(netdissect_options *ndo,

@@ -20,6 +20,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: IEEE 802.11 printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -2037,7 +2039,7 @@ ieee802_11_print(netdissect_options *ndo,
 {
 	uint16_t fc;
 	u_int caplen, hdrlen, meshdrlen;
-	const uint8_t *src, *dst;
+	struct lladdr_info src, dst;
 	int llc_hdrlen;
 
 	caplen = orig_caplen;
@@ -2089,10 +2091,12 @@ ieee802_11_print(netdissect_options *ndo,
 	caplen -= hdrlen;
 	p += hdrlen;
 
+	src.addr_string = etheraddr_string;
+	dst.addr_string = etheraddr_string;
 	switch (FC_TYPE(fc)) {
 	case T_MGMT:
-		get_mgmt_src_dst_mac(p - hdrlen, &src, &dst);
-		if (!mgmt_body_print(ndo, fc, src, p, length)) {
+		get_mgmt_src_dst_mac(p - hdrlen, &src.addr, &dst.addr);
+		if (!mgmt_body_print(ndo, fc, src.addr, p, length)) {
 			ND_PRINT((ndo, "%s", tstr));
 			return hdrlen;
 		}
@@ -2114,8 +2118,8 @@ ieee802_11_print(netdissect_options *ndo,
 				return hdrlen;
 			}
 		} else {
-			get_data_src_dst_mac(fc, p - hdrlen, &src, &dst);
-			llc_hdrlen = llc_print(ndo, p, length, caplen, src, dst);
+			get_data_src_dst_mac(fc, p - hdrlen, &src.addr, &dst.addr);
+			llc_hdrlen = llc_print(ndo, p, length, caplen, &src, &dst);
 			if (llc_hdrlen < 0) {
 				/*
 				 * Some kinds of LLC packet we cannot
@@ -3111,6 +3115,9 @@ ieee802_11_radio_print(netdissect_options *ndo,
 
 	len = EXTRACT_LE_16BITS(&hdr->it_len);
 
+	/*
+	 * If we don't have the entire radiotap header, just give up.
+	 */
 	if (caplen < len) {
 		ND_PRINT((ndo, "%s", tstr));
 		return caplen;
@@ -3118,13 +3125,13 @@ ieee802_11_radio_print(netdissect_options *ndo,
 	cpack_init(&cpacker, (const uint8_t *)hdr, len); /* align against header start */
 	cpack_advance(&cpacker, sizeof(*hdr)); /* includes the 1st bitmap */
 	for (last_presentp = &hdr->it_present;
-	     IS_EXTENDED(last_presentp) &&
-	     (const u_char*)(last_presentp + 1) <= p + len;
+	     (const u_char*)(last_presentp + 1) <= p + len &&
+	     IS_EXTENDED(last_presentp);
 	     last_presentp++)
 	  cpack_advance(&cpacker, sizeof(hdr->it_present)); /* more bitmaps */
 
 	/* are there more bitmap extensions than bytes in header? */
-	if (IS_EXTENDED(last_presentp)) {
+	if ((const u_char*)(last_presentp + 1) > p + len) {
 		ND_PRINT((ndo, "%s", tstr));
 		return caplen;
 	}

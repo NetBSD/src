@@ -15,6 +15,8 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+/* \summary: DLT_JUNIPER_* printers */
+
 #ifndef lint
 #else
 __RCSID("NetBSD: print-juniper.c,v 1.3 2007/07/25 06:31:32 dogcow Exp ");
@@ -25,6 +27,8 @@ __RCSID("NetBSD: print-juniper.c,v 1.3 2007/07/25 06:31:32 dogcow Exp ");
 #endif
 
 #include <netdissect-stdinc.h>
+
+#include <string.h>
 
 #include "netdissect.h"
 #include "addrtoname.h"
@@ -88,7 +92,7 @@ enum {
 };
 
 /* 1 byte type and 1-byte length */
-#define JUNIPER_EXT_TLV_OVERHEAD 2
+#define JUNIPER_EXT_TLV_OVERHEAD 2U
 
 static const struct tok jnx_ext_tlv_values[] = {
     { JUNIPER_EXT_TLV_IFD_IDX, "Device Interface Index" },
@@ -742,7 +746,8 @@ juniper_pppoe_atm_print(netdissect_options *ndo,
         if (ethertype_print(ndo, extracted_ethertype,
                               p+ETHERTYPE_LEN,
                               l2info.length-ETHERTYPE_LEN,
-                              l2info.caplen-ETHERTYPE_LEN) == 0)
+                              l2info.caplen-ETHERTYPE_LEN,
+                              NULL, NULL) == 0)
             /* ether_type not known, probably it wasn't one */
             ND_PRINT((ndo, "unknown ethertype 0x%04x", extracted_ethertype));
 
@@ -817,6 +822,7 @@ juniper_mfr_print(netdissect_options *ndo,
 {
         struct juniper_l2info_t l2info;
 
+        memset(&l2info, 0, sizeof(l2info));
         l2info.pictype = DLT_JUNIPER_MFR;
         if (juniper_parse_header(ndo, p, h, &l2info) == 0)
             return l2info.header_len;
@@ -1197,9 +1203,11 @@ juniper_parse_header(netdissect_options *ndo,
             tlv_len = *(tptr++);
             tlv_value = 0;
 
-            /* sanity check */
+            /* sanity checks */
             if (tlv_type == 0 || tlv_len == 0)
                 break;
+            if (tlv_len+JUNIPER_EXT_TLV_OVERHEAD > jnx_ext_len)
+                goto trunc;
 
             if (ndo->ndo_vflag > 1)
                 ND_PRINT((ndo, "\n\t  %s Extension TLV #%u, length %u, value ",

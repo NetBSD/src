@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: IPv6 printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -291,15 +293,19 @@ ip6_print(netdissect_options *ndo, const u_char *bp, u_int length)
 		switch (nh) {
 		case IPPROTO_HOPOPTS:
 			advance = hbhopt_print(ndo, cp);
+			if (advance < 0)
+				return;
 			nh = *cp;
 			break;
 		case IPPROTO_DSTOPTS:
 			advance = dstopt_print(ndo, cp);
+			if (advance < 0)
+				return;
 			nh = *cp;
 			break;
 		case IPPROTO_FRAGMENT:
 			advance = frag6_print(ndo, cp, (const u_char *)ip6);
-			if (ndo->ndo_snapend <= cp + advance)
+			if (advance < 0 || ndo->ndo_snapend <= cp + advance)
 				return;
 			nh = *cp;
 			fragmented = 1;
@@ -351,9 +357,14 @@ ip6_print(netdissect_options *ndo, const u_char *bp, u_int length)
 		    }
 		case IPPROTO_IPCOMP:
 		    {
-			int enh;
-			advance = ipcomp_print(ndo, cp, &enh);
-			nh = enh & 0xff;
+			ipcomp_print(ndo, cp);
+			/*
+			 * Either this has decompressed the payload and
+			 * printed it, in which case there's nothing more
+			 * to do, or it hasn't, in which case there's
+			 * nothing more to do.
+			 */
+			advance = -1;
 			break;
 		    }
 

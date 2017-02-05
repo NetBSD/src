@@ -23,6 +23,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: TCP printer */
+
 #ifndef lint
 #else
 __RCSID("NetBSD: print-tcp.c,v 1.8 2007/07/24 11:53:48 drochner Exp ");
@@ -125,8 +127,9 @@ static const struct tok tcp_option_values[] = {
         { TCPOPT_CCNEW, "ccnew" },
         { TCPOPT_CCECHO, "" },
         { TCPOPT_SIGNATURE, "md5" },
-        { TCPOPT_AUTH, "enhanced auth" },
+        { TCPOPT_SCPS, "scps" },
         { TCPOPT_UTO, "uto" },
+        { TCPOPT_TCPAO, "tcp-ao" },
         { TCPOPT_MPTCP, "mptcp" },
         { TCPOPT_FASTOPEN, "tfo" },
         { TCPOPT_EXPERIMENT2, "exp" },
@@ -187,8 +190,6 @@ tcp_print(netdissect_options *ndo,
         sport = EXTRACT_16BITS(&tp->th_sport);
         dport = EXTRACT_16BITS(&tp->th_dport);
 
-        hlen = TH_OFF(tp) * 4;
-
         if (ip6) {
                 if (ip6->ip6_nxt == IPPROTO_TCP) {
                         ND_PRINT((ndo, "%s.%s > %s.%s: ",
@@ -213,13 +214,15 @@ tcp_print(netdissect_options *ndo,
                 }
         }
 
+        ND_TCHECK(*tp);
+
+        hlen = TH_OFF(tp) * 4;
+
         if (hlen < sizeof(*tp)) {
                 ND_PRINT((ndo, " tcp %d [bad hdr length %u - too short, < %lu]",
                              length - hlen, hlen, (unsigned long)sizeof(*tp)));
                 return;
         }
-
-        ND_TCHECK(*tp);
 
         seq = EXTRACT_32BITS(&tp->th_seq);
         ack = EXTRACT_32BITS(&tp->th_ack);
@@ -462,7 +465,7 @@ tcp_print(netdissect_options *ndo,
                         case TCPOPT_SACK:
                                 datalen = len - 2;
                                 if (datalen % 8 != 0) {
-                                        ND_PRINT((ndo, "invalid sack"));
+                                        ND_PRINT((ndo, " invalid sack"));
                                 } else {
                                         uint32_t s, e;
 
@@ -510,6 +513,7 @@ tcp_print(netdissect_options *ndo,
                         case TCPOPT_SIGNATURE:
                                 datalen = TCP_SIGLEN;
                                 LENCHECK(datalen);
+                                ND_PRINT((ndo, " "));
 #ifdef HAVE_LIBCRYPTO
                                 switch (tcp_verify_signature(ndo, ip, tp,
                                                              bp + TH_OFF(tp) * 4, length, cp)) {
@@ -534,15 +538,35 @@ tcp_print(netdissect_options *ndo,
 #endif
                                 break;
 
-                        case TCPOPT_AUTH:
-                                ND_PRINT((ndo, "keyid %d", *cp++));
-                                datalen = len - 3;
-                                for (i = 0; i < datalen; ++i) {
-                                        LENCHECK(i);
-                                        ND_PRINT((ndo, "%02x", cp[i]));
-                                }
+                        case TCPOPT_SCPS:
+                                datalen = 2;
+                                LENCHECK(datalen);
+                                ND_PRINT((ndo, " cap %02x id %u", cp[0], cp[1]));
                                 break;
 
+                        case TCPOPT_TCPAO:
+                                datalen = len - 2;
+                                /* RFC 5925 Section 2.2:
+                                 * "The Length value MUST be greater than or equal to 4."
+                                 * (This includes the Kind and Length fields already processed
+                                 * at this point.)
+                                 */
+                                if (datalen < 2) {
+                                        ND_PRINT((ndo, " invalid"));
+                                } else {
+                                        LENCHECK(1);
+                                        ND_PRINT((ndo, " keyid %u", cp[0]));
+                                        LENCHECK(2);
+                                        ND_PRINT((ndo, " rnextkeyid %u", cp[1]));
+                                        if (datalen > 2) {
+                                                ND_PRINT((ndo, " mac 0x"));
+                                                for (i = 2; i < datalen; i++) {
+                                                        LENCHECK(i + 1);
+                                                        ND_PRINT((ndo, "%02x", cp[i]));
+                                                }
+                                        }
+                                }
+                                break;
 
                         case TCPOPT_EOL:
                         case TCPOPT_NOP:
@@ -557,7 +581,7 @@ tcp_print(netdissect_options *ndo,
                                 datalen = 2;
                                 LENCHECK(datalen);
                                 utoval = EXTRACT_16BITS(cp);
-                                ND_PRINT((ndo, "0x%x", utoval));
+                                ND_PRINT((ndo, " 0x%x", utoval));
                                 if (utoval & 0x0001)
                                         utoval = (utoval >> 1) * 60;
                                 else
@@ -575,6 +599,7 @@ tcp_print(netdissect_options *ndo,
                         case TCPOPT_FASTOPEN:
                                 datalen = len - 2;
                                 LENCHECK(datalen);
+                                ND_PRINT((ndo, " "));
                                 print_tcp_fastopen_option(ndo, cp, datalen, FALSE);
                                 break;
 
@@ -605,7 +630,7 @@ tcp_print(netdissect_options *ndo,
                                 if (datalen)
                                         ND_PRINT((ndo, " 0x"));
                                 for (i = 0; i < datalen; ++i) {
-                                        LENCHECK(i);
+                                        LENCHECK(i + 1);
                                         ND_PRINT((ndo, "%02x", cp[i]));
                                 }
                                 break;

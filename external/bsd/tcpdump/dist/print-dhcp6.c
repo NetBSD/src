@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* \summary: IPv6 DHCP printer */
+
 /*
  * RFC3315: DHCPv6
  * supported DHCPv6 options:
@@ -102,8 +105,8 @@ static const struct tok dh6_msgtype_str[] = {
 /* DHCP6 base packet format */
 struct dhcp6 {
 	union {
-		uint8_t m;
-		uint32_t x;
+		nd_uint8_t m;
+		nd_uint32_t x;
 	} dh6_msgtypexid;
 	/* options follow */
 };
@@ -113,10 +116,10 @@ struct dhcp6 {
 
 /* DHCPv6 relay messages */
 struct dhcp6_relay {
-	uint8_t dh6relay_msgtype;
-	uint8_t dh6relay_hcnt;
-	uint8_t dh6relay_linkaddr[16];	/* XXX: badly aligned */
-	uint8_t dh6relay_peeraddr[16];
+	nd_uint8_t dh6relay_msgtype;
+	nd_uint8_t dh6relay_hcnt;
+	nd_uint8_t dh6relay_linkaddr[16];	/* XXX: badly aligned */
+	nd_uint8_t dh6relay_peeraddr[16];
 	/* options follow */
 };
 
@@ -191,6 +194,7 @@ struct dhcp6_relay {
 #  define DH6OPT_NTP_SUBOPTION_MC_ADDR 2
 #  define DH6OPT_NTP_SUBOPTION_SRV_FQDN 3
 #define DH6OPT_AFTR_NAME 64
+#define DH6OPT_MUDURL 112
 
 static const struct tok dh6opt_str[] = {
 	{ DH6OPT_CLIENTID,           "client-ID"            },
@@ -241,6 +245,7 @@ static const struct tok dh6opt_str[] = {
 	{ DH6OPT_LQ_CLIENT_LINK,     "LQ-client-link"       },
 	{ DH6OPT_NTP_SERVER,         "NTP-server"           },
 	{ DH6OPT_AFTR_NAME,          "AFTR-Name"            },
+	{ DH6OPT_MUDURL,             "MUD-URL"              },
 	{ 0, NULL }
 };
 
@@ -260,8 +265,8 @@ static const struct tok dh6opt_stcode_str[] = {
 };
 
 struct dhcp6opt {
-	uint16_t dh6opt_type;
-	uint16_t dh6opt_len;
+	nd_uint16_t dh6opt_type;
+	nd_uint16_t dh6opt_len;
 	/* type-dependent data follows */
 };
 
@@ -299,6 +304,7 @@ dhcp6opt_print(netdissect_options *ndo,
 			goto trunc;
 		opttype = EXTRACT_16BITS(&dh6o->dh6opt_type);
 		ND_PRINT((ndo, " (%s", tok2str(dh6opt_str, "opt_%u", opttype)));
+		ND_TCHECK2(*(cp + sizeof(*dh6o)), optlen);
 		switch (opttype) {
 		case DH6OPT_CLIENTID:
 		case DH6OPT_SERVERID:
@@ -726,7 +732,7 @@ dhcp6opt_print(netdissect_options *ndo,
 			while (remain_len && *tp) {
 				label_len =  *tp++;
 				if (label_len < remain_len - 1) {
-					ND_PRINT((ndo, "%.*s", label_len, tp));
+					(void)fn_printn(ndo, tp, label_len, NULL);
 					tp += label_len;
 					remain_len -= (label_len + 1);
 					if(*tp) ND_PRINT((ndo, "."));
@@ -737,6 +743,19 @@ dhcp6opt_print(netdissect_options *ndo,
 			}
 			ND_PRINT((ndo, ")"));
 			break;
+		case DH6OPT_NEW_POSIX_TIMEZONE: /* all three of these options */
+		case DH6OPT_NEW_TZDB_TIMEZONE:	/* are encoded similarly */
+		case DH6OPT_MUDURL:		/* although GMT might not work */
+		        if (optlen < 5) {
+				ND_PRINT((ndo, " ?)"));
+				break;
+			}
+			tp = (const u_char *)(dh6o + 1);
+			ND_PRINT((ndo, "="));
+			(void)fn_printn(ndo, tp, (u_int)optlen, NULL);
+			ND_PRINT((ndo, ")"));
+			break;
+
 		default:
 			ND_PRINT((ndo, ")"));
 			break;

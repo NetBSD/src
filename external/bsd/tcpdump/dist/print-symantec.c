@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: Symantec Enterprise Firewall printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -99,7 +101,7 @@ symantec_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_
 
 		if (!ndo->ndo_suppress_default_print)
 			ND_DEFAULTPRINT(p, caplen);
-	} else if (ethertype_print(ndo, ether_type, p, length, caplen) == 0) {
+	} else if (ethertype_print(ndo, ether_type, p, length, caplen, NULL, NULL) == 0) {
 		/* ether_type not known, print raw packet */
 		if (!ndo->ndo_eflag)
 			symantec_hdr_print(ndo, (const u_char *)sp, length + sizeof (struct symantec_header));

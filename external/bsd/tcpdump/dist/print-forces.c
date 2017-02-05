@@ -14,6 +14,10 @@
  *
  */
 
+/* \summary: Forwarding and Control Element Separation (ForCES) Protocol printer */
+
+/* specification: RFC 5810 */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -25,9 +29,6 @@
 
 static const char tstr[] = "[|forces]";
 
-/*
- * RFC5810: Forwarding and Control Element Separation (ForCES) Protocol
- */
 #define	ForCES_VERS	1
 #define	ForCES_HDRL	24
 #define	ForCES_ALNL	4U
@@ -152,17 +153,17 @@ static const struct tok ForCES_TPs[] = {
  * Structure of forces header, naked of TLVs.
  */
 struct forcesh {
-	uint8_t fm_vrsvd;	/* version and reserved */
+	nd_uint8_t fm_vrsvd;	/* version and reserved */
 #define ForCES_V(forcesh)	((forcesh)->fm_vrsvd >> 4)
-	uint8_t fm_tom;	/* type of message */
-	uint16_t fm_len;	/* total length * 4 bytes */
+	nd_uint8_t fm_tom;	/* type of message */
+	nd_uint16_t fm_len;	/* total length * 4 bytes */
 #define ForCES_BLN(forcesh)	((uint32_t)(EXTRACT_16BITS(&(forcesh)->fm_len) << 2))
-	uint32_t fm_sid;	/* Source ID */
+	nd_uint32_t fm_sid;	/* Source ID */
 #define ForCES_SID(forcesh)	EXTRACT_32BITS(&(forcesh)->fm_sid)
-	uint32_t fm_did;	/* Destination ID */
+	nd_uint32_t fm_did;	/* Destination ID */
 #define ForCES_DID(forcesh)	EXTRACT_32BITS(&(forcesh)->fm_did)
-	uint8_t fm_cor[8];	/* correlator */
-	uint32_t fm_flags;	/* flags */
+	nd_uint8_t fm_cor[8];	/* correlator */
+	nd_uint32_t fm_flags;	/* flags */
 #define ForCES_ACK(forcesh)	((EXTRACT_32BITS(&(forcesh)->fm_flags)&0xC0000000) >> 30)
 #define ForCES_PRI(forcesh)	((EXTRACT_32BITS(&(forcesh)->fm_flags)&0x38000000) >> 27)
 #define ForCES_RS1(forcesh)	((EXTRACT_32BITS(&(forcesh)->fm_flags)&0x07000000) >> 24)
@@ -242,8 +243,8 @@ static int invoptlv_print(netdissect_options *, register const u_char * pptr, re
 
 #define OP_MIN_SIZ 8
 struct pathdata_h {
-	uint16_t pflags;
-	uint16_t pIDcnt;
+	nd_uint16_t pflags;
+	nd_uint16_t pIDcnt;
 };
 
 #define	B_FULLD		0x1
@@ -287,7 +288,7 @@ static inline const struct optlv_h *get_forces_optlv_h(uint16_t opt)
 #define IND_CHR ' '
 #define IND_PREF '\n'
 #define IND_SUF 0x0
-char ind_buf[IND_SIZE];
+static char ind_buf[IND_SIZE];
 
 static inline char *indent_pr(int indent, int nlpref)
 {
@@ -375,13 +376,13 @@ static inline int ttlv_valid(uint16_t ttlv)
 }
 
 struct forces_ilv {
-	uint32_t type;
-	uint32_t length;
+	nd_uint32_t type;
+	nd_uint32_t length;
 };
 
 struct forces_tlv {
-	uint16_t type;
-	uint16_t length;
+	nd_uint16_t type;
+	nd_uint16_t length;
 };
 
 #define F_ALN_LEN(len) ( ((len)+ForCES_ALNL-1) & ~(ForCES_ALNL-1) )
@@ -451,8 +452,8 @@ static int asttlv_print(netdissect_options *, register const u_char * pptr, regi
 			uint16_t op_msk, int indent);
 
 struct forces_lfbsh {
-	uint32_t class;
-	uint32_t instance;
+	nd_uint32_t class;
+	nd_uint32_t instance;
 };
 
 #define ASSNS_OPS (B_OP_REPORT)
@@ -545,9 +546,9 @@ chk_op_type(netdissect_options *ndo,
 #define F_TABAPPEND 4
 
 struct res_val {
-	uint8_t result;
-	uint8_t resv1;
-	uint16_t resv2;
+	nd_uint8_t result;
+	nd_uint8_t resv1;
+	nd_uint16_t resv2;
 };
 
 static int prestlv_print(netdissect_options *, register const u_char * pptr, register u_int len,
@@ -1414,7 +1415,7 @@ trunc:
 static int
 print_reddata(netdissect_options *ndo,
               register const u_char * pptr, register u_int len,
-              uint16_t op_msk _U_, int indent _U_)
+              uint16_t op_msk _U_, int indent)
 {
 	u_int dlen;
 	char *ib = indent_pr(indent, 0);

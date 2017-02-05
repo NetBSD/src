@@ -119,6 +119,56 @@ fn_print(netdissect_options *ndo,
 }
 
 /*
+ * Print out a null-terminated filename (or other ascii string) from
+ * a fixed-length buffer.
+ * If ep is NULL, assume no truncation check is needed.
+ * Return the number of bytes of string processed, including the
+ * terminating null, if not truncated.  Return 0 if truncated.
+ */
+u_int
+fn_printztn(netdissect_options *ndo,
+         register const u_char *s, register u_int n, register const u_char *ep)
+{
+	register u_int bytes;
+	register u_char c;
+
+	bytes = 0;
+	for (;;) {
+		if (n == 0 || (ep != NULL && s >= ep)) {
+			/*
+			 * Truncated.  This includes "no null before we
+			 * got to the end of the fixed-length buffer".
+			 *
+			 * XXX - BOOTP says "null-terminated", which
+			 * means the maximum length of the string, in
+			 * bytes, is 1 less than the size of the buffer,
+			 * as there must always be a terminating null.
+			 */
+			bytes = 0;
+			break;
+		}
+
+		c = *s++;
+		bytes++;
+		n--;
+		if (c == '\0') {
+			/* End of string */
+			break;
+		}
+		if (!ND_ISASCII(c)) {
+			c = ND_TOASCII(c);
+			ND_PRINT((ndo, "M-"));
+		}
+		if (!ND_ISPRINT(c)) {
+			c ^= 0x40;	/* DEL to ?, others to alpha */
+			ND_PRINT((ndo, "^"));
+		}
+		ND_PRINT((ndo, "%c", c));
+	}
+	return(bytes);
+}
+
+/*
  * Print out a counted filename (or other ascii string).
  * If ep is NULL, assume no truncation check is needed.
  * Return true if truncated.
@@ -337,26 +387,22 @@ ts_print(netdissect_options *ndo,
 }
 
 /*
- * Print a relative number of seconds (e.g. hold time, prune timer)
+ * Print an unsigned relative number of seconds (e.g. hold time, prune timer)
  * in the form 5m1s.  This does no truncation, so 32230861 seconds
  * is represented as 1y1w1d1h1m1s.
  */
 void
-relts_print(netdissect_options *ndo,
-            int secs)
+unsigned_relts_print(netdissect_options *ndo,
+                     uint32_t secs)
 {
 	static const char *lengths[] = {"y", "w", "d", "h", "m", "s"};
-	static const int seconds[] = {31536000, 604800, 86400, 3600, 60, 1};
+	static const u_int seconds[] = {31536000, 604800, 86400, 3600, 60, 1};
 	const char **l = lengths;
-	const int *s = seconds;
+	const u_int *s = seconds;
 
 	if (secs == 0) {
 		ND_PRINT((ndo, "0s"));
 		return;
-	}
-	if (secs < 0) {
-		ND_PRINT((ndo, "-"));
-		secs = -secs;
 	}
 	while (secs > 0) {
 		if (secs >= *s) {
@@ -366,6 +412,42 @@ relts_print(netdissect_options *ndo,
 		s++;
 		l++;
 	}
+}
+
+/*
+ * Print a signed relative number of seconds (e.g. hold time, prune timer)
+ * in the form 5m1s.  This does no truncation, so 32230861 seconds
+ * is represented as 1y1w1d1h1m1s.
+ */
+void
+signed_relts_print(netdissect_options *ndo,
+                   int32_t secs)
+{
+	if (secs < 0) {
+		ND_PRINT((ndo, "-"));
+		if (secs == INT32_MIN) {
+			/*
+			 * -2^31; you can't fit its absolute value into
+			 * a 32-bit signed integer.
+			 *
+			 * Just directly pass said absolute value to
+			 * unsigned_relts_print() directly.
+			 *
+			 * (XXX - does ISO C guarantee that -(-2^n),
+			 * when calculated and cast to an n-bit unsigned
+			 * integer type, will have the value 2^n?)
+			 */
+			unsigned_relts_print(ndo, 2147483648U);
+		} else {
+			/*
+			 * We now know -secs will fit into an int32_t;
+			 * negate it and pass that to unsigned_relts_print().
+			 */
+			unsigned_relts_print(ndo, -secs);
+		}
+		return;
+	}
+	unsigned_relts_print(ndo, secs);
 }
 
 /*
@@ -783,7 +865,7 @@ txtproto_print(netdissect_options *ndo, const u_char *pptr, u_int len,
 
 	/* Capitalize the protocol name */
 	for (pnp = protoname; *pnp != '\0'; pnp++)
-		ND_PRINT((ndo, "%c", toupper(*pnp)));
+		ND_PRINT((ndo, "%c", toupper((u_char)*pnp)));
 
 	if (is_reqresp) {
 		/*

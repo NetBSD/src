@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: Domain Name System (DNS) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -395,7 +397,7 @@ ns_rprint(netdissect_options *ndo,
 	} else if (ndo->ndo_vflag > 2) {
 		/* print ttl */
 		ND_PRINT((ndo, " ["));
-		relts_print(ndo, EXTRACT_32BITS(cp));
+		unsigned_relts_print(ndo, EXTRACT_32BITS(cp));
 		ND_PRINT((ndo, "]"));
 		cp += 4;
 	} else {

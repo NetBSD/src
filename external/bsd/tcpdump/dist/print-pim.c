@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: Protocol Independent Multicast (PIM) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -153,7 +155,7 @@ pimv1_join_prune_print(netdissect_options *ndo,
 		hold = EXTRACT_16BITS(&bp[6]);
 		if (hold != 180) {
 			ND_PRINT((ndo, "Hold "));
-			relts_print(ndo, hold);
+			unsigned_relts_print(ndo, hold);
 		}
 		ND_PRINT((ndo, "%s (%s/%d, %s", njoin ? "Join" : "Prune",
 		ipaddr_string(ndo, &bp[26]), bp[25] & 0x3f,
@@ -175,7 +177,7 @@ pimv1_join_prune_print(netdissect_options *ndo,
 	if (ndo->ndo_vflag > 1)
 		ND_PRINT((ndo, "\n"));
 	ND_PRINT((ndo, " Hold time: "));
-	relts_print(ndo, EXTRACT_16BITS(&bp[6]));
+	unsigned_relts_print(ndo, EXTRACT_16BITS(&bp[6]));
 	if (ndo->ndo_vflag < 2)
 		return;
 	bp += 8;
@@ -260,7 +262,7 @@ pimv1_print(netdissect_options *ndo,
 		if (ndo->ndo_vflag) {
 			ND_TCHECK2(bp[10],2);
 			ND_PRINT((ndo, " (Hold-time "));
-			relts_print(ndo, EXTRACT_16BITS(&bp[10]));
+			unsigned_relts_print(ndo, EXTRACT_16BITS(&bp[10]));
 			ND_PRINT((ndo, ")"));
 		}
 		break;
@@ -282,7 +284,7 @@ pimv1_print(netdissect_options *ndo,
 			if (EXTRACT_32BITS(&bp[12]) != 0xffffffff)
 				ND_PRINT((ndo, "/%s", ipaddr_string(ndo, &bp[12])));
 			ND_PRINT((ndo, " RP %s hold ", ipaddr_string(ndo, &bp[16])));
-			relts_print(ndo, EXTRACT_16BITS(&bp[22]));
+			unsigned_relts_print(ndo, EXTRACT_16BITS(&bp[22]));
 		}
 		break;
 	case PIMV1_TYPE_ASSERT:
@@ -349,7 +351,7 @@ cisco_autorp_print(netdissect_options *ndo,
 	ND_PRINT((ndo, " Hold "));
 	hold = EXTRACT_16BITS(&bp[2]);
 	if (hold)
-		relts_print(ndo, EXTRACT_16BITS(&bp[2]));
+		unsigned_relts_print(ndo, EXTRACT_16BITS(&bp[2]));
 	else
 		ND_PRINT((ndo, "FOREVER"));
 
@@ -620,11 +622,16 @@ enum checksum_status {
 };
 
 static enum checksum_status
-pimv2_check_checksum(netdissect_options *ndo, const u_char *bp, const u_char *bp2, u_int len)
+pimv2_check_checksum(netdissect_options *ndo, const u_char *bp,
+		     const u_char *bp2, u_int len)
 {
 	const struct ip *ip;
 	u_int cksum;
 
+	if (!ND_TTEST2(bp[0], len)) {
+		/* We don't have all the data. */
+		return (UNVERIFIED);
+	}
 	ip = (const struct ip *)bp2;
 	if (IP_V(ip) == 4) {
 		struct cksum_vec vec[1];
@@ -722,7 +729,7 @@ pimv2_print(netdissect_options *ndo,
 
 			switch (otype) {
 			case PIMV2_HELLO_OPTION_HOLDTIME:
-				relts_print(ndo, EXTRACT_16BITS(bp));
+				unsigned_relts_print(ndo, EXTRACT_16BITS(bp));
 				break;
 
 			case PIMV2_HELLO_OPTION_LANPRUNEDELAY:
@@ -763,7 +770,7 @@ pimv2_print(netdissect_options *ndo,
 				ND_PRINT((ndo, "v%d", *bp));
 				if (*(bp+1) != 0) {
 					ND_PRINT((ndo, ", interval "));
-					relts_print(ndo, *(bp+1));
+					unsigned_relts_print(ndo, *(bp+1));
 				}
 				if (EXTRACT_16BITS(bp+2) != 0) {
 					ND_PRINT((ndo, " ?0x%04x?", EXTRACT_16BITS(bp+2)));
@@ -925,7 +932,7 @@ pimv2_print(netdissect_options *ndo,
 			if (holdtime == 0xffff)
 				ND_PRINT((ndo, "infinite"));
 			else
-				relts_print(ndo, holdtime);
+				unsigned_relts_print(ndo, holdtime);
 		}
 		bp += 4; len -= 4;
 		for (i = 0; i < ngroup; i++) {
@@ -1029,7 +1036,7 @@ pimv2_print(netdissect_options *ndo,
 					goto bs_done;
 				}
 				ND_PRINT((ndo, ",holdtime="));
-				relts_print(ndo, EXTRACT_16BITS(bp));
+				unsigned_relts_print(ndo, EXTRACT_16BITS(bp));
 				if (bp + 2 >= ep) {
 					ND_PRINT((ndo, "...)"));
 					goto bs_done;
@@ -1081,7 +1088,7 @@ pimv2_print(netdissect_options *ndo,
 		ND_PRINT((ndo, " prio=%d", bp[1]));
 		if (bp + 3 >= ep) break;
 		ND_PRINT((ndo, " holdtime="));
-		relts_print(ndo, EXTRACT_16BITS(&bp[2]));
+		unsigned_relts_print(ndo, EXTRACT_16BITS(&bp[2]));
 		bp += 4;
 
 		/* Encoded-Unicast-RP-Address */
@@ -1127,7 +1134,7 @@ pimv2_print(netdissect_options *ndo,
 		bp += advance;
 		ND_TCHECK2(bp[0], 2);
 		ND_PRINT((ndo, " TUNR "));
-		relts_print(ndo, EXTRACT_16BITS(bp));
+		unsigned_relts_print(ndo, EXTRACT_16BITS(bp));
 		break;
 
 

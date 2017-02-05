@@ -15,6 +15,8 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: Generic Network Virtualization Encapsulation (Geneve) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -221,9 +223,9 @@ geneve_print(netdissect_options *ndo, const u_char *bp, u_int len)
     else
         ND_PRINT((ndo, "\n\t"));
 
-    if (ethertype_print(ndo, prot, bp, len, len) == 0) {
+    if (ethertype_print(ndo, prot, bp, len, ndo->ndo_snapend - bp, NULL, NULL) == 0) {
         if (prot == ETHERTYPE_TEB)
-            ether_print(ndo, bp, len, len, NULL, NULL);
+            ether_print(ndo, bp, len, ndo->ndo_snapend - bp, NULL, NULL);
         else
             ND_PRINT((ndo, "geneve-proto-0x%x", prot));
     }

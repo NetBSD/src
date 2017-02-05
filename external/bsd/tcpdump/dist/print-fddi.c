@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: Fiber Distributed Data Interface (FDDI) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -83,9 +85,9 @@ struct fddi_header {
  * Some FDDI interfaces use bit-swapped addresses.
  */
 #if defined(ultrix) || defined(__alpha) || defined(__bsdi) || defined(__NetBSD__) || defined(__linux__)
-int	fddi_bitswap = 0;
+static int fddi_bitswap = 0;
 #else
-int	fddi_bitswap = 1;
+static int fddi_bitswap = 1;
 #endif
 
 /*
@@ -276,6 +278,7 @@ fddi_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen)
 {
 	const struct fddi_header *fddip = (const struct fddi_header *)p;
 	struct ether_header ehdr;
+	struct lladdr_info src, dst;
 	int llc_hdrlen;
 
 	if (caplen < FDDI_HDRLEN) {
@@ -291,6 +294,11 @@ fddi_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen)
 	if (ndo->ndo_eflag)
 		fddi_hdr_print(ndo, fddip, length, ESRC(&ehdr), EDST(&ehdr));
 
+	src.addr = ESRC(&ehdr);
+	src.addr_string = etheraddr_string;
+	dst.addr = EDST(&ehdr);
+	dst.addr_string = etheraddr_string;
+
 	/* Skip over FDDI MAC header */
 	length -= FDDI_HDRLEN;
 	p += FDDI_HDRLEN;
@@ -299,7 +307,7 @@ fddi_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen)
 	/* Frame Control field determines interpretation of packet */
 	if ((fddip->fddi_fc & FDDIFC_CLFF) == FDDIFC_LLC_ASYNC) {
 		/* Try to print the LLC-layer header & higher layers */
-		llc_hdrlen = llc_print(ndo, p, length, caplen, ESRC(&ehdr), EDST(&ehdr));
+		llc_hdrlen = llc_print(ndo, p, length, caplen, &src, &dst);
 		if (llc_hdrlen < 0) {
 			/*
 			 * Some kinds of LLC packet we cannot

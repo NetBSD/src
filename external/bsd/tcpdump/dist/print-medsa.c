@@ -19,6 +19,8 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+/* \summary: Marvell Extended Distributed Switch Architecture (MEDSA) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,6 +30,7 @@
 #include "netdissect.h"
 #include "ether.h"
 #include "ethertype.h"
+#include "addrtoname.h"
 #include "extract.h"
 
 static const char tstr[] = "[|MEDSA]";
@@ -135,14 +138,13 @@ medsa_print_full(netdissect_options *ndo,
 
 void
 medsa_print(netdissect_options *ndo,
-	    const u_char *bp, u_int length, u_int caplen)
+	    const u_char *bp, u_int length, u_int caplen,
+	    const struct lladdr_info *src, const struct lladdr_info *dst)
 {
-	register const struct ether_header *ep;
 	const struct medsa_pkthdr *medsa;
 	u_short ether_type;
 
 	medsa = (const struct medsa_pkthdr *)bp;
-	ep = (const struct ether_header *)(bp - sizeof(*ep));
 	ND_TCHECK(*medsa);
 
 	if (!ndo->ndo_eflag)
@@ -158,7 +160,7 @@ medsa_print(netdissect_options *ndo,
 	ether_type = EXTRACT_16BITS(&medsa->ether_type);
 	if (ether_type <= ETHERMTU) {
 		/* Try to print the LLC-layer header & higher layers */
-		if (llc_print(ndo, bp, length, caplen, ESRC(ep), EDST(ep)) < 0) {
+		if (llc_print(ndo, bp, length, caplen, src, dst) < 0) {
 			/* packet type not known, print raw packet */
 			if (!ndo->ndo_suppress_default_print)
 				ND_DEFAULTPRINT(bp, caplen);
@@ -169,8 +171,7 @@ medsa_print(netdissect_options *ndo,
 				  tok2str(ethertype_values, "Unknown",
 					  ether_type),
 				  ether_type));
-
-		if (ethertype_print(ndo, ether_type, bp, length, caplen) == 0) {
+		if (ethertype_print(ndo, ether_type, bp, length, caplen, src, dst) == 0) {
 			/* ether_type not known, print raw packet */
 			if (!ndo->ndo_eflag)
 				ND_PRINT((ndo, "ethertype %s (0x%04x) ",
