@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.h,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.h,v 1.1.2.3 2017/02/05 10:56:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -52,12 +52,13 @@ struct canpcb {
 	int		canp_flags;
 	struct		socket *canp_socket;	/* back pointer to socket */
 	struct		ifnet *canp_ifp; /* interface this socket is bound to */
+
 	struct		canpcbtable *canp_table;
+	struct		can_filter *canp_filters; /* filter array */
+	int		canp_nfilters; /* size of canp_filters */
 };
 
 LIST_HEAD(canpcbhead, canpcb);
-
-#define canp_faddr	canp_dst.scan_addr
 
 TAILQ_HEAD(canpcbqueue, canpcb);
 
@@ -97,6 +98,8 @@ void	can_pcbpurgeif0(struct canpcbtable *, struct ifnet *);
 void	can_pcbpurgeif(struct canpcbtable *, struct ifnet *);
 void	can_pcbstate(struct canpcb *, int);
 void	can_setsockaddr(struct canpcb *, struct sockaddr_can *);
+int	can_pcbsetfilter(struct canpcb *, struct can_filter *, int);
+bool	can_pcbfilter(struct canpcb *, struct mbuf *);
 #endif
 
 #endif /* _NETCAN_CAN_PCB_H_ */

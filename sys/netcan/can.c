@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.3 2017/02/05 10:56:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.3 2017/02/05 10:56:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,6 +204,9 @@ canintr(void)
 		if (m == NULL)	/* no more queued packets */
 			break;
 
+#if 0
+		m_claim(m, &can_rx_mowner);
+#endif
 		sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
 		if (sotag) {
 			so = *(struct socket **)(sotag + 1);
@@ -219,9 +222,6 @@ canintr(void)
 		}
 		memset(&from, 0, sizeof(struct sockaddr_can));
 		rcv_ifindex = m->m_pkthdr.rcvif_index;
-#if 0
-		m_claim(m, &can_rx_mowner);
-#endif
 		from.can_ifindex = rcv_ifindex;
 		from.can_len = sizeof(struct sockaddr_can);
 		from.can_family = AF_CAN;
@@ -237,6 +237,10 @@ canintr(void)
 			/* don't loop back to myself if I don't want it */
 			if (canp == sender_canp &&
 			    (canp->canp_flags & CANP_RECEIVE_OWN) == 0)
+				continue;
+
+			/* skip if the accept filter doen't match this pkt */
+			if (!can_pcbfilter(canp, m))
 				continue;
 
 			if (TAILQ_NEXT(canp, canp_queue) != NULL) {
@@ -274,7 +278,6 @@ canintr(void)
 static int
 can_attach(struct socket *so, int proto)
 {
-	/*struct canpcb *canp;*/
 	int error;
 
 	KASSERT(sotocanpcb(so) == NULL);
@@ -298,7 +301,6 @@ can_attach(struct socket *so, int proto)
 	if (error) {
 		return error;
 	}
-	/*canp = sotocanpcb(so);*/
 	KASSERT(solocked(so));
 
 	return error;
@@ -702,6 +704,10 @@ can_raw_getop(struct canpcb *canp, struct sockopt *sopt)
 		optval = (canp->canp_flags & CANP_RECEIVE_OWN) ? 1 : 0;
 		error = sockopt_set(sopt, &optval, sizeof(optval));
 		break;
+	case CAN_RAW_FILTER:
+		error = sockopt_set(sopt, canp->canp_filters,
+		    sizeof(struct can_filter) * canp->canp_nfilters);
+		break;
 	default:
 		error = ENOPROTOOPT;
 		break;
@@ -736,6 +742,14 @@ can_raw_setop(struct canpcb *canp, struct sockopt *sopt)
 			}
 		}
 		break;
+	case CAN_RAW_FILTER:
+		{
+		int nfilters = sopt->sopt_size / sizeof(struct can_filter);
+		if (sopt->sopt_size % sizeof(struct can_filter) != 0)
+			return EINVAL;
+		error = can_pcbsetfilter(canp, sopt->sopt_data, nfilters);
+		break;
+		}
 	default:
 		error = ENOPROTOOPT;
 		break;
