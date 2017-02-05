@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.2 2017/02/04 13:36:07 roy Exp $	*/
+/*	$NetBSD: panic.c,v 1.3 2017/02/05 10:13:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -47,7 +47,7 @@ Panic(
 	va_end(args);
 	reboot();
 	/*NOTREACHED*/
-	__builtin_unreachable();
+	__unreachable();
 }
 
 __dead void
