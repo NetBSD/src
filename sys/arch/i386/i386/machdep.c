@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.777 2017/01/22 20:17:10 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.778 2017/02/05 10:42:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.777 2017/01/22 20:17:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.778 2017/02/05 10:42:21 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -505,8 +505,8 @@ i386_proc0_tss_ldt_init(void)
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + USPACE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
-	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 #ifndef XEN
@@ -838,8 +838,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __INITIAL_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
-	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
@@ -867,8 +867,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
  * Initialize segments and descriptor tables
  */
 
-union	descriptor *gdt, *ldt;
-union	descriptor *pentium_idt;
+union descriptor *gdtstore, *ldtstore;
+union descriptor *pentium_idt;
 extern vaddr_t lwp0uarea;
 
 void
@@ -959,34 +959,37 @@ initgdt(union descriptor *tgdt)
 {
 	KASSERT(tgdt != NULL);
 	
-	gdt = tgdt;
+	gdtstore = tgdt;
 #ifdef XEN
 	u_long	frames[16];
 #else
 	struct region_descriptor region;
-	memset(gdt, 0, NGDT*sizeof(*gdt));
-#endif /* XEN */
+	memset(gdtstore, 0, NGDT * sizeof(*gdtstore));
+#endif
+
 	/* make gdt gates and memory segments */
-	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
+	setsegment(&gdtstore[GCODE_SEL].sd, 0, 0xfffff,
+	    SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&gdtstore[GDATA_SEL].sd, 0, 0xfffff,
+	    SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdtstore[GUCODE_SEL].sd, 0, x86_btop(I386_MAX_EXE_ADDR) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUCODEBIG_SEL].sd, 0, 0xfffff,
+	setsegment(&gdtstore[GUCODEBIG_SEL].sd, 0, 0xfffff,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, 0xfffff,
+	setsegment(&gdtstore[GUDATA_SEL].sd, 0, 0xfffff,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
-	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
-	    0);
-	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
-	    0);
+	setsegment(&gdtstore[GBIOSCODE_SEL].sd, 0, 0xfffff,
+	    SDT_MEMERA, SEL_KPL, 0, 0);
+	setsegment(&gdtstore[GBIOSDATA_SEL].sd, 0, 0xfffff,
+	    SDT_MEMRWA, SEL_KPL, 0, 0);
 #endif
-	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	setsegment(&gdtstore[GCPU_SEL].sd, &cpu_info_primary,
 	    sizeof(struct cpu_info) - 1, SDT_MEMRWA, SEL_KPL, 1, 0);
 
 #ifndef XEN
-	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
 #else /* !XEN */
 	/*
@@ -997,7 +1000,7 @@ initgdt(union descriptor *tgdt)
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
 
-	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
+	frames[0] = xpmap_ptom((uint32_t)gdtstore - KERNBASE) >> PAGE_SHIFT;
 	{	/*
 		 * Enter the gdt page RO into the kernel map. We can't
 		 * use pmap_kenter_pa() here, because %fs is not
@@ -1009,10 +1012,11 @@ initgdt(union descriptor *tgdt)
 		extern pt_entry_t xpmap_pg_nx;
 		pt_entry_t pte;
 
-		pte = pmap_pa2pte((vaddr_t)gdt - KERNBASE);
+		pte = pmap_pa2pte((vaddr_t)gdtstore - KERNBASE);
 		pte |= PG_k | PG_RO | xpmap_pg_nx | PG_V;
 
-		if (HYPERVISOR_update_va_mapping((vaddr_t)gdt, pte, UVMF_INVLPG) < 0) {
+		if (HYPERVISOR_update_va_mapping((vaddr_t)gdtstore, pte,
+		    UVMF_INVLPG) < 0) {
 			panic("gdt page RO update failed.\n");
 		}
 
@@ -1153,7 +1157,7 @@ init386(paddr_t first_avail)
 
 	/* Use the dummy page as a gdt */
 	extern vaddr_t xen_dummy_page;
-	gdt = (void *)xen_dummy_page;
+	gdtstore = (void *)xen_dummy_page;
 
 	/* Determine physical address space */
 	avail_end = ctob((paddr_t)xen_start_info.nr_pages);
@@ -1170,7 +1174,7 @@ init386(paddr_t first_avail)
 	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
 	 * before the above variables are set.
 	 */
-	initgdt(gdt);
+	initgdt(gdtstore);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 #endif /* XEN */
@@ -1262,31 +1266,32 @@ init386(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 
-	tgdt = gdt;
+	tgdt = gdtstore;
 	idt = (struct gate_descriptor *)idt_vaddr;
-	gdt = (union descriptor *)gdt_vaddr;
-	ldt = (union descriptor *)ldt_vaddr;
+	gdtstore = (union descriptor *)gdt_vaddr;
+	ldtstore = (union descriptor *)ldt_vaddr;
 
-	memcpy(gdt, tgdt, NGDT * sizeof(*gdt));
+	memcpy(gdtstore, tgdt, NGDT * sizeof(*gdtstore));
 
-	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
-	    SDT_SYSLDT, SEL_KPL, 0, 0);
+	setsegment(&gdtstore[GLDT_SEL].sd, ldtstore,
+	    NLDT * sizeof(ldtstore[0]) - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
 #else
 	HYPERVISOR_set_callbacks(
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)hypervisor_callback,
 	    GSEL(GCODE_SEL, SEL_KPL), (unsigned long)failsafe_callback);
 
-	ldt = (union descriptor *)idt_vaddr;
+	ldtstore = (union descriptor *)idt_vaddr;
 #endif /* XEN */
 
 	/* make ldt gates and memory segments */
-	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
+	setgate(&ldtstore[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
 	    SDT_SYS386CGT, SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
-	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
-	ldt[LUCODEBIG_SEL] = gdt[GUCODEBIG_SEL];
-	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
-	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];
+	ldtstore[LUCODE_SEL] = gdtstore[GUCODE_SEL];
+	ldtstore[LUCODEBIG_SEL] = gdtstore[GUCODEBIG_SEL];
+	ldtstore[LUDATA_SEL] = gdtstore[GUDATA_SEL];
+	ldtstore[LSOL26CALLS_SEL] = ldtstore[LBSDICALLS_SEL] =
+	    ldtstore[LSYS5CALLS_SEL];
 
 #ifndef XEN
 	/* exceptions */
@@ -1305,7 +1310,7 @@ init386(paddr_t first_avail)
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386IGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 
-	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
 
 	cpu_init_idt();
