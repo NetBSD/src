@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.269 2017/01/15 23:53:13 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.270 2017/02/05 07:10:10 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -15431,4 +15431,28 @@ sys/dev/scsipi/scsi_disk.h			1.32
 	disabled, albeit supporting it.  Minor (cosmetic) fixup of
 	scsi_disk_pages while there.  PR bin/29165.
 	[flxd, ticket #1418]
+
+sys/net/if_arcsubr.c				1.76 via patch
+sys/net/if_ecosubr.c				1.50 via patch
+sys/net/if_ethersubr.c				1.236 via patch
+sys/net/if_fddisubr.c				1.104 via patch
+sys/net/if_tokensubr.c				1.80 via patch
+
+	Don't leak an mbuf in the ARP reply.
+	[maxv, ticket #1429]
+
+crypto/external/bsd/openssl/dist/crypto/evp/e_rc4_hmac_md5.c patch
+
+	Fix CVE-2017-3731.
+	[spz, ticket #1430]
+
+sys/arch/amd64/amd64/copy.S			patch
+
+	suword: Don't allow 4 bytes to overflow beyond the userland space.
+	[maxv, ticket #1431]
+
+sys/netinet/if_arp.c				1.238, 1.239 via patch
+
+	Add checks on the ARP header
+	[maxv, ticket #1432]
 
