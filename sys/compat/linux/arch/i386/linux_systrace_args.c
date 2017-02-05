@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.2.2.3 2016/10/05 20:55:38 skrll Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.2.2.4 2017/02/05 13:40:25 skrll Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -19,7 +19,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_exit */
 	case 1: {
-		struct linux_sys_exit_args *p = params;
+		const struct linux_sys_exit_args *p = params;
 		iarg[0] = SCARG(p, rval); /* int */
 		*n_args = 1;
 		break;
@@ -31,7 +31,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_read */
 	case 3: {
-		struct sys_read_args *p = params;
+		const struct sys_read_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf); /* void * */
 		uarg[2] = SCARG(p, nbyte); /* size_t */
@@ -40,7 +40,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_write */
 	case 4: {
-		struct sys_write_args *p = params;
+		const struct sys_write_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf); /* const void * */
 		uarg[2] = SCARG(p, nbyte); /* size_t */
@@ -49,7 +49,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_open */
 	case 5: {
-		struct linux_sys_open_args *p = params;
+		const struct linux_sys_open_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, flags); /* int */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -58,14 +58,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_close */
 	case 6: {
-		struct sys_close_args *p = params;
+		const struct sys_close_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_waitpid */
 	case 7: {
-		struct linux_sys_waitpid_args *p = params;
+		const struct linux_sys_waitpid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		uarg[1] = (intptr_t) SCARG(p, status); /* int * */
 		iarg[2] = SCARG(p, options); /* int */
@@ -74,7 +74,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_creat */
 	case 8: {
-		struct linux_sys_creat_args *p = params;
+		const struct linux_sys_creat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -82,7 +82,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_link */
 	case 9: {
-		struct sys_link_args *p = params;
+		const struct sys_link_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, link); /* const char * */
 		*n_args = 2;
@@ -90,14 +90,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_unlink */
 	case 10: {
-		struct linux_sys_unlink_args *p = params;
+		const struct linux_sys_unlink_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_execve */
 	case 11: {
-		struct sys_execve_args *p = params;
+		const struct sys_execve_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, argp); /* char ** */
 		uarg[2] = (intptr_t) SCARG(p, envp); /* char ** */
@@ -106,21 +106,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_chdir */
 	case 12: {
-		struct sys_chdir_args *p = params;
+		const struct sys_chdir_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_time */
 	case 13: {
-		struct linux_sys_time_args *p = params;
+		const struct linux_sys_time_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, t); /* linux_time_t * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_mknod */
 	case 14: {
-		struct linux_sys_mknod_args *p = params;
+		const struct linux_sys_mknod_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		uarg[2] = SCARG(p, dev); /* unsigned */
@@ -129,7 +129,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_chmod */
 	case 15: {
-		struct sys_chmod_args *p = params;
+		const struct sys_chmod_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -137,7 +137,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_lchown16 */
 	case 16: {
-		struct linux_sys_lchown16_args *p = params;
+		const struct linux_sys_lchown16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, uid); /* linux_uid16_t */
 		iarg[2] = SCARG(p, gid); /* linux_gid16_t */
@@ -146,14 +146,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_break */
 	case 17: {
-		struct linux_sys_break_args *p = params;
+		const struct linux_sys_break_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, nsize); /* char * */
 		*n_args = 1;
 		break;
 	}
 	/* compat_43_sys_lseek */
 	case 19: {
-		struct compat_43_sys_lseek_args *p = params;
+		const struct compat_43_sys_lseek_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, offset); /* long */
 		iarg[2] = SCARG(p, whence); /* int */
@@ -167,7 +167,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setuid */
 	case 23: {
-		struct sys_setuid_args *p = params;
+		const struct sys_setuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
@@ -179,14 +179,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_stime */
 	case 25: {
-		struct linux_sys_stime_args *p = params;
+		const struct linux_sys_stime_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, t); /* linux_time_t * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_ptrace */
 	case 26: {
-		struct linux_sys_ptrace_args *p = params;
+		const struct linux_sys_ptrace_args *p = params;
 		iarg[0] = SCARG(p, request); /* int */
 		iarg[1] = SCARG(p, pid); /* int */
 		iarg[2] = SCARG(p, addr); /* int */
@@ -196,7 +196,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_alarm */
 	case 27: {
-		struct linux_sys_alarm_args *p = params;
+		const struct linux_sys_alarm_args *p = params;
 		uarg[0] = SCARG(p, secs); /* unsigned int */
 		*n_args = 1;
 		break;
@@ -208,7 +208,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_utime */
 	case 30: {
-		struct linux_sys_utime_args *p = params;
+		const struct linux_sys_utime_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, times); /* struct linux_utimbuf * */
 		*n_args = 2;
@@ -216,7 +216,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_access */
 	case 33: {
-		struct sys_access_args *p = params;
+		const struct sys_access_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
@@ -224,7 +224,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_nice */
 	case 34: {
-		struct linux_sys_nice_args *p = params;
+		const struct linux_sys_nice_args *p = params;
 		iarg[0] = SCARG(p, incr); /* int */
 		*n_args = 1;
 		break;
@@ -236,7 +236,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_kill */
 	case 37: {
-		struct linux_sys_kill_args *p = params;
+		const struct linux_sys_kill_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		iarg[1] = SCARG(p, signum); /* int */
 		*n_args = 2;
@@ -244,7 +244,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___posix_rename */
 	case 38: {
-		struct sys___posix_rename_args *p = params;
+		const struct sys___posix_rename_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, from); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, to); /* const char * */
 		*n_args = 2;
@@ -252,7 +252,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_mkdir */
 	case 39: {
-		struct sys_mkdir_args *p = params;
+		const struct sys_mkdir_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -260,42 +260,42 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_rmdir */
 	case 40: {
-		struct sys_rmdir_args *p = params;
+		const struct sys_rmdir_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_dup */
 	case 41: {
-		struct sys_dup_args *p = params;
+		const struct sys_dup_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_pipe */
 	case 42: {
-		struct linux_sys_pipe_args *p = params;
+		const struct linux_sys_pipe_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, pfds); /* int * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_times */
 	case 43: {
-		struct linux_sys_times_args *p = params;
+		const struct linux_sys_times_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tms); /* struct times * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_brk */
 	case 45: {
-		struct linux_sys_brk_args *p = params;
+		const struct linux_sys_brk_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, nsize); /* char * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_setgid */
 	case 46: {
-		struct sys_setgid_args *p = params;
+		const struct sys_setgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
@@ -307,9 +307,9 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_signal */
 	case 48: {
-		struct linux_sys_signal_args *p = params;
+		const struct linux_sys_signal_args *p = params;
 		iarg[0] = SCARG(p, signum); /* int */
-		iarg[1] = SCARG(p, handler); /* linux_handler_t */
+		uarg[1] = (intptr_t) SCARG(p, handler); /* linux_handler_t */
 		*n_args = 2;
 		break;
 	}
@@ -325,14 +325,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_acct */
 	case 51: {
-		struct sys_acct_args *p = params;
+		const struct sys_acct_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_ioctl */
 	case 54: {
-		struct linux_sys_ioctl_args *p = params;
+		const struct linux_sys_ioctl_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, com); /* u_long */
 		uarg[2] = (intptr_t) SCARG(p, data); /* void * */
@@ -341,7 +341,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fcntl */
 	case 55: {
-		struct linux_sys_fcntl_args *p = params;
+		const struct linux_sys_fcntl_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, arg); /* void * */
@@ -350,7 +350,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setpgid */
 	case 57: {
-		struct sys_setpgid_args *p = params;
+		const struct sys_setpgid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		iarg[1] = SCARG(p, pgid); /* int */
 		*n_args = 2;
@@ -358,28 +358,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_oldolduname */
 	case 59: {
-		struct linux_sys_oldolduname_args *p = params;
+		const struct linux_sys_oldolduname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, up); /* struct linux_oldold_utsname * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_umask */
 	case 60: {
-		struct sys_umask_args *p = params;
+		const struct sys_umask_args *p = params;
 		iarg[0] = SCARG(p, newmask); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* sys_chroot */
 	case 61: {
-		struct sys_chroot_args *p = params;
+		const struct sys_chroot_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_dup2 */
 	case 63: {
-		struct sys_dup2_args *p = params;
+		const struct sys_dup2_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		*n_args = 2;
@@ -402,7 +402,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sigaction */
 	case 67: {
-		struct linux_sys_sigaction_args *p = params;
+		const struct linux_sys_sigaction_args *p = params;
 		iarg[0] = SCARG(p, signum); /* int */
 		uarg[1] = (intptr_t) SCARG(p, nsa); /* const struct linux_old_sigaction * */
 		uarg[2] = (intptr_t) SCARG(p, osa); /* struct linux_old_sigaction * */
@@ -416,14 +416,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sigsetmask */
 	case 69: {
-		struct linux_sys_sigsetmask_args *p = params;
+		const struct linux_sys_sigsetmask_args *p = params;
 		iarg[0] = SCARG(p, mask); /* linux_old_sigset_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_setreuid16 */
 	case 70: {
-		struct linux_sys_setreuid16_args *p = params;
+		const struct linux_sys_setreuid16_args *p = params;
 		iarg[0] = SCARG(p, ruid); /* linux_uid16_t */
 		iarg[1] = SCARG(p, euid); /* linux_uid16_t */
 		*n_args = 2;
@@ -431,7 +431,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setregid16 */
 	case 71: {
-		struct linux_sys_setregid16_args *p = params;
+		const struct linux_sys_setregid16_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* linux_gid16_t */
 		iarg[1] = SCARG(p, egid); /* linux_gid16_t */
 		*n_args = 2;
@@ -439,7 +439,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sigsuspend */
 	case 72: {
-		struct linux_sys_sigsuspend_args *p = params;
+		const struct linux_sys_sigsuspend_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, restart); /* void * */
 		iarg[1] = SCARG(p, oldmask); /* int */
 		iarg[2] = SCARG(p, mask); /* int */
@@ -448,14 +448,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sigpending */
 	case 73: {
-		struct linux_sys_sigpending_args *p = params;
+		const struct linux_sys_sigpending_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, set); /* linux_old_sigset_t * */
 		*n_args = 1;
 		break;
 	}
 	/* compat_43_sys_sethostname */
 	case 74: {
-		struct compat_43_sys_sethostname_args *p = params;
+		const struct compat_43_sys_sethostname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, hostname); /* char * */
 		uarg[1] = SCARG(p, len); /* u_int */
 		*n_args = 2;
@@ -463,7 +463,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setrlimit */
 	case 75: {
-		struct linux_sys_setrlimit_args *p = params;
+		const struct linux_sys_setrlimit_args *p = params;
 		uarg[0] = SCARG(p, which); /* u_int */
 		uarg[1] = (intptr_t) SCARG(p, rlp); /* struct orlimit * */
 		*n_args = 2;
@@ -471,7 +471,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getrlimit */
 	case 76: {
-		struct linux_sys_getrlimit_args *p = params;
+		const struct linux_sys_getrlimit_args *p = params;
 		uarg[0] = SCARG(p, which); /* u_int */
 		uarg[1] = (intptr_t) SCARG(p, rlp); /* struct orlimit * */
 		*n_args = 2;
@@ -479,7 +479,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_sys_getrusage */
 	case 77: {
-		struct compat_50_sys_getrusage_args *p = params;
+		const struct compat_50_sys_getrusage_args *p = params;
 		iarg[0] = SCARG(p, who); /* int */
 		uarg[1] = (intptr_t) SCARG(p, rusage); /* struct rusage50 * */
 		*n_args = 2;
@@ -487,7 +487,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_gettimeofday */
 	case 78: {
-		struct linux_sys_gettimeofday_args *p = params;
+		const struct linux_sys_gettimeofday_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tp); /* struct timeval50 * */
 		uarg[1] = (intptr_t) SCARG(p, tzp); /* struct timezone * */
 		*n_args = 2;
@@ -495,7 +495,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_settimeofday */
 	case 79: {
-		struct linux_sys_settimeofday_args *p = params;
+		const struct linux_sys_settimeofday_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tp); /* struct timeval50 * */
 		uarg[1] = (intptr_t) SCARG(p, tzp); /* struct timezone * */
 		*n_args = 2;
@@ -503,7 +503,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getgroups16 */
 	case 80: {
-		struct linux_sys_getgroups16_args *p = params;
+		const struct linux_sys_getgroups16_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset); /* linux_gid16_t * */
 		*n_args = 2;
@@ -511,7 +511,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setgroups16 */
 	case 81: {
-		struct linux_sys_setgroups16_args *p = params;
+		const struct linux_sys_setgroups16_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset); /* linux_gid16_t * */
 		*n_args = 2;
@@ -519,14 +519,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_oldselect */
 	case 82: {
-		struct linux_sys_oldselect_args *p = params;
+		const struct linux_sys_oldselect_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lsp); /* struct linux_oldselect * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_symlink */
 	case 83: {
-		struct sys_symlink_args *p = params;
+		const struct sys_symlink_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, link); /* const char * */
 		*n_args = 2;
@@ -534,7 +534,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_sys_lstat */
 	case 84: {
-		struct compat_43_sys_lstat_args *p = params;
+		const struct compat_43_sys_lstat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, ub); /* struct stat43 * */
 		*n_args = 2;
@@ -542,7 +542,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_readlink */
 	case 85: {
-		struct sys_readlink_args *p = params;
+		const struct sys_readlink_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, buf); /* char * */
 		iarg[2] = SCARG(p, count); /* int */
@@ -552,7 +552,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 #ifdef EXEC_AOUT
 	/* linux_sys_uselib */
 	case 86: {
-		struct linux_sys_uselib_args *p = params;
+		const struct linux_sys_uselib_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		*n_args = 1;
 		break;
@@ -561,14 +561,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 #endif
 	/* linux_sys_swapon */
 	case 87: {
-		struct linux_sys_swapon_args *p = params;
+		const struct linux_sys_swapon_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, name); /* char * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_reboot */
 	case 88: {
-		struct linux_sys_reboot_args *p = params;
+		const struct linux_sys_reboot_args *p = params;
 		iarg[0] = SCARG(p, magic1); /* int */
 		iarg[1] = SCARG(p, magic2); /* int */
 		iarg[2] = SCARG(p, cmd); /* int */
@@ -578,7 +578,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_readdir */
 	case 89: {
-		struct linux_sys_readdir_args *p = params;
+		const struct linux_sys_readdir_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, dent); /* void * */
 		uarg[2] = SCARG(p, count); /* unsigned int */
@@ -587,14 +587,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_old_mmap */
 	case 90: {
-		struct linux_sys_old_mmap_args *p = params;
+		const struct linux_sys_old_mmap_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lmp); /* struct linux_oldmmap * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_munmap */
 	case 91: {
-		struct sys_munmap_args *p = params;
+		const struct sys_munmap_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr); /* void * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		*n_args = 2;
@@ -602,7 +602,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_sys_truncate */
 	case 92: {
-		struct compat_43_sys_truncate_args *p = params;
+		const struct compat_43_sys_truncate_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, length); /* long */
 		*n_args = 2;
@@ -610,7 +610,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_sys_ftruncate */
 	case 93: {
-		struct compat_43_sys_ftruncate_args *p = params;
+		const struct compat_43_sys_ftruncate_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, length); /* long */
 		*n_args = 2;
@@ -618,7 +618,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_fchmod */
 	case 94: {
-		struct sys_fchmod_args *p = params;
+		const struct sys_fchmod_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -626,7 +626,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fchown16 */
 	case 95: {
-		struct linux_sys_fchown16_args *p = params;
+		const struct linux_sys_fchown16_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, uid); /* linux_uid16_t */
 		iarg[2] = SCARG(p, gid); /* linux_gid16_t */
@@ -635,7 +635,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getpriority */
 	case 96: {
-		struct linux_sys_getpriority_args *p = params;
+		const struct linux_sys_getpriority_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, who); /* int */
 		*n_args = 2;
@@ -643,7 +643,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setpriority */
 	case 97: {
-		struct sys_setpriority_args *p = params;
+		const struct sys_setpriority_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, who); /* int */
 		iarg[2] = SCARG(p, prio); /* int */
@@ -652,7 +652,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_profil */
 	case 98: {
-		struct sys_profil_args *p = params;
+		const struct sys_profil_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, samples); /* void * */
 		uarg[1] = SCARG(p, size); /* u_int */
 		uarg[2] = SCARG(p, offset); /* u_int */
@@ -662,7 +662,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_statfs */
 	case 99: {
-		struct linux_sys_statfs_args *p = params;
+		const struct linux_sys_statfs_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_statfs * */
 		*n_args = 2;
@@ -670,7 +670,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fstatfs */
 	case 100: {
-		struct linux_sys_fstatfs_args *p = params;
+		const struct linux_sys_fstatfs_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_statfs * */
 		*n_args = 2;
@@ -678,7 +678,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_ioperm */
 	case 101: {
-		struct linux_sys_ioperm_args *p = params;
+		const struct linux_sys_ioperm_args *p = params;
 		uarg[0] = SCARG(p, lo); /* unsigned int */
 		uarg[1] = SCARG(p, hi); /* unsigned int */
 		iarg[2] = SCARG(p, val); /* int */
@@ -687,7 +687,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_socketcall */
 	case 102: {
-		struct linux_sys_socketcall_args *p = params;
+		const struct linux_sys_socketcall_args *p = params;
 		iarg[0] = SCARG(p, what); /* int */
 		uarg[1] = (intptr_t) SCARG(p, args); /* void * */
 		*n_args = 2;
@@ -695,7 +695,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_sys_setitimer */
 	case 104: {
-		struct compat_50_sys_setitimer_args *p = params;
+		const struct compat_50_sys_setitimer_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		uarg[1] = (intptr_t) SCARG(p, itv); /* struct itimerval50 * */
 		uarg[2] = (intptr_t) SCARG(p, oitv); /* struct itimerval50 * */
@@ -704,7 +704,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_sys_getitimer */
 	case 105: {
-		struct compat_50_sys_getitimer_args *p = params;
+		const struct compat_50_sys_getitimer_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		uarg[1] = (intptr_t) SCARG(p, itv); /* struct itimerval50 * */
 		*n_args = 2;
@@ -712,7 +712,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_stat */
 	case 106: {
-		struct linux_sys_stat_args *p = params;
+		const struct linux_sys_stat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_stat * */
 		*n_args = 2;
@@ -720,7 +720,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_lstat */
 	case 107: {
-		struct linux_sys_lstat_args *p = params;
+		const struct linux_sys_lstat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_stat * */
 		*n_args = 2;
@@ -728,7 +728,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fstat */
 	case 108: {
-		struct linux_sys_fstat_args *p = params;
+		const struct linux_sys_fstat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_stat * */
 		*n_args = 2;
@@ -736,21 +736,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_olduname */
 	case 109: {
-		struct linux_sys_olduname_args *p = params;
+		const struct linux_sys_olduname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, up); /* struct linux_old_utsname * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_iopl */
 	case 110: {
-		struct linux_sys_iopl_args *p = params;
+		const struct linux_sys_iopl_args *p = params;
 		iarg[0] = SCARG(p, level); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_wait4 */
 	case 114: {
-		struct linux_sys_wait4_args *p = params;
+		const struct linux_sys_wait4_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		uarg[1] = (intptr_t) SCARG(p, status); /* int * */
 		iarg[2] = SCARG(p, options); /* int */
@@ -760,21 +760,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_swapoff */
 	case 115: {
-		struct linux_sys_swapoff_args *p = params;
+		const struct linux_sys_swapoff_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_sysinfo */
 	case 116: {
-		struct linux_sys_sysinfo_args *p = params;
+		const struct linux_sys_sysinfo_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, arg); /* struct linux_sysinfo * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_ipc */
 	case 117: {
-		struct linux_sys_ipc_args *p = params;
+		const struct linux_sys_ipc_args *p = params;
 		iarg[0] = SCARG(p, what); /* int */
 		iarg[1] = SCARG(p, a1); /* int */
 		iarg[2] = SCARG(p, a2); /* int */
@@ -785,21 +785,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_fsync */
 	case 118: {
-		struct sys_fsync_args *p = params;
+		const struct sys_fsync_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_sigreturn */
 	case 119: {
-		struct linux_sys_sigreturn_args *p = params;
+		const struct linux_sys_sigreturn_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, scp); /* struct linux_sigcontext * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_clone */
 	case 120: {
-		struct linux_sys_clone_args *p = params;
+		const struct linux_sys_clone_args *p = params;
 		iarg[0] = SCARG(p, flags); /* int */
 		uarg[1] = (intptr_t) SCARG(p, stack); /* void * */
 		uarg[2] = (intptr_t) SCARG(p, parent_tidptr); /* void * */
@@ -810,7 +810,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setdomainname */
 	case 121: {
-		struct linux_sys_setdomainname_args *p = params;
+		const struct linux_sys_setdomainname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, domainname); /* char * */
 		iarg[1] = SCARG(p, len); /* int */
 		*n_args = 2;
@@ -818,14 +818,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_uname */
 	case 122: {
-		struct linux_sys_uname_args *p = params;
+		const struct linux_sys_uname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, up); /* struct linux_utsname * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_modify_ldt */
 	case 123: {
-		struct linux_sys_modify_ldt_args *p = params;
+		const struct linux_sys_modify_ldt_args *p = params;
 		iarg[0] = SCARG(p, func); /* int */
 		uarg[1] = (intptr_t) SCARG(p, ptr); /* void * */
 		uarg[2] = SCARG(p, bytecount); /* size_t */
@@ -834,7 +834,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_mprotect */
 	case 125: {
-		struct linux_sys_mprotect_args *p = params;
+		const struct linux_sys_mprotect_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, start); /* const void * */
 		uarg[1] = SCARG(p, len); /* unsigned long */
 		iarg[2] = SCARG(p, prot); /* int */
@@ -843,7 +843,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sigprocmask */
 	case 126: {
-		struct linux_sys_sigprocmask_args *p = params;
+		const struct linux_sys_sigprocmask_args *p = params;
 		iarg[0] = SCARG(p, how); /* int */
 		uarg[1] = (intptr_t) SCARG(p, set); /* const linux_old_sigset_t * */
 		uarg[2] = (intptr_t) SCARG(p, oset); /* linux_old_sigset_t * */
@@ -852,42 +852,42 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_getpgid */
 	case 132: {
-		struct sys_getpgid_args *p = params;
+		const struct sys_getpgid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		*n_args = 1;
 		break;
 	}
 	/* sys_fchdir */
 	case 133: {
-		struct sys_fchdir_args *p = params;
+		const struct sys_fchdir_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_personality */
 	case 136: {
-		struct linux_sys_personality_args *p = params;
+		const struct linux_sys_personality_args *p = params;
 		uarg[0] = SCARG(p, per); /* unsigned long */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_setfsuid */
 	case 138: {
-		struct linux_sys_setfsuid_args *p = params;
+		const struct linux_sys_setfsuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_setfsgid */
 	case 139: {
-		struct linux_sys_setfsgid_args *p = params;
+		const struct linux_sys_setfsgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_llseek */
 	case 140: {
-		struct linux_sys_llseek_args *p = params;
+		const struct linux_sys_llseek_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, ohigh); /* u_int32_t */
 		uarg[2] = SCARG(p, olow); /* u_int32_t */
@@ -898,7 +898,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getdents */
 	case 141: {
-		struct linux_sys_getdents_args *p = params;
+		const struct linux_sys_getdents_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, dent); /* struct linux_dirent * */
 		uarg[2] = SCARG(p, count); /* unsigned int */
@@ -907,7 +907,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_select */
 	case 142: {
-		struct linux_sys_select_args *p = params;
+		const struct linux_sys_select_args *p = params;
 		iarg[0] = SCARG(p, nfds); /* int */
 		uarg[1] = (intptr_t) SCARG(p, readfds); /* fd_set * */
 		uarg[2] = (intptr_t) SCARG(p, writefds); /* fd_set * */
@@ -918,7 +918,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_flock */
 	case 143: {
-		struct sys_flock_args *p = params;
+		const struct sys_flock_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, how); /* int */
 		*n_args = 2;
@@ -926,7 +926,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___msync13 */
 	case 144: {
-		struct sys___msync13_args *p = params;
+		const struct sys___msync13_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr); /* void * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -935,7 +935,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_readv */
 	case 145: {
-		struct sys_readv_args *p = params;
+		const struct sys_readv_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, iovp); /* const struct iovec * */
 		iarg[2] = SCARG(p, iovcnt); /* int */
@@ -944,7 +944,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_writev */
 	case 146: {
-		struct sys_writev_args *p = params;
+		const struct sys_writev_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, iovp); /* const struct iovec * */
 		iarg[2] = SCARG(p, iovcnt); /* int */
@@ -953,28 +953,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_getsid */
 	case 147: {
-		struct sys_getsid_args *p = params;
+		const struct sys_getsid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_fdatasync */
 	case 148: {
-		struct linux_sys_fdatasync_args *p = params;
+		const struct linux_sys_fdatasync_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys___sysctl */
 	case 149: {
-		struct linux_sys___sysctl_args *p = params;
+		const struct linux_sys___sysctl_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lsp); /* struct linux___sysctl * */
 		*n_args = 1;
 		break;
 	}
 	/* sys_mlock */
 	case 150: {
-		struct sys_mlock_args *p = params;
+		const struct sys_mlock_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr); /* void * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		*n_args = 2;
@@ -982,7 +982,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_munlock */
 	case 151: {
-		struct sys_munlock_args *p = params;
+		const struct sys_munlock_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr); /* void * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		*n_args = 2;
@@ -990,7 +990,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_mlockall */
 	case 152: {
-		struct sys_mlockall_args *p = params;
+		const struct sys_mlockall_args *p = params;
 		iarg[0] = SCARG(p, flags); /* int */
 		*n_args = 1;
 		break;
@@ -1002,7 +1002,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_setparam */
 	case 154: {
-		struct linux_sys_sched_setparam_args *p = params;
+		const struct linux_sys_sched_setparam_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* const struct linux_sched_param * */
 		*n_args = 2;
@@ -1010,7 +1010,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_getparam */
 	case 155: {
-		struct linux_sys_sched_getparam_args *p = params;
+		const struct linux_sys_sched_getparam_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_sched_param * */
 		*n_args = 2;
@@ -1018,7 +1018,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_setscheduler */
 	case 156: {
-		struct linux_sys_sched_setscheduler_args *p = params;
+		const struct linux_sys_sched_setscheduler_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		iarg[1] = SCARG(p, policy); /* int */
 		uarg[2] = (intptr_t) SCARG(p, sp); /* const struct linux_sched_param * */
@@ -1027,7 +1027,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_getscheduler */
 	case 157: {
-		struct linux_sys_sched_getscheduler_args *p = params;
+		const struct linux_sys_sched_getscheduler_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		*n_args = 1;
 		break;
@@ -1039,21 +1039,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_get_priority_max */
 	case 159: {
-		struct linux_sys_sched_get_priority_max_args *p = params;
+		const struct linux_sys_sched_get_priority_max_args *p = params;
 		iarg[0] = SCARG(p, policy); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_sched_get_priority_min */
 	case 160: {
-		struct linux_sys_sched_get_priority_min_args *p = params;
+		const struct linux_sys_sched_get_priority_min_args *p = params;
 		iarg[0] = SCARG(p, policy); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_nanosleep */
 	case 162: {
-		struct linux_sys_nanosleep_args *p = params;
+		const struct linux_sys_nanosleep_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, rqtp); /* const struct linux_timespec * */
 		uarg[1] = (intptr_t) SCARG(p, rmtp); /* struct linux_timespec * */
 		*n_args = 2;
@@ -1061,7 +1061,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_mremap */
 	case 163: {
-		struct linux_sys_mremap_args *p = params;
+		const struct linux_sys_mremap_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, old_address); /* void * */
 		uarg[1] = SCARG(p, old_size); /* size_t */
 		uarg[2] = SCARG(p, new_size); /* size_t */
@@ -1071,7 +1071,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setresuid16 */
 	case 164: {
-		struct linux_sys_setresuid16_args *p = params;
+		const struct linux_sys_setresuid16_args *p = params;
 		iarg[0] = SCARG(p, ruid); /* linux_uid16_t */
 		iarg[1] = SCARG(p, euid); /* linux_uid16_t */
 		iarg[2] = SCARG(p, suid); /* linux_uid16_t */
@@ -1080,7 +1080,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getresuid16 */
 	case 165: {
-		struct linux_sys_getresuid16_args *p = params;
+		const struct linux_sys_getresuid16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ruid); /* linux_uid16_t * */
 		uarg[1] = (intptr_t) SCARG(p, euid); /* linux_uid16_t * */
 		uarg[2] = (intptr_t) SCARG(p, suid); /* linux_uid16_t * */
@@ -1089,7 +1089,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_poll */
 	case 168: {
-		struct sys_poll_args *p = params;
+		const struct sys_poll_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fds); /* struct pollfd * */
 		uarg[1] = SCARG(p, nfds); /* u_int */
 		iarg[2] = SCARG(p, timeout); /* int */
@@ -1098,7 +1098,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setresgid16 */
 	case 170: {
-		struct linux_sys_setresgid16_args *p = params;
+		const struct linux_sys_setresgid16_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* linux_gid16_t */
 		iarg[1] = SCARG(p, egid); /* linux_gid16_t */
 		iarg[2] = SCARG(p, sgid); /* linux_gid16_t */
@@ -1107,7 +1107,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getresgid16 */
 	case 171: {
-		struct linux_sys_getresgid16_args *p = params;
+		const struct linux_sys_getresgid16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, rgid); /* linux_gid16_t * */
 		uarg[1] = (intptr_t) SCARG(p, egid); /* linux_gid16_t * */
 		uarg[2] = (intptr_t) SCARG(p, sgid); /* linux_gid16_t * */
@@ -1116,14 +1116,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_rt_sigreturn */
 	case 173: {
-		struct linux_sys_rt_sigreturn_args *p = params;
+		const struct linux_sys_rt_sigreturn_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ucp); /* struct linux_ucontext * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_rt_sigaction */
 	case 174: {
-		struct linux_sys_rt_sigaction_args *p = params;
+		const struct linux_sys_rt_sigaction_args *p = params;
 		iarg[0] = SCARG(p, signum); /* int */
 		uarg[1] = (intptr_t) SCARG(p, nsa); /* const struct linux_sigaction * */
 		uarg[2] = (intptr_t) SCARG(p, osa); /* struct linux_sigaction * */
@@ -1133,7 +1133,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_rt_sigprocmask */
 	case 175: {
-		struct linux_sys_rt_sigprocmask_args *p = params;
+		const struct linux_sys_rt_sigprocmask_args *p = params;
 		iarg[0] = SCARG(p, how); /* int */
 		uarg[1] = (intptr_t) SCARG(p, set); /* const linux_sigset_t * */
 		uarg[2] = (intptr_t) SCARG(p, oset); /* linux_sigset_t * */
@@ -1143,7 +1143,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_rt_sigpending */
 	case 176: {
-		struct linux_sys_rt_sigpending_args *p = params;
+		const struct linux_sys_rt_sigpending_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, set); /* linux_sigset_t * */
 		uarg[1] = SCARG(p, sigsetsize); /* size_t */
 		*n_args = 2;
@@ -1151,7 +1151,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_rt_sigtimedwait */
 	case 177: {
-		struct linux_sys_rt_sigtimedwait_args *p = params;
+		const struct linux_sys_rt_sigtimedwait_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, set); /* const linux_sigset_t * */
 		uarg[1] = (intptr_t) SCARG(p, info); /* linux_siginfo_t * */
 		uarg[2] = (intptr_t) SCARG(p, timeout); /* const struct linux_timespec * */
@@ -1160,7 +1160,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_rt_queueinfo */
 	case 178: {
-		struct linux_sys_rt_queueinfo_args *p = params;
+		const struct linux_sys_rt_queueinfo_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		iarg[1] = SCARG(p, signum); /* int */
 		uarg[2] = (intptr_t) SCARG(p, uinfo); /* linux_siginfo_t * */
@@ -1169,7 +1169,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_rt_sigsuspend */
 	case 179: {
-		struct linux_sys_rt_sigsuspend_args *p = params;
+		const struct linux_sys_rt_sigsuspend_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, unewset); /* linux_sigset_t * */
 		uarg[1] = SCARG(p, sigsetsize); /* size_t */
 		*n_args = 2;
@@ -1177,7 +1177,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_pread */
 	case 180: {
-		struct linux_sys_pread_args *p = params;
+		const struct linux_sys_pread_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf); /* char * */
 		uarg[2] = SCARG(p, nbyte); /* size_t */
@@ -1187,7 +1187,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_pwrite */
 	case 181: {
-		struct linux_sys_pwrite_args *p = params;
+		const struct linux_sys_pwrite_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf); /* char * */
 		uarg[2] = SCARG(p, nbyte); /* size_t */
@@ -1197,7 +1197,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_chown16 */
 	case 182: {
-		struct linux_sys_chown16_args *p = params;
+		const struct linux_sys_chown16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, uid); /* linux_uid16_t */
 		iarg[2] = SCARG(p, gid); /* linux_gid16_t */
@@ -1206,7 +1206,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___getcwd */
 	case 183: {
-		struct sys___getcwd_args *p = params;
+		const struct sys___getcwd_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, bufp); /* char * */
 		uarg[1] = SCARG(p, length); /* size_t */
 		*n_args = 2;
@@ -1214,7 +1214,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sigaltstack */
 	case 186: {
-		struct linux_sys_sigaltstack_args *p = params;
+		const struct linux_sys_sigaltstack_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ss); /* const struct linux_sigaltstack * */
 		uarg[1] = (intptr_t) SCARG(p, oss); /* struct linux_sigaltstack * */
 		*n_args = 2;
@@ -1227,7 +1227,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_ugetrlimit */
 	case 191: {
-		struct linux_sys_ugetrlimit_args *p = params;
+		const struct linux_sys_ugetrlimit_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		uarg[1] = (intptr_t) SCARG(p, rlp); /* struct orlimit * */
 		*n_args = 2;
@@ -1236,7 +1236,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 #define linux_sys_mmap2_args linux_sys_mmap_args
 	/* linux_sys_mmap2 */
 	case 192: {
-		struct linux_sys_mmap2_args *p = params;
+		const struct linux_sys_mmap2_args *p = params;
 		uarg[0] = SCARG(p, addr); /* unsigned long */
 		uarg[1] = SCARG(p, len); /* size_t */
 		iarg[2] = SCARG(p, prot); /* int */
@@ -1248,7 +1248,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_truncate64 */
 	case 193: {
-		struct linux_sys_truncate64_args *p = params;
+		const struct linux_sys_truncate64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, length); /* off_t */
 		*n_args = 2;
@@ -1256,7 +1256,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_ftruncate64 */
 	case 194: {
-		struct linux_sys_ftruncate64_args *p = params;
+		const struct linux_sys_ftruncate64_args *p = params;
 		uarg[0] = SCARG(p, fd); /* unsigned int */
 		iarg[1] = SCARG(p, length); /* off_t */
 		*n_args = 2;
@@ -1264,7 +1264,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_stat64 */
 	case 195: {
-		struct linux_sys_stat64_args *p = params;
+		const struct linux_sys_stat64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_stat64 * */
 		*n_args = 2;
@@ -1272,7 +1272,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_lstat64 */
 	case 196: {
-		struct linux_sys_lstat64_args *p = params;
+		const struct linux_sys_lstat64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_stat64 * */
 		*n_args = 2;
@@ -1280,7 +1280,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fstat64 */
 	case 197: {
-		struct linux_sys_fstat64_args *p = params;
+		const struct linux_sys_fstat64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, sp); /* struct linux_stat64 * */
 		*n_args = 2;
@@ -1288,7 +1288,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___posix_lchown */
 	case 198: {
-		struct sys___posix_lchown_args *p = params;
+		const struct sys___posix_lchown_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = SCARG(p, uid); /* uid_t */
 		iarg[2] = SCARG(p, gid); /* gid_t */
@@ -1317,7 +1317,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setreuid */
 	case 203: {
-		struct sys_setreuid_args *p = params;
+		const struct sys_setreuid_args *p = params;
 		uarg[0] = SCARG(p, ruid); /* uid_t */
 		uarg[1] = SCARG(p, euid); /* uid_t */
 		*n_args = 2;
@@ -1325,7 +1325,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setregid */
 	case 204: {
-		struct sys_setregid_args *p = params;
+		const struct sys_setregid_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* gid_t */
 		iarg[1] = SCARG(p, egid); /* gid_t */
 		*n_args = 2;
@@ -1333,7 +1333,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_getgroups */
 	case 205: {
-		struct sys_getgroups_args *p = params;
+		const struct sys_getgroups_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset); /* gid_t * */
 		*n_args = 2;
@@ -1341,7 +1341,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setgroups */
 	case 206: {
-		struct sys_setgroups_args *p = params;
+		const struct sys_setgroups_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset); /* gid_t * */
 		*n_args = 2;
@@ -1349,7 +1349,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___posix_fchown */
 	case 207: {
-		struct sys___posix_fchown_args *p = params;
+		const struct sys___posix_fchown_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, uid); /* uid_t */
 		iarg[2] = SCARG(p, gid); /* gid_t */
@@ -1358,7 +1358,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setresuid */
 	case 208: {
-		struct linux_sys_setresuid_args *p = params;
+		const struct linux_sys_setresuid_args *p = params;
 		uarg[0] = SCARG(p, ruid); /* uid_t */
 		uarg[1] = SCARG(p, euid); /* uid_t */
 		uarg[2] = SCARG(p, suid); /* uid_t */
@@ -1367,7 +1367,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getresuid */
 	case 209: {
-		struct linux_sys_getresuid_args *p = params;
+		const struct linux_sys_getresuid_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ruid); /* uid_t * */
 		uarg[1] = (intptr_t) SCARG(p, euid); /* uid_t * */
 		uarg[2] = (intptr_t) SCARG(p, suid); /* uid_t * */
@@ -1376,7 +1376,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setresgid */
 	case 210: {
-		struct linux_sys_setresgid_args *p = params;
+		const struct linux_sys_setresgid_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* gid_t */
 		iarg[1] = SCARG(p, egid); /* gid_t */
 		iarg[2] = SCARG(p, sgid); /* gid_t */
@@ -1385,7 +1385,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getresgid */
 	case 211: {
-		struct linux_sys_getresgid_args *p = params;
+		const struct linux_sys_getresgid_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, rgid); /* gid_t * */
 		uarg[1] = (intptr_t) SCARG(p, egid); /* gid_t * */
 		uarg[2] = (intptr_t) SCARG(p, sgid); /* gid_t * */
@@ -1394,7 +1394,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys___posix_chown */
 	case 212: {
-		struct sys___posix_chown_args *p = params;
+		const struct sys___posix_chown_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = SCARG(p, uid); /* uid_t */
 		iarg[2] = SCARG(p, gid); /* gid_t */
@@ -1403,35 +1403,35 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_setuid */
 	case 213: {
-		struct sys_setuid_args *p = params;
+		const struct sys_setuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
 	}
 	/* sys_setgid */
 	case 214: {
-		struct sys_setgid_args *p = params;
+		const struct sys_setgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_setfsuid */
 	case 215: {
-		struct linux_sys_setfsuid_args *p = params;
+		const struct linux_sys_setfsuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_setfsgid */
 	case 216: {
-		struct linux_sys_setfsgid_args *p = params;
+		const struct linux_sys_setfsgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
 	}
 	/* sys_mincore */
 	case 218: {
-		struct sys_mincore_args *p = params;
+		const struct sys_mincore_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr); /* void * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		uarg[2] = (intptr_t) SCARG(p, vec); /* char * */
@@ -1440,7 +1440,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_madvise */
 	case 219: {
-		struct sys_madvise_args *p = params;
+		const struct sys_madvise_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr); /* void * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		iarg[2] = SCARG(p, behav); /* int */
@@ -1449,7 +1449,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getdents64 */
 	case 220: {
-		struct linux_sys_getdents64_args *p = params;
+		const struct linux_sys_getdents64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, dent); /* struct linux_dirent64 * */
 		uarg[2] = SCARG(p, count); /* unsigned int */
@@ -1458,7 +1458,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fcntl64 */
 	case 221: {
-		struct linux_sys_fcntl64_args *p = params;
+		const struct linux_sys_fcntl64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, arg); /* void * */
@@ -1472,7 +1472,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_setxattr */
 	case 226: {
-		struct linux_sys_setxattr_args *p = params;
+		const struct linux_sys_setxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		uarg[2] = (intptr_t) SCARG(p, value); /* void * */
@@ -1483,7 +1483,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_lsetxattr */
 	case 227: {
-		struct linux_sys_lsetxattr_args *p = params;
+		const struct linux_sys_lsetxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		uarg[2] = (intptr_t) SCARG(p, value); /* void * */
@@ -1494,7 +1494,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fsetxattr */
 	case 228: {
-		struct linux_sys_fsetxattr_args *p = params;
+		const struct linux_sys_fsetxattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		uarg[2] = (intptr_t) SCARG(p, value); /* void * */
@@ -1505,7 +1505,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_getxattr */
 	case 229: {
-		struct linux_sys_getxattr_args *p = params;
+		const struct linux_sys_getxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		uarg[2] = (intptr_t) SCARG(p, value); /* void * */
@@ -1515,7 +1515,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_lgetxattr */
 	case 230: {
-		struct linux_sys_lgetxattr_args *p = params;
+		const struct linux_sys_lgetxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		uarg[2] = (intptr_t) SCARG(p, value); /* void * */
@@ -1525,7 +1525,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fgetxattr */
 	case 231: {
-		struct linux_sys_fgetxattr_args *p = params;
+		const struct linux_sys_fgetxattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		uarg[2] = (intptr_t) SCARG(p, value); /* void * */
@@ -1535,7 +1535,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_listxattr */
 	case 232: {
-		struct linux_sys_listxattr_args *p = params;
+		const struct linux_sys_listxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, list); /* char * */
 		uarg[2] = SCARG(p, size); /* size_t */
@@ -1544,7 +1544,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_llistxattr */
 	case 233: {
-		struct linux_sys_llistxattr_args *p = params;
+		const struct linux_sys_llistxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, list); /* char * */
 		uarg[2] = SCARG(p, size); /* size_t */
@@ -1553,7 +1553,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_flistxattr */
 	case 234: {
-		struct linux_sys_flistxattr_args *p = params;
+		const struct linux_sys_flistxattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, list); /* char * */
 		uarg[2] = SCARG(p, size); /* size_t */
@@ -1562,7 +1562,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_removexattr */
 	case 235: {
-		struct linux_sys_removexattr_args *p = params;
+		const struct linux_sys_removexattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		*n_args = 2;
@@ -1570,7 +1570,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_lremovexattr */
 	case 236: {
-		struct linux_sys_lremovexattr_args *p = params;
+		const struct linux_sys_lremovexattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* char * */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		*n_args = 2;
@@ -1578,7 +1578,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fremovexattr */
 	case 237: {
-		struct linux_sys_fremovexattr_args *p = params;
+		const struct linux_sys_fremovexattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name); /* char * */
 		*n_args = 2;
@@ -1586,7 +1586,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_tkill */
 	case 238: {
-		struct linux_sys_tkill_args *p = params;
+		const struct linux_sys_tkill_args *p = params;
 		iarg[0] = SCARG(p, tid); /* int */
 		iarg[1] = SCARG(p, sig); /* int */
 		*n_args = 2;
@@ -1594,7 +1594,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_futex */
 	case 240: {
-		struct linux_sys_futex_args *p = params;
+		const struct linux_sys_futex_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, uaddr); /* int * */
 		iarg[1] = SCARG(p, op); /* int */
 		iarg[2] = SCARG(p, val); /* int */
@@ -1606,7 +1606,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_setaffinity */
 	case 241: {
-		struct linux_sys_sched_setaffinity_args *p = params;
+		const struct linux_sys_sched_setaffinity_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = SCARG(p, len); /* unsigned int */
 		uarg[2] = (intptr_t) SCARG(p, mask); /* unsigned long * */
@@ -1615,7 +1615,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_sched_getaffinity */
 	case 242: {
-		struct linux_sys_sched_getaffinity_args *p = params;
+		const struct linux_sys_sched_getaffinity_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = SCARG(p, len); /* unsigned int */
 		uarg[2] = (intptr_t) SCARG(p, mask); /* unsigned long * */
@@ -1624,21 +1624,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_set_thread_area */
 	case 243: {
-		struct linux_sys_set_thread_area_args *p = params;
+		const struct linux_sys_set_thread_area_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, desc); /* struct linux_user_desc * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_get_thread_area */
 	case 244: {
-		struct linux_sys_get_thread_area_args *p = params;
+		const struct linux_sys_get_thread_area_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, desc); /* struct linux_user_desc * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_fadvise64 */
 	case 250: {
-		struct linux_sys_fadvise64_args *p = params;
+		const struct linux_sys_fadvise64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, offset); /* off_t */
 		uarg[2] = SCARG(p, len); /* size_t */
@@ -1648,21 +1648,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_exit_group */
 	case 252: {
-		struct linux_sys_exit_group_args *p = params;
+		const struct linux_sys_exit_group_args *p = params;
 		iarg[0] = SCARG(p, error_code); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_set_tid_address */
 	case 258: {
-		struct linux_sys_set_tid_address_args *p = params;
+		const struct linux_sys_set_tid_address_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tid); /* int * */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_clock_settime */
 	case 264: {
-		struct linux_sys_clock_settime_args *p = params;
+		const struct linux_sys_clock_settime_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		uarg[1] = (intptr_t) SCARG(p, tp); /* struct linux_timespec * */
 		*n_args = 2;
@@ -1670,7 +1670,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_clock_gettime */
 	case 265: {
-		struct linux_sys_clock_gettime_args *p = params;
+		const struct linux_sys_clock_gettime_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		uarg[1] = (intptr_t) SCARG(p, tp); /* struct linux_timespec * */
 		*n_args = 2;
@@ -1678,7 +1678,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_clock_getres */
 	case 266: {
-		struct linux_sys_clock_getres_args *p = params;
+		const struct linux_sys_clock_getres_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		uarg[1] = (intptr_t) SCARG(p, tp); /* struct linux_timespec * */
 		*n_args = 2;
@@ -1686,7 +1686,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_clock_nanosleep */
 	case 267: {
-		struct linux_sys_clock_nanosleep_args *p = params;
+		const struct linux_sys_clock_nanosleep_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		iarg[1] = SCARG(p, flags); /* int */
 		uarg[2] = (intptr_t) SCARG(p, rqtp); /* struct linux_timespec * */
@@ -1696,7 +1696,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_statfs64 */
 	case 268: {
-		struct linux_sys_statfs64_args *p = params;
+		const struct linux_sys_statfs64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = SCARG(p, sz); /* size_t */
 		uarg[2] = (intptr_t) SCARG(p, sp); /* struct linux_statfs64 * */
@@ -1705,7 +1705,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fstatfs64 */
 	case 269: {
-		struct linux_sys_fstatfs64_args *p = params;
+		const struct linux_sys_fstatfs64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, sz); /* size_t */
 		uarg[2] = (intptr_t) SCARG(p, sp); /* struct linux_statfs64 * */
@@ -1714,7 +1714,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_tgkill */
 	case 270: {
-		struct linux_sys_tgkill_args *p = params;
+		const struct linux_sys_tgkill_args *p = params;
 		iarg[0] = SCARG(p, tgid); /* int */
 		iarg[1] = SCARG(p, tid); /* int */
 		iarg[2] = SCARG(p, sig); /* int */
@@ -1723,7 +1723,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_sys_utimes */
 	case 271: {
-		struct compat_50_sys_utimes_args *p = params;
+		const struct compat_50_sys_utimes_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[1] = (intptr_t) SCARG(p, tptr); /* const struct timeval50 * */
 		*n_args = 2;
@@ -1731,7 +1731,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fadvise64_64 */
 	case 272: {
-		struct linux_sys_fadvise64_64_args *p = params;
+		const struct linux_sys_fadvise64_64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, offset); /* off_t */
 		iarg[2] = SCARG(p, len); /* off_t */
@@ -1741,7 +1741,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_openat */
 	case 295: {
-		struct linux_sys_openat_args *p = params;
+		const struct linux_sys_openat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -1751,7 +1751,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_mkdirat */
 	case 296: {
-		struct sys_mkdirat_args *p = params;
+		const struct sys_mkdirat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -1760,7 +1760,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_mknodat */
 	case 297: {
-		struct linux_sys_mknodat_args *p = params;
+		const struct linux_sys_mknodat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -1770,7 +1770,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fchownat */
 	case 298: {
-		struct linux_sys_fchownat_args *p = params;
+		const struct linux_sys_fchownat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[2] = SCARG(p, owner); /* uid_t */
@@ -1781,7 +1781,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fstatat64 */
 	case 300: {
-		struct linux_sys_fstatat64_args *p = params;
+		const struct linux_sys_fstatat64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[2] = (intptr_t) SCARG(p, sp); /* struct linux_stat64 * */
@@ -1791,7 +1791,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_unlinkat */
 	case 301: {
-		struct linux_sys_unlinkat_args *p = params;
+		const struct linux_sys_unlinkat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, flag); /* int */
@@ -1800,7 +1800,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_renameat */
 	case 302: {
-		struct sys_renameat_args *p = params;
+		const struct sys_renameat_args *p = params;
 		iarg[0] = SCARG(p, fromfd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, from); /* const char * */
 		iarg[2] = SCARG(p, tofd); /* int */
@@ -1810,7 +1810,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_linkat */
 	case 303: {
-		struct linux_sys_linkat_args *p = params;
+		const struct linux_sys_linkat_args *p = params;
 		iarg[0] = SCARG(p, fd1); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name1); /* const char * */
 		iarg[2] = SCARG(p, fd2); /* int */
@@ -1821,7 +1821,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_symlinkat */
 	case 304: {
-		struct sys_symlinkat_args *p = params;
+		const struct sys_symlinkat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path1); /* const char * */
 		iarg[1] = SCARG(p, fd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, path2); /* const char * */
@@ -1830,7 +1830,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* sys_readlinkat */
 	case 305: {
-		struct sys_readlinkat_args *p = params;
+		const struct sys_readlinkat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[2] = (intptr_t) SCARG(p, buf); /* char * */
@@ -1840,7 +1840,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_fchmodat */
 	case 306: {
-		struct linux_sys_fchmodat_args *p = params;
+		const struct linux_sys_fchmodat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -1849,16 +1849,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_faccessat */
 	case 307: {
-		struct linux_sys_faccessat_args *p = params;
+		const struct linux_sys_faccessat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[2] = SCARG(p, amode); /* int */
 		*n_args = 3;
 		break;
 	}
+	/* linux_sys_pselect6 */
+	case 308: {
+		const struct linux_sys_pselect6_args *p = params;
+		iarg[0] = SCARG(p, nfds); /* int */
+		uarg[1] = (intptr_t) SCARG(p, readfds); /* fd_set * */
+		uarg[2] = (intptr_t) SCARG(p, writefds); /* fd_set * */
+		uarg[3] = (intptr_t) SCARG(p, exceptfds); /* fd_set * */
+		uarg[4] = (intptr_t) SCARG(p, timeout); /* struct linux_timespec * */
+		uarg[5] = (intptr_t) SCARG(p, ss); /* linux_sized_sigset_t * */
+		*n_args = 6;
+		break;
+	}
 	/* linux_sys_ppoll */
 	case 309: {
-		struct linux_sys_ppoll_args *p = params;
+		const struct linux_sys_ppoll_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fds); /* struct pollfd * */
 		uarg[1] = SCARG(p, nfds); /* u_int */
 		uarg[2] = (intptr_t) SCARG(p, timeout); /* struct linux_timespec * */
@@ -1868,7 +1880,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_set_robust_list */
 	case 311: {
-		struct linux_sys_set_robust_list_args *p = params;
+		const struct linux_sys_set_robust_list_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, head); /* struct linux_robust_list_head * */
 		uarg[1] = SCARG(p, len); /* size_t */
 		*n_args = 2;
@@ -1876,7 +1888,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_get_robust_list */
 	case 312: {
-		struct linux_sys_get_robust_list_args *p = params;
+		const struct linux_sys_get_robust_list_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		uarg[1] = (intptr_t) SCARG(p, head); /* struct linux_robust_list_head ** */
 		uarg[2] = (intptr_t) SCARG(p, len); /* size_t * */
@@ -1885,7 +1897,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_utimensat */
 	case 320: {
-		struct linux_sys_utimensat_args *p = params;
+		const struct linux_sys_utimensat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path); /* const char * */
 		uarg[2] = (intptr_t) SCARG(p, times); /* struct linux_timespec * */
@@ -1895,7 +1907,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_dup3 */
 	case 330: {
-		struct linux_sys_dup3_args *p = params;
+		const struct linux_sys_dup3_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -1904,7 +1916,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_pipe2 */
 	case 331: {
-		struct linux_sys_pipe2_args *p = params;
+		const struct linux_sys_pipe2_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, pfds); /* int * */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
@@ -4915,6 +4927,31 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_pselect6 */
+	case 308:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "fd_set *";
+			break;
+		case 2:
+			p = "fd_set *";
+			break;
+		case 3:
+			p = "fd_set *";
+			break;
+		case 4:
+			p = "struct linux_timespec *";
+			break;
+		case 5:
+			p = "linux_sized_sigset_t *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_ppoll */
 	case 309:
 		switch(ndx) {
@@ -6100,6 +6137,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_faccessat */
 	case 307:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_pselect6 */
+	case 308:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

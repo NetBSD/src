@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.65.2.2 2015/12/27 12:09:45 skrll Exp $
+#	$NetBSD: GENERIC,v 1.65.2.3 2017/02/05 13:40:24 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -135,6 +135,7 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+options		NOPORTALGO
 
 #
 # wscons options
@@ -239,6 +240,8 @@ audio* at zaudio?
 
 # Audio support
 audio* at audiobus?
+
+spkr* at audio?		# PC speaker (synthesized)
 
 # integrated 16550 UARTs
 options 	COM_PXA2X0

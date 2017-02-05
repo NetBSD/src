@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.56.14.3 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.56.14.4 2017/02/05 13:40:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.56.14.3 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.56.14.4 2017/02/05 13:40:45 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -558,6 +558,7 @@ cnw_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, macaddr);
 
 	sc->sc_resource |= CNW_RES_NET;
@@ -852,8 +853,6 @@ cnw_recv(struct cnw_softc *sc)
 		}
 		++ifp->if_ipackets;
 
-		bpf_mtap(ifp, m);
-
 		/* Pass the packet up. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
@@ -975,7 +974,7 @@ cnw_intr(void *arg)
 			ifp->if_flags &= ~IFF_OACTIVE;
 
 			/* Continue to send packets from the queue */
-			cnw_start(&sc->sc_ethercom.ec_if);
+			if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 		}
 
 	}

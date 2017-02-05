@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_subr.c,v 1.12 2009/11/18 21:59:38 macallan Exp $ */
+/*	$NetBSD: igsfb_subr.c,v 1.12.40.1 2017/02/05 13:40:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.12 2009/11/18 21:59:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_subr.c,v 1.12.40.1 2017/02/05 13:40:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 			depth = 8;
 			seq_mode = IGS_EXT_SEQ_8BPP;
 	}
-	bytes_per_pixel = depth >> 3;
+	bytes_per_pixel = howmany(depth, NBBY);
 
 	hoffset = (mode->hdisplay >> 3) * bytes_per_pixel;
 	memfetch = hoffset + 1;
@@ -660,7 +660,7 @@ igsfb_set_mode(struct igsfb_devconfig *dc, const struct videomode *mode,
 	dc->dc_width = mode->hdisplay;
 	dc->dc_height = mode->vdisplay;
 	dc->dc_depth = depth;
-	dc->dc_stride = dc->dc_width * (depth >> 3);
+	dc->dc_stride = dc->dc_width * howmany(depth, NBBY);
 
 	igsfb_video_on(dc);
 }

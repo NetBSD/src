@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.11.6.6 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.11.6.7 2017/02/05 13:40:29 skrll Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1272,7 +1272,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 			/* Disable ASPM L0S and L1. */
 			cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 			    base + PCIE_LCAP) >> 16;
-			if ((cap & 0x00000c00) != 0) {
+			if ((cap & PCIE_LCAP_ASPM) != 0) {
 				ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 				    base + PCIE_LCSR) >> 16;
 				if ((ctl & 0x08) != 0)
@@ -1466,6 +1466,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_miibus.mii_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->alc_eaddr);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -2300,8 +2301,7 @@ alc_intr(void *arg)
 		}
 
 		alc_txeof(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			alc_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	/* Re-enable interrupts. */
@@ -2585,8 +2585,6 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 				VLAN_INPUT_TAG(ifp, m, ntohs(vtag), );
 			}
 #endif
-
-			bpf_mtap(ifp, m);
 
 			/* Pass it on. */
 			if_percpuq_enqueue(ifp->if_percpuq, m);

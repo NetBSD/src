@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 282289 2015-04-30 22:53:27Z erj $*/
-/*$NetBSD: ixgbe_mbx.c,v 1.1.30.2 2016/12/05 10:55:17 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_mbx.c 299200 2016-05-06 22:54:56Z pfg $*/
+/*$NetBSD: ixgbe_mbx.c,v 1.1.30.3 2017/02/05 13:40:45 skrll Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_mbx.h"
@@ -43,7 +43,7 @@
  *  @size: Length of buffer
  *  @mbx_id: id of mailbox to read
  *
- *  returns SUCCESS if it successfuly read message from buffer
+ *  returns SUCCESS if it successfully read message from buffer
  **/
 s32 ixgbe_read_mbx(struct ixgbe_hw *hw, u32 *msg, u16 size, u16 mbx_id)
 {
@@ -463,7 +463,7 @@ out_no_write:
  *  @size: Length of buffer
  *  @mbx_id: id of mailbox to read
  *
- *  returns SUCCESS if it successfuly read message from buffer
+ *  returns SUCCESS if it successfully read message from buffer
  **/
 static s32 ixgbe_read_mbx_vf(struct ixgbe_hw *hw, u32 *msg, u16 size,
 			     u16 mbx_id)

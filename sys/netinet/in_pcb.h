@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.55.2.3 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.55.2.4 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,6 +160,7 @@ void	in_setpeeraddr(struct inpcb *, struct sockaddr_in *);
 void	in_setsockaddr(struct inpcb *, struct sockaddr_in *);
 struct rtentry *
 	in_pcbrtentry(struct inpcb *);
+void	in_pcbrtentry_unref(struct rtentry *, struct inpcb *);
 #endif
 
 #endif /* !_NETINET_IN_PCB_H_ */

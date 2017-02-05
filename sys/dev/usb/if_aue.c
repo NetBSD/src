@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.16 2016/12/28 09:45:16 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.17 2017/02/05 13:40:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.16 2016/12/28 09:45:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.17 2017/02/05 13:40:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -834,7 +834,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
-	strncpy(ifp->if_xname, device_xname(sc->aue_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->aue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -1185,7 +1185,6 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m = c->aue_mbuf;
 	total_len -= ETHER_CRC_LEN + 4;
 	m->m_pkthdr.len = m->m_len = total_len;
-	ifp->if_ipackets++;
 
 	m_set_rcvif(m, ifp);
 
@@ -1196,14 +1195,6 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		ifp->if_ierrors++;
 		goto done1;
 	}
-
-	/*
-	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 * don't pass it up to the ether_input() layer unless it's
-	 * a broadcast packet, multicast packet, matches our ethernet
-	 * address or the interface is in promiscuous mode.
-	 */
-	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->aue_dev),
 		    __func__, m->m_len));

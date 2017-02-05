@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.64.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.64.2.2 2017/02/05 13:41:00 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.64.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.64.2.2 2017/02/05 13:41:00 skrll Exp $");
 
 /*
  * IPsec controller part.
@@ -929,6 +929,7 @@ ipsec4_forward(struct mbuf *m, int *destmtu)
 			    rt->rt_rmx.rmx_mtu : rt->rt_ifp->if_mtu;
 			*destmtu -= ipsechdr;
 		}
+		rtcache_unref(rt, ro);
 	}
 	KEY_FREESP(&sp);
 	return 0;
@@ -2312,6 +2313,10 @@ inet_ntoa4(struct in_addr ina)
 const char *
 ipsec_address(const union sockaddr_union *sa)
 {
+#if INET6
+	static char ip6buf[INET6_ADDRSTRLEN];	/* XXX: NOMPSAFE */
+#endif
+
 	switch (sa->sa.sa_family) {
 #if INET
 	case AF_INET:
@@ -2320,7 +2325,7 @@ ipsec_address(const union sockaddr_union *sa)
 
 #if INET6
 	case AF_INET6:
-		return ip6_sprintf(&sa->sin6.sin6_addr);
+		return IN6_PRINT(ip6buf, &sa->sin6.sin6_addr);
 #endif /* INET6 */
 
 	default:

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121.2.1 2015/09/22 12:05:39 skrll Exp $
+# $NetBSD: GENERIC,v 1.121.2.2 2017/02/05 13:40:06 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -192,6 +192,8 @@ mbe*		at g2bus?			# SEGA LAN Adapter
 
 aica*		at g2bus?			# AICA Sound Processing Unit
 audio*		at aica?
+
+spkr*		at audio?		# PC speaker (synthesized)
 
 #pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	md			# memory disk device (ramdisk)

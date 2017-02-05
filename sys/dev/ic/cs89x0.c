@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.34.4.3 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.34.4.4 2017/02/05 13:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.34.4.3 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.34.4.4 2017/02/05 13:40:27 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1655,14 +1655,6 @@ void
 cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);

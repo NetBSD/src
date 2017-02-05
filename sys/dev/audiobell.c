@@ -1,4 +1,5 @@
-/*	$NetBSD: audiobell.c,v 1.8 2009/05/12 10:22:31 cegger Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.8.40.1 2017/02/05 13:40:26 skrll Exp $	*/
+
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,12 +32,13 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.8 2009/05/12 10:22:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.8.40.1 2017/02/05 13:40:26 skrll Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/null.h>
 #include <sys/systm.h>
@@ -46,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.8 2009/05/12 10:22:31 cegger Exp $")
 #include <dev/audiobellvar.h>
 
 extern dev_type_open(audioopen);
+extern dev_type_ioctl(audioioctl);
 extern dev_type_write(audiowrite);
 extern dev_type_close(audioclose);
 
@@ -134,36 +137,53 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 }
 
 void
-audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
+audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 {
-	device_t audio = arg;
 	uint8_t *buf;
+	struct audio_info ai;
 	struct uio auio;
 	struct iovec aiov;
+	int size, len, offset;
+	dev_t audio = AUDIO_DEVICE | device_unit((device_t)v);
 
 	/* The audio system isn't built for polling. */
 	if (poll) return;
 
 	/* If not configured, we can't beep. */
-	if (audioopen(AUDIO_DEVICE | device_unit(audio), FWRITE, 0, NULL) != 0)
+	if (audioopen(audio, FWRITE, 0, NULL) != 0)
 		return;
 
-	buf = malloc(period * 8, M_TEMP, M_WAITOK);
+	if (audioioctl(audio, AUDIO_GETINFO, &ai, 0, NULL) != 0)
+		return;
+
+	buf = NULL;
+
+	len = period * 8;
+	size = min(len, ai.blocksize);
+	if (size == 0) goto out;
+
+	buf = malloc(size, M_TEMP, M_WAITOK);
 	if (buf == NULL) goto out;
-	if (audiobell_synthesize(buf, pitch, period, volume) != 0) goto out;
 
-	aiov.iov_base = (void *)buf;
-	aiov.iov_len = period * 8;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_offset = 0;
-	auio.uio_resid = period * 8;
-	auio.uio_rw = UIO_WRITE;
-	UIO_SETUP_SYSSPACE(&auio);
+	offset = 0;
+	while (len > 0) {
+		size = min(len, ai.blocksize);
+		if (audiobell_synthesize(buf, pitch, size / 8, volume) != 0)
+			goto out;
+		aiov.iov_base = (void *)buf;
+		aiov.iov_len = size;
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		auio.uio_offset = 0;
+		auio.uio_resid = size;
+		auio.uio_rw = UIO_WRITE;
+		UIO_SETUP_SYSSPACE(&auio);
 
-	audiowrite(AUDIO_DEVICE | device_unit(audio), &auio, 0);
-
+		audiowrite(audio, &auio, 0);
+		len -= size;
+		offset += size;
+	}
 out:
 	if (buf != NULL) free(buf, M_TEMP);
-	audioclose(AUDIO_DEVICE | device_unit(audio), FWRITE, 0, NULL);
+	audioclose(audio, FWRITE, 0, NULL);
 }

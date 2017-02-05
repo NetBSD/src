@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.2.2.6 2017/02/05 13:40:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.2.2.6 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Ex
 #ifdef INET6
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/nd6.h>
 #include <netinet6/dccp6_var.h>
 #endif
 #include <netinet/dccp.h>
@@ -378,11 +377,12 @@ dccp_input(struct mbuf *m, ...)
 
 #ifdef INET6
 			if (isipv6) {
+				char ip6buf[INET6_ADDRSTRLEN];
 				strlcpy(dbuf, "[", sizeof dbuf);
-				strlcat(dbuf, ip6_sprintf(&ip6->ip6_dst), sizeof dbuf);
+				strlcat(dbuf, IN6_PRINT(ip6buf, &ip6->ip6_dst), sizeof dbuf);
 				strlcat(dbuf, "]", sizeof dbuf);
 				strlcpy(sbuf, "[", sizeof sbuf);
-				strlcat(sbuf, ip6_sprintf(&ip6->ip6_src), sizeof sbuf);
+				strlcat(sbuf, IN6_PRINT(ip6buf, &ip6->ip6_src), sizeof sbuf);
 				strlcat(sbuf, "]", sizeof sbuf);
 			} else
 #endif

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@
  * AML opcodes with related syntax and grammar information.
  * This table was extracted from the ACPI specification.
  */
-const AH_AML_OPCODE         AmlOpcodeInfo[] =
+const AH_AML_OPCODE         Gbl_AmlOpcodeInfo[] =
 {
     {0x00,   0x00,   "0x00",            "ZeroOp",               "DataObject",   NULL,                                           NULL,
                                                                 NULL},

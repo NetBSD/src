@@ -1,4 +1,4 @@
-#	$NetBSD: NETBOOKPRO,v 1.16.2.1 2015/09/22 12:05:42 skrll Exp $
+#	$NetBSD: NETBOOKPRO,v 1.16.2.2 2017/02/05 13:40:11 skrll Exp $
 #
 #	NETBOOKPRO -- Psion Teklogix NETBOOK PRO
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.netbookpro"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16.2.1 $"
+#ident 		"GENERIC-$Revision: 1.16.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -184,6 +184,8 @@ pxaacu0 at pxaip? addr 0x40500000 intr 14	# Wolfson WM97xx
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 # Inter-Integrated Circuit controller
 nbpiic0	at pxaip? addr 0x40300000 intr 18

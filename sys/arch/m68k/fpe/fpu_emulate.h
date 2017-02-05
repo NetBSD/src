@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.24.12.1 2016/10/05 20:55:31 skrll Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.24.12.2 2017/02/05 13:40:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -248,7 +248,6 @@ struct fpn *fpu_cmp(struct fpemu *);
 
 /* fpu_cordic.c */
 extern const struct fpn fpu_cordic_inv_gain1;
-extern const struct fpn fpu_cordic_inv_gain2;
 void fpu_cordit1(struct fpemu *,
 	struct fpn *, struct fpn *, struct fpn *, const struct fpn *);
 

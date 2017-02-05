@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.35 2011/11/23 23:07:31 jmcneill Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.35.26.1 2017/02/05 13:40:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.35 2011/11/23 23:07:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.35.26.1 2017/02/05 13:40:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sparc_arch.h"
@@ -268,9 +268,13 @@ static int
 cs4231_ebus_round_blocksize(void *addr, int blk, int mode,
 			    const audio_params_t *param)
 {
+	int sz;
 
 	/* we want to use DMA burst size of 16 words */
-	return blk & -64;
+	sz = blk & -64;
+	if (sz == 0)
+		sz = 64;	/* zero is not a good blocksize */
+	return sz;
 }
 
 

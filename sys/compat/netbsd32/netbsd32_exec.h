@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.h,v 1.32 2014/10/24 21:07:55 christos Exp $	*/
+/*	$NetBSD: netbsd32_exec.h,v 1.32.2.1 2017/02/05 13:40:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -94,13 +94,12 @@ netbsd32_copyargs(struct lwp *l, struct exec_package *pack,
 	int envc = arginfo->ps_nenvstr;
 	int error;
 
-	NETBSD32PTR32(dp, cpp + 
+	NETBSD32PTR32(dp, (char *)(cpp +
 	    1 +				/* int argc */
 	    argc +			/* char *argv[] */
 	    1 +				/* \0 */
 	    envc +			/* char *env[] */
-	    1 +				/* \0 */
-	    /* XXX auxinfo multiplied by ptr size? */
+	    1) +			/* \0 */
 	    pack->ep_esch->es_arglen);	/* auxinfo */
 	sp = argp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.64.4.1 2015/06/06 14:40:31 skrll Exp $	*/
+/*	$NetBSD: uvm.h,v 1.64.4.2 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,6 +62,7 @@
 
 #ifdef _KERNEL
 
+#include <uvm/uvm_physseg.h>
 #include <sys/rndsource.h>
 
 /*

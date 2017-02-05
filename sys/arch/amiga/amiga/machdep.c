@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.243.6.2 2016/04/22 15:44:08 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.243.6.3 2017/02/05 13:40:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243.6.2 2016/04/22 15:44:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243.6.3 2017/02/05 13:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,6 @@ paddr_t msgbufpa;
 
 int	machineid;
 int	maxmem;			/* max memory per process */
-extern int	physmem;	/* max supported memory, changes to actual */
 
 extern  int   freebufspace;
 extern	u_int lowram;

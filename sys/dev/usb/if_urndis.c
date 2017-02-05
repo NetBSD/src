@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.15 2017/01/26 12:40:16 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.16 2017/02/05 13:40:46 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.15 2017/01/26 12:40:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.16 2017/02/05 13:40:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -873,7 +873,6 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, uint32_t len)
 		    le32toh(msg->rm_datalen));
 		m->m_pkthdr.len = m->m_len = le32toh(msg->rm_datalen);
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 
 		s = splnet();

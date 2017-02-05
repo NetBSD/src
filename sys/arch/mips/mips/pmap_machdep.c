@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.11.2.2 2016/10/05 20:55:32 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.11.2.3 2017/02/05 13:40:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11.2.2 2016/10/05 20:55:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11.2.3 2017/02/05 13:40:15 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11.2.2 2016/10/05 20:55:32 skrll 
 #endif
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #include <mips/cache.h>
 #include <mips/cpuregs.h>
@@ -306,12 +307,12 @@ pmap_md_vca_page_wbinv(struct vm_page *pg, bool locked_p)
 }
 
 bool
-pmap_md_ok_to_steal_p(const struct vm_physseg *seg, size_t npgs)
+pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 {
 #ifndef _LP64
-	if (seg->avail_start + npgs >= atop(MIPS_PHYS_MASK + 1)) {
-		aprint_debug("%s: seg %zu: not enough in KSEG0 for %zu pages\n",
-		    __func__, seg - VM_PHYSMEM_PTR(0), npgs);
+	if (uvm_physseg_get_avail_start(bank) + npgs >= atop(MIPS_PHYS_MASK + 1)) {
+		aprint_debug("%s: seg not enough in KSEG0 for %zu pages\n",
+		    __func__, npgs);
 		return false;
 	}
 #endif
@@ -393,8 +394,8 @@ pmap_bootstrap(void)
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	pmap_limits.avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	pmap_limits.avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	pmap_limits.avail_start = ptoa(uvm_physseg_get_start(uvm_physseg_get_first()));
+	pmap_limits.avail_end = ptoa(uvm_physseg_get_end(uvm_physseg_get_last()));
 	pmap_limits.virtual_end = pmap_limits.virtual_start + (vaddr_t)sysmap_size * NBPG;
 
 #ifndef _LP64

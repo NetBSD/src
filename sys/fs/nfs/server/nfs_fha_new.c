@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_fha_new.c,v 1.1.1.1.12.1 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: nfs_fha_new.c,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Copyright (c) 2013 Spectra Logic Corporation
@@ -27,17 +27,17 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_fha_new.c 259765 2013-12-23 08:43:16Z mav "); */
-__RCSID("$NetBSD: nfs_fha_new.c,v 1.1.1.1.12.1 2016/12/05 10:55:26 skrll Exp $");
+__RCSID("$NetBSD: nfs_fha_new.c,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $");
 
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 #include <rpc/rpc.h>
-#include <nfs/nfs_fha.h>
-#include <fs/nfs/xdr_subs.h>
-#include <fs/nfs/nfs.h>
-#include <fs/nfs/nfsproto.h>
-#include <fs/nfs/nfsm_subs.h>
-#include <fs/nfsserver/nfs_fha_new.h>
+#include <fs/nfs/common/nfs_fha.h>
+#include <fs/nfs/common/xdr_subs.h>
+#include <fs/nfs/common/nfs.h>
+#include <fs/nfs/common/nfsproto.h>
+#include <fs/nfs/common/nfsm_subs.h>
+#include <fs/nfs/server/nfs_fha_new.h>
 
 static void fhanew_init(void *foo);
 static void fhanew_uninit(void *foo);

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.62.16.4 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: qe.c,v 1.62.16.5 2017/02/05 13:40:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62.16.4 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62.16.5 2017/02/05 13:40:46 skrll Exp $");
 
 #define QEDEBUG
 
@@ -421,13 +421,7 @@ qe_read(struct qe_softc *sc, int idx, int len)
 		ifp->if_ierrors++;
 		return;
 	}
-	ifp->if_ipackets++;
 
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }

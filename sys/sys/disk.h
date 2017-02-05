@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.61.2.6 2016/12/05 10:55:29 skrll Exp $	*/
+/*	$NetBSD: disk.h,v 1.61.2.7 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -482,6 +482,7 @@ struct dkdriver {
 	int	(*d_lastclose)(device_t);
 	int	(*d_discard)(device_t, off_t, off_t);
 	int	(*d_firstopen)(device_t, dev_t, int, int);
+	void	(*d_label)(device_t, struct disklabel *lp);
 };
 #endif
 

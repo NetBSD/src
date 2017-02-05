@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.8 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.9 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.8 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.9 2017/02/05 13:40:56 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1235,26 +1235,11 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_lflag & PL_PPWAIT) != 0) {
-#if 0
-		lwp_t *lp;
-
-		mutex_enter(proc_lock);
-		lp = p->p_vforklwp;
-		p->p_vforklwp = NULL;
-
-		l->l_lwpctl = NULL; /* was on loan from blocked parent */
-		p->p_lflag &= ~PL_PPWAIT;
-
-		lp->l_pflag &= ~LP_VFORKWAIT; /* XXX */
-		cv_broadcast(&lp->l_waitcv);
-		mutex_exit(proc_lock);
-#else
 		mutex_enter(proc_lock);
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(proc_lock);
-#endif
 	}
 
 	error = credexec(l, &data->ed_attr);
@@ -1318,6 +1303,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		KSI_INIT_EMPTY(&ksi);
 		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_EXEC;
 		ksi.ksi_lid = l->l_lid;
 		kpsignal(p, &ksi, NULL);
 	}
@@ -1425,10 +1411,11 @@ calcargs(struct execve_data * restrict data, const size_t argenvstrlen)
 	    data->ed_argc +		/* char *argv[] */
 	    1 +				/* \0 */
 	    data->ed_envc +		/* char *env[] */
-	    1 +				/* \0 */
-	    epp->ep_esch->es_arglen;	/* auxinfo */
+	    1;				/* \0 */
 
-	return (nargenvptrs * ptrsz(epp)) + argenvstrlen;
+	return (nargenvptrs * ptrsz(epp))	/* pointers */
+	    + argenvstrlen			/* strings */
+	    + epp->ep_esch->es_arglen;		/* auxinfo */
 }
 
 static size_t
@@ -1679,9 +1666,8 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	    argc +			/* char *argv[] */
 	    1 +				/* \0 */
 	    envc +			/* char *env[] */
-	    1 +				/* \0 */
-	    /* XXX auxinfo multiplied by ptr size? */
-	    pack->ep_esch->es_arglen);	/* auxinfo */
+	    1) +			/* \0 */
+	    pack->ep_esch->es_arglen;	/* auxinfo */
 	sp = argp;
 
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {

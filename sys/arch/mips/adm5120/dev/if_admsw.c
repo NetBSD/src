@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.12.4.2 2016/07/09 20:24:53 skrll Exp $ */
+/* $NetBSD: if_admsw.c,v 1.12.4.3 2017/02/05 13:40:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.12.4.2 2016/07/09 20:24:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.12.4.3 2017/02/05 13:40:15 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -480,6 +480,7 @@ admsw_attach(device_t parent, device_t self, void *aux)
 
 		/* Attach the interface. */
 		if_attach(ifp);
+		if_deferred_start_init(ifp, NULL);
 		ether_ifattach(ifp, enaddr);
 		enaddr[5]++;
 	}
@@ -886,7 +887,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 		ifp = &sc->sc_ethercom[0].ec_if;
 
 		/* Try to queue more packets. */
-		admsw_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 		/*
 		 * If there are no more pending transmissions,
@@ -998,12 +999,9 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			if (stat & ADM5120_DMA_CSUMFAIL)
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
 		}
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		ifp->if_ipackets++;
 	}
 #ifdef ADMSW_EVENT_COUNTERS
 	if (pkts)

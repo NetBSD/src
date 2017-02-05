@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.52.6.3 2016/07/09 20:24:49 skrll Exp $ */
+/*	$NetBSD: if_es.c,v 1.52.6.4 2017/02/05 13:40:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.52.6.3 2016/07/09 20:24:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.52.6.4 2017/02/05 13:40:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -659,7 +659,6 @@ esrint(struct es_softc *sc)
 	}
 #endif
 #endif /* USEPKTBUF */
-	ifp->if_ipackets++;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
@@ -720,7 +719,6 @@ esrint(struct es_softc *sc)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	bpf_mtap(ifp, top);
 	if_percpuq_enqueue(ifp->if_percpuq, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2014/05/01 18:37:26 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.12.4.1 2017/02/05 13:40:12 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -9,5 +9,4 @@ OPT_SIZE.gcc=	-Os -ffreestanding -fomit-frame-pointer -fno-unwind-tables \
 OPT_SIZE.clang=	-Oz -ffreestanding -fomit-frame-pointer -DNDEBUG \
 		-fno-stack-protector -mno-sse \
 		-mstack-alignment=4 \
-		-mllvm -inline-threshold=3 -mllvm -enable-load-pre=false \
 		-fno-unwind-tables

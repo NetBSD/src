@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.38.2.1 2015/09/22 12:05:54 skrll Exp $
+#	$NetBSD: Makefile.xen,v 1.38.2.2 2017/02/05 13:40:23 skrll Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -105,7 +105,7 @@ vector.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S assym.h
 .if ${XEN_BUILD} == i386
 TEXTADDR?=	0xc0100000
 .elif ${XEN_BUILD} == amd64
-TEXTADDR?=	0xffffffff80100000
+TEXTADDR?=	0xffffffff80200000
 .endif
 LINKFLAGS_NORMAL=	-X
 KERNLDSCRIPT?=	$S/arch/${XEN_BUILD}/conf/kern.ldscript.Xen

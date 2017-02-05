@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.6.4.4 2016/10/05 20:55:26 skrll Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.6.4.5 2017/02/05 13:40:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.6.4.4 2016/10/05 20:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.6.4.5 2017/02/05 13:40:06 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -216,6 +216,7 @@ enic_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	sc->sc_sh = shutdownhook_establish(enic_shutdown, ifp);
@@ -540,7 +541,7 @@ enic_init(struct ifnet *ifp)
 	printf("enic_init <- %x\n",ctl);
 #endif
 
-	enic_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return 0;
 }
@@ -758,15 +759,6 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	m->m_pkthdr.len = len;
 	m->m_len = len; /* recheck */
 
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp, m);
-
 	/* Pass the packet up. */
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 
@@ -819,7 +811,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 		ifp->if_timer = 0;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
-	enic_start(ifp);
+	if_schedule_deferred_start(ifp);
 #if DEBUG
 	sc->it = 1;
 #endif

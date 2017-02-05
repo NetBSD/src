@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.34 2012/02/20 22:42:05 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.34.16.1 2017/02/05 13:40:46 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.34 2012/02/20 22:42:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.34.16.1 2017/02/05 13:40:46 skrll Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -324,12 +324,7 @@ void
 rf_FreeReconMap(RF_ReconMap_t *mapPtr)
 {
 	RF_ReconMapListElem_t *p, *q;
-	RF_ReconUnitCount_t numRUs;
 	RF_ReconUnitNum_t i;
-
-	numRUs = mapPtr->sectorsInDisk / mapPtr->sectorsPerReconUnit;
-	if (mapPtr->sectorsInDisk % mapPtr->sectorsPerReconUnit)
-		numRUs++;
 
 	for (i = 0; i < mapPtr->status_size; i++) {
 		p = mapPtr->status[i];

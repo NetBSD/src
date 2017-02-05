@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.45.6.3 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.45.6.4 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.45.6.3 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.45.6.4 2017/02/05 13:40:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -357,8 +357,8 @@ coredump_note_procinfo(struct lwp *l, struct note_state *ns)
 	/* First, write an elfcore_procinfo. */
 	cpi.cpi_version = NETBSD_ELFCORE_PROCINFO_VERSION;
 	cpi.cpi_cpisize = sizeof(cpi);
-	cpi.cpi_signo = p->p_sigctx.ps_signo;
-	cpi.cpi_sigcode = p->p_sigctx.ps_code;
+	cpi.cpi_signo = p->p_sigctx.ps_info._signo;
+	cpi.cpi_sigcode = p->p_sigctx.ps_info._code;
 	cpi.cpi_siglwp = p->p_sigctx.ps_lwp;
 
 	/*
@@ -416,7 +416,7 @@ coredump_note_auxv(struct lwp *l, struct note_state *ns)
 
 	size_t ptrsz = PROC_PTRSZ(p);
 	uauxv = (void *)((char *)pss.ps_envstr + (pss.ps_nenvstr + 1) * ptrsz);
-	size_t len = p->p_execsw->es_arglen * ptrsz;
+	size_t len = p->p_execsw->es_arglen;
 
 	kauxv = kmem_alloc(len, KM_SLEEP);
 	error = copyin_proc(p, uauxv, kauxv, len);

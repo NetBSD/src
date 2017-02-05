@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.2.2.4 2016/10/05 20:55:37 skrll Exp $	*/
+/*	$NetBSD: efi.c,v 1.2.2.5 2017/02/05 13:40:23 skrll Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2.2.4 2016/10/05 20:55:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2.2.5 2017/02/05 13:40:23 skrll Exp $");
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,7 @@ void 		efi_aprintcfgtbl(void);
 void 		efi_aprintuuid(const struct uuid *);
 bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 
+static bool efi_is32bit = false;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 
@@ -150,7 +151,7 @@ efi_getcfgtblhead(void)
 	if (efi_cfgtblhead_va != NULL)
 		return efi_cfgtblhead_va;
 
-	pa = (paddr_t) efi_systbl_va->st_cfgtbl;
+	pa = (paddr_t)(u_long) efi_systbl_va->st_cfgtbl;
 	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
 	va = efi_getva(pa);
 	aprint_debug("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
@@ -173,7 +174,7 @@ efi_aprintcfgtbl(void)
 	count = efi_systbl_va->st_entries;
 	aprint_debug("efi: %lu cfgtbl entries:\n", count);
 	for (; count; count--, ct++) {
-		aprint_debug("efi: %16" PRIx64 "", ct->ct_data);
+		aprint_debug("efi: %p", ct->ct_data);
 		efi_aprintuuid(&ct->ct_uuid);
 		aprint_debug("\n");
 	}
@@ -209,7 +210,7 @@ efi_getcfgtblpa(const struct uuid * uuid)
 	count = efi_systbl_va->st_entries;
 	for (; count; count--, ct++)
 		if (efi_uuideq(&ct->ct_uuid, uuid))
-			return (paddr_t) ct->ct_data;
+			return (paddr_t)(u_long) ct->ct_data;
 
 	return 0;	/* Not found. */
 }
@@ -226,7 +227,15 @@ efi_getsystblpa(void)
 		/* Unable to locate the EFI System Table. */
 		return 0;
 	}
-	pa = bi->bi_systbl;
+	if (bi->common.len > 16 && (bi->flags & BI_EFI_32BIT)) {
+		/* 32Bit UEFI */
+		if (sizeof(paddr_t) == 4 &&
+		    (bi->systblpa & 0xffffffff00000000ULL))
+			/* Unable to access EFI System Table. */
+			return 0;
+		efi_is32bit = true;
+	}
+	pa = (paddr_t)bi->systblpa;
 	return pa;
 }
 
@@ -259,7 +268,7 @@ efi_getsystbl(void)
 		 * XXX Also print fwvendor, which is an UCS-2 string (use
 		 * some UTF-16 routine?)
 		 */
-		aprint_debug("efi: runtime services at pa %" PRIx64 "\n",
+		aprint_debug("efi: runtime services at pa %p\n",
 		    systbl->st_rt);
 		aprint_debug("efi: boot services at pa %p\n",
 		    systbl->st_bs);
@@ -284,4 +293,59 @@ efi_probe(void)
 		return false;
 	}
 	return true;
+}
+
+int
+efi_getbiosmemtype(uint32_t type, uint64_t attr)
+{
+
+	switch (type) {
+	case EFI_MD_TYPE_CODE:
+	case EFI_MD_TYPE_DATA:
+	case EFI_MD_TYPE_BS_CODE:
+	case EFI_MD_TYPE_BS_DATA:
+	case EFI_MD_TYPE_FREE:
+		return (attr & EFI_MD_ATTR_WB) ? BIM_Memory : BIM_Reserved;
+
+	case EFI_MD_TYPE_RECLAIM:
+		return BIM_ACPI;
+
+	case EFI_MD_TYPE_FIRMWARE:
+		return BIM_NVS;
+
+	case EFI_MD_TYPE_NULL:
+	case EFI_MD_TYPE_RT_CODE:
+	case EFI_MD_TYPE_RT_DATA:
+	case EFI_MD_TYPE_BAD:
+	case EFI_MD_TYPE_IOMEM:
+	case EFI_MD_TYPE_IOPORT:
+	case EFI_MD_TYPE_PALCODE:
+		return BIM_Reserved;
+	}
+	return BIM_Reserved;
+}
+
+const char *
+efi_getmemtype_str(uint32_t type)
+{
+	static const char *efimemtypes[] = {
+		"Reserved",
+		"LoaderCode",
+		"LoaderData",
+		"BootServicesCode",
+		"BootServicesData",
+		"RuntimeServicesCode",
+		"RuntimeServicesData",
+		"ConventionalMemory",
+		"UnusableMemory",
+		"ACPIReclaimMemory",
+		"ACPIMemoryNVS",
+		"MemoryMappedIO",
+		"MemoryMappedIOPortSpace",
+		"PalCode",
+	};
+
+	if (type < __arraycount(efimemtypes))
+		return efimemtypes[type];
+	return "unknown";
 }

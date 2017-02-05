@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.150.4.7 2016/12/05 10:54:49 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.150.4.8 2017/02/05 13:40:03 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150.4.7 2016/12/05 10:54:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.150.4.8 2017/02/05 13:40:03 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3076,7 +3076,7 @@ pj4bv7_setup(char *args)
 	cpuctrl |= CPU_CONTROL_IC_ENABLE;
 	cpuctrl |= (0xf << 3);
 	cpuctrl |= CPU_CONTROL_BPRD_ENABLE;
-	cpuctrl |= (0x5 << 16) | (1 < 22);
+	cpuctrl |= (0x5 << 16);
 	cpuctrl |= CPU_CONTROL_XP_ENABLE;
 
 #ifndef ARM_HAS_VBAR

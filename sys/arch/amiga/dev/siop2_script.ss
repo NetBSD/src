@@ -1,4 +1,4 @@
-;	$NetBSD: siop2_script.ss,v 1.7 2009/10/21 23:53:38 snj Exp $
+;	$NetBSD: siop2_script.ss,v 1.7.40.1 2017/02/05 13:40:02 skrll Exp $
 
 ;
 ; Copyright (c) 1998 Michael L. Hitch
@@ -146,7 +146,7 @@ wait_reselect:
 	INT err9, WHEN NOT MSG_IN	; didn't get IDENTIFY
 	MOVE FROM ds_Msg, WHEN MSG_IN
 	INT err3			; let host know about reconnect
-	CLEAR ACK			; acknowlege the message
+	CLEAR ACK			; acknowledge the message
 	JUMP REL(switch)
 
 

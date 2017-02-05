@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.11.6.1 2016/07/09 20:24:55 skrll Exp $	*/
+/*	$NetBSD: sii.c,v 1.11.6.2 2017/02/05 13:40:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.11.6.1 2016/07/09 20:24:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.11.6.2 2017/02/05 13:40:17 skrll Exp $");
 
 #include "sii.h"
 /*
@@ -352,7 +352,7 @@ sii_Reset(struct siisoftc* sc, int reset)
 /*
  * Start a SCSI command by sending the cmd data
  * to a SCSI controller via the SII.
- * Call the device done proceedure if it can't be started.
+ * Call the device done procedure if it can't be started.
  * NOTE: we should be called with interrupts disabled.
  */
 static void
@@ -1125,7 +1125,7 @@ again:
 				if (msg == 0)
 					msg = 256;
 				/*
-				 * We read and acknowlege all the bytes
+				 * We read and acknowledge all the bytes
 				 * except the last so we can assert ATN
 				 * if needed before acknowledging the last.
 				 */

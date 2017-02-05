@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.134.4.7 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.134.4.8 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.7 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.8 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.7 2016/12/05 10:55:28 skrll Exp 
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h> /* For softnet_lock */
 #include <sys/kmem.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.7 2016/12/05 10:55:28 skrll Exp 
 #include <netinet/in_proto.h>
 #include <netinet/icmp_var.h>
 #include <netinet/icmp_private.h>
+#include <netinet/wqinput.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -174,6 +176,10 @@ static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
 static void sysctl_netinet_icmp_setup(struct sysctllog **);
 
+/* workqueue-based pr_input */
+static struct wqinput *icmp_wqinput;
+static void _icmp_input(struct mbuf *, int, int);
+
 void
 icmp_init(void)
 {
@@ -190,6 +196,7 @@ icmp_init(void)
 	}
 
 	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
+	icmp_wqinput = wqinput_create("icmp", _icmp_input);
 }
 
 /*
@@ -383,10 +390,9 @@ struct sockaddr_in icmpmask = {
 /*
  * Process a received ICMP message.
  */
-void
-icmp_input(struct mbuf *m, ...)
+static void
+_icmp_input(struct mbuf *m, int hlen, int proto)
 {
-	int proto;
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
 	int icmplen;
@@ -394,14 +400,7 @@ icmp_input(struct mbuf *m, ...)
 	struct in_ifaddr *ia;
 	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
-	int hlen;
-	va_list ap;
 	struct rtentry *rt;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
 
 	/*
 	 * Locate icmp structure in mbuf, and check
@@ -652,7 +651,7 @@ reflect:
 			}
 		}
 		if (rt != NULL)
-			rtfree(rt);
+			rt_unref(rt);
 
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
 #if defined(IPSEC)
@@ -682,6 +681,20 @@ raw:
 freeit:
 	m_freem(m);
 	return;
+}
+
+void
+icmp_input(struct mbuf *m, ...)
+{
+	int hlen, proto;
+	va_list ap;
+
+	va_start(ap, m);
+	hlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
+	va_end(ap);
+
+	wqinput_input(icmp_wqinput, m, hlen, proto);
 }
 
 /*
@@ -1012,6 +1025,9 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		return (EINVAL);
 	icmp_redirtimeout = tmp;
 
+	/* XXX NOMPSAFE still need softnet_lock */
+	mutex_enter(softnet_lock);
+
 	/*
 	 * was it a *defined* side-effect that anyone even *reading*
 	 * this value causes these things to happen?
@@ -1028,6 +1044,8 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		icmp_redirect_timeout_q =
 		    rt_timer_queue_create(icmp_redirtimeout);
 	}
+
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -1148,16 +1166,19 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		error = rtrequest(RTM_ADD, dst, rt->rt_gateway, NULL,
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
-			rtfree(rt);
+			rt_unref(rt);
 			return;
 		}
 		nrt->rt_rmx = rt->rt_rmx;
-		rtfree(rt);
+		rt_unref(rt);
 		rt = nrt;
 	}
+
+	if (ip_mtudisc_timeout_q == NULL)
+		ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
 	if (error) {
-		rtfree(rt);
+		rt_unref(rt);
 		return;
 	}
 
@@ -1205,8 +1226,8 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		}
 	}
 
-	if (rt)
-		rtfree(rt);
+	if (rt != NULL)
+		rt_unref(rt);
 
 	/*
 	 * Notify protocols that the MTU for this destination

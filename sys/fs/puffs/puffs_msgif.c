@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.97.2.2 2016/07/09 20:25:19 skrll Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.97.2.3 2017/02/05 13:40:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.97.2.2 2016/07/09 20:25:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.97.2.3 2017/02/05 13:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -429,9 +429,9 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	park->park_flags |= PARKFLAG_ONQUEUE1;
 	pmp->pmp_msg_touser_count++;
 	park->park_refcount++;
-	mutex_exit(&pmp->pmp_lock);
 
 	cv_broadcast(&pmp->pmp_msg_waiter_cv);
+	mutex_exit(&pmp->pmp_lock);
 	putter_notify(pmp->pmp_pi);
 
 	DPRINTF(("touser: req %" PRIu64 ", preq: %p, park: %p, "

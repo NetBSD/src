@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsclstate.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: nfsclstate.h,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsclstate.h 268115 2014-07-01 20:47:16Z rmacklem 
- * $NetBSD: nfsclstate.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $
+ * $NetBSD: nfsclstate.h,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $
  */
 
 #ifndef _NFS_NFSCLSTATE_H_
@@ -56,7 +56,7 @@ LIST_HEAD(nfsclrecalllayouthead, nfsclrecalllayout);
 
 /* Structure for NFSv4.1 session stuff. */
 struct nfsclsession {
-	struct mtx	nfsess_mtx;
+	kmutex_t	nfsess_mtx;
 	struct nfsslot	nfsess_cbslots[NFSV4_CBSLOTS];
 	nfsquad_t	nfsess_clientid;
 	SVCXPRT		*nfsess_xprt;		/* For backchannel callback */
@@ -77,7 +77,7 @@ struct nfsclsession {
 struct nfsclds {
 	TAILQ_ENTRY(nfsclds)	nfsclds_list;
 	struct nfsclsession	nfsclds_sess;
-	struct mtx		nfsclds_mtx;
+	kmutex_t		nfsclds_mtx;
 	struct nfssockreq	*nfsclds_sockp;
 	time_t			nfsclds_expire;
 	uint16_t		nfsclds_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.64.4.1 2015/12/27 12:10:06 skrll Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.64.4.2 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -177,6 +177,7 @@ struct ethercom {
 	 * ec_if.if_init, 0 on success, not 0 on failure.
 	 */
 	ether_cb_t				ec_ifflags_cb;
+	kmutex_t				*ec_lock;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -285,6 +286,9 @@ struct ether_multistep {
 }
 
 #ifdef _KERNEL
+
+#define ETHER_LOCK(ec)		mutex_enter((ec)->ec_lock)
+#define ETHER_UNLOCK(ec)	mutex_exit((ec)->ec_lock)
 
 /*
  * Ethernet 802.1Q VLAN structures.

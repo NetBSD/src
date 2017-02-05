@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.62.2.3 2016/10/05 20:55:38 skrll Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.62.2.4 2017/02/05 13:40:25 skrll Exp $ */
 
 /*
  * System call numbers.
@@ -667,6 +667,9 @@
 /* syscall: "faccessat" ret: "int" args: "int" "const char *" "int" */
 #define	LINUX_SYS_faccessat	300
 
+/* syscall: "pselect6" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "struct linux_timespec *" "linux_sized_sigset_t *" */
+#define	LINUX_SYS_pselect6	301
+
 /* syscall: "ppoll" ret: "int" args: "struct pollfd *" "u_int" "struct linux_timespec *" "linux_sigset_t *" */
 #define	LINUX_SYS_ppoll	302
 
@@ -685,6 +688,15 @@
 /* syscall: "pipe2" ret: "int" args: "int *" "int" */
 #define	LINUX_SYS_pipe2	328
 
-#define	LINUX_SYS_MAXSYSCALL	336
+/* syscall: "accept4" ret: "int" args: "int" "struct osockaddr *" "int *" "int" */
+#define	LINUX_SYS_accept4	334
+
+/* syscall: "recvmmsg" ret: "int" args: "int" "struct linux_mmsghdr *" "unsigned int" "unsigned int" "struct timespec *" */
+#define	LINUX_SYS_recvmmsg	335
+
+/* syscall: "sendmmsg" ret: "int" args: "int" "struct linux_mmsghdr *" "unsigned int" "unsigned int" */
+#define	LINUX_SYS_sendmmsg	344
+
+#define	LINUX_SYS_MAXSYSCALL	367
 #define	LINUX_SYS_NSYSENT	512
 #endif /* _LINUX_SYS_SYSCALL_H_ */

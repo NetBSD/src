@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.28.6.1 2015/06/06 14:39:54 skrll Exp $
+#	$NetBSD: majors.alpha,v 1.28.6.2 2017/02/05 13:40:01 skrll Exp $
 #
 # Device majors for alpha
 #
@@ -38,7 +38,6 @@ device-major	se		char 37			se
 device-major	satlink		char 38			satlink
 device-major	rnd		char 39			rnd
 #device-major	obsolete	char 40			obsolete
-device-major	spkr		char 41			spkr
 device-major	scsibus		char 42			scsibus
 device-major	raid		char 43  block 16	raid
 device-major	esh		char 44			esh

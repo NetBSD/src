@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.141 2014/07/22 08:18:33 maxv Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.141.4.1 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.141 2014/07/22 08:18:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.141.4.1 2017/02/05 13:40:56 skrll Exp $");
 
 #define	ELFSIZE	32
 
@@ -40,8 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf32.c,v 1.141 2014/07/22 08:18:33 maxv Exp $"
 
 #include <sys/module.h>
 
-#define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
-    sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
+#define ELF32_AUXSIZE (ELF_AUX_ENTRIES * sizeof(Aux32Info) \
+    + MAXPATHLEN + ALIGN(1))
 
 #ifdef COREDUMP
 #define	DEP	"coredump"

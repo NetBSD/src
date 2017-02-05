@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.99.4.4 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.99.4.5 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.4 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.5 2017/02/05 13:40:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.4 2015/12/27 12:10:05 skrll Exp
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -101,8 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.99.4.4 2015/12/27 12:10:05 skrll Exp
  * is for DELETE, or NOCACHE is set (rewrite), and the
  * name is located in the cache, it will be dropped.
  * The entry is dropped also when it was not possible to lock
- * the cached vnode, either because vget() failed or the generation
- * number has changed while waiting for the lock.
+ * the cached vnode, either because vcache_tryvget() failed or
+ * the generation number has changed while waiting for the lock.
  */
 
 /*
@@ -588,9 +588,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	mutex_exit(&cpup->cpu_lock);
 
 	/*
-	 * Unlocked except for the vnode interlock.  Call vget().
+	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
 	 */
-	error = vget(vp, LK_NOWAIT, false /* !wait */);
+	error = vcache_tryvget(vp);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -669,9 +669,9 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	mutex_exit(&cpup->cpu_lock);
 
 	/*
-	 * Unlocked except for the vnode interlock.  Call vget().
+	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
 	 */
-	error = vget(vp, LK_NOWAIT, false /* !wait */);
+	error = vcache_tryvget(vp);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
@@ -761,7 +761,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 			mutex_enter(dvp->v_interlock);
 			mutex_exit(&ncp->nc_lock);
 			mutex_exit(namecache_lock);
-			error = vget(dvp, LK_NOWAIT, false /* !wait */);
+			error = vcache_tryvget(dvp);
 			if (error) {
 				KASSERT(error == EBUSY);
 				if (bufp)
@@ -844,9 +844,9 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 	/* Fill in cache info. */
 	ncp->nc_dvp = dvp;
-	LIST_INSERT_HEAD(&dvp->v_dnclist, ncp, nc_dvlist);
+	LIST_INSERT_HEAD(&VNODE_TO_VIMPL(dvp)->vi_dnclist, ncp, nc_dvlist);
 	if (vp)
-		LIST_INSERT_HEAD(&vp->v_nclist, ncp, nc_vlist);
+		LIST_INSERT_HEAD(&VNODE_TO_VIMPL(vp)->vi_nclist, ncp, nc_vlist);
 	else {
 		ncp->nc_vlist.le_prev = NULL;
 		ncp->nc_vlist.le_next = NULL;
@@ -1031,8 +1031,8 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 	if (flags & PURGE_PARENTS) {
 		SDT_PROBE(vfs, namecache, purge, parents, vp, 0, 0, 0, 0);
 
-		for (ncp = LIST_FIRST(&vp->v_nclist); ncp != NULL;
-		    ncp = ncnext) {
+		for (ncp = LIST_FIRST(&VNODE_TO_VIMPL(vp)->vi_nclist);
+		    ncp != NULL; ncp = ncnext) {
 			ncnext = LIST_NEXT(ncp, nc_vlist);
 			mutex_enter(&ncp->nc_lock);
 			cache_invalidate(ncp);
@@ -1042,8 +1042,8 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 	}
 	if (flags & PURGE_CHILDREN) {
 		SDT_PROBE(vfs, namecache, purge, children, vp, 0, 0, 0, 0);
-		for (ncp = LIST_FIRST(&vp->v_dnclist); ncp != NULL;
-		    ncp = ncnext) {
+		for (ncp = LIST_FIRST(&VNODE_TO_VIMPL(vp)->vi_dnclist);
+		    ncp != NULL; ncp = ncnext) {
 			ncnext = LIST_NEXT(ncp, nc_dvlist);
 			mutex_enter(&ncp->nc_lock);
 			cache_invalidate(ncp);

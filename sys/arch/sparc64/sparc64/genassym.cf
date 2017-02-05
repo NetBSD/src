@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.75.2.2 2016/05/29 08:44:19 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.75.2.3 2017/02/05 13:40:21 skrll Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ export SUN4U_TTE_P
 export SUN4U_TTE_EXEC
 export SUN4V_TLB_ACCESS
 export SUN4V_TLB_MODIFY
+export SUN4V_TLB_EXEC
 export SUN4V_TLB_W
 export SUN4V_TLB_TSB_LOCK
 

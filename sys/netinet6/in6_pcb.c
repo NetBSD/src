@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.134.2.6 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.134.2.7 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.6 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.7 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.6 2016/12/05 10:55:28 skrll Exp 
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/scope6_var.h>
-#include <netinet6/nd6.h>
 
 #include "faith.h"
 
@@ -159,9 +158,7 @@ in6_pcballoc(struct socket *so, void *v)
 	struct in6pcb *in6p;
 	int s;
 
-	s = splnet();
 	in6p = pool_get(&in6pcb_pool, PR_NOWAIT);
-	splx(s);
 	if (in6p == NULL)
 		return (ENOBUFS);
 	memset((void *)in6p, 0, sizeof(*in6p));
@@ -176,9 +173,7 @@ in6_pcballoc(struct socket *so, void *v)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 		if (error != 0) {
-			s = splnet();
 			pool_put(&in6pcb_pool, in6p);
-			splx(s);
 			return error;
 		}
 	}
@@ -696,7 +691,6 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
     u_int fport_arg, const struct sockaddr *src, u_int lport_arg, int cmd,
     void *cmdarg, void (*notify)(struct in6pcb *, int))
 {
-	struct rtentry *rt;
 	struct inpcb_hdr *inph, *ninph;
 	struct sockaddr_in6 sa6_src;
 	const struct sockaddr_in6 *sa6_dst;
@@ -738,6 +732,8 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 	errno = inet6ctlerrmap[cmd];
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
+		struct rtentry *rt = NULL;
+
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 
@@ -783,9 +779,12 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 			if (dst6 == NULL)
 				;
 			else if (IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
-			    &sa6_dst->sin6_addr))
+			    &sa6_dst->sin6_addr)) {
+				rtcache_unref(rt, &in6p->in6p_route);
 				goto do_notify;
+			}
 		}
+		rtcache_unref(rt, &in6p->in6p_route);
 
 		/*
 		 * If the error designates a new path MTU for a destination
@@ -887,8 +886,11 @@ in6_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 		if ((rt = rtcache_validate(&in6p->in6p_route)) != NULL &&
-		    rt->rt_ifp == ifp)
+		    rt->rt_ifp == ifp) {
+			rtcache_unref(rt, &in6p->in6p_route);
 			in6_rtchange(in6p, 0);
+		} else
+			rtcache_unref(rt, &in6p->in6p_route);
 	}
 }
 
@@ -916,9 +918,16 @@ in6_losing(struct in6pcb *in6p)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
 	if (rt->rt_flags & RTF_DYNAMIC) {
-		(void)rtrequest(RTM_DELETE, rt_getkey(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
-	}
+		int error;
+		struct rtentry *nrt;
+
+		error = rtrequest(RTM_DELETE, rt_getkey(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &nrt);
+		rtcache_unref(rt, &in6p->in6p_route);
+		if (error == 0)
+			rt_free(nrt);
+	} else
+		rtcache_unref(rt, &in6p->in6p_route);
 	/*
 	 * A new route can be allocated
 	 * the next time output is attempted.
@@ -1149,6 +1158,13 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		rt = rtcache_init(ro);
 	}
 	return rt;
+}
+
+void
+in6_pcbrtentry_unref(struct rtentry *rt, struct in6pcb *in6p)
+{
+
+	rtcache_unref(rt, &in6p->in6p_route);
 }
 
 struct in6pcb *

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.144.4.2 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.144.4.3 2017/02/05 13:40:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144.4.2 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144.4.3 2017/02/05 13:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1067,6 +1067,9 @@ static int
 auich_round_blocksize(void *v, int blk, int mode,
     const audio_params_t *param)
 {
+
+	if (blk < 0x40)
+		return 0x40;		/* avoid 0 block size */
 
 	return blk & ~0x3f;		/* keep good alignment */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $	   */
+/*	$NetBSD: pmap.c,v 1.182.24.1 2017/02/05 13:40:22 skrll Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182.24.1 2017/02/05 13:40:22 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2012/02/02 18:59:44 para Exp $");
 #include <sys/mutex.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_physseg.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
@@ -302,7 +303,7 @@ pmap_bootstrap(void)
 
 	/* Set logical page size */
 	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
+	uvm_md_init();
 
 	physmem = btoc(avail_end);
 
@@ -475,6 +476,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	vaddr_t v;
 	int npgs;
+	uvm_physseg_t bank;
 
 	PMDEBUG(("pmap_steal_memory: size 0x%lx start %p end %p\n",
 		    size, vstartp, vendp));
@@ -490,10 +492,10 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	/*
 	 * A vax only have one segment of memory.
 	 */
+	bank = uvm_physseg_get_first();
 
-	v = (VM_PHYSMEM_PTR(0)->avail_start << PGSHIFT) | KERNBASE;
-	VM_PHYSMEM_PTR(0)->avail_start += npgs;
-	VM_PHYSMEM_PTR(0)->start += npgs;
+	v = (uvm_physseg_get_start(bank) << PGSHIFT) | KERNBASE;
+	uvm_physseg_unplug(uvm_physseg_get_start(bank), npgs);
 	memset((void *)v, 0, size);
 	return v;
 }

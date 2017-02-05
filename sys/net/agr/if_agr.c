@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.31.6.4 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.31.6.5 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.4 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.5 2017/02/05 13:40:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,7 +161,6 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 		return;
 	}
 
-	ifp->if_ipackets++;
 	m_set_rcvif(m, ifp);
 
 #define DNH_DEBUG
@@ -185,7 +184,6 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 #endif
 
-	bpf_mtap(ifp, m);
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
@@ -345,14 +343,19 @@ agr_clone_create(struct if_clone *ifc, int unit)
 {
 	struct agr_softc *sc;
 	struct ifnet *ifp;
+	int error;
 
 	sc = agr_alloc_softc();
+	error = agrtimer_init(sc);
+	if (error) {
+		agr_free_softc(sc);
+		return error;
+	}
 	TAILQ_INIT(&sc->sc_ports);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_entry_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_insc_cv, "agrsoftc");
 	cv_init(&sc->sc_ports_cv, "agrports");
-	agrtimer_init(sc);
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);

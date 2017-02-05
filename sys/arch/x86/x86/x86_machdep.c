@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.67.4.3 2016/12/05 10:54:59 skrll Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.67.4.4 2017/02/05 13:40:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.3 2016/12/05 10:54:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.4 2017/02/05 13:40:23 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.3 2016/12/05 10:54:59 skrll E
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+#include <x86/efi.h>
 #include <x86/machdep.h>
 #include <x86/nmi.h>
 #include <x86/pio.h>
@@ -100,6 +101,16 @@ struct bootinfo bootinfo;
 /* --------------------------------------------------------------------- */
 
 static kauth_listener_t x86_listener;
+
+extern paddr_t lowmem_rsvd, avail_start, avail_end;
+
+vaddr_t msgbuf_vaddr;
+
+struct msgbuf_p_seg msgbuf_p_seg[VM_PHYSSEG_MAX];
+
+unsigned int msgbuf_p_cnt = 0;
+
+void init_x86_msgbuf(void);
 
 /*
  * Given the type of a bootinfo entry, looks for a matching item inside
@@ -482,8 +493,6 @@ static struct {
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
-extern paddr_t avail_start, avail_end;
-
 int
 x86_select_freelist(uint64_t maxaddr)
 {
@@ -620,28 +629,63 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 }
 
 static int
-x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
+x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
 {
+	union {
+		struct btinfo_common *common;
+		struct btinfo_memmap *bios;
+		struct btinfo_efimemmap *efi;
+	} bim;
 	uint64_t seg_start, seg_end;
 	uint64_t addr, size;
 	uint32_t type;
-	int x;
+	int x, num;
+	bool efimemmap;
 
-	KASSERT(bim != NULL);
-	KASSERT(bim->num > 0);
+	KASSERT(bi != NULL);
+	bim.common = bi;
+	efimemmap = bi->type == BTINFO_EFIMEMMAP;
+	num = efimemmap ? bim.efi->num : bim.bios->num;
+	KASSERT(num > 0);
 
 #ifdef DEBUG_MEMLOAD
-	printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
+	printf("MEMMAP: %s MEMORY MAP (%d ENTRIES):\n",
+	    efimemmap ? "UEFI" : "BIOS", num);
 #endif
 
-	for (x = 0; x < bim->num; x++) {
-		addr = bim->entry[x].addr;
-		size = bim->entry[x].size;
-		type = bim->entry[x].type;
+	for (x = 0; x < num; x++) {
+		if (efimemmap) {
+			struct efi_md *md = (struct efi_md *)
+			    (bim.efi->memmap + bim.efi->size * x);
+			addr = md->md_phys;
+			size = md->md_pages * EFI_PAGE_SIZE;
+			type = efi_getbiosmemtype(md->md_type, md->md_attr);
 #ifdef DEBUG_MEMLOAD
-		printf("    addr 0x%"PRIx64"  size 0x%"PRIx64"  type 0x%x\n",
-			addr, size, type);
+			printf("MEMMAP: p0x%016" PRIx64 "-0x%016" PRIx64
+			    ", v0x%016" PRIx64 "-0x%016" PRIx64
+			    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
+			    ", type=%d(%s)\n",
+			    addr, addr + size - 1,
+			    (uint64_t)(u_long)md->md_virt,
+			    (uint64_t)(u_long)md->md_virt + size - 1,
+			    size, md->md_attr, md->md_type,
+			    efi_getmemtype_str(md->md_type));
 #endif
+		} else {
+			addr = bim.bios->entry[x].addr;
+			size = bim.bios->entry[x].size;
+			type = bim.bios->entry[x].type;
+#ifdef DEBUG_MEMLOAD
+			printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
+			    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+			    addr, addr + size - 1, size, type,
+			    (type == BIM_Memory) ?  "Memory" :
+			    (type == BIM_Reserved) ?  "Reserved" :
+			    (type == BIM_ACPI) ? "ACPI" :
+			    (type == BIM_NVS) ? "NVS" :
+			    "unknown");
+#endif
+		}
 
 		/* If the segment is not memory, skip it. */
 		switch (type) {
@@ -800,7 +844,8 @@ void
 init_x86_clusters(void)
 {
 	extern struct extent *iomem_ex;
-	struct btinfo_memmap *bim;
+	struct btinfo_memmap *bim = NULL;
+	struct btinfo_efimemmap *biem;
 
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed to us by
@@ -808,17 +853,23 @@ init_x86_clusters(void)
 	 */
 #ifdef i386
 	extern int biosmem_implicit;
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
+	if (biem == NULL)
+		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
-	    bim != NULL && bim->num > 0)
-		x86_parse_clusters(bim, iomem_ex);
+	    ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0)))
+		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common,
+		    iomem_ex);
 #else
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0)
-		x86_parse_clusters(bim, iomem_ex);
+	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
+	if (biem == NULL)
+		bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0))
+		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common,
+		    iomem_ex);
 #else
-	(void)bim, (void)iomem_ex;
+	(void)bim, (void)biem, (void)iomem_ex;
 #endif
 #endif
 
@@ -833,12 +884,13 @@ init_x86_clusters(void)
 
 /*
  * init_x86_vm: initialize the VM system on x86. We basically internalize as
- * many physical pages as we can, starting at avail_start, but we don't
- * internalize the kernel physical pages (from IOM_END to pa_kend).
+ * many physical pages as we can, starting at lowmem_rsvd, but we don't
+ * internalize the kernel physical pages (from pa_kstart to pa_kend).
  */
 int
 init_x86_vm(paddr_t pa_kend)
 {
+	paddr_t pa_kstart = (KERNTEXTOFF - KERNBASE);
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
 	int x;
@@ -853,8 +905,7 @@ init_x86_vm(paddr_t pa_kend)
 	 * Now, load the memory clusters (which have already been rounded and
 	 * truncated) into the VM system.
 	 *
-	 * NOTE: we assume that memory starts at 0 and that the kernel is
-	 * loaded at IOM_END (1MB).
+	 * NOTE: we assume that memory starts at 0.
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		const phys_ram_seg_t *cluster = &mem_clusters[x];
@@ -865,11 +916,11 @@ init_x86_vm(paddr_t pa_kend)
 		seg_end1 = 0;
 
 		/* Skip memory before our available starting point. */
-		if (seg_end <= avail_start)
+		if (seg_end <= lowmem_rsvd)
 			continue;
 
-		if (seg_start <= avail_start && avail_start < seg_end) {
-			seg_start = avail_start;
+		if (seg_start <= lowmem_rsvd && lowmem_rsvd < seg_end) {
+			seg_start = lowmem_rsvd;
 			if (seg_start == seg_end)
 				continue;
 		}
@@ -878,10 +929,10 @@ init_x86_vm(paddr_t pa_kend)
 		 * If this segment contains the kernel, split it in two, around
 		 * the kernel.
 		 */
-		if (seg_start <= IOM_END && pa_kend <= seg_end) {
+		if (seg_start <= pa_kstart && pa_kend <= seg_end) {
 			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
-			seg_end = IOM_END;
+			seg_end = pa_kstart;
 			KASSERT(seg_end < seg_end1);
 		}
 
@@ -900,6 +951,52 @@ init_x86_vm(paddr_t pa_kend)
 }
 
 #endif /* !XEN */
+
+void
+init_x86_msgbuf(void)
+{
+	/* Message buffer is located at end of core. */
+	psize_t sz = round_page(MSGBUFSIZE);
+	psize_t reqsz = sz;
+	uvm_physseg_t x;
+		
+ search_again:
+        for (x = uvm_physseg_get_first();
+	     uvm_physseg_valid_p(x);
+	     x = uvm_physseg_get_next(x)) {
+
+		if (ctob(uvm_physseg_get_avail_end(x)) == avail_end)
+			break;
+	}
+
+	if (uvm_physseg_valid_p(x) == false)
+		panic("init_x86_msgbuf: can't find end of memory");
+
+	/* Shrink so it'll fit in the last segment. */
+	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
+		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
+
+	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x)) - sz;
+	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
+
+	/* Now find where the new avail_end is. */
+	avail_end = ctob(uvm_physseg_get_highest_frame());
+
+	if (sz == reqsz)
+		return;
+
+	reqsz -= sz;
+	if (msgbuf_p_cnt == VM_PHYSSEG_MAX) {
+		/* No more segments available, bail out. */
+		printf("WARNING: MSGBUFSIZE (%zu) too large, using %zu.\n",
+		    (size_t)MSGBUFSIZE, (size_t)(MSGBUFSIZE - reqsz));
+		return;
+	}
+
+	sz = reqsz;
+	goto search_again;
+}
 
 void
 x86_reset(void)

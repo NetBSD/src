@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.154.2.10 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: nd6.c,v 1.154.2.11 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.10 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.11 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.10 2016/12/05 10:55:28 skrll Exp $")
 #include <sys/sockio.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
@@ -103,6 +102,8 @@ int nd6_debug = 1;
 int nd6_debug = 0;
 #endif
 
+krwlock_t nd6_lock __cacheline_aligned;
+
 struct nd_drhead nd_defrouter;
 struct nd_prhead nd_prefix = { 0 };
 
@@ -116,6 +117,7 @@ static void nd6_llinfo_timer(void *);
 static void nd6_timer(void *);
 static void nd6_timer_work(struct work *, void *);
 static void clear_llinfo_pqueue(struct llentry *);
+static struct nd_opt_hdr *nd6_option(union nd_opts *);
 
 static callout_t nd6_slowtimo_ch;
 static callout_t nd6_timer_ch;
@@ -125,6 +127,11 @@ static struct work	nd6_timer_wk;
 static int fill_drlist(void *, size_t *, size_t);
 static int fill_prlist(void *, size_t *, size_t);
 
+static struct ifnet *nd6_defifp;
+static int nd6_defifindex;
+
+static int nd6_setdefaultiface(int);
+
 MALLOC_DEFINE(M_IP6NDP, "NDP", "IPv6 Neighbour Discovery");
 
 void
@@ -132,8 +139,10 @@ nd6_init(void)
 {
 	int error;
 
+	rw_init(&nd6_lock);
+
 	/* initialization of the default router list */
-	TAILQ_INIT(&nd_defrouter);
+	ND_DEFROUTER_LIST_INIT();
 
 	callout_init(&nd6_slowtimo_ch, CALLOUT_MPSAFE);
 	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
@@ -190,6 +199,8 @@ void
 nd6_ifdetach(struct ifnet *ifp, struct in6_ifextra *ext)
 {
 
+	/* Ensure all IPv6 addresses are purged before calling nd6_purge */
+	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 	nd6_purge(ifp, ext);
 	free(ext->nd_ifinfo, M_IP6NDP);
 }
@@ -254,7 +265,7 @@ nd6_option_init(void *opt, int icmp6len, union nd_opts *ndopts)
 /*
  * Take one ND option.
  */
-struct nd_opt_hdr *
+static struct nd_opt_hdr *
 nd6_option(union nd_opts *ndopts)
 {
 	struct nd_opt_hdr *nd_opt;
@@ -389,22 +400,18 @@ nd6_llinfo_settimer(struct llentry *ln, time_t xtick)
 	CTASSERT(sizeof(time_t) > sizeof(int));
 	LLE_WLOCK_ASSERT(ln);
 
-	if (xtick < 0) {
-		ln->ln_expire = 0;
-		ln->ln_ntick = 0;
-		callout_halt(&ln->ln_timer_ch, &ln->lle_lock);
+	KASSERT(xtick >= 0);
+
+	ln->ln_expire = time_uptime + xtick / hz;
+	LLE_ADDREF(ln);
+	if (xtick > INT_MAX) {
+		ln->ln_ntick = xtick - INT_MAX;
+		callout_reset(&ln->ln_timer_ch, INT_MAX,
+		    nd6_llinfo_timer, ln);
 	} else {
-		ln->ln_expire = time_uptime + xtick / hz;
-		LLE_ADDREF(ln);
-		if (xtick > INT_MAX) {
-			ln->ln_ntick = xtick - INT_MAX;
-			callout_reset(&ln->ln_timer_ch, INT_MAX,
-			    nd6_llinfo_timer, ln);
-		} else {
-			ln->ln_ntick = 0;
-			callout_reset(&ln->ln_timer_ch, xtick,
-			    nd6_llinfo_timer, ln);
-		}
+		ln->ln_ntick = 0;
+		callout_reset(&ln->ln_timer_ch, xtick,
+		    nd6_llinfo_timer, ln);
 	}
 }
 
@@ -443,12 +450,9 @@ nd6_llinfo_timer(void *arg)
 	bool send_ns = false;
 	const struct in6_addr *daddr6 = NULL;
 
-#ifndef NET_MPSAFE
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-#endif
-
 	LLE_WLOCK(ln);
+	if ((ln->la_flags & LLE_LINKED) == 0)
+		goto out;
 	if (ln->ln_ntick > 0) {
 		nd6_llinfo_settimer(ln, ln->ln_ntick);
 		goto out;
@@ -501,9 +505,18 @@ nd6_llinfo_timer(void *arg)
  			}
 			nd6_free(ln, 0);
 			ln = NULL;
-			if (m != NULL)
+			if (m != NULL) {
+#ifndef NET_MPSAFE
+				mutex_enter(softnet_lock);
+				KERNEL_LOCK(1, NULL);
+#endif
 				icmp6_error2(m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0, ifp);
+#ifndef NET_MPSAFE
+				KERNEL_UNLOCK_ONE(NULL);
+				mutex_exit(softnet_lock);
+#endif
+			}
 		}
 		break;
 	case ND6_LLINFO_REACHABLE:
@@ -554,16 +567,20 @@ nd6_llinfo_timer(void *arg)
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_FREE_LOCKED(ln);
 		ln = NULL;
+#ifndef NET_MPSAFE
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+#endif
 		nd6_ns_output(ifp, daddr6, taddr6, psrc, 0);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
+#endif
 	}
 
 out:
 	if (ln != NULL)
 		LLE_FREE_LOCKED(ln);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
-#endif
 }
 
 /*
@@ -588,11 +605,13 @@ nd6_timer_work(struct work *wk, void *arg)
 
 	/* expire default router list */
 
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, next_dr) {
+	ND6_WLOCK();
+	ND_DEFROUTER_LIST_FOREACH_SAFE(dr, next_dr) {
 		if (dr->expire && dr->expire < time_uptime) {
-			defrtrlist_del(dr, NULL);
+			nd6_defrtrlist_del(dr, NULL);
 		}
 	}
+	ND6_UNLOCK();
 
 	/*
 	 * expire interface addresses.
@@ -687,7 +706,8 @@ nd6_timer_work(struct work *wk, void *arg)
 	curlwp_bindx(bound);
 
 	/* expire prefix list */
-	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, next_pr) {
+	ND6_WLOCK();
+	ND_PREFIX_LIST_FOREACH_SAFE(pr, next_pr) {
 		/*
 		 * check prefix lifetime.
 		 * since pltime is just for autoconf, pltime processing for
@@ -701,9 +721,10 @@ nd6_timer_work(struct work *wk, void *arg)
 			 * separate.  NEVER perform in6_purgeaddr here.
 			 */
 
-			prelist_remove(pr);
+			nd6_prelist_remove(pr);
 		}
 	}
+	ND6_UNLOCK();
 
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
@@ -778,7 +799,10 @@ regen_tmpaddr(const struct in6_ifaddr *ia6)
 		 * Random factor is introduced in the preferred lifetime, so
 		 * we do not need additional delay (3rd arg to in6_tmpifadd).
 		 */
-		if ((e = in6_tmpifadd(public_ifa6, 0, 0)) != 0) {
+		ND6_WLOCK();
+		e = in6_tmpifadd(public_ifa6, 0, 0);
+		ND6_UNLOCK();
+		if (e != 0) {
 			ia6_release(public_ifa6, &psref);
 			log(LOG_NOTICE, "regen_tmpaddr: failed to create a new"
 			    " tmp addr, errno=%d\n", e);
@@ -827,51 +851,41 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 	if (ext == NULL)
 		return;
 
+	ND6_WLOCK();
 	/*
 	 * Nuke default router list entries toward ifp.
 	 * We defer removal of default router list entries that is installed
 	 * in the routing table, in order to keep additional side effects as
 	 * small as possible.
 	 */
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
+	ND_DEFROUTER_LIST_FOREACH_SAFE(dr, ndr) {
 		if (dr->installed)
 			continue;
 
 		if (dr->ifp == ifp) {
 			KASSERT(ext != NULL);
-			defrtrlist_del(dr, ext);
+			nd6_defrtrlist_del(dr, ext);
 		}
 	}
 
-	TAILQ_FOREACH_SAFE(dr, &nd_defrouter, dr_entry, ndr) {
+	ND_DEFROUTER_LIST_FOREACH_SAFE(dr, ndr) {
 		if (!dr->installed)
 			continue;
 
 		if (dr->ifp == ifp) {
 			KASSERT(ext != NULL);
-			defrtrlist_del(dr, ext);
+			nd6_defrtrlist_del(dr, ext);
 		}
 	}
 
 	/* Nuke prefix list entries toward ifp */
-	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, npr) {
+	ND_PREFIX_LIST_FOREACH_SAFE(pr, npr) {
 		if (pr->ndpr_ifp == ifp) {
 			/*
-			 * Because if_detach() does *not* release prefixes
-			 * while purging addresses the reference count will
-			 * still be above zero. We therefore reset it to
-			 * make sure that the prefix really gets purged.
+			 * All addresses referencing pr should be already freed.
 			 */
-			pr->ndpr_refcnt = 0;
-			/*
-			 * Previously, pr->ndpr_addr is removed as well,
-			 * but I strongly believe we don't have to do it.
-			 * nd6_purge() is only called from in6_ifdetach(),
-			 * which removes all the associated interface addresses
-			 * by itself.
-			 * (jinmei@kame.net 20010129)
-			 */
-			prelist_remove(pr);
+			KASSERT(pr->ndpr_refcnt == 0);
+			nd6_prelist_remove(pr);
 		}
 	}
 
@@ -884,9 +898,10 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 		struct nd_ifinfo *ndi = ND_IFINFO(ifp);
 		if (ndi && nd6_accepts_rtadv(ndi)) {
 			/* refresh default router list */
-			defrouter_select();
+			nd6_defrouter_select();
 		}
 	}
+	ND6_UNLOCK();
 
 	/*
 	 * We may not need to nuke the neighbor cache entries here
@@ -898,6 +913,29 @@ nd6_purge(struct ifnet *ifp, struct in6_ifextra *ext)
 	 */
 	if (ext->lltable != NULL)
 		lltable_purge_entries(ext->lltable);
+}
+
+void
+nd6_assert_purged(struct ifnet *ifp)
+{
+	struct nd_defrouter *dr;
+	struct nd_prefix *pr;
+	char ip6buf[INET6_ADDRSTRLEN] __diagused;
+
+	ND6_RLOCK();
+	ND_DEFROUTER_LIST_FOREACH(dr) {
+		KASSERTMSG(dr->ifp != ifp,
+		    "defrouter %s remains on %s",
+		    IN6_PRINT(ip6buf, &dr->rtaddr), ifp->if_xname);
+	}
+
+	ND_PREFIX_LIST_FOREACH(pr) {
+		KASSERTMSG(pr->ndpr_ifp != ifp,
+		    "prefix %s/%d remains on %s",
+		    IN6_PRINT(ip6buf, &pr->ndpr_prefix.sin6_addr),
+		    pr->ndpr_plen, ifp->if_xname);
+	}
+	ND6_UNLOCK();
 }
 
 struct llentry *
@@ -976,7 +1014,8 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the address matches one of our on-link prefixes, it should be a
 	 * neighbor.
 	 */
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+	ND6_RLOCK();
+	ND_PREFIX_LIST_FOREACH(pr) {
 		if (pr->ndpr_ifp != ifp)
 			continue;
 
@@ -998,16 +1037,19 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 			 */
 			if (!IN6_ARE_ADDR_EQUAL(&pr->ndpr_prefix.sin6_addr,
 			    &satocsin6(rt_getkey(rt))->sin6_addr)) {
-				rtfree(rt);
+				rt_unref(rt);
 				continue;
 			}
-			rtfree(rt);
+			rt_unref(rt);
 		}
 
 		if (IN6_ARE_MASKED_ADDR_EQUAL(&pr->ndpr_prefix.sin6_addr,
-		    &addr->sin6_addr, &pr->ndpr_mask))
+		    &addr->sin6_addr, &pr->ndpr_mask)) {
+			ND6_UNLOCK();
 			return 1;
+		}
 	}
+	ND6_UNLOCK();
 
 	/*
 	 * If the address is assigned on the node of the other side of
@@ -1027,11 +1069,13 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the default router list is empty, all addresses are regarded
 	 * as on-link, and thus, as a neighbor.
 	 */
+	ND6_RLOCK();
 	if (ND_IFINFO(ifp)->flags & ND6_IFF_ACCEPT_RTADV &&
-	    TAILQ_EMPTY(&nd_defrouter) &&
-	    nd6_defifindex == ifp->if_index) {
+	    ND_DEFROUTER_LIST_EMPTY() && nd6_defifindex == ifp->if_index) {
+		ND6_UNLOCK();
 		return 1;
 	}
+	ND6_UNLOCK();
 
 	return 0;
 }
@@ -1074,7 +1118,8 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the address matches one of our on-link prefixes, it should be a
 	 * neighbor.
 	 */
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+	ND6_RLOCK();
+	ND_PREFIX_LIST_FOREACH(pr) {
 		if (pr->ndpr_ifp != ifp)
 			continue;
 
@@ -1082,8 +1127,10 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 			continue;
 
 		if (IN6_ARE_MASKED_ADDR_EQUAL(&pr->ndpr_prefix.sin6_addr,
-		    &addr->sin6_addr, &pr->ndpr_mask))
+		    &addr->sin6_addr, &pr->ndpr_mask)) {
+			ND6_UNLOCK();
 			return 1;
+		}
 	}
 
 	/*
@@ -1092,12 +1139,13 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * XXX: we restrict the condition to hosts, because routers usually do
 	 * not have the "default router list".
 	 */
-	if (!ip6_forwarding && TAILQ_FIRST(&nd_defrouter) == NULL &&
+	if (!ip6_forwarding && ND_DEFROUTER_LIST_EMPTY() &&
 	    nd6_defifindex == ifp->if_index) {
+		ND6_UNLOCK();
 		return 1;
 	}
+	ND6_UNLOCK();
 
-	IF_AFDATA_UNLOCK_ASSERT(ifp);
 	if (nd6_is_new_addr_neighbor(addr, ifp))
 		return 1;
 
@@ -1126,10 +1174,10 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	    rt->rt_ifp->if_carpdev == ifp->if_carpdev)
 #endif
 	    )) {
-		rtfree(rt);
+		rt_unref(rt);
 		return 1;
 	}
-	rtfree(rt);
+	rt_unref(rt);
 
 	return 0;
 }
@@ -1157,13 +1205,9 @@ nd6_free(struct llentry *ln, int gc)
 	 * even though it is not harmful, it was not really necessary.
 	 */
 
-	/* cancel timer */
-	nd6_llinfo_settimer(ln, -1);
-
 	if (!ip6_forwarding) {
-		int s;
-		s = splsoftnet();
-		dr = defrouter_lookup(in6, ifp);
+		ND6_WLOCK();
+		dr = nd6_defrouter_lookup(in6, ifp);
 
 		if (dr != NULL && dr->expire &&
 		    ln->ln_state == ND6_LLINFO_STALE && gc) {
@@ -1184,27 +1228,27 @@ nd6_free(struct llentry *ln, int gc)
 				    (dr->expire - time_uptime) * hz);
 			else
 				nd6_llinfo_settimer(ln, nd6_gctimer * hz);
-			splx(s);
+			ND6_UNLOCK();
 			LLE_WUNLOCK(ln);
 			return;
 		}
 
 		if (ln->ln_router || dr) {
 			/*
-			 * We need to unlock to avoid a LOR with rt6_flush()
+			 * We need to unlock to avoid a LOR with nd6_rt_flush()
 			 * with the rnh and for the calls to
-			 * pfxlist_onlink_check() and defrouter_select() in the
+			 * nd6_pfxlist_onlink_check() and nd6_defrouter_select() in the
 			 * block further down for calls into nd6_lookup().
 			 * We still hold a ref.
 			 */
 			LLE_WUNLOCK(ln);
 
 			/*
-			 * rt6_flush must be called whether or not the neighbor
+			 * nd6_rt_flush must be called whether or not the neighbor
 			 * is in the Default Router List.
 			 * See a corresponding comment in nd6_na_input().
 			 */
-			rt6_flush(in6, ifp);
+			nd6_rt_flush(in6, ifp);
 		}
 
 		if (dr) {
@@ -1224,17 +1268,17 @@ nd6_free(struct llentry *ln, int gc)
 			ln->ln_state = ND6_LLINFO_INCOMPLETE;
 
 			/*
-			 * Since defrouter_select() does not affect the
+			 * Since nd6_defrouter_select() does not affect the
 			 * on-link determination and MIP6 needs the check
 			 * before the default router selection, we perform
 			 * the check now.
 			 */
-			pfxlist_onlink_check();
+			nd6_pfxlist_onlink_check();
 
 			/*
 			 * refresh default router list
 			 */
-			defrouter_select();
+			nd6_defrouter_select();
 		}
 
 #ifdef __FreeBSD__
@@ -1245,11 +1289,10 @@ nd6_free(struct llentry *ln, int gc)
 		if (ln->la_flags & LLE_REDIRECT)
 			nd6_free_redirect(ln);
 #endif
+		ND6_UNLOCK();
 
 		if (ln->ln_router || dr)
 			LLE_WLOCK(ln);
-
-		splx(s);
 	}
 
 	/*
@@ -1260,12 +1303,7 @@ nd6_free(struct llentry *ln, int gc)
 	IF_AFDATA_LOCK(ifp);
 	LLE_WLOCK(ln);
 
-	/* Guard against race with other llentry_free(). */
-	if (ln->la_flags & LLE_LINKED) {
-		LLE_REMREF(ln);
-		llentry_free(ln);
-	} else
-		LLE_FREE_LOCKED(ln);
+	lltable_free_entry(LLTABLE6(ifp), ln);
 
 	IF_AFDATA_UNLOCK(ifp);
 }
@@ -1553,9 +1591,10 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				if (in6_setscope(&llsol, ifp, NULL))
 					goto out;
 				if (!in6_addmulti(&llsol, ifp, &error, 0)) {
+					char ip6buf[INET6_ADDRSTRLEN];
 					nd6log(LOG_ERR, "%s: failed to join "
 					    "%s (errno=%d)\n", if_name(ifp),
-					    ip6_sprintf(&llsol), error);
+					    IN6_PRINT(ip6buf, &llsol), error);
 				}
 			}
 		}
@@ -1603,7 +1642,6 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
 	int i = 0, error = 0;
-	int s;
 
 	switch (cmd) {
 	case SIOCGDRLST_IN6:
@@ -1611,8 +1649,8 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		 * obsolete API, use sysctl under net.inet6.icmp6
 		 */
 		memset(drl, 0, sizeof(*drl));
-		s = splsoftnet();
-		TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+		ND6_RLOCK();
+		ND_DEFROUTER_LIST_FOREACH(dr) {
 			if (i >= DRLSTSIZ)
 				break;
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1625,7 +1663,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			drl->defrouter[i].if_index = dr->ifp->if_index;
 			i++;
 		}
-		splx(s);
+		ND6_UNLOCK();
 		break;
 	case SIOCGPRLST_IN6:
 		/*
@@ -1641,8 +1679,8 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		 * how about separating ioctls into two?
 		 */
 		memset(oprl, 0, sizeof(*oprl));
-		s = splsoftnet();
-		LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+		ND6_RLOCK();
+		ND_PREFIX_LIST_FOREACH(pr) {
 			struct nd_pfxrouter *pfr;
 			int j;
 
@@ -1689,7 +1727,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 			i++;
 		}
-		splx(s);
+		ND6_UNLOCK();
 
 		break;
 	case OSIOCGIFINFO_IN6:
@@ -1740,6 +1778,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 	{
 		struct ifaddr *ifa;
 		struct in6_ifaddr *ia;
+		int s;
 
 		if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
 		    !(ND.flags & ND6_IFF_IFDISABLED))
@@ -1840,16 +1879,19 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 #undef ND
 	case SIOCSNDFLUSH_IN6:	/* XXX: the ioctl name is confusing... */
 		/* sync kernel routing table with the default router list */
-		defrouter_reset();
-		defrouter_select();
+		ND6_WLOCK();
+		nd6_defrouter_reset();
+		nd6_defrouter_select();
+		ND6_UNLOCK();
 		break;
 	case SIOCSPFXFLUSH_IN6:
 	{
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pfx, *next;
 
-		s = splsoftnet();
-		LIST_FOREACH_SAFE(pfx, &nd_prefix, ndpr_entry, next) {
+	restart:
+		ND6_WLOCK();
+		ND_PREFIX_LIST_FOREACH_SAFE(pfx, next) {
 			struct in6_ifaddr *ia, *ia_next;
 			int _s;
 
@@ -1857,7 +1899,6 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				continue; /* XXX */
 
 			/* do we really have to remove addresses as well? */
-		restart:
 			_s = pserialize_read_enter();
 			for (ia = IN6_ADDRLIST_READER_FIRST(); ia;
 			     ia = ia_next) {
@@ -1869,15 +1910,19 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 
 				if (ia->ia6_ndpr == pfx) {
 					pserialize_read_exit(_s);
+					ND6_UNLOCK();
 					/* XXX NOMPSAFE? */
+					/* in6_purgeaddr may destroy pfx. */
 					in6_purgeaddr(&ia->ia_ifa);
 					goto restart;
 				}
 			}
 			pserialize_read_exit(_s);
-			prelist_remove(pfx);
+
+			KASSERT(pfx->ndpr_refcnt == 0);
+			nd6_prelist_remove(pfx);
 		}
-		splx(s);
+		ND6_UNLOCK();
 		break;
 	}
 	case SIOCSRTRFLUSH_IN6:
@@ -1885,13 +1930,13 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *drtr, *next;
 
-		s = splsoftnet();
-		defrouter_reset();
-		TAILQ_FOREACH_SAFE(drtr, &nd_defrouter, dr_entry, next) {
-			defrtrlist_del(drtr, NULL);
+		ND6_WLOCK();
+		nd6_defrouter_reset();
+		ND_DEFROUTER_LIST_FOREACH_SAFE(drtr, next) {
+			nd6_defrtrlist_del(drtr, NULL);
 		}
-		defrouter_select();
-		splx(s);
+		nd6_defrouter_select();
+		ND6_UNLOCK();
 		break;
 	}
 	case SIOCGNBRINFO_IN6:
@@ -2167,17 +2212,20 @@ nd6_cache_lladdr(
 	 * Question: can we restrict the first condition to the "is_newentry"
 	 * case?
 	 * XXX: when we hear an RA from a new router with the link-layer
-	 * address option, defrouter_select() is called twice, since
+	 * address option, nd6_defrouter_select() is called twice, since
 	 * defrtrlist_update called the function as well.  However, I believe
 	 * we can compromise the overhead, since it only happens the first
 	 * time.
-	 * XXX: although defrouter_select() should not have a bad effect
+	 * XXX: although nd6_defrouter_select() should not have a bad effect
 	 * for those are not autoconfigured hosts, we explicitly avoid such
 	 * cases for safety.
 	 */
 	if (do_update && router && !ip6_forwarding &&
-	    nd6_accepts_rtadv(ndi))
-		defrouter_select();
+	    nd6_accepts_rtadv(ndi)) {
+		ND6_WLOCK();
+		nd6_defrouter_select();
+		ND6_UNLOCK();
+	}
 }
 
 static void
@@ -2295,10 +2343,11 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	if (ln == NULL) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
 		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
+			char ip6buf[INET6_ADDRSTRLEN];
 			log(LOG_DEBUG,
 			    "nd6_output: can't allocate llinfo for %s "
 			    "(ln=%p, rt=%p)\n",
-			    ip6_sprintf(&dst->sin6_addr), ln, rt);
+			    IN6_PRINT(ip6buf, &dst->sin6_addr), ln, rt);
 			senderr(EIO);	/* XXX: good error? */
 		}
 		goto sendpkt;	/* send anyway */
@@ -2626,12 +2675,10 @@ nd6_sysctl(
 static int
 fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 {
-	int error = 0, s;
+	int error = 0;
 	struct in6_defrouter *d = NULL, *de = NULL;
 	struct nd_defrouter *dr;
 	size_t l;
-
-	s = splsoftnet();
 
 	if (oldp) {
 		d = (struct in6_defrouter *)oldp;
@@ -2639,15 +2686,17 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	l = 0;
 
-	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+	ND6_RLOCK();
+	ND_DEFROUTER_LIST_FOREACH(dr) {
 
 		if (oldp && d + 1 <= de) {
 			memset(d, 0, sizeof(*d));
 			sockaddr_in6_init(&d->rtaddr, &dr->rtaddr, 0, 0, 0);
 			if (sa6_recoverscope(&d->rtaddr)) {
+				char ip6buf[INET6_ADDRSTRLEN];
 				log(LOG_ERR,
 				    "scope error in router list (%s)\n",
-				    ip6_sprintf(&d->rtaddr.sin6_addr));
+				    IN6_PRINT(ip6buf, &d->rtaddr.sin6_addr));
 				/* XXX: press on... */
 			}
 			d->flags = dr->flags;
@@ -2661,6 +2710,7 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 		if (d)
 			d++;
 	}
+	ND6_UNLOCK();
 
 	if (oldp) {
 		if (l > ol)
@@ -2669,21 +2719,18 @@ fill_drlist(void *oldp, size_t *oldlenp, size_t ol)
 	if (oldlenp)
 		*oldlenp = l;	/* (void *)d - (void *)oldp */
 
-	splx(s);
-
 	return error;
 }
 
 static int
 fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 {
-	int error = 0, s;
+	int error = 0;
 	struct nd_prefix *pr;
 	uint8_t *p = NULL, *ps = NULL;
 	uint8_t *pe = NULL;
 	size_t l;
-
-	s = splsoftnet();
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	if (oldp) {
 		ps = p = (uint8_t*)oldp;
@@ -2691,7 +2738,8 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 	}
 	l = 0;
 
-	LIST_FOREACH(pr, &nd_prefix, ndpr_entry) {
+	ND6_RLOCK();
+	ND_PREFIX_LIST_FOREACH(pr) {
 		u_short advrtrs;
 		struct sockaddr_in6 sin6;
 		struct nd_pfxrouter *pfr;
@@ -2706,7 +2754,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 			if (sa6_recoverscope(&pfx.prefix)) {
 				log(LOG_ERR,
 				    "scope error in prefix list (%s)\n",
-				    ip6_sprintf(&pfx.prefix.sin6_addr));
+				    IN6_PRINT(ip6buf, &pfx.prefix.sin6_addr));
 				/* XXX: press on... */
 			}
 			pfx.raflags = pr->ndpr_raf;
@@ -2744,12 +2792,13 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 				}
 
 				sockaddr_in6_init(&sin6, &pfr->router->rtaddr,
-				    0, 0, 0);
+					    0, 0, 0);
 				if (sa6_recoverscope(&sin6)) {
 					log(LOG_ERR,
 					    "scope error in "
 					    "prefix list (%s)\n",
-					    ip6_sprintf(&pfr->router->rtaddr));
+					    IN6_PRINT(ip6buf,
+					    &pfr->router->rtaddr));
 				}
 				advrtrs++;
 				memcpy(p, &sin6, sizeof(sin6));
@@ -2768,6 +2817,7 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 			}
 		}
 	}
+	ND6_UNLOCK();
 
 	if (oldp) {
 		*oldlenp = l;	/* (void *)d - (void *)oldp */
@@ -2776,7 +2826,34 @@ fill_prlist(void *oldp, size_t *oldlenp, size_t ol)
 	} else
 		*oldlenp = l;
 
-	splx(s);
-
 	return error;
+}
+
+static int
+nd6_setdefaultiface(int ifindex)
+{
+	ifnet_t *ifp;
+	int error = 0;
+	int s;
+
+	s = pserialize_read_enter();
+	ifp = if_byindex(ifindex);
+	if (ifp == NULL) {
+		pserialize_read_exit(s);
+		return EINVAL;
+	}
+	if (nd6_defifindex != ifindex) {
+		nd6_defifindex = ifindex;
+		nd6_defifp = nd6_defifindex > 0 ? ifp : NULL;
+
+		/*
+		 * Our current implementation assumes one-to-one maping between
+		 * interfaces and links, so it would be natural to use the
+		 * default interface as the default link.
+		 */
+		scope6_setdefault(nd6_defifp);
+	}
+	pserialize_read_exit(s);
+
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.97.2.3 2015/12/27 12:10:04 skrll Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.97.2.4 2017/02/05 13:40:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.97.2.3 2015/12/27 12:10:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.97.2.4 2017/02/05 13:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -1125,12 +1125,10 @@ tmpfs_chsize(vnode_t *vp, u_quad_t size, kauth_cred_t cred, lwp_t *l)
 	if (length < 0) {
 		return EINVAL;
 	}
-	if (node->tn_size == length) {
-		return 0;
-	}
 
 	/* Note: tmpfs_reg_resize() will raise NOTE_EXTEND and NOTE_ATTRIB. */
-	if ((error = tmpfs_reg_resize(vp, length)) != 0) {
+	if (node->tn_size != length &&
+	    (error = tmpfs_reg_resize(vp, length)) != 0) {
 		return error;
 	}
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME | TMPFS_UPDATE_MTIME);

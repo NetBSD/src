@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.39.4.2 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: hci.h,v 1.39.4.3 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.39.4.2 2015/12/27 12:10:07 skrll Exp $
+ * $Id: hci.h,v 1.39.4.3 2017/02/05 13:40:59 skrll Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2278,28 +2278,28 @@ struct hci_filter {
 static __inline void
 hci_filter_set(uint8_t bit, struct hci_filter *filter)
 {
-	uint8_t off = bit - 1;
+	uint8_t off = (uint8_t)((bit - 1) >> 5);
+	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	off >>= 5;
-	filter->mask[off] |= (1 << ((bit - 1) & 0x1f));
+	filter->mask[off] |= 1U << sh;
 }
 
 static __inline void
 hci_filter_clr(uint8_t bit, struct hci_filter *filter)
 {
-	uint8_t off = bit - 1;
+	uint8_t off = (uint8_t)((bit - 1) >> 5);
+	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	off >>= 5;
-	filter->mask[off] &= ~(1 << ((bit - 1) & 0x1f));
+	filter->mask[off] &= ~(1U << sh);
 }
 
 static __inline int
 hci_filter_test(uint8_t bit, const struct hci_filter *filter)
 {
-	uint8_t off = bit - 1;
+	uint8_t off = (uint8_t)((bit - 1) >> 5);
+	uint8_t sh = (uint8_t)((bit - 1) & 0x1f);
 
-	off >>= 5;
-	return (filter->mask[off] & (1 << ((bit - 1) & 0x1f)));
+	return (filter->mask[off] >> sh) & 1U;
 }
 
 /*

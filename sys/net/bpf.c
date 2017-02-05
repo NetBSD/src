@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.189.2.6 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: bpf.c,v 1.189.2.7 2017/02/05 13:40:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,12 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.6 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.7 2017/02/05 13:40:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
 #include "sl.h"
 #include "strip.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -60,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.6 2016/10/05 20:56:08 skrll Exp $");
 #include <sys/stat.h>
 #include <sys/module.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -73,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.6 2016/10/05 20:56:08 skrll Exp $");
 #include <sys/poll.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/syslog.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/slip.h>
@@ -105,9 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.6 2016/10/05 20:56:08 skrll Exp $");
  * XXX the default values should be computed dynamically based
  * on available memory size and available mbuf clusters.
  */
-int bpf_bufsize = BPF_BUFSIZE;
-int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
-bool bpf_jit = false;
+static int bpf_bufsize = BPF_BUFSIZE;
+static int bpf_maxbufsize = BPF_DFLTBUFSIZE;	/* XXX set dynamically, see above */
+static bool bpf_jit = false;
 
 struct bpfjit_ops bpfjit_module_ops = {
 	.bj_generate_code = NULL,
@@ -117,7 +121,15 @@ struct bpfjit_ops bpfjit_module_ops = {
 /*
  * Global BPF statistics returned by net.bpf.stats sysctl.
  */
-struct bpf_stat	bpf_gstats;
+static struct percpu	*bpf_gstats_percpu; /* struct bpf_stat */
+
+#define BPF_STATINC(id)					\
+	{						\
+		struct bpf_stat *__stats =		\
+		    percpu_getref(bpf_gstats_percpu);	\
+		__stats->bs_##id++;			\
+		percpu_putref(bpf_gstats_percpu);	\
+	}
 
 /*
  * Use a mutex to avoid a race condition between gathering the stats/peers
@@ -129,8 +141,60 @@ static kmutex_t bpf_mtx;
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
  *  bpf_dtab holds the descriptors, indexed by minor device #
  */
-struct bpf_if	*bpf_iflist;
-LIST_HEAD(, bpf_d) bpf_list;
+static struct pslist_head bpf_iflist;
+static struct pslist_head bpf_dlist;
+
+/* Macros for bpf_d on bpf_dlist */
+#define BPF_DLIST_WRITER_INSEART_HEAD(__d)				\
+	PSLIST_WRITER_INSERT_HEAD(&bpf_dlist, (__d), bd_bpf_dlist_entry)
+#define BPF_DLIST_READER_FOREACH(__d)					\
+	PSLIST_READER_FOREACH((__d), &bpf_dlist, struct bpf_d,		\
+	                      bd_bpf_dlist_entry)
+#define BPF_DLIST_WRITER_FOREACH(__d)					\
+	PSLIST_WRITER_FOREACH((__d), &bpf_dlist, struct bpf_d,		\
+	                      bd_bpf_dlist_entry)
+#define BPF_DLIST_ENTRY_INIT(__d)					\
+	PSLIST_ENTRY_INIT((__d), bd_bpf_dlist_entry)
+#define BPF_DLIST_WRITER_REMOVE(__d)					\
+	PSLIST_WRITER_REMOVE((__d), bd_bpf_dlist_entry)
+#define BPF_DLIST_ENTRY_DESTROY(__d)					\
+	PSLIST_ENTRY_DESTROY((__d), bd_bpf_dlist_entry)
+
+/* Macros for bpf_if on bpf_iflist */
+#define BPF_IFLIST_WRITER_INSERT_HEAD(__bp)				\
+	PSLIST_WRITER_INSERT_HEAD(&bpf_iflist, (__bp), bif_iflist_entry)
+#define BPF_IFLIST_READER_FOREACH(__bp)					\
+	PSLIST_READER_FOREACH((__bp), &bpf_iflist, struct bpf_if,	\
+	                      bif_iflist_entry)
+#define BPF_IFLIST_WRITER_FOREACH(__bp)					\
+	PSLIST_WRITER_FOREACH((__bp), &bpf_iflist, struct bpf_if,	\
+	                      bif_iflist_entry)
+#define BPF_IFLIST_WRITER_REMOVE(__bp)					\
+	PSLIST_WRITER_REMOVE((__bp), bif_iflist_entry)
+#define BPF_IFLIST_ENTRY_INIT(__bp)					\
+	PSLIST_ENTRY_INIT((__bp), bif_iflist_entry)
+#define BPF_IFLIST_ENTRY_DESTROY(__bp)					\
+	PSLIST_ENTRY_DESTROY((__bp), bif_iflist_entry)
+
+/* Macros for bpf_d on bpf_if#bif_dlist_pslist */
+#define BPFIF_DLIST_READER_FOREACH(__d, __bp)				\
+	PSLIST_READER_FOREACH((__d), &(__bp)->bif_dlist_head, struct bpf_d, \
+	                      bd_bif_dlist_entry)
+#define BPFIF_DLIST_WRITER_INSERT_HEAD(__bp, __d)			\
+	PSLIST_WRITER_INSERT_HEAD(&(__bp)->bif_dlist_head, (__d),	\
+	                          bd_bif_dlist_entry)
+#define BPFIF_DLIST_WRITER_REMOVE(__d)					\
+	PSLIST_WRITER_REMOVE((__d), bd_bif_dlist_entry)
+#define BPFIF_DLIST_ENTRY_INIT(__d)					\
+	PSLIST_ENTRY_INIT((__d), bd_bif_dlist_entry)
+#define	BPFIF_DLIST_READER_EMPTY(__bp)					\
+	(PSLIST_READER_FIRST(&(__bp)->bif_dlist_head, struct bpf_d,	\
+	                     bd_bif_dlist_entry) == NULL)
+#define	BPFIF_DLIST_WRITER_EMPTY(__bp)					\
+	(PSLIST_WRITER_FIRST(&(__bp)->bif_dlist_head, struct bpf_d,	\
+	                     bd_bif_dlist_entry) == NULL)
+#define BPFIF_DLIST_ENTRY_DESTROY(__d)					\
+	PSLIST_ENTRY_DESTROY((__d), bd_bif_dlist_entry)
 
 static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
@@ -144,6 +208,7 @@ static int	bpf_movein(struct uio *, int, uint64_t,
 static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 static void	bpf_detachd(struct bpf_d *);
 static int	bpf_setif(struct bpf_d *, struct ifreq *);
+static int	bpf_setf(struct bpf_d *, struct bpf_program *);
 static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
@@ -346,8 +411,7 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 	 * it will divert packets to bpf.
 	 */
 	d->bd_bif = bp;
-	d->bd_next = bp->bif_dlist;
-	bp->bif_dlist = d;
+	BPFIF_DLIST_WRITER_INSERT_HEAD(bp, d);
 
 	*bp->bif_driverp = bp;
 }
@@ -358,7 +422,6 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 static void
 bpf_detachd(struct bpf_d *d)
 {
-	struct bpf_d **p;
 	struct bpf_if *bp;
 
 	KASSERT(mutex_owned(&bpf_mtx));
@@ -385,19 +448,21 @@ bpf_detachd(struct bpf_d *d)
 			printf("%s: ifpromisc failed: %d", __func__, error);
 #endif
 	}
+
 	/* Remove d from the interface's descriptor list. */
-	p = &bp->bif_dlist;
-	while (*p != d) {
-		p = &(*p)->bd_next;
-		if (*p == NULL)
-			panic("%s: descriptor not in list", __func__);
-	}
-	*p = (*p)->bd_next;
-	if (bp->bif_dlist == NULL)
+	BPFIF_DLIST_WRITER_REMOVE(d);
+
+	/* TODO pserialize_perform(); */
+	/* TODO psref_target_destroy(); */
+	BPFIF_DLIST_ENTRY_DESTROY(d);
+
+	/* XXX NOMPSAFE? */
+	if (BPFIF_DLIST_WRITER_EMPTY(bp)) {
 		/*
 		 * Let the driver know that there are no more listeners.
 		 */
 		*d->bd_bif->bif_driverp = NULL;
+	}
 	d->bd_bif = NULL;
 }
 
@@ -407,11 +472,10 @@ bpf_init(void)
 
 	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	LIST_INIT(&bpf_list);
+	PSLIST_INIT(&bpf_iflist);
+	PSLIST_INIT(&bpf_dlist);
 
-	bpf_gstats.bs_recv = 0;
-	bpf_gstats.bs_drop = 0;
-	bpf_gstats.bs_capt = 0;
+	bpf_gstats_percpu = percpu_alloc(sizeof(struct bpf_stat));
 
 	return;
 }
@@ -442,7 +506,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
-	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK|M_ZERO);
+	d = kmem_zalloc(sizeof(*d), KM_SLEEP);
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
 	d->bd_feedback = 0;
@@ -457,9 +521,13 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	selinit(&d->bd_sel);
 	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
 	d->bd_jitcode = NULL;
+	BPF_DLIST_ENTRY_INIT(d);
+	BPFIF_DLIST_ENTRY_INIT(d);
+	d->bd_mtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	cv_init(&d->bd_cv, "bpf");
 
 	mutex_enter(&bpf_mtx);
-	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
+	BPF_DLIST_WRITER_INSEART_HEAD(d);
 	mutex_exit(&bpf_mtx);
 
 	return fd_clone(fp, fd, flag, &bpf_fileops, d);
@@ -498,16 +566,23 @@ bpf_close(struct file *fp)
 		bpf_detachd(d);
 	splx(s);
 	bpf_freed(d);
-	LIST_REMOVE(d, bd_list);
+	BPF_DLIST_WRITER_REMOVE(d);
 	fp->f_bpf = NULL;
 
 	mutex_exit(&bpf_mtx);
 	KERNEL_UNLOCK_ONE(NULL);
 
+	/* TODO pserialize_perform(); */
+	/* TODO psref_target_destroy(); */
+	BPF_DLIST_ENTRY_DESTROY(d);
+
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
 	softint_disestablish(d->bd_sih);
-	free(d, M_DEVBUF);
+	mutex_obj_free(d->bd_mtx);
+	cv_destroy(&d->bd_cv);
+
+	kmem_free(d, sizeof(*d));
 
 	return (0);
 }
@@ -557,9 +632,8 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	while (d->bd_hbuf == NULL) {
 		if (fp->f_flag & FNONBLOCK) {
 			if (d->bd_slen == 0) {
-				splx(s);
-				KERNEL_UNLOCK_ONE(NULL);
-				return (EWOULDBLOCK);
+				error = EWOULDBLOCK;
+				goto out;
 			}
 			ROTATE_BUFFERS(d);
 			break;
@@ -574,13 +648,14 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		error = tsleep(d, PRINET|PCATCH, "bpf",
-				d->bd_rtout);
-		if (error == EINTR || error == ERESTART) {
-			splx(s);
-			KERNEL_UNLOCK_ONE(NULL);
-			return (error);
-		}
+
+		mutex_enter(d->bd_mtx);
+		error = cv_timedwait_sig(&d->bd_cv, d->bd_mtx, d->bd_rtout);
+		mutex_exit(d->bd_mtx);
+
+		if (error == EINTR || error == ERESTART)
+			goto out;
+
 		if (error == EWOULDBLOCK) {
 			/*
 			 * On a timeout, return what's in the buffer,
@@ -596,15 +671,14 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 				break;
 
 			if (d->bd_slen == 0) {
-				splx(s);
-				KERNEL_UNLOCK_ONE(NULL);
-				return (0);
+				error = 0;
+				goto out;
 			}
 			ROTATE_BUFFERS(d);
 			break;
 		}
 		if (error != 0)
-			goto done;
+			goto out;
 	}
 	/*
 	 * At this point, we know we have something in the hold slot.
@@ -622,7 +696,7 @@ bpf_read(struct file *fp, off_t *offp, struct uio *uio,
 	d->bd_fbuf = d->bd_hbuf;
 	d->bd_hbuf = NULL;
 	d->bd_hlen = 0;
-done:
+out:
 	splx(s);
 	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
@@ -635,7 +709,11 @@ done:
 static inline void
 bpf_wakeup(struct bpf_d *d)
 {
-	wakeup(d);
+
+	mutex_enter(d->bd_mtx);
+	cv_broadcast(&d->bd_cv);
+	mutex_exit(d->bd_mtx);
+
 	if (d->bd_async)
 		softint_schedule(d->bd_sih);
 	selnotify(&d->bd_sel, 0, 0);
@@ -836,7 +914,11 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 * Set buffer length.
 	 */
 	case BIOCSBLEN:
-		if (d->bd_bif != NULL)
+		/*
+		 * Forbid to change the buffer length if buffers are already
+		 * allocated.
+		 */
+		if (d->bd_bif != NULL || d->bd_sbuf != NULL)
 			error = EINVAL;
 		else {
 			u_int size = *(u_int *)addr;
@@ -1101,12 +1183,12 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
  * Set d's packet filter program to fp.  If this file already has a filter,
  * free it and replace it.  Returns EINVAL for bogus requests.
  */
-int
+static int
 bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 {
 	struct bpf_insn *fcode, *old;
 	bpfjit_func_t jcode, oldj;
-	size_t flen, size;
+	size_t flen, size = 0, old_size;
 	int s;
 
 	jcode = NULL;
@@ -1122,10 +1204,10 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 		 * userspace and validate it.
 		 */
 		size = flen * sizeof(*fp->bf_insns);
-		fcode = malloc(size, M_DEVBUF, M_WAITOK);
+		fcode = kmem_alloc(size, KM_SLEEP);
 		if (copyin(fp->bf_insns, fcode, size) != 0 ||
 		    !bpf_validate(fcode, (int)flen)) {
-			free(fcode, M_DEVBUF);
+			kmem_free(fcode, size);
 			return EINVAL;
 		}
 		membar_consumer();
@@ -1135,16 +1217,19 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 		fcode = NULL;
 	}
 
+	old_size = d->bd_filter_size;
+
 	s = splnet();
 	old = d->bd_filter;
 	d->bd_filter = fcode;
+	d->bd_filter_size = size;
 	oldj = d->bd_jitcode;
 	d->bd_jitcode = jcode;
 	reset_d(d);
 	splx(s);
 
 	if (old) {
-		free(old, M_DEVBUF);
+		kmem_free(old, old_size);
 	}
 	if (oldj) {
 		bpf_jit_freecode(oldj);
@@ -1192,7 +1277,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 	/*
 	 * Look through attached interfaces for the named one.
 	 */
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		struct ifnet *ifp = bp->bif_ifp;
 
 		if (ifp == NULL ||
@@ -1412,20 +1497,21 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 	};
 	bool gottime = false;
 	struct timespec ts;
+	struct bpf_d *d;
 
 	/*
 	 * Note that the IPL does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
 	 * interfaces shared any data.  This is not the case.
 	 */
-	for (struct bpf_d *d = bp->bif_dlist; d != NULL; d = d->bd_next) {
+	BPFIF_DLIST_READER_FOREACH(d, bp) {
 		u_int slen;
 
 		if (!d->bd_seesent && !rcv) {
 			continue;
 		}
 		d->bd_rcount++;
-		bpf_gstats.bs_recv++;
+		BPF_STATINC(recv);
 
 		if (d->bd_jitcode)
 			slen = d->bd_jitcode(NULL, &args);
@@ -1593,6 +1679,93 @@ _bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	m_freem(m);
 }
 
+static struct mbuf *
+bpf_mbuf_enqueue(struct bpf_if *bp, struct mbuf *m)
+{
+	struct mbuf *dup;
+
+	dup = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+	if (dup == NULL)
+		return NULL;
+
+	if (bp->bif_mbuf_tail != NULL) {
+		bp->bif_mbuf_tail->m_nextpkt = dup;
+	} else {
+		bp->bif_mbuf_head = dup;
+	}
+	bp->bif_mbuf_tail = dup;
+#ifdef BPF_MTAP_SOFTINT_DEBUG
+	log(LOG_DEBUG, "%s: enqueued mbuf=%p to %s\n",
+	    __func__, dup, bp->bif_ifp->if_xname);
+#endif
+
+	return dup;
+}
+
+static struct mbuf *
+bpf_mbuf_dequeue(struct bpf_if *bp)
+{
+	struct mbuf *m;
+	int s;
+
+	s = splnet();
+	m = bp->bif_mbuf_head;
+	if (m != NULL) {
+		bp->bif_mbuf_head = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+
+		if (bp->bif_mbuf_head == NULL)
+			bp->bif_mbuf_tail = NULL;
+#ifdef BPF_MTAP_SOFTINT_DEBUG
+		log(LOG_DEBUG, "%s: dequeued mbuf=%p from %s\n",
+		    __func__, m, bp->bif_ifp->if_xname);
+#endif
+	}
+	splx(s);
+
+	return m;
+}
+
+static void
+bpf_mtap_si(void *arg)
+{
+	struct bpf_if *bp = arg;
+	struct mbuf *m;
+
+	while ((m = bpf_mbuf_dequeue(bp)) != NULL) {
+#ifdef BPF_MTAP_SOFTINT_DEBUG
+		log(LOG_DEBUG, "%s: tapping mbuf=%p on %s\n",
+		    __func__, m, bp->bif_ifp->if_xname);
+#endif
+#ifndef NET_MPSAFE
+		KERNEL_LOCK(1, NULL);
+#endif
+		bpf_ops->bpf_mtap(bp, m);
+#ifndef NET_MPSAFE
+		KERNEL_UNLOCK_ONE(NULL);
+#endif
+		m_freem(m);
+	}
+}
+
+static void
+_bpf_mtap_softint(struct ifnet *ifp, struct mbuf *m)
+{
+	struct bpf_if *bp = ifp->if_bpf;
+	struct mbuf *dup;
+
+	KASSERT(cpu_intr_p());
+
+	/* To avoid extra invocations of the softint */
+	if (BPFIF_DLIST_READER_EMPTY(bp))
+		return;
+	KASSERT(bp->bif_si != NULL);
+
+	dup = bpf_mbuf_enqueue(bp, m);
+	if (dup != NULL)
+		softint_schedule(bp->bif_si);
+}
+
 static int
 bpf_hdrlen(struct bpf_d *d)
 {
@@ -1629,7 +1802,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	int do_wakeup = 0;
 
 	++d->bd_ccount;
-	++bpf_gstats.bs_capt;
+	BPF_STATINC(capt);
 	/*
 	 * Figure out how many bytes to move.  If the packet is
 	 * greater or equal to the snapshot length, transfer that
@@ -1668,7 +1841,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 			 * so drop the packet.
 			 */
 			++d->bd_dcount;
-			++bpf_gstats.bs_drop;
+			BPF_STATINC(drop);
 			return;
 		}
 		ROTATE_BUFFERS(d);
@@ -1731,12 +1904,12 @@ static int
 bpf_allocbufs(struct bpf_d *d)
 {
 
-	d->bd_fbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_fbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_fbuf)
 		return (ENOBUFS);
-	d->bd_sbuf = malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	d->bd_sbuf = kmem_alloc(d->bd_bufsize, KM_NOSLEEP);
 	if (!d->bd_sbuf) {
-		free(d->bd_fbuf, M_DEVBUF);
+		kmem_free(d->bd_fbuf, d->bd_bufsize);
 		return (ENOBUFS);
 	}
 	d->bd_slen = 0;
@@ -1757,14 +1930,14 @@ bpf_freed(struct bpf_d *d)
 	 * free.
 	 */
 	if (d->bd_sbuf != NULL) {
-		free(d->bd_sbuf, M_DEVBUF);
+		kmem_free(d->bd_sbuf, d->bd_bufsize);
 		if (d->bd_hbuf != NULL)
-			free(d->bd_hbuf, M_DEVBUF);
+			kmem_free(d->bd_hbuf, d->bd_bufsize);
 		if (d->bd_fbuf != NULL)
-			free(d->bd_fbuf, M_DEVBUF);
+			kmem_free(d->bd_fbuf, d->bd_bufsize);
 	}
 	if (d->bd_filter)
-		free(d->bd_filter, M_DEVBUF);
+		kmem_free(d->bd_filter, d->bd_filter_size);
 
 	if (d->bd_jitcode != NULL) {
 		bpf_jit_freecode(d->bd_jitcode);
@@ -1780,18 +1953,19 @@ static void
 _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
-	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
+	bp = kmem_alloc(sizeof(*bp), KM_NOSLEEP);
 	if (bp == NULL)
 		panic("bpfattach");
 
 	mutex_enter(&bpf_mtx);
-	bp->bif_dlist = NULL;
 	bp->bif_driverp = driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
+	bp->bif_si = NULL;
+	BPF_IFLIST_ENTRY_INIT(bp);
+	PSLIST_INIT(&bp->bif_dlist_head);
 
-	bp->bif_next = bpf_iflist;
-	bpf_iflist = bp;
+	BPF_IFLIST_WRITER_INSERT_HEAD(bp);
 
 	*bp->bif_driverp = NULL;
 
@@ -1802,19 +1976,43 @@ _bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 #endif
 }
 
+static void
+_bpf_mtap_softint_init(struct ifnet *ifp)
+{
+	struct bpf_if *bp;
+
+	mutex_enter(&bpf_mtx);
+	BPF_IFLIST_WRITER_FOREACH(bp) {
+		if (bp->bif_ifp != ifp)
+			continue;
+
+		bp->bif_mbuf_head = NULL;
+		bp->bif_mbuf_tail = NULL;
+		bp->bif_si = softint_establish(SOFTINT_NET, bpf_mtap_si, bp);
+		if (bp->bif_si == NULL)
+			panic("%s: softint_establish() failed", __func__);
+		break;
+	}
+	mutex_exit(&bpf_mtx);
+
+	if (bp == NULL)
+		panic("%s: no bpf_if found for %s", __func__, ifp->if_xname);
+}
+
 /*
  * Remove an interface from bpf.
  */
 static void
 _bpfdetach(struct ifnet *ifp)
 {
-	struct bpf_if *bp, **pbp;
+	struct bpf_if *bp;
 	struct bpf_d *d;
 	int s;
 
 	mutex_enter(&bpf_mtx);
 	/* Nuke the vnodes for any open instances */
-	LIST_FOREACH(d, &bpf_list, bd_list) {
+  again_d:
+	BPF_DLIST_WRITER_FOREACH(d) {
 		if (d->bd_bif != NULL && d->bd_bif->bif_ifp == ifp) {
 			/*
 			 * Detach the descriptor from an interface now.
@@ -1824,15 +2022,28 @@ _bpfdetach(struct ifnet *ifp)
 			d->bd_promisc = 0;	/* we can't touch device. */
 			bpf_detachd(d);
 			splx(s);
+			goto again_d;
 		}
 	}
 
   again:
-	for (bp = bpf_iflist, pbp = &bpf_iflist;
-	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		if (bp->bif_ifp == ifp) {
-			*pbp = bp->bif_next;
-			free(bp, M_DEVBUF);
+			BPF_IFLIST_WRITER_REMOVE(bp);
+			/* TODO pserialize_perform(); */
+			/* TODO psref_target_destroy(); */
+			BPF_IFLIST_ENTRY_DESTROY(bp);
+			if (bp->bif_si != NULL) {
+				s = splnet();
+				while (bp->bif_mbuf_head != NULL) {
+					struct mbuf *m = bp->bif_mbuf_head;
+					bp->bif_mbuf_head = m->m_nextpkt;
+					m_freem(m);
+				}
+				splx(s);
+				softint_disestablish(bp->bif_si);
+			}
+			kmem_free(bp, sizeof(*bp));
 			goto again;
 		}
 	}
@@ -1847,7 +2058,7 @@ _bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_READER_FOREACH(bp) {
 		if (bp->bif_driverp == &ifp->if_bpf)
 			break;
 	}
@@ -1872,7 +2083,7 @@ bpf_getdltlist(struct bpf_d *d, struct bpf_dltlist *bfl)
 	ifp = d->bd_bif->bif_ifp;
 	n = 0;
 	error = 0;
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_READER_FOREACH(bp) {
 		if (bp->bif_ifp != ifp)
 			continue;
 		if (bfl->bfl_list != NULL) {
@@ -1902,7 +2113,7 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	if (d->bd_bif->bif_dlt == dlt)
 		return 0;
 	ifp = d->bd_bif->bif_ifp;
-	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+	BPF_IFLIST_WRITER_FOREACH(bp) {
 		if (bp->bif_ifp == ifp && bp->bif_dlt == dlt)
 			break;
 	}
@@ -2010,7 +2221,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	mutex_enter(&bpf_mtx);
-	LIST_FOREACH(dp, &bpf_list, bd_list) {
+	BPF_DLIST_WRITER_FOREACH(dp) {
 		if (len >= elem_size && elem_count > 0) {
 #define BPF_EXT(field)	dpe.bde_ ## field = dp->bd_ ## field
 			BPF_EXT(bufsize);
@@ -2048,6 +2259,38 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	return (error);
 }
 
+static void
+bpf_stats(void *p, void *arg, struct cpu_info *ci __unused)
+{
+	struct bpf_stat *const stats = p;
+	struct bpf_stat *sum = arg;
+
+	sum->bs_recv += stats->bs_recv;
+	sum->bs_drop += stats->bs_drop;
+	sum->bs_capt += stats->bs_capt;
+}
+
+static int
+bpf_sysctl_gstats_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	struct bpf_stat sum;
+
+	memset(&sum, 0, sizeof(sum));
+	node = *rnode;
+
+	percpu_foreach(bpf_gstats_percpu, bpf_stats, &sum);
+
+	node.sysctl_data = &sum;
+	node.sysctl_size = sizeof(sum);
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	return 0;
+}
+
 static struct sysctllog *bpf_sysctllog;
 static void
 sysctl_net_bpf_setup(void)
@@ -2080,7 +2323,7 @@ sysctl_net_bpf_setup(void)
 			CTLFLAG_PERMANENT,
 			CTLTYPE_STRUCT, "stats",
 			SYSCTL_DESCR("BPF stats"),
-			NULL, 0, &bpf_gstats, sizeof(bpf_gstats),
+			bpf_sysctl_gstats_handler, 0, NULL, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
@@ -2103,6 +2346,9 @@ struct bpf_ops bpf_ops_kernel = {
 	.bpf_mtap_af =		_bpf_mtap_af,
 	.bpf_mtap_sl_in =	_bpf_mtap_sl_in,
 	.bpf_mtap_sl_out =	_bpf_mtap_sl_out,
+
+	.bpf_mtap_softint =		_bpf_mtap_softint,
+	.bpf_mtap_softint_init =	_bpf_mtap_softint_init,
 };
 
 MODULE(MODULE_CLASS_DRIVER, bpf, "bpf_filter");

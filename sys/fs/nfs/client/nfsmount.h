@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfsclient/nfsmount.h 244042 2012-12-08 22:52:39Z rmacklem 
- * $NetBSD: nfsmount.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $
+ * $NetBSD: nfsmount.h,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $
  */
 
 #ifndef _NFSCLIENT_NFSMOUNT_H_
 #define	_NFSCLIENT_NFSMOUNT_H_
 
-#include <fs/nfs//common/nfs_mountcommon.h>
+#include <fs/nfs/common/nfs_mountcommon.h>
 
 /*
  * Mount structure.

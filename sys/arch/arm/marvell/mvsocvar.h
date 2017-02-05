@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.8.6.1 2015/06/06 14:39:56 skrll Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.8.6.2 2017/02/05 13:40:04 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -107,6 +107,17 @@ enum mvsoc_tags {
 	MV78XX0_TAG_PEX13_IO,
 	MV78XX0_TAG_CRYPT,
 
+	DOVE_TAG_PEX0_MEM,
+	DOVE_TAG_PEX0_IO,
+	DOVE_TAG_PEX1_MEM,
+	DOVE_TAG_PEX1_IO,
+	DOVE_TAG_CRYPT,
+	DOVE_TAG_SPI0,
+	DOVE_TAG_SPI1,
+	DOVE_TAG_BOOTROM,
+	DOVE_TAG_NAND,
+	DOVE_TAG_PMU,
+
 	ARMADAXP_TAG_PEX00_MEM,
 	ARMADAXP_TAG_PEX00_IO,
 	ARMADAXP_TAG_PEX01_MEM,
@@ -126,21 +137,13 @@ int mvsoc_target(int, uint32_t *, uint32_t *, uint32_t *, uint32_t *);
 int mvsoc_target_dump(struct mvsoc_softc *);
 int mvsoc_attr_dump(struct mvsoc_softc *, uint32_t, uint32_t);
 
+extern void (*mvsoc_intr_init)(void);
 extern int (*mvsoc_clkgating)(struct marvell_attach_args *);
 
-void orion_intr_bootstrap(void);
-void orion_getclks(bus_addr_t);
-
-void kirkwood_intr_bootstrap(void);
-void kirkwood_getclks(bus_addr_t);
-int kirkwood_clkgating(struct marvell_attach_args *);
-
-void mv78xx0_intr_bootstrap(void);
-void mv78xx0_getclks(bus_addr_t);
-
-void armadaxp_intr_bootstrap(bus_addr_t);
-void armadaxp_getclks(void);
-void armada370_getclks(void);
-int armadaxp_clkgating(struct marvell_attach_args *);
+void orion_bootstrap(vaddr_t);
+void kirkwood_bootstrap(vaddr_t);
+void mv78xx0_bootstrap(vaddr_t);
+void dove_bootstrap(vaddr_t);
+void armadaxp_bootstrap(vaddr_t, bus_addr_t);
 
 #endif	/* _MVSOCVAR_H_ */

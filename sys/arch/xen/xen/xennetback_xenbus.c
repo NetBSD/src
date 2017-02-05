@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.52.6.4 2016/07/09 20:25:00 skrll Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.52.6.5 2017/02/05 13:40:24 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.6.4 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.6.5 2017/02/05 13:40:24 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -889,9 +889,7 @@ so always copy for now.
 			}
 		}
 		m_set_rcvif(m, ifp);
-		ifp->if_ipackets++;
 		
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	xen_rmb(); /* be sure to read the request before updating pointer */

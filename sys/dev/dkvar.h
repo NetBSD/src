@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.19.4.3 2015/12/27 12:09:48 skrll Exp $ */
+/* $NetBSD: dkvar.h,v 1.19.4.4 2017/02/05 13:40:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct dk_softc {
 	struct bufq_state	*sc_bufq;	/* buffer queue */
 	int			 sc_dtype;	/* disk type */
 	struct buf		*sc_deferred;	/* retry after start failed */
-	bool			 sc_busy;	/* processing buffers */
+	int			 sc_busy;	/* processing buffers */
 	krndsource_t		 sc_rnd_source;	/* entropy source */
 };
 

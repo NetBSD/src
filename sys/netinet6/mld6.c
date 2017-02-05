@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.61.2.6 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: mld6.c,v 1.61.2.7 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.6 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.7 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.6 2016/12/05 10:55:28 skrll Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/protosw.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/kernel.h>
@@ -230,6 +229,7 @@ mld_timeo(void *arg)
 {
 	struct in6_multi *in6m = arg;
 
+	/* XXX NOMPSAFE still need softnet_lock */
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
@@ -374,9 +374,12 @@ mld_input(struct mbuf *m, int off)
 		 * though RFC3590 says "SHOULD log" if the source of a query
 		 * is the unspecified address.
 		 */
+		char ip6bufs[INET6_ADDRSTRLEN];
+		char ip6bufm[INET6_ADDRSTRLEN];
 		log(LOG_INFO,
 		    "mld_input: src %s is not link-local (grp=%s)\n",
-		    ip6_sprintf(&ip6->ip6_src), ip6_sprintf(&mldh->mld_addr));
+		    IN6_PRINT(ip6bufs,&ip6->ip6_src),
+		    IN6_PRINT(ip6bufm, &mldh->mld_addr));
 #endif
 		goto out;
 	}
@@ -790,11 +793,10 @@ in6_delmulti(struct in6_multi *in6m)
 
 		/* Tell mld_timeo we're halting the timer */
 		in6m->in6m_timer = IN6M_TIMER_UNDEF;
-#ifdef NET_MPSAFE
-		callout_halt(&in6m->in6m_timer_ch, NULL);
-#else
-		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
-#endif
+		if (mutex_owned(softnet_lock))
+			callout_halt(&in6m->in6m_timer_ch, softnet_lock);
+		else
+			callout_halt(&in6m->in6m_timer_ch, NULL);
 		callout_destroy(&in6m->in6m_timer_ch);
 
 		free(in6m, M_IPMADDR);
@@ -1099,7 +1101,8 @@ done:
 	return error;
 }
 
-SYSCTL_SETUP(sysctl_in6_mklude_setup, "sysctl net.inet6.multicast_kludge subtree setup")
+void
+in6_sysctl_multicast_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

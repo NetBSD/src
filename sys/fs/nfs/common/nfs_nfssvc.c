@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,9 +34,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/nfs_nfssvc.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $");
+__RCSID("$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $");
 
-#include "opt_nfs.h"
+#ifdef _KERNEL_OPT
+#include "opt_newnfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,11 +52,10 @@ __RCSID("$NetBSD: nfs_nfssvc.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $");
 #include <sys/module.h>
 #include <sys/sysent.h>
 #include <sys/syscall.h>
-#include <sys/sysproto.h>
 
 #include <security/audit/audit.h>
 
-#include <nfs/nfssvc.h>
+#include <fs/nfs/common/nfssvc.h>
 
 static int nfssvc_offset = SYS_nfssvc;
 static struct sysent nfssvc_prev_sysent;

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.10.6.1 2015/06/06 14:40:00 skrll Exp $
+#	$NetBSD: majors.ia64,v 1.10.6.2 2017/02/05 13:40:13 skrll Exp $
 #
 # Device majors for ia64
 #
@@ -30,7 +30,6 @@ device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
 device-major	joy		char 26			joy
-device-major	spkr		char 27			spkr
 
 # next three are obsolete
 #device-major	omms		char 35			omms

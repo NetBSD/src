@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.44.30.2 2016/12/05 10:55:27 skrll Exp $	*/
+/*	$NetBSD: radix.c,v 1.44.30.3 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.44.30.2 2016/12/05 10:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.44.30.3 2017/02/05 13:40:58 skrll Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -1053,7 +1053,8 @@ rn_delayedinit(void **head, int off)
 {
 	struct delayinit *di;
 
-	KASSERT(radix_initialized == 0);
+	if (radix_initialized)
+		return;
 
 	di = kmem_alloc(sizeof(*di), KM_SLEEP);
 	di->head = head;

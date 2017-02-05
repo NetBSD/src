@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.57.2.2 2016/04/22 15:44:09 skrll Exp $
+#	$NetBSD: SMDK2410,v 1.57.2.3 2017/02/05 13:40:07 skrll Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -213,6 +213,8 @@ midi*	at midibus?
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 # on-board CS8900A Ethernet
 cs*	at ssextio? intr 9 addr 0x18000000

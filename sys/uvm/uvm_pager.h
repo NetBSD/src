@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.43 2012/04/29 22:54:01 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.43.16.1 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -108,6 +108,7 @@
  */
 
 struct uvm_faultinfo;
+struct uvm_object;
 
 /*
  * pager ops

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.47.2.3 2016/03/19 11:30:07 skrll Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.47.2.4 2017/02/05 13:40:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.3 2016/03/19 11:30:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.4 2017/02/05 13:40:23 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -61,9 +61,9 @@ static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] =
 int cpu_vendor;
 char cpu_brand_string[49];
 
-int x86_fpu_save = FPU_SAVE_FSAVE;
-unsigned int x86_fpu_save_size = 512;
-uint64_t x86_xsave_features = 0;
+int x86_fpu_save __read_mostly = FPU_SAVE_FSAVE;
+unsigned int x86_fpu_save_size __read_mostly = 512;
+uint64_t x86_xsave_features __read_mostly = 0;
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -760,10 +760,12 @@ cpu_probe_fpu(struct cpu_info *ci)
 
 	/* Get features and maximum size of the save area */
 	x86_cpuid(0xd, descs);
-	/* XXX these probably ought to be per-cpu */
 	if (descs[2] > 512)
-	    x86_fpu_save_size = descs[2];
-#ifndef XEN
+		x86_fpu_save_size = descs[2];
+
+#ifdef XEN
+	/* Don't use xsave, force fxsave with x86_xsave_features = 0. */
+#else
 	x86_xsave_features = (uint64_t)descs[3] << 32 | descs[0];
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.94.2.6 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.94.2.7 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.94.2.6 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.94.2.7 2017/02/05 13:40:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,8 +576,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	 * we know there's no other link-local address on the interface
 	 * and therefore we are adding one (instead of updating one).
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL,
-	    IN6_IFAUPDATE_DADDELAY)) != 0) {
+	if ((error = in6_update_ifa(ifp, &ifra, IN6_IFAUPDATE_DADDELAY)) != 0) {
 		/*
 		 * XXX: When the interface does not support IPv6, this call
 		 * would fail in the SIOCINITIFADDR ioctl.  I believe the
@@ -634,7 +633,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 * We are sure that this is a newly assigned address, so we can set
 	 * NULL to the 3rd arg.
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL, 0)) != 0) {
+	if ((error = in6_update_ifa(ifp, &ifra, 0)) != 0) {
 		nd6log(LOG_ERR, "failed to configure "
 		    "the loopback address on %s (errno=%d)\n",
 		    if_name(ifp), error);
@@ -815,21 +814,13 @@ in6_ifdetach(struct ifnet *ifp)
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
 
-	/* remove neighbor management table */
-	nd6_purge(ifp, NULL);
-
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
 
-	/*
-	 * remove neighbor management table.  we call it twice just to make
-	 * sure we nuke everything.  maybe we need just one call.
-	 * XXX: since the first call did not release addresses, some prefixes
-	 * might remain.  We should call nd6_purge() again to release the
-	 * prefixes after removing all addresses above.
-	 * (Or can we just delay calling nd6_purge until at this point?)
-	 */
+	/* remove neighbor management table */
 	nd6_purge(ifp, NULL);
+
+	nd6_assert_purged(ifp);
 }
 
 int
@@ -869,6 +860,7 @@ in6_tmpaddrtimer(void *ignored_arg)
 	struct ifnet *ifp;
 	int s;
 
+	/* XXX NOMPSAFE still need softnet_lock */
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 

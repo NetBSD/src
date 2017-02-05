@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157.2.1 2015/12/27 12:09:39 skrll Exp $
+# $NetBSD: GENERIC,v 1.157.2.2 2017/02/05 13:40:17 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.157.2.1 $"
+#ident 		"GENERIC-$Revision: 1.157.2.2 $"
 
 maxusers	32
 
@@ -359,6 +359,7 @@ wskbd*	at ukbd? console ? mux 1
 
 ucycom*	at uhidev? reportid ?				# USB serial adapter
 uhid*	at uhidev? reportid ?				# USB Generic HID
+
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
@@ -403,6 +404,8 @@ auvia*  at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 
 # Audio support
 audio*	at audiobus?
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 
 #

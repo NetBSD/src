@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmacvar.h,v 1.2 2014/03/15 13:33:48 kiyohara Exp $	*/
+/*	$NetBSD: gtidmacvar.h,v 1.2.6.1 2017/02/05 13:40:28 skrll Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -47,8 +47,6 @@ struct gtidmac_winacctbl {
 };
 extern struct gtidmac_winacctbl *gtidmac_winacctbl;
 extern struct gtidmac_winacctbl *mvxore_winacctbl;
-
-void *gtidmac_tag_get(void);
 
 int gtidmac_chan_alloc(void *, bus_dmamap_t **, bus_dmamap_t **, void *);
 void gtidmac_chan_free(void *, int);

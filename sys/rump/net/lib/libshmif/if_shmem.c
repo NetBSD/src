@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.63.2.3 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.63.2.4 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.63.2.3 2016/07/09 20:25:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.63.2.4 2017/02/05 13:41:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -374,7 +374,6 @@ shmif_unclone(struct ifnet *ifp)
 
 	shmif_stop(ifp, 1);
 	if_down(ifp);
-	finibackend(sc);
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_dying = true;
@@ -384,6 +383,13 @@ shmif_unclone(struct ifnet *ifp)
 	if (sc->sc_rcvl)
 		kthread_join(sc->sc_rcvl);
 	sc->sc_rcvl = NULL;
+
+	/*
+	 * Need to be called after the kthread left, otherwise closing kqueue
+	 * (sc_kq) hangs sometimes perhaps because of a race condition between
+	 * close and kevent in the kthread on the kqueue.
+	 */
+	finibackend(sc);
 
 	vmem_xfree(shmif_units, sc->sc_unit+1, 1);
 
@@ -681,12 +687,11 @@ shmif_rcv(void *arg)
 		KASSERT(busmem->shm_gen >= sc->sc_devgen);
 
 		/* need more data? */
-		if (sc->sc_devgen == busmem->shm_gen && 
+		if (sc->sc_devgen == busmem->shm_gen &&
 		    shmif_nextpktoff(busmem, busmem->shm_last)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
-			error = 0;
-			rumpcomp_shmif_watchwait(sc->sc_kq);
+			error = rumpcomp_shmif_watchwait(sc->sc_kq);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
 			membar_consumer();
@@ -765,11 +770,9 @@ shmif_rcv(void *arg)
 
 		if (passup) {
 			int bound;
-			ifp->if_ipackets++;
 			KERNEL_LOCK(1, NULL);
 			/* Prevent LWP migrations between CPUs for psref(9) */
 			bound = curlwp_bind();
-			bpf_mtap(ifp, m);
 			if_input(ifp, m);
 			curlwp_bindx(bound);
 			KERNEL_UNLOCK_ONE(NULL);

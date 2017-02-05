@@ -1,4 +1,4 @@
-# $NetBSD: ssp.mk,v 1.1.2.2 2015/09/22 12:05:56 skrll Exp $
+# $NetBSD: ssp.mk,v 1.1.2.3 2017/02/05 13:40:26 skrll Exp $
 
 .if ${USE_SSP:Uno} == "yes"
 COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
@@ -16,6 +16,7 @@ VARSTACK= \
 	arch/xen/i386/gdt.c \
 	dev/ic/aic79xx.c \
 	dev/ic/aic7xxx.c \
+	dev/usb/xhci.c \
 	dev/ofw/ofw_subr.c \
 	kern/uipc_socket.c \
 	miscfs/genfs/genfs_vnops.c \

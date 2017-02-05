@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.93.6.5 2016/10/05 20:55:43 skrll Exp $ */
+/* $NetBSD: if_ti.c,v 1.93.6.6 2017/02/05 13:40:30 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93.6.5 2016/10/05 20:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93.6.6 2017/02/05 13:40:30 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1866,6 +1866,7 @@ ti_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	/*
@@ -1967,16 +1968,7 @@ ti_rxeof(struct ti_softc *sc)
 		}
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
-
-		/*
-	 	 * Handle BPF listeners. Let the BPF user see the packet, but
-	 	 * don't pass it up to the ether_input() layer unless it's
-	 	 * a broadcast packet, multicast packet, matches our ethernet
-	 	 * address or the interface is in promiscuous mode.
-	 	 */
-		bpf_mtap(ifp, m);
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
@@ -2180,9 +2172,8 @@ ti_intr(void *xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 0);
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0 &&
-	    IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		ti_start(ifp);
+	if ((ifp->if_flags & IFF_RUNNING) != 0)
+		if_schedule_deferred_start(ifp);
 
 	return (1);
 }

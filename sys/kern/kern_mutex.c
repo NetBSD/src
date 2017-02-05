@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.61.2.2 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.61.2.3 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.61.2.2 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.61.2.3 2017/02/05 13:40:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.61.2.2 2016/07/09 20:25:20 skrll Ex
     LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    mutex_abort(mtx, __func__, msg)
+    mutex_abort(__func__, __LINE__, mtx, msg)
 
 #if defined(LOCKDEBUG)
 
@@ -261,8 +261,8 @@ __strong_alias(mutex_spin_enter,mutex_vector_enter);
 __strong_alias(mutex_spin_exit,mutex_vector_exit);
 #endif
 
-static void		mutex_abort(kmutex_t *, const char *, const char *);
-static void		mutex_dump(volatile void *);
+static void	mutex_abort(const char *, size_t, kmutex_t *, const char *);
+static void	mutex_dump(volatile void *);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
@@ -307,11 +307,11 @@ mutex_dump(volatile void *cookie)
  *	we ask the compiler to not inline it.
  */
 void __noinline
-mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
+mutex_abort(const char *func, size_t line, kmutex_t *mtx, const char *msg)
 {
 
-	LOCKDEBUG_ABORT(mtx, (MUTEX_SPIN_P(mtx) ?
-	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
+	LOCKDEBUG_ABORT(func, line, mtx, (MUTEX_SPIN_P(mtx) ?
+	    &mutex_spin_lockops : &mutex_adaptive_lockops), msg);
 }
 
 /*
@@ -591,7 +591,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *	    set waiters  	           ..
 		 *	 unlock cache line		   ..
 		 *	  lose cache line     ->    acquire cache line
-		 *		..	          clear lock word, waiters 
+		 *		..	          clear lock word, waiters
 		 *	  return success
 		 *
 		 * There is another race that can occur: a third CPU could
@@ -628,9 +628,9 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *
 		 * o mi_switch() posts a store fence before setting curlwp
 		 *   and before resuming execution of an LWP.
-		 * 
+		 *
 		 * o _kernel_lock() posts a store fence before setting
-		 *   curcpu()->ci_biglock_wanted, and after clearing it. 
+		 *   curcpu()->ci_biglock_wanted, and after clearing it.
 		 *   This ensures that any overwrite of the mutex waiters
 		 *   flag by mutex_exit() completes before the modification
 		 *   of ci_biglock_wanted becomes visible.

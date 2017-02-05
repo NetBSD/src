@@ -1,4 +1,4 @@
-/*	$NetBSD: athnvar.h,v 1.4.16.1 2015/12/27 12:09:49 skrll Exp $	*/
+/*	$NetBSD: athnvar.h,v 1.4.16.2 2017/02/05 13:40:27 skrll Exp $	*/
 /*	$OpenBSD: athnvar.h,v 1.34 2013/10/21 16:13:49 stsp Exp $	*/
 
 /*-
@@ -416,6 +416,7 @@ struct athn_ops {
 	int	(*dma_alloc)(struct athn_softc *);
 	void	(*dma_free)(struct athn_softc *);
 	void	(*rx_enable)(struct athn_softc *);
+	int	(*intr_status)(struct athn_softc *);
 	int	(*intr)(struct athn_softc *);
 	int	(*tx)(struct athn_softc *, struct mbuf *,
 		    struct ieee80211_node *, int);
@@ -457,6 +458,7 @@ struct athn_softc {
 	struct ieee80211com		sc_ic;
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
+	void				*sc_soft_ih;
 
 #if 0
 	int				(*sc_enable)(struct athn_softc *);

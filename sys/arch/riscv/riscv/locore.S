@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.5.2.2 2015/04/06 15:18:01 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.5.2.3 2017/02/05 13:40:19 skrll Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -156,7 +156,7 @@ ENTRY_NP(start)
 END(start)
 
 //
-// struct lwp *cpu_switch(struct lwp *oldl, struct lwp *newl, bool returning);
+// struct lwp *cpu_switchto(struct lwp *oldl, struct lwp *newl, bool returning);
 //
 ENTRY_NP(cpu_switchto)
 	addi	sp, sp, -TF_LEN		// allocate trapframe

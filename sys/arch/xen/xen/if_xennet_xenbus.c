@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.63.4.4 2016/07/09 20:25:00 skrll Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.63.4.5 2017/02/05 13:40:24 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.4.4 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.63.4.5 2017/02/05 13:40:24 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1099,12 +1099,6 @@ again:
 		}
 		/* free req may overwrite *rx, better doing it late */
 		xennet_rx_free_req(req);
-		/*
-		 * Pass packet to bpf if there is a listener.
-		 */
-		bpf_mtap(ifp, m);
-
-		ifp->if_ipackets++;
 
 		/* Pass the packet up. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

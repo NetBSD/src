@@ -1,4 +1,4 @@
-#	$NetBSD: files.octeon,v 1.4.2.2 2015/06/06 14:39:59 skrll Exp $
+#	$NetBSD: files.octeon,v 1.4.2.3 2017/02/05 13:40:09 skrll Exp $
 
 file	arch/evbmips/cavium/autoconf.c
 file	arch/evbmips/cavium/machdep.c
@@ -9,9 +9,15 @@ file	arch/evbmips/evbmips/interrupt.c
 
 file	kern/subr_disk_mbr.c
 
+# Stack-less Just-In-Time compiler
+include	"external/bsd/sljit/conf/files.sljit"
+
 #device	cpu
 #attach	cpu at mainbus
 #file	arch/evbmips/evbmips/cpu.c		cpu
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
+
+# workaround Cavium 50x0 problem vs uvm freelists
+defparam opt_cavium.h		OCTEON_MEMSIZE

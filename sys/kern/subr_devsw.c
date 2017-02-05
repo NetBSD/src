@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.33.2.1 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.33.2.2 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Overview
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.33.2.1 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.33.2.2 2017/02/05 13:40:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -169,7 +169,7 @@ devsw_attach(const char *devname,
 	}
 
 	error = bdevsw_attach(bdev, bmajor);
-	if (error != 0) 
+	if (error != 0)
 		goto fail;
 	error = cdevsw_attach(cdev, cmajor);
 	if (error != 0) {
@@ -479,7 +479,7 @@ cdevsw_getname(devmajor_t major)
 
 	if (major < 0)
 		return (NULL);
-  
+
 	mutex_enter(&device_lock);
 	for (i = 0 ; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_cmajor == major) {
@@ -504,7 +504,7 @@ bdevsw_getname(devmajor_t major)
 
 	if (major < 0)
 		return (NULL);
-  
+
 	mutex_enter(&device_lock);
 	for (i = 0 ; i < max_devsw_convs; i++) {
 		if (devsw_conv[i].d_bmajor == major) {
@@ -796,6 +796,16 @@ bdev_dump(dev_t dev, daddr_t addr, void *data, size_t sz)
 }
 
 int
+bdev_flags(dev_t dev)
+{
+	const struct bdevsw *d;
+
+	if ((d = bdevsw_lookup(dev)) == NULL)
+		return 0;
+	return d->d_flag & ~D_TYPEMASK;
+}
+
+int
 bdev_type(dev_t dev)
 {
 	const struct bdevsw *d;
@@ -1026,6 +1036,16 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 }
 
 int
+cdev_flags(dev_t dev)
+{
+	const struct cdevsw *d;
+
+	if ((d = cdevsw_lookup(dev)) == NULL)
+		return 0;
+	return d->d_flag & ~D_TYPEMASK;
+}
+
+int
 cdev_type(dev_t dev)
 {
 	const struct cdevsw *d;
@@ -1033,4 +1053,16 @@ cdev_type(dev_t dev)
 	if ((d = cdevsw_lookup(dev)) == NULL)
 		return D_OTHER;
 	return d->d_flag & D_TYPEMASK;
+}
+
+/*
+ * nommap(dev, off, prot)
+ *
+ *	mmap routine that always fails, for non-mmappable devices.
+ */
+paddr_t
+nommap(dev_t dev, off_t off, int prot)
+{
+
+	return (paddr_t)-1;
 }

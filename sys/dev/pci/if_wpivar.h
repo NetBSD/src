@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.18.4.1 2015/04/06 15:18:10 skrll Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.18.4.2 2017/02/05 13:40:30 skrll Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -150,6 +150,8 @@ struct wpi_softc {
 	bus_space_tag_t		sc_st;
 	bus_space_handle_t	sc_sh;
 	void 			*sc_ih;
+	void			*sc_soft_ih;
+	pci_intr_handle_t	*sc_pihp;
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.32.6.2 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.32.6.3 2017/02/05 13:41:00 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32.6.2 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32.6.3 2017/02/05 13:41:00 skrll Exp $");
 
 /*
  * IPsec input processing.
@@ -380,10 +380,11 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 		    (saidx->proxy.sa.sa_family != AF_INET6 &&
 			saidx->proxy.sa.sa_family != 0)) {
 
+			char ip6buf[INET6_ADDRSTRLEN];
 			DPRINTF(("ipsec4_common_input_cb: inner "
 			    "source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
-			    ip6_sprintf(&ip6n.ip6_src),
+			    ip6_sprintf(ip6buf, &ip6n.ip6_src),
 			    ipsec_address(&saidx->proxy),
 			    ipsec_address(&saidx->dst),
 			    (u_long) ntohl(sav->spi)));
@@ -697,10 +698,11 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		    (saidx->proxy.sa.sa_family != AF_INET6 &&
 			saidx->proxy.sa.sa_family != 0)) {
 
+			char ip6buf[INET6_ADDRSTRLEN];
 			DPRINTF(("ipsec6_common_input_cb: inner "
 			    "source address %s doesn't correspond to "
 			    "expected proxy source %s, SA %s/%08lx\n",
-			    ip6_sprintf(&ip6n.ip6_src),
+			    ip6_sprintf(ip6buf, &ip6n.ip6_src),
 			    ipsec_address(&saidx->proxy),
 			    ipsec_address(&saidx->dst),
 			    (u_long) ntohl(sav->spi)));

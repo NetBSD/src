@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.55.2.8 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.55.2.9 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.8 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55.2.9 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -141,27 +141,32 @@ static struct in6_addrpolicy *match_addrsel_policy(struct sockaddr_in6 *);
  * If necessary, this function lookups the routing table and returns
  * an entry to the caller for later use.
  */
-#if 0				/* diabled ad-hoc */
+#if 0				/* disabled ad-hoc */
 #define REPLACE(r) do {\
+	char _buf1[INET6_ADDRSTRLEN], _buf2[INET6_ADDRSTRLEN]; \
 	if ((r) < sizeof(ip6stat.ip6s_sources_rule) / \
 		sizeof(ip6stat.ip6s_sources_rule[0])) /* check for safety */ \
 		ip6stat.ip6s_sources_rule[(r)]++; \
-	/* printf("in6_selectsrc: replace %s with %s by %d\n", ia_best ? ip6_sprintf(&ia_best->ia_addr.sin6_addr) : "none", ip6_sprintf(&ia->ia_addr.sin6_addr), (r)); */ \
+	printf("%s: replace %s with %s by %d\n", __func__, ia_best ? \
+	    IN6_PRINT(_buf1, &ia_best->ia_addr.sin6_addr) : "none", \
+	    IN6_PRINT(_buf2, &ia->ia_addr.sin6_addr), (r)); \
 	goto replace; \
-} while(0)
+} while(/*CONSTCOND*/0)
 #define NEXT(r) do {\
 	if ((r) < sizeof(ip6stat.ip6s_sources_rule) / \
 		sizeof(ip6stat.ip6s_sources_rule[0])) /* check for safety */ \
 		ip6stat.ip6s_sources_rule[(r)]++; \
-	/* printf("in6_selectsrc: keep %s against %s by %d\n", ia_best ? ip6_sprintf(&ia_best->ia_addr.sin6_addr) : "none", ip6_sprintf(&ia->ia_addr.sin6_addr), (r)); */ \
+	printf("%s: keep %s against %s by %d\n", ia_best ? \
+	    IN6_PRINT(_buf1, &ia_best->ia_addr.sin6_addr) : "none", \
+	    IN6_PRINT(_buf2, &ia->ia_addr.sin6_addr), (r)); \
 	goto next; 		/* XXX: we can't use 'continue' here */ \
-} while(0)
+} while(/*CONSTCOND*/0)
 #define BREAK(r) do { \
 	if ((r) < sizeof(ip6stat.ip6s_sources_rule) / \
 		sizeof(ip6stat.ip6s_sources_rule[0])) /* check for safety */ \
 		ip6stat.ip6s_sources_rule[(r)]++; \
 	goto out; 		/* XXX: we can't use 'break' here */ \
-} while(0)
+} while(/*CONSTCOND*/0)
 #else
 #define REPLACE(r) goto replace
 #define NEXT(r) goto next
@@ -599,17 +604,20 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	} u;
 
 	KASSERT(ro != NULL);
+	KASSERT(*ro != NULL);
 	KASSERT(retrt != NULL);
 
 #if 0
 	if (dstsock->sin6_addr.s6_addr32[0] == 0 &&
 	    dstsock->sin6_addr.s6_addr32[1] == 0 &&
 	    !IN6_IS_ADDR_LOOPBACK(&dstsock->sin6_addr)) {
+		char ip6buf[INET6_ADDRSTRLEN];
 		printf("in6_selectroute: strange destination %s\n",
-		       ip6_sprintf(&dstsock->sin6_addr));
+		       IN6_PRINT(ip6buf, &dstsock->sin6_addr));
 	} else {
+		char ip6buf[INET6_ADDRSTRLEN];
 		printf("in6_selectroute: destination = %s%%%d\n",
-		       ip6_sprintf(&dstsock->sin6_addr),
+		       IN6_PRINT(ip6buf, &dstsock->sin6_addr),
 		       dstsock->sin6_scope_id); /* for debug */
 	}
 #endif
@@ -638,10 +646,14 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		rt = rtcache_lookup(ron, sin6tosa(sin6_next));
 		if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) != 0 ||
 		    !nd6_is_addr_neighbor(sin6_next, rt->rt_ifp)) {
+			if (rt != NULL) {
+				if (count_discard)
+					in6_ifstat_inc(rt->rt_ifp,
+					    ifs6_out_discard);
+				rtcache_unref(rt, ron);
+				rt = NULL;
+			}
 			rtcache_free(ron);
-			if (rt != NULL && count_discard)
-				in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
-			rt = NULL;
 			error = EHOSTUNREACH;
 			goto done;
 		}
@@ -691,7 +703,7 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct ip6_moptions *mopts, struct route *ro, struct ifnet **retifp,
 	struct psref *psref)
 {
-	int error;
+	int error = 0;
 	struct rtentry *rt = NULL;
 	struct in6_addr *dst;
 	struct in6_pktinfo *pi = NULL;
@@ -743,8 +755,11 @@ getroute:
 	 * Although this may not be very harmful, it should still be confusing.
 	 * We thus reject the case here.
 	 */
-	if ((rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE)))
-		return (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+	if ((rt->rt_flags & (RTF_REJECT | RTF_BLACKHOLE))) {
+		error = (rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
+		/* XXX: ifp can be returned with psref even if error */
+		goto out;
+	}
 
 	/*
 	 * Adjust the "outgoing" interface.  If we're going to loop the packet
@@ -760,8 +775,9 @@ getroute:
 		*retifp = rt->rt_ifa->ifa_ifp;
 		if_acquire_NOMPSAFE(*retifp, psref);
 	}
-
-	return (0);
+out:
+	rtcache_unref(rt, ro);
+	return error;
 }
 
 /*
@@ -791,9 +807,11 @@ in6_selecthlim_rt(struct in6pcb *in6p)
 		return in6_selecthlim(in6p, NULL);
 
 	rt = rtcache_validate(&in6p->in6p_route);
-	if (rt != NULL)
-		return in6_selecthlim(in6p, rt->rt_ifp);
-	else
+	if (rt != NULL) {
+		int ret = in6_selecthlim(in6p, rt->rt_ifp);
+		rtcache_unref(rt, &in6p->in6p_route);
+		return ret;
+	} else
 		return in6_selecthlim(in6p, NULL);
 }
 

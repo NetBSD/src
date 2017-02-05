@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.30.24.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: tcp.h,v 1.30.24.2 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,11 @@ struct tcphdr {
 } __packed;
 
 #define	TCPOPT_EOL		0
+#define	   TCPOLEN_EOL			1
+#define	TCPOPT_PAD		0
+#define	   TCPOLEN_PAD			1
 #define	TCPOPT_NOP		1
+#define	   TCPOLEN_NOP			1
 #define	TCPOPT_MAXSEG		2
 #define	   TCPOLEN_MAXSEG		4
 #define	TCPOPT_WINDOW		3
@@ -156,7 +160,9 @@ struct tcp_info {
 	uint8_t		__tcpi_probes;
 	uint8_t		__tcpi_backoff;
 	uint8_t		tcpi_options;	       /* Options enabled on conn. */
+	/*LINTED: non-portable bitfield*/
 	uint8_t		tcpi_snd_wscale:4,	/* RFC1323 send shift value. */
+	/*LINTED: non-portable bitfield*/
 			tcpi_rcv_wscale:4; /* RFC1323 recv shift value. */
 
 	uint32_t	tcpi_rto;		/* Retransmission timeout (usec). */

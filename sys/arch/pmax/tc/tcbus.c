@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.29.14.2 2016/12/05 10:54:56 skrll Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.29.14.3 2017/02/05 13:40:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29.14.2 2016/12/05 10:54:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29.14.3 2017/02/05 13:40:18 skrll Exp $");
 
 #define	_PMAX_BUS_DMA_PRIVATE
 /*
@@ -178,8 +178,6 @@ tc_ds_get_dma_tag(int slot)
 
 #include <pmax/pmax/cons.h>
 #include <pmax/dec_prom.h>
-
-int	tc_checkslot(tc_addr_t, char *);
 
 struct cnboards {
 	const char	*cb_tcname;

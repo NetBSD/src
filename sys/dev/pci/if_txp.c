@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.41.4.3 2016/10/05 20:55:43 skrll Exp $ */
+/* $NetBSD: if_txp.c,v 1.41.4.4 2017/02/05 13:40:30 skrll Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.41.4.3 2016/10/05 20:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.41.4.4 2017/02/05 13:40:30 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -343,6 +343,7 @@ txp_attach(device_t parent, device_t self, void *aux)
 	 * Attach us everywhere
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
@@ -652,7 +653,7 @@ txp_intr(void *vsc)
 	/* unmask all interrupts */
 	WRITE_REG(sc, TXP_IMR, TXP_INT_A2H_3);
 
-	txp_start(&sc->sc_arpcom.ec_if);
+	if_schedule_deferred_start(&sc->sc_arpcom.ec_if);
 
 	return (claimed);
 }
@@ -729,11 +730,6 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 			m = mnew;
 		}
 #endif
-
-		/*
-		 * Handle BPF listeners. Let the BPF user see the packet.
-		 */
-		bpf_mtap(ifp, m);
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116.6.2 2016/10/05 20:55:25 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116.6.3 2017/02/05 13:40:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.6.2 2016/10/05 20:55:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.6.3 2017/02/05 13:40:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -252,7 +252,7 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 	if (bi_msg != NULL)
 		printf("%s: magic=%#x bip=%p\n", bi_msg, bim, bip);
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * The boot command is passed in the top 512 bytes,

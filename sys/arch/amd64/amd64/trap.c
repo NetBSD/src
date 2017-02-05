@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79.2.4 2016/12/05 10:54:49 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.79.2.5 2017/02/05 13:40:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.4 2016/12/05 10:54:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.5 2017/02/05 13:40:01 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,7 +230,7 @@ trap(struct trapframe *frame)
 #endif
 	ksiginfo_t ksi;
 	void *onfault;
-	int type, error;
+	int type, error, wptnfo;
 	uint64_t cr2;
 	bool pfail;
 
@@ -673,6 +673,19 @@ faultcommon:
 	}
 
 	case T_TRCTRAP:
+		/*
+		 * Ignore debug register trace traps due to
+		 * accesses in the user's address space, which
+		 * can happen under several conditions such as
+		 * if a user sets a watchpoint on a buffer and
+		 * then passes that buffer to a system call.
+		 * We still want to get TRCTRAPS for addresses
+		 * in kernel space because that is useful when
+		 * debugging the kernel.
+		 */
+		if (user_trap_x86_hw_watchpoint())
+			break;
+
 		/* Check whether they single-stepped into a lcall. */
 		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
 		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
@@ -693,7 +706,11 @@ faultcommon:
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
-			if (type == (T_BPTFLT|T_USER))
+			if ((wptnfo = user_trap_x86_hw_watchpoint())) {
+				ksi.ksi_code = TRAP_HWWPT;
+				ksi.ksi_trap2 = x86_hw_watchpoint_reg(wptnfo);
+				ksi.ksi_trap3 = x86_hw_watchpoint_type(wptnfo);
+			} else if (type == (T_BPTFLT|T_USER))
 				ksi.ksi_code = TRAP_BRKPT;
 			else
 				ksi.ksi_code = TRAP_TRACE;

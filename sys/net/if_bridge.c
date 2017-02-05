@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.9 2016/10/05 20:56:08 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.10 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.9 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.10 2017/02/05 13:40:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -205,7 +205,7 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 #define ACQUIRE_GLOBAL_LOCKS()	do {					\
 					KERNEL_LOCK(1, NULL);		\
 					mutex_enter(softnet_lock);	\
-					__s = splnet();			\
+					__s = splsoftnet();		\
 				} while (0)
 #define RELEASE_GLOBAL_LOCKS()	do {					\
 					splx(__s);			\
@@ -456,7 +456,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 	struct bridge_iflist *bif;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	bridge_stop(ifp, 1);
 
@@ -509,7 +509,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	const struct bridge_control *bc = NULL; /* XXXGCC */
 	int s, error = 0;
 
-	/* Authorize command before calling splnet(). */
+	/* Authorize command before calling splsoftnet(). */
 	switch (cmd) {
 	case SIOCGDRVSPEC:
 	case SIOCSDRVSPEC:
@@ -535,7 +535,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
-	s = splnet();
+	s = splsoftnet();
 
 	switch (cmd) {
 	case SIOCGDRVSPEC:
@@ -552,7 +552,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
-		/* BC_F_SUSER is checked above, before splnet(). */
+		/* BC_F_SUSER is checked above, before splsoftnet(). */
 
 		if ((bc->bc_flags & (BC_F_XLATEIN|BC_F_XLATEOUT)) == 0
 		    && (ifd->ifd_len != bc->bc_argsize
@@ -1548,7 +1548,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				mc->m_flags &= ~M_PROMISC;
 
 #ifndef NET_MPSAFE
-				s = splnet();
+				s = splsoftnet();
 #endif
 				ether_input(dst_if, mc);
 #ifndef NET_MPSAFE

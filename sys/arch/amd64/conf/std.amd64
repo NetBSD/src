@@ -1,15 +1,15 @@
-# $NetBSD: std.amd64,v 1.9.14.1 2015/06/06 14:39:54 skrll Exp $
+# $NetBSD: std.amd64,v 1.9.14.2 2017/02/05 13:40:02 skrll Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
 machine amd64 x86
-include		"conf/std"	# MI standard options
+include 	"conf/std"	# MI standard options
 
 options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR
-options		MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 options 	CHILD_MAX=1024	# 160 is too few
 options 	OPEN_MAX=1024	# 128 is too few

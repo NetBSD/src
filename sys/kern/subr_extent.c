@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.76.4.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.76.4.2 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.76.4.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.76.4.2 2017/02/05 13:40:56 skrll Exp $");
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
@@ -81,7 +81,7 @@ pool_get(pool, flags)		kmem_alloc((pool)->pr_size,0)
 #define	\
 pool_put(pool, rp)		kmem_free(rp,0)
 #define	\
-panic(a)			printf(a)
+panic(a ...)			printf(a)
 #define	mutex_init(a, b, c)
 #define	mutex_destroy(a)
 #define	mutex_enter(l)

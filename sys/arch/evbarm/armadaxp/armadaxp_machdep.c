@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.8.8.1 2015/06/06 14:39:57 skrll Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.8.8.2 2017/02/05 13:40:06 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8.8.1 2015/06/06 14:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.8.8.2 2017/02/05 13:40:06 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_mvsoc.h"
@@ -146,10 +146,6 @@ extern int KERNEL_BASE_phys[];
 #define	KERNEL_VM_BASE		(KERNEL_BASE + 0x40000000)
 #define KERNEL_VM_SIZE		0x14000000
 
-/* Prototypes */
-extern int armadaxp_l2_init(bus_addr_t);
-extern void armadaxp_io_coherency_init(void);
-
 void consinit(void);
 #ifdef KGDB
 static void kgdb_port_init(void);
@@ -198,7 +194,7 @@ static const struct pmap_devmap devmap[] = {
 		/* Internal registers */
 		.pd_va = _A(MARVELL_INTERREGS_VBASE),
 		.pd_pa = _A(MARVELL_INTERREGS_PBASE),
-		.pd_size = _S(MARVELL_INTERREGS_SIZE),
+		.pd_size = _S(MVSOC_INTERREGS_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -344,37 +340,9 @@ initarm(void *arg)
 	reset_axp_pcie_win();
 
 	/* Get CPU, system and timebase frequencies */
-	extern vaddr_t misc_base;
-	misc_base = MARVELL_INTERREGS_VBASE + ARMADAXP_MISC_BASE;
-	switch (mvsoc_model()) {
-	case MARVELL_ARMADA370_MV6707:
-	case MARVELL_ARMADA370_MV6710:
-	case MARVELL_ARMADA370_MV6W11:
-		armada370_getclks();
-		break;
-	case MARVELL_ARMADAXP_MV78130:
-	case MARVELL_ARMADAXP_MV78160:
-	case MARVELL_ARMADAXP_MV78230:
-	case MARVELL_ARMADAXP_MV78260:
-	case MARVELL_ARMADAXP_MV78460:
-	default:
-		armadaxp_getclks();
-		break;
-	}
-	mvsoc_clkgating = armadaxp_clkgating;
-
-	/* Preconfigure interrupts */
-	armadaxp_intr_bootstrap(MARVELL_INTERREGS_PBASE);
-
-#ifdef L2CACHE_ENABLE
-	/* Initialize L2 Cache */
-	(void)armadaxp_l2_init(MARVELL_INTERREGS_PBASE);
-#endif
-
-#ifdef AURORA_IO_CACHE_COHERENCY
-	/* Initialize cache coherency */
-	armadaxp_io_coherency_init();
-#endif
+	armadaxp_bootstrap(
+	    MARVELL_INTERREGS_VBASE,
+	    MARVELL_INTERREGS_PBASE);
 
 #ifdef KGDB
 	kgdb_port_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.78.2.10 2016/12/05 10:55:27 skrll Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.78.2.11 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.10 2016/12/05 10:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.11 2017/02/05 13:40:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -313,10 +313,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		ifv->ifv_encaplen = ETHER_VLAN_ENCAP_LEN;
 		ifv->ifv_mintu = ETHERMIN;
 
-		if (ec->ec_nvlans == 0) {
+		if (ec->ec_nvlans++ == 0) {
 			if ((error = ether_enable_vlan_mtu(p)) >= 0) {
-				if (error)
+				if (error) {
+					ec->ec_nvlans--;
 					return error;
+				}
 				ifv->ifv_mtufudge = 0;
 			} else {
 				/*
@@ -329,7 +331,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 				ifv->ifv_mtufudge = ifv->ifv_encaplen;
 			}
 		}
-		ec->ec_nvlans++;
 
 		/*
 		 * If the parent interface can do hardware-assisted
@@ -732,7 +733,7 @@ vlan_start(struct ifnet *ifp)
 
 #ifdef ALTQ
 		/*
-		 * KERNEL_LOCK is required for ALTQ even if NET_MPSAFE if defined.
+		 * KERNEL_LOCK is required for ALTQ even if NET_MPSAFE is defined.
 		 */
 		KERNEL_LOCK(1, NULL);
 		/*
@@ -936,8 +937,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 
 	m_set_rcvif(m, &ifv->ifv_if);
 	ifv->ifv_if.if_ipackets++;
-
-	bpf_mtap(&ifv->ifv_if, m);
 
 	m->m_flags &= ~M_PROMISC;
 	if_input(&ifv->ifv_if, m);

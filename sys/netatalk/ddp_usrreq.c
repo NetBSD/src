@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.63.4.3 2016/10/05 20:56:08 skrll Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.63.4.4 2017/02/05 13:40:58 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63.4.3 2016/10/05 20:56:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.63.4.4 2017/02/05 13:40:58 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -226,6 +226,7 @@ at_pcbconnect(struct ddpcb *ddp, struct sockaddr_at *sat)
 		if (aa == NULL || (cdst->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
 		    cdst->sat_addr.s_node != sat->sat_addr.s_node)) {
+			rtcache_unref(rt, ro);
 			rtcache_free(ro);
 			rt = NULL;
 		}
@@ -254,6 +255,7 @@ at_pcbconnect(struct ddpcb *ddp, struct sockaddr_at *sat)
 		}
 	} else
 		aa = NULL;
+	rtcache_unref(rt, ro);
 	if (aa == NULL)
 		return ENETUNREACH;
 	ddp->ddp_fsat = *sat;

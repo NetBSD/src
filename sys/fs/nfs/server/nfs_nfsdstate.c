@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdstate.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: nfs_nfsdstate.c,v 1.2.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,10 +28,10 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdstate.c 307694 2016-10-20 23:53:16Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $");
+__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.2.12.2 2017/02/05 13:40:55 skrll Exp $");
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 struct nfsrv_stablefirst nfsrv_stablefirst;
 int nfsrv_issuedelegs = 0;

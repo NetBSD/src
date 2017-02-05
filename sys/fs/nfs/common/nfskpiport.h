@@ -1,4 +1,4 @@
-/*	$NetBSD: nfskpiport.h,v 1.1.1.1 2013/09/30 07:19:40 dholland Exp $	*/
+/*	$NetBSD: nfskpiport.h,v 1.1.1.1.12.1 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfskpiport.h 207785 2010-05-08 14:50:12Z rmacklem 
- * $NetBSD: nfskpiport.h,v 1.1.1.1 2013/09/30 07:19:40 dholland Exp $
+ * $NetBSD: nfskpiport.h,v 1.1.1.1.12.1 2017/02/05 13:40:55 skrll Exp $
  */
 
 #ifndef _NFS_NFSKPIPORT_H_
@@ -39,7 +39,9 @@ typedef	struct mount *		mount_t;
 #define	vfs_statfs(m)		(&((m)->mnt_stat))
 #define	vfs_flags(m)		((m)->mnt_flag)
 
+#if 0	/* Predefined in NetBSD sys/vnode.h */
 typedef struct vnode *		vnode_t;
+#endif
 #define	vnode_mount(v)		((v)->v_mount)
 #define	vnode_vtype(v)		((v)->v_type)
 

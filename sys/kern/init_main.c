@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.461.2.9 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.461.2.10 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.9 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.10 2017/02/05 13:40:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.9 2016/12/05 10:55:26 skrll Ex
 #include "opt_ptrace.h"
 #include "opt_rnd_printf.h"
 #include "opt_splash.h"
+#include "opt_kernhist.h"
 
 #if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;
@@ -214,6 +215,7 @@ extern void *_binary_splash_image_end;
 
 #include <net/bpf.h>
 #include <net/if.h>
+#include <net/pfil.h>
 #include <net/raw_cb.h>
 #include <net/if_llatbl.h>
 
@@ -349,6 +351,11 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
+	biohist_init();
+
+#ifdef KERNHIST
+	sysctl_kernhist_init();
+#endif
 
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
@@ -472,6 +479,9 @@ main(void)
 	/* Initialize the kernel strong PRNG. */
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
+	/* Initialize pfil */
+	pfil_init();
 
 	/* Initialize interfaces. */
 	ifinit1();

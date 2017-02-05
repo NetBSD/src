@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.42.4.3 2016/07/09 20:25:02 skrll Exp $ */
+/* $NetBSD: lemac.c,v 1.42.4.4 2017/02/05 13:40:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.42.4.3 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.42.4.4 2017/02/05 13:40:28 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -302,21 +302,10 @@ lemac_input(
 	if (length & 1)
 	    m->m_data[length - 1] = LEMAC_GET8(sc, offset + length - 1);
     }
-    if (sc->sc_if.if_bpf != NULL) {
-	m->m_pkthdr.len = m->m_len = length;
-	bpf_mtap(&sc->sc_if, m);
-    }
-    /*
-     * If this is single cast but not to us
-     * drop it!
-     */
-    if ((eh.ether_dhost[0] & 1) == 0
-	   && !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_enaddr)) {
-	m_freem(m);
-	return;
-    }
+
     m->m_pkthdr.len = m->m_len = length;
     m_set_rcvif(m, &sc->sc_if);
+
     if_percpuq_enqueue((&sc->sc_if)->if_percpuq, m);
 }
 
@@ -332,7 +321,6 @@ lemac_rne_intr(
 	unsigned rxpg = LEMAC_INB(sc, LEMAC_REG_RQ);
 	u_int32_t rxlen;
 
-	sc->sc_if.if_ipackets++;
 	if (LEMAC_USE_PIO_MODE(sc)) {
 	    LEMAC_OUTB(sc, LEMAC_REG_IOP, rxpg);
 	    LEMAC_OUTB(sc, LEMAC_REG_PI1, 0);

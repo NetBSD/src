@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_kmod_netbsd.c,v 1.3.2.2 2016/03/19 11:30:31 skrll Exp $ */
+/* $NetBSD: vchiq_kmod_netbsd.c,v 1.3.2.3 2017/02/05 13:40:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.3.2.2 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_kmod_netbsd.c,v 1.3.2.3 2017/02/05 13:40:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,13 @@ static void vchiq_defer(device_t);
 /* External functions */
 int vchiq_init(void);
 
+
+#define VCHIQ_DOORBELL0		0x40
+#define VCHIQ_DOORBELL1		0x44
+#define VCHIQ_DOORBELL2		0x48
+#define VCHIQ_DOORBELL3		0x4C
+
+
 CFATTACH_DECL_NEW(vchiq, sizeof(struct vchiq_softc),
     vchiq_match, vchiq_attach, NULL, NULL);
 
@@ -79,7 +86,7 @@ static int
 vchiq_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct amba_attach_args *aaa = aux;
-	
+
 	if (strcmp(aaa->aaa_name, "bcmvchiq") != 0)
 		return 0;
 
@@ -138,14 +145,17 @@ vchiq_intr(void *priv)
 	struct vchiq_softc *sc = priv;
 	uint32_t status;
 
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0x40);
-	if (status & 0x4)
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh,
+	    VCHIQ_DOORBELL0, 4, BUS_SPACE_BARRIER_READ);
+
+	rmb();
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, VCHIQ_DOORBELL0);
+	if (status & 0x4) {
 		remote_event_pollall(&g_state);
+		return 1;
+	}
 
-	bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-	    0x40, 4, BUS_SPACE_BARRIER_READ);
-
-	return 1;
+	return 0;
 }
 
 static int
@@ -169,10 +179,10 @@ remote_event_signal(REMOTE_EVENT_T *event)
 	dsb();		/* data barrier operation */
 
 	if (event->armed) {
-		bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-		    0x48, 4, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
-		    0x48, 0);
+		    VCHIQ_DOORBELL2, 0);
+                bus_space_barrier(vchiq_softc->sc_iot, vchiq_softc->sc_ioh,
+                    VCHIQ_DOORBELL2, 4, BUS_SPACE_BARRIER_WRITE);
 	}
 }
 

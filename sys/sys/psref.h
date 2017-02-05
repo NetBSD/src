@@ -1,4 +1,4 @@
-/*	$NetBSD: psref.h,v 1.1.2.2 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: psref.h,v 1.1.2.3 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@ struct psref {
 	struct cpu_info			*psref_cpu;
 };
 
+#ifdef _KERNEL
 struct psref_class *
 	psref_class_create(const char *, int);
 void	psref_class_destroy(struct psref_class *);
@@ -91,5 +92,6 @@ void	psref_copy(struct psref *, const struct psref *,
 
 /* For use only in assertions.  */
 bool	psref_held(const struct psref_target *, struct psref_class *);
+#endif
 
 #endif	/* _SYS_PSREF_H */

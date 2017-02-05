@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19.6.7 2017/01/29 15:58:14 skrll Exp $ */
+/* $NetBSD: uslsa.c,v 1.19.6.8 2017/02/05 13:40:48 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.7 2017/01/29 15:58:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.8 2017/02/05 13:40:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -241,6 +241,9 @@ uslsa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 	                                    ucomprint, ucomsubmatch);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	
 	return;
 }
 

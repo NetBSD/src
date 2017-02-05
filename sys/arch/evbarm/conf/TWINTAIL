@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.65.2.1 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: TWINTAIL,v 1.65.2.2 2017/02/05 13:40:07 skrll Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -167,6 +167,7 @@ options KGDB_DEVRATE=115200
 # Audio support
 #audio*	at audiobus?
 
+#spkr*	at audio?		# PC speaker (synthesized)
 
 # FlashROM disk driver
 # frd*	at pxaip?

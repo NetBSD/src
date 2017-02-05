@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.5.28.2 2016/07/09 20:24:58 skrll Exp $ */
+/* $NetBSD: if_veth.c,v 1.5.28.3 2017/02/05 13:40:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5.28.2 2016/07/09 20:24:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5.28.3 2017/02/05 13:40:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -232,9 +232,6 @@ veth_softrx(void *priv)
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		memcpy(mtod(m, void *), sc->sc_rx_buf, len);
-		++ifp->if_ipackets;
-
-		bpf_mtap(ifp, m);
 
 		s = splnet();
 		if_input(ifp, m);

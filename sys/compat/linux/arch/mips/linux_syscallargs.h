@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.61.2.3 2016/10/05 20:55:38 skrll Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.61.2.4 2017/02/05 13:40:25 skrll Exp $ */
 
 /*
  * System call argument lists.
@@ -997,6 +997,16 @@ struct linux_sys_faccessat_args {
 };
 check_syscall_args(linux_sys_faccessat)
 
+struct linux_sys_pselect6_args {
+	syscallarg(int) nfds;
+	syscallarg(fd_set *) readfds;
+	syscallarg(fd_set *) writefds;
+	syscallarg(fd_set *) exceptfds;
+	syscallarg(struct linux_timespec *) timeout;
+	syscallarg(linux_sized_sigset_t *) ss;
+};
+check_syscall_args(linux_sys_pselect6)
+
 struct linux_sys_ppoll_args {
 	syscallarg(struct pollfd *) fds;
 	syscallarg(u_int) nfds;
@@ -1038,6 +1048,31 @@ struct linux_sys_pipe2_args {
 	syscallarg(int) flags;
 };
 check_syscall_args(linux_sys_pipe2)
+
+struct linux_sys_accept4_args {
+	syscallarg(int) s;
+	syscallarg(struct osockaddr *) name;
+	syscallarg(int *) anamelen;
+	syscallarg(int) flags;
+};
+check_syscall_args(linux_sys_accept4)
+
+struct linux_sys_recvmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_mmsghdr *) msgvec;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+	syscallarg(struct timespec *) timeout;
+};
+check_syscall_args(linux_sys_recvmmsg)
+
+struct linux_sys_sendmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct linux_mmsghdr *) msgvec;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+};
+check_syscall_args(linux_sys_sendmmsg)
 
 /*
  * System call prototypes.
@@ -1477,6 +1512,8 @@ int	linux_sys_fchmodat(struct lwp *, const struct linux_sys_fchmodat_args *, reg
 
 int	linux_sys_faccessat(struct lwp *, const struct linux_sys_faccessat_args *, register_t *);
 
+int	linux_sys_pselect6(struct lwp *, const struct linux_sys_pselect6_args *, register_t *);
+
 int	linux_sys_ppoll(struct lwp *, const struct linux_sys_ppoll_args *, register_t *);
 
 int	linux_sys_set_robust_list(struct lwp *, const struct linux_sys_set_robust_list_args *, register_t *);
@@ -1488,5 +1525,11 @@ int	linux_sys_utimensat(struct lwp *, const struct linux_sys_utimensat_args *, r
 int	linux_sys_dup3(struct lwp *, const struct linux_sys_dup3_args *, register_t *);
 
 int	linux_sys_pipe2(struct lwp *, const struct linux_sys_pipe2_args *, register_t *);
+
+int	linux_sys_accept4(struct lwp *, const struct linux_sys_accept4_args *, register_t *);
+
+int	linux_sys_recvmmsg(struct lwp *, const struct linux_sys_recvmmsg_args *, register_t *);
+
+int	linux_sys_sendmmsg(struct lwp *, const struct linux_sys_sendmmsg_args *, register_t *);
 
 #endif /* _LINUX_SYS_SYSCALLARGS_H_ */

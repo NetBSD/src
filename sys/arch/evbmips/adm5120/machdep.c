@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23.6.1 2015/09/22 12:05:41 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.23.6.2 2017/02/05 13:40:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.6.1 2015/09/22 12:05:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.6.2 2017/02/05 13:40:09 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -292,10 +292,7 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	 */
 	mips_vector_init(NULL, false);
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	adm5120_setcpufreq();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet_component.c,v 1.4.2.2 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: netinet_component.c,v 1.4.2.3 2017/02/05 13:41:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4.2.2 2016/10/05 20:56:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4.2.3 2017/02/05 13:41:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4.2.2 2016/10/05 20:56:11 sk
 #include <rump-sys/kern.h>
 #include <rump-sys/net.h>
 
-int carpattach(int);
-
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
 	extern struct domain arpdomain, inetdomain;
@@ -54,9 +52,15 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	domain_attach(&arpdomain);
 	domain_attach(&inetdomain);
 
-	carpattach(1);
-
 	rump_netisr_register(NETISR_ARP, arpintr);
+}
+
+int carpattach(int);
+
+RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
+{
+
+	carpattach(1);
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)

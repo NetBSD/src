@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.56 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: INSTALL,v 1.56.2.1 2017/02/05 13:40:05 skrll Exp $
 #
 # First try for BeBox config file
 #
@@ -179,7 +179,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 ukphy*  at mii? phy ?                   # generic unknown PHYs
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#spkr0	at pcppi?
+#spkr*	at pcppi?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201

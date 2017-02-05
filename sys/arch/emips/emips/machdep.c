@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10.6.1 2015/09/22 12:05:40 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.6.2 2017/02/05 13:40:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.1 2015/09/22 12:05:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.2 2017/02/05 13:40:06 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -225,10 +225,7 @@ mach_init(int argc, char *argv[], int code, intptr_t cv, u_int bim, char *bip)
 	if (bootinfo_msg != NULL)
 		printf(bootinfo_msg);
 #endif
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Copy exception-dispatch code down to exception vector.

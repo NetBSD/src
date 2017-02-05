@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.90.4.3 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: if_el.c,v 1.90.4.4 2017/02/05 13:40:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.90.4.3 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.90.4.4 2017/02/05 13:40:28 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -582,14 +582,6 @@ elread(struct el_softc *sc, int len)
 		ifp->if_ierrors++;
 		return;
 	}
-
-	ifp->if_ipackets++;
-
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	bpf_mtap(ifp, m);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
