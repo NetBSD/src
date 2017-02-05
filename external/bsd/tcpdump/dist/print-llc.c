@@ -24,8 +24,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-llc.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: IEEE 802.2 LLC printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -151,7 +153,7 @@ static const struct oui_tok oui_to_tok[] = {
  */
 int
 llc_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
-	  const u_char *esrc, const u_char *edst)
+	  const struct lladdr_info *src, const struct lladdr_info *dst)
 {
 	uint8_t dsap_field, dsap, ssap_field, ssap;
 	uint16_t control;
@@ -265,7 +267,7 @@ llc_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
 		 * Does anybody ever bridge one form of LAN traffic
 		 * over a networking type that uses 802.2 LLC?
 		 */
-		if (!snap_print(ndo, p, length, caplen, esrc, edst, 2)) {
+		if (!snap_print(ndo, p, length, caplen, src, dst, 2)) {
 			/*
 			 * Unknown packet type; tell our caller, by
 			 * returning a negative value, so they
@@ -333,23 +335,23 @@ llc_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
 
 	if (!ndo->ndo_eflag) {
 		if (ssap == dsap) {
-			if (esrc == NULL || edst == NULL)
+			if (src == NULL || dst == NULL)
 				ND_PRINT((ndo, "%s ", tok2str(llc_values, "Unknown DSAP 0x%02x", dsap)));
 			else
 				ND_PRINT((ndo, "%s > %s %s ",
-						etheraddr_string(ndo, esrc),
-						etheraddr_string(ndo, edst),
+						(src->addr_string)(ndo, src->addr),
+						(dst->addr_string)(ndo, dst->addr),
 						tok2str(llc_values, "Unknown DSAP 0x%02x", dsap)));
 		} else {
-			if (esrc == NULL || edst == NULL)
+			if (src == NULL || dst == NULL)
 				ND_PRINT((ndo, "%s > %s ",
                                         tok2str(llc_values, "Unknown SSAP 0x%02x", ssap),
 					tok2str(llc_values, "Unknown DSAP 0x%02x", dsap)));
 			else
 				ND_PRINT((ndo, "%s %s > %s %s ",
-					etheraddr_string(ndo, esrc),
+					(src->addr_string)(ndo, src->addr),
                                         tok2str(llc_values, "Unknown SSAP 0x%02x", ssap),
-					etheraddr_string(ndo, edst),
+					(dst->addr_string)(ndo, dst->addr),
 					tok2str(llc_values, "Unknown DSAP 0x%02x", dsap)));
 		}
 	}
@@ -361,8 +363,27 @@ llc_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
                        length + hdrlen));
 
 		if ((control & ~LLC_U_POLL) == LLC_XID) {
+			if (length == 0) {
+				/*
+				 * XID with no payload.
+				 * This could, for example, be an SNA
+				 * "short form" XID.
+                                 */
+				return (hdrlen);
+			}
+			if (caplen < 1) {
+				ND_PRINT((ndo, "[|llc]"));
+				if (caplen > 0)
+					ND_DEFAULTPRINT((const u_char *)p, caplen);
+				return (hdrlen);
+			}
 			if (*p == LLC_XID_FI) {
-				ND_PRINT((ndo, ": %02x %02x", p[1], p[2]));
+				if (caplen < 3 || length < 3) {
+					ND_PRINT((ndo, "[|llc]"));
+					if (caplen > 0)
+						ND_DEFAULTPRINT((const u_char *)p, caplen);
+				} else
+					ND_PRINT((ndo, ": %02x %02x", p[1], p[2]));
 				return (hdrlen);
 			}
 		}
@@ -402,7 +423,8 @@ oui_to_struct_tok(uint32_t orgcode)
 
 int
 snap_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
-	const u_char *esrc, const u_char *edst, u_int bridge_pad)
+	const struct lladdr_info *src, const struct lladdr_info *dst,
+	u_int bridge_pad)
 {
 	uint32_t orgcode;
 	register u_short et;
@@ -440,7 +462,7 @@ snap_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
 		 * Cisco hardware; the protocol ID is
 		 * an Ethernet protocol type.
 		 */
-		ret = ethertype_print(ndo, et, p, length, caplen);
+		ret = ethertype_print(ndo, et, p, length, caplen, src, dst);
 		if (ret)
 			return (ret);
 		break;
@@ -455,7 +477,7 @@ snap_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
 			 * but used 0x000000 and an Ethernet
 			 * packet type for AARP packets.
 			 */
-			ret = ethertype_print(ndo, et, p, length, caplen);
+			ret = ethertype_print(ndo, et, p, length, caplen, src, dst);
 			if (ret)
 				return (ret);
 		}
@@ -556,13 +578,13 @@ snap_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen,
 	}
 	if (!ndo->ndo_eflag) {
 		/*
-		 * Nobody printed the MAC addresses, so print them, if
+		 * Nobody printed the link-layer addresses, so print them, if
 		 * we have any.
 		 */
-		if (esrc != NULL && edst != NULL) {
+		if (src != NULL && dst != NULL) {
 			ND_PRINT((ndo, "%s > %s ",
-				etheraddr_string(ndo, esrc),
-				etheraddr_string(ndo, edst)));
+				(src->addr_string)(ndo, src->addr),
+				(dst->addr_string)(ndo, dst->addr)));
 		}
 		/*
 		 * Print the SNAP header, but if the OUI is 000000, don't

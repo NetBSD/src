@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-frag6.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: IPv6 fragmentation header printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

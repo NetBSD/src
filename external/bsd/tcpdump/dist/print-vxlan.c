@@ -15,8 +15,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vxlan.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-vxlan.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Virtual eXtensible Local Area Network (VXLAN) printer */
+
+/* specification: RFC 7348 */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -66,7 +70,7 @@ vxlan_print(netdissect_options *ndo, const u_char *bp, u_int len)
     ND_PRINT((ndo, "flags [%s] (0x%02x), ", flags & 0x08 ? "I" : ".", flags));
     ND_PRINT((ndo, "vni %u\n", vni));
 
-    ether_print(ndo, bp, len - VXLAN_HDR_LEN, len - VXLAN_HDR_LEN, NULL, NULL);
+    ether_print(ndo, bp, len - VXLAN_HDR_LEN, ndo->ndo_snapend - bp, NULL, NULL);
 
     return;
 

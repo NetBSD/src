@@ -1,8 +1,4 @@
 /*
- * This module implements decoding of AHCP (Ad Hoc Configuration Protocol) based
- * on draft-chroboczek-ahcp-00 and source code of ahcpd-0.53.
- *
- *
  * Copyright (c) 2013 The TCPDUMP project
  * All rights reserved.
  *
@@ -31,8 +27,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ahcp.c,v 1.4 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: print-ahcp.c,v 1.5 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Ad Hoc Configuration Protocol (AHCP) printer */
+
+/* Based on draft-chroboczek-ahcp-00 and source code of ahcpd-0.53 */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

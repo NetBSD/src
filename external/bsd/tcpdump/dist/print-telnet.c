@@ -40,8 +40,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-telnet.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-telnet.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Telnet option printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -52,6 +54,8 @@ __RCSID("$NetBSD: print-telnet.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
 #include <stdio.h>
 
 #include "netdissect.h"
+
+static const char tstr[] = " [|telnet]";
 
 #define TELCMDS
 #define TELOPTS
@@ -85,7 +89,7 @@ __RCSID("$NetBSD: print-telnet.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
 #define SYNCH	242		/* for telfunc calls */
 
 #ifdef TELCMDS
-const char *telcmds[] = {
+static const char *telcmds[] = {
 	"EOF", "SUSP", "ABORT", "EOR",
 	"SE", "NOP", "DMARK", "BRK", "IP", "AO", "AYT", "EC",
 	"EL", "GA", "SB", "WILL", "WONT", "DO", "DONT", "IAC", 0,
@@ -146,7 +150,7 @@ extern char *telcmds[];
 
 #define	NTELOPTS	(1+TELOPT_NEW_ENVIRON)
 #ifdef TELOPTS
-const char *telopts[NTELOPTS+1] = {
+static const char *telopts[NTELOPTS+1] = {
 	"BINARY", "ECHO", "RCP", "SUPPRESS GO AHEAD", "NAME",
 	"STATUS", "TIMING MARK", "RCTE", "NAOL", "NAOP",
 	"NAOCRD", "NAOHTS", "NAOHTD", "NAOFFD", "NAOVTS",
@@ -431,6 +435,7 @@ telnet_parse(netdissect_options *ndo, const u_char *sp, u_int length, int print)
 		/* IAC SB .... IAC SE */
 		p = sp;
 		while (length > (u_int)(p + 1 - sp)) {
+			ND_TCHECK2(*p, 2);
 			if (p[0] == IAC && p[1] == SE)
 				break;
 			p++;
@@ -491,7 +496,7 @@ done:
 	return sp - osp;
 
 trunc:
-	ND_PRINT((ndo, "[|telnet]"));
+	ND_PRINT((ndo, "%s", tstr));
 pktend:
 	return -1;
 #undef FETCH
@@ -506,6 +511,7 @@ telnet_print(netdissect_options *ndo, const u_char *sp, u_int length)
 
 	osp = sp;
 
+	ND_TCHECK(*sp);
 	while (length > 0 && *sp == IAC) {
 		/*
 		 * Parse the Telnet command without printing it,
@@ -534,6 +540,7 @@ telnet_print(netdissect_options *ndo, const u_char *sp, u_int length)
 
 		sp += l;
 		length -= l;
+		ND_TCHECK(*sp);
 	}
 	if (!first) {
 		if (ndo->ndo_Xflag && 2 < ndo->ndo_vflag)
@@ -541,4 +548,7 @@ telnet_print(netdissect_options *ndo, const u_char *sp, u_int length)
 		else
 			ND_PRINT((ndo, "]"));
 	}
+	return;
+trunc:
+	ND_PRINT((ndo, "%s", tstr));
 }

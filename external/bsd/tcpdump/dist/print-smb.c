@@ -8,8 +8,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-smb.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-smb.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: SMB/CIFS printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -809,9 +811,6 @@ print_smb(netdissect_options *ndo,
 
     ND_TCHECK(buf[9]);
     request = (buf[9] & 0x80) ? 0 : 1;
-    flags2 = EXTRACT_LE_16BITS(&buf[10]);
-    unicodestr = flags2 & 0x8000;
-    nterrcodes = flags2 & 0x4000;
     startbuf = buf;
 
     command = buf[4];
@@ -825,6 +824,11 @@ print_smb(netdissect_options *ndo,
 
     if (ndo->ndo_vflag < 2)
 	return;
+
+    ND_TCHECK_16BITS(&buf[10]);
+    flags2 = EXTRACT_LE_16BITS(&buf[10]);
+    unicodestr = flags2 & 0x8000;
+    nterrcodes = flags2 & 0x4000;
 
     /* print out the header */
     smb_fdata(ndo, buf, fmt_smbheader, buf + 33, unicodestr);
@@ -1168,10 +1172,12 @@ nbt_udp137_print(netdissect_options *ndo,
 	    p = smb_fdata(ndo, p, "Name=[n1]\n#", maxbuf, 0);
 	    if (p == NULL)
 		goto out;
+	    ND_TCHECK_16BITS(p);
 	    restype = EXTRACT_16BITS(p);
 	    p = smb_fdata(ndo, p, "ResType=[rw]\nResClass=[rw]\nTTL=[rD]\n", p + 8, 0);
 	    if (p == NULL)
 		goto out;
+	    ND_TCHECK_16BITS(p);
 	    rdlen = EXTRACT_16BITS(p);
 	    ND_PRINT((ndo, "ResourceLength=%d\nResourceData=\n", rdlen));
 	    p += 2;
@@ -1313,7 +1319,7 @@ out:
 /*
    print netbeui frames
 */
-struct nbf_strings {
+static struct nbf_strings {
 	const char	*name;
 	const char	*nonverbose;
 	const char	*verbose;

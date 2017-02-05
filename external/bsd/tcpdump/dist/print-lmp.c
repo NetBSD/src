@@ -10,16 +10,18 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * Support for the Link Management Protocol as per rfc 4204.
- *
  * Original code by Hannes Gredler (hannes@juniper.net)
  * Support for LMP service discovery extensions (defined by UNI 1.0) added
  * by Manu Pathak (mapathak@cisco.com), May 2005
  */
 
+/* \summary: Link Management Protocol (LMP) printer */
+
+/* specification: RFC 4204 */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lmp.c,v 1.8 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-lmp.c,v 1.9 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -845,7 +847,7 @@ lmp_print(netdissect_options *ndo,
 
 	    default:
 		hexdump = TRUE;
-	    };
+	    }
 
 	break;
 

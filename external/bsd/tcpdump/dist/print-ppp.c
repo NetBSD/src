@@ -22,6 +22,8 @@
  * complete PPP support.
  */
 
+/* \summary: Point to Point Protocol (PPP) printer */
+
 /*
  * TODO:
  * o resolve XXX as much as possible
@@ -31,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ppp.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -947,6 +949,9 @@ handle_pap(netdissect_options *ndo,
 
 	switch (code) {
 	case PAP_AREQ:
+		/* A valid Authenticate-Request is 6 or more octets long. */
+		if (len < 6)
+			goto trunc;
 		if (length - (p - p0) < 1)
 			return;
 		ND_TCHECK(*p);
@@ -975,6 +980,13 @@ handle_pap(netdissect_options *ndo,
 		break;
 	case PAP_AACK:
 	case PAP_ANAK:
+		/* Although some implementations ignore truncation at
+		 * this point and at least one generates a truncated
+		 * packet, RFC 1334 section 2.2.2 clearly states that
+		 * both AACK and ANAK are at least 5 bytes long.
+		 */
+		if (len < 5)
+			goto trunc;
 		if (length - (p - p0) < 1)
 			return;
 		ND_TCHECK(*p);
@@ -1674,6 +1686,11 @@ ppp_hdlc_if_print(netdissect_options *ndo,
 		return (chdlc_if_print(ndo, h, p));
 
 	default:
+		if (caplen < 4) {
+			ND_PRINT((ndo, "[|ppp]"));
+			return (caplen);
+		}
+
 		if (ndo->ndo_eflag)
 			ND_PRINT((ndo, "%02x %02x %d ", p[0], p[1], length));
 		p += 2;

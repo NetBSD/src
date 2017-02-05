@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.7 2017/01/24 23:29:13 christos Exp $	*/
+/*	$NetBSD: interface.h,v 1.8 2017/02/05 04:05:05 spz Exp $	*/
 
 /*
  * Copyright (c) 1988-2002
@@ -70,21 +70,6 @@ extern char *strsep(char **, const char *);
 #endif
 
 extern char *program_name;	/* used to generate self-identifying messages */
-
-extern void error(const char *, ...)
-     __attribute__((noreturn))
-#ifdef __ATTRIBUTE___FORMAT_OK
-     __attribute__((format (printf, 1, 2)))
-#endif /* __ATTRIBUTE___FORMAT_OK */
-     ;
-extern void warning(const char *, ...)
-#ifdef __ATTRIBUTE___FORMAT_OK
-     __attribute__((format (printf, 1, 2)))
-#endif /* __ATTRIBUTE___FORMAT_OK */
-     ;
-
-extern char *read_infile(char *);
-extern char *copy_argv(char **);
 
 #include <pcap.h>
 

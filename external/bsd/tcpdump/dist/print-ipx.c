@@ -18,13 +18,14 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Format and print Novell IPX packets.
  * Contributed by Brad Parker (brad@fcr.com).
  */
 
+/* \summary: Novell IPX printer */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ipx.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-ipx.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H

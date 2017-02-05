@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-dvmrp.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-dvmrp.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Distance Vector Multicast Routing Protocol printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -341,7 +343,7 @@ print_prune(netdissect_options *ndo,
 	ND_PRINT((ndo, " src %s grp %s", ipaddr_string(ndo, bp), ipaddr_string(ndo, bp + 4)));
 	bp += 8;
 	ND_PRINT((ndo, " timer "));
-	relts_print(ndo, EXTRACT_32BITS(bp));
+	unsigned_relts_print(ndo, EXTRACT_32BITS(bp));
 	return (0);
 trunc:
 	return (-1);

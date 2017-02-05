@@ -17,8 +17,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-rsvp.c,v 1.8 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-rsvp.c,v 1.9 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Resource ReSerVation Protocol (RSVP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -524,9 +526,10 @@ rsvp_intserv_print(netdissect_options *ndo,
         * |        IS hop cnt (32-bit unsigned integer)                   |
         * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         */
-        if (parameter_length == 4)
+        if (parameter_length == 4) {
 	    ND_TCHECK2(*(tptr + 4), 4);
             ND_PRINT((ndo, "\n\t\tIS hop count: %u", EXTRACT_32BITS(tptr + 4)));
+        }
         break;
 
     case 6:
@@ -571,9 +574,10 @@ rsvp_intserv_print(netdissect_options *ndo,
         * |      Composed MTU (32-bit unsigned integer)                   |
         * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
         */
-        if (parameter_length == 4)
+        if (parameter_length == 4) {
 	    ND_TCHECK2(*(tptr + 4), 4);
             ND_PRINT((ndo, "\n\t\tComposed MTU: %u bytes", EXTRACT_32BITS(tptr + 4)));
+        }
         break;
     case 127:
        /*
@@ -628,9 +632,10 @@ rsvp_intserv_print(netdissect_options *ndo,
     case 134:
     case 135:
     case 136:
-        if (parameter_length == 4)
+        if (parameter_length == 4) {
 	    ND_TCHECK2(*(tptr + 4), 4);
             ND_PRINT((ndo, "\n\t\tValue: %u", EXTRACT_32BITS(tptr + 4)));
+        }
         break;
 
     default:

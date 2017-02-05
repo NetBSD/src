@@ -22,6 +22,11 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: netdissect.c,v 1.2 2017/02/05 04:05:05 spz Exp $");
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

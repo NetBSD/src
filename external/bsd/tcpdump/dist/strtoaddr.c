@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: strtoaddr.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: strtoaddr.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: strtoaddr.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
 #endif
 
 #ifndef NS_INT16SZ
-#define NS_INT16SZ	2	/* #/bytes of data in a u_int16_t */
+#define NS_INT16SZ	2	/* #/bytes of data in a uint16_t */
 #endif
 
 /*%

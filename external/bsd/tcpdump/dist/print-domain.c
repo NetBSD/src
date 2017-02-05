@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-domain.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Domain Name System (DNS) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -400,7 +402,7 @@ ns_rprint(netdissect_options *ndo,
 	} else if (ndo->ndo_vflag > 2) {
 		/* print ttl */
 		ND_PRINT((ndo, " ["));
-		relts_print(ndo, EXTRACT_32BITS(cp));
+		unsigned_relts_print(ndo, EXTRACT_32BITS(cp));
 		ND_PRINT((ndo, "]"));
 		cp += 4;
 	} else {

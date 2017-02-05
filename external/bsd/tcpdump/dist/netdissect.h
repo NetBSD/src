@@ -125,6 +125,20 @@ extern const char *tok2str(const struct tok *, const char *, u_int);
 extern char *bittok2str(const struct tok *, const char *, u_int);
 extern char *bittok2str_nosep(const struct tok *, const char *, u_int);
 
+/* Initialize netdissect. */
+extern int nd_init(char *, size_t);
+/* Clean up netdissect. */
+extern void nd_cleanup(void);
+
+/* Do we have libsmi support? */
+extern int nd_have_smi_support(void);
+/* Load an SMI module. */
+extern int nd_load_smi_module(const char *, char *, size_t);
+/* Flag indicating whether an SMI module has been loaded. */
+extern int nd_smi_module_loaded;
+/* Version number of the SMI library, or NULL if we don't have libsmi support. */
+extern const char *nd_smi_version_string(void);
+
 typedef struct netdissect_options netdissect_options;
 
 #define IF_PRINTER_ARGS (netdissect_options *, const struct pcap_pkthdr *, const u_char *)
@@ -139,7 +153,6 @@ struct netdissect_options {
   int ndo_nflag;		/* leave addresses as numbers */
   int ndo_Nflag;		/* remove domains from printed host names */
   int ndo_qflag;		/* quick (shorter) output */
-  int ndo_mflag;		/* use the libsmi to translate OIDs */
   int ndo_Sflag;		/* print raw TCP sequence numbers */
   int ndo_tflag;		/* print packet arrival time */
   int ndo_uflag;		/* Print undecoded NFS handles */
@@ -315,10 +328,12 @@ struct netdissect_options {
 #define ND_DEFAULTPRINT(ap, length) (*ndo->ndo_default_print)(ndo, ap, length)
 
 extern void ts_print(netdissect_options *, const struct timeval *);
-extern void relts_print(netdissect_options *, int);
+extern void signed_relts_print(netdissect_options *, int32_t);
+extern void unsigned_relts_print(netdissect_options *, uint32_t);
 
 extern void fn_print_char(netdissect_options *, u_char);
 extern int fn_print(netdissect_options *, const u_char *, const u_char *);
+extern u_int fn_printztn(netdissect_options *ndo, const u_char *, u_int, const u_char *);
 extern int fn_printn(netdissect_options *, const u_char *, u_int, const u_char *);
 extern int fn_printzp(netdissect_options *, const u_char *, u_int, const u_char *);
 
@@ -436,6 +451,21 @@ extern u_int token_if_print IF_PRINTER_ARGS;
 extern u_int usb_linux_48_byte_print IF_PRINTER_ARGS;
 extern u_int usb_linux_64_byte_print IF_PRINTER_ARGS;
 
+/*
+ * Structure passed to some printers to allow them to print
+ * link-layer address information if ndo_eflag isn't set
+ * (because they are for protocols that don't have their
+ * own addresses, so that we'd want to report link-layer
+ * address information).
+ *
+ * This contains a pointer to an address and a pointer to a routine
+ * to which we pass that pointer in order to get a string.
+ */
+struct lladdr_info {
+	const char *(*addr_string)(netdissect_options *, const u_char *);
+	const u_char *addr;
+};
+
 /* The printer routines. */
 
 extern void aarp_print(netdissect_options *, const u_char *, u_int);
@@ -453,7 +483,7 @@ extern void bfd_print(netdissect_options *, const u_char *, u_int, u_int);
 extern void bgp_print(netdissect_options *, const u_char *, int);
 extern char *bgp_vpn_rd_print (netdissect_options *, const u_char *);
 extern void bootp_print(netdissect_options *, const u_char *, u_int);
-extern void calm_fast_print(netdissect_options *, const u_char *, const u_char *, u_int);
+extern void calm_fast_print(netdissect_options *, const u_char *, u_int, const struct lladdr_info *);
 extern void carp_print(netdissect_options *, const u_char *, u_int, int);
 extern void cdp_print(netdissect_options *, const u_char *, u_int, u_int);
 extern void cfm_print(netdissect_options *, const u_char *, u_int);
@@ -471,14 +501,14 @@ extern void egp_print(netdissect_options *, const u_char *, u_int);
 extern void eigrp_print(netdissect_options *, const u_char *, u_int);
 extern int esp_print(netdissect_options *, const u_char *, const int, const u_char *, int *, int *);
 extern u_int ether_print(netdissect_options *, const u_char *, u_int, u_int, void (*)(netdissect_options *, const u_char *), const u_char *);
-extern int ethertype_print(netdissect_options *, u_short, const u_char *, u_int, u_int);
+extern int ethertype_print(netdissect_options *, u_short, const u_char *, u_int, u_int, const struct lladdr_info *, const struct lladdr_info *);
 extern u_int fddi_print(netdissect_options *, const u_char *, u_int, u_int);
 extern void forces_print(netdissect_options *, const u_char *, u_int);
 extern u_int fr_print(netdissect_options *, register const u_char *, u_int);
 extern int frag6_print(netdissect_options *, const u_char *, const u_char *);
 extern void ftp_print(netdissect_options *, const u_char *, u_int);
 extern void geneve_print(netdissect_options *, const u_char *, u_int);
-extern void geonet_print(netdissect_options *, const u_char *, const u_char *, u_int);
+extern void geonet_print(netdissect_options *, const u_char *, u_int, const struct lladdr_info *);
 extern void gre_print(netdissect_options *, const u_char *, u_int);
 extern int hbhopt_print(netdissect_options *, const u_char *);
 extern void hex_and_ascii_print(netdissect_options *, const char *, const u_char *, u_int);
@@ -496,7 +526,7 @@ extern void ip6_print(netdissect_options *, const u_char *, u_int);
 extern void ipN_print(netdissect_options *, const u_char *, u_int);
 extern void ip_print(netdissect_options *, const u_char *, u_int);
 extern void ip_print_inner(netdissect_options *, const u_char *, u_int, u_int nh, const u_char *);
-extern int ipcomp_print(netdissect_options *, register const u_char *, int *);
+extern void ipcomp_print(netdissect_options *, register const u_char *);
 extern void ipx_netbios_print(netdissect_options *, const u_char *, u_int);
 extern void ipx_print(netdissect_options *, const u_char *, u_int);
 extern void isakmp_print(netdissect_options *, const u_char *, u_int, const u_char *);
@@ -508,7 +538,7 @@ extern void lane_print(netdissect_options *, const u_char *, u_int, u_int);
 extern void ldp_print(netdissect_options *, const u_char *, u_int);
 extern void lisp_print(netdissect_options *, const u_char *, u_int);
 extern u_int llap_print(netdissect_options *, const u_char *, u_int);
-extern int llc_print(netdissect_options *, const u_char *, u_int, u_int, const u_char *, const u_char *);
+extern int llc_print(netdissect_options *, const u_char *, u_int, u_int, const struct lladdr_info *, const struct lladdr_info *);
 extern void lldp_print(netdissect_options *, const u_char *, u_int);
 extern void lmp_print(netdissect_options *, const u_char *, u_int);
 extern void loopback_print(netdissect_options *, const u_char *, const u_int);
@@ -517,7 +547,7 @@ extern void lwapp_control_print(netdissect_options *, const u_char *, u_int, int
 extern void lwapp_data_print(netdissect_options *, const u_char *, u_int);
 extern void lwres_print(netdissect_options *, const u_char *, u_int);
 extern void m3ua_print(netdissect_options *, const u_char *, const u_int);
-extern void medsa_print(netdissect_options *, const u_char *, u_int, u_int);
+extern void medsa_print(netdissect_options *, const u_char *, u_int, u_int, const struct lladdr_info *, const struct lladdr_info *);
 extern u_int mfr_print(netdissect_options *, register const u_char *, u_int);
 extern void mobile_print(netdissect_options *, const u_char *, u_int);
 extern int mobility_print(netdissect_options *, const u_char *, const u_char *);
@@ -537,7 +567,7 @@ extern const u_char * ns_nprint (netdissect_options *, register const u_char *, 
 extern void ns_print(netdissect_options *, const u_char *, u_int, int);
 extern void nsh_print(netdissect_options *ndo, const u_char *bp, u_int len);
 extern void ntp_print(netdissect_options *, const u_char *, u_int);
-extern int oam_print(netdissect_options *, const u_char *, u_int, u_int);
+extern void oam_print(netdissect_options *, const u_char *, u_int, u_int);
 extern void olsr_print(netdissect_options *, const u_char *, u_int, int);
 extern void openflow_print(netdissect_options *, const u_char *, const u_int);
 extern void ospf6_print(netdissect_options *, const u_char *, u_int);
@@ -559,7 +589,7 @@ extern void resp_print(netdissect_options *, const u_char *, u_int);
 extern void rip_print(netdissect_options *, const u_char *, u_int);
 extern void ripng_print(netdissect_options *, const u_char *, unsigned int);
 extern void rpki_rtr_print(netdissect_options *, const u_char *, u_int);
-extern void rrcp_print(netdissect_options *, const u_char *, u_int);
+extern void rrcp_print(netdissect_options *, const u_char *, u_int, const struct lladdr_info *, const struct lladdr_info *);
 extern void rsvp_print(netdissect_options *, const u_char *, u_int);
 extern int rt6_print(netdissect_options *, const u_char *, const u_char *);
 extern void rtsp_print(netdissect_options *, const u_char *, u_int);
@@ -571,7 +601,7 @@ extern void slow_print(netdissect_options *, const u_char *, u_int);
 extern void smb_print_data(netdissect_options *, const unsigned char *, int);
 extern void smb_tcp_print(netdissect_options *, const u_char *, int);
 extern void smtp_print(netdissect_options *, const u_char *, u_int);
-extern int snap_print(netdissect_options *, const u_char *, u_int, u_int, const u_char *, const u_char *, u_int);
+extern int snap_print(netdissect_options *, const u_char *, u_int, u_int, const struct lladdr_info *, const struct lladdr_info *, u_int);
 extern void snmp_print(netdissect_options *, const u_char *, u_int);
 extern void stp_print(netdissect_options *, const u_char *, u_int);
 extern void sunrpcrequest_print(netdissect_options *, const u_char *, u_int, const u_char *);

@@ -5451,7 +5451,6 @@ fi
 
 
 
-
                 LBL_LIBS="$LIBS"
     pfopen=/usr/examples/packetfilter/pfopen.c
     if test -f $pfopen ; then
@@ -7574,20 +7573,20 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports the -pedantic option" >&5
-$as_echo_n "checking whether the compiler supports the -pedantic option... " >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports the -Wpedantic option" >&5
+$as_echo_n "checking whether the compiler supports the -Wpedantic option... " >&6; }
 	save_CFLAGS="$CFLAGS"
-	if expr "x-pedantic" : "x-W.*" >/dev/null
+	if expr "x-Wpedantic" : "x-W.*" >/dev/null
 	then
-	    CFLAGS="$CFLAGS $ac_lbl_unknown_warning_option_error -pedantic"
-	elif expr "x-pedantic" : "x-f.*" >/dev/null
+	    CFLAGS="$CFLAGS $ac_lbl_unknown_warning_option_error -Wpedantic"
+	elif expr "x-Wpedantic" : "x-f.*" >/dev/null
 	then
-	    CFLAGS="$CFLAGS -Werror -pedantic"
-	elif expr "x-pedantic" : "x-m.*" >/dev/null
+	    CFLAGS="$CFLAGS -Werror -Wpedantic"
+	elif expr "x-Wpedantic" : "x-m.*" >/dev/null
 	then
-	    CFLAGS="$CFLAGS -Werror -pedantic"
+	    CFLAGS="$CFLAGS -Werror -Wpedantic"
 	else
-	    CFLAGS="$CFLAGS -pedantic"
+	    CFLAGS="$CFLAGS -Wpedantic"
 	fi
 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -7605,7 +7604,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 		CFLAGS="$save_CFLAGS"
-		V_CCOPT="$V_CCOPT -pedantic"
+		V_CCOPT="$V_CCOPT -Wpedantic"
 
 else
 
@@ -7649,6 +7648,49 @@ if ac_fn_c_try_compile "$LINENO"; then :
 $as_echo "yes" >&6; }
 		CFLAGS="$save_CFLAGS"
 		V_CCOPT="$V_CCOPT -Wold-style-definition"
+
+else
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		CFLAGS="$save_CFLAGS"
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports the -Wused-but-marked-unused option" >&5
+$as_echo_n "checking whether the compiler supports the -Wused-but-marked-unused option... " >&6; }
+	save_CFLAGS="$CFLAGS"
+	if expr "x-Wused-but-marked-unused" : "x-W.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS $ac_lbl_unknown_warning_option_error -Wused-but-marked-unused"
+	elif expr "x-Wused-but-marked-unused" : "x-f.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS -Werror -Wused-but-marked-unused"
+	elif expr "x-Wused-but-marked-unused" : "x-m.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS -Werror -Wused-but-marked-unused"
+	else
+	    CFLAGS="$CFLAGS -Wused-but-marked-unused"
+	fi
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+return 0
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		CFLAGS="$save_CFLAGS"
+		V_CCOPT="$V_CCOPT -Wused-but-marked-unused"
 
 else
 

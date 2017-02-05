@@ -23,8 +23,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ospf.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-ospf.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Open Shortest Path First (OSPF) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -999,6 +1001,7 @@ ospf_decode_v2(netdissect_options *ndo,
 		break;
 
 	case OSPF_TYPE_HELLO:
+		ND_TCHECK(op->ospf_hello.hello_options);
 		ND_PRINT((ndo, "\n\tOptions [%s]",
 		          bittok2str(ospf_option_values,"none",op->ospf_hello.hello_options)));
 
