@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sl.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-sl.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Compressed Serial Line Internet Protocol printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -71,12 +73,18 @@ sl_if_print(netdissect_options *ndo,
 		return (caplen);
 	}
 
+	caplen -= SLIP_HDRLEN;
 	length -= SLIP_HDRLEN;
 
 	ip = (const struct ip *)(p + SLIP_HDRLEN);
 
 	if (ndo->ndo_eflag)
 		sliplink_print(ndo, p, ip, length);
+
+	if (caplen < 1 || length < 1) {
+		ND_PRINT((ndo, "%s", tstr));
+		return (caplen + SLIP_HDRLEN);
+	}
 
 	switch (IP_V(ip)) {
 	case 4:

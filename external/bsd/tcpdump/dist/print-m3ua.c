@@ -24,8 +24,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-m3ua.c,v 1.3 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-m3ua.c,v 1.4 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Message Transfer Part 3 (MTP3) User Adaptation Layer (M3UA) printer */
+
+/* RFC 4666 */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -37,8 +41,6 @@ __RCSID("$NetBSD: print-m3ua.c,v 1.3 2017/01/24 23:29:14 christos Exp $");
 #include "extract.h"
 
 static const char tstr[] = " [|m3ua]";
-
-/* RFC 4666 */
 
 #define M3UA_REL_1_0 1
 

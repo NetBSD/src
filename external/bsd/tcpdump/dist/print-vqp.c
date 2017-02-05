@@ -12,14 +12,14 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * support for the Cisco prop. VQP Protocol
- *
  * Original code by Carles Kishimoto <Carles.Kishimoto@bsc.es>
  */
 
+/* \summary: Cisco VLAN Query Protocol (VQP) printer */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vqp.c,v 1.5 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-vqp.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H

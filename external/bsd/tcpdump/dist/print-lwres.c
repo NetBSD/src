@@ -29,8 +29,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lwres.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-lwres.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: BIND9 Lightweight Resolver protocol printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -545,7 +547,7 @@ lwres_print(netdissect_options *ndo,
 				    EXTRACT_16BITS(&grbn->rdclass))));
 			}
 			ND_PRINT((ndo, " TTL "));
-			relts_print(ndo, EXTRACT_32BITS(&grbn->ttl));
+			unsigned_relts_print(ndo, EXTRACT_32BITS(&grbn->ttl));
 			ND_PRINT((ndo, " %u/%u", EXTRACT_16BITS(&grbn->nrdatas),
 			    EXTRACT_16BITS(&grbn->nsigs)));
 
