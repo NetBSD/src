@@ -1,4 +1,4 @@
-/*	$NetBSD: t_canfilter.c,v 1.1.2.1 2017/02/05 10:56:12 bouyer Exp $	*/
+/*	$NetBSD: t_canfilter.c,v 1.1.2.2 2017/02/05 12:03:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_canfilter.c,v 1.1.2.1 2017/02/05 10:56:12 bouyer Exp $");
+__RCSID("$NetBSD: t_canfilter.c,v 1.1.2.2 2017/02/05 12:03:23 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,8 +70,6 @@ ATF_TC_BODY(canfilter_basic, tc)
 {
 	const char ifname[] = "canlo0";
 	int s, rv, v, vlen;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi;
 
@@ -83,19 +81,7 @@ ATF_TC_BODY(canfilter_basic, tc)
 		atf_tc_fail_errno("CAN socket");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	can_bind(s, ifname);
 
 	v = 1;
 	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
@@ -219,8 +205,6 @@ ATF_TC_BODY(canfilter_null, tc)
 {
 	const char ifname[] = "canlo0";
 	int s, rv, v, vlen;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi[2];
 	int cfilen;
@@ -233,19 +217,7 @@ ATF_TC_BODY(canfilter_null, tc)
 		atf_tc_fail_errno("CAN socket");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	can_bind(s, ifname);
 
 	v = 1;
 	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,
@@ -316,8 +288,6 @@ ATF_TC_BODY(canfilter_multiple, tc)
 {
 	const char ifname[] = "canlo0";
 	int s, rv, v, vlen;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi[2];
 
@@ -329,19 +299,7 @@ ATF_TC_BODY(canfilter_multiple, tc)
 		atf_tc_fail_errno("CAN socket");
 	}
 
-	strcpy(ifr.ifr_name, ifname );
-	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
-		atf_tc_fail_errno("SIOCGIFINDEX");
-	}
-	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
-	    ifname, ifr.ifr_ifindex);
-
-	sa.can_family = AF_CAN;
-	sa.can_ifindex = ifr.ifr_ifindex;
-
-	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
-		atf_tc_fail_errno("bind");
-	}
+	can_bind(s, ifname);
 
 	v = 1;
 	if (rump_sys_setsockopt(s, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS,

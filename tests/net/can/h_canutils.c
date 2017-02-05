@@ -1,4 +1,4 @@
-/*	$NetBSD: h_canutils.c,v 1.1.2.2 2017/02/05 11:44:17 bouyer Exp $	*/
+/*	$NetBSD: h_canutils.c,v 1.1.2.3 2017/02/05 12:03:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: h_canutils.c,v 1.1.2.2 2017/02/05 11:44:17 bouyer Exp $");
+__RCSID("$NetBSD: h_canutils.c,v 1.1.2.3 2017/02/05 12:03:23 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ cancfg_rump_createif(const char *ifname)
 int
 can_recvfrom(int s, struct can_frame *cf, int *len, struct sockaddr_can *sa)
 {
-	int salen;
+	socklen_t salen;
 	fd_set rfds;
 	struct timeval tmout;
 	int rv;
@@ -158,4 +158,26 @@ can_read(int s, struct can_frame *cf, int *len)
 	}
 	ATF_CHECK_MSG(rv > 0, "short read on socket");
 	return 0;
+}
+
+int
+can_bind(int s, const char *ifname)
+{
+	struct ifreq ifr;
+	struct sockaddr_can sa;
+
+	strcpy(ifr.ifr_name, ifname );
+	if (rump_sys_ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
+		atf_tc_fail_errno("SIOCGIFINDEX");
+	}
+	ATF_CHECK_MSG(ifr.ifr_ifindex > 0, "%s index is %d (not > 0)",
+	    ifname, ifr.ifr_ifindex);
+
+	sa.can_family = AF_CAN;
+	sa.can_ifindex = ifr.ifr_ifindex;
+
+	if (rump_sys_bind(s, (struct sockaddr *)&sa, sizeof(sa)) < 0) {
+		atf_tc_fail_errno("bind");
+	}
+	return ifr.ifr_ifindex;
 }
