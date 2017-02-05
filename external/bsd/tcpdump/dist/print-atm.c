@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-atm.c,v 1.7 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Asynchronous Transfer Mode (ATM) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -348,24 +350,18 @@ static const struct tok msgtype2str[] = {
 
 static void
 sig_print(netdissect_options *ndo,
-          const u_char *p, int caplen)
+          const u_char *p)
 {
 	uint32_t call_ref;
 
-	if (caplen < PROTO_POS) {
-		ND_PRINT((ndo, "%s", tstr));
-		return;
-	}
+	ND_TCHECK(p[PROTO_POS]);
 	if (p[PROTO_POS] == Q2931) {
 		/*
 		 * protocol:Q.2931 for User to Network Interface
 		 * (UNI 3.1) signalling
 		 */
 		ND_PRINT((ndo, "Q.2931"));
-		if (caplen < MSG_TYPE_POS) {
-			ND_PRINT((ndo, " %s", tstr));
-			return;
-		}
+		ND_TCHECK(p[MSG_TYPE_POS]);
 		ND_PRINT((ndo, ":%s ",
 		    tok2str(msgtype2str, "msgtype#%d", p[MSG_TYPE_POS])));
 
@@ -381,6 +377,10 @@ sig_print(netdissect_options *ndo,
 		/* SCCOP with some unknown protocol atop it */
 		ND_PRINT((ndo, "SSCOP, proto %d ", p[PROTO_POS]));
 	}
+	return;
+
+trunc:
+	ND_PRINT((ndo, " %s", tstr));
 }
 
 /*
@@ -398,7 +398,7 @@ atm_print(netdissect_options *ndo,
 		switch (vci) {
 
 		case VCI_PPC:
-			sig_print(ndo, p, caplen);
+			sig_print(ndo, p);
 			return;
 
 		case VCI_BCC:
@@ -451,7 +451,7 @@ struct oam_fm_ais_rdi_t {
     uint8_t unused[28];
 };
 
-int
+void
 oam_print (netdissect_options *ndo,
            const u_char *p, u_int length, u_int hec)
 {
@@ -465,6 +465,7 @@ oam_print (netdissect_options *ndo,
     } oam_ptr;
 
 
+    ND_TCHECK(*(p+ATM_HDR_LEN_NOHEC+hec));
     cell_header = EXTRACT_32BITS(p+hec);
     cell_type = ((*(p+ATM_HDR_LEN_NOHEC+hec))>>4) & 0x0f;
     func_type = (*(p+ATM_HDR_LEN_NOHEC+hec)) & 0x0f;
@@ -481,7 +482,7 @@ oam_print (netdissect_options *ndo,
            clp, length));
 
     if (!ndo->ndo_vflag) {
-        return 1;
+        return;
     }
 
     ND_PRINT((ndo, "\n\tcell-type %s (%u)",
@@ -500,6 +501,7 @@ oam_print (netdissect_options *ndo,
     switch (cell_type << 4 | func_type) {
     case (OAM_CELLTYPE_FM << 4 | OAM_FM_FUNCTYPE_LOOPBACK):
         oam_ptr.oam_fm_loopback = (const struct oam_fm_loopback_t *)(p + OAM_CELLTYPE_FUNCTYPE_LEN);
+        ND_TCHECK(*oam_ptr.oam_fm_loopback);
         ND_PRINT((ndo, "\n\tLoopback-Indicator %s, Correlation-Tag 0x%08x",
                tok2str(oam_fm_loopback_indicator_values,
                        "Unknown",
@@ -522,6 +524,7 @@ oam_print (netdissect_options *ndo,
     case (OAM_CELLTYPE_FM << 4 | OAM_FM_FUNCTYPE_AIS):
     case (OAM_CELLTYPE_FM << 4 | OAM_FM_FUNCTYPE_RDI):
         oam_ptr.oam_fm_ais_rdi = (const struct oam_fm_ais_rdi_t *)(p + OAM_CELLTYPE_FUNCTYPE_LEN);
+        ND_TCHECK(*oam_ptr.oam_fm_ais_rdi);
         ND_PRINT((ndo, "\n\tFailure-type 0x%02x", oam_ptr.oam_fm_ais_rdi->failure_type));
         ND_PRINT((ndo, "\n\tLocation-ID "));
         for (idx = 0; idx < sizeof(oam_ptr.oam_fm_ais_rdi->failure_location); idx++) {
@@ -540,6 +543,7 @@ oam_print (netdissect_options *ndo,
     }
 
     /* crc10 checksum verification */
+    ND_TCHECK2(*(p + OAM_CELLTYPE_FUNCTYPE_LEN + OAM_FUNCTION_SPECIFIC_LEN), 2);
     cksum = EXTRACT_16BITS(p + OAM_CELLTYPE_FUNCTYPE_LEN + OAM_FUNCTION_SPECIFIC_LEN)
         & OAM_CRC10_MASK;
     cksum_shouldbe = verify_crc10_cksum(0, p, OAM_PAYLOAD_LEN);
@@ -548,5 +552,9 @@ oam_print (netdissect_options *ndo,
            cksum,
            cksum_shouldbe == 0 ? "" : "in"));
 
-    return 1;
+    return;
+
+trunc:
+    ND_PRINT((ndo, "[|oam]"));
+    return;
 }

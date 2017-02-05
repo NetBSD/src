@@ -17,8 +17,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-geonet.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-geonet.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: ISO CALM FAST and ETSI GeoNetworking printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -89,6 +91,8 @@ print_long_pos_vector(netdissect_options *ndo,
 {
 	uint32_t lat, lon;
 
+	if (!ND_TTEST2(*bp, GEONET_ADDR_LEN))
+		return (-1);
 	ND_PRINT((ndo, "GN_ADDR:%s ", linkaddr_string (ndo, bp, 0, GEONET_ADDR_LEN)));
 
 	if (!ND_TTEST2(*(bp+12), 8))
@@ -106,7 +110,8 @@ print_long_pos_vector(netdissect_options *ndo,
  * to the geonet header of the packet.
  */
 void
-geonet_print(netdissect_options *ndo, const u_char *eth, const u_char *bp, u_int length)
+geonet_print(netdissect_options *ndo, const u_char *bp, u_int length,
+	     const struct lladdr_info *src)
 {
 	int version;
 	int next_hdr;
@@ -118,13 +123,16 @@ geonet_print(netdissect_options *ndo, const u_char *eth, const u_char *bp, u_int
 	const char *hdr_type_txt = "Unknown";
 	int hdr_size = -1;
 
-	ND_PRINT((ndo, "GeoNet src:%s; ", etheraddr_string(ndo, eth+6)));
+	ND_PRINT((ndo, "GeoNet "));
+	if (src != NULL)
+		ND_PRINT((ndo, "src:%s", (src->addr_string)(ndo, src->addr)));
+	ND_PRINT((ndo, "; "));
 
 	/* Process Common Header */
 	if (length < 36)
 		goto invalid;
 
-	ND_TCHECK2(*bp, 7);
+	ND_TCHECK2(*bp, 8);
 	version = bp[0] >> 4;
 	next_hdr = bp[0] & 0x0f;
 	hdr_type = bp[1] >> 4;

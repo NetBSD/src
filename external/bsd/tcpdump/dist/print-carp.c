@@ -36,8 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-carp.c,v 1.2 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: print-carp.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Common Address Redundancy Protocol (CARP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

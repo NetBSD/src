@@ -12,14 +12,16 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * Support for the Light Weight Access Point Protocol as per RFC 5412
- *
  * Original code by Carles Kishimoto <carles.kishimoto@gmail.com>
  */
 
+/* \summary: Light Weight Access Point Protocol (LWAPP) printer */
+
+/* specification: RFC 5412 */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-lwapp.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-lwapp.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
