@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.1.2.3 2017/02/05 11:45:11 bouyer Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.1.2.4 2017/02/05 17:37:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.3 2017/02/05 11:45:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.4 2017/02/05 17:37:10 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -69,8 +69,7 @@ void canloopinit(void);
 static int	canloop_clone_create(struct if_clone *, int);
 static int	canloop_clone_destroy(struct ifnet *);
 static int	canloop_ioctl(struct ifnet *, u_long, void *);
-static int	canloop_output(struct ifnet *,
-	struct mbuf *, const struct sockaddr *, const struct rtentry *);
+static void	canloop_ifstart(struct ifnet *);
 
 static int	canloop_count;
 
@@ -113,19 +112,13 @@ canloop_clone_create(struct if_clone *ifc, int unit)
 
 	if_initname(ifp, ifc->ifc_name, unit);
 
-	ifp->if_mtu = sizeof(struct can_frame);
 	ifp->if_flags = IFF_LOOPBACK | IFF_RUNNING;
 	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
 	ifp->if_ioctl = canloop_ioctl;
-	ifp->if_output = canloop_output;
-	ifp->if_type = IFT_OTHER;
-	ifp->if_hdrlen = 0;
-	ifp->if_addrlen = 0;
-	ifp->if_dlt = DLT_CAN_SOCKETCAN;
-	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_start = canloop_ifstart;
 	if_attach(ifp);
-	if_alloc_sadl(ifp);
-	bpf_attach(ifp, DLT_CAN_SOCKETCAN, sizeof(u_int));
+	can_ifattach(ifp);
+	bpf_attach(ifp, DLT_CAN_SOCKETCAN, 0);
 #ifdef MBUFTRACE
 	ifp->if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
@@ -156,40 +149,41 @@ canloop_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-static int
-canloop_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    const struct rtentry *rt)
+static void
+canloop_ifstart(struct ifnet *ifp)
 {
-	int error = 0;
 	size_t pktlen;
-
-	MCLAIM(m, ifp->if_mowner);
+	struct mbuf *m;
 
 	KERNEL_LOCK(1, NULL);
+	while (true) {
+		IF_DEQUEUE(&ifp->if_snd, m);
+		if (m == NULL)
+			break;
+		MCLAIM(m, ifp->if_mowner);
 
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("canloop_output: no header mbuf");
-	if (ifp->if_flags & IFF_LOOPBACK)
-		bpf_mtap_af(ifp, AF_CAN, m);
-	m_set_rcvif(m, ifp);
+		if ((m->m_flags & M_PKTHDR) == 0)
+			panic("canloop_output: no header mbuf");
+		if (ifp->if_flags & IFF_LOOPBACK)
+			bpf_mtap_af(ifp, AF_CAN, m);
+		m_set_rcvif(m, ifp);
 
-	pktlen = m->m_pkthdr.len;
-	ifp->if_opackets++;
-	ifp->if_obytes += pktlen;
+		pktlen = m->m_pkthdr.len;
+		ifp->if_opackets++;
+		ifp->if_obytes += pktlen;
 
 #ifdef CAN
-	can_mbuf_tag_clean(m);
-	can_input(ifp, m);
+		can_mbuf_tag_clean(m);
+		can_input(ifp, m);
 #else
-	printf("%s: can't handle CAN packet\n", ifp->if_xname);
-	m_freem(m);
-	error = EAFNOSUPPORT;
+		printf("%s: can't handle CAN packet\n", ifp->if_xname);
+		m_freem(m);
+		error = EAFNOSUPPORT;
 #endif
+	}
 
 	KERNEL_UNLOCK_ONE(NULL);
-	return error;
 }
-
 
 /*
  * Process an ioctl request.

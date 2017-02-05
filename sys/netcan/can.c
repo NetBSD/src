@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.4 2017/02/05 11:45:11 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.5 2017/02/05 17:37:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.4 2017/02/05 11:45:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.5 2017/02/05 17:37:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.4 2017/02/05 11:45:11 bouyer Exp $");
 #include <sys/kauth.h>
 
 #include <net/if.h>
+#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
 
@@ -115,6 +116,17 @@ can_purgeif(struct socket *so, struct ifnet *ifp)
 	return 0;
 }
 
+void
+can_ifattach(struct ifnet *ifp) {
+	ifp->if_mtu = sizeof(struct can_frame);
+	ifp->if_type = IFT_OTHER;
+	ifp->if_hdrlen = 0;
+	ifp->if_addrlen = 0;
+	ifp->if_dlt = DLT_CAN_SOCKETCAN;
+	ifp->if_output = NULL; /* unused */
+	IFQ_SET_READY(&ifp->if_snd);
+}
+
 static int
 can_output(struct mbuf *m, struct canpcb *canp)
 {
@@ -143,8 +155,7 @@ can_output(struct mbuf *m, struct canpcb *canp)
 
 	if (m->m_len <= ifp->if_mtu) {
 		can_output_cnt++;
-		error = (*ifp->if_output)(ifp, m, NULL, 0);
-		return error;
+		return ifq_enqueue(ifp, m);
 	} else
 		error = EMSGSIZE;
 bad:
