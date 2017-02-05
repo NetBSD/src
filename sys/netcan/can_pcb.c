@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.1.2.2 2017/02/05 10:56:12 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.1.2.3 2017/02/05 19:44:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.1.2.2 2017/02/05 10:56:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.1.2.3 2017/02/05 19:44:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,6 +331,9 @@ can_pcbfilter(struct canpcb *canp, struct mbuf *m)
 	int i;
 	struct can_frame *fmp;
 	struct can_filter *fip;
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len == m->m_pkthdr.len);
 
 	fmp = mtod(m, struct can_frame *);
 	for (i = 0; i < canp->canp_nfilters; i++) {
