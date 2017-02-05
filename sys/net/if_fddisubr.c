@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.88 2014/06/07 09:34:02 martin Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.88.6.1 2017/02/05 19:14:01 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88 2014/06/07 09:34:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.6.1 2017/02/05 19:14:01 snj Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -294,8 +294,10 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
                 	memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
 			void *tha = ar_tha(ah);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			memcpy(edst, tha, sizeof(edst));
 		}
 
