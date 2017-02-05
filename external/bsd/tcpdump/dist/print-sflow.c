@@ -12,16 +12,18 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * The SFLOW protocol as per http://www.sflow.org/developers/specifications.php
- *
  * Original code by Carles Kishimoto <carles.kishimoto@gmail.com>
  *
  * Expansion and refactoring by Rick Jones <rick.jones2@hp.com>
  */
 
+/* \summary: sFlow protocol printer */
+
+/* specification: http://www.sflow.org/developers/specifications.php */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sflow.c,v 1.7 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-sflow.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H

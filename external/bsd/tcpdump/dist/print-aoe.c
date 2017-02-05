@@ -1,8 +1,4 @@
 /*
- * This module implements decoding of the ATA over Ethernet (AoE) protocol
- * according to the following specification:
- * http://support.coraid.com/documents/AoEr11.txt
- *
  * Copyright (c) 2014 The TCPDUMP project
  * All rights reserved.
  *
@@ -31,8 +27,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-aoe.c,v 1.3 2017/01/24 23:29:13 christos Exp $");
+__RCSID("$NetBSD: print-aoe.c,v 1.4 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: ATA over Ethernet (AoE) protocol printer */
+
+/* specification: http://brantleycoilecompany.com/AoEr11.pdf */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -12,8 +12,6 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * VLAN TRUNKING PROTOCOL (VTP)
- *
  * Reference documentation:
  *  http://www.cisco.com/en/US/tech/tk389/tk689/technologies_tech_note09186a0080094c52.shtml
  *  http://www.cisco.com/warp/public/473/21.html
@@ -24,8 +22,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vtp.c,v 1.2 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-vtp.c,v 1.3 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Cisco VLAN Trunking Protocol (VTP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -125,7 +125,7 @@ void
 vtp_print (netdissect_options *ndo,
            const u_char *pptr, u_int length)
 {
-    int type, len, tlv_len, tlv_value;
+    int type, len, tlv_len, tlv_value, mgmtd_len;
     const u_char *tptr;
     const struct vtp_vlan_ *vtp_vlan;
 
@@ -150,7 +150,12 @@ vtp_print (netdissect_options *ndo,
 
     /* verbose mode print all fields */
     ND_PRINT((ndo, "\n\tDomain name: "));
-    fn_printzp(ndo, tptr + 4, *(tptr + 3), NULL);
+    mgmtd_len = *(tptr + 3);
+    if (mgmtd_len < 1 ||  mgmtd_len > 32) {
+	ND_PRINT((ndo, " [invalid MgmtD Len %d]", mgmtd_len));
+	return;
+    }
+    fn_printzp(ndo, tptr + 4, mgmtd_len, NULL);
     ND_PRINT((ndo, ", %s: %u",
 	   tok2str(vtp_header_values, "Unknown", type),
 	   *(tptr+2)));
@@ -166,7 +171,7 @@ vtp_print (netdissect_options *ndo,
 	 *
 	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *  |     Version   |     Code      |    Followers  |    MmgtD Len  |
+	 *  |     Version   |     Code      |    Followers  |    MgmtD Len  |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	 *  |       Management Domain Name  (zero-padded to 32 bytes)       |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -208,7 +213,7 @@ vtp_print (netdissect_options *ndo,
 	 *
 	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *  |     Version   |     Code      |   Seq number  |    MmgtD Len  |
+	 *  |     Version   |     Code      |   Seq number  |    MgmtD Len  |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	 *  |       Management Domain Name  (zero-padded to 32 bytes)       |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -347,7 +352,7 @@ vtp_print (netdissect_options *ndo,
 	 *
 	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 *  |     Version   |     Code      |   Reserved    |    MmgtD Len  |
+	 *  |     Version   |     Code      |   Reserved    |    MgmtD Len  |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	 *  |       Management Domain Name  (zero-padded to 32 bytes)       |
 	 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

@@ -21,8 +21,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-nfs.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
+
+/* \summary: Network File System (NFS) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -57,7 +59,7 @@ static const uint32_t *parse_post_op_attr(netdissect_options *, const uint32_t *
 /*
  * Mapping of old NFS Version 2 RPC numbers to generic numbers.
  */
-uint32_t nfsv3_procid[NFS_NPROCS] = {
+static uint32_t nfsv3_procid[NFS_NPROCS] = {
 	NFSPROC_NULL,
 	NFSPROC_GETATTR,
 	NFSPROC_SETATTR,
@@ -656,12 +658,12 @@ nfsreq_print_noaddr(netdissect_options *ndo,
 		break;
 
 	case NFSPROC_SYMLINK:
-		if ((dp = parsereq(ndo, rp, length)) != 0 &&
-		    (dp = parsefhn(ndo, dp, v3)) != 0) {
+		if ((dp = parsereq(ndo, rp, length)) != NULL &&
+		    (dp = parsefhn(ndo, dp, v3)) != NULL) {
 			ND_PRINT((ndo, " ->"));
-			if (v3 && (dp = parse_sattr3(ndo, dp, &sa3)) == 0)
+			if (v3 && (dp = parse_sattr3(ndo, dp, &sa3)) == NULL)
 				break;
-			if (parsefn(ndo, dp) == 0)
+			if (parsefn(ndo, dp) == NULL)
 				break;
 			if (v3 && ndo->ndo_vflag)
 				print_sattr3(ndo, &sa3, ndo->ndo_vflag);
@@ -670,12 +672,12 @@ nfsreq_print_noaddr(netdissect_options *ndo,
 		break;
 
 	case NFSPROC_MKNOD:
-		if ((dp = parsereq(ndo, rp, length)) != 0 &&
-		    (dp = parsefhn(ndo, dp, v3)) != 0) {
+		if ((dp = parsereq(ndo, rp, length)) != NULL &&
+		    (dp = parsefhn(ndo, dp, v3)) != NULL) {
 			ND_TCHECK(*dp);
 			type = (nfs_type)EXTRACT_32BITS(dp);
 			dp++;
-			if ((dp = parse_sattr3(ndo, dp, &sa3)) == 0)
+			if ((dp = parse_sattr3(ndo, dp, &sa3)) == NULL)
 				break;
 			ND_PRINT((ndo, " %s", tok2str(type2str, "unk-ft %d", type)));
 			if (ndo->ndo_vflag && (type == NFCHR || type == NFBLK)) {
@@ -858,10 +860,10 @@ struct xid_map_entry {
 
 #define	XIDMAPSIZE	64
 
-struct xid_map_entry xid_map[XIDMAPSIZE];
+static struct xid_map_entry xid_map[XIDMAPSIZE];
 
-int	xid_map_next = 0;
-int	xid_map_hint = 0;
+static int xid_map_next = 0;
+static int xid_map_hint = 0;
 
 static int
 xid_map_enter(netdissect_options *ndo,
@@ -1347,7 +1349,7 @@ parsewccres(netdissect_options *ndo,
 
 	if (!(dp = parsestatus(ndo, dp, &er)))
 		return (0);
-	return parse_wcc_data(ndo, dp, verbose) != 0;
+	return parse_wcc_data(ndo, dp, verbose) != NULL;
 }
 
 static const uint32_t *
@@ -1579,7 +1581,7 @@ interp_reply(netdissect_options *ndo,
 		if (!(dp = parserep(ndo, rp, length)))
 			break;
 		if (v3) {
-			if (parsecreateopres(ndo, dp, ndo->ndo_vflag) != 0)
+			if (parsecreateopres(ndo, dp, ndo->ndo_vflag) != NULL)
 				return;
 		} else {
 			if (parsediropres(ndo, dp) != 0)
@@ -1591,10 +1593,10 @@ interp_reply(netdissect_options *ndo,
 		if (!(dp = parserep(ndo, rp, length)))
 			break;
 		if (v3) {
-			if (parsecreateopres(ndo, dp, ndo->ndo_vflag) != 0)
+			if (parsecreateopres(ndo, dp, ndo->ndo_vflag) != NULL)
 				return;
 		} else {
-			if (parsestatus(ndo, dp, &er) != 0)
+			if (parsestatus(ndo, dp, &er) != NULL)
 				return;
 		}
 		break;
@@ -1602,7 +1604,7 @@ interp_reply(netdissect_options *ndo,
 	case NFSPROC_MKNOD:
 		if (!(dp = parserep(ndo, rp, length)))
 			break;
-		if (parsecreateopres(ndo, dp, ndo->ndo_vflag) != 0)
+		if (parsecreateopres(ndo, dp, ndo->ndo_vflag) != NULL)
 			return;
 		break;
 
@@ -1614,7 +1616,7 @@ interp_reply(netdissect_options *ndo,
 			if (parsewccres(ndo, dp, ndo->ndo_vflag))
 				return;
 		} else {
-			if (parsestatus(ndo, dp, &er) != 0)
+			if (parsestatus(ndo, dp, &er) != NULL)
 				return;
 		}
 		break;
@@ -1635,7 +1637,7 @@ interp_reply(netdissect_options *ndo,
 			}
 			return;
 		} else {
-			if (parsestatus(ndo, dp, &er) != 0)
+			if (parsestatus(ndo, dp, &er) != NULL)
 				return;
 		}
 		break;
@@ -1656,7 +1658,7 @@ interp_reply(netdissect_options *ndo,
 				return;
 			}
 		} else {
-			if (parsestatus(ndo, dp, &er) != 0)
+			if (parsestatus(ndo, dp, &er) != NULL)
 				return;
 		}
 		break;

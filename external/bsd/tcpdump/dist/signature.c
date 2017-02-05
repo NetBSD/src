@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signature.c,v 1.6 2017/01/24 23:29:14 christos Exp $");
+__RCSID("$NetBSD: signature.c,v 1.7 2017/02/05 04:05:05 spz Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -147,7 +147,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
         /* No. */
         return (CANT_CHECK_SIGNATURE);
     }
-    if ((sig_ptr + sizeof(sig) - pptr) > plen) {
+    if (sig_ptr + sizeof(sig) > pptr + plen) {
         /* No. */
         return (CANT_CHECK_SIGNATURE);
     }
@@ -172,7 +172,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
      * Clear anything else that needs to be cleared in the copy.
      * Our caller is assumed to have vetted the clear_arg pointer.
      */
-    (*clear_rtn)((void *)(packet_copy + ((const u_int8_t *)clear_arg - pptr)));
+    (*clear_rtn)((void *)(packet_copy + ((const uint8_t *)clear_arg - pptr)));
 
     /*
      * Compute the signature.
