@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.19 2017/01/29 10:16:09 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.20 2017/02/05 09:02:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.19 2017/01/29 10:16:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.20 2017/02/05 09:02:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.19 2017/01/29 10:16:09 skrll Exp $
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
