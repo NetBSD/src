@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.1.2.3 2017/02/05 11:45:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.2 2017/01/16 18:03:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.3 2017/02/05 11:45:11 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -83,7 +83,7 @@ canloopattach(int n)
 
 	/*
 	 * Nothing to do here, initialization is handled by the
-	 * module initialization code in canloopnit() below).
+	 * module initialization code in canloopinit() below).
 	 */
 }
 
@@ -162,7 +162,6 @@ canloop_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	int error = 0;
 	size_t pktlen;
-	struct m_tag *sotag;
 
 	MCLAIM(m, ifp->if_mowner);
 
@@ -178,12 +177,8 @@ canloop_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	ifp->if_opackets++;
 	ifp->if_obytes += pktlen;
 
-	/* we have to preserve the socket tag */
-	sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
-	m_tag_delete_nonpersistent(m);
-	if (sotag)
-		m_tag_prepend(m, sotag);
 #ifdef CAN
+	can_mbuf_tag_clean(m);
 	can_input(ifp, m);
 #else
 	printf("%s: can't handle CAN packet\n", ifp->if_xname);
