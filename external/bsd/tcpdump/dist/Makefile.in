@@ -70,7 +70,7 @@ DEPENDENCY_CFLAG = @DEPENDENCY_CFLAG@
 	@rm -f $@
 	$(CC) $(FULL_CFLAGS) -c $(srcdir)/$*.c
 
-CSRC =	setsignal.c tcpdump.c util.c
+CSRC =	setsignal.c tcpdump.c
 
 LIBNETDISSECT_SRC=\
 	addrtoname.c \
@@ -232,6 +232,7 @@ LIBNETDISSECT_SRC=\
 	print-wb.c \
 	print-zephyr.c \
 	print-zeromq.c \
+	netdissect.c \
 	signature.c \
 	strtoaddr.c \
 	util-print.c
@@ -301,7 +302,6 @@ HDR = \
 TAGHDR = \
 	/usr/include/arpa/tftp.h \
 	/usr/include/net/if_arp.h \
-	/usr/include/net/slip.h \
 	/usr/include/netinet/if_ether.h \
 	/usr/include/netinet/in.h \
 	/usr/include/netinet/ip_icmp.h \
@@ -315,11 +315,14 @@ CLEANFILES = $(PROG) $(OBJ) $(GENSRC)
 
 EXTRA_DIST = \
 	CHANGES \
+	CONTRIBUTING \
 	CREDITS \
 	INSTALL.txt \
 	LICENSE \
 	Makefile.in \
 	Makefile-devel-adds \
+	PLATFORMS \
+	README \
 	README.md \
 	Readme.Win32 \
 	VERSION \
@@ -357,7 +360,10 @@ EXTRA_DIST = \
 	vfprintf.c \
 	win32/prj/GNUmakefile \
 	win32/prj/WinDump.dsp \
-	win32/prj/WinDump.dsw
+	win32/prj/WinDump.dsw \
+	win32/prj/WinDump.sln \
+	win32/prj/WinDump.vcproj \
+	win32/src/ether_ntohost.c
 
 TEST_DIST= `find tests \( -name 'DIFF' -prune \) -o \( -name NEW -prune \) -o -type f \! -name '.*' \! -name '*~' -print`
 
@@ -432,6 +438,9 @@ distclean:
 
 check: tcpdump
 	(cd tests && ./TESTrun.sh)
+
+extags: $(TAGFILES)
+	ctags $(TAGFILES)
 
 tags: $(TAGFILES)
 	ctags -wtd $(TAGFILES)
