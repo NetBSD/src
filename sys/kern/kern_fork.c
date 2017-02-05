@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.193.6.3 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.193.6.4 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.193.6.3 2016/12/05 10:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.193.6.4 2017/02/05 13:40:56 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -219,7 +219,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
-	int		tracefork;
+	int		tracefork, tracevforkdone;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -471,11 +471,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 
 	/*
-	 * We don't want to tracefork vfork()ed processes because they
-	 * will not receive the SIGTRAP until it is too late.
+	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
 	tracefork = (p1->p_slflag & (PSL_TRACEFORK|PSL_TRACED)) ==
 	    (PSL_TRACEFORK|PSL_TRACED) && (flags && FORK_PPWAIT) == 0;
+	tracevforkdone = (p1->p_slflag & (PSL_TRACEVFORK_DONE|PSL_TRACED)) ==
+	    (PSL_TRACEVFORK_DONE|PSL_TRACED) && (flags && FORK_PPWAIT);
 	if (tracefork) {
 		proc_changeparent(p2, p1->p_pptr);
 		/*
@@ -483,6 +484,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		 */
 		p1->p_fpid = p2->p_pid;
 		p2->p_fpid = p1->p_pid;
+	}
+	if (tracevforkdone) {
+		/*
+		 * Set ptrace status.
+		 */
+		p1->p_vfpid_done = p2->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
@@ -570,23 +577,18 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Preserve synchronization semantics of vfork.  If waiting for
 	 * child to exec or exit, sleep until it clears LP_VFORKWAIT.
 	 */
-#if 0
-	while (l1->l_pflag & LP_VFORKWAIT) {
-		cv_wait(&l1->l_waitcv, proc_lock);
-	}
-#else
 	while (p2->p_lflag & PL_PPWAIT)
 		cv_wait(&p1->p_waitcv, proc_lock);
-#endif
 
 	/*
 	 * Let the parent know that we are tracing its child.
 	 */
-	if (tracefork) {
+	if (tracefork || tracevforkdone) {
 		ksiginfo_t ksi;
 
 		KSI_INIT_EMPTY(&ksi);
 		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_CHLD;
 		ksi.ksi_lid = l1->l_lid;
 		kpsignal(p1, &ksi, NULL);
 	}

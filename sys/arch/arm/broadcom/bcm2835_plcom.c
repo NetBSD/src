@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_plcom.c,v 1.1.20.1 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: bcm2835_plcom.c,v 1.1.20.2 2017/02/05 13:40:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL011) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_plcom.c,v 1.1.20.1 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_plcom.c,v 1.1.20.2 2017/02/05 13:40:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -69,11 +69,19 @@ static void
 bcm2835_plcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct plcom_softc *sc = device_private(self);
+	prop_dictionary_t dict = device_properties(self);
 	struct amba_attach_args *aaa = aux;
 	void *ih;
 
 	sc->sc_dev = self;
 	sc->sc_frequency = BCM2835_UART0_CLK;
+
+        /* Fetch the UART clock frequency from property if set. */
+	prop_number_t frequency = prop_dictionary_get(dict, "frequency");
+        if (frequency != NULL) {
+		sc->sc_frequency = prop_number_integer_value(frequency);
+        }
+
 	sc->sc_hwflags = PLCOM_HW_TXFIFO_DISABLE;
 	sc->sc_swflags = 0;
 	sc->sc_set_mcr = NULL;

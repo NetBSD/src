@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.56.2.1 2015/09/22 12:05:41 skrll Exp $
+#	$NetBSD: ALCHEMY,v 1.56.2.2 2017/02/05 13:40:09 skrll Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.56.2.1 $"
+#ident 		"ALCHEMY-$Revision: 1.56.2.2 $"
 
 maxusers	32
 
@@ -223,6 +223,8 @@ ugen*		at uhub? port ?
 # Audio support
 auaudio*	at aubus? addr ?		# STAC9745 audio codec
 audio*		at auaudio?
+
+spkr*		at audio?			# PC speaker (synthesized)
 
 # GPIOs
 augpio*	at aubus? addr ?

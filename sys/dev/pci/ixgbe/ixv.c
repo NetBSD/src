@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.2.6.6 2016/12/05 10:55:17 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
+/*$NetBSD: ixv.c,v 1.2.6.7 2017/02/05 13:40:45 skrll Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -253,7 +253,7 @@ ixv_lookup(const struct pci_attach_args *pa)
 	pcireg_t subid;
 	ixgbe_vendor_info_t *ent;
 
-	INIT_DEBUGOUT("ixv_probe: begin");
+	INIT_DEBUGOUT("ixv_lookup: begin");
 
 	if (PCI_VENDOR(pa->pa_id) != IXGBE_INTEL_VENDOR_ID)
 		return NULL;
@@ -527,7 +527,9 @@ ixv_detach(device_t dev, int flags)
 
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
 #ifndef IXGBE_LEGACY_TX
-		softint_disestablish(txr->txq_si);
+		struct tx_ring *txr = adapter->tx_rings;
+
+		softint_disestablish(txr->txr_si);
 #endif
 		softint_disestablish(que->que_si);
 	}
@@ -637,7 +639,7 @@ ixv_ioctl(struct ifnet * ifp, u_long command, void *data)
 		IOCTL_DEBUGOUT("ioctl: SIOCSIFMTU (Set Interface MTU)");
 		break;
 	default:
-		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)\n", (int)command);
+		IOCTL_DEBUGOUT1("ioctl: UNKNOWN (0x%X)", (int)command);
 		break;
 	}
 
@@ -858,8 +860,8 @@ ixv_handle_que(void *context)
 		more = ixgbe_rxeof(que);
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
-#if __FreeBSD_version >= 800000
-		if (!drbr_empty(ifp, txr->br))
+#ifndef IXGBE_LEGACY_TX
+		if (pcq_peek(txr->txr_interq) != NULL)
 			ixgbe_mq_start_locked(ifp, txr);
 #else
 		if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -897,7 +899,12 @@ ixv_msix_que(void *arg)
 	ixv_disable_queue(adapter, que->msix);
 	++que->irqs.ev_count;
 
+#ifdef __NetBSD__
+	/* Don't run ixgbe_rxeof in interrupt context */
+	more = true;
+#else
 	more = ixgbe_rxeof(que);
+#endif
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
@@ -910,7 +917,7 @@ ixv_msix_que(void *arg)
 	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
 		ixgbe_start_locked(txr, ifp);
 #else
-	if (!drbr_empty(adapter->ifp, txr->br))
+	if (pcq_peek(txr->txr_interq) != NULL)
 		ixgbe_mq_start_locked(ifp, txr);
 #endif
 	IXGBE_TX_UNLOCK(txr);
@@ -1189,7 +1196,7 @@ ixv_local_timer_locked(void *arg)
 
 	}
 
-	/* Only truely watchdog if all queues show hung */
+	/* Only truly watchdog if all queues show hung */
 	if (hung == adapter->num_queues)
 		goto watchdog;
 	else if (queues != 0) { /* Force an IRQ on queues with work */
@@ -1348,7 +1355,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	tag = adapter->osdep.tag;
 
 	if (pci_msix_alloc_exact(pa,
-		&adapter->osdep.intrs, IXG_MSIX_NINTR) != 0)
+		&adapter->osdep.intrs, IXG_MAX_NINTR) != 0)
 		return (ENXIO);
 
 	kcpuset_create(&affinity, false);
@@ -1387,7 +1394,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			aprint_normal("\n");
 
 #ifndef IXGBE_LEGACY_TX
-		txr->txq_si = softint_establish(SOFTINT_NET,
+		txr->txr_si = softint_establish(SOFTINT_NET,
 		    ixgbe_deferred_mq_start, txr);
 #endif
 		que->que_si = softint_establish(SOFTINT_NET, ixv_handle_que,
@@ -1457,16 +1464,24 @@ ixv_setup_msix(struct adapter *adapter)
 	device_t dev = adapter->dev;
 	int want, msgs;
 
-	/*
-	** Want two vectors: one for a queue,
-	** plus an additional for mailbox.
-	*/
+	/* Must have at least 2 MSIX vectors */
 	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
-	if (msgs < IXG_MSIX_NINTR) {
+	if (msgs < 2) {
 		aprint_error_dev(dev,"MSIX config error\n");
 		return (ENXIO);
 	}
-	want = MIN(msgs, IXG_MSIX_NINTR);
+	msgs = MIN(msgs, IXG_MAX_NINTR);
+
+	/*
+	** Want vectors for the queues,
+	** plus an additional for mailbox.
+	*/
+	want = adapter->num_queues + 1;
+	if (want > msgs) {
+		want = msgs;
+		adapter->num_queues = msgs - 1;
+	} else
+		msgs = want;
 
 	adapter->msix_mem = (void *)1; /* XXX */
 	aprint_normal_dev(dev,
@@ -1513,7 +1528,6 @@ map_err:
 
 	/* Pick up the tuneable queues */
 	adapter->num_queues = ixv_num_queues;
-
 	adapter->hw.back = adapter;
 
 	/*
@@ -1591,16 +1605,20 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = ixv_ioctl;
-#if __FreeBSD_version >= 800000
+#ifndef IXGBE_LEGACY_TX
 	ifp->if_transmit = ixgbe_mq_start;
-	ifp->if_qflush = ixgbe_qflush;
-#else
-	ifp->if_start = ixgbe_start;
 #endif
+	ifp->if_start = ixgbe_start;
 	ifp->if_snd.ifq_maxlen = adapter->num_tx_desc - 2;
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+#ifndef IXGBE_LEGACY_TX
+#if 0	/* We use per TX queue softint */
+	if_deferred_start_init(ifp, ixgbe_deferred_mq_start);
+#endif
+#endif
+	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
 	adapter->max_frame_size =
@@ -2038,7 +2056,7 @@ ixv_handle_mbx(void *context)
 }
 
 /*
-** The VF stats registers never have a truely virgin
+** The VF stats registers never have a truly virgin
 ** starting point, so this routine tries to make an
 ** artificial one, marking ground zero on attach as
 ** it were.

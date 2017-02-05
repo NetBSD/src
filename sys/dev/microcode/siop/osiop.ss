@@ -1,4 +1,4 @@
-;	$NetBSD: osiop.ss,v 1.2 2009/10/21 23:53:38 snj Exp $
+;	$NetBSD: osiop.ss,v 1.2.40.1 2017/02/05 13:40:29 skrll Exp $
 
 ;
 ; Copyright (c) 1995 Michael L. Hitch
@@ -150,7 +150,7 @@ wait_reselect:
 	INT int_identify, WHEN NOT MSG_IN
 	MOVE FROM ds_Msg, WHEN MSG_IN
 	INT int_reconnect		; let host know about reconnect
-	CLEAR ACK			; acknowlege the message
+	CLEAR ACK			; acknowledge the message
 	JUMP REL(switch)
 
 select_adr:

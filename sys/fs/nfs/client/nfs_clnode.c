@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clnode.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: nfs_clnode.c,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clnode.c 302210 2016-06-26 14:18:28Z kib "); */
-__RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $");
+__RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +52,13 @@ __RCSID("$NetBSD: nfs_clnode.c,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $");
 
 #include <vm/uma.h>
 
-#include <fs/nfs/nfsport.h>
-#include <fs/nfsclient/nfsnode.h>
-#include <fs/nfsclient/nfsmount.h>
-#include <fs/nfsclient/nfs.h>
-#include <fs/nfsclient/nfs_kdtrace.h>
+#include <fs/nfs/common/nfsport.h>
+#include <fs/nfs/client/nfsnode.h>
+#include <fs/nfs/client/nfsmount.h>
+#include <fs/nfs/client/nfs.h>
+#include <fs/nfs/client/nfs_kdtrace.h>
 
-#include <nfs/nfs_lock.h>
+#include <fs/nfs/common/nfs_lock.h>
 
 extern struct vop_vector newnfs_vnodeops;
 extern struct buf_ops buf_ops_newnfs;

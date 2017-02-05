@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.11 2014/10/23 19:39:42 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.11.2.1 2017/02/05 13:40:20 skrll Exp $	*/
 
 #include <machine/endian_machdep.h>
 
@@ -47,6 +47,11 @@
 #define	R_SH_DIR8BP		7
 #define	R_SH_DIR8W		8
 #define	R_SH_DIR8L		9
+#define	R_SH_LOOP_START		10
+#define	R_SH_LOOP_END		11
+#define	R_SH_GNU_VTINHERIT	22
+#define	R_SH_GNU_VTENTRY	23
+#define	R_SH_SWITCH8		24
 #define	R_SH_SWITCH16		25
 #define	R_SH_SWITCH32		26
 #define	R_SH_USES		27
@@ -55,11 +60,6 @@
 #define	R_SH_CODE		30
 #define	R_SH_DATA		31
 #define	R_SH_LABEL		32
-#define	R_SH_SWITCH8		33
-#define	R_SH_GNU_VTINHERIT	34
-#define	R_SH_GNU_VTENTRY	35
-#define	R_SH_LOOP_START		36
-#define	R_SH_LOOP_END		37
 
 /* TLS relocations */
 #define	R_SH_TLS_GD_32		144

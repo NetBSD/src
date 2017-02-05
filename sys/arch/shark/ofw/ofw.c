@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.63.6.2 2016/07/09 20:24:56 skrll Exp $	*/
+/*	$NetBSD: ofw.c,v 1.63.6.3 2017/02/05 13:40:20 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63.6.2 2016/07/09 20:24:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63.6.3 2017/02/05 13:40:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -871,8 +871,7 @@ ofw_configmem(void)
 		bootconfig.dramblocks = availcnt;
 	}
 
-	/* Load memory into UVM. */
-	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+	uvm_md_init();
 
 	/* XXX Please kill this code dead. */
 	for (i = 0; i < bootconfig.dramblocks; i++) {

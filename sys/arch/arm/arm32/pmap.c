@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.316.2.5 2016/10/05 20:55:24 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.316.2.6 2017/02/05 13:40:03 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316.2.5 2016/10/05 20:55:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316.2.6 2017/02/05 13:40:03 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6453,8 +6453,8 @@ pmap_init(void)
 	 * One could argue whether this should be the entire memory or just
 	 * the memory that is useable in a user process.
 	 */
-	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	avail_start = ptoa(uvm_physseg_get_avail_start(uvm_physseg_get_first()));
+	avail_end = ptoa(uvm_physseg_get_avail_end(uvm_physseg_get_last()));
 
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get
@@ -6522,7 +6522,7 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
  *
  * This routine is called after the vm and kmem subsystems have been
  * initialised. This allows the pmap code to perform any initialisation
- * that can only be done one the memory allocation is in place.
+ * that can only be done once the memory allocation is in place.
  */
 void
 pmap_postinit(void)

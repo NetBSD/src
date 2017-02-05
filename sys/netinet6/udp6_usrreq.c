@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.115.4.7 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.115.4.8 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.115.4.7 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.115.4.8 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -912,15 +912,17 @@ static int
 udp6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	in6_pcbpurgeif0(&udbtable, ifp);
-	in6_purgeif(ifp);
-	in6_pcbpurgeif(&udbtable, ifp);
-#ifndef NET_MPSAFE
+#ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
+	in6_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
+	in6_pcbpurgeif(&udbtable, ifp);
+	mutex_exit(softnet_lock);
 
 	return 0;
 }

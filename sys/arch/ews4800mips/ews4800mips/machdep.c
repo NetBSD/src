@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.6.1 2017/02/05 13:40:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.6.1 2017/02/05 13:40:11 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,7 +110,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 	option(argc, argv, bi);
 
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/* Fill mem_clusters and mem_cluster_cnt */
 	(*platform.mem_init)(kernel_text,

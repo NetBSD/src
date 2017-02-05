@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clstate.c,v 1.2.2.1 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: nfs_clstate.c,v 1.2.2.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clstate.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clstate.c,v 1.2.2.1 2016/12/05 10:55:25 skrll Exp $");
+__RCSID("$NetBSD: nfs_clstate.c,v 1.2.2.2 2017/02/05 13:40:55 skrll Exp $");
 
 /*
  * These functions implement the client side state handling for NFSv4.
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: nfs_clstate.c,v 1.2.2.1 2016/12/05 10:55:25 skrll Exp $");
  */
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 /*
  * Global variables

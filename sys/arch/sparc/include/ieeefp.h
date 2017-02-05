@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.8.16.1 2015/04/06 15:18:02 skrll Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.8.16.2 2017/02/05 13:40:21 skrll Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -9,15 +9,9 @@
 #define _SPARC_IEEEFP_H_
 
 #include <sys/featuretest.h>
+#include <machine/fenv.h>
 
-#if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
-
-#define	FE_TONEAREST	0	/* round to nearest representable number */
-#define	FE_TOWARDZERO	1	/* round to zero (truncate) */
-#define	FE_UPWARD	2	/* round toward positive infinity */
-#define	FE_DOWNWARD	3	/* round toward negative infinity */
-
-#if !defined(_ISOC99_SOURCE)
+#if defined(_NETBSD_SOURCE) && !defined(_ISOC99_SOURCE)
 
 typedef unsigned int fp_except;
 #define FP_X_IMP	0x01		/* imprecise (loss of precision) */
@@ -33,8 +27,6 @@ typedef enum {
     FP_RM=3			/* round toward negative infinity */
 } fp_rnd;
 
-#endif /* !_ISOC99_SOURCE */
-
-#endif /* _NETBSD_SOURCE || _ISOC99_SOURCE */
+#endif /* _NETBSD_SOURCE || !_ISOC99_SOURCE */
 
 #endif /* _SPARC_IEEEFP_H_ */

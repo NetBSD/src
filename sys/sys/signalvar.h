@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.86.4.1 2016/10/05 20:56:11 skrll Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.86.4.2 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +37,7 @@
 #include <sys/siginfo.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/stdbool.h>
 
 /*
  * Kernel signal definitions and data structures,
@@ -74,12 +75,12 @@ typedef struct sigpend {
  * Process signal state.
  */
 struct sigctx {
-	int		ps_signo;	/* for core dump/debugger XXX */
-	int		ps_code;	/* for core dump/debugger XXX */
-	int		ps_lwp;		/* for core dump/debugger XXX */
+	struct _ksiginfo ps_info;	/* for core dump/debugger XXX */
+	int		 ps_lwp;	/* for core dump/debugger XXX */
+	bool		 ps_faked;	/* for core dump/debugger XXX */
 	void		*ps_sigcode;	/* address of signal trampoline */
-	sigset_t	ps_sigignore;	/* Signals being ignored. */
-	sigset_t	ps_sigcatch;	/* Signals being caught by user. */
+	sigset_t	 ps_sigignore;	/* Signals being ignored. */
+	sigset_t	 ps_sigcatch;	/* Signals being caught by user. */
 };
 
 /* additional signal action values, used only temporarily/internally */

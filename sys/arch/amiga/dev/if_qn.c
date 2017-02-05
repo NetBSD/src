@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.39.14.3 2016/07/09 20:24:49 skrll Exp $ */
+/*	$NetBSD: if_qn.c,v 1.39.14.4 2017/02/05 13:40:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.39.14.3 2016/07/09 20:24:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.39.14.4 2017/02/05 13:40:02 skrll Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -582,9 +582,6 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 		len -= len1;
 	}
 
-	/* Tap off BPF listeners */
-	bpf_mtap(ifp, head);
-
 	if_percpuq_enqueue(ifp->if_percpuq, head);
 	return;
 
@@ -693,8 +690,6 @@ qn_rint(struct qn_softc *sc, u_short rstat)
 
 		/* Read the packet. */
 		qn_get_packet(sc, len);
-
-		++sc->sc_ethercom.ec_if.if_ipackets;
 	}
 
 #ifdef QN_DEBUG

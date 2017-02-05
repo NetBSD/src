@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.26.4.4 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.26.4.5 2017/02/05 13:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26.4.4 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26.4.5 2017/02/05 13:40:29 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1170,9 +1170,7 @@ jme_intr_rx(jme_softc_t *sc) {
 			m->m_len =
 			    JME_RX_BYTES(buflen) - (MCLBYTES * (nsegs - 1));
 		}
-		ifp->if_ipackets++;
 		ipackets++;
-		bpf_mtap(ifp, mhead);
 
 		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) &&
 		    (flags & JME_RD_IPV4)) {

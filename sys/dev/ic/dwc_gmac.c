@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.10 2016/07/15 06:36:21 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.11 2017/02/05 13:40:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.10 2016/07/15 06:36:21 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.11 2017/02/05 13:40:27 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1211,11 +1211,8 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		m_set_rcvif(m, ifp);
 		m->m_flags |= M_HASFCS;
 
-		ifp->if_ipackets++;
-
 		mutex_exit(&sc->sc_rxq.r_mtx);
 
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(sc->sc_ipq, m);
 
 		mutex_enter(&sc->sc_rxq.r_mtx);

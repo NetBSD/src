@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.1.2.2 2016/03/19 11:30:07 skrll Exp $   */
+/*     $NetBSD: efi.h,v 1.1.2.3 2017/02/05 13:40:23 skrll Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -56,7 +56,7 @@ typedef unsigned long efi_status;
 
 struct efi_cfgtbl {
        struct uuid     ct_uuid;
-       uint64_t        ct_data;
+       void           *ct_data;
 };
 struct efi_md {
        uint32_t        md_type;
@@ -143,17 +143,19 @@ struct efi_systbl {
 #define        EFI_SYSTBL_SIG  0x5453595320494249UL
        efi_char        *st_fwvendor;
        uint32_t        st_fwrev;
+#ifdef __amd64__
        uint32_t        __pad;
+#endif
        void            *st_cin;
        void            *st_cinif;
        void            *st_cout;
        void            *st_coutif;
        void            *st_cerr;
        void            *st_cerrif;
-       uint64_t        st_rt;
+       struct efi_rt   *st_rt;
        void            *st_bs;
        u_long          st_entries;
-       uint64_t        st_cfgtbl;
+       struct efi_cfgtbl *st_cfgtbl;
 };
 
 bool               efi_probe(void);
@@ -161,6 +163,8 @@ paddr_t            efi_getsystblpa(void);
 struct efi_systbl *efi_getsystbl(void);
 paddr_t            efi_getcfgtblpa(const struct uuid*);
 void              *efi_getcfgtbl(const struct uuid*);
+int                efi_getbiosmemtype(uint32_t, uint64_t);
+const char        *efi_getmemtype_str(uint32_t);
 /*
 void efi_boot_finish(void);
 int efi_boot_minimal(uint64_t);

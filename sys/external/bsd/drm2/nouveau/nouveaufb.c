@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.c,v 1.2.2.3 2015/12/27 12:10:03 skrll Exp $	*/
+/*	$NetBSD: nouveaufb.c,v 1.2.2.4 2017/02/05 13:40:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.2.2.3 2015/12/27 12:10:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.2.2.4 2017/02/05 13:40:54 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -147,6 +147,7 @@ nouveaufb_attach_task(struct nouveau_pci_task *task)
 		.da_fb_helper = nfa->nfa_fb_helper,
 		.da_fb_sizes = &nfa->nfa_fb_sizes,
 		.da_fb_vaddr = __UNVOLATILE(nfa->nfa_fb_ptr),
+		.da_fb_linebytes = nfa->nfa_fb_linebytes,
 		.da_params = &nouveaufb_drmfb_params,
 	};
 	int error;

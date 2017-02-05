@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfsclient/nfsnode.h 303715 2016-08-03 15:58:20Z kib 
- * $NetBSD: nfsnode.h,v 1.1.1.1.12.1 2016/12/05 10:55:25 skrll Exp $
+ * $NetBSD: nfsnode.h,v 1.1.1.1.12.2 2017/02/05 13:40:55 skrll Exp $
  */
 
 #ifndef _NFSCLIENT_NFSNODE_H_
@@ -90,7 +90,7 @@ struct nfs_accesscache {
  *     be well aligned and, therefore, tightly packed.
  */
 struct nfsnode {
-	struct mtx 		n_mtx;		/* Protects all of these members */
+	kmutex_t 		n_mtx;		/* Protects all of these members */
 	u_quad_t		n_size;		/* Current size of file */
 	u_quad_t		n_brev;		/* Modify rev when cached */
 	u_quad_t		n_lrev;		/* Modify rev for lease */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10.4.2 2016/12/05 10:54:53 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.4.3 2017/02/05 13:40:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.4.2 2016/12/05 10:54:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.4.3 2017/02/05 13:40:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -146,10 +146,7 @@ mach_init(void)
 	 */
 	cal_timer();
 
-	/*
-	 * Set the VM page size.
-	 */
-	uvm_setpagesize();
+	uvm_md_init();
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.

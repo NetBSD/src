@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.158.4.4 2016/10/05 20:55:43 skrll Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.158.4.5 2017/02/05 13:40:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.158.4.4 2016/10/05 20:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.158.4.5 2017/02/05 13:40:30 skrll Exp $");
 
 
 
@@ -1283,6 +1283,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, sip_ifflags_cb);
 	sc->sc_prev.ec_capenable = sc->sc_ethercom.ec_capenable;
@@ -1952,7 +1953,7 @@ sipcom_intr(void *arg)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, IER_IE);
 
 	/* Try to get more packets going. */
-	sipcom_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	return (handled);
 }
@@ -2232,15 +2233,8 @@ gsip_rxintr(struct sip_softc *sc)
 			}
 		}
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -2399,15 +2393,8 @@ sip_rxintr(struct sip_softc *sc)
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		ifp->if_ipackets++;
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
-
-		/*
-		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
-		 */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

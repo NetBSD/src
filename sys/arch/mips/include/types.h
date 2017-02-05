@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.54.6.4 2016/10/05 20:55:31 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.54.6.5 2017/02/05 13:40:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,8 +34,8 @@
  *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_MIPS_TYPES_H_
+#define	_MIPS_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -169,4 +169,4 @@ typedef __uint32_t tlb_asid_t;
 #define	__HAVE_MM_MD_KERNACC
 #define	__HAVE_MM_MD_CACHE_ALIASING
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* _MIPS_TYPES_H_ */

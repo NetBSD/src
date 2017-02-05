@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.11.2.8 2016/12/05 10:55:02 skrll Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.11.2.9 2017/02/05 13:40:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.8 2016/12/05 10:55:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.9 2017/02/05 13:40:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -672,6 +672,7 @@ skip:
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_mac);
 
 	return;
@@ -1035,8 +1036,6 @@ vioif_rx_deq_locked(struct vioif_softc *sc)
 		virtio_dequeue_commit(vsc, vq, slot);
 		m_set_rcvif(m, ifp);
 		m->m_len = m->m_pkthdr.len = len;
-		ifp->if_ipackets++;
-		bpf_mtap(ifp, m);
 
 		VIOIF_RX_UNLOCK(sc);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
@@ -1130,7 +1129,7 @@ vioif_tx_vq_done(struct virtqueue *vq)
 out:
 	VIOIF_TX_UNLOCK(sc);
 	if (r)
-		vioif_start(ifp);
+		if_schedule_deferred_start(ifp);
 	return r;
 }
 
@@ -1447,22 +1446,26 @@ vioif_rx_filter(struct vioif_softc *sc)
 	}
 
 	nentries = -1;
+	ETHER_LOCK(&sc->sc_ethercom);
 	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 	while (nentries++, enm != NULL) {
 		if (nentries >= VIRTIO_NET_CTRL_MAC_MAXENTRIES) {
 			allmulti = 1;
-			goto set;
+			goto set_unlock;
 		}
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			   ETHER_ADDR_LEN)) {
 			allmulti = 1;
-			goto set;
+			goto set_unlock;
 		}
 		memcpy(sc->sc_ctrl_mac_tbl_mc->macs[nentries],
 		       enm->enm_addrlo, ETHER_ADDR_LEN);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	rxfilter = 1;
+
+set_unlock:
+	ETHER_UNLOCK(&sc->sc_ethercom);
 
 set:
 	if (rxfilter) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.46.6.1 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.46.6.2 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -48,9 +48,9 @@
 #ifndef _KERNEL
 #include <sys/featuretest.h>
 #include <sys/types.h>
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE)
 #include <sys/stat.h>
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE */
 #endif /* !_KERNEL */
 
 /*

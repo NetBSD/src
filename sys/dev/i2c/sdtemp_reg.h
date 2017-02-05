@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.7.6.2 2016/10/05 20:55:41 skrll Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.7.6.3 2017/02/05 13:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@
 #define	CAT_34TS02_DEVICE_ID		0x0800
 #define	CAT_34TS02_MASK			0xFFE0
 #define	CAT_34TS02C_DEVICE_ID		0x0a00
-#define	CAT_34TS02C_MASK		0xFFFF
+#define	CAT_34TS02C_MASK		0xFFFE
 #define	CAT_34TS04_DEVICE_ID		0x2200
 #define	CAT_34TS04_MASK			0xFFFF
 

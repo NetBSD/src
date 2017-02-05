@@ -1,0 +1,6 @@
+#	$NetBSD: Makefile.syscall,v 1.1.2.2 2017/02/05 13:40:24 skrll Exp $
+
+SUBDIR	=	aoutm68k freebsd ibcs2 linux linux32 netbsd32
+SUBDIR +=	osf1 sunos sunos32 svr4 svr4_32 ultrix
+
+.include <bsd.subdir.mk>

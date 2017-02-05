@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.73.2.1 2015/04/06 15:18:06 skrll Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.73.2.2 2017/02/05 13:40:26 skrll Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.73.2.1 2015/04/06 15:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.73.2.2 2017/02/05 13:40:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.73.2.1 2015/04/06 15:18:06 skrl
 
 struct sysent linux32_sysent[] = {
 	{
-		
 		.sy_call = (sy_call_t *)linux_sys_nosys
 	},		/* 0 = syscall */
 	{
@@ -46,7 +45,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)linux32_sys_exit
 	},		/* 1 = exit */
 	{
-		
 		.sy_call = (sy_call_t *)sys_fork
 	},		/* 2 = fork */
 	{
@@ -117,7 +115,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)compat_43_netbsd32_olseek
 	},		/* 19 = compat_43_netbsd32_olseek */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getpid
 	},		/* 20 = getpid */
 	{
@@ -131,7 +128,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)netbsd32_setuid
 	},		/* 23 = linux_setuid16 */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getuid
 	},		/* 24 = linux_getuid16 */
 	{
@@ -150,7 +146,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 28 = filler */
 	{
-		
 		.sy_call = (sy_call_t *)linux_sys_pause
 	},		/* 29 = pause */
 	{
@@ -175,7 +170,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 35 = filler */
 	{
-		
 		.sy_call = (sy_call_t *)sys_sync
 	},		/* 36 = sync */
 	{
@@ -218,7 +212,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)netbsd32_setgid
 	},		/* 46 = linux_setgid16 */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getgid
 	},		/* 47 = linux_getgid16 */
 	{
@@ -226,11 +219,9 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)linux32_sys_signal
 	},		/* 48 = signal */
 	{
-		
 		.sy_call = (sy_call_t *)sys_geteuid
 	},		/* 49 = linux_geteuid16 */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getegid
 	},		/* 50 = linux_getegid16 */
 	{
@@ -281,22 +272,18 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)netbsd32_dup2
 	},		/* 63 = netbsd32_dup2 */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getppid
 	},		/* 64 = getppid */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getpgrp
 	},		/* 65 = getpgrp */
 	{
-		
 		.sy_call = (sy_call_t *)sys_setsid
 	},		/* 66 = setsid */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 67 = filler */
 	{
-		
 		.sy_call = (sy_call_t *)linux32_sys_siggetmask
 	},		/* 68 = siggetmask */
 	{
@@ -619,7 +606,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)netbsd32_mlockall
 	},		/* 152 = netbsd32_mlockall */
 	{
-		
 		.sy_call = (sy_call_t *)sys_munlockall
 	},		/* 153 = munlockall */
 	{
@@ -639,7 +625,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)linux32_sys_sched_getscheduler
 	},		/* 157 = sched_getscheduler */
 	{
-		
 		.sy_call = (sy_call_t *)linux_sys_sched_yield
 	},		/* 158 = sched_yield */
 	{
@@ -723,10 +708,12 @@ struct sysent linux32_sysent[] = {
 	},		/* 179 = rt_sigsuspend */
 	{
 		ns(struct linux32_sys_pread_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG3_64,
 		.sy_call = (sy_call_t *)linux32_sys_pread
 	},		/* 180 = pread */
 	{
 		ns(struct linux32_sys_pwrite_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG3_64,
 		.sy_call = (sy_call_t *)linux32_sys_pwrite
 	},		/* 181 = pwrite */
 	{
@@ -756,7 +743,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 189 = filler */
 	{
-		
 		.sy_call = (sy_call_t *)sys___vfork14
 	},		/* 190 = __vfork14 */
 	{
@@ -792,19 +778,15 @@ struct sysent linux32_sysent[] = {
 		.sy_call = (sy_call_t *)netbsd32___posix_lchown
 	},		/* 198 = netbsd32___posix_lchown */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getuid
 	},		/* 199 = getuid */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getgid
 	},		/* 200 = getgid */
 	{
-		
 		.sy_call = (sy_call_t *)sys_geteuid
 	},		/* 201 = geteuid */
 	{
-		
 		.sy_call = (sy_call_t *)sys_getegid
 	},		/* 202 = getegid */
 	{
@@ -891,7 +873,6 @@ struct sysent linux32_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 223 = filler */
 	{
-		
 		.sy_call = (sy_call_t *)linux_sys_gettid
 	},		/* 224 = gettid */
 	{

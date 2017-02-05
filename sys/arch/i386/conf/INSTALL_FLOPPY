@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.27.2.3 2016/12/05 10:54:53 skrll Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.27.2.4 2017/02/05 13:40:12 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -105,22 +105,22 @@ options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
-file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	NTFS		# Windows/NT Filesystem
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-#file-system 	FDESC		# /dev/fd
-#file-system 	KERNFS		# /kern
-#file-system 	NULLFS		# loopback file system
-#file-system 	PROCFS		# /proc
-#file-system 	UMAPFS		# NULLFS + uid and gid remapping
-#file-system 	UNION		# union file system
-#file-system 	PTYFS		# /dev/pts/N support
-file-system 	TMPFS		# Efficient memory file-system
+file-system	FFS		# UFS
+file-system	EXT2FS		# second extended file system (linux)
+#file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	NTFS		# Windows/NT Filesystem
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+#file-system	FDESC		# /dev/fd
+#file-system	KERNFS		# /kern
+#file-system	NULLFS		# loopback file system
+#file-system	PROCFS		# /proc
+#file-system	UMAPFS		# NULLFS + uid and gid remapping
+#file-system	UNION		# union file system
+#file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
 
 # Filesystem options
 #options 	QUOTA		# legacy UFS quotas
@@ -710,8 +710,8 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 #midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
-
+#spkr*	at pcppi?		# PC speaker
+#spkr*	at audio?		# PC speaker (synthesized)
 
 # Mice
 

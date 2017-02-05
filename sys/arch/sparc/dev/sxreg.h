@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.11.12.1 2016/05/29 08:44:18 skrll Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.11.12.2 2017/02/05 13:40:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -163,6 +163,8 @@
 #define SX_STM(sreg, cnt, o)  (0x80000000 | ((cnt) << 23) | SX_STORE_MASK | \
 				SX_LONG | (sreg << 7) | (o))
 #define SX_STB(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE | \
+				SX_UBYTE_0 | (sreg << 7) | (o))
+#define SX_STBM(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_MASK | \
 				SX_UBYTE_0 | (sreg << 7) | (o))
 #define SX_STBC(sreg, cnt, o) (0x80000000 | ((cnt) << 23) | SX_STORE_CLAMP | \
 				SX_UBYTE_0 | (sreg << 7) | (o))

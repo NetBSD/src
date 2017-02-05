@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.148.2.10 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.148.2.11 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.10 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.11 2017/02/05 13:40:59 skrll Exp $");
 
 #include "arp.h"
 
@@ -148,6 +148,9 @@ static u_int	in_mask2len(struct in_addr *);
 static void	in_len2mask(struct in_addr *, u_int);
 static int	in_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
+
+static void	in_addrhash_insert_locked(struct in_ifaddr *);
+static void	in_addrhash_remove_locked(struct in_ifaddr *);
 
 static int	in_addprefix(struct in_ifaddr *, int);
 static void	in_scrubaddr(struct in_ifaddr *);
@@ -294,19 +297,18 @@ in_socktrim(struct sockaddr_in *ap)
 /*
  *  Routine to take an Internet address and convert into a
  *  "dotted quad" representation for printing.
+ *  Caller has to make sure that buf is at least INET_ADDRSTRLEN long.
  */
 const char *
-in_fmtaddr(struct in_addr addr)
+in_fmtaddr(char *buf, struct in_addr addr)
 {
-	static char buf[sizeof("123.456.789.123")];
-
 	addr.s_addr = ntohl(addr.s_addr);
 
-	snprintf(buf, sizeof(buf), "%d.%d.%d.%d",
-		(addr.s_addr >> 24) & 0xFF,
-		(addr.s_addr >> 16) & 0xFF,
-		(addr.s_addr >>  8) & 0xFF,
-		(addr.s_addr >>  0) & 0xFF);
+	snprintf(buf, INET_ADDRSTRLEN, "%d.%d.%d.%d",
+	    (addr.s_addr >> 24) & 0xFF,
+	    (addr.s_addr >> 16) & 0xFF,
+	    (addr.s_addr >>  8) & 0xFF,
+	    (addr.s_addr >>  0) & 0xFF);
 	return buf;
 }
 
@@ -598,14 +600,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	case SIOCSIFADDR:
 		if (!newifaddr) {
-			mutex_enter(&in_ifaddr_lock);
-			LIST_REMOVE(ia, ia_hash);
-			IN_ADDRHASH_WRITER_REMOVE(ia);
-			mutex_exit(&in_ifaddr_lock);
-#ifdef NET_MPSAFE
-			pserialize_perform(in_ifaddrhash_psz);
-#endif
-			IN_ADDRHASH_ENTRY_DESTROY(ia);
+			in_addrhash_remove(ia);
 			need_reinsert = true;
 		}
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
@@ -619,14 +614,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		if (!newifaddr) {
-			mutex_enter(&in_ifaddr_lock);
-			LIST_REMOVE(ia, ia_hash);
-			IN_ADDRHASH_WRITER_REMOVE(ia);
-			mutex_exit(&in_ifaddr_lock);
-#ifdef NET_MPSAFE
-			pserialize_perform(in_ifaddrhash_psz);
-#endif
-			IN_ADDRHASH_ENTRY_DESTROY(ia);
+			in_addrhash_remove(ia);
 			need_reinsert = true;
 		}
 		error = in_ifinit(ifp, ia, NULL, NULL, 0);
@@ -649,14 +637,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
 			if (!newifaddr) {
-				mutex_enter(&in_ifaddr_lock);
-				LIST_REMOVE(ia, ia_hash);
-				IN_ADDRHASH_WRITER_REMOVE(ia);
-				mutex_exit(&in_ifaddr_lock);
-#ifdef NET_MPSAFE
-				pserialize_perform(in_ifaddrhash_psz);
-#endif
-				IN_ADDRHASH_ENTRY_DESTROY(ia);
+				in_addrhash_remove(ia);
 				need_reinsert = true;
 			}
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr,
@@ -687,9 +668,11 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	case SIOCDIFADDR:
 		ia4_release(ia, &psref);
+		ifaref(&ia->ia_ifa);
 		in_purgeaddr(&ia->ia_ifa);
+		pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
+		ifafree(&ia->ia_ifa);
 		ia = NULL;
-		run_hook = true;
 		break;
 
 #ifdef MROUTING
@@ -715,23 +698,15 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		mutex_enter(&in_ifaddr_lock);
 		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 		IN_ADDRLIST_WRITER_INSERT_TAIL(ia);
-		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
-		    ia, ia_hash);
-		IN_ADDRHASH_WRITER_INSERT_HEAD(ia);
+		in_addrhash_insert_locked(ia);
 		mutex_exit(&in_ifaddr_lock);
 	} else if (need_reinsert) {
-		mutex_enter(&in_ifaddr_lock);
-		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
-		    ia, ia_hash);
-		IN_ADDRHASH_ENTRY_INIT(ia);
-		IN_ADDRHASH_WRITER_INSERT_HEAD(ia);
-		mutex_exit(&in_ifaddr_lock);
+		in_addrhash_insert(ia);
 	}
 
 	if (error == 0) {
 		if (run_hook)
-			(void)pfil_run_hooks(if_pfil,
-			    (struct mbuf **)cmd, ifp, PFIL_IFADDR);
+			pfil_run_addrhooks(if_pfil, cmd, &ia->ia_ifa);
 	} else if (newifaddr) {
 		KASSERT(ia != NULL);
 		in_purgeaddr(&ia->ia_ifa);
@@ -848,23 +823,66 @@ in_purgeaddr(struct ifaddr *ifa)
 
 	KASSERT(!ifa_held(ifa));
 
+	ifa->ifa_flags |= IFA_DESTROYING;
 	in_scrubaddr(ia);
 
 	mutex_enter(&in_ifaddr_lock);
-	LIST_REMOVE(ia, ia_hash);
-	IN_ADDRHASH_WRITER_REMOVE(ia);
+	in_addrhash_remove_locked(ia);
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	IN_ADDRLIST_WRITER_REMOVE(ia);
 	ifa_remove(ifp, &ia->ia_ifa);
-	mutex_exit(&in_ifaddr_lock);
-
 #ifdef NET_MPSAFE
 	pserialize_perform(in_ifaddrhash_psz);
 #endif
+	mutex_exit(&in_ifaddr_lock);
 	IN_ADDRHASH_ENTRY_DESTROY(ia);
 	IN_ADDRLIST_ENTRY_DESTROY(ia);
 	ifafree(&ia->ia_ifa);
 	in_setmaxmtu();
+}
+
+static void
+in_addrhash_insert_locked(struct in_ifaddr *ia)
+{
+
+	KASSERT(mutex_owned(&in_ifaddr_lock));
+
+	LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr), ia,
+	    ia_hash);
+	IN_ADDRHASH_ENTRY_INIT(ia);
+	IN_ADDRHASH_WRITER_INSERT_HEAD(ia);
+}
+
+void
+in_addrhash_insert(struct in_ifaddr *ia)
+{
+
+	mutex_enter(&in_ifaddr_lock);
+	in_addrhash_insert_locked(ia);
+	mutex_exit(&in_ifaddr_lock);
+}
+
+static void
+in_addrhash_remove_locked(struct in_ifaddr *ia)
+{
+
+	KASSERT(mutex_owned(&in_ifaddr_lock));
+
+	LIST_REMOVE(ia, ia_hash);
+	IN_ADDRHASH_WRITER_REMOVE(ia);
+}
+
+void
+in_addrhash_remove(struct in_ifaddr *ia)
+{
+
+	mutex_enter(&in_ifaddr_lock);
+	in_addrhash_remove_locked(ia);
+#ifdef NET_MPSAFE
+	pserialize_perform(in_ifaddrhash_psz);
+#endif
+	mutex_exit(&in_ifaddr_lock);
+	IN_ADDRHASH_ENTRY_DESTROY(ia);
 }
 
 void
@@ -1114,7 +1132,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	s = splnet();
+	s = splsoftnet();
 	error = if_addr_init(ifp, &ia->ia_ifa, true);
 	splx(s);
 	/* Now clear the try tentative flag, it's job is done. */
@@ -1772,7 +1790,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		}
 		if (ia == NULL) {
 			*errorp = EADDRNOTAVAIL;
-			return NULL;
+			goto out;
 		}
 	}
 	/*
@@ -1802,7 +1820,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 				if (ia != NULL)
 					ia4_release(ia, psref);
 				*errorp = EADDRNOTAVAIL;
-				return NULL;
+				ia = NULL;
+				goto out;
 			}
 			pserialize_read_exit(s);
 		}
@@ -1812,7 +1831,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		                                      sintosa(sin)));
 		if (ia == NULL) {
 			*errorp = EADDRNOTAVAIL;
-			return NULL;
+			goto out;
 		}
 		/* FIXME NOMPSAFE */
 		ia4_acquire(ia, psref);
@@ -1821,6 +1840,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	else
 		printf("%s: missing ifa_getifa\n", __func__);
 #endif
+out:
+	rtcache_unref(rt, ro);
 	return ia;
 }
 
@@ -1987,7 +2008,7 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 
 	error = 0;
 error:
-	rtfree(rt);
+	rt_unref(rt);
 	return error;
 }
 

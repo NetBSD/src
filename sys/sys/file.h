@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.77.2.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.77.2.3 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -148,7 +148,7 @@ struct file {
 #define f_bpf		f_undata.fd_bpf
 #define f_fcrypt	f_undata.fd_fcrypt
 #define f_iscsi		f_undata.fd_iscsi
-#endif
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * Descriptor types.

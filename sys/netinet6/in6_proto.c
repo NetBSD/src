@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.103.4.8 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.103.4.9 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.8 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.9 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -118,8 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.8 2016/07/09 20:25:22 skrll Ex
 #endif
 
 #include <netinet6/pim6_var.h>
-
-#include <netinet6/nd6.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>

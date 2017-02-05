@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.55.14.2 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.55.14.3 2017/02/05 13:40:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.55.14.2 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.55.14.3 2017/02/05 13:40:28 skrll Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -220,7 +220,6 @@ pdq_os_receive_pdu(
     pdq_softc_t *sc = pdq->pdq_os_ctx;
     struct fddi_header *fh;
 
-    sc->sc_if.if_ipackets++;
 #if defined(PDQ_BUS_DMA)
     {
 	/*
@@ -240,8 +239,6 @@ pdq_os_receive_pdu(
     }
 #endif
     m->m_pkthdr.len = pktlen;
-    if (sc->sc_bpf != NULL)
-	PDQ_BPF_MTAP(sc, m);
     fh = mtod(m, struct fddi_header *);
     if (drop || (fh->fddi_fc & (FDDIFC_L|FDDIFC_F)) != FDDIFC_LLC_ASYNC) {
 	PDQ_OS_DATABUF_FREE(pdq, m);

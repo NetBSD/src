@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.233.2.8 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.233.2.9 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.8 2016/10/05 20:56:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.9 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -106,13 +106,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.8 2016/10/05 20:56:09 skrll Ex
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/kauth.h>
-#ifdef IPSEC
-#include <sys/domain.h>
-#endif
 #include <sys/systm.h>
 #include <sys/syslog.h>
 
@@ -361,10 +357,13 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		/*
-		 * XXX NOMPSAFE: depends on accessing rt->rt_ifa isn't racy.
-		 * Revisit when working on rtentry MP-ification.
-		 */
+		if (ifa_is_destroying(rt->rt_ifa)) {
+			rtcache_unref(rt, ro);
+			rt = NULL;
+			IP_STATINC(IP_STAT_NOROUTE);
+			error = EHOSTUNREACH;
+			goto bad;
+		}
 		ifa_acquire(rt->rt_ifa, &psref_ia);
 		ia = ifatoia(rt->rt_ifa);
 		ifp = rt->rt_ifp;
@@ -621,9 +620,9 @@ sendit:
 	if ((ia != NULL || (flags & IP_FORWARDING) == 0) &&
 	    (error = ip_ifaddrvalid(ia)) != 0)
 	{
-		arplog(LOG_ERR,
+		ARPLOG(LOG_ERR,
 		    "refusing to send from invalid address %s (pid %d)\n",
-		    in_fmtaddr(ip->ip_src), curproc->p_pid);
+		    ARPLOGADDR(ip->ip_src), curproc->p_pid);
 		IP_STATINC(IP_STAT_ODROPPED);
 		if (error == 1)
 			/*
@@ -765,6 +764,7 @@ sendit:
 	}
 done:
 	ia4_release(ia, &psref_ia);
+	rtcache_unref(rt, ro);
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
 	}
@@ -1543,6 +1543,7 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 		if (error != 0)
 			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
+		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		*ifp = ip_multicast_if(&mreq.imr_interface, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.63.4.3 2016/10/05 20:56:02 skrll Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.63.4.4 2017/02/05 13:40:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.63.4.3 2016/10/05 20:56:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.63.4.4 2017/02/05 13:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -92,7 +92,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct vnode *vp;
 	uint64_t memlimit;
 	ino_t nodes;
-	int error;
+	int error, flags;
 	bool set_memlimit;
 	bool set_nodes;
 
@@ -160,6 +160,20 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		tmp = VFS_TO_TMPFS(mp);
 		if (set_nodes && nodes < tmp->tm_nodes_cnt)
 			return EBUSY;
+		if (!tmp->tm_rdonly && (mp->mnt_flag & MNT_RDONLY)) {
+			/* Changing from read/write to read-only. */
+			flags = WRITECLOSE;
+			if ((mp->mnt_flag & MNT_FORCE))
+				flags |= FORCECLOSE;
+			error = vflush(mp, NULL, flags);
+			if (error)
+				return error;
+			tmp->tm_rdonly = true;
+		}
+		if (tmp->tm_rdonly && (mp->mnt_flag & IMNT_WANTRDWR)) {
+			/* Changing from read-only to read/write. */
+			tmp->tm_rdonly = false;
+		}
 		if (set_memlimit) {
 			if ((error = tmpfs_mntmem_set(tmp, memlimit)) != 0)
 				return error;
@@ -178,6 +192,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (tmp == NULL)
 		return ENOMEM;
 
+	if ((mp->mnt_flag & MNT_RDONLY))
+		tmp->tm_rdonly = true;
 	tmp->tm_nodes_max = nodes;
 	tmp->tm_nodes_cnt = 0;
 	LIST_INIT(&tmp->tm_nodes);

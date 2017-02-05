@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.56.2.1 2016/12/05 10:55:28 skrll Exp $	*/
+/*	$NetBSD: frag6.c,v 1.56.2.2 2017/02/05 13:40:59 skrll Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,15 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.56.2.1 2016/12/05 10:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.56.2.2 2017/02/05 13:40:59 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kmem.h>
@@ -182,6 +182,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		IP6_STATINC(IP6_STAT_REASSEMBLED);
 		in6_ifstat_inc(dstifp, ifs6_reass_ok);
 		*offp = offset;
+		rtcache_unref(rt, &ro);
 		return ip6f->ip6f_nxt;		
 	}
 
@@ -463,6 +464,7 @@ insert:
 
 	IP6_STATINC(IP6_STAT_REASSEMBLED);
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
+	rtcache_unref(rt, &ro);
 
 	/*
 	 * Tell launch routine the next header
@@ -480,6 +482,7 @@ insert:
 	IP6_STATINC(IP6_STAT_FRAGDROPPED);
 	m_freem(m);
  done:
+	rtcache_unref(rt, &ro);
 	return IPPROTO_DONE;
 }
 
@@ -593,16 +596,21 @@ frag6_remque(struct ip6q *p6)
 void
 frag6_fasttimo(void)
 {
+
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	if (frag6_drainwanted) {
 		frag6_drain();
 		frag6_drainwanted = 0;
 	}
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -615,8 +623,10 @@ frag6_slowtimo(void)
 {
 	struct ip6q *q6;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	mutex_enter(&frag6_lock);
 	q6 = ip6q.ip6q_next;
@@ -643,8 +653,10 @@ frag6_slowtimo(void)
 	}
 	mutex_exit(&frag6_lock);
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 
 #if 0
 	/*

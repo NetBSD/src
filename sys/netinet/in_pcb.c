@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.155.2.6 2016/10/05 20:56:09 skrll Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.155.2.7 2017/02/05 13:40:59 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.6 2016/10/05 20:56:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.7 2017/02/05 13:40:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.6 2016/10/05 20:56:09 skrll Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
@@ -193,9 +192,7 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcb *inp;
 	int s;
 
-	s = splnet();
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
-	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
 	memset(inp, 0, sizeof(*inp));
@@ -209,9 +206,7 @@ in_pcballoc(struct socket *so, void *v)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 		if (error != 0) {
-			s = splnet();
 			pool_put(&inpcb_pool, inp);
-			splx(s);
 			return error;
 		}
 	}
@@ -777,8 +772,11 @@ in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		if (inp->inp_af != AF_INET)
 			continue;
 		if ((rt = rtcache_validate(&inp->inp_route)) != NULL &&
-		    rt->rt_ifp == ifp)
+		    rt->rt_ifp == ifp) {
+			rtcache_unref(rt, &inp->inp_route);
 			in_rtchange(inp, 0);
+		} else
+			rtcache_unref(rt, &inp->inp_route);
 	}
 }
 
@@ -805,10 +803,17 @@ in_losing(struct inpcb *inp)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-	if (rt->rt_flags & RTF_DYNAMIC)
-		(void) rtrequest(RTM_DELETE, rt_getkey(rt),
-			rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-			NULL);
+	if (rt->rt_flags & RTF_DYNAMIC) {
+		int error;
+		struct rtentry *nrt;
+
+		error = rtrequest(RTM_DELETE, rt_getkey(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, &nrt);
+		rtcache_unref(rt, &inp->inp_route);
+		if (error == 0)
+			rt_free(nrt);
+	} else
+		rtcache_unref(rt, &inp->inp_route);
 	/*
 	 * A new route can be allocated
 	 * the next time output is attempted.
@@ -1087,4 +1092,11 @@ in_pcbrtentry(struct inpcb *inp)
 
 	sockaddr_in_init(&u.dst4, &inp->inp_faddr, 0);
 	return rtcache_lookup(ro, &u.dst);
+}
+
+void
+in_pcbrtentry_unref(struct rtentry *rt, struct inpcb *inp)
+{
+
+	rtcache_unref(rt, &inp->inp_route);
 }

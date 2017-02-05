@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.59.4.2 2016/12/05 10:54:53 skrll Exp $	 */
+/*	$NetBSD: exec.c,v 1.59.4.3 2017/02/05 13:40:13 skrll Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -108,6 +108,11 @@
 #include "vbe.h"
 #ifdef SUPPORT_PS2
 #include "biosmca.h"
+#endif
+#ifdef EFIBOOT
+#include "efiboot.h"
+#undef DEBUG	/* XXX */
+static u_long efi_loadaddr;
 #endif
 
 #define BOOT_NARGS	6
@@ -295,6 +300,31 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 			return ENOMEM;
 	}
 #endif
+#ifdef EFIBOOT
+	{
+		EFI_STATUS status;
+		EFI_PHYSICAL_ADDRESS addr;
+		UINTN kernsize;
+
+		marks[MARK_START] = loadaddr;
+		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
+			return EIO;
+		close(fd);
+
+		/* Allocate temporary arena. */
+		addr = EFI_ALLOCATE_MAX_ADDRESS;
+		kernsize = marks[MARK_END] - loadaddr;
+		kernsize += 1 * 1024 * 1024;	/* XXX: kernel size COUNT_KERNEL vs LOAD_KERNL (lacked some SYMTAB?) */
+		kernsize = EFI_SIZE_TO_PAGES(kernsize);
+		status = uefi_call_wrapper(BS->AllocatePages, 4,
+		    AllocateMaxAddress, EfiLoaderData, kernsize, &addr);
+		if (EFI_ERROR(status))
+			return ENOMEM;
+		efi_loadaddr = loadaddr = addr;
+
+		memset(marks, 0, sizeof(marks[0]) * MARK_MAX);
+	}
+#endif
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
@@ -332,6 +362,15 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 		ppbcopy(loadaddr, origaddr, marks[MARK_END]);
 	}
 #endif
+#ifdef EFIBOOT
+	marks[MARK_START] -= loadaddr;
+	marks[MARK_ENTRY] -= loadaddr;
+	marks[MARK_DATA] -= loadaddr;
+	/* MARK_NSYM */
+	marks[MARK_SYM] -= loadaddr;
+	marks[MARK_END] -= loadaddr;
+	/* Copy the kernel to original load address later. */
+#endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
 	image_end = marks[MARK_END];
@@ -349,6 +388,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	struct btinfo_symtab btinfo_symtab;
 	u_long extmem;
 	u_long basemem;
+	int error;
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n", file ? file : "NULL",
@@ -363,8 +403,12 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 	memset(marks, 0, sizeof(marks));
 
-	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
+	error = common_load_kernel(file, &basemem, &extmem, loadaddr, floppy,
+	    marks);
+	if (error) {
+		errno = error;
 		goto out;
+	}
 
 	boot_argv[0] = boothowto;
 	boot_argv[1] = 0;
@@ -404,6 +448,12 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 	if (callback != NULL)
 		(*callback)();
+#ifdef EFIBOOT
+	/* Copy the kernel to original load address. */
+	memmove((void *)marks[MARK_START],
+	    (void *)(efi_loadaddr + marks[MARK_START]),
+	    marks[MARK_END] - marks[MARK_START]);
+#endif
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
 	    x86_trunc_page(basemem * 1024));
 	panic("exec returned");

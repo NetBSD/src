@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/02/11 12:45:07 yamt Exp $
+#	$NetBSD: Makefile,v 1.9.134.1 2017/02/05 13:41:01 skrll Exp $
 
 INCSDIR= /usr/include/uvm
 

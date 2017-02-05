@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.81.16.2 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.81.16.3 2017/02/05 13:40:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.81.16.2 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.81.16.3 2017/02/05 13:40:28 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -707,15 +707,8 @@ epic_intr(void *arg)
 			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = len;
 
-			/*
-			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack if it's for us.
-			 */
-			bpf_mtap(ifp, m);
-
 			/* Pass it on. */
 			if_percpuq_enqueue(ifp->if_percpuq, m);
-			ifp->if_ipackets++;
 		}
 
 		/* Update the receive pointer. */

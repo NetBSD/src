@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.4.2.7 2016/12/05 10:55:27 skrll Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.4.2.8 2017/02/05 13:40:58 skrll Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -424,8 +424,24 @@ lltable_purge_entries(struct lltable *llt)
 	IF_AFDATA_WUNLOCK(llt->llt_ifp);
 
 	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
-		if (callout_halt(&lle->la_timer, &lle->lle_lock))
-			LLE_REMREF(lle);
+		/*
+		 * We need to release the lock here to lle_timer proceeds;
+		 * lle_timer should stop immediately if LLE_LINKED isn't set.
+		 * Note that we cannot pass lle->lle_lock to callout_halt
+		 * because it's a rwlock.
+		 */
+		LLE_ADDREF(lle);
+		LLE_WUNLOCK(lle);
+#ifdef NET_MPSAFE
+		callout_halt(&lle->la_timer, NULL);
+#else
+		if (mutex_owned(softnet_lock))
+			callout_halt(&lle->la_timer, softnet_lock);
+		else
+			callout_halt(&lle->la_timer, NULL);
+#endif
+		LLE_WLOCK(lle);
+		LLE_REMREF(lle);
 		llentry_free(lle);
 	}
 
@@ -554,6 +570,13 @@ lltable_unlink_entry(struct lltable *llt, struct llentry *lle)
 {
 
 	llt->llt_unlink_entry(lle);
+}
+
+void
+lltable_free_entry(struct lltable *llt, struct llentry *lle)
+{
+
+	llt->llt_free_entry(llt, lle);
 }
 
 void
@@ -771,7 +794,7 @@ llatbl_lle_show(struct llentry_sa *la)
 		char l3s[INET6_ADDRSTRLEN];
 
 		sin6 = (struct sockaddr_in6 *)&la->l3_addr;
-		ip6_sprintf(l3s, &sin6->sin6_addr);
+		IN6_PRINT(l3s, &sin6->sin6_addr);
 		db_printf(" l3_addr=%s\n", l3s);
 		break;
 	}

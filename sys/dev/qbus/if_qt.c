@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.18.36.1 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.18.36.2 2017/02/05 13:40:45 skrll Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.18.36.1 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.18.36.2 2017/02/05 13:40:45 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -369,7 +369,7 @@ qtinit(struct ifnet *ifp)
 /*
  * Fill in most of the INIT block: vector, options (interrupt enable), ring
  * locations.  The physical address is copied from the ROMs as part of the
- * -YM testing proceedure.  The CSR is saved here rather than in qtinit()
+ * -YM testing procedure.  The CSR is saved here rather than in qtinit()
  * because the qtturbo() routine needs it.
  *
  * The INIT block must be quadword aligned.  Using malloc() guarantees click
@@ -585,7 +585,6 @@ qtrint(struct qt_softc *sc)
 			sc->is_if.if_ierrors++;
 			goto rnext;
 		}
-		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 rnext:
 		--sc->nrcv;

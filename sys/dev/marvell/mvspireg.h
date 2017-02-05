@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _MVSPIREG_H_
 #define _MVSPIREG_H_
 
-#define		MVSPI_SIZE			0x50		/* Size of MVSPI */
+#define		MVSPI_SIZE			0x80		/* Size of MVSPI */
 
 /* Definition of registers */
 #define		MVSPI_CTRL_REG			0x00		/* MVSPI Control Register */

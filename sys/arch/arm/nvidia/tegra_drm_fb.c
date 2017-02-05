@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.3.2.2 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.3.2.3 2017/02/05 13:40:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.3.2.2 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.3.2.3 2017/02/05 13:40:04 skrll Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -108,6 +108,7 @@ tegra_fb_probe(struct drm_fb_helper *helper,
 	tfa.tfa_fb_sizes = *sizes;
 	tfa.tfa_fb_bst = sc->sc_bst;
 	tfa.tfa_fb_dmat = sc->sc_dmat;
+	tfa.tfa_fb_linebytes = helper->fb->pitches[0];
 
 	helper->fbdev = config_found_ia(ddev->dev, "tegrafbbus", &tfa, NULL);
 	if (helper->fbdev == NULL) {

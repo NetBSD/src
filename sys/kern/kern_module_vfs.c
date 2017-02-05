@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.12.30.2 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.12.30.3 2017/02/05 13:40:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.2 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.12.30.3 2017/02/05 13:40:56 skrll Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -126,7 +126,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 		if (error == 0) {	/* can get here if error == ENOENT */
 			if ((flags & MODCTL_NO_PROP) == 0 && filedictp)
 				*filedictp = moduledict;
-			else 
+			else
 				prop_object_release(moduledict);
 		}
 	}
@@ -162,7 +162,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	base = NULL;
 
 	proppath = PNBUF_GET();
-	strcpy(proppath, modpath);
+	strlcpy(proppath, modpath, MAXPATHLEN);
 	pathlen = strlen(proppath);
 	if ((pathlen >= 6) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
 		strcpy(&proppath[pathlen - 5], ".plist");
@@ -180,7 +180,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 		goto out1;
 	}
 	module_print("Loading plist from %s", proppath);
-	
+
 	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0), pb);
 
 	error = vn_open(&nd, FREAD, 0);

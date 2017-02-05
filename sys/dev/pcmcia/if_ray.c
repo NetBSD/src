@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.81.14.2 2016/07/09 20:25:15 skrll Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.81.14.3 2017/02/05 13:40:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.81.14.2 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.81.14.3 2017/02/05 13:40:45 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -553,10 +553,7 @@ ray_attach(device_t parent, device_t self, void *aux)
 	 */
 	memset(&sc->sc_dnwid, 0, sizeof(sc->sc_dnwid));
 	sc->sc_dnwid.i_len = strlen(RAY_DEF_NWID);
-	if (sc->sc_dnwid.i_len > IEEE80211_NWID_LEN)
-		sc->sc_dnwid.i_len = IEEE80211_NWID_LEN;
-	if (sc->sc_dnwid.i_len > 0)
-		memcpy(sc->sc_dnwid.i_nwid, RAY_DEF_NWID, sc->sc_dnwid.i_len);
+	memcpy(sc->sc_dnwid.i_nwid, RAY_DEF_NWID, sc->sc_dnwid.i_len);
 	memcpy(&sc->sc_cnwid, &sc->sc_dnwid, sizeof(sc->sc_cnwid));
 	sc->sc_omode = sc->sc_mode = RAY_MODE_DEFAULT;
 	sc->sc_countrycode = sc->sc_dcountrycode =

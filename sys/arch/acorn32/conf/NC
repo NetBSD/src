@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.64.2.1 2015/09/22 12:05:35 skrll Exp $
+#	$NetBSD: NC,v 1.64.2.2 2017/02/05 13:40:00 skrll Exp $
 #
 #	NC - with wscons
 #
@@ -209,6 +209,8 @@ lpt*	at pioc? offset 0x0278 irq 0	# Old driver
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+spkr*	at audio?		# PC speaker (synthesized)
 
 # Podule bus device
 podulebus0	at root

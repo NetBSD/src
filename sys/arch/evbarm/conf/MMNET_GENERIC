@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.20.2.2 2016/12/05 10:54:52 skrll Exp $
+# $NetBSD: MMNET_GENERIC,v 1.20.2.3 2017/02/05 13:40:07 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20.2.2 $"
+#ident 		"GENERIC-$Revision: 1.20.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -518,6 +518,8 @@ ucom*	at uvscom? portno ?
 
 # Audio support
 #audio*	at audiobus?
+
+#spkr*	at audio?		# PC speaker (synthesized)
 
 # MIDI support
 #midi*	at midibus?

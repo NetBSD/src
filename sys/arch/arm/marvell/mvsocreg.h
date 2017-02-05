@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocreg.h,v 1.9.6.1 2015/06/06 14:39:56 skrll Exp $	*/
+/*	$NetBSD: mvsocreg.h,v 1.9.6.2 2017/02/05 13:40:04 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -33,6 +33,9 @@
 #define MVSOC_UNITID_DEVBUS		0x1	/* Device Bus registers */
 #define MVSOC_UNITID_MLMB		0x2	/* Mbus-L to Mbus Bridge reg */
 #define MVSOC_UNITID_PEX		0x4	/* PCI Express Interface reg */
+
+
+#define MVSOC_INTERREGS_SIZE		0x00100000	/* 1 MB */
 
 
 /*
@@ -192,5 +195,19 @@
  * PCI-Express Interface Registers
  */
 #define MVSOC_PEX_BASE		(UNITID2PHYS(PEX))	/* 0x40000 */
+
+
+/*
+ * AXI's DDR Controller Registers
+ *   used by Dove only ???
+ */
+
+/* DDR SDRAM Contriller Address Decode Registers */
+#define MVSOC_AXI_NCS			2
+#define MVSOC_AXI_MMAP1(cs)		(((cs) << 4) + 0x100)
+#define MVSOC_AXI_MMAP1_STARTADDRESS(v)	((v) & 0xff800000)
+#define MVSOC_AXI_MMAP1_AREALENGTH(v)	(0x10000 << (((v) & 0xf0000) >> 16))
+#define MVSOC_AXI_MMAP1_ADDRESSMASK	(0x1ff << 7)
+#define MVSOC_AXI_MMAP1_VALID		(1 << 0)
 
 #endif	/* _MVSOCREG_H_ */

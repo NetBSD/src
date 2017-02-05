@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.30.6.3 2016/12/05 10:55:26 skrll Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.30.6.4 2017/02/05 13:40:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -258,6 +258,21 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #define IS_TEXT(p)	(p.p_flags & PF_X)
 #define IS_DATA(p)	(p.p_flags & PF_W)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
+
+/*
+ * Load the ELF binary into memory. Layout of the memory:
+ * +-----------------+------------+-----------------+-----------------+
+ * | KERNEL SEGMENTS | ELF HEADER | SECTION HEADERS | SYMBOL SECTIONS |
+ * +-----------------+------------+-----------------+-----------------+
+ * The KERNEL SEGMENTS start address is fixed by the segments themselves. We
+ * then map the rest by increasing maxp.
+ *
+ * The offsets of the SYMBOL SECTIONS are relative to the start address of the
+ * ELF HEADER. The shdr offset of ELF HEADER points to SECTION HEADERS.
+ *
+ * We just give the kernel a pointer to the ELF HEADER, which is enough for it
+ * to find the location and number of symbols by itself later.
+ */
 
 int
 ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)

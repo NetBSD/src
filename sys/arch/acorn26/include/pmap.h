@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.9 2009/01/14 23:14:48 bjh21 Exp $ */
+/* $NetBSD: pmap.h,v 1.9.42.1 2017/02/05 13:40:00 skrll Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -56,6 +56,8 @@ pmap_remove_all(struct pmap *pmap)
 #define PMAP_MAP_POOLPAGE(pa)	((vaddr_t)MEMC_PHYS_BASE + (pa))
 #define PMAP_UNMAP_POOLPAGE(va)	((va) - (vaddr_t)MEMC_PHYS_BASE)
 #define PMAP_STEAL_MEMORY
+
+#define UVM_PHYSSEG_LEGACY /* for uvm_physseg_set_avail_start */
 
 #endif /* _KERNEL */
 

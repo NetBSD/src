@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 292674 2015-12-23 22:45:17Z sbruno $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.3.6.4 2016/12/05 10:55:17 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 294734 2016-01-25 16:18:53Z smh $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.3.6.5 2017/02/05 13:40:45 skrll Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -55,6 +55,15 @@
 #define ASSERT(x) if(!(x)) panic("IXGBE: x")
 #define EWARN(H, W, S) printf(W)
 
+enum {
+	IXGBE_ERROR_SOFTWARE,
+	IXGBE_ERROR_POLLING,
+	IXGBE_ERROR_INVALID_STATE,
+	IXGBE_ERROR_UNSUPPORTED,
+	IXGBE_ERROR_ARGUMENT,
+	IXGBE_ERROR_CAUTION,
+};
+
 /* The happy-fun DELAY macro is defined in /usr/src/sys/i386/include/clock.h */
 #define usec_delay(x) DELAY(x)
 #define msec_delay(x) DELAY(1000*(x))
@@ -71,9 +80,23 @@
 	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
-	#define ERROR_REPORT1(S,A)      printf(S "\n",A)
-	#define ERROR_REPORT2(S,A,B)    printf(S "\n",A,B)
-	#define ERROR_REPORT3(S,A,B,C)  printf(S "\n",A,B,C)
+	#define ERROR_REPORT1 ERROR_REPORT
+	#define ERROR_REPORT2 ERROR_REPORT
+	#define ERROR_REPORT3 ERROR_REPORT
+	#define ERROR_REPORT(level, format, arg...) do { \
+		switch (level) { \
+		case IXGBE_ERROR_SOFTWARE: \
+		case IXGBE_ERROR_CAUTION: \
+		case IXGBE_ERROR_POLLING: \
+		case IXGBE_ERROR_INVALID_STATE: \
+		case IXGBE_ERROR_UNSUPPORTED: \
+		case IXGBE_ERROR_ARGUMENT: \
+			device_printf(ixgbe_dev_from_hw(hw), format, ## arg); \
+			break; \
+		default: \
+			break; \
+		} \
+	} while (0)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)
@@ -126,14 +149,8 @@ typedef uint64_t	u64;
 
 #define le16_to_cpu
 
-/*
- * This device driver divides interrupt to TX, RX and link state.
- * Each MSI-X vector indexes are below.
- */
-#define IXG_MSIX_NINTR		2
-#define IXG_MSIX_TXRXINTR_IDX	0
-#define IXG_MSIX_LINKINTR_IDX	1
-#define IXG_MAX_NINTR		IXG_MSIX_NINTR
+/* This device driver's max interrupt numbers. */
+#define IXG_MAX_NINTR		64
 
 #if __FreeBSD_version < 800000
 #if defined(__i386__) || defined(__amd64__)

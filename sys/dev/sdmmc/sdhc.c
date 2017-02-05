@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.51.2.7 2016/10/05 20:55:56 skrll Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.51.2.8 2017/02/05 13:40:46 skrll Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.51.2.7 2016/10/05 20:55:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.51.2.8 2017/02/05 13:40:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -290,38 +290,42 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	callout_init(&hp->tuning_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hp->tuning_timer, sdhc_tuning_timer, hp);
 
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
-		sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
-	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+	if (iosize <= SDHC_HOST_CTL_VERSION) {
+		aprint_normal_dev(sc->sc_dev, "SDHC NO-VERS");
+		hp->specver = -1;
 	} else {
-		sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
+		} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+		} else
+			sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+		aprint_normal_dev(sc->sc_dev, "SDHC ");
+		hp->specver = SDHC_SPEC_VERSION(sdhcver);
+		switch (SDHC_SPEC_VERSION(sdhcver)) {
+		case SDHC_SPEC_VERS_100:
+			aprint_normal("1.0");
+			break;
+
+		case SDHC_SPEC_VERS_200:
+			aprint_normal("2.0");
+			break;
+
+		case SDHC_SPEC_VERS_300:
+			aprint_normal("3.0");
+			break;
+
+		case SDHC_SPEC_VERS_400:
+			aprint_normal("4.0");
+			break;
+
+		default:
+			aprint_normal("unknown version(0x%x)",
+			    SDHC_SPEC_VERSION(sdhcver));
+			break;
+		}
+		aprint_normal(", rev %u", SDHC_VENDOR_VERSION(sdhcver));
 	}
-	aprint_normal_dev(sc->sc_dev, "SDHC ");
-	hp->specver = SDHC_SPEC_VERSION(sdhcver);
-	switch (SDHC_SPEC_VERSION(sdhcver)) {
-	case SDHC_SPEC_VERS_100:
-		aprint_normal("1.0");
-		break;
-
-	case SDHC_SPEC_VERS_200:
-		aprint_normal("2.0");
-		break;
-
-	case SDHC_SPEC_VERS_300:
-		aprint_normal("3.0");
-		break;
-
-	case SDHC_SPEC_VERS_400:
-		aprint_normal("4.0");
-		break;
-
-	default:
-		aprint_normal("unknown version(0x%x)",
-		    SDHC_SPEC_VERSION(sdhcver));
-		break;
-	}
-	aprint_normal(", rev %u", SDHC_VENDOR_VERSION(sdhcver));
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -591,7 +595,9 @@ adma_done:
 		saa.saa_clkmin = hp->clkbase / 0x3ff;
 	else
 		saa.saa_clkmin = hp->clkbase / 256;
-	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
+	if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP))
+		saa.saa_caps |= SMC_CAPS_AUTO_STOP;
+	saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_8BIT_MODE))
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
@@ -1568,7 +1574,8 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_error == 0 && cmd->c_data != NULL)
 		sdhc_transfer_data(hp, cmd);
 	else if (ISSET(cmd->c_flags, SCF_RSP_BSY)) {
-		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_BUSY_INTR) &&
+		    !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
 			DPRINTF(1,("%s: sdhc_exec_command: RSP_BSY\n",
 			    HDEVNAME(hp)));
 			cmd->c_error = ETIMEDOUT;
@@ -1583,6 +1590,10 @@ out:
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 	}
 	SET(cmd->c_flags, SCF_ITSDONE);
+
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP) &&
+	    cmd->c_opcode == MMC_STOP_TRANSMISSION)
+		(void)sdhc_soft_reset(hp, SDHC_RESET_CMD|SDHC_RESET_DAT);
 
 	mutex_exit(&hp->intr_lock);
 
@@ -1638,7 +1649,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	if (blkcount > 1) {
 		mode |= SDHC_MULTI_BLOCK_MODE;
 		/* XXX only for memory commands? */
-		mode |= SDHC_AUTO_CMD12_ENABLE;
+		if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP))
+			mode |= SDHC_AUTO_CMD12_ENABLE;
 	}
 	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0 &&
 	    ISSET(hp->flags,  SHF_MODE_DMAEN)) {

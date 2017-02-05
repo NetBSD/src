@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.38.4.4 2016/07/09 20:25:04 skrll Exp $ */
+/*	$NetBSD: if_dge.c,v 1.38.4.5 2017/02/05 13:40:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38.4.4 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.38.4.5 2017/02/05 13:40:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,6 +941,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -1576,7 +1577,7 @@ dge_intr(void *arg)
 			dge_init(ifp);
 
 		/* Try to get more packets going. */
-		dge_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	return (handled);
@@ -1804,11 +1805,6 @@ dge_rxintr(struct dge_softc *sc)
 			if (errors & RDESC_ERR_TCPE)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
-
-		ifp->if_ipackets++;
-
-		/* Pass this up to any BPF listeners. */
-		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

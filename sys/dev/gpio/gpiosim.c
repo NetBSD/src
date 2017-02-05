@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.16.6.2 2016/10/05 20:55:40 skrll Exp $ */
+/* $NetBSD: gpiosim.c,v 1.16.6.3 2017/02/05 13:40:27 skrll Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -121,7 +121,8 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = GPIOSIM_NPINS;
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
         sysctl_createv(&sc->sc_log, 0, NULL, &node,
             0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.145.4.1 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: conf.h,v 1.145.4.2 2017/02/05 13:41:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,6 +63,7 @@ struct vnode;
 #define	D_TYPEMASK	0x00ff
 #define	D_MPSAFE	0x0100
 #define	D_NEGOFFSAFE	0x0200
+#define	D_MCLOSE	0x0400
 
 /*
  * Block device switch table
@@ -133,7 +134,7 @@ devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 #define	nostop		((dev_type_stop((*)))enodev)
 #define	notty		NULL
 #define	nopoll		seltrue
-#define	nommap		((dev_type_mmap((*)))enodev)
+paddr_t	nommap(dev_t, off_t, int);
 #define	nodump		((dev_type_dump((*)))enodev)
 #define	nosize		NULL
 #define	nokqfilter	seltrue_kqfilter
@@ -146,7 +147,6 @@ devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 #define	nullioctl	((dev_type_ioctl((*)))nullop)
 #define	nullstop	((dev_type_stop((*)))nullop)
 #define	nullpoll	((dev_type_poll((*)))nullop)
-#define	nullmmap	((dev_type_mmap((*)))nullop)
 #define	nulldump	((dev_type_dump((*)))nullop)
 #define	nullkqfilter	((dev_type_kqfilter((*)))eopnotsupp)
 #define nulldiscard	((dev_type_discard((*)))nullop)
@@ -174,7 +174,9 @@ dev_type_kqfilter(cdev_kqfilter);
 dev_type_discard(cdev_discard);
 
 int	cdev_type(dev_t);
+int	cdev_flags(dev_t);
 int	bdev_type(dev_t);
+int	bdev_flags(dev_t);
 
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];

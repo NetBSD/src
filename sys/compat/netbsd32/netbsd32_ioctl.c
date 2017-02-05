@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.69.6.5 2016/12/05 10:55:00 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.69.6.6 2017/02/05 13:40:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.5 2016/12/05 10:55:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.6 2017/02/05 13:40:26 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -335,7 +335,7 @@ static inline void
 netbsd32_to_ieee80211req(struct netbsd32_ieee80211req *ireq32,
 			 struct ieee80211req *ireq, u_long cmd)
 {
-	strncpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
+	strlcpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
 	ireq->i_type = ireq32->i_type;
 	ireq->i_val = ireq32->i_val;
 	ireq->i_len = ireq32->i_len;
@@ -349,7 +349,7 @@ netbsd32_to_ieee80211_nwkey(struct netbsd32_ieee80211_nwkey *nwk32,
 {
 	int i;
 
-	strncpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
+	strlcpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
 	nwk->i_wepon = nwk32->i_wepon;
 	nwk->i_defkid = nwk32->i_defkid;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -472,9 +472,7 @@ netbsd32_to_npf_ioctl_table(
 	case NPF_CMD_TABLE_LOOKUP:
 	case NPF_CMD_TABLE_ADD:
 	case NPF_CMD_TABLE_REMOVE:
-		p->nct_data.ent.alen = s32p->nct_data.ent.alen;
-		p->nct_data.ent.addr = s32p->nct_data.ent.addr;
-		p->nct_data.ent.mask = s32p->nct_data.ent.mask;
+		p->nct_data.ent = s32p->nct_data.ent;
 		break;
 	case NPF_CMD_TABLE_LIST:
 		p->nct_data.buf.buf = NETBSD32PTR64(s32p->nct_data.buf.buf);
@@ -760,7 +758,7 @@ static inline void
 netbsd32_from_ieee80211req(struct ieee80211req *ireq,
 			   struct netbsd32_ieee80211req *ireq32, u_long cmd)
 {
-	strncpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
+	strlcpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
 	ireq32->i_type = ireq->i_type;
 	ireq32->i_val = ireq->i_val;
 	ireq32->i_len = ireq->i_len;
@@ -774,7 +772,7 @@ netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
 {
 	int i;
 
-	strncpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
+	strlcpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
 	nwk32->i_wepon = nwk->i_wepon;
 	nwk32->i_defkid = nwk->i_defkid;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -896,9 +894,7 @@ netbsd32_from_npf_ioctl_table(
 	case NPF_CMD_TABLE_LOOKUP:
 	case NPF_CMD_TABLE_ADD:
 	case NPF_CMD_TABLE_REMOVE:
-		s32p->nct_data.ent.alen = p->nct_data.ent.alen;
-		s32p->nct_data.ent.addr = p->nct_data.ent.addr;
-		s32p->nct_data.ent.mask = p->nct_data.ent.mask;
+		s32p->nct_data.ent = p->nct_data.ent;
 		break;
 	case NPF_CMD_TABLE_LIST:
 		NETBSD32PTR32(s32p->nct_data.buf.buf, p->nct_data.buf.buf);

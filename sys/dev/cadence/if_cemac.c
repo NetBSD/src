@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.1.2.6 2016/07/09 20:25:01 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.1.2.7 2017/02/05 13:40:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.1.2.6 2016/07/09 20:25:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.1.2.7 2017/02/05 13:40:27 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -356,7 +356,6 @@ cemac_intr(void *arg)
 					break;
 				}
 				sc->rxq[bi].m->m_pkthdr.csum_flags = csum;
-				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
                                 if_percpuq_enqueue(ifp->if_percpuq,
 						   sc->rxq[bi].m);

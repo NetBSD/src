@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.38 2013/11/15 00:12:44 rmind Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.38.6.1 2017/02/05 13:40:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -45,12 +45,18 @@
 #include <sys/selinfo.h>		/* for struct selinfo */
 #include <net/if.h>			/* for IFNAMSIZ */
 #include <net/bpfjit.h>			/* for bpfjit_function_t */
+#ifdef _KERNEL
+#include <sys/pslist.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+#endif
 
 /*
  * Descriptor associated with each open bpf file.
  */
 struct bpf_d {
-	struct bpf_d	*bd_next;	/* Linked list of descriptors */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
+	struct bpf_d	*_bd_next;	/* Linked list of descriptors */
 	/*
 	 * Buffer slots: two mbuf clusters buffer the incoming packets.
 	 *   The model has three slots.  Sbuf is always occupied.
@@ -93,7 +99,8 @@ struct bpf_d {
 #endif
 	callout_t	bd_callout;	/* for BPF timeouts with select */
 	pid_t		bd_pid;		/* corresponding PID */
-	LIST_ENTRY(bpf_d) bd_list;	/* list of all BPF's */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
+	LIST_ENTRY(bpf_d) _bd_list;	/* list of all BPF's */
 	void		*bd_sih;	/* soft interrupt handle */
 	struct timespec bd_atime;	/* access time */
 	struct timespec bd_mtime;	/* modification time */
@@ -102,6 +109,13 @@ struct bpf_d {
 	int		bd_compat32;	/* 32-bit stream on LP64 system */
 #endif
 	bpfjit_func_t	bd_jitcode;	/* compiled filter program */
+	size_t		bd_filter_size;
+#ifdef _KERNEL
+	struct pslist_entry	bd_bif_dlist_entry; /* For bpf_if */
+	struct pslist_entry	bd_bpf_dlist_entry; /* For the global list */
+	kmutex_t	*bd_mtx;
+	kcondvar_t	bd_cv;
+#endif
 };
 
 
@@ -133,16 +147,20 @@ struct bpf_d_ext {
  * Descriptor associated with each attached hardware interface.
  */
 struct bpf_if {
-	struct bpf_if *bif_next;	/* list of all interfaces */
-	struct bpf_d *bif_dlist;	/* descriptor list */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
+	struct bpf_if *_bif_next;	/* list of all interfaces */
+	struct bpf_d *_bif_dlist;	/* descriptor list */
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */
 	struct ifnet *bif_ifp;		/* corresponding interface */
-};
-
+	void *bif_si;
+	struct mbuf *bif_mbuf_head;
+	struct mbuf *bif_mbuf_tail;
 #ifdef _KERNEL
-int	 bpf_setf(struct bpf_d *, struct bpf_program *);
+	struct pslist_entry bif_iflist_entry;
+	struct pslist_head bif_dlist_head;
 #endif
+};
 
 #endif /* !_NET_BPFDESC_H_ */

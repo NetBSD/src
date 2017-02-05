@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdserv.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $	*/
+/*	$NetBSD: nfs_nfsdserv.c,v 1.2.12.2 2017/02/05 13:40:55 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdserv.c 299514 2016-05-12 05:03:12Z cem "); */
-__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $");
+__RCSID("$NetBSD: nfs_nfsdserv.c,v 1.2.12.2 2017/02/05 13:40:55 skrll Exp $");
 
 /*
  * nfs version 2, 3 and 4 server calls to vnode ops
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: nfs_nfsdserv.c,v 1.2.12.1 2016/12/05 10:55:26 skrll Exp $");
  */
 
 #ifndef APPLEKEXT
-#include <fs/nfs/nfsport.h>
+#include <fs/nfs/common/nfsport.h>
 
 /* Global vars */
 extern u_int32_t newnfs_false, newnfs_true;
