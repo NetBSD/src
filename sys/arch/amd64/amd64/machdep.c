@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.247 2017/02/05 06:12:33 maya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.248 2017/02/05 06:13:53 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.247 2017/02/05 06:12:33 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248 2017/02/05 06:13:53 maya Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -811,7 +811,7 @@ sparse_dump_mark(void)
 		 * uvm_page_physload()ed
 		 */
 		for (pfn = uvm_physseg_get_start(upm);
-		     pfn <= uvm_physseg_get_end(upm);
+		     pfn < uvm_physseg_get_end(upm);
 		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 
