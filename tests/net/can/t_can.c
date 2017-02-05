@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.1.2.3 2017/02/04 22:26:16 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.1.2.4 2017/02/05 11:44:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.1.2.3 2017/02/04 22:26:16 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.1.2.4 2017/02/05 11:44:17 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -835,8 +835,8 @@ ATF_TC_BODY(cannoloop, tc)
 	FD_ZERO(&rfds);
 	FD_SET(s1, &rfds);
 	FD_SET(s2, &rfds);
-	/* we should receive no message; wait for 2 seconds */
-	tmout.tv_sec = 2;
+	/* we should receive no message; wait for 1 seconds */
+	tmout.tv_sec = 1;
 	tmout.tv_usec = 0;
 	rv1 = rump_sys_select(MAX(s1,s2) + 1, &rfds, NULL, NULL, &tmout);
 	switch(rv1) {

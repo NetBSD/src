@@ -1,4 +1,4 @@
-/*	$NetBSD: h_canutils.c,v 1.1.2.1 2017/02/04 22:26:16 bouyer Exp $	*/
+/*	$NetBSD: h_canutils.c,v 1.1.2.2 2017/02/05 11:44:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: h_canutils.c,v 1.1.2.1 2017/02/04 22:26:16 bouyer Exp $");
+__RCSID("$NetBSD: h_canutils.c,v 1.1.2.2 2017/02/05 11:44:17 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -100,8 +100,8 @@ can_recvfrom(int s, struct can_frame *cf, int *len, struct sockaddr_can *sa)
 	memset(cf,  0, sizeof(struct can_frame));
 	FD_ZERO(&rfds);
 	FD_SET(s, &rfds);
-	/* we should receive no message; wait for 2 seconds */
-	tmout.tv_sec = 2;
+	/* wait 1 second for the message (in some tests we expect no message) */
+	tmout.tv_sec = 1;
 	tmout.tv_usec = 0;
 	rv = rump_sys_select(s + 1, &rfds, NULL, NULL, &tmout);
 	switch(rv) {
@@ -138,8 +138,8 @@ can_read(int s, struct can_frame *cf, int *len)
 	memset(cf,  0, sizeof(struct can_frame));
 	FD_ZERO(&rfds);
 	FD_SET(s, &rfds);
-	/* we should receive no message; wait for 2 seconds */
-	tmout.tv_sec = 2;
+	/* wait 1 second for the message (in some tests we expect no message) */
+	tmout.tv_sec = 1;
 	tmout.tv_usec = 0;
 	rv = rump_sys_select(s + 1, &rfds, NULL, NULL, &tmout);
 	switch(rv) {
