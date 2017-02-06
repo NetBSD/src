@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.32 2017/02/05 13:40:46 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.33 2017/02/06 09:02:38 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -422,10 +422,10 @@ void
 smsc_setmulti(struct smsc_softc *sc)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	struct ether_multi	*enm;
-	struct ether_multistep	 step;
-	uint32_t		 hashtbl[2] = { 0, 0 };
-	uint32_t		 hash;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t hashtbl[2] = { 0, 0 };
+	uint32_t hash;
 
 	if (sc->sc_dying)
 		return;
@@ -966,8 +966,8 @@ out:
 int
 smsc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct smsc_softc	*sc = ifp->if_softc;
-	int			s, error = 0;
+	struct smsc_softc *sc = ifp->if_softc;
+	int s, error = 0;
 
 	if (sc->sc_dying)
 		return EIO;
@@ -1283,14 +1283,14 @@ smsc_unlock_mii(struct smsc_softc *sc)
 void
 smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	struct smsc_chain	*c = (struct smsc_chain *)priv;
-	struct smsc_softc	*sc = c->sc_sc;
-	struct ifnet		*ifp = &sc->sc_ec.ec_if;
-	u_char			*buf = c->sc_buf;
-	uint32_t		total_len;
-	uint32_t		rxhdr;
-	uint16_t		pktlen;
-	struct mbuf		*m;
+	struct smsc_chain *c = (struct smsc_chain *)priv;
+	struct smsc_softc *sc = c->sc_sc;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	u_char *buf = c->sc_buf;
+	uint32_t total_len;
+	uint32_t rxhdr;
+	uint16_t pktlen;
+	struct mbuf *m;
 
 	mutex_enter(&sc->sc_rxlock);
 
@@ -1595,7 +1595,7 @@ smsc_rx_list_free(struct smsc_softc *sc)
 struct mbuf *
 smsc_newbuf(void)
 {
-	struct mbuf	*m;
+	struct mbuf *m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
