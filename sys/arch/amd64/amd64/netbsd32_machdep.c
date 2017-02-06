@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.99 2017/02/05 08:52:11 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.100 2017/02/06 16:02:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.99 2017/02/05 08:52:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.100 2017/02/06 16:02:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.99 2017/02/05 08:52:11 maxv E
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
 #include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
@@ -82,6 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.99 2017/02/05 08:52:11 maxv E
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
 const char	machine_arch32[] = "i386";	
+
+#ifdef USER_LDT
+static int x86_64_get_ldt32(struct lwp *, void *, register_t *);
+static int x86_64_set_ldt32(struct lwp *, void *, register_t *);
+#else
+#define x86_64_get_ldt32(x, y, z)	ENOSYS
+#define x86_64_set_ldt32(x, y, z)	ENOSYS
+#endif
 
 #ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
@@ -575,6 +584,14 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 		error = x86_iopl(l,
 		    NETBSD32PTR64(SCARG(uap, parms)), retval);
 		break;
+	case X86_GET_LDT: 
+		error = x86_64_get_ldt32(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
+	case X86_SET_LDT: 
+		error = x86_64_set_ldt32(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
 	case X86_GET_MTRR:
 		error = x86_64_get_mtrr32(l,
 		    NETBSD32PTR64(SCARG(uap, parms)), retval);
@@ -589,6 +606,70 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	}
 	return error;
 }
+
+#ifdef USER_LDT
+static int
+x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
+{
+	struct x86_set_ldt_args32 ua32;
+	struct x86_set_ldt_args ua;
+	union descriptor *descv;
+	int error;
+
+	if ((error = copyin(args, &ua32, sizeof(ua32))) != 0)
+		return (error);
+
+	ua.start = ua32.start;
+	ua.num = ua32.num;
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_NOWAIT);
+	if (descv == NULL)
+		return ENOMEM;
+
+	error = copyin((void *)(uintptr_t)ua32.desc, descv,
+	    sizeof(*descv) * ua.num);
+	if (error == 0)
+		error = x86_set_ldt1(l, &ua, descv);
+	*retval = ua.start;
+
+	free(descv, M_TEMP);
+	return error;
+}
+
+static int
+x86_64_get_ldt32(struct lwp *l, void *args, register_t *retval)
+{
+	struct x86_get_ldt_args32 ua32;
+	struct x86_get_ldt_args ua;
+	union descriptor *cp;
+	int error;
+
+	if ((error = copyin(args, &ua32, sizeof(ua32))) != 0)
+		return error;
+
+	ua.start = ua32.start;
+	ua.num = ua32.num;
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	if (cp == NULL)
+		return ENOMEM;
+
+	error = x86_get_ldt1(l, &ua, cp);
+	*retval = ua.num;
+	if (error == 0)
+		error = copyout(cp, (void *)(uintptr_t)ua32.desc,
+		    ua.num * sizeof(*cp));
+
+	free(cp, M_TEMP);
+	return error;
+}
+#endif
 
 #ifdef MTRR
 static int
