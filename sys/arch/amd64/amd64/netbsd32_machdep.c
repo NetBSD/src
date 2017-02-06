@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.100 2017/02/06 16:02:17 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.101 2017/02/06 16:34:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.100 2017/02/06 16:02:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.101 2017/02/06 16:34:37 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1016,6 +1016,7 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 int
 cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 {
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	const __greg32_t *gr;
 	struct trapframe *tf;
 	struct pcb *pcb;
@@ -1024,22 +1025,31 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 	tf = l->l_md.md_regs;
 	pcb = lwp_getpcb(l);
 
-	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !VALID_USER_CSEL32(gr[_REG32_CS]))
+	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
 		return EINVAL;
-	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
-	    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
-		return EINVAL;
-	if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
-	    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
-		return EINVAL;
-	if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
-		return EINVAL;
-	if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
-	    !VALID_USER_DSEL32(gr[_REG32_SS]))
-		return EINVAL;
-	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
-		return EINVAL;
+
+	if (__predict_false(pmap->pm_ldt != NULL)) {
+		/* Only when the LDT is user-set (with USER_LDT) */
+		if (!USERMODE(gr[_REG32_CS], gr[_REG32_EFL]))
+			return EINVAL;
+	} else {
+		if (!VALID_USER_CSEL32(gr[_REG32_CS]))
+			return EINVAL;
+		if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
+		    !(VALID_USER_FSEL32(gr[_REG32_FS]) && pcb->pcb_fs != 0))
+			return EINVAL;
+		if (gr[_REG32_GS] != 0 && !VALID_USER_DSEL32(gr[_REG32_GS]) &&
+		    !(VALID_USER_GSEL32(gr[_REG32_GS]) && pcb->pcb_gs != 0))
+			return EINVAL;
+		if (gr[_REG32_ES] != 0 && !VALID_USER_DSEL32(gr[_REG32_ES]))
+			return EINVAL;
+		if (!VALID_USER_DSEL32(gr[_REG32_DS]) ||
+		    !VALID_USER_DSEL32(gr[_REG32_SS]))
+			return EINVAL;
+		if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
+			return EINVAL;
+	}
+
 	return 0;
 }
 
