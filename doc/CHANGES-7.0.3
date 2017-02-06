@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.22 2017/02/05 19:20:06 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.23 2017/02/06 07:28:39 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -343,4 +343,10 @@ sys/netinet/if_arp.c				1.238, 1.239 via patch
 
 	Add checks on the ARP header
 	[maxv, ticket #1356]
+
+crypto/external/bsd/openssl/dist/crypto/ecdsa/ecs_ossl.c patch
+crypto/external/bsd/openssl/dist/crypto/evp/e_rc4_hmac_md5.c patch
+
+	Fix CVE-2016-7056 and CVE-2017-3731.
+	[spz, ticket #1352]
 
