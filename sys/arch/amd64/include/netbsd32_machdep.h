@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.20 2016/10/19 09:44:00 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.21 2017/02/06 16:02:17 maxv Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -112,6 +112,18 @@ struct reg32 {
 
 struct fpreg32 {
 	char	__data[108];
+};
+
+struct x86_get_ldt_args32 {
+	int32_t start;
+	uint32_t desc;
+	int32_t num;
+};
+
+struct x86_set_ldt_args32 {
+	int32_t start;
+	uint32_t desc;
+	int32_t num;
 };
 
 struct mtrr32 {
