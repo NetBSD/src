@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.195 2017/02/02 22:07:33 martin Exp $
+# $NetBSD: mi,v 1.196 2017/02/06 19:45:17 kre Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -664,6 +664,7 @@
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/nbperf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nbsvtool.debug	comp-crypto-debug	crypto,debug
+./usr/libdata/debug/usr/bin/nc.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/bin/netpgp.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/bin/netpgpkeys.debug	comp-crypto-debug	crypto,debug
