@@ -26,6 +26,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: netcat.c,v 1.2 2017/02/06 16:03:40 christos Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -54,8 +56,17 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef CRYPTO
 #include <tls.h>
+#else
+#define TLS_WANT_POLLIN -2
+#define TLS_WANT_POLLOUT -2
+#endif
 #include "atomicio.h"
+
+#ifdef __NetBSD__
+#define accept4(a, b, c, d) paccept((a), (b), (c), NULL, (d))
+#endif
 
 #define PORT_MAX	65535
 #define UNIX_DG_TMP_SOCKET_SIZE	19
@@ -95,13 +106,15 @@ int	Iflag;					/* TCP receive buffer size */
 int	Oflag;					/* TCP send buffer size */
 int	Sflag;					/* TCP MD5 signature option */
 int	Tflag = -1;				/* IP Type of Service */
+#ifdef __OpenBSD__
 int	rtableid = -1;
+#endif
 
 int	usetls;					/* use TLS */
 char    *Cflag;					/* Public cert file */
 char    *Kflag;					/* Private key file */
 char    *oflag;					/* OCSP stapling file */
-char    *Rflag = DEFAULT_CA_FILE;		/* Root CA file */
+const char    *Rflag = DEFAULT_CA_FILE;		/* Root CA file */
 int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
@@ -118,6 +131,7 @@ void	atelnet(int, unsigned char *, unsigned int);
 void	build_ports(char *);
 void	help(void);
 int	local_listen(char *, char *, struct addrinfo);
+struct tls;
 void	readwrite(int, struct tls *);
 void	fdpass(int nfd) __attribute__((noreturn));
 int	remote_connect(const char *, const char *, struct addrinfo);
@@ -132,7 +146,7 @@ void	set_common_sockopts(int, int);
 int	map_tos(char *, int *);
 int	map_tls(char *, int *);
 void	report_connect(const struct sockaddr *, socklen_t, char *);
-void	report_tls(struct tls *tls_ctx, char * host, char *tls_expectname);
+void	report_tls(struct tls *tls_ctx, char * host, char *tlsexpectname);
 void	usage(int);
 ssize_t drainbuf(int, unsigned char *, size_t *, struct tls *);
 ssize_t fillbuf(int, unsigned char *, size_t *, struct tls *);
@@ -148,12 +162,14 @@ main(int argc, char *argv[])
 	struct servent *sv;
 	socklen_t len;
 	struct sockaddr_storage cliaddr;
-	char *proxy, *proxyport = NULL;
-	const char *errstr;
+	char *proxy = NULL, *proxyport = NULL;
+	int errnum;
 	struct addrinfo proxyhints;
 	char unix_dg_tmp_socket_buf[UNIX_DG_TMP_SOCKET_SIZE];
+#ifdef CRYPTO
 	struct tls_config *tls_cfg = NULL;
 	struct tls *tls_ctx = NULL;
+#endif
 
 	ret = 1;
 	socksv = 5;
@@ -185,12 +201,14 @@ main(int argc, char *argv[])
 			else
 				errx(1, "unsupported proxy protocol");
 			break;
+#ifdef CRYPTO
 		case 'C':
 			Cflag = optarg;
 			break;
 		case 'c':
 			usetls = 1;
 			break;
+#endif
 		case 'd':
 			dflag = 1;
 			break;
@@ -200,20 +218,24 @@ main(int argc, char *argv[])
 		case 'F':
 			Fflag = 1;
 			break;
+#ifdef CRYPTO
 		case 'H':
 			tls_expecthash = optarg;
 			break;
+#endif
 		case 'h':
 			help();
 			break;
 		case 'i':
-			iflag = strtonum(optarg, 0, UINT_MAX, &errstr);
-			if (errstr)
-				errx(1, "interval %s: %s", errstr, optarg);
+			iflag = strtoi(optarg, NULL, 0, 0, UINT_MAX, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad interval `%s'", optarg);
 			break;
+#ifdef CRYPTO
 		case 'K':
 			Kflag = optarg;
 			break;
+#endif
 		case 'k':
 			kflag = 1;
 			break;
@@ -221,14 +243,14 @@ main(int argc, char *argv[])
 			lflag = 1;
 			break;
 		case 'M':
-			ttl = strtonum(optarg, 0, 255, &errstr);
-			if (errstr)
-				errx(1, "ttl is %s", errstr);
+			ttl = strtoi(optarg, NULL, 0, 0, 255, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad ttl `%s'", optarg);
 			break;
 		case 'm':
-			minttl = strtonum(optarg, 0, 255, &errstr);
-			if (errstr)
-				errx(1, "minttl is %s", errstr);
+			minttl = strtoi(optarg, NULL, 0, 0, 255, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad minttl `%s'", optarg);
 			break;
 		case 'N':
 			Nflag = 1;
@@ -242,10 +264,12 @@ main(int argc, char *argv[])
 		case 'p':
 			pflag = optarg;
 			break;
+#ifdef CRYPTO
 		case 'R':
 			tls_cachanged = 1;
 			Rflag = optarg;
 			break;
+#endif
 		case 'r':
 			rflag = 1;
 			break;
@@ -258,19 +282,20 @@ main(int argc, char *argv[])
 		case 'u':
 			uflag = 1;
 			break;
+#ifdef __OpenBSD__
 		case 'V':
-			rtableid = (int)strtonum(optarg, 0,
-			    RT_TABLEID_MAX, &errstr);
-			if (errstr)
-				errx(1, "rtable %s: %s", errstr, optarg);
+			rtableid = (int)strtoi(optarg, NULL, 0, 0, 255, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad rtable `%s'", optarg);
 			break;
+#endif
 		case 'v':
 			vflag = 1;
 			break;
 		case 'w':
-			timeout = strtonum(optarg, 0, INT_MAX / 1000, &errstr);
-			if (errstr)
-				errx(1, "timeout %s: %s", errstr, optarg);
+			timeout = strtoi(optarg, NULL, 0, 0, INT_MAX / 1000, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad timeout `%s'", optarg);
 			timeout *= 1000;
 			break;
 		case 'x':
@@ -285,39 +310,37 @@ main(int argc, char *argv[])
 			Dflag = 1;
 			break;
 		case 'I':
-			Iflag = strtonum(optarg, 1, 65536 << 14, &errstr);
-			if (errstr != NULL)
-				errx(1, "TCP receive window %s: %s",
-				    errstr, optarg);
+			Iflag = strtoi(optarg, NULL, 0, 1, 65536 << 14, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad TCP receive window `%s'",
+				    optarg);
 			break;
 		case 'O':
-			Oflag = strtonum(optarg, 1, 65536 << 14, &errstr);
-			if (errstr != NULL)
-				errx(1, "TCP send window %s: %s",
-				    errstr, optarg);
+			Oflag = strtoi(optarg, NULL, 0, 1, 65536 << 14, &errnum);
+			if (errnum)
+				errc(1, errnum, "bad TCP send window `%s'",
+				    optarg);
 			break;
+#ifdef CRYPTO
 		case 'o':
 			oflag = optarg;
 			break;
+#endif
 		case 'S':
 			Sflag = 1;
 			break;
+#ifdef CRYPTO
 		case 'T':
-			errstr = NULL;
-			errno = 0;
 			if (map_tos(optarg, &Tflag))
 				break;
 			if (map_tls(optarg, &TLSopt))
 				break;
-			if (strlen(optarg) > 1 && optarg[0] == '0' &&
-			    optarg[1] == 'x')
-				Tflag = (int)strtol(optarg, NULL, 16);
-			else
-				Tflag = (int)strtonum(optarg, 0, 255,
-				    &errstr);
-			if (Tflag < 0 || Tflag > 255 || errstr || errno)
-				errx(1, "illegal tos/tls value %s", optarg);
+			Tflag = (int)strtoi(optarg, NULL, 0, 0, 255, &errnum);
+			if (errnum)
+				errc(1, errnum, "illegal tos/tls value `%s'",
+				    optarg);
 			break;
+#endif
 		default:
 			usage(1);
 		}
@@ -325,6 +348,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+#ifdef __OpenBSD__
 	if (rtableid >= 0)
 		if (setrtable(rtableid) == -1)
 			err(1, "setrtable");
@@ -346,6 +370,7 @@ main(int argc, char *argv[])
 			err(1, "pledge");
 	} else if (pledge("stdio inet dns", NULL) == -1)
 		err(1, "pledge");
+#endif
 
 	/* Cruft to make sure options are clean, and used properly. */
 	if (argv[0] && !argv[1] && family == AF_UNIX) {
@@ -378,6 +403,7 @@ main(int argc, char *argv[])
 		errx(1, "cannot use -F and -U");
 	if (Fflag && usetls)
 		errx(1, "cannot use -c and -F");
+#ifdef CRYPTO
 	if (TLSopt && !usetls)
 		errx(1, "you must specify -c to use TLS options");
 	if (Cflag && !usetls)
@@ -392,6 +418,7 @@ main(int argc, char *argv[])
 		errx(1, "you must specify -c to use -H");
 	if (tls_expectname && !usetls)
 		errx(1, "you must specify -c to use -e");
+#endif
 
 	/* Get name of temporary socket for unix datagram client */
 	if ((family == AF_UNIX) && uflag && !lflag) {
@@ -458,12 +485,15 @@ main(int argc, char *argv[])
 			proxyhints.ai_flags |= AI_NUMERICHOST;
 	}
 
+#ifdef CRYPTO
 	if (usetls) {
+#if __OpenBSD__
 		if (Pflag) {
 			if (pledge("stdio inet dns tty rpath", NULL) == -1)
 				err(1, "pledge");
 		} else if (pledge("stdio inet dns rpath", NULL) == -1)
 			err(1, "pledge");
+#endif
 
 		if (tls_init() == -1)
 			errx(1, "unable to initialize TLS");
@@ -497,14 +527,19 @@ main(int argc, char *argv[])
 		if (TLSopt & TLS_MUSTSTAPLE)
 			tls_config_ocsp_require_stapling(tls_cfg);
 
+#ifdef __OpenBSD__
 		if (Pflag) {
 			if (pledge("stdio inet dns tty", NULL) == -1)
 				err(1, "pledge");
 		} else if (pledge("stdio inet dns", NULL) == -1)
 			err(1, "pledge");
+#endif
 	}
+#endif
 	if (lflag) {
+#ifdef CRYPTO
 		struct tls *tls_cctx = NULL;
+#endif
 		int connfd;
 		ret = 0;
 
@@ -515,6 +550,7 @@ main(int argc, char *argv[])
 				s = unix_listen(host);
 		}
 
+#ifdef CRYPTO
 		if (usetls) {
 			tls_config_verify_client_optional(tls_cfg);
 			if ((tls_ctx = tls_server()) == NULL)
@@ -523,6 +559,7 @@ main(int argc, char *argv[])
 				errx(1, "tls configuration failed (%s)",
 				    tls_error(tls_ctx));
 		}
+#endif
 		/* Allow only one connection at a time, but stay alive. */
 		for (;;) {
 			if (family != AF_UNIX)
@@ -571,11 +608,14 @@ main(int argc, char *argv[])
 				if (vflag)
 					report_connect((struct sockaddr *)&cliaddr, len,
 					    family == AF_UNIX ? host : NULL);
+#ifdef CRYPTO
 				if ((usetls) &&
 				    (tls_cctx = tls_setup_server(tls_ctx, connfd, host)))
 					readwrite(connfd, tls_cctx);
 				if (!usetls)
+#endif
 					readwrite(connfd, NULL);
+#ifdef CRYPTO
 				if (tls_cctx) {
 					int i;
 
@@ -586,6 +626,7 @@ main(int argc, char *argv[])
 					tls_free(tls_cctx);
 					tls_cctx = NULL;
 				}
+#endif
 				close(connfd);
 			}
 			if (family != AF_UNIX)
@@ -622,6 +663,7 @@ main(int argc, char *argv[])
 			if (s != -1)
 				close(s);
 
+#ifdef CRYPTO
 			if (usetls) {
 				if ((tls_ctx = tls_client()) == NULL)
 					errx(1, "tls client creation failed");
@@ -629,6 +671,7 @@ main(int argc, char *argv[])
 					errx(1, "tls configuration failed (%s)",
 					    tls_error(tls_ctx));
 			}
+#endif
 			if (xflag)
 				s = socks_connect(host, portlist[i], hints,
 				    proxy, proxyport, proxyhints, socksv,
@@ -666,6 +709,7 @@ main(int argc, char *argv[])
 			}
 			if (Fflag)
 				fdpass(s);
+#ifdef CRYPTO
 			else {
 				if (usetls)
 					tls_setup_client(tls_ctx, s, host);
@@ -682,13 +726,16 @@ main(int argc, char *argv[])
 					tls_ctx = NULL;
 				}
 			}
+#endif
 		}
 	}
 
 	if (s != -1)
 		close(s);
 
+#ifdef CRYPTO
 	tls_config_free(tls_cfg);
+#endif
 
 	exit(ret);
 }
@@ -727,6 +774,7 @@ unix_bind(char *path, int flags)
 	return (s);
 }
 
+#ifdef CRYPTO
 void
 tls_setup_client(struct tls *tls_ctx, int s, char *host)
 {
@@ -788,6 +836,7 @@ tls_setup_server(struct tls *tls_ctx, int connfd, char *host)
 	}
 	return NULL;
 }
+#endif
 
 /*
  * unix_connect()
@@ -853,7 +902,7 @@ int
 remote_connect(const char *host, const char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
-	int s = -1, error, on = 1, save_errno;
+	int s = -1, error, save_errno;
 
 	if ((error = getaddrinfo(host, port, &hints, &res0)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
@@ -867,8 +916,10 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 		if (sflag || pflag) {
 			struct addrinfo ahints, *ares;
 
+#ifdef SO_BINDANY
 			/* try SO_BINDANY, but don't insist */
 			setsockopt(s, SOL_SOCKET, SO_BINDANY, &on, sizeof(on));
+#endif
 			memset(&ahints, 0, sizeof(struct addrinfo));
 			ahints.ai_family = res->ai_family;
 			ahints.ai_socktype = uflag ? SOCK_DGRAM : SOCK_STREAM;
@@ -1193,9 +1244,12 @@ drainbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 	ssize_t n;
 	ssize_t adjust;
 
+#ifdef CRYPTO
 	if (tls)
 		n = tls_write(tls, buf, *bufpos);
-	else {
+	else
+#endif
+	{
 		n = write(fd, buf, *bufpos);
 		/* don't treat EAGAIN, EINTR as error */
 		if (n == -1 && (errno == EAGAIN || errno == EINTR))
@@ -1217,9 +1271,13 @@ fillbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 	size_t num = BUFSIZE - *bufpos;
 	ssize_t n;
 
+#ifdef CRYPTO
 	if (tls)
 		n = tls_read(tls, buf + *bufpos, num);
-	else {
+	else
+#endif
+	{
+
 		n = read(fd, buf + *bufpos, num);
 		/* don't treat EAGAIN, EINTR as error */
 		if (n == -1 && (errno == EAGAIN || errno == EINTR))
@@ -1322,21 +1380,19 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 }
 
 
-int
-strtoport(char *portstr, int udp)
+static int
+strtoport(const char *portstr, int udp)
 {
 	struct servent *entry;
-	const char *errstr;
-	char *proto;
-	int port = -1;
+	int errnum;
+	const char *proto;
+	int port;
 
 	proto = udp ? "udp" : "tcp";
 
-	port = strtonum(portstr, 1, PORT_MAX, &errstr);
-	if (errstr == NULL)
+	port = strtoi(portstr, NULL, 0, 1, PORT_MAX, &errnum);
+	if (errnum == 0)
 		return port;
-	if (errno != EINVAL)
-		errx(1, "port number %s: %s", errstr, portstr);
 	if ((entry = getservbyname(portstr, proto)) == NULL)
 		errx(1, "service \"%s\" unknown", portstr);
 	return ntohs(entry->s_port);
@@ -1464,10 +1520,11 @@ set_common_sockopts(int s, int af)
 		if (af == AF_INET && setsockopt(s, IPPROTO_IP,
 		    IP_MINTTL, &minttl, sizeof(minttl)))
 			err(1, "set IP min TTL");
-
+#ifdef IPV6_MINHOPCOUNT
 		else if (af == AF_INET6 && setsockopt(s, IPPROTO_IPV6,
 		    IPV6_MINHOPCOUNT, &minttl, sizeof(minttl)))
 			err(1, "set IPv6 min hop count");
+#endif
 	}
 }
 
@@ -1519,6 +1576,7 @@ map_tos(char *s, int *val)
 	return (0);
 }
 
+#ifdef CRYPTO
 int
 map_tls(char *s, int *val)
 {
@@ -1544,7 +1602,7 @@ map_tls(char *s, int *val)
 }
 
 void
-report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
+report_tls(struct tls * tls_ctx, char * host, char *tlsexpectname)
 {
 	time_t t;
 	const char *ocsp_url;
@@ -1552,7 +1610,7 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 	fprintf(stderr, "TLS handshake negotiated %s/%s with host %s\n",
 	    tls_conn_version(tls_ctx), tls_conn_cipher(tls_ctx), host);
 	fprintf(stderr, "Peer name: %s\n",
-	    tls_expectname ? tls_expectname : host);
+	    tlsexpectname ? tlsexpectname : host);
 	if (tls_peer_cert_subject(tls_ctx))
 		fprintf(stderr, "Subject: %s\n",
 		    tls_peer_cert_subject(tls_ctx));
@@ -1600,6 +1658,7 @@ report_tls(struct tls * tls_ctx, char * host, char *tls_expectname)
 
 	}
 }
+#endif
 
 void
 report_connect(const struct sockaddr *sa, socklen_t salen, char *path)
@@ -1636,45 +1695,62 @@ void
 help(void)
 {
 	usage(0);
-	fprintf(stderr, "\tCommand Summary:\n\
-	\t-4		Use IPv4\n\
-	\t-6		Use IPv6\n\
-	\t-C certfile	Public key file\n\
-	\t-c		Use TLS\n\
-	\t-D		Enable the debug socket option\n\
-	\t-d		Detach from stdin\n\
-	\t-e name\t	Required name in peer certificate\n\
-	\t-F		Pass socket fd\n\
-	\t-H hash\t	Hash string of peer certificate\n\
-	\t-h		This help text\n\
-	\t-I length	TCP receive buffer length\n\
-	\t-i interval	Delay interval for lines sent, ports scanned\n\
-	\t-K keyfile	Private key file\n\
-	\t-k		Keep inbound sockets open for multiple connects\n\
-	\t-l		Listen mode, for inbound connects\n\
-	\t-M ttl		Outgoing TTL / Hop Limit\n\
-	\t-m minttl	Minimum incoming TTL / Hop Limit\n\
-	\t-N		Shutdown the network socket after EOF on stdin\n\
-	\t-n		Suppress name/port resolutions\n\
-	\t-O length	TCP send buffer length\n\
-	\t-o staplefile	Staple file\n\
-	\t-P proxyuser\tUsername for proxy authentication\n\
-	\t-p port\t	Specify local port for remote connects\n\
-	\t-R CAfile	CA bundle\n\
-	\t-r		Randomize remote ports\n\
-	\t-S		Enable the TCP MD5 signature option\n\
-	\t-s source	Local source address\n\
-	\t-T keyword	TOS value or TLS options\n\
-	\t-t		Answer TELNET negotiation\n\
-	\t-U		Use UNIX domain socket\n\
-	\t-u		UDP mode\n\
-	\t-V rtable	Specify alternate routing table\n\
-	\t-v		Verbose\n\
-	\t-w timeout	Timeout for connects and final net reads\n\
-	\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n\
-	\t-x addr[:port]\tSpecify proxy address and port\n\
-	\t-z		Zero-I/O mode [used for scanning]\n\
-	Port numbers can be individual or ranges: lo-hi [inclusive]\n");
+	fprintf(stderr, "\tCommand Summary:\n"
+
+	"\t-4		Use IPv4\n"
+	"\t-6		Use IPv6\n"
+#ifdef CRYPTO
+	"\t-C certfile	Public key file\n"
+	"\t-c		Use TLS\n"
+#endif
+	"\t-D		Enable the debug socket option\n"
+	"\t-d		Detach from stdin\n"
+#ifdef CRYPTO
+	"\t-e name\t	Required name in peer certificate\n"
+#endif
+	"\t-F		Pass socket fd\n"
+#ifdef CRYPTO
+	"\t-H hash\t	Hash string of peer certificate\n"
+#endif
+	"\t-h		This help text\n"
+	"\t-I length	TCP receive buffer length\n"
+	"\t-i interval	Delay interval for lines sent, ports scanned\n"
+#ifdef CRYPTO
+	"\t-K keyfile	Private key file\n"
+#endif
+	"\t-k		Keep inbound sockets open for multiple connects\n"
+	"\t-l		Listen mode, for inbound connects\n"
+	"\t-M ttl		Outgoing TTL / Hop Limit\n"
+	"\t-m minttl	Minimum incoming TTL / Hop Limit\n"
+	"\t-N		Shutdown the network socket after EOF on stdin\n"
+	"\t-n		Suppress name/port resolutions\n"
+	"\t-O length	TCP send buffer length\n"
+#ifdef CRYPTO
+	"\t-o staplefile	Staple file\n"
+#endif
+	"\t-P proxyuser\tUsername for proxy authentication\n"
+	"\t-p port\t	Specify local port for remote connects\n"
+#ifdef CRYPTO
+	"\t-R CAfile	CA bundle\n"
+#endif
+	"\t-r		Randomize remote ports\n"
+	"\t-S		Enable the TCP MD5 signature option\n"
+	"\t-s source	Local source address\n"
+#ifdef CRYPTO
+	"\t-T keyword	TOS value or TLS options\n"
+#endif
+	"\t-t		Answer TELNET negotiation\n"
+	"\t-U		Use UNIX domain socket\n"
+	"\t-u		UDP mode\n"
+#ifdef __OpenBSD__
+	"\t-V rtable	Specify alternate routing table\n"
+#endif
+	"\t-v		Verbose\n"
+	"\t-w timeout	Timeout for connects and final net reads\n"
+	"\t-X proto	Proxy protocol: \"4\", \"5\" (SOCKS) or \"connect\"\n"
+	"\t-x addr[:port]\tSpecify proxy address and port\n"
+	"\t-z		Zero-I/O mode [used for scanning]\n"
+	"Port numbers can be individual or ranges: lo-hi [inclusive]\n");
 	exit(1);
 }
 
@@ -1682,14 +1758,26 @@ void
 usage(int ret)
 {
 	fprintf(stderr,
-	    "usage: nc [-46cDdFhklNnrStUuvz] [-C certfile] [-e name] "
-	    "[-H hash] [-I length]\n"
-	    "\t  [-i interval] [-K keyfile] [-M ttl] [-m minttl] [-O length]\n"
-	    "\t  [-o staplefile] [-P proxy_username] [-p source_port] "
-	    "[-R CAfile]\n"
-	    "\t  [-s source] [-T keyword] [-V rtable] [-w timeout] "
-	    "[-X proxy_protocol]\n"
-	    "\t  [-x proxy_address[:port]] [destination] [port]\n");
+	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-e name] [-I length]\n"
+#ifdef CRYPTO
+	    "\t  [-C certfile] [-H hash] [-K keyfile] [-R CAfile] "
+	    "[-T keyword] [-o staplefile]\n"
+#endif
+	    "\t  [-i interval] [-M ttl] [-m minttl] [-O length]\n"
+	    "\t  [-P proxy_username] [-p source_port]\n"
+	    "\t  [-s source] "
+#ifdef __OpenBSD__
+	    "[-V rtable] "
+#endif
+	    "[-w timeout] [-X proxy_protocol]\n"
+	    "\t  [-x proxy_address[:port]] [destination] [port]\n",
+	    getprogname(),
+#ifdef CRYPTO
+	    "c"
+#else
+	    ""
+#endif
+	);
 	if (ret)
 		exit(1);
 }

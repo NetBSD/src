@@ -1,3 +1,4 @@
+.\"     $NetBSD: nc.1,v 1.2 2017/02/06 16:03:40 christos Exp $
 .\"     $OpenBSD: nc.1,v 1.81 2017/01/26 22:59:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
@@ -25,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 26 2017 $
+.Dd Feb 2, 2017
 .Dt NC 1
 .Os
 .Sh NAME
@@ -49,7 +50,7 @@
 .Op Fl R Ar CAfile
 .Op Fl s Ar source
 .Op Fl T Ar keyword
-.Op Fl V Ar rtable
+.\" .Op Fl V Ar rtable
 .Op Fl w Ar timeout
 .Op Fl X Ar proxy_protocol
 .Op Fl x Ar proxy_address Ns Op : Ns Ar port
@@ -281,8 +282,8 @@ socket is used, a temporary receiving socket is created in
 unless the
 .Fl s
 flag is given.
-.It Fl V Ar rtable
-Set the routing table to be used.
+.\" .It Fl V Ar rtable
+.\" Set the routing table to be used.
 .It Fl v
 Have
 .Nm

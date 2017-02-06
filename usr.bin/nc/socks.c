@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: socks.c,v 1.2 2017/02/06 16:03:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,7 +40,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <resolv.h>
+#ifdef __OpenBSD__
 #include <readpassphrase.h>
+#endif
 #include "atomicio.h"
 
 #define SOCKS_PORT	"1080"
@@ -117,8 +121,13 @@ getproxypass(const char *proxyuser, const char *proxyhost)
 
 	snprintf(prompt, sizeof(prompt), "Proxy password for %s@%s: ",
 	   proxyuser, proxyhost);
+#ifdef __NetBSD__
+     	if (getpassfd(prompt, pw, sizeof(pw), NULL, GETPASS_NEED_TTY, 0)
+	    == NULL)
+#else
 	if (readpassphrase(prompt, pw, sizeof(pw), RPP_REQUIRE_TTY) == NULL)
-		errx(1, "Unable to read proxy passphrase");
+#endif
+		err(1, "Unable to read proxy passphrase");
 	return (pw);
 }
 
@@ -183,6 +192,7 @@ socks_connect(const char *host, const char *port,
 	int proxyfd, r, authretry = 0;
 	size_t hlen, wlen;
 	unsigned char buf[1024];
+	char *cbuf = (char *)buf;
 	size_t cnt;
 	struct sockaddr_storage addr;
 	struct sockaddr_in *in4 = (struct sockaddr_in *)&addr;
@@ -328,62 +338,62 @@ socks_connect(const char *host, const char *port,
 
 		/* Try to be sane about numeric IPv6 addresses */
 		if (strchr(host, ':') != NULL) {
-			r = snprintf(buf, sizeof(buf),
+			r = snprintf(cbuf, sizeof(buf),
 			    "CONNECT [%s]:%d HTTP/1.0\r\n",
 			    host, ntohs(serverport));
 		} else {
-			r = snprintf(buf, sizeof(buf),
+			r = snprintf(cbuf, sizeof(buf),
 			    "CONNECT %s:%d HTTP/1.0\r\n",
 			    host, ntohs(serverport));
 		}
 		if (r == -1 || (size_t)r >= sizeof(buf))
 			errx(1, "hostname too long");
-		r = strlen(buf);
+		r = strlen(cbuf);
 
 		cnt = atomicio(vwrite, proxyfd, buf, r);
-		if (cnt != r)
+		if (cnt != (size_t)r)
 			err(1, "write failed (%zu/%d)", cnt, r);
 
 		if (authretry > 1) {
 			char resp[1024];
 
 			proxypass = getproxypass(proxyuser, proxyhost);
-			r = snprintf(buf, sizeof(buf), "%s:%s",
+			r = snprintf(cbuf, sizeof(buf), "%s:%s",
 			    proxyuser, proxypass);
 			if (r == -1 || (size_t)r >= sizeof(buf) ||
-			    b64_ntop(buf, strlen(buf), resp,
+			    b64_ntop(buf, strlen(cbuf), resp,
 			    sizeof(resp)) == -1)
 				errx(1, "Proxy username/password too long");
-			r = snprintf(buf, sizeof(buf), "Proxy-Authorization: "
+			r = snprintf(cbuf, sizeof(buf), "Proxy-Authorization: "
 			    "Basic %s\r\n", resp);
 			if (r == -1 || (size_t)r >= sizeof(buf))
 				errx(1, "Proxy auth response too long");
-			r = strlen(buf);
-			if ((cnt = atomicio(vwrite, proxyfd, buf, r)) != r)
+			r = strlen(cbuf);
+			if ((ssize_t)(cnt = atomicio(vwrite, proxyfd, buf, r)) != r)
 				err(1, "write failed (%zu/%d)", cnt, r);
 		}
 
 		/* Terminate headers */
-		if ((cnt = atomicio(vwrite, proxyfd, "\r\n", 2)) != 2)
+		if ((cnt = atomicio(vwrite, proxyfd, __UNCONST("\r\n"), 2)) != 2)
 			err(1, "write failed (%zu/2)", cnt);
 
 		/* Read status reply */
-		proxy_read_line(proxyfd, buf, sizeof(buf));
+		proxy_read_line(proxyfd, cbuf, sizeof(buf));
 		if (proxyuser != NULL &&
-		    strncmp(buf, "HTTP/1.0 407 ", 12) == 0) {
+		    strncmp(cbuf, "HTTP/1.0 407 ", 12) == 0) {
 			if (authretry > 1) {
 				fprintf(stderr, "Proxy authentication "
 				    "failed\n");
 			}
 			close(proxyfd);
 			goto again;
-		} else if (strncmp(buf, "HTTP/1.0 200 ", 12) != 0 &&
-		    strncmp(buf, "HTTP/1.1 200 ", 12) != 0)
+		} else if (strncmp(cbuf, "HTTP/1.0 200 ", 12) != 0 &&
+		    strncmp(cbuf, "HTTP/1.1 200 ", 12) != 0)
 			errx(1, "Proxy error: \"%s\"", buf);
 
 		/* Headers continue until we hit an empty line */
 		for (r = 0; r < HTTP_MAXHDRS; r++) {
-			proxy_read_line(proxyfd, buf, sizeof(buf));
+			proxy_read_line(proxyfd, cbuf, sizeof(buf));
 			if (*buf == '\0')
 				break;
 		}
