@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.33 2017/02/06 09:02:38 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.34 2017/02/06 09:08:48 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1283,14 +1283,11 @@ smsc_unlock_mii(struct smsc_softc *sc)
 void
 smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	struct smsc_chain *c = (struct smsc_chain *)priv;
-	struct smsc_softc *sc = c->sc_sc;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct smsc_chain * const c = (struct smsc_chain *)priv;
+	struct smsc_softc * const sc = c->sc_sc;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	u_char *buf = c->sc_buf;
 	uint32_t total_len;
-	uint32_t rxhdr;
-	uint16_t pktlen;
-	struct mbuf *m;
 
 	mutex_enter(&sc->sc_rxlock);
 
@@ -1322,6 +1319,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	smsc_dbg_printf(sc, "xfer status total_len %d\n", total_len);
 
 	while (total_len != 0) {
+		uint32_t rxhdr;
 		if (total_len < sizeof(rxhdr)) {
 			smsc_dbg_printf(sc, "total_len %d < sizeof(rxhdr) %zu\n",
 			    total_len, sizeof(rxhdr));
@@ -1345,7 +1343,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		pktlen = (uint16_t)SMSC_RX_STAT_FRM_LENGTH(rxhdr);
+		uint16_t pktlen = (uint16_t)SMSC_RX_STAT_FRM_LENGTH(rxhdr);
 		smsc_dbg_printf(sc, "rxeof total_len %d pktlen %d rxhdr "
 		    "0x%08x\n", total_len, pktlen, rxhdr);
 
@@ -1372,7 +1370,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		m = smsc_newbuf();
+		struct mbuf *m = smsc_newbuf();
 		if (m == NULL) {
 			smsc_dbg_printf(sc, "smc_newbuf returned NULL\n");
 			ifp->if_ierrors++;
