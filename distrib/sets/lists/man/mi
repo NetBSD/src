@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1547 2017/01/28 16:55:54 nat Exp $
+# $NetBSD: mi,v 1.1548 2017/02/06 16:06:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -350,6 +350,7 @@
 ./usr/share/man/cat1/mt.0			man-util-catman		.cat
 ./usr/share/man/cat1/mv.0			man-util-catman		.cat
 ./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/nc.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
 ./usr/share/man/cat1/netpgp.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/netpgpkeys.0		man-crypto-catman	crypto,.cat
@@ -3521,6 +3522,7 @@
 ./usr/share/man/html1/mt.html			man-util-htmlman	html
 ./usr/share/man/html1/mv.html			man-util-htmlman	html
 ./usr/share/man/html1/nbsvtool.html		man-crypto-htmlman	crypto,html
+./usr/share/man/html1/nc.html			man-netutil-htmlman	html
 ./usr/share/man/html1/netgroup.html		man-nis-htmlman		html
 ./usr/share/man/html1/netpgp.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/netpgpkeys.html		man-crypto-htmlman	crypto,html
@@ -6334,6 +6336,7 @@
 ./usr/share/man/man1/mt.1			man-util-man		.man
 ./usr/share/man/man1/mv.1			man-util-man		.man
 ./usr/share/man/man1/nbsvtool.1			man-crypto-man		crypto,.man
+./usr/share/man/man1/nc.1			man-netutil-man		.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man
 ./usr/share/man/man1/netpgp.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/netpgpkeys.1		man-crypto-man		crypto,.man
