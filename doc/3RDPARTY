@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1408 2017/02/05 04:05:05 spz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1409 2017/02/06 16:08:40 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1668,3 +1668,14 @@ Mailing List:   none
 Responsible:    christos
 License:        BSD-like (2-clause)
 Location:       external/bsd/librtld_db/dist
+
+Package:        netcat
+Version:        OpenBSD-2017-02-06
+Current Vers:   OpenBSD-XXXX-YY-ZZ
+Maintainer:     OpenBSD
+Archive Site:   none
+Home Page:      none
+Mailing List:   none
+Responsible:    christos
+License:        BSD-like (3-clause)
+Location:       usr.bin/nc
