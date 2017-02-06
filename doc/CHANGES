@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2242 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2243 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -457,4 +457,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	acpi(4): Updated ACPICA to 20170119. [christos 20170125]
 	bta2dpd(8): Add new bluetooth A2DP daemon. [nat 20170129]
 	kerberos(8): Update to latest Heimdal-HEAD [christos 20170128]
-	libevent: Import libevent 2.1.18 [christos 20160131]
+	libevent: Import libevent 2.1.18 [christos 20170131]
+	nc(1): Add a netcat utility from OpenBSD [christos 20170206]
