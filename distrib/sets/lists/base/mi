@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1151 2017/01/28 16:55:54 nat Exp $
+# $NetBSD: mi,v 1.1152 2017/02/06 19:45:17 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -810,6 +810,7 @@
 ./usr/bin/mset					base-obsolete		obsolete
 ./usr/bin/msgs					base-util-bin
 ./usr/bin/nbsvtool				base-crypto-bin		crypto
+./usr/bin/nc					base-netutil-bin
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netpgp				base-crypto-bin		crypto
 ./usr/bin/netpgpkeys				base-crypto-bin		crypto
