@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.240 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.241 2017/02/07 02:38:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.240 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.241 2017/02/07 02:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -941,6 +941,10 @@ arpintr(void)
 			goto badlen;
 
 		rcvif = m_get_rcvif(m, &s);
+		if (__predict_false(rcvif == NULL)) {
+			ARP_STATINC(ARP_STAT_RCVNOINT);
+			goto free;
+		}
 		switch (rcvif->if_type) {
 		case IFT_IEEE1394:
 			arplen = sizeof(struct arphdr) +
@@ -967,6 +971,7 @@ arpintr(void)
 badlen:
 			ARP_STATINC(ARP_STAT_RCVBADLEN);
 		}
+free:
 		m_freem(m);
 	}
 out:
@@ -1312,10 +1317,15 @@ reply:
 		struct llentry *lle = NULL;
 		struct sockaddr_in sin;
 #if NCARP > 0
-		struct ifnet *_rcvif = m_get_rcvif(m, &s);
-		if (ifp->if_type == IFT_CARP && _rcvif->if_type != IFT_CARP)
-			goto out;
-		m_put_rcvif(_rcvif, &s);
+		if (ifp->if_type == IFT_CARP) {
+			struct ifnet *_rcvif = m_get_rcvif(m, &s);
+			int iftype = 0;
+			if (__predict_true(_rcvif != NULL))
+				iftype = _rcvif->if_type;
+			m_put_rcvif(_rcvif, &s);
+			if (iftype != IFT_CARP)
+				goto out;
+		}
 #endif
 
 		tha = ar_tha(ah);
@@ -1877,6 +1887,8 @@ in_revarpinput(struct mbuf *m)
 	op = ntohs(ah->ar_op);
 
 	rcvif = m_get_rcvif(m, &s);
+	if (__predict_false(rcvif == NULL))
+		goto out;
 	switch (rcvif->if_type) {
 	case IFT_IEEE1394:
 		/* ARP without target hardware address is not supported */
