@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.13 2017/01/26 01:12:13 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.14 2017/02/07 16:15:05 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -9,20 +9,18 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add new ptrace(2) calls to lock (suspend) and unlock LWP within a process
  - add PT_DUMPCORE tests in the ATF framework
  - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
- - once the API for hardware watchpoints will stabilize, document it
+ - switch PT_WATCHPOINT* to PT_*ETDBREGS and document it, add ATF tests
  - add tests for the procfs interface covering all functions available on the
    same level as ptrace(2)
  - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
    in all ports
- - integrate all ptrace(2) features in gdb
- - add ptrace(2) NetBSD support in LLDB
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
- - remove exect(3) - there is no usecase for it
- - refactor pthread_dbg(3) to only query private pthread_t data, otherwise it
-   duplicates ptrace(2) interface and cannot cover all types of threads
+ - remove exect(3) from libc - there is no usecase for it
+ - remove pthread_dbg(3) from the base distribution
  - research what happens when a tracee masks signals (including SIGTRAP) and a
    breakpoint is triggered
  - add ATF tests for SIGCHLD
+ - add si_code values for PT_SYSCALL: TRAP_SCE and TRAP_SCX
  - add ATF tests for PT_SYSCALL and PT_SYSCALLEMU
 
 and of course: fix as many bugs as possible.
