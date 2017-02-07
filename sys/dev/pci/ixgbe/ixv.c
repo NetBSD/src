@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.35 2017/02/01 10:47:13 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.36 2017/02/07 04:20:59 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -427,11 +427,9 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Negotiate mailbox API version */
 	error = ixgbevf_negotiate_api_version(hw, ixgbe_mbox_api_11);
-	if (error) {
-		device_printf(dev, "MBX API 1.1 negotiation failed! Error %d\n", error);
-		error = EIO;
-		goto err_late;
-	}
+	if (error)
+		aprint_debug_dev(dev,
+		    "MBX API 1.1 negotiation failed! Error %d\n", error);
 
 	error = ixgbe_init_hw(hw);
 	if (error) {
@@ -1346,7 +1344,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	int 		error, rid, vector = 0;
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
-	char intrbuf[PCI_INTRSTR_LEN];
+	char		intrbuf[PCI_INTRSTR_LEN];
+	char		intr_xname[32];
 	const char	*intrstr = NULL;
 	kcpuset_t	*affinity;
 	int		cpu_id = 0;
@@ -1354,12 +1353,15 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	pc = adapter->osdep.pc;
 	tag = adapter->osdep.tag;
 
+	adapter->osdep.nintrs = adapter->num_queues + 1;
 	if (pci_msix_alloc_exact(pa,
-		&adapter->osdep.intrs, IXG_MAX_NINTR) != 0)
+	    &adapter->osdep.intrs, adapter->osdep.nintrs) != 0)
 		return (ENXIO);
 
 	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++, txr++) {
+		snprintf(intr_xname, sizeof(intr_xname), "%s TX/RX",
+		    device_xname(dev));
 		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
 #ifdef IXV_MPSAFE
@@ -1367,10 +1369,12 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		    true);
 #endif
 		/* Set the handler function */
-		adapter->osdep.ihs[i] = pci_intr_establish(pc,
-		    adapter->osdep.intrs[i], IPL_NET, ixv_msix_que, que);
-		if (adapter->osdep.ihs[i] == NULL) {
-			que->res = NULL;
+		que->res = adapter->osdep.ihs[i] = pci_intr_establish_xname(pc,
+		    adapter->osdep.intrs[i], IPL_NET, ixv_msix_que, que,
+			intr_xname);
+		if (que->res == NULL) {
+			pci_intr_release(pc, adapter->osdep.intrs,
+			    adapter->osdep.nintrs);
 			aprint_error_dev(dev,
 			    "Failed to register QUE handler");
 			kcpuset_destroy(affinity);
@@ -1407,14 +1411,16 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	/* and Mailbox */
 	cpu_id++;
+	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
 #ifdef IXG_MPSAFE
 	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE, true);
 #endif
 	/* Set the mbx handler function */
-	adapter->osdep.ihs[vector] = pci_intr_establish(pc,
-	    adapter->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, adapter);
+	adapter->osdep.ihs[vector] = pci_intr_establish_xname(pc,
+	    adapter->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, adapter,
+		intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
 		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
@@ -1451,6 +1457,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		pci_conf_write(pc, tag, rid, msix_ctrl);
 	}
 
+	kcpuset_destroy(affinity);
 	return (0);
 }
 
@@ -1462,7 +1469,7 @@ static int
 ixv_setup_msix(struct adapter *adapter)
 {
 	device_t dev = adapter->dev;
-	int want, msgs;
+	int want, queues, msgs;
 
 	/* Must have at least 2 MSIX vectors */
 	msgs = pci_msix_count(adapter->osdep.pc, adapter->osdep.tag);
@@ -1472,21 +1479,34 @@ ixv_setup_msix(struct adapter *adapter)
 	}
 	msgs = MIN(msgs, IXG_MAX_NINTR);
 
+	/* Figure out a reasonable auto config value */
+	queues = (ncpu > (msgs - 1)) ? (msgs - 1) : ncpu;
+
+	if (ixv_num_queues != 0)
+		queues = ixv_num_queues;
+	else if ((ixv_num_queues == 0) && (queues > IXGBE_VF_MAX_TX_QUEUES))
+		queues = IXGBE_VF_MAX_TX_QUEUES;
+
 	/*
 	** Want vectors for the queues,
 	** plus an additional for mailbox.
 	*/
-	want = adapter->num_queues + 1;
-	if (want > msgs) {
-		want = msgs;
-		adapter->num_queues = msgs - 1;
-	} else
+	want = queues + 1;
+	if (msgs >= want) {
 		msgs = want;
+	} else {
+               	aprint_error_dev(dev,
+		    "MSIX Configuration Problem, "
+		    "%d vectors but %d queues wanted!\n",
+		    msgs, want);
+		return -1;
+	}
 
 	adapter->msix_mem = (void *)1; /* XXX */
 	aprint_normal_dev(dev,
 	    "Using MSIX interrupts with %d vectors\n", msgs);
-	return (want);
+	adapter->num_queues = queues;
+	return (msgs);
 }
 
 
