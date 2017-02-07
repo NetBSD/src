@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.167 2016/10/04 14:13:21 christos Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.168 2017/02/07 02:36:48 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -1006,16 +1006,24 @@ void m_print(const struct mbuf *, const char *, void (*)(const char *, ...)
 /*
  * Get rcvif of a mbuf.
  *
- * The caller must call m_put_rcvif after using rcvif. The caller cannot
- * block or sleep during using rcvif. Insofar as the constraint is satisfied,
- * the API ensures a got rcvif isn't be freed until m_put_rcvif is called.
+ * The caller must call m_put_rcvif after using rcvif if the returned rcvif
+ * isn't NULL. If the returned rcvif is NULL, the caller doesn't need to call
+ * m_put_rcvif (although calling it is safe).
+ *
+ * The caller must not block or sleep while using rcvif. The API ensures a
+ * returned rcvif isn't freed until m_put_rcvif is called.
  */
 static __inline struct ifnet *
 m_get_rcvif(const struct mbuf *m, int *s)
 {
+	struct ifnet *ifp;
 
 	*s = pserialize_read_enter();
-	return if_byindex(m->m_pkthdr.rcvif_index);
+	ifp = if_byindex(m->m_pkthdr.rcvif_index);
+	if (__predict_false(ifp == NULL))
+		pserialize_read_exit(*s);
+
+	return ifp;
 }
 
 static __inline void
