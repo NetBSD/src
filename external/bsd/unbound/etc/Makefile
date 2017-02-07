@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2016/08/23 15:04:29 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2017/02/07 22:34:37 christos Exp $
 
 SUBDIR=rc.d
 
-FILESDIR=               /etc/unbound
+FILESDIR=               /usr/share/examples/unbound
 FILESMODE=    644
 FILES=	unbound.conf
 FILESBUILD_unbound.conf=yes
