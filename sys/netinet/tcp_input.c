@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.353 2017/01/04 12:35:14 kre Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.354 2017/02/07 02:38:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.353 2017/01/04 12:35:14 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.354 2017/02/07 02:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -904,6 +904,8 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 	 */
 
 	rcvif = m_get_rcvif(m, &s);
+	if (__predict_false(rcvif == NULL))
+		goto badcsum; /* XXX */
 
 	switch (af) {
 #ifdef INET

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.156 2017/02/02 02:52:10 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.157 2017/02/07 02:38:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.156 2017/02/02 02:52:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.157 2017/02/07 02:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -562,7 +562,7 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 	case ICMP_MASKREQ: {
 		struct ifnet *rcvif;
 		int s, ss;
-		struct ifaddr *ifa;
+		struct ifaddr *ifa = NULL;
 
 		if (icmpmaskrepl == 0)
 			break;
@@ -581,7 +581,8 @@ _icmp_input(struct mbuf *m, int hlen, int proto)
 			icmpdst.sin_addr = ip->ip_dst;
 		ss = pserialize_read_enter();
 		rcvif = m_get_rcvif(m, &s);
-		ifa = ifaof_ifpforaddr(sintosa(&icmpdst), rcvif);
+		if (__predict_true(rcvif != NULL))
+			ifa = ifaof_ifpforaddr(sintosa(&icmpdst), rcvif);
 		m_put_rcvif(rcvif, &s);
 		if (ifa == NULL) {
 			pserialize_read_exit(ss);

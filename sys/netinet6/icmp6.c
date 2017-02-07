@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.207 2017/02/02 02:52:10 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.208 2017/02/07 02:38:08 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.207 2017/02/02 02:52:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.208 2017/02/07 02:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1067,6 +1067,8 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		eip6 = (struct ip6_hdr *)(icmp6 + 1);
 
 		rcvif = m_get_rcvif(m, &s);
+		if (__predict_false(rcvif == NULL))
+			goto freeit;
 		sockaddr_in6_init(&icmp6dst,
 		    (finaldst == NULL) ? &eip6->ip6_dst : finaldst, 0, 0, 0);
 		if (in6_setscope(&icmp6dst.sin6_addr, rcvif, NULL)) {
@@ -1164,6 +1166,8 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *dst;
 	rcvif = m_get_rcvif(m, &s);
+	if (__predict_false(rcvif == NULL))
+		return;
 	if (in6_setscope(&sin6.sin6_addr, rcvif, NULL)) {
 		m_put_rcvif(rcvif, &s);
 		return;
@@ -1307,6 +1311,8 @@ ni6_input(struct mbuf *m, int off)
 			m_copydata(m, off + sizeof(struct icmp6_nodeinfo),
 			    subjlen, (void *)&in6_subj);
 			rcvif = m_get_rcvif(m, &s);
+			if (__predict_false(rcvif == NULL))
+				goto bad;
 			if (in6_setscope(&in6_subj, rcvif, NULL)) {
 				m_put_rcvif(rcvif, &s);
 				goto bad;
