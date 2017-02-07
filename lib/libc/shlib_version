@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.269 2016/09/24 20:12:07 christos Exp $
+#	$NetBSD: shlib_version,v 1.270 2017/02/07 15:33:25 kamil Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -45,5 +45,6 @@
 # - decide whether soft-float should support fenv.h, including thread-local contett
 # - stop all math functions from setting errno
 # - boot obsolete signal functions to libcompat
+# - remove exect(3) API - tracing functionality has been moved to the kernel
 major=12
 minor=205
