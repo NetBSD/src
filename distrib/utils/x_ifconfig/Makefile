@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.33 2015/04/28 15:14:07 christos Exp $
+# $NetBSD: Makefile,v 1.34 2017/02/07 16:49:40 rin Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
-.include <bsd.own.mk>
-
 NOMAN=	# defined
+
+.include <bsd.own.mk>
 
 SRCDIR=		${.CURDIR}/../../../sbin/ifconfig
 
