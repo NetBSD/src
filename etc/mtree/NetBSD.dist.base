@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.156 2017/01/11 12:10:48 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.157 2017/02/07 22:31:29 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -377,6 +377,7 @@
 ./usr/share/examples/lutok
 ./usr/share/examples/mount_portal
 ./usr/share/examples/npf
+./usr/share/examples/nsd
 ./usr/share/examples/openssl
 ./usr/share/examples/pf
 ./usr/share/examples/postfix
@@ -392,6 +393,7 @@
 ./usr/share/examples/tmux
 ./usr/share/examples/wpa_supplicant
 ./usr/share/examples/wsmoused
+./usr/share/examples/unbound
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle

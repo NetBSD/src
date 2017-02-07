@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1152 2017/02/06 19:45:17 kre Exp $
+# $NetBSD: mi,v 1.1153 2017/02/07 22:34:09 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -2186,6 +2186,7 @@
 ./usr/share/examples/npf/l2tp_gw-npf.conf	base-netutil-examples   share
 ./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples   share
 ./usr/share/examples/npf/treetablefile		base-netutil-examples   share
+./usr/share/examples/nsd			base-netutil-examples   share
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/pf				base-netutil-examples
 ./usr/share/examples/postfix			base-postfix-examples
@@ -2209,6 +2210,7 @@
 ./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	share
 ./usr/share/examples/wsmoused			base-sysutil-examples
 ./usr/share/examples/wsmoused/wsmoused.conf	base-sysutil-examples	share
+./usr/share/examples/unbound			base-netutil-examples   share
 ./usr/share/games				base-games-share
 ./usr/share/games/atc				base-games-share
 ./usr/share/games/boggle			base-games-share
