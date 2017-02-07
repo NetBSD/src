@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.231 2016/07/03 14:24:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.232 2017/02/07 19:29:40 kamil Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -13,13 +13,13 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
-SRCS+=	__clone.S __vfork14.S brk.S exect.S fork.S pipe.S \
+SRCS+=	__clone.S __vfork14.S brk.S fork.S pipe.S \
 	getcontext.S \
 	ptrace.S sbrk.S shmat.S \
 	syscall.S __syscall.S __clone.S cerror.S
 
 _LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
-	Lint_getcontext.c Lint_exect.c Lint_pipe.c Lint_ptrace.c \
+	Lint_getcontext.c Lint_pipe.c Lint_ptrace.c \
 	Lint_sbrk.c Lint___sigaction14.c Lint_syscall.c Lint___syscall.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
