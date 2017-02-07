@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.37 2017/02/07 04:26:07 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.38 2017/02/07 04:27:43 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1031,7 +1031,7 @@ ixv_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 			ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
 			break;
 		case IXGBE_LINK_SPEED_10GB_FULL:
-			ifmr->ifm_active |= IFM_FDX;
+			ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
 			break;
 	}
 
