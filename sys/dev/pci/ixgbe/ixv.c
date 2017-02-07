@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.36 2017/02/07 04:20:59 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.37 2017/02/07 04:26:07 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -783,6 +783,7 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Config/Enable Link */
 	ixv_config_link(adapter);
+	hw->mac.get_link_status = TRUE;
 
 	/* Start watchdog */
 	callout_reset(&adapter->timer, hz, ixv_local_timer, adapter);
@@ -1690,10 +1691,9 @@ static void
 ixv_config_link(struct adapter *adapter)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
-	u32	autoneg;
 
 	if (hw->mac.ops.check_link)
-		hw->mac.ops.check_link(hw, &autoneg,
+		hw->mac.ops.check_link(hw, &adapter->link_speed,
 		    &adapter->link_up, FALSE);
 }
 
