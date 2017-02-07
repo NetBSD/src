@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.300 2017/02/03 20:13:52 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.301 2017/02/07 02:05:26 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.300 2017/02/03 20:13:52 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.301 2017/02/07 02:05:26 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1962,6 +1962,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		vc->sc_open |= AUOPEN_WRITE;
 		mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
 	}
+
+	vc->sc_mrr.blksize = sc->sc_vchan[0]->sc_mrr.blksize;
+	vc->sc_mpr.blksize = sc->sc_vchan[0]->sc_mpr.blksize;
 
 	/*
 	 * Multiplex device: /dev/audio (MU-Law) and /dev/sound (linear)
