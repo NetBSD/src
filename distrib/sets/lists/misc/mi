@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.199 2016/08/31 17:28:58 christos Exp $
+# $NetBSD: mi,v 1.200 2017/02/07 22:37:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1463,6 +1463,7 @@
 ./usr/share/examples/mount_portal/tcp.1		misc-sys-examples	share
 ./usr/share/examples/mount_portal/tcp.1.conf	misc-sys-examples	share
 ./usr/share/examples/named/named.conf		misc-obsolete		obsolete
+./usr/share/examples/nsd/nsd.conf		misc-netutil-examples	share
 ./usr/share/examples/openssl/CA.pl		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/CA.sh		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/der_chop		misc-obsolete		obsolete
@@ -1618,6 +1619,7 @@
 ./usr/share/examples/usermgmt/.cshrc		misc-obsolete		obsolete
 ./usr/share/examples/usermgmt/.login		misc-obsolete		obsolete
 ./usr/share/examples/usermgmt/.profile		misc-obsolete		obsolete
+./usr/share/examples/unbound/unbound.conf	misc-netutil-examples	share
 ./usr/share/misc/NetBSD.el			misc-reference-share	share
 ./usr/share/misc/airport			misc-reference-share	share
 ./usr/share/misc/birthtoken			misc-reference-share	share
