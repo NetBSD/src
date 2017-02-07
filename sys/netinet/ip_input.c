@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.348 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.349 2017/02/07 02:38:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.348 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.349 2017/02/07 02:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -908,7 +908,7 @@ ip_dooptions(struct mbuf *m)
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr dst;
 	n_time ntime;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
 	int s;
 
 	dst = ip->ip_dst;
@@ -1098,7 +1098,10 @@ ip_dooptions(struct mbuf *m)
 				ipaddr.sin_addr = dst;
 				_ss = pserialize_read_enter();
 				rcvif = m_get_rcvif(m, &_s);
-				ifa = ifaof_ifpforaddr(sintosa(&ipaddr), rcvif);
+				if (__predict_true(rcvif != NULL)) {
+					ifa = ifaof_ifpforaddr(sintosa(&ipaddr),
+					    rcvif);
+				}
 				m_put_rcvif(rcvif, &_s);
 				if (ifa == NULL) {
 					pserialize_read_exit(_ss);

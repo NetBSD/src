@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.80 2017/01/24 07:09:25 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.81 2017/02/07 02:38:08 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.80 2017/01/24 07:09:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.81 2017/02/07 02:38:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -345,6 +345,8 @@ mld_input(struct mbuf *m, int off)
 	int s;
 
 	ifp = m_get_rcvif(m, &s);
+	if (__predict_false(ifp == NULL))
+		goto out;
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
