@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.35 2017/02/08 09:39:32 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.36 2017/02/08 10:08:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.35 2017/02/08 09:39:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.36 2017/02/08 10:08:26 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -207,21 +207,6 @@ gdt_init_cpu(struct cpu_info *ci)
 #endif
 	lgdt(&region);
 }
-
-#ifdef MULTIPROCESSOR
-void
-gdt_reload_cpu(struct cpu_info *ci)
-{
-	struct region_descriptor region;
-
-#ifndef XEN
-	setregion(&region, ci->ci_gdt, MAXGDTSIZ - 1);
-#else
-	setregion(&region, ci->ci_gdt, gdt_size - 1);
-#endif
-	lgdt(&region);
-}
-#endif
 
 #if !defined(XEN) || defined(USER_LDT)
 /*
