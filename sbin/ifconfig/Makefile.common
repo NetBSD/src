@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2012/10/31 10:17:34 msaitoh Exp $
+#	$NetBSD: Makefile.common,v 1.1 2017/02/08 23:16:41 rin Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
