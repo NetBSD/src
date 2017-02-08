@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.279 2017/02/08 13:54:39 kre Exp $
+$NetBSD: UPDATING,v 1.280 2017/02/08 14:47:55 kre Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,7 +19,7 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
-20170107:
+20170207:
 	various arch dependent libc/exect.S files were removed
 	Either remove the obj directories (lib/libc and compat/amd64/i386/lib
 	if it exists) or do a clean build.
