@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.69 2017/02/08 04:05:13 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.70 2017/02/08 08:13:53 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2998,14 +2998,10 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 #endif
 #ifndef IXGBE_LEGACY_TX
 	ifp->if_transmit = ixgbe_mq_start;
-#else
-	IFQ_SET_MAXLEN(&ifp->if_snd, adapter->num_tx_desc - 2);
-#if 0
-	ifp->if_snd.ifq_drv_maxlen = adapter->num_tx_desc - 2;
-#endif
-	IFQ_SET_READY(&ifp->if_snd);
 #endif
 	ifp->if_start = ixgbe_start;
+	IFQ_SET_MAXLEN(&ifp->if_snd, adapter->num_tx_desc - 2);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
