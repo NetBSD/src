@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.70 2017/02/08 08:13:53 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.71 2017/02/08 09:00:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2736,11 +2736,11 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 #ifdef	RSS
 			aprintf_normal(
 			    ", bound RSS bucket %d to CPU %d",
-			    i, cpu_id);
+			    i, cpu_id % ncpu);
 #else
 			aprint_normal(
 			    ", bound queue %d to cpu %d",
-			    i, cpu_id);
+			    i, cpu_id % ncpu);
 #endif
 #endif /* IXGBE_DEBUG */
 		}
@@ -2784,7 +2784,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s", intrstr);
 	if (error == 0)
-		aprint_normal(", affinity to cpu %d\n", cpu_id);
+		aprint_normal(", affinity to cpu %d\n", cpu_id % ncpu);
 	else
 		aprint_normal("\n");
 

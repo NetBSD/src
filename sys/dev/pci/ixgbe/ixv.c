@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.46 2017/02/08 08:30:16 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.47 2017/02/08 09:00:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1421,7 +1421,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		    intrstr);
 		if (error == 0)
 			aprint_normal(", bound queue %d to cpu %d\n",
-			    i, cpu_id);
+			    i, cpu_id % ncpu);
 		else
 			aprint_normal("\n");
 
@@ -1464,7 +1464,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s", intrstr);
 	if (error == 0)
-		aprint_normal(", affinity to cpu %d\n", cpu_id);
+		aprint_normal(", affinity to cpu %d\n", cpu_id % ncpu);
 	else
 		aprint_normal("\n");
 
