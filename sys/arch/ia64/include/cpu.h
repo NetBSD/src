@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2017/01/14 16:12:51 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2017/02/08 16:14:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@ struct clockframe {
 #define	TRAPF_CPL(tf)		((tf)->tf_special.psr & IA64_PSR_CPL)
 #define	TRAPF_USERMODE(tf)	(TRAPF_CPL(tf) != IA64_PSR_CPL_KERN)
 
-#define __empty do { } while (/*CONSTCOND*/0)
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid. XXX:Fixme.... On the ia64 I haven't yet figured 
