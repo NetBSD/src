@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.38 2017/02/07 04:27:43 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.39 2017/02/08 03:59:12 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1020,6 +1020,7 @@ ixv_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 	ifmr->ifm_active = IFM_ETHER;
 
 	if (!adapter->link_active) {
+		ifmr->ifm_active |= IFM_NONE;
 		IXGBE_CORE_UNLOCK(adapter);
 		return;
 	}
