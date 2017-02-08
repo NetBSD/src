@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile.common,v 1.1 2017/02/08 23:16:41 rin Exp $
+#	$NetBSD: Makefile.common,v 1.2 2017/02/08 23:22:43 rin Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
+
+.ifdef SMALLPROG
+CPPFLAGS+=-DSMALL
+.endif
 
 DPADD+=${LIBUTIL}
 DPADD+=${LIBPROP}
