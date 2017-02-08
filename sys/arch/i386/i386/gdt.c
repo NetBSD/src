@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.57 2017/02/05 10:42:21 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.58 2017/02/08 09:39:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.57 2017/02/05 10:42:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.58 2017/02/08 09:39:32 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -60,6 +60,7 @@ int gdt_free[2];	/* next free slot; terminated with GNULL_SEL */
 static int ldt_count;	/* number of LDTs */
 static int ldt_max = 1000;/* max number of LDTs */
 
+static void setgdt(int, const void *, size_t, int, int, int, int);
 void gdt_init(void);
 static void gdt_grow(int);
 static int gdt_get_slot1(int);
@@ -81,7 +82,10 @@ update_descriptor(union descriptor *table, union descriptor *entry)
 #endif
 }
 
-void
+/*
+ * Called on a newly-allocated GDT slot, so no race between CPUs.
+ */
+static void
 setgdt(int sel, const void *base, size_t limit, int type, int dpl, int def32,
     int gran)
 {
@@ -104,7 +108,8 @@ setgdt(int sel, const void *base, size_t limit, int type, int dpl, int def32,
 }
 
 /*
- * Initialize the GDT subsystem.  Called from autoconf().
+ * Initialize the GDT. We already have a gdtstore, which was temporarily used
+ * by the bootstrap code. Now, we allocate a new gdtstore, and put it in cpu0.
  */
 void
 gdt_init(void)
@@ -152,7 +157,8 @@ gdt_init(void)
 }
 
 /*
- * Allocate shadow GDT for a slave CPU.
+ * Allocate shadow GDT for a secondary CPU. It contains the same values as the
+ * GDT present in cpu0 (gdtstore).
  */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
@@ -180,10 +186,9 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	    sizeof(struct cpu_info) - 1, SDT_MEMRWA, SEL_KPL, 1, 0);
 }
 
-
 /*
- * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a CPU knows who it is).
+ * Load appropriate GDT descriptor into the currently running CPU, which must
+ * be ci.
  */
 void
 gdt_init_cpu(struct cpu_info *ci)
@@ -227,7 +232,6 @@ gdt_init_cpu(struct cpu_info *ci)
 }
 
 #if defined(MULTIPROCESSOR) && !defined(XEN)
-
 void
 gdt_reload_cpu(struct cpu_info *ci)
 {
@@ -240,9 +244,10 @@ gdt_reload_cpu(struct cpu_info *ci)
 }
 #endif
 
-
 /*
- * Grow the GDT.
+ * Grow the GDT. The GDT is present on each CPU, so we need to iterate over all
+ * of them. We already have the virtual memory, we only need to grow the
+ * physical memory.
  */
 void
 gdt_grow(int which)
