@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.299 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: shl.mi,v 1.300 2017/02/08 03:44:40 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -133,7 +133,7 @@
 ./usr/lib/libproc.so.0				comp-c-shlib		compatfile,dtrace
 ./usr/lib/libproc_pic.a				comp-c-piclib		compatfile,dtrace,picinstall
 ./usr/lib/libprop_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libpthread_dbg_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libpthread_dbg_pic.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpuffs_pic.a			comp-puffs-piclib	compatfile,picinstall
 ./usr/lib/libquota_pic.a			comp-c-piclib		compatfile,picinstall
