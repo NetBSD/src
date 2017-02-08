@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2017/02/08 23:22:43 rin Exp $
+#	$NetBSD: Makefile,v 1.60 2017/02/08 23:34:15 rin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -7,25 +7,25 @@
 
 .include <bsd.own.mk>
 
-RUMPPRG=ifconfig
-MAN=	ifconfig.8
+RUMPPRG=	ifconfig
+MAN=		ifconfig.8
 
-#DBG+=-g
-SRCS= af_atalk.c af_link.c carp.c
+SRCS=		af_atalk.c af_link.c carp.c
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/dist/pf/
+SRCS+=		pfsync.c
+
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
-SRCS+= af_inet6.c
+SRCS+=		af_inet6.c
 .endif
 
 .include "Makefile.common"
 
 .PATH:		${.CURDIR}/../../lib/libc/net
-RUMPSRCS= getifaddrs.c getnameinfo.c if_indextoname.c
+RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c
 .if (${MKRUMP} != "no")
-CPPFLAGS+= -DRUMP_ACTION
+CPPFLAGS+=	-DRUMP_ACTION
 .endif
-
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/pf/
-SRCS+= pfsync.c
 
 .include <bsd.prog.mk>
