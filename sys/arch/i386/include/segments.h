@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.58 2017/02/05 10:42:21 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.59 2017/02/08 09:39:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -197,7 +197,6 @@ void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
-void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 void update_descriptor(union descriptor *, union descriptor *);
