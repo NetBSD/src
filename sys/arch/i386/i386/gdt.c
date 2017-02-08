@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.58 2017/02/08 09:39:32 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.59 2017/02/08 10:08:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.58 2017/02/08 09:39:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.59 2017/02/08 10:08:26 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -230,19 +230,6 @@ gdt_init_cpu(struct cpu_info *ci)
 	lgdt_finish();
 #endif
 }
-
-#if defined(MULTIPROCESSOR) && !defined(XEN)
-void
-gdt_reload_cpu(struct cpu_info *ci)
-{
-	struct region_descriptor region;
-	size_t max_len;
-
-	max_len = MAXGDTSIZ * sizeof(gdtstore[0]);
-	setregion(&region, ci->ci_gdt, max_len - 1);
-	lgdt(&region);
-}
-#endif
 
 /*
  * Grow the GDT. The GDT is present on each CPU, so we need to iterate over all
