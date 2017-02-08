@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.35 2017/02/08 04:08:53 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.36 2017/02/08 16:00:30 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.35 2017/02/08 04:08:53 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.36 2017/02/08 16:00:30 christos Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -126,7 +126,7 @@ static int     avgfilesize;	   /* expected average file size */
 static int     avgfpdir;	   /* expected number of files per directory */
 
 static void
-ffs_sb_copy(struct fs *o, const struct fs *i, size_t l, fsinfo_t *fsopts)
+ffs_sb_copy(struct fs *o, struct fs *i, size_t l, const fsinfo_t *fsopts)
 {
 	memcpy(o, i, l);
 	/* Zero out pointers */
