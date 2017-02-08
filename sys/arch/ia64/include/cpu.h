@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2017/02/08 16:14:08 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2017/02/08 18:01:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@ struct clockframe {
  * out what to do about this.. XXX.
  */
 /* extern void	cpu_need_proftick(struct lwp *l); */
-#define cpu_need_proftick(l) __empty
+#define cpu_need_proftick(l) __nothing
 
 /*
  * Notify the LWP l that it has a signal pending, process as soon as possible.
@@ -168,14 +168,14 @@ struct clockframe {
 	__USE(f);			\
 } while(/*CONSTCOND*/0)
 
-#define setsoftclock()        __empty       /*XXX: FIXME */
+#define setsoftclock()        __nothing       /*XXX: FIXME */
 
 /* machdep.c */
 int cpu_maxproc(void); /*XXX: Fill in machdep.c */
 
-#define	cpu_proc_fork(p1, p2)  __empty	/* XXX: Look into this. */
+#define	cpu_proc_fork(p1, p2)  __nothing	/* XXX: Look into this. */
 
-#define DELAY(x)	 __empty	/* XXX: FIXME */
+#define DELAY(x)	 __nothing	/* XXX: FIXME */
 
 static inline void cpu_idle(void);
 static inline
