@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.278 2017/02/08 10:56:12 kre Exp $
+$NetBSD: UPDATING,v 1.279 2017/02/08 13:54:39 kre Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,9 +21,10 @@ Recent changes:
 
 20170107:
 	various arch dependent libc/exect.S files were removed
-	Either remove the obj directory (lib/libc) or do a
-	clean build.   (This is a bug in the make system, it should
-	be corrected without human intervention, but isn't.)
+	Either remove the obj directories (lib/libc and compat/amd64/i386/lib
+	if it exists) or do a clean build.
+	(This is a bug in the make system, it should be corrected without
+	human intervention, but isn't.)
 
 20170104:
 	xinput build options have changed.
