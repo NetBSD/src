@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.45 2017/02/08 08:13:53 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.46 2017/02/08 08:30:16 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1379,9 +1379,12 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	tag = adapter->osdep.tag;
 
 	adapter->osdep.nintrs = adapter->num_queues + 1;
-	if (pci_msix_alloc_exact(pa,
-	    &adapter->osdep.intrs, adapter->osdep.nintrs) != 0)
+	if (pci_msix_alloc_exact(pa, &adapter->osdep.intrs,
+	    adapter->osdep.nintrs) != 0) {
+		aprint_error_dev(dev,
+		    "failed to allocate MSI-X interrupt\n");
 		return (ENXIO);
+	}
 
 	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++, txr++) {
@@ -1396,12 +1399,12 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		/* Set the handler function */
 		que->res = adapter->osdep.ihs[i] = pci_intr_establish_xname(pc,
 		    adapter->osdep.intrs[i], IPL_NET, ixv_msix_que, que,
-			intr_xname);
+		    intr_xname);
 		if (que->res == NULL) {
 			pci_intr_release(pc, adapter->osdep.intrs,
 			    adapter->osdep.nintrs);
 			aprint_error_dev(dev,
-			    "Failed to register QUE handler");
+			    "Failed to register QUE handler\n");
 			kcpuset_destroy(affinity);
 			return (ENXIO);
 		}
@@ -1440,12 +1443,13 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
 #ifdef IXG_MPSAFE
-	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE, true);
+	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE,
+	    true);
 #endif
 	/* Set the mbx handler function */
 	adapter->osdep.ihs[vector] = pci_intr_establish_xname(pc,
 	    adapter->osdep.intrs[vector], IPL_NET, ixv_msix_mbx, adapter,
-		intr_xname);
+	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
 		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
@@ -1458,10 +1462,12 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	error = interrupt_distribute(adapter->osdep.ihs[vector], affinity,NULL);
 
 	aprint_normal_dev(dev,
-	    "for link, interrupting at %s, ", intrstr);
-	if (error == 0) {
-		aprint_normal("affinity to cpu %d\n", cpu_id);
-	}
+	    "for link, interrupting at %s", intrstr);
+	if (error == 0)
+		aprint_normal(", affinity to cpu %d\n", cpu_id);
+	else
+		aprint_normal("\n");
+
 	adapter->vector = vector;
 	/* Tasklets for Mailbox */
 	adapter->link_si = softint_establish(SOFTINT_NET, ixv_handle_mbx,
@@ -1517,9 +1523,9 @@ ixv_setup_msix(struct adapter *adapter)
 	** plus an additional for mailbox.
 	*/
 	want = queues + 1;
-	if (msgs >= want) {
+	if (msgs >= want)
 		msgs = want;
-	} else {
+	else {
                	aprint_error_dev(dev,
 		    "MSIX Configuration Problem, "
 		    "%d vectors but %d queues wanted!\n",
@@ -1545,7 +1551,6 @@ ixv_allocate_pci_resources(struct adapter *adapter,
 	int flags;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_BAR(0));
-
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
@@ -1570,10 +1575,10 @@ map_err:
 		aprint_error_dev(dev, "unexpected type on BAR0\n");
 		return ENXIO;
 	}
+	adapter->hw.back = adapter;
 
 	/* Pick up the tuneable queues */
 	adapter->num_queues = ixv_num_queues;
-	adapter->hw.back = adapter;
 
 	/*
 	** Now setup MSI/X, should
@@ -1642,7 +1647,7 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 
 	ifp = adapter->ifp = &ec->ec_if;
 	strlcpy(ifp->if_xname, device_xname(dev), IFNAMSIZ);
-	ifp->if_baudrate = 1000000000;
+	ifp->if_baudrate = IF_Gbps(10);
 	ifp->if_init = ixv_init;
 	ifp->if_stop = ixv_ifstop;
 	ifp->if_softc = adapter;
