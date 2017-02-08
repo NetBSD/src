@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2017/02/08 16:56:56 rin Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2017/02/08 18:05:25 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -59,10 +59,10 @@ extern int	needswap;	/* Filesystem not in native byte order */
 #else
 /* Disable Endian-Independent FFS support for install media */
 #define		needswap		(0)
-#define		ffs_cg_swap(a, b, c)	__empty
-#define		ffs_csum_swap(a, b, c)	__empty
-#define		ffs_dinode1_swap(a, b)	__empty
-#define		ffs_sb_swap(a, b)	__empty
+#define		ffs_cg_swap(a, b, c)	__nothing
+#define		ffs_csum_swap(a, b, c)	__nothing
+#define		ffs_dinode1_swap(a, b)	__nothing
+#define		ffs_sb_swap(a, b)	__nothing
 #endif
 
 #ifndef NO_APPLE_UFS
