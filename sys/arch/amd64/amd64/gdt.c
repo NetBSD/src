@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.36 2017/02/08 10:08:26 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.37 2017/02/08 18:50:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.36 2017/02/08 10:08:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.37 2017/02/08 18:50:51 kre Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -63,7 +63,9 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
+#if defined(USER_LDT) || !defined(XEN)
 static void set_sys_gdt(int, void *, size_t, int, int, int);
+#endif
 void gdt_init(void);
 
 void
@@ -85,6 +87,7 @@ update_descriptor(void *tp, void *ep)
 #endif
 }
 
+#if defined(USER_LDT) || !defined(XEN)
 /*
  * Called on a newly-allocated GDT slot, so no race between CPUs.
  */
@@ -107,6 +110,7 @@ set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 		update_descriptor(&ci->ci_gdt[idx + 1], &d.bits[1]);
 	}
 }
+#endif	/* USER_LDT || !XEN */
 
 /*
  * Initialize the GDT. We already have a gdtstore, which was temporarily used
