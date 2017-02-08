@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.14 2017/02/07 16:15:05 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.15 2017/02/08 03:44:41 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -16,7 +16,6 @@ Items we (currently) plan to finish in the ptrace(2) field:
    in all ports
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
  - remove exect(3) from libc - there is no usecase for it
- - remove pthread_dbg(3) from the base distribution
  - research what happens when a tracee masks signals (including SIGTRAP) and a
    breakpoint is triggered
  - add ATF tests for SIGCHLD
