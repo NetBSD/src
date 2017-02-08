@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.18 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.19 2017/02/08 16:13:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -278,9 +278,6 @@ __END_DECLS
 
 #else /* _REENTRANT */
 
-#ifndef __empty
-#define __empty do {} while (/*CONSTCOND*/0)
-#endif
 #define	mutex_init(m, a) __empty
 #define	mutex_lock(m) __empty
 #define	mutex_trylock(m) __empty
