@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.8 2016/08/20 18:31:06 maxv Exp $	*/
+/*	$NetBSD: gdt.h,v 1.9 2017/02/08 09:39:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,8 +44,6 @@ void tss_free(int);
 
 int ldt_alloc(void *, size_t);
 void ldt_free(int);
-
-void set_sys_gdt(int, void *, size_t, int, int, int);
 #endif
 
 #define MINGDTSIZ       PAGE_SIZE
