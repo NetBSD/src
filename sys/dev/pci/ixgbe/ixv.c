@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.41 2017/02/08 04:14:05 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.42 2017/02/08 04:20:29 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1029,11 +1029,14 @@ ixv_media_status(struct ifnet * ifp, struct ifmediareq * ifmr)
 	ifmr->ifm_status |= IFM_ACTIVE;
 
 	switch (adapter->link_speed) {
+		case IXGBE_LINK_SPEED_10GB_FULL:
+			ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
+			break;
 		case IXGBE_LINK_SPEED_1GB_FULL:
 			ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
 			break;
-		case IXGBE_LINK_SPEED_10GB_FULL:
-			ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
+		case IXGBE_LINK_SPEED_100_FULL:
+			ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
 			break;
 	}
 
@@ -1227,10 +1230,26 @@ ixv_update_link_status(struct adapter *adapter)
 
 	if (adapter->link_up){ 
 		if (adapter->link_active == FALSE) {
-			if (bootverbose)
-				device_printf(dev,"Link is up %d Gbps %s \n",
-				    ((adapter->link_speed == 128)? 10:1),
-				    "Full Duplex");
+			if (bootverbose) {
+				const char *bpsmsg;
+
+				switch (adapter->link_speed) {
+				case IXGBE_LINK_SPEED_10GB_FULL:
+					bpsmsg = "10 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_1GB_FULL:
+					bpsmsg = "1 Gbps";
+					break;
+				case IXGBE_LINK_SPEED_100_FULL:
+					bpsmsg = "100 Mbps";
+					break;
+				default:
+					bpsmsg = "unknown speed";
+					break;
+				}
+				device_printf(dev,"Link is up %s %s \n",
+				    bpsmsg, "Full Duplex");
+			}
 			adapter->link_active = TRUE;
 			if_link_state_change(ifp, LINK_STATE_UP);
 		}
