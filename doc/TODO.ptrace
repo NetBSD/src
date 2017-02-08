@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.15 2017/02/08 03:44:41 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.16 2017/02/08 14:53:50 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -21,6 +21,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add ATF tests for SIGCHLD
  - add si_code values for PT_SYSCALL: TRAP_SCE and TRAP_SCX
  - add ATF tests for PT_SYSCALL and PT_SYSCALLEMU
+ - add PT_SET_SIGMASK and PT_GET_SIGMASK - used by checkpointing software
 
 and of course: fix as many bugs as possible.
 
