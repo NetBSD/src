@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.44 2017/02/08 04:28:53 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.45 2017/02/08 08:13:53 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1652,7 +1652,8 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_transmit = ixgbe_mq_start;
 #endif
 	ifp->if_start = ixgbe_start;
-	ifp->if_snd.ifq_maxlen = adapter->num_tx_desc - 2;
+	IFQ_SET_MAXLEN(&ifp->if_snd, adapter->num_tx_desc - 2);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
