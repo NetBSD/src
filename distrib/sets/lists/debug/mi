@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.197 2017/02/08 03:44:41 kamil Exp $
+# $NetBSD: mi,v 1.198 2017/02/08 23:08:27 rin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -32,7 +32,6 @@
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libavl_g.a				comp-c-debuglib		debuglib,compatfile,zfs
-./usr/lib/libbfd_g.a				comp-c-debuglib		debuglib,compatfile,binutils
 ./usr/lib/libbind9_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libblacklist_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib,compatfile
@@ -67,9 +66,9 @@
 ./usr/lib/libfl_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libform_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgcc_eh_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
-./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
+./usr/lib/libgcc_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgcc_s_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
-./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcccmds
+./usr/lib/libgcov_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgnumalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libgomp_g.a				comp-c-debuglib		debuglib,compatfile,gcc
 ./usr/lib/libgssapi_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
@@ -110,7 +109,7 @@
 ./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile,crypto
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
-./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcccmds,compatfile
+./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcc,compatfile
 ./usr/lib/libopcodes_g.a			comp-c-debuglib		debuglib,compatfile,binutils
 ./usr/lib/libopenpgpsdk_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libossaudio_g.a			comp-c-debuglib		debuglib,compatfile
@@ -239,8 +238,8 @@
 ./usr/lib/libss_g.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libssh_g.a				comp-c-debuglib		debuglib,compatfile,crypto
 ./usr/lib/libssl_g.a				comp-c-debuglib		debuglib,compatfile,crypto
-./usr/lib/libstdc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcccmds,libstdcxx
-./usr/lib/libsupc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcccmds,libstdcxx
+./usr/lib/libstdc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc,libstdcxx
+./usr/lib/libsupc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcc,libstdcxx
 ./usr/lib/libtddl_g.a				comp-c-debuglib		debuglib,compatfile,tpm
 ./usr/lib/libtermcap_g.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libterminfo_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2329,10 +2328,4 @@
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
 ./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	comp-c-debuglib		atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a	comp-c-debuglib	atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
 ./var/db/obsolete/debug				base-sys-root		debug

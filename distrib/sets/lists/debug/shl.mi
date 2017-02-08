@@ -1,4 +1,5 @@
-# $NetBSD: shl.mi,v 1.160 2017/02/08 20:26:26 maya Exp $
+# $NetBSD: shl.mi,v 1.161 2017/02/08 23:08:27 rin Exp $
+./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.206.debug			comp-sys-debug	debug,dynamicroot
@@ -305,3 +306,9 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a			comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a			comp-c-debuglib	atf,debuglib,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a			comp-c-debuglib	atf,debuglib,compattestfile
