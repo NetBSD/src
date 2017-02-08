@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.50 2017/02/08 16:11:40 rin Exp $	*/
+/*	$NetBSD: fsck.h,v 1.51 2017/02/08 16:23:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -307,11 +307,11 @@ int	do_dirswap;		/* need to do dir entry byteswap */
 #define	needswap 		(0)
 #define	do_blkswap		(0)
 #define	do_dirswap		(0)
-#define	ffs_cg_swap(a, b, c)	do {} while (/*CONSTCOND*/0)
-#define	ffs_csum_swap(a, b, c)	do {} while (/*CONSTCOND*/0)
-#define	ffs_sb_swap(a, b)	do {} while (/*CONSTCOND*/0)
-#define	swap_dinode1(a, b)	do {} while (/*CONSTCOND*/0)
-#define	swap_dinode2(a, b)	do {} while (/*CONSTCOND*/0)
+#define	ffs_cg_swap(a, b, c)	__empty
+#define	ffs_csum_swap(a, b, c)	__empty
+#define	ffs_sb_swap(a, b)	__empty
+#define	swap_dinode1(a, b)	__empty
+#define	swap_dinode2(a, b)	__empty
 #endif
 
 #ifndef NO_APPLE_UFS
