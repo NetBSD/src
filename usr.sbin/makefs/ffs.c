@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.67 2017/02/08 02:20:35 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.68 2017/02/08 02:23:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.67 2017/02/08 02:20:35 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.68 2017/02/08 02:23:45 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -294,7 +294,6 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		/* update various superblock parameters */
 	superblock = fsopts->superblock;
-	memset(superblock, 0, sizeof(*superblock));
 	superblock->fs_fmod = 0;
 	superblock->fs_old_cstotal.cs_ndir   = superblock->fs_cstotal.cs_ndir;
 	superblock->fs_old_cstotal.cs_nbfree = superblock->fs_cstotal.cs_nbfree;
