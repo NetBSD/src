@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2017/02/08 23:16:41 rin Exp $
+# $NetBSD: Makefile,v 1.36 2017/02/08 23:22:43 rin Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 NOMAN=	# defined
@@ -12,10 +12,6 @@ CPPFLAGS+=	-DCRUNCHOPS
 .if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
 SRCS+= af_inet6.c
-.endif
-
-.ifdef SMALLPROG
-CPPFLAGS+=-DSMALL
 .endif
 
 PROG=	ifconfig
