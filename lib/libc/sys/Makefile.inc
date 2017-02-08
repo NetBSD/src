@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.233 2017/02/08 17:30:27 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.234 2017/02/08 17:58:41 maya Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -9,7 +9,7 @@ SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
 SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
-	clock_getcpuclockid.c
+	clock_getcpuclockid.c accept4.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
