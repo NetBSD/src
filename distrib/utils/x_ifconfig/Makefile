@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36 2017/02/08 23:22:43 rin Exp $
+# $NetBSD: Makefile,v 1.37 2017/02/08 23:24:57 rin Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 NOMAN=	# defined
@@ -15,8 +15,9 @@ SRCS+= af_inet6.c
 .endif
 
 PROG=	ifconfig
+
+.PATH:		${SRCDIR}
+
 .include "${.CURDIR}/../../../sbin/ifconfig/Makefile.common"
 
 .include <bsd.prog.mk>
-
-.PATH:		${SRCDIR}
