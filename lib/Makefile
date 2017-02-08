@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.248 2016/10/14 17:29:29 macallan Exp $
+#	$NetBSD: Makefile,v 1.249 2017/02/08 03:44:41 kamil Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SUBDIR+=	libarch \
 		libcompat libcrypt \
 		libintl libipsec libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
-		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
+		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 

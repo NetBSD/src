@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2107 2017/02/01 12:33:58 christos Exp $
+#	$NetBSD: mi,v 1.2108 2017/02/08 03:44:40 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2620,7 +2620,7 @@
 ./usr/include/protocols/talkd.h			comp-c-include
 ./usr/include/protocols/timed.h			comp-c-include
 ./usr/include/pthread.h				comp-c-include
-./usr/include/pthread_dbg.h			comp-c-include
+./usr/include/pthread_dbg.h			comp-obsolete		obsolete
 ./usr/include/pthread_queue.h			comp-c-include
 ./usr/include/pthread_types.h			comp-c-include
 ./usr/include/puffs.h				comp-puffs-include
@@ -3384,8 +3384,8 @@
 ./usr/lib/libprop.a				comp-c-lib		compatfile
 ./usr/lib/libprop_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpthread.a				comp-c-lib		compatfile
-./usr/lib/libpthread_dbg.a			comp-c-lib		compatfile
-./usr/lib/libpthread_dbg_p.a			comp-c-proflib		compatfile,profile
+./usr/lib/libpthread_dbg.a			comp-obsolete		obsolete
+./usr/lib/libpthread_dbg_p.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libpuffs.a				comp-puffs-lib		compatfile
 ./usr/lib/libpuffs_p.a				comp-puffs-proflib	compatfile,profile
@@ -3749,7 +3749,7 @@
 ./usr/libdata/lint/llib-lproc.ln		comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-lprop.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lpthread_dbg.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lpuffs.ln		comp-puffs-lintlib	lint
 ./usr/libdata/lint/llib-lquota.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lradius.ln		comp-c-lintlib		lint
@@ -8465,7 +8465,7 @@
 ./usr/share/man/cat3/pthread_condattr_setpshared.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_curcpu_np.0	comp-c-catman		.cat
-./usr/share/man/cat3/pthread_dbg.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_dbg.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
@@ -9406,12 +9406,12 @@
 ./usr/share/man/cat3/tcsendbreak.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetattr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tcsetpgrp.0		comp-c-catman		.cat
-./usr/share/man/cat3/td_close.0			comp-c-catman		.cat
-./usr/share/man/cat3/td_map_pth2thr.0		comp-c-catman		.cat
-./usr/share/man/cat3/td_open.0			comp-c-catman		.cat
-./usr/share/man/cat3/td_thr_getname.0		comp-c-catman		.cat
-./usr/share/man/cat3/td_thr_info.0		comp-c-catman		.cat
-./usr/share/man/cat3/td_thr_iter.0		comp-c-catman		.cat
+./usr/share/man/cat3/td_close.0			comp-obsolete		obsolete
+./usr/share/man/cat3/td_map_pth2thr.0		comp-obsolete		obsolete
+./usr/share/man/cat3/td_open.0			comp-obsolete		obsolete
+./usr/share/man/cat3/td_thr_getname.0		comp-obsolete		obsolete
+./usr/share/man/cat3/td_thr_info.0		comp-obsolete		obsolete
+./usr/share/man/cat3/td_thr_iter.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/tdelete.0			comp-c-catman		.cat
 ./usr/share/man/cat3/telldir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tempnam.0			comp-c-catman		.cat
@@ -15838,7 +15838,7 @@
 ./usr/share/man/html3/pthread_condattr_setpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_curcpu_np.html	comp-c-htmlman		html
-./usr/share/man/html3/pthread_dbg.html		comp-c-htmlman		html
+./usr/share/man/html3/pthread_dbg.html		comp-obsolete		obsolete
 ./usr/share/man/html3/pthread_detach.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_equal.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_exit.html		comp-c-htmlman		html
@@ -16743,12 +16743,12 @@
 ./usr/share/man/html3/tcsendbreak.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetattr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tcsetpgrp.html		comp-c-htmlman		html
-./usr/share/man/html3/td_close.html		comp-c-htmlman		html
-./usr/share/man/html3/td_map_pth2thr.html	comp-c-htmlman		html
-./usr/share/man/html3/td_open.html		comp-c-htmlman		html
-./usr/share/man/html3/td_thr_getname.html	comp-c-htmlman		html
-./usr/share/man/html3/td_thr_info.html		comp-c-htmlman		html
-./usr/share/man/html3/td_thr_iter.html		comp-c-htmlman		html
+./usr/share/man/html3/td_close.html		comp-obsolete		obsolete
+./usr/share/man/html3/td_map_pth2thr.html	comp-obsolete		obsolete
+./usr/share/man/html3/td_open.html		comp-obsolete		obsolete
+./usr/share/man/html3/td_thr_getname.html	comp-obsolete		obsolete
+./usr/share/man/html3/td_thr_info.html		comp-obsolete		obsolete
+./usr/share/man/html3/td_thr_iter.html		comp-obsolete		obsolete
 ./usr/share/man/html3/tdelete.html		comp-c-htmlman		html
 ./usr/share/man/html3/telldir.html		comp-c-htmlman		html
 ./usr/share/man/html3/tempnam.html		comp-c-htmlman		html
@@ -23204,7 +23204,7 @@
 ./usr/share/man/man3/pthread_condattr_setpshared.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_create.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_curcpu_np.3	comp-c-man		.man
-./usr/share/man/man3/pthread_dbg.3		comp-c-man		.man
+./usr/share/man/man3/pthread_dbg.3		comp-obsolete		obsolete
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
@@ -24141,12 +24141,12 @@
 ./usr/share/man/man3/tcsendbreak.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetattr.3		comp-c-man		.man
 ./usr/share/man/man3/tcsetpgrp.3		comp-c-man		.man
-./usr/share/man/man3/td_close.3			comp-c-man		.man
-./usr/share/man/man3/td_map_pth2thr.3		comp-c-man		.man
-./usr/share/man/man3/td_open.3			comp-c-man		.man
-./usr/share/man/man3/td_thr_getname.3		comp-c-man		.man
-./usr/share/man/man3/td_thr_info.3		comp-c-man		.man
-./usr/share/man/man3/td_thr_iter.3		comp-c-man		.man
+./usr/share/man/man3/td_close.3			comp-obsolete		obsolete
+./usr/share/man/man3/td_map_pth2thr.3		comp-obsolete		obsolete
+./usr/share/man/man3/td_open.3			comp-obsolete		obsolete
+./usr/share/man/man3/td_thr_getname.3		comp-obsolete		obsolete
+./usr/share/man/man3/td_thr_info.3		comp-obsolete		obsolete
+./usr/share/man/man3/td_thr_iter.3		comp-obsolete		obsolete
 ./usr/share/man/man3/tdelete.3			comp-c-man		.man
 ./usr/share/man/man3/telldir.3			comp-c-man		.man
 ./usr/share/man/man3/tempnam.3			comp-c-man		.man

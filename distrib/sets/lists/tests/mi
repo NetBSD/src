@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.716 2017/02/02 22:07:33 martin Exp $
+# $NetBSD: mi,v 1.717 2017/02/08 03:44:41 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -132,7 +132,7 @@
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen			tests-lib-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/lib/libpthread_dbg			tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libpthread_dbg			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/librumpclient				tests-lib-debug		compattestfile,atf
@@ -3049,11 +3049,11 @@
 ./usr/tests/lib/libpthread/t_status		tests-obsolete		obsolete
 ./usr/tests/lib/libpthread/t_swapcontext	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libpthread/t_timedmutex		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libpthread_dbg			tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libpthread_dbg/Atffile		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libpthread_dbg/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libpthread_dbg/t_dummy		tests-lib-tests		compattestfile,atf
-./usr/tests/lib/libpthread_dbg/t_threads	tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpthread_dbg			tests-obsolete		obsolete
+./usr/tests/lib/libpthread_dbg/Atffile		tests-obsolete		obsolete
+./usr/tests/lib/libpthread_dbg/Kyuafile		tests-obsolete		obsolete
+./usr/tests/lib/libpthread_dbg/t_dummy		tests-obsolete		obsolete
+./usr/tests/lib/libpthread_dbg/t_threads	tests-obsolete		obsolete
 ./usr/tests/lib/librefuse			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librefuse/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/librefuse/t_refuse_opt		tests-lib-tests		compattestfile,atf
