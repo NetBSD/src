@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.34 2016/08/21 10:42:33 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.35 2017/02/08 09:39:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.34 2016/08/21 10:42:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.35 2017/02/08 09:39:32 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -63,6 +63,7 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
+static void set_sys_gdt(int, void *, size_t, int, int, int);
 void gdt_init(void);
 
 void
@@ -84,7 +85,10 @@ update_descriptor(void *tp, void *ep)
 #endif
 }
 
-void
+/*
+ * Called on a newly-allocated GDT slot, so no race between CPUs.
+ */
+static void
 set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 {
 	union {
