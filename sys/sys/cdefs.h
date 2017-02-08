@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.131 2017/02/08 16:26:19 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.132 2017/02/08 17:59:35 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -312,13 +312,13 @@
  * #ifdef DEBUG
  * # define dprintf(a) printf(a)
  * #else
- * # define dprintf(a) __empty
+ * # define dprintf(a) __nothing
  * #endif
  *
  * We use ((void)0) instead of do {} while (0) so that it
  * works on , expressions.
  */
-#define __empty	((void)0)
+#define __nothing	((void)0)
 
 #if defined(__cplusplus)
 #define	__BEGIN_EXTERN_C	extern "C" {
