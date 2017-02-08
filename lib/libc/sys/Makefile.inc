@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.232 2017/02/07 19:29:40 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.233 2017/02/08 17:30:27 maya Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -130,7 +130,7 @@ ASM=	access.S acct.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
 	openat.S \
-	paccept.S pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
+	pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
@@ -170,7 +170,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S \
 	fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
-	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
+	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S paccept.S poll.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S _sched_protect.S \
