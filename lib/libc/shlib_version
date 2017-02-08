@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.270 2017/02/07 15:33:25 kamil Exp $
+#	$NetBSD: shlib_version,v 1.271 2017/02/08 20:26:26 maya Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -47,4 +47,4 @@
 # - boot obsolete signal functions to libcompat
 # - remove exect(3) API - tracing functionality has been moved to the kernel
 major=12
-minor=205
+minor=206
