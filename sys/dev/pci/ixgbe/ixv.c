@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.43 2017/02/08 04:24:44 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.44 2017/02/08 04:28:53 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -186,7 +186,7 @@ MODULE_DEPEND(ix, netmap, 1, 1, 1);
 */
 
 /* Number of Queues - do not exceed MSIX vectors - 1 */
-static int ixv_num_queues = 1;
+static int ixv_num_queues = 0;
 #define	TUNABLE_INT(__x, __y)
 TUNABLE_INT("hw.ixv.num_queues", &ixv_num_queues);
 
