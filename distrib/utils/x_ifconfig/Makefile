@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34 2017/02/07 16:49:40 rin Exp $
+# $NetBSD: Makefile,v 1.35 2017/02/08 23:16:41 rin Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 NOMAN=	# defined
@@ -19,7 +19,7 @@ CPPFLAGS+=-DSMALL
 .endif
 
 PROG=	ifconfig
-.include "${.CURDIR}/../../../sbin/ifconfig/Makefile.inc"
+.include "${.CURDIR}/../../../sbin/ifconfig/Makefile.common"
 
 .include <bsd.prog.mk>
 
