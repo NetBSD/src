@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.68 2017/02/08 03:59:12 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.69 2017/02/08 04:05:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -507,7 +507,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	ixgbe_set_sysctl_value(adapter, "tx_processing_limit",
 	    "max number of tx packets to process",
-	&adapter->tx_process_limit, ixgbe_tx_process_limit);
+	    &adapter->tx_process_limit, ixgbe_tx_process_limit);
 
 	/* Do descriptor calc and sanity checks */
 	if (((ixgbe_txd * sizeof(union ixgbe_adv_tx_desc)) % DBA_ALIGN) != 0 ||
@@ -2684,8 +2684,8 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++, txr++) {
-		snprintf(intr_xname, sizeof(intr_xname), "%s TX/RX",
-		    device_xname(dev));
+		snprintf(intr_xname, sizeof(intr_xname), "%s TXRX%d",
+		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
 #ifdef IXG_MPSAFE

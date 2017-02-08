@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.39 2017/02/08 03:59:12 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.40 2017/02/08 04:05:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1362,8 +1362,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++, txr++) {
-		snprintf(intr_xname, sizeof(intr_xname), "%s TX/RX",
-		    device_xname(dev));
+		snprintf(intr_xname, sizeof(intr_xname), "%s TXRX%d",
+		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
 #ifdef IXV_MPSAFE
