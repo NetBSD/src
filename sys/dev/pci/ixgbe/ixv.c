@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.40 2017/02/08 04:05:13 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.41 2017/02/08 04:14:05 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -502,6 +502,7 @@ ixv_detach(device_t dev, int flags)
 {
 	struct adapter *adapter = device_private(dev);
 	struct ix_queue *que = adapter->queues;
+	struct tx_ring *txr = adapter->tx_rings;
 
 	INIT_DEBUGOUT("ixv_detach: begin");
 	if (adapter->osdep.attached == false)
@@ -523,10 +524,8 @@ ixv_detach(device_t dev, int flags)
 	ixv_stop(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 
-	for (int i = 0; i < adapter->num_queues; i++, que++) {
+	for (int i = 0; i < adapter->num_queues; i++, que++, txr++) {
 #ifndef IXGBE_LEGACY_TX
-		struct tx_ring *txr = adapter->tx_rings;
-
 		softint_disestablish(txr->txr_si);
 #endif
 		softint_disestablish(que->que_si);
@@ -553,6 +552,8 @@ ixv_detach(device_t dev, int flags)
 	bus_generic_detach(dev);
 #endif
 	if_detach(adapter->ifp);
+
+	sysctl_teardown(&adapter->sysctllog);
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
@@ -1574,7 +1575,6 @@ ixv_free_pci_resources(struct adapter * adapter)
 	**  Release all msix queue resources:
 	*/
 	for (int i = 0; i < adapter->num_queues; i++, que++) {
-		rid = que->msix + 1;
 		if (que->res != NULL)
 			pci_intr_disestablish(adapter->osdep.pc,
 			    adapter->osdep.ihs[i]);
@@ -1583,19 +1583,18 @@ ixv_free_pci_resources(struct adapter * adapter)
 
 	/* Clean the Legacy or Link interrupt last */
 	if (adapter->vector) /* we are doing MSIX */
-		rid = adapter->vector + 1;
+		rid = adapter->vector;
 	else
-		(adapter->msix != 0) ? (rid = 1):(rid = 0);
+		rid = 0;
 
-	if (adapter->osdep.ihs[rid] != NULL)
+	if (adapter->osdep.ihs[rid] != NULL) {
 		pci_intr_disestablish(adapter->osdep.pc,
 		    adapter->osdep.ihs[rid]);
-	adapter->osdep.ihs[rid] = NULL;
+		adapter->osdep.ihs[rid] = NULL;
+	}
 
-#if defined(NETBSD_MSI_OR_MSIX)
 	pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs,
 	    adapter->osdep.nintrs);
-#endif
 
 	if (adapter->osdep.mem_size != 0) {
 		bus_space_unmap(adapter->osdep.mem_bus_space_tag,
