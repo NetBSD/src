@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
  
 #
@@ -127,7 +127,6 @@ UMLDAP|University of Michigan LDAP Team|http://www.umich.edu/~dirsvcs/ldap/ldap.
 
 !block products; data; sort='Name'
 Name|Jump
-Berkeley DB|http://www.oracle.com/database/berkeley-db/db/index.html
 Cyrus|http://cyrusimap.web.cmu.edu/generalinfo.html
 Cyrus SASL|http://asg.web.cmu.edu/sasl/sasl-library.html
 Git|http://git-scm.com/
@@ -225,6 +224,7 @@ LDAPv3|LDAP, version 3
 LDIF|LDAP Data Interchange Format
 LMDB|Lightning Memory-Mapped Database
 MD5|Message Digest 5
+MDB|Memory-Mapped Database (Backend)
 MIB|Management Information Base
 MODDN|Modify DN
 MODRDN|Modify RDN
