@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2017/01/11 12:02:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2017/02/09 17:58:57 joerg Exp $
 
 LIB=	LLVMDebugInfoCodeView
 
@@ -7,6 +7,7 @@ LIB=	LLVMDebugInfoCodeView
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/CodeView
 
 SRCS+=	CVSymbolVisitor.cpp \
+	CVTypeDumper.cpp \
 	CVTypeVisitor.cpp \
 	CodeViewError.cpp \
 	CodeViewRecordIO.cpp \
@@ -17,7 +18,9 @@ SRCS+=	CVSymbolVisitor.cpp \
 	RecordSerialization.cpp \
 	SymbolDumper.cpp \
 	SymbolRecordMapping.cpp \
-	TypeDumper.cpp \
+	TypeDatabase.cpp \
+	TypeDatabaseVisitor.cpp \
+	TypeDumpVisitor.cpp \
 	TypeRecord.cpp \
 	TypeRecordMapping.cpp \
 	TypeSerializer.cpp \
