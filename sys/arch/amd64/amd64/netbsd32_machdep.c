@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.101 2017/02/06 16:34:37 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.102 2017/02/09 08:38:25 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.101 2017/02/06 16:34:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.102 2017/02/09 08:38:25 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -531,13 +531,31 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 int
 netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
-	struct trapframe *tf = l->l_md.md_regs;
+	struct trapframe *tf;
+	struct pcb *pcb;
+
+	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(l);
 
 	/*
-	 * Check for security violations. Taken from i386/process_machdep.c.
+	 * Check for security violations.
 	 */
-	if (((regs->r_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !VALID_USER_CSEL32(regs->r_cs))
+	if (((regs->r_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+	if (!VALID_USER_CSEL32(regs->r_cs))
+		return EINVAL;
+	if (regs->r_fs != 0 && !VALID_USER_DSEL32(regs->r_fs) &&
+	    !(VALID_USER_FSEL32(regs->r_fs) && pcb->pcb_fs != 0))
+		return EINVAL;
+	if (regs->r_gs != 0 && !VALID_USER_DSEL32(regs->r_gs) &&
+	    !(VALID_USER_GSEL32(regs->r_gs) && pcb->pcb_gs != 0))
+		return EINVAL;
+	if (regs->r_es != 0 && !VALID_USER_DSEL32(regs->r_es))
+		return EINVAL;
+	if (!VALID_USER_DSEL32(regs->r_ds) ||
+	    !VALID_USER_DSEL32(regs->r_ss))
+		return EINVAL;
+	if (regs->r_eip >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
 	tf->tf_rax = regs->r_eax;
