@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.37 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: trm.c,v 1.38 2017/02/09 20:32:19 macallan Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.37 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.38 2017/02/09 20:32:19 macallan Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -412,7 +412,7 @@ trm_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t command;
 	const char *intrstr;
-	int fl = 0;
+	int fl = -1;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
