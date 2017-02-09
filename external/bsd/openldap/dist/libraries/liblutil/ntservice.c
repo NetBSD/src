@@ -1,9 +1,9 @@
-/*	$NetBSD: ntservice.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.1.1.5 2017/02/09 01:46:46 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,6 +18,9 @@
 /*
  * NT Service manager utilities for OpenLDAP services
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ntservice.c,v 1.1.1.5 2017/02/09 01:46:46 christos Exp $");
 
 #include "portable.h"
 

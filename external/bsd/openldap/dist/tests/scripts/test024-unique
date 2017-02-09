@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2004-2014 The OpenLDAP Foundation.
+## Copyright 2004-2016 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -73,6 +73,7 @@ $LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
 	> /dev/null << EOTUNIQ1
 dn: uid=dave,ou=users,o=unique
 objectClass: inetOrgPerson
+objectClass: simpleSecurityObject
 uid: dave
 sn: nothere
 cn: dave
@@ -85,6 +86,7 @@ displayName: Dave (ITS#4212)
 employeeNumber: 69
 employeeType: contractor
 givenName: Dave
+userpassword: $PASSWD
 EOTUNIQ1
 RC=$?
 if test $RC != 0 ; then
@@ -94,7 +96,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Adding a non-unique record..."
-$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPADD -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
 	 $TESTOUT 2>&1 << EOTUNIQ2
 dn: uid=bill,ou=users,o=unique
 objectClass: inetOrgPerson
@@ -114,6 +116,64 @@ if test $RC != $RCODEconstraint ; then
 	echo "unique check failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
+fi
+
+# ITS#6641/8057
+echo "Trying to bypass uniqueness as a normal user..."
+$LDAPADD -M -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+	 $TESTOUT 2>&1 << EOTUNIQ2
+dn: uid=bill,ou=users,o=unique
+objectClass: inetOrgPerson
+uid: bill
+sn: johnson
+cn: bill
+businessCategory: rtest
+carLicense: ABC123
+departmentNumber: 42
+displayName: Bill
+employeeNumber: 5150
+employeeType: contractor
+givenName: Bill
+EOTUNIQ2
+RC=$?
+if test $RC != $RCODEconstraint ; then
+	echo "unique check failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
+# ITS#6641/8057
+echo "Bypassing uniqueness as an admin user..."
+$LDAPADD -M -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+	 $TESTOUT 2>&1 << EOTUNIQ2
+dn: uid=bill,ou=users,o=unique
+objectClass: inetOrgPerson
+uid: bill
+sn: johnson
+cn: bill
+businessCategory: rtest
+carLicense: ABC123
+departmentNumber: 42
+displayName: Bill
+employeeNumber: 5150
+employeeType: contractor
+givenName: Bill
+EOTUNIQ2
+RC=$?
+if test $RC != 0 ; then
+	echo "spurious unique error ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Cleaning up"
+$LDAPDELETE -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+    "uid=bill,ou=users,o=unique" > $TESTOUT 2>&1
+RC=$?
+if test $RC != 0; then
+	echo "ldapdelete failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
 fi
 
 echo Dynamically retrieving initial configuration...
@@ -210,7 +270,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Adding a non-unique record..."
-$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPADD -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
 	 $TESTOUT 2>&1 << EOTUNIQ2
 dn: uid=bill,ou=users,o=unique
 objectClass: inetOrgPerson
@@ -267,7 +327,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Verifying we removed the right attr..."
-$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPADD -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
 	 $TESTOUT 2>&1 << EOTUNIQ2
 dn: uid=bill,ou=users,o=unique
 objectClass: inetOrgPerson
@@ -327,7 +387,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Adding a non-unique record..."
-$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPADD -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
 	 $TESTOUT 2>&1 << EOTUNIQ2
 dn: uid=bill,ou=users,o=unique
 objectClass: inetOrgPerson
@@ -495,10 +555,137 @@ if test $RC != 0 ; then
 	exit -1
 fi
 
+echo "Making a record non-unique"
+$LDAPMODIFY -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+    $TESTOUT 2>&1 << EOF
+dn: uid=empty,ou=users,o=unique
+changetype: modify
+replace: sn
+sn: johnson
+EOF
+
+RC=$?
+if test $RC != $RCODEconstraint ; then
+	echo "unique check failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
+# ITS#6641/8057
+echo "Trying to bypass uniqueness as a normal user..."
+$LDAPMODIFY -M -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+    $TESTOUT 2>&1 << EOF
+dn: uid=empty,ou=users,o=unique
+changetype: modify
+replace: sn
+sn: johnson
+EOF
+
+RC=$?
+if test $RC != $RCODEconstraint ; then
+	echo "unique check failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
+# ITS#6641/8057
+echo "Bypassing uniqueness as an admin user..."
+$LDAPMODIFY -M -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+    $TESTOUT 2>&1 << EOF
+dn: uid=empty,ou=users,o=unique
+changetype: modify
+replace: sn
+sn: johnson
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+	echo "spurious unique error ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Cleaning up"
+$LDAPMODIFY -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+    $TESTOUT 2>&1 << EOF
+dn: uid=empty,ou=users,o=unique
+changetype: modify
+replace: sn
+sn: empty
+EOF
+
+RC=$?
+if test $RC != 0; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Adding another unique record..."
+$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+	 $TESTOUT 2>&1 << EOF
+dn: uid=not edgar,uid=edgar,ou=users,o=unique
+objectClass: inetOrgPerson
+uid: not edgar
+sn: Alan
+cn: not edgar
+EOF
+
+RC=$?
+if test $RC != 0 ; then
+	echo "unique check failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
+echo "Making the record non-unique with modrdn..."
+$LDAPMODRDN -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+	"uid=not edgar,uid=edgar,ou=users,o=unique" "uid=edgar" > $TESTOUT 2>&1
+
+RC=$?
+if test $RC != $RCODEconstraint ; then
+	echo "unique check failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
+# ITS#6641/8057
+echo "Trying to bypass uniqueness as a normal user..."
+$LDAPMODRDN -M -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+	"uid=not edgar,uid=edgar,ou=users,o=unique" "uid=edgar" > $TESTOUT 2>&1
+
+RC=$?
+if test $RC != $RCODEconstraint ; then
+	echo "unique check failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit -1
+fi
+
+# ITS#6641/8057
+echo "Bypassing uniqueness as an admin user..."
+$LDAPMODRDN -M -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+	"uid=not edgar,uid=edgar,ou=users,o=unique" "uid=edgar" > $TESTOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "spurious unique error ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Cleaning up"
+$LDAPDELETE -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+    "uid=edgar,uid=edgar,ou=users,o=unique" > $TESTOUT 2>&1
+RC=$?
+if test $RC != 0; then
+	echo "ldapdelete failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
 
 echo "Adding a record unique in one domain, non-unique in the filtered domain..."
 
-$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPADD -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
 	 $TESTOUT 2>&1 << EOF
 dn: uid=elvis,ou=users,o=unique
 objectClass: inetOrgPerson
@@ -569,7 +756,7 @@ fi
 
 echo "Adding a record non-unique in the ignore-domain..."
 
-$LDAPADD -D "$UNIQUEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPADD -D "uid=dave,ou=users,o=unique" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
 	 $TESTOUT 2>&1 << EOF
 dn: uid=harry,ou=users,o=unique
 objectClass: inetOrgPerson
