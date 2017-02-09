@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.48 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: crypto.c,v 1.49 2017/02/09 06:03:29 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.48 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.49 2017/02/09 06:03:29 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -75,9 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.48 2016/07/07 06:55:43 msaitoh Exp $");
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
-kmutex_t crypto_q_mtx;
-kmutex_t crypto_ret_q_mtx;
-kcondvar_t cryptoret_cv;
+static kmutex_t crypto_q_mtx;
+static kmutex_t crypto_ret_q_mtx;
+static kcondvar_t cryptoret_cv;
 kmutex_t crypto_mtx;
 
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
