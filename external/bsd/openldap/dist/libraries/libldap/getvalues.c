@@ -1,9 +1,9 @@
-/*	$NetBSD: getvalues.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: getvalues.c,v 1.1.1.5 2017/02/09 01:46:47 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,9 @@
 /* Portions Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: getvalues.c,v 1.1.1.5 2017/02/09 01:46:47 christos Exp $");
 
 #include "portable.h"
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: frontend.c,v 1.1.1.4 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: frontend.c,v 1.1.1.5 2017/02/09 01:46:58 christos Exp $	*/
 
 /* frontend.c - routines for dealing with frontend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,9 @@
  * is provided ``as is'' without express or implied warranty.
  */
 
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: frontend.c,v 1.1.1.5 2017/02/09 01:46:58 christos Exp $");
 
 #include "portable.h"
 
