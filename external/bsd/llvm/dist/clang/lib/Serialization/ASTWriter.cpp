@@ -629,6 +629,7 @@ void TypeLocWriter::VisitFunctionTypeLoc(FunctionTypeLoc TL) {
   Record.AddSourceLocation(TL.getLocalRangeBegin());
   Record.AddSourceLocation(TL.getLParenLoc());
   Record.AddSourceLocation(TL.getRParenLoc());
+  Record.AddSourceRange(TL.getExceptionSpecRange());
   Record.AddSourceLocation(TL.getLocalRangeEnd());
   for (unsigned i = 0, e = TL.getNumParams(); i != e; ++i)
     Record.AddDeclRef(TL.getParam(i));
@@ -4654,17 +4655,6 @@ uint64_t ASTWriter::WriteASTCore(Sema &SemaRef, StringRef isysroot,
   // If we're emitting a module, write out the submodule information.  
   if (WritingModule)
     WriteSubmodules(WritingModule);
-  else if (!getLangOpts().CurrentModule.empty()) {
-    // If we're building a PCH in the implementation of a module, we may need
-    // the description of the current module.
-    //
-    // FIXME: We may need other modules that we did not load from an AST file,
-    // such as if a module declares a 'conflicts' on a different module.
-    Module *M = PP.getHeaderSearchInfo().getModuleMap().findModule(
-        getLangOpts().CurrentModule);
-    if (M && !M->IsFromModuleFile)
-      WriteSubmodules(M);
-  }
 
   Stream.EmitRecord(SPECIAL_TYPES, SpecialTypes);
 
