@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.717 2017/02/08 03:44:41 kamil Exp $
+# $NetBSD: mi,v 1.718 2017/02/09 03:29:55 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -91,7 +91,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/lib/libc/gen/exect			tests-kernel-tests	compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/exect			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
@@ -2430,10 +2430,10 @@
 ./usr/tests/lib/libc/gen			tests-lib-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
-./usr/tests/lib/libc/gen/exect			tests-kernel-tests	compattestfile,atf
-./usr/tests/lib/libc/gen/exect/Atffile		tests-kernel-tests	compattestfile,atf
-./usr/tests/lib/libc/gen/exect/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua
-./usr/tests/lib/libc/gen/exect/t_exect		tests-kernel-tests	compattestfile,atf
+./usr/tests/lib/libc/gen/exect			tests-obsolete		obsolete
+./usr/tests/lib/libc/gen/exect/Atffile		tests-obsolete		obsoleteernel-tests	compattestfile,atf
+./usr/tests/lib/libc/gen/exect/Kyuafile		tests-obsolete		obsoleteernel-tests	compattestfile,atf,kyua
+./usr/tests/lib/libc/gen/exect/t_exect		tests-obsolete		obsoleteernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Atffile		tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Kyuafile	tests-kernel-tests	compattestfile,atf,kyua
