@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.2 2017/02/06 16:03:40 christos Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.3 2017/02/09 17:27:30 christos Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -709,8 +709,8 @@ main(int argc, char *argv[])
 			}
 			if (Fflag)
 				fdpass(s);
-#ifdef CRYPTO
 			else {
+#ifdef CRYPTO
 				if (usetls)
 					tls_setup_client(tls_ctx, s, host);
 				if (!zflag)
@@ -725,8 +725,11 @@ main(int argc, char *argv[])
 					tls_free(tls_ctx);
 					tls_ctx = NULL;
 				}
-			}
+#else
+				if (!zflag)
+					readwrite(s, NULL);
 #endif
+			}
 		}
 	}
 
