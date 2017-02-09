@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.119 2017/02/02 19:12:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.120 2017/02/09 08:23:46 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1310,16 +1310,15 @@ do_syscall:
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
 	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
 	SWAPGS
 	jnz	2f
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
-	movw	TF_DS(%rsp),%ds
 	movq	TF_RSP(%rsp),%rsp
 	sysretq
 #else
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
@@ -1332,7 +1331,6 @@ do_syscall:
  * then a SIGSEGV will be signalled.
  */
 2:
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	iretq
 
