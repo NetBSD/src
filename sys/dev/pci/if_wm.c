@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.476 2017/02/02 10:29:10 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.477 2017/02/09 23:30:46 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.476 2017/02/02 10:29:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.477 2017/02/09 23:30:46 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -280,6 +280,9 @@ struct wm_softc;
 
 #define WM_Q_INTR_EVCNT_ATTACH(qname, evname, q, qnum, xname)		\
 	WM_Q_EVCNT_ATTACH(qname, evname, q, qnum, xname, EVCNT_TYPE_INTR)
+
+#define WM_Q_EVCNT_DETACH(qname, evname, q, qnum)	\
+	evcnt_detach(&(q)->qname##_ev_##evname);
 #endif /* WM_EVENT_COUNTERS */
 
 struct wm_txqueue {
@@ -2692,6 +2695,16 @@ wm_detach(device_t self, int flags __unused)
 	wm_stop(ifp, 1);
 
 	pmf_device_deregister(self);
+
+#ifdef WM_EVENT_COUNTERS
+	evcnt_detach(&sc->sc_ev_linkintr);
+
+	evcnt_detach(&sc->sc_ev_tx_xoff);
+	evcnt_detach(&sc->sc_ev_tx_xon);
+	evcnt_detach(&sc->sc_ev_rx_xoff);
+	evcnt_detach(&sc->sc_ev_rx_xon);
+	evcnt_detach(&sc->sc_ev_rx_macctl);
+#endif /* WM_EVENT_COUNTERS */
 
 	/* Tell the firmware about the release */
 	WM_CORE_LOCK(sc);
@@ -5917,6 +5930,13 @@ wm_free_txrx_queues(struct wm_softc *sc)
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
+
+#ifdef WM_EVENT_COUNTERS
+		WM_Q_EVCNT_DETACH(rxq, rxintr, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, rxipsum, rxq, i);
+		WM_Q_EVCNT_DETACH(rxq, rxtusum, rxq, i);
+#endif /* WM_EVENT_COUNTERS */
+
 		wm_free_rx_buffer(sc, rxq);
 		wm_free_rx_descs(sc, rxq);
 		if (rxq->rxq_lock)
@@ -5926,6 +5946,27 @@ wm_free_txrx_queues(struct wm_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
 		struct mbuf *m;
+#ifdef WM_EVENT_COUNTERS
+		int j;
+
+		WM_Q_EVCNT_DETACH(txq, txsstall, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txdstall, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txfifo_stall, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txdw, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txqe, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txipsum, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txtusum, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txtusum6, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txtso, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txtso6, txq, i);
+		WM_Q_EVCNT_DETACH(txq, txtsopain, txq, i);
+
+		for (j = 0; j < WM_NTXSEGS; j++)
+			evcnt_detach(&txq->txq_ev_txseg[j]);
+
+		WM_Q_EVCNT_DETACH(txq, txdrop, txq, i);
+		WM_Q_EVCNT_DETACH(txq, tu, txq, i);
+#endif /* WM_EVENT_COUNTERS */
 
 		/* drain txq_interq */
 		while ((m = pcq_get(txq->txq_interq)) != NULL)
