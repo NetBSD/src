@@ -46,10 +46,13 @@ public:
   }
 
   void handleDeclarator(const DeclaratorDecl *D,
-                        const NamedDecl *Parent = nullptr) {
+                        const NamedDecl *Parent = nullptr,
+                        bool isIBType = false) {
     if (!Parent) Parent = D;
 
-    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), Parent);
+    IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), Parent,
+                                 Parent->getLexicalDeclContext(),
+                                 /*isBase=*/false, isIBType);
     IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent);
     if (IndexCtx.shouldIndexFunctionLocalSymbols()) {
       // Only index parameters in definitions, parameters in declarations are
@@ -89,11 +92,20 @@ public:
       Relations.emplace_back((unsigned)SymbolRole::RelationAccessorOf,
                              AssociatedProp);
 
-    if (!IndexCtx.handleDecl(D, (unsigned)SymbolRole::Dynamic, Relations))
+    // getLocation() returns beginning token of a method declaration, but for
+    // indexing purposes we want to point to the base name.
+    SourceLocation MethodLoc = D->getSelectorStartLoc();
+    if (MethodLoc.isInvalid())
+      MethodLoc = D->getLocation();
+
+    if (!IndexCtx.handleDecl(D, MethodLoc, (unsigned)SymbolRole::Dynamic, Relations))
       return false;
     IndexCtx.indexTypeSourceInfo(D->getReturnTypeSourceInfo(), D);
-    for (const auto *I : D->parameters())
-      handleDeclarator(I, D);
+    bool hasIBActionAndFirst = D->hasAttr<IBActionAttr>();
+    for (const auto *I : D->parameters()) {
+      handleDeclarator(I, D, /*isIBType=*/hasIBActionAndFirst);
+      hasIBActionAndFirst = false;
+    }
 
     if (D->isThisDeclarationADefinition()) {
       const Stmt *Body = D->getBody();
@@ -283,11 +295,12 @@ public:
 
   bool VisitObjCCategoryDecl(const ObjCCategoryDecl *D) {
     const ObjCInterfaceDecl *C = D->getClassInterface();
-    if (C)
-      TRY_TO(IndexCtx.handleReference(C, D->getLocation(), D, D,
-                                  SymbolRoleSet(), SymbolRelation{
-                                    (unsigned)SymbolRole::RelationExtendedBy, D
-                                  }));
+    if (!C)
+      return true;
+    TRY_TO(IndexCtx.handleReference(C, D->getLocation(), D, D, SymbolRoleSet(),
+                                   SymbolRelation{
+                                     (unsigned)SymbolRole::RelationExtendedBy, D
+                                   }));
     SourceLocation CategoryLoc = D->getCategoryNameLoc();
     if (!CategoryLoc.isValid())
       CategoryLoc = D->getLocation();
@@ -333,6 +346,9 @@ public:
         handleObjCMethod(MD, D);
     if (!IndexCtx.handleDecl(D))
       return false;
+    if (IBOutletCollectionAttr *attr = D->getAttr<IBOutletCollectionAttr>())
+      IndexCtx.indexTypeSourceInfo(attr->getInterfaceLoc(), D,
+                                   D->getLexicalDeclContext(), false, true);
     IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
     return true;
   }
