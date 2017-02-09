@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.15 2017/01/24 11:09:14 nonaka Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.16 2017/02/09 11:56:40 nonaka Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.15 2017/01/24 11:09:14 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.16 2017/02/09 11:56:40 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,8 +402,7 @@ acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 			    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
 			    ", type=%d(%s)\n",
 			    mapaddr, mapaddr + mapsize - 1,
-			    (uint64_t)(u_long)md->md_virt,
-			    (uint64_t)(u_long)md->md_virt + mapsize - 1,
+			    md->md_virt, md->md_virt + mapsize - 1,
 			    size, md->md_attr, md->md_type,
 			    efi_getmemtype_str(md->md_type));
 		} else
