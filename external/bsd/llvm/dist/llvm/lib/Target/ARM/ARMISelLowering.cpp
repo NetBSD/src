@@ -97,171 +97,6 @@ namespace {
   };
 }
 
-void ARMTargetLowering::InitLibcallCallingConvs() {
-  // The builtins on ARM always use AAPCS, irrespective of wheter C is AAPCS or
-  // AAPCS_VFP.
-  for (const auto LC : {
-           RTLIB::SHL_I16,
-           RTLIB::SHL_I32,
-           RTLIB::SHL_I64,
-           RTLIB::SHL_I128,
-           RTLIB::SRL_I16,
-           RTLIB::SRL_I32,
-           RTLIB::SRL_I64,
-           RTLIB::SRL_I128,
-           RTLIB::SRA_I16,
-           RTLIB::SRA_I32,
-           RTLIB::SRA_I64,
-           RTLIB::SRA_I128,
-           RTLIB::MUL_I8,
-           RTLIB::MUL_I16,
-           RTLIB::MUL_I32,
-           RTLIB::MUL_I64,
-           RTLIB::MUL_I128,
-           RTLIB::MULO_I32,
-           RTLIB::MULO_I64,
-           RTLIB::MULO_I128,
-           RTLIB::SDIV_I8,
-           RTLIB::SDIV_I16,
-           RTLIB::SDIV_I32,
-           RTLIB::SDIV_I64,
-           RTLIB::SDIV_I128,
-           RTLIB::UDIV_I8,
-           RTLIB::UDIV_I16,
-           RTLIB::UDIV_I32,
-           RTLIB::UDIV_I64,
-           RTLIB::UDIV_I128,
-           RTLIB::SREM_I8,
-           RTLIB::SREM_I16,
-           RTLIB::SREM_I32,
-           RTLIB::SREM_I64,
-           RTLIB::SREM_I128,
-           RTLIB::UREM_I8,
-           RTLIB::UREM_I16,
-           RTLIB::UREM_I32,
-           RTLIB::UREM_I64,
-           RTLIB::UREM_I128,
-           RTLIB::SDIVREM_I8,
-           RTLIB::SDIVREM_I16,
-           RTLIB::SDIVREM_I32,
-           RTLIB::SDIVREM_I64,
-           RTLIB::SDIVREM_I128,
-           RTLIB::UDIVREM_I8,
-           RTLIB::UDIVREM_I16,
-           RTLIB::UDIVREM_I32,
-           RTLIB::UDIVREM_I64,
-           RTLIB::UDIVREM_I128,
-           RTLIB::NEG_I32,
-           RTLIB::NEG_I64,
-           RTLIB::ADD_F32,
-           RTLIB::ADD_F64,
-           RTLIB::ADD_F80,
-           RTLIB::ADD_F128,
-           RTLIB::SUB_F32,
-           RTLIB::SUB_F64,
-           RTLIB::SUB_F80,
-           RTLIB::SUB_F128,
-           RTLIB::MUL_F32,
-           RTLIB::MUL_F64,
-           RTLIB::MUL_F80,
-           RTLIB::MUL_F128,
-           RTLIB::DIV_F32,
-           RTLIB::DIV_F64,
-           RTLIB::DIV_F80,
-           RTLIB::DIV_F128,
-           RTLIB::POWI_F32,
-           RTLIB::POWI_F64,
-           RTLIB::POWI_F80,
-           RTLIB::POWI_F128,
-           RTLIB::FPEXT_F64_F128,
-           RTLIB::FPEXT_F32_F128,
-           RTLIB::FPEXT_F32_F64,
-           RTLIB::FPEXT_F16_F32,
-           RTLIB::FPROUND_F32_F16,
-           RTLIB::FPROUND_F64_F16,
-           RTLIB::FPROUND_F80_F16,
-           RTLIB::FPROUND_F128_F16,
-           RTLIB::FPROUND_F64_F32,
-           RTLIB::FPROUND_F80_F32,
-           RTLIB::FPROUND_F128_F32,
-           RTLIB::FPROUND_F80_F64,
-           RTLIB::FPROUND_F128_F64,
-           RTLIB::FPTOSINT_F32_I32,
-           RTLIB::FPTOSINT_F32_I64,
-           RTLIB::FPTOSINT_F32_I128,
-           RTLIB::FPTOSINT_F64_I32,
-           RTLIB::FPTOSINT_F64_I64,
-           RTLIB::FPTOSINT_F64_I128,
-           RTLIB::FPTOSINT_F80_I32,
-           RTLIB::FPTOSINT_F80_I64,
-           RTLIB::FPTOSINT_F80_I128,
-           RTLIB::FPTOSINT_F128_I32,
-           RTLIB::FPTOSINT_F128_I64,
-           RTLIB::FPTOSINT_F128_I128,
-           RTLIB::FPTOUINT_F32_I32,
-           RTLIB::FPTOUINT_F32_I64,
-           RTLIB::FPTOUINT_F32_I128,
-           RTLIB::FPTOUINT_F64_I32,
-           RTLIB::FPTOUINT_F64_I64,
-           RTLIB::FPTOUINT_F64_I128,
-           RTLIB::FPTOUINT_F80_I32,
-           RTLIB::FPTOUINT_F80_I64,
-           RTLIB::FPTOUINT_F80_I128,
-           RTLIB::FPTOUINT_F128_I32,
-           RTLIB::FPTOUINT_F128_I64,
-           RTLIB::FPTOUINT_F128_I128,
-           RTLIB::SINTTOFP_I32_F32,
-           RTLIB::SINTTOFP_I32_F64,
-           RTLIB::SINTTOFP_I32_F80,
-           RTLIB::SINTTOFP_I32_F128,
-           RTLIB::SINTTOFP_I64_F32,
-           RTLIB::SINTTOFP_I64_F64,
-           RTLIB::SINTTOFP_I64_F80,
-           RTLIB::SINTTOFP_I64_F128,
-           RTLIB::SINTTOFP_I128_F32,
-           RTLIB::SINTTOFP_I128_F64,
-           RTLIB::SINTTOFP_I128_F80,
-           RTLIB::SINTTOFP_I128_F128,
-           RTLIB::UINTTOFP_I32_F32,
-           RTLIB::UINTTOFP_I32_F64,
-           RTLIB::UINTTOFP_I32_F80,
-           RTLIB::UINTTOFP_I32_F128,
-           RTLIB::UINTTOFP_I64_F32,
-           RTLIB::UINTTOFP_I64_F64,
-           RTLIB::UINTTOFP_I64_F80,
-           RTLIB::UINTTOFP_I64_F128,
-           RTLIB::UINTTOFP_I128_F32,
-           RTLIB::UINTTOFP_I128_F64,
-           RTLIB::UINTTOFP_I128_F80,
-           RTLIB::UINTTOFP_I128_F128,
-           RTLIB::OEQ_F32,
-           RTLIB::OEQ_F64,
-           RTLIB::OEQ_F128,
-           RTLIB::UNE_F32,
-           RTLIB::UNE_F64,
-           RTLIB::UNE_F128,
-           RTLIB::OGE_F32,
-           RTLIB::OGE_F64,
-           RTLIB::OGE_F128,
-           RTLIB::OLT_F32,
-           RTLIB::OLT_F64,
-           RTLIB::OLT_F128,
-           RTLIB::OLE_F32,
-           RTLIB::OLE_F64,
-           RTLIB::OLE_F128,
-           RTLIB::OGT_F32,
-           RTLIB::OGT_F64,
-           RTLIB::OGT_F128,
-           RTLIB::UO_F32,
-           RTLIB::UO_F64,
-           RTLIB::UO_F128,
-           RTLIB::O_F32,
-           RTLIB::O_F64,
-           RTLIB::O_F128,
-       })
-  setLibcallCallingConv(LC, CallingConv::ARM_AAPCS);
-}
-
 // The APCS parameter registers.
 static const MCPhysReg GPRArgRegs[] = {
   ARM::R0, ARM::R1, ARM::R2, ARM::R3
@@ -349,7 +184,22 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
 
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
 
-  InitLibcallCallingConvs();
+  if (!Subtarget->isTargetDarwin() && !Subtarget->isTargetIOS() &&
+      !Subtarget->isTargetWatchOS()) {
+    const auto &E = Subtarget->getTargetTriple().getEnvironment();
+
+    bool IsHFTarget = E == Triple::EABIHF || E == Triple::GNUEABIHF ||
+                      E == Triple::MuslEABIHF;
+    // Windows is a special case.  Technically, we will replace all of the "GNU"
+    // calls with calls to MSVCRT if appropriate and adjust the calling
+    // convention then.
+    IsHFTarget = IsHFTarget || Subtarget->isTargetWindows();
+
+    for (int LCID = 0; LCID < RTLIB::UNKNOWN_LIBCALL; ++LCID)
+      setLibcallCallingConv(static_cast<RTLIB::Libcall>(LCID),
+                            IsHFTarget ? CallingConv::ARM_AAPCS_VFP
+                                       : CallingConv::ARM_AAPCS);
+  }
 
   if (Subtarget->isTargetMachO()) {
     // Uses VFP for Thumb libfuncs if available.
@@ -608,15 +458,27 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   // In EABI, these functions have an __aeabi_ prefix, but in GNUEABI they have
   // a __gnu_ prefix (which is the default).
   if (Subtarget->isTargetAEABI()) {
-    setLibcallName(RTLIB::FPROUND_F32_F16, "__aeabi_f2h");
-    setLibcallName(RTLIB::FPROUND_F64_F16, "__aeabi_d2h");
-    setLibcallName(RTLIB::FPEXT_F16_F32,   "__aeabi_h2f");
+    static const struct {
+      const RTLIB::Libcall Op;
+      const char * const Name;
+      const CallingConv::ID CC;
+    } LibraryCalls[] = {
+      { RTLIB::FPROUND_F32_F16, "__aeabi_f2h", CallingConv::ARM_AAPCS },
+      { RTLIB::FPROUND_F64_F16, "__aeabi_d2h", CallingConv::ARM_AAPCS },
+      { RTLIB::FPEXT_F16_F32, "__aeabi_h2f", CallingConv::ARM_AAPCS },
+    };
+
+    for (const auto &LC : LibraryCalls) {
+      setLibcallName(LC.Op, LC.Name);
+      setLibcallCallingConv(LC.Op, LC.CC);
+    }
   }
 
   if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, &ARM::tGPRRegClass);
   else
     addRegisterClass(MVT::i32, &ARM::GPRRegClass);
+
   if (!Subtarget->useSoftFloat() && Subtarget->hasVFP2() &&
       !Subtarget->isThumb1Only()) {
     addRegisterClass(MVT::f32, &ARM::SPRRegClass);
@@ -976,6 +838,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
 
   setOperationAction(ISD::SREM,  MVT::i32, Expand);
   setOperationAction(ISD::UREM,  MVT::i32, Expand);
+
   // Register based DivRem for AEABI (RTABI 4.2)
   if (Subtarget->isTargetAEABI() || Subtarget->isTargetAndroid() ||
       Subtarget->isTargetGNUAEABI() || Subtarget->isTargetMuslAEABI() ||
@@ -984,29 +847,49 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UREM, MVT::i64, Custom);
     HasStandaloneRem = false;
 
-    for (const auto &LC :
-         {RTLIB::SDIVREM_I8, RTLIB::SDIVREM_I16, RTLIB::SDIVREM_I32})
-      setLibcallName(LC, Subtarget->isTargetWindows() ? "__rt_sdiv"
-                                                      : "__aeabi_idivmod");
-    setLibcallName(RTLIB::SDIVREM_I64, Subtarget->isTargetWindows()
-                                           ? "__rt_sdiv64"
-                                           : "__aeabi_ldivmod");
-    for (const auto &LC :
-         {RTLIB::UDIVREM_I8, RTLIB::UDIVREM_I16, RTLIB::UDIVREM_I32})
-      setLibcallName(LC, Subtarget->isTargetWindows() ? "__rt_udiv"
-                                                      : "__aeabi_uidivmod");
-    setLibcallName(RTLIB::UDIVREM_I64, Subtarget->isTargetWindows()
-                                           ? "__rt_udiv64"
-                                           : "__aeabi_uldivmod");
+    if (Subtarget->isTargetWindows()) {
+      const struct {
+        const RTLIB::Libcall Op;
+        const char * const Name;
+        const CallingConv::ID CC;
+      } LibraryCalls[] = {
+        { RTLIB::SDIVREM_I8, "__rt_sdiv", CallingConv::ARM_AAPCS },
+        { RTLIB::SDIVREM_I16, "__rt_sdiv", CallingConv::ARM_AAPCS },
+        { RTLIB::SDIVREM_I32, "__rt_sdiv", CallingConv::ARM_AAPCS },
+        { RTLIB::SDIVREM_I64, "__rt_sdiv64", CallingConv::ARM_AAPCS },
 
-    setLibcallCallingConv(RTLIB::SDIVREM_I8, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::SDIVREM_I16, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::SDIVREM_I32, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::SDIVREM_I64, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::UDIVREM_I8, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::UDIVREM_I16, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::UDIVREM_I32, CallingConv::ARM_AAPCS);
-    setLibcallCallingConv(RTLIB::UDIVREM_I64, CallingConv::ARM_AAPCS);
+        { RTLIB::UDIVREM_I8, "__rt_udiv", CallingConv::ARM_AAPCS },
+        { RTLIB::UDIVREM_I16, "__rt_udiv", CallingConv::ARM_AAPCS },
+        { RTLIB::UDIVREM_I32, "__rt_udiv", CallingConv::ARM_AAPCS },
+        { RTLIB::UDIVREM_I64, "__rt_udiv64", CallingConv::ARM_AAPCS },
+      };
+
+      for (const auto &LC : LibraryCalls) {
+        setLibcallName(LC.Op, LC.Name);
+        setLibcallCallingConv(LC.Op, LC.CC);
+      }
+    } else {
+      const struct {
+        const RTLIB::Libcall Op;
+        const char * const Name;
+        const CallingConv::ID CC;
+      } LibraryCalls[] = {
+        { RTLIB::SDIVREM_I8, "__aeabi_idivmod", CallingConv::ARM_AAPCS },
+        { RTLIB::SDIVREM_I16, "__aeabi_idivmod", CallingConv::ARM_AAPCS },
+        { RTLIB::SDIVREM_I32, "__aeabi_idivmod", CallingConv::ARM_AAPCS },
+        { RTLIB::SDIVREM_I64, "__aeabi_ldivmod", CallingConv::ARM_AAPCS },
+
+        { RTLIB::UDIVREM_I8, "__aeabi_uidivmod", CallingConv::ARM_AAPCS },
+        { RTLIB::UDIVREM_I16, "__aeabi_uidivmod", CallingConv::ARM_AAPCS },
+        { RTLIB::UDIVREM_I32, "__aeabi_uidivmod", CallingConv::ARM_AAPCS },
+        { RTLIB::UDIVREM_I64, "__aeabi_uldivmod", CallingConv::ARM_AAPCS },
+      };
+
+      for (const auto &LC : LibraryCalls) {
+        setLibcallName(LC.Op, LC.Name);
+        setLibcallCallingConv(LC.Op, LC.CC);
+      }
+    }
 
     setOperationAction(ISD::SDIVREM, MVT::i32, Custom);
     setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
@@ -3305,11 +3188,6 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
   SDLoc dl(Op);
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
-  case Intrinsic::arm_rbit: {
-    assert(Op.getOperand(1).getValueType() == MVT::i32 &&
-           "RBIT intrinsic must have i32 type!");
-    return DAG.getNode(ISD::BITREVERSE, dl, MVT::i32, Op.getOperand(1));
-  }
   case Intrinsic::thread_pointer: {
     EVT PtrVT = getPointerTy(DAG.getDataLayout());
     return DAG.getNode(ARMISD::THREAD_POINTER, dl, PtrVT);
@@ -7693,11 +7571,11 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FLT_ROUNDS_:   return LowerFLT_ROUNDS_(Op, DAG);
   case ISD::MUL:           return LowerMUL(Op, DAG);
   case ISD::SDIV:
-    if (Subtarget->isTargetWindows())
+    if (Subtarget->isTargetWindows() && !Op.getValueType().isVector())
       return LowerDIV_Windows(Op, DAG, /* Signed */ true);
     return LowerSDIV(Op, DAG);
   case ISD::UDIV:
-    if (Subtarget->isTargetWindows())
+    if (Subtarget->isTargetWindows() && !Op.getValueType().isVector())
       return LowerDIV_Windows(Op, DAG, /* Signed */ false);
     return LowerUDIV(Op, DAG);
   case ISD::ADDC:
@@ -9232,12 +9110,102 @@ SDValue combineSelectAndUseCommutative(SDNode *N, bool AllOnes,
   return SDValue();
 }
 
-// AddCombineToVPADDL- For pair-wise add on neon, use the vpaddl instruction
-// (only after legalization).
-static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
+static bool IsVUZPShuffleNode(SDNode *N) {
+  // VUZP shuffle node.
+  if (N->getOpcode() == ARMISD::VUZP)
+    return true;
+
+  // "VUZP" on i32 is an alias for VTRN.
+  if (N->getOpcode() == ARMISD::VTRN && N->getValueType(0) == MVT::v2i32)
+    return true;
+
+  return false;
+}
+
+static SDValue AddCombineToVPADD(SDNode *N, SDValue N0, SDValue N1,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const ARMSubtarget *Subtarget) {
+  // Look for ADD(VUZP.0, VUZP.1).
+  if (!IsVUZPShuffleNode(N0.getNode()) || N0.getNode() != N1.getNode() ||
+      N0 == N1)
+   return SDValue();
 
+  // Make sure the ADD is a 64-bit add; there is no 128-bit VPADD.
+  if (!N->getValueType(0).is64BitVector())
+    return SDValue();
+
+  // Generate vpadd.
+  SelectionDAG &DAG = DCI.DAG;
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDLoc dl(N);
+  SDNode *Unzip = N0.getNode();
+  EVT VT = N->getValueType(0);
+
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(DAG.getConstant(Intrinsic::arm_neon_vpadd, dl,
+                                TLI.getPointerTy(DAG.getDataLayout())));
+  Ops.push_back(Unzip->getOperand(0));
+  Ops.push_back(Unzip->getOperand(1));
+
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT, Ops);
+}
+
+static SDValue AddCombineVUZPToVPADDL(SDNode *N, SDValue N0, SDValue N1,
+                                      TargetLowering::DAGCombinerInfo &DCI,
+                                      const ARMSubtarget *Subtarget) {
+  // Check for two extended operands.
+  if (!(N0.getOpcode() == ISD::SIGN_EXTEND &&
+        N1.getOpcode() == ISD::SIGN_EXTEND) &&
+      !(N0.getOpcode() == ISD::ZERO_EXTEND &&
+        N1.getOpcode() == ISD::ZERO_EXTEND))
+    return SDValue();
+
+  SDValue N00 = N0.getOperand(0);
+  SDValue N10 = N1.getOperand(0);
+
+  // Look for ADD(SEXT(VUZP.0), SEXT(VUZP.1))
+  if (!IsVUZPShuffleNode(N00.getNode()) || N00.getNode() != N10.getNode() ||
+      N00 == N10)
+    return SDValue();
+
+  // We only recognize Q register paddl here; this can't be reached until
+  // after type legalization.
+  if (!N00.getValueType().is64BitVector() ||
+      !N0.getValueType().is128BitVector())
+    return SDValue();
+
+  // Generate vpaddl.
+  SelectionDAG &DAG = DCI.DAG;
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  SDLoc dl(N);
+  EVT VT = N->getValueType(0);
+
+  SmallVector<SDValue, 8> Ops;
+  // Form vpaddl.sN or vpaddl.uN depending on the kind of extension.
+  unsigned Opcode;
+  if (N0.getOpcode() == ISD::SIGN_EXTEND)
+    Opcode = Intrinsic::arm_neon_vpaddls;
+  else
+    Opcode = Intrinsic::arm_neon_vpaddlu;
+  Ops.push_back(DAG.getConstant(Opcode, dl,
+                                TLI.getPointerTy(DAG.getDataLayout())));
+  EVT ElemTy = N00.getValueType().getVectorElementType();
+  unsigned NumElts = VT.getVectorNumElements();
+  EVT ConcatVT = EVT::getVectorVT(*DAG.getContext(), ElemTy, NumElts * 2);
+  SDValue Concat = DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(N), ConcatVT,
+                               N00.getOperand(0), N00.getOperand(1));
+  Ops.push_back(Concat);
+
+  return DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT, Ops);
+}
+
+// FIXME: This function shouldn't be necessary; if we lower BUILD_VECTOR in
+// an appropriate manner, we end up with ADD(VUZP(ZEXT(N))), which is
+// much easier to match.
+static SDValue
+AddCombineBUILD_VECTORToVPADDL(SDNode *N, SDValue N0, SDValue N1,
+                               TargetLowering::DAGCombinerInfo &DCI,
+                               const ARMSubtarget *Subtarget) {
   // Only perform optimization if after legalize, and if NEON is available. We
   // also expected both operands to be BUILD_VECTORs.
   if (DCI.isBeforeLegalize() || !Subtarget->hasNEON()
@@ -9292,6 +9260,10 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
     } else
       return SDValue();
   }
+
+  // Don't generate vpaddl+vmovn; we'll match it to vpadd later.
+  if (Vec.getValueType().getVectorElementType() == VT.getVectorElementType())
+    return SDValue();
 
   // Create VPADDL node.
   SelectionDAG &DAG = DCI.DAG;
@@ -9564,9 +9536,15 @@ static SDValue PerformADDCCombine(SDNode *N,
 static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
                                           TargetLowering::DAGCombinerInfo &DCI,
                                           const ARMSubtarget *Subtarget){
+  // Attempt to create vpadd for this add.
+  if (SDValue Result = AddCombineToVPADD(N, N0, N1, DCI, Subtarget))
+    return Result;
 
   // Attempt to create vpaddl for this add.
-  if (SDValue Result = AddCombineToVPADDL(N, N0, N1, DCI, Subtarget))
+  if (SDValue Result = AddCombineVUZPToVPADDL(N, N0, N1, DCI, Subtarget))
+    return Result;
+  if (SDValue Result = AddCombineBUILD_VECTORToVPADDL(N, N0, N1, DCI,
+                                                      Subtarget))
     return Result;
 
   // fold (add (select cc, 0, c), x) -> (select cc, x, (add, x, c))
