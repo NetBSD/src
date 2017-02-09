@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2245 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2246 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -462,3 +462,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	pthread_dbg(3): Removed from the base distribution. [kamil 20170208]
 	ixv(4): Add Intel 10G Ethernet virtual function driver.
 		[msaitoh 20170208]
+	bind: Import version 9.10.4-P6. [christos 20170208]
