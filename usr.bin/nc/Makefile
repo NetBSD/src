@@ -12,3 +12,5 @@ SRCS=	netcat.c atomicio.c socks.c
 #.endif
 
 .include <bsd.prog.mk>
+
+LDFLAGS+=	-Wl,--no-fatal-warnings
