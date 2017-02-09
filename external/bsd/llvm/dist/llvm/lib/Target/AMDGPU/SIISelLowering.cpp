@@ -711,7 +711,8 @@ SDValue SITargetLowering::LowerParameterPtr(SelectionDAG &DAG,
 
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                          const SDLoc &SL, SDValue Chain,
-                                         unsigned Offset, bool Signed) const {
+                                         unsigned Offset, bool Signed,
+                                         const ISD::InputArg *Arg) const {
   const DataLayout &DL = DAG.getDataLayout();
   Type *Ty = MemVT.getTypeForEVT(*DAG.getContext());
   PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
@@ -725,20 +726,21 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                              MachineMemOperand::MODereferenceable |
                              MachineMemOperand::MOInvariant);
 
-  SDValue Val;
+  SDValue Val = Load;
+  if (Arg && (Arg->Flags.isSExt() || Arg->Flags.isZExt()) &&
+      VT.bitsLT(MemVT)) {
+    unsigned Opc = Arg->Flags.isZExt() ? ISD::AssertZext : ISD::AssertSext;
+    Val = DAG.getNode(Opc, SL, MemVT, Val, DAG.getValueType(VT));
+  }
+
   if (MemVT.isFloatingPoint())
-    Val = getFPExtOrFPTrunc(DAG, Load, SL, VT);
+    Val = getFPExtOrFPTrunc(DAG, Val, SL, VT);
   else if (Signed)
-    Val = DAG.getSExtOrTrunc(Load, SL, VT);
+    Val = DAG.getSExtOrTrunc(Val, SL, VT);
   else
-    Val = DAG.getZExtOrTrunc(Load, SL, VT);
+    Val = DAG.getZExtOrTrunc(Val, SL, VT);
 
-  SDValue Ops[] = {
-    Val,
-    Load.getValue(1)
-  };
-
-  return DAG.getMergeValues(Ops, SL);
+  return DAG.getMergeValues({ Val, Load.getValue(1) }, SL);
 }
 
 SDValue SITargetLowering::LowerFormalArguments(
@@ -840,12 +842,18 @@ SDValue SITargetLowering::LowerFormalArguments(
   if (!AMDGPU::isShader(CallConv)) {
     assert(Info->hasWorkGroupIDX() && Info->hasWorkItemIDX());
   } else {
-    assert(!Info->hasPrivateSegmentBuffer() && !Info->hasDispatchPtr() &&
+    assert(!Info->hasDispatchPtr() &&
            !Info->hasKernargSegmentPtr() && !Info->hasFlatScratchInit() &&
            !Info->hasWorkGroupIDX() && !Info->hasWorkGroupIDY() &&
            !Info->hasWorkGroupIDZ() && !Info->hasWorkGroupInfo() &&
            !Info->hasWorkItemIDX() && !Info->hasWorkItemIDY() &&
            !Info->hasWorkItemIDZ());
+  }
+
+  if (Info->hasPrivateMemoryInputPtr()) {
+    unsigned PrivateMemoryPtrReg = Info->addPrivateMemoryPtr(*TRI);
+    MF.addLiveIn(PrivateMemoryPtrReg, &AMDGPU::SReg_64RegClass);
+    CCInfo.AllocateReg(PrivateMemoryPtrReg);
   }
 
   // FIXME: How should these inputs interact with inreg / custom SGPR inputs?
@@ -906,12 +914,13 @@ SDValue SITargetLowering::LowerFormalArguments(
     if (VA.isMemLoc()) {
       VT = Ins[i].VT;
       EVT MemVT = VA.getLocVT();
-      const unsigned Offset = Subtarget->getExplicitKernelArgOffset() +
+      const unsigned Offset = Subtarget->getExplicitKernelArgOffset(MF) +
                               VA.getLocMemOffset();
       // The first 36 bytes of the input buffer contains information about
       // thread group and global sizes.
       SDValue Arg = LowerParameter(DAG, VT, MemVT,  DL, Chain,
-                                   Offset, Ins[i].Flags.isSExt());
+                                   Offset, Ins[i].Flags.isSExt(),
+                                   &Ins[i]);
       Chains.push_back(Arg.getValue(1));
 
       auto *ParamTy =
@@ -1030,7 +1039,7 @@ SDValue SITargetLowering::LowerFormalArguments(
   if (getTargetMachine().getOptLevel() == CodeGenOpt::None)
     HasStackObjects = true;
 
-  if (ST.isAmdCodeObjectV2()) {
+  if (ST.isAmdCodeObjectV2(MF)) {
     if (HasStackObjects) {
       // If we have stack objects, we unquestionably need the private buffer
       // resource. For the Code Object V2 ABI, this will be the first 4 user
@@ -2359,9 +2368,13 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
   // TODO: Should this propagate fast-math-flags?
 
   switch (IntrinsicID) {
+  case Intrinsic::amdgcn_implicit_buffer_ptr: {
+    unsigned Reg = TRI->getPreloadedValue(MF, SIRegisterInfo::PRIVATE_SEGMENT_BUFFER);
+    return CreateLiveInRegister(DAG, &AMDGPU::SReg_64RegClass, Reg, VT);
+  }
   case Intrinsic::amdgcn_dispatch_ptr:
   case Intrinsic::amdgcn_queue_ptr: {
-    if (!Subtarget->isAmdCodeObjectV2()) {
+    if (!Subtarget->isAmdCodeObjectV2(MF)) {
       DiagnosticInfoUnsupported BadIntrin(
           *MF.getFunction(), "unsupported hsa intrinsic without hsa target",
           DL.getDebugLoc());
