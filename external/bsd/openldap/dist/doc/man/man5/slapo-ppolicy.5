@@ -1,5 +1,5 @@
 .TH SLAPO_PPOLICY 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2014 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2016 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -104,7 +104,7 @@ object class.  The definition of that class is as follows:
         pwdLockout $ pwdLockoutDuration $
         pwdMaxFailure $ pwdFailureCountInterval $
         pwdMustChange $ pwdAllowUserChange $
-        pwdSafeModify ) )
+        pwdSafeModify 4 pwdMaxRecordedFailure ) )
 .RE
 
 This implementation also provides an additional
@@ -360,6 +360,25 @@ and
 .RS 4
 (  1.3.6.1.4.1.42.2.27.8.1.11
    NAME 'pwdMaxFailure'
+   EQUALITY integerMatch
+   SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
+   SINGLE\-VALUE )
+.RE
+
+.B pwdMaxRecordedFailure
+.P
+This attribute contains the maximum number of failed bind
+attempts to store in a user's entry.
+If
+.B pwdMaxRecordedFailure
+is not present, or its value is zero (0), then it defaults
+to the value of
+.BR pwdMaxFailure .
+If that value is also 0, the default is 5.
+.LP
+.RS 4
+(  1.3.6.1.4.1.42.2.27.8.1.16
+   NAME 'pwdMaxRecordedFailure'
    EQUALITY integerMatch
    SYNTAX 1.3.6.1.4.1.1466.115.121.1.27
    SINGLE\-VALUE )
@@ -641,6 +660,8 @@ account may be locked.
 password policy attribute.)
 Excess timestamps beyond those allowed by
 .B pwdMaxFailure
+or
+.B pwdMaxRecordedFailure
 may also be purged.  If a successful authentication is made to this
 DN (i.e. to this user account), then
 .B pwdFailureTime   

@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_log.h,v 1.1.1.4 2014/05/28 09:58:40 tron Exp $	*/
+/*	$NetBSD: ldap_log.h,v 1.1.1.5 2017/02/09 01:46:42 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

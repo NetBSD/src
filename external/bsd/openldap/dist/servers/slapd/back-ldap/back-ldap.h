@@ -1,10 +1,10 @@
-/*	$NetBSD: back-ldap.h,v 1.1.1.5 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: back-ldap.h,v 1.1.1.6 2017/02/09 01:47:06 christos Exp $	*/
 
 /* back-ldap.h - ldap backend header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

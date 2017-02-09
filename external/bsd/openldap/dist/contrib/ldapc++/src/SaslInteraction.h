@@ -1,8 +1,8 @@
-/*	$NetBSD: SaslInteraction.h,v 1.1.1.3 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: SaslInteraction.h,v 1.1.1.4 2017/02/09 01:46:43 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2007-2016 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

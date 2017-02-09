@@ -1,9 +1,9 @@
-/*	$NetBSD: hash.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: hash.c,v 1.1.1.5 2017/02/09 01:46:46 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * A summary of the algorithm can be found at:
  *   http://www.isthe.com/chongo/tech/comp/fnv/index.html
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: hash.c,v 1.1.1.5 2017/02/09 01:46:46 christos Exp $");
 
 #include "portable.h"
 

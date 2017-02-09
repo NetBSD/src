@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: var.c,v 1.1.1.5 2017/02/09 01:46:45 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

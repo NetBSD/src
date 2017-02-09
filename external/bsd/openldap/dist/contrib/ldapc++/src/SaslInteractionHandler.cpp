@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2007-2016 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

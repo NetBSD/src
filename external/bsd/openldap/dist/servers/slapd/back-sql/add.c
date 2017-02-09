@@ -1,9 +1,9 @@
-/*	$NetBSD: add.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.5 2017/02/09 01:47:08 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -23,6 +23,9 @@
  * Pierangelo Masarati and Mark Adamson.
 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: add.c,v 1.1.1.5 2017/02/09 01:47:08 christos Exp $");
 
 #include "portable.h"
 

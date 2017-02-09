@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: A Quick-Start Guide
@@ -130,44 +130,65 @@ be skipped.
 . Everything should now be installed under {{F:/usr/local}} (or
 whatever installation prefix was used by {{EX:configure}}).
 
-
 .{{S: }}
 +{{B:Edit the configuration file}}.
 
-. Use your favorite editor to edit the provided {{slapd.conf}}(5)
-example (usually installed as {{F:/usr/local/etc/openldap/slapd.conf}})
-to contain a BDB database definition of the form:
+. Use your favorite editor to edit the provided {{slapd.ldif}}
+example (usually installed as {{F:/usr/local/etc/openldap/slapd.ldif}})
+to contain a MDB database definition of the form:
 
-..{{EX:database        bdb}}
-..{{EX:suffix          "dc=<MY-DOMAIN>,dc=<COM>"}}
-..{{EX:rootdn          "cn=Manager,dc=<MY-DOMAIN>,dc=<COM>"}}
-..{{EX:rootpw          secret}}
-..{{EX:directory       /usr/local/var/openldap-data}}
+..{{EX:dn: olcDatabase=mdb,cn=config}}
+..{{EX:objectClass: olcDatabaseConfig}}
+..{{EX:objectClass: olcMdbConfig}}
+..{{EX:olcDatabase: mdb}}
+..{{EX:OlcDbMaxSize: 1073741824}}
+..{{EX:olcSuffix: dc=<MY-DOMAIN>,dc=<COM>}}
+..{{EX:olcRootDN: cn=Manager,dc=<MY-DOMAIN>,dc=<COM>}}
+..{{EX:olcRootPW: secret}}
+..{{EX:olcDbDirectory: /usr/local/var/openldap-data}}
+..{{EX:olcDbIndex: objectClass eq}}
 
 . Be sure to replace {{EX:<MY-DOMAIN>}} and {{EX:<COM>}} with
 the appropriate domain components of your domain name.  For
 example, for {{EX:example.com}}, use:
 
-..{{EX:database        bdb}}
-..{{EX:suffix          "dc=example,dc=com"}}
-..{{EX:rootdn          "cn=Manager,dc=example,dc=com"}}
-..{{EX:rootpw          secret}}
-..{{EX:directory       /usr/local/var/openldap-data}}
+..{{EX:dn: olcDatabase=mdb,cn=config}}
+..{{EX:objectClass: olcDatabaseConfig}}
+..{{EX:objectClass: olcMdbConfig}}
+..{{EX:olcDatabase: mdb}}
+..{{EX:OlcDbMaxSize: 1073741824}}
+..{{EX:olcSuffix: dc=example,dc=com}}
+..{{EX:olcRootDN: cn=Manager,dc=example,dc=com}}
+..{{EX:olcRootPW: secret}}
+..{{EX:olcDbDirectory: /usr/local/var/openldap-data}}
+..{{EX:olcDbIndex: objectClass eq}}
 
 .If your domain contains additional components, such as
 {{EX:eng.uni.edu.eu}}, use:
 
-..{{EX:database        bdb}}
-..{{EX:suffix          "dc=eng,dc=uni,dc=edu,dc=eu"}}
-..{{EX:rootdn          "cn=Manager,dc=eng,dc=uni,dc=edu,dc=eu"}}
-..{{EX:rootpw          secret}}
-..{{EX:directory       /usr/local/var/openldap-data}}
+..{{EX:dn: olcDatabase=mdb,cn=config}}
+..{{EX:objectClass: olcDatabaseConfig}}
+..{{EX:objectClass: olcMdbConfig}}
+..{{EX:olcDatabase: mdb}}
+..{{EX:OlcDbMaxSize: 1073741824}}
+..{{EX:olcSuffix: dc=eng,dc=uni,dc=edu,dc=eu}}
+..{{EX:olcRootDN: cn=Manager,dc=eng,dc=uni,dc=edu,dc=eu}}
+..{{EX:olcRootPW: secret}}
+..{{EX:olcDbDirectory: /usr/local/var/openldap-data}}
+..{{EX:olcDbIndex: objectClass eq}}
 
 . Details regarding configuring {{slapd}}(8) can be found
-in the {{slapd.conf}}(5) manual page and the {{SECT:The slapd
-Configuration File}} chapter of this document.  Note that the
-specified directory must exist prior to starting {{slapd}}(8).
+in the {{slapd-config}}(5) manual page and the {{SECT:Configuring
+slapd}} chapter of this document.  Note that the
+specified olcDbDirectory must exist prior to starting {{slapd}}(8).
 
+
+.{{S: }}
++{{B:Import the configuration database}}
+. You are now ready to import your configration database for use by
+{{slapd}}(8), by running the command:
+
+..{{EX: su root -c /usr/local/sbin/slapadd -F /usr/local/etc/cn=config -l /usr/local/etc/openldap/slapd.ldif}}
 
 .{{S: }}
 +{{B:Start SLAPD}}.
@@ -175,7 +196,7 @@ specified directory must exist prior to starting {{slapd}}(8).
 . You are now ready to start the Standalone LDAP Daemon, {{slapd}}(8),
 by running the command:
 
-..{{EX:su root -c /usr/local/libexec/slapd}}
+..{{EX:su root -c /usr/local/libexec/slapd -F /usr/local/etc/cn=config}}
 
 
 . To check to see if the server is running and configured correctly,

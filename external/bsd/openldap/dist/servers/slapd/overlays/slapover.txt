@@ -149,4 +149,10 @@ servers to be cached locally. In both cases the overlays must provide a bit of
 glue to swap in the appropriate be_private and bd_info pointers before invoking
 the attached backend, which can then be invoked as usual.
 
+Note on overlay initialization/destruction: you should allocate storage for
+config info in the _db_init handler, and free this storage in the _db_destroy
+handler. You must not free it in the _db_close handler because a module may
+be opened/closed multiple times in a running slapd when using dynamic
+configuration and the config info must remain intact.
+
 ---

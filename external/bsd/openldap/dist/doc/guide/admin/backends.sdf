@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2014 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2016 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Backends
@@ -23,7 +23,7 @@ H2: Berkeley DB Backends
 
 H3: Overview
 
-The {{hdb}} backend to {{slapd}}(8) is the recommended primary backend for a 
+The {{hdb}} backend to {{slapd}}(8) is a backend for a 
 normal {{slapd}} database.  It uses the Oracle Berkeley DB ({{TERM:BDB}}) 
 package to store data. It makes extensive use of indexing and caching 
 (see the {{SECT:Tuning}} section) to speed data access.
@@ -196,7 +196,7 @@ H2: LMDB
 
 H3: Overview
 
-The {{mdb}} backend to {{slapd}}(8) is the upcoming primary backend for a
+The {{mdb}} backend to {{slapd}}(8) is the recommended primary backend for a
 normal {{slapd}} database.  It uses OpenLDAP's own
 Lightning Memory-Mapped Database ({{TERM:LMDB}})
 library to store data and is intended to replace the Berkeley DB backends.
