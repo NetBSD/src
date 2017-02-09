@@ -1,9 +1,9 @@
-/*	$NetBSD: sortctrl.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: sortctrl.c,v 1.1.1.5 2017/02/09 01:46:47 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@
  * can be found in the file "build/LICENSE-2.0.1" in this distribution
  * of OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sortctrl.c,v 1.1.1.5 2017/02/09 01:46:47 christos Exp $");
 
 #include "portable.h"
 

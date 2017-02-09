@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2014 The OpenLDAP Foundation.
+## Copyright 1998-2016 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,16 @@ RELNAME=openldap-$1
 shift
 TAG=$1
 shift
+
+#Linux
+#SHA="sha1sum"
+#MD="md5sum"
+#BSD
+#SHA="sha1"
+#MD="md5"
+#OpenSSL
+SHA="openssl sha1"
+MD="openssl md5"
 
 if test -e $RELNAME ; then
 	echo "error: $RELNAME exists"
@@ -75,8 +85,8 @@ echo "Rolling up $OL_STRING ..."
 
 tar cf $RELNAME.tar $RELNAME
 gzip -9 -c $RELNAME.tar > $RELNAME.tgz
-md5 $RELNAME.tgz > $RELNAME.md5
-sha1 $RELNAME.tgz > $RELNAME.sha1
+${MD} $RELNAME.tgz > $RELNAME.md5
+${SHA} $RELNAME.tgz > $RELNAME.sha1
 rm -f $RELNAME.tar
 
 ls -l $RELNAME.*

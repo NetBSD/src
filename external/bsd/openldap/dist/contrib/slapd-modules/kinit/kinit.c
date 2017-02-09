@@ -1,9 +1,9 @@
-/*	$NetBSD: kinit.c,v 1.1.1.1 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: kinit.c,v 1.1.1.2 2017/02/09 01:46:42 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2014 The OpenLDAP Foundation.
+ * Copyright 2010-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
