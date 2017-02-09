@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.4 2017/02/09 20:37:58 joerg Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.5 2017/02/09 21:23:48 christos Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -425,10 +425,14 @@ main(int argc, char *argv[])
 		if (sflag) {
 			unix_dg_tmp_socket = sflag;
 		} else {
-			strlcpy(unix_dg_tmp_socket_buf, "/tmp/nc.XXXXXXXXXX",
-			    UNIX_DG_TMP_SOCKET_SIZE);
-			if (mktemp(unix_dg_tmp_socket_buf) == NULL)
+			int fd;
+			snprintf(unix_dg_tmp_socket_buf,
+			    sizeof(unix_dg_tmp_socket_buf),
+			    "/tmp/%s.XXXXXXXXXX", getprogname());
+			/* XXX: abstract sockets instead? */
+			if ((fd = mkstemp(unix_dg_tmp_socket_buf)) == -1)
 				err(1, "mktemp");
+			close(fd);
 			unix_dg_tmp_socket = unix_dg_tmp_socket_buf;
 		}
 	}
