@@ -1627,8 +1627,17 @@ static bool CheckLiteralType(EvalInfo &Info, const Expr *E,
   // C++1y: A constant initializer for an object o [...] may also invoke
   // constexpr constructors for o and its subobjects even if those objects
   // are of non-literal class types.
-  if (Info.getLangOpts().CPlusPlus14 && This &&
-      Info.EvaluatingDecl == This->getLValueBase())
+  //
+  // C++11 missed this detail for aggregates, so classes like this:
+  //   struct foo_t { union { int i; volatile int j; } u; };
+  // are not (obviously) initializable like so:
+  //   __attribute__((__require_constant_initialization__))
+  //   static const foo_t x = {{0}};
+  // because "i" is a subobject with non-literal initialization (due to the
+  // volatile member of the union). See:
+  //   http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_active.html#1677
+  // Therefore, we use the C++1y behavior.
+  if (This && Info.EvaluatingDecl == This->getLValueBase())
     return true;
 
   // Prvalue constant expressions must be of literal types.
@@ -2353,7 +2362,14 @@ static unsigned getBaseIndex(const CXXRecordDecl *Derived,
 /// Extract the value of a character from a string literal.
 static APSInt extractStringLiteralCharacter(EvalInfo &Info, const Expr *Lit,
                                             uint64_t Index) {
-  // FIXME: Support ObjCEncodeExpr, MakeStringConstant
+  // FIXME: Support MakeStringConstant
+  if (const auto *ObjCEnc = dyn_cast<ObjCEncodeExpr>(Lit)) {
+    std::string Str;
+    Info.Ctx.getObjCEncodingForType(ObjCEnc->getEncodedType(), Str);
+    assert(Index <= Str.size() && "Index too large");
+    return APSInt::getUnsigned(Str.c_str()[Index]);
+  }
+
   if (auto PE = dyn_cast<PredefinedExpr>(Lit))
     Lit = PE->getFunctionName();
   const StringLiteral *S = cast<StringLiteral>(Lit);
@@ -5674,6 +5690,7 @@ bool PointerExprEvaluator::VisitBuiltinCallExpr(const CallExpr *E,
   case Builtin::BI__builtin_strchr:
   case Builtin::BI__builtin_wcschr:
   case Builtin::BI__builtin_memchr:
+  case Builtin::BI__builtin_char_memchr:
   case Builtin::BI__builtin_wmemchr: {
     if (!Visit(E->getArg(0)))
       return false;
@@ -5711,6 +5728,7 @@ bool PointerExprEvaluator::VisitBuiltinCallExpr(const CallExpr *E,
       // Fall through.
     case Builtin::BImemchr:
     case Builtin::BI__builtin_memchr:
+    case Builtin::BI__builtin_char_memchr:
       // memchr compares by converting both sides to unsigned char. That's also
       // correct for strchr if we get this far (to cope with plain char being
       // unsigned in the strchr case).
