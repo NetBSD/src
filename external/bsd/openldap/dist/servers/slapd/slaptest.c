@@ -1,9 +1,9 @@
-/*	$NetBSD: slaptest.c,v 1.1.1.4 2014/05/28 09:58:48 tron Exp $	*/
+/*	$NetBSD: slaptest.c,v 1.1.1.5 2017/02/09 01:46:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -19,6 +19,9 @@
  * This work was initially developed by Pierangelo Masarati for inclusion
  * in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: slaptest.c,v 1.1.1.5 2017/02/09 01:46:58 christos Exp $");
 
 #include "portable.h"
 
