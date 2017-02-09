@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.3 2017/02/09 17:27:30 christos Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.4 2017/02/09 20:37:58 joerg Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -129,11 +129,11 @@ int minttl = -1;
 
 void	atelnet(int, unsigned char *, unsigned int);
 void	build_ports(char *);
-void	help(void);
+static void	help(void) __dead;
 int	local_listen(char *, char *, struct addrinfo);
 struct tls;
 void	readwrite(int, struct tls *);
-void	fdpass(int nfd) __attribute__((noreturn));
+void	fdpass(int nfd) __dead;
 int	remote_connect(const char *, const char *, struct addrinfo);
 int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,

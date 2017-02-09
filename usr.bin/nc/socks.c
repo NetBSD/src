@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: socks.c,v 1.2 2017/02/06 16:03:40 christos Exp $");
+__RCSID("$NetBSD: socks.c,v 1.3 2017/02/09 20:37:58 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -185,7 +185,7 @@ socks5_strerror(int e)
 
 int
 socks_connect(const char *host, const char *port,
-    struct addrinfo hints __attribute__ ((__unused__)),
+    struct addrinfo hints __unused,
     const char *proxyhost, const char *proxyport, struct addrinfo proxyhints,
     int socksv, const char *proxyuser)
 {
