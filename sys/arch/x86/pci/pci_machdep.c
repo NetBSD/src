@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.76 2016/08/25 12:21:21 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.77 2017/02/09 03:38:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.76 2016/08/25 12:21:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.77 2017/02/09 03:38:01 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,7 +483,12 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
 		return;
 
-	if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
+	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
+	if ((cpu_feature[1] & CPUID2_RAZ)
+	    && (pci_has_msi_quirk(id, PCI_QUIRK_ENABLE_MSI_VM))) {
+			pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
+			pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
+	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
 		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
 		aprint_verbose("\n");
@@ -498,14 +503,6 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	} else {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
-	}
-
-	/* VMware and KVM use old chipset, but they can use MSI/MSI-X */
-	if (cpu_feature[1] & CPUID2_RAZ) {
-		if (pci_has_msi_quirk(id, PCI_QUIRK_ENABLE_MSI_VM)) {
-			pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
-			pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
-		}
 	}
 
 	/*
