@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.47 2017/02/03 16:57:39 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.48 2017/02/09 22:01:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.47 2017/02/03 16:57:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.48 2017/02/09 22:01:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,7 +93,7 @@ static const struct {
 	{L("socket"),	sizeof(struct linux_sys_socket_args)},		/* 1 */
 	{L("bind"),	sizeof(struct linux_sys_bind_args)},		/* 2 */
 	{L("connect"),	sizeof(struct linux_sys_connect_args)},		/* 3 */
-	{L("listen"),	sizeof(struct linux_sys_listen_args)},		/* 4 */
+	{L("listen"),	sizeof(struct sys_listen_args)},		/* 4 */
 	{L("accept"),	sizeof(struct linux_sys_accept_args)},		/* 5 */
 	{L("getsockname"),sizeof(struct linux_sys_getsockname_args)},	/* 6 */
 	{L("getpeername"),sizeof(struct linux_sys_getpeername_args)},	/* 7 */
@@ -102,7 +102,7 @@ static const struct {
 	{L("recv"),	sizeof(struct linux_sys_recv_args)},		/* 10 */
 	{L("sendto"),	sizeof(struct linux_sys_sendto_args)},		/* 11 */
 	{L("recvfrom"),	sizeof(struct linux_sys_recvfrom_args)},	/* 12 */
-	{L("shutdown"),	sizeof(struct linux_sys_shutdown_args)},	/* 13 */
+	{L("shutdown"),	sizeof(struct sys_shutdown_args)},		/* 13 */
 	{L("setsockopt"),sizeof(struct linux_sys_setsockopt_args)},	/* 14 */
 	{L("getsockopt"),sizeof(struct linux_sys_getsockopt_args)},	/* 15 */
 	{L("sendmsg"),	sizeof(struct linux_sys_sendmsg_args)},		/* 16 */
