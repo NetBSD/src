@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-modify.c,v 1.1.1.4 2014/05/28 09:58:54 tron Exp $	*/
+/*	$NetBSD: slapd-modify.c,v 1.1.1.5 2017/02/09 01:46:54 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: slapd-modify.c,v 1.1.1.5 2017/02/09 01:46:54 christos Exp $");
 
 #include "portable.h"
 

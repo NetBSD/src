@@ -1,10 +1,10 @@
-/*	$NetBSD: zn_malloc.c,v 1.1.1.4 2014/05/28 09:58:48 tron Exp $	*/
+/*	$NetBSD: zn_malloc.c,v 1.1.1.5 2017/02/09 01:46:58 christos Exp $	*/
 
 /* zn_malloc.c - zone-based malloc routines */
 /* $OpenLDAP$*/
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,9 @@
  * This work originally developed by Jong-Hyuk Choi for inclusion in
  * OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: zn_malloc.c,v 1.1.1.5 2017/02/09 01:46:58 christos Exp $");
 
 #include "portable.h"
 
