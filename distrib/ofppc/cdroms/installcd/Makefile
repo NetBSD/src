@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/02/05 19:05:40 garbled Exp $
+#	$NetBSD: Makefile,v 1.5 2017/02/10 16:43:59 christos Exp $
 
 CDBASE=		ofppccd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
@@ -12,8 +12,8 @@ prepare_md_post:
 	# install ofwboot as ofwboot.ofppc
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${DESTDIR}/usr/mdec/ofwboot \
 	    ${.OBJDIR}/cdrom/ofwboot.ofppc
-	${MKDIR} ${.OBJDIR}/cdrom/nbsd
-	${MKDIR} ${.OBJDIR}/cdrom/ppc
+	${MKDIR} ${MKDIRPERM} ${.OBJDIR}/cdrom/nbsd
+	${MKDIR} ${MKDIRPERM} ${.OBJDIR}/cdrom/ppc
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${DESTDIR}/usr/mdec/ofwboot \
 	    ${.OBJDIR}/cdrom/nbsd/ofwboot
 	${DESTDIR}/usr/mdec/mkbootinfo "NetBSD/${MACHINE} ${DISTRIBVERS}" \

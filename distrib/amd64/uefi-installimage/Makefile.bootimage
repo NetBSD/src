@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.1 2017/01/24 11:16:50 nonaka Exp $
+#	$NetBSD: Makefile.bootimage,v 1.2 2017/02/10 16:43:59 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -149,7 +149,6 @@ TIMESTAMP=-T ${NETBSDSRCDIR}/sys/sys/param.h
 # should be defined elsewhere? 
 CAT?=		cat
 CHMOD?=		chmod
-CP?=		cp
 DD?=		dd
 MKDIR?=		mkdir -p
 RM?=		rm
@@ -254,7 +253,7 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 		echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 		false; 							\
 	fi;
-	@${MKDIR} ${WORKDIR}
+	@${MKDIR} ${MKDIRPERM} ${WORKDIR}
 .for set in ${IMG_SETS}
 	@if [ ! -f ${SETS_DIR}/${set}.tgz ]; then 			\
 		echo "Missing ${SETS_DIR}/${set}.tgz, aborting";	\
@@ -265,7 +264,7 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
-	${CP} -f ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
+	${INSTALL} ${COPY} -m 0444 ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
 .endif
 	@echo Preparing /etc/fstab ...
 .if ${USE_GPT} != "no"
@@ -290,11 +289,11 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 	    < ${FSTAB_IN} > ${WORKFSTAB}
 .endif
 .endif	# USE_GPT != "no"
-	${CP} ${WORKFSTAB} ${WORKDIR}/etc/fstab
+	${INSTALL} ${COPY} -m 0644 ${WORKFSTAB} ${WORKDIR}/etc/fstab
 	@echo Setting rc_configured=YES in /etc/rc.conf ...
 	${TOOL_SED} "s/rc_configured=NO/rc_configured=YES/"		\
 	    < ${WORKDIR}/etc/rc.conf > ${WORKRCCONF}
-	${CP} ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
+	${INSTALL} ${COPY} -m 0644 ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
 .if defined(IMGDIR_EXTRA)
 	@echo Copying extra dirs...
 .for _SRCDIR _TARGET in ${IMGDIR_EXTRA}
@@ -302,7 +301,7 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 		echo "${_SRCDIR} is not directory, aborting";		\
 		false; 							\
 	fi
-	${MKDIR} ${WORKDIR}/${_TARGET}
+	${MKDIR} ${MKDIRPERM} ${WORKDIR}/${_TARGET}
 	(cd ${_SRCDIR} ;						\
 	    ${TOOL_PAX} -rw -pe	-v					\
 	    ${IMGDIR_EXCLUDE}						\
@@ -317,8 +316,8 @@ ${TARGETFS}: prepare_md_post pre-targetfs
 		false; 							\
 	fi
 	@if [ -f ${_SRC} ]; then 					\
-		echo ${CP} ${_SRC} ${WORKDIR}/${_TARGET};		\
-		${CP} ${_SRC} ${WORKDIR}/${_TARGET};			\
+		echo ${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET}; \
+		${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET}; \
 	fi
 .endfor
 .endif
@@ -406,10 +405,10 @@ pre-targetfs:
 
 ${IMGBASE}.img:	${TARGETFS}
 	@echo create EFI system partition...
-	@${MKDIR} ${EFIWORKDIR}/EFI/boot
+	@${MKDIR} ${MKDIRPERM} ${EFIWORKDIR}/EFI/boot
 .if !empty(EFIBOOT)
 .for f in ${EFIBOOT}
-	${CP} -f ${f} ${EFIWORKDIR}/EFI/boot/`basename ${f}`
+	${INSTALL} ${COPY} -m 0644 -f ${f} ${EFIWORKDIR}/EFI/boot/`basename ${f}`
 .endfor
 .endif
 	${RM} -f ${WORKEFI}
@@ -455,7 +454,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${TARGETFS} > ${WORKIMG}
 .else	# USE_MBR == "no"
-	${CP} ${TARGETFS} ${WORKIMG}
+	${INSTALL} ${COPY} -m 0644 ${TARGETFS} ${WORKIMG}
 .endif	# USE_MBR != "no"
 .endif	# USE_GPT != "no"
 .if ${OMIT_SWAPIMG} == "no"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.13 2017/01/24 18:01:07 christos Exp $
+#	$NetBSD: Makefile.bootimage,v 1.14 2017/02/10 16:43:59 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -140,7 +140,6 @@ MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 # should be defined elsewhere? 
 CAT?=		cat
 CHMOD?=		chmod
-CP?=		cp
 DD?=		dd
 MKDIR?=		mkdir -p
 RM?=		rm
@@ -229,7 +228,7 @@ ${TARGETFS}: prepare_md_post
 		echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 		false; 							\
 	fi;
-	@${MKDIR} ${WORKDIR}
+	@${MKDIR} ${MKDIRPERM} ${WORKDIR}
 .for set in ${IMG_SETS}
 	@if [ ! -f ${SETS_DIR}/${set}.tgz ]; then 			\
 		echo "Missing ${SETS_DIR}/${set}.tgz, aborting";	\
@@ -240,15 +239,15 @@ ${TARGETFS}: prepare_md_post
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
-	${CP} -f ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
+	${INSTALL} ${COPY} -m 0644 -f ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
 .endif
 	@echo Preparing /etc/fstab ...
 	${TOOL_SED} "s/@@BOOTDISK@@/${BOOTDISK}/" < ${FSTAB_IN} > ${WORKFSTAB}
-	${CP} ${WORKFSTAB} ${WORKDIR}/etc/fstab
+	${INSTALL} ${COPY} -m 0644 ${WORKFSTAB} ${WORKDIR}/etc/fstab
 	@echo Setting rc_configured=YES in /etc/rc.conf ...
 	${TOOL_SED} "s/rc_configured=NO/rc_configured=YES/"		\
 	    < ${WORKDIR}/etc/rc.conf > ${WORKRCCONF}
-	${CP} ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
+	${INSTALL} ${COPY} -m 0644 ${WORKRCCONF} ${WORKDIR}/etc/rc.conf
 .if defined(IMGDIR_EXTRA)
 	@echo Copying extra dirs...
 .for _SRCDIR _TARGET in ${IMGDIR_EXTRA}
@@ -256,7 +255,7 @@ ${TARGETFS}: prepare_md_post
 		echo "${_SRCDIR} is not directory, aborting";		\
 		false; 							\
 	fi
-	${MKDIR} ${WORKDIR}/${_TARGET}
+	${MKDIR} ${MKDIRPERM} ${WORKDIR}/${_TARGET}
 	(cd ${_SRCDIR} ;						\
 	    ${TOOL_PAX} -rw -pe	-v					\
 	    ${IMGDIR_EXCLUDE}						\
@@ -271,8 +270,8 @@ ${TARGETFS}: prepare_md_post
 		false; 							\
 	fi
 	@if [ -f ${_SRC} ]; then 					\
-		echo ${CP} ${_SRC} ${WORKDIR}/${_TARGET};		\
-		${CP} ${_SRC} ${WORKDIR}/${_TARGET};			\
+		echo ${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET};		\
+		${INSTALL} ${COPY} -m 0644 ${_SRC} ${WORKDIR}/${_TARGET};			\
 	fi
 .endfor
 .endif
@@ -371,7 +370,7 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${TARGETFS} > ${WORKIMG}
 .else
-	${CP} ${TARGETFS} ${WORKIMG}
+	${INSTALL} ${COPY} -m 0644 ${TARGETFS} ${WORKIMG}
 .endif
 .if ${OMIT_SWAPIMG} == "no"
 	${DD} if=/dev/zero of=${WORKSWAP} seek=$$((${SWAPSECTORS} - 1)) count=1
