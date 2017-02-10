@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.71 2017/02/08 09:00:37 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.72 2017/02/10 06:35:22 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -710,10 +710,10 @@ static int
 ixgbe_detach(device_t dev, int flags)
 {
 	struct adapter *adapter = device_private(dev);
-	struct rx_ring *rxr = adapter->rx_rings;
-	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	struct ix_queue *que = adapter->queues;
+	struct rx_ring *rxr = adapter->rx_rings;
 	struct tx_ring *txr = adapter->tx_rings;
+	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	u32	ctrl_ext;
 
 	INIT_DEBUGOUT("ixgbe_detach: begin");
@@ -784,11 +784,8 @@ ixgbe_detach(device_t dev, int flags)
 	sysctl_teardown(&adapter->sysctllog);
 	evcnt_detach(&adapter->handleq);
 	evcnt_detach(&adapter->req);
-	evcnt_detach(&adapter->morerx);
-	evcnt_detach(&adapter->moretx);
-	evcnt_detach(&adapter->txloops);
 	evcnt_detach(&adapter->efbig_tx_dma_setup);
-	evcnt_detach(&adapter->m_defrag_failed);
+	evcnt_detach(&adapter->mbuf_defrag_failed);
 	evcnt_detach(&adapter->efbig2_tx_dma_setup);
 	evcnt_detach(&adapter->einval_tx_dma_setup);
 	evcnt_detach(&adapter->other_tx_dma_setup);
@@ -800,26 +797,30 @@ ixgbe_detach(device_t dev, int flags)
 
 	txr = adapter->tx_rings;
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		evcnt_detach(&adapter->queues[i].irqs);
 		evcnt_detach(&txr->no_desc_avail);
 		evcnt_detach(&txr->total_packets);
 		evcnt_detach(&txr->tso_tx);
+#ifndef IXGBE_LEGACY_TX
+		evcnt_detach(&txr->pcq_drops);
+#endif
 
-		if (i < __arraycount(adapter->stats.pf.mpc)) {
-			evcnt_detach(&adapter->stats.pf.mpc[i]);
+		if (i < __arraycount(stats->mpc)) {
+			evcnt_detach(&stats->mpc[i]);
 		}
-		if (i < __arraycount(adapter->stats.pf.pxontxc)) {
-			evcnt_detach(&adapter->stats.pf.pxontxc[i]);
-			evcnt_detach(&adapter->stats.pf.pxonrxc[i]);
-			evcnt_detach(&adapter->stats.pf.pxofftxc[i]);
-			evcnt_detach(&adapter->stats.pf.pxoffrxc[i]);
-			evcnt_detach(&adapter->stats.pf.pxon2offc[i]);
+		if (i < __arraycount(stats->pxontxc)) {
+			evcnt_detach(&stats->pxontxc[i]);
+			evcnt_detach(&stats->pxonrxc[i]);
+			evcnt_detach(&stats->pxofftxc[i]);
+			evcnt_detach(&stats->pxoffrxc[i]);
+			evcnt_detach(&stats->pxon2offc[i]);
 		}
-		if (i < __arraycount(adapter->stats.pf.qprc)) {
-			evcnt_detach(&adapter->stats.pf.qprc[i]);
-			evcnt_detach(&adapter->stats.pf.qptc[i]);
-			evcnt_detach(&adapter->stats.pf.qbrc[i]);
-			evcnt_detach(&adapter->stats.pf.qbtc[i]);
-			evcnt_detach(&adapter->stats.pf.qprdc[i]);
+		if (i < __arraycount(stats->qprc)) {
+			evcnt_detach(&stats->qprc[i]);
+			evcnt_detach(&stats->qptc[i]);
+			evcnt_detach(&stats->qbrc[i]);
+			evcnt_detach(&stats->qbtc[i]);
+			evcnt_detach(&stats->qprdc[i]);
 		}
 
 		evcnt_detach(&rxr->rx_packets);
@@ -827,7 +828,6 @@ ixgbe_detach(device_t dev, int flags)
 		evcnt_detach(&rxr->rx_copies);
 		evcnt_detach(&rxr->no_jmbuf);
 		evcnt_detach(&rxr->rx_discarded);
-		evcnt_detach(&rxr->rx_irq);
 	}
 	evcnt_detach(&stats->ipcs);
 	evcnt_detach(&stats->l4cs);
@@ -4660,13 +4660,11 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	struct tx_ring *txr = adapter->tx_rings;
 	struct rx_ring *rxr = adapter->rx_rings;
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
+	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
 #if 0
 	/* These counters are not updated by the software */
-	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "dropped",
-			CTLFLAG_RD, &adapter->dropped_pkts,
-			"Driver dropped packets");
 	SYSCTL_ADD_ULONG(ctx, child, OID_AUTO, "mbuf_header_failed",
 			CTLFLAG_RD, &adapter->mbuf_header_failed,
 			"???");
@@ -4678,40 +4676,34 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 			"???");
 #endif
 	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Handled queue in softint");
+	    NULL, xname, "Handled queue in softint");
 	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Requeued in softint");
-	evcnt_attach_dynamic(&adapter->morerx, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Interrupt handler more rx");
-	evcnt_attach_dynamic(&adapter->moretx, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Interrupt handler more tx");
-	evcnt_attach_dynamic(&adapter->txloops, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Interrupt handler tx loops");
+	    NULL, xname, "Requeued in softint");
 	evcnt_attach_dynamic(&adapter->efbig_tx_dma_setup, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Driver tx dma soft fail EFBIG");
-	evcnt_attach_dynamic(&adapter->m_defrag_failed, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "m_defrag() failed");
+	    NULL, xname, "Driver tx dma soft fail EFBIG");
+	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
+	    NULL, xname, "m_defrag() failed");
 	evcnt_attach_dynamic(&adapter->efbig2_tx_dma_setup, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Driver tx dma hard fail EFBIG");
+	    NULL, xname, "Driver tx dma hard fail EFBIG");
 	evcnt_attach_dynamic(&adapter->einval_tx_dma_setup, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Driver tx dma hard fail EINVAL");
+	    NULL, xname, "Driver tx dma hard fail EINVAL");
 	evcnt_attach_dynamic(&adapter->other_tx_dma_setup, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Driver tx dma hard fail other");
+	    NULL, xname, "Driver tx dma hard fail other");
 	evcnt_attach_dynamic(&adapter->eagain_tx_dma_setup, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Driver tx dma soft fail EAGAIN");
+	    NULL, xname, "Driver tx dma soft fail EAGAIN");
 	evcnt_attach_dynamic(&adapter->enomem_tx_dma_setup, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Driver tx dma soft fail ENOMEM");
+	    NULL, xname, "Driver tx dma soft fail ENOMEM");
 	evcnt_attach_dynamic(&adapter->watchdog_events, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Watchdog timeouts");
+	    NULL, xname, "Watchdog timeouts");
 	evcnt_attach_dynamic(&adapter->tso_err, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "TSO errors");
-	evcnt_attach_dynamic(&adapter->link_irq, EVCNT_TYPE_MISC,
-	    NULL, device_xname(dev), "Link MSIX IRQ Handled");
+	    NULL, xname, "TSO errors");
+	evcnt_attach_dynamic(&adapter->link_irq, EVCNT_TYPE_INTR,
+	    NULL, xname, "Link MSIX IRQ Handled");
 
 	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
 		snprintf(adapter->queues[i].evnamebuf,
 		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
-		    device_xname(dev), i);
+		    xname, i);
 		snprintf(adapter->queues[i].namebuf,
 		    sizeof(adapter->queues[i].namebuf), "q%d", i);
 
@@ -4756,8 +4748,10 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
+		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
+		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
 		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
-		    NULL, device_xname(dev), "TSO");
+		    NULL, adapter->queues[i].evnamebuf, "TSO");
 		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf,
 		    "Queue No Descriptor Available");
@@ -4840,8 +4834,6 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		    NULL, adapter->queues[i].evnamebuf, "Rx no jumbo mbuf");
 		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
-		evcnt_attach_dynamic(&rxr->rx_irq, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Rx interrupts");
 #ifdef LRO
 		SYSCTL_ADD_INT(ctx, queue_list, OID_AUTO, "lro_queued",
 				CTLFLAG_RD, &lro->lro_queued, 0,
@@ -4854,9 +4846,8 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 
 	/* MAC stats get the own sub node */
 
-
 	snprintf(stats->namebuf,
-	    sizeof(stats->namebuf), "%s MAC Statistics", device_xname(dev));
+	    sizeof(stats->namebuf), "%s MAC Statistics", xname);
 
 	evcnt_attach_dynamic(&stats->ipcs, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "rx csum offload - IP");
