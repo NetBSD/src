@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.10 2017/02/10 18:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: print.c,v 1.81 2016/01/19 15:09:03 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.9 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.10 2017/02/10 18:06:59 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -244,7 +244,7 @@ file_fmttime(uint64_t v, int flags, char *buf)
 
 	if (flags & FILE_T_WINDOWS) {
 		struct timespec ts;
-		cdf_timestamp_to_timespec(&ts, v);
+		cdf_timestamp_to_timespec(&ts, CAST(cdf_timestamp_t, v));
 		t = ts.tv_sec;
 	} else {
 		// XXX: perhaps detect and print something if overflow

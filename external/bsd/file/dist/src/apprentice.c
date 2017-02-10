@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.15 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.16 2017/02/10 18:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.257 2017/02/04 16:46:16 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.15 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.16 2017/02/10 18:06:59 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -555,8 +555,10 @@ apprentice_unmap(struct magic_map *map)
 		break;
 	case MAP_TYPE_MALLOC:
 		for (i = 0; i < MAGIC_SETS; i++) {
-			if ((char *)map->magic[i] >= (char *)map->p &&
-			    (char *)map->magic[i] <= (char *)map->p + map->len)
+			void *b = map->magic[i];
+			void *p = map->p;
+			if (CAST(char *, b) >= CAST(char *, p) &&
+			    CAST(char *, b) <= CAST(char *, p) + map->len)
 				continue;
 			free(map->magic[i]);
 		}
