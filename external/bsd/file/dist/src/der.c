@@ -1,4 +1,4 @@
-/*	$NetBSD: der.c,v 1.1.1.1 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: der.c,v 1.2 2017/02/10 18:11:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)$File: der.c,v 1.11 2016/11/07 15:51:23 christos Exp $")
 #else
-__RCSID("$NetBSD: der.c,v 1.1.1.1 2017/02/10 17:42:57 christos Exp $");
+__RCSID("$NetBSD: der.c,v 1.2 2017/02/10 18:11:17 christos Exp $");
 #endif
 #endif
 #endif
@@ -207,7 +207,7 @@ getlength(const uint8_t *c, size_t *p, size_t l)
 
 	if (*p + len >= l)
 		return DER_BAD;
-	return len;
+	return CAST(uint32_t, len);
 }
 
 static const char *
@@ -266,12 +266,12 @@ der_offs(struct magic_set *ms, struct magic *m, size_t nbytes)
 #endif
 	if (m->cont_level != 0) {
 		if (offs + tlen > nbytes)
-			return DER_BAD;
-		ms->c.li[m->cont_level - 1].off = offs + tlen;
+			return -1;
+		ms->c.li[m->cont_level - 1].off = CAST(int, offs + tlen);
 		DPRINTF(("cont_level[%u] = %u\n", m->cont_level - 1,
 		    ms->c.li[m->cont_level - 1].off));
 	}
-	return offs;
+	return CAST(int32_t, offs);
 }
 
 int
