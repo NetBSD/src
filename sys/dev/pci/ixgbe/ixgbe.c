@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.72 2017/02/10 06:35:22 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.73 2017/02/10 08:41:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -282,7 +282,7 @@ MODULE_DEPEND(ix, ether, 1, 1, 1);
 ** is varied over time based on the
 ** traffic for that interrupt vector
 */
-static int ixgbe_enable_aim = TRUE;
+static bool ixgbe_enable_aim = true;
 #define SYSCTL_INT(_a1, _a2, _a3, _a4, _a5, _a6, _a7)
 SYSCTL_INT(_hw_ix, OID_AUTO, enable_aim, CTLFLAG_RWTUN, &ixgbe_enable_aim, 0,
     "Enable adaptive interrupt moderation");
@@ -1708,7 +1708,7 @@ ixgbe_msix_que(void *arg)
 
 	/* Do AIM now? */
 
-	if (adapter->enable_aim == FALSE)
+	if (adapter->enable_aim == false)
 		goto no_calc;
 	/*
 	** Do Adaptive Interrupt Moderation:
@@ -4521,13 +4521,10 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	    ixgbe_sysctl_flowcntl, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
-	/* XXX This is an *instance* sysctl controlling a *global* variable.
-	 * XXX It's that way in the FreeBSD driver that this derives from.
-	 */
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
 	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
-	    NULL, 0, &ixgbe_enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
+	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,

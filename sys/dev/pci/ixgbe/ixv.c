@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.49 2017/02/10 06:35:22 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.50 2017/02/10 08:41:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -197,7 +197,7 @@ TUNABLE_INT("hw.ixv.num_queues", &ixv_num_queues);
 ** is varied over time based on the
 ** traffic for that interrupt vector
 */
-static int ixv_enable_aim = FALSE;
+static bool ixv_enable_aim = false;
 TUNABLE_INT("hw.ixv.enable_aim", &ixv_enable_aim);
 
 /* How many packets rxeof tries to clean at a time */
@@ -424,6 +424,9 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		addr[0] |= 0x02;
 		bcopy(addr, hw->mac.addr, sizeof(addr));
 	}
+
+	/* hw.ix defaults init */
+	adapter->enable_aim = ixv_enable_aim;
 
 	/* Setup OS specific network interface */
 	ixv_setup_interface(dev, adapter);
@@ -943,7 +946,7 @@ ixv_msix_que(void *arg)
 
 	/* Do AIM now? */
 
-	if (ixv_enable_aim == FALSE)
+	if (adapter->enable_aim == false)
 		goto no_calc;
 	/*
 	** Do Adaptive Interrupt Moderation:
@@ -2323,13 +2326,10 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
-	/* XXX This is an *instance* sysctl controlling a *global* variable.
-	 * XXX It's that way in the FreeBSD driver that this derives from.
-	 */
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
 	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
-	    NULL, 0, &ixv_enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
+	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
