@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1003 2017/01/18 02:33:25 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.1004 2017/02/10 16:44:55 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -717,6 +717,8 @@ DEBUGDIR?=	/usr/libdata/debug
 DEBUGGRP?=	wheel
 DEBUGOWN?=	root
 DEBUGMODE?=	${NONBINMODE}
+
+MKDIRMODE?=	0755
 
 #
 # Data-driven table using make variables to control how
