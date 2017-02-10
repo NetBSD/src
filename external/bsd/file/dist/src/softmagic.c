@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.14 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.15 2017/02/10 18:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: softmagic.c,v 1.243 2017/02/07 23:27:32 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.14 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.15 2017/02/10 18:06:59 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1023,9 +1023,8 @@ private int
 mconvert(struct magic_set *ms, struct magic *m, int flip)
 {
 	union VALUETYPE *p = &ms->ms_value;
-	uint8_t type;
 
-	switch (type = cvt_flip(m->type, flip)) {
+	switch (cvt_flip(m->type, flip)) {
 	case FILE_BYTE:
 		if (cvt_8(p, m) == -1)
 			goto out;
@@ -1190,7 +1189,7 @@ mcopy(struct magic_set *ms, union VALUETYPE *p, int type, int indir,
 		case FILE_DER:
 		case FILE_SEARCH:
 			if (offset > nbytes)
-				offset = nbytes;
+				offset = CAST(uint32_t, nbytes);
 			ms->search.s = RCAST(const char *, s) + offset;
 			ms->search.s_len = nbytes - offset;
 			ms->search.offset = offset;

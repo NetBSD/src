@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.12 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.13 2017/02/10 18:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.130 2017/01/29 19:34:24 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.12 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.13 2017/02/10 18:06:59 christos Exp $");
 #endif
 #endif
 
@@ -896,7 +896,7 @@ get_string_on_virtaddr(struct magic_set *ms,
 
 	offset = get_offset_from_virtaddr(ms, swap, clazz, fd, ph_off, ph_num,
 	    fsize, virtaddr);
-	if ((buflen = pread(fd, buf, buflen, offset)) <= 0) {
+	if ((buflen = pread(fd, buf, CAST(size_t, buflen), offset)) <= 0) {
 		file_badread(ms);
 		return 0;
 	}
