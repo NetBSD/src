@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.22 2017/02/01 10:47:13 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.23 2017/02/10 06:35:22 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -435,7 +435,6 @@ struct rx_ring {
 	u32			packets;
 
 	/* Soft stats */
-	struct evcnt		rx_irq;
 	struct evcnt		rx_copies;
 	struct evcnt		rx_packets;
 	struct evcnt 		rx_bytes;
@@ -579,13 +578,11 @@ struct adapter {
 #endif
 
 	/* Misc stats maintained by the driver */
-	struct evcnt   		dropped_pkts;
 	struct evcnt   		mbuf_defrag_failed;
 	struct evcnt	   	mbuf_header_failed;
 	struct evcnt	   	mbuf_packet_failed;
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt	   	efbig2_tx_dma_setup;
-	struct evcnt	   	m_defrag_failed;
 	struct evcnt	   	einval_tx_dma_setup;
 	struct evcnt	   	other_tx_dma_setup;
 	struct evcnt	   	eagain_tx_dma_setup;
@@ -593,9 +590,6 @@ struct adapter {
 	struct evcnt	   	tso_err;
 	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
-	struct evcnt		morerx;
-	struct evcnt		moretx;
-	struct evcnt		txloops;
 	struct evcnt		handleq;
 	struct evcnt		req;
 
