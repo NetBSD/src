@@ -1,5 +1,5 @@
 #
-# $File: Makefile.am,v 1.101 2014/12/12 16:48:39 christos Exp $
+# $File: Makefile.am,v 1.122 2016/11/09 18:20:53 christos Exp $
 #
 MAGIC_FRAGMENT_BASE = magdir
 MAGIC_DIR = $(top_srcdir)/magic
@@ -13,6 +13,7 @@ $(MAGIC_DIR)/Localstuff \
 $(MAGIC_FRAGMENT_DIR)/acorn \
 $(MAGIC_FRAGMENT_DIR)/adi \
 $(MAGIC_FRAGMENT_DIR)/adventure \
+$(MAGIC_FRAGMENT_DIR)/algol68 \
 $(MAGIC_FRAGMENT_DIR)/allegro \
 $(MAGIC_FRAGMENT_DIR)/alliant \
 $(MAGIC_FRAGMENT_DIR)/amanda \
@@ -22,14 +23,18 @@ $(MAGIC_FRAGMENT_DIR)/animation \
 $(MAGIC_FRAGMENT_DIR)/aout \
 $(MAGIC_FRAGMENT_DIR)/apl \
 $(MAGIC_FRAGMENT_DIR)/apple \
+$(MAGIC_FRAGMENT_DIR)/application \
 $(MAGIC_FRAGMENT_DIR)/applix \
+$(MAGIC_FRAGMENT_DIR)/apt \
 $(MAGIC_FRAGMENT_DIR)/archive \
 $(MAGIC_FRAGMENT_DIR)/assembler \
 $(MAGIC_FRAGMENT_DIR)/asterix \
 $(MAGIC_FRAGMENT_DIR)/att3b \
 $(MAGIC_FRAGMENT_DIR)/audio \
 $(MAGIC_FRAGMENT_DIR)/basis \
+$(MAGIC_FRAGMENT_DIR)/ber \
 $(MAGIC_FRAGMENT_DIR)/bflt \
+$(MAGIC_FRAGMENT_DIR)/bioinformatics \
 $(MAGIC_FRAGMENT_DIR)/blackberry \
 $(MAGIC_FRAGMENT_DIR)/blcr \
 $(MAGIC_FRAGMENT_DIR)/blender \
@@ -42,6 +47,7 @@ $(MAGIC_FRAGMENT_DIR)/c-lang \
 $(MAGIC_FRAGMENT_DIR)/c64 \
 $(MAGIC_FRAGMENT_DIR)/cad \
 $(MAGIC_FRAGMENT_DIR)/cafebabe \
+$(MAGIC_FRAGMENT_DIR)/cbor \
 $(MAGIC_FRAGMENT_DIR)/cddb \
 $(MAGIC_FRAGMENT_DIR)/chord \
 $(MAGIC_FRAGMENT_DIR)/cisco \
@@ -49,11 +55,13 @@ $(MAGIC_FRAGMENT_DIR)/citrus \
 $(MAGIC_FRAGMENT_DIR)/clarion \
 $(MAGIC_FRAGMENT_DIR)/claris \
 $(MAGIC_FRAGMENT_DIR)/clipper \
+$(MAGIC_FRAGMENT_DIR)/coff \
 $(MAGIC_FRAGMENT_DIR)/commands \
 $(MAGIC_FRAGMENT_DIR)/communications \
 $(MAGIC_FRAGMENT_DIR)/compress \
 $(MAGIC_FRAGMENT_DIR)/console \
 $(MAGIC_FRAGMENT_DIR)/convex \
+$(MAGIC_FRAGMENT_DIR)/coverage \
 $(MAGIC_FRAGMENT_DIR)/cracklib \
 $(MAGIC_FRAGMENT_DIR)/ctags \
 $(MAGIC_FRAGMENT_DIR)/ctf \
@@ -61,6 +69,7 @@ $(MAGIC_FRAGMENT_DIR)/cubemap \
 $(MAGIC_FRAGMENT_DIR)/cups \
 $(MAGIC_FRAGMENT_DIR)/dact \
 $(MAGIC_FRAGMENT_DIR)/database \
+$(MAGIC_FRAGMENT_DIR)/der \
 $(MAGIC_FRAGMENT_DIR)/diamond \
 $(MAGIC_FRAGMENT_DIR)/diff \
 $(MAGIC_FRAGMENT_DIR)/digital \
@@ -77,7 +86,9 @@ $(MAGIC_FRAGMENT_DIR)/erlang \
 $(MAGIC_FRAGMENT_DIR)/esri \
 $(MAGIC_FRAGMENT_DIR)/fcs \
 $(MAGIC_FRAGMENT_DIR)/filesystems \
+$(MAGIC_FRAGMENT_DIR)/finger \
 $(MAGIC_FRAGMENT_DIR)/flash \
+$(MAGIC_FRAGMENT_DIR)/flif \
 $(MAGIC_FRAGMENT_DIR)/fonts \
 $(MAGIC_FRAGMENT_DIR)/fortran \
 $(MAGIC_FRAGMENT_DIR)/frame \
@@ -93,6 +104,7 @@ $(MAGIC_FRAGMENT_DIR)/gnome \
 $(MAGIC_FRAGMENT_DIR)/gnu \
 $(MAGIC_FRAGMENT_DIR)/gnumeric \
 $(MAGIC_FRAGMENT_DIR)/gpt \
+$(MAGIC_FRAGMENT_DIR)/gpu \
 $(MAGIC_FRAGMENT_DIR)/grace \
 $(MAGIC_FRAGMENT_DIR)/graphviz \
 $(MAGIC_FRAGMENT_DIR)/gringotts \
@@ -144,6 +156,7 @@ $(MAGIC_FRAGMENT_DIR)/mcrypt \
 $(MAGIC_FRAGMENT_DIR)/mercurial \
 $(MAGIC_FRAGMENT_DIR)/metastore \
 $(MAGIC_FRAGMENT_DIR)/meteorological \
+$(MAGIC_FRAGMENT_DIR)/microfocus \
 $(MAGIC_FRAGMENT_DIR)/mime \
 $(MAGIC_FRAGMENT_DIR)/mips \
 $(MAGIC_FRAGMENT_DIR)/mirage \
@@ -160,6 +173,7 @@ $(MAGIC_FRAGMENT_DIR)/msx \
 $(MAGIC_FRAGMENT_DIR)/msvc \
 $(MAGIC_FRAGMENT_DIR)/mup \
 $(MAGIC_FRAGMENT_DIR)/music \
+$(MAGIC_FRAGMENT_DIR)/nasa \
 $(MAGIC_FRAGMENT_DIR)/natinst \
 $(MAGIC_FRAGMENT_DIR)/ncr \
 $(MAGIC_FRAGMENT_DIR)/neko \
@@ -183,6 +197,8 @@ $(MAGIC_FRAGMENT_DIR)/parrot \
 $(MAGIC_FRAGMENT_DIR)/pascal \
 $(MAGIC_FRAGMENT_DIR)/pbf \
 $(MAGIC_FRAGMENT_DIR)/pbm \
+$(MAGIC_FRAGMENT_DIR)/pc88 \
+$(MAGIC_FRAGMENT_DIR)/pc98 \
 $(MAGIC_FRAGMENT_DIR)/pdf \
 $(MAGIC_FRAGMENT_DIR)/pdp \
 $(MAGIC_FRAGMENT_DIR)/perl \
@@ -191,9 +207,11 @@ $(MAGIC_FRAGMENT_DIR)/pgp \
 $(MAGIC_FRAGMENT_DIR)/pkgadd \
 $(MAGIC_FRAGMENT_DIR)/plan9 \
 $(MAGIC_FRAGMENT_DIR)/plus5 \
+$(MAGIC_FRAGMENT_DIR)/polyml \
 $(MAGIC_FRAGMENT_DIR)/printer \
 $(MAGIC_FRAGMENT_DIR)/project \
 $(MAGIC_FRAGMENT_DIR)/psdbms \
+$(MAGIC_FRAGMENT_DIR)/psl \
 $(MAGIC_FRAGMENT_DIR)/pulsar \
 $(MAGIC_FRAGMENT_DIR)/pwsafe \
 $(MAGIC_FRAGMENT_DIR)/pyramid \
@@ -245,6 +263,7 @@ $(MAGIC_FRAGMENT_DIR)/unknown \
 $(MAGIC_FRAGMENT_DIR)/uterus \
 $(MAGIC_FRAGMENT_DIR)/uuencode \
 $(MAGIC_FRAGMENT_DIR)/varied.out \
+$(MAGIC_FRAGMENT_DIR)/vacuum-cleaner \
 $(MAGIC_FRAGMENT_DIR)/varied.script \
 $(MAGIC_FRAGMENT_DIR)/vax \
 $(MAGIC_FRAGMENT_DIR)/vicar \
@@ -261,11 +280,13 @@ $(MAGIC_FRAGMENT_DIR)/windows \
 $(MAGIC_FRAGMENT_DIR)/wireless \
 $(MAGIC_FRAGMENT_DIR)/wordprocessors \
 $(MAGIC_FRAGMENT_DIR)/wsdl \
+$(MAGIC_FRAGMENT_DIR)/x68000 \
 $(MAGIC_FRAGMENT_DIR)/xdelta \
 $(MAGIC_FRAGMENT_DIR)/xenix \
 $(MAGIC_FRAGMENT_DIR)/xilinx \
 $(MAGIC_FRAGMENT_DIR)/xo65 \
 $(MAGIC_FRAGMENT_DIR)/xwindows \
+$(MAGIC_FRAGMENT_DIR)/yara \
 $(MAGIC_FRAGMENT_DIR)/zfs \
 $(MAGIC_FRAGMENT_DIR)/zilog \
 $(MAGIC_FRAGMENT_DIR)/zyxel 
@@ -289,7 +310,7 @@ ${MAGIC}: $(EXTRA_DIST) $(FILE_COMPILE_DEP)
 	@(if expr "${FILE_COMPILE}" : '.*/.*' > /dev/null; then \
 	    echo "Using ${FILE_COMPILE} to generate ${MAGIC}" > /dev/null; \
 	  else \
-	    v=$$(file --version | sed -e s/file-// -e q); \
+	    v=$$(${FILE_COMPILE} --version | sed -e s/file-// -e q); \
 	    if [ "$$v" != "${PACKAGE_VERSION}" ]; then \
 		echo "Cannot use the installed version of file ($$v) to"; \
 		echo "cross-compile file ${PACKAGE_VERSION}"; \
