@@ -1,13 +1,82 @@
-$NetBSD: TODO.smpnet,v 1.1 2017/01/24 09:05:27 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.2 2017/02/10 03:59:02 ozaki-r Exp $
 
-Non MP-safe components
-======================
+MP-safe components
+==================
 
- - bpf
- - To be listed more...
+ - bridge(4)
+ - bpf(4)
+ - gif(4)
+ - npf(7)
+ - pfil(9)
+ - pppoe(4)
+   - if_spppsubr.c
+ - tun(4)
+ - vioif(4)
+ - vmx(4)
+ - wm(4)
+
+ - Layer 2 (only Ethernet)
+   - if_ethersubr.c
+ - Most Layer 3
+
+Non MP-safe components and kernel options
+=========================================
+
+ - agr(4)
+ - altq(4)
+ - carp(4)
+ - etherip(4)
+ - faith(4)
+ - gre(4)
+ - ieee80211(4)
+ - ipf(4)
+ - ipsec(4)
+ - kttcp(4)
+ - mpls(4)
+ - opencrypto(9)
+ - pf(4)
+ - ppp(4)
+ - sl(4)
+ - stf(4)
+ - strip(4)
+ - if_srt
+ - tap(4)
+ - vlan(4)
+
+ - netsmb
+ - netnatm
+ - netisbn
+ - netatalk
+ - netbt
+ - netkey
+
+ - if_arcsubr.c
+ - if_atmsubr.c
+ - if_ecosubr.c
+ - if_fddisubr.c
+ - if_hippisubr.c
+ - if_ieee1394subr.c
+ - if_tokensubr.c
+
+ - DCCP
+ - IGMP
+ - IPSELSRC
+ - MROUTING
+ - NFS
+ - PIM
+ - SCTP
+ - TCP
+ - UDP
+
+ - Layer 4
+ - IP multicast
+ - Most network device drivers
+
+Know issues
+===========
 
 bpf
-===
+---
 
 MP-ification of bpf requires all of bpf_mtap* are called in normal LWP context
 or softint context, i.e., not in hardware interrupt context.  For Tx, all
