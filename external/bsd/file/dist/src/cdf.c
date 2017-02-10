@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.12 2017/02/10 17:53:24 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.13 2017/02/10 18:06:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)$File: cdf.c,v 1.88 2017/02/07 23:21:29 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.12 2017/02/10 17:53:24 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.13 2017/02/10 18:06:59 christos Exp $");
 #endif
 #endif
 
@@ -817,7 +817,7 @@ cdf_find_stream(const cdf_dir_t *dir, const char *name, int type)
 		    == 0)
 			break;
 	if (i > 0)
-		return i;
+		return CAST(int, i);
 
 	DPRINTF(("Cannot find type %d `%s'\n", type, name));
 	errno = ESRCH;
@@ -1074,7 +1074,7 @@ cdf_unpack_catalog(const cdf_header_t *h, const cdf_stream_t *sst,
 {
 	size_t ss = cdf_check_stream(sst, h);
 	const char *b = CAST(const char *, sst->sst_tab);
-	const char *eb = b + ss * sst->sst_len;
+	const char *nb, *eb = b + ss * sst->sst_len;
 	size_t nr, i, j, k;
 	cdf_catalog_entry_t *ce;
 	uint16_t reclen;
@@ -1119,7 +1119,9 @@ cdf_unpack_catalog(const cdf_header_t *h, const cdf_stream_t *sst,
 			cep->ce_namlen = rlen;
 
 		np = CAST(const uint16_t *, CAST(const void *, (b + 16)));
-		if (RCAST(const char *, np + cep->ce_namlen) > eb) {
+		nb = CAST(const char *, CAST(const void *,
+		    (np + cep->ce_namlen)));
+		if (nb > eb) {
 			cep->ce_namlen = 0;
 			break;
 		}
