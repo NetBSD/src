@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.13 2017/02/10 19:31:42 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.14 2017/02/10 21:03:15 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.13 2017/02/10 19:31:42 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.14 2017/02/10 21:03:15 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.13 2017/02/10 19:31:42 nat Exp $");
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <sys/mutex.h>
 #include <sys/null.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
@@ -159,9 +158,6 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	/* If not configured, we can't beep. */
 	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
 		return;
-	mutex_enter(&fp->f_lock);
-	fp->f_count++;
-	mutex_exit(&fp->f_lock);
 
 	if (audioioctl(fp, AUDIO_GETINFO, &ai) != 0) {
 		audioclose(fp);
