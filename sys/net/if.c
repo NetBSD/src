@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.376 2017/02/09 09:30:26 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.377 2017/02/10 20:56:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.376 2017/02/09 09:30:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.377 2017/02/10 20:56:21 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1653,9 +1653,10 @@ void
 if_clone_detach(struct if_clone *ifc)
 {
 
-	KASSERT(mutex_owned(&if_clone_mtx));
+	mutex_enter(&if_clone_mtx);
 	LIST_REMOVE(ifc, ifc_list);
 	if_cloners_count--;
+	mutex_exit(&if_clone_mtx);
 }
 
 /*
