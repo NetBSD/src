@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2015/07/19 10:16:56 martin Exp $
+#	$NetBSD: Makefile,v 1.28 2017/02/10 16:43:59 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ image_md_pre:
 	${INSTALL} ${COPY} ${.CURDIR}/etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/etc.rc cdrom/etc/rc
 	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/install.sh cdrom/install.sh
-	${MKDIR} cdrom/mnt2 cdrom/targetroot
+	${MKDIR} ${MKDIRPERM} cdrom/mnt2 cdrom/targetroot
 	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
 
 image_md_post:

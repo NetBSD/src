@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.21 2017/01/24 11:27:55 nonaka Exp $
+# $NetBSD: Makefile.cdrom,v 1.22 2017/02/10 16:43:59 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -22,8 +22,8 @@ CD_SETS+=	modules
 ${EFIBOOTIMG}: ${DESTDIR}/usr/mdec/bootx64.efi ${DESTDIR}/usr/mdec/bootia32.efi
 	${RM} -f ${EFIBOOTIMG}
 	${RM} -rf efiboot/EFI/boot
-	${MKDIR} efiboot/EFI/boot
-	${CP} ${.ALLSRC} efiboot/EFI/boot/
+	${MKDIR} ${MKDIRPERM} efiboot/EFI/boot
+	${INSTALL} ${COPY} -m 0444 ${.ALLSRC} efiboot/EFI/boot/
 	${TOOL_MAKEFS} -M 1m -m 1m -B ${TARGET_ENDIANNESS} \
 		-t msdos -o F=12,c=1 ${EFIBOOTIMG} efiboot
 
@@ -33,6 +33,6 @@ image_md_pre: ${EFIBOOTIMG}
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.rc cdrom/etc/rc
 	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/../install.sh cdrom/install.sh
-	${MKDIR} cdrom/mnt2 cdrom/targetroot
+	${MKDIR} ${MKDIRPERM} cdrom/mnt2 cdrom/targetroot
 	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
-	${MKDIR} cdrom/var
+	${MKDIR} ${MKDIRPERM} cdrom/var
