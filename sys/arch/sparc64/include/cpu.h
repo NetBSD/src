@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.122 2016/06/25 13:52:04 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.123 2017/02/10 23:26:23 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,7 +185,7 @@ struct cpu_info {
 	 * Will be initialized to the physical address of the bottom of
 	 * the interrupt stack.
 	 */
-	paddr_t			ci_mmfsa;
+	paddr_t			ci_mmufsa;
 
 	/*
 	 * sun4v mondo control fields
