@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.188 2017/01/19 06:58:55 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.189 2017/02/10 13:44:47 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.188 2017/01/19 06:58:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.189 2017/02/10 13:44:47 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1012,7 +1012,11 @@ ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
 		int s;
 		struct rtentry *rt;
 
-		rt = rtalloc1(dst, 0);
+		/* XXX we cannot call rtalloc1 if holding the rt lock */
+		if (RT_LOCKED())
+			rt = rtalloc1_locked(dst, 0, true);
+		else
+			rt = rtalloc1(dst, 0);
 		if (rt == NULL)
 			return NULL;
 		/*
