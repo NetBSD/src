@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.84 2017/02/09 11:56:41 nonaka Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.85 2017/02/10 09:57:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.84 2017/02/09 11:56:41 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.85 2017/02/10 09:57:04 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -510,9 +510,9 @@ x86_select_freelist(uint64_t maxaddr)
 }
 
 static int
-x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
-    uint32_t type)
+x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
+	extern struct extent *iomem_ex;
 	uint64_t new_physmem = 0;
 	phys_ram_seg_t *cluster;
 	int i;
@@ -629,7 +629,7 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 }
 
 static int
-x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
+x86_parse_clusters(struct btinfo_common *bi)
 {
 	union {
 		struct btinfo_common *common;
@@ -720,10 +720,10 @@ x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 
-			x86_add_cluster(iomem_ex, seg_start, 0xa0000, type);
-			x86_add_cluster(iomem_ex, 0x100000, seg_end, type);
+			x86_add_cluster(seg_start, 0xa0000, type);
+			x86_add_cluster(0x100000, seg_end, type);
 		} else {
-			x86_add_cluster(iomem_ex, seg_start, seg_end, type);
+			x86_add_cluster(seg_start, seg_end, type);
 		}
 	}
 
@@ -731,8 +731,9 @@ x86_parse_clusters(struct btinfo_common *bi, struct extent *iomem_ex)
 }
 
 static int
-x86_fake_clusters(struct extent *iomem_ex)
+x86_fake_clusters(void)
 {
+	extern struct extent *iomem_ex;
 	phys_ram_seg_t *cluster;
 	KASSERT(mem_cluster_cnt == 0);
 
@@ -842,7 +843,6 @@ x86_load_region(uint64_t seg_start, uint64_t seg_end)
 void
 init_x86_clusters(void)
 {
-	extern struct extent *iomem_ex;
 	struct btinfo_memmap *bim = NULL;
 	struct btinfo_efimemmap *biem;
 
@@ -857,18 +857,16 @@ init_x86_clusters(void)
 		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
 	    ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0)))
-		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common,
-		    iomem_ex);
+		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common);
 #else
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
 	if (biem == NULL)
 		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0))
-		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common,
-		    iomem_ex);
+		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common);
 #else
-	(void)bim, (void)biem, (void)iomem_ex;
+	(void)bim, (void)biem;
 #endif
 #endif
 
@@ -877,7 +875,7 @@ init_x86_clusters(void)
 		 * If x86_parse_clusters didn't find any valid segment, create
 		 * fake clusters.
 		 */
-		x86_fake_clusters(iomem_ex);
+		x86_fake_clusters();
 	}
 }
 
