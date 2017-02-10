@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.86 2017/02/10 10:02:26 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.87 2017/02/10 10:39:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.86 2017/02/10 10:02:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.87 2017/02/10 10:39:36 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -583,8 +583,9 @@ x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		return 0;
 
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX) {
-		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
-			__func__);
+		printf("WARNING: too many memory segments"
+		    "(increase VM_PHYSSEG_MAX)");
+		return -1;
 	}
 
 #ifdef PHYSMEM_MAX_ADDR
@@ -715,10 +716,13 @@ x86_parse_clusters(struct btinfo_common *bi)
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 
-			x86_add_cluster(seg_start, IOM_BEGIN, type);
-			x86_add_cluster(IOM_END, seg_end, type);
+			if (x86_add_cluster(seg_start, IOM_BEGIN, type) == -1)
+				break;
+			if (x86_add_cluster(IOM_END, seg_end, type) == -1)
+				break;
 		} else {
-			x86_add_cluster(seg_start, seg_end, type);
+			if (x86_add_cluster(seg_start, seg_end, type) == -1)
+				break;
 		}
 	}
 
