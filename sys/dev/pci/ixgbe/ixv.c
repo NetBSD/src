@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.47 2017/02/08 09:00:37 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.48 2017/02/10 04:34:11 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -117,6 +117,7 @@ static void	ixv_register_vlan(void *, struct ifnet *, u16);
 static void	ixv_unregister_vlan(void *, struct ifnet *, u16);
 #endif
 
+static void	ixv_add_device_sysctls(struct adapter *);
 static void	ixv_save_stats(struct adapter *);
 static void	ixv_init_stats(struct adapter *);
 static void	ixv_update_stats(struct adapter *);
@@ -276,37 +277,6 @@ ixv_lookup(const struct pci_attach_args *pa)
 }
 
 
-static void
-ixv_sysctl_attach(struct adapter *adapter)
-{
-	struct sysctllog **log;
-	const struct sysctlnode *rnode, *cnode;
-	device_t dev;
-
-	dev = adapter->dev;
-	log = &adapter->sysctllog;
-
-	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
-		aprint_error_dev(dev, "could not create sysctl root\n");
-		return;
-	}
-
-	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "debug", SYSCTL_DESCR("Debug Info"),
-	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-
-	/* XXX This is an *instance* sysctl controlling a *global* variable.
-	 * XXX It's that way in the FreeBSD driver that this derives from.
-	 */
-	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
-	    NULL, 0, &ixv_enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-}
-
 /*********************************************************************
  *  Device initialization routine
  *
@@ -355,9 +325,6 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 
 	/* Core Lock Init*/
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
-
-	/* SYSCTL APIs */
-	ixv_sysctl_attach(adapter);
 
 	/* Set up the timer callout */
 	callout_init(&adapter->timer, 0);
@@ -464,7 +431,6 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	/* Do the stats setup */
 	ixv_save_stats(adapter);
 	ixv_init_stats(adapter);
-	ixv_add_stats_sysctls(adapter);
 
 	/* Register for VLAN events */
 #if 0 /* XXX delete after write? */
@@ -473,6 +439,10 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	adapter->vlan_detach = EVENTHANDLER_REGISTER(vlan_unconfig,
 	    ixv_unregister_vlan, adapter, EVENTHANDLER_PRI_FIRST);
 #endif
+
+	/* Add sysctls */
+	ixv_add_device_sysctls(adapter);
+	ixv_add_stats_sysctls(adapter);
 
 #ifdef DEV_NETMAP
 	ixgbe_netmap_attach(adapter);
@@ -2194,78 +2164,6 @@ ixv_update_stats(struct adapter *adapter)
 	    adapter->stats.vf.vfmprc);
 }
 
-/*
- * Add statistic sysctls for the VF.
- */
-static void
-ixv_add_stats_sysctls(struct adapter *adapter)
-{
-	device_t dev = adapter->dev;
-	struct ix_queue *que = &adapter->queues[0];
-	struct tx_ring *txr = que->txr;
-	struct rx_ring *rxr = que->rxr;
-
-	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
-
-	const char *xname = device_xname(dev);
-
-	/* Driver Statistics */
-	evcnt_attach_dynamic(&adapter->dropped_pkts, EVCNT_TYPE_MISC,
-	    NULL, xname, "Driver dropped packets");
-	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
-	    NULL, xname, "m_defrag() failed");
-	evcnt_attach_dynamic(&adapter->watchdog_events, EVCNT_TYPE_MISC,
-	    NULL, xname, "Watchdog timeouts");
-
-	evcnt_attach_dynamic(&stats->vfgprc, EVCNT_TYPE_MISC, NULL,
-	    xname, "Good Packets Received");
-	evcnt_attach_dynamic(&stats->vfgorc, EVCNT_TYPE_MISC, NULL,
-	    xname, "Good Octets Received");
-	evcnt_attach_dynamic(&stats->vfmprc, EVCNT_TYPE_MISC, NULL,
-	    xname, "Multicast Packets Received");
-	evcnt_attach_dynamic(&stats->vfgptc, EVCNT_TYPE_MISC, NULL,
-	    xname, "Good Packets Transmitted");
-	evcnt_attach_dynamic(&stats->vfgotc, EVCNT_TYPE_MISC, NULL,
-	    xname, "Good Octets Transmitted");
-	evcnt_attach_dynamic(&que->irqs, EVCNT_TYPE_INTR, NULL,
-	    xname, "IRQs on queue");
-	evcnt_attach_dynamic(&rxr->rx_irq, EVCNT_TYPE_INTR, NULL,
-	    xname, "RX irqs on queue");
-	evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC, NULL,
-	    xname, "RX packets");
-	evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC, NULL,
-	    xname, "RX bytes");
-	evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC, NULL,
-	    xname, "Discarded RX packets");
-	evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC, NULL,
-	    xname, "TX Packets");
-	evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC, NULL,
-	    xname, "# of times not enough descriptors were available during TX");
-	evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC, NULL,
-	    xname, "TX TSO");
-}
-
-static void
-ixv_set_sysctl_value(struct adapter *adapter, const char *name,
-	const char *description, int *limit, int value)
-{
-	device_t dev =  adapter->dev;
-	struct sysctllog **log;
-	const struct sysctlnode *rnode, *cnode;
-
-	log = &adapter->sysctllog;
-	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
-		aprint_error_dev(dev, "could not create sysctl root\n");
-		return;
-	}
-	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    name, SYSCTL_DESCR(description),
-	    NULL, 0, limit, 0, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-	*limit = value;
-}
-
 /**********************************************************************
  *
  *  This routine is called only when em_display_debug_stats is enabled.
@@ -2359,4 +2257,107 @@ ixv_sysctl_instance(struct adapter *adapter)
 err:
 	printf("%s: sysctl_createv failed, rc = %d\n", __func__, rc);
 	return NULL;
+}
+
+static void
+ixv_add_device_sysctls(struct adapter *adapter)
+{
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *cnode;
+	device_t dev;
+
+	dev = adapter->dev;
+	log = &adapter->sysctllog;
+
+	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
+		aprint_error_dev(dev, "could not create sysctl root\n");
+		return;
+	}
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Debug Info"),
+	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	/* XXX This is an *instance* sysctl controlling a *global* variable.
+	 * XXX It's that way in the FreeBSD driver that this derives from.
+	 */
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
+	    NULL, 0, &ixv_enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+}
+
+/*
+ * Add statistic sysctls for the VF.
+ */
+static void
+ixv_add_stats_sysctls(struct adapter *adapter)
+{
+	device_t dev = adapter->dev;
+	struct ix_queue *que = &adapter->queues[0];
+	struct tx_ring *txr = que->txr;
+	struct rx_ring *rxr = que->rxr;
+
+	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
+
+	const char *xname = device_xname(dev);
+
+	/* Driver Statistics */
+	evcnt_attach_dynamic(&adapter->dropped_pkts, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver dropped packets");
+	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
+	    NULL, xname, "m_defrag() failed");
+	evcnt_attach_dynamic(&adapter->watchdog_events, EVCNT_TYPE_MISC,
+	    NULL, xname, "Watchdog timeouts");
+
+	evcnt_attach_dynamic(&stats->vfgprc, EVCNT_TYPE_MISC, NULL,
+	    xname, "Good Packets Received");
+	evcnt_attach_dynamic(&stats->vfgorc, EVCNT_TYPE_MISC, NULL,
+	    xname, "Good Octets Received");
+	evcnt_attach_dynamic(&stats->vfmprc, EVCNT_TYPE_MISC, NULL,
+	    xname, "Multicast Packets Received");
+	evcnt_attach_dynamic(&stats->vfgptc, EVCNT_TYPE_MISC, NULL,
+	    xname, "Good Packets Transmitted");
+	evcnt_attach_dynamic(&stats->vfgotc, EVCNT_TYPE_MISC, NULL,
+	    xname, "Good Octets Transmitted");
+	evcnt_attach_dynamic(&que->irqs, EVCNT_TYPE_INTR, NULL,
+	    xname, "IRQs on queue");
+	evcnt_attach_dynamic(&rxr->rx_irq, EVCNT_TYPE_INTR, NULL,
+	    xname, "RX irqs on queue");
+	evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC, NULL,
+	    xname, "RX packets");
+	evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC, NULL,
+	    xname, "RX bytes");
+	evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC, NULL,
+	    xname, "Discarded RX packets");
+	evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC, NULL,
+	    xname, "TX Packets");
+	evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC, NULL,
+	    xname, "# of times not enough descriptors were available during TX");
+	evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC, NULL,
+	    xname, "TX TSO");
+}
+
+static void
+ixv_set_sysctl_value(struct adapter *adapter, const char *name,
+	const char *description, int *limit, int value)
+{
+	device_t dev =  adapter->dev;
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *cnode;
+
+	log = &adapter->sysctllog;
+	if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
+		aprint_error_dev(dev, "could not create sysctl root\n");
+		return;
+	}
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    name, SYSCTL_DESCR(description),
+	    NULL, 0, limit, 0, CTL_CREATE, CTL_EOL) != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+	*limit = value;
 }
