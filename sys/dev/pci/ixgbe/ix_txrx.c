@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.18 2017/02/01 10:47:13 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.19 2017/02/10 06:35:22 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -171,7 +171,7 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 				if (rc != 0)
 					adapter->efbig2_tx_dma_setup.ev_count++;
 			} else
-				adapter->m_defrag_failed.ev_count++;
+				adapter->mbuf_defrag_failed.ev_count++;
 		}
 		if (rc != 0) {
 			m_freem(m_head);
