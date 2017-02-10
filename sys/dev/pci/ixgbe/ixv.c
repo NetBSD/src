@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.48 2017/02/10 04:34:11 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.49 2017/02/10 06:35:22 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -476,6 +476,8 @@ ixv_detach(device_t dev, int flags)
 	struct adapter *adapter = device_private(dev);
 	struct ix_queue *que = adapter->queues;
 	struct tx_ring *txr = adapter->tx_rings;
+	struct rx_ring *rxr = adapter->rx_rings;
+	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
 
 	INIT_DEBUGOUT("ixv_detach: begin");
 	if (adapter->osdep.attached == false)
@@ -527,6 +529,48 @@ ixv_detach(device_t dev, int flags)
 	if_detach(adapter->ifp);
 
 	sysctl_teardown(&adapter->sysctllog);
+	evcnt_detach(&adapter->handleq);
+	evcnt_detach(&adapter->req);
+	evcnt_detach(&adapter->efbig_tx_dma_setup);
+	evcnt_detach(&adapter->mbuf_defrag_failed);
+	evcnt_detach(&adapter->efbig2_tx_dma_setup);
+	evcnt_detach(&adapter->einval_tx_dma_setup);
+	evcnt_detach(&adapter->other_tx_dma_setup);
+	evcnt_detach(&adapter->eagain_tx_dma_setup);
+	evcnt_detach(&adapter->enomem_tx_dma_setup);
+	evcnt_detach(&adapter->watchdog_events);
+	evcnt_detach(&adapter->tso_err);
+	evcnt_detach(&adapter->link_irq);
+
+	txr = adapter->tx_rings;
+	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		evcnt_detach(&adapter->queues[i].irqs);
+		evcnt_detach(&txr->no_desc_avail);
+		evcnt_detach(&txr->total_packets);
+		evcnt_detach(&txr->tso_tx);
+#ifndef IXGBE_LEGACY_TX
+		evcnt_detach(&txr->pcq_drops);
+#endif
+
+		evcnt_detach(&rxr->rx_packets);
+		evcnt_detach(&rxr->rx_bytes);
+		evcnt_detach(&rxr->rx_copies);
+		evcnt_detach(&rxr->no_jmbuf);
+		evcnt_detach(&rxr->rx_discarded);
+	}
+	evcnt_detach(&stats->ipcs);
+	evcnt_detach(&stats->l4cs);
+	evcnt_detach(&stats->ipcs_bad);
+	evcnt_detach(&stats->l4cs_bad);
+
+	/* Packet Reception Stats */
+	evcnt_detach(&stats->vfgorc);
+	evcnt_detach(&stats->vfgprc);
+	evcnt_detach(&stats->vfmprc);
+
+	/* Packet Transmission Stats */
+	evcnt_detach(&stats->vfgotc);
+	evcnt_detach(&stats->vfgptc);
 
 	ixgbe_free_transmit_structures(adapter);
 	ixgbe_free_receive_structures(adapter);
@@ -828,6 +872,8 @@ ixv_handle_que(void *context)
 	struct tx_ring	*txr = que->txr;
 	struct ifnet    *ifp = adapter->ifp;
 	bool		more;
+
+	adapter->handleq.ev_count++;
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		more = ixgbe_rxeof(que);
@@ -1578,11 +1624,8 @@ ixv_free_pci_resources(struct adapter * adapter)
 	}
 
 
-	/* Clean the Legacy or Link interrupt last */
-	if (adapter->vector) /* we are doing MSIX */
-		rid = adapter->vector;
-	else
-		rid = 0;
+	/* Clean the Link interrupt last */
+	rid = adapter->vector;
 
 	if (adapter->osdep.ihs[rid] != NULL) {
 		pci_intr_disestablish(adapter->osdep.pc,
@@ -2297,22 +2340,161 @@ static void
 ixv_add_stats_sysctls(struct adapter *adapter)
 {
 	device_t dev = adapter->dev;
+	const struct sysctlnode *rnode;
+	struct sysctllog **log = &adapter->sysctllog;
 	struct ix_queue *que = &adapter->queues[0];
 	struct tx_ring *txr = que->txr;
 	struct rx_ring *rxr = que->rxr;
 
 	struct ixgbevf_hw_stats *stats = &adapter->stats.vf;
-
 	const char *xname = device_xname(dev);
 
 	/* Driver Statistics */
-	evcnt_attach_dynamic(&adapter->dropped_pkts, EVCNT_TYPE_MISC,
-	    NULL, xname, "Driver dropped packets");
+	evcnt_attach_dynamic(&adapter->handleq, EVCNT_TYPE_MISC,
+	    NULL, xname, "Handled queue in softint");
+	evcnt_attach_dynamic(&adapter->req, EVCNT_TYPE_MISC,
+	    NULL, xname, "Requeued in softint");
+	evcnt_attach_dynamic(&adapter->efbig_tx_dma_setup, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver tx dma soft fail EFBIG");
 	evcnt_attach_dynamic(&adapter->mbuf_defrag_failed, EVCNT_TYPE_MISC,
 	    NULL, xname, "m_defrag() failed");
+	evcnt_attach_dynamic(&adapter->efbig2_tx_dma_setup, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver tx dma hard fail EFBIG");
+	evcnt_attach_dynamic(&adapter->einval_tx_dma_setup, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver tx dma hard fail EINVAL");
+	evcnt_attach_dynamic(&adapter->other_tx_dma_setup, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver tx dma hard fail other");
+	evcnt_attach_dynamic(&adapter->eagain_tx_dma_setup, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver tx dma soft fail EAGAIN");
+	evcnt_attach_dynamic(&adapter->enomem_tx_dma_setup, EVCNT_TYPE_MISC,
+	    NULL, xname, "Driver tx dma soft fail ENOMEM");
 	evcnt_attach_dynamic(&adapter->watchdog_events, EVCNT_TYPE_MISC,
 	    NULL, xname, "Watchdog timeouts");
+	evcnt_attach_dynamic(&adapter->tso_err, EVCNT_TYPE_MISC,
+	    NULL, xname, "TSO errors");
+	evcnt_attach_dynamic(&adapter->link_irq, EVCNT_TYPE_INTR,
+	    NULL, xname, "Link MSIX IRQ Handled");
 
+	for (int i = 0; i < adapter->num_queues; i++, rxr++, txr++) {
+		snprintf(adapter->queues[i].evnamebuf,
+		    sizeof(adapter->queues[i].evnamebuf), "%s q%d",
+		    xname, i);
+		snprintf(adapter->queues[i].namebuf,
+		    sizeof(adapter->queues[i].namebuf), "q%d", i);
+
+		if ((rnode = ixv_sysctl_instance(adapter)) == NULL) {
+			aprint_error_dev(dev, "could not create sysctl root\n");
+			break;
+		}
+
+		if (sysctl_createv(log, 0, &rnode, &rnode,
+		    0, CTLTYPE_NODE,
+		    adapter->queues[i].namebuf, SYSCTL_DESCR("Queue Name"),
+		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+#if 0 /* not yet */
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_INT,
+		    "interrupt_rate", SYSCTL_DESCR("Interrupt Rate"),
+		    ixgbe_sysctl_interrupt_rate_handler, 0,
+		    (void *)&adapter->queues[i], 0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_QUAD,
+		    "irqs", SYSCTL_DESCR("irqs on this queue"),
+			NULL, 0, &(adapter->queues[i].irqs),
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txd_head", SYSCTL_DESCR("Transmit Descriptor Head"),
+		    ixgbe_sysctl_tdh_handler, 0, (void *)txr,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txd_tail", SYSCTL_DESCR("Transmit Descriptor Tail"),
+		    ixgbe_sysctl_tdt_handler, 0, (void *)txr,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+#endif
+		evcnt_attach_dynamic(&adapter->queues[i].irqs, EVCNT_TYPE_INTR,
+		    NULL, adapter->queues[i].evnamebuf, "IRQs on queue");
+		evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "TSO");
+		evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue No Descriptor Available");
+		evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Packets Transmitted");
+#ifndef IXGBE_LEGACY_TX
+		evcnt_attach_dynamic(&txr->pcq_drops, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Packets dropped in pcq");
+#endif
+
+#ifdef LRO
+		struct lro_ctrl *lro = &rxr->lro;
+#endif /* LRO */
+
+#if 0 /* not yet */
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY,
+		    CTLTYPE_INT,
+		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
+		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY,
+		    CTLTYPE_INT,
+		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
+		    ixgbe_sysctl_rdt_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+#endif
+
+		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Queue Packets Received");
+		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Queue Bytes Received");
+		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
+		evcnt_attach_dynamic(&rxr->no_jmbuf, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Rx no jumbo mbuf");
+		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
+#ifdef LRO
+		SYSCTL_ADD_INT(ctx, queue_list, OID_AUTO, "lro_queued",
+				CTLFLAG_RD, &lro->lro_queued, 0,
+				"LRO Queued");
+		SYSCTL_ADD_INT(ctx, queue_list, OID_AUTO, "lro_flushed",
+				CTLFLAG_RD, &lro->lro_flushed, 0,
+				"LRO Flushed");
+#endif /* LRO */
+	}
+
+	/* MAC stats get the own sub node */
+
+	snprintf(stats->namebuf,
+	    sizeof(stats->namebuf), "%s MAC Statistics", xname);
+
+	evcnt_attach_dynamic(&stats->ipcs, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "rx csum offload - IP");
+	evcnt_attach_dynamic(&stats->l4cs, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "rx csum offload - L4");
+	evcnt_attach_dynamic(&stats->ipcs_bad, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "rx csum offload - IP bad");
+	evcnt_attach_dynamic(&stats->l4cs_bad, EVCNT_TYPE_MISC, NULL,
+	    stats->namebuf, "rx csum offload - L4 bad");
+
+	/* Packet Reception Stats */
 	evcnt_attach_dynamic(&stats->vfgprc, EVCNT_TYPE_MISC, NULL,
 	    xname, "Good Packets Received");
 	evcnt_attach_dynamic(&stats->vfgorc, EVCNT_TYPE_MISC, NULL,
@@ -2323,22 +2505,6 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 	    xname, "Good Packets Transmitted");
 	evcnt_attach_dynamic(&stats->vfgotc, EVCNT_TYPE_MISC, NULL,
 	    xname, "Good Octets Transmitted");
-	evcnt_attach_dynamic(&que->irqs, EVCNT_TYPE_INTR, NULL,
-	    xname, "IRQs on queue");
-	evcnt_attach_dynamic(&rxr->rx_irq, EVCNT_TYPE_INTR, NULL,
-	    xname, "RX irqs on queue");
-	evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC, NULL,
-	    xname, "RX packets");
-	evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC, NULL,
-	    xname, "RX bytes");
-	evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC, NULL,
-	    xname, "Discarded RX packets");
-	evcnt_attach_dynamic(&txr->total_packets, EVCNT_TYPE_MISC, NULL,
-	    xname, "TX Packets");
-	evcnt_attach_dynamic(&txr->no_desc_avail, EVCNT_TYPE_MISC, NULL,
-	    xname, "# of times not enough descriptors were available during TX");
-	evcnt_attach_dynamic(&txr->tso_tx, EVCNT_TYPE_MISC, NULL,
-	    xname, "TX TSO");
 }
 
 static void
