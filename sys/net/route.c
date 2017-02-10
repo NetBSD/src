@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.189 2017/02/10 13:44:47 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.190 2017/02/10 13:48:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.189 2017/02/10 13:44:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.190 2017/02/10 13:48:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -918,15 +918,27 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			 * Smash the current notion of the gateway to
 			 * this destination.  Should check about netmask!!!
 			 */
-			/*
-			 * FIXME NOMPSAFE: the rtentry is updated with the existence
-			 * of refeferences of it.
-			 */
-			error = rt_setgate(rt, gateway);
+#ifdef NET_MPSAFE
+			KASSERT(!cpu_softintr_p());
+
+			error = rt_update_prepare(rt);
 			if (error == 0) {
-				rt->rt_flags |= RTF_MODIFIED;
-				flags |= RTF_MODIFIED;
+#endif
+				error = rt_setgate(rt, gateway);
+				if (error == 0) {
+					rt->rt_flags |= RTF_MODIFIED;
+					flags |= RTF_MODIFIED;
+				}
+#ifdef NET_MPSAFE
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
 			}
+#endif
 			stat = &rtstat.rts_newgateway;
 		}
 	} else
