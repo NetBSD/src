@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.31 2017/02/10 08:50:27 maya Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.32 2017/02/10 08:52:04 maya Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.31 2017/02/10 08:50:27 maya Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.32 2017/02/10 08:52:04 maya Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -497,7 +497,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		*(struct count_info *)argp = cntinfo;
 		break;
 	case SNDCTL_SYSINFO:
-		strlcpy(tmpsysinfo.product, "OSS/NetBSD", sizeof tmpsysinfo.product);
+		strlcpy(tmpsysinfo.product, "OSS/NetBSD",
+		    sizeof tmpsysinfo.product);
 		strlcpy(tmpsysinfo.version, version, sizeof tmpsysinfo.version);
 		strlcpy(tmpsysinfo.license, license, sizeof tmpsysinfo.license);
 		tmpsysinfo.versionnum = SOUND_VERSION;
