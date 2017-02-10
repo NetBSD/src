@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.85 2017/02/10 09:57:04 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.86 2017/02/10 10:02:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.85 2017/02/10 09:57:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.86 2017/02/10 10:02:26 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -704,24 +704,19 @@ x86_parse_clusters(struct btinfo_common *bi)
 		seg_end = addr + size;
 
 		/*
-		 * XXX XXX: Avoid compatibility holes.
-		 *
-		 * Holes within memory space that allow access to be directed
-		 * to the PC-compatible frame buffer (0xa0000-0xbffff), to
-		 * adapter ROM space (0xc0000-0xdffff), and to system BIOS
-		 * space (0xe0000-0xfffff).
+		 * XXX XXX: Avoid the ISA I/O MEM.
 		 * 
-		 * Some laptop (for example, Toshiba Satellite2550X) report
-		 * this area and occurred problems, so we avoid this area.
+		 * Some laptops (for example, Toshiba Satellite2550X) report
+		 * this area as valid.
 		 */
-		if (seg_start < 0x100000 && seg_end > 0xa0000) {
+		if (seg_start < IOM_END && seg_end > IOM_BEGIN) {
 			printf("WARNING: memory map entry overlaps "
 			    "with ``Compatibility Holes'': "
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 
-			x86_add_cluster(seg_start, 0xa0000, type);
-			x86_add_cluster(0x100000, seg_end, type);
+			x86_add_cluster(seg_start, IOM_BEGIN, type);
+			x86_add_cluster(IOM_END, seg_end, type);
 		} else {
 			x86_add_cluster(seg_start, seg_end, type);
 		}
