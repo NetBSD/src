@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.6 2017/02/06 10:32:35 nonaka Exp $
+# $NetBSD: Makefile.efiboot,v 1.7 2017/02/11 10:13:46 nonaka Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -61,7 +61,6 @@ CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DSUPPORT_EXT2FS
 CPPFLAGS+= -DPASS_BIOSGEOM
-CPPFLAGS+= -DPASS_MEMMAP
 CPPFLAGS+= -DLIBSA_ENABLE_LS_OP
 
 EFIDIR= ${S}/external/bsd/gnu-efi/dist
