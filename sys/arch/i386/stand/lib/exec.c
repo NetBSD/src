@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.63 2017/01/24 11:09:14 nonaka Exp $	 */
+/*	$NetBSD: exec.c,v 1.64 2017/02/11 10:18:10 nonaka Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -389,6 +389,9 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	u_long extmem;
 	u_long basemem;
 	int error;
+#ifdef EFIBOOT
+	int i;
+#endif
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n", file ? file : "NULL",
@@ -449,6 +452,14 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	if (callback != NULL)
 		(*callback)();
 #ifdef EFIBOOT
+	/* Copy bootinfo to safe arena. */
+	for (i = 0; i < bootinfo->nentries; i++) {
+		struct btinfo_common *bi = (void *)(u_long)bootinfo->entry[i];
+		char *p = alloc(bi->len);
+		memcpy(p, bi, bi->len);
+		bootinfo->entry[i] = vtophys(p);
+	}
+
 	/* Copy the kernel to original load address. */
 	memmove((void *)marks[MARK_START],
 	    (void *)(efi_loadaddr + marks[MARK_START]),
