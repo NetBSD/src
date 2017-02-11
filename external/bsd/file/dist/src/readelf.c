@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.13 2017/02/10 18:06:59 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.14 2017/02/11 18:17:29 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.130 2017/01/29 19:34:24 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.13 2017/02/10 18:06:59 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.14 2017/02/11 18:17:29 christos Exp $");
 #endif
 #endif
 
@@ -1191,7 +1191,7 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 {
 	Elf32_Shdr sh32;
 	Elf64_Shdr sh64;
-	int stripped = 1, has_debug_info = 1;
+	int stripped = 1, has_debug_info = 0;
 	size_t nbadcap = 0;
 	void *nbuf;
 	off_t noff, coff, name_off;
