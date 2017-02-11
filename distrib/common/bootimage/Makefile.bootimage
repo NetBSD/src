@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.15 2017/02/11 03:07:06 christos Exp $
+#	$NetBSD: Makefile.bootimage,v 1.16 2017/02/11 04:19:25 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -130,7 +130,6 @@
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
 MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
-.endif
 .endif
 
 .if empty(IMGBASE)
