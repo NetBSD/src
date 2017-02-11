@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.3 2017/02/05 10:13:43 joerg Exp $	*/
+/*	$NetBSD: panic.c,v 1.4 2017/02/11 10:15:55 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -54,7 +54,8 @@ __dead void
 reboot(void)
 {
 
-	WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
+	if (!efi_cleanuped)
+		WaitForSingleEvent(ST->ConIn->WaitForKey, 0);
 
 	uefi_call_wrapper(RT->ResetSystem, 4, EfiResetCold, EFI_SUCCESS,
 	    0, NULL);
