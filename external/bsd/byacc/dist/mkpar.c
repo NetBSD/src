@@ -1,6 +1,6 @@
-/*	$NetBSD: mkpar.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
 
-/* Id: mkpar.c,v 1.14 2014/04/01 23:05:37 tom Exp  */
+/* Id: mkpar.c,v 1.15 2016/06/07 00:22:12 tom Exp  */
 
 #include "defs.h"
 
@@ -86,7 +86,7 @@ get_shifts(int stateno)
     if (sp)
     {
 	to_state2 = sp->shift;
-	for (i = (Value_t) (sp->nshifts - 1); i >= 0; i--)
+	for (i = (Value_t)(sp->nshifts - 1); i >= 0; i--)
 	{
 	    k = to_state2[i];
 	    symbol = accessing_symbol[k];
@@ -155,8 +155,8 @@ add_reduce(action *actions,
 
     temp = NEW(action);
     temp->next = next;
-    temp->symbol = (Value_t) symbol;
-    temp->number = (Value_t) ruleno;
+    temp->symbol = (Value_t)symbol;
+    temp->number = (Value_t)ruleno;
     temp->prec = rprec[ruleno];
     temp->action_code = REDUCE;
     temp->assoc = rassoc[ruleno];
@@ -374,7 +374,7 @@ defreds(void)
 
     defred = NEW2(nstates, Value_t);
     for (i = 0; i < nstates; i++)
-	defred[i] = (Value_t) sole_reduction(i);
+	defred[i] = (Value_t)sole_reduction(i);
 }
 
 static void

@@ -1,6 +1,6 @@
-/*	$NetBSD: main.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
 
-/* Id: main.c,v 1.55 2015/07/11 00:34:19 tom Exp  */
+/* Id: main.c,v 1.59 2017/02/02 00:44:38 tom Exp  */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -50,13 +50,13 @@ const char *myname = "yacc";
 int lineno;
 int outline;
 
-static char empty_string[] = "";
 static char default_file_prefix[] = "y";
 
 static char *file_prefix = default_file_prefix;
 
 char *code_file_name;
-char *input_file_name = empty_string;
+char *input_file_name;
+size_t input_file_name_len = 0;
 char *defines_file_name;
 char *externs_file_name;
 
@@ -94,6 +94,7 @@ char *symbol_assoc;
 
 int pure_parser;
 int token_table;
+int error_verbose;
 
 #if defined(YYBTYACC)
 Value_t *symbol_pval;
@@ -101,6 +102,7 @@ char **symbol_destructor;
 char **symbol_type_tag;
 int locations = 0;	/* default to no position processing */
 int backtrack = 0;	/* default is no backtracking */
+char *initial_action = NULL;
 #endif
 
 int exit_code;
@@ -381,7 +383,10 @@ getargs(int argc, char *argv[])
   no_more_options:;
     if (i + 1 != argc)
 	usage();
-    input_file_name = argv[i];
+    input_file_name_len = strlen(argv[i]);
+    input_file_name = TMALLOC(char, input_file_name_len + 1);
+    NO_SPACE(input_file_name);
+    strcpy(input_file_name, argv[i]);
 }
 
 void *
@@ -412,32 +417,46 @@ alloc_file_name(size_t len, const char *suffix)
     return result;
 }
 
+static char *
+find_suffix(char *name, const char *suffix)
+{
+    size_t len = strlen(name);
+    size_t slen = strlen(suffix);
+    if (len >= slen)
+    {
+	name += len - slen;
+	if (strcmp(name, suffix) == 0)
+	    return name;
+    }
+    return NULL;
+}
+
 static void
 create_file_names(void)
 {
     size_t len;
     const char *defines_suffix;
     const char *externs_suffix;
-    char *prefix;
+    char *suffix;
 
-    prefix = NULL;
+    suffix = NULL;
     defines_suffix = DEFINES_SUFFIX;
     externs_suffix = EXTERNS_SUFFIX;
 
     /* compute the file_prefix from the user provided output_file_name */
     if (output_file_name != 0)
     {
-	if (!(prefix = strstr(output_file_name, OUTPUT_SUFFIX))
-	    && (prefix = strstr(output_file_name, ".c")))
+	if (!(suffix = find_suffix(output_file_name, OUTPUT_SUFFIX))
+	    && (suffix = find_suffix(output_file_name, ".c")))
 	{
 	    defines_suffix = ".h";
 	    externs_suffix = ".i";
 	}
     }
 
-    if (prefix != NULL)
+    if (suffix != NULL)
     {
-	len = (size_t) (prefix - output_file_name);
+	len = (size_t) (suffix - output_file_name);
 	file_prefix = TMALLOC(char, len + 1);
 	NO_SPACE(file_prefix);
 	strncpy(file_prefix, output_file_name, len)[len] = 0;
@@ -479,7 +498,7 @@ create_file_names(void)
 	CREATE_FILE_NAME(graph_file_name, GRAPH_SUFFIX);
     }
 
-    if (prefix != NULL)
+    if (suffix != NULL)
     {
 	FREE(file_prefix);
     }

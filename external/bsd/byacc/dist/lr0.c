@@ -1,6 +1,6 @@
-/*	$NetBSD: lr0.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: lr0.c,v 1.1.1.9 2017/02/11 19:30:02 christos Exp $	*/
 
-/* Id: lr0.c,v 1.18 2015/07/11 00:53:38 tom Exp  */
+/* Id: lr0.c,v 1.19 2016/06/07 00:21:53 tom Exp  */
 
 #include "defs.h"
 
@@ -238,7 +238,7 @@ initialize_states(void)
     p->link = 0;
     p->number = 0;
     p->accessing_symbol = 0;
-    p->nitems = (Value_t) i;
+    p->nitems = (Value_t)i;
 
     for (i = 0; start_derives[i] >= 0; ++i)
 	p->items[i] = rrhs[start_derives[i]];
@@ -274,7 +274,7 @@ new_itemsets(void)
 		ksp = kernel_base[symbol];
 	    }
 
-	    *ksp++ = (Value_t) (i + 1);
+	    *ksp++ = (Value_t)(i + 1);
 	    kernel_end[symbol] = ksp;
 	}
     }
@@ -303,9 +303,9 @@ new_state(int symbol)
     n = (unsigned)(iend - isp1);
 
     p = (core *)allocate((sizeof(core) + (n - 1) * sizeof(Value_t)));
-    p->accessing_symbol = (Value_t) symbol;
-    p->number = (Value_t) nstates;
-    p->nitems = (Value_t) n;
+    p->accessing_symbol = (Value_t)symbol;
+    p->number = (Value_t)nstates;
+    p->nitems = (Value_t)n;
 
     isp2 = p->items;
     while (isp1 < iend)
@@ -411,7 +411,7 @@ save_shifts(void)
 			      (unsigned)(nshifts - 1) * sizeof(Value_t)));
 
     p->number = this_state->number;
-    p->nshifts = (Value_t) nshifts;
+    p->nshifts = (Value_t)nshifts;
 
     sp1 = shiftset;
     sp2 = p->shift;
@@ -449,7 +449,7 @@ save_reductions(void)
 	item = ritem[*isp];
 	if (item < 0)
 	{
-	    redset[count++] = (Value_t) - item;
+	    redset[count++] = (Value_t)-item;
 	}
     }
 
