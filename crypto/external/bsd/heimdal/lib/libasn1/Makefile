@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:51 christos Exp $
+# $NetBSD: Makefile,v 1.4 2017/02/11 04:56:37 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -68,8 +68,19 @@ ${ASN1COMPILEOBJ}/asn1_compile: try_to_build_asn1_compile
 SUBDIR=	asn1_compile
 .endif
 
+
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>
 .if ${USETOOLS} != "yes"
 .include <bsd.subdir.mk>
+.endif
+
+.if ${MACHINE_ARCH} == "sparc64"
+# Or anything else that uses PROFILE_HOOK with gcc.
+# What happens is that we end up generating one of two different
+# function orders and since the profile code uses the function
+# number for label generation, we end up with one of two different
+# label orders. Disabling ASLR or optimization fixes it.
+# This happens only with -m32...
+COPTS.asn1_krb5_asn1.c+=-O0
 .endif
