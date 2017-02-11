@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.12 2017/01/26 03:54:01 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.13 2017/02/11 19:32:41 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.12 2017/01/26 03:54:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.13 2017/02/11 19:32:41 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -404,6 +404,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
 	case  PT_IO:
+	case  PT_SET_SIGINFO:
+	case  PT_GET_SIGINFO:
 #ifdef PT_GETREGS
 	case  PT_GETREGS:
 #endif
@@ -451,8 +453,6 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_SET_EVENT_MASK:
 	case  PT_GET_EVENT_MASK:
 	case  PT_GET_PROCESS_STATE:
-	case  PT_SET_SIGINFO:
-	case  PT_GET_SIGINFO:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
