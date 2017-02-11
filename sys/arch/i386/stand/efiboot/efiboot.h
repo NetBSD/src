@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.2 2017/02/11 10:13:46 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -61,6 +61,8 @@ void efi_disk_probe(void);
 /* efimemory.c */
 void efi_memory_probe(void);
 void efi_memory_show_map(bool);
+EFI_MEMORY_DESCRIPTOR *efi_memory_get_map(UINTN *, UINTN *, UINTN *, UINT32 *,
+    bool);
 
 /* panic.c */
 __dead VOID Panic(IN CHAR16 *, ...);
