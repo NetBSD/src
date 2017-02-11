@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.239 2017/02/02 17:37:49 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.240 2017/02/11 14:11:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.239 2017/02/02 17:37:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.240 2017/02/11 14:11:24 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -496,29 +496,15 @@ static struct pool_cache pmap_pv_cache;
 
 #ifndef __HAVE_DIRECT_MAP
 /*
- * MULTIPROCESSOR: special VAs and PTEs are actually allocated inside a
- * (maxcpus * NPTECL) array of PTE, to avoid cache line thrashing due to
- * false sharing.
- */
-#ifdef MULTIPROCESSOR
-#define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
-#else
-#define PTESLEW(pte, id) ((void)id, pte)
-#define VASLEW(va,id) ((void)id, va)
-#endif
-
-/*
  * Special VAs and the PTEs that map them
  */
-static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
-static char *csrcp, *cdstp, *zerop, *ptpp;
+static pt_entry_t *early_zero_pte;
+static void pmap_vpage_cpualloc(struct cpu_info *);
 #ifdef XEN
 char *early_zerop; /* also referenced from xen_locore() */
 #else
 static char *early_zerop;
 #endif
-
 #endif
 
 int pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
@@ -1328,11 +1314,15 @@ pmap_bootstrap(vaddr_t kva_start)
 	pmap_init_lapic();
 #endif /* !XEN */
 
-
 #ifdef __HAVE_DIRECT_MAP
 	pmap_init_directmap(kpm);
 #else
-	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
+	pmap_vpage_cpualloc(&cpu_info_primary);
+
+	if (VM_MIN_KERNEL_ADDRESS == KERNBASE) { /* i386 */
+		early_zerop = (void *)cpu_info_primary.vpage[VPAGE_ZER];
+		early_zero_pte = cpu_info_primary.vpage_pte[VPAGE_ZER];
+	} else { /* amd64 */
 		/*
 		 * zero_pte is stuck at the end of mapped space for the kernel
 		 * image (disjunct from kva space). This is done so that it
@@ -1346,41 +1336,6 @@ pmap_bootstrap(vaddr_t kva_start)
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 #endif
 		early_zero_pte = PTE_BASE + pl1_i((vaddr_t)early_zerop);
-	}
-
-	/*
-	 * Now we allocate the "special" VAs which are used for tmp mappings
-	 * by pmap. We allocate the VAs, and find the PTE that maps them via
-	 * the linear PTE mapping.
-	 */
-	vaddr_t cpuva_base;
-	pt_entry_t *pte;
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * Waste some VA space to avoid false sharing of cache lines for page
-	 * table pages: give each possible CPU a cache line of 8 PTEs to play
-	 * with, though we only need 4.
-	 */
-	cpuva_base = pmap_bootstrap_valloc(maxcpus * NPTECL);
-#else
-	cpuva_base = pmap_bootstrap_valloc(4);
-#endif
-	pte = PTE_BASE + pl1_i(cpuva_base);
-
-	/* Values used to index the array */
-	csrcp = (char *)cpuva_base;
-	csrc_pte = pte;
-	cdstp = (char *)cpuva_base + PAGE_SIZE;
-	cdst_pte = pte + 1;
-	zerop = (char *)cpuva_base + PAGE_SIZE * 2;
-	zero_pte = pte + 2;
-	ptpp = (char *)cpuva_base + PAGE_SIZE * 3;
-	ptp_pte = pte + 3;
-
-	if (VM_MIN_KERNEL_ADDRESS == KERNBASE) {
-		early_zerop = zerop;
-		early_zero_pte = zero_pte;
 	}
 #endif
 
@@ -1712,6 +1667,57 @@ pmap_cpu_init_late(struct cpu_info *ci)
 #ifdef PAE
 	cpu_alloc_l3_page(ci);
 #endif
+}
+#endif
+
+#ifndef __HAVE_DIRECT_MAP
+CTASSERT(CACHE_LINE_SIZE > sizeof(pt_entry_t));
+CTASSERT(CACHE_LINE_SIZE % sizeof(pt_entry_t) == 0);
+
+static void
+pmap_vpage_cpualloc(struct cpu_info *ci)
+{
+	bool primary = (ci == &cpu_info_primary);
+	size_t i, npages;
+	vaddr_t vabase;
+	vsize_t vrange;
+
+	npages = (CACHE_LINE_SIZE / sizeof(pt_entry_t));
+	KASSERT(npages >= VPAGE_MAX);
+	vrange = npages * PAGE_SIZE;
+
+	if (primary) {
+		while ((vabase = pmap_bootstrap_valloc(1)) % vrange != 0) {
+			/* Waste some pages to align properly */
+		}
+		/* The base is aligned, allocate the rest (contiguous) */
+		pmap_bootstrap_valloc(npages - 1);
+	} else {
+		vabase = uvm_km_alloc(kernel_map, vrange, vrange,
+		    UVM_KMF_VAONLY);
+		if (vabase == 0) {
+			panic("%s: failed to allocate tmp VA for CPU %d\n",
+			    __func__, cpu_index(ci));
+		}
+	}
+
+	KASSERT((vaddr_t)&PTE_BASE[pl1_i(vabase)] % CACHE_LINE_SIZE == 0);
+
+	for (i = 0; i < VPAGE_MAX; i++) {
+		ci->vpage[i] = vabase + i * PAGE_SIZE;
+		ci->vpage_pte[i] = PTE_BASE + pl1_i(ci->vpage[i]);
+	}
+}
+
+void
+pmap_vpage_cpu_init(struct cpu_info *ci)
+{
+	if (ci == &cpu_info_primary) {
+		/* cpu0 already taken care of in pmap_bootstrap */
+		return;
+	}
+
+	pmap_vpage_cpualloc(ci);
 }
 #endif
 
@@ -3039,17 +3045,18 @@ pmap_zero_page(paddr_t pa)
 	if (XEN_VERSION_SUPPORTED(3, 4))
 		xen_pagezero(pa);
 #endif
+	struct cpu_info *ci;
 	pt_entry_t *zpte;
-	void *zerova;
-	int id;
+	vaddr_t zerova;
 
 	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U |
 	    PG_k;
 
 	kpreempt_disable();
-	id = cpu_number();
-	zpte = PTESLEW(zero_pte, id);
-	zerova = VASLEW(zerop, id);
+
+	ci = curcpu();
+	zerova = ci->vpage[VPAGE_ZER];
+	zpte = ci->vpage_pte[VPAGE_ZER];
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
@@ -3058,9 +3065,9 @@ pmap_zero_page(paddr_t pa)
 
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | pteflags);
 	pmap_pte_flush();
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
+	pmap_update_pg(zerova);		/* flush TLB */
 
-	memset(zerova, 0, PAGE_SIZE);
+	memset((void *)zerova, 0, PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
@@ -3084,26 +3091,26 @@ pmap_pageidlezero(paddr_t pa)
 	KASSERT(cpu_feature[0] & CPUID_SSE2);
 	return sse2_idlezero_page((void *)PMAP_DIRECT_MAP(pa));
 #else
+	struct cpu_info *ci;
 	pt_entry_t *zpte;
-	void *zerova;
+	vaddr_t zerova;
 	bool rv;
-	int id;
 
 	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U |
 	    PG_k;
 
-	id = cpu_number();
-	zpte = PTESLEW(zero_pte, id);
-	zerova = VASLEW(zerop, id);
+	ci = curcpu();
+	zerova = ci->vpage[VPAGE_ZER];
+	zpte = ci->vpage_pte[VPAGE_ZER];
 
 	KASSERT(cpu_feature[0] & CPUID_SSE2);
 	KASSERT(*zpte == 0);
 
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | pteflags);
 	pmap_pte_flush();
-	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
+	pmap_update_pg(zerova);		/* flush TLB */
 
-	rv = sse2_idlezero_page(zerova);
+	rv = sse2_idlezero_page((void *)zerova);
 
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pmap_pte_set(zpte, 0);				/* zap ! */
@@ -3133,33 +3140,32 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 		return;
 	}
 #endif
-	pt_entry_t *spte;
-	pt_entry_t *dpte;
-	void *csrcva;
-	void *cdstva;
-	int id;
+	struct cpu_info *ci;
+	pt_entry_t *srcpte, *dstpte;
+	vaddr_t srcva, dstva;
 
 	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_k;
 
 	kpreempt_disable();
-	id = cpu_number();
-	spte = PTESLEW(csrc_pte, id);
-	dpte = PTESLEW(cdst_pte, id);
-	csrcva = VASLEW(csrcp, id);
-	cdstva = VASLEW(cdstp, id);
 
-	KASSERT(*spte == 0 && *dpte == 0);
+	ci = curcpu();
+	srcva = ci->vpage[VPAGE_SRC];
+	dstva = ci->vpage[VPAGE_DST];
+	srcpte = ci->vpage_pte[VPAGE_SRC];
+	dstpte = ci->vpage_pte[VPAGE_DST];
 
-	pmap_pte_set(spte, pmap_pa2pte(srcpa) | pteflags);
-	pmap_pte_set(dpte, pmap_pa2pte(dstpa) | pteflags | PG_M);
+	KASSERT(*srcpte == 0 && *dstpte == 0);
+
+	pmap_pte_set(srcpte, pmap_pa2pte(srcpa) | pteflags);
+	pmap_pte_set(dstpte, pmap_pa2pte(dstpa) | pteflags | PG_M);
 	pmap_pte_flush();
-	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
+	pmap_update_2pg(srcva, dstva);
 
-	memcpy(cdstva, csrcva, PAGE_SIZE);
+	memcpy((void *)dstva, (void *)srcva, PAGE_SIZE);
 
 #if defined(DIAGNOSTIC) || defined(XEN)
-	pmap_pte_set(spte, 0);
-	pmap_pte_set(dpte, 0);
+	pmap_pte_set(srcpte, 0);
+	pmap_pte_set(dstpte, 0);
 	pmap_pte_flush();
 #endif
 
@@ -3173,9 +3179,9 @@ pmap_map_ptp(struct vm_page *ptp)
 #ifdef __HAVE_DIRECT_MAP
 	return (void *)PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(ptp));
 #else
+	struct cpu_info *ci;
 	pt_entry_t *ptppte;
-	void *ptpva;
-	int id;
+	vaddr_t ptpva;
 
 	KASSERT(kpreempt_disabled());
 
@@ -3186,13 +3192,14 @@ pmap_map_ptp(struct vm_page *ptp)
 	const pd_entry_t pteflags = PG_V | pmap_pg_nx | PG_U | PG_M | PG_k;
 #endif
 
-	id = cpu_number();
-	ptppte = PTESLEW(ptp_pte, id);
-	ptpva = VASLEW(ptpp, id);
+	ci = curcpu();
+	ptpva = ci->vpage[VPAGE_PTP];
+	ptppte = ci->vpage_pte[VPAGE_PTP];
+
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | pteflags);
 
 	pmap_pte_flush();
-	pmap_update_pg((vaddr_t)ptpva);
+	pmap_update_pg(ptpva);
 
 	return (pt_entry_t *)ptpva;
 #endif
@@ -3203,11 +3210,14 @@ pmap_unmap_ptp(void)
 {
 #ifndef __HAVE_DIRECT_MAP
 #if defined(DIAGNOSTIC) || defined(XEN)
+	struct cpu_info *ci;
 	pt_entry_t *pte;
 
 	KASSERT(kpreempt_disabled());
 
-	pte = PTESLEW(ptp_pte, cpu_number());
+	ci = curcpu();
+	pte = ci->vpage_pte[VPAGE_PTP];
+
 	if (*pte != 0) {
 		pmap_pte_set(pte, 0);
 		pmap_pte_flush();

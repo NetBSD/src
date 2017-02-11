@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.108 2017/02/05 10:42:21 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.109 2017/02/11 14:11:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.108 2017/02/05 10:42:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.109 2017/02/11 14:11:24 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -359,6 +359,9 @@ cpu_vm_init(struct cpu_info *ci)
 	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 	pmap_tlb_cpu_init(ci);
+#ifndef __HAVE_DIRECT_MAP
+	pmap_vpage_cpu_init(ci);
+#endif
 }
 
 static void
