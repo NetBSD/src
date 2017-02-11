@@ -6,8 +6,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.9 $
-#	$Date: 2017/02/11 09:12:32 $
+#	$Revision: 1.10 $
+#	$Date: 2017/02/11 09:15:38 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -2481,7 +2481,7 @@ arm100-w|arm100-wam|Arm(RiscPC) ncurses compatible (for 1024x768),
 # From Minoura Makoto <minoura@netlaputa.or.jp>, 12 May 1996
 x68k|x68k-ite|NetBSD/x68k ITE,
 	cols#96, lines#32,
-	kclr=\E[9~, khlp=\E[28~, use=vt220,
+	kbs=\177,kclr=\E[9~, khlp=\E[28~, use=vt220,
 
 # <tv@pobox.com>:
 # Entry for the DNARD OpenFirmware console, close to ANSI but not quite.
@@ -10865,7 +10865,7 @@ wy85-wvb|wyse85-wvb|wyse 85 with visible bell 132-columns,
 # terminfo. At one point, I found some reference indicating that this
 # terminal bug (not sending \E[) was acknowledged by Wyse (so it's not just
 # me), but I can't find that and the server under my bookmark to "Wyse
-# Technical" isn't responding.  So there's the question of wether the wy85
+# Technical" isn't responding.  So there's the question of whether the wy85
 # terminfo should reflect the manufactuer's intended behaviour of the terminal
 # or the actual."
 wy85-8bit|wyse85-8bit|wyse 85 in 8-bit mode,
