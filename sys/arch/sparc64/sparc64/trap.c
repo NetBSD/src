@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.186 2017/02/11 21:04:29 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.187 2017/02/11 23:41:36 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.186 2017/02/11 21:04:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.187 2017/02/11 23:41:36 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -738,8 +738,8 @@ badtrap:
 			if (dsfsr & SFSR_FV)
 				dsfar = ldxa(SFAR, ASI_DMMU);
 		} else {
-		  	paddr_t mmu_fsa_dfa = cpus->ci_mmufsa
-			    + offsetof(struct mmufsa, dfa);
+			paddr_t mmu_fsa_dfa = cpus->ci_mmufsa +
+			  (offsetof(struct mmufsa, dfa) / sizeof(paddr_t));
 			dsfar = ldxa(mmu_fsa_dfa, ASI_PHYS_CACHED);
 		}
 #ifdef DEBUG
