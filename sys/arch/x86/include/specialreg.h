@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.92 2017/02/02 05:43:48 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.93 2017/02/11 15:11:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -651,14 +651,14 @@
 #define MSR_MC2_STATUS		0x409
 #define MSR_MC2_ADDR		0x40a
 #define MSR_MC2_MISC		0x40b
-#define MSR_MC4_CTL		0x40c
-#define MSR_MC4_STATUS		0x40d
-#define MSR_MC4_ADDR		0x40e
-#define MSR_MC4_MISC		0x40f
-#define MSR_MC3_CTL		0x410
-#define MSR_MC3_STATUS		0x411
-#define MSR_MC3_ADDR		0x412
-#define MSR_MC3_MISC		0x413
+#define MSR_MC3_CTL		0x40c
+#define MSR_MC3_STATUS		0x40d
+#define MSR_MC3_ADDR		0x40e
+#define MSR_MC3_MISC		0x40f
+#define MSR_MC4_CTL		0x410
+#define MSR_MC4_STATUS		0x411
+#define MSR_MC4_ADDR		0x412
+#define MSR_MC4_MISC		0x413
 				/* 0x480 - 0x490 VMX */
 
 /*
@@ -694,13 +694,16 @@
 /*
  * AMD K8 (Opteron) MSRs.
  */
-#define MSR_SYSCFG	0xc0000010
+#define MSR_SYSCFG	0xc0010010
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
-#define 	EFER_SCE		0x00000001	/* SYSCALL extension */
-#define 	EFER_LME		0x00000100	/* Long Mode Active */
-#define 	EFER_LMA		0x00000400	/* Long Mode Enabled */
-#define 	EFER_NXE		0x00000800	/* No-Execute Enabled */
+#define 	EFER_SCE	0x00000001	/* SYSCALL extension */
+#define 	EFER_LME	0x00000100	/* Long Mode Active */
+#define 	EFER_LMA	0x00000400	/* Long Mode Enabled */
+#define 	EFER_NXE	0x00000800	/* No-Execute Enabled */
+#define 	EFER_SVME	0x00001000	/* Secure Virtual Machine En. */
+#define 	EFER_LMSLE	0x00002000	/* Long Mode Segment Limit E. */
+#define 	EFER_FFXSR	0x00004000	/* Fast FXSAVE/FXRSTOR En. */
 
 #define MSR_STAR	0xc0000081		/* 32 bit syscall gate addr */
 #define MSR_LSTAR	0xc0000082		/* 64 bit syscall gate addr */
