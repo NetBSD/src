@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.16 2017/02/11 04:19:25 christos Exp $
+#	$NetBSD: Makefile.bootimage,v 1.17 2017/02/11 08:08:00 pgoyette Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -240,7 +240,7 @@ ${TARGETFS}: prepare_md_post
 .endfor
 .if defined(SECONDARY_BOOT)
 	@echo Copying secondary boot...
-	${INSTALL} ${COPY} -m 0644 -f ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
+	${INSTALL} ${COPY} -m 0644 ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
 .endif
 	@echo Preparing /etc/fstab ...
 	${TOOL_SED} "s/@@BOOTDISK@@/${BOOTDISK}/" < ${FSTAB_IN} > ${WORKFSTAB}
