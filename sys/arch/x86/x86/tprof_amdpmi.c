@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.5 2017/01/31 17:38:54 maxv Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.6 2017/02/11 13:22:58 maxv Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.5 2017/01/31 17:38:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.6 2017/02/11 13:22:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.5 2017/01/31 17:38:54 maxv Exp $"
 #define DC_refills_sys__EVENT	0x43
 #define DC_refills_sys__UNIT	0x1E
 
-/* Hardcode your counter here */
+/*
+ * Hardcode your counter here. There is no detection, so make sure it is
+ * supported by your CPU family.
+ */
 static uint32_t event = CPU_clocks__EVENT;
 static uint32_t unit = CPU_clocks__UNIT;
 static int ctrno = 0;
@@ -180,11 +183,9 @@ tprof_amdpmi_estimate_freq(void)
 static int
 tprof_amdpmi_start(tprof_backend_cookie_t *cookie)
 {
-	struct cpu_info * const ci = curcpu();
 	uint64_t xc;
 
-	if (!(cpu_vendor == CPUVENDOR_AMD) ||
-	    CPUID_TO_FAMILY(ci->ci_signature) != 0xf) { /* XXX */
+	if (cpu_vendor != CPUVENDOR_AMD) {
 		return ENOTSUP;
 	}
 
