@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.241 2017/02/07 02:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.242 2017/02/11 15:37:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.241 2017/02/07 02:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.242 2017/02/11 15:37:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1161,7 +1161,8 @@ in_arpinput(struct mbuf *m)
 
 	/* DAD check, RFC 5227 */
 	if (in_hosteq(isaddr, myaddr) ||
-	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr)))
+	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr)
+	    && ISSET(m->m_flags, M_BCAST))) /* Allow Unicast Poll, RFC 1122 */
 	{
 		arp_dad_duplicated((struct ifaddr *)ia,
 		    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln));
