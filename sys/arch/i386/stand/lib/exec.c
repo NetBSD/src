@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.64 2017/02/11 10:18:10 nonaka Exp $	 */
+/*	$NetBSD: exec.c,v 1.65 2017/02/11 10:23:39 nonaka Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@
 #ifdef EFIBOOT
 #include "efiboot.h"
 #undef DEBUG	/* XXX */
-static u_long efi_loadaddr;
 #endif
 
 #define BOOT_NARGS	6
@@ -460,10 +459,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 		bootinfo->entry[i] = vtophys(p);
 	}
 
-	/* Copy the kernel to original load address. */
-	memmove((void *)marks[MARK_START],
-	    (void *)(efi_loadaddr + marks[MARK_START]),
-	    marks[MARK_END] - marks[MARK_START]);
+	efi_kernel_start = marks[MARK_START];
+	efi_kernel_size = marks[MARK_END] - efi_kernel_start;
 #endif
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
 	    x86_trunc_page(basemem * 1024));
