@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit4.y,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: err_inherit4.y,v 1.1.1.4 2017/02/11 19:30:02 christos Exp $	*/
 
 %locations
 %{
@@ -52,9 +52,9 @@ extern symbol *mksymbol(type t, class c, name id);
 
 %%
 declaration: class type namelist($1, $2)
-	{ $$ = $3; }
+	{ $$ = $3; @$ = @3; }
 	| type locnamelist($1)
-	{ $$ = $2; }
+	{ $$ = $2; @$ = @-1; }
 	;
 
 class	: GLOBAL { $$ = cGLOBAL; }
