@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootx64.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efibootx64.c,v 1.2 2017/02/11 10:23:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,8 +32,10 @@
 
 struct x86_boot_params boot_params;
 
-void startprog64_start(void *, physaddr_t, physaddr_t);
-extern void (*startprog64)(void *, physaddr_t, physaddr_t);
+void startprog64_start(physaddr_t, physaddr_t, physaddr_t, u_long,
+    void *, physaddr_t);
+extern void (*startprog64)(physaddr_t, physaddr_t, physaddr_t, u_long,
+    void *, physaddr_t);
 extern u_int startprog64_size;
 
 void
@@ -64,7 +66,8 @@ startprog(physaddr_t entry, uint32_t argc, uint32_t *argv, physaddr_t sp)
 		memcpy(newsp, argv, sizeof(*argv) * argc);
 	}
 
-	(*startprog64)(startprog64, entry, (physaddr_t)newsp);
+	(*startprog64)(efi_kernel_start, efi_kernel_start + efi_loadaddr,
+	    (physaddr_t)newsp, efi_kernel_size, startprog64, entry);
 }
 
 /* ARGSUSED */

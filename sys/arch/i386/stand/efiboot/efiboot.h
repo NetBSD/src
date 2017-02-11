@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.3 2017/02/11 10:15:55 nonaka Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.4 2017/02/11 10:23:39 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -48,6 +48,8 @@ extern EFI_HANDLE IH;
 extern EFI_DEVICE_PATH *efi_bootdp;
 extern EFI_LOADED_IMAGE *efi_li;
 extern uintptr_t efi_main_sp;
+extern physaddr_t efi_loadaddr, efi_kernel_start;
+extern u_long efi_kernel_size;
 extern bool efi_cleanuped;
 void efi_cleanup(void);
 
