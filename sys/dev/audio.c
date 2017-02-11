@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.302 2017/02/10 19:31:42 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.303 2017/02/11 08:36:30 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.302 2017/02/10 19:31:42 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.303 2017/02/11 08:36:30 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5526,7 +5526,7 @@ mix_func8(struct audio_softc *sc, struct audio_ringbuffer *cb,
 		for (m = 0; m < cc;  m++) {
 			orig[m] += (int8_t)((int32_t)(tomix[m] *
 			    (vc->sc_swvol + 1)) / (sc->sc_opens *
-			    255));
+			    256));
 		}
 
 		if (&orig[m] >= (int8_t *)sc->sc_pr.s.end)
@@ -5563,7 +5563,7 @@ mix_func16(struct audio_softc *sc, struct audio_ringbuffer *cb,
 		for (m = 0; m < cc / 2; m++) {
 			orig[m] += (int16_t)((int32_t)(tomix[m] *
 			    (vc->sc_swvol + 1)) / (sc->sc_opens *
-			    255));
+			    256));
 		}
 
 		if (&orig[m] >= (int16_t *)sc->sc_pr.s.end)
@@ -5600,7 +5600,7 @@ mix_func32(struct audio_softc *sc, struct audio_ringbuffer *cb,
 		for (m = 0; m < cc / 4; m++) {
 			orig[m] += (int32_t)((int32_t)(tomix[m] *
 			    (vc->sc_swvol + 1)) / (sc->sc_opens *
-			    255));
+			    256));
 		}
 
 		if (&orig[m] >= (int32_t *)sc->sc_pr.s.end)
