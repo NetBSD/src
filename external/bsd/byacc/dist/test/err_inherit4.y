@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit4.y,v 1.1.1.4 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: err_inherit4.y,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
 
 %locations
 %{

@@ -1,4 +1,4 @@
-/*	$NetBSD: err_inherit4.tab.h,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: err_inherit4.tab.h,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
 
 #ifndef _err_inherit4__defines_h_
 #define _err_inherit4__defines_h_

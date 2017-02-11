@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.oxout.y,v 1.1.1.1 2017/02/11 19:30:02 christos Exp $	*/
+/*	$NetBSD: expr.oxout.y,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
 
 /* output from Ox version G1.04 */
 #line 1 "expr.Y"
