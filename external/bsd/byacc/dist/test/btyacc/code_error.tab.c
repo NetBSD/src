@@ -1,4 +1,4 @@
-/*	$NetBSD: code_error.tab.c,v 1.1.1.4 2017/02/11 19:30:03 christos Exp $	*/
+/*	$NetBSD: code_error.tab.c,v 1.2 2017/02/11 19:33:12 christos Exp $	*/
 
 #undef YYBTYACC
 #define YYBTYACC 0
