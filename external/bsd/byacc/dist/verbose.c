@@ -1,11 +1,11 @@
-/*	$NetBSD: verbose.c,v 1.9 2016/01/09 22:05:33 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.10 2017/02/11 19:33:12 christos Exp $	*/
 
-/* Id: verbose.c,v 1.11 2014/04/01 23:15:59 Tom.Shields Exp  */
+/* Id: verbose.c,v 1.12 2016/06/07 00:22:05 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: verbose.c,v 1.9 2016/01/09 22:05:33 christos Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.10 2017/02/11 19:33:12 christos Exp $");
 
 static void log_conflicts(void);
 static void log_unused(void);
@@ -235,7 +235,7 @@ print_nulls(int state)
 		else if (i != null_rules[j])
 		{
 		    ++nnulls;
-		    for (k = (Value_t) (nnulls - 1); k > j; --k)
+		    for (k = (Value_t)(nnulls - 1); k > j; --k)
 			null_rules[k] = null_rules[k - 1];
 		    null_rules[j] = i;
 		}
