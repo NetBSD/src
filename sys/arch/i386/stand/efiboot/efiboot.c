@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.2 2017/02/11 10:13:46 nonaka Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.3 2017/02/11 10:15:55 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,6 +35,7 @@ EFI_HANDLE IH;
 EFI_DEVICE_PATH *efi_bootdp;
 EFI_LOADED_IMAGE *efi_li;
 uintptr_t efi_main_sp;
+bool efi_cleanuped;
 
 static EFI_PHYSICAL_ADDRESS heap_start = EFI_ALLOCATE_MAX_ADDRESS;
 static UINTN heap_size = 1 * 1024 * 1024;			/* 1MB */
@@ -121,6 +122,7 @@ efi_cleanup(void)
 		if (EFI_ERROR(status))
 			Panic(L"ExitBootServices failed");
 	}
+	efi_cleanuped = true;
 
 	allocsz = sizeof(struct btinfo_efimemmap) - 1
 	    + NoEntries * DescriptorSize;
