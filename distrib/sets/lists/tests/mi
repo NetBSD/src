@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.719 2017/02/09 13:59:02 christos Exp $
+# $NetBSD: mi,v 1.720 2017/02/11 18:47:36 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2431,9 +2431,9 @@
 ./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/gen/exect			tests-obsolete		obsolete
-./usr/tests/lib/libc/gen/exect/Atffile		tests-obsolete		obsoleteernel-tests	compattestfile,atf
-./usr/tests/lib/libc/gen/exect/Kyuafile		tests-obsolete		obsoleteernel-tests	compattestfile,atf,kyua
-./usr/tests/lib/libc/gen/exect/t_exect		tests-obsolete		obsoleteernel-tests	compattestfile,atf
+./usr/tests/lib/libc/gen/exect/Atffile		tests-obsolete		obsolete
+./usr/tests/lib/libc/gen/exect/Kyuafile		tests-obsolete		obsolete
+./usr/tests/lib/libc/gen/exect/t_exect		tests-obsolete		obsolete
 ./usr/tests/lib/libc/gen/execve			tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Atffile		tests-kernel-tests	compattestfile,atf
 ./usr/tests/lib/libc/gen/execve/Kyuafile	tests-kernel-tests	compattestfile,atf,kyua
