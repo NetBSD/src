@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.98 2017/02/12 08:51:45 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.99 2017/02/12 09:47:31 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.98 2017/02/12 08:51:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.99 2017/02/12 09:47:31 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -251,13 +251,13 @@ tapattach(int n)
 static void
 tapinit(void)
 {
-        int error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
-        if (error) {
-                aprint_error("%s: unable to register cfattach\n",
-                    tap_cd.cd_name);
-                (void)config_cfdriver_detach(&tap_cd);
-                return;
-        }
+	int error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
+	if (error) {
+		aprint_error("%s: unable to register cfattach\n",
+		    tap_cd.cd_name);
+		(void)config_cfdriver_detach(&tap_cd);
+		return;
+	}
 
 	if_clone_attach(&tap_cloners);
 	sysctl_tap_setup(&tap_sysctl_clog);
@@ -653,7 +653,7 @@ tap_clone_create(struct if_clone *ifc, int unit)
 {
 	if (tap_clone_creator(unit) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
-                    tap_cd.cd_name, unit);
+		    tap_cd.cd_name, unit);
 		return ENXIO;
 	}
 	atomic_inc_uint(&tap_count);
