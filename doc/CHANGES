@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2250 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2251 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -467,3 +467,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	openldap: Import 2.4.44. [christos 20170208]
 	file(1): Upgraded to 5.30. [christos 20170210]
 	byacc: update to 20170201 [christos 20170211]
+	ptrace(2): Add signal mask information accessors API:
+		PT_GET_SIGMASK and PT_SET_SIGMASK [kamil 20170212]
