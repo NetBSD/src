@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.236 2017/01/24 18:37:20 maxv Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.237 2017/02/12 09:36:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.236 2017/01/24 18:37:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.237 2017/02/12 09:36:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -991,7 +991,6 @@ ether_ifdetach(struct ifnet *ifp)
 {
 	struct ethercom *ec = (void *) ifp;
 	struct ether_multi *enm;
-	int s;
 
 	/*
 	 * Prevent further calls to ioctl (for example turning off
@@ -1014,7 +1013,6 @@ ether_ifdetach(struct ifnet *ifp)
 		vlan_ifdetach(ifp);
 #endif
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
 		LIST_REMOVE(enm, enm_list);
@@ -1022,7 +1020,6 @@ ether_ifdetach(struct ifnet *ifp)
 		ec->ec_multicnt--;
 	}
 	mutex_exit(ec->ec_lock);
-	splx(s);
 
 	mutex_destroy(ec->ec_lock);
 
@@ -1234,7 +1231,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	struct ether_multi *enm, *_enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s, error = 0;
+	int error = 0;
 
 	/* Allocate out of lock */
 	/* XXX still can be called in softint */
@@ -1242,7 +1239,6 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	if (enm == NULL)
 		return ENOBUFS;
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0)
@@ -1284,7 +1280,6 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 	enm = NULL;
 out:
 	mutex_exit(ec->ec_lock);
-	splx(s);
 	if (enm != NULL)
 		kmem_free(enm, sizeof(*enm));
 	return error;
@@ -1299,9 +1294,8 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	struct ether_multi *enm;
 	u_char addrlo[ETHER_ADDR_LEN];
 	u_char addrhi[ETHER_ADDR_LEN];
-	int s, error;
+	int error;
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	error = ether_multiaddr(sa, addrlo, addrhi);
 	if (error != 0)
@@ -1328,7 +1322,6 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	LIST_REMOVE(enm, enm_list);
 	ec->ec_multicnt--;
 	mutex_exit(ec->ec_lock);
-	splx(s);
 
 	kmem_free(enm, sizeof(*enm));
 	/*
@@ -1338,7 +1331,6 @@ ether_delmulti(const struct sockaddr *sa, struct ethercom *ec)
 	return ENETRESET;
 error:
 	mutex_exit(ec->ec_lock);
-	splx(s);
 	return error;
 }
 
@@ -1537,7 +1529,7 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 	int error = 0;
 	size_t written;
 	struct psref psref;
-	int bound, s;
+	int bound;
 	unsigned int multicnt;
 	struct ether_multi_sysctl *addrs;
 	int i;
@@ -1573,12 +1565,10 @@ retry:
 	multicnt = ec->ec_multicnt;
 	addrs = kmem_alloc(sizeof(*addrs) * multicnt, KM_SLEEP);
 
-	s = splnet();
 	mutex_enter(ec->ec_lock);
 	if (multicnt < ec->ec_multicnt) {
 		/* The number of multicast addresses have increased */
 		mutex_exit(ec->ec_lock);
-		splx(s);
 		kmem_free(addrs, sizeof(*addrs) * multicnt);
 		goto retry;
 	}
@@ -1592,7 +1582,6 @@ retry:
 		i++;
 	}
 	mutex_exit(ec->ec_lock);
-	splx(s);
 
 	error = 0;
 	written = 0;
