@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.17 2017/02/11 19:10:04 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.18 2017/02/12 05:21:34 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -12,6 +12,9 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - switch PT_WATCHPOINT* to PT_*ETDBREGS and document it, add ATF tests
  - add tests for the procfs interface covering all functions available on the
    same level as ptrace(2)
+ - add support to read debugger events via a file descriptor in procfs
+   (kevent(2)), it's still useful in cases when a parent traces tracee and has
+   to call waitpid(2) for its child - as this clashes with GUI toolkits
  - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
    in all ports
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
@@ -20,6 +23,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add ATF tests for PT_SYSCALL and PT_SYSCALLEMU
  - add PT_SET_SIGMASK and PT_GET_SIGMASK - used by checkpointing software
  - research support PT_SYSCALL & PT_STEP combined like in Linux
+ - fix more calls for netbsd32 compat
 
 and of course: fix as many bugs as possible.
 
