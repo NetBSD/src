@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.96 2017/02/12 08:40:19 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.97 2017/02/12 08:47:12 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.96 2017/02/12 08:40:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.97 2017/02/12 08:47:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -226,7 +226,7 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 					tap_clone_create,
 					tap_clone_destroy);
 
-/* Helper functionis shared by the two cloning code paths */
+/* Helper functions shared by the two cloning code paths */
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
