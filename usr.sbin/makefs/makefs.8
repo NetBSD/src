@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.60 2017/02/11 16:04:59 christos Exp $
+.\"	$NetBSD: makefs.8,v 1.61 2017/02/12 14:45:09 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -215,7 +215,7 @@ value interpreted as the number of seconds from the Epoch.
 Note that timestamps specified in an
 .Xr mtree 5
 spec file, override the default timestamp.
-When this option is enabled, filesystems that regularly use
+When this option is enabled, file systems that regularly use
 .Xr localtime 3
 to convert times to the native format (such as udf and cd9660), use
 .Xr gmtime 3
