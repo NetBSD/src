@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.95 2017/02/07 11:17:50 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.96 2017/02/12 08:40:19 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.95 2017/02/07 11:17:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.96 2017/02/12 08:40:19 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -42,26 +42,25 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.95 2017/02/07 11:17:50 skrll Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/cprng.h>
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/module.h>
+#include <sys/mutex.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/sockio.h>
-#include <sys/sysctl.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/intr.h>
 #include <sys/stat.h>
-#include <sys/device.h>
-#include <sys/module.h>
-#include <sys/atomic.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
