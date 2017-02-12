@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.1 2017/01/28 16:55:54 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.2 2017/02/12 08:25:31 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -822,9 +822,10 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 	ssize_t len, mySize[16], offset, next_pkt;
 	ssize_t pkt_len;
 	size_t readsize, totalSize;
+	size_t frequency;
 	static size_t ts = 0;
 	static uint16_t seqnumber = 0;
-	int numpkts;
+	int numpkts, tries;
 
 	global_mode = mode;
 	global_bitpool = bitpool;
@@ -854,6 +855,15 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 	global_chan = 2;
 	if (global_mode == MODE_MONO)
 		global_chan = 1;
+
+	if (global_freq == FREQ_16K)
+		frequency = 16000;
+	else if (global_freq == FREQ_32K)
+		frequency = 32000;
+	else if (global_freq == FREQ_48K)
+		frequency = 48000;
+	else
+		frequency = 44100;
 
 	memset(&myHeader, 0, sizeof(myHeader));
 	myHeader.id = 0x80;	/* RTP v2 */
@@ -911,16 +921,31 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 	memcpy(whole + offset, frameData, (size_t)next_pkt);
 	free(frameData);
 
+	tries = 1;
 send_again:
 	len = write(outfd, whole, totalSize);
 
-	if (len == -1 && errno == EAGAIN)
-		goto send_again;
-	free(whole);
+	if (len == -1 && errno == EAGAIN) {
+		tries --;
+		if (tries >= 0) {
+			usleep(1);
+			goto send_again;
+		} else
+			len = (ssize_t)totalSize;
+	} else if (len == -1 && (errno == EINPROGRESS ||
+	    errno == EWOULDBLOCK)) {
+		usleep(1);
+			len = (ssize_t)totalSize;
+	}
 
 	seqnumber++;
-	ts += (readsize / ((size_t)global_chan * sizeof(int16_t)))  *
-	    (size_t)numpkts;
+	ts += (1000000 * (size_t)(global_blocks * global_bands)
+	    / frequency) * (size_t)numpkts;
+
+	free(whole);
+
+	if (seqnumber % 96 == 95)
+		usleep(1);
 
 	return len;
 }
