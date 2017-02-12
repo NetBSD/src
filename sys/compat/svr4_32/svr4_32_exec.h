@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.15 2015/11/26 13:15:34 martin Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.16 2017/02/12 21:02:20 chs Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -34,10 +34,9 @@
 
 #undef SVR4_COMPAT_SOLARIS2
 #ifdef SVR4_COMPAT_SOLARIS2
-# define SVR4_32_AUX_ARGSIZ howmany((sizeof(Aux32Info) * 15) + 256, \
-				sizeof(netbsd32_charp))
+# define SVR4_32_AUX_ARGSIZ (sizeof(Aux32Info) * 15 + 256)
 #else
-# define SVR4_32_AUX_ARGSIZ howmany(sizeof(Aux32Info) * 8, sizeof(netbsd32_charp))
+# define SVR4_32_AUX_ARGSIZ (sizeof(Aux32Info) * 8)
 #endif
 
 int svr4_32_copyargs(struct lwp *, struct exec_package *, struct ps_strings *,
