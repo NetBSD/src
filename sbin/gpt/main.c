@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2015/12/29 16:45:04 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2017/02/12 16:54:06 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.7 2015/12/29 16:45:04 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2017/02/12 16:54:06 aymeric Exp $");
 #endif
 
 #include <stdio.h>
@@ -145,8 +145,14 @@ main(int argc, char *argv[])
 		dev = argv[--argc];
 	}
 
+#ifdef __GLIBC__
+#define GETOPT_BE_POSIX		"+"
+#else
+#define GETOPT_BE_POSIX		""
+#endif
+
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "m:nqrs:v")) != -1) {
+	while ((ch = getopt(argc, argv, GETOPT_BE_POSIX "m:nqrs:v")) != -1) {
 		switch(ch) {
 		case 'm':
 			if (mediasz > 0)
