@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.97 2017/02/12 08:47:12 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.98 2017/02/12 08:51:45 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.97 2017/02/12 08:47:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.98 2017/02/12 08:51:45 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.97 2017/02/12 08:47:12 skrll Exp $");
 #include <sys/intr.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/poll.h>
@@ -670,9 +670,9 @@ tap_clone_create(struct if_clone *ifc, int unit)
 static struct tap_softc *
 tap_clone_creator(int unit)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
-	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf = kmem_alloc(sizeof(*cf), KM_SLEEP);
 	cf->cf_name = tap_cd.cd_name;
 	cf->cf_atname = tap_ca.ca_name;
 	if (unit == -1) {
@@ -711,7 +711,7 @@ tap_clone_destroyer(device_t dev)
 
 	if ((error = config_detach(dev, 0)) != 0)
 		aprint_error_dev(dev, "unable to detach instance\n");
-	free(cf, M_DEVBUF);
+	kmem_free(cf, sizeof(*cf));
 
 	return error;
 }
