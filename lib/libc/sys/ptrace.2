@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.58 2017/01/27 12:52:39 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.59 2017/02/12 06:09:53 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 25, 2016
+.Dd February 12, 2016
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -514,6 +514,31 @@ The
 .Fa data
 argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
+.It Dv PT_SET_SIGMASK
+This request loads the traced process' signal mask from
+.Dq Li "sigset_t"
+(defined in
+.In sys/sigtypes.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.
+If zero is supplied, the first thread of the process is written.
+.It Dv PT_GET_SIGMASK
+This request is the converse of
+.Dv PT_SET_SIGMASK ;
+it reads the traced process' signal mask into
+.Dq Li "sigset_t"
+(defined in
+.In sys/sigtypes.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose mask is to be read.
+If zero is supplied, the first thread of the process is read.
 .El
 .Pp
 Additionally, the following requests exist but are

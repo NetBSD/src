@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.55 2017/01/16 21:35:59 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.56 2017/02/12 06:09:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -55,6 +55,8 @@
 #define	PT_GET_PROCESS_STATE	18	/* get process state, defined below */
 #define	PT_SET_SIGINFO		19	/* set signal state, defined below */
 #define	PT_GET_SIGINFO		20	/* get signal state, defined below */
+#define	PT_SET_SIGMASK		21	/* set signal mask */
+#define	PT_GET_SIGMASK		22	/* get signal mask */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
@@ -80,7 +82,9 @@
 /* 17 */    "PT_GET_EVENT_MASK", \
 /* 18 */    "PT_GET_PROCESS_STATE", \
 /* 19 */    "PT_SET_SIGINFO", \
-/* 20 */    "PT_GET_SIGINFO",
+/* 20 */    "PT_GET_SIGINFO", \
+/* 20 */    "PT_GET_SIGMASK", \
+/* 20 */    "PT_GET_SIGMASK",
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
