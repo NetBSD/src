@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.1 2017/01/28 16:55:54 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.2 2017/02/12 08:25:31 nat Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -615,7 +615,7 @@ do_ctlreq(int fd, short ev, void *arg)
 	static uint8_t trans;
 	uint8_t buff[1024];
 	static size_t offset = 0;
-	int result;
+	int result, flags;
 
 	if(avdtpCheckResponse(fd, &isCommand, &trans, &signal, NULL, buff,
 	    &bufflen, &sep) == ENOMEM) {
@@ -674,6 +674,7 @@ do_ctlreq(int fd, short ev, void *arg)
 		case AVDTP_SUSPEND:
 		case AVDTP_START:
 			avdtpSendAccept(fd, fd, trans, signal);
+			state = 6;
 			break;
 		default:
 			avdtpSendReject(fd, fd, trans, signal);
@@ -703,17 +704,20 @@ do_ctlreq(int fd, short ev, void *arg)
 
 			if (!result && verbose)
 				fprintf(stderr, "Bitpool value = %d\n",bitpool);
+			state = 3;
 			break;
 		case AVDTP_SET_CONFIGURATION:
-			if (state < 5 && !asSpeaker)
+			if (state == 3 && !asSpeaker)
 				avdtpOpen(fd, fd, mySepInfo.sep);
+			state = 4;
 			break;
 		case AVDTP_OPEN:
-			if (state < 5)
+			if (state == 4)
 				state = 5;
 			break;
 		case AVDTP_SUSPEND:
 		case AVDTP_START:
+			state = 6;
 			break;
 		default:
 			avdtpSendReject(fd, fd, trans, signal);
@@ -723,7 +727,7 @@ do_ctlreq(int fd, short ev, void *arg)
 	}
 
 
-	if (state != 5)
+	if (state < 5 || state > 7)
 		return;
 
 	if (asSpeaker) {
@@ -731,8 +735,9 @@ do_ctlreq(int fd, short ev, void *arg)
 		if ((sc = accept(orighc,(struct sockaddr*)&addr, &len)) < 0)
 			err(EXIT_FAILURE, "stream accept");
 
-		goto opened_connection;
 	}
+	if (state == 6)
+		goto opened_connection;
 
 	memset(&addr, 0, sizeof(addr));
 
@@ -758,31 +763,34 @@ do_ctlreq(int fd, short ev, void *arg)
 	if (connect(sc,(struct sockaddr*)&addr, sizeof(addr)) < 0)
 		return;
 
+	if (!asSpeaker)
+		avdtpStart(fd, fd, mySepInfo.sep); 
+
+	return;
+
 opened_connection:
 	if (asSpeaker) {
 		event_set(&recv_ev, sc, EV_READ | EV_PERSIST, do_recv, NULL);
 		if (event_add(&recv_ev, NULL) < 0)
 			err(EXIT_FAILURE, "recv_ev");
+		state = 7;
 	} else {
+		flags = fcntl(sc, F_GETFL, 0);
+		fcntl(sc, F_SETFL, flags | O_NONBLOCK);
 		event_set(&interrupt_ev, audfile, EV_READ | EV_PERSIST,
 		    do_interrupt, NULL);
 		if (event_add(&interrupt_ev, NULL) < 0)
 			err(EXIT_FAILURE, "interrupt_ev");
+		state = 7;
 	}
 
-	mtusize = sizeof(uint16_t);
 	getsockopt(sc, BTPROTO_L2CAP, SO_L2CAP_OMTU, &mtu, &mtusize);
-
 	if (userset_mtu != 0 && userset_mtu > 100 && userset_mtu < mtu)
 		mtu = userset_mtu;
 	else if (userset_mtu == 0 && mtu >= 500)
 		mtu /= 2;
 
-	if (!asSpeaker)
-		avdtpStart(fd, fd, mySepInfo.sep); 
-
-	state = 6;
-
+	mtusize = sizeof(uint16_t);
 }
 
 static void
