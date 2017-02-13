@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.156 2017/01/23 09:14:24 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.157 2017/02/13 04:05:58 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.156 2017/01/23 09:14:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.157 2017/02/13 04:05:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -178,7 +178,7 @@ in6_pcballoc(struct socket *so, void *v)
 		}
 	}
 #endif /* IPSEC */
-	s = splnet();
+	s = splsoftnet();
 	TAILQ_INSERT_HEAD(&table->inpt_queue, (struct inpcb_hdr*)in6p,
 	    inph_queue);
 	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, in6p->in6p_lport),
@@ -627,7 +627,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 #endif
 	so->so_pcb = NULL;
 
-	s = splnet();
+	s = splsoftnet();
 	in6_pcbstate(in6p, IN6P_ATTACHED);
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	TAILQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
