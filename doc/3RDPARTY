@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1413 2017/02/11 19:34:23 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1414 2017/02/13 20:31:46 maya Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -901,7 +901,7 @@ Notes:
 
 Package:	MesaLib
 Version:	7.11.2
-Current Vers:	10.2.3
+Current Vers:	13.0.4
 Maintainer:	mesa-git@?
 Archive Site:	ftp://ftp.freedesktop.org/pub/mesa/
 Home Page:	http://www.mesa3d.org/
@@ -1132,7 +1132,7 @@ pdksh-5.2.14-patches.1 and pdksh-5.2.14-patches.2 have been applied.
 
 Package:	PF (openbsd packet filter)
 Version:	OpenBSD 4.2
-Current Vers:	OpenBSD 4.3-current
+Current Vers:	OpenBSD 6.1-current
 Maintainer:	The OpenBSD Project
 Archive Site:	ftp://ftp.openbsd.org/
 Home Page:	http://www.openbsd.org/faq/pf/
@@ -1271,7 +1271,7 @@ to be installed and many more changes. It is not worth the hassle.
 
 Package:	SoftFloat
 Version:	2a
-Current Vers:	2b
+Current Vers:	3c
 Maintainer:	John Hauser <jhauser@jhauser.us>
 Archive Site:	http://www.jhauser.us/arithmetic/SoftFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/SoftFloat.html
@@ -1311,7 +1311,7 @@ tree.
 
 Package:	TestFloat
 Version:	2a
-Current Vers:	2a
+Current Vers:	3c
 Maintainer:	John Hauser <jhauser@jhauser.us>
 Archive Site:	http://www.jhauser.us/arithmetic/TestFloat.html
 Home Page:	http://www.jhauser.us/arithmetic/TestFloat.html
@@ -1522,7 +1522,7 @@ Notes:
 
 Package:	mpfr
 Version:	3.1.2
-Current Vers:	3.1.3
+Current Vers:	3.1.5
 Maintainer:	
 Archive Site:	http://www.mpfr.org/mpfr-current/
 Home Page:	http://www.mpfr.org/
@@ -1534,7 +1534,7 @@ Notes:
 
 Package:	GNU MP
 Version:	5.1.3
-Current Vers:	6.1.0
+Current Vers:	6.1.2
 Maintainer:	http://gmplib.org/mailman/listinfo/gmp-devel
 Archive Site:	http://gmplib.org/
 Home Page:	http://gmplib.org/
