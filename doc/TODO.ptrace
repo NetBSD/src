@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.19 2017/02/12 06:16:33 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.20 2017/02/13 15:29:18 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -12,9 +12,15 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - switch PT_WATCHPOINT* to PT_*ETDBREGS and document it, add ATF tests
  - add tests for the procfs interface covering all functions available on the
    same level as ptrace(2)
- - add support to read debugger events via a file descriptor in procfs
-   (kevent(2)), it's still useful in cases when a parent traces tracee and has
-   to call waitpid(2) for its child - as this clashes with GUI toolkits
+ - remove 4.4BSD tracing with /proc, restrict /proc to Linux compat, to be
+   superseded with kevent tracing, the original purpose of /proc debugging is
+   long gone (performance issues with PT_WRITE_* and PT_READ_*)
+ - research kevent support for tracing a process over a file descriptor,
+   this means alternative to wait(2)-based events with passing events over the
+   kqueue API - signal handlers are global per application and they clash with
+   GUI toolkits (and perhaps other libraries) - this is long term wishlist in
+   GDB for Linux - the current approach is to fork and debug through GDB remote
+   protocol (this is how it is done in LLDB)
  - add support for PT_STEP, PT_GETREGS, PT_SETREGS, PT_GETFPREGS, PT_SETFPREGS
    in all ports
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
