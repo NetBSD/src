@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.120 2016/04/26 08:44:44 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.121 2017/02/13 07:18:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.120 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.121 2017/02/13 07:18:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -201,6 +201,16 @@ const struct protosw inetsw[] = {
 	.pr_slowtimo = ip_slowtimo,
 	.pr_drain = ip_drainstub,
 },
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_ICMP,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = icmp_input,
+	.pr_ctlinput = rip_ctlinput,
+	.pr_ctloutput = rip_ctloutput,
+	.pr_usrreqs = &rip_usrreqs,
+	.pr_init = icmp_init,
+},
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_UDP,
@@ -276,16 +286,6 @@ const struct protosw inetsw[] = {
 	.pr_ctlinput = rip_ctlinput,
 	.pr_ctloutput = rip_ctloutput,
 	.pr_usrreqs = &rip_usrreqs,
-},
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inetdomain,
-	.pr_protocol = IPPROTO_ICMP,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = icmp_input,
-	.pr_ctlinput = rip_ctlinput,
-	.pr_ctloutput = rip_ctloutput,
-	.pr_usrreqs = &rip_usrreqs,
-	.pr_init = icmp_init,
 },
 #ifdef GATEWAY
 {	.pr_domain = &inetdomain,
