@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.174 2017/01/23 09:14:24 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.175 2017/02/13 04:05:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.174 2017/01/23 09:14:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.175 2017/02/13 04:05:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -212,7 +212,7 @@ in_pcballoc(struct socket *so, void *v)
 	}
 #endif
 	so->so_pcb = inp;
-	s = splnet();
+	s = splsoftnet();
 	TAILQ_INSERT_HEAD(&table->inpt_queue, &inp->inp_head, inph_queue);
 	LIST_INSERT_HEAD(INPCBHASH_PORT(table, inp->inp_lport), &inp->inp_head,
 	    inph_lhash);
@@ -621,7 +621,7 @@ in_pcbdetach(void *v)
 #endif
 	so->so_pcb = NULL;
 
-	s = splnet();
+	s = splsoftnet();
 	in_pcbstate(inp, INP_ATTACHED);
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	TAILQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head, inph_queue);
