@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.140 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: mi,v 1.141 2017/02/13 02:34:11 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -990,8 +990,10 @@
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/fi	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/fr	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/gb	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/is	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/it	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/jp	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/latam	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/nl	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/no	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/pt	-unknown-	xorg
