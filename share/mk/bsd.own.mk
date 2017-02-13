@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1005 2017/02/10 16:46:55 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1006 2017/02/13 16:33:14 snj Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1409,7 +1409,7 @@ HAVE_XORG_GLAMOR?=	no
 
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \
-	xkbcomp xorg-cf-files imake xbiff xkeyboard-config \
+	xorg-cf-files imake xbiff xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
 	glu glw mesa-demos MesaGLUT MesaLib MesaLib7 \
@@ -1424,7 +1424,7 @@ HAVE_XORG_GLAMOR?=	no
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xtrap xkbutils xkbcomp \
-	xkeyboard-config xinput xcb-util xorg-docs \
+	xinput xcb-util xorg-docs \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \
