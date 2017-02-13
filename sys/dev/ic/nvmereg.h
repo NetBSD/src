@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.6 2016/10/08 16:05:32 jdolecek Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.7 2017/02/13 11:11:32 nonaka Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -41,6 +41,7 @@
 #define  NVME_VS_1_0		0x00010000
 #define  NVME_VS_1_1		0x00010100
 #define  NVME_VS_1_2		0x00010200
+#define  NVME_VS_1_2_1		0x00010201
 #define NVME_INTMS	0x000c	/* Interrupt Mask Set */
 #define NVME_INTMC	0x0010	/* Interrupt Mask Clear */
 #define NVME_CC		0x0014	/* Controller Configuration */
