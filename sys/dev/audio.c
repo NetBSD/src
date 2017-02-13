@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.303 2017/02/11 08:36:30 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.304 2017/02/13 01:59:14 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.303 2017/02/11 08:36:30 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.304 2017/02/13 01:59:14 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -346,7 +346,6 @@ int audioread(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int audiowrite(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 int audioioctl(struct file *, u_long, void *);
 int audiopoll(struct file *, int);
-int audiofcntl(struct file *, u_int, void *);
 int audiokqfilter(struct file *, struct knote *);
 int audiostat(struct file *, struct stat *);
 
@@ -430,7 +429,7 @@ const struct fileops audio_fileops = {
 	.fo_read = audioread,
 	.fo_write = audiowrite,
 	.fo_ioctl = audioioctl,
-	.fo_fcntl = audiofcntl,
+	.fo_fcntl = fnullop_fcntl,
 	.fo_stat = audiostat,
 	.fo_poll = audiopoll,
 	.fo_close = audioclose,
@@ -1738,13 +1737,6 @@ audioioctl(struct file *fp, u_long cmd, void *addr)
 	audio_exit(sc);
 
 	return error;
-}
-
-int
-audiofcntl(struct file *fp, u_int cmd, void *data)
-{
-
-	return EOPNOTSUPP;
 }
 
 int
