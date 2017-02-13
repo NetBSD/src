@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.477 2017/02/09 23:30:46 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.478 2017/02/13 05:02:21 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.477 2017/02/09 23:30:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.478 2017/02/13 05:02:21 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6114,7 +6114,7 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
-				panic("%s: MCLBYTES %d unsupported for i2575 or higher\n", __func__, MCLBYTES);
+				panic("%s: MCLBYTES %d unsupported for 82575 or higher\n", __func__, MCLBYTES);
 
 			/* Currently, support SRRCTL_DESCTYPE_ADV_ONEBUF only. */
 			CSR_WRITE(sc, WMREG_SRRCTL(qid), SRRCTL_DESCTYPE_ADV_ONEBUF
