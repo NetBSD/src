@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.2 2017/02/10 03:59:02 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.3 2017/02/13 04:01:11 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -67,6 +67,7 @@ Non MP-safe components and kernel options
  - SCTP
  - TCP
  - UDP
+ - BRIDGE_IPF
 
  - Layer 4
  - IP multicast
