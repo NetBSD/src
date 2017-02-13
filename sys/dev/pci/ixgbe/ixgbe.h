@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.23 2017/02/10 06:35:22 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.24 2017/02/13 10:13:54 msaitoh Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -475,6 +475,7 @@ struct adapter {
 
 	device_t		dev;
 	struct ifnet		*ifp;
+	struct if_percpuq	*ipq;	/* softint-based input queues */
 
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;

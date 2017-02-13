@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.51 2017/02/13 06:38:45 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.52 2017/02/13 10:13:54 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -530,6 +530,7 @@ ixv_detach(device_t dev, int flags)
 	bus_generic_detach(dev);
 #endif
 	if_detach(adapter->ifp);
+	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);
 	evcnt_detach(&adapter->handleq);
@@ -1676,6 +1677,7 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_initialize(ifp);
+	adapter->ipq = if_percpuq_create(&adapter->osdep.ec.ec_if);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
 	/*
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
