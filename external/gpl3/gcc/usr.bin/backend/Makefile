@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2016/09/29 20:08:25 uwe Exp $
+#	$NetBSD: Makefile,v 1.35 2017/02/13 22:31:09 rin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -461,6 +461,7 @@ CPPFLAGS+=-I${.CURDIR}/../../lib/libgcc/libgcov/arch/${GCC_MACHINE_ARCH}
 COPTS.builtins.c+=-O0
 COPTS.convert.c+=-O0
 COPTS.dwarf2out.c+=-O0
+COPTS.dse.c+=-O0					/* port-vax/51967 */
 COPTS.expmed.c+=-O0
 COPTS.expr.c+=-O0
 COPTS.fixed-value.c+=-O0
