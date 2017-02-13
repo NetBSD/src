@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.23 2017/02/13 11:10:45 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.24 2017/02/13 11:11:32 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.23 2017/02/13 11:10:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.24 2017/02/13 11:11:32 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,9 @@ nvme_version(struct nvme_softc *sc, uint32_t ver)
 		break;
 	case NVME_VS_1_2:
 		v = "1.2";
+		break;
+	case NVME_VS_1_2_1:
+		v = "1.2.1";
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev, "unknown version 0x%08x\n", ver);
