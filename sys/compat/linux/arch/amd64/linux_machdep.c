@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.49 2017/02/05 08:42:49 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.50 2017/02/13 14:54:11 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.49 2017/02/05 08:42:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50 2017/02/13 14:54:11 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -234,7 +234,12 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (error != 0) {
 		sigexit(l, SIGILL);
 		return;
-	}	
+	}
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS) {
+		sigexit(l, SIGILL);
+		return;
+	}
 
 	linux_buildcontext(l, catcher, sp);
 	tf->tf_rdi = sigframe.info.lsi_signo;
