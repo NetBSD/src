@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.50 2017/02/10 08:41:13 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.51 2017/02/13 06:38:45 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -912,7 +912,9 @@ ixv_msix_que(void *arg)
 {
 	struct ix_queue	*que = arg;
 	struct adapter  *adapter = que->adapter;
+#ifdef IXGBE_LEGACY_TX
 	struct ifnet    *ifp = adapter->ifp;
+#endif
 	struct tx_ring	*txr = que->txr;
 	struct rx_ring	*rxr = que->rxr;
 	bool		more;
@@ -938,9 +940,6 @@ ixv_msix_que(void *arg)
 #ifdef IXGBE_LEGACY_TX
 	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
 		ixgbe_start_locked(txr, ifp);
-#else
-	if (pcq_peek(txr->txr_interq) != NULL)
-		ixgbe_mq_start_locked(ifp, txr);
 #endif
 	IXGBE_TX_UNLOCK(txr);
 
@@ -1678,11 +1677,10 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 
 	if_initialize(ifp);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
-#ifndef IXGBE_LEGACY_TX
-#if 0	/* We use per TX queue softint */
-	if_deferred_start_init(ifp, ixgbe_deferred_mq_start);
-#endif
-#endif
+	/*
+	 * We use per TX queue softint, so if_deferred_start_init() isn't
+	 * used.
+	 */
 	if_register(ifp);
 	ether_set_ifflags_cb(ec, ixv_ifflags_cb);
 
