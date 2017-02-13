@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.114 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.115 2017/02/13 07:18:20 ozaki-r Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.114 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.115 2017/02/13 07:18:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -213,6 +213,16 @@ const struct ip6protosw inet6sw[] = {
 	.pr_slowtimo = frag6_slowtimo,
 	.pr_drain = frag6_drainstub,
 },
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_ICMPV6,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = icmp6_input,
+	.pr_ctlinput = rip6_ctlinput,
+	.pr_ctloutput = icmp6_ctloutput,
+	.pr_usrreqs = &rip6_usrreqs,
+	.pr_init = icmp6_init,
+},
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_UDP,
@@ -295,16 +305,6 @@ const struct ip6protosw inet6sw[] = {
 	.pr_init = ip6flow_poolinit,
 },
 #endif /* GATEWAY */
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_ICMPV6,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = icmp6_input,
-	.pr_ctlinput = rip6_ctlinput,
-	.pr_ctloutput = icmp6_ctloutput,
-	.pr_usrreqs = &rip6_usrreqs,
-	.pr_init = icmp6_init,
-},
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_DSTOPTS,
