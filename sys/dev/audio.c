@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.304 2017/02/13 01:59:14 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.305 2017/02/13 04:47:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.304 2017/02/13 01:59:14 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.305 2017/02/13 04:47:59 ozaki-r Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1158,7 +1158,7 @@ audio_printsc(struct audio_softc *sc)
 {
 	struct audio_chan *chan;
 	
-	chan = SIMPLEQ_FIRST(sc->sc_audiochan);
+	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	
 	if (chan == NULL)
 		return;
@@ -2262,7 +2262,7 @@ audio_drain(struct audio_softc *sc, struct audio_chan *chan)
 	
 	error = 0;
 	vc = chan->vc;
-	DPRINTF(("audio_drain: enter busy=%d\n", sc->sc_vchan[n]->sc_pbus));
+	DPRINTF(("audio_drain: enter busy=%d\n", vc->sc_pbus));
 	cb = &chan->vc->sc_mpr;
 	if (cb->mmapped)
 		return 0;
@@ -2320,7 +2320,8 @@ audio_drain(struct audio_softc *sc, struct audio_chan *chan)
 	drops = cb->drops;
 	error = 0;
 	while (cb->drops == drops && !error) {
-		DPRINTF(("audio_drain: n=%d, used=%d, drops=%ld\n", n,
+		DPRINTF(("audio_drain: chan=%d used=%d, drops=%ld\n",
+			chan->chan,
 			audio_stream_get_used(&vc->sc_mpr.s),
 			cb->drops));
 		mutex_exit(sc->sc_intr_lock);
@@ -2960,7 +2961,7 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 			else
 				sc->sc_async_audio = pchan->chan;
 			DPRINTF(("audio_ioctl: FIOASYNC chan %d\n",
-			    sc->sc_audiochan[n].chan));
+			    pchan->chan));
 		} else
 			sc->sc_async_audio = 0;
 		break;
