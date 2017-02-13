@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.50 2017/02/13 14:54:11 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.51 2017/02/13 15:03:18 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.50 2017/02/13 14:54:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.51 2017/02/13 15:03:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -457,7 +457,7 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 {
 	struct trapframe *tf = arg;
 	uint64_t retaddr;
-	int vsyscallnr;
+	size_t vsyscallnr;
 
 	/*
 	 * Check for a vsyscall. %rip must be the fault address,
@@ -486,6 +486,8 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 	 * which is the only way that vsyscalls are ever entered.
 	 */
 	if (copyin((void *)tf->tf_rsp, &retaddr, sizeof retaddr) != 0)
+		return 0;
+	if ((vaddr_t)retaddr >= VM_MAXUSER_ADDRESS)
 		return 0;
 	tf->tf_rip = retaddr;
 	tf->tf_rax = linux_vsyscall_to_syscall[vsyscallnr];
