@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.213 2017/02/09 09:30:26 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.214 2017/02/13 03:44:45 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.213 2017/02/09 09:30:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.214 2017/02/13 03:44:45 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -439,7 +439,6 @@ bad:
 
 /*
  * Attach file to the bpf interface, i.e. make d listen on bp.
- * Must be called at splnet.
  */
 static void
 bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
@@ -871,7 +870,7 @@ out_bindx:
 
 /*
  * Reset a descriptor by flushing its packet buffer and clearing the
- * receive and drop counts.  Should be called at splnet.
+ * receive and drop counts.
  */
 static void
 reset_d(struct bpf_d *d)
