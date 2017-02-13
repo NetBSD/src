@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.19 2017/02/10 06:35:22 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.20 2017/02/13 10:13:54 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1704,10 +1704,9 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 static __inline void
 ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype)
 {
-	int s;
+	struct adapter	*adapter = ifp->if_softc;
 
 #ifdef LRO
-	struct adapter	*adapter = ifp->if_softc;
 	struct ethercom *ec = &adapter->osdep.ec;
 
         /*
@@ -1738,9 +1737,7 @@ ixgbe_rx_input(struct rx_ring *rxr, struct ifnet *ifp, struct mbuf *m, u32 ptype
 
 	IXGBE_RX_UNLOCK(rxr);
 
-	s = splnet();
-	if_input(ifp, m);
-	splx(s);
+	if_percpuq_enqueue(adapter->ipq, m);
 
 	IXGBE_RX_LOCK(rxr);
 }
