@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.52 2017/02/13 10:13:54 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.53 2017/02/13 10:37:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -933,15 +933,6 @@ ixv_msix_que(void *arg)
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
-	/*
-	** Make certain that if the stack
-	** has anything queued the task gets
-	** scheduled to handle it.
-	*/
-#ifdef IXGBE_LEGACY_TX
-	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
-		ixgbe_start_locked(txr, ifp);
-#endif
 	IXGBE_TX_UNLOCK(txr);
 
 	/* Do AIM now? */

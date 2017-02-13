@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.75 2017/02/13 10:13:54 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.76 2017/02/13 10:37:37 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1627,13 +1627,6 @@ ixgbe_legacy_irq(void *arg)
 
 		IXGBE_TX_LOCK(txr);
 		ixgbe_txeof(txr);
-#ifdef IXGBE_LEGACY_TX
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ixgbe_start_locked(txr, ifp);
-#else
-		if (pcq_peek(txr->txr_interq) != NULL)
-			ixgbe_mq_start_locked(ifp, txr);
-#endif
 		IXGBE_TX_UNLOCK(txr);
 	}
 
@@ -1698,10 +1691,6 @@ ixgbe_msix_que(void *arg)
 
 	IXGBE_TX_LOCK(txr);
 	ixgbe_txeof(txr);
-#ifdef IXGBE_LEGACY_TX
-	if (!IFQ_IS_EMPTY(&adapter->ifp->if_snd))
-		ixgbe_start_locked(txr, ifp);
-#endif
 	IXGBE_TX_UNLOCK(txr);
 
 	/* Do AIM now? */
