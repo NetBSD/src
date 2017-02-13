@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.208 2017/02/07 02:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.209 2017/02/13 07:18:20 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.208 2017/02/07 02:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.209 2017/02/13 07:18:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -152,6 +152,9 @@ static struct rttimer_queue *icmp6_redirect_timeout_q = NULL;
 static int icmp6_redirect_hiwat = -1;
 static int icmp6_redirect_lowat = -1;
 
+/* Protect mtudisc and redirect stuffs */
+static kmutex_t icmp6_mtx __cacheline_aligned;
+
 static void icmp6_errcount(u_int, int, int);
 static int icmp6_rip6_input(struct mbuf **, int);
 static int icmp6_ratelimit(const struct in6_addr *, const int, const int);
@@ -180,8 +183,12 @@ icmp6_init(void)
 
 	sysctl_net_inet6_icmp6_setup(NULL);
 	mld_init();
+
+	mutex_init(&icmp6_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_enter(&icmp6_mtx);
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
+	mutex_exit(&icmp6_mtx);
 
 	icmp6stat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP6_NSTATS);
 
@@ -253,17 +260,23 @@ icmp6_errcount(u_int base, int type, int code)
 void
 icmp6_mtudisc_callback_register(void (*func)(struct in6_addr *))
 {
-	struct icmp6_mtudisc_callback *mc;
+	struct icmp6_mtudisc_callback *mc, *new;
 
+	new = kmem_alloc(sizeof(*mc), KM_SLEEP);
+
+	mutex_enter(&icmp6_mtx);
 	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list)) {
-		if (mc->mc_func == func)
+		if (mc->mc_func == func) {
+			mutex_exit(&icmp6_mtx);
+			kmem_free(new, sizeof(*mc));
 			return;
+		}
 	}
 
-	mc = kmem_alloc(sizeof(*mc), KM_SLEEP);
-	mc->mc_func = func;
-	LIST_INSERT_HEAD(&icmp6_mtudisc_callbacks, mc, mc_list);
+	new->mc_func = func;
+	LIST_INSERT_HEAD(&icmp6_mtudisc_callbacks, new, mc_list);
+	mutex_exit(&icmp6_mtx);
 }
 
 /*
@@ -1146,10 +1159,13 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 * allow non-validated cases if memory is plenty, to make traffic
 	 * from non-connected pcb happy.
 	 */
+	mutex_enter(&icmp6_mtx);
 	rtcount = rt_timer_count(icmp6_mtudisc_timeout_q);
 	if (validated) {
-		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat)
+		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat) {
+			mutex_exit(&icmp6_mtx);
 			return;
+		}
 		else if (0 <= icmp6_mtudisc_lowat &&
 		    rtcount > icmp6_mtudisc_lowat) {
 			/*
@@ -1157,9 +1173,12 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 			 */
 		}
 	} else {
-		if (0 <= icmp6_mtudisc_lowat && rtcount > icmp6_mtudisc_lowat)
+		if (0 <= icmp6_mtudisc_lowat && rtcount > icmp6_mtudisc_lowat) {
+			mutex_exit(&icmp6_mtx);
 			return;
+		}
 	}
+	mutex_exit(&icmp6_mtx);
 
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = PF_INET6;
@@ -1192,9 +1211,11 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 * Notify protocols that the MTU for this destination
 	 * has changed.
 	 */
+	mutex_enter(&icmp6_mtx);
 	for (mc = LIST_FIRST(&icmp6_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list))
 		(*mc->mc_func)(&sin6.sin6_addr);
+	mutex_exit(&icmp6_mtx);
 }
 
 /*
@@ -2382,12 +2403,16 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		 * work just fine even if we do not install redirect route
 		 * (there will be additional hops, though).
 		 */
+		mutex_enter(&icmp6_mtx);
 		rtcount = rt_timer_count(icmp6_redirect_timeout_q);
-		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
+		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes) {
+			mutex_exit(&icmp6_mtx);
 			goto freeit;
-		if (0 <= icmp6_redirect_hiwat && rtcount > icmp6_redirect_hiwat)
+		}
+		if (0 <= icmp6_redirect_hiwat && rtcount > icmp6_redirect_hiwat) {
+			mutex_exit(&icmp6_mtx);
 			goto freeit;
-		else if (0 <= icmp6_redirect_lowat &&
+		} else if (0 <= icmp6_redirect_lowat &&
 		    rtcount > icmp6_redirect_lowat) {
 			/*
 			 * XXX nuke a victim, install the new one.
@@ -2412,6 +2437,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 			    icmp6_redirect_timeout_q);
 			rt_unref(newrt);
 		}
+		mutex_exit(&icmp6_mtx);
 	}
 	/* finally update cached route in each socket via pfctlinput */
 	{
@@ -2804,8 +2830,12 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 		rt_unref(rt);
 		rt = nrt;
 	}
+
+	mutex_enter(&icmp6_mtx);
 	error = rt_timer_add(rt, icmp6_mtudisc_timeout,
 			icmp6_mtudisc_timeout_q);
+	mutex_exit(&icmp6_mtx);
+
 	if (error) {
 		rt_unref(rt);
 		return NULL;
@@ -2876,14 +2906,18 @@ sysctl_net_inet6_icmp6_redirtimeout(SYSCTLFN_ARGS)
 	int error, tmp;
 	struct sysctlnode node;
 
+	mutex_enter(&icmp6_mtx);
+
 	node = *rnode;
 	node.sysctl_data = &tmp;
 	tmp = icmp6_redirtimeout;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return error;
-	if (tmp < 0)
-		return EINVAL;
+		goto out;
+	if (tmp < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	icmp6_redirtimeout = tmp;
 
 	if (icmp6_redirect_timeout_q != NULL) {
@@ -2897,8 +2931,10 @@ sysctl_net_inet6_icmp6_redirtimeout(SYSCTLFN_ARGS)
 		icmp6_redirect_timeout_q =
 		    rt_timer_queue_create(icmp6_redirtimeout);
 	}
-
-	return 0;
+	error = 0;
+out:
+	mutex_exit(&icmp6_mtx);
+	return error;
 }
 
 static void
