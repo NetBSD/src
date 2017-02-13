@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.269 2017/01/16 15:14:16 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.270 2017/02/13 04:06:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.269 2017/01/16 15:14:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.270 2017/02/13 04:06:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -794,7 +794,6 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	struct mbuf **mnext;
 	int sw_csum = m->m_pkthdr.csum_flags;
 	int fragments = 0;
-	int s;
 	int error = 0;
 
 	ip = mtod(m, struct ip *);
@@ -901,14 +900,14 @@ sendorfree:
 	 * any of them.
 	 */
 	if (ifp != NULL) {
-		s = splnet();
+		IFQ_LOCK(&ifp->if_snd);
 		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
 		    error == 0) {
 			error = ENOBUFS;
 			IP_STATINC(IP_STAT_ODROPPED);
 			IFQ_INC_DROPS(&ifp->if_snd);
 		}
-		splx(s);
+		IFQ_UNLOCK(&ifp->if_snd);
 	}
 	if (error) {
 		for (m = m0; m; m = m0) {
