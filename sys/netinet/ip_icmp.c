@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.157 2017/02/07 02:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.158 2017/02/13 07:18:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.157 2017/02/07 02:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.158 2017/02/13 07:18:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -171,6 +171,9 @@ static int icmp_rediraccept = 1;
 static int icmp_redirtimeout = 600;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
+/* Protect mtudisc and redirect stuffs */
+static kmutex_t icmp_mtx __cacheline_aligned;
+
 static void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
@@ -186,14 +189,17 @@ icmp_init(void)
 
 	sysctl_netinet_icmp_setup(NULL);
 
+	mutex_init(&icmp_mtx, MUTEX_DEFAULT, IPL_NONE);
 	/*
 	 * This is only useful if the user initializes redirtimeout to
 	 * something other than zero.
 	 */
+	mutex_enter(&icmp_mtx);
 	if (icmp_redirtimeout != 0) {
 		icmp_redirect_timeout_q =
 			rt_timer_queue_create(icmp_redirtimeout);
 	}
+	mutex_exit(&icmp_mtx);
 
 	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
 	icmp_wqinput = wqinput_create("icmp", _icmp_input);
@@ -205,17 +211,23 @@ icmp_init(void)
 void
 icmp_mtudisc_callback_register(void (*func)(struct in_addr))
 {
-	struct icmp_mtudisc_callback *mc;
+	struct icmp_mtudisc_callback *mc, *new;
 
+	new = kmem_alloc(sizeof(*mc), KM_SLEEP);
+
+	mutex_enter(&icmp_mtx);
 	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list)) {
-		if (mc->mc_func == func)
+		if (mc->mc_func == func) {
+			mutex_exit(&icmp_mtx);
+			kmem_free(new, sizeof(*mc));
 			return;
+		}
 	}
 
-	mc = kmem_alloc(sizeof(*mc), KM_SLEEP);
-	mc->mc_func = func;
-	LIST_INSERT_HEAD(&icmp_mtudisc_callbacks, mc, mc_list);
+	new->mc_func = func;
+	LIST_INSERT_HEAD(&icmp_mtudisc_callbacks, new, mc_list);
+	mutex_exit(&icmp_mtx);
 }
 
 /*
@@ -640,6 +652,7 @@ reflect:
 		rt = NULL;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    NULL, RTF_GATEWAY | RTF_HOST, sintosa(&icmpgw), &rt);
+		mutex_enter(&icmp_mtx);
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			i = rt_timer_add(rt, icmp_redirect_timeout,
 					 icmp_redirect_timeout_q);
@@ -651,6 +664,7 @@ reflect:
 				    IN_PRINT(buf, &icp->icmp_ip.ip_dst), i);
 			}
 		}
+		mutex_exit(&icmp_mtx);
 		if (rt != NULL)
 			rt_unref(rt);
 
@@ -1016,18 +1030,19 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	int error, tmp;
 	struct sysctlnode node;
 
+	mutex_enter(&icmp_mtx);
+
 	node = *rnode;
 	node.sysctl_data = &tmp;
 	tmp = icmp_redirtimeout;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	if (tmp < 0)
-		return (EINVAL);
+		goto out;
+	if (tmp < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	icmp_redirtimeout = tmp;
-
-	/* XXX NOMPSAFE still need softnet_lock */
-	mutex_enter(softnet_lock);
 
 	/*
 	 * was it a *defined* side-effect that anyone even *reading*
@@ -1045,10 +1060,10 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		icmp_redirect_timeout_q =
 		    rt_timer_queue_create(icmp_redirtimeout);
 	}
-
-	mutex_exit(softnet_lock);
-
-	return (0);
+	error = 0;
+out:
+	mutex_exit(&icmp_mtx);
+	return error;
 }
 
 static int
@@ -1175,9 +1190,11 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		rt = nrt;
 	}
 
+	mutex_enter(&icmp_mtx);
 	if (ip_mtudisc_timeout_q == NULL)
 		ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
+	mutex_exit(&icmp_mtx);
 	if (error) {
 		rt_unref(rt);
 		return;
@@ -1234,9 +1251,11 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 	 * Notify protocols that the MTU for this destination
 	 * has changed.
 	 */
+	mutex_enter(&icmp_mtx);
 	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list))
 		(*mc->mc_func)(faddr);
+	mutex_exit(&icmp_mtx);
 }
 
 /*
