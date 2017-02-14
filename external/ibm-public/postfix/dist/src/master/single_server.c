@@ -1,4 +1,4 @@
-/*	$NetBSD: single_server.c,v 1.1.1.6 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: single_server.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
