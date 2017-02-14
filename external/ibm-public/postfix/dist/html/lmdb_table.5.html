@@ -20,9 +20,9 @@ LMDB_TABLE(5)                                                    LMDB_TABLE(5)
        <b>postmap -q - <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
-       The  Postfix  LMDB  adapter  provides  access  to a persistent, memory-
-       mapped, key-value store.  The database size is limited only by the size
-       of  the  memory  address  space  (typically  31 or 47 bits on 32-bit or
+       The  Postfix  LMDB  adapter  provides  access  to  a  persistent,  mem-
+       ory-mapped, key-value store.  The database size is limited only by  the
+       size  of the memory address space (typically 31 or 47 bits on 32-bit or
        64-bit CPUs, respectively) and by the available file system space.
 
 <b>REQUESTS</b>
@@ -48,7 +48,7 @@ LMDB_TABLE(5)                                                    LMDB_TABLE(5)
        LMDB's copy-on-write architecture provides safe updates, at the cost of
        using  more space than some other flat-file databases.  Read operations
        are memory-mapped for speed.  Write operations are not memory-mapped to
-       avoid silent curruption due to stray pointer bugs.
+       avoid silent corruption due to stray pointer bugs.
 
        Multiple processes can safely update an LMDB database without serializ-
        ing requests through the <a href="proxymap.8.html">proxymap(8)</a> service.  This makes LMDB suitable
@@ -64,17 +64,16 @@ LMDB_TABLE(5)                                                    LMDB_TABLE(5)
        Every Postfix LMDB database read or write transaction must be protected
        from start to end with a shared or exclusive fcntl(2) lock.   A  writer
        may  atomically  downgrade  an  exclusive lock to a shared lock, but it
-       must acquire an exclusive lock between updating the database and start-
-       ing another write transaction.
+       must hold an exclusive lock while opening another write transaction.
 
-       Note  that  fcntl(2)  locks do not protect transactions within the same
-       process against each other.  If a program cannot avoid making  simulta-
-       neous database requests, then it must protect its transactions with in-
-       process locks, in addition to the per-process fcntl(2) locks.
+       Note that fcntl(2) locks do not protect transactions  within  the  same
+       process  against each other.  If a program cannot avoid making simulta-
+       neous database requests, then it must  protect  its  transactions  with
+       in-process locks, in addition to the per-process fcntl(2) locks.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Short-lived programs automatically pick up changes  to  <a href="postconf.5.html">main.cf</a>.   With
-       long-running  daemon programs, Use the command "<b>postfix reload</b>" after a
+       Short-lived  programs  automatically  pick up changes to <a href="postconf.5.html">main.cf</a>.  With
+       long-running daemon programs, Use the command "<b>postfix reload</b>" after  a
        configuration change.
 
        <b><a href="postconf.5.html#lmdb_map_size">lmdb_map_size</a> (default: 16777216)</b>
@@ -103,6 +102,11 @@ LMDB_TABLE(5)                                                    LMDB_TABLE(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                  LMDB_TABLE(5)
 </pre> </body> </html>

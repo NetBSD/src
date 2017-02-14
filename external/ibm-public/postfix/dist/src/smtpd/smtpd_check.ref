@@ -55,8 +55,8 @@ OK
 ./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 450 4.7.1 <foo>: Helo command rejected: Host not found; proto=SMTP helo=<foo>
 450 4.7.1 <foo>: Helo command rejected: Host not found
 >>> helo spike.porcupine.org
-./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 554 5.7.1 <spike.porcupine.org>: Helo command rejected: name server spike.porcupine.org; proto=SMTP helo=<spike.porcupine.org>
-554 5.7.1 <spike.porcupine.org>: Helo command rejected: name server spike.porcupine.org
+./smtpd_check: <queue id>: reject: HELO from foo[123.123.123.123]: 554 5.7.1 <spike.porcupine.org>: Helo command rejected: ns or mx server spike.porcupine.org; proto=SMTP helo=<spike.porcupine.org>
+554 5.7.1 <spike.porcupine.org>: Helo command rejected: ns or mx server spike.porcupine.org
 >>> helo_restrictions permit_mynetworks,reject_unknown_client,reject_invalid_hostname,hash:./smtpd_check_access
 OK
 >>> helo random.bad.domain
