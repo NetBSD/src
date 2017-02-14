@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2017/02/14 09:00:03 rin Exp $
+#	$NetBSD: Makefile,v 1.21 2017/02/14 09:59:16 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -117,7 +117,8 @@ COPTS.channels.c+=	-fno-strict-aliasing
 
 # XXX
 .if ${MACHINE} == "vax"
-COPTS.umac.c+=-O0
+COPTS.poly1305.c+=	-O0
+COPTS.umac.c+=		-O0
 .endif
 
 .include <bsd.lib.mk>
