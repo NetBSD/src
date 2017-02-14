@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.88 2017/02/14 13:23:50 nonaka Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.89 2017/02/14 13:29:09 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.88 2017/02/14 13:23:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.89 2017/02/14 13:29:09 nonaka Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -658,6 +658,8 @@ x86_parse_clusters(struct btinfo_memmap *bim)
 		    (type == BIM_Reserved) ?  "Reserved" :
 		    (type == BIM_ACPI) ? "ACPI" :
 		    (type == BIM_NVS) ? "NVS" :
+		    (type == BIM_PMEM) ? "Persistent" :
+		    (type == BIM_PRAM) ? "Persistent (Legacy)" :
 		    "unknown");
 #endif
 
