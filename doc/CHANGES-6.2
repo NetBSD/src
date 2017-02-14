@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.270 2017/02/05 07:10:10 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.271 2017/02/14 17:01:55 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -15455,4 +15455,9 @@ sys/netinet/if_arp.c				1.238, 1.239 via patch
 
 	Add checks on the ARP header
 	[maxv, ticket #1432]
+
+sys/compat/linux/arch/amd64/linux_machdep.c	1.50, 1.51
+
+	Don't let userland choose %rip.
+	[maxv, ticket #1433]
 
