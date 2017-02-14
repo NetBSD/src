@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_tweak.c,v 1.1.1.4 2017/02/14 01:13:45 christos Exp $	*/
+/*	$NetBSD: vstream_tweak.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME

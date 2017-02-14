@@ -4,19 +4,33 @@
 # NAME
 #	makedefs 1
 # SUMMARY
-#	makefile configuration utility
+#	Postfix makefile configuration utility
 # SYNOPSIS
 #	\fBmake makefiles \fIname=value...\fR
 # DESCRIPTION
 #	The \fBmakedefs\fR command identifies the compilation
-#	environment, and emits macro definitions on the standard output
-#	stream that can be prepended to template Makefiles.
+#	environment, and emits macro definitions on the standard
+#	output stream that can be prepended to template Makefiles.
+#	These macros implement an internal interface and are subject
+#	to change without notice.
 #
 #	Default settings can be overruled by specifying them as
-#	environment variables. Use quotes if variables contain
-#	whitespace or shell meta characters.
+#	environment variables (or as name=value pairs on the "make"
+#	command line). Use quotes if variables contain whitespace
+#	or shell meta characters.
+#
+#	The command "make makefiles name=value..." will replace the
+#	string MAIL_VERSION at the end of a parameter value with
+#	the Postfix release version. Do not try to specify something
+#	like $mail_version on this command line. This produces
+#	inconsistent results with different versions of the make(1)
+#	command.
 # .IP \fBAUXLIBS=\fIobject_library...\fR
-#	Specifies one or more non-default object libraries.
+#	Specifies one or more non-default object libraries. Postfix
+#	2,12 and later specify some of their database library
+#	dependencies with AUXLIBS_CDB, AUXLIBS_LDAP, AUXLIBS_LMDB,
+#	AUXLIBS_MYSQL, AUXLIBS_PCRE, AUXLIBS_PGSQL, AUXLIBS_SDBM,
+#	and AUXLIBS_SQLITE, respectively.
 # .IP \fBCC=\fIcompiler_command\fR
 #	Specifies a non-default compiler. On many systems, the default
 #	is \fBgcc\fR.
@@ -31,10 +45,21 @@
 #	Do not build with Solaris /dev/poll support.
 #	By default, /dev/poll support is compiled in on platforms that
 #	are known to support it.
+# .IP \fB-DNO_DNSSEC\fR
+#	Do not build with DNSSEC support, even if the resolver
+#	library appears to support it.
 # .IP \fB-DNO_EPOLL\fR
 #	Do not build with Linux EPOLL support.
 #	By default, EPOLL support is compiled in on platforms that
 #	are known to support it.
+# .IP \fB-DNO_EAI\fR
+#	Do not build with EAI (SMTPUTF8) support. By default, EAI
+#	support is compiled in when the "icuuc" library and header
+#	files are found.
+# .IP \fB-DNO_INLINE\fR
+#	Do not require support for C99 "inline" functions. Instead,
+#	implement argument typechecks for non-printf/scanf-like
+#	functions with ternary operators and unreachable code.
 # .IP \fB-DNO_IPV6\fR
 #	Do not build with IPv6 support.
 #	By default, IPv6 support is compiled in on platforms that
@@ -69,6 +94,58 @@
 # .IP \fBOPT=\fIoptimization_level\fR
 #	Specifies a non-default optimization level. The default is \fB-O\fR.
 #	Specify \fBOPT=\fR to turn off optimization.
+# .IP \fBSHLIB_CFLAGS=\fIflags\fR
+#	Override the compiler flags (typically, "-fPIC") for Postfix
+#	dynamically-linked libraries and database plugins.
+#
+#	This feature was introduced with Postfix 3.0.
+# .IP \fBSHLIB_RPATH=\fIrpath\fR
+#	Override the runpath (typically, "'-Wl,-rpath,${SHLIB_DIR}'")
+#	for Postfix dynamically-linked libraries.
+#
+#	This feature was introduced with Postfix 3.0.
+# .IP \fBSHLIB_SUFFIX=\fIsuffix\fR
+#	Override the filename suffix (typically, ".so") for Postfix
+#	dynamically-linked libraries and database plugins.
+#
+#	This feature was introduced with Postfix 3.0.
+# .IP \fBshared=yes\fR
+# .IP \fBshared=no\fR
+#	Enable (disable) Postfix builds with dynamically-linked
+#	libraries typically named $shlib_directory/libpostfix-*.so.*.
+#
+#	This feature was introduced with Postfix 3.0.
+# .IP \fBdynamicmaps=yes\fR
+# .IP \fBdynamicmaps=no\fR
+#	Enable (disable) Postfix builds with the configuration file
+#	$meta_directory/dynamicmaps.cf and dynamically-loadable
+#	database plugins typically named postfix-*.so.*.  The setting
+#	"dynamicmaps=yes" implicitly enables Postfix dynamically-linked
+#	libraries.
+#
+#	This feature was introduced with Postfix 3.0.
+# .IP \fBpie=yes\fR
+# .IP \fBpie=no\fR
+#
+#	Enable (disable) Postfix builds with position-independent
+#	executables, on platforms where this is supported.
+#
+#	This feature was introduced with Postfix 3.0.
+# .IP \fIinstallation_parameter\fB=\fIvalue\fR...
+#	Override the compiled-in default value of the specified
+#	installation parameter(s). The following parameters are
+#	supported in this context:
+#
+#	command_directory config_directory daemon_directory
+#	data_directory default_database_type html_directory
+#	mail_spool_directory mailq_path manpage_directory meta_directory
+#	newaliases_path queue_directory readme_directory sendmail_path
+#	shlib_directory openssl_path
+#
+#	See the postconf(5) manpage for a description of these
+#	parameters.
+#
+#	This feature was introduced with Postfix 3.0.
 # .IP \fBWARN=\fIwarning_flags\fR
 #	Specifies non-default gcc compiler warning options for use when
 #	"make" is invoked in a source subdirectory only.
@@ -81,9 +158,23 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--
 
 # Emit system-dependent Makefile macro definitions to standard output.
+
+echo "#----------------------------------------------------------------"
+echo "# Start of summary of user-configurable 'make makefiles' options."
+echo "# CCARGS=$CCARGS"
+echo "# AUXLIBS=$AUXLIBS"
+env | grep '^AUXLIBS_' | sed 's/^/# /'
+echo "# shared=$shared"
+echo "# dynamicmaps=$dynamicmaps"
+echo "# pie=$pie"
 
 # Defaults for most sane systems
 
@@ -157,11 +248,29 @@ case "$SYSTEM.$RELEASE" in
   FreeBSD.7*)	SYSTYPE=FREEBSD7
 		;;
   FreeBSD.8*)	SYSTYPE=FREEBSD8
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
   FreeBSD.9*)	SYSTYPE=FREEBSD9
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
   FreeBSD.10*)	SYSTYPE=FREEBSD10
 		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
 		;;
  DragonFly.*)	SYSTYPE=DRAGONFLY
 		;;
@@ -172,6 +281,22 @@ case "$SYSTEM.$RELEASE" in
   OpenBSD.4*)	SYSTYPE=OPENBSD4
 		;;
   OpenBSD.5*)	SYSTYPE=OPENBSD5
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so.1.0}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
+  OpenBSD.6*)	SYSTYPE=OPENBSD6
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so.1.0}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
 		;;
   ekkoBSD.1*)	SYSTYPE=EKKOBSD1
 		;;
@@ -186,6 +311,20 @@ case "$SYSTEM.$RELEASE" in
    NetBSD.5*)	SYSTYPE=NETBSD5
 		;;
    NetBSD.6*)	SYSTYPE=NETBSD6
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
+               ;;
+   NetBSD.7*)  SYSTYPE=NETBSD7
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
    BSD/OS.2*)	SYSTYPE=BSDI2
 		;;
@@ -207,6 +346,12 @@ case "$SYSTEM.$RELEASE" in
     SunOS.5*)	SYSTYPE=SUNOS5
 		RANLIB=echo
 		SYSLIBS="-lresolv -lsocket -lnsl -ldl"
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-h,${LIB}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${SHLIB_RPATH='-Wl,-R,${SHLIB_DIR}'}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		# Stock awk breaks with >10 files.
 		test -x /usr/xpg4/bin/awk && AWK=/usr/xpg4/bin/awk
 		# Solaris 2.5 added usleep(), POSIX regexp, POSIX getpwnam/uid_r
@@ -259,18 +404,21 @@ case "$SYSTEM.$RELEASE" in
 		;;
        AIX.*)	case "`uname -v`" in
 		6)	SYSTYPE=AIX6
+			CCARGS="$CCARGS -DNO_DNSSEC"
 			case "$CC" in
 			cc|*/cc|xlc|*/xlc) CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;
 			esac
 			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
 			;;
 		5)	SYSTYPE=AIX5
+			CCARGS="$CCARGS -DNO_DNSSEC"
 			case "$CC" in
 			cc|*/cc|xlc|*/xlc) CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;
 			esac
 			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
 			;;
 		4)	SYSTYPE=AIX4
+			CCARGS="$CCARGS -DNO_DNSSEC"
 			# How embarrassing...
 			case "$CC" in
 			cc|*/cc|xlc|*/xlc) OPT=; CCARGS="$CCARGS -w -blibpath:/usr/lib:/lib:/usr/local/lib";;
@@ -278,6 +426,7 @@ case "$SYSTEM.$RELEASE" in
 			CCARGS="$CCARGS -D_ALL_SOURCE -DHAS_POSIX_REGEXP"
 			;;
 		3)	SYSTYPE=AIX3
+			CCARGS="$CCARGS -DNO_DNSSEC"
 			# How embarrassing...
 			case "$CC" in
 			cc|*/cc|xlc|*/xlc) OPT=; CCARGS="$CCARGS -w";;
@@ -366,6 +515,13 @@ EOF
 			   rm -f makedefs.test makedefs.test.[co]
 		       fi;;
 		esac
+		SYSLIBS="$SYSLIBS -ldl"
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,--enable-new-dtags -Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
   Linux.[34].*)	SYSTYPE=LINUX$RELEASE_MAJOR
 		case "$CCARGS" in
@@ -397,6 +553,13 @@ EOF
 			}
 		    done
 		done
+		SYSLIBS="$SYSLIBS -ldl"
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,--enable-new-dtags -Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
      GNU.0*|GNU/kFreeBSD.[567]*)
 		SYSTYPE=GNU0
@@ -475,6 +638,7 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
     Darwin.*)   SYSTYPE=MACOSX
 		# Use the native compiler by default
 		: ${CC=cc}
+		CCARGS="$CCARGS"
 		# Darwin > 1.3 uses awk and flat_namespace
 		case $RELEASE in
 		 1.[0-3]) AWK=gawk;;
@@ -505,6 +669,14 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		case $RELEASE in
 	    ?.*|1[0-1].*) CCARGS="$CCARGS -DNO_KQUEUE";;
 		esac
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_SUFFIX=.dylib}
+		: ${SHLIB_LD='cc -shared -Wl,-flat_namespace -Wl,-undefined,dynamic_lookup -Wl,-install_name,@rpath/${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+                # In MacOS/X 10.11.x /bin/sh unsets DYLD_LIBRARY_PATH, so we
+                # have export it into postfix-install indirectly!
+		: ${SHLIB_ENV="DYLD_LIBRARY_PATH=`pwd`/lib SHLIB_ENV_VAR=DYLD_LIBRARY_PATH SHLIB_ENV_VAL=`pwd`/lib"}
+		: ${PLUGIN_LD='cc -shared -Wl,-flat_namespace -Wl,-undefined,dynamic_lookup'}
 		;;
     dcosx.1*)	SYSTYPE=DCOSX1
 		RANLIB=echo
@@ -581,6 +753,47 @@ EOF
 esac
 
 #
+# Look for the ICU library and enable unicode email if available.
+#
+case "$CCARGS" in
+*-DNO_EAI*) ;;
+	 *) icu_cppflags=`(icu-config --cppflags) 2>/dev/null` && {
+		icu_ldflags=`(icu-config --ldflags) 2>/dev/null` && {
+		    trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
+		    cat >makedefs.test.c <<'EOF'
+#include <unicode/uidna.h>
+#include <stdlib.h>
+
+int main(int argc, char **argv)
+{
+    char    buf[1024];
+    UErrorCode error = U_ZERO_ERROR;
+    UIDNAInfo info = UIDNA_INFO_INITIALIZER;
+    UIDNA  *idna = uidna_openUTS46(UIDNA_DEFAULT, &error);
+
+    exit(uidna_labelToUnicodeUTF8(idna,
+				  "xn--lgbbat1ad8j",	/* an arabic TLD */
+				  15,
+				  buf,
+				  sizeof(buf),
+				  &info,
+				  &error) != 14);
+}
+EOF
+		    ${CC-gcc} -o makedefs.test makedefs.test.c $icu_cppflags \
+			$icu_ldflags >/dev/null 2>&1
+		    if ./makedefs.test 2>/dev/null ; then
+			CCARGS="$CCARGS $icu_cppflags"
+			SYSLIBS="$SYSLIBS $icu_ldflags"
+		    else
+			CCARGS="$CCARGS -DNO_EAI"
+		    fi
+		    rm -f makedefs.test makedefs.test.[co]
+		}
+	    } || CCARGS="$CCARGS -DNO_EAI"
+esac
+
+#
 # OpenSSL has no configuration query utility, but we don't try to
 # guess. We assume includes in /usr/include/openssl and libraries in
 # /usr/lib, or in their /usr/local equivalents. If the OpenSSL files
@@ -595,6 +808,11 @@ esac
 #esac
 
 #
+# We don't know all systems that have /dev/urandom, so we probe.
+#
+test -r /dev/urandom && CCARGS="$CCARGS -DHAS_DEV_URANDOM"
+
+#
 # PCRE 3.x has a pcre-config utility so we don't have to guess.
 #
 case "$CCARGS" in
@@ -603,7 +821,7 @@ case "$CCARGS" in
 	   *)	pcre_cflags=`(pcre-config --cflags) 2>/dev/null` &&
 		    pcre_libs=`(pcre-config --libs) 2>/dev/null` && {
 			CCARGS="$CCARGS -DHAS_PCRE $pcre_cflags"
-			AUXLIBS="$AUXLIBS $pcre_libs"
+			AUXLIBS_PCRE="$pcre_libs"
 		}
 		;;
 esac
@@ -621,19 +839,6 @@ case "$CC" in
       *CC) error "Don't use CC. That's the C++ compiler";;
 	*) : ${OPT='-O'};;
 esac
-#
-# "gcc -W" 3.4.2 no longer reports functions that fail to return a
-# result.  Use "gcc -Wall -Wno-comment" instead. We'll figure out
-# later if the other -Wmumble options are really redundant. Having
-# een burned once by a compiler that lies about what warnings it
-# produces, not taking that chance again.
-
-: ${CC=gcc} ${OPT='-O'} ${DEBUG='-g'} ${AWK=awk} \
-${WARN='-Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
-	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
-	-Wunused -Wno-missing-braces'}
-
-export SYSTYPE AR ARFL RANLIB SYSLIBS CC OPT DEBUG AWK OPTS
 
 # Snapshot only.
 #CCARGS="$CCARGS -DSNAPSHOT"
@@ -645,17 +850,351 @@ export SYSTYPE AR ARFL RANLIB SYSLIBS CC OPT DEBUG AWK OPTS
 # Workaround: prepend Postfix include files before other include files.
 CCARGS="-I. -I../../include $CCARGS"
 
-sed 's/  / /g' <<EOF
+# Portability and usability considerations.
+#
+# In an ideal world we would be able to provide the option to say
+# "make makefiles shlib_directory=/some/where/'$mail_version'".  This
+# would allow a running system to be upggraded without worries about
+# tempororary program-library ABI incompatibilities (the Postfix
+# library API changes incompatibly from one version to the next).
+#
+# Unfortunately, gmake performs macro expansion on values in name=value
+# command-line arguments. In the specific example above, gmake would
+# eat up the "$" and "m" before it even invokes makedefs, and it
+# ould replace "'${mail_version}'" and "'$(mail_version)'" with
+# nothing.
+#
+# Requiring people to specify $$ is not a good option. Instead we
+# replace the string MAIL_VERSION at the end of parameter values in
+# "make makefiles name=value...". The replacement depends on usage
+# context: the expanded release version in actual pathnames, or the
+# unexpanded ${mail_version} in configuration parameter values (both
+# main.cf and and built-in defaults).
+
+# Helper function to determine DEF_MAIL_VERSION.
+
+def_mail_version()
+{
+    trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
+    cat > makedefs.test.c <<'EOF'
+#include <stdlib.h>
+#include <stdio.h>
+EOF
+        # Avoid "nested comment" warnings. Top-of-file comments start in
+        # column 1 and have no code after "*/", not even in header files.
+        # If this is insufficient, kill the problem with #ifndef MAKEDEFS.
+        sed '/^\/\*/,/\*\//d' src/global/mail_version.h >>makedefs.test.c
+        cat >>makedefs.test.c <<EOF
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+int     main(void)
+{
+    printf("%s\n", DEF_MAIL_VERSION);
+    fflush(stdout);
+    exit(ferror(stdout) ? 1 : 0);
+}
+EOF
+    eval ${CC-gcc} ${CCARGS} -o makedefs.test makedefs.test.c || exit 1
+    ./makedefs.test || exit 1
+    rm -f makedefs.test makedefs.test.[co]
+}
+
+# Helper to expand MAIL_VERSION at the end of a command-line parameter value.
+
+# Note that MAIL_VERSION) does not anchor the match at the end.
+
+process_input_parameter()
+{
+    echo "#" $parm_name=$parm_val
+    case "$parm_val" in
+    *MAIL_VERSION*)
+	cparm_val=`echo "$parm_val" | \
+	    sed 's/MAIL_VERSION$/\\\\$${mail_version}/g'`|| exit 1
+	case "$mail_version" in
+	"") mail_version=`def_mail_version` || exit 1
+	esac
+	parm_val=`echo "$parm_val" | sed 's/MAIL_VERSION$/'"$mail_version/g"` ||
+	    exit 1
+	case "$parm_val" in
+	*MAIL_VERSION*)
+	    error "MAIL_VERSION not at end of parameter value: $parm_val"
+	esac
+	eval ${parm_name}=\""\$parm_val"\";;
+     *) cparm_val="$parm_val";;
+    esac
+    CCARGS="$CCARGS -D$parm_macro=\\\"$cparm_val\\\""
+}
+
+# Optionally override installation-parameter default settings.
+
+command_directory_macro=DEF_COMMAND_DIR
+config_directory_macro=DEF_CONFIG_DIR
+daemon_directory_macro=DEF_DAEMON_DIR
+data_directory_macro=DEF_DATA_DIR
+mail_spool_directory_macro=DEF_MAIL_SPOOL_DIR
+mailq_path_macro=DEF_MAILQ_PATH
+meta_directory_macro=DEF_META_DIR
+newaliases_path_macro=DEF_NEWALIAS_PATH
+queue_directory_macro=DEF_QUEUE_DIR
+sendmail_path_macro=DEF_SENDMAIL_PATH
+shlib_directory_macro=DEF_SHLIB_DIR
+openssl_path_macro=DEF_OPENSSL_PATH
+
+# shlib_directory is checked here because "no" is not a good answer.
+# Instead, build with "dynamicmaps=no" and "shared=no" as appropriate.
+
+for parm_name in command_directory config_directory daemon_directory \
+	data_directory mail_spool_directory mailq_path meta_directory \
+	newaliases_path queue_directory sendmail_path shlib_directory \
+	openssl_path
+do
+    eval parm_val=\"\$$parm_name\"
+    eval parm_macro=\"\$${parm_name}_macro\"
+    case "$parm_val" in
+    "") ;;
+    /*) process_input_parameter;;
+     *) error "$parm_name must specify an absolute path name";;
+    esac
+done
+
+html_directory_macro=DEF_HTML_DIR
+manpage_directory_macro=DEF_MANPAGE_DIR
+readme_directory_macro=DEF_README_DIR
+
+for parm_name in html_directory manpage_directory readme_directory
+do
+    eval parm_val=\"\$$parm_name\"
+    eval parm_macro=\"\$${parm_name}_macro\"
+    case "$parm_val" in
+    "") ;;
+ /*|no) process_input_parameter;;
+     *) error "$parm_name must specify \"no\" or an absolute path name";;
+    esac
+done
+
+default_database_type_macro=DEF_DB_TYPE
+
+for parm_name in default_database_type
+do
+    eval parm_val=\"\$$parm_name\"
+    eval parm_macro=\"\$${parm_name}_macro\"
+    case "$parm_val" in
+    "") ;;
+     *) process_input_parameter;;
+    esac
+done
+
+echo "# End of summary of user-configurable 'make makefiles' options."
+echo "#--------------------------------------------------------------"
+
+# The following are for non-shared libsasl and libmilter builds.
+
+_AR=$AR
+_RANLIB=$RANLIB
+
+# Choose between dynamic and static library builds.
+
+case "$dynamicmaps" in
+  yes) shared=yes;;
+""|no) ;;
+    *) error "Specify \"dynamicmaps=yes\" or \"dynamicmaps=no\"";;
+esac
+
+case "$shared" in
+yes)
+    if [ -z "$SHLIB_SUFFIX" ]
+    then 
+	error "Shared libraries are requested, but not supported on this platform"
+    fi
+    AR=:
+    RANLIB=:
+    CCARGS="$CCARGS -DUSE_DYNAMIC_LIBS"
+    case "$dynamicmaps" in
+    yes) NON_PLUGIN_MAP_OBJ=
+	 PLUGIN_MAP_OBJ='$(MAP_OBJ)'
+	 PLUGIN_MAP_OBJ_UPDATE=plugin_map_obj_update
+	 PLUGIN_MAP_SO_MAKE=plugin_map_so_make
+	 PLUGIN_MAP_SO_UPDATE=plugin_map_so_update
+	 CCARGS="$CCARGS -DUSE_DYNAMIC_MAPS"
+	 ;;
+      *) NON_PLUGIN_MAP_OBJ='$(MAP_OBJ)'
+	 PLUGIN_MAP_OBJ=
+	 PLUGIN_MAP_OBJ_UPDATE=
+	 PLUGIN_MAP_SO_MAKE=
+	 PLUGIN_MAP_SO_UPDATE=
+	 PLUGIN_LD=
+	 CCARGS="$CCARGS -UUSE_DYNAMIC_MAPS"
+	 ;;
+    esac
+
+    # Determine the dynamically-linked library and plugin installation
+    # directory.
+
+    parm_name=shlib_directory
+    eval parm_val=\"\$$parm_name\"
+    eval parm_macro=\"\$${parm_name}_macro\"
+    case "$parm_val" in
+    /*|no) # CCARGS was already updated above.
+	;;
+    "") trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
+	sed -n '
+	    /_SHLIB_DIR/,/^$/p
+	' src/global/mail_params.h >makedefs.test.c
+	cat >>makedefs.test.c <<EOF
+#include <stdlib.h>
+#include <stdio.h>
+int     main(void)
+{
+    printf("%s\n", $parm_macro);
+    fflush(stdout);
+    exit(ferror(stdout) ? 1 : 0);
+}
+EOF
+	eval ${CC-gcc} ${CCARGS} -o makedefs.test makedefs.test.c || exit 1
+	parm_val=`./makedefs.test` || exit 1
+	rm -f makedefs.test makedefs.test.[co]
+	eval ${parm_name}=\""\$parm_val"\"
+	#CCARGS="$CCARGS -D$parm_macro=\\\"$parm_val\\\""
+	;;
+     *) # this parameter was already checked above.
+	error "Can't happen in $0 - $parm_val is not an absolute path"
+	;;
+    esac
+
+    LIB_PREFIX=postfix-
+    LIB_SUFFIX=${SHLIB_SUFFIX}
+    ;;
+
+no|"")
+    shlib_directory=no
+    CCARGS="$CCARGS -UUSE_DYNAMIC_LIBS -DDEF_SHLIB_DIR=\\\"no\\\""
+    CCARGS="$CCARGS -UUSE_DYNAMIC_MAPS"
+    SHLIB_CFLAGS=
+    SHLIB_SUFFIX=
+    SHLIB_LD=:
+    SHLIB_SYSLIBS=
+    SHLIB_RPATH=
+    SHLIB_ENV=
+    LIB_PREFIX=
+    LIB_SUFFIX=.a
+    NON_PLUGIN_MAP_OBJ='$(MAP_OBJ)'
+    PLUGIN_MAP_OBJ=
+    PLUGIN_MAP_OBJ_UPDATE=
+    PLUGIN_MAP_SO_MAKE=
+    PLUGIN_MAP_SO_UPDATE=
+    PLUGIN_LD=
+    ;;
+
+*)  error "Specify \"shared=yes\" or \"shared=no\""
+    ;;
+esac
+
+# "gcc -W" 3.4.2 no longer reports functions that fail to return a
+# result.  Use "gcc -Wall -Wno-comment" instead. We'll figure out
+# later if the other -Wmumble options are really redundant. Having
+# een burned once by a compiler that lies about what warnings it
+# produces, not taking that chance again.
+
+: ${CC=gcc} ${OPT='-O'} ${DEBUG='-g'} ${AWK=awk} \
+${WARN='-Wall -Wno-comment -Wformat -Wimplicit -Wmissing-prototypes \
+	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
+	-Wunused -Wno-missing-braces'}
+
+# Extract map type names from -DHAS_XXX compiler options.  We avoid
+# problems with tr(1) range syntax by using enumerations instead,
+# and we don't try to figure out which awk versions have tolower().
+# The following was validated in 2014 on FreeBSD/Linux and Solaris 9.
+
+DEFINED_MAP_TYPES=`
+    echo $CCARGS | tr -cd '\- _ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' | 
+	tr ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz | ${AWK} '
+	{ for (n = 1; n <= NF; n++)
+	      if ($n ~ /^-dhas_/)
+		  if (seen[name = substr($n, 7)]++ == 0)
+		      printf(" %s", name) }
+'`
+
+# Propagate AUXLIBS_FOO or merge them into global AUXLIBS (i.e. SYSLIBS).
+
+PLUGGABLE_MAPS="CDB LDAP LMDB MYSQL PCRE PGSQL SDBM SQLITE"
+
+case "$dynamicmaps" in
+yes) for name in $PLUGGABLE_MAPS
+     do
+	 eval test -n "\"\$AUXLIBS_$name\"" && 
+	     eval PLUGIN_AUXLIBS="\"\$PLUGIN_AUXLIBS
+AUXLIBS_$name = \$AUXLIBS_$name\""
+     done;;
+  *) for name in $PLUGGABLE_MAPS
+     do
+	 eval AUXLIBS="\"\$AUXLIBS \$AUXLIBS_$name\""
+     done;;
+esac
+
+# Remove static libraries from SYSLIBS when building shared objects,
+# Can't use the shell "case" patterns to detect names ending in *.a.
+
+case "$shared" in
+yes) SHLIB_SYSLIBS=`${AWK} '
+     BEGIN { wc = split("'"$AUXLIBS $SYSLIBS"'", words) 
+	 for (n = 1; n <= wc; n++)
+	     if (words[n] !~ /\.a$/)
+		 printf(" %s", words[n])
+     }
+     '`
+esac
+
+# Choose between PIE and non-PIE builds.
+
+case "$pie" in
+  yes) case "$shared" in
+        yes) CCARGS_PIE="-fPIC";;
+          *) CCARGS_PIE="-fPIE";;
+       esac
+       case " $CCARGS " in
+         *" $CCARGS_PIE "*) CCARGS_PIE=;;
+       esac
+       SYSLIBS_PIE="-pie";;
+""|no) ;;
+    *) error "Specify \"pie=yes\" or \"pie=no\"";;
+esac
+
+# Finally...
+
+sed 's/   */ /g' <<EOF
+# System-dependent settings and compiler/linker overrides.
 SYSTYPE	= $SYSTYPE
-AR	= $AR
+_AR	= $_AR
 ARFL	= $ARFL
-RANLIB	= $RANLIB
-SYSLIBS	= $AUXLIBS $SYSLIBS
-CC	= $CC $CCARGS \$(WARN)
+_RANLIB	= $_RANLIB
+SYSLIBS	= $SYSLIBS_PIE $AUXLIBS $SYSLIBS $PLUGIN_AUXLIBS
+CC	= $CC $CCARGS_PIE $CCARGS \$(WARN)
 OPT	= $OPT
 DEBUG	= $DEBUG
 AWK	= $AWK
 STRCASE = $STRCASE
-EXPORT	= AUXLIBS='$AUXLIBS' CCARGS='$CCARGS' OPT='$OPT' DEBUG='$DEBUG'
+EXPORT	= CCARGS='$CCARGS' OPT='$OPT' DEBUG='$DEBUG'
 WARN	= $WARN
+DEFINED_MAP_TYPES = $DEFINED_MAP_TYPES
+MAKE_FIX = $MAKE_FIX
+# Switch between Postfix static and dynamically-linked libraries.
+AR	= $AR
+RANLIB	= $RANLIB
+LIB_PREFIX = $LIB_PREFIX
+LIB_SUFFIX = $LIB_SUFFIX
+SHLIB_CFLAGS = $SHLIB_CFLAGS
+SHLIB_DIR = $shlib_directory
+SHLIB_ENV = $SHLIB_ENV
+SHLIB_LD = $SHLIB_LD
+SHLIB_SYSLIBS = $SHLIB_SYSLIBS
+SHLIB_RPATH = $SHLIB_RPATH
+# Switch between dynamicmaps.cf plugins and hard-linked databases.
+NON_PLUGIN_MAP_OBJ = $NON_PLUGIN_MAP_OBJ
+PLUGIN_MAP_OBJ = $PLUGIN_MAP_OBJ
+PLUGIN_MAP_OBJ_UPDATE = $PLUGIN_MAP_OBJ_UPDATE
+PLUGIN_MAP_SO_MAKE = $PLUGIN_MAP_SO_MAKE
+PLUGIN_MAP_SO_UPDATE = $PLUGIN_MAP_SO_UPDATE
+PLUGIN_LD = $PLUGIN_LD
+# Application-specific rules.
 EOF

@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.1.1.3 2017/02/14 01:13:42 christos Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.2 2017/02/14 01:16:47 christos Exp $	*/
 
 /*++
 /* NAME

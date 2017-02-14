@@ -1,4 +1,4 @@
-/*	$NetBSD: postcat.c,v 1.1.1.4 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: postcat.c,v 1.2 2017/02/14 01:16:46 christos Exp $	*/
 
 /*++
 /* NAME

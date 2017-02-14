@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring_vstream.h,v 1.1.1.2 2017/02/14 01:13:45 christos Exp $	*/
+/*	$NetBSD: vstring_vstream.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _VSTRING_VSTREAM_H_INCLUDED_
 #define _VSTRING_VSTREAM_H_INCLUDED_

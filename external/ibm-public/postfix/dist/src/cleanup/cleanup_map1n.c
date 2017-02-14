@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map1n.c,v 1.1.1.6 2017/02/14 01:13:39 christos Exp $	*/
+/*	$NetBSD: cleanup_map1n.c,v 1.2 2017/02/14 01:16:44 christos Exp $	*/
 
 /*++
 /* NAME

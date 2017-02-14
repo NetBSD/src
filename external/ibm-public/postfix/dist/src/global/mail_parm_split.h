@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_parm_split.h,v 1.1.1.1 2017/02/14 01:13:40 christos Exp $	*/
+/*	$NetBSD: mail_parm_split.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _MAIL_PARM_SPLIT_H_INCLUDED_
 #define _MAIL_PARM_SPLIT_H_INCLUDED_

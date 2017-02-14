@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/25 18:22:00 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2017/02/14 01:16:50 christos Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 PROG=	postqueue
+SRCS=	postqueue.c showq_compat.c showq_json.c
 
 DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist/src/${PROG}
 .PATH:	${DIST}

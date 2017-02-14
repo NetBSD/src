@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: msg_output.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _MSG_OUTPUT_FN_
 #define _MSG_OUTPUT_FN_

@@ -1,4 +1,4 @@
-/*	$NetBSD: unescape.c,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: unescape.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 /*++
 /* NAME

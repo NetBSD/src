@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.7 2017/02/14 01:13:34 christos Exp $
+#	$NetBSD: post-install,v 1.2 2017/02/14 01:16:43 christos Exp $
 #
 
 # To view the formatted manual page of this file, type:

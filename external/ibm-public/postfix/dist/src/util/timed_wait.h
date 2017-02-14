@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_wait.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: timed_wait.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _TIMED_WAIT_H_INCLUDED_
 #define _TIMED_WAIT_H_INCLUDED_
