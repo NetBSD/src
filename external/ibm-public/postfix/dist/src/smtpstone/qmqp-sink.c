@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-sink.c,v 1.1.1.3 2017/02/14 01:13:43 christos Exp $	*/
+/*	$NetBSD: qmqp-sink.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
 /*++
 /* NAME

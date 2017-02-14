@@ -1,4 +1,4 @@
-/*	$NetBSD: host_port.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: host_port.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _HOST_PORT_H_INCLUDED_
 #define _HOST_PORT_H_INCLUDED_
