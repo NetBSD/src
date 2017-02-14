@@ -622,8 +622,8 @@ mail:
         postscreen_dnsbl_reply_map = texthash:/etc/postfix/dnsbl_reply
 
     /etc/postfix/dnsbl_reply:
-        # Secret DNSBL name        Name in postscreen(8) replies
-        secret.zen.spamhaus.org    zen.spamhaus.org
+        # Secret DNSBL name           Name in postscreen(8) replies
+        secret.zen.dq.spamhaus.net    zen.spamhaus.org
 
     The texthash: format is similar to hash: except that there is no need to
     run postmap(1) before the file can be used, and that it does not detect
@@ -704,14 +704,17 @@ more of:
     disconnect.
 
     When the good client comes back in a later session, it is allowed to talk
-    directly to a Postfix SMTP server. See "after_220 Tests after the 220 SMTP
-    server greeting above for limitations with AUTH and other features that
-    clients may need.
+    directly to a Postfix SMTP server. See "Tests after the 220 SMTP server
+    greeting" above for limitations with AUTH and other features that clients
+    may need.
 
     An unexpected benefit from "deep protocol tests" is that some "good"
     clients don't return after the 4XX reply; these clients were not so good
-    after all. Wietse enables "deep protocol tests" on his own internet-facing
-    mail server.
+    after all.
+
+    Unfortunately, some senders will retry requests from different IP
+    addresses, and may never get whitelisted. For this reason, Wietse stopped
+    using "deep protocol tests" on his own internet-facing mail server.
 
   * There is also support for permanent blacklisting and whitelisting; see the
     description of the postscreen_access_list parameter for details.

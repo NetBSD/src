@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_socketpair.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_socketpair.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
 
 #ifndef _SANE_SOCKETPAIR_H_
 #define _SANE_SOCKETPAIR_H_
@@ -15,7 +15,7 @@
 
  /* External interface. */
 
-extern int sane_socketpair(int, int, int, int *);
+extern int WARN_UNUSED_RESULT sane_socketpair(int, int, int, int *);
 
 /* LICENSE
 /* .ad

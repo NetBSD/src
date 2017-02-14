@@ -14,3 +14,4 @@ whatevershebrings_recipient_limit = $default_recipient_limit
 whatevershebrings_recipient_refill_delay = $default_recipient_refill_delay
 whatevershebrings_recipient_refill_limit = $default_recipient_refill_limit
 whatevershebrings_time_limit = $command_time_limit
+whatevershebrings_transport_rate_delay = $default_transport_rate_delay
