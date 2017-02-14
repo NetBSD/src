@@ -1,4 +1,5 @@
-/*	$NetBSD: efi.c,v 1.6 2017/01/26 01:35:51 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.7 2017/02/14 13:23:50 nonaka Exp $	*/
+
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -24,8 +25,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.6 2017/01/26 01:35:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.7 2017/02/14 13:23:50 nonaka Exp $");
+
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +68,10 @@ bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 static bool efi_is32bit = false;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
+static struct efi_e820memmap {
+	struct btinfo_memmap bim;
+	struct bi_memmap_entry entry[VM_PHYSSEG_MAX - 1];
+} efi_e820memmap;
 
 /*
  * Map a physical address (PA) to a newly allocated virtual address (VA).
@@ -348,4 +355,76 @@ efi_getmemtype_str(uint32_t type)
 	if (type < __arraycount(efimemtypes))
 		return efimemtypes[type];
 	return "unknown";
+}
+
+struct btinfo_memmap *
+efi_get_e820memmap(void)
+{
+	struct btinfo_efimemmap *efimm;
+	struct bi_memmap_entry *entry;
+	struct efi_md *md;
+	uint64_t addr, size;
+	uint64_t start_addr, end_addr;
+	uint32_t i;
+	int n, type, seg_type = -1;
+
+	if (efi_e820memmap.bim.common.type == BTINFO_MEMMAP)
+		return &efi_e820memmap.bim;
+
+	efimm = lookup_bootinfo(BTINFO_EFIMEMMAP);
+	if (efimm == NULL)
+		return NULL;
+
+	for (n = 0, i = 0; i < efimm->num; i++) {
+		md = (struct efi_md *)(efimm->memmap + efimm->size * i);
+		addr = md->md_phys;
+		size = md->md_pages * EFI_PAGE_SIZE;
+		type = efi_getbiosmemtype(md->md_type, md->md_attr);
+
+#ifdef DEBUG_MEMLOAD
+		printf("MEMMAP: p0x%016" PRIx64 "-0x%016" PRIx64
+		    ", v0x%016" PRIx64 "-0x%016" PRIx64
+		    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
+		    ", type=%d(%s)\n",
+		    addr, addr + size - 1,
+		    md->md_virt, md->md_virt + size - 1,
+		    size, md->md_attr, md->md_type,
+		    efi_getmemtype_str(md->md_type));
+#endif
+
+		if (seg_type == -1) {
+			/* first entry */
+		} else if (seg_type == type && end_addr == addr) {
+			/* continuous region */
+			end_addr = addr + size;
+			continue;
+		} else {
+			entry = &efi_e820memmap.bim.entry[n];
+			entry->addr = start_addr;
+			entry->size = end_addr - start_addr;
+			entry->type = seg_type;
+			if (++n == VM_PHYSSEG_MAX)
+				break;
+		}
+
+		start_addr = addr;
+		end_addr = addr + size;
+		seg_type = type;
+	}
+	if (i > 0 && n < VM_PHYSSEG_MAX) {
+		entry = &efi_e820memmap.bim.entry[n];
+		entry->addr = start_addr;
+		entry->size = end_addr - start_addr;
+		entry->type = seg_type;
+		++n;
+	} else if (n == VM_PHYSSEG_MAX) {
+		printf("WARNING: too many memory segments"
+		    "(increase VM_PHYSSEG_MAX)\n");
+	}
+
+	efi_e820memmap.bim.num = n;
+	efi_e820memmap.bim.common.len =
+	    (intptr_t)&efi_e820memmap.bim.entry[n] - (intptr_t)&efi_e820memmap;
+	efi_e820memmap.bim.common.type = BTINFO_MEMMAP;
+	return &efi_e820memmap.bim;
 }

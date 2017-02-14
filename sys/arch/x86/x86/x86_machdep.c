@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.87 2017/02/10 10:39:36 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.88 2017/02/14 13:23:50 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.87 2017/02/10 10:39:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.88 2017/02/14 13:23:50 nonaka Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -630,62 +630,36 @@ x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 }
 
 static int
-x86_parse_clusters(struct btinfo_common *bi)
+x86_parse_clusters(struct btinfo_memmap *bim)
 {
-	union {
-		struct btinfo_common *common;
-		struct btinfo_memmap *bios;
-		struct btinfo_efimemmap *efi;
-	} bim;
 	uint64_t seg_start, seg_end;
 	uint64_t addr, size;
 	uint32_t type;
-	int x, num;
-	bool efimemmap;
+	int x;
 
-	KASSERT(bi != NULL);
-	bim.common = bi;
-	efimemmap = bi->type == BTINFO_EFIMEMMAP;
-	num = efimemmap ? bim.efi->num : bim.bios->num;
-	KASSERT(num > 0);
+	KASSERT(bim != NULL);
+	KASSERT(bim->num > 0);
 
 #ifdef DEBUG_MEMLOAD
 	printf("MEMMAP: %s MEMORY MAP (%d ENTRIES):\n",
-	    efimemmap ? "UEFI" : "BIOS", num);
+	    lookup_bootinfo(BTINFO_EFIMEMMAP) != NULL ? "UEFI" : "BIOS",
+	    bim->num);
 #endif
 
-	for (x = 0; x < num; x++) {
-		if (efimemmap) {
-			struct efi_md *md = (struct efi_md *)
-			    (bim.efi->memmap + bim.efi->size * x);
-			addr = md->md_phys;
-			size = md->md_pages * EFI_PAGE_SIZE;
-			type = efi_getbiosmemtype(md->md_type, md->md_attr);
+	for (x = 0; x < bim->num; x++) {
+		addr = bim->entry[x].addr;
+		size = bim->entry[x].size;
+		type = bim->entry[x].type;
 #ifdef DEBUG_MEMLOAD
-			printf("MEMMAP: p0x%016" PRIx64 "-0x%016" PRIx64
-			    ", v0x%016" PRIx64 "-0x%016" PRIx64
-			    ", size=0x%016" PRIx64 ", attr=0x%016" PRIx64
-			    ", type=%d(%s)\n",
-			    addr, addr + size - 1,
-			    md->md_virt, md->md_virt + size - 1,
-			    size, md->md_attr, md->md_type,
-			    efi_getmemtype_str(md->md_type));
+		printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
+		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		    addr, addr + size - 1, size, type,
+		    (type == BIM_Memory) ?  "Memory" :
+		    (type == BIM_Reserved) ?  "Reserved" :
+		    (type == BIM_ACPI) ? "ACPI" :
+		    (type == BIM_NVS) ? "NVS" :
+		    "unknown");
 #endif
-		} else {
-			addr = bim.bios->entry[x].addr;
-			size = bim.bios->entry[x].size;
-			type = bim.bios->entry[x].type;
-#ifdef DEBUG_MEMLOAD
-			printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
-			    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
-			    addr, addr + size - 1, size, type,
-			    (type == BIM_Memory) ?  "Memory" :
-			    (type == BIM_Reserved) ?  "Reserved" :
-			    (type == BIM_ACPI) ? "ACPI" :
-			    (type == BIM_NVS) ? "NVS" :
-			    "unknown");
-#endif
-		}
 
 		/* If the segment is not memory, skip it. */
 		switch (type) {
@@ -842,7 +816,7 @@ x86_load_region(uint64_t seg_start, uint64_t seg_end)
 void
 init_x86_clusters(void)
 {
-	struct btinfo_memmap *bim = NULL;
+	struct btinfo_memmap *bim;
 	struct btinfo_efimemmap *biem;
 
 	/*
@@ -852,18 +826,22 @@ init_x86_clusters(void)
 #ifdef i386
 	extern int biosmem_implicit;
 	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
-	if (biem == NULL)
+	if (biem != NULL)
+		bim = efi_get_e820memmap();
+	else
 		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
-	    ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0)))
-		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common);
+	    bim != NULL && bim->num > 0)
+		x86_parse_clusters(bim);
 #else
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
-	if (biem == NULL)
+	if (biem != NULL)
+		bim = efi_get_e820memmap();
+	else
 		bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if ((bim != NULL && bim->num > 0) || (biem != NULL && biem->num > 0))
-		x86_parse_clusters(biem != NULL ? &biem->common : &bim->common);
+	if (bim != NULL && bim->num > 0)
+		x86_parse_clusters(bim);
 #else
 	(void)bim, (void)biem;
 #endif
