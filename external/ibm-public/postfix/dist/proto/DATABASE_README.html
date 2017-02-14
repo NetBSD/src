@@ -313,6 +313,15 @@ private databases are maintained by Postfix daemons. The database
 name as used in "hash:table" is the database file name without the
 ".db" suffix.  </dd>
 
+<dt> <b>inline</b> (read-only) </dt>
+
+<dd> A non-shared, in-memory lookup table. Example: "inline:{
+<i>key=value</i>, { <i>key = text with whitespace or comma</i> }}".
+Key-value pairs are separated by whitespace or comma; whitespace
+after "{" and before "}" is ignored. Inline tables eliminate the
+need to create a database file for just a few fixed elements. See
+also the static: map type. </dd>
+
 <dt> <b>internal</b> </dt>
 
 <dd> A non-shared, in-memory hash table. Its content are lost when
@@ -362,6 +371,18 @@ The file format is described in pcre_table(5). The lookup table
 name as used in "pcre:table" is the name of the regular expression
 file.  </dd>
 
+<dt> <b>pipemap</b> (read-only) </dt>
+
+<dd> A pipeline of lookup tables. Example:
+"pipemap:{<i>type<sub>1</sub>:name<sub>1</sub>, ...,
+type<sub>n</sub>:name<sub>n</sub></i>}".  Each "pipemap:" query is
+given to the first table.  Each lookup result becomes the query for
+the next table in the pipeline, and the last table produces the
+final result.  When any table lookup produces no result, the pipeline
+produces no result.  The first and last characters of the "pipemap:"
+table name must be "{" and "}". Within these, individual maps are
+separated with comma or whitespace.  </dd>
+
 <dt> <b>pgsql</b> (read-only) </dt>
 
 <dd> PostgreSQL database client.  Configuration details are given
@@ -372,6 +393,15 @@ in pgsql_table(5). </dd>
 <dd> Postfix proxymap(8) client for shared access to Postfix
 databases. The lookup table name syntax is "proxy:type:table".
 </dd>
+
+<dt> <b>randmap</b> (read-only) </dt>
+
+<dd> An in-memory table that performs random selection.  Example:
+"randmap:{<i>result<sub>1</sub>. ..., result<sub>n</sub></i>}".
+Each table query returns a random choice from the specified results.
+The first and last characters of the "randmap:" table name must be
+"{" and "}".  Within these, individual maps are separated with comma
+or whitespace.  </dd>
 
 <dt> <b>regexp</b> (read-only) </dt>
 
@@ -404,7 +434,9 @@ server. See socketmap_table(5) for details.  </dd>
 
 <dd> A table that always returns its name as the lookup result.
 For example, "static:foobar" always returns the string "foobar" as
-lookup result. </dd>
+lookup result. Specify "static:{ <i>text with whitespace</i> }"
+when the result contains whitespace; this form ignores whitespace
+after "{" and before "}". See also the inline: map type.  </dd>
 
 <dt> <b>tcp</b> </dt>
 
@@ -420,6 +452,12 @@ that you don't have to run the postmap(1) command before you can
 use the file, and that texthash: does not detect changes after the
 file is read.  The lookup table name is "texthash:filename", where
 the file name is taken literally; no suffix is appended. </dd>
+
+<dt> <b>unionmap</b> (read-only) </dt>
+
+<dd> A table that sends each query to multiple lookup tables and
+that concatenates all found results, separated by comma. The table
+name syntax is the same as for pipemap tables. </dd>
 
 <dt> <b>unix</b> (read-only) </dt>
 

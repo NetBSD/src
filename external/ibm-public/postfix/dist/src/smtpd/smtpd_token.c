@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_token.c,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_token.c,v 1.1.1.2 2017/02/14 01:13:43 christos Exp $	*/
 
 /*++
 /* NAME
@@ -163,7 +163,7 @@ static char *smtp_next_token(char *cp, SMTPD_TOKEN *arg)
 
 /* smtpd_token_init - initialize token structures */
 
-static void smtpd_token_init(char *ptr, int count)
+static void smtpd_token_init(char *ptr, ssize_t count)
 {
     SMTPD_TOKEN *arg;
     int     n;
