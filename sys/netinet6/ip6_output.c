@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.182 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.183 2017/02/14 03:05:06 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.182 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.183 2017/02/14 03:05:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -176,6 +176,31 @@ ip6_handle_rthdr(struct ip6_rthdr *rh, struct ip6_hdr *ip6)
 		 error = EINVAL;
 	}
 
+	return error;
+}
+
+/*
+ * Send an IP packet to a host.
+ */
+int
+ip6_if_output(struct ifnet * const ifp, struct ifnet * const origifp,
+    struct mbuf * const m,
+    const struct sockaddr_in6 * const dst, const struct rtentry *rt)
+{
+	int error = 0;
+
+	if (rt != NULL) {
+		error = rt_check_reject_route(rt, ifp);
+		if (error != 0) {
+			m_freem(m);
+			return error;
+		}
+	}
+
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
+		error = if_output_lock(ifp, origifp, m, sin6tocsa(dst), rt);
+	else
+		error = if_output_lock(ifp, ifp, m, sin6tocsa(dst), rt);
 	return error;
 }
 
@@ -844,7 +869,7 @@ ip6_output(
 		KASSERT(dst != NULL);
 		if (__predict_true(!tso ||
 		    (ifp->if_capenable & IFCAP_TSOv6) != 0)) {
-			error = nd6_output(ifp, origifp, m, dst, rt);
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
 		} else {
 			error = ip6_tso_output(ifp, origifp, m, dst, rt);
 		}
@@ -1030,7 +1055,7 @@ sendorfree:
 			}
 			pserialize_read_exit(s);
 			KASSERT(dst != NULL);
-			error = nd6_output(ifp, origifp, m, dst, rt);
+			error = ip6_if_output(ifp, origifp, m, dst, rt);
 		} else
 			m_freem(m);
 	}
