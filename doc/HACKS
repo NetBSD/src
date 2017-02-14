@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.178 2017/02/13 22:31:09 rin Exp $
+# $NetBSD: HACKS,v 1.179 2017/02/14 09:00:03 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -546,6 +546,15 @@ port	vax
 	descr
 		cc1 aborts due to SIGILL when compiling the sample code attached
 		to the PR. As a workaround, compile dse.c with -O0.
+	kcah
+
+	hack	libssh miscompile
+	date	Tue Feb 14 17:58:06 JST 2017
+	who	rin
+	file	crypto/external/bsd/openssh/lib/Makefile : 1.20
+	descr
+		umac.c is miscompiled, which results in login to/from external
+		hosts via ssh fails.
 	kcah
 
 port	arm
