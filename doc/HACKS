@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.179 2017/02/14 09:00:03 rin Exp $
+# $NetBSD: HACKS,v 1.180 2017/02/14 09:05:17 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -555,6 +555,14 @@ port	vax
 	descr
 		umac.c is miscompiled, which results in login to/from external
 		hosts via ssh fails.
+	kcah
+
+	hack	mandoc miscompile
+	date	Tue Feb 14 18:03:05 JST 2017
+	who	rin
+	file	external/bsd/mdocml/lib/libmandoc/Makefile : 1.8
+	descr
+		mandoc(1) receives SIGILL in in_line_argn() from mdoc_macro.c.
 	kcah
 
 port	arm
