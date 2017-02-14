@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.226 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.227 2017/02/14 03:05:06 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.226 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.227 2017/02/14 03:05:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1992,7 +1992,7 @@ nd6_llinfo_release_pkts(struct llentry *ln, struct ifnet *ifp)
 		 * just set the 2nd argument as the 
 		 * 1st one.
 		 */
-		nd6_output(ifp, ifp, m_hold, &sin6, NULL);
+		ip6_if_output(ifp, ifp, m_hold, &sin6, NULL);
 	}
 	LLE_WLOCK(ln);
 }
@@ -2265,59 +2265,23 @@ nd6_slowtimo(void *ignored_arg)
 #endif
 }
 
+/*
+ * Return 0 if a neighbor cache is found. Return EWOULDBLOCK if a cache is not
+ * found and trying to resolve a neighbor; in this case the mbuf is queued in
+ * the list. Otherwise return errno after freeing the mbuf.
+ */
 int
-nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
-    const struct sockaddr_in6 *dst, struct rtentry *rt)
+nd6_resolve(struct ifnet *ifp, const struct rtentry *rt, struct mbuf *m,
+    const struct sockaddr *_dst, uint8_t *lldst, size_t dstsize)
 {
-#define senderr(e) { error = (e); goto bad;}
 	struct llentry *ln = NULL;
-	int error = 0;
 	bool created = false;
+	const struct sockaddr_in6 *dst = satocsin6(_dst);
 
-	if (rt != NULL) {
-		error = rt_check_reject_route(rt, ifp);
-		if (error != 0) {
-			m_freem(m);
-			return error;
-		}
-	}
-
-	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
-		goto sendpkt;
-
-	if (nd6_need_cache(ifp) == 0)
-		goto sendpkt;
-
-	if (rt != NULL && (rt->rt_flags & RTF_GATEWAY) != 0) {
-		struct sockaddr_in6 *gw6 = satosin6(rt->rt_gateway);
-		int s;
-
-		/* XXX remain the check to keep the original behavior. */
-		/*
-		 * We skip link-layer address resolution and NUD
-		 * if the gateway is not a neighbor from ND point
-		 * of view, regardless of the value of nd_ifinfo.flags.
-		 * The second condition is a bit tricky; we skip
-		 * if the gateway is our own address, which is
-		 * sometimes used to install a route to a p2p link.
-		 */
-		s = pserialize_read_enter();
-		if (!nd6_is_addr_neighbor(gw6, ifp) ||
-		    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
-			/*
-			 * We allow this kind of tricky route only
-			 * when the outgoing interface is p2p.
-			 * XXX: we may need a more generic rule here.
-			 */
-			if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
-				pserialize_read_exit(s);
-				senderr(EHOSTUNREACH);
-			}
-
-			pserialize_read_exit(s);
-			goto sendpkt;
-		}
-		pserialize_read_exit(s);
+	/* discard the packet if IPv6 operation is disabled on the interface */
+	if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
+		m_freem(m);
+		return ENETDOWN; /* better error? */
 	}
 
 	/*
@@ -2328,29 +2292,37 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	 */
 
 	/* Look up the neighbor cache for the nexthop */
+	ln = nd6_lookup(&dst->sin6_addr, ifp, false);
+
+	if (ln != NULL && (ln->la_flags & LLE_VALID) != 0) {
+		KASSERT(ln->ln_state > ND6_LLINFO_INCOMPLETE);
+		/* Fast path */
+		memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
+		LLE_RUNLOCK(ln);
+		return 0;
+	}
+	if (ln != NULL)
+		LLE_RUNLOCK(ln);
+
+	/* Slow path */
 	ln = nd6_lookup(&dst->sin6_addr, ifp, true);
-	if ((ln == NULL) && nd6_is_addr_neighbor(dst, ifp))  {
+	if (ln == NULL && nd6_is_addr_neighbor(dst, ifp))  {
 		/*
 		 * Since nd6_is_addr_neighbor() internally calls nd6_lookup(),
 		 * the condition below is not very efficient.  But we believe
 		 * it is tolerable, because this should be a rare case.
 		 */
 		ln = nd6_create(&dst->sin6_addr, ifp);
-		if (ln != NULL)
-			created = true;
-	}
-
-	if (ln == NULL) {
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0 &&
-		    !(ND_IFINFO(ifp)->flags & ND6_IFF_PERFORMNUD)) {
+		if (ln == NULL) {
 			char ip6buf[INET6_ADDRSTRLEN];
 			log(LOG_DEBUG,
-			    "nd6_output: can't allocate llinfo for %s "
-			    "(ln=%p, rt=%p)\n",
+			    "%s: can't allocate llinfo for %s "
+			    "(ln=%p, rt=%p)\n", __func__,
 			    IN6_PRINT(ip6buf, &dst->sin6_addr), ln, rt);
-			senderr(EIO);	/* XXX: good error? */
+			m_freem(m);
+			return ENOBUFS;
 		}
-		goto sendpkt;	/* send anyway */
+		created = true;
 	}
 
 	LLE_WLOCK_ASSERT(ln);
@@ -2374,14 +2346,6 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 		ln->ln_state = ND6_LLINFO_DELAY;
 		nd6_llinfo_settimer(ln, nd6_delay * hz);
 	}
-
-	/*
-	 * If the neighbor cache entry has a state other than INCOMPLETE
-	 * (i.e. its link-layer address is already resolved), just
-	 * send the packet.
-	 */
-	if (ln->ln_state > ND6_LLINFO_INCOMPLETE)
-		goto sendpkt;
 
 	/*
 	 * There is a neighbor cache entry, but no ethernet address
@@ -2432,34 +2396,10 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 		LLE_WUNLOCK(ln);
 	}
 
-	error = 0;
-	goto exit;
-
-  sendpkt:
-	/* discard the packet if IPv6 operation is disabled on the interface */
-	if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
-		error = ENETDOWN; /* better error? */
-		goto bad;
-	}
-
-	if (ln != NULL)
-		LLE_WUNLOCK(ln);
-
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
-		error = if_output_lock(ifp, origifp, m, sin6tocsa(dst), rt);
-	else
-		error = if_output_lock(ifp, ifp, m, sin6tocsa(dst), rt);
-	goto exit;
-
-  bad:
-	if (m != NULL)
-		m_freem(m);
-  exit:
 	if (created)
 		nd6_gc_neighbors(LLTABLE6(ifp), &dst->sin6_addr);
 
-	return error;
-#undef senderr
+	return EWOULDBLOCK;
 }
 
 int
@@ -2540,68 +2480,6 @@ nd6_rem_ifa_lle(struct in6_ifaddr *ia)
 	memcpy(&mask, &ia->ia_prefixmask, sizeof(ia->ia_prefixmask));
 	lltable_prefix_free(AF_INET6, sin6tosa(&addr), sin6tosa(&mask),
 	    LLE_STATIC);
-}
-
-int
-nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
-    struct mbuf *m, const struct sockaddr *dst, uint8_t *lldst,
-    size_t dstsize)
-{
-	struct llentry *ln;
-
-	if (m->m_flags & M_MCAST) {
-		switch (ifp->if_type) {
-		case IFT_ETHER:
-		case IFT_FDDI:
-			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
-			    lldst);
-			return 1;
-		case IFT_IEEE1394:
-			memcpy(lldst, ifp->if_broadcastaddr,
-			    MIN(dstsize, ifp->if_addrlen));
-			return 1;
-		case IFT_ARCNET:
-			*lldst = 0;
-			return 1;
-		default:
-			m_freem(m);
-			return 0;
-		}
-	}
-
-	/*
-	 * the entry should have been created in nd6_store_lladdr
-	 */
-	ln = nd6_lookup(&satocsin6(dst)->sin6_addr, ifp, false);
-	if ((ln == NULL) || !(ln->la_flags & LLE_VALID)) {
-		if (ln != NULL)
-			LLE_RUNLOCK(ln);
-		/* this could happen, if we could not allocate memory */
-		m_freem(m);
-		return 0;
-	}
-
-	/* XXX llentry should have addrlen? */
-#if 0
-	sdl = satocsdl(rt->rt_gateway);
-	if (sdl->sdl_alen == 0 || sdl->sdl_alen > dstsize) {
-		char sbuf[INET6_ADDRSTRLEN];
-		char dbuf[LINK_ADDRSTRLEN];
-		/* this should be impossible, but we bark here for debugging */
-		printf("%s: sdl_alen == %" PRIu8 ", if=%s, dst=%s, sdl=%s\n",
-		    __func__, sdl->sdl_alen, if_name(ifp),
-		    IN6_PRINT(sbuf, &satocsin6(dst)->sin6_addr),
-		    DL_PRINT(dbuf, &sdl->sdl_addr));
-		m_freem(m);
-		return 0;
-	}
-#endif
-
-	memcpy(lldst, &ln->ll_addr, MIN(dstsize, ifp->if_addrlen));
-
-	LLE_RUNLOCK(ln);
-
-	return 1;
 }
 
 static void 
