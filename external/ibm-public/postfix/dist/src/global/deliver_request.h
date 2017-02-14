@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_request.h,v 1.1.1.3 2017/02/14 01:13:40 christos Exp $	*/
+/*	$NetBSD: deliver_request.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _DELIVER_REQUEST_H_INCLUDED_
 #define _DELIVER_REQUEST_H_INCLUDED_
