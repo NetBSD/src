@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.157 2017/02/07 22:31:29 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.158 2017/02/14 01:11:27 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -247,6 +247,7 @@
 ./usr/lib/lua
 ./usr/lib/lua/5.3
 ./usr/lib/pkgconfig
+./usr/lib/postfix
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
