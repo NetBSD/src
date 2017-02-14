@@ -49,7 +49,7 @@
 #	at the cost of using more space than some other flat-file
 #	databases.  Read operations are memory-mapped for speed.
 #	Write operations are not memory-mapped to avoid silent
-#	curruption due to stray pointer bugs.
+#	corruption due to stray pointer bugs.
 #
 #	Multiple processes can safely update an LMDB database without
 #	serializing requests through the proxymap(8) service.  This
@@ -68,9 +68,8 @@
 #	Every Postfix LMDB database read or write transaction must
 #	be protected from start to end with a shared or exclusive
 #	fcntl(2) lock.  A writer may atomically downgrade an exclusive
-#	lock to a shared lock, but it must acquire an exclusive
-#	lock between updating the database and starting another
-#	write transaction.
+#	lock to a shared lock, but it must hold an exclusive lock
+#	while opening another write transaction.
 #
 #	Note that fcntl(2) locks do not protect transactions within
 #	the same process against each other.  If a program cannot
@@ -112,4 +111,9 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--

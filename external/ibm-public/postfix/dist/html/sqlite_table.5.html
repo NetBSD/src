@@ -107,8 +107,8 @@ SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
                      pressed and returns no results.
 
               The <b>domain</b> parameter described below limits the  input  keys  to
-              addresses in matching domains. When the <b>domain</b> parameter is non-
-              empty, SQL queries for unqualified  addresses  or  addresses  in
+              addresses  in  matching  domains.  When  the <b>domain</b> parameter is
+              non-empty, SQL queries for unqualified addresses or addresses in
               non-matching domains are suppressed and return no results.
 
               This  parameter is available with Postfix 2.2. In prior releases
@@ -173,11 +173,11 @@ SQLITE_TABLE(5)                                                SQLITE_TABLE(5)
 
        <b>domain (default: no domain list)</b>
               This is a list of domain names, paths to files, or dictionaries.
-              When  specified,  only  fully qualified search keys with a *non-
-              empty* localpart and a matching domain are eligible for  lookup:
-              'user'  lookups,  bare  domain lookups and "@domain" lookups are
-              not performed. This can significantly reduce the query  load  on
-              the SQLite server.
+              When   specified,  only  fully  qualified  search  keys  with  a
+              *non-empty* localpart and a matching  domain  are  eligible  for
+              lookup:  'user'  lookups,  bare  domain  lookups  and  "@domain"
+              lookups are not performed. This  can  significantly  reduce  the
+              query load on the SQLite server.
                   domain = postfix.org, <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/searchdomains
 
               It  is best not to use SQL to store the domains eligible for SQL

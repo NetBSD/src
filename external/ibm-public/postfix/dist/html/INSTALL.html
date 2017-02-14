@@ -135,6 +135,19 @@ mantools directory. </p>
 
 <h2> <a name="4">4 - Building on a supported system</a> </h2>
 
+<p> Postfix development happens on FreeBSD and MacOS X, with regular
+tests on Linux (Fedora, Ubuntu) and Solaris. Support for other
+systems relies on feedback from their users, and may not always be
+up-to-date. </p>
+
+<p> OpenBSD is partially supported. The libc resolver does not
+implement the documented "internal resolver options which are [...]
+set by changing fields in the _res structure" (documented in the
+OpenBSD 5.6 resolver(3) manpage). This results in too many DNS
+queries, and false positives for queries that should fail. </p>
+
+<!--
+
 <p> At some point in time, a version of Postfix was supported on: </p>
 
 <blockquote>
@@ -163,18 +176,47 @@ Ultrix 4.x (well, that was long ago) <br>
 
 <p> or something closely resemblant. </p>
 
-<h3>4.1 - Getting started</h3>
+-->
 
-<p> On Solaris, the "make" command and other utilities for software
-development are in /usr/ccs/bin, so you MUST have /usr/ccs/bin in
-your command search path. If these files do not exist, install the
-development packages first. See the Solaris FAQ item "<a
-href="http://www.science.uva.nl/pub/solaris/solaris2.html#q6.2">Which
-packages do I need to install to support a C compiler?</a>". </p>
+<p> Overview of topics: </p>
 
-<p> If you need to build Postfix for multiple architectures, use the
-"lndir" command to build a shadow tree with symbolic links to the
-source files. "lndir" is part of X11R6. </p>
+<ul>
+
+<li><a href="#build_first">4.1 - Getting started</a> 
+
+<li><a href="#build_cc">4.2 - What compiler to use</a>
+
+<li><a href="#build_pie">4.3 - Building with Postfix position-independent
+executables (Postfix &ge; 3.0)</a> 
+
+<li><a href="#build_dll">4.4 - Building with Postfix dynamically-linked
+libraries and database plugins (Postfix &ge; 3.0)</a> 
+
+<li><a href="#build_opt">4.5 - Building with optional features</a>
+
+<li><a href="#build_over">4.6 - Overriding built-in parameter default
+settings</a>
+
+<li><a href="#build_other">4.7 - Overriding other compile-time
+features</a>
+
+<li><a href="#build_proc">4.8 - Support for thousands of processes</a>
+
+<li><a href="#build_final">4.9 - Compiling Postfix, at last</a>
+
+</ul>
+
+
+<h3><a name="build_first">4.1 - Getting started</a> </h3>
+
+<p> On Solaris, the "make" command and other development utilities
+are in /usr/ccs/bin, so you MUST have /usr/ccs/bin in your command
+search path. If these files do not exist, you need to install the
+development packages first. </p>
+
+<p> If you need to build Postfix for multiple architectures from a
+single source-code tree, use the "lndir" command to build a shadow
+tree with symbolic links to the source files. </p>
 
 <p> If at any time in the build process you get messages like: "make:
 don't know how to ..." you should be able to recover by running
@@ -199,7 +241,7 @@ $ make tidy
 <p> This will get rid of any system dependencies left over from
 compiling the software elsewhere. </p>
 
-<h3>4.2 - What compiler to use</h3>
+<h3><a name="build_cc">4.2 - What compiler to use</a></h3>
 
 <p> To build with GCC, or with the native compiler if people told me
 that is better for your system, just cd into the top-level Postfix
@@ -227,9 +269,320 @@ $ make
 </pre>
 </blockquote>
 
-<p> and so on. In some cases, optimization is turned off automatically. </p>
+<p> and so on. In some cases, optimization will be turned off
+automatically. </p>
 
-<h3>4.3 - Building with optional features</h3>
+<h3><a name="build_pie">4.3 - Building with Postfix position-independent
+executables (Postfix &ge; 3.0)</a> </h3>
+
+<p> On some systems Postfix can be built with Position-Independent
+Executables. PIE is used by the ASLR exploit mitigation technique
+(ASLR = Address-Space Layout Randomization): </p>
+
+<blockquote>
+<pre>
+$ make makefiles pie=yes ...other arguments...
+</pre>
+</blockquote>
+
+<p> (Specify "make makefiles pie=no" to explicitly disable Postfix
+position-independent executable support). </p>
+
+<p> Postfix PIE support appears to work on Fedora Core 20, Ubuntu
+14.04, FreeBSD 9 and 10, and NetBSD 6 (all with the default system
+compilers). </p>
+
+<p> Whether the "pie=yes" above has any effect depends on the
+compiler.  Some compilers always produce PIE executables, and some
+may even complain that the Postfix build option is redundant. </p>
+
+<h3><a name="build_dll">4.4 - Building with Postfix dynamically-linked
+libraries and database plugins (Postfix &ge; 3.0)</a> </h3>
+
+<p> Postfix dynamically-linked library and database plugin support
+exists for recent versions of Linux, FreeBSD and MacOS X.
+Dynamically-linked library builds may become the default at some
+point in the future. </p>
+
+<p> Overview of topics: </p>
+
+<ul>
+
+<li><a href="#shared_enable">4.4.1 Turning on Postfix dynamically-linked
+library support</a>
+
+<li><a href="#dynamicmaps_enable">4.4.2 Turning on Postfix database-plugin
+support</a>
+
+<li><a href="#shared_custom">4.4.3 Customizing Postfix dynamically-linked
+libraries and database plugins</a>
+
+<li><a href="#shared_tips">4.4.4 Tips for distribution maintainers</a>
+
+</ul>
+
+<p> Note: directories with Postfix dynamically-linked  libraries
+or database plugins should contain only postfix-related files.
+Postfix dynamically-linked libraries and database plugins should
+not be installed in a "public" system directory such as /usr/lib
+or /usr/local/lib.  Linking Postfix dynamically-linked library or
+database-plugin files into non-Postfix programs is not supported.
+Postfix dynamically-linked libraries and database plugins implement
+a Postfix-internal API that changes without maintaining compatibility.
+</p>
+
+<h4><a name="shared_enable"> 4.4.1 Turning on Postfix dynamically-linked
+library support </a></h4>
+
+<p> Postfix can be built with Postfix dynamically-linked libraries
+(files typically named <tt>libpostfix-*.so</tt>). Postfix
+dynamically-linked libraries add minor run-time overhead and result
+in significantly-smaller Postfix executable files. </p>
+
+<p> Specify "shared=yes" on the "make makefiles" command line to
+build Postfix with dynamically-linked library support. </p>
+
+<blockquote>
+<pre>
+$ make makefiles shared=yes ...other arguments...
+$ make
+</pre>
+</blockquote>
+
+<p> (Specify "make makefiles shared=no" to explicitly disable Postfix
+dynamically-linked library support). </p>
+
+<p> This installs dynamically-linked libraries in $<a href="postconf.5.html#shlib_directory">shlib_directory</a>,
+typically /usr/lib/postfix or /usr/local/lib/postfix, with file
+names libpostfix-<i>name</i>.so, where the <i>name</i> is a source-code
+directory name such as "util" or "global".  </p>
+
+<p> See section 4.4.3 "<a href="#shared_custom">Customizing Postfix
+dynamically-linked libraries and database plugins</a>" below for
+how to customize the Postfix dynamically-linked library location,
+including support to upgrade a running mail system safely.  </p>
+
+<h4><a name="dynamicmaps_enable"> 4.4.2 Turning on Postfix
+database-plugin support </a></h4>
+
+<p> Additionally, Postfix can be built to support dynamic loading
+of Postfix database clients (database plugins) with the Debian-style
+dynamicmaps feature. Postfix 3.0 supports dynamic loading of <a href="CDB_README.html">cdb</a>:,
+<a href="ldap_table.5.html">ldap</a>:, <a href="lmdb_table.5.html">lmdb</a>:, <a href="mysql_table.5.html">mysql</a>:, <a href="pcre_table.5.html">pcre</a>:, <a href="pgsql_table.5.html">pgsql</a>:, <a href="DATABASE_README.html#types">sdbm</a>:, and <a href="sqlite_table.5.html">sqlite</a>: database
+clients.  Dynamic loading is useful when you distribute or install
+pre-compiled Postfix packages. </p>
+
+<p> Specify "dynamicmaps=yes" on the "make makefiles" command line
+to build Postfix with support to dynamically load Postfix database
+clients with the Debian-style dynamicmaps feature.
+</p>
+
+<blockquote>
+<pre>
+$ make makefiles dynamicmaps=yes ...other arguments...
+$ make
+</pre>
+</blockquote>
+
+<p> (Specify "make makefiles dynamicmaps=no" to explicitly disable
+Postfix database-plugin support). </p>
+
+<p> This implicitly enables dynamically-linked library support,
+installs the configuration file dynamicmaps.cf in $<a href="postconf.5.html#meta_directory">meta_directory</a>
+(usually, /etc/postfix or /usr/local/etc/postfix), and installs
+database plugins in $<a href="postconf.5.html#shlib_directory">shlib_directory</a> (see above).  Database plugins
+are named postfix-<i>type</i>.so where the <i>type</i> is a database
+type such as "cdb" or "ldap". </p>
+
+<blockquote>
+
+<p> NOTE: The Postfix 3.0 build procedure expects that you specify
+database library dependencies with variables named <a href="CDB_README.html">AUXLIBS_CDB</a>,
+<a href="LDAP_README.html">AUXLIBS_LDAP</a>, etc.  With Postfix 3.0 and later, the old AUXLIBS
+variable still supports building a statically-loaded database client,
+but only the new <a href="CDB_README.html">AUXLIBS_CDB</a> etc. variables support building a
+dynamically-loaded or statically-loaded CDB etc. database client.
+See <a href="CDB_README.html">CDB_README</a>, <a href="LDAP_README.html">LDAP_README</a>, etc. for details.  </p>
+
+<p> Failure to follow this advice will defeat the purpose of dynamic
+database client loading. Every Postfix executable file will have
+database library dependencies. And that was exactly what dynamic
+database client loading was meant to avoid. </p>
+
+</blockquote>
+
+<p> See the next section for how to customize the location and
+version of Postfix database plugins and the location of the file
+dynamicmaps.cf.  </p>
+
+<h4><a name="shared_custom"> 4.4.3 Customizing Postfix dynamically-linked
+libraries and database plugins </a></h4>
+
+<h5> Customizing build-time and run-time options for Postfix
+dynamically-linked libraries and database plugins </h5>
+
+<p> The build-time environment variables SHLIB_CFLAGS, SHLIB_RPATH,
+and SHLIB_SUFFIX provide control over how Postfix libraries and
+plugins are compiled, linked, and named.
+
+<blockquote>
+<pre>
+$ make makefiles SHLIB_CFLAGS=flags SHLIB_RPATH=rpath SHLIB_SUFFIX=suffix ...other arguments...
+$ make
+</pre>
+</blockquote>
+
+<p> See section 4.7 "<a href="#build_other">Overriding other
+compile-time features</a>" below for details. </p>
+
+<h5> Customizing the location of Postfix dynamically-linked libraries
+and database plugins </h5>
+
+<p> As a reminder, the directories with Postfix dynamically-linked
+libraries or database plugins should contain only Postfix-related
+files.  Linking these files into other programs is not supported.
+</p>
+
+<p> To override the default location of Postfix dynamically-linked
+libraries and database plugins specify, for example: </p>
+
+<blockquote>
+<pre>
+$ make makefiles shared=yes <a href="postconf.5.html#shlib_directory">shlib_directory</a>=/usr/local/lib/postfix ...
+</pre>
+</blockquote>
+
+<p> If you intend to upgrade Postfix without stopping the mail
+system, then you should append the Postfix release version to the
+<a href="postconf.5.html#shlib_directory">shlib_directory</a> pathname, to eliminate the possibility that programs
+will link with dynamically-linked libraries or database plugins
+from the wrong Postfix version.  For example: </p>
+
+<blockquote>
+<pre>
+$ make makefiles shared=yes \
+    <a href="postconf.5.html#shlib_directory">shlib_directory</a>=/usr/local/lib/postfix/MAIL_VERSION ...
+</pre>
+</blockquote>
+
+<p> The command "make makefiles name=value..." will replace the
+string MAIL_VERSION at the end of a configuration parameter value
+with the Postfix release version. Do not try to specify something
+like $<a href="postconf.5.html#mail_version">mail_version</a> on this command line. This produces inconsistent
+results with different versions of the make(1) command.  </p>
+
+<p> You can change the <a href="postconf.5.html#shlib_directory">shlib_directory</a> setting after Postfix is
+built, with "make install" or "make upgrade". However, you may have
+to run ldconfig if you change <a href="postconf.5.html#shlib_directory">shlib_directory</a> after Postfix is built
+(the symptom is that Postfix programs fail because the run-time
+linker cannot find the files libpostfix-*.so).  No ldconfig command
+is needed if you keep the files libpostfix-*.so in the compiled-in
+default $<a href="postconf.5.html#shlib_directory">shlib_directory</a> location. </p>
+
+<blockquote>
+<pre>
+# make upgrade <a href="postconf.5.html#shlib_directory">shlib_directory</a>=/usr/local/lib/postfix ...
+# make install <a href="postconf.5.html#shlib_directory">shlib_directory</a>=/usr/local/lib/postfix ...
+</pre>
+</blockquote>
+
+<p> To append the Postfix release version to the pathname if you
+intend to upgrade Postfix without stopping the mail system:  </p>
+
+<blockquote>
+<pre>
+# make upgrade <a href="postconf.5.html#shlib_directory">shlib_directory</a>=/usr/local/lib/postfix/MAIL_VERSION ...
+# make install <a href="postconf.5.html#shlib_directory">shlib_directory</a>=/usr/local/lib/postfix/MAIL_VERSION ...
+</pre>
+</blockquote>
+
+<p> See also the comments above for appending MAIL_VERSION with
+the "make makefiles" command. </p>
+
+<h5> Customizing the location of dynamicmaps.cf and other files
+</h5>
+
+<p> The <a href="postconf.5.html#meta_directory">meta_directory</a> parameter has the same default setting as
+the <a href="postconf.5.html#config_directory">config_directory</a> parameter, typically /etc/postfix or
+/usr/local/etc/postfix. </p>
+
+<p> You can override the default <a href="postconf.5.html#meta_directory">meta_directory</a> location at compile
+time or after Postfix is built. To override the default location
+at compile time specify, for example: </p>
+
+<blockquote>
+<pre>
+% make makefiles <a href="postconf.5.html#meta_directory">meta_directory</a>=/usr/libexec/postfix ...
+</pre>
+</blockquote>
+
+<p> Here is a tip if you want to make a pathname dependent on the
+Postfix release version: the command "make makefiles name=value..."
+will replace the string MAIL_VERSION at the end of a configuration
+parameter value with the Postfix release version. Do not try to
+specify something like $<a href="postconf.5.html#mail_version">mail_version</a> on this command line. This
+produces inconsistent results with different versions of the make(1)
+command.  </p>
+
+<p> You can override the <a href="postconf.5.html#meta_directory">meta_directory</a> setting after Postfix is
+built, with "make install" or "make upgrade". </p>
+
+<blockquote>
+<pre>
+# make upgrade <a href="postconf.5.html#meta_directory">meta_directory</a>=/usr/libexec/postfix ...
+# make install <a href="postconf.5.html#meta_directory">meta_directory</a>=/usr/libexec/postfix ...
+</pre>
+</blockquote>
+
+<p> As with the command "make makefiles, the command "make
+install/upgrade name=value..." will replace the string MAIL_VERSION
+at the end of a configuration parameter value with the Postfix
+release version.  Do not try to specify something like $<a href="postconf.5.html#mail_version">mail_version</a>
+on this command line. This produces inconsistent results with
+different versions of the make(1) command.  </p>
+
+<h4><a name="shared_tips"> 4.4.4 Tips for distribution maintainers
+</a></h4>
+
+<ul>
+
+<li> <p> The <a href="postconf.5.html#shlib_directory">shlib_directory</a> parameter setting also provides the
+default directory for database plugin files with a relative pathname
+in the file dynamicmaps.cf. </p>
+
+<li> <p> The <a href="postconf.5.html#meta_directory">meta_directory</a> parameter specifies the location of the
+files dynamicmaps.cf, postfix-files, and some multi-instance template
+files. The <a href="postconf.5.html#meta_directory">meta_directory</a> parameter has the same default value as
+the <a href="postconf.5.html#config_directory">config_directory</a> parameter (typically, /etc/postfix or
+/usr/local/etc/postfix). For backwards compatibility with Postfix
+2.6 .. 2.11, specify "<a href="postconf.5.html#meta_directory">meta_directory</a> = $<a href="postconf.5.html#daemon_directory">daemon_directory</a>" in <a href="postconf.5.html">main.cf</a>
+before installing or upgrading Postfix, or specify "<a href="postconf.5.html#meta_directory">meta_directory</a>
+= /path/name" on the "make makefiles", "make install" or "make
+upgrade" command line.  </p>
+
+<li> <p> The configuration file dynamicmaps.cf will automatically
+include files under the directory dynamicmaps.cf.d, just like the
+configuration file postfix-files will automatically include files
+under the directory postfix-files.d.  Thanks to this, you can install
+or deinstall a database plugin package without having to edit
+postfix-files or dynamicmaps.cf. Instead, you give that plugin its
+own configuration files dynamicmaps.cf.d and postfix-files.d, and
+you add or remove those configuration files along with the database
+plugin dynamically-linked object.  </p>
+
+<li> <p> Each configuration file under the directory dynamicmaps.cf.d
+must have the same format as the configuration file dynamicmaps.cf.
+There is no requirement that these configuration file *names* have a
+specific format.  </p>
+
+<li> <p> Each configuration file under the directory postfix-files.d
+must have the same format as the configuration file postfix-files.
+There is no requirement that these configuration file *names* have a
+specific format.  </p>
+
+</ul>
+
+<h3><a name="build_opt">4.5 - Building with optional features</a></h3>
 
 By default, Postfix builds as a mail system with relatively few
 bells and whistles. Support for third-party databases etc.
@@ -277,7 +630,77 @@ Postfix 2.2 </td> </tr>
 systems that have IPv6 support. See the <a href="IPV6_README.html">IPV6_README</a> file for details.
 </p>
 
-<h3>4.4 - Overriding built-in parameter default settings</h3>
+<h3><a name="build_over">4.6 - Overriding built-in parameter default
+settings</a></h3>
+
+<h4>4.6.1 - Postfix 3.0 and later </h4>
+
+<p> All Postfix configuration parameters can be changed by editing
+a Postfix configuration file, except for one: the parameter that
+specifies the location of Postfix configuration files. In order to
+build Postfix with a configuration directory other than /etc/postfix,
+use: </p>
+
+<blockquote>
+<pre>
+$ make makefiles <a href="postconf.5.html#config_directory">config_directory</a>=/some/where ...other arguments...
+$ make
+</pre>
+</blockquote>
+
+<p> The command "make makefiles name=value ..." will replace the
+string MAIL_VERSION at the end of a configuration parameter value
+with the Postfix release version. Do not try to specify something
+like $<a href="postconf.5.html#mail_version">mail_version</a> on this command line. This produces inconsistent
+results with different versions of the make(1) command.  </p>
+
+<p> Parameters whose defaults can be specified in this way are
+listed below. See the <a href="postconf.5.html">postconf(5)</a> manpage for a description
+(command: "<tt>nroff -man man/man5/postconf.5 | less</tt>").  </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th>parameter name</th>  <th>typical default</th> </tr>
+
+<tr> <td><a href="postconf.5.html#command_directory">command_directory</a></td> <td>/usr/sbin</td> </tr>
+
+<tr> <td><a href="postconf.5.html#config_directory">config_directory</a></td> <td>/etc/postfix</td> </tr>
+
+<tr> <td><a href="postconf.5.html#default_database_type">default_database_type</a></td> <td>hash</td> </tr>
+
+<tr> <td><a href="postconf.5.html#daemon_directory">daemon_directory</a></td> <td>/usr/libexec/postfix</td> </tr>
+
+<tr> <td><a href="postconf.5.html#data_directory">data_directory</a></td> <td>/var/lib/postfix</td> </tr>
+
+<tr> <td><a href="postconf.5.html#html_directory">html_directory</a></td> <td>no</td> </tr>
+
+<tr> <td><a href="postconf.5.html#mail_spool_directory">mail_spool_directory</a></td> <td>/var/mail</td> </tr>
+
+<tr> <td><a href="postconf.5.html#mailq_path">mailq_path</a></td> <td>/usr/bin/mailq</td> </tr>
+
+<tr> <td><a href="postconf.5.html#manpage_directory">manpage_directory</a></td> <td>/usr/local/man</td> </tr>
+
+<tr> <td><a href="postconf.5.html#meta_directory">meta_directory</a></td> <td>/etc/postfix</td> </tr>
+
+<tr> <td><a href="postconf.5.html#newaliases_path">newaliases_path</a></td> <td>/usr/bin/newaliases</td> </tr>
+
+<tr> <td>openssl_path</td> <td>openssl</td> </tr>
+
+<tr> <td><a href="postconf.5.html#queue_directory">queue_directory</a></td> <td>/var/spool/postfix</td> </tr>
+
+<tr> <td><a href="postconf.5.html#readme_directory">readme_directory</a></td> <td>no</td> </tr>
+
+<tr> <td><a href="postconf.5.html#sendmail_path">sendmail_path</a></td> <td>/usr/sbin/sendmail</td> </tr>
+
+<tr> <td><a href="postconf.5.html#shlib_directory">shlib_directory</a></td> <td>/usr/lib/postfix</td> </tr>
+
+</table>
+
+</blockquote>
+
+<h4>4.6.2 - All Postfix versions </h4>
 
 <p> All Postfix configuration parameters can be changed by editing
 a Postfix configuration file, except for one: the parameter that
@@ -295,7 +718,9 @@ $ make
 <p> IMPORTANT: Be sure to get the quotes right. These details matter
 a lot. </p>
 
-<p> Parameters whose defaults can be specified in this way are: </p>
+<p> Parameters whose defaults can be specified in this way are
+listed below. See the <a href="postconf.5.html">postconf(5)</a> manpage for a description
+(command: "<tt>nroff -man man/man5/postconf.5 | less</tt>").  </p>
 
 <blockquote>
 
@@ -347,7 +772,8 @@ default</th> </tr>
 <p> Note: the <a href="postconf.5.html#data_directory">data_directory</a> parameter (for caches and pseudo-random
 numbers) was introduced with Postfix version 2.5. </p>
 
-<h3>4.5 - Overriding other compile-time features</h3>
+<h3><a name="build_other">4.7 - Overriding other compile-time
+features</a></h3>
 
 <p> The general method to override Postfix compile-time features
 is as follows: </p>
@@ -366,7 +792,10 @@ $ make
 <tr> <th colspan="2"> Name/Value </th> <th> Description </th> </tr>
 
 <tr> <td colspan="2"> AUXLIBS="object_library..."</td> <td> Specifies
-one or more non-default object libraries. </td> </tr>
+one or more non-default object libraries. Postfix 3.0 and later
+specify some of their database library dependencies with <a href="CDB_README.html">AUXLIBS_CDB</a>,
+<a href="LDAP_README.html">AUXLIBS_LDAP</a>, <a href="LMDB_README.html">AUXLIBS_LMDB</a>, <a href="MYSQL_README.html">AUXLIBS_MYSQL</a>, <a href="PCRE_README.html">AUXLIBS_PCRE</a>, <a href="PGSQL_README.html">AUXLIBS_PGSQL</a>,
+<a href="SDBM_README.html">AUXLIBS_SDBM</a>, and <a href="SQLITE_README.html">AUXLIBS_SQLITE</a>, respectively. </td> </tr>
 
 <tr> <td colspan="2"> CC=compiler_command</td> <td> Specifies a
 non-default compiler. On many systems, the default is <tt>gcc</tt>.
@@ -381,7 +810,11 @@ off Postfix features at compile time:</td> </tr>
 DB support. By default, Berkeley DB support is compiled in on
 platforms that are known to support this feature. If you override
 this, then you probably should also override DEF_DB_TYPE as described
-in section 4.4.  </td> </tr>
+in section 4.6.  </td> </tr>
+
+<tr> <td> </td> <td> -DNO_DNSSEC </td> <td> Do not build with DNSSEC
+support, even if the resolver library appears to support it. </td>
+</tr>
 
 <tr> <td> </td> <td> -DNO_DEVPOLL </td> <td> Do not build with
 Solaris <tt>/dev/poll</tt> support. By default, <tt>/dev/poll</tt>
@@ -391,6 +824,15 @@ this feature.  </td> </tr>
 <tr> <td> </td> <td> -DNO_EPOLL </td> <td> Do not build with Linux
 EPOLL support.  By default, EPOLL support is compiled in on platforms
 that are known to support this feature. </td> </tr>
+
+<tr> <td> </td> <td> -DNO_EAI </td> <td> Do not build with EAI
+(SMTPUTF8) support. By default, EAI support is compiled in when 
+the "icuuc" library and header files are found.  </td> </tr>
+
+<tr> <td> </td> <td> -DNO_INLINE </td> <td> Do not require support
+for C99 "inline" functions. Instead, implement argument typechecks
+for non-printf/scanf-like functions with ternary operators and
+unreachable code. </td> </tr>
 
 <tr> <td> </td> <td> -DNO_IPV6 </td> <td> Do not build with IPv6
 support. By default, IPv6 support is compiled in on platforms that
@@ -425,21 +867,35 @@ By default, Postfix uses <tt>sigsetjmp()/siglongjmp()</tt> when
 they are known to be available. </td> </tr>
 
 <tr> <td colspan="2"> DEBUG=debug_level </td> <td> Specifies a
-non-default compiler debugging level. The default is <tt>-g</tt>.
+non-default compiler debugging level. The default is "<tt>-g</tt>".
 Specify DEBUG= to turn off debugging. </td> </tr>
 
 <tr> <td colspan="2"> OPT=optimization_level </td> <td> Specifies
-a non-default optimization level. The default is -O.  Specify OPT=
-to turn off optimization. </td> </tr>
+a non-default optimization level. The default is "<tt>-O</tt>".
+Specify OPT= to turn off optimization. </td> </tr>
+
+<tr> <td colspan="2"> SHLIB_CFLAGS=flags </td> <td> Specifies
+non-default compiler options for building Postfix dynamically-linked
+libraries and database plugins. The typical default is "-fPIC".
+</td> </tr>
+
+<tr> <td colspan="2"> SHLIB_RPATH=rpath </td> <td> Specifies
+a non-default runpath for Postfix dynamically-linked libraries. The
+typical default is "'-Wl,-rpath,${SHLIB_DIR}'". </td> </tr>
+
+<tr> <td colspan="2"> SHLIB_SUFFIX=suffix </td> <td> Specifies
+a non-default suffix for Postfix dynamically-linked libraries and
+database plugins.  The typical default is "<tt>.so</tt>". </td>
+</tr>
 
 <tr> <td colspan="2"> WARN="warning_flags..." </td> <td> Specifies
-non-default <tt>gcc</tt> compiler warning options for use when
-"<tt>make</tt>" is invoked in a source subdirectory only. </td>
+non-default compiler warning options for use when "<tt>make</tt>"
+is invoked in a source subdirectory only. </td>
 </tr>
 
 </table>
 
-<h3>4.6 - Support for thousands of processes</h3>
+<h3><a name="build_proc">4.8 - Support for thousands of processes</a></h3>
 
 <p> The number of connections that Postfix can manage simultaneously
 is limited by the number of processes that it can run.  This number
@@ -487,7 +943,7 @@ operating system is configured to handle thousands of connections.
 See the <a href="TUNING_README.html">TUNING_README</a> guide for examples of how to increase the
 number of open sockets or files. </p>
 
-<h3>4.7 - Compiling Postfix, at last</h3>
+<h3><a name="build_final">4.9 - Compiling Postfix, at last</a></h3>
 
 <p> If the command </p>
 
@@ -635,6 +1091,17 @@ pathnames that end in ".postfix"</b>. </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a> file from a previous installation. If the file
 does not exist, use interactive installation ("make install")
 instead. </p>
+
+<li> <p> If you specify name=value arguments on the "make install"
+or "make upgrade" command line, then these will take precedence
+over compiled-in default settings or <a href="postconf.5.html">main.cf</a> settings. </p>
+
+<p> The command "make install/upgrade name=value ..." will replace
+the string MAIL_VERSION at the end of a configuration parameter
+value with the Postfix release version. Do not try to specify
+something like $<a href="postconf.5.html#mail_version">mail_version</a> on this command line. This produces
+inconsistent results with different versions of the make(1) command.
+</p>
 
 </ul>
 

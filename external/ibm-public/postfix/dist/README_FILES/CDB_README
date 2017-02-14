@@ -42,7 +42,7 @@ To build Postfix after you have installed tinycdb, use something like:
     % make tidy
     % CDB=../../../tinycdb-0.5
     % make -f Makefile.init makefiles "CCARGS=-DHAS_CDB -I$CDB" \
-        "AUXLIBS=$CDB/libcdb.a"
+        "AUXLIBS_CDB=$CDB/libcdb.a"
     % make
 
 Alternatively, for the D.J.B. version of CDB:
@@ -50,8 +50,19 @@ Alternatively, for the D.J.B. version of CDB:
     % make tidy
     % CDB=../../../cdb-0.75
     % make -f Makefile.init makefiles "CCARGS=-DHAS_CDB -I$CDB" \
-        "AUXLIBS=$CDB/cdb.a $CDB/alloc.a $CDB/buffer.a $CDB/unix.a $CDB/byte.a"
+        "AUXLIBS_CDB=$CDB/cdb.a $CDB/alloc.a $CDB/buffer.a $CDB/unix.a $CDB/
+    byte.a"
     % make
+
+Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_CDB. With Postfix
+3.0 and later, the old AUXLIBS variable still supports building a statically-
+loaded CDB database client, but only the new AUXLIBS_CDB variable supports
+building a dynamically-loaded or statically-loaded CDB database client.
+
+    Failure to use the AUXLIBS_CDB variable will defeat the purpose of dynamic
+    database client loading. Every Postfix executable file will have CDB
+    database library dependencies. And that was exactly what dynamic database
+    client loading was meant to avoid.
 
 After Postfix has been built with cdb support, you can use "cdb" tables
 wherever you can use read-only "hash", "btree" or "dbm" tables. However, the

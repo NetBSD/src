@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.h,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
+/*	$NetBSD: vbuf.h,v 1.1.1.3 2017/02/14 01:13:44 christos Exp $	*/
 
 #ifndef _VBUF_H_INCLUDED_
 #define _VBUF_H_INCLUDED_
@@ -95,8 +95,8 @@ struct VBUF {
 extern int vbuf_get(VBUF *);
 extern int vbuf_put(VBUF *, int);
 extern int vbuf_unget(VBUF *, int);
-extern ssize_t vbuf_read(VBUF *, char *, ssize_t);
-extern ssize_t vbuf_write(VBUF *, const char *, ssize_t);
+extern ssize_t vbuf_read(VBUF *, void *, ssize_t);
+extern ssize_t vbuf_write(VBUF *, const void *, ssize_t);
 
 /* LICENSE
 /* .ad
