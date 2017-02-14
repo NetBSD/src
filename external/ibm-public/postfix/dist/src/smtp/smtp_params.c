@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.1.1.6 2017/02/14 01:13:43 christos Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
 
     static const CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,

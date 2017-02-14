@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.h,v 1.1.1.2 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: mynetworks.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _MYNETWORKS_H_INCLUDED_
 #define _MYNETWORKS_H_INCLUDED_

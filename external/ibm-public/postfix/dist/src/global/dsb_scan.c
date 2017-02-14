@@ -1,4 +1,4 @@
-/*	$NetBSD: dsb_scan.c,v 1.1.1.2 2017/02/14 01:13:40 christos Exp $	*/
+/*	$NetBSD: dsb_scan.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 /*++
 /* NAME
