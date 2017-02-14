@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.25 2017/02/09 11:43:32 kre Exp $ */
+/* $NetBSD: if_srt.c,v 1.26 2017/02/14 03:05:06 ozaki-r Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.25 2017/02/09 11:43:32 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26 2017/02/14 03:05:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.25 2017/02/09 11:43:32 kre Exp $");
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
 #include <net/if_types.h>
@@ -240,7 +241,7 @@ srt_if_output(
 	}
 	/* XXX is 0 the right last arg here? */
 	if (to->sa_family == AF_INET6)
-		return nd6_output(r->u.dstifp, r->u.dstifp, m, &r->dst.sin6, 0);
+		return ip6_if_output(r->u.dstifp, r->u.dstifp, m, &r->dst.sin6, 0);
 	return if_output_lock(r->u.dstifp, r->u.dstifp, m, &r->dst.sa, 0);
 }
 

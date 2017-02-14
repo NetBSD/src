@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.116 2017/01/24 07:09:25 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.117 2017/02/14 03:05:06 ozaki-r Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.116 2017/01/24 07:09:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.117 2017/02/14 03:05:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1620,12 +1620,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 */
 	linkmtu = IN6_LINKMTU(ifp);
 	if (mb_copy->m_pkthdr.len <= linkmtu || linkmtu < IPV6_MMTU) {
-		/*
-		 * We could call if_output directly here, but we use
-		 * nd6_output on purpose to see if IPv6 operation is allowed
-		 * on the interface.
-		 */
-		error = nd6_output(ifp, ifp, mb_copy, &dst6, NULL);
+		error = ip6_if_output(ifp, ifp, mb_copy, &dst6, NULL);
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on mif %td err %d\n",
