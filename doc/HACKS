@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.180 2017/02/14 09:05:17 rin Exp $
+# $NetBSD: HACKS,v 1.181 2017/02/14 09:07:35 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -553,8 +553,8 @@ port	vax
 	who	rin
 	file	crypto/external/bsd/openssh/lib/Makefile : 1.20
 	descr
-		umac.c is miscompiled, which results in login to/from external
-		hosts via ssh fails.
+		umac.c is miscompiled, which results in login failure to/from
+		external hosts via ssh.
 	kcah
 
 	hack	mandoc miscompile
