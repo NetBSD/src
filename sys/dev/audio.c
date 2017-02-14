@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.305 2017/02/13 04:47:59 ozaki-r Exp $	*/
+/*	$NetBSD: audio.c,v 1.306 2017/02/14 09:41:29 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.305 2017/02/13 04:47:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.306 2017/02/14 09:41:29 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2169,6 +2169,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
+	grow_mixer_states(sc, 2);
 	mutex_enter(sc->sc_intr_lock);
 	if (flags & FREAD)
 		sc->sc_recopens++;
@@ -2176,7 +2177,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	chan->dev = dev;
 	chan->chan = n;
 	chan->deschan = n;
-	grow_mixer_states(sc, 2);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_audiochan, chan, entries);
 	mutex_exit(sc->sc_intr_lock);
 
