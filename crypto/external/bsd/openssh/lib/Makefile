@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2016/08/02 13:45:13 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2017/02/14 09:00:03 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -114,5 +114,10 @@ COPTS.${f}.c+=	-Wno-pointer-sign
 
 # XXX
 COPTS.channels.c+=	-fno-strict-aliasing
+
+# XXX
+.if ${MACHINE} == "vax"
+COPTS.umac.c+=-O0
+.endif
 
 .include <bsd.lib.mk>
