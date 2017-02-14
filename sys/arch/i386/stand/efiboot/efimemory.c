@@ -1,4 +1,4 @@
-/*	$NetBSD: efimemory.c,v 1.3 2017/02/11 10:13:46 nonaka Exp $	*/
+/*	$NetBSD: efimemory.c,v 1.4 2017/02/14 13:29:09 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,7 +35,15 @@ static const char *memtypes[] = {
 	"available",
 	"reserved",
 	"ACPI reclaimable",
-	"ACPI NVS"
+	"ACPI NVS",
+	"unusable",
+	"disabled",
+	"Persistent",
+	"undefined (8)",
+	"undefined (9)",
+	"undefined (10)",
+	"undefined (11)",
+	"Persistent (Legacy)"
 };
 
 static const char *efimemtypes[] = {
@@ -53,6 +61,7 @@ static const char *efimemtypes[] = {
 	"MemoryMappedIO",
 	"MemoryMappedIOPortSpace",
 	"PalCode",
+	"PersistentMemory",
 };
 
 static int
@@ -74,6 +83,9 @@ getmemtype(EFI_MEMORY_DESCRIPTOR *md)
 	case EfiACPIMemoryNVS:
 		return BIM_NVS;
 
+	case EfiPersistentMemory:
+		return BIM_PMEM;
+
 	case EfiReservedMemoryType:
 	case EfiRuntimeServicesCode:
 	case EfiRuntimeServicesData:
@@ -82,9 +94,9 @@ getmemtype(EFI_MEMORY_DESCRIPTOR *md)
 	case EfiMemoryMappedIOPortSpace:
 	case EfiPalCode:
 	case EfiMaxMemoryType:
+	default:
 		return BIM_Reserved;
 	}
-	return BIM_Reserved;
 }
 
 EFI_MEMORY_DESCRIPTOR *

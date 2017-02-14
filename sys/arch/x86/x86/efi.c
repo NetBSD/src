@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.7 2017/02/14 13:23:50 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.8 2017/02/14 13:29:09 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.7 2017/02/14 13:23:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.8 2017/02/14 13:29:09 nonaka Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -320,6 +320,9 @@ efi_getbiosmemtype(uint32_t type, uint64_t attr)
 	case EFI_MD_TYPE_FIRMWARE:
 		return BIM_NVS;
 
+	case EFI_MD_TYPE_PMEM:
+		return BIM_PMEM;
+
 	case EFI_MD_TYPE_NULL:
 	case EFI_MD_TYPE_RT_CODE:
 	case EFI_MD_TYPE_RT_DATA:
@@ -327,9 +330,9 @@ efi_getbiosmemtype(uint32_t type, uint64_t attr)
 	case EFI_MD_TYPE_IOMEM:
 	case EFI_MD_TYPE_IOPORT:
 	case EFI_MD_TYPE_PALCODE:
+	default:
 		return BIM_Reserved;
 	}
-	return BIM_Reserved;
 }
 
 const char *
@@ -350,6 +353,7 @@ efi_getmemtype_str(uint32_t type)
 		"MemoryMappedIO",
 		"MemoryMappedIOPortSpace",
 		"PalCode",
+		"PersistentMemory",
 	};
 
 	if (type < __arraycount(efimemtypes))

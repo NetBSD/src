@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.4 2017/02/14 13:23:50 nonaka Exp $   */
+/*     $NetBSD: efi.h,v 1.5 2017/02/14 13:29:09 nonaka Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -74,6 +74,7 @@ struct efi_md {
 #define        EFI_MD_TYPE_IOMEM       11      /* Memory-mapped I/O. */
 #define        EFI_MD_TYPE_IOPORT      12      /* I/O port space. */
 #define        EFI_MD_TYPE_PALCODE     13      /* PAL */
+#define        EFI_MD_TYPE_PMEM        14      /* Persistent memory. */
        uint32_t        __pad;
        uint64_t        md_phys;
        uint64_t        md_virt;
