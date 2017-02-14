@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.3 2017/02/09 11:56:40 nonaka Exp $   */
+/*     $NetBSD: efi.h,v 1.4 2017/02/14 13:23:50 nonaka Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -165,6 +165,9 @@ paddr_t            efi_getcfgtblpa(const struct uuid*);
 void              *efi_getcfgtbl(const struct uuid*);
 int                efi_getbiosmemtype(uint32_t, uint64_t);
 const char        *efi_getmemtype_str(uint32_t);
+struct btinfo_memmap;
+struct btinfo_memmap *efi_get_e820memmap(void);
+
 /*
 void efi_boot_finish(void);
 int efi_boot_minimal(uint64_t);
