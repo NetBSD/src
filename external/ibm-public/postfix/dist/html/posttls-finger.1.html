@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
 <title> Postfix manual - posttls-finger(1) </title>
 </head> <body> <pre>
-POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
+POSTTLS-FINGER(1)           General Commands Manual          POSTTLS-FINGER(1)
 
 <b>NAME</b>
        posttls-finger - Probe the TLS properties of an ESMTP or LMTP server.
@@ -39,11 +39,12 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
 
        If TLS negotiation succeeds, the TLS protocol and  cipher  details  are
        reported.  The  server  certificate is then verified in accordance with
-       the policy at the chosen (or default) security level.  With public  CA-
-       based  trust,  when the <b>-L</b> option includes <b>certmatch</b>, (true by default)
-       name matching is  performed  even  if  the  certificate  chain  is  not
-       trusted.   This logs the names found in the remote SMTP server certifi-
-       cate and which if any would match, were the certificate chain  trusted.
+       the policy at the chosen (or  default)  security  level.   With  public
+       CA-based  trust,  when  the  <b>-L</b>  option  includes  <b>certmatch</b>,  (true by
+       default) name matching is performed even if the  certificate  chain  is
+       not  trusted.  This logs the names found in the remote SMTP server cer-
+       tificate and which if any  would  match,  were  the  certificate  chain
+       trusted.
 
        Note:  <a href="posttls-finger.1.html"><b>posttls-finger</b>(1)</a> does not perform any table lookups, so the TLS
        policy table and obsolete per-site tables are not consulted.   It  does
@@ -56,7 +57,7 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
        after  the  specified delay, and <a href="posttls-finger.1.html"><b>posttls-finger</b>(1)</a> then reports whether
        the cached TLS session was re-used.
 
-       When the destination is a load-balancer, it may  be  distributing  load
+       When the destination is a load balancer, it may  be  distributing  load
        between  multiple  server  caches.  Typically,  each server returns its
        unique name in its EHLO response. If, upon reconnecting with <b>-r</b>, a  new
        server  name is detected, another session is cached for the new server,
@@ -64,8 +65,8 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
        5) that can be specified via the <b>-m</b> option.
 
        The  choice  of  SMTP  or LMTP (<b>-S</b> option) determines the syntax of the
-       destination argument. With SMTP, one can specify a service  on  a  non-
-       default  port  as  <i>host</i>:<i>service</i>,  and  disable  MX (mail exchanger) DNS
+       destination argument. With  SMTP,  one  can  specify  a  service  on  a
+       non-default  port  as <i>host</i>:<i>service</i>, and disable MX (mail exchanger) DNS
        lookups with [<i>host</i>] or [<i>host</i>]:<i>port</i>.  The [] form is required  when  you
        specify an IP address instead of a hostname.  An IPv6 address takes the
        form [<b>ipv6:</b><i>address</i>].  The default port  for  SMTP  is  taken  from  the
@@ -126,6 +127,14 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               The  hostname  lookup  methods used for the connection.  See the
               documentation of <a href="postconf.5.html#smtp_host_lookup">smtp_host_lookup</a> for syntax and semantics.
 
+       <b>-k</b> <i>certfile</i> (default: <i>keyfile</i>)
+              File  with  PEM-encoded  TLS  client  certificate  chain.   This
+              defaults to <i>keyfile</i> if one is specified.
+
+       <b>-K</b> <i>keyfile</i> (default: <i>certfile</i>)
+              File  with PEM-encoded TLS client private key.  This defaults to
+              <i>certfile</i> if one is specified.
+
        <b>-l</b> <i>level</i> (default: <b>dane</b> or <b>secure</b>)
               The security level for the connection, default  <b>dane</b>  or  <b>secure</b>
               depending on whether DNSSEC is available.  For syntax and seman-
@@ -162,8 +171,8 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
                      and verbose.
 
               <b>3, ssl-expert</b>
-                     These synonymous values combine debug with ssl-handshake-
-                     packet-dump.  For experts only.
+                     These  synonymous  values  combine  debug  with ssl-hand-
+                     shake-packet-dump.  For experts only.
 
               <b>4, ssl-developer</b>
                      These synonymous values combine ssl-expert with  ssl-ses-
@@ -186,7 +195,7 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               <b>untrusted</b>
                      Logs trust chain verification problems.  This  is  turned
                      on  automatically  at security levels that use peer names
-                     signed by certificate authorities  to  validate  certifi-
+                     signed by Certification Authorities to validate  certifi-
                      cates.   So  while this setting is recognized, you should
                      never need to set it explicitly.
 
@@ -197,8 +206,8 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               <b>certmatch</b>
                      This  logs remote SMTP server certificate matching, show-
                      ing  the  CN  and  each  subjectAltName  and  which  name
-                     matched.   With DANE, logs matching of TLSA record trust-
-                     anchor and end-entity certificates.
+                     matched.    With  DANE,  logs  matching  of  TLSA  record
+                     trust-anchor and end-entity certificates.
 
               <b>cache</b>  This logs session cache operations, showing whether  ses-
                      sion  caching  is  effective with the remote SMTP server.
@@ -216,37 +225,43 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
        <b>-m</b> <i>count</i> (default: <b>5</b>)
               When the <b>-r</b> <i>delay</i> option is specified, the <b>-m</b> option  determines
               the  maximum  number  of reconnect attempts to use with a server
-              behind a load-balacer, to  see  whether  connection  caching  is
+              behind a load balancer, to see  whether  connection  caching  is
               likely  to  be  effective for this destination.  Some MTAs don't
               expose the underlying server identity in  their  EHLO  response;
               with  these servers there will never be more than 1 reconnection
               attempt.
 
+       <b>-M</b> <i>insecure</i><b>_</b><i>mx</i><b>_</b><i>policy</i> (default: <b>dane</b>)
+              The TLS policy for MX hosts with "secure" TLSA records when  the
+              nexthop  destination  security  level is <b>dane</b>, but the MX record
+              was found via an "insecure" MX lookup.  See the <a href="postconf.5.html">main.cf</a> documen-
+              tation for smtp_tls_insecure_mx_policy for details.
+
        <b>-o</b> <i>name=value</i>
-              Specify zero or more times to override the value of the  <a href="postconf.5.html">main.cf</a>
-              parameter  <i>name</i> with <i>value</i>.  Possible use-cases include overrid-
-              ing the values of TLS library  parameters,  or  "<a href="postconf.5.html#myhostname">myhostname</a>"  to
+              Specify  zero or more times to override the value of the <a href="postconf.5.html">main.cf</a>
+              parameter <i>name</i> with <i>value</i>.  Possible use-cases include  overrid-
+              ing  the  values  of  TLS library parameters, or "<a href="postconf.5.html#myhostname">myhostname</a>" to
               configure the SMTP EHLO name sent to the remote server.
 
        <b>-p</b> <i>protocols</i> (default: !SSLv2)
-              List  of  TLS  protocols  that  posttls-finger  will  exclude or
+              List of  TLS  protocols  that  posttls-finger  will  exclude  or
               include.  See <a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> for details.
 
        <b>-P</b> <i>CApath/</i> (default: none)
-              The OpenSSL CApath/  directory  (indexed  via  c_rehash(1))  for
+              The  OpenSSL  CApath/  directory  (indexed  via c_rehash(1)) for
               remote SMTP server certificate verification.  By default no CAp-
               ath is used and no public CAs are trusted.
 
        <b>-r</b> <i>delay</i>
-              With a cachable TLS  session,  disconnect  and  reconnect  after
+              With  a  cacheable  TLS  session, disconnect and reconnect after
               <i>delay</i> seconds. Report whether the session is re-used. Retry if a
-              new server is encountered, up to 5 times or  as  specified  with
-              the  <b>-m</b>  option.  By default reconnection is disabled, specify a
+              new  server  is  encountered, up to 5 times or as specified with
+              the <b>-m</b> option.  By default reconnection is disabled,  specify  a
               positive delay to enable this behavior.
 
-       <b>-S</b>     Disable SMTP; that is, connect to an LMTP  server.  The  default
-              port  for  LMTP over TCP is 24.  Alternative ports can specified
-              by appending "<i>:servicename</i>" or ":<i>portnumber</i>" to the  destination
+       <b>-S</b>     Disable  SMTP;  that  is, connect to an LMTP server. The default
+              port for LMTP over TCP is 24.  Alternative ports  can  specified
+              by  appending "<i>:servicename</i>" or ":<i>portnumber</i>" to the destination
               argument.
 
        <b>-t</b> <i>timeout</i> (default: <b>30</b>)
@@ -254,10 +269,16 @@ POSTTLS-FINGER(1)                                            POSTTLS-FINGER(1)
               reading the remote server's 220 banner.
 
        <b>-T</b> <i>timeout</i> (default: <b>30</b>)
-              The SMTP/LMTP command timeout for EHLO/LHLO, STARTTLS and  QUIT.
+              The SMTP/LMTP command timeout for EHLO/LHLO, STARTTLS and QUIT.
 
-       <b>-v</b>     Enable  verose  Postfix  logging.   Specify  more  than  once to
+       <b>-v</b>     Enable  verbose  Postfix  logging.   Specify  more  than once to
               increase the level of verbose logging.
+
+       <b>-w</b>     Enable outgoing TLS wrapper mode, or  SMTPS  support.   This  is
+              typically  provided  on  port 465 by servers that are compatible
+              with the ad-hoc SMTP in SSL protocol, rather than  the  standard
+              STARTTLS protocol.  The destination <i>domain</i>:<i>port</i> should of course
+              provide such a service.
 
        [<b>inet:</b>]<i>domain</i>[:<i>port</i>]
               Connect via TCP to domain <i>domain</i>, port <i>port</i>. The default port is

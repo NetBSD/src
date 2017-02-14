@@ -126,6 +126,8 @@ same message repeatedly. </p>
 
 <li><a href="#remote_only">Configuring header/body checks for mail from outside users only</a>
 
+<li><a href="#mx_submission">Configuring different header/body checks for MX service and submission service</a>
+
 <li><a href="#domain_except">Configuring header/body checks for mail to some domains only</a>
 
 </ul>
@@ -209,7 +211,9 @@ header/body checks are requested by the source.  Examples of how
 to turn off header/body checks for mail received with <a href="smtpd.8.html">smtpd(8)</a>,
 <a href="qmqpd.8.html">qmqpd(8)</a> or <a href="pickup.8.html">pickup(8)</a> are given below under "<a
 href="#remote_only">Configuring header/body checks for mail from
-outside users only</a>" and "<a href="#domain_except">Configuring
+outside users only</a>", "<a href="#mx_submission">Configuring
+different header/body checks for MX service and submission
+service</a>", and "<a href="#domain_except">Configuring
 header/body checks for mail to some domains only</a>".  </p>
 
 <h2><a name="limitations">Limitations of Postfix header/body checks </a></h2>
@@ -392,6 +396,61 @@ header/body filtering turned on via <a href="postconf.5.html">main.cf</a>. </p>
 </pre>
 
 </ul>
+
+<h2><a name="mx_submission">Configuring different header/body checks for MX service and submission service</a></h2>
+
+<p> If authorized user submissions require different header/body
+checks than mail from remote MTAs, then this is possible as long
+as you have separate mail streams for authorized users and for MX
+service. </p>
+
+<p> The example below assumes that authorized users connect to TCP
+port 587 (submission) or 465 (smtps), and that remote MTAs connect
+to TCP port 25 (smtp). </p>
+
+<p> First, we define a few "user-defined" parameters that will
+override settings for the submission and smtps services. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    msa_cleanup_service_name = msa_cleanup
+    msa_header_checks = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/msa_header_checks
+    msa_body_checks = <a href="pcre_table.5.html">pcre</a>:/etc/postfix/msa_body_checks
+</pre>
+</blockquote>
+
+<p> Next, we define msa_cleanup as a dedicated cleanup service that
+will be used only by the submission and smtps services.  This service
+uses the <a href="postconf.5.html#header_checks">header_checks</a> and <a href="postconf.5.html#body_checks">body_checks</a> overrides that were defined
+above. </p>
+
+<blockquote>
+<pre>
+/etc/postfix.<a href="master.5.html">master.cf</a>:
+    # =================================================================
+    # service     type  private unpriv  chroot  wakeup  maxproc command
+    #                   (yes)   (yes)   (yes)   (never) (100)
+    # =================================================================
+    smtp          inet  n       -       n       -       -       smtpd
+    msa_cleanup   unix  n       -       n       -       0       cleanup
+        -o <a href="postconf.5.html#header_checks">header_checks</a>=$msa_header_checks
+        -o <a href="postconf.5.html#body_checks">body_checks</a>=$msa_body_checks
+    submission    inet  n       -       n       -       -       smtpd
+        -o <a href="postconf.5.html#cleanup_service_name">cleanup_service_name</a>=$msa_cleanup_service_name
+        -o <a href="postconf.5.html#syslog_name">syslog_name</a>=postfix/submission
+        <i>...[see sample <a href="master.5.html">master.cf</a> file for more]...</i>
+    smtps         inet  n       -       n       -       -       smtpd
+        -o <a href="postconf.5.html#cleanup_service_name">cleanup_service_name</a>=$msa_cleanup_service_name
+        -o <a href="postconf.5.html#syslog_name">syslog_name</a>=postfix/smtps
+        -o <a href="postconf.5.html#smtpd_tls_wrappermode">smtpd_tls_wrappermode</a>=yes
+        <i>...[see sample <a href="master.5.html">master.cf</a> file for more]...</i>
+</pre>
+</blockquote>
+
+<p> By keeping the "msa_xxx" parameter settings in <a href="postconf.5.html">main.cf</a>, you
+keep your <a href="master.5.html">master.cf</a> file simple, and you minimize the amount
+of duplication. </p>
 
 <h2><a name="domain_except">Configuring header/body checks for mail to some domains only</a></h2>
 
