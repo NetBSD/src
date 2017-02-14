@@ -7,6 +7,10 @@
 #	\fBpostmap -q "\fIstring\fB" pcre:/etc/postfix/\fIfilename\fR
 #
 #	\fBpostmap -q - pcre:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+#
+#	\fBpostmap -hmq - pcre:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+#
+#	\fBpostmap -bmq - pcre:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting, mail routing, or access control. These tables
@@ -20,9 +24,12 @@
 #	To find out what types of lookup tables your Postfix system
 #	supports use the "\fBpostconf -m\fR" command.
 #
-#	To test lookup tables, use the "\fBpostmap -q\fR" command as
-#	described in the SYNOPSIS above.
-# COMPATIBILITY 
+#	To test lookup tables, use the "\fBpostmap -q\fR" command
+#	as described in the SYNOPSIS above. Use "\fBpostmap -hmq
+#	-\fR <\fIfile\fR" for header_checks(5) patterns, and
+#	"\fBpostmap -bmq -\fR <\fIfile\fR" for body_checks(5)
+#	(Postfix 2.6 and later).
+# COMPATIBILITY
 # .ad
 # .fi
 #	With Postfix version 2.2 and earlier specify "\fBpostmap
@@ -40,9 +47,9 @@
 #	the corresponding \fIresult\fR value.
 # .IP "\fBif /\fIpattern\fB/\fIflags\fR"
 # .IP "\fBendif\fR"
-#	Match the input string against the patterns between \fBif\fR
-#	and \fBendif\fR, if and only if that same input string also matches
-#	\fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+#	If the input string matches /\fIpattern\fR/, then match that
+#	input string against the patterns between \fBif\fR and
+#	\fBendif\fR.  The \fBif\fR..\fBendif\fR can nest.
 # .sp
 #	Note: do not prepend whitespace to patterns inside
 #	\fBif\fR..\fBendif\fR.
@@ -50,9 +57,9 @@
 #	This feature is available in Postfix 2.1 and later.
 # .IP "\fBif !/\fIpattern\fB/\fIflags\fR"
 # .IP "\fBendif\fR"
-#	Match the input string against the patterns between \fBif\fR
-#	and \fBendif\fR, if and only if that same input string does \fBnot\fR
-#	match \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
+#	If the input string does not match /\fIpattern\fR/, then
+#	match that input string against the patterns between \fBif\fR
+#	and \fBendif\fR. The \fBif\fR..\fBendif\fR can nest.
 # .sp
 #	Note: do not prepend whitespace to patterns inside
 #	\fBif\fR..\fBendif\fR.
@@ -195,4 +202,9 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--

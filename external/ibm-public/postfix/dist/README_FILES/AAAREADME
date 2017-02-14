@@ -12,7 +12,9 @@ GGeenneerraall ccoonnffiigguurraattiioonn
   * TLS_README: TLS Encryption and authentication
   * FORWARD_SECRECY_README: TLS Forward Secrecy
   * IPV6_README: IP Version 6 Support
-  * MULTI_INSTANCE_README: Multiple-instance management
+  * IPV6_README: IP Version 6 Support
+  * SMTPUTF8_README: SMTPUTF8 Support
+  * COMPATIBILITY_README: Backwards-Compatibility Safety Net
   * INSTALL: Installation from source code
 
 PPrroobblleemm ssoollvviinngg

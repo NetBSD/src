@@ -30,10 +30,10 @@ LOCAL(8)                                                              LOCAL(8)
        EXTENSION below for a few exceptions.
 
 <b>SYSTEM-WIDE AND USER-LEVEL ALIASING</b>
-       The system administrator can set up one or more  system-wide  <b>sendmail</b>-
-       style alias databases.  Users can have <b>sendmail</b>-style ~/.<b>forward</b> files.
-       Mail for <i>name</i> is delivered  to  the  alias  <i>name</i>,  to  destinations  in
-       ~<i>name</i>/.<b>forward</b>,  to  the  mailbox owned by the user <i>name</i>, or it is sent
+       The system administrator can set  up  one  or  more  system-wide  <b>send-</b>
+       <b>mail</b>-style  alias  databases.  Users can have <b>sendmail</b>-style ~/.<b>forward</b>
+       files.  Mail for <i>name</i> is delivered to the alias <i>name</i>,  to  destinations
+       in ~<i>name</i>/.<b>forward</b>, to the mailbox owned by the user <i>name</i>, or it is sent
        back as undeliverable.
 
        The system administrator can specify a comma/space  separated  list  of
@@ -258,8 +258,8 @@ LOCAL(8)                                                              LOCAL(8)
        In the case of <b>maildir</b> delivery, the local daemon prepends an  optional
        <b>Delivered-To:</b>  header  with  the  final envelope recipient address, and
        prepends an <b>X-Original-To:</b> header with the recipient address  as  given
-       to  Postfix.   The  envelope sender address is available in the <b>Return-</b>
-       <b>Path:</b> header.
+       to   Postfix.    The  envelope  sender  address  is  available  in  the
+       <b>Return-Path:</b> header.
 
 <b>ADDRESS EXTENSION</b>
        The optional <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a></b> configuration parameter specifies  how
@@ -327,9 +327,9 @@ LOCAL(8)                                                              LOCAL(8)
               Whether or not to use the local <a href="postconf.5.html#biff">biff</a> service.
 
        <b><a href="postconf.5.html#expand_owner_alias">expand_owner_alias</a> (no)</b>
-              When  delivering  to  an  alias  "aliasname" that has an "owner-
-              aliasname" companion alias, set the envelope sender  address  to
-              the expansion of the "owner-aliasname" alias.
+              When   delivering   to   an   alias   "aliasname"  that  has  an
+              "owner-aliasname"  companion  alias,  set  the  envelope  sender
+              address to the expansion of the "owner-aliasname" alias.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a> (yes)</b>
               Give  special  treatment  to owner-listname and listname-request
@@ -357,6 +357,13 @@ LOCAL(8)                                                              LOCAL(8)
               Reset  the  <a href="local.8.html"><b>local</b>(8)</a>  delivery  agent's  idea of the owner-alias
               attribute, when delivering mail to a child alias that  does  not
               have its own owner alias.
+
+       Available in Postfix version 3.0 and later:
+
+       <b><a href="postconf.5.html#local_delivery_status_filter">local_delivery_status_filter</a> ($<a href="postconf.5.html#default_delivery_status_filter">default_delivery_status_filter</a>)</b>
+              Optional  filter  for  the <a href="local.8.html"><b>local</b>(8)</a> delivery agent to change the
+              status code or explanatory text of  successful  or  unsuccessful
+              deliveries.
 
 <b>DELIVERY METHOD CONTROLS</b>
        The  precedence  of  <a href="local.8.html"><b>local</b>(8)</a>  delivery  methods  from  high to low is:
@@ -586,6 +593,11 @@ LOCAL(8)                                                              LOCAL(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                       LOCAL(8)
 </pre> </body> </html>
