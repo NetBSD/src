@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: edit_file.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _EDIT_FILE_H_INCLUDED_
 #define _EDIT_FILE_H_INCLUDED_

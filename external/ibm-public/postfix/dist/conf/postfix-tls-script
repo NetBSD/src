@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-tls-script,v 1.1.1.1 2017/02/14 01:13:34 christos Exp $
+#	$NetBSD: postfix-tls-script,v 1.2 2017/02/14 01:16:43 christos Exp $
 #
 
 #++

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvect.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
+/*	$NetBSD: mvect.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
 
 #ifndef _MVECT_H_INCLUDED_
 #define _MVECT_H_INCLUDED_
