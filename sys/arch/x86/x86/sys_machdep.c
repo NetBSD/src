@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.31 2017/02/05 10:42:21 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.32 2017/02/14 09:11:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.31 2017/02/05 10:42:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.32 2017/02/14 09:11:05 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -68,8 +68,23 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.31 2017/02/05 10:42:21 maxv Exp $"
 #include <machine/mtrr.h>
 
 #ifdef __x86_64__
-/* Need to be checked. */
+/*
+ * The code for USER_LDT on amd64 is mostly functional, but it is still not
+ * enabled.
+ *
+ * On amd64 we are allowing only 8-byte-sized entries in the LDT, and we are
+ * not allowing the user to overwrite the existing entries (below LDT_SIZE).
+ * Note that USER_LDT is used only by 32bit applications, under compat_netbsd32.
+ * This is theoretically enough for Wine to work.
+ *
+ * However, letting segment registers have different location breaks amd64's
+ * Thread Local Storage: %fs and %gs must be reloaded when returning to
+ * userland. See the tech-kern@ archive from February 2017. A patch has been
+ * proposed to fix that, but Wine still randomly crashes; it is not clear
+ * whether the issues come from Wine, from netbsd32 or from the patch itself.
+ */
 #undef	USER_LDT
+/* Need to be checked. */
 #undef	PERFCTRS
 #undef	IOPERM
 #else
@@ -168,14 +183,23 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
+#ifdef __x86_64__
+	if (ua->start * sizeof(union descriptor) < LDT_SIZE)
+		return EINVAL;
+#endif
+
 	mutex_enter(&cpu_lock);
 
 	if (pmap->pm_ldt != NULL) {
 		nldt = pmap->pm_ldt_len / sizeof(*lp);
 		lp = pmap->pm_ldt;
 	} else {
+#ifdef __x86_64__
+		nldt = LDT_SIZE / sizeof(*lp);
+#else
 		nldt = NLDT;
-		lp = ldtstore;
+#endif
+		lp = (union descriptor *)ldtstore;
 	}
 
 	if (ua->start > nldt) {
@@ -244,6 +268,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	size_t old_len, new_len;
 	union descriptor *old_ldt, *new_ldt;
 
+#ifdef __x86_64__
+	const size_t min_ldt_size = LDT_SIZE;
+#else
+	const size_t min_ldt_size = NLDT * sizeof(union descriptor);
+#endif
+
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
@@ -253,6 +283,11 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
+#ifdef __x86_64__
+	if (ua->start * sizeof(union descriptor) < LDT_SIZE)
+		return EINVAL;
+#endif
+
 	/* Check descriptors for access violations. */
 	for (i = 0; i < ua->num; i++) {
 		union descriptor *desc = &descv[i];
@@ -261,6 +296,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		case SDT_SYSNULL:
 			desc->sd.sd_p = 0;
 			break;
+#ifdef __x86_64__
+		case SDT_SYS286CGT:
+		case SDT_SYS386CGT:
+			/* We don't allow these on amd64. */
+			return EACCES;
+#else
 		case SDT_SYS286CGT:
 		case SDT_SYS386CGT:
 			/*
@@ -277,6 +318,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 				return EACCES;
 			}
 			break;
+#endif
 		case SDT_MEMEC:
 		case SDT_MEMEAC:
 		case SDT_MEMERC:
@@ -324,7 +366,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	for (;;) {
 		new_len = (ua->start + ua->num) * sizeof(union descriptor);
 		new_len = max(new_len, pmap->pm_ldt_len);
-		new_len = max(new_len, NLDT * sizeof(union descriptor));
+		new_len = max(new_len, min_ldt_size);
 		new_len = round_page(new_len);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_WAITVA);
@@ -347,7 +389,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		old_ldt = NULL;
 		old_len = 0;
 		old_sel = -1;
-		memcpy(new_ldt, ldtstore, NLDT * sizeof(union descriptor));
+		memcpy(new_ldt, ldtstore, min_ldt_size);
 	}
 
 	/* Apply requested changes. */
@@ -768,6 +810,10 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		error = x86_iopl(l, SCARG(uap, parms), retval);
 		break;
 
+#ifdef i386
+	/*
+	 * On amd64, this is done via netbsd32_sysarch.
+	 */
 	case X86_GET_LDT: 
 		error = x86_get_ldt(l, SCARG(uap, parms), retval);
 		break;
@@ -775,6 +821,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	case X86_SET_LDT: 
 		error = x86_set_ldt(l, SCARG(uap, parms), retval);
 		break;
+#endif
 
 	case X86_GET_IOPERM: 
 		error = x86_get_ioperm(l, SCARG(uap, parms), retval);
