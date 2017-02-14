@@ -78,7 +78,7 @@ the following convention:  </p>
 
 EOF
 
-srctoman "$@" | awk '
+srctoman "$@" | sed 's/\\-/-/g' | awk '
 
 NR == 1,/SH "*SEE ALSO"*/ { next }
 

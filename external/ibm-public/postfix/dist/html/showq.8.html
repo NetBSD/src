@@ -13,17 +13,18 @@ SHOWQ(8)                                                              SHOWQ(8)
        <b>showq</b> [generic Postfix daemon options]
 
 <b>DESCRIPTION</b>
-       The  <a href="showq.8.html"><b>showq</b>(8)</a>  daemon reports the Postfix mail queue status.  It is the
-       program that emulates the sendmail `mailq' command.
+       The  <a href="showq.8.html"><b>showq</b>(8)</a> daemon reports the Postfix mail queue status.  The output
+       is meant to be formatted by the <a href="postqueue.1.html">postqueue(1)</a> command,  as  it  emulates
+       the Sendmail `mailq' command.
 
-       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon can also be run in stand-alone mode  by  the  supe-
-       ruser.  This  mode  of operation is used to emulate the `mailq' command
+       The  <a href="showq.8.html"><b>showq</b>(8)</a>  daemon  can also be run in stand-alone mode by the supe-
+       ruser. This mode of operation is used to emulate  the  `mailq'  command
        while the Postfix mail system is down.
 
 <b>SECURITY</b>
-       The <a href="showq.8.html"><b>showq</b>(8)</a> daemon can run in a chroot jail at  fixed  low  privilege,
-       and  takes  no input from the client. Its service port is accessible to
-       local untrusted users, so the service can be susceptible to  denial  of
+       The  <a href="showq.8.html"><b>showq</b>(8)</a>  daemon  can run in a chroot jail at fixed low privilege,
+       and takes no input from the client. Its service port is  accessible  to
+       local  untrusted  users, so the service can be susceptible to denial of
        service attacks.
 
 <b>STANDARDS</b>
@@ -33,19 +34,19 @@ SHOWQ(8)                                                              SHOWQ(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are picked up automatically as <a href="showq.8.html"><b>showq</b>(8)</a> processes
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically  as  <a href="showq.8.html"><b>showq</b>(8)</a>  processes
        run for only a limited amount of time. Use the command "<b>postfix reload</b>"
        to speed up a change.
 
-       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
+       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
        more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much  time  a  Postfix  daemon process may take to handle a
+              How much time a Postfix daemon process  may  take  to  handle  a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#duplicate_filter_limit">duplicate_filter_limit</a> (1000)</b>
@@ -57,11 +58,11 @@ SHOWQ(8)                                                              SHOWQ(8)
               The recipient of mail addressed to the null address.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The time limit for sending  or  receiving  information  over  an
+              The  time  limit  for  sending  or receiving information over an
               internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The  maximum  amount of time that an idle Postfix daemon process
+              The maximum amount of time that an idle Postfix  daemon  process
               waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
@@ -81,8 +82,8 @@ SHOWQ(8)                                                              SHOWQ(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              The  mail  system  name that is prepended to the process name in
+              syslog records, so that "smtpd"  becomes,  for  example,  "post-
               fix/smtpd".
 
        Available in Postfix version 2.9 and later:
@@ -109,6 +110,11 @@ SHOWQ(8)                                                              SHOWQ(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                       SHOWQ(8)
 </pre> </body> </html>

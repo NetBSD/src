@@ -130,18 +130,18 @@
 # 
 #        if /pattern/flags
 # 
-#        endif  Match the input string against the patterns between
-#               if  and endif, if and only if the same input string
-#               also matches /pattern/. The if..endif can nest.
+#        endif  If the input string matches /pattern/,  then  match
+#               that  input  string against the patterns between if
+#               and endif.  The if..endif can nest.
 # 
 #               Note: do not prepend whitespace to patterns  inside
 #               if..endif.
 # 
 #        if !/pattern/flags
 # 
-#        endif  Match the input string against the patterns between
-#               if and endif, if and only if the same input  string
-#               does not match /pattern/. The if..endif can nest.
+#        endif  If  the input string does not match /pattern/, then
+#               match  that  input  string  against  the   patterns
+#               between if and endif. The if..endif can nest.
 # 
 #        blank lines and comments
 #               Empty  lines and whitespace-only lines are ignored,
@@ -175,8 +175,30 @@
 #        Action names are case insensitive. They are shown in upper
 #        case for consistency with other Postfix documentation.
 # 
+#        BCC user@domain
+#               Add the specified address as a BCC  recipient,  and
+#               inspect  the next input line. The address must have
+#               a local part and domain part.  The  number  of  BCC
+#               addresses  that can be added is limited only by the
+#               amount of available storage space.
+# 
+#               Note 1: the BCC address is added as if it was spec-
+#               ified  with  NOTIFY=NONE.  The  sender  will not be
+#               notified when the BCC address is undeliverable,  as
+#               long  as  all  down-stream  software implements RFC
+#               3461.
+# 
+#               Note 2: this ignores duplicate addresses (with  the
+#               same delivery status notification options).
+# 
+#               This feature is available in Postfix 3.0 and later.
+# 
+#               This feature is not supported with smtp header/body
+#               checks.
+# 
 #        DISCARD optional text...
-#               Claim successful delivery and silently discard  the
+#               Claim  successful delivery and silently discard the
+#               message.  Do not inspect the remainder of the input
 #               message.   Log the optional text if specified, oth-
 #               erwise log a generic message.
 # 
@@ -203,14 +225,16 @@
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        FILTER transport:destination
-#               After the message is queued, send the  entire  mes-
-#               sage through the specified external content filter.
-#               The transport name specifies the first field  of  a
-#               mail  delivery  agent  definition in master.cf; the
-#               syntax of the next-hop destination is described  in
-#               the  manual  page  of  the  corresponding  delivery
-#               agent.  More  information  about  external  content
-#               filters is in the Postfix FILTER_README file.
+#               Override the content_filter parameter setting,  and
+#               inspect  the next input line.  After the message is
+#               queued, send the entire message through the  speci-
+#               fied  external  content  filter. The transport name
+#               specifies the first field of a mail delivery  agent
+#               definition in master.cf; the syntax of the next-hop
+#               destination is described in the manual page of  the
+#               corresponding  delivery  agent.   More  information
+#               about external content filters is  in  the  Postfix
+#               FILTER_README file.
 # 
 #               Note  1: do not use $number regular expression sub-
 #               stitutions for transport or destination unless  you
@@ -293,8 +317,8 @@
 #                      line, the prepended text must begin  with  a
 #                      valid message header label.
 # 
-#               o      This action cannot be used to prepend multi-
-#                      line text.
+#               o      This   action  cannot  be  used  to  prepend
+#                      multi-line text.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
@@ -339,9 +363,10 @@
 #                      headers.
 # 
 #        REJECT optional text...
-#               Reject the  entire  message.  Reply  with  optional
-#               text... when the optional text is specified, other-
-#               wise reply with a generic error message.
+#               Reject the  entire  message.  Do  not  inspect  the
+#               remainder   of   the  input  message.   Reply  with
+#               optional text... when the optional text  is  speci-
+#               fied, otherwise reply with a generic error message.
 # 
 #               Note:  this  action  disables  further  header   or
 #               body_checks  inspection  of the current message and
@@ -445,7 +470,7 @@
 #            header_checks = pcre:/etc/postfix/header_checks.pcre
 # 
 #        /etc/postfix/header_checks.pcre:
-#            /^Content-(Disposition|Type).*name\s*=\s*"?(.*(\.|=2E)(
+#            /^Content-(Disposition|Type).*name\s*=\s*"?([^;]*(\.|=2E)(
 #              ade|adp|asp|bas|bat|chm|cmd|com|cpl|crt|dll|exe|
 #              hlp|ht[at]|
 #              inf|ins|isp|jse?|lnk|md[betw]|ms[cipt]|nws|
@@ -492,5 +517,10 @@
 #        IBM T.J. Watson Research
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
+# 
+#        Wietse Venema
+#        Google, Inc.
+#        111 8th Avenue
+#        New York, NY 10011, USA
 # 
 #                                                               HEADER_CHECKS(5)
