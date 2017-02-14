@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.17 2017/02/14 13:23:50 nonaka Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.18 2017/02/14 13:29:09 nonaka Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.17 2017/02/14 13:23:50 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18 2017/02/14 13:29:09 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,6 +395,8 @@ acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 		    (type == BIM_Reserved) ?  "Reserved" :
 		    (type == BIM_ACPI) ? "ACPI" :
 		    (type == BIM_NVS) ? "NVS" :
+		    (type == BIM_PMEM) ? "Persistent" :
+		    (type == BIM_PRAM) ? "Persistent (Legacy)" :
 		    "unknown");
 
 		switch (type) {
