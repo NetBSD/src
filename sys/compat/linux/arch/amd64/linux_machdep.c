@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.39 2011/11/18 04:07:43 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.39.6.1 2017/02/14 16:59:31 snj Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39 2011/11/18 04:07:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.39.6.1 2017/02/14 16:59:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -254,7 +254,12 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (error != 0) {
 		sigexit(l, SIGILL);
 		return;
-	}	
+	}
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS) {
+		sigexit(l, SIGILL);
+		return;
+	}
 
 	linux_buildcontext(l, catcher, sp);
 	tf->tf_rdi = sigframe.info.lsi_signo;
@@ -485,7 +490,7 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 {
 	struct trapframe *tf = arg;
 	uint64_t retaddr;
-	int vsyscallnr;
+	size_t vsyscallnr;
 
 	/*
 	 * Check for a vsyscall. %rip must be the fault address,
@@ -514,6 +519,8 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 	 * which is the only way that vsyscalls are ever entered.
 	 */
 	if (copyin((void *)tf->tf_rsp, &retaddr, sizeof retaddr) != 0)
+		return 0;
+	if ((vaddr_t)retaddr >= VM_MAXUSER_ADDRESS)
 		return 0;
 	tf->tf_rip = retaddr;
 	tf->tf_rax = linux_vsyscall_to_syscall[vsyscallnr];
