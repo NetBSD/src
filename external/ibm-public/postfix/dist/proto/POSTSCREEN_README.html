@@ -872,8 +872,8 @@ For example: </p>
 
 <pre>
 /etc/postfix/dnsbl_reply:
-    # Secret DNSBL name        Name in postscreen(8) replies
-    secret.zen.spamhaus.org    zen.spamhaus.org
+    # Secret DNSBL name           Name in postscreen(8) replies
+    secret.zen.dq.spamhaus.net    zen.spamhaus.org
 </pre>
 
 <p> The texthash: format is similar to hash: except that there is
@@ -982,16 +982,18 @@ helo/sender/recipient information, and waits for the client to
 disconnect. </p>
 
 <p> When the good client comes back in a later session, it is allowed
-to talk directly to a Postfix SMTP server.  See "after_220 <a
-href="#after_220">Tests after the 220 SMTP server greeting</a> above
-for limitations with AUTH and other features that clients may need.
-</p>
+to talk directly to a Postfix SMTP server.  See "<a href="#after_220">Tests
+after the 220 SMTP server greeting</a>" above for limitations with
+AUTH and other features that clients may need.  </p>
 
 <p> An unexpected benefit from "<a href="#after_220">deep protocol
 tests</a>" is that some "good" clients don't return after the 4XX
-reply; these clients were not so good after all.  Wietse enables
-"<a href="#after_220">deep protocol tests</a>" on his own internet-facing
-mail server.  </p>
+reply; these clients were not so good after all. </p>
+
+<p> Unfortunately, some senders will retry requests from different
+IP addresses, and may never get whitelisted.  For this reason,
+Wietse stopped using "<a href="#after_220">deep protocol tests</a>"
+on his own internet-facing mail server.  </p>
 
 <li> <p> There is also support for permanent blacklisting and
 whitelisting; see the description of the postscreen_access_list

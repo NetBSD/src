@@ -124,7 +124,8 @@ EEDDHH SSeerrvveerr ssuuppppoorrtt
 Postfix >= 2.2 support 1024-bit-prime EDH out of the box, with no additional
 configuration, but you may want to override the default prime to be 2048 bits
 long, and you may want to regenerate your primes periodically. See the quick-
-start section for details.
+start section for details. With Postfix >= 3.1 the out of the box (compiled-in)
+EDH prime size is 2048 bits.
 
 With prime-field EDH, OpenSSL wants the server to provide two explicitly-
 selected (prime, generator) combinations. One for the now long-obsolete
@@ -135,7 +136,9 @@ configured overrides.
   * The "export" EDH parameters are used only with the obsolete "export"
     ciphers. To use a non-default prime, generate a 512-bit DH parameter file
     and set smtpd_tls_dh512_param_file to the filename (see the quick-start
-    section for details).
+    section for details). With Postfix releases after the middle of 2015 the
+    default opportunistic TLS cipher grade (smtpd_tls_ciphers) is "medium" or
+    stronger, and export ciphers are no longer used.
 
   * The non-export EDH parameters are used for all other EDH cipher suites. To
     use a non-default prime, generate a 1024-bit or 2048-bit DH parameter file
@@ -143,9 +146,10 @@ configured overrides.
     is simply the non-export parameter file and the prime need not actually be
     1024 bits long (see the quick-start section for details).
 
-It turns out that (inadvisably-patched in some Debian releases) Exim SMTP
-clients require a >= 2048-bit length for the non-export prime. See the quick-
-start section for the recommended configuration to work around this issue.
+As of mid-2015, SMTP clients are starting to reject TLS handshakes with primes
+smaller than 2048 bits. Each site needs to determine which prime size works
+best for the majority of its clients. See the quick-start section for the
+recommended configuration to work around this issue.
 
 EEEECCDDHH SSeerrvveerr ssuuppppoorrtt
 
@@ -181,31 +185,38 @@ main.cf.
 FFoorrwwaarrdd SSeeccrreeccyy iinn tthhee PPoossttffiixx SSMMTTPP CClliieenntt
 
 The Postfix >= 2.2 SMTP client supports forward secrecy in its default
-configuration. No configuration changes are needed besides turning on elliptic-
-curve support with Postfix 2.6 and 2.7 (see the quick-start section). If the
-remote SMTP server supports cipher suites with forward secrecy (and does not
-override the SMTP client's cipher preference), then the traffic between the
-server and client will resist decryption even if the server's long-term
-authentication keys are later compromised.
+configuration. All supported OpenSSL releases support EDH key exchange. OpenSSL
+releases >= 1.0.0 also support EECDH key exchange (provided elliptic-curve
+support has not been disabled by the vendor as in some versions of RedHat
+Linux). If the remote SMTP server supports cipher suites with forward secrecy
+(and does not override the SMTP client's cipher preference), then the traffic
+between the server and client will resist decryption even if the server's long-
+term authentication keys are later compromised.
 
 The default Postfix SMTP client cipher lists are correctly ordered to prefer
 EECDH and EDH cipher suites ahead of similar cipher suites that don't implement
 forward secrecy. Administrators are strongly discouraged from changing the
-cipher list definitions. It is likely safe to set "smtp_tls_ciphers = medium"
-if you wish to disable the obsolete "export" and "low" grade ciphers even with
-opportunistic TLS. Setting a minimum strength does not change the preference
-order. Note that strengths higher than "medium" exclude Exchange 2003 and
-likely other widely used MTAs, thus "high" grade ciphers should only be used on
-a case-by-case basis via the TLS policy table.
+cipher list definitions.
+
+The default minimum cipher grade for opportunistic TLS is "medium" for Postfix
+releases after the middle of 2015, "export" for older releases. Changing the
+minimum cipher grade does not change the cipher preference order. Note that
+cipher grades higher than "medium" exclude Exchange 2003 and likely other MTAs,
+thus a "high" cipher grade should be chosen only on a case-by-case basis via
+the TLS policy table.
 
 GGeettttiinngg ssttaarrtteedd,, qquuiicckk aanndd ddiirrttyy
 
-EEEECCDDHH CClliieenntt aanndd sseerrvveerr ssuuppppoorrtt ((PPoossttffiixx >>== 22..66 wwiitthh OOppeennSSSSLL >>== 11..00..00))
+EEEECCDDHH CClliieenntt ssuuppppoorrtt ((PPoossttffiixx >>== 22..22 wwiitthh OOppeennSSSSLL >>== 11..00..00))
+
+This works "out of the box" without additional configuration.
+
+EEEECCDDHH SSeerrvveerr ssuuppppoorrtt ((PPoossttffiixx >>== 22..66 wwiitthh OOppeennSSSSLL >>== 11..00..00))
 
 With Postfix 2.6 and 2.7, enable elliptic-curve support in the Postfix SMTP
-client and server. This is the default with Postfix >= 2.8. Note, however, that
-elliptic-curve support may be disabled by the vendor, as in some versions of
-RedHat Linux.
+server. This is the default with Postfix >= 2.8. Note, however, that elliptic-
+curve support may be disabled by the vendor, as in some versions of RedHat
+Linux.
 
     /etc/postfix/main.cf:
         # Postfix 2.6 or 2.7 only. This is default with Postfix 2.8 and later.
@@ -251,7 +262,10 @@ the submission entry in master.cf accordingly:
     /etc/postfix/master.cf:
         submission inet n       -       n       -       -       smtpd
             # Some submission clients may not yet do 2048-bit EDH, if such
-            # clients use your MSA, configure 1024-bit EDH instead:
+            # clients use your MSA, configure 1024-bit EDH instead.  However,
+            # as of mid-2015, many submission clients no longer accept primes
+            # with less than 2048-bits.  Each site needs to determine which
+            # type of client is more important to support.
             -o smtpd_tls_dh1024_param_file=${config_directory}/dh1024.pem
             -o smtpd_tls_security_level=encrypt
             -o smtpd_sasl_auth_enable=yes
@@ -402,8 +416,8 @@ peer certificate with expected public-key or certificate fingerprint)
 
     PPoossttffiixx SSMMTTPP sseerrvveerr:: The status is never "Verified", because the Postfix
     SMTP server never verifies the remote SMTP client name against the names in
-    the client certificate, and because the Postfix SMTP does not expect a
-    specific fingerprint in the client public key or certificate.
+    the client certificate, and because the Postfix SMTP server does not expect
+    a specific fingerprint in the client public key or certificate.
 
 CCrreeddiittss
 

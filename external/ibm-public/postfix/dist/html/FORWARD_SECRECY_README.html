@@ -180,7 +180,8 @@ and is not recommended for now.  </p>
 with no additional configuration, but you may want to override the
 default prime to be 2048 bits long, and you may want to regenerate
 your primes periodically. See the <a href="#quick-start">quick-start</a>
-section for details.  </p>
+section for details.  With Postfix &ge; 3.1 the out of the box
+(compiled-in) EDH prime size is 2048 bits.  </p>
 
 <p> With prime-field EDH, OpenSSL wants the server to provide
 two explicitly-selected (prime, generator) combinations.  One for
@@ -195,7 +196,9 @@ compiled in, but also supports explicitly-configured overrides.
 "export" ciphers.  To use a non-default prime, generate a 512-bit
 DH parameter file and set <a href="postconf.5.html#smtpd_tls_dh512_param_file">smtpd_tls_dh512_param_file</a> to the filename
 (see the <a href="#quick-start">quick-start</a> section for details).
-</p>
+With Postfix releases after the middle of 2015 the default opportunistic
+TLS cipher grade (<a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a>) is "medium" or stronger, and
+export ciphers are no longer used.  </p>
 
 <li> <p> The non-export EDH parameters are used for all other EDH
 cipher suites.  To use a non-default prime, generate a 1024-bit or
@@ -207,10 +210,11 @@ parameter file and the prime need not actually be 1024 bits long
 
 </ul>
 
-<p> It turns out that (inadvisably-patched in some Debian releases)
-Exim SMTP clients require a &ge; 2048-bit length for the non-export
-prime.  See the <a href="#quick-start">quick-start</a> section for
-the recommended configuration to work around this issue.  </p>
+<p> As of mid-2015, SMTP clients are starting to reject TLS
+handshakes with primes smaller than 2048 bits.  Each site needs to
+determine which prime size works best for the majority of its
+clients.  See the <a href="#quick-start">quick-start</a> section
+for the recommended configuration to work around this issue.  </p>
 
 <h3> EECDH Server support </h3>
 
@@ -253,9 +257,10 @@ more curves at the desired security level without any changes to
 <h2> <a name="client_fs">Forward Secrecy in the Postfix SMTP Client</a> </h2>
 
 <p> The Postfix &ge; 2.2 SMTP client supports forward secrecy in
-its default configuration.  No configuration changes are needed
-besides turning on elliptic-curve support with Postfix 2.6 and 2.7
-(see the <a href="#quick-start"> quick-start</a> section).  If the
+its default configuration.  All supported OpenSSL releases support
+EDH key exchange.  OpenSSL releases &ge; 1.0.0 also support EECDH
+key exchange (provided elliptic-curve support has not been disabled
+by the vendor as in some versions of RedHat Linux).  If the
 remote SMTP server supports cipher suites with forward secrecy (and
 does not override the SMTP client's cipher preference), then the
 traffic between the server and client will resist decryption even
@@ -265,23 +270,27 @@ compromised.  </p>
 <p> The default Postfix SMTP client cipher lists are correctly
 ordered to prefer EECDH and EDH cipher suites ahead of similar
 cipher suites that don't implement forward secrecy.  Administrators
-are strongly discouraged from changing the cipher list definitions.
-It is likely safe to set "<a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a> = medium" if you wish
-to disable the obsolete "export" and "low" grade ciphers even with
-opportunistic TLS.  Setting a minimum strength does not change the
-preference
-order.  Note that strengths higher than "medium" exclude Exchange
-2003 and likely other widely used MTAs, thus "high" grade ciphers
-should only be used on a case-by-case basis via the <a
-href="TLS_README.html#client_tls_policy">TLS policy</a> table. </p>
+are strongly discouraged from changing the cipher list definitions. </p>
+
+<p> The default minimum cipher grade for opportunistic TLS is
+"medium" for Postfix releases after the middle of 2015, "export"
+for older releases. Changing the minimum cipher grade does not
+change the cipher preference order.  Note that cipher grades higher
+than "medium" exclude Exchange 2003 and likely other MTAs, thus a
+"high" cipher grade should be chosen only on a case-by-case basis
+via the <a href="TLS_README.html#client_tls_policy">TLS policy</a>
+table. </p>
 
 <h2><a name="quick-start">Getting started, quick and dirty</a></h2>
 
-<h3> EECDH Client and server support (Postfix &ge; 2.6 with OpenSSL
-&ge; 1.0.0) </h3>
+<h3> EECDH Client support (Postfix &ge; 2.2 with OpenSSL &ge; 1.0.0) </h3>
+
+<p> This works "out of the box" without additional configuration. </p>
+
+<h3> EECDH Server support (Postfix &ge; 2.6 with OpenSSL &ge; 1.0.0) </h3>
 
 <p> With Postfix 2.6 and 2.7, enable elliptic-curve support in the
-Postfix SMTP client and server. This is the default with Postfix
+Postfix SMTP server. This is the default with Postfix
 &ge; 2.8. Note, however, that elliptic-curve support may be disabled
 by the vendor, as in some versions of RedHat Linux. </p>
 
@@ -347,7 +356,10 @@ need to adjust the submission entry in <a href="master.5.html">master.cf</a> acc
 /etc/postfix/<a href="master.5.html">master.cf</a>:
     submission inet n       -       n       -       -       smtpd
         # Some submission clients may not yet do 2048-bit EDH, if such
-        # clients use your MSA, configure 1024-bit EDH instead:
+        # clients use your MSA, configure 1024-bit EDH instead.  However,
+        # as of mid-2015, many submission clients no longer accept primes
+        # with less than 2048-bits.  Each site needs to determine which
+        # type of client is more important to support.
         -o <a href="postconf.5.html#smtpd_tls_dh1024_param_file">smtpd_tls_dh1024_param_file</a>=${<a href="postconf.5.html#config_directory">config_directory</a>}/dh1024.pem
         -o <a href="postconf.5.html#smtpd_tls_security_level">smtpd_tls_security_level</a>=encrypt
         -o <a href="postconf.5.html#smtpd_sasl_auth_enable">smtpd_sasl_auth_enable</a>=yes
@@ -547,8 +559,8 @@ signature.  </p>
 <p> <b> Postfix SMTP server:</b> The status is never "Verified",
 because the Postfix SMTP server never verifies the remote SMTP
 client name against the names in the client certificate, and because
-the Postfix SMTP does not expect a specific fingerprint in the
-client public key or certificate.  </p>
+the Postfix SMTP server does not expect a specific fingerprint in
+the client public key or certificate.  </p>
 
 </dd>
 

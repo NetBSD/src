@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_buf.c,v 1.1.1.2 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: dsn_buf.c,v 1.1.1.3 2017/02/14 01:13:40 christos Exp $	*/
 
 /*++
 /* NAME
@@ -198,7 +198,7 @@ void    dsb_free(DSN_BUF *dsb)
     vstring_free(dsb->dtype);
     vstring_free(dsb->dtext);
     vstring_free(dsb->reason);
-    myfree((char *) dsb);
+    myfree((void *) dsb);
 }
 
  /*

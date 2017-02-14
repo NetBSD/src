@@ -17,7 +17,7 @@
 #
 #	The Postfix socketmap client expects TCP endpoint names of
 #	the form \fBinet:\fIhost\fB:\fIport\fB:\fIname\fR, or
-#	UNIX-domain endponts of the form \fBunix:\fIpathname\fB:\fIname\fR.
+#	UNIX-domain endpoints of the form \fBunix:\fIpathname\fB:\fIname\fR.
 #	In both cases, \fIname\fR specifies the name field in a
 #	socketmap client request (see "REQUEST FORMAT" below).
 # PROTOCOL
@@ -30,15 +30,17 @@
 # .ad
 # .fi
 #	The socketmap protocol supports only the lookup request.
+#	The request has the following form:
 #
+# .IP "\fB\fIname\fB <space> \fIkey\fR"
+#	Search the named socketmap for the specified key. 
+# .PP
 #	Postfix will not generate partial search keys such as domain
 #	names without one or more subdomains, network addresses
 #	without one or more least-significant octets, or email
 #	addresses without the localpart, address extension or domain
 #	portion. This behavior is also found with cidr:, pcre:, and
 #	regexp: tables.
-# .IP "\fB\fIname\fB <space> \fIkey\fR"
-#	Search the named socketmap for the specified key. 
 # REPLY FORMAT
 # .ad
 # .fi
@@ -85,5 +87,10 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--
 

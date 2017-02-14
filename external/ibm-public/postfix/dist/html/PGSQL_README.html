@@ -53,8 +53,23 @@ the location of the libpq library file. </p>
 % make tidy
 % make -f Makefile.init makefiles \
         'CCARGS=-DHAS_PGSQL -I/usr/local/include/pgsql' \
-        'AUXLIBS=-L/usr/local/lib -lpq'
+        '<a href="PGSQL_README.html">AUXLIBS_PGSQL</a>=-L/usr/local/lib -lpq'
 </pre>
+</blockquote>
+
+<p> Postfix versions before 3.0 use AUXLIBS instead of <a href="PGSQL_README.html">AUXLIBS_PGSQL</a>.
+With Postfix 3.0 and later, the old AUXLIBS variable still supports
+building a statically-loaded PostgreSQL database client, but only
+the new <a href="PGSQL_README.html">AUXLIBS_PGSQL</a> variable supports building a dynamically-loaded
+or statically-loaded PostgreSQL database client.  </p>
+
+<blockquote>
+ 
+<p> Failure to use the <a href="PGSQL_README.html">AUXLIBS_PGSQL</a> variable will defeat the purpose
+of dynamic database client loading. Every Postfix executable file
+will have PGSQL database library dependencies. And that was exactly
+what dynamic database client loading was meant to avoid. </p>
+ 
 </blockquote>
 
 <p> Then just run 'make'.  </p>

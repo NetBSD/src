@@ -15,14 +15,16 @@ TESTPROG=
 PROG	= bounce
 SAMPLES	= ../../conf/bounce.cf.default
 INC_DIR	= ../../include
-LIBS	= ../../lib/libmaster.a ../../lib/libglobal.a ../../lib/libutil.a
+LIBS	= ../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
+	../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
+	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 
 .c.o:;  $(CC) $(CFLAGS) -c $*.c
 
 all:	$(PROG) ../../conf/bounce.cf.default
 
 $(PROG):	$(OBJS) $(LIBS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
+	$(CC) $(CFLAGS) $(SHLIB_RPATH) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
 # Eliminate dependency on installed Postfix.
 ../../conf/bounce.cf.default: template_test.ref annotate.sh
@@ -95,10 +97,12 @@ depend: $(MAKES)
 bounce.o: ../../include/attr.h
 bounce.o: ../../include/bounce.h
 bounce.o: ../../include/bounce_log.h
+bounce.o: ../../include/check_arg.h
 bounce.o: ../../include/deliver_request.h
 bounce.o: ../../include/dsb_scan.h
 bounce.o: ../../include/dsn.h
 bounce.o: ../../include/dsn_buf.h
+bounce.o: ../../include/htable.h
 bounce.o: ../../include/iostuff.h
 bounce.o: ../../include/load_file.h
 bounce.o: ../../include/mail_addr.h
@@ -110,6 +114,8 @@ bounce.o: ../../include/mail_server.h
 bounce.o: ../../include/mail_version.h
 bounce.o: ../../include/msg.h
 bounce.o: ../../include/msg_stats.h
+bounce.o: ../../include/mymalloc.h
+bounce.o: ../../include/nvtable.h
 bounce.o: ../../include/rcpt_buf.h
 bounce.o: ../../include/recipient_list.h
 bounce.o: ../../include/stringops.h
@@ -122,15 +128,19 @@ bounce.o: bounce_service.h
 bounce.o: bounce_template.h
 bounce_append_service.o: ../../include/attr.h
 bounce_append_service.o: ../../include/bounce_log.h
+bounce_append_service.o: ../../include/check_arg.h
 bounce_append_service.o: ../../include/deliver_flock.h
 bounce_append_service.o: ../../include/dsn.h
 bounce_append_service.o: ../../include/dsn_buf.h
+bounce_append_service.o: ../../include/htable.h
 bounce_append_service.o: ../../include/iostuff.h
 bounce_append_service.o: ../../include/mail_params.h
 bounce_append_service.o: ../../include/mail_proto.h
 bounce_append_service.o: ../../include/mail_queue.h
 bounce_append_service.o: ../../include/msg.h
 bounce_append_service.o: ../../include/myflock.h
+bounce_append_service.o: ../../include/mymalloc.h
+bounce_append_service.o: ../../include/nvtable.h
 bounce_append_service.o: ../../include/quote_822_local.h
 bounce_append_service.o: ../../include/quote_flags.h
 bounce_append_service.o: ../../include/rcpt_buf.h
@@ -145,11 +155,14 @@ bounce_append_service.o: bounce_service.h
 bounce_append_service.o: bounce_template.h
 bounce_cleanup.o: ../../include/attr.h
 bounce_cleanup.o: ../../include/bounce_log.h
+bounce_cleanup.o: ../../include/check_arg.h
 bounce_cleanup.o: ../../include/dsn.h
 bounce_cleanup.o: ../../include/dsn_buf.h
+bounce_cleanup.o: ../../include/htable.h
 bounce_cleanup.o: ../../include/mail_queue.h
 bounce_cleanup.o: ../../include/msg.h
 bounce_cleanup.o: ../../include/mymalloc.h
+bounce_cleanup.o: ../../include/nvtable.h
 bounce_cleanup.o: ../../include/rcpt_buf.h
 bounce_cleanup.o: ../../include/recipient_list.h
 bounce_cleanup.o: ../../include/sys_defs.h
@@ -162,22 +175,31 @@ bounce_cleanup.o: bounce_template.h
 bounce_notify_service.o: ../../include/attr.h
 bounce_notify_service.o: ../../include/bounce.h
 bounce_notify_service.o: ../../include/bounce_log.h
+bounce_notify_service.o: ../../include/check_arg.h
 bounce_notify_service.o: ../../include/cleanup_user.h
 bounce_notify_service.o: ../../include/deliver_request.h
 bounce_notify_service.o: ../../include/dsn.h
 bounce_notify_service.o: ../../include/dsn_buf.h
 bounce_notify_service.o: ../../include/dsn_mask.h
+bounce_notify_service.o: ../../include/htable.h
 bounce_notify_service.o: ../../include/int_filt.h
+bounce_notify_service.o: ../../include/iostuff.h
 bounce_notify_service.o: ../../include/mail_addr.h
 bounce_notify_service.o: ../../include/mail_error.h
 bounce_notify_service.o: ../../include/mail_params.h
+bounce_notify_service.o: ../../include/mail_proto.h
 bounce_notify_service.o: ../../include/mail_queue.h
 bounce_notify_service.o: ../../include/msg.h
 bounce_notify_service.o: ../../include/msg_stats.h
+bounce_notify_service.o: ../../include/mymalloc.h
 bounce_notify_service.o: ../../include/name_mask.h
+bounce_notify_service.o: ../../include/nvtable.h
 bounce_notify_service.o: ../../include/post_mail.h
 bounce_notify_service.o: ../../include/rcpt_buf.h
+bounce_notify_service.o: ../../include/rec_type.h
 bounce_notify_service.o: ../../include/recipient_list.h
+bounce_notify_service.o: ../../include/smtputf8.h
+bounce_notify_service.o: ../../include/stringops.h
 bounce_notify_service.o: ../../include/sys_defs.h
 bounce_notify_service.o: ../../include/vbuf.h
 bounce_notify_service.o: ../../include/vstream.h
@@ -187,12 +209,14 @@ bounce_notify_service.o: bounce_service.h
 bounce_notify_service.o: bounce_template.h
 bounce_notify_util.o: ../../include/attr.h
 bounce_notify_util.o: ../../include/bounce_log.h
+bounce_notify_util.o: ../../include/check_arg.h
 bounce_notify_util.o: ../../include/cleanup_user.h
 bounce_notify_util.o: ../../include/deliver_completed.h
 bounce_notify_util.o: ../../include/dsn.h
 bounce_notify_util.o: ../../include/dsn_buf.h
 bounce_notify_util.o: ../../include/dsn_mask.h
 bounce_notify_util.o: ../../include/events.h
+bounce_notify_util.o: ../../include/htable.h
 bounce_notify_util.o: ../../include/int_filt.h
 bounce_notify_util.o: ../../include/iostuff.h
 bounce_notify_util.o: ../../include/is_header.h
@@ -208,6 +232,7 @@ bounce_notify_util.o: ../../include/msg.h
 bounce_notify_util.o: ../../include/myflock.h
 bounce_notify_util.o: ../../include/mymalloc.h
 bounce_notify_util.o: ../../include/name_mask.h
+bounce_notify_util.o: ../../include/nvtable.h
 bounce_notify_util.o: ../../include/post_mail.h
 bounce_notify_util.o: ../../include/quote_822_local.h
 bounce_notify_util.o: ../../include/quote_flags.h
@@ -215,6 +240,7 @@ bounce_notify_util.o: ../../include/rcpt_buf.h
 bounce_notify_util.o: ../../include/rec_type.h
 bounce_notify_util.o: ../../include/recipient_list.h
 bounce_notify_util.o: ../../include/record.h
+bounce_notify_util.o: ../../include/smtputf8.h
 bounce_notify_util.o: ../../include/stringops.h
 bounce_notify_util.o: ../../include/sys_defs.h
 bounce_notify_util.o: ../../include/vbuf.h
@@ -226,22 +252,31 @@ bounce_notify_util.o: bounce_template.h
 bounce_notify_verp.o: ../../include/attr.h
 bounce_notify_verp.o: ../../include/bounce.h
 bounce_notify_verp.o: ../../include/bounce_log.h
+bounce_notify_verp.o: ../../include/check_arg.h
 bounce_notify_verp.o: ../../include/cleanup_user.h
 bounce_notify_verp.o: ../../include/deliver_request.h
 bounce_notify_verp.o: ../../include/dsn.h
 bounce_notify_verp.o: ../../include/dsn_buf.h
 bounce_notify_verp.o: ../../include/dsn_mask.h
+bounce_notify_verp.o: ../../include/htable.h
 bounce_notify_verp.o: ../../include/int_filt.h
+bounce_notify_verp.o: ../../include/iostuff.h
 bounce_notify_verp.o: ../../include/mail_addr.h
 bounce_notify_verp.o: ../../include/mail_error.h
 bounce_notify_verp.o: ../../include/mail_params.h
+bounce_notify_verp.o: ../../include/mail_proto.h
 bounce_notify_verp.o: ../../include/mail_queue.h
 bounce_notify_verp.o: ../../include/msg.h
 bounce_notify_verp.o: ../../include/msg_stats.h
+bounce_notify_verp.o: ../../include/mymalloc.h
 bounce_notify_verp.o: ../../include/name_mask.h
+bounce_notify_verp.o: ../../include/nvtable.h
 bounce_notify_verp.o: ../../include/post_mail.h
 bounce_notify_verp.o: ../../include/rcpt_buf.h
+bounce_notify_verp.o: ../../include/rec_type.h
 bounce_notify_verp.o: ../../include/recipient_list.h
+bounce_notify_verp.o: ../../include/smtputf8.h
+bounce_notify_verp.o: ../../include/stringops.h
 bounce_notify_verp.o: ../../include/sys_defs.h
 bounce_notify_verp.o: ../../include/vbuf.h
 bounce_notify_verp.o: ../../include/verp_sender.h
@@ -253,21 +288,30 @@ bounce_notify_verp.o: bounce_template.h
 bounce_one_service.o: ../../include/attr.h
 bounce_one_service.o: ../../include/bounce.h
 bounce_one_service.o: ../../include/bounce_log.h
+bounce_one_service.o: ../../include/check_arg.h
 bounce_one_service.o: ../../include/cleanup_user.h
 bounce_one_service.o: ../../include/deliver_request.h
 bounce_one_service.o: ../../include/dsn.h
 bounce_one_service.o: ../../include/dsn_buf.h
 bounce_one_service.o: ../../include/dsn_mask.h
+bounce_one_service.o: ../../include/htable.h
 bounce_one_service.o: ../../include/int_filt.h
+bounce_one_service.o: ../../include/iostuff.h
 bounce_one_service.o: ../../include/mail_addr.h
 bounce_one_service.o: ../../include/mail_error.h
 bounce_one_service.o: ../../include/mail_params.h
+bounce_one_service.o: ../../include/mail_proto.h
 bounce_one_service.o: ../../include/msg.h
 bounce_one_service.o: ../../include/msg_stats.h
+bounce_one_service.o: ../../include/mymalloc.h
 bounce_one_service.o: ../../include/name_mask.h
+bounce_one_service.o: ../../include/nvtable.h
 bounce_one_service.o: ../../include/post_mail.h
 bounce_one_service.o: ../../include/rcpt_buf.h
+bounce_one_service.o: ../../include/rec_type.h
 bounce_one_service.o: ../../include/recipient_list.h
+bounce_one_service.o: ../../include/smtputf8.h
+bounce_one_service.o: ../../include/stringops.h
 bounce_one_service.o: ../../include/sys_defs.h
 bounce_one_service.o: ../../include/vbuf.h
 bounce_one_service.o: ../../include/vstream.h
@@ -276,6 +320,8 @@ bounce_one_service.o: bounce_one_service.c
 bounce_one_service.o: bounce_service.h
 bounce_one_service.o: bounce_template.h
 bounce_template.o: ../../include/attr.h
+bounce_template.o: ../../include/check_arg.h
+bounce_template.o: ../../include/htable.h
 bounce_template.o: ../../include/iostuff.h
 bounce_template.o: ../../include/is_header.h
 bounce_template.o: ../../include/mac_expand.h
@@ -283,8 +329,10 @@ bounce_template.o: ../../include/mac_parse.h
 bounce_template.o: ../../include/mail_conf.h
 bounce_template.o: ../../include/mail_params.h
 bounce_template.o: ../../include/mail_proto.h
+bounce_template.o: ../../include/midna_domain.h
 bounce_template.o: ../../include/msg.h
 bounce_template.o: ../../include/mymalloc.h
+bounce_template.o: ../../include/nvtable.h
 bounce_template.o: ../../include/split_at.h
 bounce_template.o: ../../include/stringops.h
 bounce_template.o: ../../include/sys_defs.h
@@ -294,11 +342,14 @@ bounce_template.o: ../../include/vstring.h
 bounce_template.o: bounce_template.c
 bounce_template.o: bounce_template.h
 bounce_templates.o: ../../include/attr.h
+bounce_templates.o: ../../include/check_arg.h
+bounce_templates.o: ../../include/htable.h
 bounce_templates.o: ../../include/iostuff.h
 bounce_templates.o: ../../include/mail_addr.h
 bounce_templates.o: ../../include/mail_proto.h
 bounce_templates.o: ../../include/msg.h
 bounce_templates.o: ../../include/mymalloc.h
+bounce_templates.o: ../../include/nvtable.h
 bounce_templates.o: ../../include/stringops.h
 bounce_templates.o: ../../include/sys_defs.h
 bounce_templates.o: ../../include/vbuf.h
@@ -309,22 +360,31 @@ bounce_templates.o: bounce_template.h
 bounce_templates.o: bounce_templates.c
 bounce_trace_service.o: ../../include/attr.h
 bounce_trace_service.o: ../../include/bounce_log.h
+bounce_trace_service.o: ../../include/check_arg.h
 bounce_trace_service.o: ../../include/cleanup_user.h
 bounce_trace_service.o: ../../include/deliver_request.h
 bounce_trace_service.o: ../../include/dsn.h
 bounce_trace_service.o: ../../include/dsn_buf.h
 bounce_trace_service.o: ../../include/dsn_mask.h
+bounce_trace_service.o: ../../include/htable.h
 bounce_trace_service.o: ../../include/int_filt.h
+bounce_trace_service.o: ../../include/iostuff.h
 bounce_trace_service.o: ../../include/mail_addr.h
 bounce_trace_service.o: ../../include/mail_error.h
 bounce_trace_service.o: ../../include/mail_params.h
+bounce_trace_service.o: ../../include/mail_proto.h
 bounce_trace_service.o: ../../include/mail_queue.h
 bounce_trace_service.o: ../../include/msg.h
 bounce_trace_service.o: ../../include/msg_stats.h
+bounce_trace_service.o: ../../include/mymalloc.h
 bounce_trace_service.o: ../../include/name_mask.h
+bounce_trace_service.o: ../../include/nvtable.h
 bounce_trace_service.o: ../../include/post_mail.h
 bounce_trace_service.o: ../../include/rcpt_buf.h
+bounce_trace_service.o: ../../include/rec_type.h
 bounce_trace_service.o: ../../include/recipient_list.h
+bounce_trace_service.o: ../../include/smtputf8.h
+bounce_trace_service.o: ../../include/stringops.h
 bounce_trace_service.o: ../../include/sys_defs.h
 bounce_trace_service.o: ../../include/vbuf.h
 bounce_trace_service.o: ../../include/vstream.h
@@ -334,20 +394,29 @@ bounce_trace_service.o: bounce_template.h
 bounce_trace_service.o: bounce_trace_service.c
 bounce_warn_service.o: ../../include/attr.h
 bounce_warn_service.o: ../../include/bounce_log.h
+bounce_warn_service.o: ../../include/check_arg.h
 bounce_warn_service.o: ../../include/cleanup_user.h
 bounce_warn_service.o: ../../include/dsn.h
 bounce_warn_service.o: ../../include/dsn_buf.h
 bounce_warn_service.o: ../../include/dsn_mask.h
+bounce_warn_service.o: ../../include/htable.h
 bounce_warn_service.o: ../../include/int_filt.h
+bounce_warn_service.o: ../../include/iostuff.h
 bounce_warn_service.o: ../../include/mail_addr.h
 bounce_warn_service.o: ../../include/mail_error.h
 bounce_warn_service.o: ../../include/mail_params.h
+bounce_warn_service.o: ../../include/mail_proto.h
 bounce_warn_service.o: ../../include/mail_queue.h
 bounce_warn_service.o: ../../include/msg.h
+bounce_warn_service.o: ../../include/mymalloc.h
 bounce_warn_service.o: ../../include/name_mask.h
+bounce_warn_service.o: ../../include/nvtable.h
 bounce_warn_service.o: ../../include/post_mail.h
 bounce_warn_service.o: ../../include/rcpt_buf.h
+bounce_warn_service.o: ../../include/rec_type.h
 bounce_warn_service.o: ../../include/recipient_list.h
+bounce_warn_service.o: ../../include/smtputf8.h
+bounce_warn_service.o: ../../include/stringops.h
 bounce_warn_service.o: ../../include/sys_defs.h
 bounce_warn_service.o: ../../include/vbuf.h
 bounce_warn_service.o: ../../include/vstream.h

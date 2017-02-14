@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_log.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: bounce_log.c,v 1.1.1.2 2017/02/14 01:13:40 christos Exp $	*/
 
 /*++
 /* NAME
@@ -312,7 +312,7 @@ int     bounce_log_close(BOUNCE_LOG *bp)
     vstring_free(bp->buf);
     myfree(bp->compat_status);
     myfree(bp->compat_action);
-    myfree((char *) bp);
+    myfree((void *) bp);
 
     return (ret);
 }

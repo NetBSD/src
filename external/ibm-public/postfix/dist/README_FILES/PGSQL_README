@@ -34,7 +34,18 @@ For example:
     % make tidy
     % make -f Makefile.init makefiles \
             'CCARGS=-DHAS_PGSQL -I/usr/local/include/pgsql' \
-            'AUXLIBS=-L/usr/local/lib -lpq'
+            'AUXLIBS_PGSQL=-L/usr/local/lib -lpq'
+
+Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_PGSQL. With Postfix
+3.0 and later, the old AUXLIBS variable still supports building a statically-
+loaded PostgreSQL database client, but only the new AUXLIBS_PGSQL variable
+supports building a dynamically-loaded or statically-loaded PostgreSQL database
+client.
+
+    Failure to use the AUXLIBS_PGSQL variable will defeat the purpose of
+    dynamic database client loading. Every Postfix executable file will have
+    PGSQL database library dependencies. And that was exactly what dynamic
+    database client loading was meant to avoid.
 
 Then just run 'make'.
 

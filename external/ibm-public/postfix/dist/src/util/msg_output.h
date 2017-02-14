@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: msg_output.h,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
 
 #ifndef _MSG_OUTPUT_FN_
 #define _MSG_OUTPUT_FN_
@@ -40,10 +40,10 @@ extern void msg_text(int, const char *);
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
 /* AUTHOR(S)
-/*      Wietse Venema
-/*      IBM T.J. Watson Research
-/*      P.O. Box 704
-/*      Yorktown Heights, NY 10598, USA
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
 /*--*/
 
 #endif

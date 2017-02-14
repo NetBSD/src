@@ -135,8 +135,8 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
                      pressed and returns no results.
 
               The <b>domain</b> parameter described below limits the  input  keys  to
-              addresses in matching domains. When the <b>domain</b> parameter is non-
-              empty, SQL queries for unqualified  addresses  or  addresses  in
+              addresses  in  matching  domains.  When  the <b>domain</b> parameter is
+              non-empty, SQL queries for unqualified addresses or addresses in
               non-matching domains are suppressed and return no results.
 
               This  parameter is available with Postfix 2.2. In prior releases
@@ -201,11 +201,11 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
 
        <b>domain (default: no domain list)</b>
               This is a list of domain names, paths to files, or dictionaries.
-              When  specified,  only  fully qualified search keys with a *non-
-              empty* localpart and a matching domain are eligible for  lookup:
-              'user'  lookups,  bare  domain lookups and "@domain" lookups are
-              not performed. This can significantly reduce the query  load  on
-              the MySQL server.
+              When   specified,  only  fully  qualified  search  keys  with  a
+              *non-empty* localpart and a matching  domain  are  eligible  for
+              lookup:  'user'  lookups,  bare  domain  lookups  and  "@domain"
+              lookups are not performed. This  can  significantly  reduce  the
+              query load on the MySQL server.
                   domain = postfix.org, <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/searchdomains
 
               It  is best not to use SQL to store the domains eligible for SQL
@@ -232,6 +232,11 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
        <b>option_group</b>
               Read options from the given group.
 
+              Postfix 3.1 and earlier don't read <b>[client]</b>  option  group  set-
+              tings  unless  a non-empty <b>option_file</b> or <b>option_group</b> value are
+              specified. To enable this, specify, for example, "<b>option_group =</b>
+              <b>client</b>".
+
               This parameter is available with Postfix 2.11 and later.
 
        <b>tls_cert_file</b>
@@ -240,37 +245,37 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
               This parameter is available with Postfix 2.11 and later.
 
        <b>tls_key_file</b>
-              File containing the private key corresponding to  <b>tls_cert_file</b>.
+              File  containing the private key corresponding to <b>tls_cert_file</b>.
 
               This parameter is available with Postfix 2.11 and later.
 
        <b>tls_CAfile</b>
-              File  containing  certificates  for  all of the X509 Certificate
-              Authorities the client will recognize.   Takes  precedence  over
+              File containing certificates for all of the  X509  Certification
+              Authorities  the  client  will recognize.  Takes precedence over
               <b>tls_CApath</b>.
 
               This parameter is available with Postfix 2.11 and later.
 
        <b>tls_CApath</b>
-              Directory  containing X509 Certificate Authority certificates in
-              separate individual files.
+              Directory containing X509 Certification  Authority  certificates
+              in separate individual files.
 
               This parameter is available with Postfix 2.11 and later.
 
        <b>tls_verify_cert (default: no)</b>
-              Verify that the server's name matches the  common  name  in  the
-              certficate.
+              Verify  that  the  server's  name matches the common name in the
+              certificate.
 
               This parameter is available with Postfix 2.11 and later.
 
 <b>OBSOLETE QUERY INTERFACE</b>
-       This  section  describes  an interface that is deprecated as of Postfix
-       2.2. It is replaced by  the  more  general  <b>query</b>  interface  described
-       above.   If  the  <b>query</b>  parameter  is  defined,  the legacy parameters
-       described here ignored.  Please migrate to the  new  interface  as  the
+       This section describes an interface that is deprecated  as  of  Postfix
+       2.2.  It  is  replaced  by  the  more general <b>query</b> interface described
+       above.  If the  <b>query</b>  parameter  is  defined,  the  legacy  parameters
+       described  here  ignored.   Please  migrate to the new interface as the
        legacy interface may be removed in a future release.
 
-       The  following  parameters  can  be  used  to fill in a SELECT template
+       The following parameters can be used  to  fill  in  a  SELECT  template
        statement of the form:
 
            SELECT [<b>select_field</b>]
@@ -279,7 +284,7 @@ MYSQL_TABLE(5)                                                  MYSQL_TABLE(5)
                  [<b>additional_conditions</b>]
 
        The specifier %s is replaced by the search string, and is escaped so if
-       it  contains single quotes or other odd characters, it will not cause a
+       it contains single quotes or other odd characters, it will not cause  a
        parse error, or worse, a security problem.
 
        <b>select_field</b>

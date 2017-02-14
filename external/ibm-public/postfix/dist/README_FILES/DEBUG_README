@@ -373,8 +373,12 @@ When reporting a problem, be sure to include the following information.
     host names consistently. Replace each letter by "A", each digit by "D" so
     that the helpers can still recognize syntactical errors.
 
-  * Output from "ppoossttccoonnff --nn". Please do not send your main.cf file, or 500+
-    lines of ppoossttccoonnff output.
+  * Command output from:
+
+      o "ppoossttccoonnff --nn". Please do not send your main.cf file, or 1000+ lines of
+        ppoossttccoonnff command output.
+
+      o "ppoossttccoonnff --MMff" (Postfix 2.9 or later).
 
   * Better, provide output from the ppoossttffiinnggeerr tool. This can be found at http:
     //ftp.wl0.org/SOURCES/postfinger.

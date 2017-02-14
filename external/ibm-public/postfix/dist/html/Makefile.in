@@ -15,7 +15,7 @@ COMMANDS= mailq.1.html newaliases.1.html postalias.1.html postcat.1.html \
 	postqueue.1.html postsuper.1.html sendmail.1.html \
 	smtp-source.1.html smtp-sink.1.html posttls-finger.1.html \
 	qmqp-source.1.html qmqp-sink.1.html \
-	qshape.1.html
+	qshape.1.html postfix-tls.1.html
 CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 	transport.5.html virtual.5.html pcre_table.5.html regexp_table.5.html \
 	cidr_table.5.html tcp_table.5.html header_checks.5.html \
@@ -26,7 +26,7 @@ CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 OTHER	= postfix-manuals.html
 AWK	= awk '{ print; if (NR == 2) print ".pl 99999\n.ll 78" }'
 MAN2HTML = man2html -t "Postfix manual - `IFS=.; set \`echo $@\`; echo \"$$1($$2)\"`"
-NROFF	= GROFF_NO_SGR=1 nroff
+NROFF	= LANG=C GROFF_NO_SGR=1 nroff
 
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(OTHER)
 
@@ -176,6 +176,10 @@ postdrop.1.html: ../src/postdrop/postdrop.c
 postfix.1.html: ../src/postfix/postfix.c
 	PATH=../mantools:$$PATH; \
 	srctoman $? | $(AWK) | $(NROFF) -man | uniq | $(MAN2HTML) | postlink >$@
+
+postfix-tls.1.html: ../conf/postfix-tls-script
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | $(NROFF) -man | uniq | $(MAN2HTML) | postlink >$@
 
 postkick.1.html: ../src/postkick/postkick.c
 	PATH=../mantools:$$PATH; \

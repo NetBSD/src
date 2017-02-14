@@ -8,6 +8,7 @@
 ./dict_open: warning: cidr map dict_cidr.map, line 16: missing ']' character after "[1234": skipping this rule
 ./dict_open: warning: cidr map dict_cidr.map, line 17: garbage after "[1234]": skipping this rule
 ./dict_open: warning: cidr map dict_cidr.map, line 18: bad net/mask pattern: "172.16.1.3/3x": skipping this rule
+owner=untrusted (uid=USER)
 > get 172.16.0.0
 172.16.0.0=554 match bad netblock 172.16.0.0/21
 > get 172.16.0.1

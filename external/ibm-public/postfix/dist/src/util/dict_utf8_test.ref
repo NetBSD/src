@@ -1,0 +1,18 @@
+owner=trusted (uid=2147483647)
+> flags
+dict flags fixed|lock|replace|utf8_request|utf8_active
+> verbose
+> get foo
+foo: not found
+> put Δημοσθένους.example.com aaa
+> get Δημοσθένους.example.com
+Δημοσθένους.example.com=aaa
+> put ��� xxx
+./dict_open: warning: internal:whatever: non-UTF-8 key "???": malformed UTF-8 or invalid codepoint
+> get ���
+./dict_open: warning: internal:whatever: non-UTF-8 key "???": malformed UTF-8 or invalid codepoint
+���: not found
+> put xxx ���
+./dict_open: warning: internal:whatever: key "xxx": non-UTF-8 value "???": malformed UTF-8 or invalid codepoint
+> get xxx
+xxx: not found

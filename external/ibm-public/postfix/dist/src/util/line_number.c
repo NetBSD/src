@@ -1,4 +1,4 @@
-/*	$NetBSD: line_number.c,v 1.1.1.1 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: line_number.c,v 1.1.1.2 2017/02/14 01:13:44 christos Exp $	*/
 
 /*++
 /* NAME
@@ -65,8 +65,9 @@ char   *format_line_number(VSTRING *result, ssize_t first, ssize_t last)
     /*
      * Print a range only when the numbers differ.
      */
-    vstring_sprintf(result, first == last ? "%ld" : "%ld-%ld",
-		    (long) first, (long) last);
+    vstring_sprintf(result, "%ld", (long) first);
+    if (first != last)
+	vstring_sprintf_append(result, "-%ld", (long) last);
 
     return (vstring_str(result));
 }

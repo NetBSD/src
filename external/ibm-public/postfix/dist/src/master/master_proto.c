@@ -1,4 +1,4 @@
-/*	$NetBSD: master_proto.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: master_proto.c,v 1.1.1.2 2017/02/14 01:13:41 christos Exp $	*/
 
 /*++
 /* NAME
@@ -79,7 +79,7 @@ int     master_notify(int pid, unsigned generation, int status)
     stat.gen = generation;
     stat.avail = status;
 
-    if (write(MASTER_STATUS_FD, (char *) &stat, sizeof(stat)) != sizeof(stat)) {
+    if (write(MASTER_STATUS_FD, (void *) &stat, sizeof(stat)) != sizeof(stat)) {
 	if (msg_verbose)
 	    msg_info("%s: status %d: %m", myname, status);
 	return (-1);

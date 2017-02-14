@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_open.c,v 1.1.1.3 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: mbox_open.c,v 1.1.1.4 2017/02/14 01:13:40 christos Exp $	*/
 
 /*++
 /* NAME
@@ -237,7 +237,7 @@ void    mbox_release(MBOX *mp)
     if (mp->locked & MBOX_DOT_LOCK)
 	dot_unlockfile(mp->path);
     myfree(mp->path);
-    myfree((char *) mp);
+    myfree((void *) mp);
 }
 
 /* mbox_dsn - map errno value to mailbox-related DSN detail */

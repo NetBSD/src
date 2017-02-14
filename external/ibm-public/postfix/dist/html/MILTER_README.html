@@ -28,16 +28,10 @@ SMTP commands (HELO, MAIL FROM, etc.) as well as mail content
 <p> The reason for adding Milter support to Postfix is that there
 exists a large collection of applications, not only to block unwanted
 mail, but also to verify authenticity (examples: <a
-href="http://www.opendkim.org/">OpenDKIM</a>, <a
-href="http://sourceforge.net/projects/dkim-milter/">DomainKeys
-Identified Mail (DKIM)</a>, <a
-href="http://sourceforge.net/projects/sid-milter/">SenderID+SPF</a> and
-<a href="http://sourceforge.net/projects/dk-milter/">DomainKeys</a>)
-or to digitally sign mail (examples: <a
-href="http://www.opendkim.org/">OpenDKIM</a>, <a
-href="http://sourceforge.net/projects/dkim-milter/">DomainKeys
-Identified Mail (DKIM)</a>, <a
-href="http://sourceforge.net/projects/dk-milter/">DomainKeys</a>).
+href="http://www.opendkim.org/">OpenDKIM</a> and <a
+href="http://www.trusteddomain.org/opendmarc/">DMARC </a>)
+or to digitally sign mail (example: <a
+href="http://www.opendkim.org/">OpenDKIM</a>).
 Having yet another Postfix-specific version of all that software
 is a poor use of human and system resources. </p>
 
@@ -206,17 +200,14 @@ an object library that implements the Sendmail 8 Milter protocol.
 Postfix currently does not provide such a library, but Sendmail
 does. </p>
 
-<ul>
-
-<li> <p> The first option is to use a pre-compiled library. Some
+<p> Some
 systems install the Sendmail libmilter library by default.  With
 other systems, libmilter may be provided by a package (called
 "sendmail-devel" on some Linux systems).  </p>
 
 <p> Once libmilter is installed, applications such as <a
-href="http://www.opendkim.org/">OpenDKIM</a>, <a
-href="http://sourceforge.net/projects/dkim-milter/">dkim-milter</a> and
-<a href="http://sourceforge.net/projects/sid-milter/">sid-milter</a>
+href="http://www.opendkim.org/">OpenDKIM</a> and
+<a href="http://www.trusteddomain.org/opendmarc/">OpenDMARC</a>
 build out of the box without requiring any tinkering:</p>
 
 <blockquote>
@@ -230,44 +221,6 @@ $ <b>make install</b>
 </pre>
 </blockquote>
 
-<blockquote>
-<pre>
-$ <b>gzcat dkim-milter-<i>x.y.z</i>.tar.gz | tar xf -</b>
-$ <b>cd dkim-milter-<i>x.y.z</i></b>
-$ <b>make</b>
-[...<i>lots of output omitted</i>...]
-</pre>
-</blockquote>
-
-<li> <p> The other option is to build the libmilter library from
-Sendmail source code: </p>
-
-<blockquote>
-<pre>
-$ <b>gzcat sendmail-<i>x.y.z</i>.tar.gz | tar xf -</b>
-$ <b>cd sendmail-<i>x.y.z</i>/libmilter</b>
-$ <b>make</b>
-[...<i>lots of output omitted</i>...]
-</pre>
-</blockquote>
-
-<p> After building your own libmilter library, follow the installation
-instructions in the Milter application source distribution to specify
-the location of the libmilter include files and object library.
-Typically, these settings are configured in a file named
-<tt>sid-filter/Makefile.m4</tt> or similar:
-
-<blockquote>
-<pre>
-APPENDDEF(`confINCDIRS', `-I/some/where/sendmail-x.y.z/include')
-APPENDDEF(`confLIBDIRS', `-L/some/where/sendmail-x.y.z/obj.<i>systemtype</i>/libmilter')
-</pre>
-</blockquote>
-
-<p>Then build the Milter application. </p>
-
-</ul>
-
 <h2><a name="running">Running Milter applications</a></h2>
 
 <p> To run a Milter application, see the documentation of the filter
@@ -275,7 +228,7 @@ for options.  A typical command looks like this:</p>
 
 <blockquote>
 <pre>
-# <b>/some/where/dkim-filter -u <i>userid</i> -p inet:<i>portnumber</i>@localhost ...<i>other options</i>...</b>
+# <b>/some/where/opendkim -l -u <i>userid</i> -p inet:<i>portnumber</i>@localhost ...<i>other options</i>...</b>
 </pre>
 </blockquote>
 
@@ -285,9 +238,8 @@ applications (not "postfix", not "www", etc.). </p>
 <h2><a name="config">Configuring Postfix</a></h2>
 
 <p> Like Sendmail, Postfix has a lot of configuration options that
-control how it talks to Milter applications. With the initial Postfix
-Milter protocol implementation, many options are global, that is,
-they apply to all Milter applications. Future Postfix versions may
+control how it talks to Milter applications. Besides global options
+that apply to all Milter applications, Postfix 3.0 and later
 support per-Milter timeouts, per-Milter error handling, etc. </p>
 
 <p> Information in this section: </p>
@@ -304,7 +256,12 @@ support per-Milter timeouts, per-Milter error handling, etc. </p>
 
 <li><a href="#timeouts">Milter protocol timeouts</a>
 
+<li><a href="#per-milter">Different settings for different Milter
+applications </a>
+
 <li><a href="#macros">Sendmail macro emulation</a>
+
+<li><a href="#send-macros">What macros will Postfix send to Milters?</a>
 
 </ul>
 
@@ -316,11 +273,12 @@ unwanted mail, and to sign mail from authorized SMTP clients.  Mail
 that arrives via the Postfix <a href="smtpd.8.html">smtpd(8)</a> server is not filtered by the
 non-SMTP filters that are described in the next section. </p>
 
-<p> NOTE: Do not use the <a href="header_checks.5.html">header_checks(5)</a> IGNORE action to remove
+<blockquote> NOTE for Postfix versions that have a <a href="postconf.5.html#mail_release_date">mail_release_date</a>
+before 20141018: do not use the <a href="header_checks.5.html">header_checks(5)</a> IGNORE action to remove
 Postfix's own Received: message header. This causes problems with
 mail signing filters. Instead, keep Postfix's own Received: message
 header and use the <a href="header_checks.5.html">header_checks(5)</a> REPLACE action to sanitize
-information. </p>
+information. </blockquote>
 
 <p> You specify SMTP-only Milter applications (there can be more
 than one) with the <a href="postconf.5.html#smtpd_milters">smtpd_milters</a> parameter.  Each Milter application
@@ -426,8 +384,28 @@ commands.  When a <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters<
 a recipient, Postfix will report a configuration error, and mail
 will stay in the queue.  </p>
 
-<p> None of this is a problem for mail filters that digitally sign
-mail. </p>
+<h4> Signing internally-generated bounce messages </h4>
+
+<p> Postfix normally does not apply content filters to mail
+that is generated internally such as bounces or Postmaster
+notifications. Filtering internally-generated bounces would result
+in loss of mail when a filter rejects a message, as the resulting
+double-bounce message would almost certainly also be blocked. </p>
+
+<p>  To sign Postfix's own bounce messages, enable filtering of
+internally-generated bounces (line 2 below), and don't reject any
+internally-generated bounces with <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a>, <a href="postconf.5.html#header_checks">header_checks</a>
+or <a href="postconf.5.html#body_checks">body_checks</a> (lines 3-5 below).  </p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#internal_mail_filter_classes">internal_mail_filter_classes</a> = bounce
+3     <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a> = <i>don't reject internally-generated bounces</i>
+4     <a href="postconf.5.html#header_checks">header_checks</a> = <i>don't reject internally-generated bounces</i>
+5     <a href="postconf.5.html#body_checks">body_checks</a> = <i>don't reject internally-generated bounces</i>
+</pre>
+</blockquote>
 
 <h3><a name="errors">Milter error handling</a></h3>
 
@@ -448,6 +426,9 @@ in the "<a href="QSHAPE_README.html#hold_queue">hold" queue</a>, and is availabl
     <a href="postconf.5.html#milter_default_action">milter_default_action</a> = tempfail
 </pre>
 </blockquote>
+
+<p> See "<a href="#per-milter">Different settings for different
+Milter applications</a>" for advanced configuration options. </p>
 
 <h3><a name="version">Milter protocol version</a></h3>
 
@@ -499,6 +480,9 @@ number. Postfix 2.8 and later will automatically turn off protocol
 features that the application's libmilter library does not expect.
 </p>
 
+<p> See "<a href="#per-milter">Different settings for different
+Milter applications</a>" for advanced configuration options. </p>
+
 <h3><a name="timeouts">Milter protocol timeouts</a></h3>
 
 <p> Postfix uses different time limits at different Milter protocol
@@ -531,6 +515,54 @@ lots of DNS lookups.  However, if you increase the above timeouts
 too much, remote SMTP clients may hang up and mail may be delivered
 multiple times. This is an inherent problem with before-queue
 filtering. </p>
+
+<p> See "<a href="#per-milter">Different settings for different
+Milter applications</a>" for advanced configuration options. </p>
+
+<h3><a name="per-milter">Different settings for different Milter
+applications </a></h3>
+
+<p> The previous sections list a number of Postfix <a href="postconf.5.html">main.cf</a> parameters
+that control time limits and other settings for all Postfix Milter
+clients. This is sufficient for simple configurations. With more
+complex configurations it becomes desirable to have different
+settings for different Milter clients. This is supported with Postfix
+3.0 and later. </p>
+
+<p> The following example shows a "non-critical" Milter client with
+a short connect timeout, and with "accept" as default action when
+the service is unvailable. </p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#smtpd_milters">smtpd_milters</a> = { inet:host:port,
+3         connect_timeout=10s, default_action=accept }
+</pre>
+</blockquote>
+
+<p> Instead of a server endpoint, we now have a list enclosed in {}. </p>
+
+<ul>
+
+<li> <p> Line 2: The first item in the list is the server endpoint.
+This supports the exact same "inet" and "unix" syntax as described
+earlier. </p>
+
+<li> <p> Line 3: The remainder of the list contains per-Milter
+settings. These settings override global <a href="postconf.5.html">main.cf</a> parameters, and
+have the same name as those parameters, without the "milter_" prefix.
+The per-Milter settings that are supported as of Postfix 3.0 are
+command_timeout, connect_timeout, content_timeout, default_action,
+and protocol.  </p>
+
+</ul>
+
+<p> Inside the list, syntax is similar to what we already know from
+<a href="postconf.5.html">main.cf</a>: items separated by space or comma. There is one difference:
+<b>you must enclose a setting in parentheses, as in "{ name = value
+}", if you want to have space or comma within a value or around
+"="</b>.  </p>
 
 <h3><a name="macros">Sendmail macro emulation</a></h3>
 
@@ -632,9 +664,11 @@ With rejected recipient: "error" </td> </tr>
 
 </blockquote>
 
+<h3><a name="send-macros">What macros will Postfix send to Milters?</a></h3>
+
 <p> Postfix sends specific sets of macros at different Milter protocol
-stages.  The sets are configured with the parameters as described
-in the table (EOH = end of headers; EOM = end of message). The
+stages.  The sets are configured with the parameters as shown in the
+table below (EOH = end of headers; EOM = end of message). The
 protocol version is a number that Postfix sends at the beginning
 of the Milter protocol handshake. </p>
 
@@ -677,6 +711,17 @@ TO </td> </tr>
 </table>
 
 </blockquote>
+
+<p> By default, Postfix will send only macros whose values have been
+updated with information from <a href="postconf.5.html">main.cf</a> or <a href="master.5.html">master.cf</a>, from an SMTP session
+(for example; SASL login, or TLS certificates) or from a Mail delivery
+transaction (for example; queue ID, sender, or recipient). </p>
+
+<p> To force a macro to be sent even when its value has not been updated,
+you may specify macro default values with the <a href="postconf.5.html#milter_macro_defaults">milter_macro_defaults</a>
+parameter. Specify zero or more <i>name=value</i> pairs separated by
+comma or whitespace; you may even specify macro names that Postfix does
+know about! </p>
 
 <h2><a name="workarounds">Workarounds</a></h2>
 
@@ -830,12 +875,6 @@ with only one exception: <a href="postconf.5.html#non_smtpd_milters">non_smtpd_m
 TEMPFAIL simulated RCPT TO commands. When this rule is violated,
 Postfix will report a configuration error, and mail will stay in
 the queue.  </p>
-
-<li> <p> Postfix currently does not apply content filters to mail
-that is forwarded or aliased internally, or to mail that is generated
-internally such as bounces or Postmaster notifications. This may
-be a problem when you want to apply a signing Milter to such mail.
-</p>
 
 <li> <p> When you use the before-queue content filter for incoming
 SMTP mail (see <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a>), Milter applications have access

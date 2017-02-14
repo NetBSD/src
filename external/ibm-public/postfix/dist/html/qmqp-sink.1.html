@@ -7,7 +7,7 @@
 QMQP-SINK(1)                                                      QMQP-SINK(1)
 
 <b>NAME</b>
-       qmqp-sink - multi-threaded QMQP test server
+       qmqp-sink - parallelized QMQP test server
 
 <b>SYNOPSIS</b>
        <b>qmqp-sink</b> [<b>-46cv</b>] [<b>-x</b> <i>time</i>] [<b>inet:</b>][<i>host</i>]:<i>port backlog</i>
@@ -19,8 +19,8 @@ QMQP-SINK(1)                                                      QMQP-SINK(1)
        messages from the network and throws them away.  The purpose is to mea-
        sure QMQP client performance, not protocol compliance.  Connections can
        be accepted on IPv4 or IPv6 endpoints, or on UNIX-domain sockets.  IPv4
-       and  IPv6 are the default.  This program is the complement of the <a href="qmqp-source.1.html"><b>qmqp-</b></a>
-       <a href="qmqp-source.1.html"><b>source</b>(1)</a> program.
+       and  IPv6  are  the  default.   This  program  is the complement of the
+       <a href="qmqp-source.1.html"><b>qmqp-source</b>(1)</a> program.
 
        Note: this is an unsupported test program. No attempt is made to  main-
        tain compatibility between successive versions.
@@ -54,6 +54,11 @@ QMQP-SINK(1)                                                      QMQP-SINK(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                   QMQP-SINK(1)
 </pre> </body> </html>

@@ -1,0 +1,10 @@
+compare Δημοσθένους.example.com δημοσθένουσ.example.com
+compare Δημοσθένους.example.com ηδμοσθένουσ.example.com
+compare ηδμοσθένουσ.example.com Δημοσθένους.example.com
+compare HeLlO.ExAmPlE.CoM hello.example.com
+compare HeLlO hellp
+compare hellp HeLlO
+compare-len HeLlO hellp 4
+compare-len HeLO help 4
+compare abcde abcdf 
+compare YYY���XXX yyy���xxx

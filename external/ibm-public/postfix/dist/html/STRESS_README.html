@@ -158,15 +158,18 @@ default with Postfix 2.6 and later. </p>
 
 <blockquote>
 <pre>
-1 <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> = ${stress?10}${stress:300}s
-2 <a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a> = ${stress?1}${stress:20}
-3 <a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> = ${stress?1}${stress:100}
+1 <a href="postconf.5.html#smtpd_timeout">smtpd_timeout</a> = ${stress?{10}:{300}}s
+2 <a href="postconf.5.html#smtpd_hard_error_limit">smtpd_hard_error_limit</a> = ${stress?{1}:{20}}
+3 <a href="postconf.5.html#smtpd_junk_command_limit">smtpd_junk_command_limit</a> = ${stress?{1}:{100}}
 4 # Parameters added after Postfix 2.6:
-5 <a href="postconf.5.html#smtpd_per_record_deadline">smtpd_per_record_deadline</a> = ${stress?yes}${stress:no}
-6 <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_starttls_timeout</a> = ${stress?10}${stress:300}s
-7 <a href="postconf.5.html#address_verify_poll_count">address_verify_poll_count</a> = ${stress?1}${stress:3}
+5 <a href="postconf.5.html#smtpd_per_record_deadline">smtpd_per_record_deadline</a> = ${stress?{yes}:{no}}
+6 <a href="postconf.5.html#smtpd_starttls_timeout">smtpd_starttls_timeout</a> = ${stress?{10}:{300}}s
+7 <a href="postconf.5.html#address_verify_poll_count">address_verify_poll_count</a> = ${stress?{1}:{3}}
 </pre>
 </blockquote>
+
+<p> Postfix versions before 3.0 use the older form ${stress?x}${stress:y}
+instead of the newer form ${stress?{x}:{y}}. </p>
 
 <p> Translation: <p>
 
@@ -216,8 +219,9 @@ as this measure is used only temporarily.  </p>
 
 </ul>
 
-<p> The syntax of ${name?value} and ${name:value} is explained at
-the beginning of the <a href="postconf.5.html">postconf(5)</a> manual page. </p>
+<p> The syntax of ${name?{value}:{value}}, ${name?value} and
+${name:value} is explained at the beginning of the <a href="postconf.5.html">postconf(5)</a>
+manual page. </p>
 
 <p> NOTE: Please keep in mind that the stress-adaptive feature is
 a fairly desperate measure to keep <b>some</b> legitimate mail
