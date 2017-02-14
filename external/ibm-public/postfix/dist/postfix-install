@@ -57,11 +57,17 @@
 #	parameter settings. These settings have the highest precedence.
 # .IP "command line"
 #	Parameter settings can be given as name=value arguments on
-#	the postfix-install command line.
+#	the postfix-install command line. This mode will replace
+#	the string MAIL_VERSION at the end of a configuration
+#	parameter value with the Postfix release version (Postfix
+#	3.0 and later).
 # .IP "process environment"
 #	Parameter settings can be given as name=value environment
-#	variables. Environment parameters can also be specified on the
-#	make(1) command line as "make install name=value ...".
+#	variables. Environment parameters can also be specified on
+#	the make(1) command line as "make install name=value ...".
+#	This mode will replace the string MAIL_VERSION at the end
+#	of a configuration parameter value with the Postfix release
+#	version (Postfix 3.0 and later).
 # .IP "installed configuration files"
 #	If a parameter is not specified via the command line or via the
 #	process environment, postfix-install will attempt to extract its
@@ -144,14 +150,29 @@
 #	The final destination directory for the Postfix sample configuration
 #	files. This parameter is obsolete as of Postfix version 2.1.
 #	This parameter setting is recorded in the installed main.cf file.
+# .IP meta_directory
+#	The final destination directory for non-executable files
+#	that are shared among multiple Postfix instances, such
+#	as postfix-files, dynamicmaps.cf, as well as the multi-instance
+#	template files main.cf.proto and master.cf.proto. This
+#	directory should contain only Postfix-related files.
 # .IP readme_directory
 #	The final destination directory for the Postfix README files.
 #	This parameter setting is recorded in the installed main.cf file.
+# .IP shlib_directory
+#	The final destination directory for Postfix shared-library
+#	files, and the default directory for Postfix database plugin
+#	files with a relative pathname in the file dynamicmaps.cf.
+#	This directory should contain only Postfix-related files.
+#	The shlib_directory parameter built-in default value is
+#	specified at compile time.  If you change this at installation
+#	time, then additional configuration will be required with
+#	ldconfig(1) or equivalent.
 # SEE ALSO
 #	post-install(1) post-installation procedure
 # FILES
 #	$config_directory/main.cf, Postfix installation configuration.
-#	$daemon_directory/postfix-files, installation control file.
+#	$meta_directory/postfix-files, installation control file.
 #	$config_directory/install.cf, obsolete configuration file.
 # LICENSE
 # .ad
@@ -162,6 +183,11 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--
 
 # Initialize.
@@ -178,6 +204,11 @@ BACKUP_IFS="$IFS"
 # Override all LC_* settings and LANG for robustness.
 LC_ALL=C; export LC_ALL
 
+if [ -n "$SHLIB_ENV_VAR" ]; then
+    junk="${SHLIB_ENV_VAL}"
+    eval export "$SHLIB_ENV_VAR=\$junk"
+fi
+
 USAGE="Usage: $0 [name=value] [option]
     -non-interactive        Do not ask for installation parameters.
     -package                Build a ready-to-install package.
@@ -190,10 +221,11 @@ USAGE="Usage: $0 [name=value] [option]
 for arg
 do
     case $arg in
-      *=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
--non-int*) non_interactive=1;;
- -package) need_install_root=install_root;;
-        *) echo "$0: Error: $USAGE" 1>&2; exit 1;;
+*[" 	"]*) echo "$0: Error: argument contains whitespace: '$arg'"; exit 1;;
+	*=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
+  -non-int*) non_interactive=1;;
+   -package) need_install_root=install_root;;
+	  *) echo "$0: Error: $USAGE" 1>&2; exit 1;;
     esac
     shift
 done
@@ -209,6 +241,34 @@ test -x bin/postconf || {
     echo $0: Error: no bin/postconf file. Did you forget to run \"make\"? 1>&2
     exit 1
 }
+
+CONFIG_PARAMS="command_directory daemon_directory data_directory \
+html_directory mail_owner mailq_path manpage_directory newaliases_path \
+queue_directory readme_directory sendmail_path setgid_group shlib_directory \
+meta_directory"
+
+# Expand the string MAIL_VERSION at the end of "make install" etc.
+# name=value command-line arguments (and consequently, in environment
+# settings), for consistency with "make makefiles".
+
+# Note that MAIL_VERSION) does not anchor the match at the end.
+
+for name in $CONFIG_PARAMS sample_directory install_root tempdir
+do
+    eval junk=\$$name
+    case "$junk" in
+    *MAIL_VERSION*) 
+	case "$mail_version" in
+	"") mail_version="`bin/postconf -dhx mail_version`" || exit 1
+	esac
+	val=`echo "$junk" | sed 's/MAIL_VERSION$/'"$mail_version/g"` || exit 1
+	case "$val" in
+	*MAIL_VERSION*)
+	   echo "MAIL_VERSION not at end of parameter value: $junk" 1>&2; exit 1
+	esac
+	eval ${name}='"$val"'
+    esac
+done
 
 case `uname -s` in
 HP-UX*) FMT=cat;;
@@ -252,11 +312,16 @@ compare_or_replace() {
     }
 }
 
+myreadlink() {
+    ls -ld -- "$@" 2>/dev/null | awk '
+	/->/ { print $NF; next } 
+	{ exit(1) }  
+    '
+}
+
 compare_or_symlink() {
-    (cmp $1 $2 >/dev/null 2>&1 && echo Skipping $2...) || {
-	echo Updating $2...
-	rm -f $tempdir/junk || exit 1
-	dest=`echo $1 | sed '
+    case $1 in
+    /*) dest=`echo $1 | sed '
 	    s;^'$install_root';;
 	    s;/\./;/;g
 	    s;//*;/;g
@@ -271,14 +336,18 @@ compare_or_symlink() {
 	    s;[^/]*/;../;g
 	    s;$;'$dest';
 	'`
-	ln -s $link $tempdir/junk || exit 1
-	mv -f $tempdir/junk $2 || {
-	    echo $0: Error: your mv command has trouble renaming symlinks. 1>&2
-	    echo If you run Linux, upgrade to GNU fileutils-4.0 or better, 1>&2
-	    echo or choose a tempdir that is in the same file system as $2. 1>&2
-	    echo If you run FreeBSD, upgrade to version 5 or better. 1>&2
-	    exit 1
-	}
+	;;
+     *) link=$1
+	;;
+    esac
+    (test $link = "`myreadlink $2`" >/dev/null 2>&1 && echo Skipping $2...) || {
+	echo Updating $2...
+	# We create the symlink in place instead of using mv because:
+	# 1) some systems cannot move symlinks between file systems;
+	# 2) we cannot use mv to replace a symlink-to-directory;
+	# 3) "ln -n" is not in POSIX, therefore it's not portable.
+	# rm+ln is less atomic but this affects compatibility symlinks only.
+	rm -f $2 && ln -sf $link $2 || exit 1
     }
 }
 
@@ -364,6 +433,14 @@ README files. Specify \"no\" if you do not want to install these files."
 html_directory_prompt="the final destination directory for the Postfix
 HTML files. Specify \"no\" if you do not want to install these files."
 
+shlib_directory_prompt="the final destination directory for Postfix
+shared-library files."
+
+meta_directory_prompt="the final destination directory for
+non-executable files that are shared among multiple Postfix instances,
+such as postfix-files, dynamicmaps.cf, as well as the multi-instance
+template files main.cf.proto and master.cf.proto."
+
 # Default settings, just to get started.
 
 : ${install_root=/}
@@ -425,10 +502,6 @@ grep setgid_group $CONFIG_DIRECTORY/main.cf >/dev/null 2>&1 || {
     }
 }
 
-CONFIG_PARAMS="command_directory daemon_directory data_directory \
-html_directory mail_owner mailq_path  manpage_directory newaliases_path \
-queue_directory readme_directory sendmail_path setgid_group"
-
 # Extract parameter settings from the installed main.cf file.
 
 test -f $CONFIG_DIRECTORY/main.cf && {
@@ -438,7 +511,7 @@ test -f $CONFIG_DIRECTORY/main.cf && {
 	case "$junk" in
 	"") eval unset $name;;
 	esac
-	eval : \${$name=\`bin/postconf -c $CONFIG_DIRECTORY -h $name\`} ||
+	eval : \${$name=\`bin/postconf -c $CONFIG_DIRECTORY -hx $name\`} ||
 	    exit 1
     done
 }
@@ -451,7 +524,7 @@ do
     case "$junk" in
     "") eval unset $name;;
     esac
-    eval : \${$name=\`bin/postconf -c conf -d -h $name\`} || exit 1
+    eval : \${$name=\`bin/postconf -c conf -d -hx $name\`} || exit 1
 done
 
 # Override settings manually.
@@ -489,7 +562,7 @@ case "$manpage_directory" in
      exit 1;;
 esac
 
-for path in "$html_directory" "$readme_directory"
+for path in "$html_directory" "$readme_directory" "$shlib_directory"
 do
    case "$path" in
    /*) ;;
@@ -500,7 +573,8 @@ do
 done
 
 for path in "$daemon_directory" "$data_directory" "$command_directory" "$queue_directory" \
-    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
+    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory" \
+    "$meta_directory"
 do
    case "$path" in
    /*) ;;
@@ -517,12 +591,27 @@ do
 done
 
 for path in command_directory config_directory daemon_directory data_directory \
-    manpage_directory queue_directory html_directory readme_directory
+    manpage_directory queue_directory shlib_directory html_directory \
+    readme_directory meta_directory
 do
-    eval test -f $install_root\$$path && {
+   case "$path" in
+   no) ;;
+    *) eval test -f $install_root\$$path && {
 	echo $0: Error: \"$path\" specifies a regular file. 1>&2
 	exit 1
-    }
+   };;
+   esac
+done
+
+# Don't allow space or tab in parameter settings.
+
+for name in $CONFIG_PARAMS sample_directory
+do
+    eval junk=\$$name
+    case "$junk" in
+*"[ 	]"*) echo "$0: Error: $name value contains whitespace: '$junk'" 1>&2
+	     exit 1;;
+    esac
 done
 
 test -d $tempdir || mkdir -p $tempdir || exit 1
@@ -569,16 +658,21 @@ SENDMAIL_PATH=$install_root$sendmail_path
 HTML_DIRECTORY=$install_root$html_directory
 MANPAGE_DIRECTORY=$install_root$manpage_directory
 README_DIRECTORY=$install_root$readme_directory
+SHLIB_DIRECTORY=$install_root$shlib_directory
+META_DIRECTORY=$install_root$meta_directory
 
 # Avoid repeated tests for existence of these; default permissions suffice.
 
 test -d $DAEMON_DIRECTORY || mkdir -p $DAEMON_DIRECTORY || exit 1
 test -d $COMMAND_DIRECTORY || mkdir -p $COMMAND_DIRECTORY || exit 1
-test -d $COMMAND_DIRECTORY || mkdir -p $COMMAND_DIRECTORY || exit 1
+test -d $QUEUE_DIRECTORY || mkdir -p $QUEUE_DIRECTORY || exit 1
+test "$shlib_directory" = "no" -o -d $SHLIB_DIRECTORY ||
+	mkdir -p $SHLIB_DIRECTORY || exit 1
 test "$html_directory" = "no" -o -d $HTML_DIRECTORY || 
 	mkdir -p $HTML_DIRECTORY || exit 1
 test "$readme_directory" = "no" -o -d $README_DIRECTORY || 
 	mkdir -p $README_DIRECTORY || exit 1
+test -d $META_DIRECTORY || mkdir -p $META_DIRECTORY || exit 1
 
 # Upgrade or first-time installation?
 
@@ -591,7 +685,7 @@ fi
 
 # Install files, using information from the postfix-files file.
 
-exec < libexec/postfix-files || exit 1
+exec < meta/postfix-files || exit 1
 while IFS=: read path type owner group mode flags junk
 do
     IFS="$BACKUP_IFS"
@@ -662,6 +756,12 @@ do
 
      f) echo $path | (IFS=/ read prefix file; IFS="$BACKUP_IFS"
 	case $prefix in
+	'$shlib_directory')
+	    compare_or_replace $mode "$owner" "$group" lib/$file \
+		    $SHLIB_DIRECTORY/$file || exit 1;;
+	'$meta_directory')
+	    compare_or_replace $mode "$owner" "$group" meta/$file \
+		$META_DIRECTORY/$file || exit 1;;
 	'$daemon_directory')
 	    compare_or_replace $mode "$owner" "$group" libexec/$file \
 		$DAEMON_DIRECTORY/$file || exit 1;;
@@ -687,7 +787,7 @@ do
 	    test "$readme_directory" = "no" ||
 		compare_or_replace $mode "$owner" "$group" README_FILES/$file \
 		    $README_DIRECTORY/$file || exit 1;;
-	 *) echo $0: Error: unknown entry $path in libexec/postfix-files 1>&2
+	 *) echo $0: Error: unknown entry $path in meta/postfix-files 1>&2
 	    exit 1;;
 	esac) || exit 1
 	continue;;
@@ -718,16 +818,39 @@ do
 	) || exit 1
 	continue;;
 
-     *) echo $0: Error: unknown type $type for $path in libexec/postfix-files 1>&2
+     *) echo $0: Error: unknown type $type for $path in meta/postfix-files 1>&2
 	exit 1;;
     esac
 
-    done
+done
+# More (solaris9) shell brain damage!
+IFS="$BACKUP_IFS"
 
 # Save the installation parameters to main.cf even when they haven't
 # changed from their current default. Defaults can change between
 # Postfix releases, and software should not suddenly be installed in
 # the wrong place when Postfix is being upgraded.
+
+case "$mail_version" in
+"") mail_version="`bin/postconf -dhx mail_version`" || exit 1
+esac
+
+# Undo MAIL_VERSION expansion at the end of a parameter value. If
+# someone really wants the expanded mail version in main.cf, then
+# we're sorry.
+
+for name in $CONFIG_PARAMS sample_directory
+do
+    eval junk=\$$name
+    case "$junk" in
+    *"$mail_version"*) 
+	case "$pattern" in
+	"") pattern=`echo "$mail_version" | sed 's/\./\\\\./g'` || exit 1
+	esac
+	val=`echo "$junk" | sed "s/$pattern"'$/${mail_version}/g'` || exit 1
+	eval ${name}='"$val"'
+    esac
+done
 
 bin/postconf -c $CONFIG_DIRECTORY -e \
     "daemon_directory = $daemon_directory" \
@@ -743,10 +866,15 @@ bin/postconf -c $CONFIG_DIRECTORY -e \
     "manpage_directory = $manpage_directory" \
     "sample_directory = $sample_directory" \
     "readme_directory = $readme_directory" \
+    "shlib_directory = $shlib_directory" \
+    "meta_directory = $meta_directory" \
 || exit 1
 
 # If Postfix is being installed locally from source code, do the
 # post-install processing now.
+
+# The unexpansion above may have side effects on exported variables.
+# It does not matter because bin/postfix below will override them.
 
 test -n "$install_root" || {
     bin/postfix post-install $post_install_options || exit 1

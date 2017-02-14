@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reply_footer.h,v 1.1.1.2 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: smtp_reply_footer.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _SMTP_REPLY_FOOTER_H_INCLUDED_
 #define _SMTP_REPLY_FOOTER_H_INCLUDED_

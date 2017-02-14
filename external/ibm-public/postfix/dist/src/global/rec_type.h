@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.1.1.3 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
