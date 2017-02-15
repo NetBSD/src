@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.14 2017/02/10 21:03:15 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.15 2017/02/15 02:55:53 nat Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.14 2017/02/10 21:03:15 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.15 2017/02/15 02:55:53 nat Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -197,5 +197,4 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 out:
 	if (buf != NULL) free(buf, M_TEMP);
 	audioclose(fp);
-	closef(fp);
 }
