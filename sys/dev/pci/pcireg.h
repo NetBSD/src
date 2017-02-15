@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.119 2016/12/28 06:57:27 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.120 2017/02/15 06:53:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -589,6 +589,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PMCSR_PME_STS	0x00008000
 #define PCI_PMCSR_B2B3_SUPPORT	0x00400000
 #define PCI_PMCSR_BPCC_EN	0x00800000
+#define PCI_PMCSR_DATA		0xff000000
 
 
 /*
