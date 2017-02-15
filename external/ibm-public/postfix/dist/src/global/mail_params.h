@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.14 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.15 2017/02/15 16:42:16 christos Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -3925,7 +3925,7 @@ extern char *var_shlib_dir;
 
 #define VAR_META_DIR	"meta_directory"
 #ifndef DEF_META_DIR
-#define DEF_META_DIR	DEF_CONFIG_DIR
+#define DEF_META_DIR	DEF_DAEMON_DIR
 #endif
 extern char *var_meta_dir;
 
