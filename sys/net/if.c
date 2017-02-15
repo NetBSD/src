@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.377 2017/02/10 20:56:21 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.378 2017/02/15 01:48:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.377 2017/02/10 20:56:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.378 2017/02/15 01:48:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -518,6 +518,23 @@ if_deactivate_sadl(struct ifnet *ifp)
 	ifafree(ifa);
 }
 
+static void
+if_replace_sadl(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	struct ifaddr *old;
+
+	KASSERT(ifp->if_dl != NULL);
+
+	old = ifp->if_dl;
+
+	ifaref(ifa);
+	/* XXX Update if_dl and if_sadl atomically */
+	ifp->if_dl = ifa;
+	ifp->if_sadl = satosdl(ifa->ifa_addr);
+
+	ifafree(old);
+}
+
 void
 if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
     const struct sockaddr_dl *sdl)
@@ -526,11 +543,11 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
 	struct ifaddr *ifa;
 	int bound = curlwp_bind();
 
+	KASSERT(ifa_held(ifa0));
+
 	s = splsoftnet();
 
-	if_deactivate_sadl(ifp);
-
-	if_sadl_setrefs(ifp, ifa0);
+	if_replace_sadl(ifp, ifa0);
 
 	ss = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
