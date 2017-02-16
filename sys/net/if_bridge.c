@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.132 2017/01/23 10:19:03 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.133 2017/02/16 08:12:44 knakahara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.132 2017/01/23 10:19:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.133 2017/02/16 08:12:44 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -735,11 +735,6 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	if (ifs == NULL)
 		return (ENOENT);
 
-	if (sc->sc_if.if_mtu != ifs->if_mtu) {
-		error = EINVAL;
-		goto out;
-	}
-
 	if (ifs->if_bridge == sc) {
 		error = EEXIST;
 		goto out;
@@ -765,6 +760,12 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
+		if (sc->sc_if.if_mtu != ifs->if_mtu) {
+			error = EINVAL;
+			goto out;
+		}
+		/* FALLTHROUGH */
+	case IFT_L2TP:
 		if ((error = ether_enable_vlan_mtu(ifs)) > 0)
 			goto out;
 		/*
@@ -840,6 +841,7 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
+	case IFT_L2TP:
 		/*
 		 * Take the interface out of promiscuous mode.
 		 * Don't call it with holding a spin lock.
@@ -898,6 +900,7 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 	if (req->ifbr_ifsflags & IFBIF_STP) {
 		switch (bif->bif_ifp->if_type) {
 		case IFT_ETHER:
+		case IFT_L2TP:
 			/* These can do spanning tree. */
 			break;
 

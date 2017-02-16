@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.115 2017/02/13 07:18:20 ozaki-r Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.116 2017/02/16 08:12:44 knakahara Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.115 2017/02/13 07:18:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.116 2017/02/16 08:12:44 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -388,6 +388,16 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif /* NCARP */
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_L2TP,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = encap6_input,
+	.pr_ctlinput = rip6_ctlinput,
+	.pr_ctloutput = rip6_ctloutput,
+	.pr_usrreqs = &rip6_usrreqs,
+	.pr_init = encap_init,
+},
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_PIM,
