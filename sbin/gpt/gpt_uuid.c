@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.14 2017/02/16 03:32:17 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.15 2017/02/16 22:40:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.14 2017/02/16 03:32:17 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.15 2017/02/16 22:40:19 christos Exp $");
 #endif
 
 #include <err.h>
@@ -301,10 +301,10 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 {
 	int rv;
 	struct dce_uuid u;
-	if (gpt->timestamp == 0)
-		rv = gpt_uuid_random(gpt, &u, sizeof(u));
-	else
+	if (gpt->flags & GPT_TIMESTAMP)
 		rv = gpt_uuid_tstamp(gpt, &u, sizeof(u));
+	else
+		rv = gpt_uuid_random(gpt, &u, sizeof(u));
 
 	if (rv == -1)
 		return -1;
