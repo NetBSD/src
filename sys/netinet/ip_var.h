@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.116 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.117 2017/02/16 08:12:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -157,8 +157,9 @@ struct ip_moptions {
 #define	IP_STAT_TOOLONG		27	/* ip length > max ip packet size */
 #define	IP_STAT_NOGIF		28	/* no match gif found */
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
+#define	IP_STAT_NOL2TP		30	/* no match l2tp found */
 
-#define	IP_NSTATS		30
+#define	IP_NSTATS		31
 
 #ifdef _KERNEL
 

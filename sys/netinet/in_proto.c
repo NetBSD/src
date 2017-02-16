@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.121 2017/02/13 07:18:20 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.122 2017/02/16 08:12:44 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.121 2017/02/13 07:18:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.122 2017/02/16 08:12:44 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -360,6 +360,16 @@ const struct protosw inetsw[] = {
 	.pr_init = carp_init,
 },
 #endif /* NCARP > 0 */
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_L2TP,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = encap4_input,
+	.pr_ctlinput = rip_ctlinput,
+	.pr_ctloutput = rip_ctloutput,
+	.pr_usrreqs = &rip_usrreqs,	/*XXX*/
+	.pr_init = encap_init,
+},
 #if NPFSYNC > 0
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,

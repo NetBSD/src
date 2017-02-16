@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1169 2017/02/02 19:50:35 macallan Exp $
+#	$NetBSD: files,v 1.1170 2017/02/16 08:12:43 knakahara Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -119,6 +119,8 @@ defparam opt_pax.h		PAX_MPROTECT
 defflag	opt_fileassoc.h		FILEASSOC
 
 defflag	opt_gre.h		GRE_DEBUG
+
+defparam opt_l2tp.h		L2TP_ID_HASH_SIZE
 
 # Write Ahead Physical Block Logging
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
@@ -1435,6 +1437,7 @@ defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
 defpseudo carp:		ifnet, ether, arp
 defpseudodev etherip:	ifnet, ether, arp
+defpseudodev l2tp:	ifnet, ether, arp
 
 defpseudo sequencer
 defpseudo clockctl
