@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.11 2017/02/16 18:49:31 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.12 2017/02/16 22:42:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.11 2017/02/16 18:49:31 christos Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.12 2017/02/16 22:42:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -621,7 +621,7 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	printf("MBR type: %d\n", ch);
     print_bpb(&bpb);
     if (!o.no_create) {
-	if (o.timestamp) {
+	if (o.timestamp_set) {
 		tv.tv_sec = now = o.timestamp;
 		tv.tv_usec = 0;
 		tm = gmtime(&now);
