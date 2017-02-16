@@ -1,9 +1,8 @@
-/*	$NetBSD: net_component.c,v 1.9 2017/02/16 08:39:10 knakahara Exp $	*/
+/*	$NetBSD: l2tp_component.c,v 1.1 2017/02/16 08:39:10 knakahara Exp $	*/
 
 /*
- * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by The Nokia Foundation
+ * Copyright (c) 2017 Internet Initiative Japan Inc.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,42 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.9 2017/02/16 08:39:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2tp_component.c,v 1.1 2017/02/16 08:39:10 knakahara Exp $");
 
 #include <sys/param.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-
-#include <net/if.h>
-#include <net/if_llatbl.h>
-#include <net/if_l2tp.h>
-#include <net/route.h>
 
 #include <rump-sys/kern.h>
 
-RUMP_COMPONENT(RUMP_COMPONENT_NET)
-{
-	ifinit1();
-	ifinit();
-	lltableinit();
-}
-
-RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
-{
-	extern struct domain routedomain, linkdomain;
-#ifdef COMPAT_50
-	extern struct domain compat_50_routedomain;
-#endif
-
-	domain_attach(&linkdomain);
-	domain_attach(&routedomain);
-#ifdef COMPAT_50
-	domain_attach(&compat_50_routedomain);
-#endif
-}
+int l2tpattach(int);
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 
-	loopinit();
+	l2tpattach(0);
 }
