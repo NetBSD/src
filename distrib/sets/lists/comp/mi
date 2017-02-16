@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2109 2017/02/16 08:12:43 knakahara Exp $
+#	$NetBSD: mi,v 1.2110 2017/02/16 08:39:10 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3552,6 +3552,8 @@
 ./usr/lib/librumpnet_bridge_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_gif.a			comp-c-lib		rump
 ./usr/lib/librumpnet_gif_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet_l2tp.a			comp-c-lib		rump
+./usr/lib/librumpnet_l2tp_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_local.a			comp-c-lib		rump
 ./usr/lib/librumpnet_local_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_net.a			comp-c-lib		rump
