@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1548 2017/02/06 16:06:38 christos Exp $
+# $NetBSD: mi,v 1.1549 2017/02/16 08:32:21 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1360,6 +1360,7 @@
 ./usr/share/man/cat4/ksyms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kttcp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kue.0			man-sys-catman		.cat
+./usr/share/man/cat4/l2tp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ld.0			man-sys-catman		.cat
 ./usr/share/man/cat4/le.0			man-sys-catman		.cat
@@ -4433,6 +4434,7 @@
 ./usr/share/man/html4/ksyms.html		man-sys-htmlman		html
 ./usr/share/man/html4/kttcp.html		man-sys-htmlman		html
 ./usr/share/man/html4/kue.html			man-sys-htmlman		html
+./usr/share/man/html4/l2tp.html			man-sys-htmlman		html
 ./usr/share/man/html4/lc.html			man-sys-htmlman		html
 ./usr/share/man/html4/ld.html			man-sys-htmlman		html
 ./usr/share/man/html4/le.html			man-sys-htmlman		html
@@ -7346,6 +7348,7 @@
 ./usr/share/man/man4/ksyms.4			man-sys-man		.man
 ./usr/share/man/man4/kttcp.4			man-sys-man		.man
 ./usr/share/man/man4/kue.4			man-sys-man		.man
+./usr/share/man/man4/l2tp.4			man-sys-man		.man
 ./usr/share/man/man4/lc.4			man-sys-man		.man
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
