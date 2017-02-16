@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2108 2017/02/08 03:44:40 kamil Exp $
+#	$NetBSD: mi,v 1.2109 2017/02/16 08:12:43 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2215,6 +2215,7 @@
 ./usr/include/net/if_hippi.h			comp-c-include
 ./usr/include/net/if_ieee1394.h			comp-c-include
 ./usr/include/net/if_ieee80211.h		comp-obsolete		obsolete
+./usr/include/net/if_l2tp.h			comp-c-include
 ./usr/include/net/if_llc.h			comp-c-include
 ./usr/include/net/if_media.h			comp-c-include
 ./usr/include/net/if_mpls.h			comp-c-include
@@ -2296,6 +2297,7 @@
 ./usr/include/netinet/igmp_var.h		comp-c-include
 ./usr/include/netinet/in.h			comp-c-include
 ./usr/include/netinet/in_gif.h			comp-c-include
+./usr/include/netinet/in_l2tp.h			comp-c-include
 ./usr/include/netinet/in_pcb.h			comp-c-include
 ./usr/include/netinet/in_pcb_hdr.h		comp-c-include
 ./usr/include/netinet/in_route.h		comp-obsolete		obsolete
@@ -2349,6 +2351,7 @@
 ./usr/include/netinet6/in6_gif.h		comp-c-include
 ./usr/include/netinet6/in6_ifattach.h		comp-c-include
 ./usr/include/netinet6/in6_pcb.h		comp-c-include
+./usr/include/netinet6/in6_l2tp.h		comp-c-include
 ./usr/include/netinet6/in6_var.h		comp-c-include
 ./usr/include/netinet6/ip6.h			comp-obsolete		obsolete
 ./usr/include/netinet6/ip6_mroute.h		comp-c-include
