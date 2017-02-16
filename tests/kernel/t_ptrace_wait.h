@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.8 2017/02/15 20:58:22 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.9 2017/02/16 15:57:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -428,10 +428,4 @@ check_happy(unsigned n)
 #define ATF_TP_ADD_TC_PT_STEP(a,b)	ATF_TP_ADD_TC(a,b)
 #else
 #define ATF_TP_ADD_TC_PT_STEP(a,b)
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-#define ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(a,b)	ATF_TP_ADD_TC(a,b)
-#else
-#define ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(a,b)
 #endif
