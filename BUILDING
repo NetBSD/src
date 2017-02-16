@@ -349,7 +349,7 @@ CONFIGURATION
                  statically linked.
 
                  Default: Platform dependent.  As of this writing, all
-                 platforms except sh3 default to ``yes''.
+                 platforms except m68000 default to ``yes''.
 
      MKPICINSTALL
                  Can be set to ``yes'' or ``no''.  Indicates whether the ar(1)
@@ -1108,4 +1108,4 @@ CAVEATS
      files in object directories.  Instead, one may have to manually remove
      the files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                         January 29, 2016                         NetBSD
+NetBSD                         February 16, 2017                        NetBSD
