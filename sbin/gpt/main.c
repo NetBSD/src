@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2017/02/16 03:32:17 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2017/02/16 22:40:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.9 2017/02/16 03:32:17 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2017/02/16 22:40:19 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -206,6 +206,7 @@ main(int argc, char *argv[])
 				usage();
 			break;
 		case 'T':
+			flags |= GPT_TIMESTAMP;
 			timestamp = get_tstamp(optarg);
 			break;
 		case 'v':
