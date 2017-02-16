@@ -1,4 +1,4 @@
-.\"	$NetBSD: l2tp.4,v 1.1 2017/02/16 08:32:21 knakahara Exp $
+.\"	$NetBSD: l2tp.4,v 1.2 2017/02/16 14:00:26 wiz Exp $
 .\"
 .\" Copyright (C) 2017 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -38,34 +38,37 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface is a version 3 of the Layer Two Tunneling Protocol(L2TPv3)
-pseudo device. It can tunnel layer 2 protocol traffic over IPv4 or IPv6,
-as specified in
+interface is a version 3 of the Layer Two Tunneling Protocol (L2TPv3)
+pseudo device.
+It can tunnel layer 2 protocol traffic over IPv4 or IPv6, as specified in
 .Li RFC3931 .
 .Pp
-L2TPv3 protocol is comprised of two types of messages, control messages
-and data messages. Control messages are used in the establishment,
+The L2TPv3 protocol is comprised of two types of messages, control messages
+and data messages.
+Control messages are used in the establishment,
 maintenace, and clearing of control connections and sessions.
-.Xr l2tp 4
-interface can send control messages and data messages, furthermore
+The
+.Nm
+interface can send control messages and data messages; furthermore
 the management of control messages is entrusted to userland daemon.
-Without management daemon,
-.Xr l2tp 4
-interface can send data messages by using
+Without a management daemon, the
+.Nm
+interface can send data messages using the
 .Xr ifconfig 8
 .Cm tunnel
 and
 .Cm session
-subcommands, or
+subcommands, or the
 .Dv SIOCSIFPHYADDR
 and
 .Dv SIOCSL2TPSESSION
-ioctls. Additionally, it can use cookie specified in
+ioctls.
+Additionally, it can use cookies specified in
 .Li RFC3931
-by using
+by using the
 .Xr ifconfig 8
 .Cm cookie
-subcommand, or
+subcommand, or the
 .Dv SIOCSL2TPCOOKIE
 ioctl.
 .Ss Packet format
@@ -80,7 +83,6 @@ Host X--NetBSD A  ----------------tunnel---------- NetBSD B------Host E
            \\                                          |
             \\                                        /
              +-----Router B--------Router C---------+
-
 .Ed
 configuration example without cookies,
 .Pp
@@ -100,7 +102,6 @@ system A
 # ifconfig bridge0 up
 .Ed
 .Pp
-.Ed
 On
 .Nx
 system B
@@ -136,7 +137,6 @@ system A
 # ifconfig bridge0 up
 .Ed
 .Pp
-.Ed
 On
 .Nx
 system B
@@ -153,7 +153,6 @@ system B
 # ifconfig wm1 up
 # ifconfig bridge0 up
 .Ed
-
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr inet6 4 ,
@@ -173,6 +172,6 @@ The
 device first appeared in
 .Nx 8.0 .
 .Sh BUGS
-Currently,
+Currently, the
 .Nm
-interface support ethernet frame over IPv4 or IPv6 only.
+interface supports Ethernet frames over IPv4 or IPv6 only.
