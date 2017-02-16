@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.52 2017/02/02 08:57:04 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.53 2017/02/16 15:00:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.52 2017/02/02 08:57:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.53 2017/02/16 15:00:30 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -551,7 +551,19 @@ cpu_probe_c3(struct cpu_info *ci)
 			}
 		    }
 
-		    /* Actually do the enables. */
+		    /*
+		     * Actually do the enables.  It's a little gross,
+		     * but per the PadLock programming guide, "Enabling
+		     * PadLock", condition 3, we must enable SSE too or
+		     * else the first use of RNG or ACE instructions
+		     * will generate a trap.
+		     *
+		     * We must do this early because of kernel RNG
+		     * initialization but it is safe without the full
+		     * FPU-detect as all these CPUs have SSE.
+		     */
+		    lcr4(rcr4() | CR4_OSFXSR);
+
 		    if (rng_enable) {
 			msr = rdmsr(MSR_VIA_RNG);
 			msr |= MSR_VIA_RNG_ENABLE;
