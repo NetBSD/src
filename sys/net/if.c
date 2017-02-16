@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.378 2017/02/15 01:48:44 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.379 2017/02/16 08:13:43 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.378 2017/02/15 01:48:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.379 2017/02/16 08:13:43 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -188,6 +188,7 @@ struct psref_class		*ifa_psref_class __read_mostly;
 
 static int	if_delroute_matcher(struct rtentry *, void *);
 
+static bool if_is_unit(const char *);
 static struct if_clone *if_clone_lookup(const char *, int *);
 
 static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -1594,6 +1595,19 @@ if_clone_destroy(const char *name)
 	return (*ifc->ifc_destroy)(ifp);
 }
 
+static bool
+if_is_unit(const char *name)
+{
+
+	while(*name != '\0') {
+		if (*name < '0' || *name > '9')
+			return false;
+		name++;
+	}
+
+	return true;
+}
+
 /*
  * Look up a network interface cloner.
  */
@@ -1609,8 +1623,9 @@ if_clone_lookup(const char *name, int *unitp)
 
 	strcpy(ifname, "if_");
 	/* separate interface name from unit */
+	/* TODO: search unit number from backward */
 	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
-	    *cp && (*cp < '0' || *cp > '9');)
+	    *cp && !if_is_unit(cp);)
 		*dp++ = *cp++;
 
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
