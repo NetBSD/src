@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.44 2017/02/16 18:49:31 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.44 2017/02/16 18:49:31 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,6 +170,7 @@ main(int argc, char *argv[])
 	    o.size = argto4(optarg, 1, "file system size");
 	    break;
 	case 'T':
+	    o.timestamp_set = 1;
 	    o.timestamp = get_tstamp(optarg);
 	    break;
 	case 'u':
