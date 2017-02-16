@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.h,v 1.3 2015/10/16 17:38:17 christos Exp $	*/
+/*	$NetBSD: mkfs_msdos.h,v 1.4 2017/02/16 18:49:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ struct msdos_options {
 #define AOPT(_opt, _type, _name, _min, _desc) _type _name;
 ALLOPTS
 #undef AOPT	
+	time_t	timestamp;
 	uint32_t volume_id_set:1;
 	uint32_t media_descriptor_set:1;
 	uint32_t hidden_sectors_set:1;
