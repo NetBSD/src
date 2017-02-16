@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.110 2017/01/24 07:09:25 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.111 2017/02/16 08:12:44 knakahara Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.110 2017/01/24 07:09:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.111 2017/02/16 08:12:44 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,6 +712,7 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
 	case IFT_BRIDGE:
+	case IFT_L2TP:
 #ifdef IFT_PFLOG
 	case IFT_PFLOG:
 #endif
