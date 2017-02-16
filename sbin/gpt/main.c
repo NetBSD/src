@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2017/02/12 16:54:06 aymeric Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2017/02/16 03:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,13 +34,18 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.8 2017/02/12 16:54:06 aymeric Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2017/02/16 03:32:17 christos Exp $");
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
+#include <sys/stat.h>
+#ifndef NBTOOL_CONFIG_H
+#include <util.h>
+#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -126,6 +131,31 @@ prefix(const char *cmd)
 		setprogname(pfx);
 }
 
+static time_t
+get_tstamp(const char *b)
+{
+	struct stat st;
+	char *eb;
+	long long l;
+#ifndef HAVE_NBTOOL_CONFIG_H
+	time_t when;
+#endif
+
+	if (stat(b, &st) != -1)
+		return (time_t)st.st_mtime;
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+	errno = 0;
+	if ((when = parsedate(b, NULL, NULL)) != -1 || errno == 0)
+		return when;
+#endif
+	errno = 0;
+	l = strtoll(b, &eb, 0);
+	if (b == eb || *eb || errno)
+		errx(EXIT_FAILURE, "Can't parse timestamp `%s'", b);
+	return (time_t)l;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -135,6 +165,7 @@ main(int argc, char *argv[])
 	off_t mediasz = 0;
 	int flags = 0;
 	int verbose = 0;
+	time_t timestamp = 0;
 	gpt_t gpt;
 
 	setprogname(argv[0]);
@@ -152,7 +183,7 @@ main(int argc, char *argv[])
 #endif
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, GETOPT_BE_POSIX "m:nqrs:v")) != -1) {
+	while ((ch = getopt(argc, argv, GETOPT_BE_POSIX "m:nqrs:T:v")) != -1) {
 		switch(ch) {
 		case 'm':
 			if (mediasz > 0)
@@ -173,6 +204,9 @@ main(int argc, char *argv[])
 		case 's':
 			if (gpt_uint_get(NULL, &secsz) == -1)
 				usage();
+			break;
+		case 'T':
+			timestamp = get_tstamp(optarg);
 			break;
 		case 'v':
 			verbose++;
@@ -202,7 +236,7 @@ main(int argc, char *argv[])
 
 	if (*dev != '-') {
 		gpt = gpt_open(dev, flags | cmdsw[i]->flags,
-		    verbose, mediasz, secsz);
+		    verbose, mediasz, secsz, timestamp);
 		if (gpt == NULL)
 			return EXIT_FAILURE;
 	} else {
