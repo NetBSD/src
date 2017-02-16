@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.17 2017/02/16 18:50:04 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.18 2017/02/16 22:44:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.17 2017/02/16 18:50:04 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.18 2017/02/16 22:44:06 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -134,7 +134,10 @@ msdos_parse_opts(const char *option, fsinfo_t *fsopts)
 	else if (strcmp(msdos_options[rv].name, "hidden_sectors") == 0)
 		msdos_opt->hidden_sectors_set = 1;
 
-	msdos_opt->timestamp = stampst.st_ino ? stampst.st_mtime : 0;
+	if (stampst.st_ino) {
+		msdos_opt->timestamp_set = 1;
+		msdos_opt->timestamp = stampst.st_mtime;
+	}
 
 	return 1;
 }
