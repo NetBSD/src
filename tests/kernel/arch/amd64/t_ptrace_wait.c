@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.11 2017/01/18 05:14:34 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.12 2017/02/16 15:57:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.11 2017/01/18 05:14:34 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.12 2017/02/16 15:57:45 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -37,7 +37,6 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.11 2017/01/18 05:14:34 kamil Exp $");
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <machine/reg.h>
-#include <x86/dbregs.h>
 #include <err.h>
 #include <errno.h>
 #include <sched.h>
@@ -50,10 +49,40 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.11 2017/01/18 05:14:34 kamil Exp $");
 
 #include <atf-c.h>
 
-#include "h_macros.h"
+#include "../../../h_macros.h"
 
 #include "../../t_ptrace_wait.h"
 
+
+union u {
+	long raw;
+	struct {
+		long local_dr0_breakpoint : 1;	/* 0 */
+		long global_dr0_breakpoint : 1;	/* 1 */
+		long local_dr1_breakpoint : 1;	/* 2 */
+		long global_dr1_breakpoint : 1;	/* 3 */
+		long local_dr2_breakpoint : 1;	/* 4 */
+		long global_dr2_breakpoint : 1;	/* 5 */
+		long local_dr3_breakpoint : 1;	/* 6 */
+		long global_dr3_breakpoint : 1;	/* 7 */
+		long local_exact_breakpt : 1;	/* 8 */
+		long global_exact_breakpt : 1;	/* 9 */
+		long reserved_10 : 1;		/* 10 */
+		long rest_trans_memory : 1;	/* 11 */
+		long reserved_12 : 1;		/* 12 */
+		long general_detect_enable : 1;	/* 13 */
+		long reserved_14 : 1;		/* 14 */
+		long reserved_15 : 1;		/* 15 */
+		long condition_dr0 : 2;		/* 16-17 */
+		long len_dr0 : 2;		/* 18-19 */
+		long condition_dr1 : 2;		/* 20-21 */
+		long len_dr1 : 2;		/* 22-23 */
+		long condition_dr2 : 2;		/* 24-25 */
+		long len_dr2 : 2;		/* 26-27 */
+		long condition_dr3 : 2;		/* 28-29 */
+		long len_dr3 : 2;		/* 30-31 */
+	} bits;
+};
 
 #if defined(HAVE_GPREGS)
 ATF_TC(regs1);
@@ -138,15 +167,15 @@ ATF_TC_BODY(regs1, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_count);
-ATF_TC_HEAD(watchpoint_count, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_print);
+ATF_TC_HEAD(dbregs_print, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and assert four available watchpoints");
+	    "Verify plain PT_GETDBREGS with printing Debug Registers");
 }
 
-ATF_TC_BODY(watchpoint_count, tc)
+ATF_TC_BODY(dbregs_print, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -154,7 +183,8 @@ ATF_TC_BODY(watchpoint_count, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	int N;
+	struct dbreg r;
+	size_t i;
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -173,13 +203,14 @@ ATF_TC_BODY(watchpoint_count, tc)
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_stopped(status, sigval);
+	validate_status_stopped(status, sigval);	
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE((N = ptrace(PT_COUNT_WATCHPOINTS, child, NULL, 0)) != -1);
-	printf("Reported %d watchpoints\n", N);
+	printf("Call GETDBREGS for the child process\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r, 0) != -1);
 
-	ATF_REQUIRE_EQ_MSG(N, 4, "Expected 4 hw watchpoints - got %d", N);
+	printf("State of the debug registers:\n");
+	for (i = 0; i < __arraycount(r.dbregs); i++)
+		printf("r[%zu]=%#lx\n", i, r.dbregs[i]);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -195,15 +226,15 @@ ATF_TC_BODY(watchpoint_count, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_read);
-ATF_TC_HEAD(watchpoint_read, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr0);
+ATF_TC_HEAD(dbregs_preserve_dr0, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and assert four available watchpoints");
+	    "Verify that setting DR0 is preserved across ptrace(2) calls");
 }
 
-ATF_TC_BODY(watchpoint_read, tc)
+ATF_TC_BODY(dbregs_preserve_dr0, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -211,9 +242,17 @@ ATF_TC_BODY(watchpoint_read, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	int i, N;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -234,25 +273,28 @@ ATF_TC_BODY(watchpoint_read, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE((N = ptrace(PT_COUNT_WATCHPOINTS, child, NULL, 0)) != -1);
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
-	ATF_REQUIRE_EQ_MSG(N, 4, "Expected 4 hw watchpoints - got %d", N);
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	for (i = 0; i < N; i++) {
-		printf("Before reading watchpoint %d\n", i);
-		pw.pw_index = i;
-		ATF_REQUIRE(ptrace(PT_READ_WATCHPOINT, child, &pw, len) != -1);
+	r1.dbregs[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
 
-		printf("struct ptrace {\n");
-		printf("\t.pw_index=%d\n", pw.pw_index);
-		printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-		printf("\t.pw_type=%#x\n", pw.pw_type);
-		printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-		printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-		printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-		printf("}\n");
-	}
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -268,16 +310,15 @@ ATF_TC_BODY(watchpoint_read, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_write_unmodified);
-ATF_TC_HEAD(watchpoint_write_unmodified, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr1);
+ATF_TC_HEAD(dbregs_preserve_dr1, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and assert functional write of "
-	    "unmodified data");
+	    "Verify that setting DR1 is preserved across ptrace(2) calls");
 }
 
-ATF_TC_BODY(watchpoint_write_unmodified, tc)
+ATF_TC_BODY(dbregs_preserve_dr1, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -285,9 +326,17 @@ ATF_TC_BODY(watchpoint_write_unmodified, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	int i, N;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -308,29 +357,28 @@ ATF_TC_BODY(watchpoint_write_unmodified, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Call GETREGS for the child process\n");
-	ATF_REQUIRE((N = ptrace(PT_COUNT_WATCHPOINTS, child, NULL, 0)) != -1);
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
-	ATF_REQUIRE_EQ_MSG(N, 4, "Expected 4 hw watchpoints - got %d", N);
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	for (i = 0; i < N; i++) {
-		printf("Before reading watchpoint %d\n", i);
-		pw.pw_index = i;
-		ATF_REQUIRE(ptrace(PT_READ_WATCHPOINT, child, &pw, len) != -1);
+	r1.dbregs[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
 
-		printf("struct ptrace {\n");
-		printf("\t.pw_index=%d\n", pw.pw_index);
-		printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-		printf("\t.pw_type=%#x\n", pw.pw_type);
-		printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-		printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-		printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-		printf("}\n");
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-		printf("Before writing watchpoint %d (unmodified)\n", i);
-		ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len)
-		    != -1);
-	}
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -346,15 +394,15 @@ ATF_TC_BODY(watchpoint_write_unmodified, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_code0);
-ATF_TC_HEAD(watchpoint_trap_code0, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr2);
+ATF_TC_HEAD(dbregs_preserve_dr2, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test code trap with watchpoint 0");
+	    "Verify that setting DR2 is preserved across ptrace(2) calls");
 }
 
-ATF_TC_BODY(watchpoint_trap_code0, tc)
+ATF_TC_BODY(dbregs_preserve_dr2, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -362,12 +410,17 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	const int i = 0;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -377,8 +430,6 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
 
 		printf("Before exiting of the child process\n");
 		_exit(exitval);
@@ -390,29 +441,950 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Preparing code watchpoint trap %d\n", i);
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
-	pw.pw_index = i;
-	pw.pw_lwpid = 0;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = (void *)check_happy;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
+	r1.dbregs[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
 
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr3);
+ATF_TC_HEAD(dbregs_preserve_dr3, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR3 is preserved across ptrace(2) calls");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr3, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr0_yield);
+ATF_TC_HEAD(dbregs_preserve_dr0_yield, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR0 is preserved across ptrace(2) calls with "
+	    "scheduler yield");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr0_yield, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Yields a processor voluntarily and gives other threads a "
+	    "chance to run without waiting for an involuntary preemptive "
+	    "switch\n");
+	sched_yield();
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr1_yield);
+ATF_TC_HEAD(dbregs_preserve_dr1_yield, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR1 is preserved across ptrace(2) calls with "
+	    "scheduler yield");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr1_yield, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Yields a processor voluntarily and gives other threads a "
+	    "chance to run without waiting for an involuntary preemptive "
+	    "switch\n");
+	sched_yield();
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr2_yield);
+ATF_TC_HEAD(dbregs_preserve_dr2_yield, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR2 is preserved across ptrace(2) calls with "
+	    "scheduler yield");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Yields a processor voluntarily and gives other threads a "
+	    "chance to run without waiting for an involuntary preemptive "
+	    "switch\n");
+	sched_yield();
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr3_yield);
+ATF_TC_HEAD(dbregs_preserve_dr3_yield, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR3 is preserved across ptrace(2) calls with "
+	    "scheduler yield");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr3_yield, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Yields a processor voluntarily and gives other threads a "
+	    "chance to run without waiting for an involuntary preemptive "
+	    "switch\n");
+	sched_yield();
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr0_continued);
+ATF_TC_HEAD(dbregs_preserve_dr0_continued, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR0 is preserved across ptrace(2) calls and "
+	    "with continued child");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr0_continued, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr1_continued);
+ATF_TC_HEAD(dbregs_preserve_dr1_continued, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR1 is preserved across ptrace(2) calls and "
+	    "with continued child");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr1_continued, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr2_continued);
+ATF_TC_HEAD(dbregs_preserve_dr2_continued, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR2 is preserved across ptrace(2) calls and "
+	    "with continued child");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr2_continued, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_preserve_dr3_continued);
+ATF_TC_HEAD(dbregs_preserve_dr3_continued, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting DR3 is preserved across ptrace(2) calls and "
+	    "with continued child");
+}
+
+ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	int watchme;
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_dr0_trap_variable);
+ATF_TC_HEAD(dbregs_dr0_trap_variable, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that setting trap with DR0 triggers SIGTRAP");
+}
+
+ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	volatile int watchme;
+	union u dr7;
+
+	dr7.raw = 0;
+	dr7.bits.global_dr0_breakpoint = 1;
+	dr7.bits.condition_dr0 = 3;	/* 0b11 -- break on data write&read */
+	dr7.bits.len_dr0 = 3;		/* 0b11 -- 4 bytes */
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		watchme = 1;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	r1.dbregs[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+
+	r1.dbregs[7] = dr7.raw;
+	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
@@ -420,23 +1392,16 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
+	validate_status_stopped(status, sigval);
 
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 0);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
 
-	pw.pw_md.md_address = NULL;
-	printf("Before writing watchpoint %d (disable it)\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -452,15 +1417,15 @@ ATF_TC_BODY(watchpoint_trap_code0, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_code1);
-ATF_TC_HEAD(watchpoint_trap_code1, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_dr1_trap_variable);
+ATF_TC_HEAD(dbregs_dr1_trap_variable, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test code trap with watchpoint 1");
+	    "Verify that setting trap with DR1 triggers SIGTRAP");
 }
 
-ATF_TC_BODY(watchpoint_trap_code1, tc)
+ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -468,12 +1433,23 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	const int i = 1;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	volatile int watchme;
+	union u dr7;
+
+	dr7.raw = 0;
+	dr7.bits.global_dr1_breakpoint = 1;
+	dr7.bits.condition_dr1 = 3;	/* 0b11 -- break on data write&read */
+	dr7.bits.len_dr1 = 3;		/* 0b11 -- 4 bytes */
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -484,7 +1460,10 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		watchme = 1;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
 
 		printf("Before exiting of the child process\n");
 		_exit(exitval);
@@ -496,29 +1475,27 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Preparing code watchpoint trap %d\n", i);
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
-	pw.pw_index = i;
-	pw.pw_lwpid = 0;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = (void *)check_happy;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%d\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
+	r1.dbregs[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
 
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	r1.dbregs[7] = dr7.raw;
+	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
 
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
@@ -526,23 +1503,16 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
+	validate_status_stopped(status, sigval);
 
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 1);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
 
-	pw.pw_md.md_address = NULL;
-	printf("Before writing watchpoint %d (disable it)\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -558,15 +1528,15 @@ ATF_TC_BODY(watchpoint_trap_code1, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_code2);
-ATF_TC_HEAD(watchpoint_trap_code2, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_dr2_trap_variable);
+ATF_TC_HEAD(dbregs_dr2_trap_variable, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test code trap with watchpoint 2");
+	    "Verify that setting trap with DR2 triggers SIGTRAP");
 }
 
-ATF_TC_BODY(watchpoint_trap_code2, tc)
+ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -574,12 +1544,23 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	const int i = 2;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	volatile int watchme;
+	union u dr7;
+
+	dr7.raw = 0;
+	dr7.bits.global_dr2_breakpoint = 1;
+	dr7.bits.condition_dr2 = 3;	/* 0b11 -- break on data write&read */
+	dr7.bits.len_dr2 = 3;		/* 0b11 -- 4 bytes */
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -590,7 +1571,10 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		watchme = 1;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
 
 		printf("Before exiting of the child process\n");
 		_exit(exitval);
@@ -602,29 +1586,27 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Preparing code watchpoint trap %d\n", i);
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
-	pw.pw_index = i;
-	pw.pw_lwpid = 0;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = (void *)check_happy;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
+	r1.dbregs[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
 
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	r1.dbregs[7] = dr7.raw;
+	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
 
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
@@ -632,23 +1614,16 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
+	validate_status_stopped(status, sigval);
 
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 2);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
 
-	pw.pw_md.md_address = NULL;
-	printf("Before writing watchpoint %d (disable it)\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -664,15 +1639,15 @@ ATF_TC_BODY(watchpoint_trap_code2, tc)
 }
 #endif
 
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_code3);
-ATF_TC_HEAD(watchpoint_trap_code3, tc)
+#if defined(HAVE_DBREGS)
+ATF_TC(dbregs_dr3_trap_variable);
+ATF_TC_HEAD(dbregs_dr3_trap_variable, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test code trap with watchpoint 3");
+	    "Verify that setting trap with DR3 triggers SIGTRAP");
 }
 
-ATF_TC_BODY(watchpoint_trap_code3, tc)
+ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -680,12 +1655,23 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-	const int i = 3;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
+	struct dbreg r1;
+	struct dbreg r2;
+	/* Number of available CPU Debug Registers on AMD64 */
+	const size_t len = 16;
+	size_t i;
+	volatile int watchme;
+	union u dr7;
+
+	dr7.raw = 0;
+	dr7.bits.global_dr3_breakpoint = 1;
+	dr7.bits.condition_dr3 = 3;	/* 0b11 -- break on data write&read */
+	dr7.bits.len_dr3 = 3;		/* 0b11 -- 4 bytes */
+
+	printf("Assert that known number of Debug Registers (%zu) is valid\n",
+	    len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -696,7 +1682,10 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		printf("check_happy(%d)=%d\n", watchme, check_happy(watchme));
+		watchme = 1;
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
 
 		printf("Before exiting of the child process\n");
 		_exit(exitval);
@@ -708,862 +1697,44 @@ ATF_TC_BODY(watchpoint_trap_code3, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Preparing code watchpoint trap %d\n", i);
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
-	pw.pw_index = i;
-	pw.pw_lwpid = 0;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = (void *)check_happy;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_EXECUTION;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
 
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
+	r1.dbregs[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
 
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
+	r1.dbregs[7] = dr7.raw;
+	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
 
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dbregs); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 3);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	pw.pw_md.md_address = NULL;
-	printf("Before writing watchpoint %d (disable it)\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_write0);
-ATF_TC_HEAD(watchpoint_trap_data_write0, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 0");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_write0, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 0;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		++watchme;
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, sigval);
 
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = 0;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 0);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_write1);
-ATF_TC_HEAD(watchpoint_trap_data_write1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 1");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_write1, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 1;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		++watchme;
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 1);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_write2);
-ATF_TC_HEAD(watchpoint_trap_data_write2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 2");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_write2, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 2;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		++watchme;
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 2);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_write3);
-ATF_TC_HEAD(watchpoint_trap_data_write3, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 3");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_write3, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 3;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		++watchme;
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_WRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 3);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_rw0);
-ATF_TC_HEAD(watchpoint_trap_data_rw0, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 0");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_rw0, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 0;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("watchme=%d\n", watchme);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 0);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_rw1);
-ATF_TC_HEAD(watchpoint_trap_data_rw1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 1");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_rw1, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 1;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("watchme=%d\n", watchme);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 1);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_rw2);
-ATF_TC_HEAD(watchpoint_trap_data_rw2, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 2");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_rw2, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 2;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("watchme=%d\n", watchme);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 2);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-ATF_TC(watchpoint_trap_data_rw3);
-ATF_TC_HEAD(watchpoint_trap_data_rw3, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Call PT_COUNT_WATCHPOINTS and test write trap with watchpoint 3");
-}
-
-ATF_TC_BODY(watchpoint_trap_data_rw3, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	const int i = 3;
-	struct ptrace_watchpoint pw;
-	int len = sizeof(pw);
-	int watchme = 1234;
-	struct ptrace_siginfo info;
-	memset(&info, 0, sizeof(info));
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("watchme=%d\n", watchme);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Preparing code watchpoint trap %d\n", i);
-
-	pw.pw_index = i;
-	pw.pw_type = PTRACE_PW_TYPE_DBREGS;
-	pw.pw_md.md_address = &watchme;
-	pw.pw_md.md_condition = X86_HW_WATCHPOINT_DR7_CONDITION_DATA_READWRITE;
-	pw.pw_md.md_length = X86_HW_WATCHPOINT_DR7_LENGTH_BYTE;
-
-	printf("struct ptrace {\n");
-	printf("\t.pw_index=%d\n", pw.pw_index);
-	printf("\t.pw_lwpid=%d\n", pw.pw_lwpid);
-	printf("\t.pw_type=%#x\n", pw.pw_type);
-	printf("\t.pw_md.md_address=%p\n", pw.pw_md.md_address);
-	printf("\t.pw_md.md_condition=%#x\n", pw.pw_md.md_condition);
-	printf("\t.pw_md.md_length=%#x\n", pw.pw_md.md_length);
-	printf("}\n");
-
-	printf("Before writing watchpoint %d\n", i);
-	ATF_REQUIRE(ptrace(PT_WRITE_WATCHPOINT, child, &pw, len) != -1);
-
-	printf("Before resuming the child process where it left off "
-	    "and without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, SIGTRAP);
-
-	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
-
-	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
-	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
-	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
-	    info.psi_siginfo.si_errno);
-
-	printf("Before checking siginfo_t\n");
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_HWWPT);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap2, 3);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_trap3, X86_HW_WATCHPOINT_EVENT_FIRED);
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, len) == 0);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -1586,21 +1757,27 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, regs1);
 
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_count);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_read);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_write_unmodified);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_code0);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_code1);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_code2);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_code3);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_write0);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_write1);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_write2);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_write3);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_rw0);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_rw1);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_rw2);
-	ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(tp, watchpoint_trap_data_rw3);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_print);
+
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr0);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr1);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr2);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr3);
+
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr0_yield);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr1_yield);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr2_yield);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr3_yield);
+
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr0_continued);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr1_continued);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr2_continued);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_preserve_dr3_continued);
+
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr0_trap_variable);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr1_trap_variable);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr2_trap_variable);
+	ATF_TP_ADD_TC_HAVE_DBREGS(tp, dbregs_dr3_trap_variable);
 
 	return atf_no_error();
 }
