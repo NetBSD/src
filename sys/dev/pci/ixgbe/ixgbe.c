@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.76 2017/02/13 10:37:37 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.77 2017/02/16 07:58:21 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1648,11 +1648,7 @@ ixgbe_legacy_irq(void *arg)
 		softint_schedule(adapter->phy_si);
 
 	if (more)
-#ifndef IXGBE_LEGACY_TX
-		softint_schedule(txr->txr_si);
-#else
 		softint_schedule(que->que_si);
-#endif
 	else
 		ixgbe_enable_intr(adapter);
 	return 1;
