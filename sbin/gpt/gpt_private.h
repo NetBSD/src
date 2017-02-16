@@ -41,5 +41,6 @@ struct gpt {
 	struct map *tbl, *lbt, *gpt, *tpg;
 	u_int secsz;
 	off_t mediasz;
+	time_t timestamp;
 	struct stat sb;
 };
