@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.5 2017/02/11 08:14:05 pgoyette Exp $
+#	$NetBSD: Makefile.bootimage,v 1.6 2017/02/16 03:47:23 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -138,6 +138,7 @@
 
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
 MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
+GPT_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 .endif
 
@@ -214,8 +215,8 @@ BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} - ${EFISECTORS} - 2048
 FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS}
 SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} + ${EFISECTORS}
 
-BOOTDISK_UUID=`${TOOL_GPT} ${WORKMBR} show -i 2 | awk '/^GUID/ {print $$2}'`
-SWAPDISK_UUID=`${TOOL_GPT} ${WORKMBR} show -i 3 | awk '/^GUID/ {print $$2}'`
+BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | awk '/^GUID/ {print $$2}'`
+SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | awk '/^GUID/ {print $$2}'`
 .endif
 
 #
@@ -397,11 +398,11 @@ pre-targetfs:
 	@echo creating GPT header and partition entries...
 	${RM} -f ${WORKMBR}
 	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
-	${TOOL_GPT} ${WORKMBR} create
-	${TOOL_GPT} ${WORKMBR} add -a 1m -s ${EFISECTORS} -t efi -l "EFI system"
-	${TOOL_GPT} ${WORKMBR} add -a 1m -s ${FSSECTORS} -t ffs
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} create
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${EFISECTORS} -t efi -l "EFI system"
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${FSSECTORS} -t ffs
 .if ${OMIT_SWAPIMG} == "no"
-	${TOOL_GPT} ${WORKMBR} add -a 1m -s ${SWAPSECTORS} -t swap
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${SWAPSECTORS} -t swap
 .endif
 
 ${IMGBASE}.img:	${TARGETFS}
@@ -423,9 +424,9 @@ ${IMGBASE}.img:	${TARGETFS}
 	    count=2048
 	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
 	    ${CAT} - ${WORKEFI} ${TARGETFS} ${WORKGPT} > ${WORKIMG}
-	${TOOL_GPT} ${WORKIMG} biosboot -i 2				\
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2				\
 	    -c ${.OBJDIR}/${WORKDIR}/usr/mdec/gptmbr.bin
-	${TOOL_GPT} ${WORKIMG} set -a bootme -i 2
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} set -a bootme -i 2
 .else	# USE_GPT == "no"
 ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 .if ${USE_MBR} != "no"
