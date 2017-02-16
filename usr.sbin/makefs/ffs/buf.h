@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.11 2017/02/16 19:11:13 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.12 2017/02/16 22:10:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <string.h>
