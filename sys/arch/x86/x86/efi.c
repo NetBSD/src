@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.8 2017/02/14 13:29:09 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.9 2017/02/16 03:53:20 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.8 2017/02/14 13:29:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.9 2017/02/16 03:53:20 nonaka Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -368,7 +368,8 @@ efi_get_e820memmap(void)
 	struct bi_memmap_entry *entry;
 	struct efi_md *md;
 	uint64_t addr, size;
-	uint64_t start_addr, end_addr;
+	uint64_t start_addr = 0;        /* XXX gcc -Os: maybe-uninitialized */
+	uint64_t end_addr = 0;          /* XXX gcc -Os: maybe-uninitialized */
 	uint32_t i;
 	int n, type, seg_type = -1;
 
