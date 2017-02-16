@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.77 2017/02/16 07:58:21 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.78 2017/02/16 08:01:11 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1572,10 +1572,11 @@ ixgbe_handle_que(void *context)
 #ifndef IXGBE_LEGACY_TX
 		if (pcq_peek(txr->txr_interq) != NULL)
 			ixgbe_mq_start_locked(ifp, txr);
-#else
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
-			ixgbe_start_locked(txr, ifp);
 #endif
+		/* Only for queue 0 */
+		if ((&adapter->queues[0] == que)
+		    && (!IFQ_IS_EMPTY(&ifp->if_snd)))
+			ixgbe_start_locked(txr, ifp);
 		IXGBE_TX_UNLOCK(txr);
 	}
 
