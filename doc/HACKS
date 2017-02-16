@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.183 2017/02/16 01:02:28 rin Exp $
+# $NetBSD: HACKS,v 1.184 2017/02/16 01:05:01 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -572,7 +572,7 @@ port	vax
 	file	src/external/mit/xorg/lib/libX11/Makefile.libx11 : 1.18
 	descr
 		lcWrap.c is miscompiled, which results in input failure via XIM.
-		Besides, some clients, e.g., pkgsrc/x11/kterm, receives SIGSEGV.
+		Besides, some clients, e.g., pkgsrc/x11/kterm, receive SIGSEGV.
 	kcah
 
 port	arm
