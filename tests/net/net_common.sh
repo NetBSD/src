@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.11 2017/01/10 05:55:34 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.12 2017/02/16 08:12:47 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -29,7 +29,8 @@
 # Common utility functions for tests/net
 #
 
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
+HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
+    RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
 
 extract_new_packets()
 {
@@ -128,6 +129,39 @@ stop_httpd()
 	if [ -f $HTTPD_PID ]; then
 		kill -9 $(cat $HTTPD_PID)
 		rm -f $HTTPD_PID
+		sleep 1
+	fi
+}
+
+NC_PID=./.__nc.pid
+start_nc_server()
+{
+	local sock=$1
+	local port=$2
+	local outfile=$3
+	local backup=$RUMP_SERVER
+	local pid=
+
+	export RUMP_SERVER=$sock
+
+	env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    nc -l $port > $outfile &
+	pid=$!
+	echo $pid > $NC_PID
+
+	$DEBUG && rump.netstat -a -f inet
+
+	export RUMP_SERVER=$backup
+
+	sleep 1
+}
+
+stop_nc_server()
+{
+
+	if [ -f $NC_PID ]; then
+		kill -9 $(cat $NC_PID)
+		rm -f $NC_PID
 		sleep 1
 	fi
 }
