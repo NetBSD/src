@@ -116,6 +116,7 @@ static struct vfsops zfs_vfsops_template = {
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_quotactl = (void *)eopnotsupp,
 	.vfs_extattrctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_fsync = (void *)eopnotsupp,
 };

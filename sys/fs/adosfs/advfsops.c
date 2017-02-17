@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.75 2015/11/18 22:06:25 phx Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.76 2017/02/17 08:31:24 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.75 2015/11/18 22:06:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.76 2017/02/17 08:31:24 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -804,7 +804,7 @@ struct vfsops adosfs_vfsops = {
 	.vfs_done = adosfs_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
