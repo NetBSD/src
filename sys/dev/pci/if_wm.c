@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.481 2017/02/17 05:20:01 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.482 2017/02/17 07:21:28 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.481 2017/02/17 05:20:01 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.482 2017/02/17 07:21:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6525,12 +6525,12 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
-	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
-	int qid = wmq->wmq_id;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+	if ((ifp->if_flags & IFF_OACTIVE) != 0 && !is_transmit)
 		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
@@ -6642,7 +6642,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
 			    segs_needed, txq->txq_free - 1));
-			if (qid == 0)
+			if (!is_transmit)
 				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -6660,7 +6660,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: 82547 Tx FIFO bug detected\n",
 			    device_xname(sc->sc_dev)));
-			if (qid == 0)
+			if (!is_transmit)
 				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -6806,7 +6806,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	}
 
 	if (m0 != NULL) {
-		if (qid == 0)
+		if (!is_transmit)
 			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_Q_EVCNT_INCR(txq, txdrop);
@@ -6817,7 +6817,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
-		if (qid == 0)
+		if (!is_transmit)
 			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
@@ -7118,12 +7118,12 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
-	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
-	int qid = wmq->wmq_id;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+	if ((ifp->if_flags & IFF_OACTIVE) != 0 && !is_transmit)
 		return;
 	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
@@ -7213,7 +7213,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
 			    segs_needed, txq->txq_free - 1));
-			if (qid == 0)
+			if (!is_transmit)
 				ifp->if_flags |= IFF_OACTIVE;
 			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -7372,7 +7372,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	}
 
 	if (m0 != NULL) {
-		if (qid == 0)
+		if (!is_transmit)
 			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_Q_EVCNT_INCR(txq, txdrop);
@@ -7383,7 +7383,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
-		if (qid == 0)
+		if (!is_transmit)
 			ifp->if_flags |= IFF_OACTIVE;
 		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
