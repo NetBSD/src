@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.270 2017/02/13 04:06:39 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.271 2017/02/17 04:31:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.270 2017/02/13 04:06:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.271 2017/02/17 04:31:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -432,7 +432,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			xifa = &xia->ia_ifa;
 			if (xifa->ifa_getifa != NULL) {
 				ia4_release(xia, &_psref);
-				/* FIXME NOMPSAFE */
+				/* FIXME ifa_getifa is NOMPSAFE */
 				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 				if (xia == NULL) {
 					error = EADDRNOTAVAIL;
@@ -502,7 +502,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		xifa = &ia->ia_ifa;
 		if (xifa->ifa_getifa != NULL) {
 			ia4_release(ia, &psref_ia);
-			/* FIXME NOMPSAFE */
+			/* FIXME ifa_getifa is NOMPSAFE */
 			ia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 			if (ia == NULL) {
 				error = EADDRNOTAVAIL;
