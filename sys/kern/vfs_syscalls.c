@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.505 2016/07/31 20:34:04 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.506 2017/02/17 08:26:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.505 2016/07/31 20:34:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.506 2017/02/17 08:26:07 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.505 2016/07/31 20:34:04 dholland 
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kmem.h>
@@ -638,6 +639,7 @@ do_sys_sync(struct lwp *l)
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
+		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
@@ -647,6 +649,7 @@ do_sys_sync(struct lwp *l)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_exit(&mp->mnt_updating);
+		fstrans_done(mp);
 		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
