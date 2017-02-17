@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.143 2017/01/27 10:48:51 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.144 2017/02/17 08:31:26 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.143 2017/01/27 10:48:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.144 2017/02/17 08:31:26 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1779,7 +1779,7 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_mountroot =	rumpfs_mountroot,
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
-	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_suspendctl =	genfs_suspendctl,
 	.vfs_renamelock_enter =	genfs_renamelock_enter,
 	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,

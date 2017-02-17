@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.344 2017/02/17 08:29:11 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.345 2017/02/17 08:31:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.344 2017/02/17 08:29:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.345 2017/02/17 08:31:26 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -167,7 +167,7 @@ struct vfsops ffs_vfsops = {
 	.vfs_mountroot = ffs_mountroot,
 	.vfs_snapshot = ffs_snapshot,
 	.vfs_extattrctl = ffs_extattrctl,
-	.vfs_suspendctl = ffs_suspendctl,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = ffs_vfs_fsync,
@@ -2396,30 +2396,6 @@ ffs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
 		return (ufs_extattrctl(mp, cmd, vp, attrnamespace, attrname));
 #endif
 	return (vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname));
-}
-
-int
-ffs_suspendctl(struct mount *mp, int cmd)
-{
-	int error;
-	struct lwp *l = curlwp;
-
-	switch (cmd) {
-	case SUSPEND_SUSPEND:
-		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
-			return error;
-		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDED)) != 0) {
-			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
-			return error;
-		}
-		return 0;
-
-	case SUSPEND_RESUME:
-		return fstrans_setstate(mp, FSTRANS_NORMAL);
-
-	default:
-		return EINVAL;
-	}
 }
 
 /*
