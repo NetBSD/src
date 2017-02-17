@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.200 2017/01/19 06:58:55 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.201 2017/02/17 02:56:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.200 2017/01/19 06:58:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.201 2017/02/17 02:56:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1001,6 +1001,7 @@ rtm_setmetrics(const struct rtentry *in, struct rt_xmsghdr *out)
 	metric(rmx_rttvar);
 	metric(rmx_hopcount);
 	metric(rmx_mtu);
+	metric(rmx_locks);
 #undef metric
 	out->rtm_rmx.rmx_expire = in->rt_rmx.rmx_expire ?
 	    time_mono_to_wall(in->rt_rmx.rmx_expire) : 0;
