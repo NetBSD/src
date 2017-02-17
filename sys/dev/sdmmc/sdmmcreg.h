@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.27 2017/02/17 10:46:20 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.28 2017/02/17 10:47:09 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -133,6 +133,12 @@
 #define EXT_CSD_BUS_WIDTH_8		2	/* 8 bit mode */
 #define EXT_CSD_BUS_WIDTH_4_DDR		5	/* 4 bit mode (DDR) */
 #define EXT_CSD_BUS_WIDTH_8_DDR		6	/* 8 bit mode (DDR) */
+
+/* EXT_CSD_HS_TIMING */
+#define EXT_CSD_HS_TIMING_LEGACY	0
+#define EXT_CSD_HS_TIMING_HIGHSPEED	1
+#define EXT_CSD_HS_TIMING_HS200		2
+#define EXT_CSD_HS_TIMING_HS400		3
 
 /* EXT_CSD_STRUCTURE */
 #define EXT_CSD_STRUCTURE_VER_1_0	0	/* CSD Version No.1.0 */
