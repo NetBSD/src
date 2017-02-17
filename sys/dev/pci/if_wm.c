@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.480 2017/02/17 04:51:01 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.481 2017/02/17 05:20:01 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.480 2017/02/17 04:51:01 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.481 2017/02/17 05:20:01 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -710,6 +710,7 @@ static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
 static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
 static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
 static void	wm_deferred_start(struct ifnet *);
+static void	wm_deferred_start_locked(struct wm_txqueue *);
 /* Interrupt */
 static int	wm_txeof(struct wm_softc *, struct wm_txqueue *);
 static void	wm_rxeof(struct wm_rxqueue *);
@@ -7416,23 +7417,36 @@ wm_deferred_start(struct ifnet *ifp)
 		 * if we use mutex_tryenter() here.
 		 */
 		mutex_enter(txq->txq_lock);
-		if (txq->txq_stopping) {
-			mutex_exit(txq->txq_lock);
-			return;
-		}
-
-		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-			/* XXX need for ALTQ */
-			if (qid == 0)
-				wm_nq_start_locked(ifp);
-			wm_nq_transmit_locked(ifp, txq);
-		} else {
-			/* XXX need for ALTQ */
-			if (qid == 0)
-				wm_start_locked(ifp);
-			wm_transmit_locked(ifp, txq);
-		}
+		wm_deferred_start_locked(txq);
 		mutex_exit(txq->txq_lock);
+	}
+}
+
+static void
+wm_deferred_start_locked(struct wm_txqueue *txq)
+{
+	struct wm_softc *sc = txq->txq_sc;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
+	int qid = wmq->wmq_id;
+
+	KASSERT(mutex_owned(txq->txq_lock));
+
+	if (txq->txq_stopping) {
+		mutex_exit(txq->txq_lock);
+		return;
+	}
+
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+		/* XXX need for ALTQ */
+		if (qid == 0)
+			wm_nq_start_locked(ifp);
+		wm_nq_transmit_locked(ifp, txq);
+	} else {
+		/* XXX need for ALTQ */
+		if (qid == 0)
+			wm_start_locked(ifp);
+		wm_transmit_locked(ifp, txq);
 	}
 }
 
