@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.22 2017/02/17 10:49:47 nonaka Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.23 2017/02/17 10:51:48 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -47,6 +47,11 @@ struct sdmmc_csd {
 	int	tran_speed;	/* transfer speed (kbit/s) */
 	int	ccc;		/* Card Command Class for SD */
 	/* ... */
+};
+
+struct sdmmc_ext_csd {
+	uint8_t	rev;
+	uint8_t	rst_n_function;	/* RST_n_FUNCTION */
 };
 
 struct sdmmc_cid {
@@ -185,6 +190,7 @@ struct sdmmc_function {
 	struct sdmmc_cis cis;		/* decoded CIS */
 	/* SD/MMC memory card members */
 	struct sdmmc_csd csd;		/* decoded CSD value */
+	struct sdmmc_ext_csd ext_csd;	/* decoded EXT_CSD value */
 	struct sdmmc_cid cid;		/* decoded CID value */
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
