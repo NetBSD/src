@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.37 2017/01/27 10:47:13 hannken Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.38 2017/02/17 08:31:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -90,6 +90,7 @@ int	layerfs_vget(struct mount *, ino_t, struct vnode **);
 int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
 int	layerfs_snapshot(struct mount *, struct vnode *, struct timespec *);
+int	layerfs_suspendctl(struct mount *, int);
 int	layerfs_renamelock_enter(struct mount *);
 void	layerfs_renamelock_exit(struct mount *);
 
