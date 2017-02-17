@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.119 2016/12/14 15:48:54 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.120 2017/02/17 08:27:20 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.119 2016/12/14 15:48:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.120 2017/02/17 08:27:20 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1032,9 +1032,11 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
+	vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = VOP_FSYNC(pmp->pm_devvp, cred,
 	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 		allerror = error;
+	VOP_UNLOCK(pmp->pm_devvp);
 	fstrans_done(mp);
 	return (allerror);
 }
