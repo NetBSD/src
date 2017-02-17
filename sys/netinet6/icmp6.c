@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.209 2017/02/13 07:18:20 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.210 2017/02/17 03:57:17 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.209 2017/02/13 07:18:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.210 2017/02/17 03:57:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1793,7 +1793,7 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 			addrsofif++; /* count the address */
 		}
 		if (iffound) {
-			if_acquire_NOMPSAFE(ifp, psref);
+			if_acquire(ifp, psref);
 			pserialize_read_exit(s);
 			*ifpp = ifp;
 			return (addrsofif);

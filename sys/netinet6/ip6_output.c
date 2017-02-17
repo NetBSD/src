@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.183 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.184 2017/02/17 03:57:17 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.183 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.184 2017/02/17 03:57:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -582,7 +582,7 @@ ip6_output(
 		origifp = ia->ia_ifp;
 		if (if_is_deactivated(origifp))
 			goto bad;
-		if_acquire_NOMPSAFE(origifp, &psref_ia);
+		if_acquire(origifp, &psref_ia);
 		release_psref_ia = true;
 	} else
 		origifp = ifp;
