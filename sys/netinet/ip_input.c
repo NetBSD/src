@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.350 2017/02/17 04:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.351 2017/02/17 18:09:25 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.350 2017/02/17 04:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.351 2017/02/17 18:09:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1619,7 +1619,7 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	error = 0;
 out:
 	icmp_mtudisc_unlock();
-	return 0;
+	return error;
 }
 
 static int
