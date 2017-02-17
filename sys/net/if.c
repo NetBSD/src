@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.379 2017/02/16 08:13:43 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.380 2017/02/17 03:57:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.379 2017/02/16 08:13:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.380 2017/02/17 03:57:17 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2663,12 +2663,12 @@ if_get_byindex(u_int idx, struct psref *psref)
 }
 
 /*
- * XXX it's safe only if the passed ifp is guaranteed to not be freed,
- * for example the ifp is already held or some other object is held which
- * guarantes the ifp to not be freed indirectly.
+ * Note that it's safe only if the passed ifp is guaranteed to not be freed,
+ * for example using pserialize or the ifp is already held or some other
+ * object is held which guarantes the ifp to not be freed indirectly.
  */
 void
-if_acquire_NOMPSAFE(struct ifnet *ifp, struct psref *psref)
+if_acquire(struct ifnet *ifp, struct psref *psref)
 {
 
 	KASSERT(ifp->if_index != 0);
