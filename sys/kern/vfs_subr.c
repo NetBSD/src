@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.459 2017/01/11 14:52:02 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.460 2017/02/17 08:25:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.459 2017/01/11 14:52:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.460 2017/02/17 08:25:15 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.459 2017/01/11 14:52:02 hannken Exp $
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/vnode_impl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -782,7 +783,10 @@ sched_sync(void *arg)
 			mp->mnt_synclist_slot = sync_delay_slot(sync_delay(mp));
 			if (vfs_busy(mp, &nmp))
 				continue;
-			VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+			if (fstrans_start_nowait(mp, FSTRANS_SHARED) == 0) {
+				VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+				fstrans_done(mp);
+			}
 			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
