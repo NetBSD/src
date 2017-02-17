@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.22 2016/08/10 04:24:17 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.23 2017/02/17 10:43:03 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -115,12 +115,12 @@
 #define SD_ARG_BUS_WIDTH_4		2
 
 /* EXT_CSD fields */
-#define EXT_CSD_BUS_WIDTH		183	/* WO */
-#define EXT_CSD_HS_TIMING		185	/* R/W */
-#define EXT_CSD_REV			192	/* RO */
-#define EXT_CSD_STRUCTURE		194	/* RO */
-#define EXT_CSD_CARD_TYPE		196	/* RO */
-#define EXT_CSD_SEC_COUNT		212	/* RO */
+#define EXT_CSD_BUS_WIDTH		183	/* W/E_P */
+#define EXT_CSD_HS_TIMING		185	/* R/W/E_P */
+#define EXT_CSD_REV			192	/* R */
+#define EXT_CSD_STRUCTURE		194	/* R */
+#define EXT_CSD_CARD_TYPE		196	/* R */
+#define EXT_CSD_SEC_COUNT		212	/* R */
 
 /* EXT_CSD field definitions */
 #define EXT_CSD_CMD_SET_NORMAL		(1U << 0)
