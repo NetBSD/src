@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.35 2017/02/17 08:24:07 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.36 2017/02/17 08:25:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.35 2017/02/17 08:24:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.36 2017/02/17 08:25:15 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -506,11 +506,8 @@ vfs_suspend(struct mount *mp, int nowait)
 	} else
 		mutex_enter(&vfs_suspend_lock);
 
-	mutex_enter(&syncer_mutex);
-	if ((error = VFS_SUSPENDCTL(mp, SUSPEND_SUSPEND)) != 0) {
-		mutex_exit(&syncer_mutex);
+	if ((error = VFS_SUSPENDCTL(mp, SUSPEND_SUSPEND)) != 0)
 		mutex_exit(&vfs_suspend_lock);
-	}
 
 	return error;
 }
@@ -523,7 +520,6 @@ vfs_resume(struct mount *mp)
 {
 
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
-	mutex_exit(&syncer_mutex);
 	mutex_exit(&vfs_suspend_lock);
 }
 
