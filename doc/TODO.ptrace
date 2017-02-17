@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.21 2017/02/14 18:38:07 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.22 2017/02/17 21:22:02 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -30,6 +30,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - research support PT_SYSCALL & PT_STEP combined like in Linux
  - fix more calls for netbsd32 compat
  - research ipkdb(4)
+ - research kgdb(4)
 
 and of course: fix as many bugs as possible.
 
