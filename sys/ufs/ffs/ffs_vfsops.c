@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.343 2017/02/17 08:26:41 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.344 2017/02/17 08:29:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.343 2017/02/17 08:26:41 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.344 2017/02/17 08:29:11 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2408,14 +2408,7 @@ ffs_suspendctl(struct mount *mp, int cmd)
 	case SUSPEND_SUSPEND:
 		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
 			return error;
-		error = ffs_sync(mp, MNT_WAIT, l->l_proc->p_cred);
-		if (error == 0)
-			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
-#ifdef WAPBL
-		if (error == 0 && mp->mnt_wapbl)
-			error = wapbl_flush(mp->mnt_wapbl, 1);
-#endif
-		if (error != 0) {
+		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDED)) != 0) {
 			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
 			return error;
 		}
