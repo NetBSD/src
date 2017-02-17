@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.8 2007/04/16 19:12:18 ad Exp $	*/
+/*	$NetBSD: pmc.h,v 1.9 2017/02/17 12:10:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -66,12 +66,13 @@
 struct x86_pmc_info_args;
 struct x86_pmc_startstop_args;
 struct x86_pmc_read_args;
-int	pmc_info(struct lwp *, struct x86_pmc_info_args *,
-	    register_t *);
-int	pmc_startstop(struct lwp *, struct x86_pmc_startstop_args *,
-	    register_t *);
-int	pmc_read(struct lwp *, struct x86_pmc_read_args *,
-	    register_t *);
+void pmc_init(void);
+int sys_pmc_info(struct lwp *, struct x86_pmc_info_args *,
+    register_t *);
+int sys_pmc_startstop(struct lwp *, struct x86_pmc_startstop_args *,
+    register_t *);
+int sys_pmc_read(struct lwp *, struct x86_pmc_read_args *,
+    register_t *);
 /* END LEGACY PMC SUPPORT */
 
 #define pmc_md_fork(p1,p2)

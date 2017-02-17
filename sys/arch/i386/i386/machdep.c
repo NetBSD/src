@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.778 2017/02/05 10:42:21 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.779 2017/02/17 12:10:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.778 2017/02/05 10:42:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.779 2017/02/17 12:10:40 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.778 2017/02/05 10:42:21 maxv Exp $");
 #include <machine/intr.h>
 #include <machine/kcore.h>
 #include <machine/pio.h>
+#include <machine/pmc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -1402,6 +1403,8 @@ init386(paddr_t first_avail)
 	}
 
 	rw_init(&svr4_fasttrap_lock);
+
+	pmc_init();
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
