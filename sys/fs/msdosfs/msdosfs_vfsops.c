@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.120 2017/02/17 08:27:20 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.121 2017/02/17 08:29:11 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.120 2017/02/17 08:27:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.121 2017/02/17 08:29:11 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1120,10 +1120,7 @@ msdosfs_suspendctl(struct mount *mp, int cmd)
 	case SUSPEND_SUSPEND:
 		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
 			return error;
-		error = msdosfs_sync(mp, MNT_WAIT, l->l_proc->p_cred);
-		if (error == 0)
-			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
-		if (error != 0) {
+		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDED)) != 0) {
 			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
 			return error;
 		}
