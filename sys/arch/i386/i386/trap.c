@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.282 2017/01/18 05:11:59 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.283 2017/02/17 01:14:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.282 2017/01/18 05:11:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.283 2017/02/17 01:14:31 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -701,7 +701,7 @@ faultcommon:
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
 			if ((wptnfo = user_trap_x86_hw_watchpoint())) {
-				ksi.ksi_code = TRAP_HWWPT;
+				ksi.ksi_code = TRAP_DBREG;
 				ksi.ksi_trap2 = x86_hw_watchpoint_reg(wptnfo);
 				ksi.ksi_trap3 = x86_hw_watchpoint_type(wptnfo);
 			} else if (type == (T_BPTFLT|T_USER))
