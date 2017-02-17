@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.97 2017/01/07 15:05:08 kiyohara Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.98 2017/02/17 10:50:43 nonaka Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.97 2017/01/07 15:05:08 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.98 2017/02/17 10:50:43 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1107,7 +1107,13 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		if (freq > 100000) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR104);
 		} else if (freq > 50000) {
-			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR50);
+			if (ddr) {
+				HSET2(hp, SDHC_HOST_CTL2,
+				    SDHC_UHS_MODE_SELECT_DDR50);
+			} else {
+				HSET2(hp, SDHC_HOST_CTL2,
+				    SDHC_UHS_MODE_SELECT_SDR50);
+			}
 		} else if (freq > 25000) {
 			if (ddr) {
 				HSET2(hp, SDHC_HOST_CTL2,
@@ -1334,6 +1340,9 @@ static int
 sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
+
+	if (hp->specver < SDHC_SPEC_VERS_300)
+		return EINVAL;
 
 	mutex_enter(&hp->intr_lock);
 	switch (signal_voltage) {

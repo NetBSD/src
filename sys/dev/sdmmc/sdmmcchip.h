@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.7 2015/08/05 10:29:37 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.8 2017/02/17 10:50:43 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ struct sdmmc_chip_functions {
 	((tag)->card_intr_ack((handle)))
 /* UHS functions */
 #define sdmmc_chip_signal_voltage(tag, handle, voltage)			\
-	((tag)->signal_voltage((handle), (voltage)))
+	((tag)->signal_voltage ? (tag)->signal_voltage((handle), (voltage)) : EINVAL)
 #define sdmmc_chip_execute_tuning(tag, handle, timing)			\
 	((tag)->execute_tuning ? (tag)->execute_tuning((handle), (timing)) : EINVAL)
 
