@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.479 2017/02/16 05:36:41 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.480 2017/02/17 04:51:01 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.479 2017/02/16 05:36:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.480 2017/02/17 04:51:01 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -718,6 +718,8 @@ static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
 static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
 static void	wm_linkintr(struct wm_softc *, uint32_t);
 static int	wm_intr_legacy(void *);
+static inline void	wm_txrxintr_disable(struct wm_queue *);
+static inline void	wm_txrxintr_enable(struct wm_queue *);
 static int	wm_txrxintr_msix(void *);
 static int	wm_linkintr_msix(void *);
 
@@ -8296,6 +8298,32 @@ wm_intr_legacy(void *arg)
 	return handled;
 }
 
+static inline void
+wm_txrxintr_disable(struct wm_queue *wmq)
+{
+	struct wm_softc *sc = wmq->wmq_txq.txq_sc;
+
+	if (sc->sc_type == WM_T_82574)
+		CSR_WRITE(sc, WMREG_IMC, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
+	else if (sc->sc_type == WM_T_82575)
+		CSR_WRITE(sc, WMREG_EIMC, EITR_TX_QUEUE(wmq->wmq_id) | EITR_RX_QUEUE(wmq->wmq_id));
+	else
+		CSR_WRITE(sc, WMREG_EIMC, 1 << wmq->wmq_intr_idx);
+}
+
+static inline void
+wm_txrxintr_enable(struct wm_queue *wmq)
+{
+	struct wm_softc *sc = wmq->wmq_txq.txq_sc;
+
+	if (sc->sc_type == WM_T_82574)
+		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
+	else if (sc->sc_type == WM_T_82575)
+		CSR_WRITE(sc, WMREG_EIMS, EITR_TX_QUEUE(wmq->wmq_id) | EITR_RX_QUEUE(wmq->wmq_id));
+	else
+		CSR_WRITE(sc, WMREG_EIMS, 1 << wmq->wmq_intr_idx);
+}
+
 static int
 wm_txrxintr_msix(void *arg)
 {
@@ -8310,12 +8338,7 @@ wm_txrxintr_msix(void *arg)
 	DPRINTF(WM_DEBUG_TX,
 	    ("%s: TX: got Tx intr\n", device_xname(sc->sc_dev)));
 
-	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMC, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
-	else if (sc->sc_type == WM_T_82575)
-		CSR_WRITE(sc, WMREG_EIMC, EITR_TX_QUEUE(wmq->wmq_id) | EITR_RX_QUEUE(wmq->wmq_id));
-	else
-		CSR_WRITE(sc, WMREG_EIMC, 1 << wmq->wmq_intr_idx);
+	wm_txrxintr_disable(wmq);
 
 	mutex_enter(txq->txq_lock);
 
@@ -8352,12 +8375,7 @@ wm_txrxintr_msix(void *arg)
 	wm_rxeof(rxq);
 	mutex_exit(rxq->rxq_lock);
 
-	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
-	else if (sc->sc_type == WM_T_82575)
-		CSR_WRITE(sc, WMREG_EIMS, EITR_TX_QUEUE(wmq->wmq_id) | EITR_RX_QUEUE(wmq->wmq_id));
-	else
-		CSR_WRITE(sc, WMREG_EIMS, 1 << wmq->wmq_intr_idx);
+	wm_txrxintr_enable(wmq);
 
 	return 1;
 }
