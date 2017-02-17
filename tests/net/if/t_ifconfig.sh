@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.16 2017/02/14 08:43:06 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.17 2017/02/17 00:51:52 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -343,10 +343,10 @@ ifconfig_up_down_common()
 	# work for both IPv4 and IPv6
 	if [ $family = inet6 ]; then
 		atf_check -s exit:0 -o ignore \
-		    rump.sysctl -w net.inet6.ip6.dad_count=3
+		    rump.sysctl -w net.inet6.ip6.dad_count=5
 	else
 		atf_check -s exit:0 -o ignore \
-		    rump.sysctl -w net.inet.ip.dad_count=3
+		    rump.sysctl -w net.inet.ip.dad_count=5
 	fi
 
 	#
