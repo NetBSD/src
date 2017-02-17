@@ -1,6 +1,35 @@
-/*	$NetBSD: pmc.c,v 1.21 2013/11/21 22:04:40 riz Exp $	*/
+/*	$NetBSD: pmc.c,v 1.22 2017/02/17 12:10:40 maxv Exp $	*/
 
-/*-
+/*
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c) 2000 Zembu Labs, Inc.
  * All rights reserved.
  *
@@ -38,11 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.21 2013/11/21 22:04:40 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.22 2017/02/17 12:10:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
+#include <sys/xcall.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
@@ -52,36 +83,141 @@ __KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.21 2013/11/21 22:04:40 riz Exp $");
 #include <machine/cpu_counter.h>
 #include <machine/cputypes.h>
 
-static int pmc_initialized;
-static int pmc_ncounters;
-static int pmc_type;
-static int pmc_flags;
+typedef struct {
+	bool running;
+	uint32_t evtmsr;	/* event selector MSR */
+	uint64_t evtval;	/* event selector value */
+	uint32_t ctrmsr;	/* counter MSR */
+	uint64_t ctrval;	/* counter value */
+	uint64_t tsc;
+} pmc_state_t;
 
-static struct pmc_state {
-	uint64_t pmcs_val;
-	uint64_t pmcs_tsc;
-	uint64_t pmcs_control;
-	uint32_t pmcs_ctrmsr;
-} pmc_state[PMC_NCOUNTERS];
+static uint64_t pmc_val_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
+static kmutex_t pmc_lock;
 
-static int pmc_running;
+static pmc_state_t pmc_state[PMC_NCOUNTERS];
+static int pmc_ncounters __read_mostly;
+static int pmc_type __read_mostly;
+static int pmc_flags __read_mostly;
 
 static void
+pmc_read_cpu(void *arg1, void *arg2)
+{
+	pmc_state_t *pmc = (pmc_state_t *)arg1;
+	struct cpu_info *ci = curcpu();
+
+	pmc_val_cpus[cpu_index(ci)] = rdmsr(pmc->ctrmsr) & 0xffffffffffULL;
+}
+
+static void
+pmc_read(pmc_state_t *pmc)
+{
+	uint64_t xc;
+	size_t i;
+
+	xc = xc_broadcast(0, pmc_read_cpu, pmc, NULL);
+	xc_wait(xc);
+
+	pmc->ctrval = 0;
+	for (i = 0; i < ncpu; i++) {
+		/* XXX: really shitty */
+		pmc->ctrval += pmc_val_cpus[i];
+	}
+}
+
+static void
+pmc_apply_cpu(void *arg1, void *arg2)
+{
+	pmc_state_t *pmc = (pmc_state_t *)arg1;
+
+	wrmsr(pmc->ctrmsr, pmc->ctrval);
+	switch (pmc_type) {
+	case PMC_TYPE_I586:
+		wrmsr(MSR_CESR, pmc_state[0].evtval |
+		    (pmc_state[1].evtval << 16));
+		break;
+
+	case PMC_TYPE_I686:
+	case PMC_TYPE_K7:
+		wrmsr(pmc->evtmsr, pmc->evtval);
+		break;
+	}
+}
+
+static void
+pmc_apply(pmc_state_t *pmc)
+{
+	uint64_t xc;
+
+	xc = xc_broadcast(0, pmc_apply_cpu, pmc, NULL);
+	xc_wait(xc);
+}
+
+static void
+pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
+{
+	pmc->running = true;
+
+	/*
+	 * Initialize the counter MSR.
+	 */
+	pmc->ctrval = args->val;
+
+	/*
+	 * Initialize the event MSR.
+	 */
+	switch (pmc_type) {
+	case PMC_TYPE_I586:
+		pmc->evtval = args->event |
+		    ((args->flags & PMC_SETUP_KERNEL) ? PMC5_CESR_OS : 0) |
+		    ((args->flags & PMC_SETUP_USER) ? PMC5_CESR_USR : 0) |
+		    ((args->flags & PMC_SETUP_EDGE) ? PMC5_CESR_E : 0);
+		break;
+
+	case PMC_TYPE_I686:
+		pmc->evtval = args->event | PMC6_EVTSEL_EN |
+		    (args->unit << PMC6_EVTSEL_UNIT_SHIFT) |
+		    ((args->flags & PMC_SETUP_KERNEL) ? PMC6_EVTSEL_OS : 0) |
+		    ((args->flags & PMC_SETUP_USER) ? PMC6_EVTSEL_USR : 0) |
+		    ((args->flags & PMC_SETUP_EDGE) ? PMC6_EVTSEL_E : 0) |
+		    ((args->flags & PMC_SETUP_INV) ? PMC6_EVTSEL_INV : 0) |
+		    (args->compare << PMC6_EVTSEL_COUNTER_MASK_SHIFT);
+		break;
+
+	case PMC_TYPE_K7:
+		args->event &= K7_EVTSEL_EVENT;
+		args->unit = (args->unit << K7_EVTSEL_UNIT_SHIFT) &
+		    K7_EVTSEL_UNIT;
+		pmc->evtval = args->event | args->unit | K7_EVTSEL_EN |
+		    ((args->flags & PMC_SETUP_KERNEL) ? K7_EVTSEL_OS : 0) |
+		    ((args->flags & PMC_SETUP_USER) ? K7_EVTSEL_USR : 0) |
+		    ((args->flags & PMC_SETUP_EDGE) ? K7_EVTSEL_E : 0) |
+		    ((args->flags & PMC_SETUP_INV) ? K7_EVTSEL_INV : 0) |
+		    (args->compare << K7_EVTSEL_COUNTER_MASK_SHIFT);
+		break;
+	}
+
+	/*
+	 * Apply the changes.
+	 */
+	pmc_apply(pmc);
+}
+
+static void
+pmc_stop(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
+{
+	pmc->running = false;
+	pmc->evtval = 0;
+	pmc_apply(pmc);
+}
+
+void
 pmc_init(void)
 {
 	const char *cpu_vendorstr;
 	struct cpu_info *ci;
 
-	if (pmc_initialized)
-		return;
-
 	pmc_type = PMC_TYPE_NONE;
-
-#ifdef MULTIPROCESSOR
-	/* XXX */
-	if (ncpu > 1)
-		goto done;
-#endif
 
 	ci = curcpu();
 	cpu_vendorstr = (char *)ci->ci_vendor;
@@ -91,34 +227,35 @@ pmc_init(void)
 		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
 			pmc_type = PMC_TYPE_I586;
 			pmc_ncounters = 2;
-			pmc_state[0].pmcs_ctrmsr = MSR_CTR0;
-			pmc_state[1].pmcs_ctrmsr = MSR_CTR1;
+			pmc_state[0].ctrmsr = MSR_CTR0;
+			pmc_state[1].ctrmsr = MSR_CTR1;
 			break;
 		}
 
 	case CPUCLASS_686:
 		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
-
-			/*
-			 * Figure out what we support; right now
-			 * we're missing Pentium 4 support.
-			 */
+			/* Right now we're missing Pentium 4 support. */
 			if (cpuid_level == -1 ||
 			    CPUID_TO_FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
 				break;
-
 			pmc_type = PMC_TYPE_I686;
 			pmc_ncounters = 2;
-			pmc_state[0].pmcs_ctrmsr = MSR_PERFCTR0;
-			pmc_state[1].pmcs_ctrmsr = MSR_PERFCTR1;
-		} else if (strncmp(cpu_vendorstr, "AuthenticAMD",
-			   12) == 0) {
+			pmc_state[0].evtmsr = MSR_EVNTSEL0;
+			pmc_state[0].ctrmsr = MSR_PERFCTR0;
+			pmc_state[1].evtmsr = MSR_EVNTSEL1;
+			pmc_state[1].ctrmsr = MSR_PERFCTR1;
+		} else if (strncmp(cpu_vendorstr, "AuthenticAMD", 12) == 0) {
+			/* XXX: make sure it is at least K7 */
 			pmc_type = PMC_TYPE_K7;
 			pmc_ncounters = 4;
-			pmc_state[0].pmcs_ctrmsr = MSR_K7_PERFCTR0;
-			pmc_state[1].pmcs_ctrmsr = MSR_K7_PERFCTR1;
-			pmc_state[2].pmcs_ctrmsr = MSR_K7_PERFCTR2;
-			pmc_state[3].pmcs_ctrmsr = MSR_K7_PERFCTR3;
+			pmc_state[0].evtmsr = MSR_K7_EVNTSEL0;
+			pmc_state[0].ctrmsr = MSR_K7_PERFCTR0;
+			pmc_state[1].evtmsr = MSR_K7_EVNTSEL1;
+			pmc_state[1].ctrmsr = MSR_K7_PERFCTR1;
+			pmc_state[2].evtmsr = MSR_K7_EVNTSEL2;
+			pmc_state[2].ctrmsr = MSR_K7_PERFCTR2;
+			pmc_state[3].evtmsr = MSR_K7_EVNTSEL3;
+			pmc_state[3].ctrmsr = MSR_K7_PERFCTR3;
 		}
 		break;
 	}
@@ -126,160 +263,95 @@ pmc_init(void)
 	if (pmc_type != PMC_TYPE_NONE && cpu_hascounter())
 		pmc_flags |= PMC_INFO_HASTSC;
 
-#ifdef MULTIPROCESSOR
-done:
-#endif
-	pmc_initialized = 1;
+	mutex_init(&pmc_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 int
-pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs,
-    register_t *retval)
+sys_pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs, register_t *retval)
 {
 	struct x86_pmc_info_args rv;
 
 	memset(&rv, 0, sizeof(rv));
 
-	if (pmc_initialized == 0)
-		pmc_init();
-
 	rv.type = pmc_type;
 	rv.flags = pmc_flags;
 
-	return (copyout(&rv, uargs, sizeof(rv)));
+	return copyout(&rv, uargs, sizeof(rv));
 }
 
 int
-pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
+sys_pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
     register_t *retval)
 {
 	struct x86_pmc_startstop_args args;
-	int error, mask, start;
+	pmc_state_t *pmc;
+	bool start;
+	int error;
 
-	if (pmc_initialized == 0)
-		pmc_init();
 	if (pmc_type == PMC_TYPE_NONE)
-		return (ENODEV);
+		return ENODEV;
 
 	error = copyin(uargs, &args, sizeof(args));
 	if (error)
-		return (error);
+		return error;
 
 	if (args.counter < 0 || args.counter >= pmc_ncounters)
-		return (EINVAL);
+		return EINVAL;
 
-	mask = 1 << args.counter;
 	start = (args.flags & (PMC_SETUP_KERNEL|PMC_SETUP_USER)) != 0;
+	pmc = &pmc_state[args.counter];
 
-	if ((pmc_running & mask) != 0 && start != 0)
-		return (EBUSY);
-	else if ((pmc_running & mask) == 0 && start == 0)
-		return (0);
+	mutex_enter(&pmc_lock);
 
-	x86_disable_intr();
+	if (start && pmc->running) {
+		mutex_exit(&pmc_lock);
+		return EBUSY;
+	} else if (!start && !pmc->running) {
+		mutex_exit(&pmc_lock);
+		return 0;
+	}
+
 	if (start) {
-		pmc_running |= mask;
-		pmc_state[args.counter].pmcs_val = args.val;
-		switch (pmc_type) {
-		case PMC_TYPE_I586:
-			pmc_state[args.counter].pmcs_control = args.event |
-			    ((args.flags & PMC_SETUP_KERNEL) ?
-			      PMC5_CESR_OS : 0) |
-			    ((args.flags & PMC_SETUP_USER) ?
-			      PMC5_CESR_USR : 0) |
-			    ((args.flags & PMC_SETUP_EDGE) ?
-			      PMC5_CESR_E : 0);
-			break;
-
-		case PMC_TYPE_I686:
-			pmc_state[args.counter].pmcs_control = args.event |
-			    (args.unit << PMC6_EVTSEL_UNIT_SHIFT) |
-			    ((args.flags & PMC_SETUP_KERNEL) ?
-			      PMC6_EVTSEL_OS : 0) |
-			    ((args.flags & PMC_SETUP_USER) ?
-			      PMC6_EVTSEL_USR : 0) |
-			    ((args.flags & PMC_SETUP_EDGE) ?
-			      PMC6_EVTSEL_E : 0) |
-			    ((args.flags & PMC_SETUP_INV) ?
-			      PMC6_EVTSEL_INV : 0) |
-			    (args.compare << PMC6_EVTSEL_COUNTER_MASK_SHIFT);
-			break;
-
-		case PMC_TYPE_K7:
-			pmc_state[args.counter].pmcs_control = args.event |
-			    (args.unit << K7_EVTSEL_UNIT_SHIFT) |
-			    ((args.flags & PMC_SETUP_KERNEL) ?
-			      K7_EVTSEL_OS : 0) |
-			    ((args.flags & PMC_SETUP_USER) ?
-			      K7_EVTSEL_USR : 0) |
-			    ((args.flags & PMC_SETUP_EDGE) ?
-			      K7_EVTSEL_E : 0) |
-			    ((args.flags & PMC_SETUP_INV) ?
-			      K7_EVTSEL_INV : 0) |
-			    (args.compare << PMC6_EVTSEL_COUNTER_MASK_SHIFT);
-			break;
-		}
-		wrmsr(pmc_state[args.counter].pmcs_ctrmsr,
-		    pmc_state[args.counter].pmcs_val);
+		pmc_start(pmc, &args);
 	} else {
-		pmc_running &= ~mask;
-		pmc_state[args.counter].pmcs_control = 0;
+		pmc_stop(pmc, &args);
 	}
 
-	switch (pmc_type) {
-	case PMC_TYPE_I586:
-		wrmsr(MSR_CESR, pmc_state[0].pmcs_control |
-		    (pmc_state[1].pmcs_control << 16));
-		break;
+	mutex_exit(&pmc_lock);
 
-	case PMC_TYPE_I686:
-		if (args.counter == 1)
-			wrmsr(MSR_EVNTSEL1, pmc_state[1].pmcs_control);
-		wrmsr(MSR_EVNTSEL0, pmc_state[0].pmcs_control |
-		    (pmc_running ? PMC6_EVTSEL_EN : 0));
-		break;
-
-	case PMC_TYPE_K7:
-		if (args.counter == 1)
-			wrmsr(MSR_K7_EVNTSEL1, pmc_state[1].pmcs_control);
-		wrmsr(MSR_K7_EVNTSEL0, pmc_state[0].pmcs_control |
-		    (pmc_running ? K7_EVTSEL_EN : 0));
-		break;
-	}
-	x86_enable_intr();
-
-	return (0);
+	return 0;
 }
 
 int
-pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs,
-    register_t *retval)
+sys_pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs, register_t *retval)
 {
 	struct x86_pmc_read_args args;
+	pmc_state_t *pmc;
 	int error;
 
-	if (pmc_initialized == 0)
-		pmc_init();
 	if (pmc_type == PMC_TYPE_NONE)
-		return (ENODEV);
+		return ENODEV;
 
 	error = copyin(uargs, &args, sizeof(args));
 	if (error)
-		return (error);
+		return error;
 
 	if (args.counter < 0 || args.counter >= pmc_ncounters)
-		return (EINVAL);
+		return EINVAL;
+	pmc = &pmc_state[args.counter];
 
-	if (pmc_running & (1 << args.counter)) {
-		pmc_state[args.counter].pmcs_val =
-		    rdmsr(pmc_state[args.counter].pmcs_ctrmsr) &
-		    0xffffffffffULL;
+	mutex_enter(&pmc_lock);
+
+	if (pmc->running) {
+		pmc_read(pmc);
 		if (pmc_flags & PMC_INFO_HASTSC)
-			pmc_state[args.counter].pmcs_tsc = cpu_counter();
+			pmc->tsc = cpu_counter();
 	}
 
-	args.val = pmc_state[args.counter].pmcs_val;
-	args.time = pmc_state[args.counter].pmcs_tsc;
+	args.val = pmc->ctrval;
+	args.time = pmc->tsc;
 
-	return (copyout(&args, uargs, sizeof(args)));
+	mutex_exit(&pmc_lock);
+
+	return copyout(&args, uargs, sizeof(args));
 }

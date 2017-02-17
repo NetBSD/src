@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.32 2017/02/14 09:11:05 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.33 2017/02/17 12:10:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.32 2017/02/14 09:11:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33 2017/02/17 12:10:40 maxv Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -849,21 +849,15 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 
 #ifdef PERFCTRS
 	case X86_PMC_INFO:
-		KERNEL_LOCK(1, NULL);
-		error = pmc_info(l, SCARG(uap, parms), retval);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = sys_pmc_info(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_PMC_STARTSTOP:
-		KERNEL_LOCK(1, NULL);
-		error = pmc_startstop(l, SCARG(uap, parms), retval);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = sys_pmc_startstop(l, SCARG(uap, parms), retval);
 		break;
 
 	case X86_PMC_READ:
-		KERNEL_LOCK(1, NULL);
-		error = pmc_read(l, SCARG(uap, parms), retval);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = sys_pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif
 
