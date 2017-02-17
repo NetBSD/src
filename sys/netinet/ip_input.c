@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.349 2017/02/07 02:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.350 2017/02/17 04:32:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.349 2017/02/07 02:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.350 2017/02/17 04:32:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1601,24 +1601,25 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	int error, tmp;
 	struct sysctlnode node;
 
+	icmp_mtudisc_lock();
+
 	node = *rnode;
 	tmp = ip_mtudisc_timeout;
 	node.sysctl_data = &tmp;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	if (tmp < 0)
-		return (EINVAL);
-
-	/* XXX NOMPSAFE still need softnet_lock */
-	mutex_enter(softnet_lock);
+		goto out;
+	if (tmp < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	ip_mtudisc_timeout = tmp;
 	rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
-
-	mutex_exit(softnet_lock);
-
-	return (0);
+	error = 0;
+out:
+	icmp_mtudisc_unlock();
+	return 0;
 }
 
 static int
