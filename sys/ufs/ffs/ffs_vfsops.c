@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.342 2016/12/27 10:54:38 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.343 2017/02/17 08:26:41 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.342 2016/12/27 10:54:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.343 2017/02/17 08:26:41 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1973,7 +1973,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 #ifdef WAPBL
 	if (mp->mnt_wapbl) {
-		error = wapbl_flush(mp->mnt_wapbl, 0);
+		error = wapbl_flush(mp->mnt_wapbl, (waitfor == MNT_WAIT));
 		if (error)
 			allerror = error;
 	}
