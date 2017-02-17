@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.21 2015/11/29 23:38:47 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.22 2017/02/17 10:49:47 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -222,21 +222,25 @@ struct sdmmc_softc {
 #define SMF_UHS_MODE		0x10000	/* host in UHS mode */
 
 	uint32_t sc_caps;		/* host capability */
-#define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */
-#define SMC_CAPS_4BIT_MODE	0x0002	/* 4-bits data bus width */
-#define SMC_CAPS_DMA		0x0004	/* DMA transfer */
-#define SMC_CAPS_SPI_MODE	0x0008	/* SPI mode */
-#define SMC_CAPS_POLL_CARD_DET	0x0010	/* Polling card detect */
-#define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
-#define SMC_CAPS_8BIT_MODE	0x0040	/* 8-bits data bus width */
-#define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
-#define SMC_CAPS_SD_HIGHSPEED	0x0100	/* SD high-speed timing */
-#define SMC_CAPS_MMC_HIGHSPEED	0x0200	/* MMC high-speed timing */
-#define SMC_CAPS_UHS_SDR50	0x1000	/* UHS SDR50 timing */
-#define SMC_CAPS_UHS_SDR104	0x2000	/* UHS SDR104 timing */
-#define SMC_CAPS_UHS_DDR50	0x4000	/* UHS DDR50 timing */
-#define SMC_CAPS_UHS_MASK	0x7000
-#define SMC_CAPS_MMC_HS200	0x8000	/* eMMC HS200 timing */
+#define SMC_CAPS_AUTO_STOP	__BIT(0)	/* send CMD12 automagically by host */
+#define SMC_CAPS_4BIT_MODE	__BIT(1)	/* 4-bits data bus width */
+#define SMC_CAPS_DMA		__BIT(2)	/* DMA transfer */
+#define SMC_CAPS_SPI_MODE	__BIT(3)	/* SPI mode */
+#define SMC_CAPS_POLL_CARD_DET	__BIT(4)	/* Polling card detect */
+#define SMC_CAPS_SINGLE_ONLY	__BIT(5)	/* only single read/write */
+#define SMC_CAPS_8BIT_MODE	__BIT(6)	/* 8-bits data bus width */
+#define SMC_CAPS_MULTI_SEG_DMA	__BIT(7)	/* multiple segment DMA transfer */
+#define SMC_CAPS_SD_HIGHSPEED	__BIT(8)	/* SD high-speed timing */
+#define SMC_CAPS_MMC_HIGHSPEED	__BIT(9)	/* MMC high-speed timing */
+#define SMC_CAPS_MMC_DDR52	__BIT(10)	/* MMC HS DDR52 timing */
+/*				__BIT(11)	*/
+#define SMC_CAPS_UHS_SDR50	__BIT(12)	/* UHS SDR50 timing */
+#define SMC_CAPS_UHS_SDR104	__BIT(13)	/* UHS SDR104 timing */
+#define SMC_CAPS_UHS_DDR50	__BIT(14)	/* UHS DDR50 timing */
+#define SMC_CAPS_UHS_MASK	(SMC_CAPS_UHS_SDR50 \
+				    | SMC_CAPS_UHS_SDR104 \
+				    | SMC_CAPS_UHS_DDR50)
+#define SMC_CAPS_MMC_HS200	__BIT(15)	/* eMMC HS200 timing */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
