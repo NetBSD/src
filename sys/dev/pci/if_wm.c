@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.482 2017/02/17 07:21:28 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.483 2017/02/17 11:57:26 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.482 2017/02/17 07:21:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.483 2017/02/17 11:57:26 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7799,8 +7799,14 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		uint8_t rsstype = wm_rxdesc_get_rsstype(rxq, i);
 #endif
 
-		if (!wm_rxdesc_dd(rxq, i, status))
+		if (!wm_rxdesc_dd(rxq, i, status)) {
+			/*
+			 * Update the receive pointer holding rxq_lock
+			 * consistent with increment counter.
+			 */
+			rxq->rxq_ptr = i;
 			break;
+		}
 
 		count++;
 		if (__predict_false(rxq->rxq_discard)) {
@@ -7924,7 +7930,11 @@ wm_rxeof(struct wm_rxqueue *rxq)
 
 		/* Set up checksum info for this packet. */
 		wm_rxdesc_ensure_checksum(rxq, status, errors, m);
-
+		/*
+		 * Update the receive pointer holding rxq_lock consistent with
+		 * increment counter.
+		 */
+		rxq->rxq_ptr = i;
 		mutex_exit(rxq->rxq_lock);
 
 		/* Pass it on. */
@@ -7936,8 +7946,6 @@ wm_rxeof(struct wm_rxqueue *rxq)
 			break;
 	}
 
-	/* Update the receive pointer. */
-	rxq->rxq_ptr = i;
 	if (count != 0)
 		rnd_add_uint32(&sc->rnd_source, count);
 
