@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.28 2017/02/17 10:47:09 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.29 2017/02/17 10:51:48 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -115,6 +115,7 @@
 #define SD_ARG_BUS_WIDTH_4		2
 
 /* EXT_CSD fields */
+#define EXT_CSD_RST_N_FUNCTION		162	/* R/W */
 #define EXT_CSD_BUS_WIDTH		183	/* W/E_P */
 #define EXT_CSD_HS_TIMING		185	/* R/W/E_P */
 #define EXT_CSD_REV			192	/* R */
@@ -154,6 +155,12 @@
 #define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5) /* HS200 SDR 200 MHz 1.2V */
 #define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6) /* HS400 DDR 200 MHz 1.8V */
 #define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7) /* HS400 DDR 200 MHz 1.2V */
+
+/* EXT_CSD_RST_N_FUNCTION */
+#define	EXT_CSD_RST_N_TMP_DISABLED	0x00
+#define	EXT_CSD_RST_N_PERM_ENABLED	0x01
+#define	EXT_CSD_RST_N_PERM_DISABLED	0x02
+#define	EXT_CSD_RST_N_MASK		0x03
 
 /* MMC_SWITCH access mode */
 #define MMC_SWITCH_MODE_CMD_SET		0x00	/* Change the command set */
