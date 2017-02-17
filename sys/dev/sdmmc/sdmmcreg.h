@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.24 2017/02/17 10:43:47 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.25 2017/02/17 10:44:31 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -140,14 +140,14 @@
 #define EXT_CSD_STRUCTURE_VER_1_2	2	/* Version 4.1-4.2-4.3 */
 
 /* EXT_CSD_CARD_TYPE */
-#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0)
-#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1)
-#define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2)
-#define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3)
-#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4)
-#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5)
-#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6)
-#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7)
+#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0) /* HS 26 MHz */
+#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1) /* HS 52 MHz */
+#define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2) /* HS DDR 52 MHz 1.8V or 3V */
+#define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3) /* HS DDR 52 MHz 1.2V */
+#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4) /* HS200 SDR 200 MHz 1.8V */
+#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5) /* HS200 SDR 200 MHz 1.2V */
+#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6) /* HS400 DDR 200 MHz 1.8V */
+#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7) /* HS400 DDR 200 MHz 1.2V */
 #define EXT_CSD_CARD_TYPE_26M		0x01
 #define EXT_CSD_CARD_TYPE_52M		0x03
 #define EXT_CSD_CARD_TYPE_52M_V18	0x07
