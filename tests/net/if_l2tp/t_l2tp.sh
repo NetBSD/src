@@ -1,4 +1,4 @@
-#	$NetBSD: t_l2tp.sh,v 1.1 2017/02/16 08:44:47 knakahara Exp $
+#	$NetBSD: t_l2tp.sh,v 1.2 2017/02/17 00:51:25 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -401,7 +401,7 @@ add_test()
 	lan_mode=$3
 	wan_mode=$4
 
-	name="${category}${lan_mode}over${wan_mode}"
+	name="l2tp_${category}_${lan_mode}over${wan_mode}"
 	fulldesc="Does ${lan_mode} over ${wan_mode} if_l2tp ${desc}"
 
 	atf_test_case ${name} cleanup
