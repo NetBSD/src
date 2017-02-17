@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.74 2017/02/17 08:27:58 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.75 2017/02/17 08:30:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.74 2017/02/17 08:27:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.75 2017/02/17 08:30:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -455,6 +455,45 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 }
 
 /*
+ * Release deferred vrele vnodes for this mount.
+ * Called with file system suspended.
+ */
+void
+vrele_flush(struct mount *mp)
+{
+	vnode_impl_t *vip, *marker;
+
+	KASSERT(fstrans_is_owner(mp));
+
+	marker = VNODE_TO_VIMPL(vnalloc_marker(NULL));
+
+	mutex_enter(&vdrain_lock);
+	TAILQ_INSERT_HEAD(&lru_vrele_list, marker, vi_lrulist);
+
+	while ((vip = TAILQ_NEXT(marker, vi_lrulist))) {
+		TAILQ_REMOVE(&lru_vrele_list, marker, vi_lrulist);
+		TAILQ_INSERT_AFTER(&lru_vrele_list, vip, marker, vi_lrulist);
+		if (vnis_marker(VIMPL_TO_VNODE(vip)))
+			continue;
+
+		KASSERT(vip->vi_lrulisthd == &lru_vrele_list);
+		TAILQ_REMOVE(vip->vi_lrulisthd, vip, vi_lrulist);
+		vip->vi_lrulisthd = &lru_hold_list;
+		TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
+		mutex_exit(&vdrain_lock);
+
+		vrele(VIMPL_TO_VNODE(vip));
+
+		mutex_enter(&vdrain_lock);
+	}
+
+	TAILQ_REMOVE(&lru_vrele_list, marker, vi_lrulist);
+	mutex_exit(&vdrain_lock);
+
+	vnfree_marker(VIMPL_TO_VNODE(marker));
+}
+
+/*
  * Reclaim a cached vnode.  Used from vdrain_thread only.
  */
 static __inline void
@@ -556,6 +595,8 @@ vdrain_thread(void *cookie)
 				TAILQ_REMOVE(listhd[i], marker, vi_lrulist);
 				TAILQ_INSERT_AFTER(listhd[i], vip, marker,
 				    vi_lrulist);
+				if (vnis_marker(VIMPL_TO_VNODE(vip)))
+					continue;
 				if (listhd[i] == &lru_vrele_list)
 					vdrain_vrele(VIMPL_TO_VNODE(vip));
 				else if (numvnodes < target)

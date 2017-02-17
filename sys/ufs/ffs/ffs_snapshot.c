@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.144 2017/02/17 08:29:11 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.145 2017/02/17 08:30:00 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.144 2017/02/17 08:29:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.145 2017/02/17 08:30:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -256,6 +256,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	error = vfs_suspend(vp->v_mount, 0);
 	if (error == 0) {
 		suspended = true;
+		vrele_flush(vp->v_mount);
 		error = VFS_SYNC(vp->v_mount, MNT_WAIT, curlwp->l_cred);
 	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
