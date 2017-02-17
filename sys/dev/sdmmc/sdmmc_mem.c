@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.54 2017/02/17 10:50:43 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.55 2017/02/17 10:51:48 nonaka Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.54 2017/02/17 10:50:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.55 2017/02/17 10:51:48 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -934,6 +934,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				ext_csd[EXT_CSD_STRUCTURE]);
 			return ENOTSUP;
 		}
+		sf->ext_csd.rev = ext_csd[EXT_CSD_REV];
 
 		if (ISSET(sc->sc_caps, SMC_CAPS_MMC_HS200) &&
 		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_HS200_1_8V) {
@@ -1087,6 +1088,11 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				    "can't execute MMC tuning\n");
 				return error;
 			}
+		}
+
+		if (sf->ext_csd.rev >= 5) {
+			sf->ext_csd.rst_n_function =
+			    ext_csd[EXT_CSD_RST_N_FUNCTION];
 		}
 	} else {
 		if (sc->sc_busclk > sf->csd.tran_speed)
