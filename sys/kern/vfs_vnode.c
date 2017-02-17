@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.73 2017/01/27 10:50:10 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.74 2017/02/17 08:27:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.73 2017/01/27 10:50:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.74 2017/02/17 08:27:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1441,6 +1441,7 @@ vcache_reclaim(vnode_t *vp)
 {
 	lwp_t *l = curlwp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
+	struct mount *mp = vp->v_mount;
 	uint32_t hash;
 	uint8_t temp_buf[64], *temp_key;
 	size_t temp_key_len;
@@ -1476,6 +1477,8 @@ vcache_reclaim(vnode_t *vp)
 	memcpy(temp_key, vip->vi_key.vk_key, temp_key_len);
 	vip->vi_key.vk_key = temp_key;
 	mutex_exit(&vcache_lock);
+
+	fstrans_start(mp, FSTRANS_LAZY);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1536,6 +1539,8 @@ vcache_reclaim(vnode_t *vp)
 	VSTATE_CHANGE(vp, VS_RECLAIMING, VS_RECLAIMED);
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
+
+	fstrans_done(mp);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 }
