@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.143 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.144 2017/02/17 08:29:11 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.143 2016/10/28 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.144 2017/02/17 08:29:11 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -254,10 +254,13 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * All allocations are done, so we can now suspend the filesystem.
 	 */
 	error = vfs_suspend(vp->v_mount, 0);
+	if (error == 0) {
+		suspended = true;
+		error = VFS_SYNC(vp->v_mount, MNT_WAIT, curlwp->l_cred);
+	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error)
 		goto out;
-	suspended = true;
 	getmicrotime(&starttime);
 	/*
 	 * First, copy all the cylinder group maps that have changed.
