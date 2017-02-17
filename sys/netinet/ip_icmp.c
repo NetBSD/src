@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.158 2017/02/13 07:18:20 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.159 2017/02/17 04:32:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.158 2017/02/13 07:18:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.159 2017/02/17 04:32:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -203,6 +203,20 @@ icmp_init(void)
 
 	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
 	icmp_wqinput = wqinput_create("icmp", _icmp_input);
+}
+
+void
+icmp_mtudisc_lock(void)
+{
+
+	mutex_enter(&icmp_mtx);
+}
+
+void
+icmp_mtudisc_unlock(void)
+{
+
+	mutex_exit(&icmp_mtx);
 }
 
 /*
