@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.23 2017/02/17 10:43:03 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.24 2017/02/17 10:43:47 nonaka Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -131,6 +131,8 @@
 #define EXT_CSD_BUS_WIDTH_1		0	/* 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4		1	/* 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8		2	/* 8 bit mode */
+#define EXT_CSD_BUS_WIDTH_4_DDR		5	/* 4 bit mode (DDR) */
+#define EXT_CSD_BUS_WIDTH_8_DDR		6	/* 8 bit mode (DDR) */
 
 /* EXT_CSD_STRUCTURE */
 #define EXT_CSD_STRUCTURE_VER_1_0	0	/* CSD Version No.1.0 */
