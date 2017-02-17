@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.76 2017/02/17 08:31:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.76 2017/02/17 08:31:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Ex
 #include <sys/kauth.h>
 #include <sys/module.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <fs/union/union.h>
 
 MODULE(MODULE_CLASS_VFS, union, NULL);
@@ -534,7 +535,7 @@ struct vfsops union_vfsops = {
 	.vfs_done = union_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = union_renamelock_enter,
 	.vfs_renamelock_exit = union_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
