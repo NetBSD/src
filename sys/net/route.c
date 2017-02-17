@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.190 2017/02/10 13:48:06 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.191 2017/02/17 04:31:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.190 2017/02/10 13:48:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.191 2017/02/17 04:31:34 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1163,7 +1163,7 @@ rt_getifa(struct rt_addrinfo *info, struct psref *psref)
 		return NULL;
 got:
 	if (ifa->ifa_getifa != NULL) {
-		/* FIXME NOMPSAFE */
+		/* FIXME ifa_getifa is NOMPSAFE */
 		ifa = (*ifa->ifa_getifa)(ifa, dst);
 		if (ifa == NULL)
 			return NULL;
