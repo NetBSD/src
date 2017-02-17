@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.376 2016/12/15 12:04:18 kamil Exp $
+#	$NetBSD: files.i386,v 1.377 2017/02/17 12:10:40 maxv Exp $
 #
 # new style config file for i386 architecture
 #
@@ -74,6 +74,7 @@ file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
+file	arch/i386/i386/pmc.c
 file	arch/i386/i386/process_machdep.c
 file	arch/x86/x86/convert_xmm_s87.c
 file	arch/i386/i386/trap.c
@@ -82,8 +83,6 @@ file	arch/x86/x86/fpu.c
 file	arch/x86/x86/dbregs.c
 
 file	arch/i386/i386/mptramp.S	multiprocessor
-
-file	arch/i386/i386/pmc.c		perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
