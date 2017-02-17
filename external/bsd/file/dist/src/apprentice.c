@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.16 2017/02/10 18:06:59 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.17 2017/02/17 17:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -37,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.257 2017/02/04 16:46:16 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.16 2017/02/10 18:06:59 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.17 2017/02/17 17:33:00 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1322,6 +1322,8 @@ apprentice_load(struct magic_set *ms, const char *fn, int action)
 			goto out;
 		}
 		while ((d = readdir(dir)) != NULL) {
+			if (d->d_name[0] == '.')
+				continue;
 			if (asprintf(&mfn, "%s/%s", fn, d->d_name) < 0) {
 				file_oomem(ms,
 				    strlen(fn) + strlen(d->d_name) + 2);
