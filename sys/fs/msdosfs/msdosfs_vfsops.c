@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.121 2017/02/17 08:29:11 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.122 2017/02/17 08:31:24 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.121 2017/02/17 08:29:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.122 2017/02/17 08:31:24 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -136,7 +136,7 @@ struct vfsops msdosfs_vfsops = {
 	.vfs_mountroot = msdosfs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = msdosfs_suspendctl,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -1108,28 +1108,4 @@ msdosfs_vget(struct mount *mp, ino_t ino,
 {
 
 	return (EOPNOTSUPP);
-}
-
-int
-msdosfs_suspendctl(struct mount *mp, int cmd)
-{
-	int error;
-	struct lwp *l = curlwp;
-
-	switch (cmd) {
-	case SUSPEND_SUSPEND:
-		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
-			return error;
-		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDED)) != 0) {
-			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
-			return error;
-		}
-		return 0;
-
-	case SUSPEND_RESUME:
-		return fstrans_setstate(mp, FSTRANS_NORMAL);
-
-	default:
-		return EINVAL;
-	}
 }
