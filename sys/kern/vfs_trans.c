@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.34 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.35 2017/02/17 08:24:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.34 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.35 2017/02/17 08:24:07 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -78,6 +78,7 @@ struct fstrans_mount_info {
 static specificdata_key_t lwp_data_key;	/* Our specific data key. */
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
 static kmutex_t fstrans_lock;		/* Fstrans big lock. */
+static kmutex_t fstrans_mount_lock;	/* Fstrans mount big lock. */
 static kcondvar_t fstrans_state_cv;	/* Fstrans or cow state changed. */
 static kcondvar_t fstrans_count_cv;	/* Fstrans or cow count changed. */
 static pserialize_t fstrans_psz;	/* Pserialize state. */
@@ -106,6 +107,7 @@ fstrans_init(void)
 
 	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&fstrans_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&fstrans_mount_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&fstrans_state_cv, "fstchg");
 	cv_init(&fstrans_count_cv, "fstcnt");
 	fstrans_psz = pserialize_create();
@@ -140,17 +142,25 @@ fstrans_mount_dtor(struct mount *mp)
 {
 	struct fstrans_mount_info *fmi;
 
+	mutex_enter(&fstrans_mount_lock);
+
 	fmi = mp->mnt_transinfo;
-	if (atomic_dec_uint_nv(&fmi->fmi_ref_cnt) > 0)
+	KASSERT(fmi != NULL);
+	fmi->fmi_ref_cnt -= 1;
+	if (fmi->fmi_ref_cnt > 0) {
+		mutex_exit(&fstrans_mount_lock);
 		return;
+	}
 
 	KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
 	KASSERT(LIST_FIRST(&fmi->fmi_cow_handler) == NULL);
 
-	kmem_free(fmi, sizeof(*fmi));
 	mp->mnt_iflag &= ~IMNT_HAS_TRANS;
 	mp->mnt_transinfo = NULL;
 
+	mutex_exit(&fstrans_mount_lock);
+
+	kmem_free(fmi, sizeof(*fmi));
 	vfs_destroy(mp);
 }
 
@@ -172,8 +182,10 @@ fstrans_mount(struct mount *mp)
 	LIST_INIT(&newfmi->fmi_cow_handler);
 	newfmi->fmi_cow_change = false;
 
+	mutex_enter(&fstrans_mount_lock);
 	mp->mnt_transinfo = newfmi;
 	mp->mnt_iflag |= IMNT_HAS_TRANS;
+	mutex_exit(&fstrans_mount_lock);
 
 	vfs_unbusy(mp, true, NULL);
 
@@ -236,6 +248,7 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 		mutex_enter(&fstrans_lock);
 		LIST_FOREACH(fli, &fstrans_fli_head, fli_list) {
 			if (fli->fli_self == NULL) {
+				KASSERT(fli->fli_mount == NULL);
 				KASSERT(fli->fli_trans_cnt == 0);
 				KASSERT(fli->fli_cow_cnt == 0);
 				fli->fli_self = curlwp;
@@ -260,9 +273,16 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 	/*
 	 * Attach the entry to the mount.
 	 */
-	fmi = mp->mnt_transinfo;
-	fli->fli_mount = mp;
-	atomic_inc_uint(&fmi->fmi_ref_cnt);
+	mutex_enter(&fstrans_mount_lock);
+	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0) {
+		fli = NULL;
+	} else {
+		fmi = mp->mnt_transinfo;
+		KASSERT(fmi != NULL);
+		fli->fli_mount = mp;
+		fmi->fmi_ref_cnt += 1;
+	}
+	mutex_exit(&fstrans_mount_lock);
 
 	return fli;
 }
@@ -297,10 +317,8 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 
 	ASSERT_SLEEPABLE();
 
-	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
+	if (mp == NULL || (fli = fstrans_get_lwp_info(mp, true)) == NULL)
 		return 0;
-
-	fli = fstrans_get_lwp_info(mp, true);
 
 	if (fli->fli_trans_cnt > 0) {
 		KASSERT(lock_type != FSTRANS_EXCL);
@@ -343,11 +361,9 @@ fstrans_done(struct mount *mp)
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 
-	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
+	if (mp == NULL || (fli = fstrans_get_lwp_info(mp, true)) == NULL)
 		return;
 
-	fli = fstrans_get_lwp_info(mp, false);
-	KASSERT(fli != NULL);
 	KASSERT(fli->fli_trans_cnt > 0);
 
 	if (fli->fli_trans_cnt > 1) {
@@ -380,11 +396,10 @@ fstrans_is_owner(struct mount *mp)
 {
 	struct fstrans_lwp_info *fli;
 
-	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
+	if (mp == NULL || (fli = fstrans_get_lwp_info(mp, false)) == NULL)
 		return 0;
 
-	fli = fstrans_get_lwp_info(mp, false);
-	if (fli == NULL || fli->fli_trans_cnt == 0)
+	if (fli->fli_trans_cnt == 0)
 		return 0;
 
 	KASSERT(fli->fli_mount == mp);
