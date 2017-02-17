@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.143 2016/12/15 12:04:18 kamil Exp $
+#	$NetBSD: files.xen,v 1.144 2017/02/17 21:51:47 kre Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -50,11 +50,10 @@ file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
+file	arch/i386/i386/pmc.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
-
-file	arch/i386/i386/pmc.c			perfctrs
 
 file	crypto/des/arch/i386/des_enc.S		des
 file	crypto/des/arch/i386/des_cbc.S		des
