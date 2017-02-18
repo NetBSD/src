@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.13 2017/02/18 02:28:21 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.14 2017/02/18 04:30:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.13 2017/02/18 02:28:21 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.14 2017/02/18 04:30:34 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -209,8 +209,8 @@ ATF_TC_BODY(dbregs_print, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r, 0) != -1);
 
 	printf("State of the debug registers:\n");
-	for (i = 0; i < __arraycount(r.dbregs); i++)
-		printf("r[%zu]=%#lx\n", i, r.dbregs[i]);
+	for (i = 0; i < __arraycount(r.dr); i++)
+		printf("r[%zu]=%#lx\n", i, r.dr[i]);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -251,8 +251,8 @@ ATF_TC_BODY(dbregs_preserve_dr0, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -277,15 +277,15 @@ ATF_TC_BODY(dbregs_preserve_dr0, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+	r1.dr[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dr[0]) to new value %#lx\n", r1.dr[0]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -335,8 +335,8 @@ ATF_TC_BODY(dbregs_preserve_dr1, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -361,15 +361,15 @@ ATF_TC_BODY(dbregs_preserve_dr1, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
+	r1.dr[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dr[1]) to new value %#lx\n", r1.dr[1]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -419,8 +419,8 @@ ATF_TC_BODY(dbregs_preserve_dr2, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -445,15 +445,15 @@ ATF_TC_BODY(dbregs_preserve_dr2, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
+	r1.dr[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dr[2]) to new value %#lx\n", r1.dr[2]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -503,8 +503,8 @@ ATF_TC_BODY(dbregs_preserve_dr3, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -529,15 +529,15 @@ ATF_TC_BODY(dbregs_preserve_dr3, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+	r1.dr[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dr[3]) to new value %#lx\n", r1.dr[3]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -588,8 +588,8 @@ ATF_TC_BODY(dbregs_preserve_dr0_yield, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -614,15 +614,15 @@ ATF_TC_BODY(dbregs_preserve_dr0_yield, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+	r1.dr[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dr[0]) to new value %#lx\n", r1.dr[0]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -678,8 +678,8 @@ ATF_TC_BODY(dbregs_preserve_dr1_yield, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -704,15 +704,15 @@ ATF_TC_BODY(dbregs_preserve_dr1_yield, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
+	r1.dr[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dr[1]) to new value %#lx\n", r1.dr[1]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -768,8 +768,8 @@ ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -794,15 +794,15 @@ ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
+	r1.dr[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dr[2]) to new value %#lx\n", r1.dr[2]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -858,8 +858,8 @@ ATF_TC_BODY(dbregs_preserve_dr3_yield, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -884,15 +884,15 @@ ATF_TC_BODY(dbregs_preserve_dr3_yield, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+	r1.dr[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dr[3]) to new value %#lx\n", r1.dr[3]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -948,8 +948,8 @@ ATF_TC_BODY(dbregs_preserve_dr0_continued, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -977,15 +977,15 @@ ATF_TC_BODY(dbregs_preserve_dr0_continued, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+	r1.dr[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dr[0]) to new value %#lx\n", r1.dr[0]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1044,8 +1044,8 @@ ATF_TC_BODY(dbregs_preserve_dr1_continued, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1073,15 +1073,15 @@ ATF_TC_BODY(dbregs_preserve_dr1_continued, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
+	r1.dr[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dr[1]) to new value %#lx\n", r1.dr[1]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1140,8 +1140,8 @@ ATF_TC_BODY(dbregs_preserve_dr2_continued, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1169,15 +1169,15 @@ ATF_TC_BODY(dbregs_preserve_dr2_continued, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
+	r1.dr[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dr[2]) to new value %#lx\n", r1.dr[2]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1236,8 +1236,8 @@ ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1265,15 +1265,15 @@ ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+	r1.dr[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dr[3]) to new value %#lx\n", r1.dr[3]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1337,8 +1337,8 @@ ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1368,18 +1368,18 @@ ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dbregs[0]) to new value %#lx\n", r1.dbregs[0]);
+	r1.dr[0] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dr[0]) to new value %#lx\n", r1.dr[0]);
 
-	r1.dbregs[7] = dr7.raw;
-	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
+	r1.dr[7] = dr7.raw;
+	printf("Set DR7 (r1.dr[7]) to new value %#lx\n", r1.dr[7]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1451,8 +1451,8 @@ ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1482,18 +1482,18 @@ ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dbregs[1]) to new value %#lx\n", r1.dbregs[1]);
+	r1.dr[1] = (long)(intptr_t)&watchme;
+	printf("Set DR1 (r1.dr[1]) to new value %#lx\n", r1.dr[1]);
 
-	r1.dbregs[7] = dr7.raw;
-	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
+	r1.dr[7] = dr7.raw;
+	printf("Set DR7 (r1.dr[7]) to new value %#lx\n", r1.dr[7]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1565,8 +1565,8 @@ ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1596,18 +1596,18 @@ ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dbregs[2]) to new value %#lx\n", r1.dbregs[2]);
+	r1.dr[2] = (long)(intptr_t)&watchme;
+	printf("Set DR2 (r1.dr[2]) to new value %#lx\n", r1.dr[2]);
 
-	r1.dbregs[7] = dr7.raw;
-	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
+	r1.dr[7] = dr7.raw;
+	printf("Set DR7 (r1.dr[7]) to new value %#lx\n", r1.dr[7]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
@@ -1679,8 +1679,8 @@ ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 
 	printf("Assert that known number of Debug Registers (%zu) is valid\n",
 	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dbregs), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dbregs), len);
+	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
+	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1710,18 +1710,18 @@ ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
 
 	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
-	r1.dbregs[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dbregs[3]) to new value %#lx\n", r1.dbregs[3]);
+	r1.dr[3] = (long)(intptr_t)&watchme;
+	printf("Set DR3 (r1.dr[3]) to new value %#lx\n", r1.dr[3]);
 
-	r1.dbregs[7] = dr7.raw;
-	printf("Set DR7 (r1.dbregs[7]) to new value %#lx\n", r1.dbregs[7]);
+	r1.dr[7] = dr7.raw;
+	printf("Set DR7 (r1.dr[7]) to new value %#lx\n", r1.dr[7]);
 
 	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dbregs); i++)
-		printf("r1[%zu]=%#lx\n", i, r1.dbregs[i]);
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%#lx\n", i, r1.dr[i]);
 
 	printf("Call SETDBREGS for the child process (r1)\n");
 	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
