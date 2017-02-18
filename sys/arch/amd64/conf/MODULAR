@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.6 2016/12/18 04:35:26 dholland Exp $
+# $NetBSD: MODULAR,v 1.7 2017/02/18 19:28:44 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -116,6 +116,7 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 -no pseudo-device	vlan			# IEEE 802.1q encapsulation
 -no pseudo-device	agr			# IEEE 802.3ad link aggregation
+-no pseudo-device	l2tp			# L2TPv3 interface
 -no pseudo-device	npf			# NPF packet filter
 
 #
