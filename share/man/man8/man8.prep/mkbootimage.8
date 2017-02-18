@@ -1,4 +1,4 @@
-.\" $NetBSD: mkbootimage.8,v 1.7 2017/02/17 22:30:28 christos Exp $
+.\" $NetBSD: mkbootimage.8,v 1.8 2017/02/18 21:47:11 wiz Exp $
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -56,7 +56,7 @@ The image can be written directly to a floppy or hard drive with
 the
 .Xr dd 1
 command, or it can be directly netbooted via
-.Xr prep/bootpd 8 .
+.Xr bootpd 8 .
 .Pp
 The following options are available:
 .Bl -tag -width indent
@@ -139,10 +139,10 @@ to create a new bootable image with com0 as the console:
 .Dl Ic mkbootimage -b /usr/mdec/boot_com0 -k /netbsd -r /dev/rsd0c boot.fs
 .Sh SEE ALSO
 .Xr dd 1 ,
-.Xr prep/boot 8 ,
-.Xr prep/bootpd 8 ,
+.Xr bootpd 8 ,
 .Xr disklabel 8 ,
-.Xr fdisk 8
+.Xr fdisk 8 ,
+.Xr prep/boot 8
 .Sh HISTORY
 .Nm
 first appeared in
