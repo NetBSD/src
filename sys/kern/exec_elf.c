@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.88 2017/02/12 21:52:46 uwe Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.89 2017/02/18 01:29:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.88 2017/02/12 21:52:46 uwe Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.89 2017/02/18 01:29:09 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -134,7 +134,9 @@ elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 			align = ph[i].p_align;
 
 	offset = (Elf_Addr)pax_aslr_exec_offset(epp, align);
-	offset += epp->ep_vm_minaddr;
+	if (offset < epp->ep_vm_minaddr)
+		offset = roundup(epp->ep_vm_minaddr, align);
+	KASSERT((offset & (align - 1)) == 0);
 
 	for (i = 0; i < eh->e_phnum; i++)
 		ph[i].p_vaddr += offset;
