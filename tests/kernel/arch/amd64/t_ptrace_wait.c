@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.12 2017/02/16 15:57:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.13 2017/02/18 02:28:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.12 2017/02/16 15:57:45 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.13 2017/02/18 02:28:21 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1392,6 +1392,9 @@ ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
@@ -1502,6 +1505,9 @@ ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
@@ -1614,6 +1620,9 @@ ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
@@ -1724,6 +1733,9 @@ ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Call CONTINUE for the child process\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
