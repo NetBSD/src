@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.9 2017/02/17 22:30:28 christos Exp $
+.\"	$NetBSD: boot.8,v 1.10 2017/02/18 21:39:53 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,7 +138,7 @@ will be used to configure the behaviour of the boot loader including
 setting the timeout, choosing a console device, altering the banner
 text and displaying a menu allowing boot commands to be easily chosen.
 See
-.Xr x86/boot.cfg 5 .
+.Xr boot.cfg 5 .
 .Ss Boot Protocol
 The
 .Nx Ns /x86
@@ -153,7 +153,7 @@ boot protocol, options are passed from the boot loader
 to the kernel via flag bits in the
 .Va boothowto
 variable (see
-.Xr x86/boothowto 9 ) .
+.Xr boothowto 9 ) .
 In the multiboot protocol, options are passed from the boot loader
 to the kernel as strings.
 .Ss Diagnostic Output
@@ -384,7 +384,7 @@ DOM0 kernel before booting the
 .Tn Xen
 hypervisor.
 See
-.Xr x86/boot.cfg 5
+.Xr boot.cfg 5
 for examples.
 .Pp
 In addition to the
@@ -521,7 +521,7 @@ must be passed as options to the
 .Ic multiboot
 command.
 See
-.Xr x86/boot.cfg 5
+.Xr boot.cfg 5
 for examples on how to boot
 .Nx Ns / Ns  Xen.
 .It Nx No multiboot kernels
@@ -630,7 +630,7 @@ file system to mount as root.
 There are three methods:
 .Bl -tag -width 04n -offset 04n
 .It Ic BTINFO_ROOTDEVICE Va from
-.Xr x86/boot.cfg 5
+.Xr boot.cfg 5
 or multiboot.
 The bootloader passes the root device name as driver, unit, and
 partition (like sd0a).
@@ -706,7 +706,7 @@ partition by
 .Xr fd 4 ,
 .Xr pciback 4 ,
 .Xr userconf 4 ,
-.Xr x86/boot.cfg 5 ,
+.Xr boot.cfg 5 ,
 .Xr halt 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8 ,
@@ -717,7 +717,7 @@ partition by
 .Xr x86/mbr 8 ,
 .Xr x86/multiboot 8 ,
 .Xr x86/pxeboot 8 ,
-.Xr x86/boothowto 9
+.Xr /boothowto 9
 .Sh BUGS
 The kernel file name must be specified before, not after, the boot options.
 Any
