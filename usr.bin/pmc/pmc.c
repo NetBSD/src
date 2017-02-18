@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $	*/
+/*	$NetBSD: pmc.c,v 1.18 2017/02/18 16:48:38 maxv Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.18 2017/02/18 16:48:38 maxv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,6 +52,16 @@ __RCSID("$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#if defined(__i386__)
+typedef struct i386_pmc_info_args x86_pmc_info_args_t;
+typedef struct i386_pmc_startstop_args x86_pmc_startstop_args_t;
+typedef struct i386_pmc_read_args x86_pmc_read_args_t;
+#else /* amd64 */
+typedef struct x86_64_pmc_info_args x86_pmc_info_args_t;
+typedef struct x86_64_pmc_startstop_args x86_pmc_startstop_args_t;
+typedef struct x86_64_pmc_read_args x86_pmc_read_args_t;
+#endif
+
 struct pmc_name2val {
 	const char *name;
 	int val;
@@ -61,7 +71,7 @@ struct pmc_name2val {
 static const struct pmc_name2val i586_names[] = {
 	{ "tlb-data-miss",		PMC5_DATA_TLB_MISS,		0 },
 	{ "tlb-ins-miss",		PMC5_INST_TLB_MISS,		0 },
-	{ "l1cache-ins-miss", 		PMC5_INST_CACHE_MISS,		0 },
+	{ "l1cache-ins-miss",		PMC5_INST_CACHE_MISS,		0 },
 	{ "l1cache-data-miss",		PMC5_DATA_RW_MISS,		0 },
 	{ "l1cache-data-miss-read",	PMC5_DATA_READ_MISS,		0 },
 	{ "l1cache-data-miss-write",	PMC5_DATA_WRITE_MISS,		0 },
@@ -91,7 +101,7 @@ static const struct pmc_name2val i586_names[] = {
 	{ "bus-utilization",		PMC5_BUS_UTILIZATION,		0 },
 	{ "bus-locked",			PMC5_LOCKED_BUS,		0 },
 	{ "bus-io-cycle",		PMC5_IO_CYCLE,			0 },
-	{ "fpu-flops", 			PMC5_FLOPS,			0 },
+	{ "fpu-flops",			PMC5_FLOPS,			0 },
 	{ "int-hw",			PMC5_HARDWARE_INTR,		0 },
 	{ "break-match0",		PMC5_BP0_MATCH,			0 },
 	{ "break-match1",		PMC5_BP1_MATCH,			0 },
@@ -104,7 +114,7 @@ static const struct pmc_name2val i686_names[] = {
 	{ "l1cache-lines",		PMC6_DCU_LINES_IN,		0 },
 	{ "l1cache-mlines",		PMC6_DCU_M_LINES_IN,		0 },
 	{ "l1cache-mlines-evict",	PMC6_DCU_M_LINES_OUT,		0 },
-	{ "l1cache-miss-wait",		PMC6_DCU_MISS_OUTSTANDING, 	0 },
+	{ "l1cache-miss-wait",		PMC6_DCU_MISS_OUTSTANDING,	0 },
 	{ "ins-fetch",			PMC6_IFU_IFETCH,		0 },
 	{ "ins-fetch-misses",		PMC6_IFU_IFETCH_MISS,		0 },
 	{ "itlb-misses",		PMC6_IFU_IFETCH_MISS,		0 },
@@ -237,25 +247,25 @@ static const struct pmc_name2val k7_names[] = {
 	{ "seg-load-hs",		K7_SEGMENT_REG_LOADS,		0x40 },
 	{ "seg-load-stall",		K7_SEGMENT_LOAD_STALL,		0 },
 	{ "l1cache-access",		K7_DATA_CACHE_ACCESS,		0 },
-	{ "l1cache-miss",		K7_DATA_CACHE_MISS,	 	0 },
-	{ "l1cache-refill",		K7_DATA_CACHE_REFILL,	 	0x1f },
-	{ "l1cache-refill-invalid",	K7_DATA_CACHE_REFILL,	 	0x01 },
-	{ "l1cache-refill-shared",	K7_DATA_CACHE_REFILL,	 	0x02 },
-	{ "l1cache-refill-exclusive",	K7_DATA_CACHE_REFILL,	 	0x04 },
-	{ "l1cache-refill-owner",	K7_DATA_CACHE_REFILL,	 	0x08 },
-	{ "l1cache-refill-modified",	K7_DATA_CACHE_REFILL,	 	0x10 },
-	{ "l1cache-load",		K7_DATA_CACHE_REFILL_SYSTEM, 	0x1f },
-	{ "l1cache-load-invalid",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x01 },
-	{ "l1cache-load-shared",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x02 },
-	{ "l1cache-load-exclusive",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x04 },
-	{ "l1cache-load-owner",		K7_DATA_CACHE_REFILL_SYSTEM, 	0x08 },
-	{ "l1cache-load-modified",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x10 },
-	{ "l1cache-writeback",		K7_DATA_CACHE_WBACK,	 	0x1f },
-	{ "l1cache-writeback-invalid",	K7_DATA_CACHE_WBACK,	 	0x01 },
-	{ "l1cache-writeback-shared",	K7_DATA_CACHE_WBACK,	 	0x02 },
-	{ "l1cache-writeback-exclusive",K7_DATA_CACHE_WBACK,	 	0x04 },
-	{ "l1cache-writeback-owner",	K7_DATA_CACHE_WBACK,	 	0x08 },
-	{ "l1cache-writeback-modified",	K7_DATA_CACHE_WBACK,	 	0x10 },
+	{ "l1cache-miss",		K7_DATA_CACHE_MISS,		0 },
+	{ "l1cache-refill",		K7_DATA_CACHE_REFILL,		0x1f },
+	{ "l1cache-refill-invalid",	K7_DATA_CACHE_REFILL,		0x01 },
+	{ "l1cache-refill-shared",	K7_DATA_CACHE_REFILL,		0x02 },
+	{ "l1cache-refill-exclusive",	K7_DATA_CACHE_REFILL,		0x04 },
+	{ "l1cache-refill-owner",	K7_DATA_CACHE_REFILL,		0x08 },
+	{ "l1cache-refill-modified",	K7_DATA_CACHE_REFILL,		0x10 },
+	{ "l1cache-load",		K7_DATA_CACHE_REFILL_SYSTEM,	0x1f },
+	{ "l1cache-load-invalid",	K7_DATA_CACHE_REFILL_SYSTEM,	0x01 },
+	{ "l1cache-load-shared",	K7_DATA_CACHE_REFILL_SYSTEM,	0x02 },
+	{ "l1cache-load-exclusive",	K7_DATA_CACHE_REFILL_SYSTEM,	0x04 },
+	{ "l1cache-load-owner",		K7_DATA_CACHE_REFILL_SYSTEM,	0x08 },
+	{ "l1cache-load-modified",	K7_DATA_CACHE_REFILL_SYSTEM,	0x10 },
+	{ "l1cache-writeback",		K7_DATA_CACHE_WBACK,		0x1f },
+	{ "l1cache-writeback-invalid",	K7_DATA_CACHE_WBACK,		0x01 },
+	{ "l1cache-writeback-shared",	K7_DATA_CACHE_WBACK,		0x02 },
+	{ "l1cache-writeback-exclusive",K7_DATA_CACHE_WBACK,		0x04 },
+	{ "l1cache-writeback-owner",	K7_DATA_CACHE_WBACK,		0x08 },
+	{ "l1cache-writeback-modified",	K7_DATA_CACHE_WBACK,		0x10 },
 	{ "l2cache-access",		K7_L2_REQUEST,			0xff },
 	{ "l2cache-tag-read",		K7_L2_REQUEST,			0x01 },
 	{ "l2cache-tag-write",		K7_L2_REQUEST,			0x02 },
@@ -266,8 +276,8 @@ static const struct pmc_name2val k7_names[] = {
 	{ "l2cache-data-write",		K7_L2_REQUEST,			0x40 },
 	{ "l2cache-data-move",		K7_L2_REQUEST,			0x80 },
 	{ "l2cache-access-busy",	K7_L2_REQUEST_BUSY,		0 },
-	{ "l2cache-hit",		K7_L2_DTLB_HIT,		 	0 },
-	{ "l2cache-miss",		K7_L2_DTLB_MISS,	 	0 },
+	{ "l2cache-hit",		K7_L2_DTLB_HIT,			0 },
+	{ "l2cache-miss",		K7_L2_DTLB_MISS,		0 },
 	{ "mem-misalign-ref",		K7_MISALIGNED_DATA_REF,		0 },
 	{ "mem-access",			K7_SYSTEM_REQUEST,		0 },
 	{ "mem-access-uc",		K7_SYSTEM_REQUEST_TYPE,		0x01 },
@@ -314,70 +324,89 @@ static struct pmc_name2val_cpus {
 	int size;
 } pmc_cpus[] = {
 	{ PMC_TYPE_I586, i586_names,
-	  sizeof(i586_names)/sizeof(struct pmc_name2val) },
+	  sizeof(i586_names) / sizeof(struct pmc_name2val) },
 	{ PMC_TYPE_I686, i686_names,
-	  sizeof(i686_names)/sizeof(struct pmc_name2val) },
+	  sizeof(i686_names) / sizeof(struct pmc_name2val) },
 	{ PMC_TYPE_K7, k7_names,
-	  sizeof(k7_names)/sizeof(struct pmc_name2val) },
+	  sizeof(k7_names) / sizeof(struct pmc_name2val) },
 };
 
+static void usage(void) __dead;
+
+static void usage(void)
+{
+	fprintf(stderr, "usage: %s -h\n"
+	    "       %s -C\n"
+	    "       %s -c <event> command [options] ...\n",
+	    getprogname(), getprogname(), getprogname());
+	exit(1);
+}
 
 static const struct pmc_name2val_cpus *
 pmc_lookup_cpu(int type)
 {
-	size_t i;
+	size_t i, n = sizeof(pmc_cpus) / sizeof(struct pmc_name2val_cpus);
 
-	for (i = 0; i < sizeof(pmc_cpus)/sizeof(struct pmc_name2val_cpus);
-	    i++) {
+	for (i = 0; i < n; i++) {
 		if (pmc_cpus[i].type == type)
-			return (&pmc_cpus[i]);
+			return &pmc_cpus[i];
 	}
-	return (NULL);
+
+	return NULL;
 }
 
-
 static const struct pmc_name2val *
-find_pmc_name(const struct pmc_name2val_cpus *pncp, const char *name)
+pmc_find_event(const struct pmc_name2val_cpus *pncp, const char *name)
 {
 	int i;
-	const struct pmc_name2val *pnp = NULL;
 
 	for (i = 0; i < pncp->size; i++) {
-		if (strcmp(pncp->pmc_names[i].name, name) == 0) {
-			pnp = &pncp->pmc_names[i];
-			break;
-		}
+		if (strcmp(pncp->pmc_names[i].name, name) == 0)
+			return &pncp->pmc_names[i];
 	}
 
-	return (pnp);
+	return NULL;
 }
 
 static void
-list_pmc_names(const struct pmc_name2val_cpus *pncp)
+pmc_list_events(const struct pmc_name2val_cpus *pncp)
 {
 	int i, n, left, pairs;
 
-	(void)printf("Supported performance counter events:\n");
+	printf("Supported performance counter events:\n");
 	n = pncp->size;
 	pairs = n / 2;
 	left = n % 2;
 
 	for (i = 0; i < pairs; i++)
-		(void)printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
+		printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
 		    pncp->pmc_names[i * 2 + 1].name);
 	if (left != 0)
-		(void)printf("\t%37s\n", pncp->pmc_names[n - 1].name);
+		printf("\t%37s\n", pncp->pmc_names[n - 1].name);
 }
 
-static void usage(void) __dead;
-static void usage(void)
+static int
+x86_pmc_info(x86_pmc_info_args_t *args)
 {
+	if (sysarch(X86_PMC_INFO, args) == -1)
+		return -1;
+	return 0;
+}
 
-	(void)fprintf(stderr, "usage: %s -h\n"
-			"       %s -C\n"
-			"       %s -c <event> command [options] ...\n",
-	    getprogname(), getprogname(), getprogname());
-	exit(1);
+static int
+x86_pmc_startstop(x86_pmc_startstop_args_t *args)
+{
+	if (sysarch(X86_PMC_STARTSTOP, args) == -1)
+		return -1;
+	return 0;
+}
+
+static int
+x86_pmc_read(x86_pmc_read_args_t *args)
+{
+	if (sysarch(X86_PMC_READ, args) == -1)
+		return -1;
+	return 0;
 }
 
 int
@@ -387,21 +416,21 @@ main(int argc, char **argv)
 	const char * volatile event = "unknown";
 	const struct pmc_name2val_cpus *pncp;
 	const struct pmc_name2val *pnp;
-	struct i386_pmc_info_args pi;
-	struct i386_pmc_startstop_args pss0, pss1;
-	struct i386_pmc_read_args pr0, pr1;
+	x86_pmc_info_args_t pmcinfo;
+	x86_pmc_startstop_args_t pss0, pss1;
+	x86_pmc_read_args_t pr0, pr1;
 	pid_t pid;
 
 	setprogname(argv[0]);
 	errn0 = errn1 = 0;
 
-	if (i386_pmc_info(&pi) < 0)
+	if (x86_pmc_info(&pmcinfo) < 0)
 		errx(2, "PMC support is not compiled into the kernel");
 
-	pncp = pmc_lookup_cpu(pi.type);
+	pncp = pmc_lookup_cpu(pmcinfo.type);
 	if (pncp == NULL)
 		errx(3, "PMC counters are not supported for your CPU (0x%x)",
-		    pi.type);
+		    pmcinfo.type);
 
 	pnp = NULL;
 	while ((c = getopt(argc, argv, "Cc:h")) != -1) {
@@ -410,23 +439,22 @@ main(int argc, char **argv)
 			if (argc != 2)
 				usage();
 			/*
-			 * Just clear both counters. Useful if
-			 * a previous run got killed and did not
-			 * clean up.
+			 * Just clear both counters. Useful if a previous run
+			 * got killed and did not clean up.
 			 */
-			(void)memset(&pss0, 0, sizeof pss0);
-			(void)i386_pmc_startstop(&pss0);
+			memset(&pss0, 0, sizeof(pss0));
+			x86_pmc_startstop(&pss0);
 			pss0.counter = 1;
-			(void)i386_pmc_startstop(&pss0);
+			x86_pmc_startstop(&pss0);
 			return 0;
 		case 'c':
 			event = optarg;
-			pnp = find_pmc_name(pncp, event);
+			pnp = pmc_find_event(pncp, event);
 			break;
 		case 'h':
 			if (argc != 2)
 				usage();
-			list_pmc_names(pncp);
+			pmc_list_events(pncp);
 			return 0;
 		default:
 			usage();
@@ -436,8 +464,8 @@ main(int argc, char **argv)
 	if (pnp == NULL || argc <= optind)
 		usage();
 
-	(void)memset(&pss0, 0, sizeof pss0);
-	(void)memset(&pss1, 0, sizeof pss1);
+	memset(&pss0, 0, sizeof(pss0));
+	memset(&pss1, 0, sizeof(pss1));
 	pss0.event = pss1.event = pnp->val;
 	pss0.unit = pss1.unit = pnp->unit;
 	pss0.flags = PMC_SETUP_USER;
@@ -448,25 +476,25 @@ main(int argc, char **argv)
 	/*
 	 * XXX should catch signals and tidy up in the parent.
 	 */
-	if (i386_pmc_startstop(&pss0) < 0)
+	if (x86_pmc_startstop(&pss0) < 0)
 		err(4, "pmc_start user");
 	pss0.flags = 0;
-	if (i386_pmc_startstop(&pss1) < 0)
+	if (x86_pmc_startstop(&pss1) < 0)
 		err(5, "pmc_start kernel");
 	pss1.flags = 0;
 
 	pid = vfork();
 
-	switch(pid) {
+	switch (pid) {
 	case -1:
 		err(5, "vfork");
 	case 0:
-		(void)execvp(argv[optind], &argv[optind]);
+		execvp(argv[optind], &argv[optind]);
 		err(6, "execvp");
 	}
 
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_IGN);
+	signal(SIGINT, SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
 
 	if (waitpid(pid, &status, 0) == -1)
 		err(6, "waitpid");
@@ -474,22 +502,21 @@ main(int argc, char **argv)
 		return 0;
 
 	/*
-	 * Do not immediately exit on errors below. The counters
-	 * must be stopped first, or subsequent runs will get
-	 * EBUSY.
+	 * Do not immediately exit on errors below. The counters must be
+	 * stopped first, or subsequent runs will get EBUSY.
 	 */
 	pr0.counter = 0;
-	ret0 = i386_pmc_read(&pr0);
+	ret0 = x86_pmc_read(&pr0);
 	if (ret0 < 0)
 		errn0 = errno;
 	pr1.counter = 1;
-	ret1 = i386_pmc_read(&pr1);
+	ret1 = x86_pmc_read(&pr1);
 	if (ret1 < 0)
 		errn1 = errno;
 
-	if (i386_pmc_startstop(&pss0) < 0)
+	if (x86_pmc_startstop(&pss0) < 0)
 		warn("pmc_stop user");
-	if (i386_pmc_startstop(&pss1) < 0)
+	if (x86_pmc_startstop(&pss1) < 0)
 		warn("pmc_stop kernel");
 
 	if (ret0 < 0) {
@@ -501,7 +528,7 @@ main(int argc, char **argv)
 		err(7, "pmc_read");
 	}
 
-	(void)printf("%s: user %llu kernel %llu\n", event, pr0.val, pr1.val);
+	printf("%s: user %llu kernel %llu\n", event, pr0.val, pr1.val);
 
 	return 0;
 }
