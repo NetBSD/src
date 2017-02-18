@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.1 2017/02/17 18:07:51 jakllsch Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.2 2017/02/18 13:56:29 flxd Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.1 2017/02/17 18:07:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.2 2017/02/18 13:56:29 flxd Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -91,7 +91,7 @@ vlpci_match(device_t parent, struct cfdata *match, void *aux)
 	if (of_compatible(oba->oba_phandle, compat_strings) < 0)
 		return 0;
 
-	return 1;
+	return 2;	/* beat generic ofbus */
 }
 
 static void
