@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.484 2017/02/17 12:16:37 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.485 2017/02/18 14:48:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.484 2017/02/17 12:16:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.485 2017/02/18 14:48:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4565,6 +4565,28 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		sc->sc_nqueues = ncpu;
 }
 
+static int
+wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
+{
+	struct wm_queue *wmq = &sc->sc_queue[qidx];
+	wmq->wmq_id = qidx;
+	wmq->wmq_intr_idx = intr_idx;
+	wmq->wmq_si = softint_establish(SOFTINT_NET
+#ifdef WM_MPSAFE
+	    | SOFTINT_MPSAFE
+#endif
+	    , wm_handle_queue, wmq);
+	if (wmq->wmq_si != NULL)
+		return 0;
+
+	aprint_error_dev(sc->sc_dev, "unable to establish queue[%d] handler\n",
+	    wmq->wmq_id);
+
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[wmq->wmq_intr_idx]);
+	sc->sc_ihs[wmq->wmq_intr_idx] = NULL;
+	return ENOMEM;
+}
+
 /*
  * Both single interrupt MSI and INTx can use this function.
  */
@@ -4598,7 +4620,8 @@ wm_setup_legacy(struct wm_softc *sc)
 
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 	sc->sc_nintrs = 1;
-	return 0;
+
+	return wm_softint_establish(sc, 0, 0);
 }
 
 static int
@@ -4676,20 +4699,8 @@ wm_setup_msix(struct wm_softc *sc)
 			    "for TX and RX interrupting at %s\n", intrstr);
 		}
 		sc->sc_ihs[intr_idx] = vih;
-		wmq->wmq_id = qidx;
-		wmq->wmq_intr_idx = intr_idx;
-		wmq->wmq_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
-		    wm_handle_queue, wmq);
-		if (wmq->wmq_si == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to establish queue[%d] handler\n",
-			    wmq->wmq_id);
-			pci_intr_disestablish(sc->sc_pc,
-			    sc->sc_ihs[wmq->wmq_intr_idx]);
-			sc->sc_ihs[wmq->wmq_intr_idx] = NULL;
+		if (wm_softint_establish(sc, qidx, intr_idx) != 0)
 			goto fail;
-		}
-
 		txrx_established++;
 		intr_idx++;
 	}
