@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_log.c,v 1.12 2017/02/18 18:08:16 mlelstv Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.13 2017/02/18 23:27:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.12 2017/02/18 18:08:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.13 2017/02/18 23:27:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -104,15 +104,10 @@ npf_log(npf_cache_t *npc, void *meta, const npf_match_info_t *mi, int *decision)
 	hdr.action = *decision == NPF_DECISION_PASS ?
 	    0 /* pass */ : 1 /* block */;
 	hdr.reason = 0;	/* match */
-#if 0
-	struct nbuf *nb = npc->npc_nbuf;
-	const char *ifname = nb && nb->nb_ifid ? 
-	    npf_ifmap_getname(npc->npc_ctx, nb->nb_ifid) : "???";
-#else
-	const char *ifname = "???";
-#endif
 
-	strlcpy(hdr.ifname, ifname, sizeof(hdr.ifname));
+	struct nbuf *nb = npc->npc_nbuf;
+	npf_ifmap_copyname(npc->npc_ctx, nb ? nb->nb_ifid : 0,
+	    hdr.ifname, sizeof(hdr.ifname));
 
 	hdr.rulenr = htonl((uint32_t)mi->mi_rid);
 	hdr.subrulenr = htonl((uint32_t)(mi->mi_rid >> 32));
