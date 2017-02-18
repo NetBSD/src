@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.9 2017/02/17 12:10:40 maxv Exp $	*/
+/*	$NetBSD: pmc.h,v 1.10 2017/02/18 14:36:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -52,17 +52,9 @@
  * Each PMC event on the x86 is associated with a processor unit.  We
  * encode the unit in the upper 16 bits of the event ID.
  */
-#define	__PMC_EVID_EVENT_MASK	0x0000ffff
-#define	__PMC_EVID_UNIT_MASK	0xffff0000
-
 #define	__PMC_UNIT(x)		((x) << 16)
-#define	__PMC_GET_UNIT(x)	(((x) & __PMC_EVID_UNIT_MASK) >> 16)
-#define	__PMC_GET_EVENT(x)	((x) & __PMC_EVID_EVENT_MASK)
 
 #if defined(_KERNEL)
-/*
- * LEGACY PMC support
- */
 struct x86_pmc_info_args;
 struct x86_pmc_startstop_args;
 struct x86_pmc_read_args;
@@ -73,28 +65,6 @@ int sys_pmc_startstop(struct lwp *, struct x86_pmc_startstop_args *,
     register_t *);
 int sys_pmc_read(struct lwp *, struct x86_pmc_read_args *,
     register_t *);
-/* END LEGACY PMC SUPPORT */
-
-#define pmc_md_fork(p1,p2)
-#define pmc_get_num_counters()			(0)
-#define pmc_get_counter_type(c)			(0)
-#define pmc_save_context(p)
-#define pmc_restore_context(p)
-#define pmc_enable_counter(p,c)
-#define pmc_disable_counter(p,c)
-#define pmc_accumulate(p1,p2)
-#define pmc_process_exit(p1)
-#define pmc_counter_isconfigured(p,c)		(0)
-#define pmc_counter_isrunning(p,c)		(0)
-#define pmc_start_profiling(c,f)		(0)
-#define pmc_stop_profiling(c)			(0)
-#define pmc_alloc_kernel_counter(c,f)		(0)
-#define pmc_free_kernel_counter(c)		(0)
-#define pmc_configure_counter(p,c,f)		(0)
-#define pmc_get_counter_value(p,c,f,pv)		(0)
-
-#define PMC_ENABLED(p)		(0)
-
 #endif /* _KERNEL */
 
 #endif /* _I386_PMC_H_ */
