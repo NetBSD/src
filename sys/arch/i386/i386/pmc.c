@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.22 2017/02/17 12:10:40 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.23 2017/02/18 15:56:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.22 2017/02/17 12:10:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.23 2017/02/18 15:56:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,8 @@ pmc_apply(pmc_state_t *pmc)
 static void
 pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 {
+	uint64_t event, unit;
+
 	pmc->running = true;
 
 	/*
@@ -185,10 +187,10 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 		break;
 
 	case PMC_TYPE_K7:
-		args->event &= K7_EVTSEL_EVENT;
-		args->unit = (args->unit << K7_EVTSEL_UNIT_SHIFT) &
+		event = (args->event & K7_EVTSEL_EVENT);
+		unit = (args->unit << K7_EVTSEL_UNIT_SHIFT) &
 		    K7_EVTSEL_UNIT;
-		pmc->evtval = args->event | args->unit | K7_EVTSEL_EN |
+		pmc->evtval = event | unit | K7_EVTSEL_EN |
 		    ((args->flags & PMC_SETUP_KERNEL) ? K7_EVTSEL_OS : 0) |
 		    ((args->flags & PMC_SETUP_USER) ? K7_EVTSEL_USR : 0) |
 		    ((args->flags & PMC_SETUP_EDGE) ? K7_EVTSEL_E : 0) |
