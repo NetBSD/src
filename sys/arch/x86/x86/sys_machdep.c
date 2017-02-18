@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.33 2017/02/17 12:10:40 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.34 2017/02/18 14:36:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33 2017/02/17 12:10:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.34 2017/02/18 14:36:32 maxv Exp $");
 
 #include "opt_mtrr.h"
-#include "opt_perfctrs.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
 #ifdef i386
@@ -85,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33 2017/02/17 12:10:40 maxv Exp $"
  */
 #undef	USER_LDT
 /* Need to be checked. */
-#undef	PERFCTRS
+#undef	PMC
 #undef	IOPERM
 #else
 #if defined(XEN)
@@ -99,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.33 2017/02/17 12:10:40 maxv Exp $"
 #include <machine/vm86.h>
 #endif
 
-#ifdef PERFCTRS
+#ifdef PMC
 #include <machine/pmc.h>
 #endif
 
@@ -847,7 +846,7 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		break;
 #endif
 
-#ifdef PERFCTRS
+#ifdef PMC
 	case X86_PMC_INFO:
 		error = sys_pmc_info(l, SCARG(uap, parms), retval);
 		break;
