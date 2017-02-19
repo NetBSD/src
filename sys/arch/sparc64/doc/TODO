@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.21 2017/02/05 20:08:35 palle Exp $ */
+ /* $NetBSD: TODO,v 1.22 2017/02/19 18:07:12 palle Exp $ */
 
 Things to be done:
 
@@ -29,4 +29,4 @@ sun4v:
 - mpt(4) complains: mpt0: Phy 0: Link Status Unknown
 - man pages for drivers imported from OpenBSD lke vpci, vbus, cbus, vdsk, ldc etc.
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
-
+- vbus.c: handle prom_getprop() memory leaks
