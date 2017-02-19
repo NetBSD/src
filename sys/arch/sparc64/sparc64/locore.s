@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.408 2017/02/10 23:26:23 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.409 2017/02/19 18:25:45 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3145,7 +3145,7 @@ sun4v_texttrap:
 	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
-	
+
 /*
  * End of traps for sun4v.
  */
@@ -4747,6 +4747,36 @@ rft_user:
 	wrpr	%g2, 0, %tpc
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g1, %g0, %tstate
+
+	/*
+	 * The restore instruction further down may cause the trap level
+	 * to exceede the maximum trap level on sun4v, so a manual fill
+	 * may be necessary.
+	*/
+	
+#ifdef SUN4V
+	sethi	%hi(cputyp), %g5
+	ld	[%g5 + %lo(cputyp)], %g5
+	cmp	%g5, CPU_SUN4V
+	bne,pt	%icc, 1f
+	 nop
+
+	! Only manual fill if the restore instruction will cause a fill trap
+	rdpr	%canrestore, %g5
+	brnz	%g5, 1f
+	 nop
+
+	! Do a manual fill
+	wr	%g0, ASI_AIUS, %asi
+	rdpr	%cwp, %g4
+	dec	%g4
+	wrpr	%g4, 0, %cwp
+	FILL	ldxa, %sp+BIAS, 8, %asi
+	restored
+	inc	%g4
+	wrpr	%g4, 0, %cwp
+1:	
+#endif
 	restore
 6:
 	rdpr	%canrestore, %g5
