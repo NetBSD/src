@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.2 2017/02/18 13:56:29 flxd Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.3 2017/02/19 14:34:40 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.2 2017/02/18 13:56:29 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.3 2017/02/19 14:34:40 jakllsch Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -179,7 +179,9 @@ vlpci_pc_conf_read(void *v, pcitag_t tag, int offset)
 	pcireg_t ret;
 
 	KASSERT((offset & 3) == 0);
-	KASSERT(offset < 0x100);
+
+	if (offset >= PCI_CONF_SIZE)
+		return 0xffffffff;
 
 	mutex_spin_enter(&sc->sc_lock);
 	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh, 0,
@@ -201,7 +203,9 @@ vlpci_pc_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	struct vlpci_softc * const sc = v;
 
 	KASSERT((offset & 3) == 0);
-	KASSERT(offset < 0x100);
+
+	if (offset >= PCI_CONF_SIZE)
+		return;
 
 #if 0
 	device_printf(sc->sc_dev, "%s tag %x offset %x val %x\n",
