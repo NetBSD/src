@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /usr/bin/env bash
 
 #   EXPAT TEST SCRIPT FOR W3C XML TEST SUITE
 
@@ -20,11 +20,13 @@
 # produced by xmlwf conforms to an older definition of canonical XML
 # and does not generate notation declarations.
 
+shopt -s nullglob
+
 MYDIR="`dirname \"$0\"`"
 cd "$MYDIR"
 MYDIR="`pwd`"
-XMLWF="`dirname \"$MYDIR\"`/xmlwf/xmlwf"
-# XMLWF=/usr/local/bin/xmlwf
+# XMLWF="`dirname \"$MYDIR\"`/xmlwf/xmlwf"
+XMLWF=/usr/bin/xmlwf
 TS="$MYDIR/XML-Test-Suite"
 # OUTPUT must terminate with the directory separator.
 OUTPUT="$TS/out/"
@@ -100,7 +102,7 @@ for xmldir in ibm/valid/P* \
       RunXmlwfWF "$xmlfile" "$xmldir/"
       UpdateStatus $?
   done
-  rm outfile
+  rm -f outfile
 done
 
 cd "$TS/xmlconf/oasis"
