@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.69 2017/01/23 17:35:34 christos Exp $
+# $NetBSD: XEN3_DOMU,v 1.70 2017/02/19 07:46:59 rin Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -104,6 +104,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
