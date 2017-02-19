@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.68 2017/01/29 00:15:54 christos Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.69 2017/02/19 02:11:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ u_int		npf_ifmap_register(npf_t *, const char *);
 void		npf_ifmap_flush(npf_t *);
 u_int		npf_ifmap_getid(npf_t *, const ifnet_t *);
 const char *	npf_ifmap_getname(npf_t *, const u_int);
+void		npf_ifmap_copyname(npf_t *, u_int, char *, size_t);
 
 void		npf_ifaddr_sync(npf_t *, ifnet_t *);
 void		npf_ifaddr_flush(npf_t *, ifnet_t *);
