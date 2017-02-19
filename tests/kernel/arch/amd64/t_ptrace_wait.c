@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.14 2017/02/18 04:30:34 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.15 2017/02/19 22:09:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.14 2017/02/18 04:30:34 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.15 2017/02/19 22:09:29 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1330,6 +1330,9 @@ ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
 	volatile int watchme;
 	union u dr7;
 
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
 	dr7.raw = 0;
 	dr7.bits.global_dr0_breakpoint = 1;
 	dr7.bits.condition_dr0 = 3;	/* 0b11 -- break on data write&read */
@@ -1392,6 +1395,18 @@ ATF_TC_BODY(dbregs_dr0_trap_variable, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_DBREG);
+
 	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
@@ -1443,6 +1458,9 @@ ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 	size_t i;
 	volatile int watchme;
 	union u dr7;
+
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	dr7.raw = 0;
 	dr7.bits.global_dr1_breakpoint = 1;
@@ -1506,6 +1524,18 @@ ATF_TC_BODY(dbregs_dr1_trap_variable, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_DBREG);
+
 	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
@@ -1557,6 +1587,9 @@ ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 	size_t i;
 	volatile int watchme;
 	union u dr7;
+
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	dr7.raw = 0;
 	dr7.bits.global_dr2_breakpoint = 1;
@@ -1620,6 +1653,18 @@ ATF_TC_BODY(dbregs_dr2_trap_variable, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_DBREG);
+
 	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
@@ -1671,6 +1716,9 @@ ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 	size_t i;
 	volatile int watchme;
 	union u dr7;
+
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
 
 	dr7.raw = 0;
 	dr7.bits.global_dr3_breakpoint = 1;
@@ -1733,6 +1781,18 @@ ATF_TC_BODY(dbregs_dr3_trap_variable, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Signal traced to lwpid=%d\n", info.psi_lwpid);
+	printf("Signal properties: si_signo=%#x si_code=%#x si_errno=%#x\n",
+	    info.psi_siginfo.si_signo, info.psi_siginfo.si_code,
+	    info.psi_siginfo.si_errno);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_DBREG);
 
 	printf("Call CONTINUE for the child process\n");
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
