@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.214 2017/02/13 03:44:45 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.215 2017/02/19 13:58:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.214 2017/02/13 03:44:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.215 2017/02/19 13:58:42 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -184,7 +184,7 @@ static struct pslist_head bpf_iflist;
 static struct pslist_head bpf_dlist;
 
 /* Macros for bpf_d on bpf_dlist */
-#define BPF_DLIST_WRITER_INSEART_HEAD(__d)				\
+#define BPF_DLIST_WRITER_INSERT_HEAD(__d)				\
 	PSLIST_WRITER_INSERT_HEAD(&bpf_dlist, (__d), bd_bpf_dlist_entry)
 #define BPF_DLIST_READER_FOREACH(__d)					\
 	PSLIST_READER_FOREACH((__d), &bpf_dlist, struct bpf_d,		\
@@ -576,7 +576,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	cv_init(&d->bd_cv, "bpf");
 
 	mutex_enter(&bpf_mtx);
-	BPF_DLIST_WRITER_INSEART_HEAD(d);
+	BPF_DLIST_WRITER_INSERT_HEAD(d);
 	mutex_exit(&bpf_mtx);
 
 	return fd_clone(fp, fd, flag, &bpf_fileops, d);
