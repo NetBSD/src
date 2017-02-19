@@ -21,12 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/vfprintf.c,v 1.6 2003-11-16 09:36:45 guy Exp  (LBL)";
-#else
-__RCSID("$NetBSD: vfprintf.c,v 1.3 2013/04/06 19:33:09 christos Exp $");
-#endif
+__RCSID("$NetBSD: vfprintf.c,v 1.3.6.1 2017/02/19 05:01:17 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -40,7 +35,7 @@ __RCSID("$NetBSD: vfprintf.c,v 1.3 2013/04/06 19:33:09 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 /*
  * Stock 4.3 doesn't have vfprintf.

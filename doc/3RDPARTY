@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1145.2.34 2017/02/19 04:53:23 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.1145.2.35 2017/02/19 05:01:14 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1221,8 +1221,8 @@ Notes:
 Run cleantags before inporting because sqlite3.c has an RCSID
 
 Package:	tcpdump
-Version:	4.5.1
-Current Vers:	4.5.1
+Version:	4.9.0
+Current Vers:	4.9.0
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/

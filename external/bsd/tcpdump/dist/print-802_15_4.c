@@ -20,17 +20,20 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-802_15_4.c,v 1.1.1.1.10.1 2017/02/19 05:01:15 snj Exp $");
+#endif
+
+/* \summary: IEEE 802.15.4 printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include <stdio.h>
-#include <pcap.h>
-#include <string.h>
-
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 
 #include "extract.h"
@@ -47,7 +50,7 @@ static const char *ftypes[] = {
 };
 
 static int
-extract_header_length(u_int16_t fc)
+extract_header_length(uint16_t fc)
 {
 	int len = 0;
 
@@ -90,13 +93,13 @@ extract_header_length(u_int16_t fc)
 
 
 u_int
-ieee802_15_4_if_print(struct netdissect_options *ndo,
+ieee802_15_4_if_print(netdissect_options *ndo,
                       const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
 	int hdrlen;
-	u_int16_t fc;
-	u_int8_t seq;
+	uint16_t fc;
+	uint8_t seq;
 
 	if (caplen < 3) {
 		ND_PRINT((ndo, "[|802.15.4] %x", caplen));
@@ -112,19 +115,19 @@ ieee802_15_4_if_print(struct netdissect_options *ndo,
 	caplen -= 3;
 
 	ND_PRINT((ndo,"IEEE 802.15.4 %s packet ", ftypes[fc & 0x7]));
-	if (vflag)
+	if (ndo->ndo_vflag)
 		ND_PRINT((ndo,"seq %02x ", seq));
 	if (hdrlen == -1) {
-		ND_PRINT((ndo,"malformed! "));
+		ND_PRINT((ndo,"invalid! "));
 		return caplen;
 	}
 
 
-	if (!vflag) {
+	if (!ndo->ndo_vflag) {
 		p+= hdrlen;
 		caplen -= hdrlen;
 	} else {
-		u_int16_t panid = 0;
+		uint16_t panid = 0;
 
 		switch ((fc >> 10) & 0x3) {
 		case 0x00:
@@ -142,11 +145,11 @@ ieee802_15_4_if_print(struct netdissect_options *ndo,
 		case 0x03:
 			panid = EXTRACT_LE_16BITS(p);
 			p += 2;
-			ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(p)));
+			ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(ndo, p)));
 			p += 8;
 			break;
 		}
-		ND_PRINT((ndo,"< ");
+		ND_PRINT((ndo,"< "));
 
 		switch ((fc >> 14) & 0x3) {
 		case 0x00:
@@ -168,7 +171,7 @@ ieee802_15_4_if_print(struct netdissect_options *ndo,
 				panid = EXTRACT_LE_16BITS(p);
 				p += 2;
 			}
-                        ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(p))));
+                        ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(ndo, p)));
 			p += 8;
 			break;
 		}
@@ -176,8 +179,8 @@ ieee802_15_4_if_print(struct netdissect_options *ndo,
 		caplen -= hdrlen;
 	}
 
-	if (!suppress_default_print)
-		(ndo->ndo_default_print)(ndo, p, caplen);
+	if (!ndo->ndo_suppress_default_print)
+		ND_DEFAULTPRINT(p, caplen);
 
 	return 0;
 }
