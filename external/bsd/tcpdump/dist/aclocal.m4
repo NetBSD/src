@@ -1,5 +1,3 @@
-dnl @(#) Header: /tcpdump/master/tcpdump/aclocal.m4,v 1.116 2008-09-25 21:45:50 guy Exp (LBL)
-dnl
 dnl Copyright (c) 1995, 1996, 1997, 1998
 dnl	The Regents of the University of California.  All rights reserved.
 dnl
@@ -38,16 +36,15 @@ dnl AC_LBL_C_INIT.  Now, we run AC_LBL_C_INIT_BEFORE_CC, AC_PROG_CC,
 dnl and AC_LBL_C_INIT at the top level.
 dnl
 AC_DEFUN(AC_LBL_C_INIT_BEFORE_CC,
-    [AC_PREREQ(2.50)
+[
     AC_BEFORE([$0], [AC_LBL_C_INIT])
     AC_BEFORE([$0], [AC_PROG_CC])
     AC_BEFORE([$0], [AC_LBL_FIXINCLUDES])
     AC_BEFORE([$0], [AC_LBL_DEVEL])
     AC_ARG_WITH(gcc, [  --without-gcc           don't use gcc])
-    $1="-O"
-    $2=""
+    $1=""
     if test "${srcdir}" != "." ; then
-	    $2="-I\$(srcdir)"
+	    $1="-I$srcdir"
     fi
     if test "${CFLAGS+set}" = set; then
 	    LBL_CFLAGS="$CFLAGS"
@@ -73,9 +70,15 @@ AC_DEFUN(AC_LBL_C_INIT_BEFORE_CC,
 dnl
 dnl Determine which compiler we're using (cc or gcc)
 dnl If using gcc, determine the version number
-dnl If using cc, require that it support ansi prototypes
-dnl If using gcc, use -O2 (otherwise use -O)
-dnl If using cc, explicitly specify /usr/local/include
+dnl If using cc:
+dnl     require that it support ansi prototypes
+dnl     use -O (AC_PROG_CC will use -g -O2 on gcc, so we don't need to
+dnl     do that ourselves for gcc)
+dnl     add -g flags, as appropriate
+dnl     explicitly specify /usr/local/include
+dnl
+dnl NOTE WELL: with newer versions of autoconf, "gcc" means any compiler
+dnl that defines __GNUC__, which means clang, for example, counts as "gcc".
 dnl
 dnl usage:
 dnl
@@ -87,92 +90,82 @@ dnl	$1 (copt set)
 dnl	$2 (incls set)
 dnl	CC
 dnl	LDFLAGS
-dnl	ac_cv_lbl_gcc_vers
 dnl	LBL_CFLAGS
 dnl
 AC_DEFUN(AC_LBL_C_INIT,
-    [AC_PREREQ(2.50)
+[
     AC_BEFORE([$0], [AC_LBL_FIXINCLUDES])
     AC_BEFORE([$0], [AC_LBL_DEVEL])
     AC_BEFORE([$0], [AC_LBL_SHLIBS_INIT])
     if test "$GCC" = yes ; then
-	    if test "$SHLICC2" = yes ; then
-		    ac_cv_lbl_gcc_vers=2
-		    $1="-O2"
-	    else
-		    AC_MSG_CHECKING(gcc version)
-		    AC_CACHE_VAL(ac_cv_lbl_gcc_vers,
-			ac_cv_lbl_gcc_vers=`$CC -v 2>&1 | \
-			    sed -e '/^gcc version /!d' \
-				-e 's/^gcc version //' \
-				-e 's/ .*//' -e 's/^[[[^0-9]]]*//' \
-				-e 's/\..*//'`)
-		    AC_MSG_RESULT($ac_cv_lbl_gcc_vers)
-		    if test $ac_cv_lbl_gcc_vers -gt 1 ; then
-			    $1="-O2"
-		    fi
-	    fi
+	    #
+	    # -Werror forces warnings to be errors.
+	    #
+	    ac_lbl_cc_force_warning_errors=-Werror
+
+	    #
+	    # Use -ffloat-store so that, on 32-bit x86, we don't
+	    # do 80-bit arithmetic with the FPU; that way we should
+	    # get the same results for floating-point calculations
+	    # on x86-32 and x86-64.
+	    #
+	    AC_LBL_CHECK_COMPILER_OPT($1, -ffloat-store)
     else
-	    AC_MSG_CHECKING(that $CC handles ansi prototypes)
-	    AC_CACHE_VAL(ac_cv_lbl_cc_ansi_prototypes,
-		AC_TRY_COMPILE(
-		    [#include <sys/types.h>],
-		    [int frob(int, char *)],
-		    ac_cv_lbl_cc_ansi_prototypes=yes,
-		    ac_cv_lbl_cc_ansi_prototypes=no))
-	    AC_MSG_RESULT($ac_cv_lbl_cc_ansi_prototypes)
-	    if test $ac_cv_lbl_cc_ansi_prototypes = no ; then
-		    case "$host_os" in
-
-		    hpux*)
-			    AC_MSG_CHECKING(for HP-UX ansi compiler ($CC -Aa -D_HPUX_SOURCE))
-			    savedcflags="$CFLAGS"
-			    CFLAGS="-Aa -D_HPUX_SOURCE $CFLAGS"
-			    AC_CACHE_VAL(ac_cv_lbl_cc_hpux_cc_aa,
-				AC_TRY_COMPILE(
-				    [#include <sys/types.h>],
-				    [int frob(int, char *)],
-				    ac_cv_lbl_cc_hpux_cc_aa=yes,
-				    ac_cv_lbl_cc_hpux_cc_aa=no))
-			    AC_MSG_RESULT($ac_cv_lbl_cc_hpux_cc_aa)
-			    if test $ac_cv_lbl_cc_hpux_cc_aa = no ; then
-				    AC_MSG_ERROR(see the INSTALL doc for more info)
-			    fi
-			    CFLAGS="$savedcflags"
-			    $1="-Aa $$1"
-			    AC_DEFINE(_HPUX_SOURCE,1,[needed on HP-UX])
-			    ;;
-
-		    osf*)
-			    AC_MSG_CHECKING(for ansi mode in DEC compiler ($CC -std1))
-			    savedcflags="$CFLAGS"
-			    CFLAGS="-std1"
-			    AC_CACHE_VAL(ac_cv_lbl_cc_osf1_cc_std1,
-				AC_TRY_COMPILE(
-				    [#include <sys/types.h>],
-				    [int frob(int, char *)],
-				    ac_cv_lbl_cc_osf1_cc_std1=yes,
-				    ac_cv_lbl_cc_osf1_cc_std1=no))
-			    AC_MSG_RESULT($ac_cv_lbl_cc_osf1_cc_std1)
-			    if test $ac_cv_lbl_cc_osf1_cc_std1 = no ; then
-				    AC_MSG_ERROR(see the INSTALL doc for more info)
-			    fi
-			    CFLAGS="$savedcflags"
-			    $1="-std1 $$1"
-			    ;;
-
-		    *)
-			    AC_MSG_ERROR(see the INSTALL doc for more info)
-			    ;;
-		    esac
-	    fi
 	    $2="$$2 -I/usr/local/include"
 	    LDFLAGS="$LDFLAGS -L/usr/local/lib"
 
 	    case "$host_os" in
 
+	    darwin*)
+		    #
+		    # This is assumed either to be GCC or clang, both
+		    # of which use -Werror to force warnings to be errors.
+		    #
+		    ac_lbl_cc_force_warning_errors=-Werror
+		    ;;
+
+	    hpux*)
+		    #
+		    # HP C, which is what we presume we're using, doesn't
+		    # exit with a non-zero exit status if we hand it an
+		    # invalid -W flag, can't be forced to do so even with
+		    # +We, and doesn't handle GCC-style -W flags, so we
+		    # don't want to try using GCC-style -W flags.
+		    #
+		    ac_lbl_cc_dont_try_gcc_dashW=yes
+		    ;;
+
 	    irix*)
-		    $1="$$1 -xansi -signed -O"
+		    #
+		    # MIPS C, which is what we presume we're using, doesn't
+		    # necessarily exit with a non-zero exit status if we
+		    # hand it an invalid -W flag, can't be forced to do
+		    # so, and doesn't handle GCC-style -W flags, so we
+		    # don't want to try using GCC-style -W flags.
+		    #
+		    ac_lbl_cc_dont_try_gcc_dashW=yes
+		    #
+		    # It also, apparently, defaults to "char" being
+		    # unsigned, unlike most other C implementations;
+		    # I suppose we could say "signed char" whenever
+		    # we want to guarantee a signed "char", but let's
+		    # just force signed chars.
+		    #
+		    # -xansi is normally the default, but the
+		    # configure script was setting it; perhaps -cckr
+		    # was the default in the Old Days.  (Then again,
+		    # that would probably be for backwards compatibility
+		    # in the days when ANSI C was Shiny and New, i.e.
+		    # 1989 and the early '90's, so maybe we can just
+		    # drop support for those compilers.)
+		    #
+		    # -g is equivalent to -g2, which turns off
+		    # optimization; we choose -g3, which generates
+		    # debugging information but doesn't turn off
+		    # optimization (even if the optimization would
+		    # cause inaccuracies in debugging).
+		    #
+		    $1="$$1 -xansi -signed -g3"
 		    ;;
 
 	    osf*)
@@ -180,7 +173,29 @@ AC_DEFUN(AC_LBL_C_INIT,
 		    # Presumed to be DEC OSF/1, Digital UNIX, or
 		    # Tru64 UNIX.
 		    #
-		    $1="$$1 -O"
+		    # The DEC C compiler, which is what we presume we're
+		    # using, doesn't exit with a non-zero exit status if we
+		    # hand it an invalid -W flag, can't be forced to do
+		    # so, and doesn't handle GCC-style -W flags, so we
+		    # don't want to try using GCC-style -W flags.
+		    #
+		    ac_lbl_cc_dont_try_gcc_dashW=yes
+		    #
+		    # -g is equivalent to -g2, which turns off
+		    # optimization; we choose -g3, which generates
+		    # debugging information but doesn't turn off
+		    # optimization (even if the optimization would
+		    # cause inaccuracies in debugging).
+		    #
+		    $1="$$1 -g3"
+		    ;;
+
+	    solaris*)
+		    #
+		    # Assumed to be Sun C, which requires -errwarn to force
+		    # warnings to be treated as errors.
+		    #
+		    ac_lbl_cc_force_warning_errors=-errwarn
 		    ;;
 
 	    ultrix*)
@@ -199,8 +214,188 @@ AC_DEFUN(AC_LBL_C_INIT,
 		    fi
 		    ;;
 	    esac
+	    $1="$$1 -O"
     fi
 ])
+
+dnl
+dnl Check whether, if you pass an unknown warning option to the
+dnl compiler, it fails or just prints a warning message and succeeds.
+dnl Set ac_lbl_unknown_warning_option_error to the appropriate flag
+dnl to force an error if it would otherwise just print a warning message
+dnl and succeed.
+dnl
+AC_DEFUN(AC_LBL_CHECK_UNKNOWN_WARNING_OPTION_ERROR,
+    [
+	AC_MSG_CHECKING([whether the compiler fails when given an unknown warning option])
+	save_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS -Wxyzzy-this-will-never-succeed-xyzzy"
+	AC_TRY_COMPILE(
+	    [],
+	    [return 0],
+	    [
+		AC_MSG_RESULT([no])
+		#
+		# We're assuming this is clang, where
+		# -Werror=unknown-warning-option is the appropriate
+		# option to force the compiler to fail.
+		#
+		ac_lbl_unknown_warning_option_error="-Werror=unknown-warning-option"
+	    ],
+	    [
+		AC_MSG_RESULT([yes])
+	    ])
+	CFLAGS="$save_CFLAGS"
+    ])
+
+dnl
+dnl Check whether the compiler option specified as the second argument
+dnl is supported by the compiler and, if so, add it to the macro
+dnl specified as the first argument
+dnl
+AC_DEFUN(AC_LBL_CHECK_COMPILER_OPT,
+    [
+	AC_MSG_CHECKING([whether the compiler supports the $2 option])
+	save_CFLAGS="$CFLAGS"
+	if expr "x$2" : "x-W.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS $ac_lbl_unknown_warning_option_error $2"
+	elif expr "x$2" : "x-f.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS -Werror $2"
+	elif expr "x$2" : "x-m.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS -Werror $2"
+	else
+	    CFLAGS="$CFLAGS $2"
+	fi
+	AC_TRY_COMPILE(
+	    [],
+	    [return 0],
+	    [
+		AC_MSG_RESULT([yes])
+		CFLAGS="$save_CFLAGS"
+		$1="$$1 $2"
+	    ],
+	    [
+		AC_MSG_RESULT([no])
+		CFLAGS="$save_CFLAGS"
+	    ])
+    ])
+
+dnl
+dnl Check whether the compiler supports an option to generate
+dnl Makefile-style dependency lines
+dnl
+dnl GCC uses -M for this.  Non-GCC compilers that support this
+dnl use a variety of flags, including but not limited to -M.
+dnl
+dnl We test whether the flag in question is supported, as older
+dnl versions of compilers might not support it.
+dnl
+dnl We don't try all the possible flags, just in case some flag means
+dnl "generate dependencies" on one compiler but means something else
+dnl on another compiler.
+dnl
+dnl Most compilers that support this send the output to the standard
+dnl output by default.  IBM's XLC, however, supports -M but sends
+dnl the output to {sourcefile-basename}.u, and AIX has no /dev/stdout
+dnl to work around that, so we don't bother with XLC.
+dnl
+AC_DEFUN(AC_LBL_CHECK_DEPENDENCY_GENERATION_OPT,
+    [
+	AC_MSG_CHECKING([whether the compiler supports generating dependencies])
+	if test "$GCC" = yes ; then
+		#
+		# GCC, or a compiler deemed to be GCC by AC_PROG_CC (even
+		# though it's not); we assume that, in this case, the flag
+		# would be -M.
+		#
+		ac_lbl_dependency_flag="-M"
+	else
+		#
+		# Not GCC or a compiler deemed to be GCC; what platform is
+		# this?  (We're assuming that if the compiler isn't GCC
+		# it's the compiler from the vendor of the OS; that won't
+		# necessarily be true for x86 platforms, where it might be
+		# the Intel C compiler.)
+		#
+		case "$host_os" in
+
+		irix*|osf*|darwin*)
+			#
+			# MIPS C for IRIX, DEC C, and clang all use -M.
+			#
+			ac_lbl_dependency_flag="-M"
+			;;
+
+		solaris*)
+			#
+			# Sun C uses -xM.
+			#
+			ac_lbl_dependency_flag="-xM"
+			;;
+
+		hpux*)
+			#
+			# HP's older C compilers don't support this.
+			# HP's newer C compilers support this with
+			# either +M or +Make; the older compilers
+			# interpret +M as something completely
+			# different, so we use +Make so we don't
+			# think it works with the older compilers.
+			#
+			ac_lbl_dependency_flag="+Make"
+			;;
+
+		*)
+			#
+			# Not one of the above; assume no support for
+			# generating dependencies.
+			#
+			ac_lbl_dependency_flag=""
+			;;
+		esac
+	fi
+
+	#
+	# Is ac_lbl_dependency_flag defined and, if so, does the compiler
+	# complain about it?
+	#
+	# Note: clang doesn't seem to exit with an error status when handed
+	# an unknown non-warning error, even if you pass it
+	# -Werror=unknown-warning-option.  However, it always supports
+	# -M, so the fact that this test always succeeds with clang
+	# isn't an issue.
+	#
+	if test ! -z "$ac_lbl_dependency_flag"; then
+		AC_LANG_CONFTEST(
+		    [AC_LANG_SOURCE([[int main(void) { return 0; }]])])
+		echo "$CC" $ac_lbl_dependency_flag conftest.c >&5
+		if "$CC" $ac_lbl_dependency_flag conftest.c >/dev/null 2>&1; then
+			AC_MSG_RESULT([yes, with $ac_lbl_dependency_flag])
+			DEPENDENCY_CFLAG="$ac_lbl_dependency_flag"
+			MKDEP='${srcdir}/mkdep'
+		else
+			AC_MSG_RESULT([no])
+			#
+			# We can't run mkdep, so have "make depend" do
+			# nothing.
+			#
+			MKDEP=:
+		fi
+		rm -rf conftest*
+	else
+		AC_MSG_RESULT([no])
+		#
+		# We can't run mkdep, so have "make depend" do
+		# nothing.
+		#
+		MKDEP=:
+	fi
+	AC_SUBST(DEPENDENCY_CFLAG)
+	AC_SUBST(MKDEP)
+    ])
 
 #
 # Try compiling a sample of the type of code that appears in
@@ -284,39 +479,53 @@ AC_DEFUN(AC_LBL_LIBPCAP,
 		    LIBS="$LIBS $pfopen"
 	    fi
     fi
-    AC_MSG_CHECKING(for local pcap library)
-    libpcap=FAIL
-    lastdir=FAIL
-    places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
-	egrep '/libpcap-[[0-9]]+\.[[0-9]]+(\.[[0-9]]*)?([[ab]][[0-9]]*|-PRE-GIT)?$'`
-    for dir in $places $srcdir/../libpcap $srcdir/libpcap ; do
-	    basedir=`echo $dir | sed -e 's/[[ab]][[0-9]]*$//' | \
-	        sed -e 's/-PRE-GIT$//' `
-	    if test $lastdir = $basedir ; then
-		    dnl skip alphas when an actual release is present
-		    continue;
-	    fi
-	    lastdir=$dir
-	    if test -r $dir/libpcap.a ; then
-		    libpcap=$dir/libpcap.a
-		    d=$dir
-		    dnl continue and select the last one that exists
-	    fi
-    done
+	libpcap=FAIL
+	AC_MSG_CHECKING(for local pcap library)
+	AC_ARG_WITH([system-libpcap],
+		[AS_HELP_STRING([--with-system-libpcap], [don't use local pcap library])])
+	if test "x$with_system_libpcap" != xyes ; then
+		lastdir=FAIL
+    	places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
+		egrep '/libpcap-[[0-9]]+\.[[0-9]]+(\.[[0-9]]*)?([[ab]][[0-9]]*|-PRE-GIT)?$'`
+    	places2=`ls .. | sed -e 's,/$,,' -e "s,^,../," | \
+		egrep '/libpcap-[[0-9]]+\.[[0-9]]+(\.[[0-9]]*)?([[ab]][[0-9]]*|-PRE-GIT)?$'`
+    	for dir in $places $srcdir/../libpcap ../libpcap $srcdir/libpcap $places2 ; do
+	    	basedir=`echo $dir | sed -e 's/[[ab]][[0-9]]*$//' | \
+	        	sed -e 's/-PRE-GIT$//' `
+	    	if test $lastdir = $basedir ; then
+		    	dnl skip alphas when an actual release is present
+		    	continue;
+	    	fi
+	    	lastdir=$dir
+	    	if test -r $dir/libpcap.a ; then
+		    	libpcap=$dir/libpcap.a
+		    	d=$dir
+		    	dnl continue and select the last one that exists
+	    	fi
+		done
+	fi
     if test $libpcap = FAIL ; then
 	    AC_MSG_RESULT(not found)
 
 	    #
 	    # Look for pcap-config.
 	    #
-	    AC_PATH_PROG(PCAP_CONFIG, pcap-config)
+	    AC_PATH_TOOL(PCAP_CONFIG, pcap-config)
 	    if test -n "$PCAP_CONFIG" ; then
 		#
 		# Found - use it to get the include flags for
 		# libpcap and the flags to link with libpcap.
 		#
-		$2="`\"$PCAP_CONFIG\" --cflags` $$2"
-		libpcap="`\"$PCAP_CONFIG\" --libs`"
+		# Please read section 11.6 "Shell Substitutions"
+		# in the autoconf manual before doing anything
+		# to this that involves quoting.  Especially note
+		# the statement "There is just no portable way to use
+		# double-quoted strings inside double-quoted back-quoted
+		# expressions (pfew!)."
+		#
+		cflags=`"$PCAP_CONFIG" --cflags`
+		$2="$cflags $$2"
+		libpcap=`"$PCAP_CONFIG" --libs`
 	    else
 		#
 		# Not found; look for pcap.
@@ -364,13 +573,23 @@ AC_DEFUN(AC_LBL_LIBPCAP,
 	    $1=$libpcap
 	    places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
     	 		egrep '/libpcap-[[0-9]]*.[[0-9]]*(.[[0-9]]*)?([[ab]][[0-9]]*)?$'`
+	    places2=`ls .. | sed -e 's,/$,,' -e "s,^,../," | \
+    	 		egrep '/libpcap-[[0-9]]*.[[0-9]]*(.[[0-9]]*)?([[ab]][[0-9]]*)?$'`
+            pcapH=FAIL
 	    if test -r $d/pcap.h; then
-		    $2="-I$d $$2"
-	    elif test -r $places/pcap.h; then
-		    $2="-I$places $$2"
+                    pcapH=$d
 	    else
-                    AC_MSG_ERROR(cannot find pcap.h, see INSTALL)
+                for dir in $places $srcdir/../libpcap ../libpcap $srcdir/libpcap $places2 ; do
+                   if test -r $dir/pcap.h ; then
+                       pcapH=$dir
+                   fi
+                done
+            fi
+
+            if test $pcapH = FAIL ; then
+                    AC_MSG_ERROR(cannot find pcap.h: see INSTALL)
  	    fi
+            $2="-I$pcapH $$2"
 	    AC_MSG_RESULT($libpcap)
 	    AC_PATH_PROG(PCAP_CONFIG, pcap-config,, $d)
 	    if test -n "$PCAP_CONFIG"; then
@@ -378,9 +597,17 @@ AC_DEFUN(AC_LBL_LIBPCAP,
 		# The libpcap directory has a pcap-config script.
 		# Use it to get any additioal libraries needed
 		# to link with the libpcap archive library in
-		# that directory
+		# that directory.
 		#
-		libpcap="$libpcap `\"$PCAP_CONFIG\" --additional-libs --static`"
+		# Please read section 11.6 "Shell Substitutions"
+		# in the autoconf manual before doing anything
+		# to this that involves quoting.  Especially note
+		# the statement "There is just no portable way to use
+		# double-quoted strings inside double-quoted back-quoted
+		# expressions (pfew!)."
+		#
+		additional_libs=`"$PCAP_CONFIG" --additional-libs --static`
+		libpcap="$libpcap $additional_libs"
 	    fi
     fi
     LIBS="$libpcap $LIBS"
@@ -418,44 +645,25 @@ AC_DEFUN(AC_LBL_LIBPCAP,
     fi
 
     dnl
-    dnl Check for "pcap_list_datalinks()", "pcap_set_datalink()",
-    dnl and "pcap_datalink_name_to_val()", and use substitute versions
-    dnl if they're not present.
+    dnl Check for "pcap_loop()", to make sure we found a working
+    dnl libpcap and have all the right other libraries with which
+    dnl to link.  (Otherwise, the checks below will fail, not
+    dnl because the routines are missing from the library, but
+    dnl because we aren't linking properly with libpcap, and
+    dnl that will cause confusing errors at build time.)
     dnl
-    AC_CHECK_FUNC(pcap_list_datalinks,
-	AC_DEFINE(HAVE_PCAP_LIST_DATALINKS),
+    AC_CHECK_FUNC(pcap_loop,,
 	[
-	    AC_LIBOBJ(datalinks)
-	])
-    AC_CHECK_FUNC(pcap_set_datalink,
-	AC_DEFINE(HAVE_PCAP_SET_DATALINK))
-    AC_CHECK_FUNC(pcap_datalink_name_to_val,
-	[
-	    AC_DEFINE(HAVE_PCAP_DATALINK_NAME_TO_VAL)
-	    AC_CHECK_FUNC(pcap_datalink_val_to_description,
-		AC_DEFINE(HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION),
-		[
-		    AC_LIBOBJ(dlnames)
-		])
-	],
-	[
-	    AC_LIBOBJ(dlnames)
-	])
-
-    dnl
-    dnl Check for "pcap_breakloop()"; you can't substitute for it if
-    dnl it's absent (it has hooks into the live capture routines),
-    dnl so just define the HAVE_ value if it's there.
-    dnl
-    AC_CHECK_FUNCS(pcap_breakloop)
-
-    dnl
-    dnl Check for "pcap_dump_ftell()" and use a substitute version
-    dnl if it's not present.
-    AC_CHECK_FUNC(pcap_dump_ftell,
-	AC_DEFINE(HAVE_PCAP_DUMP_FTELL),
-	[
-	    AC_LIBOBJ(pcap_dump_ftell)
+	    AC_MSG_ERROR(
+[Report this to tcpdump-workers@lists.tcpdump.org, and include the
+config.log file in your report.  If you have downloaded libpcap from
+tcpdump.org, and built it yourself, please also include the config.log
+file from the libpcap source directory, the Makefile from the libpcap
+source directory, and the output of the make process for libpcap, as
+this could be a problem with the libpcap that was built, and we will
+not be able to determine why this is happening, and thus will not be
+able to fix it, without that information, as we have not been able to
+reproduce this problem ourselves.])
 	])
 ])
 
@@ -622,15 +830,12 @@ AC_DEFUN(AC_LBL_CHECK_64BIT_FORMAT,
 #	    ifdef HAVE_INTTYPES_H
 	    #include <inttypes.h>
 #	    endif
-#	    ifdef HAVE_SYS_BITYPES_H
-            #include <sys/bitypes.h>
-#	    endif
 	    #include <stdio.h>
 	    #include <sys/types.h>
 
 	    main()
 	    {
-	      u_int64_t t = 1;
+	      uint64_t t = 1;
 	      char strbuf[16+1];
 	      sprintf(strbuf, "%016$1x", t << 32);
 	      if (strcmp(strbuf, "0000000100000000") == 0)
@@ -641,10 +846,10 @@ AC_DEFUN(AC_LBL_CHECK_64BIT_FORMAT,
 	  ]])
       ],
       [
-	AC_DEFINE(PRId64, "$1d")
-	AC_DEFINE(PRIo64, "$1o")
-	AC_DEFINE(PRIx64, "$1x")
-	AC_DEFINE(PRIu64, "$1u")
+	AC_DEFINE(PRId64, "$1d", [define if the platform doesn't define PRId64])
+	AC_DEFINE(PRIo64, "$1o", [define if the platform doesn't define PRIo64])
+	AC_DEFINE(PRIx64, "$1x", [define if the platform doesn't define PRIu64])
+	AC_DEFINE(PRIu64, "$1u", [define if the platform doesn't define PRIx64])
 	AC_MSG_RESULT(yes)
       ],
       [
@@ -754,10 +959,8 @@ EOF
     fi])
 
 dnl
-dnl If using gcc and the file .devel exists:
-dnl	Compile with -g (if supported) and -Wall
-dnl	If using gcc 2 or later, do extra prototype checking and some other
-dnl	checks
+dnl If the file .devel exists:
+dnl	Add some warning flags if the compiler supports them
 dnl	If an os prototype include exists, symlink os-proto.h to it
 dnl
 dnl usage:
@@ -776,27 +979,33 @@ AC_DEFUN(AC_LBL_DEVEL,
 	    $1="$$1 ${LBL_CFLAGS}"
     fi
     if test -f .devel ; then
-	    if test "$GCC" = yes ; then
-		    if test "${LBL_CFLAGS+set}" != set; then
-			    if test "$ac_cv_prog_cc_g" = yes ; then
-				    $1="-g $$1"
-			    fi
-			    $1="$$1 -Wall"
-			    if test $ac_cv_lbl_gcc_vers -gt 1 ; then
-				    $1="$$1 -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wpointer-arith -W"
-			    fi
-		    fi
-	    else
-		    case "$host_os" in
-
-		    irix6*)
-			    V_CCOPT="$V_CCOPT -n32"
-			    ;;
-
-		    *)
-			    ;;
-		    esac
+	    #
+	    # Skip all the warning option stuff on some compilers.
+	    #
+	    if test "$ac_lbl_cc_dont_try_gcc_dashW" != yes; then
+		    AC_LBL_CHECK_UNKNOWN_WARNING_OPTION_ERROR()
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wall)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wmissing-prototypes)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wstrict-prototypes)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wwrite-strings)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wpointer-arith)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wcast-qual)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wshadow)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wdeclaration-after-statement)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wpedantic)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wold-style-definition)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wused-but-marked-unused)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -W)
 	    fi
+	    AC_LBL_CHECK_DEPENDENCY_GENERATION_OPT()
+	    #
+	    # We used to set -n32 for IRIX 6 when not using GCC (presumed
+	    # to mean that we're using MIPS C or MIPSpro C); it specified
+	    # the "new" faster 32-bit ABI, introduced in IRIX 6.2.  I'm
+	    # not sure why that would be something to do *only* with a
+	    # .devel file; why should the ABI for which we produce code
+	    # depend on .devel?
+	    #
 	    os=`echo $host_os | sed -e 's/\([[0-9]][[0-9]]*\)[[^0-9]].*$/\1/'`
 	    name="lbl/os-$os.h"
 	    if test -f $name ; then
@@ -939,7 +1148,7 @@ dnl    documentation and/or other materials provided with the distribution.
 dnl 3. Neither the name of the project nor the names of its contributors
 dnl    may be used to endorse or promote products derived from this software
 dnl    without specific prior written permission.
-dnl 
+dnl
 dnl THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 dnl ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 dnl IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -953,241 +1162,13 @@ dnl OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 dnl SUCH DAMAGE.
 
 dnl
-dnl Checks to see if AF_INET6 is defined
-AC_DEFUN(AC_CHECK_AF_INET6, [
-	AC_MSG_CHECKING(for AF_INET6)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <sys/socket.h>],
-		[int a = AF_INET6],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-		if test $$1 = yes ; then
-			AC_DEFINE(HAVE_AF_INET6)
-	fi
-])
-
-dnl
-dnl Checks to see if the sockaddr struct has the 4.4 BSD sa_len member
-dnl borrowed from LBL libpcap
-AC_DEFUN(AC_CHECK_SA_LEN, [
-	AC_MSG_CHECKING(if sockaddr struct has sa_len member)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <sys/socket.h>],
-		[u_int i = sizeof(((struct sockaddr *)0)->sa_len)],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-		if test $$1 = yes ; then
-			AC_DEFINE(HAVE_SOCKADDR_SA_LEN)
-	fi
-])
-
-dnl
-dnl Checks for addrinfo structure
-AC_DEFUN(AC_STRUCT_ADDRINFO, [
-	AC_MSG_CHECKING(for addrinfo)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <netdb.h>],
-		[struct addrinfo a],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_ADDRINFO)
-	else
-		AC_DEFINE(NEED_ADDRINFO_H)
-	fi
-])
-
-dnl
-dnl Checks for NI_MAXSERV
-AC_DEFUN(AC_NI_MAXSERV, [
-	AC_MSG_CHECKING(for NI_MAXSERV)
-	AC_CACHE_VAL($1,
-	AC_EGREP_CPP(yes, [#include <netdb.h>
-#ifdef NI_MAXSERV
-yes
-#endif],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 != yes; then
-		AC_DEFINE(NEED_ADDRINFO_H)
-	fi
-])
-
-dnl
-dnl Checks for NI_NAMEREQD
-AC_DEFUN(AC_NI_NAMEREQD, [
-	AC_MSG_CHECKING(for NI_NAMEREQD)
-	AC_CACHE_VAL($1,
-	AC_EGREP_CPP(yes, [#include <netdb.h>
-#ifdef NI_NOFQDN
-yes
-#endif],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 != yes; then
-		AC_DEFINE(NEED_ADDRINFO_H)
-	fi
-])
-
-dnl
-dnl Checks for sockaddr_storage structure
-AC_DEFUN(AC_STRUCT_SA_STORAGE, [
-	AC_MSG_CHECKING(for sockaddr_storage)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <sys/socket.h>],
-		[struct sockaddr_storage s],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_SOCKADDR_STORAGE)
-	fi
-])
-
-dnl
-dnl Checks for macro of IP address size
-AC_DEFUN(AC_CHECK_ADDRSZ, [
-	$1=yes
-dnl check for INADDRSZ
-	AC_MSG_CHECKING(for INADDRSZ)
-	AC_CACHE_VAL(ac_cv_inaddrsz,
-	AC_TRY_COMPILE([
-#		include <arpa/nameser.h>],
-		[int a = INADDRSZ],
-		ac_cv_inaddrsz=yes,
-		ac_cv_inaddrsz=no))
-	AC_MSG_RESULT($ac_cv_inaddrsz)
-	if test $ac_cv_inaddrsz = yes; then
-		AC_DEFINE(HAVE_INADDRSZ)
-	else
-		$1=no
-	fi
-dnl check for IN6ADDRSZ
-	AC_MSG_CHECKING(for IN6ADDRSZ)
-	AC_CACHE_VAL(ac_cv_in6addrsz,
-	AC_TRY_COMPILE([
-#		include <arpa/nameser.h>],
-		[int a = IN6ADDRSZ],
-		ac_cv_in6addrsz=yes,
-		ac_cv_in6addrsz=no))
-	AC_MSG_RESULT($ac_cv_in6addrsz)
-	if test $ac_cv_in6addrsz = yes; then
-		AC_DEFINE(HAVE_IN6ADDRSZ)
-	else
-		$1=no
-	fi
-])
-
-dnl
-dnl check for RES_USE_INET6
-AC_DEFUN(AC_CHECK_RES_USE_INET6, [
-	AC_MSG_CHECKING(for RES_USE_INET6)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <netinet/in.h>
-#		include <resolv.h>],
-		[int a = RES_USE_INET6],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_RES_USE_INET6)
-	fi
-])
-
-dnl
-dnl check for AAAA
-AC_DEFUN(AC_CHECK_AAAA, [
-	AC_MSG_CHECKING(for AAAA)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <arpa/nameser.h>],
-		[int a = T_AAAA],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_AAAA)
-	fi
-])
-
-dnl
-dnl check for struct res_state_ext
-AC_DEFUN(AC_STRUCT_RES_STATE_EXT, [
-	AC_MSG_CHECKING(for res_state_ext)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <netinet/in.h>
-#		include <netinet6/in6.h>
-#		include <resolv.h>],
-		[struct __res_state_ext e],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_RES_STATE_EXT)
-	fi
-])
-
-dnl
-dnl check for struct res_state_ext
-AC_DEFUN(AC_STRUCT_RES_STATE, [
-	AC_MSG_CHECKING(for nsort in res_state)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <netinet/in.h>
-#		include <netinet6/in6.h>
-#		include <resolv.h>],
-		[struct __res_state e; e.nsort = 0],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_NEW_RES_STATE)
-	fi
-])
-
-dnl
-dnl check for h_errno
-AC_DEFUN(AC_VAR_H_ERRNO, [
-	AC_MSG_CHECKING(for h_errno)
-	AC_CACHE_VAL(ac_cv_var_h_errno,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <netdb.h>],
-		[int foo = h_errno;],
-		ac_cv_var_h_errno=yes,
-		ac_cv_var_h_errno=no))
-	AC_MSG_RESULT($ac_cv_var_h_errno)
-	if test "$ac_cv_var_h_errno" = "yes"; then
-		AC_DEFINE(HAVE_H_ERRNO)
-	fi
-])
-
-dnl
 dnl Test for __attribute__
 dnl
 
 AC_DEFUN(AC_C___ATTRIBUTE__, [
 AC_MSG_CHECKING(for __attribute__)
 AC_CACHE_VAL(ac_cv___attribute__, [
-AC_COMPILE_IFELSE(
+AC_COMPILE_IFELSE([
   AC_LANG_SOURCE([[
 #include <stdlib.h>
 
@@ -1204,18 +1185,85 @@ main(int argc, char **argv)
 {
   foo();
 }
-  ]]),
+  ]])],
 ac_cv___attribute__=yes,
 ac_cv___attribute__=no)])
 if test "$ac_cv___attribute__" = "yes"; then
   AC_DEFINE(HAVE___ATTRIBUTE__, 1, [define if your compiler has __attribute__])
-  V_DEFS="$V_DEFS -D_U_=\"__attribute__((unused))\""
 else
+  #
+  # We can't use __attribute__, so we can't use __attribute__((unused)),
+  # so we define _U_ to an empty string.
+  #
   V_DEFS="$V_DEFS -D_U_=\"\""
 fi
 AC_MSG_RESULT($ac_cv___attribute__)
 ])
 
+
+dnl
+dnl Test whether __attribute__((unused)) can be used without warnings
+dnl
+
+AC_DEFUN(AC_C___ATTRIBUTE___UNUSED, [
+AC_MSG_CHECKING([whether __attribute__((unused)) can be used without warnings])
+AC_CACHE_VAL(ac_cv___attribute___unused, [
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $ac_lbl_cc_force_warning_errors"
+AC_COMPILE_IFELSE([
+  AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <stdio.h>
+
+int
+main(int argc  __attribute((unused)), char **argv __attribute((unused)))
+{
+  printf("Hello, world!\n");
+  return 0;
+}
+  ]])],
+ac_cv___attribute___unused=yes,
+ac_cv___attribute___unused=no)])
+CFLAGS="$save_CFLAGS"
+if test "$ac_cv___attribute___unused" = "yes"; then
+  V_DEFS="$V_DEFS -D_U_=\"__attribute__((unused))\""
+else
+  V_DEFS="$V_DEFS -D_U_=\"\""
+fi
+AC_MSG_RESULT($ac_cv___attribute___unused)
+])
+
+dnl
+dnl Test whether __attribute__((format)) can be used without warnings
+dnl
+
+AC_DEFUN(AC_C___ATTRIBUTE___FORMAT, [
+AC_MSG_CHECKING([whether __attribute__((format)) can be used without warnings])
+AC_CACHE_VAL(ac_cv___attribute___format, [
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $ac_lbl_cc_force_warning_errors"
+AC_COMPILE_IFELSE([
+  AC_LANG_SOURCE([[
+#include <stdlib.h>
+
+extern int foo(const char *fmt, ...)
+		  __attribute__ ((format (printf, 1, 2)));
+
+int
+main(int argc, char **argv)
+{
+  foo("%s", "test");
+}
+  ]])],
+ac_cv___attribute___format=yes,
+ac_cv___attribute___format=no)])
+CFLAGS="$save_CFLAGS"
+if test "$ac_cv___attribute___format" = "yes"; then
+  AC_DEFINE(__ATTRIBUTE___FORMAT_OK, 1,
+    [define if your compiler allows __attribute__((format)) without a warning])
+fi
+AC_MSG_RESULT($ac_cv___attribute___format)
+])
 
 dnl
 dnl Test whether __attribute__((format)) can be applied to function
@@ -1225,7 +1273,7 @@ dnl
 AC_DEFUN(AC_C___ATTRIBUTE___FORMAT_FUNCTION_POINTER, [
 AC_MSG_CHECKING([whether __attribute__((format)) can be applied to function pointers])
 AC_CACHE_VAL(ac_cv___attribute___format_function_pointer, [
-AC_COMPILE_IFELSE(
+AC_COMPILE_IFELSE([
   AC_LANG_SOURCE([[
 #include <stdlib.h>
 
@@ -1237,7 +1285,7 @@ main(int argc, char **argv)
 {
   (*foo)("%s", "test");
 }
-  ]]),
+  ]])],
 ac_cv___attribute___format_function_pointer=yes,
 ac_cv___attribute___format_function_pointer=no)])
 if test "$ac_cv___attribute___format_function_pointer" = "yes"; then
@@ -1245,6 +1293,34 @@ if test "$ac_cv___attribute___format_function_pointer" = "yes"; then
     [define if your compiler allows __attribute__((format)) to be applied to function pointers])
 fi
 AC_MSG_RESULT($ac_cv___attribute___format_function_pointer)
+])
+
+AC_DEFUN(AC_C___ATTRIBUTE___NORETURN_FUNCTION_POINTER, [
+AC_MSG_CHECKING([whether __attribute__((noreturn)) can be applied to function pointers without warnings])
+AC_CACHE_VAL(ac_cv___attribute___noreturn_function_pointer, [
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $ac_lbl_cc_force_warning_errors"
+AC_COMPILE_IFELSE([
+  AC_LANG_SOURCE([[
+#include <stdlib.h>
+
+extern int (*foo)(int i)
+		  __attribute__ ((noreturn));
+
+int
+main(int argc, char **argv)
+{
+  (*foo)(1);
+}
+  ]])],
+ac_cv___attribute___noreturn_function_pointer=yes,
+ac_cv___attribute___noreturn_function_pointer=no)])
+CFLAGS="$save_CFLAGS"
+if test "$ac_cv___attribute___noreturn_function_pointer" = "yes"; then
+  AC_DEFINE(__ATTRIBUTE___NORETURN_OK_FOR_FUNCTION_POINTERS, 1,
+    [define if your compiler allows __attribute__((noreturn)) to be applied to function pointers])
+fi
+AC_MSG_RESULT($ac_cv___attribute___noreturn_function_pointer)
 ])
 
 AC_DEFUN(AC_LBL_SSLEAY,

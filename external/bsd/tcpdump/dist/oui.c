@@ -15,20 +15,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/oui.c,v 1.9 2008-01-09 09:40:47 hannes Exp (LBL)";
-#else
-__RCSID("$NetBSD: oui.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
-#endif
+__RCSID("$NetBSD: oui.c,v 1.2.8.1 2017/02/19 07:37:07 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
-#include "interface.h"
+#include <netdissect-stdinc.h>
+#include "netdissect.h"
 #include "oui.h"
 
 /* FIXME complete OUI list using a script */
@@ -36,6 +31,7 @@ __RCSID("$NetBSD: oui.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
 const struct tok oui_values[] = {
     { OUI_ENCAP_ETHER, "Ethernet" },
     { OUI_CISCO, "Cisco" },
+    { OUI_IANA, "IANA" },
     { OUI_NORTEL, "Nortel Networks SONMP" },
     { OUI_CISCO_90, "Cisco bridged" },
     { OUI_RFC2684, "Ethernet bridged" },
@@ -47,6 +43,16 @@ const struct tok oui_values[] = {
     { OUI_IEEE_8021_PRIVATE, "IEEE 802.1 Private"},
     { OUI_IEEE_8023_PRIVATE, "IEEE 802.3 Private"},
     { OUI_TIA, "ANSI/TIA"},
+    { OUI_DCBX, "DCBX"},
+    { OUI_NICIRA, "Nicira Networks" },
+    { OUI_BSN, "Big Switch Networks" },
+    { OUI_VELLO, "Vello Systems" },
+    { OUI_HP2, "HP" },
+    { OUI_HPLABS, "HP-Labs" },
+    { OUI_INFOBLOX, "Infoblox Inc" },
+    { OUI_ONLAB, "Open Networking Lab" },
+    { OUI_FREESCALE, "Freescale" },
+    { OUI_NETRONOME, "Netronome" },
     { 0, NULL }
 };
 

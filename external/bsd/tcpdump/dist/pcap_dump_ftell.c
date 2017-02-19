@@ -21,12 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/pcap_dump_ftell.c,v 1.1 2005-06-03 22:08:52 guy Exp (LBL)";
-#else
-__RCSID("$NetBSD: pcap_dump_ftell.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
-#endif
+__RCSID("$NetBSD: pcap_dump_ftell.c,v 1.2.8.1 2017/02/19 07:37:07 snj Exp $");
 #endif
 
 #include <stdio.h>
