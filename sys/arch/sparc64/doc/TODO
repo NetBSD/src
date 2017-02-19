@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.22 2017/02/19 18:07:12 palle Exp $ */
+ /* $NetBSD: TODO,v 1.23 2017/02/19 18:27:12 palle Exp $ */
 
 Things to be done:
 
@@ -30,3 +30,5 @@ sun4v:
 - man pages for drivers imported from OpenBSD lke vpci, vbus, cbus, vdsk, ldc etc.
 - vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
 - vbus.c: handle prom_getprop() memory leaks
+- locore.s: rft_user (sun4v specific manaul fill) - seems to work, but is it good enough (compared to openbsds rft_user
+
