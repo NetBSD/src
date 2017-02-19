@@ -30,7 +30,7 @@
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
-__RCSID("$NetBSD: tcpdump.c,v 1.3.18.1 2017/02/19 07:36:20 snj Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.3.18.2 2017/02/19 17:43:53 snj Exp $");
 #endif
 
 /*
@@ -156,8 +156,8 @@ static int Lflag;			/* list available data link types and exit */
 static int Iflag;			/* rfmon (monitor) mode */
 #ifdef HAVE_PCAP_SET_TSTAMP_TYPE
 static int Jflag;			/* list available time stamp types */
-#endif
 static int jflag = -1;			/* packet time stamp source */
+#endif
 static int pflag;			/* don't go promiscuous */
 #ifdef HAVE_PCAP_SETDIRECTION
 static int Qflag = -1;			/* restrict captured packet by send/receive direction */
@@ -166,7 +166,9 @@ static int Uflag;			/* "unbuffered" output of dump files */
 static int Wflag;			/* recycle output files after this number of files */
 static int WflagChars;
 static char *zflag = NULL;		/* compress each savefile using a specified command (like gzip or bzip2) */
+#ifdef HAVE_PCAP_SET_IMMEDIATE_MODE
 static int immediate_mode;
+#endif
 
 static int infodelay;
 static int infoprint;
@@ -190,7 +192,9 @@ static RETSIGTYPE cleanup(int);
 static RETSIGTYPE child_cleanup(int);
 static void print_version(void);
 static void print_usage(void);
+#ifdef HAVE_PCAP_SET_TSTAMP_TYPE
 static void show_tstamp_types_and_exit(pcap_t *, const char *device) __attribute__((noreturn));
+#endif
 static void show_dlts_and_exit(pcap_t *, const char *device) __attribute__((noreturn));
 #ifdef HAVE_PCAP_FINDALLDEVS
 static void show_devices_and_exit (void) __attribute__((noreturn));
