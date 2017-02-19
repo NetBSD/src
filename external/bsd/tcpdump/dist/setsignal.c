@@ -21,19 +21,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/setsignal.c,v 1.11 2003-11-16 09:36:42 guy Exp  (LBL)";
-#else
-__RCSID("$NetBSD: setsignal.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
-#endif
+__RCSID("$NetBSD: setsignal.c,v 1.4.4.1 2017/02/19 05:01:16 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <signal.h>
 #ifdef HAVE_SIGACTION

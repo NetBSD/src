@@ -42,24 +42,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.29 2006-06-13 22:21:38 guy Exp  (LBL)";
-#else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
-#endif
+__RCSID("$NetBSD: parsenfsfh.c,v 1.4.4.1 2017/02/19 05:01:15 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "nfsfh.h"
 
 /*
@@ -85,10 +80,11 @@ __RCSID("$NetBSD: parsenfsfh.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 #define	FHT_AIX32	10
 #define	FHT_HPUX9	11
 #define	FHT_BSD44	12
+#define	FHT_NETBSD	13
 
 #ifdef	ultrix
 /* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
-#define	XFF(x)	((u_int32_t)(x))
+#define	XFF(x)	((uint32_t)(x))
 #else
 #define	XFF(x)	(x)
 #endif
@@ -112,150 +108,162 @@ __RCSID("$NetBSD: parsenfsfh.c,v 1.4 2013/12/31 17:33:31 christos Exp $");
 	((lsb) + ((e)<<8) + ((d)<<16) + ((c)<<24))
 #endif
 
-static int is_UCX(const unsigned char *);
+static int is_UCX(const unsigned char *, u_int);
 
 void
-Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
-register const unsigned char *fh;
-int len _U_;
-my_fsid *fsidp;
-u_int32_t *inop;
-const char **osnamep;		/* if non-NULL, return OS name here */
-const char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
-int ourself;		/* true if file handle was generated on this host */
+Parse_fh(register const unsigned char *fh, u_int len, my_fsid *fsidp,
+	 uint32_t *inop,
+	 const char **osnamep, /* if non-NULL, return OS name here */
+	 const char **fsnamep, /* if non-NULL, return server fs name here (for VMS) */
+	 int ourself)	/* true if file handle was generated on this host */
 {
 	register const unsigned char *fhp = fh;
-	u_int32_t temp;
+	uint32_t temp;
 	int fhtype = FHT_UNKNOWN;
-	int i;
+	u_int i;
 
-	if (ourself) {
-	    /* File handle generated on this host, no need for guessing */
+	/*
+	 * Require at least 16 bytes of file handle; it's variable-length
+	 * in NFSv3.  "len" is in units of 32-bit words, not bytes.
+	 */
+	if (len < 16/4)
+	    fhtype = FHT_UNKNOWN;
+	else {
+	    if (ourself) {
+		/* File handle generated on this host, no need for guessing */
 #if	defined(IRIX40)
-	    fhtype = FHT_IRIX4;
+		fhtype = FHT_IRIX4;
 #endif
 #if	defined(IRIX50)
-	    fhtype = FHT_IRIX5;
+		fhtype = FHT_IRIX5;
 #endif
 #if	defined(IRIX51)
-	    fhtype = FHT_IRIX5;
+		fhtype = FHT_IRIX5;
 #endif
 #if	defined(SUNOS4)
-	    fhtype = FHT_SUNOS4;
+		fhtype = FHT_SUNOS4;
 #endif
 #if	defined(SUNOS5)
-	    fhtype = FHT_SUNOS5;
+		fhtype = FHT_SUNOS5;
 #endif
 #if	defined(ultrix)
-	    fhtype = FHT_ULTRIX;
+		fhtype = FHT_ULTRIX;
 #endif
 #if	defined(__osf__)
-	    fhtype = FHT_DECOSF;
+		fhtype = FHT_DECOSF;
 #endif
-#if	defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) \
-     || defined(__OpenBSD__)
-	    fhtype = FHT_BSD44;
+#if	defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+		fhtype = FHT_BSD44;
 #endif
-	}
-	/*
-	 * This is basically a big decision tree
-	 */
-	else if ((fhp[0] == 0) && (fhp[1] == 0)) {
-	    /* bytes[0,1] == (0,0); rules out Ultrix, IRIX5, SUNOS5 */
-	    /* probably rules out HP-UX, AIX unless they allow major=0 */
-	    if ((fhp[2] == 0) && (fhp[3] == 0)) {
-		/* bytes[2,3] == (0,0); must be Auspex */
-		/* XXX or could be Ultrix+MASSBUS "hp" disk? */
-		fhtype = FHT_AUSPEX;
+#if	defined(__NetBSD__)
+		fhtype = FHT_NETBSD;
+#endif
 	    }
-	    else {
-		/*
-		 * bytes[2,3] != (0,0); rules out Auspex, could be
-		 * DECOSF, SUNOS4, or IRIX4
-		 */
-		if ((fhp[4] != 0) && (fhp[5] == 0) &&
-			(fhp[8] == 12) && (fhp[9] == 0)) {
-		    /* seems to be DECOSF, with minor == 0 */
-		    fhtype = FHT_DECOSF;
-		}
-		else {
-		    /* could be SUNOS4 or IRIX4 */
-		    /* XXX the test of fhp[5] == 8 could be wrong */
-		    if ((fhp[4] == 0) && (fhp[5] == 8) && (fhp[6] == 0) &&
-			(fhp[7] == 0)) {
-			/* looks like a length, not a file system typecode */
-			fhtype = FHT_IRIX4;
-		    }
-		    else {
-			/* by elimination */
-			fhtype = FHT_SUNOS4;
-		    }
-		}
-	    }
-	}
-	else {
 	    /*
-	     * bytes[0,1] != (0,0); rules out Auspex, IRIX4, SUNOS4
-	     * could be IRIX5, DECOSF, UCX, Ultrix, SUNOS5
-	     * could be AIX, HP-UX
+	     * This is basically a big decision tree
 	     */
-	    if ((fhp[2] == 0) && (fhp[3] == 0)) {
-		/*
-		 * bytes[2,3] == (0,0); rules out OSF, probably not UCX
-		 * (unless the exported device name is just one letter!),
-		 * could be Ultrix, IRIX5, AIX, or SUNOS5
-		 * might be HP-UX (depends on their values for minor devs)
-		 */
-		if ((fhp[6] == 0) && (fhp[7] == 0)) {
-		    fhtype = FHT_BSD44;
-		}
-		/*XXX we probably only need to test of these two bytes */
-		else if ((fhp[21] == 0) && (fhp[23] == 0)) {
-		    fhtype = FHT_ULTRIX;
+	    else if ((fhp[0] == 0) && (fhp[1] == 0)) {
+		/* bytes[0,1] == (0,0); rules out Ultrix, IRIX5, SUNOS5 */
+		/* probably rules out HP-UX, AIX unless they allow major=0 */
+		if ((fhp[2] == 0) && (fhp[3] == 0)) {
+		    /* bytes[2,3] == (0,0); must be Auspex */
+		    /* XXX or could be Ultrix+MASSBUS "hp" disk? */
+		    fhtype = FHT_AUSPEX;
 		}
 		else {
-		    /* Could be SUNOS5/IRIX5, maybe AIX */
-		    /* XXX no obvious difference between SUNOS5 and IRIX5 */
-		    if (fhp[9] == 10)
-			fhtype = FHT_SUNOS5;
-		    /* XXX what about AIX? */
+		    /*
+		     * bytes[2,3] != (0,0); rules out Auspex, could be
+		     * DECOSF, SUNOS4, or IRIX4
+		     */
+		    if ((fhp[4] != 0) && (fhp[5] == 0) &&
+			    (fhp[8] == 12) && (fhp[9] == 0)) {
+			/* seems to be DECOSF, with minor == 0 */
+			fhtype = FHT_DECOSF;
+		    }
+		    else {
+			/* could be SUNOS4 or IRIX4 */
+			/* XXX the test of fhp[5] == 8 could be wrong */
+			if ((fhp[4] == 0) && (fhp[5] == 8) && (fhp[6] == 0) &&
+			    (fhp[7] == 0)) {
+			    /* looks like a length, not a file system typecode */
+			    fhtype = FHT_IRIX4;
+			}
+			else {
+			    /* by elimination */
+			    fhtype = FHT_SUNOS4;
+			}
+		    }
 		}
 	    }
 	    else {
 		/*
-		 * bytes[2,3] != (0,0); rules out Ultrix, could be
-		 * DECOSF, SUNOS5, IRIX5, AIX, HP-UX, or UCX
+		 * bytes[0,1] != (0,0); rules out Auspex, IRIX4, SUNOS4
+		 * could be IRIX5, DECOSF, UCX, Ultrix, SUNOS5
+		 * could be AIX, HP-UX
 		 */
-		if ((fhp[8] == 12) && (fhp[9] == 0)) {
-		    fhtype = FHT_DECOSF;
+		if ((fhp[2] == 0) && (fhp[3] == 0)) {
+		    /*
+		     * bytes[2,3] == (0,0); rules out OSF, probably not UCX
+		     * (unless the exported device name is just one letter!),
+		     * could be Ultrix, IRIX5, AIX, or SUNOS5
+		     * might be HP-UX (depends on their values for minor devs)
+		     */
+		    if ((fhp[6] == 0) && (fhp[7] == 0)) {
+			/* for ffs sizeof(ufid) == 16 bytes */
+			if ((fhp[8] == 0x10 && fhp[9] == 0x0) ||
+			    (fhp[9] == 0x0 && fhp[9] == 0x10))
+				fhtype = FHT_NETBSD;
+			else
+				fhtype = FHT_BSD44;
+		    }
+		    /*XXX we probably only need to test of these two bytes */
+		    else if ((len >= 24/4) && (fhp[21] == 0) && (fhp[23] == 0)) {
+			fhtype = FHT_ULTRIX;
+		    }
+		    else {
+			/* Could be SUNOS5/IRIX5, maybe AIX */
+			/* XXX no obvious difference between SUNOS5 and IRIX5 */
+			if (fhp[9] == 10)
+			    fhtype = FHT_SUNOS5;
+			/* XXX what about AIX? */
+		    }
 		}
-		else if ((fhp[8] == 0) && (fhp[9] == 10)) {
-		    /* could be SUNOS5/IRIX5, AIX, HP-UX */
-		    if ((fhp[7] == 0) && (fhp[6] == 0) &&
-			(fhp[5] == 0) && (fhp[4] == 0)) {
-			/* XXX is this always true of HP-UX? */
-			fhtype = FHT_HPUX9;
-		    }
-		    else if (fhp[7] == 2) {
-			/* This would be MNT_NFS on AIX, which is impossible */
-			fhtype = FHT_SUNOS5;	/* or maybe IRIX5 */
-		    }
-		    else {
-			/*
-			 * XXX Could be SUNOS5/IRIX5 or AIX.  I don't
-			 * XXX see any way to disambiguate these, so
-			 * XXX I'm going with the more likely guess.
-			 * XXX Sorry, Big Blue.
-			 */
-			fhtype = FHT_SUNOS5;	/* or maybe IRIX5 */
-		    }
-	        }
 		else {
-		    if (is_UCX(fhp)) {
-			fhtype = FHT_VMSUCX;
+		    /*
+		     * bytes[2,3] != (0,0); rules out Ultrix, could be
+		     * DECOSF, SUNOS5, IRIX5, AIX, HP-UX, or UCX
+		     */
+		    if ((fhp[8] == 12) && (fhp[9] == 0)) {
+			fhtype = FHT_DECOSF;
+		    }
+		    else if ((fhp[8] == 0) && (fhp[9] == 10)) {
+			/* could be SUNOS5/IRIX5, AIX, HP-UX */
+			if ((fhp[7] == 0) && (fhp[6] == 0) &&
+			    (fhp[5] == 0) && (fhp[4] == 0)) {
+			    /* XXX is this always true of HP-UX? */
+			    fhtype = FHT_HPUX9;
+			}
+			else if (fhp[7] == 2) {
+			    /* This would be MNT_NFS on AIX, which is impossible */
+			    fhtype = FHT_SUNOS5;	/* or maybe IRIX5 */
+			}
+			else {
+			    /*
+			     * XXX Could be SUNOS5/IRIX5 or AIX.  I don't
+			     * XXX see any way to disambiguate these, so
+			     * XXX I'm going with the more likely guess.
+			     * XXX Sorry, Big Blue.
+			     */
+			    fhtype = FHT_SUNOS5;	/* or maybe IRIX5 */
+			}
 		    }
 		    else {
-			fhtype = FHT_UNKNOWN;
+			if (is_UCX(fhp, len)) {
+			    fhtype = FHT_VMSUCX;
+			}
+			else {
+			    fhtype = FHT_UNKNOWN;
+			}
 		    }
 		}
 	    }
@@ -276,11 +284,19 @@ int ourself;		/* true if file handle was generated on this host */
 	    break;
 
 	case FHT_BSD44:
+	case FHT_NETBSD:
 	    fsidp->Fsid_dev.Minor = fhp[0];
 	    fsidp->Fsid_dev.Major = fhp[1];
 	    fsidp->fsid_code = 0;
 
-	    *inop = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
+	    /*
+	     * NetBSD puts the generation number before the inode; inode
+	     * is 64 bits, but only 32 are typically used; XXX endian issues?
+	     */
+	    if (fhtype == FHT_NETBSD)
+		    *inop = make_uint32(fhp[19], fhp[18], fhp[17], fhp[16]);
+	    else
+		    *inop = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
 
 	    if (osnamep)
 		*osnamep = "BSD 4.4";
@@ -373,13 +389,13 @@ int ourself;		/* true if file handle was generated on this host */
 		if (sizeof(*fsidp) > 14)
 		    memset((char *)fsidp, 0, sizeof(*fsidp));
 		/* just use the whole thing */
-		memcpy((char *)fsidp, (char *)fh, 14);
+		memcpy((char *)fsidp, (const char *)fh, 14);
 	    }
 	    else {
-		u_int32_t tempa[4];	/* at least 16 bytes, maybe more */
+		uint32_t tempa[4];	/* at least 16 bytes, maybe more */
 
 		memset((char *)tempa, 0, sizeof(tempa));
-		memcpy((char *)tempa, (char *)fh, 14); /* ensure alignment */
+		memcpy((char *)tempa, (const char *)fh, 14); /* ensure alignment */
 		fsidp->Fsid_dev.Minor = tempa[0] + (tempa[1]<<1);
 		fsidp->Fsid_dev.Major = tempa[2] + (tempa[3]<<1);
 		fsidp->fsid_code = 0;
@@ -390,7 +406,7 @@ int ourself;		/* true if file handle was generated on this host */
 
 	    /* Caller must save (and null-terminate?) this value */
 	    if (fsnamep)
-		*fsnamep = (char *)&(fhp[1]);
+		*fsnamep = (const char *)&(fhp[1]);
 
 	    if (osnamep)
 		*osnamep = "VMS";
@@ -422,13 +438,14 @@ int ourself;		/* true if file handle was generated on this host */
 	case FHT_UNKNOWN:
 #ifdef DEBUG
 	    /* XXX debugging */
-	    for (i = 0; i < 32; i++)
+	    for (i = 0; i < len*4; i++)
 		(void)fprintf(stderr, "%x.", fhp[i]);
 	    (void)fprintf(stderr, "\n");
 #endif
 	    /* Save the actual handle, so it can be display with -u */
-	    for (i = 0; i < 32; i++)
+	    for (i = 0; i < len*4 && i*2 < sizeof(fsidp->Opaque_Handle) - 1; i++)
 	    	(void)snprintf(&(fsidp->Opaque_Handle[i*2]), 3, "%.2X", fhp[i]);
+	    fsidp->Opaque_Handle[i*2] = '\0';
 
 	    /* XXX for now, give "bogus" values to aid debugging */
 	    fsidp->fsid_code = 0;
@@ -455,14 +472,20 @@ int ourself;		/* true if file handle was generated on this host */
  *	(3) followed by string of nulls
  */
 static int
-is_UCX(fhp)
-const unsigned char *fhp;
+is_UCX(const unsigned char *fhp, u_int len)
 {
-	register int i;
+	register u_int i;
 	int seen_null = 0;
 
+	/*
+	 * Require at least 28 bytes of file handle; it's variable-length
+	 * in NFSv3.  "len" is in units of 32-bit words, not bytes.
+	 */
+	if (len < 28/4)
+		return(0);
+
 	for (i = 1; i < 14; i++) {
-	    if (isprint(fhp[i])) {
+	    if (ND_ISPRINT(fhp[i])) {
 		if (seen_null)
 		   return(0);
 		else
