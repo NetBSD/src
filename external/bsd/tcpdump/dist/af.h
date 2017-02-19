@@ -1,5 +1,3 @@
-/* @(#) Header: /tcpdump/master/tcpdump/af.h,v 1.3 2006-03-23 14:58:44 hannes Exp  (LBL) */
-
 /*
  * Copyright (c) 1998-2006 The TCPDUMP project
  *
@@ -52,6 +50,6 @@ extern const struct tok bsd_af_values[];
 #define BSD_AFNUM_ISO		7
 #define BSD_AFNUM_APPLETALK	16
 #define BSD_AFNUM_IPX		23
-#define BSD_AFNUM_INET6_BSD	24	/* OpenBSD (and probably NetBSD), BSD/OS */
-#define BSD_AFNUM_INET6_FREEBSD	28
-#define BSD_AFNUM_INET6_DARWIN	30
+#define BSD_AFNUM_INET6_BSD	24	/* NetBSD, OpenBSD, BSD/OS, Npcap */
+#define BSD_AFNUM_INET6_FREEBSD	28	/* FreeBSD */
+#define BSD_AFNUM_INET6_DARWIN	30	/* OS X, iOS, other Darwin-based OSes */

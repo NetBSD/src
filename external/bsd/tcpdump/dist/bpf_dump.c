@@ -20,24 +20,18 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/bpf_dump.c,v 1.17 2008-02-14 20:53:49 guy Exp  (LBL)";
-#else
-__RCSID("$NetBSD: bpf_dump.c,v 1.3 2013/04/06 19:33:07 christos Exp $");
-#endif
+__RCSID("$NetBSD: bpf_dump.c,v 1.3.8.1 2017/02/19 04:59:44 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include <pcap.h>
 #include <stdio.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 void
 bpf_dump(const struct bpf_program *p, int option)
