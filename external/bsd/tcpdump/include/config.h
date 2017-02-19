@@ -146,7 +146,7 @@
 #define HAVE_PCAP_SET_DATALINK 1
 
 /* Define to 1 if you have the `pcap_set_immediate_mode' function. */
-#define HAVE_PCAP_SET_IMMEDIATE_MODE 1
+/* #undef HAVE_PCAP_SET_IMMEDIATE_MODE */
 
 /* Define to 1 if you have the `pcap_set_optimizer_debug' function. */
 /* #undef HAVE_PCAP_SET_OPTIMIZER_DEBUG */
@@ -155,10 +155,10 @@
 /* #undef HAVE_PCAP_SET_PARSER_DEBUG */
 
 /* Define to 1 if you have the `pcap_set_tstamp_precision' function. */
-#define HAVE_PCAP_SET_TSTAMP_PRECISION 1
+/* #undef HAVE_PCAP_SET_TSTAMP_PRECISION */
 
 /* Define to 1 if you have the `pcap_set_tstamp_type' function. */
-#define HAVE_PCAP_SET_TSTAMP_TYPE 1
+/* #undef HAVE_PCAP_SET_TSTAMP_TYPE */
 
 /* Define to 1 if you have the <pcap/usb.h> header file. */
 /* #undef HAVE_PCAP_USB_H */
