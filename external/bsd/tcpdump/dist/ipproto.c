@@ -15,21 +15,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/ipproto.c,v 1.6 2005-09-20 06:01:22 guy Exp (LBL)";
-#else
-__RCSID("$NetBSD: ipproto.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
-#endif
+__RCSID("$NetBSD: ipproto.c,v 1.2.8.1 2017/02/19 07:37:07 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "ipproto.h"
 
 const struct tok ipproto_values[] = {
@@ -61,6 +56,7 @@ const struct tok ipproto_values[] = {
     { IPPROTO_SCTP, "SCTP" },
     { IPPROTO_MOBILITY, "Mobility" },
     { IPPROTO_PFSYNC, "PFSYNC" },
+    { IPPROTO_CARP, "CARP" },
     { 0, NULL }
 };
 

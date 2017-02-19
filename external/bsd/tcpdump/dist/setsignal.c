@@ -21,19 +21,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/setsignal.c,v 1.11 2003-11-16 09:36:42 guy Exp (LBL)";
-#else
-__RCSID("$NetBSD: setsignal.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
-#endif
+__RCSID("$NetBSD: setsignal.c,v 1.2.8.1 2017/02/19 07:37:09 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <signal.h>
 #ifdef HAVE_SIGACTION
@@ -83,6 +78,8 @@ RETSIGTYPE
 
 	memset(&new, 0, sizeof(new));
 	new.sa_handler = func;
+	if (sig == SIGCHLD)
+		new.sa_flags = SA_RESTART;
 	if (sigaction(sig, &new, &old) < 0)
 		return (SIG_ERR);
 	return (old.sa_handler);

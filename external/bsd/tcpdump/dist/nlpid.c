@@ -15,20 +15,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/nlpid.c,v 1.4 2004-10-19 15:27:55 hannes Exp (LBL)";
-#else
-__RCSID("$NetBSD: nlpid.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
-#endif
+__RCSID("$NetBSD: nlpid.c,v 1.2.8.1 2017/02/19 07:37:07 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
-#include "interface.h"
+#include <netdissect-stdinc.h>
+#include "netdissect.h"
 #include "nlpid.h"
 
 const struct tok nlpid_values[] = {
@@ -41,6 +36,7 @@ const struct tok nlpid_values[] = {
     { NLPID_ISIS, "IS-IS" },
     { NLPID_CONS, "CONS" },
     { NLPID_IDRP, "IDRP" },
+    { NLPID_SPB, "ISIS_SPB" },
     { NLPID_MFR, "FRF.15" },
     { NLPID_IP, "IPv4" },
     { NLPID_PPP, "PPP" },
