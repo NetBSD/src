@@ -1,4 +1,4 @@
-/* 
+/*
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code
  * distributions retain the above copyright notice and this paragraph
@@ -15,21 +15,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/gmpls.c,v 1.7 2006-04-14 07:11:59 hannes Exp (LBL)";
-#else
-__RCSID("$NetBSD: gmpls.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
-#endif
+__RCSID("$NetBSD: gmpls.c,v 1.2.20.1 2017/02/19 07:36:18 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "gmpls.h"
 
 /* rfc3471 */
@@ -146,8 +141,8 @@ const struct tok gmpls_payload_values[] = {
     { 0, NULL }
 };
 
-/* 
- * Link Type values used by LMP Service Discovery (specifically, the Client 
+/*
+ * Link Type values used by LMP Service Discovery (specifically, the Client
  * Port Service Attributes Object). See UNI 1.0 section 9.4.2 for details.
  */
 const struct tok lmp_sd_service_config_cpsa_link_type_values[] = {
@@ -156,9 +151,9 @@ const struct tok lmp_sd_service_config_cpsa_link_type_values[] = {
     { 0, NULL}
 };
 
-/* 
- * Signal Type values for SDH links used by LMP Service Discovery (specifically, 
- * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for 
+/*
+ * Signal Type values for SDH links used by LMP Service Discovery (specifically,
+ * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for
  * details.
  */
 const struct tok lmp_sd_service_config_cpsa_signal_type_sdh_values[] = {
@@ -173,9 +168,9 @@ const struct tok lmp_sd_service_config_cpsa_signal_type_sdh_values[] = {
     { 0, NULL}
 };
 
-/* 
- * Signal Type values for SONET links used by LMP Service Discovery (specifically, 
- * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for 
+/*
+ * Signal Type values for SONET links used by LMP Service Discovery (specifically,
+ * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for
  * details.
  */
 const struct tok lmp_sd_service_config_cpsa_signal_type_sonet_values[] = {
@@ -191,7 +186,7 @@ const struct tok lmp_sd_service_config_cpsa_signal_type_sonet_values[] = {
 };
 
 #define DIFFSERV_BC_MODEL_RDM           0   /* draft-ietf-tewg-diff-te-proto-07 */
-#define DIFFSERV_BC_MODEL_MAM           1   /* draft-ietf-tewg-diff-te-proto-07 */ 
+#define DIFFSERV_BC_MODEL_MAM           1   /* draft-ietf-tewg-diff-te-proto-07 */
 #define DIFFSERV_BC_MODEL_EXTD_MAM      254 /* experimental */
 
 const struct tok diffserv_te_bc_values[] = {
