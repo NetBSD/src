@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.36 2016/07/04 15:45:38 kiyohara Exp $
+#	$NetBSD: BEAGLEBONE,v 1.37 2017/02/19 07:47:00 rin Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
