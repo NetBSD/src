@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.462 2017/02/19 07:43:42 rin Exp $
+.\"	$NetBSD: options.4,v 1.463 2017/02/19 11:16:45 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -979,11 +979,11 @@ support.
 This allows a system to recognize a disklabel written in the other byte order.
 For writing, when a label already exists, its byte order is preserved.
 Otherwise, a new label is written in the native byte order.
-To specify the byte order explicitly,
+To specify the byte order explicitly, the
 .Fl F
 option of
 .Xr disklabel 8
-should be used with
+should be used with the
 .Fl B
 option in order to avoid using
 .Xr ioctl 2 ,
@@ -993,8 +993,8 @@ amd64, bebox, emips, epoc32, evbarm, i386, ibmnws, landisk, mvmeppc, prep,
 .\" riscv,
 rs6000, sandpoint,
 .\" usermode,
-xen, and zaurus.
-And to machines of
+xen, and zaurus;
+also to machines of the
 .\" evbarm64,
 evbmips and evbppc ports that support
 Master Boot Record (MBR).
