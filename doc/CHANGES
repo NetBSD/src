@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2255 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2256 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -473,3 +473,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	postfix(1): Import version 3.1.4. [christos 20170213]
 	l2tp(4): Add L2TPv3 interface. [knakahara 20170216]
 	siginfo(2): Add new si_code for SIGTRAP: TRAP_DBREG [kamil 20170217]
+	disklabel(5): Add DISKLABEL_EI (``Endian-Independent'' disklabel)
+		kernel option to machines that support Master Boot Record
+		(MBR). [rin 20170219]
