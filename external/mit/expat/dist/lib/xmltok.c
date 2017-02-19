@@ -4,7 +4,7 @@
 
 #include <stddef.h>
 
-#ifdef COMPILED_FROM_DSP
+#ifdef WIN32
 #include "winconfig.h"
 #elif defined(MACOS_CLASSIC)
 #include "macconfig.h"
@@ -16,7 +16,7 @@
 #ifdef HAVE_EXPAT_CONFIG_H
 #include <expat_config.h>
 #endif
-#endif /* ndef COMPILED_FROM_DSP */
+#endif /* ndef WIN32 */
 
 #include "expat_external.h"
 #include "internal.h"
@@ -122,19 +122,19 @@
     ((*p) == 0xF4 ? (p)[1] > 0x8F : ((p)[1] & 0xC0) == 0xC0)))
 
 static int PTRFASTCALL
-isNever(const ENCODING *enc, const char *p)
+isNever(const ENCODING *UNUSED_P(enc), const char *UNUSED_P(p))
 {
   return 0;
 }
 
 static int PTRFASTCALL
-utf8_isName2(const ENCODING *enc, const char *p)
+utf8_isName2(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_GET_NAMING2(namePages, (const unsigned char *)p);
 }
 
 static int PTRFASTCALL
-utf8_isName3(const ENCODING *enc, const char *p)
+utf8_isName3(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_GET_NAMING3(namePages, (const unsigned char *)p);
 }
@@ -142,13 +142,13 @@ utf8_isName3(const ENCODING *enc, const char *p)
 #define utf8_isName4 isNever
 
 static int PTRFASTCALL
-utf8_isNmstrt2(const ENCODING *enc, const char *p)
+utf8_isNmstrt2(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_GET_NAMING2(nmstrtPages, (const unsigned char *)p);
 }
 
 static int PTRFASTCALL
-utf8_isNmstrt3(const ENCODING *enc, const char *p)
+utf8_isNmstrt3(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_GET_NAMING3(nmstrtPages, (const unsigned char *)p);
 }
@@ -156,19 +156,19 @@ utf8_isNmstrt3(const ENCODING *enc, const char *p)
 #define utf8_isNmstrt4 isNever
 
 static int PTRFASTCALL
-utf8_isInvalid2(const ENCODING *enc, const char *p)
+utf8_isInvalid2(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_INVALID2((const unsigned char *)p);
 }
 
 static int PTRFASTCALL
-utf8_isInvalid3(const ENCODING *enc, const char *p)
+utf8_isInvalid3(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_INVALID3((const unsigned char *)p);
 }
 
 static int PTRFASTCALL
-utf8_isInvalid4(const ENCODING *enc, const char *p)
+utf8_isInvalid4(const ENCODING *UNUSED_P(enc), const char *p)
 {
   return UTF8_INVALID4((const unsigned char *)p);
 }
@@ -221,6 +221,17 @@ struct normal_encoding {
  E ## isInvalid2, \
  E ## isInvalid3, \
  E ## isInvalid4
+
+#define NULL_VTABLE \
+ /* isName2 */ NULL, \
+ /* isName3 */ NULL, \
+ /* isName4 */ NULL, \
+ /* isNmstrt2 */ NULL, \
+ /* isNmstrt3 */ NULL, \
+ /* isNmstrt4 */ NULL, \
+ /* isInvalid2 */ NULL, \
+ /* isInvalid3 */ NULL, \
+ /* isInvalid4 */ NULL
 
 static int FASTCALL checkCharRefNumber(int);
 
@@ -318,8 +329,43 @@ enum {  /* UTF8_cvalN is value of masked first byte of N byte sequence */
   UTF8_cval4 = 0xf0
 };
 
+void
+align_limit_to_full_utf8_characters(const char * from, const char ** fromLimRef)
+{
+  const char * fromLim = *fromLimRef;
+  size_t walked = 0;
+  for (; fromLim > from; fromLim--, walked++) {
+    const unsigned char prev = (unsigned char)fromLim[-1];
+    if ((prev & 0xf8u) == 0xf0u) { /* 4-byte character, lead by 0b11110xxx byte */
+      if (walked + 1 >= 4) {
+        fromLim += 4 - 1;
+        break;
+      } else {
+        walked = 0;
+      }
+    } else if ((prev & 0xf0u) == 0xe0u) { /* 3-byte character, lead by 0b1110xxxx byte */
+      if (walked + 1 >= 3) {
+        fromLim += 3 - 1;
+        break;
+      } else {
+        walked = 0;
+      }
+    } else if ((prev & 0xe0u) == 0xc0u) { /* 2-byte character, lead by 0b110xxxxx byte */
+      if (walked + 1 >= 2) {
+        fromLim += 2 - 1;
+        break;
+      } else {
+        walked = 0;
+      }
+    } else if ((prev & 0x80u) == 0x00u) { /* 1-byte character, matching 0b0xxxxxxx */
+      break;
+    }
+  }
+  *fromLimRef = fromLim;
+}
+
 static enum XML_Convert_Result PTRCALL
-utf8_toUtf8(const ENCODING *enc,
+utf8_toUtf8(const ENCODING *UNUSED_P(enc),
             const char **fromP, const char *fromLim,
             char **toP, const char *toLim)
 {
@@ -329,9 +375,8 @@ utf8_toUtf8(const ENCODING *enc,
   if (fromLim - *fromP > toLim - *toP) {
     /* Avoid copying partial characters. */
     res = XML_CONVERT_OUTPUT_EXHAUSTED;
-    for (fromLim = *fromP + (toLim - *toP); fromLim > *fromP; fromLim--)
-      if (((unsigned char)fromLim[-1] & 0xc0) != 0x80)
-        break;
+    fromLim = *fromP + (toLim - *toP);
+    align_limit_to_full_utf8_characters(*fromP, &fromLim);
   }
   for (to = *toP, from = *fromP; (from < fromLim) && (to < toLim); from++, to++)
     *to = *from;
@@ -449,7 +494,7 @@ static const struct normal_encoding internal_utf8_encoding = {
 };
 
 static enum XML_Convert_Result PTRCALL
-latin1_toUtf8(const ENCODING *enc,
+latin1_toUtf8(const ENCODING *UNUSED_P(enc),
               const char **fromP, const char *fromLim,
               char **toP, const char *toLim)
 {
@@ -474,7 +519,7 @@ latin1_toUtf8(const ENCODING *enc,
 }
 
 static enum XML_Convert_Result PTRCALL
-latin1_toUtf16(const ENCODING *enc,
+latin1_toUtf16(const ENCODING *UNUSED_P(enc),
                const char **fromP, const char *fromLim,
                unsigned short **toP, const unsigned short *toLim)
 {
@@ -495,7 +540,7 @@ static const struct normal_encoding latin1_encoding_ns = {
 #include "asciitab.h"
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(sb_)
+  STANDARD_VTABLE(sb_) NULL_VTABLE
 };
 
 #endif
@@ -508,11 +553,11 @@ static const struct normal_encoding latin1_encoding = {
 #undef BT_COLON
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(sb_)
+  STANDARD_VTABLE(sb_) NULL_VTABLE
 };
 
 static enum XML_Convert_Result PTRCALL
-ascii_toUtf8(const ENCODING *enc,
+ascii_toUtf8(const ENCODING *UNUSED_P(enc),
              const char **fromP, const char *fromLim,
              char **toP, const char *toLim)
 {
@@ -533,7 +578,7 @@ static const struct normal_encoding ascii_encoding_ns = {
 #include "asciitab.h"
 /* BT_NONXML == 0 */
   },
-  STANDARD_VTABLE(sb_)
+  STANDARD_VTABLE(sb_) NULL_VTABLE
 };
 
 #endif
@@ -546,7 +591,7 @@ static const struct normal_encoding ascii_encoding = {
 #undef BT_COLON
 /* BT_NONXML == 0 */
   },
-  STANDARD_VTABLE(sb_)
+  STANDARD_VTABLE(sb_) NULL_VTABLE
 };
 
 static int PTRFASTCALL
@@ -570,7 +615,7 @@ unicode_byte_type(char hi, char lo)
 
 #define DEFINE_UTF16_TO_UTF8(E) \
 static enum XML_Convert_Result  PTRCALL \
-E ## toUtf8(const ENCODING *enc, \
+E ## toUtf8(const ENCODING *UNUSED_P(enc), \
             const char **fromP, const char *fromLim, \
             char **toP, const char *toLim) \
 { \
@@ -616,7 +661,7 @@ E ## toUtf8(const ENCODING *enc, \
         *fromP = from; \
         return XML_CONVERT_OUTPUT_EXHAUSTED; \
       } \
-      if (from + 4 > fromLim) { \
+      if (fromLim - from < 4) { \
         *fromP = from; \
         return XML_CONVERT_INPUT_INCOMPLETE; \
       } \
@@ -642,7 +687,7 @@ E ## toUtf8(const ENCODING *enc, \
 
 #define DEFINE_UTF16_TO_UTF16(E) \
 static enum XML_Convert_Result  PTRCALL \
-E ## toUtf16(const ENCODING *enc, \
+E ## toUtf16(const ENCODING *UNUSED_P(enc), \
              const char **fromP, const char *fromLim, \
              unsigned short **toP, const unsigned short *toLim) \
 { \
@@ -776,7 +821,7 @@ static const struct normal_encoding little2_encoding_ns = {
 #include "asciitab.h"
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(little2_)
+  STANDARD_VTABLE(little2_) NULL_VTABLE
 };
 
 #endif
@@ -795,7 +840,7 @@ static const struct normal_encoding little2_encoding = {
 #undef BT_COLON
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(little2_)
+  STANDARD_VTABLE(little2_) NULL_VTABLE
 };
 
 #if BYTEORDER != 4321
@@ -808,7 +853,7 @@ static const struct normal_encoding internal_little2_encoding_ns = {
 #include "iasciitab.h"
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(little2_)
+  STANDARD_VTABLE(little2_) NULL_VTABLE
 };
 
 #endif
@@ -821,7 +866,7 @@ static const struct normal_encoding internal_little2_encoding = {
 #undef BT_COLON
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(little2_)
+  STANDARD_VTABLE(little2_) NULL_VTABLE
 };
 
 #endif
@@ -917,7 +962,7 @@ static const struct normal_encoding big2_encoding_ns = {
 #include "asciitab.h"
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(big2_)
+  STANDARD_VTABLE(big2_) NULL_VTABLE
 };
 
 #endif
@@ -936,7 +981,7 @@ static const struct normal_encoding big2_encoding = {
 #undef BT_COLON
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(big2_)
+  STANDARD_VTABLE(big2_) NULL_VTABLE
 };
 
 #if BYTEORDER != 1234
@@ -949,7 +994,7 @@ static const struct normal_encoding internal_big2_encoding_ns = {
 #include "iasciitab.h"
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(big2_)
+  STANDARD_VTABLE(big2_) NULL_VTABLE
 };
 
 #endif
@@ -962,7 +1007,7 @@ static const struct normal_encoding internal_big2_encoding = {
 #undef BT_COLON
 #include "latin1tab.h"
   },
-  STANDARD_VTABLE(big2_)
+  STANDARD_VTABLE(big2_) NULL_VTABLE
 };
 
 #endif
@@ -988,7 +1033,7 @@ streqci(const char *s1, const char *s2)
 }
 
 static void PTRCALL
-initUpdatePosition(const ENCODING *enc, const char *ptr,
+initUpdatePosition(const ENCODING *UNUSED_P(enc), const char *ptr,
                    const char *end, POSITION *pos)
 {
   normal_updatePosition(&utf8_encoding.enc, ptr, end, pos);
