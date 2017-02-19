@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.26 2017/02/14 16:56:05 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.27 2017/02/19 05:03:40 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -374,4 +374,786 @@ sys/compat/linux/arch/amd64/linux_machdep.c	1.50, 1.51
 
 	Don't let userland choose %rip.
 	[maxv, ticket #1359]
+
+doc/3RDPARTY					1.398, 1.407
+external/mit/expat/dist/CMake.README            up to 1.1.1.3
+external/mit/expat/dist/CMakeLists.txt          up to 1.1.1.3
+external/mit/expat/dist/COPYING                 up to 1.1.1.2
+external/mit/expat/dist/Changes                 up to 1.1.1.4
+external/mit/expat/dist/MANIFEST                up to 1.1.1.4
+external/mit/expat/dist/Makefile.in             up to 1.1.1.4
+external/mit/expat/dist/README                  up to 1.1.1.4
+external/mit/expat/dist/aclocal.m4              up to 1.1.1.3
+external/mit/expat/dist/bcb5/expat.bpr          up to 1.1.1.3
+external/mit/expat/dist/bcb5/expat.mak          up to 1.1.1.2
+external/mit/expat/dist/bcb5/expat_static.bpr   up to 1.1.1.3
+external/mit/expat/dist/bcb5/expat_static.mak   up to 1.1.1.2
+external/mit/expat/dist/bcb5/expatw.bpr         up to 1.1.1.3
+external/mit/expat/dist/bcb5/expatw.mak         up to 1.1.1.2
+external/mit/expat/dist/bcb5/expatw_static.bpr  up to 1.1.1.3
+external/mit/expat/dist/bcb5/expatw_static.mak  up to 1.1.1.2
+external/mit/expat/dist/bcb5/xmlwf.bpr          up to 1.1.1.3
+external/mit/expat/dist/bcb5/xmlwf.mak          up to 1.1.1.2
+external/mit/expat/dist/configure               up to 1.1.1.4
+external/mit/expat/dist/configure.ac            up to 1.1.1.2
+external/mit/expat/dist/conftools/config.guess  up to 1.3
+external/mit/expat/dist/conftools/config.sub    up to 1.3
+external/mit/expat/dist/conftools/install-sh    up to 1.1.1.4
+external/mit/expat/dist/conftools/ltmain.sh     up to 1.1.1.4
+external/mit/expat/dist/doc/expat.png           up to 1.1.1.2
+external/mit/expat/dist/doc/valid-xhtml10.png   up to 1.1.1.2
+external/mit/expat/dist/doc/xmlwf.1             up to 1.1.1.3
+external/mit/expat/dist/doc/xmlwf.sgml          delete
+external/mit/expat/dist/doc/xmlwf.xml           up to 1.1.1.1
+external/mit/expat/dist/examples/elements.c     up to 1.1.1.3
+external/mit/expat/dist/examples/outline.c      up to 1.1.1.2
+external/mit/expat/dist/expat_config.h.in       up to 1.1.1.4
+external/mit/expat/dist/lib/expat.dsp           up to 1.1.1.3
+external/mit/expat/dist/lib/expat.h             up to 1.1.1.4
+external/mit/expat/dist/lib/expat_external.h    up to 1.1.1.2
+external/mit/expat/dist/lib/expat_static.dsp    up to 1.1.1.3
+external/mit/expat/dist/lib/expatw.dsp          up to 1.1.1.3
+external/mit/expat/dist/lib/expatw_static.dsp   up to 1.1.1.2
+external/mit/expat/dist/lib/internal.h          up to 1.1.1.2
+external/mit/expat/dist/lib/xmlparse.c          up to 1.6
+external/mit/expat/dist/lib/xmlrole.c           up to 1.1.1.3
+external/mit/expat/dist/lib/xmltok.c            up to 1.3
+external/mit/expat/dist/lib/xmltok_impl.c       up to 1.5
+external/mit/expat/dist/m4/libtool.m4           up to 1.1.1.3
+external/mit/expat/dist/m4/ltoptions.m4         up to 1.1.1.3
+external/mit/expat/dist/m4/ltsugar.m4           up to 1.1.1.2
+external/mit/expat/dist/m4/ltversion.m4         up to 1.1.1.3
+external/mit/expat/dist/m4/lt~obsolete.m4       up to 1.1.1.2
+external/mit/expat/dist/tests/chardata.c        up to 1.1.1.3
+external/mit/expat/dist/tests/minicheck.c       up to 1.1.1.2
+external/mit/expat/dist/tests/minicheck.h       up to 1.1.1.3
+external/mit/expat/dist/tests/runtests.c        up to 1.1.1.3
+external/mit/expat/dist/tests/xmltest.sh        up to 1.2
+external/mit/expat/dist/win32/README.txt        up to 1.1.1.3
+external/mit/expat/dist/win32/expat.iss         up to 1.1.1.4
+external/mit/expat/dist/xmlwf/codepage.c        up to 1.1.1.2
+external/mit/expat/dist/xmlwf/readfilemap.c     up to 1.1.1.3
+external/mit/expat/dist/xmlwf/xmlfile.c         up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmlwf.c           up to 1.1.1.4
+external/mit/expat/dist/xmlwf/xmlwf.dsp         up to 1.1.1.3
+external/mit/expat/lib/libexpat/expat_config.h  up to 1.4
+
+	Update expat to 2.2.0, fixing CVE-2016-0718, CVE-2016-4472,
+	CVE-2016-5300, and CVE-2012-6702.
+	[spz, ticket #1361]
+
+doc/3RDPARTY					patch
+external/bsd/tcpdump/bin/Makefile               up to 1.18
+external/bsd/tcpdump/dist/CHANGES               up to 1.1.1.7
+external/bsd/tcpdump/dist/CONTRIBUTING          up to 1.1.1.1
+external/bsd/tcpdump/dist/CREDITS               up to 1.1.1.7
+external/bsd/tcpdump/dist/INSTALL.txt           up to 1.1.1.6
+external/bsd/tcpdump/dist/Makefile.in           up to 1.1.1.7
+external/bsd/tcpdump/dist/PLATFORMS             up to 1.1.1.1
+external/bsd/tcpdump/dist/README                up to 1.3
+external/bsd/tcpdump/dist/README.md             up to 1.1.1.2
+external/bsd/tcpdump/dist/VERSION               up to 1.1.1.7
+external/bsd/tcpdump/dist/aclocal.m4            up to 1.1.1.7
+external/bsd/tcpdump/dist/addrtoname.c          up to 1.9
+external/bsd/tcpdump/dist/addrtoname.h          up to 1.1.1.5
+external/bsd/tcpdump/dist/addrtostr.c           up to 1.3
+external/bsd/tcpdump/dist/addrtostr.h           up to 1.1.1.1
+external/bsd/tcpdump/dist/af.c                  up to 1.5
+external/bsd/tcpdump/dist/af.h                  up to 1.1.1.4
+external/bsd/tcpdump/dist/ah.h                  up to 1.3
+external/bsd/tcpdump/dist/aodv.h                delete
+external/bsd/tcpdump/dist/appletalk.h           up to 1.1.1.3
+external/bsd/tcpdump/dist/arcnet.h              delete
+external/bsd/tcpdump/dist/ascii_strcasecmp.c    up to 1.2
+external/bsd/tcpdump/dist/ascii_strcasecmp.h    up to 1.1.1.1
+external/bsd/tcpdump/dist/atm.h                 up to 1.1.1.3
+external/bsd/tcpdump/dist/atmuni31.h            delete
+external/bsd/tcpdump/dist/bgp.h                 delete
+external/bsd/tcpdump/dist/bootp.h               delete
+external/bsd/tcpdump/dist/bpf_dump.c            up to 1.5
+external/bsd/tcpdump/dist/chdlc.h               up to 1.1.1.3
+external/bsd/tcpdump/dist/checksum.c            up to 1.6
+external/bsd/tcpdump/dist/config.guess          up to 1.2
+external/bsd/tcpdump/dist/config.h.in           up to 1.1.1.6
+external/bsd/tcpdump/dist/config.sub            up to 1.2
+external/bsd/tcpdump/dist/configure             up to 1.8
+external/bsd/tcpdump/dist/configure.in          up to 1.8
+external/bsd/tcpdump/dist/cpack.c               up to 1.6
+external/bsd/tcpdump/dist/cpack.h               up to 1.6
+external/bsd/tcpdump/dist/dccp.h                delete
+external/bsd/tcpdump/dist/decnet.h              delete
+external/bsd/tcpdump/dist/decode_prefix.h       delete
+external/bsd/tcpdump/dist/enc.h                 delete
+external/bsd/tcpdump/dist/esp.h                 delete
+external/bsd/tcpdump/dist/ether.h               up to 1.5
+external/bsd/tcpdump/dist/ethertype.h           up to 1.1.1.5
+external/bsd/tcpdump/dist/extract.h             up to 1.7
+external/bsd/tcpdump/dist/fddi.h                delete
+external/bsd/tcpdump/dist/getopt_long.h         up to 1.1.1.1
+external/bsd/tcpdump/dist/gmpls.c               up to 1.5
+external/bsd/tcpdump/dist/gmpls.h               up to 1.1.1.3
+external/bsd/tcpdump/dist/gmt2local.c           up to 1.5
+external/bsd/tcpdump/dist/gmt2local.h           up to 1.1.1.3
+external/bsd/tcpdump/dist/icmp6.h               delete
+external/bsd/tcpdump/dist/ieee802_11.h          delete
+external/bsd/tcpdump/dist/ieee802_11_radio.h    delete
+external/bsd/tcpdump/dist/igrp.h                delete
+external/bsd/tcpdump/dist/in_cksum.c            up to 1.2
+external/bsd/tcpdump/dist/install-sh            up to 1.1.1.2
+external/bsd/tcpdump/dist/interface.h           up to 1.8
+external/bsd/tcpdump/dist/ip.h                  up to 1.6
+external/bsd/tcpdump/dist/ip6.h                 up to 1.5
+external/bsd/tcpdump/dist/ipfc.h                delete
+external/bsd/tcpdump/dist/ipnet.h               delete
+external/bsd/tcpdump/dist/ipproto.c             up to 1.5
+external/bsd/tcpdump/dist/ipproto.h             up to 1.4
+external/bsd/tcpdump/dist/ipsec_doi.h           delete
+external/bsd/tcpdump/dist/ipx.h                 delete
+external/bsd/tcpdump/dist/isakmp.h              delete
+external/bsd/tcpdump/dist/l2tp.h                delete
+external/bsd/tcpdump/dist/l2vpn.c               up to 1.6
+external/bsd/tcpdump/dist/l2vpn.h               up to 1.1.1.4
+external/bsd/tcpdump/dist/lane.h                delete
+external/bsd/tcpdump/dist/lbl/os-osf4.h         up to 1.1.1.3
+external/bsd/tcpdump/dist/lbl/os-solaris2.h     up to 1.1.1.4
+external/bsd/tcpdump/dist/lbl/os-sunos4.h       up to 1.1.1.4
+external/bsd/tcpdump/dist/lbl/os-ultrix4.h      up to 1.1.1.4
+external/bsd/tcpdump/dist/llc.h                 up to 1.1.1.4
+external/bsd/tcpdump/dist/machdep.c             up to 1.7
+external/bsd/tcpdump/dist/machdep.h             up to 1.1.1.4
+external/bsd/tcpdump/dist/makemib               up to 1.1.1.3
+external/bsd/tcpdump/dist/mib.h                 up to 1.1.1.2
+external/bsd/tcpdump/dist/missing/addrinfo.h    delete
+external/bsd/tcpdump/dist/missing/datalinks.c   up to 1.1.1.4
+external/bsd/tcpdump/dist/missing/dlnames.c     up to 1.1.1.4
+external/bsd/tcpdump/dist/missing/getnameinfo.c delete
+external/bsd/tcpdump/dist/missing/getopt_long.c up to 1.1.1.1
+external/bsd/tcpdump/dist/missing/inet_aton.c   delete
+external/bsd/tcpdump/dist/missing/inet_ntop.c   delete
+external/bsd/tcpdump/dist/missing/inet_pton.c   delete
+external/bsd/tcpdump/dist/missing/snprintf.c    up to 1.1.1.4
+external/bsd/tcpdump/dist/missing/sockstorage.h delete
+external/bsd/tcpdump/dist/missing/strdup.c      up to 1.1.1.4
+external/bsd/tcpdump/dist/missing/strlcat.c     up to 1.1.1.4
+external/bsd/tcpdump/dist/missing/strlcpy.c     up to 1.1.1.4
+external/bsd/tcpdump/dist/missing/strsep.c      up to 1.1.1.5
+external/bsd/tcpdump/dist/mkdep                 up to 1.1.1.3
+external/bsd/tcpdump/dist/mpls.h                up to 1.1.1.3
+external/bsd/tcpdump/dist/mptcp.h               delete
+external/bsd/tcpdump/dist/nameser.h             up to 1.5
+external/bsd/tcpdump/dist/netbios.h             delete
+external/bsd/tcpdump/dist/netdissect-stdinc.h   up to 1.2
+external/bsd/tcpdump/dist/netdissect.c          up to 1.2
+external/bsd/tcpdump/dist/netdissect.h          up to 1.5
+external/bsd/tcpdump/dist/nflog.h               delete
+external/bsd/tcpdump/dist/nfs.h                 up to 1.4
+external/bsd/tcpdump/dist/nfsfh.h               up to 1.1.1.5
+external/bsd/tcpdump/dist/nlpid.c               up to 1.6
+external/bsd/tcpdump/dist/nlpid.h               up to 1.1.1.4
+external/bsd/tcpdump/dist/ntp.h                 delete
+external/bsd/tcpdump/dist/oakley.h              delete
+external/bsd/tcpdump/dist/openflow.h            up to 1.1.1.3
+external/bsd/tcpdump/dist/ospf.h                up to 1.1.1.3
+external/bsd/tcpdump/dist/ospf6.h               delete
+external/bsd/tcpdump/dist/oui.c                 up to 1.7
+external/bsd/tcpdump/dist/oui.h                 up to 1.1.1.5
+external/bsd/tcpdump/dist/parsenfsfh.c          up to 1.8
+external/bsd/tcpdump/dist/pcap-missing.h        up to 1.1.1.4
+external/bsd/tcpdump/dist/pcap_dump_ftell.c     up to 1.4
+external/bsd/tcpdump/dist/pmap_prot.h           delete
+external/bsd/tcpdump/dist/ppi.h                 delete
+external/bsd/tcpdump/dist/ppp.h                 up to 1.1.1.4
+external/bsd/tcpdump/dist/print-802_11.c        up to 1.7
+external/bsd/tcpdump/dist/print-802_15_4.c      up to 1.3
+external/bsd/tcpdump/dist/print-ah.c            up to 1.6
+external/bsd/tcpdump/dist/print-ahcp.c          up to 1.5
+external/bsd/tcpdump/dist/print-aodv.c          up to 1.7
+external/bsd/tcpdump/dist/print-aoe.c           up to 1.4
+external/bsd/tcpdump/dist/print-ap1394.c        up to 1.6
+external/bsd/tcpdump/dist/print-arcnet.c        up to 1.8
+external/bsd/tcpdump/dist/print-arp.c           up to 1.8
+external/bsd/tcpdump/dist/print-ascii.c         up to 1.7
+external/bsd/tcpdump/dist/print-atalk.c         up to 1.7
+external/bsd/tcpdump/dist/print-atm.c           up to 1.8
+external/bsd/tcpdump/dist/print-babel.c         up to 1.3
+external/bsd/tcpdump/dist/print-beep.c          up to 1.6
+external/bsd/tcpdump/dist/print-bfd.c           up to 1.6
+external/bsd/tcpdump/dist/print-bgp.c           up to 1.8
+external/bsd/tcpdump/dist/print-bootp.c         up to 1.8
+external/bsd/tcpdump/dist/print-bt.c            up to 1.6
+external/bsd/tcpdump/dist/print-calm-fast.c     up to 1.3
+external/bsd/tcpdump/dist/print-carp.c          up to 1.3
+external/bsd/tcpdump/dist/print-cdp.c           up to 1.8
+external/bsd/tcpdump/dist/print-cfm.c           up to 1.8
+external/bsd/tcpdump/dist/print-chdlc.c         up to 1.8
+external/bsd/tcpdump/dist/print-cip.c           up to 1.6
+external/bsd/tcpdump/dist/print-cnfp.c          up to 1.7
+external/bsd/tcpdump/dist/print-dccp.c          up to 1.7
+external/bsd/tcpdump/dist/print-decnet.c        up to 1.8
+external/bsd/tcpdump/dist/print-dhcp6.c         up to 1.7
+external/bsd/tcpdump/dist/print-domain.c        up to 1.7
+external/bsd/tcpdump/dist/print-dtp.c           up to 1.3
+external/bsd/tcpdump/dist/print-dvmrp.c         up to 1.6
+external/bsd/tcpdump/dist/print-eap.c           up to 1.6
+external/bsd/tcpdump/dist/print-egp.c           up to 1.6
+external/bsd/tcpdump/dist/print-eigrp.c         up to 1.8
+external/bsd/tcpdump/dist/print-enc.c           up to 1.7
+external/bsd/tcpdump/dist/print-esp.c           up to 1.8
+external/bsd/tcpdump/dist/print-ether.c         up to 1.8
+external/bsd/tcpdump/dist/print-fddi.c          up to 1.6
+external/bsd/tcpdump/dist/print-forces.c        up to 1.6
+external/bsd/tcpdump/dist/print-fr.c            up to 1.8
+external/bsd/tcpdump/dist/print-frag6.c         up to 1.6
+external/bsd/tcpdump/dist/print-ftp.c           up to 1.3
+external/bsd/tcpdump/dist/print-geneve.c        up to 1.3
+external/bsd/tcpdump/dist/print-geonet.c        up to 1.3
+external/bsd/tcpdump/dist/print-gre.c           up to 1.8
+external/bsd/tcpdump/dist/print-hncp.c          up to 1.3
+external/bsd/tcpdump/dist/print-hsrp.c          up to 1.7
+external/bsd/tcpdump/dist/print-http.c          up to 1.3
+external/bsd/tcpdump/dist/print-icmp.c          up to 1.8
+external/bsd/tcpdump/dist/print-icmp6.c         up to 1.10
+external/bsd/tcpdump/dist/print-igmp.c          up to 1.7
+external/bsd/tcpdump/dist/print-igrp.c          up to 1.7
+external/bsd/tcpdump/dist/print-ip.c            up to 1.11
+external/bsd/tcpdump/dist/print-ip6.c           up to 1.7
+external/bsd/tcpdump/dist/print-ip6opts.c       up to 1.6
+external/bsd/tcpdump/dist/print-ipcomp.c        up to 1.6
+external/bsd/tcpdump/dist/print-ipfc.c          up to 1.6
+external/bsd/tcpdump/dist/print-ipnet.c         up to 1.3
+external/bsd/tcpdump/dist/print-ipx.c           up to 1.6
+external/bsd/tcpdump/dist/print-isakmp.c        up to 1.9
+external/bsd/tcpdump/dist/print-isoclns.c       up to 1.8
+external/bsd/tcpdump/dist/print-juniper.c       up to 1.8
+external/bsd/tcpdump/dist/print-krb.c           up to 1.7
+external/bsd/tcpdump/dist/print-l2tp.c          up to 1.7
+external/bsd/tcpdump/dist/print-lane.c          up to 1.6
+external/bsd/tcpdump/dist/print-ldp.c           up to 1.8
+external/bsd/tcpdump/dist/print-lisp.c          up to 1.3
+external/bsd/tcpdump/dist/print-llc.c           up to 1.8
+external/bsd/tcpdump/dist/print-lldp.c          up to 1.8
+external/bsd/tcpdump/dist/print-lmp.c           up to 1.9
+external/bsd/tcpdump/dist/print-loopback.c      up to 1.4
+external/bsd/tcpdump/dist/print-lspping.c       up to 1.8
+external/bsd/tcpdump/dist/print-lwapp.c         up to 1.7
+external/bsd/tcpdump/dist/print-lwres.c         up to 1.7
+external/bsd/tcpdump/dist/print-m3ua.c          up to 1.4
+external/bsd/tcpdump/dist/print-medsa.c         up to 1.3
+external/bsd/tcpdump/dist/print-mobile.c        up to 1.6
+external/bsd/tcpdump/dist/print-mobility.c      up to 1.7
+external/bsd/tcpdump/dist/print-mpcp.c          up to 1.7
+external/bsd/tcpdump/dist/print-mpls.c          up to 1.7
+external/bsd/tcpdump/dist/print-mptcp.c         up to 1.3
+external/bsd/tcpdump/dist/print-msdp.c          up to 1.6
+external/bsd/tcpdump/dist/print-msnlb.c         up to 1.3
+external/bsd/tcpdump/dist/print-netbios.c       delete
+external/bsd/tcpdump/dist/print-nflog.c         up to 1.3
+external/bsd/tcpdump/dist/print-nfs.c           up to 1.7
+external/bsd/tcpdump/dist/print-nsh.c           up to 1.3
+external/bsd/tcpdump/dist/print-ntp.c           up to 1.7
+external/bsd/tcpdump/dist/print-null.c          up to 1.7
+external/bsd/tcpdump/dist/print-olsr.c          up to 1.3
+external/bsd/tcpdump/dist/print-openflow-1.0.c  up to 1.3
+external/bsd/tcpdump/dist/print-openflow.c      up to 1.3
+external/bsd/tcpdump/dist/print-ospf.c          up to 1.8
+external/bsd/tcpdump/dist/print-ospf6.c         up to 1.7
+external/bsd/tcpdump/dist/print-otv.c           up to 1.3
+external/bsd/tcpdump/dist/print-pflog.c         up to 1.8
+external/bsd/tcpdump/dist/print-pfsync.c        up to 1.4
+external/bsd/tcpdump/dist/print-pgm.c           up to 1.8
+external/bsd/tcpdump/dist/print-pim.c           up to 1.9
+external/bsd/tcpdump/dist/print-pktap.c         up to 1.4
+external/bsd/tcpdump/dist/print-ppi.c           up to 1.3
+external/bsd/tcpdump/dist/print-ppp.c           up to 1.8
+external/bsd/tcpdump/dist/print-pppoe.c         up to 1.7
+external/bsd/tcpdump/dist/print-pptp.c          up to 1.6
+external/bsd/tcpdump/dist/print-radius.c        up to 1.8
+external/bsd/tcpdump/dist/print-raw.c           up to 1.6
+external/bsd/tcpdump/dist/print-resp.c          up to 1.3
+external/bsd/tcpdump/dist/print-rip.c           up to 1.7
+external/bsd/tcpdump/dist/print-ripng.c         up to 1.6
+external/bsd/tcpdump/dist/print-rpki-rtr.c      up to 1.4
+external/bsd/tcpdump/dist/print-rrcp.c          up to 1.6
+external/bsd/tcpdump/dist/print-rsvp.c          up to 1.9
+external/bsd/tcpdump/dist/print-rt6.c           up to 1.6
+external/bsd/tcpdump/dist/print-rtsp.c          up to 1.3
+external/bsd/tcpdump/dist/print-rx.c            up to 1.7
+external/bsd/tcpdump/dist/print-sctp.c          up to 1.8
+external/bsd/tcpdump/dist/print-sflow.c         up to 1.8
+external/bsd/tcpdump/dist/print-sip.c           up to 1.7
+external/bsd/tcpdump/dist/print-sl.c            up to 1.7
+external/bsd/tcpdump/dist/print-sll.c           up to 1.8
+external/bsd/tcpdump/dist/print-slow.c          up to 1.8
+external/bsd/tcpdump/dist/print-smb.c           up to 1.7
+external/bsd/tcpdump/dist/print-smtp.c          up to 1.3
+external/bsd/tcpdump/dist/print-snmp.c          up to 1.6
+external/bsd/tcpdump/dist/print-stp.c           up to 1.7
+external/bsd/tcpdump/dist/print-sunatm.c        up to 1.6
+external/bsd/tcpdump/dist/print-sunrpc.c        up to 1.7
+external/bsd/tcpdump/dist/print-symantec.c      up to 1.6
+external/bsd/tcpdump/dist/print-syslog.c        up to 1.7
+external/bsd/tcpdump/dist/print-tcp.c           up to 1.8
+external/bsd/tcpdump/dist/print-telnet.c        up to 1.7
+external/bsd/tcpdump/dist/print-tftp.c          up to 1.7
+external/bsd/tcpdump/dist/print-timed.c         up to 1.6
+external/bsd/tcpdump/dist/print-tipc.c          up to 1.3
+external/bsd/tcpdump/dist/print-token.c         up to 1.6
+external/bsd/tcpdump/dist/print-udld.c          up to 1.3
+external/bsd/tcpdump/dist/print-udp.c           up to 1.8
+external/bsd/tcpdump/dist/print-usb.c           up to 1.3
+external/bsd/tcpdump/dist/print-vjc.c           up to 1.6
+external/bsd/tcpdump/dist/print-vqp.c           up to 1.6
+external/bsd/tcpdump/dist/print-vrrp.c          up to 1.6
+external/bsd/tcpdump/dist/print-vtp.c           up to 1.3
+external/bsd/tcpdump/dist/print-vxlan-gpe.c     up to 1.3
+external/bsd/tcpdump/dist/print-vxlan.c         up to 1.3
+external/bsd/tcpdump/dist/print-wb.c            up to 1.7
+external/bsd/tcpdump/dist/print-zephyr.c        up to 1.7
+external/bsd/tcpdump/dist/print-zeromq.c        up to 1.3
+external/bsd/tcpdump/dist/print.c               up to 1.3
+external/bsd/tcpdump/dist/print.h               up to 1.1.1.1
+external/bsd/tcpdump/dist/route6d.h             delete
+external/bsd/tcpdump/dist/rpc_auth.h            up to 1.1.1.3
+external/bsd/tcpdump/dist/rpc_msg.h             up to 1.1.1.3
+external/bsd/tcpdump/dist/rpl.h                 up to 1.1.1.2
+external/bsd/tcpdump/dist/rx.h                  delete
+external/bsd/tcpdump/dist/sctpConstants.h       delete
+external/bsd/tcpdump/dist/sctpHeader.h          delete
+external/bsd/tcpdump/dist/setsignal.c           up to 1.6
+external/bsd/tcpdump/dist/setsignal.h           up to 1.1.1.3
+external/bsd/tcpdump/dist/signature.c           up to 1.7
+external/bsd/tcpdump/dist/signature.h           up to 1.1.1.4
+external/bsd/tcpdump/dist/slcompress.h          up to 1.1.1.3
+external/bsd/tcpdump/dist/slip.h                delete
+external/bsd/tcpdump/dist/sll.h                 delete
+external/bsd/tcpdump/dist/smb.h                 up to 1.1.1.4
+external/bsd/tcpdump/dist/smbutil.c             up to 1.5
+external/bsd/tcpdump/dist/strcasecmp.c          delete
+external/bsd/tcpdump/dist/strtoaddr.c           up to 1.3
+external/bsd/tcpdump/dist/strtoaddr.h           up to 1.1.1.1
+external/bsd/tcpdump/dist/tcp.h                 up to 1.8
+external/bsd/tcpdump/dist/tcpdump-stdinc.h      delete
+external/bsd/tcpdump/dist/tcpdump.1.in          up to 1.12
+external/bsd/tcpdump/dist/tcpdump.c             up to 1.15
+external/bsd/tcpdump/dist/telnet.h              delete
+external/bsd/tcpdump/dist/tests/3560_CDP.pcap   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/802.1D_spanning_tree.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/802.1w_rapid_STP.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/AoE_Linux.pcap  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/DECnet_Phone.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/DTP.pcap        up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/EIGRP_adjacency.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/EIGRP_goodbye.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/EIGRP_subnet_down.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/EIGRP_subnet_up.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/HDLC.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/HSRP_coup.pcap  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/HSRP_election.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/HSRP_failover.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/IGMP_V1.pcap    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/IGMP_V2.pcap    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ISAKMP_sa_setup.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ISIS_external_lsp.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ISIS_level1_adjacency.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ISIS_level2_adjacency.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ISIS_p2p_adjacency.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/LACP.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/LLDP_and_CDP.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/MSTP_Intra-Region_BPDUs.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/OLSRv1_HNA_sgw_1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/OLSRv1_HNA_sgw_1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/OSPFv3_NBMA_adjacencies.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/OSPFv3_broadcast_adjacency.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/OSPFv3_multipoint_adjacencies.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/OSPFv3_with_AH.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/PIM-DM_pruning.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/PIM-SM_join_prune.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/PIM_register_register-stop.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/PIMv2_bootstrap.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/PIMv2_hellos.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/RADIUS-RFC4675.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/RADIUS-RFC5176.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/RADIUS-port1700.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/RADIUS.pcap     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/TESTLIST        up to 1.1.1.7
+external/bsd/tcpdump/dist/tests/TESTonce        up to 1.1.1.5
+external/bsd/tcpdump/dist/tests/TESTrun.sh      up to 1.1.1.5
+external/bsd/tcpdump/dist/tests/UDLD.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/aarp-heapoverflow-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/aarp-heapoverflow-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/aarp-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/aarp-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ahcp-vv.out     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ahcp.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/aoe_1-v.out     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/aoe_1.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/arp-too-long-tha.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/arp-too-long-tha.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/atm-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/atm-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/atm-oam-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/atm-oam-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/babel1.out      up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/babel1v.out     up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/babel_auth.out  up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/babel_rtt.out   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/babel_rtt.pcap  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bad-ipv4-version-pgm-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bad-ipv4-version-pgm-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-md5-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-md5.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-md5.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-sha1-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-sha1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-sha1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-simple-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-simple.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bfd-raw-auth-simple.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bgp-aigp.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bgp-aigp.pcap   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bgp-large-community.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bgp-large-community.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/bgp_infloop-v.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/bgp_vpn_attrset.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/calm-fast-mac-lookup-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/calm-fast-mac-lookup-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cdp-v.out       up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/crypto.sh       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/cve-2014-8767-OLSR.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve-2014-8767-OLSR.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve-2014-8768-Geonet.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve-2014-8768-Geonet.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve-2014-8769-AODV.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve-2014-8769-AODV.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve2015-0261-crash.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/cve2015-0261-crash.pcap up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/cve2015-0261-ipv6.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/cve2015-0261-ipv6.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v4_longer.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v4_longer.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v4_simple.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v4_simple.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v6_longer.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v6_longer.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v6_simple.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/dccp_partial_csum_v6_simple.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/decnet.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcp-mud.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcp-mud.pcap   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcp-rfc3004-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcp-rfc3004.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcp-rfc5859-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcp-rfc5859.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcpv6-mud.out  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dhcpv6-mud.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dio.out         delete
+external/bsd/tcpdump/dist/tests/dio.pcap        delete
+external/bsd/tcpdump/dist/tests/dnssec-vv.out   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dnssec.pcap     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/dtp-v.out       up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/dvmrp.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/eigrp1-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/eigrp2-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/eigrp3-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/eigrp4-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/evb.out         up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/forces1vvv.out  up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/forces1vvvv.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/forces2v.out    delete
+external/bsd/tcpdump/dist/tests/frf15-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/frf15-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/geneve-tcp.out  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/geneve-vni.out  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/geneve-vv.out   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/geneve.pcap     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/geonet-mac-lookup-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/geonet-mac-lookup-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/gre-heapoverflow-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/gre-heapoverflow-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/gre-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/gre-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hdlc1.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hdlc2.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hdlc3.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hdlc4.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hdlc_slarp.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heap-overflow-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heap-overflow-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heap-overflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heap-overflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-EXTRACT_16BITS.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-EXTRACT_16BITS.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-atalk_print.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-atalk_print.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-in_checksum.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-in_checksum.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-ip_print_demux.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-ip_print_demux.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-ppp_hdlc_if_print.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-ppp_hdlc_if_print.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-q933_printq.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-q933_printq.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-sl_if_print.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-sl_if_print.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-tcp_print.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/heapoverflow-tcp_print.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hncp.out        up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/hncp.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hsrp_1-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hsrp_1.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hsrp_2-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/hsrp_3-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/icmpv6_opt24-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/icmpv6_opt24.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ieee802.11_exthdr.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/ieee802.11_rx-stbc.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/igmpv1.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/igmpv2.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ikev2pI2-segfault-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ikev2pI2-segfault.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ikev2pI2-segfault.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipcomp-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipcomp-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6-bad-version.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6-bad-version.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6-routing-header.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6-routing-header.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6hdr-heapoverflow-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6hdr-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ipv6hdr-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isakmp5-v.out   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-1-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-1-v.sh up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-2-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-3-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis-seg-fault-3.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_1-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_1.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_2-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_3-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_4-v.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_infloop-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_poi.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_poi.pcap   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_poi2.out   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isis_poi2.pcap  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isoclns-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isoclns-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isoclns-heapoverflow-3.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isoclns-heapoverflow-3.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isoclns-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isoclns-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isup.out        up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isup.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/isupvv.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/juniper_header-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/juniper_header-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday1.out       up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/kday1.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday2.out       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/kday2.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday3.out       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/kday3.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday4.out       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/kday4.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday5.out       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/kday5.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday6.out       up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/kday6.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday7.out       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/kday7.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/kday8.out       up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/kday8.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lacp-ev.out     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ldp_infloop.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lisp_eid_notify.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lisp_eid_notify.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lisp_eid_register.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lisp_eid_register.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lisp_ipv6.out   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lisp_ipv6.pcap  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/llc-xid-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/llc-xid-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lldp_cdp-ev.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/lldp_mudurl-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lldp_mudurl-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lldp_mudurl.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lmp-v.sh        up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/loopback.out    up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/loopback.pcap   up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lspping-fec-ldp-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lspping-fec-ldp-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lspping-fec-ldp.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lspping-fec-rsvp-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lspping-fec-rsvp-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/lspping-fec-rsvp.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/medsa-e.out     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/medsa.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/medsa.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mpbgp-linklocal-nexthop.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/mpls-label-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mpls-label-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mpls-traceroute-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mpls-traceroute.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mrinfo_query.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mstp-v.out      up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/mtrace.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/mtrace.pcap     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nflog-e.sh      up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/nfs-seg-fault-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nfs-seg-fault-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nsh-over-vxlan-gpe-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nsh-over-vxlan-gpe-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nsh-over-vxlan-gpe-vvv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nsh-over-vxlan-gpe.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/nsh-over-vxlan-gpe.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/of10_7050q-v.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/of10_7050q.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/of10_7050sx_bsn-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/of10_7050sx_bsn.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/of10_p3295-vv.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/of10_s4810-vvvv.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/ospf2-seg-fault-1-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf2-seg-fault-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf3_ah-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf3_auth-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf3_auth.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf3_bc-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf3_mp-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/ospf3_nbma-vv.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/otv-heapoverflow-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/otv-heapoverflow-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/otv-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/otv-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-invalid-version-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-invalid-version-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-invalid-version-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-invalid-version-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-ng-invalid-vers-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-ng-invalid-vers-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-ng-invalid-vers-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pcap-ng-invalid-vers-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pimv2_bootstrap-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pimv2_dm-v.out  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pimv2_hellos-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pimv2_register-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/pimv2_sm-v.out  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/print-A.out     up to 1.1.1.4
+external/bsd/tcpdump/dist/tests/print-AA.out    up to 1.1.1.4
+external/bsd/tcpdump/dist/tests/print-capX.out  up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/print-capXX.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/print-flags.pcap up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/print-x.out     up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/print-xx.out    up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/q933-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/q933-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/radiotap-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/radiotap-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/radius-port1700-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/radius-rfc4675-v.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/radius-rfc5176-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/radius-v.out    up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/relts-0x80000000.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/relts-0x80000000.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/resp_1.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/resp_1_benchmark.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/resp_2.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/resp_2_inline.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/resp_3.out      up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/resp_3_malicious.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rpl-14-dao.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rpl-14-daovvv.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/rpl-19-pickdag.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/rpl-19-pickdag.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rpl-19-pickdagvvv.out up to 1.1.1.3
+external/bsd/tcpdump/dist/tests/rpl-26-senddaoack.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rpl-26-senddaovv.out up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/rpvst-v.out     up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rpvstp-trunk-native-vid5.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rstp-v.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rsvp-inf-loop-2-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rsvp-inf-loop-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rsvp_infloop-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rtp-seg-fault-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rtp-seg-fault-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rtp-seg-fault-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/rtp-seg-fault-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/scps_invalid.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/scps_invalid.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/snmp-heapoverflow-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/snmp-heapoverflow-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/snmp-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/snmp-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/spb_bpduv4-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-2.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-2.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-3.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-3.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-4.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-4.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-5.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-heapoverflow-5.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/stp-v.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/tcp-auth-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/tcp-auth-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/tcp_header_heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/tcp_header_heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/tftp-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/tftp-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/trunc_aack.out  up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/truncated-aack.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/udld-inf-loop-1-v.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/udld-inf-loop-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/udld-v.out      up to 1.1.1.2
+external/bsd/tcpdump/dist/tests/udp-length-heapoverflow.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/udp-length-heapoverflow.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/unaligned-nfs-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/unaligned-nfs-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/vrrp-v.out      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/vrrp.out        up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/vrrp.pcap       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/vxlan.out       up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/vxlan.pcap      up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/zmtp1-inf-loop-1.out up to 1.1.1.1
+external/bsd/tcpdump/dist/tests/zmtp1-inf-loop-1.pcap up to 1.1.1.1
+external/bsd/tcpdump/dist/tftp.h                delete
+external/bsd/tcpdump/dist/timed.h               delete
+external/bsd/tcpdump/dist/timeval-operations.h  up to 1.1.1.1
+external/bsd/tcpdump/dist/token.h               delete
+external/bsd/tcpdump/dist/udp.h                 up to 1.8
+external/bsd/tcpdump/dist/util-print.c          up to 1.4
+external/bsd/tcpdump/dist/util.c                delete
+external/bsd/tcpdump/dist/vfprintf.c            up to 1.5
+external/bsd/tcpdump/dist/win32/Include/bittypes.h delete
+external/bsd/tcpdump/dist/win32/Include/errno.h delete
+external/bsd/tcpdump/dist/win32/Include/getopt.h delete
+external/bsd/tcpdump/dist/win32/Include/w32_fzs.h delete
+external/bsd/tcpdump/dist/win32/Src/getopt.c    delete
+external/bsd/tcpdump/dist/win32/prj/GNUmakefile up to 1.1.1.3
+external/bsd/tcpdump/dist/win32/prj/WinDump.dsp up to 1.1.1.4
+external/bsd/tcpdump/dist/win32/prj/WinDump.sln up to 1.1.1.1
+external/bsd/tcpdump/dist/win32/prj/WinDump.vcproj up to 1.1.1.1
+external/bsd/tcpdump/dist/win32/src/ether_ntohost.c up to 1.1.1.1
+external/bsd/tcpdump/include/config.h           up to 1.10
+
+	Update tcpdump to 4.9.0, fixing the following vulnerabilities:
+	OLSR: CVE-2014-8767
+	Geonet: CVE-2014-8768
+	PPP dissector: CVE-2014-9140
+	IPv6 mobility header check issue: CVE-2015-0261
+	kday packets: CVE-2015-2153, 2154, 2155
+	buffer overflows: CVE-2016-7922 CVE-2016-7923 CVE-2016-7924
+	CVE-2016-7925 CVE-2016-7926 CVE-2016-7927 CVE-2016-7928 CVE-2016-7929
+	CVE-2016-7930 CVE-2016-7931 CVE-2016-7932 CVE-2016-7933 CVE-2016-7934
+	CVE-2016-7935 CVE-2016-7936 CVE-2016-7937 CVE-2016-7938 CVE-2016-7939
+	CVE-2016-7940 CVE-2016-7973 CVE-2016-7974 CVE-2016-7975 CVE-2016-7983
+	CVE-2016-7984 CVE-2016-7985 CVE-2016-7986 CVE-2016-7992 CVE-2016-7993
+	CVE-2016-8574 CVE-2016-8575 CVE-2017-5202 CVE-2017-5203 CVE-2017-5204
+	CVE-2017-5205 CVE-2017-5341 CVE-2017-5342 CVE-2017-5482 CVE-2017-5483
+	CVE-2017-5484 CVE-2017-5485 CVE-2017-5486
+	[spz, ticket #1362]
 
