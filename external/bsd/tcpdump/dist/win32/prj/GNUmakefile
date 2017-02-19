@@ -21,8 +21,6 @@ CFLAGS = -I ${PCAP_DIR}/wpcap/libpcap/bpf \
 	-DHAVE_PCAP_DUMP_FTELL=1 -DHAVE_BPF_DUMP=1 \
 	-DHAVE_PCAP_DUMP_FLUSH=1 -DHAVE_PCAP_FINDALLDEVS=1 \
 	-DHAVE_PCAP_IF_T=1 -DHAVE_PCAP_LIB_VERSION=1 \
-	-DSIZEOF_CHAR=1 -DSIZEOF_SHORT=2 -DSIZEOF_INT=4 \
-	-DSIZEOF_LONG_LONG=8 \
 	-D_U_="__attribute__((unused))" \
 	-D_WIN32_WINNT=0x0501 \
 	-mno-cygwin ${OPTFLAGS}
@@ -41,6 +39,7 @@ OBJS = \
 	../../missing/datalinks.o \
 	../../missing/strsep.o \
 	../../missing/inet_pton.o \
+	../../missing/getopt_long.o \
 	../../machdep.o \
 	../../oui.o \
 	../../parsenfsfh.o \
@@ -148,7 +147,6 @@ OBJS = \
 	../../smbutil.o \
 	../../tcpdump.o \
 	../../util.o \
-	../../Win32/src/getopt.o \
 	../../cpack.o \
 	../../ipproto.o \
 	../../l2vpn.o \
