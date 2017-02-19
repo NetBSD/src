@@ -17,40 +17,71 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * Format and print trivial file transfer protocol packets.
  */
+
+/* \summary: Trivial File Transfer Protocol (TFTP) printer */
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.39 2008-04-11 16:47:38 gianluca Exp (LBL)";
-#else
-__RCSID("$NetBSD: print-tftp.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
-#endif
+__RCSID("$NetBSD: print-tftp.c,v 1.2.20.1 2017/02/19 07:36:20 snj Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#ifdef SEGSIZE
-#undef SEGSIZE					/* SINIX sucks */
-#endif
-
-#include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
-#include "addrtoname.h"
+#include "netdissect.h"
 #include "extract.h"
-#include "tftp.h"
+
+/*
+ * Trivial File Transfer Protocol (IEN-133)
+ */
+
+/*
+ * Packet types.
+ */
+#define	RRQ	01			/* read request */
+#define	WRQ	02			/* write request */
+#define	DATA	03			/* data packet */
+#define	ACK	04			/* acknowledgement */
+#define	TFTP_ERROR	05			/* error code */
+#define OACK	06			/* option acknowledgement */
+
+struct	tftphdr {
+	unsigned short	th_opcode;		/* packet type */
+	union {
+		unsigned short	tu_block;	/* block # */
+		unsigned short	tu_code;	/* error code */
+		char	tu_stuff[1];	/* request packet stuff */
+	} th_u;
+	char	th_data[1];		/* data or error string */
+};
+
+#define	th_block	th_u.tu_block
+#define	th_code		th_u.tu_code
+#define	th_stuff	th_u.tu_stuff
+#define	th_msg		th_data
+
+/*
+ * Error codes.
+ */
+#define	EUNDEF		0		/* not defined */
+#define	ENOTFOUND	1		/* file not found */
+#define	EACCESS		2		/* access violation */
+#define	ENOSPACE	3		/* disk full or allocation exceeded */
+#define	EBADOP		4		/* illegal TFTP operation */
+#define	EBADID		5		/* unknown transfer ID */
+#define	EEXISTS		6		/* file already exists */
+#define	ENOUSER		7		/* no such user */
+
+static const char tstr[] = " [|tftp]";
 
 /* op code to string mapping */
-static struct tok op2str[] = {
+static const struct tok op2str[] = {
 	{ RRQ,		"RRQ" },	/* read request */
 	{ WRQ,		"WRQ" },	/* write request */
 	{ DATA,		"DATA" },	/* data packet */
@@ -61,7 +92,7 @@ static struct tok op2str[] = {
 };
 
 /* error code to string mapping */
-static struct tok err2str[] = {
+static const struct tok err2str[] = {
 	{ EUNDEF,	"EUNDEF" },	/* not defined */
 	{ ENOTFOUND,	"ENOTFOUND" },	/* file not found */
 	{ EACCESS,	"EACCESS" },	/* access violation */
@@ -77,24 +108,28 @@ static struct tok err2str[] = {
  * Print trivial file transfer program requests
  */
 void
-tftp_print(register const u_char *bp, u_int length)
+tftp_print(netdissect_options *ndo,
+           register const u_char *bp, u_int length)
 {
 	register const struct tftphdr *tp;
 	register const char *cp;
 	register const u_char *p;
-	register int opcode, i;
-	static char tstr[] = " [|tftp]";
+	register int opcode;
+	u_int ui;
 
 	tp = (const struct tftphdr *)bp;
 
 	/* Print length */
-	printf(" %d", length);
+	ND_PRINT((ndo, " %d", length));
 
 	/* Print tftp request type */
-	TCHECK(tp->th_opcode);
+	if (length < 2)
+		goto trunc;
+	ND_TCHECK(tp->th_opcode);
 	opcode = EXTRACT_16BITS(&tp->th_opcode);
 	cp = tok2str(op2str, "tftp-#%d", opcode);
-	printf(" %s", cp);
+	length -= 2;
+	ND_PRINT((ndo, " %s", cp));
 	/* Bail if bogus opcode */
 	if (*cp == 't')
 		return;
@@ -103,64 +138,90 @@ tftp_print(register const u_char *bp, u_int length)
 
 	case RRQ:
 	case WRQ:
-	case OACK:
-		/*
-		 * XXX Not all arpa/tftp.h's specify th_stuff as any
-		 * array; use address of th_block instead
-		 */
-#ifdef notdef
-		p = (u_char *)tp->th_stuff;
-#else
-		p = (u_char *)&tp->th_block;
-#endif
-		putchar(' ');
-		/* Print filename or first option */
-		if (opcode != OACK)
-			putchar('"');
-		i = fn_print(p, snapend);
-		if (opcode != OACK)
-			putchar('"');
-
-		/* Print the mode (RRQ and WRQ only) and any options */
-		while ((p = (const u_char *)strchr((const char *)p, '\0')) != NULL) {
-			if (length <= (u_int)(p - (const u_char *)&tp->th_block))
-				break;
-			p++;
-			if (*p != '\0') {
-				putchar(' ');
-				fn_print(p, snapend);
-			}
-		}
-		
-		if (i)
+		p = (const u_char *)tp->th_stuff;
+		if (length == 0)
 			goto trunc;
+		ND_PRINT((ndo, " "));
+		/* Print filename */
+		ND_PRINT((ndo, "\""));
+		ui = fn_printztn(ndo, p, length, ndo->ndo_snapend);
+		ND_PRINT((ndo, "\""));
+		if (ui == 0)
+			goto trunc;
+		p += ui;
+		length -= ui;
+
+		/* Print the mode - RRQ and WRQ only */
+		if (length == 0)
+			goto trunc;	/* no mode */
+		ND_PRINT((ndo, " "));
+		ui = fn_printztn(ndo, p, length, ndo->ndo_snapend);
+		if (ui == 0)
+			goto trunc;
+		p += ui;
+		length -= ui;
+
+		/* Print options, if any */
+		while (length != 0) {
+			ND_TCHECK(*p);
+			if (*p != '\0')
+				ND_PRINT((ndo, " "));
+			ui = fn_printztn(ndo, p, length, ndo->ndo_snapend);
+			if (ui == 0)
+				goto trunc;
+			p += ui;
+			length -= ui;
+		}
+		break;
+
+	case OACK:
+		p = (const u_char *)tp->th_stuff;
+		/* Print options */
+		while (length != 0) {
+			ND_TCHECK(*p);
+			if (*p != '\0')
+				ND_PRINT((ndo, " "));
+			ui = fn_printztn(ndo, p, length, ndo->ndo_snapend);
+			if (ui == 0)
+				goto trunc;
+			p += ui;
+			length -= ui;
+		}
 		break;
 
 	case ACK:
 	case DATA:
-		TCHECK(tp->th_block);
-		printf(" block %d", EXTRACT_16BITS(&tp->th_block));
+		if (length < 2)
+			goto trunc;	/* no block number */
+		ND_TCHECK(tp->th_block);
+		ND_PRINT((ndo, " block %d", EXTRACT_16BITS(&tp->th_block)));
 		break;
 
 	case TFTP_ERROR:
 		/* Print error code string */
-		TCHECK(tp->th_code);
-		printf(" %s \"", tok2str(err2str, "tftp-err-#%d \"",
-				       EXTRACT_16BITS(&tp->th_code)));
+		if (length < 2)
+			goto trunc;	/* no error code */
+		ND_TCHECK(tp->th_code);
+		ND_PRINT((ndo, " %s", tok2str(err2str, "tftp-err-#%d \"",
+				       EXTRACT_16BITS(&tp->th_code))));
+		length -= 2;
 		/* Print error message string */
-		i = fn_print((const u_char *)tp->th_data, snapend);
-		putchar('"');
-		if (i)
+		if (length == 0)
+			goto trunc;	/* no error message */
+		ND_PRINT((ndo, " \""));
+		ui = fn_printztn(ndo, (const u_char *)tp->th_data, length, ndo->ndo_snapend);
+		ND_PRINT((ndo, "\""));
+		if (ui == 0)
 			goto trunc;
 		break;
 
 	default:
 		/* We shouldn't get here */
-		printf("(unknown #%d)", opcode);
+		ND_PRINT((ndo, "(unknown #%d)", opcode));
 		break;
 	}
 	return;
 trunc:
-	fputs(tstr, stdout);
+	ND_PRINT((ndo, "%s", tstr));
 	return;
 }
