@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.909.2.14.2.18 2016/10/05 10:23:24 bouyer Exp $
+#	$NetBSD: 3RDPARTY,v 1.909.2.14.2.19 2017/02/19 07:35:22 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1064,8 +1064,8 @@ Initial import uses a pre-release with a number of bug fixes to avoid
 unnecessary local changes.
 
 Package:	tcpdump
-Version:	4.1.1
-Current Vers:	4.1.1
+Version:	4.9.0
+Current Vers:	4.9.0
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
