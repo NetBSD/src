@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.10 2017/02/20 05:40:03 rin Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.11 2017/02/20 05:43:12 rin Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -185,6 +185,8 @@
     || defined(USAGI_LIBINET6)
 #ifndef NO_IPV6
 #define HAS_IPV6
+#endif
+#if !defined(NO_IPV6) || defined(__NetBSD__)
 #define HAVE_GETIFADDRS
 #endif
 #endif
