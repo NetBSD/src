@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.721 2017/02/16 08:44:47 knakahara Exp $
+# $NetBSD: mi,v 1.722 2017/02/20 03:14:42 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -91,7 +91,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/c063				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/db				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/lib/libc/gen/exect			tests-kernel-tests	compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libc/gen/exect			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/gen/execve			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/gen/posix_spawn			tests-kernel-tests	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc/getaddrinfo			tests-obsolete		obsolete
