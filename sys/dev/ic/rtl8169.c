@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.148 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.149 2017/02/20 06:46:41 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.148 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.149 2017/02/20 06:46:41 ozaki-r Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -869,6 +869,7 @@ re_attach(struct rtk_softc *sc)
 	 * Call MI attach routine.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -1496,8 +1497,8 @@ re_intr(void *arg)
 		}
 	}
 
-	if (handled && !IFQ_IS_EMPTY(&ifp->if_snd))
-		re_start(ifp);
+	if (handled)
+		if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->rnd_source, status);
 
