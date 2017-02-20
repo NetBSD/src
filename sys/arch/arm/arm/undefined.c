@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.56 2015/04/15 13:22:50 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.57 2017/02/20 17:25:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.56 2015/04/15 13:22:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.57 2017/02/20 17:25:41 skrll Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -432,8 +432,8 @@ undefinedinstruction(trapframe_t *tf)
 
 	if (uh == NULL) {
 		/* Fault has not been handled */
-		ksiginfo_t ksi; 
-		
+		ksiginfo_t ksi;
+
 #ifdef VERBOSE_ARM32
 		s = spltty();
 
@@ -454,7 +454,7 @@ undefinedinstruction(trapframe_t *tf)
 
 		splx(s);
 #endif
-        
+
 		if ((fault_code & FAULT_USER) == 0) {
 #ifdef DDB
 			db_printf("Undefined instruction %#x in kernel at %#lx (LR %#x SP %#x)\n",
