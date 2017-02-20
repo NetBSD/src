@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2017/02/14 01:16:43 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2017/02/20 05:46:12 rin Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
 
-CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH -DNO_EAI \
+CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
 	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
