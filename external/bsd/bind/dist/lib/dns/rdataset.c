@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.6.10.1 2015/07/17 04:31:33 snj Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.6.10.1.2.1 2017/02/20 16:27:17 sborrill Exp $	*/
 
 /*
  * Copyright (C) 2004-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -340,6 +340,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	 */
 
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
+	REQUIRE(rdataset->methods != NULL);
 	REQUIRE(countp != NULL);
 	REQUIRE((order == NULL) == (order_arg == NULL));
 	REQUIRE(cctx != NULL && cctx->mctx != NULL);
