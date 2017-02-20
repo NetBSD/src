@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.98 2016/06/28 16:34:40 christos Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.99 2017/02/20 01:38:28 khorben Exp $");
 #endif
 
 #include <sys/types.h>
@@ -740,14 +740,10 @@ find_passphrase(FILE *passfp, const char *id, char *passphrase, size_t size, int
 	}
 	for (i = 0 ; i < attempts ; i++) {
 		(void) snprintf(prompt, sizeof(prompt), "Enter passphrase for %.16s: ", id);
-		if ((cp = getpass(prompt)) == NULL) {
-			break;
-		}
+		cp = getpass(prompt);
 		cc = snprintf(buf, sizeof(buf), "%s", cp);
 		(void) snprintf(prompt, sizeof(prompt), "Repeat passphrase for %.16s: ", id);
-		if ((cp = getpass(prompt)) == NULL) {
-			break;
-		}
+		cp = getpass(prompt);
 		cc = snprintf(passphrase, size, "%s", cp);
 		if (strcmp(buf, passphrase) == 0) {
 			(void) memset(buf, 0x0, sizeof(buf));
