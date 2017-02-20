@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.22 2017/02/20 06:18:48 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.23 2017/02/20 06:48:49 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.22 2017/02/20 06:18:48 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.23 2017/02/20 06:48:49 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5897,13 +5897,14 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 
 volatile lwpid_t the_lwp_id = 0;
 
-static void
+static void __used
 lwp_main_func(void *arg)
 {
 	the_lwp_id = _lwp_self();
 	_lwp_exit();
 }
 
+#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr0_dont_inherit_lwp);
 ATF_TC_HEAD(dbregs_dr0_dont_inherit_lwp, tc)
 {
@@ -6030,7 +6031,9 @@ ATF_TC_BODY(dbregs_dr0_dont_inherit_lwp, tc)
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+#endif
 
+#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr1_dont_inherit_lwp);
 ATF_TC_HEAD(dbregs_dr1_dont_inherit_lwp, tc)
 {
@@ -6157,7 +6160,9 @@ ATF_TC_BODY(dbregs_dr1_dont_inherit_lwp, tc)
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+#endif
 
+#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr2_dont_inherit_lwp);
 ATF_TC_HEAD(dbregs_dr2_dont_inherit_lwp, tc)
 {
@@ -6284,7 +6289,9 @@ ATF_TC_BODY(dbregs_dr2_dont_inherit_lwp, tc)
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+#endif
 
+#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr3_dont_inherit_lwp);
 ATF_TC_HEAD(dbregs_dr3_dont_inherit_lwp, tc)
 {
@@ -6411,7 +6418,9 @@ ATF_TC_BODY(dbregs_dr3_dont_inherit_lwp, tc)
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+#endif
 
+#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr6_dont_inherit_lwp);
 ATF_TC_HEAD(dbregs_dr6_dont_inherit_lwp, tc)
 {
@@ -6538,7 +6547,9 @@ ATF_TC_BODY(dbregs_dr6_dont_inherit_lwp, tc)
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+#endif
 
+#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr7_dont_inherit_lwp);
 ATF_TC_HEAD(dbregs_dr7_dont_inherit_lwp, tc)
 {
@@ -6665,6 +6676,7 @@ ATF_TC_BODY(dbregs_dr7_dont_inherit_lwp, tc)
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+#endif
 
 ATF_TP_ADD_TCS(tp)
 {
