@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.22 2017/02/17 21:22:02 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.23 2017/02/20 03:37:24 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -31,6 +31,7 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - fix more calls for netbsd32 compat
  - research ipkdb(4)
  - research kgdb(4)
+ - check 64-bit debugger on 64-bit kernel tracing capabilities of 32-bit tracee
 
 and of course: fix as many bugs as possible.
 
