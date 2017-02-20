@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.191 2017/02/17 04:31:34 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.192 2017/02/20 04:23:11 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.191 2017/02/17 04:31:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.192 2017/02/20 04:23:11 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1512,10 +1512,6 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		break;
 	case RTM_ADD:
 		/*
-		 * FIXME NOMPSAFE: the rtentry is updated with the existence
-		 * of refeferences of it.
-		 */
-		/*
 		 * XXX it looks just reverting rt_ifa replaced by ifa_rtrequest
 		 * called via rtrequest1. Can we just prevent the replacement
 		 * somehow and remove the following code? And also doesn't
@@ -1524,14 +1520,30 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if (rt->rt_ifa != ifa) {
 			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
 				rt->rt_ifa);
-			if (rt->rt_ifa->ifa_rtrequest != NULL) {
-				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt,
-				    &info);
+#ifdef NET_MPSAFE
+			KASSERT(!cpu_softintr_p());
+
+			error = rt_update_prepare(rt);
+			if (error == 0) {
+#endif
+				if (rt->rt_ifa->ifa_rtrequest != NULL) {
+					rt->rt_ifa->ifa_rtrequest(RTM_DELETE,
+					    rt, &info);
+				}
+				rt_replace_ifa(rt, ifa);
+				rt->rt_ifp = ifa->ifa_ifp;
+				if (ifa->ifa_rtrequest != NULL)
+					ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+#ifdef NET_MPSAFE
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
 			}
-			rt_replace_ifa(rt, ifa);
-			rt->rt_ifp = ifa->ifa_ifp;
-			if (ifa->ifa_rtrequest != NULL)
-				ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+#endif
 		}
 		rt_newmsg(cmd, rt);
 		rt_unref(rt);
