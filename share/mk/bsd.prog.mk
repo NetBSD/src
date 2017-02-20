@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.302 2017/02/08 03:44:41 kamil Exp $
+#	$NetBSD: bsd.prog.mk,v 1.303 2017/02/20 16:05:34 rin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -118,6 +118,7 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	crypto_mdc2 \
 	crypto_rc5 \
 	curses \
+	cxx \
 	dbm \
 	des \
 	dns \
