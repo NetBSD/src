@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.9 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.10 2017/02/20 05:40:03 rin Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -187,6 +187,7 @@
 #define HAS_IPV6
 #define HAVE_GETIFADDRS
 #endif
+#endif
 
 #if (defined(__FreeBSD_version) && __FreeBSD_version >= 300000) \
     || (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 103000000) \
@@ -210,8 +211,6 @@
     || (defined(OpenBSD) && OpenBSD >= 200811)	/* OpenBSD 4.4 */
 #define HAVE_POSIX_GETPW_R
 #endif
-#endif
-
 #endif
 
  /*
