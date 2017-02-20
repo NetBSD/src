@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.22 2014/09/13 18:08:38 matt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.23 2017/02/20 10:34:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -81,7 +81,7 @@ extern db_regs_t *ddb_regp;
 #define T_BREAKPOINT			(1)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
-#define IS_WATCHPOINT_TRAP(type, code)	(0)
+#define	IS_WATCHPOINT_TRAP(type, code)	(0)
 
 #define	inst_trap_return(ins)	(0)
 /* ldmxx reg, {..., pc}
