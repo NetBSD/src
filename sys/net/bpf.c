@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.215 2017/02/19 13:58:42 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.216 2017/02/20 03:08:38 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.215 2017/02/19 13:58:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216 2017/02/20 03:08:38 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1380,11 +1380,13 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		}
 		mutex_enter(d->bd_mtx);
 		if (bp != d->bd_bif) {
-			if (d->bd_bif)
+			if (d->bd_bif) {
 				/*
 				 * Detach if attached to something else.
 				 */
 				bpf_detachd(d);
+				BPFIF_DLIST_ENTRY_INIT(d);
+			}
 
 			bpf_attachd(d, bp);
 		}
@@ -2239,6 +2241,7 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 		return EINVAL;
 	opromisc = d->bd_promisc;
 	bpf_detachd(d);
+	BPFIF_DLIST_ENTRY_INIT(d);
 	bpf_attachd(d, bp);
 	reset_d(d);
 	if (opromisc) {
