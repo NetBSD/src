@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.157 2017/02/20 00:29:37 pgoyette Exp $
+#	$NetBSD: special,v 1.158 2017/02/20 00:33:53 pgoyette Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -296,6 +296,7 @@
 ./etc/rc.d/timed		type=file mode=0555
 ./etc/rc.d/tpctl		type=file mode=0555
 ./etc/rc.d/ttys			type=file mode=0555
+./etc/rc.d/unbound		type=file mode=0555
 ./etc/rc.d/veriexec		type=file mode=0555
 ./etc/rc.d/virecover		type=file mode=0555
 ./etc/rc.d/wdogctl		type=file mode=0555
