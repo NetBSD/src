@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.158 2017/02/20 00:33:53 pgoyette Exp $
+#	$NetBSD: special,v 1.159 2017/02/20 04:02:53 pgoyette Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -276,11 +276,6 @@
 ./etc/rc.d/routed		type=file mode=0555
 ./etc/rc.d/rpcbind		type=file mode=0555
 ./etc/rc.d/rtadvd		type=file mode=0555
-./etc/saslc.d			type=dir  mode=0755
-./etc/saslc.d/postfix		type=dir  mode=0755
-./etc/saslc.d/postfix/mech	type=dir  mode=0755
-./etc/saslc.d/saslc		type=dir  mode=0755
-./etc/saslc.d/saslc/mech	type=dir  mode=0755
 ./etc/rc.d/rtclocaltime		type=file mode=0555
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
@@ -316,6 +311,11 @@
 ./etc/resolv.conf		type=file mode=0644 optional
 ./etc/rpc			type=file mode=0644
 ./etc/rtadvd.conf		type=file mode=0644 optional
+./etc/saslc.d			type=dir  mode=0755
+./etc/saslc.d/postfix		type=dir  mode=0755
+./etc/saslc.d/postfix/mech	type=dir  mode=0755
+./etc/saslc.d/saslc		type=dir  mode=0755
+./etc/saslc.d/saslc/mech	type=dir  mode=0755
 ./etc/security			type=file mode=0644
 ./etc/security.conf		type=file mode=0644
 ./etc/security.local		type=file mode=0644 optional
