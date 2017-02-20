@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.20 2017/02/20 05:40:51 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.21 2017/02/20 05:47:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.20 2017/02/20 05:40:51 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.21 2017/02/20 05:47:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -245,15 +245,8 @@ ATF_TC_BODY(dbregs_preserve_dr0, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -329,15 +322,8 @@ ATF_TC_BODY(dbregs_preserve_dr1, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -413,15 +399,8 @@ ATF_TC_BODY(dbregs_preserve_dr2, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -497,15 +476,8 @@ ATF_TC_BODY(dbregs_preserve_dr3, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -582,15 +554,8 @@ ATF_TC_BODY(dbregs_preserve_dr0_yield, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -672,15 +637,8 @@ ATF_TC_BODY(dbregs_preserve_dr1_yield, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -762,15 +720,8 @@ ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -852,15 +803,8 @@ ATF_TC_BODY(dbregs_preserve_dr3_yield, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -942,15 +886,8 @@ ATF_TC_BODY(dbregs_preserve_dr0_continued, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1038,15 +975,8 @@ ATF_TC_BODY(dbregs_preserve_dr1_continued, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1134,15 +1064,8 @@ ATF_TC_BODY(dbregs_preserve_dr2_continued, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -1230,15 +1153,8 @@ ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 #endif
 	struct dbreg r1;
 	struct dbreg r2;
-	/* Number of available CPU Debug Registers on AMD64 */
-	const size_t len = 16;
 	size_t i;
 	int watchme;
-
-	printf("Assert that known number of Debug Registers (%zu) is valid\n",
-	    len);
-	ATF_REQUIRE_EQ(__arraycount(r1.dr), len);
-	ATF_REQUIRE_EQ(__arraycount(r2.dr), len);
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
