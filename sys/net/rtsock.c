@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.201 2017/02/17 02:56:53 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.202 2017/02/21 04:00:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.201 2017/02/17 02:56:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.202 2017/02/21 04:00:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1220,8 +1220,8 @@ again:
 		if (rw->w_needed <= 0 && rw->w_where) {
 			if (rw->w_tmemsize < len) {
 				if (rw->w_tmem)
-					free(rw->w_tmem, M_RTABLE);
-				rw->w_tmem = malloc(len, M_RTABLE, M_NOWAIT);
+					kmem_free(rw->w_tmem, rw->w_tmemsize);
+				rw->w_tmem = kmem_alloc(len, KM_SLEEP);
 				if (rw->w_tmem)
 					rw->w_tmemsize = len;
 				else
@@ -1746,7 +1746,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 again:
 	/* we may return here if a later [re]alloc of the t_mem buffer fails */
 	if (w.w_tmemneeded) {
-		w.w_tmem = malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
+		w.w_tmem = kmem_alloc(w.w_tmemneeded, KM_SLEEP);
 		w.w_tmemsize = w.w_tmemneeded;
 		w.w_tmemneeded = 0;
 	}
@@ -1808,7 +1808,7 @@ again:
 		goto again;
 
 	if (w.w_tmem)
-		free(w.w_tmem, M_RTABLE);
+		kmem_free(w.w_tmem, w.w_tmemsize);
 	w.w_needed += w.w_given;
 	if (where) {
 		*given = (char *)w.w_where - (char *)where;
