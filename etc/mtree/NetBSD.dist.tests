@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.141 2017/02/20 03:14:42 kamil Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.142 2017/02/21 10:40:30 kre Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -407,6 +407,7 @@
 ./usr/tests/usr.bin/mixerctl
 ./usr/tests/usr.bin/mkdep
 ./usr/tests/usr.bin/nbperf
+./usr/tests/usr.bin/pkill
 ./usr/tests/usr.bin/pr
 ./usr/tests/usr.bin/rump_server
 ./usr/tests/usr.bin/sdiff
