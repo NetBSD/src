@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.238 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.239 2017/02/21 03:59:31 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.238 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.239 2017/02/21 03:59:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.238 2017/02/14 03:05:06 ozaki-r E
 #include "agr.h"
 
 #include <sys/sysctl.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/ioctl.h>
@@ -1271,8 +1270,7 @@ ether_addmulti(const struct sockaddr *sa, struct ethercom *ec)
 		goto out;
 	}
 	/*
-	 * New address or range; malloc a new multicast record
-	 * and link it into the interface's multicast list.
+	 * Link a new multicast record into the interface's multicast list.
 	 */
 	memcpy(enm->enm_addrlo, addrlo, 6);
 	memcpy(enm->enm_addrhi, addrhi, 6);
