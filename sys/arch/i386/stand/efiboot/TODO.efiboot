@@ -3,7 +3,6 @@
  * boot from CD/DVD (bootable from CD/DVD, but root fs not found.)
  * load boot.cfg from EFI system partition (FAT32)
  * fix module_init(). need to allocate memory for modules.
- * bootia32.efi can load kernel, but can't start kernel
 
 - kernel
  * handle UEFI variables (/dev/efivar)
