@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.2 2017/02/21 10:53:37 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -32,18 +32,40 @@
 
 struct x86_boot_params boot_params;
 
+void startprog32_start(physaddr_t, uint32_t, uint32_t *, physaddr_t,
+    physaddr_t, physaddr_t, u_long, void *);
+extern void (*startprog32)(physaddr_t, uint32_t, uint32_t *, physaddr_t,
+    physaddr_t, physaddr_t, u_long, void *);
+extern u_int startprog32_size;
+
 void
 efi_md_init(void)
 {
-	/* Nothing to do */
+	EFI_STATUS status;
+	EFI_PHYSICAL_ADDRESS addr = EFI_ALLOCATE_MAX_ADDRESS;
+	u_int sz = EFI_SIZE_TO_PAGES(startprog32_size);
+
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
+	    EfiLoaderData, sz, &addr);
+	if (EFI_ERROR(status))
+		Panic(L"%a: AllocatePages() failed: %d page(s): %r",
+		    __func__, sz, status);
+	startprog32 = (void *)(u_long)addr;
+	CopyMem(startprog32, startprog32_start, startprog32_size);
 }
 
+/* ARGSUSED */
 void
 startprog(physaddr_t entry, uint32_t argc, uint32_t *argv, physaddr_t sp)
 {
-	Panic(L"%a: not implemented", __func__);
+
+	(*startprog32)(entry, argc, argv,
+	    (physaddr_t)startprog32 + startprog32_size,
+	    efi_kernel_start, efi_kernel_start + efi_loadaddr,
+	    efi_kernel_size, startprog32);
 }
 
+/* ARGSUSED */
 void
 multiboot(physaddr_t entry, physaddr_t header, physaddr_t sp)
 {
