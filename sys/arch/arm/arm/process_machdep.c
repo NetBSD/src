@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30 2014/08/13 21:41:32 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.31 2017/02/21 07:40:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.30 2014/08/13 21:41:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.31 2017/02/21 07:40:28 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -165,7 +165,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 		regs->r_pc |= 1;
 #endif
 
-	return(0);
+	return 0;
 }
 
 int
@@ -209,7 +209,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	tf->tf_r15 = regs->r_pc;
 #endif
 
-	return(0);
+	return 0;
 }
 
 int
@@ -224,7 +224,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 	pcb->pcb_vfp = regs->fpr_vfp;
 	pcb->pcb_vfp.vfp_fpexc &= ~VFP_FPEXC_EN;
 #endif
-	return(0);
+	return 0;
 }
 
 int
@@ -248,5 +248,5 @@ process_set_pc(struct lwp *l, void *addr)
 	tf->tf_r15 = (tf->tf_r15 & ~R15_PC) | (register_t)addr;
 #endif
 
-	return (0);
+	return 0;
 }
