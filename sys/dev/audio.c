@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.306 2017/02/14 09:41:29 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.307 2017/02/21 20:23:37 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.306 2017/02/14 09:41:29 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.307 2017/02/21 20:23:37 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -339,7 +339,8 @@ static void	audio_softintr_wr(void *);
 
 static int	audio_enter(dev_t, krw_t, struct audio_softc **);
 static void	audio_exit(struct audio_softc *);
-static int	audio_waitio(struct audio_softc *, kcondvar_t *);
+static int	audio_waitio(struct audio_softc *, kcondvar_t *,
+			     struct virtual_channel *);
 
 int audioclose(struct file *);
 int audioread(struct file *, off_t *, struct uio *, kauth_cred_t, int);
@@ -1516,8 +1517,10 @@ audio_exit(struct audio_softc *sc)
  * Wait for I/O to complete, releasing device lock.
  */
 static int
-audio_waitio(struct audio_softc *sc, kcondvar_t *chan)
+audio_waitio(struct audio_softc *sc, kcondvar_t *chan, struct virtual_channel *vc)
 {
+	struct audio_chan *vchan;
+	bool found = false;
 	int error;
 
 	KASSERT(mutex_owned(sc->sc_lock));
@@ -1525,6 +1528,16 @@ audio_waitio(struct audio_softc *sc, kcondvar_t *chan)
 
 	/* Wait for pending I/O to complete. */
 	error = cv_wait_sig(chan, sc->sc_lock);
+
+	found = false;
+	SIMPLEQ_FOREACH(vchan, &sc->sc_audiochan, entries) {
+		if (vchan->vc == vc) {
+			found = true;
+			break;
+		}
+	}
+	if (found == false)
+		error = EIO;
 
 	return error;
 }
@@ -2325,7 +2338,7 @@ audio_drain(struct audio_softc *sc, struct audio_chan *chan)
 			audio_stream_get_used(&vc->sc_mpr.s),
 			cb->drops));
 		mutex_exit(sc->sc_intr_lock);
-		error = audio_waitio(sc, &sc->sc_wchan);
+		error = audio_waitio(sc, &sc->sc_wchan, vc);
 		mutex_enter(sc->sc_intr_lock);
 		if (sc->sc_dying)
 			error = EIO;
@@ -2476,7 +2489,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 					 vc->sc_mpr.stamp, vc->sc_wstamp));
 				if (ioflag & IO_NDELAY)
 					return EWOULDBLOCK;
-				error = audio_waitio(sc, &sc->sc_rchan);
+				error = audio_waitio(sc, &sc->sc_rchan, vc);
 				if (sc->sc_dying)
 					error = EIO;
 				if (error)
@@ -2504,7 +2517,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 			if (ioflag & IO_NDELAY)
 				return EWOULDBLOCK;
 			DPRINTFN(2, ("audio_read: sleep used=%d\n", used));
-			error = audio_waitio(sc, &sc->sc_rchan);
+			error = audio_waitio(sc, &sc->sc_rchan, vc);
 			if (sc->sc_dying)
 				error = EIO;
 			if (error)
@@ -2832,7 +2845,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			mutex_exit(sc->sc_intr_lock);
 			if (ioflag & IO_NDELAY)
 				return EWOULDBLOCK;
-			error = audio_waitio(sc, &sc->sc_wchan);
+			error = audio_waitio(sc, &sc->sc_wchan, vc);
 			if (sc->sc_dying)
 				error = EIO;
 			if (error)
