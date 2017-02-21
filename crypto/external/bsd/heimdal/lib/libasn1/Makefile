@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2017/02/11 04:56:37 christos Exp $
+# $NetBSD: Makefile,v 1.5 2017/02/21 16:07:17 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -81,6 +81,5 @@ SUBDIR=	asn1_compile
 # function orders and since the profile code uses the function
 # number for label generation, we end up with one of two different
 # label orders. Disabling ASLR or optimization fixes it.
-# This happens only with -m32...
 COPTS.asn1_krb5_asn1.c+=-O0
 .endif
