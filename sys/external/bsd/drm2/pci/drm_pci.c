@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.13 2015/04/29 04:38:55 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.14 2017/02/21 14:19:40 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.13 2015/04/29 04:38:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.14 2017/02/21 14:19:40 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -232,16 +232,17 @@ drm_pci_irq_install(struct drm_device *dev, irqreturn_t (*handler)(void *),
     struct drm_bus_irq_cookie **cookiep)
 {
 	const struct pci_attach_args *const pa = drm_pci_attach_args(dev);
-	pci_intr_handle_t ih;
 	const char *intrstr;
 	void *ih_cookie;
 	char intrbuf[PCI_INTRSTR_LEN];
 
-	if (pci_intr_map(pa, &ih))
+	if (pci_intr_alloc(pa, &dev->intr_handles, NULL, 0))
 		return -ENOENT;
 
-	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-	ih_cookie = pci_intr_establish(pa->pa_pc, ih, IPL_DRM, handler, arg);
+	intrstr = pci_intr_string(pa->pa_pc, dev->intr_handles[0], intrbuf,
+	    sizeof(intrbuf));
+	ih_cookie = pci_intr_establish(pa->pa_pc, dev->intr_handles[0],
+	    IPL_DRM, handler, arg);
 	if (ih_cookie == NULL) {
 		aprint_error_dev(dev->dev,
 		    "couldn't establish interrupt at %s (%s)\n",
@@ -262,6 +263,7 @@ drm_pci_irq_uninstall(struct drm_device *dev,
 	const struct pci_attach_args *pa = drm_pci_attach_args(dev);
 
 	pci_intr_disestablish(pa->pa_pc, (void *)cookie);
+	pci_intr_release(pa->pa_pc, dev->intr_handles, 1);
 }
 
 static const char *
