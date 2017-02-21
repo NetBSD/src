@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.242 2017/02/11 15:37:30 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.243 2017/02/21 03:58:23 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.242 2017/02/11 15:37:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.243 2017/02/21 03:58:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.242 2017/02/11 15:37:30 roy Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -1515,7 +1515,6 @@ struct dadq {
 	int dad_arp_acount;	/* # of announcements */
 	struct callout dad_timer_ch;
 };
-MALLOC_JUSTDEFINE(M_IPARP, "ARP DAD", "ARP DAD Structure");
 
 static struct dadq_head dadq;
 static int dad_init = 0;
@@ -1613,14 +1612,17 @@ arp_dad_start(struct ifaddr *ifa)
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
 
+	dp = kmem_intr_alloc(sizeof(*dp), KM_NOSLEEP);
+
 	mutex_enter(&arp_dad_lock);
 	if (arp_dad_find(ifa) != NULL) {
 		mutex_exit(&arp_dad_lock);
 		/* DAD already in progress */
+		if (dp != NULL)
+			kmem_intr_free(dp, sizeof(*dp));
 		return;
 	}
 
-	dp = malloc(sizeof(*dp), M_IPARP, M_NOWAIT);
 	if (dp == NULL) {
 		mutex_exit(&arp_dad_lock);
 		log(LOG_ERR, "%s: memory allocation failed for %s(%s)\n",
@@ -1628,13 +1630,12 @@ arp_dad_start(struct ifaddr *ifa)
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	memset(dp, 0, sizeof(*dp));
-	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 
 	/*
 	 * Send ARP packet for DAD, ip_dad_count times.
 	 * Note that we must delay the first transmission.
 	 */
+	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	dp->dad_ifa = ifa;
 	ifaref(ifa);	/* just for safety */
 	dp->dad_count = ip_dad_count;
@@ -1675,8 +1676,7 @@ arp_dad_stop(struct ifaddr *ifa)
 
 	arp_dad_stoptimer(dp);
 
-	free(dp, M_IPARP);
-	dp = NULL;
+	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
@@ -1686,6 +1686,7 @@ arp_dad_timer(struct ifaddr *ifa)
 	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
 	struct dadq *dp;
 	char ipbuf[INET_ADDRSTRLEN];
+	bool need_free = false;
 
 #ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
@@ -1723,9 +1724,7 @@ arp_dad_timer(struct ifaddr *ifa)
 		    if_name(ifa->ifa_ifp));
 
 		TAILQ_REMOVE(&dadq, dp, dad_list);
-		free(dp, M_IPARP);
-		dp = NULL;
-		ifafree(ifa);
+		need_free = true;
 		goto done;
 	}
 
@@ -1774,12 +1773,15 @@ announce:
 	}
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
-	free(dp, M_IPARP);
-	dp = NULL;
-	ifafree(ifa);
-
+	need_free = true;
 done:
 	mutex_exit(&arp_dad_lock);
+
+	if (need_free) {
+		kmem_intr_free(dp, sizeof(*dp));
+		ifafree(ifa);
+	}
+
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
