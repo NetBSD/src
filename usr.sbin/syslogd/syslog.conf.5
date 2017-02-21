@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.23 2017/02/21 18:28:28 abhinav Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.24 2017/02/21 18:36:39 abhinav Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -511,7 +511,7 @@ message containing hashes of previous messages.
 .Pp
 To detect later manipulation one has to keep a copy of the key used for
 signing (otherwise an attacker could alter the logs and sign them with his
-his own key).
+own key).
 If TLS is used with a DSA key then the same key will be used for signing.
 This is the recommended setup because it makes it easy to have copies of
 the certificate (with the public key) in backups.
