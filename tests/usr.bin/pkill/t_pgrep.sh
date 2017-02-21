@@ -1,4 +1,4 @@
-# $NetBSD: t_pgrep.sh,v 1.1 2017/02/21 10:40:30 kre Exp $
+# $NetBSD: t_pgrep.sh,v 1.2 2017/02/21 21:22:45 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,9 +35,9 @@ pr50934_body() {
 
 	cat > t.c <<'!'
 #include <stdlib.h>
-int
 #include <unistd.h>
 
+int
 main(int argc, char **argv)
 {
 	sleep(2);
