@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.136 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.137 2017/02/21 03:58:24 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.136 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.137 2017/02/21 03:58:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.136 2017/01/16 15:44:47 christos Exp $
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -1154,14 +1154,17 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
 
+	dp = kmem_intr_alloc(sizeof(*dp), KM_NOSLEEP);
+
 	mutex_enter(&nd6_dad_lock);
 	if (nd6_dad_find(ifa) != NULL) {
 		mutex_exit(&nd6_dad_lock);
 		/* DAD already in progress */
+		if (dp != NULL)
+			kmem_intr_free(dp, sizeof(*dp));
 		return;
 	}
 
-	dp = malloc(sizeof(*dp), M_IP6NDP, M_NOWAIT);
 	if (dp == NULL) {
 		mutex_exit(&nd6_dad_lock);
 		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
@@ -1170,8 +1173,6 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		return;
 	}
-	memset(dp, 0, sizeof(*dp));
-	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1179,6 +1180,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	 * first packet to be sent from the interface after interface
 	 * (re)initialization.
 	 */
+	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	dp->dad_ifa = ifa;
 	ifaref(ifa);	/* just for safety */
 	dp->dad_count = ip6_dad_count;
@@ -1223,8 +1225,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 
 	nd6_dad_stoptimer(dp);
 
-	free(dp, M_IP6NDP);
-	dp = NULL;
+	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
@@ -1235,6 +1236,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 	struct dadq *dp;
 	int duplicate = 0;
 	char ip6buf[INET6_ADDRSTRLEN];
+	bool need_free = false;
 
 #ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
@@ -1273,9 +1275,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 			if_name(ifa->ifa_ifp));
 
 		TAILQ_REMOVE(&dadq, dp, dad_list);
-		free(dp, M_IP6NDP);
-		dp = NULL;
-		ifafree(ifa);
+		need_free = true;
 		goto done;
 	}
 
@@ -1322,14 +1322,17 @@ nd6_dad_timer(struct ifaddr *ifa)
 			    IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr));
 
 			TAILQ_REMOVE(&dadq, dp, dad_list);
-			free(dp, M_IP6NDP);
-			dp = NULL;
-			ifafree(ifa);
+			need_free = true;
 		}
 	}
-
 done:
 	mutex_exit(&nd6_dad_lock);
+
+	if (need_free) {
+		kmem_intr_free(dp, sizeof(*dp));
+		ifafree(ifa);
+		ifa = NULL;
+	}
 
 	if (duplicate)
 		nd6_dad_duplicated(ifa);
@@ -1413,8 +1416,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	TAILQ_REMOVE(&dadq, dp, dad_list);
 	mutex_exit(&nd6_dad_lock);
 
-	free(dp, M_IP6NDP);
-	dp = NULL;
+	kmem_intr_free(dp, sizeof(*dp));
 	ifafree(ifa);
 }
 
