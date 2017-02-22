@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2017/01/28 23:42:36 christos Exp $
+# $NetBSD: Makefile,v 1.29 2017/02/22 12:17:16 maya Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -72,9 +72,4 @@ prsa_tok.c: ${DIST}/src/racoon/prsa_tok.l
 prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 48
-.if ${MACHINE_ARCH} == "sh3el"
-COPTS.ipsec_doi.c=	-O0
-.endif
-.endif
 .include <bsd.prog.mk>
