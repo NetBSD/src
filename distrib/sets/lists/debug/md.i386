@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.9 2015/07/06 08:25:43 martin Exp $
+# $NetBSD: md.i386,v 1.10 2017/02/22 01:07:13 kamil Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -17,3 +17,9 @@
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait6.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitid.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitpid.debug	tests-kernel-tests	debug,atf,compattestfile
