@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.142 2017/02/21 10:40:30 kre Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.143 2017/02/22 02:42:53 kamil Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -49,6 +49,7 @@
 ./usr/libdata/debug/usr/tests/kernel/arch
 ./usr/libdata/debug/usr/tests/kernel/arch/amd64
 ./usr/libdata/debug/usr/tests/kernel/arch/i386
+./usr/libdata/debug/usr/tests/kernel/arch/x86
 ./usr/libdata/debug/usr/tests/kernel/kqueue
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
@@ -232,6 +233,7 @@
 ./usr/tests/kernel/arch
 ./usr/tests/kernel/arch/amd64
 ./usr/tests/kernel/arch/i386
+./usr/tests/kernel/arch/x86
 ./usr/tests/kernel/kqueue
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
