@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.228 2017/02/22 03:02:55 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.229 2017/02/22 03:41:54 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.228 2017/02/22 03:02:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.229 2017/02/22 03:41:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.228 2017/02/22 03:02:55 ozaki-r Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -163,7 +163,7 @@ nd6_ifattach(struct ifnet *ifp)
 {
 	struct nd_ifinfo *nd;
 
-	nd = (struct nd_ifinfo *)malloc(sizeof(*nd), M_IP6NDP, M_WAITOK|M_ZERO);
+	nd = kmem_zalloc(sizeof(*nd), KM_SLEEP);
 
 	nd->initialized = 1;
 
@@ -202,7 +202,7 @@ nd6_ifdetach(struct ifnet *ifp, struct in6_ifextra *ext)
 	/* Ensure all IPv6 addresses are purged before calling nd6_purge */
 	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 	nd6_purge(ifp, ext);
-	free(ext->nd_ifinfo, M_IP6NDP);
+	kmem_free(ext->nd_ifinfo, sizeof(struct nd_ifinfo));
 }
 
 void
@@ -2508,6 +2508,7 @@ nd6_sysctl(
 	void *p;
 	size_t ol;
 	int error;
+	size_t bufsize = 0;
 
 	error = 0;
 
@@ -2517,10 +2518,11 @@ nd6_sysctl(
 		return EINVAL;
 	ol = oldlenp ? *oldlenp : 0;
 
-	if (oldp) {
-		p = malloc(*oldlenp, M_TEMP, M_WAITOK);
+	if (oldp && *oldlenp > 0) {
+		p = kmem_alloc(*oldlenp, KM_SLEEP);
 		if (p == NULL)
 			return ENOMEM;
+		bufsize = *oldlenp;
 	} else
 		p = NULL;
 	switch (name) {
@@ -2544,7 +2546,7 @@ nd6_sysctl(
 		break;
 	}
 	if (p)
-		free(p, M_TEMP);
+		kmem_free(p, bufsize);
 
 	return error;
 }
