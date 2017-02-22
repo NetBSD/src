@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.229 2017/02/22 03:41:54 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.230 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.229 2017/02/22 03:41:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.230 2017/02/22 07:46:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1621,7 +1621,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			llsol.s6_addr32[2] = htonl(1);
 			llsol.s6_addr8[12] = 0xff;
 			if (in6_setscope(&llsol, ifp, NULL) == 0) {
-				IN6_LOOKUP_MULTI(llsol, ifp, in6m);
+				in6m = in6_lookup_multi(&llsol, ifp);
 				if (in6m)
 					in6_delmulti(in6m);
 			}
