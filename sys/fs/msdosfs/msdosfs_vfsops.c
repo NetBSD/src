@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.122 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.123 2017/02/22 09:50:13 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.122 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.123 2017/02/22 09:50:13 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -478,10 +478,6 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
 
-	error = fstrans_mount(mp);
-	if (error)
-		goto error_exit;
-
 	error = getdisksize(devvp, &psize, &secsize);
 	if (error) {
 		if (argp->flags & MSDOSFSMNT_GEMDOSFS)
@@ -858,7 +854,6 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	return (0);
 
 error_exit:
-	fstrans_unmount(mp);
 	if (bp)
 		brelse(bp, BC_AGE);
 	if (pmp) {
@@ -923,7 +918,6 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 	free(pmp, M_MSDOSFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	fstrans_unmount(mp);
 	return (0);
 }
 

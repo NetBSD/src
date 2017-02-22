@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.47 2017/01/27 10:50:10 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.48 2017/02/22 09:50:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.47 2017/01/27 10:50:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.48 2017/02/22 09:50:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.47 2017/01/27 10:50:10 hannken Exp $
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/namei.h>
 #include <sys/extattr.h>
 #include <sys/syscallargs.h>
@@ -710,6 +711,12 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 		return ENOMEM;
 	}
 
+	if ((error = fstrans_mount(mp)) != 0) {
+		vfs_unbusy(mp, false, NULL);
+		vfs_destroy(mp);
+		return error;
+	}
+
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 
 	/*
@@ -794,6 +801,7 @@ err_mounted:
 err_unmounted:
 	vp->v_mountedhere = NULL;
 	mutex_exit(&mp->mnt_updating);
+	fstrans_unmount(mp);
 	vfs_unbusy(mp, false, NULL);
 	vfs_destroy(mp);
 
@@ -919,6 +927,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
 
+	fstrans_unmount(mp);
 	vfs_destroy(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);
@@ -1200,6 +1209,8 @@ done:
 		mp = TAILQ_FIRST(&mountlist);
 		mp->mnt_flag |= MNT_ROOTFS;
 		mp->mnt_op->vfs_refcount++;
+		error = fstrans_mount(mp);
+		KASSERT(error == 0);
 
 		/*
 		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to
