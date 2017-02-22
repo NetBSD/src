@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.185 2017/02/22 07:05:04 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.186 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.185 2017/02/22 07:05:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.186 2017/02/22 07:46:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -652,7 +652,7 @@ ip6_output(
 			goto bad;
 		}
 
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
+		in6m = in6_lookup_multi(&ip6->ip6_dst, ifp);
 		if (in6m != NULL &&
 		   (im6o == NULL || im6o->im6o_multicast_loop)) {
 			/*

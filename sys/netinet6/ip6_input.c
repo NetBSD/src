@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.174 2017/02/21 03:59:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.175 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.174 2017/02/21 03:59:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.175 2017/02/22 07:46:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -465,7 +465,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		 * See if we belong to the destination multicast group on the
 		 * arrival interface.
 		 */
-		IN6_LOOKUP_MULTI(ip6->ip6_dst, rcvif, in6m);
+		in6m = in6_lookup_multi(&ip6->ip6_dst, rcvif);
 		if (in6m)
 			ours = 1;
 		else if (!ip6_mrouter) {

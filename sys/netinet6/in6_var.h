@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.91 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.92 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -680,14 +680,6 @@ in6_lookup_multi(struct in6_addr *addr, struct ifnet *ifp)
 	return in6m;
 }
 
-#define IN6_LOOKUP_MULTI(__addr, __ifp, __in6m)			\
-/* struct in6_addr __addr; */					\
-/* struct ifnet *__ifp; */					\
-/* struct in6_multi *__in6m; */					\
-do {								\
-	(__in6m) = in6_lookup_multi(&(__addr), (__ifp));	\
-} while (/*CONSTCOND*/ 0)
-
 /*
  * Macro to step through all of the in6_multi records, one at a time.
  * The current position is remembered in "step", which the caller must
@@ -725,21 +717,6 @@ in6_first_multi(struct in6_multistep *step)
 	step->i_in6m = NULL;			
 	return in6_next_multi(step);		
 }
-
-#define IN6_NEXT_MULTI(__step, __in6m)		\
-/* struct in6_multistep __step; */		\
-/* struct in6_multi *__in6m; */			\
-do {						\
-	(__in6m) = in6_next_multi(&(__step));	\
-} while (/*CONSTCOND*/ 0)
-
-#define IN6_FIRST_MULTI(__step, __in6m)		\
-/* struct in6_multistep __step; */		\
-/* struct in6_multi *__in6m */			\
-do {						\
-	(__in6m) = in6_first_multi(&(__step));	\
-} while (/*CONSTCOND*/ 0)
-
 
 #if 0
 /*

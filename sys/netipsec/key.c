@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.101 2016/07/20 07:37:51 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.102 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.101 2016/07/20 07:37:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.102 2017/02/22 07:46:00 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4182,7 +4182,7 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 		 */
 		in6m = NULL;
 #ifdef __FreeBSD__
-		IN6_LOOKUP_MULTI(sin6->sin6_addr, ia->ia_ifp, in6m);
+		in6m = in6_lookup_multi(&sin6->sin6_addr, ia->ia_ifp);
 #else
 		for ((in6m) = ia->ia6_multiaddrs.lh_first;
 		     (in6m) != NULL &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.81 2017/02/07 02:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.82 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.81 2017/02/07 02:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.82 2017/02/22 07:46:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -493,7 +493,7 @@ mld_input(struct mbuf *m, int off)
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
-		IN6_LOOKUP_MULTI(mld_addr, ifp, in6m);
+		in6m = in6_lookup_multi(&mld_addr, ifp);
 		if (in6m) {
 			mld_stoptimer(in6m); /* transit to idle state */
 			in6m->in6m_state = MLD_OTHERLISTENER; /* clear flag */
@@ -665,7 +665,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 	/*
 	 * See if address already in list.
 	 */
-	IN6_LOOKUP_MULTI(*maddr6, ifp, in6m);
+	in6m = in6_lookup_multi(maddr6, ifp);
 	if (in6m != NULL) {
 		/*
 		 * Found it; just increment the refrence count.
