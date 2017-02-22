@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.271 2017/02/17 04:31:34 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.272 2017/02/22 07:05:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.271 2017/02/17 04:31:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.272 2017/02/22 07:05:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1058,6 +1058,8 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	int inpflags = inp->inp_flags;
 	int optval = 0, error = 0;
 
+	KASSERT(solocked(so));
+
 	if (sopt->sopt_level != IPPROTO_IP) {
 		if (sopt->sopt_level == SOL_SOCKET && sopt->sopt_name == SO_NOHEADER)
 			return 0;
@@ -1334,6 +1336,8 @@ ip_pcbopts(struct inpcb *inp, const struct sockopt *sopt)
 	const u_char *cp;
 	u_char *dp;
 	int cnt;
+
+	KASSERT(inplocked(inp));
 
 	/* Turn off any old options. */
 	if (inp->inp_options) {
@@ -1772,6 +1776,8 @@ ip_getmoptions(struct ip_moptions *imo, struct sockopt *sopt)
 	struct in_addr addr;
 	uint8_t optval;
 	int error = 0;
+
+	/* imo is protected by solock or refereced only by the caller */
 
 	switch (sopt->sopt_name) {
 	case IP_MULTICAST_IF:
