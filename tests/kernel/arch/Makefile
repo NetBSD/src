@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/12/13 18:00:10 kamil Exp $
+# $NetBSD: Makefile,v 1.3 2017/02/22 01:07:13 kamil Exp $
 
 NOMAN=		# defined
 
@@ -12,6 +12,10 @@ TESTS_SUBDIRS+=	amd64
 
 .if (${MACHINE} == "i386")
 TESTS_SUBDIRS+=	i386
+.endif
+
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+TESTS_SUBDIRS+= x86
 .endif
 
 .include <bsd.test.mk>
