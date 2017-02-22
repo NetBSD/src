@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.227 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.228 2017/02/22 03:02:55 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.227 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.228 2017/02/22 03:02:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -715,13 +715,12 @@ nd6_timer_work(struct work *wk, void *arg)
 		 */
 		if (pr->ndpr_vltime != ND6_INFINITE_LIFETIME &&
 		    time_uptime - pr->ndpr_lastupdate > pr->ndpr_vltime) {
-
 			/*
-			 * address expiration and prefix expiration are
-			 * separate.  NEVER perform in6_purgeaddr here.
+			 * Just invalidate the prefix here. Removing it
+			 * will be done when purging an associated address.
 			 */
-
-			nd6_prelist_remove(pr);
+			KASSERT(pr->ndpr_refcnt > 0);
+			nd6_invalidate_prefix(pr);
 		}
 	}
 	ND6_UNLOCK();

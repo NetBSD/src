@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.131 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.132 2017/02/22 03:02:55 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.131 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.132 2017/02/22 03:02:55 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1035,14 +1035,11 @@ nd6_prefix_unref(struct nd_prefix *pr)
 }
 
 void
-nd6_prelist_remove(struct nd_prefix *pr)
+nd6_invalidate_prefix(struct nd_prefix *pr)
 {
-	struct nd_pfxrouter *pfr, *next;
-	int e, s;
-	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
+	int e;
 
 	ND6_ASSERT_WLOCK();
-	KASSERT(pr->ndpr_refcnt == 0);
 
 	/* make sure to invalidate the prefix until it is really freed. */
 	pr->ndpr_vltime = 0;
@@ -1064,6 +1061,19 @@ nd6_prelist_remove(struct nd_prefix *pr)
 		    pr->ndpr_plen, if_name(pr->ndpr_ifp), e);
 		/* what should we do? */
 	}
+}
+
+void
+nd6_prelist_remove(struct nd_prefix *pr)
+{
+	struct nd_pfxrouter *pfr, *next;
+	int s;
+	struct in6_ifextra *ext = pr->ndpr_ifp->if_afdata[AF_INET6];
+
+	ND6_ASSERT_WLOCK();
+	KASSERT(pr->ndpr_refcnt == 0);
+
+	nd6_invalidate_prefix(pr);
 
 	s = splsoftnet();
 	/* unlink ndpr_entry from nd_prefix list */

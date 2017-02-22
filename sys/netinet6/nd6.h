@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.82 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.83 2017/02/22 03:02:55 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -469,6 +469,7 @@ void nd6_defrouter_select(void);
 void nd6_defrtrlist_del(struct nd_defrouter *, struct in6_ifextra *);
 void nd6_prefix_unref(struct nd_prefix *);
 void nd6_prelist_remove(struct nd_prefix *);
+void nd6_invalidate_prefix(struct nd_prefix *);
 void nd6_pfxlist_onlink_check(void);
 struct nd_defrouter *nd6_defrouter_lookup(const struct in6_addr *, struct ifnet *);
 void nd6_rt_flush(struct in6_addr *, struct ifnet *);
