@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.59 2017/02/12 06:09:53 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.60 2017/02/22 23:43:43 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd February 12, 2016
@@ -355,6 +355,7 @@ Possible values are:
 .Bl -tag -width 30n -offset indent -compact
 .It Dv PL_EVENT_NONE
 .It Dv PL_EVENT_SIGNAL
+.It Dv PL_EVENT_SUSPENDED
 .El
 .Pp
 The
@@ -539,6 +540,34 @@ The
 .Fa data
 argument contains the LWP ID of the thread whose mask is to be read.
 If zero is supplied, the first thread of the process is read.
+.It Dv PT_RESUME
+Allow execution of a specified thread,
+change its state from suspended to continued.
+The
+.Fa addr
+argument is unused.
+The
+.Fa data
+argument specifies the LWP ID.
+.Pp
+This call is equivalent to
+.Xr _lwp_continue 2
+called by a traced process.
+This call does not change the general process state from stopped to continued.
+.It Dv PT_SUSPEND
+Prevent execution of a specified thread,
+change its state from continued to suspended.
+The
+.Fa addr
+argument is unused.
+The
+.Fa data
+argument specifies the requested LWP ID.
+.Pp
+This call is equivalent to
+.Xr _lwp_suspend 2
+called by a traced process.
+This call does not change the general process state from continued to stopped.
 .El
 .Pp
 Additionally, the following requests exist but are
@@ -692,6 +721,8 @@ A request (other than
 .Dv PT_ATTACH )
 specified a process that wasn't stopped.
 .El
+.It Bq Er EDEADLK
+An attempt to unstop a process with locked threads.
 .It Bq Er EINVAL
 .Bl -bullet -compact
 .It
@@ -761,3 +792,10 @@ should be able to sidestep this.
 .Dv PTRACE_VFORK
 is currently unimplemented and it will return
 .Er ENOTSUP .
+.Pp
+.Dv PT_SET_SIGINFO ,
+.Dv PT_RESUME
+and
+.Dv PT_SUSPEND
+can change the image of process returned by
+.Dv PT_LWPINFO .
