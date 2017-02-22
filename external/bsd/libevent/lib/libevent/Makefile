@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2017/01/31 23:17:40 christos Exp $
+# $NetBSD: Makefile,v 1.4 2017/02/22 12:17:16 maya Exp $
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -28,11 +28,5 @@ log.c \
 poll.c \
 select.c \
 signal.c
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 48
-.if ${MACHINE_ARCH} == "sh3el"
-COPTS.evdns.c=	-O0
-.endif
-.endif
 
 .include <bsd.lib.mk>
