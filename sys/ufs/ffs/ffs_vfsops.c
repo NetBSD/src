@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.345 2017/02/17 08:31:26 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.346 2017/02/22 09:50:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.345 2017/02/17 08:31:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.346 2017/02/22 09:50:13 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1115,12 +1115,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
-	error = fstrans_mount(mp);
-	if (error) {
-		DPRINTF("fstrans_mount returned %d", error);
-		return error;
-	}
-
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 	error = ffs_snapshot_init(ump);
@@ -1536,7 +1530,6 @@ out:
 	}
 #endif
 
-	fstrans_unmount(mp);
 	if (fs)
 		kmem_free(fs, fs->fs_sbsize);
 	spec_node_setmountedfs(devvp, NULL);
@@ -1739,7 +1732,6 @@ ffs_unmount(struct mount *mp, int mntflags)
 	kmem_free(ump, sizeof(*ump));
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	fstrans_unmount(mp);
 	return (0);
 }
 
