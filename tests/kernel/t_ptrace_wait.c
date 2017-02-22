@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.70 2017/02/12 06:09:52 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.71 2017/02/22 23:43:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.70 2017/02/12 06:09:52 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.71 2017/02/22 23:43:43 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6947,6 +6947,338 @@ ATF_TC_BODY(setsigmask4, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+static void
+lwp_main_stop(void *arg)
+{
+	the_lwp_id = _lwp_self();
+
+	raise(SIGTRAP);
+
+	_lwp_exit();
+}
+
+ATF_TC(suspend1);
+ATF_TC_HEAD(suspend1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that a thread can be suspended by a debugger and later "
+	    "resumed by a tracee");
+}
+
+ATF_TC_BODY(suspend1, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	ucontext_t uc;
+	lwpid_t lid;
+	static const size_t ssize = 16*1024;
+	void *stack;
+	struct ptrace_lwpinfo pl;
+	struct ptrace_siginfo psi;
+	volatile int go = 0;
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before allocating memory for stack in child\n");
+		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
+
+		printf("Before making context for new lwp in child\n");
+		_lwp_makecontext(&uc, lwp_main_stop, NULL, NULL, stack, ssize);
+
+		printf("Before creating new in child\n");
+		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
+
+		while (go == 0)
+			continue;
+
+		raise(SIGINT);
+
+		FORKEE_ASSERT(_lwp_continue(lid) == 0);
+
+		printf("Before waiting for lwp %d to exit\n", lid);
+		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
+
+		printf("Before verifying that reported %d and running lid %d "
+		    "are the same\n", lid, the_lwp_id);
+		FORKEE_ASSERT_EQ(lid, the_lwp_id);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected stopped "
+	    "SIGTRAP\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before reading siginfo and lwpid_t\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
+
+	printf("Before suspending LWP %d\n", psi.psi_lwpid);
+	ATF_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
+
+        printf("Write new go to tracee (PID=%d) from tracer (PID=%d)\n",
+	    child, getpid());
+	ATF_REQUIRE(ptrace(PT_WRITE_D, child, __UNVOLATILE(&go), 1) != -1);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected stopped "
+	    "SIGINT\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGINT);
+
+	pl.pl_lwpid = 0;
+
+	ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+	while (pl.pl_lwpid != 0) {
+
+		ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+		switch (pl.pl_lwpid) {
+		case 1:
+			ATF_REQUIRE_EQ(pl.pl_event, PL_EVENT_SIGNAL);
+			break;
+		case 2:
+			ATF_REQUIRE_EQ(pl.pl_event, PL_EVENT_SUSPENDED);
+			break;
+		}
+	}
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(suspend2);
+ATF_TC_HEAD(suspend2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that the while the only thread within a process is "
+	    "suspended, the whole process cannot be unstopped");
+}
+
+ATF_TC_BODY(suspend2, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct ptrace_siginfo psi;
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before reading siginfo and lwpid_t\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
+
+	printf("Before suspending LWP %d\n", psi.psi_lwpid);
+	ATF_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE_ERRNO(EDEADLK,
+	    ptrace(PT_CONTINUE, child, (void *)1, 0) == -1);
+
+	printf("Before resuming LWP %d\n", psi.psi_lwpid);
+	ATF_REQUIRE(ptrace(PT_RESUME, child, NULL, psi.psi_lwpid) != -1);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+ATF_TC(resume1);
+ATF_TC_HEAD(resume1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that a thread can be suspended by a debugger and later "
+	    "resumed by the debugger");
+}
+
+ATF_TC_BODY(resume1, tc)
+{
+	struct msg_fds fds;
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	uint8_t msg = 0xde; /* dummy message for IPC based on pipe(2) */
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	ucontext_t uc;
+	lwpid_t lid;
+	static const size_t ssize = 16*1024;
+	void *stack;
+	struct ptrace_lwpinfo pl;
+	struct ptrace_siginfo psi;
+
+	ATF_REQUIRE(msg_open(&fds) == 0);
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		printf("Before allocating memory for stack in child\n");
+		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
+
+		printf("Before making context for new lwp in child\n");
+		_lwp_makecontext(&uc, lwp_main_stop, NULL, NULL, stack, ssize);
+
+		printf("Before creating new in child\n");
+		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
+
+		CHILD_TO_PARENT("Message", fds, msg);
+
+		raise(SIGINT);
+
+		printf("Before waiting for lwp %d to exit\n", lid);
+		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
+
+		printf("Before verifying that reported %d and running lid %d "
+		    "are the same\n", lid, the_lwp_id);
+		FORKEE_ASSERT_EQ(lid, the_lwp_id);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected stopped "
+	    "SIGTRAP\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before reading siginfo and lwpid_t\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &psi, sizeof(psi)) != -1);
+
+	printf("Before suspending LWP %d\n", psi.psi_lwpid);
+	ATF_REQUIRE(ptrace(PT_SUSPEND, child, NULL, psi.psi_lwpid) != -1);
+
+	PARENT_FROM_CHILD("Message", fds, msg);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected stopped "
+	    "SIGINT\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGINT);
+
+	pl.pl_lwpid = 0;
+
+	ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+	while (pl.pl_lwpid != 0) {
+		ATF_REQUIRE(ptrace(PT_LWPINFO, child, &pl, sizeof(pl)) != -1);
+		switch (pl.pl_lwpid) {
+		case 1:
+			ATF_REQUIRE_EQ(pl.pl_event, PL_EVENT_SIGNAL);
+			break;
+		case 2:
+			ATF_REQUIRE_EQ(pl.pl_event, PL_EVENT_SUSPENDED);
+			break;
+		}
+	}
+
+	printf("Before resuming LWP %d\n", psi.psi_lwpid);
+	ATF_REQUIRE(ptrace(PT_RESUME, child, NULL, psi.psi_lwpid) != -1);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child - expected exited\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child - expected no process\n",
+	    TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+
+	msg_close(&fds);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -7059,6 +7391,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, signal8);
 	ATF_TP_ADD_TC(tp, signal9);
 	ATF_TP_ADD_TC(tp, signal10);
+
+	ATF_TP_ADD_TC(tp, suspend1);
+	ATF_TP_ADD_TC(tp, suspend2);
+
+	ATF_TP_ADD_TC(tp, resume1);
 
 	ATF_TP_ADD_TC(tp, getsigmask1);
 	ATF_TP_ADD_TC(tp, getsigmask2);
