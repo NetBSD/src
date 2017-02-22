@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.66 2017/02/22 13:17:29 maya Exp $
+#	$NetBSD: Makefile.mips,v 1.67 2017/02/22 13:34:39 maya Exp $
 
 # Makefile for NetBSD
 #
@@ -46,6 +46,11 @@ GENASSYM_CONF=	${MIPS}/mips/genassym.cf
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
+
+.if ${ACTIVE_CC} == "gcc"
+COPTS.mips_fpu.c+=	-mhard-float -Wa,-mhard-float
+AFLAGS.fp.S+=		-Wa,-mhard-float
+.endif
 
 CFLAGS+=	${GP} -mno-abicalls -msoft-float -ffixed-24
 .if defined(LP64) && ${LP64} == "yes"
