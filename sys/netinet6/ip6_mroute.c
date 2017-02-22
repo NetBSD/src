@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.117 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.118 2017/02/22 07:46:00 ozaki-r Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.117 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.118 2017/02/22 07:46:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1608,7 +1608,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 */
 	sockaddr_in6_init(&dst6, &ip6->ip6_dst, 0, 0, 0);
 
-	IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
+	in6m = in6_lookup_multi(&ip6->ip6_dst, ifp);
 	if (in6m != NULL) {
 		ip6_mloopback(ifp, m,
 		    satocsin6(rtcache_getdst(&ro)));
