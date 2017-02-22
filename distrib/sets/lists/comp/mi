@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2110 2017/02/16 08:39:10 knakahara Exp $
+#	$NetBSD: mi,v 1.2111 2017/02/22 09:20:39 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10562,6 +10562,9 @@
 ./usr/share/man/cat9/kmem.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_asprintf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_intr_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_intr_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_intr_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
@@ -17853,6 +17856,9 @@
 ./usr/share/man/html9/kmem.html			comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_asprintf.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_intr_alloc.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_intr_free.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_intr_zalloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/knote.html		comp-sys-htmlman	html
@@ -25296,6 +25302,9 @@
 ./usr/share/man/man9/kmem.9			comp-sys-man		.man
 ./usr/share/man/man9/kmem_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_asprintf.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_intr_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_intr_free.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_intr_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
