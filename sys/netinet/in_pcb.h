@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.61 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.62 2017/02/22 07:05:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -128,6 +128,7 @@ struct inpcb {
 				INP_PKTINFO)
 
 #define	sotoinpcb(so)		((struct inpcb *)(so)->so_pcb)
+#define	inplocked(inp)		solocked((inp)->inp_socket)
 
 #ifdef _KERNEL
 void	in_losing(struct inpcb *);
