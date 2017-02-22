@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.14 2017/02/12 06:09:52 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.15 2017/02/22 23:43:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.14 2017/02/12 06:09:52 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.15 2017/02/22 23:43:43 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -236,6 +236,8 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_SYSCALL:
 	case PT_SYSCALLEMU:
 	case PT_DUMPCORE:
+	case PT_RESUME:
+	case PT_SUSPEND:
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -457,6 +459,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_SET_EVENT_MASK:
 	case  PT_GET_EVENT_MASK:
 	case  PT_GET_PROCESS_STATE:
+	case  PT_RESUME:
+	case  PT_SUSPEND:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -755,6 +759,34 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			break;
 		}
 
+		/* Prevent process deadlock */
+		if (resume_all) {
+#ifdef PT_STEP
+			if (req == PT_STEP) {
+				if (lt->l_flag & LW_WSUSPEND) {
+					error = EDEADLK;
+					break;
+				}
+			} else
+#endif
+			{
+				error = EDEADLK;
+				LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
+					if ((lt2->l_flag & LW_WSUSPEND) == 0) {
+						error = 0;
+						break;
+					}
+				}
+				if (error != 0)
+					break;
+			}
+		} else {
+			if (lt->l_flag & LW_WSUSPEND) {
+				error = EDEADLK;
+				break;
+			}
+		}
+
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1) {
 			error = process_set_pc(lt, addr);
@@ -968,15 +1000,18 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (lt) {
 			lwp_addref(lt);
 			pl.pl_lwpid = lt->l_lid;
+
+			if (lt->l_flag & LW_WSUSPEND)
+				pl.pl_event = PL_EVENT_SUSPENDED;
 			/*
 			 * If we match the lwp, or it was sent to every lwp,
 			 * we set PL_EVENT_SIGNAL.
 			 * XXX: ps_lwp == 0 means everyone and noone, so
 			 * check ps_signo too.
 			 */
-			if (lt->l_lid == t->p_sigctx.ps_lwp
-			    || (t->p_sigctx.ps_lwp == 0 &&
-			        t->p_sigctx.ps_info._signo))
+			else if (lt->l_lid == t->p_sigctx.ps_lwp
+			         || (t->p_sigctx.ps_lwp == 0 &&
+			             t->p_sigctx.ps_info._signo))
 				pl.pl_event = PL_EVENT_SIGNAL;
 		}
 		mutex_exit(t->p_lock);
@@ -1070,6 +1105,37 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		else
 			error = copyout(&lt->l_sigmask, addr, sizeof(sigset_t));
 			
+		break;
+
+	case  PT_RESUME:
+		write = 1;
+
+	case  PT_SUSPEND:
+		/* write = 0 done above. */
+
+		tmp = data;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+		if (lt->l_flag & LW_SYSTEM) {
+			error = EINVAL;
+		} else {
+			lwp_lock(lt);
+			if (write == 0)
+				lt->l_flag |= LW_WSUSPEND;
+			else
+				lt->l_flag &= ~LW_WSUSPEND;
+			lwp_unlock(lt);
+		}
 		break;
 
 #ifdef PT_SETREGS
