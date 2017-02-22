@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.184 2017/02/17 03:57:17 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.185 2017/02/22 07:05:04 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.184 2017/02/17 03:57:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.185 2017/02/22 07:05:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1359,6 +1359,7 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	int error, optval;
 	int level, optname;
 
+	KASSERT(solocked(so));
 	KASSERT(sopt != NULL);
 
 	level = sopt->sopt_level;
@@ -2073,6 +2074,8 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct socket *so,
 	struct mbuf *m;
 	int error = 0;
 
+	KASSERT(solocked(so));
+
 	/* turn off any old options. */
 	if (opt) {
 #ifdef DIAGNOSTIC
@@ -2466,6 +2469,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	struct ifnet *ifp;
 	struct ip6_moptions *im6o = in6p->in6p_moptions;
 	struct in6_multi_mship *imm;
+
+	KASSERT(in6plocked(in6p));
 
 	if (im6o == NULL) {
 		/*
