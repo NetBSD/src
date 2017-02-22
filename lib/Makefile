@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.249 2017/02/08 03:44:41 kamil Exp $
+#	$NetBSD: Makefile,v 1.250 2017/02/22 02:58:31 maya Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -83,10 +83,6 @@ SUBDIR+=	../external/gpl2/libmalloc
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
-. if ${HAVE_GCC} == 48
-SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libmudflap
-SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libmudflapth
-. endif
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
 # We don't build compat versions of these.
