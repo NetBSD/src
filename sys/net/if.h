@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.234 2017/02/17 03:57:17 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.235 2017/02/23 07:57:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ struct callout;
 struct krwlock;
 struct if_percpuq;
 struct if_deferred_start;
+struct in6_multi;
 
 typedef unsigned short if_index_t;
 
@@ -344,6 +345,8 @@ typedef struct ifnet {
 	struct psref_target     if_psref;
 	struct pslist_head	if_addr_pslist;
 	struct if_deferred_start	*if_deferred_start;
+	/* XXX should be protocol independent */
+	LIST_HEAD(, in6_multi) if_multiaddrs;
 #endif
 } ifnet_t;
  
