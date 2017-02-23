@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2111 2017/02/22 09:20:39 msaitoh Exp $
+#	$NetBSD: mi,v 1.2112 2017/02/23 15:18:36 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4047,6 +4047,7 @@
 ./usr/share/man/cat2/_lwp_wait.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_wakeup.0		comp-c-catman		.cat
 ./usr/share/man/cat2/accept.0			comp-c-catman		.cat
+./usr/share/man/cat2/accept4.0			comp-c-catman		.cat
 ./usr/share/man/cat2/access.0			comp-c-catman		.cat
 ./usr/share/man/cat2/acct.0			comp-c-catman		.cat
 ./usr/share/man/cat2/adjtime.0			comp-c-catman		.cat
@@ -11538,6 +11539,7 @@
 ./usr/share/man/html2/_lwp_wait.html		comp-c-htmlman		html
 ./usr/share/man/html2/_lwp_wakeup.html		comp-c-htmlman		html
 ./usr/share/man/html2/accept.html		comp-c-htmlman		html
+./usr/share/man/html2/accept4.html		comp-c-htmlman		html
 ./usr/share/man/html2/access.html		comp-c-htmlman		html
 ./usr/share/man/html2/acct.html			comp-c-htmlman		html
 ./usr/share/man/html2/adjtime.html		comp-c-htmlman		html
@@ -18794,6 +18796,7 @@
 ./usr/share/man/man2/_lwp_wait.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_wakeup.2		comp-c-man		.man
 ./usr/share/man/man2/accept.2			comp-c-man		.man
+./usr/share/man/man2/accept4.2			comp-c-man		.man
 ./usr/share/man/man2/access.2			comp-c-man		.man
 ./usr/share/man/man2/acct.2			comp-c-man		.man
 ./usr/share/man/man2/adjtime.2			comp-c-man		.man
