@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.43 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.44 2017/02/23 03:34:22 kamil Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -50,12 +50,10 @@ struct mdlwp {
 	volatile int md_astpending;	/* AST pending for this process */
 	struct pmap *md_gc_pmap;	/* pmap being garbage collected */
 	struct vm_page *md_gc_ptp;	/* pages from pmap g/c */
-	struct  x86_hw_watchpoint md_watchpoint[X86_HW_WATCHPOINTS];
 };
 
 /* md_flags */
 #define	MDL_IOPL		0x0002	/* XEN: i/o privilege */
-#define	MDL_X86_HW_WATCHPOINTS	0x0004	/* has hardware watchpoints */
 
 struct mdproc {
 	int	md_flags;

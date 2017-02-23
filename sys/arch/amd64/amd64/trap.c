@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2017/02/17 01:14:31 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 2017/02/23 03:34:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2017/02/17 01:14:31 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2017/02/23 03:34:22 kamil Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,7 +230,7 @@ trap(struct trapframe *frame)
 #endif
 	ksiginfo_t ksi;
 	void *onfault;
-	int type, error, wptnfo;
+	int type, error;
 	uint64_t cr2;
 	bool pfail;
 
@@ -687,7 +687,7 @@ faultcommon:
 		 * in kernel space because that is useful when
 		 * debugging the kernel.
 		 */
-		if (user_trap_x86_hw_watchpoint())
+		if (x86_dbregs_user_trap())
 			break;
 
 		/* Check whether they single-stepped into a lcall. */
@@ -710,10 +710,9 @@ faultcommon:
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
-			if ((wptnfo = user_trap_x86_hw_watchpoint())) {
+			if (x86_dbregs_user_trap()) {
+				x86_dbregs_store_dr6(l);
 				ksi.ksi_code = TRAP_DBREG;
-				ksi.ksi_trap2 = x86_hw_watchpoint_reg(wptnfo);
-				ksi.ksi_trap3 = x86_hw_watchpoint_type(wptnfo);
 			} else if (type == (T_BPTFLT|T_USER))
 				ksi.ksi_code = TRAP_BRKPT;
 			else
