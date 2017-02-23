@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.251 2017/02/05 08:36:08 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.252 2017/02/23 03:34:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2017/02/05 08:36:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2017/02/23 03:34:22 kamil Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -175,6 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.251 2017/02/05 08:36:08 maxv Exp $");
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
@@ -282,6 +283,7 @@ void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
+struct pool x86_dbregspl;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -469,11 +471,11 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_gs = 0;
 	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + USPACE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
+	pcb->pcb_dbregs = NULL;
 
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 #if !defined(XEN)
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -1316,10 +1318,12 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	pcb->pcb_flags = 0;
+	if (pcb->pcb_dbregs != NULL) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 
 	l->l_proc->p_flag &= ~PK_32;
-
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1491,6 +1495,7 @@ init_x86_64(paddr_t first_avail)
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
+	struct pcb *pcb;
 #ifndef XEN
 	extern paddr_t local_apic_pa;
 	int ist;
@@ -1510,8 +1515,8 @@ init_x86_64(paddr_t first_avail)
 
 	use_pae = 1; /* PAE always enabled in long mode */
 
+	pcb = lwp_getpcb(&lwp0);
 #ifdef XEN
-	struct pcb *pcb = lwp_getpcb(&lwp0);
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
@@ -1774,6 +1779,13 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
+
+	pcb->pcb_dbregs = NULL;
+
+	x86_dbregs_setup_initdbstate();
+
+	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
+	    NULL, IPL_NONE);
 }
 
 void
