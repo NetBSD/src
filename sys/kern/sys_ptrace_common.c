@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.17 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.18 2017/02/23 04:48:36 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.17 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.18 2017/02/23 04:48:36 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -297,9 +297,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 {
 	struct proc *p = l->l_proc;
 	struct lwp *lt;
-#ifdef PT_STEP
 	struct lwp *lt2;
-#endif
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
