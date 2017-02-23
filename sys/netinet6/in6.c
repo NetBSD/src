@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.237 2017/01/23 10:19:03 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.238 2017/02/23 07:57:10 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.237 2017/01/23 10:19:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.238 2017/02/23 07:57:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1370,23 +1370,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	mutex_exit(&in6_ifaddr_lock);
 
 	/*
-	 * XXX thorpej@NetBSD.org -- if the interface is going
-	 * XXX away, don't save the multicast entries, delete them!
-	 */
-	if (LIST_EMPTY(&ia->ia6_multiaddrs))
-		;
-	else if (if_is_deactivated(ia->ia_ifa.ifa_ifp)) {
-		struct in6_multi *in6m, *next;
-
-		for (in6m = LIST_FIRST(&ia->ia6_multiaddrs); in6m != NULL;
-		     in6m = next) {
-			next = LIST_NEXT(in6m, in6m_entry);
-			in6_delmulti(in6m);
-		}
-	} else
-		in6_savemkludge(ia);
-
-	/*
 	 * Release the reference to the ND prefix.
 	 */
 	if (ia->ia6_ndpr != NULL) {
@@ -1753,9 +1736,6 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 			in6_ifremlocal(&ia->ia_ifa);
 		return error;
 	}
-
-	if (ifp->if_flags & IFF_MULTICAST)
-		in6_restoremkludge(ia, ifp);
 
 	return error;
 }
