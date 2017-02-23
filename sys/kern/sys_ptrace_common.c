@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.15 2017/02/22 23:43:43 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.16 2017/02/23 00:50:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.15 2017/02/22 23:43:43 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.16 2017/02/23 00:50:09 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1098,11 +1098,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			mutex_exit(t->p_lock);
 		}
 
-		if (!process_validregs(lt))
+		if (lt->l_flag & LW_SYSTEM)
 			error = EINVAL;
-		else if (write == 1)
+		else if (write == 1) {
 			error = copyin(addr, &lt->l_sigmask, sizeof(sigset_t));
-		else
+			sigminusset(&sigcantmask, &lt->l_sigmask);
+		} else
 			error = copyout(&lt->l_sigmask, addr, sizeof(sigset_t));
 			
 		break;
