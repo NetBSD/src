@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.187 2016/12/08 18:42:01 christos Exp $
+#  $NetBSD: Makefile,v 1.188 2017/02/23 02:05:30 scole Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -77,6 +77,9 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 .endif
+.elif (${LIBC_MACHINE_ARCH} == "ia64")
+.PATH: ${.CURDIR}/arch/ia64
+COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
