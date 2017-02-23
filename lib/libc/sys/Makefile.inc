@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.234 2017/02/08 17:58:41 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.235 2017/02/23 15:17:17 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -379,6 +379,6 @@ MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=wait.2 wait6.2 wait.2 waitid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
-MLINKS+=accept.2 paccept.2
+MLINKS+=accept.2 paccept.2 accept.2 accept4.2
 MLINKS+=nanosleep.2 clock_nanosleep.2
 MLINKS+=clock_getcpuclockid2.2 clock_getcpuclockid.2
