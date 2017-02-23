@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.18 2017/01/11 19:42:02 maya Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.19 2017/02/23 22:33:31 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.18 2017/01/11 19:42:02 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.19 2017/02/23 22:33:31 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -312,7 +312,7 @@ static struct mbus_description {
 };
 
 /*
- * Default Mbus addrss decoding table for ARMADA XP
+ * Default Mbus address decoding table for ARMADA XP
  * this table may changed by device drivers.
  *
  * NOTE: some version of u-boot is broken. it writes old decoding table.
