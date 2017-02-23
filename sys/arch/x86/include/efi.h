@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.5 2017/02/14 13:29:09 nonaka Exp $   */
+/*     $NetBSD: efi.h,v 1.6 2017/02/23 12:17:36 nonaka Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -42,9 +42,6 @@
 extern const struct uuid EFI_UUID_ACPI20;
 extern const struct uuid EFI_UUID_ACPI10;
 
-#define        EFI_TABLE_SAL                           \
-       {0xeb9d2d32,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
-
 enum efi_reset {
        EFI_RESET_COLD,
        EFI_RESET_WARM
@@ -53,11 +50,11 @@ enum efi_reset {
 typedef uint16_t       efi_char;
 typedef unsigned long efi_status;
 
-
 struct efi_cfgtbl {
        struct uuid     ct_uuid;
        void           *ct_data;
 };
+
 struct efi_md {
        uint32_t        md_type;
 #define        EFI_MD_TYPE_NULL        0
@@ -158,6 +155,53 @@ struct efi_systbl {
        u_long          st_entries;
        struct efi_cfgtbl *st_cfgtbl;
 };
+
+#if defined(__amd64__)
+struct efi_cfgtbl32 {
+	struct uuid		ct_uuid;
+	uint32_t		ct_data;	/* void * */
+};
+
+struct efi_systbl32 {
+	struct efi_tblhdr	st_hdr;
+
+	uint32_t		st_fwvendor;
+	uint32_t		st_fwrev;
+	uint32_t		st_cin;		/* = 0 */
+	uint32_t		st_cinif;	/* = 0 */
+	uint32_t		st_cout;	/* = 0 */
+	uint32_t		st_coutif;	/* = 0 */
+	uint32_t		st_cerr;	/* = 0 */
+	uint32_t		st_cerrif;	/* = 0 */
+	uint32_t		st_rt;		/* struct efi_rt32 * */
+	uint32_t		st_bs;		/* = 0 */
+	uint32_t		st_entries;
+	uint32_t		st_cfgtbl;	/* struct efi_cfgtbl32 * */
+};
+#elif defined(__i386__)
+struct efi_cfgtbl64 {
+	struct uuid		ct_uuid;
+	uint64_t		ct_data;	/* void * */
+};
+
+struct efi_systbl64 {
+	struct efi_tblhdr	st_hdr;
+
+	uint64_t		st_fwvendor;
+	uint32_t		st_fwrev;
+	uint32_t		__pad;
+	uint64_t		st_cin;		/* = 0 */
+	uint64_t		st_cinif;	/* = 0 */
+	uint64_t		st_cout;	/* = 0 */
+	uint64_t		st_coutif;	/* = 0 */
+	uint64_t		st_cerr;	/* = 0 */
+	uint64_t		st_cerrif;	/* = 0 */
+	uint64_t		st_rt;		/* struct efi_rt64 * */
+	uint64_t		st_bs;		/* = 0 */
+	uint64_t		st_entries;
+	uint64_t		st_cfgtbl;	/* struct efi_cfgtbl64 * */
+};
+#endif
 
 bool               efi_probe(void);
 paddr_t            efi_getsystblpa(void);

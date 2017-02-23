@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.9 2017/02/16 03:53:20 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.10 2017/02/23 12:17:36 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.9 2017/02/16 03:53:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.10 2017/02/23 12:17:36 nonaka Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ void 		efi_aprintcfgtbl(void);
 void 		efi_aprintuuid(const struct uuid *);
 bool 		efi_uuideq(const struct uuid *, const struct uuid *);
 
-static bool efi_is32bit = false;
+static bool efi_is32x64 = false;
 static struct efi_systbl *efi_systbl_va = NULL;
 static struct efi_cfgtbl *efi_cfgtblhead_va = NULL;
 static struct efi_e820memmap {
@@ -158,7 +158,18 @@ efi_getcfgtblhead(void)
 	if (efi_cfgtblhead_va != NULL)
 		return efi_cfgtblhead_va;
 
-	pa = (paddr_t)(u_long) efi_systbl_va->st_cfgtbl;
+	if (efi_is32x64) {
+#if defined(__amd64__)
+		struct efi_systbl32 *systbl32 = (void *) efi_systbl_va;
+		pa = systbl32->st_cfgtbl;
+#elif defined(__i386__)
+		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
+		if (systbl64->st_cfgtbl & 0xffffffff00000000ULL)
+			return NULL;
+		pa = (paddr_t) systbl64->st_cfgtbl;
+#endif
+	} else
+		pa = (paddr_t)(u_long) efi_systbl_va->st_cfgtbl;
 	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
 	va = efi_getva(pa);
 	aprint_debug("efi: cfgtbl mapped at va %" PRIxVADDR "\n", va);
@@ -175,7 +186,34 @@ void
 efi_aprintcfgtbl(void)
 {
 	struct efi_cfgtbl *ct;
-	unsigned long 	count;
+	unsigned long count;
+
+	if (efi_is32x64) {
+#if defined(__amd64__)
+		struct efi_systbl32 *systbl32 = (void *) efi_systbl_va;
+		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
+
+		count = systbl32->st_entries;
+		aprint_debug("efi: %lu cfgtbl entries:\n", count);
+		for (; count; count--, ct32++) {
+			aprint_debug("efi: %08" PRIx32, ct32->ct_data);
+			efi_aprintuuid(&ct32->ct_uuid);
+			aprint_debug("\n");
+		}
+#elif defined(__i386__)
+		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
+		struct efi_cfgtbl64 *ct64 = (void *) efi_cfgtblhead_va;
+		uint64_t count64 = systbl64->st_entries;
+
+		aprint_debug("efi: %" PRIu64 " cfgtbl entries:\n", count64);
+		for (; count64; count64--, ct64++) {
+			aprint_debug("efi: %016" PRIx64, ct64->ct_data);
+			efi_aprintuuid(&ct64->ct_uuid);
+			aprint_debug("\n");
+		}
+#endif
+		return;
+	}
 
 	ct = efi_cfgtblhead_va;
 	count = efi_systbl_va->st_entries;
@@ -195,7 +233,7 @@ void *
 efi_getcfgtbl(const struct uuid * uuid)
 {
 	paddr_t pa;
-	vaddr_t  va;
+	vaddr_t va;
 
 	pa = efi_getcfgtblpa(uuid);
 	if (pa == 0)
@@ -212,6 +250,28 @@ efi_getcfgtblpa(const struct uuid * uuid)
 {
 	struct efi_cfgtbl *ct;
 	unsigned long count;
+
+	if (efi_is32x64) {
+#if defined(__amd64__)
+		struct efi_systbl32 *systbl32 = (void *) efi_systbl_va;
+		struct efi_cfgtbl32 *ct32 = (void *) efi_cfgtblhead_va;
+
+		count = systbl32->st_entries;
+		for (; count; count--, ct32++)
+			if (efi_uuideq(&ct32->ct_uuid, uuid))
+				return ct32->ct_data;
+#elif defined(__i386__)
+		struct efi_systbl64 *systbl64 = (void *) efi_systbl_va;
+		struct efi_cfgtbl64 *ct64 = (void *) efi_cfgtblhead_va;
+		uint64_t count64 = systbl64->st_entries;
+
+		for (; count64; count64--, ct64++)
+			if (efi_uuideq(&ct64->ct_uuid, uuid))
+				if (!(ct64->ct_data & 0xffffffff00000000ULL))
+					return ct64->ct_data;
+#endif
+		return 0;	/* Not found. */
+	}
 
 	ct = efi_cfgtblhead_va;
 	count = efi_systbl_va->st_entries;
@@ -234,15 +294,23 @@ efi_getsystblpa(void)
 		/* Unable to locate the EFI System Table. */
 		return 0;
 	}
-	if (bi->common.len > 16 && (bi->flags & BI_EFI_32BIT)) {
-		/* 32Bit UEFI */
-		if (sizeof(paddr_t) == 4 &&
-		    (bi->systblpa & 0xffffffff00000000ULL))
-			/* Unable to access EFI System Table. */
-			return 0;
-		efi_is32bit = true;
+	if (sizeof(paddr_t) == 4 &&	/* XXX i386 with PAE */
+	    (bi->systblpa & 0xffffffff00000000ULL)) {
+		/* Unable to access EFI System Table. */
+		return 0;
 	}
-	pa = (paddr_t)bi->systblpa;
+	if (bi->common.len > 16 && (bi->flags & BI_EFI_32BIT)) {
+		/* boot from 32bit UEFI */
+#if defined(__amd64__)
+		efi_is32x64 = true;
+#endif
+	} else {
+		/* boot from 64bit UEFI */
+#if defined(__i386__)
+		efi_is32x64 = true;
+#endif
+	}
+	pa = (paddr_t) bi->systblpa;
 	return pa;
 }
 
@@ -253,34 +321,78 @@ efi_getsystblpa(void)
 struct efi_systbl *
 efi_getsystbl(void)
 {
-	if (!efi_systbl_va) {
-		paddr_t 	pa;
-		vaddr_t 	va;
-		struct efi_systbl *systbl;
+	paddr_t pa;
+	vaddr_t va;
+	struct efi_systbl *systbl;
 
-		pa = efi_getsystblpa();
-		if (pa == 0)
-			return NULL;
-		aprint_normal("efi: systbl at pa %" PRIxPADDR "\n", pa);
-		va = efi_getva(pa);
-		aprint_debug("efi: systbl mapped at va %" PRIxVADDR "\n", va);
-		systbl = (struct efi_systbl *) va;
+	if (efi_systbl_va)
+		return efi_systbl_va;
+
+	pa = efi_getsystblpa();
+	if (pa == 0)
+		return NULL;
+
+	aprint_normal("efi: systbl at pa %" PRIxPADDR "\n", pa);
+	va = efi_getva(pa);
+	aprint_debug("efi: systbl mapped at va %" PRIxVADDR "\n", va);
+
+	if (efi_is32x64) {
+#if defined(__amd64__)
+		struct efi_systbl32 *systbl32 = (struct efi_systbl32 *) va;
+
 		/* XXX Check the signature and the CRC32 */
 		aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
-		    " crc32 %" PRIx32 "\n", systbl->st_hdr.th_sig,
-		    systbl->st_hdr.th_rev, systbl->st_hdr.th_crc32);
+		    " crc32 %" PRIx32 "\n", systbl32->st_hdr.th_sig,
+		    systbl32->st_hdr.th_rev, systbl32->st_hdr.th_crc32);
 		aprint_debug("efi: firmware revision %" PRIx32 "\n",
-		    systbl->st_fwrev);
+		    systbl32->st_fwrev);
 		/*
 		 * XXX Also print fwvendor, which is an UCS-2 string (use
 		 * some UTF-16 routine?)
 		 */
-		aprint_debug("efi: runtime services at pa %p\n",
-		    systbl->st_rt);
-		aprint_debug("efi: boot services at pa %p\n",
-		    systbl->st_bs);
-		efi_systbl_va = systbl;
+		aprint_debug("efi: runtime services at pa 0x%08" PRIx32 "\n",
+		    systbl32->st_rt);
+		aprint_debug("efi: boot services at pa 0x%08" PRIx32 "\n",
+		    systbl32->st_bs);
+
+		efi_systbl_va = (struct efi_systbl *) systbl32;
+#elif defined(__i386__)
+		struct efi_systbl64 *systbl64 = (struct efi_systbl64 *) va;
+
+		/* XXX Check the signature and the CRC32 */
+		aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
+		    " crc32 %" PRIx32 "\n", systbl64->st_hdr.th_sig,
+		    systbl64->st_hdr.th_rev, systbl64->st_hdr.th_crc32);
+		aprint_debug("efi: firmware revision %" PRIx32 "\n",
+		    systbl64->st_fwrev);
+		/*
+		 * XXX Also print fwvendor, which is an UCS-2 string (use
+		 * some UTF-16 routine?)
+		 */
+		aprint_debug("efi: runtime services at pa 0x%016" PRIx64 "\n",
+		    systbl64->st_rt);
+		aprint_debug("efi: boot services at pa 0x%016" PRIx64 "\n",
+		    systbl64->st_bs);
+
+		efi_systbl_va = (struct efi_systbl *) systbl64;
+#endif
+		return efi_systbl_va;
 	}
+
+	systbl = (struct efi_systbl *) va;
+	/* XXX Check the signature and the CRC32 */
+	aprint_debug("efi: signature %" PRIx64 " revision %" PRIx32
+	    " crc32 %" PRIx32 "\n", systbl->st_hdr.th_sig,
+	    systbl->st_hdr.th_rev, systbl->st_hdr.th_crc32);
+	aprint_debug("efi: firmware revision %" PRIx32 "\n", systbl->st_fwrev);
+	/*
+	 * XXX Also print fwvendor, which is an UCS-2 string (use
+	 * some UTF-16 routine?)
+	 */
+	aprint_debug("efi: runtime services at pa %p\n", systbl->st_rt);
+	aprint_debug("efi: boot services at pa %p\n", systbl->st_bs);
+
+	efi_systbl_va = systbl;
 	return efi_systbl_va;
 }
 
@@ -290,11 +402,11 @@ efi_getsystbl(void)
 bool
 efi_probe(void)
 {
-	if (efi_getsystbl() == 0) {
+	if (efi_getsystbl() == NULL) {
 		aprint_debug("efi: missing or invalid systbl\n");
 		return false;
 	}
-	if (efi_getcfgtblhead() == 0) {
+	if (efi_getcfgtblhead() == NULL) {
 		aprint_debug("efi: missing or invalid cfgtbl\n");
 		efi_relva((vaddr_t) efi_systbl_va);
 		return false;
