@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.13 2017/01/16 21:19:14 kamil Exp $	*/
+/*	$NetBSD: userret.h,v 1.14 2017/02/23 03:34:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,15 +74,13 @@ static __inline void userret(struct lwp *);
 static __inline void
 userret(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	/*
-	 * Allow to mix debug registers with single step.
-	 */
-	if (l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS)
-		set_x86_hw_watchpoints(l);
+	if (pcb->pcb_dbregs)
+		x86_dbregs_set(l);
 	else
-		clear_x86_hw_watchpoints();
+		x86_dbregs_clear(l);
 }
