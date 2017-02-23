@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.103 2017/02/14 09:03:48 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.104 2017/02/23 03:34:22 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.103 2017/02/14 09:03:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.104 2017/02/23 03:34:22 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.103 2017/02/14 09:03:48 maxv 
 
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
+
+extern struct pool x86_dbregspl;
 
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
@@ -136,9 +138,12 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ?  __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 
-	p->p_flag |= PK_32;
+	if (pcb->pcb_dbregs != NULL) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+	p->p_flag |= PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -529,6 +534,28 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 }
 
 int
+netbsd32_process_read_dbregs(struct lwp *l, struct dbreg32 *regs, size_t *sz)
+{
+#if notyet
+	struct pcb *pcb;
+
+	pcb = lwp_getpcb(l);
+
+	regs->dr[0] = pcb->pcb_dbregs->dr[0] & 0xffffffff;
+	regs->dr[1] = pcb->pcb_dbregs->dr[1] & 0xffffffff;
+	regs->dr[2] = pcb->pcb_dbregs->dr[2] & 0xffffffff;
+	regs->dr[3] = pcb->pcb_dbregs->dr[3] & 0xffffffff;
+
+	regs->dr[6] = pcb->pcb_dbregs->dr[6] & 0xffffffff;
+	regs->dr[7] = pcb->pcb_dbregs->dr[7] & 0xffffffff;
+
+	return 0;
+#else
+	return ENOTSUP;
+#endif
+}
+
+int
 netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
 	struct trapframe *tf;
@@ -586,6 +613,29 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs,
 	__CTASSERT(sizeof *regs == sizeof (struct save87));
 	process_write_fpregs_s87(l, (const struct save87 *)regs);
 	return 0;
+}
+
+int
+netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
+    size_t sz)
+{
+#if notyet
+	struct pcb *pcb;
+
+	pcb = lwp_getpcb(l);
+
+	pcb->pcb_dbregs->dr[0] = regs->dr[0];
+	pcb->pcb_dbregs->dr[1] = regs->dr[1];
+	pcb->pcb_dbregs->dr[2] = regs->dr[2];
+	pcb->pcb_dbregs->dr[3] = regs->dr[3];
+
+	pcb->pcb_dbregs->dr[6] = regs->dr[6];
+	pcb->pcb_dbregs->dr[7] = regs->dr[7];
+
+	return 0;
+#else
+	return ENOTSUP;
+#endif
 }
 
 int

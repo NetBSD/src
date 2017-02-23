@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.779 2017/02/17 12:10:40 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.780 2017/02/23 03:34:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.779 2017/02/17 12:10:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.780 2017/02/23 03:34:22 kamil Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.779 2017/02/17 12:10:40 maxv Exp $");
 #include <x86/x86/tsc.h>
 
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <x86/machdep.h>
 
 #include <machine/multiboot.h>
@@ -236,6 +237,8 @@ int i386_fpu_fdivbug;
 int i386_use_fxsave;
 int i386_has_sse;
 int i386_has_sse2;
+
+struct pool x86_dbregspl;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
@@ -508,7 +511,7 @@ i386_proc0_tss_ldt_init(void)
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
 	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+	pcb->pcb_dbregs = NULL;
 
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -841,8 +844,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	memcpy(&pcb->pcb_fsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_fsd));
 	memcpy(&pcb->pcb_gsd, &gdtstore[GUDATA_SEL], sizeof(pcb->pcb_gsd));
-
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
+	if (pcb->pcb_dbregs != NULL) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 
 	tf = l->l_md.md_regs;
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
@@ -1089,6 +1094,7 @@ init386(paddr_t first_avail)
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
 #endif
+	struct pcb *pcb;
 
 	KASSERT(first_avail % PAGE_SIZE == 0);
 
@@ -1110,8 +1116,8 @@ init386(paddr_t first_avail)
 	use_pae = 0;
 #endif
 
+	pcb = lwp_getpcb(&lwp0);
 #ifdef XEN
-	struct pcb *pcb = lwp_getpcb(&lwp0);
 	pcb->pcb_cr3 = PDPpaddr;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr, xpmap_ptom(PDPpaddr)));
@@ -1405,6 +1411,13 @@ init386(paddr_t first_avail)
 	rw_init(&svr4_fasttrap_lock);
 
 	pmc_init();
+
+	pcb->pcb_dbregs = NULL;
+
+	x86_dbregs_setup_initdbstate();
+
+	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",                                                                                   
+	    NULL, IPL_NONE);
 }
 
 #include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
