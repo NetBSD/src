@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.34 2017/01/06 09:14:36 maxv Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.35 2017/02/23 12:13:05 nonaka Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -428,41 +428,37 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * First load the section names section.
 		 */
 		if (boot_load_ctf && (elf->e_shstrndx != 0)) {
+			Elf_Off shstroff = shp[elf->e_shstrndx].sh_offset;
+			shstrsz = shp[elf->e_shstrndx].sh_size;
 			if (flags & LOAD_SYM) {
-				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-				    SEEK_SET) == -1) {
+				if (lseek(fd, shstroff, SEEK_SET) == -1) {
 					WARN(("lseek symbols"));
 					goto freeshp;
 				}
-				nr = READ(fd, maxp,
-				    shp[elf->e_shstrndx].sh_size);
+				nr = READ(fd, maxp, shstrsz);
 				if (nr == -1) {
 					WARN(("read symbols"));
 					goto freeshp;
 				}
-				if (nr !=
-				    (ssize_t)shp[elf->e_shstrndx].sh_size) {
+				if (nr != (ssize_t)shstrsz) {
 					errno = EIO;
 					WARN(("read symbols"));
 					goto freeshp;
 				}
+			}
 
-				shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
-				shstrsz = shp[elf->e_shstrndx].sh_size;
-				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-				    SEEK_SET) == -1) {
-					WARN(("lseek symbols"));
-					goto freeshp;
-				}
-				nr = read(fd, shstr,
-				    shp[elf->e_shstrndx].sh_size);
-				if (nr == -1) {
-					WARN(("read symbols"));
-					goto freeshp;
-				}
+			shstr = ALLOC(shstrsz);
+			if (lseek(fd, shstroff, SEEK_SET) == -1) {
+				WARN(("lseek symbols"));
+				goto freeshp;
+			}
+			nr = read(fd, shstr, shstrsz);
+			if (nr == -1) {
+				WARN(("read symbols"));
+				goto freeshp;
 			}
 			shp[elf->e_shstrndx].sh_offset = maxp - elfp;
-			maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
+			maxp += roundup(shstrsz, ELFROUND);
 		}
 
 		/*
