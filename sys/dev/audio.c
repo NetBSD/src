@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.307 2017/02/21 20:23:37 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.308 2017/02/23 23:19:04 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.307 2017/02/21 20:23:37 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.308 2017/02/23 23:19:04 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -908,8 +908,9 @@ audioactivate(device_t self, enum devact act)
 	case DVACT_DEACTIVATE:
 		mutex_enter(sc->sc_lock);
 		sc->sc_dying = true;
+		mutex_enter(sc->sc_intr_lock);
 		cv_broadcast(&sc->sc_condvar);
-		mutex_exit(sc->sc_lock);
+		mutex_exit(sc->sc_intr_lock);
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -933,8 +934,10 @@ audiodetach(device_t self, int flags)
 	sc->sc_dying = true;
 	cv_broadcast(&sc->sc_wchan);
 	cv_broadcast(&sc->sc_rchan);
+	mutex_enter(sc->sc_intr_lock);
 	cv_broadcast(&sc->sc_condvar);
 	cv_broadcast(&sc->sc_rcondvar);
+	mutex_exit(sc->sc_intr_lock);
 	mutex_exit(sc->sc_lock);
 	kthread_join(sc->sc_playthread);
 	kthread_join(sc->sc_recthread);
@@ -6007,15 +6010,18 @@ audio_play_thread(void *v)
 	
 	sc = (struct audio_softc *)v;
 
-	mutex_enter(sc->sc_lock);
 	for (;;) {
-		cv_wait_sig(&sc->sc_condvar, sc->sc_lock);
+		mutex_enter(sc->sc_intr_lock);
+		cv_wait_sig(&sc->sc_condvar, sc->sc_intr_lock);
 		if (sc->sc_dying) {
-			mutex_exit(sc->sc_lock);
+			mutex_exit(sc->sc_intr_lock);
 			kthread_exit(0);
 		}
+		mutex_exit(sc->sc_intr_lock);
 
+		mutex_enter(sc->sc_lock);
 		audio_mix(sc);
+		mutex_exit(sc->sc_lock);
 	}
 }
 
@@ -6026,15 +6032,18 @@ audio_rec_thread(void *v)
 	
 	sc = (struct audio_softc *)v;
 
-	mutex_enter(sc->sc_lock);
 	for (;;) {
-		cv_wait_sig(&sc->sc_rcondvar, sc->sc_lock);
+		mutex_enter(sc->sc_intr_lock);
+		cv_wait_sig(&sc->sc_rcondvar, sc->sc_intr_lock);
 		if (sc->sc_dying) {
-			mutex_exit(sc->sc_lock);
+			mutex_exit(sc->sc_intr_lock);
 			kthread_exit(0);
 		}
+		mutex_exit(sc->sc_intr_lock);
 
+		mutex_enter(sc->sc_lock);
 		audio_upmix(sc);
+		mutex_exit(sc->sc_lock);
 	}
 
 }
