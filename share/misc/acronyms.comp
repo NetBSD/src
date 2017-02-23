@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.174 2017/01/26 19:00:13 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.175 2017/02/23 05:04:14 kamil Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -42,8 +42,8 @@ AM	access method
 AM	alignment mask
 AM	amplitude modulation
 AMI	alternate mark inversion
-AMQP	advanced message queuing protocol
 AMP	asymmetric multiprocessing
+AMQP	advanced message queuing protocol
 AMT	active management technology
 AN	Arabic number
 ANSI	American National Standards Institute
@@ -1219,6 +1219,7 @@ SRAM	static random access memory
 SRC	sample rate conversion
 SS	self-snoop
 SS	stack segment
+SSA	static single assignment
 SSAP	source service access point
 SSB	single-sideband modulation
 SSD	solid state drive
