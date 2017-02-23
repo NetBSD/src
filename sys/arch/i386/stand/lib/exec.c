@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.65 2017/02/11 10:23:39 nonaka Exp $	 */
+/*	$NetBSD: exec.c,v 1.66 2017/02/23 12:14:53 nonaka Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -313,7 +313,6 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 		/* Allocate temporary arena. */
 		addr = EFI_ALLOCATE_MAX_ADDRESS;
 		kernsize = marks[MARK_END] - loadaddr;
-		kernsize += 1 * 1024 * 1024;	/* XXX: kernel size COUNT_KERNEL vs LOAD_KERNL (lacked some SYMTAB?) */
 		kernsize = EFI_SIZE_TO_PAGES(kernsize);
 		status = uefi_call_wrapper(BS->AllocatePages, 4,
 		    AllocateMaxAddress, EfiLoaderData, kernsize, &addr);
