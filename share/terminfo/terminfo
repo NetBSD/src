@@ -6,8 +6,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.10 $
-#	$Date: 2017/02/11 09:15:38 $
+#	$Revision: 1.11 $
+#	$Date: 2017/02/23 13:22:53 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -3698,7 +3698,7 @@ putty|PuTTY terminal emulator,
 	initc=\E]P%p1%x%p2%{255}%*%{1000}%/%02x%p3%{255}%*%{1000}%/
 	      %02x%p4%{255}%*%{1000}%/%02x,
 	is2=\E7\E[r\E[m\E[?7h\E[?1;4;6l\E[4l\E8\E>\E]R,
-	kLFT=\E[D, kRIT=\E[C, kb2=\E[G, kbs=\177, kcbt=\E[Z,
+	kb2=\E[G, kbs=\177, kcbt=\E[Z,
 	kcub1=\EOD, kcud1=\EOB, kcuf1=\EOC, kcuu1=\EOA,
 	kdch1=\E[3~, kend=\E[4~, khome=\E[1~, kich1=\E[2~,
 	kind=\E[B, kmous=\E[M, knp=\E[6~, kpp=\E[5~, kri=\E[A,
