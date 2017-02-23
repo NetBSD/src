@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.36 2017/02/17 08:25:15 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.37 2017/02/23 11:23:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.36 2017/02/17 08:25:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.37 2017/02/23 11:23:22 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -235,6 +235,16 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 		return NULL;
 
 	/*
+	 * Does this file system support fstrans?
+	 */
+	mutex_enter(&fstrans_mount_lock);
+	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0) {
+		mutex_exit(&fstrans_mount_lock);
+		return NULL;
+	}
+	mutex_exit(&fstrans_mount_lock);
+
+	/*
 	 * Try to reuse a cleared entry or allocate a new one.
 	 */
 	for (fli = lwp_getspecific(lwp_data_key); fli; fli = fli->fli_succ) {
@@ -274,14 +284,10 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 	 * Attach the entry to the mount.
 	 */
 	mutex_enter(&fstrans_mount_lock);
-	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0) {
-		fli = NULL;
-	} else {
-		fmi = mp->mnt_transinfo;
-		KASSERT(fmi != NULL);
-		fli->fli_mount = mp;
-		fmi->fmi_ref_cnt += 1;
-	}
+	fmi = mp->mnt_transinfo;
+	KASSERT(fmi != NULL);
+	fli->fli_mount = mp;
+	fmi->fmi_ref_cnt += 1;
 	mutex_exit(&fstrans_mount_lock);
 
 	return fli;
