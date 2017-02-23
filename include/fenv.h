@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.23 2016/08/25 12:12:59 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.24 2017/02/23 02:06:12 scole Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,7 @@
 #include <sys/featuretest.h>
 
 #if !defined(__aarch64__) && !defined(__arm__) && !defined(__i386__) \
+    && !defined(__ia64__) \
     && !defined(__hppa__) && !defined(__powerpc__) && !defined(__mips__) \
     && !defined(__or1k__) && !defined(__riscv__) && !defined(__sparc__) \
     && !defined(__x86_64__) && !defined(__alpha__) && !defined(__sh__) \
