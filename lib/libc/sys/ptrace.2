@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.61 2017/02/23 05:48:14 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.62 2017/02/23 08:11:09 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd February 23, 2017
@@ -109,10 +109,9 @@ the details of the process state associated with this event.
 Design choices for Debug Register accessors
 .Bl -dash
 .It
-.Dv exec()
-(
-.Dv TRAP_EXEC
-event ) must remove debug registers from LWP
+.Fn exec
+.Dv ( TRAP_EXEC
+event) must remove debug registers from LWP
 .It
 debug registers are only per-LWP, not per-process globally
 .It
