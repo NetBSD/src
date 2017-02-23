@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.93 2017/01/22 04:52:04 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.94 2017/02/23 07:57:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.93 2017/01/22 04:52:04 mrg Exp $");
+__RCSID("$NetBSD: if.c,v 1.94 2017/02/23 07:57:10 ozaki-r Exp $");
 #endif
 #endif /* not lint */
 
@@ -553,7 +553,7 @@ print_addr(const int ifindex, struct sockaddr *sa,
 			struct in6_multi inm;
 			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
 		
-			multiaddr = (u_long)ifaddr->in6.ia6_multiaddrs.lh_first;
+			multiaddr = (u_long)ifaddr->in6._ia6_multiaddrs.lh_first;
 			while (multiaddr != 0) {
 				kread(multiaddr, (char *)&inm, sizeof inm);
 				ia6_print(&inm.in6m_addr);

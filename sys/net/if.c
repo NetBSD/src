@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.380 2017/02/17 03:57:17 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.381 2017/02/23 07:57:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.380 2017/02/17 03:57:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.381 2017/02/23 07:57:10 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -720,6 +720,7 @@ if_initialize(ifnet_t *ifp)
 	PSLIST_INIT(&ifp->if_addr_pslist);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&ifp->if_multiaddrs);
 
 	IFNET_LOCK();
 	if_getindex(ifp);
