@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.60 2017/02/22 23:43:43 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.61 2017/02/23 05:48:14 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd February 12, 2016
+.Dd February 23, 2017
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -90,7 +90,8 @@ with
 .Dv si_code
 set to
 .Dv TRAP_TRACE .
-This event is always enabled and cannot be disabled.
+This event is not maskable
+.Dv PT_SET_EVENT_MASK .
 .Pp
 Child program traps are reported with
 .Dv SIGTRAP
@@ -104,6 +105,46 @@ If this event occurs,
 check with
 .Dv PT_GET_PROCESS_STATE
 the details of the process state associated with this event.
+.Pp
+Design choices for Debug Register accessors
+.Bl -dash
+.It
+.Dv exec()
+(
+.Dv TRAP_EXEC
+event ) must remove debug registers from LWP
+.It
+debug registers are only per-LWP, not per-process globally
+.It
+debug registers must not be inherited after (v)forking a process
+.It
+debug registers must not be inherited after forking a thread
+.It
+a debugger is responsible to set global watchpoints/breakpoints with the
+debug registers,
+to achieve this
+.Dv PTRACE_LWP_CREATE
+/
+.Dv PTRACE_LWP_EXIT
+event monitoring function is designed to be used
+.It
+debug register traps must generate
+.Dv SIGTRAP with
+.Dv si_code
+.Dv TRAP_DBREG
+.It
+debugger is responsible to retrieve debug register state to distinguish
+the exact debug register trap
+.It
+kernel must not remove debug register traps after triggering a trap event;
+a debugger is responsible to detach this trap with appropriate
+.Dv PT_SETDBREGS
+call
+.It
+debug registers must not be exposed in mcontext
+.It
+userland must not be allowed to set a trap on the kernel
+.El
 .Pp
 A debugger might reuse a port specific symbols,
 to help writing portable code as described in the port specific part of the
@@ -632,6 +673,33 @@ This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
 .Dq Li "struct fpreg"
+(defined in
+.In machine/reg.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.
+If zero is supplied, the first thread of the process is written.
+.It Dv PT_GETDBREGS
+This request reads the traced process' debug registers into
+the
+.Dq Li "struct dbreg"
+(defined in
+.In machine/reg.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be read.
+If zero is supplied, the first thread of the process is read.
+.It Dv PT_SETDBREGS
+This request is the converse of
+.Dv PT_GETDBREGS ;
+it loads the traced process' debug registers from the
+.Dq Li "struct dbreg"
 (defined in
 .In machine/reg.h )
 pointed to by
