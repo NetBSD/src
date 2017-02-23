@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.5 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.6 2017/02/23 12:01:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ x86_dbregs_setup_initdbstate(void)
 void
 x86_dbregs_clear(struct lwp *l)
 {
-	struct pcb *pcb = lwp_getpcb(l);
+	struct pcb *pcb __diagused = lwp_getpcb(l);
 
 	KASSERT(pcb->pcb_dbregs == NULL);
 
