@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.35 2017/02/23 12:13:05 nonaka Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.36 2017/02/23 12:13:59 nonaka Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -363,6 +363,10 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT|COUNT_TEXT))) ||
 		    (IS_DATA(phdr[i]) && (flags & (LOAD_DATA|COUNT_DATA)))) {
+			/* XXX: Assume first address is lowest */
+			if (marks[MARK_DATA] == 0 && IS_DATA(phdr[i]))
+				marks[MARK_DATA] = LOADADDR(phdr[i].p_vaddr);
+
 			pos = phdr[i].p_vaddr;
 			if (minp > pos)
 				minp = pos;
