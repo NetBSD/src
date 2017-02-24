@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.27 2017/01/09 14:15:20 kiyohara Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.28 2017/02/24 17:07:13 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.27 2017/01/09 14:15:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.28 2017/02/24 17:07:13 skrll Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -400,7 +400,7 @@ static struct {
 #if defined(ARMADAXP)
 	{ ARMADAXP(MV78130),	1, "MV78130",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78160),	1, "MV78160",	"A0",  "Armada XP" },
-	{ ARMADAXP(MV78230),	1, "MV78260",	"A0",  "Armada XP" },
+	{ ARMADAXP(MV78230),	1, "MV78230",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78260),	1, "MV78260",	"A0",  "Armada XP" },
 	{ ARMADAXP(MV78260),	2, "MV78260",	"B0",  "Armada XP" },
 	{ ARMADAXP(MV78460),	1, "MV78460",	"A0",  "Armada XP" },
