@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.31 2017/02/23 18:49:00 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.32 2017/02/24 13:03:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -512,7 +512,7 @@ saveRead(int file, off_t offset, off_t len, const char *name)
 	if ((off = lseek(file, offset, SEEK_SET)) < 0)
 		err(1, "%s: fseek", name);
 	if ((tmp = malloc(len)) == NULL)
-		err(1, "%s: Can't allocate %td bytes", name, len);
+		err(1, "%s: Can't allocate %jd bytes", name, (intmax_t)len);
 	count = read(file, tmp, len);
 	if (count != len)
 		err(1, "%s: short read", name);
