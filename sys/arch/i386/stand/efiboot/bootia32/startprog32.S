@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog32.S,v 1.1 2017/02/21 10:53:37 nonaka Exp $	*/
+/*	$NetBSD: startprog32.S,v 1.2 2017/02/24 12:24:25 nonaka Exp $	*/
 /*	NetBSD: startprog.S,v 1.4 2016/12/04 08:21:08 maxv Exp	*/
 
 /*
@@ -91,6 +91,9 @@ start:
 
 	cli
 
+	movl	8(%ebp), %ebx	/* %ebx: entry address */
+	movl	36(%ebp), %edx	/* %edx: loaded start address */
+
 	/* Prepare a new stack */
 	movl	20(%ebp), %eax	/* stack */
 	subl	$4, %eax
@@ -108,12 +111,12 @@ start:
 	rep
 	movsl			/* copy %ds:(%esi) -> %es:(%edi) */
 	cld
-	mov	%edi, %edx	/* %edx: new stack pointer */
+	mov	%edi, %esp	/* set new stack pointer */
 
 	/* Copy kernel */
-	movl	24(%esp), %edi	/* dest */
-	movl	28(%esp), %esi	/* src */
-	movl	32(%esp), %ecx	/* size */
+	movl	24(%ebp), %edi	/* dest */
+	movl	28(%ebp), %esi	/* src */
+	movl	32(%ebp), %ecx	/* size */
 #if defined(NO_OVERLAP)
 	movl	%ecx, %eax
 #else
@@ -179,20 +182,17 @@ start:
 .Lcopy_done:
 	cld			/* LynxOS depends on it */
 
-	movl	8(%ebp), %esi	/* %esi: entry address */
-	movl	36(%ebp), %edi	/* %edi: loaded start address */
-
 	/* Prepare jump address */
-	lea	(start32a - start)(%edi), %eax
-	movl	%eax, (start32r - start)(%edi)
+	lea	(start32a - start)(%edx), %eax
+	movl	%eax, (start32r - start)(%edx)
 
 	/* Setup GDT */
-	lea	(gdt - start)(%edi), %eax
-	movl	%eax, (gdtrr - start)(%edi)
-	lgdt	(gdtr - start)(%edi)
+	lea	(gdt - start)(%edx), %eax
+	movl	%eax, (gdtrr - start)(%edx)
+	lgdt	(gdtr - start)(%edx)
 
 	/* Jump to set %cs */
-	ljmp	*(start32r - start)(%edi)
+	ljmp	*(start32r - start)(%edx)
 
 	.align	4
 start32a:
@@ -203,7 +203,8 @@ start32a:
 	movw	%ax, %gs
 	movw	%ax, %ss
 
-	movl	%edx, %esp
+	/* Already set new stack pointer */
+	movl	%esp, %ebp
 
 	/* Disable Paging in CR0 */
 	movl	%cr0, %eax
@@ -220,8 +221,8 @@ start32a:
 	.align	4
 start32b:
 	xor	%eax, %eax
-	movl	%esi, (start32r - start)(%edi)
-	ljmp	*(start32r - start)(%edi)
+	movl	%ebx, (start32r - start)(%edx)
+	ljmp	*(start32r - start)(%edx)
 
 	.align	16
 start32r:
