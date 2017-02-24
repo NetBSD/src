@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.32 2017/02/24 13:03:25 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.33 2017/02/24 17:19:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -247,7 +247,7 @@ usage:
 
 			if (debug) {
 				fprintf(stderr, "  combinining PH %zu type %d "
-				    "flags 0x%x with data, ndata = %d, "
+				    "flags %#x with data, ndata = %d, "
 				    "nbss =%d\n", i, ph[i].p_type,
 				    ph[i].p_flags, ndata.len, nbss.len);
 			}
@@ -260,7 +260,7 @@ usage:
 			ntxt.len = ph[i].p_filesz;
 			if (debug) {
 				fprintf(stderr, "  combinining PH %zu type %d "
-				    "flags 0x%x with text, len = %d\n",
+				    "flags %#x with text, len = %d\n",
 				    i, ph[i].p_type, ph[i].p_flags, ntxt.len);
 			}
 			combine(&text, &ntxt, 0);
@@ -423,8 +423,8 @@ usage:
 
 
 	if (debug)
-		fprintf(stderr, "writing syms at offset 0x%lx\n",
-		    (uint32_t) ep.f.f_symptr + sizeof(symhdr));
+		fprintf(stderr, "writing syms at offset %#x\n",
+		    (uint32_t)(ep.f.f_symptr + sizeof(symhdr)));
 
 	/* Copy and translate the symbol table... */
 	elf_symbol_table_to_ecoff(outfile, infile, &ep,
@@ -590,7 +590,7 @@ write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
 
 	if (debug)
 		fprintf(stderr,
-		    "writing symhdr for %d entries at offset 0x%x\n",
+		    "writing symhdr for %d entries at offset %#x\n",
 		    nesyms, ep->f.f_symptr);
 
 	ep->f.f_nsyms = sizeof(struct ecoff32_symhdr);
