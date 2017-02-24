@@ -43,7 +43,9 @@ pass_cb(char *buf, int size, int rwflag, void *u)
 
 	USE_ARG(rwflag);
 	snprintf(prompt, sizeof(prompt), "\"%s\" passphrase: ", (char *)u);
-	passphrase = getpass(prompt);
+	if ((passphrase = getpass(prompt)) == NULL) {
+		return -1;
+	}
 	(void) memcpy(buf, passphrase, (size_t)size);
 	return (int)strlen(passphrase);
 }

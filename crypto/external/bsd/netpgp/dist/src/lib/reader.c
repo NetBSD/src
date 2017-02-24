@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.50 2017/02/20 01:33:28 khorben Exp $");
+__RCSID("$NetBSD: reader.c,v 1.51 2017/02/24 01:27:14 khorben Exp $");
 #endif
 
 #include <sys/types.h>
@@ -162,7 +162,8 @@ pgp_getpassphrase(void *in, char *phrase, size_t size)
 	char	*p;
 
 	if (in == NULL) {
-		p = getpass("netpgp passphrase: ");
+		while ((p = getpass("netpgp passphrase: ")) == NULL) {
+		}
 		(void) snprintf(phrase, size, "%s", p);
 	} else {
 		if (fgets(phrase, (int)size, in) == NULL) {
