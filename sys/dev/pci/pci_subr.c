@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.158 2017/02/24 05:04:46 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.159 2017/02/24 06:39:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.158 2017/02/24 05:04:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.159 2017/02/24 06:39:54 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -789,7 +789,7 @@ pci_conf_print_common(
 		printf("unknown/reserved");	/* XXX */
 		break;
 	}
-	printf(" (0x%x)\n", (rval & PCI_STATUS_DEVSEL_MASK) >> 25);
+	printf(" (0x%x)\n", __SHIFTOUT(rval, PCI_STATUS_DEVSEL_MASK));
 
 	onoff("Slave signaled Target Abort", rval,
 	    PCI_STATUS_TARGET_TARGET_ABORT);
@@ -1544,38 +1544,38 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("      Capability version: %u\n", pciever);
 	printf("      Device type: ");
 	switch ((reg & 0x00f00000) >> 20) {
-	case 0x0:
+	case PCIE_XCAP_TYPE_PCIE_DEV:	/* 0x0 */
 		printf("PCI Express Endpoint device\n");
 		check_link = true;
 		break;
-	case 0x1:
+	case PCIE_XCAP_TYPE_PCI_DEV:	/* 0x1 */
 		printf("Legacy PCI Express Endpoint device\n");
 		check_link = true;
 		break;
-	case 0x4:
+	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
 		check_link = true;
 		check_slot = true;
 		check_rootport = true;
 		break;
-	case 0x5:
+	case PCIE_XCAP_TYPE_UP:		/* 0x5 */
 		printf("Upstream Port of PCI Express Switch\n");
 		break;
-	case 0x6:
+	case PCIE_XCAP_TYPE_DOWN:	/* 0x6 */
 		printf("Downstream Port of PCI Express Switch\n");
 		check_slot = true;
 		check_rootport = true;
 		break;
-	case 0x7:
+	case PCIE_XCAP_TYPE_PCIE2PCI:	/* 0x7 */
 		printf("PCI Express to PCI/PCI-X Bridge\n");
 		break;
-	case 0x8:
+	case PCIE_XCAP_TYPE_PCI2PCIE:	/* 0x8 */
 		printf("PCI/PCI-X to PCI Express Bridge\n");
 		break;
-	case 0x9:
+	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");
 		break;
-	case 0xa:
+	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
 		check_rootport = true;
 		printf("Root Complex Event Collector\n");
 		break;
@@ -1585,7 +1585,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	}
 	onoff("Slot implemented", reg, PCIE_XCAP_SI);
 	printf("      Interrupt Message Number: 0x%02x\n",
-	    (unsigned int)((reg & PCIE_XCAP_IRQ) >> 27));
+	    (unsigned int)__SHIFTOUT(reg, PCIE_XCAP_IRQ));
 
 	/* Device Capability Register */
 	reg = regs[o2i(capoff + PCIE_DCAP)];
@@ -1593,7 +1593,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("      Max Payload Size Supported: %u bytes max\n",
 	    128 << (unsigned int)(reg & PCIE_DCAP_MAX_PAYLOAD));
 	printf("      Phantom Functions Supported: ");
-	switch ((reg & PCIE_DCAP_PHANTOM_FUNCS) >> 3) {
+	switch (__SHIFTOUT(reg, PCIE_DCAP_PHANTOM_FUNCS)) {
 	case 0x0:
 		printf("not available\n");
 		break;
@@ -1610,17 +1610,17 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("      Extended Tag Field Supported: %dbit\n",
 	    (reg & PCIE_DCAP_EXT_TAG_FIELD) == 0 ? 5 : 8);
 	printf("      Endpoint L0 Acceptable Latency: ");
-	pci_print_pcie_L0s_latency((reg & PCIE_DCAP_L0S_LATENCY) >> 6);
+	pci_print_pcie_L0s_latency(__SHIFTOUT(reg, PCIE_DCAP_L0S_LATENCY));
 	printf("      Endpoint L1 Acceptable Latency: ");
-	pci_print_pcie_L1_latency((reg & PCIE_DCAP_L1_LATENCY) >> 9);
+	pci_print_pcie_L1_latency(__SHIFTOUT(reg, PCIE_DCAP_L1_LATENCY));
 	onoff("Attention Button Present", reg, PCIE_DCAP_ATTN_BUTTON);
 	onoff("Attention Indicator Present", reg, PCIE_DCAP_ATTN_IND);
 	onoff("Power Indicator Present", reg, PCIE_DCAP_PWR_IND);
 	onoff("Role-Based Error Report", reg, PCIE_DCAP_ROLE_ERR_RPT);
-	printf("      Captured Slot Power Limit Value: %d\n",
-	    (unsigned int)(reg & PCIE_DCAP_SLOT_PWR_LIM_VAL) >> 18);
-	printf("      Captured Slot Power Limit Scale: %d\n",
-	    (unsigned int)(reg & PCIE_DCAP_SLOT_PWR_LIM_SCALE) >> 26);
+	printf("      Captured Slot Power Limit Value: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCIE_DCAP_SLOT_PWR_LIM_VAL));
+	printf("      Captured Slot Power Limit Scale: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCIE_DCAP_SLOT_PWR_LIM_SCALE));
 	onoff("Function-Level Reset Capability", reg, PCIE_DCAP_FLR);
 
 	/* Device Control Register */
@@ -1633,13 +1633,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Unsupported Request Reporting Enable", reg, PCIE_DCSR_ENA_URR);
 	onoff("Enable Relaxed Ordering", reg, PCIE_DCSR_ENA_RELAX_ORD);
 	printf("      Max Payload Size: %d byte\n",
-	    128 << (((unsigned int)(reg & PCIE_DCSR_MAX_PAYLOAD) >> 5)));
+	    128 << __SHIFTOUT(reg, PCIE_DCSR_MAX_PAYLOAD));
 	onoff("Extended Tag Field Enable", reg, PCIE_DCSR_EXT_TAG_FIELD);
 	onoff("Phantom Functions Enable", reg, PCIE_DCSR_PHANTOM_FUNCS);
 	onoff("Aux Power PM Enable", reg, PCIE_DCSR_AUX_POWER_PM);
 	onoff("Enable No Snoop", reg, PCIE_DCSR_ENA_NO_SNOOP);
 	printf("      Max Read Request Size: %d byte\n",
-	    128 << ((unsigned int)(reg & PCIE_DCSR_MAX_READ_REQ) >> 12));
+	    128 << __SHIFTOUT(reg, PCIE_DCSR_MAX_READ_REQ));
 
 	/* Device Status Register */
 	reg = regs[o2i(capoff + PCIE_DCSR)];
@@ -1650,8 +1650,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Unsupported Request Detected", reg, PCIE_DCSR_URD);
 	onoff("Aux Power Detected", reg, PCIE_DCSR_AUX_PWR);
 	onoff("Transaction Pending", reg, PCIE_DCSR_TRANSACTION_PND);
-	onoff("Emergency Power Reduction Detected", reg,
-	    PCIE_DCSR_EMGPWRREDD);
+	onoff("Emergency Power Reduction Detected", reg, PCIE_DCSR_EMGPWRREDD);
 
 	if (check_link) {
 		/* Link Capability Register */
@@ -1660,10 +1659,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("      Maximum Link Speed: ");
 		pci_print_pcie_linkspeed(reg & PCIE_LCAP_MAX_SPEED);
 		printf("      Maximum Link Width: x%u lanes\n",
-		    (unsigned int)(reg & PCIE_LCAP_MAX_WIDTH) >> 4);
+		    (unsigned int)__SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH));
 		printf("      Active State PM Support: ");
-		val = (reg & PCIE_LCAP_ASPM) >> 10;
-		switch (val) {
+		switch (__SHIFTOUT(reg, PCIE_LCAP_ASPM)) {
 		case 0x0:
 			printf("No ASPM support\n");
 			break;
@@ -1678,10 +1676,11 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			break;
 		}
 		printf("      L0 Exit Latency: ");
-		pci_print_pcie_L0s_latency((reg & PCIE_LCAP_L0S_EXIT) >> 12);
+		pci_print_pcie_L0s_latency(__SHIFTOUT(reg,PCIE_LCAP_L0S_EXIT));
 		printf("      L1 Exit Latency: ");
-		pci_print_pcie_L1_latency((reg & PCIE_LCAP_L1_EXIT) >> 15);
-		printf("      Port Number: %u\n", reg >> 24);
+		pci_print_pcie_L1_latency(__SHIFTOUT(reg, PCIE_LCAP_L1_EXIT));
+		printf("      Port Number: %u\n",
+		    (unsigned int)__SHIFTOUT(reg, PCIE_LCAP_PORT));
 		onoff("Clock Power Management", reg, PCIE_LCAP_CLOCK_PM);
 		onoff("Surprise Down Error Report", reg,
 		    PCIE_LCAP_SURPRISE_DOWN);
@@ -1695,8 +1694,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		reg = regs[o2i(capoff + PCIE_LCSR)];
 		printf("    Link Control Register: 0x%04x\n", reg & 0xffff);
 		printf("      Active State PM Control: ");
-		val = reg & (PCIE_LCSR_ASPM_L1 | PCIE_LCSR_ASPM_L0S);
-		switch (val) {
+		switch (reg & (PCIE_LCSR_ASPM_L1 | PCIE_LCSR_ASPM_L0S)) {
 		case 0:
 			printf("disabled\n");
 			break;
@@ -1717,15 +1715,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Common Clock Configuration", reg, PCIE_LCSR_COMCLKCFG);
 		onoff("Extended Synch", reg, PCIE_LCSR_EXTNDSYNC);
 		onoff("Enable Clock Power Management", reg, PCIE_LCSR_ENCLKPM);
-		onoff("Hardware Autonomous Width Disable", reg,
-		    PCIE_LCSR_HAWD);
+		onoff("Hardware Autonomous Width Disable", reg,PCIE_LCSR_HAWD);
 		onoff("Link Bandwidth Management Interrupt Enable", reg,
 		    PCIE_LCSR_LBMIE);
 		onoff("Link Autonomous Bandwidth Interrupt Enable", reg,
 		    PCIE_LCSR_LABIE);
 		printf("      DRS Signaling Control: ");
-		val = __SHIFTOUT(reg, PCIE_LCSR_DRSSGNL);
-		switch (val) {
+		switch (__SHIFTOUT(reg, PCIE_LCSR_DRSSGNL)) {
 		case 0:
 			printf("not reported\n");
 			break;
@@ -1746,7 +1742,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("      Negotiated Link Speed: ");
 		pci_print_pcie_linkspeed(__SHIFTOUT(reg, PCIE_LCSR_LINKSPEED));
 		printf("      Negotiated Link Width: x%u lanes\n",
-		    (reg >> 20) & 0x003f);
+		    (unsigned int)__SHIFTOUT(reg, PCIE_LCSR_NLW));
 		onoff("Training Error", reg, PCIE_LCSR_LINKTRAIN_ERR);
 		onoff("Link Training", reg, PCIE_LCSR_LINKTRAIN);
 		onoff("Slot Clock Configuration", reg, PCIE_LCSR_SLOTCLKCFG);
@@ -2367,11 +2363,11 @@ pci_conf_print_aer_cap_rooterr_status(pcireg_t reg)
 	onoff("ERR_FATAL/NONFATAL_ERR Received", reg, PCI_AER_ROOTERR_UC_ERR);
 	onoff("Multiple ERR_FATAL/NONFATAL_ERR Received", reg,
 	    PCI_AER_ROOTERR_MULTI_UC_ERR);
-	onoff("First Uncorrectable Fatal", reg, PCI_AER_ROOTERR_FIRST_UC_FATAL);
-	onoff("Non-Fatal Error Messages Received", reg, PCI_AER_ROOTERR_NF_ERR);
+	onoff("First Uncorrectable Fatal", reg,PCI_AER_ROOTERR_FIRST_UC_FATAL);
+	onoff("Non-Fatal Error Messages Received", reg,PCI_AER_ROOTERR_NF_ERR);
 	onoff("Fatal Error Messages Received", reg, PCI_AER_ROOTERR_F_ERR);
 	printf("      Advanced Error Interrupt Message Number: 0x%02x\n",
-	    (pcireg_t)__SHIFTOUT(reg, PCI_AER_ROOTERR_INT_MESSAGE));
+	    (unsigned int)__SHIFTOUT(reg, PCI_AER_ROOTERR_INT_MESSAGE));
 }
 
 static void
@@ -3980,13 +3976,13 @@ pci_conf_print_type1(
 	rval = (regs[o2i(PCI_BRIDGE_CONTROL_REG)] >> PCI_BRIDGE_CONTROL_SHIFT)
 	    & PCI_BRIDGE_CONTROL_MASK;
 	printf("    Bridge control register: 0x%04x\n", rval); /* XXX bits */
-	onoff("Parity error response", rval, 0x0001);
-	onoff("Secondary SERR forwarding", rval, 0x0002);
-	onoff("ISA enable", rval, 0x0004);
-	onoff("VGA enable", rval, 0x0008);
-	onoff("Master abort reporting", rval, 0x0020);
-	onoff("Secondary bus reset", rval, 0x0040);
-	onoff("Fast back-to-back capable", rval, 0x0080);
+	onoff("Parity error response", rval, PCI_BRIDGE_CONTROL_PERE);
+	onoff("Secondary SERR forwarding", rval, PCI_BRIDGE_CONTROL_SERR);
+	onoff("ISA enable", rval, PCI_BRIDGE_CONTROL_ISA);
+	onoff("VGA enable", rval, PCI_BRIDGE_CONTROL_VGA);
+	onoff("Master abort reporting", rval, PCI_BRIDGE_CONTROL_MABRT);
+	onoff("Secondary bus reset", rval, PCI_BRIDGE_CONTROL_SECBR);
+	onoff("Fast back-to-back capable", rval,PCI_BRIDGE_CONTROL_SECFASTB2B);
 }
 
 static void
