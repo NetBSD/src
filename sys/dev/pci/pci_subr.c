@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.157 2017/02/15 06:53:55 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.158 2017/02/24 05:04:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.157 2017/02/15 06:53:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.158 2017/02/24 05:04:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2370,7 +2370,7 @@ pci_conf_print_aer_cap_rooterr_status(pcireg_t reg)
 	onoff("First Uncorrectable Fatal", reg, PCI_AER_ROOTERR_FIRST_UC_FATAL);
 	onoff("Non-Fatal Error Messages Received", reg, PCI_AER_ROOTERR_NF_ERR);
 	onoff("Fatal Error Messages Received", reg, PCI_AER_ROOTERR_F_ERR);
-	printf("      Advanced Error Interrupt Message Number: 0x%u\n",
+	printf("      Advanced Error Interrupt Message Number: 0x%02x\n",
 	    (pcireg_t)__SHIFTOUT(reg, PCI_AER_ROOTERR_INT_MESSAGE));
 }
 
@@ -2930,7 +2930,7 @@ pci_conf_print_sriov_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("ARI Capable Hierarchy Preserved", reg,
 	    PCI_SRIOV_CAP_ARI_CAP_HIER_PRESERVED);
 	if (reg & PCI_SRIOV_CAP_VF_MIGRATION) {
-		printf("      VF Migration Interrupt Message Number: 0x%u\n",
+		printf("      VF Migration Interrupt Message Number: 0x%03x\n",
 		    (pcireg_t)__SHIFTOUT(reg,
 		      PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N));
 	}
