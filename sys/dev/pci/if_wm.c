@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.485 2017/02/18 14:48:43 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.486 2017/02/24 10:07:33 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.485 2017/02/18 14:48:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.486 2017/02/24 10:07:33 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5133,10 +5133,15 @@ wm_init_locked(struct ifnet *ifp)
 
 		switch (sc->sc_type) {
 		case WM_T_82574:
-			CSR_WRITE(sc, WMREG_EIAC_82574,
-			    WMREG_EIAC_82574_MSIX_MASK);
-			sc->sc_icr |= WMREG_EIAC_82574_MSIX_MASK;
-			CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
+			mask = 0;
+			for (i = 0; i < sc->sc_nqueues; i++) {
+				wmq = &sc->sc_queue[i];
+				mask |= ICR_TXQ(wmq->wmq_id);
+				mask |= ICR_RXQ(wmq->wmq_id);
+			}
+			mask |= ICR_OTHER;
+			CSR_WRITE(sc, WMREG_EIAC_82574, mask);
+			CSR_WRITE(sc, WMREG_IMS, mask | ICR_LSC);
 			break;
 		default:
 			if (sc->sc_type == WM_T_82575) {
