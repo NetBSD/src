@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.308 2017/02/23 23:19:04 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.309 2017/02/24 07:52:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.308 2017/02/23 23:19:04 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.309 2017/02/24 07:52:39 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -911,6 +911,7 @@ audioactivate(device_t self, enum devact act)
 		mutex_enter(sc->sc_intr_lock);
 		cv_broadcast(&sc->sc_condvar);
 		mutex_exit(sc->sc_intr_lock);
+		mutex_exit(sc->sc_lock);
 		return 0;
 	default:
 		return EOPNOTSUPP;
