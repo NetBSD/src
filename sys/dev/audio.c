@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.309 2017/02/24 07:52:39 skrll Exp $	*/
+/*	$NetBSD: audio.c,v 1.310 2017/02/24 09:49:49 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.309 2017/02/24 07:52:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.310 2017/02/24 09:49:49 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -205,6 +205,12 @@ int	audiodebug = AUDIO_DEBUG;
 #ifdef AUDIO_PM_IDLE
 int	audio_idle_timeout = 30;
 #endif
+
+#define HW_LOCK(x)	if (x == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
+				mutex_enter(sc->sc_intr_lock);
+
+#define HW_UNLOCK(x)	if (x == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
+				mutex_exit(sc->sc_intr_lock);
 
 int	audio_blk_ms = AUDIO_BLK_MS;
 
@@ -1280,7 +1286,7 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	}
 
 	/* Swap in new filters. */
-	mutex_enter(sc->sc_intr_lock);
+	HW_LOCK(vc);
 	memcpy(of, vc->sc_pfilters, sizeof(of));
 	memcpy(os, vc->sc_pstreams, sizeof(os));
 	onfilters = vc->sc_npfilters;
@@ -1298,7 +1304,7 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 		vc->sc_mpr.s.param = pfilters->filters[0].param;
 		vc->sc_pustream = &vc->sc_pstreams[0];
 	}
-	mutex_exit(sc->sc_intr_lock);
+	HW_UNLOCK(vc);
 
 	/* Destroy old filters. */
 	for (i = 0; i < onfilters; i++) {
@@ -1365,7 +1371,7 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 	}
 
 	/* Swap in new filters. */
-	mutex_enter(sc->sc_intr_lock);
+	HW_LOCK(vc);
 	memcpy(of, vc->sc_rfilters, sizeof(of));
 	memcpy(os, vc->sc_rstreams, sizeof(os));
 	onfilters = vc->sc_nrfilters;
@@ -1383,7 +1389,7 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 		vc->sc_mrr.s.param = rfilters->filters[0].param;
 		vc->sc_rustream = &vc->sc_rstreams[rfilters->req_size - 1];
 	}
-	mutex_exit(sc->sc_intr_lock);
+	HW_UNLOCK(vc);
 
 #ifdef AUDIO_DEBUG
 	printf("%s: HW-buffer=%p pustream=%p\n",
@@ -2187,7 +2193,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	DPRINTF(("audio_open: done sc_mode = 0x%x\n", vc->sc_mode));
 
 	grow_mixer_states(sc, 2);
-	mutex_enter(sc->sc_intr_lock);
 	if (flags & FREAD)
 		sc->sc_recopens++;
 	sc->sc_opens++;
@@ -2195,7 +2200,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	chan->chan = n;
 	chan->deschan = n;
 	SIMPLEQ_INSERT_TAIL(&sc->sc_audiochan, chan, entries);
-	mutex_exit(sc->sc_intr_lock);
 
 	error = fd_clone(fp, fd, flags, &audio_fileops, chan);
 	KASSERT(error == EMOVEFD);
@@ -2303,7 +2307,9 @@ audio_drain(struct audio_softc *sc, struct audio_chan *chan)
 		cc = cb->blksize - (inp - cb->s.start) % cb->blksize;
 		audio_fill_silence(&cb->s.param, inp, cc);
 		cb->s.inp = audio_stream_add_inp(&cb->s, inp, cc);
+		mutex_exit(sc->sc_intr_lock);
 		error = audiostartp(sc, vc);
+		mutex_enter(sc->sc_intr_lock);
 		if (error)
 			return error;
 	} else if (hw == true) {
@@ -2411,6 +2417,8 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 
 	if (sc->sc_opens == 1 && hw->close != NULL)
 		hw->close(sc->hw_hdl);
+	mutex_exit(sc->sc_intr_lock);
+
 	if (sc->sc_opens == 1) {
 		sc->sc_async_audio = 0;
 		kauth_cred_free(sc->sc_credentials);
@@ -2438,7 +2446,6 @@ audio_close(struct audio_softc *sc, int flags, struct audio_chan *chan)
 	sc->sc_opens--;
 	shrink_mixer_states(sc, 2);
 	SIMPLEQ_REMOVE(&sc->sc_audiochan, chan, audio_chan, entries);
-	mutex_exit(sc->sc_intr_lock);
 	mutex_exit(sc->sc_lock);
 	audio_free_ring(sc, &vc->sc_mpr);
 	audio_free_ring(sc, &vc->sc_mrr);
@@ -2510,12 +2517,10 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 		return error;
 	}
 
-	mutex_enter(sc->sc_intr_lock);
 	while (uio->uio_resid > 0 && !error) {
 		while ((used = audio_stream_get_used(vc->sc_rustream)) <= 0) {
 			if (!vc->sc_rbus && !vc->sc_mrr.pause)
 				error = audiostartr(sc, vc);
-			mutex_exit(sc->sc_intr_lock);
 			if (error)
 				return error;
 			if (ioflag & IO_NDELAY)
@@ -2526,7 +2531,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 				error = EIO;
 			if (error)
 				return error;
-			mutex_enter(sc->sc_intr_lock);
 		}
 
 		outp = vc->sc_rustream->outp;
@@ -2553,7 +2557,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 			(vc->sc_rustream, outp, n);
 		cb->copying = false;
 	}
-	mutex_exit(sc->sc_intr_lock);
 	return error;
 }
 
@@ -2838,7 +2841,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 	}
 
 	error = 0;
-	mutex_enter(sc->sc_intr_lock);
 	while (uio->uio_resid > 0 && !error) {
 		/* wait if the first buffer is occupied */
 		while ((used = audio_stream_get_used(vc->sc_pustream)) >=
@@ -2846,7 +2848,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d "
 				     "hiwat=%d\n", used,
 				     cb->usedlow, cb->usedhigh));
-			mutex_exit(sc->sc_intr_lock);
 			if (ioflag & IO_NDELAY)
 				return EWOULDBLOCK;
 			error = audio_waitio(sc, &sc->sc_wchan, vc);
@@ -2854,7 +2855,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 				error = EIO;
 			if (error)
 				return error;
-			mutex_enter(sc->sc_intr_lock);
 		}
 		inp = cb->s.inp;
 		cb->copying = true;
@@ -2862,7 +2862,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 		used = stream.used;
 
 		/* Write to the sc_pustream as much as possible. */
-		mutex_exit(sc->sc_intr_lock);
 		if (vc->sc_npfilters > 0) {
 			filter = vc->sc_pfilters[0];
 			filter->set_fetcher(filter, &ufetcher.base);
@@ -2881,7 +2880,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			cc = stream.end - stream.start;
 			error = fetcher->fetch_to(sc, fetcher, &stream, cc);
 		}
-		mutex_enter(sc->sc_intr_lock);
 		if (vc->sc_npfilters > 0) {
 			cb->fstamp += ufetcher.last_used
 			    - audio_stream_get_used(vc->sc_pustream);
@@ -2924,7 +2922,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 			audio_fill_silence(&cb->s.param, einp, cc);
 		}
 	}
-	mutex_exit(sc->sc_intr_lock);
 
 	return error;
 }
@@ -2994,12 +2991,12 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 			mutex_exit(sc->sc_intr_lock);
 			return error;
 		}
+		mutex_exit(sc->sc_intr_lock);
 		if ((vc->sc_mode & AUMODE_PLAY) && !vc->sc_pbus && pbus)
 			error = audiostartp(sc, vc);
 		if (!error &&
 		    (vc->sc_mode & AUMODE_RECORD) && !vc->sc_rbus && rbus)
 			error = audiostartr(sc, vc);
-		mutex_exit(sc->sc_intr_lock);
 		break;
 
 	/*
@@ -3019,12 +3016,12 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	 */
 	case AUDIO_GETIOFFS:
 		ao = (struct audio_offset *)addr;
-		mutex_enter(sc->sc_intr_lock);
+		HW_LOCK(vc);
 		/* figure out where next DMA will start */
 		stamp = vc->sc_rustream == &vc->sc_mrr.s
 			? vc->sc_mrr.stamp : vc->sc_mrr.fstamp;
 		offs = vc->sc_rustream->inp - vc->sc_rustream->start;
-		mutex_exit(sc->sc_intr_lock);
+		HW_UNLOCK(vc);
 		ao->samples = stamp;
 		ao->deltablks =
 		  (stamp / vc->sc_mrr.blksize) -
@@ -3035,13 +3032,13 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	case AUDIO_GETOOFFS:
 		ao = (struct audio_offset *)addr;
-		mutex_enter(sc->sc_intr_lock);
+		HW_LOCK(vc);
 		/* figure out where next DMA will start */
 		stamp = vc->sc_pustream == &vc->sc_mpr.s
 			? vc->sc_mpr.stamp : vc->sc_mpr.fstamp;
 		offs = vc->sc_pustream->outp - vc->sc_pustream->start
 			+ vc->sc_mpr.blksize;
-		mutex_exit(sc->sc_intr_lock);
+		HW_UNLOCK(vc);
 		ao->samples = stamp;
 		ao->deltablks =
 		  (stamp / vc->sc_mpr.blksize) -
@@ -3153,7 +3150,7 @@ audio_poll(struct audio_softc *sc, int events, struct lwp *l,
 	DPRINTF(("audio_poll: events=0x%x mode=%d\n", events, vc->sc_mode));
 
 	revents = 0;
-	mutex_enter(sc->sc_intr_lock);
+	HW_LOCK(vc);
 	if (events & (POLLIN | POLLRDNORM)) {
 		used = audio_stream_get_used(vc->sc_rustream);
 		/*
@@ -3180,7 +3177,7 @@ audio_poll(struct audio_softc *sc, int events, struct lwp *l,
 		    (used <= vc->sc_mpr.usedlow))
 			revents |= events & (POLLOUT | POLLWRNORM);
 	}
-	mutex_exit(sc->sc_intr_lock);
+	HW_UNLOCK(vc);
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
@@ -3370,17 +3367,13 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot,
 		if (cb != &sc->sc_rr) {
 			audio_fill_silence(&cb->s.param, cb->s.start,
 					   cb->s.bufsize);
-			mutex_enter(sc->sc_intr_lock);
 			vc->sc_pustream = &cb->s;
 			if (!vc->sc_pbus && !vc->sc_mpr.pause)
 				(void)audiostartp(sc, vc);
-			mutex_exit(sc->sc_intr_lock);
 		} else {
-			mutex_enter(sc->sc_intr_lock);
 			vc->sc_rustream = &cb->s;
 			if (!vc->sc_rbus && !sc->sc_rr.pause)
 				(void)audiostartr(sc, vc);
-			mutex_exit(sc->sc_intr_lock);
 		}
 	}
 
@@ -3394,7 +3387,6 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 {
 
 	KASSERT(mutex_owned(sc->sc_lock));
-	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	DPRINTF(("audiostartr: start=%p used=%d(hi=%d) mmapped=%d\n",
 		 vc->sc_mrr.s.start, audio_stream_get_used(&vc->sc_mrr.s),
@@ -3404,8 +3396,10 @@ audiostartr(struct audio_softc *sc, struct virtual_channel *vc)
 		return EINVAL;
 
 	if (sc->sc_rec_started == false) {
+		mutex_enter(sc->sc_intr_lock);
 		mix_read(sc);
 		cv_broadcast(&sc->sc_rcondvar);
+		mutex_exit(sc->sc_intr_lock);
 	}
 	vc->sc_rbus = true;
 
@@ -3419,7 +3413,6 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	int error, used;
 
 	KASSERT(mutex_owned(sc->sc_lock));
-	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 	error = 0;
@@ -3440,15 +3433,17 @@ audiostartp(struct audio_softc *sc, struct virtual_channel *vc)
 	vc->sc_pbus = true;
 	if (sc->sc_trigger_started == false) {
 		audio_mix(sc);
-		mix_write(sc);
 
 		vc = chan->vc;
 		vc->sc_mpr.s.outp =
 		    audio_stream_add_outp(&vc->sc_mpr.s,
 		      vc->sc_mpr.s.outp, vc->sc_mpr.blksize);
 		audio_mix(sc);
+		mutex_enter(sc->sc_intr_lock);
+		mix_write(sc);
 		mix_write(sc);
 		cv_broadcast(&sc->sc_condvar);
+		mutex_exit(sc->sc_intr_lock);
 	}
 
 	return error;
@@ -3639,7 +3634,9 @@ audio_mix(void *v)
 		if (cb->mmapped) {
 			DPRINTF(("audio_pint: mmapped outp=%p cc=%d inp=%p\n",
 				     cb->s.outp, blksize, cb->s.inp));
+			mutex_enter(sc->sc_intr_lock);
 			mix_func(sc, cb, vc);
+			mutex_exit(sc->sc_intr_lock);
 			continue;
 		}
 
@@ -3731,7 +3728,9 @@ audio_mix(void *v)
 
 		DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->s.outp,
 			 blksize));
+		mutex_enter(sc->sc_intr_lock);
 		mix_func(sc, cb, vc);
+		mutex_exit(sc->sc_intr_lock);
 		cb->s.outp = audio_stream_add_outp(&cb->s, cb->s.outp, blksize);
 
 		DPRINTFN(2, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
@@ -3747,11 +3746,14 @@ audio_mix(void *v)
 		if (!vc->sc_full_duplex && vc->sc_mode & AUMODE_RECORD)
 				sc->schedule_rih = true;
 	}
+	mutex_enter(sc->sc_intr_lock);
 	if (sc->sc_saturate == true && sc->sc_opens > 1)
 		saturate_func(sc);
 
 	cb = &sc->sc_pr;
-	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, blksize);
+	if (sc->sc_writeme == true)
+		cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, blksize);
+	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
 	if (sc->schedule_wih == true)
@@ -3774,6 +3776,8 @@ audio_rint(void *v)
 	int blksize;
 
 	sc = v;
+
+	KASSERT(mutex_owned(sc->sc_intr_lock));
 
 	if (sc->sc_dying == true)
 		return;
@@ -3833,12 +3837,14 @@ audio_upmix(void *v)
 		cc = blksize;
 		if (cb->s.inp + blksize > cb->s.end)
 			cc = cb->s.end - cb->s.inp;
+		mutex_enter(sc->sc_intr_lock);
 		memcpy(cb->s.inp, sc->sc_rr.s.start, cc);
 		if (cc < blksize && cc != 0) {
 			cc1 = cc;
 			cc = blksize - cc;
 			memcpy(cb->s.start, sc->sc_rr.s.start + cc1, cc);
 		}
+		mutex_exit(sc->sc_intr_lock);
 
 		cc = blksize;
 		recswvol_func(sc, cb, blksize, vc);
@@ -4721,7 +4727,6 @@ cleanup:
 	if (error == 0 && (cleared || pausechange|| reset)) {
 		int init_error;
 
-		mutex_enter(sc->sc_intr_lock);
 		init_error = (pausechange == 1 && reset == 0) ? 0 :
 		    audio_initbufs(sc, vc);
 		if (init_error) goto err;
@@ -4738,7 +4743,6 @@ cleanup:
 		    rbus && !vc->sc_rbus)
 			init_error = audiostartr(sc, vc);
 	err:
-		mutex_exit(sc->sc_intr_lock);
 		if (init_error)
 			return init_error;
 	}
@@ -5251,12 +5255,10 @@ audio_resume(device_t dv, const pmf_qual_t *qual)
 
 		if (vc->sc_lastinfovalid == true)
 			audiosetinfo(sc, &vc->sc_lastinfo, true, vc);
-		mutex_enter(sc->sc_intr_lock);
 		if (vc->sc_pbus == true && !vc->sc_mpr.pause)
 			audiostartp(sc, vc);
 		if (vc->sc_rbus == true && !vc->sc_mrr.pause)
 			audiostartr(sc, vc);
-		mutex_exit(sc->sc_intr_lock);
 	}
 	mutex_exit(sc->sc_lock);
 
