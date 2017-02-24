@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.310 2017/02/24 09:49:49 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.311 2017/02/24 16:53:24 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.310 2017/02/24 09:49:49 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.311 2017/02/24 16:53:24 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2546,11 +2546,9 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
 
 		n = uio->uio_resid;
-		mutex_exit(sc->sc_intr_lock);
 		mutex_exit(sc->sc_lock);
 		error = uiomove(__UNCONST(outp), cc, uio);
 		mutex_enter(sc->sc_lock);
-		mutex_enter(sc->sc_intr_lock);
 		n -= uio->uio_resid; /* number of bytes actually moved */
 
 		vc->sc_rustream->outp = audio_stream_add_outp
