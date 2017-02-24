@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.486 2017/02/24 10:07:33 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.487 2017/02/24 10:09:21 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.486 2017/02/24 10:07:33 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.487 2017/02/24 10:09:21 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5031,6 +5031,16 @@ wm_init_locked(struct ifnet *ifp)
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
 			reg |= CTRL_EXT_PBA | CTRL_EXT_EIAME;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			/*
+			 * workaround issue with spurious interrupts
+			 * in MSI-X mode.
+			 * At wm_initialize_hardware_bits(), sc_nintrs has not
+			 * initialized yet. So re-initialize WMREG_RFCTL here.
+			 */
+			reg = CSR_READ(sc, WMREG_RFCTL);
+			reg |= WMREG_RFCTL_ACKDIS;
+			CSR_WRITE(sc, WMREG_RFCTL, reg);
 
 			ivar = 0;
 			/* TX and RX */
