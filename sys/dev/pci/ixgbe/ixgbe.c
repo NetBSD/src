@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.78 2017/02/16 08:01:11 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.79 2017/02/24 05:38:30 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -453,10 +453,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	struct adapter *adapter;
 	struct ixgbe_hw *hw;
 	int             error = -1;
-	u16		csum;
+	u16		csum, high, low;
 	u32		ctrl_ext;
 	ixgbe_vendor_info_t *ent;
 	struct pci_attach_args *pa = aux;
+	const char *str;
 
 	INIT_DEBUGOUT("ixgbe_attach: begin");
 
@@ -492,6 +493,40 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Determine hardware revision */
 	ixgbe_identify_hardware(adapter);
+
+	switch (hw->mac.type) {
+	case ixgbe_mac_82598EB:
+		str = "82598EB";
+		break;
+	case ixgbe_mac_82599EB:
+		str = "82599EB";
+		break;
+	case ixgbe_mac_82599_vf:
+		str = "82599 VF";
+		break;
+	case ixgbe_mac_X540:
+		str = "X540";
+		break;
+	case ixgbe_mac_X540_vf:
+		str = "X540 VF";
+		break;
+	case ixgbe_mac_X550:
+		str = "X550";
+		break;
+	case ixgbe_mac_X550EM_x:
+		str = "X550EM";
+		break;
+	case ixgbe_mac_X550_vf:
+		str = "X550 VF";
+		break;
+	case ixgbe_mac_X550EM_x_vf:
+		str = "X550EM X VF";
+		break;
+	default:
+		str = "Unknown";
+		break;
+	}
+	aprint_normal_dev(dev, "device %s\n", str);
 
 	/* Do base PCI setup - map BAR0 */
 	if (ixgbe_allocate_pci_resources(adapter, pa)) {
@@ -581,6 +616,11 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		error = EIO;
 		goto err_late;
 	}
+
+	/* Print the TrackID */
+	hw->eeprom.ops.read(hw, IXGBE_TRACKID_H, &high);
+	hw->eeprom.ops.read(hw, IXGBE_TRACKID_L, &low);
+	aprint_normal_dev(dev, "TrackID %08x\n", ((uint32_t)high << 16) | low);
 
 	error = ixgbe_init_hw(hw);
 	switch (error) {

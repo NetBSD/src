@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_type.h 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_type.h,v 1.18 2017/01/19 06:56:33 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.19 2017/02/24 05:38:30 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -2225,6 +2225,8 @@ enum {
 
 #define IXGBE_SAN_MAC_ADDR_PTR		0x28
 #define IXGBE_DEVICE_CAPS		0x2C
+#define IXGBE_TRACKID_L			0x2d
+#define IXGBE_TRACKID_H			0x2e
 #define IXGBE_SERIAL_NUMBER_MAC_ADDR	0x11
 #define IXGBE_PCIE_MSIX_82599_CAPS	0x72
 #define IXGBE_MAX_MSIX_VECTORS_82599	0x40
