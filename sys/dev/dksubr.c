@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.94 2016/12/22 13:42:14 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.95 2017/02/25 15:19:00 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.94 2016/12/22 13:42:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.95 2017/02/25 15:19:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -888,13 +888,16 @@ dk_getdisklabel(struct dk_softc *dksc, dev_t dev)
 		return;
 
 	/* Sanity check */
-	if (lp->d_secperunit < UINT32_MAX ?
-		lp->d_secperunit != dg->dg_secperunit :
-		lp->d_secperunit > dg->dg_secperunit)
+	if (lp->d_secperunit > dg->dg_secperunit)
 		printf("WARNING: %s: total sector size in disklabel (%ju) "
 		    "!= the size of %s (%ju)\n", dksc->sc_xname,
 		    (uintmax_t)lp->d_secperunit, dksc->sc_xname,
 		    (uintmax_t)dg->dg_secperunit);
+	else if (lp->d_secperunit < UINT32_MAX &&
+	         lp->d_secperunit < dg->dg_secperunit)
+		printf("%s: %ju trailing sectors not covered by disklabel\n",
+		    dksc->sc_xname,
+		    (uintmax_t)dg->dg_secperunit - lp->d_secperunit);
 
 	for (i=0; i < lp->d_npartitions; i++) {
 		pp = &lp->d_partitions[i];
