@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.1 2017/02/22 01:07:13 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.2 2017/02/25 16:45:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.1 2017/02/22 01:07:13 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.2 2017/02/25 16:45:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,32 +56,32 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.1 2017/02/22 01:07:13 kamil Exp $");
 
 
 union u {
-	long raw;
+	unsigned long raw;
 	struct {
-		long local_dr0_breakpoint : 1;	/* 0 */
-		long global_dr0_breakpoint : 1;	/* 1 */
-		long local_dr1_breakpoint : 1;	/* 2 */
-		long global_dr1_breakpoint : 1;	/* 3 */
-		long local_dr2_breakpoint : 1;	/* 4 */
-		long global_dr2_breakpoint : 1;	/* 5 */
-		long local_dr3_breakpoint : 1;	/* 6 */
-		long global_dr3_breakpoint : 1;	/* 7 */
-		long local_exact_breakpt : 1;	/* 8 */
-		long global_exact_breakpt : 1;	/* 9 */
-		long reserved_10 : 1;		/* 10 */
-		long rest_trans_memory : 1;	/* 11 */
-		long reserved_12 : 1;		/* 12 */
-		long general_detect_enable : 1;	/* 13 */
-		long reserved_14 : 1;		/* 14 */
-		long reserved_15 : 1;		/* 15 */
-		long condition_dr0 : 2;		/* 16-17 */
-		long len_dr0 : 2;		/* 18-19 */
-		long condition_dr1 : 2;		/* 20-21 */
-		long len_dr1 : 2;		/* 22-23 */
-		long condition_dr2 : 2;		/* 24-25 */
-		long len_dr2 : 2;		/* 26-27 */
-		long condition_dr3 : 2;		/* 28-29 */
-		long len_dr3 : 2;		/* 30-31 */
+		unsigned long local_dr0_breakpoint : 1;q	/* 0 */
+		unsigned long global_dr0_breakpoint : 1;	/* 1 */
+		unsigned long local_dr1_breakpoint : 1;q	/* 2 */
+		unsigned long global_dr1_breakpoint : 1;	/* 3 */
+		unsigned long local_dr2_breakpoint : 1;q	/* 4 */
+		unsigned long global_dr2_breakpoint : 1;	/* 5 */
+		unsigned long local_dr3_breakpoint : 1;q	/* 6 */
+		unsigned long global_dr3_breakpoint : 1;	/* 7 */
+		unsigned long local_exact_breakpt : 1;		/* 8 */
+		unsigned long global_exact_breakpt : 1;		/* 9 */
+		unsigned long reserved_10 : 1;			/* 10 */
+		unsigned long rest_trans_memory : 1;		/* 11 */
+		unsigned long reserved_12 : 1;			/* 12 */
+		unsigned long general_detect_enable : 1;	/* 13 */
+		unsigned long reserved_14 : 1;			/* 14 */
+		unsigned long reserved_15 : 1;			/* 15 */
+		unsigned long condition_dr0 : 2;		/* 16-17 */
+		unsigned long len_dr0 : 2;			/* 18-19 */
+		unsigned long condition_dr1 : 2;		/* 20-21 */
+		unsigned long len_dr1 : 2;			/* 22-23 */
+		unsigned long condition_dr2 : 2;		/* 24-25 */
+		unsigned long len_dr2 : 2;			/* 26-27 */
+		unsigned long condition_dr3 : 2;		/* 28-29 */
+		unsigned long len_dr3 : 2;			/* 30-31 */
 	} bits;
 };
 
