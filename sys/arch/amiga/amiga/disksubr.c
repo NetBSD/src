@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.64 2017/02/25 22:40:18 rin Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.65 2017/02/25 22:45:59 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.64 2017/02/25 22:40:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.65 2017/02/25 22:45:59 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 			daddr_t boff;
 
 			boff = pbp->e.lowcyl * pbp->e.secpertrk
-			    * pbp->e.numheads;
+			    * pbp->e.numheads
+			    * ((pbp->e.sizeblock << 2) / lp->d_secsize);
 			if (boff > (pp - 1)->p_offset)
 				break;
 			*pp = *(pp - 1);	/* struct copy */
