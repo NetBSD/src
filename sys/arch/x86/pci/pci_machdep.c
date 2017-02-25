@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.77 2017/02/09 03:38:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.78 2017/02/25 01:13:50 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.77 2017/02/09 03:38:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.78 2017/02/25 01:13:50 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1095,6 +1095,8 @@ device_pci_register(device_t dev, void *aux)
 				if (ri->ri_bits != NULL) {
 					prop_dictionary_set_uint64(dict,
 					    "virtual_address",
+					    ri->ri_hwbits != NULL ?
+					    (vaddr_t)ri->ri_hworigbits :
 					    (vaddr_t)ri->ri_origbits);
 				}
 #endif
@@ -1121,6 +1123,11 @@ device_pci_register(device_t dev, void *aux)
 
 #if NWSDISPLAY > 0 && NGENFB > 0
 				if (device_is_a(dev, "genfb")) {
+					prop_dictionary_set_bool(dict,
+					    "enable_shadowfb",
+					    ri->ri_hwbits != NULL ?
+					      true : false);
+
 					x86_genfb_set_console_dev(dev);
 #ifdef DDB
 					db_trap_callback =
