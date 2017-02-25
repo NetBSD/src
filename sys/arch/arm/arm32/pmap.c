@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.343 2017/02/23 08:22:20 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.344 2017/02/25 16:48:03 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.343 2017/02/23 08:22:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.344 2017/02/25 16:48:03 christos Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -954,6 +954,7 @@ pmap_is_cached(pmap_t pm)
  *       - The specified pmap is 'active' in the cache/tlb.
  */
 
+#ifdef PMAP_INCLUDE_PTE_SYNC
 static inline void
 pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 {
@@ -962,10 +963,9 @@ pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 	arm_dsb();
 }
 
-#ifdef PMAP_INCLUDE_PTE_SYNC
-#define	PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
+# define PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
 #else
-#define	PTE_SYNC_CURRENT(pm, ptep)	/* nothing */
+# define PTE_SYNC_CURRENT(pm, ptep)	__nothing
 #endif
 
 /*
