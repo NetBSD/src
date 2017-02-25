@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.2 2017/02/25 16:45:24 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.3 2017/02/25 18:18:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.2 2017/02/25 16:45:24 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.3 2017/02/25 18:18:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,13 +58,13 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.2 2017/02/25 16:45:24 christos Exp $");
 union u {
 	unsigned long raw;
 	struct {
-		unsigned long local_dr0_breakpoint : 1;q	/* 0 */
+		unsigned long local_dr0_breakpoint : 1;		/* 0 */
 		unsigned long global_dr0_breakpoint : 1;	/* 1 */
-		unsigned long local_dr1_breakpoint : 1;q	/* 2 */
+		unsigned long local_dr1_breakpoint : 1;		/* 2 */
 		unsigned long global_dr1_breakpoint : 1;	/* 3 */
-		unsigned long local_dr2_breakpoint : 1;q	/* 4 */
+		unsigned long local_dr2_breakpoint : 1;		/* 4 */
 		unsigned long global_dr2_breakpoint : 1;	/* 5 */
-		unsigned long local_dr3_breakpoint : 1;q	/* 6 */
+		unsigned long local_dr3_breakpoint : 1;		/* 6 */
 		unsigned long global_dr3_breakpoint : 1;	/* 7 */
 		unsigned long local_exact_breakpt : 1;		/* 8 */
 		unsigned long global_exact_breakpt : 1;		/* 9 */
