@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.33 2017/02/05 12:05:46 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.34 2017/02/25 12:03:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -417,12 +417,6 @@ iscsi_send_thread(void *par)
 		KASSERT(ccb->disp >= CCBDISP_NOWAIT);
 		wake_ccb(ccb, conn->terminating);
 		/* NOTE: wake_ccb will remove the CCB from the queue */
-	}
-
-	if (conn->in_session) {
-		conn->in_session = FALSE;
-		TAILQ_REMOVE(&sess->conn_list, conn, connections);
-		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
 	}
 
 	add_connection_cleanup(conn);
