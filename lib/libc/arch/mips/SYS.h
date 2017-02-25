@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.19 2009/12/14 01:07:41 matt Exp $ */
+/*	$NetBSD: SYS.h,v 1.20 2017/02/25 21:16:50 joerg Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -76,7 +76,7 @@
  * ii) Do interprocedure jumps indirectly via t9, with the side-effect of
  *     preserving the callee's entry address in t9.
  */
-#ifdef __ABICALLS__
+#ifdef __mips_abicalls
 	.abicalls
 # if defined(__mips_o32) || defined(__mips_o64)
 #  define PIC_PROLOGUE(x)	SETUP_GP
@@ -91,7 +91,7 @@
 # define PIC_PROLOGUE(x)
 # define PIC_TAILCALL(l)	j  _C_LABEL(l)
 # define PIC_RETURN()
-#endif /* __ABICALLS__ */
+#endif /* __mips_abicalls */
 
 
 #ifdef __STDC__
