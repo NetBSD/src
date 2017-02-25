@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.24 2017/02/05 12:05:46 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.25 2017/02/25 12:03:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -464,12 +464,12 @@ void
 unref_session(session_t *session)
 {
 
-	mutex_enter(&iscsi_cleanup_mtx);
+	mutex_enter(&session->lock);
 	KASSERT(session != NULL);
 	KASSERT(session->refcount > 0);
 	if (--session->refcount == 0)
 		cv_broadcast(&session->sess_cv);
-	mutex_exit(&iscsi_cleanup_mtx);
+	mutex_exit(&session->lock);
 }
 
 
@@ -811,11 +811,11 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		return -1;
 	}
 
-	mutex_enter(&session->lock);
+	mutex_enter(&iscsi_cleanup_mtx);
 	if (session->terminating) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBC(connection, 0, ("Session terminating\n"));
 		kill_connection(connection, rc, NO_LOGOUT, FALSE);
-		mutex_exit(&session->lock);
 		par->status = session->terminating;
 		return -1;
 	}
@@ -825,7 +825,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	session->total_connections++;
 	session->active_connections++;
 	session->mru_connection = connection;
-	mutex_exit(&session->lock);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	DEBC(connection, 5, ("Connection created successfully!\n"));
 	return 0;
@@ -1630,12 +1630,20 @@ handle_connection_error(connection_t *conn, uint32_t status, int dologout)
 }
 
 /*
- * add a connection to the cleanup list
+ * remove a connection from session and add to the cleanup list
  */
 void
 add_connection_cleanup(connection_t *conn)
 {
+	session_t *sess;
+
 	mutex_enter(&iscsi_cleanup_mtx);
+	if (conn->in_session) {
+		sess = conn->session;
+		conn->in_session = FALSE;
+		TAILQ_REMOVE(&sess->conn_list, conn, connections);
+		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
+	}
 	TAILQ_INSERT_TAIL(&iscsi_cleanupc_list, conn, connections);
 	iscsi_notify_cleanup();
 	mutex_exit(&iscsi_cleanup_mtx);
