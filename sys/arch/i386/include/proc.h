@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.44 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.45 2017/02/25 13:34:21 kamil Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -36,7 +36,6 @@
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#include <x86/dbregs.h>
 
 /*
  * Machine-dependent part of the lwp structure for i386.
