@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1170 2017/02/16 08:12:43 knakahara Exp $
+#	$NetBSD: files,v 1.1171 2017/02/26 11:56:49 rin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -90,6 +90,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
 				DKWEDGE_METHOD_APPLE
+				DKWEDGE_METHOD_RDB
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
