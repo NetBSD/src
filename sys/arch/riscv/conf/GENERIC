@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.4 2017/02/19 07:47:01 rin Exp $
+# $NetBSD: GENERIC,v 1.5 2017/02/26 12:03:14 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -87,6 +87,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 include		"conf/filesystems.config"
 
