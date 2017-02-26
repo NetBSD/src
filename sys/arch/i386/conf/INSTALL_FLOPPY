@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.36 2017/02/19 07:47:01 rin Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.37 2017/02/26 12:21:15 maya Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -125,7 +125,6 @@ file-system	TMPFS		# Efficient memory file-system
 # Filesystem options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER	# Network File System server
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
