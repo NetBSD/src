@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.105 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: kauth.9,v 1.106 2017/02/26 15:44:15 riastradh Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -1879,6 +1879,9 @@ for
 will be done.
 .It Ft kauth_cred_t Fn kauth_cred_get "void"
 Return the credentials associated with the current LWP.
+This does not change the reference count of the resulting
+.Ft kauth_cred_t
+object.
 .El
 .Ss Scope Management
 .Nm
