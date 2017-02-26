@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.75 2017/02/26 12:21:15 maya Exp $
+# $NetBSD: XEN3_DOMU,v 1.76 2017/02/26 12:41:50 rin Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -93,7 +93,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
-options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
