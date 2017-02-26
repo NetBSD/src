@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.453 2017/02/26 12:21:14 maya Exp $
+# $NetBSD: GENERIC,v 1.454 2017/02/26 12:41:50 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.453 $"
+#ident		"GENERIC-$Revision: 1.454 $"
 
 maxusers	64		# estimated number of users
 
@@ -143,6 +143,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
