@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.20 2017/02/26 09:29:08 skrll Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.21 2017/02/26 09:33:27 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.20 2017/02/26 09:29:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.21 2017/02/26 09:33:27 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -398,7 +398,7 @@ static struct mbus_table_def {
 		14, 0xd4000000, 0x04000000,
 		ARMADAXP_UNITID_DEVBUS, ARMADAXP_ATTR_DEVBUS_SPI0_CS0
 	},
-	{	
+	{
 		/* Security Accelerator SRAM, Engine 1, no data swap */
 		/* MODIFIED (added, 0xd0300000-0xd030ffff) */
 		15, 0xd0300000, 0x00010000,
