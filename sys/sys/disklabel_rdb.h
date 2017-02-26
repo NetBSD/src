@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_rdb.h,v 1.3 2017/02/26 11:48:55 rin Exp $	*/
+/*	$NetBSD: disklabel_rdb.h,v 1.4 2017/02/26 11:51:38 rin Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -128,7 +128,7 @@ struct partblock {
 	uint32_t next;		/* next in chain */
 	uint32_t flags;		/* see below */
 	uint32_t resv1[3];
-	u_char partname[32];	/* (BCPL) part name (may not be unique) */
+	unsigned char partname[32]; /* (BCPL) part name (may not be unique) */
 	uint32_t resv2[15];
 	struct ados_environ e;
 #if never_use_secsize
@@ -211,8 +211,8 @@ struct lsegblock {
 #define DOST_SFS	0x53465300	/* 'SFSx' Smart fs partition */
 
 struct adostype {
-	u_char archtype;	/* see ADT_xxx below */
-	u_char fstype;		/* byte 3 from amiga dostype */
+	unsigned char archtype;	/* see ADT_xxx below */
+	unsigned char fstype;	/* byte 3 from amiga dostype */
 };
 
 /* archtypes */
