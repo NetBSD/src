@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.159 2017/02/24 06:39:54 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.160 2017/02/26 05:41:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.159 2017/02/24 06:39:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.160 2017/02/26 05:41:47 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2578,42 +2578,38 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		    "  VC", varbsel, varbsize);
 }
 
-static const char *
-pci_conf_print_pwrbdgt_base_power(uint8_t reg)
+static void
+pci_conf_print_pwrbdgt_base_power(uint8_t base, int scale)
 {
-
-	switch (reg) {
+	int sdiv = 1;
+	const char *s;
+	int i;
+	
+	if (base <= 0xef) {
+		for (i = scale; i > 0; i--)
+			sdiv *= 10;
+		printf("%hhu", base / sdiv);
+		if (scale != 0) {
+			printf(".%hhu", base % sdiv);
+		}
+		printf ("W\n");
+		return;
+	}
+	switch (base) {
 	case 0xf0:
-		return "239W < x <= 250W";
+		s = "239W < x <= 250W";
+		break;
 	case 0xf1:
-		return "250W < x <= 275W";
+		s = "250W < x <= 275W";
+		break;
 	case 0xf2:
-		return "275W < x <= 300W";
+		s = "275W < x <= 300W";
+		break;
 	default:
+		s = "reserved for above 300W";
 		break;
 	}
-	if (reg >= 0xf3)
-		return "reserved for above 300W";
-
-	return "Unknown";
-}
-
-static const char *
-pci_conf_print_pwrbdgt_data_scale(uint8_t reg)
-{
-
-	switch (reg) {
-	case 0x00:
-		return "1.0x";
-	case 0x01:
-		return "0.1x";
-	case 0x02:
-		return "0.01x";
-	case 0x03:
-		return "0.001x";
-	default:
-		return "wrong value!";
-	}
+	printf("%s\n", s);
 }
 
 static const char *
@@ -2634,7 +2630,7 @@ pci_conf_print_pwrbdgt_type(uint8_t reg)
 	case 0x05:
 		return "Maximum (Emergency Power Reduction)";
 	case 0x07:
-		return "Maximun";
+		return "Maximum";
 	default:
 		return "Unknown";
 	}
@@ -2662,19 +2658,18 @@ static void
 pci_conf_print_pwrbdgt_cap(const pcireg_t *regs, int capoff, int extcapoff)
 {
 	pcireg_t reg;
+	unsigned int scale;
 
-	printf("\n  Power Budget Register\n");
+	printf("\n  Power Budgeting\n");
 
 	reg = regs[o2i(extcapoff + PCI_PWRBDGT_DSEL)];
 	printf("    Data Select register: 0x%08x\n", reg);
 
 	reg = regs[o2i(extcapoff + PCI_PWRBDGT_DATA)];
 	printf("    Data register: 0x%08x\n", reg);
-	printf("      Base Power: %s\n",
-	    pci_conf_print_pwrbdgt_base_power((uint8_t)reg));
-	printf("      Data Scale: %s\n",
-	    pci_conf_print_pwrbdgt_data_scale(
-		    (uint8_t)(__SHIFTOUT(reg, PCI_PWRBDGT_DATA_SCALE))));
+	scale = __SHIFTOUT(reg, PCI_PWRBDGT_DATA_SCALE);
+	printf("      Base Power: ");
+	pci_conf_print_pwrbdgt_base_power((uint8_t)reg, scale);
 	printf("      PM Sub State: 0x%hhx\n",
 	    (uint8_t)__SHIFTOUT(reg, PCI_PWRBDGT_PM_SUBSTAT));
 	printf("      PM State: D%u\n",
