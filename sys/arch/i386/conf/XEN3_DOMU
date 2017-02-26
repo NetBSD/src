@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.74 2017/02/26 12:03:14 rin Exp $
+# $NetBSD: XEN3_DOMU,v 1.75 2017/02/26 12:21:15 maya Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -122,7 +122,6 @@ file-system	NILFS		# experimental - NTT's NiLFS(2)
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

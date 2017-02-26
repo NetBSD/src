@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.76 2017/02/19 07:47:01 rin Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.77 2017/02/26 12:21:15 maya Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -87,7 +87,6 @@ file-system	KERNFS		# /kern
 
 # File system options
 options 	QUOTA		# UFS quotas
-#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
