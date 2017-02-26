@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.311 2017/02/24 16:53:24 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.312 2017/02/26 16:22:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.311 2017/02/24 16:53:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.312 2017/02/26 16:22:55 riastradh Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -197,19 +197,19 @@ int	audiodebug = AUDIO_DEBUG;
 #define DPRINTFN(n,x)
 #endif
 
-#define ROUNDSIZE(x)	x &= -16	/* round to nice boundary */
-#define SPECIFIED(x)	(x != ~0)
-#define SPECIFIED_CH(x)	(x != (u_char)~0)
+#define ROUNDSIZE(x)	(x) &= -16	/* round to nice boundary */
+#define SPECIFIED(x)	((x) != ~0)
+#define SPECIFIED_CH(x)	((x) != (u_char)~0)
 
 /* #define AUDIO_PM_IDLE */
 #ifdef AUDIO_PM_IDLE
 int	audio_idle_timeout = 30;
 #endif
 
-#define HW_LOCK(x)	if (x == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
+#define HW_LOCK(x)	if ((x) == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
 				mutex_enter(sc->sc_intr_lock);
 
-#define HW_UNLOCK(x)	if (x == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
+#define HW_UNLOCK(x)	if ((x) == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) \
 				mutex_exit(sc->sc_intr_lock);
 
 int	audio_blk_ms = AUDIO_BLK_MS;
