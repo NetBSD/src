@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.71 2017/02/19 07:47:01 rin Exp $
+#	$NetBSD: GENERIC,v 1.72 2017/02/26 12:03:15 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -115,6 +115,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # Shared memory options
 
