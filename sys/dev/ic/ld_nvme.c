@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.11 2017/02/27 21:32:33 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.12 2017/02/27 21:48:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.11 2017/02/27 21:32:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.12 2017/02/27 21:48:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,6 @@ static int
 ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
 {
 	int error;
-	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
 	switch (cmd) {
 	case DIOCCACHESYNC:
