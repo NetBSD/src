@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.160 2017/02/26 05:41:47 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.161 2017/02/27 14:13:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.160 2017/02/26 05:41:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.161 2017/02/27 14:13:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1006,10 +1006,52 @@ pci_conf_print_regs(const pcireg_t *regs, int first, int pastlast)
 		printf("\n");
 }
 
+static const char *
+pci_conf_print_agp_calcycle(uint8_t cal)
+{
+
+	switch (cal) {
+	case 0x0:
+		return "4ms";
+	case 0x1:
+		return "16ms";
+	case 0x2:
+		return "64ms";
+	case 0x3:
+		return "256ms";
+	case 0x7:
+		return "Calibration Cycle Not Needed";
+	default:
+		return "(reserved)";
+	}
+}
+
+static void
+pci_conf_print_agp_datarate(pcireg_t reg, bool isagp3)
+{
+	if (isagp3) {
+		/* AGP 3.0 */
+		if (reg & AGP_MODE_V3_RATE_4x)
+			printf("x4");
+		if (reg & AGP_MODE_V3_RATE_8x)
+			printf("x8");
+	} else {
+		/* AGP 2.0 */
+		if (reg & AGP_MODE_V2_RATE_1x)
+			printf("x1");
+		if (reg & AGP_MODE_V2_RATE_2x)
+			printf("x2");
+		if (reg & AGP_MODE_V2_RATE_4x)
+			printf("x4");
+	}
+	printf("\n");
+}
+
 static void
 pci_conf_print_agp_cap(const pcireg_t *regs, int capoff)
 {
 	pcireg_t rval;
+	bool isagp3;
 
 	printf("\n  AGP Capabilities Register\n");
 
@@ -1017,7 +1059,44 @@ pci_conf_print_agp_cap(const pcireg_t *regs, int capoff)
 	printf("    Revision: %d.%d\n",
 	    PCI_CAP_AGP_MAJOR(rval), PCI_CAP_AGP_MINOR(rval));
 
-	/* XXX need more */
+	rval = regs[o2i(capoff + PCI_AGP_STATUS)];
+	printf("    Status register: 0x%04x\n", rval);
+	printf("      RQ: %d\n",
+	    (unsigned int)__SHIFTOUT(rval, AGP_MODE_RQ) + 1);
+	printf("      ARQSZ: %d\n",
+	    (unsigned int)__SHIFTOUT(rval, AGP_MODE_ARQSZ));
+	printf("      CAL cycle: %s\n",
+	       pci_conf_print_agp_calcycle(__SHIFTOUT(rval, AGP_MODE_CAL)));
+	onoff("SBA", rval, AGP_MODE_SBA);
+	onoff("htrans#", rval, AGP_MODE_HTRANS);
+	onoff("Over 4G", rval, AGP_MODE_4G);
+	onoff("Fast Write", rval, AGP_MODE_FW);
+	onoff("AGP 3.0 Mode", rval, AGP_MODE_MODE_3);
+	isagp3 = rval & AGP_MODE_MODE_3;
+	printf("      Data Rate Support: ");
+	pci_conf_print_agp_datarate(rval, isagp3);
+
+	rval = regs[o2i(capoff + PCI_AGP_COMMAND)];
+	printf("    Command register: 0x%08x\n", rval);
+	printf("      PRQ: %d\n",
+	    (unsigned int)__SHIFTOUT(rval, AGP_MODE_RQ) + 1);
+	printf("      PARQSZ: %d\n",
+	    (unsigned int)__SHIFTOUT(rval, AGP_MODE_ARQSZ));
+	printf("      PCAL cycle: %s\n",
+	       pci_conf_print_agp_calcycle(__SHIFTOUT(rval, AGP_MODE_CAL)));
+	onoff("SBA", rval, AGP_MODE_SBA);
+	onoff("AGP", rval, AGP_MODE_AGP);
+	onoff("Over 4G", rval, AGP_MODE_4G);
+	onoff("Fast Write", rval, AGP_MODE_FW);
+	if (isagp3) {
+		printf("      Data Rate Enable: ");
+		/*
+		 * The Data Rate Enable bits are used only on 3.0 and the
+		 * Command register has no AGP_MODE_MODE_3 bit, so pass the
+		 * flag to print correctly.
+		 */
+		pci_conf_print_agp_datarate(rval, isagp3);
+	}
 }
 
 static const char *
