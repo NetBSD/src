@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.487 2017/02/24 10:09:21 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.488 2017/02/27 09:27:27 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.487 2017/02/24 10:09:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.488 2017/02/27 09:27:27 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6470,7 +6470,7 @@ wm_select_txqueue(struct ifnet *ifp, struct mbuf *m)
 	 * TODO:
 	 * distribute by flowid(RSS has value).
 	 */
-	return (cpuid + sc->sc_affinity_offset) % sc->sc_nqueues;
+        return (cpuid + ncpu - sc->sc_affinity_offset) % sc->sc_nqueues;                                                          
 }
 
 /*
