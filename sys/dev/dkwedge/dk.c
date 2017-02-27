@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.94 2017/01/19 00:44:40 maya Exp $	*/
+/*	$NetBSD: dk.c,v 1.95 2017/02/27 21:27:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.94 2017/01/19 00:44:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.95 2017/02/27 21:27:07 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1478,16 +1478,10 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	error = 0;
 	
 	switch (cmd) {
+	case DIOCGSTRATEGY:
+	case DIOCGCACHE:
 	case DIOCCACHESYNC:
-		/*
-		 * XXX Do we really need to care about having a writable
-		 * file descriptor here?
-		 */
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else
-			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
-					  cmd, data, flag,
+		error = VOP_IOCTL(sc->sc_parent->dk_rawvp, cmd, data, flag,
 					  l != NULL ? l->l_cred : NOCRED);
 		break;
 	case DIOCGWEDGEINFO:
