@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.161 2017/02/27 14:13:56 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.162 2017/02/27 16:16:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.161 2017/02/27 14:13:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.162 2017/02/27 16:16:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2658,22 +2658,24 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 static void
-pci_conf_print_pwrbdgt_base_power(uint8_t base, int scale)
+pci_conf_print_pwrbdgt_base_power(uint8_t base, unsigned int scale)
 {
-	int sdiv = 1;
-	const char *s;
-	int i;
-	
 	if (base <= 0xef) {
-		for (i = scale; i > 0; i--)
+		unsigned int sdiv = 1;
+		for (unsigned int i = scale; i > 0; i--)
 			sdiv *= 10;
-		printf("%hhu", base / sdiv);
+
+		printf("%u", base / sdiv);
+
 		if (scale != 0) {
-			printf(".%hhu", base % sdiv);
+			printf(".%u", base % sdiv);
 		}
 		printf ("W\n");
 		return;
 	}
+
+	const char *s;
+
 	switch (base) {
 	case 0xf0:
 		s = "239W < x <= 250W";
