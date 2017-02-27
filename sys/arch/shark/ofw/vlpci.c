@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.3 2017/02/19 14:34:40 jakllsch Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.4 2017/02/27 18:30:42 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.3 2017/02/19 14:34:40 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.4 2017/02/27 18:30:42 jakllsch Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -56,6 +56,16 @@ static pcitag_t	vlpci_pc_make_tag(void *, int, int, int);
 static void	vlpci_pc_decompose_tag(void *, pcitag_t, int *, int *, int *);
 static pcireg_t	vlpci_pc_conf_read(void *, pcitag_t, int);
 static void	vlpci_pc_conf_write(void *, pcitag_t, int, pcireg_t);
+
+static int	vlpci_pc_intr_map(const struct pci_attach_args *,
+    pci_intr_handle_t *);
+static const char * vlpci_pc_intr_string(void *, pci_intr_handle_t, char *,
+    size_t);
+static const struct evcnt * vlpci_pc_intr_evcnt(void *, pci_intr_handle_t);
+static void *	vlpci_pc_intr_establish(void *, pci_intr_handle_t, int,
+    int (*)(void *), void *);
+static void 	vlpci_pc_intr_disestablish(void *, void *);
+
 #ifdef __HAVE_PCI_CONF_HOOK
 static int	vlpci_pc_conf_hook(void *, int, int, int, pcireg_t);
 #endif
@@ -119,8 +129,12 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Enable VLB/PCI bridge */
-	regwrite_1(sc, 0x96, 0x18); /* Undocumented by VIA */
-	regwrite_1(sc, 0x93, 0xd0);
+	regwrite_1(sc, 0x96, 0x18); /* enable LOCAL#, compatible mode */
+	regwrite_1(sc, 0x93, 0x60); /* IOCHCK# on IOCHCK#/NMI */
+	regwrite_1(sc, 0x86, 2<<5); /* invert all INTx to IRQ */
+	regwrite_1(sc, 0x97, 0x00); /* don't do per-INTx conversions */
+	regwrite_1(sc, 0x91, 0xbb); /* enable INT[AB] to IRQ 10 */
+	regwrite_1(sc, 0x90, 0xbb); /* enable INT[CD] to IRQ 10 */
 
 	pc->pc_conf_v = sc;
 	pc->pc_attach_hook = vlpci_pc_attach_hook;
@@ -129,14 +143,28 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	pc->pc_decompose_tag = vlpci_pc_decompose_tag;
 	pc->pc_conf_read = vlpci_pc_conf_read;
 	pc->pc_conf_write = vlpci_pc_conf_write;
+
+	pc->pc_intr_v = sc;
+	pc->pc_intr_map = vlpci_pc_intr_map;
+	pc->pc_intr_string = vlpci_pc_intr_string;
+	pc->pc_intr_evcnt = vlpci_pc_intr_evcnt;
+	pc->pc_intr_establish = vlpci_pc_intr_establish;
+	pc->pc_intr_disestablish = vlpci_pc_intr_disestablish;
+
 #ifdef __HAVE_PCI_CONF_HOOK
 	pc->pc_conf_hook = vlpci_pc_conf_hook;
 #endif
 	pc->pc_conf_interrupt = vlpci_pc_conf_interrupt;
 
-	pc->pc_intr_v = sc;
+	/* try to assure IO space is enabled on the default device-function */
+	vlpci_pc_conf_write(sc, vlpci_pc_make_tag(sc, 0, 6, 0),
+	    PCI_COMMAND_STATUS_REG,
+	    vlpci_pc_conf_read(sc, vlpci_pc_make_tag(sc, 0, 6, 0),
+	    PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_IO_ENABLE);
 
-	pba.pba_flags = PCI_FLAGS_IO_OKAY; /* XXX test this, implement more */
+	pba.pba_flags = PCI_FLAGS_IO_OKAY; /* try for more someday */
+	pba.pba_iot = &isa_io_bs_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 
@@ -217,6 +245,54 @@ vlpci_pc_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	    0x80000000UL|tag|offset);
 	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh, 4, val);
 	mutex_spin_exit(&sc->sc_lock);
+}
+
+static int
+vlpci_pc_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
+{
+	switch (pa->pa_intrpin) {
+	default:
+	case 0:
+		return EINVAL;
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		*ih = 10;
+		return 0;
+	}
+}
+
+static const char *
+vlpci_pc_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
+{
+
+	if (ih == PCI_INTERRUPT_PIN_NONE)
+		return NULL;
+	snprintf(buf, len, "irq %2lu", ih);
+	return buf;
+}
+
+static const struct evcnt *
+vlpci_pc_intr_evcnt(void *v, pci_intr_handle_t ih)
+{
+	return NULL;
+}
+
+static void *
+vlpci_pc_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
+    int (*callback)(void *), void *arg)
+{
+	if (pih == 0)
+		return NULL;
+
+	return isa_intr_establish(NULL, pih, IST_LEVEL, ipl, callback, arg);
+}
+
+static void
+vlpci_pc_intr_disestablish(void *v, void *w)
+{
+	panic("%s unimplemented", __func__);
 }
 
 #ifdef __HAVE_PCI_CONF_HOOK
