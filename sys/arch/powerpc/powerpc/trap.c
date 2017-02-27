@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.150 2014/08/12 20:27:10 joerg Exp $	*/
+/*	$NetBSD: trap.c,v 1.151 2017/02/27 06:54:00 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.150 2014/08/12 20:27:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2017/02/27 06:54:00 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -1015,6 +1015,7 @@ int
 emulated_opcode(struct lwp *l, struct trapframe *tf)
 {
 	uint32_t opcode;
+
 	if (copyin((void *)tf->tf_srr0, &opcode, sizeof(opcode)) != 0)
 		return 0;
 
@@ -1038,7 +1039,7 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		return 1;
 	}
 
-#define	OPC_MTMSR_CODE		0x7c0000a8
+#define	OPC_MTMSR_CODE		0x7c000124
 #define	OPC_MTMSR_MASK		0xfc1fffff
 #define	OPC_MTMSR		OPC_MTMSR_CODE
 #define	OPC_MTMSR_REG(o)	(((o) >> 21) & 0x1f)
@@ -1049,15 +1050,24 @@ emulated_opcode(struct lwp *l, struct trapframe *tf)
 		register_t msr = tf->tf_fixreg[OPC_MTMSR_REG(opcode)];
 
 		/*
+		 * Ignore the FP enable bit in the requested MSR.
+		 * It might be set in the thread's actual MSR but the
+		 * user code isn't allowed to change it.
+		 */
+		msr &= ~PSL_FP;
+
+		/*
 		 * Don't let the user muck with bits he's not allowed to.
 		 */
 		if (!PSL_USEROK_P(msr))
 			return 0;
+
 		/*
 		 * For now, only update the FP exception mode.
 		 */
 		pcb->pcb_flags &= ~(PSL_FE0|PSL_FE1);
 		pcb->pcb_flags |= msr & (PSL_FE0|PSL_FE1);
+
 		/*
 		 * If we think we have the FPU, update SRR1 too.  If we're
 		 * wrong userret() will take care of it.
