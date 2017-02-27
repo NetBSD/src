@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.2 2017/02/27 07:24:26 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.3 2017/02/27 07:25:59 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -31,11 +31,19 @@ SOCK_BACKUP=unix://carp_backup
 BUS=bus_carp
 TIMEOUT=3
 
-atf_test_case carp_handover cleanup
+atf_test_case carp_handover_halt cleanup
 carp_handover_head()
 {
 
-	atf_set "descr" "Tests for CARP handover"
+	atf_set "descr" "Tests for CARP handover on halt"
+	atf_set "require.progs" "rump_server"
+}
+
+atf_test_case carp_handover_ifdown cleanup
+carp_handover_head()
+{
+
+	atf_set "descr" "Tests for CARP handover on ifconfig down"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -95,8 +103,9 @@ wait_handover()
 	fi
 }
 
-carp_handover_body()
+test_carp_handover()
 {
+	local op=$1
 
 	rump_server_start $SOCK_CLIENT
 	rump_server_start $SOCK_MASTER
@@ -138,7 +147,11 @@ carp_handover_body()
 	    rump.ping -n -w $TIMEOUT -c 1 $IP_CARP
 
 	# KILLING SPREE
-	env RUMP_SERVER=$SOCK_MASTER rump.halt
+	if [ $op = halt ]; then
+		env RUMP_SERVER=$SOCK_MASTER rump.halt
+	elif [ $op = ifdown ]; then
+		env RUMP_SERVER=$SOCK_MASTER rump.ifconfig shmif0 down
+	fi
 	sleep 1
 
 	# Check that primary is now dead
@@ -153,20 +166,51 @@ carp_handover_body()
 	$DEBUG && rump.ifconfig
 	atf_check -s exit:0 -o match:'carp: MASTER carpdev shmif0' \
 	    rump.ifconfig carp1
+
+	if [ $op = ifdown ]; then
+		rump_server_destroy_ifaces
+	fi
 }
 
-carp_handover_cleanup()
+carp_handover_halt_body()
+{
+
+	test_carp_handover halt
+}
+
+carp_handover_ifdown_body()
+{
+
+	test_carp_handover ifdown
+}
+
+carp_handover_halt_cleanup()
 {
 
 	$DEBUG && dump
 	cleanup
 }
 
-atf_test_case carp6_handover cleanup
-carp6_handover_head()
+carp_handover_ifdown_cleanup()
 {
 
-	atf_set "descr" "Tests for CARP handover (IPv6)"
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case carp6_handover_halt cleanup
+carp6_handover_halt_head()
+{
+
+	atf_set "descr" "Tests for CARP handover on halt (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+atf_test_case carp6_handover_ifdown cleanup
+carp6_handover_ifdown_head()
+{
+
+	atf_set "descr" "Tests for CARP handover on ifconfig down (IPv6)"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -225,8 +269,9 @@ wait_carp6_handover()
 	fi
 }
 
-carp6_handover_body()
+test_carp6_handover()
 {
+	local op=$1
 
 	atf_expect_fail 'The implementation of CARP on IPv6 is incomplete yet.'
 
@@ -270,7 +315,11 @@ carp6_handover_body()
 	    rump.ping6 -n -X $TIMEOUT -c 1 $IP6_CARP
 
 	# KILLING SPREE
-	env RUMP_SERVER=$SOCK_MASTER rump.halt
+	if [ $op = halt ]; then
+		env RUMP_SERVER=$SOCK_MASTER rump.halt
+	elif [ $op = ifdown ]; then
+		env RUMP_SERVER=$SOCK_MASTER rump.ifconfig shmif0 down
+	fi
 	sleep 1
 
 	# Check that primary is now dead
@@ -285,9 +334,32 @@ carp6_handover_body()
 	$DEBUG && rump.ifconfig
 	atf_check -s exit:0 -o match:'carp: MASTER carpdev shmif0' \
 	    rump.ifconfig carp1
+
+	if [ $op = ifdown ]; then
+		rump_server_destroy_ifaces
+	fi
 }
 
-carp6_handover_cleanup()
+carp6_handover_halt_body()
+{
+
+	test_carp6_handover halt
+}
+
+carp6_handover_ifdown_body()
+{
+
+	test_carp6_handover ifdown
+}
+
+carp6_handover_halt_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+carp6_handover_ifdown_cleanup()
 {
 
 	$DEBUG && dump
@@ -297,6 +369,8 @@ carp6_handover_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case carp_handover
-	atf_add_test_case carp6_handover
+	atf_add_test_case carp_handover_halt
+	atf_add_test_case carp_handover_ifdown
+	atf_add_test_case carp6_handover_halt
+	atf_add_test_case carp6_handover_ifdown
 }
