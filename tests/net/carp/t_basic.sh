@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.3 2017/02/27 07:25:59 ozaki-r Exp $
+#	$NetBSD: t_basic.sh,v 1.4 2017/02/27 08:26:53 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -272,8 +272,6 @@ wait_carp6_handover()
 test_carp6_handover()
 {
 	local op=$1
-
-	atf_expect_fail 'The implementation of CARP on IPv6 is incomplete yet.'
 
 	rump_server_start $SOCK_CLIENT netinet6
 	rump_server_start $SOCK_MASTER netinet6
