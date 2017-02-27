@@ -1268,7 +1268,6 @@ struct drm_device {
 	bool irq_enabled;		/**< True if irq handler is enabled */
 #ifdef __NetBSD__
 	struct drm_bus_irq_cookie *irq_cookie;
-	pci_intr_handle_t *intr_handles;
 #endif
 	__volatile__ long context_flag;	/**< Context swapping flag */
 	int last_context;		/**< Last current context */
