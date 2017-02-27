@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1271 2017/01/16 04:45:06 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1272 2017/02/27 03:37:16 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1279 2017/01/16 04:44:38 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1280 2017/02/27 01:33:21 msaitoh Exp
  */
 
 /*
@@ -5469,6 +5469,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9800_GT	0x0614		/* GeForce 9800 GT */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9600_GT	0x0622		/* GeForce 9600 GT */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9500_GT	0x0640		/* GeForce 9500 GT */
+#define	PCI_PRODUCT_NVIDIA_TESLA_M2050	0x06de		/* GF100GL (Tesla M2050) */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9300_GE_1	0x06e0		/* GeForce 9300 GE */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE8400GS	0x06e4		/* GeForce 8400 GS */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE9300M_GS	0x06e9		/* GeForce 9300M GS */
@@ -5534,6 +5535,9 @@
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_11	0x0ada		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_12	0x0adb		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_210_HDA	0x0be3		/* GeForce 210 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_GF100_HDA	0x0be5		/* GF100 HD Audio */
+#define	PCI_PRODUCT_NVIDIA_GF108_HDA	0x0bea		/* GF108 HD Audio */
+#define	PCI_PRODUCT_NVIDIA_GF116_HDA	0x0bee		/* GF116 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_GF_GT640M	0x0fd2		/* GeForce GT 640M */
 #define	PCI_PRODUCT_NVIDIA_GT520	0x1040		/* GeForce GT 520 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_510	0x1042		/* GeForce 510 */
