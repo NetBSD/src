@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.10 2016/11/01 14:39:38 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.11 2017/02/27 21:32:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.10 2016/11/01 14:39:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.11 2017/02/27 21:32:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ CFATTACH_DECL_NEW(ld_nvme, sizeof(struct ld_nvme_softc),
 
 static int	ld_nvme_start(struct ld_softc *, struct buf *);
 static int	ld_nvme_dump(struct ld_softc *, void *, int, int);
-static int	ld_nvme_flush(struct ld_softc *, int);
+static int	ld_nvme_flush(struct ld_softc *, bool);
+static int	ld_nvme_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 
 static void	ld_nvme_biodone(void *, struct buf *, uint16_t);
 static void	ld_nvme_syncdone(void *, struct buf *, uint16_t);
@@ -112,7 +113,7 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_maxqueuecnt = naa->naa_qentries;
 	ld->sc_start = ld_nvme_start;
 	ld->sc_dump = ld_nvme_dump;
-	ld->sc_flush = ld_nvme_flush;
+	ld->sc_ioctl = ld_nvme_ioctl;
 	ld->sc_flags = LDF_ENABLED;
 	ldattach(ld, "fcfs");
 }
@@ -180,14 +181,32 @@ ld_nvme_biodone(void *xc, struct buf *bp, uint16_t cmd_status)
 }
 
 static int
-ld_nvme_flush(struct ld_softc *ld, int flags)
+ld_nvme_flush(struct ld_softc *ld, bool poll)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
-	/* wait for the sync to finish */
 	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid, sc,
-	    (flags & LDFL_POLL) ? NVME_NS_CTX_F_POLL : 0,
+	    poll ? NVME_NS_CTX_F_POLL : 0,
 	    ld_nvme_syncdone);
+}
+
+static int
+ld_nvme_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
+{
+	int error;
+	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
+
+	switch (cmd) {
+	case DIOCCACHESYNC:
+		error = ld_nvme_flush(ld, poll);
+		break;
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	return error;
 }
 
 static void
