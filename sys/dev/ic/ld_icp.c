@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.30 2017/02/26 23:06:36 jdolecek Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.31 2017/02/27 21:32:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.30 2017/02/26 23:06:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.31 2017/02/27 21:32:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,8 @@ static int	ld_icp_detach(device_t, int);
 static int	ld_icp_dobio(struct ld_icp_softc *, void *, int, int, int,
 		     struct buf *);
 static int	ld_icp_dump(struct ld_softc *, void *, int, int);
-static int	ld_icp_flush(struct ld_softc *, int);
+static int	ld_icp_flush(struct ld_softc *, bool);
+static int	ld_icp_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_icp_intr(struct icp_ccb *);
 static int	ld_icp_match(device_t, cfdata_t, void *);
 static int	ld_icp_start(struct ld_softc *, struct buf *);
@@ -110,7 +111,7 @@ ld_icp_attach(device_t parent, device_t self, void *aux)
 	ld->sc_secsize = ICP_SECTOR_SIZE;
 	ld->sc_start = ld_icp_start;
 	ld->sc_dump = ld_icp_dump;
-	ld->sc_flush = ld_icp_flush;
+	ld->sc_ioctl = ld_icp_ioctl;
 	ld->sc_secperunit = cd->cd_size;
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxqueuecnt = icp->icp_openings;
@@ -254,8 +255,9 @@ ld_icp_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));
 }
 
+/* ARGSUSED */
 static int
-ld_icp_flush(struct ld_softc *ld, int flags)
+ld_icp_flush(struct ld_softc *ld, bool poll)
 {
 	struct ld_icp_softc *sc;
 	struct icp_softc *icp;
@@ -283,6 +285,24 @@ ld_icp_flush(struct ld_softc *ld, int flags)
 	icp_ccb_free(icp, ic);
 
 	return (rv);
+}
+
+static int
+ld_icp_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
+{
+        int error;
+
+        switch (cmd) {
+        case DIOCCACHESYNC:
+		error = ld_icp_flush(ld, poll);
+		break;
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	return error;
 }
 
 static void
