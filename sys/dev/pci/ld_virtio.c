@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.13 2016/11/30 01:36:38 christos Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.14 2017/02/27 21:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.13 2016/11/30 01:36:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.14 2017/02/27 21:32:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,6 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 		goto err;
 
 	ld->sc_dump = ld_virtio_dump;
-	ld->sc_flush = NULL;
 	ld->sc_start = ld_virtio_start;
 
 	ld->sc_flags = LDF_ENABLED;
