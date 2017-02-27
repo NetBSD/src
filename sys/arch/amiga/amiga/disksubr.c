@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.65 2017/02/25 22:45:59 rin Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.66 2017/02/27 15:59:36 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.65 2017/02/25 22:45:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.66 2017/02/27 15:59:36 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 		lp->d_partitions[i].p_offset = 0;
 	}
 
-	lp->d_secsize = rbp->nbytes;
+	if (lp->d_secsize != rbp->nbytes) {
+		lp->d_secsize = rbp->nbytes;
+		allocbuf(bp, (int)lp->d_secsize, 1);
+		rbp = baddr(bp);
+	}
 	lp->d_nsectors = rbp->nsectors;
 	lp->d_ntracks = rbp->nheads;
 	/*
