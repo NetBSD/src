@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.50 2017/02/10 19:31:42 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.51 2017/02/27 23:31:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,6 +72,12 @@
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
+
+/* Interfaces for audiobell. */
+int audiobellopen(dev_t, int, int, struct lwp *, struct file **);
+int audiobellclose(struct file *);
+int audiobellwrite(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int audiobellioctl(struct file *, u_long, void *);
 
 /*
  * Initial/default block duration is both configurable and patchable.
