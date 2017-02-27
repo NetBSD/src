@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.313 2017/02/27 10:31:02 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.314 2017/02/27 23:31:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.313 2017/02/27 10:31:02 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.314 2017/02/27 23:31:00 mrg Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -233,8 +233,8 @@ int	audio_poll(struct audio_softc *, int, struct lwp *,
 int	audio_kqfilter(struct audio_chan *, struct knote *);
 paddr_t audiommap(dev_t, off_t, int, struct virtual_channel *);
 paddr_t audio_mmap(struct audio_softc *, off_t, int, struct virtual_channel *);
-int	audio_fop_mmap(struct file *, off_t *, size_t, int, int *, int *,
-			     struct uvm_object **, int *);
+static	int audio_fop_mmap(struct file *, off_t *, size_t, int, int *, int *,
+			   struct uvm_object **, int *);
 
 int	mixer_open(dev_t, struct audio_softc *, int, int, struct lwp *,
 		   struct file **);
@@ -315,12 +315,12 @@ static int audio_sysctl_frequency(SYSCTLFN_PROTO);
 static int audio_sysctl_precision(SYSCTLFN_PROTO);
 static int audio_sysctl_channels(SYSCTLFN_PROTO);
 
-int	audioprobe(device_t, cfdata_t, void *);
-void	audioattach(device_t, device_t, void *);
-int	audiodetach(device_t, int);
-int	audioactivate(device_t, enum devact);
-void	audiochilddet(device_t, device_t);
-int	audiorescan(device_t, const char *, const int *);
+static int	audiomatch(device_t, cfdata_t, void *);
+static void	audioattach(device_t, device_t, void *);
+static int	audiodetach(device_t, int);
+static int	audioactivate(device_t, enum devact);
+static void	audiochilddet(device_t, device_t);
+static int	audiorescan(device_t, const char *, const int *);
 
 #ifdef AUDIO_PM_IDLE
 static void	audio_idle(void *);
@@ -348,13 +348,13 @@ static void	audio_exit(struct audio_softc *);
 static int	audio_waitio(struct audio_softc *, kcondvar_t *,
 			     struct virtual_channel *);
 
-int audioclose(struct file *);
-int audioread(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-int audiowrite(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-int audioioctl(struct file *, u_long, void *);
-int audiopoll(struct file *, int);
-int audiokqfilter(struct file *, struct knote *);
-int audiostat(struct file *, struct stat *);
+static int audioclose(struct file *);
+static int audioread(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+static int audiowrite(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+static int audioioctl(struct file *, u_long, void *);
+static int audiopoll(struct file *, int);
+static int audiokqfilter(struct file *, struct knote *);
+static int audiostat(struct file *, struct stat *);
 
 struct portname {
 	const char *name;
@@ -413,9 +413,8 @@ static int	uio_fetcher_fetch_to(struct audio_softc *, stream_fetcher_t *,
 static int	null_fetcher_fetch_to(struct audio_softc *, stream_fetcher_t *,
 				      audio_stream_t *, int);
 
-int audiobellopen(dev_t, int, int, struct lwp *, struct file **);
-
-dev_type_open(audioopen);
+static dev_type_open(audioopen);
+/* XXXMRG use more dev_type_xxx */
 
 const struct cdevsw audio_cdevsw = {
 	.d_open = audioopen,
@@ -460,23 +459,23 @@ int auto_config_freq[] = { 48000, 44100, 96000, 192000, 32000,
 			   22050, 16000, 11025, 8000, 4000 };
 
 CFATTACH_DECL3_NEW(audio, sizeof(struct audio_softc),
-    audioprobe, audioattach, audiodetach, audioactivate, audiorescan,
+    audiomatch, audioattach, audiodetach, audioactivate, audiorescan,
     audiochilddet, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver audio_cd;
 
-int
-audioprobe(device_t parent, cfdata_t match, void *aux)
+static int
+audiomatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *sa;
 
 	sa = aux;
-	DPRINTF(("audioprobe: type=%d sa=%p hw=%p\n",
-		 sa->type, sa, sa->hwif));
+	DPRINTF(("%s: type=%d sa=%p hw=%p\n",
+		 __func__, sa->type, sa, sa->hwif));
 	return (sa->type == AUDIODEV_TYPE_AUDIO) ? 1 : 0;
 }
 
-void
+static void
 audioattach(device_t parent, device_t self, void *aux)
 {
 	struct audio_softc *sc;
@@ -905,7 +904,7 @@ bad_rec:
 	audiorescan(self, "audio", NULL);
 }
 
-int
+static int
 audioactivate(device_t self, enum devact act)
 {
 	struct audio_softc *sc = device_private(self);
@@ -924,7 +923,7 @@ audioactivate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 audiodetach(device_t self, int flags)
 {
 	struct audio_softc *sc;
@@ -1054,7 +1053,7 @@ audiodetach(device_t self, int flags)
 	return 0;
 }
 
-void
+static void
 audiochilddet(device_t self, device_t child)
 {
 
@@ -1071,7 +1070,7 @@ audiosearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	return 0;
 }
 
-int
+static int
 audiorescan(device_t self, const char *ifattr, const int *flags)
 {
 	struct audio_softc *sc = device_private(self);
@@ -1552,6 +1551,7 @@ audio_waitio(struct audio_softc *sc, kcondvar_t *chan, struct virtual_channel *v
 	return error;
 }
 
+/* Exported interfaces for audiobell. */
 int
 audiobellopen(dev_t dev, int flags, int ifmt, struct lwp *l,
 	      struct file **fp)
@@ -1574,7 +1574,30 @@ audiobellopen(dev_t dev, int flags, int ifmt, struct lwp *l,
 
 	return error;
 }
+
 int
+audiobellclose(struct file *fp)
+{
+
+	return audioclose(fp);
+}
+
+int
+audiobellwrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
+	   int ioflag)
+{
+
+	return audiowrite(fp, offp, uio, cred, ioflag);
+}
+
+int
+audiobellioctl(struct file *fp, u_long cmd, void *addr)
+{
+
+	return audioioctl(fp, cmd, addr);
+}
+
+static int
 audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 	struct audio_softc *sc;
@@ -1602,7 +1625,7 @@ audioopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	return error;
 }
 
-int
+static int
 audioclose(struct file *fp)
 {
 	struct audio_softc *sc;
@@ -1643,7 +1666,7 @@ audioclose(struct file *fp)
 	return error;
 }
 
-int
+static int
 audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	  int ioflag)
 {
@@ -1676,7 +1699,7 @@ audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	return error;
 }
 
-int
+static int
 audiowrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	   int ioflag)
 {
@@ -1709,7 +1732,7 @@ audiowrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	return error;
 }
 
-int
+static int
 audioioctl(struct file *fp, u_long cmd, void *addr)
 {
 	struct audio_softc *sc;
@@ -1762,7 +1785,7 @@ audioioctl(struct file *fp, u_long cmd, void *addr)
 	return error;
 }
 
-int
+static int
 audiostat(struct file *fp, struct stat *st)
 {
 	memset(st, 0, sizeof(*st));
@@ -1775,7 +1798,7 @@ audiostat(struct file *fp, struct stat *st)
 	return 0;
 }
 
-int
+static int
 audiopoll(struct file *fp, int events)
 {
 	struct audio_softc *sc;
@@ -1815,7 +1838,7 @@ audiopoll(struct file *fp, int events)
 	return revents;
 }
 
-int
+static int
 audiokqfilter(struct file *fp, struct knote *kn)
 {
 	struct audio_softc *sc;
@@ -1853,7 +1876,7 @@ audiokqfilter(struct file *fp, struct knote *kn)
 }
 
 /* XXX:NS mmap is disabled. */
-int
+static int
 audio_fop_mmap(struct file *fp, off_t *offp, size_t len, int prot, int *flagsp,
 	     int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
