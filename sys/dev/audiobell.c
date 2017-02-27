@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.15 2017/02/15 02:55:53 nat Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.16 2017/02/27 23:31:00 mrg Exp $	*/
 
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.15 2017/02/15 02:55:53 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.16 2017/02/27 23:31:00 mrg Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -48,12 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.15 2017/02/15 02:55:53 nat Exp $");
 #include <sys/unistd.h>
 
 #include <dev/audio_if.h>
+#include <dev/audiovar.h>
 #include <dev/audiobellvar.h>
-
-extern int audiobellopen(dev_t, int, int, struct lwp *, struct file **);
-extern int audioclose(struct file *);
-extern int audiowrite(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-extern int audioioctl(struct file *, u_long, void *);
 
 /* Convert a %age volume to an amount to add to u-law values */
 /* XXX Probably highly inaccurate -- should be regenerated */
@@ -159,8 +155,8 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
 		return;
 
-	if (audioioctl(fp, AUDIO_GETINFO, &ai) != 0) {
-		audioclose(fp);
+	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0) {
+		audiobellclose(fp);
 		return;
 	}
 
@@ -190,11 +186,11 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 		auio.uio_rw = UIO_WRITE;
 		UIO_SETUP_SYSSPACE(&auio);
 
-		audiowrite(fp, NULL, &auio, NULL, 0);
+		audiobellwrite(fp, NULL, &auio, NULL, 0);
 		len -= size;
 		offset += size;
 	}
 out:
 	if (buf != NULL) free(buf, M_TEMP);
-	audioclose(fp);
+	audiobellclose(fp);
 }
