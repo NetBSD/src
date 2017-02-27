@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.57 2017/02/20 17:25:41 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.58 2017/02/27 06:46:59 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.57 2017/02/20 17:25:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.58 2017/02/27 06:46:59 chs Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -225,7 +225,7 @@ static struct undefined_handler gdb_uh_thumb;
 dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 dtrace_trap_func_t		dtrace_trap_func = NULL;
 
-int (* dtrace_invop_jump_addr)(uintptr_t, uintptr_t *, uintptr_t);
+int (* dtrace_invop_jump_addr)(uintptr_t, struct trapframe *, uintptr_t);
 void (* dtrace_emulation_jump_addr)(int, struct trapframe *);
 
 static int
@@ -248,7 +248,7 @@ dtrace_trapper(u_int addr, struct trapframe *frame)
 	}
 
 	back = *frame;
-	op = dtrace_invop_jump_addr(addr, (uintptr_t *) frame->tf_svc_sp, frame->tf_r0);
+	op = dtrace_invop_jump_addr(addr, frame, frame->tf_r0);
 	*frame = back;
 
 	dtrace_emulation_jump_addr(op, frame);
