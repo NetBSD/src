@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.239 2017/02/28 02:56:49 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.240 2017/02/28 04:07:11 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.239 2017/02/28 02:56:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.240 2017/02/28 04:07:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -778,6 +778,204 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	return error;
 }
 
+static int
+in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
+    struct ifnet *ifp, struct in6_multi **in6m_sol, int flags)
+{
+	int error;
+	struct sockaddr_in6 mltaddr, mltmask;
+	struct in6_multi_mship *imm;
+	struct in6_addr llsol;
+	struct rtentry *rt;
+	int dad_delay;
+	char ip6buf[INET6_ADDRSTRLEN];
+
+	KASSERT(in6m_sol != NULL);
+
+	/* join solicited multicast addr for new host id */
+	memset(&llsol, 0, sizeof(struct in6_addr));
+	llsol.s6_addr16[0] = htons(0xff02);
+	llsol.s6_addr32[1] = 0;
+	llsol.s6_addr32[2] = htonl(1);
+	llsol.s6_addr32[3] = ifra->ifra_addr.sin6_addr.s6_addr32[3];
+	llsol.s6_addr8[12] = 0xff;
+	if ((error = in6_setscope(&llsol, ifp, NULL)) != 0) {
+		/* XXX: should not happen */
+		log(LOG_ERR, "%s: in6_setscope failed\n", __func__);
+		goto out;
+	}
+	dad_delay = 0;
+	if ((flags & IN6_IFAUPDATE_DADDELAY)) {
+		/*
+		 * We need a random delay for DAD on the address
+		 * being configured.  It also means delaying
+		 * transmission of the corresponding MLD report to
+		 * avoid report collision.
+		 * [draft-ietf-ipv6-rfc2462bis-02.txt]
+		 */
+		dad_delay = cprng_fast32() % (MAX_RTR_SOLICITATION_DELAY * hz);
+	}
+
+#define	MLTMASK_LEN  4	/* mltmask's masklen (=32bit=4octet) */
+	/* join solicited multicast addr for new host id */
+	imm = in6_joingroup(ifp, &llsol, &error, dad_delay);
+	if (!imm) {
+		nd6log(LOG_ERR,
+		    "addmulti failed for %s on %s (errno=%d)\n",
+		    IN6_PRINT(ip6buf, &llsol), if_name(ifp), error);
+		goto out;
+	}
+	LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+	*in6m_sol = imm->i6mm_maddr;
+
+	sockaddr_in6_init(&mltmask, &in6mask32, 0, 0, 0);
+
+	/*
+	 * join link-local all-nodes address
+	 */
+	sockaddr_in6_init(&mltaddr, &in6addr_linklocal_allnodes,
+	    0, 0, 0);
+	if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0)
+		goto out; /* XXX: should not fail */
+
+	/*
+	 * XXX: do we really need this automatic routes?
+	 * We should probably reconsider this stuff.  Most applications
+	 * actually do not need the routes, since they usually specify
+	 * the outgoing interface.
+	 */
+	rt = rtalloc1(sin6tosa(&mltaddr), 0);
+	if (rt) {
+		if (memcmp(&mltaddr.sin6_addr,
+		    &satocsin6(rt_getkey(rt))->sin6_addr,
+		    MLTMASK_LEN)) {
+			rt_unref(rt);
+			rt = NULL;
+		} else if (rt->rt_ifp != ifp) {
+			IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
+			    "network %04x:%04x::/32 = %04x:%04x::/32\n",
+			    __func__, rt->rt_ifp, ifp, ifp->if_xname,
+			    ntohs(mltaddr.sin6_addr.s6_addr16[0]),
+			    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
+			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
+			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
+			rt_replace_ifa(rt, &ia->ia_ifa);
+			rt->rt_ifp = ifp;
+		}
+	}
+	if (!rt) {
+		struct rt_addrinfo info;
+
+		memset(&info, 0, sizeof(info));
+		info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
+		info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia->ia_addr);
+		info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
+		info.rti_info[RTAX_IFA] = sin6tosa(&ia->ia_addr);
+		/* XXX: we need RTF_CONNECTED to fake nd6_rtrequest */
+		info.rti_flags = RTF_UP | RTF_CONNECTED;
+		error = rtrequest1(RTM_ADD, &info, NULL);
+		if (error)
+			goto out;
+	} else {
+		rt_unref(rt);
+	}
+	imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
+	if (!imm) {
+		nd6log(LOG_WARNING,
+		    "addmulti failed for %s on %s (errno=%d)\n",
+		    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
+		    if_name(ifp), error);
+		goto out;
+	}
+	LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+
+	/*
+	 * join node information group address
+	 */
+	dad_delay = 0;
+	if ((flags & IN6_IFAUPDATE_DADDELAY)) {
+		/*
+		 * The spec doesn't say anything about delay for this
+		 * group, but the same logic should apply.
+		 */
+		dad_delay = cprng_fast32() % (MAX_RTR_SOLICITATION_DELAY * hz);
+	}
+	if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) != 0)
+		;
+	else if ((imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
+		  dad_delay)) == NULL) { /* XXX jinmei */
+		nd6log(LOG_WARNING,
+		    "addmulti failed for %s on %s (errno=%d)\n",
+		    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
+		    if_name(ifp), error);
+		/* XXX not very fatal, go on... */
+	} else {
+		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+	}
+
+
+	/*
+	 * join interface-local all-nodes address.
+	 * (ff01::1%ifN, and ff01::%ifN/32)
+	 */
+	mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
+	if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0)
+		goto out; /* XXX: should not fail */
+
+	/* XXX: again, do we really need the route? */
+	rt = rtalloc1(sin6tosa(&mltaddr), 0);
+	if (rt) {
+		/* 32bit came from "mltmask" */
+		if (memcmp(&mltaddr.sin6_addr,
+		    &satocsin6(rt_getkey(rt))->sin6_addr,
+		    32 / NBBY)) {
+			rt_unref(rt);
+			rt = NULL;
+		} else if (rt->rt_ifp != ifp) {
+			IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
+			    "network %04x:%04x::/32 = %04x:%04x::/32\n",
+			    __func__, rt->rt_ifp, ifp, ifp->if_xname,
+			    ntohs(mltaddr.sin6_addr.s6_addr16[0]),
+			    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
+			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
+			    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
+			rt_replace_ifa(rt, &ia->ia_ifa);
+			rt->rt_ifp = ifp;
+		}
+	}
+	if (!rt) {
+		struct rt_addrinfo info;
+
+		memset(&info, 0, sizeof(info));
+		info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
+		info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia->ia_addr);
+		info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
+		info.rti_info[RTAX_IFA] = sin6tosa(&ia->ia_addr);
+		info.rti_flags = RTF_UP | RTF_CONNECTED;
+		error = rtrequest1(RTM_ADD, &info, NULL);
+		if (error)
+			goto out;
+#undef	MLTMASK_LEN
+	} else {
+		rt_unref(rt);
+	}
+	imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
+	if (!imm) {
+		nd6log(LOG_WARNING,
+		    "addmulti failed for %s on %s (errno=%d)\n",
+		    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
+		    if_name(ifp), error);
+		goto out;
+	} else {
+		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+	}
+	return 0;
+
+out:
+	KASSERT(error != 0);
+	return error;
+}
+
 /*
  * Update parameters of an IPv6 interface address.
  * If necessary, a new entry is created and linked into address chains.
@@ -791,17 +989,13 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	int error = 0, hostIsNew = 0, plen = -1;
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
-	struct in6_multi_mship *imm;
-	struct in6_multi *in6m_sol;
-	struct rtentry *rt;
+	struct in6_multi *in6m_sol = NULL;
 	int dad_delay, was_tentative;
 	struct in6_ifaddr *ia = iap ? *iap : NULL;
 	char ip6buf[INET6_ADDRSTRLEN];
 
 	KASSERT((iap == NULL && psref == NULL) ||
 	    (iap != NULL && psref != NULL));
-
-	in6m_sol = NULL;
 
 	/* Validate parameters */
 	if (ifp == NULL || ifra == NULL) /* this maybe redundant */
@@ -1081,188 +1275,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 	/* join necessary multicast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
-		struct sockaddr_in6 mltaddr, mltmask;
-		struct in6_addr llsol;
-
-		/* join solicited multicast addr for new host id */
-		memset(&llsol, 0, sizeof(struct in6_addr));
-		llsol.s6_addr16[0] = htons(0xff02);
-		llsol.s6_addr32[1] = 0;
-		llsol.s6_addr32[2] = htonl(1);
-		llsol.s6_addr32[3] = ifra->ifra_addr.sin6_addr.s6_addr32[3];
-		llsol.s6_addr8[12] = 0xff;
-		if ((error = in6_setscope(&llsol, ifp, NULL)) != 0) {
-			/* XXX: should not happen */
-			log(LOG_ERR, "%s: in6_setscope failed\n", __func__);
+		error = in6_join_mcastgroups(ifra, ia, ifp, &in6m_sol, flags);
+		if (error != 0)
 			goto cleanup;
-		}
-		dad_delay = 0;
-		if ((flags & IN6_IFAUPDATE_DADDELAY)) {
-			/*
-			 * We need a random delay for DAD on the address
-			 * being configured.  It also means delaying
-			 * transmission of the corresponding MLD report to
-			 * avoid report collision.
-			 * [draft-ietf-ipv6-rfc2462bis-02.txt]
-			 */
-			dad_delay = cprng_fast32() %
-			    (MAX_RTR_SOLICITATION_DELAY * hz);
-		}
-
-#define	MLTMASK_LEN  4	/* mltmask's masklen (=32bit=4octet) */
-		/* join solicited multicast addr for new host id */
-		imm = in6_joingroup(ifp, &llsol, &error, dad_delay);
-		if (!imm) {
-			nd6log(LOG_ERR,
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    IN6_PRINT(ip6buf, &llsol), if_name(ifp), error);
-			goto cleanup;
-		}
-		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
-		in6m_sol = imm->i6mm_maddr;
-
-		sockaddr_in6_init(&mltmask, &in6mask32, 0, 0, 0);
-
-		/*
-		 * join link-local all-nodes address
-		 */
-		sockaddr_in6_init(&mltaddr, &in6addr_linklocal_allnodes,
-		    0, 0, 0);
-		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0)
-			goto cleanup; /* XXX: should not fail */
-
-		/*
-		 * XXX: do we really need this automatic routes?
-		 * We should probably reconsider this stuff.  Most applications
-		 * actually do not need the routes, since they usually specify
-		 * the outgoing interface.
-		 */
-		rt = rtalloc1(sin6tosa(&mltaddr), 0);
-		if (rt) {
-			if (memcmp(&mltaddr.sin6_addr,
-			    &satocsin6(rt_getkey(rt))->sin6_addr,
-			    MLTMASK_LEN)) {
-				rt_unref(rt);
-				rt = NULL;
-			} else if (rt->rt_ifp != ifp) {
-				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
-				    "network %04x:%04x::/32 = %04x:%04x::/32\n",
-				    __func__, rt->rt_ifp, ifp, ifp->if_xname,
-				    ntohs(mltaddr.sin6_addr.s6_addr16[0]),
-				    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
-				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
-				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
-				rt_replace_ifa(rt, &ia->ia_ifa);
-				rt->rt_ifp = ifp;
-			}
-		}
-		if (!rt) {
-			struct rt_addrinfo info;
-
-			memset(&info, 0, sizeof(info));
-			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
-			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia->ia_addr);
-			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
-			info.rti_info[RTAX_IFA] = sin6tosa(&ia->ia_addr);
-			/* XXX: we need RTF_CONNECTED to fake nd6_rtrequest */
-			info.rti_flags = RTF_UP | RTF_CONNECTED;
-			error = rtrequest1(RTM_ADD, &info, NULL);
-			if (error)
-				goto cleanup;
-		} else {
-			rt_unref(rt);
-		}
-		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
-		if (!imm) {
-			nd6log(LOG_WARNING,
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
-			    if_name(ifp), error);
-			goto cleanup;
-		}
-		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
-
-		/*
-		 * join node information group address
-		 */
-		dad_delay = 0;
-		if ((flags & IN6_IFAUPDATE_DADDELAY)) {
-			/*
-			 * The spec doesn't say anything about delay for this
-			 * group, but the same logic should apply.
-			 */
-			dad_delay = cprng_fast32() %
-			    (MAX_RTR_SOLICITATION_DELAY * hz);
-		}
-		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) != 0)
-			;
-		else if ((imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error,
-		          dad_delay)) == NULL) { /* XXX jinmei */
-			nd6log(LOG_WARNING,
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
-			    if_name(ifp), error);
-			/* XXX not very fatal, go on... */
-		} else {
-			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
-		}
-
-
-		/*
-		 * join interface-local all-nodes address.
-		 * (ff01::1%ifN, and ff01::%ifN/32)
-		 */
-		mltaddr.sin6_addr = in6addr_nodelocal_allnodes;
-		if ((error = in6_setscope(&mltaddr.sin6_addr, ifp, NULL)) != 0) 
-			goto cleanup; /* XXX: should not fail */
-
-		/* XXX: again, do we really need the route? */
-		rt = rtalloc1(sin6tosa(&mltaddr), 0);
-		if (rt) {
-			/* 32bit came from "mltmask" */
-			if (memcmp(&mltaddr.sin6_addr,
-			    &satocsin6(rt_getkey(rt))->sin6_addr,
-			    32 / NBBY)) {
-				rt_unref(rt);
-				rt = NULL;
-			} else if (rt->rt_ifp != ifp) {
-				IN6_DPRINTF("%s: rt_ifp %p -> %p (%s) "
-				    "network %04x:%04x::/32 = %04x:%04x::/32\n",
-				    __func__, rt->rt_ifp, ifp, ifp->if_xname,
-				    ntohs(mltaddr.sin6_addr.s6_addr16[0]),
-				    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
-				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
-				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
-				rt_replace_ifa(rt, &ia->ia_ifa);
-				rt->rt_ifp = ifp;
-			}
-		}
-		if (!rt) {
-			struct rt_addrinfo info;
-
-			memset(&info, 0, sizeof(info));
-			info.rti_info[RTAX_DST] = sin6tosa(&mltaddr);
-			info.rti_info[RTAX_GATEWAY] = sin6tosa(&ia->ia_addr);
-			info.rti_info[RTAX_NETMASK] = sin6tosa(&mltmask);
-			info.rti_info[RTAX_IFA] = sin6tosa(&ia->ia_addr);
-			info.rti_flags = RTF_UP | RTF_CONNECTED;
-			error = rtrequest1(RTM_ADD, &info, NULL);
-			if (error)
-				goto cleanup;
-#undef	MLTMASK_LEN
-		} else {
-			rt_unref(rt);
-		}
-		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error, 0);
-		if (!imm) {
-			nd6log(LOG_WARNING,
-			    "addmulti failed for %s on %s (errno=%d)\n",
-			    IN6_PRINT(ip6buf, &mltaddr.sin6_addr),
-			    if_name(ifp), error);
-			goto cleanup;
-		} else {
-			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
-		}
 	}
 
 	/* Add local address to lltable, if necessary (ex. on p2p link). */
