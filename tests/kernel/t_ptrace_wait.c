@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.74 2017/02/28 13:19:50 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.75 2017/02/28 13:29:52 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.74 2017/02/28 13:19:50 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.75 2017/02/28 13:29:52 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7298,6 +7298,8 @@ ATF_TC_BODY(resume1, tc)
 	struct ptrace_lwpinfo pl;
 	struct ptrace_siginfo psi;
 
+	atf_tc_expect_fail("PR kern/51995");
+
 	ATF_REQUIRE(msg_open(&fds) == 0);
 
 	printf("Before forking process PID=%d\n", getpid());
@@ -7485,6 +7487,8 @@ ATF_TC_BODY(syscallemu1, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+
+	atf_tc_expect_fail("PR kern/52012");
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
