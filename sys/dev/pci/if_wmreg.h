@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.97 2017/02/02 05:38:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.98 2017/02/28 09:55:47 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1051,7 +1051,12 @@ struct livengood_tcpip_ctxdesc {
 #define EITR_OTHER	0x80000000 /* Interrupt Cause Active */
 
 #define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
-#define EITR_ITR_INT_MASK	0x0000ffff
+#define EITR_ITR_INT_MASK	__BITS(14,2)
+#define EITR_COUNTER_MASK_82575	__BITS(31,16)
+#define EITR_CNT_INGR		__BIT(31) /* does not overwrite counter */
+
+#define WMREG_EITR_82574(x)	(0x000E8 + (0x4 * (x)))
+#define EITR_ITR_INT_MASK_82574	__BITS(15, 0)
 
 #define	WMREG_RXPBS	0x2404	/* Rx Packet Buffer Size  */
 #define RXPBS_SIZE_MASK_82576	0x0000007F
