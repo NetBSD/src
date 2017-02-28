@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.24 2017/02/13 11:11:32 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.25 2017/02/28 20:53:50 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.24 2017/02/13 11:11:32 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.25 2017/02/28 20:53:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,10 @@ static void	nvme_ns_io_done(struct nvme_queue *, struct nvme_ccb *,
 static void	nvme_ns_sync_fill(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
 static void	nvme_ns_sync_done(struct nvme_queue *, struct nvme_ccb *,
+		    struct nvme_cqe *);
+static void	nvme_getcache_fill(struct nvme_queue *, struct nvme_ccb *,
+		    void *);
+static void	nvme_getcache_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
 
 static void	nvme_pt_fill(struct nvme_queue *, struct nvme_ccb *,
@@ -753,7 +757,18 @@ nvme_ns_io_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	nvme_ccb_put(q, ccb);
 
-	nnc_done(nnc_cookie, bp, lemtoh16(&cqe->flags));
+	nnc_done(nnc_cookie, bp, lemtoh16(&cqe->flags), lemtoh32(&cqe->cdw0));
+}
+
+/*
+ * If there is no volatile write cache, it makes no sense to issue
+ * flush commands or query for the status.
+ */
+bool
+nvme_has_volatile_write_cache(struct nvme_softc *sc)
+{
+	/* sc_identify is filled during attachment */
+	return  ((sc->sc_identify.vwc & NVME_ID_CTRLR_VWC_PRESENT) != 0);
 }
 
 int
@@ -803,7 +818,52 @@ nvme_ns_sync_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 
 	nvme_ccb_put(q, ccb);
 
-	nnc_done(cookie, NULL, lemtoh16(&cqe->flags));
+	nnc_done(cookie, NULL, lemtoh16(&cqe->flags), lemtoh32(&cqe->cdw0));
+}
+
+/*
+ * Get status of volatile write cache. Always asynchronous.
+ */
+int
+nvme_admin_getcache(struct nvme_softc *sc, void *cookie, nvme_nnc_done nnc_done)
+{
+	struct nvme_ccb *ccb;
+	struct nvme_queue *q = sc->sc_admin_q;
+
+	ccb = nvme_ccb_get(q);
+	if (ccb == NULL)
+		return EAGAIN;
+
+	ccb->ccb_done = nvme_getcache_done;
+	ccb->ccb_cookie = cookie;
+
+	/* namespace context */
+	ccb->nnc_flags = 0;
+	ccb->nnc_done = nnc_done;
+
+	nvme_q_submit(sc, q, ccb, nvme_getcache_fill);
+	return 0;
+}
+
+static void
+nvme_getcache_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe *sqe = slot;
+
+	sqe->opcode = NVM_ADMIN_GET_FEATURES;
+	sqe->cdw10 = NVM_FEATURE_VOLATILE_WRITE_CACHE;
+}
+
+static void
+nvme_getcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
+    struct nvme_cqe *cqe)
+{
+	void *cookie = ccb->ccb_cookie;
+	nvme_nnc_done nnc_done = ccb->nnc_done;
+
+	nvme_ccb_put(q, ccb);
+
+	nnc_done(cookie, NULL, lemtoh16(&cqe->flags), lemtoh32(&cqe->cdw0));
 }
 
 void
@@ -1300,7 +1360,7 @@ nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
 
 	memset(&pt, 0, sizeof(pt));
 	pt.cmd.opcode = NVM_ADMIN_GET_FEATURES;
-	pt.cmd.cdw10 = 7 /*NVME_FEAT_NUMBER_OF_QUEUES*/;
+	pt.cmd.cdw10 = NVM_FEATURE_NUMBER_OF_QUEUES;
 
 	ccb->ccb_done = nvme_pt_done;
 	ccb->ccb_cookie = &pt;

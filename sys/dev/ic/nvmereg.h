@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.7 2017/02/13 11:11:32 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.8 2017/02/28 20:53:50 jdolecek Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -223,6 +223,7 @@ struct nvme_sqe_io {
 
 struct nvme_cqe {
 	uint32_t	cdw0;
+#define NVME_CQE_CDW0_VWC_WCE	__BIT(1)	/* Volatile Write Cache Enable */
 
 	uint32_t	_reserved;
 
@@ -314,6 +315,10 @@ struct nvme_cqe {
 #define NVM_CMD_WR_UNCOR	0x04 /* Write Uncorrectable */
 #define NVM_CMD_COMPARE		0x05 /* Compare */
 #define NVM_CMD_DSM		0x09 /* Dataset Management */
+
+/* Features for GET/SET FEATURES */
+#define NVM_FEATURE_VOLATILE_WRITE_CACHE	0x06	/* optional */
+#define NVM_FEATURE_NUMBER_OF_QUEUES		0x07	/* mandatory */
 
 /* Power State Descriptor Data */
 struct nvm_identify_psd {
