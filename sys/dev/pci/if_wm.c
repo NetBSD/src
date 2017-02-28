@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.488 2017/02/27 09:27:27 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.489 2017/02/28 09:55:47 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.488 2017/02/27 09:27:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.489 2017/02/28 09:55:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4874,8 +4874,19 @@ wm_init_locked(struct ifnet *ifp)
 		wm_gmii_reset(sc);
 
 	/* Calculate (E)ITR value */
-	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-		sc->sc_itr = 450;	/* For EITR */
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0 && sc->sc_type != WM_T_82575) {
+		/*
+		 * For NEWQUEUE's EITR (except for 82575).
+		 * 82575's EITR should be set same throttling value as other
+		 * old controllers' ITR because the interrupt/sec calculation
+		 * is the same, that is, 1,000,000,000 / (N * 256).
+		 *
+		 * 82574's EITR should be set same throttling value as ITR.
+		 *
+		 * For N interrupts/sec, set this value to:
+		 * 1,000,000 / N in contrast to ITR throttoling value.
+		 */
+		sc->sc_itr = 450;
 	} else if (sc->sc_type >= WM_T_82543) {
 		/*
 		 * Set up the interrupt throttling register (units of 256ns)
@@ -4891,11 +4902,10 @@ wm_init_locked(struct ifnet *ifp)
 
 		/*
 		 * For N interrupts/sec, set this value to:
-		 * 1000000000 / (N * 256).  Note that we set the
+		 * 1,000,000,000 / (N * 256).  Note that we set the
 		 * absolute and packet timer values to this value
 		 * divided by 4 to get "simple timer" behavior.
 		 */
-
 		sc->sc_itr = 1500;		/* 2604 ints/sec */
 	}
 
@@ -5192,16 +5202,26 @@ wm_init_locked(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
 
 	if (sc->sc_type >= WM_T_82543) {
-		/*
-		 * XXX 82574 has both ITR and EITR. SET EITR when we use
-		 * the multi queue function with MSI-X.
-		 */
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 			int qidx;
 			for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 				struct wm_queue *wmq = &sc->sc_queue[qidx];
+				uint32_t eitr = __SHIFTIN(sc->sc_itr,
+				    EITR_ITR_INT_MASK);
+
+				/*
+				 * 82575 doesn't have CNT_INGR field.
+				 * So, overwrite counter field by software.
+				 */
+				if (sc->sc_type == WM_T_82575) {
+					eitr |= __SHIFTIN(sc->sc_itr,
+					    EITR_COUNTER_MASK_82575);
+				} else {
+					eitr |= EITR_CNT_INGR;
+				}
+
 				CSR_WRITE(sc, WMREG_EITR(wmq->wmq_intr_idx),
-				    sc->sc_itr);
+				    eitr);
 			}
 			/*
 			 * Link interrupts occur much less than TX
@@ -5209,6 +5229,17 @@ wm_init_locked(struct ifnet *ifp)
 			 * tune EINTR(WM_MSIX_LINKINTR_IDX) value like
 			 * FreeBSD's if_igb.
 			 */
+		} else if (sc->sc_type == WM_T_82574 && sc->sc_nintrs > 1) {
+			/*
+			 * 82574 has both ITR and EITR. SET EITR when we use
+			 * the multi queue function with MSI-X.
+			 */
+			for (int qidx = 0; qidx < sc->sc_nqueues; qidx++) {
+				struct wm_queue *wmq = &sc->sc_queue[qidx];
+				CSR_WRITE(sc,
+				    WMREG_EITR_82574(wmq->wmq_intr_idx),
+				    sc->sc_itr & EITR_ITR_INT_MASK_82574);
+			}
 		} else
 			CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
