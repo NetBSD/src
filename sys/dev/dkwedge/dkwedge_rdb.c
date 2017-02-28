@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.1 2017/02/26 11:56:49 rin Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.2 2017/02/28 04:39:58 rin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.1 2017/02/26 11:56:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.2 2017/02/28 04:39:58 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
@@ -96,9 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.1 2017/02/26 11:56:49 rin Exp $");
 #define	ADJUST_NR(x)	(x)
 #endif
 
-/* XXX */
-#define	PARANOID
-
 #ifdef _KERNEL
 #define	DKW_MALLOC(SZ)	malloc((SZ), M_DEVBUF, M_WAITOK)
 #define	DKW_FREE(PTR)	free((PTR), M_DEVBUF)
@@ -121,7 +118,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	struct rdblock *rbp;
 	void *bp;
 	int error;
-	unsigned blk_per_cyl, bufsize, nextb, secsize, tabsize;
+	unsigned blk_per_cyl, bufsize, newsecsize, nextb, secsize, tabsize;
 	const char *ptype;
 	unsigned char archtype;
 	bool found, root, swap;
@@ -159,8 +156,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 		goto done;
 	}
 
-#ifdef PARANOID
-	unsigned newsecsize = be32toh(rbp->nbytes);
+	newsecsize = be32toh(rbp->nbytes);
 	if (secsize != newsecsize) {
 		aprint_verbose("secsize changed from %u to %u\n",
 		    secsize, newsecsize);
@@ -170,7 +166,6 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 			bufsize *= 2;
 		bp = DKW_REALLOC(bp, bufsize);
 	}
-#endif
 
 	strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 
