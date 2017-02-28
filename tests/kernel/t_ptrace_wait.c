@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.73 2017/02/24 06:17:48 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.74 2017/02/28 13:19:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.73 2017/02/24 06:17:48 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.74 2017/02/28 13:19:50 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7470,6 +7470,77 @@ ATF_TC_BODY(syscall1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+ATF_TC(syscallemu1);
+ATF_TC_HEAD(syscallemu1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that exit(2) can be intercepted with PT_SYSCALLEMU");
+}
+
+ATF_TC_BODY(syscallemu1, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		syscall(SYS_exit, 100);
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	printf("Set SYSCALLEMU for intercepted syscall\n");
+	ATF_REQUIRE(ptrace(PT_SYSCALLEMU, child, (void *)1, 0) != -1);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -7599,6 +7670,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, setsigmask6);
 
 	ATF_TP_ADD_TC(tp, syscall1);
+
+	ATF_TP_ADD_TC(tp, syscallemu1);
 
 	return atf_no_error();
 }
