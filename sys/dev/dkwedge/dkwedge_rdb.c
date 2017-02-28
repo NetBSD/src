@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.3 2017/02/28 04:46:02 rin Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.4 2017/02/28 04:47:41 rin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.3 2017/02/28 04:46:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.4 2017/02/28 04:47:41 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
@@ -123,7 +123,7 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	unsigned char archtype;
 	bool found, root, swap;
 
-	secsize = bufsize = DEV_BSIZE << pdk->dk_blkshift;
+	secsize = DEV_BSIZE << pdk->dk_blkshift;
 	bufsize = roundup(MAX(sizeof(struct partblock), sizeof(struct rdblock)),
 	    secsize);
 	bp = DKW_MALLOC(bufsize);
