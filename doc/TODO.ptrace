@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.23 2017/02/20 03:37:24 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.24 2017/02/28 13:10:54 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -6,10 +6,8 @@ Items we (currently) plan to finish in the ptrace(2) field:
    it must point to the real parent, not tracer
  - adapt OpenBSD regress test (regress/sys/ptrace/ptrace.c) for the ATF context
  - reiterate over FreeBSD tests and add missing ones if applicable
- - add new ptrace(2) calls to lock (suspend) and unlock LWP within a process
  - add PT_DUMPCORE tests in the ATF framework
  - add ATF tests for PT_WRITE_I and PIOD_WRITE_I - test mprotect restrictions
- - switch PT_WATCHPOINT* to PT_*ETDBREGS and document it, add ATF tests
  - add tests for the procfs interface covering all functions available on the
    same level as ptrace(2)
  - remove 4.4BSD tracing with /proc, restrict /proc to Linux compat, to be
@@ -26,7 +24,6 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
  - add ATF tests for SIGCHLD
  - add si_code values for PT_SYSCALL: TRAP_SCE and TRAP_SCX
- - add ATF tests for PT_SYSCALL and PT_SYSCALLEMU
  - research support PT_SYSCALL & PT_STEP combined like in Linux
  - fix more calls for netbsd32 compat
  - research ipkdb(4)
