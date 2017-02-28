@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.13 2017/02/28 20:53:50 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.14 2017/02/28 20:55:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.13 2017/02/28 20:53:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.14 2017/02/28 20:55:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,11 @@ static int
 ld_nvme_flush(struct ld_softc *ld, bool poll)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
+
+	if (!nvme_has_volatile_write_cache(sc->sc_nvme)) {
+		/* cache not present, no value in trying to flush it */
+		return 0;
+	}
 
 	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid, sc,
 	    poll ? NVME_NS_CTX_F_POLL : 0,
