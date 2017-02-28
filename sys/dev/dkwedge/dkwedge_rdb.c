@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_rdb.c,v 1.2 2017/02/28 04:39:58 rin Exp $	*/
+/*	$NetBSD: dkwedge_rdb.c,v 1.3 2017/02/28 04:46:02 rin Exp $	*/
 
 /*
  * Adapted from arch/amiga/amiga/disksubr.c:
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.2 2017/02/28 04:39:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_rdb.c,v 1.3 2017/02/28 04:46:02 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel_rdb.h>
@@ -124,9 +124,8 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	bool found, root, swap;
 
 	secsize = bufsize = DEV_BSIZE << pdk->dk_blkshift;
-	while (bufsize < sizeof(struct partblock) ||
-	       bufsize < sizeof(struct rdblock))
-		bufsize *= 2;
+	bufsize = roundup(MAX(sizeof(struct partblock), sizeof(struct rdblock)),
+	    secsize);
 	bp = DKW_MALLOC(bufsize);
 
 	/*
@@ -160,10 +159,9 @@ dkwedge_discover_rdb(struct disk *pdk, struct vnode *vp)
 	if (secsize != newsecsize) {
 		aprint_verbose("secsize changed from %u to %u\n",
 		    secsize, newsecsize);
-		secsize = bufsize = newsecsize;
-		while (bufsize < sizeof(struct partblock) ||
-		       bufsize < sizeof(struct rdblock))
-			bufsize *= 2;
+		secsize = newsecsize;
+		bufsize = roundup(MAX(sizeof(struct partblock),
+		    sizeof(struct rdblock)), secsize);
 		bp = DKW_REALLOC(bp, bufsize);
 	}
 
