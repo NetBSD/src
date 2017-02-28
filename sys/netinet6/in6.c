@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.238 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.239 2017/02/28 02:56:49 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.238 2017/02/23 07:57:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.239 2017/02/28 02:56:49 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1043,6 +1043,13 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia6_lifetime.ia6t_preferred = time_uptime;
 	}
 
+	if (hostIsNew) {
+		/*
+		 * We need a reference to ia before calling in6_ifinit.
+		 * Otherwise ia can be freed in in6_ifinit accidentally.
+		 */
+		ifaref(&ia->ia_ifa);
+	}
 	/* reset the interface and routing table appropriately. */
 	error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew);
 	if (error != 0) {
@@ -1059,13 +1066,12 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 	/*
 	 * Insert ia to the global list and ifa to the interface's list.
+	 * A reference to it is already gained above.
 	 */
 	mutex_enter(&in6_ifaddr_lock);
 	IN6_ADDRLIST_WRITER_INSERT_TAIL(ia);
 	mutex_exit(&in6_ifaddr_lock);
 
-	/* gain a refcnt for the link from in6_ifaddr */
-	ifaref(&ia->ia_ifa);
 	ifa_insert(ifp, &ia->ia_ifa);
 
 	/*
