@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.126 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.127 2017/03/01 21:55:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.126 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.127 2017/03/01 21:55:07 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -283,18 +283,20 @@ ffs_spec_fsync(void *v)
 	} */ *ap = v;
 	int error, flags, uflags;
 	struct vnode *vp;
+#ifdef WAPBL
 	struct mount *mp;
+#endif /* WAPBL */
 
 	flags = ap->a_flags;
 	uflags = UPDATE_CLOSE | ((flags & FSYNC_WAIT) ? UPDATE_WAIT : 0);
 	vp = ap->a_vp;
-	mp = vp->v_mount;
 
 	error = spec_fsync(v);
 	if (error)
 		goto out;
 
 #ifdef WAPBL
+	mp = vp->v_mount;
 	if (mp && mp->mnt_wapbl) {
 		/*
 		 * Don't bother writing out metadata if the syncer is
