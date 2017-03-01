@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.490 2017/03/01 08:31:06 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.491 2017/03/01 08:56:33 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.490 2017/03/01 08:31:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.491 2017/03/01 08:56:33 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -674,6 +674,7 @@ static void	wm_stop_locked(struct ifnet *, int);
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
+static void	wm_itrs_writereg(struct wm_softc *, struct wm_queue *);
 /* DMA related */
 static int	wm_alloc_tx_descs(struct wm_softc *, struct wm_txqueue *);
 static void	wm_free_tx_descs(struct wm_softc *, struct wm_txqueue *);
@@ -4802,6 +4803,39 @@ wm_turnoff(struct wm_softc *sc)
 }
 
 /*
+ * write interrupt interval value to ITR or EITR
+ */
+static void
+wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
+{
+
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+		uint32_t eitr = __SHIFTIN(wmq->wmq_itr, EITR_ITR_INT_MASK);
+
+		/*
+		 * 82575 doesn't have CNT_INGR field.
+		 * So, overwrite counter field by software.
+		 */
+		if (sc->sc_type == WM_T_82575)
+			eitr |= __SHIFTIN(wmq->wmq_itr, EITR_COUNTER_MASK_82575);
+		else
+			eitr |= EITR_CNT_INGR;
+
+		CSR_WRITE(sc, WMREG_EITR(wmq->wmq_intr_idx), eitr);
+	} else if (sc->sc_type == WM_T_82574 && sc->sc_nintrs > 1) {
+		/*
+		 * 82574 has both ITR and EITR. SET EITR when we use
+		 * the multi queue function with MSI-X.
+		 */
+		CSR_WRITE(sc, WMREG_EITR_82574(wmq->wmq_intr_idx),
+			    wmq->wmq_itr & EITR_ITR_INT_MASK_82574);
+	} else {
+		KASSERT(wmq->wmq_id == 0);
+		CSR_WRITE(sc, WMREG_ITR, wmq->wmq_itr);
+	}
+}
+
+/*
  * wm_init:		[ifnet interface function]
  *
  *	Initialize the interface.
@@ -5204,46 +5238,16 @@ wm_init_locked(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
 
 	if (sc->sc_type >= WM_T_82543) {
-		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-			int qidx;
-			for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
-				struct wm_queue *wmq = &sc->sc_queue[qidx];
-				uint32_t eitr = __SHIFTIN(wmq->wmq_itr,
-				    EITR_ITR_INT_MASK);
-
-				/*
-				 * 82575 doesn't have CNT_INGR field.
-				 * So, overwrite counter field by software.
-				 */
-				if (sc->sc_type == WM_T_82575) {
-					eitr |= __SHIFTIN(wmq->wmq_itr,
-					    EITR_COUNTER_MASK_82575);
-				} else {
-					eitr |= EITR_CNT_INGR;
-				}
-
-				CSR_WRITE(sc, WMREG_EITR(wmq->wmq_intr_idx),
-				    eitr);
-			}
-			/*
-			 * Link interrupts occur much less than TX
-			 * interrupts and RX interrupts. So, we don't
-			 * tune EINTR(WM_MSIX_LINKINTR_IDX) value like
-			 * FreeBSD's if_igb.
-			 */
-		} else if (sc->sc_type == WM_T_82574 && sc->sc_nintrs > 1) {
-			/*
-			 * 82574 has both ITR and EITR. SET EITR when we use
-			 * the multi queue function with MSI-X.
-			 */
-			for (int qidx = 0; qidx < sc->sc_nqueues; qidx++) {
-				struct wm_queue *wmq = &sc->sc_queue[qidx];
-				CSR_WRITE(sc,
-				    WMREG_EITR_82574(wmq->wmq_intr_idx),
-				    wmq->wmq_itr & EITR_ITR_INT_MASK_82574);
-			}
-		} else
-			CSR_WRITE(sc, WMREG_ITR, sc->sc_queue[0].wmq_itr);
+		for (int qidx = 0; qidx < sc->sc_nqueues; qidx++) {
+			struct wm_queue *wmq = &sc->sc_queue[qidx];
+			wm_itrs_writereg(sc, wmq);
+		}
+		/*
+		 * Link interrupts occur much less than TX
+		 * interrupts and RX interrupts. So, we don't
+		 * tune EINTR(WM_MSIX_LINKINTR_IDX) value like
+		 * FreeBSD's if_igb.
+		 */
 	}
 
 	/* Set the VLAN ethernetype. */
