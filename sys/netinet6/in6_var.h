@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.93 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.94 2017/03/01 08:54:12 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -683,6 +683,7 @@ void	in6_init(void);
 
 struct in6_multi *
 	in6_lookup_multi(const struct in6_addr *, const struct ifnet *);
+bool	in6_multi_group(const struct in6_addr *, const struct ifnet *);
 void	in6_purge_multi(struct ifnet *);
 struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *,
 	int *, int);

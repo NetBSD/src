@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.186 2017/02/22 07:46:00 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.187 2017/03/01 08:54:12 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.186 2017/02/22 07:46:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.187 2017/03/01 08:54:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -636,7 +636,7 @@ ip6_output(
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst))
 		m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
 	else {
-		struct	in6_multi *in6m;
+		bool ingroup;
 
 		m->m_flags = (m->m_flags & ~M_BCAST) | M_MCAST;
 
@@ -652,9 +652,8 @@ ip6_output(
 			goto bad;
 		}
 
-		in6m = in6_lookup_multi(&ip6->ip6_dst, ifp);
-		if (in6m != NULL &&
-		   (im6o == NULL || im6o->im6o_multicast_loop)) {
+		ingroup = in6_multi_group(&ip6->ip6_dst, ifp);
+		if (ingroup && (im6o == NULL || im6o->im6o_multicast_loop)) {
 			/*
 			 * If we belong to the destination multicast group
 			 * on the outgoing interface, and the caller did not
