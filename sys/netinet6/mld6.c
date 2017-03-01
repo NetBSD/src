@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.84 2017/03/01 08:54:12 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.85 2017/03/01 09:09:37 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.84 2017/03/01 08:54:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.85 2017/03/01 09:09:37 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.84 2017/03/01 08:54:12 ozaki-r Exp $");
 #include <sys/kernel.h>
 #include <sys/callout.h>
 #include <sys/cprng.h>
+#include <sys/rwlock.h>
 
 #include <net/if.h>
 
@@ -134,6 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.84 2017/03/01 08:54:12 ozaki-r Exp $");
 
 #include <net/net_osdep.h>
 
+
+static krwlock_t	in6_multilock __cacheline_aligned;
 
 /*
  * Protocol constants
@@ -157,6 +160,10 @@ static void mld_starttimer(struct in6_multi *);
 static void mld_stoptimer(struct in6_multi *);
 static u_long mld_timerresid(struct in6_multi *);
 
+static void in6m_ref(struct in6_multi *);
+static void in6m_unref(struct in6_multi *);
+static void in6m_destroy(struct in6_multi *);
+
 void
 mld_init(void)
 {
@@ -178,6 +185,8 @@ mld_init(void)
 	/* We will specify the hoplimit by a multicast option. */
 	ip6_opts.ip6po_hlim = -1;
 	ip6_opts.ip6po_prefer_tempaddr = IP6PO_TEMPADDR_NOTPREFER;
+
+	rw_init(&in6_multilock);
 }
 
 static void
@@ -185,6 +194,7 @@ mld_starttimer(struct in6_multi *in6m)
 {
 	struct timeval now;
 
+	KASSERT(rw_write_held(&in6_multilock));
 	KASSERT(in6m->in6m_timer != IN6M_TIMER_UNDEF);
 
 	microtime(&now);
@@ -200,13 +210,27 @@ mld_starttimer(struct in6_multi *in6m)
 	callout_schedule(&in6m->in6m_timer_ch, in6m->in6m_timer);
 }
 
+/*
+ * mld_stoptimer releases in6_multilock when calling callout_halt.
+ * The caller must ensure in6m won't be freed while releasing the lock.
+ */
 static void
 mld_stoptimer(struct in6_multi *in6m)
 {
+
+	KASSERT(rw_write_held(&in6_multilock));
+
 	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
 		return;
 
-	callout_stop(&in6m->in6m_timer_ch);
+	rw_exit(&in6_multilock);
+
+	if (mutex_owned(softnet_lock))
+		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
+	else
+		callout_halt(&in6m->in6m_timer_ch, NULL);
+
+	rw_enter(&in6_multilock, RW_WRITER);
 
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
 }
@@ -216,10 +240,13 @@ mld_timeo(void *arg)
 {
 	struct in6_multi *in6m = arg;
 
-	/* XXX NOMPSAFE still need softnet_lock */
+	KASSERT(in6m->in6m_refcount > 0);
+
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
-
+#endif
+	rw_enter(&in6_multilock, RW_WRITER);
 	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
 		goto out;
 
@@ -235,8 +262,13 @@ mld_timeo(void *arg)
 	}
 
 out:
+	rw_exit(&in6_multilock);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#else
+	return;
+#endif
 }
 
 static u_long
@@ -267,6 +299,8 @@ static void
 mld_start_listening(struct in6_multi *in6m)
 {
 	struct in6_addr all_in6;
+
+	KASSERT(rw_write_held(&in6_multilock));
 
 	/*
 	 * RFC2710 page 10:
@@ -299,6 +333,8 @@ static void
 mld_stop_listening(struct in6_multi *in6m)
 {
 	struct in6_addr allnode, allrouter;
+
+	KASSERT(rw_lock_held(&in6_multilock));
 
 	allnode = in6addr_linklocal_allnodes;
 	if (in6_setscope(&allnode, in6m->in6m_ifp, NULL)) {
@@ -395,6 +431,8 @@ mld_input(struct mbuf *m, int off)
 	 */
 	switch (mldh->mld_type) {
 	case MLD_LISTENER_QUERY: {
+		struct in6_multi *next;
+
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
@@ -420,7 +458,17 @@ mld_input(struct mbuf *m, int off)
 		 */
 		timer = ntohs(mldh->mld_maxdelay);
 
-		LIST_FOREACH(in6m, &ifp->if_multiaddrs, in6m_entry) {
+		rw_enter(&in6_multilock, RW_WRITER);
+		/*
+		 * mld_stoptimer and mld_sendpkt release in6_multilock
+		 * temporarily, so we have to prevent in6m from being freed
+		 * while releasing the lock by having an extra reference to it.
+		 *
+		 * Also in6_purge_multi might remove items from the list of the
+		 * ifp while releasing the lock. Fortunately in6_purge_multi is
+		 * never executed as long as we have a psref of the ifp.
+		 */
+		LIST_FOREACH_SAFE(in6m, &ifp->if_multiaddrs, in6m_entry, next) {
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &all_in6) ||
 			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
 			    IPV6_ADDR_SCOPE_LINKLOCAL)
@@ -434,10 +482,14 @@ mld_input(struct mbuf *m, int off)
 				continue;
 
 			if (timer == 0) {
+				in6m_ref(in6m);
+
 				/* send a report immediately */
 				mld_stoptimer(in6m);
 				mld_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
 				in6m->in6m_state = MLD_IREPORTEDLAST;
+
+				in6m_unref(in6m); /* May free in6m */
 			} else if (in6m->in6m_timer == IN6M_TIMER_UNDEF ||
 			    mld_timerresid(in6m) > timer) {
 				in6m->in6m_timer =
@@ -445,6 +497,7 @@ mld_input(struct mbuf *m, int off)
 				mld_starttimer(in6m);
 			}
 		}
+		rw_exit(&in6_multilock);
 		break;
 	    }
 
@@ -468,11 +521,16 @@ mld_input(struct mbuf *m, int off)
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
+		rw_enter(&in6_multilock, RW_WRITER);
 		in6m = in6_lookup_multi(&mld_addr, ifp);
 		if (in6m) {
+			in6m_ref(in6m);
 			mld_stoptimer(in6m); /* transit to idle state */
 			in6m->in6m_state = MLD_OTHERLISTENER; /* clear flag */
+			in6m_unref(in6m);
+			in6m = NULL; /* in6m might be freed */
 		}
+		rw_exit(&in6_multilock);
 		break;
 	default:		/* this is impossible */
 #if 0
@@ -492,6 +550,11 @@ out_nodrop:
 	m_put_rcvif_psref(ifp, &psref);
 }
 
+/*
+ * XXX mld_sendpkt must be called with in6_multilock held and
+ * will release in6_multilock before calling ip6_output and
+ * returning to avoid locking against myself in ip6_output.
+ */
 static void
 mld_sendpkt(struct in6_multi *in6m, int type, 
 	const struct in6_addr *dst)
@@ -505,6 +568,8 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	int ignflags;
 	struct psref psref;
 	int bound;
+
+	KASSERT(rw_write_held(&in6_multilock));
 
 	/*
 	 * At first, find a link local address on the outgoing interface
@@ -570,8 +635,13 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 		break;
 	}
 
+	/* XXX we cannot call ip6_output with holding in6_multilock */
+	rw_exit(&in6_multilock);
+
 	ip6_output(mh, &ip6_opts, NULL, ia ? 0 : IPV6_UNSPECSRC,
 	    &im6o, NULL, NULL);
+
+	rw_enter(&in6_multilock, RW_WRITER);
 }
 
 static struct mld_hdr *
@@ -623,6 +693,23 @@ mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
 	return mldh;
 }
 
+static void
+in6m_ref(struct in6_multi *in6m)
+{
+
+	KASSERT(rw_write_held(&in6_multilock));
+	in6m->in6m_refcount++;
+}
+
+static void
+in6m_unref(struct in6_multi *in6m)
+{
+
+	KASSERT(rw_write_held(&in6_multilock));
+	if (--in6m->in6m_refcount == 0)
+		in6m_destroy(in6m);
+}
+
 /*
  * Add an address to the list of IP6 multicast addresses for a given interface.
  */
@@ -632,10 +719,10 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 {
 	struct	sockaddr_in6 sin6;
 	struct	in6_multi *in6m;
-	int	s = splsoftnet();
 
 	*errorp = 0;
 
+	rw_enter(&in6_multilock, RW_WRITER);
 	/*
 	 * See if address already in list.
 	 */
@@ -653,9 +740,8 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		in6m = (struct in6_multi *)
 			malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT|M_ZERO);
 		if (in6m == NULL) {
-			splx(s);
 			*errorp = ENOBUFS;
-			return (NULL);
+			goto out;
 		}
 
 		in6m->in6m_addr = *maddr6;
@@ -665,7 +751,6 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 
-		/* FIXME NOMPSAFE: need to lock */
 		LIST_INSERT_HEAD(&ifp->if_multiaddrs, in6m, in6m_entry);
 
 		/*
@@ -678,17 +763,15 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 			callout_destroy(&in6m->in6m_timer_ch);
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
-			splx(s);
-			return (NULL);
+			in6m = NULL;
+			goto out;
 		}
 
 		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {
 			in6m->in6m_state = MLD_REPORTPENDING;
 			mld_starttimer(in6m);
-
-			splx(s);
-			return (in6m);
+			goto out;
 		}
 
 		/*
@@ -697,8 +780,62 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 */
 		mld_start_listening(in6m);
 	}
-	splx(s);
-	return (in6m);
+out:
+	rw_exit(&in6_multilock);
+	return in6m;
+}
+
+static void
+in6m_destroy(struct in6_multi *in6m)
+{
+	struct	in6_ifaddr *ia;
+	struct sockaddr_in6 sin6;
+	int s;
+
+	KASSERT(rw_write_held(&in6_multilock));
+	KASSERT(in6m->in6m_refcount == 0);
+
+	/*
+	 * No remaining claims to this record; let MLD6 know
+	 * that we are leaving the multicast group.
+	 */
+	mld_stop_listening(in6m);
+
+	/*
+	 * Unlink from list.
+	 */
+	LIST_REMOVE(in6m, in6m_entry);
+
+	/*
+	 * Delete all references of this multicasting group from
+	 * the membership arrays
+	 */
+	s = pserialize_read_enter();
+	IN6_ADDRLIST_READER_FOREACH(ia) {
+		struct in6_multi_mship *imm;
+		LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
+			if (imm->i6mm_maddr == in6m)
+				imm->i6mm_maddr = NULL;
+		}
+	}
+	pserialize_read_exit(s);
+
+	/*
+	 * Notify the network driver to update its multicast
+	 * reception filter.
+	 */
+	sockaddr_in6_init(&sin6, &in6m->in6m_addr, 0, 0, 0);
+	if_mcast_op(in6m->in6m_ifp, SIOCDELMULTI, sin6tosa(&sin6));
+
+	/* Tell mld_timeo we're halting the timer */
+	in6m->in6m_timer = IN6M_TIMER_UNDEF;
+	if (mutex_owned(softnet_lock))
+		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
+	else
+		callout_halt(&in6m->in6m_timer_ch, NULL);
+	callout_destroy(&in6m->in6m_timer_ch);
+
+	free(in6m, M_IPMADDR);
 }
 
 /*
@@ -707,59 +844,18 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 void
 in6_delmulti(struct in6_multi *in6m)
 {
-	struct	sockaddr_in6 sin6;
-	struct	in6_ifaddr *ia;
-	int	s = splsoftnet();
 
+	KASSERT(in6m->in6m_refcount > 0);
+
+	rw_enter(&in6_multilock, RW_WRITER);
+	/*
+	 * The caller should have a reference to in6m. So we don't need to care
+	 * of releasing the lock in mld_stoptimer.
+	 */
 	mld_stoptimer(in6m);
-
-	if (--in6m->in6m_refcount == 0) {
-		int _s;
-
-		/*
-		 * No remaining claims to this record; let MLD6 know
-		 * that we are leaving the multicast group.
-		 */
-		mld_stop_listening(in6m);
-
-		/*
-		 * Unlink from list.
-		 */
-		/* FIXME NOMPSAFE: need to lock */
-		LIST_REMOVE(in6m, in6m_entry);
-
-		/*
-		 * Delete all references of this multicasting group from
-		 * the membership arrays
-		 */
-		_s = pserialize_read_enter();
-		IN6_ADDRLIST_READER_FOREACH(ia) {
-			struct in6_multi_mship *imm;
-			LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
-				if (imm->i6mm_maddr == in6m)
-					imm->i6mm_maddr = NULL;
-			}
-		}
-		pserialize_read_exit(_s);
-
-		/*
-		 * Notify the network driver to update its multicast
-		 * reception filter.
-		 */
-		sockaddr_in6_init(&sin6, &in6m->in6m_addr, 0, 0, 0);
-		if_mcast_op(in6m->in6m_ifp, SIOCDELMULTI, sin6tosa(&sin6));
-
-		/* Tell mld_timeo we're halting the timer */
-		in6m->in6m_timer = IN6M_TIMER_UNDEF;
-		if (mutex_owned(softnet_lock))
-			callout_halt(&in6m->in6m_timer_ch, softnet_lock);
-		else
-			callout_halt(&in6m->in6m_timer_ch, NULL);
-		callout_destroy(&in6m->in6m_timer_ch);
-
-		free(in6m, M_IPMADDR);
-	}
-	splx(s);
+	if (--in6m->in6m_refcount == 0)
+		in6m_destroy(in6m);
+	rw_exit(&in6_multilock);
 }
 
 /*
@@ -772,7 +868,8 @@ in6_lookup_multi(const struct in6_addr *addr, const struct ifnet *ifp)
 {
 	struct in6_multi *in6m;
 
-	/* XXX NOMPSAFE */
+	KASSERT(rw_lock_held(&in6_multilock));
+
 	LIST_FOREACH(in6m, &ifp->if_multiaddrs, in6m_entry) {
 		if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, addr))
 			break;
@@ -785,7 +882,9 @@ in6_multi_group(const struct in6_addr *addr, const struct ifnet *ifp)
 {
 	bool ingroup;
 
+	rw_enter(&in6_multilock, RW_READER);
 	ingroup = in6_lookup_multi(addr, ifp) != NULL;
+	rw_exit(&in6_multilock);
 
 	return ingroup;
 }
@@ -798,10 +897,18 @@ in6_purge_multi(struct ifnet *ifp)
 {
 	struct in6_multi *in6m, *next;
 
-	/* XXX NOMPSAFE */
+	rw_enter(&in6_multilock, RW_WRITER);
 	LIST_FOREACH_SAFE(in6m, &ifp->if_multiaddrs, in6m_entry, next) {
-		in6_delmulti(in6m);
+		/*
+		 * Normally multicast addresses are already purged at this
+		 * point. Remaining references aren't accessible via ifp,
+		 * so what we can do here is to prevent ifp from being
+		 * accessed via in6m by removing it from the list of ifp.
+		 */
+		mld_stoptimer(in6m);
+		LIST_REMOVE(in6m, in6m_entry);
 	}
+	rw_exit(&in6_multilock);
 }
 
 struct in6_multi_mship *
@@ -865,10 +972,13 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 	if (namelen != 1)
 		return EINVAL;
 
+	rw_enter(&in6_multilock, RW_READER);
+
 	bound = curlwp_bind();
 	ifp = if_get_byindex(name[0], &psref);
 	if (ifp == NULL) {
 		curlwp_bindx(bound);
+		rw_exit(&in6_multilock);
 		return ENODEV;
 	}
 
@@ -884,6 +994,7 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 		pserialize_read_exit(s);
 		if_put(ifp, &psref);
 		curlwp_bindx(bound);
+		rw_exit(&in6_multilock);
 		return 0;
 	}
 
@@ -938,6 +1049,7 @@ done:
 	ifa_release(ifa, &psref_ia);
 	if_put(ifp, &psref);
 	curlwp_bindx(bound);
+	rw_exit(&in6_multilock);
 	*oldlenp = written;
 	return error;
 }
