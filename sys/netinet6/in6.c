@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.240 2017/02/28 04:07:11 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.241 2017/03/01 03:02:35 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.240 2017/02/28 04:07:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.241 2017/03/01 03:02:35 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2655,7 +2655,13 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 
 	lltable_free(ext->lltable);
 	ext->lltable = NULL;
+#ifndef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
 	nd6_ifdetach(ifp, ext);
+#ifndef NET_MPSAFE
+	mutex_exit(softnet_lock);
+#endif
 	free(ext->in6_ifstat, M_IFADDR);
 	free(ext->icmp6_ifstat, M_IFADDR);
 	scope6_ifdetach(ext->scope6_id);
