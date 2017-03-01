@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.507 2017/03/01 10:44:47 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.508 2017/03/01 10:45:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.507 2017/03/01 10:44:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.508 2017/03/01 10:45:24 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -287,6 +287,10 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		goto out;
 	}
 
+	error = vfs_suspend(mp, 0);
+	if (error)
+		goto out;
+
 	mutex_enter(&mp->mnt_updating);
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
@@ -339,6 +343,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			vfs_syncer_remove_from_worklist(mp);
 	}
 	mutex_exit(&mp->mnt_updating);
+	vfs_resume(mp);
 	vfs_unbusy(mp, false, NULL);
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
