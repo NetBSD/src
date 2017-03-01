@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.31 2017/02/17 01:49:24 kamil Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.32 2017/03/01 00:19:22 kamil Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -214,6 +214,8 @@ typedef union siginfo {
 #define	TRAP_CHLD	4	/* Process child trap			*/
 #define	TRAP_LWP	5	/* Process lwp trap			*/
 #define	TRAP_DBREG	6	/* Process hardware debug register trap	*/
+#define	TRAP_SCE	7	/* Process syscall entry trap		*/
+#define	TRAP_SCX	8	/* Process syscall exit trap		*/
 
 /* SIGCHLD */
 #define	CLD_EXITED	1	/* Child has exited			*/
