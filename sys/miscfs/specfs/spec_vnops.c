@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.168 2017/01/02 10:33:28 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.169 2017/03/01 10:46:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.168 2017/01/02 10:33:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.169 2017/03/01 10:46:05 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1053,6 +1053,16 @@ spec_strategy(void *v)
 	bp->b_dev = dev;
 
 	if (!(bp->b_flags & B_READ)) {
+#ifdef DIAGNOSTIC
+		if (bp->b_vp && bp->b_vp->v_type == VBLK) {
+			struct mount *mp = spec_node_getmountedfs(bp->b_vp);
+
+			if (mp && (mp->mnt_flag & MNT_RDONLY)) {
+				printf("%s blk %"PRId64" written while ro!\n",
+				    mp->mnt_stat.f_mntonname, bp->b_blkno);
+			}
+		}
+#endif /* DIAGNOSTIC */
 		error = fscow_run(bp, false);
 		if (error)
 			goto out;
