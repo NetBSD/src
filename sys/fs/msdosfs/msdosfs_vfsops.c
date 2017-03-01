@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.123 2017/02/22 09:50:13 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.124 2017/03/01 10:41:28 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.123 2017/02/22 09:50:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.124 2017/03/01 10:41:28 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.123 2017/02/22 09:50:13 hannken
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/fstrans.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
@@ -1002,7 +1001,6 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 			/* update FATs here */
 		}
 	}
-	fstrans_start(mp, FSTRANS_SHARED);
 	/*
 	 * Write back each (modified) denode.
 	 */
@@ -1031,7 +1029,6 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 		allerror = error;
 	VOP_UNLOCK(pmp->pm_devvp);
-	fstrans_done(mp);
 	return (allerror);
 }
 
