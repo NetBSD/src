@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.63 2016/09/29 19:08:48 christos Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.64 2017/03/01 10:47:26 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.63 2016/09/29 19:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.64 2017/03/01 10:47:26 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,8 @@ genfs_getpages(void *v)
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
 	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
-	const bool need_wapbl = blockalloc && vp->v_mount->mnt_wapbl;
-	bool has_trans_wapbl = false;
+	bool holds_wapbl = false;
+	struct mount *trans_mount = NULL;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -291,20 +291,27 @@ startover:
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
 
-	if (!has_trans_wapbl) {
-		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+	if (trans_mount == NULL) {
+		trans_mount = vp->v_mount;
+		fstrans_start(trans_mount, FSTRANS_SHARED);
+		/*
+		 * check if this vnode is still valid.
+		 */
+		mutex_enter(vp->v_interlock);
+		error = vdead_check(vp, 0);
+		mutex_exit(vp->v_interlock);
+		if (error)
+			goto out_err_free;
 		/*
 		 * XXX: This assumes that we come here only via
 		 * the mmio path
 		 */
-		if (need_wapbl) {
-			error = WAPBL_BEGIN(vp->v_mount);
-			if (error) {
-				fstrans_done(vp->v_mount);
+		if (blockalloc && vp->v_mount->mnt_wapbl) {
+			error = WAPBL_BEGIN(trans_mount);
+			if (error)
 				goto out_err_free;
-			}
+			holds_wapbl = true;
 		}
-		has_trans_wapbl = true;
 	}
 
 	/*
@@ -491,10 +498,10 @@ out_err_free:
 	if (pgs != NULL && pgs != pgs_onstack)
 		kmem_free(pgs, pgs_size);
 out_err:
-	if (has_trans_wapbl) {
-		if (need_wapbl)
-			WAPBL_END(vp->v_mount);
-		fstrans_done(vp->v_mount);
+	if (trans_mount != NULL) {
+		if (holds_wapbl)
+			WAPBL_END(trans_mount);
+		fstrans_done(trans_mount);
 	}
 	return error;
 }
