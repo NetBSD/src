@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.347 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.348 2017/03/01 10:46:43 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.347 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.348 2017/03/01 10:46:43 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -564,7 +564,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 		ump = VFSTOUFS(mp);
 		fs = ump->um_fs;
-		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+		if (fs->fs_ronly == 0 && (mp->mnt_iflag & IMNT_WANTRDONLY)) {
 			/*
 			 * Changing from r/w to r/o
 			 */
@@ -599,7 +599,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		}
 #endif /* WAPBL */
 
-		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+		if (fs->fs_ronly == 0 && (mp->mnt_iflag & IMNT_WANTRDONLY)) {
 			/*
 			 * Finish change from r/w to r/o
 			 */
@@ -1455,7 +1455,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
