@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.506 2017/02/17 08:26:07 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.507 2017/03/01 10:44:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.506 2017/02/17 08:26:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.507 2017/03/01 10:44:47 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -295,12 +295,14 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	/*
 	 * Set the mount level flags.
 	 */
-	if (flags & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_iflag |= IMNT_WANTRDWR;
+	if ((flags & MNT_RDONLY) != (mp->mnt_flag & MNT_RDONLY)) {
+		if ((flags & MNT_RDONLY))
+			mp->mnt_iflag |= IMNT_WANTRDONLY;
+		else
+			mp->mnt_iflag |= IMNT_WANTRDWR;
+	}
 	mp->mnt_flag &= ~MNT_BASIC_FLAGS;
-	mp->mnt_flag |= flags & MNT_BASIC_FLAGS;
+	mp->mnt_flag |= (flags & ~MNT_RDONLY) & MNT_BASIC_FLAGS;
 	error = VFS_MOUNT(mp, path, data, data_len);
 
 	if (error && data != NULL) {
@@ -321,12 +323,14 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			error = error2;
 	}
 
-	if (mp->mnt_iflag & IMNT_WANTRDWR)
+	if (error == 0 && (mp->mnt_iflag & IMNT_WANTRDONLY))
+		mp->mnt_flag |= MNT_RDONLY;
+	else if (error == 0 && (mp->mnt_iflag & IMNT_WANTRDWR))
 		mp->mnt_flag &= ~MNT_RDONLY;
 	if (error)
 		mp->mnt_flag = saved_flags;
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
-	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+	mp->mnt_iflag &= ~(IMNT_WANTRDONLY | IMNT_WANTRDWR);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 		if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0)
 			vfs_syncer_add_to_worklist(mp);
