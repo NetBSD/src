@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.489 2017/02/28 09:55:47 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.490 2017/03/01 08:31:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.489 2017/02/28 09:55:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.490 2017/03/01 08:31:06 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -402,6 +402,8 @@ struct wm_queue {
 	int wmq_id;			/* index of transmit and receive queues */
 	int wmq_intr_idx;		/* index of MSI-X tables */
 
+	uint32_t wmq_itr;		/* interrupt interval per queue. */
+
 	struct wm_txqueue wmq_txq;
 	struct wm_rxqueue wmq_rxq;
 
@@ -503,7 +505,7 @@ struct wm_softc {
 	uint32_t sc_ctrl_ext;		/* prototype CTRL_EXT register */
 #endif
 	uint32_t sc_icr;		/* prototype interrupt bits */
-	uint32_t sc_itr;		/* prototype intr throttling reg */
+	uint32_t sc_itr_init;		/* prototype intr throttling reg */
 	uint32_t sc_tctl;		/* prototype TCTL register */
 	uint32_t sc_rctl;		/* prototype RCTL register */
 	uint32_t sc_txcw;		/* prototype TXCW register */
@@ -4886,7 +4888,7 @@ wm_init_locked(struct ifnet *ifp)
 		 * For N interrupts/sec, set this value to:
 		 * 1,000,000 / N in contrast to ITR throttoling value.
 		 */
-		sc->sc_itr = 450;
+		sc->sc_itr_init = 450;
 	} else if (sc->sc_type >= WM_T_82543) {
 		/*
 		 * Set up the interrupt throttling register (units of 256ns)
@@ -4906,7 +4908,7 @@ wm_init_locked(struct ifnet *ifp)
 		 * absolute and packet timer values to this value
 		 * divided by 4 to get "simple timer" behavior.
 		 */
-		sc->sc_itr = 1500;		/* 2604 ints/sec */
+		sc->sc_itr_init = 1500;		/* 2604 ints/sec */
 	}
 
 	error = wm_init_txrx_queues(sc);
@@ -5206,7 +5208,7 @@ wm_init_locked(struct ifnet *ifp)
 			int qidx;
 			for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 				struct wm_queue *wmq = &sc->sc_queue[qidx];
-				uint32_t eitr = __SHIFTIN(sc->sc_itr,
+				uint32_t eitr = __SHIFTIN(wmq->wmq_itr,
 				    EITR_ITR_INT_MASK);
 
 				/*
@@ -5214,7 +5216,7 @@ wm_init_locked(struct ifnet *ifp)
 				 * So, overwrite counter field by software.
 				 */
 				if (sc->sc_type == WM_T_82575) {
-					eitr |= __SHIFTIN(sc->sc_itr,
+					eitr |= __SHIFTIN(wmq->wmq_itr,
 					    EITR_COUNTER_MASK_82575);
 				} else {
 					eitr |= EITR_CNT_INGR;
@@ -5238,10 +5240,10 @@ wm_init_locked(struct ifnet *ifp)
 				struct wm_queue *wmq = &sc->sc_queue[qidx];
 				CSR_WRITE(sc,
 				    WMREG_EITR_82574(wmq->wmq_intr_idx),
-				    sc->sc_itr & EITR_ITR_INT_MASK_82574);
+				    wmq->wmq_itr & EITR_ITR_INT_MASK_82574);
 			}
 		} else
-			CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
+			CSR_WRITE(sc, WMREG_ITR, sc->sc_queue[0].wmq_itr);
 	}
 
 	/* Set the VLAN ethernetype. */
@@ -6096,11 +6098,11 @@ wm_init_tx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
-			/* ITR / 4 */
-			CSR_WRITE(sc, WMREG_TIDV, sc->sc_itr / 4);
+			/* XXX should update with AIM? */
+			CSR_WRITE(sc, WMREG_TIDV, wmq->wmq_itr / 4);
 			if (sc->sc_type >= WM_T_82540) {
 				/* should be same */
-				CSR_WRITE(sc, WMREG_TADV, sc->sc_itr / 4);
+				CSR_WRITE(sc, WMREG_TADV, wmq->wmq_itr / 4);
 			}
 
 			CSR_WRITE(sc, WMREG_TDT(qid), 0);
@@ -6194,10 +6196,10 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
 		} else {
 			CSR_WRITE(sc, WMREG_RDH(qid), 0);
 			CSR_WRITE(sc, WMREG_RDT(qid), 0);
-			/* ITR / 4 */
-			CSR_WRITE(sc, WMREG_RDTR, (sc->sc_itr / 4) | RDTR_FPD);
+			/* XXX should update with AIM? */
+			CSR_WRITE(sc, WMREG_RDTR, (wmq->wmq_itr / 4) | RDTR_FPD);
 			/* MUST be same */
-			CSR_WRITE(sc, WMREG_RADV, sc->sc_itr / 4);
+			CSR_WRITE(sc, WMREG_RADV, wmq->wmq_itr / 4);
 			CSR_WRITE(sc, WMREG_RXDCTL(qid), RXDCTL_PTHRESH(0) |
 			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
 		}
@@ -6279,6 +6281,8 @@ wm_init_txrx_queues(struct wm_softc *sc)
 		struct wm_queue *wmq = &sc->sc_queue[i];
 		struct wm_txqueue *txq = &wmq->wmq_txq;
 		struct wm_rxqueue *rxq = &wmq->wmq_rxq;
+
+		wmq->wmq_itr = sc->sc_itr_init;
 
 		mutex_enter(txq->txq_lock);
 		wm_init_tx_queue(sc, wmq, txq);
