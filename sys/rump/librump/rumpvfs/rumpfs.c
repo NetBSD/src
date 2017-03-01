@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.144 2017/02/17 08:31:26 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.145 2017/03/01 10:44:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.144 2017/02/17 08:31:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.145 2017/03/01 10:44:47 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -216,7 +216,6 @@ struct rumpfs_node {
 
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
-	bool rfsmp_rdonly;
 };
 
 #define INO_WHITEOUT 1
@@ -1806,7 +1805,6 @@ rumpfs_mountfs(struct mount *mp)
 	}
 
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
-	rfsmp->rfsmp_rdonly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	mp->mnt_data = rfsmp;
 	mp->mnt_stat.f_namemax = RUMPFS_MAXNAMLEN;
@@ -1822,14 +1820,13 @@ rumpfs_mountfs(struct mount *mp)
 int
 rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
-	struct rumpfs_mount *rfsmp = mp->mnt_data;
 	int error, flags;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		return 0;
 	}
 	if (mp->mnt_flag & MNT_UPDATE) {
-		if (!rfsmp->rfsmp_rdonly && (mp->mnt_flag & MNT_RDONLY)) {
+		if ((mp->mnt_iflag & IMNT_WANTRDONLY)) {
 			/* Changing from read/write to read-only. */
 			flags = WRITECLOSE;
 			if ((mp->mnt_flag & MNT_FORCE))
@@ -1837,11 +1834,6 @@ rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 			error = vflush(mp, NULL, flags);
 			if (error)
 				return error;
-			rfsmp->rfsmp_rdonly = true;
-		}
-		if (rfsmp->rfsmp_rdonly && (mp->mnt_flag & IMNT_WANTRDWR)) {
-			/* Changing from read-only to read/write. */
-			rfsmp->rfsmp_rdonly = false;
 		}
 		return 0;
 	}
@@ -1966,7 +1958,6 @@ int
 rumpfs_mountroot()
 {
 	struct mount *mp;
-	struct rumpfs_mount *rfsmp;
 	int error;
 
 	if ((error = vfs_rootmountalloc(MOUNT_RUMPFS, "rootdev", &mp)) != 0) {
@@ -1984,9 +1975,7 @@ rumpfs_mountroot()
 	if (error)
 		panic("set_statvfs_info failed for rootfs: %d", error);
 
-	rfsmp = mp->mnt_data;
 	mp->mnt_flag &= ~MNT_RDONLY;
-	rfsmp->rfsmp_rdonly = false;
 	vfs_unbusy(mp, false, NULL);
 
 	return 0;
