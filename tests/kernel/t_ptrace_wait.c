@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.75 2017/02/28 13:29:52 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.76 2017/03/01 08:05:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.75 2017/02/28 13:29:52 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.76 2017/03/01 08:05:15 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7419,6 +7419,10 @@ ATF_TC_BODY(syscall1, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
+	struct ptrace_siginfo info;
+	memset(&info, 0, sizeof(info));
+
+	atf_tc_expect_fail("PR kern/52012 PR kern/52018 PR kern/52019");
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -7450,6 +7454,12 @@ ATF_TC_BODY(syscall1, tc)
 
 	validate_status_stopped(status, SIGTRAP);
 
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
+
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
 	ATF_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
@@ -7458,6 +7468,13 @@ ATF_TC_BODY(syscall1, tc)
 	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
 
 	validate_status_stopped(status, SIGTRAP);
+
+	printf("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
+	ATF_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+
+	printf("Before checking siginfo_t\n");
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
