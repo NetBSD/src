@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.346 2017/02/22 09:50:13 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.347 2017/03/01 10:42:45 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.346 2017/02/22 09:50:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.347 2017/03/01 10:42:45 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.346 2017/02/22 09:50:13 hannken Exp
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 #include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -1832,7 +1831,6 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp)
 
 struct ffs_sync_ctx {
 	int waitfor;
-	bool is_suspending;
 };
 
 static bool
@@ -1869,9 +1867,6 @@ ffs_sync_selector(void *cl, struct vnode *vp)
 	    UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
 		return false;
 
-	if (vp->v_type == VBLK && c->is_suspending)
-		return false;
-
 	return true;
 }
 
@@ -1890,7 +1885,6 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	struct fs *fs;
 	struct vnode_iterator *marker;
 	int error, allerror = 0;
-	bool is_suspending;
 	struct ffs_sync_ctx ctx;
 
 	fs = ump->um_fs;
@@ -1898,15 +1892,12 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		panic("%s: rofs mod, fs=%s", __func__, fs->fs_fsmnt);
 	}
 
-	fstrans_start(mp, FSTRANS_SHARED);
-	is_suspending = (fstrans_getstate(mp) == FSTRANS_SUSPENDING);
 	/*
 	 * Write back each (modified) inode.
 	 */
 	vfs_vnode_iterator_init(mp, &marker);
 
 	ctx.waitfor = waitfor;
-	ctx.is_suspending = is_suspending;
 	while ((vp = vfs_vnode_iterator_next(marker, ffs_sync_selector, &ctx)))
 	{
 		error = vn_lock(vp,
@@ -1971,7 +1962,6 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	}
 #endif
 
-	fstrans_done(mp);
 	return (allerror);
 }
 

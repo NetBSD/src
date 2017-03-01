@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.51 2017/03/01 10:42:45 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.51 2017/03/01 10:42:45 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.50 2013/01/22 09:39:18 dholland Exp $
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
 #include <sys/trace.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -93,10 +92,8 @@ ufs_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	fstrans_start(ap->a_vp->v_mount, FSTRANS_SHARED);
 	error = ufs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
 	    ap->a_runp, ufs_issequential);
-	fstrans_done(ap->a_vp->v_mount);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.145 2017/02/17 08:30:00 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.146 2017/03/01 10:42:45 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.145 2017/02/17 08:30:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.146 2017/03/01 10:42:45 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2086,7 +2086,6 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	long size, xfersize, blkoffset;
 	int error;
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
 	if (ioflag & IO_ALTSEMANTICS)
@@ -2139,7 +2138,6 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 		brelse(bp, BC_AGE);
 
 	mutex_exit(&si->si_snaplock);
-	fstrans_done(vp->v_mount);
 	return error;
 }
 

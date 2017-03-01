@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.155 2017/03/01 10:42:45 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.155 2017/03/01 10:42:45 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/cprng.h>
-#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
