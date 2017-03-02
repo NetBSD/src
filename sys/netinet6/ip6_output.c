@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.187 2017/03/01 08:54:12 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.188 2017/03/02 01:05:02 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.187 2017/03/01 08:54:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.188 2017/03/02 01:05:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2574,12 +2574,12 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		/*
 		 * See if the membership already exists.
 		 */
-		for (imm = im6o->im6o_memberships.lh_first;
-		     imm != NULL; imm = imm->i6mm_chain.le_next)
+		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
 			if (imm->i6mm_maddr->in6m_ifp == ifp &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &ia))
 				break;
+		}
 		if (imm != NULL) {
 			error = EADDRINUSE;
 			break;
@@ -2660,8 +2660,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		/*
 		 * Find the membership in the membership list.
 		 */
-		for (imm = im6o->im6o_memberships.lh_first;
-		     imm != NULL; imm = imm->i6mm_chain.le_next) {
+		LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
 			if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &mreq.ipv6mr_multiaddr))
@@ -2691,7 +2690,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	if (im6o->im6o_multicast_if_index == 0 &&
 	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_multicast_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
-	    im6o->im6o_memberships.lh_first == NULL) {
+	    LIST_EMPTY(&im6o->im6o_memberships)) {
 		free(in6p->in6p_moptions, M_IPMOPTS);
 		in6p->in6p_moptions = NULL;
 	}
@@ -2750,12 +2749,12 @@ ip6_getmoptions(struct sockopt *sopt, struct in6pcb *in6p)
 void
 ip6_freemoptions(struct ip6_moptions *im6o)
 {
-	struct in6_multi_mship *imm;
+	struct in6_multi_mship *imm, *nimm;
 
 	if (im6o == NULL)
 		return;
 
-	while ((imm = im6o->im6o_memberships.lh_first) != NULL) {
+	LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships, i6mm_chain, nimm) {
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
