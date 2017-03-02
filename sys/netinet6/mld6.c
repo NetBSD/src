@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.85 2017/03/01 09:09:37 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.86 2017/03/02 05:27:39 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.85 2017/03/01 09:09:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.86 2017/03/02 05:27:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -788,9 +788,7 @@ out:
 static void
 in6m_destroy(struct in6_multi *in6m)
 {
-	struct	in6_ifaddr *ia;
 	struct sockaddr_in6 sin6;
-	int s;
 
 	KASSERT(rw_write_held(&in6_multilock));
 	KASSERT(in6m->in6m_refcount == 0);
@@ -810,15 +808,7 @@ in6m_destroy(struct in6_multi *in6m)
 	 * Delete all references of this multicasting group from
 	 * the membership arrays
 	 */
-	s = pserialize_read_enter();
-	IN6_ADDRLIST_READER_FOREACH(ia) {
-		struct in6_multi_mship *imm;
-		LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
-			if (imm->i6mm_maddr == in6m)
-				imm->i6mm_maddr = NULL;
-		}
-	}
-	pserialize_read_exit(s);
+	in6_purge_mcast_references(in6m);
 
 	/*
 	 * Notify the network driver to update its multicast
