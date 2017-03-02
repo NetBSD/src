@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.189 2017/03/02 05:24:23 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.190 2017/03/02 05:26:24 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.189 2017/03/02 05:24:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.190 2017/03/02 05:26:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2471,7 +2471,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	struct ip6_moptions *im6o = in6p->in6p_moptions;
 	struct in6_multi_mship *imm;
 
-	KASSERT(in6plocked(in6p));
+	KASSERT(in6p_locked(in6p));
 
 	if (im6o == NULL) {
 		/*
@@ -2772,6 +2772,7 @@ ip6_freemoptions(struct ip6_moptions *im6o)
 	if (im6o == NULL)
 		return;
 
+	/* The owner of im6o (in6p) should be protected by solock */
 	LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships, i6mm_chain, nimm) {
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
