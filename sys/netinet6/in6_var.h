@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.94 2017/03/01 08:54:12 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.95 2017/03/02 05:27:39 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -716,6 +716,7 @@ int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purgeprefix(struct ifnet *);
+void	in6_purge_mcast_references(struct in6_multi *);
 
 int	ip6flow_fastforward(struct mbuf **); /* IPv6 fast forward routine */
 
