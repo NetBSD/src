@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.24 2017/02/28 13:10:54 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.25 2017/03/02 14:25:41 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -29,6 +29,8 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - research ipkdb(4)
  - research kgdb(4)
  - check 64-bit debugger on 64-bit kernel tracing capabilities of 32-bit tracee
+ - GDB Remote Protocol expects a case with a step with a signal to be sent,
+   this is currently unsupported on NetBSD
 
 and of course: fix as many bugs as possible.
 
