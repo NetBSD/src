@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.72 2017/02/14 03:05:06 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.73 2017/03/02 05:24:23 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -404,8 +404,8 @@ int	in6_selectsrc(struct sockaddr_in6 *, struct ip6_pktopts *,
 	   struct ifnet **, struct psref *, struct in6_addr *);
 int in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	struct route **, struct rtentry **, bool);
-int	ip6_get_membership(const struct sockopt *, struct ifnet **, void *,
-	size_t);
+int	ip6_get_membership(const struct sockopt *, struct ifnet **,
+	    struct psref *, void *, size_t);
 
 u_int32_t ip6_randomid(void);
 u_int32_t ip6_randomflowlabel(void);
