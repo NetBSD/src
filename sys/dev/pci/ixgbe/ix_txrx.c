@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.21 2017/03/02 04:33:56 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.22 2017/03/02 05:35:01 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -162,17 +162,6 @@ ixgbe_start_locked(struct tx_ring *txr, struct ifnet * ifp)
 			break;
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
-		if (rc == EFBIG) {
-			struct mbuf *mtmp;
-
-			if ((mtmp = m_defrag(m_head, M_NOWAIT)) != NULL) {
-				m_head = mtmp;
-				rc = ixgbe_xmit(txr, m_head);
-				if (rc != 0)
-					adapter->efbig2_tx_dma_setup.ev_count++;
-			} else
-				adapter->mbuf_defrag_failed.ev_count++;
-		}
 		if (rc != 0) {
 			m_freem(m_head);
 			continue;
@@ -348,6 +337,7 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	u32		olinfo_status = 0, cmd_type_len;
 	int             i, j, error;
 	int		first;
+	bool		remap = TRUE;
 	bus_dmamap_t	map;
 	struct ixgbe_tx_buf *txbuf;
 	union ixgbe_adv_tx_desc *txd = NULL;
@@ -371,10 +361,12 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 	/*
 	 * Map the packet for DMA.
 	 */
+retry:
 	error = bus_dmamap_load_mbuf(txr->txtag->dt_dmat, map,
 	    m_head, BUS_DMA_NOWAIT);
 
 	if (__predict_false(error)) {
+		struct mbuf *m;
 
 		switch (error) {
 		case EAGAIN:
@@ -384,12 +376,25 @@ ixgbe_xmit(struct tx_ring *txr, struct mbuf *m_head)
 			adapter->enomem_tx_dma_setup.ev_count++;
 			return EAGAIN;
 		case EFBIG:
-			/*
-			 * XXX Try it again?
-			 * do m_defrag() and retry bus_dmamap_load_mbuf().
-			 */
-			adapter->efbig_tx_dma_setup.ev_count++;
-			return error;
+			/* Try it again? - one try */
+			if (remap == TRUE) {
+				remap = FALSE;
+				/*
+				 * XXX: m_defrag will choke on
+				 * non-MCLBYTES-sized clusters
+				 */
+				adapter->efbig_tx_dma_setup.ev_count++;
+				m = m_defrag(m_head, M_NOWAIT);
+				if (m == NULL) {
+					adapter->mbuf_defrag_failed.ev_count++;
+					return ENOBUFS;
+				}
+				m_head = m;
+				goto retry;
+			} else {
+				adapter->efbig2_tx_dma_setup.ev_count++;
+				return error;
+			}
 		case EINVAL:
 			adapter->einval_tx_dma_setup.ev_count++;
 			return error;
