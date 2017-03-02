@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ix_txrx.c 301538 2016-06-07 04:51:50Z sephe $*/
-/*$NetBSD: ix_txrx.c,v 1.20 2017/02/13 10:13:54 msaitoh Exp $*/
+/*$NetBSD: ix_txrx.c,v 1.21 2017/03/02 04:33:56 msaitoh Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -745,10 +745,9 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	if (mp->m_pkthdr.csum_flags & (M_CSUM_TSOv4|M_CSUM_TSOv6)) {
 		int rv = ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status);
 
-		if (rv != 0) {
+		if (rv != 0)
 			++adapter->tso_err.ev_count;
-			return rv;
-		}
+		return rv;
 	}
 
 	if ((mp->m_pkthdr.csum_flags & M_CSUM_OFFLOAD) == 0)
