@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.272 2017/02/22 07:05:04 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.273 2017/03/02 05:24:23 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.272 2017/02/22 07:05:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.273 2017/03/02 05:24:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1444,6 +1444,7 @@ bad:
 
 /*
  * following RFC1724 section 3.3, 0.0.0.0/8 is interpreted as interface index.
+ * Must be called in a pserialize critical section.
  */
 static struct ifnet *
 ip_multicast_if(struct in_addr *a, int *ifindexp)
@@ -1462,10 +1463,12 @@ ip_multicast_if(struct in_addr *a, int *ifindexp)
 		if (ifindexp)
 			*ifindexp = ifindex;
 	} else {
-		LIST_FOREACH(ia, &IN_IFADDR_HASH(a->s_addr), ia_hash) {
+		IN_ADDRHASH_READER_FOREACH(ia, a->s_addr) {
 			if (in_hosteq(ia->ia_addr.sin_addr, *a) &&
 			    (ia->ia_ifp->if_flags & IFF_MULTICAST) != 0) {
 				ifp = ia->ia_ifp;
+				if (if_is_deactivated(ifp))
+					ifp = NULL;
 				break;
 			}
 		}
@@ -1509,7 +1512,7 @@ ip_getoptval(const struct sockopt *sopt, u_int8_t *val, u_int maxval)
 
 static int
 ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
-    struct in_addr *ia, bool add)
+    struct psref *psref, struct in_addr *ia, bool add)
 {
 	int error;
 	struct ip_mreq mreq;
@@ -1546,12 +1549,28 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 		if (error != 0)
 			return error;
 		*ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp : NULL;
+		if (*ifp != NULL) {
+			if (if_is_deactivated(*ifp))
+				*ifp = NULL;
+			else
+				if_acquire(*ifp, psref);
+		}
 		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
+		int s = pserialize_read_enter();
 		*ifp = ip_multicast_if(&mreq.imr_interface, NULL);
-		if (!add && *ifp == NULL)
+		if (!add && *ifp == NULL) {
+			pserialize_read_exit(s);
 			return EADDRNOTAVAIL;
+		}
+		if (*ifp != NULL) {
+			if (if_is_deactivated(*ifp))
+				*ifp = NULL;
+			else
+				if_acquire(*ifp, psref);
+		}
+		pserialize_read_exit(s);
 	}
 	return 0;
 }
@@ -1565,26 +1584,31 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 {
 	struct ifnet *ifp = NULL;	// XXX: gcc [ppc]
 	struct in_addr ia;
-	int i, error;
+	int i, error, bound;
+	struct psref psref;
 
+	bound = curlwp_bind();
 	if (sopt->sopt_size == sizeof(struct ip_mreq))
-		error = ip_get_membership(sopt, &ifp, &ia, true);
+		error = ip_get_membership(sopt, &ifp, &psref, &ia, true);
 	else
 #ifdef INET6
-		error = ip6_get_membership(sopt, &ifp, &ia, sizeof(ia));
+		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
-		return EINVAL;	
+		error = EINVAL;
+		goto out;
 #endif
 
 	if (error)
-		return error;
+		goto out;
 
 	/*
 	 * See if we found an interface, and confirm that it
 	 * supports multicast.
 	 */
-	if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0)
-		return EADDRNOTAVAIL;
+	if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
+		error = EADDRNOTAVAIL;
+		goto out;
+	}
 
 	/*
 	 * See if the membership already exists or if all the
@@ -1595,21 +1619,31 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 		    in_hosteq(imo->imo_membership[i]->inm_addr, ia))
 			break;
 	}
-	if (i < imo->imo_num_memberships)
-		return EADDRINUSE;
+	if (i < imo->imo_num_memberships) {
+		error = EADDRINUSE;
+		goto out;
+	}
 
-	if (i == IP_MAX_MEMBERSHIPS)
-		return ETOOMANYREFS;
+	if (i == IP_MAX_MEMBERSHIPS) {
+		error = ETOOMANYREFS;
+		goto out;
+	}
 
 	/*
 	 * Everything looks good; add a new record to the multicast
 	 * address list for the given interface.
 	 */
-	if ((imo->imo_membership[i] = in_addmulti(&ia, ifp)) == NULL)
-		return ENOBUFS;
+	if ((imo->imo_membership[i] = in_addmulti(&ia, ifp)) == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
 
 	++imo->imo_num_memberships;
-	return 0;
+	error = 0;
+out:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
+	return error;
 }
 
 /*
@@ -1621,19 +1655,24 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 {
 	struct in_addr ia = { .s_addr = 0 };	// XXX: gcc [ppc]
 	struct ifnet *ifp = NULL;		// XXX: gcc [ppc]
-	int i, error;
+	int i, error, bound;
+	struct psref psref;
 
+	/* imo is protected by solock or referenced only by the caller */
+
+	bound = curlwp_bind();
 	if (sopt->sopt_size == sizeof(struct ip_mreq))
-		error = ip_get_membership(sopt, &ifp, &ia, false);
+		error = ip_get_membership(sopt, &ifp, &psref, &ia, false);
 	else
 #ifdef INET6
-		error = ip6_get_membership(sopt, &ifp, &ia, sizeof(ia));
+		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
 #else
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 #endif
 
 	if (error)
-		return error;
+		goto out;
 
 	/*
 	 * Find the membership in the membership array.
@@ -1644,8 +1683,10 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 		    in_hosteq(imo->imo_membership[i]->inm_addr, ia))
 			break;
 	}
-	if (i == imo->imo_num_memberships)
-		return EADDRNOTAVAIL;
+	if (i == imo->imo_num_memberships) {
+		error = EADDRNOTAVAIL;
+		goto out;
+	}
 
 	/*
 	 * Give up the multicast address record to which the
@@ -1659,7 +1700,11 @@ ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	for (++i; i < imo->imo_num_memberships; ++i)
 		imo->imo_membership[i-1] = imo->imo_membership[i];
 	--imo->imo_num_memberships;
-	return 0;
+	error = 0;
+out:
+	curlwp_bindx(bound);
+	if_put(ifp, &psref);
+	return error;
 }
 
 /*
@@ -1691,7 +1736,8 @@ ip_setmoptions(struct ip_moptions **pimo, const struct sockopt *sopt)
 	}
 
 	switch (sopt->sopt_name) {
-	case IP_MULTICAST_IF:
+	case IP_MULTICAST_IF: {
+		int s;
 		/*
 		 * Select the interface for outgoing multicast packets.
 		 */
@@ -1713,17 +1759,21 @@ ip_setmoptions(struct ip_moptions **pimo, const struct sockopt *sopt)
 		 * IP address.  Find the interface and confirm that
 		 * it supports multicasting.
 		 */
+		s = pserialize_read_enter();
 		ifp = ip_multicast_if(&addr, &ifindex);
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
+			pserialize_read_exit(s);
 			error = EADDRNOTAVAIL;
 			break;
 		}
 		imo->imo_multicast_if_index = ifp->if_index;
+		pserialize_read_exit(s);
 		if (ifindex)
 			imo->imo_multicast_addr = addr;
 		else
 			imo->imo_multicast_addr.s_addr = INADDR_ANY;
 		break;
+	    }
 
 	case IP_MULTICAST_TTL:
 		/*
