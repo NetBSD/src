@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.158 2017/03/02 01:05:02 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.159 2017/03/02 05:26:24 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.158 2017/03/02 01:05:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.159 2017/03/02 05:26:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -844,9 +844,15 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
+		bool need_unlock = false;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 
+		/* The caller holds either one of in6ps' lock */
+		if (!in6p_locked(in6p)) {
+			in6p_lock(in6p);
+			need_unlock = true;
+		}
 		im6o = in6p->in6p_moptions;
 		if (im6o) {
 			/*
@@ -871,6 +877,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			}
 		}
 		in_purgeifmcast(in6p->in6p_v4moptions, ifp);
+		if (need_unlock)
+			in6p_unlock(in6p);
 	}
 }
 
