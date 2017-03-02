@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.242 2017/03/02 05:27:39 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.243 2017/03/02 09:16:46 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.242 2017/03/02 05:27:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.243 2017/03/02 09:16:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -779,8 +779,30 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 }
 
 static int
+in6_get_llsol_addr(struct in6_addr *llsol, struct ifnet *ifp,
+    struct in6_addr *ip6)
+{
+	int error;
+
+	memset(llsol, 0, sizeof(struct in6_addr));
+	llsol->s6_addr16[0] = htons(0xff02);
+	llsol->s6_addr32[1] = 0;
+	llsol->s6_addr32[2] = htonl(1);
+	llsol->s6_addr32[3] = ip6->s6_addr32[3];
+	llsol->s6_addr8[12] = 0xff;
+
+	error = in6_setscope(llsol, ifp, NULL);
+	if (error != 0) {
+		/* XXX: should not happen */
+		log(LOG_ERR, "%s: in6_setscope failed\n", __func__);
+	}
+
+	return error;
+}
+
+static int
 in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
-    struct ifnet *ifp, struct in6_multi **in6m_sol, int flags)
+    struct ifnet *ifp, int flags)
 {
 	int error;
 	struct sockaddr_in6 mltaddr, mltmask;
@@ -790,20 +812,10 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 	int dad_delay;
 	char ip6buf[INET6_ADDRSTRLEN];
 
-	KASSERT(in6m_sol != NULL);
-
 	/* join solicited multicast addr for new host id */
-	memset(&llsol, 0, sizeof(struct in6_addr));
-	llsol.s6_addr16[0] = htons(0xff02);
-	llsol.s6_addr32[1] = 0;
-	llsol.s6_addr32[2] = htonl(1);
-	llsol.s6_addr32[3] = ifra->ifra_addr.sin6_addr.s6_addr32[3];
-	llsol.s6_addr8[12] = 0xff;
-	if ((error = in6_setscope(&llsol, ifp, NULL)) != 0) {
-		/* XXX: should not happen */
-		log(LOG_ERR, "%s: in6_setscope failed\n", __func__);
+	error = in6_get_llsol_addr(&llsol, ifp, &ifra->ifra_addr.sin6_addr);
+	if (error != 0)
 		goto out;
-	}
 	dad_delay = 0;
 	if ((flags & IN6_IFAUPDATE_DADDELAY)) {
 		/*
@@ -828,7 +840,6 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 	mutex_enter(&in6_ifaddr_lock);
 	LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 	mutex_exit(&in6_ifaddr_lock);
-	*in6m_sol = imm->i6mm_maddr;
 
 	sockaddr_in6_init(&mltmask, &in6mask32, 0, 0, 0);
 
@@ -997,7 +1008,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	int error = 0, hostIsNew = 0, plen = -1;
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
-	struct in6_multi *in6m_sol = NULL;
 	int dad_delay, was_tentative;
 	struct in6_ifaddr *ia = iap ? *iap : NULL;
 	char ip6buf[INET6_ADDRSTRLEN];
@@ -1283,7 +1293,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 	/* join necessary multicast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
-		error = in6_join_mcastgroups(ifra, ia, ifp, &in6m_sol, flags);
+		error = in6_join_mcastgroups(ifra, ia, ifp, flags);
 		if (error != 0)
 			goto cleanup;
 	}
@@ -1306,6 +1316,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 		dad_delay = 0;
 		if ((flags & IN6_IFAUPDATE_DADDELAY)) {
+			struct in6_addr llsol;
+			struct in6_multi *in6m_sol = NULL;
 			/*
 			 * We need to impose a delay before sending an NS
 			 * for DAD.  Check if we also needed a delay for the
@@ -1315,10 +1327,16 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			 * safe).
 			 */
 			mindelay = 0;
+			error = in6_get_llsol_addr(&llsol, ifp,
+			    &ifra->ifra_addr.sin6_addr);
+			in6_multi_lock(RW_READER);
+			if (error == 0)
+				in6m_sol = in6_lookup_multi(&llsol, ifp);
 			if (in6m_sol != NULL &&
 			    in6m_sol->in6m_state == MLD_REPORTPENDING) {
 				mindelay = in6m_sol->in6m_timer;
 			}
+			in6_multi_unlock();
 			maxdelay = MAX_RTR_SOLICITATION_DELAY * hz;
 			if (maxdelay - mindelay == 0)
 				dad_delay = 0;
