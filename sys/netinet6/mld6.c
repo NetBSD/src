@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.86 2017/03/02 05:27:39 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.87 2017/03/02 09:16:46 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.86 2017/03/02 05:27:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.87 2017/03/02 09:16:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -898,6 +898,20 @@ in6_purge_multi(struct ifnet *ifp)
 		mld_stoptimer(in6m);
 		LIST_REMOVE(in6m, in6m_entry);
 	}
+	rw_exit(&in6_multilock);
+}
+
+void
+in6_multi_lock(int op)
+{
+
+	rw_enter(&in6_multilock, op);
+}
+
+void
+in6_multi_unlock(void)
+{
+
 	rw_exit(&in6_multilock);
 }
 
