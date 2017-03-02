@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.243 2017/03/02 09:16:46 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.244 2017/03/02 09:48:20 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.243 2017/03/02 09:16:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.244 2017/03/02 09:48:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1462,10 +1462,11 @@ in6_purge_mcast_references(struct in6_multi *in6m)
 {
 	struct	in6_ifaddr *ia;
 
+	KASSERT(in6_multi_locked(RW_WRITER));
+
 	mutex_enter(&in6_ifaddr_lock);
 	IN6_ADDRLIST_WRITER_FOREACH(ia) {
 		struct in6_multi_mship *imm;
-		/* XXX imm isn't safe? */
 		LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
 			if (imm->i6mm_maddr == in6m)
 				imm->i6mm_maddr = NULL;
