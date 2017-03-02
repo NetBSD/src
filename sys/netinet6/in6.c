@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.241 2017/03/01 03:02:35 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.242 2017/03/02 05:27:39 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.241 2017/03/01 03:02:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.242 2017/03/02 05:27:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -825,7 +825,9 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 		    IN6_PRINT(ip6buf, &llsol), if_name(ifp), error);
 		goto out;
 	}
+	mutex_enter(&in6_ifaddr_lock);
 	LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+	mutex_exit(&in6_ifaddr_lock);
 	*in6m_sol = imm->i6mm_maddr;
 
 	sockaddr_in6_init(&mltmask, &in6mask32, 0, 0, 0);
@@ -887,7 +889,9 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 		    if_name(ifp), error);
 		goto out;
 	}
+	mutex_enter(&in6_ifaddr_lock);
 	LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+	mutex_exit(&in6_ifaddr_lock);
 
 	/*
 	 * join node information group address
@@ -910,7 +914,9 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 		    if_name(ifp), error);
 		/* XXX not very fatal, go on... */
 	} else {
+		mutex_enter(&in6_ifaddr_lock);
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+		mutex_exit(&in6_ifaddr_lock);
 	}
 
 
@@ -967,7 +973,9 @@ in6_join_mcastgroups(struct in6_aliasreq *ifra, struct in6_ifaddr *ia,
 		    if_name(ifp), error);
 		goto out;
 	} else {
+		mutex_enter(&in6_ifaddr_lock);
 		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
+		mutex_exit(&in6_ifaddr_lock);
 	}
 	return 0;
 
@@ -1372,10 +1380,14 @@ in6_purgeaddr(struct ifaddr *ifa)
 	/*
 	 * leave from multicast groups we have joined for the interface
 	 */
+	mutex_enter(&in6_ifaddr_lock);
 	while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
+		mutex_exit(&in6_ifaddr_lock);
 		in6_leavegroup(imm);
+		mutex_enter(&in6_ifaddr_lock);
 	}
+	mutex_exit(&in6_ifaddr_lock);
 
 	in6_unlink_ifa(ia, ifp);
 }
@@ -1425,6 +1437,23 @@ in6_purgeif(struct ifnet *ifp)
 {
 
 	in6_ifdetach(ifp);
+}
+
+void
+in6_purge_mcast_references(struct in6_multi *in6m)
+{
+	struct	in6_ifaddr *ia;
+
+	mutex_enter(&in6_ifaddr_lock);
+	IN6_ADDRLIST_WRITER_FOREACH(ia) {
+		struct in6_multi_mship *imm;
+		/* XXX imm isn't safe? */
+		LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
+			if (imm->i6mm_maddr == in6m)
+				imm->i6mm_maddr = NULL;
+		}
+	}
+	mutex_exit(&in6_ifaddr_lock);
 }
 
 /*
