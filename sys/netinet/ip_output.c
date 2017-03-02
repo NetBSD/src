@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.273 2017/03/02 05:24:23 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.274 2017/03/02 05:29:31 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.273 2017/03/02 05:24:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.274 2017/03/02 05:29:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1337,7 +1337,7 @@ ip_pcbopts(struct inpcb *inp, const struct sockopt *sopt)
 	u_char *dp;
 	int cnt;
 
-	KASSERT(inplocked(inp));
+	KASSERT(inp_locked(inp));
 
 	/* Turn off any old options. */
 	if (inp->inp_options) {
@@ -1587,6 +1587,8 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 	int i, error, bound;
 	struct psref psref;
 
+	/* imo is protected by solock or referenced only by the caller */
+
 	bound = curlwp_bind();
 	if (sopt->sopt_size == sizeof(struct ip_mreq))
 		error = ip_get_membership(sopt, &ifp, &psref, &ia, true);
@@ -1717,6 +1719,8 @@ ip_setmoptions(struct ip_moptions **pimo, const struct sockopt *sopt)
 	struct in_addr addr;
 	struct ifnet *ifp;
 	int ifindex, error = 0;
+
+	/* The passed imo isn't NULL, it should be protected by solock */
 
 	if (!imo) {
 		/*
@@ -1879,6 +1883,8 @@ void
 ip_freemoptions(struct ip_moptions *imo)
 {
 	int i;
+
+	/* The owner of imo (inp) should be protected by solock */
 
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
