@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.157 2017/02/13 04:05:58 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.158 2017/03/02 01:05:02 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.157 2017/02/13 04:05:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.158 2017/03/02 01:05:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -862,9 +862,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			 * XXX controversial - is it really legal for kernel
 			 * to force this?
 			 */
-			for (imm = im6o->im6o_memberships.lh_first;
-			     imm != NULL; imm = nimm) {
-				nimm = imm->i6mm_chain.le_next;
+			LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships,
+			    i6mm_chain, nimm) {
 				if (imm->i6mm_maddr->in6m_ifp == ifp) {
 					LIST_REMOVE(imm, i6mm_chain);
 					in6_leavegroup(imm);
