@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.188 2017/03/02 01:05:02 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.189 2017/03/02 05:24:23 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.188 2017/03/02 01:05:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.189 2017/03/02 05:24:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2380,13 +2380,14 @@ ip6_freepcbopts(struct ip6_pktopts *pktopt)
 }
 
 int
-ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
-    size_t l)
+ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
+    struct psref *psref, void *v, size_t l)
 {
 	struct ipv6_mreq mreq;
 	int error;
 	struct in6_addr *ia = &mreq.ipv6mr_multiaddr;
 	struct in_addr *ia4 = (void *)&ia->s6_addr32[3];
+
 	error = sockopt_get(sopt, &mreq, sizeof(mreq));
 	if (error != 0)
 		return error;
@@ -2437,15 +2438,16 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp, void *v,
 		if (error != 0)
 			return error;
 		rt = rtcache_init(&ro);
-		*ifp = rt != NULL ? rt->rt_ifp : NULL;
-		/* FIXME *ifp is NOMPSAFE */
+		*ifp = rt != NULL ?
+		    if_get_byindex(rt->rt_ifp->if_index, psref) : NULL;
 		rtcache_unref(rt, &ro);
 		rtcache_free(&ro);
 	} else {
 		/*
 		 * If the interface is specified, validate it.
 		 */
-		if ((*ifp = if_byindex(mreq.ipv6mr_interface)) == NULL)
+		*ifp = if_get_byindex(mreq.ipv6mr_interface, psref);
+		if (*ifp == NULL)
 			return ENXIO;	/* XXX EINVAL? */
 	}
 	if (sizeof(*ia) == l)
@@ -2488,7 +2490,8 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 
 	switch (sopt->sopt_name) {
 
-	case IPV6_MULTICAST_IF:
+	case IPV6_MULTICAST_IF: {
+		int s;
 		/*
 		 * Select the interface for outgoing multicast packets.
 		 */
@@ -2496,19 +2499,24 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		if (error != 0)
 			break;
 
+		s = pserialize_read_enter();
 		if (ifindex != 0) {
 			if ((ifp = if_byindex(ifindex)) == NULL) {
+				pserialize_read_exit(s);
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
 			if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+				pserialize_read_exit(s);
 				error = EADDRNOTAVAIL;
 				break;
 			}
 		} else
 			ifp = NULL;
 		im6o->im6o_multicast_if_index = if_get_index(ifp);
+		pserialize_read_exit(s);
 		break;
+	    }
 
 	case IPV6_MULTICAST_HOPS:
 	    {
@@ -2545,17 +2553,23 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		im6o->im6o_multicast_loop = loop;
 		break;
 
-	case IPV6_JOIN_GROUP:
+	case IPV6_JOIN_GROUP: {
+		int bound;
+		struct psref psref;
 		/*
 		 * Add a multicast group membership.
 		 * Group must be a valid IP6 multicast address.
 		 */
-		if ((error = ip6_get_membership(sopt, &ifp, &ia, sizeof(ia))))
+		bound = curlwp_bind();
+		error = ip6_get_membership(sopt, &ifp, &psref, &ia, sizeof(ia));
+		if (error != 0) {
+			curlwp_bindx(bound);
 			return error;
+		}
 
 		if (IN6_IS_ADDR_V4MAPPED(&ia)) {
 			error = ip_setmoptions(&in6p->in6p_v4moptions, sopt);
-			break;
+			goto put_break;
 		}
 		/*
 		 * See if we found an interface, and confirm that it
@@ -2563,12 +2577,12 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 */
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
-			break;
+			goto put_break;
 		}
 
 		if (in6_setscope(&ia, ifp, NULL)) {
 			error = EADDRNOTAVAIL; /* XXX: should not happen */
-			break;
+			goto put_break;
 		}
 
 		/*
@@ -2578,11 +2592,11 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 			if (imm->i6mm_maddr->in6m_ifp == ifp &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
 			    &ia))
-				break;
+				goto put_break;
 		}
 		if (imm != NULL) {
 			error = EADDRINUSE;
-			break;
+			goto put_break;
 		}
 		/*
 		 * Everything looks good; add a new record to the multicast
@@ -2590,9 +2604,13 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		 */
 		imm = in6_joingroup(ifp, &ia, &error, 0);
 		if (imm == NULL)
-			break;
+			goto put_break;
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
+	    put_break:
+		if_put(ifp, &psref);
+		curlwp_bindx(bound);
 		break;
+	    }
 
 	case IPV6_LEAVE_GROUP:
 		/*
