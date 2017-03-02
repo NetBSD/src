@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.175 2017/02/13 04:05:58 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.176 2017/03/02 05:29:31 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.175 2017/02/13 04:05:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.176 2017/03/02 05:29:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -722,6 +722,7 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 {
 	int i, gap;
 
+	/* The owner of imo should be protected by solock */
 	KASSERT(ifp != NULL);
 
 	if (imo == NULL)
@@ -755,9 +756,21 @@ in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct inpcb *inp = (struct inpcb *)inph;
+		bool need_unlock = false;
+
 		if (inp->inp_af != AF_INET)
 			continue;
+
+		/* The caller holds either one of inps' lock */
+		if (!inp_locked(inp)) {
+			inp_lock(inp);
+			need_unlock = true;
+		}
+
 		in_purgeifmcast(inp->inp_moptions, ifp);
+
+		if (need_unlock)
+			inp_unlock(inp);
 	}
 }
 
