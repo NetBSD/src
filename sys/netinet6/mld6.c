@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.87 2017/03/02 09:16:46 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.88 2017/03/02 09:48:20 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.87 2017/03/02 09:16:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.88 2017/03/02 09:48:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -915,6 +915,20 @@ in6_multi_unlock(void)
 	rw_exit(&in6_multilock);
 }
 
+bool
+in6_multi_locked(int op)
+{
+
+	switch (op) {
+	case RW_READER:
+		return rw_read_held(&in6_multilock);
+	case RW_WRITER:
+		return rw_write_held(&in6_multilock);
+	default:
+		return rw_lock_held(&in6_multilock);
+	}
+}
+
 struct in6_multi_mship *
 in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, 
 	int *errorp, int timer)
@@ -939,9 +953,13 @@ in6_joingroup(struct ifnet *ifp, struct in6_addr *addr,
 int
 in6_leavegroup(struct in6_multi_mship *imm)
 {
+	struct in6_multi *in6m;
 
-	if (imm->i6mm_maddr) {
-		in6_delmulti(imm->i6mm_maddr);
+	rw_enter(&in6_multilock, RW_READER);
+	in6m = imm->i6mm_maddr;
+	rw_exit(&in6_multilock);
+	if (in6m != NULL) {
+		in6_delmulti(in6m);
 	}
 	free(imm, M_IPMADDR);
 	return 0;
