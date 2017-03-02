@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.197 2017/01/23 10:19:03 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.198 2017/03/02 05:31:04 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.197 2017/01/23 10:19:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.198 2017/03/02 05:31:04 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -802,10 +802,12 @@ in_scrubaddr(struct in_ifaddr *ia)
 	in_scrubprefix(ia);
 	in_ifremlocal(&ia->ia_ifa);
 
+	mutex_enter(&in_ifaddr_lock);
 	if (ia->ia_allhosts != NULL) {
 		in_delmulti(ia->ia_allhosts);
 		ia->ia_allhosts = NULL;
 	}
+	mutex_exit(&in_ifaddr_lock);
 }
 
 /*
@@ -1209,12 +1211,14 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
+	mutex_enter(&in_ifaddr_lock);
 	if ((ifp->if_flags & IFF_MULTICAST) != 0 && ia->ia_allhosts == NULL) {
 		struct in_addr addr;
 
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
+	mutex_exit(&in_ifaddr_lock);
 
 	if (hostIsNew &&
 	    ia->ia4_flags & IN_IFF_TENTATIVE &&
