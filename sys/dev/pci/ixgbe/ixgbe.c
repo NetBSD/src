@@ -59,10 +59,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.79 2017/02/24 05:38:30 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.80 2017/03/03 04:37:05 msaitoh Exp $*/
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
+#include "opt_net_mpsafe.h"
+#endif
 
 #include "ixgbe.h"
 #include "vlan.h"
@@ -391,6 +394,15 @@ static int fdir_pballoc = 1;
 #include <dev/netmap/ixgbe_netmap.h>
 #endif /* DEV_NETMAP */
 
+#ifdef NET_MPSAFE
+#define IXGBE_MPSAFE		1
+#define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
+#define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#else
+#define IXGBE_CALLOUT_FLAGS	0
+#define IXGBE_SOFTINFT_FLAGS	0
+#endif
+
 /*********************************************************************
  *  Device identification routine
  *
@@ -489,7 +501,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
 	/* Set up the timer callout */
-	callout_init(&adapter->timer, 0);
+	callout_init(&adapter->timer, IXGBE_CALLOUT_FLAGS);
 
 	/* Determine hardware revision */
 	ixgbe_identify_hardware(adapter);
@@ -2615,24 +2627,26 @@ alloc_retry:
 	 * processing contexts.
 	 */
 #ifndef IXGBE_LEGACY_TX
-	txr->txr_si = softint_establish(SOFTINT_NET, ixgbe_deferred_mq_start,
-	    txr);
+	txr->txr_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_deferred_mq_start, txr);
 #endif
-	que->que_si = softint_establish(SOFTINT_NET, ixgbe_handle_que, que);
+	que->que_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_que, que);
 
 	/* Tasklets for Link, SFP and Multispeed Fiber */
-	adapter->link_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_link, adapter);
-	adapter->mod_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_mod, adapter);
-	adapter->msf_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_msf, adapter);
-	adapter->phy_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_phy, adapter);
+	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_link, adapter);
+	adapter->mod_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_mod, adapter);
+	adapter->msf_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_msf, adapter);
+	adapter->phy_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_phy, adapter);
 
 #ifdef IXGBE_FDIR
 	adapter->fdir_si =
-	    softint_establish(SOFTINT_NET, ixgbe_reinit_fdir, adapter);
+	    softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		ixgbe_reinit_fdir, adapter);
 #endif
 	if (que->que_si == NULL ||
 	    adapter->link_si == NULL ||
@@ -2712,8 +2726,8 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
-#ifdef IXG_MPSAFE
-		pci_intr_setattr(pc, adapter->osdep.intrs[i], PCI_INTR_MPSAFE,
+#ifdef IXGBE_MPSAFE
+		pci_intr_setattr(pc, &adapter->osdep.intrs[i], PCI_INTR_MPSAFE,
 		    true);
 #endif
 		/* Set the handler function */
@@ -2770,11 +2784,13 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		}
 		aprint_normal("\n");
 #ifndef IXGBE_LEGACY_TX
-		txr->txr_si = softint_establish(SOFTINT_NET,
+		txr->txr_si
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
 		    ixgbe_deferred_mq_start, txr);
 #endif
-		que->que_si = softint_establish(SOFTINT_NET, ixgbe_handle_que,
-		    que);
+		que->que_si
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+			ixgbe_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
 			    "could not establish software interrupt\n"); 
@@ -2786,7 +2802,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
-#ifdef IXG_MPSAFE
+#ifdef IXGBE_MPSAFE
 	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE,
 	    true);
 #endif
@@ -2814,20 +2830,20 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	adapter->vector = vector;
 	/* Tasklets for Link, SFP and Multispeed Fiber */
-	adapter->link_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_link, adapter);
-	adapter->mod_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_mod, adapter);
-	adapter->msf_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_msf, adapter);
+	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_link, adapter);
+	adapter->mod_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_mod, adapter);
+	adapter->msf_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+	    ixgbe_handle_msf, adapter);
 #ifdef PCI_IOV
 	TASK_INIT(&adapter->mbx_task, 0, ixgbe_handle_mbx, adapter);
 #endif
-	adapter->phy_si =
-	    softint_establish(SOFTINT_NET, ixgbe_handle_phy, adapter);
+	adapter->phy_si = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+		ixgbe_handle_phy, adapter);
 #ifdef IXGBE_FDIR
-	adapter->fdir_si =
-	    softint_establish(SOFTINT_NET, ixgbe_reinit_fdir, adapter);
+	adapter->fdir_si = softint_establish(SOFTINT_NET | XGBE_SOFTINFT_FLAGS,
+		ixgbe_reinit_fdir, adapter);
 #endif
 
 	kcpuset_destroy(affinity);
@@ -3013,6 +3029,9 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_stop = ixgbe_ifstop;
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#ifdef IXGBE_MPSAFE
+	ifp->if_extflags = IFEF_START_MPSAFE;
+#endif
 	ifp->if_ioctl = ixgbe_ioctl;
 #if __FreeBSD_version >= 1100045
 	/* TSO parameters */

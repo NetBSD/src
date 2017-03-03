@@ -31,10 +31,13 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixv.c,v 1.54 2017/02/16 08:01:11 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.55 2017/03/03 04:37:05 msaitoh Exp $*/
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
+#include "opt_net_mpsafe.h"
+#endif
 
 #include "ixgbe.h"
 #include "vlan.h"
@@ -227,6 +230,15 @@ TUNABLE_INT("hw.ixv.rxd", &ixv_rxd);
 */
 static u32 ixv_shadow_vfta[IXGBE_VFTA_SIZE];
 
+#ifdef NET_MPSAFE
+#define IXGBE_MPSAFE		1
+#define IXGBE_CALLOUT_FLAGS	CALLOUT_MPSAFE
+#define IXGBE_SOFTINFT_FLAGS	SOFTINT_MPSAFE
+#else
+#define IXGBE_CALLOUT_FLAGS	0
+#define IXGBE_SOFTINFT_FLAGS	0
+#endif
+
 /*********************************************************************
  *  Device identification routine
  *
@@ -327,7 +339,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
 	/* Set up the timer callout */
-	callout_init(&adapter->timer, 0);
+	callout_init(&adapter->timer, IXGBE_CALLOUT_FLAGS);
 
 	/* Determine hardware revision */
 	ixv_identify_hardware(adapter);
@@ -1403,8 +1415,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		    device_xname(dev), i);
 		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
-#ifdef IXV_MPSAFE
-		pci_intr_setattr(pc, adapter->osdep.intrs[i], PCI_INTR_MPSAFE,
+#ifdef IXGBE_MPSAFE
+		pci_intr_setattr(pc, &adapter->osdep.intrs[i], PCI_INTR_MPSAFE,
 		    true);
 #endif
 		/* Set the handler function */
@@ -1437,11 +1449,13 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 			aprint_normal("\n");
 
 #ifndef IXGBE_LEGACY_TX
-		txr->txr_si = softint_establish(SOFTINT_NET,
-		    ixgbe_deferred_mq_start, txr);
+		txr->txr_si
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+			ixgbe_deferred_mq_start, txr);
 #endif
-		que->que_si = softint_establish(SOFTINT_NET, ixv_handle_que,
-		    que);
+		que->que_si
+		    = softint_establish(SOFTINT_NET | IXGBE_SOFTINFT_FLAGS,
+			ixv_handle_que, que);
 		if (que->que_si == NULL) {
 			aprint_error_dev(dev,
 			    "could not establish software interrupt\n"); 
@@ -1453,7 +1467,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
-#ifdef IXG_MPSAFE
+#ifdef IXGBE_MPSAFE
 	pci_intr_setattr(pc, &adapter->osdep.intrs[vector], PCI_INTR_MPSAFE,
 	    true);
 #endif
@@ -1481,8 +1495,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	adapter->vector = vector;
 	/* Tasklets for Mailbox */
-	adapter->link_si = softint_establish(SOFTINT_NET, ixv_handle_mbx,
-	    adapter);
+	adapter->link_si = softint_establish(SOFTINT_NET |IXGBE_SOFTINFT_FLAGS,
+	    ixv_handle_mbx, adapter);
 	/*
 	** Due to a broken design QEMU will fail to properly
 	** enable the guest for MSIX unless the vectors in
@@ -1660,6 +1674,9 @@ ixv_setup_interface(device_t dev, struct adapter *adapter)
 	ifp->if_stop = ixv_ifstop;
 	ifp->if_softc = adapter;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#ifdef IXGBE_MPSAFE
+	ifp->if_extflags = IFEF_START_MPSAFE;
+#endif
 	ifp->if_ioctl = ixv_ioctl;
 #ifndef IXGBE_LEGACY_TX
 	ifp->if_transmit = ixgbe_mq_start;
