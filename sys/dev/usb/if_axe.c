@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.80 2017/01/12 18:26:08 maya Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.81 2017/03/03 06:27:20 msaitoh Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,11 +87,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.80 2017/01/12 18:26:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.81 2017/03/03 06:27:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_usb.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
