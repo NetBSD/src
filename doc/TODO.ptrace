@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.26 2017/03/03 07:03:11 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.27 2017/03/03 07:11:49 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -23,7 +23,6 @@ Items we (currently) plan to finish in the ptrace(2) field:
    in all ports
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
  - add ATF tests for SIGCHLD
- - add si_code values for PT_SYSCALL: TRAP_SCE and TRAP_SCX
  - research support PT_SYSCALL & PT_STEP combined like in Linux
  - fix more calls for netbsd32 compat
  - research ipkdb(4)
