@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.155 2017/01/24 07:09:25 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.156 2017/03/03 07:13:06 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.155 2017/01/24 07:09:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.156 2017/03/03 07:13:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -514,7 +514,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		struct ifnet *ret_oifp = NULL;
 
 		error = ip6_output(m, optp, &in6p->in6p_route, 0,
-		    in6p->in6p_moptions, so, &ret_oifp);
+		    in6p->in6p_moptions, in6p, &ret_oifp);
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 			if (ret_oifp)
 				icmp6_ifoutstat_inc(ret_oifp, type, code);
