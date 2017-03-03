@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.493 2017/03/03 07:32:36 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.494 2017/03/03 07:38:52 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,10 +84,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.493 2017/03/03 07:32:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.494 2017/03/03 07:38:52 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
+#include "opt_if_wm.h"
 #endif
 
 #include <sys/param.h>
@@ -213,8 +214,12 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NEXTRX(x)		(((x) + 1) & WM_NRXDESC_MASK)
 #define	WM_PREVRX(x)		(((x) - 1) & WM_NRXDESC_MASK)
 
+#ifndef WM_RX_PROCESS_LIMIT_DEFAULT
 #define	WM_RX_PROCESS_LIMIT_DEFAULT		100U
+#endif
+#ifndef WM_RX_INTR_PROCESS_LIMIT_DEFAULT
 #define	WM_RX_INTR_PROCESS_LIMIT_DEFAULT	0U
+#endif
 
 typedef union txdescs {
 	wiseman_txdesc_t sctxu_txdescs[WM_NTXDESC_82544];
