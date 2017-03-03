@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.12 2017/01/16 15:44:47 christos Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.13 2017/03/03 07:13:06 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.12 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.13 2017/03/03 07:13:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1620,7 +1620,7 @@ again:
 		DCCP_DEBUG((LOG_INFO, "Calling ip_output, mbuf->m_len = %u, mbuf->m_pkthdr.len = %u\n", m->m_len, m->m_pkthdr.len));
 		error = ip_output(m, inp->inp_options, &inp->inp_route,
 		    (inp->inp_socket->so_options & SO_DONTROUTE), 0, 
-				  inp->inp_socket);
+				  inp);
 	}
 
 	if (error) {

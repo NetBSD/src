@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.274 2017/03/02 05:29:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.275 2017/03/03 07:13:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.274 2017/03/02 05:29:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.275 2017/03/03 07:13:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -225,7 +225,7 @@ ip_if_output(struct ifnet * const ifp, struct mbuf * const m,
  */
 int
 ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
-    struct ip_moptions *imo, struct socket *so)
+    struct ip_moptions *imo, struct inpcb *inp)
 {
 	struct rtentry *rt;
 	struct ip *ip;
@@ -588,7 +588,7 @@ sendit:
 		bool ipsec_done = false;
 
 		/* Perform IPsec processing, if any. */
-		error = ipsec4_output(m, so, flags, &sp, &mtu, &natt_frag,
+		error = ipsec4_output(m, inp, flags, &sp, &mtu, &natt_frag,
 		    &ipsec_done);
 		if (error || ipsec_done)
 			goto done;
@@ -713,10 +713,7 @@ sendit:
 	 */
 	if (ntohs(ip->ip_off) & IP_DF) {
 		if (flags & IP_RETURNMTU) {
-			struct inpcb *inp;
-
-			KASSERT(so && solocked(so));
-			inp = sotoinpcb(so);
+			KASSERT(inp != NULL);
 			inp->inp_errormtu = mtu;
 		}
 		error = EMSGSIZE;
@@ -750,7 +747,7 @@ sendit:
 		if (natt_frag) {
 			error = ip_output(m, opt, ro,
 			    flags | IP_RAWOUTPUT | IP_NOIPNEWID,
-			    imo, so);
+			    imo, inp);
 		} else {
 			KASSERT((m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.69 2017/01/16 15:44:47 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.70 2017/03/03 07:13:06 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.69 2017/01/16 15:44:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70 2017/03/03 07:13:06 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -735,16 +735,12 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 }
 
 int
-ipsec4_output(struct mbuf *m, struct socket *so, int flags,
+ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
     struct secpolicy **sp_out, u_long *mtu, bool *natt_frag, bool *done)
 {
 	const struct ip *ip = mtod(m, const struct ip *);
 	struct secpolicy *sp = NULL;
-	struct inpcb *inp;
 	int error, s;
-
-	inp = (so && so->so_proto->pr_domain->dom_family == AF_INET) ?
-	    (struct inpcb *)so->so_pcb : NULL;
 
 	/*
 	 * Check the security policy (SP) for the packet and, if required,
@@ -2384,17 +2380,13 @@ ipsec_dumpmbuf(struct mbuf *m)
 
 #ifdef INET6
 struct secpolicy * 
-ipsec6_check_policy(struct mbuf *m, const struct socket *so,
+ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p,
 		    int flags, int *needipsecp, int *errorp)
 {
-	struct in6pcb *in6p = NULL;
 	struct secpolicy *sp = NULL;
 	int s;
 	int error = 0;
 	int needipsec = 0;
-
-	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET6)
-		in6p = sotoin6pcb(so);
 
 	if (!ipsec_outdone(m)) {
 		s = splsoftnet();
