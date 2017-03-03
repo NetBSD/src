@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.76 2017/03/01 08:05:15 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.77 2017/03/03 12:23:26 kre Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.76 2017/03/01 08:05:15 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.77 2017/03/03 12:23:26 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1329,7 +1329,7 @@ ATF_TC_BODY(fork1, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = fork()) != 1);
+		FORKEE_ASSERT((child2 = fork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -1450,7 +1450,7 @@ ATF_TC_BODY(fork2, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = fork()) != 1);
+		FORKEE_ASSERT((child2 = fork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -1533,7 +1533,7 @@ ATF_TC_BODY(vfork1, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = vfork()) != 1);
+		FORKEE_ASSERT((child2 = vfork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -1654,7 +1654,7 @@ ATF_TC_BODY(vfork2, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = vfork()) != 1);
+		FORKEE_ASSERT((child2 = vfork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -1734,7 +1734,7 @@ ATF_TC_BODY(vforkdone1, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = vfork()) != 1);
+		FORKEE_ASSERT((child2 = vfork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -1830,7 +1830,7 @@ ATF_TC_BODY(vforkdone2, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = vfork()) != 1);
+		FORKEE_ASSERT((child2 = vfork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -5265,7 +5265,7 @@ ATF_TC_BODY(siginfo5, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = fork()) != 1);
+		FORKEE_ASSERT((child2 = fork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -6050,7 +6050,7 @@ ATF_TC_BODY(signal6, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = fork()) != 1);
+		FORKEE_ASSERT((child2 = fork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -6181,7 +6181,7 @@ ATF_TC_BODY(signal7, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = fork()) != 1);
+		FORKEE_ASSERT((child2 = fork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
@@ -6311,7 +6311,7 @@ ATF_TC_BODY(signal8, tc)
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT((child2 = vfork()) != 1);
+		FORKEE_ASSERT((child2 = vfork()) != -1);
 
 		if (child2 == 0)
 			_exit(exitval2);
