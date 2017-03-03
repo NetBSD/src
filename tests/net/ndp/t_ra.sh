@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.25 2017/02/22 03:03:37 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.26 2017/03/03 07:34:04 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -147,7 +147,7 @@ check_entries()
 	atf_check -s exit:0 -o match:"${ll_srv}%shmif0 \(reachable\)" rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
 	atf_check -s exit:0 \
-	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +(23h59m|1d0h0m)..s S R" \
+	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +$ONEDAYISH S R" \
 	    rump.ndp -n -a
 	atf_check -s exit:0 -o match:$addr_prefix rump.ndp -n -a
 	atf_check -s exit:0 \
@@ -276,7 +276,7 @@ ra_flush_prefix_entries_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o empty rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -334,7 +334,7 @@ ra_flush_defrouter_entries_body()
 	atf_check -s exit:0 -o empty rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -762,7 +762,7 @@ ra_defrouter_expiration_body()
 	atf_check -s exit:0 -o not-match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -827,7 +827,7 @@ ra_prefix_expiration_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o empty rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
