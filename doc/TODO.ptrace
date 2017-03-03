@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.25 2017/03/02 14:25:41 kamil Exp $
+$NetBSD: TODO.ptrace,v 1.26 2017/03/03 07:03:11 kamil Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -31,6 +31,9 @@ Items we (currently) plan to finish in the ptrace(2) field:
  - check 64-bit debugger on 64-bit kernel tracing capabilities of 32-bit tracee
  - GDB Remote Protocol expects a case with a step with a signal to be sent,
    this is currently unsupported on NetBSD
+ - support QPassSignals (PT_SET_SIGPASS/PT_GET_SIGPASS) in the kernel, a way to
+   stop routing a set of signals to tracer as they are uninteresting - GDB and
+   LLDB expect this feature
 
 and of course: fix as many bugs as possible.
 
