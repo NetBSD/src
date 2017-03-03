@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.492 2017/03/03 03:33:44 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.493 2017/03/03 07:32:36 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.492 2017/03/03 03:33:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.493 2017/03/03 07:32:36 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -212,6 +212,9 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NRXDESC_MASK		(WM_NRXDESC - 1)
 #define	WM_NEXTRX(x)		(((x) + 1) & WM_NRXDESC_MASK)
 #define	WM_PREVRX(x)		(((x) - 1) & WM_NRXDESC_MASK)
+
+#define	WM_RX_PROCESS_LIMIT_DEFAULT		100U
+#define	WM_RX_INTR_PROCESS_LIMIT_DEFAULT	0U
 
 typedef union txdescs {
 	wiseman_txdesc_t sctxu_txdescs[WM_NTXDESC_82544];
@@ -485,6 +488,8 @@ struct wm_softc {
 
 	int sc_nqueues;
 	struct wm_queue *sc_queue;
+	u_int sc_rx_process_limit;	/* Rx processing repeat limit in softint */
+	u_int sc_rx_intr_process_limit;	/* Rx processing repeat limit in H/W intr */
 
 	int sc_affinity_offset;
 
@@ -715,7 +720,7 @@ static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
 /* Interrupt */
 static int	wm_txeof(struct wm_softc *, struct wm_txqueue *);
-static void	wm_rxeof(struct wm_rxqueue *);
+static void	wm_rxeof(struct wm_rxqueue *, u_int);
 static void	wm_linkintr_gmii(struct wm_softc *, uint32_t);
 static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
 static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
@@ -2638,6 +2643,9 @@ alloc_retry:
 	if (sc->sc_type >= WM_T_82571) {
 		ifp->if_capabilities |= IFCAP_TSOv6;
 	}
+
+	sc->sc_rx_process_limit = WM_RX_PROCESS_LIMIT_DEFAULT;
+	sc->sc_rx_intr_process_limit = WM_RX_INTR_PROCESS_LIMIT_DEFAULT;
 
 #ifdef WM_MPSAFE
 	sc->sc_core_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
@@ -7812,7 +7820,7 @@ wm_rxdesc_ensure_checksum(struct wm_rxqueue *rxq, uint32_t status,
  *	Helper; handle receive interrupts.
  */
 static void
-wm_rxeof(struct wm_rxqueue *rxq)
+wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 {
 	struct wm_softc *sc = rxq->rxq_sc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -7826,6 +7834,11 @@ wm_rxeof(struct wm_rxqueue *rxq)
 	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	for (i = rxq->rxq_ptr;; i = WM_NEXTRX(i)) {
+		if (limit-- == 0) {
+			rxq->rxq_ptr = i;
+			break;
+		}
+
 		rxs = &rxq->rxq_soft[i];
 
 		DPRINTF(WM_DEBUG_RX,
@@ -8310,7 +8323,7 @@ wm_intr_legacy(void *arg)
 			WM_Q_EVCNT_INCR(rxq, rxintr);
 		}
 #endif
-		wm_rxeof(rxq);
+		wm_rxeof(rxq, UINT_MAX);
 
 		mutex_exit(rxq->rxq_lock);
 		mutex_enter(txq->txq_lock);
@@ -8396,6 +8409,7 @@ wm_txrxintr_msix(void *arg)
 	struct wm_txqueue *txq = &wmq->wmq_txq;
 	struct wm_rxqueue *rxq = &wmq->wmq_rxq;
 	struct wm_softc *sc = txq->txq_sc;
+	u_int limit = sc->sc_rx_intr_process_limit;
 
 	KASSERT(wmq->wmq_intr_idx == wmq->wmq_id);
 
@@ -8426,12 +8440,10 @@ wm_txrxintr_msix(void *arg)
 	}
 
 	WM_Q_EVCNT_INCR(rxq, rxintr);
-	wm_rxeof(rxq);
+	wm_rxeof(rxq, limit);
 	mutex_exit(rxq->rxq_lock);
 
 	softint_schedule(wmq->wmq_si);
-
-	wm_txrxintr_enable(wmq);
 
 	return 1;
 }
@@ -8443,6 +8455,7 @@ wm_handle_queue(void *arg)
 	struct wm_txqueue *txq = &wmq->wmq_txq;
 	struct wm_rxqueue *rxq = &wmq->wmq_rxq;
 	struct wm_softc *sc = txq->txq_sc;
+	u_int limit = sc->sc_rx_process_limit;
 
 	mutex_enter(txq->txq_lock);
 	if (txq->txq_stopping) {
@@ -8459,8 +8472,10 @@ wm_handle_queue(void *arg)
 		return;
 	}
 	WM_Q_EVCNT_INCR(rxq, rxintr);
-	wm_rxeof(rxq);
+	wm_rxeof(rxq, limit);
 	mutex_exit(rxq->rxq_lock);
+
+	wm_txrxintr_enable(wmq);
 }
 
 /*
