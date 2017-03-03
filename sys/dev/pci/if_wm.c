@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.494 2017/03/03 07:38:52 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.495 2017/03/03 07:57:49 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.494 2017/03/03 07:38:52 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.495 2017/03/03 07:57:49 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -346,6 +346,8 @@ struct wm_txqueue {
 
 	bool txq_stopping;
 
+	uint32_t txq_packets;		/* for AIM */
+	uint32_t txq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
 	WM_Q_EVCNT_DEFINE(txq, txsstall)	/* Tx stalled due to no txs */
 	WM_Q_EVCNT_DEFINE(txq, txdstall)	/* Tx stalled due to no txd */
@@ -401,6 +403,8 @@ struct wm_rxqueue {
 
 	bool rxq_stopping;
 
+	uint32_t rxq_packets;		/* for AIM */
+	uint32_t rxq_bytes;		/* for AIM */
 #ifdef WM_EVENT_COUNTERS
 	WM_Q_EVCNT_DEFINE(rxq, rxintr);		/* Rx interrupts */
 
@@ -414,6 +418,7 @@ struct wm_queue {
 	int wmq_intr_idx;		/* index of MSI-X tables */
 
 	uint32_t wmq_itr;		/* interrupt interval per queue. */
+	bool wmq_set_itr;
 
 	struct wm_txqueue wmq_txq;
 	struct wm_rxqueue wmq_rxq;
@@ -733,6 +738,7 @@ static void	wm_linkintr(struct wm_softc *, uint32_t);
 static int	wm_intr_legacy(void *);
 static inline void	wm_txrxintr_disable(struct wm_queue *);
 static inline void	wm_txrxintr_enable(struct wm_queue *);
+static void	wm_itrs_calculate(struct wm_softc *, struct wm_queue *);
 static int	wm_txrxintr_msix(void *);
 static int	wm_linkintr_msix(void *);
 
@@ -4821,6 +4827,9 @@ static void
 wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
 {
 
+	if (!wmq->wmq_set_itr)
+		return;
+
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		uint32_t eitr = __SHIFTIN(wmq->wmq_itr, EITR_ITR_INT_MASK);
 
@@ -4845,6 +4854,70 @@ wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
 		KASSERT(wmq->wmq_id == 0);
 		CSR_WRITE(sc, WMREG_ITR, wmq->wmq_itr);
 	}
+
+	wmq->wmq_set_itr = false;
+}
+
+/*
+ * TODO
+ * Below dynamic calculation of itr is almost the same as linux igb,
+ * however it does not fit to wm(4). So, we will have been disable AIM
+ * until we will find appropriate calculation of itr.
+ */
+/*
+ * calculate interrupt interval value to be going to write register in
+ * wm_itrs_writereg(). This function does not write ITR/EITR register.
+ */
+static void
+wm_itrs_calculate(struct wm_softc *sc, struct wm_queue *wmq)
+{
+#ifdef NOTYET
+	struct wm_rxqueue *rxq = &wmq->wmq_rxq;
+	struct wm_txqueue *txq = &wmq->wmq_txq;
+	uint32_t avg_size = 0;
+	uint32_t new_itr;
+
+	if (rxq->rxq_packets)
+		avg_size =  rxq->rxq_bytes / rxq->rxq_packets;
+	if (txq->txq_packets)
+		avg_size = max(avg_size, txq->txq_bytes / txq->txq_packets);
+
+	if (avg_size == 0) {
+		new_itr = 450; /* restore default value */
+		goto out;
+	}
+
+	/* Add 24 bytes to size to account for CRC, preamble, and gap */
+	avg_size += 24;
+
+	/* Don't starve jumbo frames */
+	avg_size = min(avg_size, 3000);
+
+	/* Give a little boost to mid-size frames */
+	if ((avg_size > 300) && (avg_size < 1200))
+		new_itr = avg_size / 3;
+	else
+		new_itr = avg_size / 2;
+
+out:
+	/*
+	 * The usage of 82574 and 82575 EITR is different from otther NEWQUEUE
+	 * controllers. See sc->sc_itr_init setting in wm_init_locked().
+	 */
+	if ((sc->sc_flags & WM_F_NEWQUEUE) == 0 || sc->sc_type != WM_T_82575)
+		new_itr *= 4;
+
+	if (new_itr != wmq->wmq_itr) {
+		wmq->wmq_itr = new_itr;
+		wmq->wmq_set_itr = true;
+	} else
+		wmq->wmq_set_itr = false;
+
+	rxq->rxq_packets = 0;
+	rxq->rxq_bytes = 0;
+	txq->txq_packets = 0;
+	txq->txq_bytes = 0;
+#endif
 }
 
 /*
@@ -6298,7 +6371,18 @@ wm_init_txrx_queues(struct wm_softc *sc)
 		struct wm_txqueue *txq = &wmq->wmq_txq;
 		struct wm_rxqueue *rxq = &wmq->wmq_rxq;
 
-		wmq->wmq_itr = sc->sc_itr_init;
+		/*
+		 * TODO
+		 * Currently, use constant variable instead of AIM.
+		 * Furthermore, the interrupt interval of multiqueue which use
+		 * polling mode is less than default value.
+		 * More tuning and AIM are required.
+		 */
+		if (sc->sc_nqueues > 1)
+			wmq->wmq_itr = 50;
+		else
+			wmq->wmq_itr = sc->sc_itr_init;
+		wmq->wmq_set_itr = true;
 
 		mutex_enter(txq->txq_lock);
 		wm_init_tx_queue(sc, wmq, txq);
@@ -7587,6 +7671,9 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 		} else
 			ifp->if_opackets++;
 
+		txq->txq_packets++;
+		txq->txq_bytes += txs->txs_mbuf->m_pkthdr.len;
+
 		txq->txq_free += txs->txs_ndesc;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
 		    0, txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -7996,6 +8083,8 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 		 * increment counter.
 		 */
 		rxq->rxq_ptr = i;
+		rxq->rxq_packets++;
+		rxq->rxq_bytes += len;
 		mutex_exit(rxq->rxq_lock);
 
 		/* Pass it on. */
@@ -8399,6 +8488,8 @@ wm_txrxintr_enable(struct wm_queue *wmq)
 {
 	struct wm_softc *sc = wmq->wmq_txq.txq_sc;
 
+	wm_itrs_calculate(sc, wmq);
+
 	if (sc->sc_type == WM_T_82574)
 		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(wmq->wmq_id) | ICR_RXQ(wmq->wmq_id));
 	else if (sc->sc_type == WM_T_82575)
@@ -8447,6 +8538,8 @@ wm_txrxintr_msix(void *arg)
 	WM_Q_EVCNT_INCR(rxq, rxintr);
 	wm_rxeof(rxq, limit);
 	mutex_exit(rxq->rxq_lock);
+
+	wm_itrs_writereg(sc, wmq);
 
 	softint_schedule(wmq->wmq_si);
 
