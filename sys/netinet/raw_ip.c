@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.162 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.163 2017/03/03 07:13:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.162 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.163 2017/03/03 07:13:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -383,7 +383,7 @@ rip_output(struct mbuf *m, struct inpcb *inp)
 	 * will be stored in inp_errormtu.
 	 */
 	return ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	     inp->inp_socket);
+	     inp);
 }
 
 /*
