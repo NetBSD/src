@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2017/02/03 16:42:26 roy Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2017/03/03 09:29:57 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -557,7 +557,7 @@ command_efivar(char *arg)
 	 L"GUID                                Variable Name        Value\n"
 	 L"=================================== ==================== ========\n";
 	EFI_STATUS status;
-	UINTN sz = 64;
+	UINTN sz = 64, osz;
 	CHAR16 *name = NULL, *tmp, *val;
 	EFI_GUID vendor;
 	UINTN cols, rows, row = 0;
@@ -576,11 +576,12 @@ command_efivar(char *arg)
 		return;
 	}
 
-	name[0] = 0;
+	SetMem(name, sz, 0);
 	vendor = NullGuid;
 
 	Print(L"%s", header);
 	for (;;) {
+		osz = sz;
 		status = uefi_call_wrapper(RT->GetNextVariableName, 3,
 		    &sz, name, &vendor);
 		if (EFI_ERROR(status)) {
@@ -598,8 +599,11 @@ command_efivar(char *arg)
 				    (UINT64)sz);
 				break;
 			}
+			SetMem(tmp, sz, 0);
+			CopyMem(tmp, name, osz);
 			FreePool(name);
 			name = tmp;
+			continue;
 		}
 
 		val = LibGetVariable(name, &vendor);
