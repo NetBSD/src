@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.491 2017/03/01 08:56:33 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.492 2017/03/03 03:33:44 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.491 2017/03/01 08:56:33 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.492 2017/03/03 03:33:44 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -161,6 +161,9 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 
 #ifdef NET_MPSAFE
 #define WM_MPSAFE	1
+#define CALLOUT_FLAGS	CALLOUT_MPSAFE
+#else
+#define CALLOUT_FLAGS	0
 #endif
 
 /*
@@ -537,12 +540,6 @@ struct wm_softc {
 #define WM_CORE_LOCK(_sc)	if ((_sc)->sc_core_lock) mutex_enter((_sc)->sc_core_lock)
 #define WM_CORE_UNLOCK(_sc)	if ((_sc)->sc_core_lock) mutex_exit((_sc)->sc_core_lock)
 #define WM_CORE_LOCKED(_sc)	(!(_sc)->sc_core_lock || mutex_owned((_sc)->sc_core_lock))
-
-#ifdef WM_MPSAFE
-#define CALLOUT_FLAGS	CALLOUT_MPSAFE
-#else
-#define CALLOUT_FLAGS	0
-#endif
 
 #define	WM_RXCHAIN_RESET(rxq)						\
 do {									\
@@ -2539,7 +2536,9 @@ alloc_retry:
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+#ifdef WM_MPSAFE
 	ifp->if_extflags = IFEF_START_MPSAFE;
+#endif
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
