@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.32 2017/03/03 10:44:25 knakahara Exp $
+.\"	$NetBSD: wm.4,v 1.33 2017/03/03 11:36:20 wiz Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -173,34 +173,41 @@ for information on how to enable this feature.
 .Sh OPTIONS
 .Bl -tag -width WM_RX_INTR_PROCESS_LIMIT_DEFAULT -offset 3n
 .It Dv WM_RX_PROCESS_LIMIT_DEFAULT
-The maxinum number of received packets which processed in each
+The maximum number of received packets processed in each
 .Xr softint 9
-context. This option only effects for multiqueue. The value range
-is between zero to UINT_MAX. The default value is 100.
-When you increase this value, receive latency would increase and
-receive throughput would increase.
+context.
+This option only affects multiqueue.
+The value range is from zero to
+.Dv UINT_MAX .
+The default value is 100.
+When you increase this value, both the receive latency and
+the receive throughput will increase.
 .It Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
-The maxinum number of received packets which processed in each
-hardware interrupt context. This option only effects for multiqueue.
-The value range is between zero to UINT_MAX. The default value is 0.
-When you increase this value, receive latency would decrease and
-receive throughput would decrease.
+The maximum number of received packets processed in each
+hardware interrupt context.
+This option only affects multiqueue.
+The value range is from zero to
+.Dv UINT_MAX .
+The default value is 0.
+When you increase this value, both the receive latency and
+the receive throughput will decrease.
 .El
 .Pp
 Setting
-.Em WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+.Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
 to zero means so-called polling mode, that is, once an interrupt occurs,
 the driver keep processing received packets until
-.Em WM_RX_PROCESS_LIMIT_DEFAULT .
+.Dv WM_RX_PROCESS_LIMIT_DEFAULT .
 Polling mode increases latency a little, however it supresses
 performance degration at high load very well.
 .Pp
 If you want to disable polling mode (to use traditional interrupt
 driven mode), you should set
-.Em WM_RX_PROCESS_LIMIT_DEFAULT
-zero and set
-.Em WM_RX_INTR_PROCESS_LIMIT_DEFAULT
-UINT_MAX.
+.Dv WM_RX_PROCESS_LIMIT_DEFAULT
+to zero and set
+.Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+to
+.Dv UINT_MAX .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
