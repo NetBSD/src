@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.133 2017/02/22 07:05:47 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.134 2017/03/03 06:27:20 msaitoh Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.133 2017/02/22 07:05:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.134 2017/03/03 06:27:20 msaitoh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
