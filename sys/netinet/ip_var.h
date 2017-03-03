@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.117 2017/02/16 08:12:44 knakahara Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.118 2017/03/03 07:13:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -213,7 +213,7 @@ void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
-	    struct ip_moptions *, struct socket *);
+	    struct ip_moptions *, struct inpcb *);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 
 void	 ip_reass_init(void);

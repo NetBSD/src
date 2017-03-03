@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.230 2017/01/24 07:09:24 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.231 2017/03/03 07:13:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.230 2017/01/24 07:09:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.231 2017/03/03 07:13:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -848,7 +848,7 @@ udp_output(struct mbuf *m, struct inpcb *inp)
 
 	return (ip_output(m, inp->inp_options, ro,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions, inp->inp_socket));
+	    inp->inp_moptions, inp));
 
 release:
 	m_freem(m);

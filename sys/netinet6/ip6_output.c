@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.190 2017/03/02 05:26:24 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.191 2017/03/03 07:13:06 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.190 2017/03/02 05:26:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.191 2017/03/03 07:13:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -222,7 +222,7 @@ ip6_output(
     struct route *ro,
     int flags,
     struct ip6_moptions *im6o,
-    struct socket *so,
+    struct in6pcb *in6p,
     struct ifnet **ifpp		/* XXX: just for statistics */
 )
 {
@@ -311,7 +311,7 @@ ip6_output(
 	if (ipsec_used) {
 		/* Check the security policy (SP) for the packet */
 	    
-		sp = ipsec6_check_policy(m, so, flags, &needipsec, &error);
+		sp = ipsec6_check_policy(m, in6p, flags, &needipsec, &error);
 		if (error != 0) {
 			/*
 			 * Hack: -EINVAL is used to signal that a packet
