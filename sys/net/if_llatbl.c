@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.17 2017/01/16 15:44:46 christos Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.18 2017/03/03 06:27:20 msaitoh Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -33,6 +33,7 @@
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include "arp.h"
