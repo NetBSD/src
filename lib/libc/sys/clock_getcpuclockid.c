@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_getcpuclockid.c,v 1.1 2016/04/23 23:11:31 christos Exp $	*/
+/*	$NetBSD: clock_getcpuclockid.c,v 1.2 2017/03/04 11:16:33 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,14 +30,22 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: clock_getcpuclockid.c,v 1.1 2016/04/23 23:11:31 christos Exp $");
+__RCSID("$NetBSD: clock_getcpuclockid.c,v 1.2 2017/03/04 11:16:33 njoly Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <errno.h>
 #include <time.h>
 
 int
 clock_getcpuclockid(pid_t pid, clockid_t *clock_id)
 {
-	return clock_getcpuclockid2(P_PID, (id_t)pid, clock_id);
+	int error = 0, saved_errno;
+
+	saved_errno = errno;
+	if (clock_getcpuclockid2(P_PID, (id_t)pid, clock_id) == -1)
+		error = errno;
+	errno = saved_errno;
+
+	return error;
 }
