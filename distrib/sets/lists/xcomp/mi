@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.189 2017/01/05 13:45:51 wiz Exp $
+#	 $NetBSD: mi,v 1.190 2017/03/04 23:24:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -758,6 +758,7 @@
 ./usr/X11R7/include/xcb/xvmc.h				-unknown-	xorg
 ./usr/X11R7/include/xf86drm.h				-unknown-	xorg
 ./usr/X11R7/include/xf86drmMode.h			-unknown-	xorg
+./usr/X11R7/include/libsync.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/BT.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/IBM.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/TI.h				-unknown-	xorg
