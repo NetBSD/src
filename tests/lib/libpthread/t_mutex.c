@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.15 2017/01/16 16:23:41 christos Exp $ */
+/* $NetBSD: t_mutex.c,v 1.16 2017/03/05 16:08:23 chs Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.15 2017/01/16 16:23:41 christos Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.16 2017/03/05 16:08:23 chs Exp $");
 
 #include <sys/time.h> /* For timespecadd */
 #include <inttypes.h> /* For UINT16_MAX */
@@ -148,9 +148,6 @@ ATF_TC(mutex2);
 ATF_TC_HEAD(mutex2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
-#if defined(__powerpc__)
-	atf_tc_set_md_var(tc, "timeout", "40");
-#endif
 }
 ATF_TC_BODY(mutex2, tc)
 {
@@ -159,10 +156,6 @@ ATF_TC_BODY(mutex2, tc)
 	void *joinval;
 
 	printf("1: Mutex-test 2\n");
-
-#if defined(__powerpc__)
-	atf_tc_expect_timeout("PR port-powerpc/44387");
-#endif
 
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 	
@@ -188,14 +181,6 @@ ATF_TC_BODY(mutex2, tc)
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
-
-#if defined(__powerpc__)
-	/* XXX force a timeout in ppc case since an un-triggered race
-	   otherwise looks like a "failure" */
-	/* We sleep for longer than the timeout to make ATF not
-	   complain about unexpected success */
-	sleep(41);
-#endif
 }
 
 static void *
@@ -219,9 +204,6 @@ ATF_TC_HEAD(mutex3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes using a static "
 	    "initializer");
-#if defined(__powerpc__)
-	atf_tc_set_md_var(tc, "timeout", "40");
-#endif
 }
 ATF_TC_BODY(mutex3, tc)
 {
@@ -230,10 +212,6 @@ ATF_TC_BODY(mutex3, tc)
 	void *joinval;
 
 	printf("1: Mutex-test 3\n");
-
-#if defined(__powerpc__)
-	atf_tc_expect_timeout("PR port-powerpc/44387");
-#endif
 
 	global_x = 0;
 	count = count2 = 10000000;
@@ -257,14 +235,6 @@ ATF_TC_BODY(mutex3, tc)
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
-
-#if defined(__powerpc__)
-	/* XXX force a timeout in ppc case since an un-triggered race
-	   otherwise looks like a "failure" */
-	/* We sleep for longer than the timeout to make ATF not
-	   complain about unexpected success */
-	sleep(41);
-#endif
 }
 
 static void *
