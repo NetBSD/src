@@ -30,9 +30,9 @@ typedef uint32_t xcb_xvmc_context_t;
  * @brief xcb_xvmc_context_iterator_t
  **/
 typedef struct xcb_xvmc_context_iterator_t {
-    xcb_xvmc_context_t *data; /**<  */
-    int                 rem; /**<  */
-    int                 index; /**<  */
+    xcb_xvmc_context_t *data;
+    int                 rem;
+    int                 index;
 } xcb_xvmc_context_iterator_t;
 
 typedef uint32_t xcb_xvmc_surface_t;
@@ -41,9 +41,9 @@ typedef uint32_t xcb_xvmc_surface_t;
  * @brief xcb_xvmc_surface_iterator_t
  **/
 typedef struct xcb_xvmc_surface_iterator_t {
-    xcb_xvmc_surface_t *data; /**<  */
-    int                 rem; /**<  */
-    int                 index; /**<  */
+    xcb_xvmc_surface_t *data;
+    int                 rem;
+    int                 index;
 } xcb_xvmc_surface_iterator_t;
 
 typedef uint32_t xcb_xvmc_subpicture_t;
@@ -52,40 +52,40 @@ typedef uint32_t xcb_xvmc_subpicture_t;
  * @brief xcb_xvmc_subpicture_iterator_t
  **/
 typedef struct xcb_xvmc_subpicture_iterator_t {
-    xcb_xvmc_subpicture_t *data; /**<  */
-    int                    rem; /**<  */
-    int                    index; /**<  */
+    xcb_xvmc_subpicture_t *data;
+    int                    rem;
+    int                    index;
 } xcb_xvmc_subpicture_iterator_t;
 
 /**
  * @brief xcb_xvmc_surface_info_t
  **/
 typedef struct xcb_xvmc_surface_info_t {
-    xcb_xvmc_surface_t id; /**<  */
-    uint16_t           chroma_format; /**<  */
-    uint16_t           pad0; /**<  */
-    uint16_t           max_width; /**<  */
-    uint16_t           max_height; /**<  */
-    uint16_t           subpicture_max_width; /**<  */
-    uint16_t           subpicture_max_height; /**<  */
-    uint32_t           mc_type; /**<  */
-    uint32_t           flags; /**<  */
+    xcb_xvmc_surface_t id;
+    uint16_t           chroma_format;
+    uint16_t           pad0;
+    uint16_t           max_width;
+    uint16_t           max_height;
+    uint16_t           subpicture_max_width;
+    uint16_t           subpicture_max_height;
+    uint32_t           mc_type;
+    uint32_t           flags;
 } xcb_xvmc_surface_info_t;
 
 /**
  * @brief xcb_xvmc_surface_info_iterator_t
  **/
 typedef struct xcb_xvmc_surface_info_iterator_t {
-    xcb_xvmc_surface_info_t *data; /**<  */
-    int                      rem; /**<  */
-    int                      index; /**<  */
+    xcb_xvmc_surface_info_t *data;
+    int                      rem;
+    int                      index;
 } xcb_xvmc_surface_info_iterator_t;
 
 /**
  * @brief xcb_xvmc_query_version_cookie_t
  **/
 typedef struct xcb_xvmc_query_version_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xvmc_query_version_cookie_t;
 
 /** Opcode for xcb_xvmc_query_version. */
@@ -95,28 +95,28 @@ typedef struct xcb_xvmc_query_version_cookie_t {
  * @brief xcb_xvmc_query_version_request_t
  **/
 typedef struct xcb_xvmc_query_version_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
 } xcb_xvmc_query_version_request_t;
 
 /**
  * @brief xcb_xvmc_query_version_reply_t
  **/
 typedef struct xcb_xvmc_query_version_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t major; /**<  */
-    uint32_t minor; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t major;
+    uint32_t minor;
 } xcb_xvmc_query_version_reply_t;
 
 /**
  * @brief xcb_xvmc_list_surface_types_cookie_t
  **/
 typedef struct xcb_xvmc_list_surface_types_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xvmc_list_surface_types_cookie_t;
 
 /** Opcode for xcb_xvmc_list_surface_types. */
@@ -126,29 +126,29 @@ typedef struct xcb_xvmc_list_surface_types_cookie_t {
  * @brief xcb_xvmc_list_surface_types_request_t
  **/
 typedef struct xcb_xvmc_list_surface_types_request_t {
-    uint8_t       major_opcode; /**<  */
-    uint8_t       minor_opcode; /**<  */
-    uint16_t      length; /**<  */
-    xcb_xv_port_t port_id; /**<  */
+    uint8_t       major_opcode;
+    uint8_t       minor_opcode;
+    uint16_t      length;
+    xcb_xv_port_t port_id;
 } xcb_xvmc_list_surface_types_request_t;
 
 /**
  * @brief xcb_xvmc_list_surface_types_reply_t
  **/
 typedef struct xcb_xvmc_list_surface_types_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t num; /**<  */
-    uint8_t  pad1[20]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t num;
+    uint8_t  pad1[20];
 } xcb_xvmc_list_surface_types_reply_t;
 
 /**
  * @brief xcb_xvmc_create_context_cookie_t
  **/
 typedef struct xcb_xvmc_create_context_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xvmc_create_context_cookie_t;
 
 /** Opcode for xcb_xvmc_create_context. */
@@ -158,29 +158,29 @@ typedef struct xcb_xvmc_create_context_cookie_t {
  * @brief xcb_xvmc_create_context_request_t
  **/
 typedef struct xcb_xvmc_create_context_request_t {
-    uint8_t            major_opcode; /**<  */
-    uint8_t            minor_opcode; /**<  */
-    uint16_t           length; /**<  */
-    xcb_xvmc_context_t context_id; /**<  */
-    xcb_xv_port_t      port_id; /**<  */
-    xcb_xvmc_surface_t surface_id; /**<  */
-    uint16_t           width; /**<  */
-    uint16_t           height; /**<  */
-    uint32_t           flags; /**<  */
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_xvmc_context_t context_id;
+    xcb_xv_port_t      port_id;
+    xcb_xvmc_surface_t surface_id;
+    uint16_t           width;
+    uint16_t           height;
+    uint32_t           flags;
 } xcb_xvmc_create_context_request_t;
 
 /**
  * @brief xcb_xvmc_create_context_reply_t
  **/
 typedef struct xcb_xvmc_create_context_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint16_t width_actual; /**<  */
-    uint16_t height_actual; /**<  */
-    uint32_t flags_return; /**<  */
-    uint8_t  pad1[20]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint16_t width_actual;
+    uint16_t height_actual;
+    uint32_t flags_return;
+    uint8_t  pad1[20];
 } xcb_xvmc_create_context_reply_t;
 
 /** Opcode for xcb_xvmc_destroy_context. */
@@ -190,17 +190,17 @@ typedef struct xcb_xvmc_create_context_reply_t {
  * @brief xcb_xvmc_destroy_context_request_t
  **/
 typedef struct xcb_xvmc_destroy_context_request_t {
-    uint8_t            major_opcode; /**<  */
-    uint8_t            minor_opcode; /**<  */
-    uint16_t           length; /**<  */
-    xcb_xvmc_context_t context_id; /**<  */
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_xvmc_context_t context_id;
 } xcb_xvmc_destroy_context_request_t;
 
 /**
  * @brief xcb_xvmc_create_surface_cookie_t
  **/
 typedef struct xcb_xvmc_create_surface_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xvmc_create_surface_cookie_t;
 
 /** Opcode for xcb_xvmc_create_surface. */
@@ -210,22 +210,22 @@ typedef struct xcb_xvmc_create_surface_cookie_t {
  * @brief xcb_xvmc_create_surface_request_t
  **/
 typedef struct xcb_xvmc_create_surface_request_t {
-    uint8_t            major_opcode; /**<  */
-    uint8_t            minor_opcode; /**<  */
-    uint16_t           length; /**<  */
-    xcb_xvmc_surface_t surface_id; /**<  */
-    xcb_xvmc_context_t context_id; /**<  */
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_xvmc_surface_t surface_id;
+    xcb_xvmc_context_t context_id;
 } xcb_xvmc_create_surface_request_t;
 
 /**
  * @brief xcb_xvmc_create_surface_reply_t
  **/
 typedef struct xcb_xvmc_create_surface_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint8_t  pad1[24]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint8_t  pad1[24];
 } xcb_xvmc_create_surface_reply_t;
 
 /** Opcode for xcb_xvmc_destroy_surface. */
@@ -235,17 +235,17 @@ typedef struct xcb_xvmc_create_surface_reply_t {
  * @brief xcb_xvmc_destroy_surface_request_t
  **/
 typedef struct xcb_xvmc_destroy_surface_request_t {
-    uint8_t            major_opcode; /**<  */
-    uint8_t            minor_opcode; /**<  */
-    uint16_t           length; /**<  */
-    xcb_xvmc_surface_t surface_id; /**<  */
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_xvmc_surface_t surface_id;
 } xcb_xvmc_destroy_surface_request_t;
 
 /**
  * @brief xcb_xvmc_create_subpicture_cookie_t
  **/
 typedef struct xcb_xvmc_create_subpicture_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xvmc_create_subpicture_cookie_t;
 
 /** Opcode for xcb_xvmc_create_subpicture. */
@@ -255,30 +255,30 @@ typedef struct xcb_xvmc_create_subpicture_cookie_t {
  * @brief xcb_xvmc_create_subpicture_request_t
  **/
 typedef struct xcb_xvmc_create_subpicture_request_t {
-    uint8_t               major_opcode; /**<  */
-    uint8_t               minor_opcode; /**<  */
-    uint16_t              length; /**<  */
-    xcb_xvmc_subpicture_t subpicture_id; /**<  */
-    xcb_xvmc_context_t    context; /**<  */
-    uint32_t              xvimage_id; /**<  */
-    uint16_t              width; /**<  */
-    uint16_t              height; /**<  */
+    uint8_t               major_opcode;
+    uint8_t               minor_opcode;
+    uint16_t              length;
+    xcb_xvmc_subpicture_t subpicture_id;
+    xcb_xvmc_context_t    context;
+    uint32_t              xvimage_id;
+    uint16_t              width;
+    uint16_t              height;
 } xcb_xvmc_create_subpicture_request_t;
 
 /**
  * @brief xcb_xvmc_create_subpicture_reply_t
  **/
 typedef struct xcb_xvmc_create_subpicture_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint16_t width_actual; /**<  */
-    uint16_t height_actual; /**<  */
-    uint16_t num_palette_entries; /**<  */
-    uint16_t entry_bytes; /**<  */
-    uint8_t  component_order[4]; /**<  */
-    uint8_t  pad1[12]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint16_t width_actual;
+    uint16_t height_actual;
+    uint16_t num_palette_entries;
+    uint16_t entry_bytes;
+    uint8_t  component_order[4];
+    uint8_t  pad1[12];
 } xcb_xvmc_create_subpicture_reply_t;
 
 /** Opcode for xcb_xvmc_destroy_subpicture. */
@@ -288,17 +288,17 @@ typedef struct xcb_xvmc_create_subpicture_reply_t {
  * @brief xcb_xvmc_destroy_subpicture_request_t
  **/
 typedef struct xcb_xvmc_destroy_subpicture_request_t {
-    uint8_t               major_opcode; /**<  */
-    uint8_t               minor_opcode; /**<  */
-    uint16_t              length; /**<  */
-    xcb_xvmc_subpicture_t subpicture_id; /**<  */
+    uint8_t               major_opcode;
+    uint8_t               minor_opcode;
+    uint16_t              length;
+    xcb_xvmc_subpicture_t subpicture_id;
 } xcb_xvmc_destroy_subpicture_request_t;
 
 /**
  * @brief xcb_xvmc_list_subpicture_types_cookie_t
  **/
 typedef struct xcb_xvmc_list_subpicture_types_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xvmc_list_subpicture_types_cookie_t;
 
 /** Opcode for xcb_xvmc_list_subpicture_types. */
@@ -308,23 +308,23 @@ typedef struct xcb_xvmc_list_subpicture_types_cookie_t {
  * @brief xcb_xvmc_list_subpicture_types_request_t
  **/
 typedef struct xcb_xvmc_list_subpicture_types_request_t {
-    uint8_t            major_opcode; /**<  */
-    uint8_t            minor_opcode; /**<  */
-    uint16_t           length; /**<  */
-    xcb_xv_port_t      port_id; /**<  */
-    xcb_xvmc_surface_t surface_id; /**<  */
+    uint8_t            major_opcode;
+    uint8_t            minor_opcode;
+    uint16_t           length;
+    xcb_xv_port_t      port_id;
+    xcb_xvmc_surface_t surface_id;
 } xcb_xvmc_list_subpicture_types_request_t;
 
 /**
  * @brief xcb_xvmc_list_subpicture_types_reply_t
  **/
 typedef struct xcb_xvmc_list_subpicture_types_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t num; /**<  */
-    uint8_t  pad1[20]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t num;
+    uint8_t  pad1[20];
 } xcb_xvmc_list_subpicture_types_reply_t;
 
 /**
@@ -336,7 +336,7 @@ typedef struct xcb_xvmc_list_subpicture_types_reply_t {
  * element. The member index is increased by sizeof(xcb_xvmc_context_t)
  */
 void
-xcb_xvmc_context_next (xcb_xvmc_context_iterator_t *i  /**< */);
+xcb_xvmc_context_next (xcb_xvmc_context_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -348,7 +348,7 @@ xcb_xvmc_context_next (xcb_xvmc_context_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_xvmc_context_end (xcb_xvmc_context_iterator_t i  /**< */);
+xcb_xvmc_context_end (xcb_xvmc_context_iterator_t i);
 
 /**
  * Get the next element of the iterator
@@ -359,7 +359,7 @@ xcb_xvmc_context_end (xcb_xvmc_context_iterator_t i  /**< */);
  * element. The member index is increased by sizeof(xcb_xvmc_surface_t)
  */
 void
-xcb_xvmc_surface_next (xcb_xvmc_surface_iterator_t *i  /**< */);
+xcb_xvmc_surface_next (xcb_xvmc_surface_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -371,7 +371,7 @@ xcb_xvmc_surface_next (xcb_xvmc_surface_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_xvmc_surface_end (xcb_xvmc_surface_iterator_t i  /**< */);
+xcb_xvmc_surface_end (xcb_xvmc_surface_iterator_t i);
 
 /**
  * Get the next element of the iterator
@@ -382,7 +382,7 @@ xcb_xvmc_surface_end (xcb_xvmc_surface_iterator_t i  /**< */);
  * element. The member index is increased by sizeof(xcb_xvmc_subpicture_t)
  */
 void
-xcb_xvmc_subpicture_next (xcb_xvmc_subpicture_iterator_t *i  /**< */);
+xcb_xvmc_subpicture_next (xcb_xvmc_subpicture_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -394,7 +394,7 @@ xcb_xvmc_subpicture_next (xcb_xvmc_subpicture_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_xvmc_subpicture_end (xcb_xvmc_subpicture_iterator_t i  /**< */);
+xcb_xvmc_subpicture_end (xcb_xvmc_subpicture_iterator_t i);
 
 /**
  * Get the next element of the iterator
@@ -405,7 +405,7 @@ xcb_xvmc_subpicture_end (xcb_xvmc_subpicture_iterator_t i  /**< */);
  * element. The member index is increased by sizeof(xcb_xvmc_surface_info_t)
  */
 void
-xcb_xvmc_surface_info_next (xcb_xvmc_surface_info_iterator_t *i  /**< */);
+xcb_xvmc_surface_info_next (xcb_xvmc_surface_info_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -417,7 +417,7 @@ xcb_xvmc_surface_info_next (xcb_xvmc_surface_info_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_xvmc_surface_info_end (xcb_xvmc_surface_info_iterator_t i  /**< */);
+xcb_xvmc_surface_info_end (xcb_xvmc_surface_info_iterator_t i);
 
 /**
  *
@@ -428,7 +428,7 @@ xcb_xvmc_surface_info_end (xcb_xvmc_surface_info_iterator_t i  /**< */);
  *
  */
 xcb_xvmc_query_version_cookie_t
-xcb_xvmc_query_version (xcb_connection_t *c  /**< */);
+xcb_xvmc_query_version (xcb_connection_t *c);
 
 /**
  *
@@ -442,7 +442,7 @@ xcb_xvmc_query_version (xcb_connection_t *c  /**< */);
  * placed in the event queue.
  */
 xcb_xvmc_query_version_cookie_t
-xcb_xvmc_query_version_unchecked (xcb_connection_t *c  /**< */);
+xcb_xvmc_query_version_unchecked (xcb_connection_t *c);
 
 /**
  * Return the reply
@@ -459,12 +459,12 @@ xcb_xvmc_query_version_unchecked (xcb_connection_t *c  /**< */);
  * The returned value must be freed by the caller using free().
  */
 xcb_xvmc_query_version_reply_t *
-xcb_xvmc_query_version_reply (xcb_connection_t                 *c  /**< */,
+xcb_xvmc_query_version_reply (xcb_connection_t                 *c,
                               xcb_xvmc_query_version_cookie_t   cookie  /**< */,
-                              xcb_generic_error_t             **e  /**< */);
+                              xcb_generic_error_t             **e);
 
 int
-xcb_xvmc_list_surface_types_sizeof (const void  *_buffer  /**< */);
+xcb_xvmc_list_surface_types_sizeof (const void  *_buffer);
 
 /**
  *
@@ -475,8 +475,8 @@ xcb_xvmc_list_surface_types_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xvmc_list_surface_types_cookie_t
-xcb_xvmc_list_surface_types (xcb_connection_t *c  /**< */,
-                             xcb_xv_port_t     port_id  /**< */);
+xcb_xvmc_list_surface_types (xcb_connection_t *c,
+                             xcb_xv_port_t     port_id);
 
 /**
  *
@@ -490,17 +490,17 @@ xcb_xvmc_list_surface_types (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xvmc_list_surface_types_cookie_t
-xcb_xvmc_list_surface_types_unchecked (xcb_connection_t *c  /**< */,
-                                       xcb_xv_port_t     port_id  /**< */);
+xcb_xvmc_list_surface_types_unchecked (xcb_connection_t *c,
+                                       xcb_xv_port_t     port_id);
 
 xcb_xvmc_surface_info_t *
-xcb_xvmc_list_surface_types_surfaces (const xcb_xvmc_list_surface_types_reply_t *R  /**< */);
+xcb_xvmc_list_surface_types_surfaces (const xcb_xvmc_list_surface_types_reply_t *R);
 
 int
-xcb_xvmc_list_surface_types_surfaces_length (const xcb_xvmc_list_surface_types_reply_t *R  /**< */);
+xcb_xvmc_list_surface_types_surfaces_length (const xcb_xvmc_list_surface_types_reply_t *R);
 
 xcb_xvmc_surface_info_iterator_t
-xcb_xvmc_list_surface_types_surfaces_iterator (const xcb_xvmc_list_surface_types_reply_t *R  /**< */);
+xcb_xvmc_list_surface_types_surfaces_iterator (const xcb_xvmc_list_surface_types_reply_t *R);
 
 /**
  * Return the reply
@@ -517,12 +517,12 @@ xcb_xvmc_list_surface_types_surfaces_iterator (const xcb_xvmc_list_surface_types
  * The returned value must be freed by the caller using free().
  */
 xcb_xvmc_list_surface_types_reply_t *
-xcb_xvmc_list_surface_types_reply (xcb_connection_t                      *c  /**< */,
+xcb_xvmc_list_surface_types_reply (xcb_connection_t                      *c,
                                    xcb_xvmc_list_surface_types_cookie_t   cookie  /**< */,
-                                   xcb_generic_error_t                  **e  /**< */);
+                                   xcb_generic_error_t                  **e);
 
 int
-xcb_xvmc_create_context_sizeof (const void  *_buffer  /**< */);
+xcb_xvmc_create_context_sizeof (const void  *_buffer);
 
 /**
  *
@@ -533,13 +533,13 @@ xcb_xvmc_create_context_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xvmc_create_context_cookie_t
-xcb_xvmc_create_context (xcb_connection_t   *c  /**< */,
-                         xcb_xvmc_context_t  context_id  /**< */,
-                         xcb_xv_port_t       port_id  /**< */,
-                         xcb_xvmc_surface_t  surface_id  /**< */,
-                         uint16_t            width  /**< */,
-                         uint16_t            height  /**< */,
-                         uint32_t            flags  /**< */);
+xcb_xvmc_create_context (xcb_connection_t   *c,
+                         xcb_xvmc_context_t  context_id,
+                         xcb_xv_port_t       port_id,
+                         xcb_xvmc_surface_t  surface_id,
+                         uint16_t            width,
+                         uint16_t            height,
+                         uint32_t            flags);
 
 /**
  *
@@ -553,22 +553,22 @@ xcb_xvmc_create_context (xcb_connection_t   *c  /**< */,
  * placed in the event queue.
  */
 xcb_xvmc_create_context_cookie_t
-xcb_xvmc_create_context_unchecked (xcb_connection_t   *c  /**< */,
-                                   xcb_xvmc_context_t  context_id  /**< */,
-                                   xcb_xv_port_t       port_id  /**< */,
-                                   xcb_xvmc_surface_t  surface_id  /**< */,
-                                   uint16_t            width  /**< */,
-                                   uint16_t            height  /**< */,
-                                   uint32_t            flags  /**< */);
+xcb_xvmc_create_context_unchecked (xcb_connection_t   *c,
+                                   xcb_xvmc_context_t  context_id,
+                                   xcb_xv_port_t       port_id,
+                                   xcb_xvmc_surface_t  surface_id,
+                                   uint16_t            width,
+                                   uint16_t            height,
+                                   uint32_t            flags);
 
 uint32_t *
-xcb_xvmc_create_context_priv_data (const xcb_xvmc_create_context_reply_t *R  /**< */);
+xcb_xvmc_create_context_priv_data (const xcb_xvmc_create_context_reply_t *R);
 
 int
-xcb_xvmc_create_context_priv_data_length (const xcb_xvmc_create_context_reply_t *R  /**< */);
+xcb_xvmc_create_context_priv_data_length (const xcb_xvmc_create_context_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_xvmc_create_context_priv_data_end (const xcb_xvmc_create_context_reply_t *R  /**< */);
+xcb_xvmc_create_context_priv_data_end (const xcb_xvmc_create_context_reply_t *R);
 
 /**
  * Return the reply
@@ -585,9 +585,9 @@ xcb_xvmc_create_context_priv_data_end (const xcb_xvmc_create_context_reply_t *R 
  * The returned value must be freed by the caller using free().
  */
 xcb_xvmc_create_context_reply_t *
-xcb_xvmc_create_context_reply (xcb_connection_t                  *c  /**< */,
+xcb_xvmc_create_context_reply (xcb_connection_t                  *c,
                                xcb_xvmc_create_context_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */);
+                               xcb_generic_error_t              **e);
 
 /**
  *
@@ -601,8 +601,8 @@ xcb_xvmc_create_context_reply (xcb_connection_t                  *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_xvmc_destroy_context_checked (xcb_connection_t   *c  /**< */,
-                                  xcb_xvmc_context_t  context_id  /**< */);
+xcb_xvmc_destroy_context_checked (xcb_connection_t   *c,
+                                  xcb_xvmc_context_t  context_id);
 
 /**
  *
@@ -613,11 +613,11 @@ xcb_xvmc_destroy_context_checked (xcb_connection_t   *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_xvmc_destroy_context (xcb_connection_t   *c  /**< */,
-                          xcb_xvmc_context_t  context_id  /**< */);
+xcb_xvmc_destroy_context (xcb_connection_t   *c,
+                          xcb_xvmc_context_t  context_id);
 
 int
-xcb_xvmc_create_surface_sizeof (const void  *_buffer  /**< */);
+xcb_xvmc_create_surface_sizeof (const void  *_buffer);
 
 /**
  *
@@ -628,9 +628,9 @@ xcb_xvmc_create_surface_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xvmc_create_surface_cookie_t
-xcb_xvmc_create_surface (xcb_connection_t   *c  /**< */,
-                         xcb_xvmc_surface_t  surface_id  /**< */,
-                         xcb_xvmc_context_t  context_id  /**< */);
+xcb_xvmc_create_surface (xcb_connection_t   *c,
+                         xcb_xvmc_surface_t  surface_id,
+                         xcb_xvmc_context_t  context_id);
 
 /**
  *
@@ -644,18 +644,18 @@ xcb_xvmc_create_surface (xcb_connection_t   *c  /**< */,
  * placed in the event queue.
  */
 xcb_xvmc_create_surface_cookie_t
-xcb_xvmc_create_surface_unchecked (xcb_connection_t   *c  /**< */,
-                                   xcb_xvmc_surface_t  surface_id  /**< */,
-                                   xcb_xvmc_context_t  context_id  /**< */);
+xcb_xvmc_create_surface_unchecked (xcb_connection_t   *c,
+                                   xcb_xvmc_surface_t  surface_id,
+                                   xcb_xvmc_context_t  context_id);
 
 uint32_t *
-xcb_xvmc_create_surface_priv_data (const xcb_xvmc_create_surface_reply_t *R  /**< */);
+xcb_xvmc_create_surface_priv_data (const xcb_xvmc_create_surface_reply_t *R);
 
 int
-xcb_xvmc_create_surface_priv_data_length (const xcb_xvmc_create_surface_reply_t *R  /**< */);
+xcb_xvmc_create_surface_priv_data_length (const xcb_xvmc_create_surface_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_xvmc_create_surface_priv_data_end (const xcb_xvmc_create_surface_reply_t *R  /**< */);
+xcb_xvmc_create_surface_priv_data_end (const xcb_xvmc_create_surface_reply_t *R);
 
 /**
  * Return the reply
@@ -672,9 +672,9 @@ xcb_xvmc_create_surface_priv_data_end (const xcb_xvmc_create_surface_reply_t *R 
  * The returned value must be freed by the caller using free().
  */
 xcb_xvmc_create_surface_reply_t *
-xcb_xvmc_create_surface_reply (xcb_connection_t                  *c  /**< */,
+xcb_xvmc_create_surface_reply (xcb_connection_t                  *c,
                                xcb_xvmc_create_surface_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */);
+                               xcb_generic_error_t              **e);
 
 /**
  *
@@ -688,8 +688,8 @@ xcb_xvmc_create_surface_reply (xcb_connection_t                  *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_xvmc_destroy_surface_checked (xcb_connection_t   *c  /**< */,
-                                  xcb_xvmc_surface_t  surface_id  /**< */);
+xcb_xvmc_destroy_surface_checked (xcb_connection_t   *c,
+                                  xcb_xvmc_surface_t  surface_id);
 
 /**
  *
@@ -700,11 +700,11 @@ xcb_xvmc_destroy_surface_checked (xcb_connection_t   *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_xvmc_destroy_surface (xcb_connection_t   *c  /**< */,
-                          xcb_xvmc_surface_t  surface_id  /**< */);
+xcb_xvmc_destroy_surface (xcb_connection_t   *c,
+                          xcb_xvmc_surface_t  surface_id);
 
 int
-xcb_xvmc_create_subpicture_sizeof (const void  *_buffer  /**< */);
+xcb_xvmc_create_subpicture_sizeof (const void  *_buffer);
 
 /**
  *
@@ -715,12 +715,12 @@ xcb_xvmc_create_subpicture_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xvmc_create_subpicture_cookie_t
-xcb_xvmc_create_subpicture (xcb_connection_t      *c  /**< */,
-                            xcb_xvmc_subpicture_t  subpicture_id  /**< */,
-                            xcb_xvmc_context_t     context  /**< */,
-                            uint32_t               xvimage_id  /**< */,
-                            uint16_t               width  /**< */,
-                            uint16_t               height  /**< */);
+xcb_xvmc_create_subpicture (xcb_connection_t      *c,
+                            xcb_xvmc_subpicture_t  subpicture_id,
+                            xcb_xvmc_context_t     context,
+                            uint32_t               xvimage_id,
+                            uint16_t               width,
+                            uint16_t               height);
 
 /**
  *
@@ -734,21 +734,21 @@ xcb_xvmc_create_subpicture (xcb_connection_t      *c  /**< */,
  * placed in the event queue.
  */
 xcb_xvmc_create_subpicture_cookie_t
-xcb_xvmc_create_subpicture_unchecked (xcb_connection_t      *c  /**< */,
-                                      xcb_xvmc_subpicture_t  subpicture_id  /**< */,
-                                      xcb_xvmc_context_t     context  /**< */,
-                                      uint32_t               xvimage_id  /**< */,
-                                      uint16_t               width  /**< */,
-                                      uint16_t               height  /**< */);
+xcb_xvmc_create_subpicture_unchecked (xcb_connection_t      *c,
+                                      xcb_xvmc_subpicture_t  subpicture_id,
+                                      xcb_xvmc_context_t     context,
+                                      uint32_t               xvimage_id,
+                                      uint16_t               width,
+                                      uint16_t               height);
 
 uint32_t *
-xcb_xvmc_create_subpicture_priv_data (const xcb_xvmc_create_subpicture_reply_t *R  /**< */);
+xcb_xvmc_create_subpicture_priv_data (const xcb_xvmc_create_subpicture_reply_t *R);
 
 int
-xcb_xvmc_create_subpicture_priv_data_length (const xcb_xvmc_create_subpicture_reply_t *R  /**< */);
+xcb_xvmc_create_subpicture_priv_data_length (const xcb_xvmc_create_subpicture_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_xvmc_create_subpicture_priv_data_end (const xcb_xvmc_create_subpicture_reply_t *R  /**< */);
+xcb_xvmc_create_subpicture_priv_data_end (const xcb_xvmc_create_subpicture_reply_t *R);
 
 /**
  * Return the reply
@@ -765,9 +765,9 @@ xcb_xvmc_create_subpicture_priv_data_end (const xcb_xvmc_create_subpicture_reply
  * The returned value must be freed by the caller using free().
  */
 xcb_xvmc_create_subpicture_reply_t *
-xcb_xvmc_create_subpicture_reply (xcb_connection_t                     *c  /**< */,
+xcb_xvmc_create_subpicture_reply (xcb_connection_t                     *c,
                                   xcb_xvmc_create_subpicture_cookie_t   cookie  /**< */,
-                                  xcb_generic_error_t                 **e  /**< */);
+                                  xcb_generic_error_t                 **e);
 
 /**
  *
@@ -781,8 +781,8 @@ xcb_xvmc_create_subpicture_reply (xcb_connection_t                     *c  /**< 
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_xvmc_destroy_subpicture_checked (xcb_connection_t      *c  /**< */,
-                                     xcb_xvmc_subpicture_t  subpicture_id  /**< */);
+xcb_xvmc_destroy_subpicture_checked (xcb_connection_t      *c,
+                                     xcb_xvmc_subpicture_t  subpicture_id);
 
 /**
  *
@@ -793,11 +793,11 @@ xcb_xvmc_destroy_subpicture_checked (xcb_connection_t      *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_xvmc_destroy_subpicture (xcb_connection_t      *c  /**< */,
-                             xcb_xvmc_subpicture_t  subpicture_id  /**< */);
+xcb_xvmc_destroy_subpicture (xcb_connection_t      *c,
+                             xcb_xvmc_subpicture_t  subpicture_id);
 
 int
-xcb_xvmc_list_subpicture_types_sizeof (const void  *_buffer  /**< */);
+xcb_xvmc_list_subpicture_types_sizeof (const void  *_buffer);
 
 /**
  *
@@ -808,9 +808,9 @@ xcb_xvmc_list_subpicture_types_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xvmc_list_subpicture_types_cookie_t
-xcb_xvmc_list_subpicture_types (xcb_connection_t   *c  /**< */,
-                                xcb_xv_port_t       port_id  /**< */,
-                                xcb_xvmc_surface_t  surface_id  /**< */);
+xcb_xvmc_list_subpicture_types (xcb_connection_t   *c,
+                                xcb_xv_port_t       port_id,
+                                xcb_xvmc_surface_t  surface_id);
 
 /**
  *
@@ -824,18 +824,18 @@ xcb_xvmc_list_subpicture_types (xcb_connection_t   *c  /**< */,
  * placed in the event queue.
  */
 xcb_xvmc_list_subpicture_types_cookie_t
-xcb_xvmc_list_subpicture_types_unchecked (xcb_connection_t   *c  /**< */,
-                                          xcb_xv_port_t       port_id  /**< */,
-                                          xcb_xvmc_surface_t  surface_id  /**< */);
+xcb_xvmc_list_subpicture_types_unchecked (xcb_connection_t   *c,
+                                          xcb_xv_port_t       port_id,
+                                          xcb_xvmc_surface_t  surface_id);
 
 xcb_xv_image_format_info_t *
-xcb_xvmc_list_subpicture_types_types (const xcb_xvmc_list_subpicture_types_reply_t *R  /**< */);
+xcb_xvmc_list_subpicture_types_types (const xcb_xvmc_list_subpicture_types_reply_t *R);
 
 int
-xcb_xvmc_list_subpicture_types_types_length (const xcb_xvmc_list_subpicture_types_reply_t *R  /**< */);
+xcb_xvmc_list_subpicture_types_types_length (const xcb_xvmc_list_subpicture_types_reply_t *R);
 
 xcb_xv_image_format_info_iterator_t
-xcb_xvmc_list_subpicture_types_types_iterator (const xcb_xvmc_list_subpicture_types_reply_t *R  /**< */);
+xcb_xvmc_list_subpicture_types_types_iterator (const xcb_xvmc_list_subpicture_types_reply_t *R);
 
 /**
  * Return the reply
@@ -852,9 +852,9 @@ xcb_xvmc_list_subpicture_types_types_iterator (const xcb_xvmc_list_subpicture_ty
  * The returned value must be freed by the caller using free().
  */
 xcb_xvmc_list_subpicture_types_reply_t *
-xcb_xvmc_list_subpicture_types_reply (xcb_connection_t                         *c  /**< */,
+xcb_xvmc_list_subpicture_types_reply (xcb_connection_t                         *c,
                                       xcb_xvmc_list_subpicture_types_cookie_t   cookie  /**< */,
-                                      xcb_generic_error_t                     **e  /**< */);
+                                      xcb_generic_error_t                     **e);
 
 
 #ifdef __cplusplus
