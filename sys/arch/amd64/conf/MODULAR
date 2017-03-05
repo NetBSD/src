@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.7 2017/02/18 19:28:44 christos Exp $
+# $NetBSD: MODULAR,v 1.8 2017/03/05 17:20:24 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -11,6 +11,9 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no est0		at cpu0
 -no powernow0	at cpu0
 -no vmt0		at cpu0
+
+-no spkr*	at pcppi?	# PC speaker
+-no spkr*	at audio?	# PC speaker (synthesized)
 
 -no options 	COMPAT_15	# NetBSD 1.5,
 -no options 	COMPAT_16	# NetBSD 1.6,
