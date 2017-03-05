@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.31 2017/03/05 17:30:38 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.32 2017/03/05 19:23:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.31 2017/03/05 17:30:38 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.32 2017/03/05 19:23:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -131,7 +131,7 @@ hist_get(EditLine *el)
 		if ((hp = HIST_NEXT(el)) == NULL)
 			goto out;
 
-	hlen = wcslen(hp);
+	hlen = wcslen(hp) + 1;
 	blen = (size_t)(el->el_line.limit - el->el_line.buffer);
 	if (hlen > blen && !ch_enlargebufs(el, hlen))
 		goto out;
