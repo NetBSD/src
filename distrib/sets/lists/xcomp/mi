@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.190 2017/03/04 23:24:50 mrg Exp $
+#	 $NetBSD: mi,v 1.191 2017/03/05 09:27:52 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -745,7 +745,7 @@
 ./usr/X11R7/include/xcb/xcb_renderutil.h		-unknown-	xorg
 ./usr/X11R7/include/xcb/xcb_reply.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xcbext.h			-unknown-	xorg
-./usr/X11R7/include/xcb/xevie.h				-unknown-	xorg
+./usr/X11R7/include/xcb/xevie.h				-unknown-	obsolete
 ./usr/X11R7/include/xcb/xf86dri.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xfixes.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xinerama.h			-unknown-	xorg
@@ -1266,14 +1266,16 @@
 ./usr/X11R7/lib/libxcb-shm_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-sync.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-sync_p.a				-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libxcb-xevie.a				-unknown-	xorg,compatx11file
-./usr/X11R7/lib/libxcb-xevie_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libxcb-xevie.a				-unknown-	obsolete
+./usr/X11R7/lib/libxcb-xevie_p.a			-unknown-	obsolete
 ./usr/X11R7/lib/libxcb-xf86dri.a			-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xf86dri_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xfixes.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xfixes_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xinerama.a			-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xinerama_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libxcb-xinput.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libxcb-xinput_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xkb.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xkb_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xtest.a				-unknown-	xorg,compatx11file
@@ -1363,10 +1365,11 @@
 ./usr/X11R7/lib/pkgconfig/xcb-shape.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-shm.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-sync.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xcb-xevie.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xcb-xevie.pc			-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/xcb-xf86dri.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xfixes.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xinerama.pc		-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xcb-xinput.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xkb.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xtest.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xcb-xv.pc			-unknown-	xorg
@@ -1377,7 +1380,7 @@
 ./usr/X11R7/lib/pkgconfig/xcursor.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xdamage.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xdmcp.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xevie.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xevie.pc			-unknown-	obsolete
 ./usr/X11R7/lib/pkgconfig/xext.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xextproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xf86bigfontproto.pc		-unknown-	xorg
@@ -4172,14 +4175,14 @@
 ./usr/X11R7/share/xcb/sync.xml				-unknown-	xorg
 ./usr/X11R7/share/xcb/xc_misc.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xcb.xsd				-unknown-	xorg
-./usr/X11R7/share/xcb/xevie.xml				-unknown-	xorg
+./usr/X11R7/share/xcb/xevie.xml				-unknown-	obsolete
 ./usr/X11R7/share/xcb/xf86dri.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xf86vidmode.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xfixes.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinerama.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xinput.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xkb.xml				-unknown-	xorg
-./usr/X11R7/share/xcb/xprint.xml			-unknown-	xorg
+./usr/X11R7/share/xcb/xprint.xml			-unknown-	obsolete
 ./usr/X11R7/share/xcb/xproto.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xselinux.xml			-unknown-	xorg
 ./usr/X11R7/share/xcb/xtest.xml				-unknown-	xorg
@@ -4262,6 +4265,7 @@
 ./usr/libdata/lint/llib-lxcb-xf86dri.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xfixes.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xinerama.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxcb-xinput.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xkb.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xtest.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xv.ln			-unknown-	lint,xorg
