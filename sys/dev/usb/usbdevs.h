@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.719 2016/12/12 16:43:14 bouyer Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.720 2017/03/05 19:22:10 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.728 2016/12/12 16:41:08 bouyer Exp
+ *	NetBSD: usbdevs,v 1.729 2017/03/05 19:21:17 snj Exp
  */
 
 /*
@@ -890,6 +890,7 @@
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_5	0x821f		/* Bluetooth USB Host Controller MacBookAir 4,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_6	0x8281		/* Bluetooth USB Host Controller MacMini 5,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_7	0x828f		/* Bluetooth USB Host Controller MacBookAir 6,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_8	0x821d		/* Bluetooth USB Host Controller MacBookPro 9,2 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH	0x8300		/* Bluetooth */
 
 /* ArkMicroChips products */
