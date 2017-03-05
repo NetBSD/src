@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.87 2017/03/05 13:57:29 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.88 2017/03/05 20:45:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.87 2017/03/05 13:57:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.88 2017/03/05 20:45:49 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.87 2017/03/05 13:57:29 jdolecek Exp 
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/evcnt.h>
 
 #include <miscfs/specfs/specdev.h>
 
