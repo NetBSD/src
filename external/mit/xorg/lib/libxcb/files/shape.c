@@ -19,7 +19,7 @@
 xcb_extension_t xcb_shape_id = { "SHAPE", 0 };
 
 void
-xcb_shape_op_next (xcb_shape_op_iterator_t *i  /**< */)
+xcb_shape_op_next (xcb_shape_op_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -27,7 +27,7 @@ xcb_shape_op_next (xcb_shape_op_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_shape_op_end (xcb_shape_op_iterator_t i  /**< */)
+xcb_shape_op_end (xcb_shape_op_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -37,7 +37,7 @@ xcb_shape_op_end (xcb_shape_op_iterator_t i  /**< */)
 }
 
 void
-xcb_shape_kind_next (xcb_shape_kind_iterator_t *i  /**< */)
+xcb_shape_kind_next (xcb_shape_kind_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -45,7 +45,7 @@ xcb_shape_kind_next (xcb_shape_kind_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_shape_kind_end (xcb_shape_kind_iterator_t i  /**< */)
+xcb_shape_kind_end (xcb_shape_kind_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -55,13 +55,13 @@ xcb_shape_kind_end (xcb_shape_kind_iterator_t i  /**< */)
 }
 
 xcb_shape_query_version_cookie_t
-xcb_shape_query_version (xcb_connection_t *c  /**< */)
+xcb_shape_query_version (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -79,13 +79,13 @@ xcb_shape_query_version (xcb_connection_t *c  /**< */)
 }
 
 xcb_shape_query_version_cookie_t
-xcb_shape_query_version_unchecked (xcb_connection_t *c  /**< */)
+xcb_shape_query_version_unchecked (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -103,16 +103,16 @@ xcb_shape_query_version_unchecked (xcb_connection_t *c  /**< */)
 }
 
 xcb_shape_query_version_reply_t *
-xcb_shape_query_version_reply (xcb_connection_t                  *c  /**< */,
+xcb_shape_query_version_reply (xcb_connection_t                  *c,
                                xcb_shape_query_version_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */)
+                               xcb_generic_error_t              **e)
 {
     return (xcb_shape_query_version_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_shape_rectangles_sizeof (const void  *_buffer  /**< */,
-                             uint32_t     rectangles_len  /**< */)
+xcb_shape_rectangles_sizeof (const void  *_buffer,
+                             uint32_t     rectangles_len)
 {
     char *xcb_tmp = (char *)_buffer;
     unsigned int xcb_buffer_len = 0;
@@ -142,21 +142,21 @@ xcb_shape_rectangles_sizeof (const void  *_buffer  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_rectangles_checked (xcb_connection_t      *c  /**< */,
-                              xcb_shape_op_t         operation  /**< */,
-                              xcb_shape_kind_t       destination_kind  /**< */,
-                              uint8_t                ordering  /**< */,
-                              xcb_window_t           destination_window  /**< */,
-                              int16_t                x_offset  /**< */,
-                              int16_t                y_offset  /**< */,
-                              uint32_t               rectangles_len  /**< */,
-                              const xcb_rectangle_t *rectangles  /**< */)
+xcb_shape_rectangles_checked (xcb_connection_t      *c,
+                              xcb_shape_op_t         operation,
+                              xcb_shape_kind_t       destination_kind,
+                              uint8_t                ordering,
+                              xcb_window_t           destination_window,
+                              int16_t                x_offset,
+                              int16_t                y_offset,
+                              uint32_t               rectangles_len,
+                              const xcb_rectangle_t *rectangles)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 4,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_RECTANGLES,
-        /* isvoid */ 1
+        .count = 4,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_RECTANGLES,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[6];
@@ -186,21 +186,21 @@ xcb_shape_rectangles_checked (xcb_connection_t      *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_rectangles (xcb_connection_t      *c  /**< */,
-                      xcb_shape_op_t         operation  /**< */,
-                      xcb_shape_kind_t       destination_kind  /**< */,
-                      uint8_t                ordering  /**< */,
-                      xcb_window_t           destination_window  /**< */,
-                      int16_t                x_offset  /**< */,
-                      int16_t                y_offset  /**< */,
-                      uint32_t               rectangles_len  /**< */,
-                      const xcb_rectangle_t *rectangles  /**< */)
+xcb_shape_rectangles (xcb_connection_t      *c,
+                      xcb_shape_op_t         operation,
+                      xcb_shape_kind_t       destination_kind,
+                      uint8_t                ordering,
+                      xcb_window_t           destination_window,
+                      int16_t                x_offset,
+                      int16_t                y_offset,
+                      uint32_t               rectangles_len,
+                      const xcb_rectangle_t *rectangles)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 4,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_RECTANGLES,
-        /* isvoid */ 1
+        .count = 4,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_RECTANGLES,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[6];
@@ -229,20 +229,42 @@ xcb_shape_rectangles (xcb_connection_t      *c  /**< */,
     return xcb_ret;
 }
 
+xcb_rectangle_t *
+xcb_shape_rectangles_rectangles (const xcb_shape_rectangles_request_t *R)
+{
+    return (xcb_rectangle_t *) (R + 1);
+}
+
+int
+xcb_shape_rectangles_rectangles_length (const xcb_shape_rectangles_request_t *R)
+{
+    return (((R->length * 4) - sizeof(xcb_shape_rectangles_request_t))/sizeof(xcb_rectangle_t));
+}
+
+xcb_rectangle_iterator_t
+xcb_shape_rectangles_rectangles_iterator (const xcb_shape_rectangles_request_t *R)
+{
+    xcb_rectangle_iterator_t i;
+    i.data = (xcb_rectangle_t *) (R + 1);
+    i.rem = (((R->length * 4) - sizeof(xcb_shape_rectangles_request_t))/sizeof(xcb_rectangle_t));
+    i.index = (char *) i.data - (char *) R;
+    return i;
+}
+
 xcb_void_cookie_t
-xcb_shape_mask_checked (xcb_connection_t *c  /**< */,
-                        xcb_shape_op_t    operation  /**< */,
-                        xcb_shape_kind_t  destination_kind  /**< */,
-                        xcb_window_t      destination_window  /**< */,
-                        int16_t           x_offset  /**< */,
-                        int16_t           y_offset  /**< */,
-                        xcb_pixmap_t      source_bitmap  /**< */)
+xcb_shape_mask_checked (xcb_connection_t *c,
+                        xcb_shape_op_t    operation,
+                        xcb_shape_kind_t  destination_kind,
+                        xcb_window_t      destination_window,
+                        int16_t           x_offset,
+                        int16_t           y_offset,
+                        xcb_pixmap_t      source_bitmap)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_MASK,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_MASK,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -267,19 +289,19 @@ xcb_shape_mask_checked (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_mask (xcb_connection_t *c  /**< */,
-                xcb_shape_op_t    operation  /**< */,
-                xcb_shape_kind_t  destination_kind  /**< */,
-                xcb_window_t      destination_window  /**< */,
-                int16_t           x_offset  /**< */,
-                int16_t           y_offset  /**< */,
-                xcb_pixmap_t      source_bitmap  /**< */)
+xcb_shape_mask (xcb_connection_t *c,
+                xcb_shape_op_t    operation,
+                xcb_shape_kind_t  destination_kind,
+                xcb_window_t      destination_window,
+                int16_t           x_offset,
+                int16_t           y_offset,
+                xcb_pixmap_t      source_bitmap)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_MASK,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_MASK,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -304,20 +326,20 @@ xcb_shape_mask (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_combine_checked (xcb_connection_t *c  /**< */,
-                           xcb_shape_op_t    operation  /**< */,
-                           xcb_shape_kind_t  destination_kind  /**< */,
-                           xcb_shape_kind_t  source_kind  /**< */,
-                           xcb_window_t      destination_window  /**< */,
-                           int16_t           x_offset  /**< */,
-                           int16_t           y_offset  /**< */,
-                           xcb_window_t      source_window  /**< */)
+xcb_shape_combine_checked (xcb_connection_t *c,
+                           xcb_shape_op_t    operation,
+                           xcb_shape_kind_t  destination_kind,
+                           xcb_shape_kind_t  source_kind,
+                           xcb_window_t      destination_window,
+                           int16_t           x_offset,
+                           int16_t           y_offset,
+                           xcb_window_t      source_window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_COMBINE,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_COMBINE,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -343,20 +365,20 @@ xcb_shape_combine_checked (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_combine (xcb_connection_t *c  /**< */,
-                   xcb_shape_op_t    operation  /**< */,
-                   xcb_shape_kind_t  destination_kind  /**< */,
-                   xcb_shape_kind_t  source_kind  /**< */,
-                   xcb_window_t      destination_window  /**< */,
-                   int16_t           x_offset  /**< */,
-                   int16_t           y_offset  /**< */,
-                   xcb_window_t      source_window  /**< */)
+xcb_shape_combine (xcb_connection_t *c,
+                   xcb_shape_op_t    operation,
+                   xcb_shape_kind_t  destination_kind,
+                   xcb_shape_kind_t  source_kind,
+                   xcb_window_t      destination_window,
+                   int16_t           x_offset,
+                   int16_t           y_offset,
+                   xcb_window_t      source_window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_COMBINE,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_COMBINE,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -382,17 +404,17 @@ xcb_shape_combine (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_offset_checked (xcb_connection_t *c  /**< */,
-                          xcb_shape_kind_t  destination_kind  /**< */,
-                          xcb_window_t      destination_window  /**< */,
-                          int16_t           x_offset  /**< */,
-                          int16_t           y_offset  /**< */)
+xcb_shape_offset_checked (xcb_connection_t *c,
+                          xcb_shape_kind_t  destination_kind,
+                          xcb_window_t      destination_window,
+                          int16_t           x_offset,
+                          int16_t           y_offset)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_OFFSET,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_OFFSET,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -415,17 +437,17 @@ xcb_shape_offset_checked (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_offset (xcb_connection_t *c  /**< */,
-                  xcb_shape_kind_t  destination_kind  /**< */,
-                  xcb_window_t      destination_window  /**< */,
-                  int16_t           x_offset  /**< */,
-                  int16_t           y_offset  /**< */)
+xcb_shape_offset (xcb_connection_t *c,
+                  xcb_shape_kind_t  destination_kind,
+                  xcb_window_t      destination_window,
+                  int16_t           x_offset,
+                  int16_t           y_offset)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_OFFSET,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_OFFSET,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -448,14 +470,14 @@ xcb_shape_offset (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_query_extents_cookie_t
-xcb_shape_query_extents (xcb_connection_t *c  /**< */,
-                         xcb_window_t      destination_window  /**< */)
+xcb_shape_query_extents (xcb_connection_t *c,
+                         xcb_window_t      destination_window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_QUERY_EXTENTS,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_QUERY_EXTENTS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -474,14 +496,14 @@ xcb_shape_query_extents (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_query_extents_cookie_t
-xcb_shape_query_extents_unchecked (xcb_connection_t *c  /**< */,
-                                   xcb_window_t      destination_window  /**< */)
+xcb_shape_query_extents_unchecked (xcb_connection_t *c,
+                                   xcb_window_t      destination_window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_QUERY_EXTENTS,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_QUERY_EXTENTS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -500,23 +522,23 @@ xcb_shape_query_extents_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_query_extents_reply_t *
-xcb_shape_query_extents_reply (xcb_connection_t                  *c  /**< */,
+xcb_shape_query_extents_reply (xcb_connection_t                  *c,
                                xcb_shape_query_extents_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */)
+                               xcb_generic_error_t              **e)
 {
     return (xcb_shape_query_extents_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_void_cookie_t
-xcb_shape_select_input_checked (xcb_connection_t *c  /**< */,
-                                xcb_window_t      destination_window  /**< */,
-                                uint8_t           enable  /**< */)
+xcb_shape_select_input_checked (xcb_connection_t *c,
+                                xcb_window_t      destination_window,
+                                uint8_t           enable)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_SELECT_INPUT,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_SELECT_INPUT,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -537,15 +559,15 @@ xcb_shape_select_input_checked (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_shape_select_input (xcb_connection_t *c  /**< */,
-                        xcb_window_t      destination_window  /**< */,
-                        uint8_t           enable  /**< */)
+xcb_shape_select_input (xcb_connection_t *c,
+                        xcb_window_t      destination_window,
+                        uint8_t           enable)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_SELECT_INPUT,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_SELECT_INPUT,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -566,14 +588,14 @@ xcb_shape_select_input (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_input_selected_cookie_t
-xcb_shape_input_selected (xcb_connection_t *c  /**< */,
-                          xcb_window_t      destination_window  /**< */)
+xcb_shape_input_selected (xcb_connection_t *c,
+                          xcb_window_t      destination_window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_INPUT_SELECTED,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_INPUT_SELECTED,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -592,14 +614,14 @@ xcb_shape_input_selected (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_input_selected_cookie_t
-xcb_shape_input_selected_unchecked (xcb_connection_t *c  /**< */,
-                                    xcb_window_t      destination_window  /**< */)
+xcb_shape_input_selected_unchecked (xcb_connection_t *c,
+                                    xcb_window_t      destination_window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_INPUT_SELECTED,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_INPUT_SELECTED,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -618,15 +640,15 @@ xcb_shape_input_selected_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_input_selected_reply_t *
-xcb_shape_input_selected_reply (xcb_connection_t                   *c  /**< */,
+xcb_shape_input_selected_reply (xcb_connection_t                   *c,
                                 xcb_shape_input_selected_cookie_t   cookie  /**< */,
-                                xcb_generic_error_t               **e  /**< */)
+                                xcb_generic_error_t               **e)
 {
     return (xcb_shape_input_selected_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_shape_get_rectangles_sizeof (const void  *_buffer  /**< */)
+xcb_shape_get_rectangles_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_shape_get_rectangles_reply_t *_aux = (xcb_shape_get_rectangles_reply_t *)_buffer;
@@ -657,15 +679,15 @@ xcb_shape_get_rectangles_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_shape_get_rectangles_cookie_t
-xcb_shape_get_rectangles (xcb_connection_t *c  /**< */,
-                          xcb_window_t      window  /**< */,
-                          xcb_shape_kind_t  source_kind  /**< */)
+xcb_shape_get_rectangles (xcb_connection_t *c,
+                          xcb_window_t      window,
+                          xcb_shape_kind_t  source_kind)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_GET_RECTANGLES,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_GET_RECTANGLES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -686,15 +708,15 @@ xcb_shape_get_rectangles (xcb_connection_t *c  /**< */,
 }
 
 xcb_shape_get_rectangles_cookie_t
-xcb_shape_get_rectangles_unchecked (xcb_connection_t *c  /**< */,
-                                    xcb_window_t      window  /**< */,
-                                    xcb_shape_kind_t  source_kind  /**< */)
+xcb_shape_get_rectangles_unchecked (xcb_connection_t *c,
+                                    xcb_window_t      window,
+                                    xcb_shape_kind_t  source_kind)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_shape_id,
-        /* opcode */ XCB_SHAPE_GET_RECTANGLES,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_shape_id,
+        .opcode = XCB_SHAPE_GET_RECTANGLES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -715,19 +737,19 @@ xcb_shape_get_rectangles_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_rectangle_t *
-xcb_shape_get_rectangles_rectangles (const xcb_shape_get_rectangles_reply_t *R  /**< */)
+xcb_shape_get_rectangles_rectangles (const xcb_shape_get_rectangles_reply_t *R)
 {
     return (xcb_rectangle_t *) (R + 1);
 }
 
 int
-xcb_shape_get_rectangles_rectangles_length (const xcb_shape_get_rectangles_reply_t *R  /**< */)
+xcb_shape_get_rectangles_rectangles_length (const xcb_shape_get_rectangles_reply_t *R)
 {
     return R->rectangles_len;
 }
 
 xcb_rectangle_iterator_t
-xcb_shape_get_rectangles_rectangles_iterator (const xcb_shape_get_rectangles_reply_t *R  /**< */)
+xcb_shape_get_rectangles_rectangles_iterator (const xcb_shape_get_rectangles_reply_t *R)
 {
     xcb_rectangle_iterator_t i;
     i.data = (xcb_rectangle_t *) (R + 1);
@@ -737,9 +759,9 @@ xcb_shape_get_rectangles_rectangles_iterator (const xcb_shape_get_rectangles_rep
 }
 
 xcb_shape_get_rectangles_reply_t *
-xcb_shape_get_rectangles_reply (xcb_connection_t                   *c  /**< */,
+xcb_shape_get_rectangles_reply (xcb_connection_t                   *c,
                                 xcb_shape_get_rectangles_cookie_t   cookie  /**< */,
-                                xcb_generic_error_t               **e  /**< */)
+                                xcb_generic_error_t               **e)
 {
     return (xcb_shape_get_rectangles_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }

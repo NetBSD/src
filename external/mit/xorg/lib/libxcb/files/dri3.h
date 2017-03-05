@@ -28,7 +28,7 @@ extern xcb_extension_t xcb_dri3_id;
  * @brief xcb_dri3_query_version_cookie_t
  **/
 typedef struct xcb_dri3_query_version_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri3_query_version_cookie_t;
 
 /** Opcode for xcb_dri3_query_version. */
@@ -38,30 +38,30 @@ typedef struct xcb_dri3_query_version_cookie_t {
  * @brief xcb_dri3_query_version_request_t
  **/
 typedef struct xcb_dri3_query_version_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t major_version; /**<  */
-    uint32_t minor_version; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t major_version;
+    uint32_t minor_version;
 } xcb_dri3_query_version_request_t;
 
 /**
  * @brief xcb_dri3_query_version_reply_t
  **/
 typedef struct xcb_dri3_query_version_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t major_version; /**<  */
-    uint32_t minor_version; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t major_version;
+    uint32_t minor_version;
 } xcb_dri3_query_version_reply_t;
 
 /**
  * @brief xcb_dri3_open_cookie_t
  **/
 typedef struct xcb_dri3_open_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri3_open_cookie_t;
 
 /** Opcode for xcb_dri3_open. */
@@ -71,22 +71,22 @@ typedef struct xcb_dri3_open_cookie_t {
  * @brief xcb_dri3_open_request_t
  **/
 typedef struct xcb_dri3_open_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       provider; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       provider;
 } xcb_dri3_open_request_t;
 
 /**
  * @brief xcb_dri3_open_reply_t
  **/
 typedef struct xcb_dri3_open_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  nfd; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint8_t  pad0[24]; /**<  */
+    uint8_t  response_type;
+    uint8_t  nfd;
+    uint16_t sequence;
+    uint32_t length;
+    uint8_t  pad0[24];
 } xcb_dri3_open_reply_t;
 
 /** Opcode for xcb_dri3_pixmap_from_buffer. */
@@ -96,24 +96,24 @@ typedef struct xcb_dri3_open_reply_t {
  * @brief xcb_dri3_pixmap_from_buffer_request_t
  **/
 typedef struct xcb_dri3_pixmap_from_buffer_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_pixmap_t   pixmap; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       size; /**<  */
-    uint16_t       width; /**<  */
-    uint16_t       height; /**<  */
-    uint16_t       stride; /**<  */
-    uint8_t        depth; /**<  */
-    uint8_t        bpp; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_pixmap_t   pixmap;
+    xcb_drawable_t drawable;
+    uint32_t       size;
+    uint16_t       width;
+    uint16_t       height;
+    uint16_t       stride;
+    uint8_t        depth;
+    uint8_t        bpp;
 } xcb_dri3_pixmap_from_buffer_request_t;
 
 /**
  * @brief xcb_dri3_buffer_from_pixmap_cookie_t
  **/
 typedef struct xcb_dri3_buffer_from_pixmap_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri3_buffer_from_pixmap_cookie_t;
 
 /** Opcode for xcb_dri3_buffer_from_pixmap. */
@@ -123,27 +123,27 @@ typedef struct xcb_dri3_buffer_from_pixmap_cookie_t {
  * @brief xcb_dri3_buffer_from_pixmap_request_t
  **/
 typedef struct xcb_dri3_buffer_from_pixmap_request_t {
-    uint8_t      major_opcode; /**<  */
-    uint8_t      minor_opcode; /**<  */
-    uint16_t     length; /**<  */
-    xcb_pixmap_t pixmap; /**<  */
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    xcb_pixmap_t pixmap;
 } xcb_dri3_buffer_from_pixmap_request_t;
 
 /**
  * @brief xcb_dri3_buffer_from_pixmap_reply_t
  **/
 typedef struct xcb_dri3_buffer_from_pixmap_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  nfd; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t size; /**<  */
-    uint16_t width; /**<  */
-    uint16_t height; /**<  */
-    uint16_t stride; /**<  */
-    uint8_t  depth; /**<  */
-    uint8_t  bpp; /**<  */
-    uint8_t  pad0[12]; /**<  */
+    uint8_t  response_type;
+    uint8_t  nfd;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t size;
+    uint16_t width;
+    uint16_t height;
+    uint16_t stride;
+    uint8_t  depth;
+    uint8_t  bpp;
+    uint8_t  pad0[12];
 } xcb_dri3_buffer_from_pixmap_reply_t;
 
 /** Opcode for xcb_dri3_fence_from_fd. */
@@ -153,20 +153,20 @@ typedef struct xcb_dri3_buffer_from_pixmap_reply_t {
  * @brief xcb_dri3_fence_from_fd_request_t
  **/
 typedef struct xcb_dri3_fence_from_fd_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       fence; /**<  */
-    uint8_t        initially_triggered; /**<  */
-    uint8_t        pad0[3]; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       fence;
+    uint8_t        initially_triggered;
+    uint8_t        pad0[3];
 } xcb_dri3_fence_from_fd_request_t;
 
 /**
  * @brief xcb_dri3_fd_from_fence_cookie_t
  **/
 typedef struct xcb_dri3_fd_from_fence_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri3_fd_from_fence_cookie_t;
 
 /** Opcode for xcb_dri3_fd_from_fence. */
@@ -176,22 +176,22 @@ typedef struct xcb_dri3_fd_from_fence_cookie_t {
  * @brief xcb_dri3_fd_from_fence_request_t
  **/
 typedef struct xcb_dri3_fd_from_fence_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       fence; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       fence;
 } xcb_dri3_fd_from_fence_request_t;
 
 /**
  * @brief xcb_dri3_fd_from_fence_reply_t
  **/
 typedef struct xcb_dri3_fd_from_fence_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  nfd; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint8_t  pad0[24]; /**<  */
+    uint8_t  response_type;
+    uint8_t  nfd;
+    uint16_t sequence;
+    uint32_t length;
+    uint8_t  pad0[24];
 } xcb_dri3_fd_from_fence_reply_t;
 
 /**
@@ -203,9 +203,9 @@ typedef struct xcb_dri3_fd_from_fence_reply_t {
  *
  */
 xcb_dri3_query_version_cookie_t
-xcb_dri3_query_version (xcb_connection_t *c  /**< */,
-                        uint32_t          major_version  /**< */,
-                        uint32_t          minor_version  /**< */);
+xcb_dri3_query_version (xcb_connection_t *c,
+                        uint32_t          major_version,
+                        uint32_t          minor_version);
 
 /**
  *
@@ -219,9 +219,9 @@ xcb_dri3_query_version (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri3_query_version_cookie_t
-xcb_dri3_query_version_unchecked (xcb_connection_t *c  /**< */,
-                                  uint32_t          major_version  /**< */,
-                                  uint32_t          minor_version  /**< */);
+xcb_dri3_query_version_unchecked (xcb_connection_t *c,
+                                  uint32_t          major_version,
+                                  uint32_t          minor_version);
 
 /**
  * Return the reply
@@ -238,9 +238,9 @@ xcb_dri3_query_version_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri3_query_version_reply_t *
-xcb_dri3_query_version_reply (xcb_connection_t                 *c  /**< */,
+xcb_dri3_query_version_reply (xcb_connection_t                 *c,
                               xcb_dri3_query_version_cookie_t   cookie  /**< */,
-                              xcb_generic_error_t             **e  /**< */);
+                              xcb_generic_error_t             **e);
 
 /**
  *
@@ -251,9 +251,9 @@ xcb_dri3_query_version_reply (xcb_connection_t                 *c  /**< */,
  *
  */
 xcb_dri3_open_cookie_t
-xcb_dri3_open (xcb_connection_t *c  /**< */,
-               xcb_drawable_t    drawable  /**< */,
-               uint32_t          provider  /**< */);
+xcb_dri3_open (xcb_connection_t *c,
+               xcb_drawable_t    drawable,
+               uint32_t          provider);
 
 /**
  *
@@ -267,9 +267,9 @@ xcb_dri3_open (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri3_open_cookie_t
-xcb_dri3_open_unchecked (xcb_connection_t *c  /**< */,
-                         xcb_drawable_t    drawable  /**< */,
-                         uint32_t          provider  /**< */);
+xcb_dri3_open_unchecked (xcb_connection_t *c,
+                         xcb_drawable_t    drawable,
+                         uint32_t          provider);
 
 /**
  * Return the reply
@@ -286,9 +286,9 @@ xcb_dri3_open_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri3_open_reply_t *
-xcb_dri3_open_reply (xcb_connection_t        *c  /**< */,
+xcb_dri3_open_reply (xcb_connection_t        *c,
                      xcb_dri3_open_cookie_t   cookie  /**< */,
-                     xcb_generic_error_t    **e  /**< */);
+                     xcb_generic_error_t    **e);
 
 /**
  * Return the reply fds
@@ -301,7 +301,7 @@ xcb_dri3_open_reply (xcb_connection_t        *c  /**< */,
  */
 int *
 xcb_dri3_open_reply_fds (xcb_connection_t       *c  /**< */,
-                         xcb_dri3_open_reply_t  *reply  /**< */);
+                         xcb_dri3_open_reply_t  *reply);
 
 /**
  *
@@ -315,16 +315,16 @@ xcb_dri3_open_reply_fds (xcb_connection_t       *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_dri3_pixmap_from_buffer_checked (xcb_connection_t *c  /**< */,
-                                     xcb_pixmap_t      pixmap  /**< */,
-                                     xcb_drawable_t    drawable  /**< */,
-                                     uint32_t          size  /**< */,
-                                     uint16_t          width  /**< */,
-                                     uint16_t          height  /**< */,
-                                     uint16_t          stride  /**< */,
-                                     uint8_t           depth  /**< */,
-                                     uint8_t           bpp  /**< */,
-                                     int32_t           pixmap_fd  /**< */);
+xcb_dri3_pixmap_from_buffer_checked (xcb_connection_t *c,
+                                     xcb_pixmap_t      pixmap,
+                                     xcb_drawable_t    drawable,
+                                     uint32_t          size,
+                                     uint16_t          width,
+                                     uint16_t          height,
+                                     uint16_t          stride,
+                                     uint8_t           depth,
+                                     uint8_t           bpp,
+                                     int32_t           pixmap_fd);
 
 /**
  *
@@ -335,16 +335,16 @@ xcb_dri3_pixmap_from_buffer_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_dri3_pixmap_from_buffer (xcb_connection_t *c  /**< */,
-                             xcb_pixmap_t      pixmap  /**< */,
-                             xcb_drawable_t    drawable  /**< */,
-                             uint32_t          size  /**< */,
-                             uint16_t          width  /**< */,
-                             uint16_t          height  /**< */,
-                             uint16_t          stride  /**< */,
-                             uint8_t           depth  /**< */,
-                             uint8_t           bpp  /**< */,
-                             int32_t           pixmap_fd  /**< */);
+xcb_dri3_pixmap_from_buffer (xcb_connection_t *c,
+                             xcb_pixmap_t      pixmap,
+                             xcb_drawable_t    drawable,
+                             uint32_t          size,
+                             uint16_t          width,
+                             uint16_t          height,
+                             uint16_t          stride,
+                             uint8_t           depth,
+                             uint8_t           bpp,
+                             int32_t           pixmap_fd);
 
 /**
  *
@@ -355,8 +355,8 @@ xcb_dri3_pixmap_from_buffer (xcb_connection_t *c  /**< */,
  *
  */
 xcb_dri3_buffer_from_pixmap_cookie_t
-xcb_dri3_buffer_from_pixmap (xcb_connection_t *c  /**< */,
-                             xcb_pixmap_t      pixmap  /**< */);
+xcb_dri3_buffer_from_pixmap (xcb_connection_t *c,
+                             xcb_pixmap_t      pixmap);
 
 /**
  *
@@ -370,8 +370,8 @@ xcb_dri3_buffer_from_pixmap (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri3_buffer_from_pixmap_cookie_t
-xcb_dri3_buffer_from_pixmap_unchecked (xcb_connection_t *c  /**< */,
-                                       xcb_pixmap_t      pixmap  /**< */);
+xcb_dri3_buffer_from_pixmap_unchecked (xcb_connection_t *c,
+                                       xcb_pixmap_t      pixmap);
 
 /**
  * Return the reply
@@ -388,9 +388,9 @@ xcb_dri3_buffer_from_pixmap_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri3_buffer_from_pixmap_reply_t *
-xcb_dri3_buffer_from_pixmap_reply (xcb_connection_t                      *c  /**< */,
+xcb_dri3_buffer_from_pixmap_reply (xcb_connection_t                      *c,
                                    xcb_dri3_buffer_from_pixmap_cookie_t   cookie  /**< */,
-                                   xcb_generic_error_t                  **e  /**< */);
+                                   xcb_generic_error_t                  **e);
 
 /**
  * Return the reply fds
@@ -403,7 +403,7 @@ xcb_dri3_buffer_from_pixmap_reply (xcb_connection_t                      *c  /**
  */
 int *
 xcb_dri3_buffer_from_pixmap_reply_fds (xcb_connection_t                     *c  /**< */,
-                                       xcb_dri3_buffer_from_pixmap_reply_t  *reply  /**< */);
+                                       xcb_dri3_buffer_from_pixmap_reply_t  *reply);
 
 /**
  *
@@ -417,11 +417,11 @@ xcb_dri3_buffer_from_pixmap_reply_fds (xcb_connection_t                     *c  
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_dri3_fence_from_fd_checked (xcb_connection_t *c  /**< */,
-                                xcb_drawable_t    drawable  /**< */,
-                                uint32_t          fence  /**< */,
-                                uint8_t           initially_triggered  /**< */,
-                                int32_t           fence_fd  /**< */);
+xcb_dri3_fence_from_fd_checked (xcb_connection_t *c,
+                                xcb_drawable_t    drawable,
+                                uint32_t          fence,
+                                uint8_t           initially_triggered,
+                                int32_t           fence_fd);
 
 /**
  *
@@ -432,11 +432,11 @@ xcb_dri3_fence_from_fd_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_dri3_fence_from_fd (xcb_connection_t *c  /**< */,
-                        xcb_drawable_t    drawable  /**< */,
-                        uint32_t          fence  /**< */,
-                        uint8_t           initially_triggered  /**< */,
-                        int32_t           fence_fd  /**< */);
+xcb_dri3_fence_from_fd (xcb_connection_t *c,
+                        xcb_drawable_t    drawable,
+                        uint32_t          fence,
+                        uint8_t           initially_triggered,
+                        int32_t           fence_fd);
 
 /**
  *
@@ -447,9 +447,9 @@ xcb_dri3_fence_from_fd (xcb_connection_t *c  /**< */,
  *
  */
 xcb_dri3_fd_from_fence_cookie_t
-xcb_dri3_fd_from_fence (xcb_connection_t *c  /**< */,
-                        xcb_drawable_t    drawable  /**< */,
-                        uint32_t          fence  /**< */);
+xcb_dri3_fd_from_fence (xcb_connection_t *c,
+                        xcb_drawable_t    drawable,
+                        uint32_t          fence);
 
 /**
  *
@@ -463,9 +463,9 @@ xcb_dri3_fd_from_fence (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri3_fd_from_fence_cookie_t
-xcb_dri3_fd_from_fence_unchecked (xcb_connection_t *c  /**< */,
-                                  xcb_drawable_t    drawable  /**< */,
-                                  uint32_t          fence  /**< */);
+xcb_dri3_fd_from_fence_unchecked (xcb_connection_t *c,
+                                  xcb_drawable_t    drawable,
+                                  uint32_t          fence);
 
 /**
  * Return the reply
@@ -482,9 +482,9 @@ xcb_dri3_fd_from_fence_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri3_fd_from_fence_reply_t *
-xcb_dri3_fd_from_fence_reply (xcb_connection_t                 *c  /**< */,
+xcb_dri3_fd_from_fence_reply (xcb_connection_t                 *c,
                               xcb_dri3_fd_from_fence_cookie_t   cookie  /**< */,
-                              xcb_generic_error_t             **e  /**< */);
+                              xcb_generic_error_t             **e);
 
 /**
  * Return the reply fds
@@ -497,7 +497,7 @@ xcb_dri3_fd_from_fence_reply (xcb_connection_t                 *c  /**< */,
  */
 int *
 xcb_dri3_fd_from_fence_reply_fds (xcb_connection_t                *c  /**< */,
-                                  xcb_dri3_fd_from_fence_reply_t  *reply  /**< */);
+                                  xcb_dri3_fd_from_fence_reply_t  *reply);
 
 
 #ifdef __cplusplus
