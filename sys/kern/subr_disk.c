@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.117 2017/02/28 00:33:36 jakllsch Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.118 2017/03/05 23:07:12 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.117 2017/02/28 00:33:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.118 2017/03/05 23:07:12 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -272,6 +272,16 @@ disk_destroy(struct disk *diskp)
 
 	mutex_destroy(&diskp->dk_openlock);
 	mutex_destroy(&diskp->dk_rawlock);
+}
+
+/*
+ * Mark the disk as having work queued for metrics collection.
+ */
+void
+disk_wait(struct disk *diskp)
+{
+
+	iostat_wait(diskp->dk_stats);
 }
 
 /*
