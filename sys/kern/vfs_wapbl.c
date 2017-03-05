@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.86 2016/11/10 20:56:32 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.87 2017/03/05 13:57:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.86 2016/11/10 20:56:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.87 2017/03/05 13:57:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -176,14 +176,21 @@ struct wapbl {
 	 * wl_count or wl_bufs or head or tail
 	 */
 
+#if _KERNEL
 	/*
 	 * Callback called from within the flush routine to flush any extra
 	 * bits.  Note that flush may be skipped without calling this if
 	 * there are no outstanding buffers in the transaction.
 	 */
-#if _KERNEL
 	wapbl_flush_fn_t wl_flush;	/* r	*/
 	wapbl_flush_fn_t wl_flush_abort;/* r	*/
+
+	/* Event counters */
+	char wl_ev_group[EVCNT_STRING_MAX];	/* r	*/
+	struct evcnt wl_ev_commit;		/* l	*/
+	struct evcnt wl_ev_journalwrite;	/* l	*/
+	struct evcnt wl_ev_metawrite;		/* lm	*/
+	struct evcnt wl_ev_cacheflush;		/* l	*/
 #endif
 
 	size_t wl_bufbytes;	/* m:	Byte count of pages in wl_bufs */
@@ -270,6 +277,9 @@ static inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
 static void wapbl_deallocation_free(struct wapbl *, struct wapbl_dealloc *,
 	bool);
 
+static void wapbl_evcnt_init(struct wapbl *);
+static void wapbl_evcnt_free(struct wapbl *);
+
 #if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
 #endif
@@ -350,6 +360,34 @@ wapbl_fini(void)
 	pool_destroy(&wapbl_entry_pool);
 
 	return 0;
+}
+
+static void
+wapbl_evcnt_init(struct wapbl *wl)
+{
+	snprintf(wl->wl_ev_group, sizeof(wl->wl_ev_group),
+	    "wapbl fsid 0x%x/0x%x",
+	    wl->wl_mount->mnt_stat.f_fsidx.__fsid_val[0],
+	    wl->wl_mount->mnt_stat.f_fsidx.__fsid_val[1]
+	);
+
+	evcnt_attach_dynamic(&wl->wl_ev_commit, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "commit");
+	evcnt_attach_dynamic(&wl->wl_ev_journalwrite, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "journal sync block write");
+	evcnt_attach_dynamic(&wl->wl_ev_metawrite, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "metadata finished block write");
+	evcnt_attach_dynamic(&wl->wl_ev_cacheflush, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "cache flush");
+}
+
+static void
+wapbl_evcnt_free(struct wapbl *wl)
+{
+	evcnt_detach(&wl->wl_ev_commit);
+	evcnt_detach(&wl->wl_ev_journalwrite);
+	evcnt_detach(&wl->wl_ev_metawrite);
+	evcnt_detach(&wl->wl_ev_cacheflush);
 }
 
 static int
@@ -521,6 +559,8 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wl->wl_buffer_used = 0;
 
 	wapbl_inodetrk_init(wl, WAPBL_INODETRK_SIZE);
+
+	wapbl_evcnt_init(wl);
 
 	/* Initialize the commit header */
 	{
@@ -746,6 +786,8 @@ wapbl_stop(struct wapbl *wl, int force)
 	wapbl_free(wl->wl_buffer, MAXPHYS);
 	wapbl_inodetrk_free(wl);
 
+	wapbl_evcnt_free(wl);
+
 	cv_destroy(&wl->wl_reclaimable_cv);
 	mutex_destroy(&wl->wl_mtx);
 	rw_destroy(&wl->wl_rwlock);
@@ -857,6 +899,8 @@ wapbl_buffered_flush(struct wapbl *wl)
 	error = wapbl_doio(wl->wl_buffer, wl->wl_buffer_used,
 	    wl->wl_devvp, wl->wl_buffer_dblk, B_WRITE);
 	wl->wl_buffer_used = 0;
+
+	wl->wl_ev_journalwrite.ev_count++;
 
 	return error;
 }
@@ -1471,6 +1515,7 @@ wapbl_biodone(struct buf *bp)
 	KASSERT(wl->wl_unsynced_bufbytes >= bufsize);
 	wl->wl_unsynced_bufbytes -= bufsize;
 #endif
+	wl->wl_ev_metawrite.ev_count++;
 
 	/*
 	 * If the current transaction can be reclaimed, start
@@ -2179,6 +2224,9 @@ wapbl_cache_sync(struct wapbl *wl, const char *msg)
 		    msg, (uintmax_t)wl->wl_devvp->v_rdev,
 		    (uintmax_t)ts.tv_sec, ts.tv_nsec);
 	}
+
+	wl->wl_ev_cacheflush.ev_count++;
+
 	return error;
 }
 
@@ -2269,6 +2317,9 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 			panic("wapbl_write_commit: error writing duplicate "
 			      "log header: %d", error);
 	}
+
+	wl->wl_ev_commit.ev_count++;
+
 	return 0;
 }
 
