@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1549 2017/02/16 08:32:21 knakahara Exp $
+# $NetBSD: mi,v 1.1550 2017/03/06 09:06:23 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1576,6 +1576,7 @@
 ./usr/share/man/cat4/puffs.0			man-puffs-catman	.cat
 ./usr/share/man/cat4/pwdog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/px.0			man-sys-catman		.cat
+./usr/share/man/cat4/pxaip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pxg.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qec.0			man-sys-catman		.cat
@@ -4619,6 +4620,7 @@
 ./usr/share/man/html4/puffs.html		man-sys-htmlman		html
 ./usr/share/man/html4/pwdog.html		man-sys-htmlman		html
 ./usr/share/man/html4/px.html			man-sys-htmlman		html
+./usr/share/man/html4/pxaip.html		man-sys-htmlman		html
 ./usr/share/man/html4/pxg.html			man-sys-htmlman		html
 ./usr/share/man/html4/qe.html			man-sys-htmlman		html
 ./usr/share/man/html4/qec.html			man-sys-htmlman		html
@@ -7534,6 +7536,7 @@
 ./usr/share/man/man4/pmax/lk201.4		man-obsolete		obsolete
 ./usr/share/man/man4/pmax/pm.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/px.4			man-obsolete		obsolete
+./usr/share/man/man4/pmax/pxaip.4		man-obsolete		obsolete
 ./usr/share/man/man4/pmax/scc.4			man-obsolete		obsolete
 ./usr/share/man/man4/pmax/sii.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/tc.4			man-obsolete		obsolete
