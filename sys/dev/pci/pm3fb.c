@@ -1304,5 +1304,5 @@ pm3fb_set_mode(struct pm3fb_softc *sc, const struct videomode *mode)
 	sc->sc_depth = 8;
 	sc->sc_stride = stride;
 	aprint_normal_dev(sc->sc_dev, "pm3 using %d x %d in 8 bit, stride %d\n",
-	    sc->sc_width, sc->sc_height, sc->sc_width);
+	    sc->sc_width, sc->sc_height, stride);
 }
