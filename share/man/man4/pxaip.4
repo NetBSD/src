@@ -1,10 +1,10 @@
-.\" $NetBSD: ohci.4,v 1.9 2017/03/06 09:06:01 pgoyette Exp $
+.\"	$NetBSD: pxaip.4,v 1.1 2017/03/06 09:06:01 pgoyette Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Lennart Augustsson.
+.\" by Steve Woodford.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -27,29 +27,71 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 4, 2017
-.Dt OHCI 4
+.Dd March 5, 2017
+.Dt PXAIP 4
 .Os
 .Sh NAME
-.Nm ohci
-.Nd USB Open Host Controller driver
+.Nm pxaip
+.Nd Intel Xscale PXA250/PXA270 Onboard Peripheral Bus
 .Sh SYNOPSIS
-.Cd "ohci*    at cardbus? function ?"
-.Cd "ohci*    at pci? dev ? function ?"
-.Cd "usb*     at ohci?"
-.Ss Arm32
-.Cd "ohci0    at pxaip?"
+.Cd "pxaip0 at mainbus?"
 .Sh DESCRIPTION
-The
 .Nm
-driver provides support for USB Open Host Controller Interface.
+is a on-board peripheral bus found in XScale PXA250, PXA255, PXA270, PXA271
+and PXA272 processors manufactured by Intel and Marvell Technology.
+Drivers are available for the following peripherals:
+.Bl -tag -width -pcdisplay -offset indent
+.It com
+NS16650-compatible serial ports.
+.It gxiic
+Gumstix Inter IC controller.
+.It gxio
+Gumstix I/O interface.
+.It lcd
+LCD controller.
+.It obio
+Onboard I/O interface.
+.It ohci
+USB OHCI host controller.
+.It pxaacu
+Intel Xscale PXA250/270 AC'97 audio device.
+.It pxadmac
+Intel XScale PXA250/270 DMA controller.
+.It pxagpio0
+Intel XScale PXA250/270 .Tn GPIO controller.
+.It pxaintc
+Intel XScale PXA250/270 interrupt controller.
+.It pxamci
+Intel XScale PXA250/270 SD/MMC card controller.
+.It pxapcic
+Intel XScale PXA250/270 .Tn PCMCIA controller.
+.It pxartc
+Intel XScale PXA250/270 real time clock.
+.It saost
+StrongARM SA-110 compatible OS timer.
+.It sm
+SMC91Cxx ethernet interface.
+.It zapm
+Sharp Zaurus power management controller.
+.It ziic
+Sharp Zaurus Inter IC controller
+.It zkbd
+Sharp Zaurus keyboard.
+.It zrc
+Sharp Zaurus remote controller.
+.El
 .Sh SEE ALSO
-.Xr cardbus 4 ,
-.Xr pci 4 ,
-.Xr usb 4
+.Xr com 4 ,
+.Xr ohci 4 ,
+.Xr sm 4
 .Sh HISTORY
 The
 .Nm
-driver
-appeared in
-.Nx 1.4 .
+driver first appeared in
+.Nx 2.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Steve Woodford
+.Aq scw@NetBSD.org .
