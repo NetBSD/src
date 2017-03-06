@@ -7,6 +7,8 @@ struct foo *hole;
 char *
 foo(void)
 {
-	return ((char *)&((typeof(hole))0)->list);
+	return hole ?
+	    ((char *)&((typeof(hole))0)->list) :
+	    ((char *)&((typeof(*hole) *)0)->list);
 }
 
