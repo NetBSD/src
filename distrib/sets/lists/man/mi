@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1550 2017/03/06 09:06:23 pgoyette Exp $
+# $NetBSD: mi,v 1.1551 2017/03/06 13:14:25 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7536,7 +7536,6 @@
 ./usr/share/man/man4/pmax/lk201.4		man-obsolete		obsolete
 ./usr/share/man/man4/pmax/pm.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/px.4			man-obsolete		obsolete
-./usr/share/man/man4/pmax/pxaip.4		man-obsolete		obsolete
 ./usr/share/man/man4/pmax/scc.4			man-obsolete		obsolete
 ./usr/share/man/man4/pmax/sii.4			man-sys-man		.man
 ./usr/share/man/man4/pmax/tc.4			man-obsolete		obsolete
@@ -7567,6 +7566,7 @@
 ./usr/share/man/man4/puffs.4			man-sys-man		.man
 ./usr/share/man/man4/pwdog.4			man-sys-man		.man
 ./usr/share/man/man4/px.4			man-sys-man		.man
+./usr/share/man/man4/pxaip.4			man-sys-man		.man
 ./usr/share/man/man4/pxg.4			man-sys-man		.man
 ./usr/share/man/man4/qe.4			man-sys-man		.man
 ./usr/share/man/man4/qec.4			man-sys-man		.man
