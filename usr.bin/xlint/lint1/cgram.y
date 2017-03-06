@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.92 2017/01/07 18:28:49 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.93 2017/03/06 11:58:31 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.92 2017/01/07 18:28:49 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.93 2017/03/06 11:58:31 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,7 +117,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 100
+%expect 107
 
 %union {
 	int	y_int;
@@ -1362,7 +1362,10 @@ init_rbrace:
 	;
 
 type_name:
-	  {
+	  T_TYPEOF term  {
+		$$ = $2->tn_type;
+	  }
+	| {
 		pushdecl(ABSTRACT);
 	  } abstract_declaration {
 		popdecl();
