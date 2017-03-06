@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.726 2017/03/06 12:01:47 christos Exp $
+# $NetBSD: mi,v 1.727 2017/03/06 21:03:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3913,6 +3913,7 @@
 ./usr/tests/usr.bin/xlint/lint1/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/Kyuafile	tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_bltinoffsetof.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_anon_struct.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_anon_union.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_complex_num.c		tests-usr.bin-tests	compattestfile,atf
