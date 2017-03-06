@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.159 2017/02/17 04:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.160 2017/03/06 07:31:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.159 2017/02/17 04:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.160 2017/03/06 07:31:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -195,10 +195,7 @@ icmp_init(void)
 	 * something other than zero.
 	 */
 	mutex_enter(&icmp_mtx);
-	if (icmp_redirtimeout != 0) {
-		icmp_redirect_timeout_q =
-			rt_timer_queue_create(icmp_redirtimeout);
-	}
+	icmp_redirect_timeout_q = rt_timer_queue_create(icmp_redirtimeout);
 	mutex_exit(&icmp_mtx);
 
 	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
@@ -1205,8 +1202,6 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 	}
 
 	mutex_enter(&icmp_mtx);
-	if (ip_mtudisc_timeout_q == NULL)
-		ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
 	mutex_exit(&icmp_mtx);
 	if (error) {
