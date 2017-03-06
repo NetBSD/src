@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.191 2017/03/05 09:27:52 mrg Exp $
+#	 $NetBSD: mi,v 1.192 2017/03/06 05:58:00 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1380,7 +1380,7 @@
 ./usr/X11R7/lib/pkgconfig/xcursor.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xdamage.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xdmcp.pc			-unknown-	xorg
-./usr/X11R7/lib/pkgconfig/xevie.pc			-unknown-	obsolete
+./usr/X11R7/lib/pkgconfig/xevie.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xext.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xextproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xf86bigfontproto.pc		-unknown-	xorg
@@ -4261,7 +4261,7 @@
 ./usr/libdata/lint/llib-lxcb-shape.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-shm.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-sync.ln			-unknown-	lint,xorg
-./usr/libdata/lint/llib-lxcb-xevie.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxcb-xevie.ln			-unknown-	obsolete
 ./usr/libdata/lint/llib-lxcb-xf86dri.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xfixes.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xinerama.ln		-unknown-	lint,xorg
