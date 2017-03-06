@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.2.4.4.1 2016/07/14 07:09:39 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.4.4.2 2017/03/06 08:17:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.4.4.1 2016/07/14 07:09:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.4.4.2 2017/03/06 08:17:49 snj Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1467,7 +1467,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	memset((void *) (xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
-	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
+	    pmap_pa2pte(xen_dummy_user_pgd) | PG_k | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
@@ -2064,7 +2064,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 * this pdir will NEVER be active in kernel mode
 	 * so mark recursive entry invalid
 	 */
-	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_u;
+	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_k;
 	/*
 	 * PDP constructed this way won't be for kernel,
 	 * hence we don't put kernel mappings on Xen.
