@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.29 2017/03/02 07:44:40 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.30 2017/03/06 03:34:33 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -1256,4 +1256,16 @@ external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.13
 
 	Update to tzdata2017a.
 	[kre, ticket #1374]
+
+external/mit/xorg/lib/libICE/Makefile		1.6
+
+	define HAVE_ARC4RANDOM_BUF.
+	[mrg, ticket #1377]
+
+sys/arch/x86/include/pmap.h			1.63 via patch
+sys/arch/x86/x86/pmap.c				1.241 via patch
+
+	Remove PG_u from the kernel pages on Xen. Otherwise there is
+	no privilege separation between the kernel and userland.
+	[bouyer, ticket #1388]
 
