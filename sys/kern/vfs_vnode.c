@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.75 2017/02/17 08:30:00 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.76 2017/03/06 10:07:52 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.75 2017/02/17 08:30:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.76 2017/03/06 10:07:52 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -919,7 +919,7 @@ vrecycle(vnode_t *vp)
 	 * On layered file systems waiting for the lock would open a can of
 	 * deadlocks as the lower vnodes may have other active references.
 	 */
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_NOWAIT);
 
 	mutex_enter(vp->v_interlock);
 	VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
@@ -978,13 +978,12 @@ void
 vgone(vnode_t *vp)
 {
 
-	if (vn_lock(vp, LK_EXCLUSIVE) != 0) {
-		VSTATE_ASSERT(vp, VS_RECLAIMED);
-		vrele(vp);
-	}
-
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	mutex_enter(vp->v_interlock);
-	vcache_reclaim(vp);
+	VSTATE_WAIT_STABLE(vp);
+	if (VSTATE_GET(vp) == VS_ACTIVE)
+		vcache_reclaim(vp);
+	VSTATE_ASSERT(vp, VS_RECLAIMED);
 	vrelel(vp, 0);
 }
 
