@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.13 2017/03/03 07:34:04 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.14 2017/03/06 07:15:47 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@
 
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
     RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
-ONEDAYISH="(23h5[0-9]m|1d0h0m)[0-9]+s"
+ONEDAYISH="(23h5[0-9]m|1d0h0m)[0-9]+s ?"
 
 extract_new_packets()
 {
