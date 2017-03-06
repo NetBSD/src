@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipsec.4,v 1.38 2012/03/22 20:34:38 drochner Exp $
+.\"	$NetBSD: ipsec.4,v 1.39 2017/03/06 10:00:14 knakahara Exp $
 .\"	$KAME: ipsec.4,v 1.17 2001/06/27 15:25:10 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -192,6 +192,7 @@ for tweaking kernel IPsec behavior:
 .It Sy Name Ta Sy Type Ta Sy Changeable
 .It net.inet.ipsec.ah_cleartos Ta integer Ta yes
 .It net.inet.ipsec.ah_offsetmask Ta integer Ta yes
+.It net.inet.ipsec.crypto_support Ta integer Ta yes
 .It net.inet.ipsec.dfbit Ta integer Ta yes
 .It net.inet.ipsec.ecn Ta integer Ta yes
 .It net.inet.ipsec.debug Ta integer Ta yes
@@ -219,6 +220,11 @@ implement RFC1826 AH.
 It should be set to zero
 .Pq clear the fragment offset field during computation
 for RFC2402 conformance.
+.It Li ipsec.crypto_support
+The variable configures the kernel behavior to select encryption drivers.
+If set to > 0, the kernel select first hardware encryption driver.
+If set to < 0, the kernel select first software encryption driver.
+If set to 0, the kernel select first either hardware or software driver.
 .It Li ipsec.dfbit
 The variable configures the kernel behavior on IPv4 IPsec tunnel encapsulation.
 If set to 0, DF bit on the outer IPv4 header will be cleared.
