@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.38 2017/03/02 10:41:27 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.39 2017/03/06 10:11:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.38 2017/03/02 10:41:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.39 2017/03/06 10:11:21 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -123,6 +123,8 @@ static inline struct mount *
 fstrans_normalize_mount(struct mount *mp)
 {
 
+	while (mp && mp->mnt_lower)
+		mp = mp->mnt_lower;
 	if (mp == NULL)
 		return NULL;
 	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
