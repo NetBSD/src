@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.348 2017/03/01 10:46:43 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.349 2017/03/06 10:12:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.348 2017/03/01 10:46:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.349 2017/03/06 10:12:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -518,7 +518,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 #ifdef WAPBL
 	/* WAPBL can only be enabled on a r/w mount. */
-	if ((mp->mnt_flag & MNT_RDONLY) && !(mp->mnt_iflag & IMNT_WANTRDWR)) {
+	if (((mp->mnt_flag & MNT_RDONLY) && !(mp->mnt_iflag & IMNT_WANTRDWR)) ||
+	    (mp->mnt_iflag & IMNT_WANTRDONLY)) {
 		mp->mnt_flag &= ~MNT_LOG;
 	}
 #else /* !WAPBL */
