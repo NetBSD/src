@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55.4.1.2.1 2016/12/18 07:02:59 snj Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55.4.1.2.2 2017/03/06 03:32:45 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -179,15 +179,7 @@ struct pmap {
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
-/* 
- * flag to be used for kernel mappings: PG_u on Xen/amd64, 
- * 0 otherwise.
- */
-#if defined(XEN) && defined(__x86_64__)
-#define PG_k PG_u
-#else
 #define PG_k 0
-#endif
 
 /*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
