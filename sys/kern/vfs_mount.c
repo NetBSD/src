@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.48 2017/02/22 09:50:13 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.49 2017/03/06 10:10:43 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.48 2017/02/22 09:50:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.49 2017/03/06 10:10:43 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -817,6 +817,7 @@ err_unmounted:
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
 {
+	struct mount *cmp;
 	vnode_t *coveredvp;
 	int error, async, used_syncer, used_extattr;
 
@@ -825,6 +826,18 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (error)
 		return (error);
 #endif /* NVERIEXEC > 0 */
+
+	/*
+	 * No unmount below layered mounts.
+	 */
+	mutex_enter(&mountlist_lock);
+	TAILQ_FOREACH(cmp, &mountlist, mnt_list) {
+		if (cmp->mnt_lower == mp) {
+			mutex_exit(&mountlist_lock);
+			return EBUSY;
+		}
+	}
+	mutex_exit(&mountlist_lock);
 
 	/*
 	 * XXX Freeze syncer.  Must do this before locking the
