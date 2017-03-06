@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.725 2017/02/28 03:32:11 ozaki-r Exp $
+# $NetBSD: mi,v 1.726 2017/03/06 12:01:47 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3938,6 +3938,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_cast_init.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_cast_init2.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_cast_lhs.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_typeof.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_compound_literals1.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_compound_literals2.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_constant_conv1.c		tests-usr.bin-tests	compattestfile,atf
