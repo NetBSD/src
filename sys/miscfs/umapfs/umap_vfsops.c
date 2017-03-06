@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.97 2017/03/06 10:10:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.97 2017/03/06 10:10:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,6 +220,7 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_vflag |= VV_ROOT;
 	amp->umapm_rootvp = vp;
+	mp->mnt_lower = amp->umapm_vfs;
 	VOP_UNLOCK(vp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->umap_target,
