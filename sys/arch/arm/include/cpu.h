@@ -104,7 +104,7 @@ extern int cpu_fpu_present;
 	((curcpu()->ci_intr_depth > 1) ||			\
 	    ((cf)->cf_tf.tf_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1) 
+#define CLKF_INTR(cf)	((void)(cf), curcpu()->ci_intr_depth > 1)
 #endif
 
 /*
@@ -202,7 +202,7 @@ _curlwp_set(struct lwp *l)
 	armreg_tpidrprw_write((uintptr_t)l);
 }
 
-// Also in <sys/lwp.h> but also here if this was included before <sys/lwp.h> 
+// Also in <sys/lwp.h> but also here if this was included before <sys/lwp.h>
 static inline struct cpu_info *lwp_getcpu(struct lwp *);
 
 #define	curlwp		_curlwp()
@@ -237,7 +237,7 @@ void cpu_boot_secondary_processors(void);
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
-#else 
+#else
 #define cpu_number()            0
 
 #define CPU_IS_PRIMARY(ci)	true
@@ -307,7 +307,7 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 void	cpu_set_curpri(int);
 
 /*
- * We've already preallocated the stack for the idlelwps for additional CPUs.  
+ * We've already preallocated the stack for the idlelwps for additional CPUs.
  * This hook allows to return them.
  */
 vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
