@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxaip.4,v 1.1 2017/03/06 09:06:01 pgoyette Exp $
+.\"	$NetBSD: pxaip.4,v 1.2 2017/03/06 11:34:53 pgoyette Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,13 +32,13 @@
 .Os
 .Sh NAME
 .Nm pxaip
-.Nd Intel Xscale PXA250/PXA270 Onboard Peripheral Bus
+.Nd Intel Xscale PXA250/PXA270 Onboard Peripheral Controller
 .Sh SYNOPSIS
 .Cd "pxaip0 at mainbus?"
 .Sh DESCRIPTION
 .Nm
-is a on-board peripheral bus found in XScale PXA250, PXA255, PXA270, PXA271
-and PXA272 processors manufactured by Intel and Marvell Technology.
+is an on-board peripheral controller found in XScale PXA250, PXA255, PXA270,
+PXA271, and PXA272 processors manufactured by Intel and Marvell Technology.
 Drivers are available for the following peripherals:
 .Bl -tag -width -pcdisplay -offset indent
 .It com
@@ -90,8 +90,11 @@ The
 driver first appeared in
 .Nx 2.0 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
 .An Steve Woodford
 .Aq scw@NetBSD.org .
+This manual page was contributed by
+.An Stephan Meisinger .
