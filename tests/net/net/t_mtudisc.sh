@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.9 2017/02/16 08:12:47 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.10 2017/03/06 07:33:27 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -175,12 +175,42 @@ mtudisc_basic_body()
 
 mtudisc_basic_cleanup()
 {
+
 	$DEBUG && dump
 	stop_nc_server
 	cleanup
 }
 
+atf_test_case mtudisc_timeout cleanup
+mtudisc_timeout_head()
+{
+
+	atf_set "descr" "Tests for IPv4 Path MTU Dicorvery timeout behavior"
+	atf_set "require.progs" "rump_server nc"
+}
+
+mtudisc_timeout_body()
+{
+
+	rump_server_start $SOCKLOCAL
+
+	export RUMP_SERVER=$SOCKLOCAL
+	atf_check -s exit:0 -o match:'600 -> 600' \
+	    rump.sysctl -w net.inet.ip.mtudisctimeout=600
+
+	# TODO more tests
+}
+
+mtudisc_timeout_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
+
 	atf_add_test_case mtudisc_basic
+	atf_add_test_case mtudisc_timeout
 }
