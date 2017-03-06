@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.91 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.92 2017/03/06 10:10:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.91 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.92 2017/03/06 10:10:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_vflag |= VV_ROOT;
 	nmp->nullm_rootvp = vp;
+	mp->mnt_lower = nmp->nullm_vfs;
 	mp->mnt_iflag |= IMNT_MPSAFE;
 	VOP_UNLOCK(vp);
 
