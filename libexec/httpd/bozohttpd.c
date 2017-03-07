@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.30.8.2 2016/04/15 19:37:27 snj Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.30.8.3 2017/03/07 07:21:53 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2015 Matthew R. Green
+ * Copyright (c) 1997-2017 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20160415"
+#define SERVER_SOFTWARE		"bozohttpd/20170201"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -1590,6 +1590,7 @@ bozo_process_request(bozo_httpreq_t *request)
 		debug((httpd, DEBUG_FAT, "open failed: %s", strerror(errno)));
 		switch (errno) {
 		case EPERM:
+		case EACCES:
 			(void)bozo_http_error(httpd, 403, request,
 						"no permission to open file");
 			break;
@@ -2242,7 +2243,8 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	struct passwd	 *pw;
 	extern char	**environ;
 	static char	 *cleanenv[1] = { NULL };
-	uid_t		  uid = 0;
+	uid_t		  uid;
+	int		  uidset = 0;
 	char		 *chrootdir;
 	char		 *username;
 	char		 *portnum;
@@ -2338,6 +2340,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 			bozoerr(httpd, 1, "setgid(%u): %s", pw->pw_gid,
 				strerror(errno));
 		uid = pw->pw_uid;
+		uidset = 1;
 	}
 	/*
 	 * handle chroot.
@@ -2352,7 +2355,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 				strerror(errno));
 	}
 
-	if (username != NULL && setuid(uid) == -1)
+	if (uidset && setuid(uid) == -1)
 		bozoerr(httpd, 1, "setuid(%d): %s", uid, strerror(errno));
 
 	/*
@@ -2373,4 +2376,10 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 			httpd->virthostname, httpd->slashdir));
 
 	return 1;
+}
+
+int
+bozo_get_version(char *buf, size_t size)
+{
+	return snprintf(buf, size, "%s", SERVER_SOFTWARE);
 }
