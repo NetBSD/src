@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.83 2017/03/07 07:22:48 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.84 2017/03/07 21:00:11 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -10049,4 +10049,13 @@ libexec/httpd/testsuite/test-simple             up to 1.4
 	- no longer sends encoding header for compressed formats
 	- add a bozo_get_version() function which returns the version number
 	[mrg, ticket #1437]
+
+xsrc/external/mit/libICE/dist/src/iceauth.c	patch
+xsrc/xfree/xc/lib/ICE/iceauth.c			patch
+external/mit/xorg/lib/libICE/Makefile		patch
+x11/lib/ICE/Makefile				patch
+
+	Use arc4random when available to produce the auth cookie.
+	(80f62c54fbd50a3bbdf9c37258525098c9117830 upstream)
+	[mrg, ticket #1442]
 
