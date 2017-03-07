@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.30 2017/03/06 03:34:33 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.31 2017/03/07 20:18:50 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -1268,4 +1268,11 @@ sys/arch/x86/x86/pmap.c				1.241 via patch
 	Remove PG_u from the kernel pages on Xen. Otherwise there is
 	no privilege separation between the kernel and userland.
 	[bouyer, ticket #1388]
+
+xsrc/xfree/xc/lib/ICE/iceauth.c				patch
+x11/lib/ICE/Makefile					patch
+
+	Use arc4random when available to produce the auth cookie.
+	(80f62c54fbd50a3bbdf9c37258525098c9117830 upstream)
+	[mrg, ticket #1380]
 
