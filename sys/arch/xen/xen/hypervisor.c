@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.65 2014/02/01 20:07:07 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.65.4.1 2017/03/07 20:26:12 snj Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,12 +53,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65 2014/02/01 20:07:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65.4.1 2017/03/07 20:26:12 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 
 #include "xenbus.h"
 #include "xencons.h"
@@ -203,14 +204,32 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 	char xen_extra_version[XEN_EXTRAVERSION_LEN];
+	static char xen_version_string[20];
+	int rc;
+	const struct sysctlnode *node = NULL;
 
 	xenkernfs_init();
 
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	memset(xen_extra_version, 0, sizeof(xen_extra_version));
 	HYPERVISOR_xen_version(XENVER_extraversion, xen_extra_version);
-	aprint_normal(": Xen version %d.%d%s\n", XEN_MAJOR(xen_version),
+	rc = snprintf(xen_version_string, 20, "%d.%d%s", XEN_MAJOR(xen_version),
 		XEN_MINOR(xen_version), xen_extra_version);
+	aprint_normal(": Xen version %s\n", xen_version_string);
+	if (rc >= 20)
+		aprint_debug(": xen_version_string truncated\n");
+
+	sysctl_createv(NULL, 0, NULL, &node, 0,
+	    CTLTYPE_NODE, "xen",
+	    SYSCTL_DESCR("Xen top level node"),
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	if (node != NULL) {
+		sysctl_createv(NULL, 0, &node, NULL, CTLFLAG_READONLY,
+		    CTLTYPE_STRING, "version",
+		    SYSCTL_DESCR("Xen hypervisor version"),
+		    NULL, 0, xen_version_string, 0, CTL_CREATE, CTL_EOL);
+	}
 
 	xengnt_init();
 	events_init();
