@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.176 2017/03/07 16:37:38 dholland Exp $
+$NetBSD: acronyms.comp,v 1.177 2017/03/07 16:40:16 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -262,6 +262,7 @@ CTS	clear to send
 CUA	common user access
 CUT	coordinated universal time
 CV	control voltage
+CVE	common vulnerabilities and exposures
 CVS	Concurrent Versions System
 DA	destination address
 DAA	distributed application architecture
