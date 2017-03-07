@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.508 2017/03/01 10:45:24 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.509 2017/03/07 11:54:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.508 2017/03/01 10:45:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.509 2017/03/07 11:54:16 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -306,7 +306,10 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			mp->mnt_iflag |= IMNT_WANTRDWR;
 	}
 	mp->mnt_flag &= ~MNT_BASIC_FLAGS;
-	mp->mnt_flag |= (flags & ~MNT_RDONLY) & MNT_BASIC_FLAGS;
+	mp->mnt_flag |= flags & MNT_BASIC_FLAGS;
+	if ((mp->mnt_iflag & IMNT_WANTRDONLY))
+		mp->mnt_flag &= ~MNT_RDONLY;
+
 	error = VFS_MOUNT(mp, path, data, data_len);
 
 	if (error && data != NULL) {
@@ -329,8 +332,6 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	if (error == 0 && (mp->mnt_iflag & IMNT_WANTRDONLY))
 		mp->mnt_flag |= MNT_RDONLY;
-	else if (error == 0 && (mp->mnt_iflag & IMNT_WANTRDWR))
-		mp->mnt_flag &= ~MNT_RDONLY;
 	if (error)
 		mp->mnt_flag = saved_flags;
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
