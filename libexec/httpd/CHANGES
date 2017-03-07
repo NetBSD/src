@@ -1,4 +1,12 @@
-$eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
+$NetBSD: CHANGES,v 1.11.8.3 2017/03/07 07:21:53 snj Exp $
+
+changes in bozohttpd 20170201:
+	o  fix an infinite loop in cgi processing
+	o  fixes and clean up for the testsuite
+	o  no longer sends encoding header for compressed formats
+
+changes in bozohttpd 20160517:
+	o  add a bozo_get_version() function which returns the version number
 
 changes in bozohttpd 20160415:
 	o  add search-word support for CGI
