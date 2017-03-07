@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.74.1 2017/03/07 20:17:58 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ CPPFLAGS.listenwk.c=	$(TRANS_INCLUDES) $(CONN_DEFINES)
 CPPFLAGS.misc.c=	$(TRANS_INCLUDES) $(CONN_DEFINES)
 CPPFLAGS.shutdown.c=	$(TRANS_INCLUDES) $(CONN_DEFINES)
 CPPFLAGS.transport.c=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES)
+CPPFLAGS+=		-DHAVE_ARC4RANDOM_BUF
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
