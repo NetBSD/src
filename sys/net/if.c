@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.381 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.382 2017/03/07 01:32:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.381 2017/02/23 07:57:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.382 2017/03/07 01:32:03 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1008,8 +1008,11 @@ if_deferred_start_softint(void *arg)
 static void
 if_deferred_start_common(struct ifnet *ifp)
 {
+	int s;
 
+	s = splnet();
 	if_start_lock(ifp);
+	splx(s);
 }
 
 static inline bool
