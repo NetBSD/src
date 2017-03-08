@@ -1,9 +1,10 @@
-$NetBSD: TODO.smpnet,v 1.5 2017/03/08 06:59:36 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.6 2017/03/08 07:32:58 ozaki-r Exp $
 
 MP-safe components
 ==================
 
  - bridge(4)
+   - STP
  - bpf(4)
  - gif(4)
  - l2tp(4)
@@ -23,54 +24,54 @@ MP-safe components
 Non MP-safe components and kernel options
 =========================================
 
- - agr(4)
- - altq(4)
- - carp(4)
- - etherip(4)
- - faith(4)
- - gre(4)
- - ieee80211(4)
- - ipf(4)
- - ipsec(4)
- - kttcp(4)
- - mpls(4)
- - opencrypto(9)
- - pf(4)
- - ppp(4)
- - sl(4)
- - stf(4)
- - strip(4)
- - if_srt
- - tap(4)
- - vlan(4)
-
- - netsmb
- - netnatm
- - netisbn
- - netatalk
- - netbt
- - netkey
-
- - if_arcsubr.c
- - if_atmsubr.c
- - if_ecosubr.c
- - if_fddisubr.c
- - if_hippisubr.c
- - if_ieee1394subr.c
- - if_tokensubr.c
-
- - DCCP
- - IPSELSRC
- - MROUTING
- - NFS
- - PIM
- - SCTP
- - TCP
- - UDP
- - BRIDGE_IPF
-
- - Layer 4
  - Most network device drivers
+ - Layer 2
+   - ARCNET (if_arcsubr.c)
+   - ATM (if_atmsubr.c)
+   - BRIDGE_IPF
+   - if_ecosubr.c
+   - FDDI (if_fddisubr.c)
+   - HIPPI (if_hippisubr.c)
+   - IEEE 1394 (if_ieee1394subr.c)
+   - IEEE 802.11 (ieee80211(4))
+   - Token ring (if_tokensubr.c)
+ - Layer 3
+   - IPSELSRC
+   - MROUTING
+   - PIM
+   - MPLS (mpls(4))
+ - Layer 4
+   - DCCP
+   - SCTP
+   - TCP
+   - UDP
+ - Interfaces
+   - agr(4)
+   - carp(4)
+   - etherip(4)
+   - faith(4)
+   - gre(4)
+   - ppp(4)
+   - sl(4)
+   - stf(4)
+   - strip(4)
+   - if_srt
+   - tap(4)
+   - vlan(4)
+ - Packet filters
+   - ipf(4)
+   - pf(4)
+ - Others
+   - AppleTalk (sys/netatalk/)
+   - ATM (sys/netnatm/)
+   - Bluetooth (sys/netbt/)
+   - altq(4)
+   - CIFS (sys/netsmb/)
+   - ipsec(4)
+   - ISDN (sys/netisbn/)
+   - kttcp(4)
+   - NFS
+   - opencrypto(9)
 
 Know issues
 ===========
