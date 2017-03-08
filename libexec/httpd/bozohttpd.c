@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.30.6.3 2017/03/07 07:16:08 snj Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.30.6.4 2017/03/08 00:39:44 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2243,7 +2243,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	struct passwd	 *pw;
 	extern char	**environ;
 	static char	 *cleanenv[1] = { NULL };
-	uid_t		  uid;
+	uid_t		  uid = 0;
 	int		  uidset = 0;
 	char		 *chrootdir;
 	char		 *username;
