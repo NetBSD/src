@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.23 2017/02/18 15:56:03 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.24 2017/03/08 16:42:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.23 2017/02/18 15:56:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.24 2017/03/08 16:42:27 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,6 +275,7 @@ sys_pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs, register_t *retval)
 
 	memset(&rv, 0, sizeof(rv));
 
+	rv.vers = PMC_VERSION;
 	rv.type = pmc_type;
 	rv.flags = pmc_flags;
 
@@ -297,7 +298,7 @@ sys_pmc_startstop(struct lwp *l, struct x86_pmc_startstop_args *uargs,
 	if (error)
 		return error;
 
-	if (args.counter < 0 || args.counter >= pmc_ncounters)
+	if (args.counter >= pmc_ncounters)
 		return EINVAL;
 
 	start = (args.flags & (PMC_SETUP_KERNEL|PMC_SETUP_USER)) != 0;
@@ -338,7 +339,7 @@ sys_pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs, register_t *retval)
 	if (error)
 		return error;
 
-	if (args.counter < 0 || args.counter >= pmc_ncounters)
+	if (args.counter >= pmc_ncounters)
 		return EINVAL;
 	pmc = &pmc_state[args.counter];
 

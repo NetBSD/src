@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.18 2017/02/18 16:48:38 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.19 2017/03/08 16:42:27 maxv Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.18 2017/02/18 16:48:38 maxv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.19 2017/03/08 16:42:27 maxv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -426,6 +426,8 @@ main(int argc, char **argv)
 
 	if (x86_pmc_info(&pmcinfo) < 0)
 		errx(2, "PMC support is not compiled into the kernel");
+	if (pmcinfo.vers != 1)
+		errx(2, "Wrong PMC version");
 
 	pncp = pmc_lookup_cpu(pmcinfo.type);
 	if (pncp == NULL)
