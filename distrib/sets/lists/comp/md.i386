@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.165 2017/03/08 16:52:17 maxv Exp $
+# $NetBSD: md.i386,v 1.166 2017/03/08 21:56:05 kre Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -412,7 +412,7 @@
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mm_malloc.h			comp-obsolete		obsolete
 ./usr/include/mmintrin.h			comp-obsolete		obsolete
-./usr/include/pmc.h				comp-c-include
+./usr/include/pmc.h				comp-obsolete
 ./usr/include/pmmintrin.h			comp-obsolete		obsolete
 ./usr/include/x86				comp-c-include
 ./usr/include/x86/aout_machdep.h		comp-c-include
