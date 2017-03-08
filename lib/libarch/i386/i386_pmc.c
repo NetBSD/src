@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_pmc.c,v 1.3 2000/09/13 05:22:12 thorpej Exp $	*/
+/*	$NetBSD: i386_pmc.c,v 1.4 2017/03/08 16:09:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -44,29 +44,17 @@
 int
 i386_pmc_info(struct i386_pmc_info_args *args)
 {
-
-	if (sysarch(I386_PMC_INFO, args) == -1)
-		return (-1);
-
-	return (0);
+	return -1;
 }
 
 int
 i386_pmc_startstop(struct i386_pmc_startstop_args *args)
 {
-
-	if (sysarch(I386_PMC_STARTSTOP, args) == -1)
-		return (-1);
-
-	return (0);
+	return -1;
 }
 
 int
 i386_pmc_read(struct i386_pmc_read_args *args)
 {
-
-	if (sysarch(I386_PMC_READ, args) == -1)
-		return (-1);
-
-	return (0);
+	return -1;
 }
