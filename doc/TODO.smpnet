@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.4 2017/02/22 04:44:16 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.5 2017/03/08 06:59:36 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -60,7 +60,6 @@ Non MP-safe components and kernel options
  - if_tokensubr.c
 
  - DCCP
- - IGMP
  - IPSELSRC
  - MROUTING
  - NFS
@@ -71,7 +70,6 @@ Non MP-safe components and kernel options
  - BRIDGE_IPF
 
  - Layer 4
- - IP multicast
  - Most network device drivers
 
 Know issues
