@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.284 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.285 2017/03/09 00:16:51 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.284 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.285 2017/03/09 00:16:51 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,7 +125,6 @@ dtrace_trap_func_t	dtrace_trap_func = NULL;
 dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 #endif
 
-
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
 void trap_return_fault_return(struct trapframe *) __dead;
@@ -160,6 +159,10 @@ int	trapdebug = 0;
 #endif
 
 #define	IDTVEC(name)	__CONCAT(X, name)
+
+#ifdef TRAP_SIGDEBUG
+static void frame_dump(struct trapframe *, struct pcb *);
+#endif
 
 void
 trap_tss(struct i386tss *tss, int trapno, int code)
@@ -224,8 +227,8 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	}
 	printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 
-	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx "
-	    "ilevel %x esp %x\n",
+	printf("trap type %d code %#x eip %#x cs %#x eflags %#x cr2 %#lx "
+	    "ilevel %#x esp %#x\n",
 	    type, frame->tf_err, frame->tf_eip, frame->tf_cs, frame->tf_eflags,
 	    (long)rcr2(), curcpu()->ci_ilevel, frame->tf_esp);
 
@@ -673,7 +676,7 @@ faultcommon:
 		}
 
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): signal %d at eip %x addr %lx "
+		printf("pid %d.%d (%s): signal %d at eip %#x addr %#lx "
 		    "error %d\n", p->p_pid, l->l_lid, p->p_comm, ksi.ksi_signo,
 		    frame->tf_eip, va, error);
 #endif
@@ -768,3 +771,37 @@ startlwp(void *arg)
 	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
+
+#ifdef TRAP_SIGDEBUG
+void
+frame_dump(struct trapframe *tf, struct pcb *pcb)
+{
+	int i;
+	unsigned long *p;
+	uint64_t fsd, gsd;
+
+	printf("trapframe %p\n", tf);
+	printf("eip 0x%08x  esp 0x%08x  efl 0x%08x\n",
+	    tf->tf_eip, tf->tf_esp, tf->tf_eflags);
+	printf("edi 0x%08x  esi 0x%08x  edx 0x%08x\n",
+	    tf->tf_edi, tf->tf_esi, tf->tf_edx);
+	printf("ecx 0x%08x\n",
+	    tf->tf_ecx);
+	printf("ebp 0x%08x  ebx 0x%08x  eax 0x%08x\n",
+	    tf->tf_ebp, tf->tf_ebx, tf->tf_eax);
+	printf("cs 0x%04x  ds 0x%04x  es 0x%04x  "
+	       "fs 0x%04x  gs 0x%04x  ss 0x%04x\n",
+		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
+		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
+	memcpy(&fsd, &pcb->pcb_fsd, sizeof(fsd));
+	memcpy(&gsd, &pcb->pcb_gsd, sizeof(gsd));
+	printf("fsbase 0x%016llx gsbase 0x%016llx\n", fsd, gsd);
+	printf("\n");
+	printf("Stack dump:\n");
+	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 8)
+		printf(" 0x%.8lx 0x%.8lx 0x%.8lx 0x%.8lx"
+		       " 0x%.8lx 0x%.8lx 0x%.8lx 0x%.8lx\n",
+		       p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+	printf("\n");
+}
+#endif
