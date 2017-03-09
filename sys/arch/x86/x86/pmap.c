@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.241 2017/03/05 08:36:35 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.242 2017/03/09 00:21:55 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.241 2017/03/05 08:36:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2017/03/09 00:21:55 chs Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -551,7 +551,7 @@ static void pmap_remap_largepages(void);
 #endif
 
 static struct vm_page *pmap_get_ptp(struct pmap *, vaddr_t,
-    pd_entry_t * const *);
+    pd_entry_t * const *, int);
 static struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
 static void pmap_freepage(struct pmap *, struct vm_page *, int);
 static void pmap_free_ptp(struct pmap *, struct vm_page *, vaddr_t,
@@ -1966,51 +1966,61 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  */
 
 static struct vm_page *
-pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
+pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 {
-	struct vm_page *ptp, *pptp;
-	int i;
+	struct vm_page *ptp;
+	struct {
+		struct vm_page *pg;
+		bool new;
+	} pt[PTP_LEVELS + 1];
+	int i, aflags;
 	unsigned long index;
 	pd_entry_t *pva;
-	paddr_t ppa, pa;
+	paddr_t pa;
 	struct uvm_object *obj;
+	voff_t off;
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
-	ptp = NULL;
-	pa = (paddr_t)-1;
+	/*
+	 * Loop through all page table levels allocating a page
+	 * for any level where we don't already have one.
+	 */
+	memset(pt, 0, sizeof(pt));
+	aflags = ((flags & PMAP_CANFAIL) ? 0 : UVM_PGA_USERESERVE) |
+		UVM_PGA_ZERO;
+	for (i = PTP_LEVELS; i > 1; i--) {
+		obj = &pmap->pm_obj[i - 2];
+		off = ptp_va2o(va, i - 1);
+
+		PMAP_SUBOBJ_LOCK(pmap, i - 2);
+		pt[i].pg = uvm_pagelookup(obj, off);
+		if (pt[i].pg == NULL) {
+			pt[i].pg = uvm_pagealloc(obj, off, NULL, aflags);
+			pt[i].new = true;
+		}
+		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
+
+		if (pt[i].pg == NULL)
+			goto fail;
+	}
 
 	/*
-	 * Loop through all page table levels seeing if we need to
-	 * add a new page to that level.
+	 * Now that we have all the pages looked up or allocated,
+	 * loop through again installing any new ones into the tree.
 	 */
 	for (i = PTP_LEVELS; i > 1; i--) {
-		/*
-		 * Save values from previous round.
-		 */
-		pptp = ptp;
-		ppa = pa;
-
 		index = pl_i(va, i);
 		pva = pdes[i - 2];
 
 		if (pmap_valid_entry(pva[index])) {
-			ppa = pmap_pte2pa(pva[index]);
-			ptp = NULL;
+			KASSERT(!pt[i].new);
 			continue;
 		}
 
-		obj = &pmap->pm_obj[i-2];
-		PMAP_SUBOBJ_LOCK(pmap, i - 2);
-		ptp = uvm_pagealloc(obj, ptp_va2o(va, i - 1), NULL,
-		    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
-
-		if (ptp == NULL)
-			return NULL;
-
+		ptp = pt[i].pg;
 		ptp->flags &= ~PG_BUSY; /* never busy */
 		ptp->wire_count = 1;
 		pmap->pm_ptphint[i - 2] = ptp;
@@ -2019,6 +2029,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		    (pmap_pa2pte(pa) | PG_u | PG_RW | PG_V));
 #if defined(XEN) && defined(__x86_64__)
 		if (i == PTP_LEVELS) {
+
 			/*
 			 * Update the per-cpu PD on all cpus the current
 			 * pmap is active on
@@ -2028,31 +2039,37 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 #endif
 		pmap_pte_flush();
 		pmap_stats_update(pmap, 1, 0);
+
 		/*
 		 * If we're not in the top level, increase the
 		 * wire count of the parent page.
 		 */
 		if (i < PTP_LEVELS) {
-			if (pptp == NULL) {
-				pptp = pmap_find_ptp(pmap, va, ppa, i);
-				KASSERT(pptp != NULL);
-			}
-			pptp->wire_count++;
+			pt[i + 1].pg->wire_count++;
 		}
 	}
-
-	/*
-	 * PTP is not NULL if we just allocated a new PTP.  If it is
-	 * still NULL, we must look up the existing one.
-	 */
-	if (ptp == NULL) {
-		ptp = pmap_find_ptp(pmap, va, ppa, 1);
-		KASSERTMSG(ptp != NULL, "pmap_get_ptp: va %" PRIxVADDR
-		    "ppa %" PRIxPADDR "\n", va, ppa);
-	}
-
+	ptp = pt[2].pg;
+	KASSERT(ptp != NULL);
 	pmap->pm_ptphint[0] = ptp;
 	return ptp;
+
+	/*
+	 * Allocation of a ptp failed, free any others that we just allocated.
+	 */
+fail:
+	for (i = PTP_LEVELS; i > 1; i--) {
+		if (pt[i].pg == NULL) {
+			break;
+		}
+		if (!pt[i].new) {
+			continue;
+		}
+		obj = &pmap->pm_obj[i - 2];
+		PMAP_SUBOBJ_LOCK(pmap, i - 2);
+		uvm_pagefree(pt[i].pg);
+		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
+	}
+	return NULL;
 }
 
 /*
@@ -2309,6 +2326,22 @@ pmap_free_ptps(struct vm_page *empty_ptps)
 }
 
 /*
+ * pmap_check_ptps: verify that none of the pmap's page table objects
+ * have any pages allocated to them.
+ */
+
+static inline void
+pmap_check_ptps(struct pmap *pmap)
+{
+	int i;
+
+	for (i = 0; i < PTP_LEVELS - 1; i++) {
+		KASSERT(pmap->pm_obj[i].uo_npages == 0);
+		KASSERT(TAILQ_EMPTY(&pmap->pm_obj[i].memq));
+	}
+}
+
+/*
  * pmap_destroy: drop reference count on pmap.   free pmap if
  *	reference count goes to zero.
  */
@@ -2327,6 +2360,7 @@ pmap_destroy(struct pmap *pmap)
 	 */
 	l = curlwp;
 	if (__predict_false(l->l_md.md_gc_pmap == pmap)) {
+		pmap_check_ptps(pmap);
 		if (uvmexp.free < uvmexp.freetarg) {
 			pmap_update(pmap);
 		} else {
@@ -2387,15 +2421,6 @@ pmap_destroy(struct pmap *pmap)
 
 	pmap_free_ptps(pmap->pm_gc_ptp);
 
-	/*
-	 * destroyed pmap shouldn't have remaining PTPs
-	 */
-
-	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		KASSERT(pmap->pm_obj[i].uo_npages == 0);
-		KASSERT(TAILQ_EMPTY(&pmap->pm_obj[i].memq));
-	}
-
 	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
@@ -2424,6 +2449,8 @@ pmap_destroy(struct pmap *pmap)
 #ifdef XEN
 	kcpuset_destroy(pmap->pm_xen_ptp_cpus);
 #endif
+
+	pmap_check_ptps(pmap);
 	pool_cache_put(&pmap_cache, pmap);
 }
 
@@ -4086,7 +4113,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	if (pmap == pmap_kernel()) {
 		ptp = NULL;
 	} else {
-		ptp = pmap_get_ptp(pmap, va, pdes);
+		ptp = pmap_get_ptp(pmap, va, pdes, flags);
 		if (ptp == NULL) {
 			pmap_unmap_ptes(pmap, pmap2);
 			if (flags & PMAP_CANFAIL) {
@@ -4506,6 +4533,7 @@ pmap_update(struct pmap *pmap)
 		l->l_md.md_gc_pmap = NULL;
 		pmap_tlb_shootdown(pmap, (vaddr_t)-1LL, 0, TLBSHOOT_UPDATE);
 	}
+
 	/*
 	 * Initiate any pending TLB shootdowns.  Wait for them to
 	 * complete before returning control to the caller.
