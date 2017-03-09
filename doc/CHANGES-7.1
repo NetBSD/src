@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.160 2017/03/08 14:22:55 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.161 2017/03/09 06:33:12 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -8946,4 +8946,31 @@ external/mit/xorg/server/xorg-server/os/Makefile 1.15 (patch)
 	Apply upstream fixes for generation and comparision of
 	MIT-MAGIC-COOKIES, fixing CVE-2017-2624
 	[mrg, ticket #1381]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.60
+
+	Use 64bit DMA tag. If not, a lot of bounce buffer is allocated.
+	PR 49968.
+	[msaitoh, ticket #1370]
+
+sys/dev/mii/miidevs				1.125
+
+	Add some Intel devices.
+	[msaitoh, ticket #1371]
+
+sys/dev/pci/if_wm.c				1.462, 1.464-1.465 1.474 via patch                                    
+sys/dev/pci/if_wmreg.h				1.97
+sys/dev/pci/if_wmvar.h				1.33 
+
+	wm(4):
+        - Set IPV6EXDIS bit in RFCTL register because of an Errata on
+	  82575 and newer devices.              
+        - Linux and FreeBSD defines 0x10f5 as E1000_DEV_ID_ICH9_IGP_M_AMT.
+	  In reality, This is not IGP but BM. Add new case to identify PHY
+	  type correctly on this device. Fixes PR#51924 reported by Jarle
+	  Greipsland. 
+        - Use new wm_gmii_setup_phytype() function to setup sc_phytype and
+          mii_{read|write}reg. This change improves detection of PHY type.
+        - Fix typo in comment.
+	[msaitoh, ticket #1372]
 
