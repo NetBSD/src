@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.5 2017/03/09 07:55:23 maya Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.6 2017/03/09 08:05:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.5 2017/03/09 07:55:23 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.6 2017/03/09 08:05:21 maya Exp $");
 
 #include <sys/bus.h>
 
@@ -86,9 +86,9 @@ ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 
 fail2: __unused
 	bus_dmamap_unload(ttm_dma->ttm.bdev->dmat, ttm_dma->dma_address);
-fail1:	KASSERT(ttm->state == tt_unbound);
+fail1:	KASSERT(ttm_dma->ttm.state == tt_unbound);
 	ttm_tt_unwire(&ttm_dma->ttm);
-	ttm->state = tt_unpopulated;
+	ttm_dma->ttm.state = tt_unpopulated;
 fail0:	KASSERT(ret);
 	return ret;
 }
