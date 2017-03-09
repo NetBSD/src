@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.463 2017/02/19 11:16:45 wiz Exp $
+.\"	$NetBSD: options.4,v 1.464 2017/03/09 00:17:32 chs Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -634,6 +634,12 @@ Functions for use in
 to check lock chains etc. are also enabled.
 These checks are very expensive and can decrease performance on
 multi-processor machines by a factor of three.
+.It Cd options KDTRACE_HOOKS
+Adds hooks for the DTrace tracing facility, which allows users to
+analyse many aspects of system and application behavior.
+See
+.Xr dtrace 1
+for details.
 .It Cd options KSTACK_CHECK_MAGIC
 Check kernel stack usage and panic if stack overflow is detected.
 This check is performance sensitive because it scans stack on each context
