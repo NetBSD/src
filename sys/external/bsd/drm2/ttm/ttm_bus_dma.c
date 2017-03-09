@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.6 2017/03/09 08:05:21 maya Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.7 2017/03/09 08:27:18 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.6 2017/03/09 08:05:21 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.7 2017/03/09 08:27:18 maya Exp $");
 
 #include <sys/bus.h>
 
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.6 2017/03/09 08:05:21 maya Exp $")
  *	its DMA map.  The wiring and loading are stable as long as the
  *	associated bo is reserved.
  *
- *	Transitions from tt_unpopulated or tt_unbound to tt_unbound.
- *	Marks as wired, a.k.a. !swapped.
+ *	Transitions from tt_unpopulated to tt_unbound.  Marks as wired,
+ *	a.k.a. !swapped.
  */
 int
 ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
