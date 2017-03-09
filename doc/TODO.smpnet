@@ -1,30 +1,36 @@
-$NetBSD: TODO.smpnet,v 1.6 2017/03/08 07:32:58 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.7 2017/03/09 06:21:54 ozaki-r Exp $
 
 MP-safe components
 ==================
 
- - bridge(4)
-   - STP
- - bpf(4)
- - gif(4)
- - l2tp(4)
- - npf(7)
- - pfil(9)
- - pppoe(4)
-   - if_spppsubr.c
- - tun(4)
- - vioif(4)
- - vmx(4)
- - wm(4)
-
- - Layer 2 (only Ethernet)
-   - if_ethersubr.c
- - Most Layer 3
+ - Device drivers
+   - vioif(4)
+   - vmx(4)
+   - wm(4)
+ - Layer 2
+   - Ethernet (if_ethersubr.c)
+   - bridge(4)
+     - STP
+   - Fast forward (ipflow)
+ - Layer 3
+   - All except for items in the below section
+ - Interfaces
+   - gif(4)
+   - l2tp(4)
+   - pppoe(4)
+     - if_spppsubr.c
+   - tun(4)
+ - Packet filters
+   - npf(7)
+ - Others
+   - bpf(4)
+   - pfil(9)
 
 Non MP-safe components and kernel options
 =========================================
 
- - Most network device drivers
+ - Device drivers
+   - Most drivers other than ones listed in the above section
  - Layer 2
    - ARCNET (if_arcsubr.c)
    - ATM (if_atmsubr.c)
