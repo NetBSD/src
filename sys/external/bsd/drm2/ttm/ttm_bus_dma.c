@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bus_dma.c,v 1.3 2017/03/09 07:42:36 maya Exp $	*/
+/*	$NetBSD: ttm_bus_dma.c,v 1.4 2017/03/09 07:50:50 maya Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.3 2017/03/09 07:42:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bus_dma.c,v 1.4 2017/03/09 07:50:50 maya Exp $");
 
 #include <sys/bus.h>
 
@@ -55,23 +55,12 @@ ttm_bus_dma_populate(struct ttm_dma_tt *ttm_dma)
 {
 	int ret;
 
-	KASSERT(ttm_dma->ttm.state != tt_bound);
+	KASSERT(ttm_dma->ttm.state == tt_unpopulated);
 
-	/* Check the current state.  */
-	if (ttm_dma->ttm.state == tt_unbound) {
-		/*
-		 * If it's populated, then if the pages are wired and
-		 * loaded already, nothing to do.
-		 */
-		if (!ISSET(ttm_dma->ttm.page_flags, TTM_PAGE_FLAG_SWAPPED))
-			return 0;
-	} else if (ttm_dma->ttm.state == tt_unpopulated) {
-		/* If it's unpopulated, it can't be swapped.  */
-		KASSERT(!ISSET(ttm_dma->ttm.page_flags,
-			TTM_PAGE_FLAG_SWAPPED));
-		/* Pretend it is now, for the sake of ttm_tt_wire.  */
-		ttm_dma->ttm.page_flags |= TTM_PAGE_FLAG_SWAPPED;
-	}
+	/* If it's unpopulated, it can't be swapped.  */
+	KASSERT(!ISSET(ttm_dma->ttm.page_flags, TTM_PAGE_FLAG_SWAPPED));
+	/* Pretend it is now, for the sake of ttm_tt_wire.  */
+	ttm_dma->ttm.page_flags |= TTM_PAGE_FLAG_SWAPPED;
 
 	/* Wire the uvm pages and fill the ttm page array.  */
 	ret = ttm_tt_wire(&ttm_dma->ttm);
