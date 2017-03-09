@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.36 2015/07/06 01:55:50 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.37 2017/03/09 00:14:03 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.36 2015/07/06 01:55:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.37 2017/03/09 00:14:03 chs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -139,9 +139,10 @@ fpu_get_fault_code(void)
 	uint32_t fpscr, ofpscr;
 	int code;
 
-	int s = splsoftclock();	/* disable preemption */
+	kpreempt_disable();
 
 	struct cpu_info * const ci = curcpu();
+
 	/*
 	 * If we got preempted, we may be running on a different CPU.  So we
 	 * need to check for that.
@@ -180,7 +181,7 @@ fpu_get_fault_code(void)
 		((uint32_t *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] &= ~MASKBITS;
 	}
 
-	splx(s);	/* allow preemption */
+	kpreempt_enable();
 
 	/*
 	 * Now determine the fault type.  First we test to see if any of sticky
