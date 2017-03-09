@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.382 2017/03/07 01:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.383 2017/03/09 09:57:36 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.382 2017/03/07 01:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.383 2017/03/09 09:57:36 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -379,6 +379,7 @@ int
 if_nulltransmit(struct ifnet *ifp, struct mbuf *m)
 {
 
+	m_freem(m);
 	return ENXIO;
 }
 
@@ -3260,9 +3261,11 @@ if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		KERNEL_UNLOCK_ONE(NULL);
 		error = (*ifp->if_transmit)(ifp, m);
+		/* mbuf is alredy freed */
 	}
 #else /* !ALTQ */
 	error = (*ifp->if_transmit)(ifp, m);
+	/* mbuf is alredy freed */
 #endif /* !ALTQ */
 
 	return error;
