@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.64 2017/03/01 10:47:26 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.65 2017/03/09 10:10:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.64 2017/03/01 10:47:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.65 2017/03/09 10:10:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,11 +842,11 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp * const l = curlwp ? curlwp : &lwp0;
 	struct genfs_node * const gp = VTOG(vp);
+	struct mount *trans_mp;
 	int flags;
 	int dirtygen;
 	bool modified;
-	bool need_wapbl;
-	bool has_trans;
+	bool holds_wapbl;
 	bool cleanall;
 	bool onworklst;
 
@@ -859,9 +859,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
-	has_trans = false;
-	need_wapbl = (!pagedaemon && vp->v_mount && vp->v_mount->mnt_wapbl &&
-	    (origflags & PGO_JOURNALLOCKED) == 0);
+	trans_mp = NULL;
+	holds_wapbl = false;
 
 retry:
 	modified = false;
@@ -874,10 +873,10 @@ retry:
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
-		if (has_trans) {
-			if (need_wapbl)
-				WAPBL_END(vp->v_mount);
-			fstrans_done(vp->v_mount);
+		if (trans_mp) {
+			if (holds_wapbl)
+				WAPBL_END(trans_mp);
+			fstrans_done(trans_mp);
 		}
 		mutex_exit(slock);
 		return (0);
@@ -887,24 +886,41 @@ retry:
 	 * the vnode has pages, set up to process the request.
 	 */
 
-	if (!has_trans && (flags & PGO_CLEANIT) != 0) {
-		mutex_exit(slock);
+	if (trans_mp == NULL && (flags & PGO_CLEANIT) != 0) {
 		if (pagedaemon) {
-			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
-			if (error)
-				return error;
-		} else
-			fstrans_start(vp->v_mount, FSTRANS_LAZY);
-		if (need_wapbl) {
-			error = WAPBL_BEGIN(vp->v_mount);
+			/* Pagedaemon must not sleep here. */
+			trans_mp = vp->v_mount;
+			error = fstrans_start_nowait(trans_mp, FSTRANS_LAZY);
 			if (error) {
-				fstrans_done(vp->v_mount);
+				mutex_exit(slock);
 				return error;
 			}
+		} else {
+			/*
+			 * Cannot use vdeadcheck() here as this operation
+			 * usually gets used from VOP_RECLAIM().  Test for
+			 * change of v_mount instead and retry on change.
+			 */
+			mutex_exit(slock);
+			trans_mp = vp->v_mount;
+			fstrans_start(trans_mp, FSTRANS_LAZY);
+			if (vp->v_mount != trans_mp) {
+				fstrans_done(trans_mp);
+				trans_mp = NULL;
+			} else {
+				holds_wapbl = (trans_mp->mnt_wapbl &&
+				    (origflags & PGO_JOURNALLOCKED) == 0);
+				if (holds_wapbl) {
+					error = WAPBL_BEGIN(trans_mp);
+					if (error) {
+						fstrans_done(trans_mp);
+						return error;
+					}
+				}
+			}
+			mutex_enter(slock);
+			goto retry;
 		}
-		has_trans = true;
-		mutex_enter(slock);
-		goto retry;
 	}
 
 	error = 0;
@@ -1277,10 +1293,10 @@ skip_scan:
 		goto retry;
 	}
 
-	if (has_trans) {
-		if (need_wapbl)
-			WAPBL_END(vp->v_mount);
-		fstrans_done(vp->v_mount);
+	if (trans_mp) {
+		if (holds_wapbl)
+			WAPBL_END(trans_mp);
+		fstrans_done(trans_mp);
 	}
 
 	return (error);
