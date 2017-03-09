@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2017/02/27 06:54:00 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.152 2017/03/09 00:15:06 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2017/02/27 06:54:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2017/03/09 00:15:06 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -262,18 +262,28 @@ trap(struct trapframe *tf)
 			    tf->tf_dar, tf->tf_srr0, tf->tf_dsisr, rv);
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
 		ksi.ksi_addr = (void *)tf->tf_dar;
-		ksi.ksi_code =
-		    (tf->tf_dsisr & DSISR_PROTECT ? SEGV_ACCERR : SEGV_MAPERR);
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d.%d (%s), uid %d killed: "
-			       "out of swap\n",
-			       p->p_pid, l->l_lid, p->p_comm,
-			       l->l_cred ?
-			       kauth_cred_geteuid(l->l_cred) : -1);
+vm_signal:
+		switch (rv) {
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case EACCES:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			break;
+		case ENOMEM:
 			ksi.ksi_signo = SIGKILL;
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
+			       "out of swap\n", p->p_pid, l->l_lid, p->p_comm,
+			       l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			break;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
@@ -323,12 +333,9 @@ trap(struct trapframe *tf)
 			    tf->tf_srr0, tf->tf_srr1);
 		}
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)tf->tf_srr0;
-		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
-		(*p->p_emul->e_trapsignal)(l, &ksi);
-		break;
+		goto vm_signal;
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
