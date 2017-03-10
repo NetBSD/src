@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.349 2017/03/06 10:12:00 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.350 2017/03/10 20:38:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.349 2017/03/06 10:12:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.350 2017/03/10 20:38:28 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -573,20 +573,23 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = ffs_flushfiles(mp, flags, l);
-			if (error == 0)
-				error = UFS_WAPBL_BEGIN(mp);
-			if (error == 0 &&
-			    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
+			if (error)
+				return error;
+
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error) {
+				DPRINTF("wapbl %d", error);
+				return error;
+			}
+
+			if (ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 			    fs->fs_clean & FS_WASCLEAN) {
 				if (mp->mnt_flag & MNT_SOFTDEP)
 					fs->fs_flags &= ~FS_DOSOFTDEP;
 				fs->fs_clean = FS_ISCLEAN;
 				(void) ffs_sbupdate(ump, MNT_WAIT);
 			}
-			if (error) {
-				DPRINTF("wapbl %d", error);
-				return error;
-			}
+
 			UFS_WAPBL_END(mp);
 		}
 
