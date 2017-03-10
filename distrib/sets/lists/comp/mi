@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2112 2017/02/23 15:18:36 christos Exp $
+#	$NetBSD: mi,v 1.2113 2017/03/10 09:12:46 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2350,8 +2350,8 @@
 ./usr/include/netinet6/in6.h			comp-c-include
 ./usr/include/netinet6/in6_gif.h		comp-c-include
 ./usr/include/netinet6/in6_ifattach.h		comp-c-include
-./usr/include/netinet6/in6_pcb.h		comp-c-include
 ./usr/include/netinet6/in6_l2tp.h		comp-c-include
+./usr/include/netinet6/in6_pcb.h		comp-c-include
 ./usr/include/netinet6/in6_var.h		comp-c-include
 ./usr/include/netinet6/ip6.h			comp-obsolete		obsolete
 ./usr/include/netinet6/ip6_mroute.h		comp-c-include
@@ -3104,8 +3104,8 @@
 ./usr/include/uvm/uvm_pager_i.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_param.h			comp-c-include
 ./usr/include/uvm/uvm_pdaemon.h			comp-c-include
-./usr/include/uvm/uvm_physseg.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_pglist.h			comp-c-include
+./usr/include/uvm/uvm_physseg.h			comp-obsolete		obsolete
 ./usr/include/uvm/uvm_pmap.h			comp-c-include
 ./usr/include/uvm/uvm_prot.h			comp-c-include
 ./usr/include/uvm/uvm_stat.h			comp-c-include
@@ -9021,12 +9021,13 @@
 ./usr/share/man/cat3/sl_find.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sl_free.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sl_init.0			comp-c-catman		.cat
-./usr/share/man/cat3/slk_attroff.0		comp-c-catman		.cat
+./usr/share/man/cat3/sleep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/slk_attr_off.0		comp-c-catman		.cat
-./usr/share/man/cat3/slk_attron.0		comp-c-catman		.cat
 ./usr/share/man/cat3/slk_attr_on.0		comp-c-catman		.cat
-./usr/share/man/cat3/slk_attrset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/slk_attr_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attroff.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attron.0		comp-c-catman		.cat
+./usr/share/man/cat3/slk_attrset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/slk_clear.0		comp-c-catman		.cat
 ./usr/share/man/cat3/slk_color.0		comp-c-catman		.cat
 ./usr/share/man/cat3/slk_init.0			comp-c-catman		.cat
@@ -9037,7 +9038,6 @@
 ./usr/share/man/cat3/slk_set.0			comp-c-catman		.cat
 ./usr/share/man/cat3/slk_touch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/slk_wset.0			comp-c-catman		.cat
-./usr/share/man/cat3/sleep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb_m.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snprintf.0			comp-c-catman		.cat
@@ -9534,13 +9534,13 @@
 ./usr/share/man/cat3/unsetenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/untouchwin.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unvis.0			comp-c-catman		.cat
-./usr/share/man/cat3/use_env.0			comp-c-catman		.cat
 ./usr/share/man/cat3/update_panels.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updlastlogx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updwtmpx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/usb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/usbhid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/use_default_colors.0	comp-c-catman		.cat
+./usr/share/man/cat3/use_env.0			comp-c-catman		.cat
 ./usr/share/man/cat3/user_from_uid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/usleep.0			comp-c-catman		.cat
 ./usr/share/man/cat3/util.0			comp-c-catman		.cat
@@ -10563,10 +10563,10 @@
 ./usr/share/man/cat9/kmem.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_asprintf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_intr_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_intr_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_intr_zalloc.0		comp-sys-catman		.cat
-./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
@@ -10602,6 +10602,7 @@
 ./usr/share/man/cat9/longjmp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lookup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ltsleep.0			comp-sys-catman		.cat
+./usr/share/man/cat9/lwp_trampoline.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_adj.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_cat.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copyback.0		comp-sys-catman		.cat
@@ -10929,7 +10930,7 @@
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		.cat
+./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/profhz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyin_ioctl.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyout_ioctl.0 comp-sys-catman		.cat
@@ -11214,10 +11215,10 @@
 ./usr/share/man/cat9/uvm_fault.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_fork.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_grow.0			comp-sys-catman		.cat
+./usr/share/man/cat9/uvm_hotplug.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_init.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_init_limits.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_io.0			comp-sys-catman		.cat
-./usr/share/man/cat9/uvm_hotplug.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_kernacc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_km.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uvm_km_alloc.0		comp-sys-catman		.cat
@@ -12946,8 +12947,8 @@
 ./usr/share/man/html3/bt_setprotoent.html	comp-c-htmlman		html
 ./usr/share/man/html3/btowc.html		comp-c-htmlman		html
 ./usr/share/man/html3/btree.html		comp-c-htmlman		html
-./usr/share/man/html3/bufferevent.html		comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent.h.html	comp-c-htmlman		html
+./usr/share/man/html3/bufferevent.html		comp-c-htmlman		html
 ./usr/share/man/html3/bufferevent_base_set.html comp-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_disable.html	comp-obsolete		obsolete
 ./usr/share/man/html3/bufferevent_enable.html	comp-obsolete		obsolete
@@ -13649,8 +13650,8 @@
 ./usr/share/man/html3/ether_ntohost.html	comp-c-htmlman		html
 ./usr/share/man/html3/ethers.html		comp-c-htmlman		html
 ./usr/share/man/html3/evasprintf.html		comp-c-htmlman		html
-./usr/share/man/html3/evbuffer.html		comp-c-htmlman		html
 ./usr/share/man/html3/evbuffer.h.html		comp-c-htmlman		html
+./usr/share/man/html3/evbuffer.html		comp-c-htmlman		html
 ./usr/share/man/html3/evbuffer_add.html		comp-obsolete		obsolete
 ./usr/share/man/html3/evbuffer_add_buffer.html	comp-obsolete		obsolete
 ./usr/share/man/html3/evbuffer_add_printf.html	comp-obsolete		obsolete
@@ -13684,8 +13685,8 @@
 ./usr/share/man/html3/evdns_search_ndots_set.html	comp-obsolete		obsolete
 ./usr/share/man/html3/evdns_set_log_fn.html	comp-obsolete		obsolete
 ./usr/share/man/html3/evdns_shutdown.html	comp-obsolete		obsolete
-./usr/share/man/html3/event.html			comp-c-htmlman		html
 ./usr/share/man/html3/event.h.html			comp-c-htmlman		html
+./usr/share/man/html3/event.html			comp-c-htmlman		html
 ./usr/share/man/html3/event_add.html		comp-obsolete		obsolete
 ./usr/share/man/html3/event_base.html		comp-c-htmlman		html
 ./usr/share/man/html3/event_base_dispatch.html	comp-obsolete		obsolete
@@ -14093,6 +14094,7 @@
 ./usr/share/man/html3/getskeyprompt.html	comp-c-htmlman		skey,html
 ./usr/share/man/html3/getstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/getsubopt.html		comp-c-htmlman		html
+./usr/share/man/html3/getsyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/gettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/gettmode.html		comp-c-htmlman		html
 ./usr/share/man/html3/getttyent.html		comp-c-htmlman		html
@@ -14102,7 +14104,6 @@
 ./usr/share/man/html3/getutmpx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxent.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxid.html		comp-c-htmlman		html
-./usr/share/man/html3/getsyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getutxline.html		comp-c-htmlman		html
 ./usr/share/man/html3/getw.html			comp-c-htmlman		html
 ./usr/share/man/html3/getwc.html		comp-c-htmlman		html
@@ -16377,12 +16378,13 @@
 ./usr/share/man/html3/sl_find.html		comp-c-htmlman		html
 ./usr/share/man/html3/sl_free.html		comp-c-htmlman		html
 ./usr/share/man/html3/sl_init.html		comp-c-htmlman		html
-./usr/share/man/html3/slk_attroff.html		comp-c-htmlman		html
+./usr/share/man/html3/sleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_attr_off.html		comp-c-htmlman		html
-./usr/share/man/html3/slk_attron.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_attr_on.html		comp-c-htmlman		html
-./usr/share/man/html3/slk_attrset.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_attr_set.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attroff.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attron.html		comp-c-htmlman		html
+./usr/share/man/html3/slk_attrset.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_clear.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_color.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_init.html		comp-c-htmlman		html
@@ -16393,7 +16395,6 @@
 ./usr/share/man/html3/slk_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_touch.html		comp-c-htmlman		html
 ./usr/share/man/html3/slk_wset.html		comp-c-htmlman		html
-./usr/share/man/html3/sleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb_m.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintf.html		comp-c-htmlman		html
@@ -16874,12 +16875,12 @@
 ./usr/share/man/html3/unsetenv.html		comp-c-htmlman		html
 ./usr/share/man/html3/untouchwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/unvis.html		comp-c-htmlman		html
-./usr/share/man/html3/use_env.html		comp-c-htmlman		html
 ./usr/share/man/html3/update_panels.html	comp-c-htmlman		html
 ./usr/share/man/html3/updlastlogx.html		comp-c-htmlman		html
 ./usr/share/man/html3/updwtmpx.html		comp-c-htmlman		html
 ./usr/share/man/html3/usbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/use_default_colors.html	comp-c-htmlman		html
+./usr/share/man/html3/use_env.html		comp-c-htmlman		html
 ./usr/share/man/html3/user_from_uid.html	comp-c-htmlman		html
 ./usr/share/man/html3/usleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/util.html			comp-c-htmlman		html
@@ -17858,10 +17859,10 @@
 ./usr/share/man/html9/kmem.html			comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_alloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_asprintf.html	comp-sys-htmlman	html
+./usr/share/man/html9/kmem_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_intr_alloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_intr_free.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_intr_zalloc.html	comp-sys-htmlman	html
-./usr/share/man/html9/kmem_free.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/knote.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpause.html		comp-sys-htmlman	html
@@ -17896,6 +17897,7 @@
 ./usr/share/man/html9/longjmp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lookup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ltsleep.html		comp-sys-htmlman	html
+./usr/share/man/html9/lwp_trampoline.html	comp-sys-htmlman	html
 ./usr/share/man/html9/m_adj.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_cat.html		comp-sys-htmlman	html
 ./usr/share/man/html9/m_copyback.html		comp-sys-htmlman	html
@@ -18219,7 +18221,7 @@
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf_nolog.html		comp-sys-htmlman	html
 ./usr/share/man/html9/proc_find.html		comp-sys-htmlman	html
-./usr/share/man/html9/proc_trampoline.html	comp-sys-htmlman	html
+./usr/share/man/html9/proc_trampoline.html	comp-sys-htmlman	obsolete
 ./usr/share/man/html9/profhz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyin_ioctl.html	comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyout_ioctl.html	comp-sys-htmlman	html
@@ -18479,10 +18481,10 @@
 ./usr/share/man/html9/uvm_fault.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_fork.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_grow.html		comp-sys-htmlman	html
+./usr/share/man/html9/uvm_hotplug.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_init_limits.html	comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_io.html		comp-sys-htmlman	html
-./usr/share/man/html9/uvm_hotplug.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_kernacc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_km.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uvm_km_alloc.html		comp-sys-htmlman	html
@@ -23764,12 +23766,13 @@
 ./usr/share/man/man3/sl_find.3			comp-c-man		.man
 ./usr/share/man/man3/sl_free.3			comp-c-man		.man
 ./usr/share/man/man3/sl_init.3			comp-c-man		.man
-./usr/share/man/man3/slk_attroff.3		comp-c-man		.man
+./usr/share/man/man3/sleep.3			comp-c-man		.man
 ./usr/share/man/man3/slk_attr_off.3		comp-c-man		.man
-./usr/share/man/man3/slk_attron.3		comp-c-man		.man
 ./usr/share/man/man3/slk_attr_on.3		comp-c-man		.man
-./usr/share/man/man3/slk_attrset.3		comp-c-man		.man
 ./usr/share/man/man3/slk_attr_set.3		comp-c-man		.man
+./usr/share/man/man3/slk_attroff.3		comp-c-man		.man
+./usr/share/man/man3/slk_attron.3		comp-c-man		.man
+./usr/share/man/man3/slk_attrset.3		comp-c-man		.man
 ./usr/share/man/man3/slk_clear.3		comp-c-man		.man
 ./usr/share/man/man3/slk_color.3		comp-c-man		.man
 ./usr/share/man/man3/slk_init.3			comp-c-man		.man
@@ -23780,7 +23783,6 @@
 ./usr/share/man/man3/slk_set.3			comp-c-man		.man
 ./usr/share/man/man3/slk_touch.3		comp-c-man		.man
 ./usr/share/man/man3/slk_wset.3			comp-c-man		.man
-./usr/share/man/man3/sleep.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb_m.3		comp-c-man		.man
 ./usr/share/man/man3/snprintf.3			comp-c-man		.man
@@ -24277,13 +24279,13 @@
 ./usr/share/man/man3/unsetenv.3			comp-c-man		.man
 ./usr/share/man/man3/untouchwin.3		comp-c-man		.man
 ./usr/share/man/man3/unvis.3			comp-c-man		.man
-./usr/share/man/man3/use_env.3			comp-c-man		.man
 ./usr/share/man/man3/update_panels.3		comp-c-man		.man
 ./usr/share/man/man3/updlastlogx.3		comp-c-man		.man
 ./usr/share/man/man3/updwtmpx.3			comp-c-man		.man
 ./usr/share/man/man3/usb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/usbhid.3			comp-c-man		.man
 ./usr/share/man/man3/use_default_colors.3	comp-c-man		.man
+./usr/share/man/man3/use_env.3			comp-c-man		.man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man		.man
 ./usr/share/man/man3/usleep.3			comp-c-man		.man
 ./usr/share/man/man3/util.3			comp-c-man		.man
@@ -25305,10 +25307,10 @@
 ./usr/share/man/man9/kmem.9			comp-sys-man		.man
 ./usr/share/man/man9/kmem_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_asprintf.9		comp-sys-man		.man
+./usr/share/man/man9/kmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_intr_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_intr_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_intr_zalloc.9		comp-sys-man		.man
-./usr/share/man/man9/kmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
@@ -25344,6 +25346,7 @@
 ./usr/share/man/man9/longjmp.9			comp-sys-man		.man
 ./usr/share/man/man9/lookup.9			comp-sys-man		.man
 ./usr/share/man/man9/ltsleep.9			comp-sys-man		.man
+./usr/share/man/man9/lwp_trampoline.9		comp-sys-man		.man
 ./usr/share/man/man9/m_adj.9			comp-sys-man		.man
 ./usr/share/man/man9/m_cat.9			comp-sys-man		.man
 ./usr/share/man/man9/m_copyback.9		comp-sys-man		.man
@@ -25671,7 +25674,7 @@
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_find.9		comp-sys-man		.man
-./usr/share/man/man9/proc_trampoline.9		comp-sys-man		.man
+./usr/share/man/man9/proc_trampoline.9		comp-sys-man		obsolete
 ./usr/share/man/man9/profhz.9			comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyin_ioctl.9	comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyout_ioctl.9 comp-sys-man		.man
@@ -25956,10 +25959,10 @@
 ./usr/share/man/man9/uvm_fault.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_fork.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_grow.9			comp-sys-man		.man
+./usr/share/man/man9/uvm_hotplug.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_init.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_init_limits.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_io.9			comp-sys-man		.man
-./usr/share/man/man9/uvm_hotplug.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_kernacc.9		comp-sys-man		.man
 ./usr/share/man/man9/uvm_km.9			comp-sys-man		.man
 ./usr/share/man/man9/uvm_km_alloc.9		comp-sys-man		.man
