@@ -1,4 +1,33 @@
-/*	$NetBSD: pmc.c,v 1.19 2017/03/08 16:42:27 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.20 2017/03/10 13:09:11 maxv Exp $	*/
+
+/*
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,12 +66,14 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.19 2017/03/08 16:42:27 maxv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.20 2017/03/10 13:09:11 maxv Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/stdbool.h>
 #include <machine/sysarch.h>
 #include <machine/specialreg.h>
+#include <machine/param.h>
 #include <sys/wait.h>
 #include <err.h>
 #include <errno.h>
@@ -62,13 +93,19 @@ typedef struct x86_64_pmc_startstop_args x86_pmc_startstop_args_t;
 typedef struct x86_64_pmc_read_args x86_pmc_read_args_t;
 #endif
 
-struct pmc_name2val {
+typedef struct {
 	const char *name;
-	int val;
-	int unit;
-};
+	uint32_t val;
+	uint32_t unit;
+} pmc_name2val_t;
 
-static const struct pmc_name2val i586_names[] = {
+typedef struct {
+	int type;
+	const pmc_name2val_t *pmc_names;
+	size_t size;
+} pmc_name2val_cpu_t;
+
+static const pmc_name2val_t i586_names[] = {
 	{ "tlb-data-miss",		PMC5_DATA_TLB_MISS,		0 },
 	{ "tlb-ins-miss",		PMC5_INST_TLB_MISS,		0 },
 	{ "l1cache-ins-miss",		PMC5_INST_CACHE_MISS,		0 },
@@ -109,7 +146,7 @@ static const struct pmc_name2val i586_names[] = {
 	{ "break-match3",		PMC5_BP3_MATCH,			0 },
 };
 
-static const struct pmc_name2val i686_names[] = {
+static const pmc_name2val_t i686_names[] = {
 	{ "mem-refs",			PMC6_DATA_MEM_REFS,		0 },
 	{ "l1cache-lines",		PMC6_DCU_LINES_IN,		0 },
 	{ "l1cache-mlines",		PMC6_DCU_M_LINES_IN,		0 },
@@ -236,7 +273,7 @@ static const struct pmc_name2val i686_names[] = {
 	{ "seg-rename-retire",		PMC6_RET_SEG_RENAMES,		0 },
 };
 
-static const struct pmc_name2val k7_names[] = {
+static const pmc_name2val_t k7_names[] = {
 	{ "seg-load-all",		K7_SEGMENT_REG_LOADS,		0x7f },
 	{ "seg-load-es",		K7_SEGMENT_REG_LOADS,		0x01 },
 	{ "seg-load-cs",		K7_SEGMENT_REG_LOADS,		0x02 },
@@ -318,58 +355,58 @@ static const struct pmc_name2val k7_names[] = {
 	{ "break-match3",		K7_BP3_MATCH,			0 },
 };
 
-static struct pmc_name2val_cpus {
-	int type;
-	const struct pmc_name2val *pmc_names;
-	int size;
-} pmc_cpus[] = {
+static const pmc_name2val_cpu_t pmc_cpus[] = {
 	{ PMC_TYPE_I586, i586_names,
-	  sizeof(i586_names) / sizeof(struct pmc_name2val) },
+	  sizeof(i586_names) / sizeof(pmc_name2val_t) },
 	{ PMC_TYPE_I686, i686_names,
-	  sizeof(i686_names) / sizeof(struct pmc_name2val) },
+	  sizeof(i686_names) / sizeof(pmc_name2val_t) },
 	{ PMC_TYPE_K7, k7_names,
-	  sizeof(k7_names) / sizeof(struct pmc_name2val) },
+	  sizeof(k7_names) / sizeof(pmc_name2val_t) },
 };
+
+/* -------------------------------------------------------------------------- */
 
 static void usage(void) __dead;
 
+static void pmc_list(const pmc_name2val_cpu_t *, char **);
+static void pmc_start(const pmc_name2val_cpu_t *, char **);
+static void pmc_stop(const pmc_name2val_cpu_t *, char **);
+
+static const pmc_name2val_cpu_t *pmc_lookup_cpu(int);
+static const pmc_name2val_t *pmc_find_event(const pmc_name2val_cpu_t *,
+    const char *);
+
+static int x86_pmc_info(x86_pmc_info_args_t *);
+static int x86_pmc_startstop(x86_pmc_startstop_args_t *);
+static int x86_pmc_read(x86_pmc_read_args_t *);
+
+static uint32_t pmc_ncounters;
+
+static struct cmdtab {
+	const char *label;
+	bool takesargs;
+	bool argsoptional;
+	void (*func)(const pmc_name2val_cpu_t *, char **);
+} const pmc_cmdtab[] = {
+	{ "list",	false, false, pmc_list },
+	{ "start",	true,  false, pmc_start },
+	{ "stop",	false, false, pmc_stop },
+	{ NULL,		false, false, NULL },
+};
+
 static void usage(void)
 {
-	fprintf(stderr, "usage: %s -h\n"
-	    "       %s -C\n"
-	    "       %s -c <event> command [options] ...\n",
-	    getprogname(), getprogname(), getprogname());
-	exit(1);
-}
+	const char *progname = getprogname();
 
-static const struct pmc_name2val_cpus *
-pmc_lookup_cpu(int type)
-{
-	size_t i, n = sizeof(pmc_cpus) / sizeof(struct pmc_name2val_cpus);
-
-	for (i = 0; i < n; i++) {
-		if (pmc_cpus[i].type == type)
-			return &pmc_cpus[i];
-	}
-
-	return NULL;
-}
-
-static const struct pmc_name2val *
-pmc_find_event(const struct pmc_name2val_cpus *pncp, const char *name)
-{
-	int i;
-
-	for (i = 0; i < pncp->size; i++) {
-		if (strcmp(pncp->pmc_names[i].name, name) == 0)
-			return &pncp->pmc_names[i];
-	}
-
-	return NULL;
+	fprintf(stderr, "usage: %s list\n", progname);
+	fprintf(stderr, "       %s start [name:option ...]\n", progname);
+	fprintf(stderr, "       %s stop\n", progname);
+	exit(EXIT_FAILURE);
+	/* NOTREACHED */
 }
 
 static void
-pmc_list_events(const struct pmc_name2val_cpus *pncp)
+pmc_list(const pmc_name2val_cpu_t *pncp, char **argv)
 {
 	int i, n, left, pairs;
 
@@ -383,6 +420,138 @@ pmc_list_events(const struct pmc_name2val_cpus *pncp)
 		    pncp->pmc_names[i * 2 + 1].name);
 	if (left != 0)
 		printf("\t%37s\n", pncp->pmc_names[n - 1].name);
+}
+
+static void
+pmc_start(const pmc_name2val_cpu_t *pncp, char **argv)
+{
+	x86_pmc_startstop_args_t pmcargs[PMC_NCOUNTERS], *pmcarg;
+	char *tokens[PMC_NCOUNTERS][2], *event, *options;
+	const pmc_name2val_t *pnp;
+	uint32_t flags;
+	size_t n, i;
+
+	for (n = 0; n < pmc_ncounters; n++) {
+		if (argv[n] == NULL)
+			break;
+		tokens[n][0] = strtok(argv[n], ":");
+		tokens[n][1] = strtok(NULL, ":");
+		if (tokens[n][1] == NULL)
+			usage();
+	}
+
+	for (i = 0; i < n; i++) {
+		pmcarg = &pmcargs[i];
+		event = tokens[i][0];
+		options = tokens[i][1];
+
+		pnp = pmc_find_event(pncp, event);
+		if (pnp == NULL)
+			errx(EXIT_FAILURE, "Unable to find '%s'", event);
+		flags = 0;
+		if (strchr(options, 'u'))
+			flags |= PMC_SETUP_USER;
+		if (strchr(options, 'k'))
+			flags |= PMC_SETUP_KERNEL;
+		if (flags == 0)
+			errx(EXIT_FAILURE, "Missing counter option");
+
+		memset(pmcarg, 0, sizeof(*pmcarg));
+		pmcarg->counter = i;
+		pmcarg->event = pnp->val;
+		pmcarg->unit = pnp->unit;
+		pmcarg->flags = flags;
+	}
+
+	for (i = 0; i < n; i++) {
+		pmcarg = &pmcargs[i];
+		if (x86_pmc_startstop(pmcarg) < 0)
+			errx(EXIT_FAILURE, "Unable to start counter #%zu", i);
+		printf("Counter #%zu started\n", i);
+	}
+}
+
+static void
+pmc_stop(const pmc_name2val_cpu_t *pncp, char **argv)
+{
+	x86_pmc_cpuval_t cpuval[PMC_NCOUNTERS][MAXCPUS];
+	x86_pmc_startstop_args_t pmcstop;
+	x86_pmc_read_args_t pmcread;
+	size_t i, j, n, nval = 0;
+
+	/* Read the values. */
+	for (n = 0; n < pmc_ncounters; n++) {
+		memset(&pmcread, 0, sizeof(pmcread));
+		pmcread.counter = n;
+		pmcread.values = (x86_pmc_cpuval_t *)&cpuval[n];
+		pmcread.nval = MAXCPUS;
+		if (x86_pmc_read(&pmcread) < 0) {
+			if (errno == ENOENT) {
+				/*
+				 * This counter is not running. So we stop the
+				 * iteration here, since the next counters
+				 * won't be running either.
+				 */
+				break;
+			}
+			errx(EXIT_FAILURE, "Unable to read counter #%zu", n);
+		}
+		nval = pmcread.nval;
+	}
+
+	/* Display the results. Should probably be revisited. */
+	printf("Counter\t\t");
+	for (i = 0; i < nval; i++) {
+		printf("cpu%zu\t\t", i);
+	}
+	printf("\n");
+	printf("-------\t\t");
+	for (i = 0; i < nval; i++) {
+		printf("----\t\t");
+	}
+	printf("\n");
+	for (i = 0; i < n; i++) {
+		printf("%zu\t\t", i);
+		for (j = 0; j < nval; j++) {
+			printf("%llu\t\t", cpuval[i][j].ctrval);
+		}
+		printf("\n");
+	}
+
+	/* Stop the counters. */
+	for (i = 0; i < n; i++) {
+		memset(&pmcstop, 0, sizeof(pmcstop));
+		pmcstop.counter = i;
+		if (x86_pmc_startstop(&pmcstop) < 0)
+			errx(EXIT_FAILURE, "Unable to stop counter #%zu", i);
+		printf("Counter #%zu stopped\n", i);
+	}
+}
+
+static const pmc_name2val_cpu_t *
+pmc_lookup_cpu(int type)
+{
+	size_t i, n = sizeof(pmc_cpus) / sizeof(pmc_name2val_cpu_t);
+
+	for (i = 0; i < n; i++) {
+		if (pmc_cpus[i].type == type)
+			return &pmc_cpus[i];
+	}
+
+	return NULL;
+}
+
+static const pmc_name2val_t *
+pmc_find_event(const pmc_name2val_cpu_t *pncp, const char *name)
+{
+	size_t i;
+
+	for (i = 0; i < pncp->size; i++) {
+		if (strcmp(pncp->pmc_names[i].name, name) == 0)
+			return &pncp->pmc_names[i];
+	}
+
+	return NULL;
 }
 
 static int
@@ -412,125 +581,35 @@ x86_pmc_read(x86_pmc_read_args_t *args)
 int
 main(int argc, char **argv)
 {
-	int c, status, ret0, ret1, errn0, errn1;
-	const char * volatile event = "unknown";
-	const struct pmc_name2val_cpus *pncp;
-	const struct pmc_name2val *pnp;
+	const pmc_name2val_cpu_t *pncp;
 	x86_pmc_info_args_t pmcinfo;
-	x86_pmc_startstop_args_t pss0, pss1;
-	x86_pmc_read_args_t pr0, pr1;
-	pid_t pid;
+	const struct cmdtab *ct;
 
 	setprogname(argv[0]);
-	errn0 = errn1 = 0;
+	argv += 1;
 
 	if (x86_pmc_info(&pmcinfo) < 0)
-		errx(2, "PMC support is not compiled into the kernel");
+		errx(EXIT_FAILURE, "PMC support not compiled into the kernel");
 	if (pmcinfo.vers != 1)
-		errx(2, "Wrong PMC version");
+		errx(EXIT_FAILURE, "Wrong PMC version");
+	pmc_ncounters = pmcinfo.nctrs;
 
 	pncp = pmc_lookup_cpu(pmcinfo.type);
 	if (pncp == NULL)
-		errx(3, "PMC counters are not supported for your CPU (0x%x)",
+		errx(EXIT_FAILURE, "PMC type 0x%x not recognized",
 		    pmcinfo.type);
 
-	pnp = NULL;
-	while ((c = getopt(argc, argv, "Cc:h")) != -1) {
-		switch (c) {
-		case 'C':
-			if (argc != 2)
+	for (ct = pmc_cmdtab; ct->label != NULL; ct++) {
+		if (strcmp(argv[0], ct->label) == 0) {
+			if (!ct->argsoptional &&
+			    ((ct->takesargs == 0) ^ (argv[1] == NULL)))
+			{
 				usage();
-			/*
-			 * Just clear both counters. Useful if a previous run
-			 * got killed and did not clean up.
-			 */
-			memset(&pss0, 0, sizeof(pss0));
-			x86_pmc_startstop(&pss0);
-			pss0.counter = 1;
-			x86_pmc_startstop(&pss0);
-			return 0;
-		case 'c':
-			event = optarg;
-			pnp = pmc_find_event(pncp, event);
+			}
+			(*ct->func)(pncp, argv + 1);
 			break;
-		case 'h':
-			if (argc != 2)
-				usage();
-			pmc_list_events(pncp);
-			return 0;
-		default:
-			usage();
 		}
 	}
-
-	if (pnp == NULL || argc <= optind)
-		usage();
-
-	memset(&pss0, 0, sizeof(pss0));
-	memset(&pss1, 0, sizeof(pss1));
-	pss0.event = pss1.event = pnp->val;
-	pss0.unit = pss1.unit = pnp->unit;
-	pss0.flags = PMC_SETUP_USER;
-	pss0.counter = 0;
-	pss1.flags = PMC_SETUP_KERNEL;
-	pss1.counter = 1;
-
-	/*
-	 * XXX should catch signals and tidy up in the parent.
-	 */
-	if (x86_pmc_startstop(&pss0) < 0)
-		err(4, "pmc_start user");
-	pss0.flags = 0;
-	if (x86_pmc_startstop(&pss1) < 0)
-		err(5, "pmc_start kernel");
-	pss1.flags = 0;
-
-	pid = vfork();
-
-	switch (pid) {
-	case -1:
-		err(5, "vfork");
-	case 0:
-		execvp(argv[optind], &argv[optind]);
-		err(6, "execvp");
-	}
-
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-
-	if (waitpid(pid, &status, 0) == -1)
-		err(6, "waitpid");
-	if (!WIFEXITED(status))
-		return 0;
-
-	/*
-	 * Do not immediately exit on errors below. The counters must be
-	 * stopped first, or subsequent runs will get EBUSY.
-	 */
-	pr0.counter = 0;
-	ret0 = x86_pmc_read(&pr0);
-	if (ret0 < 0)
-		errn0 = errno;
-	pr1.counter = 1;
-	ret1 = x86_pmc_read(&pr1);
-	if (ret1 < 0)
-		errn1 = errno;
-
-	if (x86_pmc_startstop(&pss0) < 0)
-		warn("pmc_stop user");
-	if (x86_pmc_startstop(&pss1) < 0)
-		warn("pmc_stop kernel");
-
-	if (ret0 < 0) {
-		errno = errn0;
-		err(6, "pmc_read");
-	}
-	if (ret1 < 0) {
-		errno = errn1;
-		err(7, "pmc_read");
-	}
-
-	printf("%s: user %llu kernel %llu\n", event, pr0.val, pr1.val);
 
 	return 0;
 }
