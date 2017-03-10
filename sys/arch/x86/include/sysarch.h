@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.10 2017/03/08 16:42:27 maxv Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.11 2017/03/10 13:09:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ struct _X86_SYSARCH_L(set_ioperm_args) {
 struct _X86_SYSARCH_L(pmc_info_args) {
 	int vers;
 	int type;
-	int flags;
+	uint32_t nctrs;
 };
 
 #define	PMC_VERSION		1
@@ -162,10 +162,15 @@ struct _X86_SYSARCH_L(pmc_startstop_args) {
 #define	PMC_SETUP_EDGE		0x04
 #define	PMC_SETUP_INV		0x08
 
+typedef struct {
+	uint64_t ctrval;
+	uint32_t overfl;
+} x86_pmc_cpuval_t;
+
 struct _X86_SYSARCH_L(pmc_read_args) {
-	int counter;
-	uint64_t val;
-	uint64_t time;
+	uint32_t counter;
+	x86_pmc_cpuval_t *values;
+	uint32_t nval;
 };
 
 struct mtrr;
