@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.56 2017/03/09 00:43:50 chs Exp $	 */
+/*	$NetBSD: map_object.c,v 1.57 2017/03/10 09:13:49 maya Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.56 2017/03/09 00:43:50 chs Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.57 2017/03/10 09:13:49 maya Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -88,10 +88,8 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	Elf_Off		 data_offset;
 	Elf_Addr	 data_vaddr;
 	Elf_Addr	 data_vlimit;
-	size_t		 data_size;
 	int		 data_flags;
 	caddr_t		 data_addr;
-	size_t		 bss_size;
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	Elf_Addr	 tls_vaddr = 0; /* Noise GCC */
 #endif
@@ -363,8 +361,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 
 	/* Overlay the data segment onto the proper region. */
 	data_addr = mapbase + (data_vaddr - base_vaddr);
-	data_size = data_vlimit - data_vaddr;
-	if (data_size != 0 && mmap(data_addr, data_size, data_flags,
+	if (mmap(data_addr, data_vlimit - data_vaddr, data_flags,
 	    MAP_FILE | MAP_PRIVATE | MAP_FIXED, fd, data_offset) ==
 	    MAP_FAILED) {
 		_rtld_error("mmap of data failed: %s", xstrerror(errno));
@@ -372,8 +369,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	}
 
 	/* Overlay the bss segment onto the proper region. */
-	bss_size = base_vlimit - data_vlimit;
-	if (bss_size != 0 && mmap(mapbase + data_vlimit - base_vaddr, bss_size,
+	if (mmap(mapbase + data_vlimit - base_vaddr, base_vlimit - data_vlimit,
 	    data_flags, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0) ==
 	    MAP_FAILED) {
 		_rtld_error("mmap of bss failed: %s", xstrerror(errno));
@@ -383,8 +379,8 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	/* Unmap the gap between the text and data. */
 	gap_addr = mapbase + round_up(text_vlimit - base_vaddr);
 	gap_size = data_addr - gap_addr;
-	if (gap_size != 0 && munmap(gap_addr, gap_size) == -1) {
-		_rtld_error("munmap of text -> data gap failed: %s",
+	if (gap_size != 0 && mprotect(gap_addr, gap_size, PROT_NONE) == -1) {
+		_rtld_error("mprotect of text -> data gap failed: %s",
 		    xstrerror(errno));
 		goto bad;
 	}
