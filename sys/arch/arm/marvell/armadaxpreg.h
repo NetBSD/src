@@ -98,7 +98,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ARMADAXP_ATTR_NAND_RESERVED	0x20
 
 /* PCIe Attributes */
-/* port 0, 1 has 4 lanes */
+/* port 0 has 4 lanes. port 1 has either 4 or 1 lanes. */
 #define ARMADAXP_ATTR_PEXx0_MEM		0xe8
 #define ARMADAXP_ATTR_PEXx0_IO		0xe0
 #define ARMADAXP_ATTR_PEXx1_MEM		0xd8
