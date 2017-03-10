@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.29 2017/03/10 17:47:20 maya Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.30 2017/03/10 18:02:32 maya Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.29 2017/03/10 17:47:20 maya Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.30 2017/03/10 18:02:32 maya Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -553,8 +553,7 @@ hes_to_bind(const char *name, const char *type)
 
 	if (init_context() < 0)
 		return NULL;
-	if (bindname)
-		free(bindname);
+
 	bindname = hesiod_to_bind(context, name, type);
 	if (!bindname)
 		translate_errors();
