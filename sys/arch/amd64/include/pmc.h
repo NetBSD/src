@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.3 2017/02/18 14:43:35 maxv Exp $	*/
+/*	$NetBSD: pmc.h,v 1.4 2017/03/10 14:40:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -34,17 +34,14 @@
  */
 
 #ifdef _KERNEL
-/*
- * LEGACY PMC support
- */
-struct x86_64_pmc_info_args;
-int	pmc_info(struct proc *, struct x86_64_pmc_info_args *,
+struct x86_pmc_info_args;
+struct x86_pmc_startstop_args;
+struct x86_pmc_read_args;
+void pmc_init(void);
+int sys_pmc_info(struct lwp *, struct x86_pmc_info_args *,
     register_t *);
-struct x86_64_pmc_startstop_args;
-int	pmc_startstop(struct proc *, struct x86_64_pmc_startstop_args *,
+int sys_pmc_startstop(struct lwp *, struct x86_pmc_startstop_args *,
     register_t *);
-struct x86_64_pmc_read_args;
-int	pmc_read(struct proc *, struct x86_64_pmc_read_args *,
+int sys_pmc_read(struct lwp *, struct x86_pmc_read_args *,
     register_t *);
-/* END LEGACY PMC SUPPORT */
 #endif
