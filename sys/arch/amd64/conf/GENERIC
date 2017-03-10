@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.454 2017/02/26 12:41:50 rin Exp $
+# $NetBSD: GENERIC,v 1.455 2017/03/10 14:54:12 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.454 $"
+#ident		"GENERIC-$Revision: 1.455 $"
 
 maxusers	64		# estimated number of users
 
@@ -80,6 +80,8 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 vmt0		at cpu0		# VMware Tools
+
+#options 	PMC		# performance-monitoring counters support
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
