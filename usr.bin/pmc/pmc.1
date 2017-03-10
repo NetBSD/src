@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.1,v 1.10 2017/03/10 13:09:11 maxv Exp $
+.\"	$NetBSD: pmc.1,v 1.11 2017/03/10 15:34:17 wiz Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,7 +96,6 @@ Stop any performance counters that are currently running, and display the
 values of these counters.
 .El
 .Sh EXAMPLES
-.Pp
 The following command prints the available counters.
 .Dl $ pmc list
 .Pp
@@ -114,7 +113,6 @@ track the same event.
 The latter will start one counter that tracks the event from all sources;
 it therefore does the sum of the two counters from the first command, but
 takes only one counter to do so.
-.Ed
 .Sh DIAGNOSTICS
 .Bl -diag
 .It PMC support not compiled into the kernel
@@ -127,12 +125,6 @@ See
 .Xr options 4
 for details.
 .El
-.Sh BUGS
-The
-.Nm
-command currently only supports performance-monitoring counters
-on the i386 architecture.
-.El
 .Sh SEE ALSO
 .Xr options 4
 .Sh HISTORY
@@ -141,4 +133,8 @@ The
 command first appeared in
 .Nx 1.6 .
 It was revamped in 2017.
-
+.Sh BUGS
+The
+.Nm
+command currently only supports performance-monitoring counters
+on the i386 architecture.
