@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.20 2017/03/10 13:09:11 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.21 2017/03/10 15:06:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -66,9 +66,10 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.20 2017/03/10 13:09:11 maxv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.21 2017/03/10 15:06:20 maxv Exp $");
 #endif
 
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stdbool.h>
 #include <machine/sysarch.h>
@@ -513,7 +514,7 @@ pmc_stop(const pmc_name2val_cpu_t *pncp, char **argv)
 	for (i = 0; i < n; i++) {
 		printf("%zu\t\t", i);
 		for (j = 0; j < nval; j++) {
-			printf("%llu\t\t", cpuval[i][j].ctrval);
+			printf("%" PRIu64 "\t\t", cpuval[i][j].ctrval);
 		}
 		printf("\n");
 	}
