@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.4 2017/02/27 18:30:42 jakllsch Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.5 2017/03/10 00:22:01 macallan Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.4 2017/02/27 18:30:42 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.5 2017/03/10 00:22:01 macallan Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -37,6 +37,10 @@ __KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.4 2017/02/27 18:30:42 jakllsch Exp $");
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/mutex.h>
+#include <uvm/uvm.h>
+#include <machine/pio.h>
+#include <machine/pmap.h>
+#include <machine/ofw.h>
 
 #include <dev/isa/isavar.h>
 
@@ -84,6 +88,10 @@ CFATTACH_DECL_NEW(vlpci, sizeof(struct vlpci_softc),
 
 static const char * const compat_strings[] = { "via,vt82c505", NULL };
 
+vaddr_t vlpci_mem_vaddr = 0;
+paddr_t vlpci_mem_paddr;
+struct bus_space vlpci_memt;
+
 static void
 regwrite_1(struct vlpci_softc * const sc, uint8_t off, uint8_t val)
 {
@@ -91,6 +99,54 @@ regwrite_1(struct vlpci_softc * const sc, uint8_t off, uint8_t val)
 	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 0, off);
 	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 1, val);
 	mutex_spin_exit(&sc->sc_lock);
+}
+
+static uint8_t
+regread_1(struct vlpci_softc * const sc, uint8_t off)
+{
+	uint8_t reg;
+
+	mutex_spin_enter(&sc->sc_lock);
+	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 0, off);
+	reg = bus_space_read_1(&isa_io_bs_tag, sc->sc_reg_ioh, 1);
+	mutex_spin_exit(&sc->sc_lock);
+	return reg;
+}
+
+static void
+vlpci_dump_window(struct vlpci_softc *sc, int num)
+{
+	int regaddr = 0x87 + 3 * num;
+	uint32_t addr, size;
+	uint8_t attr;
+
+	addr = regread_1(sc, regaddr) << 24;
+	addr |= regread_1(sc, regaddr + 1) << 16;
+	attr = regread_1(sc, regaddr + 2);
+	size = 0x00010000 << ((attr & 0x1c) >> 2);
+	printf("memory window #%d at %08x size %08x flags %x\n", num, addr, size, attr);
+}
+
+static int
+vlpci_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
+{
+	*bshp = vlpci_mem_vaddr - 0x02000000 + bpa;
+printf("%s: %08lx -> %08lx\n", __func__, bpa, *bshp);
+	return(0);
+}
+
+static paddr_t
+vlpci_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
+    int flags)
+{
+	paddr_t ret;
+
+	ret = vlpci_mem_paddr + addr + off;
+
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
+		return (arm_btop(ret) | ARM32_MMAP_WRITECOMBINE);
+	} else
+		return arm_btop(ret);	
 }
 
 static int
@@ -131,11 +187,51 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	/* Enable VLB/PCI bridge */
 	regwrite_1(sc, 0x96, 0x18); /* enable LOCAL#, compatible mode */
 	regwrite_1(sc, 0x93, 0x60); /* IOCHCK# on IOCHCK#/NMI */
-	regwrite_1(sc, 0x86, 2<<5); /* invert all INTx to IRQ */
+	regwrite_1(sc, 0x86, 0x61); /* invert all INTx to IRQ */
 	regwrite_1(sc, 0x97, 0x00); /* don't do per-INTx conversions */
 	regwrite_1(sc, 0x91, 0xbb); /* enable INT[AB] to IRQ 10 */
 	regwrite_1(sc, 0x90, 0xbb); /* enable INT[CD] to IRQ 10 */
+	/*
+	 * XXX
+	 * set memory size to 255MB, so the bridge knows which cycles go to RAM
+	 * shark's RAM is in the upper half of the lower 256MB, part of the
+	 * lower half is occupied by the graphics chip
+	 * ... or that's the theory. OF puts PCI BARS at 0x02000000 which
+	 * overlaps with when we do this and pci memory access doesn't work.
+	 */
+	regwrite_1(sc, 0x81, 0x1);
 
+	regwrite_1(sc, 0x82, 0x08); /* PCI dynamic acceleration decoding enable */
+	regwrite_1(sc, 0x83, 0x08); 
+	printf("reg 0x83 %02x\n", regread_1(sc, 0x83));
+
+#if 1
+	/* program window #0 to 0x08000000 */
+	regwrite_1(sc, 0x87, 0x08);
+	regwrite_1(sc, 0x88, 0x00);
+	regwrite_1(sc, 0x89, 0x38);	/* VL, unbuffered, 4MB */
+#else
+	regwrite_1(sc, 0x87, 0x00);
+	regwrite_1(sc, 0x88, 0x00);
+	regwrite_1(sc, 0x89, 0x00);
+#endif
+
+	vlpci_mem_paddr = 0x02000000;	/* get from OF! */
+	
+	/*
+	 * we map in 1MB at 0x02000000, so program window #1 accordingly
+	 */
+	regwrite_1(sc, 0x8a, vlpci_mem_paddr >> 24);
+	regwrite_1(sc, 0x8b, (vlpci_mem_paddr >> 16) & 0xff);
+	regwrite_1(sc, 0x8c, 0x90);	/* PCI, unbuffered, 1MB */
+
+	/* now map in some of the memory space */
+	printf("vlpci_mem_vaddr %08lx\n", vlpci_mem_vaddr);
+	memcpy(&vlpci_memt, &isa_io_bs_tag, sizeof(struct bus_space));
+	vlpci_memt.bs_cookie = (void *)vlpci_mem_vaddr;
+	vlpci_memt.bs_map = vlpci_map;
+	vlpci_memt.bs_mmap = vlpci_mmap;
+	 
 	pc->pc_conf_v = sc;
 	pc->pc_attach_hook = vlpci_pc_attach_hook;
 	pc->pc_bus_maxdevs = vlpci_pc_bus_maxdevs;
@@ -163,10 +259,20 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	    PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_IO_ENABLE);
 
-	pba.pba_flags = PCI_FLAGS_IO_OKAY; /* try for more someday */
+	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_iot = &isa_io_bs_tag;
+	pba.pba_memt = &vlpci_memt;
+	pba.pba_dmat = &isa_bus_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
+
+printf("dma %lx %lx, %lx\n", isa_bus_dma_tag._ranges[0].dr_sysbase,
+			 isa_bus_dma_tag._ranges[0].dr_busbase,
+			 isa_bus_dma_tag._ranges[0].dr_len);
+
+	vlpci_dump_window(sc, 0);
+	vlpci_dump_window(sc, 1);
+	vlpci_dump_window(sc, 2);
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
@@ -299,7 +405,7 @@ vlpci_pc_intr_disestablish(void *v, void *w)
 static int
 vlpci_pc_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 {
-	return PCI_CONF_DEFAULT & ~PCI_CONF_ENABLE_BM;
+	return PCI_CONF_DEFAULT /*& ~PCI_CONF_ENABLE_BM*/;
 }
 #endif
 
