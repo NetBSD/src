@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.24 2017/03/08 16:42:27 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.25 2017/03/10 13:09:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.24 2017/03/08 16:42:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.25 2017/03/10 13:09:11 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,17 +88,15 @@ typedef struct {
 	uint32_t evtmsr;	/* event selector MSR */
 	uint64_t evtval;	/* event selector value */
 	uint32_t ctrmsr;	/* counter MSR */
-	uint64_t ctrval;	/* counter value */
-	uint64_t tsc;
+	uint64_t ctrval;	/* initial counter value */
 } pmc_state_t;
 
-static uint64_t pmc_val_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
+static x86_pmc_cpuval_t pmc_val_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
 static kmutex_t pmc_lock;
 
 static pmc_state_t pmc_state[PMC_NCOUNTERS];
 static int pmc_ncounters __read_mostly;
 static int pmc_type __read_mostly;
-static int pmc_flags __read_mostly;
 
 static void
 pmc_read_cpu(void *arg1, void *arg2)
@@ -106,29 +104,25 @@ pmc_read_cpu(void *arg1, void *arg2)
 	pmc_state_t *pmc = (pmc_state_t *)arg1;
 	struct cpu_info *ci = curcpu();
 
-	pmc_val_cpus[cpu_index(ci)] = rdmsr(pmc->ctrmsr) & 0xffffffffffULL;
+	pmc_val_cpus[cpu_index(ci)].ctrval =
+	    rdmsr(pmc->ctrmsr) & 0xffffffffffULL;
+	pmc_val_cpus[cpu_index(ci)].overfl = 0;
 }
 
 static void
 pmc_read(pmc_state_t *pmc)
 {
 	uint64_t xc;
-	size_t i;
 
 	xc = xc_broadcast(0, pmc_read_cpu, pmc, NULL);
 	xc_wait(xc);
-
-	pmc->ctrval = 0;
-	for (i = 0; i < ncpu; i++) {
-		/* XXX: really shitty */
-		pmc->ctrval += pmc_val_cpus[i];
-	}
 }
 
 static void
 pmc_apply_cpu(void *arg1, void *arg2)
 {
 	pmc_state_t *pmc = (pmc_state_t *)arg1;
+	struct cpu_info *ci = curcpu();
 
 	wrmsr(pmc->ctrmsr, pmc->ctrval);
 	switch (pmc_type) {
@@ -142,6 +136,9 @@ pmc_apply_cpu(void *arg1, void *arg2)
 		wrmsr(pmc->evtmsr, pmc->evtval);
 		break;
 	}
+
+	pmc_val_cpus[cpu_index(ci)].ctrval = 0;
+	pmc_val_cpus[cpu_index(ci)].overfl = 0;
 }
 
 static void
@@ -210,6 +207,7 @@ pmc_stop(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 {
 	pmc->running = false;
 	pmc->evtval = 0;
+	pmc->ctrval = 0;
 	pmc_apply(pmc);
 }
 
@@ -262,9 +260,6 @@ pmc_init(void)
 		break;
 	}
 
-	if (pmc_type != PMC_TYPE_NONE && cpu_hascounter())
-		pmc_flags |= PMC_INFO_HASTSC;
-
 	mutex_init(&pmc_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
@@ -277,7 +272,7 @@ sys_pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs, register_t *retval)
 
 	rv.vers = PMC_VERSION;
 	rv.type = pmc_type;
-	rv.flags = pmc_flags;
+	rv.nctrs = pmc_ncounters;
 
 	return copyout(&rv, uargs, sizeof(rv));
 }
@@ -330,6 +325,7 @@ sys_pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs, register_t *retval)
 {
 	struct x86_pmc_read_args args;
 	pmc_state_t *pmc;
+	size_t nval;
 	int error;
 
 	if (pmc_type == PMC_TYPE_NONE)
@@ -341,20 +337,27 @@ sys_pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs, register_t *retval)
 
 	if (args.counter >= pmc_ncounters)
 		return EINVAL;
+	if (args.values == NULL)
+		return EINVAL;
+	nval = MIN(ncpu, args.nval);
+
 	pmc = &pmc_state[args.counter];
 
 	mutex_enter(&pmc_lock);
 
 	if (pmc->running) {
 		pmc_read(pmc);
-		if (pmc_flags & PMC_INFO_HASTSC)
-			pmc->tsc = cpu_counter();
+		error = copyout(&pmc_val_cpus, args.values,
+		    nval * sizeof(x86_pmc_cpuval_t));
+		args.nval = nval;
+	} else {
+		error = ENOENT;
 	}
 
-	args.val = pmc->ctrval;
-	args.time = pmc->tsc;
-
 	mutex_exit(&pmc_lock);
+
+	if (error)
+		return error;
 
 	return copyout(&args, uargs, sizeof(args));
 }
