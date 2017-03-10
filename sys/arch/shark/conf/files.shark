@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.19 2017/02/17 18:07:51 jakllsch Exp $
+#	$NetBSD: files.shark,v 1.20 2017/03/10 00:09:13 macallan Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -22,6 +22,7 @@ define todservice {}
 #
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
+include "dev/usb/files.usb"
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -138,7 +139,7 @@ file	arch/shark/ofw/chipsfb_ofbus.c		chipsfb_ofbus needs-flag
 
 # ofbus VLB Host to PCI Bridge (VIA VT82C505)
 device	vlpci: pcibus
-file	arch/shark/ofw/vlpci.c			vlpci
+file	arch/shark/ofw/vlpci.c			vlpci needs-flag
 attach	vlpci at ofbus
 
 # Smart Card Reader
