@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.245 2017/03/09 08:41:56 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.246 2017/03/10 20:27:31 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.245 2017/03/09 08:41:56 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.246 2017/03/10 20:27:31 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1058,11 +1058,15 @@ in_arpinput(struct mbuf *m)
 	/*
 	 * Search for a matching interface address
 	 * or any address on the interface to use
-	 * as a dummy address in the rest of this function
+	 * as a dummy address in the rest of this function.
+	 *
+	 * If the target IP address is zero then try and find
+	 * the sender address for DAD.
 	 */
+	myaddr = in_nullhost(itaddr) ? isaddr : itaddr;
 	s = pserialize_read_enter();
-	IN_ADDRHASH_READER_FOREACH(ia, itaddr.s_addr) {
-		if (!in_hosteq(ia->ia_addr.sin_addr, itaddr))
+	IN_ADDRHASH_READER_FOREACH(ia, myaddr.s_addr) {
+		if (!in_hosteq(ia->ia_addr.sin_addr, myaddr))
 			continue;
 #if NCARP > 0
 		if (ia->ia_ifp->if_type == IFT_CARP &&
@@ -1153,15 +1157,8 @@ in_arpinput(struct mbuf *m)
 	else if (in_hosteq(isaddr, myaddr))
 		ARP_STATINC(ARP_STAT_RCVLOCALSPA);
 
-	/*
-	 * If the target IP address is zero, ignore the packet.
-	 * This prevents the code below from trying to answer
-	 * when we are using IP address zero (booting).
-	 */
-	if (in_nullhost(itaddr)) {
+	if (in_nullhost(itaddr))
 		ARP_STATINC(ARP_STAT_RCVZEROTPA);
-		goto out;
-	}
 
 	/*
 	 * DAD check, RFC 5227.
@@ -1181,6 +1178,14 @@ in_arpinput(struct mbuf *m)
 		    lla_snprintf(llabuf, ar_sha(ah), ah->ar_hln));
 		goto out;
 	}
+
+	/*
+	 * If the target IP address is zero, ignore the packet.
+	 * This prevents the code below from trying to answer
+	 * when we are using IP address zero (booting).
+	 */
+	if (in_nullhost(itaddr))
+		goto out;
 
 	if (in_nullhost(isaddr))
 		goto reply;
