@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.295.2.9 2017/03/11 07:40:21 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.295.2.10 2017/03/11 16:03:54 snj Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295.2.9 2017/03/11 07:40:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.295.2.10 2017/03/11 16:03:54 snj Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -979,7 +979,7 @@ pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 
 # define PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
 #else
-# define PTE_SYNC_CURRENT(pm, ptep)	__nothing
+# define PTE_SYNC_CURRENT(pm, ptep)	/* nothing */
 #endif
 
 /*
