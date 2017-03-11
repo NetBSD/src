@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_MPRINTF 3
 .Os
 .Sh NAME
@@ -8,24 +8,24 @@
 .Nm sqlite3_vsnprintf
 .Nd Formatted String Printing Functions
 .Sh SYNOPSIS
-.Ft char *SQLITE_CDECL 
+.Ft char *
 .Fo sqlite3_mprintf
 .Fa "const char*"
 .Fa "..."
 .Fc
-.Ft char *SQLITE_STDCALL 
+.Ft char *
 .Fo sqlite3_vmprintf
 .Fa "const char*"
 .Fa "va_list"
 .Fc
-.Ft char *SQLITE_CDECL 
+.Ft char *
 .Fo sqlite3_snprintf
 .Fa "int"
 .Fa "char*"
 .Fa "const char*"
 .Fa "..."
 .Fc
-.Ft char *SQLITE_STDCALL 
+.Ft char *
 .Fo sqlite3_vsnprintf
 .Fa "int"
 .Fa "char*"
