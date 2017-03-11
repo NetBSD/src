@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_MUTEX_ALLOC 3
 .Os
 .Sh NAME
@@ -9,23 +9,23 @@
 .Nm sqlite3_mutex_leave
 .Nd Mutexes
 .Sh SYNOPSIS
-.Ft sqlite3_mutex *SQLITE_STDCALL 
+.Ft sqlite3_mutex *
 .Fo sqlite3_mutex_alloc
 .Fa "int"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_mutex_free
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_mutex_enter
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_mutex_try
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_mutex_leave
 .Fa "sqlite3_mutex*"
 .Fc

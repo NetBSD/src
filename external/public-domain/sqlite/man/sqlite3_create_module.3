@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_CREATE_MODULE 3
 .Os
 .Sh NAME
@@ -6,14 +6,14 @@
 .Nm sqlite3_create_module_v2
 .Nd Register A Virtual Table Implementation
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_module
 .Fa "sqlite3 *db"
 .Fa "const char *zName"
 .Fa "const sqlite3_module *p"
 .Fa "void *pClientData          "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_module_v2
 .Fa "sqlite3 *db"
 .Fa "const char *zName"
