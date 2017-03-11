@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.10 2017/02/23 12:17:36 nonaka Exp $	*/
+/*	$NetBSD: efi.c,v 1.11 2017/03/11 07:21:10 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.10 2017/02/23 12:17:36 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.11 2017/03/11 07:21:10 nonaka Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -41,22 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.10 2017/02/23 12:17:36 nonaka Exp $");
 
 #include <dev/mm.h>
 
-const struct uuid EFI_UUID_ACPI20 = {
-	.time_low = 0x8868e871,
-	.time_mid = 0xe4f1,
-	.time_hi_and_version = 0x11d3,
-	.clock_seq_hi_and_reserved = 0xbc,
-	.clock_seq_low = 0x22,
-	.node = {0x0, 0x80, 0xc7, 0x3c, 0x88, 0x81}
-};
-const struct uuid EFI_UUID_ACPI10 = {
-	.time_low = 0xeb9d2d30,
-	.time_mid = 0x2d88,
-	.time_hi_and_version = 0x11d3,
-	.clock_seq_hi_and_reserved = 0x9a,
-	.clock_seq_low = 0x16,
-	.node = {0x0, 0x90, 0x27, 0x3f, 0xc1, 0x4d}
-};
+const struct uuid EFI_UUID_ACPI20 = EFI_TABLE_ACPI20;
+const struct uuid EFI_UUID_ACPI10 = EFI_TABLE_ACPI10;
+const struct uuid EFI_UUID_SMBIOS = EFI_TABLE_SMBIOS;
+const struct uuid EFI_UUID_SMBIOS3 = EFI_TABLE_SMBIOS3;
 
 vaddr_t 	efi_getva(paddr_t);
 void 		efi_relva(vaddr_t);
@@ -143,6 +131,10 @@ efi_aprintuuid(const struct uuid * uuid)
 		aprint_debug(" ACPI 2.0");
 	} else if (efi_uuideq(uuid, &EFI_UUID_ACPI10)) {
 		aprint_debug(" ACPI 1.0");
+	} else if (efi_uuideq(uuid, &EFI_UUID_SMBIOS)) {
+		aprint_debug(" SMBIOS");
+	} else if (efi_uuideq(uuid, &EFI_UUID_SMBIOS3)) {
+		aprint_debug(" SMBIOS3");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*     $NetBSD: efi.h,v 1.6 2017/02/23 12:17:36 nonaka Exp $   */
+/*     $NetBSD: efi.h,v 1.7 2017/03/11 07:21:10 nonaka Exp $   */
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -39,8 +39,19 @@
 #define        EFI_PAGE_SIZE           (1 << EFI_PAGE_SHIFT)
 #define        EFI_PAGE_MASK           (EFI_PAGE_SIZE - 1)
 
+#define	EFI_TABLE_ACPI20						\
+	{0x8868e871,0xe4f1,0x11d3,0xbc,0x22,{0x00,0x80,0xc7,0x3c,0x88,0x81}}
+#define	EFI_TABLE_ACPI10						\
+	{0xeb9d2d30,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
+#define	EFI_TABLE_SMBIOS						\
+	{0xeb9d2d31,0x2d88,0x11d3,0x9a,0x16,{0x00,0x90,0x27,0x3f,0xc1,0x4d}}
+#define	EFI_TABLE_SMBIOS3						\
+	{0xf2fd1544,0x9794,0x4a2c,0x99,0x2e,{0xe5,0xbb,0xcf,0x20,0xe3,0x94}}
+
 extern const struct uuid EFI_UUID_ACPI20;
 extern const struct uuid EFI_UUID_ACPI10;
+extern const struct uuid EFI_UUID_SMBIOS;
+extern const struct uuid EFI_UUID_SMBIOS3;
 
 enum efi_reset {
        EFI_RESET_COLD,
