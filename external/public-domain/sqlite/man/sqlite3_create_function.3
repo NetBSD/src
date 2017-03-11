@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_CREATE_FUNCTION 3
 .Os
 .Sh NAME
@@ -7,7 +7,7 @@
 .Nm sqlite3_create_function_v2
 .Nd Create Or Redefine SQL Functions
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_function
 .Fa "sqlite3 *db"
 .Fa "const char *zFunctionName"
@@ -18,7 +18,7 @@
 .Fa "void (*xStep)(sqlite3_context*,int,sqlite3_value**)"
 .Fa "void (*xFinal)(sqlite3_context*) "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_function16
 .Fa "sqlite3 *db"
 .Fa "const void *zFunctionName"
@@ -29,7 +29,7 @@
 .Fa "void (*xStep)(sqlite3_context*,int,sqlite3_value**)"
 .Fa "void (*xFinal)(sqlite3_context*) "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_function_v2
 .Fa "sqlite3 *db"
 .Fa "const char *zFunctionName"
