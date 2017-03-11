@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.185 2017/02/22 12:17:16 maya Exp $
+# $NetBSD: HACKS,v 1.186 2017/03/11 09:12:13 maya Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -332,21 +332,10 @@ descr
 	Generate .hx files and copy it in the Makefiles if they changed.
 kcah
 
-hack	MKPIE ldscript for /usr.sbin/crash
-cdate	22 April 2010
-who	christos
-file	src/usr.sbin/crash/Makefile	: 1.5
-file	src/usr.sbin/crash/ldscript.crash	: 1.1
-pr	N/A
-descr
-	fixed in binutils-2.20.1. Linking with MKPIE=yes causes overlapping
-	sections
-kcah
-
 hack	Disable fortification for /usr/bin/makeinfo
 cdata	24 Mar 2014
 who	tron
-file	src/gnu/usr.bin/texinfo/makeinfo/Makefile	: 1.8
+file	src/external/gpl2/texinfo/bin/makeinfo/Makefile	: 1.1
 pr	N/A
 descr
 	If "makeinfo" is compiled with "-D_FORTIFY_SOURCE=2" using GCC 4.8.3
