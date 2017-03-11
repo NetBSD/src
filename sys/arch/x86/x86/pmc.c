@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.2 2017/03/11 10:33:46 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.3 2017/03/11 14:13:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2 2017/03/11 10:33:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3 2017/03/11 14:13:39 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,6 @@ int
 sys_pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs, register_t *retval)
 {
 	struct x86_pmc_info_args rv;
-
-printf("PMCTYPE: %d\n", (int)pmc_type);
 
 	memset(&rv, 0, sizeof(rv));
 
