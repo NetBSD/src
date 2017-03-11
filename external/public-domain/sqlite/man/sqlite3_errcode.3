@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_ERRCODE 3
 .Os
 .Sh NAME
@@ -9,23 +9,23 @@
 .Nm sqlite3_errstr
 .Nd Error Codes And Messages
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_errcode
 .Fa "sqlite3 *db"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_extended_errcode
 .Fa "sqlite3 *db"
 .Fc
-.Ft const char *SQLITE_STDCALL 
+.Ft const char *
 .Fo sqlite3_errmsg
 .Fa "sqlite3*"
 .Fc
-.Ft const void *SQLITE_STDCALL 
+.Ft const void *
 .Fo sqlite3_errmsg16
 .Fa "sqlite3*"
 .Fc
-.Ft const char *SQLITE_STDCALL 
+.Ft const char *
 .Fo sqlite3_errstr
 .Fa "int"
 .Fc
