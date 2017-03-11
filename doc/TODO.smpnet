@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.7 2017/03/09 06:21:54 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.8 2017/03/11 06:40:19 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -7,6 +7,7 @@ MP-safe components
    - vioif(4)
    - vmx(4)
    - wm(4)
+   - ixg(4)
  - Layer 2
    - Ethernet (if_ethersubr.c)
    - bridge(4)
