@@ -1,6 +1,6 @@
-/*	$NetBSD: strftime.c,v 1.38 2016/10/20 17:41:34 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.39 2017/03/11 18:23:14 christos Exp $	*/
 
-/* Convert a broken-down time stamp to a string.  */
+/* Convert a broken-down timestamp to a string.  */
 
 /* Copyright 1989 The Regents of the University of California.
    All rights reserved.
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.38 2016/10/20 17:41:34 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.39 2017/03/11 18:23:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,9 +65,8 @@ __RCSID("$NetBSD: strftime.c,v 1.38 2016/10/20 17:41:34 christos Exp $");
 #undef TM_GMTOFF
 #endif
 
-#include "tzfile.h"
-#include "fcntl.h"
-#include "locale.h"
+#include <fcntl.h>
+#include <locale.h>
 
 #ifdef __weak_alias
 __weak_alias(strftime_l, _strftime_l)
@@ -498,6 +497,7 @@ label:
 				{
 				long		diff;
 				char const *	sign;
+				bool negative;
 
 				if (t->tm_isdst < 0)
 					continue;
@@ -566,7 +566,17 @@ label:
 				}
 #  endif
 # endif
-				if (diff < 0) {
+				negative = diff < 0;
+				if (diff == 0) {
+#ifdef TM_ZONE
+				  negative = t->TM_ZONE[0] == '-';
+#else
+				  negative
+				    = (t->tm_isdst < 0
+				       || tzname[t->tm_isdst != 0][0] == '-');
+#endif
+				}
+				if (negative) {
 					sign = "-";
 					diff = -diff;
 				} else	sign = "+";
