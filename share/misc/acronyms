@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.252 2017/01/31 03:44:14 riastradh Exp $
+$NetBSD: acronyms,v 1.253 2017/03/11 07:10:37 riastradh Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -32,6 +32,7 @@ AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
 AM	ante meridiem
+AMA	ask me anything
 AMOL	a mountain of love
 ASAIC	as soon as I can
 ASAP	as soon as possible
