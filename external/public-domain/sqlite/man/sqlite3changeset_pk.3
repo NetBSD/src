@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3CHANGESET_PK 3
 .Os
 .Sh NAME
@@ -28,8 +28,8 @@ where nCol is the number of columns in the table.
 Elements of *pabPK are set to 0x01 if the corresponding column is part
 of the tables primary key, or 0x00 if it is not.
 .Pp
-If argumet pnCol is not NULL, then *pnCol is set to the number of columns
-in the table.
+If argument pnCol is not NULL, then *pnCol is set to the number of
+columns in the table.
 .Pp
 If this function is called when the iterator does not point to a valid
 entry, SQLITE_MISUSE is returned and the output variables zeroed.
