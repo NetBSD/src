@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.30 2017/03/11 07:21:10 nonaka Exp $	*/
+/*	$NetBSD: bios32.c,v 1.31 2017/03/11 23:39:49 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.30 2017/03/11 07:21:10 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.31 2017/03/11 23:39:49 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,9 +188,7 @@ bios32_init(void)
 			goto out;
 		}
 	}
-#ifndef XEN
 out:
-#endif
 	pmap_update(pmap_kernel());
 }
 
