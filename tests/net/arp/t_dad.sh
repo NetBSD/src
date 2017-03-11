@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.14 2017/03/08 05:30:56 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.15 2017/03/11 02:01:10 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -168,21 +168,24 @@ dad_duplicated_body()
 	export RUMP_SERVER=$SOCKLOCAL
 
 	# The primary address isn't marked as duplicated
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip1 |grep -iq duplicated"
+	atf_check -s exit:0 -o not-match:"${localip1}.+DUPLICATED" \
+	    rump.ifconfig shmif0
 
 	#
 	# Add a new address duplicated with the peer server
 	#
 	atf_check -s exit:0 rump.ifconfig shmif0 inet $peerip alias
-	atf_check -s exit:0 sleep 1
+	atf_check -s exit:0 sleep 2
 
 	# The new address is marked as duplicated
-	atf_check -s exit:0 -x "rump.ifconfig shmif0 |grep $peerip |grep -iq duplicated"
+	atf_check -s exit:0 -o match:"${peerip}.+DUPLICATED" \
+	    rump.ifconfig shmif0
 
 	# A unique address isn't marked as duplicated
 	atf_check -s exit:0 rump.ifconfig shmif0 inet $localip2 alias
-	atf_check -s exit:0 sleep 1
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip2 |grep -iq duplicated"
+	atf_check -s exit:0 sleep 2
+	atf_check -s exit:0 -o not-match:"${localip2}.+DUPLICATED" \
+	    rump.ifconfig shmif0
 
 	rump_server_destroy_ifaces
 }
