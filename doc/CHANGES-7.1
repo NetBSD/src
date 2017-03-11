@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.162 2017/03/09 16:28:13 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.163 2017/03/11 07:47:31 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -8975,4 +8975,26 @@ sys/dev/pci/if_wmvar.h				1.33
           mii_{read|write}reg. This change improves detection of PHY type.
         - Fix typo in comment.
 	[msaitoh, ticket #1372]
+
+sys/arch/arm/arm32/pmap.c			1.343, 1.344
+sys/arch/arm/include/arm32/pmap.h		1.145
+sys/arch/evbarm/gumstix/gumstix_machdep.c	1.58 via patch
+
+	Fixup the compile time decisions around PMAP_{INCLUDE,NEEDS}_PTE_SYNC
+	and fix the options for xscale boards which require the code in
+	pmap_l2ptp_ctor marked as #ifndef PMAP_INCLUDE_PTE_SYNC.
+
+	Fix the typo (pte -> opte) in this code block and consistently use
+	opte elsewhere.
+
+	Set xscale_cache_clean_addr appropriately and re-arrange default KVA
+	layout to allow direct map for all boards.
+
+	PRs 51990 and 52010.
+	[skrll, ticket #1366]
+
+sys/conf/copyright				1.14, 1.15
+
+	Update copyright year.
+	[tsutsui, ticket #1384]
 
