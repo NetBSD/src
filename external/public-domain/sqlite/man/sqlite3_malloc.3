@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_MALLOC 3
 .Os
 .Sh NAME
@@ -10,29 +10,29 @@
 .Nm sqlite3_msize
 .Nd Memory Allocation Subsystem
 .Sh SYNOPSIS
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_malloc
 .Fa "int"
 .Fc
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_malloc64
 .Fa "sqlite3_uint64"
 .Fc
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_realloc
 .Fa "void*"
 .Fa "int"
 .Fc
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_realloc64
 .Fa "void*"
 .Fa "sqlite3_uint64"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_free
 .Fa "void*"
 .Fc
-.Ft sqlite3_uint64 SQLITE_STDCALL 
+.Ft sqlite3_uint64 
 .Fo sqlite3_msize
 .Fa "void*"
 .Fc

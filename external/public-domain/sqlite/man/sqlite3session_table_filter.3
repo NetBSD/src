@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3SESSION_TABLE_FILTER 3
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Sh DESCRIPTION
 The second argument (xFilter) is the "filter callback".
 For changes to rows in tables that are not attached to the Session
-oject, the filter is called to determine whether changes to the table's
+object, the filter is called to determine whether changes to the table's
 rows should be tracked or not.
 If xFilter returns 0, changes is not tracked.
 Note that once a table is attached, xFilter will not be called again.
