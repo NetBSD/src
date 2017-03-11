@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_CREATE_COLLATION 3
 .Os
 .Sh NAME
@@ -7,7 +7,7 @@
 .Nm sqlite3_create_collation16
 .Nd Define New Collating Sequences
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_collation
 .Fa "sqlite3*"
 .Fa "const char *zName"
@@ -15,7 +15,7 @@
 .Fa "void *pArg"
 .Fa "int(*xCompare)(void*,int,const void*,int,const void*) "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_collation_v2
 .Fa "sqlite3*"
 .Fa "const char *zName"
@@ -24,7 +24,7 @@
 .Fa "int(*xCompare)(void*,int,const void*,int,const void*)"
 .Fa "void(*xDestroy)(void*) "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_create_collation16
 .Fa "sqlite3*"
 .Fa "const void *zName"
