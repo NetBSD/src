@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.727 2017/03/06 21:03:56 christos Exp $
+# $NetBSD: mi,v 1.728 2017/03/11 04:24:52 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3250,6 +3250,7 @@
 ./usr/tests/net/if_bridge/Atffile		tests-net-tests		atf,rump
 ./usr/tests/net/if_bridge/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_bridge/t_bridge		tests-net-tests		atf,rump
+./usr/tests/net/if_bridge/t_rtable		tests-net-tests		atf,rump
 ./usr/tests/net/if_gif				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_gif/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_gif/Kyuafile			tests-net-tests		atf,rump,kyua
