@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.1 2017/03/10 14:40:56 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.2 2017/03/11 10:33:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.1 2017/03/10 14:40:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.2 2017/03/11 10:33:46 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,7 @@ pmc_apply_cpu(void *arg1, void *arg2)
 
 	case PMC_TYPE_I686:
 	case PMC_TYPE_K7:
+	case PMC_TYPE_F10H:
 		wrmsr(pmc->evtmsr, pmc->evtval);
 		break;
 	}
@@ -194,6 +195,22 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 		    ((args->flags & PMC_SETUP_INV) ? K7_EVTSEL_INV : 0) |
 		    (args->compare << K7_EVTSEL_COUNTER_MASK_SHIFT);
 		break;
+
+	case PMC_TYPE_F10H:
+		event =
+		    ((uint64_t)(args->event & 0x00FF) <<
+		     F10H_EVTSEL_EVENT_SHIFT_LOW) |
+		    ((uint64_t)(args->event & 0x0F00) <<
+		     F10H_EVTSEL_EVENT_SHIFT_HIGH);
+		unit = (args->unit << F10H_EVTSEL_UNIT_SHIFT) &
+		    F10H_EVTSEL_UNIT_MASK;
+		pmc->evtval = event | unit | F10H_EVTSEL_EN |
+		    ((args->flags & PMC_SETUP_KERNEL) ? F10H_EVTSEL_OS : 0) |
+		    ((args->flags & PMC_SETUP_USER) ? F10H_EVTSEL_USR : 0) |
+		    ((args->flags & PMC_SETUP_EDGE) ? F10H_EVTSEL_EDGE : 0) |
+		    ((args->flags & PMC_SETUP_INV) ? F10H_EVTSEL_INV : 0) |
+		    (args->compare << F10H_EVTSEL_COUNTER_MASK_SHIFT);
+		break;
 	}
 
 	/*
@@ -245,17 +262,30 @@ pmc_init(void)
 			pmc_state[1].evtmsr = MSR_EVNTSEL1;
 			pmc_state[1].ctrmsr = MSR_PERFCTR1;
 		} else if (strncmp(cpu_vendorstr, "AuthenticAMD", 12) == 0) {
-			/* XXX: make sure it is at least K7 */
-			pmc_type = PMC_TYPE_K7;
-			pmc_ncounters = 4;
-			pmc_state[0].evtmsr = MSR_K7_EVNTSEL0;
-			pmc_state[0].ctrmsr = MSR_K7_PERFCTR0;
-			pmc_state[1].evtmsr = MSR_K7_EVNTSEL1;
-			pmc_state[1].ctrmsr = MSR_K7_PERFCTR1;
-			pmc_state[2].evtmsr = MSR_K7_EVNTSEL2;
-			pmc_state[2].ctrmsr = MSR_K7_PERFCTR2;
-			pmc_state[3].evtmsr = MSR_K7_EVNTSEL3;
-			pmc_state[3].ctrmsr = MSR_K7_PERFCTR3;
+			if (CPUID_TO_FAMILY(ci->ci_signature) == 0x10) {
+				pmc_type = PMC_TYPE_F10H;
+				pmc_ncounters = 4;
+				pmc_state[0].evtmsr = MSR_F10H_EVNTSEL0;
+				pmc_state[0].ctrmsr = MSR_F10H_PERFCTR0;
+				pmc_state[1].evtmsr = MSR_F10H_EVNTSEL1;
+				pmc_state[1].ctrmsr = MSR_F10H_PERFCTR1;
+				pmc_state[2].evtmsr = MSR_F10H_EVNTSEL2;
+				pmc_state[2].ctrmsr = MSR_F10H_PERFCTR2;
+				pmc_state[3].evtmsr = MSR_F10H_EVNTSEL3;
+				pmc_state[3].ctrmsr = MSR_F10H_PERFCTR3;
+			} else {
+				/* XXX: make sure it is at least K7 */
+				pmc_type = PMC_TYPE_K7;
+				pmc_ncounters = 4;
+				pmc_state[0].evtmsr = MSR_K7_EVNTSEL0;
+				pmc_state[0].ctrmsr = MSR_K7_PERFCTR0;
+				pmc_state[1].evtmsr = MSR_K7_EVNTSEL1;
+				pmc_state[1].ctrmsr = MSR_K7_PERFCTR1;
+				pmc_state[2].evtmsr = MSR_K7_EVNTSEL2;
+				pmc_state[2].ctrmsr = MSR_K7_PERFCTR2;
+				pmc_state[3].evtmsr = MSR_K7_EVNTSEL3;
+				pmc_state[3].ctrmsr = MSR_K7_PERFCTR3;
+			}
 		}
 		break;
 	}
@@ -267,6 +297,8 @@ int
 sys_pmc_info(struct lwp *l, struct x86_pmc_info_args *uargs, register_t *retval)
 {
 	struct x86_pmc_info_args rv;
+
+printf("PMCTYPE: %d\n", (int)pmc_type);
 
 	memset(&rv, 0, sizeof(rv));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.21 2017/03/10 15:06:20 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.22 2017/03/11 10:33:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.21 2017/03/10 15:06:20 maxv Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.22 2017/03/11 10:33:46 maxv Exp $");
 #endif
 
 #include <inttypes.h>
@@ -275,15 +275,6 @@ static const pmc_name2val_t i686_names[] = {
 };
 
 static const pmc_name2val_t k7_names[] = {
-	{ "seg-load-all",		K7_SEGMENT_REG_LOADS,		0x7f },
-	{ "seg-load-es",		K7_SEGMENT_REG_LOADS,		0x01 },
-	{ "seg-load-cs",		K7_SEGMENT_REG_LOADS,		0x02 },
-	{ "seg-load-ss",		K7_SEGMENT_REG_LOADS,		0x04 },
-	{ "seg-load-ds",		K7_SEGMENT_REG_LOADS,		0x08 },
-	{ "seg-load-fs",		K7_SEGMENT_REG_LOADS,		0x10 },
-	{ "seg-load-gs",		K7_SEGMENT_REG_LOADS,		0x20 },
-	{ "seg-load-hs",		K7_SEGMENT_REG_LOADS,		0x40 },
-	{ "seg-load-stall",		K7_SEGMENT_LOAD_STALL,		0 },
 	{ "l1cache-access",		K7_DATA_CACHE_ACCESS,		0 },
 	{ "l1cache-miss",		K7_DATA_CACHE_MISS,		0 },
 	{ "l1cache-refill",		K7_DATA_CACHE_REFILL,		0x1f },
@@ -304,36 +295,18 @@ static const pmc_name2val_t k7_names[] = {
 	{ "l1cache-writeback-exclusive",K7_DATA_CACHE_WBACK,		0x04 },
 	{ "l1cache-writeback-owner",	K7_DATA_CACHE_WBACK,		0x08 },
 	{ "l1cache-writeback-modified",	K7_DATA_CACHE_WBACK,		0x10 },
-	{ "l2cache-access",		K7_L2_REQUEST,			0xff },
-	{ "l2cache-tag-read",		K7_L2_REQUEST,			0x01 },
-	{ "l2cache-tag-write",		K7_L2_REQUEST,			0x02 },
-	{ "l2cache-inst-read",		K7_L2_REQUEST,			0x04 },
-	{ "l2cache-inst-load",		K7_L2_REQUEST,			0x08 },
-	{ "l2cache-data-store",		K7_L2_REQUEST,			0x10 },
-	{ "l2cache-data-loadmem",	K7_L2_REQUEST,			0x20 },
-	{ "l2cache-data-write",		K7_L2_REQUEST,			0x40 },
-	{ "l2cache-data-move",		K7_L2_REQUEST,			0x80 },
-	{ "l2cache-access-busy",	K7_L2_REQUEST_BUSY,		0 },
-	{ "l2cache-hit",		K7_L2_DTLB_HIT,			0 },
-	{ "l2cache-miss",		K7_L2_DTLB_MISS,		0 },
+	{ "l1DTLB-miss",		K7_L1_DTLB_MISS,		0 },
+	{ "l2DTLB-miss",		K7_L2_DTLB_MISS,		0 },
+	{ "l1ITLB-miss",		K7_L1_ITLB_MISS,		0 },
+	{ "l2ITLB-miss",		K7_L2_ITLB_MISS,		0 },
 	{ "mem-misalign-ref",		K7_MISALIGNED_DATA_REF,		0 },
-	{ "mem-access",			K7_SYSTEM_REQUEST,		0 },
-	{ "mem-access-uc",		K7_SYSTEM_REQUEST_TYPE,		0x01 },
-	{ "mem-access-wc",		K7_SYSTEM_REQUEST_TYPE,		0x04 },
-	{ "mem-access-wt",		K7_SYSTEM_REQUEST_TYPE,		0x10 },
-	{ "mem-access-wp",		K7_SYSTEM_REQUEST_TYPE,		0x20 },
-	{ "mem-access-wb",		K7_SYSTEM_REQUEST_TYPE,		0x40 },
 	{ "ins-fetch",			K7_IFU_IFETCH,			0 },
 	{ "ins-fetch-miss",		K7_IFU_IFETCH_MISS,		0 },
 	{ "ins-refill-l2",		K7_IFU_REFILL_FROM_L2,		0 },
-	{ "ins-refill-mem",		K7_IFU_REFILL_FROM_SYSTEM,	0 },
-	{ "ins-fetch-stall",		K7_IFU_STALL,			0 },
+	{ "ins-refill-sys",		K7_IFU_REFILL_FROM_SYSTEM,	0 },
 	{ "ins-retired",		K7_RETIRED_INST,		0 },
-	{ "ins-empty",			K7_INSTRUCTION_DECODER_EMPTY,	0 },
-	{ "itlb-miss-l1",		K7_ITLB_L1_MISS,		0 },
-	{ "itlb-miss-l2",		K7_ITLB_L2_MISS,		0 },
 	{ "ops-retired",		K7_RETIRED_OPS,			0 },
-	{ "branch-retired",		K7_RETIRED_BRANCHES,		0 },
+	{ "branch-retired",		K7_RETIRED_BRANCH,		0 },
 	{ "branch-miss-retired",	K7_RETIRED_BRANCH_MISPREDICTED,	0 },
 	{ "branch-taken-retired",	K7_RETIRED_TAKEN_BRANCH,	0 },
 	{ "branch-taked-miss-retired",
@@ -341,19 +314,84 @@ static const pmc_name2val_t k7_names[] = {
 	{ "branch-far-retired",
 	    K7_RETIRED_FAR_CONTROL_TRANSFER,		0 },
 	{ "branch-resync-retired",	K7_RETIRED_RESYNC_BRANCH,	0 },
-	{ "branch-near-retired",	K7_RETIRED_NEAR_RETURNS,	0 },
-	{ "branch-near-miss-retired",
-	    K7_RETIRED_NEAR_RETURNS_MISPREDICTED,	0 },
-	{ "branch-indirect-miss-retired",
-	    K7_RETIRED_INDIRECT_MISPREDICTED,	0 },
 	{ "int-hw",			K7_HW_INTR_RECV,		0 },
 	{ "int-cycles-masked",		K7_CYCLES_INT_MASKED,		0 },
 	{ "int-cycles-masked-pending",
 	    K7_CYCLES_INT_PENDING_AND_MASKED, 0 },
-	{ "break-match0",		K7_BP0_MATCH,			0 },
-	{ "break-match1",		K7_BP1_MATCH,			0 },
-	{ "break-match2",		K7_BP2_MATCH,			0 },
-	{ "break-match3",		K7_BP3_MATCH,			0 },
+};
+
+static const pmc_name2val_t f10h_names[] = {
+	{ "seg-load-all",		F10H_SEGMENT_REG_LOADS,		0x7f },
+	{ "seg-load-es",		F10H_SEGMENT_REG_LOADS,		0x01 },
+	{ "seg-load-cs",		F10H_SEGMENT_REG_LOADS,		0x02 },
+	{ "seg-load-ss",		F10H_SEGMENT_REG_LOADS,		0x04 },
+	{ "seg-load-ds",		F10H_SEGMENT_REG_LOADS,		0x08 },
+	{ "seg-load-fs",		F10H_SEGMENT_REG_LOADS,		0x10 },
+	{ "seg-load-gs",		F10H_SEGMENT_REG_LOADS,		0x20 },
+	{ "seg-load-hs",		F10H_SEGMENT_REG_LOADS,		0x40 },
+	{ "l1cache-access",		F10H_DATA_CACHE_ACCESS,		0 },
+	{ "l1cache-miss",		F10H_DATA_CACHE_MISS,		0 },
+	{ "l1cache-refill",		F10H_DATA_CACHE_REFILL_FROM_L2,	0x1f },
+	{ "l1cache-refill-invalid",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x01 },
+	{ "l1cache-refill-shared",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x02 },
+	{ "l1cache-refill-exclusive",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x04 },
+	{ "l1cache-refill-owner",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x08 },
+	{ "l1cache-refill-modified",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x10 },
+	{ "l1cache-load",		F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x1f },
+	{ "l1cache-load-invalid",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x01 },
+	{ "l1cache-load-shared",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x02 },
+	{ "l1cache-load-exclusive",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x04 },
+	{ "l1cache-load-owner",		F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x08 },
+	{ "l1cache-load-modified",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x10 },
+	{ "l1cache-writeback",		F10H_CACHE_LINES_EVICTED,	0x1f },
+	{ "l1cache-writeback-invalid",	F10H_CACHE_LINES_EVICTED,	0x01 },
+	{ "l1cache-writeback-shared",	F10H_CACHE_LINES_EVICTED,	0x02 },
+	{ "l1cache-writeback-exclusive",F10H_CACHE_LINES_EVICTED,	0x04 },
+	{ "l1cache-writeback-owner",	F10H_CACHE_LINES_EVICTED,	0x08 },
+	{ "l1cache-writeback-modified",	F10H_CACHE_LINES_EVICTED,	0x10 },
+	{ "l1DTLB-hit-all",		F10H_L1_DTLB_HIT,		0x07 },
+	{ "l1DTLB-hit-4Kpage",		F10H_L1_DTLB_HIT,		0x01 },
+	{ "l1DTLB-hit-2Mpage",		F10H_L1_DTLB_HIT,		0x02 },
+	{ "l1DTLB-hit-1Gpage",		F10H_L1_DTLB_HIT,		0x04 },
+	{ "l1DTLB-miss-all",		F10H_L1_DTLB_MISS,		0x07 },
+	{ "l1DTLB-miss-4Kpage",		F10H_L1_DTLB_MISS,		0x01 },
+	{ "l1DTLB-miss-2Mpage",		F10H_L1_DTLB_MISS,		0x02 },
+	{ "l1DTLB-miss-1Gpage",		F10H_L1_DTLB_MISS,		0x04 },
+	{ "l2DTLB-miss-all",		F10H_L2_DTLB_MISS,		0x03 },
+	{ "l2DTLB-miss-4Kpage",		F10H_L2_DTLB_MISS,		0x01 },
+	{ "l2DTLB-miss-2Mpage",		F10H_L2_DTLB_MISS,		0x02 },
+	/* l2DTLB-miss-1Gpage: reserved on some revisions, so disabled */
+	{ "l1ITLB-miss",		F10H_L1_ITLB_MISS,		0 },
+	{ "l2ITLB-miss-all",		F10H_L2_ITLB_MISS,		0x03 },
+	{ "l2ITLB-miss-4Kpage",		F10H_L2_ITLB_MISS,		0x01 },
+	{ "l2ITLB-miss-2Mpage",		F10H_L2_ITLB_MISS,		0x02 },
+	{ "mem-misalign-ref",		F10H_MISALIGNED_ACCESS,		0 },
+	{ "ins-fetch",			F10H_INSTRUCTION_CACHE_FETCH,	0 },
+	{ "ins-fetch-miss",		F10H_INSTRUCTION_CACHE_MISS,	0 },
+	{ "ins-refill-l2",		F10H_INSTRUCTION_CACHE_REFILL_FROM_L2,	0 },
+	{ "ins-refill-sys",		F10H_INSTRUCTION_CACHE_REFILL_FROM_SYS,	0 },
+	{ "ins-fetch-stall",		F10H_INSTRUCTION_FETCH_STALL,	0 },
+	{ "ins-retired",		F10H_RETIRED_INSTRUCTIONS,	0 },
+	{ "ins-empty",			F10H_DECODER_EMPTY,	0 },
+	{ "ops-retired",		F10H_RETIRED_UOPS,		0 },
+	{ "branch-retired",		F10H_RETIRED_BRANCH,		0 },
+	{ "branch-miss-retired",	F10H_RETIRED_MISPREDICTED_BRANCH,0 },
+	{ "branch-taken-retired",	F10H_RETIRED_TAKEN_BRANCH,	0 },
+	{ "branch-taken-miss-retired",	F10H_RETIRED_TAKEN_BRANCH_MISPREDICTED,	0 },
+	{ "branch-far-retired", 	F10H_RETIRED_FAR_CONTROL_TRANSFER, 0 },
+	{ "branch-resync-retired",	F10H_RETIRED_BRANCH_RESYNC,	0 },
+	{ "branch-near-retired",	F10H_RETIRED_NEAR_RETURNS,	0 },
+	{ "branch-near-miss-retired",	F10H_RETIRED_NEAR_RETURNS_MISPREDICTED,	0 },
+	{ "branch-indirect-miss-retired", F10H_RETIRED_INDIRECT_BRANCH_MISPREDICTED,	0 },
+	{ "int-hw",			F10H_INTERRUPTS_TAKEN,		0 },
+	{ "int-cycles-masked",		F10H_INTERRUPTS_MASKED_CYCLES,	0 },
+	{ "int-cycles-masked-pending",
+	    F10H_INTERRUPTS_MASKED_CYCLES_INTERRUPT_PENDING, 0 },
+	{ "fpu-exceptions",		F10H_FPU_EXCEPTIONS, 0 },
+	{ "break-match0",		F10H_DR0_BREAKPOINT_MATCHES,	0 },
+	{ "break-match1",		F10H_DR1_BREAKPOINT_MATCHES,	0 },
+	{ "break-match2",		F10H_DR2_BREAKPOINT_MATCHES,	0 },
+	{ "break-match3",		F10H_DR3_BREAKPOINT_MATCHES,	0 },
 };
 
 static const pmc_name2val_cpu_t pmc_cpus[] = {
@@ -363,6 +401,8 @@ static const pmc_name2val_cpu_t pmc_cpus[] = {
 	  sizeof(i686_names) / sizeof(pmc_name2val_t) },
 	{ PMC_TYPE_K7, k7_names,
 	  sizeof(k7_names) / sizeof(pmc_name2val_t) },
+	{ PMC_TYPE_F10H, f10h_names,
+	  sizeof(f10h_names) / sizeof(pmc_name2val_t) },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -409,18 +449,17 @@ static void usage(void)
 static void
 pmc_list(const pmc_name2val_cpu_t *pncp, char **argv)
 {
-	int i, n, left, pairs;
+	size_t i, n, mid;
 
 	printf("Supported performance counter events:\n");
 	n = pncp->size;
-	pairs = n / 2;
-	left = n % 2;
+	mid = n / 2;
 
-	for (i = 0; i < pairs; i++)
-		printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
-		    pncp->pmc_names[i * 2 + 1].name);
-	if (left != 0)
-		printf("\t%37s\n", pncp->pmc_names[n - 1].name);
+	for (i = 0; i < mid; i++)
+		printf("    %-37s %-37s\n", pncp->pmc_names[i].name,
+		    pncp->pmc_names[mid + i].name);
+	if ((n % 2) != 0)
+		printf("    %-37s\n", pncp->pmc_names[n - 1].name);
 }
 
 static void
