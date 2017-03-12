@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.5 2017/03/10 00:22:01 macallan Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.6 2017/03/12 10:19:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.5 2017/03/10 00:22:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.6 2017/03/12 10:19:40 martin Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -398,7 +398,8 @@ vlpci_pc_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 static void
 vlpci_pc_intr_disestablish(void *v, void *w)
 {
-	panic("%s unimplemented", __func__);
+
+	return isa_intr_disestablish(NULL, v);
 }
 
 #ifdef __HAVE_PCI_CONF_HOOK
