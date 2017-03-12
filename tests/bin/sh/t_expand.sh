@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.8 2016/04/29 18:29:17 christos Exp $
+# $NetBSD: t_expand.sh,v 1.9 2017/03/12 00:39:47 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -319,7 +319,7 @@ results()
 	echo >&2 " - - - - - - - - - - - - - - - - -"
 	echo >&2 "${TEST_FAILURES}"
 	atf_fail \
- "Test ${TEST_ID}: $TEST_FAIL_COUNT subtests (of $TEST_NUM) failed - see stderr"
+ "Test ${TEST_ID}: $TEST_FAIL_COUNT (of $TEST_NUM) subtests failed - see stderr"
 }
 
 atf_test_case shell_params
@@ -366,6 +366,63 @@ shell_params_body() {
 	results
 }
 
+atf_test_case var_with_embedded_cmdsub
+var_with_embedded_cmdsub_head() {
+	atf_set "descr" "Test expansion of vars with embedded cmdsub"
+}
+var_with_embedded_cmdsub_body() {
+
+	reset var_with_embedded_cmdsub
+
+	check 'unset x; echo ${x-$(echo a)}$(echo b)'  'ab' 0	#1
+	check 'unset x; echo ${x:-$(echo a)}$(echo b)' 'ab' 0	#2
+	check 'x=""; echo ${x-$(echo a)}$(echo b)'     'b'  0	#3
+	check 'x=""; echo ${x:-$(echo a)}$(echo b)'    'ab' 0	#4
+	check 'x=c; echo ${x-$(echo a)}$(echo b)'      'cb' 0	#5
+	check 'x=c; echo ${x:-$(echo a)}$(echo b)'     'cb' 0	#6
+
+	check 'unset x; echo ${x+$(echo a)}$(echo b)'  'b'  0	#7
+	check 'unset x; echo ${x:+$(echo a)}$(echo b)' 'b'  0	#8
+	check 'x=""; echo ${x+$(echo a)}$(echo b)'     'ab' 0	#9
+	check 'x=""; echo ${x:+$(echo a)}$(echo b)'    'b'  0	#10
+	check 'x=c; echo ${x+$(echo a)}$(echo b)'      'ab' 0	#11
+	check 'x=c; echo ${x:+$(echo a)}$(echo b)'     'ab' 0	#12
+
+	check 'unset x; echo ${x=$(echo a)}$(echo b)'  'ab' 0	#13
+	check 'unset x; echo ${x:=$(echo a)}$(echo b)' 'ab' 0	#14
+	check 'x=""; echo ${x=$(echo a)}$(echo b)'     'b'  0	#15
+	check 'x=""; echo ${x:=$(echo a)}$(echo b)'    'ab' 0	#16
+	check 'x=c; echo ${x=$(echo a)}$(echo b)'      'cb' 0	#17
+	check 'x=c; echo ${x:=$(echo a)}$(echo b)'     'cb' 0	#18
+
+	check 'unset x; echo ${x?$(echo a)}$(echo b)'  ''   2	#19
+	check 'unset x; echo ${x:?$(echo a)}$(echo b)' ''   2	#20
+	check 'x=""; echo ${x?$(echo a)}$(echo b)'     'b'  0	#21
+	check 'x=""; echo ${x:?$(echo a)}$(echo b)'    ''   2	#22
+	check 'x=c; echo ${x?$(echo a)}$(echo b)'      'cb' 0	#23
+	check 'x=c; echo ${x:?$(echo a)}$(echo b)'     'cb' 0	#24
+
+	check 'unset x; echo ${x%$(echo a)}$(echo b)'  'b'  0	#25
+	check 'unset x; echo ${x%%$(echo a)}$(echo b)' 'b'  0	#26
+	check 'x=""; echo ${x%$(echo a)}$(echo b)'     'b'  0	#27
+	check 'x=""; echo ${x%%$(echo a)}$(echo b)'    'b'  0	#28
+	check 'x=c; echo ${x%$(echo a)}$(echo b)'      'cb' 0	#29
+	check 'x=c; echo ${x%%$(echo a)}$(echo b)'     'cb' 0	#30
+	check 'x=aa; echo ${x%$(echo "*a")}$(echo b)'  'ab' 0	#31
+	check 'x=aa; echo ${x%%$(echo "*a")}$(echo b)' 'b'  0	#32
+
+	check 'unset x; echo ${x#$(echo a)}$(echo b)'  'b'  0	#33
+	check 'unset x; echo ${x##$(echo a)}$(echo b)' 'b'  0	#34
+	check 'x=""; echo ${x#$(echo a)}$(echo b)'     'b'  0	#35
+	check 'x=""; echo ${x##$(echo a)}$(echo b)'    'b'  0	#36
+	check 'x=c; echo ${x#$(echo a)}$(echo b)'      'cb' 0	#37
+	check 'x=c; echo ${x##$(echo a)}$(echo b)'     'cb' 0	#38
+	check 'x=aa; echo ${x#$(echo "*a")}$(echo b)'  'ab' 0	#39
+	check 'x=aa; echo ${x##$(echo "*a")}$(echo b)' 'b'  0	#40
+
+	results
+}
+
 atf_init_test_cases() {
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_with_text
@@ -377,4 +434,5 @@ atf_init_test_cases() {
 	atf_add_test_case iteration_on_null_or_null_parameter
 	atf_add_test_case iteration_on_null_or_missing_parameter
 	atf_add_test_case shell_params
+	atf_add_test_case var_with_embedded_cmdsub
 }
