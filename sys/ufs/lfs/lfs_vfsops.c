@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.352 2017/02/17 08:31:26 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.353 2017/03/13 14:24:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.352 2017/02/17 08:31:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.353 2017/03/13 14:24:20 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2319,16 +2319,10 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 				ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 	}
 
-#ifdef DIAGNOSTIC
-	if (vp->v_type == VNON) {
-# ifdef DEBUG
-		lfs_dump_dinode(fs, ip->i_din);
-# endif
-		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
-		      (unsigned long long)ip->i_number,
-		      (ip->i_mode & LFS_IFMT) >> 12);
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((vp->v_type != VNON),
+	    "lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
+	    (unsigned long long)ip->i_number,
+	    (ip->i_mode & LFS_IFMT) >> 12);
 
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
