@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.10 2017/03/13 20:47:38 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.11 2017/03/13 21:06:50 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.10 2017/03/13 20:47:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.11 2017/03/13 21:06:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ static int	 vioscsi_vq_done(struct virtqueue *);
 static void	 vioscsi_req_done(struct vioscsi_softc *, struct virtio_softc *,
     struct vioscsi_req *);
 static struct vioscsi_req *vioscsi_req_get(struct vioscsi_softc *);
-static void	 vioscsi_req_put(struct vioscsi_softc *, struct vioscsi_req *);
 
 static const char *const vioscsi_vq_names[] = {
 	"control",
@@ -132,6 +131,8 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	vsc->sc_config_change = NULL;
 	vsc->sc_intrhand = virtio_vq_intr;
 	vsc->sc_flags = 0;
+
+	vsc->sc_flags |= VIRTIO_F_PCI_INTR_MSIX;
 
 	features = virtio_negotiate_features(vsc, 0);
 	snprintb(buf, sizeof(buf), VIRTIO_COMMON_FLAG_BITS, features);
@@ -193,8 +194,8 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = max_target;
-	chan->chan_nluns = max_lun;
+	chan->chan_ntargets = max_target + 1;
+	chan->chan_nluns = max_lun + 1;
 	chan->chan_id = 0;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
@@ -223,7 +224,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	struct scsipi_periph *periph;
 	struct vioscsi_req *vr;
 	struct virtio_scsi_req_hdr *req;
-	struct virtqueue *vq = &sc->sc_vqs[2];
+	struct virtqueue *vq = &sc->sc_vqs[VIOSCSI_VQ_REQUEST];
 	int slot, error;
 
 	DPRINTF(("%s: enter\n", __func__));
@@ -325,10 +326,10 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	default:
 		aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n",
 		    error);
-	stuffup:
+stuffup:
 		xs->error = XS_DRIVER_STUFFUP;
 nomore:
-		vioscsi_req_put(sc, vr);
+		/* nothing else to free */
 		scsipi_done(xs);
 		return;
 	}
@@ -340,7 +341,9 @@ nomore:
 	error = virtio_enqueue_reserve(vsc, vq, slot, nsegs);
 	if (error) {
 		DPRINTF(("%s: error reserving %d\n", __func__, error));
-		goto stuffup;
+		bus_dmamap_unload(vsc->sc_dmat, vr->vr_data);
+		xs->error = XS_RESOURCE_SHORTAGE;
+		goto nomore;
 	}
 
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
@@ -411,6 +414,9 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
 	    XS2DMAPOST(xs));
 
+	xs->status = vr->vr_res.status;
+	xs->resid = vr->vr_res.residual;
+
 	switch (vr->vr_res.response) {
 	case VIRTIO_SCSI_S_OK:
 		sense_len = MIN(sizeof(xs->sense), vr->vr_res.sense_len);
@@ -433,14 +439,12 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 		break;
 	}
 
-	xs->status = vr->vr_res.status;
-	xs->resid = vr->vr_res.residual;
-
 	DPRINTF(("%s: done %d, %d, %d\n", __func__,
 	    xs->error, xs->status, xs->resid));
 
+	bus_dmamap_unload(vsc->sc_dmat, vr->vr_data);
 	vr->vr_xs = NULL;
-	vioscsi_req_put(sc, vr);
+
 	scsipi_done(xs);
 }
 
@@ -460,7 +464,11 @@ vioscsi_vq_done(struct virtqueue *vq)
 			break;
 
 		DPRINTF(("%s: slot=%d\n", __func__, slot));
+
 		vioscsi_req_done(sc, vsc, &sc->sc_reqs[slot]);
+
+		virtio_dequeue_commit(vsc, vq, slot);
+
 		ret = 1;
 	}
 
@@ -484,26 +492,9 @@ vioscsi_req_get(struct vioscsi_softc *sc)
 	KASSERT(slot < sc->sc_nreqs);
 	vr = &sc->sc_reqs[slot];
 
-	vr->vr_req.id = slot;
-	vr->vr_req.task_attr = VIRTIO_SCSI_S_SIMPLE;
-
 	DPRINTF(("%s: %p, %d\n", __func__, vr, slot));
 
 	return vr;
-}
-
-static void
-vioscsi_req_put(struct vioscsi_softc *sc, struct vioscsi_req *vr)
-{
-	struct virtio_softc *vsc = device_private(device_parent(sc->sc_dev));
-	struct virtqueue *vq = &sc->sc_vqs[2];
-	int slot = vr - sc->sc_reqs;
-
-	DPRINTF(("%s: %p, %d\n", __func__, vr, slot));
-
-	bus_dmamap_unload(vsc->sc_dmat, vr->vr_data);
-
-	virtio_dequeue_commit(vsc, vq, slot);
 }
 
 int
