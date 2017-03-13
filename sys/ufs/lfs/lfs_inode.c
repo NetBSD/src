@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.147 2015/09/01 06:13:09 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.148 2017/03/13 13:45:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.147 2015/09/01 06:13:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.148 2017/03/13 13:45:53 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -243,10 +243,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	    (oip->i_size < fs->um_maxsymlinklen ||
 	     (fs->um_maxsymlinklen == 0 &&
 	      lfs_dino_getblocks(fs, oip->i_din) == 0))) {
-#ifdef DIAGNOSTIC
-		if (length != 0)
-			panic("lfs_truncate: partial truncate of symlink");
-#endif
+		KASSERTMSG((length == 0),
+		    "partial truncate of symlink: %jd", (intmax_t)length);
 		memset((char *)SHORTLINK(oip), 0, (u_int)oip->i_size);
 		oip->i_size = 0;
 		lfs_dino_setsize(fs, oip->i_din, 0);
@@ -589,15 +587,16 @@ done:
 	mutex_enter(&lfs_lock);
 	lfs_sb_addbfree(fs, blocksreleased);
 	mutex_exit(&lfs_lock);
-#ifdef DIAGNOSTIC
-	if (oip->i_size == 0 &&
-	    (lfs_dino_getblocks(fs, oip->i_din) != 0 || oip->i_lfs_effnblks != 0)) {
-		printf("lfs_truncate: truncate to 0 but %jd blks/%jd effblks\n",
-		       (intmax_t)lfs_dino_getblocks(fs, oip->i_din),
-		       (intmax_t)oip->i_lfs_effnblks);
-		panic("lfs_truncate: persistent blocks");
-	}
-#endif
+
+	KASSERTMSG((oip->i_size != 0 ||
+		lfs_dino_getblocks(fs, oip->i_din) == 0),
+	    "truncate to 0 but %jd blks/%jd effblks",
+	    lfs_dino_getblocks(fs, oip->i_din),
+	    oip->i_lfs_effnblks);
+	KASSERTMSG((oip->i_size != 0 || oip->i_lfs_effnblks == 0),
+	    "truncate to 0 but %jd blks/%jd effblks",
+	    lfs_dino_getblocks(fs, oip->i_din),
+	    oip->i_lfs_effnblks);
 
 	/*
 	 * If we truncated to zero, take us off the paging queue.
