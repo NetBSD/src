@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.134 2017/03/13 14:24:20 riastradh Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.135 2017/03/13 20:15:50 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.134 2017/03/13 14:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.135 2017/03/13 20:15:50 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -318,9 +318,6 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
  *
  * Called in the same context as lfs_valloc and therefore shares the
  * same locking assumptions.
- *
- * XXX: WHICH MEANS IT OUGHT TO TAKE THE SEGLOCK WHILE FROBBING THIS
- * XXX: STUFF. REALLY.
  */
 int
 lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
@@ -330,9 +327,12 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	ino_t headino, thisino, oldnext;
 	CLEANERINFO *cip;
 
-	/* XXX: check for readonly */
-	/* XXX: assert no seglock */
-	/* XXX: should take seglock (as noted above) */
+	if (fs->lfs_ronly)
+		return EROFS;
+
+	ASSERT_NO_SEGLOCK(fs);
+
+	lfs_seglock(fs, SEGM_PROT);
 
 	/*
 	 * If the ifile is too short to contain this inum, extend it.
@@ -381,7 +381,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 		if (nextfree == LFS_UNUSED_INUM) {
 			/* hit the end -- this inode is not available */
 			brelse(bp, 0);
-			/* XXX release seglock (see above) */
+			lfs_segunlock(fs);
 			return ENOENT;
 		}
 		/* found it; update the next pointer */
@@ -391,7 +391,7 @@ lfs_valloc_fixed(struct lfs *fs, ino_t ino, int vers)
 	}
 
 	/* done */
-	/* XXX release seglock (see above) */
+	lfs_segunlock(fs);
 	return 0;
 }
 
