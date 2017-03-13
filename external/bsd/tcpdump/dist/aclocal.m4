@@ -1,5 +1,3 @@
-dnl @(#) Header: /tcpdump/master/tcpdump/aclocal.m4,v 1.116 2008-09-25 21:45:50 guy Exp  (LBL)
-dnl
 dnl Copyright (c) 1995, 1996, 1997, 1998
 dnl	The Regents of the University of California.  All rights reserved.
 dnl
@@ -221,6 +219,36 @@ AC_DEFUN(AC_LBL_C_INIT,
 ])
 
 dnl
+dnl Check whether, if you pass an unknown warning option to the
+dnl compiler, it fails or just prints a warning message and succeeds.
+dnl Set ac_lbl_unknown_warning_option_error to the appropriate flag
+dnl to force an error if it would otherwise just print a warning message
+dnl and succeed.
+dnl
+AC_DEFUN(AC_LBL_CHECK_UNKNOWN_WARNING_OPTION_ERROR,
+    [
+	AC_MSG_CHECKING([whether the compiler fails when given an unknown warning option])
+	save_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS -Wxyzzy-this-will-never-succeed-xyzzy"
+	AC_TRY_COMPILE(
+	    [],
+	    [return 0],
+	    [
+		AC_MSG_RESULT([no])
+		#
+		# We're assuming this is clang, where
+		# -Werror=unknown-warning-option is the appropriate
+		# option to force the compiler to fail.
+		#
+		ac_lbl_unknown_warning_option_error="-Werror=unknown-warning-option"
+	    ],
+	    [
+		AC_MSG_RESULT([yes])
+	    ])
+	CFLAGS="$save_CFLAGS"
+    ])
+
+dnl
 dnl Check whether the compiler option specified as the second argument
 dnl is supported by the compiler and, if so, add it to the macro
 dnl specified as the first argument
@@ -229,7 +257,18 @@ AC_DEFUN(AC_LBL_CHECK_COMPILER_OPT,
     [
 	AC_MSG_CHECKING([whether the compiler supports the $2 option])
 	save_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS $ac_lbl_cc_force_warning_errors $2"
+	if expr "x$2" : "x-W.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS $ac_lbl_unknown_warning_option_error $2"
+	elif expr "x$2" : "x-f.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS -Werror $2"
+	elif expr "x$2" : "x-m.*" >/dev/null
+	then
+	    CFLAGS="$CFLAGS -Werror $2"
+	else
+	    CFLAGS="$CFLAGS $2"
+	fi
 	AC_TRY_COMPILE(
 	    [],
 	    [return 0],
@@ -440,25 +479,31 @@ AC_DEFUN(AC_LBL_LIBPCAP,
 		    LIBS="$LIBS $pfopen"
 	    fi
     fi
-    AC_MSG_CHECKING(for local pcap library)
-    libpcap=FAIL
-    lastdir=FAIL
-    places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
-	egrep '/libpcap-[[0-9]]+\.[[0-9]]+(\.[[0-9]]*)?([[ab]][[0-9]]*|-PRE-GIT)?$'`
-    for dir in $places $srcdir/../libpcap $srcdir/libpcap ; do
-	    basedir=`echo $dir | sed -e 's/[[ab]][[0-9]]*$//' | \
-	        sed -e 's/-PRE-GIT$//' `
-	    if test $lastdir = $basedir ; then
-		    dnl skip alphas when an actual release is present
-		    continue;
-	    fi
-	    lastdir=$dir
-	    if test -r $dir/libpcap.a ; then
-		    libpcap=$dir/libpcap.a
-		    d=$dir
-		    dnl continue and select the last one that exists
-	    fi
-    done
+	libpcap=FAIL
+	AC_MSG_CHECKING(for local pcap library)
+	AC_ARG_WITH([system-libpcap],
+		[AS_HELP_STRING([--with-system-libpcap], [don't use local pcap library])])
+	if test "x$with_system_libpcap" != xyes ; then
+		lastdir=FAIL
+    	places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
+		egrep '/libpcap-[[0-9]]+\.[[0-9]]+(\.[[0-9]]*)?([[ab]][[0-9]]*|-PRE-GIT)?$'`
+    	places2=`ls .. | sed -e 's,/$,,' -e "s,^,../," | \
+		egrep '/libpcap-[[0-9]]+\.[[0-9]]+(\.[[0-9]]*)?([[ab]][[0-9]]*|-PRE-GIT)?$'`
+    	for dir in $places $srcdir/../libpcap ../libpcap $srcdir/libpcap $places2 ; do
+	    	basedir=`echo $dir | sed -e 's/[[ab]][[0-9]]*$//' | \
+	        	sed -e 's/-PRE-GIT$//' `
+	    	if test $lastdir = $basedir ; then
+		    	dnl skip alphas when an actual release is present
+		    	continue;
+	    	fi
+	    	lastdir=$dir
+	    	if test -r $dir/libpcap.a ; then
+		    	libpcap=$dir/libpcap.a
+		    	d=$dir
+		    	dnl continue and select the last one that exists
+	    	fi
+		done
+	fi
     if test $libpcap = FAIL ; then
 	    AC_MSG_RESULT(not found)
 
@@ -528,13 +573,23 @@ AC_DEFUN(AC_LBL_LIBPCAP,
 	    $1=$libpcap
 	    places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
     	 		egrep '/libpcap-[[0-9]]*.[[0-9]]*(.[[0-9]]*)?([[ab]][[0-9]]*)?$'`
+	    places2=`ls .. | sed -e 's,/$,,' -e "s,^,../," | \
+    	 		egrep '/libpcap-[[0-9]]*.[[0-9]]*(.[[0-9]]*)?([[ab]][[0-9]]*)?$'`
+            pcapH=FAIL
 	    if test -r $d/pcap.h; then
-		    $2="-I$d $$2"
-	    elif test -r $places/pcap.h; then
-		    $2="-I$places $$2"
+                    pcapH=$d
 	    else
-                    AC_MSG_ERROR(cannot find pcap.h, see INSTALL)
+                for dir in $places $srcdir/../libpcap ../libpcap $srcdir/libpcap $places2 ; do
+                   if test -r $dir/pcap.h ; then
+                       pcapH=$dir
+                   fi
+                done
+            fi
+
+            if test $pcapH = FAIL ; then
+                    AC_MSG_ERROR(cannot find pcap.h: see INSTALL)
  	    fi
+            $2="-I$pcapH $$2"
 	    AC_MSG_RESULT($libpcap)
 	    AC_PATH_PROG(PCAP_CONFIG, pcap-config,, $d)
 	    if test -n "$PCAP_CONFIG"; then
@@ -609,52 +664,6 @@ this could be a problem with the libpcap that was built, and we will
 not be able to determine why this is happening, and thus will not be
 able to fix it, without that information, as we have not been able to
 reproduce this problem ourselves.])
-	])
-
-    dnl
-    dnl Check for "pcap_list_datalinks()", "pcap_set_datalink()",
-    dnl and "pcap_datalink_name_to_val()", and use substitute versions
-    dnl if they're not present.
-    dnl
-    AC_CHECK_FUNC(pcap_list_datalinks,
-	AC_DEFINE(HAVE_PCAP_LIST_DATALINKS, 1,
-	    [define if libpcap has pcap_list_datalinks()]),
-	[
-	    AC_LIBOBJ(datalinks)
-	])
-    AC_CHECK_FUNC(pcap_set_datalink,
-	AC_DEFINE(HAVE_PCAP_SET_DATALINK, 1,
-	    [define if libpcap has pcap_set_datalink()]))
-    AC_CHECK_FUNC(pcap_datalink_name_to_val,
-	[
-	    AC_DEFINE(HAVE_PCAP_DATALINK_NAME_TO_VAL, 1,
-		[define if libpcap has pcap_datalink_name_to_val()])
-	    AC_CHECK_FUNC(pcap_datalink_val_to_description,
-		AC_DEFINE(HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION, 1,
-		    [define if libpcap has pcap_datalink_val_to_description()]),
-		[
-		    AC_LIBOBJ(dlnames)
-		])
-	],
-	[
-	    AC_LIBOBJ(dlnames)
-	])
-
-    dnl
-    dnl Check for "pcap_breakloop()"; you can't substitute for it if
-    dnl it's absent (it has hooks into the live capture routines),
-    dnl so just define the HAVE_ value if it's there.
-    dnl
-    AC_CHECK_FUNCS(pcap_breakloop)
-
-    dnl
-    dnl Check for "pcap_dump_ftell()" and use a substitute version
-    dnl if it's not present.
-    AC_CHECK_FUNC(pcap_dump_ftell,
-	AC_DEFINE(HAVE_PCAP_DUMP_FTELL, 1,
-	    [define if libpcap has pcap_dump_ftell()]),
-	[
-	    AC_LIBOBJ(pcap_dump_ftell)
 	])
 ])
 
@@ -821,15 +830,12 @@ AC_DEFUN(AC_LBL_CHECK_64BIT_FORMAT,
 #	    ifdef HAVE_INTTYPES_H
 	    #include <inttypes.h>
 #	    endif
-#	    ifdef HAVE_SYS_BITYPES_H
-            #include <sys/bitypes.h>
-#	    endif
 	    #include <stdio.h>
 	    #include <sys/types.h>
 
 	    main()
 	    {
-	      u_int64_t t = 1;
+	      uint64_t t = 1;
 	      char strbuf[16+1];
 	      sprintf(strbuf, "%016$1x", t << 32);
 	      if (strcmp(strbuf, "0000000100000000") == 0)
@@ -977,11 +983,18 @@ AC_DEFUN(AC_LBL_DEVEL,
 	    # Skip all the warning option stuff on some compilers.
 	    #
 	    if test "$ac_lbl_cc_dont_try_gcc_dashW" != yes; then
+		    AC_LBL_CHECK_UNKNOWN_WARNING_OPTION_ERROR()
 		    AC_LBL_CHECK_COMPILER_OPT($1, -Wall)
 		    AC_LBL_CHECK_COMPILER_OPT($1, -Wmissing-prototypes)
 		    AC_LBL_CHECK_COMPILER_OPT($1, -Wstrict-prototypes)
 		    AC_LBL_CHECK_COMPILER_OPT($1, -Wwrite-strings)
 		    AC_LBL_CHECK_COMPILER_OPT($1, -Wpointer-arith)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wcast-qual)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wshadow)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wdeclaration-after-statement)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wpedantic)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wold-style-definition)
+		    AC_LBL_CHECK_COMPILER_OPT($1, -Wused-but-marked-unused)
 		    AC_LBL_CHECK_COMPILER_OPT($1, -W)
 	    fi
 	    AC_LBL_CHECK_DEPENDENCY_GENERATION_OPT()
@@ -1135,7 +1148,7 @@ dnl    documentation and/or other materials provided with the distribution.
 dnl 3. Neither the name of the project nor the names of its contributors
 dnl    may be used to endorse or promote products derived from this software
 dnl    without specific prior written permission.
-dnl 
+dnl
 dnl THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 dnl ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 dnl IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -1147,131 +1160,6 @@ dnl HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 dnl LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 dnl OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 dnl SUCH DAMAGE.
-
-dnl
-dnl Checks to see if AF_INET6 is defined
-AC_DEFUN(AC_CHECK_AF_INET6, [
-	AC_MSG_CHECKING(for AF_INET6)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <sys/socket.h>],
-		[int a = AF_INET6],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-		if test $$1 = yes ; then
-			AC_DEFINE(HAVE_AF_INET6)
-	fi
-])
-
-dnl
-dnl Checks to see if the sockaddr struct has the 4.4 BSD sa_len member
-dnl borrowed from LBL libpcap
-AC_DEFUN(AC_CHECK_SA_LEN, [
-	AC_MSG_CHECKING(if sockaddr struct has sa_len member)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <sys/socket.h>],
-		[u_int i = sizeof(((struct sockaddr *)0)->sa_len)],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-		if test $$1 = yes ; then
-			AC_DEFINE(HAVE_SOCKADDR_SA_LEN)
-	fi
-])
-
-dnl
-dnl Checks for addrinfo structure
-AC_DEFUN(AC_STRUCT_ADDRINFO, [
-	AC_MSG_CHECKING(for addrinfo)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <netdb.h>],
-		[struct addrinfo a],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_ADDRINFO, 1,
-		    [define if you have the addrinfo function])
-	else
-		AC_DEFINE(NEED_ADDRINFO_H, 1,
-		    [define if you need to include missing/addrinfo.h])
-	fi
-])
-
-dnl
-dnl Checks for NI_MAXSERV
-AC_DEFUN(AC_NI_MAXSERV, [
-	AC_MSG_CHECKING(for NI_MAXSERV)
-	AC_CACHE_VAL($1,
-	AC_EGREP_CPP(yes, [#include <netdb.h>
-#ifdef NI_MAXSERV
-yes
-#endif],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 != yes; then
-		AC_DEFINE(NEED_ADDRINFO_H)
-	fi
-])
-
-dnl
-dnl Checks for NI_NAMEREQD
-AC_DEFUN(AC_NI_NAMEREQD, [
-	AC_MSG_CHECKING(for NI_NAMEREQD)
-	AC_CACHE_VAL($1,
-	AC_EGREP_CPP(yes, [#include <netdb.h>
-#ifdef NI_NOFQDN
-yes
-#endif],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 != yes; then
-		AC_DEFINE(NEED_ADDRINFO_H)
-	fi
-])
-
-dnl
-dnl Checks for sockaddr_storage structure
-AC_DEFUN(AC_STRUCT_SA_STORAGE, [
-	AC_MSG_CHECKING(for sockaddr_storage)
-	AC_CACHE_VAL($1,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <sys/socket.h>],
-		[struct sockaddr_storage s],
-		$1=yes,
-		$1=no))
-	AC_MSG_RESULT($$1)
-	if test $$1 = yes; then
-		AC_DEFINE(HAVE_SOCKADDR_STORAGE, 1,
-		    [define if you have struct sockaddr_storage])
-	fi
-])
-
-dnl
-dnl check for h_errno
-AC_DEFUN(AC_VAR_H_ERRNO, [
-	AC_MSG_CHECKING(for h_errno)
-	AC_CACHE_VAL(ac_cv_var_h_errno,
-	AC_TRY_COMPILE([
-#		include <sys/types.h>
-#		include <netdb.h>],
-		[int foo = h_errno;],
-		ac_cv_var_h_errno=yes,
-		ac_cv_var_h_errno=no))
-	AC_MSG_RESULT($ac_cv_var_h_errno)
-	if test "$ac_cv_var_h_errno" = "yes"; then
-		AC_DEFINE(HAVE_H_ERRNO, 1,
-		    [define if you have the h_errno variable])
-	fi
-])
 
 dnl
 dnl Test for __attribute__

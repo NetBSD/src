@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.17.2.3.4.1 2017/01/18 08:46:19 skrll Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.17.2.3.4.2 2017/03/13 07:41:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.17.2.3.4.1 2017/01/18 08:46:19 skrll Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.17.2.3.4.2 2017/03/13 07:41:13 skrll Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((o = getopt(argc, argv, "abD:drw")) != -1)
+	while ((o = getopt(argc, argv, "abD:dnrw")) != -1)
 		switch (o) {
 		case 'a':
 			all = 1;

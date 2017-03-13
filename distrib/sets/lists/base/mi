@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.8.2.1 2017/01/18 08:45:47 skrll Exp $
+# $NetBSD: mi,v 1.1087.2.8.2.2 2017/03/13 07:41:08 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5345,6 +5345,7 @@
 ./usr/share/zoneinfo/America/Porto_Acre		base-sys-share		share
 ./usr/share/zoneinfo/America/Porto_Velho	base-sys-share		share
 ./usr/share/zoneinfo/America/Puerto_Rico	base-sys-share		share
+./usr/share/zoneinfo/America/Punta_Arenas	base-sys-share		share
 ./usr/share/zoneinfo/America/Rainy_River	base-sys-share		share
 ./usr/share/zoneinfo/America/Rankin_Inlet	base-sys-share		share
 ./usr/share/zoneinfo/America/Recife		base-sys-share		share

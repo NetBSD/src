@@ -21,7 +21,7 @@
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="article"><div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.2"></a>Release Notes for BIND Version 9.10.4-P5</h2></div></div></div>
+<a name="id-1.2"></a>Release Notes for BIND Version 9.10.4-P6</h2></div></div></div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_intro"></a>Introduction</h3></div></div></div>
@@ -29,8 +29,13 @@
       This document summarizes changes since BIND 9.10.4:
     </p>
 <p>
+      BIND 9.10.4-P6 addresses the security issue described in
+      CVE-2017-3135, and fixes a regression introduced in a prior
+      security release.
+    </p>
+<p>
       BIND 9.10.4-P5 addresses the security issues described in
-      CVE-2016-9131, CVE-2016-9147 and CVE-2016-9444.
+      CVE-2016-9131, CVE-2016-9147, CVE-2016-9444 and CVE-2016-9778.
     </p>
 <p>
       BIND 9.10.4-P4 addresses the security issue described in
@@ -68,24 +73,33 @@
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem"><p>
-	  Named could mishandle authority sections that were missing
-	  RRSIGs triggering an assertion failure.  This flaw is
-	  disclosed in CVE-2016-9444. [RT # 43632]
+	  If a server is configured with a response policy zone (RPZ)
+	  that rewrites an answer with local data, and is also configured
+	  for DNS64 address mapping, a NULL pointer can be read
+	  triggering a server crash.  This flaw is disclosed in
+	  CVE-2017-3135. [RT #44434]
 	</p></li>
 <li class="listitem"><p>
-	  Named mishandled some responses where covering RRSIG
-	  records are returned without the requested data
-	  resulting in a assertion failure. This flaw is disclosed in
-	  CVE-2016-9147. [RT #43548]
+	  <span class="command"><strong>named</strong></span> could mishandle authority sections
+	  with missing RRSIGs, triggering an assertion failure. This
+	  flaw is disclosed in CVE-2016-9444. [RT #43632]
 	</p></li>
 <li class="listitem"><p>
-	  Named incorrectly tried to cache TKEY records which could
-	  trigger a assertion failure when there was a class mismatch.
-	  This flaw is disclosed in CVE-2016-9131.  [RT #43522]
+	  <span class="command"><strong>named</strong></span> mishandled some responses where
+	  covering RRSIG records were returned without the requested
+	  data, resulting in an assertion failure. This flaw is
+	  disclosed in CVE-2016-9147. [RT #43548]
+	</p></li>
+<li class="listitem"><p>
+	  <span class="command"><strong>named</strong></span> incorrectly tried to cache TKEY
+	  records which could trigger an assertion failure when there was
+	  a class mismatch. This flaw is disclosed in CVE-2016-9131.
+	  [RT #43522]
 	</p></li>
 <li class="listitem"><p>
 	  It was possible to trigger assertions when processing
-	  a response. This flaw is disclosed in CVE-2016-8864. [RT #43465]
+	  responses containing answers of type DNAME. This flaw is
+	  disclosed in CVE-2016-8864. [RT #43465]
 	</p></li>
 <li class="listitem"><p>
 	  It was possible to trigger a assertion when rendering a
@@ -93,11 +107,13 @@
 	  disclosed in CVE-2016-2776. [RT #43139]
 	</p></li>
 <li class="listitem"><p>
-	 getrrsetbyname with a non absolute name could trigger an
-	 infinite recursion bug in lwresd and named with lwres
-	 configured if when combined with a search list entry the
-	 resulting name is too long.  This flaw is disclosed in
-	 CVE-2016-2775. [RT #42694]
+	  Calling <span class="command"><strong>getrrsetbyname()</strong></span> with a non
+	  absolute name could trigger an infinite recursion bug in
+	  <span class="command"><strong>lwresd</strong></span> or <span class="command"><strong>named</strong></span> with
+	  <span class="command"><strong>lwres</strong></span> configured if, when combined with
+	  a search list entry from <code class="filename">resolv.conf</code>,
+	  the resulting name is too long.  This flaw is disclosed in
+	  CVE-2016-2775. [RT #42694]
 	</p></li>
 </ul></div>
 </div>
@@ -127,8 +143,19 @@
 <a name="relnotes_bugs"></a>Bug Fixes</h3></div></div></div>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
 <li class="listitem"><p>
+	  A synthesized CNAME record appearing in a response before the
+	  associated DNAME could be cached, when it should not have been.
+	  This was a regression introduced while addressing CVE-2016-8864.
+	  [RT #44318]
+	</p></li>
+<li class="listitem"><p>
+	  Fixed a crash when calling <span class="command"><strong>rndc stats</strong></span> on some
+	  Windows builds: some Visual Studio compilers generate code that
+	  crashes when the "%z" printf() format specifier is used. [RT #42380]
+	</p></li>
+<li class="listitem"><p>
 	  ECS clients with the option set to 0.0.0.0/0/0 or ::/0/0
-	  where incorrectly getting a FORMERR response.
+	  were incorrectly getting a FORMERR response.
 	</p></li>
 <li class="listitem"><p>
 	  Windows installs were failing due to triggering UAC without

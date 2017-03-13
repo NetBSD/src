@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.40.2.1 2014/12/01 11:38:43 martin Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.40.2.1.4.1 2017/03/13 07:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.40.2.1 2014/12/01 11:38:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.40.2.1.4.1 2017/03/13 07:41:27 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -241,8 +241,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ARP:
 		ah = mtod(m, struct arphdr *);
 
-		if (ntohs(ah->ar_pro) != ETHERTYPE_IP)
-			return EAFNOSUPPORT;
+		if (ntohs(ah->ar_pro) != ETHERTYPE_IP) {
+			error = EAFNOSUPPORT;
+			goto bad;
+		}
 		ehdr.eco_port = ECO_PORT_IP;
 		switch (ntohs(ah->ar_op)) {
 		case ARPOP_REQUEST:
@@ -252,7 +254,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			ehdr.eco_control = ECO_CTL_ARP_REPLY;
 			break;
 		default:
-			return EOPNOTSUPP;
+			error = EOPNOTSUPP;
+			goto bad;
 		}
 
 		if (m->m_flags & M_BCAST)
@@ -260,8 +263,10 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ECO_ADDR_LEN);
 		else {
 			tha = ar_tha(ah);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			memcpy(ehdr.eco_dhost, tha, ECO_ADDR_LEN);
 		}
 
