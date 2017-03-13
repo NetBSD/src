@@ -17,20 +17,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/af.c,v 1.3 2006-03-23 14:58:44 hannes Exp  (LBL)";
-#else
-__RCSID("$NetBSD: af.c,v 1.3 2013/04/06 19:33:07 christos Exp $");
-#endif
+__RCSID("$NetBSD: af.c,v 1.3.10.1 2017/03/13 07:41:13 skrll Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
-#include "interface.h"
+#include <netdissect-stdinc.h>
+#include "netdissect.h"
 #include "af.h"
 
 const struct tok af_values[] = {

@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1145.2.27.2.1 2017/01/18 08:45:49 skrll Exp $
+#	$NetBSD: 3RDPARTY,v 1.1145.2.27.2.2 2017/03/13 07:41:08 skrll Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -113,8 +113,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.3-P4
-Current Vers:	9.10.3-P4
+Version:	9.10.4-P6
+Current Vers:	9.10.4-P6
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -344,8 +344,8 @@ Location:	external/bsd/ekermit
 Notes:
 
 Package:	expat
-Version:	2.1.1
-Current Vers:	2.1.1
+Version:	2.2.0
+Current Vers:	2.2.0
 Maintainer:	Expat Project
 Archive Site:	http://sourceforge.net/projects/expat/files/expat/
 Home Page:	http://www.libexpat.org/
@@ -1221,8 +1221,8 @@ Notes:
 Run cleantags before inporting because sqlite3.c has an RCSID
 
 Package:	tcpdump
-Version:	4.5.1
-Current Vers:	4.5.1
+Version:	4.9.0
+Current Vers:	4.9.0
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -1300,8 +1300,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2014j (+ upgraded zic) / tzdata2016j
-Current Vers:	tzcode2016j / tzdata2016j
+Version:	tzcode2014j (+ upgraded zic) / tzdata2017a
+Current Vers:	tzcode2017a / tzdata2017a
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/

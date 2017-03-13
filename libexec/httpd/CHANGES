@@ -1,7 +1,12 @@
-$NetBSD: CHANGES,v 1.19.2.3.2.1 2017/01/18 08:46:23 skrll Exp $
+$NetBSD: CHANGES,v 1.19.2.3.2.2 2017/03/13 07:41:25 skrll Exp $
+
+changes in bozohttpd 20170201:
+	o  fix an infinite loop in cgi processing
+	o  fixes and clean up for the testsuite
+	o  no longer sends encoding header for compressed formats
 
 changes in bozohttpd 20160517:
-	o add a bozo_get_version() function which returns the version number
+	o  add a bozo_get_version() function which returns the version number
 
 changes in bozohttpd 20160415:
 	o  add search-word support for CGI

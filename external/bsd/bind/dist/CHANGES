@@ -1,3 +1,11 @@
+	--- 9.10.4-P6 released ---
+
+4558.	[bug]		Synthesised CNAME before matching DNAME was still
+			being cached when it should have been.  [RT #44318]
+
+4557.	[security]	Combining dns64 and rpz can result in dereferencing
+			a NULL pointer (read).  (CVE-2017-3135) [RT#44434]
+
 	--- 9.10.4-P5 released ---
 
 4530.	[bug]		Change 4489 broke the handling of CNAME -> DNAME
