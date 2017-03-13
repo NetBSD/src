@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.177 2017/03/07 16:40:16 dholland Exp $
+$NetBSD: acronyms.comp,v 1.178 2017/03/13 11:50:06 leot Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1323,6 +1323,7 @@ UAC	user {access,account} control
 UAF	use-after-free
 UART	universal asynchronous receiver/transmitter
 UAT	user acceptance testing
+UB	undefined behavior
 UC	uncacheable
 UCS	uniform-cost search
 UDMA	ultra DMA
