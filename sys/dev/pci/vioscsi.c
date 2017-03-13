@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.9 2017/03/07 22:03:04 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.10 2017/03/13 20:47:38 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.9 2017/03/07 22:03:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.10 2017/03/13 20:47:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,10 @@ struct vioscsi_softc {
 	struct scsipi_channel 	 sc_channel;
 
 	struct virtqueue	 sc_vqs[3];
+#define VIOSCSI_VQ_CONTROL	0
+#define VIOSCSI_VQ_EVENT	1
+#define VIOSCSI_VQ_REQUEST	2
+
 	struct vioscsi_req	*sc_reqs;
 	int			 sc_nreqs;
 	bus_dma_segment_t        sc_reqs_segs[1];
@@ -159,13 +163,17 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 			    "failed to allocate virtqueue %zu\n", i);
 			return;
 		}
-		sc->sc_vqs[i].vq_done = vioscsi_vq_done;
+
+		if (i == VIOSCSI_VQ_REQUEST)
+			sc->sc_vqs[i].vq_done = vioscsi_vq_done;
 	}
 
-	int qsize = sc->sc_vqs[2].vq_num;
+	int qsize = sc->sc_vqs[VIOSCSI_VQ_REQUEST].vq_num;
 	aprint_normal_dev(sc->sc_dev, "qsize %d\n", qsize);
 	if (vioscsi_alloc_reqs(sc, vsc, qsize, seg_max))
 		return;
+
+	virtio_start_vq_intr(vsc, &sc->sc_vqs[VIOSCSI_VQ_REQUEST]);
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -240,10 +248,10 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	xs = arg;
 	periph = xs->xs_periph;
 
-	vr = vioscsi_req_get(sc);
 	/*
 	 * This can happen when we run out of queue slots.
 	 */
+	vr = vioscsi_req_get(sc);
 	if (vr == NULL) {
 		xs->error = XS_RESOURCE_SHORTAGE;
 		scsipi_done(xs);
@@ -267,8 +275,8 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	}
 	req->lun[0] = 1;
 	req->lun[1] = periph->periph_target - 1;
-	req->lun[2] = 0x40 | (periph->periph_lun >> 8);
-	req->lun[3] = periph->periph_lun;
+	req->lun[2] = 0x40 | ((periph->periph_lun >> 8) & 0x3F);
+	req->lun[3] = periph->periph_lun & 0xFF;
 	memset(req->lun + 4, 0, 4);
 	DPRINTF(("%s: command for %u:%u at slot %d\n", __func__,
 	    periph->periph_target - 1, periph->periph_lun, slot));
@@ -294,7 +302,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 		req->task_attr = VIRTIO_SCSI_S_SIMPLE;
 		break;
 	}
-	req->id = (intptr_t)vr;
+	req->id = slot;
 
 	if ((size_t)xs->cmdlen > sizeof(req->cdb)) {
 		DPRINTF(("%s: bad cmdlen %zu > %zu\n", __func__,
@@ -465,7 +473,7 @@ static struct vioscsi_req *
 vioscsi_req_get(struct vioscsi_softc *sc)
 {
 	struct virtio_softc *vsc = device_private(device_parent(sc->sc_dev));
-	struct virtqueue *vq = &sc->sc_vqs[2];
+	struct virtqueue *vq = &sc->sc_vqs[VIOSCSI_VQ_REQUEST];
 	struct vioscsi_req *vr;
 	int r, slot;
 
