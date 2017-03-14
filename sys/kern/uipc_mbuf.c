@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.170 2017/01/09 14:25:52 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.171 2017/03/14 09:03:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.170 2017/01/09 14:25:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.171 2017/03/14 09:03:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -562,14 +562,12 @@ m_reclaim(void *arg, int flags)
 		IFNET_READER_FOREACH(ifp) {
 			struct psref psref;
 
-			psref_acquire(&psref, &ifp->if_psref,
-			    ifnet_psref_class);
+			if_acquire(ifp, &psref);
 
 			if (ifp->if_drain)
 				(*ifp->if_drain)(ifp);
 
-			psref_release(&psref, &ifp->if_psref,
-			    ifnet_psref_class);
+			if_release(ifp, &psref);
 		}
 		curlwp_bindx(bound);
 	}

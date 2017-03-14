@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.206 2017/03/14 08:35:55 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.207 2017/03/14 09:03:08 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.206 2017/03/14 08:35:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.207 2017/03/14 09:03:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1685,7 +1685,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		if (IFADDR_READER_EMPTY(ifp))
 			continue;
 
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1719,7 +1719,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		    info.rti_info[RTAX_BRD] = NULL;
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
@@ -1727,7 +1727,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	return 0;
 
 release_exit:
-	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	if_release(ifp, &psref);
 	curlwp_bindx(bound);
 	return error;
 }

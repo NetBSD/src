@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.384 2017/03/14 04:25:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.385 2017/03/14 09:03:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.384 2017/03/14 04:25:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.385 2017/03/14 09:03:08 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -176,7 +176,7 @@ static size_t			if_indexlim = 0;
 static uint64_t			index_gen;
 /* Mutex to protect the above objects. */
 kmutex_t			ifnet_mtx __cacheline_aligned;
-struct psref_class		*ifnet_psref_class __read_mostly;
+static struct psref_class	*ifnet_psref_class __read_mostly;
 static pserialize_t		ifnet_psz;
 
 static kmutex_t			if_clone_mtx;
