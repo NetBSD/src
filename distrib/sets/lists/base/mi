@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1155 2017/03/01 03:02:48 kre Exp $
+# $NetBSD: mi,v 1.1156 2017/03/14 23:59:24 nonaka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -150,22 +150,33 @@
 ./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root
 ./libdata/firmware/if_iwm			base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-3160-ucode	base-firmware-root
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-3168-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-7260-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-7265-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-8000-ucode	base-firmware-root
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-8265-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-3160-ucode	base-firmware-root
+./libdata/firmware/if_iwm/README.iwlwifi-3168-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-7260-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-7265-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-8000-ucode	base-firmware-root
-./libdata/firmware/if_iwm/iwlwifi-3160-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/README.iwlwifi-8265-ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-3160-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-3160-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-3160-9.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-3168-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7260-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-7260-9.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7265-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-7265-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-firmware-root
-./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7265D-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-8000C-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-8265-22.ucode	base-firmware-root
 ./libdata/firmware/if_iwn			base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root
