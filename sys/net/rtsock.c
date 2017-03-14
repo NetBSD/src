@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.204 2017/03/14 04:25:10 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.205 2017/03/14 08:11:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.204 2017/03/14 04:25:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.205 2017/03/14 08:11:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1678,6 +1678,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
+		int _s;
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		if (IFADDR_READER_EMPTY(ifp))
@@ -1694,15 +1695,25 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			if ((error = iflist_if(ifp, w, &info, len)) != 0)
 				goto release_exit;
 		}
+		_s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
+			struct psref _psref;
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
+			ifa_acquire(ifa, &_psref);
+			pserialize_read_exit(_s);
+
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			if ((error = iflist_addr(w, ifa, &info)) != 0)
+			error = iflist_addr(w, ifa, &info);
+
+			_s = pserialize_read_enter();
+			ifa_release(ifa, &_psref);
+			if (error != 0)
 				goto release_exit;
 		}
+		pserialize_read_exit(_s);
 		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
 		    info.rti_info[RTAX_BRD] = NULL;
 
