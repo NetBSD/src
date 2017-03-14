@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.121 2017/02/27 14:13:56 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.122 2017/03/14 08:20:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -163,6 +163,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_SATCOM			0x0f
 #define	PCI_CLASS_CRYPTO			0x10
 #define	PCI_CLASS_DASP				0x11
+#define	PCI_CLASS_ACCEL				0x12
+#define	PCI_CLASS_INSTRUMENT			0x13
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
