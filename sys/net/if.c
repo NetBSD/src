@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.383 2017/03/09 09:57:36 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.384 2017/03/14 04:25:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.383 2017/03/09 09:57:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.384 2017/03/14 04:25:10 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1371,11 +1371,7 @@ again:
 		if (family == AF_LINK)
 			continue;
 		dp = pffinddomain(family);
-#ifdef DIAGNOSTIC
-		if (dp == NULL)
-			panic("if_detach: no domain for AF %d",
-			    family);
-#endif
+		KASSERTMSG(dp != NULL, "no domain for AF %d", family);
 		/*
 		 * XXX These PURGEIF calls are redundant with the
 		 * purge-all-families calls below, but are left in for

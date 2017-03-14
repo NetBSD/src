@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.203 2017/03/14 04:23:15 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.204 2017/03/14 04:25:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.203 2017/03/14 04:23:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.204 2017/03/14 04:25:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1449,10 +1449,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		default:
 			continue;
 		}
-#ifdef DIAGNOSTIC
-		if (m == NULL)
-			panic("%s: called with wrong command", __func__);
-#endif
+		KASSERTMSG(m != NULL, "called with wrong command");
 		COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
 	}
 #undef cmdpass

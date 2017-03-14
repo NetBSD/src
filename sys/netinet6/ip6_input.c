@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.176 2017/03/01 08:54:12 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.177 2017/03/14 04:25:10 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.176 2017/03/01 08:54:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.177 2017/03/14 04:25:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1322,10 +1322,7 @@ ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
 	if (mtu == NULL)
 		return;
 
-#ifdef DIAGNOSTIC
-	if (so == NULL)		/* I believe this is impossible */
-		panic("ip6_notify_pmtu: socket is NULL");
-#endif
+	KASSERT(so != NULL);
 
 	memset(&mtuctl, 0, sizeof(mtuctl));	/* zero-clear for safety */
 	mtuctl.ip6m_mtu = *mtu;
