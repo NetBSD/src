@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.207 2017/03/14 09:03:08 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.208 2017/03/14 09:39:28 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.207 2017/03/14 09:03:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.208 2017/03/14 09:39:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1711,8 +1711,10 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 
 			_s = pserialize_read_enter();
 			ifa_release(ifa, &_psref);
-			if (error != 0)
+			if (error != 0) {
+				pserialize_read_exit(_s);
 				goto release_exit;
+			}
 		}
 		pserialize_read_exit(_s);
 		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
