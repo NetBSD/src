@@ -1,5 +1,5 @@
 
-/*	$NetBSD: trap.c,v 1.285 2017/03/09 00:16:51 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.286 2017/03/14 07:02:53 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.285 2017/03/09 00:16:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.286 2017/03/14 07:02:53 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -421,6 +421,11 @@ kernelfault:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
+#ifdef TRAP_SIGDEBUG
+		printf("pid %d.%d (%s): BUS/SEGV (%#x) at eip %#x addr %#lx\n",
+		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_eip, rcr2());
+		frame_dump(frame, pcb);
+#endif
 		KSI_INIT_TRAP(&ksi);
 
 		ksi.ksi_addr = (void *)rcr2();
@@ -463,6 +468,11 @@ kernelfault:
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
+#ifdef TRAP_SIGDEBUG
+		printf("pid %d.%d (%s): ILL at eip %#x addr %#lx\n",
+		    p->p_pid, l->l_lid, p->p_comm, frame->tf_eip, rcr2());
+		frame_dump(frame, pcb);
+#endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *) frame->tf_eip;
@@ -679,6 +689,7 @@ faultcommon:
 		printf("pid %d.%d (%s): signal %d at eip %#x addr %#lx "
 		    "error %d\n", p->p_pid, l->l_lid, p->p_comm, ksi.ksi_signo,
 		    frame->tf_eip, va, error);
+		frame_dump(frame, pcb);
 #endif
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
