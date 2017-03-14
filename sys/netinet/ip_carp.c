@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.85 2017/02/27 08:26:53 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.86 2017/03/14 09:03:08 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.85 2017/02/27 08:26:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.86 2017/03/14 09:03:08 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -975,7 +975,7 @@ carp_send_ad_all(void)
 		if (ifp->if_carp == NULL || ifp->if_type == IFT_CARP)
 			continue;
 
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		cif = (struct carp_if *)ifp->if_carp;
@@ -986,7 +986,7 @@ carp_send_ad_all(void)
 		}
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);

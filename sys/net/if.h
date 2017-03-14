@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.235 2017/02/23 07:57:10 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.236 2017/03/14 09:03:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -975,6 +975,7 @@ ifnet_t *if_byindex(u_int);
 ifnet_t *if_get_byindex(u_int, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);
 void	if_acquire(struct ifnet *, struct psref *);
+#define	if_release	if_put
 
 static inline if_index_t
 if_get_index(const struct ifnet *ifp)
@@ -1170,7 +1171,6 @@ __END_DECLS
 	} while (0)
 
 extern struct pslist_head ifnet_pslist;
-extern struct psref_class *ifnet_psref_class;
 extern kmutex_t ifnet_mtx;
 
 extern struct ifnet *lo0ifp;
