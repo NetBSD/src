@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.162 2017/02/27 16:16:23 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.163 2017/03/14 08:09:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.162 2017/02/27 16:16:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.163 2017/03/14 08:09:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -523,7 +523,7 @@ static const struct pci_class pci_subclass_dasp[] = {
 };
 
 /* List of classes */
-static const struct pci_class pci_class[] = {
+static const struct pci_class pci_classes[] = {
 	{ "prehistoric",	PCI_CLASS_PREHISTORIC,
 	    pci_subclass_prehistoric,				},
 	{ "mass storage",	PCI_CLASS_MASS_STORAGE,
@@ -609,14 +609,14 @@ void
 pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
     size_t l)
 {
-	pci_class_t pciclass;
+	pci_class_t class;
 	pci_subclass_t subclass;
 	pci_interface_t interface;
 	pci_revision_t revision;
 	char vendor[PCI_VENDORSTR_LEN], product[PCI_PRODUCTSTR_LEN];
 	const struct pci_class *classp, *subclassp, *interfacep;
 
-	pciclass = PCI_CLASS(class_reg);
+	class = PCI_CLASS(class_reg);
 	subclass = PCI_SUBCLASS(class_reg);
 	interface = PCI_INTERFACE(class_reg);
 	revision = PCI_REVISION(class_reg);
@@ -625,9 +625,9 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	pci_findproduct(product, sizeof(product), PCI_VENDOR(id_reg),
 	    PCI_PRODUCT(id_reg));
 
-	classp = pci_class;
+	classp = pci_classes;
 	while (classp->name != NULL) {
-		if (pciclass == classp->val)
+		if (class == classp->val)
 			break;
 		classp++;
 	}
@@ -653,7 +653,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		if (classp->name == NULL)
 			(void)snappendf(&cp, &l,
 			    "class 0x%02x, subclass 0x%02x",
-			    pciclass, subclass);
+			    class, subclass);
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
 				(void)snappendf(&cp, &l,
@@ -724,12 +724,21 @@ pci_conf_print_common(
 #endif
     const pcireg_t *regs)
 {
-	const char *name;
+	pci_class_t class;
+	pci_subclass_t subclass;
+	pci_interface_t interface;
+	pci_revision_t revision;
+	char vendor[PCI_VENDORSTR_LEN], product[PCI_PRODUCTSTR_LEN];
 	const struct pci_class *classp, *subclassp;
-	char vendor[PCI_VENDORSTR_LEN];
-	char product[PCI_PRODUCTSTR_LEN];
+	const char *name;
 	pcireg_t rval;
 	unsigned int num;
+
+	rval = regs[o2i(PCI_CLASS_REG)];
+	class = PCI_CLASS(rval);
+	subclass = PCI_SUBCLASS(rval);
+	interface = PCI_INTERFACE(rval);
+	revision = PCI_REVISION(rval);
 
 	rval = regs[o2i(PCI_ID_REG)];
 	name = pci_findvendor(vendor, sizeof(vendor), PCI_VENDOR(rval));
@@ -800,19 +809,18 @@ pci_conf_print_common(
 	onoff("Parity error detected", rval, PCI_STATUS_PARITY_DETECT);
 
 	rval = regs[o2i(PCI_CLASS_REG)];
-	for (classp = pci_class; classp->name != NULL; classp++) {
-		if (PCI_CLASS(rval) == classp->val)
+	for (classp = pci_classes; classp->name != NULL; classp++) {
+		if (class == classp->val)
 			break;
 	}
 	subclassp = (classp->name != NULL) ? classp->subclasses : NULL;
 	while (subclassp && subclassp->name != NULL) {
-		if (PCI_SUBCLASS(rval) == subclassp->val)
+		if (subclass == subclassp->val)
 			break;
 		subclassp++;
 	}
 	if (classp->name != NULL) {
-		printf("    Class Name: %s (0x%02x)\n", classp->name,
-		    PCI_CLASS(rval));
+		printf("    Class Name: %s (0x%02x)\n", classp->name, class);
 		if (subclassp != NULL && subclassp->name != NULL)
 			printf("    Subclass Name: %s (0x%02x)\n",
 			    subclassp->name, PCI_SUBCLASS(rval));
@@ -820,11 +828,11 @@ pci_conf_print_common(
 			printf("    Subclass ID: 0x%02x\n",
 			    PCI_SUBCLASS(rval));
 	} else {
-		printf("    Class ID: 0x%02x\n", PCI_CLASS(rval));
-		printf("    Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+		printf("    Class ID: 0x%02x\n", class);
+		printf("    Subclass ID: 0x%02x\n", subclass);
 	}
-	printf("    Interface: 0x%02x\n", PCI_INTERFACE(rval));
-	printf("    Revision ID: 0x%02x\n", PCI_REVISION(rval));
+	printf("    Interface: 0x%02x\n", interface);
+	printf("    Revision ID: 0x%02x\n", revision);
 
 	rval = regs[o2i(PCI_BHLC_REG)];
 	printf("    BIST: 0x%02x\n", PCI_BIST(rval));
@@ -1344,7 +1352,7 @@ pci_conf_print_pcix_cap(const pcireg_t *regs, int capoff)
 
 	/* Only for bridge */
 	for (i = 0; i < 2; i++) {
-		reg = regs[o2i(capoff+PCIX_BRIDGE_UP_STCR + (4 * i))];
+		reg = regs[o2i(capoff + PCIX_BRIDGE_UP_STCR + (4 * i))];
 		printf("    %s split transaction control register: 0x%08x\n",
 		    (i == 0) ? "Upstream" : "Downstream", reg);
 		printf("      Capacity: %d\n", reg & PCIX_BRIDGE_STCAP);
