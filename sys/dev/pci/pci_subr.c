@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.165 2017/03/14 08:25:35 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.166 2017/03/14 08:27:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.165 2017/03/14 08:25:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.166 2017/03/14 08:27:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -819,12 +819,31 @@ pci_conf_print_common(
 		if (class == classp->val)
 			break;
 	}
+
+	/*
+	 * ECN: Change Root Complex Event Collector Class Code
+	 * Old RCEC has subclass 0x06. It's the same as IOMMU. Read the type
+	 * in PCIe extend capability to know whether it's RCEC or IOMMU.
+	 */
+	if ((class == PCI_CLASS_SYSTEM)
+	    && (subclass == PCI_SUBCLASS_SYSTEM_IOMMU)) {
+		int pcie_capoff;
+		pcireg_t reg;
+
+		if (pci_conf_find_cap(regs, PCI_CAPLISTPTR_REG,
+		    PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
+			reg = regs[o2i(pcie_capoff + PCIE_XCAP)];
+			if (PCIE_XCAP_TYPE(reg) == PCIE_XCAP_TYPE_ROOT_EVNTC)
+				subclass = PCI_SUBCLASS_SYSTEM_RCEC;
+		}
+	}
 	subclassp = (classp->name != NULL) ? classp->subclasses : NULL;
 	while (subclassp && subclassp->name != NULL) {
 		if (subclass == subclassp->val)
 			break;
 		subclassp++;
 	}
+
 	interfacep = (subclassp && subclassp->name != NULL) ?
 	    subclassp->subclasses : NULL;
 	while (interfacep && interfacep->name != NULL) {
