@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.137 2017/02/21 03:58:24 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.138 2017/03/14 04:25:10 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.137 2017/02/21 03:58:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138 2017/03/14 04:25:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -394,14 +394,9 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-#ifdef DIAGNOSTIC
-	if (max_linkhdr + maxlen >= MCLBYTES) {
-		printf("nd6_ns_output: max_linkhdr + maxlen >= MCLBYTES "
-		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
-		panic("nd6_ns_output: insufficient MCLBYTES");
-		/* NOTREACHED */
-	}
-#endif
+	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
+	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && max_linkhdr + maxlen >= MHLEN) {
@@ -910,14 +905,9 @@ nd6_na_output(
 	/* estimate the size of message */
 	maxlen = sizeof(*ip6) + sizeof(*nd_na);
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
-#ifdef DIAGNOSTIC
-	if (max_linkhdr + maxlen >= MCLBYTES) {
-		printf("nd6_na_output: max_linkhdr + maxlen >= MCLBYTES "
-		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
-		panic("nd6_na_output: insufficient MCLBYTES");
-		/* NOTREACHED */
-	}
-#endif
+	KASSERTMSG(max_linkhdr + maxlen < MCLBYTES,
+	    "max_linkhdr + maxlen >= MCLBYTES (%d + %d >= %d)",
+	    max_linkhdr, maxlen, MCLBYTES);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && max_linkhdr + maxlen >= MHLEN) {
