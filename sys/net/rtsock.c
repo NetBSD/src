@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.205 2017/03/14 08:11:09 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.206 2017/03/14 08:35:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.205 2017/03/14 08:11:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.206 2017/03/14 08:35:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1638,7 +1638,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			       struct rt_addrinfo *);
 	int s;
 	struct psref psref;
-	int bound = curlwp_bind();
+	int bound;
 
 	switch (type) {
 	case NET_RT_IFLIST:
@@ -1676,6 +1676,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 
 	memset(&info, 0, sizeof(info));
 
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		int _s;
