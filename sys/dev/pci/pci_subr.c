@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.163 2017/03/14 08:09:31 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.164 2017/03/14 08:20:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.163 2017/03/14 08:09:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.164 2017/03/14 08:20:11 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -560,6 +560,10 @@ static const struct pci_class pci_classes[] = {
 	    pci_subclass_crypto,				},
 	{ "DASP",		PCI_CLASS_DASP,
 	    pci_subclass_dasp,					},
+	{ "processing accelerators", PCI_CLASS_ACCEL,
+	    NULL,						},
+	{ "non-essential instrumentation", PCI_CLASS_INSTRUMENT,
+	    NULL,						},
 	{ "undefined",		PCI_CLASS_UNDEFINED,
 	    NULL,						},
 	{ NULL,			0,
