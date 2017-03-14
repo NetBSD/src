@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.164 2017/03/14 08:20:11 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.165 2017/03/14 08:25:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.164 2017/03/14 08:20:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.165 2017/03/14 08:25:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.164 2017/03/14 08:20:11 msaitoh Exp $
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcidevs_data.h>
 #endif
+
+static int pci_conf_find_cap(const pcireg_t *, int, unsigned int, int *);
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -733,7 +735,7 @@ pci_conf_print_common(
 	pci_interface_t interface;
 	pci_revision_t revision;
 	char vendor[PCI_VENDORSTR_LEN], product[PCI_PRODUCTSTR_LEN];
-	const struct pci_class *classp, *subclassp;
+	const struct pci_class *classp, *subclassp, *interfacep;
 	const char *name;
 	pcireg_t rval;
 	unsigned int num;
@@ -823,19 +825,29 @@ pci_conf_print_common(
 			break;
 		subclassp++;
 	}
-	if (classp->name != NULL) {
-		printf("    Class Name: %s (0x%02x)\n", classp->name, class);
-		if (subclassp != NULL && subclassp->name != NULL)
-			printf("    Subclass Name: %s (0x%02x)\n",
-			    subclassp->name, PCI_SUBCLASS(rval));
-		else
-			printf("    Subclass ID: 0x%02x\n",
-			    PCI_SUBCLASS(rval));
-	} else {
-		printf("    Class ID: 0x%02x\n", class);
-		printf("    Subclass ID: 0x%02x\n", subclass);
+	interfacep = (subclassp && subclassp->name != NULL) ?
+	    subclassp->subclasses : NULL;
+	while (interfacep && interfacep->name != NULL) {
+		if (interface == interfacep->val)
+			break;
+		interfacep++;
 	}
-	printf("    Interface: 0x%02x\n", interface);
+
+	if (classp->name != NULL)
+		printf("    Class Name: %s (0x%02x)\n", classp->name, class);
+	else
+		printf("    Class ID: 0x%02x\n", class);
+	if (subclassp != NULL && subclassp->name != NULL)
+		printf("    Subclass Name: %s (0x%02x)\n",
+		    subclassp->name, PCI_SUBCLASS(rval));
+	else
+		printf("    Subclass ID: 0x%02x\n", PCI_SUBCLASS(rval));
+	if ((interfacep != NULL) && (interfacep->name != NULL)
+	    && (strncmp(interfacep->name, "", 1) != 0))
+		printf("    Interface Name: %s (0x%02x)\n",
+		    interfacep->name, interface);
+	else
+		printf("    Interface: 0x%02x\n", interface);
 	printf("    Revision ID: 0x%02x\n", revision);
 
 	rval = regs[o2i(PCI_BHLC_REG)];
