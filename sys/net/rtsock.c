@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.202 2017/02/21 04:00:01 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.203 2017/03/14 04:23:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.202 2017/02/21 04:00:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.203 2017/03/14 04:23:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1064,8 +1064,8 @@ rt_getlen(int type)
 #ifdef COMPAT_70
 		return sizeof(struct ifa_msghdr70);
 #else
-#ifdef DIAGNOSTIC
-		printf("RTM_ONEWADDR\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported RTM type %d\n", __func__, type);
 #endif
 		return -1;
 #endif
@@ -1078,8 +1078,8 @@ rt_getlen(int type)
 #ifdef COMPAT_14
 		return sizeof(struct if_msghdr14);
 #else
-#ifdef DIAGNOSTIC
-		printf("RTM_OOIFINFO\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported RTM type RTM_OOIFINFO\n", __func__);
 #endif
 		return -1;
 #endif
@@ -1087,8 +1087,8 @@ rt_getlen(int type)
 #ifdef COMPAT_50
 		return sizeof(struct if_msghdr50);
 #else
-#ifdef DIAGNOSTIC
-		printf("RTM_OIFINFO\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported RTM type RTM_OIFINFO\n", __func__);
 #endif
 		return -1;
 #endif
@@ -1671,8 +1671,8 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		break;
 #endif
 	default:
-#ifdef DIAGNOSTIC
-		printf("sysctl_iflist\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported IFLIST type %d\n", __func__, type);
 #endif
 		return EINVAL;
 	}
