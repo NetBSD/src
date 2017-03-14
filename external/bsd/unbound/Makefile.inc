@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2016/08/21 17:24:22 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2017/03/14 21:11:12 roy Exp $
 
 USE_FORT?= yes  # network client/server
 UNBOUND:=${.PARSEDIR}/dist
@@ -12,6 +12,7 @@ DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
 DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
+DPLIBS+= event ${NETBSDSRCDIR}/external/bsd/libevent/lib/libevent
 
 __subst: .USE
 	${TOOL_SED} \
