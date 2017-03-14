@@ -115,19 +115,19 @@
 #define HAVE_ENDSERVENT 1
 
 /* Define to 1 if you have the `event_base_free' function. */
-/* #undef HAVE_EVENT_BASE_FREE */
+#define HAVE_EVENT_BASE_FREE 1
 
 /* Define to 1 if you have the `event_base_get_method' function. */
-/* #undef HAVE_EVENT_BASE_GET_METHOD */
+#define HAVE_EVENT_BASE_GET_METHOD 1
 
 /* Define to 1 if you have the `event_base_new' function. */
-/* #undef HAVE_EVENT_BASE_NEW */
+#define HAVE_EVENT_BASE_NEW 1
 
 /* Define to 1 if you have the `event_base_once' function. */
-/* #undef HAVE_EVENT_BASE_ONCE */
+#define HAVE_EVENT_BASE_ONCE 1
 
 /* Define to 1 if you have the <event.h> header file. */
-/* #undef HAVE_EVENT_H */
+#define HAVE_EVENT_H 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 /* #undef HAVE_EVP_MD_CTX_NEW */
@@ -609,7 +609,7 @@
 #define USE_GOST 1
 
 /* Define if you want to use internal select based events */
-#define USE_MINI_EVENT 1
+/* #undef USE_MINI_EVENT */
 
 /* Define this to enable SHA256 and SHA512 support. */
 #define USE_SHA2 1
