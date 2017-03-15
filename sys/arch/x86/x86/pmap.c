@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.242 2017/03/09 00:21:55 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.243 2017/03/15 16:42:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.242 2017/03/09 00:21:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.243 2017/03/15 16:42:18 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3882,6 +3882,12 @@ pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 
 /*
  * pmap_write_protect: write-protect pages in a pmap.
+ *
+ * Note for Xen-amd64. Xen automatically adds PG_u to the kernel pages, but we
+ * don't need to remove this bit when re-entering the PTEs here: Xen tracks the
+ * kernel pages with a reserved bit (_PAGE_GUEST_KERNEL), so even if PG_u is
+ * present the page will still be considered as a kernel page, and the privilege
+ * separation will be enforced correctly.
  */
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
