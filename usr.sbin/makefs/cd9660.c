@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.54 2017/01/24 11:22:43 nonaka Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.55 2017/03/15 15:33:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.54 2017/01/24 11:22:43 nonaka Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.55 2017/03/15 15:33:54 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -298,7 +298,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		    "Allow 37 char filenames (unimplemented)"),
 	        OPT_BOOL('i', "allow-illegal-chars", allow_illegal_chars,
 		    "Allow illegal characters in filenames"),
-	        OPT_BOOL('D', "allow-multidot", allow_multidot,
+	        OPT_BOOL('m', "allow-multidot", allow_multidot,
 		    "Allow multiple periods in filenames"),
 	        OPT_BOOL('o', "omit-trailing-period", omit_trailing_period,
 		    "Omit trailing periods in filenames"),
