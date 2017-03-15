@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.95 2017/01/23 06:47:54 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.96 2017/03/15 09:51:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.95 2017/01/23 06:47:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.96 2017/03/15 09:51:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -841,19 +841,17 @@ vlan_start(struct ifnet *ifp)
 			}
 		}
 
-		/*
-		 * Send it, precisely as the parent's output routine
-		 * would have.  We are already running at splnet.
-		 */
-		if ((p->if_flags & IFF_RUNNING) != 0) {
-			error = if_transmit_lock(p, m);
-			if (error) {
-				/* mbuf is already freed */
-				ifp->if_oerrors++;
-				continue;
-			}
+		if ((p->if_flags & IFF_RUNNING) == 0) {
+			m_freem(m);
+			continue;
 		}
 
+		error = if_transmit_lock(p, m);
+		if (error) {
+			/* mbuf is already freed */
+			ifp->if_oerrors++;
+			continue;
+		}
 		ifp->if_opackets++;
 	}
 
