@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.148 2017/03/13 13:45:53 riastradh Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.149 2017/03/15 21:28:41 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.148 2017/03/13 13:45:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.149 2017/03/15 21:28:41 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -149,7 +149,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	mutex_enter(vp->v_interlock);
 	while ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
-		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
+		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %"PRIx64
 		      " (in progress)\n", ip->i_number));
 		cv_wait(&vp->v_cv, vp->v_interlock);
 	}
@@ -168,7 +168,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 		mutex_enter(&lfs_lock);
 		++fs->lfs_diropwait;
 		while (vp->v_uflag & VU_DIROP) {
-			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
+			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %"PRIx64
 			      " (dirops)\n", ip->i_number));
 			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, iflags"
 			      " 0x%x\n",
@@ -590,12 +590,12 @@ done:
 
 	KASSERTMSG((oip->i_size != 0 ||
 		lfs_dino_getblocks(fs, oip->i_din) == 0),
-	    "truncate to 0 but %jd blks/%jd effblks",
-	    lfs_dino_getblocks(fs, oip->i_din),
+	    "ino %"PRIx64" truncate to 0 but %jd blks/%jd effblks",
+	    oip->i_number, lfs_dino_getblocks(fs, oip->i_din),
 	    oip->i_lfs_effnblks);
 	KASSERTMSG((oip->i_size != 0 || oip->i_lfs_effnblks == 0),
-	    "truncate to 0 but %jd blks/%jd effblks",
-	    lfs_dino_getblocks(fs, oip->i_din),
+	    "ino %"PRIx64" truncate to 0 but %jd blks/%jd effblks",
+	    oip->i_number, lfs_dino_getblocks(fs, oip->i_din),
 	    oip->i_lfs_effnblks);
 
 	/*
