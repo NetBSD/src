@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.5.12.3 2017/01/06 06:10:37 snj Exp $
+#	$NetBSD: README.files,v 1.5.12.3.2.1 2017/03/15 06:17:07 snj Exp $
 
 What's in this directory:
 
@@ -8,6 +8,8 @@ CHANGES-7.0	Changes between the creation of the netbsd-7 branch and
 		the 7.0 release.
 
 CHANGES-7.1	Changes between the 7.0 and 7.1 releases.
+
+CHANGES-7.1.1	Changes between the 7.1 and 7.1.1 releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
