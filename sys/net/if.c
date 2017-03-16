@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.386 2017/03/16 08:11:47 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.387 2017/03/16 09:40:48 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.386 2017/03/16 08:11:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.387 2017/03/16 09:40:48 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2545,14 +2545,8 @@ ifunit(const char *name)
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
-	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_indexlim)
-			return NULL;
-		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || if_is_deactivated(ifp))
-			return NULL;
-		return ifp;
-	}
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0'))
+		return if_byindex(unit);
 
 	ifp = NULL;
 	s = pserialize_read_enter();
@@ -2591,18 +2585,8 @@ if_get(const char *name, struct psref *psref)
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
-	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_indexlim)
-			return NULL;
-		s = pserialize_read_enter();
-		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || if_is_deactivated(ifp))
-			ifp = NULL;
-		if (ifp != NULL)
-			psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
-		pserialize_read_exit(s);
-		return ifp;
-	}
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0'))
+		return if_get_byindex(unit, psref);
 
 	ifp = NULL;
 	s = pserialize_read_enter();
@@ -2639,7 +2623,7 @@ if_byindex(u_int idx)
 {
 	ifnet_t *ifp;
 
-	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
 	if (ifp != NULL && if_is_deactivated(ifp))
 		ifp = NULL;
 	return ifp;
@@ -2657,9 +2641,7 @@ if_get_byindex(u_int idx, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
-	if (ifp != NULL && if_is_deactivated(ifp))
-		ifp = NULL;
+	ifp = if_byindex(idx);
 	if (__predict_true(ifp != NULL))
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
 	pserialize_read_exit(s);
