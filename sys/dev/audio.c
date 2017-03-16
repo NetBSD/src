@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.314 2017/02/27 23:31:00 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.315 2017/03/16 00:21:30 maya Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.314 2017/02/27 23:31:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.315 2017/03/16 00:21:30 maya Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -257,23 +257,8 @@ void	audio_play_thread(void *);
 void	audio_rec_thread(void *);
 void	recswvol_func(struct audio_softc *, struct audio_ringbuffer *,
 		      size_t, struct virtual_channel *);
-void	recswvol_func8(struct audio_softc *, struct audio_ringbuffer *,
-		       size_t, struct virtual_channel *);
-void	recswvol_func16(struct audio_softc *, struct audio_ringbuffer *,
-			size_t, struct virtual_channel *);
-void	recswvol_func32(struct audio_softc *, struct audio_ringbuffer *,
-			size_t, struct virtual_channel *);
 void	saturate_func(struct audio_softc *);
-void	saturate_func8(struct audio_softc *);
-void	saturate_func16(struct audio_softc *);
-void	saturate_func32(struct audio_softc *);
 void	mix_func(struct audio_softc *, struct audio_ringbuffer *,
-		 struct virtual_channel *);
-void	mix_func8(struct audio_softc *, struct audio_ringbuffer *,
-		 struct virtual_channel *);
-void	mix_func16(struct audio_softc *, struct audio_ringbuffer *,
-		 struct virtual_channel *);
-void	mix_func32(struct audio_softc *, struct audio_ringbuffer *,
 		 struct virtual_channel *);
 void	mix_write(void *);
 void	mix_read(void *);
@@ -5533,116 +5518,47 @@ mix_write(void *arg)
 	}
 }
 
-void
-mix_func8(struct audio_softc *sc, struct audio_ringbuffer *cb,
-	  struct virtual_channel *vc)
-{
-	int blksize, cc, cc1, cc2, m, resid;
-	int8_t *orig, *tomix;
+#define DEF_MIX_FUNC(name, type)					\
+	static void						\
+	mix_func##name(struct audio_softc *sc, struct audio_ringbuffer *cb, \
+		  struct virtual_channel *vc)				\
+	{								\
+		int blksize, cc, cc1, cc2, m, resid;			\
+		type *orig, *tomix;					\
+									\
+		blksize = sc->sc_pr.blksize;				\
+		resid = blksize;					\
+									\
+		tomix = __UNCONST(cb->s.outp);				\
+		orig = (type *)(sc->sc_pr.s.inp);			\
+									\
+		while (resid > 0) {					\
+			cc = resid;					\
+			cc1 = sc->sc_pr.s.end - (uint8_t *)orig;	\
+			cc2 = cb->s.end - (uint8_t *)tomix;		\
+			if (cc > cc1)					\
+				cc = cc1;				\
+			if (cc > cc2)					\
+				cc = cc2;				\
+									\
+			for (m = 0; m < cc / 2; m++) {			\
+				orig[m] += (type)((int32_t)(tomix[m] *	\
+				    (vc->sc_swvol + 1)) / (sc->sc_opens * \
+				    256));				\
+			}						\
+									\
+			if (&orig[m] >= (type *)sc->sc_pr.s.end)	\
+				orig = (type *)sc->sc_pr.s.start;	\
+			if (&tomix[m] >= (type *)cb->s.end)		\
+				tomix = (type *)cb->s.start;		\
+									\
+			resid -= cc;					\
+		}							\
+	}								\
 
-	blksize = sc->sc_pr.blksize;
-	resid = blksize;
-
-	tomix = __UNCONST(cb->s.outp);
-	orig = (int8_t *)(sc->sc_pr.s.inp);
-
-	while (resid > 0) {
-		cc = resid;
-		cc1 = sc->sc_pr.s.end - (uint8_t *)orig;
-		cc2 = cb->s.end - (uint8_t *)tomix;
-		if (cc > cc1)
-			cc = cc1;
-		if (cc > cc2)
-			cc = cc2;
-
-		for (m = 0; m < cc;  m++) {
-			orig[m] += (int8_t)((int32_t)(tomix[m] *
-			    (vc->sc_swvol + 1)) / (sc->sc_opens *
-			    256));
-		}
-
-		if (&orig[m] >= (int8_t *)sc->sc_pr.s.end)
-			orig = (int8_t *)sc->sc_pr.s.start;
-		if (&tomix[m] >= (int8_t *)cb->s.end)
-			tomix = (int8_t *)cb->s.start;
-
-		resid -= cc;
-	}
-}
-
-void
-mix_func16(struct audio_softc *sc, struct audio_ringbuffer *cb,
-	  struct virtual_channel *vc)
-{
-	int blksize, cc, cc1, cc2, m, resid;
-	int16_t *orig, *tomix;
-
-	blksize = sc->sc_pr.blksize;
-	resid = blksize;
-
-	tomix = __UNCONST(cb->s.outp);
-	orig = (int16_t *)(sc->sc_pr.s.inp);
-
-	while (resid > 0) {
-		cc = resid;
-		cc1 = sc->sc_pr.s.end - (uint8_t *)orig;
-		cc2 = cb->s.end - (uint8_t *)tomix;
-		if (cc > cc1)
-			cc = cc1;
-		if (cc > cc2)
-			cc = cc2;
-
-		for (m = 0; m < cc / 2; m++) {
-			orig[m] += (int16_t)((int32_t)(tomix[m] *
-			    (vc->sc_swvol + 1)) / (sc->sc_opens *
-			    256));
-		}
-
-		if (&orig[m] >= (int16_t *)sc->sc_pr.s.end)
-			orig = (int16_t *)sc->sc_pr.s.start;
-		if (&tomix[m] >= (int16_t *)cb->s.end)
-			tomix = (int16_t *)cb->s.start;
-
-		resid -= cc;
-	}
-}
-
-void
-mix_func32(struct audio_softc *sc, struct audio_ringbuffer *cb,
-	  struct virtual_channel *vc)
-{
-	int blksize, cc, cc1, cc2, m, resid;
-	int32_t *orig, *tomix;
-
-	blksize = sc->sc_pr.blksize;
-	resid = blksize;
-
-	tomix = __UNCONST(cb->s.outp);
-	orig = (int32_t *)(sc->sc_pr.s.inp);
-
-	while (resid > 0) {
-		cc = resid;
-		cc1 = sc->sc_pr.s.end - (uint8_t *)orig;
-		cc2 = cb->s.end - (uint8_t *)tomix;
-		if (cc > cc1)
-			cc = cc1;
-		if (cc > cc2)
-			cc = cc2;
-
-		for (m = 0; m < cc / 4; m++) {
-			orig[m] += (int32_t)((int32_t)(tomix[m] *
-			    (vc->sc_swvol + 1)) / (sc->sc_opens *
-			    256));
-		}
-
-		if (&orig[m] >= (int32_t *)sc->sc_pr.s.end)
-			orig = (int32_t *)sc->sc_pr.s.start;
-		if (&tomix[m] >= (int32_t *)cb->s.end)
-			tomix = (int32_t *)cb->s.start;
-
-		resid -= cc;
-	}
-}
+DEF_MIX_FUNC(8, int8_t);
+DEF_MIX_FUNC(16, int16_t);
+DEF_MIX_FUNC(32, int32_t);
 
 void
 mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
@@ -5664,101 +5580,43 @@ mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 	}
 }
 
-void
-saturate_func8(struct audio_softc *sc)
-{
-	int blksize, m, i, resid;
-	int8_t *orig;
+#define DEF_SATURATE_FUNC(name, type, max_type, min_type)		\
+	static void						\
+	saturate_func##name(struct audio_softc *sc)			\
+	{								\
+		int blksize, m, i, resid;				\
+		type *orig;						\
+									\
+		blksize = sc->sc_pr.blksize;				\
+		resid = blksize;					\
+		if (sc->sc_trigger_started == false)			\
+			resid *= 2;					\
+									\
+		orig = (type *)(sc->sc_pr.s.inp);			\
+									\
+		for (m = 0; m < resid;m++) {				\
+			i = 0;						\
+			if (&orig[m] >= (type *)sc->sc_pr.s.end) {	\
+				orig = (type *)sc->sc_pr.s.start;	\
+				resid -= m;				\
+				m = 0;					\
+			}						\
+			if (orig[m] != 0) {				\
+				if (orig[m] > 0)			\
+					i = max_type / orig[m];		\
+				else					\
+					i = min_type / orig[m];	 	\
+			}						\
+			if (i > sc->sc_opens)				\
+				i = sc->sc_opens;			\
+			orig[m] *= i;					\
+		}							\
+	}								\
 
-	blksize = sc->sc_pr.blksize;
-	resid = blksize;
-	if (sc->sc_trigger_started == false)
-		resid *= 2;
 
-	orig = (int8_t *)(sc->sc_pr.s.inp);
-
-	for (m = 0; m < resid;  m++) {
-		i = 0;
-		if (&orig[m] >= (int8_t *)sc->sc_pr.s.end) { 
-			orig = (int8_t *)sc->sc_pr.s.start;
-			resid -= m;
-			m = 0;
-		}
-		if (orig[m] != 0) {
-			if (orig[m] > 0)
-				i = INT8_MAX / orig[m];
-			else
-				i = INT8_MIN / orig[m];
-		}
-		if (i > sc->sc_opens)
-			i = sc->sc_opens;
-		orig[m] *= i;
-	}
-}
-
-void
-saturate_func16(struct audio_softc *sc)
-{
-	int blksize, m, i, resid;
-	int16_t *orig;
-
-	blksize = sc->sc_pr.blksize;
-	resid = blksize;
-	if (sc->sc_trigger_started == false)
-		resid *= 2;
-
-	orig = (int16_t *)(sc->sc_pr.s.inp);
-
-	for (m = 0; m < resid / 2;  m++) {
-		i = 0;
-		if (&orig[m] >= (int16_t *)sc->sc_pr.s.end) { 
-			orig = (int16_t *)sc->sc_pr.s.start;
-			resid -= m;
-			m = 0;
-		}
-		if (orig[m] != 0) {
-			if (orig[m] > 0)
-				i = INT16_MAX / orig[m];
-			else
-				i = INT16_MIN / orig[m];
-		}
-		if (i > sc->sc_opens)
-			i = sc->sc_opens;
-		orig[m] *= i;
-	}
-}
-
-void
-saturate_func32(struct audio_softc *sc)
-{
-	int blksize, m, i, resid;
-	int32_t *orig;
-
-	blksize = sc->sc_pr.blksize;
-	resid = blksize;
-	if (sc->sc_trigger_started == false)
-		resid *= 2;
-
-	orig = (int32_t *)(sc->sc_pr.s.inp);
-
-	for (m = 0; m < resid / 4;  m++) {
-		i = 0;
-		if (&orig[m] >= (int32_t *)sc->sc_pr.s.end) { 
-			orig = (int32_t *)sc->sc_pr.s.start;
-			resid -= m;
-			m = 0;
-		}
-		if (orig[m] != 0) {
-			if (orig[m] > 0)
-				i = INT32_MAX / orig[m];
-			else
-				i = INT32_MIN / orig[m];
-		}
-		if (i > sc->sc_opens)
-			i = sc->sc_opens;
-		orig[m] *= i;
-	}
-}
+DEF_SATURATE_FUNC(8, int8_t, INT8_MAX, INT8_MIN);
+DEF_SATURATE_FUNC(16, int16_t, INT16_MAX, INT16_MIN);
+DEF_SATURATE_FUNC(32, int32_t, INT32_MAX, INT32_MIN);
 
 void
 saturate_func(struct audio_softc *sc)
@@ -5779,83 +5637,37 @@ saturate_func(struct audio_softc *sc)
 	}
 }
 
-void
-recswvol_func8(struct audio_softc *sc, struct audio_ringbuffer *cb,
-    size_t blksize, struct virtual_channel *vc)
-{
-	int cc, cc1, m, resid;
-	int8_t *orig;
+#define DEF_RECSWVOL_FUNC(name, type, bigger_type)			\
+	static void						\
+	recswvol_func##name(struct audio_softc *sc,			\
+	    struct audio_ringbuffer *cb, size_t blksize,		\
+	    struct virtual_channel *vc)					\
+	{								\
+		int cc, cc1, m, resid;					\
+		type *orig;						\
+									\
+		orig = (type *) cb->s.inp;				\
+		resid = blksize;					\
+									\
+		while (resid > 0) {					\
+			cc = resid;					\
+			cc1 = cb->s.end - (uint8_t *)orig;		\
+			if (cc > cc1)					\
+				cc = cc1;				\
+									\
+			for (m = 0; m < cc; m++) {			\
+				orig[m] = (bigger_type)(orig[m] *	\
+				    (bigger_type)(vc->sc_recswvol) / 256);\
+			}						\
+			orig = (type *) cb->s.start;			\
+									\
+			resid -= cc;					\
+		}							\
+	}								\
 
-	orig = cb->s.inp;
-	resid = blksize;
-
-	while (resid > 0) {
-		cc = resid;
-		cc1 = cb->s.end - (uint8_t *)orig;
-		if (cc > cc1)
-			cc = cc1;
-
-		for (m = 0; m < cc; m++) {
-			orig[m] = (int16_t)(orig[m] *
-			    (int16_t)(vc->sc_recswvol) / 256);
-		}
-		orig = cb->s.start;
-
-		resid -= cc;
-	}
-}
-
-void
-recswvol_func16(struct audio_softc *sc, struct audio_ringbuffer *cb,
-    size_t blksize, struct virtual_channel *vc)
-{
-	int cc, cc1, m, resid;
-	int16_t *orig;
-
-	orig = (int16_t *)cb->s.inp;
-	resid = blksize;
-
-	while (resid > 0) {
-		cc = resid;
-		cc1 = cb->s.end - (uint8_t *)orig;
-		if (cc > cc1)
-			cc = cc1;
-
-		for (m = 0; m < cc / 2; m++) {
-			orig[m] = (int32_t)(orig[m] *
-			    (int32_t)(vc->sc_recswvol) / 256);
-		}
-		orig = (uint16_t *)cb->s.start;
-
-		resid -= cc;
-	}
-}
-
-void
-recswvol_func32(struct audio_softc *sc, struct audio_ringbuffer *cb,
-    size_t blksize, struct virtual_channel *vc)
-{
-	int cc, cc1, m, resid;
-	int32_t *orig;
-
-	orig = (int32_t *)cb->s.inp;
-	resid = blksize;
-
-	while (resid > 0) {
-		cc = resid;
-		cc1 = cb->s.end - (uint8_t *)orig;
-		if (cc > cc1)
-			cc = cc1;
-
-		for (m = 0; m < cc / 2; m++) {
-			orig[m] = (int64_t)(orig[m] *
-			    (int64_t)(vc->sc_recswvol) / 256);
-		}
-		orig = (uint32_t *)cb->s.start;
-
-		resid -= cc;
-	}
-}
+DEF_RECSWVOL_FUNC(8, int8_t, int16_t);
+DEF_RECSWVOL_FUNC(16, int16_t, int32_t);
+DEF_RECSWVOL_FUNC(32, int32_t, int64_t);
 
 void
 recswvol_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
