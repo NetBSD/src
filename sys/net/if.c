@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.385 2017/03/14 09:03:08 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.386 2017/03/16 08:11:47 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.385 2017/03/14 09:03:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.386 2017/03/16 08:11:47 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2594,9 +2594,13 @@ if_get(const char *name, struct psref *psref)
 	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
 		if (unit >= if_indexlim)
 			return NULL;
+		s = pserialize_read_enter();
 		ifp = ifindex2ifnet[unit];
 		if (ifp == NULL || if_is_deactivated(ifp))
-			return NULL;
+			ifp = NULL;
+		if (ifp != NULL)
+			psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
 		return ifp;
 	}
 
