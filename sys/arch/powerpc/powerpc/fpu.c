@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.37 2017/03/09 00:14:03 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.38 2017/03/16 16:13:20 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.37 2017/03/09 00:14:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.38 2017/03/16 16:13:20 chs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,13 +65,13 @@ const pcu_ops_t fpu_ops = {
 bool
 fpu_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&fpu_ops);
+	return pcu_valid_p(&fpu_ops, l);
 }
 
 void
 fpu_mark_used(lwp_t *l)
 {
-	pcu_discard(&fpu_ops, true);
+	pcu_discard(&fpu_ops, l, true);
 }
 
 #ifdef PPC_HAVE_FPU
@@ -176,7 +176,7 @@ fpu_get_fault_code(void)
 		 * We got preempted to a different CPU so we need to save
 		 * our FPU state.
 		 */
-		fpu_save();
+		fpu_save(l);
 		fpscr64 = *(uint64_t *)&pcb->pcb_fpu.fpscr;
 		((uint32_t *)&pcb->pcb_fpu.fpscr)[_QUAD_LOWWORD] &= ~MASKBITS;
 	}
@@ -214,14 +214,14 @@ fpu_save_to_mcontext(lwp_t *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	KASSERT(l == curlwp);
 
-	if (!pcu_valid_p(&fpu_ops))
+	if (!pcu_valid_p(&fpu_ops, l))
 		return false;
 
 	struct pcb * const pcb = lwp_getpcb(l);
 
 #ifdef PPC_HAVE_FPU
 	/* If we're the FPU owner, dump its context to the PCB first. */
-	pcu_save(&fpu_ops);
+	pcu_save(&fpu_ops, l);
 #endif
 	(void)memcpy(mcp->__fpregs.__fpu_regs, pcb->pcb_fpu.fpreg,
 	    sizeof (mcp->__fpregs.__fpu_regs));
@@ -242,8 +242,7 @@ fpu_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 
 #ifdef PPC_HAVE_FPU
 	/* we don't need to save the state, just drop it */
-	if (l == curlwp)
-		pcu_discard(&fpu_ops, true);
+	pcu_discard(&fpu_ops, l, true);
 #endif
 	(void)memcpy(&pcb->pcb_fpu.fpreg, &mcp->__fpregs.__fpu_regs,
 	    sizeof (pcb->pcb_fpu.fpreg));

@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.8 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: spe.c,v 1.9 2017/03/16 16:13:20 chs Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.8 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.9 2017/03/16 16:13:20 chs Exp $");
 
 #include "opt_altivec.h"
 
@@ -63,13 +63,13 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&vec_ops);
+	return pcu_valid_p(&vec_ops, l);
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	pcu_discard(&vec_ops, true);
+	pcu_discard(&vec_ops, l, true);
 }
 
 void
