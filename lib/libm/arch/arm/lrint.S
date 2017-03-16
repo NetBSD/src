@@ -29,14 +29,14 @@
 
 #include <arm/asm.h>
 
-RCSID("$NetBSD: lrint.S,v 1.1 2013/02/11 12:43:03 matt Exp $")
+RCSID("$NetBSD: lrint.S,v 1.2 2017/03/16 16:32:12 chs Exp $")
 
 STRONG_ALIAS(_lrintl, _lrint)
 WEAK_ALIAS(lrintl, _lrintl)
 WEAK_ALIAS(lrint, _lrint)
 
 ENTRY(_lrint)
-	vcvt.s32.f64	s0, d0
+	vcvtr.s32.f64	s0, d0
 	vmov		r0, s0
 	RET
 END(_lrint)
