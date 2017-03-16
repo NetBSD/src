@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.152 2017/03/09 00:15:06 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.153 2017/03/16 16:13:20 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2017/03/09 00:15:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2017/03/16 16:13:20 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -757,12 +757,12 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
 				fpu_mark_used(l);
 			} else {
-				fpu_save();
+				fpu_save(l);
 			}
 
-				if (copyin((void *)tf->tf_dar, fpreg,
-				    sizeof(double)) != 0)
-					return -1;
+			if (copyin((void *)tf->tf_dar, fpreg,
+				   sizeof(double)) != 0)
+				return -1;
 
 			if (dsi->flags & DSI_OP_INDEXED) {
 			    /* do nothing */
@@ -803,12 +803,12 @@ fix_unaligned(struct lwp *l, struct trapframe *tf)
 				memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
 				fpu_mark_used(l);
 			} else {
-				fpu_save();
+				fpu_save(l);
 			}
 
-				if (copyout(fpreg, (void *)tf->tf_dar,
+			if (copyout(fpreg, (void *)tf->tf_dar,
 				    sizeof(double)) != 0)
-					return -1;
+				return -1;
 
 			if (dsi->flags & DSI_OP_INDEXED) {
 			    /* do nothing */
