@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.49 2017/02/09 06:03:29 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.50 2017/03/16 05:23:56 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.49 2017/02/09 06:03:29 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.50 2017/03/16 05:23:56 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -982,11 +982,8 @@ crypto_invoke(struct cryptop *crp, int hint)
 		int (*process)(void *, struct cryptop *, int);
 		void *arg;
 
-		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) {
-			mutex_exit(&crypto_mtx);
+		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
 			crypto_freesession(crp->crp_sid);
-			mutex_enter(&crypto_mtx);
-		}
 		process = crypto_drivers[hid].cc_process;
 		arg = crypto_drivers[hid].cc_arg;
 
