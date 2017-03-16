@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.17 2017/02/17 00:51:52 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.18 2017/03/16 09:43:56 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -449,6 +449,35 @@ ifconfig_up_down_ipv6_cleanup()
 	cleanup
 }
 
+atf_test_case ifconfig_number cleanup
+ifconfig_number_head()
+{
+	atf_set "descr" "tests of passing a number (if_index) to ifconfig"
+	atf_set "require.progs" "rump_server"
+}
+
+ifconfig_number_body()
+{
+
+	rump_server_start $RUMP_SERVER1
+	rump_server_add_iface $RUMP_SERVER1 shmif0 bus1
+
+	export RUMP_SERVER=$RUMP_SERVER1
+	atf_check -s not-exit:0 -e match:'Device not configured' rump.ifconfig 0
+	atf_check -s exit:0 rump.ifconfig 1 # lo0
+	atf_check -s exit:0 rump.ifconfig 2 # shmif0
+	atf_check -s not-exit:0 -e match:'Device not configured' rump.ifconfig 3
+
+	rump_server_destroy_ifaces
+}
+
+ifconfig_number_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -457,4 +486,5 @@ atf_init_test_cases()
 	atf_add_test_case ifconfig_parameters
 	atf_add_test_case ifconfig_up_down_ipv4
 	atf_add_test_case ifconfig_up_down_ipv6
+	atf_add_test_case ifconfig_number
 }
