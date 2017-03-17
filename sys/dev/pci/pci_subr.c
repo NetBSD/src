@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.166 2017/03/14 08:27:13 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.167 2017/03/17 08:51:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.166 2017/03/14 08:27:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.167 2017/03/17 08:51:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -884,21 +884,18 @@ pci_conf_print_bar(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
 #endif
-    const pcireg_t *regs, int reg, const char *name
-#ifdef _KERNEL
-    , int sizebar
-#endif
-    )
+    const pcireg_t *regs, int reg, const char *name)
 {
 	int width;
 	pcireg_t rval, rval64h;
-#ifdef _KERNEL
-	int s;
-	pcireg_t mask, mask64h;
-#endif
+	bool ioen, memen;
+	pcireg_t mask, mask64h = 0;
+
+	rval = regs[o2i(PCI_COMMAND_STATUS_REG)];
+	ioen = rval & PCI_COMMAND_IO_ENABLE;
+	memen = rval & PCI_COMMAND_MEM_ENABLE;
 
 	width = 4;
-
 	/*
 	 * Section 6.2.5.1, `Address Maps', tells us that:
 	 *
@@ -919,8 +916,9 @@ pci_conf_print_bar(
 		rval64h = 0;
 
 #ifdef _KERNEL
-	/* XXX don't size unknown memory type? */
-	if (rval != 0 && sizebar) {
+	if (rval != 0 && memen) {
+		int s;
+
 		/*
 		 * The following sequence seems to make some devices
 		 * (e.g. host bus bridges, which don't normally
@@ -939,19 +937,23 @@ pci_conf_print_bar(
 			pci_conf_write(pc, tag, reg + 4, 0xffffffff);
 			mask64h = pci_conf_read(pc, tag, reg + 4);
 			pci_conf_write(pc, tag, reg + 4, rval64h);
-		} else
-			mask64h = 0;
+		}
 		splx(s);
 	} else
-		mask = mask64h = 0;
 #endif /* _KERNEL */
+	{
+		mask = regs[o2i(reg)];
+		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM &&
+		    PCI_MAPREG_MEM_TYPE(rval) == PCI_MAPREG_MEM_TYPE_64BIT)
+			mask64h = regs[o2i(reg + 4)];
+	}
 
 	printf("    Base address register at 0x%02x", reg);
 	if (name)
 		printf(" (%s)", name);
 	printf("\n      ");
 	if (rval == 0) {
-		printf("not implemented(?)\n");
+		printf("not implemented\n");
 		return width;
 	}
 	printf("type: ");
@@ -979,47 +981,34 @@ pci_conf_print_bar(
 		printf("%s %sprefetchable memory\n", type, prefetch);
 		switch (PCI_MAPREG_MEM_TYPE(rval)) {
 		case PCI_MAPREG_MEM_TYPE_64BIT:
-			printf("      base: 0x%016llx, ",
+			printf("      base: 0x%016llx\n",
 			    PCI_MAPREG_MEM64_ADDR(
 				((((long long) rval64h) << 32) | rval)));
-#ifdef _KERNEL
-			if (sizebar)
-				printf("size: 0x%016llx",
-				    PCI_MAPREG_MEM64_SIZE(
-				      ((((long long) mask64h) << 32) | mask)));
-			else
-#endif /* _KERNEL */
-				printf("not sized");
+			printf("      size: 0x%016llx",
+			    PCI_MAPREG_MEM64_SIZE(
+				    ((((long long) mask64h) << 32) | mask)));
+			if (!memen)
+				printf(", disabled");
 			printf("\n");
 			break;
 		case PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 		default:
-			printf("      base: 0x%08x, ",
-			    PCI_MAPREG_MEM_ADDR(rval));
-#ifdef _KERNEL
-			if (sizebar)
-				printf("size: 0x%08x",
-				    PCI_MAPREG_MEM_SIZE(mask));
-			else
-#endif /* _KERNEL */
-				printf("not sized");
+			printf("      base: 0x%08x\n",
+			    PCI_MAPREG_MEM_ADDR(rval)),
+			printf("      size: 0x%08x",
+			    PCI_MAPREG_MEM_SIZE(mask));
+			if (!memen)
+				printf(", disabled");
 			printf("\n");
 			break;
 		}
 	} else {
-#ifdef _KERNEL
-		if (sizebar)
-			printf("%d-bit ", mask & ~0x0000ffff ? 32 : 16);
-#endif /* _KERNEL */
-		printf("i/o\n");
-		printf("      base: 0x%08x, ", PCI_MAPREG_IO_ADDR(rval));
-#ifdef _KERNEL
-		if (sizebar)
-			printf("size: 0x%08x", PCI_MAPREG_IO_SIZE(mask));
-		else
-#endif /* _KERNEL */
-			printf("not sized");
+		printf("%d-bit I/O\n", mask & ~0x0000ffff ? 32 : 16);
+		printf("      base: 0x%08x\n", PCI_MAPREG_IO_ADDR(rval));
+		printf("      size: 0x%08x", PCI_MAPREG_IO_SIZE(mask));
+		if (!ioen)
+			printf(", disabled");
 		printf("\n");
 	}
 
@@ -3866,18 +3855,14 @@ pci_conf_print_type0(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
 #endif
-    const pcireg_t *regs
-#ifdef _KERNEL
-    , int sizebars
-#endif
-    )
+    const pcireg_t *regs)
 {
 	int off, width;
 	pcireg_t rval;
 
 	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width) {
 #ifdef _KERNEL
-		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL);
 #else
 		width = pci_conf_print_bar(regs, off, NULL);
 #endif
@@ -3933,11 +3918,7 @@ pci_conf_print_type1(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
 #endif
-    const pcireg_t *regs
-#ifdef _KERNEL
-    , int sizebars
-#endif
-    )
+    const pcireg_t *regs)
 {
 	int off, width;
 	pcireg_t rval;
@@ -3954,7 +3935,7 @@ pci_conf_print_type1(
 
 	for (off = 0x10; off < 0x18; off += width) {
 #ifdef _KERNEL
-		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL);
 #else
 		width = pci_conf_print_bar(regs, off, NULL);
 #endif
@@ -4109,11 +4090,7 @@ pci_conf_print_type2(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
 #endif
-    const pcireg_t *regs
-#ifdef _KERNEL
-    , int sizebars
-#endif
-    )
+    const pcireg_t *regs)
 {
 	pcireg_t rval;
 
@@ -4128,7 +4105,7 @@ pci_conf_print_type2(
 
 #ifdef _KERNEL
 	pci_conf_print_bar(pc, tag, regs, 0x10,
-	    "CardBus socket/ExCA registers", sizebars);
+	    "CardBus socket/ExCA registers");
 #else
 	pci_conf_print_bar(regs, 0x10, "CardBus socket/ExCA registers");
 #endif
@@ -4212,8 +4189,7 @@ pci_conf_print_type2(
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
 #ifdef _KERNEL
-	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers",
-	    sizebars);
+	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers");
 #else
 	pci_conf_print_bar(regs, 0x44, "legacy-mode registers");
 #endif
@@ -4233,9 +4209,7 @@ pci_conf_print(
 	int off, capoff, endoff, hdrtype;
 	const char *type_name;
 #ifdef _KERNEL
-	void (*type_printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *,
-	    int);
-	int sizebars;
+	void (*type_printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
 #else
 	void (*type_printfn)(const pcireg_t *);
 #endif
@@ -4251,13 +4225,6 @@ pci_conf_print(
 			regs[o2i(off)] = 0;
 #endif
 	}
-
-#ifdef _KERNEL
-	sizebars = 1;
-	if (PCI_CLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_CLASS_BRIDGE &&
-	    PCI_SUBCLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_SUBCLASS_BRIDGE_HOST)
-		sizebars = 0;
-#endif
 
 	/* common header */
 	printf("  Common header:\n");
@@ -4310,7 +4277,7 @@ pci_conf_print(
 	printf("\n");
 	if (type_printfn) {
 #ifdef _KERNEL
-		(*type_printfn)(pc, tag, regs, sizebars);
+		(*type_printfn)(pc, tag, regs);
 #else
 		(*type_printfn)(regs);
 #endif
