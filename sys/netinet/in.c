@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.198 2017/03/02 05:31:04 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.199 2017/03/17 17:26:20 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.198 2017/03/02 05:31:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.199 2017/03/17 17:26:20 roy Exp $");
 
 #include "arp.h"
 
@@ -1161,9 +1161,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia4_flags = newflags;
 	}
 
-	/* Add the local route to the address */
-	in_ifaddlocal(&ia->ia_ifa);
-
 	i = ia->ia_addr.sin_addr.s_addr;
 	if (ifp->if_flags & IFF_POINTOPOINT)
 		ia->ia_netmask = INADDR_BROADCAST;	/* default to /32 */
@@ -1187,11 +1184,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	ia->ia_net = i & ia->ia_netmask;
 	ia->ia_subnet = i & ia->ia_subnetmask;
 	in_socktrim(&ia->ia_sockmask);
+
 	/* re-calculate the "in_maxmtu" value */
 	in_setmaxmtu();
-	/*
-	 * Add route for the network.
-	 */
+
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		ia->ia_broadaddr.sin_addr.s_addr =
@@ -1206,7 +1202,13 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 			return (0);
 		flags |= RTF_HOST;
 	}
+
+	/* Add the local route to the address */
+	in_ifaddlocal(&ia->ia_ifa);
+
+	/* Add the prefix route for the address */
 	error = in_addprefix(ia, flags);
+
 	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
