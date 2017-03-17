@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.88 2017/03/05 20:45:49 mrg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.89 2017/03/17 03:06:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.88 2017/03/05 20:45:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.89 2017/03/17 03:06:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2435,6 +2435,8 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 	off_t off = *offp;
 	int error;
 
+	KASSERT(rw_write_held(&wl->wl_rwlock));
+
 	if (wl->wl_dealloccnt == 0)
 		return 0;
 
@@ -2491,6 +2493,8 @@ wapbl_write_inodes(struct wapbl *wl, off_t *offp)
 	struct wapbl_ino_head *wih;
 	struct wapbl_ino *wi;
 	int iph;
+
+	KASSERT(rw_write_held(&wl->wl_rwlock));
 
 	iph = (blocklen - offsetof(struct wapbl_wc_inodelist, wc_inodes)) /
 	    sizeof(((struct wapbl_wc_inodelist *)0)->wc_inodes[0]);
