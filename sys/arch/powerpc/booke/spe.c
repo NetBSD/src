@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.9 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: spe.c,v 1.10 2017/03/17 23:43:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.9 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.10 2017/03/17 23:43:43 chs Exp $");
 
 #include "opt_altivec.h"
 
@@ -149,9 +149,7 @@ vec_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 	struct pcb * const pcb = lwp_getpcb(l);
 	const union __vr *vr = mcp->__vrf.__vrs;
 
-	KASSERT(l == curlwp);
-
-	vec_save();
+	vec_save(l);
 
 	/* grab the accumulator */
 	pcb->pcb_vr.vreg[8][0] = vr->__vr32[2];
@@ -175,12 +173,10 @@ vec_save_to_mcontext(lwp_t *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	KASSERT(l == curlwp);
-
 	if (!vec_used_p(l))
 		return false;
 
-	vec_save();
+	vec_save(l);
 
 	mcp->__gregs[_REG_MSR] |= PSL_SPV;
 
