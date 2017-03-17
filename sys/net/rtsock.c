@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.208 2017/03/14 09:39:28 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.209 2017/03/17 10:05:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.208 2017/03/14 09:39:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.209 2017/03/17 10:05:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -637,8 +637,8 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	}
 	if (ifa) {
 		struct ifaddr *oifa = rt->rt_ifa;
-		if (oifa != ifa &&
-		    !ifa_is_destroying(ifa) && !if_is_deactivated(new_ifp)) {
+		if (oifa != ifa && !ifa_is_destroying(ifa) &&
+		    new_ifp != NULL && !if_is_deactivated(new_ifp)) {
 			if (oifa && oifa->ifa_rtrequest)
 				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
 			rt_replace_ifa(rt, ifa);
