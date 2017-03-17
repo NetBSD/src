@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.167 2017/03/17 08:51:44 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.168 2017/03/17 11:20:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.167 2017/03/17 08:51:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.168 2017/03/17 11:20:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -889,7 +889,9 @@ pci_conf_print_bar(
 	int width;
 	pcireg_t rval, rval64h;
 	bool ioen, memen;
+#ifdef _KERNEL
 	pcireg_t mask, mask64h = 0;
+#endif
 
 	rval = regs[o2i(PCI_COMMAND_STATUS_REG)];
 	ioen = rval & PCI_COMMAND_IO_ENABLE;
@@ -940,13 +942,8 @@ pci_conf_print_bar(
 		}
 		splx(s);
 	} else
+		mask = mask64h = 0;
 #endif /* _KERNEL */
-	{
-		mask = regs[o2i(reg)];
-		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM &&
-		    PCI_MAPREG_MEM_TYPE(rval) == PCI_MAPREG_MEM_TYPE_64BIT)
-			mask64h = regs[o2i(reg + 4)];
-	}
 
 	printf("    Base address register at 0x%02x", reg);
 	if (name)
@@ -981,35 +978,45 @@ pci_conf_print_bar(
 		printf("%s %sprefetchable memory\n", type, prefetch);
 		switch (PCI_MAPREG_MEM_TYPE(rval)) {
 		case PCI_MAPREG_MEM_TYPE_64BIT:
-			printf("      base: 0x%016llx\n",
+			printf("      base: 0x%016llx",
 			    PCI_MAPREG_MEM64_ADDR(
 				((((long long) rval64h) << 32) | rval)));
-			printf("      size: 0x%016llx",
-			    PCI_MAPREG_MEM64_SIZE(
-				    ((((long long) mask64h) << 32) | mask)));
 			if (!memen)
 				printf(", disabled");
 			printf("\n");
+#ifdef _KERNEL
+			printf("      size: 0x%016llx\n",
+			    PCI_MAPREG_MEM64_SIZE(
+				    ((((long long) mask64h) << 32) | mask)));
+#endif
 			break;
 		case PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 		default:
-			printf("      base: 0x%08x\n",
-			    PCI_MAPREG_MEM_ADDR(rval)),
-			printf("      size: 0x%08x",
-			    PCI_MAPREG_MEM_SIZE(mask));
+			printf("      base: 0x%08x",
+			    PCI_MAPREG_MEM_ADDR(rval));
 			if (!memen)
 				printf(", disabled");
 			printf("\n");
+#ifdef _KERNEL
+			printf("      size: 0x%08x\n",
+			    PCI_MAPREG_MEM_SIZE(mask));
+#endif
 			break;
 		}
 	} else {
-		printf("%d-bit I/O\n", mask & ~0x0000ffff ? 32 : 16);
-		printf("      base: 0x%08x\n", PCI_MAPREG_IO_ADDR(rval));
-		printf("      size: 0x%08x", PCI_MAPREG_IO_SIZE(mask));
+#ifdef _KERNEL
+		if (ioen)
+			printf("%d-bit ", mask & ~0x0000ffff ? 32 : 16);
+#endif
+		printf("I/O\n");
+		printf("      base: 0x%08x", PCI_MAPREG_IO_ADDR(rval));
 		if (!ioen)
 			printf(", disabled");
 		printf("\n");
+#ifdef _KERNEL
+		printf("      size: 0x%08x\n", PCI_MAPREG_IO_SIZE(mask));
+#endif
 	}
 
 	return width;
