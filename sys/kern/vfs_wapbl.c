@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.90 2017/03/17 03:16:29 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.91 2017/03/17 03:17:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.90 2017/03/17 03:16:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.91 2017/03/17 03:17:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -95,7 +95,7 @@ static inline size_t wapbl_space_free(size_t, off_t, off_t);
  * INTERNAL DATA STRUCTURES
  */
 
-/* 
+/*
  * This structure holds per-mount log information.
  *
  * Legend:	a = atomic access only
@@ -420,7 +420,7 @@ wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 		    wr->wr_inodes[i].wr_imode);
 
 	/* Make sure new transaction won't overwrite old inodes list */
-	KDASSERT(wapbl_transaction_len(wl) <= 
+	KDASSERT(wapbl_transaction_len(wl) <=
 	    wapbl_space_free(wl->wl_circ_size, wr->wr_inodeshead,
 	    wr->wr_inodestail));
 
@@ -555,7 +555,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	/* XXX tie this into resource estimation */
 	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	TAILQ_INIT(&wl->wl_dealloclist);
-	
+
 	wl->wl_buffer = wapbl_alloc(MAXPHYS);
 	wl->wl_buffer_used = 0;
 
@@ -1400,7 +1400,7 @@ wapbl_truncate(struct wapbl *wl, size_t minfree)
 	 * the reserved bytes reserved.  Watch out for discarded transactions,
 	 * which could leave more bytes reserved than are reclaimable.
 	 */
-	if (SIMPLEQ_EMPTY(&wl->wl_entries) && 
+	if (SIMPLEQ_EMPTY(&wl->wl_entries) &&
 	    (delta >= wl->wl_reserved_bytes)) {
 		delta -= wl->wl_reserved_bytes;
 	}
@@ -1778,7 +1778,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	 * fully flushed and the on disk log is empty.
 	 */
 	if (waitfor) {
-		error = wapbl_truncate(wl, wl->wl_circ_size - 
+		error = wapbl_truncate(wl, wl->wl_circ_size -
 			wl->wl_reserved_bytes);
 	}
 
@@ -2404,7 +2404,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 		}
 		if (padding) {
 			void *zero;
-			
+
 			zero = wapbl_alloc(padding);
 			memset(zero, 0, padding);
 			error = wapbl_circ_write(wl, zero, padding, &off);
@@ -2526,7 +2526,7 @@ wapbl_write_inodes(struct wapbl *wl, off_t *offp)
 		if (error)
 			return error;
 	} while (i < wl->wl_inohashcnt);
-	
+
 	*offp = off;
 	return 0;
 }
