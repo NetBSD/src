@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.72 2017/03/08 18:00:49 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.73 2017/03/18 13:35:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.72 2017/03/08 18:00:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.73 2017/03/18 13:35:57 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -119,11 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.72 2017/03/08 18:00:49 maxv Exp $");
 
 #ifdef XENDEBUG
 #define	XENPRINTF(x) printf x
-#define	XENPRINTK2(x) /* printk x */
-static char XBUF[256];
 #else
 #define	XENPRINTF(x)
-#define	XENPRINTK2(x)
 #endif
 
 /* Xen requires the start_info struct to be page aligned */
@@ -138,10 +135,6 @@ pt_entry_t xpmap_pg_nx __read_mostly;
 #define XPQUEUE_SIZE 2048
 static mmu_update_t xpq_queue_array[MAXCPUS][XPQUEUE_SIZE];
 static int xpq_idx_array[MAXCPUS];
-
-#ifdef XENDEBUG
-void xpq_debug_dump(void);
-#endif
 
 void xen_failsafe_handler(void);
 
@@ -203,46 +196,26 @@ void
 xpq_flush_queue(void)
 {
 	mmu_update_t *xpq_queue;
-	int i, ok = 0, ret, xpq_idx;
+	int done = 0, ret, xpq_idx;
 
 	xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
 	xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
 
 retry:
-	ret = HYPERVISOR_mmu_update(xpq_queue, xpq_idx, &ok, DOMID_SELF);
+	ret = HYPERVISOR_mmu_update(xpq_queue, xpq_idx, &done, DOMID_SELF);
 
-	if (xpq_idx != 0 && ret < 0) {
-		struct cpu_info *ci;
-		CPU_INFO_ITERATOR cii;
-
+	if (ret < 0 && xpq_idx != 0) {
 		printf("xpq_flush_queue: %d entries (%d successful) on "
 		    "cpu%d (%ld)\n",
-		    xpq_idx, ok, curcpu()->ci_index, curcpu()->ci_cpuid);
+		    xpq_idx, done, curcpu()->ci_index, curcpu()->ci_cpuid);
 
-		if (ok != 0) {
-			xpq_queue += ok;
-			xpq_idx -= ok;
-			ok = 0;
+		if (done != 0) {
+			xpq_queue += done;
+			xpq_idx -= done;
+			done = 0;
 			goto retry;
 		}
 
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			xpq_queue = xpq_queue_array[ci->ci_cpuid];
-			xpq_idx = xpq_idx_array[ci->ci_cpuid];
-			printf("cpu%d (%ld):\n", ci->ci_index, ci->ci_cpuid);
-			for (i = 0; i < xpq_idx; i++) {
-				printf("  0x%016" PRIx64 ": 0x%016" PRIx64 "\n",
-				   xpq_queue[i].ptr, xpq_queue[i].val);
-			}
-#ifdef __x86_64__
-			for (i = 0; i < PDIR_SLOT_PTE; i++) {
-				if (ci->ci_kpm_pdir[i] == 0)
-					continue;
-				printf(" kpm_pdir[%d]: 0x%" PRIx64 "\n",
-				    i, ci->ci_kpm_pdir[i]);
-			}
-#endif
-		}
 		panic("HYPERVISOR_mmu_update failed, ret: %d\n", ret);
 	}
 	xpq_idx_array[curcpu()->ci_cpuid] = 0;
@@ -288,7 +261,7 @@ xpq_queue_pt_switch(paddr_t pa)
 	op.cmd = MMUEXT_NEW_BASEPTR;
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_pt_switch");
+		panic(__func__);
 }
 
 void
@@ -298,10 +271,10 @@ xpq_queue_pin_table(paddr_t pa, int lvl)
 
 	xpq_flush_queue();
 
-	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = lvl;
+	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_pin_table");
+		panic(__func__);
 }
 
 void
@@ -311,10 +284,10 @@ xpq_queue_unpin_table(paddr_t pa)
 
 	xpq_flush_queue();
 
-	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = MMUEXT_UNPIN_TABLE;
+	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_unpin_table");
+		panic(__func__);
 }
 
 void
@@ -329,7 +302,7 @@ xpq_queue_set_ldt(vaddr_t va, uint32_t entries)
 	op.arg1.linear_addr = va;
 	op.arg2.nr_ents = entries;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_set_ldt");
+		panic(__func__);
 }
 
 void
@@ -341,7 +314,7 @@ xpq_queue_tlb_flush(void)
 
 	op.cmd = MMUEXT_TLB_FLUSH_LOCAL;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_tlb_flush");
+		panic(__func__);
 }
 
 void
@@ -365,7 +338,7 @@ xpq_queue_invlpg(vaddr_t va)
 	op.cmd = MMUEXT_INVLPG_LOCAL;
 	op.arg1.linear_addr = (va & ~PAGE_MASK);
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_invlpg");
+		panic(__func__);
 }
 
 void
@@ -383,7 +356,7 @@ xen_mcast_invlpg(vaddr_t va, kcpuset_t *kc)
 	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_invlpg_all");
+		panic(__func__);
 }
 
 void
@@ -397,7 +370,7 @@ xen_bcast_invlpg(vaddr_t va)
 	op.arg1.linear_addr = va;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_invlpg_all");
+		panic(__func__);
 }
 
 /* This is a synchronous call. */
@@ -415,7 +388,7 @@ xen_mcast_tlbflush(kcpuset_t *kc)
 	op.arg2.vcpumask = &xcpumask.xcpum_xm;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_invlpg_all");
+		panic(__func__);
 }
 
 /* This is a synchronous call. */
@@ -429,7 +402,7 @@ xen_bcast_tlbflush(void)
 	op.cmd = MMUEXT_TLB_FLUSH_ALL;
 
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
-		panic("xpq_queue_invlpg_all");
+		panic(__func__);
 }
 
 void
@@ -441,9 +414,8 @@ xen_copy_page(paddr_t srcpa, paddr_t dstpa)
 	op.arg1.mfn = xpmap_ptom(dstpa) >> PAGE_SHIFT;
 	op.arg2.src_mfn = xpmap_ptom(srcpa) >> PAGE_SHIFT;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic(__func__);
-	}
 }
 
 void
@@ -454,9 +426,8 @@ xen_pagezero(paddr_t pa)
 	op.cmd = MMUEXT_CLEAR_PAGE;
 	op.arg1.mfn = xpmap_ptom(pa) >> PAGE_SHIFT;
 
-	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0) {
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
 		panic(__func__);
-	}
 }
 
 int
@@ -473,40 +444,6 @@ xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 		return EFAULT;
 	return 0;
 }
-
-#ifdef XENDEBUG
-void
-xpq_debug_dump(void)
-{
-	int i;
-
-	mmu_update_t *xpq_queue = xpq_queue_array[curcpu()->ci_cpuid];
-	int xpq_idx = xpq_idx_array[curcpu()->ci_cpuid];
-
-	XENPRINTK2(("idx: %d\n", xpq_idx));
-	for (i = 0; i < xpq_idx; i++) {
-		snprintf(XBUF, sizeof(XBUF), "%" PRIx64 " %08" PRIx64,
-		    xpq_queue[i].ptr, xpq_queue[i].val);
-		if (++i < xpq_idx)
-			snprintf(XBUF + strlen(XBUF),
-			    sizeof(XBUF) - strlen(XBUF),
-			    "%" PRIx64 " %08" PRIx64,
-			    xpq_queue[i].ptr, xpq_queue[i].val);
-		if (++i < xpq_idx)
-			snprintf(XBUF + strlen(XBUF),
-			    sizeof(XBUF) - strlen(XBUF),
-			    "%" PRIx64 " %08" PRIx64,
-			    xpq_queue[i].ptr, xpq_queue[i].val);
-		if (++i < xpq_idx)
-			snprintf(XBUF + strlen(XBUF),
-			    sizeof(XBUF) - strlen(XBUF),
-			    "%" PRIx64 " %08" PRIx64,
-			    xpq_queue[i].ptr, xpq_queue[i].val);
-		XENPRINTK2(("%d: %s\n", xpq_idx, XBUF));
-	}
-}
-#endif
-
 
 #if L2_SLOT_KERNBASE > 0
 #define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
