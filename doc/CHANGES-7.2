@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.1 2017/03/15 06:26:31 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.2 2017/03/18 05:50:30 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -9,4 +9,24 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 7.1_STABLE.
 	[snj]
+
+usr.bin/ftp/fetch.c				1.227
+
+	Use the first name we requested the http/https URL for, not any
+	name we ended up with after random redirects.
+	[nonaka, ticket #1353]
+
+usr.bin/pkill/pkill.c				1.31
+
+	Avoid core dump if a process being examined has set its argv[0]
+	to NULL. PR bin/50934.
+	[kre, ticket #1365]
+
+sys/kern/exec_elf.c				1.88 via patch
+
+	netbsd_elf_signature - look at note segments (phdrs) not note
+	sections.  They point to the same data in the file, but
+	sections are for linkers and are not necessarily present in
+	an executable.
+	[uwe, ticket #1368]
 
