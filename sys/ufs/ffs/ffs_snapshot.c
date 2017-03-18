@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.146 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.147 2017/03/18 05:29:16 riastradh Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.146 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.147 2017/03/18 05:29:16 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1993,10 +1993,9 @@ retry:
 			if (gen != si->si_gen)
 				goto retry;
 		}
-#ifdef DIAGNOSTIC
-		if (blkno == BLK_SNAP && bp->b_lblkno >= 0)
-			panic("ffs_copyonwrite: bad copy block");
-#endif
+		KASSERTMSG((blkno != BLK_SNAP || bp->b_lblkno < 0),
+		    "ffs_copyonwrite: bad copy block: blkno %jd, lblkno %jd",
+		    (intmax_t)blkno, (intmax_t)bp->b_lblkno);
 		if (blkno != 0)
 			continue;
 
