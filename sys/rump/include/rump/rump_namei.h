@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_namei.h,v 1.27 2015/04/21 03:19:03 riastradh Exp $	*/
+/*	$NetBSD: rump_namei.h,v 1.28 2017/03/18 19:43:46 riastradh Exp $	*/
 
 
 /*
