@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.118 2017/03/18 22:02:11 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.119 2017/03/18 22:04:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.118 2017/03/18 22:02:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.119 2017/03/18 22:04:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -278,7 +278,6 @@ static struct evcnt cache_ev_over;
 static struct evcnt cache_ev_under;
 static struct evcnt cache_ev_forced;
 
-static void cache_invalidate(struct namecache *);
 static struct namecache *cache_lookup_entry(
     const struct vnode *, const char *, size_t);
 static void cache_thread(void *);
