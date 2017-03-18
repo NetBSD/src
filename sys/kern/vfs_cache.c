@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.117 2017/03/18 21:03:28 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.118 2017/03/18 22:02:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.117 2017/03/18 21:03:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.118 2017/03/18 22:02:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -110,7 +110,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.117 2017/03/18 21:03:28 riastradh Ex
  * N struct namecache::nc_lock	Per-entry lock.
  * V struct vnode::v_interlock	Vnode interlock.
  *
- * Lock order: C -> N -> L -> V
+ * Lock order: L -> C -> N -> V
+ *
+ *	Examples:
+ *	. L->C: cache_reclaim
+ *	. C->N->V: cache_lookup
+ *	. L->N->V: cache_purge1, cache_revlookup
  *
  * All use serialized by namecache_lock:
  *
