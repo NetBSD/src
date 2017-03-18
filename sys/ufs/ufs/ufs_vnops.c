@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.235 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.236 2017/03/18 05:39:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.235 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.236 2017/03/18 05:39:06 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -865,10 +865,9 @@ ufs_whiteout(void *v)
 		error = UFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error)
 			break;
-#ifdef DIAGNOSTIC
-		if (ump->um_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
-#endif
+
+		KASSERTMSG((ump->um_maxsymlinklen > 0),
+		    "ufs_whiteout: old format filesystem");
 
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		newdir->d_ino = UFS_WINO;
@@ -886,10 +885,9 @@ ufs_whiteout(void *v)
 		error = UFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error)
 			break;
-#ifdef DIAGNOSTIC
-		if (ump->um_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
-#endif
+
+		KASSERTMSG((ump->um_maxsymlinklen > 0),
+		    "ufs_whiteout: old format filesystem");
 
 		cnp->cn_flags &= ~DOWHITEOUT;
 		error = ufs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);
