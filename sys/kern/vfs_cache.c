@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.114 2017/03/18 19:59:20 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.115 2017/03/18 20:00:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,30 +58,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.114 2017/03/18 19:59:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.115 2017/03/18 20:00:10 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
-#include "opt_revcache.h"
 #include "opt_dtrace.h"
+#include "opt_revcache.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/sysctl.h>
-#include <sys/time.h>
-#include <sys/mount.h>
-#include <sys/vnode_impl.h>
-#include <sys/namei.h>
-#include <sys/errno.h>
-#include <sys/pool.h>
-#include <sys/mutex.h>
 #include <sys/atomic.h>
-#include <sys/kthread.h>
-#include <sys/kernel.h>
 #include <sys/cpu.h>
+#include <sys/errno.h>
 #include <sys/evcnt.h>
+#include <sys/kernel.h>
+#include <sys/kthread.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
+#include <sys/namei.h>
+#include <sys/pool.h>
 #include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/vnode_impl.h>
 
 #define NAMECACHE_ENTER_REVERSE
 /*
