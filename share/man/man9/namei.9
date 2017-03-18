@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.41 2017/03/18 18:53:43 riastradh Exp $
+.\"     $NetBSD: namei.9,v 1.42 2017/03/18 18:55:49 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -468,7 +468,8 @@ Guaranteed to remain set in subsequent directory operations.
 The current object to be looked up must be a directory.
 May not be used by subsequent directory operations.
 .It Dv MAKEENTRY
-The current pathname component should be added to the
+The lookup result for the current pathname component should be added to
+the
 .Xr namecache 9 .
 May be used to make additional caching decisions, e.g. to store an
 mtime for determining whether our cache for a remote vnode is stale.
@@ -483,7 +484,7 @@ for use by
 and subsequent directory operations:
 .Bl -tag -width NOCROSSMOUNT
 .It Dv ISWHITEOUT
-The current pathname component is a whiteout.
+The object at the current pathname component is a whiteout.
 .El
 .Pp
 The following additional historic flags have been removed from
