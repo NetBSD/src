@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.269 2017/01/20 09:45:13 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.270 2017/03/18 05:45:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.269 2017/01/20 09:45:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.270 2017/03/18 05:45:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -206,7 +206,7 @@ BIOHIST_DEFINE(biohist);
 void
 biohist_init(void)
 {
- 
+
 	BIOHIST_INIT(biohist, BIOHIST_SIZE);
 }
 
@@ -1014,7 +1014,7 @@ brelsel(buf_t *bp, int set)
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(!cv_has_waiters(&bp->b_done));
 	KASSERT(bp->b_refcnt > 0);
-	
+
 	SET(bp->b_cflags, set);
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
@@ -1973,7 +1973,7 @@ getiobuf(struct vnode *vp, bool waitok)
 	} else {
 		KASSERT(bp->b_objlock == &buffer_lock);
 	}
-	
+
 	return bp;
 }
 
