@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.113 2017/03/18 19:43:31 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.114 2017/03/18 19:59:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.113 2017/03/18 19:43:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.114 2017/03/18 19:59:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -100,9 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.113 2017/03/18 19:43:31 riastradh Ex
  * Upon reaching the last segment of a path, if the reference
  * is for DELETE, or NOCACHE is set (rewrite), and the
  * name is located in the cache, it will be dropped.
- * The entry is dropped also when it was not possible to lock
- * the cached vnode, either because vcache_tryvget() failed or
- * the generation number has changed while waiting for the lock.
  */
 
 /*
