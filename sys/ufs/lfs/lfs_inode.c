@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.150 2017/03/16 01:09:24 maya Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.151 2017/03/18 05:43:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.150 2017/03/16 01:09:24 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.151 2017/03/18 05:43:16 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -561,21 +561,19 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 done:
 	/* Finish segment accounting corrections */
 	lfs_update_seguse(fs, oip, lastseg, bc);
-#ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if ((newblks[ULFS_NDADDR + level] == 0) !=
-		    (lfs_dino_getib(fs, oip->i_din, level) == 0)) {
-			panic("lfs itrunc1");
-		}
+		KASSERTMSG(((newblks[ULFS_NDADDR + level] == 0) !=
+			(lfs_dino_getib(fs, oip->i_din, level) == 0)),
+		    "lfs itrunc1");
 	for (i = 0; i < ULFS_NDADDR; i++)
-		if ((newblks[i] == 0) !=
-		    (lfs_dino_getdb(fs, oip->i_din, i) == 0)) {
-			panic("lfs itrunc2");
-		}
-	if (length == 0 &&
-	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
-		panic("lfs itrunc3");
-#endif /* DIAGNOSTIC */
+		KASSERTMSG(((newblks[i] == 0) !=
+			(lfs_dino_getdb(fs, oip->i_din, i) == 0)),
+		    "lfs itrunc2");
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_cleanblkhd)),
+	    "lfs itrunc3a");
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_dirtyblkhd)),
+	    "lfs itrunc3b");
+
 	/*
 	 * Put back the real size.
 	 */
