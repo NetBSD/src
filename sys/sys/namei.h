@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.93 2015/04/21 03:19:03 riastradh Exp $	*/
+/*	$NetBSD: namei.h,v 1.94 2017/03/18 19:43:46 riastradh Exp $	*/
 
 
 /*
@@ -282,9 +282,9 @@ void	cache_purge1(struct vnode *, const char *, size_t, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
 #define	cache_purge(vp)	cache_purge1((vp),NULL,0,PURGE_PARENTS|PURGE_CHILDREN)
-int	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
+bool	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
 			int *, struct vnode **);
-int	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
+bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *,
