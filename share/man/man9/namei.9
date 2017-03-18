@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.37 2016/05/07 08:52:10 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.38 2017/03/18 16:12:20 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -360,19 +360,24 @@ This only makes sense in
 mode and when creating a directory.
 Set by the caller and used internally.
 .It Dv NOCACHE
-The name looked up should not be entered in the
+The last component name looked up should not be entered in the
 .Xr namecache 9 .
-Set and used internally.
-(Currently sometimes set by callers, but most likely this is
-improper/incorrect.)
-May also be used by file-system-level vnode functions.
+Set by the caller.
+Used internally in
+.Nm
+to decide whether to set
+.Dv MAKEENTRY
+for the last component.
+Used by the rename system call for lookup of the target node, which
+will be overwritten.
 .It Dv MAKEENTRY
 The current pathname component should be added to the
 .Xr namecache 9 .
 Set and used internally.
-Also abused by the
+Used by
 .Xr nfs 4
-code.
+to decide whether to record directory and node mtimes in order to
+determine cache freshness for subsequent lookups.
 .El
 .Pp
 The following additional historic flags have been removed from
