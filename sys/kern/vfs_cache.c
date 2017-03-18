@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.112 2017/01/11 09:04:37 hannken Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.113 2017/03/18 19:43:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.112 2017/01/11 09:04:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.113 2017/03/18 19:43:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -498,7 +498,7 @@ cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
  * other errors, and the value of VN might or might not have been set
  * depending on what error occurred.)
  */
-int
+bool
 cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	     uint32_t nameiop, uint32_t cnflags,
 	     int *iswht_ret, struct vnode **vn_ret)
@@ -506,7 +506,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	struct namecache *ncp;
 	struct vnode *vp;
 	struct nchcpu *cpup;
-	int error, ret_value;
+	int error;
+	bool hit;
 
 
 	/* Establish default result values */
@@ -516,7 +517,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	*vn_ret = NULL;
 
 	if (__predict_false(!doingcache)) {
-		return 0;
+		return false;
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
@@ -527,7 +528,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		COUNT(cpup, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	ncp = cache_lookup_entry(dvp, name, namelen);
@@ -535,7 +536,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		COUNT(cpup, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	if ((cnflags & MAKEENTRY) == 0) {
 		COUNT(cpup, ncs_badhits);
@@ -548,7 +549,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	if (ncp->nc_vp == NULL) {
 		if (iswht_ret != NULL) {
@@ -565,7 +566,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		    (cnflags & ISLASTCN) == 0)) {
 			COUNT(cpup, ncs_neghits);
 			/* found neg entry; vn is already null from above */
-			ret_value = 1;
+			hit = true;
 		} else {
 			COUNT(cpup, ncs_badhits);
 			/*
@@ -575,11 +576,11 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 			 */
 			cache_invalidate(ncp);
 			/* found nothing */
-			ret_value = 0;
+			hit = false;
 		}
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
-		return ret_value;
+		return hit;
 	}
 
 	vp = ncp->nc_vp;
@@ -599,20 +600,20 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		 */
 		COUNT_UNL(cpup, ncs_falsehits);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	COUNT_UNL(cpup, ncs_goodhits);
 	/* found it */
 	*vn_ret = vp;
-	return 1;
+	return true;
 }
 
 
 /*
  * Cut-'n-pasted version of the above without the nameiop argument.
  */
-int
+bool
 cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		 uint32_t cnflags,
 		 int *iswht_ret, struct vnode **vn_ret)
@@ -630,7 +631,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 
 	if (__predict_false(!doingcache)) {
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
@@ -639,14 +640,14 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		COUNT(cpup, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	ncp = cache_lookup_entry(dvp, name, namelen);
 	if (__predict_false(ncp == NULL)) {
 		COUNT(cpup, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 	vp = ncp->nc_vp;
 	if (vp == NULL) {
@@ -662,7 +663,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 		/* found negative entry; vn is already null from above */
-		return 1;
+		return true;
 	}
 	mutex_enter(vp->v_interlock);
 	mutex_exit(&ncp->nc_lock);
@@ -680,13 +681,13 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		 */
 		COUNT_UNL(cpup, ncs_falsehits);
 		/* found nothing */
-		return 0;
+		return false;
 	}
 
 	COUNT_UNL(cpup, ncs_goodhits); /* XXX can be "badhits" */
 	/* found it */
 	*vn_ret = vp;
-	return 1;
+	return true;
 }
 
 /*
