@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.40 2017/03/18 18:13:15 riastradh Exp $
+.\"     $NetBSD: namei.9,v 1.41 2017/03/18 18:53:43 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,13 +93,6 @@ with
 and optionally
 .Fn NDAT
 to specify the arguments to a lookup.
-If
-.Dv EMULROOTSET
-is specified, the caller must also set
-.Fa nd Ns .ni_erootdir
-to the vnode for an emulation root directory, to change it from the
-default for
-.Dv TRYEMULROOT .
 .It
 Call
 .Fn namei
@@ -386,132 +379,117 @@ implementation of
 .Xr VOP_ABORTOP 9
 does nothing.
 .Ss Flags
-The following flags may appear.
-Some are set by
-.Nm ;
-some are set by
-.Xr VOP_LOOKUP 9 ;
-some are set by the caller in the
-.Fa flags
-argument of
-.Fn NDINIT .
-Not all possible combinations are sensible or legal.
-.Bl -tag -offset indent -width NOCROSSMOUNT -compact
+The following flags may be specified by
+.Em callers
+of
+.Nm ,
+and MUST NOT be used by file systems:
+.Bl -tag -width NOCROSSMOUNT
 .It Dv FOLLOW
-Follow symbolic links encountered as the last path component.
-Used by operations that do not address symbolic links directly, e.g.
+Follow symbolic links in the last path component.
+Used by operations that do not address symbolic links directly, such as
 .Xr stat 2 .
-Does not affect symbolic links found in the middle of a path.
-Set by the caller.
-Used internally.
+(Does not affect symbolic links found in the middle of a path.)
 .It Dv NOFOLLOW
-Do not follow symbolic links encountered as the last path component.
-Used by operations that address symbolic links explicitly, such as
+Do not follow symbolic links in the last path component.
+Used by operations that address symbolic links directly, such as
 .Xr lstat 2 .
-Set by the caller.
-Used internally.
-Note: the value of
-.Dv NOFOLLOW is 0 ;
-it exists on the grounds that every
-.Nm
-call should explicitly choose either
+.Pp
+Note: The value of
+.Dv NOFOLLOW
+is 0.
+We define the constant to let callers say either
 .Dv FOLLOW
 or
-.Dv NOFOLLOW .
+.Dv NOFOLLOW
+explicitly.
 .It Dv LOCKLEAF
-Upon successful completion, the resultant named vnode
-.Em ni_vp
-is to be left locked.
-(Otherwise, the vnode is unlocked before
-.Nm
-returns.)
-Set by the caller; used internally.
+On successful lookup, lock the vnode, if any, in
+.Fa ndp Ns Li ->ni_vp .
+Without this flag, it would be unlocked.
 .It Dv LOCKPARENT
-Upon successful completion, the parent directory containing the named
-vnode is left locked and returned in
-.Em ni_dvp
-as described above.
-Otherwise,
-.Em ni_dvp
-is set to
-.Dv NULL .
-Set by the caller; used internally.
+On successful lookup, lock and return the directory vnode in
+.Fa ndp Ns Li ->ni_dvp .
+Without this flag, it is not returned at all.
 .It Dv TRYEMULROOT
-If set, the path is looked up in emulation root of the current process
-first.
+If set, the path is looked up in the emulation root of the current
+process first.
 If that fails, the system root is used.
-Set by the caller; used internally.
 .It Dv EMULROOTSET
-As described above, indicates that the caller has set
-.Em ni_erootdir
+Indicates that the caller has set
+.Fa ndp Ns Li ->ni_erootdir
 prior to calling
 .Nm .
-This is only useful or permitted when the emulation in the
-current process is partway through being set up.
-Set by the caller; used internally.
+This is only useful or permitted when the emulation in the current
+process is partway through being set up.
 .It Dv NOCHROOT
 Bypass normal
 .Xr chroot 8
 handling for absolute paths.
-Set by the caller and used internally.
 .It Dv NOCROSSMOUNT
 Do not cross mount points.
-Set by the caller and used internally.
 .It Dv RDONLY
 Enforce read-only behavior.
-Set by the caller and used internally.
-May also be used by file-system-level vnode functions.
-.It Dv DOWHITEOUT
-Allow whiteouts to be seen as objects instead of functioning as
-.Dq nothing there .
-Set by the caller; used by vnode functions.
-.It Dv ISWHITEOUT
-The current path component is a whiteout.
-Set by
-.Xr VOP_LOOKUP 9
-implementations and consumed by other vnode functions and the
-.Xr namecache 9 .
-.It Dv ISDOTDOT
-The current pathname component is ``..''.
-Set internally; used by vnode operations.
-.It Dv ISLASTCN
-The current path component is the last component found in the
-pathname.
-Set internally; used by vnode functions.
-.It Dv REQUIREDIR
-The current object to be looked up must be a directory.
-Set and used internally; any external references are abusive.
 .It Dv CREATEDIR
 Accept slashes after a component name that does not exist.
 This only makes sense in
 .Dv CREATE
 mode and when creating a directory.
-Set by the caller and used internally.
 .It Dv NOCACHE
-The last component name looked up should not be entered in the
-.Xr namecache 9 .
-Set by the caller.
-Used internally in
+Do not cache the lookup result for the last component name.
+This is used only with the
+.Dv RENAME
+mode for the target; the cache entry would be invalidated immediately.
+.El
+.Pp
+The following flag may be set by a caller of
 .Nm
-to decide whether to set
-.Dv MAKEENTRY
-for the last component.
-Used by the rename system call for lookup of the target node, which
-will be overwritten.
+and tested by a file system in
+.Xr VOP_LOOKUP 9
+or other subsequent directory operations:
+.Bl -tag -width NOCROSSMOUNT
+.It Dv DOWHITEOUT
+Allow whiteouts to be seen as objects instead of functioning as
+.Dq nothing there .
+.El
+.Pp
+The following flags are set by namei for calling
+.Xr VOP_LOOKUP 9 :
+.Bl -tag -width NOCROSSMOUNT
+.It Dv ISDOTDOT
+The current pathname component is
+.Dq Li .. .
+May be tested by subsequent directory operations too.
+.It Dv ISLASTCN
+The current pathname component is the last component found in the
+pathname.
+Guaranteed to remain set in subsequent directory operations.
+.It Dv REQUIREDIR
+The current object to be looked up must be a directory.
+May not be used by subsequent directory operations.
 .It Dv MAKEENTRY
 The current pathname component should be added to the
 .Xr namecache 9 .
-Set and used internally.
-Used by
-.Xr nfs 4
-to decide whether to record directory and node mtimes in order to
-determine cache freshness for subsequent lookups.
+May be used to make additional caching decisions, e.g. to store an
+mtime for determining whether our cache for a remote vnode is stale.
+May not be used by subsequent directory operatoins.
+.El
+.Pp
+A file system may set the following flag on return from
+.Xr VOP_LOOKUP 9
+for use by
+.Nm ,
+.Xr namecache 9 ,
+and subsequent directory operations:
+.Bl -tag -width NOCROSSMOUNT
+.It Dv ISWHITEOUT
+The current pathname component is a whiteout.
 .El
 .Pp
 The following additional historic flags have been removed from
 .Nx
 and should be handled as follows if porting code from elsewhere:
-.Bl -tag -offset indent -width NOCROSSMOUNT -compact
+.Bl -tag -width NOCROSSMOUNT
 .It Dv INRENAME
 Part of a misbegotten and incorrect locking scheme.
 Any file-system-level code using this is presumptively incorrect.
