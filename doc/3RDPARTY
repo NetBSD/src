@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1423 2017/03/14 21:22:59 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.1424 2017/03/18 15:25:40 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -862,7 +862,7 @@ Notes:
 
 Package:	mdocml
 Version:	1.14.1
-Current Vers:	1.13.4
+Current Vers:	1.14.1
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
 Home Page:	http://mdocml.bsd.lv/
@@ -1285,7 +1285,7 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	sqlite
-Version:	3.13.0
+Version:	3.17.0
 Current Vers:	3.17.0
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
