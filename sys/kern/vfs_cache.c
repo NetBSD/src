@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.119 2017/03/18 22:04:52 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.120 2017/03/18 22:36:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.119 2017/03/18 22:04:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.120 2017/03/18 22:36:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -100,6 +100,48 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.119 2017/03/18 22:04:52 riastradh Ex
  * Upon reaching the last segment of a path, if the reference
  * is for DELETE, or NOCACHE is set (rewrite), and the
  * name is located in the cache, it will be dropped.
+ */
+
+/*
+ * Cache entry lifetime:
+ *
+ *	nonexistent
+ *	---create---> active
+ *	---invalidate---> queued
+ *	---reclaim---> nonexistent.
+ *
+ * States:
+ * - Nonexistent.  Cache entry does not exist.
+ *
+ * - Active.  cache_lookup, cache_lookup_raw, cache_revlookup can look
+ *   up, acquire references, and hand off references to vnodes,
+ *   e.g. via v_interlock.  Marked by nonnull ncp->nc_dvp.
+ *
+ * - Queued.  Pending desstruction by cache_reclaim.  Cannot be used by
+ *   cache_lookup, cache_lookup_raw, or cache_revlookup.  May still be
+ *   on lists.  Marked by null ncp->nc_dvp.
+ *
+ * Transitions:
+ *
+ * - Create: nonexistent--->active
+ *
+ *   Done by cache_enter(dvp, vp, name, namelen, cnflags), called by
+ *   VOP_LOOKUP after the answer is found.  Allocates a struct
+ *   namecache object, initializes it with the above fields, and
+ *   activates it by inserting it into the forward and reverse tables.
+ *
+ * - Invalidate: active--->queued
+ *
+ *   Done by cache_invalidate.  If not already invalidated, nullify
+ *   ncp->nc_dvp and ncp->nc_vp, and add to cache_gcqueue.  Called,
+ *   among various other places, in cache_lookup(dvp, name, namelen,
+ *   nameiop, cnflags, &iswht, &vp) when MAKEENTRY is missing from
+ *   cnflags.
+ *
+ * - Reclaim: queued--->nonexistent
+ *
+ *   Done by cache_reclaim.  Disassociate ncp from any lists it is on
+ *   and free memory.
  */
 
 /*
