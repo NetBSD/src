@@ -1,6 +1,6 @@
-/*	Id: test-vasprintf.c,v 1.4 2016/07/18 18:35:05 schwarze Exp 	*/
+/*	Id: dbm_map.h,v 1.1 2016/07/19 21:31:55 schwarze Exp  */
 /*
- * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,40 +13,17 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Private interface for low-level routines for the map-based version 
+ * of the mandoc database, for read-only access.
+ * To be used by dbm*.c only.
  */
 
-#if defined(__linux__) || defined(__MINT__)
-#define _GNU_SOURCE /* vasprintf() */
-#endif
+struct dbm_match;
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-
-static int	 testfunc(char **, const char *, ...);
-
-
-static int
-testfunc(char **ret, const char *format, ...)
-{
-	va_list	 ap;
-	int	 irc;
-
-	va_start(ap, format);
-	irc = vasprintf(ret, format, ap);
-	va_end(ap);
-
-	return irc;
-}
-
-int
-main(void)
-{
-	char	*ret;
-
-	if (testfunc(&ret, "%s.", "Text") != 5)
-		return 1;
-	if (strcmp(ret, "Text."))
-		return 2;
-	return 0;
-}
+int		 dbm_map(const char *);
+void		 dbm_unmap(void);
+void		*dbm_get(int32_t);
+int32_t		*dbm_getint(int32_t);
+int32_t		 dbm_addr(const void *);
+int		 dbm_match(const struct dbm_match *, const char *);
