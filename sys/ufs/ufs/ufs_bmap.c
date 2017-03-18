@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.51 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.52 2017/03/18 05:33:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.51 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.52 2017/03/18 05:33:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,10 +127,8 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 	ip = VTOI(vp);
 	mp = vp->v_mount;
 	ump = ip->i_ump;
-#ifdef DIAGNOSTIC
-	if ((ap != NULL && nump == NULL) || (ap == NULL && nump != NULL))
-		panic("ufs_bmaparray: invalid arguments");
-#endif
+	KASSERTMSG(((ap == NULL) == (nump == NULL)),
+	    "ufs_bmaparray: invalid arguments: ap = %p, nump = %p", ap, nump);
 
 	if (runp) {
 		/*
@@ -249,12 +247,9 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		}
 		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
-		}
-#ifdef DIAGNOSTIC
-		else if (!daddr)
-			panic("ufs_bmaparray: indirect block not in cache");
-#endif
-		else {
+		} else {
+			KASSERTMSG((daddr != 0),
+			    "ufs_bmaparray: indirect block not in cache");
 			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
