@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.43 2017/03/18 19:01:01 riastradh Exp $
+.\"     $NetBSD: namei.9,v 1.44 2017/03/18 19:03:23 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,6 +76,11 @@ for name-to-inode conversion, in the days before the
 .Xr vfs 9
 interface was implemented.
 .Pp
+All access to the
+.Nm
+interface must be in process context.
+Pathname lookups cannot be done in interrupt context.
+.Pp
 In the general form of
 .Nm ,
 a caller must:
@@ -143,6 +148,7 @@ struct componentname {
 	size_t		cn_consume;	/* chars to consume in lookup */
 };
 .Ed
+.Pp
 This structure contains the information about a single directory
 component name, along with certain other information required by vnode
 operations.
@@ -523,10 +529,6 @@ Related to SAVENAME.
 Any uses can be replaced with
 .Dq true .
 .El
-All access to the
-.Nm
-interface must be in process context.
-Pathname lookups cannot be done in interrupt context.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn NDINIT "ndp" "op" "flags" "pathbuf"
