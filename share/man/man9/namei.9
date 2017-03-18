@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.42 2017/03/18 18:55:49 riastradh Exp $
+.\"     $NetBSD: namei.9,v 1.43 2017/03/18 19:01:01 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -214,7 +214,7 @@ mode for each directory component, and then finally calls
 .Xr VOP_LOOKUP 9
 in the caller-specified mode for the last component.
 .El
-Each mode can fail in different ways -- for example,
+Each mode can fail in different ways \(em for example,
 .Dv LOOKUP
 mode fails with
 .Er ENOENT
