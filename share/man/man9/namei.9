@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.39 2017/03/18 17:55:23 riastradh Exp $
+.\"     $NetBSD: namei.9,v 1.40 2017/03/18 18:13:15 riastradh Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,69 +76,64 @@ for name-to-inode conversion, in the days before the
 .Xr vfs 9
 interface was implemented.
 .Pp
-Except for the simple forms, the arguments passed to the functions are
-encapsulated in the
-.Em nameidata
-structure.
-The public interface to this structure is as follows.
-.Bl -offset indent
+In the general form of
+.Nm ,
+a caller must:
+.Bl -enum -compact
 .It
-It contains a member
-.Em ni_erootdir
-that may be set to the emulation root directory before the call if
-the
+Allocate storage for a
+.Ft struct nameidata
+object
+.Fa nd .
+.It
+Initialize
+.Fa nd
+with
+.Fn NDINIT
+and optionally
+.Fn NDAT
+to specify the arguments to a lookup.
+If
 .Dv EMULROOTSET
-flag is also set and
-.Dv TRYEMULROOT
-is in effect.
-This is only necessary (or allowed) if the emulation root is not yet
-set in the current process.
+is specified, the caller must also set
+.Fa nd Ns .ni_erootdir
+to the vnode for an emulation root directory, to change it from the
+default for
+.Dv TRYEMULROOT .
 .It
-It contains a member
-.Em ni_vp
-that upon successful return contains the result vnode.
+Call
+.Fn namei
+and handle failure if it returns a nonzero error code.
 .It
-It contains a member
-.Em ni_dvp
-that upon successful return contains the vnode of the directory
-containing the result vnode or
-.Dv NULL .
-If the
-.Dv LOCKPARENT
-flag is set, the containing vnode is returned; otherwise this field is
-left set to
-.Dv NULL .
+Read the resulting vnode out of
+.Fa nd Ns Li .ni_vp .
+If requested with
+.Dv LOCKPARENT ,
+read the directory vnode out of
+.Fa nd Ns Li .ni_dvp .
 .It
-It contains a member
-.Em ni_cnd
-that is a
-.Em componentname
-structure (described in just a moment).
-This may be used by callers to pass to certain vnode operations that
-operate on pathnames.
+For directory operations, use the
+.Ft struct componentname
+object stored at
+.Fa nd Ns Li .ni_cnd .
 .El
 .Pp
-The other fields in the structure should not be examined or altered
-directly.
+The other fields of
+.Ft struct nameidata
+should not be examined or altered directly.
+.Pp
 Note that the
 .Xr nfs 4
-code misuses the
-.Em nameidata
-structure and currently has an incestuous relationship with the
+code misuses
+.Ft struct nameidata
+and currently has an incestuous relationship with the
 .Nm
 code.
 This is gradually being cleaned up.
-Other code should initialize the
-.Em nameidata
-structure with the
-.Fn NDINIT
-macro and perhaps also the
-.Fn NDAT
-macro.
 .Pp
 The
-.Em componentname
-structure has the following layout:
+.Ft struct componentname
+type has the following layout:
 .Bd -literal
 struct componentname {
 	/*
@@ -204,6 +199,8 @@ New uses of this feature are discouraged and should be discussed.
 Each lookup happens in one of the following modes, specified by
 callers of
 .Nm
+with
+.Fn NDINIT
 and specified internally by
 .Nm
 to
