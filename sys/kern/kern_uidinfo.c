@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.9 2017/03/18 05:49:17 riastradh Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.10 2017/03/18 05:49:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.9 2017/03/18 05:49:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.10 2017/03/18 05:49:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,7 @@ uid_find(uid_t uid)
 	uip_first = uipp->slh_first;
  again:
 	SLIST_FOREACH(uip, uipp, ui_hash) {
+		membar_datadep_consumer();
 		if (uip->ui_uid != uid)
 			continue;
 		if (newuip != NULL)
