@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.115 2017/03/18 20:00:10 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.116 2017/03/18 20:01:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.115 2017/03/18 20:00:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.116 2017/03/18 20:01:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -900,7 +900,7 @@ nchinit(void)
 	int error;
 
 	TAILQ_INIT(&nclruhead);
-	namecache_cache = pool_cache_init(sizeof(struct namecache), 
+	namecache_cache = pool_cache_init(sizeof(struct namecache),
 	    coherency_unit, 0, 0, "ncache", NULL, IPL_NONE, cache_ctor,
 	    cache_dtor, NULL);
 	KASSERT(namecache_cache != NULL);
@@ -1087,7 +1087,7 @@ cache_purgevfs(struct mount *mp)
 }
 
 /*
- * Scan global list invalidating entries until we meet a preset target. 
+ * Scan global list invalidating entries until we meet a preset target.
  * Prefer to invalidate entries that have not scored a hit within
  * cache_hottime seconds.  We sort the LRU list only for this routine's
  * benefit.
