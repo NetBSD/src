@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.8 2013/03/10 17:55:42 pooka Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.9 2017/03/18 05:49:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.8 2013/03/10 17:55:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.9 2017/03/18 05:49:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ static u_long 		uihash;
 
 static int
 sysctl_kern_uidinfo_cnt(SYSCTLFN_ARGS)
-{  
+{
 	static const struct {
 		const char *name;
 		u_int value;
@@ -76,7 +76,7 @@ sysctl_kern_uidinfo_cnt(SYSCTLFN_ARGS)
 			node.sysctl_data = &cnt;
 			uip = uid_find(kauth_cred_geteuid(l->l_cred));
 
-			*(uint64_t *)node.sysctl_data = 
+			*(uint64_t *)node.sysctl_data =
 			    *(u_long *)((char *)uip + nv[i].value);
 
 			return sysctl_lookup(SYSCTLFN_CALL(&node));
