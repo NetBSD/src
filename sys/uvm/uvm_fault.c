@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.197 2015/06/22 06:24:17 matt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.198 2017/03/19 23:44:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.197 2015/06/22 06:24:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.198 2017/03/19 23:44:34 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1602,9 +1602,7 @@ uvm_fault_lower(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
+	struct vm_amap *amap __diagused = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage;
 	int error;
