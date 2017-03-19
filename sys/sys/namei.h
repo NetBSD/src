@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.95 2017/03/18 21:04:24 riastradh Exp $	*/
+/*	$NetBSD: namei.h,v 1.96 2017/03/19 10:21:25 riastradh Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.39 2017/03/18 21:03:28 riastradh Exp 
+ *   from: NetBSD: namei.src,v 1.40 2017/03/19 10:21:02 riastradh Exp 
  */
 
 /*
@@ -215,13 +215,15 @@ struct nameidata {
  *      -       stable after initialization
  *      L       namecache_lock
  *      C       struct nchcpu::cpu_lock
+ *      L/C     insert/delete needs L and C, read needs L or any C,
+ *              must hold L and all C after (or during) delete before free
  *      N       struct namecache::nc_lock
  */
 struct namecache {
-	LIST_ENTRY(namecache) nc_hash;	/* L hash chain */
+	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
 	LIST_ENTRY(namecache) nc_vhash;	/* L directory hash chain */
-	struct	vnode *nc_dvp;		/* - vnode of parent of name */
-	struct	vnode *nc_vp;		/* - vnode the name refers to */
+	struct	vnode *nc_dvp;		/* N vnode of parent of name */
+	struct	vnode *nc_vp;		/* N vnode the name refers to */
 	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
 	char	nc_nlen;		/* - length of name */
 	char	nc_name[NCHNAMLEN];	/* - segment name */
