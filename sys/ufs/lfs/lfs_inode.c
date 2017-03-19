@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.151 2017/03/18 05:43:16 riastradh Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.152 2017/03/19 22:48:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.151 2017/03/18 05:43:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.152 2017/03/19 22:48:00 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -562,11 +562,11 @@ done:
 	/* Finish segment accounting corrections */
 	lfs_update_seguse(fs, oip, lastseg, bc);
 	for (level = SINGLE; level <= TRIPLE; level++)
-		KASSERTMSG(((newblks[ULFS_NDADDR + level] == 0) !=
+		KASSERTMSG(((newblks[ULFS_NDADDR + level] == 0) ==
 			(lfs_dino_getib(fs, oip->i_din, level) == 0)),
 		    "lfs itrunc1");
 	for (i = 0; i < ULFS_NDADDR; i++)
-		KASSERTMSG(((newblks[i] == 0) !=
+		KASSERTMSG(((newblks[i] == 0) ==
 			(lfs_dino_getdb(fs, oip->i_din, i) == 0)),
 		    "lfs itrunc2");
 	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_cleanblkhd)),
