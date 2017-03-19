@@ -452,9 +452,10 @@ fi
 [ ${HAVE_STRLCPY} -eq 0 ] && \
 	echo "extern	size_t	  strlcpy(char *, const char *, size_t);"
 
-[ ${HAVE_STRSEP} -eq 0 ] && \
+if [ ${HAVE_STRSEP} -eq 0 ]; then
 	echo "#undef strsep"
 	echo "extern	char	 *strsep(char **, const char *);"
+fi
 
 [ ${HAVE_STRTONUM} -eq 0 ] && \
 	echo "extern	long long strtonum(const char *, long long, long long, const char **);"
