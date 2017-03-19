@@ -364,7 +364,8 @@ echo "#define MANPATH_DEFAULT \"${MANPATH_DEFAULT}\""
 [ -n "${OSNAME}" ] && echo "#define OSNAME \"${OSNAME}\""
 [ -n "${UTF8_LOCALE}" ] && echo "#define UTF8_LOCALE \"${UTF8_LOCALE}\""
 [ -n "${HOMEBREWDIR}" ] && echo "#define HOMEBREWDIR \"${HOMEBREWDIR}\""
-[ ${HAVE_EFTYPE} -eq 0 ] && echo "#define EFTYPE EINVAL"
+[ ${HAVE_EFTYPE} -eq 0 ] && echo "#ifndef EFTYPE" && \
+    echo "#define EFTYPE EINVAL" && echo "#endif"
 [ ${HAVE_O_DIRECTORY} -eq 0 ] && echo "#define O_DIRECTORY 0"
 [ ${HAVE_PATH_MAX} -eq 0 ] && echo "#define PATH_MAX 4096"
 if [ ${HAVE_ENDIAN} -eq 0 -a ${HAVE_SYS_ENDIAN} -eq 0 ]; then
