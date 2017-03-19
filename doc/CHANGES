@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2262 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2263 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -483,6 +483,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	siginfo(2): Add new si_code values for SIGTRAP: TRAP_SCE and TRAP_SCX
 		[kamil 20170228]
 	zoneinfo: Import tzdata2017a.  [kre 20170301]
+	luna68k: Add a driver for LUNA's front panel LCD.  Ported from
+		OpenBSD/luna88k. [tsutsui 20170309]
 	sqlite3: Import 3.17.0. [christos 20170311]
 	libc: Update to tzcode2017a. [christos 20170311]
 	mdocml: Import 1.14.1. [christos 20170318]
