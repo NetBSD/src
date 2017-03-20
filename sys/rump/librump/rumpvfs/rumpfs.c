@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.141 2016/07/07 06:55:44 msaitoh Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.141.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.141 2016/07/07 06:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.141.2.1 2017/03/20 06:57:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1012,6 +1012,7 @@ rump_vop_rmdir(void *v)
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 	rn->rn_parent = NULL;
+	rn->rn_va.va_nlink = 0;
 
 out:
 	vput(dvp);
@@ -1040,6 +1041,7 @@ rump_vop_remove(void *v)
 
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+	rn->rn_va.va_nlink = 0;
 
 	vput(dvp);
 	vput(vp);
@@ -1777,7 +1779,7 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_mountroot =	rumpfs_mountroot,
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
-	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_suspendctl =	genfs_suspendctl,
 	.vfs_renamelock_enter =	genfs_renamelock_enter,
 	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,
@@ -1819,9 +1821,21 @@ rumpfs_mountfs(struct mount *mp)
 int
 rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
-	int error;
+	int error, flags;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		return 0;
+	}
 	if (mp->mnt_flag & MNT_UPDATE) {
+		if ((mp->mnt_iflag & IMNT_WANTRDONLY)) {
+			/* Changing from read/write to read-only. */
+			flags = WRITECLOSE;
+			if ((mp->mnt_flag & MNT_FORCE))
+				flags |= FORCECLOSE;
+			error = vflush(mp, NULL, flags);
+			if (error)
+				return error;
+		}
 		return 0;
 	}
 

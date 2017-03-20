@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.53.2.2 2017/01/07 08:56:49 pgoyette Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.53.2.3 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.53.2.2 2017/01/07 08:56:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.53.2.3 2017/03/20 06:57:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -454,6 +454,45 @@ lru_requeue(vnode_t *vp, vnodelst_t *listhd)
 }
 
 /*
+ * Release deferred vrele vnodes for this mount.
+ * Called with file system suspended.
+ */
+void
+vrele_flush(struct mount *mp)
+{
+	vnode_impl_t *vip, *marker;
+
+	KASSERT(fstrans_is_owner(mp));
+
+	marker = VNODE_TO_VIMPL(vnalloc_marker(NULL));
+
+	mutex_enter(&vdrain_lock);
+	TAILQ_INSERT_HEAD(&lru_vrele_list, marker, vi_lrulist);
+
+	while ((vip = TAILQ_NEXT(marker, vi_lrulist))) {
+		TAILQ_REMOVE(&lru_vrele_list, marker, vi_lrulist);
+		TAILQ_INSERT_AFTER(&lru_vrele_list, vip, marker, vi_lrulist);
+		if (vnis_marker(VIMPL_TO_VNODE(vip)))
+			continue;
+
+		KASSERT(vip->vi_lrulisthd == &lru_vrele_list);
+		TAILQ_REMOVE(vip->vi_lrulisthd, vip, vi_lrulist);
+		vip->vi_lrulisthd = &lru_hold_list;
+		TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
+		mutex_exit(&vdrain_lock);
+
+		vrele(VIMPL_TO_VNODE(vip));
+
+		mutex_enter(&vdrain_lock);
+	}
+
+	TAILQ_REMOVE(&lru_vrele_list, marker, vi_lrulist);
+	mutex_exit(&vdrain_lock);
+
+	vnfree_marker(VIMPL_TO_VNODE(marker));
+}
+
+/*
  * Reclaim a cached vnode.  Used from vdrain_thread only.
  */
 static __inline void
@@ -555,6 +594,8 @@ vdrain_thread(void *cookie)
 				TAILQ_REMOVE(listhd[i], marker, vi_lrulist);
 				TAILQ_INSERT_AFTER(listhd[i], vip, marker,
 				    vi_lrulist);
+				if (vnis_marker(VIMPL_TO_VNODE(vip)))
+					continue;
 				if (listhd[i] == &lru_vrele_list)
 					vdrain_vrele(VIMPL_TO_VNODE(vip));
 				else if (numvnodes < target)
@@ -961,11 +1002,21 @@ vrecycle(vnode_t *vp)
 	VSTATE_CHANGE(vp, VS_ACTIVE, VS_BLOCKED);
 	mutex_exit(vp->v_interlock);
 
-	error = vn_lock(vp, LK_EXCLUSIVE);
-	KASSERT(error == 0);
+	/*
+	 * On a leaf file system this lock will always succeed as we hold
+	 * the last reference and prevent further references.
+	 * On layered file systems waiting for the lock would open a can of
+	 * deadlocks as the lower vnodes may have other active references.
+	 */
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_NOWAIT);
 
 	mutex_enter(vp->v_interlock);
 	VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
+
+	if (error) {
+		mutex_exit(vp->v_interlock);
+		return false;
+	}
 
 	KASSERT(vp->v_usecount == 1);
 	vcache_reclaim(vp);
@@ -1016,13 +1067,12 @@ void
 vgone(vnode_t *vp)
 {
 
-	if (vn_lock(vp, LK_EXCLUSIVE) != 0) {
-		VSTATE_ASSERT(vp, VS_RECLAIMED);
-		vrele(vp);
-	}
-
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	mutex_enter(vp->v_interlock);
-	vclean(vp);
+	VSTATE_WAIT_STABLE(vp);
+	if (VSTATE_GET(vp) == VS_ACTIVE)
+		vcache_reclaim(vp);
+	VSTATE_ASSERT(vp, VS_RECLAIMED);
 	vrelel(vp, 0);
 }
 
@@ -1111,15 +1161,15 @@ vcache_alloc(void)
 	vip = pool_cache_get(vcache_pool, PR_WAITOK);
 	memset(vip, 0, sizeof(*vip));
 
+	rw_init(&vip->vi_lock);
 	/* SLIST_INIT(&vip->vi_hash); */
+	/* LIST_INIT(&vip->vi_nclist); */
+	/* LIST_INIT(&vip->vi_dnclist); */
 
 	vp = VIMPL_TO_VNODE(vip);
 	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
 	cv_init(&vp->v_cv, "vnode");
-	/* LIST_INIT(&vp->v_nclist); */
-	/* LIST_INIT(&vp->v_dnclist); */
 
-	rw_init(&vp->v_lock);
 	vp->v_usecount = 1;
 	vp->v_type = VNON;
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
@@ -1153,7 +1203,7 @@ vcache_free(vnode_impl_t *vip)
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		spec_node_destroy(vp);
 
-	rw_destroy(&vp->v_lock);
+	rw_destroy(&vip->vi_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
 	pool_cache_put(vcache_pool, vip);
@@ -1517,6 +1567,7 @@ vcache_remove(struct mount *mp, const void *key, size_t key_len)
 {
 	lwp_t *l = curlwp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
+	struct mount *mp = vp->v_mount;
 	uint32_t hash;
 	struct vcache_key vcache_key;
 	struct vcache_node *node;
@@ -1550,6 +1601,8 @@ vcache_remove(struct mount *mp, const void *key, size_t key_len)
 	memcpy(temp_key, vip->vi_key.vk_key, temp_key_len);
 	vip->vi_key.vk_key = temp_key;
 	mutex_exit(&vcache_lock);
+
+	fstrans_start(mp, FSTRANS_LAZY);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1610,6 +1663,8 @@ vcache_remove(struct mount *mp, const void *key, size_t key_len)
 	VSTATE_CHANGE(vp, VS_RECLAIMING, VS_RECLAIMED);
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
+
+	fstrans_done(mp);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 }

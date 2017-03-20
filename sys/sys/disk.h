@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.67.2.1 2017/01/07 08:56:53 pgoyette Exp $	*/
+/*	$NetBSD: disk.h,v 1.67.2.2 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -534,6 +534,7 @@ int	disk_begindetach(struct disk *, int (*)(device_t), device_t, int);
 void	disk_detach(struct disk *);
 void	disk_init(struct disk *, const char *, const struct dkdriver *);
 void	disk_destroy(struct disk *);
+void	disk_wait(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
 bool	disk_isbusy(struct disk *);

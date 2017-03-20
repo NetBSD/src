@@ -55,25 +55,30 @@ Expressions), which can be obtained from: </p>
 <p> NOTE: pcre versions prior to 2.06 cannot be used. </p>
 
 <p> In order to build Postfix with PCRE support you need to add
--DHAS_PCRE and a -I for the PCRE include file to CCARGS, and add
-the path to the PCRE library to AUXLIBS, for example: </p>
+-DHAS_PCRE and a -I option for the PCRE include file to CCARGS, and
+add the path to the PCRE library to <a href="PCRE_README.html">AUXLIBS_PCRE</a>, for example: </p>
 
 <blockquote>
 <pre>
 make -f Makefile.init makefiles \
-    "CCARGS=-DHAS_PCRE -I/usr/local/include" \
-    "AUXLIBS=-L/usr/local/lib -lpcre"
+    "CCARGS=-DHAS_PCRE `pcre-config --cflags`" \
+    "<a href="PCRE_README.html">AUXLIBS_PCRE</a>=`pcre-config --libs`"
 </pre>
 </blockquote>
 
-<p> Solaris needs run-time path information too: </p>
+<p> Postfix versions before 3.0 use AUXLIBS instead of <a href="PCRE_README.html">AUXLIBS_PCRE</a>.
+With Postfix 3.0 and later, the old AUXLIBS variable still supports
+building a statically-loaded PCRE database client, but only the new
+<a href="PCRE_README.html">AUXLIBS_PCRE</a> variable supports building a dynamically-loaded or 
+statically-loaded PCRE database client.  </p>
 
 <blockquote>
-<pre>
-make -f Makefile.init makefiles \
-    "CCARGS=-DHAS_PCRE -I/usr/local/include" \
-    "AUXLIBS=-L/usr/local/lib -R/usr/local/lib -lpcre"
-</pre>
+ 
+<p> Failure to use the <a href="PCRE_README.html">AUXLIBS_PCRE</a> variable will defeat the purpose
+of dynamic database client loading. Every Postfix executable file
+will have PCRE library dependencies. And that was exactly
+what dynamic database client loading was meant to avoid. </p>
+ 
 </blockquote>
 
 <h2>Things to know</h2>

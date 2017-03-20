@@ -19,14 +19,20 @@
  *
  */
 
-#define NETDISSECT_REWORKED
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-usb.c,v 1.1.1.2.2.1 2017/03/20 06:56:23 pgoyette Exp $");
+#endif
+
+/* \summary: USB printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 
 #if defined(HAVE_PCAP_USB_H) && defined(DLT_USB_LINUX)

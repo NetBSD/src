@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.16 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: term.h,v 1.16.10.1 2017/03/20 06:57:00 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
@@ -1057,7 +1057,7 @@ enum TISTRS{
 #define t_pkey_local(t)			(t)->strs[TICODE_pfloc]
 #define t_pkey_plab(t)			(t)->strs[TICODE_pfxl]
 #define t_pkey_xmit(t)			(t)->strs[TICODE_pfx]
-#define t_pkey_norm(t)			(t)->strs[TICODE_pln]
+#define t_plab_norm(t)			(t)->strs[TICODE_pln]
 #define t_print_screen(t)		(t)->strs[TICODE_mc0]
 #define t_ptr_non(t)			(t)->strs[TICODE_mc5p]
 #define t_ptr_off(t)			(t)->strs[TICODE_mc4]
@@ -1452,7 +1452,7 @@ enum TISTRS{
 #define pkey_local			 t_pkey_local(cur_term)
 #define pkey_plab			 t_pkey_plab(cur_term)
 #define pkey_xmit			 t_pkey_xmit(cur_term)
-#define pkey_norm			 t_pkey_norm(cur_term)
+#define plab_norm			 t_plab_norm(cur_term)
 #define print_screen			 t_print_screen(cur_term)
 #define ptr_non				 t_ptr_non(cur_term)
 #define ptr_off				 t_ptr_off(cur_term)
@@ -1850,7 +1850,7 @@ enum TISTRS{
  * pkey_local: Prog funct key #1 to execute string #2
  * pkey_plab: Prog key #1 to xmit string #2 and show string #3
  * pkey_xmit: Prog funct key #1 to xmit string #2
- * pkey_norm: Prog label #1 to show string #3
+ * plab_norm: Prog label #1 to show string #2
  * print_screen: Print contents of screen
  * ptr_non: Turn off printer for #1 bytes
  * ptr_off: Turn off the printer

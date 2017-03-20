@@ -42,8 +42,8 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
 
               # postfix status
 
-       This enumerates the status of all Postfix  instances  within  a  multi-
-       instance configuration.
+       This  enumerates  the  status  of  all  Postfix  instances   within   a
+       multi-instance configuration.
 
 <b>MANAGING AN INDIVIDUAL POSTFIX INSTANCE</b>
        To manage a specific Postfix instance, specify its configuration direc-
@@ -173,10 +173,10 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        -c  option  is specified, or when MAIL_CONFIG is present in the process
        environment. This is necessary to terminate recursion.
 
-       Otherwise, when the <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a> parameter value is  non-
-       empty,  the  <a href="postfix.1.html">postfix(1)</a> command executes the command specified with the
-       <a href="postconf.5.html#multi_instance_wrapper">multi_instance_wrapper</a> parameter, instead of executing the commands  in
-       postfix-script.
+       Otherwise,  when  the  <a href="postconf.5.html#multi_instance_directories">multi_instance_directories</a>  parameter  value  is
+       non-empty,  the  <a href="postfix.1.html">postfix(1)</a> command executes the command specified with
+       the <a href="postconf.5.html#multi_instance_wrapper">multi_instance_wrapper</a> parameter, instead of executing the commands
+       in postfix-script.
 
        The  multi-instance  manager  skips commands such as "stop" or "reload"
        that require a running Postfix instance, when an instance does not have
@@ -262,6 +262,11 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                             POSTFIX-WRAPPER(5)
 </pre> </body> </html>

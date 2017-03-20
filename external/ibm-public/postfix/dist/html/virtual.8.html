@@ -261,6 +261,13 @@ VIRTUAL(8)                                                          VIRTUAL(8)
               syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
 
+       Available in Postfix version 3.0 and later:
+
+       <b><a href="postconf.5.html#virtual_delivery_status_filter">virtual_delivery_status_filter</a> ($<a href="postconf.5.html#default_delivery_status_filter">default_delivery_status_filter</a>)</b>
+              Optional filter for the <a href="virtual.8.html"><b>virtual</b>(8)</a> delivery agent to change  the
+              delivery status code or explanatory text of successful or unsuc-
+              cessful deliveries.
+
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
@@ -291,6 +298,11 @@ VIRTUAL(8)                                                          VIRTUAL(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
        Andrew McNamara
        andrewm@connect.com.au

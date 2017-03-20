@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.21.28.1 2017/01/07 08:56:03 pgoyette Exp $	*/
+/*	$NetBSD: attributes.c,v 1.21.28.2 2017/03/20 06:56:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.21.28.1 2017/01/07 08:56:03 pgoyette Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.21.28.2 2017/03/20 06:56:58 pgoyette Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -159,41 +159,45 @@ wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
 int
 wattr_on(WINDOW *win, attr_t attr, void *opt)
 {
+	const TERMINAL *t = win->screen->term;
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_on: win %p, attr %08x\n", win, attr);
 #endif
 	/* If can enter modes, set the relevent attribute bits. */
-	if (exit_attribute_mode != NULL) {
-		if (attr & __BLINK && enter_blink_mode != NULL)
+	if (t_exit_attribute_mode(t) != NULL) {
+		if (attr & __BLINK && t_enter_blink_mode(t) != NULL)
 			win->wattr |= __BLINK;
-		if (attr & __BOLD && enter_bold_mode != NULL)
+		if (attr & __BOLD && t_enter_bold_mode(t) != NULL)
 			win->wattr |= __BOLD;
-		if (attr & __DIM && enter_dim_mode != NULL)
+		if (attr & __DIM && t_enter_dim_mode(t) != NULL)
 			win->wattr |= __DIM;
-		if (attr & __BLANK && enter_secure_mode != NULL)
+		if (attr & __BLANK && t_enter_secure_mode(t) != NULL)
 			win->wattr |= __BLANK;
-		if (attr & __PROTECT && enter_protected_mode != NULL)
+		if (attr & __PROTECT && t_enter_protected_mode(t) != NULL)
 			win->wattr |= __PROTECT;
-		if (attr & __REVERSE && enter_reverse_mode != NULL)
+		if (attr & __REVERSE && t_enter_reverse_mode(t) != NULL)
 			win->wattr |= __REVERSE;
 #ifdef HAVE_WCHAR
-		if (attr & WA_LOW && enter_low_hl_mode != NULL)
+		if (attr & WA_LOW && t_enter_low_hl_mode(t) != NULL)
 			win->wattr |= WA_LOW;
-		if (attr & WA_TOP && enter_top_hl_mode != NULL)
+		if (attr & WA_TOP && t_enter_top_hl_mode(t) != NULL)
 			win->wattr |= WA_TOP;
-		if (attr & WA_LEFT && enter_left_hl_mode != NULL)
+		if (attr & WA_LEFT && t_enter_left_hl_mode(t) != NULL)
 			win->wattr |= WA_LEFT;
-		if (attr & WA_RIGHT && enter_right_hl_mode != NULL)
+		if (attr & WA_RIGHT && t_enter_right_hl_mode(t) != NULL)
 			win->wattr |= WA_RIGHT;
-		if (attr & WA_HORIZONTAL && enter_horizontal_hl_mode != NULL)
+		if (attr & WA_HORIZONTAL && t_enter_horizontal_hl_mode(t) != NULL)
 			win->wattr |= WA_HORIZONTAL;
-		if (attr & WA_VERTICAL && enter_vertical_hl_mode != NULL)
+		if (attr & WA_VERTICAL && t_enter_vertical_hl_mode(t) != NULL)
 			win->wattr |= WA_VERTICAL;
 #endif /* HAVE_WCHAR */
 	}
-	if (attr & __STANDOUT && enter_standout_mode != NULL && exit_standout_mode != NULL)
+	if (attr & __STANDOUT && t_enter_standout_mode(t) != NULL &&
+	    t_exit_standout_mode(t) != NULL)
 		wstandout(win);
-	if (attr & __UNDERSCORE && enter_underline_mode != NULL && exit_underline_mode != NULL)
+	if (attr & __UNDERSCORE && t_enter_underline_mode(t) != NULL &&
+	    t_exit_underline_mode(t) != NULL)
 		wunderscore(win);
 	if ((attr_t) attr & __COLOR)
 		__wcolor_set(win, (attr_t) attr);
@@ -211,11 +215,13 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
 int
 wattr_off(WINDOW *win, attr_t attr, void *opt)
 {
+	const TERMINAL *t = win->screen->term;
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_off: win %p, attr %08x\n", win, attr);
 #endif
 	/* If can do exit modes, unset the relevent attribute bits. */
-	if (exit_attribute_mode != NULL) {
+	if (t_exit_attribute_mode(t) != NULL) {
 		if (attr & __BLINK)
 			win->wattr &= ~__BLINK;
 		if (attr & __BOLD)
@@ -441,9 +447,11 @@ term_attrs(void)
 void
 __wcolor_set(WINDOW *win, attr_t attr)
 {
+	const TERMINAL *t = win->screen->term;
+
 	/* If another color pair is set, turn that off first. */
 	win->wattr &= ~__COLOR;
 	/* If can do color video, set the color pair bits. */
-	if (max_colors != 0 && attr & __COLOR)
+	if (t_max_colors(t) != 0 && attr & __COLOR)
 		win->wattr |= attr & __COLOR;
 }

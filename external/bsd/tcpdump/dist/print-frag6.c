@@ -21,20 +21,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-frag6.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.4.2.1 2017/03/20 06:56:22 pgoyette Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: IPv6 fragmentation header printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef INET6
-
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include "ip6.h"
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 int
@@ -73,4 +72,3 @@ trunc:
 	ND_PRINT((ndo, "[|frag]"));
 	return -1;
 }
-#endif /* INET6 */

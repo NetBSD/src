@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.128 2016/06/01 05:10:41 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.128.2.1 2017/03/20 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.128 2016/06/01 05:10:41 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.128.2.1 2017/03/20 06:51:32 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: eval.c,v 1.128 2016/06/01 05:10:41 kre Exp $");
 #include <limits.h>
 #include <unistd.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <sys/times.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1043,7 +1044,7 @@ normal_fork:
 		temp_path = 0;
 		if (!setjmp(jmploc.loc)) {
 			/* We need to ensure the command hash table isn't
-			 * corruped by temporary PATH assignments.
+			 * corrupted by temporary PATH assignments.
 			 * However we must ensure the 'local' command works!
 			 */
 			if (path != pathval() && (cmdentry.u.bltin == hashcmd ||

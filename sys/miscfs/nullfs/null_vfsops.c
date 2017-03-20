@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.90 2014/11/09 18:08:07 maxv Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.90.4.1 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.90 2014/11/09 18:08:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.90.4.1 2017/03/20 06:57:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,7 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_vflag |= VV_ROOT;
 	nmp->nullm_rootvp = vp;
+	mp->mnt_lower = nmp->nullm_vfs;
 	mp->mnt_iflag |= IMNT_MPSAFE;
 	VOP_UNLOCK(vp);
 
@@ -228,7 +229,7 @@ struct vfsops nullfs_vfsops = {
 	.vfs_done = layerfs_done,
 	.vfs_snapshot = layerfs_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = layerfs_suspendctl,
 	.vfs_renamelock_enter = layerfs_renamelock_enter,
 	.vfs_renamelock_exit = layerfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

@@ -1,10 +1,10 @@
-/*	$NetBSD: backglue.c,v 1.1.1.5 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: backglue.c,v 1.1.1.5.6.1 2017/03/20 06:56:15 pgoyette Exp $	*/
 
 /* backglue.c - backend glue */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2014 The OpenLDAP Foundation.
+ * Copyright 2001-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,9 @@
  * of the glued backends should have identical rootdn.
  *  -- Howard Chu
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: backglue.c,v 1.1.1.5.6.1 2017/03/20 06:56:15 pgoyette Exp $");
 
 #include "portable.h"
 

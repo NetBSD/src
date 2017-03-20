@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE_FCNTL_LOCKSTATE 3
 .Os
 .Sh NAME
@@ -28,7 +28,9 @@
 .Nm SQLITE_FCNTL_ZIPVFS ,
 .Nm SQLITE_FCNTL_RBU ,
 .Nm SQLITE_FCNTL_VFS_POINTER ,
-.Nm SQLITE_FCNTL_JOURNAL_POINTER
+.Nm SQLITE_FCNTL_JOURNAL_POINTER ,
+.Nm SQLITE_FCNTL_WIN32_GET_HANDLE ,
+.Nm SQLITE_FCNTL_PDB
 .Nd Standard File Control Opcodes
 .Sh SYNOPSIS
 .Fd #define SQLITE_FCNTL_LOCKSTATE
@@ -58,6 +60,8 @@
 .Fd #define SQLITE_FCNTL_RBU
 .Fd #define SQLITE_FCNTL_VFS_POINTER
 .Fd #define SQLITE_FCNTL_JOURNAL_POINTER
+.Fd #define SQLITE_FCNTL_WIN32_GET_HANDLE
+.Fd #define SQLITE_FCNTL_PDB
 .Sh DESCRIPTION
 These integer constants are opcodes for the xFileControl method of
 the sqlite3_io_methods object and for the sqlite3_file_control()
@@ -277,6 +281,12 @@ The SQLITE_FCNTL_HAS_MOVED file control interprets
 its argument as a pointer to an integer and it writes a boolean into
 that integer depending on whether or not the file has been renamed,
 moved, or deleted since it was first opened.
+.It
+The SQLITE_FCNTL_WIN32_GET_HANDLE opcode
+can be used to obtain the underlying native file handle associated
+with a file handle.
+This file control interprets its argument as a pointer to a native
+file handle and writes the resulting value there.
 .It
 The SQLITE_FCNTL_WIN32_SET_HANDLE opcode
 is used for debugging.

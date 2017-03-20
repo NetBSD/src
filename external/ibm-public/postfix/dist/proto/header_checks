@@ -120,18 +120,17 @@
 #	execute the corresponding \fIaction\fR.
 # .IP "\fBif /\fIpattern\fB/\fIflags\fR"
 # .IP "\fBendif\fR"
-#	Match the input string against the patterns between \fBif\fR
-#	and \fBendif\fR, if and only if the same input string also
-#	matches /\fIpattern\fR/. The \fBif\fR..\fBendif\fR can nest.
+#	If the input string matches /\fIpattern\fR/, then match that
+#	input string against the patterns between \fBif\fR and
+#	\fBendif\fR.  The \fBif\fR..\fBendif\fR can nest.
 # .sp
 #	Note: do not prepend whitespace to patterns inside
 #	\fBif\fR..\fBendif\fR.
 # .IP "\fBif !/\fIpattern\fB/\fIflags\fR"
 # .IP "\fBendif\fR"
-#	Match the input string against the patterns between \fBif\fR
-#	and \fBendif\fR, if and only if the same input string does
-#	\fBnot\fR match /\fIpattern\fR/. The \fBif\fR..\fBendif\fR
-#	can nest.
+#	If the input string does not match /\fIpattern\fR/, then
+#	match that input string against the patterns between \fBif\fR
+#	and \fBendif\fR. The \fBif\fR..\fBendif\fR can nest.
 # .IP "blank lines and comments"
 #	Empty lines and whitespace-only lines are ignored, as
 #	are lines whose first non-whitespace character is a `#'.
@@ -163,6 +162,24 @@
 # .fi
 #	Action names are case insensitive. They are shown in upper case
 #	for consistency with other Postfix documentation.
+# .IP "\fBBCC \fIuser@domain\fR"
+#	Add the specified address as a BCC recipient, and inspect
+#	the next input line. The address
+#	must have a local part and domain part. The number of BCC
+#	addresses that can be added is limited only by the amount
+#	of available storage space.
+#
+#	Note 1: the BCC address is added as if it was specified with
+#	NOTIFY=NONE. The sender will not be notified when the BCC
+#	address is undeliverable, as long as all down-stream software
+#	implements RFC 3461.
+#
+#	Note 2: this ignores duplicate addresses (with the same
+#	delivery status notification options).
+# .sp
+#	This feature is available in Postfix 3.0 and later.
+# .sp
+#	This feature is not supported with smtp header/body checks.
 # \" .IP "\fBDELAY \fItime\fR"
 # \"	Place the message into the deferred queue, and delay the
 # \"	initial delivery attempt by \fItime\fR. The time value may
@@ -192,6 +209,7 @@
 # \"	This feature is available in Postfix 2.3 and later.
 # .IP "\fBDISCARD \fIoptional text...\fR"
 #	Claim successful delivery and silently discard the message.
+#	Do not inspect the remainder of the input message.
 #	Log the optional text if specified, otherwise log a generic
 #	message.
 # .sp
@@ -212,6 +230,8 @@
 # .sp
 #	This feature is available in Postfix 2.1 and later.
 # .IP "\fBFILTER \fItransport:destination\fR"
+#	Override the content_filter parameter setting, and inspect
+#	the next input line.
 #	After the message is queued, send the entire message through
 #	the specified external content filter. The \fItransport\fR
 #	name specifies the first field of a mail delivery agent
@@ -330,9 +350,10 @@
 #	the way that Postfix adds missing message headers.
 # .RE
 # .IP "\fBREJECT \fIoptional text...\fR
-#	Reject the entire message. Reply with \fIoptional text...\fR when
-#	the optional text is specified, otherwise reply with a generic error
-#	message.
+#	Reject the entire message. Do not inspect the remainder of
+#	the input message.  Reply with \fIoptional text...\fR when
+#	the optional text is specified, otherwise reply with a
+#	generic error message.
 # .sp
 #	Note: this action disables further header or body_checks inspection
 #	of the current message and affects all recipients.
@@ -421,7 +442,7 @@
 #	    header_checks = pcre:/etc/postfix/header_checks.pcre
 #
 #	/etc/postfix/header_checks.pcre:
-#	    /^Content-(Disposition|Type).*name\es*=\es*"?(.*(\e.|=2E)(
+#	    /^Content-(Disposition|Type).*name\es*=\es*"?([^;]*(\e.|=2E)(
 #	      ade|adp|asp|bas|bat|chm|cmd|com|cpl|crt|dll|exe|
 #	      hlp|ht[at]|
 #	      inf|ins|isp|jse?|lnk|md[betw]|ms[cipt]|nws|
@@ -472,4 +493,9 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--

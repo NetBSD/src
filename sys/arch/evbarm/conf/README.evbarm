@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.12.2.1 2016/11/04 14:49:00 pgoyette Exp $
+$NetBSD: README.evbarm,v 1.12.2.2 2017/03/20 06:57:13 pgoyette Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -13,6 +13,7 @@ BEAGLEBONE	2012/08/20	TI AM335x BeagleBone
 BPI		2014/09/07	Banana Pi
 CUBIEBOARD	2013/09/03	Cubietech Cubieboard 1 & 2
 CUBIETRUCK	2014/04/11	Cubietech Cubietruck
+CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
 DEVKIT8000	2010/09/08	Embest OMAP3530 DevKit8000 eval Kit 
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS

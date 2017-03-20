@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.50 2011/06/25 00:37:44 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.50.28.1 2017/03/20 06:51:53 pgoyette Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -993,9 +993,12 @@ pgp_keyring_list(pgp_io_t *io, const pgp_keyring_t *keyring, const int psigs)
 {
 	pgp_key_t		*key;
 	unsigned		 n;
+	unsigned		 keyc = (keyring != NULL) ? keyring->keyc : 0;
 
-	(void) fprintf(io->res, "%u key%s\n", keyring->keyc,
-		(keyring->keyc == 1) ? "" : "s");
+	(void) fprintf(io->res, "%u key%s\n", keyc, (keyc == 1) ? "" : "s");
+	if (keyring == NULL) {
+		return 1;
+	}
 	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
 		if (pgp_is_key_secret(key)) {
 			pgp_print_keydata(io, keyring, key, "sec",

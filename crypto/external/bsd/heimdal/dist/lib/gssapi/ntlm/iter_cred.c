@@ -1,4 +1,4 @@
-/*	$NetBSD: iter_cred.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: iter_cred.c,v 1.1.1.2.6.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan

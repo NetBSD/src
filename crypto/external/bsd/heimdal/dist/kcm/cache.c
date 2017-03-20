@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.2 2014/07/24 22:54:10 joerg Exp $	*/
+/*	$NetBSD: cache.c,v 1.2.6.1 2017/03/20 06:51:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -44,12 +44,15 @@ char *kcm_ccache_nextid(pid_t pid, uid_t uid, gid_t gid)
 {
     unsigned n;
     char *name;
+    int ret;
 
     HEIMDAL_MUTEX_lock(&ccache_mutex);
     n = ++ccache_nextid;
     HEIMDAL_MUTEX_unlock(&ccache_mutex);
 
-    asprintf(&name, "%ld:%u", (long)uid, n);
+    ret = asprintf(&name, "%ld:%u", (long)uid, n);
+    if (ret == -1)
+	return NULL;
 
     return name;
 }

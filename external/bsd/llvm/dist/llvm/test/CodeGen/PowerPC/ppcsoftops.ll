@@ -1,4 +1,8 @@
-; RUN: llc  -mtriple=powerpc-unknown-linux-gnu -O0 < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs  -mtriple=powerpc-unknown-linux-gnu -O0 < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs  -mtriple=powerpc64-unknown-linux-gnu -O0 < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs  -mtriple=powerpc64le-unknown-linux-gnu -O0 < %s | FileCheck %s
+
+; Testing operations in soft-float mode
 define double @foo() #0 {
 entry:
   %a = alloca double, align 8

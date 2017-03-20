@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.54 2016/01/24 19:49:35 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.54.2.1 2017/03/20 06:57:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_POWERPC_TYPES_H_
+#define	_POWERPC_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -100,4 +100,4 @@ typedef __uint32_t tlb_asid_t;		/* for booke */
 #define	__HAVE_RAS
 #endif
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* _POWERPC_TYPES_H_ */

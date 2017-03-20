@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.449.2.2 2017/01/07 08:56:49 pgoyette Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.449.2.3 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449.2.2 2017/01/07 08:56:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449.2.3 2017/03/20 06:57:48 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.449.2.2 2017/01/07 08:56:49 pgoyette 
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/vnode_impl.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -552,7 +553,7 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 
 #define SYNCER_MAXDELAY		32
 
-typedef TAILQ_HEAD(synclist, vnode) synclist_t;
+typedef TAILQ_HEAD(synclist, vnode_impl) synclist_t;
 
 static void	vn_syncer_add1(struct vnode *, int);
 static void	sysctl_vfs_syncfs_setup(struct sysctllog **);
@@ -624,6 +625,7 @@ static void
 vn_syncer_add1(struct vnode *vp, int delayx)
 {
 	synclist_t *slp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(&syncer_data_lock));
 
@@ -633,17 +635,17 @@ vn_syncer_add1(struct vnode *vp, int delayx)
 		 * Note: called from sched_sync(), which will not hold
 		 * interlock, therefore we cannot modify v_iflag here.
 		 */
-		slp = &syncer_workitem_pending[vp->v_synclist_slot];
-		TAILQ_REMOVE(slp, vp, v_synclist);
+		slp = &syncer_workitem_pending[vip->vi_synclist_slot];
+		TAILQ_REMOVE(slp, vip, vi_synclist);
 	} else {
 		KASSERT(mutex_owned(vp->v_interlock));
 		vp->v_iflag |= VI_ONWORKLST;
 	}
 
-	vp->v_synclist_slot = sync_delay_slot(delayx);
+	vip->vi_synclist_slot = sync_delay_slot(delayx);
 
-	slp = &syncer_workitem_pending[vp->v_synclist_slot];
-	TAILQ_INSERT_TAIL(slp, vp, v_synclist);
+	slp = &syncer_workitem_pending[vip->vi_synclist_slot];
+	TAILQ_INSERT_TAIL(slp, vip, vi_synclist);
 }
 
 void
@@ -664,14 +666,15 @@ void
 vn_syncer_remove_from_worklist(struct vnode *vp)
 {
 	synclist_t *slp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 	if (vp->v_iflag & VI_ONWORKLST) {
 		vp->v_iflag &= ~VI_ONWORKLST;
-		slp = &syncer_workitem_pending[vp->v_synclist_slot];
-		TAILQ_REMOVE(slp, vp, v_synclist);
+		slp = &syncer_workitem_pending[vip->vi_synclist_slot];
+		TAILQ_REMOVE(slp, vip, vi_synclist);
 	}
 	mutex_exit(&syncer_data_lock);
 }
@@ -780,7 +783,10 @@ sched_sync(void *arg)
 			mp->mnt_synclist_slot = sync_delay_slot(sync_delay(mp));
 			if (vfs_busy(mp, &nmp))
 				continue;
-			VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+			if (fstrans_start_nowait(mp, FSTRANS_SHARED) == 0) {
+				VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+				fstrans_done(mp);
+			}
 			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
@@ -795,14 +801,14 @@ sched_sync(void *arg)
 		if (syncer_delayno >= syncer_last)
 			syncer_delayno = 0;
 
-		while ((vp = TAILQ_FIRST(slp)) != NULL) {
+		while ((vp = VIMPL_TO_VNODE(TAILQ_FIRST(slp))) != NULL) {
 			synced = lazy_sync_vnode(vp);
 
 			/*
 			 * XXX The vnode may have been recycled, in which
 			 * case it may have a new identity.
 			 */
-			if (TAILQ_FIRST(slp) == vp) {
+			if (VIMPL_TO_VNODE(TAILQ_FIRST(slp)) == vp) {
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
@@ -1114,7 +1120,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
-	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vp->v_lock);
+	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vip->vi_lock);
 
 	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(vip->vi_state),
 	    vip->vi_key.vk_mount, vip->vi_key.vk_key_len);
@@ -1538,6 +1544,21 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 }
 
 void
+vfs_vnode_lock_print(void *vlock, int full, void (*pr)(const char *, ...))
+{
+	struct mount *mp;
+	vnode_impl_t *vip;
+
+	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			if (&vip->vi_lock != vlock)
+				continue;
+			vfs_vnode_print(VIMPL_TO_VNODE(vip), full, pr);
+		}
+	}
+}
+
+void
 vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 {
 	char sbuf[256];
@@ -1592,9 +1613,11 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 
 	{
 		int cnt = 0;
-		struct vnode *vp;
+		vnode_t *vp;
+		vnode_impl_t *vip;
 		(*pr)("locked vnodes =");
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			vp = VIMPL_TO_VNODE(vip);
 			if (VOP_ISLOCKED(vp)) {
 				if ((++cnt % 6) == 0) {
 					(*pr)(" %p,\n\t", vp);
@@ -1608,10 +1631,12 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 
 	if (full) {
 		int cnt = 0;
-		struct vnode *vp;
+		vnode_t *vp;
+		vnode_impl_t *vip;
 		(*pr)("all vnodes =");
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			vp = VIMPL_TO_VNODE(vip);
+			if (!TAILQ_NEXT(vip, vi_mntvnodes)) {
 				(*pr)(" %p", vp);
 			} else if ((++cnt % 6) == 0) {
 				(*pr)(" %p,\n\t", vp);
@@ -1619,7 +1644,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 				(*pr)(" %p,", vp);
 			}
 		}
-		(*pr)("\n", vp);
+		(*pr)("\n");
 	}
 }
 
@@ -1632,7 +1657,8 @@ void
 printlockedvnodes(void)
 {
 	struct mount *mp, *nmp;
-	struct vnode *vp;
+	vnode_t *vp;
+	vnode_impl_t *vip;
 
 	printf("Locked vnodes\n");
 	mutex_enter(&mountlist_lock);
@@ -1640,7 +1666,8 @@ printlockedvnodes(void)
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
-		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
+			vp = VIMPL_TO_VNODE(vip);
 			if (VOP_ISLOCKED(vp))
 				vprint(NULL, vp);
 		}

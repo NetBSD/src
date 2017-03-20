@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_spnego.h,v 1.1.1.2 2011/04/14 14:08:25 elric Exp $	*/
+/*	$NetBSD: gssapi_spnego.h,v 1.1.1.2.28.1 2017/03/20 06:51:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan

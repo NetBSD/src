@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.258.2.2 2017/01/07 08:56:49 pgoyette Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.258.2.3 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.258.2.2 2017/01/07 08:56:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.258.2.3 2017/03/20 06:57:47 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -343,21 +343,9 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 */
 	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_PPWAIT) {
-#if 0
-		lwp_t *lp;
-
-		l->l_lwpctl = NULL; /* was on loan from blocked parent */
-		p->p_lflag &= ~PL_PPWAIT;
-
-		lp = p->p_vforklwp;
-		p->p_vforklwp = NULL;
-		lp->l_pflag &= ~LP_VFORKWAIT; /* XXX */
-		cv_broadcast(&lp->l_waitcv);
-#else
 		l->l_lwpctl = NULL; /* was on loan from blocked parent */
 		p->p_lflag &= ~PL_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
-#endif
 	}
 
 	if (SESS_LEADER(p)) {

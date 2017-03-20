@@ -53,44 +53,44 @@ typedef enum xcb_dri2_event_type_t {
  * @brief xcb_dri2_dri2_buffer_t
  **/
 typedef struct xcb_dri2_dri2_buffer_t {
-    uint32_t attachment; /**<  */
-    uint32_t name; /**<  */
-    uint32_t pitch; /**<  */
-    uint32_t cpp; /**<  */
-    uint32_t flags; /**<  */
+    uint32_t attachment;
+    uint32_t name;
+    uint32_t pitch;
+    uint32_t cpp;
+    uint32_t flags;
 } xcb_dri2_dri2_buffer_t;
 
 /**
  * @brief xcb_dri2_dri2_buffer_iterator_t
  **/
 typedef struct xcb_dri2_dri2_buffer_iterator_t {
-    xcb_dri2_dri2_buffer_t *data; /**<  */
-    int                     rem; /**<  */
-    int                     index; /**<  */
+    xcb_dri2_dri2_buffer_t *data;
+    int                     rem;
+    int                     index;
 } xcb_dri2_dri2_buffer_iterator_t;
 
 /**
  * @brief xcb_dri2_attach_format_t
  **/
 typedef struct xcb_dri2_attach_format_t {
-    uint32_t attachment; /**<  */
-    uint32_t format; /**<  */
+    uint32_t attachment;
+    uint32_t format;
 } xcb_dri2_attach_format_t;
 
 /**
  * @brief xcb_dri2_attach_format_iterator_t
  **/
 typedef struct xcb_dri2_attach_format_iterator_t {
-    xcb_dri2_attach_format_t *data; /**<  */
-    int                       rem; /**<  */
-    int                       index; /**<  */
+    xcb_dri2_attach_format_t *data;
+    int                       rem;
+    int                       index;
 } xcb_dri2_attach_format_iterator_t;
 
 /**
  * @brief xcb_dri2_query_version_cookie_t
  **/
 typedef struct xcb_dri2_query_version_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_query_version_cookie_t;
 
 /** Opcode for xcb_dri2_query_version. */
@@ -100,30 +100,30 @@ typedef struct xcb_dri2_query_version_cookie_t {
  * @brief xcb_dri2_query_version_request_t
  **/
 typedef struct xcb_dri2_query_version_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t major_version; /**<  */
-    uint32_t minor_version; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t major_version;
+    uint32_t minor_version;
 } xcb_dri2_query_version_request_t;
 
 /**
  * @brief xcb_dri2_query_version_reply_t
  **/
 typedef struct xcb_dri2_query_version_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t major_version; /**<  */
-    uint32_t minor_version; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t major_version;
+    uint32_t minor_version;
 } xcb_dri2_query_version_reply_t;
 
 /**
  * @brief xcb_dri2_connect_cookie_t
  **/
 typedef struct xcb_dri2_connect_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_connect_cookie_t;
 
 /** Opcode for xcb_dri2_connect. */
@@ -133,31 +133,31 @@ typedef struct xcb_dri2_connect_cookie_t {
  * @brief xcb_dri2_connect_request_t
  **/
 typedef struct xcb_dri2_connect_request_t {
-    uint8_t      major_opcode; /**<  */
-    uint8_t      minor_opcode; /**<  */
-    uint16_t     length; /**<  */
-    xcb_window_t window; /**<  */
-    uint32_t     driver_type; /**<  */
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    xcb_window_t window;
+    uint32_t     driver_type;
 } xcb_dri2_connect_request_t;
 
 /**
  * @brief xcb_dri2_connect_reply_t
  **/
 typedef struct xcb_dri2_connect_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t driver_name_length; /**<  */
-    uint32_t device_name_length; /**<  */
-    uint8_t  pad1[16]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t driver_name_length;
+    uint32_t device_name_length;
+    uint8_t  pad1[16];
 } xcb_dri2_connect_reply_t;
 
 /**
  * @brief xcb_dri2_authenticate_cookie_t
  **/
 typedef struct xcb_dri2_authenticate_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_authenticate_cookie_t;
 
 /** Opcode for xcb_dri2_authenticate. */
@@ -167,22 +167,22 @@ typedef struct xcb_dri2_authenticate_cookie_t {
  * @brief xcb_dri2_authenticate_request_t
  **/
 typedef struct xcb_dri2_authenticate_request_t {
-    uint8_t      major_opcode; /**<  */
-    uint8_t      minor_opcode; /**<  */
-    uint16_t     length; /**<  */
-    xcb_window_t window; /**<  */
-    uint32_t     magic; /**<  */
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    xcb_window_t window;
+    uint32_t     magic;
 } xcb_dri2_authenticate_request_t;
 
 /**
  * @brief xcb_dri2_authenticate_reply_t
  **/
 typedef struct xcb_dri2_authenticate_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t authenticated; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t authenticated;
 } xcb_dri2_authenticate_reply_t;
 
 /** Opcode for xcb_dri2_create_drawable. */
@@ -192,10 +192,10 @@ typedef struct xcb_dri2_authenticate_reply_t {
  * @brief xcb_dri2_create_drawable_request_t
  **/
 typedef struct xcb_dri2_create_drawable_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
 } xcb_dri2_create_drawable_request_t;
 
 /** Opcode for xcb_dri2_destroy_drawable. */
@@ -205,17 +205,17 @@ typedef struct xcb_dri2_create_drawable_request_t {
  * @brief xcb_dri2_destroy_drawable_request_t
  **/
 typedef struct xcb_dri2_destroy_drawable_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
 } xcb_dri2_destroy_drawable_request_t;
 
 /**
  * @brief xcb_dri2_get_buffers_cookie_t
  **/
 typedef struct xcb_dri2_get_buffers_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_get_buffers_cookie_t;
 
 /** Opcode for xcb_dri2_get_buffers. */
@@ -225,32 +225,32 @@ typedef struct xcb_dri2_get_buffers_cookie_t {
  * @brief xcb_dri2_get_buffers_request_t
  **/
 typedef struct xcb_dri2_get_buffers_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       count; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       count;
 } xcb_dri2_get_buffers_request_t;
 
 /**
  * @brief xcb_dri2_get_buffers_reply_t
  **/
 typedef struct xcb_dri2_get_buffers_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t width; /**<  */
-    uint32_t height; /**<  */
-    uint32_t count; /**<  */
-    uint8_t  pad1[12]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t width;
+    uint32_t height;
+    uint32_t count;
+    uint8_t  pad1[12];
 } xcb_dri2_get_buffers_reply_t;
 
 /**
  * @brief xcb_dri2_copy_region_cookie_t
  **/
 typedef struct xcb_dri2_copy_region_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_copy_region_cookie_t;
 
 /** Opcode for xcb_dri2_copy_region. */
@@ -260,30 +260,30 @@ typedef struct xcb_dri2_copy_region_cookie_t {
  * @brief xcb_dri2_copy_region_request_t
  **/
 typedef struct xcb_dri2_copy_region_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       region; /**<  */
-    uint32_t       dest; /**<  */
-    uint32_t       src; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       region;
+    uint32_t       dest;
+    uint32_t       src;
 } xcb_dri2_copy_region_request_t;
 
 /**
  * @brief xcb_dri2_copy_region_reply_t
  **/
 typedef struct xcb_dri2_copy_region_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
 } xcb_dri2_copy_region_reply_t;
 
 /**
  * @brief xcb_dri2_get_buffers_with_format_cookie_t
  **/
 typedef struct xcb_dri2_get_buffers_with_format_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_get_buffers_with_format_cookie_t;
 
 /** Opcode for xcb_dri2_get_buffers_with_format. */
@@ -293,32 +293,32 @@ typedef struct xcb_dri2_get_buffers_with_format_cookie_t {
  * @brief xcb_dri2_get_buffers_with_format_request_t
  **/
 typedef struct xcb_dri2_get_buffers_with_format_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       count; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       count;
 } xcb_dri2_get_buffers_with_format_request_t;
 
 /**
  * @brief xcb_dri2_get_buffers_with_format_reply_t
  **/
 typedef struct xcb_dri2_get_buffers_with_format_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t width; /**<  */
-    uint32_t height; /**<  */
-    uint32_t count; /**<  */
-    uint8_t  pad1[12]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t width;
+    uint32_t height;
+    uint32_t count;
+    uint8_t  pad1[12];
 } xcb_dri2_get_buffers_with_format_reply_t;
 
 /**
  * @brief xcb_dri2_swap_buffers_cookie_t
  **/
 typedef struct xcb_dri2_swap_buffers_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_swap_buffers_cookie_t;
 
 /** Opcode for xcb_dri2_swap_buffers. */
@@ -328,35 +328,35 @@ typedef struct xcb_dri2_swap_buffers_cookie_t {
  * @brief xcb_dri2_swap_buffers_request_t
  **/
 typedef struct xcb_dri2_swap_buffers_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       target_msc_hi; /**<  */
-    uint32_t       target_msc_lo; /**<  */
-    uint32_t       divisor_hi; /**<  */
-    uint32_t       divisor_lo; /**<  */
-    uint32_t       remainder_hi; /**<  */
-    uint32_t       remainder_lo; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       target_msc_hi;
+    uint32_t       target_msc_lo;
+    uint32_t       divisor_hi;
+    uint32_t       divisor_lo;
+    uint32_t       remainder_hi;
+    uint32_t       remainder_lo;
 } xcb_dri2_swap_buffers_request_t;
 
 /**
  * @brief xcb_dri2_swap_buffers_reply_t
  **/
 typedef struct xcb_dri2_swap_buffers_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t swap_hi; /**<  */
-    uint32_t swap_lo; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t swap_hi;
+    uint32_t swap_lo;
 } xcb_dri2_swap_buffers_reply_t;
 
 /**
  * @brief xcb_dri2_get_msc_cookie_t
  **/
 typedef struct xcb_dri2_get_msc_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_get_msc_cookie_t;
 
 /** Opcode for xcb_dri2_get_msc. */
@@ -366,33 +366,33 @@ typedef struct xcb_dri2_get_msc_cookie_t {
  * @brief xcb_dri2_get_msc_request_t
  **/
 typedef struct xcb_dri2_get_msc_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
 } xcb_dri2_get_msc_request_t;
 
 /**
  * @brief xcb_dri2_get_msc_reply_t
  **/
 typedef struct xcb_dri2_get_msc_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t ust_hi; /**<  */
-    uint32_t ust_lo; /**<  */
-    uint32_t msc_hi; /**<  */
-    uint32_t msc_lo; /**<  */
-    uint32_t sbc_hi; /**<  */
-    uint32_t sbc_lo; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t ust_hi;
+    uint32_t ust_lo;
+    uint32_t msc_hi;
+    uint32_t msc_lo;
+    uint32_t sbc_hi;
+    uint32_t sbc_lo;
 } xcb_dri2_get_msc_reply_t;
 
 /**
  * @brief xcb_dri2_wait_msc_cookie_t
  **/
 typedef struct xcb_dri2_wait_msc_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_wait_msc_cookie_t;
 
 /** Opcode for xcb_dri2_wait_msc. */
@@ -402,39 +402,39 @@ typedef struct xcb_dri2_wait_msc_cookie_t {
  * @brief xcb_dri2_wait_msc_request_t
  **/
 typedef struct xcb_dri2_wait_msc_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       target_msc_hi; /**<  */
-    uint32_t       target_msc_lo; /**<  */
-    uint32_t       divisor_hi; /**<  */
-    uint32_t       divisor_lo; /**<  */
-    uint32_t       remainder_hi; /**<  */
-    uint32_t       remainder_lo; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       target_msc_hi;
+    uint32_t       target_msc_lo;
+    uint32_t       divisor_hi;
+    uint32_t       divisor_lo;
+    uint32_t       remainder_hi;
+    uint32_t       remainder_lo;
 } xcb_dri2_wait_msc_request_t;
 
 /**
  * @brief xcb_dri2_wait_msc_reply_t
  **/
 typedef struct xcb_dri2_wait_msc_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t ust_hi; /**<  */
-    uint32_t ust_lo; /**<  */
-    uint32_t msc_hi; /**<  */
-    uint32_t msc_lo; /**<  */
-    uint32_t sbc_hi; /**<  */
-    uint32_t sbc_lo; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t ust_hi;
+    uint32_t ust_lo;
+    uint32_t msc_hi;
+    uint32_t msc_lo;
+    uint32_t sbc_hi;
+    uint32_t sbc_lo;
 } xcb_dri2_wait_msc_reply_t;
 
 /**
  * @brief xcb_dri2_wait_sbc_cookie_t
  **/
 typedef struct xcb_dri2_wait_sbc_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_wait_sbc_cookie_t;
 
 /** Opcode for xcb_dri2_wait_sbc. */
@@ -444,28 +444,28 @@ typedef struct xcb_dri2_wait_sbc_cookie_t {
  * @brief xcb_dri2_wait_sbc_request_t
  **/
 typedef struct xcb_dri2_wait_sbc_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       target_sbc_hi; /**<  */
-    uint32_t       target_sbc_lo; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       target_sbc_hi;
+    uint32_t       target_sbc_lo;
 } xcb_dri2_wait_sbc_request_t;
 
 /**
  * @brief xcb_dri2_wait_sbc_reply_t
  **/
 typedef struct xcb_dri2_wait_sbc_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t ust_hi; /**<  */
-    uint32_t ust_lo; /**<  */
-    uint32_t msc_hi; /**<  */
-    uint32_t msc_lo; /**<  */
-    uint32_t sbc_hi; /**<  */
-    uint32_t sbc_lo; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t ust_hi;
+    uint32_t ust_lo;
+    uint32_t msc_hi;
+    uint32_t msc_lo;
+    uint32_t sbc_hi;
+    uint32_t sbc_lo;
 } xcb_dri2_wait_sbc_reply_t;
 
 /** Opcode for xcb_dri2_swap_interval. */
@@ -475,18 +475,18 @@ typedef struct xcb_dri2_wait_sbc_reply_t {
  * @brief xcb_dri2_swap_interval_request_t
  **/
 typedef struct xcb_dri2_swap_interval_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       interval; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       interval;
 } xcb_dri2_swap_interval_request_t;
 
 /**
  * @brief xcb_dri2_get_param_cookie_t
  **/
 typedef struct xcb_dri2_get_param_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_dri2_get_param_cookie_t;
 
 /** Opcode for xcb_dri2_get_param. */
@@ -496,23 +496,23 @@ typedef struct xcb_dri2_get_param_cookie_t {
  * @brief xcb_dri2_get_param_request_t
  **/
 typedef struct xcb_dri2_get_param_request_t {
-    uint8_t        major_opcode; /**<  */
-    uint8_t        minor_opcode; /**<  */
-    uint16_t       length; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       param; /**<  */
+    uint8_t        major_opcode;
+    uint8_t        minor_opcode;
+    uint16_t       length;
+    xcb_drawable_t drawable;
+    uint32_t       param;
 } xcb_dri2_get_param_request_t;
 
 /**
  * @brief xcb_dri2_get_param_reply_t
  **/
 typedef struct xcb_dri2_get_param_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  is_param_recognized; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t value_hi; /**<  */
-    uint32_t value_lo; /**<  */
+    uint8_t  response_type;
+    uint8_t  is_param_recognized;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t value_hi;
+    uint32_t value_lo;
 } xcb_dri2_get_param_reply_t;
 
 /** Opcode for xcb_dri2_buffer_swap_complete. */
@@ -522,17 +522,17 @@ typedef struct xcb_dri2_get_param_reply_t {
  * @brief xcb_dri2_buffer_swap_complete_event_t
  **/
 typedef struct xcb_dri2_buffer_swap_complete_event_t {
-    uint8_t        response_type; /**<  */
-    uint8_t        pad0; /**<  */
-    uint16_t       sequence; /**<  */
-    uint16_t       event_type; /**<  */
-    uint8_t        pad1[2]; /**<  */
-    xcb_drawable_t drawable; /**<  */
-    uint32_t       ust_hi; /**<  */
-    uint32_t       ust_lo; /**<  */
-    uint32_t       msc_hi; /**<  */
-    uint32_t       msc_lo; /**<  */
-    uint32_t       sbc; /**<  */
+    uint8_t        response_type;
+    uint8_t        pad0;
+    uint16_t       sequence;
+    uint16_t       event_type;
+    uint8_t        pad1[2];
+    xcb_drawable_t drawable;
+    uint32_t       ust_hi;
+    uint32_t       ust_lo;
+    uint32_t       msc_hi;
+    uint32_t       msc_lo;
+    uint32_t       sbc;
 } xcb_dri2_buffer_swap_complete_event_t;
 
 /** Opcode for xcb_dri2_invalidate_buffers. */
@@ -542,10 +542,10 @@ typedef struct xcb_dri2_buffer_swap_complete_event_t {
  * @brief xcb_dri2_invalidate_buffers_event_t
  **/
 typedef struct xcb_dri2_invalidate_buffers_event_t {
-    uint8_t        response_type; /**<  */
-    uint8_t        pad0; /**<  */
-    uint16_t       sequence; /**<  */
-    xcb_drawable_t drawable; /**<  */
+    uint8_t        response_type;
+    uint8_t        pad0;
+    uint16_t       sequence;
+    xcb_drawable_t drawable;
 } xcb_dri2_invalidate_buffers_event_t;
 
 /**
@@ -557,7 +557,7 @@ typedef struct xcb_dri2_invalidate_buffers_event_t {
  * element. The member index is increased by sizeof(xcb_dri2_dri2_buffer_t)
  */
 void
-xcb_dri2_dri2_buffer_next (xcb_dri2_dri2_buffer_iterator_t *i  /**< */);
+xcb_dri2_dri2_buffer_next (xcb_dri2_dri2_buffer_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -569,7 +569,7 @@ xcb_dri2_dri2_buffer_next (xcb_dri2_dri2_buffer_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_dri2_dri2_buffer_end (xcb_dri2_dri2_buffer_iterator_t i  /**< */);
+xcb_dri2_dri2_buffer_end (xcb_dri2_dri2_buffer_iterator_t i);
 
 /**
  * Get the next element of the iterator
@@ -580,7 +580,7 @@ xcb_dri2_dri2_buffer_end (xcb_dri2_dri2_buffer_iterator_t i  /**< */);
  * element. The member index is increased by sizeof(xcb_dri2_attach_format_t)
  */
 void
-xcb_dri2_attach_format_next (xcb_dri2_attach_format_iterator_t *i  /**< */);
+xcb_dri2_attach_format_next (xcb_dri2_attach_format_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -592,7 +592,7 @@ xcb_dri2_attach_format_next (xcb_dri2_attach_format_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_dri2_attach_format_end (xcb_dri2_attach_format_iterator_t i  /**< */);
+xcb_dri2_attach_format_end (xcb_dri2_attach_format_iterator_t i);
 
 /**
  *
@@ -603,9 +603,9 @@ xcb_dri2_attach_format_end (xcb_dri2_attach_format_iterator_t i  /**< */);
  *
  */
 xcb_dri2_query_version_cookie_t
-xcb_dri2_query_version (xcb_connection_t *c  /**< */,
-                        uint32_t          major_version  /**< */,
-                        uint32_t          minor_version  /**< */);
+xcb_dri2_query_version (xcb_connection_t *c,
+                        uint32_t          major_version,
+                        uint32_t          minor_version);
 
 /**
  *
@@ -619,9 +619,9 @@ xcb_dri2_query_version (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_query_version_cookie_t
-xcb_dri2_query_version_unchecked (xcb_connection_t *c  /**< */,
-                                  uint32_t          major_version  /**< */,
-                                  uint32_t          minor_version  /**< */);
+xcb_dri2_query_version_unchecked (xcb_connection_t *c,
+                                  uint32_t          major_version,
+                                  uint32_t          minor_version);
 
 /**
  * Return the reply
@@ -638,12 +638,12 @@ xcb_dri2_query_version_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_query_version_reply_t *
-xcb_dri2_query_version_reply (xcb_connection_t                 *c  /**< */,
+xcb_dri2_query_version_reply (xcb_connection_t                 *c,
                               xcb_dri2_query_version_cookie_t   cookie  /**< */,
-                              xcb_generic_error_t             **e  /**< */);
+                              xcb_generic_error_t             **e);
 
 int
-xcb_dri2_connect_sizeof (const void  *_buffer  /**< */);
+xcb_dri2_connect_sizeof (const void  *_buffer);
 
 /**
  *
@@ -654,9 +654,9 @@ xcb_dri2_connect_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_dri2_connect_cookie_t
-xcb_dri2_connect (xcb_connection_t *c  /**< */,
-                  xcb_window_t      window  /**< */,
-                  uint32_t          driver_type  /**< */);
+xcb_dri2_connect (xcb_connection_t *c,
+                  xcb_window_t      window,
+                  uint32_t          driver_type);
 
 /**
  *
@@ -670,36 +670,36 @@ xcb_dri2_connect (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_connect_cookie_t
-xcb_dri2_connect_unchecked (xcb_connection_t *c  /**< */,
-                            xcb_window_t      window  /**< */,
-                            uint32_t          driver_type  /**< */);
+xcb_dri2_connect_unchecked (xcb_connection_t *c,
+                            xcb_window_t      window,
+                            uint32_t          driver_type);
 
 char *
-xcb_dri2_connect_driver_name (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_driver_name (const xcb_dri2_connect_reply_t *R);
 
 int
-xcb_dri2_connect_driver_name_length (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_driver_name_length (const xcb_dri2_connect_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_dri2_connect_driver_name_end (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_driver_name_end (const xcb_dri2_connect_reply_t *R);
 
 void *
-xcb_dri2_connect_alignment_pad (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_alignment_pad (const xcb_dri2_connect_reply_t *R);
 
 int
-xcb_dri2_connect_alignment_pad_length (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_alignment_pad_length (const xcb_dri2_connect_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_dri2_connect_alignment_pad_end (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_alignment_pad_end (const xcb_dri2_connect_reply_t *R);
 
 char *
-xcb_dri2_connect_device_name (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_device_name (const xcb_dri2_connect_reply_t *R);
 
 int
-xcb_dri2_connect_device_name_length (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_device_name_length (const xcb_dri2_connect_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_dri2_connect_device_name_end (const xcb_dri2_connect_reply_t *R  /**< */);
+xcb_dri2_connect_device_name_end (const xcb_dri2_connect_reply_t *R);
 
 /**
  * Return the reply
@@ -716,9 +716,9 @@ xcb_dri2_connect_device_name_end (const xcb_dri2_connect_reply_t *R  /**< */);
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_connect_reply_t *
-xcb_dri2_connect_reply (xcb_connection_t           *c  /**< */,
+xcb_dri2_connect_reply (xcb_connection_t           *c,
                         xcb_dri2_connect_cookie_t   cookie  /**< */,
-                        xcb_generic_error_t       **e  /**< */);
+                        xcb_generic_error_t       **e);
 
 /**
  *
@@ -729,9 +729,9 @@ xcb_dri2_connect_reply (xcb_connection_t           *c  /**< */,
  *
  */
 xcb_dri2_authenticate_cookie_t
-xcb_dri2_authenticate (xcb_connection_t *c  /**< */,
-                       xcb_window_t      window  /**< */,
-                       uint32_t          magic  /**< */);
+xcb_dri2_authenticate (xcb_connection_t *c,
+                       xcb_window_t      window,
+                       uint32_t          magic);
 
 /**
  *
@@ -745,9 +745,9 @@ xcb_dri2_authenticate (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_authenticate_cookie_t
-xcb_dri2_authenticate_unchecked (xcb_connection_t *c  /**< */,
-                                 xcb_window_t      window  /**< */,
-                                 uint32_t          magic  /**< */);
+xcb_dri2_authenticate_unchecked (xcb_connection_t *c,
+                                 xcb_window_t      window,
+                                 uint32_t          magic);
 
 /**
  * Return the reply
@@ -764,9 +764,9 @@ xcb_dri2_authenticate_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_authenticate_reply_t *
-xcb_dri2_authenticate_reply (xcb_connection_t                *c  /**< */,
+xcb_dri2_authenticate_reply (xcb_connection_t                *c,
                              xcb_dri2_authenticate_cookie_t   cookie  /**< */,
-                             xcb_generic_error_t            **e  /**< */);
+                             xcb_generic_error_t            **e);
 
 /**
  *
@@ -780,8 +780,8 @@ xcb_dri2_authenticate_reply (xcb_connection_t                *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_dri2_create_drawable_checked (xcb_connection_t *c  /**< */,
-                                  xcb_drawable_t    drawable  /**< */);
+xcb_dri2_create_drawable_checked (xcb_connection_t *c,
+                                  xcb_drawable_t    drawable);
 
 /**
  *
@@ -792,8 +792,8 @@ xcb_dri2_create_drawable_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_dri2_create_drawable (xcb_connection_t *c  /**< */,
-                          xcb_drawable_t    drawable  /**< */);
+xcb_dri2_create_drawable (xcb_connection_t *c,
+                          xcb_drawable_t    drawable);
 
 /**
  *
@@ -807,8 +807,8 @@ xcb_dri2_create_drawable (xcb_connection_t *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_dri2_destroy_drawable_checked (xcb_connection_t *c  /**< */,
-                                   xcb_drawable_t    drawable  /**< */);
+xcb_dri2_destroy_drawable_checked (xcb_connection_t *c,
+                                   xcb_drawable_t    drawable);
 
 /**
  *
@@ -819,12 +819,12 @@ xcb_dri2_destroy_drawable_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_dri2_destroy_drawable (xcb_connection_t *c  /**< */,
-                           xcb_drawable_t    drawable  /**< */);
+xcb_dri2_destroy_drawable (xcb_connection_t *c,
+                           xcb_drawable_t    drawable);
 
 int
-xcb_dri2_get_buffers_sizeof (const void  *_buffer  /**< */,
-                             uint32_t     attachments_len  /**< */);
+xcb_dri2_get_buffers_sizeof (const void  *_buffer,
+                             uint32_t     attachments_len);
 
 /**
  *
@@ -835,11 +835,11 @@ xcb_dri2_get_buffers_sizeof (const void  *_buffer  /**< */,
  *
  */
 xcb_dri2_get_buffers_cookie_t
-xcb_dri2_get_buffers (xcb_connection_t *c  /**< */,
-                      xcb_drawable_t    drawable  /**< */,
-                      uint32_t          count  /**< */,
-                      uint32_t          attachments_len  /**< */,
-                      const uint32_t   *attachments  /**< */);
+xcb_dri2_get_buffers (xcb_connection_t *c,
+                      xcb_drawable_t    drawable,
+                      uint32_t          count,
+                      uint32_t          attachments_len,
+                      const uint32_t   *attachments);
 
 /**
  *
@@ -853,20 +853,20 @@ xcb_dri2_get_buffers (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_get_buffers_cookie_t
-xcb_dri2_get_buffers_unchecked (xcb_connection_t *c  /**< */,
-                                xcb_drawable_t    drawable  /**< */,
-                                uint32_t          count  /**< */,
-                                uint32_t          attachments_len  /**< */,
-                                const uint32_t   *attachments  /**< */);
+xcb_dri2_get_buffers_unchecked (xcb_connection_t *c,
+                                xcb_drawable_t    drawable,
+                                uint32_t          count,
+                                uint32_t          attachments_len,
+                                const uint32_t   *attachments);
 
 xcb_dri2_dri2_buffer_t *
-xcb_dri2_get_buffers_buffers (const xcb_dri2_get_buffers_reply_t *R  /**< */);
+xcb_dri2_get_buffers_buffers (const xcb_dri2_get_buffers_reply_t *R);
 
 int
-xcb_dri2_get_buffers_buffers_length (const xcb_dri2_get_buffers_reply_t *R  /**< */);
+xcb_dri2_get_buffers_buffers_length (const xcb_dri2_get_buffers_reply_t *R);
 
 xcb_dri2_dri2_buffer_iterator_t
-xcb_dri2_get_buffers_buffers_iterator (const xcb_dri2_get_buffers_reply_t *R  /**< */);
+xcb_dri2_get_buffers_buffers_iterator (const xcb_dri2_get_buffers_reply_t *R);
 
 /**
  * Return the reply
@@ -883,9 +883,9 @@ xcb_dri2_get_buffers_buffers_iterator (const xcb_dri2_get_buffers_reply_t *R  /*
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_get_buffers_reply_t *
-xcb_dri2_get_buffers_reply (xcb_connection_t               *c  /**< */,
+xcb_dri2_get_buffers_reply (xcb_connection_t               *c,
                             xcb_dri2_get_buffers_cookie_t   cookie  /**< */,
-                            xcb_generic_error_t           **e  /**< */);
+                            xcb_generic_error_t           **e);
 
 /**
  *
@@ -896,11 +896,11 @@ xcb_dri2_get_buffers_reply (xcb_connection_t               *c  /**< */,
  *
  */
 xcb_dri2_copy_region_cookie_t
-xcb_dri2_copy_region (xcb_connection_t *c  /**< */,
-                      xcb_drawable_t    drawable  /**< */,
-                      uint32_t          region  /**< */,
-                      uint32_t          dest  /**< */,
-                      uint32_t          src  /**< */);
+xcb_dri2_copy_region (xcb_connection_t *c,
+                      xcb_drawable_t    drawable,
+                      uint32_t          region,
+                      uint32_t          dest,
+                      uint32_t          src);
 
 /**
  *
@@ -914,11 +914,11 @@ xcb_dri2_copy_region (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_copy_region_cookie_t
-xcb_dri2_copy_region_unchecked (xcb_connection_t *c  /**< */,
-                                xcb_drawable_t    drawable  /**< */,
-                                uint32_t          region  /**< */,
-                                uint32_t          dest  /**< */,
-                                uint32_t          src  /**< */);
+xcb_dri2_copy_region_unchecked (xcb_connection_t *c,
+                                xcb_drawable_t    drawable,
+                                uint32_t          region,
+                                uint32_t          dest,
+                                uint32_t          src);
 
 /**
  * Return the reply
@@ -935,13 +935,13 @@ xcb_dri2_copy_region_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_copy_region_reply_t *
-xcb_dri2_copy_region_reply (xcb_connection_t               *c  /**< */,
+xcb_dri2_copy_region_reply (xcb_connection_t               *c,
                             xcb_dri2_copy_region_cookie_t   cookie  /**< */,
-                            xcb_generic_error_t           **e  /**< */);
+                            xcb_generic_error_t           **e);
 
 int
-xcb_dri2_get_buffers_with_format_sizeof (const void  *_buffer  /**< */,
-                                         uint32_t     attachments_len  /**< */);
+xcb_dri2_get_buffers_with_format_sizeof (const void  *_buffer,
+                                         uint32_t     attachments_len);
 
 /**
  *
@@ -952,11 +952,11 @@ xcb_dri2_get_buffers_with_format_sizeof (const void  *_buffer  /**< */,
  *
  */
 xcb_dri2_get_buffers_with_format_cookie_t
-xcb_dri2_get_buffers_with_format (xcb_connection_t               *c  /**< */,
-                                  xcb_drawable_t                  drawable  /**< */,
-                                  uint32_t                        count  /**< */,
-                                  uint32_t                        attachments_len  /**< */,
-                                  const xcb_dri2_attach_format_t *attachments  /**< */);
+xcb_dri2_get_buffers_with_format (xcb_connection_t               *c,
+                                  xcb_drawable_t                  drawable,
+                                  uint32_t                        count,
+                                  uint32_t                        attachments_len,
+                                  const xcb_dri2_attach_format_t *attachments);
 
 /**
  *
@@ -970,20 +970,20 @@ xcb_dri2_get_buffers_with_format (xcb_connection_t               *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_get_buffers_with_format_cookie_t
-xcb_dri2_get_buffers_with_format_unchecked (xcb_connection_t               *c  /**< */,
-                                            xcb_drawable_t                  drawable  /**< */,
-                                            uint32_t                        count  /**< */,
-                                            uint32_t                        attachments_len  /**< */,
-                                            const xcb_dri2_attach_format_t *attachments  /**< */);
+xcb_dri2_get_buffers_with_format_unchecked (xcb_connection_t               *c,
+                                            xcb_drawable_t                  drawable,
+                                            uint32_t                        count,
+                                            uint32_t                        attachments_len,
+                                            const xcb_dri2_attach_format_t *attachments);
 
 xcb_dri2_dri2_buffer_t *
-xcb_dri2_get_buffers_with_format_buffers (const xcb_dri2_get_buffers_with_format_reply_t *R  /**< */);
+xcb_dri2_get_buffers_with_format_buffers (const xcb_dri2_get_buffers_with_format_reply_t *R);
 
 int
-xcb_dri2_get_buffers_with_format_buffers_length (const xcb_dri2_get_buffers_with_format_reply_t *R  /**< */);
+xcb_dri2_get_buffers_with_format_buffers_length (const xcb_dri2_get_buffers_with_format_reply_t *R);
 
 xcb_dri2_dri2_buffer_iterator_t
-xcb_dri2_get_buffers_with_format_buffers_iterator (const xcb_dri2_get_buffers_with_format_reply_t *R  /**< */);
+xcb_dri2_get_buffers_with_format_buffers_iterator (const xcb_dri2_get_buffers_with_format_reply_t *R);
 
 /**
  * Return the reply
@@ -1000,9 +1000,9 @@ xcb_dri2_get_buffers_with_format_buffers_iterator (const xcb_dri2_get_buffers_wi
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_get_buffers_with_format_reply_t *
-xcb_dri2_get_buffers_with_format_reply (xcb_connection_t                           *c  /**< */,
+xcb_dri2_get_buffers_with_format_reply (xcb_connection_t                           *c,
                                         xcb_dri2_get_buffers_with_format_cookie_t   cookie  /**< */,
-                                        xcb_generic_error_t                       **e  /**< */);
+                                        xcb_generic_error_t                       **e);
 
 /**
  *
@@ -1013,14 +1013,14 @@ xcb_dri2_get_buffers_with_format_reply (xcb_connection_t                        
  *
  */
 xcb_dri2_swap_buffers_cookie_t
-xcb_dri2_swap_buffers (xcb_connection_t *c  /**< */,
-                       xcb_drawable_t    drawable  /**< */,
-                       uint32_t          target_msc_hi  /**< */,
-                       uint32_t          target_msc_lo  /**< */,
-                       uint32_t          divisor_hi  /**< */,
-                       uint32_t          divisor_lo  /**< */,
-                       uint32_t          remainder_hi  /**< */,
-                       uint32_t          remainder_lo  /**< */);
+xcb_dri2_swap_buffers (xcb_connection_t *c,
+                       xcb_drawable_t    drawable,
+                       uint32_t          target_msc_hi,
+                       uint32_t          target_msc_lo,
+                       uint32_t          divisor_hi,
+                       uint32_t          divisor_lo,
+                       uint32_t          remainder_hi,
+                       uint32_t          remainder_lo);
 
 /**
  *
@@ -1034,14 +1034,14 @@ xcb_dri2_swap_buffers (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_swap_buffers_cookie_t
-xcb_dri2_swap_buffers_unchecked (xcb_connection_t *c  /**< */,
-                                 xcb_drawable_t    drawable  /**< */,
-                                 uint32_t          target_msc_hi  /**< */,
-                                 uint32_t          target_msc_lo  /**< */,
-                                 uint32_t          divisor_hi  /**< */,
-                                 uint32_t          divisor_lo  /**< */,
-                                 uint32_t          remainder_hi  /**< */,
-                                 uint32_t          remainder_lo  /**< */);
+xcb_dri2_swap_buffers_unchecked (xcb_connection_t *c,
+                                 xcb_drawable_t    drawable,
+                                 uint32_t          target_msc_hi,
+                                 uint32_t          target_msc_lo,
+                                 uint32_t          divisor_hi,
+                                 uint32_t          divisor_lo,
+                                 uint32_t          remainder_hi,
+                                 uint32_t          remainder_lo);
 
 /**
  * Return the reply
@@ -1058,9 +1058,9 @@ xcb_dri2_swap_buffers_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_swap_buffers_reply_t *
-xcb_dri2_swap_buffers_reply (xcb_connection_t                *c  /**< */,
+xcb_dri2_swap_buffers_reply (xcb_connection_t                *c,
                              xcb_dri2_swap_buffers_cookie_t   cookie  /**< */,
-                             xcb_generic_error_t            **e  /**< */);
+                             xcb_generic_error_t            **e);
 
 /**
  *
@@ -1071,8 +1071,8 @@ xcb_dri2_swap_buffers_reply (xcb_connection_t                *c  /**< */,
  *
  */
 xcb_dri2_get_msc_cookie_t
-xcb_dri2_get_msc (xcb_connection_t *c  /**< */,
-                  xcb_drawable_t    drawable  /**< */);
+xcb_dri2_get_msc (xcb_connection_t *c,
+                  xcb_drawable_t    drawable);
 
 /**
  *
@@ -1086,8 +1086,8 @@ xcb_dri2_get_msc (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_get_msc_cookie_t
-xcb_dri2_get_msc_unchecked (xcb_connection_t *c  /**< */,
-                            xcb_drawable_t    drawable  /**< */);
+xcb_dri2_get_msc_unchecked (xcb_connection_t *c,
+                            xcb_drawable_t    drawable);
 
 /**
  * Return the reply
@@ -1104,9 +1104,9 @@ xcb_dri2_get_msc_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_get_msc_reply_t *
-xcb_dri2_get_msc_reply (xcb_connection_t           *c  /**< */,
+xcb_dri2_get_msc_reply (xcb_connection_t           *c,
                         xcb_dri2_get_msc_cookie_t   cookie  /**< */,
-                        xcb_generic_error_t       **e  /**< */);
+                        xcb_generic_error_t       **e);
 
 /**
  *
@@ -1117,14 +1117,14 @@ xcb_dri2_get_msc_reply (xcb_connection_t           *c  /**< */,
  *
  */
 xcb_dri2_wait_msc_cookie_t
-xcb_dri2_wait_msc (xcb_connection_t *c  /**< */,
-                   xcb_drawable_t    drawable  /**< */,
-                   uint32_t          target_msc_hi  /**< */,
-                   uint32_t          target_msc_lo  /**< */,
-                   uint32_t          divisor_hi  /**< */,
-                   uint32_t          divisor_lo  /**< */,
-                   uint32_t          remainder_hi  /**< */,
-                   uint32_t          remainder_lo  /**< */);
+xcb_dri2_wait_msc (xcb_connection_t *c,
+                   xcb_drawable_t    drawable,
+                   uint32_t          target_msc_hi,
+                   uint32_t          target_msc_lo,
+                   uint32_t          divisor_hi,
+                   uint32_t          divisor_lo,
+                   uint32_t          remainder_hi,
+                   uint32_t          remainder_lo);
 
 /**
  *
@@ -1138,14 +1138,14 @@ xcb_dri2_wait_msc (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_wait_msc_cookie_t
-xcb_dri2_wait_msc_unchecked (xcb_connection_t *c  /**< */,
-                             xcb_drawable_t    drawable  /**< */,
-                             uint32_t          target_msc_hi  /**< */,
-                             uint32_t          target_msc_lo  /**< */,
-                             uint32_t          divisor_hi  /**< */,
-                             uint32_t          divisor_lo  /**< */,
-                             uint32_t          remainder_hi  /**< */,
-                             uint32_t          remainder_lo  /**< */);
+xcb_dri2_wait_msc_unchecked (xcb_connection_t *c,
+                             xcb_drawable_t    drawable,
+                             uint32_t          target_msc_hi,
+                             uint32_t          target_msc_lo,
+                             uint32_t          divisor_hi,
+                             uint32_t          divisor_lo,
+                             uint32_t          remainder_hi,
+                             uint32_t          remainder_lo);
 
 /**
  * Return the reply
@@ -1162,9 +1162,9 @@ xcb_dri2_wait_msc_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_wait_msc_reply_t *
-xcb_dri2_wait_msc_reply (xcb_connection_t            *c  /**< */,
+xcb_dri2_wait_msc_reply (xcb_connection_t            *c,
                          xcb_dri2_wait_msc_cookie_t   cookie  /**< */,
-                         xcb_generic_error_t        **e  /**< */);
+                         xcb_generic_error_t        **e);
 
 /**
  *
@@ -1175,10 +1175,10 @@ xcb_dri2_wait_msc_reply (xcb_connection_t            *c  /**< */,
  *
  */
 xcb_dri2_wait_sbc_cookie_t
-xcb_dri2_wait_sbc (xcb_connection_t *c  /**< */,
-                   xcb_drawable_t    drawable  /**< */,
-                   uint32_t          target_sbc_hi  /**< */,
-                   uint32_t          target_sbc_lo  /**< */);
+xcb_dri2_wait_sbc (xcb_connection_t *c,
+                   xcb_drawable_t    drawable,
+                   uint32_t          target_sbc_hi,
+                   uint32_t          target_sbc_lo);
 
 /**
  *
@@ -1192,10 +1192,10 @@ xcb_dri2_wait_sbc (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_wait_sbc_cookie_t
-xcb_dri2_wait_sbc_unchecked (xcb_connection_t *c  /**< */,
-                             xcb_drawable_t    drawable  /**< */,
-                             uint32_t          target_sbc_hi  /**< */,
-                             uint32_t          target_sbc_lo  /**< */);
+xcb_dri2_wait_sbc_unchecked (xcb_connection_t *c,
+                             xcb_drawable_t    drawable,
+                             uint32_t          target_sbc_hi,
+                             uint32_t          target_sbc_lo);
 
 /**
  * Return the reply
@@ -1212,9 +1212,9 @@ xcb_dri2_wait_sbc_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_wait_sbc_reply_t *
-xcb_dri2_wait_sbc_reply (xcb_connection_t            *c  /**< */,
+xcb_dri2_wait_sbc_reply (xcb_connection_t            *c,
                          xcb_dri2_wait_sbc_cookie_t   cookie  /**< */,
-                         xcb_generic_error_t        **e  /**< */);
+                         xcb_generic_error_t        **e);
 
 /**
  *
@@ -1228,9 +1228,9 @@ xcb_dri2_wait_sbc_reply (xcb_connection_t            *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_dri2_swap_interval_checked (xcb_connection_t *c  /**< */,
-                                xcb_drawable_t    drawable  /**< */,
-                                uint32_t          interval  /**< */);
+xcb_dri2_swap_interval_checked (xcb_connection_t *c,
+                                xcb_drawable_t    drawable,
+                                uint32_t          interval);
 
 /**
  *
@@ -1241,9 +1241,9 @@ xcb_dri2_swap_interval_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_dri2_swap_interval (xcb_connection_t *c  /**< */,
-                        xcb_drawable_t    drawable  /**< */,
-                        uint32_t          interval  /**< */);
+xcb_dri2_swap_interval (xcb_connection_t *c,
+                        xcb_drawable_t    drawable,
+                        uint32_t          interval);
 
 /**
  *
@@ -1254,9 +1254,9 @@ xcb_dri2_swap_interval (xcb_connection_t *c  /**< */,
  *
  */
 xcb_dri2_get_param_cookie_t
-xcb_dri2_get_param (xcb_connection_t *c  /**< */,
-                    xcb_drawable_t    drawable  /**< */,
-                    uint32_t          param  /**< */);
+xcb_dri2_get_param (xcb_connection_t *c,
+                    xcb_drawable_t    drawable,
+                    uint32_t          param);
 
 /**
  *
@@ -1270,9 +1270,9 @@ xcb_dri2_get_param (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_dri2_get_param_cookie_t
-xcb_dri2_get_param_unchecked (xcb_connection_t *c  /**< */,
-                              xcb_drawable_t    drawable  /**< */,
-                              uint32_t          param  /**< */);
+xcb_dri2_get_param_unchecked (xcb_connection_t *c,
+                              xcb_drawable_t    drawable,
+                              uint32_t          param);
 
 /**
  * Return the reply
@@ -1289,9 +1289,9 @@ xcb_dri2_get_param_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_dri2_get_param_reply_t *
-xcb_dri2_get_param_reply (xcb_connection_t             *c  /**< */,
+xcb_dri2_get_param_reply (xcb_connection_t             *c,
                           xcb_dri2_get_param_cookie_t   cookie  /**< */,
-                          xcb_generic_error_t         **e  /**< */);
+                          xcb_generic_error_t         **e);
 
 
 #ifdef __cplusplus

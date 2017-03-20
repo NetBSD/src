@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/02/27 21:47:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2017/03/20 06:52:29 pgoyette Exp $
 
 PROG_CXX=	llvm-readobj
 NOMAN=		yes
@@ -16,7 +16,6 @@ SRCS=	llvm-readobj.cpp \
 	Error.cpp \
 	MachODumper.cpp \
 	ObjDumper.cpp \
-	StreamWriter.cpp \
 	Win64EHDumper.cpp
 
 LLVM_LIBS+= \
@@ -26,12 +25,15 @@ LLVM_LIBS+= \
 	PowerPCTargetInfo \
 	SparcTargetInfo \
 	X86TargetInfo \
+	DebugInfoCodeView \
+	DebugInfoMSF \
 	Object \
 	MC \
 	MCParser \
 	BitReader \
 	IR \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.39 2015/06/16 23:18:55 christos Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.39.2.1 2017/03/20 06:57:03 pgoyette Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -43,6 +43,7 @@
 #include <err.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 
 #include <prop/proplib.h>
 

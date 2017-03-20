@@ -59,7 +59,8 @@ void test1() {
 
 // CHECK-LABEL: define void @test2
 void test2(struct Foo *t) {
-  // CHECK: call i32 @ObjectSize1(i8* %{{.*}}, i64 36)
+  // CHECK: [[VAR:%[0-9]+]] = call i64 @llvm.objectsize
+  // CHECK: call i32 @ObjectSize1(i8* %{{.*}}, i64 [[VAR]])
   gi = ObjectSize1(&t->t[1]);
   // CHECK: call i32 @ObjectSize3(i8* %{{.*}}, i64 36)
   gi = ObjectSize3(&t->t[1]);
@@ -168,7 +169,8 @@ void test4(struct Foo *t) {
 
   // CHECK: call i32 @_Z27NoViableOverloadObjectSize0PvU17pass_object_size0(i8* %{{.*}}, i64 %{{.*}})
   gi = NoViableOverloadObjectSize0(&t[1].t[1]);
-  // CHECK: call i32 @_Z27NoViableOverloadObjectSize1PvU17pass_object_size1(i8* %{{.*}}, i64 36)
+  // CHECK: [[VAR:%[0-9]+]] = call i64 @llvm.objectsize
+  // CHECK: call i32 @_Z27NoViableOverloadObjectSize1PvU17pass_object_size1(i8* %{{.*}}, i64 [[VAR]])
   gi = NoViableOverloadObjectSize1(&t[1].t[1]);
   // CHECK: call i32 @_Z27NoViableOverloadObjectSize2PvU17pass_object_size2(i8* %{{.*}}, i64 %{{.*}})
   gi = NoViableOverloadObjectSize2(&t[1].t[1]);
@@ -274,7 +276,8 @@ void test7() {
 
 // CHECK-LABEL: define void @test8
 void test8(struct Foo *t) {
-  // CHECK: call i32 @"\01Identity"(i8* %{{.*}}, i64 36)
+  // CHECK: [[VAR:%[0-9]+]] = call i64 @llvm.objectsize
+  // CHECK: call i32 @"\01Identity"(i8* %{{.*}}, i64 [[VAR]])
   gi = AsmObjectSize1(&t[1].t[1]);
   // CHECK: call i32 @"\01Identity"(i8* %{{.*}}, i64 36)
   gi = AsmObjectSize3(&t[1].t[1]);
@@ -350,4 +353,19 @@ void test13() {
   // CHECK-NOT: @llvm.objectsize
   ObjectSize0(++p);
   ObjectSize0(p++);
+}
+
+// There was a bug where variadic functions with pass_object_size would cause
+// problems in the form of failed assertions.
+void my_sprintf(char *const c __attribute__((pass_object_size(0))), ...) {}
+
+// CHECK-LABEL: define void @test14
+void test14(char *c) {
+  // CHECK: @llvm.objectsize
+  // CHECK: call void (i8*, i64, ...) @my_sprintf
+  my_sprintf(c);
+
+  // CHECK: @llvm.objectsize
+  // CHECK: call void (i8*, i64, ...) @my_sprintf
+  my_sprintf(c, 1, 2, 3);
 }

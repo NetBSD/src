@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_fast_mp_invmod.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
+/*	$NetBSD: bn_fast_mp_invmod.c,v 1.1.1.2.6.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_FAST_MP_INVMOD_C

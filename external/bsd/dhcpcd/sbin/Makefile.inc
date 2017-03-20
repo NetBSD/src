@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2008/09/19 23:00:49 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.2.46.1 2017/03/20 06:52:19 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -9,3 +9,4 @@ BINDIR=		/sbin
 LDSTATIC?=	-static
 .endif
 
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member

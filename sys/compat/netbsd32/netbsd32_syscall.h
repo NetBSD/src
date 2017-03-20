@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.122.2.1 2016/11/04 14:49:07 pgoyette Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.122.2.2 2017/03/20 06:57:25 pgoyette Exp $ */
 
 /*
  * System call numbers.

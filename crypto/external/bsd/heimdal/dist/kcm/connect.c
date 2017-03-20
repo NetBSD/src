@@ -1,4 +1,4 @@
-/*	$NetBSD: connect.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: connect.c,v 1.1.1.2.6.1 2017/03/20 06:51:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan

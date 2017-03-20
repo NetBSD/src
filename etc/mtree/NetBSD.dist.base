@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.153 2016/03/12 23:07:05 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.153.2.1 2017/03/20 06:52:12 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -41,6 +41,7 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
+./etc/nsd
 ./etc/openldap
 ./etc/openssl
 ./etc/openssl/certs
@@ -104,7 +105,7 @@
 ./usr/include/c++
 ./usr/include/c++/experimental
 ./usr/include/c++/ext
-./usr/include/clang-3.8
+./usr/include/clang-4.0
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm
@@ -245,6 +246,7 @@
 ./usr/lib/lua
 ./usr/lib/lua/5.3
 ./usr/lib/pkgconfig
+./usr/lib/postfix
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
@@ -375,6 +377,7 @@
 ./usr/share/examples/lutok
 ./usr/share/examples/mount_portal
 ./usr/share/examples/npf
+./usr/share/examples/nsd
 ./usr/share/examples/openssl
 ./usr/share/examples/pf
 ./usr/share/examples/postfix
@@ -390,6 +393,7 @@
 ./usr/share/examples/tmux
 ./usr/share/examples/wpa_supplicant
 ./usr/share/examples/wsmoused
+./usr/share/examples/unbound
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle
@@ -1269,6 +1273,12 @@
 ./var/chroot/named/var/run/lwresd	mode=0775 gname=named
 ./var/chroot/named/var/run/named	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
+./var/chroot/nsd		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/etc		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/etc/nsd	mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var/db		mode=0755 uname=_nsd gname=_nsd
+./var/chroot/nsd/var/db/nsd	mode=0755 uname=_nsd gname=_nsd
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
 ./var/chroot/ntpd/etc

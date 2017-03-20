@@ -17,6 +17,7 @@
 #include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/CodeGenCWrappers.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetOptions.h"
 #include <cstring>
@@ -186,7 +187,7 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
     // NoFramePointerElim.
     for (auto &F : *Mod) {
       auto Attrs = F.getAttributes();
-      auto Value = options.NoFramePointerElim ? "true" : "false";
+      StringRef Value(options.NoFramePointerElim ? "true" : "false");
       Attrs = Attrs.addAttribute(F.getContext(), AttributeSet::FunctionIndex,
                                  "no-frame-pointer-elim", Value);
       F.setAttributes(Attrs);
@@ -215,10 +216,12 @@ void LLVMDisposeExecutionEngine(LLVMExecutionEngineRef EE) {
 }
 
 void LLVMRunStaticConstructors(LLVMExecutionEngineRef EE) {
+  unwrap(EE)->finalizeObject();
   unwrap(EE)->runStaticConstructorsDestructors(false);
 }
 
 void LLVMRunStaticDestructors(LLVMExecutionEngineRef EE) {
+  unwrap(EE)->finalizeObject();
   unwrap(EE)->runStaticConstructorsDestructors(true);
 }
 

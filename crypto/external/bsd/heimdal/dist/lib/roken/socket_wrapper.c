@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_wrapper.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: socket_wrapper.c,v 1.1.1.2.6.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (C) Jelmer Vernooij 2005 <jelmer@samba.org>

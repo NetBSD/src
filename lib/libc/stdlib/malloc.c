@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: malloc.c,v 1.56.2.1 2017/03/20 06:56:58 pgoyette Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -84,21 +84,27 @@ void utrace(struct ut *, int);
 
 #include <sys/types.h>
 #if defined(__NetBSD__)
-#   define malloc_minsize               16U
-#   define HAS_UTRACE
-#   define UTRACE_LABEL "malloc",
-#include <sys/cdefs.h>
-#include "extern.h"
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
+# define malloc_minsize               16U
+# ifdef _LIBC
+#  define HAS_UTRACE
+#  define UTRACE_LABEL "malloc",
 int utrace(const char *, void *, size_t);
-
-#include <reentrant.h>
+# endif
+# include <sys/cdefs.h>
+# include "extern.h"
+# if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: malloc.c,v 1.56.2.1 2017/03/20 06:56:58 pgoyette Exp $");
+# endif /* LIBC_SCCS and not lint */
+# include <reentrant.h>
+# ifdef _REENTRANT
 extern int __isthreaded;
 static mutex_t thread_lock = MUTEX_INITIALIZER;
-#define _MALLOC_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
-#define _MALLOC_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
+#  define _MALLOC_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
+#  define _MALLOC_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
+# else
+#  define _MALLOC_LOCK()	
+#  define _MALLOC_UNLOCK()
+# endif
 #endif /* __NetBSD__ */
 
 #if defined(__sparc__) && defined(sun)
@@ -452,7 +458,7 @@ malloc_init(void)
     /*
      * Compute page-size related variables.
      */
-    malloc_pagesize = (size_t)sysconf(_SC_PAGESIZE);
+    malloc_pagesize = getpagesize();
     malloc_pagemask = malloc_pagesize - 1;
     for (malloc_pageshift = 0;
 	 (1UL << malloc_pageshift) != malloc_pagesize;
@@ -472,8 +478,10 @@ malloc_init(void)
 		continue;
 	    b[j] = '\0';
 	    p = b;
+#ifdef _LIBC
 	} else if (i == 1 && issetugid() == 0) {
 	    p = getenv("MALLOC_OPTIONS");
+#endif
 	} else if (i == 1) {
 	    continue;
 	} else {

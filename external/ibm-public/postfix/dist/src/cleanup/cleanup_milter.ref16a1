@@ -1,0 +1,3 @@
+./cleanup_milter: NOQUEUE: milter-header-bcc: header X-SPAM-FLAG: NO from client_name[client_addr]; from=<sender> to=<recipient>: bar@example.com
+./cleanup_milter: NOQUEUE: milter-header-bcc: header X-SPAM-FLAG: YES from client_name[client_addr]; from=<sender> to=<recipient>: foo@example.com
+./cleanup_milter: flags = enable_header_body_filter enable_milters

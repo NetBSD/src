@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.56.4.1 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: frag6.c,v 1.56.4.2 2017/03/20 06:57:51 pgoyette Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,15 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.56.4.1 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.56.4.2 2017/03/20 06:57:51 pgoyette Exp $");
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kmem.h>
@@ -596,16 +595,21 @@ frag6_remque(struct ip6q *p6)
 void
 frag6_fasttimo(void)
 {
+
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	if (frag6_drainwanted) {
 		frag6_drain();
 		frag6_drainwanted = 0;
 	}
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -618,8 +622,10 @@ frag6_slowtimo(void)
 {
 	struct ip6q *q6;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	mutex_enter(&frag6_lock);
 	q6 = ip6q.ip6q_next;
@@ -646,8 +652,10 @@ frag6_slowtimo(void)
 	}
 	mutex_exit(&frag6_lock);
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 
 #if 0
 	/*

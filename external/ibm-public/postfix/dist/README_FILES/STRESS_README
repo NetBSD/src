@@ -97,13 +97,16 @@ The "stress" parameter value is the key to making main.cf parameter settings
 stress adaptive. The following settings are the default with Postfix 2.6 and
 later.
 
-    1 smtpd_timeout = ${stress?10}${stress:300}s
-    2 smtpd_hard_error_limit = ${stress?1}${stress:20}
-    3 smtpd_junk_command_limit = ${stress?1}${stress:100}
+    1 smtpd_timeout = ${stress?{10}:{300}}s
+    2 smtpd_hard_error_limit = ${stress?{1}:{20}}
+    3 smtpd_junk_command_limit = ${stress?{1}:{100}}
     4 # Parameters added after Postfix 2.6:
-    5 smtpd_per_record_deadline = ${stress?yes}${stress:no}
-    6 smtpd_starttls_timeout = ${stress?10}${stress:300}s
-    7 address_verify_poll_count = ${stress?1}${stress:3}
+    5 smtpd_per_record_deadline = ${stress?{yes}:{no}}
+    6 smtpd_starttls_timeout = ${stress?{10}:{300}}s
+    7 address_verify_poll_count = ${stress?{1}:{3}}
+
+Postfix versions before 3.0 use the older form ${stress?x}${stress:y} instead
+of the newer form ${stress?{x}:{y}}.
 
 Translation:
 
@@ -146,8 +149,8 @@ Translation:
     $unverified_sender_tempfail_action. No mail should be lost, as long as this
     measure is used only temporarily.
 
-The syntax of ${name?value} and ${name:value} is explained at the beginning of
-the postconf(5) manual page.
+The syntax of ${name?{value}:{value}}, ${name?value} and ${name:value} is
+explained at the beginning of the postconf(5) manual page.
 
 NOTE: Please keep in mind that the stress-adaptive feature is a fairly
 desperate measure to keep ssoommee legitimate mail flowing under overload

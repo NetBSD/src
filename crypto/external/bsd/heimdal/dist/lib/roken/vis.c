@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: vis.c,v 1.1.1.1.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*	NetBSD: vis.c,v 1.37 2008/07/25 22:29:23 dsl Exp	*/
 

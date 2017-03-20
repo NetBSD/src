@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi_ops.c,v 1.1.1.4 2014/05/28 09:58:53 tron Exp $	*/
+/*	$NetBSD: slapi_ops.c,v 1.1.1.4.6.1 2017/03/20 06:56:19 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2014 The OpenLDAP Foundation.
+ * Copyright 2002-2016 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -21,6 +21,9 @@
  * Steve Omrani.  Additional significant contributors include:
  *   Luke Howard
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: slapi_ops.c,v 1.1.1.4.6.1 2017/03/20 06:56:19 pgoyette Exp $");
 
 #include "portable.h"
 

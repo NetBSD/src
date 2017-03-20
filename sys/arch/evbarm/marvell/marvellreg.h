@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellreg.h,v 1.4 2014/03/15 13:56:19 kiyohara Exp $  */
+/*	$NetBSD: marvellreg.h,v 1.4.10.1 2017/03/20 06:57:13 pgoyette Exp $  */
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -40,7 +40,6 @@
 #else
 #define MARVELL_INTERREGS_PBASE			0xf1000000
 #endif
-#define MARVELL_INTERREGS_SIZE			0x00100000
 #define MARVELL_PEXIO_PBASE			0xf2000000
 #define MARVELL_PEXIO_SIZE			0x00100000
 

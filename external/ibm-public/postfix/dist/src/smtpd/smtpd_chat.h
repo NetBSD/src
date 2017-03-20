@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.h,v 1.1.1.1 2009/06/23 10:08:55 tron Exp $	*/
+/*	$NetBSD: smtpd_chat.h,v 1.1.1.1.32.1 2017/03/20 06:56:40 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -16,7 +16,7 @@
   */
 extern void smtpd_chat_reset(SMTPD_STATE *);
 extern void smtpd_chat_query(SMTPD_STATE *);
-extern void PRINTFLIKE(2, 3) smtpd_chat_reply(SMTPD_STATE *, const char *, ...);
+extern void PRINTFLIKE(2, 3) smtpd_chat_reply(SMTPD_STATE *, const char *,...);
 extern void smtpd_chat_notify(SMTPD_STATE *);
 
 /* LICENSE
@@ -29,4 +29,3 @@ extern void smtpd_chat_notify(SMTPD_STATE *);
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*--*/
-

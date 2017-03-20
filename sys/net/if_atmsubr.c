@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.59.2.1 2016/11/04 14:49:20 pgoyette Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.59.2.2 2017/03/20 06:57:49 pgoyette Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.59.2.1 2016/11/04 14:49:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.59.2.2 2017/03/20 06:57:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.59.2.1 2016/11/04 14:49:20 pgoyette
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

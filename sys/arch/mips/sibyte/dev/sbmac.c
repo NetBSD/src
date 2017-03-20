@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.45.2.2 2017/01/07 08:56:21 pgoyette Exp $ */
+/* $NetBSD: sbmac.c,v 1.45.2.3 2017/03/20 06:57:17 pgoyette Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.45.2.2 2017/01/07 08:56:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.45.2.3 2017/03/20 06:57:17 pgoyette Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1754,7 +1754,7 @@ sbmac_intr(void *xsc, uint32_t status, vaddr_t pc)
 	}
 
 	/* try to get more packets going */
-	sbmac_start(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 
@@ -2353,5 +2353,6 @@ sbmac_attach(device_t parent, device_t self, void *aux)
 	 * Call MI attach routines.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
 }

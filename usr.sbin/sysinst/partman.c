@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.13.2.1 2017/01/07 08:57:01 pgoyette Exp $ */
+/*	$NetBSD: partman.c,v 1.13.2.2 2017/03/20 06:58:09 pgoyette Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -65,7 +65,7 @@ typedef struct raids_t {
 	uint total_size;
 	pm_devs_t *pm[MAX_IN_RAID];
 } raids_t;
-raids_t raids[MAX_RAID];
+raids_t *raids;
 
 #define MAX_VND 4
 typedef struct vnds_t {
@@ -81,7 +81,7 @@ typedef struct vnds_t {
 	int pm_part;    /* Used only for */
 	pm_devs_t *pm;  /* referring device */
 } vnds_t;
-vnds_t vnds[MAX_VND];
+vnds_t *vnds;
 
 #define MAX_CGD 4
 typedef struct cgds_t {
@@ -97,7 +97,7 @@ typedef struct cgds_t {
 	const char *iv_type;
 	int key_size;
 } cgds_t;
-cgds_t cgds[MAX_CGD];
+cgds_t *cgds;
 
 #define MAX_LVM_VG 16
 #define MAX_LVM_PV 255
@@ -138,7 +138,7 @@ typedef struct lvms_t {
 	pv_t pv[MAX_LVM_PV];
 	lv_t lv[MAX_LVM_LV];
 } lvms_t;
-lvms_t lvms[MAX_LVM_VG];
+lvms_t *lvms;
 
 typedef struct structinfo_t {
 	int max;
@@ -163,7 +163,7 @@ typedef struct pm_upddevlist_adv_t {
 struct {
     char dev[STRSIZE];
     const char *mnt_opts, *on;
-} mnts[MAX_MNTS];
+} *mnts;
 
 int cursel; /* Number of selected entry in main menu */
 int changed; /* flag indicating that we have unsaved changes */
@@ -376,8 +376,8 @@ pm_raid_menufmt(menudesc *m, int opt, void *arg)
 		return;
 	for (i = 0; i < MAX_IN_RAID; i++)
 		if (dev_ptr->pm[i] != NULL) {
-			strncat(buf, dev_ptr->pm_name[i], STRSIZE);
-			strncat(buf, " ", STRSIZE);
+			strlcat(buf, dev_ptr->pm_name[i], STRSIZE);
+			strlcat(buf, " ", STRSIZE);
 			ok = 1;
 		}
 	if (ok)
@@ -1285,8 +1285,8 @@ pm_lvm_menufmt(menudesc *m, int opt, void *arg)
 	snprintf(buf1, STRSIZE, "VG '%s' on ", dev_ptr->name);
 	for (i = 0; i < MAX_LVM_PV; i++)
 		if (dev_ptr->pv[i].pm != NULL) {
-			strncat(buf1, dev_ptr->pv[i].pm_name, STRSIZE);
-			strncat(buf1, " ", STRSIZE);
+			strlcat(buf1, dev_ptr->pv[i].pm_name, STRSIZE);
+			strlcat(buf1, " ", STRSIZE);
 			ok = 1;
 		}
 	for (i = 0; i < MAX_LVM_LV; i++)
@@ -2115,7 +2115,8 @@ pm_mountall(void)
 	pm_devs_t *pm_i;
 	
 	localfs_dev[0] = '\0';
-	memset(&mnts, 0, sizeof mnts);
+	if (mnts == NULL)
+		mnts = calloc(sizeof(*mnts), MAX_MNTS);
 
 	SLIST_FOREACH(pm_i, &pm_head, l) {
 		ok = 0;
@@ -2730,12 +2731,27 @@ partman(void)
 
 		if (!have_raid)
 			remove_raid_options();
-		if (!have_lvm)
-			remove_lvm_options();
-		if (!have_gpt)
-			remove_gpt_options();
+		else if (!(raids = calloc(sizeof(*raids), MAX_RAID)))
+			have_raid = 0;
+			
+#define remove_vnd_options() (void)0
+		if (!have_vnd)
+			remove_vnd_options();
+		else if (!(vnds = calloc(sizeof(*vnds), MAX_VND)))
+			have_vnd = 0;
+
 		if (!have_cgd)
 			remove_cgd_options();
+		else if (!(cgds = calloc(sizeof(*vnds), MAX_CGD)))
+			have_cgd = 0;
+
+		if (!have_lvm)
+			remove_lvm_options();
+		else if (!(lvms = calloc(sizeof(*lvms), MAX_LVM_VG)))
+			have_lvm = 0;
+
+		if (!have_gpt)
+			remove_gpt_options();
 
 		raids_t_info = (structinfo_t) {
 			.max = MAX_RAID,
@@ -2778,10 +2794,6 @@ partman(void)
 			.parent_size = sizeof lvms[0],
 		};
 
-		memset(&raids, 0, sizeof raids);
-		memset(&cgds, 0, sizeof cgds);
-		memset(&vnds, 0, sizeof vnds);
-		memset(&lvms, 0, sizeof lvms);
 		cursel = 0;
 		changed = 0;
 		firstrun = 0;

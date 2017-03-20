@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.4 2016/01/05 00:47:08 ozaki-r Exp $	*/
+/*	$NetBSD: fenv.h,v 1.4.2.1 2017/03/20 06:57:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define FE_ALL_EXCEPT \
     (FE_INEXACT | FE_DIVBYZERO | FE_UNDERFLOW | FE_OVERFLOW | FE_INVALID)
 
-/* Rounding modes, from FPSR */
+/* Rounding modes, from FPCR */
 #define FE_TONEAREST	FPCR_NEAR
 #define	FE_TOWARDZERO	FPCR_ZERO
 #define	FE_DOWNWARD	FPCR_MINF
@@ -266,12 +266,12 @@ feupdateenv(const fenv_t *__envp)
 static inline int
 feenableexcept(int __mask)
 {
-	fexcept_t __fpsr, __oldmask;
+	fexcept_t __fpcr, __oldmask;
 
-	__get_fpsr(__fpsr);
-	__oldmask = __fpsr & FE_ALL_EXCEPT;
-	__fpsr |= __mask & FE_ALL_EXCEPT;
-	__set_fpsr(__fpsr);
+	__get_fpcr(__fpcr);
+	__oldmask = (__fpcr >> 6) & FE_ALL_EXCEPT;
+	__fpcr |= (__mask & FE_ALL_EXCEPT) << 6;
+	__set_fpcr(__fpcr);
 
 	return __oldmask;
 }
@@ -279,12 +279,12 @@ feenableexcept(int __mask)
 static inline int
 fedisableexcept(int __mask)
 {
-	fexcept_t __fpsr, __oldmask;
+	fexcept_t __fpcr, __oldmask;
 
-	__get_fpsr(__fpsr);
-	__oldmask = __fpsr & FE_ALL_EXCEPT;
-	__fpsr &= ~(__mask & FE_ALL_EXCEPT);
-	__set_fpsr(__fpsr);
+	__get_fpcr(__fpcr);
+	__oldmask = (__fpcr >> 6) & FE_ALL_EXCEPT;
+	__fpcr &= ~((__mask & FE_ALL_EXCEPT) << 6);
+	__set_fpcr(__fpcr);
 
 	return __oldmask;
 }
@@ -292,11 +292,11 @@ fedisableexcept(int __mask)
 static inline int
 fegetexcept(void)
 {
-	fexcept_t __fpsr;
+	fexcept_t __fpcr;
 
-	__get_fpsr(__fpsr);
+	__get_fpcr(__fpcr);
 
-	return __fpsr & FE_ALL_EXCEPT;
+	return (__fpcr >> 6) & FE_ALL_EXCEPT;
 }
 
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */

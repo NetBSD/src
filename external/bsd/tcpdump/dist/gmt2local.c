@@ -21,15 +21,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gmt2local.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: gmt2local.c,v 1.4.2.1 2017/03/20 06:56:21 pgoyette Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 

@@ -449,7 +449,7 @@ An optional string message can be added to the ``deprecated`` and
 If the deprecated or unavailable declaration is used, the message will be
 incorporated into the appropriate diagnostic:
 
-.. code-block:: c++
+.. code-block:: none
 
   harmless.c:4:3: warning: 'explode' is deprecated: extremely unsafe, use 'combust' instead!!!
         [-Wdeprecated-declarations]
@@ -1022,6 +1022,7 @@ The following type trait primitives are supported by Clang:
 * ``__is_nothrow_assignable`` (MSVC 2013, clang)
 * ``__is_constructible`` (MSVC 2013, clang)
 * ``__is_nothrow_constructible`` (MSVC 2013, clang)
+* ``__is_assignable`` (MSVC 2015, clang)
 
 Blocks
 ======
@@ -1505,6 +1506,35 @@ C-style cast applied to each element of the first argument.
 
 Query for this feature with ``__has_builtin(__builtin_convertvector)``.
 
+``__builtin_bitreverse``
+------------------------
+
+* ``__builtin_bitreverse8``
+* ``__builtin_bitreverse16``
+* ``__builtin_bitreverse32``
+* ``__builtin_bitreverse64``
+
+**Syntax**:
+
+.. code-block:: c++
+
+     __builtin_bitreverse32(x)
+
+**Examples**:
+
+.. code-block:: c++
+
+      uint8_t rev_x = __builtin_bitreverse8(x);
+      uint16_t rev_x = __builtin_bitreverse16(x);
+      uint32_t rev_y = __builtin_bitreverse32(y);
+      uint64_t rev_z = __builtin_bitreverse64(z);
+
+**Description**:
+
+The '``__builtin_bitreverse``' family of builtins is used to reverse
+the bitpattern of an integer value; for example ``0b10110110`` becomes
+``0b01101101``.
+
 ``__builtin_unreachable``
 -------------------------
 
@@ -1728,6 +1758,64 @@ convert their operands before performing the operation.
 
 Query for this feature with ``__has_builtin(__builtin_add_overflow)``, etc.
 
+Floating point builtins
+---------------------------------------
+
+``__builtin_canonicalize``
+--------------------------
+
+.. code-block:: c
+
+   double __builtin_canonicalize(double);
+   float __builtin_canonicalizef(float);
+   long double__builtin_canonicalizel(long double);
+
+Returns the platform specific canonical encoding of a floating point
+number. This canonicalization is useful for implementing certain
+numeric primitives such as frexp. See `LLVM canonicalize intrinsic
+<http://llvm.org/docs/LangRef.html#llvm-canonicalize-intrinsic>`_ for
+more information on the semantics.
+
+String builtins
+---------------
+
+Clang provides constant expression evaluation support for builtins forms of
+the following functions from the C standard library ``<strings.h>`` header:
+
+* ``memchr``
+* ``memcmp``
+* ``strchr``
+* ``strcmp``
+* ``strlen``
+* ``strncmp``
+* ``wcschr``
+* ``wcscmp``
+* ``wcslen``
+* ``wcsncmp``
+* ``wmemchr``
+* ``wmemcmp``
+
+In each case, the builtin form has the name of the C library function prefixed
+by ``__builtin_``. Example:
+
+.. code-block:: c
+
+  void *p = __builtin_memchr("foobar", 'b', 5);
+
+In addition to the above, one further builtin is provided:
+
+.. code-block:: c
+
+  char *__builtin_char_memchr(const char *haystack, int needle, size_t size);
+
+``__builtin_char_memchr(a, b, c)`` is identical to
+``(char*)__builtin_memchr(a, b, c)`` except that its use is permitted within
+constant expressions in C++11 onwards (where a cast from ``void*`` to ``char*``
+is disallowed in general).
+
+Support for constant expression evaluation for the above builtins be detected
+with ``__has_feature(cxx_constexpr_string_builtins)``.
+
 .. _langext-__c11_atomic:
 
 __c11_atomic builtins
@@ -1817,6 +1905,82 @@ The types ``T`` currently supported are:
 Note that the compiler does not guarantee that non-temporal loads or stores
 will be used.
 
+C++ Coroutines support builtins
+--------------------------------
+
+.. warning::
+  This is a work in progress. Compatibility across Clang/LLVM releases is not 
+  guaranteed.
+
+Clang provides experimental builtins to support C++ Coroutines as defined by
+http://wg21.link/P0057. The following four are intended to be used by the
+standard library to implement `std::experimental::coroutine_handle` type.
+
+**Syntax**:
+
+.. code-block:: c
+
+  void  __builtin_coro_resume(void *addr);
+  void  __builtin_coro_destroy(void *addr);
+  bool  __builtin_coro_done(void *addr);
+  void *__builtin_coro_promise(void *addr, int alignment, bool from_promise)
+
+**Example of use**:
+
+.. code-block:: c++
+
+  template <> struct coroutine_handle<void> {
+    void resume() const { __builtin_coro_resume(ptr); }
+    void destroy() const { __builtin_coro_destroy(ptr); }
+    bool done() const { return __builtin_coro_done(ptr); }
+    // ...
+  protected:
+    void *ptr;
+  };
+
+  template <typename Promise> struct coroutine_handle : coroutine_handle<> {
+    // ...
+    Promise &promise() const {
+      return *reinterpret_cast<Promise *>(
+        __builtin_coro_promise(ptr, alignof(Promise), /*from-promise=*/false));
+    }
+    static coroutine_handle from_promise(Promise &promise) {
+      coroutine_handle p;
+      p.ptr = __builtin_coro_promise(&promise, alignof(Promise),
+                                                      /*from-promise=*/true);
+      return p;
+    }
+  };
+
+
+Other coroutine builtins are either for internal clang use or for use during
+development of the coroutine feature. See `Coroutines in LLVM
+<http://llvm.org/docs/Coroutines.html#intrinsics>`_ for
+more information on their semantics. Note that builtins matching the intrinsics
+that take token as the first parameter (llvm.coro.begin, llvm.coro.alloc, 
+llvm.coro.free and llvm.coro.suspend) omit the token parameter and fill it to
+an appropriate value during the emission.
+
+**Syntax**:
+
+.. code-block:: c
+
+  size_t __builtin_coro_size()
+  void  *__builtin_coro_frame()
+  void  *__builtin_coro_free(void *coro_frame)
+
+  void  *__builtin_coro_id(int align, void *promise, void *fnaddr, void *parts)
+  bool   __builtin_coro_alloc()
+  void  *__builtin_coro_begin(void *memory)
+  void   __builtin_coro_end(void *coro_frame, bool unwind)
+  char   __builtin_coro_suspend(bool final)
+  bool   __builtin_coro_param(void *original, void *copy)
+
+Note that there is no builtin matching the `llvm.coro.save` intrinsic. LLVM
+automatically will insert one if the first argument to `llvm.coro.suspend` is
+token `none`. If a user calls `__builin_suspend`, clang will insert `token none`
+as the first argument to the intrinsic.
+
 Non-standard C++11 Attributes
 =============================
 
@@ -1857,7 +2021,7 @@ in the `ARM C Language Extensions Release 2.0
 <http://infocenter.arm.com/help/topic/com.arm.doc.ihi0053c/IHI0053C_acle_2_0.pdf>`_.
 Note that these intrinsics are implemented as motion barriers that block
 reordering of memory accesses and side effect instructions. Other instructions
-like simple arithmatic may be reordered around the intrinsic. If you expect to
+like simple arithmetic may be reordered around the intrinsic. If you expect to
 have no reordering at all, use inline assembly instead.
 
 X86/X86-64 Language Extensions
@@ -1865,12 +2029,13 @@ X86/X86-64 Language Extensions
 
 The X86 backend has these language extensions:
 
-Memory references off the GS segment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Memory references to specified segments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Annotating a pointer with address space #256 causes it to be code generated
-relative to the X86 GS segment register, and address space #257 causes it to be
-relative to the X86 FS segment.  Note that this is a very very low-level
+relative to the X86 GS segment register, address space #257 causes it to be
+relative to the X86 FS segment, and address space #258 causes it to be
+relative to the X86 SS segment.  Note that this is a very very low-level
 feature that should only be used if you know what you're doing (for example in
 an OS kernel).
 
@@ -2001,9 +2166,9 @@ Extensions for loop hint optimizations
 
 The ``#pragma clang loop`` directive is used to specify hints for optimizing the
 subsequent for, while, do-while, or c++11 range-based for loop. The directive
-provides options for vectorization, interleaving, and unrolling. Loop hints can
-be specified before any loop and will be ignored if the optimization is not safe
-to apply.
+provides options for vectorization, interleaving, unrolling and
+distribution. Loop hints can be specified before any loop and will be ignored if
+the optimization is not safe to apply.
 
 Vectorization and Interleaving
 ------------------------------
@@ -2097,6 +2262,38 @@ to the same code size limit as with ``unroll(enable)``.
   }
 
 Unrolling of a loop can be prevented by specifying ``unroll(disable)``.
+
+Loop Distribution
+-----------------
+
+Loop Distribution allows splitting a loop into multiple loops.  This is
+beneficial for example when the entire loop cannot be vectorized but some of the
+resulting loops can.
+
+If ``distribute(enable))`` is specified and the loop has memory dependencies
+that inhibit vectorization, the compiler will attempt to isolate the offending
+operations into a new loop.  This optimization is not enabled by default, only
+loops marked with the pragma are considered.
+
+.. code-block:: c++
+
+  #pragma clang loop distribute(enable)
+  for (i = 0; i < N; ++i) {
+    S1: A[i + 1] = A[i] + B[i];
+    S2: C[i] = D[i] * E[i];
+  }
+
+This loop will be split into two loops between statements S1 and S2.  The
+second loop containing S2 will be vectorized.
+
+Loop Distribution is currently not enabled by default in the optimizer because
+it can hurt performance in some cases.  For example, instruction-level
+parallelism could be reduced by sequentializing the execution of the
+statements S1 and S2 above.
+
+If Loop Distribution is turned on globally with
+``-mllvm -enable-loop-distribution``, specifying ``distribute(disable)`` can
+be used the disable it on a per-loop basis.
 
 Additional Information
 ----------------------

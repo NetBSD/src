@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genhash,v 1.8 2011/11/02 12:09:25 roy Exp $
+# $NetBSD: genhash,v 1.8.24.1 2017/03/20 06:57:00 pgoyette Exp $
 
 # Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
 #
@@ -65,7 +65,7 @@ const char *
 _ti_${name}id(ssize_t idx)
 {
 
-	if ((size_t)idx > __arraycount(_ti_${name}ids))
+	if ((size_t)idx >= __arraycount(_ti_${name}ids))
 		return NULL;
 	return _ti_${name}ids[idx];
 }
@@ -76,7 +76,7 @@ _ti_${name}index(const char *key)
 	uint32_t idx;
 
 	idx = _ti_${name}hash((const unsigned char *)key, strlen(key));
-	if (idx > __arraycount(_ti_${name}ids) ||
+	if (idx >= __arraycount(_ti_${name}ids) ||
 	    strcmp(key, _ti_${name}ids[idx]) != 0)
 		return -1;
 	return idx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_readlinkat.c,v 1.3 2013/03/17 04:46:06 jmmv Exp $ */
+/*	$NetBSD: t_readlinkat.c,v 1.3.12.1 2017/03/20 06:57:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_readlinkat.c,v 1.3 2013/03/17 04:46:06 jmmv Exp $");
+__RCSID("$NetBSD: t_readlinkat.c,v 1.3.12.1 2017/03/20 06:57:58 pgoyette Exp $");
 
+#include <sys/param.h>
+#include <sys/stat.h>
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -39,7 +41,6 @@ __RCSID("$NetBSD: t_readlinkat.c,v 1.3 2013/03/17 04:46:06 jmmv Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
 
 #define DIR "dir"
 #define FILE "dir/readlinkat"

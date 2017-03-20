@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.81.14.1 2017/03/20 06:56:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.81.14.1 2017/03/20 06:56:57 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,7 +117,6 @@ __RCSID("$NetBSD: getpwent.c,v 1.81 2012/09/08 15:15:06 dholland Exp $");
 #endif
 
 #ifdef YP
-#include <machine/param.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>

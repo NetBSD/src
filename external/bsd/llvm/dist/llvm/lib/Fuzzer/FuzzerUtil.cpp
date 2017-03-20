@@ -9,22 +9,30 @@
 // Misc utils.
 //===----------------------------------------------------------------------===//
 
+#include "FuzzerUtil.h"
+#include "FuzzerIO.h"
 #include "FuzzerInternal.h"
-#include <sstream>
-#include <iomanip>
-#include <sys/time.h>
 #include <cassert>
+#include <chrono>
 #include <cstring>
+#include <errno.h>
 #include <signal.h>
 #include <sstream>
-#include <unistd.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <thread>
 
 namespace fuzzer {
 
-void Print(const Unit &v, const char *PrintAfter) {
-  for (auto x : v)
-    Printf("0x%x,", (unsigned) x);
+void PrintHexArray(const uint8_t *Data, size_t Size,
+                   const char *PrintAfter) {
+  for (size_t i = 0; i < Size; i++)
+    Printf("0x%x,", (unsigned)Data[i]);
   Printf("%s", PrintAfter);
+}
+
+void Print(const Unit &v, const char *PrintAfter) {
+  PrintHexArray(v.data(), v.size(), PrintAfter);
 }
 
 void PrintASCIIByte(uint8_t Byte) {
@@ -45,50 +53,13 @@ void PrintASCII(const uint8_t *Data, size_t Size, const char *PrintAfter) {
 }
 
 void PrintASCII(const Unit &U, const char *PrintAfter) {
-  for (auto X : U)
-    PrintASCIIByte(X);
-  Printf("%s", PrintAfter);
+  PrintASCII(U.data(), U.size(), PrintAfter);
 }
 
-std::string Hash(const Unit &U) {
-  uint8_t Hash[kSHA1NumBytes];
-  ComputeSHA1(U.data(), U.size(), Hash);
-  std::stringstream SS;
-  for (int i = 0; i < kSHA1NumBytes; i++)
-    SS << std::hex << std::setfill('0') << std::setw(2) << (unsigned)Hash[i];
-  return SS.str();
-}
-
-static void AlarmHandler(int, siginfo_t *, void *) {
-  Fuzzer::StaticAlarmCallback();
-}
-
-void SetTimer(int Seconds) {
-  struct itimerval T {{Seconds, 0}, {Seconds, 0}};
-  int Res = setitimer(ITIMER_REAL, &T, nullptr);
-  assert(Res == 0);
-  struct sigaction sigact;
-  memset(&sigact, 0, sizeof(sigact));
-  sigact.sa_sigaction = AlarmHandler;
-  Res = sigaction(SIGALRM, &sigact, 0);
-  assert(Res == 0);
-}
-
-int NumberOfCpuCores() {
-  FILE *F = popen("nproc", "r");
-  int N = 0;
-  fscanf(F, "%d", &N);
-  fclose(F);
-  return N;
-}
-
-int ExecuteCommand(const std::string &Command) {
-  return system(Command.c_str());
-}
-
-bool ToASCII(Unit &U) {
+bool ToASCII(uint8_t *Data, size_t Size) {
   bool Changed = false;
-  for (auto &X : U) {
+  for (size_t i = 0; i < Size; i++) {
+    uint8_t &X = Data[i];
     auto NewX = X;
     NewX &= 127;
     if (!isspace(NewX) && !isprint(NewX))
@@ -99,9 +70,11 @@ bool ToASCII(Unit &U) {
   return Changed;
 }
 
-bool IsASCII(const Unit &U) {
-  for (auto X : U)
-    if (!(isprint(X) || isspace(X))) return false;
+bool IsASCII(const Unit &U) { return IsASCII(U.data(), U.size()); }
+
+bool IsASCII(const uint8_t *Data, size_t Size) {
+  for (size_t i = 0; i < Size; i++)
+    if (!(isprint(Data[i]) || isspace(Data[i]))) return false;
   return true;
 }
 
@@ -178,9 +151,6 @@ bool ParseDictionaryFile(const std::string &Text, std::vector<Unit> *Units) {
   return true;
 }
 
-int GetPid() { return getpid(); }
-
-
 std::string Base64(const Unit &U) {
   static const char Table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                               "abcdefghijklmnopqrstuvwxyz"
@@ -207,6 +177,42 @@ std::string Base64(const Unit &U) {
     Res += "=";
   }
   return Res;
+}
+
+std::string DescribePC(const char *SymbolizedFMT, uintptr_t PC) {
+  if (!EF->__sanitizer_symbolize_pc) return "<can not symbolize>";
+  char PcDescr[1024];
+  EF->__sanitizer_symbolize_pc(reinterpret_cast<void*>(PC),
+                               SymbolizedFMT, PcDescr, sizeof(PcDescr));
+  PcDescr[sizeof(PcDescr) - 1] = 0;  // Just in case.
+  return PcDescr;
+}
+
+void PrintPC(const char *SymbolizedFMT, const char *FallbackFMT, uintptr_t PC) {
+  if (EF->__sanitizer_symbolize_pc)
+    Printf("%s", DescribePC(SymbolizedFMT, PC).c_str());
+  else
+    Printf(FallbackFMT, PC);
+}
+
+unsigned NumberOfCpuCores() {
+  unsigned N = std::thread::hardware_concurrency();
+  if (!N) {
+    Printf("WARNING: std::thread::hardware_concurrency not well defined for "
+           "your platform. Assuming CPU count of 1.\n");
+    N = 1;
+  }
+  return N;
+}
+
+bool ExecuteCommandAndReadOutput(const std::string &Command, std::string *Out) {
+  FILE *Pipe = OpenProcessPipe(Command.c_str(), "r");
+  if (!Pipe) return false;
+  char Buff[1024];
+  size_t N;
+  while ((N = fread(Buff, 1, sizeof(Buff), Pipe)) > 0)
+    Out->append(Buff, N);
+  return true;
 }
 
 }  // namespace fuzzer

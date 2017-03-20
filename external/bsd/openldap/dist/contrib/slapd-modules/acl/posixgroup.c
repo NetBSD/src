@@ -1,10 +1,10 @@
-/*	$NetBSD: posixgroup.c,v 1.1.1.4 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: posixgroup.c,v 1.1.1.4.6.1 2017/03/20 06:56:09 pgoyette Exp $	*/
 
 /* posixgroup.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

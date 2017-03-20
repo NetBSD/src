@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.260.2.1 2017/01/07 08:56:08 pgoyette Exp $
+#	$NetBSD: bsd.sys.mk,v 1.260.2.2 2017/03/20 06:57:08 pgoyette Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -31,6 +31,7 @@ REPROFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
 LINTFLAGS+=	-R${NETBSDSRCDIR}=/usr/src -R${X11SRCDIR}=/usr/xsrc
 
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj.*=/usr/obj/\1'
+REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj.*/(.*)=/usr/obj/\1/\2'
 
 CFLAGS+=	${REPROFLAGS}
 CXXFLAGS+=	${REPROFLAGS}
@@ -53,10 +54,14 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare
+# Don't suppress warnings coming from constructs in system headers.
+# Our system headers should be clean and we want to warn about things like:
+# isdigit((char)1)
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wsystem-headers :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
-CFLAGS+=	-Wa,--fatal-warnings
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wa,--fatal-warnings :}
 .endif
 
 .if ${MKRELRO:Uno} != "no"

@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: defer.h,v 1.1.1.1.32.1 2017/03/20 06:56:36 pgoyette Exp $	*/
 
 #ifndef _DEFER_H_INCLUDED_
 #define _DEFER_H_INCLUDED_
@@ -23,10 +23,24 @@
   */
 extern int defer_append(int, const char *, MSG_STATS *, RECIPIENT *,
 			        const char *, DSN *);
-extern int defer_flush(int, const char *, const char *, const char *,
+extern int defer_flush(int, const char *, const char *, const char *, int,
 		               const char *, const char *, int);
-extern int defer_warn(int, const char *, const char *, const char *,
-		              const char *, int);
+extern int defer_warn(int, const char *, const char *, const char *, int,
+		              const char *, const char *, int);
+extern int defer_one(int, const char *, const char *, const char *, int,
+		             const char *, const char *,
+		             int, MSG_STATS *, RECIPIENT *,
+		             const char *, DSN *);
+
+ /*
+  * Start of private API.
+  */
+#ifdef DSN_INTERN
+
+extern int defer_append_intern(int, const char *, MSG_STATS *, RECIPIENT *,
+			               const char *, DSN *);
+
+#endif
 
 /* LICENSE
 /* .ad

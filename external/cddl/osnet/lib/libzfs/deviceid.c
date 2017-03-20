@@ -1,4 +1,4 @@
-/*	$NetBSD: deviceid.c,v 1.2 2012/07/05 13:55:58 christos Exp $	*/
+/*	$NetBSD: deviceid.c,v 1.2.14.1 2017/03/20 06:56:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/compat/opensolaris/misc/deviceid.c,v 1.1 2007/05/06 01:39:38 pjd Exp $"); */
-__RCSID("$NetBSD: deviceid.c,v 1.2 2012/07/05 13:55:58 christos Exp $");
+__RCSID("$NetBSD: deviceid.c,v 1.2.14.1 2017/03/20 06:56:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -84,8 +84,8 @@ devid_str_decode(char *devidstr, ddi_devid_t *retdevid, char **retminor_name)
 }
 
 int
-devid_deviceid_to_nmlist(char *search_path, ddi_devid_t devid, char *minor_name,
-    devid_nmlist_t **retlist)
+devid_deviceid_to_nmlist(const char *search_path, ddi_devid_t devid,
+    const char *minor_name, devid_nmlist_t **retlist)
 {
 
 	errx(1, "XXXNETBSD devid_deviceid_to_nmlist");

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.46 2015/04/20 19:36:55 riastradh Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.46.2.1 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.46 2015/04/20 19:36:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.46.2.1 2017/03/20 06:57:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.46 2015/04/20 19:36:55 riastradh 
 #include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
 
@@ -319,6 +320,23 @@ layerfs_snapshot(struct mount *mp, struct vnode *vp,
 {
 
 	return EOPNOTSUPP;
+}
+
+/*
+ * layerfs_suspendctl - suspend a layered file system
+ *
+ * Here we should suspend the lower file system(s) too.  At present
+ * this will deadlock as we don't know which to suspend first.
+ *
+ * This routine serves as a central resource for this behavior; all
+ * layered file systems don't need to worry about the above. Also, if
+ * things get fixed, all layers get the benefit.
+ */
+int
+layerfs_suspendctl(struct mount *mp, int cmd)
+{
+
+	return genfs_suspendctl(mp, cmd);
 }
 
 SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")

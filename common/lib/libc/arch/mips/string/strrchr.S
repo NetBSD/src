@@ -1,4 +1,4 @@
-/*	$NetBSD: strrchr.S,v 1.3 2015/05/26 06:55:08 matt Exp $	*/
+/*	$NetBSD: strrchr.S,v 1.3.2.1 2017/03/20 06:51:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,10 +36,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)rindex.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: strrchr.S,v 1.3 2015/05/26 06:55:08 matt Exp $")
+	ASMSTR("$NetBSD: strrchr.S,v 1.3.2.1 2017/03/20 06:51:38 pgoyette Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __ABICALLS__
+#ifdef __mips_abicalls
 	.abicalls
 #endif
 

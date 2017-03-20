@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.37.2.2 2017/01/07 08:56:03 pgoyette Exp $
+.\"	$NetBSD: ptrace.2,v 1.37.2.3 2017/03/20 06:56:58 pgoyette Exp $
 .\"
 .\" This file is in the public domain.
-.Dd January 7, 2016
+.Dd February 23, 2017
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -43,12 +43,140 @@ terminate or continue as appropriate.
 .Fn ptrace
 is the mechanism by which all this happens.
 .Pp
+When a process that is traced by a debugger requests and calls
+.Xr execve 2
+or any of the routines built on it
+.Po
+such as
+.Xr execv 3
+.Pc ,
+it will stop before executing the first instruction of the new image and emit
+.Dv SIGRAP
+with
+.Dv si_code
+set to
+.Dv TRAP_EXEC .
+If a program is traced with the
+.Dv PT_SYSCALL
+option enabled,
+this event notifier is disabled.
+If a traced program calls
+.Xr execve 2
+any setuid or setgid bits on the executable being executed will be ignored.
+.Pp
+Program (software) breakpoints are reported with
+.Dv SIGTRAP
+and the
+.Dv si_code
+value set to
+.Dv TRAP_BKPT .
+These breakpoints are machine specific instructions that interrput the process.
+In order to put a trap by a tracer into the tracee's program,
+debugger must violate the
+.Dv PaX MPROTECT
+restrictions.
+For details check the
+.Dv security.pax.mprotect.ptrace
+option described in
+.Xr sysctl 7 .
+When a tracee is interrputed by a trap,
+the trap is not removed by the kernel and it must be handled by a debugger.
+.Pp
+If a program is traced with single steps
+.Dv ( PT_STEP )
+it reports each step with
+.Dv SIGTRAP
+with
+.Dv si_code
+set to
+.Dv TRAP_TRACE .
+This event is not maskable
+.Dv PT_SET_EVENT_MASK .
+.Pp
+Child program traps are reported with
+.Dv SIGTRAP
+and the
+.Dv si_code
+value set to
+.Dv TRAP_CHLD .
+These events are by default disabled and can be configured with
+.Dv PT_SET_EVENT_MASK .
+If this event occurs,
+check with
+.Dv PT_GET_PROCESS_STATE
+the details of the process state associated with this event.
+.Pp
+Design choices for Debug Register accessors
+.Bl -dash
+.It
+.Fn exec
+.Dv ( TRAP_EXEC
+event) must remove debug registers from LWP
+.It
+debug registers are only per-LWP, not per-process globally
+.It
+debug registers must not be inherited after (v)forking a process
+.It
+debug registers must not be inherited after forking a thread
+.It
+a debugger is responsible to set global watchpoints/breakpoints with the
+debug registers,
+to achieve this
+.Dv PTRACE_LWP_CREATE
+/
+.Dv PTRACE_LWP_EXIT
+event monitoring function is designed to be used
+.It
+debug register traps must generate
+.Dv SIGTRAP with
+.Dv si_code
+.Dv TRAP_DBREG
+.It
+debugger is responsible to retrieve debug register state to distinguish
+the exact debug register trap
+.It
+kernel must not remove debug register traps after triggering a trap event;
+a debugger is responsible to detach this trap with appropriate
+.Dv PT_SETDBREGS
+call
+.It
+debug registers must not be exposed in mcontext
+.It
+userland must not be allowed to set a trap on the kernel
+.El
+.Pp
+A debugger might reuse a port specific symbols,
+to help writing portable code as described in the port specific part of the
+.In sys/ptrace.h
+header.
+Among these symbols,
+there are:
+.Bl -dash
+.It
+.Dv PTRACE_REG_PC
+.It
+.Dv PTRACE_REG_SET_PC
+.It
+.Dv PTRACE_REG_SP
+.It
+.Dv PTRACE_REG_INTRV
+.It
+.Dv PTRACE_BREAKPOINT
+.It
+.Dv PTRACE_BREAKPOINT_SIZE
+.It
+.Dv PTRACE_BREAKPOINT_ADJ
+.El
+.Pp
 The
 .Fa request
-argument specifies what operation is being performed; the meaning of
+argument
+of
+.Nm
+specifies what operation is being performed; the meaning of
 the rest of the arguments depends on the operation, but except for one
 special case noted below, all
-.Fn ptrace
+.Nm
 calls are made by the tracing process, and the
 .Fa pid
 argument specifies the process ID of the traced process.
@@ -59,20 +187,14 @@ can be:
 This request is the only one used by the traced process; it declares
 that the process expects to be traced by its parent.
 All the other arguments are ignored.
-(If the parent process does not expect to trace
+If the parent process does not expect to trace
 the child, it will probably be rather confused by the results; once the
 traced process stops, it cannot be made to continue except via
-.Fn ptrace . )
-When a process has used this request and calls
-.Xr execve 2
-or any of the routines built on it
-.Po
-such as
-.Xr execv 3
-.Pc ,
-it will stop before executing the first instruction of the new image.
-Also, any setuid or setgid bits on the executable being executed will
-be ignored.
+.Fn ptrace .
+.Pp
+This call does not stop the process neither emit
+.Dv SIGSTOP
+to parent.
 .It Dv PT_READ_I , Dv PT_READ_D
 These requests read a single
 .Li int
@@ -138,8 +260,14 @@ must have the same real UID as the tracing process, and that it must
 not be executing a setuid or setgid executable.
 (If the tracing process is running as root,
 these restrictions do not apply.)
+.Pp
 The tracing process will see the newly-traced process stop and may then
 control it as if it had been traced all along.
+It means that the
+.Dv SIGSTOP
+signal is emitted to tracer.
+It is different behavior to the one from
+.Dv PT_TRACE_ME .
 .Pp
 Three other restrictions apply to all tracing processes, even those
 running as root.
@@ -197,9 +325,16 @@ Possible values are:
 See the description of
 .Dv PT_READ_I
 for the difference between I and D spaces.
+.Pp
 The
 .Dv PIOD_READ_AUXV
 operation can be used to read from the ELF auxiliary vector.
+The
+.Fa piod_offs
+argument sets the offset within the tracee's vector.
+To read from the beginning of it, this value must be set to 0 and cast to
+.Dv (void *) .
+.Pp
 A pointer to the I/O descriptor is passed in the
 .Fa addr
 argument to
@@ -260,6 +395,7 @@ Possible values are:
 .Bl -tag -width 30n -offset indent -compact
 .It Dv PL_EVENT_NONE
 .It Dv PL_EVENT_SIGNAL
+.It Dv PL_EVENT_SUSPENDED
 .El
 .Pp
 The
@@ -291,7 +427,46 @@ This set is formed by OR'ing together the following values:
 .It PTRACE_FORK
 Report
 .Xr fork 2 .
+.It PTRACE_VFORK
+Report
+.Xr vfork 2 .
+.It PTRACE_VFORK_DONE
+Report parent resumed after
+.Xr vfork 2 .
+.It PTRACE_LWP_CREATE
+Report thread birth.
+.It PTRACE_LWP_EXIT
+Report thread termination.
 .El
+.Pp
+The
+.Xr fork 2
+and
+.Xr vfork 2
+events can occur with similar operations,
+like
+.Xr clone 2
+or
+.Xr posix_spawn 3 .
+The
+.Dv PTRACE_FORK
+value means that process gives birth to its child
+without pending on its termination or
+.Xr execve 2
+operation.
+If enabled,
+the child is also traced by the debugger and
+.Dv SIGRAP
+is generated twice,
+first for the parent and second for the child.
+The
+.Dv PTRACE_VFORK
+event is the same as
+.Dv PTRACE_FORK ,
+but the parent blocks after giving birth to the child.
+The
+.Dv PTRACE_VFORK_DONE
+event can be used to report unblocking of the parent.
 .Pp
 A pointer to this structure is passed in
 .Fa addr .
@@ -360,7 +535,7 @@ argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
 .Pp
 In order to pass faked signal to the tracee,
-the siginal type must match the signal passed to process with
+the signal type must match the signal passed to process with
 .Dv PT_CONTINUE ,
 .Dv PT_DETACH
 or
@@ -380,6 +555,59 @@ The
 .Fa data
 argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
+.It Dv PT_SET_SIGMASK
+This request loads the traced process' signal mask from
+.Dq Li "sigset_t"
+(defined in
+.In sys/sigtypes.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.
+If zero is supplied, the first thread of the process is written.
+.It Dv PT_GET_SIGMASK
+This request is the converse of
+.Dv PT_SET_SIGMASK ;
+it reads the traced process' signal mask into
+.Dq Li "sigset_t"
+(defined in
+.In sys/sigtypes.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose mask is to be read.
+If zero is supplied, the first thread of the process is read.
+.It Dv PT_RESUME
+Allow execution of a specified thread,
+change its state from suspended to continued.
+The
+.Fa addr
+argument is unused.
+The
+.Fa data
+argument specifies the LWP ID.
+.Pp
+This call is equivalent to
+.Xr _lwp_continue 2
+called by a traced process.
+This call does not change the general process state from stopped to continued.
+.It Dv PT_SUSPEND
+Prevent execution of a specified thread,
+change its state from continued to suspended.
+The
+.Fa addr
+argument is unused.
+The
+.Fa data
+argument specifies the requested LWP ID.
+.Pp
+This call is equivalent to
+.Xr _lwp_suspend 2
+called by a traced process.
+This call does not change the general process state from continued to stopped.
 .El
 .Pp
 Additionally, the following requests exist but are
@@ -444,6 +672,33 @@ This request is the converse of
 .Dv PT_GETFPREGS ;
 it loads the traced process' floating-point registers from the
 .Dq Li "struct fpreg"
+(defined in
+.In machine/reg.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.
+If zero is supplied, the first thread of the process is written.
+.It Dv PT_GETDBREGS
+This request reads the traced process' debug registers into
+the
+.Dq Li "struct dbreg"
+(defined in
+.In machine/reg.h )
+pointed to by
+.Fa addr .
+The
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be read.
+If zero is supplied, the first thread of the process is read.
+.It Dv PT_SETDBREGS
+This request is the converse of
+.Dv PT_GETDBREGS ;
+it loads the traced process' debug registers from the
+.Dq Li "struct dbreg"
 (defined in
 .In machine/reg.h )
 pointed to by
@@ -533,6 +788,8 @@ A request (other than
 .Dv PT_ATTACH )
 specified a process that wasn't stopped.
 .El
+.It Bq Er EDEADLK
+An attempt to unstop a process with locked threads.
 .It Bq Er EINVAL
 .Bl -bullet -compact
 .It
@@ -577,6 +834,11 @@ No process having the specified process ID exists.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr signal 7
+.Sh HISTORY
+The
+.Fn ptrace
+function appeared in
+.At v7 .
 .Sh BUGS
 On the SPARC, the PC is set to the provided PC value for
 .Dv PT_CONTINUE
@@ -593,3 +855,14 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
+.Pp
+.Dv PTRACE_VFORK
+is currently unimplemented and it will return
+.Er ENOTSUP .
+.Pp
+.Dv PT_SET_SIGINFO ,
+.Dv PT_RESUME
+and
+.Dv PT_SUSPEND
+can change the image of process returned by
+.Dv PT_LWPINFO .

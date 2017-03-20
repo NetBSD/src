@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Argument.h"
@@ -232,12 +231,14 @@ protected:
     DITypeRefArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
     DISubroutineType *FuncType =
         DBuilder.createSubroutineType(ParamTypes);
-    auto *CU =
-        DBuilder.createCompileUnit(dwarf::DW_LANG_C99, "filename.c",
-                                   "/file/dir", "CloneFunc", false, "", 0);
+    auto *CU = DBuilder.createCompileUnit(dwarf::DW_LANG_C99,
+                                          DBuilder.createFile("filename.c",
+                                                              "/file/dir"),
+                                          "CloneFunc", false, "", 0);
 
-    auto *Subprogram = DBuilder.createFunction(
-        CU, "f", "f", File, 4, FuncType, true, true, 3, 0, false);
+    auto *Subprogram =
+        DBuilder.createFunction(CU, "f", "f", File, 4, FuncType, true, true, 3,
+                                DINode::FlagZero, false);
     OldFunc->setSubprogram(Subprogram);
 
     // Function body
@@ -253,8 +254,7 @@ protected:
     Instruction* Terminator = IBuilder.CreateRetVoid();
 
     // Create a local variable around the alloca
-    auto *IntType =
-        DBuilder.createBasicType("int", 32, 0, dwarf::DW_ATE_signed);
+    auto *IntType = DBuilder.createBasicType("int", 32, dwarf::DW_ATE_signed);
     auto *E = DBuilder.createExpression();
     auto *Variable =
         DBuilder.createAutoVariable(Subprogram, "x", File, 5, IntType, true);
@@ -269,14 +269,14 @@ protected:
     // Create another, empty, compile unit
     DIBuilder DBuilder2(*M);
     DBuilder2.createCompileUnit(dwarf::DW_LANG_C99,
-        "extra.c", "/file/dir", "CloneFunc", false, "", 0);
+                                DBuilder.createFile("extra.c", "/file/dir"),
+                                "CloneFunc", false, "", 0);
     DBuilder2.finalize();
   }
 
   void CreateNewFunc() {
     ValueToValueMapTy VMap;
-    NewFunc = CloneFunction(OldFunc, VMap, true, nullptr);
-    M->getFunctionList().push_back(NewFunc);
+    NewFunc = CloneFunction(OldFunc, VMap, nullptr);
   }
 
   void SetupFinder() {
@@ -302,31 +302,13 @@ TEST_F(CloneFunc, Subprogram) {
   EXPECT_FALSE(verifyModule(*M));
 
   unsigned SubprogramCount = Finder->subprogram_count();
-  EXPECT_EQ(2U, SubprogramCount);
+  EXPECT_EQ(1U, SubprogramCount);
 
   auto Iter = Finder->subprograms().begin();
-  auto *Sub1 = cast<DISubprogram>(*Iter);
-  Iter++;
-  auto *Sub2 = cast<DISubprogram>(*Iter);
+  auto *Sub = cast<DISubprogram>(*Iter);
 
-  EXPECT_TRUE(
-      (Sub1 == OldFunc->getSubprogram() && Sub2 == NewFunc->getSubprogram()) ||
-      (Sub1 == NewFunc->getSubprogram() && Sub2 == OldFunc->getSubprogram()));
-}
-
-// Test that the new subprogram entry was not added to the CU which doesn't
-// contain the old subprogram entry.
-TEST_F(CloneFunc, SubprogramInRightCU) {
-  EXPECT_FALSE(verifyModule(*M));
-
-  EXPECT_EQ(2U, Finder->compile_unit_count());
-
-  auto Iter = Finder->compile_units().begin();
-  auto *CU1 = cast<DICompileUnit>(*Iter);
-  Iter++;
-  auto *CU2 = cast<DICompileUnit>(*Iter);
-  EXPECT_TRUE(CU1->getSubprograms().size() == 0 ||
-              CU2->getSubprograms().size() == 0);
+  EXPECT_TRUE(Sub == OldFunc->getSubprogram());
+  EXPECT_TRUE(Sub == NewFunc->getSubprogram());
 }
 
 // Test that instructions in the old function still belong to it in the
@@ -423,6 +405,12 @@ protected:
   void SetupModule() { OldM = new Module("", C); }
 
   void CreateOldModule() {
+    auto GV = new GlobalVariable(
+        *OldM, Type::getInt32Ty(C), false, GlobalValue::ExternalLinkage,
+        ConstantInt::get(Type::getInt32Ty(C), 1), "gv");
+    GV->addMetadata(LLVMContext::MD_type, *MDNode::get(C, {}));
+
+    DIBuilder DBuilder(*OldM);
     IRBuilder<> IBuilder(C);
 
     auto *FuncType = FunctionType::get(Type::getVoidTy(C), false);
@@ -431,9 +419,27 @@ protected:
     auto *F =
         Function::Create(FuncType, GlobalValue::PrivateLinkage, "f", OldM);
     F->setPersonalityFn(PersFn);
+
+    // Create debug info
+    auto *File = DBuilder.createFile("filename.c", "/file/dir/");
+    DITypeRefArray ParamTypes = DBuilder.getOrCreateTypeArray(None);
+    DISubroutineType *DFuncType = DBuilder.createSubroutineType(ParamTypes);
+    auto *CU = DBuilder.createCompileUnit(dwarf::DW_LANG_C99,
+                                          DBuilder.createFile("filename.c",
+                                                              "/file/dir"),
+                                          "CloneModule", false, "", 0);
+    // Function DI
+    auto *Subprogram =
+        DBuilder.createFunction(CU, "f", "f", File, 4, DFuncType, true, true, 3,
+                                DINode::FlagZero, false);
+    F->setSubprogram(Subprogram);
+
     auto *Entry = BasicBlock::Create(C, "", F);
     IBuilder.SetInsertPoint(Entry);
     IBuilder.CreateRetVoid();
+
+    // Finalize the debug info
+    DBuilder.finalize();
   }
 
   void CreateNewModule() { NewM = llvm::CloneModule(OldM).release(); }
@@ -447,4 +453,23 @@ TEST_F(CloneModule, Verify) {
   EXPECT_FALSE(verifyModule(*NewM));
 }
 
+TEST_F(CloneModule, OldModuleUnchanged) {
+  DebugInfoFinder Finder;
+  Finder.processModule(*OldM);
+  EXPECT_EQ(1U, Finder.subprogram_count());
+}
+
+TEST_F(CloneModule, Subprogram) {
+  Function *NewF = NewM->getFunction("f");
+  DISubprogram *SP = NewF->getSubprogram();
+  EXPECT_TRUE(SP != nullptr);
+  EXPECT_EQ(SP->getName(), "f");
+  EXPECT_EQ(SP->getFile()->getFilename(), "filename.c");
+  EXPECT_EQ(SP->getLine(), (unsigned)4);
+}
+
+TEST_F(CloneModule, GlobalMetadata) {
+  GlobalVariable *NewGV = NewM->getGlobalVariable("gv");
+  EXPECT_NE(nullptr, NewGV->getMetadata(LLVMContext::MD_type));
+}
 }

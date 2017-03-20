@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.28.2.1 2016/11/04 14:49:27 pgoyette Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.28.2.2 2017/03/20 06:58:08 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.28.2.1 2016/11/04 14:49:27 pgoyette Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.28.2.2 2017/03/20 06:58:08 pgoyette Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: apropos-utils.c,v 1.28.2.1 2016/11/04 14:49:27 pgoyette Exp $"
 #include <util.h>
 #include <zlib.h>
 #include <term.h>
+#include <unistd.h>
 #undef tab	// XXX: manconf.h
 
 #include "apropos-utils.h"

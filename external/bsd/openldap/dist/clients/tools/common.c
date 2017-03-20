@@ -1,10 +1,10 @@
-/*	$NetBSD: common.c,v 1.4.6.1 2016/11/04 14:42:45 pgoyette Exp $	*/
+/*	$NetBSD: common.c,v 1.4.6.2 2017/03/20 06:56:08 pgoyette Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -23,6 +23,9 @@
  * this directory.   Additional contributors include:
  *   Kurt D. Zeilenga (additional common argument and control support)
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: common.c,v 1.4.6.2 2017/03/20 06:56:08 pgoyette Exp $");
 
 #include "portable.h"
 
@@ -68,7 +71,7 @@ int		nocanon = 0;
 int		referrals = 0;
 int		verbose = 0;
 int		ldif = 0;
-ber_len_t	ldif_wrap = LDIF_LINE_WIDTH;
+ber_len_t	ldif_wrap = 0;
 char		*prog = NULL;
 
 /* connection */

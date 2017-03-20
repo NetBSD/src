@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.57.4.1 2017/03/20 06:57:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.57.4.1 2017/03/20 06:57:23 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -448,7 +448,8 @@ again:
 		idb.d_fileno = (uint32_t)bdp->d_fileno;
 		idb.d_reclen = (uint16_t)old_reclen;
 		idb.d_namlen = (uint16_t)bdp->d_namlen;
-		strcpy(idb.d_name, bdp->d_name);
+		memcpy(idb.d_name, bdp->d_name, MIN(sizeof(idb.d_name),
+		    idb.d_namlen));
 		if ((error = copyout(&idb, outp, old_reclen)))
 			goto out;
 		/* advance past this real entry */

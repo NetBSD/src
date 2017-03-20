@@ -267,8 +267,8 @@ define <4 x float> @test10(<4 x float> %A, <4 x float> %B) {
 define <4 x float> @test11(<4 x float> %A, <4 x float> %B) {
 ; SSE-LABEL: test11:
 ; SSE:       # BB#0:
-; SSE-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1,0]
-; SSE-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[1,0]
+; SSE-NEXT:    movhlps {{.*#+}} xmm0 = xmm0[1,1]
+; SSE-NEXT:    movhlps {{.*#+}} xmm1 = xmm1[1,1]
 ; SSE-NEXT:    subss %xmm1, %xmm0
 ; SSE-NEXT:    movddup {{.*#+}} xmm0 = xmm0[0,0]
 ; SSE-NEXT:    retq
@@ -339,8 +339,8 @@ define <4 x float> @test14(<4 x float> %A, <4 x float> %B) {
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movaps %xmm0, %xmm2
 ; SSE-NEXT:    subss %xmm1, %xmm2
-; SSE-NEXT:    shufpd {{.*#+}} xmm0 = xmm0[1,0]
-; SSE-NEXT:    shufpd {{.*#+}} xmm1 = xmm1[1,0]
+; SSE-NEXT:    movhlps {{.*#+}} xmm0 = xmm0[1,1]
+; SSE-NEXT:    movhlps {{.*#+}} xmm1 = xmm1[1,1]
 ; SSE-NEXT:    subss %xmm1, %xmm0
 ; SSE-NEXT:    unpcklps {{.*#+}} xmm2 = xmm2[0],xmm0[0],xmm2[1],xmm0[1]
 ; SSE-NEXT:    shufps {{.*#+}} xmm2 = xmm2[0,1,1,3]
@@ -388,7 +388,7 @@ define <4 x float> @test15(<4 x float> %A, <4 x float> %B) {
 ; AVX-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[3,1,2,3]
 ; AVX-NEXT:    vpermilps {{.*#+}} xmm1 = xmm1[3,1,2,3]
 ; AVX-NEXT:    vaddss %xmm1, %xmm0, %xmm0
-; AVX-NEXT:    vinsertps {{.*#+}} xmm1 = xmm0[0],xmm2[0],xmm0[2,3]
+; AVX-NEXT:    vmovsldup {{.*#+}} xmm1 = xmm2[0,0,2,2]
 ; AVX-NEXT:    vinsertps {{.*#+}} xmm0 = xmm1[0,1,2],xmm0[0]
 ; AVX-NEXT:    retq
   %1 = extractelement <4 x float> %A, i32 1
@@ -408,9 +408,9 @@ define <4 x float> @test16(<4 x float> %A, <4 x float> %B) {
 ; SSE-NEXT:    movaps %xmm0, %xmm2
 ; SSE-NEXT:    subss %xmm0, %xmm2
 ; SSE-NEXT:    movaps %xmm0, %xmm3
-; SSE-NEXT:    shufpd {{.*#+}} xmm3 = xmm3[1,0]
-; SSE-NEXT:    movapd %xmm1, %xmm4
-; SSE-NEXT:    shufpd {{.*#+}} xmm4 = xmm4[1,0]
+; SSE-NEXT:    movhlps {{.*#+}} xmm3 = xmm3[1,1]
+; SSE-NEXT:    movaps %xmm1, %xmm4
+; SSE-NEXT:    movhlps {{.*#+}} xmm4 = xmm4[1,1]
 ; SSE-NEXT:    subss %xmm4, %xmm3
 ; SSE-NEXT:    movshdup {{.*#+}} xmm4 = xmm0[1,1,3,3]
 ; SSE-NEXT:    addss %xmm0, %xmm4

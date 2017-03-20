@@ -1,7 +1,7 @@
 ; RUN: opt -S -codegenprepare -mtriple=amdgcn-unknown-unknown -mcpu=bonaire < %s | FileCheck -check-prefix=OPT -check-prefix=OPT-CI %s
-; RUN: opt -S -codegenprepare -mtriple=amdgcn-unknown-unknown -mcpu=tonga < %s | FileCheck -check-prefix=OPT -check-prefix=OPT-VI %s
+; RUN: opt -S -codegenprepare -mtriple=amdgcn-unknown-unknown -mcpu=tonga -mattr=-flat-for-global < %s | FileCheck -check-prefix=OPT -check-prefix=OPT-VI %s
 ; RUN: llc -march=amdgcn -mcpu=bonaire -mattr=-promote-alloca < %s | FileCheck -check-prefix=GCN -check-prefix=CI %s
-; RUN: llc -march=amdgcn -mcpu=tonga -mattr=-promote-alloca < %s | FileCheck -check-prefix=GCN -check-prefix=VI %s
+; RUN: llc -march=amdgcn -mcpu=tonga -mattr=-flat-for-global -mattr=-promote-alloca < %s | FileCheck -check-prefix=GCN -check-prefix=VI %s
 
 ; OPT-LABEL: @test_no_sink_flat_small_offset_i32(
 ; OPT: getelementptr i32, i32 addrspace(4)* %in
@@ -42,7 +42,7 @@ done:
 ; OPT: br label
 
 ; GCN-LABEL: {{^}}test_sink_noop_addrspacecast_flat_to_global_i32:
-; CI: buffer_load_dword {{v[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, 0 offset:28
+; CI: buffer_load_dword {{v[0-9]+}}, off, s{{\[[0-9]+:[0-9]+\]}}, 0 offset:28
 define void @test_sink_noop_addrspacecast_flat_to_global_i32(i32 addrspace(4)* %out, i32 addrspace(4)* %in, i32 %cond) {
 entry:
   %out.gep = getelementptr i32, i32 addrspace(4)* %out, i64 999999

@@ -15,11 +15,14 @@
 #define LLVM_CLANG_LIB_CODEGEN_CGDEBUGINFO_H
 
 #include "CGBuilder.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DebugInfo.h"
@@ -31,7 +34,6 @@ class MDNode;
 }
 
 namespace clang {
-class CXXMethodDecl;
 class ClassTemplateSpecializationDecl;
 class GlobalDecl;
 class ModuleMap;
@@ -52,28 +54,21 @@ class CGDebugInfo {
   friend class ApplyDebugLocation;
   friend class SaveAndRestoreLocation;
   CodeGenModule &CGM;
-  const CodeGenOptions::DebugInfoKind DebugKind;
+  const codegenoptions::DebugInfoKind DebugKind;
   bool DebugTypeExtRefs;
   llvm::DIBuilder DBuilder;
   llvm::DICompileUnit *TheCU = nullptr;
   ModuleMap *ClangModuleMap = nullptr;
+  ExternalASTSource::ASTSourceDescriptor PCHDescriptor;
   SourceLocation CurLoc;
   llvm::DIType *VTablePtrType = nullptr;
   llvm::DIType *ClassTy = nullptr;
   llvm::DICompositeType *ObjTy = nullptr;
   llvm::DIType *SelTy = nullptr;
-  llvm::DIType *OCLImage1dDITy = nullptr;
-  llvm::DIType *OCLImage1dArrayDITy = nullptr;
-  llvm::DIType *OCLImage1dBufferDITy = nullptr;
-  llvm::DIType *OCLImage2dDITy = nullptr;
-  llvm::DIType *OCLImage2dArrayDITy = nullptr;
-  llvm::DIType *OCLImage2dDepthDITy = nullptr;
-  llvm::DIType *OCLImage2dArrayDepthDITy = nullptr;
-  llvm::DIType *OCLImage2dMSAADITy = nullptr;
-  llvm::DIType *OCLImage2dArrayMSAADITy = nullptr;
-  llvm::DIType *OCLImage2dMSAADepthDITy = nullptr;
-  llvm::DIType *OCLImage2dArrayMSAADepthDITy = nullptr;
-  llvm::DIType *OCLImage3dDITy = nullptr;
+#define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) \
+  llvm::DIType *SingletonId = nullptr;
+#include "clang/Basic/OpenCLImageTypes.def"
+  llvm::DIType *OCLSamplerDITy = nullptr;
   llvm::DIType *OCLEventDITy = nullptr;
   llvm::DIType *OCLClkEventDITy = nullptr;
   llvm::DIType *OCLQueueDITy = nullptr;
@@ -103,11 +98,10 @@ class CGDebugInfo {
   /// List of interfaces we want to keep even if orphaned.
   std::vector<void *> RetainedTypes;
 
-  /// Cache of forward declared types to RAUW at the end of
-  /// compilation.
+  /// Cache of forward declared types to RAUW at the end of compilation.
   std::vector<std::pair<const TagType *, llvm::TrackingMDRef>> ReplaceMap;
 
-  /// Cache of replaceable forward declarartions (functions and
+  /// Cache of replaceable forward declarations (functions and
   /// variables) to RAUW at the end of compilation.
   std::vector<std::pair<const DeclaratorDecl *, llvm::TrackingMDRef>>
       FwdDeclReplaceMap;
@@ -162,6 +156,8 @@ class CGDebugInfo {
                                      llvm::DIFile *F);
   /// Get Objective-C object type.
   llvm::DIType *CreateType(const ObjCObjectType *Ty, llvm::DIFile *F);
+  llvm::DIType *CreateType(const ObjCTypeParamType *Ty, llvm::DIFile *Unit);
+
   llvm::DIType *CreateType(const VectorType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const ArrayType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const LValueReferenceType *Ty, llvm::DIFile *F);
@@ -223,6 +219,15 @@ class CGDebugInfo {
                        SmallVectorImpl<llvm::Metadata *> &EltTys,
                        llvm::DIType *RecordTy);
 
+  /// Helper function for CollectCXXBases.
+  /// Adds debug info entries for types in Bases that are not in SeenTypes.
+  void CollectCXXBasesAux(const CXXRecordDecl *RD, llvm::DIFile *Unit,
+                          SmallVectorImpl<llvm::Metadata *> &EltTys,
+                          llvm::DIType *RecordTy,
+                          const CXXRecordDecl::base_class_const_range &Bases,
+                          llvm::DenseSet<CanonicalDeclPtr<const CXXRecordDecl>> &SeenTypes,
+                          llvm::DINode::DIFlags StartingFlags);
+
   /// A helper function to collect template parameters.
   llvm::DINodeArray CollectTemplateParams(const TemplateParameterList *TPList,
                                           ArrayRef<TemplateArgument> TAList,
@@ -239,10 +244,25 @@ class CGDebugInfo {
                            llvm::DIFile *F);
 
   llvm::DIType *createFieldType(StringRef name, QualType type,
-                                uint64_t sizeInBitsOverride, SourceLocation loc,
-                                AccessSpecifier AS, uint64_t offsetInBits,
+                                SourceLocation loc, AccessSpecifier AS,
+                                uint64_t offsetInBits,
+                                uint32_t AlignInBits,
                                 llvm::DIFile *tunit, llvm::DIScope *scope,
                                 const RecordDecl *RD = nullptr);
+
+  llvm::DIType *createFieldType(StringRef name, QualType type,
+                                SourceLocation loc, AccessSpecifier AS,
+                                uint64_t offsetInBits, llvm::DIFile *tunit,
+                                llvm::DIScope *scope,
+                                const RecordDecl *RD = nullptr) {
+    return createFieldType(name, type, loc, AS, offsetInBits, 0, tunit, scope,
+                           RD);
+  }
+
+  /// Create new bit field member.
+  llvm::DIType *createBitFieldType(const FieldDecl *BitFieldDecl,
+                                   llvm::DIScope *RecordTy,
+                                   const RecordDecl *RD);
 
   /// Helpers for collecting fields of a record.
   /// @{
@@ -256,6 +276,8 @@ class CGDebugInfo {
                                 llvm::DIFile *F,
                                 SmallVectorImpl<llvm::Metadata *> &E,
                                 llvm::DIType *RecordTy, const RecordDecl *RD);
+  void CollectRecordNestedRecord(const RecordDecl *RD,
+                                 SmallVectorImpl<llvm::Metadata *> &E);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile *F,
                            SmallVectorImpl<llvm::Metadata *> &E,
                            llvm::DICompositeType *RecordTy);
@@ -263,7 +285,8 @@ class CGDebugInfo {
   /// If the C++ class has vtable info then insert appropriate debug
   /// info entry in EltTys vector.
   void CollectVTableInfo(const CXXRecordDecl *Decl, llvm::DIFile *F,
-                         SmallVectorImpl<llvm::Metadata *> &EltTys);
+                         SmallVectorImpl<llvm::Metadata *> &EltTys,
+                         llvm::DICompositeType *RecordTy);
   /// @}
 
   /// Create a new lexical block node and push it on the stack.
@@ -275,6 +298,8 @@ public:
 
   void finalize();
 
+  /// Module debugging: Support for building PCMs.
+  /// @{
   /// Set the main CU's DwoId field to \p Signature.
   void setDwoId(uint64_t Signature);
 
@@ -283,9 +308,20 @@ public:
   /// the module of origin of each Decl.
   void setModuleMap(ModuleMap &MMap) { ClangModuleMap = &MMap; }
 
+  /// When generating debug information for a clang module or
+  /// precompiled header, this module map will be used to determine
+  /// the module of origin of each Decl.
+  void setPCHDescriptor(ExternalASTSource::ASTSourceDescriptor PCH) {
+    PCHDescriptor = PCH;
+  }
+  /// @}
+
   /// Update the current source location. If \arg loc is invalid it is
   /// ignored.
   void setLocation(SourceLocation Loc);
+
+  // Converts a SourceLocation to a DebugLoc
+  llvm::DebugLoc SourceLocToDebugLoc(SourceLocation Loc);
 
   /// Emit metadata to indicate a change in line/column information in
   /// the source file. If the location is invalid, the previous
@@ -342,8 +378,8 @@ public:
   /// Emit information about a global variable.
   void EmitGlobalVariable(llvm::GlobalVariable *GV, const VarDecl *Decl);
 
-  /// Emit global variable's debug info.
-  void EmitGlobalVariable(const ValueDecl *VD, llvm::Constant *Init);
+  /// Emit a constant global variable's debug info.
+  void EmitGlobalVariable(const ValueDecl *VD, const APValue &Init);
 
   /// Emit C++ using directive.
   void EmitUsingDirective(const UsingDirectiveDecl &UD);
@@ -406,6 +442,10 @@ private:
   /// Remap a given path with the current debug prefix map
   std::string remapDIPath(StringRef) const;
 
+  /// Compute the file checksum debug info for input file ID.
+  llvm::DIFile::ChecksumKind computeChecksum(FileID FID,
+                                             SmallString<32> &Checksum) const;
+
   /// Get the file debug info descriptor for the input location.
   llvm::DIFile *getOrCreateFile(SourceLocation Loc);
 
@@ -460,14 +500,14 @@ private:
   llvm::DIGlobalVariable *
   getGlobalVariableForwardDeclaration(const VarDecl *VD);
 
-  /// \brief Return a global variable that represents one of the
-  /// collection of global variables created for an anonmyous union.
+  /// Return a global variable that represents one of the collection of global
+  /// variables created for an anonmyous union.
   ///
   /// Recursively collect all of the member fields of a global
   /// anonymous decl and create static variables for them. The first
   /// time this is called it needs to be on a union and then from
   /// there we can have additional unnamed fields.
-  llvm::DIGlobalVariable *
+  llvm::DIGlobalVariableExpression *
   CollectAnonRecordDecls(const RecordDecl *RD, llvm::DIFile *Unit,
                          unsigned LineNo, StringRef LinkageName,
                          llvm::GlobalVariable *Var, llvm::DIScope *DContext);
@@ -506,7 +546,7 @@ private:
                                 StringRef &Name, StringRef &LinkageName,
                                 llvm::DIScope *&FDContext,
                                 llvm::DINodeArray &TParamsArray,
-                                unsigned &Flags);
+                                llvm::DINode::DIFlags &Flags);
 
   /// Collect various properties of a VarDecl.
   void collectVarDeclProps(const VarDecl *VD, llvm::DIFile *&Unit,

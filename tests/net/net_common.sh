@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.9.2.2 2017/01/07 08:56:55 pgoyette Exp $
+#	$NetBSD: net_common.sh,v 1.9.2.3 2017/03/20 06:58:00 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -29,7 +29,9 @@
 # Common utility functions for tests/net
 #
 
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
+HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so \
+    RUMPHIJACK=path=/rump,socket=all:nolocal,sysctl=yes"
+ONEDAYISH="(23h5[0-9]m|1d0h0m)[0-9]+s ?"
 
 extract_new_packets()
 {
@@ -132,6 +134,39 @@ stop_httpd()
 	fi
 }
 
+NC_PID=./.__nc.pid
+start_nc_server()
+{
+	local sock=$1
+	local port=$2
+	local outfile=$3
+	local backup=$RUMP_SERVER
+	local pid=
+
+	export RUMP_SERVER=$sock
+
+	env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    nc -l $port > $outfile &
+	pid=$!
+	echo $pid > $NC_PID
+
+	$DEBUG && rump.netstat -a -f inet
+
+	export RUMP_SERVER=$backup
+
+	sleep 1
+}
+
+stop_nc_server()
+{
+
+	if [ -f $NC_PID ]; then
+		kill -9 $(cat $NC_PID)
+		rm -f $NC_PID
+		sleep 1
+	fi
+}
+
 BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet \
     -lrumpnet_shmif -lrumpdev"
 FS_LIBS="$BASIC_LIBS -lrumpvfs -lrumpfs_ffs"
@@ -219,6 +254,19 @@ rump_server_destroy_ifaces()
 	local backup=$RUMP_SERVER
 
 	$DEBUG && cat $_rump_server_ifaces
+
+	# Try to dump states before destroying interfaces
+	for sock in $(cat $_rump_server_socks); do
+		export RUMP_SERVER=$sock
+		atf_check -s exit:0 -o ignore rump.ifconfig
+		atf_check -s exit:0 -o ignore rump.netstat -nr
+		# XXX still need hijacking
+		atf_check -s exit:0 -o ignore $HIJACKING rump.netstat -i -a
+		atf_check -s exit:0 -o ignore rump.arp -na
+		atf_check -s exit:0 -o ignore rump.ndp -na
+		atf_check -s exit:0 -o ignore $HIJACKING ifmcstat
+	done
+
 	# XXX using pipe doesn't work. See PR bin/51667
 	#cat $_rump_server_ifaces | while read sock ifname; do
 	while read sock ifname; do
@@ -256,8 +304,11 @@ rump_server_dump_servers()
 		export RUMP_SERVER=$sock
 		rump.ifconfig
 		rump.netstat -nr
+		# XXX still need hijacking
+		$HIJACKING rump.netstat -i -a
 		rump.arp -na
 		rump.ndp -na
+		$HIJACKING ifmcstat
 		$HIJACKING dmesg
 	done
 	export RUMP_SERVER=$backup

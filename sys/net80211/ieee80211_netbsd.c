@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.27.2.1 2016/11/04 14:49:21 pgoyette Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.27.2.2 2017/03/20 06:57:50 pgoyette Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.27.2.1 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.27.2.2 2017/03/20 06:57:50 pgoyette Exp $");
 #endif
 
 /*
@@ -139,7 +139,7 @@ ieee80211_sysctl_parent(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	ic = node.sysctl_data;
-	strncpy(pname, ic->ic_ifp->if_xname, IFNAMSIZ);
+	strlcpy(pname, ic->ic_ifp->if_xname, IFNAMSIZ);
 	node.sysctl_data = pname;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }

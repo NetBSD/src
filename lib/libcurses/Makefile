@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71.6.1 2017/01/07 08:56:03 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.71.6.2 2017/03/20 06:56:58 pgoyette Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -22,9 +22,9 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	idcok.c immedok.c inch.c inchstr.c initscr.c insch.c insdelln.c \
 	insertln.c instr.c keypad.c keyname.c leaveok.c line.c meta.c move.c \
 	mvwin.c newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c \
-	printw.c putchar.c refresh.c resize.c scanw.c screen.c scroll.c \
-	scrollok.c setterm.c standout.c syncok.c timeout.c toucholap.c \
-	touchwin.c tstp.c tty.c unctrl.c underscore.c
+	printw.c putchar.c refresh.c resize.c ripoffline.c scanw.c screen.c \
+	scroll.c scrollok.c setterm.c slk.c standout.c syncok.c timeout.c \
+	toucholap.c touchwin.c tstp.c tty.c unctrl.c underscore.c
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
@@ -34,8 +34,8 @@ MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_inch.3 curses_input.3 curses_insertch.3 curses_insertln.3 \
 	curses_insdelln.3 curses_keyname.3 curses_line.3 curses_pad.3 \
 	curses_print.3 curses_refresh.3 curses_scanw.3 curses_screen.3 \
-	curses_scroll.3 curses_standout.3 curses_termcap.3 curses_touch.3 \
-	curses_tty.3 curses_underscore.3 curses_window.3
+	curses_scroll.3 curses_slk.3 curses_standout.3 curses_termcap.3 \
+	curses_touch.3 curses_tty.3 curses_underscore.3 curses_window.3
 INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
 
@@ -143,12 +143,21 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_tty.3 reset_prog_mode.3 curses_tty.3 reset_shell_mode.3 \
 	 curses_tty.3 resetty.3 \
 	 curses_screen.3 resizeterm.3 curses_screen.3 resize_term.3 \
+	 curses_screen.3 ripoffline.3 \
 	 curses_tty.3 savetty.3 curses_scanw.3 scanw.3 \
 	 curses_scroll.3 scrl.3 curses_scroll.3 scroll.3 \
 	 curses_scroll.3 scrollok.3 curses_scroll.3 setscrreg.3 \
 	 curses_cursor.3 setsyx.3 \
 	 curses_input.3 set_escdelay.3 curses_screen.3 set_tabsize.3 \
 	 curses_screen.3 set_term.3 curses_screen.3 setterm.3 \
+	 curses_slk.3 slk_attroff.3 curses_slk.3 slk_attr_off.3 \
+	 curses_slk.3 slk_attron.3 curses_slk.3 slk_attr_on.3 \
+	 curses_slk.3 slk_attrset.3 curses_slk.3 slk_attr_set.3 \
+	 curses_slk.3 slk_clear.3 curses_slk.3 slk_color.3 \
+	 curses_slk.3 slk_init.3 curses_slk.3 slk_label.3 \
+	 curses_slk.3 slk_noutrefresh.3 curses_slk.3 slk_refresh.3 \
+	 curses_slk.3 slk_restore.3 curses_slk.3 slk_set.3 \
+	 curses_slk.3 slk_touch.3 curses_slk.3 slk_wset.3 \
 	 curses_standout.3 standend.3 curses_standout.3 standout.3 \
 	 curses_color.3 start_color.3 curses_pad.3 subpad.3 \
 	 curses_window.3 subwin.3 curses_touch.3 syncok.3 \

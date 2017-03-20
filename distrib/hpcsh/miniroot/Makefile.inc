@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2012/10/26 18:15:55 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.8.14.1 2017/03/20 06:52:05 pgoyette Exp $
 
 WARNS=		1
 DBG=		-Os
 
 IMAGESIZE=	4m
-MAKEFS_FLAGS=	-o density=2k
+MAKEFS_FLAGS+=	-o density=2k
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all ipty
 LISTS+=		${DISTRIBDIR}/common/list.sysinst.en

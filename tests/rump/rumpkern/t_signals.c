@@ -1,4 +1,4 @@
-/*	$NetBSD: t_signals.c,v 1.2 2011/02/20 19:45:45 pooka Exp $	*/
+/*	$NetBSD: t_signals.c,v 1.2.26.1 2017/03/20 06:58:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <rump/rump.h>
 
 #include "../kernspace/kernspace.h"
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(sigraise);
 ATF_TC_HEAD(sigraise, tc)

@@ -212,6 +212,12 @@ To find out what database types your Postfix system supports, use the "ppooss
         are created with the postmap(1) or postalias(1) command, and private
         databases are maintained by Postfix daemons. The database name as used
         in "hash:table" is the database file name without the ".db" suffix.
+    iinnlliinnee (read-only)
+        A non-shared, in-memory lookup table. Example: "inline:{ key=value,
+        { key = text with whitespace or comma }}". Key-value pairs are
+        separated by whitespace or comma; whitespace after "{" and before "}"
+        is ignored. Inline tables eliminate the need to create a database file
+        for just a few fixed elements. See also the static: map type.
     iinntteerrnnaall
         A non-shared, in-memory hash table. Its content are lost when a process
         terminates.
@@ -242,12 +248,26 @@ To find out what database types your Postfix system supports, use the "ppooss
         A lookup table based on Perl Compatible Regular Expressions. The file
         format is described in pcre_table(5). The lookup table name as used in
         "pcre:table" is the name of the regular expression file.
+    ppiippeemmaapp (read-only)
+        A pipeline of lookup tables. Example: "pipemap:{type1:name1, ...,
+        typen:namen}". Each "pipemap:" query is given to the first table. Each
+        lookup result becomes the query for the next table in the pipeline, and
+        the last table produces the final result. When any table lookup
+        produces no result, the pipeline produces no result. The first and last
+        characters of the "pipemap:" table name must be "{" and "}". Within
+        these, individual maps are separated with comma or whitespace.
     ppggssqqll (read-only)
         PostgreSQL database client. Configuration details are given in
         pgsql_table(5).
     pprrooxxyy
         Postfix proxymap(8) client for shared access to Postfix databases. The
         lookup table name syntax is "proxy:type:table".
+    rraannddmmaapp (read-only)
+        An in-memory table that performs random selection. Example: "randmap:
+        {result1. ..., resultn}". Each table query returns a random choice from
+        the specified results. The first and last characters of the "randmap:
+        " table name must be "{" and "}". Within these, individual maps are
+        separated with comma or whitespace.
     rreeggeexxpp (read-only)
         A lookup table based on regular expressions. The file format is
         described in regexp_table(5). The lookup table name as used in "regexp:
@@ -268,6 +288,9 @@ To find out what database types your Postfix system supports, use the "ppooss
     ssttaattiicc (read-only)
         A table that always returns its name as the lookup result. For example,
         "static:foobar" always returns the string "foobar" as lookup result.
+        Specify "static:{ text with whitespace }" when the result contains
+        whitespace; this form ignores whitespace after "{" and before "}". See
+        also the inline: map type.
     ttccpp
         TCP/IP client. The protocol is described in tcp_table(5). The lookup
         table name is "tcp:host:port" where "host" specifies a symbolic
@@ -279,6 +302,10 @@ To find out what database types your Postfix system supports, use the "ppooss
         and that texthash: does not detect changes after the file is read. The
         lookup table name is "texthash:filename", where the file name is taken
         literally; no suffix is appended.
+    uunniioonnmmaapp (read-only)
+        A table that sends each query to multiple lookup tables and that
+        concatenates all found results, separated by comma. The table name
+        syntax is the same as for pipemap tables.
     uunniixx (read-only)
         A limited view of the UNIX authentication database. The following
         tables are implemented:

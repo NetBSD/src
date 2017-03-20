@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.26.2.1 2017/01/07 08:56:16 pgoyette Exp $
+# $NetBSD: LOONGSON,v 1.26.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.26.2.1 $"
+#ident 		"LOONGSON-$Revision: 1.26.2.2 $"
 
 maxusers	16
 
@@ -95,6 +95,8 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

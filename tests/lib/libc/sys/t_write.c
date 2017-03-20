@@ -1,4 +1,4 @@
-/* $NetBSD: t_write.c,v 1.2 2011/10/19 16:19:30 jruoho Exp $ */
+/* $NetBSD: t_write.c,v 1.2.24.1 2017/03/20 06:57:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -29,15 +29,15 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_write.c,v 1.2 2011/10/19 16:19:30 jruoho Exp $");
+__RCSID("$NetBSD: t_write.c,v 1.2.24.1 2017/03/20 06:57:59 pgoyette Exp $");
 
 #include <sys/uio.h>
-#include <sys/syslimits.h>
 
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -49,7 +49,7 @@ static bool		 fail = false;
 static const char	*path = "write";
 
 static void
-sighandler(int signo)
+sighandler(int signo __unused)
 {
 	fail = false;
 }

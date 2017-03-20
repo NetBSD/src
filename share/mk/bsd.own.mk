@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.938.2.3 2017/01/07 08:56:08 pgoyette Exp $
+#	$NetBSD: bsd.own.mk,v 1.938.2.4 2017/03/20 06:57:08 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -148,8 +148,6 @@ HAVE_BINUTILS?=	227
 
 .if ${HAVE_BINUTILS} == 227
 EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 226
-EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 .endif
@@ -650,22 +648,6 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 .endif
 
 #
-# Build a dynamically linked /bin and /sbin, with the necessary shared
-# libraries moved from /usr/lib to /lib and the shared linker moved
-# from /usr/libexec to /lib
-#
-# Note that if the BINDIR is not /bin or /sbin, then we always use the
-# non-DYNAMICROOT behavior (i.e. it is only enabled for programs in /bin
-# and /sbin).  See <bsd.shlib.mk>.
-#
-MKDYNAMICROOT?=	yes
-
-# For ia64, ld.elf_so not yet implemented
-.if ${MACHINE_ARCH} == "ia64"
-MKDYNAMICROOT=	no
-.endif
-
-#
 # Where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj (for example).
 #
@@ -731,6 +713,9 @@ DEBUGDIR?=	/usr/libdata/debug
 DEBUGGRP?=	wheel
 DEBUGOWN?=	root
 DEBUGMODE?=	${NONBINMODE}
+
+MKDIRMODE?=	0755
+MKDIRPERM?=	-m ${MKDIRMODE}
 
 #
 # Data-driven table using make variables to control how
@@ -995,20 +980,6 @@ MKSOFTFLOAT?=	yes
 SOFTFLOAT_BITS=	32
 .endif
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc" 
-MKSLJIT?=	yes
-.else
-MKSLJIT?=	no
-.endif
-
-#
-# MK* backward compatibility.
-#
-.if defined(MKBFD)
-MKBINUTILS?=	${MKBFD}
-.endif
 
 #
 # We want to build zfs only for amd64 by default for now.
@@ -1060,6 +1031,7 @@ _MKVARS.yes= \
 	MKBINUTILS \
 	MKCRYPTO MKCOMPLEX MKCVS MKCXX \
 	MKDOC \
+	MKDYNAMICROOT \
 	MKGCC MKGDB MKGROFF \
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
@@ -1101,23 +1073,56 @@ MKRUMP=		no
 .endif
 
 #
+# Build a dynamically linked /bin and /sbin, with the necessary shared
+# libraries moved from /usr/lib to /lib and the shared linker moved
+# from /usr/libexec to /lib
+#
+# Note that if the BINDIR is not /bin or /sbin, then we always use the
+# non-DYNAMICROOT behavior (i.e. it is only enabled for programs in /bin
+# and /sbin).  See <bsd.shlib.mk>.
+#
+# For ia64, ld.elf_so not yet implemented
+.if ${MACHINE_ARCH} == "ia64"
+MKDYNAMICROOT=	no
+.endif
+
+.if defined(MKREPRO)
+MKARZERO ?= ${MKREPRO}
+.endif
+
+#
 # MK* options which default to "no".  Note that MKZFS has a different
-# default for some platforms, see above.
+# default for some platforms, see above.  Please keep alphabetically
+# sorted with at most one letter per line.
 #
 _MKVARS.no= \
+	MKARZERO \
 	MKBSDGREP MKBSDTAR \
-	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCRYPTO_RC5 MKCTF MKDEBUG \
-	MKDEBUGLIB MKDTRACE MKEXTSRC MKGROFFHTMLDOC \
-	MKKYUA MKLLD MKLLDB MKLINT \
-	MKMANZ MKMCLINKER MKOBJDIRS \
-	MKLIBCXX MKLLVM MKPCC \
-	MKPIGZGZIP \
-	MKREPRO \
-	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
-	MKUNPRIVED MKUPDATE MKX11 MKX11MOTIF MKZFS
+	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCRYPTO_RC5 MKCTF \
+	MKDEBUG MKDEBUGLIB MKDTRACE \
+	MKEXTSRC \
+	MKGROFFHTMLDOC \
+	MKKYUA \
+	MKLIBCXX MKLLD MKLLDB MKLLVM MKLINT \
+	MKMANZ MKMCLINKER \
+	MKNSD \
+	MKOBJDIRS \
+	MKPCC MKPIGZGZIP \
+	MKRADEONFIRMWARE MKREPRO \
+	MKSLJIT MKSOFTFLOAT MKSTRIPIDENT \
+	MKTPM \
+	MKUNPRIVED MKUPDATE \
+	MKX11 MKX11MOTIF MKXORG_SERVER \
+	MKZFS
 .for var in ${_MKVARS.no}
 ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
 .endfor
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "sparc" 
+MKSLJIT=	yes
+.endif
 
 #
 # Which platforms build the xorg-server drivers (as opposed
@@ -1151,9 +1156,13 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "vax"		|| \
     ${MACHINE} == "zaurus"
-MKXORG_SERVER?=yes
+MKXORG_SERVER=yes
 .else
-MKXORG_SERVER?=no
+.endif
+
+# Only install the radeon firmware on DRM-happy systems.
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+MKRADEONFIRMWARE=		yes
 .endif
 
 #
@@ -1389,7 +1398,7 @@ X11SRCDIR.xorg-server?=		${X11SRCDIRMIT}/${XORG_SERVER_SUBDIR}/dist
 
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \
-	xkbcomp xorg-cf-files imake xbiff xkeyboard-config \
+	xorg-cf-files imake xbiff xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
 	glu glw mesa-demos MesaGLUT MesaLib MesaLib7 \
@@ -1404,7 +1413,7 @@ X11SRCDIR.xorg-server?=		${X11SRCDIRMIT}/${XORG_SERVER_SUBDIR}/dist
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xtrap xkbutils xkbcomp \
-	xkeyboard-config xinput xcb-util xorg-docs \
+	xinput xcb-util xorg-docs \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \
@@ -1442,11 +1451,6 @@ EXTRA_DRIVERS=	modesetting
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
-# Only install the radeon firmware on DRM-happy systems.
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
-MKRADEONFIRMWARE?=		yes
-.endif
-MKRADEONFIRMWARE?=		no
 
 X11DRI?=			yes
 X11LOADABLE?=			yes

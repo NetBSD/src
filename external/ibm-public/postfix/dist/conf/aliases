@@ -60,11 +60,11 @@ decode:		root
 #        LDAP  or  SQL,  the  same lookups are done as for ordinary
 #        indexed files.
 # 
-#        Alternatively, the table can be  provided  as  a  regular-
-#        expression map where patterns are given as regular expres-
-#        sions. In this case, the lookups are done  in  a  slightly
-#        different way as described below under "REGULAR EXPRESSION
-#        TABLES".
+#        Alternatively, the  table  can  be  provided  as  a  regu-
+#        lar-expression  map  where  patterns  are given as regular
+#        expressions. In this case,  the  lookups  are  done  in  a
+#        slightly  different  way as described below under "REGULAR
+#        EXPRESSION TABLES".
 # 
 #        Users can control delivery of their own mail by setting up
 #        .forward files in their home directory.  Lines in per-user
@@ -253,5 +253,10 @@ decode:		root
 #        IBM T.J. Watson Research
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
+# 
+#        Wietse Venema
+#        Google, Inc.
+#        111 8th Avenue
+#        New York, NY 10011, USA
 # 
 #                                                                     ALIASES(5)

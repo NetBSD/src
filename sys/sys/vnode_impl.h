@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.2.2.3 2017/01/07 08:56:53 pgoyette Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.2.2.4 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/vnode.h>
 
+struct namecache;
+
 enum vnode_state {
 	VS_MARKER,	/* Stable, used as marker. Will not change. */
 	VS_LOADING,	/* Intermediate, initialising the fs node. */
@@ -59,19 +61,28 @@ struct vcache_key {
  *	c	vcache_lock
  *	d	vdrain_lock
  *	i	v_interlock
+ *	m	mntvnode_lock
+ *	n	namecache_lock
+ *	s	syncer_data_lock
  */
 struct vnode_impl {
 	struct vnode vi_vnode;
 	enum vnode_state vi_state;		/* i: current state */
 	struct vnodelst *vi_lrulisthd;		/* d: current lru list head */
 	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
+	LIST_HEAD(, namecache) vi_dnclist;	/* n: namecaches (children) */
+	LIST_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
+	int vi_synclist_slot;			/* s: synclist slot index */
+	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */
+	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m: vnodes for mount point */
 	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
+	krwlock_t vi_lock;			/* -: lock for this vnode */
 	struct vcache_key vi_key;		/* c: vnode cache key */
 };
 typedef struct vnode_impl vnode_impl_t;
 
-#define VIMPL_TO_VNODE(vip)	((vnode_t *)(vip))
-#define VNODE_TO_VIMPL(vp)	((vnode_impl_t *)(vp))
+#define VIMPL_TO_VNODE(vip)	(&(vip)->vi_vnode)
+#define VNODE_TO_VIMPL(vp)	container_of((vp), struct vnode_impl, vi_vnode)
 
 /*
  * Vnode manipulation functions.

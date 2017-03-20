@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36.8.1 2017/01/07 08:56:09 pgoyette Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.8.2 2017/03/20 06:57:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -143,13 +143,6 @@
 	trunc_page(USRSTACK32 - MAXSSIZ32 - (sz))
 #define VM_DEFAULT_ADDRESS32_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MAXDSIZ32)
-
-/*
- * XXXfvdl we have plenty of KVM now, remove this.
- */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
-#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

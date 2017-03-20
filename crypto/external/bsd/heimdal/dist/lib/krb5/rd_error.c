@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_error.c,v 1.1.1.1 2011/04/13 18:15:37 elric Exp $	*/
+/*	$NetBSD: rd_error.c,v 1.1.1.1.28.1 2017/03/20 06:51:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan

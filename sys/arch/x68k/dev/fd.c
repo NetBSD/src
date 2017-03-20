@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.118 2015/07/11 10:32:46 kamil Exp $	*/
+/*	$NetBSD: fd.c,v 1.118.2.1 2017/03/20 06:57:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.118 2015/07/11 10:32:46 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.118.2.1 2017/03/20 06:57:22 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -672,7 +672,7 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	size_t type = FDTYPE(dev);
 
-	if (type > __arraycount(fd_types))
+	if (type >= __arraycount(fd_types))
 		return NULL;
 	return &fd_types[type];
 }

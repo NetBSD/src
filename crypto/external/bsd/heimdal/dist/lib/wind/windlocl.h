@@ -1,4 +1,4 @@
-/*	$NetBSD: windlocl.h,v 1.1.1.2 2011/04/14 14:09:49 elric Exp $	*/
+/*	$NetBSD: windlocl.h,v 1.1.1.2.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan

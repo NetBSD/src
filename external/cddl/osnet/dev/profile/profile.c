@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.6 2016/04/09 15:17:58 riastradh Exp $	*/
+/*	$NetBSD: profile.c,v 1.6.2.1 2017/03/20 06:56:28 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -44,7 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
-#include <sys/limits.h>
+#include <sys/syslimits.h>
 #include <sys/linker.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>

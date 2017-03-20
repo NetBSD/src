@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.46.2.1 2016/11/04 14:49:07 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.46.2.2 2017/03/20 06:57:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.46.2.1 2016/11/04 14:49:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.46.2.2 2017/03/20 06:57:26 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -453,7 +453,8 @@ netbsd32_clock_nanosleep(struct lwp *l, const struct netbsd32_clock_nanosleep_ar
 		goto out;
 
 	netbsd32_from_timespec(&rmt, &ts32);
-	if ((error1 = copyout(&ts32, SCARG_P32(uap, rmtp), sizeof(ts32))) != 0)
+	if ((SCARG(uap, flags) & TIMER_ABSTIME) == 0 &&
+	    (error1 = copyout(&ts32, SCARG_P32(uap, rmtp), sizeof(ts32))) != 0)
 		error = error1;
 out:
 	*retval = error;

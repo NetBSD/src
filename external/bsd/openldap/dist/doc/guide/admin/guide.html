@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">25 January 2014</ADDRESS>
+<ADDRESS CLASS="doc-modified">5 February 2016</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -1072,8 +1072,8 @@ Support Pages
 <LI>Extensibility (controls, extended operations, and more)</UL>
 <P>LDAPv2 is historic (<A HREF="http://www.rfc-editor.org/rfc/rfc3494.txt">RFC3494</A>).  As most <EM>so-called</EM> LDAPv2 implementations (including <EM>slapd</EM>(8)) do not conform to the LDAPv2 technical specification, interoperability amongst implementations claiming LDAPv2 support is limited.  As LDAPv2 differs significantly from LDAPv3, deploying both LDAPv2 and LDAPv3 simultaneously is quite problematic.  LDAPv2 should be avoided. LDAPv2 is disabled by default.</P>
 <H2><A NAME="LDAP vs RDBMS">1.8. LDAP vs RDBMS</A></H2>
-<P>This question is raised many times, in different forms. The most common, however, is: <EM>Why doesn't OpenLDAP drop Berkeley DB and use a relational database management system (RDBMS) instead?</EM> In general, expecting that the sophisticated algorithms implemented by commercial-grade RDBMS would make <EM>OpenLDAP</EM> be faster or somehow better and, at the same time, permitting sharing of data with other applications.</P>
-<P>The short answer is that use of an embedded database and custom indexing system allows OpenLDAP to provide greater performance and scalability without loss of reliability. OpenLDAP uses Berkeley DB concurrent / transactional database software. This is the same software used by leading commercial directory software.</P>
+<P>This question is raised many times, in different forms. The most common, however, is: <EM>Why doesn't OpenLDAP use a relational database management system (RDBMS) instead of an embedded key/value store like LMDB?</EM> In general, expecting that the sophisticated algorithms implemented by commercial-grade RDBMS would make <EM>OpenLDAP</EM> be faster or somehow better and, at the same time, permitting sharing of data with other applications.</P>
+<P>The short answer is that use of an embedded database and custom indexing system allows OpenLDAP to provide greater performance and scalability without loss of reliability. OpenLDAP uses <TERM>LMDB</TERM> concurrent / transactional database software.</P>
 <P>Now for the long answer. We are all confronted all the time with the choice RDBMSes vs. directories. It is a hard choice and no simple answer exists.</P>
 <P>It is tempting to think that having a RDBMS backend to the directory solves all problems. However, it is a pig. This is because the data models are very different. Representing directory data with a relational database is going to require splitting data into multiple tables.</P>
 <P>Think for a moment about the person objectclass. Its definition requires attribute types objectclass, sn and cn and allows attribute types userPassword, telephoneNumber, seeAlso and description. All of these attributes are multivalued, so a normalization requires putting each attribute type in a separate table.</P>
@@ -1084,7 +1084,7 @@ Support Pages
 <P>What to do? Should we have different tables for the different objectclasses? This way the person would have an entry on the person table, another on organizationalPerson, etc. Or should we get rid of person and put everything on the second table?</P>
 <P>But what do we do with a filter like (cn=*) where cn is an attribute type that appears in many, many objectclasses. Should we search all possible tables for matching entries? Not very attractive.</P>
 <P>Once this point is reached, three approaches come to mind. One is to do full normalization so that each attribute type, no matter what, has its own separate table. The simplistic approach where the DN is part of the primary key is extremely wasteful, and calls for an approach where the entry has a unique numeric id that is used instead for the keys and a main table that maps DNs to ids. The approach, anyway, is very inefficient when several attribute types from one or more entries are requested. Such a database, though cumbersomely, can be managed from SQL applications.</P>
-<P>The second approach is to put the whole entry as a blob in a table shared by all entries regardless of the objectclass and have additional tables that act as indices for the first table. Index tables are not database indices, but are fully managed by the LDAP server-side implementation. However, the database becomes unusable from SQL. And, thus, a fully fledged database system provides little or no advantage. The full generality of the database is unneeded. Much better to use something light and fast, like Berkeley DB.</P>
+<P>The second approach is to put the whole entry as a blob in a table shared by all entries regardless of the objectclass and have additional tables that act as indices for the first table. Index tables are not database indices, but are fully managed by the LDAP server-side implementation. However, the database becomes unusable from SQL. And, thus, a fully fledged database system provides little or no advantage. The full generality of the database is unneeded. Much better to use something light and fast, like <TERM>LMDB</TERM>.</P>
 <P>A completely different way to see this is to give up any hopes of implementing the directory data model. In this case, LDAP is used as an access protocol to data that provides only superficially the directory data model. For instance, it may be read only or, where updates are allowed, restrictions are applied, such as making single-value attribute types that would allow for multiple values. Or the impossibility to add new objectclasses to an existing entry or remove one of those present. The restrictions span the range from allowed restrictions (that might be elsewhere the result of access control) to outright violations of the data model. It can be, however, a method to provide LDAP access to preexisting data that is used by other applications. But in the understanding that we don't really have a &quot;directory&quot;.</P>
 <P>Existing commercial LDAP server implementations that use a relational database are either from the first kind or the third. I don't know of any implementation that uses a relational database to do inefficiently what BDB does efficiently. For those who are interested in &quot;third way&quot; (exposing EXISTING data from RDBMS as LDAP tree, having some limitations compared to classic LDAP model, but making it possible to interoperate between LDAP and SQL applications):</P>
 <P>OpenLDAP includes back-sql - the backend that makes it possible. It uses ODBC + additional metainformation about translating LDAP queries to SQL queries in your RDBMS schema, providing different levels of access - from read-only to full access depending on RDBMS you use, and your schema.</P>
@@ -1097,7 +1097,7 @@ Support Pages
 <P><B>Topology control</B>: <EM>slapd</EM> can be configured to restrict access at the socket layer based upon network topology information. This feature utilizes <EM>TCP wrappers</EM>.</P>
 <P><B>Access control</B>: <EM>slapd</EM> provides a rich and powerful access control facility, allowing you to control access to the information in your database(s). You can control access to entries based on LDAP authorization information, <TERM>IP</TERM> address, domain name and other criteria.  <EM>slapd</EM> supports both <EM>static</EM> and <EM>dynamic</EM> access control information.</P>
 <P><B>Internationalization</B>: <EM>slapd</EM> supports Unicode and language tags.</P>
-<P><B>Choice of database backends</B>: <EM>slapd</EM> comes with a variety of different database backends you can choose from. They include <TERM>BDB</TERM>, a high-performance transactional database backend; <TERM>HDB</TERM>, a hierarchical high-performance transactional backend; <EM>SHELL</EM>, a backend interface to arbitrary shell scripts; and PASSWD, a simple backend interface to the <EM>passwd</EM>(5) file. The BDB and HDB backends utilize <A HREF="http://www.oracle.com/">Oracle</A> <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>.</P>
+<P><B>Choice of database backends</B>: <EM>slapd</EM> comes with a variety of different database backends you can choose from. They include <TERM>MDB</TERM>, a hierarchical high-performance transactional database backend; <TERM>BDB</TERM>, a high-performance transactional database backend (deprecated); <TERM>HDB</TERM>, a hierarchical high-performance transactional backend (deprecated); <EM>SHELL</EM>, a backend interface to arbitrary shell scripts; and PASSWD, a simple backend interface to the <EM>passwd</EM>(5) file. The MDB backend utilizes <TERM>LMDB</TERM>, a high performance replacement for <A HREF="http://www.oracle.com/">Oracle Corporation</A>'s Berkeley DB. The BDB and HDB backends utilize <A HREF="http://www.oracle.com/">Oracle Corporation</A> Berkeley DB. These backends have been deprecated as LMDB provides significantly higher read and write throughput and data reliability.</P>
 <P><B>Multiple database instances</B>: <EM>slapd</EM> can be configured to serve multiple databases at the same time. This means that a single <EM>slapd</EM> server can respond to requests for many logically different portions of the LDAP tree, using the same or different database backends.</P>
 <P><B>Generic modules API</B>:  If you require even more customization, <EM>slapd</EM> lets you write your own modules easily. <EM>slapd</EM> consists of two distinct parts: a front end that handles protocol communication with LDAP clients; and modules which handle specific tasks such as database operations.  Because these two pieces communicate via a well-defined <TERM>C</TERM> <TERM>API</TERM>, you can write your own customized modules which extend <EM>slapd</EM> in numerous ways.  Also, a number of <EM>programmable database</EM> modules are provided.  These allow you to expose external data sources to <EM>slapd</EM> using popular programming languages (<A HREF="http://www.perl.org/">Perl</A>, <EM>shell</EM>, and <TERM>SQL</TERM>).</P>
 <P><B>Threads</B>: <EM>slapd</EM> is threaded for high performance.  A single multi-threaded <EM>slapd</EM> process handles all incoming requests using a pool of threads.  This reduces the amount of system overhead required while providing high performance.</P>
@@ -1179,46 +1179,82 @@ Everything should now be installed under <TT>/usr/local</TT> (or whatever instal
 &nbsp;
 <LI><B>Edit the configuration file</B>.
 <BR>
-Use your favorite editor to edit the provided <EM>slapd.conf</EM>(5) example (usually installed as <TT>/usr/local/etc/openldap/slapd.conf</TT>) to contain a BDB database definition of the form:<UL>
-<TT>database        bdb</TT>
+Use your favorite editor to edit the provided <EM>slapd.ldif</EM> example (usually installed as <TT>/usr/local/etc/openldap/slapd.ldif</TT>) to contain a MDB database definition of the form:<UL>
+<TT>dn: olcDatabase=mdb,cn=config</TT>
 <BR>
-<TT>suffix          &quot;dc=&lt;MY-DOMAIN&gt;,dc=&lt;COM&gt;&quot;</TT>
+<TT>objectClass: olcDatabaseConfig</TT>
 <BR>
-<TT>rootdn          &quot;cn=Manager,dc=&lt;MY-DOMAIN&gt;,dc=&lt;COM&gt;&quot;</TT>
+<TT>objectClass: olcMdbConfig</TT>
 <BR>
-<TT>rootpw          secret</TT>
+<TT>olcDatabase: mdb</TT>
 <BR>
-<TT>directory       /usr/local/var/openldap-data</TT></UL>
+<TT>OlcDbMaxSize: 1073741824</TT>
+<BR>
+<TT>olcSuffix: dc=&lt;MY-DOMAIN&gt;,dc=&lt;COM&gt;</TT>
+<BR>
+<TT>olcRootDN: cn=Manager,dc=&lt;MY-DOMAIN&gt;,dc=&lt;COM&gt;</TT>
+<BR>
+<TT>olcRootPW: secret</TT>
+<BR>
+<TT>olcDbDirectory: /usr/local/var/openldap-data</TT>
+<BR>
+<TT>olcDbIndex: objectClass eq</TT></UL>
 <BR>
 Be sure to replace <TT>&lt;MY-DOMAIN&gt;</TT> and <TT>&lt;COM&gt;</TT> with the appropriate domain components of your domain name.  For example, for <TT>example.com</TT>, use:<UL>
-<TT>database        bdb</TT>
+<TT>dn: olcDatabase=mdb,cn=config</TT>
 <BR>
-<TT>suffix          &quot;dc=example,dc=com&quot;</TT>
+<TT>objectClass: olcDatabaseConfig</TT>
 <BR>
-<TT>rootdn          &quot;cn=Manager,dc=example,dc=com&quot;</TT>
+<TT>objectClass: olcMdbConfig</TT>
 <BR>
-<TT>rootpw          secret</TT>
+<TT>olcDatabase: mdb</TT>
 <BR>
-<TT>directory       /usr/local/var/openldap-data</TT></UL>
+<TT>OlcDbMaxSize: 1073741824</TT>
+<BR>
+<TT>olcSuffix: dc=example,dc=com</TT>
+<BR>
+<TT>olcRootDN: cn=Manager,dc=example,dc=com</TT>
+<BR>
+<TT>olcRootPW: secret</TT>
+<BR>
+<TT>olcDbDirectory: /usr/local/var/openldap-data</TT>
+<BR>
+<TT>olcDbIndex: objectClass eq</TT></UL>
 <BR>
 If your domain contains additional components, such as <TT>eng.uni.edu.eu</TT>, use:<UL>
-<TT>database        bdb</TT>
+<TT>dn: olcDatabase=mdb,cn=config</TT>
 <BR>
-<TT>suffix          &quot;dc=eng,dc=uni,dc=edu,dc=eu&quot;</TT>
+<TT>objectClass: olcDatabaseConfig</TT>
 <BR>
-<TT>rootdn          &quot;cn=Manager,dc=eng,dc=uni,dc=edu,dc=eu&quot;</TT>
+<TT>objectClass: olcMdbConfig</TT>
 <BR>
-<TT>rootpw          secret</TT>
+<TT>olcDatabase: mdb</TT>
 <BR>
-<TT>directory       /usr/local/var/openldap-data</TT></UL>
+<TT>OlcDbMaxSize: 1073741824</TT>
 <BR>
-Details regarding configuring <EM>slapd</EM>(8) can be found in the <EM>slapd.conf</EM>(5) manual page and the <A HREF="#The slapd Configuration File">The slapd Configuration File</A> chapter of this document.  Note that the specified directory must exist prior to starting <EM>slapd</EM>(8).
+<TT>olcSuffix: dc=eng,dc=uni,dc=edu,dc=eu</TT>
+<BR>
+<TT>olcRootDN: cn=Manager,dc=eng,dc=uni,dc=edu,dc=eu</TT>
+<BR>
+<TT>olcRootPW: secret</TT>
+<BR>
+<TT>olcDbDirectory: /usr/local/var/openldap-data</TT>
+<BR>
+<TT>olcDbIndex: objectClass eq</TT></UL>
+<BR>
+Details regarding configuring <EM>slapd</EM>(8) can be found in the <EM>slapd-config</EM>(5) manual page and the <A HREF="#Configuring slapd">Configuring slapd</A> chapter of this document.  Note that the specified olcDbDirectory must exist prior to starting <EM>slapd</EM>(8).
+<BR>
+&nbsp;
+<LI><B>Import the configuration database</B>
+<BR>
+You are now ready to import your configration database for use by <EM>slapd</EM>(8), by running the command:<UL>
+<TT> su root -c /usr/local/sbin/slapadd -F /usr/local/etc/cn=config -l /usr/local/etc/openldap/slapd.ldif</TT></UL>
 <BR>
 &nbsp;
 <LI><B>Start SLAPD</B>.
 <BR>
 You are now ready to start the Standalone LDAP Daemon, <EM>slapd</EM>(8), by running the command:<UL>
-<TT>su root -c /usr/local/libexec/slapd</TT></UL>
+<TT>su root -c /usr/local/libexec/slapd -F /usr/local/etc/cn=config</TT></UL>
 <BR>
 To check to see if the server is running and configured correctly, you can run a search against it with <EM>ldapsearch</EM>(1).  By default, <EM>ldapsearch</EM> is installed as <TT>/usr/local/bin/ldapsearch</TT>:<UL>
 <TT>ldapsearch -x -b '' -s base '(objectclass=*)' namingContexts</TT></UL>
@@ -1347,10 +1383,10 @@ This command will search for and retrieve every entry in the database.</OL>
 <P>Heimdal Kerberos is available from <A HREF="http://www.pdc.kth.se/heimdal/">http://www.pdc.kth.se/heimdal/</A>. MIT Kerberos is available from <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
 <P>Use of strong authentication services, such as those provided by Kerberos, is highly recommended.</P>
 <H3><A NAME="Database Software">4.2.4. Database Software</A></H3>
-<P>OpenLDAP's <EM>slapd</EM>(8) <TERM>BDB</TERM> and <TERM>HDB</TERM> primary database backends require <A HREF="http://www.oracle.com/">Oracle Corporation</A> <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>. If not available at configure time, you will not be able to build <EM>slapd</EM>(8) with these primary database backends.</P>
-<P>Your operating system may provide a supported version of <A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A> in the base system or as an optional software component.  If not, you'll have to obtain and install it yourself.</P>
-<P><A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A> is available from <A HREF="http://www.oracle.com/">Oracle Corporation</A>'s Berkeley DB download page <A HREF="http://www.oracle.com/technology/software/products/berkeley-db/index.html">http://www.oracle.com/technology/software/products/berkeley-db/index.html</A>.</P>
-<P>There are several versions available. Generally, the most recent release (with published patches) is recommended. This package is required if you wish to use the <TERM>BDB</TERM> or <TERM>HDB</TERM> database backends.</P>
+<P>OpenLDAP's <EM>slapd</EM>(8) <TERM>MDB</TERM> primary database backend uses the <TERM>LMDB</TERM> software included with the OpenLDAP source.  There is no need to download any additional software to have <EM>MDB</EM> support.</P>
+<P>OpenLDAP's <EM>slapd</EM>(8) <TERM>BDB</TERM> and <TERM>HDB</TERM> deprecated database backends require <A HREF="http://www.oracle.com/">Oracle Corporation</A>'s Berkeley DB. If not available at configure time, you will not be able to build <EM>slapd</EM>(8) with these deprecated database backends.</P>
+<P>Your operating system may provide a supported version of Berkeley DB in the base system or as an optional software component.  If not, you'll have to obtain and install it yourself.  Berkeley DB is available from <A HREF="http://www.oracle.com/">Oracle Corporation</A>'s Berkeley DB download page if required.</P>
+<P>There are several versions available from <A HREF="http://www.oracle.com/">Oracle Corporation</A>. Berkeley DB version 6.0.20 and later uses a software license that is incompatible with LDAP technology and should not be used with OpenLDAP.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>Please see <A HREF="#Recommended OpenLDAP Software Dependency Versions">Recommended OpenLDAP Software Dependency Versions</A> for more information.
 <HR WIDTH="80%" ALIGN="Left"></P>
@@ -2060,7 +2096,7 @@ SQL Programmable backend
 <P>Simple authentication should not be used unless adequate data integrity and confidentiality protections are in place (e.g. TLS or IPsec). Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
 <P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT>, respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
 <P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
-<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  Note that the main slapd TLS settings are not used by the syncrepl engine; by default the TLS parameters from a <EM>ldap.conf</EM>(5) configuration file will be used.  TLS settings may be specified here, in which case any <EM>ldap.conf</EM>(5) settings will be completely ignored.</P>
+<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  The tls_reqcert setting defaults to <TT>&quot;demand&quot;</TT> and the other TLS settings default to the same as the main slapd TLS settings.</P>
 <P>Rather than replicating whole entries, the consumer can query logs of data modifications.  This mode of operation is referred to as <EM>delta syncrepl</EM>.  In addition to the above parameters, the <TT>logbase</TT> and <TT>logfilter</TT> parameters must be set appropriately for the log that will be used. The <TT>syncdata</TT> parameter must be set to either <TT>&quot;accesslog&quot;</TT> if the log conforms to the <EM>slapo-accesslog</EM>(5) log format, or <TT>&quot;changelog&quot;</TT> if the log conforms to the obsolete <EM>changelog</EM> format. If the <TT>syncdata</TT> parameter is omitted or set to <TT>&quot;default&quot;</TT> then the log parameters are ignored.</P>
 <P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM> and <EM>hdb</EM> backends.</P>
 <P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of this guide for more information on how to use this directive.</P>
@@ -2796,9 +2832,9 @@ SQL Programmable backend
 <P>Simple authentication should not be used unless adequate data integrity and confidentiality protections are in place (e.g. TLS or IPsec). Simple authentication requires specification of <TT>binddn</TT> and <TT>credentials</TT> parameters.</P>
 <P>SASL authentication is generally recommended.  SASL authentication requires specification of a mechanism using the <TT>saslmech</TT> parameter. Depending on the mechanism, an authentication identity and/or credentials can be specified using <TT>authcid</TT> and <TT>credentials</TT>, respectively.  The <TT>authzid</TT> parameter may be used to specify an authorization identity.</P>
 <P>The <TT>realm</TT> parameter specifies a realm which a certain mechanisms authenticate the identity within. The <TT>secprops</TT> parameter specifies Cyrus SASL security properties.</P>
-<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  Note that the main slapd TLS settings are not used by the syncrepl engine; by default the TLS parameters from a <EM>ldap.conf</EM>(5) configuration file will be used.  TLS settings may be specified here, in which case any <EM>ldap.conf</EM>(5) settings will be completely ignored.</P>
+<P>The <TT>starttls</TT> parameter specifies use of the StartTLS extended operation to establish a TLS session before authenticating to the provider. If the <TT>critical</TT> argument is supplied, the session will be aborted if the StartTLS request fails.  Otherwise the syncrepl session continues without TLS.  The tls_reqcert setting defaults to <TT>&quot;demand&quot;</TT> and the other TLS settings default to the same as the main slapd TLS settings.</P>
 <P>Rather than replicating whole entries, the consumer can query logs of data modifications.  This mode of operation is referred to as <EM>delta syncrepl</EM>.  In addition to the above parameters, the <TT>logbase</TT> and <TT>logfilter</TT> parameters must be set appropriately for the log that will be used. The <TT>syncdata</TT> parameter must be set to either <TT>&quot;accesslog&quot;</TT> if the log conforms to the <EM>slapo-accesslog</EM>(5) log format, or <TT>&quot;changelog&quot;</TT> if the log conforms to the obsolete <EM>changelog</EM> format. If the <TT>syncdata</TT> parameter is omitted or set to <TT>&quot;default&quot;</TT> then the log parameters are ignored.</P>
-<P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM> and <EM>hdb</EM> backends.</P>
+<P>The <EM>syncrepl</EM> replication mechanism is supported by the <EM>bdb</EM>, <EM>hdb</EM>, and <EM>mdb</EM> backends.</P>
 <P>See the <A HREF="#LDAP Sync Replication">LDAP Sync Replication</A> chapter of this guide for more information on how to use this directive.</P>
 <H4><A NAME="updateref &lt;URL&gt;">6.2.3.8. updateref &lt;URL&gt;</A></H4>
 <P>This directive is only applicable in a <EM>slave</EM> (or <EM>shadow</EM>) <EM>slapd</EM>(8) instance. It specifies the URL to return to clients which submit update requests upon the replica. If specified multiple times, each <TERM>URL</TERM> is provided.</P>
@@ -4633,7 +4669,7 @@ Members of a group
 </PRE>
 <H2><A NAME="Berkeley DB Backends">11.1. Berkeley DB Backends</A></H2>
 <H3><A NAME="Overview">11.1.1. Overview</A></H3>
-<P>The <EM>hdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
+<P>The <EM>hdb</EM> backend to <EM>slapd</EM>(8) is a backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
 <P><EM>hdb</EM> is a variant of the original <EM>bdb</EM> backend which was first written for use with BDB. <EM>hdb</EM> uses a hierarchical database layout which supports subtree renames. It is otherwise identical to the <EM>bdb</EM> behavior, and all the same configuration options apply.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>An <EM>hdb</EM> database needs a large <EM>idlcachesize</EM> for good search performance, typically three times the <EM>cachesize</EM> (entry cache size) or larger.
@@ -4724,7 +4760,7 @@ Members of a group
 <P><EM>slapd-ldif</EM>(5)</P>
 <H2><A NAME="LMDB">11.4. LMDB</A></H2>
 <H3><A NAME="Overview">11.4.1. Overview</A></H3>
-<P>The <EM>mdb</EM> backend to <EM>slapd</EM>(8) is the upcoming primary backend for a normal <EM>slapd</EM> database.  It uses OpenLDAP's own Lightning Memory-Mapped Database (<TERM>LMDB</TERM>) library to store data and is intended to replace the Berkeley DB backends.</P>
+<P>The <EM>mdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses OpenLDAP's own Lightning Memory-Mapped Database (<TERM>LMDB</TERM>) library to store data and is intended to replace the Berkeley DB backends.</P>
 <P>It supports indexing like the BDB backends, but it uses no caching and requires no tuning to deliver maximum search performance.  Like <EM>hdb</EM>, it is also fully hierarchical and supports subtree renames in constant time.</P>
 <H3><A NAME="back-mdb Configuration">11.4.2. back-mdb Configuration</A></H3>
 <P>Unlike the BDB backends, the <EM>mdb</EM> backend can be instantiated with very few configuration lines:</P>
@@ -7159,7 +7195,7 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <P>The syncrepl engine utilizes both the <EM>refreshOnly</EM> and the <EM>refreshAndPersist</EM> operations of the LDAP Sync protocol.  If a syncrepl specification is included in a database definition, <EM>slapd</EM>(8) launches a syncrepl engine as a <EM>slapd</EM>(8) thread and schedules its execution. If the <EM>refreshOnly</EM> operation is specified, the syncrepl engine will be rescheduled at the interval time after a synchronization operation is completed.  If the <EM>refreshAndPersist</EM> operation is specified, the engine will remain active and process the persistent synchronization messages from the provider.</P>
 <P>The syncrepl engine utilizes both the present phase and the delete phase of the refresh synchronization. It is possible to configure a session log in the provider which stores the <TT>entryUUID</TT>s of a finite number of entries deleted from a database. Multiple replicas share the same session log. The syncrepl engine uses the delete phase if the session log is present and the state of the consumer server is recent enough that no session log entries are truncated after the last synchronization of the client.  The syncrepl engine uses the present phase if no session log is configured for the replication content or if the consumer replica is too outdated to be covered by the session log.  The current design of the session log store is memory based, so the information contained in the session log is not persistent over multiple provider invocations. It is not currently supported to access the session log store by using LDAP operations. It is also not currently supported to impose access control to the session log.</P>
 <P>As a further optimization, even in the case the synchronization search is not associated with any session log, no entries will be transmitted to the consumer server when there has been no update in the replication context.</P>
-<P>The syncrepl engine, which is a consumer-side replication engine, can work with any backends. The LDAP Sync provider can be configured as an overlay on any backend, but works best with the <EM>back-bdb</EM> or <EM>back-hdb</EM> backend.</P>
+<P>The syncrepl engine, which is a consumer-side replication engine, can work with any backends. The LDAP Sync provider can be configured as an overlay on any backend, but works best with the <EM>back-bdb</EM> <EM>back-hdb</EM>, or <EM>back-mdb</EM> backends.</P>
 <P>The LDAP Sync provider maintains a <TT>contextCSN</TT> for each database as the current synchronization state indicator of the provider content.  It is the largest <TT>entryCSN</TT> in the provider context such that no transactions for an entry having smaller <TT>entryCSN</TT> value remains outstanding.  The <TT>contextCSN</TT> could not just be set to the largest issued <TT>entryCSN</TT> because <TT>entryCSN</TT> is obtained before a transaction starts and transactions are not committed in the issue order.</P>
 <P>The provider stores the <TT>contextCSN</TT> of a context in the <TT>contextCSN</TT> attribute of the context suffix entry. The attribute is not written to the database after every update operation though; instead it is maintained primarily in memory. At database start time the provider reads the last saved <TT>contextCSN</TT> into memory and uses the in-memory copy exclusively thereafter. By default, changes to the <TT>contextCSN</TT> as a result of database updates will not be written to the database until the server is cleanly shut down. A checkpoint facility exists to cause the <TT>contextCSN</TT> to be written out more frequently if desired.</P>
 <P>Note that at startup time, if the provider is unable to read a <TT>contextCSN</TT> from the suffix entry, it will scan the entire database to determine the value, and this scan may take quite a long time on a large database. When a <TT>contextCSN</TT> value is read, the database will still be scanned for any <TT>entryCSN</TT> values greater than it, to make sure the <TT>contextCSN</TT> value truly reflects the greatest committed <TT>entryCSN</TT> in the database. On databases which support inequality indexing, setting an eq index on the <TT>entryCSN</TT> attribute and configuring <EM>contextCSN</EM> checkpoints will greatly speed up this scanning step.</P>
@@ -7265,7 +7301,8 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <P>Note that using the session log requires searching on the <EM>entryUUID</EM> attribute. Setting an eq index on this attribute will greatly benefit the performance of the session log on the provider.</P>
 <P>A more complete example of the <EM>slapd.conf</EM>(5) content is thus:</P>
 <PRE>
-        database bdb
+        database mdb
+        maxsize 1073741824
         suffix dc=Example,dc=com
         rootdn dc=Example,dc=com
         directory /var/ldap/db
@@ -7278,7 +7315,8 @@ Use <TT>certutil -L</TT> to list the certificates by name:</UL>
 <H4><A NAME="Set up the consumer slapd">18.3.1.3. Set up the consumer slapd</A></H4>
 <P>The syncrepl replication is specified in the database section of <EM>slapd.conf</EM>(5) for the replica context.  The syncrepl engine is backend independent and the directive can be defined with any database type.</P>
 <PRE>
-        database hdb
+        database mdb
+        maxsize 1073741824
         suffix dc=Example,dc=com
         rootdn dc=Example,dc=com
         directory /var/ldap/db
@@ -8910,7 +8948,7 @@ Database objects of instances of this backend
 <TT>&nbsp;<A HREF="http://www.gnu.org/software/gnutls/">GnuTLS</A></TT>
 </TD>
 <TD>
-<TT>2.0.1</TT>
+<TT>2.12.0</TT>
 </TD>
 </TR>
 <TR>
@@ -8966,105 +9004,6 @@ Database objects of instances of this backend
 </TD>
 <TD>
 <TT>Version</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-Database Software
-</TD>
-<TD>
-<TT>&nbsp;<A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>:</TT>
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>4.4</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>4.5</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>4.6</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>4.7</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>4.8</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>5.0</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>5.1</TT>
-</TD>
-</TR>
-<TR>
-<TD>
-&nbsp;
-</TD>
-<TD>
-<TT>&nbsp;</TT>
-</TD>
-<TD>
-<TT>Note: It is highly recommended to apply the patches from Oracle for a given release.</TT>
 </TD>
 </TR>
 <TR>
@@ -9885,6 +9824,14 @@ Message Digest 5
 </TR>
 <TR>
 <TD>
+MDB
+</TD>
+<TD>
+Memory-Mapped Database (Backend)
+</TD>
+</TR>
+<TR>
+<TD>
 MIB
 </TD>
 <TD>
@@ -10593,14 +10540,6 @@ University of Michigan LDAP Team
 </TD>
 <TD>
 <A HREF="http://search.cpan.org/src/IANC/sdf-2.001/doc/catalog.html">http://search.cpan.org/src/IANC/sdf-2.001/doc/catalog.html</A>
-</TD>
-</TR>
-<TR>
-<TD>
-<A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">Berkeley DB</A>
-</TD>
-<TD>
-<A HREF="http://www.oracle.com/database/berkeley-db/db/index.html">http://www.oracle.com/database/berkeley-db/db/index.html</A>
 </TD>
 </TR>
 <TR>

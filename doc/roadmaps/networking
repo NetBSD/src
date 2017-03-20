@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.11.2.1 2017/01/07 08:53:45 pgoyette Exp $
+$NetBSD: networking,v 1.11.2.2 2017/03/20 06:52:12 pgoyette Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -19,6 +19,7 @@ The following features are expected to be in future releases:
 7. netboot from http
 8. MP network stack (Layer 3 and below)
 9. MP network stack (rest)
+10. Infiniband
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -116,6 +117,13 @@ Make multi-threaded network stack. Get tasks other than the above targets down.
 Responsible: TBD
 Status: not started
 
+10. Infiniband
+--------------
+
+We do not really have Infiniband support. We should; since it still
+hasn't quite died, it probably isn't going to.
+
+
 Matt Thomas
 Alistair Crooks
 Sat Jan 14 11:44:46 PST 2012
@@ -123,3 +131,5 @@ Christos Zoulas
 Tue May 17 16:46:54 EDT 2016
 Ryota Ozaki
 Wed May 18 18:07:43 JST 2016
+dholland
+Fri Jan 13 00:53:46 EST 2017

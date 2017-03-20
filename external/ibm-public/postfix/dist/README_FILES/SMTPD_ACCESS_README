@@ -146,6 +146,7 @@ Examples of simple restriction lists are:
         # (available with Postfix 2.10 and later).
         reject_unauth_destination
         reject_rbl_client zen.spamhaus.org,
+        reject_rhsbl_reverse_client dbl.spamhaus.org,
         reject_rhsbl_helo dbl.spamhaus.org,
         reject_rhsbl_sender dbl.spamhaus.org
 
@@ -156,7 +157,7 @@ Examples of simple restriction lists are:
     smtpd_end_of_data_restrictions = check_policy_service unix:private/policy
 
 Each restriction list is evaluated from left to right until some restriction
-produces a result of PERMIT, REJECT or DEFER (try again later). The end of the
+produces a result of PERMIT, REJECT or DEFER (try again later). The end of each
 list is equivalent to a PERMIT result. By placing a PERMIT restriction before a
 REJECT restriction you can make exceptions for specific clients or users. This
 is called whitelisting; the fourth example above allows mail from local

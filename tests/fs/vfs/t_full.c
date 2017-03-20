@@ -1,4 +1,4 @@
-/*	$NetBSD: t_full.c,v 1.8 2013/03/16 05:45:37 jmmv Exp $	*/
+/*	$NetBSD: t_full.c,v 1.8.12.1 2017/03/20 06:57:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <rump/rump.h>
 
 #include "../common/h_fsmacros.h"
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 /*
  * Write this much over the image size.  This is to force an NFS commit,

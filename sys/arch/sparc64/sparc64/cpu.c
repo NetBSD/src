@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.128.2.1 2017/01/07 08:56:26 pgoyette Exp $ */
+/*	$NetBSD: cpu.c,v 1.128.2.2 2017/03/20 06:57:21 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.128.2.1 2017/01/07 08:56:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.128.2.2 2017/03/20 06:57:21 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -355,7 +355,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	if (CPU_ISSUN4V)
-		cpi->ci_mmfsa = pa0;
+		cpi->ci_mmufsa = pa0;
 	cpi->ci_node = cpu_node;
 	cpi->ci_idepth = -1;
 	memset(cpi->ci_intrpending, -1, sizeof(cpi->ci_intrpending));

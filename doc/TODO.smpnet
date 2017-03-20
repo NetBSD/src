@@ -1,0 +1,106 @@
+$NetBSD: TODO.smpnet,v 1.9.2.2 2017/03/20 06:52:12 pgoyette Exp $
+
+MP-safe components
+==================
+
+ - Device drivers
+   - vioif(4)
+   - vmx(4)
+   - wm(4)
+   - ixg(4)
+   - ixv(4)
+ - Layer 2
+   - Ethernet (if_ethersubr.c)
+   - bridge(4)
+     - STP
+   - Fast forward (ipflow)
+ - Layer 3
+   - All except for items in the below section
+ - Interfaces
+   - gif(4)
+   - l2tp(4)
+   - pppoe(4)
+     - if_spppsubr.c
+   - tun(4)
+ - Packet filters
+   - npf(7)
+ - Others
+   - bpf(4)
+   - pfil(9)
+
+Non MP-safe components and kernel options
+=========================================
+
+ - Device drivers
+   - Most drivers other than ones listed in the above section
+ - Layer 2
+   - ARCNET (if_arcsubr.c)
+   - ATM (if_atmsubr.c)
+   - BRIDGE_IPF
+   - if_ecosubr.c
+   - FDDI (if_fddisubr.c)
+   - HIPPI (if_hippisubr.c)
+   - IEEE 1394 (if_ieee1394subr.c)
+   - IEEE 802.11 (ieee80211(4))
+   - Token ring (if_tokensubr.c)
+ - Layer 3
+   - IPSELSRC
+   - MROUTING
+   - PIM
+   - MPLS (mpls(4))
+ - Layer 4
+   - DCCP
+   - SCTP
+   - TCP
+   - UDP
+ - Interfaces
+   - agr(4)
+   - carp(4)
+   - etherip(4)
+   - faith(4)
+   - gre(4)
+   - ppp(4)
+   - sl(4)
+   - stf(4)
+   - strip(4)
+   - if_srt
+   - tap(4)
+   - vlan(4)
+ - Packet filters
+   - ipf(4)
+   - pf(4)
+ - Others
+   - AppleTalk (sys/netatalk/)
+   - ATM (sys/netnatm/)
+   - Bluetooth (sys/netbt/)
+   - altq(4)
+   - CIFS (sys/netsmb/)
+   - ipsec(4)
+   - ISDN (sys/netisbn/)
+   - kttcp(4)
+   - NFS
+   - opencrypto(9)
+
+Know issues
+===========
+
+bpf
+---
+
+MP-ification of bpf requires all of bpf_mtap* are called in normal LWP context
+or softint context, i.e., not in hardware interrupt context.  For Tx, all
+bpf_mtap satisfy the requrement.  For Rx, most of bpf_mtap are called in softint.
+Unfortunately some bpf_mtap on Rx are still called in hardware interrupt context.
+
+This is the list of the functions that have such bpf_mtap:
+
+ - sca_frame_process() @ sys/dev/ic/hd64570.c
+ - en_intr() @ sys/dev/ic/midway.c
+ - rxintr_cleanup() and txintr_cleanup() @ sys/dev/pci/if_lmc.c
+ - ipr_rx_data_rdy() @ sys/netisdn/i4b_ipr.c
+
+Ideally we should make the functions run in softint somehow, but we don't have
+actual devices, no time (or interest/love) to work on the task, so instead we
+provide a deferred bpf_mtap mechanism that forcibly runs bpf_mtap in softint
+context.  It's a workaround and once the functions run in softint, we should use
+the original bpf_mtap again.

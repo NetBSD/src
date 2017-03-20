@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.25.2.1 2016/08/06 00:19:07 pgoyette Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.25.2.2 2017/03/20 06:57:25 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.25.2.1 2016/08/06 00:19:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.25.2.2 2017/03/20 06:57:25 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -441,7 +441,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct ifaddr *ifa;
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -477,7 +477,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 			ifa_release(ifa, &psref_ifa);
 		}
 
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
@@ -491,7 +491,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 
 release_exit:
 	pserialize_read_exit(s);
-	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	if_release(ifp, &psref);
 	curlwp_bindx(bound);
 	return error;
 }

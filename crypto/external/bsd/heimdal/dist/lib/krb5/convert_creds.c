@@ -1,4 +1,4 @@
-/*	$NetBSD: convert_creds.c,v 1.1.1.2 2014/04/24 12:45:49 pettai Exp $	*/
+/*	$NetBSD: convert_creds.c,v 1.1.1.2.6.1 2017/03/20 06:51:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan

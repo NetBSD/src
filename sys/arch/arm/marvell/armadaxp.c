@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.15 2015/06/03 02:53:19 hsuenaga Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.15.2.1 2017/03/20 06:57:11 pgoyette Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.15 2015/06/03 02:53:19 hsuenaga Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.15.2.1 2017/03/20 06:57:11 pgoyette Exp $");
 
 #define _INTR_PRIVATE
 
@@ -90,7 +90,6 @@ int iocc_state = 0;
 vaddr_t misc_base;
 vaddr_t armadaxp_l2_barrier_reg;
 
-extern void (*mvsoc_intr_init)(void);
 static void armadaxp_intr_init(void);
 
 static void armadaxp_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
@@ -110,6 +109,17 @@ static void armadaxp_err_pic_establish_irq(struct pic_softc *,
 static void armadaxp_err_pic_source_name(struct pic_softc *,
     int, char*, size_t);
 static int armadaxp_err_pic_pending_irqs(struct pic_softc *);
+
+static void armadaxp_getclks(void);
+static void armada370_getclks(void);
+static int armadaxp_clkgating(struct marvell_attach_args *);
+
+static int armadaxp_l2_init(bus_addr_t);
+static paddr_t armadaxp_sdcache_wbalign_base(vaddr_t, paddr_t, psize_t);
+static paddr_t armadaxp_sdcache_wbalign_end(vaddr_t, paddr_t, psize_t);
+#ifdef AURORA_IO_CACHE_COHERENCY
+static void armadaxp_io_coherency_init(void);
+#endif
 
 struct vco_freq_ratio {
 	uint8_t	vco_cpu;	/* VCO to CLK0(CPU) clock ratio */
@@ -241,7 +251,7 @@ static struct mbus_description {
 	       	"PEX0(Lane2, Memory)" },
 	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEXx3_MEM,
 	       	"PEX0(Lane3, Memory)" },
-	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEX2_MEM,
+	{ ARMADAXP_UNITID_PEX2, ARMADAXP_ATTR_PEX2_MEM,
 	       	"PEX2(Lane0, Memory)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx0_MEM,
 	       	"PEX1(Lane0, Memory)" },
@@ -251,7 +261,7 @@ static struct mbus_description {
 	       	"PEX1(Lane2, Memory)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx3_MEM,
 	       	"PEX1(Lane3, Memory)" },
-	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEX2_MEM,
+	{ ARMADAXP_UNITID_PEX3, ARMADAXP_ATTR_PEX3_MEM,
 	       	"PEX3(Lane0, Memory)" },
 	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEXx0_IO,
 	       	"PEX0(Lane0, I/O)" },
@@ -261,7 +271,7 @@ static struct mbus_description {
 	       	"PEX0(Lane2, I/O)" },
 	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEXx3_IO,
 	       	"PEX0(Lane3, I/O)" },
-	{ ARMADAXP_UNITID_PEX0, ARMADAXP_ATTR_PEX2_IO,
+	{ ARMADAXP_UNITID_PEX2, ARMADAXP_ATTR_PEX2_IO,
 	       	"PEX2(Lane0, I/O)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx0_IO,
 	       	"PEX1(Lane0, I/O)" },
@@ -271,7 +281,7 @@ static struct mbus_description {
 	       	"PEX1(Lane2, I/O)" },
 	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEXx3_IO,
 	       	"PEX1(Lane3, I/O)" },
-	{ ARMADAXP_UNITID_PEX1, ARMADAXP_ATTR_PEX2_IO,
+	{ ARMADAXP_UNITID_PEX3, ARMADAXP_ATTR_PEX3_IO,
 	       	"PEX3(Lane0, I/O)" },
 
 	/* CRYPT */
@@ -302,7 +312,7 @@ static struct mbus_description {
 };
 
 /*
- * Default Mbus addrss decoding table for ARMADA XP
+ * Default Mbus address decoding table for ARMADA XP
  * this table may changed by device drivers.
  *
  * NOTE: some version of u-boot is broken. it writes old decoding table.
@@ -388,7 +398,7 @@ static struct mbus_table_def {
 		14, 0xd4000000, 0x04000000,
 		ARMADAXP_UNITID_DEVBUS, ARMADAXP_ATTR_DEVBUS_SPI0_CS0
 	},
-	{	
+	{
 		/* Security Accelerator SRAM, Engine 1, no data swap */
 		/* MODIFIED (added, 0xd0300000-0xd030ffff) */
 		15, 0xd0300000, 0x00010000,
@@ -511,13 +521,13 @@ static struct {
 };
 
 /*
- * armadaxp_intr_bootstrap:
+ * armadaxp_bootstrap:
  *
- *	Initialize the rest of the interrupt subsystem, making it
+ *	Initialize the rest of the Armada XP dependencies, making it
  *	ready to handle interrupts from devices.
  */
 void
-armadaxp_intr_bootstrap(bus_addr_t pbase)
+armadaxp_bootstrap(vaddr_t vbase, bus_addr_t pbase)
 {
 	int i;
 
@@ -534,6 +544,35 @@ armadaxp_intr_bootstrap(bus_addr_t pbase)
 		MPIC_WRITE(ARMADAXP_MLMB_MPIC_ICE, i);
 
 	mvsoc_intr_init = armadaxp_intr_init;
+
+	mvsoc_clkgating = armadaxp_clkgating;
+
+	misc_base = vbase + ARMADAXP_MISC_BASE;
+	switch (mvsoc_model()) {
+	case MARVELL_ARMADAXP_MV78130:
+	case MARVELL_ARMADAXP_MV78160:
+	case MARVELL_ARMADAXP_MV78230:
+	case MARVELL_ARMADAXP_MV78260:
+	case MARVELL_ARMADAXP_MV78460:
+		armadaxp_getclks();
+		break;
+
+	case MARVELL_ARMADA370_MV6707:
+	case MARVELL_ARMADA370_MV6710:
+	case MARVELL_ARMADA370_MV6W11:
+		armada370_getclks();
+		break;
+	}
+
+#ifdef L2CACHE_ENABLE
+	/* Initialize L2 Cache */
+	armadaxp_l2_init(pbase);
+#endif
+
+#ifdef AURORA_IO_CACHE_COHERENCY
+	/* Initialize cache coherency */
+	armadaxp_io_coherency_init();
+#endif
 }
 
 static void
@@ -626,7 +665,7 @@ armadaxp_pic_set_priority(struct pic_softc *pic, int ipl)
 static void
 armadaxp_pic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 {
-	if (irq > __arraycount(armadaxp_pic_source_names)) {
+	if (irq >= __arraycount(armadaxp_pic_source_names)) {
 		snprintf(buf, len, "Unknown IRQ %d", irq);
 		return;
 	}
@@ -669,7 +708,7 @@ static void
 armadaxp_err_pic_source_name(struct pic_softc *pic, int irq,
     char *buf, size_t len)
 {
-	if (irq > __arraycount(armadaxp_err_pic_source_names)) {
+	if (irq >= __arraycount(armadaxp_err_pic_source_names)) {
 		snprintf(buf, len, "Unknown IRQ %d", irq);
 		return;
 	}
@@ -744,7 +783,7 @@ armadaxp_err_pic_pending_irqs(struct pic_softc *pic)
  * Clock functions
  */
 
-void
+static void
 armadaxp_getclks(void)
 {
 	uint64_t sar_reg;
@@ -789,7 +828,7 @@ armadaxp_getclks(void)
 	curcpu()->ci_data.cpu_cc_freq = mvPclk;
 }
 
-void
+static void
 armada370_getclks(void)
 {
 	uint32_t sar;
@@ -834,7 +873,7 @@ armada370_getclks(void)
  * L2 Cache initialization
  */
 
-int
+static int
 armadaxp_l2_init(bus_addr_t pbase)
 {
 	u_int32_t reg;
@@ -1030,7 +1069,8 @@ armadaxp_sdcache_wbinv_range(vaddr_t va, paddr_t pa, psize_t sz)
 	__asm__ __volatile__("dsb");
 }
 
-void
+#ifdef AURORA_IO_CACHE_COHERENCY
+static void
 armadaxp_io_coherency_init(void)
 {
 	uint32_t reg;
@@ -1057,8 +1097,9 @@ armadaxp_io_coherency_init(void)
 	/* Mark as enabled */
 	iocc_state = 1;
 }
+#endif
 
-int
+static int
 armadaxp_clkgating(struct marvell_attach_args *mva)
 {
 	uint32_t val;

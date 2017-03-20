@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.195.2.1 2016/11/04 14:48:52 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.195.2.2 2017/03/20 06:56:57 pgoyette Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -13,7 +13,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	confstr.c ctermid.c ctype_.c \
 	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
 	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
-	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
+	exect.c extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \
@@ -32,12 +32,12 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	siglist.c signal.c signame.c sigrelse.c \
 	sigset.c sigsetops.c sleep.c \
 	stringlist.c sysconf.c sysctl.c sysctlbyname.c sysctlgetmibinfo.c \
-	sysctlnametomib.c syslog.c telldir.c time.c timespec_get.c \
+	sysctlnametomib.c syslog.c syslog_ss.c telldir.c time.c timespec_get.c \
 	times.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c ualarm.c \
 	ulimit.c uname.c unvis.c usleep.c utime.c utimens.c utmp.c \
 	utmpx.c valloc.c vis.c wait.c wait3.c waitid.c waitpid.c warn.c \
-	warnx.c warnc.c vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c \
-	wordexp.c
+	warnx.c warnc.c wordexp.c xsyslog.c \
+	vwarn.c vwarnx.c vwarnc.c verr.c verrx.c verrc.c
 
 # uses alloca
 COPTS.execvp.c = -Wno-stack-protector

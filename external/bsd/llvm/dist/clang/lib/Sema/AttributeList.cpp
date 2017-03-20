@@ -20,7 +20,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Sema/SemaInternal.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 
 IdentifierLoc *IdentifierLoc::create(ASTContext &Ctx, SourceLocation Loc,
@@ -63,7 +62,7 @@ void *AttributeFactory::allocate(size_t size) {
   }
 
   // Otherwise, allocate something new.
-  return Alloc.Allocate(size, llvm::AlignOf<AttributeFactory>::Alignment);
+  return Alloc.Allocate(size, alignof(AttributeFactory));
 }
 
 void AttributeFactory::reclaimPool(AttributeList *cur) {
@@ -159,6 +158,7 @@ struct ParsedAttrInfo {
   unsigned HasCustomParsing : 1;
   unsigned IsTargetSpecific : 1;
   unsigned IsType : 1;
+  unsigned IsStmt : 1;
   unsigned IsKnownToGCC : 1;
 
   bool (*DiagAppertainsToDecl)(Sema &S, const AttributeList &Attr,
@@ -202,6 +202,10 @@ bool AttributeList::isTargetSpecificAttr() const {
 
 bool AttributeList::isTypeAttr() const {
   return getInfo(*this).IsType;
+}
+
+bool AttributeList::isStmtAttr() const {
+  return getInfo(*this).IsStmt;
 }
 
 bool AttributeList::existsInTarget(const TargetInfo &Target) const {

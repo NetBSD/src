@@ -202,7 +202,7 @@ _mul_1x1:
 .type	bn_GF2m_mul_2x2,@function
 .align	16
 bn_GF2m_mul_2x2:
-	movq	OPENSSL_ia32cap_P@GOTPCREL(%rip),%rax
+	movq	OPENSSL_ia32cap_P(%rip),%rax
 	btq	$33,%rax
 	jnc	.Lvanilla_mul_2x2
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.100.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: key.c,v 1.100.2.2 2017/03/20 06:57:52 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.100.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.100.2.2 2017/03/20 06:57:52 pgoyette Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4180,16 +4180,7 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 		 * about IPv4 multicast??
 		 * XXX scope
 		 */
-		in6m = NULL;
-#ifdef __FreeBSD__
-		IN6_LOOKUP_MULTI(sin6->sin6_addr, ia->ia_ifp, in6m);
-#else
-		for ((in6m) = ia->ia6_multiaddrs.lh_first;
-		     (in6m) != NULL &&
-		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &sin6->sin6_addr);
-		     (in6m) = in6m->in6m_entry.le_next)
-			continue;
-#endif
+		in6m = in6_lookup_multi(&sin6->sin6_addr, ia->ia_ifp);
 		if (in6m) {
 			pserialize_read_exit(s);
 			return 1;

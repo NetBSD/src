@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.30 2015/01/09 12:45:32 prlw1 Exp $	*/
+/*	$NetBSD: pkill.c,v 1.30.2.1 2017/03/20 06:58:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.30 2015/01/09 12:45:32 prlw1 Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.30.2.1 2017/03/20 06:58:05 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -296,8 +296,10 @@ main(int argc, char **argv)
 					    pargv[0]);
 					pargv++;
 				}
-			} else
+			} else if (pargv[0] != NULL)
 				strlcpy(buf, pargv[0], sizeof(buf));
+			else
+				strlcpy(buf, kp->p_comm, sizeof(buf));
 
 			rv = regexec(&reg, buf, 1, &regmatch, 0);
 			if (rv == 0) {

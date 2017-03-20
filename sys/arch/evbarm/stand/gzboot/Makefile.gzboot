@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.34 2016/03/01 16:08:22 joerg Exp $
+#	$NetBSD: Makefile.gzboot,v 1.34.2.1 2017/03/20 06:57:13 pgoyette Exp $
 
 NOMAN=  # defined
 
@@ -39,11 +39,7 @@ CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 CPPFLAGS+= -I${S}/../common/dist/zlib
 CPPFLAGS+= ${ARM_APCS_FLAGS}
-.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
-.else
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.endif
 
 CPPFLAGS+= -D_STANDALONE
 

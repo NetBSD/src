@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.347.2.1 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.347.2.2 2017/03/20 06:57:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.347.2.1 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.347.2.2 2017/03/20 06:57:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -904,6 +904,8 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 	 */
 
 	rcvif = m_get_rcvif(m, &s);
+	if (__predict_false(rcvif == NULL))
+		goto badcsum; /* XXX */
 
 	switch (af) {
 #ifdef INET
@@ -4533,7 +4535,6 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	struct tcpcb *tp = NULL;
 	struct tcphdr *th;
 	u_int hlen;
-	struct socket *so;
 #ifdef TCP_SIGNATURE
 	struct secasvar *sav = NULL;
 	u_int8_t *sigp = NULL;
@@ -4582,18 +4583,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
-	if (sc->sc_tp) {
+	if (sc->sc_tp)
 		tp = sc->sc_tp;
-		if (tp->t_inpcb)
-			so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-		else if (tp->t_in6pcb)
-			so = tp->t_in6pcb->in6p_socket;
-#endif
-		else
-			so = NULL;
-	} else
-		so = NULL;
 	m_reset_rcvif(m);
 	memset(mtod(m, u_char *), 0, tlen);
 
@@ -4816,7 +4807,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0),
-		    NULL, so);
+		    NULL, tp ? tp->t_inpcb : NULL);
 		break;
 #endif
 #ifdef INET6
@@ -4825,7 +4816,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		    (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp : NULL);
 		rtcache_unref(rt, ro);
 
-		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
+		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL,
+		    tp ? tp->t_in6pcb : NULL, NULL);
 		break;
 #endif
 	default:

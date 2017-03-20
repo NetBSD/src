@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.140.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.140.2.2 2017/03/20 06:57:54 pgoyette Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.140.2.1 2016/11/04 14:49:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.140.2.2 2017/03/20 06:57:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -254,10 +254,14 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * All allocations are done, so we can now suspend the filesystem.
 	 */
 	error = vfs_suspend(vp->v_mount, 0);
+	if (error == 0) {
+		suspended = true;
+		vrele_flush(vp->v_mount);
+		error = VFS_SYNC(vp->v_mount, MNT_WAIT, curlwp->l_cred);
+	}
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error)
 		goto out;
-	suspended = true;
 	getmicrotime(&starttime);
 	/*
 	 * First, copy all the cylinder group maps that have changed.
@@ -1989,10 +1993,9 @@ retry:
 			if (gen != si->si_gen)
 				goto retry;
 		}
-#ifdef DIAGNOSTIC
-		if (blkno == BLK_SNAP && bp->b_lblkno >= 0)
-			panic("ffs_copyonwrite: bad copy block");
-#endif
+		KASSERTMSG((blkno != BLK_SNAP || bp->b_lblkno < 0),
+		    "ffs_copyonwrite: bad copy block: blkno %jd, lblkno %jd",
+		    (intmax_t)blkno, (intmax_t)bp->b_lblkno);
 		if (blkno != 0)
 			continue;
 
@@ -2082,7 +2085,6 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	long size, xfersize, blkoffset;
 	int error;
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
 	if (ioflag & IO_ALTSEMANTICS)
@@ -2135,7 +2137,6 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 		brelse(bp, BC_AGE);
 
 	mutex_exit(&si->si_snaplock);
-	fstrans_done(vp->v_mount);
 	return error;
 }
 

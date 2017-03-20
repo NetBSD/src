@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.15.10.2 2017/01/07 08:56:03 pgoyette Exp $	*/
+/*	$NetBSD: border.c,v 1.15.10.3 2017/03/20 06:56:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.15.10.2 2017/01/07 08:56:03 pgoyette Exp $");
+__RCSID("$NetBSD: border.c,v 1.15.10.3 2017/03/20 06:56:59 pgoyette Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -144,7 +144,7 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	}
 
 	/* Corners */
-	if (!(win->maxx == LINES && win->maxy == COLS &&
+	if (!(win->maxy == LINES && win->maxx == COLS &&
 	    (win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN))) {
 		fp[0].ch = (wchar_t) topleft & __CHARTEXT;
 		fp[0].attr = (attr_t) topleft & __ATTRIBUTES;
@@ -492,7 +492,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	}
 
 	/* Corners */
-	if (!(win->maxx == LINES && win->maxy == COLS &&
+	if (!(win->maxy == LINES && win->maxx == COLS &&
 		(win->flags & __SCROLLOK) && (win->flags & __SCROLLWIN))) {
 		for (i = 0; i < tlcw; i++) {
 			win->alines[0]->line[i].ch = topleft.vals[0];

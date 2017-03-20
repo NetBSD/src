@@ -295,6 +295,16 @@ OQMGR(8)                                                              OQMGR(8)
        <b><a href="postconf.5.html#transport_destination_rate_delay"><i>transport</i>_destination_rate_delay</a> $<a href="postconf.5.html#default_destination_rate_delay">default_destination_rate_delay</a></b>
               Idem, for delivery via the named message <i>transport</i>.
 
+       Available in Postfix version 3.1 and later:
+
+       <b><a href="postconf.5.html#default_transport_rate_delay">default_transport_rate_delay</a> (0s)</b>
+              The default amount of delay that is inserted between  individual
+              deliveries  over the same message delivery transport, regardless
+              of destination.
+
+       <b><a href="postconf.5.html#transport_transport_rate_delay"><i>transport</i>_transport_rate_delay</a> $<a href="postconf.5.html#default_transport_rate_delay">default_transport_rate_delay</a></b>
+              Idem, for delivery via the named message <i>transport</i>.
+
 <b>SAFETY CONTROLS</b>
        <b><a href="postconf.5.html#qmgr_daemon_timeout">qmgr_daemon_timeout</a> (1000s)</b>
               How much time a Postfix queue manager process may take to handle
@@ -304,9 +314,15 @@ OQMGR(8)                                                              OQMGR(8)
               The time limit for the queue manager to send or receive informa-
               tion over an internal communication channel.
 
+       Available in Postfix version 3.1 and later:
+
+       <b><a href="postconf.5.html#address_verify_pending_request_limit">address_verify_pending_request_limit</a> (see 'postconf -d' output)</b>
+              A  safety limit that prevents address verification requests from
+              overwhelming the Postfix queue.
+
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#defer_transports">defer_transports</a> (empty)</b>
@@ -314,11 +330,11 @@ OQMGR(8)                                                              OQMGR(8)
               mail unless someone issues "<b>sendmail -q</b>" or equivalent.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The  maximal  number of digits after the decimal point when log-
+              The maximal number of digits after the decimal point  when  log-
               ging sub-second delay values.
 
        <b><a href="postconf.5.html#helpful_warnings">helpful_warnings</a> (yes)</b>
-              Log warnings about problematic configuration settings, and  pro-
+              Log  warnings about problematic configuration settings, and pro-
               vide helpful suggestions.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
@@ -334,9 +350,15 @@ OQMGR(8)                                                              OQMGR(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
+
+       Available in Postfix version 3.0 and later:
+
+       <b><a href="postconf.5.html#confirm_delay_cleared">confirm_delay_cleared</a> (no)</b>
+              After sending a "your message is delayed"  notification,  inform
+              the sender when the delay clears up.
 
 <b>FILES</b>
        /var/spool/postfix/incoming, <a href="QSHAPE_README.html#incoming_queue">incoming queue</a>
@@ -365,6 +387,11 @@ OQMGR(8)                                                              OQMGR(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                       OQMGR(8)
 </pre> </body> </html>

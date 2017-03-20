@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.86.2.3 2017/01/07 08:53:44 pgoyette Exp $
+# $NetBSD: mi,v 1.86.2.4 2017/03/20 06:52:09 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -142,6 +142,18 @@
 ./@MODULEDIR@/if_axe/if_axe.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_axen				base-kernel-modules	kmod
 ./@MODULEDIR@/if_axen/if_axen.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_faith				base-kernel-modules	kmod
+./@MODULEDIR@/if_faith/if_faith.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_gif				base-kernel-modules	kmod
+./@MODULEDIR@/if_gif/if_gif.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_gre				base-kernel-modules	kmod
+./@MODULEDIR@/if_gre/if_gre.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_l2tp				base-kernel-modules	kmod
+./@MODULEDIR@/if_l2tp/if_l2tp.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_loop				base-kernel-modules	kmod
+./@MODULEDIR@/if_loop/if_loop.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_mpls				base-kernel-modules	kmod
+./@MODULEDIR@/if_mpls/if_mpls.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_npflog				base-kernel-modules	kmod
 ./@MODULEDIR@/if_npflog/if_npflog.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_smsc				base-kernel-modules	kmod

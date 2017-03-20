@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.6 2014/01/14 18:51:25 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6.10.1 2017/03/20 06:57:24 pgoyette Exp $
 
+.if !defined(SUBDIR)
 SYSCALL_PREFIX=linux
 
 .include <bsd.syscall.mk>
+.endif

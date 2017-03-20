@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.3 2013/01/02 11:28:48 martin Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.3.12.1 2017/03/20 06:57:58 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.3 2013/01/02 11:28:48 martin Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.3.12.1 2017/03/20 06:57:58 pgoyette Exp $");
 
 #include <atf-c.h>
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: t_glob.c,v 1.3 2013/01/02 11:28:48 martin Exp $");
 #include <string.h>
 #include <errno.h>
 
-#include "../../../h_macros.h"
+#include "h_macros.h"
 
 
 #ifdef DEBUG
@@ -146,7 +146,7 @@ gl_stat(const char *name , __gl_stat_t *st)
 	memset(st, 0, sizeof(*st));
 
 	if (strcmp(buf, "a") == 0 || strcmp(buf, "a/b") == 0) {
-		st->st_mode |= _S_IFDIR;
+		st->st_mode |= S_IFDIR;
 		return 0;
 	}
 

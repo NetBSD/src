@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.14 2016/06/15 06:01:21 ozaki-r Exp $	*/
+/*	$NetBSD: scope6.c,v 1.14.2.1 2017/03/20 06:57:51 pgoyette Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.14 2016/06/15 06:01:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.14.2.1 2017/03/20 06:57:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -344,11 +344,12 @@ int
 sa6_recoverscope(struct sockaddr_in6 *sin6)
 {
 	uint32_t zoneid;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	if (sin6->sin6_scope_id != 0) {
 		log(LOG_NOTICE,
 		    "sa6_recoverscope: assumption failure (non 0 ID): %s%%%d\n",
-		    ip6_sprintf(&sin6->sin6_addr), sin6->sin6_scope_id);
+		    IN6_PRINT(ip6buf, &sin6->sin6_addr), sin6->sin6_scope_id);
 		/* XXX: proceed anyway... */
 	}
 	if (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr) ||

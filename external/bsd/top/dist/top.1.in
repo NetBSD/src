@@ -409,7 +409,7 @@ Top supports the use of ANSI color in its output. By default, color is
 available but not used.  The environment variable
 .B TOPCOLORS
 specifies colors to use and conditions for which they should be used.
-At the present time, only numbers in the summay display area can be 
+At the present time, only numbers in the summary display area can be 
 colored. In a future version it will be possible to highlight numbers
 in the process display area as well.  The environment variable is the
 only way to specify color: there is no equivalent command line option.
@@ -454,7 +454,7 @@ You can see a list of color codes recognized by this installation of top
 with the
 .B \-T
 option.  This will also show the current set of tests used for
-color highligting, as specified in the environment.
+color highlighting, as specified in the environment.
 .SH AUTHOR
 William LeFebvre
 .SH ENVIRONMENT

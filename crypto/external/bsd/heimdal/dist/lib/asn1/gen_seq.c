@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_seq.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: gen_seq.c,v 1.1.1.2.6.1 2017/03/20 06:51:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: gen_seq.c,v 1.1.1.2.6.1 2017/03/20 06:51:41 pgoyette Exp $");
 
 void
 generate_type_seq (const Symbol *s)

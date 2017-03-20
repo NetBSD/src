@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.12.10.1 2016/11/04 14:49:03 pgoyette Exp $ */
+/* $NetBSD: ofwpci.c,v 1.12.10.2 2017/03/20 06:57:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.12.10.1 2016/11/04 14:49:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.12.10.2 2017/03/20 06:57:18 pgoyette Exp $");
 
 #include "opt_pci.h"
 
@@ -134,7 +134,7 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	struct pcibus_attach_args pba;
 	struct genppc_pci_chipset_businfo *pbi;
 	int node = ca->ca_node;
-	int i, isprim = 0;
+	int i;
 	uint32_t busrange[2];
 	char buf[64];
 #ifdef PCI_NETBSD_CONFIGURE
@@ -173,7 +173,6 @@ ofwpci_attach(device_t parent, device_t self, void *aux)
 	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") == node) {
 		int isa_node;
 
-		isprim++;
 		/* yes we are, now do we have an ISA child? */
 		isa_node = of_find_firstchild_byname(node, "isa");
 		if (isa_node != -1) {

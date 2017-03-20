@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.15.14.1 2017/01/07 08:56:04 pgoyette Exp $
+.\"	$NetBSD: curses_screen.3,v 1.15.14.2 2017/03/20 06:56:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,12 +30,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 5, 2017
+.Dd January 24, 2017
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
 .Nm curses_screen ,
 .Nm filter ,
+.Nm ripoffline ,
 .Nm use_env ,
 .Nm newterm ,
 .Nm set_term ,
@@ -55,6 +56,8 @@
 .In curses.h
 .Ft void
 .Fn filter "void"
+.Ft int
+.Fn ripoffline "int line" "int (*init)(WINDOW *win, int cols)"
 .Ft void
 .Fn use_env "bool value"
 .Ft SCREEN *
@@ -212,6 +215,36 @@ Set lines equal to 1.
 .El
 .Pp
 The
+.Fn ripoffline
+funcion will rip a line from
+.Dv stdscr
+at the top if
+.Fa line
+is positive, or at the bottom if negative.
+When
+.Fn initscr
+or
+.Fn newterm
+is called, a window will be created for each line ripped and passed
+to the
+.Fa init
+function pointer alongwith the number of columns in the window.
+This init function cannot use the
+.Dv LINES
+or
+.Dv COLS
+variables and cannot call
+.Xr wrefresh 3
+or
+.Xr doupdate 3 ,
+but may call
+.Xr wnoutrefresh 3 .
+.Dv LINES
+will be reduced by the total number of lines ripped off.
+.Fn ripoffline
+can be called up to five times.
+.Pp
+The
 .Fn use_env
 function determines whether the environment variables
 .Ev LINES
@@ -274,3 +307,8 @@ functions are
 .Em ncurses
 extension to the Curses library and was added in
 .Nx 8.0 .
+.Sh BUGS
+There is currently an issue with cursor movement in a 1 line sized window
+which causes the screen to scroll up.
+This can obviously be seen when using
+.Fn ripoffline .

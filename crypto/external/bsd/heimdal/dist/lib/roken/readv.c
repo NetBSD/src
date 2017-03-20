@@ -1,4 +1,4 @@
-/*	$NetBSD: readv.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: readv.c,v 1.1.1.1.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan

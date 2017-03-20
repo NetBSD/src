@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_extracted.c,v 1.1.1.2 2010/06/17 18:06:43 tron Exp $	*/
+/*	$NetBSD: cleanup_extracted.c,v 1.1.1.2.28.1 2017/03/20 06:56:35 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -307,6 +307,21 @@ void    cleanup_extracted_finish(CLEANUP_STATE *state)
     if ((state->flags & CLEANUP_FLAG_BCC_OK)
 	&& state->recip != 0 && *var_always_bcc)
 	cleanup_addr_bcc(state, var_always_bcc);
+
+    /*
+     * Flush non-Milter header/body_checks BCC recipients. Clear hbc_rcpt
+     * so that it can be used for other purposes.
+     */
+    if (state->hbc_rcpt) {
+	if (CLEANUP_OUT_OK(state) && state->recip != 0) {
+	    char  **cpp;
+
+	    for (cpp = state->hbc_rcpt->argv; *cpp; cpp++)
+		cleanup_addr_bcc(state, *cpp);
+	}
+	argv_free(state->hbc_rcpt);
+	state->hbc_rcpt = 0;
+    }
 
     /*
      * Terminate the extracted segment.

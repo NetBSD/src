@@ -1,4 +1,4 @@
-/* $NetBSD: t_wait.c,v 1.4.2.1 2017/01/07 08:56:55 pgoyette Exp $ */
+/* $NetBSD: t_wait.c,v 1.4.2.2 2017/03/20 06:57:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,16 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_wait.c,v 1.4.2.1 2017/01/07 08:56:55 pgoyette Exp $");
+__RCSID("$NetBSD: t_wait.c,v 1.4.2.2 2017/03/20 06:57:59 pgoyette Exp $");
 
 #include <sys/wait.h>
 #include <sys/resource.h>
 
-#include <stdio.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 

@@ -11,11 +11,18 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-smtp.c,v 1.1.1.1.2.1 2017/03/20 06:56:23 pgoyette Exp $");
+#endif
+
+/* \summary: Simple Mail Transfer Protocol (SMTP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <stdlib.h>

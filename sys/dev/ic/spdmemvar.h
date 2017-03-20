@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.11 2016/01/05 11:49:32 msaitoh Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.11.2.1 2017/03/20 06:57:28 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -353,7 +353,7 @@ struct spdmem_fbdimm {				/* Fully-buffered DIMM */
 	);
 	SPD_BITFIELD(				\
 		uint8_t	fbdimm_ftb_divisor:4,	\
-		uint8_t	fbdimm_ftp_dividend:4, ,\
+		uint8_t	fbdimm_ftb_dividend:4, ,\
 	);
 	uint8_t	fbdimm_mtb_dividend;
 	uint8_t	fbdimm_mtb_divisor;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.26.1 2017/01/07 08:56:00 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.3.26.2 2017/03/20 06:56:49 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,8 +8,6 @@ FILES=		README amiga ataritt chicony dell everex fujitsu hhk hp \
 		pc sanwa sony sun teck thinkpad typematrix winbook
 
 SUBDIR=		digital_vndr sgi_vndr
-
-XKBDIR=		1
 
 .include "../Makefile.xkbdata"
 

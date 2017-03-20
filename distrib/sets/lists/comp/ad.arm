@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.72.2.2 2017/01/07 08:53:43 pgoyette Exp $
+# $NetBSD: ad.arm,v 1.72.2.3 2017/03/20 06:52:08 pgoyette Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -296,8 +296,10 @@
 ./usr/include/cats/wchar_limits.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-3.8/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-3.8/arm_neon.h		comp-c-include		llvm
+./usr/include/clang-3.8/arm_acle.h		comp-obsolete		obsolete
+./usr/include/clang-3.8/arm_neon.h		comp-obsolete		obsolete
+./usr/include/clang-4.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-4.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/epoc32				comp-c-include
 ./usr/include/epoc32/ansi.h			comp-obsolete		obsolete
 ./usr/include/epoc32/aout_machdep.h		comp-obsolete		obsolete

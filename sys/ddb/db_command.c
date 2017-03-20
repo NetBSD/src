@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.147 2016/04/13 00:47:02 ozaki-r Exp $	*/
+/*	$NetBSD: db_command.c,v 1.147.2.1 2017/03/20 06:57:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.147 2016/04/13 00:47:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.147.2.1 2017/03/20 06:57:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -209,6 +209,8 @@ static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_kernhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_vnode_lock_print_cmd(db_expr_t, bool, db_expr_t,
+		    const char *);
 static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
@@ -282,6 +284,9 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("vnode_lock",	db_vnode_lock_print_cmd,	0,
+	    "Print the vnode having that address as v_lock.",
+	    "[/f] address",NULL) },
 	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
 	    "Print the vmem usage.", "[/a] address", NULL) },
 	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
@@ -1111,6 +1116,21 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
+#endif
+}
+
+/*ARGSUSED*/
+static void
+db_vnode_lock_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+#ifdef _KERNEL /* XXX CRASH(8) */
+	bool full = false;
+
+	if (modif[0] == 'f')
+		full = true;
+
+	vfs_vnode_lock_print((struct vnode *)(uintptr_t) addr, full, db_printf);
 #endif
 }
 

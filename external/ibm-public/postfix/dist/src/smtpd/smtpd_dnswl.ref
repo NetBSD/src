@@ -48,7 +48,7 @@ OK
 >>> #
 >>> 
 >>> # Whitelist overrides reject.
->>> client_restrictions permit_rhswl_client,dsn.rfc-ignorant.org,reject
+>>> client_restrictions permit_rhswl_client,dnswl.porcupine.org,reject
 OK
 >>> # Non-whitelisted client name - reject.
 >>> client spike.porcupine.org 168.100.189.2
@@ -61,7 +61,7 @@ OK
 >>> # Whitelist does not override reject_unauth_destination.
 >>> client_restrictions permit
 OK
->>> recipient_restrictions permit_rhswl_client,dsn.rfc-ignorant.org,reject_unauth_destination
+>>> recipient_restrictions permit_rhswl_client,dnswl.porcupine.org,reject_unauth_destination
 OK
 >>> # Non-whitelisted client name.
 >>> client spike.porcupine.org 168.100.189.2

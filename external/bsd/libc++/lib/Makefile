@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/02/27 21:42:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2017/03/20 06:52:21 pgoyette Exp $
 
 LIB=		c++
 WARNS=		4
@@ -45,9 +45,5 @@ CWARNFLAGS.clang+=	-Wno-error=missing-field-initializers -Wno-error=switch
 CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch
 
 LDFLAGS+=	-Wl,-z,defs
-
-.if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
-CXXFLAGS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
-.endif
 
 .include <bsd.lib.mk>

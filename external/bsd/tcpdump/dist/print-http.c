@@ -11,21 +11,23 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header";
+__RCSID("$NetBSD: print-http.c,v 1.1.1.1.2.1 2017/03/20 06:56:22 pgoyette Exp $");
 #endif
+
+/* \summary: Hypertext Transfer Protocol (HTTP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 /*

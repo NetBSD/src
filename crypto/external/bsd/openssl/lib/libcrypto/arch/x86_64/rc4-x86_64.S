@@ -24,7 +24,7 @@ RC4:	orq	%rsi,%rsi
 	movb	-4(%rdi),%cl
 	cmpl	$-1,256(%rdi)
 	je	.LRC4_CHAR
-	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r8d
+	movl	OPENSSL_ia32cap_P(%rip),%r8d
 	xorq	%rbx,%rbx
 	incb	%r10b
 	subq	%r10,%rbx
@@ -531,7 +531,7 @@ private_RC4_set_key:
 	xorq	%r10,%r10
 	xorq	%r11,%r11
 
-	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%r8d
+	movl	OPENSSL_ia32cap_P(%rip),%r8d
 	btl	$20,%r8d
 	jc	.Lc1stloop
 	jmp	.Lw1stloop
@@ -595,7 +595,7 @@ private_RC4_set_key:
 .align	16
 RC4_options:
 	leaq	.Lopts(%rip),%rax
-	movl	OPENSSL_ia32cap_P@GOTPCREL(%rip),%edx
+	movl	OPENSSL_ia32cap_P(%rip),%edx
 	btl	$20,%edx
 	jc	.L8xchar
 	btl	$30,%edx

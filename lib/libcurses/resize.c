@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.20.28.1 2017/01/07 08:56:04 pgoyette Exp $	*/
+/*	$NetBSD: resize.c,v 1.20.28.2 2017/03/20 06:56:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.20.28.1 2017/01/07 08:56:04 pgoyette Exp $");
+__RCSID("$NetBSD: resize.c,v 1.20.28.2 2017/03/20 06:56:59 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -144,7 +144,9 @@ bool
 is_term_resized(int nlines, int ncols)
 {
 
-	return (nlines > 0 && ncols > 0 && (nlines != LINES || ncols != COLS));
+	return (nlines > 0 && ncols > 0 &&
+	    (nlines != _cursesi_screen->LINES ||
+	    ncols != _cursesi_screen->COLS));
 }
 
 /*
@@ -161,11 +163,25 @@ resizeterm(int nlines, int ncols)
 	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
 #endif
 
+
 	if (!is_term_resized(nlines, ncols))
 		return OK;
 
-	result = resizeterm(nlines, ncols);
+	result = resize_term(nlines, ncols);
+
+	/* Screen contents are unknown, libcurses is not libpanel, we don't
+	 * know the correct draw order. */
 	clearok(curscr, TRUE);
+
+	if (result == OK) {
+		/* We know how to repaint the ripoffs */
+		__ripoffresize(_cursesi_screen);
+
+		/* We do need to reposition our slks. */
+		__slk_resize(_cursesi_screen, ncols);
+		__slk_noutrefresh(_cursesi_screen);
+	}
+
 	return result;
 }
 
@@ -178,6 +194,7 @@ resize_term(int nlines, int ncols)
 {
 	WINDOW *win;
 	struct __winlist *list;
+	int rlines;
 
 #ifdef	DEBUG
 	__CTRACE(__CTRACE_WINDOW, "resize_term: (%d, %d)\n", nlines, ncols);
@@ -190,11 +207,19 @@ resize_term(int nlines, int ncols)
 		return ERR;
 	if (__resizeterm(__virtscr, nlines, ncols) == ERR)
 		return ERR;
-	if (__resizeterm(stdscr, nlines, ncols) == ERR)
+	rlines = nlines - __rippedlines(_cursesi_screen);
+	if (__resizeterm(stdscr, rlines, ncols) == ERR)
 		return ERR;
 
-	LINES = nlines;
+	_cursesi_screen->LINES = nlines;
+	_cursesi_screen->COLS = ncols;
+	LINES = rlines;
 	COLS = ncols;
+
+	if (_cursesi_screen->slk_window != NULL &&
+	    __resizewin(_cursesi_screen->slk_window,
+		        _cursesi_screen->slk_window->reqy, ncols) == ERR)
+		return ERR;
 
 	  /* tweak the flags now that we have updated the LINES and COLS */
 	for (list = _cursesi_screen->winlistp; list != NULL; list = list->nextp) {

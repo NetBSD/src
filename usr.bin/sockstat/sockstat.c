@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.17 2011/05/29 04:45:08 manu Exp $ */
+/*	$NetBSD: sockstat.c,v 1.17.26.1 2017/03/20 06:58:05 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,10 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.17 2011/05/29 04:45:08 manu Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.17.26.1 2017/03/20 06:58:05 pgoyette Exp $");
 #endif
 
+#define _KMEMUSER
 #include <sys/types.h>
+#undef _KMEMUSER
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
@@ -48,10 +50,10 @@ __RCSID("$NetBSD: sockstat.c,v 1.17 2011/05/29 04:45:08 manu Exp $");
 #include <netinet/in_pcb_hdr.h>
 #include <netinet/tcp_fsm.h>
 
-#define _KERNEL
+#define _KMEMUSER
 /* want DTYPE_* defines */
 #include <sys/file.h>
-#undef _KERNEL
+#undef _KMEMUSER
 
 #include <arpa/inet.h>
 

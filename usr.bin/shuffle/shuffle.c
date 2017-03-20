@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.21 2011/09/16 15:39:29 joerg Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.21.24.1 2017/03/20 06:58:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.21 2011/09/16 15:39:29 joerg Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.21.24.1 2017/03/20 06:58:05 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -73,7 +73,7 @@ get_shuffle(size_t t)
 	 */
 
 	for (j = t - 1; j > 0; j--) {
-		k = arc4random() % (j + 1);
+		k = arc4random_uniform(j + 1);
 		temp = shuffle[j];
 		shuffle[j] = shuffle[k];
 		shuffle[k] = temp;

@@ -1,10 +1,10 @@
-/*	$NetBSD: proto-back-relay.h,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: proto-back-relay.h,v 1.1.1.4.6.1 2017/03/20 06:56:17 pgoyette Exp $	*/
 
 /* proto-back-relay.h - relay backend header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_fsops.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_fsops.h,v 1.1.1.1.32.1 2017/03/20 06:56:42 pgoyette Exp $	*/
 
 #ifndef _SANE_FSOPS_H_
 #define _SANE_FSOPS_H_
@@ -15,8 +15,8 @@
 
  /* External interface. */
 
-extern int sane_rename(const char *, const char *);
-extern int sane_link(const char *, const char *);
+extern int WARN_UNUSED_RESULT sane_rename(const char *, const char *);
+extern int WARN_UNUSED_RESULT sane_link(const char *, const char *);
 
 /* LICENSE
 /* .ad

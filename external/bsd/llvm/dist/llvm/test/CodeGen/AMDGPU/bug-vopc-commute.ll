@@ -1,14 +1,12 @@
-; RUN: llc < %s -march=amdgcn -mcpu=verde -verify-machineinstrs | FileCheck %s
-; RUN: llc < %s -march=amdgcn -mcpu=tonga -verify-machineinstrs | FileCheck %s
-
-target triple = "amdgcn--"
+; RUN: llc -march=amdgcn -mcpu=verde -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck %s
 
 ; CHECK-LABEL: {{^}}main:
 ;
 ; Test for compilation only. This generated an invalid machine instruction
 ; by trying to commute the operands of a V_CMP_EQ_i32_e32 instruction, both
 ; of which were in SGPRs.
-define float @main(i32 %v) #2 {
+define amdgpu_vs float @main(i32 %v) {
 main_body:
   %d1 = call float @llvm.SI.load.const(<16 x i8> undef, i32 960)
   %d2 = call float @llvm.SI.load.const(<16 x i8> undef, i32 976)
@@ -47,4 +45,3 @@ declare float @llvm.SI.load.const(<16 x i8>, i32) #0
 
 attributes #0 = { nounwind readnone }
 attributes #1 = { readnone }
-attributes #2 = { "ShaderType"="1" }

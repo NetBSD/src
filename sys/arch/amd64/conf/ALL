@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.36.2.3 2017/01/07 08:56:09 pgoyette Exp $
+# $NetBSD: ALL,v 1.36.2.4 2017/03/20 06:57:09 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.36.2.3 $"
+#ident		"ALL-$Revision: 1.36.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -39,8 +39,7 @@ powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
 
-# doesn't work with MP just yet..
-options 	PERFCTRS	# performance-monitoring counters support
+options 	PMC	# performance-monitoring counters support
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 
@@ -163,35 +162,36 @@ options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
-options 	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
-file-system 	FFS		# UFS
-file-system 	EXT2FS		# second extended file system (linux)
-file-system 	LFS		# log-structured file system
-file-system 	MFS		# memory file system
-file-system 	NFS		# Network File System client
-file-system 	NTFS		# Windows/NT file system (experimental)
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-file-system 	MSDOSFS		# MS-DOS file system
-file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	OVERLAY		# overlay file system
+file-system	FFS		# UFS
+file-system	EXT2FS		# second extended file system (linux)
+file-system	LFS		# log-structured file system
+file-system	MFS		# memory file system
+file-system	NFS		# Network File System client
+file-system	NTFS		# Windows/NT file system (experimental)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	MSDOSFS		# MS-DOS file system
+file-system	FDESC		# /dev/fd
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
 file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system 	PROCFS		# /proc
-file-system 	UMAPFS		# NULLFS + uid and gid remapping
-file-system 	UNION		# union file system
-file-system 	CODA		# Coda File System; also needs vcoda (below)
-file-system 	SMBFS		# experimental - CIFS; also needs nsmb (below)
-file-system 	SYSVBFS		# System V boot file system
-file-system 	PTYFS		# /dev/ptm support
-file-system 	TMPFS		# Efficient memory file-system
-file-system 	UDF		# experimental - OSTA UDF CD/DVD file-system
-file-system 	HFS		# experimental - Apple HFS+ file system
-file-system 	EFS		# Silicon Graphics Extent File System
-file-system 	FILECORE	# Acorn filecore file system
-file-system 	ADOSFS		# AmigaDOS file system
+file-system	PROCFS		# /proc
+file-system	UMAPFS		# NULLFS + uid and gid remapping
+file-system	UNION		# union file system
+file-system	CODA		# Coda File System; also needs vcoda (below)
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	SYSVBFS		# System V boot file system
+file-system	PTYFS		# /dev/ptm support
+file-system	TMPFS		# Efficient memory file-system
+file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	HFS		# experimental - Apple HFS+ file system
+file-system	EFS		# Silicon Graphics Extent File System
+file-system	FILECORE	# Acorn filecore file system
+file-system	ADOSFS		# AmigaDOS file system
 file-system	NILFS		# experimental - NTT's NiLFS(2)
 file-system	V7FS		# 7th Edition(V7) File System
 file-system	CHFS		# Chip File System
@@ -199,6 +199,7 @@ file-system	CHFS		# Chip File System
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -529,14 +530,14 @@ wsdisplay*	at wsemuldisplaydev?
 #viadrm* 	at drm?		# VIA UniChrome DRM driver
 
 # DRMKMS drivers
-i915drmkms* 	at pci? dev ? function ?
-intelfb* 	at intelfbbus?
+i915drmkms*	at pci? dev ? function ?
+intelfb*	at intelfbbus?
 
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-nouveau* 	at pci? dev ? function ?
-nouveaufb* 	at nouveaufbbus?
+nouveau*	at pci? dev ? function ?
+nouveaufb*	at nouveaufbbus?
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -827,7 +828,7 @@ satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 schide* 	at pci? dev ? function ?	# Intel SCH IDE controllers
 siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
-slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+slide*		at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata*	at pci? dev ? function ?	# ServerWorks SATA controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 toshide*	at pci? dev ? function ?	# TOSHIBA PICCOLO controllers
@@ -938,7 +939,7 @@ jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-malo*   at pci? dev ? function ?	# Marvell Libertas Wireless
+malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
@@ -1481,11 +1482,11 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 
 # Trusted Platform Module
-tpm*   at isa? iomem 0xfed40000 irq 7
-#tpm*  at isa? port 0x02e
-#tpm*  at isa? port 0x04e 
-#tpm*  at isa? port 0x07e 
-#tpm*  at isa? port 0x0ee
+tpm*	at isa? iomem 0xfed40000 irq 7
+#tpm*	at isa? port 0x02e
+#tpm*	at isa? port 0x04e
+#tpm*	at isa? port 0x07e
+#tpm*	at isa? port 0x0ee
 
 # Joysticks
 
@@ -1523,7 +1524,7 @@ nand* at nandbus?
 
 # Pseudo-Devices
 
-pseudo-device 	crypto		# /dev/crypto device
+pseudo-device	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
@@ -1549,7 +1550,7 @@ options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
-pseudo-device 	dm			# device-mapper disk driver
+pseudo-device	dm			# device-mapper disk driver
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
@@ -1573,6 +1574,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+pseudo-device	l2tp			# L2TPv3 interface
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	pfsync			# PF sync if
@@ -2332,7 +2334,6 @@ options XDEBUG
 options XENDEBUG
 options XENDEBUG_LOW
 options XENDEBUG_NET
-options XENDEBUG_SYNC
 options XENDEBUG_VBD
 options XENNET_DEBUG
 options XENNET_DEBUG_DUMP

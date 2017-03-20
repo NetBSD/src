@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.482.2.3 2017/01/07 08:56:49 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.482.2.4 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.3 2017/01/07 08:56:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.4 2017/03/20 06:57:47 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -215,6 +215,7 @@ extern void *_binary_splash_image_end;
 
 #include <net/bpf.h>
 #include <net/if.h>
+#include <net/pfil.h>
 #include <net/raw_cb.h>
 #include <net/if_llatbl.h>
 
@@ -481,6 +482,9 @@ main(void)
 	/* Initialize the kernel strong PRNG. */
 	kern_cprng = cprng_strong_create("kernel", IPL_VM,
 					 CPRNG_INIT_ANY|CPRNG_REKEY_ANY);
+
+	/* Initialize pfil */
+	pfil_init();
 
 	/* Initialize interfaces. */
 	ifinit1();

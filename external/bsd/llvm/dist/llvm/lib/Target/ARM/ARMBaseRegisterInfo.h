@@ -99,11 +99,12 @@ public:
   /// Code Generation virtual methods...
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
   const MCPhysReg *
-  getCalleeSavedRegsViaCopy(const MachineFunction *MF) const override;
+  getCalleeSavedRegsViaCopy(const MachineFunction *MF) const;
   const uint32_t *getCallPreservedMask(const MachineFunction &MF,
                                        CallingConv::ID) const override;
   const uint32_t *getNoPreservedMask() const override;
   const uint32_t *getTLSCallPreservedMask(const MachineFunction &MF) const;
+  const uint32_t *getSjLjDispatchPreservedMask(const MachineFunction &MF) const;
 
   /// getThisReturnPreservedMask - Returns a call preserved mask specific to the
   /// case that 'returned' is on an i32 first argument if the calling convention
@@ -166,12 +167,12 @@ public:
 
   /// emitLoadConstPool - Emits a load from constpool to materialize the
   /// specified immediate.
-  virtual void emitLoadConstPool(MachineBasicBlock &MBB,
-                                 MachineBasicBlock::iterator &MBBI,
-                                 DebugLoc dl, unsigned DestReg, unsigned SubIdx,
-                                 int Val, ARMCC::CondCodes Pred = ARMCC::AL,
-                                 unsigned PredReg = 0,
-                                 unsigned MIFlags = MachineInstr::NoFlags)const;
+  virtual void
+  emitLoadConstPool(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+                    const DebugLoc &dl, unsigned DestReg, unsigned SubIdx,
+                    int Val, ARMCC::CondCodes Pred = ARMCC::AL,
+                    unsigned PredReg = 0,
+                    unsigned MIFlags = MachineInstr::NoFlags) const;
 
   /// Code Generation virtual methods...
   bool requiresRegisterScavenging(const MachineFunction &MF) const override;

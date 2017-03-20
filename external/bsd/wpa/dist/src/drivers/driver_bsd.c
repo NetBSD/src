@@ -14,8 +14,6 @@
 #include "common.h"
 #include "driver.h"
 #include "eloop.h"
-#include "common/ieee802_11_defs.h"
-#include "common/wpa_common.h"
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -44,6 +42,9 @@
 #if __NetBSD__
 #include <net80211/ieee80211_netbsd.h>
 #endif
+
+#include "common/ieee802_11_defs.h"
+#include "common/wpa_common.h"
 
 #include "l2_packet/l2_packet.h"
 

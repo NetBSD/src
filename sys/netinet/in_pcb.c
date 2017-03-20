@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.166.2.4 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.166.2.5 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.4 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.5 2017/03/20 06:57:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.4 2017/01/07 08:56:51 pgoyette Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
@@ -193,9 +192,7 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcb *inp;
 	int s;
 
-	s = splnet();
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
-	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
 	memset(inp, 0, sizeof(*inp));
@@ -209,15 +206,13 @@ in_pcballoc(struct socket *so, void *v)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &inp->inp_sp);
 		if (error != 0) {
-			s = splnet();
 			pool_put(&inpcb_pool, inp);
-			splx(s);
 			return error;
 		}
 	}
 #endif
 	so->so_pcb = inp;
-	s = splnet();
+	s = splsoftnet();
 	TAILQ_INSERT_HEAD(&table->inpt_queue, &inp->inp_head, inph_queue);
 	LIST_INSERT_HEAD(INPCBHASH_PORT(table, inp->inp_lport), &inp->inp_head,
 	    inph_lhash);
@@ -626,7 +621,7 @@ in_pcbdetach(void *v)
 #endif
 	so->so_pcb = NULL;
 
-	s = splnet();
+	s = splsoftnet();
 	in_pcbstate(inp, INP_ATTACHED);
 	LIST_REMOVE(&inp->inp_head, inph_lhash);
 	TAILQ_REMOVE(&inp->inp_table->inpt_queue, &inp->inp_head, inph_queue);
@@ -727,6 +722,7 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 {
 	int i, gap;
 
+	/* The owner of imo should be protected by solock */
 	KASSERT(ifp != NULL);
 
 	if (imo == NULL)
@@ -760,9 +756,21 @@ in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct inpcb *inp = (struct inpcb *)inph;
+		bool need_unlock = false;
+
 		if (inp->inp_af != AF_INET)
 			continue;
+
+		/* The caller holds either one of inps' lock */
+		if (!inp_locked(inp)) {
+			inp_lock(inp);
+			need_unlock = true;
+		}
+
 		in_purgeifmcast(inp->inp_moptions, ifp);
+
+		if (need_unlock)
+			inp_unlock(inp);
 	}
 }
 

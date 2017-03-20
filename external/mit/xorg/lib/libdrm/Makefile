@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/03/21 18:14:20 riastradh Exp $
+#	$NetBSD: Makefile,v 1.10.8.1 2017/03/20 06:56:47 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ LIB=	drm
 
 SRCS=	xf86drm.c xf86drmHash.c xf86drmMode.c xf86drmRandom.c xf86drmSL.c
 
-INCS=	xf86drm.h xf86drmMode.h
+INCS=	xf86drm.h xf86drmMode.h libsync.h
 INCSDIR=${X11INCDIR}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm

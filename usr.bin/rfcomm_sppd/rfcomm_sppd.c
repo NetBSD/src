@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.16 2013/12/09 09:35:17 wiz Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.16.8.1 2017/03/20 06:58:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,9 +62,10 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.16 2013/12/09 09:35:17 wiz Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.16.8.1 2017/03/20 06:58:05 pgoyette Exp $");
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <bluetooth.h>
 #include <ctype.h>

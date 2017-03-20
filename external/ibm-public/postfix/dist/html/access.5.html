@@ -163,8 +163,8 @@ ACCESS(5)                                                            ACCESS(5)
 
        <i>all-numerical</i>
               An  all-numerical result is treated as OK. This format is gener-
-              ated by address-based relay authorization schemes such  as  pop-
-              before-smtp.
+              ated  by  address-based  relay  authorization  schemes  such  as
+              pop-before-smtp.
 
        For other accept actions, see "OTHER ACTIONS" below.
 
@@ -246,7 +246,7 @@ ACCESS(5)                                                            ACCESS(5)
               If multiple BCC actions are specified within the same SMTP  MAIL
               transaction, only the last action will be used.
 
-              This feature is not part of the stable Postfix release.
+              This feature is available in Postfix 3.0 and later.
 
        <b>DISCARD</b> <i>optional text...</i>
               Claim successful delivery and silently discard the message.  Log
@@ -326,76 +326,84 @@ ACCESS(5)                                                            ACCESS(5)
 
        <b>REDIRECT</b> <i>user@domain</i>
               After the message is queued, send the message to  the  specified
-              address instead of the intended recipient(s).
+              address instead of the intended recipient(s).  When multiple <b>RE-</b>
+              <b>DIRECT</b> actions fire, only the last one takes effect.
 
-              Note:  this  action  overrides  the FILTER action, and currently
-              affects all recipients of the message.
+              Note: this action overrides the  FILTER  action,  and  currently
+              overrides all recipients of the message.
 
               This feature is available in Postfix 2.1 and later.
 
+       <b>INFO</b> <i>optional text...</i>
+              Log  an  informational  record  with the optional text, together
+              with client information and if  available,  with  helo,  sender,
+              recipient and protocol information.
+
+              This feature is available in Postfix 3.0 and later.
+
        <b>WARN</b> <i>optional text...</i>
-              Log a warning with  the  optional  text,  together  with  client
-              information  and  if available, with helo, sender, recipient and
+              Log  a  warning  with  the  optional  text, together with client
+              information and if available, with helo, sender,  recipient  and
               protocol information.
 
               This feature is available in Postfix 2.1 and later.
 
 <b>ENHANCED STATUS CODES</b>
-       Postfix version 2.3 and later support enhanced status codes as  defined
-       in  <a href="http://tools.ietf.org/html/rfc3463">RFC  3463</a>.   When an enhanced status code is specified in an access
+       Postfix  version 2.3 and later support enhanced status codes as defined
+       in <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>.  When an enhanced status code is specified  in  an  access
        table, it is subject to modification. The following transformations are
-       needed  when the same access table is used for client, helo, sender, or
-       recipient access restrictions; they happen regardless of whether  Post-
+       needed when the same access table is used for client, helo, sender,  or
+       recipient  access restrictions; they happen regardless of whether Post-
        fix replies to a MAIL FROM, RCPT TO or other SMTP command.
 
-       <b>o</b>      When  a sender address matches a REJECT action, the Postfix SMTP
+       <b>o</b>      When a sender address matches a REJECT action, the Postfix  SMTP
               server will transform a recipient DSN status (e.g., 4.1.1-4.1.6)
               into the corresponding sender DSN status, and vice versa.
 
-       <b>o</b>      When  non-address  information  matches a REJECT action (such as
-              the HELO command argument or the client  hostname/address),  the
-              Postfix  SMTP  server  will  transform a sender or recipient DSN
+       <b>o</b>      When non-address information matches a REJECT  action  (such  as
+              the  HELO  command argument or the client hostname/address), the
+              Postfix SMTP server will transform a  sender  or  recipient  DSN
               status into a generic non-address DSN status (e.g., 4.0.0).
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This section describes how the table lookups change when the  table  is
-       given  in the form of regular expressions. For a description of regular
+       This  section  describes how the table lookups change when the table is
+       given in the form of regular expressions. For a description of  regular
        expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each pattern is a regular expression that  is  applied  to  the  entire
+       Each  pattern  is  a  regular  expression that is applied to the entire
        string being looked up. Depending on the application, that string is an
-       entire client hostname, an entire client IP address, or an entire  mail
-       address.  Thus,  no  parent  domain  or  parent network search is done,
-       <i>user@domain</i> mail addresses are not  broken  up  into  their  <i>user@</i>  and
-       <i>domain</i>  constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
+       entire  client hostname, an entire client IP address, or an entire mail
+       address. Thus, no parent domain  or  parent  network  search  is  done,
+       <i>user@domain</i>  mail  addresses  are  not  broken  up into their <i>user@</i> and
+       <i>domain</i> constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and  <i>foo</i>.
 
-       Patterns are applied in the order as specified in the  table,  until  a
+       Patterns  are  applied  in the order as specified in the table, until a
        pattern is found that matches the search string.
 
-       Actions  are the same as with indexed file lookups, with the additional
-       feature that parenthesized substrings from the pattern can be  interpo-
+       Actions are the same as with indexed file lookups, with the  additional
+       feature  that parenthesized substrings from the pattern can be interpo-
        lated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>TCP-BASED TABLES</b>
-       This  section  describes  how the table lookups change when lookups are
-       directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
-       client/server  lookup  protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature is not
+       This section describes how the table lookups change  when  lookups  are
+       directed   to  a  TCP-based  server.  For  a  description  of  the  TCP
+       client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature  is  not
        available up to and including Postfix version 2.4.
 
-       Each lookup operation uses the entire query string once.  Depending  on
-       the  application,  that  string is an entire client hostname, an entire
-       client IP address, or an entire mail address.  Thus, no  parent  domain
-       or  parent  network  search is done, <i>user@domain</i> mail addresses are not
-       broken up into  their  <i>user@</i>  and  <i>domain</i>  constituent  parts,  nor  is
+       Each  lookup operation uses the entire query string once.  Depending on
+       the application, that string is an entire client  hostname,  an  entire
+       client  IP  address, or an entire mail address.  Thus, no parent domain
+       or parent network search is done, <i>user@domain</i> mail  addresses  are  not
+       broken  up  into  their  <i>user@</i>  and  <i>domain</i>  constituent  parts, nor is
        <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
        Actions are the same as with indexed file lookups.
 
 <b>EXAMPLE</b>
-       The  following example uses an indexed file, so that the order of table
-       entries does not matter. The example permits access by  the  client  at
+       The following example uses an indexed file, so that the order of  table
+       entries  does  not  matter. The example permits access by the client at
        address 1.2.3.4 but rejects all other clients in 1.2.3.0/24. Instead of
-       <b>hash</b> lookup tables, some systems use <b>dbm</b>.  Use  the  command  "<b>postconf</b>
+       <b>hash</b>  lookup  tables,  some systems use <b>dbm</b>.  Use the command "<b>postconf</b>
        <b>-m</b>" to find out what lookup tables Postfix supports on your system.
 
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
@@ -406,7 +414,7 @@ ACCESS(5)                                                            ACCESS(5)
            1.2.3   REJECT
            1.2.3.4 OK
 
-       Execute  the  command  "<b>postmap  /etc/postfix/access</b>" after editing the
+       Execute the command "<b>postmap  /etc/postfix/access</b>"  after  editing  the
        file.
 
 <b>BUGS</b>
@@ -430,6 +438,11 @@ ACCESS(5)                                                            ACCESS(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                      ACCESS(5)
 </pre> </body> </html>

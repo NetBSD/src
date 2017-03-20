@@ -52,14 +52,29 @@ which can be obtained from: </p>
 
 <p> In order to build Postfix with mysql map support, you will need to add
 -DHAS_MYSQL and -I for the directory containing the mysql headers, and
-the mysqlclient library (and libm) to AUXLIBS, for example: </p>
+the mysqlclient library (and libm) to <a href="MYSQL_README.html">AUXLIBS_MYSQL</a>, for example: </p>
 
 <blockquote>
 <pre>
 make -f Makefile.init makefiles \
     'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-    'AUXLIBS=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
+    '<a href="MYSQL_README.html">AUXLIBS_MYSQL</a>=-L/usr/local/mysql/lib -lmysqlclient -lz -lm'
 </pre>
+</blockquote>
+
+<p> Postfix versions before 3.0 use AUXLIBS instead of <a href="MYSQL_README.html">AUXLIBS_MYSQL</a>.
+With Postfix 3.0 and later, the old AUXLIBS variable still supports
+building a statically-loaded MySQL database client, but only the new
+<a href="MYSQL_README.html">AUXLIBS_MYSQL</a> variable supports building a dynamically-loaded or 
+statically-loaded MySQL database client.  </p>
+
+<blockquote>
+ 
+<p> Failure to use the <a href="MYSQL_README.html">AUXLIBS_MYSQL</a> variable will defeat the purpose
+of dynamic database client loading. Every Postfix executable file
+will have MYSQL database library dependencies. And that was exactly
+what dynamic database client loading was meant to avoid. </p>
+ 
 </blockquote>
 
 <p> On Solaris, use this instead: </p>
@@ -68,7 +83,7 @@ make -f Makefile.init makefiles \
 <pre>
 make -f Makefile.init makefiles \
     'CCARGS=-DHAS_MYSQL -I/usr/local/mysql/include' \
-    'AUXLIBS=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
+    '<a href="MYSQL_README.html">AUXLIBS_MYSQL</a>=-L/usr/local/mysql/lib -R/usr/local/mysql/lib \
         -lmysqlclient -lz -lm'
 </pre>
 </blockquote>
@@ -115,9 +130,22 @@ table = mxaliases
 where_field = alias
 # Don't forget the leading "AND"!
 additional_conditions = AND status = 'paid'
+
+# This is necessary to make UTF8 queries work for Postfix 2.11 .. 3.1,
+# and is the default setting as of Postfix 3.2,
+option_group = client
 </pre>
 
 <h2>Additional notes</h2>
+
+<p> Postfix 3.2 and later read <b>[client]</b> option group settings
+by default. To disable this, specify no <b>option_file</b> and
+specify "<b>option_group =</b>" (i.e. an empty value).  </p>
+
+<p> Postfix 3.1 and earlier don't read <b>[client]</b> option group
+settings unless a non-empty <b>option_file</b> or <b>option_group</b>
+value are specified. To enable this, specify, for example
+"<b>option_group = client</b>".  </p>
 
 <p> The MySQL configuration interface setup allows for multiple
 mysql databases: you can use one for a virtual table, one for an

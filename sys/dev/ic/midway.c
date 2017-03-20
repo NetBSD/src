@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.97.2.1 2017/01/07 08:56:32 pgoyette Exp $	*/
+/*	$NetBSD: midway.c,v 1.97.2.2 2017/03/20 06:57:28 pgoyette Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.97.2.1 2017/01/07 08:56:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.97.2.2 2017/03/20 06:57:28 pgoyette Exp $");
 
 #include "opt_natm.h"
 
@@ -2766,7 +2766,7 @@ EN_INTR_TYPE en_intr(void *arg)
 	  ifp->if_ipackets++;
 #endif
 
-	  bpf_mtap(ifp, m); /* XXX not in softint */
+	  bpf_mtap_softint(ifp, m);
 
 	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}
@@ -3623,6 +3623,7 @@ en_pvcattach(struct ifnet *ifp)
 	LIST_INSERT_HEAD(&sc->sif_list, (struct pvcsif *)pvc_ifp, sif_links);
 	if_attach(pvc_ifp);
 	atm_ifattach(pvc_ifp);
+	bpf_mtap_softint_init(pvc_ifp);
 
 #ifdef ATM_PVCEXT
 	rrp_add(sc, pvc_ifp);

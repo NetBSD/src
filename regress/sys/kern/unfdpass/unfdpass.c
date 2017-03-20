@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.10 2008/04/28 20:23:07 martin Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.10.44.1 2017/03/20 06:57:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <sys/uio.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <errno.h>

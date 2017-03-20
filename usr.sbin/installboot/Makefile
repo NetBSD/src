@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2015/06/06 15:45:47 joerg Exp $
+#	$NetBSD: Makefile,v 1.50.2.1 2017/03/20 06:58:07 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -50,5 +50,7 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}
 .endif
+
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 .include <bsd.prog.mk>

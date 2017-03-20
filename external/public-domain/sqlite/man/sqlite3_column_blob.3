@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_COLUMN_BLOB 3
 .Os
 .Sh NAME
@@ -14,52 +14,52 @@
 .Nm sqlite3_column_value
 .Nd Result Values From A Query
 .Sh SYNOPSIS
-.Ft const void *SQLITE_STDCALL 
+.Ft const void *
 .Fo sqlite3_column_blob
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_column_bytes
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_column_bytes16
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft double SQLITE_STDCALL 
+.Ft double 
 .Fo sqlite3_column_double
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_column_int
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft sqlite3_int64 SQLITE_STDCALL 
+.Ft sqlite3_int64 
 .Fo sqlite3_column_int64
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft const unsigned char *SQLITE_STDCALL 
+.Ft const unsigned char *
 .Fo sqlite3_column_text
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft const void *SQLITE_STDCALL 
+.Ft const void *
 .Fo sqlite3_column_text16
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_column_type
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"
 .Fc
-.Ft sqlite3_value *SQLITE_STDCALL 
+.Ft sqlite3_value *
 .Fo sqlite3_column_value
 .Fa "sqlite3_stmt*"
 .Fa "int iCol"

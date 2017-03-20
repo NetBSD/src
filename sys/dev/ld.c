@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.94.2.7 2017/01/07 08:56:31 pgoyette Exp $	*/
+/*	$NetBSD: ld.c,v 1.94.2.8 2017/03/20 06:57:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.7 2017/01/07 08:56:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.8 2017/03/20 06:57:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ static void	ld_set_geometry(struct ld_softc *);
 static void	ld_config_interrupts (device_t);
 static int	ld_lastclose(device_t);
 static int	ld_discard(device_t, off_t, off_t);
+static int	ld_flush(device_t, bool);
 
 extern struct	cfdriver ld_cd;
 
@@ -250,15 +251,12 @@ ldenddetach(struct ld_softc *sc)
 	pmf_device_deregister(dksc->sc_dev);
 
 	/*
-	 * XXX We can't really flush the cache here, beceause the
+	 * XXX We can't really flush the cache here, because the
 	 * XXX device may already be non-existent from the controller's
 	 * XXX perspective.
 	 */
 #if 0
-	/* Flush the device's cache. */
-	if (sc->sc_flush != NULL)
-		if ((*sc->sc_flush)(sc, 0) != 0)
-			device_printf(dksc->sc_dev, "unable to flush cache\n");
+	ld_flush(dksc->sc_dev, false);
 #endif
 	cv_destroy(&sc->sc_drain);
 	mutex_destroy(&sc->sc_mutex);
@@ -275,14 +273,8 @@ ld_suspend(device_t dev, const pmf_qual_t *qual)
 static bool
 ld_shutdown(device_t dev, int flags)
 {
-	struct ld_softc *sc = device_private(dev);
-	struct dk_softc *dksc = &sc->sc_dksc;
-
-	if ((flags & RB_NOSYNC) == 0 && sc->sc_flush != NULL
-	    && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
-		device_printf(dksc->sc_dev, "unable to flush cache\n");
+	if ((flags & RB_NOSYNC) == 0 && ld_flush(dev, true) != 0)
 		return false;
-	}
 
 	return true;
 }
@@ -312,10 +304,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 static int
 ld_lastclose(device_t self)
 {
-	struct ld_softc *sc = device_private(self);
-
-	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
-		device_printf(self, "unable to flush cache\n");
+	ld_flush(self, false);
 
 	return 0;
 }
@@ -382,6 +371,10 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 
 	error = 0;
 
+	/*
+	 * Some common checks so that individual attachments wouldn't need
+	 * to duplicate them.
+	 */
 	switch (cmd) {
 	case DIOCCACHESYNC:
 		/*
@@ -390,19 +383,40 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		 */
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
-		else if (sc->sc_flush)
-			error = (*sc->sc_flush)(sc, 0);
 		else
-			error = 0;	/* XXX Error out instead? */
-		break;
-
-	default:
-		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
+			error = 0;
 		break;
 	}
 
-	device_release(self);
-	return (error);
+	if (error != 0)
+		return (error);
+
+	if (sc->sc_ioctl) {
+		error = (*sc->sc_ioctl)(sc, cmd, addr, flag, 0);
+		if (error != EPASSTHROUGH)
+			return (error);
+	}
+
+	/* something not handled by the attachment */
+	return dk_ioctl(dksc, dev, cmd, addr, flag, l);
+}
+
+/*
+ * Flush the device's cache.
+ */
+static int
+ld_flush(device_t self, bool poll)
+{
+	int error = 0;
+	struct ld_softc *sc = device_private(self);
+
+	if (sc->sc_ioctl) {
+		error = (*sc->sc_ioctl)(sc, DIOCCACHESYNC, NULL, 0, poll);
+		if (error != 0)
+			device_printf(self, "unable to flush cache\n");
+	}
+
+	return error;
 }
 
 static void

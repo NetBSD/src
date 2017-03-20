@@ -169,6 +169,8 @@ username/password information.
 
     /etc/postfix/main.cf:
         smtp_sasl_auth_enable = yes
+        smtp_tls_security_level = encrypt
+        smtp_sasl_tls_security_options = noanonymous
         relayhost = [mail.isp.example]
         # Alternative form:
         # relayhost = [mail.isp.example]:submission
@@ -177,6 +179,10 @@ username/password information.
   * The smtp_sasl_auth_enable setting enables client-side authentication. We
     will configure the client's username and password information in the second
     part of the example.
+
+  * The smtp_tls_security_level setting ensures that the connection to the
+    remote smtp server will be encrypted, and smtp_sasl_tls_security_options
+    removes the prohibition on plaintext passwords.
 
   * The relayhost setting forces the Postfix SMTP to send all remote messages
     to the specified mail server instead of trying to deliver them directly to
@@ -254,7 +260,7 @@ final resort.
 
     /etc/postfix/sasl_passwd:
         # Per-sender authentication; see also /etc/postfix/sender_relay.
-        user1@example.com               username2:password2
+        user1@example.com               username1:password1
         user2@example.net               username2:password2
         # Login information for the default relayhost.
         [mail.isp.example]              username:password

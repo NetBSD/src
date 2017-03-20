@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2016/01/31 18:57:29 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.46.2.1 2017/03/20 06:57:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.46 2016/01/31 18:57:29 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.46.2.1 2017/03/20 06:57:01 pgoyette Exp $");
 #endif
 #endif	/* not lint */
 
@@ -387,7 +387,7 @@ setbyteorder(int new_byteorder)
 	if ((!biendian_p || set_p)
 	    && byteorder != 0
 	    && byteorder != new_byteorder) {
-		warn("changing %s byteorder to %s",
+		warnx("changing %s byteorder to %s",
 		    byteorder == LITTLE_ENDIAN ? "le" : "be",
 		    new_byteorder == LITTLE_ENDIAN ? "le" : "be");
 	}

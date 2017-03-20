@@ -57,7 +57,7 @@ OK
 >>> recipient_restrictions permit_mynetworks
 OK
 >>> rcpt reject@dunno.domain
-./smtpd_check: warning: fail:1_mynetworks: table lookup problem
+./smtpd_check: warning: mynetworks: fail:1_mynetworks: table lookup problem
 ./smtpd_check: <queue id>: reject: RCPT from foo.dunno.com[131.155.210.17]: 451 4.3.0 <reject@dunno.domain>: Temporary lookup failure; from=<reject@dunno.domain> to=<reject@dunno.domain> proto=SMTP helo=<foobar>
 451 4.3.0 <reject@dunno.domain>: Temporary lookup failure
 >>> # 
@@ -69,7 +69,7 @@ OK
 >>> # Expect REJECT (server configuration error)
 >>> #
 >>> rcpt reject@dunno.domain
-./smtpd_check: warning: non-null host address bits in "168.100.189.1/27", perhaps you should use "168.100.189.0/27" instead
+./smtpd_check: warning: mynetworks: non-null host address bits in "168.100.189.1/27", perhaps you should use "168.100.189.0/27" instead
 ./smtpd_check: <queue id>: reject: RCPT from foo.dunno.com[131.155.210.17]: 451 4.3.0 <reject@dunno.domain>: Temporary lookup failure; from=<reject@dunno.domain> to=<reject@dunno.domain> proto=SMTP helo=<foobar>
 451 4.3.0 <reject@dunno.domain>: Temporary lookup failure
 >>> #
@@ -119,7 +119,7 @@ OK
 >>> mydestination fail:1_mydestination
 OK
 >>> rcpt user@example.com
-./smtpd_check: warning: fail:1_mydestination: table lookup problem
+./smtpd_check: warning: mydestination: fail:1_mydestination: table lookup problem
 ./smtpd_check: <queue id>: reject: RCPT from foo.dunno.com[131.155.210.17]: 451 4.3.0 <user@example.com>: Temporary lookup failure; from=<> to=<user@example.com> proto=SMTP helo=<foobar>
 451 4.3.0 <user@example.com>: Temporary lookup failure
 >>> #

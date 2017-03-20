@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2016/02/27 21:47:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.31.2.1 2017/03/20 06:55:59 pgoyette Exp $
 
 LIB=	LLVMCodeGen
 
@@ -12,18 +12,20 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
+	BranchRelaxation.cpp \
+	BuiltinGCs.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CodeGen.cpp \
 	CodeGenPrepare.cpp \
-	CoreCLRGC.cpp \
+	CountingFunctionInserter.cpp \
 	CriticalAntiDepBreaker.cpp \
 	DFAPacketizer.cpp \
 	DeadMachineInstructionElim.cpp \
+	DetectDeadLanes.cpp \
 	DwarfEHPrepare.cpp \
 	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
-	ErlangGC.cpp \
 	ExecutionDepsFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandPostRAPseudos.cpp \
@@ -55,6 +57,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LiveStackAnalysis.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
+	LowLevelType.cpp \
+	LowerEmuTLS.cpp \
 	MIRPrinter.cpp \
 	MIRPrintingPass.cpp \
 	MachineBasicBlock.cpp \
@@ -67,7 +71,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
 	MachineFunction.cpp \
-	MachineFunctionAnalysis.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
 	MachineInstr.cpp \
@@ -77,6 +80,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachinePassRegistry.cpp \
+	MachinePipeliner.cpp \
 	MachinePostDominators.cpp \
 	MachineRegionInfo.cpp \
 	MachineRegisterInfo.cpp \
@@ -85,15 +89,16 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineSink.cpp \
 	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
-	OcamlGC.cpp \
 	OptimizePHIs.cpp \
 	PHIElimination.cpp \
 	PHIEliminationUtils.cpp \
 	ParallelCG.cpp \
-	Passes.cpp \
+	PatchableFunction.cpp \
 	PeepholeOptimizer.cpp \
 	ScoreboardHazardRecognizer.cpp \
+	PostRAHazardRecognizer.cpp \
 	PostRASchedulerList.cpp \
+	PreISelIntrinsicLowering.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
 	PseudoSourceValue.cpp \
@@ -102,14 +107,21 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	RegAllocFast.cpp \
 	RegAllocGreedy.cpp \
 	RegAllocPBQP.cpp \
+	RegUsageInfoCollector.cpp \
+	RegUsageInfoPropagate.cpp \
 	RegisterClassInfo.cpp \
 	RegisterCoalescer.cpp \
 	RegisterPressure.cpp \
 	RegisterScavenging.cpp \
+	RegisterUsageInfo.cpp \
+	RenameIndependentSubregs.cpp \
+	ResetMachineFunctionPass.cpp \
+	SafeStack.cpp \
+	SafeStackColoring.cpp \
+	SafeStackLayout.cpp \
 	ScheduleDAG.cpp \
 	ScheduleDAGInstrs.cpp \
 	ScheduleDAGPrinter.cpp \
-	ShadowStackGC.cpp \
 	ShadowStackGCLowering.cpp \
 	ShrinkWrap.cpp \
 	SjLjEHPrepare.cpp \
@@ -121,19 +133,22 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	StackMaps.cpp \
 	StackProtector.cpp \
 	StackSlotColoring.cpp \
-	StatepointExampleGC.cpp \
 	TailDuplication.cpp \
+	TailDuplicator.cpp \
 	TargetFrameLoweringImpl.cpp \
 	TargetInstrInfo.cpp \
 	TargetLoweringBase.cpp \
 	TargetLoweringObjectFileImpl.cpp \
 	TargetOptionsImpl.cpp \
+	TargetPassConfig.cpp \
 	TargetRegisterInfo.cpp \
 	TargetSchedule.cpp \
+	TargetSubtargetInfo.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	VirtRegMap.cpp \
-	WinEHPrepare.cpp
+	WinEHPrepare.cpp \
+	XRayInstrumentation.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.15.2.2 2017/01/07 08:53:45 pgoyette Exp $
+$NetBSD: storage,v 1.15.2.3 2017/03/20 06:52:12 pgoyette Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -52,7 +52,7 @@ is where it's at for remote block devices. Note that there appears to
 be no compelling reason to move the target to the kernel or otherwise
 make major architectural changes.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is currently no clear timeframe or release target.
  - Contact agc for further information.
 
@@ -71,8 +71,9 @@ only step that has been taken is to import the code from FreeBSD. The
 next step is to update that import (since it was done a while ago now)
 and then work on getting it to configure and compile.
 
- - As of November 2015 nobody is working on this, and a volunteer to
-   take charge is urgently needed.
+ - As of January 2017 pgoyette has done a bit of prodding of the code
+   recently, but otherwise nobody is working on this, and a volunteer to
+   take charge and move it forward rapidly is urgently needed.
  - There is no clear timeframe or release target, although having an
    experimental version ready for -8 would be great.
  - Contact dholland for further information.
@@ -145,7 +146,7 @@ really working. One of the things this entails is updating the ZFS
 code, as what we have is rather old. The Illumos version is probably
 what we want for this.
 
- - There has been intermittent work on zfs, but as of November 2015
+ - There has been intermittent work on zfs, but as of January 2017
    nobody is known to be actively working on it
  - There is no clear timeframe or release target.
  - Contact riastradh or ?? for further information.
@@ -184,7 +185,7 @@ Given the increasing regulatory-level importance of full-disk
 encryption, this is at least a de facto requirement for using NetBSD
 on laptops in many circumstances.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is no clear timeframe or release target.
  - Contact dholland for further information.
 
@@ -196,12 +197,12 @@ The tls-maxphys branch changes MAXPHYS (the maximum size of a single
 I/O request) from a global fixed constant to a value that's probed
 separately for each particular I/O channel based on its
 capabilities. Large values are highly desirable for e.g. feeding large
-disk arrays but do not work with all hardware.
+disk arrays and SSDs, but do not work with all hardware.
 
 The code is nearly done and just needs more testing and support in
 more drivers.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is no clear timeframe or release target.
  - Contact tls for further information.
 
@@ -244,9 +245,10 @@ for use on shingled disks (which are larger than 2 TB) and also for
 use on disk arrays (ditto) this is something of a problem. A 64-bit
 version of LFS for large volumes is in the works.
 
- - As of November 2015 dholland is working on this.
- - It is close to being ready for at least experimental use and is
-   expected to be in 8.0.
+ - dholland was working on this in fall 2015 but time to finish it
+   dried up.
+ - The goal now is to get a few remaining things done in time for 8.0
+   so it will at least be ready for experimental use there.
  - Responsible: dholland
 
 
@@ -256,11 +258,13 @@ version of LFS for large volumes is in the works.
 Support for per-process variation of the file system namespace enables
 a number of things; more flexible chroots, for example, and also
 potentially more efficient pkgsrc builds. dholland thought up a
-somewhat hackish but low-footprint way to implement this.
+somewhat hackish but low-footprint way to implement this, and has a
+preliminary implementation, but concluded the scheme was too fragile
+for production. A different approach is probably needed, although the
+existing code could be tidied up and committed if that seems desirable.
 
- - As of November 2015 dholland is working on this.
- - It is scheduled to be in 8.0.
- - Responsible: dholland
+ - As of January 2017 nobody is working on this.
+ - Contact: dholland
 
 
 10. lvm tidyup
@@ -268,7 +272,7 @@ somewhat hackish but low-footprint way to implement this.
 
 [agc says someone should look at our lvm stuff; XXX fill this in]
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is no clear timeframe or release target.
  - Contact agc for further information.
 
@@ -289,7 +293,7 @@ plan; it is a complicated area with a lot of prior art that's also
 reportedly full of patent mines. There are a couple of open FTL
 implementations that we might be able to import.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is no clear timeframe or release target.
  - Contact dholland for further information.
 
@@ -304,7 +308,7 @@ flash translation layers found in SSDs. The nature and structure of
 shingle translation layers is still being researched; however, at some
 point we will want to support these things in NetBSD.
 
- - As of November 2015 one of dholland's coworkers is looking at this.
+ - As of 2016 one of dholland's coworkers was looking at this.
  - There is no clear timeframe or release target.
  - Contact dholland for further information.
 
@@ -347,7 +351,7 @@ the Dragonfly and NetBSD VFS layers have diverged in different
 directions from the original 4.4BSD, may not be entirely trivial
 either.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is no clear timeframe or release target.
  - There probably isn't any particular person to contact; for VFS
    concerns contact dholland or hannken.
@@ -393,7 +397,7 @@ this issue; given the performance profiles touted for nvram
 technologies, a plain RAM disk like md(4) is sufficient both
 structurally and for performance analysis.
 
- - As of November 2015 nobody is known to be working on this. Some
+ - As of January 2017 nobody is known to be working on this. Some
    time back, uebayasi wrote some preliminary patches, but they were
    rejected by the UVM maintainers.
  - There is no clear timeframe or release target.
@@ -410,6 +414,7 @@ The various tools must be modified to understand this and be able
 to copy them if requested. Also tools to manipulate the data will
 need to be written.
 
+
 18. coda maintenance
 --------------------
 
@@ -418,13 +423,15 @@ upstream, or something of the sort; XXX fill this in.] Also the code
 appears to have an ugly incestuous relationship with FFS. This should
 really be cleaned up. That or maybe it's time to remove Coda.
 
- - As of November 2015 nobody is known to be working on this.
+ - As of January 2017 nobody is known to be working on this.
  - There is no clear timeframe or release target.
  - There isn't anyone in particular to contact.
  - Circa 2012 christos made it work read-write and split it
    into modules. Since then christos has not tested it.
 
+
 Alistair Crooks, David Holland
 Fri Nov 20 02:17:53 EST 2015
 Sun May  1 16:50:42 EDT 2016 (some updates)
+Fri Jan 13 00:40:50 EST 2017 (some more updates)
 

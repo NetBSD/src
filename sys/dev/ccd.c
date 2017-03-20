@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.166.2.1 2017/01/07 08:56:31 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.166.2.2 2017/03/20 06:57:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.166.2.1 2017/01/07 08:56:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.166.2.2 2017/03/20 06:57:27 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -809,9 +809,10 @@ ccdstart(struct ccd_softc *cs)
 
 	KASSERT(mutex_owned(cs->sc_iolock));
 
-	disk_busy(&cs->sc_dkdev);
 	bp = bufq_get(cs->sc_bufq);
 	KASSERT(bp != NULL);
+
+	disk_busy(&cs->sc_dkdev);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)

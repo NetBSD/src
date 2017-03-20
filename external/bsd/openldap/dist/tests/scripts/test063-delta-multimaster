@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2014 The OpenLDAP Foundation.
+## Copyright 1998-2016 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -520,7 +520,7 @@ if test $RC != 0 ; then
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
-$LDIFFILTER -s $BACKEND=a < $TESTDIR/server$n.out > $TESTDIR/server$n.flt
+$LDIFFILTER -s a < $TESTDIR/server$n.out > $TESTDIR/server$n.flt
 n=`expr $n + 1`
 done
 

@@ -1,4 +1,4 @@
-# $NetBSD: t_mixerctl.sh,v 1.1.2.2 2017/01/07 08:56:57 pgoyette Exp $
+# $NetBSD: t_mixerctl.sh,v 1.1.2.3 2017/03/20 06:58:02 pgoyette Exp $
 
 atf_test_case noargs_usage
 noargs_usage_head() {
@@ -14,6 +14,9 @@ showvalue_head() {
 	atf_set "descr" "Ensure mixerctl(1) can print the value for all variables"
 }
 showvalue_body() {
+	(</dev/mixer) >/dev/null 2>&1 ||
+	    atf_skip "no audio mixer available in kernel"
+
 	for var in $(mixerctl -a | awk -F= '{print $1}'); do
 		atf_check -s exit:0 -e ignore -o match:"^${var}=" \
 			mixerctl ${var}
@@ -25,7 +28,10 @@ nflag_head() {
 	atf_set "descr" "Ensure 'mixerctl -n' actually suppresses some output"
 }
 nflag_body() {
-	varname="$(mixerctl -a | head -1 | awk -F= '{print $1}')"
+	(</dev/mixer) >/dev/null 2>&1 ||
+	    atf_skip "no audio mixer available in kernel"
+
+	varname="$(mixerctl -a | sed -e 's/=.*//' -e q)"
 
 	atf_check -s exit:0 -o match:"${varname}" -e ignore \
 		mixerctl ${varname}
@@ -40,7 +46,7 @@ nonexistant_device_head() {
 }
 nonexistant_device_body() {
 	atf_check -s not-exit:0  -o ignore -e match:"No such file" \
-		mixerctl -d /a/b/c/d/e
+		mixerctl -a -d /a/b/c/d/e
 }
 
 atf_init_test_cases() {

@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_GET_TABLE 3
 .Os
 .Sh NAME
@@ -6,7 +6,7 @@
 .Nm sqlite3_free_table
 .Nd Convenience Routines For Running Queries
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_get_table
 .Fa "sqlite3 *db"
 .Fa "const char *zSql"
@@ -15,7 +15,7 @@
 .Fa "int *pnColumn"
 .Fa "char **pzErrmsg       "
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_free_table
 .Fa "char **result"
 .Fc

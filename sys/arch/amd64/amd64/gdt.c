@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.26 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.26.2.1 2017/03/20 06:57:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.26 2015/11/22 13:41:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.26.2.1 2017/03/20 06:57:09 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -63,6 +63,9 @@ int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
+#if defined(USER_LDT) || !defined(XEN)
+static void set_sys_gdt(int, void *, size_t, int, int, int);
+#endif
 void gdt_init(void);
 void gdt_grow(void);
 int gdt_get_slot(void);
@@ -87,9 +90,12 @@ update_descriptor(void *tp, void *ep)
 #endif
 }
 
-void
-set_sys_gdt(int slot, void *base, size_t limit,
-	    int type, int dpl, int gran)
+#if defined(USER_LDT) || !defined(XEN)
+/*
+ * Called on a newly-allocated GDT slot, so no race between CPUs.
+ */
+static void
+set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 {
 	union {
 		struct sys_segment_descriptor sd;
@@ -107,6 +113,7 @@ set_sys_gdt(int slot, void *base, size_t limit,
 		update_descriptor(&ci->ci_gdt[idx + 1], &d.bits[1]);
 	}
 }
+#endif	/* USER_LDT || !XEN */
 
 /*
  * Initialize the GDT.
@@ -193,22 +200,7 @@ gdt_init_cpu(struct cpu_info *ci)
 	lgdt(&region);
 }
 
-#ifdef MULTIPROCESSOR
-void
-gdt_reload_cpu(struct cpu_info *ci)
-{
-	struct region_descriptor region;
-
-#ifndef XEN
-	setregion(&region, ci->ci_gdt, MAXGDTSIZ - 1);
-#else
-	setregion(&region, ci->ci_gdt, gdt_size - 1);
-#endif
-	lgdt(&region);
-}
-#endif
-
-
+#if !defined(XEN) || defined(USER_LDT)
 /*
  * Grow or shrink the GDT.
  */

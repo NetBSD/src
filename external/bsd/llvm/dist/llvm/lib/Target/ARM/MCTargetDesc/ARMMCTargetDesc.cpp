@@ -16,7 +16,6 @@
 #include "ARMMCTargetDesc.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -201,23 +200,12 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createARMMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
-                                             CodeModel::Model CM,
-                                             CodeGenOpt::Level OL) {
-  MCCodeGenInfo *X = new MCCodeGenInfo();
-  if (RM == Reloc::Default) {
-    // Default relocation model on Darwin is PIC, not DynamicNoPIC.
-    RM = TT.isOSDarwin() ? Reloc::PIC_ : Reloc::DynamicNoPIC;
-  }
-  X->initMCCodeGenInfo(RM, CM, OL);
-  return X;
-}
-
 static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
                                      MCAsmBackend &MAB, raw_pwrite_stream &OS,
                                      MCCodeEmitter *Emitter, bool RelaxAll) {
   return createARMELFStreamer(Ctx, MAB, OS, Emitter, false,
-                              T.getArch() == Triple::thumb);
+                              (T.getArch() == Triple::thumb ||
+                               T.getArch() == Triple::thumbeb));
 }
 
 static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
@@ -286,13 +274,10 @@ static MCInstrAnalysis *createARMMCInstrAnalysis(const MCInstrInfo *Info) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeARMTargetMC() {
-  for (Target *T : {&TheARMLETarget, &TheARMBETarget, &TheThumbLETarget,
-                    &TheThumbBETarget}) {
+  for (Target *T : {&getTheARMLETarget(), &getTheARMBETarget(),
+                    &getTheThumbLETarget(), &getTheThumbBETarget()}) {
     // Register the MC asm info.
     RegisterMCAsmInfoFn X(*T, createARMMCAsmInfo);
-
-    // Register the MC codegen info.
-    TargetRegistry::RegisterMCCodeGenInfo(*T, createARMMCCodeGenInfo);
 
     // Register the MC instruction info.
     TargetRegistry::RegisterMCInstrInfo(*T, createARMMCInstrInfo);
@@ -329,16 +314,18 @@ extern "C" void LLVMInitializeARMTargetMC() {
   }
 
   // Register the MC Code Emitter
-  for (Target *T : {&TheARMLETarget, &TheThumbLETarget})
+  for (Target *T : {&getTheARMLETarget(), &getTheThumbLETarget()})
     TargetRegistry::RegisterMCCodeEmitter(*T, createARMLEMCCodeEmitter);
-  for (Target *T : {&TheARMBETarget, &TheThumbBETarget})
+  for (Target *T : {&getTheARMBETarget(), &getTheThumbBETarget()})
     TargetRegistry::RegisterMCCodeEmitter(*T, createARMBEMCCodeEmitter);
 
   // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(TheARMLETarget, createARMLEAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheARMBETarget, createARMBEAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheThumbLETarget,
+  TargetRegistry::RegisterMCAsmBackend(getTheARMLETarget(),
+                                       createARMLEAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(getTheARMBETarget(),
+                                       createARMBEAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(getTheThumbLETarget(),
                                        createThumbLEAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(TheThumbBETarget,
+  TargetRegistry::RegisterMCAsmBackend(getTheThumbBETarget(),
                                        createThumbBEAsmBackend);
 }

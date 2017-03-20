@@ -127,7 +127,7 @@ public:
 /// can be extracted using getLoopVariable and getRangeInit.
 class CXXForRangeStmt : public Stmt {
   SourceLocation ForLoc;
-  enum { RANGE, BEGINEND, COND, INC, LOOPVAR, BODY, END };
+  enum { RANGE, BEGINSTMT, ENDSTMT, COND, INC, LOOPVAR, BODY, END };
   // SubExprs[RANGE] is an expression or declstmt.
   // SubExprs[COND] and SubExprs[INC] are expressions.
   Stmt *SubExprs[END];
@@ -137,7 +137,7 @@ class CXXForRangeStmt : public Stmt {
 
   friend class ASTStmtReader;
 public:
-  CXXForRangeStmt(DeclStmt *Range, DeclStmt *BeginEnd,
+  CXXForRangeStmt(DeclStmt *Range, DeclStmt *Begin, DeclStmt *End,
                   Expr *Cond, Expr *Inc, DeclStmt *LoopVar, Stmt *Body,
                   SourceLocation FL, SourceLocation CAL, SourceLocation CL,
                   SourceLocation RPL);
@@ -152,9 +152,10 @@ public:
 
 
   DeclStmt *getRangeStmt() { return cast<DeclStmt>(SubExprs[RANGE]); }
-  DeclStmt *getBeginEndStmt() {
-    return cast_or_null<DeclStmt>(SubExprs[BEGINEND]);
+  DeclStmt *getBeginStmt() {
+    return cast_or_null<DeclStmt>(SubExprs[BEGINSTMT]);
   }
+  DeclStmt *getEndStmt() { return cast_or_null<DeclStmt>(SubExprs[ENDSTMT]); }
   Expr *getCond() { return cast_or_null<Expr>(SubExprs[COND]); }
   Expr *getInc() { return cast_or_null<Expr>(SubExprs[INC]); }
   DeclStmt *getLoopVarStmt() { return cast<DeclStmt>(SubExprs[LOOPVAR]); }
@@ -163,8 +164,11 @@ public:
   const DeclStmt *getRangeStmt() const {
     return cast<DeclStmt>(SubExprs[RANGE]);
   }
-  const DeclStmt *getBeginEndStmt() const {
-    return cast_or_null<DeclStmt>(SubExprs[BEGINEND]);
+  const DeclStmt *getBeginStmt() const {
+    return cast_or_null<DeclStmt>(SubExprs[BEGINSTMT]);
+  }
+  const DeclStmt *getEndStmt() const {
+    return cast_or_null<DeclStmt>(SubExprs[ENDSTMT]);
   }
   const Expr *getCond() const {
     return cast_or_null<Expr>(SubExprs[COND]);
@@ -179,7 +183,8 @@ public:
 
   void setRangeInit(Expr *E) { SubExprs[RANGE] = reinterpret_cast<Stmt*>(E); }
   void setRangeStmt(Stmt *S) { SubExprs[RANGE] = S; }
-  void setBeginEndStmt(Stmt *S) { SubExprs[BEGINEND] = S; }
+  void setBeginStmt(Stmt *S) { SubExprs[BEGINSTMT] = S; }
+  void setEndStmt(Stmt *S) { SubExprs[ENDSTMT] = S; }
   void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt*>(E); }
   void setInc(Expr *E) { SubExprs[INC] = reinterpret_cast<Stmt*>(E); }
   void setLoopVarStmt(Stmt *S) { SubExprs[LOOPVAR] = S; }
@@ -299,6 +304,8 @@ class CoroutineBodyStmt : public Stmt {
     FinalSuspend,  ///< The final suspend statement, run after the body.
     OnException,   ///< Handler for exceptions thrown in the body.
     OnFallthrough, ///< Handler for control flow falling off the body.
+    Allocate,      ///< Coroutine frame memory allocation.
+    Deallocate,    ///< Coroutine frame memory deallocation.
     ReturnValue,   ///< Return value for thunk function.
     FirstParamMove ///< First offset for move construction of parameter copies.
   };
@@ -308,6 +315,7 @@ class CoroutineBodyStmt : public Stmt {
 public:
   CoroutineBodyStmt(Stmt *Body, Stmt *Promise, Stmt *InitSuspend,
                     Stmt *FinalSuspend, Stmt *OnException, Stmt *OnFallthrough,
+                    Expr *Allocate, Stmt *Deallocate,
                     Expr *ReturnValue, ArrayRef<Expr *> ParamMoves)
       : Stmt(CoroutineBodyStmtClass) {
     SubStmts[CoroutineBodyStmt::Body] = Body;
@@ -316,6 +324,8 @@ public:
     SubStmts[CoroutineBodyStmt::FinalSuspend] = FinalSuspend;
     SubStmts[CoroutineBodyStmt::OnException] = OnException;
     SubStmts[CoroutineBodyStmt::OnFallthrough] = OnFallthrough;
+    SubStmts[CoroutineBodyStmt::Allocate] = Allocate;
+    SubStmts[CoroutineBodyStmt::Deallocate] = Deallocate;
     SubStmts[CoroutineBodyStmt::ReturnValue] = ReturnValue;
     // FIXME: Tail-allocate space for parameter move expressions and store them.
     assert(ParamMoves.empty() && "not implemented yet");
@@ -339,6 +349,9 @@ public:
   Stmt *getFallthroughHandler() const {
     return SubStmts[SubStmt::OnFallthrough];
   }
+
+  Expr *getAllocate() const { return cast<Expr>(SubStmts[SubStmt::Allocate]); }
+  Stmt *getDeallocate() const { return SubStmts[SubStmt::Deallocate]; }
 
   Expr *getReturnValueInit() const {
     return cast<Expr>(SubStmts[SubStmt::ReturnValue]);
@@ -400,10 +413,13 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return CoreturnLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY {
-    return getOperand()->getLocEnd();
+    return getOperand() ? getOperand()->getLocEnd() : getLocStart();
   }
 
   child_range children() {
+    if (!getOperand())
+      return child_range(SubStmts + SubStmt::PromiseCall,
+                         SubStmts + SubStmt::Count);
     return child_range(SubStmts, SubStmts + SubStmt::Count);
   }
 

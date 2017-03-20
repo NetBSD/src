@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.65.2.2 2017/01/07 08:56:59 pgoyette Exp $ */
+/* $NetBSD: scan.l,v 1.65.2.3 2017/03/20 06:58:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.65.2.2 2017/01/07 08:56:59 pgoyette Exp $");
+__RCSID("$NetBSD: scan.l,v 1.65.2.3 2017/03/20 06:58:06 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -218,6 +218,7 @@ static	struct	kwtab {
 	{ "bounded",	T_AT_BOUNDED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "break",	T_BREAK,	0,	0,	0,	  0,0,0,0,1 },
 	{ "buffer",	T_AT_BUFFER,	0,	0,	0,	  0,0,1,1,5 },
+	{ "builtin_offsetof", T_BUILTIN_OFFSETOF, 0, 0, 0,	  0,0,1,0,2 },
 	{ "case",	T_CASE,		0,	0,	0,	  0,0,0,0,1 },
 	{ "char",	T_TYPE,		0,	CHAR,	0,	  0,0,0,0,1 },
 	{ "cold",	T_AT_COLD,	0,	0,	0,	  0,0,1,1,5 },
@@ -252,6 +253,7 @@ static	struct	kwtab {
 	{ "noreturn",	T_AT_NORETURN,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_AT_PACKED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "packed",	T_PACKED,	0,	0,	0,	  0,0,0,0,2 },
+	{ "pcs",	T_AT_PCS,	0,	0,	0,	  0,0,0,0,5 },
 	{ "printf",	T_AT_FORMAT_PRINTF,0,	0,	0,	  0,0,1,1,5 },
 	{ "pure",	T_AT_PURE,	0,	0,	0,	  0,0,1,1,5 },
 	{ "real",	T_REAL,		0,	0,	0,	  0,1,0,0,4 },
@@ -1089,6 +1091,9 @@ directive(void)
 		continue;
 
 	if (!isdigit((unsigned char)c)) {
+		if (strncmp(cp, "pragma", 6) == 0
+		    && isspace((unsigned char)cp[6]))
+			return;
 	error:
 		/* undefined or invalid # directive */
 		warning(255);

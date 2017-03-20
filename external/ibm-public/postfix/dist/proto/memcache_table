@@ -128,27 +128,27 @@
 #	The \fBkey_format\fR parameter supports the following '%'
 #	expansions:
 # .RS 
-# .IP "\fB\fB%%\fR\fR"
+# .IP "\fB%%\fR"
 #	This is replaced by a literal '%' character.
-# .IP "\fB\fB%s\fR\fR"
+# .IP "\fB%s\fR"
 #	This is replaced by the memcache client input key.
-# .IP "\fB\fB%u\fR\fR"
+# .IP "\fB%u\fR"
 #	When the input key is an address of the form user@domain,
 #	\fB%u\fR is replaced by the SQL quoted local part of the
 #	address.  Otherwise, \fB%u\fR is replaced by the entire
 #	search string.  If the localpart is empty, a lookup is
 #	silently suppressed and returns no results (an update is
 #	skipped with a warning).
-# .IP "\fB\fB%d\fR\fR"
+# .IP "\fB%d\fR"
 #	When the input key is an address of the form user@domain,
 #	\fB%d\fR is replaced by the domain part of the address.
 #	Otherwise, a lookup is silently suppressed and returns no
 #	results (an update is skipped with a warning).
-# .IP "\fB\fB%[SUD]\fR\fR"
+# .IP "\fB%[SUD]\fR"
 #	The upper-case equivalents of the above expansions behave
 #	in the \fBkey_format\fR parameter identically to their
 #	lower-case counter-parts.
-# .IP "\fB\fB%[1-9]\fR\fR"
+# .IP "\fB%[1-9]\fR"
 #	The patterns %1, %2, ... %9 are replaced by the corresponding
 #	most significant component of the input key's domain. If
 #	the input key is \fIuser@mail.example.com\fR, then %1 is
@@ -228,4 +228,9 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--

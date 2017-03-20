@@ -1,4 +1,4 @@
-/*	$NetBSD: build_ap_req.c,v 1.1.1.1 2011/04/13 18:15:31 elric Exp $	*/
+/*	$NetBSD: build_ap_req.c,v 1.1.1.1.28.1 2017/03/20 06:51:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan

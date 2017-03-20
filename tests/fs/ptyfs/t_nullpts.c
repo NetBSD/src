@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nullpts.c,v 1.5 2011/01/10 11:11:04 hannken Exp $	*/
+/*	$NetBSD: t_nullpts.c,v 1.5.28.1 2017/03/20 06:57:56 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -19,7 +19,7 @@
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/nullfs/null.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 static void
 mountptyfs(const char *mp, int flags)

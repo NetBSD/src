@@ -1,4 +1,4 @@
-/*	$NetBSD: release_name.c,v 1.1.1.1 2011/04/13 18:14:48 elric Exp $	*/
+/*	$NetBSD: release_name.c,v 1.1.1.1.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpi.c,v 1.1.1.3 2014/04/24 12:45:39 pettai Exp $	*/
+/*	$NetBSD: mpi.c,v 1.1.1.3.6.1 2017/03/20 06:51:44 pgoyette Exp $	*/
 
 /*
     mpi.c

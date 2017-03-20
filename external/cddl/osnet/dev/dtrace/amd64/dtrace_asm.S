@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.6 2016/06/23 04:35:35 pgoyette Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.6.2.1 2017/03/20 06:56:28 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -72,13 +72,10 @@
 	 */
 	movq	TF_RIP(%rsp), %rdi
 	decq	%rdi
-	movq	TF_RSP(%rsp), %rsi
-	movq	TF_RAX(%rsp), %rdx
-	pushq	(%rsi)
 	movq	%rsp, %rsi
+	movq	TF_RAX(%rsp), %rdx
 	call	dtrace_invop
 	ALTENTRY(dtrace_invop_callsite)
-	addq	$8, %rsp
 	cmpl	$DTRACE_INVOP_PUSHL_EBP, %eax
 	je	bp_push
 	cmpl	$DTRACE_INVOP_LEAVE, %eax

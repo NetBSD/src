@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.118 2015/12/20 01:34:00 christos Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.118.2.1 2017/03/20 06:57:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.118 2015/12/20 01:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.118.2.1 2017/03/20 06:57:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -871,7 +871,7 @@ struct vfsops puffs_vfsops = {
 	.vfs_done = puffs_vfsop_done,
 	.vfs_snapshot = puffs_vfsop_snapshot,
 	.vfs_extattrctl = puffs_vfsop_extattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

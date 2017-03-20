@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.6.2.2 2016/09/14 03:04:19 pgoyette Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.6.2.3 2017/03/20 06:57:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -28,15 +28,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_ilogb.c,v 1.6.2.3 2017/03/20 06:57:59 pgoyette Exp $");
 
 #include <atf-c.h>
 #include <fenv.h>
+#include <limits.h>
 #include <math.h>
 
 #ifndef __HAVE_FENV
 
-# define ATF_CHECK_RAISED_INVALID 
-# define ATF_CHECK_RAISED_NOTHING 
+# define ATF_CHECK_RAISED_INVALID
+# define ATF_CHECK_RAISED_NOTHING
 
 #else
 # define ATF_CHECK_RAISED_INVALID do { \

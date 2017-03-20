@@ -43,7 +43,9 @@ enum ActionType {
   PrintSets,
   GenOptParserDefs,
   GenCTags,
-  GenAttributes
+  GenAttributes,
+  GenSearchableTables,
+  GenGlobalISel,
 };
 
 namespace {
@@ -89,7 +91,10 @@ namespace {
                                "Generate ctags-compatible index"),
                     clEnumValN(GenAttributes, "gen-attrs",
                                "Generate attributes"),
-                    clEnumValEnd));
+                    clEnumValN(GenSearchableTables, "gen-searchable-tables",
+                               "Generate generic binary-searchable table"),
+                    clEnumValN(GenGlobalISel, "gen-global-isel",
+                               "Generate GlobalISel selector")));
 
   cl::opt<std::string>
   Class("class", cl::desc("Print Enum list for this class"),
@@ -172,6 +177,12 @@ bool LLVMTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
   case GenAttributes:
     EmitAttributes(Records, OS);
     break;
+  case GenSearchableTables:
+    EmitSearchableTables(Records, OS);
+    break;
+  case GenGlobalISel:
+    EmitGlobalISel(Records, OS);
+    break;
   }
 
   return false;
@@ -179,7 +190,7 @@ bool LLVMTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
 }
 
 int main(int argc, char **argv) {
-  sys::PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
 

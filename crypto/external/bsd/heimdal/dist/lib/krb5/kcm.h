@@ -1,4 +1,4 @@
-/*	$NetBSD: kcm.h,v 1.1.1.1 2011/04/13 18:15:34 elric Exp $	*/
+/*	$NetBSD: kcm.h,v 1.1.1.1.28.1 2017/03/20 06:51:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.

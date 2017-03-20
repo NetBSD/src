@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.70.2.3 2017/01/07 08:56:28 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.70.2.4 2017/03/20 06:57:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.3 2017/01/07 08:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.4 2017/03/20 06:57:22 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.3 2017/01/07 08:56:28 pgoyett
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+#include <x86/efi.h>
 #include <x86/machdep.h>
 #include <x86/nmi.h>
 #include <x86/pio.h>
@@ -509,9 +510,9 @@ x86_select_freelist(uint64_t maxaddr)
 }
 
 static int
-x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
-    uint32_t type)
+x86_add_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
+	extern struct extent *iomem_ex;
 	uint64_t new_physmem = 0;
 	phys_ram_seg_t *cluster;
 	int i;
@@ -582,8 +583,9 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 		return 0;
 
 	if (mem_cluster_cnt >= VM_PHYSSEG_MAX) {
-		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
-			__func__);
+		printf("WARNING: too many memory segments"
+		    "(increase VM_PHYSSEG_MAX)");
+		return -1;
 	}
 
 #ifdef PHYSMEM_MAX_ADDR
@@ -628,7 +630,7 @@ x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
 }
 
 static int
-x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
+x86_parse_clusters(struct btinfo_memmap *bim)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t addr, size;
@@ -639,7 +641,9 @@ x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
 	KASSERT(bim->num > 0);
 
 #ifdef DEBUG_MEMLOAD
-	printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
+	printf("MEMMAP: %s MEMORY MAP (%d ENTRIES):\n",
+	    lookup_bootinfo(BTINFO_EFIMEMMAP) != NULL ? "UEFI" : "BIOS",
+	    bim->num);
 #endif
 
 	for (x = 0; x < bim->num; x++) {
@@ -647,8 +651,16 @@ x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
 		size = bim->entry[x].size;
 		type = bim->entry[x].type;
 #ifdef DEBUG_MEMLOAD
-		printf("    addr 0x%"PRIx64"  size 0x%"PRIx64"  type 0x%x\n",
-			addr, size, type);
+		printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
+		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		    addr, addr + size - 1, size, type,
+		    (type == BIM_Memory) ?  "Memory" :
+		    (type == BIM_Reserved) ?  "Reserved" :
+		    (type == BIM_ACPI) ? "ACPI" :
+		    (type == BIM_NVS) ? "NVS" :
+		    (type == BIM_PMEM) ? "Persistent" :
+		    (type == BIM_PRAM) ? "Persistent (Legacy)" :
+		    "unknown");
 #endif
 
 		/* If the segment is not memory, skip it. */
@@ -669,26 +681,24 @@ x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
 		seg_end = addr + size;
 
 		/*
-		 * XXX XXX: Avoid compatibility holes.
-		 *
-		 * Holes within memory space that allow access to be directed
-		 * to the PC-compatible frame buffer (0xa0000-0xbffff), to
-		 * adapter ROM space (0xc0000-0xdffff), and to system BIOS
-		 * space (0xe0000-0xfffff).
+		 * XXX XXX: Avoid the ISA I/O MEM.
 		 * 
-		 * Some laptop (for example, Toshiba Satellite2550X) report
-		 * this area and occurred problems, so we avoid this area.
+		 * Some laptops (for example, Toshiba Satellite2550X) report
+		 * this area as valid.
 		 */
-		if (seg_start < 0x100000 && seg_end > 0xa0000) {
+		if (seg_start < IOM_END && seg_end > IOM_BEGIN) {
 			printf("WARNING: memory map entry overlaps "
 			    "with ``Compatibility Holes'': "
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 
-			x86_add_cluster(iomem_ex, seg_start, 0xa0000, type);
-			x86_add_cluster(iomem_ex, 0x100000, seg_end, type);
+			if (x86_add_cluster(seg_start, IOM_BEGIN, type) == -1)
+				break;
+			if (x86_add_cluster(IOM_END, seg_end, type) == -1)
+				break;
 		} else {
-			x86_add_cluster(iomem_ex, seg_start, seg_end, type);
+			if (x86_add_cluster(seg_start, seg_end, type) == -1)
+				break;
 		}
 	}
 
@@ -696,8 +706,9 @@ x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
 }
 
 static int
-x86_fake_clusters(struct extent *iomem_ex)
+x86_fake_clusters(void)
 {
+	extern struct extent *iomem_ex;
 	phys_ram_seg_t *cluster;
 	KASSERT(mem_cluster_cnt == 0);
 
@@ -807,8 +818,8 @@ x86_load_region(uint64_t seg_start, uint64_t seg_end)
 void
 init_x86_clusters(void)
 {
-	extern struct extent *iomem_ex;
 	struct btinfo_memmap *bim;
+	struct btinfo_efimemmap *biem;
 
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed to us by
@@ -816,17 +827,25 @@ init_x86_clusters(void)
 	 */
 #ifdef i386
 	extern int biosmem_implicit;
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
+	if (biem != NULL)
+		bim = efi_get_e820memmap();
+	else
+		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
 	    bim != NULL && bim->num > 0)
-		x86_parse_clusters(bim, iomem_ex);
+		x86_parse_clusters(bim);
 #else
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	biem = lookup_bootinfo(BTINFO_EFIMEMMAP);
+	if (biem != NULL)
+		bim = efi_get_e820memmap();
+	else
+		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0)
-		x86_parse_clusters(bim, iomem_ex);
+		x86_parse_clusters(bim);
 #else
-	(void)bim, (void)iomem_ex;
+	(void)bim, (void)biem;
 #endif
 #endif
 
@@ -835,7 +854,7 @@ init_x86_clusters(void)
 		 * If x86_parse_clusters didn't find any valid segment, create
 		 * fake clusters.
 		 */
-		x86_fake_clusters(iomem_ex);
+		x86_fake_clusters();
 	}
 }
 
@@ -933,12 +952,12 @@ init_x86_msgbuf(void)
 	if (uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x) < atop(sz))
 		sz = ctob(uvm_physseg_get_avail_end(x) - uvm_physseg_get_avail_start(x));
 
-	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
 	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-        msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x));
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(uvm_physseg_get_avail_end(x)) - sz;
+	uvm_physseg_unplug(uvm_physseg_get_end(x) - atop(sz), atop(sz));
 
 	/* Now find where the new avail_end is. */
-	avail_end = ctob(uvm_physseg_get_avail_end(x));
+	avail_end = ctob(uvm_physseg_get_highest_frame());
 
 	if (sz == reqsz)
 		return;

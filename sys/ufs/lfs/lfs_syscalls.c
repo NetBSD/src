@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.172 2015/10/15 06:15:48 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.172.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.172 2015/10/15 06:15:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.172.2.1 2017/03/20 06:57:54 pgoyette Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -465,10 +465,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		numrefed--;
 	}
 
-#ifdef DIAGNOSTIC
-	if (numrefed != 0)
-		panic("lfs_markv: numrefed=%d", numrefed);
-#endif
+	KASSERTMSG((numrefed == 0), "lfs_markv: numrefed=%d", numrefed);
 	DLOG((DLOG_CLEAN, "lfs_markv: writing %d blks %d inos (check point)\n",
 	      nblkwritten, ninowritten));
 
@@ -512,10 +509,7 @@ err3:
 
 	lfs_segunlock(fs);
 	vfs_unbusy(mntp, false, NULL);
-#ifdef DIAGNOSTIC
-	if (numrefed != 0)
-		panic("lfs_markv: numrefed=%d", numrefed);
-#endif
+	KASSERTMSG((numrefed == 0), "lfs_markv: numrefed=%d", numrefed);
 
 	return (error);
 }
@@ -769,10 +763,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		numrefed--;
 	}
 
-#ifdef DIAGNOSTIC
-	if (numrefed != 0)
-		panic("lfs_bmapv: numrefed=%d", numrefed);
-#endif
+	KASSERTMSG((numrefed == 0), "lfs_bmapv: numrefed=%d", numrefed);
 
 	vfs_unbusy(mntp, false, NULL);
 

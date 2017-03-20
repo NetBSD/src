@@ -1,9 +1,9 @@
-/*	$NetBSD: back-meta.h,v 1.1.1.5 2014/05/28 09:58:50 tron Exp $	*/
+/*	$NetBSD: back-meta.h,v 1.1.1.5.6.1 2017/03/20 06:56:17 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

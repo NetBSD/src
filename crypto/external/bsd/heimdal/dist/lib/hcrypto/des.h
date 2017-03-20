@@ -1,4 +1,4 @@
-/*	$NetBSD: des.h,v 1.1.1.3 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: des.h,v 1.1.1.3.6.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan

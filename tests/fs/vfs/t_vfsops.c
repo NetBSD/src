@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.11 2011/04/04 19:16:58 hannken Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.11.26.1 2017/03/20 06:57:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <rump/rump.h>
 
 #include "../common/h_fsmacros.h"
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 static void
 tmount(const atf_tc_t *tc, const char *path)

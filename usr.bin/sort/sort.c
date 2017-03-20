@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.63 2016/06/01 08:24:03 wiz Exp $	*/
+/*	$NetBSD: sort.c,v 1.63.2.1 2017/03/20 06:58:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -60,34 +60,34 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1993\
+ The Regents of the University of California.  All rights reserved.");
+#endif /* not lint */
+__RCSID("$NetBSD: sort.c,v 1.63.2.1 2017/03/20 06:58:05 pgoyette Exp $");
 
 /* Sort sorts a file using an optional user-defined key.
  * Sort uses radix sort for internal sorting, and allows
  * a choice of merge sort and radix sort for external sorting.
  */
 
-#include <util.h>
-#include "sort.h"
-#include "fsort.h"
-#include "pathnames.h"
-
-#ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1993\
- The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
-
-__RCSID("$NetBSD: sort.c,v 1.63 2016/06/01 08:24:03 wiz Exp $");
-
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <sys/resource.h>
 
+#include <locale.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <locale.h>
+#include <util.h>
+
+#include "sort.h"
+#include "fsort.h"
+#include "pathnames.h"
 
 int REC_D = '\n';
 u_char d_mask[NBINS];		/* flags for rec_d, field_d, <blank> */

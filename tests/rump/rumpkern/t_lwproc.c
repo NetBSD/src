@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lwproc.c,v 1.7 2015/01/21 15:19:01 pooka Exp $	*/
+/*	$NetBSD: t_lwproc.c,v 1.7.2.1 2017/03/20 06:58:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -43,7 +44,7 @@
 #include <unistd.h>
 #include <util.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(makelwp);
 ATF_TC_HEAD(makelwp, tc)

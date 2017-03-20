@@ -1,4 +1,4 @@
-/*	$NetBSD: code_error.tab.c,v 1.1.1.3 2016/01/09 21:59:47 christos Exp $	*/
+/*	$NetBSD: code_error.tab.c,v 1.1.1.3.2.1 2017/03/20 06:52:18 pgoyette Exp $	*/
 
 #undef YYBTYACC
 #define YYBTYACC 0
@@ -13,9 +13,11 @@ const YYINT error_len[] = {                        2,
 const YYINT error_defred[] = {                     0,
     1,    0,
 };
+#if defined(YYDESTRUCT_CALL) || defined(YYSTYPE_TOSTRING)
 const YYINT error_stos[] = {                       0,
   256,  258,
 };
+#endif /* YYDESTRUCT_CALL || YYSTYPE_TOSTRING */
 const YYINT error_dgoto[] = {                      2,
 };
 const YYINT error_sindex[] = {                  -256,

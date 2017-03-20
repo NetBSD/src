@@ -1,4 +1,4 @@
-/*	$NetBSD: t_refuse_opt.c,v 1.7.2.2 2017/01/07 08:56:55 pgoyette Exp $ */
+/*	$NetBSD: t_refuse_opt.c,v 1.7.2.3 2017/03/20 06:57:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_refuse_opt.c,v 1.7.2.2 2017/01/07 08:56:55 pgoyette Exp $");
+__RCSID("$NetBSD: t_refuse_opt.c,v 1.7.2.3 2017/03/20 06:57:59 pgoyette Exp $");
 
 #define _KERNTYPES
 #include <sys/types.h>
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: t_refuse_opt.c,v 1.7.2.2 2017/01/07 08:56:55 pgoyette Exp $");
 
 #include <fuse.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(t_fuse_opt_add_arg);
 ATF_TC_HEAD(t_fuse_opt_add_arg, tc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: hex_code.c,v 1.1.1.1.32.1 2017/03/20 06:56:41 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	ssize_t	len;
 /* DESCRIPTION
 /*	hex_encode() takes a block of len bytes and encodes it as one
-/*      upper-case null-terminated string.  The result value is
+/*	upper-case null-terminated string.  The result value is
 /*	the result argument.
 /*
 /*	hex_decode() performs the opposite transformation on

@@ -248,6 +248,8 @@ second part sets up the username/password information.  </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
+    <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = encrypt
+    <a href="postconf.5.html#smtp_sasl_tls_security_options">smtp_sasl_tls_security_options</a> = noanonymous
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
@@ -261,6 +263,11 @@ second part sets up the username/password information.  </p>
 client-side authentication. We will configure the client's username
 and password information in the second part of the example. </p>
 </li>
+
+<li> <p> The <code><a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a></code> setting ensures
+that the connection to the remote smtp server will be encrypted, and
+<code><a href="postconf.5.html#smtp_sasl_tls_security_options">smtp_sasl_tls_security_options</a></code> removes the prohibition on
+plaintext passwords. </p>
 
 <li> <p> The <code><a href="postconf.5.html#relayhost">relayhost</a></code> setting forces the Postfix SMTP
 to send all remote messages to the specified mail server instead
@@ -370,7 +377,7 @@ resort.  </p>
 <pre>
 /etc/postfix/sasl_passwd:
     # Per-sender authentication; see also /etc/postfix/sender_relay.
-    user1@example.com               username2:password2
+    user1@example.com               username1:password1
     user2@example.net               username2:password2
     # Login information for the default <a href="postconf.5.html#relayhost">relayhost</a>.
     [mail.isp.example]              username:password

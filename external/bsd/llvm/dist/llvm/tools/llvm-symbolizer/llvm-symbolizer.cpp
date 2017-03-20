@@ -46,8 +46,7 @@ static cl::opt<FunctionNameKind> ClPrintFunctions(
                clEnumValN(FunctionNameKind::ShortName, "short",
                           "print short function name"),
                clEnumValN(FunctionNameKind::LinkageName, "linkage",
-                          "print function linkage name"),
-               clEnumValEnd));
+                          "print function linkage name")));
 
 static cl::opt<bool>
     ClUseRelativeAddress("relative-address", cl::init(false),
@@ -86,10 +85,12 @@ static cl::opt<int> ClPrintSourceContextLines(
     "print-source-context-lines", cl::init(0),
     cl::desc("Print N number of source file context"));
 
-static bool error(std::error_code ec) {
-  if (!ec)
+template<typename T>
+static bool error(Expected<T> &ResOrErr) {
+  if (ResOrErr)
     return false;
-  errs() << "LLVMSymbolizer: error reading file: " << ec.message() << ".\n";
+  logAllUnhandledErrors(ResOrErr.takeError(), errs(),
+                        "LLVMSymbolizer: error reading file: ");
   return true;
 }
 
@@ -138,7 +139,7 @@ static bool parseCommand(StringRef InputString, bool &IsData,
 
 int main(int argc, char **argv) {
   // Print stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
@@ -185,14 +186,14 @@ int main(int argc, char **argv) {
     }
     if (IsData) {
       auto ResOrErr = Symbolizer.symbolizeData(ModuleName, ModuleOffset);
-      Printer << (error(ResOrErr.getError()) ? DIGlobal() : ResOrErr.get());
+      Printer << (error(ResOrErr) ? DIGlobal() : ResOrErr.get());
     } else if (ClPrintInlining) {
       auto ResOrErr = Symbolizer.symbolizeInlinedCode(ModuleName, ModuleOffset);
-      Printer << (error(ResOrErr.getError()) ? DIInliningInfo()
+      Printer << (error(ResOrErr) ? DIInliningInfo()
                                              : ResOrErr.get());
     } else {
       auto ResOrErr = Symbolizer.symbolizeCode(ModuleName, ModuleOffset);
-      Printer << (error(ResOrErr.getError()) ? DILineInfo() : ResOrErr.get());
+      Printer << (error(ResOrErr) ? DILineInfo() : ResOrErr.get());
     }
     outs() << "\n";
     outs().flush();

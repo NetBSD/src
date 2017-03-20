@@ -1,8 +1,8 @@
-/*	$NetBSD: LdifReader.h,v 1.1.1.3 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: LdifReader.h,v 1.1.1.3.6.1 2017/03/20 06:56:09 pgoyette Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2008-2014 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2008-2016 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

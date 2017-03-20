@@ -1,4 +1,4 @@
-/*	$NetBSD: compile_et.h,v 1.1.1.2 2011/04/14 14:08:23 elric Exp $	*/
+/*	$NetBSD: compile_et.h,v 1.1.1.2.28.1 2017/03/20 06:51:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan

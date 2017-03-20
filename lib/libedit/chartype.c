@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.30 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.30.2.1 2017/03/20 06:56:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.30 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.30.2.1 2017/03/20 06:56:59 pgoyette Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -156,7 +156,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 		if (ct_conv_wbuff_resize(conv, bufspace + CT_BUFSIZ) == -1)
 			return NULL;
 
-	wargv = el_malloc((size_t)argc * sizeof(*wargv));
+	wargv = el_malloc((size_t)(argc + 1) * sizeof(*wargv));
 
 	for (i = 0, p = conv->wbuff; i < argc; ++i) {
 		if (!argv[i]) {   /* don't pass null pointers to mbstowcs */
@@ -174,6 +174,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 		bufspace -= (size_t)bytes;
 		p += bytes;
 	}
+	wargv[i] = NULL;
 
 	return wargv;
 }

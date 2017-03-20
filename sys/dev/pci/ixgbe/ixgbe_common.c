@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 299200 2016-05-06 22:54:56Z pfg $*/
-/*$NetBSD: ixgbe_common.c,v 1.7.2.1 2017/01/07 08:56:40 pgoyette Exp $*/
+/*$NetBSD: ixgbe_common.c,v 1.7.2.2 2017/03/20 06:57:37 pgoyette Exp $*/
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -201,7 +201,7 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 	}
 
 	if (!supported) {
-	ERROR_REPORT2(IXGBE_ERROR_UNSUPPORTED,
+		ERROR_REPORT2(IXGBE_ERROR_UNSUPPORTED,
 		      "Device %x does not support flow control autoneg",
 		      hw->device_id);
 	}

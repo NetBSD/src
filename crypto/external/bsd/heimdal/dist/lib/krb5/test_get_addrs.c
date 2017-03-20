@@ -1,4 +1,4 @@
-/*	$NetBSD: test_get_addrs.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: test_get_addrs.c,v 1.1.1.1.28.1 2017/03/20 06:51:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan

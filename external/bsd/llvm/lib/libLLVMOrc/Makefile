@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2017/03/20 06:56:01 pgoyette Exp $
 
 LIB=	LLVMOrc
 
@@ -9,11 +9,9 @@ LIB=	LLVMOrc
 SRCS+=	ExecutionUtils.cpp \
 	IndirectionUtils.cpp \
 	NullResolver.cpp \
-	OrcArchitectureSupport.cpp \
+	OrcABISupport.cpp \
 	OrcCBindings.cpp \
-	OrcCBindingsStack.cpp \
 	OrcError.cpp \
-	OrcMCJITReplacement.cpp \
-	OrcRemoteTargetRPCAPI.cpp
+	OrcMCJITReplacement.cpp
 
 .include <bsd.lib.mk>

@@ -43,6 +43,7 @@
 #include <string.h>
 #include <zlib.h>
 #include <util.h>
+#include <unistd.h>
 
 #include "makefs.h"
 #include "chfs_makefs.h"

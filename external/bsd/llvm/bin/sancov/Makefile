@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2017/03/20 06:52:29 pgoyette Exp $
 
 PROG_CXX=	sancov
 NOMAN=		yes
@@ -41,12 +41,14 @@ LLVM_LIBS+= \
 	DebugInfoSymbolize \
 	DebugInfoDWARF \
 	DebugInfoPDB \
+	DebugInfoPDBRaw \
 	Object \
 	BitReader \
 	IR \
 	MCParser \
 	MC \
-	Support
+	Support \
+	Demangle
 
 LDADD+=	-lz
 DPADD+=	${LIBZ}

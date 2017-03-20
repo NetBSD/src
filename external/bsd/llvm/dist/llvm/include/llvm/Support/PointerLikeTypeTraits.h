@@ -15,8 +15,8 @@
 #ifndef LLVM_SUPPORT_POINTERLIKETYPETRAITS_H
 #define LLVM_SUPPORT_POINTERLIKETYPETRAITS_H
 
-#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"
+#include <type_traits>
 
 namespace llvm {
 
@@ -37,16 +37,16 @@ template <> struct ConstantLog2<1> : std::integral_constant<size_t, 0> {};
 }
 
 // Provide PointerLikeTypeTraits for non-cvr pointers.
-template <typename T> struct PointerLikeTypeTraits<T *> {
+template <typename T> class PointerLikeTypeTraits<T *> {
+public:
   static inline void *getAsVoidPointer(T *P) { return P; }
   static inline T *getFromVoidPointer(void *P) { return static_cast<T *>(P); }
 
-  enum {
-    NumLowBitsAvailable = detail::ConstantLog2<AlignOf<T>::Alignment>::value
-  };
+  enum { NumLowBitsAvailable = detail::ConstantLog2<alignof(T)>::value };
 };
 
-template <> struct PointerLikeTypeTraits<void *> {
+template <> class PointerLikeTypeTraits<void *> {
+public:
   static inline void *getAsVoidPointer(void *P) { return P; }
   static inline void *getFromVoidPointer(void *P) { return P; }
 

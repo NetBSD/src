@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_int_thread.h,v 1.1.1.4 2014/05/28 09:58:40 tron Exp $	*/
+/*	$NetBSD: ldap_int_thread.h,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $	*/
 
 /* ldap_int_thread.h - ldap internal thread wrappers header file */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

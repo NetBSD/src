@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.39.2.1 2017/01/07 08:56:52 pgoyette Exp $
+ *	$Id: i4b_ipr.c,v 1.39.2.2 2017/03/20 06:57:52 pgoyette Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.39.2.1 2017/01/07 08:56:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.39.2.2 2017/03/20 06:57:52 pgoyette Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -406,6 +406,7 @@ iripattach(void)
 		bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
 		bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int));
+		bpf_mtap_softint_init(&sc->sc_if);
 #endif
 #endif
 	}
@@ -1070,7 +1071,7 @@ error:
 		mm.m_len = 4;
 		mm.m_data = (char *)&af;
 
-		bpf_mtap(&sc->sc_if, &mm); /* XXX not in softint */
+		bpf_mtap_softint(&sc->sc_if, &mm);
 	}
 #endif /* NBPFILTER > 0  || NBPF > 0 */
 

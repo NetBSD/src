@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
+/*	$NetBSD: mkfs_msdos.c,v 1.10.2.1 2017/03/20 06:57:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -37,7 +37,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $");
+__RCSID("$NetBSD: mkfs_msdos.c,v 1.10.2.1 2017/03/20 06:57:02 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -621,9 +621,15 @@ mkfs_msdos(const char *fname, const char *dtype, const struct msdos_options *op)
 	printf("MBR type: %d\n", ch);
     print_bpb(&bpb);
     if (!o.no_create) {
-	gettimeofday(&tv, NULL);
-	now = tv.tv_sec;
-	tm = localtime(&now);
+	if (o.timestamp_set) {
+		tv.tv_sec = now = o.timestamp;
+		tv.tv_usec = 0;
+		tm = gmtime(&now);
+	} else {
+		gettimeofday(&tv, NULL);
+		now = tv.tv_sec;
+		tm = localtime(&now);
+	}
 	if (!(img = malloc(bpb.bps)))
 	    err(1, NULL);
 	dir = bpb.res + (bpb.spf ? bpb.spf : bpb.bspf) * bpb.nft;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strip_addr.c,v 1.1.1.2 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: strip_addr.c,v 1.1.1.2.6.1 2017/03/20 06:56:37 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -107,7 +107,7 @@ int     main(int unused_argc, char **unused_argv)
 {
     char   *extension;
     char   *stripped;
-    char*  delim = "+-";
+    char   *delim = "+-";
 
 #define NO_DELIM	""
 

@@ -17,11 +17,11 @@
 #define LLVM_TARGET_TARGETREGISTERINFO_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Printable.h"
 #include <cassert>
 #include <functional>
@@ -35,23 +35,6 @@ template<class T> class SmallVectorImpl;
 class VirtRegMap;
 class raw_ostream;
 class LiveRegMatrix;
-
-/// A bitmask representing the covering of a register with sub-registers.
-///
-/// This is typically used to track liveness at sub-register granularity.
-/// Lane masks for sub-register indices are similar to register units for
-/// physical registers. The individual bits in a lane mask can't be assigned
-/// any specific meaning. They can be used to check if two sub-register
-/// indices overlap.
-///
-/// Iff the target has a register such that:
-///
-///   getSubReg(Reg, A) overlaps getSubReg(Reg, B)
-///
-/// then:
-///
-///   (getSubRegIndexLaneMask(A) & getSubRegIndexLaneMask(B)) != 0
-typedef unsigned LaneBitmask;
 
 class TargetRegisterClass {
 public:
@@ -71,6 +54,9 @@ public:
   const uint8_t AllocationPriority;
   /// Whether the class supports two (or more) disjunct subregister indices.
   const bool HasDisjunctSubRegs;
+  /// Whether a combination of subregisters can cover every register in the
+  /// class. See also the CoveredBySubRegs description in Target.td.
+  const bool CoveredBySubRegs;
   const sc_iterator SuperClasses;
   ArrayRef<MCPhysReg> (*OrderFunc)(const MachineFunction&);
 
@@ -84,6 +70,11 @@ public:
 
   /// Return the number of registers in this class.
   unsigned getNumRegs() const { return MC->getNumRegs(); }
+
+  iterator_range<SmallVectorImpl<MCPhysReg>::const_iterator>
+  getRegisters() const {
+    return make_range(MC->begin(), MC->end());
+  }
 
   /// Return the specified register in the class.
   unsigned getRegister(unsigned i) const {
@@ -161,8 +152,21 @@ public:
   }
 
   /// Returns a bit vector of subclasses, including this one.
-  /// The vector is indexed by class IDs, see hasSubClassEq() above for how to
-  /// use it.
+  /// The vector is indexed by class IDs.
+  ///
+  /// To use it, consider the returned array as a chunk of memory that
+  /// contains an array of bits of size NumRegClasses. Each 32-bit chunk
+  /// contains a bitset of the ID of the subclasses in big-endian style.
+
+  /// I.e., the representation of the memory from left to right at the
+  /// bit level looks like:
+  /// [31 30 ... 1 0] [ 63 62 ... 33 32] ...
+  ///                     [ XXX NumRegClasses NumRegClasses - 1 ... ]
+  /// Where the number represents the class ID and XXX bits that
+  /// should be ignored.
+  ///
+  /// See the implementation of hasSubClassEq for an example of how it
+  /// can be used.
   const uint32_t *getSubClassMask() const {
     return SubClassMask;
   }
@@ -212,7 +216,7 @@ public:
 
   /// Returns the combination of all lane masks of register in this class.
   /// The lane masks of the registers are the combination of all lane masks
-  /// of their subregisters.
+  /// of their subregisters. Returns 1 if there are no subregisters.
   LaneBitmask getLaneMask() const {
     return LaneMask;
   }
@@ -248,7 +252,7 @@ private:
   const LaneBitmask *SubRegIndexLaneMasks;
 
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
-  unsigned CoveringLanes;
+  LaneBitmask CoveringLanes;
 
 protected:
   TargetRegisterInfo(const TargetRegisterInfoDesc *ID,
@@ -256,7 +260,7 @@ protected:
                      regclass_iterator RegClassEnd,
                      const char *const *SRINames,
                      const LaneBitmask *SRILaneMasks,
-                     unsigned CoveringLanes);
+                     LaneBitmask CoveringLanes);
   virtual ~TargetRegisterInfo();
 public:
 
@@ -426,11 +430,6 @@ public:
   virtual const MCPhysReg*
   getCalleeSavedRegs(const MachineFunction *MF) const = 0;
 
-  virtual const MCPhysReg*
-  getCalleeSavedRegsViaCopy(const MachineFunction *MF) const {
-    return nullptr;
-  }
-
   /// Return a mask of call-preserved registers for the given calling convention
   /// on the current function. The mask should include all call-preserved
   /// aliases. This is used by the register allocator to determine which
@@ -457,8 +456,12 @@ public:
 
   /// Return a register mask that clobbers everything.
   virtual const uint32_t *getNoPreservedMask() const {
-    llvm_unreachable("target does not provide no presered mask");
+    llvm_unreachable("target does not provide no preserved mask");
   }
+
+  /// Return true if all bits that are set in mask \p mask0 are also set in
+  /// \p mask1.
+  bool regmaskSubsetEqual(const uint32_t *mask0, const uint32_t *mask1) const;
 
   /// Return all the call-preserved register masks defined for this target.
   virtual ArrayRef<const uint32_t *> getRegMasks() const = 0;
@@ -466,9 +469,19 @@ public:
 
   /// Returns a bitset indexed by physical register number indicating if a
   /// register is a special register that has particular uses and should be
-  /// considered unavailable at all times, e.g. SP, RA. This is
-  /// used by register scavenger to determine what registers are free.
+  /// considered unavailable at all times, e.g. stack pointer, return address.
+  /// A reserved register:
+  /// - is not allocatable
+  /// - is considered always live
+  /// - is ignored by liveness tracking
+  /// It is often necessary to reserve the super registers of a reserved
+  /// register as well, to avoid them getting allocated indirectly. You may use
+  /// markSuperRegs() and checkAllSuperRegsMarked() in this case.
   virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
+
+  /// Returns true if PhysReg is unallocatable and constant throughout the
+  /// function.  Used by MachineRegisterInfo::isConstantPhysReg().
+  virtual bool isConstantPhysReg(unsigned PhysReg) const { return false; }
 
   /// Prior to adding the live-out mask to a stackmap or patchpoint
   /// instruction, provide the target the opportunity to adjust it (mainly to
@@ -493,7 +506,7 @@ public:
 
   // For a copy-like instruction that defines a register of class DefRC with
   // subreg index DefSubReg, reading from another source with class SrcRC and
-  // subregister SrcSubReg return true if this is a preferrable copy
+  // subregister SrcSubReg return true if this is a preferable copy
   // instruction or an earlier use should be used.
   virtual bool shouldRewriteCopySrc(const TargetRegisterClass *DefRC,
                                     unsigned DefSubReg,
@@ -548,6 +561,20 @@ public:
     return composeSubRegIndexLaneMaskImpl(IdxA, Mask);
   }
 
+  /// Transform a lanemask given for a virtual register to the corresponding
+  /// lanemask before using subregister with index \p IdxA.
+  /// This is the reverse of composeSubRegIndexLaneMask(), assuming Mask is a
+  /// valie lane mask (no invalid bits set) the following holds:
+  /// X0 = composeSubRegIndexLaneMask(Idx, Mask)
+  /// X1 = reverseComposeSubRegIndexLaneMask(Idx, X0)
+  /// => X1 == Mask
+  LaneBitmask reverseComposeSubRegIndexLaneMask(unsigned IdxA,
+                                                LaneBitmask LaneMask) const {
+    if (!IdxA)
+      return LaneMask;
+    return reverseComposeSubRegIndexLaneMaskImpl(IdxA, LaneMask);
+  }
+
   /// Debugging helper: dump register in human readable form to dbgs() stream.
   static void dumpReg(unsigned Reg, unsigned SubRegIndex = 0,
                       const TargetRegisterInfo* TRI = nullptr);
@@ -561,6 +588,11 @@ protected:
   /// Overridden by TableGen in targets that have sub-registers.
   virtual LaneBitmask
   composeSubRegIndexLaneMaskImpl(unsigned, LaneBitmask) const {
+    llvm_unreachable("Target has no sub-registers");
+  }
+
+  virtual LaneBitmask reverseComposeSubRegIndexLaneMaskImpl(unsigned,
+                                                            LaneBitmask) const {
     llvm_unreachable("Target has no sub-registers");
   }
 
@@ -770,6 +802,13 @@ public:
     return false;
   }
 
+  /// Returns true if the target requires using the RegScavenger directly for
+  /// frame elimination despite using requiresFrameIndexScavenging.
+  virtual bool requiresFrameIndexReplacementScavenging(
+      const MachineFunction &MF) const {
+    return false;
+  }
+
   /// Returns true if the target wants the LocalStackAllocation pass to be run
   /// and virtual base registers used for more efficient stack access.
   virtual bool requiresVirtualBaseRegisters(const MachineFunction &MF) const {
@@ -863,6 +902,17 @@ public:
                                    int SPAdj, unsigned FIOperandNum,
                                    RegScavenger *RS = nullptr) const = 0;
 
+  /// Return the assembly name for \p Reg.
+  virtual StringRef getRegAsmName(unsigned Reg) const {
+    // FIXME: We are assuming that the assembly name is equal to the TableGen
+    // name converted to lower case
+    //
+    // The TableGen name is the name of the definition for this register in the
+    // target's tablegen files.  For example, the TableGen name of
+    // def EAX : Register <...>; is "EAX"
+    return StringRef(getName(Reg));
+  }
+
   //===--------------------------------------------------------------------===//
   /// Subtarget Hooks
 
@@ -881,6 +931,14 @@ public:
   /// getFrameRegister - This method should return the register used as a base
   /// for values allocated in the current stack frame.
   virtual unsigned getFrameRegister(const MachineFunction &MF) const = 0;
+
+  /// Mark a register and all its aliases as reserved in the given set.
+  void markSuperRegs(BitVector &RegisterSet, unsigned Reg) const;
+
+  /// Returns true if for every register in the set all super registers are part
+  /// of the set as well.
+  bool checkAllSuperRegsMarked(const BitVector &RegisterSet,
+      ArrayRef<MCPhysReg> Exceptions = ArrayRef<MCPhysReg>()) const;
 };
 
 
@@ -926,8 +984,9 @@ public:
   /// Returns the current sub-register index.
   unsigned getSubReg() const { return SubReg; }
 
-  /// Returns the bit mask if register classes that getSubReg() projects into
+  /// Returns the bit mask of register classes that getSubReg() projects into
   /// RC.
+  /// See TargetRegisterClass::getSubClassMask() for how to use it.
   const uint32_t *getMask() const { return Mask; }
 
   /// Advance iterator to the next entry.
@@ -937,6 +996,97 @@ public:
     SubReg = *Idx++;
     if (!SubReg)
       Idx = nullptr;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                           BitMaskClassIterator
+//===----------------------------------------------------------------------===//
+/// This class encapuslates the logic to iterate over bitmask returned by
+/// the various RegClass related APIs.
+/// E.g., this class can be used to iterate over the subclasses provided by
+/// TargetRegisterClass::getSubClassMask or SuperRegClassIterator::getMask.
+class BitMaskClassIterator {
+  /// Total number of register classes.
+  const unsigned NumRegClasses;
+  /// Base index of CurrentChunk.
+  /// In other words, the number of bit we read to get at the
+  /// beginning of that chunck.
+  unsigned Base;
+  /// Adjust base index of CurrentChunk.
+  /// Base index + how many bit we read within CurrentChunk.
+  unsigned Idx;
+  /// Current register class ID.
+  unsigned ID;
+  /// Mask we are iterating over.
+  const uint32_t *Mask;
+  /// Current chunk of the Mask we are traversing.
+  uint32_t CurrentChunk;
+
+  /// Move ID to the next set bit.
+  void moveToNextID() {
+    // If the current chunk of memory is empty, move to the next one,
+    // while making sure we do not go pass the number of register
+    // classes.
+    while (!CurrentChunk) {
+      // Move to the next chunk.
+      Base += 32;
+      if (Base >= NumRegClasses) {
+        ID = NumRegClasses;
+        return;
+      }
+      CurrentChunk = *++Mask;
+      Idx = Base;
+    }
+    // Otherwise look for the first bit set from the right
+    // (representation of the class ID is big endian).
+    // See getSubClassMask for more details on the representation.
+    unsigned Offset = countTrailingZeros(CurrentChunk);
+    // Add the Offset to the adjusted base number of this chunk: Idx.
+    // This is the ID of the register class.
+    ID = Idx + Offset;
+
+    // Consume the zeros, if any, and the bit we just read
+    // so that we are at the right spot for the next call.
+    // Do not do Offset + 1 because Offset may be 31 and 32
+    // will be UB for the shift, though in that case we could
+    // have make the chunk being equal to 0, but that would
+    // have introduced a if statement.
+    moveNBits(Offset);
+    moveNBits(1);
+  }
+
+  /// Move \p NumBits Bits forward in CurrentChunk.
+  void moveNBits(unsigned NumBits) {
+    assert(NumBits < 32 && "Undefined behavior spotted!");
+    // Consume the bit we read for the next call.
+    CurrentChunk >>= NumBits;
+    // Adjust the base for the chunk.
+    Idx += NumBits;
+  }
+
+public:
+  /// Create a BitMaskClassIterator that visits all the register classes
+  /// represented by \p Mask.
+  ///
+  /// \pre \p Mask != nullptr
+  BitMaskClassIterator(const uint32_t *Mask, const TargetRegisterInfo &TRI)
+      : NumRegClasses(TRI.getNumRegClasses()), Base(0), Idx(0), ID(0),
+        Mask(Mask), CurrentChunk(*Mask) {
+    // Move to the first ID.
+    moveToNextID();
+  }
+
+  /// Returns true if this iterator is still pointing at a valid entry.
+  bool isValid() const { return getID() != NumRegClasses; }
+
+  /// Returns the current register class ID.
+  unsigned getID() const { return ID; }
+
+  /// Advance iterator to the next entry.
+  void operator++() {
+    assert(isValid() && "Cannot move iterator past end.");
+    moveToNextID();
   }
 };
 
@@ -973,9 +1123,6 @@ Printable PrintRegUnit(unsigned Unit, const TargetRegisterInfo *TRI);
 /// \brief Create Printable object to print virtual registers and physical
 /// registers on a \ref raw_ostream.
 Printable PrintVRegOrUnit(unsigned VRegOrUnit, const TargetRegisterInfo *TRI);
-
-/// Create Printable object to print LaneBitmasks on a \ref raw_ostream.
-Printable PrintLaneMask(LaneBitmask LaneMask);
 
 } // End llvm namespace
 

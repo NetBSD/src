@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_sysent.c,v 1.67 2015/09/24 14:44:44 christos Exp $ */
+/* $NetBSD: ultrix_sysent.c,v 1.67.2.1 2017/03/20 06:57:26 pgoyette Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.67 2015/09/24 14:44:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_sysent.c,v 1.67.2.1 2017/03/20 06:57:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

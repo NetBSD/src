@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2012/10/26 18:15:56 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.24.14.1 2017/03/20 06:52:07 pgoyette Exp $
 
 .if ${MACHINE_ARCH} == "mips64el"
 SFX=		64
@@ -7,7 +7,7 @@ SFX=		64
 DBG=		-Os
 
 IMAGESIZE=	32m
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all ipty
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list${SFX}

@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_systrace_args.c,v 1.2 2015/03/08 17:10:59 christos Exp $ */
+/* $NetBSD: linux32_systrace_args.c,v 1.2.4.1 2017/03/20 06:57:25 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -19,7 +19,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_exit */
 	case 1: {
-		struct linux32_sys_exit_args *p = params;
+		const struct linux32_sys_exit_args *p = params;
 		iarg[0] = SCARG(p, rval); /* int */
 		*n_args = 1;
 		break;
@@ -31,7 +31,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_read */
 	case 3: {
-		struct netbsd32_read_args *p = params;
+		const struct netbsd32_read_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_voidp */
 		iarg[2] = SCARG(p, nbyte); /* netbsd32_size_t */
@@ -40,7 +40,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_write */
 	case 4: {
-		struct netbsd32_write_args *p = params;
+		const struct netbsd32_write_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_voidp */
 		iarg[2] = SCARG(p, nbyte); /* netbsd32_size_t */
@@ -49,7 +49,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_open */
 	case 5: {
-		struct linux32_sys_open_args *p = params;
+		const struct linux32_sys_open_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, flags); /* int */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -58,14 +58,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_close */
 	case 6: {
-		struct netbsd32_close_args *p = params;
+		const struct netbsd32_close_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_waitpid */
 	case 7: {
-		struct linux32_sys_waitpid_args *p = params;
+		const struct linux32_sys_waitpid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		uarg[1] = (intptr_t) SCARG(p, status).i32; /* netbsd32_intp */
 		iarg[2] = SCARG(p, options); /* int */
@@ -74,7 +74,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_creat */
 	case 8: {
-		struct linux32_sys_creat_args *p = params;
+		const struct linux32_sys_creat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -82,7 +82,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_link */
 	case 9: {
-		struct netbsd32_link_args *p = params;
+		const struct netbsd32_link_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, link).i32; /* netbsd32_charp */
 		*n_args = 2;
@@ -90,14 +90,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_unlink */
 	case 10: {
-		struct linux32_sys_unlink_args *p = params;
+		const struct linux32_sys_unlink_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_execve */
 	case 11: {
-		struct netbsd32_execve_args *p = params;
+		const struct netbsd32_execve_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, argp).i32; /* netbsd32_charpp */
 		uarg[2] = (intptr_t) SCARG(p, envp).i32; /* netbsd32_charpp */
@@ -106,21 +106,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_chdir */
 	case 12: {
-		struct netbsd32_chdir_args *p = params;
+		const struct netbsd32_chdir_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_time */
 	case 13: {
-		struct linux32_sys_time_args *p = params;
+		const struct linux32_sys_time_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, t).i32; /* linux32_timep_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_mknod */
 	case 14: {
-		struct linux32_sys_mknod_args *p = params;
+		const struct linux32_sys_mknod_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		uarg[2] = SCARG(p, dev); /* unsigned */
@@ -129,7 +129,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_chmod */
 	case 15: {
-		struct netbsd32_chmod_args *p = params;
+		const struct netbsd32_chmod_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -137,7 +137,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_lchown16 */
 	case 16: {
-		struct linux32_sys_lchown16_args *p = params;
+		const struct linux32_sys_lchown16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, uid); /* linux32_uid16_t */
 		iarg[2] = SCARG(p, gid); /* linux32_gid16_t */
@@ -146,14 +146,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_break */
 	case 17: {
-		struct linux32_sys_break_args *p = params;
+		const struct linux32_sys_break_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, nsize).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* compat_43_netbsd32_olseek */
 	case 19: {
-		struct compat_43_netbsd32_olseek_args *p = params;
+		const struct compat_43_netbsd32_olseek_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, offset); /* netbsd32_long */
 		iarg[2] = SCARG(p, whence); /* int */
@@ -167,7 +167,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setuid */
 	case 23: {
-		struct netbsd32_setuid_args *p = params;
+		const struct netbsd32_setuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
@@ -179,14 +179,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_stime */
 	case 25: {
-		struct linux32_sys_stime_args *p = params;
+		const struct linux32_sys_stime_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, t).i32; /* linux32_timep_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_ptrace */
 	case 26: {
-		struct linux32_sys_ptrace_args *p = params;
+		const struct linux32_sys_ptrace_args *p = params;
 		iarg[0] = SCARG(p, request); /* int */
 		iarg[1] = SCARG(p, pid); /* int */
 		iarg[2] = SCARG(p, addr); /* int */
@@ -196,7 +196,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_alarm */
 	case 27: {
-		struct linux32_sys_alarm_args *p = params;
+		const struct linux32_sys_alarm_args *p = params;
 		uarg[0] = SCARG(p, secs); /* unsigned int */
 		*n_args = 1;
 		break;
@@ -208,7 +208,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_utime */
 	case 30: {
-		struct linux32_sys_utime_args *p = params;
+		const struct linux32_sys_utime_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, times).i32; /* linux32_utimbufp_t */
 		*n_args = 2;
@@ -216,7 +216,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_access */
 	case 33: {
-		struct netbsd32_access_args *p = params;
+		const struct netbsd32_access_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
@@ -224,7 +224,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_nice */
 	case 34: {
-		struct linux32_sys_nice_args *p = params;
+		const struct linux32_sys_nice_args *p = params;
 		iarg[0] = SCARG(p, incr); /* int */
 		*n_args = 1;
 		break;
@@ -236,7 +236,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_kill */
 	case 37: {
-		struct linux32_sys_kill_args *p = params;
+		const struct linux32_sys_kill_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		iarg[1] = SCARG(p, signum); /* int */
 		*n_args = 2;
@@ -244,7 +244,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___posix_rename */
 	case 38: {
-		struct netbsd32___posix_rename_args *p = params;
+		const struct netbsd32___posix_rename_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, from).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, to).i32; /* netbsd32_charp */
 		*n_args = 2;
@@ -252,7 +252,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_mkdir */
 	case 39: {
-		struct netbsd32_mkdir_args *p = params;
+		const struct netbsd32_mkdir_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -260,42 +260,42 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_rmdir */
 	case 40: {
-		struct netbsd32_rmdir_args *p = params;
+		const struct netbsd32_rmdir_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_dup */
 	case 41: {
-		struct netbsd32_dup_args *p = params;
+		const struct netbsd32_dup_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_pipe */
 	case 42: {
-		struct linux32_sys_pipe_args *p = params;
+		const struct linux32_sys_pipe_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fd).i32; /* netbsd32_intp */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_times */
 	case 43: {
-		struct linux32_sys_times_args *p = params;
+		const struct linux32_sys_times_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tms).i32; /* linux32_tmsp_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_brk */
 	case 45: {
-		struct linux32_sys_brk_args *p = params;
+		const struct linux32_sys_brk_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, nsize).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_setgid */
 	case 46: {
-		struct netbsd32_setgid_args *p = params;
+		const struct netbsd32_setgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
@@ -307,7 +307,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_signal */
 	case 48: {
-		struct linux32_sys_signal_args *p = params;
+		const struct linux32_sys_signal_args *p = params;
 		iarg[0] = SCARG(p, signum); /* int */
 		uarg[1] = (intptr_t) SCARG(p, handler).i32; /* linux32_handlerp_t */
 		*n_args = 2;
@@ -325,14 +325,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_acct */
 	case 51: {
-		struct netbsd32_acct_args *p = params;
+		const struct netbsd32_acct_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_ioctl */
 	case 54: {
-		struct linux32_sys_ioctl_args *p = params;
+		const struct linux32_sys_ioctl_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, com); /* netbsd32_u_long */
 		uarg[2] = (intptr_t) SCARG(p, data).i32; /* netbsd32_charp */
@@ -341,7 +341,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fcntl */
 	case 55: {
-		struct linux32_sys_fcntl_args *p = params;
+		const struct linux32_sys_fcntl_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, arg).i32; /* netbsd32_voidp */
@@ -350,7 +350,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setpgid */
 	case 57: {
-		struct netbsd32_setpgid_args *p = params;
+		const struct netbsd32_setpgid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		iarg[1] = SCARG(p, pgid); /* int */
 		*n_args = 2;
@@ -358,28 +358,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_oldolduname */
 	case 59: {
-		struct linux32_sys_oldolduname_args *p = params;
+		const struct linux32_sys_oldolduname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, up).i32; /* linux32_oldold_utsnamep_t */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_umask */
 	case 60: {
-		struct netbsd32_umask_args *p = params;
+		const struct netbsd32_umask_args *p = params;
 		iarg[0] = SCARG(p, newmask); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_chroot */
 	case 61: {
-		struct netbsd32_chroot_args *p = params;
+		const struct netbsd32_chroot_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_dup2 */
 	case 63: {
-		struct netbsd32_dup2_args *p = params;
+		const struct netbsd32_dup2_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		*n_args = 2;
@@ -407,14 +407,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sigsetmask */
 	case 69: {
-		struct linux32_sys_sigsetmask_args *p = params;
+		const struct linux32_sys_sigsetmask_args *p = params;
 		iarg[0] = SCARG(p, mask); /* linux32_old_sigset_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_setreuid16 */
 	case 70: {
-		struct linux32_sys_setreuid16_args *p = params;
+		const struct linux32_sys_setreuid16_args *p = params;
 		iarg[0] = SCARG(p, ruid); /* linux32_uid16_t */
 		iarg[1] = SCARG(p, euid); /* linux32_uid16_t */
 		*n_args = 2;
@@ -422,7 +422,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setregid16 */
 	case 71: {
-		struct linux32_sys_setregid16_args *p = params;
+		const struct linux32_sys_setregid16_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* linux32_gid16_t */
 		iarg[1] = SCARG(p, egid); /* linux32_gid16_t */
 		*n_args = 2;
@@ -430,7 +430,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_netbsd32_osethostname */
 	case 74: {
-		struct compat_43_netbsd32_osethostname_args *p = params;
+		const struct compat_43_netbsd32_osethostname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, hostname).i32; /* netbsd32_charp */
 		uarg[1] = SCARG(p, len); /* u_int */
 		*n_args = 2;
@@ -438,7 +438,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setrlimit */
 	case 75: {
-		struct linux32_sys_setrlimit_args *p = params;
+		const struct linux32_sys_setrlimit_args *p = params;
 		uarg[0] = SCARG(p, which); /* u_int */
 		uarg[1] = (intptr_t) SCARG(p, rlp).i32; /* netbsd32_orlimitp_t */
 		*n_args = 2;
@@ -446,7 +446,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getrlimit */
 	case 76: {
-		struct linux32_sys_getrlimit_args *p = params;
+		const struct linux32_sys_getrlimit_args *p = params;
 		uarg[0] = SCARG(p, which); /* u_int */
 		uarg[1] = (intptr_t) SCARG(p, rlp).i32; /* netbsd32_orlimitp_t */
 		*n_args = 2;
@@ -454,7 +454,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_netbsd32_getrusage */
 	case 77: {
-		struct compat_50_netbsd32_getrusage_args *p = params;
+		const struct compat_50_netbsd32_getrusage_args *p = params;
 		iarg[0] = SCARG(p, who); /* int */
 		uarg[1] = (intptr_t) SCARG(p, rusage).i32; /* netbsd32_rusage50p_t */
 		*n_args = 2;
@@ -462,7 +462,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_gettimeofday */
 	case 78: {
-		struct linux32_sys_gettimeofday_args *p = params;
+		const struct linux32_sys_gettimeofday_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tp).i32; /* netbsd32_timeval50p_t */
 		uarg[1] = (intptr_t) SCARG(p, tzp).i32; /* netbsd32_timezonep_t */
 		*n_args = 2;
@@ -470,7 +470,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_settimeofday */
 	case 79: {
-		struct linux32_sys_settimeofday_args *p = params;
+		const struct linux32_sys_settimeofday_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tp).i32; /* netbsd32_timeval50p_t */
 		uarg[1] = (intptr_t) SCARG(p, tzp).i32; /* netbsd32_timezonep_t */
 		*n_args = 2;
@@ -478,7 +478,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getgroups16 */
 	case 80: {
-		struct linux32_sys_getgroups16_args *p = params;
+		const struct linux32_sys_getgroups16_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset).i32; /* linux32_gid16p_t */
 		*n_args = 2;
@@ -486,7 +486,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setgroups16 */
 	case 81: {
-		struct linux32_sys_setgroups16_args *p = params;
+		const struct linux32_sys_setgroups16_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset).i32; /* linux32_gid16p_t */
 		*n_args = 2;
@@ -494,14 +494,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_oldselect */
 	case 82: {
-		struct linux32_sys_oldselect_args *p = params;
+		const struct linux32_sys_oldselect_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lsp).i32; /* linux32_oldselectp_t */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_symlink */
 	case 83: {
-		struct netbsd32_symlink_args *p = params;
+		const struct netbsd32_symlink_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, link).i32; /* netbsd32_charp */
 		*n_args = 2;
@@ -509,7 +509,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_netbsd32_lstat43 */
 	case 84: {
-		struct compat_43_netbsd32_lstat43_args *p = params;
+		const struct compat_43_netbsd32_lstat43_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, ub).i32; /* netbsd32_stat43p_t */
 		*n_args = 2;
@@ -517,7 +517,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_readlink */
 	case 85: {
-		struct netbsd32_readlink_args *p = params;
+		const struct netbsd32_readlink_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, count); /* netbsd32_size_t */
@@ -526,14 +526,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_swapon */
 	case 87: {
-		struct linux32_sys_swapon_args *p = params;
+		const struct linux32_sys_swapon_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_reboot */
 	case 88: {
-		struct linux32_sys_reboot_args *p = params;
+		const struct linux32_sys_reboot_args *p = params;
 		iarg[0] = SCARG(p, magic1); /* int */
 		iarg[1] = SCARG(p, magic2); /* int */
 		iarg[2] = SCARG(p, cmd); /* int */
@@ -543,7 +543,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_readdir */
 	case 89: {
-		struct linux32_sys_readdir_args *p = params;
+		const struct linux32_sys_readdir_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, dent).i32; /* netbsd32_voidp */
 		uarg[2] = SCARG(p, count); /* unsigned int */
@@ -552,14 +552,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_old_mmap */
 	case 90: {
-		struct linux32_sys_old_mmap_args *p = params;
+		const struct linux32_sys_old_mmap_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lmp).i32; /* linux32_oldmmapp */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_munmap */
 	case 91: {
-		struct netbsd32_munmap_args *p = params;
+		const struct netbsd32_munmap_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		*n_args = 2;
@@ -567,7 +567,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_netbsd32_otruncate */
 	case 92: {
-		struct compat_43_netbsd32_otruncate_args *p = params;
+		const struct compat_43_netbsd32_otruncate_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, length); /* netbsd32_long */
 		*n_args = 2;
@@ -575,7 +575,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_43_netbsd32_oftruncate */
 	case 93: {
-		struct compat_43_netbsd32_oftruncate_args *p = params;
+		const struct compat_43_netbsd32_oftruncate_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, length); /* netbsd32_long */
 		*n_args = 2;
@@ -583,7 +583,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_fchmod */
 	case 94: {
-		struct netbsd32_fchmod_args *p = params;
+		const struct netbsd32_fchmod_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, mode); /* linux_umode_t */
 		*n_args = 2;
@@ -591,7 +591,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fchown16 */
 	case 95: {
-		struct linux32_sys_fchown16_args *p = params;
+		const struct linux32_sys_fchown16_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, uid); /* linux32_uid16_t */
 		iarg[2] = SCARG(p, gid); /* linux32_gid16_t */
@@ -600,7 +600,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getpriority */
 	case 96: {
-		struct linux32_sys_getpriority_args *p = params;
+		const struct linux32_sys_getpriority_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, who); /* int */
 		*n_args = 2;
@@ -608,7 +608,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setpriority */
 	case 97: {
-		struct netbsd32_setpriority_args *p = params;
+		const struct netbsd32_setpriority_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		iarg[1] = SCARG(p, who); /* int */
 		iarg[2] = SCARG(p, prio); /* int */
@@ -617,7 +617,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_profil */
 	case 98: {
-		struct netbsd32_profil_args *p = params;
+		const struct netbsd32_profil_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, samples).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, size); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, offset); /* netbsd32_u_long */
@@ -627,7 +627,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_statfs */
 	case 99: {
-		struct linux32_sys_statfs_args *p = params;
+		const struct linux32_sys_statfs_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_statfsp */
 		*n_args = 2;
@@ -635,7 +635,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fstatfs */
 	case 100: {
-		struct linux32_sys_fstatfs_args *p = params;
+		const struct linux32_sys_fstatfs_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_statfsp */
 		*n_args = 2;
@@ -643,7 +643,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux_sys_ioperm */
 	case 101: {
-		struct linux_sys_ioperm_args *p = params;
+		const struct linux_sys_ioperm_args *p = params;
 		uarg[0] = SCARG(p, lo); /* unsigned int */
 		uarg[1] = SCARG(p, hi); /* unsigned int */
 		iarg[2] = SCARG(p, val); /* int */
@@ -652,7 +652,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_socketcall */
 	case 102: {
-		struct linux32_sys_socketcall_args *p = params;
+		const struct linux32_sys_socketcall_args *p = params;
 		iarg[0] = SCARG(p, what); /* int */
 		uarg[1] = (intptr_t) SCARG(p, args).i32; /* netbsd32_voidp */
 		*n_args = 2;
@@ -660,7 +660,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_netbsd32_setitimer */
 	case 104: {
-		struct compat_50_netbsd32_setitimer_args *p = params;
+		const struct compat_50_netbsd32_setitimer_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		uarg[1] = (intptr_t) SCARG(p, itv).i32; /* netbsd32_itimerval50p_t */
 		uarg[2] = (intptr_t) SCARG(p, oitv).i32; /* netbsd32_itimerval50p_t */
@@ -669,7 +669,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_netbsd32_getitimer */
 	case 105: {
-		struct compat_50_netbsd32_getitimer_args *p = params;
+		const struct compat_50_netbsd32_getitimer_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		uarg[1] = (intptr_t) SCARG(p, itv).i32; /* netbsd32_itimerval50p_t */
 		*n_args = 2;
@@ -677,7 +677,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_stat */
 	case 106: {
-		struct linux32_sys_stat_args *p = params;
+		const struct linux32_sys_stat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_statp */
 		*n_args = 2;
@@ -685,7 +685,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_lstat */
 	case 107: {
-		struct linux32_sys_lstat_args *p = params;
+		const struct linux32_sys_lstat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_statp */
 		*n_args = 2;
@@ -693,7 +693,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fstat */
 	case 108: {
-		struct linux32_sys_fstat_args *p = params;
+		const struct linux32_sys_fstat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_statp */
 		*n_args = 2;
@@ -701,21 +701,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_olduname */
 	case 109: {
-		struct linux32_sys_olduname_args *p = params;
+		const struct linux32_sys_olduname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, up).i32; /* linux32_oldutsnamep_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux_sys_iopl */
 	case 110: {
-		struct linux_sys_iopl_args *p = params;
+		const struct linux_sys_iopl_args *p = params;
 		iarg[0] = SCARG(p, level); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_wait4 */
 	case 114: {
-		struct linux32_sys_wait4_args *p = params;
+		const struct linux32_sys_wait4_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		uarg[1] = (intptr_t) SCARG(p, status).i32; /* netbsd32_intp */
 		iarg[2] = SCARG(p, options); /* int */
@@ -725,21 +725,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_swapoff */
 	case 115: {
-		struct linux32_sys_swapoff_args *p = params;
+		const struct linux32_sys_swapoff_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_sysinfo */
 	case 116: {
-		struct linux32_sys_sysinfo_args *p = params;
+		const struct linux32_sys_sysinfo_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, arg).i32; /* linux32_sysinfop_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_ipc */
 	case 117: {
-		struct linux32_sys_ipc_args *p = params;
+		const struct linux32_sys_ipc_args *p = params;
 		iarg[0] = SCARG(p, what); /* int */
 		iarg[1] = SCARG(p, a1); /* int */
 		iarg[2] = SCARG(p, a2); /* int */
@@ -750,21 +750,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_fsync */
 	case 118: {
-		struct netbsd32_fsync_args *p = params;
+		const struct netbsd32_fsync_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_sigreturn */
 	case 119: {
-		struct linux32_sys_sigreturn_args *p = params;
+		const struct linux32_sys_sigreturn_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, scp).i32; /* linux32_sigcontextp_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_clone */
 	case 120: {
-		struct linux32_sys_clone_args *p = params;
+		const struct linux32_sys_clone_args *p = params;
 		iarg[0] = SCARG(p, flags); /* int */
 		uarg[1] = (intptr_t) SCARG(p, stack).i32; /* netbsd32_voidp */
 		uarg[2] = (intptr_t) SCARG(p, parent_tidptr).i32; /* netbsd32_voidp */
@@ -775,7 +775,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setdomainname */
 	case 121: {
-		struct linux32_sys_setdomainname_args *p = params;
+		const struct linux32_sys_setdomainname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, domainname).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, len); /* int */
 		*n_args = 2;
@@ -783,14 +783,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_uname */
 	case 122: {
-		struct linux32_sys_uname_args *p = params;
+		const struct linux32_sys_uname_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, up).i32; /* linux32_utsnamep */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_modify_ldt */
 	case 123: {
-		struct linux32_sys_modify_ldt_args *p = params;
+		const struct linux32_sys_modify_ldt_args *p = params;
 		iarg[0] = SCARG(p, func); /* int */
 		uarg[1] = (intptr_t) SCARG(p, ptr).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, bytecount); /* netbsd32_size_t */
@@ -799,7 +799,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_mprotect */
 	case 125: {
-		struct linux32_sys_mprotect_args *p = params;
+		const struct linux32_sys_mprotect_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, start).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, prot); /* int */
@@ -808,42 +808,42 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_getpgid */
 	case 132: {
-		struct netbsd32_getpgid_args *p = params;
+		const struct netbsd32_getpgid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_fchdir */
 	case 133: {
-		struct netbsd32_fchdir_args *p = params;
+		const struct netbsd32_fchdir_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_personality */
 	case 136: {
-		struct linux32_sys_personality_args *p = params;
+		const struct linux32_sys_personality_args *p = params;
 		iarg[0] = SCARG(p, per); /* netbsd32_u_long */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_setfsuid */
 	case 138: {
-		struct linux32_sys_setfsuid_args *p = params;
+		const struct linux32_sys_setfsuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_setfsgid */
 	case 139: {
-		struct linux32_sys_setfsgid_args *p = params;
+		const struct linux32_sys_setfsgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_llseek */
 	case 140: {
-		struct linux32_sys_llseek_args *p = params;
+		const struct linux32_sys_llseek_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, ohigh); /* u_int32_t */
 		uarg[2] = SCARG(p, olow); /* u_int32_t */
@@ -854,7 +854,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getdents */
 	case 141: {
-		struct linux32_sys_getdents_args *p = params;
+		const struct linux32_sys_getdents_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, dent).i32; /* linux32_direntp_t */
 		uarg[2] = SCARG(p, count); /* unsigned int */
@@ -863,7 +863,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_select */
 	case 142: {
-		struct linux32_sys_select_args *p = params;
+		const struct linux32_sys_select_args *p = params;
 		iarg[0] = SCARG(p, nfds); /* int */
 		uarg[1] = (intptr_t) SCARG(p, readfds).i32; /* netbsd32_fd_setp_t */
 		uarg[2] = (intptr_t) SCARG(p, writefds).i32; /* netbsd32_fd_setp_t */
@@ -874,7 +874,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_flock */
 	case 143: {
-		struct netbsd32_flock_args *p = params;
+		const struct netbsd32_flock_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, how); /* int */
 		*n_args = 2;
@@ -882,7 +882,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___msync13 */
 	case 144: {
-		struct netbsd32___msync13_args *p = params;
+		const struct netbsd32___msync13_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -891,7 +891,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_readv */
 	case 145: {
-		struct netbsd32_readv_args *p = params;
+		const struct netbsd32_readv_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, iovp).i32; /* netbsd32_iovecp_t */
 		iarg[2] = SCARG(p, iovcnt); /* int */
@@ -900,7 +900,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_writev */
 	case 146: {
-		struct netbsd32_writev_args *p = params;
+		const struct netbsd32_writev_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, iovp).i32; /* netbsd32_iovecp_t */
 		iarg[2] = SCARG(p, iovcnt); /* int */
@@ -909,28 +909,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_getsid */
 	case 147: {
-		struct netbsd32_getsid_args *p = params;
+		const struct netbsd32_getsid_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_fdatasync */
 	case 148: {
-		struct linux32_sys_fdatasync_args *p = params;
+		const struct linux32_sys_fdatasync_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys___sysctl */
 	case 149: {
-		struct linux32_sys___sysctl_args *p = params;
+		const struct linux32_sys___sysctl_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, lsp).i32; /* linux32___sysctlp_t */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_mlock */
 	case 150: {
-		struct netbsd32_mlock_args *p = params;
+		const struct netbsd32_mlock_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		*n_args = 2;
@@ -938,7 +938,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_munlock */
 	case 151: {
-		struct netbsd32_munlock_args *p = params;
+		const struct netbsd32_munlock_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		*n_args = 2;
@@ -946,7 +946,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_mlockall */
 	case 152: {
-		struct netbsd32_mlockall_args *p = params;
+		const struct netbsd32_mlockall_args *p = params;
 		iarg[0] = SCARG(p, flags); /* int */
 		*n_args = 1;
 		break;
@@ -958,7 +958,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_setparam */
 	case 154: {
-		struct linux32_sys_sched_setparam_args *p = params;
+		const struct linux32_sys_sched_setparam_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* const linux32_sched_paramp_t */
 		*n_args = 2;
@@ -966,7 +966,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_getparam */
 	case 155: {
-		struct linux32_sys_sched_getparam_args *p = params;
+		const struct linux32_sys_sched_getparam_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_sched_paramp_t */
 		*n_args = 2;
@@ -974,7 +974,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_setscheduler */
 	case 156: {
-		struct linux32_sys_sched_setscheduler_args *p = params;
+		const struct linux32_sys_sched_setscheduler_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		iarg[1] = SCARG(p, policy); /* int */
 		uarg[2] = (intptr_t) SCARG(p, sp).i32; /* linux32_sched_paramp_t */
@@ -983,7 +983,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_getscheduler */
 	case 157: {
-		struct linux32_sys_sched_getscheduler_args *p = params;
+		const struct linux32_sys_sched_getscheduler_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		*n_args = 1;
 		break;
@@ -995,21 +995,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_get_priority_max */
 	case 159: {
-		struct linux32_sys_sched_get_priority_max_args *p = params;
+		const struct linux32_sys_sched_get_priority_max_args *p = params;
 		iarg[0] = SCARG(p, policy); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_sched_get_priority_min */
 	case 160: {
-		struct linux32_sys_sched_get_priority_min_args *p = params;
+		const struct linux32_sys_sched_get_priority_min_args *p = params;
 		iarg[0] = SCARG(p, policy); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_nanosleep */
 	case 162: {
-		struct linux32_sys_nanosleep_args *p = params;
+		const struct linux32_sys_nanosleep_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, rqtp).i32; /* linux32_timespecp_t */
 		uarg[1] = (intptr_t) SCARG(p, rmtp).i32; /* linux32_timespecp_t */
 		*n_args = 2;
@@ -1017,7 +1017,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_mremap */
 	case 163: {
-		struct linux32_sys_mremap_args *p = params;
+		const struct linux32_sys_mremap_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, old_address).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, old_size); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, new_size); /* netbsd32_size_t */
@@ -1027,7 +1027,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setresuid16 */
 	case 164: {
-		struct linux32_sys_setresuid16_args *p = params;
+		const struct linux32_sys_setresuid16_args *p = params;
 		iarg[0] = SCARG(p, ruid); /* linux32_uid16_t */
 		iarg[1] = SCARG(p, euid); /* linux32_uid16_t */
 		iarg[2] = SCARG(p, suid); /* linux32_uid16_t */
@@ -1036,7 +1036,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getresuid16 */
 	case 165: {
-		struct linux32_sys_getresuid16_args *p = params;
+		const struct linux32_sys_getresuid16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ruid).i32; /* linux32_uid16p_t */
 		uarg[1] = (intptr_t) SCARG(p, euid).i32; /* linux32_uid16p_t */
 		uarg[2] = (intptr_t) SCARG(p, suid).i32; /* linux32_uid16p_t */
@@ -1045,7 +1045,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_poll */
 	case 168: {
-		struct netbsd32_poll_args *p = params;
+		const struct netbsd32_poll_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fds).i32; /* netbsd32_pollfdp_t */
 		uarg[1] = SCARG(p, nfds); /* u_int */
 		iarg[2] = SCARG(p, timeout); /* int */
@@ -1054,7 +1054,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setresgid16 */
 	case 170: {
-		struct linux32_sys_setresgid16_args *p = params;
+		const struct linux32_sys_setresgid16_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* linux32_gid16_t */
 		iarg[1] = SCARG(p, egid); /* linux32_gid16_t */
 		iarg[2] = SCARG(p, sgid); /* linux32_gid16_t */
@@ -1063,7 +1063,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getresgid16 */
 	case 171: {
-		struct linux32_sys_getresgid16_args *p = params;
+		const struct linux32_sys_getresgid16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, rgid).i32; /* linux32_gid16p_t */
 		uarg[1] = (intptr_t) SCARG(p, egid).i32; /* linux32_gid16p_t */
 		uarg[2] = (intptr_t) SCARG(p, sgid).i32; /* linux32_gid16p_t */
@@ -1072,14 +1072,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_rt_sigreturn */
 	case 173: {
-		struct linux32_sys_rt_sigreturn_args *p = params;
+		const struct linux32_sys_rt_sigreturn_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ucp).i32; /* linux32_ucontextp_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_rt_sigaction */
 	case 174: {
-		struct linux32_sys_rt_sigaction_args *p = params;
+		const struct linux32_sys_rt_sigaction_args *p = params;
 		iarg[0] = SCARG(p, signum); /* int */
 		uarg[1] = (intptr_t) SCARG(p, nsa).i32; /* linux32_sigactionp_t */
 		uarg[2] = (intptr_t) SCARG(p, osa).i32; /* linux32_sigactionp_t */
@@ -1089,7 +1089,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_rt_sigprocmask */
 	case 175: {
-		struct linux32_sys_rt_sigprocmask_args *p = params;
+		const struct linux32_sys_rt_sigprocmask_args *p = params;
 		iarg[0] = SCARG(p, how); /* int */
 		uarg[1] = (intptr_t) SCARG(p, set).i32; /* linux32_sigsetp_t */
 		uarg[2] = (intptr_t) SCARG(p, oset).i32; /* linux32_sigsetp_t */
@@ -1099,7 +1099,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_rt_sigpending */
 	case 176: {
-		struct linux32_sys_rt_sigpending_args *p = params;
+		const struct linux32_sys_rt_sigpending_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, set).i32; /* linux32_sigsetp_t */
 		iarg[1] = SCARG(p, sigsetsize); /* netbsd32_size_t */
 		*n_args = 2;
@@ -1107,7 +1107,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_rt_sigtimedwait */
 	case 177: {
-		struct linux32_sys_rt_sigtimedwait_args *p = params;
+		const struct linux32_sys_rt_sigtimedwait_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, set).i32; /* const linux32_sigsetp_t */
 		uarg[1] = (intptr_t) SCARG(p, info).i32; /* linux32_siginfop_t */
 		uarg[2] = (intptr_t) SCARG(p, timeout).i32; /* const linux32_timespecp_t */
@@ -1116,7 +1116,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_rt_queueinfo */
 	case 178: {
-		struct linux32_sys_rt_queueinfo_args *p = params;
+		const struct linux32_sys_rt_queueinfo_args *p = params;
 		iarg[0] = SCARG(p, pid); /* int */
 		iarg[1] = SCARG(p, sig); /* int */
 		uarg[2] = (intptr_t) SCARG(p, uinfo).i32; /* linux32_siginfop_t */
@@ -1125,7 +1125,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_rt_sigsuspend */
 	case 179: {
-		struct linux32_sys_rt_sigsuspend_args *p = params;
+		const struct linux32_sys_rt_sigsuspend_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, unewset).i32; /* linux32_sigsetp_t */
 		iarg[1] = SCARG(p, sigsetsize); /* netbsd32_size_t */
 		*n_args = 2;
@@ -1133,7 +1133,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_pread */
 	case 180: {
-		struct linux32_sys_pread_args *p = params;
+		const struct linux32_sys_pread_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_voidp */
 		iarg[2] = SCARG(p, nbyte); /* netbsd32_size_t */
@@ -1143,7 +1143,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_pwrite */
 	case 181: {
-		struct linux32_sys_pwrite_args *p = params;
+		const struct linux32_sys_pwrite_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_voidp */
 		iarg[2] = SCARG(p, nbyte); /* netbsd32_size_t */
@@ -1153,7 +1153,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_chown16 */
 	case 182: {
-		struct linux32_sys_chown16_args *p = params;
+		const struct linux32_sys_chown16_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, uid); /* linux32_uid16_t */
 		iarg[2] = SCARG(p, gid); /* linux32_gid16_t */
@@ -1162,7 +1162,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___getcwd */
 	case 183: {
-		struct netbsd32___getcwd_args *p = params;
+		const struct netbsd32___getcwd_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, bufp).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, length); /* netbsd32_size_t */
 		*n_args = 2;
@@ -1175,7 +1175,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_ugetrlimit */
 	case 191: {
-		struct linux32_sys_ugetrlimit_args *p = params;
+		const struct linux32_sys_ugetrlimit_args *p = params;
 		iarg[0] = SCARG(p, which); /* int */
 		uarg[1] = (intptr_t) SCARG(p, rlp).i32; /* netbsd32_orlimitp_t */
 		*n_args = 2;
@@ -1183,7 +1183,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_mmap2 */
 	case 192: {
-		struct linux32_sys_mmap2_args *p = params;
+		const struct linux32_sys_mmap2_args *p = params;
 		iarg[0] = SCARG(p, addr); /* netbsd32_u_long */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, prot); /* int */
@@ -1195,7 +1195,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_truncate64 */
 	case 193: {
-		struct linux32_sys_truncate64_args *p = params;
+		const struct linux32_sys_truncate64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = SCARG(p, lenlo); /* uint32_t */
 		uarg[2] = SCARG(p, lenhi); /* uint32_t */
@@ -1204,7 +1204,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_ftruncate64 */
 	case 194: {
-		struct linux32_sys_ftruncate64_args *p = params;
+		const struct linux32_sys_ftruncate64_args *p = params;
 		uarg[0] = SCARG(p, fd); /* unsigned int */
 		uarg[1] = SCARG(p, lenlo); /* uint32_t */
 		uarg[2] = SCARG(p, lenhi); /* uint32_t */
@@ -1213,7 +1213,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_stat64 */
 	case 195: {
-		struct linux32_sys_stat64_args *p = params;
+		const struct linux32_sys_stat64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_stat64p */
 		*n_args = 2;
@@ -1221,7 +1221,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_lstat64 */
 	case 196: {
-		struct linux32_sys_lstat64_args *p = params;
+		const struct linux32_sys_lstat64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_stat64p */
 		*n_args = 2;
@@ -1229,7 +1229,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fstat64 */
 	case 197: {
-		struct linux32_sys_fstat64_args *p = params;
+		const struct linux32_sys_fstat64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, sp).i32; /* linux32_stat64p */
 		*n_args = 2;
@@ -1237,7 +1237,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___posix_lchown */
 	case 198: {
-		struct netbsd32___posix_lchown_args *p = params;
+		const struct netbsd32___posix_lchown_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = SCARG(p, uid); /* uid_t */
 		iarg[2] = SCARG(p, gid); /* gid_t */
@@ -1266,7 +1266,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setreuid */
 	case 203: {
-		struct netbsd32_setreuid_args *p = params;
+		const struct netbsd32_setreuid_args *p = params;
 		uarg[0] = SCARG(p, ruid); /* uid_t */
 		uarg[1] = SCARG(p, euid); /* uid_t */
 		*n_args = 2;
@@ -1274,7 +1274,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setregid */
 	case 204: {
-		struct netbsd32_setregid_args *p = params;
+		const struct netbsd32_setregid_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* gid_t */
 		iarg[1] = SCARG(p, egid); /* gid_t */
 		*n_args = 2;
@@ -1282,7 +1282,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_getgroups */
 	case 205: {
-		struct netbsd32_getgroups_args *p = params;
+		const struct netbsd32_getgroups_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset).i32; /* netbsd32_gid_tp */
 		*n_args = 2;
@@ -1290,7 +1290,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setgroups */
 	case 206: {
-		struct netbsd32_setgroups_args *p = params;
+		const struct netbsd32_setgroups_args *p = params;
 		iarg[0] = SCARG(p, gidsetsize); /* int */
 		uarg[1] = (intptr_t) SCARG(p, gidset).i32; /* netbsd32_gid_tp */
 		*n_args = 2;
@@ -1298,7 +1298,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___posix_fchown */
 	case 207: {
-		struct netbsd32___posix_fchown_args *p = params;
+		const struct netbsd32___posix_fchown_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, uid); /* uid_t */
 		iarg[2] = SCARG(p, gid); /* gid_t */
@@ -1307,7 +1307,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setresuid */
 	case 208: {
-		struct linux32_sys_setresuid_args *p = params;
+		const struct linux32_sys_setresuid_args *p = params;
 		uarg[0] = SCARG(p, ruid); /* uid_t */
 		uarg[1] = SCARG(p, euid); /* uid_t */
 		uarg[2] = SCARG(p, suid); /* uid_t */
@@ -1316,7 +1316,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getresuid */
 	case 209: {
-		struct linux32_sys_getresuid_args *p = params;
+		const struct linux32_sys_getresuid_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, ruid).i32; /* linux32_uidp_t */
 		uarg[1] = (intptr_t) SCARG(p, euid).i32; /* linux32_uidp_t */
 		uarg[2] = (intptr_t) SCARG(p, suid).i32; /* linux32_uidp_t */
@@ -1325,7 +1325,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_setresgid */
 	case 210: {
-		struct linux32_sys_setresgid_args *p = params;
+		const struct linux32_sys_setresgid_args *p = params;
 		iarg[0] = SCARG(p, rgid); /* gid_t */
 		iarg[1] = SCARG(p, egid); /* gid_t */
 		iarg[2] = SCARG(p, sgid); /* gid_t */
@@ -1334,7 +1334,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getresgid */
 	case 211: {
-		struct linux32_sys_getresgid_args *p = params;
+		const struct linux32_sys_getresgid_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, rgid).i32; /* linux32_gidp_t */
 		uarg[1] = (intptr_t) SCARG(p, egid).i32; /* linux32_gidp_t */
 		uarg[2] = (intptr_t) SCARG(p, sgid).i32; /* linux32_gidp_t */
@@ -1343,7 +1343,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32___posix_chown */
 	case 212: {
-		struct netbsd32___posix_chown_args *p = params;
+		const struct netbsd32___posix_chown_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = SCARG(p, uid); /* uid_t */
 		iarg[2] = SCARG(p, gid); /* gid_t */
@@ -1352,35 +1352,35 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setuid */
 	case 213: {
-		struct netbsd32_setuid_args *p = params;
+		const struct netbsd32_setuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_setgid */
 	case 214: {
-		struct netbsd32_setgid_args *p = params;
+		const struct netbsd32_setgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_setfsuid */
 	case 215: {
-		struct linux32_sys_setfsuid_args *p = params;
+		const struct linux32_sys_setfsuid_args *p = params;
 		uarg[0] = SCARG(p, uid); /* uid_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_setfsgid */
 	case 216: {
-		struct linux32_sys_setfsgid_args *p = params;
+		const struct linux32_sys_setfsgid_args *p = params;
 		iarg[0] = SCARG(p, gid); /* gid_t */
 		*n_args = 1;
 		break;
 	}
 	/* netbsd32_mincore */
 	case 218: {
-		struct netbsd32_mincore_args *p = params;
+		const struct netbsd32_mincore_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		uarg[2] = (intptr_t) SCARG(p, vec).i32; /* netbsd32_charp */
@@ -1389,7 +1389,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_madvise */
 	case 219: {
-		struct netbsd32_madvise_args *p = params;
+		const struct netbsd32_madvise_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, addr).i32; /* netbsd32_voidp */
 		iarg[1] = SCARG(p, len); /* netbsd32_size_t */
 		iarg[2] = SCARG(p, behav); /* int */
@@ -1398,7 +1398,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_getdents64 */
 	case 220: {
-		struct linux32_sys_getdents64_args *p = params;
+		const struct linux32_sys_getdents64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, dent).i32; /* linux32_dirent64p_t */
 		uarg[2] = SCARG(p, count); /* unsigned int */
@@ -1409,7 +1409,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 #define linux32_sys_fcntl64_args linux32_sys_fcntl_args
 	/* linux32_sys_fcntl64 */
 	case 221: {
-		struct linux32_sys_fcntl64_args *p = params;
+		const struct linux32_sys_fcntl64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, cmd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, arg).i32; /* netbsd32_voidp */
@@ -1423,7 +1423,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_setxattr */
 	case 226: {
-		struct netbsd32_setxattr_args *p = params;
+		const struct netbsd32_setxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, value).i32; /* netbsd32_voidp */
@@ -1434,7 +1434,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_lsetxattr */
 	case 227: {
-		struct netbsd32_lsetxattr_args *p = params;
+		const struct netbsd32_lsetxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, value).i32; /* netbsd32_voidp */
@@ -1445,7 +1445,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_fsetxattr */
 	case 228: {
-		struct netbsd32_fsetxattr_args *p = params;
+		const struct netbsd32_fsetxattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, value).i32; /* netbsd32_voidp */
@@ -1456,7 +1456,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_getxattr */
 	case 229: {
-		struct netbsd32_getxattr_args *p = params;
+		const struct netbsd32_getxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, value).i32; /* netbsd32_voidp */
@@ -1466,7 +1466,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_lgetxattr */
 	case 230: {
-		struct netbsd32_lgetxattr_args *p = params;
+		const struct netbsd32_lgetxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, value).i32; /* netbsd32_voidp */
@@ -1476,7 +1476,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_fgetxattr */
 	case 231: {
-		struct netbsd32_fgetxattr_args *p = params;
+		const struct netbsd32_fgetxattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, value).i32; /* netbsd32_voidp */
@@ -1486,7 +1486,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_listxattr */
 	case 232: {
-		struct netbsd32_listxattr_args *p = params;
+		const struct netbsd32_listxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, list).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, size); /* netbsd32_size_t */
@@ -1495,7 +1495,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_llistxattr */
 	case 233: {
-		struct netbsd32_llistxattr_args *p = params;
+		const struct netbsd32_llistxattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, list).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, size); /* netbsd32_size_t */
@@ -1504,7 +1504,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_flistxattr */
 	case 234: {
-		struct netbsd32_flistxattr_args *p = params;
+		const struct netbsd32_flistxattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, list).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, size); /* netbsd32_size_t */
@@ -1513,7 +1513,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_removexattr */
 	case 235: {
-		struct netbsd32_removexattr_args *p = params;
+		const struct netbsd32_removexattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		*n_args = 2;
@@ -1521,7 +1521,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_lremovexattr */
 	case 236: {
-		struct netbsd32_lremovexattr_args *p = params;
+		const struct netbsd32_lremovexattr_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		*n_args = 2;
@@ -1529,7 +1529,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_fremovexattr */
 	case 237: {
-		struct netbsd32_fremovexattr_args *p = params;
+		const struct netbsd32_fremovexattr_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name).i32; /* netbsd32_charp */
 		*n_args = 2;
@@ -1537,7 +1537,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_tkill */
 	case 238: {
-		struct linux32_sys_tkill_args *p = params;
+		const struct linux32_sys_tkill_args *p = params;
 		iarg[0] = SCARG(p, tid); /* int */
 		iarg[1] = SCARG(p, sig); /* int */
 		*n_args = 2;
@@ -1545,7 +1545,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_futex */
 	case 240: {
-		struct linux32_sys_futex_args *p = params;
+		const struct linux32_sys_futex_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, uaddr).i32; /* linux32_intp_t */
 		iarg[1] = SCARG(p, op); /* int */
 		iarg[2] = SCARG(p, val); /* int */
@@ -1557,7 +1557,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_setaffinity */
 	case 241: {
-		struct linux32_sys_sched_setaffinity_args *p = params;
+		const struct linux32_sys_sched_setaffinity_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = SCARG(p, len); /* unsigned int */
 		uarg[2] = (intptr_t) SCARG(p, mask).i32; /* linux32_ulongp_t */
@@ -1566,7 +1566,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_sched_getaffinity */
 	case 242: {
-		struct linux32_sys_sched_getaffinity_args *p = params;
+		const struct linux32_sys_sched_getaffinity_args *p = params;
 		iarg[0] = SCARG(p, pid); /* pid_t */
 		uarg[1] = SCARG(p, len); /* unsigned int */
 		uarg[2] = (intptr_t) SCARG(p, mask).i32; /* linux32_ulongp_t */
@@ -1575,21 +1575,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_set_thread_area */
 	case 243: {
-		struct linux32_sys_set_thread_area_args *p = params;
+		const struct linux32_sys_set_thread_area_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, desc).i32; /* linux32_user_descp_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_get_thread_area */
 	case 244: {
-		struct linux32_sys_get_thread_area_args *p = params;
+		const struct linux32_sys_get_thread_area_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, desc).i32; /* linux32_user_descp_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_fadvise64 */
 	case 250: {
-		struct linux32_sys_fadvise64_args *p = params;
+		const struct linux32_sys_fadvise64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, offlo); /* uint32_t */
 		uarg[2] = SCARG(p, offhi); /* uint32_t */
@@ -1600,21 +1600,21 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_exit_group */
 	case 252: {
-		struct linux32_sys_exit_group_args *p = params;
+		const struct linux32_sys_exit_group_args *p = params;
 		iarg[0] = SCARG(p, error_code); /* int */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_set_tid_address */
 	case 258: {
-		struct linux32_sys_set_tid_address_args *p = params;
+		const struct linux32_sys_set_tid_address_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, tid).i32; /* linux32_intp_t */
 		*n_args = 1;
 		break;
 	}
 	/* linux32_sys_clock_settime */
 	case 264: {
-		struct linux32_sys_clock_settime_args *p = params;
+		const struct linux32_sys_clock_settime_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		uarg[1] = (intptr_t) SCARG(p, tp).i32; /* linux32_timespecp_t */
 		*n_args = 2;
@@ -1622,7 +1622,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_clock_gettime */
 	case 265: {
-		struct linux32_sys_clock_gettime_args *p = params;
+		const struct linux32_sys_clock_gettime_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		uarg[1] = (intptr_t) SCARG(p, tp).i32; /* linux32_timespecp_t */
 		*n_args = 2;
@@ -1630,7 +1630,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_clock_getres */
 	case 266: {
-		struct linux32_sys_clock_getres_args *p = params;
+		const struct linux32_sys_clock_getres_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		uarg[1] = (intptr_t) SCARG(p, tp).i32; /* linux32_timespecp_t */
 		*n_args = 2;
@@ -1638,7 +1638,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_clock_nanosleep */
 	case 267: {
-		struct linux32_sys_clock_nanosleep_args *p = params;
+		const struct linux32_sys_clock_nanosleep_args *p = params;
 		iarg[0] = SCARG(p, which); /* clockid_t */
 		iarg[1] = SCARG(p, flags); /* int */
 		uarg[2] = (intptr_t) SCARG(p, rqtp).i32; /* linux32_timespecp_t */
@@ -1648,7 +1648,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_statfs64 */
 	case 268: {
-		struct linux32_sys_statfs64_args *p = params;
+		const struct linux32_sys_statfs64_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, sz); /* netbsd32_size_t */
 		uarg[2] = (intptr_t) SCARG(p, sp).i32; /* linux32_statfs64p */
@@ -1657,7 +1657,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fstatfs64 */
 	case 269: {
-		struct linux32_sys_fstatfs64_args *p = params;
+		const struct linux32_sys_fstatfs64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		iarg[1] = SCARG(p, sz); /* netbsd32_size_t */
 		uarg[2] = (intptr_t) SCARG(p, sp).i32; /* linux32_statfs64p */
@@ -1666,7 +1666,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_tgkill */
 	case 270: {
-		struct linux32_sys_tgkill_args *p = params;
+		const struct linux32_sys_tgkill_args *p = params;
 		iarg[0] = SCARG(p, tgid); /* int */
 		iarg[1] = SCARG(p, tid); /* int */
 		iarg[2] = SCARG(p, sig); /* int */
@@ -1675,7 +1675,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* compat_50_netbsd32_utimes */
 	case 271: {
-		struct compat_50_netbsd32_utimes_args *p = params;
+		const struct compat_50_netbsd32_utimes_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[1] = (intptr_t) SCARG(p, tptr).i32; /* netbsd32_timeval50p_t */
 		*n_args = 2;
@@ -1683,7 +1683,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fadvise64_64 */
 	case 272: {
-		struct linux32_sys_fadvise64_64_args *p = params;
+		const struct linux32_sys_fadvise64_64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = SCARG(p, offlo); /* uint32_t */
 		uarg[2] = SCARG(p, offhi); /* uint32_t */
@@ -1695,7 +1695,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_openat */
 	case 295: {
-		struct linux32_sys_openat_args *p = params;
+		const struct linux32_sys_openat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -1705,7 +1705,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_mkdirat */
 	case 296: {
-		struct netbsd32_mkdirat_args *p = params;
+		const struct netbsd32_mkdirat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -1714,7 +1714,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_mknodat */
 	case 297: {
-		struct linux32_sys_mknodat_args *p = params;
+		const struct linux32_sys_mknodat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -1724,7 +1724,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fchownat */
 	case 298: {
-		struct linux32_sys_fchownat_args *p = params;
+		const struct linux32_sys_fchownat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[2] = SCARG(p, owner); /* uid_t */
@@ -1735,7 +1735,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fstatat64 */
 	case 300: {
-		struct linux32_sys_fstatat64_args *p = params;
+		const struct linux32_sys_fstatat64_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, sp).i32; /* linux32_stat64p */
@@ -1745,7 +1745,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_unlinkat */
 	case 301: {
-		struct linux32_sys_unlinkat_args *p = params;
+		const struct linux32_sys_unlinkat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, flag); /* int */
@@ -1754,7 +1754,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_renameat */
 	case 302: {
-		struct netbsd32_renameat_args *p = params;
+		const struct netbsd32_renameat_args *p = params;
 		iarg[0] = SCARG(p, fromfd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, from).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, tofd); /* int */
@@ -1764,7 +1764,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_linkat */
 	case 303: {
-		struct linux32_sys_linkat_args *p = params;
+		const struct linux32_sys_linkat_args *p = params;
 		iarg[0] = SCARG(p, fd1); /* int */
 		uarg[1] = (intptr_t) SCARG(p, name1).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, fd2); /* int */
@@ -1775,7 +1775,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_symlinkat */
 	case 304: {
-		struct netbsd32_symlinkat_args *p = params;
+		const struct netbsd32_symlinkat_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path1).i32; /* netbsd32_charp */
 		iarg[1] = SCARG(p, fd); /* int */
 		uarg[2] = (intptr_t) SCARG(p, path2).i32; /* netbsd32_charp */
@@ -1784,7 +1784,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* netbsd32_readlinkat */
 	case 305: {
-		struct netbsd32_readlinkat_args *p = params;
+		const struct netbsd32_readlinkat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, buf).i32; /* netbsd32_charp */
@@ -1794,7 +1794,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_fchmodat */
 	case 306: {
-		struct linux32_sys_fchmodat_args *p = params;
+		const struct linux32_sys_fchmodat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, mode); /* linux_umode_t */
@@ -1803,7 +1803,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_faccessat */
 	case 307: {
-		struct linux32_sys_faccessat_args *p = params;
+		const struct linux32_sys_faccessat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, amode); /* int */
@@ -1812,7 +1812,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_ppoll */
 	case 309: {
-		struct linux32_sys_ppoll_args *p = params;
+		const struct linux32_sys_ppoll_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fds).i32; /* netbsd32_pollfdp_t */
 		uarg[1] = SCARG(p, nfds); /* u_int */
 		uarg[2] = (intptr_t) SCARG(p, timeout).i32; /* linux32_timespecp_t */
@@ -1822,7 +1822,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_set_robust_list */
 	case 311: {
-		struct linux32_sys_set_robust_list_args *p = params;
+		const struct linux32_sys_set_robust_list_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, head).i32; /* linux32_robust_list_headp_t */
 		iarg[1] = SCARG(p, len); /* linux32_size_t */
 		*n_args = 2;
@@ -1830,7 +1830,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_get_robust_list */
 	case 312: {
-		struct linux32_sys_get_robust_list_args *p = params;
+		const struct linux32_sys_get_robust_list_args *p = params;
 		iarg[0] = SCARG(p, pid); /* linux32_pid_t */
 		uarg[1] = (intptr_t) SCARG(p, head).i32; /* linux32_robust_list_headpp_t */
 		uarg[2] = (intptr_t) SCARG(p, len).i32; /* linux32_sizep_t */
@@ -1839,7 +1839,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_utimensat */
 	case 320: {
-		struct linux32_sys_utimensat_args *p = params;
+		const struct linux32_sys_utimensat_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		uarg[2] = (intptr_t) SCARG(p, times).i32; /* linux32_timespecp_t */
@@ -1849,7 +1849,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_dup3 */
 	case 330: {
-		struct linux32_sys_dup3_args *p = params;
+		const struct linux32_sys_dup3_args *p = params;
 		iarg[0] = SCARG(p, from); /* int */
 		iarg[1] = SCARG(p, to); /* int */
 		iarg[2] = SCARG(p, flags); /* int */
@@ -1858,7 +1858,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 	/* linux32_sys_pipe2 */
 	case 331: {
-		struct linux32_sys_pipe2_args *p = params;
+		const struct linux32_sys_pipe2_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, fd).i32; /* netbsd32_intp */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;

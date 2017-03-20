@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.34 2013/07/11 19:50:55 matt Exp $ */
+/* $NetBSD: asm.h,v 1.34.12.1 2017/03/20 06:57:09 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University

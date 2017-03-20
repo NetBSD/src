@@ -1,4 +1,4 @@
-/*	$NetBSD: getarg.h,v 1.1.1.2 2011/04/14 14:09:29 elric Exp $	*/
+/*	$NetBSD: getarg.h,v 1.1.1.2.28.1 2017/03/20 06:51:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan

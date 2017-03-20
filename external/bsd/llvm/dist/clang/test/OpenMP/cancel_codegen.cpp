@@ -1,8 +1,7 @@
-// RUN: %clang_cc1 -verify -fopenmp -triple x86_64-apple-darwin13.4.0 -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -fopenmp -x c++ -std=c++11 -triple x86_64-apple-darwin13.4.0 -emit-pch -o %t %s
-// RUN: %clang_cc1 -fopenmp -std=c++11 -include-pch %t -fsyntax-only -verify %s -triple x86_64-apple-darwin13.4.0 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -verify -fopenmp -fopenmp-version=45 -triple x86_64-apple-darwin13.4.0 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -x c++ -std=c++11 -triple x86_64-apple-darwin13.4.0 -emit-pch -o %t %s
+// RUN: %clang_cc1 -fopenmp -fopenmp-version=45 -std=c++11 -include-pch %t -fsyntax-only -verify %s -triple x86_64-apple-darwin13.4.0 -emit-llvm -o - | FileCheck %s
 // expected-no-diagnostics
-// REQUIRES: x86-registered-target
 #ifndef HEADER
 #define HEADER
 
@@ -91,9 +90,11 @@ for (int i = 0; i < argc; ++i) {
   }
 }
 // CHECK: call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(
-#pragma omp parallel for
+int r = 0;
+#pragma omp parallel for reduction(+: r)
 for (int i = 0; i < argc; ++i) {
 #pragma omp cancel for
+  r += i;
 }
 // CHECK: call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(
   return argc;
@@ -163,6 +164,9 @@ for (int i = 0; i < argc; ++i) {
 // CHECK: br label
 // CHECK: [[CONTINUE]]
 // CHECK: br label
+// CHECK: call void @__kmpc_for_static_fini(
+// CHECK: call i32 @__kmpc_reduce_nowait(
+// CHECK: call void @__kmpc_end_reduce_nowait(
 // CHECK: call void @__kmpc_for_static_fini(
 // CHECK: ret void
 

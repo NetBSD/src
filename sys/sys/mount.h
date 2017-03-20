@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.219 2016/07/07 06:55:44 msaitoh Exp $	*/
+/*	$NetBSD: mount.h,v 1.219.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -100,6 +100,7 @@
 #ifndef _STANDALONE
 
 struct vnode;
+struct vnode_impl;
 struct vattr;
 
 /*
@@ -109,9 +110,10 @@ struct vattr;
  */
 struct mount {
 	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
-	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
+	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
+	struct mount	*mnt_lower;		/* fs mounted on */
 	int		mnt_synclist_slot;	/* synclist slot index */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */

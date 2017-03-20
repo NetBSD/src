@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_peer.c,v 1.1.1.2 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: debug_peer.c,v 1.1.1.2.12.1 2017/03/20 06:56:36 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -101,7 +101,7 @@ void    debug_peer_init(void)
      */
     if (*var_debug_peer_list)
 	debug_peer_list =
-	    namadr_list_init(MATCH_FLAG_RETURN
+	    namadr_list_init(VAR_DEBUG_PEER_LIST, MATCH_FLAG_RETURN
 			     | match_parent_style(VAR_DEBUG_PEER_LIST),
 			     var_debug_peer_list);
 }

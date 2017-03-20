@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.396.2.4 2017/01/07 08:56:08 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.396.2.5 2017/03/20 06:57:07 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -258,7 +258,7 @@ MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 ioctl_copyin.9 copy.9 ioctl_copyout.9
 MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
-MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 proc_trampoline.9
+MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 lwp_trampoline.9
 MLINKS+=cpu_rootconf.9 setroot.9 \
         cpu_rootconf.9 rootconf.9
 MLINKS+=cpufreq.9 cpufreq_register.9 \
@@ -433,6 +433,9 @@ MLINKS+=kcpuset.9 kcpuset_create.9 \
 MLINKS+=kmem.9 kmem_alloc.9 \
 	kmem.9 kmem_free.9 \
 	kmem.9 kmem_zalloc.9 \
+	kmem.9 kmem_intr_alloc.9 \
+	kmem.9 kmem_intr_free.9 \
+	kmem.9 kmem_intr_zalloc.9 \
 	kmem.9 kmem_asprintf.9
 MAN+=	kpreempt.9
 MLINKS+=kpreempt.9 kpreempt_disable.9 \

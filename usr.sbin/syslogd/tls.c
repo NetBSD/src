@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.12 2016/02/03 05:34:21 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.12.2.1 2017/03/20 06:58:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,9 +45,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.12 2016/02/03 05:34:21 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.12.2.1 2017/03/20 06:58:09 pgoyette Exp $");
 
 #ifndef DISABLE_TLS
+#include <sys/stat.h>
 #include "syslogd.h"
 #include "tls.h"
 #include <netinet/in.h>

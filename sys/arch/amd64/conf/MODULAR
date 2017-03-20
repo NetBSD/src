@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.1.2.3 2017/01/07 08:56:09 pgoyette Exp $
+# $NetBSD: MODULAR,v 1.1.2.4 2017/03/20 06:57:09 pgoyette Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -7,20 +7,23 @@ include "arch/amd64/conf/GENERIC"
 options 	MODULAR		# new style module(7) framework
 options 	MODULAR_DEFAULT_AUTOLOAD
 
-no acpicpu*	at cpu?
-no est0		at cpu0
-no powernow0	at cpu0
-no vmt0		at cpu0
+-no acpicpu*	at cpu?
+-no est0		at cpu0
+-no powernow0	at cpu0
+-no vmt0		at cpu0
 
-no options 	COMPAT_15	# NetBSD 1.5,
-no options 	COMPAT_16	# NetBSD 1.6,
-no options 	COMPAT_20	# NetBSD 2.0,
-no options 	COMPAT_30	# NetBSD 3.0,
-no options 	COMPAT_40	# NetBSD 4.0,
-no options 	COMPAT_50	# NetBSD 5.0,
-no options 	COMPAT_60	# NetBSD 6.0, and
-no options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
-no options 	COMPAT_43	# and 4.3BSD
+-no spkr*	at pcppi?	# PC speaker
+-no spkr*	at audio?	# PC speaker (synthesized)
+
+-no options 	COMPAT_15	# NetBSD 1.5,
+-no options 	COMPAT_16	# NetBSD 1.6,
+-no options 	COMPAT_20	# NetBSD 2.0,
+-no options 	COMPAT_30	# NetBSD 3.0,
+-no options 	COMPAT_40	# NetBSD 4.0,
+-no options 	COMPAT_50	# NetBSD 5.0,
+-no options 	COMPAT_60	# NetBSD 6.0, and
+-no options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+-no options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 no options 	COMPAT_OSSAUDIO
@@ -99,9 +102,25 @@ no pseudo-device	putter			# for puffs and pud
 no pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices
-no pseudo-device	bpfilter		# Berkeley packet filter
-no pseudo-device	ipfilter		# IP filter (firewall) and NAT
-no pseudo-device	npf			# NPF packet filter
+-no pseudo-device	bpfilter		# Berkeley packet filter
+-no pseudo-device	ipfilter		# IP filter (firewall) and NAT
+# Loopback is hardcoded (looutput) everywhere!
+#no pseudo-device	loop			# network loopback
+-no pseudo-device	mpls			# MPLS pseudo-interface
+-no pseudo-device	ppp			# Point-to-Point Protocol
+-no pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+-no pseudo-device	sl			# Serial Line IP
+-no pseudo-device	strip			# Starmode Radio IP (Metricom)
+-no pseudo-device	tun			# network tunneling over tty
+-no pseudo-device	tap			# virtual Ethernet
+-no pseudo-device	gre			# generic L3 over IP tunnel
+-no pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+-no pseudo-device	faith			# IPv[46] tcp relay translation i/f
+-no pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+-no pseudo-device	vlan			# IEEE 802.1q encapsulation
+-no pseudo-device	agr			# IEEE 802.3ad link aggregation
+-no pseudo-device	l2tp			# L2TPv3 interface
+-no pseudo-device	npf			# NPF packet filter
 
 #
 # accept filters

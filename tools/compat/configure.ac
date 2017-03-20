@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.84.2.2 2017/01/07 08:56:57 pgoyette Exp $
+#	$NetBSD: configure.ac,v 1.84.2.3 2017/03/20 06:58:02 pgoyette Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -158,8 +158,13 @@ AC_CHECK_DECLS([raise_default_signal],,, [
 #include <util.h>
 ])
 
-AC_CHECK_DECLS([issetugid, pread, pwrite, strmode],,, [
+AC_CHECK_DECLS([issetugid, pread, pwrite],,, [
 #include <unistd.h>
+])
+
+AC_CHECK_DECLS([strmode],,, [
+#include <unistd.h>
+#include <string.h>
 ])
 
 AC_CHECK_DECLS([isblank],,, [

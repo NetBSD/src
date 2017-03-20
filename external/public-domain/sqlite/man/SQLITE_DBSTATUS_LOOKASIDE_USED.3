@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE_DBSTATUS_LOOKASIDE_USED 3
 .Os
 .Sh NAME
@@ -13,6 +13,7 @@
 .Nm SQLITE_DBSTATUS_CACHE_MISS ,
 .Nm SQLITE_DBSTATUS_CACHE_WRITE ,
 .Nm SQLITE_DBSTATUS_DEFERRED_FKS ,
+.Nm SQLITE_DBSTATUS_CACHE_USED_SHARED ,
 .Nm SQLITE_DBSTATUS_MAX
 .Nd Status Parameters for database connections
 .Sh SYNOPSIS
@@ -27,6 +28,7 @@
 .Fd #define SQLITE_DBSTATUS_CACHE_MISS
 .Fd #define SQLITE_DBSTATUS_CACHE_WRITE
 .Fd #define SQLITE_DBSTATUS_DEFERRED_FKS
+.Fd #define SQLITE_DBSTATUS_CACHE_USED_SHARED
 .Fd #define SQLITE_DBSTATUS_MAX
 .Sh DESCRIPTION
 These constants are the available integer "verbs" that can be passed
@@ -65,6 +67,17 @@ This parameter returns the approximate number of bytes of heap memory
 used by all pager caches associated with the database connection.
 The highwater mark associated with SQLITE_DBSTATUS_CACHE_USED is always
 0.
+.It SQLITE_DBSTATUS_CACHE_USED_SHARED
+This parameter is similar to DBSTATUS_CACHE_USED, except that if a
+pager cache is shared between two or more connections the bytes of
+heap memory used by that pager cache is divided evenly between the
+attached connections.
+In other words, if none of the pager caches associated with the database
+connection are shared, this request returns the same value as DBSTATUS_CACHE_USED.
+Or, if one or more or the pager caches are shared, the value returned
+by this call will be smaller than that returned by DBSTATUS_CACHE_USED.
+The highwater mark associated with SQLITE_DBSTATUS_CACHE_USED_SHARED
+is always 0.
 .It SQLITE_DBSTATUS_SCHEMA_USED
 This parameter returns the approximate number of bytes of heap memory
 used to store the schema for all databases associated with the connection

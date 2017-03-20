@@ -1,4 +1,4 @@
-/*	$NetBSD: t_raw.c,v 1.1 2011/01/11 10:51:45 pooka Exp $	*/
+/*	$NetBSD: t_raw.c,v 1.1.28.1 2017/03/20 06:58:01 pgoyette Exp $	*/
 
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -12,7 +12,7 @@
 
 #include <atf-c.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(PRU_SENSE);
 ATF_TC_HEAD(PRU_SENSE, tc)

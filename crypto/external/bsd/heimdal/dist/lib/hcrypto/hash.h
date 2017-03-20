@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.1.1.2 2011/04/14 14:08:32 elric Exp $	*/
+/*	$NetBSD: hash.h,v 1.1.1.2.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 Kungliga Tekniska Högskolan
@@ -42,7 +42,6 @@
 #ifdef KRB5
 #include <krb5/krb5-types.h>
 #endif
-#include <krb5/roken.h>
 
 #ifndef min
 #define min(a,b) (((a)>(b))?(b):(a))

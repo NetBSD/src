@@ -27,26 +27,26 @@ extern xcb_extension_t xcb_xf86dri_id;
  * @brief xcb_xf86dri_drm_clip_rect_t
  **/
 typedef struct xcb_xf86dri_drm_clip_rect_t {
-    int16_t x1; /**<  */
-    int16_t y1; /**<  */
-    int16_t x2; /**<  */
-    int16_t x3; /**<  */
+    int16_t x1;
+    int16_t y1;
+    int16_t x2;
+    int16_t x3;
 } xcb_xf86dri_drm_clip_rect_t;
 
 /**
  * @brief xcb_xf86dri_drm_clip_rect_iterator_t
  **/
 typedef struct xcb_xf86dri_drm_clip_rect_iterator_t {
-    xcb_xf86dri_drm_clip_rect_t *data; /**<  */
-    int                          rem; /**<  */
-    int                          index; /**<  */
+    xcb_xf86dri_drm_clip_rect_t *data;
+    int                          rem;
+    int                          index;
 } xcb_xf86dri_drm_clip_rect_iterator_t;
 
 /**
  * @brief xcb_xf86dri_query_version_cookie_t
  **/
 typedef struct xcb_xf86dri_query_version_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_query_version_cookie_t;
 
 /** Opcode for xcb_xf86dri_query_version. */
@@ -56,29 +56,29 @@ typedef struct xcb_xf86dri_query_version_cookie_t {
  * @brief xcb_xf86dri_query_version_request_t
  **/
 typedef struct xcb_xf86dri_query_version_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
 } xcb_xf86dri_query_version_request_t;
 
 /**
  * @brief xcb_xf86dri_query_version_reply_t
  **/
 typedef struct xcb_xf86dri_query_version_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint16_t dri_major_version; /**<  */
-    uint16_t dri_minor_version; /**<  */
-    uint32_t dri_minor_patch; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint16_t dri_major_version;
+    uint16_t dri_minor_version;
+    uint32_t dri_minor_patch;
 } xcb_xf86dri_query_version_reply_t;
 
 /**
  * @brief xcb_xf86dri_query_direct_rendering_capable_cookie_t
  **/
 typedef struct xcb_xf86dri_query_direct_rendering_capable_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_query_direct_rendering_capable_cookie_t;
 
 /** Opcode for xcb_xf86dri_query_direct_rendering_capable. */
@@ -88,28 +88,28 @@ typedef struct xcb_xf86dri_query_direct_rendering_capable_cookie_t {
  * @brief xcb_xf86dri_query_direct_rendering_capable_request_t
  **/
 typedef struct xcb_xf86dri_query_direct_rendering_capable_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
 } xcb_xf86dri_query_direct_rendering_capable_request_t;
 
 /**
  * @brief xcb_xf86dri_query_direct_rendering_capable_reply_t
  **/
 typedef struct xcb_xf86dri_query_direct_rendering_capable_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint8_t  is_capable; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint8_t  is_capable;
 } xcb_xf86dri_query_direct_rendering_capable_reply_t;
 
 /**
  * @brief xcb_xf86dri_open_connection_cookie_t
  **/
 typedef struct xcb_xf86dri_open_connection_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_open_connection_cookie_t;
 
 /** Opcode for xcb_xf86dri_open_connection. */
@@ -119,24 +119,24 @@ typedef struct xcb_xf86dri_open_connection_cookie_t {
  * @brief xcb_xf86dri_open_connection_request_t
  **/
 typedef struct xcb_xf86dri_open_connection_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
 } xcb_xf86dri_open_connection_request_t;
 
 /**
  * @brief xcb_xf86dri_open_connection_reply_t
  **/
 typedef struct xcb_xf86dri_open_connection_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t sarea_handle_low; /**<  */
-    uint32_t sarea_handle_high; /**<  */
-    uint32_t bus_id_len; /**<  */
-    uint8_t  pad1[12]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t sarea_handle_low;
+    uint32_t sarea_handle_high;
+    uint32_t bus_id_len;
+    uint8_t  pad1[12];
 } xcb_xf86dri_open_connection_reply_t;
 
 /** Opcode for xcb_xf86dri_close_connection. */
@@ -146,17 +146,17 @@ typedef struct xcb_xf86dri_open_connection_reply_t {
  * @brief xcb_xf86dri_close_connection_request_t
  **/
 typedef struct xcb_xf86dri_close_connection_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
 } xcb_xf86dri_close_connection_request_t;
 
 /**
  * @brief xcb_xf86dri_get_client_driver_name_cookie_t
  **/
 typedef struct xcb_xf86dri_get_client_driver_name_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_get_client_driver_name_cookie_t;
 
 /** Opcode for xcb_xf86dri_get_client_driver_name. */
@@ -166,32 +166,32 @@ typedef struct xcb_xf86dri_get_client_driver_name_cookie_t {
  * @brief xcb_xf86dri_get_client_driver_name_request_t
  **/
 typedef struct xcb_xf86dri_get_client_driver_name_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
 } xcb_xf86dri_get_client_driver_name_request_t;
 
 /**
  * @brief xcb_xf86dri_get_client_driver_name_reply_t
  **/
 typedef struct xcb_xf86dri_get_client_driver_name_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t client_driver_major_version; /**<  */
-    uint32_t client_driver_minor_version; /**<  */
-    uint32_t client_driver_patch_version; /**<  */
-    uint32_t client_driver_name_len; /**<  */
-    uint8_t  pad1[8]; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t client_driver_major_version;
+    uint32_t client_driver_minor_version;
+    uint32_t client_driver_patch_version;
+    uint32_t client_driver_name_len;
+    uint8_t  pad1[8];
 } xcb_xf86dri_get_client_driver_name_reply_t;
 
 /**
  * @brief xcb_xf86dri_create_context_cookie_t
  **/
 typedef struct xcb_xf86dri_create_context_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_create_context_cookie_t;
 
 /** Opcode for xcb_xf86dri_create_context. */
@@ -201,23 +201,23 @@ typedef struct xcb_xf86dri_create_context_cookie_t {
  * @brief xcb_xf86dri_create_context_request_t
  **/
 typedef struct xcb_xf86dri_create_context_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
-    uint32_t visual; /**<  */
-    uint32_t context; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
+    uint32_t visual;
+    uint32_t context;
 } xcb_xf86dri_create_context_request_t;
 
 /**
  * @brief xcb_xf86dri_create_context_reply_t
  **/
 typedef struct xcb_xf86dri_create_context_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t hw_context; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t hw_context;
 } xcb_xf86dri_create_context_reply_t;
 
 /** Opcode for xcb_xf86dri_destroy_context. */
@@ -227,18 +227,18 @@ typedef struct xcb_xf86dri_create_context_reply_t {
  * @brief xcb_xf86dri_destroy_context_request_t
  **/
 typedef struct xcb_xf86dri_destroy_context_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
-    uint32_t context; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
+    uint32_t context;
 } xcb_xf86dri_destroy_context_request_t;
 
 /**
  * @brief xcb_xf86dri_create_drawable_cookie_t
  **/
 typedef struct xcb_xf86dri_create_drawable_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_create_drawable_cookie_t;
 
 /** Opcode for xcb_xf86dri_create_drawable. */
@@ -248,22 +248,22 @@ typedef struct xcb_xf86dri_create_drawable_cookie_t {
  * @brief xcb_xf86dri_create_drawable_request_t
  **/
 typedef struct xcb_xf86dri_create_drawable_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
-    uint32_t drawable; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
+    uint32_t drawable;
 } xcb_xf86dri_create_drawable_request_t;
 
 /**
  * @brief xcb_xf86dri_create_drawable_reply_t
  **/
 typedef struct xcb_xf86dri_create_drawable_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t hw_drawable_handle; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t hw_drawable_handle;
 } xcb_xf86dri_create_drawable_reply_t;
 
 /** Opcode for xcb_xf86dri_destroy_drawable. */
@@ -273,18 +273,18 @@ typedef struct xcb_xf86dri_create_drawable_reply_t {
  * @brief xcb_xf86dri_destroy_drawable_request_t
  **/
 typedef struct xcb_xf86dri_destroy_drawable_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
-    uint32_t drawable; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
+    uint32_t drawable;
 } xcb_xf86dri_destroy_drawable_request_t;
 
 /**
  * @brief xcb_xf86dri_get_drawable_info_cookie_t
  **/
 typedef struct xcb_xf86dri_get_drawable_info_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_get_drawable_info_cookie_t;
 
 /** Opcode for xcb_xf86dri_get_drawable_info. */
@@ -294,38 +294,38 @@ typedef struct xcb_xf86dri_get_drawable_info_cookie_t {
  * @brief xcb_xf86dri_get_drawable_info_request_t
  **/
 typedef struct xcb_xf86dri_get_drawable_info_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
-    uint32_t drawable; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
+    uint32_t drawable;
 } xcb_xf86dri_get_drawable_info_request_t;
 
 /**
  * @brief xcb_xf86dri_get_drawable_info_reply_t
  **/
 typedef struct xcb_xf86dri_get_drawable_info_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t drawable_table_index; /**<  */
-    uint32_t drawable_table_stamp; /**<  */
-    int16_t  drawable_origin_X; /**<  */
-    int16_t  drawable_origin_Y; /**<  */
-    int16_t  drawable_size_W; /**<  */
-    int16_t  drawable_size_H; /**<  */
-    uint32_t num_clip_rects; /**<  */
-    int16_t  back_x; /**<  */
-    int16_t  back_y; /**<  */
-    uint32_t num_back_clip_rects; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t drawable_table_index;
+    uint32_t drawable_table_stamp;
+    int16_t  drawable_origin_X;
+    int16_t  drawable_origin_Y;
+    int16_t  drawable_size_W;
+    int16_t  drawable_size_H;
+    uint32_t num_clip_rects;
+    int16_t  back_x;
+    int16_t  back_y;
+    uint32_t num_back_clip_rects;
 } xcb_xf86dri_get_drawable_info_reply_t;
 
 /**
  * @brief xcb_xf86dri_get_device_info_cookie_t
  **/
 typedef struct xcb_xf86dri_get_device_info_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_get_device_info_cookie_t;
 
 /** Opcode for xcb_xf86dri_get_device_info. */
@@ -335,33 +335,33 @@ typedef struct xcb_xf86dri_get_device_info_cookie_t {
  * @brief xcb_xf86dri_get_device_info_request_t
  **/
 typedef struct xcb_xf86dri_get_device_info_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
 } xcb_xf86dri_get_device_info_request_t;
 
 /**
  * @brief xcb_xf86dri_get_device_info_reply_t
  **/
 typedef struct xcb_xf86dri_get_device_info_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t framebuffer_handle_low; /**<  */
-    uint32_t framebuffer_handle_high; /**<  */
-    uint32_t framebuffer_origin_offset; /**<  */
-    uint32_t framebuffer_size; /**<  */
-    uint32_t framebuffer_stride; /**<  */
-    uint32_t device_private_size; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t framebuffer_handle_low;
+    uint32_t framebuffer_handle_high;
+    uint32_t framebuffer_origin_offset;
+    uint32_t framebuffer_size;
+    uint32_t framebuffer_stride;
+    uint32_t device_private_size;
 } xcb_xf86dri_get_device_info_reply_t;
 
 /**
  * @brief xcb_xf86dri_auth_connection_cookie_t
  **/
 typedef struct xcb_xf86dri_auth_connection_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_xf86dri_auth_connection_cookie_t;
 
 /** Opcode for xcb_xf86dri_auth_connection. */
@@ -371,22 +371,22 @@ typedef struct xcb_xf86dri_auth_connection_cookie_t {
  * @brief xcb_xf86dri_auth_connection_request_t
  **/
 typedef struct xcb_xf86dri_auth_connection_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t screen; /**<  */
-    uint32_t magic; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t screen;
+    uint32_t magic;
 } xcb_xf86dri_auth_connection_request_t;
 
 /**
  * @brief xcb_xf86dri_auth_connection_reply_t
  **/
 typedef struct xcb_xf86dri_auth_connection_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t authenticated; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t authenticated;
 } xcb_xf86dri_auth_connection_reply_t;
 
 /**
@@ -398,7 +398,7 @@ typedef struct xcb_xf86dri_auth_connection_reply_t {
  * element. The member index is increased by sizeof(xcb_xf86dri_drm_clip_rect_t)
  */
 void
-xcb_xf86dri_drm_clip_rect_next (xcb_xf86dri_drm_clip_rect_iterator_t *i  /**< */);
+xcb_xf86dri_drm_clip_rect_next (xcb_xf86dri_drm_clip_rect_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -410,7 +410,7 @@ xcb_xf86dri_drm_clip_rect_next (xcb_xf86dri_drm_clip_rect_iterator_t *i  /**< */
  * last element.
  */
 xcb_generic_iterator_t
-xcb_xf86dri_drm_clip_rect_end (xcb_xf86dri_drm_clip_rect_iterator_t i  /**< */);
+xcb_xf86dri_drm_clip_rect_end (xcb_xf86dri_drm_clip_rect_iterator_t i);
 
 /**
  *
@@ -421,7 +421,7 @@ xcb_xf86dri_drm_clip_rect_end (xcb_xf86dri_drm_clip_rect_iterator_t i  /**< */);
  *
  */
 xcb_xf86dri_query_version_cookie_t
-xcb_xf86dri_query_version (xcb_connection_t *c  /**< */);
+xcb_xf86dri_query_version (xcb_connection_t *c);
 
 /**
  *
@@ -435,7 +435,7 @@ xcb_xf86dri_query_version (xcb_connection_t *c  /**< */);
  * placed in the event queue.
  */
 xcb_xf86dri_query_version_cookie_t
-xcb_xf86dri_query_version_unchecked (xcb_connection_t *c  /**< */);
+xcb_xf86dri_query_version_unchecked (xcb_connection_t *c);
 
 /**
  * Return the reply
@@ -452,9 +452,9 @@ xcb_xf86dri_query_version_unchecked (xcb_connection_t *c  /**< */);
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_query_version_reply_t *
-xcb_xf86dri_query_version_reply (xcb_connection_t                    *c  /**< */,
+xcb_xf86dri_query_version_reply (xcb_connection_t                    *c,
                                  xcb_xf86dri_query_version_cookie_t   cookie  /**< */,
-                                 xcb_generic_error_t                **e  /**< */);
+                                 xcb_generic_error_t                **e);
 
 /**
  *
@@ -465,8 +465,8 @@ xcb_xf86dri_query_version_reply (xcb_connection_t                    *c  /**< */
  *
  */
 xcb_xf86dri_query_direct_rendering_capable_cookie_t
-xcb_xf86dri_query_direct_rendering_capable (xcb_connection_t *c  /**< */,
-                                            uint32_t          screen  /**< */);
+xcb_xf86dri_query_direct_rendering_capable (xcb_connection_t *c,
+                                            uint32_t          screen);
 
 /**
  *
@@ -480,8 +480,8 @@ xcb_xf86dri_query_direct_rendering_capable (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_query_direct_rendering_capable_cookie_t
-xcb_xf86dri_query_direct_rendering_capable_unchecked (xcb_connection_t *c  /**< */,
-                                                      uint32_t          screen  /**< */);
+xcb_xf86dri_query_direct_rendering_capable_unchecked (xcb_connection_t *c,
+                                                      uint32_t          screen);
 
 /**
  * Return the reply
@@ -498,12 +498,12 @@ xcb_xf86dri_query_direct_rendering_capable_unchecked (xcb_connection_t *c  /**< 
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_query_direct_rendering_capable_reply_t *
-xcb_xf86dri_query_direct_rendering_capable_reply (xcb_connection_t                                     *c  /**< */,
+xcb_xf86dri_query_direct_rendering_capable_reply (xcb_connection_t                                     *c,
                                                   xcb_xf86dri_query_direct_rendering_capable_cookie_t   cookie  /**< */,
-                                                  xcb_generic_error_t                                 **e  /**< */);
+                                                  xcb_generic_error_t                                 **e);
 
 int
-xcb_xf86dri_open_connection_sizeof (const void  *_buffer  /**< */);
+xcb_xf86dri_open_connection_sizeof (const void  *_buffer);
 
 /**
  *
@@ -514,8 +514,8 @@ xcb_xf86dri_open_connection_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xf86dri_open_connection_cookie_t
-xcb_xf86dri_open_connection (xcb_connection_t *c  /**< */,
-                             uint32_t          screen  /**< */);
+xcb_xf86dri_open_connection (xcb_connection_t *c,
+                             uint32_t          screen);
 
 /**
  *
@@ -529,17 +529,17 @@ xcb_xf86dri_open_connection (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_open_connection_cookie_t
-xcb_xf86dri_open_connection_unchecked (xcb_connection_t *c  /**< */,
-                                       uint32_t          screen  /**< */);
+xcb_xf86dri_open_connection_unchecked (xcb_connection_t *c,
+                                       uint32_t          screen);
 
 char *
-xcb_xf86dri_open_connection_bus_id (const xcb_xf86dri_open_connection_reply_t *R  /**< */);
+xcb_xf86dri_open_connection_bus_id (const xcb_xf86dri_open_connection_reply_t *R);
 
 int
-xcb_xf86dri_open_connection_bus_id_length (const xcb_xf86dri_open_connection_reply_t *R  /**< */);
+xcb_xf86dri_open_connection_bus_id_length (const xcb_xf86dri_open_connection_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_xf86dri_open_connection_bus_id_end (const xcb_xf86dri_open_connection_reply_t *R  /**< */);
+xcb_xf86dri_open_connection_bus_id_end (const xcb_xf86dri_open_connection_reply_t *R);
 
 /**
  * Return the reply
@@ -556,9 +556,9 @@ xcb_xf86dri_open_connection_bus_id_end (const xcb_xf86dri_open_connection_reply_
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_open_connection_reply_t *
-xcb_xf86dri_open_connection_reply (xcb_connection_t                      *c  /**< */,
+xcb_xf86dri_open_connection_reply (xcb_connection_t                      *c,
                                    xcb_xf86dri_open_connection_cookie_t   cookie  /**< */,
-                                   xcb_generic_error_t                  **e  /**< */);
+                                   xcb_generic_error_t                  **e);
 
 /**
  *
@@ -572,8 +572,8 @@ xcb_xf86dri_open_connection_reply (xcb_connection_t                      *c  /**
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_xf86dri_close_connection_checked (xcb_connection_t *c  /**< */,
-                                      uint32_t          screen  /**< */);
+xcb_xf86dri_close_connection_checked (xcb_connection_t *c,
+                                      uint32_t          screen);
 
 /**
  *
@@ -584,11 +584,11 @@ xcb_xf86dri_close_connection_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_xf86dri_close_connection (xcb_connection_t *c  /**< */,
-                              uint32_t          screen  /**< */);
+xcb_xf86dri_close_connection (xcb_connection_t *c,
+                              uint32_t          screen);
 
 int
-xcb_xf86dri_get_client_driver_name_sizeof (const void  *_buffer  /**< */);
+xcb_xf86dri_get_client_driver_name_sizeof (const void  *_buffer);
 
 /**
  *
@@ -599,8 +599,8 @@ xcb_xf86dri_get_client_driver_name_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xf86dri_get_client_driver_name_cookie_t
-xcb_xf86dri_get_client_driver_name (xcb_connection_t *c  /**< */,
-                                    uint32_t          screen  /**< */);
+xcb_xf86dri_get_client_driver_name (xcb_connection_t *c,
+                                    uint32_t          screen);
 
 /**
  *
@@ -614,17 +614,17 @@ xcb_xf86dri_get_client_driver_name (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_get_client_driver_name_cookie_t
-xcb_xf86dri_get_client_driver_name_unchecked (xcb_connection_t *c  /**< */,
-                                              uint32_t          screen  /**< */);
+xcb_xf86dri_get_client_driver_name_unchecked (xcb_connection_t *c,
+                                              uint32_t          screen);
 
 char *
-xcb_xf86dri_get_client_driver_name_client_driver_name (const xcb_xf86dri_get_client_driver_name_reply_t *R  /**< */);
+xcb_xf86dri_get_client_driver_name_client_driver_name (const xcb_xf86dri_get_client_driver_name_reply_t *R);
 
 int
-xcb_xf86dri_get_client_driver_name_client_driver_name_length (const xcb_xf86dri_get_client_driver_name_reply_t *R  /**< */);
+xcb_xf86dri_get_client_driver_name_client_driver_name_length (const xcb_xf86dri_get_client_driver_name_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_xf86dri_get_client_driver_name_client_driver_name_end (const xcb_xf86dri_get_client_driver_name_reply_t *R  /**< */);
+xcb_xf86dri_get_client_driver_name_client_driver_name_end (const xcb_xf86dri_get_client_driver_name_reply_t *R);
 
 /**
  * Return the reply
@@ -641,9 +641,9 @@ xcb_xf86dri_get_client_driver_name_client_driver_name_end (const xcb_xf86dri_get
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_get_client_driver_name_reply_t *
-xcb_xf86dri_get_client_driver_name_reply (xcb_connection_t                             *c  /**< */,
+xcb_xf86dri_get_client_driver_name_reply (xcb_connection_t                             *c,
                                           xcb_xf86dri_get_client_driver_name_cookie_t   cookie  /**< */,
-                                          xcb_generic_error_t                         **e  /**< */);
+                                          xcb_generic_error_t                         **e);
 
 /**
  *
@@ -654,10 +654,10 @@ xcb_xf86dri_get_client_driver_name_reply (xcb_connection_t                      
  *
  */
 xcb_xf86dri_create_context_cookie_t
-xcb_xf86dri_create_context (xcb_connection_t *c  /**< */,
-                            uint32_t          screen  /**< */,
-                            uint32_t          visual  /**< */,
-                            uint32_t          context  /**< */);
+xcb_xf86dri_create_context (xcb_connection_t *c,
+                            uint32_t          screen,
+                            uint32_t          visual,
+                            uint32_t          context);
 
 /**
  *
@@ -671,10 +671,10 @@ xcb_xf86dri_create_context (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_create_context_cookie_t
-xcb_xf86dri_create_context_unchecked (xcb_connection_t *c  /**< */,
-                                      uint32_t          screen  /**< */,
-                                      uint32_t          visual  /**< */,
-                                      uint32_t          context  /**< */);
+xcb_xf86dri_create_context_unchecked (xcb_connection_t *c,
+                                      uint32_t          screen,
+                                      uint32_t          visual,
+                                      uint32_t          context);
 
 /**
  * Return the reply
@@ -691,9 +691,9 @@ xcb_xf86dri_create_context_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_create_context_reply_t *
-xcb_xf86dri_create_context_reply (xcb_connection_t                     *c  /**< */,
+xcb_xf86dri_create_context_reply (xcb_connection_t                     *c,
                                   xcb_xf86dri_create_context_cookie_t   cookie  /**< */,
-                                  xcb_generic_error_t                 **e  /**< */);
+                                  xcb_generic_error_t                 **e);
 
 /**
  *
@@ -707,9 +707,9 @@ xcb_xf86dri_create_context_reply (xcb_connection_t                     *c  /**< 
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_xf86dri_destroy_context_checked (xcb_connection_t *c  /**< */,
-                                     uint32_t          screen  /**< */,
-                                     uint32_t          context  /**< */);
+xcb_xf86dri_destroy_context_checked (xcb_connection_t *c,
+                                     uint32_t          screen,
+                                     uint32_t          context);
 
 /**
  *
@@ -720,9 +720,9 @@ xcb_xf86dri_destroy_context_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_xf86dri_destroy_context (xcb_connection_t *c  /**< */,
-                             uint32_t          screen  /**< */,
-                             uint32_t          context  /**< */);
+xcb_xf86dri_destroy_context (xcb_connection_t *c,
+                             uint32_t          screen,
+                             uint32_t          context);
 
 /**
  *
@@ -733,9 +733,9 @@ xcb_xf86dri_destroy_context (xcb_connection_t *c  /**< */,
  *
  */
 xcb_xf86dri_create_drawable_cookie_t
-xcb_xf86dri_create_drawable (xcb_connection_t *c  /**< */,
-                             uint32_t          screen  /**< */,
-                             uint32_t          drawable  /**< */);
+xcb_xf86dri_create_drawable (xcb_connection_t *c,
+                             uint32_t          screen,
+                             uint32_t          drawable);
 
 /**
  *
@@ -749,9 +749,9 @@ xcb_xf86dri_create_drawable (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_create_drawable_cookie_t
-xcb_xf86dri_create_drawable_unchecked (xcb_connection_t *c  /**< */,
-                                       uint32_t          screen  /**< */,
-                                       uint32_t          drawable  /**< */);
+xcb_xf86dri_create_drawable_unchecked (xcb_connection_t *c,
+                                       uint32_t          screen,
+                                       uint32_t          drawable);
 
 /**
  * Return the reply
@@ -768,9 +768,9 @@ xcb_xf86dri_create_drawable_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_create_drawable_reply_t *
-xcb_xf86dri_create_drawable_reply (xcb_connection_t                      *c  /**< */,
+xcb_xf86dri_create_drawable_reply (xcb_connection_t                      *c,
                                    xcb_xf86dri_create_drawable_cookie_t   cookie  /**< */,
-                                   xcb_generic_error_t                  **e  /**< */);
+                                   xcb_generic_error_t                  **e);
 
 /**
  *
@@ -784,9 +784,9 @@ xcb_xf86dri_create_drawable_reply (xcb_connection_t                      *c  /**
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_xf86dri_destroy_drawable_checked (xcb_connection_t *c  /**< */,
-                                      uint32_t          screen  /**< */,
-                                      uint32_t          drawable  /**< */);
+xcb_xf86dri_destroy_drawable_checked (xcb_connection_t *c,
+                                      uint32_t          screen,
+                                      uint32_t          drawable);
 
 /**
  *
@@ -797,12 +797,12 @@ xcb_xf86dri_destroy_drawable_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_xf86dri_destroy_drawable (xcb_connection_t *c  /**< */,
-                              uint32_t          screen  /**< */,
-                              uint32_t          drawable  /**< */);
+xcb_xf86dri_destroy_drawable (xcb_connection_t *c,
+                              uint32_t          screen,
+                              uint32_t          drawable);
 
 int
-xcb_xf86dri_get_drawable_info_sizeof (const void  *_buffer  /**< */);
+xcb_xf86dri_get_drawable_info_sizeof (const void  *_buffer);
 
 /**
  *
@@ -813,9 +813,9 @@ xcb_xf86dri_get_drawable_info_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xf86dri_get_drawable_info_cookie_t
-xcb_xf86dri_get_drawable_info (xcb_connection_t *c  /**< */,
-                               uint32_t          screen  /**< */,
-                               uint32_t          drawable  /**< */);
+xcb_xf86dri_get_drawable_info (xcb_connection_t *c,
+                               uint32_t          screen,
+                               uint32_t          drawable);
 
 /**
  *
@@ -829,27 +829,27 @@ xcb_xf86dri_get_drawable_info (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_get_drawable_info_cookie_t
-xcb_xf86dri_get_drawable_info_unchecked (xcb_connection_t *c  /**< */,
-                                         uint32_t          screen  /**< */,
-                                         uint32_t          drawable  /**< */);
+xcb_xf86dri_get_drawable_info_unchecked (xcb_connection_t *c,
+                                         uint32_t          screen,
+                                         uint32_t          drawable);
 
 xcb_xf86dri_drm_clip_rect_t *
-xcb_xf86dri_get_drawable_info_clip_rects (const xcb_xf86dri_get_drawable_info_reply_t *R  /**< */);
+xcb_xf86dri_get_drawable_info_clip_rects (const xcb_xf86dri_get_drawable_info_reply_t *R);
 
 int
-xcb_xf86dri_get_drawable_info_clip_rects_length (const xcb_xf86dri_get_drawable_info_reply_t *R  /**< */);
+xcb_xf86dri_get_drawable_info_clip_rects_length (const xcb_xf86dri_get_drawable_info_reply_t *R);
 
 xcb_xf86dri_drm_clip_rect_iterator_t
-xcb_xf86dri_get_drawable_info_clip_rects_iterator (const xcb_xf86dri_get_drawable_info_reply_t *R  /**< */);
+xcb_xf86dri_get_drawable_info_clip_rects_iterator (const xcb_xf86dri_get_drawable_info_reply_t *R);
 
 xcb_xf86dri_drm_clip_rect_t *
-xcb_xf86dri_get_drawable_info_back_clip_rects (const xcb_xf86dri_get_drawable_info_reply_t *R  /**< */);
+xcb_xf86dri_get_drawable_info_back_clip_rects (const xcb_xf86dri_get_drawable_info_reply_t *R);
 
 int
-xcb_xf86dri_get_drawable_info_back_clip_rects_length (const xcb_xf86dri_get_drawable_info_reply_t *R  /**< */);
+xcb_xf86dri_get_drawable_info_back_clip_rects_length (const xcb_xf86dri_get_drawable_info_reply_t *R);
 
 xcb_xf86dri_drm_clip_rect_iterator_t
-xcb_xf86dri_get_drawable_info_back_clip_rects_iterator (const xcb_xf86dri_get_drawable_info_reply_t *R  /**< */);
+xcb_xf86dri_get_drawable_info_back_clip_rects_iterator (const xcb_xf86dri_get_drawable_info_reply_t *R);
 
 /**
  * Return the reply
@@ -866,12 +866,12 @@ xcb_xf86dri_get_drawable_info_back_clip_rects_iterator (const xcb_xf86dri_get_dr
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_get_drawable_info_reply_t *
-xcb_xf86dri_get_drawable_info_reply (xcb_connection_t                        *c  /**< */,
+xcb_xf86dri_get_drawable_info_reply (xcb_connection_t                        *c,
                                      xcb_xf86dri_get_drawable_info_cookie_t   cookie  /**< */,
-                                     xcb_generic_error_t                    **e  /**< */);
+                                     xcb_generic_error_t                    **e);
 
 int
-xcb_xf86dri_get_device_info_sizeof (const void  *_buffer  /**< */);
+xcb_xf86dri_get_device_info_sizeof (const void  *_buffer);
 
 /**
  *
@@ -882,8 +882,8 @@ xcb_xf86dri_get_device_info_sizeof (const void  *_buffer  /**< */);
  *
  */
 xcb_xf86dri_get_device_info_cookie_t
-xcb_xf86dri_get_device_info (xcb_connection_t *c  /**< */,
-                             uint32_t          screen  /**< */);
+xcb_xf86dri_get_device_info (xcb_connection_t *c,
+                             uint32_t          screen);
 
 /**
  *
@@ -897,17 +897,17 @@ xcb_xf86dri_get_device_info (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_get_device_info_cookie_t
-xcb_xf86dri_get_device_info_unchecked (xcb_connection_t *c  /**< */,
-                                       uint32_t          screen  /**< */);
+xcb_xf86dri_get_device_info_unchecked (xcb_connection_t *c,
+                                       uint32_t          screen);
 
 uint32_t *
-xcb_xf86dri_get_device_info_device_private (const xcb_xf86dri_get_device_info_reply_t *R  /**< */);
+xcb_xf86dri_get_device_info_device_private (const xcb_xf86dri_get_device_info_reply_t *R);
 
 int
-xcb_xf86dri_get_device_info_device_private_length (const xcb_xf86dri_get_device_info_reply_t *R  /**< */);
+xcb_xf86dri_get_device_info_device_private_length (const xcb_xf86dri_get_device_info_reply_t *R);
 
 xcb_generic_iterator_t
-xcb_xf86dri_get_device_info_device_private_end (const xcb_xf86dri_get_device_info_reply_t *R  /**< */);
+xcb_xf86dri_get_device_info_device_private_end (const xcb_xf86dri_get_device_info_reply_t *R);
 
 /**
  * Return the reply
@@ -924,9 +924,9 @@ xcb_xf86dri_get_device_info_device_private_end (const xcb_xf86dri_get_device_inf
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_get_device_info_reply_t *
-xcb_xf86dri_get_device_info_reply (xcb_connection_t                      *c  /**< */,
+xcb_xf86dri_get_device_info_reply (xcb_connection_t                      *c,
                                    xcb_xf86dri_get_device_info_cookie_t   cookie  /**< */,
-                                   xcb_generic_error_t                  **e  /**< */);
+                                   xcb_generic_error_t                  **e);
 
 /**
  *
@@ -937,9 +937,9 @@ xcb_xf86dri_get_device_info_reply (xcb_connection_t                      *c  /**
  *
  */
 xcb_xf86dri_auth_connection_cookie_t
-xcb_xf86dri_auth_connection (xcb_connection_t *c  /**< */,
-                             uint32_t          screen  /**< */,
-                             uint32_t          magic  /**< */);
+xcb_xf86dri_auth_connection (xcb_connection_t *c,
+                             uint32_t          screen,
+                             uint32_t          magic);
 
 /**
  *
@@ -953,9 +953,9 @@ xcb_xf86dri_auth_connection (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_xf86dri_auth_connection_cookie_t
-xcb_xf86dri_auth_connection_unchecked (xcb_connection_t *c  /**< */,
-                                       uint32_t          screen  /**< */,
-                                       uint32_t          magic  /**< */);
+xcb_xf86dri_auth_connection_unchecked (xcb_connection_t *c,
+                                       uint32_t          screen,
+                                       uint32_t          magic);
 
 /**
  * Return the reply
@@ -972,9 +972,9 @@ xcb_xf86dri_auth_connection_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_xf86dri_auth_connection_reply_t *
-xcb_xf86dri_auth_connection_reply (xcb_connection_t                      *c  /**< */,
+xcb_xf86dri_auth_connection_reply (xcb_connection_t                      *c,
                                    xcb_xf86dri_auth_connection_cookie_t   cookie  /**< */,
-                                   xcb_generic_error_t                  **e  /**< */);
+                                   xcb_generic_error_t                  **e);
 
 
 #ifdef __cplusplus

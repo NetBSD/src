@@ -3,7 +3,6 @@
 // RUN: %clang_cc1 -fopenmp -x c++ -triple x86_64-unknown-unknown -fexceptions -fcxx-exceptions -std=c++11 -include-pch %t -verify %s -emit-llvm -o - | FileCheck %s
 // RUN: %clang_cc1 -verify -triple x86_64-apple-darwin10 -fopenmp -fexceptions -fcxx-exceptions -debug-info-kind=line-tables-only -x c++ -emit-llvm %s -o - | FileCheck %s --check-prefix=TERM_DEBUG
 // expected-no-diagnostics
-// REQUIRES: x86-registered-target
 #ifndef HEADER
 #define HEADER
 
@@ -39,7 +38,11 @@ int main() {
 #pragma omp critical(the_name1) hint(23)
   foo();
 // CHECK:       call {{.*}}void @__kmpc_critical([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]], [8 x i32]* [[THE_NAME_LOCK]])
+// CHECK:       br label
 // CHECK-NOT:   call {{.*}}void @__kmpc_end_critical(
+// CHECK:       br label
+// CHECK-NOT:   call {{.*}}void @__kmpc_end_critical(
+// CHECK:       br label
   if (a)
 #pragma omp critical(the_name)
     while (1)
@@ -60,6 +63,8 @@ void critical_ref(S &s) {
   // CHECK: [[S_REF:%.+]] = load %struct.S*, %struct.S** [[S_ADDR]],
   // CHECK: [[S_A_REF:%.+]] = getelementptr inbounds %struct.S, %struct.S* [[S_REF]], i32 0, i32 0
   ++s.a;
+  // CHECK: [[S_REF:%.+]] = load %struct.S*, %struct.S** [[S_ADDR]],
+  // CHECK: store %struct.S* [[S_REF]], %struct.S** [[S_ADDR:%.+]],
   // CHECK: call void @__kmpc_critical(
 #pragma omp critical
   // CHECK: [[S_REF:%.+]] = load %struct.S*, %struct.S** [[S_ADDR]],

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.191.2.4 2017/01/07 08:56:50 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.191.2.5 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.4 2017/01/07 08:56:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.5 2017/03/20 06:57:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mpls.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sctp.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -636,8 +637,8 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	}
 	if (ifa) {
 		struct ifaddr *oifa = rt->rt_ifa;
-		if (oifa != ifa &&
-		    !ifa_is_destroying(ifa) && !if_is_deactivated(new_ifp)) {
+		if (oifa != ifa && !ifa_is_destroying(ifa) &&
+		    new_ifp != NULL && !if_is_deactivated(new_ifp)) {
 			if (oifa && oifa->ifa_rtrequest)
 				oifa->ifa_rtrequest(RTM_DELETE, rt, info);
 			rt_replace_ifa(rt, ifa);
@@ -887,11 +888,15 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			break;
 
 		case RTM_CHANGE:
+#ifdef NET_MPSAFE
 			error = rt_update_prepare(rt);
 			if (error == 0) {
 				error = route_output_change(rt, &info, rtm);
 				rt_update_finish(rt);
 			}
+#else
+			error = route_output_change(rt, &info, rtm);
+#endif
 			if (error != 0)
 				goto flush;
 			/*FALLTHROUGH*/
@@ -996,6 +1001,7 @@ rtm_setmetrics(const struct rtentry *in, struct rt_xmsghdr *out)
 	metric(rmx_rttvar);
 	metric(rmx_hopcount);
 	metric(rmx_mtu);
+	metric(rmx_locks);
 #undef metric
 	out->rtm_rmx.rmx_expire = in->rt_rmx.rmx_expire ?
 	    time_mono_to_wall(in->rt_rmx.rmx_expire) : 0;
@@ -1058,8 +1064,8 @@ rt_getlen(int type)
 #ifdef COMPAT_70
 		return sizeof(struct ifa_msghdr70);
 #else
-#ifdef DIAGNOSTIC
-		printf("RTM_ONEWADDR\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported RTM type %d\n", __func__, type);
 #endif
 		return -1;
 #endif
@@ -1072,8 +1078,8 @@ rt_getlen(int type)
 #ifdef COMPAT_14
 		return sizeof(struct if_msghdr14);
 #else
-#ifdef DIAGNOSTIC
-		printf("RTM_OOIFINFO\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported RTM type RTM_OOIFINFO\n", __func__);
 #endif
 		return -1;
 #endif
@@ -1081,8 +1087,8 @@ rt_getlen(int type)
 #ifdef COMPAT_50
 		return sizeof(struct if_msghdr50);
 #else
-#ifdef DIAGNOSTIC
-		printf("RTM_OIFINFO\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported RTM type RTM_OIFINFO\n", __func__);
 #endif
 		return -1;
 #endif
@@ -1214,8 +1220,8 @@ again:
 		if (rw->w_needed <= 0 && rw->w_where) {
 			if (rw->w_tmemsize < len) {
 				if (rw->w_tmem)
-					free(rw->w_tmem, M_RTABLE);
-				rw->w_tmem = malloc(len, M_RTABLE, M_NOWAIT);
+					kmem_free(rw->w_tmem, rw->w_tmemsize);
+				rw->w_tmem = kmem_alloc(len, KM_SLEEP);
 				if (rw->w_tmem)
 					rw->w_tmemsize = len;
 				else
@@ -1443,10 +1449,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		default:
 			continue;
 		}
-#ifdef DIAGNOSTIC
-		if (m == NULL)
-			panic("%s: called with wrong command", __func__);
-#endif
+		KASSERTMSG(m != NULL, "called with wrong command");
 		COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
 	}
 #undef cmdpass
@@ -1635,7 +1638,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			       struct rt_addrinfo *);
 	int s;
 	struct psref psref;
-	int bound = curlwp_bind();
+	int bound;
 
 	switch (type) {
 	case NET_RT_IFLIST:
@@ -1665,22 +1668,24 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		break;
 #endif
 	default:
-#ifdef DIAGNOSTIC
-		printf("sysctl_iflist\n");
+#ifdef RTSOCK_DEBUG
+		printf("%s: unsupported IFLIST type %d\n", __func__, type);
 #endif
 		return EINVAL;
 	}
 
 	memset(&info, 0, sizeof(info));
 
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
+		int _s;
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		if (IFADDR_READER_EMPTY(ifp))
 			continue;
 
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 		pserialize_read_exit(s);
 
 		info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1739,33 +1744,32 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 				panic("sysctl_iflist(2)");
 			}
 		}
+		_s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
+			struct psref _psref;
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
+			ifa_acquire(ifa, &_psref);
+			pserialize_read_exit(_s);
+
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			if ((error = iflist_addr(w, ifa, &info)) != 0)
-				goto release_exit;
-			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-				struct ifa_xmsghdr *ifam;
+			error = iflist_addr(w, ifa, &info);
 
-				ifam = (struct ifa_xmsghdr *)w->w_tmem;
-				ifam->ifam_index = ifa->ifa_ifp->if_index;
-				ifam->ifam_flags = ifa->ifa_flags;
-				ifam->ifam_metric = ifa->ifa_metric;
-				ifam->ifam_addrs = info.rti_addrs;
-				error = copyout(w->w_tmem, w->w_where, len);
-				if (error)
-					goto release_exit;
-				w->w_where = (char *)w->w_where + len;
+			_s = pserialize_read_enter();
+			ifa_release(ifa, &_psref);
+			if (error != 0) {
+				pserialize_read_exit(_s);
+				goto release_exit;
 			}
 		}
+		pserialize_read_exit(_s);
 		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
 		    info.rti_info[RTAX_BRD] = NULL;
 
 		s = pserialize_read_enter();
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
@@ -1773,7 +1777,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	return 0;
 
 release_exit:
-	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	if_release(ifp, &psref);
 	curlwp_bindx(bound);
 	return error;
 }
@@ -1801,7 +1805,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 again:
 	/* we may return here if a later [re]alloc of the t_mem buffer fails */
 	if (w.w_tmemneeded) {
-		w.w_tmem = malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
+		w.w_tmem = kmem_alloc(w.w_tmemneeded, KM_SLEEP);
 		w.w_tmemsize = w.w_tmemneeded;
 		w.w_tmemneeded = 0;
 	}
@@ -1863,7 +1867,7 @@ again:
 		goto again;
 
 	if (w.w_tmem)
-		free(w.w_tmem, M_RTABLE);
+		kmem_free(w.w_tmem, w.w_tmemsize);
 	w.w_needed += w.w_given;
 	if (where) {
 		*given = (char *)w.w_where - (char *)where;

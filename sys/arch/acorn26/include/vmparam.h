@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2014/09/13 18:08:38 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.4.1 2017/03/20 06:57:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -87,12 +87,6 @@
 #define	VM_MIN_KERNEL_ADDRESS	VM_MAX_ADDRESS
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0x02000000)
 #define	VM_MAXKERN_ADDRESS	VM_MAX_KERNEL_ADDRESS
-
-/* XXX max. amount of KVM to be used by buffers. */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF \
-	((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / 4)
-#endif
 
 /* Physical memory parameters */
 

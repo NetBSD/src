@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.331.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.331.2.2 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -306,6 +306,10 @@ struct proc {
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
 	pid_t 		p_fpid;		/* :: forked pid */
+	pid_t 		p_vfpid;	/* :: vforked pid */
+	pid_t 		p_vfpid_done;	/* :: vforked done pid */
+	lwpid_t		p_lwp_created;	/* :: lwp created */
+	lwpid_t		p_lwp_exited;	/* :: lwp exited */
 	u_int		p_nsems;	/* Count of semaphores */
 
 /*
@@ -394,6 +398,14 @@ struct proc {
  * and p_lock.  Access from process context only.
  */
 #define	PSL_TRACEFORK	0x00000001 /* traced process wants fork events */
+#define	PSL_TRACEVFORK	0x00000002 /* traced process wants vfork events */
+#define	PSL_TRACEVFORK_DONE	\
+			0x00000004 /* traced process wants vfork done events */
+#define	PSL_TRACELWP_CREATE	\
+			0x00000008 /* traced process wants LWP create events */
+#define	PSL_TRACELWP_EXIT	\
+			0x00000010 /* traced process wants LWP exit events */
+
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	PSL_CHTRACED	0x00400000 /* Child has been traced & reparented */
@@ -557,6 +569,8 @@ _proclist_skipmarker(struct proc *p0)
     sizeof(process_reg32) : sizeof(struct reg))
 #define PROC_FPREGSZ(p) (((p)->p_flag & PK_32) ? \
     sizeof(process_fpreg32) : sizeof(struct fpreg))
+#define PROC_DBREGSZ(p) (((p)->p_flag & PK_32) ? \
+    sizeof(process_dbreg32) : sizeof(struct dbreg))
 
 /*
  * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.

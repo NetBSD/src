@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2016 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -43,13 +43,18 @@ LDAPAsynConnection::LDAPAsynConnection(const string& url, int port,
     this->setConstraints(cons);
 }
 
-LDAPAsynConnection::~LDAPAsynConnection(){}
+LDAPAsynConnection::~LDAPAsynConnection(){
+	unbind();
+	delete m_constr;
+}
 
 void LDAPAsynConnection::init(const string& hostname, int port){
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAsynConnection::init" << endl);
     DEBUG(LDAP_DEBUG_TRACE | LDAP_DEBUG_PARAMETER,
             "   hostname:" << hostname << endl
             << "   port:" << port << endl);
+
+	unbind();
 
     m_uri.setScheme("ldap");
     m_uri.setHost(hostname);
@@ -66,6 +71,8 @@ void LDAPAsynConnection::init(const string& hostname, int port){
 }
 
 void LDAPAsynConnection::initialize(const std::string& uri){
+	unbind();
+
 	m_uri.setURLString(uri);
     int ret = ldap_initialize(&cur_session, m_uri.getURLString().c_str());
     if ( ret != LDAP_SUCCESS ) {
@@ -277,6 +284,7 @@ void LDAPAsynConnection::unbind(){
 
 void LDAPAsynConnection::setConstraints(LDAPConstraints *cons){
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAsynConnection::setConstraints()" << endl);
+	delete m_constr;
     m_constr=cons;
 }
 

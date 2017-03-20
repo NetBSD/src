@@ -76,14 +76,14 @@ whether MemorySanitizer is enabled. :ref:`\_\_has\_feature
     #  endif
     #endif
 
-``__attribute__((no_sanitize_memory))``
+``__attribute__((no_sanitize("memory")))``
 -----------------------------------------------
 
 Some code should not be checked by MemorySanitizer.  One may use the function
-attribute `no_sanitize_memory` to disable uninitialized checks in a particular
-function.  MemorySanitizer may still instrument such functions to avoid false
-positives.  This attribute may not be supported by other compilers, so we
-suggest to use it together with ``__has_feature(memory_sanitizer)``.
+attribute ``no_sanitize("memory")`` to disable uninitialized checks in a
+particular function.  MemorySanitizer may still instrument such functions to
+avoid false positives.  This attribute may not be supported by other compilers,
+so we suggest to use it together with ``__has_feature(memory_sanitizer)``.
 
 Blacklist
 ---------
@@ -171,6 +171,8 @@ Handling external code
 MemorySanitizer requires that all program code is instrumented. This
 also includes any libraries that the program depends on, even libc.
 Failing to achieve this may result in false reports.
+For the same reason you may need to replace all inline assembly code that writes to memory
+with a pure C/C++ code.
 
 Full MemorySanitizer instrumentation is very difficult to achieve. To
 make it easier, MemorySanitizer runtime library includes 70+

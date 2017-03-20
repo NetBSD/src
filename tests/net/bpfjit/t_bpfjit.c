@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.11 2015/02/14 22:34:33 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.11.2.1 2017/03/20 06:58:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014-2015 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.11 2015/02/14 22:34:33 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.11.2.1 2017/03/20 06:58:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: t_bpfjit.c,v 1.11 2015/02/14 22:34:33 alnsn Exp $");
 #undef m_data
 #include <atf-c.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 
 static uint8_t deadbeef_at_5[16] = {

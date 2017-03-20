@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.214.2.1 2017/01/07 08:56:58 pgoyette Exp $	*/
+/*	$NetBSD: parse.c,v 1.214.2.2 2017/03/20 06:58:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.214.2.1 2017/01/07 08:56:58 pgoyette Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.214.2.2 2017/03/20 06:58:04 pgoyette Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.214.2.1 2017/01/07 08:56:58 pgoyette Exp $");
+__RCSID("$NetBSD: parse.c,v 1.214.2.2 2017/03/20 06:58:04 pgoyette Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -564,7 +564,11 @@ loadfile(const char *path, int fd)
 
 	/* truncate malloc region to actual length (maybe not useful) */
 	if (lf->len > 0) {
+		/* as for mmap case, ensure trailing \n */
+		if (lf->buf[lf->len - 1] != '\n')
+			lf->len++;
 		lf->buf = bmake_realloc(lf->buf, lf->len);
+		lf->buf[lf->len - 1] = '\n';
 	}
 
 done:

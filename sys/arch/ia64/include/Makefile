@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.6.8.1 2016/08/06 00:19:05 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.6.8.2 2017/03/20 06:57:15 pgoyette Exp $
 
 INCSDIR= /usr/include/ia64
 
 INCS=	_regset.h acpi_machdep.h ansi.h \
 	aout_machdep.h asm.h atomic.h bootinfo.h bswap.h cdefs.h \
-	cpu.h cpufunc.h dig64.h disklabel.h efi.h \
-	elf_machdep.h endian.h endian_machdep.h float.h fpu.h frame.h \
+	cpu.h cpufunc.h dig64.h disklabel.h efi.h elf_machdep.h \
+	endian.h endian_machdep.h fenv.h float.h fpu.h frame.h \
 	ia64_cpu.h ieee.h ieeefp.h int_const.h int_fmtio.h int_limits.h \
 	int_mwgwtypes.h int_types.h intr.h limits.h \
 	loadfile_machdep.h lock.h math.h mca_machdep.h mcontext.h md_var.h \

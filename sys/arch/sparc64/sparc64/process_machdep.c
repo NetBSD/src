@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.24.10.1 2017/01/07 08:56:27 pgoyette Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.24.10.2 2017/03/20 06:57:21 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24.10.1 2017/01/07 08:56:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24.10.2 2017/03/20 06:57:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,8 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t sz)
 	struct fpstate64	*fs;
 
 	if ((fs = l->l_md.md_fpstate) == NULL) {
-		fs = kmem_zalloc(sizeof(*fs), KM_SLEEP);
+		fs = pool_cache_get(fpstate_cache, PR_WAITOK);
+		memcpy(fs, &initfpstate, sizeof *fs);
 		l->l_md.md_fpstate = fs;
 	} else
 		fs->fs_qsize = 0;

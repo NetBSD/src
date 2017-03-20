@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.185 2016/07/03 14:24:58 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.185.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.185 2016/07/03 14:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.185.2.1 2017/03/20 06:57:47 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -967,6 +967,24 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
+	/* If the process is traced, report lwp creation to a debugger */
+	if ((p2->p_slflag & (PSL_TRACED|PSL_TRACELWP_CREATE|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_CREATE)) {
+		ksiginfo_t ksi;
+
+		/* Tracing */
+		KASSERT((l2->l_flag & LW_SYSTEM) == 0);
+
+		p2->p_lwp_created = l2->l_lid;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_LWP;
+		mutex_enter(proc_lock);
+		kpsignal(p2, &ksi, NULL);
+		mutex_exit(proc_lock);
+	}
+
 	return (0);
 }
 
@@ -1029,6 +1047,24 @@ lwp_exit(struct lwp *l)
 	 * Verify that we hold no locks other than the kernel lock.
 	 */
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
+
+	/* If the process is traced, report lwp termination to a debugger */
+	if ((p->p_slflag & (PSL_TRACED|PSL_TRACELWP_EXIT|PSL_SYSCALL)) ==
+	    (PSL_TRACED|PSL_TRACELWP_EXIT)) {
+		ksiginfo_t ksi;
+
+		/* Tracing */
+		KASSERT((l->l_flag & LW_SYSTEM) == 0);
+
+		p->p_lwp_exited = l->l_lid;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_LWP;
+		mutex_enter(proc_lock);
+		kpsignal(p, &ksi, NULL);
+		mutex_exit(proc_lock);
+	}
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the

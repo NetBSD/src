@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.113.2.1 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.113.2.2 2017/03/20 06:57:51 pgoyette Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.113.2.1 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.113.2.2 2017/03/20 06:57:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -213,6 +213,16 @@ const struct ip6protosw inet6sw[] = {
 	.pr_slowtimo = frag6_slowtimo,
 	.pr_drain = frag6_drainstub,
 },
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_ICMPV6,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = icmp6_input,
+	.pr_ctlinput = rip6_ctlinput,
+	.pr_ctloutput = icmp6_ctloutput,
+	.pr_usrreqs = &rip6_usrreqs,
+	.pr_init = icmp6_init,
+},
 {	.pr_type = SOCK_DGRAM,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_UDP,
@@ -297,16 +307,6 @@ const struct ip6protosw inet6sw[] = {
 #endif /* GATEWAY */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
-	.pr_protocol = IPPROTO_ICMPV6,
-	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-	.pr_input = icmp6_input,
-	.pr_ctlinput = rip6_ctlinput,
-	.pr_ctloutput = icmp6_ctloutput,
-	.pr_usrreqs = &rip6_usrreqs,
-	.pr_init = icmp6_init,
-},
-{	.pr_type = SOCK_RAW,
-	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_DSTOPTS,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = dest6_input,
@@ -388,6 +388,16 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreqs = &rip6_usrreqs,
 },
 #endif /* NCARP */
+{	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_L2TP,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = encap6_input,
+	.pr_ctlinput = rip6_ctlinput,
+	.pr_ctloutput = rip6_ctloutput,
+	.pr_usrreqs = &rip6_usrreqs,
+	.pr_init = encap_init,
+},
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_PIM,

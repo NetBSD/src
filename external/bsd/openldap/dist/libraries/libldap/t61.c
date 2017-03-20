@@ -1,9 +1,9 @@
-/*	$NetBSD: t61.c,v 1.1.1.5 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: t61.c,v 1.1.1.5.6.1 2017/03/20 06:56:14 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2014 The OpenLDAP Foundation.
+ * Copyright 2002-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,9 @@
  * These routines will perform a lossless translation from T.61 to UTF-8
  * and a lossy translation from UTF-8 to T.61.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t61.c,v 1.1.1.5.6.1 2017/03/20 06:56:14 pgoyette Exp $");
 
 #include "portable.h"
 

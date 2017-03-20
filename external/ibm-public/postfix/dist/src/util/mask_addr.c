@@ -1,4 +1,4 @@
-/*	$NetBSD: mask_addr.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: mask_addr.c,v 1.1.1.1.32.1 2017/03/20 06:56:41 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -63,7 +63,7 @@ void    mask_addr(unsigned char *addr_bytes,
     network_bits %= CHAR_BIT;
 
     if (network_bits != 0)
-	*p++ &= ~0 << (CHAR_BIT - network_bits);
+	*p++ &= ~0U << (CHAR_BIT - network_bits);
 
     while (p < addr_bytes + addr_byte_count)
 	*p++ = 0;

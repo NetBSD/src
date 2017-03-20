@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.33.2.1 2016/11/04 14:42:22 pgoyette Exp $	*/
+/*	$NetBSD: show.c,v 1.33.2.2 2017/03/20 06:51:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.33.2.1 2016/11/04 14:42:22 pgoyette Exp $");
+__RCSID("$NetBSD: show.c,v 1.33.2.2 2017/03/20 06:51:32 pgoyette Exp $");
 #endif
 #endif /* not lint */
 

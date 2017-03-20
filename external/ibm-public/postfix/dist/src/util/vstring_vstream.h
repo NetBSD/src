@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring_vstream.h,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: vstring_vstream.h,v 1.1.1.1.32.1 2017/03/20 06:56:42 pgoyette Exp $	*/
 
 #ifndef _VSTRING_VSTREAM_H_INCLUDED_
 #define _VSTRING_VSTREAM_H_INCLUDED_
@@ -21,12 +21,12 @@
  /*
   * External interface.
   */
-extern int vstring_get(VSTRING *, VSTREAM *);
-extern int vstring_get_nonl(VSTRING *, VSTREAM *);
-extern int vstring_get_null(VSTRING *, VSTREAM *);
-extern int vstring_get_bound(VSTRING *, VSTREAM *, ssize_t);
-extern int vstring_get_nonl_bound(VSTRING *, VSTREAM *, ssize_t);
-extern int vstring_get_null_bound(VSTRING *, VSTREAM *, ssize_t);
+extern int WARN_UNUSED_RESULT vstring_get(VSTRING *, VSTREAM *);
+extern int WARN_UNUSED_RESULT vstring_get_nonl(VSTRING *, VSTREAM *);
+extern int WARN_UNUSED_RESULT vstring_get_null(VSTRING *, VSTREAM *);
+extern int WARN_UNUSED_RESULT vstring_get_bound(VSTRING *, VSTREAM *, ssize_t);
+extern int WARN_UNUSED_RESULT vstring_get_nonl_bound(VSTRING *, VSTREAM *, ssize_t);
+extern int WARN_UNUSED_RESULT vstring_get_null_bound(VSTRING *, VSTREAM *, ssize_t);
 
  /*
   * Backwards compatibility for code that still uses the vstring_fgets()

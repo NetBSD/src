@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2016/06/15 13:57:26 riastradh Exp $
+# $NetBSD: Makefile,v 1.19.2.1 2017/03/20 06:58:09 pgoyette Exp $
 
 WARNS?=	4
 
@@ -25,5 +25,6 @@ RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c if_nametoindex.c
 CPPFLAGS+=	-DRUMP_ACTION
 .endif
 
+CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 .include <bsd.prog.mk>

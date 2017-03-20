@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.56 2013/10/19 01:09:58 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.56.8.1 2017/03/20 06:57:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.56 2013/10/19 01:09:58 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.56.8.1 2017/03/20 06:57:01 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,9 @@ pass1(void)
 		progress_done();
 #endif /* PROGRESS */
 	freeinodebuf();
+#ifndef NO_FFS_EI
 	do_blkswap = 0; /* has been done */
+#endif
 }
 
 static void

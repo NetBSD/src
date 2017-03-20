@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.46.4.1 2017/01/07 08:56:19 pgoyette Exp $
+#	$NetBSD: GENERIC,v 1.46.4.2 2017/03/20 06:57:15 pgoyette Exp $
 #
 #
 
@@ -44,6 +44,7 @@ file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1

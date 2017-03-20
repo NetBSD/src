@@ -41,7 +41,7 @@ namespace HexagonII {
     TypeST      = 6,
     TypeSYSTEM  = 7,
     TypeXTYPE   = 8,
-    TypeMEMOP   = 9,
+    TypeV4LDST  = 9,
     TypeNV      = 10,
     TypeDUPLEX  = 11,
     TypeCOMPOUND = 12,
@@ -92,7 +92,7 @@ namespace HexagonII {
 
   // MemAccessSize is represented as 1+log2(N) where N is size in bits.
   enum class MemAccessSize {
-    NoMemAccess = 0,            // Not a memory acces instruction.
+    NoMemAccess = 0,            // Not a memory access instruction.
     ByteAccess = 1,             // Byte access instruction (memb).
     HalfWordAccess = 2,         // Half word access instruction (memh).
     WordAccess = 3,             // Word access instruction (memw).
@@ -201,9 +201,12 @@ namespace HexagonII {
     AccumulatorPos = 54,
     AccumulatorMask = 0x1,
 
-    // Complex XU, prevent xu competition by prefering slot3
+    // Complex XU, prevent xu competition by preferring slot3
     PrefersSlot3Pos = 55,
     PrefersSlot3Mask = 0x1,
+
+    CofMax1Pos = 60,
+    CofMax1Mask = 0x1
   };
 
   // *** The code above must match HexagonInstrFormat*.td *** //
@@ -227,7 +230,27 @@ namespace HexagonII {
     MO_LO16, MO_HI16,
 
     // Offset from the base of the SDA.
-    MO_GPREL
+    MO_GPREL,
+
+    // MO_GDGOT - indicates GOT relative relocation for TLS
+    // GeneralDynamic method
+    MO_GDGOT,
+
+    // MO_GDPLT - indicates PLT relative relocation for TLS
+    // GeneralDynamic method
+    MO_GDPLT,
+
+    // MO_IE - indicates non PIC relocation for TLS
+    // Initial Executable method
+    MO_IE,
+
+    // MO_IEGOT - indicates PIC relocation for TLS
+    // Initial Executable method
+    MO_IEGOT,
+
+    // MO_TPREL - indicates relocation for TLS
+    // local Executable method
+    MO_TPREL
   };
 
   // Hexagon Sub-instruction classes.

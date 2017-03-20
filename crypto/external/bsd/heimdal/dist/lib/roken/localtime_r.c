@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime_r.c,v 1.1.1.1 2011/04/13 18:15:41 elric Exp $	*/
+/*	$NetBSD: localtime_r.c,v 1.1.1.1.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Kungliga Tekniska Högskolan

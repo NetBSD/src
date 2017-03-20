@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.58 2014/05/25 13:51:25 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.58.8.1 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.58 2014/05/25 13:51:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.58.8.1 2017/03/20 06:57:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +182,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.58 2014/05/25 13:51:25 hannken Exp
 #include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/kauth.h>
+#include <sys/fcntl.h>
 
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
@@ -491,7 +492,8 @@ layer_access(void *v)
 }
 
 /*
- * We must handle open to be able to catch MNT_NODEV and friends.
+ * We must handle open to be able to catch MNT_NODEV and friends
+ * and increment the lower v_writecount.
  */
 int
 layer_open(void *v)
@@ -503,12 +505,43 @@ layer_open(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	enum vtype lower_type = LAYERVPTOLOWERVP(vp)->v_type;
+	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
+	int error;
 
-	if (((lower_type == VBLK) || (lower_type == VCHR)) &&
+	if (((lvp->v_type == VBLK) || (lvp->v_type == VCHR)) &&
 	    (vp->v_mount->mnt_flag & MNT_NODEV))
 		return ENXIO;
 
+	error = LAYERFS_DO_BYPASS(vp, ap);
+	if (error == 0 && (ap->a_mode & FWRITE)) {
+		mutex_enter(lvp->v_interlock);
+		lvp->v_writecount++;
+		mutex_exit(lvp->v_interlock);
+	}
+	return error;
+}
+
+/*
+ * We must handle close to decrement the lower v_writecount.
+ */
+int
+layer_close(void *v)
+{
+	struct vop_close_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		int a_fflag;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct vnode *lvp = LAYERVPTOLOWERVP(vp);
+
+	if ((ap->a_fflag & FWRITE)) {
+		mutex_enter(lvp->v_interlock);
+		KASSERT(lvp->v_writecount > 0);
+		lvp->v_writecount--;
+		mutex_exit(lvp->v_interlock);
+	}
 	return LAYERFS_DO_BYPASS(vp, ap);
 }
 
@@ -660,8 +693,15 @@ layer_revoke(void *v)
 	 * We will most likely end up in vclean which uses the v_usecount
 	 * to determine if a vnode is active.  Take an extra reference on
 	 * the lower vnode so it will always close and inactivate.
+	 * Remove our writecount from the lower vnode.
 	 */
 	vref(lvp);
+
+	mutex_enter(vp->v_interlock);
+	KASSERT(vp->v_interlock == lvp->v_interlock);
+	lvp->v_writecount -= vp->v_writecount;
+	mutex_exit(vp->v_interlock);
+
 	error = LAYERFS_DO_BYPASS(vp, ap);
 	vrele(lvp);
 

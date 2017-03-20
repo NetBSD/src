@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.4.6.1 2017/03/20 06:56:14 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,9 @@
 /* Portions Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: search.c,v 1.1.1.4.6.1 2017/03/20 06:56:14 pgoyette Exp $");
 
 #include "portable.h"
 

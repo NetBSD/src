@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173.2.4 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173.2.5 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -436,3 +436,50 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dreamcast: Add preliminary "G1-ATA" IDE HDD support. [tsutsui 20161229]
 	resolvconf(8): Import openresolv-3.9.0 [roy 20161230]
 	flex(1): Import flex-2.6.3 [christos 20170102]
+	ptrace(2): Add new si_code value of SIGTRAP: TRAP_EXEC [kamil 20170107]
+	ptrace(2): Add signal information accessors API:
+		PT_GET_SIGINFO and PT_SET_SIGINFO [kamil 20170107]
+	nsd(8): Add the NSD Authoritative DNS server [christos 20170107]
+	zlib(3): Import 1.2.10 [christos 20170109]
+	ptrace(2): Add new si_code value of SIGTRAP: TRAP_CHLD [kamil 20170110]
+	ptrace(2): Add new options in EVENT_MASK: PTRACE_VFORK and
+		PTRACE_VFORK_DONE [kamil 20170113]
+	ptrace(2): Add new options in EVENT_MASK: PTRACE_LWP_CREATE and
+		PTRACE_LWP_EXIT [kamil 20170114]
+	siginfo(2): Add new si_code for SIGTRAP: TRAP_LWP [kamil 20170114]
+	libpcap: Import 1.8.1. [christos 20170124]
+	tcpdump(8): Import 4.8.1. [christos 20170124]
+	acpi(4): Updated ACPICA to 20170119. [christos 20170125]
+	bta2dpd(8): Add new bluetooth A2DP daemon. [nat 20170129]
+	kerberos(8): Update to latest Heimdal-HEAD [christos 20170128]
+	libevent: Import libevent 2.1.18 [christos 20170131]
+	nc(1): Add a netcat utility from OpenBSD [christos 20170206]
+	pthread_dbg(3): Removed from the base distribution. [kamil 20170208]
+	ixg(4): Support TX/RX multiqueue [msaitoh 20170208]
+	ixv(4): Add Intel 10G Ethernet virtual function driver.
+		[msaitoh 20170208]
+	bind: Import version 9.10.4-P6. [christos 20170208]
+	openldap: Import 2.4.44. [christos 20170208]
+	libc: Add accept4 function for compatibility [maya 20170208]
+	file(1): Upgraded to 5.30. [christos 20170210]
+	byacc: update to 20170201 [christos 20170211]
+	ptrace(2): Add signal mask information accessors API:
+		PT_GET_SIGMASK and PT_SET_SIGMASK [kamil 20170212]
+	postfix(1): Import version 3.1.4. [christos 20170213]
+	l2tp(4): Add L2TPv3 interface. [knakahara 20170216]
+	siginfo(2): Add new si_code for SIGTRAP: TRAP_DBREG [kamil 20170217]
+	disklabel(5): Add DISKLABEL_EI (``Endian-Independent'' disklabel)
+		kernel option to machines that support Master Boot Record
+		(MBR). [rin 20170219]
+	ptrace(2): Add new API replacing PT_WATCHPOINT for Debug Registers:
+		PT_GETDBREGS and PT_SETDBREGS [kamil 20170223]
+	dk(4): Add DKWEDGE_METHOD_RDB option to enable Amiga Rigid Disk Block
+		(RDB) partitioning detection method. [rin 20170226]
+	siginfo(2): Add new si_code values for SIGTRAP: TRAP_SCE and TRAP_SCX
+		[kamil 20170228]
+	zoneinfo: Import tzdata2017a.  [kre 20170301]
+	luna68k: Add a driver for LUNA's front panel LCD.  Ported from
+		OpenBSD/luna88k. [tsutsui 20170309]
+	sqlite3: Import 3.17.0. [christos 20170311]
+	libc: Update to tzcode2017a. [christos 20170311]
+	mdocml: Import 1.14.1. [christos 20170318]

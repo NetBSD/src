@@ -118,8 +118,9 @@ FLUSH(8)                                                              FLUSH(8)
               process will service before terminating voluntarily.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf -d' output)</b>
-              What Postfix features match subdomains of "domain.tld" automati-
-              cally, instead of requiring an explicit ".domain.tld" pattern.
+              A list of Postfix features where the pattern "example.com"  also
+              matches  subdomains  of  example.com,  instead  of  requiring an
+              explicit ".example.com" pattern.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
               The process ID of a Postfix command or daemon process.
@@ -134,8 +135,8 @@ FLUSH(8)                                                              FLUSH(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
 
 <b>FILES</b>
@@ -163,6 +164,11 @@ FLUSH(8)                                                              FLUSH(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                       FLUSH(8)
 </pre> </body> </html>

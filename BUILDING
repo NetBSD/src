@@ -349,7 +349,7 @@ CONFIGURATION
                  statically linked.
 
                  Default: Platform dependent.  As of this writing, all
-                 platforms except sh3 default to ``yes''.
+                 platforms except m68000 default to ``yes''.
 
      MKPICINSTALL
                  Can be set to ``yes'' or ``no''.  Indicates whether the ar(1)
@@ -366,17 +366,20 @@ CONFIGURATION
                  by default at times due to toolchain problems with profiled
                  code.
 
-     MKREPRO     Can be set to ``yes'' or ``no''.  Create reproducable builds.
+     MKREPRO     Can be set to ``yes'' or ``no''.  Create reproducible builds.
                  This enables different switches to make two builds from the
                  same source tree result in the same build results.
 
-                 Default: ``no''
+                 Default: ``no'' This may be set to ``yes'' by giving build.sh
+                 the -P option.
 
      MKREPRO_TIMESTAMP
                  Unix timestamp.  When MKREPRO is set, the timestamp of all
                  files in the sets will be set to this value.
 
-                 Default: Unset.
+                 Default: Unset.  This may be set automatically to the latest
+                 source tree timestamp using cvslatest(1) by giving build.sh
+                 the -P option.
 
      MKSHARE     Can be set to ``yes'' or ``no''.  Indicates whether files
                  destined to reside in DESTDIR/usr/share will be built and
@@ -1108,4 +1111,4 @@ CAVEATS
      files in object directories.  Instead, one may have to manually remove
      the files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                         January 29, 2016                         NetBSD
+NetBSD                         February 20, 2017                        NetBSD

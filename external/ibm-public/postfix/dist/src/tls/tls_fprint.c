@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_fprint.c,v 1.1.1.1 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_fprint.c,v 1.1.1.1.10.1 2017/03/20 06:56:41 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -190,7 +190,7 @@ char   *tls_serverid_digest(const TLS_CLIENT_START_PROPS *props, long protomask,
 	msg_panic("digest algorithm \"%s\" not found", mdalg);
 
     /* Salt the session lookup key with the OpenSSL runtime version. */
-    sslversion = SSLeay();
+    sslversion = OpenSSL_version_num();
 
     mdctx = EVP_MD_CTX_create();
     checkok(EVP_DigestInit_ex(mdctx, md, NULL));
@@ -229,7 +229,7 @@ char   *tls_serverid_digest(const TLS_CLIENT_START_PROPS *props, long protomask,
 #if 0
 	digest_dane(props->dane, ee);		/* See above */
 #endif
-	digest_string(props->tls_level == TLS_LEV_DANE ? props->host : "");
+	digest_string(TLS_DANE_BASED(props->tls_level) ? props->host : "");
     }
     checkok(EVP_DigestFinal_ex(mdctx, md_buf, &md_len));
     EVP_MD_CTX_destroy(mdctx);
