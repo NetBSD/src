@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.17 2017/01/12 13:53:11 roy Exp $ */
+/* $NetBSD: term.h,v 1.18 2017/03/20 14:46:28 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,11 @@
 #define	ERR	(-1)	/* Error return */
 #define	OK	(0)	/* Success return */
 #endif
+
+/* Ensure we have a terminal to return capabilities from */
+#define	TIFLAG(t, c)			((t) != NULL ? (t)->flags[c] : 0)
+#define	TINUM(t, c)			((t) != NULL ? (t)->nums[c] : -1)
+#define	TISTR(t, c)			((t) != NULL ? (t)->strs[c] : NULL)
 
 /* Define available terminfo flags */
 enum TIFLAGS {
@@ -77,43 +82,43 @@ enum TIFLAGS {
 };
 #define TIFLAGMAX	TICODE_xon
 
-#define t_auto_left_margin(t)		(t)->flags[TICODE_bw]
-#define t_auto_right_margin(t)		(t)->flags[TICODE_am]
-#define t_back_color_erase(t)		(t)->flags[TICODE_bce]
-#define t_can_change(t)			(t)->flags[TICODE_ccc]
-#define t_ceol_standout_glitch(t)	(t)->flags[TICODE_xhp]
-#define t_col_addr_glitch(t)		(t)->flags[TICODE_xhpa]
-#define t_cpi_changes_res(t)		(t)->flags[TICODE_cpix]
-#define t_cr_cancels_micro_mode(t)	(t)->flags[TICODE_crxm]
-#define t_dest_tabs_magic_smso(t)	(t)->flags[TICODE_xt]
-#define t_eat_newline_glitch(t)		(t)->flags[TICODE_xenl]
-#define t_erase_overstrike(t)		(t)->flags[TICODE_eo]
-#define t_generic_type(t)		(t)->flags[TICODE_gn]
-#define t_hard_copy(t)			(t)->flags[TICODE_hc]
-#define t_hard_cursor(t)		(t)->flags[TICODE_chts]
-#define t_has_meta_key(t)		(t)->flags[TICODE_km]
-#define t_has_print_wheel(t)		(t)->flags[TICODE_daisy]
-#define t_has_status_line(t)		(t)->flags[TICODE_hs]
-#define t_hue_light_saturation(t)	(t)->flags[TICODE_hls]
-#define t_insert_null_glitch(t)		(t)->flags[TICODE_in]
-#define t_lpi_changes_yes(t)		(t)->flags[TICODE_lpix]
-#define t_memory_above(t)		(t)->flags[TICODE_da]
-#define t_memory_below(t)		(t)->flags[TICODE_db]
-#define t_move_insert_mode(t)		(t)->flags[TICODE_mir]
-#define t_move_standout_mode(t)		(t)->flags[TICODE_msgr]
-#define t_needs_xon_xoff(t)		(t)->flags[TICODE_nxon]
-#define t_no_esc_ctlc(t)		(t)->flags[TICODE_xsb]
-#define t_no_pad_char(t)		(t)->flags[TICODE_npc]
-#define t_non_dest_scroll_region(t)	(t)->flags[TICODE_ndscr]
-#define t_non_rev_rmcup(t)		(t)->flags[TICODE_nrrmc]
-#define t_over_strike(t)		(t)->flags[TICODE_os]
-#define t_prtr_silent(t)		(t)->flags[TICODE_mc5i]
-#define t_row_addr_glitch(t)		(t)->flags[TICODE_xvpa]
-#define t_semi_auto_right_margin(t)	(t)->flags[TICODE_sam]
-#define t_status_line_esc_ok(t)		(t)->flags[TICODE_eslok]
-#define t_tilde_glitch(t)		(t)->flags[TICODE_hz]
-#define t_transparent_underline(t)	(t)->flags[TICODE_ul]
-#define t_xon_xoff(t)			(t)->flags[TICODE_xon]
+#define t_auto_left_margin(t)		TIFLAG((t), TICODE_bw)
+#define t_auto_right_margin(t)		TIFLAG((t), TICODE_am)
+#define t_back_color_erase(t)		TIFLAG((t), TICODE_bce)
+#define t_can_change(t)			TIFLAG((t), TICODE_ccc)
+#define t_ceol_standout_glitch(t)	TIFLAG((t), TICODE_xhp)
+#define t_col_addr_glitch(t)		TIFLAG((t), TICODE_xhpa)
+#define t_cpi_changes_res(t)		TIFLAG((t), TICODE_cpix)
+#define t_cr_cancels_micro_mode(t)	TIFLAG((t), TICODE_crxm)
+#define t_dest_tabs_magic_smso(t)	TIFLAG((t), TICODE_xt)
+#define t_eat_newline_glitch(t)		TIFLAG((t), TICODE_xenl)
+#define t_erase_overstrike(t)		TIFLAG((t), TICODE_eo)
+#define t_generic_type(t)		TIFLAG((t), TICODE_gn)
+#define t_hard_copy(t)			TIFLAG((t), TICODE_hc)
+#define t_hard_cursor(t)		TIFLAG((t), TICODE_chts)
+#define t_has_meta_key(t)		TIFLAG((t), TICODE_km)
+#define t_has_print_wheel(t)		TIFLAG((t), TICODE_daisy)
+#define t_has_status_line(t)		TIFLAG((t), TICODE_hs)
+#define t_hue_light_saturation(t)	TIFLAG((t), TICODE_hls)
+#define t_insert_null_glitch(t)		TIFLAG((t), TICODE_in)
+#define t_lpi_changes_yes(t)		TIFLAG((t), TICODE_lpix)
+#define t_memory_above(t)		TIFLAG((t), TICODE_da)
+#define t_memory_below(t)		TIFLAG((t), TICODE_db)
+#define t_move_insert_mode(t)		TIFLAG((t), TICODE_mir)
+#define t_move_standout_mode(t)		TIFLAG((t), TICODE_msgr)
+#define t_needs_xon_xoff(t)		TIFLAG((t), TICODE_nxon)
+#define t_no_esc_ctlc(t)		TIFLAG((t), TICODE_xsb)
+#define t_no_pad_char(t)		TIFLAG((t), TICODE_npc)
+#define t_non_dest_scroll_region(t)	TIFLAG((t), TICODE_ndscr)
+#define t_non_rev_rmcup(t)		TIFLAG((t), TICODE_nrrmc)
+#define t_over_strike(t)		TIFLAG((t), TICODE_os)
+#define t_prtr_silent(t)		TIFLAG((t), TICODE_mc5i)
+#define t_row_addr_glitch(t)		TIFLAG((t), TICODE_xvpa)
+#define t_semi_auto_right_margin(t)	TIFLAG((t), TICODE_sam)
+#define t_status_line_esc_ok(t)		TIFLAG((t), TICODE_eslok)
+#define t_tilde_glitch(t)		TIFLAG((t), TICODE_hz)
+#define t_transparent_underline(t)	TIFLAG((t), TICODE_ul)
+#define t_xon_xoff(t)			TIFLAG((t), TICODE_xon)
 
 #define auto_left_margin		t_auto_left_margin(cur_term)
 #define auto_right_margin		t_auto_right_margin(cur_term)
@@ -233,39 +238,39 @@ enum TINUMS {
 };
 #define TINUMMAX			TICODE_wsl
 
-#define t_bit_image_entwining(t)	(t)->nums[TICODE_bitwin]
-#define t_bit_image_type(t)		(t)->nums[TICODE_bitype]
-#define t_buffer_capacity(t)		(t)->nums[TICODE_bufsz]
-#define t_buttons(t)			(t)->nums[TICODE_btns]
-#define t_columns(t)			(t)->nums[TICODE_cols]
-#define t_dot_horz_spacing(t)		(t)->nums[TICODE_spinh]
-#define t_dot_vert_spacing(t)		(t)->nums[TICODE_spinv]
-#define t_init_tabs(t)			(t)->nums[TICODE_it]
-#define t_label_height(t)		(t)->nums[TICODE_lh]
-#define t_label_width(t)		(t)->nums[TICODE_lw]
-#define t_lines(t)			(t)->nums[TICODE_lines]
-#define t_lines_of_memory(t)		(t)->nums[TICODE_lm]
-#define t_max_attributes(t)		(t)->nums[TICODE_ma]
-#define t_magic_cookie_glitch(t)	(t)->nums[TICODE_xmc]
-#define t_max_colors(t)			(t)->nums[TICODE_colors]
-#define t_max_micro_address(t)		(t)->nums[TICODE_maddr]
-#define t_max_micro_jump(t)		(t)->nums[TICODE_mjump]
-#define t_max_pairs(t)			(t)->nums[TICODE_pairs]
-#define t_maximum_windows(t)		(t)->nums[TICODE_wnum]
-#define t_micro_col_size(t)		(t)->nums[TICODE_mcs]
-#define t_micro_line_size(t)		(t)->nums[TICODE_mls]
-#define t_no_color_video(t)		(t)->nums[TICODE_ncv]
-#define t_num_labels(t)			(t)->nums[TICODE_nlab]
-#define t_number_of_pins(t)		(t)->nums[TICODE_npins]
-#define t_output_res_char(t)		(t)->nums[TICODE_orc]
-#define t_output_res_line(t)		(t)->nums[TICODE_orl]
-#define t_output_res_horz_inch(t)	(t)->nums[TICODE_orhi]
-#define t_output_res_vert_inch(t)	(t)->nums[TICODE_orvi]
-#define t_padding_baud_rate(t)		(t)->nums[TICODE_pb]
-#define t_print_rate(t)			(t)->nums[TICODE_cps]
-#define t_virtual_terminal(t)		(t)->nums[TICODE_vt]
-#define t_wide_char_size(t)		(t)->nums[TICODE_widcs]
-#define t_width_status_line(t)		(t)->nums[TICODE_wsl]
+#define t_bit_image_entwining(t)	TINUM((t), TICODE_bitwin)
+#define t_bit_image_type(t)		TINUM((t), TICODE_bitype)
+#define t_buffer_capacity(t)		TINUM((t), TICODE_bufsz)
+#define t_buttons(t)			TINUM((t), TICODE_btns)
+#define t_columns(t)			TINUM((t), TICODE_cols)
+#define t_dot_horz_spacing(t)		TINUM((t), TICODE_spinh)
+#define t_dot_vert_spacing(t)		TINUM((t), TICODE_spinv)
+#define t_init_tabs(t)			TINUM((t), TICODE_it)
+#define t_label_height(t)		TINUM((t), TICODE_lh)
+#define t_label_width(t)		TINUM((t), TICODE_lw)
+#define t_lines(t)			TINUM((t), TICODE_lines)
+#define t_lines_of_memory(t)		TINUM((t), TICODE_lm)
+#define t_max_attributes(t)		TINUM((t), TICODE_ma)
+#define t_magic_cookie_glitch(t)	TINUM((t), TICODE_xmc)
+#define t_max_colors(t)			TINUM((t), TICODE_colors)
+#define t_max_micro_address(t)		TINUM((t), TICODE_maddr)
+#define t_max_micro_jump(t)		TINUM((t), TICODE_mjump)
+#define t_max_pairs(t)			TINUM((t), TICODE_pairs)
+#define t_maximum_windows(t)		TINUM((t), TICODE_wnum)
+#define t_micro_col_size(t)		TINUM((t), TICODE_mcs)
+#define t_micro_line_size(t)		TINUM((t), TICODE_mls)
+#define t_no_color_video(t)		TINUM((t), TICODE_ncv)
+#define t_num_labels(t)			TINUM((t), TICODE_nlab)
+#define t_number_of_pins(t)		TINUM((t), TICODE_npins)
+#define t_output_res_char(t)		TINUM((t), TICODE_orc)
+#define t_output_res_line(t)		TINUM((t), TICODE_orl)
+#define t_output_res_horz_inch(t)	TINUM((t), TICODE_orhi)
+#define t_output_res_vert_inch(t)	TINUM((t), TICODE_orvi)
+#define t_padding_baud_rate(t)		TINUM((t), TICODE_pb)
+#define t_print_rate(t)			TINUM((t), TICODE_cps)
+#define t_virtual_terminal(t)		TINUM((t), TICODE_vt)
+#define t_wide_char_size(t)		TINUM((t), TICODE_widcs)
+#define t_width_status_line(t)		TINUM((t), TICODE_wsl)
 
 #define bit_image_entwining		 t_bit_image_entwining(cur_term)
 #define bit_image_type			 t_bit_image_type(cur_term)
@@ -738,400 +743,400 @@ enum TISTRS{
 };
 #define TISTRMAX			TICODE_zerom
 
-#define t_acs_chars(t)			(t)->strs[TICODE_acsc]
-#define t_alt_scancode_esc(t)		(t)->strs[TICODE_scesa]
-#define t_back_tab(t)			(t)->strs[TICODE_cbt]
-#define t_bell(t)			(t)->strs[TICODE_bel]
-#define t_bit_image_carriage_return(t)	(t)->strs[TICODE_bicr]
-#define t_bit_image_newline(t)		(t)->strs[TICODE_binel]
-#define t_bit_image_repeat(t)		(t)->strs[TICODE_birep]
-#define t_carriage_return(t)		(t)->strs[TICODE_cr]
-#define t_change_char_pitch(t)		(t)->strs[TICODE_cpi]
-#define t_change_line_pitch(t)		(t)->strs[TICODE_lpi]
-#define t_change_res_horz(t)		(t)->strs[TICODE_chr]
-#define t_change_res_vert(t)		(t)->strs[TICODE_cvr]
-#define t_change_scroll_region(t)	(t)->strs[TICODE_csr]
-#define t_char_padding(t)		(t)->strs[TICODE_rmp]
-#define t_char_set_names(t)		(t)->strs[TICODE_csnm]
-#define t_clear_all_tabs(t)		(t)->strs[TICODE_tbc]
-#define t_clear_margins(t)		(t)->strs[TICODE_mgc]
-#define t_clear_screen(t)		(t)->strs[TICODE_clear]
-#define t_clr_bol(t)			(t)->strs[TICODE_el1]
-#define t_clr_eol(t)			(t)->strs[TICODE_el]
-#define t_clr_eos(t)			(t)->strs[TICODE_ed]
-#define t_code_set_init(t)		(t)->strs[TICODE_csin]
-#define t_color_names(t)		(t)->strs[TICODE_colornm]
-#define t_column_address(t)		(t)->strs[TICODE_hpa]
-#define t_command_character(t)		(t)->strs[TICODE_cmdch]
-#define t_create_window(t)		(t)->strs[TICODE_cwin]
-#define t_cursor_address(t)		(t)->strs[TICODE_cup]
-#define t_cursor_down(t)		(t)->strs[TICODE_cud1]
-#define t_cursor_home(t)		(t)->strs[TICODE_home]
-#define t_cursor_invisible(t)		(t)->strs[TICODE_civis]
-#define t_cursor_left(t)		(t)->strs[TICODE_cub1]
-#define t_cursor_mem_address(t)		(t)->strs[TICODE_mrcup]
-#define t_cursor_normal(t)		(t)->strs[TICODE_cnorm]
-#define t_cursor_right(t)		(t)->strs[TICODE_cuf1]
-#define t_cursor_to_ll(t)		(t)->strs[TICODE_ll]
-#define t_cursor_up(t)			(t)->strs[TICODE_cuu1]
-#define t_cursor_visible(t)		(t)->strs[TICODE_cvvis]
-#define t_define_bit_image_region(t)	(t)->strs[TICODE_defbi]
-#define t_define_char(t)		(t)->strs[TICODE_defc]
-#define t_delete_character(t)		(t)->strs[TICODE_dch1]
-#define t_delete_line(t)		(t)->strs[TICODE_dl1]
-#define t_device_type(t)		(t)->strs[TICODE_devt]
-#define t_dial_phone(t)			(t)->strs[TICODE_dial]
-#define t_dis_status_line(t)		(t)->strs[TICODE_dsl]
-#define t_display_clock(t)		(t)->strs[TICODE_dclk]
-#define t_display_pc_char(t)		(t)->strs[TICODE_dispc]
-#define t_down_half_time(t)		(t)->strs[TICODE_hd]
-#define t_ena_acs(t)			(t)->strs[TICODE_enacs]
-#define t_end_bit_image_region(t)	(t)->strs[TICODE_endbi]
-#define t_enter_alt_charset_mode(t)	(t)->strs[TICODE_smacs]
-#define t_enter_am_mode(t)		(t)->strs[TICODE_smam]
-#define t_enter_blink_mode(t)		(t)->strs[TICODE_blink]
-#define t_enter_bold_mode(t)		(t)->strs[TICODE_bold]
-#define t_enter_ca_mode(t)		(t)->strs[TICODE_smcup]
-#define t_enter_delete_mode(t)		(t)->strs[TICODE_smdc]
-#define t_enter_dim_mode(t)		(t)->strs[TICODE_dim]
-#define t_enter_doublewide_mode(t)	(t)->strs[TICODE_swidm]
-#define t_enter_draft_quality(t)	(t)->strs[TICODE_sdrfq]
-#define t_enter_horizontal_hl_mode(t)	(t)->strs[TICODE_ehhlm]
-#define t_enter_insert_mode(t)		(t)->strs[TICODE_smir]
-#define t_enter_italics_mode(t)		(t)->strs[TICODE_sitm]
-#define t_enter_left_hl_mode(t)		(t)->strs[TICODE_elhlm]
-#define t_enter_leftward_mode(t)	(t)->strs[TICODE_slm]
-#define t_enter_low_hl_mode(t)		(t)->strs[TICODE_elohlm]
-#define t_enter_micro_mode(t)		(t)->strs[TICODE_smicm]
-#define t_enter_near_quality_letter(t)	(t)->strs[TICODE_snlq]
-#define t_enter_normal_quality(t)	(t)->strs[TICODE_snrmq]
-#define t_enter_pc_charset_mode(t)	(t)->strs[TICODE_smpch]
-#define t_enter_protected_mode(t)	(t)->strs[TICODE_prot]
-#define t_enter_reverse_mode(t)		(t)->strs[TICODE_rev]
-#define t_enter_right_hl_mode(t)	(t)->strs[TICODE_erhlm]
-#define t_enter_scancode_mode(t)	(t)->strs[TICODE_smsc]
-#define t_enter_secure_mode(t)		(t)->strs[TICODE_invis]
-#define t_enter_shadow_mode(t)		(t)->strs[TICODE_sshm]
-#define t_enter_standout_mode(t)	(t)->strs[TICODE_smso]
-#define t_enter_subscript_mode(t)	(t)->strs[TICODE_ssubm]
-#define t_enter_superscript_mode(t)	(t)->strs[TICODE_ssupm]
-#define t_enter_top_hl_mode(t)		(t)->strs[TICODE_ethlm]
-#define t_enter_underline_mode(t)	(t)->strs[TICODE_smul]
-#define t_enter_upward_mode(t)		(t)->strs[TICODE_sum]
-#define t_enter_vertical_hl_mode(t)	(t)->strs[TICODE_evhlm]
-#define t_enter_xon_mode(t)		(t)->strs[TICODE_smxon]
-#define t_erase_chars(t)		(t)->strs[TICODE_ech]
-#define t_exit_alt_charset_mode(t)	(t)->strs[TICODE_rmacs]
-#define t_exit_am_mode(t)		(t)->strs[TICODE_rmam]
-#define t_exit_attribute_mode(t)	(t)->strs[TICODE_sgr0]
-#define t_exit_ca_mode(t)		(t)->strs[TICODE_rmcup]
-#define t_exit_delete_mode(t)		(t)->strs[TICODE_rmdc]
-#define t_exit_doublewide_mode(t)	(t)->strs[TICODE_rwidm]
-#define t_exit_insert_mode(t)		(t)->strs[TICODE_rmir]
-#define t_exit_italics_mode(t)		(t)->strs[TICODE_ritm]
-#define t_exit_leftward_mode(t)		(t)->strs[TICODE_rlm]
-#define t_exit_micro_mode(t)		(t)->strs[TICODE_rmicm]
-#define t_exit_pc_charset_mode(t)	(t)->strs[TICODE_rmpch]
-#define t_exit_scancode_mode(t)		(t)->strs[TICODE_rmsc]
-#define t_exit_shadow_mode(t)		(t)->strs[TICODE_rshm]
-#define t_exit_standout_mode(t)		(t)->strs[TICODE_rmso]
-#define t_exit_subscript_mode(t)	(t)->strs[TICODE_rsubm]
-#define t_exit_superscript_mode(t)	(t)->strs[TICODE_rsupm]
-#define t_exit_underline_mode(t)	(t)->strs[TICODE_rmul]
-#define t_exit_upward_mode(t)		(t)->strs[TICODE_rum]
-#define t_exit_xon_mode(t)		(t)->strs[TICODE_rmxon]
-#define t_fixed_pause(t)		(t)->strs[TICODE_pause]
-#define t_flash_hook(t)			(t)->strs[TICODE_hook]
-#define t_flash_screen(t)		(t)->strs[TICODE_flash]
-#define t_form_feed(t)			(t)->strs[TICODE_ff]
-#define t_from_status_line(t)		(t)->strs[TICODE_fsl]
-#define t_get_mouse(t)			(t)->strs[TICODE_getm]
-#define t_goto_window(t)		(t)->strs[TICODE_wingo]
-#define t_hangup(t)			(t)->strs[TICODE_hup]
-#define t_init_1string(t)		(t)->strs[TICODE_is1]
-#define t_init_2string(t)		(t)->strs[TICODE_is2]
-#define t_init_3string(t)		(t)->strs[TICODE_is3]
-#define t_init_file(t)			(t)->strs[TICODE_if]
-#define t_init_prog(t)			(t)->strs[TICODE_iprog]
-#define t_initialize_color(t)		(t)->strs[TICODE_initc]
-#define t_initialize_pair(t)		(t)->strs[TICODE_initp]
-#define t_insert_character(t)		(t)->strs[TICODE_ich1]
-#define t_insert_line(t)		(t)->strs[TICODE_il1]
-#define t_insert_padding(t)		(t)->strs[TICODE_ip]
-#define t_key_a1(t)			(t)->strs[TICODE_ka1]
-#define t_key_a3(t)			(t)->strs[TICODE_ka3]
-#define t_key_b2(t)			(t)->strs[TICODE_kb2]
-#define t_key_backspace(t)		(t)->strs[TICODE_kbs]
-#define t_key_beg(t)			(t)->strs[TICODE_kbeg]
-#define t_key_btab(t)			(t)->strs[TICODE_kcbt]
-#define t_key_c1(t)			(t)->strs[TICODE_kc1]
-#define t_key_c3(t)			(t)->strs[TICODE_kc3]
-#define t_key_cancel(t)			(t)->strs[TICODE_kcan]
-#define t_key_catab(t)			(t)->strs[TICODE_ktbc]
-#define t_key_clear(t)			(t)->strs[TICODE_kclr]
-#define t_key_close(t)			(t)->strs[TICODE_kclo]
-#define t_key_command(t)		(t)->strs[TICODE_kcmd]
-#define t_key_copy(t)			(t)->strs[TICODE_kcpy]
-#define t_key_create(t)			(t)->strs[TICODE_kcrt]
-#define t_key_ctab(t)			(t)->strs[TICODE_kctab]
-#define t_key_dc(t)			(t)->strs[TICODE_kdch1]
-#define t_key_dl(t)			(t)->strs[TICODE_kdl1]
-#define t_key_down(t)			(t)->strs[TICODE_kcud1]
-#define t_key_eic(t)			(t)->strs[TICODE_krmir]
-#define t_key_end(t)			(t)->strs[TICODE_kend]
-#define t_key_enter(t)			(t)->strs[TICODE_kent]
-#define t_key_eol(t)			(t)->strs[TICODE_kel]
-#define t_key_eos(t)			(t)->strs[TICODE_ked]
-#define t_key_exit(t)			(t)->strs[TICODE_kext]
-#define t_key_f0(t)			(t)->strs[TICODE_kf0]
-#define t_key_f1(t)			(t)->strs[TICODE_kf1]
-#define t_key_f2(t)			(t)->strs[TICODE_kf2]
-#define t_key_f3(t)			(t)->strs[TICODE_kf3]
-#define t_key_f4(t)			(t)->strs[TICODE_kf4]
-#define t_key_f5(t)			(t)->strs[TICODE_kf5]
-#define t_key_f6(t)			(t)->strs[TICODE_kf6]
-#define t_key_f7(t)			(t)->strs[TICODE_kf7]
-#define t_key_f8(t)			(t)->strs[TICODE_kf8]
-#define t_key_f9(t)			(t)->strs[TICODE_kf9]
-#define t_key_f10(t)			(t)->strs[TICODE_kf10]
-#define t_key_f11(t)			(t)->strs[TICODE_kf11]
-#define t_key_f12(t)			(t)->strs[TICODE_kf12]
-#define t_key_f13(t)			(t)->strs[TICODE_kf13]
-#define t_key_f14(t)			(t)->strs[TICODE_kf14]
-#define t_key_f15(t)			(t)->strs[TICODE_kf15]
-#define t_key_f16(t)			(t)->strs[TICODE_kf16]
-#define t_key_f17(t)			(t)->strs[TICODE_kf17]
-#define t_key_f18(t)			(t)->strs[TICODE_kf18]
-#define t_key_f19(t)			(t)->strs[TICODE_kf19]
-#define t_key_f20(t)			(t)->strs[TICODE_kf20]
-#define t_key_f21(t)			(t)->strs[TICODE_kf21]
-#define t_key_f22(t)			(t)->strs[TICODE_kf22]
-#define t_key_f23(t)			(t)->strs[TICODE_kf23]
-#define t_key_f24(t)			(t)->strs[TICODE_kf24]
-#define t_key_f25(t)			(t)->strs[TICODE_kf25]
-#define t_key_f26(t)			(t)->strs[TICODE_kf26]
-#define t_key_f27(t)			(t)->strs[TICODE_kf27]
-#define t_key_f28(t)			(t)->strs[TICODE_kf28]
-#define t_key_f29(t)			(t)->strs[TICODE_kf29]
-#define t_key_f30(t)			(t)->strs[TICODE_kf30]
-#define t_key_f31(t)			(t)->strs[TICODE_kf31]
-#define t_key_f32(t)			(t)->strs[TICODE_kf32]
-#define t_key_f33(t)			(t)->strs[TICODE_kf33]
-#define t_key_f34(t)			(t)->strs[TICODE_kf34]
-#define t_key_f35(t)			(t)->strs[TICODE_kf35]
-#define t_key_f36(t)			(t)->strs[TICODE_kf36]
-#define t_key_f37(t)			(t)->strs[TICODE_kf37]
-#define t_key_f38(t)			(t)->strs[TICODE_kf38]
-#define t_key_f39(t)			(t)->strs[TICODE_kf39]
-#define t_key_f40(t)			(t)->strs[TICODE_kf40]
-#define t_key_f41(t)			(t)->strs[TICODE_kf41]
-#define t_key_f42(t)			(t)->strs[TICODE_kf42]
-#define t_key_f43(t)			(t)->strs[TICODE_kf43]
-#define t_key_f44(t)			(t)->strs[TICODE_kf44]
-#define t_key_f45(t)			(t)->strs[TICODE_kf45]
-#define t_key_f46(t)			(t)->strs[TICODE_kf46]
-#define t_key_f47(t)			(t)->strs[TICODE_kf47]
-#define t_key_f48(t)			(t)->strs[TICODE_kf48]
-#define t_key_f49(t)			(t)->strs[TICODE_kf49]
-#define t_key_f50(t)			(t)->strs[TICODE_kf50]
-#define t_key_f51(t)			(t)->strs[TICODE_kf51]
-#define t_key_f52(t)			(t)->strs[TICODE_kf52]
-#define t_key_f53(t)			(t)->strs[TICODE_kf53]
-#define t_key_f54(t)			(t)->strs[TICODE_kf54]
-#define t_key_f55(t)			(t)->strs[TICODE_kf55]
-#define t_key_f56(t)			(t)->strs[TICODE_kf56]
-#define t_key_f57(t)			(t)->strs[TICODE_kf57]
-#define t_key_f58(t)			(t)->strs[TICODE_kf58]
-#define t_key_f59(t)			(t)->strs[TICODE_kf59]
-#define t_key_f60(t)			(t)->strs[TICODE_kf60]
-#define t_key_f61(t)			(t)->strs[TICODE_kf61]
-#define t_key_f62(t)			(t)->strs[TICODE_kf62]
-#define t_key_f63(t)			(t)->strs[TICODE_kf63]
-#define t_key_find(t)			(t)->strs[TICODE_kfnd]
-#define t_key_help(t)			(t)->strs[TICODE_khlp]
-#define t_key_home(t)			(t)->strs[TICODE_khome]
-#define t_key_ic(t)			(t)->strs[TICODE_kich1]
-#define t_key_il(t)			(t)->strs[TICODE_kil1]
-#define t_key_left(t)			(t)->strs[TICODE_kcub1]
-#define t_key_ll(t)			(t)->strs[TICODE_kll]
-#define t_key_mark(t)			(t)->strs[TICODE_kmrk]
-#define t_key_message(t)		(t)->strs[TICODE_kmsg]
-#define t_key_mouse(t)			(t)->strs[TICODE_kmous]
-#define t_key_move(t)			(t)->strs[TICODE_kmov]
-#define t_key_next(t)			(t)->strs[TICODE_knxt]
-#define t_key_npage(t)			(t)->strs[TICODE_knp]
-#define t_key_open(t)			(t)->strs[TICODE_kopn]
-#define t_key_options(t)		(t)->strs[TICODE_kopt]
-#define t_key_ppage(t)			(t)->strs[TICODE_kpp]
-#define t_key_previous(t)		(t)->strs[TICODE_kprv]
-#define t_key_print(t)			(t)->strs[TICODE_kprt]
-#define t_key_redo(t)			(t)->strs[TICODE_krdo]
-#define t_key_reference(t)		(t)->strs[TICODE_kref]
-#define t_key_refresh(t)		(t)->strs[TICODE_krfr]
-#define t_key_replace(t)		(t)->strs[TICODE_krpl]
-#define t_key_restart(t)		(t)->strs[TICODE_krst]
-#define t_key_resume(t)			(t)->strs[TICODE_kres]
-#define t_key_right(t)			(t)->strs[TICODE_kcuf1]
-#define t_key_save(t)			(t)->strs[TICODE_ksav]
-#define t_key_sbeg(t)			(t)->strs[TICODE_kBEG]
-#define t_key_scancel(t)		(t)->strs[TICODE_kCAN]
-#define t_key_scommand(t)		(t)->strs[TICODE_kCMD]
-#define t_key_scopy(t)			(t)->strs[TICODE_kCPY]
-#define t_key_screate(t)		(t)->strs[TICODE_kCRT]
-#define t_key_sdc(t)			(t)->strs[TICODE_kDC]
-#define t_key_sdl(t)			(t)->strs[TICODE_kDL]
-#define t_key_select(t)			(t)->strs[TICODE_kslt]
-#define t_key_send(t)			(t)->strs[TICODE_kEND]
-#define t_key_seol(t)			(t)->strs[TICODE_kEOL]
-#define t_key_sexit(t)			(t)->strs[TICODE_kEXT]
-#define t_key_sf(t)			(t)->strs[TICODE_kind]
-#define t_key_sfind(t)			(t)->strs[TICODE_kFND]
-#define t_key_shelp(t)			(t)->strs[TICODE_kHLP]
-#define t_key_shome(t)			(t)->strs[TICODE_kHOM]
-#define t_key_sic(t)			(t)->strs[TICODE_kIC]
-#define t_key_sleft(t)			(t)->strs[TICODE_kLFT]
-#define t_key_smessage(t)		(t)->strs[TICODE_kMSG]
-#define t_key_smove(t)			(t)->strs[TICODE_kMOV]
-#define t_key_snext(t)			(t)->strs[TICODE_kNXT]
-#define t_key_soptions(t)		(t)->strs[TICODE_kOPT]
-#define t_key_sprevious(t)		(t)->strs[TICODE_kPRV]
-#define t_key_sprint(t)			(t)->strs[TICODE_kPRT]
-#define t_key_sr(t)			(t)->strs[TICODE_kri]
-#define t_key_sredo(t)			(t)->strs[TICODE_kRDO]
-#define t_key_sreplace(t)		(t)->strs[TICODE_kRPL]
-#define t_key_sright(t)			(t)->strs[TICODE_kRIT]
-#define t_key_srsume(t)			(t)->strs[TICODE_kRES]
-#define t_key_ssave(t)			(t)->strs[TICODE_kSAV]
-#define t_key_ssuspend(t)		(t)->strs[TICODE_kSPD]
-#define t_key_stab(t)			(t)->strs[TICODE_khts]
-#define t_key_sundo(t)			(t)->strs[TICODE_kUND]
-#define t_key_suspend(t)		(t)->strs[TICODE_kspd]
-#define t_key_undo(t)			(t)->strs[TICODE_kund]
-#define t_key_up(t)			(t)->strs[TICODE_kcuu1]
-#define t_keypad_local(t)		(t)->strs[TICODE_rmkx]
-#define t_keypad_xmit(t)		(t)->strs[TICODE_smkx]
-#define t_lab_f0(t)			(t)->strs[TICODE_lf0]
-#define t_lab_f1(t)			(t)->strs[TICODE_lf1]
-#define t_lab_f2(t)			(t)->strs[TICODE_lf2]
-#define t_lab_f3(t)			(t)->strs[TICODE_lf3]
-#define t_lab_f4(t)			(t)->strs[TICODE_lf4]
-#define t_lab_f5(t)			(t)->strs[TICODE_lf5]
-#define t_lab_f6(t)			(t)->strs[TICODE_lf6]
-#define t_lab_f7(t)			(t)->strs[TICODE_lf7]
-#define t_lab_f8(t)			(t)->strs[TICODE_lf8]
-#define t_lab_f9(t)			(t)->strs[TICODE_lf9]
-#define t_lab_f10(t)			(t)->strs[TICODE_lf10]
-#define t_label_format(t)		(t)->strs[TICODE_fln]
-#define t_label_off(t)			(t)->strs[TICODE_rmln]
-#define t_label_on(t)			(t)->strs[TICODE_smln]
-#define t_meta_off(t)			(t)->strs[TICODE_rmm]
-#define t_meta_on(t)			(t)->strs[TICODE_smm]
-#define t_micro_column_address(t)	(t)->strs[TICODE_mhpa]
-#define t_micro_down(t)			(t)->strs[TICODE_mcud1]
-#define t_micro_left(t)			(t)->strs[TICODE_mcub1]
-#define t_micro_right(t)		(t)->strs[TICODE_mcuf1]
-#define t_micro_row_address(t)		(t)->strs[TICODE_mvpa]
-#define t_micro_up(t)			(t)->strs[TICODE_mcuu1]
-#define t_mouse_info(t)			(t)->strs[TICODE_minfo]
-#define t_newline(t)			(t)->strs[TICODE_nel]
-#define t_order_of_pins(t)		(t)->strs[TICODE_porder]
-#define t_orig_colors(t)		(t)->strs[TICODE_oc]
-#define t_orig_pair(t)			(t)->strs[TICODE_op]
-#define t_pad_char(t)			(t)->strs[TICODE_pad]
-#define t_parm_dch(t)			(t)->strs[TICODE_dch]
-#define t_parm_delete_line(t)		(t)->strs[TICODE_dl]
-#define t_parm_down_cursor(t)		(t)->strs[TICODE_cud]
-#define t_parm_down_micro(t)		(t)->strs[TICODE_mcud]
-#define t_parm_ich(t)			(t)->strs[TICODE_ich]
-#define t_parm_index(t)			(t)->strs[TICODE_indn]
-#define t_parm_insert_line(t)		(t)->strs[TICODE_il]
-#define t_parm_left_cursor(t)		(t)->strs[TICODE_cub]
-#define t_parm_left_micro(t)		(t)->strs[TICODE_mcub]
-#define t_parm_right_cursor(t)		(t)->strs[TICODE_cuf]
-#define t_parm_right_micro(t)		(t)->strs[TICODE_mcuf]
-#define t_parm_rindex(t)		(t)->strs[TICODE_rin]
-#define t_parm_up_cursor(t)		(t)->strs[TICODE_cuu]
-#define t_parm_up_micro(t)		(t)->strs[TICODE_mcuu]
-#define t_pc_term_options(t)		(t)->strs[TICODE_pctrm]
-#define t_pkey_key(t)			(t)->strs[TICODE_pfkey]
-#define t_pkey_local(t)			(t)->strs[TICODE_pfloc]
-#define t_pkey_plab(t)			(t)->strs[TICODE_pfxl]
-#define t_pkey_xmit(t)			(t)->strs[TICODE_pfx]
-#define t_plab_norm(t)			(t)->strs[TICODE_pln]
-#define t_print_screen(t)		(t)->strs[TICODE_mc0]
-#define t_ptr_non(t)			(t)->strs[TICODE_mc5p]
-#define t_ptr_off(t)			(t)->strs[TICODE_mc4]
-#define t_ptr_on(t)			(t)->strs[TICODE_mc5]
-#define t_pulse(t)			(t)->strs[TICODE_pulse]
-#define t_quick_dial(t)			(t)->strs[TICODE_qdial]
-#define t_remove_clock(t)		(t)->strs[TICODE_rmclk]
-#define t_repeat_char(t)		(t)->strs[TICODE_rep]
-#define t_req_for_input(t)		(t)->strs[TICODE_rfi]
-#define t_req_mouse_pos(t)		(t)->strs[TICODE_reqmp]
-#define t_reset_1string(t)		(t)->strs[TICODE_rs1]
-#define t_reset_2string(t)		(t)->strs[TICODE_rs2]
-#define t_reset_3string(t)		(t)->strs[TICODE_rs3]
-#define t_reset_file(t)			(t)->strs[TICODE_rf]
-#define t_restore_cursor(t)		(t)->strs[TICODE_rc]
-#define t_row_address(t)		(t)->strs[TICODE_vpa]
-#define t_save_cursor(t)		(t)->strs[TICODE_sc]
-#define t_scancode_escape(t)		(t)->strs[TICODE_scesc]
-#define t_scroll_forward(t)		(t)->strs[TICODE_ind]
-#define t_scroll_reverse(t)		(t)->strs[TICODE_ri]
-#define t_select_char_set(t)		(t)->strs[TICODE_scs]
-#define t_set0_des_seq(t)		(t)->strs[TICODE_s0ds]
-#define t_set1_des_seq(t)		(t)->strs[TICODE_s1ds]
-#define t_set2_des_seq(t)		(t)->strs[TICODE_s2ds]
-#define t_set3_des_seq(t)		(t)->strs[TICODE_s3ds]
-#define t_set_a_attributes(t)		(t)->strs[TICODE_sgr1]
-#define t_set_a_background(t)		(t)->strs[TICODE_setab]
-#define t_set_a_foreground(t)		(t)->strs[TICODE_setaf]
-#define t_set_attributes(t)		(t)->strs[TICODE_sgr]
-#define t_set_background(t)		(t)->strs[TICODE_setb]
-#define t_set_bottom_margin(t)		(t)->strs[TICODE_smgb]
-#define t_set_bottom_margin_parm(t)	(t)->strs[TICODE_smgbp]
-#define t_set_clock(t)			(t)->strs[TICODE_sclk]
-#define t_set_color_band(t)		(t)->strs[TICODE_setcolor]
-#define t_set_color_pair(t)		(t)->strs[TICODE_scp]
-#define t_set_foreground(t)		(t)->strs[TICODE_setf]
-#define t_set_left_margin(t)		(t)->strs[TICODE_smgl]
-#define t_set_left_margin_parm(t)	(t)->strs[TICODE_smglp]
-#define t_set_lr_margin(t)		(t)->strs[TICODE_smglr]
-#define t_set_page_length(t)		(t)->strs[TICODE_slines]
-#define t_set_pglen_inch(t)		(t)->strs[TICODE_slength]
-#define t_set_right_margin(t)		(t)->strs[TICODE_smgr]
-#define t_set_right_margin_parm(t)	(t)->strs[TICODE_smgrp]
-#define t_set_tab(t)			(t)->strs[TICODE_hts]
-#define t_set_tb_margin(t)		(t)->strs[TICODE_smgtb]
-#define t_set_top_margin(t)		(t)->strs[TICODE_smgt]
-#define t_set_top_margin_parm(t)	(t)->strs[TICODE_smgtp]
-#define t_set_window(t)			(t)->strs[TICODE_wind]
-#define t_start_bit_image(t)		(t)->strs[TICODE_sbim]
-#define t_start_char_set_def(t)		(t)->strs[TICODE_scsd]
-#define t_stop_bit_image(t)		(t)->strs[TICODE_rbim]
-#define t_stop_char_set_def(t)		(t)->strs[TICODE_rcsd]
-#define t_subscript_characters(t)	(t)->strs[TICODE_subcs]
-#define t_superscript_characters(t)	(t)->strs[TICODE_supcs]
-#define t_tab(t)			(t)->strs[TICODE_ht]
-#define t_these_cause_cr(t)		(t)->strs[TICODE_docr]
-#define t_to_status_line(t)		(t)->strs[TICODE_tsl]
-#define t_tone(t)			(t)->strs[TICODE_tone]
-#define t_user0(t)			(t)->strs[TICODE_u0]
-#define t_user1(t)			(t)->strs[TICODE_u1]
-#define t_user2(t)			(t)->strs[TICODE_u2]
-#define t_user3(t)			(t)->strs[TICODE_u3]
-#define t_user4(t)			(t)->strs[TICODE_u4]
-#define t_user5(t)			(t)->strs[TICODE_u5]
-#define t_user6(t)			(t)->strs[TICODE_u6]
-#define t_user7(t)			(t)->strs[TICODE_u7]
-#define t_user8(t)			(t)->strs[TICODE_u8]
-#define t_user9(t)			(t)->strs[TICODE_u9]
-#define t_underline_char(t)		(t)->strs[TICODE_uc]
-#define t_up_half_line(t)		(t)->strs[TICODE_hu]
-#define t_wait_tone(t)			(t)->strs[TICODE_wait]
-#define t_xoff_character(t)		(t)->strs[TICODE_xoffc]
-#define t_xon_character(t)		(t)->strs[TICODE_xonc]
-#define t_zero_motion(t)		(t)->strs[TICODE_zerom]
+#define t_acs_chars(t)			TISTR((t), TICODE_acsc)
+#define t_alt_scancode_esc(t)		TISTR((t), TICODE_scesa)
+#define t_back_tab(t)			TISTR((t), TICODE_cbt)
+#define t_bell(t)			TISTR((t), TICODE_bel)
+#define t_bit_image_carriage_return(t)	TISTR((t), TICODE_bicr)
+#define t_bit_image_newline(t)		TISTR((t), TICODE_binel)
+#define t_bit_image_repeat(t)		TISTR((t), TICODE_birep)
+#define t_carriage_return(t)		TISTR((t), TICODE_cr)
+#define t_change_char_pitch(t)		TISTR((t), TICODE_cpi)
+#define t_change_line_pitch(t)		TISTR((t), TICODE_lpi)
+#define t_change_res_horz(t)		TISTR((t), TICODE_chr)
+#define t_change_res_vert(t)		TISTR((t), TICODE_cvr)
+#define t_change_scroll_region(t)	TISTR((t), TICODE_csr)
+#define t_char_padding(t)		TISTR((t), TICODE_rmp)
+#define t_char_set_names(t)		TISTR((t), TICODE_csnm)
+#define t_clear_all_tabs(t)		TISTR((t), TICODE_tbc)
+#define t_clear_margins(t)		TISTR((t), TICODE_mgc)
+#define t_clear_screen(t)		TISTR((t), TICODE_clear)
+#define t_clr_bol(t)			TISTR((t), TICODE_el1)
+#define t_clr_eol(t)			TISTR((t), TICODE_el)
+#define t_clr_eos(t)			TISTR((t), TICODE_ed)
+#define t_code_set_init(t)		TISTR((t), TICODE_csin)
+#define t_color_names(t)		TISTR((t), TICODE_colornm)
+#define t_column_address(t)		TISTR((t), TICODE_hpa)
+#define t_command_character(t)		TISTR((t), TICODE_cmdch)
+#define t_create_window(t)		TISTR((t), TICODE_cwin)
+#define t_cursor_address(t)		TISTR((t), TICODE_cup)
+#define t_cursor_down(t)		TISTR((t), TICODE_cud1)
+#define t_cursor_home(t)		TISTR((t), TICODE_home)
+#define t_cursor_invisible(t)		TISTR((t), TICODE_civis)
+#define t_cursor_left(t)		TISTR((t), TICODE_cub1)
+#define t_cursor_mem_address(t)		TISTR((t), TICODE_mrcup)
+#define t_cursor_normal(t)		TISTR((t), TICODE_cnorm)
+#define t_cursor_right(t)		TISTR((t), TICODE_cuf1)
+#define t_cursor_to_ll(t)		TISTR((t), TICODE_ll)
+#define t_cursor_up(t)			TISTR((t), TICODE_cuu1)
+#define t_cursor_visible(t)		TISTR((t), TICODE_cvvis)
+#define t_define_bit_image_region(t)	TISTR((t), TICODE_defbi)
+#define t_define_char(t)		TISTR((t), TICODE_defc)
+#define t_delete_character(t)		TISTR((t), TICODE_dch1)
+#define t_delete_line(t)		TISTR((t), TICODE_dl1)
+#define t_device_type(t)		TISTR((t), TICODE_devt)
+#define t_dial_phone(t)			TISTR((t), TICODE_dial)
+#define t_dis_status_line(t)		TISTR((t), TICODE_dsl)
+#define t_display_clock(t)		TISTR((t), TICODE_dclk)
+#define t_display_pc_char(t)		TISTR((t), TICODE_dispc)
+#define t_down_half_time(t)		TISTR((t), TICODE_hd)
+#define t_ena_acs(t)			TISTR((t), TICODE_enacs)
+#define t_end_bit_image_region(t)	TISTR((t), TICODE_endbi)
+#define t_enter_alt_charset_mode(t)	TISTR((t), TICODE_smacs)
+#define t_enter_am_mode(t)		TISTR((t), TICODE_smam)
+#define t_enter_blink_mode(t)		TISTR((t), TICODE_blink)
+#define t_enter_bold_mode(t)		TISTR((t), TICODE_bold)
+#define t_enter_ca_mode(t)		TISTR((t), TICODE_smcup)
+#define t_enter_delete_mode(t)		TISTR((t), TICODE_smdc)
+#define t_enter_dim_mode(t)		TISTR((t), TICODE_dim)
+#define t_enter_doublewide_mode(t)	TISTR((t), TICODE_swidm)
+#define t_enter_draft_quality(t)	TISTR((t), TICODE_sdrfq)
+#define t_enter_horizontal_hl_mode(t)	TISTR((t), TICODE_ehhlm)
+#define t_enter_insert_mode(t)		TISTR((t), TICODE_smir)
+#define t_enter_italics_mode(t)		TISTR((t), TICODE_sitm)
+#define t_enter_left_hl_mode(t)		TISTR((t), TICODE_elhlm)
+#define t_enter_leftward_mode(t)	TISTR((t), TICODE_slm)
+#define t_enter_low_hl_mode(t)		TISTR((t), TICODE_elohlm)
+#define t_enter_micro_mode(t)		TISTR((t), TICODE_smicm)
+#define t_enter_near_quality_letter(t)	TISTR((t), TICODE_snlq)
+#define t_enter_normal_quality(t)	TISTR((t), TICODE_snrmq)
+#define t_enter_pc_charset_mode(t)	TISTR((t), TICODE_smpch)
+#define t_enter_protected_mode(t)	TISTR((t), TICODE_prot)
+#define t_enter_reverse_mode(t)		TISTR((t), TICODE_rev)
+#define t_enter_right_hl_mode(t)	TISTR((t), TICODE_erhlm)
+#define t_enter_scancode_mode(t)	TISTR((t), TICODE_smsc)
+#define t_enter_secure_mode(t)		TISTR((t), TICODE_invis)
+#define t_enter_shadow_mode(t)		TISTR((t), TICODE_sshm)
+#define t_enter_standout_mode(t)	TISTR((t), TICODE_smso)
+#define t_enter_subscript_mode(t)	TISTR((t), TICODE_ssubm)
+#define t_enter_superscript_mode(t)	TISTR((t), TICODE_ssupm)
+#define t_enter_top_hl_mode(t)		TISTR((t), TICODE_ethlm)
+#define t_enter_underline_mode(t)	TISTR((t), TICODE_smul)
+#define t_enter_upward_mode(t)		TISTR((t), TICODE_sum)
+#define t_enter_vertical_hl_mode(t)	TISTR((t), TICODE_evhlm)
+#define t_enter_xon_mode(t)		TISTR((t), TICODE_smxon)
+#define t_erase_chars(t)		TISTR((t), TICODE_ech)
+#define t_exit_alt_charset_mode(t)	TISTR((t), TICODE_rmacs)
+#define t_exit_am_mode(t)		TISTR((t), TICODE_rmam)
+#define t_exit_attribute_mode(t)	TISTR((t), TICODE_sgr0)
+#define t_exit_ca_mode(t)		TISTR((t), TICODE_rmcup)
+#define t_exit_delete_mode(t)		TISTR((t), TICODE_rmdc)
+#define t_exit_doublewide_mode(t)	TISTR((t), TICODE_rwidm)
+#define t_exit_insert_mode(t)		TISTR((t), TICODE_rmir)
+#define t_exit_italics_mode(t)		TISTR((t), TICODE_ritm)
+#define t_exit_leftward_mode(t)		TISTR((t), TICODE_rlm)
+#define t_exit_micro_mode(t)		TISTR((t), TICODE_rmicm)
+#define t_exit_pc_charset_mode(t)	TISTR((t), TICODE_rmpch)
+#define t_exit_scancode_mode(t)		TISTR((t), TICODE_rmsc)
+#define t_exit_shadow_mode(t)		TISTR((t), TICODE_rshm)
+#define t_exit_standout_mode(t)		TISTR((t), TICODE_rmso)
+#define t_exit_subscript_mode(t)	TISTR((t), TICODE_rsubm)
+#define t_exit_superscript_mode(t)	TISTR((t), TICODE_rsupm)
+#define t_exit_underline_mode(t)	TISTR((t), TICODE_rmul)
+#define t_exit_upward_mode(t)		TISTR((t), TICODE_rum)
+#define t_exit_xon_mode(t)		TISTR((t), TICODE_rmxon)
+#define t_fixed_pause(t)		TISTR((t), TICODE_pause)
+#define t_flash_hook(t)			TISTR((t), TICODE_hook)
+#define t_flash_screen(t)		TISTR(t, TICODE_flash)
+#define t_form_feed(t)			TISTR((t), TICODE_ff)
+#define t_from_status_line(t)		TISTR((t), TICODE_fsl)
+#define t_get_mouse(t)			TISTR((t), TICODE_getm)
+#define t_goto_window(t)		TISTR((t), TICODE_wingo)
+#define t_hangup(t)			TISTR((t), TICODE_hup)
+#define t_init_1string(t)		TISTR((t), TICODE_is1)
+#define t_init_2string(t)		TISTR((t), TICODE_is2)
+#define t_init_3string(t)		TISTR((t), TICODE_is3)
+#define t_init_file(t)			TISTR((t), TICODE_if)
+#define t_init_prog(t)			TISTR((t), TICODE_iprog)
+#define t_initialize_color(t)		TISTR((t), TICODE_initc)
+#define t_initialize_pair(t)		TISTR((t), TICODE_initp)
+#define t_insert_character(t)		TISTR((t), TICODE_ich1)
+#define t_insert_line(t)		TISTR((t), TICODE_il1)
+#define t_insert_padding(t)		TISTR((t), TICODE_ip)
+#define t_key_a1(t)			TISTR((t), TICODE_ka1)
+#define t_key_a3(t)			TISTR((t), TICODE_ka3)
+#define t_key_b2(t)			TISTR((t), TICODE_kb2)
+#define t_key_backspace(t)		TISTR((t), TICODE_kbs)
+#define t_key_beg(t)			TISTR((t), TICODE_kbeg)
+#define t_key_btab(t)			TISTR((t), TICODE_kcbt)
+#define t_key_c1(t)			TISTR((t), TICODE_kc1)
+#define t_key_c3(t)			TISTR((t), TICODE_kc3)
+#define t_key_cancel(t)			TISTR((t), TICODE_kcan)
+#define t_key_catab(t)			TISTR((t), TICODE_ktbc)
+#define t_key_clear(t)			TISTR((t), TICODE_kclr)
+#define t_key_close(t)			TISTR((t), TICODE_kclo)
+#define t_key_command(t)		TISTR((t), TICODE_kcmd)
+#define t_key_copy(t)			TISTR((t), TICODE_kcpy)
+#define t_key_create(t)			TISTR((t), TICODE_kcrt)
+#define t_key_ctab(t)			TISTR((t), TICODE_kctab)
+#define t_key_dc(t)			TISTR((t), TICODE_kdch1)
+#define t_key_dl(t)			TISTR((t), TICODE_kdl1)
+#define t_key_down(t)			TISTR((t), TICODE_kcud1)
+#define t_key_eic(t)			TISTR((t), TICODE_krmir)
+#define t_key_end(t)			TISTR((t), TICODE_kend)
+#define t_key_enter(t)			TISTR((t), TICODE_kent)
+#define t_key_eol(t)			TISTR((t), TICODE_kel)
+#define t_key_eos(t)			TISTR((t), TICODE_ked)
+#define t_key_exit(t)			TISTR((t), TICODE_kext)
+#define t_key_f0(t)			TISTR((t), TICODE_kf0)
+#define t_key_f1(t)			TISTR((t), TICODE_kf1)
+#define t_key_f2(t)			TISTR((t), TICODE_kf2)
+#define t_key_f3(t)			TISTR((t), TICODE_kf3)
+#define t_key_f4(t)			TISTR((t), TICODE_kf4)
+#define t_key_f5(t)			TISTR((t), TICODE_kf5)
+#define t_key_f6(t)			TISTR((t), TICODE_kf6)
+#define t_key_f7(t)			TISTR((t), TICODE_kf7)
+#define t_key_f8(t)			TISTR((t), TICODE_kf8)
+#define t_key_f9(t)			TISTR((t), TICODE_kf9)
+#define t_key_f10(t)			TISTR((t), TICODE_kf10)
+#define t_key_f11(t)			TISTR((t), TICODE_kf11)
+#define t_key_f12(t)			TISTR((t), TICODE_kf12)
+#define t_key_f13(t)			TISTR((t), TICODE_kf13)
+#define t_key_f14(t)			TISTR((t), TICODE_kf14)
+#define t_key_f15(t)			TISTR((t), TICODE_kf15)
+#define t_key_f16(t)			TISTR((t), TICODE_kf16)
+#define t_key_f17(t)			TISTR((t), TICODE_kf17)
+#define t_key_f18(t)			TISTR((t), TICODE_kf18)
+#define t_key_f19(t)			TISTR((t), TICODE_kf19)
+#define t_key_f20(t)			TISTR((t), TICODE_kf20)
+#define t_key_f21(t)			TISTR((t), TICODE_kf21)
+#define t_key_f22(t)			TISTR((t), TICODE_kf22)
+#define t_key_f23(t)			TISTR((t), TICODE_kf23)
+#define t_key_f24(t)			TISTR((t), TICODE_kf24)
+#define t_key_f25(t)			TISTR((t), TICODE_kf25)
+#define t_key_f26(t)			TISTR((t), TICODE_kf26)
+#define t_key_f27(t)			TISTR((t), TICODE_kf27)
+#define t_key_f28(t)			TISTR((t), TICODE_kf28)
+#define t_key_f29(t)			TISTR((t), TICODE_kf29)
+#define t_key_f30(t)			TISTR((t), TICODE_kf30)
+#define t_key_f31(t)			TISTR((t), TICODE_kf31)
+#define t_key_f32(t)			TISTR((t), TICODE_kf32)
+#define t_key_f33(t)			TISTR((t), TICODE_kf33)
+#define t_key_f34(t)			TISTR((t), TICODE_kf34)
+#define t_key_f35(t)			TISTR((t), TICODE_kf35)
+#define t_key_f36(t)			TISTR((t), TICODE_kf36)
+#define t_key_f37(t)			TISTR((t), TICODE_kf37)
+#define t_key_f38(t)			TISTR((t), TICODE_kf38)
+#define t_key_f39(t)			TISTR((t), TICODE_kf39)
+#define t_key_f40(t)			TISTR((t), TICODE_kf40)
+#define t_key_f41(t)			TISTR((t), TICODE_kf41)
+#define t_key_f42(t)			TISTR((t), TICODE_kf42)
+#define t_key_f43(t)			TISTR((t), TICODE_kf43)
+#define t_key_f44(t)			TISTR((t), TICODE_kf44)
+#define t_key_f45(t)			TISTR((t), TICODE_kf45)
+#define t_key_f46(t)			TISTR((t), TICODE_kf46)
+#define t_key_f47(t)			TISTR((t), TICODE_kf47)
+#define t_key_f48(t)			TISTR((t), TICODE_kf48)
+#define t_key_f49(t)			TISTR((t), TICODE_kf49)
+#define t_key_f50(t)			TISTR((t), TICODE_kf50)
+#define t_key_f51(t)			TISTR((t), TICODE_kf51)
+#define t_key_f52(t)			TISTR((t), TICODE_kf52)
+#define t_key_f53(t)			TISTR((t), TICODE_kf53)
+#define t_key_f54(t)			TISTR((t), TICODE_kf54)
+#define t_key_f55(t)			TISTR((t), TICODE_kf55)
+#define t_key_f56(t)			TISTR((t), TICODE_kf56)
+#define t_key_f57(t)			TISTR((t), TICODE_kf57)
+#define t_key_f58(t)			TISTR((t), TICODE_kf58)
+#define t_key_f59(t)			TISTR((t), TICODE_kf59)
+#define t_key_f60(t)			TISTR((t), TICODE_kf60)
+#define t_key_f61(t)			TISTR((t), TICODE_kf61)
+#define t_key_f62(t)			TISTR((t), TICODE_kf62)
+#define t_key_f63(t)			TISTR((t), TICODE_kf63)
+#define t_key_find(t)			TISTR((t), TICODE_kfnd)
+#define t_key_help(t)			TISTR((t), TICODE_khlp)
+#define t_key_home(t)			TISTR((t), TICODE_khome)
+#define t_key_ic(t)			TISTR((t), TICODE_kich1)
+#define t_key_il(t)			TISTR((t), TICODE_kil1)
+#define t_key_left(t)			TISTR((t), TICODE_kcub1)
+#define t_key_ll(t)			TISTR((t), TICODE_kll)
+#define t_key_mark(t)			TISTR((t), TICODE_kmrk)
+#define t_key_message(t)		TISTR((t), TICODE_kmsg)
+#define t_key_mouse(t)			TISTR((t), TICODE_kmous)
+#define t_key_move(t)			TISTR((t), TICODE_kmov)
+#define t_key_next(t)			TISTR((t), TICODE_knxt)
+#define t_key_npage(t)			TISTR((t), TICODE_knp)
+#define t_key_open(t)			TISTR((t), TICODE_kopn)
+#define t_key_options(t)		TISTR((t), TICODE_kopt)
+#define t_key_ppage(t)			TISTR((t), TICODE_kpp)
+#define t_key_previous(t)		TISTR((t), TICODE_kprv)
+#define t_key_print(t)			TISTR((t), TICODE_kprt)
+#define t_key_redo(t)			TISTR((t), TICODE_krdo)
+#define t_key_reference(t)		TISTR((t), TICODE_kref)
+#define t_key_refresh(t)		TISTR((t), TICODE_krfr)
+#define t_key_replace(t)		TISTR((t), TICODE_krpl)
+#define t_key_restart(t)		TISTR((t), TICODE_krst)
+#define t_key_resume(t)			TISTR((t), TICODE_kres)
+#define t_key_right(t)			TISTR((t), TICODE_kcuf1)
+#define t_key_save(t)			TISTR((t), TICODE_ksav)
+#define t_key_sbeg(t)			TISTR((t), TICODE_kBEG)
+#define t_key_scancel(t)		TISTR((t), TICODE_kCAN)
+#define t_key_scommand(t)		TISTR((t), TICODE_kCMD)
+#define t_key_scopy(t)			TISTR((t), TICODE_kCPY)
+#define t_key_screate(t)		TISTR((t), TICODE_kCRT)
+#define t_key_sdc(t)			TISTR((t), TICODE_kDC)
+#define t_key_sdl(t)			TISTR((t), TICODE_kDL)
+#define t_key_select(t)			TISTR((t), TICODE_kslt)
+#define t_key_send(t)			TISTR((t), TICODE_kEND)
+#define t_key_seol(t)			TISTR((t), TICODE_kEOL)
+#define t_key_sexit(t)			TISTR((t), TICODE_kEXT)
+#define t_key_sf(t)			TISTR((t), TICODE_kind)
+#define t_key_sfind(t)			TISTR((t), TICODE_kFND)
+#define t_key_shelp(t)			TISTR((t), TICODE_kHLP)
+#define t_key_shome(t)			TISTR((t), TICODE_kHOM)
+#define t_key_sic(t)			TISTR((t), TICODE_kIC)
+#define t_key_sleft(t)			TISTR((t), TICODE_kLFT)
+#define t_key_smessage(t)		TISTR((t), TICODE_kMSG)
+#define t_key_smove(t)			TISTR((t), TICODE_kMOV)
+#define t_key_snext(t)			TISTR((t), TICODE_kNXT)
+#define t_key_soptions(t)		TISTR((t), TICODE_kOPT)
+#define t_key_sprevious(t)		TISTR((t), TICODE_kPRV)
+#define t_key_sprint(t)			TISTR((t), TICODE_kPRT)
+#define t_key_sr(t)			TISTR((t), TICODE_kri)
+#define t_key_sredo(t)			TISTR((t), TICODE_kRDO)
+#define t_key_sreplace(t)		TISTR((t), TICODE_kRPL)
+#define t_key_sright(t)			TISTR((t), TICODE_kRIT)
+#define t_key_srsume(t)			TISTR((t), TICODE_kRES)
+#define t_key_ssave(t)			TISTR((t), TICODE_kSAV)
+#define t_key_ssuspend(t)		TISTR((t), TICODE_kSPD)
+#define t_key_stab(t)			TISTR((t), TICODE_khts)
+#define t_key_sundo(t)			TISTR((t), TICODE_kUND)
+#define t_key_suspend(t)		TISTR((t), TICODE_kspd)
+#define t_key_undo(t)			TISTR((t), TICODE_kund)
+#define t_key_up(t)			TISTR((t), TICODE_kcuu1)
+#define t_keypad_local(t)		TISTR((t), TICODE_rmkx)
+#define t_keypad_xmit(t)		TISTR((t), TICODE_smkx)
+#define t_lab_f0(t)			TISTR((t), TICODE_lf0)
+#define t_lab_f1(t)			TISTR((t), TICODE_lf1)
+#define t_lab_f2(t)			TISTR((t), TICODE_lf2)
+#define t_lab_f3(t)			TISTR((t), TICODE_lf3)
+#define t_lab_f4(t)			TISTR((t), TICODE_lf4)
+#define t_lab_f5(t)			TISTR((t), TICODE_lf5)
+#define t_lab_f6(t)			TISTR((t), TICODE_lf6)
+#define t_lab_f7(t)			TISTR((t), TICODE_lf7)
+#define t_lab_f8(t)			TISTR((t), TICODE_lf8)
+#define t_lab_f9(t)			TISTR((t), TICODE_lf9)
+#define t_lab_f10(t)			TISTR((t), TICODE_lf10)
+#define t_label_format(t)		TISTR((t), TICODE_fln)
+#define t_label_off(t)			TISTR((t), TICODE_rmln)
+#define t_label_on(t)			TISTR((t), TICODE_smln)
+#define t_meta_off(t)			TISTR((t), TICODE_rmm)
+#define t_meta_on(t)			TISTR((t), TICODE_smm)
+#define t_micro_column_address(t)	TISTR((t), TICODE_mhpa)
+#define t_micro_down(t)			TISTR((t), TICODE_mcud1)
+#define t_micro_left(t)			TISTR((t), TICODE_mcub1)
+#define t_micro_right(t)		TISTR((t), TICODE_mcuf1)
+#define t_micro_row_address(t)		TISTR((t), TICODE_mvpa)
+#define t_micro_up(t)			TISTR((t), TICODE_mcuu1)
+#define t_mouse_info(t)			TISTR((t), TICODE_minfo)
+#define t_newline(t)			TISTR((t), TICODE_nel)
+#define t_order_of_pins(t)		TISTR((t), TICODE_porder)
+#define t_orig_colors(t)		TISTR((t), TICODE_oc)
+#define t_orig_pair(t)			TISTR((t), TICODE_op)
+#define t_pad_char(t)			TISTR((t), TICODE_pad)
+#define t_parm_dch(t)			TISTR((t), TICODE_dch)
+#define t_parm_delete_line(t)		TISTR((t), TICODE_dl)
+#define t_parm_down_cursor(t)		TISTR((t), TICODE_cud)
+#define t_parm_down_micro(t)		TISTR((t), TICODE_mcud)
+#define t_parm_ich(t)			TISTR((t), TICODE_ich)
+#define t_parm_index(t)			TISTR((t), TICODE_indn)
+#define t_parm_insert_line(t)		TISTR((t), TICODE_il)
+#define t_parm_left_cursor(t)		TISTR((t), TICODE_cub)
+#define t_parm_left_micro(t)		TISTR((t), TICODE_mcub)
+#define t_parm_right_cursor(t)		TISTR((t), TICODE_cuf)
+#define t_parm_right_micro(t)		TISTR((t), TICODE_mcuf)
+#define t_parm_rindex(t)		TISTR((t), TICODE_rin)
+#define t_parm_up_cursor(t)		TISTR((t), TICODE_cuu)
+#define t_parm_up_micro(t)		TISTR((t), TICODE_mcuu)
+#define t_pc_term_options(t)		TISTR((t), TICODE_pctrm)
+#define t_pkey_key(t)			TISTR((t), TICODE_pfkey)
+#define t_pkey_local(t)			TISTR((t), TICODE_pfloc)
+#define t_pkey_plab(t)			TISTR((t), TICODE_pfxl)
+#define t_pkey_xmit(t)			TISTR((t), TICODE_pfx)
+#define t_plab_norm(t)			TISTR((t), TICODE_pln)
+#define t_print_screen(t)		TISTR((t), TICODE_mc0)
+#define t_ptr_non(t)			TISTR((t), TICODE_mc5p)
+#define t_ptr_off(t)			TISTR((t), TICODE_mc4)
+#define t_ptr_on(t)			TISTR((t), TICODE_mc5)
+#define t_pulse(t)			TISTR((t), TICODE_pulse)
+#define t_quick_dial(t)			TISTR((t), TICODE_qdial)
+#define t_remove_clock(t)		TISTR((t), TICODE_rmclk)
+#define t_repeat_char(t)		TISTR((t), TICODE_rep)
+#define t_req_for_input(t)		TISTR((t), TICODE_rfi)
+#define t_req_mouse_pos(t)		TISTR((t), TICODE_reqmp)
+#define t_reset_1string(t)		TISTR((t), TICODE_rs1)
+#define t_reset_2string(t)		TISTR((t), TICODE_rs2)
+#define t_reset_3string(t)		TISTR((t), TICODE_rs3)
+#define t_reset_file(t)			TISTR((t), TICODE_rf)
+#define t_restore_cursor(t)		TISTR((t), TICODE_rc)
+#define t_row_address(t)		TISTR((t), TICODE_vpa)
+#define t_save_cursor(t)		TISTR((t), TICODE_sc)
+#define t_scancode_escape(t)		TISTR((t), TICODE_scesc)
+#define t_scroll_forward(t)		TISTR((t), TICODE_ind)
+#define t_scroll_reverse(t)		TISTR((t), TICODE_ri)
+#define t_select_char_set(t)		TISTR((t), TICODE_scs)
+#define t_set0_des_seq(t)		TISTR((t), TICODE_s0ds)
+#define t_set1_des_seq(t)		TISTR((t), TICODE_s1ds)
+#define t_set2_des_seq(t)		TISTR((t), TICODE_s2ds)
+#define t_set3_des_seq(t)		TISTR((t), TICODE_s3ds)
+#define t_set_a_attributes(t)		TISTR((t), TICODE_sgr1)
+#define t_set_a_background(t)		TISTR((t), TICODE_setab)
+#define t_set_a_foreground(t)		TISTR((t), TICODE_setaf)
+#define t_set_attributes(t)		TISTR((t), TICODE_sgr)
+#define t_set_background(t)		TISTR((t), TICODE_setb)
+#define t_set_bottom_margin(t)		TISTR((t), TICODE_smgb)
+#define t_set_bottom_margin_parm(t)	TISTR((t), TICODE_smgbp)
+#define t_set_clock(t)			TISTR((t), TICODE_sclk)
+#define t_set_color_band(t)		TISTR((t), TICODE_setcolor)
+#define t_set_color_pair(t)		TISTR((t), TICODE_scp)
+#define t_set_foreground(t)		TISTR((t), TICODE_setf)
+#define t_set_left_margin(t)		TISTR((t), TICODE_smgl)
+#define t_set_left_margin_parm(t)	TISTR((t), TICODE_smglp)
+#define t_set_lr_margin(t)		TISTR((t), TICODE_smglr)
+#define t_set_page_length(t)		TISTR((t), TICODE_slines)
+#define t_set_pglen_inch(t)		TISTR((t), TICODE_slength)
+#define t_set_right_margin(t)		TISTR((t), TICODE_smgr)
+#define t_set_right_margin_parm(t)	TISTR((t), TICODE_smgrp)
+#define t_set_tab(t)			TISTR((t), TICODE_hts)
+#define t_set_tb_margin(t)		TISTR((t), TICODE_smgtb)
+#define t_set_top_margin(t)		TISTR((t), TICODE_smgt)
+#define t_set_top_margin_parm(t)	TISTR((t), TICODE_smgtp)
+#define t_set_window(t)			TISTR((t), TICODE_wind)
+#define t_start_bit_image(t)		TISTR((t), TICODE_sbim)
+#define t_start_char_set_def(t)		TISTR((t), TICODE_scsd)
+#define t_stop_bit_image(t)		TISTR((t), TICODE_rbim)
+#define t_stop_char_set_def(t)		TISTR((t), TICODE_rcsd)
+#define t_subscript_characters(t)	TISTR((t), TICODE_subcs)
+#define t_superscript_characters(t)	TISTR((t), TICODE_supcs)
+#define t_tab(t)			TISTR((t), TICODE_ht)
+#define t_these_cause_cr(t)		TISTR((t), TICODE_docr)
+#define t_to_status_line(t)		TISTR((t), TICODE_tsl)
+#define t_tone(t)			TISTR((t), TICODE_tone)
+#define t_user0(t)			TISTR((t), TICODE_u0)
+#define t_user1(t)			TISTR((t), TICODE_u1)
+#define t_user2(t)			TISTR((t), TICODE_u2)
+#define t_user3(t)			TISTR((t), TICODE_u3)
+#define t_user4(t)			TISTR((t), TICODE_u4)
+#define t_user5(t)			TISTR((t), TICODE_u5)
+#define t_user6(t)			TISTR((t), TICODE_u6)
+#define t_user7(t)			TISTR((t), TICODE_u7)
+#define t_user8(t)			TISTR((t), TICODE_u8)
+#define t_user9(t)			TISTR((t), TICODE_u9)
+#define t_underline_char(t)		TISTR((t), TICODE_uc)
+#define t_up_half_line(t)		TISTR((t), TICODE_hu)
+#define t_wait_tone(t)			TISTR((t), TICODE_wait)
+#define t_xoff_character(t)		TISTR((t), TICODE_xoffc)
+#define t_xon_character(t)		TISTR((t), TICODE_xonc)
+#define t_zero_motion(t)		TISTR((t), TICODE_zerom)
 
 #define acs_chars			 t_acs_chars(cur_term)
 #define alt_scancode_esc		 t_alt_scancode_esc(cur_term)
