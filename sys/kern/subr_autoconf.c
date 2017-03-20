@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.248 2017/03/20 00:30:03 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.249 2017/03/20 01:05:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.248 2017/03/20 00:30:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.249 2017/03/20 01:05:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1166,6 +1166,7 @@ config_makeroom(int n, struct cfdriver *cd)
 	int ondevs, nndevs;
 	device_t *osp, *nsp;
 
+	KASSERT(mutex_owned(&alldevs_mtx));
 	alldevs_nwrite++;
 
 	for (nndevs = MAX(4, cd->cd_ndevs); nndevs <= n; nndevs += nndevs)
@@ -1209,6 +1210,7 @@ config_makeroom(int n, struct cfdriver *cd)
 			mutex_enter(&alldevs_mtx);
 		}
 	}
+	KASSERT(mutex_owned(&alldevs_mtx));
 	alldevs_nwrite--;
 }
 
