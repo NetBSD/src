@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.2 2017/03/20 11:31:00 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.3 2017/03/20 13:12:35 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.2 2017/03/20 11:31:00 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.3 2017/03/20 13:12:35 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -89,7 +89,7 @@ arith_token(void)
 			arith_buf = end;
 			return ARITH_NUM;
 
-		} else if (is_name(token) {
+		} else if (is_name(token)) {
 			/*
 			 * Variable names all start with an alpha (or '_')
 			 * and nothing else does.  They continue for the
