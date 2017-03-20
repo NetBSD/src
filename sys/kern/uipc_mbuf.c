@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.168.2.1 2016/11/04 14:49:17 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.168.2.2 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.168.2.1 2016/11/04 14:49:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.168.2.2 2017/03/20 06:57:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -562,14 +562,12 @@ m_reclaim(void *arg, int flags)
 		IFNET_READER_FOREACH(ifp) {
 			struct psref psref;
 
-			psref_acquire(&psref, &ifp->if_psref,
-			    ifnet_psref_class);
+			if_acquire(ifp, &psref);
 
 			if (ifp->if_drain)
 				(*ifp->if_drain)(ifp);
 
-			psref_release(&psref, &ifp->if_psref,
-			    ifnet_psref_class);
+			if_release(ifp, &psref);
 		}
 		curlwp_bindx(bound);
 	}
@@ -1328,6 +1326,9 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 	error = m_copyback0(mp, off, len, NULL,
 	    M_COPYBACK0_PRESERVE|M_COPYBACK0_COW, how);
 
+	if (error)
+		return error;
+
 #if defined(DEBUG)
 	int reslen = 0;
 	for (struct mbuf *n = *mp; n; n = n->m_next)
@@ -1338,7 +1339,7 @@ m_makewritable(struct mbuf **mp, int off, int len, int how)
 		panic("m_makewritable: inconsist");
 #endif /* defined(DEBUG) */
 
-	return error;
+	return 0;
 }
 
 /*

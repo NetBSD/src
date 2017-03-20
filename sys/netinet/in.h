@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.98.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
+/*	$NetBSD: in.h,v 1.98.2.2 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -105,6 +105,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
 #define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
+#define	IPPROTO_L2TP		115		/* L2TPv3 */
 #define	IPPROTO_SCTP		132		/* SCTP */
 #define IPPROTO_PFSYNC      240     /* PFSYNC */
 #define	IPPROTO_RAW		255		/* raw IP packet */

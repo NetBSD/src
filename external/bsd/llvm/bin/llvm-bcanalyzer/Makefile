@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2013/02/04 15:00:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.14.1 2017/03/20 06:52:27 pgoyette Exp $
 
 PROG_CXX=	llvm-bcanalyzer
 NOMAN=		yes
@@ -11,7 +11,8 @@ SRCS=	llvm-bcanalyzer.cpp
 
 LLVM_LIBS+= \
 	BitReader \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
 

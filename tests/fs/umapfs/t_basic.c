@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.4 2010/07/19 15:35:39 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.4.28.1 2017/03/20 06:57:56 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -20,7 +20,7 @@
 #include <fs/tmpfs/tmpfs_args.h>
 #include <miscfs/umapfs/umap.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(basic);
 ATF_TC_HEAD(basic, tc)

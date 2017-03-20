@@ -1,10 +1,10 @@
-/*	$NetBSD: rewrite.h,v 1.1.1.4 2014/05/28 09:58:40 tron Exp $	*/
+/*	$NetBSD: rewrite.h,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $	*/
 
 /* $OpenLDAP$
  */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
  *

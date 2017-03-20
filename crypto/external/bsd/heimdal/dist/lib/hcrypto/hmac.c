@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: hmac.c,v 1.1.1.1.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -33,10 +33,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <config.h>
+#include <krb5/roken.h>
+
 #include <hmac.h>
 
 void

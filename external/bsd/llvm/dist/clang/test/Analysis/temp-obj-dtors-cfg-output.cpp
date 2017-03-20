@@ -1077,7 +1077,7 @@ int testConsistencyNestedNormalReturn(bool value) {
 // CHECK:    14: a([B1.13]) (Member initializer)
 // CHECK:    15: ~B() (Temporary object destructor)
 // CHECK:    16: ~A() (Temporary object destructor)
-// CHECK:    17: /*implicit*/int()
+// CHECK:    17: /*implicit*/(int)0
 // CHECK:    18: b([B1.17]) (Member initializer)
 // CHECK:     Preds (1): B2
 // CHECK:     Succs (1): B0
@@ -1093,9 +1093,9 @@ int testConsistencyNestedNormalReturn(bool value) {
 // CHECK:     1: int a;
 // CHECK:     2: NoReturn() (CXXConstructExpr, class NoReturn)
 // CHECK:     3: [B2.2] (BindTemporary)
-// CHECK:     4: [B2.3].f
-// CHECK:     5: [B2.4]()
-// CHECK:     6: ~NoReturn() (Temporary object destructor)
+// CHECK:     [[MEMBER:[45]]]: [B2.{{[34]}}].f
+// CHECK:     {{[56]}}: [B2.[[MEMBER]]]()
+// CHECK:     {{[67]}}: ~NoReturn() (Temporary object destructor)
 // CHECK:     Preds (1): B3
 // CHECK:     Succs (1): B0
 // CHECK:   [B0 (EXIT)]

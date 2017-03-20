@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.94 2016/07/03 11:55:27 kiyohara Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.94.2.1 2017/03/20 06:57:38 pgoyette Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.94 2016/07/03 11:55:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.94.2.1 2017/03/20 06:57:38 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -192,6 +192,7 @@ static int	sdhc_signal_voltage(sdmmc_chipset_handle_t, int);
 static int	sdhc_execute_tuning1(struct sdhc_host *, int);
 static int	sdhc_execute_tuning(sdmmc_chipset_handle_t, int);
 static void	sdhc_tuning_timer(void *);
+static void	sdhc_hw_reset(sdmmc_chipset_handle_t);
 static int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_wait_state(struct sdhc_host *, uint32_t, uint32_t);
 static int	sdhc_soft_reset(struct sdhc_host *, int);
@@ -235,6 +236,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 	.signal_voltage = sdhc_signal_voltage,
 	.bus_clock_ddr = sdhc_bus_clock_ddr,
 	.execute_tuning = sdhc_execute_tuning,
+	.hw_reset = sdhc_hw_reset,
 };
 
 static int
@@ -290,38 +292,42 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	callout_init(&hp->tuning_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hp->tuning_timer, sdhc_tuning_timer, hp);
 
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
-		sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
-	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+	if (iosize <= SDHC_HOST_CTL_VERSION) {
+		aprint_normal_dev(sc->sc_dev, "SDHC NO-VERS");
+		hp->specver = -1;
 	} else {
-		sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
+		} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+		} else
+			sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+		aprint_normal_dev(sc->sc_dev, "SDHC ");
+		hp->specver = SDHC_SPEC_VERSION(sdhcver);
+		switch (SDHC_SPEC_VERSION(sdhcver)) {
+		case SDHC_SPEC_VERS_100:
+			aprint_normal("1.0");
+			break;
+
+		case SDHC_SPEC_VERS_200:
+			aprint_normal("2.0");
+			break;
+
+		case SDHC_SPEC_VERS_300:
+			aprint_normal("3.0");
+			break;
+
+		case SDHC_SPEC_VERS_400:
+			aprint_normal("4.0");
+			break;
+
+		default:
+			aprint_normal("unknown version(0x%x)",
+			    SDHC_SPEC_VERSION(sdhcver));
+			break;
+		}
+		aprint_normal(", rev %u", SDHC_VENDOR_VERSION(sdhcver));
 	}
-	aprint_normal_dev(sc->sc_dev, "SDHC ");
-	hp->specver = SDHC_SPEC_VERSION(sdhcver);
-	switch (SDHC_SPEC_VERSION(sdhcver)) {
-	case SDHC_SPEC_VERS_100:
-		aprint_normal("1.0");
-		break;
-
-	case SDHC_SPEC_VERS_200:
-		aprint_normal("2.0");
-		break;
-
-	case SDHC_SPEC_VERS_300:
-		aprint_normal("3.0");
-		break;
-
-	case SDHC_SPEC_VERS_400:
-		aprint_normal("4.0");
-		break;
-
-	default:
-		aprint_normal("unknown version(0x%x)",
-		    SDHC_SPEC_VERSION(sdhcver));
-		break;
-	}
-	aprint_normal(", rev %u", SDHC_VENDOR_VERSION(sdhcver));
 
 	/*
 	 * Reset the host controller and enable interrupts.
@@ -591,7 +597,9 @@ adma_done:
 		saa.saa_clkmin = hp->clkbase / 0x3ff;
 	else
 		saa.saa_clkmin = hp->clkbase / 256;
-	saa.saa_caps = SMC_CAPS_4BIT_MODE|SMC_CAPS_AUTO_STOP;
+	if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP))
+		saa.saa_caps |= SMC_CAPS_AUTO_STOP;
+	saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_8BIT_MODE))
 		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
 	if (ISSET(caps, SDHC_HIGH_SPEED_SUPP))
@@ -1101,7 +1109,13 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		if (freq > 100000) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR104);
 		} else if (freq > 50000) {
-			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR50);
+			if (ddr) {
+				HSET2(hp, SDHC_HOST_CTL2,
+				    SDHC_UHS_MODE_SELECT_DDR50);
+			} else {
+				HSET2(hp, SDHC_HOST_CTL2,
+				    SDHC_UHS_MODE_SELECT_SDR50);
+			}
 		} else if (freq > 25000) {
 			if (ddr) {
 				HSET2(hp, SDHC_HOST_CTL2,
@@ -1329,6 +1343,9 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
+	if (hp->specver < SDHC_SPEC_VERS_300)
+		return EINVAL;
+
 	mutex_enter(&hp->intr_lock);
 	switch (signal_voltage) {
 	case SDMMC_SIGNAL_VOLTAGE_180:
@@ -1464,6 +1481,16 @@ sdhc_tuning_timer(void *arg)
 	atomic_swap_uint(&hp->tuning_timer_pending, 1);
 }
 
+static void
+sdhc_hw_reset(sdmmc_chipset_handle_t sch)
+{
+	struct sdhc_host *hp = (struct sdhc_host *)sch;
+	struct sdhc_softc *sc = hp->sc;
+
+	if (sc->sc_vendor_hw_reset != NULL)
+		sc->sc_vendor_hw_reset(sc, hp);
+}
+
 static int
 sdhc_wait_state(struct sdhc_host *hp, uint32_t mask, uint32_t value)
 {
@@ -1568,7 +1595,8 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_error == 0 && cmd->c_data != NULL)
 		sdhc_transfer_data(hp, cmd);
 	else if (ISSET(cmd->c_flags, SCF_RSP_BSY)) {
-		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_BUSY_INTR) &&
+		    !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
 			DPRINTF(1,("%s: sdhc_exec_command: RSP_BSY\n",
 			    HDEVNAME(hp)));
 			cmd->c_error = ETIMEDOUT;
@@ -1583,6 +1611,10 @@ out:
 		HCLR1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 	}
 	SET(cmd->c_flags, SCF_ITSDONE);
+
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP) &&
+	    cmd->c_opcode == MMC_STOP_TRANSMISSION)
+		(void)sdhc_soft_reset(hp, SDHC_RESET_CMD|SDHC_RESET_DAT);
 
 	mutex_exit(&hp->intr_lock);
 
@@ -1638,7 +1670,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	if (blkcount > 1) {
 		mode |= SDHC_MULTI_BLOCK_MODE;
 		/* XXX only for memory commands? */
-		mode |= SDHC_AUTO_CMD12_ENABLE;
+		if (!ISSET(sc->sc_flags, SDHC_FLAG_NO_AUTO_STOP))
+			mode |= SDHC_AUTO_CMD12_ENABLE;
 	}
 	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0 &&
 	    ISSET(hp->flags,  SHF_MODE_DMAEN)) {
@@ -2379,6 +2412,42 @@ kmutex_t *
 sdhc_host_lock(struct sdhc_host *hp)
 {
 	return &hp->intr_lock;
+}
+
+uint8_t
+sdhc_host_read_1(struct sdhc_host *hp, int reg)
+{
+	return HREAD1(hp, reg);
+}
+
+uint16_t
+sdhc_host_read_2(struct sdhc_host *hp, int reg)
+{
+	return HREAD2(hp, reg);
+}
+
+uint32_t
+sdhc_host_read_4(struct sdhc_host *hp, int reg)
+{
+	return HREAD4(hp, reg);
+}
+
+void
+sdhc_host_write_1(struct sdhc_host *hp, int reg, uint8_t val)
+{
+	HWRITE1(hp, reg, val);
+}
+
+void
+sdhc_host_write_2(struct sdhc_host *hp, int reg, uint16_t val)
+{
+	HWRITE2(hp, reg, val);
+}
+
+void
+sdhc_host_write_4(struct sdhc_host *hp, int reg, uint32_t val)
+{
+	HWRITE4(hp, reg, val);
 }
 
 #ifdef SDHC_DEBUG

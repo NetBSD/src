@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.49.2.1 2017/01/07 08:56:13 pgoyette Exp $
+#	$NetBSD: ARMADILLO9,v 1.49.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -41,6 +41,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

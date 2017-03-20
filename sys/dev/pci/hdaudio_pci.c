@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.4.2.1 2017/01/07 08:56:33 pgoyette Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.4.2.2 2017/03/20 06:57:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4.2.1 2017/01/07 08:56:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4.2.2 2017/03/20 06:57:29 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,9 +157,6 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	if (!pmf_device_register(self, NULL, hdaudio_pci_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 	hdaudio_pci_reinit(sc);
 
 	/* Attach bus-independent HD audio layer */
@@ -176,8 +173,12 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 		csr &= ~(PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG, csr);
-		pmf_device_deregister(self);
+
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self, "couldn't establish power handler\n");
 	}
+	else if (!pmf_device_register(self, NULL, hdaudio_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

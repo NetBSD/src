@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd.c,v 1.5.2.2 2017/01/07 08:57:00 pgoyette Exp $	*/
+/*	$NetBSD: npfd.c,v 1.5.2.3 2017/03/20 06:58:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd.c,v 1.5.2.2 2017/01/07 08:57:00 pgoyette Exp $");
+__RCSID("$NetBSD: npfd.c,v 1.5.2.3 2017/03/20 06:58:08 pgoyette Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -75,6 +75,7 @@ static void
 npfd_event_loop(npfd_log_t *log, int delay)
 {
 	struct pollfd pfd;
+	size_t count = 0;
 
 	pfd.fd = npfd_log_getsock(log);
 	pfd.events = POLLHUP | POLLIN;
@@ -91,6 +92,7 @@ npfd_event_loop(npfd_log_t *log, int delay)
 		if (flush) {
 			flush = false;
 			npfd_log_flush(log);
+			count = 0;
 		}
 		switch (poll(&pfd, 1, delay)) {
 		case -1:
@@ -98,10 +100,16 @@ npfd_event_loop(npfd_log_t *log, int delay)
 				continue;
 			syslog(LOG_ERR, "poll failed: %m");
 			exit(EXIT_FAILURE);
+			/*NOTREACHED*/
 		case 0:
 			npfd_log_flush(log);
+			count = 0;
 			continue;
 		default:
+			if (count++ >= 100) {
+				npfd_log_flush(log);
+				count = 0;
+			}
 			npfd_log(log);
 		}
 
@@ -167,7 +175,7 @@ main(int argc, char **argv)
 	bool daemon_off = false;
 	int ch;
 
-	int delay = 60 * 1000;
+	int delay = 5 * 1000;
 	const char *iface = "npflog0";
 	int snaplen = 116;
 	char *pidname = NULL;

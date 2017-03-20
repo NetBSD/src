@@ -377,6 +377,40 @@ void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
     EndAnalysisCheckers[i](G, BR, Eng);
 }
 
+namespace {
+struct CheckBeginFunctionContext {
+  typedef std::vector<CheckerManager::CheckBeginFunctionFunc> CheckersTy;
+  const CheckersTy &Checkers;
+  ExprEngine &Eng;
+  const ProgramPoint &PP;
+
+  CheckersTy::const_iterator checkers_begin() { return Checkers.begin(); }
+  CheckersTy::const_iterator checkers_end() { return Checkers.end(); }
+
+  CheckBeginFunctionContext(const CheckersTy &Checkers, ExprEngine &Eng,
+                            const ProgramPoint &PP)
+      : Checkers(Checkers), Eng(Eng), PP(PP) {}
+
+  void runChecker(CheckerManager::CheckBeginFunctionFunc checkFn,
+                  NodeBuilder &Bldr, ExplodedNode *Pred) {
+    const ProgramPoint &L = PP.withTag(checkFn.Checker);
+    CheckerContext C(Bldr, Eng, Pred, L);
+
+    checkFn(C);
+  }
+};
+}
+
+void CheckerManager::runCheckersForBeginFunction(ExplodedNodeSet &Dst,
+                                                 const BlockEdge &L,
+                                                 ExplodedNode *Pred,
+                                                 ExprEngine &Eng) {
+  ExplodedNodeSet Src;
+  Src.insert(Pred);
+  CheckBeginFunctionContext C(BeginFunctionCheckers, Eng, L);
+  expandGraphWithCheckers(C, Dst, Src);
+}
+
 /// \brief Run checkers for end of path.
 // Note, We do not chain the checker output (like in expandGraphWithCheckers)
 // for this callback since end of path nodes are expected to be final.
@@ -484,15 +518,6 @@ void CheckerManager::runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
   expandGraphWithCheckers(C, Dst, Src);
 }
 
-/// \brief True if at least one checker wants to check region changes.
-bool CheckerManager::wantsRegionChangeUpdate(ProgramStateRef state) {
-  for (unsigned i = 0, e = RegionChangesCheckers.size(); i != e; ++i)
-    if (RegionChangesCheckers[i].WantUpdateFn(state))
-      return true;
-
-  return false;
-}
-
 /// \brief Run checkers for region changes.
 ProgramStateRef
 CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
@@ -505,8 +530,8 @@ CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
     // bail out.
     if (!state)
       return nullptr;
-    state = RegionChangesCheckers[i].CheckFn(state, invalidated,
-                                             ExplicitRegions, Regions, Call);
+    state = RegionChangesCheckers[i](state, invalidated,
+                                     ExplicitRegions, Regions, Call);
   }
   return state;
 }
@@ -671,6 +696,10 @@ void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
   EndAnalysisCheckers.push_back(checkfn);
 }
 
+void CheckerManager::_registerForBeginFunction(CheckBeginFunctionFunc checkfn) {
+  BeginFunctionCheckers.push_back(checkfn);
+}
+
 void CheckerManager::_registerForEndFunction(CheckEndFunctionFunc checkfn) {
   EndFunctionCheckers.push_back(checkfn);
 }
@@ -688,10 +717,8 @@ void CheckerManager::_registerForDeadSymbols(CheckDeadSymbolsFunc checkfn) {
   DeadSymbolsCheckers.push_back(checkfn);
 }
 
-void CheckerManager::_registerForRegionChanges(CheckRegionChangesFunc checkfn,
-                                     WantsRegionChangeUpdateFunc wantUpdateFn) {
-  RegionChangesCheckerInfo info = {checkfn, wantUpdateFn};
-  RegionChangesCheckers.push_back(info);
+void CheckerManager::_registerForRegionChanges(CheckRegionChangesFunc checkfn) {
+  RegionChangesCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForPointerEscape(CheckPointerEscapeFunc checkfn){

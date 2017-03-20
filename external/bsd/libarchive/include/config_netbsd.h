@@ -151,7 +151,7 @@
 
 /* Define to 1 if you have the declaration of `SSIZE_MAX', and to 0 if you
    don't. */
-#define HAVE_DECL_SSIZE_MAX 0
+#define HAVE_DECL_SSIZE_MAX 1
 
 /* Define to 1 if you have the declaration of `strerror_r', and to 0 if you
    don't. */

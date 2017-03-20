@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.23.2.1 2017/01/07 08:56:52 pgoyette Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.23.2.2 2017/03/20 06:57:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.23.2.1 2017/01/07 08:56:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.23.2.2 2017/03/20 06:57:52 pgoyette Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -73,7 +73,6 @@ __weak_alias(vlan_ifdetach,rumpnet_stub);
 
 struct ifnet_head ifnet_list;
 struct pslist_head ifnet_pslist;
-struct psref_class *ifnet_psref_class;
 kmutex_t ifnet_mtx;
 
 int

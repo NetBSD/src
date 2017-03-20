@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.59.2.1 2017/01/07 08:56:13 pgoyette Exp $
+#	$NetBSD: SMDK2410,v 1.59.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -59,6 +59,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support

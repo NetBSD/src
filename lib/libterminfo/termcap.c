@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.19 2016/04/01 19:59:08 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.19.2.1 2017/03/20 06:57:00 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.19 2016/04/01 19:59:08 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.19.2.1 2017/03/20 06:57:00 pgoyette Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -88,7 +88,7 @@ tgetflag(const char *id2)
 		return 0;
 
 	ind = _t_flaghash((const unsigned char *)id, strlen(id));
-	if (ind <= __arraycount(_ti_cap_flagids)) {
+	if (ind < __arraycount(_ti_cap_flagids)) {
 		if (strcmp(id, _ti_cap_flagids[ind].id) == 0)
 			return cur_term->flags[_ti_cap_flagids[ind].ti];
 	}
@@ -113,7 +113,7 @@ tgetnum(const char *id2)
 		return -1;
 
 	ind = _t_numhash((const unsigned char *)id, strlen(id));
-	if (ind <= __arraycount(_ti_cap_numids)) {
+	if (ind < __arraycount(_ti_cap_numids)) {
 		te = &_ti_cap_numids[ind];
 		if (strcmp(id, te->id) == 0) {
 			if (!VALID_NUMERIC(cur_term->nums[te->ti]))
@@ -146,7 +146,7 @@ tgetstr(const char *id2, char **area)
 
 	str = NULL;
 	ind = _t_strhash((const unsigned char *)id, strlen(id));
-	if (ind <= __arraycount(_ti_cap_strids)) {
+	if (ind < __arraycount(_ti_cap_strids)) {
 		if (strcmp(id, _ti_cap_strids[ind].id) == 0) {
 			str = cur_term->strs[_ti_cap_strids[ind].ti];
 			if (str == NULL)
@@ -188,7 +188,7 @@ flagname(const char *key)
 	uint32_t idx;
 
 	idx = _t_flaghash((const unsigned char *)key, strlen(key));
-	if (idx <= __arraycount(_ti_cap_flagids) &&
+	if (idx < __arraycount(_ti_cap_flagids) &&
 	    strcmp(key, _ti_cap_flagids[idx].id) == 0)
 		return _ti_flagid(_ti_cap_flagids[idx].ti);
 	return key;
@@ -200,7 +200,7 @@ numname(const char *key)
 	uint32_t idx;
 
 	idx = _t_numhash((const unsigned char *)key, strlen(key));
-	if (idx <= __arraycount(_ti_cap_numids) && 
+	if (idx < __arraycount(_ti_cap_numids) && 
 	    strcmp(key, _ti_cap_numids[idx].id) == 0)
 		return _ti_numid(_ti_cap_numids[idx].ti);
 	return key;
@@ -212,7 +212,7 @@ strname(const char *key)
 	uint32_t idx;
 
 	idx = _t_strhash((const unsigned char *)key, strlen(key));
-	if (idx <= __arraycount(_ti_cap_strids) &&
+	if (idx < __arraycount(_ti_cap_strids) &&
 	    strcmp(key, _ti_cap_strids[idx].id) == 0)
 		return _ti_strid(_ti_cap_strids[idx].ti);
 

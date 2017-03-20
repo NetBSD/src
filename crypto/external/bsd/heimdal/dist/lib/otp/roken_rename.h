@@ -1,4 +1,4 @@
-/*	$NetBSD: roken_rename.h,v 1.1.1.2 2011/04/14 14:09:28 elric Exp $	*/
+/*	$NetBSD: roken_rename.h,v 1.1.1.2.28.1 2017/03/20 06:51:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan

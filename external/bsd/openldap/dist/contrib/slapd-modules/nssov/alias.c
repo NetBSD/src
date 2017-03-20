@@ -1,10 +1,10 @@
-/*	$NetBSD: alias.c,v 1.1.1.4 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: alias.c,v 1.1.1.4.6.1 2017/03/20 06:56:10 pgoyette Exp $	*/
 
 /* alias.c - mail alias lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.21 2014/11/10 18:46:33 maxv Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.21.4.1 2017/03/20 06:57:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.21 2014/11/10 18:46:33 maxv Exp $
+ *	$Id: overlay_vnops.c,v 1.21.4.1 2017/03/20 06:57:49 pgoyette Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.21 2014/11/10 18:46:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.21.4.1 2017/03/20 06:57:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ const struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
 	{ &vop_rmdir_desc,    layer_rmdir },
 
 	{ &vop_open_desc,     layer_open },	/* mount option handling */
+	{ &vop_close_desc,    layer_close },
 
 	{ &vop_bmap_desc,     layer_bmap },
 	{ &vop_getpages_desc, layer_getpages },

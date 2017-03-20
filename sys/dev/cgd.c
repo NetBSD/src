@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.20 2017/01/07 08:56:31 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.21 2017/03/20 06:57:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.20 2017/01/07 08:56:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.21 2017/03/20 06:57:27 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -792,18 +792,12 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case CGDIOCCLR:
 		if (DK_BUSY(&cs->sc_dksc, pmask))
-			error = EBUSY;
-		else
-			error = cgd_ioctl_clr(cs, l);
-		break;
+			return EBUSY;
+		return cgd_ioctl_clr(cs, l);
+	case DIOCGCACHE:
 	case DIOCCACHESYNC:
-		/*
-		 * XXX Do we really need to care about having a writable
-		 * file descriptor here?
-		 */
-		if ((flag & FWRITE) == 0)
-			error = (EBADF);
-
+		if (!DK_ATTACHED(dksc))
+			return ENOENT;
 		/*
 		 * We pass this call down to the underlying disk.
 		 */

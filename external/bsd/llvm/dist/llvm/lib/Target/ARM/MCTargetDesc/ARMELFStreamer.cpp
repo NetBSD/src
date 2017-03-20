@@ -591,7 +591,7 @@ private:
   void FlushPendingOffset();
   void FlushUnwindOpcodes(bool NoHandlerData);
 
-  void SwitchToEHSection(const char *Prefix, unsigned Type, unsigned Flags,
+  void SwitchToEHSection(StringRef Prefix, unsigned Type, unsigned Flags,
                          SectionKind Kind, const MCSymbol &Fn);
   void SwitchToExTabSection(const MCSymbol &FnStart);
   void SwitchToExIdxSection(const MCSymbol &FnStart);
@@ -761,6 +761,12 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     setAttributeItem(MPextension_use, Allowed, false);
     setAttributeItem(Virtualization_use, AllowTZVirtualization, false);
+    break;
+
+  case ARM::AK_ARMV8MBaseline:
+  case ARM::AK_ARMV8MMainline:
+    setAttributeItem(THUMB_ISA_use, AllowThumbDerived, false);
+    setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
     break;
 
   case ARM::AK_IWMMXT:
@@ -1068,7 +1074,7 @@ void ARMELFStreamer::reset() {
   getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
 }
 
-inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
+inline void ARMELFStreamer::SwitchToEHSection(StringRef Prefix,
                                               unsigned Type,
                                               unsigned Flags,
                                               SectionKind Kind,

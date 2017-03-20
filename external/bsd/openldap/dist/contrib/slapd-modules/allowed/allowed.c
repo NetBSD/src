@@ -1,10 +1,10 @@
-/*	$NetBSD: allowed.c,v 1.1.1.3 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: allowed.c,v 1.1.1.3.6.1 2017/03/20 06:56:09 pgoyette Exp $	*/
 
 /* allowed.c - add allowed attributes based on ACL */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2014 The OpenLDAP Foundation.
+ * Copyright 2006-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,9 @@
  *   allowedAttributes and allowedAttributesEffective cannot be used
  *   in filters or in compare
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: allowed.c,v 1.1.1.3.6.1 2017/03/20 06:56:09 pgoyette Exp $");
 
 #include "portable.h"
 

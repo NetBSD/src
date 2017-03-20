@@ -1,9 +1,9 @@
-/*	$NetBSD: slapschema.c,v 1.1.1.3 2014/05/28 09:58:48 tron Exp $	*/
+/*	$NetBSD: slapschema.c,v 1.1.1.3.6.1 2017/03/20 06:56:16 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -21,6 +21,9 @@
  * in OpenLDAP Software.  Code portions borrowed from slapcat.c;
  * contributors are Kurt Zeilenga and Jong Hyuk Choi
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: slapschema.c,v 1.1.1.3.6.1 2017/03/20 06:56:16 pgoyette Exp $");
 
 #include "portable.h"
 

@@ -26,7 +26,8 @@ incoming SMTP connections.
 This document covers the following topics:
 
   * Policy protocol description
-  * Policy client/server configuration
+  * Simple policy client/server configuration
+  * Advanced policy client configuration
   * Example: greylist policy server
   * Greylisting mail from frequently forged domains
   * Greylisting all your mail
@@ -73,6 +74,10 @@ a delegated SMTPD access policy request:
     stress=
     PPoossttffiixx vveerrssiioonn 22..99 aanndd llaatteerr::
     ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
+    PPoossttffiixx vveerrssiioonn 33..00 aanndd llaatteerr::
+    client_port=1234
+    PPoossttffiixx vveerrssiioonn 33..11 aanndd llaatteerr::
+    policy_context=submission
     [empty line]
 
 Notes:
@@ -142,6 +147,9 @@ Notes:
   * The "stress" attribute is either empty or "yes". See the STRESS_README
     document for further information.
 
+  * The "policy_context" attribute provides a way to pass information that is
+    not available via other attributes (Postfix version 3.1 and later).
+
 The following is specific to SMTPD delegated policy requests:
 
   * Protocol names are ESMTP or SMTP.
@@ -164,7 +172,7 @@ In case of trouble the policy server must not send a reply. Instead the server
 must log a warning and disconnect. Postfix will retry the request at some later
 time.
 
-PPoolliiccyy cclliieenntt//sseerrvveerr ccoonnffiigguurraattiioonn
+SSiimmppllee ppoolliiccyy cclliieenntt//sseerrvveerr ccoonnffiigguurraattiioonn
 
 The Postfix delegated policy client can connect to a TCP socket or to a UNIX-
 domain socket. Examples:
@@ -194,6 +202,7 @@ use something like this:
      9         check_policy_service unix:private/policy
     10         ...
     11     policy_time_limit = 3600
+    12     # smtpd_policy_service_request_limit = 1
 
 NOTES:
 
@@ -225,6 +234,9 @@ NOTES:
         (in the above example, "policy") and a built-in suffix (in the above
         example: "_time_limit").
 
+  * Line 12: specify smtpd_policy_service_request_limit to avoid error-recovery
+    delays with policy servers that cannot maintain a persistent connection.
+
   * With Solaris < 9, or Postfix < 2.10 on any Solaris version, use TCP sockets
     instead of UNIX-domain sockets:
 
@@ -239,9 +251,14 @@ NOTES:
      9         check_policy_service inet:127.0.0.1:9998
     10         ...
     11     127.0.0.1:9998_time_limit = 3600
+    12     # smtpd_policy_service_request_limit = 1
 
-Other configuration parameters that control the client side of the policy
-delegation protocol:
+Configuration parameters that control the client side of the policy delegation
+protocol:
+
+  * smtpd_policy_service_default_action (default: 451 4.3.5 Server
+    configuration problem): The default action when an SMTPD policy service
+    request fails. Available with Postfix 3.0 and later.
 
   * smtpd_policy_service_max_idle (default: 300s): The amount of time before
     the Postfix SMTP server closes an unused policy client connection.
@@ -249,8 +266,81 @@ delegation protocol:
   * smtpd_policy_service_max_ttl (default: 1000s): The amount of time before
     the Postfix SMTP server closes an active policy client connection.
 
+  * smtpd_policy_service_request_limit (default: 0): The maximal number of
+    requests per policy connection, or zero (no limit). Available with Postfix
+    3.0 and later.
+
   * smtpd_policy_service_timeout (default: 100s): The time limit to connect to,
     send to or receive from a policy server.
+
+  * smtpd_policy_service_try_limit (default: 2): The maximal number of attempts
+    to send an SMTPD policy service request before giving up. Available with
+    Postfix 3.0 and later.
+
+  * smtpd_policy_service_retry_delay (default: 1s): The delay between attempts
+    to resend a failed SMTPD policy service request. Available with Postfix 3.0
+    and later.
+
+  * smtpd_policy_service_policy_context (default: empty): Optional information
+    that is passed in the "policy_context" attribute of an SMTPD policy service
+    request (originally, to share the same SMTPD service endpoint among
+    multiple check_policy_service clients). Available with Postfix 3.1 and
+    later.
+
+Configuration parameters that control the server side of the policy delegation
+protocol:
+
+  * transport_time_limit ($command_time_limit): The maximal amount of time the
+    policy daemon is allowed to run before it is terminated. The transport is
+    the service name of the master.cf entry for the policy daemon service. In
+    the above examples, the service name is "policy" or "127.0.0.1:9998".
+
+AAddvvaanncceedd ppoolliiccyy cclliieenntt ccoonnffiigguurraattiioonn
+
+The previous section lists a number of Postfix main.cf parameters that control
+time limits and other settings for all policy clients. This is sufficient for
+simple configurations. With more complex configurations it becomes desirable to
+have different settings per policy client. This is supported with Postfix 3.0
+and later.
+
+The following example shows a "non-critical" policy service with a short
+timeout, and with "DUNNO" as default action when the service is unvailable. The
+"DUNNO" action causes Postfix to ignore the result.
+
+    1 /etc/postfix/main.cf:
+    2     smtpd_recipient_restrictions =
+    3         ...
+    4         reject_unauth_destination
+    5         check_policy_service { inet:host:port,
+    6             timeout=10s, default_action=DUNNO }
+    8         ...
+
+Instead of a server endpoint, we now have a list enclosed in {}.
+
+  * Line 5: The first item in the list is the server endpoint. This supports
+    the exact same "inet" and "unix" syntax as described earlier.
+
+  * Line 6: The remainder of the list contains per-client settings. These
+    settings override global main.cf parameters, and have the same name as
+    those parameters, without the "smtpd_policy_service_" prefix.
+
+Inside the list, syntax is similar to what we already know from main.cf: items
+separated by space or comma. There is one difference: yyoouu mmuusstt eenncclloossee aa
+sseettttiinngg iinn ppaarreenntthheesseess,, aass iinn ""{{ nnaammee == vvaalluuee }}"",, iiff yyoouu wwaanntt ttoo hhaavvee ssppaaccee oorr
+ccoommmmaa wwiitthhiinn aa vvaalluuee oorr aarroouunndd ""=="". This comes in handy when different policy
+servers require different default actions with different SMTP status codes or
+text:
+
+    1 /etc/postfix/main.cf:
+    2     smtpd_recipient_restrictions =
+    3         ...
+    4         reject_unauth_destination
+    5         check_policy_service {
+    6           inet:host:port1,
+    7           { default_action = 451 4.3.5 See http://www.example.com/
+    support1 }
+    8         }
+    9         ...
 
 EExxaammppllee:: ggrreeyylliisstt ppoolliiccyy sseerrvveerr
 
@@ -307,6 +397,7 @@ socket that is accessible by Postfix processes only:
      9         reject_unauth_destination
     10         check_policy_service unix:private/greylist
     11         ...
+    12     # smtpd_policy_service_request_limit = 1
 
 Notes:
 
@@ -338,6 +429,9 @@ Notes:
         service name (in the above example, "greylist") and a built-in suffix
         (in the above example: "_time_limit").
 
+  * Line 12: specify smtpd_policy_service_request_limit to avoid error-recovery
+    delays with policy servers that cannot maintain a persistent connection.
+
 With Solaris < 9, or Postfix < 2.10 on any Solaris version, use inet: style
 sockets instead of unix: style, as detailed in the "Policy client/server
 configuration" section above.
@@ -353,6 +447,7 @@ configuration" section above.
      9         reject_unauth_destination
     10         check_policy_service inet:127.0.0.1:9998
     11         ...
+    12     # smtpd_policy_service_request_limit = 1
 
 GGrreeyylliissttiinngg mmaaiill ffrroomm ffrreeqquueennttllyy ffoorrggeedd ddoommaaiinnss
 

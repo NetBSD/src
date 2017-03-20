@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/02/27 21:47:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2017/03/20 06:52:27 pgoyette Exp $
 
 PROG_CXX=	lldb
 NOMAN=		yes
@@ -150,7 +150,8 @@ LLVM_LIBS+= \
 	IR \
 	ProfileData \
 	Option \
-	Support
+	Support \
+	Demangle
 
 LDADD+=	-ledit -lterminfo -lexecinfo -lz
 DPADD+=	${LIBEDIT} ${LIBTERMINFO} ${LIBEXECINFO} ${LIBZ}

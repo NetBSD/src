@@ -1,27 +1,7 @@
-#	$NetBSD: Makefile.xkbdata,v 1.1.32.1 2017/01/07 08:55:59 pgoyette Exp $
+#	$NetBSD: Makefile.xkbdata,v 1.1.32.2 2017/03/20 06:56:48 pgoyette Exp $
 
 XKBDISTDIR=	${X11SRCDIR.xkeyboard-config}/${XKBNAME}
 
 .PATH:		${XKBDISTDIR}
 
 FILESDIR=	${X11LIBDIR}/xkb/${XKBNAME}
-
-
-.if defined(XKBDIR)							# {
-FILES+=			${XKBNAME}.dir
-FILESDIR_${XKBNAME}.dir=${X11LIBDIR}/xkb
-CLEANFILES+=		${XKBNAME}.dir
-
-.include "${NETBSDSRCDIR}/external/mit/xorg/tools/xkbcomp/Makefile.xkbcomp"
-
-${XKBNAME}.dir:
-	${_MKTARGET_CREATE}
-	rm -f ${.TARGET}
-	(cd ${XKBDISTDIR} && rm -f ${.OBJDIR}/${.TARGET}.tmp && \
-	    ${XKBCOMP} -lfhlpR -o ${.OBJDIR}/${.TARGET}.tmp '*' && \
-	    sort ${.OBJDIR}/${.TARGET}.tmp > ${.OBJDIR}/${.TARGET} && \
-	    rm -f ${.OBJDIR}/${.TARGET}.tmp)
-
-realall: ${FILES}
-
-.endif									# }

@@ -32,25 +32,6 @@ sed '
 	s;_\([^_]\);<i>\1</i>;g
 	s;.\(.\);<b>\1</b>;g
 
-	# Begin incomplete workarounds for grotty SGR escape sequences.
-	#/'$ESC'\[0m$/{
-	#	/'$ESC'\[1m[^'$ESC']*'$ESC'\[0m$/{
-	#		# Here, ESC[0m means end-of-bold.
-	#		s;0m$;22m;
-	#	}
-	#	/'$ESC'\[4m[^'$ESC']*'$ESC'\[0m$/{
-	#		# Here, ESC[0m means end-of-italic.
-	#		s;0m$;24m;
-	#	}
-	#}
-	#s;'$ESC'\[1m;<b>;g
-	#s;'$ESC'\[22m;</b>;g
-	#s;'$ESC'\[4m;<i>;g
-	#s;'$ESC'\[24m;</i>;g
-	# Undo gratuitous whitespace changes.
-	#s;\(  *\)\(</[bi]>\);\2\1;g
-	# End workarounds for grotty SGR escape sequences.
-
 	s;</i>\( *\)<i>;\1;g
 	s;</b>\( *\)<b>;\1;g
 

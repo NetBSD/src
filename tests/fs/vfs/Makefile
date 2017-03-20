@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2015/01/07 22:24:03 pooka Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2017/03/20 06:57:57 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,8 +11,10 @@ TESTS_C+=	t_io
 TESTS_C+=	t_renamerace
 TESTS_C+=	t_ro
 TESTS_C+=	t_rmdirrace
+TESTS_C+=	t_rwtoro
 TESTS_C+=	t_union
 TESTS_C+=	t_unpriv
+TESTS_C+=	t_mtime_otrunc
 TESTS_C+=	t_vfsops
 TESTS_C+=	t_vnops
 
@@ -28,6 +30,7 @@ LDADD+=-lrumpfs_udf						# udf
 LDADD+=-lrumpfs_union						# union
 LDADD+=-lrumpfs_v7fs						# v7fs
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device
+LDADD+=-lrumpfs_null -lrumpvfs_layerfs				# nullfs
 
 
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}

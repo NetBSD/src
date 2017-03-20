@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.142.2.1 2017/01/07 08:56:18 pgoyette Exp $
+#	$NetBSD: GENERIC_TINY,v 1.142.2.2 2017/03/20 06:57:14 pgoyette Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -555,3 +555,6 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	pty			# pseudo-terminals
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
+
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor

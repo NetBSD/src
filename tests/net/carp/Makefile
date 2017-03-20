@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 2014/06/10 04:28:40 he Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2017/03/20 06:58:00 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/net/carp
 
-TESTS_C=	t_basic
-
-LDADD+=		-lrumpnet_shmif -lrumpnet_netinet -lrumpnet_net
-LDADD+=		-lrumpnet -lrump -lrumpuser -lrump -lpthread
+.for name in basic
+TESTS_SH+=		t_${name}
+TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh
+.endfor
 
 .include <bsd.test.mk>

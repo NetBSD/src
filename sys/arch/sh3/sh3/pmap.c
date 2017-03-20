@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77.40.1 2017/01/07 08:56:25 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.40.2 2017/03/20 06:57:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.40.1 2017/01/07 08:56:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.40.2 2017/03/20 06:57:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,14 +140,15 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	for (bank = uvm_physseg_get_first();
 	     uvm_physseg_valid_p(bank);
 	     bank = uvm_physseg_get_next(bank)) {
-		if (npage <= uvm_physseg_get_end(bank) - uvm_physseg_get_start(bank))
+		if (npage <= uvm_physseg_get_avail_end(bank)
+				- uvm_physseg_get_avail_start(bank))
 			break;
 	}
 
 	KDASSERT(uvm_physseg_valid_p(bank));
 
 	/* Steal pages */
-	pa = ptoa(uvm_physseg_get_start(bank));
+	pa = ptoa(uvm_physseg_get_avail_start(bank));
 	uvm_physseg_unplug(atop(pa), npage);
 	va = SH3_PHYS_TO_P1SEG(pa);
 	memset((void *)va, 0, size);

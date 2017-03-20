@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/02/27 21:47:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2017/03/20 06:52:26 pgoyette Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -26,19 +26,26 @@ LLVM_LIBS+= \
 	BitWriter \
 	InstCombine \
 	Instrumentation \
-	MC \
 	Linker \
 	ScalarOpts \
 	ipo \
 	Object \
+	MCParser \
+	MC \
 	ProfileData \
 	Target \
 	Vectorize \
 	TransformsUtils \
 	Analysis \
 	IR \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
+
+LDADD+=	-lz
+.if !defined(HOSTPROG)
+DPADD+=	${LIBZ}
+.endif
 
 .include <bsd.prog.mk>

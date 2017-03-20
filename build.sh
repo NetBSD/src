@@ -1,5 +1,4 @@
-#! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.310.2.1 2017/01/07 08:53:41 pgoyette Exp $
+#	$NetBSD: build.sh,v 1.310.2.2 2017/03/20 06:51:32 pgoyette Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -458,7 +457,8 @@ initdefaults()
 
 	[ -d usr.bin/make ] || cd "$(dirname $0)"
 	[ -d usr.bin/make ] ||
-	    bomb "build.sh must be run from the top source level"
+	    bomb "usr.bin/make not found; build.sh must be run from the top \
+level of source directory"
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
@@ -1892,7 +1892,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.310.2.1 2017/01/07 08:53:41 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.310.2.2 2017/03/20 06:51:32 pgoyette Exp $
 # with these arguments: ${_args}
 #
 

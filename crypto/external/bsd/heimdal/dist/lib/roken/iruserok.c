@@ -1,4 +1,4 @@
-/*	$NetBSD: iruserok.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: iruserok.c,v 1.1.1.1.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994

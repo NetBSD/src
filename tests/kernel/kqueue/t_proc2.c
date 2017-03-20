@@ -1,4 +1,4 @@
-/* $NetBSD: t_proc2.c,v 1.2 2015/01/14 22:22:32 christos Exp $ */
+/* $NetBSD: t_proc2.c,v 1.2.2.1 2017/03/20 06:57:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_proc2.c,v 1.2 2015/01/14 22:22:32 christos Exp $");
+__RCSID("$NetBSD: t_proc2.c,v 1.2.2.1 2017/03/20 06:57:57 pgoyette Exp $");
 
 #include <sys/event.h>
 #include <sys/time.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: t_proc2.c,v 1.2 2015/01/14 22:22:32 christos Exp $");
 
 #include <atf-c.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 static void
 child_two(void)

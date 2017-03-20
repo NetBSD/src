@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.113.2.2 2017/01/07 08:56:40 pgoyette Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.113.2.3 2017/03/20 06:57:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -163,6 +163,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CLASS_SATCOM			0x0f
 #define	PCI_CLASS_CRYPTO			0x10
 #define	PCI_CLASS_DASP				0x11
+#define	PCI_CLASS_ACCEL				0x12
+#define	PCI_CLASS_INSTRUMENT			0x13
 #define	PCI_CLASS_UNDEFINED			0xff
 
 /* 0x00 prehistoric subclasses */
@@ -589,6 +591,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PMCSR_PME_STS	0x00008000
 #define PCI_PMCSR_B2B3_SUPPORT	0x00400000
 #define PCI_PMCSR_BPCC_EN	0x00800000
+#define PCI_PMCSR_DATA		0xff000000
 
 
 /*
@@ -597,6 +600,26 @@ typedef u_int8_t pci_revision_t;
  */
 #define PCI_CAP_AGP_MAJOR(cr)	(((cr) >> 20) & 0xf)
 #define PCI_CAP_AGP_MINOR(cr)	(((cr) >> 16) & 0xf)
+#define PCI_AGP_STATUS		0x04
+#define PCI_AGP_COMMAND		0x08
+/* Definitions for STATUS and COMMAND register bits */
+#define AGP_MODE_RQ		__BITS(31, 24)
+#define AGP_MODE_ARQSZ		__BITS(15, 13)
+#define AGP_MODE_CAL		__BITS(12, 10)
+#define AGP_MODE_SBA		__BIT(9)
+#define AGP_MODE_AGP		__BIT(8)
+#define AGP_MODE_HTRANS		__BIT(6)
+#define AGP_MODE_4G		__BIT(5)
+#define AGP_MODE_FW		__BIT(4)
+#define AGP_MODE_MODE_3		__BIT(3)
+#define AGP_MODE_RATE		__BITS(2, 0)
+#define AGP_MODE_V2_RATE_1x		0x1
+#define AGP_MODE_V2_RATE_2x		0x2
+#define AGP_MODE_V2_RATE_4x		0x4
+#define AGP_MODE_V3_RATE_4x		0x1
+#define AGP_MODE_V3_RATE_8x		0x2
+#define AGP_MODE_V3_RATE_RSVD		0x4
+
 
 /*
  * Capability ID: 0x03

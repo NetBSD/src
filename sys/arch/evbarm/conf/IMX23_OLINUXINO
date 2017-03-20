@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.12.2.1 2017/01/07 08:56:13 pgoyette Exp $
+# $Id: IMX23_OLINUXINO,v 1.12.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -123,6 +123,8 @@ file-system	PROCFS
 file-system	PTYFS
 file-system	NFS
 
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL
 
 pseudo-device	pty		# pseudo-terminals

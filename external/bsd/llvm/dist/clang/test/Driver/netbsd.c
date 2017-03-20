@@ -13,6 +13,12 @@
 // RUN: %clang -no-canonical-prefixes -target aarch64--netbsd7.0.0 \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=AARCH64-7 %s
+// RUN: %clang -no-canonical-prefixes -target aarch64_be--netbsd \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=AARCH64_BE %s
+// RUN: %clang -no-canonical-prefixes -target aarch64_be--netbsd7.0.0 \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=AARCH64_BE-7 %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabi \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM %s
@@ -74,6 +80,12 @@
 // RUN: %clang -no-canonical-prefixes -target aarch64--netbsd7.0.0 -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-AARCH64-7 %s
+// RUN: %clang -no-canonical-prefixes -target aarch64_be--netbsd -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-AARCH64_BE %s
+// RUN: %clang -no-canonical-prefixes -target aarch64_be--netbsd7.0.0 -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-AARCH64_BE-7 %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabi -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-ARM %s
@@ -104,6 +116,34 @@
 // RUN: %clang -no-canonical-prefixes -target powerpc64--netbsd -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-POWERPC64 %s
+// RUN: %clang -target x86_64--netbsd -pthread -dM -E %s \
+// RUN: | FileCheck -check-prefix=PTHREAD %s
+
+// STATIC: ld{{.*}}" "--eh-frame-hdr"
+// STATIC-NOT: "-pie"
+// STATIC-NOT: "-Bshareable"
+// STATIC: "-dynamic-linker" "/libexec/ld.elf_so"
+// STATIC-NOT: "-pie"
+// STATIC-NOT: "-Bshareable"
+// STATIC: "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// STATIC: "{{.*}}/usr/lib{{/|\\\\}}crti.o" "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o"
+// STATIC: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// SHARED: ld{{.*}}" "--eh-frame-hdr"
+// SHARED-NOT: "-pie"
+// SHARED-NOT: "-dynamic-linker"
+// SHARED-NOT: "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// SHARED: "{{.*}}/usr/lib{{/|\\\\}}crti.o" "{{.*}}/usr/lib{{/|\\\\}}crtbeginS.o"
+// SHARED: "{{.*}}/usr/lib{{/|\\\\}}crtendS.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// PIE: ld{{.*}}" "--eh-frame-hdr"
+// PIE-NOT: "-Bshareable"
+// PIE "-pie" "-dynamic-linker" "/libexec/ld.elf_so"
+// PIE-NOT: "-Bshareable"
+// PIE: "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// PIE: "{{.*}}/usr/lib{{/|\\\\}}crtbeginS.o"
+// PIE: "{{.*}}/usr/lib{{/|\\\\}}crtendS.o"
+// PIE: "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // X86_64: clang{{.*}}" "-cc1" "-triple" "x86_64--netbsd"
 // X86_64: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
@@ -134,6 +174,18 @@
 // AARCH64-7: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
 // AARCH64-7:  "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // AARCH64-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// AARCH64_BE: clang{{.*}}" "-cc1" "-triple" "aarch64_be--netbsd"
+// AARCH64_BE: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// AARCH64_BE: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// AARCH64_BE: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// AARCH64_BE: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// AARCH64_BE-7: clang{{.*}}" "-cc1" "-triple" "aarch64_be--netbsd7.0.0"
+// AARCH64_BE-7: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// AARCH64_BE-7: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// AARCH64_BE-7:  "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// AARCH64_BE-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // ARM: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabi"
 // ARM: as{{.*}}" "-mcpu=arm926ej-s" "-o"
@@ -275,6 +327,18 @@
 // S-AARCH64-7: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // S-AARCH64-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
+// S-AARCH64_BE: clang{{.*}}" "-cc1" "-triple" "aarch64_be--netbsd"
+// S-AARCH64_BE: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
+// S-AARCH64_BE: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-AARCH64_BE: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-AARCH64_BE: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-AARCH64_BE-7: clang{{.*}}" "-cc1" "-triple" "aarch64_be--netbsd7.0.0"
+// S-AARCH64_BE-7: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
+// S-AARCH64_BE-7: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-AARCH64_BE-7: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-AARCH64_BE-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
 // S-ARM: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabi"
 // S-ARM: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
 // S-ARM: "-m" "armelf_nbsd_eabi"
@@ -355,3 +419,7 @@
 // S-POWERPC64: "{{.*}}/usr/lib{{/|\\\\}}crti.o"
 // S-POWERPC64: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // S-POWERPC64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// PTHREAD-NOT: _POSIX_THREADS
+// PTHREAD:     _REENTRANT
+// PTHREAD-NOT: _POSIX_THREADS

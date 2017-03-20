@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.76.2.2 2016/11/04 14:49:21 pgoyette Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.76.2.3 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.76.2.2 2016/11/04 14:49:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.76.2.3 2017/03/20 06:57:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -105,8 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.76.2.2 2016/11/04 14:49:21 pgoyet
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -224,8 +222,11 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
  */
 		else {
 			struct llentry *la;
-			if (!arpresolve(ifp, rt, m, dst, edst, sizeof(edst)))
-				return (0);	/* if not yet resolved */
+
+			error = arpresolve(ifp, rt, m, dst, edst, sizeof(edst));
+			if (error != 0)
+				return error == EWOULDBLOCK ? 0 : error;
+
 			la = rt->rt_llinfo;
 			KASSERT(la != NULL);
 			TOKEN_RIF_LLE_ASSERT(la);
@@ -269,8 +270,10 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		}
 		else {
 			void *tha = ar_tha(ah);
-			if (tha == NULL)
+			if (tha == NULL) {
+				m_freem(m);
 				return 0;
+			}
 			memcpy(edst, tha, sizeof(edst));
 			trh = (struct token_header *)M_TRHSTART(m);
 			trh->token_ac = TOKEN_AC;

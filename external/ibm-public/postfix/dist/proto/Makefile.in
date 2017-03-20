@@ -13,6 +13,7 @@ HTML	= ../html/ADDRESS_CLASS_README.html \
 	../html/BASIC_CONFIGURATION_README.html \
 	../html/BUILTIN_FILTER_README.html \
 	../html/CDB_README.html \
+	../html/COMPATIBILITY_README.html \
 	../html/CONNECTION_CACHE_README.html \
 	../html/CONTENT_INSPECTION_README.html \
 	../html/DATABASE_README.html ../html/DB_README.html \
@@ -38,6 +39,7 @@ HTML	= ../html/ADDRESS_CLASS_README.html \
 	../html/SCHEDULER_README.html ../html/SMTPD_ACCESS_README.html \
 	../html/SMTPD_POLICY_README.html \
 	../html/SMTPD_PROXY_README.html \
+	../html/SMTPUTF8_README.html \
 	../html/SOHO_README.html \
 	../html/SQLITE_README.html \
 	../html/STANDARD_CONFIGURATION_README.html \
@@ -56,6 +58,7 @@ README	= ../README_FILES/ADDRESS_CLASS_README \
 	../README_FILES/BASIC_CONFIGURATION_README \
 	../README_FILES/BUILTIN_FILTER_README \
 	../README_FILES/CDB_README \
+	../README_FILES/COMPATIBILITY_README \
 	../README_FILES/CONNECTION_CACHE_README \
 	../README_FILES/CONTENT_INSPECTION_README \
 	../README_FILES/DATABASE_README ../README_FILES/DB_README \
@@ -81,6 +84,7 @@ README	= ../README_FILES/ADDRESS_CLASS_README \
 	../README_FILES/SASL_README ../README_FILES/SCHEDULER_README \
 	../README_FILES/SMTPD_ACCESS_README \
 	../README_FILES/SMTPD_POLICY_README ../README_FILES/SMTPD_PROXY_README \
+	../README_FILES/SMTPUTF8_README \
 	../README_FILES/SOHO_README \
 	../README_FILES/SQLITE_README \
 	../README_FILES/STANDARD_CONFIGURATION_README \
@@ -94,17 +98,19 @@ README	= ../README_FILES/ADDRESS_CLASS_README \
 
 MAN	= ../man/man5/postconf.5
 
+TOP	= ../INSTALL
+
 AWK	= awk '{ print; if (NR == 1) print ".pl 9999\n.ll 65" }'
 SRCTOMAN= ../mantools/srctoman
 POSTLINK= ../mantools/postlink
 DETAB	= pr -tre
-NROFF	= GROFF_NO_SGR=1 nroff
+NROFF	= LANG=C GROFF_NO_SGR=1 nroff
 HT2READ	= ../mantools/html2readme
 MAKEAAA	= ../mantools/makereadme
 MAKESOHO= ../mantools/make_soho_readme
 DEPSOHO	= SASL_README.html STANDARD_CONFIGURATION_README.html
 
-update:	$(CONFIG) $(HTML) $(README) $(MAN)
+update:	$(CONFIG) $(HTML) $(README) $(MAN) $(TOP)
 
 clean:
 	:
@@ -154,6 +160,9 @@ clobber:
 	$(DETAB) $? | $(POSTLINK) >$@
 
 ../html/CDB_README.html: CDB_README.html
+	$(DETAB) $? | $(POSTLINK) >$@
+
+../html/COMPATIBILITY_README.html: COMPATIBILITY_README.html
 	$(DETAB) $? | $(POSTLINK) >$@
 
 ../html/CONNECTION_CACHE_README.html: CONNECTION_CACHE_README.html
@@ -267,6 +276,9 @@ clobber:
 ../html/SMTPD_PROXY_README.html: SMTPD_PROXY_README.html
 	$(DETAB) $? | $(POSTLINK) >$@
 
+../html/SMTPUTF8_README.html: SMTPUTF8_README.html
+	$(DETAB) $? | $(POSTLINK) >$@
+
 ../html/SOHO_README.html: $(MAKESOHO) $(DEPSOHO)
 	$(MAKESOHO) | $(POSTLINK) | $(DETAB) >$@
 
@@ -325,6 +337,9 @@ clobber:
 	$(DETAB) $? | $(HT2READ) >$@
 
 ../README_FILES/CDB_README: CDB_README.html
+	$(DETAB) $? | $(HT2READ) >$@
+
+../README_FILES/COMPATIBILITY_README: COMPATIBILITY_README.html
 	$(DETAB) $? | $(HT2READ) >$@
 
 ../README_FILES/CONNECTION_CACHE_README: CONNECTION_CACHE_README.html
@@ -432,6 +447,9 @@ clobber:
 ../README_FILES/SMTPD_PROXY_README: SMTPD_PROXY_README.html
 	$(DETAB) $? | $(HT2READ) >$@
 
+../README_FILES/SMTPUTF8_README: SMTPUTF8_README.html
+	$(DETAB) $? | $(HT2READ) >$@
+
 ../README_FILES/SOHO_README: $(MAKESOHO) $(DEPSOHO)
 	$(MAKESOHO) | $(HT2READ) | $(DETAB) >$@
 
@@ -477,7 +495,8 @@ clobber:
 ../man/man5/postconf.5: postconf.man.prolog postconf.proto postconf.man.epilog \
 	../mantools/xpostconf ../mantools/postconf2html ../mantools/postconf2man
 	(cat postconf.man.prolog; ../mantools/xpostconf postconf.proto | \
-	    $(DETAB) | ../mantools/postconf2html | ../mantools/postconf2man | \
+	    $(DETAB) | ../mantools/postconf2html -n | \
+		../mantools/postconf2man | \
 		sed 's/\\e&/\\\&/'; cat postconf.man.epilog ) > $@
 
 ../html/postconf.5.html: postconf.html.prolog postconf.proto \
@@ -486,3 +505,7 @@ clobber:
 	(cat postconf.html.prolog; ../mantools/xpostconf postconf.proto | \
 	    ../mantools/postconf2html | ../mantools/postlink; \
 	    cat postconf.html.epilog ) | $(DETAB) > $@
+
+../INSTALL: ../README_FILES/INSTALL
+	rm -f $@
+	col -b < $? > $@

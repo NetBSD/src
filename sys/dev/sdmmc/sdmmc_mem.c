@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.51 2016/03/13 09:12:16 tsutsui Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.51.2.1 2017/03/20 06:57:38 pgoyette Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.51 2016/03/13 09:12:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.51.2.1 2017/03/20 06:57:38 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -907,6 +907,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int width, value, hs_timing, bus_clock, error;
 	char ext_csd[512];
 	uint32_t sectors = 0;
+	bool ddr = false;
 
 	sc->sc_transfer_mode = NULL;
 
@@ -933,18 +934,23 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				ext_csd[EXT_CSD_STRUCTURE]);
 			return ENOTSUP;
 		}
+		sf->ext_csd.rev = ext_csd[EXT_CSD_REV];
 
-		sc->sc_transfer_mode = NULL;
 		if (ISSET(sc->sc_caps, SMC_CAPS_MMC_HS200) &&
 		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_HS200_1_8V) {
 			sf->csd.tran_speed = 200000;	/* 200MHz SDR */
-			hs_timing = 2;
+			hs_timing = EXT_CSD_HS_TIMING_HS200;
+		} else if (ISSET(sc->sc_caps, SMC_CAPS_MMC_DDR52) &&
+		    ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_DDR52_1_8V) {
+			sf->csd.tran_speed = 52000;	/* 52MHz */
+			hs_timing = EXT_CSD_HS_TIMING_HIGHSPEED;
+			ddr = true;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
 			sf->csd.tran_speed = 52000;	/* 52MHz */
-			hs_timing = 1;
+			hs_timing = EXT_CSD_HS_TIMING_HIGHSPEED;
 		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
 			sf->csd.tran_speed = 26000;	/* 26MHz */
-			hs_timing = 0;
+			hs_timing = EXT_CSD_HS_TIMING_LEGACY;
 		} else {
 			aprint_error_dev(sc->sc_dev,
 			    "unknown CARD_TYPE: 0x%x\n",
@@ -980,11 +986,11 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		}
 		sf->width = width;
 
-		if (hs_timing == 1 &&
+		if (hs_timing == EXT_CSD_HS_TIMING_HIGHSPEED &&
 		    !ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
-			hs_timing = 0;
+			hs_timing = EXT_CSD_HS_TIMING_LEGACY;
 		}
-		if (hs_timing) {
+		if (hs_timing != EXT_CSD_HS_TIMING_LEGACY) {
 			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
 			    EXT_CSD_HS_TIMING, hs_timing);
 			if (error) {
@@ -1007,7 +1013,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			}
 		}
 
-		if (hs_timing) {
+		if (hs_timing != EXT_CSD_HS_TIMING_LEGACY) {
 			error = sdmmc_mem_send_cxd_data(sc,
 			    MMC_SEND_EXT_CSD, ext_csd, sizeof(ext_csd));
 			if (error) {
@@ -1022,6 +1028,47 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			}
 		}
 
+		/*
+		 * HS_TIMING must be set to “0x1” before setting BUS_WIDTH
+		 * for dual data rate operation
+		 */
+		if (ddr &&
+		    hs_timing == EXT_CSD_HS_TIMING_HIGHSPEED &&
+		    width > 1) {
+			error = sdmmc_mem_mmc_switch(sf,
+			    EXT_CSD_CMD_SET_NORMAL, EXT_CSD_BUS_WIDTH,
+			    (width == 8) ? EXT_CSD_BUS_WIDTH_8_DDR :
+			      EXT_CSD_BUS_WIDTH_4_DDR);
+			if (error) {
+				DPRINTF(("%s: can't switch to DDR"
+				    " (%d bit)\n", SDMMCDEVNAME(sc), width));
+				return error;
+			}
+
+			delay(10000);
+
+			error = sdmmc_mem_signal_voltage(sc,
+			    SDMMC_SIGNAL_VOLTAGE_180);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't switch signaling voltage\n");
+				return error;
+			}
+
+			error = sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch,
+			    sc->sc_busclk, ddr);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "can't change bus clock\n");
+				return error;
+			}
+
+			delay(10000);
+
+			sc->sc_transfer_mode = "DDR52";
+			sc->sc_busddr = ddr;
+		}
+
 		sectors = ext_csd[EXT_CSD_SEC_COUNT + 0] << 0 |
 		    ext_csd[EXT_CSD_SEC_COUNT + 1] << 8  |
 		    ext_csd[EXT_CSD_SEC_COUNT + 2] << 16 |
@@ -1031,7 +1078,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.capacity = sectors;
 		}
 
-		if (hs_timing == 2) {
+		if (hs_timing == EXT_CSD_HS_TIMING_HS200) {
 			sc->sc_transfer_mode = "HS200";
 
 			/* execute tuning (HS200) */
@@ -1041,8 +1088,11 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				    "can't execute MMC tuning\n");
 				return error;
 			}
-		} else {
-			sc->sc_transfer_mode = NULL;
+		}
+
+		if (sf->ext_csd.rev >= 5) {
+			sf->ext_csd.rst_n_function =
+			    ext_csd[EXT_CSD_RST_N_FUNCTION];
 		}
 	} else {
 		if (sc->sc_busclk > sf->csd.tran_speed)

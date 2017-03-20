@@ -1,10 +1,10 @@
-/*	$NetBSD: component.h,v 1.1.1.4 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: component.h,v 1.1.1.4.6.1 2017/03/20 06:56:15 pgoyette Exp $	*/
 
 /* component.h */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004 by IBM Corporation.
  * All rights reserved.
  *
@@ -19,6 +19,9 @@
 
 #ifndef _H_SLAPD_COMPONENT
 #define _H_SLAPD_COMPONENT
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: component.h,v 1.1.1.4.6.1 2017/03/20 06:56:15 pgoyette Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2016/02/27 21:47:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.39.2.1 2017/03/20 06:55:58 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -15,12 +15,19 @@ INCS=	__wmmintrin_aes.h \
 	avx512dqintrin.h \
 	avx512fintrin.h \
 	avx512erintrin.h \
+	avx512ifmaintrin.h \
+	avx512ifmavlintrin.h \
+	avx512pfintrin.h \
+	avx512vbmiintrin.h \
+	avx512vbmivlintrin.h \
 	avx512vlbwintrin.h \
+	avx512vlcdintrin.h \
 	avx512vldqintrin.h \
 	avx512vlintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
+	clflushoptintrin.h \
 	cpuid.h \
 	emmintrin.h \
 	f16cintrin.h \
@@ -33,6 +40,7 @@ INCS=	__wmmintrin_aes.h \
 	mm3dnow.h \
 	mmintrin.h \
 	mm_malloc.h \
+	mwaitxintrin.h \
 	nmmintrin.h \
 	pkuintrin.h \
 	pmmintrin.h \
@@ -61,6 +69,8 @@ INCS=	altivec.h \
 .elif ${MACHINE_CPU} == "arm"
 INCS=	arm_acle.h \
 	arm_neon.h
+.elif ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "mips64"
+INCS=	msa.h
 .endif
 INCS+=	stdalign.h stdatomic.h stdnoreturn.h
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
@@ -68,19 +78,20 @@ INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
 .PATH:	${LLVM_SRCDIR}/include/llvm/IR \
 	${CLANG_SRCDIR}/include/clang/AST \
 	${CLANG_SRCDIR}/include/clang/Basic \
-	${CLANG_SRCDIR}/include/clang/Driver
+	${CLANG_SRCDIR}/include/clang/Driver \
+	${CLANG_SRCDIR}/include/clang/StaticAnalyzer/Checkers
 
 TABLEGEN_SRC=	Attributes.td Intrinsics.td Options.td
 
 TABLEGEN_OUTPUT.Attributes.td= \
-	llvm/IR/Attributes.inc|-gen-attrs
+	llvm/IR/Attributes.gen|-gen-attrs
 
 TABLEGEN_OUTPUT.Intrinsics.td= \
 	llvm/IR/Intrinsics.gen|-gen-intrinsic
 
 CLANG_TABLEGEN_SRC=	Attr.td CommentCommands.td CommentHTMLTags.td \
 	CommentNodes.td CommentHTMLNamedCharacterReferences.td DeclNodes.td \
-	StmtNodes.td Diagnostic.td arm_neon.td
+	StmtNodes.td Diagnostic.td arm_neon.td Checkers.td
 
 CLANG_TABLEGEN_INCLUDES.Attr.td=	-I${CLANG_SRCDIR}/include
 CLANG_TABLEGEN_OUTPUT.Attr.td= \
@@ -138,6 +149,10 @@ CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
 	arm_neon.h|-gen-arm-neon
 
+CLANG_TABLEGEN_INCLUDES.Checkers.td=	-I${CLANG_SRCDIR}/include
+CLANG_TABLEGEN_OUTPUT.Checkers.td= \
+	clang/StaticAnalyzer/Checkers/Checkers.inc|-gen-clang-sa-checkers
+
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
 	clang/Driver/Options.inc|-gen-opt-parser-defs
@@ -150,8 +165,10 @@ CLEANFILES+=	clang/Basic/Version.inc
 clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	mkdir -p ${.TARGET:H}
 	printf '#define CLANG_VERSION ${CLANG_VERSION}\n' > ${.TARGET}.tmp
+	printf '#define CLANG_VERSION_STRING "${CLANG_VERSION}"\n' >> ${.TARGET}.tmp
 	printf '#define CLANG_VERSION_MAJOR ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:R:E}\n' >> ${.TARGET}.tmp
+	printf '#define CLANG_VERSION_PATCHLEVEL ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 
 lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
@@ -187,6 +204,7 @@ llvm/Config/config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config/llvm
 	printf '#define PACKAGE_VERSION "${LLVM_VERSION} (trunk ${LLVM_REVISION})"\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_PATCH ${LLVM_VERSION:E}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_STRING "${LLVM_VERSION}"\n' >> ${.TARGET}.tmp
 	printf '#endif\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
@@ -200,6 +218,7 @@ llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config
 	printf '#define LLVM_DEFAULT_TARGET_TRIPLE "${MACHINE_GNU_PLATFORM}"\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MAJOR ${LLVM_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_MINOR ${LLVM_VERSION:R:E}\n' >> ${.TARGET}.tmp
+	printf '#define LLVM_VERSION_PATCH ${LLVM_VERSION:E}\n' >> ${.TARGET}.tmp
 	printf '#define LLVM_VERSION_STRING "${LLVM_VERSION}"\n' >> ${.TARGET}.tmp
 	printf '#endif\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
@@ -207,14 +226,14 @@ llvm/Config/llvm-config.h: ${LLVM_TOPLEVEL}/Makefile.inc ${LLVM_TOPLEVEL}/config
 run-configure:
 	[ ! -d tmp ] || rm -r tmp
 	mkdir -p tmp
-	cd tmp && ${LLVM_SRCDIR}/configure ${LLVM_CONFIGURE_ARGS} \
+	cd tmp && CONFIG_SITE= ${CONFIG_DIR}/configure ${LLVM_CONFIGURE_ARGS} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:N-Werror:Q} CXX=${CXX:Q} CXXFLAGS=${CXXFLAGS:N-Werror:Q} \
 	    CPPFLAGS=${CPPFLAGS:N-std=c++11:Q} LDFLAGS=${LDFLAGS:Q} LD=${LD:Q} LIBS=${NATIVE_LIBS:Q} \
-	    ac_cv_func_mmap_fixed_mapped=yes ac_cv_func_mmap_file=yes llvm_cv_c_printf_a=yes
+	    BUILD_CC=${CC:Q} BUILD_CXX=${CXX:Q}
 	cp -r tmp/include/llvm/* ${LLVM_INCLUDE_CONFIG}/llvm/
 	mv ${LLVM_INCLUDE_CONFIG}/llvm/Config/llvm-config.h \
 	   ${LLVM_INCLUDE_CONFIG}/llvm/Config/llvm-config.h.in
-	cp -r tmp/tools/clang/include/clang/* ${CLANG_INCLUDE_CONFIG}/clang/
+	cp -r tmp/include/clang/* ${CLANG_INCLUDE_CONFIG}/clang/
 	rm -r tmp
 	mv ${LLVM_INCLUDE_CONFIG}/llvm/Config/config.h \
 	    ${LLVM_INCLUDE_CONFIG}/llvm/Config/config.h.in

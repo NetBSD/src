@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.22.68.1 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.22.68.2 2017/03/20 06:57:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ scsipi_make_xs_locked(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     struct buf *bp, int flags)
 {
 
+	KDASSERT(mutex_owned(chan_mtx(periph->periph_channel)));
 	return scsipi_make_xs_internal(periph, cmd, cmdlen, data_addr,
 	    datalen, retries, timeout, bp, flags | XS_CTL_NOSLEEP);
 }

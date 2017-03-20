@@ -17,9 +17,9 @@ PIPE(8)                                                                PIPE(8)
        deliver messages to external commands.  This program expects to be  run
        from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
 
-       Message  attributes such as sender address, recipient address and next-
-       hop host name can be specified as command-line macros that are expanded
-       before the external command is executed.
+       Message  attributes  such  as  sender  address,  recipient  address and
+       next-hop host name can be specified as  command-line  macros  that  are
+       expanded before the external command is executed.
 
        The  <a href="pipe.8.html"><b>pipe</b>(8)</a>  daemon  updates  queue files and marks recipients as fin-
        ished, or it informs the queue manager that delivery  should  be  tried
@@ -28,9 +28,9 @@ PIPE(8)                                                                PIPE(8)
 
 <b>SINGLE-RECIPIENT DELIVERY</b>
        Some destinations cannot handle more than one  recipient  per  delivery
-       request.  Examples  are  pagers  or  fax machines.  In addition, multi-
-       recipient delivery is undesirable when prepending a <b>Delivered-to:</b> or <b>X-</b>
-       <b>Original-To:</b> message header.
+       request.   Examples   are   pagers   or  fax  machines.   In  addition,
+       multi-recipient delivery is undesirable when prepending a <b>Delivered-to:</b>
+       or <b>X-Original-To:</b> message header.
 
        To  prevent  Postfix  from  sending  multiple  recipients  per delivery
        request, specify
@@ -191,20 +191,25 @@ PIPE(8)                                                                PIPE(8)
               out interpretation of shell meta characters by a  shell  command
               interpreter.
 
+              Specify "{" and "}" around command arguments that contain white-
+              space (Postfix 3.0 and later). Whitespace after "{"  and  before
+              "}" is ignored.
+
               In  the command argument vector, the following macros are recog-
               nized and replaced with corresponding information from the Post-
               fix queue manager delivery request.
 
-              In addition to the form ${<i>name</i>}, the forms $<i>name</i> and $(<i>name</i>) are
-              also recognized.  Specify <b>$$</b> where a single <b>$</b> is wanted.
+              In  addition to the form ${<i>name</i>}, the forms $<i>name</i> and the depre-
+              cated form $(<i>name</i>) are also recognized.  Specify <b>$$</b> where a sin-
+              gle <b>$</b> is wanted.
 
               <b>${client_address}</b>
-                     This macro expands to the remote client network  address.
+                     This  macro expands to the remote client network address.
 
                      This feature is available as of Postfix 2.2.
 
               <b>${client_helo}</b>
-                     This  macro  expands  to  the  remote client HELO command
+                     This macro expands to  the  remote  client  HELO  command
                      parameter.
 
                      This feature is available as of Postfix 2.2.
@@ -215,7 +220,7 @@ PIPE(8)                                                                PIPE(8)
                      This feature is available as of Postfix 2.2.
 
               <b>${client_port}</b>
-                     This macro expands to the remote client TCP port  number.
+                     This  macro expands to the remote client TCP port number.
 
                      This feature is available as of Postfix 2.5.
 
@@ -226,7 +231,7 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${domain}</b>
                      This macro expands to the domain portion of the recipient
-                     address.  For example, with  an  address  <i>user+foo@domain</i>
+                     address.   For  example,  with an address <i>user+foo@domain</i>
                      the domain is <i>domain</i>.
 
                      This information is modified by the <b>h</b> flag for case fold-
@@ -235,12 +240,12 @@ PIPE(8)                                                                PIPE(8)
                      This feature is available as of Postfix 2.5.
 
               <b>${extension}</b>
-                     This macro expands to the extension part of  a  recipient
-                     address.   For  example,  with an address <i>user+foo@domain</i>
+                     This  macro  expands to the extension part of a recipient
+                     address.  For example, with  an  address  <i>user+foo@domain</i>
                      the extension is <i>foo</i>.
 
-                     A  command-line  argument  that   contains   <b>${extension}</b>
-                     expands  into as many command-line arguments as there are
+                     A   command-line   argument  that  contains  <b>${extension}</b>
+                     expands into as many command-line arguments as there  are
                      recipients.
 
                      This information is modified by the <b>u</b> flag for case fold-
@@ -248,11 +253,11 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${mailbox}</b>
                      This macro expands to the complete local part of a recip-
-                     ient   address.    For   example,   with    an    address
+                     ient    address.     For   example,   with   an   address
                      <i>user+foo@domain</i> the mailbox is <i>user+foo</i>.
 
-                     A  command-line argument that contains <b>${mailbox}</b> expands
-                     to as many command-line arguments as  there  are  recipi-
+                     A command-line argument that contains <b>${mailbox}</b>  expands
+                     to  as  many  command-line arguments as there are recipi-
                      ents.
 
                      This information is modified by the <b>u</b> flag for case fold-
@@ -265,11 +270,11 @@ PIPE(8)                                                                PIPE(8)
                      ing.
 
               <b>${original_recipient}</b>
-                     This  macro  expands  to  the  complete recipient address
+                     This macro expands  to  the  complete  recipient  address
                      before any address rewriting or aliasing.
 
-                     A command-line argument that contains  <b>${original_recipi-</b>
-                     <b>ent}</b>  expands  to as many command-line arguments as there
+                     A  command-line argument that contains <b>${original_recipi-</b>
+                     <b>ent}</b> expands to as many command-line arguments  as  there
                      are recipients.
 
                      This information is modified by the <b>hqu</b> flags for quoting
@@ -285,8 +290,8 @@ PIPE(8)                                                                PIPE(8)
               <b>${recipient}</b>
                      This macro expands to the complete recipient address.
 
-                     A   command-line   argument  that  contains  <b>${recipient}</b>
-                     expands to as many command-line arguments  as  there  are
+                     A  command-line  argument  that   contains   <b>${recipient}</b>
+                     expands  to  as  many command-line arguments as there are
                      recipients.
 
                      This information is modified by the <b>hqu</b> flags for quoting
@@ -294,13 +299,13 @@ PIPE(8)                                                                PIPE(8)
 
               <b>${sasl_method}</b>
                      This macro expands to the name of the SASL authentication
-                     mechanism  in  the  AUTH  command  when  the Postfix SMTP
+                     mechanism in the  AUTH  command  when  the  Postfix  SMTP
                      server received the message.
 
                      This feature is available as of Postfix 2.2.
 
               <b>${sasl_sender}</b>
-                     This macro expands to the  SASL  sender  name  (i.e.  the
+                     This  macro  expands  to  the  SASL sender name (i.e. the
                      original submitter as per <a href="http://tools.ietf.org/html/rfc4954">RFC 4954</a>) in the MAIL FROM com-
                      mand when the Postfix SMTP server received the message.
 
@@ -313,25 +318,25 @@ PIPE(8)                                                                PIPE(8)
                      This feature is available as of Postfix 2.2.
 
               <b>${sender}</b>
-                     This  macro  expands  to  the envelope sender address. By
-                     default, the null sender address expands  to  MAILER-DAE-
-                     MON;  this can be changed with the <b>null_sender</b> attribute,
+                     This macro expands to the  envelope  sender  address.  By
+                     default,  the  null sender address expands to MAILER-DAE-
+                     MON; this can be changed with the <b>null_sender</b>  attribute,
                      as described above.
 
                      This information is modified by the <b>q</b> flag for quoting.
 
               <b>${size}</b>
                      This macro expands to Postfix's idea of the message size,
-                     which  is  an approximation of the size of the message as
+                     which is an approximation of the size of the  message  as
                      delivered.
 
               <b>${user}</b>
-                     This macro expands to the username part  of  a  recipient
-                     address.   For  example,  with an address <i>user+foo@domain</i>
+                     This  macro  expands  to the username part of a recipient
+                     address.  For example, with  an  address  <i>user+foo@domain</i>
                      the username part is <i>user</i>.
 
-                     A command-line argument  that  contains  <b>${user}</b>  expands
-                     into  as many command-line arguments as there are recipi-
+                     A  command-line  argument  that  contains <b>${user}</b> expands
+                     into as many command-line arguments as there are  recipi-
                      ents.
 
                      This information is modified by the <b>u</b> flag for case fold-
@@ -341,15 +346,20 @@ PIPE(8)                                                                PIPE(8)
        <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced status codes)
 
 <b>DIAGNOSTICS</b>
-       Command  exit  status  codes  are  expected  to  follow the conventions
+       Command exit status  codes  are  expected  to  follow  the  conventions
        defined in &lt;<b>sysexits.h</b>&gt;.  Exit status 0 means normal successful comple-
        tion.
 
        In the case of a non-zero exit status, a limited amount of command out-
-       put is reported in an delivery status notification.   When  the  output
-       begins  with  a  4.X.X  or  5.X.X enhanced status code, the status code
-       takes precedence over the non-zero exit status (Postfix version 2.3 and
-       later).
+       put  is  logged,  and reported in a delivery status notification.  When
+       the output begins with a 4.X.X or 5.X.X enhanced status code, the  sta-
+       tus  code  takes precedence over the non-zero exit status (Postfix ver-
+       sion 2.3 and later).
+
+       After successful delivery (zero exit status) a limited amount  of  com-
+       mand  output is logged, and reported in "success" delivery status noti-
+       fications (Postfix 3.0 and later).  This command output is not examined
+       for the presence of an enhanced status code.
 
        Problems  and transactions are logged to <b>syslogd</b>(8).  Corrupted message
        files are marked so that the queue manager can move them to the <b>corrupt</b>
@@ -447,6 +457,13 @@ PIPE(8)                                                                PIPE(8)
               syslog records, so that "smtpd"  becomes,  for  example,  "post-
               fix/smtpd".
 
+       Available in Postfix version 3.0 and later:
+
+       <b><a href="postconf.5.html#pipe_delivery_status_filter">pipe_delivery_status_filter</a> ($<a href="postconf.5.html#default_delivery_status_filter">default_delivery_status_filter</a>)</b>
+              Optional  filter  for  the  <a href="pipe.8.html"><b>pipe</b>(8)</a> delivery agent to change the
+              delivery status code or explanatory text of successful or unsuc-
+              cessful deliveries.
+
 <b>SEE ALSO</b>
        <a href="qmgr.8.html">qmgr(8)</a>, queue manager
        <a href="bounce.8.html">bounce(8)</a>, delivery status reports
@@ -463,6 +480,11 @@ PIPE(8)                                                                PIPE(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                        PIPE(8)
 </pre> </body> </html>

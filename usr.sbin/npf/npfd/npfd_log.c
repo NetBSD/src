@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.6.2.2 2017/01/07 08:57:00 pgoyette Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.6.2.3 2017/03/20 06:58:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.6.2.2 2017/01/07 08:57:00 pgoyette Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.6.2.3 2017/03/20 06:58:08 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,9 @@ npfd_log_gethdr(npfd_log_t *ctx, struct pcap_file_header*hdr)
 	case 1:
 		if (hdr->magic != TCPDUMP_MAGIC ||
 		    hdr->version_major != PCAP_VERSION_MAJOR ||
-		    hdr->version_minor != PCAP_VERSION_MINOR)
+		    hdr->version_minor != PCAP_VERSION_MINOR ||
+		    hdr->linktype != (u_int)pcap_datalink(ctx->pcap) ||
+		    hdr->sigfigs != (u_int)pcap_get_tstamp_precision(ctx->pcap))
 			goto out;
 		break;
 	default:
@@ -100,7 +102,7 @@ npfd_log_gethdr(npfd_log_t *ctx, struct pcap_file_header*hdr)
 	return fp;
 out:
 	fclose(fp);
-	hdr->magic = -1;
+	hdr->magic = (uint32_t)-1;
 	return NULL;
 }
 
@@ -170,7 +172,7 @@ fix:
 		syslog(LOG_WARNING,
 		    "Incomplete last packet in `%s', truncating",
 		    ctx->path);
-		if (truncate(ctx->path, o) == -1) {
+		if (truncate(ctx->path, (off_t)o) == -1) {
 			syslog(LOG_ERR, "Cannot truncate `%s': %m", ctx->path);
 			goto rename;
 		}
@@ -260,6 +262,8 @@ npfd_log_create(const char *filename, const char *ifname, const char *filter,
 bool
 npfd_log_reopen(npfd_log_t *ctx, bool die)
 {
+	mode_t omask = umask(077);
+
 	if (ctx->dumper)
 		pcap_dump_close(ctx->dumper);
 	/*
@@ -277,6 +281,7 @@ npfd_log_reopen(npfd_log_t *ctx, bool die)
 		ctx->dumper = pcap_dump_open_append(ctx->pcap, ctx->path);
 		break;
 	}
+	(void)umask(omask);
 
 	if (ctx->dumper == NULL) {
 		if (die)
@@ -321,7 +326,7 @@ npfd_log(npfd_log_t *ctx)
 {
 	pcap_dumper_t *dumper = ctx->dumper;
 
-	pcap_dispatch(ctx->pcap, PCAP_NPACKETS, pcap_dump, (uint8_t *)dumper);
+	pcap_dispatch(ctx->pcap, PCAP_NPACKETS, pcap_dump, (void *)dumper);
 }
 
 void

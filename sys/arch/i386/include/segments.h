@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.55 2016/01/24 18:21:50 christos Exp $	*/
+/*	$NetBSD: segments.h,v 1.55.2.1 2017/03/20 06:57:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -187,14 +187,13 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern union descriptor *gdt, *ldt;
+extern union descriptor *gdtstore, *ldtstore;
 extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
-void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 void update_descriptor(union descriptor *, union descriptor *);

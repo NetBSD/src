@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.7.8.2 2017/01/07 08:56:04 pgoyette Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.7.8.3 2017/03/20 06:56:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.7.8.2 2017/01/07 08:56:04 pgoyette Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.7.8.3 2017/03/20 06:56:59 pgoyette Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -136,7 +136,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	__LDATA	 *start, *temp1, *temp2;
 	__LINE	  *lnp;
 	const wchar_t *scp;
-	int width, len, sx, x, y, cw, pcw, newx, tabsize;
+	int width, len, sx, x, y, cw, pcw, newx;
 	nschar_t *np;
 	wchar_t ws[] = L"		";
 
@@ -266,9 +266,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 				}
 				continue;
 			case L'\t':
-				tabsize = win->screen->TABSIZE;
 				if (wins_nwstr(win, ws,
-				    min(win->maxx - x, tabsize - (x % tabsize)))
+				    min(win->maxx - x, TABSIZE - (x % TABSIZE)))
 				    == ERR)
 					return ERR;
 				continue;

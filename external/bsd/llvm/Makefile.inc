@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.80 2016/02/27 21:47:30 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.80.2.1 2017/03/20 06:52:26 pgoyette Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -6,9 +6,9 @@ LLVM_TOPLEVEL_MK=
 .include <bsd.own.mk>
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
-SVN_BRANCH=		branches/release_38
+SVN_BRANCH=		branches/release_40
 
-COMMON_REVISION=	r261930
+COMMON_REVISION=	r294123
 CLANG_REVISION=		${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
 LLDB_REVISION=		${COMMON_REVISION}
@@ -17,9 +17,9 @@ LLVM_REVISION=		${COMMON_REVISION}
 MCLINKER_REVISION=	deeb2a77b4165827316f88e0a7ba4ba6b743a080
 MCLINKER_ROOT=		https://code.google.com/p/mclinker/
 
-LLVM_VERSION=		3.8.0
-CLANG_VERSION=		3.8.0
-LLD_VERSION=		3.8.0
+LLVM_VERSION=		4.0.0
+CLANG_VERSION=		4.0.0
+LLD_VERSION=		4.0.0
 
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
 LLD_SRCDIR:=	${.PARSEDIR}/dist/lld
@@ -27,6 +27,7 @@ LLDB_SRCDIR:=	${.PARSEDIR}/dist/lldb
 LLVM_SRCDIR:=	${.PARSEDIR}/dist/llvm
 MCLINKER_SRCDIR:=	${.PARSEDIR}/dist/mclinker
 LLVM_TOPLEVEL:=	${.PARSEDIR}
+CONFIG_DIR:=	${.PARSEDIR}/dist/llvm-configure
 
 CPPFLAGS+=	-I. -I${CLANG_SRCDIR}/include -I${LLD_SRCDIR}/include \
 		-I${LLVM_SRCDIR}/include -I${MCLINKER_SRCDIR}/include \
@@ -69,6 +70,7 @@ LLVM_CONFIGURE_ARGS=	\
 	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-default-openmp-runtime=libomp \
+	--with-llvm-srcdir=${LLVM_SRCDIR} \
 	--with-clang-srcdir=${CLANG_SRCDIR} \
 	--host=${LLVM_PLATFORM} --disable-compiler-version-checks \
 	--disable-bindings llvm_cv_gnu_make_command=${MAKE}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.28 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.28.2.1 2017/03/20 06:57:52 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -88,6 +88,10 @@
 #include <sys/ioccom.h>
 #include <sys/condvar.h>
 #include <sys/time.h>
+
+#if defined(_KERNEL_OPT)
+#include "opt_ocf.h"
+#endif
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4
@@ -641,17 +645,11 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
 
 #ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
 #ifndef DPRINTF
-#define DPRINTF(a) uprintf a
-#endif
-#ifndef DCPRINTF
-#define DCPRINTF(a) printf a
+#define DPRINTF(a) printf a
 #endif
 #else
 #ifndef DPRINTF
 #define DPRINTF(a)
-#endif
-#ifndef DCPRINTF
-#define DCPRINTF(a)
 #endif
 #endif
 

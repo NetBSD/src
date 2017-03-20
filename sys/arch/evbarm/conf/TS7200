@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.63.2.1 2017/01/07 08:56:13 pgoyette Exp $
+#	$NetBSD: TS7200,v 1.63.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -54,6 +54,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support

@@ -21,19 +21,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-null.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-null.c,v 1.5.2.1 2017/03/20 06:56:22 pgoyette Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: BSD loopback device printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "af.h"
 
 /*
@@ -88,7 +89,7 @@ null_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char
 		return (NULL_HDRLEN);
 	}
 
-	memcpy((char *)&family, (char *)p, sizeof(family));
+	memcpy((char *)&family, (const char *)p, sizeof(family));
 
 	/*
 	 * This isn't necessarily in our host byte order; if this is

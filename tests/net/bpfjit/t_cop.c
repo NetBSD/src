@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cop.c,v 1.3 2014/07/13 21:35:33 alnsn Exp $ */
+/*	$NetBSD: t_cop.c,v 1.3.10.1 2017/03/20 06:58:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cop.c,v 1.3 2014/07/13 21:35:33 alnsn Exp $");
+__RCSID("$NetBSD: t_cop.c,v 1.3.10.1 2017/03/20 06:58:00 pgoyette Exp $");
 
 #include <stdint.h>
 #include <string.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: t_cop.c,v 1.3 2014/07/13 21:35:33 alnsn Exp $");
 #undef m_data
 #include <atf-c.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 static uint32_t retA(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A);
 static uint32_t retBL(const bpf_ctx_t *bc, bpf_args_t *args, uint32_t A);

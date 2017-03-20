@@ -1,9 +1,9 @@
-/*	$NetBSD: dds.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: dds.c,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -18,6 +18,9 @@
 /* ACKNOWLEDGEMENTS:
  * This work was developed by Pierangelo Masarati for inclusion
  * in OpenLDAP Software */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dds.c,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $");
 
 #include "portable.h"
 

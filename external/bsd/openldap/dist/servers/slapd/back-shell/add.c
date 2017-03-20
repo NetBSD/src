@@ -1,10 +1,10 @@
-/*	$NetBSD: add.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.4.6.1 2017/03/20 06:56:18 pgoyette Exp $	*/
 
 /* add.c - shell backend add function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@
  * This work was originally developed by the University of Michigan
  * (as part of U-MICH LDAP).
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: add.c,v 1.1.1.4.6.1 2017/03/20 06:56:18 pgoyette Exp $");
 
 #include "portable.h"
 

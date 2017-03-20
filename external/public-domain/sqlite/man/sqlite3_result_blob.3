@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_RESULT_BLOB 3
 .Os
 .Sh NAME
@@ -23,72 +23,72 @@
 .Nm sqlite3_result_zeroblob64
 .Nd Setting The Result Of An SQL Function
 .Sh SYNOPSIS
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_blob
 .Fa "sqlite3_context*"
 .Fa "const void*"
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_blob64
 .Fa "sqlite3_context*"
 .Fa "const void*"
 .Fa "sqlite3_uint64"
 .Fa "void(*)(void*)"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_double
 .Fa "sqlite3_context*"
 .Fa "double"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_error
 .Fa "sqlite3_context*"
 .Fa "const char*"
 .Fa "int"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_error16
 .Fa "sqlite3_context*"
 .Fa "const void*"
 .Fa "int"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_error_toobig
 .Fa "sqlite3_context*"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_error_nomem
 .Fa "sqlite3_context*"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_error_code
 .Fa "sqlite3_context*"
 .Fa "int"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_int
 .Fa "sqlite3_context*"
 .Fa "int"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_int64
 .Fa "sqlite3_context*"
 .Fa "sqlite3_int64"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_null
 .Fa "sqlite3_context*"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_text
 .Fa "sqlite3_context*"
 .Fa "const char*"
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_text64
 .Fa "sqlite3_context*"
 .Fa "const char*"
@@ -96,38 +96,38 @@
 .Fa "void(*)(void*)"
 .Fa "unsigned char encoding"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_text16
 .Fa "sqlite3_context*"
 .Fa "const void*"
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_text16le
 .Fa "sqlite3_context*"
 .Fa "const void*"
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_text16be
 .Fa "sqlite3_context*"
 .Fa "const void*"
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_value
 .Fa "sqlite3_context*"
 .Fa "sqlite3_value*"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_result_zeroblob
 .Fa "sqlite3_context*"
 .Fa "int n"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_result_zeroblob64
 .Fa "sqlite3_context*"
 .Fa "sqlite3_uint64 n"

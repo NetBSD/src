@@ -4113,7 +4113,7 @@ done
 
 for ac_header in sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
-	stdint.h util.h resolv.h arpa/nameser.h
+	libgen.h stdint.h util.h resolv.h arpa/nameser.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -4507,6 +4507,374 @@ fi
 
 
 # Global variable decls.
+ac_fn_c_check_decl "$LINENO" "asprintf" "ac_cv_have_decl_asprintf" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_asprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ASPRINTF $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "vasprintf" "ac_cv_have_decl_vasprintf" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_vasprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VASPRINTF $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "vasnprintf" "ac_cv_have_decl_vasnprintf" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_vasnprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VASNPRINTF $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "vsnprintf" "ac_cv_have_decl_vsnprintf" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_vsnprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VSNPRINTF $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "fgetln" "ac_cv_have_decl_fgetln" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_fgetln" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FGETLN $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "fparseln
+	getdelim" "ac_cv_have_decl_fparseln__getdelim" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_fparseln__getdelim" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FPARSELN__GETDELIM $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "getline" "ac_cv_have_decl_getline" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_getline" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GETLINE $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "snprintf" "ac_cv_have_decl_snprintf" "
+#include <stdio.h>
+
+"
+if test "x$ac_cv_have_decl_snprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SNPRINTF $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "atoll" "ac_cv_have_decl_atoll" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_atoll" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ATOLL $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "heapsort" "ac_cv_have_decl_heapsort" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_heapsort" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_HEAPSORT $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "mkdtemp" "ac_cv_have_decl_mkdtemp" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_mkdtemp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_MKDTEMP $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "mkstemp" "ac_cv_have_decl_mkstemp" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_mkstemp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_MKSTEMP $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "reallocarr" "ac_cv_have_decl_reallocarr" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_reallocarr" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_REALLOCARR $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "setenv" "ac_cv_have_decl_setenv" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_setenv" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SETENV $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strtoi" "ac_cv_have_decl_strtoi" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_strtoi" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOI $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strtoll" "ac_cv_have_decl_strtoll" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_strtoll" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOLL $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strtou" "ac_cv_have_decl_strtou" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_strtou" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOU $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "setprogname" "ac_cv_have_decl_setprogname" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_setprogname" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SETPROGNAME $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "getprogname" "ac_cv_have_decl_getprogname" "
+#include <stdlib.h>
+
+"
+if test "x$ac_cv_have_decl_getprogname" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_GETPROGNAME $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "basename" "ac_cv_have_decl_basename" "
+#include <libgen.h>
+
+"
+if test "x$ac_cv_have_decl_basename" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_BASENAME $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "dirname" "ac_cv_have_decl_dirname" "
+#include <libgen.h>
+
+"
+if test "x$ac_cv_have_decl_dirname" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_DIRNAME $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "raise_default_signal" "ac_cv_have_decl_raise_default_signal" "
+#include <util.h>
+
+"
+if test "x$ac_cv_have_decl_raise_default_signal" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_RAISE_DEFAULT_SIGNAL $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "issetugid" "ac_cv_have_decl_issetugid" "
+#include <unistd.h>
+
+"
+if test "x$ac_cv_have_decl_issetugid" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ISSETUGID $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "pread" "ac_cv_have_decl_pread" "
+#include <unistd.h>
+
+"
+if test "x$ac_cv_have_decl_pread" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PREAD $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "pwrite" "ac_cv_have_decl_pwrite" "
+#include <unistd.h>
+
+"
+if test "x$ac_cv_have_decl_pwrite" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_PWRITE $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "strmode" "ac_cv_have_decl_strmode" "
+#include <unistd.h>
+#include <string.h>
+
+"
+if test "x$ac_cv_have_decl_strmode" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRMODE $ac_have_decl
+_ACEOF
+
+
+ac_fn_c_check_decl "$LINENO" "isblank" "ac_cv_have_decl_isblank" "
+#include <ctype.h>
+
+"
+if test "x$ac_cv_have_decl_isblank" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ISBLANK $ac_have_decl
+_ACEOF
+
+
+
 ac_fn_c_check_decl "$LINENO" "optind" "ac_cv_have_decl_optind" "
 #include <stdio.h>
 #include <stdlib.h>
@@ -4606,6 +4974,8 @@ else
 # ifdef _MSC_VER
 #  include <malloc.h>
 #  define alloca _alloca
+# elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
+#   include <stdlib.h>
 # else
 #  ifdef HAVE_ALLOCA_H
 #   include <alloca.h>
@@ -4897,6 +5267,19 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRNLEN $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strsep" "ac_cv_have_decl_strsep" "
+#include <string.h>
+
+"
+if test "x$ac_cv_have_decl_strsep" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRSEP $ac_have_decl
 _ACEOF
 
 ac_fn_c_check_decl "$LINENO" "strsuftoll" "ac_cv_have_decl_strsuftoll" "#include <stdlib.h>

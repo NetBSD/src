@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.115 2016/01/29 13:51:13 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.115.2.1 2017/03/20 06:52:12 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd January 29, 2016
+.Dd February 20, 2017
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -646,10 +646,17 @@ by default at times due to toolchain problems with profiled code.
 .
 .It Sy MKREPRO
 .YorN
-Create reproducable builds.
+Create reproducible builds.
 This enables different switches to make two builds from the same
 source tree result in the same build results.
 .DFLTn
+This may be set to
+.Dq yes
+by giving
+.Sy build.sh
+the
+.Fl P
+option.
 .
 .It Sy MKREPRO_TIMESTAMP
 Unix timestamp.
@@ -658,6 +665,14 @@ When
 is set, the timestamp of all files in the sets will be set
 to this value.
 .DFLTu
+This may be set automatically to the latest source tree timestamp
+using
+.Xr cvslatest 1
+by giving
+.Sy build.sh
+the
+.Fl P
+option.
 .
 .It Sy MKSHARE
 .YorN

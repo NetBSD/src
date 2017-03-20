@@ -1,4 +1,4 @@
-/*	$NetBSD: tommath_superclass.h,v 1.1.1.2 2014/04/24 12:45:39 pettai Exp $	*/
+/*	$NetBSD: tommath_superclass.h,v 1.1.1.2.6.1 2017/03/20 06:51:44 pgoyette Exp $	*/
 
 /* super class file for PK algos */
 

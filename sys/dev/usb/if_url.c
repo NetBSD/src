@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.53.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: if_url.c,v 1.53.2.2 2017/03/20 06:57:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.53.2.1 2017/01/07 08:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.53.2.2 2017/03/20 06:57:38 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -277,7 +277,7 @@ url_attach(device_t parent, device_t self, void *aux)
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
-	strncpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = url_start;
 	ifp->if_ioctl = url_ioctl;

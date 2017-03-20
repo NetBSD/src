@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPConnection.h,v 1.1.1.4 2014/05/28 09:58:26 tron Exp $	*/
+/*	$NetBSD: LDAPConnection.h,v 1.1.1.4.6.1 2017/03/20 06:56:08 pgoyette Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2016 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

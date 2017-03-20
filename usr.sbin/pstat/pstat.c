@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.125 2015/04/20 19:36:56 riastradh Exp $	*/
+/*	$NetBSD: pstat.c,v 1.125.2.1 2017/03/20 06:58:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.125 2015/04/20 19:36:56 riastradh Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.125.2.1 2017/03/20 06:58:09 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,13 +89,15 @@ struct nlist nl[] = {
 	{ "_mountlist", 0, 0, 0, 0 },	/* address of head of mount list. */
 #define	V_NUMV		1
 	{ "_numvnodes", 0, 0, 0, 0 },
-#define	FNL_NFILE	2
+#define	V_NEXT_OFFSET	2
+	{ "_vnode_offset_next_by_mount", 0, 0, 0, 0 },
+#define	FNL_NFILE	3
 	{ "_nfiles", 0, 0, 0, 0 },
-#define FNL_MAXFILE	3
+#define FNL_MAXFILE	4
 	{ "_maxfiles", 0, 0, 0, 0 },
-#define TTY_NTTY	4
+#define TTY_NTTY	5
 	{ "_tty_count", 0, 0, 0, 0 },
-#define TTY_TTYLIST	5
+#define TTY_TTYLIST	6
 	{ "_ttylist", 0, 0, 0, 0 },
 #define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
 	{ "", 0, 0, 0, 0 }
@@ -747,17 +749,20 @@ kinfo_vnodes(int *avnodes)
 	struct mount *mp, mount;
 	struct vnode *vp, vnode;
 	char *beg, *bp, *ep;
-	int numvnodes;
+	int numvnodes, next_offset;
 
 	KGET(V_NUMV, numvnodes);
 	if ((bp = malloc((numvnodes + 20) * (VPTRSZ + VNODESZ))) == NULL)
 		err(1, "malloc");
 	beg = bp;
 	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
+	KGET(V_NEXT_OFFSET, next_offset);
 	KGET(V_MOUNTLIST, mlist);
-	TAILQ_FOREACH(mp, &mlist, mnt_list) {
+	mp = TAILQ_FIRST(&mlist);
+	while (mp != NULL) {
 		KGET2(mp, &mount, sizeof(mount), "mount entry");
-		TAILQ_FOREACH(vp, &mount.mnt_vnodelist, v_mntvnodes) {
+		vp = (struct vnode *)TAILQ_FIRST(&mount.mnt_vnodelist);
+		while (vp != NULL) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
 			if (bp + VPTRSZ + VNODESZ > ep)
 				/* XXX - should realloc */
@@ -766,7 +771,9 @@ kinfo_vnodes(int *avnodes)
 			bp += VPTRSZ;
 			memmove(bp, &vnode, VNODESZ);
 			bp += VNODESZ;
+			KGET2((char *)vp + next_offset, &vp, sizeof(vp), "nvp");
 		}
+		mp = TAILQ_NEXT(&mount, mnt_list);
 	}
 	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
 	return (beg);

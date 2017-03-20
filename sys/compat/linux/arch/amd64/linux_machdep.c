@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.48.10.1 2016/07/20 23:47:55 pgoyette Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.48.10.2 2017/03/20 06:57:24 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48.10.1 2016/07/20 23:47:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48.10.2 2017/03/20 06:57:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -83,6 +83,10 @@ linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
+
+#ifdef USER_LDT
+	pmap_ldt_cleanup(l);
+#endif
 
 	fpu_save_area_clear(l, __NetBSD_NPXCW__);
 	pcb->pcb_flags = 0;
@@ -230,7 +234,12 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (error != 0) {
 		sigexit(l, SIGILL);
 		return;
-	}	
+	}
+
+	if ((vaddr_t)catcher >= VM_MAXUSER_ADDRESS) {
+		sigexit(l, SIGILL);
+		return;
+	}
 
 	linux_buildcontext(l, catcher, sp);
 	tf->tf_rdi = sigframe.info.lsi_signo;
@@ -452,7 +461,7 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 {
 	struct trapframe *tf = arg;
 	uint64_t retaddr;
-	int vsyscallnr;
+	size_t vsyscallnr;
 
 	/*
 	 * Check for a vsyscall. %rip must be the fault address,
@@ -481,6 +490,8 @@ linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 	 * which is the only way that vsyscalls are ever entered.
 	 */
 	if (copyin((void *)tf->tf_rsp, &retaddr, sizeof retaddr) != 0)
+		return 0;
+	if ((vaddr_t)retaddr >= VM_MAXUSER_ADDRESS)
 		return 0;
 	tf->tf_rip = retaddr;
 	tf->tf_rax = linux_vsyscall_to_syscall[vsyscallnr];

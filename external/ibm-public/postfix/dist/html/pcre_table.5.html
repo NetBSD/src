@@ -14,6 +14,10 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
 
        <b>postmap -q - <a href="pcre_table.5.html">pcre</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
+       <b>postmap -hmq - <a href="pcre_table.5.html">pcre</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
+
+       <b>postmap -bmq - <a href="pcre_table.5.html">pcre</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
+
 <b>DESCRIPTION</b>
        The  Postfix  mail  system  uses optional tables for address rewriting,
        mail routing, or access control. These tables are usually in <b>dbm</b> or  <b>db</b>
@@ -28,7 +32,9 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
        use the "<b>postconf -m</b>" command.
 
        To test lookup tables, use the "<b>postmap -q</b>" command as described in the
-       SYNOPSIS above.
+       SYNOPSIS above. Use "<b>postmap -hmq -</b> &lt;<i>file</i>"  for  <a href="header_checks.5.html">header_checks(5)</a>  pat-
+       terns,  and  "<b>postmap -bmq -</b> &lt;<i>file</i>" for <a href="header_checks.5.html">body_checks(5)</a> (Postfix 2.6 and
+       later).
 
 <b>COMPATIBILITY</b>
        With Postfix version 2.2 and earlier specify "<b>postmap -fq</b>" to  query  a
@@ -48,9 +54,9 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
 
        <b>if /</b><i>pattern</i><b>/</b><i>flags</i>
 
-       <b>endif</b>  Match the input string  against  the  patterns  between  <b>if</b>  and
-              <b>endif</b>,  if  and only if that same input string also matches <i>pat-</i>
-              <i>tern</i>. The <b>if</b>..<b>endif</b> can nest.
+       <b>endif</b>  If the input string matches /<i>pattern</i>/,  then  match  that  input
+              string against the patterns between <b>if</b> and <b>endif</b>.  The <b>if</b>..<b>endif</b>
+              can nest.
 
               Note: do not prepend whitespace to patterns inside <b>if</b>..<b>endif</b>.
 
@@ -58,9 +64,9 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
 
        <b>if !/</b><i>pattern</i><b>/</b><i>flags</i>
 
-       <b>endif</b>  Match the input string  against  the  patterns  between  <b>if</b>  and
-              <b>endif</b>, if and only if that same input string does <b>not</b> match <i>pat-</i>
-              <i>tern</i>. The <b>if</b>..<b>endif</b> can nest.
+       <b>endif</b>  If the input string does not match /<i>pattern</i>/,  then  match  that
+              input  string  against  the  patterns  between <b>if</b> and <b>endif</b>. The
+              <b>if</b>..<b>endif</b> can nest.
 
               Note: do not prepend whitespace to patterns inside <b>if</b>..<b>endif</b>.
 
@@ -204,6 +210,11 @@ PCRE_TABLE(5)                                                    PCRE_TABLE(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                  PCRE_TABLE(5)
 </pre> </body> </html>

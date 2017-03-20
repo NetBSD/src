@@ -20,6 +20,7 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
+n=0
 
 echo "I:checking short dname from authoritative"
 ret=0
@@ -63,6 +64,44 @@ grep "status: YXDOMAIN" dig.out.ns4.toolong > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-echo "I:exit status: $status"
+echo "I:checking cname to dname from authoritative"
+ret=0
+$DIG cname.example @10.53.0.2 a -p 5300 > dig.out.ns2.cname
+grep "status: NOERROR" dig.out.ns2.cname > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
-exit $status
+echo "I:checking cname to dname from recursive"
+ret=0
+$DIG cname.example @10.53.0.4 a -p 5300 > dig.out.ns4.cname
+grep "status: NOERROR" dig.out.ns4.cname > /dev/null || ret=1
+grep '^cname.example.' dig.out.ns4.cname > /dev/null || ret=1
+grep '^cnamedname.example.' dig.out.ns4.cname > /dev/null || ret=1
+grep '^a.cnamedname.example.' dig.out.ns4.cname > /dev/null || ret=1
+grep '^a.target.example.' dig.out.ns4.cname > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking dname is returned with synthesized cname before dname ($n)"
+ret=0
+$DIG @10.53.0.4 -p 5300 name.synth-then-dname.example.broken A > dig.out.test$n
+grep "status: NXDOMAIN" dig.out.test$n > /dev/null || ret=1
+grep '^name.synth-then-dname\.example\.broken\..*CNAME.*name.$' dig.out.test$n > /dev/null || ret=1
+grep '^synth-then-dname\.example\.broken\..*DNAME.*\.$' dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking dname is returned with cname to synthesized cname before dname ($n)"
+ret=0
+$DIG @10.53.0.4 -p 5300 cname-to-synth2-then-dname.example.broken A > dig.out.test$n
+grep "status: NXDOMAIN" dig.out.test$n > /dev/null || ret=1
+grep '^cname-to-synth2-then-dname\.example\.broken\..*CNAME.*name\.synth2-then-dname\.example\.broken.$' dig.out.test$n > /dev/null || ret=1
+grep '^name\.synth2-then-dname\.example\.broken\..*CNAME.*name.$' dig.out.test$n > /dev/null || ret=1
+grep '^synth2-then-dname\.example\.broken\..*DNAME.*\.$' dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:exit status: $status"
+[ $status -eq 0 ] || exit 1

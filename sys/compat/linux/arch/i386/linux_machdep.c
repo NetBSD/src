@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.162.2.1 2016/07/20 23:47:55 pgoyette Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.162.2.2 2017/03/20 06:57:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.162.2.1 2016/07/20 23:47:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.162.2.2 2017/03/20 06:57:24 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -535,7 +535,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 	error = x86_get_ldt1(l, &gl, ldt_buf);
 	/* NB gl.num might have changed */
 	if (error == 0) {
-		*retval = gl.num * sizeof *ldt;
+		*retval = gl.num * sizeof(*ldtstore);
 		error = copyout(ldt_buf, SCARG(uap, ptr),
 		    gl.num * sizeof *ldt_buf);
 	}

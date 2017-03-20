@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.97 2016/04/03 02:08:42 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.97.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -217,7 +217,7 @@ typedef int	boolean_t;
 
 #endif /* _KERNEL || _STANDALONE */
 
-#if defined(_KERNEL) || defined(_LIBC)
+#if defined(_KERNEL) || defined(_LIBC) || defined(_KMEMUSER)
 /*
  * semctl(2)'s argument structure.  This is here for the benefit of
  * <sys/syscallargs.h>.  It is not in the user's namespace in SUSv2.
@@ -229,7 +229,7 @@ union __semun {
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
 #include <sys/stdint.h>
-#endif /* _KERNEL || _LIBC */
+#endif /* _KERNEL || _LIBC || _KMEMUSER */
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that

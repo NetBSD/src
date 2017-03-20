@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.4.6.1 2017/03/20 06:56:17 pgoyette Exp $	*/
 
 /* search.c - /etc/passwd backend search function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@
  *     Howard Chu
  *     Kurt D. Zeilenga
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: search.c,v 1.1.1.4.6.1 2017/03/20 06:56:17 pgoyette Exp $");
 
 #include "portable.h"
 

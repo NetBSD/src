@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.104 2014/12/21 10:48:53 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.104.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.104 2014/12/21 10:48:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.104.2.1 2017/03/20 06:57:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct vfsops smbfs_vfsops = {
 	.vfs_mountroot = (void *)eopnotsupp,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.49.2.1 2017/01/07 08:56:21 pgoyette Exp $	*/
+/*	$NetBSD: asm.h,v 1.49.2.2 2017/03/20 06:57:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -530,7 +530,7 @@ _C_LABEL(x):
 
 #if defined(__mips_o32) || defined(__mips_o64)
 
-#ifdef __ABICALLS__
+#ifdef __mips_abicalls
 #define	CPRESTORE(r)	.cprestore r
 #define	CPLOAD(r)	.cpload r
 #else

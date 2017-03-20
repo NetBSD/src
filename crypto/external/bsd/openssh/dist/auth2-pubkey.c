@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.14.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.14.2.2 2017/03/20 06:51:53 pgoyette Exp $	*/
 /* $OpenBSD: auth2-pubkey.c,v 1.60 2016/11/30 02:57:40 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.14.2.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.14.2.2 2017/03/20 06:51:53 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -839,13 +839,6 @@ check_authkeys_file(FILE *f, char *file, Key* key, struct passwd *pw)
 	    }
 	}
 #endif
-	debug("trying public key file %s", file);
-	f = auth_openkeyfile(file, pw, options.strict_modes);
-
-	if (!f) {
-		restore_uid();
-		return 0;
-	}
 
 	found_key = 0;
 

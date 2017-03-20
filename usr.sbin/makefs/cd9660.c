@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.52.2.1 2017/01/07 08:56:59 pgoyette Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.52.2.2 2017/03/20 06:58:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.52.2.1 2017/01/07 08:56:59 pgoyette Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.52.2.2 2017/03/20 06:58:07 pgoyette Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -298,7 +298,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		    "Allow 37 char filenames (unimplemented)"),
 	        OPT_BOOL('i', "allow-illegal-chars", allow_illegal_chars,
 		    "Allow illegal characters in filenames"),
-	        OPT_BOOL('D', "allow-multidot", allow_multidot,
+	        OPT_BOOL('m', "allow-multidot", allow_multidot,
 		    "Allow multiple periods in filenames"),
 	        OPT_BOOL('o', "omit-trailing-period", omit_trailing_period,
 		    "Omit trailing periods in filenames"),
@@ -321,6 +321,7 @@ cd9660_prep_opts(fsinfo_t *fsopts)
 		OPT_STR('\0', "no-boot", "No boot support"),
 		OPT_STR('\0', "hard-disk-boot", "Boot from hard disk"),
 		OPT_STR('\0', "boot-load-segment", "Boot load segment"),
+		OPT_STR('\0', "platformid", "Section Header Platform ID"),
 
 		{ .name = NULL }
 	};
@@ -458,7 +459,8 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 			/* RRIP */
 			cd9660_eltorito_add_boot_option(diskStructure, name, 0);
 			rv = 1;
-		} else if (strcmp(name, "boot-load-segment") == 0) {
+		} else if (strcmp(name, "boot-load-segment") == 0 ||
+		    strcmp(name, "platformid") == 0) {
 			if (buf[0] == '\0') {
 				warnx("Option `%s' doesn't contain a value",
 				    name);

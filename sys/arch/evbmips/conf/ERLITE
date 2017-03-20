@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.12.2.2 2017/01/07 08:56:16 pgoyette Exp $
+#	$NetBSD: ERLITE,v 1.12.2.3 2017/03/20 06:57:13 pgoyette Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.12.2.2 $"
+#ident 		"ERLITE-$Revision: 1.12.2.3 $"
 
 maxusers	32
 
@@ -83,6 +83,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

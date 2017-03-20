@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.94.2.1 2017/01/07 08:56:28 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.94.2.2 2017/03/20 06:57:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94.2.1 2017/01/07 08:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94.2.2 2017/03/20 06:57:22 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -925,13 +925,10 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	const char *intrstr;
 	char intrstr_buf[INTRIDBUF];
 
-#ifdef DIAGNOSTIC
-	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
-		panic("%s: bad legacy IRQ value", __func__);
-
-	if (legacy_irq == -1 && pic == &i8259_pic)
-		panic("intr_establish: non-legacy IRQ on i8259");
-#endif
+	KASSERTMSG((legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < 16)),
+	    "bad legacy IRQ value: %d", legacy_irq);
+	KASSERTMSG((legacy_irq != -1 || pic != &i8259_pic),
+	    "non-legacy IRQ on i8259");
 
 	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	if (ih == NULL) {

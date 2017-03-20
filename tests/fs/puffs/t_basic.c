@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.12.8.1 2017/01/07 08:56:54 pgoyette Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.12.8.2 2017/03/20 06:57:56 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -20,7 +20,7 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 #include "../common/h_fsmacros.h"
 
 /*

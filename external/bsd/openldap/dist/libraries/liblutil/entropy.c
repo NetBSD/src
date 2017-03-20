@@ -1,10 +1,10 @@
-/*	$NetBSD: entropy.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.4.6.1 2017/03/20 06:56:15 pgoyette Exp $	*/
 
 /* entropy.c -- routines for providing pseudo-random data */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * inclusion in OpenLDAP Software based, in part, on publically
  * available works (as noted below).
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: entropy.c,v 1.1.1.4.6.1 2017/03/20 06:56:15 pgoyette Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.17.2.2 2017/01/07 08:53:48 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.17.2.3 2017/03/20 06:52:12 pgoyette Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -138,7 +138,6 @@
 ./usr/X11R7/lib/X11/xkb/symbols/sony_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr
-./usr/X11R7/lib/X11/xkb/torture
 ./usr/X11R7/lib/X11/xkb/types
 ./usr/X11R7/lib/modules
 ./usr/X11R7/lib/modules/dri

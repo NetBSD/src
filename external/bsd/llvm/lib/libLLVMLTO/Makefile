@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/09/29 12:12:00 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.12.1 2017/03/20 06:56:00 pgoyette Exp $
 
 LIB=	LLVMLTO
 
@@ -6,8 +6,13 @@ LIB=	LLVMLTO
 
 .PATH: ${LLVM_SRCDIR}/lib/LTO
 
-SRCS+=	LTOCodeGenerator.cpp \
-	LTOModule.cpp
+SRCS+=	Caching.cpp \
+	LTO.cpp \
+	LTOBackend.cpp \
+	LTOCodeGenerator.cpp \
+	LTOModule.cpp \
+	ThinLTOCodeGenerator.cpp \
+	UpdateCompilerUsed.cpp
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

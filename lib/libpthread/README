@@ -1,7 +1,4 @@
-$NetBSD: README,v 1.6 2009/04/16 18:37:30 wiz Exp $
-
-When making changes to libpthread, please ensure that libpthread_dbg
-still compiles.
+$NetBSD: README,v 1.6.28.1 2017/03/20 06:56:59 pgoyette Exp $
 
 Due to limitations in the current pthread implementation, makecontext(3)
 and sigaltstack(2) should not be used in programs which link against

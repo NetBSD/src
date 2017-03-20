@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.38 2015/10/15 06:15:22 dholland Exp $	*/
+/*	$NetBSD: syslog.h,v 1.38.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -68,7 +68,7 @@
 				/* mark "facility" */
 #define	INTERNAL_MARK	LOG_MAKEPRI(LOG_NFACILITIES, 0)
 typedef struct _code {
-	char	*c_name;
+	const char	*c_name;
 	int	c_val;
 } CODE;
 

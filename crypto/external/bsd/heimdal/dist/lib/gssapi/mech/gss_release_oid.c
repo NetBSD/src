@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_release_oid.c,v 1.1.1.1 2011/04/13 18:14:47 elric Exp $	*/
+/*	$NetBSD: gss_release_oid.c,v 1.1.1.1.28.1 2017/03/20 06:51:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan

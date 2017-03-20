@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.18.2.1 2017/01/07 08:56:13 pgoyette Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.18.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -64,6 +64,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER	# Network File System server
 options 	WAPBL		# File system journaling support

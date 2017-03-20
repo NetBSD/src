@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2016/04/20 17:18:52 christos Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2017/03/20 06:56:32 pgoyette Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -57,9 +57,18 @@ COPTS.functexcept.cc += -Wno-stack-protector
 COPTS.valarray-inst.cc += -Wno-stack-protector
 COPTS.wlocale-inst.cc += -Wno-stack-protector
 COPTS.snprintf_lite.cc += -Wno-stack-protector
+# From system headers.
+COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
+COPTS.cxx11-locale-inst.cc +=-Wno-stack-protector
+COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
+COPTS.compatibility-thread-c++0x.cc += -Wno-deprecated-declarations
 COPTS.concept-inst.cc += -fimplicit-templates
 COPTS.hashtable_c++0x.cc += -fimplicit-templates
 COPTS.bitmap_allocator.cc += -fimplicit-templates
+COPTS.functexcept.cc += -Wno-deprecated-declarations
+COPTS.future.cc += -Wno-deprecated-declarations
+COPTS.shared_ptr.cc += -Wno-deprecated-declarations
+COPTS.thread.cc += -Wno-deprecated-declarations
 CPPFLAGS.strstream.cc += -I$(GLIBCPP_INCLUDE_DIR)/backward -Wno-deprecated
 
 CPPFLAGS.cp-demangle.cc += -DIN_GLIBCPP_V3
@@ -69,6 +78,11 @@ CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
 
 cp-demangle.d cp-demangle.o: cp-demangle.h
+
+.if ${MACHINE_ARCH} == "i386"
+COPTS.random.cc += -Wno-error=psabi
+COPTS.cow-string-inst.cc += -Wno-error=psabi
+.endif
 
 # XXX
 MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward

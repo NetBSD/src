@@ -267,6 +267,11 @@ the TLS session cache) that an SMTP client may negotiate in the
 time interval specified with anvil_rate_time_unit (default: 60s).
 </dd>
 
+<dt> smtpd_client_auth_rate_limit (default: no limit) </dt> <dd>
+The maximum number of AUTH commands that an SMTP client may send
+in the time interval specified with anvil_rate_time_unit (default:
+60s). Available in Postfix 3.1 and later. </dd>
+
 <dt> smtpd_client_event_limit_exceptions (default: $mynetworks)
 </dt> <dd> SMTP clients that are excluded from connection and rate
 limits specified above. </dd>

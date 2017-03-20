@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pkcs12.c,v 1.1.1.1 2011/04/13 18:14:51 elric Exp $	*/
+/*	$NetBSD: test_pkcs12.c,v 1.1.1.1.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,12 +34,7 @@
  */
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 
 #include <pkcs12.h>
 #include <evp.h>

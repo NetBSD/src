@@ -63,34 +63,34 @@ def : InstAlias<"memw($Rs) = $Rt.new",
       (S2_storerinew_io IntRegs:$Rs, 0, IntRegs:$Rt), 0>;
 
 def : InstAlias<"memb($Rs) = #$S8",
-      (S4_storeirb_io IntRegs:$Rs, 0, s8Ext:$S8), 0>;
+      (S4_storeirb_io IntRegs:$Rs, 0, s8_0Ext:$S8), 0>;
 
 def : InstAlias<"memh($Rs) = #$S8",
-      (S4_storeirh_io IntRegs:$Rs, 0, s8Ext:$S8), 0>;
+      (S4_storeirh_io IntRegs:$Rs, 0, s8_0Ext:$S8), 0>;
 
 def : InstAlias<"memw($Rs) = #$S8",
-      (S4_storeiri_io IntRegs:$Rs, 0, s8Ext:$S8), 0>;
+      (S4_storeiri_io IntRegs:$Rs, 0, s8_0Ext:$S8), 0>;
 
 def : InstAlias<"memd($Rs) = $Rtt",
       (S2_storerd_io IntRegs:$Rs, 0, DoubleRegs:$Rtt), 0>;
 
 def : InstAlias<"memb($Rs) = setbit(#$U5)",
-      (L4_ior_memopb_io IntRegs:$Rs, 0, u5Imm:$U5), 0>;
+      (L4_ior_memopb_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>;
 
 def : InstAlias<"memh($Rs) = setbit(#$U5)",
-      (L4_ior_memoph_io IntRegs:$Rs, 0, u5Imm:$U5), 0>;
+      (L4_ior_memoph_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>;
 
 def : InstAlias<"memw($Rs) = setbit(#$U5)",
-      (L4_ior_memopw_io IntRegs:$Rs, 0, u5Imm:$U5), 0>;
+      (L4_ior_memopw_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>;
 
 def : InstAlias<"memb($Rs) = clrbit(#$U5)",
-      (L4_iand_memopb_io IntRegs:$Rs, 0, u5Imm:$U5), 0>;
+      (L4_iand_memopb_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>;
 
 def : InstAlias<"memh($Rs) = clrbit(#$U5)",
-      (L4_iand_memoph_io IntRegs:$Rs, 0, u5Imm:$U5), 0>;
+      (L4_iand_memoph_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>;
 
 def : InstAlias<"memw($Rs) = clrbit(#$U5)",
-      (L4_iand_memopw_io IntRegs:$Rs, 0, u5Imm:$U5), 0>;
+      (L4_iand_memopw_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>;
 
 // Alias of: $Rd = memXX($Rs+#XX) to $Rd = memXX($Rs)
 def : InstAlias<"$Rd = memb($Rs)",
@@ -241,40 +241,40 @@ def : InstAlias<"if (!$Pt.new) memw($Rs) = $Rt.new",
       (S4_pstorerinewfnew_io PredRegs:$Pt, IntRegs:$Rs, 0, IntRegs:$Rt), 0>;
 
 def : InstAlias<"if ($Pt) memb($Rs) = #$S6",
-      (S4_storeirbt_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirbt_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if ($Pt) memh($Rs) = #$S6",
-      (S4_storeirht_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirht_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if ($Pt) memw($Rs) = #$S6",
-      (S4_storeirit_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirit_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if ($Pt.new) memb($Rs) = #$S6",
-      (S4_storeirbtnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirbtnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if ($Pt.new) memh($Rs) = #$S6",
-      (S4_storeirhtnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirhtnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if ($Pt.new) memw($Rs) = #$S6",
-      (S4_storeiritnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeiritnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if (!$Pt) memb($Rs) = #$S6",
-      (S4_storeirbf_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirbf_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if (!$Pt) memh($Rs) = #$S6",
-      (S4_storeirhf_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirhf_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if (!$Pt) memw($Rs) = #$S6",
-      (S4_storeirif_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirif_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if (!$Pt.new) memb($Rs) = #$S6",
-      (S4_storeirbfnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirbfnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if (!$Pt.new) memh($Rs) = #$S6",
-      (S4_storeirhfnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirhfnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 def : InstAlias<"if (!$Pt.new) memw($Rs) = #$S6",
-      (S4_storeirifnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6Ext:$S6), 0>;
+      (S4_storeirifnew_io PredRegs:$Pt, IntRegs:$Rs, 0, s6_0Ext:$S6), 0>;
 
 // Alias of: memXX($Rs + $u6_X) |= $Rt, also &=, +=, -=
 //       to: memXX($Rs) |= $Rt
@@ -295,11 +295,11 @@ def : InstAlias<"memb($Rs) -= $Rt",
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memb($Rs) += #$U5",
-      (L4_iadd_memopb_io IntRegs:$Rs, 0, u5Imm:$U5), 0>,
+      (L4_iadd_memopb_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>,
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memb($Rs) -= #$U5",
-      (L4_isub_memopb_io IntRegs:$Rs, 0, u5Imm:$U5), 0>,
+      (L4_isub_memopb_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>,
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memh($Rs) &= $Rt",
@@ -319,11 +319,11 @@ def : InstAlias<"memh($Rs) -= $Rt",
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memh($Rs) += #$U5",
-      (L4_iadd_memoph_io IntRegs:$Rs, 0, u5Imm:$U5), 0>,
+      (L4_iadd_memoph_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>,
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memh($Rs) -= #$U5",
-      (L4_isub_memoph_io IntRegs:$Rs, 0, u5Imm:$U5), 0>,
+      (L4_isub_memoph_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>,
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memw($Rs) &= $Rt",
@@ -343,11 +343,11 @@ def : InstAlias<"memw($Rs) -= $Rt",
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memw($Rs) += #$U5",
-      (L4_iadd_memopw_io IntRegs:$Rs, 0, u5Imm:$U5), 0>,
+      (L4_iadd_memopw_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>,
       Requires<[UseMEMOP]>;
 
 def : InstAlias<"memw($Rs) -= #$U5",
-      (L4_isub_memopw_io IntRegs:$Rs, 0, u5Imm:$U5), 0>,
+      (L4_isub_memopw_io IntRegs:$Rs, 0, u5_0Imm:$U5), 0>,
       Requires<[UseMEMOP]>;
 
 //
@@ -459,4 +459,194 @@ def : InstAlias<"$Pd=cmp.lt($Rs, $Rt)",
       (C2_cmpgt PredRegs:$Pd, IntRegs:$Rt, IntRegs:$Rs), 0>;
 def : InstAlias<"$Pd=cmp.ltu($Rs, $Rt)",
       (C2_cmpgtu PredRegs:$Pd, IntRegs:$Rt, IntRegs:$Rs), 0>;
+
+// maps if (!Pu) jumpr Rs -> if (!Pu) jumpr:nt Rs
+def : InstAlias<"if (!$Pu) jumpr $Rs",
+      (J2_jumprf PredRegs:$Pu, IntRegs:$Rs)>,
+      Requires<[HasV60T]>;
+
+// maps if (Pu) jumpr Rs -> if (Pu) jumpr:nt Rs
+def : InstAlias<"if ($Pu) jumpr $Rs",
+      (J2_jumprt PredRegs:$Pu, IntRegs:$Rs)>,
+      Requires<[HasV60T]>;
+
+// maps if (!Pu) jump $r15_2 -> if (!Pu) jump:nt $r15_2
+def : InstAlias<"if (!$Pu) jump $r15_2",
+      (J2_jumpf PredRegs:$Pu, brtarget:$r15_2)>,
+      Requires<[HasV60T]>;
+
+// maps if (Pu) jump $r15_2 -> if (Pu) jump:nt $r15_2
+def : InstAlias<"if ($Pu) jump $r15_2",
+     (J2_jumpt PredRegs:$Pu, brtarget:$r15_2)>,
+     Requires<[HasV60T]>;
+
+def : InstAlias<"if ($src) jump $r15_2",
+      (J2_jumpt PredRegs:$src, brtarget:$r15_2), 0>;
+
+def : InstAlias<"if (!$src) jump $r15_2",
+      (J2_jumpf PredRegs:$src, brtarget:$r15_2), 0>;
+
+def : InstAlias<"if ($src1) jumpr $src2",
+      (J2_jumprt PredRegs:$src1, IntRegs:$src2), 0>;
+
+def : InstAlias<"if (!$src1) jumpr $src2",
+      (J2_jumprf PredRegs:$src1, IntRegs:$src2), 0>;
+
+// maps Vdd = Vss to Vdd = V6_vassignp(Vss)
+def : InstAlias<"$Vdd = $Vss",
+      (V6_vassignp VecDblRegs:$Vdd, VecDblRegs:$Vss)>,
+      Requires<[HasV60T]>;
+
+// maps Vd = #0 to Vd = vxor(Vd, Vd)
+def : InstAlias<"$Vd = #0",
+      (V6_vxor VectorRegs:$Vd, VectorRegs:$Vd, VectorRegs:$Vd)>,
+      Requires<[HasV60T]>;
+
+// maps Vdd  = #0 to Vdd = vsub(Vdd, Vdd)
+def : InstAlias<"$Vdd = #0",
+      (V6_vsubw_dv VecDblRegs:$Vdd, VecDblRegs:$Vdd, VecDblRegs:$Vdd)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd = vcmp.eq($Vu.uh, $Vv.uh)" -> "$Qd = vcmp.eq($Vu.h, $Vv.h)"
+def : InstAlias<"$Qd = vcmp.eq($Vu.uh, $Vv.uh)",
+      (V6_veqh VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd &= vcmp.eq($Vu.uh, $Vv.uh)" -> "$Qd &= vcmp.eq($Vu.h, $Vv.h)"
+def : InstAlias<"$Qd &= vcmp.eq($Vu.uh, $Vv.uh)",
+      (V6_veqh_and VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd |= vcmp.eq($Vu.uh, $Vv.uh)" -> "$Qd |= vcmp.eq($Vu.h, $Vv.h)"
+def : InstAlias<"$Qd |= vcmp.eq($Vu.uh, $Vv.uh)",
+      (V6_veqh_or VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd ^= vcmp.eq($Vu.uh, $Vv.uh)" -> "$Qd ^= vcmp.eq($Vu.h, $Vv.h)"
+def : InstAlias<"$Qd ^= vcmp.eq($Vu.uh, $Vv.uh)",
+      (V6_veqh_xor VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd = vcmp.eq($Vu.uw, $Vv.uw)" -> "$Qd = vcmp.eq($Vu.w, $Vv.w)"
+def : InstAlias<"$Qd = vcmp.eq($Vu.uw, $Vv.uw)",
+      (V6_veqw VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd &= vcmp.eq($Vu.uw, $Vv.uw)" -> "$Qd &= vcmp.eq($Vu.w, $Vv.w)"
+def : InstAlias<"$Qd &= vcmp.eq($Vu.uw, $Vv.uw)",
+      (V6_veqw_and VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd |= vcmp.eq($Vu.uw, $Vv.uw)" -> "$Qd |= vcmp.eq($Vu.w, $Vv.w)"
+def : InstAlias<"$Qd |= vcmp.eq($Vu.uw, $Vv.uw)",
+      (V6_veqh_or VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd ^= vcmp.eq($Vu.uw, $Vv.uw)" -> "$Qd ^= vcmp.eq($Vu.w, $Vv.w)"
+def : InstAlias<"$Qd ^= vcmp.eq($Vu.uw, $Vv.uw)",
+      (V6_veqw_xor VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd = vcmp.eq($Vu.ub, $Vv.ub)" -> "$Qd = vcmp.eq($Vu.b, $Vv.b)"
+def : InstAlias<"$Qd = vcmp.eq($Vu.ub, $Vv.ub)",
+      (V6_veqb VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd &= vcmp.eq($Vu.ub, $Vv.ub)" -> "$Qd &= vcmp.eq($Vu.b, $Vv.b)"
+def : InstAlias<"$Qd &= vcmp.eq($Vu.ub, $Vv.ub)",
+      (V6_veqb_and VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd |= vcmp.eq($Vu.ub, $Vv.ub)" -> "$Qd |= vcmp.eq($Vu.b, $Vv.b)"
+def : InstAlias<"$Qd |= vcmp.eq($Vu.ub, $Vv.ub)",
+      (V6_veqb_or VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Qd ^= vcmp.eq($Vu.ub, $Vv.ub)" -> "$Qd ^= vcmp.eq($Vu.b, $Vv.b)"
+def : InstAlias<"$Qd ^= vcmp.eq($Vu.ub, $Vv.ub)",
+      (V6_veqb_xor VecPredRegs:$Qd, VectorRegs:$Vu, VectorRegs:$Vv)>,
+      Requires<[HasV60T]>;
+
+// maps   "$Rd.w = vextract($Vu, $Rs)" -> "$Rd = vextract($Vu, $Rs)"
+def : InstAlias<"$Rd.w = vextract($Vu, $Rs)",
+      (V6_extractw IntRegs:$Rd, VectorRegs:$Vu, IntRegs:$Rs)>,
+      Requires<[HasV60T]>;
+
+// Mapping from vtrans2x2(Vy32,Vx32,Rt32) to vshuff(Vy32,Vx32,Rt32)
+def : InstAlias<"vtrans2x2($Vy, $Vx, $Rt)",
+      (V6_vshuff VectorRegs:$Vy, VectorRegs:$Vx, IntRegs:$Rt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"$Vt=vmem($Rs)",
+      (V6_vL32b_ai VectorRegs:$Vt, IntRegs:$Rs, 0)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"$Vt=vmem($Rs):nt",
+      (V6_vL32b_nt_ai VectorRegs:$Vt, IntRegs:$Rs, 0)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"vmem($Rs)=$Vt",
+      (V6_vS32b_ai IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"vmem($Rs):nt=$Vt",
+      (V6_vS32b_nt_ai IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"vmem($Rs)=$Vt.new",
+      (V6_vS32b_new_ai IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"vmem($Rs):nt=$Vt.new",
+      (V6_vS32b_nt_new_ai IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if ($Qv) vmem($Rs)=$Vt",
+      (V6_vS32b_qpred_ai VecPredRegs:$Qv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if (!$Qv) vmem($Rs)=$Vt",
+      (V6_vS32b_nqpred_ai VecPredRegs:$Qv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if ($Qv) vmem($Rs):nt=$Vt",
+      (V6_vS32b_nt_qpred_ai VecPredRegs:$Qv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if (!$Qv) vmem($Rs):nt=$Vt",
+      (V6_vS32b_nt_nqpred_ai VecPredRegs:$Qv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if ($Pv) vmem($Rs)=$Vt",
+      (V6_vS32b_pred_ai PredRegs:$Pv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if (!$Pv) vmem($Rs)=$Vt",
+      (V6_vS32b_npred_ai PredRegs:$Pv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if ($Pv) vmem($Rs):nt=$Vt",
+      (V6_vS32b_nt_pred_ai PredRegs:$Pv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if (!$Pv) vmem($Rs):nt=$Vt",
+      (V6_vS32b_nt_npred_ai PredRegs:$Pv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"$Vt=vmemu($Rs)",
+      (V6_vL32Ub_ai VectorRegs:$Vt, IntRegs:$Rs, 0)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"vmemu($Rs)=$Vt",
+      (V6_vS32Ub_ai IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if ($Pv) vmemu($Rs)=$Vt",
+      (V6_vS32Ub_pred_ai PredRegs:$Pv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
+def : InstAlias<"if (!$Pv) vmemu($Rs)=$Vt",
+      (V6_vS32Ub_npred_ai PredRegs:$Pv, IntRegs:$Rs, 0, VectorRegs:$Vt)>,
+      Requires<[HasV60T]>;
+
 

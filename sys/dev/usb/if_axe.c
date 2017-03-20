@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.72.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.72.2.2 2017/03/20 06:57:38 pgoyette Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,11 +87,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.72.2.1 2017/01/07 08:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.72.2.2 2017/03/20 06:57:38 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_usb.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -271,6 +272,8 @@ static void	axe_unlock_mii(struct axe_softc *);
 
 static void	axe_ax88178_init(struct axe_softc *);
 static void	axe_ax88772_init(struct axe_softc *);
+static void	axe_ax88772a_init(struct axe_softc *);
+static void	axe_ax88772b_init(struct axe_softc *);
 
 /* Get exclusive access to the MII registers */
 static void
@@ -988,7 +991,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	/* Initialize interface info.*/
 	ifp = &sc->sc_if;
 	ifp->if_softc = sc;
-	strncpy(ifp->if_xname, devname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = axe_ioctl;
 	ifp->if_start = axe_start;

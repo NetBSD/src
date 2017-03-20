@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.6.2.2 2017/01/07 08:56:54 pgoyette Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.6.2.3 2017/03/20 06:57:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -194,12 +194,6 @@ do {									\
 #if defined(PT_GETDBREGS)		\
     && defined(PT_SETDBREGS)
 #define HAVE_DBREGS
-#endif
-
-/* Add guards for siginfo_t accessors */
-#if defined(PT_GET_SIGINFO)		\
-    && defined(PT_SET_SIGINFO)
-#define HAVE_SIGINFO
 #endif
 
 /*
@@ -424,20 +418,14 @@ check_happy(unsigned n)
 #define ATF_TP_ADD_TC_HAVE_FPREGS(a,b)
 #endif
 
+#if defined(HAVE_DBREGS)
+#define ATF_TP_ADD_TC_HAVE_DBREGS(a,b) ATF_TP_ADD_TC(a,b)
+#else
+#define ATF_TP_ADD_TC_HAVE_DBREGS(a,b)
+#endif
+
 #if defined(PT_STEP)
 #define ATF_TP_ADD_TC_PT_STEP(a,b)	ATF_TP_ADD_TC(a,b)
 #else
 #define ATF_TP_ADD_TC_PT_STEP(a,b)
-#endif
-
-#if defined(HAVE_SIGINFO)
-#define ATF_TP_ADD_TC_HAVE_SIGINFO(a,b)	ATF_TP_ADD_TC(a,b)
-#else
-#define ATF_TP_ADD_TC_HAVE_SIGINFO(a,b)
-#endif
-
-#if defined(__HAVE_PTRACE_WATCHPOINTS)
-#define ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(a,b)	ATF_TP_ADD_TC(a,b)
-#else
-#define ATF_TP_ADD_TC_HAVE_PTRACE_WATCHPOINTS(a,b)
 #endif

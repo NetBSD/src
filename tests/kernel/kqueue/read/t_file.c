@@ -1,4 +1,4 @@
-/* $NetBSD: t_file.c,v 1.3 2010/11/07 17:51:20 jmmv Exp $ */
+/* $NetBSD: t_file.c,v 1.3.28.1 2017/03/20 06:57:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_file.c,v 1.3 2010/11/07 17:51:20 jmmv Exp $");
+__RCSID("$NetBSD: t_file.c,v 1.3.28.1 2017/03/20 06:57:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: t_file.c,v 1.3 2010/11/07 17:51:20 jmmv Exp $");
 
 #include <atf-c.h>
 
-#include "../../../h_macros.h"
+#include "h_macros.h"
 
 #define FILENAME "file"
 #define NLINES 5

@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.98 2016/06/28 16:34:40 christos Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.98.2.1 2017/03/20 06:51:53 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>

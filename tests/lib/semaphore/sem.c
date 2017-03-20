@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.10 2012/03/09 14:25:34 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.10.14.1 2017/03/20 06:58:00 pgoyette Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(postwait);
 ATF_TC_HEAD(postwait, tc)

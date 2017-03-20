@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.22 2016/06/20 06:46:37 knakahara Exp $ */
+/* $NetBSD: if_srt.c,v 1.22.2.1 2017/03/20 06:57:50 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.22 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.22.2.1 2017/03/20 06:57:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -33,6 +33,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.22 2016/06/20 06:46:37 knakahara Exp $"
 #include <sys/ioctl.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/nd6.h>
+#include <netinet6/scope6_var.h>
 #include <net/if_types.h>
 
 #include "if_srt.h"
@@ -232,6 +236,8 @@ srt_if_output(
 		return 0; /* XXX ENETDOWN? */
 	}
 	/* XXX is 0 the right last arg here? */
+	if (to->sa_family == AF_INET6)
+		return ip6_if_output(r->u.dstifp, r->u.dstifp, m, &r->dst.sin6, 0);
 	return if_output_lock(r->u.dstifp, r->u.dstifp, m, &r->dst.sa, 0);
 }
 
@@ -368,7 +374,7 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		dr->af = scr->af;
 		dr->srcmatch = scr->srcmatch;
 		dr->srcmask = scr->srcmask;
-		strncpy(&dr->u.dstifn[0],&scr->u.dstifp->if_xname[0],IFNAMSIZ);
+		strlcpy(&dr->u.dstifn[0],&scr->u.dstifp->if_xname[0],IFNAMSIZ);
 		memcpy(&dr->dst,&scr->dst,scr->dst.sa.sa_len);
 		return 0;
 	case SRT_SETRT:
@@ -377,7 +383,7 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		dr = (struct srt_rt *) data;
 		if (dr->inx > sc->nrt)
 			return EDOM;
-		strncpy(&nbuf[0],&dr->u.dstifn[0],IFNAMSIZ);
+		strlcpy(&nbuf[0],&dr->u.dstifn[0],IFNAMSIZ);
 		nbuf[IFNAMSIZ-1] = '\0';
 		if (dr->dst.sa.sa_family != dr->af)
 			return EIO;
@@ -432,6 +438,8 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		scr->srcmask = dr->srcmask;
 		scr->u.dstifp = ifp;
 		memcpy(&scr->dst,&dr->dst,dr->dst.sa.sa_len);
+		if (dr->af == AF_INET6)
+			in6_setzoneid(&scr->dst.sin6.sin6_addr, ifp->if_index);
 		update_mtu(sc);
 		return 0;
 	case SRT_DELRT:

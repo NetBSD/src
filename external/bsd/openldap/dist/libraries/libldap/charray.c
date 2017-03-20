@@ -1,10 +1,10 @@
-/*	$NetBSD: charray.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: charray.c,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $	*/
 
 /* charray.c - routines for dealing with char * arrays */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: charray.c,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $");
 
 #include "portable.h"
 

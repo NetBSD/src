@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2017/03/20 06:52:28 pgoyette Exp $
 
 PROG_CXX=	llvm-dwp
 NOMAN=		yes
@@ -7,7 +7,8 @@ NOMAN=		yes
 
 .PATH: ${LLVM_SRCDIR}/tools/llvm-dwp
 
-SRCS=	llvm-dwp.cpp
+SRCS=	DWPError.cpp \
+	llvm-dwp.cpp
 
 LLVM_LIBS+= \
 	DebugInfoDWARF \
@@ -38,7 +39,10 @@ LLVM_LIBS+= \
 	X86Utils \
 	X86AsmPrinter \
 	MCDisassembler \
+	GlobalISel \
 	AsmPrinter \
+	DebugInfoCodeView \
+	DebugInfoMSF \
 	Object \
 	MCParser \
 	SelectionDAG \
@@ -51,7 +55,8 @@ LLVM_LIBS+= \
 	TransformsUtils \
 	Analysis \
 	IR \
-	Support
+	Support \
+	Demangle
 
 LDADD+=	-lz
 DPADD+=	${LIBZ}

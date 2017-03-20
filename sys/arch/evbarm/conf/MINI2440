@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.16.2.1 2017/01/07 08:56:13 pgoyette Exp $
+#	$NetBSD: MINI2440,v 1.16.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -72,6 +72,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 # File system options
 #options 	QUOTA		# UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	SOFTDEP

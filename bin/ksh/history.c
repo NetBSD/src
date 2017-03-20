@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.11 2011/08/31 16:24:54 plunky Exp $	*/
+/*	$NetBSD: history.c,v 1.11.26.1 2017/03/20 06:51:32 pgoyette Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.11 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: history.c,v 1.11.26.1 2017/03/20 06:51:32 pgoyette Exp $");
 #endif
 
 
@@ -757,13 +757,14 @@ hist_finish()
   else
     hp = histlist;
 
-  fd = open(hname, O_WRONLY | O_CREAT | O_TRUNC | O_EXLOCK, 0777);
-  /* Remove anything written before we got the lock */
-  ftruncate(fd, 0);
-  if (fd >= 0 && (fh = fdopen(fd, "w"))) {
-    for (i = 0; hp + i <= histptr && hp[i]; i++)
-      fprintf(fh, "%s%c", hp[i], '\0');
-    fclose(fh);
+  if ((fd = open(hname, O_WRONLY | O_CREAT | O_TRUNC | O_EXLOCK, 0777)) != -1) {
+    /* Remove anything written before we got the lock */
+    ftruncate(fd, 0);
+    if ((fh = fdopen(fd, "w")) != NULL) {
+      for (i = 0; hp + i <= histptr && hp[i]; i++)
+        fprintf(fh, "%s%c", hp[i], '\0');
+      fclose(fh);
+    }
   }
 }
 

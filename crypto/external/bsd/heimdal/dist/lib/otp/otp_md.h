@@ -1,4 +1,4 @@
-/*	$NetBSD: otp_md.h,v 1.1.1.2 2011/04/14 14:09:28 elric Exp $	*/
+/*	$NetBSD: otp_md.h,v 1.1.1.2.28.1 2017/03/20 06:51:47 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan

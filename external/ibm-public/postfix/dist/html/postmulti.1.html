@@ -10,11 +10,11 @@ POSTMULTI(1)                                                      POSTMULTI(1)
        postmulti - Postfix multi-instance manager
 
 <b>SYNOPSIS</b>
-       <b>ENABLING MULTI-INSTANCE MANAGEMENT:</b>
+   <b>Enabling multi-instance management:</b>
 
        <b>postmulti -e init</b> [<b>-v</b>]
 
-       <b>ITERATOR MODE:</b>
+   <b>Iterator mode:</b>
 
        <b>postmulti -l</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>]
 
@@ -22,7 +22,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 
        <b>postmulti -x</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>command...</i>
 
-       <b>LIFE-CYCLE MANAGEMENT:</b>
+   <b>Life-cycle management:</b>
 
        <b>postmulti -e create</b> [<b>-av</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] [<b>-G</b> <i>group</i>] [<b>-I</b> <i>name</i>]
        [<i>param=value</i> ...]
@@ -356,9 +356,23 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
 
+       Available in Postfix 3.0 and later:
+
+       <b><a href="postconf.5.html#meta_directory">meta_directory</a> (see 'postconf -d' output)</b>
+              The location of non-executable files that are shared among  mul-
+              tiple  Postfix instances, such as postfix-files, dynamicmaps.cf,
+              and the multi-instance template  files  <a href="postconf.5.html">main.cf</a>.proto  and  <a href="master.5.html">mas-
+              ter.cf</a>.proto.
+
+       <b><a href="postconf.5.html#shlib_directory">shlib_directory</a> (see 'postconf -d' output)</b>
+              The  location  of Postfix dynamically-linked libraries (libpost-
+              fix-*.so), and the default location of Postfix database  plugins
+              (postfix-*.so)  that  have  a  relative  pathname  in the dynam-
+              icmaps.cf file.
+
 <b>FILES</b>
-       $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/<a href="postconf.5.html">main.cf</a>, stock configuration file
-       $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/<a href="master.5.html">master.cf</a>, stock configuration file
+       $<a href="postconf.5.html#meta_directory">meta_directory</a>/<a href="postconf.5.html">main.cf</a>.proto, stock configuration file
+       $<a href="postconf.5.html#meta_directory">meta_directory</a>/<a href="master.5.html">master.cf</a>.proto, stock configuration file
        $<a href="postconf.5.html#daemon_directory">daemon_directory</a>/postmulti-script, life-cycle helper program
 
 <b>SEE ALSO</b>

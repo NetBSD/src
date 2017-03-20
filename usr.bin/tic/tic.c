@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.25.2.1 2017/01/07 08:56:58 pgoyette Exp $ */
+/* $NetBSD: tic.c,v 1.25.2.2 2017/03/20 06:58:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.25.2.1 2017/01/07 08:56:58 pgoyette Exp $");
+__RCSID("$NetBSD: tic.c,v 1.25.2.2 2017/03/20 06:58:06 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>

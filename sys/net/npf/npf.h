@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.47.8.1 2017/01/07 08:56:50 pgoyette Exp $	*/
+/*	$NetBSD: npf.h,v 1.47.8.2 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -196,11 +196,18 @@ struct npf_rproc;
 typedef struct npf_rproc	npf_rproc_t;
 
 typedef struct {
+	uint64_t	mi_rid;
+	u_int		mi_retfl;
+	u_int		mi_di;
+} npf_match_info_t;
+
+typedef struct {
 	unsigned int	version;
 	void *		ctx;
 	int		(*ctor)(npf_rproc_t *, prop_dictionary_t);
 	void		(*dtor)(npf_rproc_t *, void *);
-	bool		(*proc)(npf_cache_t *, void *, int *);
+	bool		(*proc)(npf_cache_t *, void *, const npf_match_info_t *,
+				int *);
 } npf_ext_ops_t;
 
 void *		npf_ext_register(npf_t *, const char *, const npf_ext_ops_t *);

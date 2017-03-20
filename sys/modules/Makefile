@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.167.2.3 2017/01/07 08:56:49 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.167.2.4 2017/03/20 06:57:49 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -51,6 +51,12 @@ SUBDIR+=	i2cexec
 SUBDIR+=	i2c_bitbang
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
+SUBDIR+=	if_faith
+SUBDIR+=	if_gif
+SUBDIR+=	if_gre
+SUBDIR+=	if_l2tp
+SUBDIR+=	if_loop
+SUBDIR+=	if_mpls
 SUBDIR+=	if_npflog
 SUBDIR+=	if_smsc
 SUBDIR+=	iic

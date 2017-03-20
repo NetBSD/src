@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.76.2.3 2017/01/07 08:56:59 pgoyette Exp $ */
+/* $NetBSD: cgram.y,v 1.76.2.4 2017/03/20 06:58:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.76.2.3 2017/01/07 08:56:59 pgoyette Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.76.2.4 2017/03/20 06:58:06 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,7 +117,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 100
+%expect 107
 
 %union {
 	int	y_int;
@@ -140,6 +140,7 @@ anonymize(sym_t *s)
 %token	<y_op>		T_UNOP
 %token	<y_op>		T_INCDEC
 %token			T_SIZEOF
+%token			T_BUILTIN_OFFSETOF
 %token			T_TYPEOF
 %token			T_EXTENSION
 %token			T_ALIGNOF
@@ -220,6 +221,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_NORETURN
 %token <y_type>		T_AT_NO_INSTRUMENT_FUNCTION
 %token <y_type>		T_AT_PACKED
+%token <y_type>		T_AT_PCS
 %token <y_type>		T_AT_PURE
 %token <y_type>		T_AT_RETURNS_TWICE
 %token <y_type>		T_AT_SECTION
@@ -244,7 +246,7 @@ anonymize(sym_t *s)
 %left	T_SHFTOP
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF T_ALIGNOF T_REAL T_IMAG
+%right	T_UNOP T_INCDEC T_SIZEOF TBUILTIN_SIZEOF T_ALIGNOF T_REAL T_IMAG
 %left	T_LPARN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
@@ -528,6 +530,7 @@ type_attribute_spec:
 	| T_AT_NONNULL T_LPARN constant T_RPARN
 	| T_AT_MODE T_LPARN T_NAME T_RPARN
 	| T_AT_ALIAS T_LPARN string T_RPARN
+	| T_AT_PCS T_LPARN string T_RPARN
 	| T_AT_SECTION T_LPARN string T_RPARN
 	| T_AT_ALIGNED 
 	| T_AT_CONSTRUCTOR 
@@ -1360,7 +1363,7 @@ init_rbrace:
 	;
 
 type_name:
-	  {
+  	  {
 		pushdecl(ABSTRACT);
 	  } abstract_declaration {
 		popdecl();
@@ -1392,6 +1395,9 @@ abs_decl:
 	  }
 	| pointer direct_abs_decl {
 		$$ = addptr($2, $1);
+	  }
+	| T_TYPEOF term {
+		$$ = mktempsym($2->tn_type);
 	  }
 	;
 
@@ -1899,6 +1905,11 @@ term:
 	  }
 	| T_IMAG T_LPARN term T_RPARN {
 		$$ = build(IMAG, $3, NULL);
+	  }
+	| T_BUILTIN_OFFSETOF T_LPARN type_name T_COMMA identifier T_RPARN
+						    %prec T_BUILTIN_OFFSETOF {
+		symtyp = FMOS;
+		$$ = bldoffsetof($3, getsym($5));
 	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
 		if (($$ = $2 == NULL ? NULL : bldszof($2->tn_type)) != NULL)

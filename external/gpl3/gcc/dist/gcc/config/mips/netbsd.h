@@ -30,7 +30,7 @@ along with GCC; see the file COPYING3.  If not see
 	builtin_define ("__LONG64");			\
 							\
       if (TARGET_ABICALLS)				\
-	builtin_define ("__ABICALLS__");		\
+	builtin_define ("__mips_abicalls");		\
 							\
     if (mips_abi == ABI_N32)				\
       {							\

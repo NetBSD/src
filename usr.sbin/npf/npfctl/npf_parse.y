@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.38.2.1 2017/01/07 08:57:00 pgoyette Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.38.2.2 2017/03/20 06:58:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __NetBSD__
 #include <vis.h>
+#endif
 
 #include "npfctl.h"
 
@@ -65,11 +67,14 @@ yyerror(const char *fmt, ...)
 	fprintf(stderr, "%s:%d:%d: %s", yyfilename,
 	    yylineno - (int)eol, yycolumn, msg);
 	if (!eol) {
+#ifdef __NetBSD__
 		size_t len = strlen(context);
 		char *dst = ecalloc(1, len * 4 + 1);
 
 		strvisx(dst, context, len, VIS_WHITE|VIS_CSTYLE);
-		fprintf(stderr, " near '%s'", dst);
+		context = dst;
+#endif
+		fprintf(stderr, " near '%s'", context);
 	}
 	fprintf(stderr, "\n");
 	exit(EXIT_FAILURE);
@@ -175,7 +180,7 @@ yyerror(const char *fmt, ...)
 %type	<var>		element, list_elems, list, value
 %type	<addrport>	mapseg
 %type	<filtopts>	filt_opts, all_or_filt_opts
-%type	<optproto>	opt_proto
+%type	<optproto>	proto opt_proto
 %type	<rulegroup>	group_opts
 %type	<tf>		onoff
 
@@ -347,13 +352,18 @@ mapseg
 	;
 
 map
-	: MAP ifref map_sd map_algo mapseg map_type mapseg PASS filt_opts
+	: MAP ifref map_sd map_algo mapseg map_type mapseg
+	  PASS opt_proto filt_opts
 	{
-		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, $4);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, &$9, &$10, $4);
 	}
 	| MAP ifref map_sd map_algo mapseg map_type mapseg
 	{
-		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, $4);
+		npfctl_build_natseg($3, $6, $2, &$5, &$7, NULL, NULL, $4);
+	}
+	| MAP ifref map_sd map_algo proto mapseg map_type mapseg
+	{
+		npfctl_build_natseg($3, $7, $2, &$6, &$8, &$5, NULL, $4);
 	}
 	| MAP RULESET group_opts
 	{
@@ -540,7 +550,7 @@ opt_family
 	|			{ $$ = AF_UNSPEC; }
 	;
 
-opt_proto
+proto
 	: PROTO TCP tcp_flags_and_mask
 	{
 		$$.op_proto = IPPROTO_TCP;
@@ -566,6 +576,10 @@ opt_proto
 		$$.op_proto = $2;
 		$$.op_opts = NULL;
 	}
+	;
+
+opt_proto
+	: proto			{ $$ = $1; }
 	|
 	{
 		$$.op_proto = -1;
@@ -665,6 +679,8 @@ addr_or_ifaddr
 	}
 	| static_ifaddrs
 	{
+		if (npfvar_get_count($1) != 1)
+			yyerror("multiple interfaces are not supported");
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		$$ = ifna->ifna_addrs;
 	}
@@ -720,12 +736,14 @@ port_range
 	}
 	| PORT VAR_ID
 	{
-		$$ = npfctl_parse_port_range_variable($2);
+		npfvar_t *vp = npfvar_lookup($2);
+		$$ = npfctl_parse_port_range_variable($2, vp);
 	}
-	|
+	| PORT list
 	{
-		$$ = NULL;
+		$$ = npfctl_parse_port_range_variable(NULL, $2);
 	}
+	|			{ $$ = NULL; }
 	;
 
 port
@@ -765,6 +783,8 @@ tcp_flags_and_mask
 	}
 	| FLAGS tcp_flags
 	{
+		if (npfvar_get_count($2) != 1)
+			yyerror("multiple tcpflags are not supported");
 		char *s = npfvar_get_data($2, NPFVAR_TCPFLAG, 0);
 		npfvar_add_elements($2, npfctl_parse_tcpflag(s));
 		$$ = $2;
@@ -804,6 +824,9 @@ ifname
 			$$ = npfvar_expand_string(vp);
 			break;
 		case NPFVAR_INTERFACE:
+			if (npfvar_get_count(vp) != 1)
+				yyerror(
+				    "multiple interfaces are not supported");
 			ifna = npfvar_get_data(vp, type, 0);
 			$$ = ifna->ifna_name;
 			break;
@@ -838,6 +861,8 @@ ifref
 	| dynamic_ifaddrs
 	| static_ifaddrs
 	{
+		if (npfvar_get_count($1) != 1)
+			yyerror("multiple interfaces are not supported");
 		ifnet_addr_t *ifna = npfvar_get_data($1, NPFVAR_INTERFACE, 0);
 		npfctl_note_interface(ifna->ifna_name);
 		$$ = ifna->ifna_name;

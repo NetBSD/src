@@ -6,7 +6,7 @@ NoEcho('
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ NoEcho('
 %type <n> ParameterTypesPackage
 %type <n> ParameterTypesPackageList
 %type <n> RequiredTarget
-%type <n> SimpleTarget
+%type <n> SimpleName
 %type <n> StringData
 %type <n> Target
 %type <n> Term
@@ -252,7 +252,10 @@ NoEcho('
 /* Types */
 
 %type <n> SuperName
-%type <n> ObjectTypeName
+%type <n> ObjectTypeSource
+%type <n> DerefOfSource
+%type <n> RefOfSource
+%type <n> CondRefOfSource
 %type <n> ArgTerm
 %type <n> LocalTerm
 %type <n> DebugTerm

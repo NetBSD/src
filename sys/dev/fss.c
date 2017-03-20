@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.93.2.8 2016/08/06 00:19:07 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.93.2.9 2017/03/20 06:57:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.8 2016/08/06 00:19:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.9 2017/03/20 06:57:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -882,7 +882,10 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 
 	microtime(&sc->sc_time);
 
-	error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
+	vrele_flush(sc->sc_mount);
+	error = VFS_SYNC(sc->sc_mount, MNT_WAIT, curlwp->l_cred);
+	if (error == 0)
+		error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rule_test.c,v 1.12.6.1 2017/01/07 08:57:00 pgoyette Exp $	*/
+/*	$NetBSD: npf_rule_test.c,v 1.12.6.2 2017/03/20 06:58:08 pgoyette Exp $	*/
 
 /*
  * NPF ruleset test.
@@ -80,7 +80,8 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 	npf_cache_t npc = { .npc_info = 0, .npc_ctx = npf };
 	nbuf_t nbuf;
 	npf_rule_t *rl;
-	int retfl, error;
+	npf_match_info_t mi;
+	int error;
 
 	nbuf_init(npf, &nbuf, m, ifp);
 	npc.npc_nbuf = &nbuf;
@@ -90,7 +91,7 @@ npf_rule_raw_test(bool verbose, struct mbuf *m, ifnet_t *ifp, int di)
 	rl = npf_ruleset_inspect(&npc, npf_config_ruleset(npf),
 	    di, NPF_LAYER_3);
 	if (rl) {
-		error = npf_rule_conclude(rl, &retfl);
+		error = npf_rule_conclude(rl, &mi);
 	} else {
 		error = ENOENT;
 	}

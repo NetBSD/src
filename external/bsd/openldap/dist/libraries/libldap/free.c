@@ -1,10 +1,10 @@
-/*	$NetBSD: free.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: free.c,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $	*/
 
 /* free.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,9 @@
  *  free.c - some free routines are included here to avoid having to
  *           link in lots of extra code when not using certain features
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: free.c,v 1.1.1.4.6.1 2017/03/20 06:56:13 pgoyette Exp $");
 
 #include "portable.h"
 

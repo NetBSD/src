@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_ipc.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: timed_ipc.c,v 1.1.1.1.32.1 2017/03/20 06:56:37 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -52,6 +52,6 @@ void    timed_ipc_setup(VSTREAM *stream)
 	msg_panic("timed_ipc_setup: bad ipc_timeout %d", var_ipc_timeout);
 
     vstream_control(stream,
-		    VSTREAM_CTL_TIMEOUT, var_ipc_timeout,
-		    VSTREAM_CTL_END);
+		    CA_VSTREAM_CTL_TIMEOUT(var_ipc_timeout),
+		    CA_VSTREAM_CTL_END);
 }

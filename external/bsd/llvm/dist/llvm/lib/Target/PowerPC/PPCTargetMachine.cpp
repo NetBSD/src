@@ -15,7 +15,9 @@
 #include "PPC.h"
 #include "PPCTargetObjectFile.h"
 #include "PPCTargetTransformInfo.h"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/MC/MCStreamer.h"
@@ -43,6 +45,10 @@ opt<bool> DisableVSXSwapRemoval("disable-ppc-vsx-swap-removal", cl::Hidden,
                                 cl::desc("Disable VSX Swap Removal for PPC"));
 
 static cl::
+opt<bool> DisableQPXLoadSplat("disable-ppc-qpx-load-splat", cl::Hidden,
+                              cl::desc("Disable QPX load splat simplification"));
+
+static cl::
 opt<bool> DisableMIPeephole("disable-ppc-peephole", cl::Hidden,
                             cl::desc("Disable machine peepholes for PPC"));
 
@@ -68,9 +74,9 @@ EnableMachineCombinerPass("ppc-machine-combiner",
 
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
-  RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
-  RegisterTargetMachine<PPC64TargetMachine> B(ThePPC64Target);
-  RegisterTargetMachine<PPC64TargetMachine> C(ThePPC64LETarget);
+  RegisterTargetMachine<PPC32TargetMachine> A(getThePPC32Target());
+  RegisterTargetMachine<PPC64TargetMachine> B(getThePPC64Target());
+  RegisterTargetMachine<PPC64TargetMachine> C(getThePPC64LETarget());
 
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializePPCBoolRetToIntPass(PR);
@@ -172,6 +178,20 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
   return PPCTargetMachine::PPC_ABI_UNKNOWN;
 }
 
+static Reloc::Model getEffectiveRelocModel(const Triple &TT,
+                                           Optional<Reloc::Model> RM) {
+  if (!RM.hasValue()) {
+    if (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le) {
+      if (!TT.isOSBinFormatMachO() && !TT.isMacOSX())
+        return Reloc::PIC_;
+    }
+    if (TT.isOSDarwin())
+      return Reloc::DynamicNoPIC;
+    return Reloc::Static;
+  }
+  return *RM;
+}
+
 // The FeatureString here is a little subtle. We are modifying the feature
 // string with what are (currently) non-function specific overrides as it goes
 // into the LLVMTargetMachine constructor and then using the stored value in the
@@ -179,30 +199,14 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
 PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    StringRef CPU, StringRef FS,
                                    const TargetOptions &Options,
-                                   Reloc::Model RM, CodeModel::Model CM,
-                                   CodeGenOpt::Level OL)
+                                   Optional<Reloc::Model> RM,
+                                   CodeModel::Model CM, CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
-                        computeFSAdditions(FS, OL, TT), Options, RM, CM, OL),
+                        computeFSAdditions(FS, OL, TT), Options,
+                        getEffectiveRelocModel(TT, RM), CM, OL),
       TLOF(createTLOF(getTargetTriple())),
       TargetABI(computeTargetABI(TT, Options)),
       Subtarget(TargetTriple, CPU, computeFSAdditions(FS, OL, TT), *this) {
-
-  // For the estimates, convergence is quadratic, so we essentially double the
-  // number of digits correct after every iteration. For both FRE and FRSQRTE,
-  // the minimum architected relative accuracy is 2^-5. When hasRecipPrec(),
-  // this is 2^-14. IEEE float has 23 digits and double has 52 digits.
-  unsigned RefinementSteps = Subtarget.hasRecipPrec() ? 1 : 3,
-           RefinementSteps64 = RefinementSteps + 1;
-
-  this->Options.Reciprocals.setDefaults("sqrtf", true, RefinementSteps);
-  this->Options.Reciprocals.setDefaults("vec-sqrtf", true, RefinementSteps);
-  this->Options.Reciprocals.setDefaults("divf", true, RefinementSteps);
-  this->Options.Reciprocals.setDefaults("vec-divf", true, RefinementSteps);
-
-  this->Options.Reciprocals.setDefaults("sqrtd", true, RefinementSteps64);
-  this->Options.Reciprocals.setDefaults("vec-sqrtd", true, RefinementSteps64);
-  this->Options.Reciprocals.setDefaults("divd", true, RefinementSteps64);
-  this->Options.Reciprocals.setDefaults("vec-divd", true, RefinementSteps64);
 
   initAsmInfo();
 }
@@ -214,7 +218,8 @@ void PPC32TargetMachine::anchor() { }
 PPC32TargetMachine::PPC32TargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
-                                       Reloc::Model RM, CodeModel::Model CM,
+                                       Optional<Reloc::Model> RM,
+                                       CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
     : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
 
@@ -223,7 +228,8 @@ void PPC64TargetMachine::anchor() { }
 PPC64TargetMachine::PPC64TargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
-                                       Reloc::Model RM, CodeModel::Model CM,
+                                       Optional<Reloc::Model> RM,
+                                       CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
     : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
 
@@ -245,12 +251,11 @@ PPCTargetMachine::getSubtargetImpl(const Function &F) const {
   // it as a key for the subtarget since that can be the only difference
   // between two functions.
   bool SoftFloat =
-    F.hasFnAttribute("use-soft-float") &&
-    F.getFnAttribute("use-soft-float").getValueAsString() == "true";
+      F.getFnAttribute("use-soft-float").getValueAsString() == "true";
   // If the soft float attribute is set on the function turn on the soft float
   // subtarget feature.
   if (SoftFloat)
-    FS += FS.empty() ? "+soft-float" : ",+soft-float";
+    FS += FS.empty() ? "-hard-float" : ",-hard-float";
 
   auto &I = SubtargetMap[CPU + FS];
   if (!I) {
@@ -313,9 +318,9 @@ void PPCPassConfig::addIRPasses() {
   if (EnablePrefetch.getNumOccurrences() > 0)
     UsePrefetching = EnablePrefetch;
   if (UsePrefetching)
-    addPass(createPPCLoopDataPrefetchPass());
+    addPass(createLoopDataPrefetchPass());
 
-  if (TM->getOptLevel() == CodeGenOpt::Aggressive && EnableGEPOpt) {
+  if (TM->getOptLevel() >= CodeGenOpt::Default && EnableGEPOpt) {
     // Call SeparateConstOffsetFromGEP pass to extract constants within indices
     // and lower a GEP with multiple indices to either arithmetic operations or
     // multiple GEPs with single index.
@@ -379,18 +384,35 @@ void PPCPassConfig::addMachineSSAOptimization() {
 }
 
 void PPCPassConfig::addPreRegAlloc() {
-  initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
-  insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
-             &PPCVSXFMAMutateID);
-  if (getPPCTargetMachine().getRelocationModel() == Reloc::PIC_)
+  if (getOptLevel() != CodeGenOpt::None) {
+    initializePPCVSXFMAMutatePass(*PassRegistry::getPassRegistry());
+    insertPass(VSXFMAMutateEarly ? &RegisterCoalescerID : &MachineSchedulerID,
+               &PPCVSXFMAMutateID);
+  }
+
+  // FIXME: We probably don't need to run these for -fPIE.
+  if (getPPCTargetMachine().isPositionIndependent()) {
+    // FIXME: LiveVariables should not be necessary here!
+    // PPCTLSDYnamicCallPass uses LiveIntervals which previously dependet on
+    // LiveVariables. This (unnecessary) dependency has been removed now,
+    // however a stage-2 clang build fails without LiveVariables computed here.
+    addPass(&LiveVariablesID, false);
     addPass(createPPCTLSDynamicCallPass());
+  }
   if (EnableExtraTOCRegDeps)
     addPass(createPPCTOCRegDepsPass());
 }
 
 void PPCPassConfig::addPreSched2() {
-  if (getOptLevel() != CodeGenOpt::None)
+  if (getOptLevel() != CodeGenOpt::None) {
     addPass(&IfConverterID);
+
+    // This optimization must happen after anything that might do store-to-load
+    // forwarding. Here we're after RA (and, thus, when spills are inserted)
+    // but before post-RA scheduling.
+    if (!DisableQPXLoadSplat)
+      addPass(createPPCQPXLoadSplatPass());
+  }
 }
 
 void PPCPassConfig::addPreEmitPass() {

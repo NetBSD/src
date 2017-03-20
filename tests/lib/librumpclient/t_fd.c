@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fd.c,v 1.4 2011/08/25 18:46:01 hannken Exp $	*/
+/*	$NetBSD: t_fd.c,v 1.4.24.1 2017/03/20 06:58:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC_WITH_CLEANUP(bigenough);
 ATF_TC_HEAD(bigenough, tc)

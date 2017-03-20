@@ -1,4 +1,4 @@
-.TH "deprecated" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "deprecated" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -62,7 +62,7 @@ This function is obsolete, and has been replaced by \fBevent_base_once()\fP\&. I
 This function is deprecated because it is easily confused by multiple calls to \fBevent_init()\fP, and because it is not safe for multithreaded use\&. The replacement is \fBevent_base_priority_init()\fP\&. 
 .IP "\fBGlobal \fBevent_set\fP (struct event *, evutil_socket_t, short, void(*)(evutil_socket_t, short, void *), void *)\fP" 1c
 \fBevent_set()\fP is not recommended for new code, because it requires a subsequent call to \fBevent_base_set()\fP to be safe under most circumstances\&. Use \fBevent_assign()\fP or \fBevent_new()\fP instead\&.  
-.IP "\fBGlobal \fBevhttp_connection_new\fP (const char *address, unsigned short port)\fP" 1c
+.IP "\fBGlobal \fBevhttp_connection_new\fP (const char *address, ev_uint16_t port)\fP" 1c
 It does not allow an event base to be specified  
 .IP "\fBGlobal \fBevhttp_connection_set_base\fP (struct evhttp_connection *evcon, struct \fBevent_base\fP *base)\fP" 1c
 XXXX Why?  
@@ -70,15 +70,13 @@ XXXX Why?
 This function is deprecated; you probably want to use evhttp_get_decoded_uri instead\&. 
 .IP "\fBGlobal \fBevhttp_parse_query\fP (const char *uri, struct evkeyvalq *headers)\fP" 1c
 This function is deprecated as of Libevent 2\&.0\&.9\&. Use evhttp_uri_parse and evhttp_parse_query_str instead\&. 
-.IP "\fBGlobal \fBevhttp_start\fP (const char *address, unsigned short port)\fP" 1c
+.IP "\fBGlobal \fBevhttp_start\fP (const char *address, ev_uint16_t port)\fP" 1c
 It does not allow an event base to be specified 
 .IP "\fBModule \fBMisnamed functions\fP \fP" 1c
-These macros are deprecated because their names don't follow Libevent's naming conventions\&. Use evtag_encode_int and evtag_encode_int64 instead\&. 
+These macros are deprecated because their names don't follow Libevent's naming conventions\&. 
 .IP "\fBModule \fBsignal_* macros\fP \fP" 1c
-These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evsignal_* macros instead\&.
-.PP
+These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. 
 .IP "\fBModule \fBtimeout_* macros\fP \fP" 1c
-These macros are deprecated because their naming is inconsistent with the rest of Libevent\&. Use the evtimer_* macros instead\&.
-.PP
+These macros are deprecated because their naming is inconsistent with the rest of Libevent\&.
 .PP
 

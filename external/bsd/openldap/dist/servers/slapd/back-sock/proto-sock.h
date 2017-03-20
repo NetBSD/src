@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-sock.h,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: proto-sock.h,v 1.1.1.4.6.1 2017/03/20 06:56:18 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2014 The OpenLDAP Foundation.
+ * Copyright 2007-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

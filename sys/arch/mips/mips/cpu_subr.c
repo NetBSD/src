@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.27.2.1 2016/11/04 14:49:02 pgoyette Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.27.2.2 2017/03/20 06:57:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27.2.1 2016/11/04 14:49:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27.2.2 2017/03/20 06:57:17 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -370,13 +370,13 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	KASSERT(l == curlwp);
-	if (fpu_used_p()) {
+	if (fpu_used_p(l)) {
 		size_t fplen;
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		fpu_save();
+		fpu_save(l);
 
 		/*
 		 * The PCB FP regs struct includes the FP CSR, so use the
@@ -450,7 +450,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		size_t fplen;
 
 		/* Disable the FPU contents. */
-		fpu_discard();
+		fpu_discard(l);
 
 #if !defined(__mips_o32)
 		if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi)) {

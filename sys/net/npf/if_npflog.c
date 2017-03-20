@@ -1,4 +1,4 @@
-/*	$NetBSD: if_npflog.c,v 1.3.22.1 2017/01/07 08:56:50 pgoyette Exp $	*/
+/*	$NetBSD: if_npflog.c,v 1.3.22.2 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.3.22.1 2017/01/07 08:56:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.3.22.2 2017/03/20 06:57:50 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_npflog.c,v 1.3.22.1 2017/01/07 08:56:50 pgoyette 
 #endif
 
 #include "npf_impl.h"
+#include "if_npflog.h"
 
 MODULE(MODULE_CLASS_DRIVER, if_npflog, NULL);
 
@@ -128,7 +129,7 @@ npflog_clone_create(struct if_clone *ifc, int unit)
 	KERNEL_LOCK(1, NULL);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	bpf_attach(ifp, DLT_NULL, 0);
+	bpf_attach(ifp, DLT_NPFLOG, NPFLOG_HDRLEN);
 	LIST_INSERT_HEAD(&npflog_if_list, sc, sc_entry);
 	KERNEL_UNLOCK_ONE(NULL);
 

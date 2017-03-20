@@ -50,6 +50,8 @@ namespace PR16975 {
     bar(T);
   };
 
+  bar<> foo{0};
+
   struct baz : public bar<> {
     using bar::bar;
   };
@@ -74,4 +76,14 @@ namespace rdar23810407 {
     g<int>();
     g<int>();
   }
+}
+
+// rdar://problem/24480205
+namespace PR13986 {
+  constexpr unsigned Dynamic = 0;
+  template <unsigned> class A { template <unsigned = Dynamic> void m_fn1(); };
+  class Test {
+    ~Test() {}
+    A<1> m_target;
+  };
 }

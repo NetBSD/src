@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.16 2016/03/23 05:25:51 mrg Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.16.2.1 2017/03/20 06:57:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.16 2016/03/23 05:25:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.16.2.1 2017/03/20 06:57:16 pgoyette Exp $");
 
 #include "fpu_emulate.h"
 
@@ -443,7 +443,7 @@ fpu_sincos(struct fpemu *fe, int regc)
 	__fpu_sincos_cordic(fe, &fe->fe_f2);
 
 	/* cos(x) */
-	fpu_implode(fe, &fe->fe_f2, FTYPE_EXT, &fe->fe_fpframe->fpf_regs[regc]);
+	fpu_implode(fe, &fe->fe_f2, FTYPE_EXT, &fe->fe_fpframe->fpf_regs[regc * 3]);
 
 	/* sin(x) */
 	return &fe->fe_f1;

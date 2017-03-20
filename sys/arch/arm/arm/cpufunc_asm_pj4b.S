@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.11 2015/05/20 02:59:57 hsuenaga Exp $ */
+/*	$NetBSD: cpufunc_asm_pj4b.S,v 1.11.2.1 2017/03/20 06:57:10 pgoyette Exp $ */
 
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
@@ -43,7 +43,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MV_FMC0_SMP		(1 << 1) /* SMP/nAMP enable */
 #define MV_FMC0_PARITY		(1 << 2) /* Enable L1 Cache Parity */
-#define MV_FMC0_LFDIS		(1 << 7) /* Disable DC Speculative linefill*/
+#define MV_FMC0_LFDIS		(1 << 7) /* Disable DC Speculative linefill */
 #define MV_FMC0_FW		(1 << 8) /* Cache & TLB maintenance broadcast */
 
 #define MPIDR_CPUID_MASK	(0x3 << 0) /* CPUID */
@@ -102,6 +102,7 @@ ENTRY(pj4b_config)
 	RET
 END(pj4b_config)
 
+#ifdef AURORA_IO_CACHE_COHERENCY
 /* LINTSTUB: void pj4b_io_coherency_barrier(vaddr_t, paddr_t, vsize_t); */
 ENTRY_NP(pj4b_io_coherency_barrier)
 	movw	r0, #:lower16:_C_LABEL(armadaxp_l2_barrier_reg)
@@ -120,3 +121,4 @@ END(pj4b_io_coherency_barrier)
 STRONG_ALIAS(pj4b_dcache_cfu_wbinv_range, pj4b_io_coherency_barrier)
 STRONG_ALIAS(pj4b_dcache_cfu_inv_range, pj4b_io_coherency_barrier)
 STRONG_ALIAS(pj4b_dcache_cfu_wb_range, pj4b_io_coherency_barrier)
+#endif

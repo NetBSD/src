@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.161.2.1 2017/01/07 08:56:07 pgoyette Exp $
+.\"	$NetBSD: ddb.4,v 1.161.2.2 2017/03/20 06:57:03 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd December 28, 2016
+.Dd January 12, 2017
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -754,6 +754,12 @@ or
 .Cd UVMHIST .
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
 Print the vnode at
+.Ar address .
+If
+.Cm /f
+is specified, the complete vnode is printed.
+.It Ic show vnode_lock Ns Oo Cm /f Oc Ar address
+Print the vnode which has its lock at
 .Ar address .
 If
 .Cm /f

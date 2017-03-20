@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.351.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.351.2.2 2017/03/20 06:57:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351.2.1 2016/07/20 23:47:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351.2.2 2017/03/20 06:57:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -163,7 +163,7 @@ struct vfsops lfs_vfsops = {
 	.vfs_mountroot = lfs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = lfs_extattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -2323,16 +2323,10 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 				ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 	}
 
-#ifdef DIAGNOSTIC
-	if (vp->v_type == VNON) {
-# ifdef DEBUG
-		lfs_dump_dinode(fs, ip->i_din);
-# endif
-		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
-		      (unsigned long long)ip->i_number,
-		      (ip->i_mode & LFS_IFMT) >> 12);
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((vp->v_type != VNON),
+	    "lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
+	    (unsigned long long)ip->i_number,
+	    (ip->i_mode & LFS_IFMT) >> 12);
 
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.

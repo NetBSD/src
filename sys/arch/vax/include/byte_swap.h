@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.11 2006/02/17 08:41:31 skrll Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.11.140.1 2017/03/20 06:57:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -61,7 +61,7 @@ static __inline uint16_t __attribute__((__unused__))
 __byte_swap_u16_variable(uint16_t x)
 {
 
-	return (x << 8 | x >> 8);
+	return (uint16_t)(x << 8 | x >> 8);
 }
 
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.8 2011/08/10 06:27:02 hannken Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.8.24.1 2017/03/20 06:57:56 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -17,7 +17,7 @@
 
 #include <miscfs/union/union.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(multilayer);
 ATF_TC_HEAD(multilayer, tc)

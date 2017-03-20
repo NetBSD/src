@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.84.2.1 2016/07/20 23:47:55 pgoyette Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.84.2.2 2017/03/20 06:57:23 pgoyette Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.84.2.1 2016/07/20 23:47:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.84.2.2 2017/03/20 06:57:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ struct vfsops coda_vfsops = {
 	.vfs_mountroot = (void *)eopnotsupp,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

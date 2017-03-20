@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.226.2.2 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.226.2.3 2017/03/20 06:57:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.226.2.2 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.226.2.3 2017/03/20 06:57:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -848,7 +848,7 @@ udp_output(struct mbuf *m, struct inpcb *inp)
 
 	return (ip_output(m, inp->inp_options, ro,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions, inp->inp_socket));
+	    inp->inp_moptions, inp));
 
 release:
 	m_freem(m);
@@ -1140,15 +1140,17 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	in_pcbpurgeif0(&udbtable, ifp);
-	in_purgeif(ifp);
-	in_pcbpurgeif(&udbtable, ifp);
-#ifndef NET_MPSAFE
+#ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
+	in_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
+	in_pcbpurgeif(&udbtable, ifp);
+	mutex_exit(softnet_lock);
 	splx(s);
 
 	return 0;

@@ -1,4 +1,4 @@
-; RUN: llc -mcpu=core-avx -debug-only=stackmaps < %s | FileCheck %s
+; RUN: llc -stack-symbol-ordering=0 -mcpu=nehalem -debug-only=stackmaps < %s | FileCheck %s
 ; REQUIRES: asserts
 
 target triple = "x86_64-pc-linux-gnu"
@@ -106,7 +106,7 @@ entry:
 
 ; CHECK: __LLVM_StackMaps:
 
-; CHECK: .Ltmp1-test
+; CHECK: .Ltmp0-test
 ; Check for the two spill slots
 ; Stack Maps: 		Loc 3: Indirect 7+0	[encoding: .byte 3, .byte 16, .short 7, .int 0]
 ; Stack Maps: 		Loc 4: Indirect 7+0	[encoding: .byte 3, .byte 16, .short 7, .int 0]
@@ -119,7 +119,7 @@ entry:
 ; CHECK: .short	7
 ; CHECK: .long	0
 
-; CHECK: .Ltmp3-test2
+; CHECK: .Ltmp1-test2
 ; Check for the two spill slots
 ; Stack Maps: 		Loc 3: Indirect 7+16	[encoding: .byte 3, .byte 16, .short 7, .int 16]
 ; Stack Maps: 		Loc 4: Indirect 7+0	[encoding: .byte 3, .byte 16, .short 7, .int 0]
@@ -132,7 +132,7 @@ entry:
 ; CHECK: .short	7
 ; CHECK: .long	0
 
-; CHECK: .Ltmp5-test3
+; CHECK: .Ltmp2-test3
 ; Check for the four spill slots
 ; Stack Maps: 		Loc 3: Indirect 7+16	[encoding: .byte 3, .byte 16, .short 7, .int 16]
 ; Stack Maps: 		Loc 4: Indirect 7+16	[encoding: .byte 3, .byte 16, .short 7, .int 16]

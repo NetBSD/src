@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.32 2016/01/23 22:31:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.32.2.1 2017/03/20 06:57:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.84.2.5 2017/01/07 08:56:50 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.84.2.6 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84.2.5 2017/01/07 08:56:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84.2.6 2017/03/20 06:57:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -42,26 +42,25 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84.2.5 2017/01/07 08:56:50 pgoyette Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/cprng.h>
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
+#include <sys/mutex.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/sockio.h>
-#if defined(COMPAT_40) || defined(MODULAR)
-#include <sys/sysctl.h>
-#endif
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/intr.h>
 #include <sys/stat.h>
-#include <sys/localcount.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -232,7 +231,7 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 					tap_clone_create,
 					tap_clone_destroy);
 
-/* Helper functionis shared by the two cloning code paths */
+/* Helper functions shared by the two cloning code paths */
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
@@ -249,6 +248,17 @@ tapattach(int n)
 		return;
 	}
 
+static void
+tapinit(void)
+{
+	int error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
+	if (error) {
+		aprint_error("%s: unable to register cfattach\n",
+		    tap_cd.cd_name);
+		(void)config_cfdriver_detach(&tap_cd);
+		return;
+	}
+
 	if_clone_attach(&tap_cloners);
 }
 
@@ -257,7 +267,7 @@ static int
 tap_match(device_t parent, cfdata_t cfdata, void *arg)
 {
 
-	return (1);
+	return 1;
 }
 
 void
@@ -419,7 +429,7 @@ tap_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -430,7 +440,7 @@ tap_detach(device_t self, int flags)
 static int
 tap_mediachange(struct ifnet *ifp)
 {
-	return (0);
+	return 0;
 }
 
 /*
@@ -559,7 +569,7 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 #if defined(COMPAT_40) || defined(MODULAR)
@@ -573,11 +583,11 @@ tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 	const struct sockaddr *sa = &ifra->ifra_addr;
 
 	if (sa->sa_family != AF_LINK)
-		return (EINVAL);
+		return EINVAL;
 
 	if_set_sadl(ifp, sa->sa_data, ETHER_ADDR_LEN, false);
 
-	return (0);
+	return 0;
 }
 #endif
 
@@ -593,7 +603,7 @@ tap_init(struct ifnet *ifp)
 
 	tap_start(ifp);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -628,11 +638,11 @@ tap_clone_create(struct if_clone *ifc, int unit)
 {
 	if (tap_clone_creator(unit) == NULL) {
 		aprint_error("%s%d: unable to attach an instance\n",
-                    tap_cd.cd_name, unit);
-		return (ENXIO);
+		    tap_cd.cd_name, unit);
+		return ENXIO;
 	}
-
-	return (0);
+	atomic_inc_uint(&tap_count);
+	return 0;
 }
 
 /*
@@ -645,9 +655,9 @@ tap_clone_create(struct if_clone *ifc, int unit)
 static struct tap_softc *
 tap_clone_creator(int unit)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
-	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+	cf = kmem_alloc(sizeof(*cf), KM_SLEEP);
 	cf->cf_name = tap_cd.cd_name;
 	cf->cf_atname = tap_ca.ca_name;
 	if (unit == -1) {
@@ -683,9 +693,9 @@ tap_clone_destroyer(device_t dev)
 
 	if ((error = config_detach(dev, 0)) != 0)
 		aprint_error_dev(dev, "unable to detach instance\n");
-	free(cf, M_DEVBUF);
+	kmem_free(cf, sizeof(*cf));
 
-	return (error);
+	return error;
 }
 
 /*
@@ -720,13 +730,13 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	sc = device_lookup_private(&tap_cd, minor(dev));
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	/* The device can only be opened once */
 	if (sc->sc_flags & TAP_INUSE)
-		return (EBUSY);
+		return EBUSY;
 	sc->sc_flags |= TAP_INUSE;
-	return (0);
+	return 0;
 }
 
 /*
@@ -759,11 +769,11 @@ tap_dev_cloner(struct lwp *l)
 	int error, fd;
 
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
-		return (error);
+		return error;
 
 	if ((sc = tap_clone_creator(-1)) == NULL) {
 		fd_abort(curproc, fp, fd);
-		return (ENXIO);
+		return ENXIO;
 	}
 
 	sc->sc_flags |= TAP_INUSE;
@@ -790,7 +800,7 @@ tap_cdev_close(dev_t dev, int flags, int fmt,
 	    device_lookup_private(&tap_cd, minor(dev));
 
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	return tap_dev_close(sc);
 }
@@ -810,21 +820,21 @@ tap_fops_close(file_t *fp)
 
 	sc = device_lookup_private(&tap_cd, unit);
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	/* tap_dev_close currently always succeeds, but it might not
 	 * always be the case. */
 	KERNEL_LOCK(1, NULL);
 	if ((error = tap_dev_close(sc)) != 0) {
 		KERNEL_UNLOCK_ONE(NULL);
-		return (error);
+		return error;
 	}
 
 	/* Destroy the device now that it is no longer useful,
 	 * unless it's already being destroyed. */
 	if ((sc->sc_flags & TAP_GOING) != 0) {
 		KERNEL_UNLOCK_ONE(NULL);
-		return (0);
+		return 0;
 	}
 
 	error = tap_clone_destroyer(sc->sc_dev);
@@ -865,7 +875,7 @@ tap_dev_close(struct tap_softc *sc)
 	}
 	sc->sc_flags &= ~(TAP_INUSE | TAP_ASYNCIO);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -895,20 +905,20 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	int error = 0, s;
 
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	getnanotime(&sc->sc_atime);
 
 	ifp = &sc->sc_ec.ec_if;
 	if ((ifp->if_flags & IFF_UP) == 0)
-		return (EHOSTDOWN);
+		return EHOSTDOWN;
 
 	/*
 	 * In the TAP_NBIO case, we have to make sure we won't be sleeping
 	 */
 	if ((sc->sc_flags & TAP_NBIO) != 0) {
 		if (!mutex_tryenter(&sc->sc_rdlock))
-			return (EWOULDBLOCK);
+			return EWOULDBLOCK;
 	} else {
 		mutex_enter(&sc->sc_rdlock);
 	}
@@ -928,13 +938,13 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		splx(s);
 
 		if (error != 0)
-			return (error);
+			return error;
 		/* The device might have been downed */
 		if ((ifp->if_flags & IFF_UP) == 0)
-			return (EHOSTDOWN);
+			return EHOSTDOWN;
 		if ((sc->sc_flags & TAP_NBIO)) {
 			if (!mutex_tryenter(&sc->sc_rdlock))
-				return (EWOULDBLOCK);
+				return EWOULDBLOCK;
 		} else {
 			mutex_enter(&sc->sc_rdlock);
 		}
@@ -966,7 +976,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 
 out:
 	mutex_exit(&sc->sc_rdlock);
-	return (error);
+	return error;
 }
 
 static int
@@ -1025,7 +1035,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	int s;
 
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	getnanotime(&sc->sc_mtime);
 	ifp = &sc->sc_ec.ec_if;
@@ -1034,7 +1044,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		ifp->if_ierrors++;
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	m->m_pkthdr.len = uio->uio_resid;
 
@@ -1054,7 +1064,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	if (error) {
 		ifp->if_ierrors++;
 		m_freem(m);
-		return (error);
+		return error;
 	}
 
 	m_set_rcvif(m, ifp);
@@ -1063,7 +1073,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	if_input(ifp, m);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1103,7 +1113,7 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 				*(int *)data = m->m_pkthdr.len;
 			splx(s);
 			return 0;
-		} 
+		}
 	case TIOCSPGRP:
 	case FIOSETOWN:
 		return fsetown(&sc->sc_pgid, cmd, data);
@@ -1190,7 +1200,7 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 	}
 	revents |= events & (POLLOUT|POLLWRNORM);
 
-	return (revents);
+	return revents;
 }
 
 static struct filterops tap_read_filterops = { 1, NULL, tap_kqdetach,
@@ -1217,7 +1227,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	    device_lookup_private(&tap_cd, unit);
 
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	KERNEL_LOCK(1, NULL);
 	switch(kn->kn_filter) {
@@ -1229,7 +1239,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		break;
 	default:
 		KERNEL_UNLOCK_ONE(NULL);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -1237,7 +1247,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
 	mutex_spin_exit(&sc->sc_kqlock);
 	KERNEL_UNLOCK_ONE(NULL);
-	return (0);
+	return 0;
 }
 
 static void
@@ -1386,16 +1396,16 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		return error;
 
 	len = strlen(addr);
 	if (len < 11 || len > 17)
-		return (EINVAL);
+		return EINVAL;
 
 	/* Commit change */
 	if (ether_aton_r(enaddr, sizeof(enaddr), addr) != 0)
-		return (EINVAL);
+		return EINVAL;
 	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
-	return (error);
+	return error;
 }
 #endif

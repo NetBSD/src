@@ -1,0 +1,21 @@
+# Upper-case greek -> lower-case greek.
+Δημοσθένους.example.com
+# Upper-case ASCII -> lower-case ASCII.
+Hello.example.com
+# Invalid LDH label('-' at begin or end).
+bad-.example.com
+-bad.example.com
+# Invalid LDH (label > 63 bytes).
+abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789.example.com
+# Valid LDH label (label <= 63 bytes).
+abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678.example.com
+# Invalid name (length > 255 bytes).
+abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567.abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567.abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567.abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567.example.com
+# Aliases for '.' -> '.'.
+x。example.com
+x．example.com
+x｡example.com
+# Good a-label.
+xn--mumble.example.com
+# Bad a-label.
+xn--123456.example.com

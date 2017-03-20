@@ -29,6 +29,7 @@
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Compiler.h"
 
 namespace clang {
@@ -444,6 +445,11 @@ public:
     return const_cast<Expr*>(this)->getSourceBitField();
   }
 
+  Decl *getReferencedDeclOfCallee();
+  const Decl *getReferencedDeclOfCallee() const {
+    return const_cast<Expr*>(this)->getReferencedDeclOfCallee();
+  }
+
   /// \brief If this expression is an l-value for an Objective C
   /// property, find the underlying property reference expression.
   const ObjCPropertyRefExpr *getObjCProperty() const;
@@ -593,6 +599,13 @@ public:
   bool EvaluateAsInt(llvm::APSInt &Result, const ASTContext &Ctx,
                      SideEffectsKind AllowSideEffects = SE_NoSideEffects) const;
 
+  /// EvaluateAsFloat - Return true if this is a constant which we can fold and
+  /// convert to a floating point value, using any crazy technique that we
+  /// want to.
+  bool
+  EvaluateAsFloat(llvm::APFloat &Result, const ASTContext &Ctx,
+                  SideEffectsKind AllowSideEffects = SE_NoSideEffects) const;
+
   /// isEvaluatable - Call EvaluateAsRValue to see if this expression can be
   /// constant folded without side-effects, but discard the result.
   bool isEvaluatable(const ASTContext &Ctx,
@@ -638,7 +651,8 @@ public:
   /// constant.
   bool EvaluateWithSubstitution(APValue &Value, ASTContext &Ctx,
                                 const FunctionDecl *Callee,
-                                ArrayRef<const Expr*> Args) const;
+                                ArrayRef<const Expr*> Args,
+                                const Expr *This = nullptr) const;
 
   /// \brief If the current Expr is a pointer, this will try to statically
   /// determine the number of bytes available where the pointer is pointing.
@@ -815,12 +829,22 @@ public:
   /// behavior if the object isn't dynamically of the derived type.
   const CXXRecordDecl *getBestDynamicClassType() const;
 
+  /// \brief Get the inner expression that determines the best dynamic class.
+  /// If this is a prvalue, we guarantee that it is of the most-derived type
+  /// for the object itself.
+  const Expr *getBestDynamicClassTypeExpr() const;
+
   /// Walk outwards from an expression we want to bind a reference to and
   /// find the expression whose lifetime needs to be extended. Record
   /// the LHSs of comma expressions and adjustments needed along the path.
   const Expr *skipRValueSubobjectAdjustments(
       SmallVectorImpl<const Expr *> &CommaLHS,
       SmallVectorImpl<SubobjectAdjustment> &Adjustments) const;
+  const Expr *skipRValueSubobjectAdjustments() const {
+    SmallVector<const Expr *, 8> CommaLHSs;
+    SmallVector<SubobjectAdjustment, 8> Adjustments;
+    return skipRValueSubobjectAdjustments(CommaLHSs, Adjustments);
+  }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstExprConstant &&
@@ -847,10 +871,12 @@ public:
                   ExprObjectKind OK = OK_Ordinary,
                   Expr *SourceExpr = nullptr)
     : Expr(OpaqueValueExprClass, T, VK, OK,
-           T->isDependentType(), 
+           T->isDependentType() ||
+           (SourceExpr && SourceExpr->isTypeDependent()),
            T->isDependentType() || 
            (SourceExpr && SourceExpr->isValueDependent()),
-           T->isInstantiationDependentType(),
+           T->isInstantiationDependentType() ||
+           (SourceExpr && SourceExpr->isInstantiationDependent()),
            false),
       SourceExpr(SourceExpr), Loc(Loc) {
   }
@@ -1108,6 +1134,10 @@ public:
       return 0;
 
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->NumTemplateArgs;
+  }
+
+  ArrayRef<TemplateArgumentLoc> template_arguments() const {
+    return {getTemplateArgs(), getNumTemplateArgs()};
   }
 
   /// \brief Returns true if this expression refers to a function that
@@ -2137,11 +2167,15 @@ class CallExpr : public Expr {
   unsigned NumArgs;
   SourceLocation RParenLoc;
 
+  void updateDependenciesFromArg(Expr *Arg);
+
 protected:
   // These versions of the constructor are for derived classes.
-  CallExpr(const ASTContext& C, StmtClass SC, Expr *fn, unsigned NumPreArgs,
-           ArrayRef<Expr*> args, QualType t, ExprValueKind VK,
-           SourceLocation rparenloc);
+  CallExpr(const ASTContext &C, StmtClass SC, Expr *fn,
+           ArrayRef<Expr *> preargs, ArrayRef<Expr *> args, QualType t,
+           ExprValueKind VK, SourceLocation rparenloc);
+  CallExpr(const ASTContext &C, StmtClass SC, Expr *fn, ArrayRef<Expr *> args,
+           QualType t, ExprValueKind VK, SourceLocation rparenloc);
   CallExpr(const ASTContext &C, StmtClass SC, unsigned NumPreArgs,
            EmptyShell Empty);
 
@@ -2388,8 +2422,8 @@ public:
 
   /// \brief Retrieve the member declaration to which this expression refers.
   ///
-  /// The returned declaration will either be a FieldDecl or (in C++)
-  /// a CXXMethodDecl.
+  /// The returned declaration will be a FieldDecl or (in C++) a VarDecl (for
+  /// static data members), a CXXMethodDecl, or an EnumConstantDecl.
   ValueDecl *getMemberDecl() const { return MemberDecl; }
   void setMemberDecl(ValueDecl *D) { MemberDecl = D; }
 
@@ -2475,6 +2509,10 @@ public:
       return 0;
 
     return getTrailingObjects<ASTTemplateKWAndArgsInfo>()->NumTemplateArgs;
+  }
+
+  ArrayRef<TemplateArgumentLoc> template_arguments() const {
+    return {getTemplateArgs(), getNumTemplateArgs()};
   }
 
   /// \brief Retrieve the member declaration name info.
@@ -3749,14 +3787,23 @@ public:
 
   /// \brief Build an empty initializer list.
   explicit InitListExpr(EmptyShell Empty)
-    : Expr(InitListExprClass, Empty) { }
+    : Expr(InitListExprClass, Empty), AltForm(nullptr, true) { }
 
   unsigned getNumInits() const { return InitExprs.size(); }
 
   /// \brief Retrieve the set of initializers.
   Expr **getInits() { return reinterpret_cast<Expr **>(InitExprs.data()); }
 
+  /// \brief Retrieve the set of initializers.
+  Expr * const *getInits() const {
+    return reinterpret_cast<Expr * const *>(InitExprs.data());
+  }
+
   ArrayRef<Expr *> inits() {
+    return llvm::makeArrayRef(getInits(), getNumInits());
+  }
+
+  ArrayRef<Expr *> inits() const {
     return llvm::makeArrayRef(getInits(), getNumInits());
   }
 
@@ -3840,13 +3887,18 @@ public:
 
   // Explicit InitListExpr's originate from source code (and have valid source
   // locations). Implicit InitListExpr's are created by the semantic analyzer.
-  bool isExplicit() {
+  bool isExplicit() const {
     return LBraceLoc.isValid() && RBraceLoc.isValid();
   }
 
   // Is this an initializer for an array of characters, initialized by a string
   // literal or an @encode?
   bool isStringLiteralInit() const;
+
+  /// Is this a transparent initializer list (that is, an InitListExpr that is
+  /// purely syntactic, and whose semantics are that of the sole contained
+  /// initializer)?
+  bool isTransparent() const;
 
   SourceLocation getLBraceLoc() const { return LBraceLoc; }
   void setLBraceLoc(SourceLocation Loc) { LBraceLoc = Loc; }
@@ -3942,7 +3994,7 @@ private:
 
   /// Whether this designated initializer used the GNU deprecated
   /// syntax rather than the C99 '=' syntax.
-  bool GNUSyntax : 1;
+  unsigned GNUSyntax : 1;
 
   /// The number of designators in this initializer expression.
   unsigned NumDesignators : 15;
@@ -3956,11 +4008,10 @@ private:
   /// expression.
   Designator *Designators;
 
-
-  DesignatedInitExpr(const ASTContext &C, QualType Ty, unsigned NumDesignators,
-                     const Designator *Designators,
+  DesignatedInitExpr(const ASTContext &C, QualType Ty,
+                     llvm::ArrayRef<Designator> Designators,
                      SourceLocation EqualOrColonLoc, bool GNUSyntax,
-                     ArrayRef<Expr*> IndexExprs, Expr *Init);
+                     ArrayRef<Expr *> IndexExprs, Expr *Init);
 
   explicit DesignatedInitExpr(unsigned NumSubExprs)
     : Expr(DesignatedInitExprClass, EmptyShell()),
@@ -4120,8 +4171,7 @@ public:
   };
 
   static DesignatedInitExpr *Create(const ASTContext &C,
-                                    Designator *Designators,
-                                    unsigned NumDesignators,
+                                    llvm::ArrayRef<Designator> Designators,
                                     ArrayRef<Expr*> IndexExprs,
                                     SourceLocation EqualOrColonLoc,
                                     bool GNUSyntax, Expr *Init);
@@ -4133,48 +4183,15 @@ public:
   unsigned size() const { return NumDesignators; }
 
   // Iterator access to the designators.
-  typedef Designator *designators_iterator;
-  designators_iterator designators_begin() { return Designators; }
-  designators_iterator designators_end() {
-    return Designators + NumDesignators;
+  llvm::MutableArrayRef<Designator> designators() {
+    return {Designators, NumDesignators};
   }
 
-  typedef const Designator *const_designators_iterator;
-  const_designators_iterator designators_begin() const { return Designators; }
-  const_designators_iterator designators_end() const {
-    return Designators + NumDesignators;
+  llvm::ArrayRef<Designator> designators() const {
+    return {Designators, NumDesignators};
   }
 
-  typedef llvm::iterator_range<designators_iterator> designators_range;
-  designators_range designators() {
-    return designators_range(designators_begin(), designators_end());
-  }
-
-  typedef llvm::iterator_range<const_designators_iterator>
-          designators_const_range;
-  designators_const_range designators() const {
-    return designators_const_range(designators_begin(), designators_end());
-  }
-
-  typedef std::reverse_iterator<designators_iterator>
-          reverse_designators_iterator;
-  reverse_designators_iterator designators_rbegin() {
-    return reverse_designators_iterator(designators_end());
-  }
-  reverse_designators_iterator designators_rend() {
-    return reverse_designators_iterator(designators_begin());
-  }
-
-  typedef std::reverse_iterator<const_designators_iterator>
-          const_reverse_designators_iterator;
-  const_reverse_designators_iterator designators_rbegin() const {
-    return const_reverse_designators_iterator(designators_end());
-  }
-  const_reverse_designators_iterator designators_rend() const {
-    return const_reverse_designators_iterator(designators_begin());
-  }
-
-  Designator *getDesignator(unsigned Idx) { return &designators_begin()[Idx]; }
+  Designator *getDesignator(unsigned Idx) { return &designators()[Idx]; }
 
   void setDesignators(const ASTContext &C, const Designator *Desigs,
                       unsigned NumDesigs);
@@ -4315,6 +4332,98 @@ public:
   child_range children() {
     return child_range(&BaseAndUpdaterExprs[0], &BaseAndUpdaterExprs[0] + 2);
   }
+};
+
+/// \brief Represents a loop initializing the elements of an array.
+///
+/// The need to initialize the elements of an array occurs in a number of
+/// contexts:
+///
+///  * in the implicit copy/move constructor for a class with an array member
+///  * when a lambda-expression captures an array by value
+///  * when a decomposition declaration decomposes an array
+///
+/// There are two subexpressions: a common expression (the source array)
+/// that is evaluated once up-front, and a per-element initializer that
+/// runs once for each array element.
+///
+/// Within the per-element initializer, the common expression may be referenced
+/// via an OpaqueValueExpr, and the current index may be obtained via an
+/// ArrayInitIndexExpr.
+class ArrayInitLoopExpr : public Expr {
+  Stmt *SubExprs[2];
+
+  explicit ArrayInitLoopExpr(EmptyShell Empty)
+      : Expr(ArrayInitLoopExprClass, Empty), SubExprs{} {}
+
+public:
+  explicit ArrayInitLoopExpr(QualType T, Expr *CommonInit, Expr *ElementInit)
+      : Expr(ArrayInitLoopExprClass, T, VK_RValue, OK_Ordinary, false,
+             CommonInit->isValueDependent() || ElementInit->isValueDependent(),
+             T->isInstantiationDependentType(),
+             CommonInit->containsUnexpandedParameterPack() ||
+                 ElementInit->containsUnexpandedParameterPack()),
+        SubExprs{CommonInit, ElementInit} {}
+
+  /// Get the common subexpression shared by all initializations (the source
+  /// array).
+  OpaqueValueExpr *getCommonExpr() const {
+    return cast<OpaqueValueExpr>(SubExprs[0]);
+  }
+
+  /// Get the initializer to use for each array element.
+  Expr *getSubExpr() const { return cast<Expr>(SubExprs[1]); }
+
+  llvm::APInt getArraySize() const {
+    return cast<ConstantArrayType>(getType()->castAsArrayTypeUnsafe())
+        ->getSize();
+  }
+
+  static bool classof(const Stmt *S) {
+    return S->getStmtClass() == ArrayInitLoopExprClass;
+  }
+
+  SourceLocation getLocStart() const LLVM_READONLY {
+    return getCommonExpr()->getLocStart();
+  }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return getCommonExpr()->getLocEnd();
+  }
+
+  child_range children() {
+    return child_range(SubExprs, SubExprs + 2);
+  }
+
+  friend class ASTReader;
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+};
+
+/// \brief Represents the index of the current element of an array being
+/// initialized by an ArrayInitLoopExpr. This can only appear within the
+/// subexpression of an ArrayInitLoopExpr.
+class ArrayInitIndexExpr : public Expr {
+  explicit ArrayInitIndexExpr(EmptyShell Empty)
+      : Expr(ArrayInitIndexExprClass, Empty) {}
+
+public:
+  explicit ArrayInitIndexExpr(QualType T)
+      : Expr(ArrayInitIndexExprClass, T, VK_RValue, OK_Ordinary,
+             false, false, false, false) {}
+
+  static bool classof(const Stmt *S) {
+    return S->getStmtClass() == ArrayInitIndexExprClass;
+  }
+
+  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+
+  child_range children() {
+    return child_range(child_iterator(), child_iterator());
+  }
+
+  friend class ASTReader;
+  friend class ASTStmtReader;
 };
 
 /// \brief Represents an implicitly-generated value initialization of
@@ -4460,11 +4569,19 @@ public:
     return cast<Expr>(SubExprs[END_EXPR+i]);
   }
   Expr *getAssocExpr(unsigned i) { return cast<Expr>(SubExprs[END_EXPR+i]); }
-
+  ArrayRef<Expr *> getAssocExprs() const {
+    return NumAssocs
+               ? llvm::makeArrayRef(
+                     &reinterpret_cast<Expr **>(SubExprs)[END_EXPR], NumAssocs)
+               : None;
+  }
   const TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) const {
     return AssocTypes[i];
   }
   TypeSourceInfo *getAssocTypeSourceInfo(unsigned i) { return AssocTypes[i]; }
+  ArrayRef<TypeSourceInfo *> getAssocTypeSourceInfos() const {
+    return NumAssocs ? llvm::makeArrayRef(&AssocTypes[0], NumAssocs) : None;
+  }
 
   QualType getAssocType(unsigned i) const {
     if (const TypeSourceInfo *TS = getAssocTypeSourceInfo(i))
@@ -4824,16 +4941,6 @@ public:
     BI_First = 0
   };
 
-  // The ABI values for various atomic memory orderings.
-  enum AtomicOrderingKind {
-    AO_ABI_memory_order_relaxed = 0,
-    AO_ABI_memory_order_consume = 1,
-    AO_ABI_memory_order_acquire = 2,
-    AO_ABI_memory_order_release = 3,
-    AO_ABI_memory_order_acq_rel = 4,
-    AO_ABI_memory_order_seq_cst = 5
-  };
-
 private:
   enum { PTR, ORDER, VAL1, ORDER_FAIL, VAL2, WEAK, END_EXPR };
   Stmt* SubExprs[END_EXPR];
@@ -4882,9 +4989,12 @@ public:
   }
 
   AtomicOp getOp() const { return Op; }
-  unsigned getNumSubExprs() { return NumSubExprs; }
+  unsigned getNumSubExprs() const { return NumSubExprs; }
 
   Expr **getSubExprs() { return reinterpret_cast<Expr **>(SubExprs); }
+  const Expr * const *getSubExprs() const {
+    return reinterpret_cast<Expr * const *>(SubExprs);
+  }
 
   bool isVolatile() const {
     return getPtr()->getType()->getPointeeType().isVolatileQualified();

@@ -58,11 +58,25 @@ public:
     SOB_Trapping    // -ftrapv
   };
 
+  enum CompilingModuleKind {
+    CMK_None,           ///< Not compiling a module interface at all.
+    CMK_ModuleMap,      ///< Compiling a module from a module map.
+    CMK_ModuleInterface ///< Compiling a C++ modules TS module interface unit.
+  };
+
   enum PragmaMSPointersToMembersKind {
     PPTMK_BestCase,
     PPTMK_FullGeneralitySingleInheritance,
     PPTMK_FullGeneralityMultipleInheritance,
     PPTMK_FullGeneralityVirtualInheritance
+  };
+
+  enum DefaultCallingConvention {
+    DCC_None,
+    DCC_CDecl,
+    DCC_FastCall,
+    DCC_StdCall,
+    DCC_VectorCall
   };
 
   enum AddrSpaceMapMangling { ASMM_Target, ASMM_On, ASMM_Off };
@@ -92,13 +106,11 @@ public:
   /// If none is specified, abort (GCC-compatible behaviour).
   std::string OverflowHandler;
 
-  /// \brief The name of the current module.
+  /// \brief The name of the current module, of which the main source file
+  /// is a part. If CompilingModule is set, we are compiling the interface
+  /// of this module, otherwise we are compiling an implementation file of
+  /// it.
   std::string CurrentModule;
-
-  /// \brief The name of the module that the translation unit is an
-  /// implementation of. Prevents semantic imports, but does not otherwise
-  /// treat this as the CurrentModule.
-  std::string ImplementationOfModule;
 
   /// \brief The names of any features to enable in module 'requires' decls
   /// in addition to the hard-coded list in Module.cpp and the target features.
@@ -120,6 +132,10 @@ public:
   /// host code generation.
   std::string OMPHostIRFile;
 
+  /// \brief Indicates whether the front-end is explicitly told that the
+  /// input is a header file (i.e. -x c-header).
+  bool IsHeaderFile;
+
   LangOptions();
 
   // Define accessors/mutators for language options of enumeration type.
@@ -128,7 +144,12 @@ public:
   Type get##Name() const { return static_cast<Type>(Name); } \
   void set##Name(Type Value) { Name = static_cast<unsigned>(Value); }  
 #include "clang/Basic/LangOptions.def"
-  
+
+  /// Are we compiling a module interface (.cppm or module map)?
+  bool isCompilingModule() const {
+    return getCompilingModule() != CMK_None;
+  }
+
   bool isSignedOverflowDefined() const {
     return getSignedOverflowBehavior() == SOB_Defined;
   }
@@ -148,7 +169,7 @@ public:
 
   /// \brief Is this a libc/libm function that is no longer recognized as a
   /// builtin because a -fno-builtin-* option has been specified?
-  bool isNoBuiltinFunc(const char *Name) const;
+  bool isNoBuiltinFunc(StringRef Name) const;
 };
 
 /// \brief Floating point control options
@@ -160,18 +181,6 @@ public:
 
   FPOptions(const LangOptions &LangOpts) :
     fp_contract(LangOpts.DefaultFPContract) {}
-};
-
-/// \brief OpenCL volatile options
-class OpenCLOptions {
-public:
-#define OPENCLEXT(nm)  unsigned nm : 1;
-#include "clang/Basic/OpenCLExtensions.def"
-
-  OpenCLOptions() {
-#define OPENCLEXT(nm)   nm = 0;
-#include "clang/Basic/OpenCLExtensions.def"
-  }
 };
 
 /// \brief Describes the kind of translation unit being processed.

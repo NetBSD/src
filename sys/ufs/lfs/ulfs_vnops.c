@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.44 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.44.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.44 2016/06/20 03:36:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.44.2.1 2017/03/20 06:57:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -637,10 +637,8 @@ ulfs_whiteout(void *v)
 	case CREATE:
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-#ifdef DIAGNOSTIC
-		if (fs->um_maxsymlinklen <= 0)
-			panic("ulfs_whiteout: old format filesystem");
-#endif
+		KASSERTMSG((fs->um_maxsymlinklen > 0),
+		    "ulfs_whiteout: old format filesystem");
 
 		error = ulfs_direnter(dvp, ulr, NULL,
 				      cnp, ULFS_WINO, LFS_DT_WHT,  NULL);
@@ -649,10 +647,8 @@ ulfs_whiteout(void *v)
 	case DELETE:
 		/* remove an existing directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-#ifdef DIAGNOSTIC
-		if (fs->um_maxsymlinklen <= 0)
-			panic("ulfs_whiteout: old format filesystem");
-#endif
+		KASSERTMSG((fs->um_maxsymlinklen > 0),
+		    "ulfs_whiteout: old format filesystem");
 
 		cnp->cn_flags &= ~DOWHITEOUT;
 		error = ulfs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.145.20.1 2017/01/07 08:56:32 pgoyette Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.145.20.2 2017/03/20 06:57:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145.20.1 2017/01/07 08:56:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.145.20.2 2017/03/20 06:57:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
-	 * config_found() to make sure the adatper is disabled.
+	 * config_found() to make sure the adapter is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");

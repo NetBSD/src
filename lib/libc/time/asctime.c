@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.20 2014/10/23 18:45:58 christos Exp $	*/
+/*	$NetBSD: asctime.c,v 1.20.2.1 2017/03/20 06:56:58 pgoyette Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -16,7 +16,7 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	8.5";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.20 2014/10/23 18:45:58 christos Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.20.2.1 2017/03/20 06:56:58 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -24,7 +24,6 @@ __RCSID("$NetBSD: asctime.c,v 1.20 2014/10/23 18:45:58 christos Exp $");
 
 #include "namespace.h"
 #include "private.h"
-#include "tzfile.h"
 
 #ifdef __weak_alias
 __weak_alias(asctime_r,_asctime_r)

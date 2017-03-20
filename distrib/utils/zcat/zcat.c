@@ -1,4 +1,4 @@
-/*	$NetBSD: zcat.c,v 1.4 2011/05/19 22:23:12 tsutsui Exp $	*/
+/*	$NetBSD: zcat.c,v 1.4.28.1 2017/03/20 06:52:11 pgoyette Exp $	*/
 
 /* mini zcat.c -- a minimal zcat using the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -13,8 +13,11 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "zlib.h"
 
@@ -22,24 +25,33 @@
 
 char *prog;
 
-void error(const char *msg);
-void gz_uncompress(gzFile in, FILE   *out);
-int  main(int argc, char *argv[]);
+static void error(const char *, ...) __printflike(1, 2);
+static void gz_uncompress(gzFile, int);
 
 /* ===========================================================================
  * Display error message and exit
  */
-void error(const char *msg)
+static void
+error(const char *fmt, ...)
 {
+	char buf[1024];
+	va_list ap;
+	int l;
 
-	fprintf(stderr, "%s: %s\n", prog, msg);
-	exit(EXIT_SUCCESS);
+	l = snprintf_ss(buf, sizeof(buf), "%s: ", prog);
+	write(STDERR_FILENO, buf, l);
+	va_start(ap, fmt);
+	l = vsnprintf_ss(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	write(STDERR_FILENO, buf, l);
+	_exit(EXIT_SUCCESS);
 }
 
 /* ===========================================================================
  * Uncompress input to output then close both files.
  */
-void gz_uncompress(gzFile in, FILE *out)
+static void
+gz_uncompress(gzFile in, int out)
 {
 	char buf[BUFLEN];
 	int len;
@@ -48,15 +60,15 @@ void gz_uncompress(gzFile in, FILE *out)
 	for (;;) {
 		len = gzread(in, buf, sizeof(buf));
 		if (len < 0)
-			error (gzerror(in, &err));
+			error ("%s", gzerror(in, &err));
 		if (len == 0)
 			break;
 
-		if ((int)fwrite(buf, 1, (unsigned)len, out) != len) {
+		if ((int)write(out, buf, (size_t)len) != len) {
 			error("failed fwrite");
 		}
 	}
-	if (fclose(out))
+	if (close(out))
 		error("failed fclose");
 
 	if (gzclose(in) != Z_OK)
@@ -68,7 +80,8 @@ void gz_uncompress(gzFile in, FILE *out)
  * Usage:  zcat [files...]
  */
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	gzFile zfp;
 
@@ -82,10 +95,10 @@ int main(int argc, char *argv[])
 	}
 
 	if (argc == 0) {
-		zfp = gzdopen(fileno(stdin), "rb");
+		zfp = gzdopen(STDIN_FILENO, "rb");
 		if (zfp == NULL)
 			error("can't gzdopen stdin");
-		gz_uncompress(zfp, stdout);
+		gz_uncompress(zfp, STDOUT_FILENO);
 		return 0;
 	}
 
@@ -93,10 +106,10 @@ int main(int argc, char *argv[])
 		/* file_uncompress(*argv); */
 		zfp = gzopen(*argv, "rb");
 		if (zfp == NULL) {
-			fprintf(stderr, "%s: can't gzopen %s\n", prog, *argv);
-			exit(EXIT_FAILURE);
+			error("can't gzopen `%s'", *argv);
+			_exit(EXIT_FAILURE);
 		}
-		gz_uncompress(zfp, stdout);
+		gz_uncompress(zfp, STDOUT_FILENO);
 	} while (argv++, --argc);
 	return 0; /* to avoid warning */
 }

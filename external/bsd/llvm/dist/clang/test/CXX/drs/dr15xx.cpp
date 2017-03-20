@@ -3,9 +3,223 @@
 // RUN: %clang_cc1 -std=c++14 -triple x86_64-unknown-unknown %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 // RUN: %clang_cc1 -std=c++1z -triple x86_64-unknown-unknown %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
-#if __cplusplus < 201103L
-// expected-no-diagnostics
+namespace dr1512 { // dr1512: 4
+  void f(char *p) {
+    if (p > 0) {} // expected-error {{ordered comparison between pointer and zero}}
+#if __cplusplus >= 201103L
+    if (p > nullptr) {} // expected-error {{invalid operands}}
 #endif
+  }
+  bool g(int **x, const int **y) {
+    return x < y;
+  }
+
+  template<typename T> T val();
+
+  template<typename A, typename B, typename C> void composite_pointer_type_is_base() {
+    typedef __typeof(true ? val<A>() : val<B>()) type;
+    typedef C type;
+
+    typedef __typeof(val<A>() == val<B>()) cmp;
+    typedef __typeof(val<A>() != val<B>()) cmp;
+    typedef bool cmp;
+  }
+
+  template<typename A, typename B, typename C> void composite_pointer_type_is_ord() {
+    composite_pointer_type_is_base<A, B, C>();
+
+    typedef __typeof(val<A>() < val<B>()) cmp;
+    typedef __typeof(val<A>() <= val<B>()) cmp;
+    typedef __typeof(val<A>() > val<B>()) cmp;
+    typedef __typeof(val<A>() >= val<B>()) cmp;
+    typedef bool cmp;
+  }
+
+  template <typename A, typename B, typename C>
+  void composite_pointer_type_is_unord(int = 0) {
+    composite_pointer_type_is_base<A, B, C>();
+  }
+  template <typename A, typename B, typename C>
+  void composite_pointer_type_is_unord(__typeof(val<A>() < val<B>()) * = 0);
+  template <typename A, typename B, typename C>
+  void composite_pointer_type_is_unord(__typeof(val<A>() <= val<B>()) * = 0);
+  template <typename A, typename B, typename C>
+  void composite_pointer_type_is_unord(__typeof(val<A>() > val<B>()) * = 0);
+  template <typename A, typename B, typename C>
+  void composite_pointer_type_is_unord(__typeof(val<A>() >= val<B>()) * = 0);
+
+  // A call to this is ambiguous if a composite pointer type exists.
+  template<typename A, typename B>
+  void no_composite_pointer_type(__typeof((true ? val<A>() : val<B>()), void()) * = 0);
+  template<typename A, typename B> void no_composite_pointer_type(int = 0);
+
+  struct A {};
+  struct B : A {};
+  struct C {};
+
+  void test() {
+#if __cplusplus >= 201103L
+    using nullptr_t = decltype(nullptr);
+    composite_pointer_type_is_unord<nullptr_t, nullptr_t, nullptr_t>();
+    no_composite_pointer_type<nullptr_t, int>();
+
+    composite_pointer_type_is_unord<nullptr_t, const char**, const char**>();
+    composite_pointer_type_is_unord<const char**, nullptr_t, const char**>();
+#endif
+
+    composite_pointer_type_is_ord<const int *, volatile void *, const volatile void*>();
+    composite_pointer_type_is_ord<const void *, volatile int *, const volatile void*>();
+
+    composite_pointer_type_is_ord<const A*, volatile B*, const volatile A*>();
+    composite_pointer_type_is_ord<const B*, volatile A*, const volatile A*>();
+
+    composite_pointer_type_is_unord<const int *A::*, volatile int *B::*, const volatile int *const B::*>();
+    composite_pointer_type_is_unord<const int *B::*, volatile int *A::*, const volatile int *const B::*>();
+    no_composite_pointer_type<int (A::*)(), int (C::*)()>();
+    no_composite_pointer_type<const int (A::*)(), volatile int (C::*)()>();
+
+#if __cplusplus > 201402
+    composite_pointer_type_is_ord<int (*)() noexcept, int (*)(), int (*)()>();
+    composite_pointer_type_is_ord<int (*)(), int (*)() noexcept, int (*)()>();
+    composite_pointer_type_is_unord<int (A::*)() noexcept, int (A::*)(), int (A::*)()>();
+    composite_pointer_type_is_unord<int (A::*)(), int (A::*)() noexcept, int (A::*)()>();
+    // FIXME: This looks like a standard defect; these should probably all have type 'int (B::*)()'.
+    composite_pointer_type_is_unord<int (B::*)(), int (A::*)() noexcept, int (B::*)()>();
+    composite_pointer_type_is_unord<int (A::*)() noexcept, int (B::*)(), int (B::*)()>();
+    composite_pointer_type_is_unord<int (B::*)() noexcept, int (A::*)(), int (B::*)()>();
+    composite_pointer_type_is_unord<int (A::*)(), int (B::*)() noexcept, int (B::*)()>();
+
+    // FIXME: It would be reasonable to permit these, with a common type of 'int (*const *)()'.
+    no_composite_pointer_type<int (**)() noexcept, int (**)()>();
+    no_composite_pointer_type<int (**)(), int (**)() noexcept>();
+
+    // FIXME: It would be reasonable to permit these, with a common type of 'int (A::*)()'.
+    no_composite_pointer_type<int (A::*)() const, int (A::*)()>();
+    no_composite_pointer_type<int (A::*)(), int (A::*)() const>();
+
+    // FIXME: It would be reasonable to permit these, with a common type of
+    // 'int (A::*)() &' and 'int (A::*)() &&', respectively.
+    no_composite_pointer_type<int (A::*)() &, int (A::*)()>();
+    no_composite_pointer_type<int (A::*)(), int (A::*)() &>();
+    no_composite_pointer_type<int (A::*)() &&, int (A::*)()>();
+    no_composite_pointer_type<int (A::*)(), int (A::*)() &&>();
+
+    no_composite_pointer_type<int (A::*)() &&, int (A::*)() &>();
+    no_composite_pointer_type<int (A::*)() &, int (A::*)() &&>();
+
+    no_composite_pointer_type<int (C::*)(), int (A::*)() noexcept>();
+    no_composite_pointer_type<int (A::*)() noexcept, int (C::*)()>();
+#endif
+  }
+
+  template<typename T> struct Wrap { operator T(); };
+  void test_overload() {
+#if __cplusplus >= 201103L
+    using nullptr_t = decltype(nullptr);
+    void(Wrap<nullptr_t>() == Wrap<nullptr_t>());
+    void(Wrap<nullptr_t>() != Wrap<nullptr_t>());
+    void(Wrap<nullptr_t>() < Wrap<nullptr_t>()); // expected-error {{invalid operands}}
+    void(Wrap<nullptr_t>() > Wrap<nullptr_t>()); // expected-error {{invalid operands}}
+    void(Wrap<nullptr_t>() <= Wrap<nullptr_t>()); // expected-error {{invalid operands}}
+    void(Wrap<nullptr_t>() >= Wrap<nullptr_t>()); // expected-error {{invalid operands}}
+
+    // The wording change fails to actually disallow this. This is valid
+    // via the builtin operator<(int*, int*) etc.
+    void(Wrap<nullptr_t>() == Wrap<int*>());
+    void(Wrap<nullptr_t>() != Wrap<int*>());
+    void(Wrap<nullptr_t>() < Wrap<int*>());
+    void(Wrap<nullptr_t>() > Wrap<int*>());
+    void(Wrap<nullptr_t>() <= Wrap<int*>());
+    void(Wrap<nullptr_t>() >= Wrap<int*>());
+#endif
+  }
+}
+
+namespace dr1518 { // dr1518: 4
+#if __cplusplus >= 201103L
+struct Z0 { // expected-note 0+ {{candidate}}
+  explicit Z0() = default; // expected-note 0+ {{here}}
+};
+struct Z { // expected-note 0+ {{candidate}}
+  explicit Z(); // expected-note 0+ {{here}}
+  explicit Z(int);
+  explicit Z(int, int); // expected-note 0+ {{here}}
+};
+template <class T> int Eat(T); // expected-note 0+ {{candidate}}
+Z0 a;
+Z0 b{};
+Z0 c = {}; // expected-error {{explicit in copy-initialization}}
+int i = Eat<Z0>({}); // expected-error {{no matching function for call to 'Eat'}}
+
+Z c2 = {}; // expected-error {{explicit in copy-initialization}}
+int i2 = Eat<Z>({}); // expected-error {{no matching function for call to 'Eat'}}
+Z a1 = 1; // expected-error {{no viable conversion}}
+Z a3 = Z(1);
+Z a2(1);
+Z *p = new Z(1);
+Z a4 = (Z)1;
+Z a5 = static_cast<Z>(1);
+Z a6 = {4, 3}; // expected-error {{explicit in copy-initialization}}
+
+struct UserProvidedBaseCtor { // expected-note 0+ {{candidate}}
+  UserProvidedBaseCtor() {}
+};
+struct DoesntInheritCtor : UserProvidedBaseCtor { // expected-note 0+ {{candidate}}
+  int x;
+};
+DoesntInheritCtor I{{}, 42};
+#if __cplusplus <= 201402L
+// expected-error@-2 {{no matching constructor}}
+#endif
+
+struct BaseCtor { BaseCtor() = default; }; // expected-note 0+ {{candidate}}
+struct InheritsCtor : BaseCtor { // expected-note 1+ {{candidate}}
+  using BaseCtor::BaseCtor;      // expected-note 2 {{inherited here}}
+  int x;
+};
+InheritsCtor II = {{}, 42}; // expected-error {{no matching constructor}}
+
+namespace std_example {
+  struct A {
+    explicit A() = default; // expected-note 2{{declared here}}
+  };
+
+  struct B : A {
+    explicit B() = default; // expected-note 2{{declared here}}
+  };
+
+  struct C {
+    explicit C(); // expected-note 2{{declared here}}
+  };
+
+  struct D : A {
+    C c;
+    explicit D() = default; // expected-note 2{{declared here}}
+  };
+
+  template <typename T> void f() {
+    T t; // ok
+    T u{}; // ok
+    T v = {}; // expected-error 4{{explicit}}
+  }
+  template <typename T> void g() {
+    void x(T t); // expected-note 4{{parameter}}
+    x({}); // expected-error 4{{explicit}}
+  }
+
+  void test() {
+    f<A>(); // expected-note {{instantiation of}}
+    f<B>(); // expected-note {{instantiation of}}
+    f<C>(); // expected-note {{instantiation of}}
+    f<D>(); // expected-note {{instantiation of}}
+    g<A>(); // expected-note {{instantiation of}}
+    g<B>(); // expected-note {{instantiation of}}
+    g<C>(); // expected-note {{instantiation of}}
+    g<D>(); // expected-note {{instantiation of}}
+  }
+}
+#endif                      // __cplusplus >= 201103L
+}
 
 namespace dr1550 { // dr1550: yes
   int f(bool b, int n) {
@@ -20,6 +234,31 @@ namespace dr1560 { // dr1560: 3.5
   class X { X(const X&); };
   const X &get();
   const X &x = true ? get() : throw 0;
+}
+
+namespace dr1573 { // dr1573: 3.9
+#if __cplusplus >= 201103L
+  // ellipsis is inherited (p0136r1 supersedes this part).
+  struct A { A(); A(int, char, ...); };
+  struct B : A { using A::A; };
+  B b(1, 'x', 4.0, "hello"); // ok
+
+  // inherited constructor is effectively constexpr if the user-written constructor would be
+  struct C { C(); constexpr C(int) {} };
+  struct D : C { using C::C; };
+  constexpr D d = D(0); // ok
+  struct E : C { using C::C; A a; }; // expected-note {{non-literal type}}
+  constexpr E e = E(0); // expected-error {{non-literal type}}
+  // FIXME: This diagnostic is pretty bad; we should explain that the problem
+  // is that F::c would be initialized by a non-constexpr constructor.
+  struct F : C { using C::C; C c; }; // expected-note {{here}}
+  constexpr F f = F(0); // expected-error {{constant expression}} expected-note {{constructor inherited from base class 'C'}}
+
+  // inherited constructor is effectively deleted if the user-written constructor would be
+  struct G { G(int); };
+  struct H : G { using G::G; G g; }; // expected-note {{constructor inherited by 'H' is implicitly deleted because field 'g' has no default constructor}}
+  H h(0); // expected-error {{constructor inherited by 'H' from base class 'G' is implicitly deleted}}
+#endif
 }
 
 #if __cplusplus >= 201103L
@@ -61,6 +300,62 @@ namespace std {
   typedef basic_string<char> string;
 
 } // std
+
+namespace dr1579 { // dr1579: 3.9
+template<class T>
+struct GenericMoveOnly {
+  GenericMoveOnly();
+  template<class U> GenericMoveOnly(const GenericMoveOnly<U> &) = delete; // expected-note 5 {{marked deleted here}}
+  GenericMoveOnly(const int &) = delete; // expected-note 2 {{marked deleted here}}
+  template<class U> GenericMoveOnly(GenericMoveOnly<U> &&);
+  GenericMoveOnly(int &&);
+};
+
+GenericMoveOnly<float> DR1579_Eligible(GenericMoveOnly<char> CharMO) {
+  int i;
+  GenericMoveOnly<char> GMO;
+
+  if (0)
+    return i;
+  else if (0)
+    return GMO;
+  else if (0)
+    return ((GMO));
+  else
+    return CharMO;
+}
+
+GenericMoveOnly<char> GlobalMO;
+
+GenericMoveOnly<float> DR1579_Ineligible(int &AnInt,
+                                          GenericMoveOnly<char> &CharMO) {
+  static GenericMoveOnly<char> StaticMove;
+  extern GenericMoveOnly<char> ExternMove;
+
+  if (0)
+    return AnInt; // expected-error{{invokes a deleted function}}
+  else if (0)
+    return GlobalMO; // expected-error{{invokes a deleted function}}
+  else if (0)
+    return StaticMove; // expected-error{{invokes a deleted function}}
+  else if (0)
+    return ExternMove; // expected-error{{invokes a deleted function}}
+  else if (0)
+    return AnInt; // expected-error{{invokes a deleted function}}
+  else
+    return CharMO; // expected-error{{invokes a deleted function}}
+}
+
+auto DR1579_lambda_valid = [](GenericMoveOnly<float> mo) ->
+  GenericMoveOnly<char> {
+  return mo;
+};
+
+auto DR1579_lambda_invalid = []() -> GenericMoveOnly<char> {
+  static GenericMoveOnly<float> mo;
+  return mo; // expected-error{{invokes a deleted function}}
+};
+} // end namespace dr1579
 
 namespace dr1589 {   // dr1589: 3.7 c++11
   // Ambiguous ranking of list-initialization sequences

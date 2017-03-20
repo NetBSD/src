@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.9.2.1 2017/01/07 08:56:33 pgoyette Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.9.2.2 2017/03/20 06:57:29 pgoyette Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -140,8 +140,6 @@ struct iwm_tx_radiotap_header {
 #define IWM_UCODE_SECT_MAX 16
 #define IWM_FWDMASEGSZ (192*1024)
 #define IWM_FWDMASEGSZ_8000 (320*1024)
-/* sanity check value */
-#define IWM_FWMAXSIZE (2*1024*1024)
 
 /*
  * fw_status is used to determine if we've already parsed the firmware file
@@ -176,6 +174,8 @@ struct iwm_fw_info {
 		} fw_sect[IWM_UCODE_SECT_MAX];
 		size_t fw_totlen;
 		int fw_count;
+		int is_dual_cpus;
+		uint32_t paging_mem_size;
 	} fw_sects[IWM_UCODE_TYPE_MAX];
 };
 
@@ -206,6 +206,8 @@ struct iwm_nvm_data {
 
 	uint16_t nvm_version;
 	uint8_t max_tx_pwr_half_dbm;
+
+	bool lar_enabled;
 };
 
 /* max bufs per tfd the driver will use */
@@ -236,6 +238,16 @@ struct iwm_dma_info {
 	bus_addr_t		paddr;
 	void 			*vaddr;
 	bus_size_t		size;
+};
+
+/**
+ * struct iwm_fw_paging
+ * @fw_paging_block: dma memory info
+ * @fw_paging_size: page size
+ */
+struct iwm_fw_paging {
+	struct iwm_dma_info fw_paging_block;
+	uint32_t fw_paging_size;
 };
 
 #define IWM_TX_RING_COUNT	256
@@ -356,7 +368,6 @@ struct iwm_softc {
 	struct ieee80211com sc_ic;
 
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
-	int sc_newstate_pending;
 
 	struct ieee80211_amrr sc_amrr;
 	struct callout sc_calib_to;
@@ -372,6 +383,7 @@ struct iwm_softc {
 	pcitag_t sc_pcitag;
 	pcireg_t sc_pciid;
 	const void *sc_ih;
+	void *sc_soft_ih;
 
 	/* TX scheduler rings. */
 	struct iwm_dma_info		sched_dma;
@@ -411,7 +423,7 @@ struct iwm_softc {
 	int sc_capaflags;
 	int sc_capa_max_probe_len;
 	int sc_capa_n_scan_channels;
-	uint32_t sc_ucode_api;
+	uint8_t sc_ucode_api[howmany(IWM_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWM_NUM_UCODE_TLV_CAPA, NBBY)];
 	char sc_fw_mcc[3];
 
@@ -446,6 +458,7 @@ struct iwm_softc {
 	int sc_rx_ba_sessions;
 
 	int sc_scan_last_antenna;
+	int sc_mgmt_last_antenna;
 
 	int sc_fixed_ridx;
 
@@ -455,8 +468,7 @@ struct iwm_softc {
 	uint8_t sc_cmd_resp[IWM_CMD_RESP_MAX];
 	int sc_wantresp;
 
-	struct workqueue *sc_nswq, *sc_eswq;
-	struct work sc_eswk;
+	struct workqueue *sc_nswq;
 
 	struct iwm_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
@@ -467,11 +479,25 @@ struct iwm_softc {
 	struct iwm_notif_statistics sc_stats;
 	int sc_noise;
 
+	int sc_cmd_hold_nic_awake;
+
+	/* device needs host interrupt operation mode set */
 	int host_interrupt_operation_mode;
+	/* should the MAC access REQ be asserted when a command is in flight.
+	 * This is due to a HW bug in 7260, 3160 and 7265. */
+	int apmg_wake_up_wa;
+
+	/*
+	 * Paging parameters - All of the parameters should be set by the
+	 * opmode when paging is enabled
+	 */
+	struct iwm_fw_paging fw_paging_db[IWM_NUM_OF_FW_PAGING_BLOCKS];
+	uint16_t num_of_paging_blk;
+	uint16_t num_of_pages_in_last_blk;
 
 	struct sysctllog *sc_clog;
 
-	struct bpf_if *		sc_drvbpf;
+	struct bpf_if *sc_drvbpf;
 
 	union {
 		struct iwm_rx_radiotap_header th;

@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.21 2016/01/05 11:49:32 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.21.2.1 2017/03/20 06:57:28 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.21 2016/01/05 11:49:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.21.2.1 2017/03/20 06:57:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	} else if (spd_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
 		(sc->sc_read)(sc, 0, &val);
 		spd_len = val & 0x0f;
-		if ((unsigned int)spd_len > __arraycount(spd_rom_sizes))
+		if ((unsigned int)spd_len >= __arraycount(spd_rom_sizes))
 			return 0;
 		spd_len = spd_rom_sizes[spd_len];
 		spd_crc_cover = 125; /* For byte 0 to 125 */
@@ -906,11 +906,15 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 		}
 	}
 
+/*
+ * Note that the ddr4_xxx_ftb fields are actually signed offsets from
+ * the corresponding mtb value, so we might have to subtract 256!
+ */
 #define	__DDR4_VALUE(field) ((s->sm_ddr4.ddr4_##field##_mtb * 125 +	\
 			     s->sm_ddr4.ddr4_##field##_ftb) - 		\
 			    ((s->sm_ddr4.ddr4_##field##_ftb > 127)?256:0))
 	/*
-	 * For now, the only value for mtb is 1 = 125ps, and ftp = 1ps 
+	 * For now, the only value for mtb is 0 = 125ps, and ftb = 1ps 
 	 * so we don't need to figure out the time-base units - just
 	 * hard-code them for now.
 	 */
@@ -927,10 +931,6 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	    1 << s->sm_ddr4.ddr4_bankgroups,
 	    cycle_time / 1000, cycle_time % 1000);
 
-/*
- * Note that the ddr4_xxx_ftb fields are actually signed offsets from
- * the corresponding mtb value, so we might have to subtract 256!
- */
 
 	tAA_clocks =  __DDR4_VALUE(tAAmin)  * 1000 / cycle_time;
 	tRCD_clocks = __DDR4_VALUE(tRCDmin) * 1000 / cycle_time;

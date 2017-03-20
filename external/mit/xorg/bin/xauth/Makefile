@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/07/13 16:35:49 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.6.1 2017/03/20 06:56:47 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ PROG=	xauth
 SRCS=	xauth.c gethost.c process.c parsedpy.c
 
 CPPFLAGS+=		-DRETSIGTYPE=void -DPACKAGE_VERSION=\"1.0.8\"
+CPPFLAGS+= 		-DHAVE_STRLCPY
 CPPFLAGS.gethost.c=	${X11FLAGS.CONNECTION}
 CPPFLAGS.parsedpy.c=	${X11FLAGS.CONNECTION}
 

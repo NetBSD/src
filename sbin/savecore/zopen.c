@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.3 2012/12/25 09:24:45 mbalmer Exp $	*/
+/*	$NetBSD: zopen.c,v 1.3.12.1 2017/03/20 06:57:03 pgoyette Exp $	*/
 
 /*
  * Public domain stdio wrapper for libz, written by Johan Danielsson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zopen.c,v 1.3 2012/12/25 09:24:45 mbalmer Exp $");
+__RCSID("$NetBSD: zopen.c,v 1.3.12.1 2017/03/20 06:57:03 pgoyette Exp $");
 #endif
 
 #include <stdio.h>
@@ -35,7 +35,7 @@ zopen(const char *fname, const char *mode)
 	return NULL;
 
     if(*mode == 'r')
-	return funopen(gz, xgzread, NULL, NULL, gzclose);
+	return funopen(gz, xgzread, NULL, NULL, (int (*)(void *))gzclose);
     else
-	return funopen(gz, NULL, xgzwrite, NULL, gzclose);
+	return funopen(gz, NULL, xgzwrite, NULL, (int (*)(void *))gzclose);
 }

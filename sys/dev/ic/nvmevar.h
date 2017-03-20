@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.2.2.1 2016/11/04 14:49:09 pgoyette Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.2.2.2 2017/03/20 06:57:28 pgoyette Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -38,7 +38,7 @@ struct nvme_dmamem {
 struct nvme_softc;
 struct nvme_queue;
 
-typedef void (*nvme_nnc_done)(void *, struct buf *, uint16_t);
+typedef void (*nvme_nnc_done)(void *, struct buf *, uint16_t, uint32_t);
 
 struct nvme_ccb {
 	SIMPLEQ_ENTRY(nvme_ccb)	ccb_entry;
@@ -180,3 +180,5 @@ void	nvme_ns_free(struct nvme_softc *, uint16_t);
 int	nvme_ns_dobio(struct nvme_softc *, uint16_t, void *,
     struct buf *, void *, size_t, int, daddr_t, int, nvme_nnc_done);
 int	nvme_ns_sync(struct nvme_softc *, uint16_t, void *, int, nvme_nnc_done);
+bool	nvme_has_volatile_write_cache(struct nvme_softc *);
+int	nvme_admin_getcache(struct nvme_softc *, void *, nvme_nnc_done);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.66.2.1 2017/01/07 08:56:52 pgoyette Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.66.2.2 2017/03/20 06:57:51 pgoyette Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.66.2.1 2017/01/07 08:56:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.66.2.2 2017/03/20 06:57:51 pgoyette Exp $");
 
 /*
  * IPsec controller part.
@@ -735,16 +735,12 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 }
 
 int
-ipsec4_output(struct mbuf *m, struct socket *so, int flags,
+ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
     struct secpolicy **sp_out, u_long *mtu, bool *natt_frag, bool *done)
 {
 	const struct ip *ip = mtod(m, const struct ip *);
 	struct secpolicy *sp = NULL;
-	struct inpcb *inp;
 	int error, s;
-
-	inp = (so && so->so_proto->pr_domain->dom_family == AF_INET) ?
-	    (struct inpcb *)so->so_pcb : NULL;
 
 	/*
 	 * Check the security policy (SP) for the packet and, if required,
@@ -2313,6 +2309,10 @@ inet_ntoa4(struct in_addr ina)
 const char *
 ipsec_address(const union sockaddr_union *sa)
 {
+#if INET6
+	static char ip6buf[INET6_ADDRSTRLEN];	/* XXX: NOMPSAFE */
+#endif
+
 	switch (sa->sa.sa_family) {
 #if INET
 	case AF_INET:
@@ -2321,7 +2321,7 @@ ipsec_address(const union sockaddr_union *sa)
 
 #if INET6
 	case AF_INET6:
-		return ip6_sprintf(&sa->sin6.sin6_addr);
+		return IN6_PRINT(ip6buf, &sa->sin6.sin6_addr);
 #endif /* INET6 */
 
 	default:
@@ -2380,17 +2380,13 @@ ipsec_dumpmbuf(struct mbuf *m)
 
 #ifdef INET6
 struct secpolicy * 
-ipsec6_check_policy(struct mbuf *m, const struct socket *so,
+ipsec6_check_policy(struct mbuf *m, struct in6pcb *in6p,
 		    int flags, int *needipsecp, int *errorp)
 {
-	struct in6pcb *in6p = NULL;
 	struct secpolicy *sp = NULL;
 	int s;
 	int error = 0;
 	int needipsec = 0;
-
-	if (so != NULL && so->so_proto->pr_domain->dom_family == AF_INET6)
-		in6p = sotoin6pcb(so);
 
 	if (!ipsec_outdone(m)) {
 		s = splsoftnet();

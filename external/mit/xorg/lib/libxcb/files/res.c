@@ -19,7 +19,7 @@
 xcb_extension_t xcb_res_id = { "X-Resource", 0 };
 
 void
-xcb_res_client_next (xcb_res_client_iterator_t *i  /**< */)
+xcb_res_client_next (xcb_res_client_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -27,7 +27,7 @@ xcb_res_client_next (xcb_res_client_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_res_client_end (xcb_res_client_iterator_t i  /**< */)
+xcb_res_client_end (xcb_res_client_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -37,7 +37,7 @@ xcb_res_client_end (xcb_res_client_iterator_t i  /**< */)
 }
 
 void
-xcb_res_type_next (xcb_res_type_iterator_t *i  /**< */)
+xcb_res_type_next (xcb_res_type_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -45,7 +45,7 @@ xcb_res_type_next (xcb_res_type_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_res_type_end (xcb_res_type_iterator_t i  /**< */)
+xcb_res_type_end (xcb_res_type_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -55,7 +55,7 @@ xcb_res_type_end (xcb_res_type_iterator_t i  /**< */)
 }
 
 void
-xcb_res_client_id_spec_next (xcb_res_client_id_spec_iterator_t *i  /**< */)
+xcb_res_client_id_spec_next (xcb_res_client_id_spec_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -63,7 +63,7 @@ xcb_res_client_id_spec_next (xcb_res_client_id_spec_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_res_client_id_spec_end (xcb_res_client_id_spec_iterator_t i  /**< */)
+xcb_res_client_id_spec_end (xcb_res_client_id_spec_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -73,7 +73,7 @@ xcb_res_client_id_spec_end (xcb_res_client_id_spec_iterator_t i  /**< */)
 }
 
 int
-xcb_res_client_id_value_sizeof (const void  *_buffer  /**< */)
+xcb_res_client_id_value_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_res_client_id_value_t *_aux = (xcb_res_client_id_value_t *)_buffer;
@@ -104,19 +104,19 @@ xcb_res_client_id_value_sizeof (const void  *_buffer  /**< */)
 }
 
 uint32_t *
-xcb_res_client_id_value_value (const xcb_res_client_id_value_t *R  /**< */)
+xcb_res_client_id_value_value (const xcb_res_client_id_value_t *R)
 {
     return (uint32_t *) (R + 1);
 }
 
 int
-xcb_res_client_id_value_value_length (const xcb_res_client_id_value_t *R  /**< */)
+xcb_res_client_id_value_value_length (const xcb_res_client_id_value_t *R)
 {
     return R->length;
 }
 
 xcb_generic_iterator_t
-xcb_res_client_id_value_value_end (const xcb_res_client_id_value_t *R  /**< */)
+xcb_res_client_id_value_value_end (const xcb_res_client_id_value_t *R)
 {
     xcb_generic_iterator_t i;
     i.data = ((uint32_t *) (R + 1)) + (R->length);
@@ -126,7 +126,7 @@ xcb_res_client_id_value_value_end (const xcb_res_client_id_value_t *R  /**< */)
 }
 
 void
-xcb_res_client_id_value_next (xcb_res_client_id_value_iterator_t *i  /**< */)
+xcb_res_client_id_value_next (xcb_res_client_id_value_iterator_t *i)
 {
     xcb_res_client_id_value_t *R = i->data;
     xcb_generic_iterator_t child;
@@ -137,7 +137,7 @@ xcb_res_client_id_value_next (xcb_res_client_id_value_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_res_client_id_value_end (xcb_res_client_id_value_iterator_t i  /**< */)
+xcb_res_client_id_value_end (xcb_res_client_id_value_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     while(i.rem > 0)
@@ -149,7 +149,7 @@ xcb_res_client_id_value_end (xcb_res_client_id_value_iterator_t i  /**< */)
 }
 
 void
-xcb_res_resource_id_spec_next (xcb_res_resource_id_spec_iterator_t *i  /**< */)
+xcb_res_resource_id_spec_next (xcb_res_resource_id_spec_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -157,7 +157,7 @@ xcb_res_resource_id_spec_next (xcb_res_resource_id_spec_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_res_resource_id_spec_end (xcb_res_resource_id_spec_iterator_t i  /**< */)
+xcb_res_resource_id_spec_end (xcb_res_resource_id_spec_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -167,7 +167,7 @@ xcb_res_resource_id_spec_end (xcb_res_resource_id_spec_iterator_t i  /**< */)
 }
 
 void
-xcb_res_resource_size_spec_next (xcb_res_resource_size_spec_iterator_t *i  /**< */)
+xcb_res_resource_size_spec_next (xcb_res_resource_size_spec_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -175,7 +175,7 @@ xcb_res_resource_size_spec_next (xcb_res_resource_size_spec_iterator_t *i  /**< 
 }
 
 xcb_generic_iterator_t
-xcb_res_resource_size_spec_end (xcb_res_resource_size_spec_iterator_t i  /**< */)
+xcb_res_resource_size_spec_end (xcb_res_resource_size_spec_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -185,7 +185,7 @@ xcb_res_resource_size_spec_end (xcb_res_resource_size_spec_iterator_t i  /**< */
 }
 
 int
-xcb_res_resource_size_value_sizeof (const void  *_buffer  /**< */)
+xcb_res_resource_size_value_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_res_resource_size_value_t *_aux = (xcb_res_resource_size_value_t *)_buffer;
@@ -216,19 +216,19 @@ xcb_res_resource_size_value_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_res_resource_size_spec_t *
-xcb_res_resource_size_value_cross_references (const xcb_res_resource_size_value_t *R  /**< */)
+xcb_res_resource_size_value_cross_references (const xcb_res_resource_size_value_t *R)
 {
     return (xcb_res_resource_size_spec_t *) (R + 1);
 }
 
 int
-xcb_res_resource_size_value_cross_references_length (const xcb_res_resource_size_value_t *R  /**< */)
+xcb_res_resource_size_value_cross_references_length (const xcb_res_resource_size_value_t *R)
 {
     return R->num_cross_references;
 }
 
 xcb_res_resource_size_spec_iterator_t
-xcb_res_resource_size_value_cross_references_iterator (const xcb_res_resource_size_value_t *R  /**< */)
+xcb_res_resource_size_value_cross_references_iterator (const xcb_res_resource_size_value_t *R)
 {
     xcb_res_resource_size_spec_iterator_t i;
     i.data = (xcb_res_resource_size_spec_t *) (R + 1);
@@ -238,7 +238,7 @@ xcb_res_resource_size_value_cross_references_iterator (const xcb_res_resource_si
 }
 
 void
-xcb_res_resource_size_value_next (xcb_res_resource_size_value_iterator_t *i  /**< */)
+xcb_res_resource_size_value_next (xcb_res_resource_size_value_iterator_t *i)
 {
     xcb_res_resource_size_value_t *R = i->data;
     xcb_generic_iterator_t child;
@@ -249,7 +249,7 @@ xcb_res_resource_size_value_next (xcb_res_resource_size_value_iterator_t *i  /**
 }
 
 xcb_generic_iterator_t
-xcb_res_resource_size_value_end (xcb_res_resource_size_value_iterator_t i  /**< */)
+xcb_res_resource_size_value_end (xcb_res_resource_size_value_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     while(i.rem > 0)
@@ -261,15 +261,15 @@ xcb_res_resource_size_value_end (xcb_res_resource_size_value_iterator_t i  /**< 
 }
 
 xcb_res_query_version_cookie_t
-xcb_res_query_version (xcb_connection_t *c  /**< */,
-                       uint8_t           client_major  /**< */,
-                       uint8_t           client_minor  /**< */)
+xcb_res_query_version (xcb_connection_t *c,
+                       uint8_t           client_major,
+                       uint8_t           client_minor)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -289,15 +289,15 @@ xcb_res_query_version (xcb_connection_t *c  /**< */,
 }
 
 xcb_res_query_version_cookie_t
-xcb_res_query_version_unchecked (xcb_connection_t *c  /**< */,
-                                 uint8_t           client_major  /**< */,
-                                 uint8_t           client_minor  /**< */)
+xcb_res_query_version_unchecked (xcb_connection_t *c,
+                                 uint8_t           client_major,
+                                 uint8_t           client_minor)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -317,15 +317,15 @@ xcb_res_query_version_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_res_query_version_reply_t *
-xcb_res_query_version_reply (xcb_connection_t                *c  /**< */,
+xcb_res_query_version_reply (xcb_connection_t                *c,
                              xcb_res_query_version_cookie_t   cookie  /**< */,
-                             xcb_generic_error_t            **e  /**< */)
+                             xcb_generic_error_t            **e)
 {
     return (xcb_res_query_version_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_res_query_clients_sizeof (const void  *_buffer  /**< */)
+xcb_res_query_clients_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_res_query_clients_reply_t *_aux = (xcb_res_query_clients_reply_t *)_buffer;
@@ -356,13 +356,13 @@ xcb_res_query_clients_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_res_query_clients_cookie_t
-xcb_res_query_clients (xcb_connection_t *c  /**< */)
+xcb_res_query_clients (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENTS,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENTS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -380,13 +380,13 @@ xcb_res_query_clients (xcb_connection_t *c  /**< */)
 }
 
 xcb_res_query_clients_cookie_t
-xcb_res_query_clients_unchecked (xcb_connection_t *c  /**< */)
+xcb_res_query_clients_unchecked (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENTS,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENTS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -404,19 +404,19 @@ xcb_res_query_clients_unchecked (xcb_connection_t *c  /**< */)
 }
 
 xcb_res_client_t *
-xcb_res_query_clients_clients (const xcb_res_query_clients_reply_t *R  /**< */)
+xcb_res_query_clients_clients (const xcb_res_query_clients_reply_t *R)
 {
     return (xcb_res_client_t *) (R + 1);
 }
 
 int
-xcb_res_query_clients_clients_length (const xcb_res_query_clients_reply_t *R  /**< */)
+xcb_res_query_clients_clients_length (const xcb_res_query_clients_reply_t *R)
 {
     return R->num_clients;
 }
 
 xcb_res_client_iterator_t
-xcb_res_query_clients_clients_iterator (const xcb_res_query_clients_reply_t *R  /**< */)
+xcb_res_query_clients_clients_iterator (const xcb_res_query_clients_reply_t *R)
 {
     xcb_res_client_iterator_t i;
     i.data = (xcb_res_client_t *) (R + 1);
@@ -426,15 +426,15 @@ xcb_res_query_clients_clients_iterator (const xcb_res_query_clients_reply_t *R  
 }
 
 xcb_res_query_clients_reply_t *
-xcb_res_query_clients_reply (xcb_connection_t                *c  /**< */,
+xcb_res_query_clients_reply (xcb_connection_t                *c,
                              xcb_res_query_clients_cookie_t   cookie  /**< */,
-                             xcb_generic_error_t            **e  /**< */)
+                             xcb_generic_error_t            **e)
 {
     return (xcb_res_query_clients_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_res_query_client_resources_sizeof (const void  *_buffer  /**< */)
+xcb_res_query_client_resources_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_res_query_client_resources_reply_t *_aux = (xcb_res_query_client_resources_reply_t *)_buffer;
@@ -465,14 +465,14 @@ xcb_res_query_client_resources_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_res_query_client_resources_cookie_t
-xcb_res_query_client_resources (xcb_connection_t *c  /**< */,
-                                uint32_t          xid  /**< */)
+xcb_res_query_client_resources (xcb_connection_t *c,
+                                uint32_t          xid)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENT_RESOURCES,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENT_RESOURCES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -491,14 +491,14 @@ xcb_res_query_client_resources (xcb_connection_t *c  /**< */,
 }
 
 xcb_res_query_client_resources_cookie_t
-xcb_res_query_client_resources_unchecked (xcb_connection_t *c  /**< */,
-                                          uint32_t          xid  /**< */)
+xcb_res_query_client_resources_unchecked (xcb_connection_t *c,
+                                          uint32_t          xid)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENT_RESOURCES,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENT_RESOURCES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -517,19 +517,19 @@ xcb_res_query_client_resources_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_res_type_t *
-xcb_res_query_client_resources_types (const xcb_res_query_client_resources_reply_t *R  /**< */)
+xcb_res_query_client_resources_types (const xcb_res_query_client_resources_reply_t *R)
 {
     return (xcb_res_type_t *) (R + 1);
 }
 
 int
-xcb_res_query_client_resources_types_length (const xcb_res_query_client_resources_reply_t *R  /**< */)
+xcb_res_query_client_resources_types_length (const xcb_res_query_client_resources_reply_t *R)
 {
     return R->num_types;
 }
 
 xcb_res_type_iterator_t
-xcb_res_query_client_resources_types_iterator (const xcb_res_query_client_resources_reply_t *R  /**< */)
+xcb_res_query_client_resources_types_iterator (const xcb_res_query_client_resources_reply_t *R)
 {
     xcb_res_type_iterator_t i;
     i.data = (xcb_res_type_t *) (R + 1);
@@ -539,22 +539,22 @@ xcb_res_query_client_resources_types_iterator (const xcb_res_query_client_resour
 }
 
 xcb_res_query_client_resources_reply_t *
-xcb_res_query_client_resources_reply (xcb_connection_t                         *c  /**< */,
+xcb_res_query_client_resources_reply (xcb_connection_t                         *c,
                                       xcb_res_query_client_resources_cookie_t   cookie  /**< */,
-                                      xcb_generic_error_t                     **e  /**< */)
+                                      xcb_generic_error_t                     **e)
 {
     return (xcb_res_query_client_resources_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_res_query_client_pixmap_bytes_cookie_t
-xcb_res_query_client_pixmap_bytes (xcb_connection_t *c  /**< */,
-                                   uint32_t          xid  /**< */)
+xcb_res_query_client_pixmap_bytes (xcb_connection_t *c,
+                                   uint32_t          xid)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENT_PIXMAP_BYTES,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENT_PIXMAP_BYTES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -573,14 +573,14 @@ xcb_res_query_client_pixmap_bytes (xcb_connection_t *c  /**< */,
 }
 
 xcb_res_query_client_pixmap_bytes_cookie_t
-xcb_res_query_client_pixmap_bytes_unchecked (xcb_connection_t *c  /**< */,
-                                             uint32_t          xid  /**< */)
+xcb_res_query_client_pixmap_bytes_unchecked (xcb_connection_t *c,
+                                             uint32_t          xid)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENT_PIXMAP_BYTES,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENT_PIXMAP_BYTES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -599,15 +599,15 @@ xcb_res_query_client_pixmap_bytes_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_res_query_client_pixmap_bytes_reply_t *
-xcb_res_query_client_pixmap_bytes_reply (xcb_connection_t                            *c  /**< */,
+xcb_res_query_client_pixmap_bytes_reply (xcb_connection_t                            *c,
                                          xcb_res_query_client_pixmap_bytes_cookie_t   cookie  /**< */,
-                                         xcb_generic_error_t                        **e  /**< */)
+                                         xcb_generic_error_t                        **e)
 {
     return (xcb_res_query_client_pixmap_bytes_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_res_query_client_ids_sizeof (const void  *_buffer  /**< */)
+xcb_res_query_client_ids_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_res_query_client_ids_request_t *_aux = (xcb_res_query_client_ids_request_t *)_buffer;
@@ -638,15 +638,15 @@ xcb_res_query_client_ids_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_res_query_client_ids_cookie_t
-xcb_res_query_client_ids (xcb_connection_t               *c  /**< */,
-                          uint32_t                        num_specs  /**< */,
-                          const xcb_res_client_id_spec_t *specs  /**< */)
+xcb_res_query_client_ids (xcb_connection_t               *c,
+                          uint32_t                        num_specs,
+                          const xcb_res_client_id_spec_t *specs)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 4,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENT_IDS,
-        /* isvoid */ 0
+        .count = 4,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENT_IDS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[6];
@@ -670,15 +670,15 @@ xcb_res_query_client_ids (xcb_connection_t               *c  /**< */,
 }
 
 xcb_res_query_client_ids_cookie_t
-xcb_res_query_client_ids_unchecked (xcb_connection_t               *c  /**< */,
-                                    uint32_t                        num_specs  /**< */,
-                                    const xcb_res_client_id_spec_t *specs  /**< */)
+xcb_res_query_client_ids_unchecked (xcb_connection_t               *c,
+                                    uint32_t                        num_specs,
+                                    const xcb_res_client_id_spec_t *specs)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 4,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_CLIENT_IDS,
-        /* isvoid */ 0
+        .count = 4,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_CLIENT_IDS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[6];
@@ -702,13 +702,13 @@ xcb_res_query_client_ids_unchecked (xcb_connection_t               *c  /**< */,
 }
 
 int
-xcb_res_query_client_ids_ids_length (const xcb_res_query_client_ids_reply_t *R  /**< */)
+xcb_res_query_client_ids_ids_length (const xcb_res_query_client_ids_reply_t *R)
 {
     return R->num_ids;
 }
 
 xcb_res_client_id_value_iterator_t
-xcb_res_query_client_ids_ids_iterator (const xcb_res_query_client_ids_reply_t *R  /**< */)
+xcb_res_query_client_ids_ids_iterator (const xcb_res_query_client_ids_reply_t *R)
 {
     xcb_res_client_id_value_iterator_t i;
     i.data = (xcb_res_client_id_value_t *) (R + 1);
@@ -718,15 +718,15 @@ xcb_res_query_client_ids_ids_iterator (const xcb_res_query_client_ids_reply_t *R
 }
 
 xcb_res_query_client_ids_reply_t *
-xcb_res_query_client_ids_reply (xcb_connection_t                   *c  /**< */,
+xcb_res_query_client_ids_reply (xcb_connection_t                   *c,
                                 xcb_res_query_client_ids_cookie_t   cookie  /**< */,
-                                xcb_generic_error_t               **e  /**< */)
+                                xcb_generic_error_t               **e)
 {
     return (xcb_res_query_client_ids_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_res_query_resource_bytes_sizeof (const void  *_buffer  /**< */)
+xcb_res_query_resource_bytes_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_res_query_resource_bytes_request_t *_aux = (xcb_res_query_resource_bytes_request_t *)_buffer;
@@ -757,16 +757,16 @@ xcb_res_query_resource_bytes_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_res_query_resource_bytes_cookie_t
-xcb_res_query_resource_bytes (xcb_connection_t                 *c  /**< */,
-                              uint32_t                          client  /**< */,
-                              uint32_t                          num_specs  /**< */,
-                              const xcb_res_resource_id_spec_t *specs  /**< */)
+xcb_res_query_resource_bytes (xcb_connection_t                 *c,
+                              uint32_t                          client,
+                              uint32_t                          num_specs,
+                              const xcb_res_resource_id_spec_t *specs)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 4,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_RESOURCE_BYTES,
-        /* isvoid */ 0
+        .count = 4,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_RESOURCE_BYTES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[6];
@@ -791,16 +791,16 @@ xcb_res_query_resource_bytes (xcb_connection_t                 *c  /**< */,
 }
 
 xcb_res_query_resource_bytes_cookie_t
-xcb_res_query_resource_bytes_unchecked (xcb_connection_t                 *c  /**< */,
-                                        uint32_t                          client  /**< */,
-                                        uint32_t                          num_specs  /**< */,
-                                        const xcb_res_resource_id_spec_t *specs  /**< */)
+xcb_res_query_resource_bytes_unchecked (xcb_connection_t                 *c,
+                                        uint32_t                          client,
+                                        uint32_t                          num_specs,
+                                        const xcb_res_resource_id_spec_t *specs)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 4,
-        /* ext */ &xcb_res_id,
-        /* opcode */ XCB_RES_QUERY_RESOURCE_BYTES,
-        /* isvoid */ 0
+        .count = 4,
+        .ext = &xcb_res_id,
+        .opcode = XCB_RES_QUERY_RESOURCE_BYTES,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[6];
@@ -825,13 +825,13 @@ xcb_res_query_resource_bytes_unchecked (xcb_connection_t                 *c  /**
 }
 
 int
-xcb_res_query_resource_bytes_sizes_length (const xcb_res_query_resource_bytes_reply_t *R  /**< */)
+xcb_res_query_resource_bytes_sizes_length (const xcb_res_query_resource_bytes_reply_t *R)
 {
     return R->num_sizes;
 }
 
 xcb_res_resource_size_value_iterator_t
-xcb_res_query_resource_bytes_sizes_iterator (const xcb_res_query_resource_bytes_reply_t *R  /**< */)
+xcb_res_query_resource_bytes_sizes_iterator (const xcb_res_query_resource_bytes_reply_t *R)
 {
     xcb_res_resource_size_value_iterator_t i;
     i.data = (xcb_res_resource_size_value_t *) (R + 1);
@@ -841,9 +841,9 @@ xcb_res_query_resource_bytes_sizes_iterator (const xcb_res_query_resource_bytes_
 }
 
 xcb_res_query_resource_bytes_reply_t *
-xcb_res_query_resource_bytes_reply (xcb_connection_t                       *c  /**< */,
+xcb_res_query_resource_bytes_reply (xcb_connection_t                       *c,
                                     xcb_res_query_resource_bytes_cookie_t   cookie  /**< */,
-                                    xcb_generic_error_t                   **e  /**< */)
+                                    xcb_generic_error_t                   **e)
 {
     return (xcb_res_query_resource_bytes_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.36.10.1 2016/07/26 03:24:17 pgoyette Exp $	*/
+/*	$NetBSD: mesh.c,v 1.36.10.2 2017/03/20 06:57:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.36.10.1 2016/07/26 03:24:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.36.10.2 2017/03/20 06:57:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -264,7 +264,7 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
 
 	/* Reset SCSI bus when halt. */
-	if (pmf_device_register1(self, NULL, NULL, mesh_shutdown))
+	if (!pmf_device_register1(self, NULL, NULL, mesh_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 

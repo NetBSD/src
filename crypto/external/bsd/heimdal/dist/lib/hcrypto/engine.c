@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: engine.c,v 1.3.6.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,10 +34,7 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <krb5/roken.h>
 
 #include <engine.h>
 

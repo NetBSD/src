@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/06/22 23:52:57 christos Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2017/03/20 06:56:32 pgoyette Exp $
 
 .include "../Makefile.inc"
 
@@ -70,8 +70,6 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 
 LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm
 DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
-
-LDADD+=                -lpthread_dbg
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${GDB_MACHINE_ARCH}

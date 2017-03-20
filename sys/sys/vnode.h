@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.263.2.2 2017/01/07 08:56:53 pgoyette Exp $	*/
+/*	$NetBSD: vnode.h,v 1.263.2.3 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
 
-struct namecache;
 struct uvm_ractx;
 #endif
 
@@ -127,9 +126,6 @@ LIST_HEAD(buflists, buf);
  *	:	stable, reference to the vnode is required
  *	f	vnode_free_list_lock, or vrele_lock for vrele_list
  *	i	v_interlock
- *	m	mntvnode_lock
- *	n	namecache_lock
- *	s	syncer_data_lock
  *	u	locked by underlying filesystem
  *	v	vnode lock
  *	x	v_interlock + bufcache_lock to modify, either to inspect
@@ -148,15 +144,10 @@ struct vnode {
 	int		v_numoutput;		/* i: # of pending writes */
 	int		v_writecount;		/* i: ref count of writers */
 	int		v_holdcnt;		/* i: page & buffer refs */
-	int		v_synclist_slot;	/* s: synclist slot index */
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
-	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
-	TAILQ_ENTRY(vnode) v_synclist;		/* s: vnodes with dirty bufs */
-	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */
-	LIST_HEAD(, namecache) v_nclist;	/* n: namecaches (parent) */
 	union {
 		struct mount	*vu_mountedhere;/* v: ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* v: unix ipc (VSOCK) */
@@ -166,7 +157,6 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	krwlock_t	v_lock;			/* v: lock for this vnode */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
@@ -525,6 +515,7 @@ void 	vput(struct vnode *);
 bool	vrecycle(struct vnode *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
+void	vrele_flush(struct mount *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 int	vdead_check(struct vnode *, int);
@@ -579,6 +570,8 @@ void	vfs_getnewfsid(struct mount *);
 void	vfs_timestamp(struct timespec *);
 #if defined(DDB) || defined(DEBUGPRINT)
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...)
+    __printflike(1, 2));
+void	vfs_vnode_lock_print(void *, int, void (*)(const char *, ...)
     __printflike(1, 2));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...)
     __printflike(1, 2));

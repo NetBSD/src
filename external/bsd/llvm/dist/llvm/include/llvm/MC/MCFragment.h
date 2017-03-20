@@ -25,6 +25,7 @@ class MCSubtargetInfo;
 class MCFragment : public ilist_node_with_parent<MCFragment, MCSection> {
   friend class MCAsmLayout;
 
+  MCFragment() = delete;
   MCFragment(const MCFragment &) = delete;
   void operator=(const MCFragment &) = delete;
 
@@ -40,6 +41,8 @@ public:
     FT_DwarfFrame,
     FT_LEB,
     FT_SafeSEH,
+    FT_CVInlineLines,
+    FT_CVDefRange,
     FT_Dummy
   };
 
@@ -81,11 +84,6 @@ protected:
              uint8_t BundlePadding, MCSection *Parent = nullptr);
 
   ~MCFragment();
-private:
-
-  // This is a friend so that the sentinal can be created.
-  friend struct ilist_sentinel_traits<MCFragment>;
-  MCFragment();
 
 public:
   /// Destroys the current fragment.
@@ -210,7 +208,8 @@ public:
 
   static bool classof(const MCFragment *F) {
     MCFragment::FragmentType Kind = F->getKind();
-    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data;
+    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data ||
+           Kind == MCFragment::FT_CVDefRange;
   }
 };
 
@@ -321,35 +320,18 @@ public:
 
 class MCFillFragment : public MCFragment {
 
-  /// Value - Value to use for filling bytes.
-  int64_t Value;
+  /// Value to use for filling bytes.
+  uint8_t Value;
 
-  /// ValueSize - The size (in bytes) of \p Value to use when filling, or 0 if
-  /// this is a virtual fill fragment.
-  unsigned ValueSize;
-
-  /// Size - The number of bytes to insert.
+  /// The number of bytes to insert.
   uint64_t Size;
 
 public:
-  MCFillFragment(int64_t Value, unsigned ValueSize, uint64_t Size,
-                 MCSection *Sec = nullptr)
-      : MCFragment(FT_Fill, false, 0, Sec), Value(Value), ValueSize(ValueSize),
-        Size(Size) {
-    assert((!ValueSize || (Size % ValueSize) == 0) &&
-           "Fill size must be a multiple of the value size!");
-  }
+  MCFillFragment(uint8_t Value, uint64_t Size, MCSection *Sec = nullptr)
+      : MCFragment(FT_Fill, false, 0, Sec), Value(Value), Size(Size) {}
 
-  /// \name Accessors
-  /// @{
-
-  int64_t getValue() const { return Value; }
-
-  unsigned getValueSize() const { return ValueSize; }
-
+  uint8_t getValue() const { return Value; }
   uint64_t getSize() const { return Size; }
-
-  /// @}
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_Fill;
@@ -364,9 +346,13 @@ class MCOrgFragment : public MCFragment {
   /// Value - Value to use for filling bytes.
   int8_t Value;
 
+  /// Loc - Source location of the directive that this fragment was created for.
+  SMLoc Loc;
+
 public:
-  MCOrgFragment(const MCExpr &Offset, int8_t Value, MCSection *Sec = nullptr)
-      : MCFragment(FT_Org, false, 0, Sec), Offset(&Offset), Value(Value) {}
+  MCOrgFragment(const MCExpr &Offset, int8_t Value, SMLoc Loc,
+                MCSection *Sec = nullptr)
+      : MCFragment(FT_Org, false, 0, Sec), Offset(&Offset), Value(Value), Loc(Loc) {}
 
   /// \name Accessors
   /// @{
@@ -374,6 +360,8 @@ public:
   const MCExpr &getOffset() const { return *Offset; }
 
   uint8_t getValue() const { return Value; }
+
+  SMLoc getLoc() const { return Loc; }
 
   /// @}
 
@@ -498,6 +486,76 @@ public:
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_SafeSEH;
+  }
+};
+
+/// Fragment representing the binary annotations produced by the
+/// .cv_inline_linetable directive.
+class MCCVInlineLineTableFragment : public MCFragment {
+  unsigned SiteFuncId;
+  unsigned StartFileId;
+  unsigned StartLineNum;
+  const MCSymbol *FnStartSym;
+  const MCSymbol *FnEndSym;
+  SmallString<8> Contents;
+
+  /// CodeViewContext has the real knowledge about this format, so let it access
+  /// our members.
+  friend class CodeViewContext;
+
+public:
+  MCCVInlineLineTableFragment(unsigned SiteFuncId, unsigned StartFileId,
+                              unsigned StartLineNum, const MCSymbol *FnStartSym,
+                              const MCSymbol *FnEndSym,
+                              MCSection *Sec = nullptr)
+      : MCFragment(FT_CVInlineLines, false, 0, Sec), SiteFuncId(SiteFuncId),
+        StartFileId(StartFileId), StartLineNum(StartLineNum),
+        FnStartSym(FnStartSym), FnEndSym(FnEndSym) {}
+
+  /// \name Accessors
+  /// @{
+
+  const MCSymbol *getFnStartSym() const { return FnStartSym; }
+  const MCSymbol *getFnEndSym() const { return FnEndSym; }
+
+  SmallString<8> &getContents() { return Contents; }
+  const SmallString<8> &getContents() const { return Contents; }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_CVInlineLines;
+  }
+};
+
+/// Fragment representing the .cv_def_range directive.
+class MCCVDefRangeFragment : public MCEncodedFragmentWithFixups<32, 4> {
+  SmallVector<std::pair<const MCSymbol *, const MCSymbol *>, 2> Ranges;
+  SmallString<32> FixedSizePortion;
+
+  /// CodeViewContext has the real knowledge about this format, so let it access
+  /// our members.
+  friend class CodeViewContext;
+
+public:
+  MCCVDefRangeFragment(
+      ArrayRef<std::pair<const MCSymbol *, const MCSymbol *>> Ranges,
+      StringRef FixedSizePortion, MCSection *Sec = nullptr)
+      : MCEncodedFragmentWithFixups<32, 4>(FT_CVDefRange, false, Sec),
+        Ranges(Ranges.begin(), Ranges.end()),
+        FixedSizePortion(FixedSizePortion) {}
+
+  /// \name Accessors
+  /// @{
+  ArrayRef<std::pair<const MCSymbol *, const MCSymbol *>> getRanges() const {
+    return Ranges;
+  }
+
+  StringRef getFixedSizePortion() const { return FixedSizePortion; }
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_CVDefRange;
   }
 };
 

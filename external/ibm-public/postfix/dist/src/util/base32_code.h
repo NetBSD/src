@@ -1,4 +1,4 @@
-/*	$NetBSD: base32_code.h,v 1.1.1.1 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: base32_code.h,v 1.1.1.1.16.1 2017/03/20 06:56:41 pgoyette Exp $	*/
 
 #ifndef _BASE32_CODE_H_INCLUDED_
 #define _BASE32_CODE_H_INCLUDED_
@@ -22,7 +22,7 @@
   * External interface.
   */
 extern VSTRING *base32_encode(VSTRING *, const char *, ssize_t);
-extern VSTRING *base32_decode(VSTRING *, const char *, ssize_t);
+extern VSTRING *WARN_UNUSED_RESULT base32_decode(VSTRING *, const char *, ssize_t);
 
 /* LICENSE
 /* .ad

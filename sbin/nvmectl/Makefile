@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/06/04 16:29:35 nonaka Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2017/03/20 06:57:02 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ SRCS+=	logpage.c
 SRCS+=	perftest.c
 SRCS+=	power.c
 SRCS+=	reset.c
+SRCS+=	bignum.c
+SRCS+=	humanize_bignum.c
 MAN=	nvmectl.8
 
 DPADD+= ${LIBUTIL}

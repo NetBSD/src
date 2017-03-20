@@ -22,17 +22,18 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-arcnet.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-arcnet.c,v 1.6.2.1 2017/03/20 06:56:22 pgoyette Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Attached Resource Computer NETwork (ARCNET) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 /*
