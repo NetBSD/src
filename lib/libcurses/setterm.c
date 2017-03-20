@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.64 2017/01/31 09:17:53 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.65 2017/03/20 20:44:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.64 2017/01/31 09:17:53 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.65 2017/03/20 20:44:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,22 +189,24 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_op = WA_ATTRIBUTES & ~__COLOR;
 #endif /* HAVE_WCHAR */
-	if (t_orig_pair(screen->term) != NULL) {
-		if (does_esc_m(t_orig_pair(screen->term)))
+
+	const char *t_op = t_orig_pair(screen->term);
+	const char *t_esm = t_exit_standout_mode(screen->term);
+	const char *t_eum = t_exit_underline_mode(screen->term);
+	const char *t_eam = t_exit_attribute_mode(screen->term);
+
+	if (t_op != NULL) {
+		if (does_esc_m(t_op))
 			screen->mask_op &=
 			    ~(__STANDOUT | __UNDERSCORE | __TERMATTR);
 		else {
-			if (t_exit_standout_mode(screen->term) != NULL &&
-			    !strcmp(t_orig_pair(screen->term),
-				t_exit_standout_mode(screen->term)))
+			if (t_esm != NULL && !strcmp(t_op, t_esm))
 				screen->mask_op &= ~__STANDOUT;
-			if (t_exit_underline_mode(screen->term) != NULL &&
-			    !strcmp(t_orig_pair(screen->term),
-				t_exit_underline_mode(screen->term)))
+
+			if (t_eum != NULL && !strcmp(t_op, t_eum))
 				screen->mask_op &= ~__UNDERSCORE;
-			if (t_exit_attribute_mode(screen->term) != NULL &&
-			    !strcmp(t_orig_pair(screen->term),
-				t_exit_attribute_mode(screen->term)))
+
+			if (t_eam != NULL && !strcmp(t_op, t_eam))
 				screen->mask_op &= ~__TERMATTR;
 		}
 	}
@@ -226,22 +228,18 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_ue = WA_ATTRIBUTES & ~__UNDERSCORE;
 #endif /* HAVE_WCHAR */
-	if (t_exit_underline_mode(screen->term) != NULL) {
-		if (does_esc_m(t_exit_underline_mode(screen->term)))
+	if (t_eum != NULL) {
+		if (does_esc_m(t_eum))
 			screen->mask_ue &=
 			    ~(__STANDOUT | __TERMATTR | __COLOR);
 		else {
-			if (t_exit_standout_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_underline_mode(screen->term),
-				t_exit_standout_mode(screen->term)))
+			if (t_esm && !strcmp(t_eum, t_esm))
 				screen->mask_ue &= ~__STANDOUT;
-			if (t_exit_attribute_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_underline_mode(screen->term),
-				t_exit_attribute_mode(screen->term)))
+
+			if (t_eam != NULL && !strcmp(t_eum, t_eam))
 				screen->mask_ue &= ~__TERMATTR;
-			if (t_orig_pair(screen->term) != NULL &&
-			    !strcmp(t_exit_underline_mode(screen->term),
-				t_orig_pair(screen->term)))
+
+			if (t_op != NULL && !strcmp(t_eum, t_op))
 				screen->mask_ue &= ~__COLOR;
 		}
 	}
@@ -250,22 +248,18 @@ _cursesi_setterm(char *type, SCREEN *screen)
 #else
 	screen->mask_se = WA_ATTRIBUTES & ~__STANDOUT;
 #endif /* HAVE_WCHAR */
-	if (t_exit_standout_mode(screen->term) != NULL) {
-		if (does_esc_m(t_exit_standout_mode(screen->term)))
+	if (t_esm != NULL) {
+		if (does_esc_m(t_esm))
 			screen->mask_se &=
 			    ~(__UNDERSCORE | __TERMATTR | __COLOR);
 		else {
-			if (t_exit_underline_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_standout_mode(screen->term),
-				t_exit_underline_mode(screen->term)))
+			if (t_eum != NULL && !strcmp(t_esm, t_eum))
 				screen->mask_se &= ~__UNDERSCORE;
-			if (t_exit_attribute_mode(screen->term) != NULL &&
-			    !strcmp(t_exit_standout_mode(screen->term),
-				t_exit_attribute_mode(screen->term)))
+
+			if (t_eam != NULL && !strcmp(t_esm, t_eam))
 				screen->mask_se &= ~__TERMATTR;
-			if (t_orig_pair(screen->term) != NULL &&
-			    !strcmp(t_exit_standout_mode(screen->term),
-				t_orig_pair(screen->term)))
+
+			if (t_op != NULL && !strcmp(t_esm, t_op))
 				screen->mask_se &= ~__COLOR;
 		}
 	}
