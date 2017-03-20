@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.15 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: GENERIC.common,v 1.16 2017/03/20 21:08:55 skrll Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -165,7 +165,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
-options         FILEASSOC               # fileassoc(9) - required for Veriexec
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 					# and PAX_SEGVGUARD
 
 # Veriexec
