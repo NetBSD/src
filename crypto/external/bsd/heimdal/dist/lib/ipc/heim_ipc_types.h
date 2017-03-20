@@ -1,4 +1,4 @@
-/*	$NetBSD: heim_ipc_types.h,v 1.1.1.1 2011/04/13 18:15:28 elric Exp $	*/
+/*	$NetBSD: heim_ipc_types.h,v 1.1.1.1.28.1 2017/03/20 06:51:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.28.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.28.2.4 2017/03/20 06:57:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28.2.3 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28.2.4 2017/03/20 06:57:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -48,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28.2.3 2017/01/07 08:56:51 pgoyette E
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

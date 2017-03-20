@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_sysvbfs.c,v 1.9 2014/03/23 05:10:56 dholland Exp $	*/
+/*	$NetBSD: newfs_sysvbfs.c,v 1.9.8.1 2017/03/20 06:57:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -28,20 +28,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: newfs_sysvbfs.c,v 1.9.8.1 2017/03/20 06:57:02 pgoyette Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
+#include <sys/disklabel.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+
+#include <assert.h>
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <time.h>
-#include <assert.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/disklabel.h>
+#include <unistd.h>
 
 #include <fs/sysvbfs/bfs.h>
 

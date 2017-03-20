@@ -1,4 +1,4 @@
-/*	$NetBSD: t_builtin.c,v 1.2 2010/11/03 16:10:23 christos Exp $	*/
+/*	$NetBSD: t_builtin.c,v 1.2.28.1 2017/03/20 06:58:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
-#include "../h_macros.h"
+#include "h_macros.h"
 
 #define MYMP "/mnt"
 #define HZFILE MYMP "/hz"

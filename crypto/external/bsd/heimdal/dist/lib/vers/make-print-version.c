@@ -1,4 +1,4 @@
-/*	$NetBSD: make-print-version.c,v 1.1.1.1 2011/04/13 18:15:44 elric Exp $	*/
+/*	$NetBSD: make-print-version.c,v 1.1.1.1.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2003 Kungliga Tekniska Högskolan

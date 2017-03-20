@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror_r.c,v 1.3 2013/08/19 13:03:12 joerg Exp $	*/
+/*	$NetBSD: strerror_r.c,v 1.3.8.1 2017/03/20 06:56:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strerror_r.c,v 1.3 2013/08/19 13:03:12 joerg Exp $");
+__RCSID("$NetBSD: strerror_r.c,v 1.3.8.1 2017/03/20 06:56:58 pgoyette Exp $");
 
 #include "namespace.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdio.h>	/* for sys_nerr on FreeBSD */
 #ifdef NLS
 #include <limits.h>
 #include <nl_types.h>

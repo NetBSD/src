@@ -1,4 +1,4 @@
-/*	$NetBSD: rc2.h,v 1.1.1.2 2011/04/14 14:08:33 elric Exp $	*/
+/*	$NetBSD: rc2.h,v 1.1.1.2.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan

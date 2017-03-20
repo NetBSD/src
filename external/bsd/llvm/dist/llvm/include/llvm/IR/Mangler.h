@@ -16,25 +16,20 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/GlobalValue.h"
-#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
 class DataLayout;
 template <typename T> class SmallVectorImpl;
 class Twine;
+class raw_ostream;
 
 class Mangler {
   /// We need to give global values the same name every time they are mangled.
   /// This keeps track of the number we give to anonymous ones.
   mutable DenseMap<const GlobalValue*, unsigned> AnonGlobalIDs;
 
-  /// This simple counter is used to unique value names.
-  mutable unsigned NextAnonGlobalID;
-
 public:
-  Mangler() : NextAnonGlobalID(1) {}
-
   /// Print the appropriate prefix and the specified global variable's name.
   /// If the global variable doesn't have a name, this fills in a unique name
   /// for the global.

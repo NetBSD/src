@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 2016/02/27 18:34:12 christos Exp $
+#	$NetBSD: Makefile,v 1.102.2.1 2017/03/20 06:51:32 pgoyette Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -53,8 +53,8 @@ SRCS+=printf.c
 	${NETBSDSRCDIR}/usr.bin/printf \
 	${NETBSDSRCDIR}/bin/kill
 
-CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
-CLEANFILES+= trace
+CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h sh.html1
+CLEANFILES+= trace.*
 
 token.h: mktokens
 	${_MKTARGET_CREATE}

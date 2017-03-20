@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.40 2015/11/22 20:24:19 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.40.2.1 2017/03/20 06:57:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.40 2015/11/22 20:24:19 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.40.2.1 2017/03/20 06:57:01 pgoyette Exp $");
 #endif
 
 #include <err.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.40 2015/11/22 20:24:19 christos Exp $");
 #include <dirent.h>
 
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <sys/disklabel_gpt.h>

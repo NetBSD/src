@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.47 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.47.2.1 2017/03/20 06:57:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.47 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.47.2.1 2017/03/20 06:57:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.47 2016/04/28 00:16:56 ozaki-r Ex
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

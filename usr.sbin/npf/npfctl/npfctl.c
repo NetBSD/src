@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.47.2.1 2017/01/07 08:57:00 pgoyette Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.47.2.2 2017/03/20 06:58:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.47.2.1 2017/01/07 08:57:00 pgoyette Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.47.2.2 2017/03/20 06:58:08 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -695,7 +695,8 @@ npfctl_open_dev(const char *path)
 	if (ver != NPF_VERSION) {
 		errx(EXIT_FAILURE,
 		    "incompatible NPF interface version (%d, kernel %d)\n"
-		    "Hint: update userland?", NPF_VERSION, ver);
+		    "Hint: update %s?", NPF_VERSION, ver, 
+		    NPF_VERSION > ver ? "userland" : "kernel");
 	}
 	return fd;
 }

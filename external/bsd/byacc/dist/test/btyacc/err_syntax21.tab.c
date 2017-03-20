@@ -1,8 +1,8 @@
-/*	$NetBSD: err_syntax21.tab.c,v 1.1.1.3 2016/01/09 21:59:46 christos Exp $	*/
+/*	$NetBSD: err_syntax21.tab.c,v 1.1.1.3.2.1 2017/03/20 06:52:18 pgoyette Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
-/* (use YYMAJOR/YYMINOR for ifdefs dependent of parser version) */
+/* (use YYMAJOR/YYMINOR for ifdefs dependent on parser version) */
 
 #define YYBYACC 1
 #define YYMAJOR 1

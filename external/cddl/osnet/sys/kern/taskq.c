@@ -1,4 +1,4 @@
-/*	$NetBSD: taskq.c,v 1.5 2015/04/11 16:32:07 riastradh Exp $	*/
+/*	$NetBSD: taskq.c,v 1.5.2.1 2017/03/20 06:56:29 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -385,7 +385,7 @@
 #include <sys/sdt.h>
 #include <sys/mutex.h>
 #include <sys/kernel.h>
-#include <sys/limits.h>
+#include <sys/syslimits.h>
 
 static kmem_cache_t *taskq_ent_cache, *taskq_cache;
 

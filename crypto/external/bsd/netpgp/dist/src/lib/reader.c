@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.49 2012/03/05 02:20:18 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.49.18.1 2017/03/20 06:51:53 pgoyette Exp $");
 #endif
 
 #include <sys/types.h>

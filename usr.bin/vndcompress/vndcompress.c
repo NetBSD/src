@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.25 2014/11/18 03:48:17 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.25.2.1 2017/03/20 06:58:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.25 2014/11/18 03:48:17 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.25.2.1 2017/03/20 06:58:06 pgoyette Exp $");
 
 #include <sys/endian.h>
+#include <sys/stat.h>
 
 #include <assert.h>
 #include <err.h>

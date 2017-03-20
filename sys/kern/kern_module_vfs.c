@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.14 2016/03/15 02:59:24 pgoyette Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.14.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.14 2016/03/15 02:59:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.14.2.1 2017/03/20 06:57:47 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -162,7 +162,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	base = NULL;
 
 	proppath = PNBUF_GET();
-	strcpy(proppath, modpath);
+	strlcpy(proppath, modpath, MAXPATHLEN);
 	pathlen = strlen(proppath);
 	if ((pathlen >= 6) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
 		strcpy(&proppath[pathlen - 5], ".plist");

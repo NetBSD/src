@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.19.4.1 2016/11/04 14:49:02 pgoyette Exp $
+# $NetBSD: INSTALL,v 1.19.4.2 2017/03/20 06:57:16 pgoyette Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -129,6 +129,9 @@ config		netbsd root on ? type ?
 mainbus0 at root
 
 clock0	at mainbus0
+
+# LCD on front panel
+lcd0	at mainbus0
 
 # uPD7201 SIO
 sio0	at mainbus0

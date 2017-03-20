@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.78.2.2 2017/01/07 08:56:49 pgoyette Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.78.2.3 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78.2.2 2017/01/07 08:56:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78.2.3 2017/03/20 06:57:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78.2.2 2017/01/07 08:56:49 pgoyette 
 
 #include <sys/atomic.h>
 #include <sys/conf.h>
+#include <sys/evcnt.h>
 #include <sys/file.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
@@ -94,7 +95,7 @@ static inline size_t wapbl_space_free(size_t, off_t, off_t);
  * INTERNAL DATA STRUCTURES
  */
 
-/* 
+/*
  * This structure holds per-mount log information.
  *
  * Legend:	a = atomic access only
@@ -176,14 +177,21 @@ struct wapbl {
 	 * wl_count or wl_bufs or head or tail
 	 */
 
+#if _KERNEL
 	/*
 	 * Callback called from within the flush routine to flush any extra
 	 * bits.  Note that flush may be skipped without calling this if
 	 * there are no outstanding buffers in the transaction.
 	 */
-#if _KERNEL
 	wapbl_flush_fn_t wl_flush;	/* r	*/
 	wapbl_flush_fn_t wl_flush_abort;/* r	*/
+
+	/* Event counters */
+	char wl_ev_group[EVCNT_STRING_MAX];	/* r	*/
+	struct evcnt wl_ev_commit;		/* l	*/
+	struct evcnt wl_ev_journalwrite;	/* l	*/
+	struct evcnt wl_ev_metawrite;		/* lm	*/
+	struct evcnt wl_ev_cacheflush;		/* l	*/
 #endif
 
 	size_t wl_bufbytes;	/* m:	Byte count of pages in wl_bufs */
@@ -270,6 +278,9 @@ static inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
 static void wapbl_deallocation_free(struct wapbl *, struct wapbl_dealloc *,
 	bool);
 
+static void wapbl_evcnt_init(struct wapbl *);
+static void wapbl_evcnt_free(struct wapbl *);
+
 #if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
 #endif
@@ -352,6 +363,34 @@ wapbl_fini(void)
 	return 0;
 }
 
+static void
+wapbl_evcnt_init(struct wapbl *wl)
+{
+	snprintf(wl->wl_ev_group, sizeof(wl->wl_ev_group),
+	    "wapbl fsid 0x%x/0x%x",
+	    wl->wl_mount->mnt_stat.f_fsidx.__fsid_val[0],
+	    wl->wl_mount->mnt_stat.f_fsidx.__fsid_val[1]
+	);
+
+	evcnt_attach_dynamic(&wl->wl_ev_commit, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "commit");
+	evcnt_attach_dynamic(&wl->wl_ev_journalwrite, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "journal sync block write");
+	evcnt_attach_dynamic(&wl->wl_ev_metawrite, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "metadata finished block write");
+	evcnt_attach_dynamic(&wl->wl_ev_cacheflush, EVCNT_TYPE_MISC,
+	    NULL, wl->wl_ev_group, "cache flush");
+}
+
+static void
+wapbl_evcnt_free(struct wapbl *wl)
+{
+	evcnt_detach(&wl->wl_ev_commit);
+	evcnt_detach(&wl->wl_ev_journalwrite);
+	evcnt_detach(&wl->wl_ev_metawrite);
+	evcnt_detach(&wl->wl_ev_cacheflush);
+}
+
 static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 {
@@ -381,7 +420,7 @@ wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 		    wr->wr_inodes[i].wr_imode);
 
 	/* Make sure new transaction won't overwrite old inodes list */
-	KDASSERT(wapbl_transaction_len(wl) <= 
+	KDASSERT(wapbl_transaction_len(wl) <=
 	    wapbl_space_free(wl->wl_circ_size, wr->wr_inodeshead,
 	    wr->wr_inodestail));
 
@@ -516,11 +555,13 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	/* XXX tie this into resource estimation */
 	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
 	TAILQ_INIT(&wl->wl_dealloclist);
-	
+
 	wl->wl_buffer = wapbl_alloc(MAXPHYS);
 	wl->wl_buffer_used = 0;
 
 	wapbl_inodetrk_init(wl, WAPBL_INODETRK_SIZE);
+
+	wapbl_evcnt_init(wl);
 
 	/* Initialize the commit header */
 	{
@@ -746,6 +787,8 @@ wapbl_stop(struct wapbl *wl, int force)
 	wapbl_free(wl->wl_buffer, MAXPHYS);
 	wapbl_inodetrk_free(wl);
 
+	wapbl_evcnt_free(wl);
+
 	cv_destroy(&wl->wl_reclaimable_cv);
 	mutex_destroy(&wl->wl_mtx);
 	rw_destroy(&wl->wl_rwlock);
@@ -857,6 +900,8 @@ wapbl_buffered_flush(struct wapbl *wl)
 	error = wapbl_doio(wl->wl_buffer, wl->wl_buffer_used,
 	    wl->wl_devvp, wl->wl_buffer_dblk, B_WRITE);
 	wl->wl_buffer_used = 0;
+
+	wl->wl_ev_journalwrite.ev_count++;
 
 	return error;
 }
@@ -1355,7 +1400,7 @@ wapbl_truncate(struct wapbl *wl, size_t minfree)
 	 * the reserved bytes reserved.  Watch out for discarded transactions,
 	 * which could leave more bytes reserved than are reclaimable.
 	 */
-	if (SIMPLEQ_EMPTY(&wl->wl_entries) && 
+	if (SIMPLEQ_EMPTY(&wl->wl_entries) &&
 	    (delta >= wl->wl_reserved_bytes)) {
 		delta -= wl->wl_reserved_bytes;
 	}
@@ -1471,6 +1516,7 @@ wapbl_biodone(struct buf *bp)
 	KASSERT(wl->wl_unsynced_bufbytes >= bufsize);
 	wl->wl_unsynced_bufbytes -= bufsize;
 #endif
+	wl->wl_ev_metawrite.ev_count++;
 
 	/*
 	 * If the current transaction can be reclaimed, start
@@ -1732,7 +1778,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	 * fully flushed and the on disk log is empty.
 	 */
 	if (waitfor) {
-		error = wapbl_truncate(wl, wl->wl_circ_size - 
+		error = wapbl_truncate(wl, wl->wl_circ_size -
 			wl->wl_reserved_bytes);
 	}
 
@@ -2179,6 +2225,9 @@ wapbl_cache_sync(struct wapbl *wl, const char *msg)
 		    msg, (uintmax_t)wl->wl_devvp->v_rdev,
 		    (uintmax_t)ts.tv_sec, ts.tv_nsec);
 	}
+
+	wl->wl_ev_cacheflush.ev_count++;
+
 	return error;
 }
 
@@ -2269,6 +2318,9 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 			panic("wapbl_write_commit: error writing duplicate "
 			      "log header: %d", error);
 	}
+
+	wl->wl_ev_commit.ev_count++;
+
 	return 0;
 }
 
@@ -2352,7 +2404,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 		}
 		if (padding) {
 			void *zero;
-			
+
 			zero = wapbl_alloc(padding);
 			memset(zero, 0, padding);
 			error = wapbl_circ_write(wl, zero, padding, &off);
@@ -2382,6 +2434,8 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 	int blocklen = 1<<wl->wl_log_dev_bshift;
 	off_t off = *offp;
 	int error;
+
+	KASSERT(rw_write_held(&wl->wl_rwlock));
 
 	if (wl->wl_dealloccnt == 0)
 		return 0;
@@ -2470,7 +2524,7 @@ wapbl_write_inodes(struct wapbl *wl, off_t *offp)
 		if (error)
 			return error;
 	} while (i < wl->wl_inohashcnt);
-	
+
 	*offp = off;
 	return 0;
 }

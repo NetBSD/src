@@ -18,13 +18,15 @@ CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 TESTPROG= cleanup_masquerade cleanup_milter
 PROG	= cleanup
 INC_DIR	= ../../include
-LIBS	= ../../lib/libmaster.a ../../lib/libmilter.a ../../lib/libglobal.a \
-	../../lib/libutil.a
+LIBS	= ../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
+	../../lib/libmilter.a \
+	../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
+	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 
 $(PROG):	$(OBJS) $(LIBS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
+	$(CC) $(CFLAGS) $(SHLIB_RPATH) -o $@ $(OBJS) $(LIBS) $(SYSLIBS)
 
 $(OBJS): ../../conf/makedefs.out
 
@@ -82,21 +84,24 @@ milter_tests: cleanup_milter_test bug_tests \
 	cleanup_milter_test14g \
 	cleanup_milter_test15a cleanup_milter_test15b cleanup_milter_test15c \
 	cleanup_milter_test15d cleanup_milter_test15e cleanup_milter_test15f \
-	cleanup_milter_test15g cleanup_milter_test15h cleanup_milter_test15i
+	cleanup_milter_test15g cleanup_milter_test15h cleanup_milter_test15i \
+	cleanup_milter_test16a cleanup_milter_test16b
 
 root_tests:
 
 cleanup_masquerade_test: cleanup_masquerade cleanup_masq.ref
 	rm -f cleanup_masq.tmp
-	./cleanup_masquerade '' a.b.c,b.c xxx@aa.a.b.c    >>cleanup_masq.tmp
-	./cleanup_masquerade 'xxx' a.b.c,b.c xxx@aa.a.b.c >>cleanup_masq.tmp
-	./cleanup_masquerade 'yyy' a.b.c,b.c xxx@aa.a.b.c >>cleanup_masq.tmp
-	./cleanup_masquerade '' !a.b.c,b.c xxx@aa.a.b.c   >>cleanup_masq.tmp
-	./cleanup_masquerade '' a.b.c,b.c xxx@a.b.c       >>cleanup_masq.tmp
-	./cleanup_masquerade '' !a.b.c,b.c xxx@a.b.c      >>cleanup_masq.tmp
-	./cleanup_masquerade '' a.b.c,b.c xxx@aaa.b.c     >>cleanup_masq.tmp
-	./cleanup_masquerade '' a.b.c,b.c xxx@b.c         >>cleanup_masq.tmp
-	./cleanup_masquerade 'fail:whatever' xy xxx@b.c   >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' a.b.c,b.c xxx@aa.a.b.c    >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' A.B.C,B.C xxx@aa.a.b.c    >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' a.b.c,b.c xxx@AA.A.B.C    >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade 'xxx' a.b.c,b.c xxx@aa.a.b.c >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade 'yyy' a.b.c,b.c xxx@aa.a.b.c >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' !a.b.c,b.c xxx@aa.a.b.c   >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' a.b.c,b.c xxx@a.b.c       >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' !a.b.c,b.c xxx@a.b.c      >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' a.b.c,b.c xxx@aaa.b.c     >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade '' a.b.c,b.c xxx@b.c         >>cleanup_masq.tmp
+	$(SHLIB_ENV) ./cleanup_masquerade 'fail:whatever' xy xxx@b.c   >>cleanup_masq.tmp
 	diff cleanup_masq.ref cleanup_masq.tmp
 	rm -f cleanup_masq.tmp
 
@@ -109,10 +114,10 @@ bug1_test: cleanup_milter bug1.file bug1.in bug1.ref bug1.text.ref \
 	../postcat/postcat
 	cp bug1.file bug1.file.tmp
 	chmod u+w bug1.file.tmp
-	./cleanup_milter <bug1.in
-	../postcat/postcat -ov bug1.file.tmp 2>/dev/null >bug1.tmp
+	$(SHLIB_ENV) ./cleanup_milter <bug1.in
+	$(SHLIB_ENV) ../postcat/postcat -ov bug1.file.tmp 2>/dev/null >bug1.tmp
 	diff bug1.ref bug1.tmp
-	../postcat/postcat bug1.file.tmp 2>/dev/null >bug1.tmp
+	$(SHLIB_ENV) ../postcat/postcat bug1.file.tmp 2>/dev/null >bug1.tmp
 	diff bug1.text.ref bug1.tmp
 	rm -f bug1.file.tmp bug1.tmp
 
@@ -120,10 +125,10 @@ bug2_test: cleanup_milter bug2.file bug2.in bug2.ref bug2.text.ref \
 	../postcat/postcat
 	cp bug2.file bug2.file.tmp
 	chmod u+w bug2.file.tmp
-	./cleanup_milter <bug2.in
-	../postcat/postcat -ov bug2.file.tmp 2>/dev/null >bug2.tmp
+	$(SHLIB_ENV) ./cleanup_milter <bug2.in
+	$(SHLIB_ENV) ../postcat/postcat -ov bug2.file.tmp 2>/dev/null >bug2.tmp
 	diff bug2.ref bug2.tmp
-	../postcat/postcat bug2.file.tmp 2>/dev/null >bug2.tmp
+	$(SHLIB_ENV) ../postcat/postcat bug2.file.tmp 2>/dev/null >bug2.tmp
 	diff bug2.text.ref bug2.tmp
 	rm -f bug2.file.tmp bug2.tmp
 
@@ -131,10 +136,10 @@ bug3_test: cleanup_milter bug3.file bug3.in bug3.ref bug3.text.ref \
 	../postcat/postcat
 	cp bug3.file bug3.file.tmp
 	chmod u+w bug3.file.tmp
-	./cleanup_milter <bug3.in
-	../postcat/postcat -ov bug3.file.tmp 2>/dev/null >bug3.tmp
+	$(SHLIB_ENV) ./cleanup_milter <bug3.in
+	$(SHLIB_ENV) ../postcat/postcat -ov bug3.file.tmp 2>/dev/null >bug3.tmp
 	diff bug3.ref bug3.tmp
-	../postcat/postcat bug3.file.tmp 2>/dev/null >bug3.tmp
+	$(SHLIB_ENV) ../postcat/postcat bug3.file.tmp 2>/dev/null >bug3.tmp
 	diff bug3.text.ref bug3.tmp
 	rm -f bug3.file.tmp bug3.tmp
 
@@ -144,8 +149,8 @@ cleanup_milter_test: cleanup_milter test-queue-file cleanup_milter.in1 \
 	cleanup_milter.ref1 ../postcat/postcat
 	cp test-queue-file test-queue-file.tmp
 	chmod u+w test-queue-file.tmp
-	./cleanup_milter <cleanup_milter.in1
-	../postcat/postcat -ov test-queue-file.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in1
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref1 cleanup_milter.tmp
 	rm -f test-queue-file.tmp cleanup_milter.tmp
 
@@ -153,8 +158,8 @@ cleanup_milter_test2: cleanup_milter test-queue-file2 cleanup_milter.in2 \
 	cleanup_milter.ref2 ../postcat/postcat
 	cp test-queue-file2 test-queue-file2.tmp
 	chmod u+w test-queue-file2.tmp
-	./cleanup_milter <cleanup_milter.in2
-	../postcat/postcat -ov test-queue-file2.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file2.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref2 cleanup_milter.tmp
 	rm -f test-queue-file2.tmp cleanup_milter.tmp
 
@@ -162,8 +167,8 @@ cleanup_milter_test3: cleanup_milter test-queue-file3 cleanup_milter.in3 \
 	cleanup_milter.ref3 ../postcat/postcat
 	cp test-queue-file3 test-queue-file3.tmp
 	chmod u+w test-queue-file3.tmp
-	./cleanup_milter <cleanup_milter.in3
-	../postcat/postcat -ov test-queue-file3.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in3
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file3.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref3 cleanup_milter.tmp
 	rm -f test-queue-file3.tmp cleanup_milter.tmp
 
@@ -172,18 +177,18 @@ cleanup_milter_test4: cleanup_milter test-queue-file4 cleanup_milter.in4a \
 	test-queue-file4 ../postcat/postcat
 	cp test-queue-file4 test-queue-file4.tmp
 	chmod u+w test-queue-file4.tmp
-	./cleanup_milter <cleanup_milter.in4a
-	../postcat/postcat -ov test-queue-file4.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in4a
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file4.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref4 cleanup_milter.tmp
 	cp test-queue-file4 test-queue-file4.tmp
 	chmod u+w test-queue-file4.tmp
-	./cleanup_milter <cleanup_milter.in4b
-	../postcat/postcat -ov test-queue-file4.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in4b
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file4.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref4 cleanup_milter.tmp
 	cp test-queue-file4 test-queue-file4.tmp
 	chmod u+w test-queue-file4.tmp
-	./cleanup_milter <cleanup_milter.in4c
-	../postcat/postcat -ov test-queue-file4.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in4c
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file4.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref4 cleanup_milter.tmp
 	rm -f test-queue-file4.tmp cleanup_milter.tmp
 
@@ -191,8 +196,8 @@ cleanup_milter_test5: cleanup_milter test-queue-file5 cleanup_milter.in5 \
 	cleanup_milter.ref5 ../postcat/postcat
 	cp test-queue-file5 test-queue-file5.tmp
 	chmod u+w test-queue-file5.tmp
-	./cleanup_milter <cleanup_milter.in5
-	../postcat/postcat -ov test-queue-file5.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in5
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file5.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref5 cleanup_milter.tmp
 	rm -f test-queue-file5.tmp cleanup_milter.tmp
 
@@ -203,8 +208,8 @@ cleanup_milter_test6a: cleanup_milter test-queue-file6 cleanup_milter.in6a \
 	cleanup_milter.ref6a test-queue-file6 ../postcat/postcat
 	cp test-queue-file6 test-queue-file6.tmp
 	chmod u+w test-queue-file6.tmp
-	./cleanup_milter <cleanup_milter.in6a
-	../postcat/postcat -ov test-queue-file6.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in6a
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file6.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref6a cleanup_milter.tmp
 	rm -f test-queue-file6.tmp cleanup_milter.tmp
 
@@ -212,8 +217,8 @@ cleanup_milter_test6b: cleanup_milter test-queue-file6 cleanup_milter.in6b \
 	cleanup_milter.ref6b ../postcat/postcat
 	cp test-queue-file6 test-queue-file6.tmp
 	chmod u+w test-queue-file6.tmp
-	./cleanup_milter <cleanup_milter.in6b
-	../postcat/postcat -ov test-queue-file6.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in6b
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file6.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref6b cleanup_milter.tmp
 	rm -f test-queue-file6.tmp cleanup_milter.tmp
 
@@ -221,8 +226,8 @@ cleanup_milter_test6c: cleanup_milter test-queue-file6 cleanup_milter.in6c \
 	cleanup_milter.ref6c ../postcat/postcat
 	cp test-queue-file6 test-queue-file6.tmp
 	chmod u+w test-queue-file6.tmp
-	./cleanup_milter <cleanup_milter.in6c
-	../postcat/postcat -ov test-queue-file6.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in6c
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file6.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref6c cleanup_milter.tmp
 	rm -f test-queue-file6.tmp cleanup_milter.tmp
 
@@ -230,8 +235,8 @@ cleanup_milter_test7: cleanup_milter test-queue-file7 cleanup_milter.in7 \
 	cleanup_milter.ref7 ../postcat/postcat
 	cp test-queue-file7 test-queue-file7.tmp
 	chmod u+w test-queue-file7.tmp
-	./cleanup_milter <cleanup_milter.in7
-	../postcat/postcat -ov test-queue-file7.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in7
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file7.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref7 cleanup_milter.tmp
 	rm -f test-queue-file7.tmp cleanup_milter.tmp
 
@@ -239,8 +244,8 @@ cleanup_milter_test8: cleanup_milter test-queue-file8 cleanup_milter.in8 \
 	cleanup_milter.ref8 ../postcat/postcat
 	cp test-queue-file8 test-queue-file8.tmp
 	chmod u+w test-queue-file8.tmp
-	./cleanup_milter <cleanup_milter.in8
-	../postcat/postcat -ov test-queue-file8.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in8
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file8.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref8 cleanup_milter.tmp
 	rm -f test-queue-file8.tmp cleanup_milter.tmp
 
@@ -248,8 +253,8 @@ cleanup_milter_test9: cleanup_milter test-queue-file9 cleanup_milter.in9 \
 	cleanup_milter.ref9 ../postcat/postcat
 	cp test-queue-file9 test-queue-file9.tmp
 	chmod u+w test-queue-file9.tmp
-	./cleanup_milter <cleanup_milter.in9
-	../postcat/postcat -ov test-queue-file9.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in9
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file9.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref9 cleanup_milter.tmp
 	rm -f test-queue-file9.tmp cleanup_milter.tmp
 
@@ -257,8 +262,8 @@ cleanup_milter_test10a: cleanup_milter test-queue-file10 cleanup_milter.in10a \
 	cleanup_milter.ref10a ../postcat/postcat
 	cp test-queue-file10 test-queue-file10.tmp
 	chmod u+w test-queue-file10.tmp
-	./cleanup_milter <cleanup_milter.in10a
-	../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in10a
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref10a cleanup_milter.tmp
 	rm -f test-queue-file10.tmp cleanup_milter.tmp
 
@@ -266,8 +271,8 @@ cleanup_milter_test10b: cleanup_milter test-queue-file10 cleanup_milter.in10b \
 	cleanup_milter.ref10b ../postcat/postcat
 	cp test-queue-file10 test-queue-file10.tmp
 	chmod u+w test-queue-file10.tmp
-	./cleanup_milter <cleanup_milter.in10b
-	../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in10b
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref10b cleanup_milter.tmp
 	rm -f test-queue-file10.tmp cleanup_milter.tmp
 
@@ -275,8 +280,8 @@ cleanup_milter_test10c: cleanup_milter test-queue-file10 cleanup_milter.in10c \
 	cleanup_milter.ref10c ../postcat/postcat
 	cp test-queue-file10 test-queue-file10.tmp
 	chmod u+w test-queue-file10.tmp
-	./cleanup_milter <cleanup_milter.in10c
-	../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in10c
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref10c cleanup_milter.tmp
 	rm -f test-queue-file10.tmp cleanup_milter.tmp
 
@@ -284,8 +289,8 @@ cleanup_milter_test10d: cleanup_milter test-queue-file10 cleanup_milter.in10c \
 	cleanup_milter.ref10d ../postcat/postcat
 	cp test-queue-file10 test-queue-file10.tmp
 	chmod u+w test-queue-file10.tmp
-	./cleanup_milter <cleanup_milter.in10d
-	../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in10d
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref10d cleanup_milter.tmp
 	rm -f test-queue-file10.tmp cleanup_milter.tmp
 
@@ -293,8 +298,8 @@ cleanup_milter_test10e: cleanup_milter test-queue-file10 cleanup_milter.in10c \
 	cleanup_milter.ref10e ../postcat/postcat
 	cp test-queue-file10 test-queue-file10.tmp
 	chmod u+w test-queue-file10.tmp
-	./cleanup_milter <cleanup_milter.in10e
-	../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in10e
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file10.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref10e cleanup_milter.tmp
 	rm -f test-queue-file10.tmp cleanup_milter.tmp
 
@@ -302,8 +307,8 @@ cleanup_milter_test11: cleanup_milter test-queue-file11 cleanup_milter.in11 \
 	cleanup_milter.ref11 ../postcat/postcat
 	cp test-queue-file11 test-queue-file11.tmp
 	chmod u+w test-queue-file11.tmp
-	./cleanup_milter <cleanup_milter.in11
-	../postcat/postcat -ov test-queue-file11.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in11
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file11.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref11 cleanup_milter.tmp
 	rm -f test-queue-file11.tmp cleanup_milter.tmp
 
@@ -311,8 +316,8 @@ cleanup_milter_test12: cleanup_milter test-queue-file12 cleanup_milter.in12 \
 	cleanup_milter.ref12 ../postcat/postcat
 	cp test-queue-file12 test-queue-file12.tmp
 	chmod u+w test-queue-file12.tmp
-	./cleanup_milter <cleanup_milter.in12
-	../postcat/postcat -ov test-queue-file12.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in12
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file12.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref12 cleanup_milter.tmp
 	rm -f test-queue-file12.tmp cleanup_milter.tmp
 
@@ -320,8 +325,8 @@ cleanup_milter_test13a: cleanup_milter test-queue-file13a cleanup_milter.in13a \
 	cleanup_milter.ref13a ../postcat/postcat
 	cp test-queue-file13a test-queue-file13a.tmp
 	chmod u+w test-queue-file13a.tmp
-	./cleanup_milter <cleanup_milter.in13a
-	../postcat/postcat -ov test-queue-file13a.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in13a
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file13a.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref13a cleanup_milter.tmp
 	rm -f test-queue-file13a.tmp cleanup_milter.tmp
 
@@ -329,8 +334,8 @@ cleanup_milter_test13b: cleanup_milter test-queue-file13b cleanup_milter.in13b \
 	cleanup_milter.ref13b ../postcat/postcat
 	cp test-queue-file13b test-queue-file13b.tmp
 	chmod u+w test-queue-file13b.tmp
-	./cleanup_milter <cleanup_milter.in13b
-	../postcat/postcat -ov test-queue-file13b.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in13b
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file13b.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref13b cleanup_milter.tmp
 	rm -f test-queue-file13b.tmp cleanup_milter.tmp
 
@@ -338,8 +343,8 @@ cleanup_milter_test13c: cleanup_milter test-queue-file13c cleanup_milter.in13c \
 	cleanup_milter.ref13c ../postcat/postcat
 	cp test-queue-file13c test-queue-file13c.tmp
 	chmod u+w test-queue-file13c.tmp
-	./cleanup_milter <cleanup_milter.in13c
-	../postcat/postcat -ov test-queue-file13c.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in13c
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file13c.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref13c cleanup_milter.tmp
 	rm -f test-queue-file13c.tmp cleanup_milter.tmp
 
@@ -347,170 +352,206 @@ cleanup_milter_test13d: cleanup_milter test-queue-file13d cleanup_milter.in13d \
 	cleanup_milter.ref13d ../postcat/postcat
 	cp test-queue-file13d test-queue-file13d.tmp
 	chmod u+w test-queue-file13d.tmp
-	./cleanup_milter <cleanup_milter.in13d
-	../postcat/postcat -ov test-queue-file13d.tmp 2>/dev/null >cleanup_milter.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in13d
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file13d.tmp 2>/dev/null >cleanup_milter.tmp
 	diff cleanup_milter.ref13d cleanup_milter.tmp
 	rm -f test-queue-file13d.tmp cleanup_milter.tmp
 
 cleanup_milter_test14a: cleanup_milter test-queue-file14 cleanup_milter.in14a \
-	cleanup_milter.ref14a1 ../postcat/postcat cleanup_milter.ref14a2
+	cleanup_milter.ref14a1 ../postcat/postcat cleanup_milter.ref14a2 \
+	cleanup_milter.reg14a
 	cp test-queue-file14 test-queue-file14a.tmp
 	chmod u+w test-queue-file14a.tmp
-	./cleanup_milter <cleanup_milter.in14a 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14a 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14a1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14a.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14a.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14a2 cleanup_milter.tmp2
 	rm -f test-queue-file14a.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test14b: cleanup_milter test-queue-file14 cleanup_milter.in14b \
-	cleanup_milter.ref14b1 ../postcat/postcat cleanup_milter.ref14b2
+	cleanup_milter.ref14b1 ../postcat/postcat cleanup_milter.ref14b2 \
+	cleanup_milter.reg14b
 	cp test-queue-file14 test-queue-file14b.tmp
 	chmod u+w test-queue-file14b.tmp
-	./cleanup_milter <cleanup_milter.in14b 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14b 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14b1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14b.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14b.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14b2 cleanup_milter.tmp2
 	rm -f test-queue-file14b.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test14c: cleanup_milter test-queue-file14 cleanup_milter.in14c \
-	cleanup_milter.ref14c1 ../postcat/postcat cleanup_milter.ref14c2
+	cleanup_milter.ref14c1 ../postcat/postcat cleanup_milter.ref14c2 \
+	cleanup_milter.reg14c
 	cp test-queue-file14 test-queue-file14c.tmp
 	chmod u+w test-queue-file14c.tmp
-	./cleanup_milter <cleanup_milter.in14c 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14c 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14c1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14c.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14c.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14c2 cleanup_milter.tmp2
 	rm -f test-queue-file14c.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test14d: cleanup_milter test-queue-file14 cleanup_milter.in14d \
-	cleanup_milter.ref14d1 ../postcat/postcat cleanup_milter.ref14d2
+	cleanup_milter.ref14d1 ../postcat/postcat cleanup_milter.ref14d2 \
+	cleanup_milter.reg14d
 	cp test-queue-file14 test-queue-file14d.tmp
 	chmod u+w test-queue-file14d.tmp
-	./cleanup_milter <cleanup_milter.in14d 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14d 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14d1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14d.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14d.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14d2 cleanup_milter.tmp2
 	rm -f test-queue-file14d.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test14e: cleanup_milter test-queue-file14 cleanup_milter.in14e \
-	cleanup_milter.ref14e1 ../postcat/postcat cleanup_milter.ref14e2
+	cleanup_milter.ref14e1 ../postcat/postcat cleanup_milter.ref14e2 \
+	cleanup_milter.reg14e
 	cp test-queue-file14 test-queue-file14e.tmp
 	chmod u+w test-queue-file14e.tmp
-	./cleanup_milter <cleanup_milter.in14e 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14e 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14e1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14e.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14e.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14e2 cleanup_milter.tmp2
 	rm -f test-queue-file14e.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test14f: cleanup_milter test-queue-file14 cleanup_milter.in14f \
-	cleanup_milter.ref14f1 ../postcat/postcat cleanup_milter.ref14f2
+	cleanup_milter.ref14f1 ../postcat/postcat cleanup_milter.ref14f2 \
+	cleanup_milter.reg14f
 	cp test-queue-file14 test-queue-file14f.tmp
 	chmod u+w test-queue-file14f.tmp
-	./cleanup_milter <cleanup_milter.in14f 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14f 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14f1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14f.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14f.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14f2 cleanup_milter.tmp2
 	rm -f test-queue-file14f.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test14g: cleanup_milter test-queue-file14 cleanup_milter.in14g \
-	cleanup_milter.ref14g1 ../postcat/postcat cleanup_milter.ref14g2
+	cleanup_milter.ref14g1 ../postcat/postcat cleanup_milter.ref14g2 \
+	cleanup_milter.reg14g
 	cp test-queue-file14 test-queue-file14g.tmp
 	chmod u+w test-queue-file14g.tmp
-	./cleanup_milter <cleanup_milter.in14g 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in14g 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref14g1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file14g.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file14g.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref14g2 cleanup_milter.tmp2
 	rm -f test-queue-file14g.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15a: cleanup_milter test-queue-file15 cleanup_milter.in15a \
-	cleanup_milter.ref15a1 ../postcat/postcat cleanup_milter.ref15a2
+	cleanup_milter.ref15a1 ../postcat/postcat cleanup_milter.ref15a2 \
+	cleanup_milter.reg15a
 	cp test-queue-file15 test-queue-file15a.tmp
 	chmod u+w test-queue-file15a.tmp
-	./cleanup_milter <cleanup_milter.in15a 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15a 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15a1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15a.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15a.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15a2 cleanup_milter.tmp2
 	rm -f test-queue-file15a.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15b: cleanup_milter test-queue-file15 cleanup_milter.in15b \
-	cleanup_milter.ref15b1 ../postcat/postcat cleanup_milter.ref15b2
+	cleanup_milter.ref15b1 ../postcat/postcat cleanup_milter.ref15b2 \
+	cleanup_milter.reg15b
 	cp test-queue-file15 test-queue-file15b.tmp
 	chmod u+w test-queue-file15b.tmp
-	./cleanup_milter <cleanup_milter.in15b 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15b 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15b1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15b.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15b.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15b2 cleanup_milter.tmp2
 	rm -f test-queue-file15b.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15c: cleanup_milter test-queue-file15 cleanup_milter.in15c \
-	cleanup_milter.ref15c1 ../postcat/postcat cleanup_milter.ref15c2
+	cleanup_milter.ref15c1 ../postcat/postcat cleanup_milter.ref15c2 \
+	cleanup_milter.reg15c
 	cp test-queue-file15 test-queue-file15c.tmp
 	chmod u+w test-queue-file15c.tmp
-	./cleanup_milter <cleanup_milter.in15c 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15c 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15c1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15c.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15c.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15c2 cleanup_milter.tmp2
 	rm -f test-queue-file15c.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15d: cleanup_milter test-queue-file15 cleanup_milter.in15d \
-	cleanup_milter.ref15d1 ../postcat/postcat cleanup_milter.ref15d2
+	cleanup_milter.ref15d1 ../postcat/postcat cleanup_milter.ref15d2 \
+	cleanup_milter.reg15d
 	cp test-queue-file15 test-queue-file15d.tmp
 	chmod u+w test-queue-file15d.tmp
-	./cleanup_milter <cleanup_milter.in15d 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15d 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15d1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15d.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15d.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15d2 cleanup_milter.tmp2
 	rm -f test-queue-file15d.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15e: cleanup_milter test-queue-file15 cleanup_milter.in15e \
-	cleanup_milter.ref15e1 ../postcat/postcat cleanup_milter.ref15e2
+	cleanup_milter.ref15e1 ../postcat/postcat cleanup_milter.ref15e2 \
+	cleanup_milter.reg15e
 	cp test-queue-file15 test-queue-file15e.tmp
 	chmod u+w test-queue-file15e.tmp
-	./cleanup_milter <cleanup_milter.in15e 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15e 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15e1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15e.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15e.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15e2 cleanup_milter.tmp2
 	rm -f test-queue-file15e.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15f: cleanup_milter test-queue-file15 cleanup_milter.in15f \
-	cleanup_milter.ref15f1 ../postcat/postcat cleanup_milter.ref15f2
+	cleanup_milter.ref15f1 ../postcat/postcat cleanup_milter.ref15f2 \
+	cleanup_milter.reg15f
 	cp test-queue-file15 test-queue-file15f.tmp
 	chmod u+w test-queue-file15f.tmp
-	./cleanup_milter <cleanup_milter.in15f 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15f 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15f1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15f.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15f.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15f2 cleanup_milter.tmp2
 	rm -f test-queue-file15f.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15g: cleanup_milter test-queue-file15 cleanup_milter.in15g \
-	cleanup_milter.ref15g1 ../postcat/postcat cleanup_milter.ref15g2
+	cleanup_milter.ref15g1 ../postcat/postcat cleanup_milter.ref15g2 \
+	cleanup_milter.reg15g
 	cp test-queue-file15 test-queue-file15g.tmp
 	chmod u+w test-queue-file15g.tmp
-	./cleanup_milter <cleanup_milter.in15g 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15g 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15g1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15g.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15g.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15g2 cleanup_milter.tmp2
 	rm -f test-queue-file15g.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15h: cleanup_milter test-queue-file15 cleanup_milter.in15h \
-	cleanup_milter.ref15h1 ../postcat/postcat cleanup_milter.ref15h2
+	cleanup_milter.ref15h1 ../postcat/postcat cleanup_milter.ref15h2 \
+	cleanup_milter.reg15h
 	cp test-queue-file15 test-queue-file15h.tmp
 	chmod u+w test-queue-file15h.tmp
-	./cleanup_milter <cleanup_milter.in15h 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15h 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15h1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15h.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15h.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15h2 cleanup_milter.tmp2
 	rm -f test-queue-file15h.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 cleanup_milter_test15i: cleanup_milter test-queue-file15 cleanup_milter.in15i \
-	cleanup_milter.ref15i1 ../postcat/postcat cleanup_milter.ref15i2
+	cleanup_milter.ref15i1 ../postcat/postcat cleanup_milter.ref15i2 \
+	cleanup_milter.reg15i
 	cp test-queue-file15 test-queue-file15i.tmp
 	chmod u+w test-queue-file15i.tmp
-	./cleanup_milter <cleanup_milter.in15i 2>cleanup_milter.tmp1
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in15i 2>cleanup_milter.tmp1
 	diff cleanup_milter.ref15i1 cleanup_milter.tmp1
-	../postcat/postcat -ov test-queue-file15i.tmp 2>/dev/null >cleanup_milter.tmp2
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file15i.tmp 2>/dev/null >cleanup_milter.tmp2
 	diff cleanup_milter.ref15i2 cleanup_milter.tmp2
 	rm -f test-queue-file15i.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test16a: cleanup_milter test-queue-file16 cleanup_milter.in16a \
+	cleanup_milter.ref16a1 ../postcat/postcat cleanup_milter.ref16a2
+	cp test-queue-file16 test-queue-file16a.tmp
+	chmod u+w test-queue-file16a.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in16a 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref16a1 cleanup_milter.tmp1
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file16a.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref16a2 cleanup_milter.tmp2
+	rm -f test-queue-file16a.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test16b: cleanup_milter test-queue-file16 cleanup_milter.in16b \
+	cleanup_milter.ref16b1 ../postcat/postcat cleanup_milter.ref16b2
+	cp test-queue-file16 test-queue-file16b.tmp
+	chmod u+w test-queue-file16b.tmp
+	$(SHLIB_ENV) ./cleanup_milter <cleanup_milter.in16b 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref16b1 cleanup_milter.tmp1
+	$(SHLIB_ENV) ../postcat/postcat -ov test-queue-file16b.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref16b2 cleanup_milter.tmp2
+	rm -f test-queue-file16b.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
@@ -525,6 +566,7 @@ depend: $(MAKES)
 cleanup.o: ../../include/argv.h
 cleanup.o: ../../include/attr.h
 cleanup.o: ../../include/been_here.h
+cleanup.o: ../../include/check_arg.h
 cleanup.o: ../../include/cleanup_user.h
 cleanup.o: ../../include/dict.h
 cleanup.o: ../../include/dsn_mask.h
@@ -561,6 +603,7 @@ cleanup_addr.o: ../../include/argv.h
 cleanup_addr.o: ../../include/attr.h
 cleanup_addr.o: ../../include/been_here.h
 cleanup_addr.o: ../../include/canon_addr.h
+cleanup_addr.o: ../../include/check_arg.h
 cleanup_addr.o: ../../include/cleanup_user.h
 cleanup_addr.o: ../../include/dict.h
 cleanup_addr.o: ../../include/dsn_mask.h
@@ -585,6 +628,7 @@ cleanup_addr.o: ../../include/mymalloc.h
 cleanup_addr.o: ../../include/nvtable.h
 cleanup_addr.o: ../../include/rec_type.h
 cleanup_addr.o: ../../include/resolve_clnt.h
+cleanup_addr.o: ../../include/smtputf8.h
 cleanup_addr.o: ../../include/string_list.h
 cleanup_addr.o: ../../include/stringops.h
 cleanup_addr.o: ../../include/sys_defs.h
@@ -598,6 +642,7 @@ cleanup_api.o: ../../include/argv.h
 cleanup_api.o: ../../include/attr.h
 cleanup_api.o: ../../include/been_here.h
 cleanup_api.o: ../../include/bounce.h
+cleanup_api.o: ../../include/check_arg.h
 cleanup_api.o: ../../include/cleanup_user.h
 cleanup_api.o: ../../include/deliver_request.h
 cleanup_api.o: ../../include/dict.h
@@ -626,6 +671,7 @@ cleanup_api.o: ../../include/nvtable.h
 cleanup_api.o: ../../include/rec_type.h
 cleanup_api.o: ../../include/recipient_list.h
 cleanup_api.o: ../../include/resolve_clnt.h
+cleanup_api.o: ../../include/smtputf8.h
 cleanup_api.o: ../../include/string_list.h
 cleanup_api.o: ../../include/sys_defs.h
 cleanup_api.o: ../../include/tok822.h
@@ -637,6 +683,7 @@ cleanup_api.o: cleanup_api.c
 cleanup_body_edit.o: ../../include/argv.h
 cleanup_body_edit.o: ../../include/attr.h
 cleanup_body_edit.o: ../../include/been_here.h
+cleanup_body_edit.o: ../../include/check_arg.h
 cleanup_body_edit.o: ../../include/cleanup_user.h
 cleanup_body_edit.o: ../../include/dict.h
 cleanup_body_edit.o: ../../include/dsn_mask.h
@@ -668,6 +715,7 @@ cleanup_bounce.o: ../../include/argv.h
 cleanup_bounce.o: ../../include/attr.h
 cleanup_bounce.o: ../../include/been_here.h
 cleanup_bounce.o: ../../include/bounce.h
+cleanup_bounce.o: ../../include/check_arg.h
 cleanup_bounce.o: ../../include/cleanup_user.h
 cleanup_bounce.o: ../../include/deliver_request.h
 cleanup_bounce.o: ../../include/dict.h
@@ -710,8 +758,11 @@ cleanup_bounce.o: cleanup_bounce.c
 cleanup_envelope.o: ../../include/argv.h
 cleanup_envelope.o: ../../include/attr.h
 cleanup_envelope.o: ../../include/been_here.h
+cleanup_envelope.o: ../../include/check_arg.h
 cleanup_envelope.o: ../../include/cleanup_user.h
+cleanup_envelope.o: ../../include/deliver_request.h
 cleanup_envelope.o: ../../include/dict.h
+cleanup_envelope.o: ../../include/dsn.h
 cleanup_envelope.o: ../../include/dsn_mask.h
 cleanup_envelope.o: ../../include/header_body_checks.h
 cleanup_envelope.o: ../../include/header_opts.h
@@ -726,6 +777,7 @@ cleanup_envelope.o: ../../include/match_list.h
 cleanup_envelope.o: ../../include/milter.h
 cleanup_envelope.o: ../../include/mime_state.h
 cleanup_envelope.o: ../../include/msg.h
+cleanup_envelope.o: ../../include/msg_stats.h
 cleanup_envelope.o: ../../include/myflock.h
 cleanup_envelope.o: ../../include/mymalloc.h
 cleanup_envelope.o: ../../include/nvtable.h
@@ -735,6 +787,7 @@ cleanup_envelope.o: ../../include/rec_type.h
 cleanup_envelope.o: ../../include/recipient_list.h
 cleanup_envelope.o: ../../include/record.h
 cleanup_envelope.o: ../../include/resolve_clnt.h
+cleanup_envelope.o: ../../include/smtputf8.h
 cleanup_envelope.o: ../../include/string_list.h
 cleanup_envelope.o: ../../include/stringops.h
 cleanup_envelope.o: ../../include/sys_defs.h
@@ -748,6 +801,7 @@ cleanup_envelope.o: cleanup_envelope.c
 cleanup_extracted.o: ../../include/argv.h
 cleanup_extracted.o: ../../include/attr.h
 cleanup_extracted.o: ../../include/been_here.h
+cleanup_extracted.o: ../../include/check_arg.h
 cleanup_extracted.o: ../../include/cleanup_user.h
 cleanup_extracted.o: ../../include/dict.h
 cleanup_extracted.o: ../../include/dsn_mask.h
@@ -784,6 +838,7 @@ cleanup_extracted.o: cleanup_extracted.c
 cleanup_final.o: ../../include/argv.h
 cleanup_final.o: ../../include/attr.h
 cleanup_final.o: ../../include/been_here.h
+cleanup_final.o: ../../include/check_arg.h
 cleanup_final.o: ../../include/cleanup_user.h
 cleanup_final.o: ../../include/dict.h
 cleanup_final.o: ../../include/dsn_mask.h
@@ -813,6 +868,7 @@ cleanup_final.o: cleanup_final.c
 cleanup_init.o: ../../include/argv.h
 cleanup_init.o: ../../include/attr.h
 cleanup_init.o: ../../include/been_here.h
+cleanup_init.o: ../../include/check_arg.h
 cleanup_init.o: ../../include/cleanup_user.h
 cleanup_init.o: ../../include/dict.h
 cleanup_init.o: ../../include/dsn_mask.h
@@ -849,6 +905,7 @@ cleanup_init.o: cleanup_init.c
 cleanup_map11.o: ../../include/argv.h
 cleanup_map11.o: ../../include/attr.h
 cleanup_map11.o: ../../include/been_here.h
+cleanup_map11.o: ../../include/check_arg.h
 cleanup_map11.o: ../../include/cleanup_user.h
 cleanup_map11.o: ../../include/dict.h
 cleanup_map11.o: ../../include/dsn_mask.h
@@ -870,6 +927,7 @@ cleanup_map11.o: ../../include/quote_822_local.h
 cleanup_map11.o: ../../include/quote_flags.h
 cleanup_map11.o: ../../include/resolve_clnt.h
 cleanup_map11.o: ../../include/string_list.h
+cleanup_map11.o: ../../include/stringops.h
 cleanup_map11.o: ../../include/sys_defs.h
 cleanup_map11.o: ../../include/tok822.h
 cleanup_map11.o: ../../include/vbuf.h
@@ -880,6 +938,7 @@ cleanup_map11.o: cleanup_map11.c
 cleanup_map1n.o: ../../include/argv.h
 cleanup_map1n.o: ../../include/attr.h
 cleanup_map1n.o: ../../include/been_here.h
+cleanup_map1n.o: ../../include/check_arg.h
 cleanup_map1n.o: ../../include/cleanup_user.h
 cleanup_map1n.o: ../../include/dict.h
 cleanup_map1n.o: ../../include/dsn_mask.h
@@ -902,6 +961,7 @@ cleanup_map1n.o: ../../include/quote_822_local.h
 cleanup_map1n.o: ../../include/quote_flags.h
 cleanup_map1n.o: ../../include/resolve_clnt.h
 cleanup_map1n.o: ../../include/string_list.h
+cleanup_map1n.o: ../../include/stringops.h
 cleanup_map1n.o: ../../include/sys_defs.h
 cleanup_map1n.o: ../../include/tok822.h
 cleanup_map1n.o: ../../include/vbuf.h
@@ -912,6 +972,7 @@ cleanup_map1n.o: cleanup_map1n.c
 cleanup_masquerade.o: ../../include/argv.h
 cleanup_masquerade.o: ../../include/attr.h
 cleanup_masquerade.o: ../../include/been_here.h
+cleanup_masquerade.o: ../../include/check_arg.h
 cleanup_masquerade.o: ../../include/cleanup_user.h
 cleanup_masquerade.o: ../../include/dict.h
 cleanup_masquerade.o: ../../include/dsn_mask.h
@@ -944,6 +1005,7 @@ cleanup_masquerade.o: cleanup_masquerade.c
 cleanup_message.o: ../../include/argv.h
 cleanup_message.o: ../../include/attr.h
 cleanup_message.o: ../../include/been_here.h
+cleanup_message.o: ../../include/check_arg.h
 cleanup_message.o: ../../include/cleanup_user.h
 cleanup_message.o: ../../include/conv_time.h
 cleanup_message.o: ../../include/dict.h
@@ -988,6 +1050,7 @@ cleanup_message.o: cleanup_message.c
 cleanup_milter.o: ../../include/argv.h
 cleanup_milter.o: ../../include/attr.h
 cleanup_milter.o: ../../include/been_here.h
+cleanup_milter.o: ../../include/check_arg.h
 cleanup_milter.o: ../../include/cleanup_user.h
 cleanup_milter.o: ../../include/dict.h
 cleanup_milter.o: ../../include/dsn_mask.h
@@ -1030,6 +1093,7 @@ cleanup_milter.o: cleanup_milter.c
 cleanup_out.o: ../../include/argv.h
 cleanup_out.o: ../../include/attr.h
 cleanup_out.o: ../../include/been_here.h
+cleanup_out.o: ../../include/check_arg.h
 cleanup_out.o: ../../include/cleanup_user.h
 cleanup_out.o: ../../include/dict.h
 cleanup_out.o: ../../include/dsn_mask.h
@@ -1051,8 +1115,10 @@ cleanup_out.o: ../../include/nvtable.h
 cleanup_out.o: ../../include/rec_type.h
 cleanup_out.o: ../../include/record.h
 cleanup_out.o: ../../include/resolve_clnt.h
+cleanup_out.o: ../../include/smtputf8.h
 cleanup_out.o: ../../include/split_at.h
 cleanup_out.o: ../../include/string_list.h
+cleanup_out.o: ../../include/stringops.h
 cleanup_out.o: ../../include/sys_defs.h
 cleanup_out.o: ../../include/tok822.h
 cleanup_out.o: ../../include/vbuf.h
@@ -1064,6 +1130,7 @@ cleanup_out_recipient.o: ../../include/argv.h
 cleanup_out_recipient.o: ../../include/attr.h
 cleanup_out_recipient.o: ../../include/been_here.h
 cleanup_out_recipient.o: ../../include/bounce.h
+cleanup_out_recipient.o: ../../include/check_arg.h
 cleanup_out_recipient.o: ../../include/cleanup_user.h
 cleanup_out_recipient.o: ../../include/deliver_request.h
 cleanup_out_recipient.o: ../../include/dict.h
@@ -1097,6 +1164,7 @@ cleanup_out_recipient.o: ../../include/sys_defs.h
 cleanup_out_recipient.o: ../../include/tok822.h
 cleanup_out_recipient.o: ../../include/trace.h
 cleanup_out_recipient.o: ../../include/vbuf.h
+cleanup_out_recipient.o: ../../include/verify.h
 cleanup_out_recipient.o: ../../include/vstream.h
 cleanup_out_recipient.o: ../../include/vstring.h
 cleanup_out_recipient.o: cleanup.h
@@ -1104,6 +1172,7 @@ cleanup_out_recipient.o: cleanup_out_recipient.c
 cleanup_region.o: ../../include/argv.h
 cleanup_region.o: ../../include/attr.h
 cleanup_region.o: ../../include/been_here.h
+cleanup_region.o: ../../include/check_arg.h
 cleanup_region.o: ../../include/cleanup_user.h
 cleanup_region.o: ../../include/dict.h
 cleanup_region.o: ../../include/dsn_mask.h
@@ -1133,6 +1202,7 @@ cleanup_region.o: cleanup_region.c
 cleanup_rewrite.o: ../../include/argv.h
 cleanup_rewrite.o: ../../include/attr.h
 cleanup_rewrite.o: ../../include/been_here.h
+cleanup_rewrite.o: ../../include/check_arg.h
 cleanup_rewrite.o: ../../include/cleanup_user.h
 cleanup_rewrite.o: ../../include/dict.h
 cleanup_rewrite.o: ../../include/dsn_mask.h
@@ -1166,6 +1236,7 @@ cleanup_rewrite.o: cleanup_rewrite.c
 cleanup_state.o: ../../include/argv.h
 cleanup_state.o: ../../include/attr.h
 cleanup_state.o: ../../include/been_here.h
+cleanup_state.o: ../../include/check_arg.h
 cleanup_state.o: ../../include/cleanup_user.h
 cleanup_state.o: ../../include/dict.h
 cleanup_state.o: ../../include/dsn_mask.h

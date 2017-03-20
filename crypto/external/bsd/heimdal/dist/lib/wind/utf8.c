@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.1.1.2 2014/04/24 12:45:56 pettai Exp $	*/
+/*	$NetBSD: utf8.c,v 1.1.1.2.6.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004, 2006, 2007, 2008 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.135 2015/10/03 09:31:29 hannken Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.135.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135 2015/10/03 09:31:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135.2.1 2017/03/20 06:57:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,11 +315,9 @@ lfs_bwrite(void *v)
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 
-#ifdef DIAGNOSTIC
-	if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
-		panic("bawrite LFS buffer");
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((VTOI(bp->b_vp)->i_lfs->lfs_ronly ||
+		!(bp->b_flags & B_ASYNC)),
+	    "bawrite LFS buffer");
 	return lfs_bwrite_ext(bp, 0);
 }
 
@@ -385,10 +383,7 @@ lfs_availwait(struct lfs *fs, int fsb)
 #endif
 
 		lfs_wakeup_cleaner(fs);
-#ifdef DIAGNOSTIC
-		if (LFS_SEGLOCK_HELD(fs))
-			panic("lfs_availwait: deadlock");
-#endif
+		KASSERTMSG(!LFS_SEGLOCK_HELD(fs), "lfs_availwait: deadlock");
 		error = tsleep(&fs->lfs_availsleep, PCATCH | PUSER,
 			       "cleaner", 0);
 		if (error)
@@ -717,12 +712,8 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
 	}
-#ifdef DIAGNOSTIC
-	if (vp == NULL)
-		panic("vp is NULL in lfs_newbuf");
-	if (bp == NULL)
-		panic("bp is NULL after malloc in lfs_newbuf");
-#endif
+	KASSERT(vp != NULL);
+	KASSERT(bp != NULL);
 
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
@@ -778,11 +769,9 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 		KASSERT(bp->b_iodone == NULL);
 		n++;
 		size += bp->b_bufsize;
-#ifdef DIAGNOSTIC
-		if (n > nbuf)
-			panic("lfs_countlocked: this can't happen: more"
-			      " buffers locked than exist");
-#endif
+		KASSERTMSG((n <= nbuf),
+		    "lfs_countlocked: this can't happen: more"
+		    " buffers locked than exist");
 	}
 	/*
 	 * Theoretically this function never really does anything.

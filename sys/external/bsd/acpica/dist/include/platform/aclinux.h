@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,6 +72,10 @@
 
 #ifdef CONFIG_ACPI_DEBUGGER
 #define ACPI_DEBUGGER
+#endif
+
+#ifdef CONFIG_ACPI_DEBUG
+#define ACPI_MUTEX_DEBUG
 #endif
 
 #include <linux/string.h>
@@ -153,6 +157,8 @@
  */
 #define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsReadable
 #define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsWritable
+#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsInitializeDebugger
+#define ACPI_USE_ALTERNATE_PROTOTYPE_AcpiOsTerminateDebugger
 
 /*
  * OSL interfaces used by utilities
@@ -186,6 +192,9 @@
 #ifndef __init
 #define __init
 #endif
+#ifndef __iomem
+#define __iomem
+#endif
 
 /* Host-dependent types and defines for user-space ACPICA */
 
@@ -193,7 +202,8 @@
 #define ACPI_CAST_PTHREAD_T(Pthread) ((ACPI_THREAD_ID) (Pthread))
 
 #if defined(__ia64__)    || defined(__x86_64__) ||\
-    defined(__aarch64__) || defined(__PPC64__)
+    defined(__aarch64__) || defined(__PPC64__) ||\
+    defined(__s390x__)
 #define ACPI_MACHINE_WIDTH          64
 #define COMPILER_DEPENDENT_INT64    long
 #define COMPILER_DEPENDENT_UINT64   unsigned long

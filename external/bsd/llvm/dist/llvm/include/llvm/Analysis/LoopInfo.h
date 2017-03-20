@@ -25,6 +25,12 @@
 //  * the loop depth
 //  * etc...
 //
+// Note that this analysis specifically identifies *Loops* not cycles or SCCs
+// in the CFG.  There can be strongly connected compontents in the CFG which
+// this analysis will not recognize and that will not be represented by a Loop
+// instance.  In particular, a Loop might be inside such a non-loop SCC, or a
+// non-loop SCC might contain a sub-SCC which is a Loop. 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_LOOPINFO_H
@@ -38,15 +44,11 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include <algorithm>
 
 namespace llvm {
-
-// FIXME: Replace this brittle forward declaration with the include of the new
-// PassManager.h when doing so doesn't break the PassManagerBuilder.
-template <typename IRUnitT> class AnalysisManager;
-class PreservedAnalyses;
 
 class DominatorTree;
 class LoopInfo;
@@ -164,6 +166,19 @@ public:
         return true;
     }
     return false;
+  }
+
+  /// Returns true if \p BB is a loop-latch.
+  /// A latch block is a block that contains a branch back to the header.
+  /// This function is useful when there are multiple latches in a loop
+  /// because \fn getLoopLatch will return nullptr in that case.
+  bool isLoopLatch(const BlockT *BB) const {
+    assert(contains(BB) && "block does not belong to the loop");
+
+    BlockT *Header = getHeader();
+    auto PredBegin = GraphTraits<Inverse<BlockT*> >::child_begin(Header);
+    auto PredEnd = GraphTraits<Inverse<BlockT*> >::child_end(Header);
+    return std::find(PredBegin, PredEnd, BB) != PredEnd;
   }
 
   /// Calculate the number of back edges to the loop header.
@@ -314,7 +329,7 @@ public:
   /// Blocks as appropriate. This does not update the mapping in the LoopInfo
   /// class.
   void removeBlockFromLoop(BlockT *BB) {
-    auto I = std::find(Blocks.begin(), Blocks.end(), BB);
+    auto I = find(Blocks, BB);
     assert(I != Blocks.end() && "N is not in this list!");
     Blocks.erase(I);
 
@@ -327,7 +342,8 @@ public:
   /// Verify loop structure of this loop and all nested loops.
   void verifyLoopNest(DenseSet<const LoopT*> *Loops) const;
 
-  void print(raw_ostream &OS, unsigned Depth = 0) const;
+  /// Print loop with all the BBs inside it.
+  void print(raw_ostream &OS, unsigned Depth = 0, bool Verbose = false) const;
 
 protected:
   friend class LoopInfoBase<BlockT, LoopT>;
@@ -346,8 +362,32 @@ raw_ostream& operator<<(raw_ostream &OS, const LoopBase<BlockT, LoopT> &Loop) {
 // Implementation in LoopInfoImpl.h
 extern template class LoopBase<BasicBlock, Loop>;
 
+
+/// Represents a single loop in the control flow graph.  Note that not all SCCs
+/// in the CFG are neccessarily loops.
 class Loop : public LoopBase<BasicBlock, Loop> {
 public:
+  /// \brief A range representing the start and end location of a loop.
+  class LocRange {
+    DebugLoc Start;
+    DebugLoc End;
+
+  public:
+    LocRange() {}
+    LocRange(DebugLoc Start) : Start(std::move(Start)), End(std::move(Start)) {}
+    LocRange(DebugLoc Start, DebugLoc End) : Start(std::move(Start)),
+                                             End(std::move(End)) {}
+
+    const DebugLoc &getStart() const { return Start; }
+    const DebugLoc &getEnd() const { return End; }
+
+    /// \brief Check for null.
+    ///
+    explicit operator bool() const {
+      return Start && End;
+    }
+  };
+
   Loop() {}
 
   /// Return true if the specified value is loop invariant.
@@ -393,7 +433,7 @@ public:
   bool isLCSSAForm(DominatorTree &DT) const;
 
   /// Return true if this Loop and all inner subloops are in LCSSA form.
-  bool isRecursivelyLCSSAForm(DominatorTree &DT) const;
+  bool isRecursivelyLCSSAForm(DominatorTree &DT, const LoopInfo &LI) const;
 
   /// Return true if the Loop is in the form that the LoopSimplify form
   /// transforms loops to, which is sometimes called normal form.
@@ -446,27 +486,23 @@ public:
   BasicBlock *getUniqueExitBlock() const;
 
   void dump() const;
+  void dumpVerbose() const;
 
   /// Return the debug location of the start of this loop.
   /// This looks for a BB terminating instruction with a known debug
   /// location by looking at the preheader and header blocks. If it
   /// cannot find a terminating instruction with location information,
   /// it returns an unknown location.
-  DebugLoc getStartLoc() const {
-    BasicBlock *HeadBB;
+  DebugLoc getStartLoc() const;
 
-    // Try the pre-header first.
-    if ((HeadBB = getLoopPreheader()) != nullptr)
-      if (DebugLoc DL = HeadBB->getTerminator()->getDebugLoc())
-        return DL;
+  /// Return the source code span of the loop.
+  LocRange getLocRange() const;
 
-    // If we have no pre-header or there are no instructions with debug
-    // info in it, try the header.
-    HeadBB = getHeader();
-    if (HeadBB)
-      return HeadBB->getTerminator()->getDebugLoc();
-
-    return DebugLoc();
+  StringRef getName() const {
+    if (BasicBlock *Header = getHeader())
+      if (Header->hasName())
+        return Header->getName();
+    return "<unnamed loop>";
   }
 
 private:
@@ -582,7 +618,7 @@ public:
   /// loop.
   void changeTopLevelLoop(LoopT *OldLoop,
                           LoopT *NewLoop) {
-    auto I = std::find(TopLevelLoops.begin(), TopLevelLoops.end(), OldLoop);
+    auto I = find(TopLevelLoops, OldLoop);
     assert(I != TopLevelLoops.end() && "Old loop not at top level!");
     *I = NewLoop;
     assert(!NewLoop->ParentLoop && !OldLoop->ParentLoop &&
@@ -623,7 +659,7 @@ public:
   // Debugging
   void print(raw_ostream &OS) const;
 
-  void verify() const;
+  void verify(const DominatorTreeBase<BlockT> &DomTree) const;
 };
 
 // Implementation in LoopInfoImpl.h
@@ -749,56 +785,46 @@ public:
 
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
-  typedef const Loop NodeType;
+  typedef const Loop *NodeRef;
   typedef LoopInfo::iterator ChildIteratorType;
 
-  static NodeType *getEntryNode(const Loop *L) { return L; }
-  static inline ChildIteratorType child_begin(NodeType *N) {
-    return N->begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->end();
-  }
+  static NodeRef getEntryNode(const Loop *L) { return L; }
+  static ChildIteratorType child_begin(NodeRef N) { return N->begin(); }
+  static ChildIteratorType child_end(NodeRef N) { return N->end(); }
 };
 
 template <> struct GraphTraits<Loop*> {
-  typedef Loop NodeType;
+  typedef Loop *NodeRef;
   typedef LoopInfo::iterator ChildIteratorType;
 
-  static NodeType *getEntryNode(Loop *L) { return L; }
-  static inline ChildIteratorType child_begin(NodeType *N) {
-    return N->begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->end();
-  }
+  static NodeRef getEntryNode(Loop *L) { return L; }
+  static ChildIteratorType child_begin(NodeRef N) { return N->begin(); }
+  static ChildIteratorType child_end(NodeRef N) { return N->end(); }
 };
 
 /// \brief Analysis pass that exposes the \c LoopInfo for a function.
-class LoopAnalysis {
-  static char PassID;
+class LoopAnalysis : public AnalysisInfoMixin<LoopAnalysis> {
+  friend AnalysisInfoMixin<LoopAnalysis>;
+  static AnalysisKey Key;
 
 public:
   typedef LoopInfo Result;
 
-  /// \brief Opaque, unique identifier for this analysis pass.
-  static void *ID() { return (void *)&PassID; }
-
-  /// \brief Provide a name for the analysis for debugging and logging.
-  static StringRef name() { return "LoopAnalysis"; }
-
-  LoopInfo run(Function &F, AnalysisManager<Function> *AM);
+  LoopInfo run(Function &F, FunctionAnalysisManager &AM);
 };
 
 /// \brief Printer pass for the \c LoopAnalysis results.
-class LoopPrinterPass {
+class LoopPrinterPass : public PassInfoMixin<LoopPrinterPass> {
   raw_ostream &OS;
 
 public:
   explicit LoopPrinterPass(raw_ostream &OS) : OS(OS) {}
-  PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+};
 
-  static StringRef name() { return "LoopPrinterPass"; }
+/// \brief Verifier pass for the \c LoopAnalysis results.
+struct LoopVerifierPass : public PassInfoMixin<LoopVerifierPass> {
+  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
 /// \brief The legacy pass manager's analysis pass to compute loop information.
@@ -827,18 +853,8 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
-/// \brief Pass for printing a loop's contents as LLVM's text IR assembly.
-class PrintLoopPass {
-  raw_ostream &OS;
-  std::string Banner;
-
-public:
-  PrintLoopPass();
-  PrintLoopPass(raw_ostream &OS, const std::string &Banner = "");
-
-  PreservedAnalyses run(Loop &L);
-  static StringRef name() { return "PrintLoopPass"; }
-};
+/// Function to print a loop's contents as LLVM's text IR assembly.
+void printLoop(Loop &L, raw_ostream &OS, const std::string &Banner = "");
 
 } // End llvm namespace
 

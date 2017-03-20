@@ -1,7 +1,6 @@
-; RUN: llc -O0 -march=amdgcn -mcpu=bonaire -mattr=-promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-NO-PROMOTE %s
-; RUN: llc -O0 -march=amdgcn -mcpu=bonaire -mattr=+promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-PROMOTE %s
-; RUN: llc -O0 -march=amdgcn -mcpu=tonga -mattr=-promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-NO-PROMOTE %s
-; RUN: llc -O0 -march=amdgcn -mcpu=tonga -mattr=+promote-alloca < %s | FileCheck -check-prefix=CHECK -check-prefix=CHECK-PROMOTE %s
+; RUN: llc -O0 -mtriple=amdgcn-mesa-mesa3d -mcpu=bonaire < %s | FileCheck  %s
+; RUN: llc -O0 -mtriple=amdgcn-mesa-mesa3d -mcpu=tonga -mattr=-flat-for-global < %s | FileCheck  %s
+; RUN: llc -O0 -mtriple=amdgcn-amd-amdhsa -mcpu=fiji -mattr=-flat-for-global < %s | FileCheck -check-prefixes=CHECK,HSA %s
 
 ; Disable optimizations in case there are optimizations added that
 ; specialize away generic pointer accesses.
@@ -17,7 +16,7 @@
 ; CHECK-DAG: v_mov_b32_e32 v[[DATA:[0-9]+]], s[[SDATA]]
 ; CHECK-DAG: v_mov_b32_e32 v[[LO_VREG:[0-9]+]], s[[LO_SREG]]
 ; CHECK-DAG: v_mov_b32_e32 v[[HI_VREG:[0-9]+]], s[[HI_SREG]]
-; CHECK: flat_store_dword v[[DATA]], v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}
+; CHECK: flat_store_dword v{{\[}}[[LO_VREG]]:[[HI_VREG]]{{\]}}, v[[DATA]]
 define void @store_flat_i32(i32 addrspace(1)* %gptr, i32 %x) #0 {
   %fptr = addrspacecast i32 addrspace(1)* %gptr to i32 addrspace(4)*
   store i32 %x, i32 addrspace(4)* %fptr, align 4
@@ -73,7 +72,7 @@ define void @load_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noa
 ; CHECK: flat_load_dwordx2
 define void @load_flat_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast i64 addrspace(1)* %gptr to i64 addrspace(4)*
-  %fload = load i64, i64 addrspace(4)* %fptr, align 4
+  %fload = load i64, i64 addrspace(4)* %fptr, align 8
   store i64 %fload, i64 addrspace(1)* %out, align 8
   ret void
 }
@@ -82,7 +81,7 @@ define void @load_flat_i64(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noa
 ; CHECK: flat_load_dwordx4
 define void @load_flat_v4i32(<4 x i32> addrspace(1)* noalias %out, <4 x i32> addrspace(1)* noalias %gptr) #0 {
   %fptr = addrspacecast <4 x i32> addrspace(1)* %gptr to <4 x i32> addrspace(4)*
-  %fload = load <4 x i32>, <4 x i32> addrspace(4)* %fptr, align 4
+  %fload = load <4 x i32>, <4 x i32> addrspace(4)* %fptr, align 32
   store <4 x i32> %fload, <4 x i32> addrspace(1)* %out, align 8
   ret void
 }
@@ -127,8 +126,51 @@ define void @zextload_flat_i16(i32 addrspace(1)* noalias %out, i16 addrspace(1)*
   ret void
 }
 
-declare void @llvm.AMDGPU.barrier.local() #1
-declare i32 @llvm.r600.read.tidig.x() #3
+; CHECK-LABEL: flat_scratch_unaligned_load:
+; CHECK: flat_load_ubyte
+; CHECK: flat_load_ubyte
+; CHECK: flat_load_ubyte
+; CHECK: flat_load_ubyte
+define void @flat_scratch_unaligned_load() {
+  %scratch = alloca i32
+  %fptr = addrspacecast i32* %scratch to i32 addrspace(4)*
+  %ld = load volatile i32, i32 addrspace(4)* %fptr, align 1
+  ret void
+}
+
+; CHECK-LABEL: flat_scratch_unaligned_store:
+; CHECK: flat_store_byte
+; CHECK: flat_store_byte
+; CHECK: flat_store_byte
+; CHECK: flat_store_byte
+define void @flat_scratch_unaligned_store() {
+  %scratch = alloca i32
+  %fptr = addrspacecast i32* %scratch to i32 addrspace(4)*
+  store volatile i32 0, i32 addrspace(4)* %fptr, align 1
+  ret void
+}
+
+; CHECK-LABEL: flat_scratch_multidword_load:
+; HSA: flat_load_dword
+; HSA: flat_load_dword
+; FIXME: These tests are broken for os = mesa3d, becasue it doesn't initialize flat_scr
+define void @flat_scratch_multidword_load() {
+  %scratch = alloca <2 x i32>
+  %fptr = addrspacecast <2 x i32>* %scratch to <2 x i32> addrspace(4)*
+  %ld = load volatile <2 x i32>, <2 x i32> addrspace(4)* %fptr
+  ret void
+}
+
+; CHECK-LABEL: flat_scratch_multidword_store:
+; HSA: flat_store_dword
+; HSA: flat_store_dword
+; FIXME: These tests are broken for os = mesa3d, becasue it doesn't initialize flat_scr
+define void @flat_scratch_multidword_store() {
+  %scratch = alloca <2 x i32>
+  %fptr = addrspacecast <2 x i32>* %scratch to <2 x i32> addrspace(4)*
+  store volatile <2 x i32> zeroinitializer, <2 x i32> addrspace(4)* %fptr
+  ret void
+}
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind convergent }

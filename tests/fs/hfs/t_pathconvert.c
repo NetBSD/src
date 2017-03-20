@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pathconvert.c,v 1.5 2011/02/25 20:54:18 martin Exp $	*/
+/*	$NetBSD: t_pathconvert.c,v 1.5.28.1 2017/03/20 06:57:56 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -18,7 +18,7 @@
 
 #include <fs/hfs/hfs.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(colonslash);
 ATF_TC_HEAD(colonslash, tc)

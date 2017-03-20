@@ -1,26 +1,32 @@
-# $NetBSD: Makefile,v 1.15 2011/05/19 22:23:12 tsutsui Exp $
+# $NetBSD: Makefile,v 1.15.28.1 2017/03/20 06:52:11 pgoyette Exp $
 # Small zcat (i.e. for install media)
 #
-# Note: gzio.c is compiled here so that crunchgen will assume
-# the same symbol space for zcat.c and gzio.c which is required
-# so that the fake deflate functions in zcat.c will satisfy the
-# references to those functions in gzio.c (yes, it's a hack).
+
+NOSSP=yes
+NOMAN=
+.include <bsd.own.mk>
 
 SRCDIR=		${.CURDIR}/../../../common/dist/zlib
+LIBC=		${NETBSDSRCDIR}/lib/libc
+
+.PATH:		${SRCDIR} ${LIBC}/stdlib
 
 WARNS?=		4
 PROG=		zcat
-NOMAN=		# defined
 
-SRCS=		zcat.c gzio.c
-
+# Just what we need from libz
+SRCS=		zcat.c gzread.c gzclose.c gzlib.c inflate.c 
+SRCS+=		adler32.c crc32.c zutil.c inffast.c inftrees.c
 CPPFLAGS+=	-I${SRCDIR} -DNO_GZCOMPRESS
-DPADD+=		${LIBZ}
-LDADD+=		-lz
+
+# This avoids including stdio, threads, locale, etc.
+SRCS+=		misc.c
+SRCS+=		malloc.c	# small
+CPPFLAGS+=	-I${LIBC}/include
+CPPFLAGS+=	-Dsnprintf=snprintf_ss -Dsprintf=sprintf_ss
+CPPFLAGS+=	-Dstrerror=strerror_ss
 
 .include <bsd.prog.mk>
-
-.PATH:		${SRCDIR}
 
 test: zcat
 	echo 'hello, hello!' | gzip | ./zcat

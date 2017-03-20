@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.192 2014/03/24 13:42:40 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.192.10.1 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.192 2014/03/24 13:42:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.192.10.1 2017/03/20 06:57:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.192 2014/03/24 13:42:40 hannken Ex
 #include <sys/mount.h>
 #include <sys/fstrans.h>
 #include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
@@ -287,14 +287,15 @@ genfs_deadlock(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 	int flags = ap->a_flags;
 	krw_t op;
 	int error;
 
 	op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 	if (ISSET(flags, LK_NOWAIT)) {
-		if (! rw_tryenter(&vp->v_lock, op))
+		if (! rw_tryenter(&vip->vi_lock, op))
 			return EBUSY;
 		if (mutex_tryenter(vp->v_interlock)) {
 			error = vdead_check(vp, VDEAD_NOWAIT);
@@ -304,25 +305,25 @@ genfs_deadlock(void *v)
 		} else
 			error = EBUSY;
 		if (error)
-			rw_exit(&vp->v_lock);
+			rw_exit(&vip->vi_lock);
 		return error;
 	}
 
-	rw_enter(&vp->v_lock, op);
+	rw_enter(&vip->vi_lock, op);
 	mutex_enter(vp->v_interlock);
 	error = vdead_check(vp, VDEAD_NOWAIT);
 	if (error == EBUSY) {
-		rw_exit(&vp->v_lock);
+		rw_exit(&vip->vi_lock);
 		error = vdead_check(vp, 0);
 		KASSERT(error == ENOENT);
 		mutex_exit(vp->v_interlock);
-		rw_enter(&vp->v_lock, op);
+		rw_enter(&vip->vi_lock, op);
 		mutex_enter(vp->v_interlock);
 	}
 	KASSERT(error == ENOENT);
 	mutex_exit(vp->v_interlock);
 	if (! ISSET(flags, LK_RETRY)) {
-		rw_exit(&vp->v_lock);
+		rw_exit(&vip->vi_lock);
 		return ENOENT;
 	}
 	return 0;
@@ -337,9 +338,10 @@ genfs_deadunlock(void *v)
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	rw_exit(&vp->v_lock);
+	rw_exit(&vip->vi_lock);
 
 	return 0;
 }
@@ -354,7 +356,8 @@ genfs_lock(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 	struct mount *mp = vp->v_mount;
 	int flags = ap->a_flags;
 	krw_t op;
@@ -364,7 +367,7 @@ genfs_lock(void *v)
 	if (ISSET(flags, LK_NOWAIT)) {
 		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
 			return EBUSY;
-		if (! rw_tryenter(&vp->v_lock, op)) {
+		if (! rw_tryenter(&vip->vi_lock, op)) {
 			fstrans_done(mp);
 			return EBUSY;
 		}
@@ -374,18 +377,18 @@ genfs_lock(void *v)
 		} else
 			error = EBUSY;
 		if (error) {
-			rw_exit(&vp->v_lock);
+			rw_exit(&vip->vi_lock);
 			fstrans_done(mp);
 		}
 		return error;
 	}
 
 	fstrans_start(mp, FSTRANS_SHARED);
-	rw_enter(&vp->v_lock, op);
+	rw_enter(&vip->vi_lock, op);
 	mutex_enter(vp->v_interlock);
 	error = vdead_check(vp, VDEAD_NOWAIT);
 	if (error) {
-		rw_exit(&vp->v_lock);
+		rw_exit(&vip->vi_lock);
 		fstrans_done(mp);
 		error = vdead_check(vp, 0);
 		KASSERT(error == ENOENT);
@@ -403,10 +406,11 @@ genfs_unlock(void *v)
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 	struct mount *mp = vp->v_mount;
 
-	rw_exit(&vp->v_lock);
+	rw_exit(&vip->vi_lock);
 	fstrans_done(mp);
 
 	return 0;
@@ -421,12 +425,13 @@ genfs_islocked(void *v)
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	vnode_t *vp = ap->a_vp;
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	if (rw_write_held(&vp->v_lock))
+	if (rw_write_held(&vip->vi_lock))
 		return LK_EXCLUSIVE;
 
-	if (rw_read_held(&vp->v_lock))
+	if (rw_read_held(&vip->vi_lock))
 		return LK_SHARED;
 
 	return 0;

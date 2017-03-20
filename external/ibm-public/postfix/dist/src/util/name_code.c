@@ -1,4 +1,4 @@
-/*	$NetBSD: name_code.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: name_code.c,v 1.1.1.1.32.1 2017/03/20 06:56:41 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -57,10 +57,6 @@
 
 #include <sys_defs.h>
 #include <string.h>
-
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
 
 /* Utility library. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2015/12/20 16:23:14 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.4.1 2017/03/20 06:57:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -92,9 +92,45 @@ extern const fenv_t	__fe_dfl_env;
 #ifndef _SOFT_FLOAT
 #define	__mffs(__env)	__asm __volatile("mffs %0" : "=f" (*(__env)))
 #define	__mtfsf(__env)	__asm __volatile("mtfsf 255,%0" : : "f" (__env))
+
+static inline uint32_t
+__mfmsr(void)
+{
+	uint32_t __msr;
+
+	__asm volatile ("mfmsr %0" : "=r"(__msr));
+	return __msr;
+}
+
+static inline void
+__mtmsr(uint32_t __msr)
+{
+
+	__asm volatile ("mtmsr %0" : : "r"(__msr));
+}
+
+#define __MSR_FE_MASK	(0x00000800 | 0x00000100)
+#define __MSR_FE_DIS	(0)
+#define __MSR_FE_PREC	(0x00000800 | 0x00000100)
+
+static inline void
+__updatemsr(uint32_t __reg)
+{
+	uint32_t __msr;
+
+	__msr = __mfmsr() & ~__MSR_FE_MASK;
+	if (__reg != 0) {
+		__msr |= __MSR_FE_PREC;
+	} else {
+		__msr |= __MSR_FE_DIS;
+	}
+	__mtmsr(__msr);
+}
+
 #else
 #define	__mffs(__env)
 #define	__mtfsf(__env)
+#define __updatemsr(__reg)
 #endif
 
 union __fpscr {
@@ -201,11 +237,13 @@ __fenv_static inline int
 feholdexcept(fenv_t *__envp)
 {
 	union __fpscr __r;
+	uint32_t msr;
 
 	__mffs(&__r.__d);
 	*__envp = __r.__d;
 	__r.__bits.__reg &= ~(FE_ALL_EXCEPT | _ENABLE_MASK);
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
 
@@ -216,6 +254,7 @@ fesetenv(const fenv_t *__envp)
 
 	__r.__bits.__reg = *__envp;
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
 
@@ -228,6 +267,7 @@ feupdateenv(const fenv_t *__envp)
 	__r.__bits.__reg &= FE_ALL_EXCEPT;
 	__r.__bits.__reg |= *__envp;
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
 
@@ -245,6 +285,7 @@ feenableexcept(int __mask)
 	__oldmask = __r.__bits.__reg;
 	__r.__bits.__reg |= (__mask & FE_ALL_EXCEPT) >> _FPUSW_SHIFT;
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
@@ -258,6 +299,7 @@ fedisableexcept(int __mask)
 	__oldmask = __r.__bits.__reg;
 	__r.__bits.__reg &= ~((__mask & FE_ALL_EXCEPT) >> _FPUSW_SHIFT);
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.h,v 1.3.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: if_athn_usb.h,v 1.3.2.2 2017/03/20 06:57:38 pgoyette Exp $	*/
 /*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
@@ -444,6 +444,8 @@ struct athn_usb_softc {
 	int				usc_athn_attached;
 
 	kmutex_t			usc_lock;
+	kcondvar_t			usc_wmi_cv;
+	kcondvar_t			usc_htc_cv;
 
 	kmutex_t			usc_msg_mtx;
 	kcondvar_t			usc_msg_cv;
@@ -476,6 +478,8 @@ struct athn_usb_softc {
 	struct ar_wmi_cmd_reg_write	usc_wbuf[AR_MAX_WRITE_COUNT];
 	int				usc_wcount;
 
+	bool				usc_wmiactive;
+	bool				usc_htcactive;
 	uint16_t			usc_wmi_seq_no;
 	uint16_t			usc_wait_cmd_id;
 	uint16_t			usc_wait_msg_id;

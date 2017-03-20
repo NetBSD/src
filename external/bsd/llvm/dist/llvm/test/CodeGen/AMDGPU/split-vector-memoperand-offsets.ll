@@ -1,6 +1,6 @@
-; RUN: llc -march=amdgcn -mcpu=hawaii -verify-machineinstrs -mattr=-promote-alloca < %s | FileCheck -check-prefix=GCN %s
+; RUN: llc -march=amdgcn -mcpu=hawaii -verify-machineinstrs -mattr=-promote-alloca,-load-store-opt < %s | FileCheck -check-prefix=GCN %s
 
-@sPrivateStorage = external addrspace(3) global [256 x [8 x <4 x i64>]]
+@sPrivateStorage = internal addrspace(3) global [256 x [8 x <4 x i64>]] undef
 
 ; GCN-LABEL: {{^}}ds_reorder_vector_split:
 
@@ -15,33 +15,32 @@
 ; GCN-DAG: ds_write_b64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}} offset:24
 ; GCN-DAG: ds_write_b64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}} offset:16
 ; GCN-DAG: ds_write_b64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}} offset:8
+; Appears to be dead store of vector component.
+; GCN-DAG: ds_write_b64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]$}}
 
-; GCN: s_waitcnt lgkmcnt
 
-; GCN-DAG ds_read_b64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset:8
+; GCN-DAG: ds_read_b64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset:8
 ; GCN-DAG: ds_read_b64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset:16
 ; GCN-DAG: ds_read_b64 {{v\[[0-9]+:[0-9]+\]}}, v{{[0-9]+}} offset:24
 
-; Appears to be dead store of vector component.
-; GCN: ds_write_b64 v{{[0-9]+}}, {{v\[[0-9]+:[0-9]+\]$}}
+; GCN-DAG: buffer_store_dwordx2 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64{{$}}
+; GCN-DAG: buffer_store_dwordx2 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:8
+; GCN-DAG: buffer_store_dwordx2 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:16
+; GCN-DAG: buffer_store_dwordx2 {{v\[[0-9]+:[0-9]+\]}}, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}, 0 addr64 offset:24
 
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
-; GCN: buffer_store_dwordx2
 ; GCN: s_endpgm
 define void @ds_reorder_vector_split(<4 x i64> addrspace(1)* nocapture readonly %srcValues, i32 addrspace(1)* nocapture readonly %offsets, <4 x i64> addrspace(1)* nocapture %destBuffer, i32 %alignmentOffset) #0 {
 entry:
   %tmp = tail call i32 @llvm.r600.read.local.size.y()
   %tmp1 = tail call i32 @llvm.r600.read.local.size.z()
-  %tmp2 = tail call i32 @llvm.r600.read.tidig.x()
-  %tmp3 = tail call i32 @llvm.r600.read.tidig.y()
-  %tmp4 = tail call i32 @llvm.r600.read.tidig.z()
+  %tmp2 = tail call i32 @llvm.amdgcn.workitem.id.x()
+  %tmp3 = tail call i32 @llvm.amdgcn.workitem.id.y()
+  %tmp4 = tail call i32 @llvm.amdgcn.workitem.id.z()
   %tmp6 = mul i32 %tmp2, %tmp
   %tmp10 = add i32 %tmp3, %tmp6
   %tmp11 = mul i32 %tmp10, %tmp1
   %tmp9 = add i32 %tmp11, %tmp4
-  %x.i.i = tail call i32 @llvm.r600.read.tgid.x() #1
+  %x.i.i = tail call i32 @llvm.amdgcn.workgroup.id.x() #1
   %x.i.12.i = tail call i32 @llvm.r600.read.local.size.x() #1
   %mul.26.i = mul i32 %x.i.12.i, %x.i.i
   %add.i = add i32 %tmp2, %mul.26.i
@@ -80,13 +79,13 @@ entry:
 }
 
 ; Function Attrs: nounwind readnone
-declare i32 @llvm.r600.read.tgid.x() #1
+declare i32 @llvm.amdgcn.workgroup.id.x() #1
 
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.r600.read.local.size.x() #1
 
 ; Function Attrs: nounwind readnone
-declare i32 @llvm.r600.read.tidig.x() #1
+declare i32 @llvm.amdgcn.workitem.id.x() #1
 
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.r600.read.local.size.y() #1
@@ -95,10 +94,10 @@ declare i32 @llvm.r600.read.local.size.y() #1
 declare i32 @llvm.r600.read.local.size.z() #1
 
 ; Function Attrs: nounwind readnone
-declare i32 @llvm.r600.read.tidig.y() #1
+declare i32 @llvm.amdgcn.workitem.id.y() #1
 
 ; Function Attrs: nounwind readnone
-declare i32 @llvm.r600.read.tidig.z() #1
+declare i32 @llvm.amdgcn.workitem.id.z() #1
 
 attributes #0 = { norecurse nounwind }
 attributes #1 = { nounwind readnone }

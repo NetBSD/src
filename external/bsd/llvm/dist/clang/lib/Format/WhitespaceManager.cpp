@@ -42,11 +42,6 @@ WhitespaceManager::Change::Change(
       TokenLength(0), PreviousEndOfTokenColumn(0), EscapedNewlineColumn(0),
       StartOfBlockComment(nullptr), IndentationOffset(0) {}
 
-void WhitespaceManager::reset() {
-  Changes.clear();
-  Replaces.clear();
-}
-
 void WhitespaceManager::replaceWhitespace(FormatToken &Tok, unsigned Newlines,
                                           unsigned IndentLevel, unsigned Spaces,
                                           unsigned StartOfTokenColumn,
@@ -372,16 +367,20 @@ void WhitespaceManager::alignTrailingComments() {
       unsigned CommentColumn = SourceMgr.getSpellingColumnNumber(
           Changes[i].OriginalWhitespaceRange.getEnd());
       for (unsigned j = i + 1; j != e; ++j) {
-        if (Changes[j].Kind != tok::comment) { // Skip over comments.
-          unsigned NextColumn = SourceMgr.getSpellingColumnNumber(
-              Changes[j].OriginalWhitespaceRange.getEnd());
-          // The start of the next token was previously aligned with the
-          // start of this comment.
-          WasAlignedWithStartOfNextLine =
-              CommentColumn == NextColumn ||
-              CommentColumn == NextColumn + Style.IndentWidth;
-          break;
-        }
+        if (Changes[j].Kind == tok::comment ||
+            Changes[j].Kind == tok::unknown)
+          // Skip over comments and unknown tokens. "unknown tokens are used for
+          // the continuation of multiline comments.
+          continue;
+
+        unsigned NextColumn = SourceMgr.getSpellingColumnNumber(
+            Changes[j].OriginalWhitespaceRange.getEnd());
+        // The start of the next token was previously aligned with the
+        // start of this comment.
+        WasAlignedWithStartOfNextLine =
+            CommentColumn == NextColumn ||
+            CommentColumn == NextColumn + Style.IndentWidth;
+        break;
       }
     }
     if (!Style.AlignTrailingComments || FollowsRBraceInColumn0) {
@@ -428,7 +427,7 @@ void WhitespaceManager::alignTrailingComments(unsigned Start, unsigned End,
     }
     assert(Shift >= 0);
     Changes[i].Spaces += Shift;
-    if (i + 1 != End)
+    if (i + 1 != Changes.size())
       Changes[i + 1].PreviousEndOfTokenColumn += Shift;
     Changes[i].StartOfTokenColumn += Shift;
   }
@@ -498,8 +497,14 @@ void WhitespaceManager::storeReplacement(SourceRange Range,
   if (StringRef(SourceMgr.getCharacterData(Range.getBegin()),
                 WhitespaceLength) == Text)
     return;
-  Replaces.insert(tooling::Replacement(
+  auto Err = Replaces.add(tooling::Replacement(
       SourceMgr, CharSourceRange::getCharRange(Range), Text));
+  // FIXME: better error handling. For now, just print an error message in the
+  // release version.
+  if (Err) {
+    llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+    assert(false);
+  }
 }
 
 void WhitespaceManager::appendNewlineText(std::string &Text,
@@ -549,6 +554,14 @@ void WhitespaceManager::appendIndentText(std::string &Text,
       if (Indentation > Spaces)
         Indentation = Spaces;
       unsigned Tabs = Indentation / Style.TabWidth;
+      Text.append(Tabs, '\t');
+      Spaces -= Tabs * Style.TabWidth;
+    }
+    Text.append(Spaces, ' ');
+    break;
+  case FormatStyle::UT_ForContinuationAndIndentation:
+    if (WhitespaceStartColumn == 0) {
+      unsigned Tabs = Spaces / Style.TabWidth;
       Text.append(Tabs, '\t');
       Spaces -= Tabs * Style.TabWidth;
     }

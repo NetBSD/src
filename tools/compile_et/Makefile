@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/04/15 18:05:46 elric Exp $
+#	$NetBSD: Makefile,v 1.7.26.1 2017/03/20 06:58:02 pgoyette Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}compile_et
 HOST_SRCDIR=	crypto/external/bsd/heimdal/lib/libcom_err/compile_et

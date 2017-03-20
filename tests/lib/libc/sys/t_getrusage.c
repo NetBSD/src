@@ -1,4 +1,4 @@
-/* $NetBSD: t_getrusage.c,v 1.3.2.1 2016/08/06 00:19:12 pgoyette Exp $ */
+/* $NetBSD: t_getrusage.c,v 1.3.2.2 2017/03/20 06:57:59 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.3.2.1 2016/08/06 00:19:12 pgoyette Exp $");
+__RCSID("$NetBSD: t_getrusage.c,v 1.3.2.2 2017/03/20 06:57:59 pgoyette Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>
@@ -47,7 +47,7 @@ static void		sighandler(int);
 static const size_t	maxiter = 2000;
 
 static void
-sighandler(int signo)
+sighandler(int signo __unused)
 {
 	/* Nothing. */
 }

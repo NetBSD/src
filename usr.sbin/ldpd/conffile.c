@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.11 2013/11/19 16:42:16 christos Exp $ */
+/* $NetBSD: conffile.c,v 1.11.8.1 2017/03/20 06:58:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,9 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <sys/mman.h>
+
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>

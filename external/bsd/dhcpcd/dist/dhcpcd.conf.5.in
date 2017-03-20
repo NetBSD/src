@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.28.2.1 2016/08/06 00:18:41 pgoyette Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.28.2.2 2017/03/20 06:52:19 pgoyette Exp $
 .\" Copyright (c) 2006-2016 Roy Marples
 .\" All rights reserved
 .\"
@@ -376,7 +376,7 @@ interface eth0
 .It Ic ipv4only
 Only configure IPv4.
 .It Ic ipv6only
-Only confgiure IPv6.
+Only configure IPv6.
 .It Ic fqdn Op disable | ptr | both
 ptr just asks the DHCP server to update the PTR
 record of the host in DNS whereas both also updates the A record.
@@ -482,7 +482,7 @@ See
 .%T "RFC 3927"
 .Re
 .It Ic noipv6
-Don't attmept to configure an IPv6 address.
+Don't attempt to configure an IPv6 address.
 .It Ic noipv6rs
 Disable solicitation and receipt of IPv6 Router Advertisements.
 .It Ic nolink
@@ -676,7 +676,7 @@ If not set then none is sent.
 Some badly configured DHCP servers reject unknown vendorclassids.
 To work around it, try and impersonate Windows by using the MSFT vendorclassid.
 .It Ic vendclass Ar en Ar data
-Add the DHCPv6 Vendor Indetifying Vendor Class with the IANA assigned Enterprise
+Add the DHCPv6 Vendor Identifying Vendor Class with the IANA assigned Enterprise
 Number
 .Ar en
 with the
@@ -752,7 +752,7 @@ with a prefix of
 Defines the Vendor-Identifying Vendor Options.
 The
 .Ar code
-is the IANA Enterprise Number which will unqiuely describe the encapsulated
+is the IANA Enterprise Number which will uniquely describe the encapsulated
 options.
 .Ar type
 is normally
@@ -823,8 +823,8 @@ A byte represented as a string of flags, most significant bit first.
 For example, using ABCDEFGH then A would equal 10000000, B 01000000,
 C 00100000, etc.
 If the bit is not set, the flag is not printed.
-A flag of 0 is not printed even if the bit postition is set.
-This is to allow reservation of the first bits while assinging the last bits.
+A flag of 0 is not printed even if the bit position is set.
+This is to allow reservation of the first bits while assigning the last bits.
 .It Ic int16
 A signed 16bit integer, 2 bytes.
 .It Ic uint16
@@ -877,7 +877,7 @@ and
 in it.
 .Nm dhcpcd
 will then look for a non-expired token with a matching realm and secretid.
-This token is used to authenicate all other messages.
+This token is used to authenticate all other messages.
 .It Ic delayed
 Same as above, but without a realm.
 .El

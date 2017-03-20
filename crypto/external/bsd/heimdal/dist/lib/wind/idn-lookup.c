@@ -1,4 +1,4 @@
-/*	$NetBSD: idn-lookup.c,v 1.1.1.1 2011/04/13 18:15:58 elric Exp $	*/
+/*	$NetBSD: idn-lookup.c,v 1.1.1.1.28.1 2017/03/20 06:51:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan

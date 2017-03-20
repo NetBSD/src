@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.79 2015/05/30 20:09:47 joerg Exp $	*/
+/*	$NetBSD: file.h,v 1.79.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -103,6 +103,7 @@ union file_data {
 	struct kqueue *fd_kq;		// DTYPE_KQUEUE
 	void *fd_data;			// DTYPE_MISC
 	struct rnd_ctx *fd_rndctx;	// DTYPE_MISC (rnd)
+	struct audio_chan *fd_audioctx;	// DTYPE_MISC (audio)
 	int fd_devunit;			// DTYPE_MISC (tap)
 	struct bpf_d *fd_bpf;		// DTYPE_MISC (bpf)
 	struct fcrypt *fd_fcrypt;	// DTYPE_CRYPTO is not used
@@ -144,11 +145,12 @@ struct file {
 #define f_ksem		f_undata.fd_ks
 
 #define f_rndctx	f_undata.fd_rndctx
+#define f_audioctx	f_undata.fd_audioctx
 #define f_devunit	f_undata.fd_devunit
 #define f_bpf		f_undata.fd_bpf
 #define f_fcrypt	f_undata.fd_fcrypt
 #define f_iscsi		f_undata.fd_iscsi
-#endif
+#endif /* _KERNEL || _KMEMUSER */
 
 /*
  * Descriptor types.

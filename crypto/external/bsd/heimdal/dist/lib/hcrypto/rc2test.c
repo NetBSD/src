@@ -1,4 +1,4 @@
-/*	$NetBSD: rc2test.c,v 1.1.1.1 2011/04/13 18:14:50 elric Exp $	*/
+/*	$NetBSD: rc2test.c,v 1.1.1.1.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -34,11 +34,9 @@
  */
 
 #include <config.h>
+#include <krb5/roken.h>
 
 #include <rc2.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 struct {
     const void *key;

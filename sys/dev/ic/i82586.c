@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.74.2.1 2017/01/07 08:56:32 pgoyette Exp $	*/
+/*	$NetBSD: i82586.c,v 1.74.2.2 2017/03/20 06:57:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.74.2.1 2017/01/07 08:56:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.74.2.2 2017/03/20 06:57:28 pgoyette Exp $");
 
 
 #include <sys/param.h>
@@ -271,6 +271,7 @@ i82586_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr,
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, etheraddr);
 
 	aprint_normal(" address %s, type %s\n", ether_sprintf(etheraddr),name);
@@ -736,7 +737,7 @@ i82586_tint(struct ie_softc *sc, int scbstatus)
 	if (sc->xmit_busy > 0)
 		iexmit(sc);
 
-	i82586_start(ifp);
+	if_schedule_deferred_start(ifp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/02/27 21:47:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2017/03/20 06:56:00 pgoyette Exp $
 
 LIB=	LLVMDebugInfoPDB
 
@@ -6,7 +6,8 @@ LIB=	LLVMDebugInfoPDB
 
 .PATH: ${LLVM_SRCDIR}/lib/DebugInfo/PDB
 
-SRCS+=	IPDBSourceFile.cpp \
+SRCS+=	GenericError.cpp \
+	IPDBSourceFile.cpp \
 	PDB.cpp \
 	PDBContext.cpp \
 	PDBExtras.cpp \

@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.34.2.1 2017/01/07 08:56:11 pgoyette Exp $	*/
+/*	$NetBSD: epe.c,v 1.34.2.2 2017/03/20 06:57:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.34.2.1 2017/01/07 08:56:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.34.2.2 2017/03/20 06:57:10 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -271,7 +271,7 @@ begin:
 	}
 
 	if (epe_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
-		epe_ifstart(ifp);
+		if_schedule_deferred_start(ifp);
 	} 
 
 	irq = EPE_READ(IntStsC);
@@ -441,6 +441,7 @@ epe_init(struct epe_softc *sc)
 	ifp->if_softc = sc;
         IFQ_SET_READY(&ifp->if_snd);
         if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
         ether_ifattach(ifp, (sc)->sc_enaddr);
 }
 

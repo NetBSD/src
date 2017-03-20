@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptyfs.c,v 1.1 2010/06/11 23:52:38 pooka Exp $	*/
+/*	$NetBSD: t_ptyfs.c,v 1.1.28.1 2017/03/20 06:57:56 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -17,7 +17,7 @@
 
 #include <fs/ptyfs/ptyfs.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 static void
 mountptyfs(const char *mp, int flags)

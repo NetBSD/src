@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.45.2.1 2017/01/07 08:56:32 pgoyette Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.45.2.2 2017/03/20 06:57:29 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.45.2.1 2017/01/07 08:56:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.45.2.2 2017/03/20 06:57:29 pgoyette Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -366,6 +366,8 @@ struct mvgbe_port {
 	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
+
+	{ MARVELL_DOVE_88AP510,		0, 1, { 29 }, FLAGS_FIX_TQTB | FLAGS_IPG2 },
 
 	{ MARVELL_ARMADAXP_MV78130,	0, 1, { 66 }, FLAGS_HAS_PV },
 	{ MARVELL_ARMADAXP_MV78130,	1, 1, { 70 }, FLAGS_HAS_PV },

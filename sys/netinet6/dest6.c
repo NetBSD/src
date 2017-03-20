@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.19 2016/04/26 08:44:45 ozaki-r Exp $	*/
+/*	$NetBSD: dest6.c,v 1.19.2.1 2017/03/20 06:57:51 pgoyette Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,14 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.19 2016/04/26 08:44:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.19.2.1 2017/03/20 06:57:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/06/23 15:05:30 christos Exp $
+#	$NetBSD: Makefile,v 1.9.6.1 2017/03/20 06:56:32 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -84,8 +84,6 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 
 LDADD+=		-lexpat -llzma -lz -lcurses -lintl -lm -lkvm
 DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
-
-LDADD+=                -lpthread_dbg
 
 .include <bsd.prog.mk>
 

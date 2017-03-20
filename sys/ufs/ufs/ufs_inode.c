@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.95.2.2 2017/01/07 08:56:53 pgoyette Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.95.2.3 2017/03/20 06:57:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.95.2.2 2017/01/07 08:56:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.95.2.3 2017/03/20 06:57:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.95.2.2 2017/01/07 08:56:53 pgoyette 
 #include <sys/namei.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 
 #include <ufs/ufs/inode.h>
@@ -90,8 +89,6 @@ ufs_inactive(void *v)
 	bool wapbl_locked = false;
 
 	UFS_WAPBL_JUNLOCK_ASSERT(mp);
-
-	fstrans_start(mp, FSTRANS_LAZY);
 
 	/*
 	 * Ignore inodes related to stale file handles.
@@ -154,7 +151,6 @@ out:
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
 	VOP_UNLOCK(vp);
-	fstrans_done(mp);
 	return (allerror);
 }
 

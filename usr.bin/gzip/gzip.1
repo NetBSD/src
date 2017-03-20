@@ -1,4 +1,4 @@
-.\"	$NetBSD: gzip.1,v 1.26 2015/10/27 07:36:18 mrg Exp $
+.\"	$NetBSD: gzip.1,v 1.26.2.1 2017/03/20 06:58:04 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997, 2003, 2004 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 26, 2015
+.Dd January 8, 2017
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -99,7 +99,7 @@ or
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width XXrXXXrecursiveX
-.It Fl 1 , -fast
+.It Fl 1 , Fl Fl fast
 .It Fl 2
 .It Fl 3
 .It Fl 4
@@ -107,58 +107,62 @@ The following options are available:
 .It Fl 6
 .It Fl 7
 .It Fl 8
-.It Fl 9 , -best
+.It Fl 9 , Fl Fl best
 These options change the compression level used, with the
 .Fl 1
 option being the fastest, with less compression, and the
 .Fl 9
 option being the slowest, with optimal compression.
 The default compression level is 6.
-.It Fl c , -stdout , -to-stdout
+.It Fl c , Fl Fl stdout , Fl Fl to-stdout
 This option specifies that output will go to the standard output
 stream, leaving files intact.
-.It Fl d , -decompress , -uncompress
+.It Fl d , Fl Fl decompress , Fl Fl uncompress
 This option selects decompression rather than compression.
-.It Fl f , -force
+.It Fl f , Fl Fl force
 This option turns on force mode.
 This allows files with multiple links, overwriting of pre-existing
 files, reading from or writing to a terminal, and when combined
 with the
 .Fl c
 option, allowing non-compressed data to pass through unchanged.
-.It Fl h , -help
+.It Fl h , Fl Fl help
 This option prints a usage summary and exits.
-.It Fl l , -list
+.It Fl k , Fl Fl keep
+This option prevents
+.Nm
+from deleting input files after (de)compression.
+.It Fl l , Fl Fl list
 This option displays information about the file's compressed and
 uncompressed size, ratio, uncompressed name.
 With the
 .Fl v
 option, it also displays the compression method, CRC, date and time
 embedded in the file.
-.It Fl N , -name
+.It Fl N , Fl Fl name
 This option causes the stored filename in the input file to be used
 as the output file.
-.It Fl n , -no-name
+.It Fl n , Fl Fl no-name
 This option stops the filename and timestamp from being stored in
 the output file.
-.It Fl q , -quiet
+.It Fl q , Fl Fl quiet
 With this option, no warnings or errors are printed.
-.It Fl r , -recursive
+.It Fl r , Fl Fl recursive
 This option is used to
 .Nm
 the files in a directory tree individually, using the
 .Xr fts 3
 library.
-.It Fl S Ar suffix , Fl -suffix Ar suffix
+.It Fl S Ar suffix , Fl Fl suffix Ar suffix
 This option changes the default suffix from .gz to
 .Ar suffix .
-.It Fl t , -test
+.It Fl t , Fl Fl test
 This option will test compressed files for integrity.
-.It Fl V , -version
+.It Fl V , Fl Fl version
 This option prints the version of the
 .Nm
 program.
-.It Fl v , -verbose
+.It Fl v , Fl Fl verbose
 This option turns on verbose mode, which prints the compression
 ratio for each file compressed.
 .El

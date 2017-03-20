@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.139.2.2 2016/08/06 00:19:11 pgoyette Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.139.2.3 2017/03/20 06:57:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.139.2.2 2016/08/06 00:19:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.139.2.3 2017/03/20 06:57:54 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -816,9 +816,7 @@ again:
 	loopsize = size;
 
 	while (loopsize) {
-#ifdef DIAGNOSTIC
-		paddr_t pa;
-#endif
+		paddr_t pa __diagused;
 		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, &pa),
 		    "loopva=%#"PRIxVADDR" loopsize=%#"PRIxVSIZE
 		    " pa=%#"PRIxPADDR" vmem=%p",

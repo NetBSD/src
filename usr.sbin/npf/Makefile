@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2014/08/02 23:57:40 rmind Exp $
+# $NetBSD: Makefile,v 1.5.6.1 2017/03/20 06:58:08 pgoyette Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		npfctl
+SUBDIR=		npfctl npfd
 
 .if ${MKRUMP} != "no" && ${MKPIC} != "no"
 SUBDIR+=	npftest

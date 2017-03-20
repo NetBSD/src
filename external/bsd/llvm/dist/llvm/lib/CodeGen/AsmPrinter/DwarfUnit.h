@@ -65,22 +65,13 @@ public:
 //===----------------------------------------------------------------------===//
 /// This dwarf writer support class manages information associated with a
 /// source file.
-class DwarfUnit {
+  class DwarfUnit : public DIEUnit {
 protected:
-  /// A numeric ID unique among all CUs in the module
-  unsigned UniqueID;
-
   /// MDNode for the compile unit.
   const DICompileUnit *CUNode;
 
   // All DIEValues are allocated through this allocator.
   BumpPtrAllocator DIEValueAllocator;
-
-  /// Unit debug information entry.
-  DIE &UnitDie;
-
-  /// Offset of the UnitDie from beginning of debug info section.
-  unsigned DebugInfoOffset;
 
   /// Target of Dwarf emission.
   AsmPrinter *Asm;
@@ -89,7 +80,7 @@ protected:
   DwarfDebug *DD;
   DwarfFile *DU;
 
-  /// An anonymous type for index type.  Owned by UnitDie.
+  /// An anonymous type for index type.  Owned by DIEUnit.
   DIE *IndexTyDie;
 
   /// Tracks the mapping of unit level debug information variables to debug
@@ -107,36 +98,21 @@ protected:
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const DINode *> ContainingTypeMap;
 
-  /// The section this unit will be emitted in.
-  MCSection *Section;
-
-  DwarfUnit(unsigned UID, dwarf::Tag, const DICompileUnit *CU, AsmPrinter *A,
-            DwarfDebug *DW, DwarfFile *DWU);
+  DwarfUnit(dwarf::Tag, const DICompileUnit *CU, AsmPrinter *A, DwarfDebug *DW,
+            DwarfFile *DWU);
 
   bool applySubprogramDefinitionAttributes(const DISubprogram *SP, DIE &SPDie);
 
 public:
   virtual ~DwarfUnit();
 
-  void initSection(MCSection *Section);
-
-  MCSection *getSection() const {
-    assert(Section);
-    return Section;
-  }
-
   // Accessors.
   AsmPrinter* getAsmPrinter() const { return Asm; }
-  unsigned getUniqueID() const { return UniqueID; }
   uint16_t getLanguage() const { return CUNode->getSourceLanguage(); }
   const DICompileUnit *getCUNode() const { return CUNode; }
-  DIE &getUnitDie() { return UnitDie; }
-
-  unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
-  void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
 
   /// Return true if this compile unit has something to write out.
-  bool hasContent() const { return UnitDie.hasChildren(); }
+  bool hasContent() const { return getUnitDie().hasChildren(); }
 
   /// Get string containing language specific context for a global name.
   ///
@@ -221,7 +197,7 @@ public:
   void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIEEntry Entry);
 
   /// Add a type's DW_AT_signature and set the  declaration flag.
-  void addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type);
+  void addDIETypeSignature(DIE &Die, uint64_t Signature);
   /// Add an attribute containing the type signature for a unique identifier.
   void addDIETypeSignature(DIE &Die, dwarf::Attribute Attribute,
                            StringRef Identifier);
@@ -258,17 +234,6 @@ public:
 
   /// Add template parameters in buffer.
   void addTemplateParams(DIE &Buffer, DINodeArray TParams);
-
-  /// Add register operand.
-  /// \returns false if the register does not exist, e.g., because it was never
-  /// materialized.
-  bool addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
-                          unsigned SizeInBits = 0, unsigned OffsetInBits = 0);
-
-  /// Add register offset.
-  /// \returns false if the register does not exist, e.g., because it was never
-  /// materialized.
-  bool addRegisterOffset(DIELoc &TheDie, unsigned Reg, int64_t Offset);
 
   // FIXME: Should be reformulated in terms of addComplexAddress.
   /// Start with the address based on the location provided, and generate the
@@ -338,7 +303,7 @@ protected:
   /// Look in the DwarfDebug map for the MDNode that corresponds to the
   /// reference.
   template <typename T> T *resolve(TypedDINodeRef<T> Ref) const {
-    return DD->resolve(Ref);
+    return Ref.resolve();
   }
 
 private:
@@ -383,12 +348,10 @@ class DwarfTypeUnit : public DwarfUnit {
   bool isDwoUnit() const override;
 
 public:
-  DwarfTypeUnit(unsigned UID, DwarfCompileUnit &CU, AsmPrinter *A,
-                DwarfDebug *DW, DwarfFile *DWU,
-                MCDwarfDwoLineTable *SplitLineTable = nullptr);
+  DwarfTypeUnit(DwarfCompileUnit &CU, AsmPrinter *A, DwarfDebug *DW,
+                DwarfFile *DWU, MCDwarfDwoLineTable *SplitLineTable = nullptr);
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }
-  uint64_t getTypeSignature() const { return TypeSignature; }
   void setType(const DIE *Ty) { this->Ty = Ty; }
 
   /// Emit the header for this unit, not including the initial length field.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.23 2016/01/06 23:03:13 wiz Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.23.2.1 2017/03/20 06:57:01 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,11 +41,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.23 2016/01/06 23:03:13 wiz Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.23.2.1 2017/03/20 06:57:01 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/queue.h>

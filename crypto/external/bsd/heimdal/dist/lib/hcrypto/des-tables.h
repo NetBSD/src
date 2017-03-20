@@ -1,4 +1,4 @@
-/*	$NetBSD: des-tables.h,v 1.1.1.1 2011/04/13 18:14:49 elric Exp $	*/
+/*	$NetBSD: des-tables.h,v 1.1.1.1.28.1 2017/03/20 06:51:43 pgoyette Exp $	*/
 
 /* GENERATE FILE from gen-des.pl, do not edit */
 

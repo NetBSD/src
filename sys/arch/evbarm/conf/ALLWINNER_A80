@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.16.2.1 2017/01/07 08:56:13 pgoyette Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.16.2.2 2017/03/20 06:57:13 pgoyette Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -22,7 +22,6 @@ options 	MEMSIZE=2048
 options 	AWIN_CONSOLE_EARLY
 options 	AWIN_GPIO_IGNORE_FW
 
-options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 makeoptions	DEBUG="-g"	# compile full symbol table

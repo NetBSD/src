@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.25.2.5 2016/11/04 14:49:09 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.25.2.6 2017/03/20 06:57:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.5 2016/11/04 14:49:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.6 2017/03/20 06:57:29 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -323,7 +323,6 @@ pad_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	}
 	
 	getmicrotime(&sc->sc_last);
-	sc->sc_bytes_count = 0;
 
 	return 0;
 }
@@ -344,8 +343,7 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 #define PAD_BYTES_PER_SEC (44100 * sizeof(int16_t) * 2)
-#define TIMENEXTREAD	(20 * 1000)
-#define BYTESTOSLEEP ((PAD_BYTES_PER_SEC / (1000000 / TIMENEXTREAD)) + PAD_BLKSIZE)
+#define TIMENEXTREAD	(PAD_BLKSIZE * 1000 / PAD_BYTES_PER_SEC)
 
 int
 pad_read(dev_t dev, struct uio *uio, int flags)
@@ -364,39 +362,31 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 
 	err = 0;
 
-	mutex_enter(&sc->sc_lock);
-	intr = sc->sc_intr;
-	intrarg = sc->sc_intrarg;
-
 	while (uio->uio_resid > 0 && !err) {
+		mutex_enter(&sc->sc_lock);
+		intr = sc->sc_intr;
+		intrarg = sc->sc_intrarg;
+
 		getmicrotime(&now);
 		nowusec = (now.tv_sec * 1000000) + now.tv_usec;
 		lastusec = (sc->sc_last.tv_sec * 1000000) +
 		     sc->sc_last.tv_usec;
-		if (lastusec + TIMENEXTREAD > nowusec &&
-		     sc->sc_bytes_count >= BYTESTOSLEEP) {
+		if (lastusec + TIMENEXTREAD > nowusec) {
 			wait_ticks = (hz * ((lastusec + TIMENEXTREAD) -
 			     nowusec)) / 1000000;
 			if (wait_ticks > 0) {
 				kpause("padwait", TRUE, wait_ticks,
-				     &sc->sc_lock);
+				    &sc->sc_lock);
 			}
-
-			sc->sc_bytes_count -= BYTESTOSLEEP;
-			getmicrotime(&sc->sc_last);
-		} else if (sc->sc_bytes_count >= BYTESTOSLEEP) {
-			sc->sc_bytes_count -= BYTESTOSLEEP;
-			getmicrotime(&sc->sc_last);
-		} else if (lastusec + TIMENEXTREAD <= nowusec)
-			getmicrotime(&sc->sc_last);
-
+		}
+		sc->sc_last.tv_sec =
+			(lastusec + TIMENEXTREAD) / 1000000;
+		sc->sc_last.tv_usec =
+			(lastusec + TIMENEXTREAD) % 1000000;
 		err = pad_get_block(sc, &pb, min(uio->uio_resid, PAD_BLKSIZE));
 		if (!err) {
-			sc->sc_bytes_count += pb.pb_len;
-
 			mutex_exit(&sc->sc_lock);
 			err = uiomove(pb.pb_ptr, pb.pb_len, uio);
-			mutex_enter(&sc->sc_lock);
 			continue;
 		}
 
@@ -409,16 +399,17 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 			intr = sc->sc_intr;
 			intrarg = sc->sc_intrarg;
 			err = 0;
+			mutex_exit(&sc->sc_lock);
 			continue;
 		}
 		err = cv_wait_sig(&sc->sc_condvar, &sc->sc_lock);
-		if (err != 0)
+		if (err != 0) {
+			mutex_exit(&sc->sc_lock);
 			break;
+		}
 
-		intr = sc->sc_intr;
-		intrarg = sc->sc_intrarg;
+		mutex_exit(&sc->sc_lock);
 	}
-	mutex_exit(&sc->sc_lock);
 
 	return err;
 }

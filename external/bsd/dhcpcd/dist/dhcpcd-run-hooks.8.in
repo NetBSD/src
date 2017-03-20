@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.15.2.1 2016/08/06 00:18:41 pgoyette Exp $
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.15.2.2 2017/03/20 06:52:19 pgoyette Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -93,7 +93,7 @@ dhcpcd successfully requested a lease from a DHCP server.
 .It Dv DELEGATED6
 dhcpcd assigned a delegated prefix to the interface.
 .It Dv IPV4LL
-dhcpcd obtaind an IPV4LL address, or one was removed.
+dhcpcd obtained an IPV4LL address, or one was removed.
 .It Dv STATIC
 dhcpcd has been configured with a static configuration which has not been
 obtained from a DHCP server.

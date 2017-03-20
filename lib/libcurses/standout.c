@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.16.28.1 2017/01/07 08:56:04 pgoyette Exp $	*/
+/*	$NetBSD: standout.c,v 1.16.28.2 2017/03/20 06:56:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.16.28.1 2017/01/07 08:56:04 pgoyette Exp $");
+__RCSID("$NetBSD: standout.c,v 1.16.28.2 2017/03/20 06:56:59 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,13 +74,15 @@ standend(void)
 int
 wstandout(WINDOW *win)
 {
+	const TERMINAL *t = win->screen->term;
 
 	/*
 	 * If standout/standend strings, or can underline, set the
 	 * screen standout bit.
 	 */
-	if ((enter_standout_mode != NULL && exit_standout_mode != NULL) ||
-	    underline_char != NULL)
+	if ((t_enter_standout_mode(t) != NULL &&
+	    t_exit_standout_mode(t) != NULL) ||
+	    t_underline_char(t) != NULL)
 		win->wattr |= __STANDOUT;
 	return 1;
 }

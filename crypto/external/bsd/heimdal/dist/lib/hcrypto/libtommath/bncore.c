@@ -1,4 +1,4 @@
-/*	$NetBSD: bncore.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
+/*	$NetBSD: bncore.c,v 1.1.1.2.6.1 2017/03/20 06:51:44 pgoyette Exp $	*/
 
 #include <tommath.h>
 #ifdef BNCORE_C

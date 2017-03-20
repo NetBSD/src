@@ -53,6 +53,10 @@ static inline unsigned int bswap_32(unsigned int v)
 }
 #endif /* __APPLE__ */
 
+#ifdef __NetBSD__
+#include <net/if.h>
+#endif
+
 #ifdef CONFIG_NATIVE_WINDOWS
 #include <winsock.h>
 

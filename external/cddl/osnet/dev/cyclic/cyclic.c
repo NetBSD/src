@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclic.c,v 1.5 2016/04/09 14:50:08 riastradh Exp $	*/
+/*	$NetBSD: cyclic.c,v 1.5.2.1 2017/03/20 06:56:28 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1466,5 +1466,5 @@ cyclic_modcmd(modcmd_t cmd, void *data)
 	}
 }
 
-MODULE(MODULE_CLASS_MISC, cyclic, "dtrace");
+MODULE(MODULE_CLASS_MISC, cyclic, "solaris");
 #endif

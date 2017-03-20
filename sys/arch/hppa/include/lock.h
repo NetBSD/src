@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.16 2008/04/28 20:23:23 martin Exp $	*/
+/* 	$NetBSD: lock.h,v 1.16.68.1 2017/03/20 06:57:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,14 +39,14 @@
 
 #include <sys/stdint.h>
 
-#define HPPA_LDCW_ALIGN	16
+#define HPPA_LDCW_ALIGN	16UL
 
 #define __SIMPLELOCK_ALIGN(p) \
-    (volatile unsigned long *)(((uintptr_t)(p) + HPPA_LDCW_ALIGN - 1) & \
+    (volatile unsigned long *)((((uintptr_t)(p) + HPPA_LDCW_ALIGN - 1)) & \
     ~(HPPA_LDCW_ALIGN - 1))
 
-#define __SIMPLELOCK_RAW_LOCKED		0
-#define __SIMPLELOCK_RAW_UNLOCKED	1
+#define __SIMPLELOCK_RAW_LOCKED		0UL
+#define __SIMPLELOCK_RAW_UNLOCKED	1UL
 
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)

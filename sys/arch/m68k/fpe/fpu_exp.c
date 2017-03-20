@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_exp.c,v 1.8.16.1 2017/01/07 08:56:20 pgoyette Exp $	*/
+/*	$NetBSD: fpu_exp.c,v 1.8.16.2 2017/03/20 06:57:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.8.16.1 2017/01/07 08:56:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_exp.c,v 1.8.16.2 2017/03/20 06:57:16 pgoyette Exp $");
 
 #include <machine/ieee.h>
 
@@ -109,13 +109,27 @@ struct fpn *
 fpu_etox(struct fpemu *fe)
 {
 	struct fpn x, *fp;
-	int j, k;
+	int k;
 
 	if (ISNAN(&fe->fe_f2))
 		return &fe->fe_f2;
 	if (ISINF(&fe->fe_f2)) {
 		if (fe->fe_f2.fp_sign)
 			fpu_const(&fe->fe_f2, FPU_CONST_0);
+		return &fe->fe_f2;
+	}
+
+	/*
+	 * return inf if x >=  2^14
+	 * return +0  if x <= -2^14
+	 */
+	if (fe->fe_f2.fp_exp >= 14) {
+		if (fe->fe_f2.fp_sign) {
+			fe->fe_f2.fp_class = FPC_ZERO;
+			fe->fe_f2.fp_sign = 0;
+		} else {
+			fe->fe_f2.fp_class = FPC_INF;
+		}
 		return &fe->fe_f2;
 	}
 
@@ -134,17 +148,7 @@ fpu_etox(struct fpemu *fe)
 		return fp;
 	}
 	/* extract k as integer format from fpn format */
-	j = FP_LG - fp->fp_exp;
-	if (j < 0) {
-		if (fp->fp_sign) {
-			fp->fp_class = FPC_ZERO;		/* k < -2^18 */
-			fp->fp_sign = 0;
-		} else {
-			fp->fp_class = FPC_INF;			/* k >  2^18 */
-		}
-		return fp;
-	}
-	k = fp->fp_mant[0] >> j;
+	k = fp->fp_mant[0] >> (FP_LG - fp->fp_exp);
 	if (fp->fp_sign)
 		k *= -1;
 

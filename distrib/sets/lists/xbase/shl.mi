@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.69.2.1 2017/01/07 08:53:44 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.69.2.2 2017/03/20 06:52:09 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -414,9 +414,9 @@
 ./usr/X11R7/lib/libxcb-sync.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-sync.so.1		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-sync.so.1.0		-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libxcb-xevie.so			-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libxcb-xevie.so.0		-unknown-		xorg,compatx11file
-./usr/X11R7/lib/libxcb-xevie.so.0.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxcb-xevie.so			-unknown-		obsolete
+./usr/X11R7/lib/libxcb-xevie.so.0		-unknown-		obsolete
+./usr/X11R7/lib/libxcb-xevie.so.0.1		-unknown-		obsolete
 ./usr/X11R7/lib/libxcb-xf86dri.so		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xf86dri.so.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xf86dri.so.0.1		-unknown-		xorg,compatx11file
@@ -426,6 +426,9 @@
 ./usr/X11R7/lib/libxcb-xinerama.so		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xinerama.so.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xinerama.so.0.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxcb-xinput.so		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxcb-xinput.so.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxcb-xinput.so.0.1		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xkb.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xkb.so.1			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xkb.so.1.0		-unknown-		xorg,compatx11file

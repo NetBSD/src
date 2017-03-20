@@ -7,20 +7,29 @@ set(ADTSources
   APIntTest.cpp
   APSIntTest.cpp
   ArrayRefTest.cpp
+  BitmaskEnumTest.cpp
   BitVectorTest.cpp
+  BumpPtrListTest.cpp
   DAGDeltaAlgorithmTest.cpp
   DeltaAlgorithmTest.cpp
   DenseMapTest.cpp
   DenseSetTest.cpp
+  DepthFirstIteratorTest.cpp
   FoldingSet.cpp
   FunctionRefTest.cpp
   HashingTest.cpp
-  ilistTest.cpp
+  IListBaseTest.cpp
+  IListIteratorTest.cpp
+  IListNodeBaseTest.cpp
+  IListNodeTest.cpp
+  IListSentinelTest.cpp
+  IListTest.cpp
   ImmutableMapTest.cpp
   ImmutableSetTest.cpp
   IntEqClassesTest.cpp
   IntervalMapTest.cpp
   IntrusiveRefCntPtrTest.cpp
+  IteratorTest.cpp
   MakeUniqueTest.cpp
   MapVectorTest.cpp
   OptionalTest.cpp
@@ -30,16 +39,25 @@ set(ADTSources
   PointerSumTypeTest.cpp
   PointerUnionTest.cpp
   PostOrderIteratorTest.cpp
+  PriorityWorklistTest.cpp
   RangeAdapterTest.cpp
+  ReverseIterationTest.cpp
   SCCIteratorTest.cpp
+  STLExtrasTest.cpp
+  ScopeExitTest.cpp
+  SequenceTest.cpp
+  SetVectorTest.cpp
+  SimpleIListTest.cpp
   SmallPtrSetTest.cpp
   SmallStringTest.cpp
   SmallVectorTest.cpp
   SparseBitVectorTest.cpp
   SparseMultiSetTest.cpp
   SparseSetTest.cpp
+  StringExtrasTest.cpp
   StringMapTest.cpp
   StringRefTest.cpp
+  StringSwitchTest.cpp
   TinyPtrVectorTest.cpp
   TripleTest.cpp
   TwineTest.cpp

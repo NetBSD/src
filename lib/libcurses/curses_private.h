@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.50.8.2 2017/01/07 08:56:04 pgoyette Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.50.8.3 2017/03/20 06:56:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -189,6 +189,29 @@ struct __pair {
 
 typedef struct keymap keymap_t;
 
+/* POSIX allows up to 8 columns in a label. */
+#define	MAX_SLK_COLS	8
+#ifdef HAVE_WCHAR
+#define	MAX_SLK_LABEL	sizeof(wchar_t) * MAX_SLK_COLS
+#else
+#define	MAX_SLK_LABEL	MAX_SLK_COLS
+#endif
+struct __slk_label {
+	char	*text;
+	int	 justify;
+#define	SLK_JUSTIFY_LEFT	0
+#define	SLK_JUSTIFY_CENTER	1
+#define	SLK_JUSTIFY_RIGHT	2
+	char	 label[MAX_SLK_LABEL + 1];
+	int	 x;
+};
+
+#define	MAX_RIPS	5
+struct __ripoff {
+	int	nlines;
+	WINDOW	*win;
+};
+
 /* this is the encapsulation of the terminal definition, one for
  * each terminal that curses talks to.
  */
@@ -201,6 +224,8 @@ struct __screen {
 	int      lx, ly;        /* loop parameters for refresh */
 	int	 COLS;		/* Columns on the screen. */
 	int	 LINES;		/* Lines on the screen. */
+	int	 nripped;	/* Number of ripofflines. */
+	struct __ripoff ripped[MAX_RIPS];	/* ripofflines. */
 	int	 ESCDELAY;	/* Delay between keys in esc seq's. */
 #define	ESCDELAY_DEFAULT	300 /* milliseconds. */
 	int	 TABSIZE;	/* Size of a tab. */
@@ -259,6 +284,18 @@ struct __screen {
 	int unget_len, unget_pos;
 	int filtered;
 	int checkfd;
+
+	/* soft label key */
+	bool		 is_term_slk;
+	WINDOW		*slk_window;
+	int		 slk_format;
+#define	SLK_FMT_3_2_3	0
+#define	SLK_FMT_4_4	1
+	int		 slk_nlabels;
+	int		 slk_label_len;
+	bool		 slk_hidden;
+	struct __slk_label *slk_labels;
+
 #ifdef HAVE_WCHAR
 #define MB_LEN_MAX 8
 #define MAX_CBUF_SIZE MB_LEN_MAX
@@ -340,11 +377,18 @@ void     __restore_meta_state(void);
 void	 __restore_termios(void);
 void	 __restore_stophandler(void);
 void	 __restore_winchhandler(void);
+int	 __ripoffscreen(SCREEN *, int *);
+void	 __ripoffresize(SCREEN *);
+int	 __rippedlines(const SCREEN *);
 void	 __save_termios(void);
 void	 __set_color(WINDOW *win, attr_t attr);
 void	 __set_stophandler(void);
 void	 __set_winchhandler(void);
 void	 __set_subwin(WINDOW *, WINDOW *);
+int	 __slk_init(SCREEN *);
+void	 __slk_free(SCREEN *);
+int	 __slk_resize(SCREEN *, int cols);
+int	 __slk_noutrefresh(SCREEN *);
 void	 __startwin(SCREEN *);
 void	 __stop_signal_handler(int);
 int	 __stopwin(void);
@@ -353,6 +397,7 @@ void	 __sync(WINDOW *);
 int	 __timeout(int);
 int	 __touchline(WINDOW *, int, int, int);
 int	 __touchwin(WINDOW *);
+int	 __unripoffline(int (*)(WINDOW *, int));
 void	 __unsetattr(int);
 void	 __unset_color(WINDOW *win);
 int	 __waddch(WINDOW *, __LDATA *);

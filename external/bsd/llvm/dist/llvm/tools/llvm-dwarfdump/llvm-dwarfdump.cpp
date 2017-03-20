@@ -29,7 +29,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstring>
-#include <list>
 #include <string>
 #include <system_error>
 
@@ -72,7 +71,12 @@ static cl::opt<DIDumpType> DumpType(
         clEnumValN(DIDT_StrOffsetsDwo, "str_offsets.dwo",
                    ".debug_str_offsets.dwo"),
         clEnumValN(DIDT_CUIndex, "cu_index", ".debug_cu_index"),
-        clEnumValN(DIDT_TUIndex, "tu_index", ".debug_tu_index"), clEnumValEnd));
+        clEnumValN(DIDT_GdbIndex, "gdb_index", ".gdb_index"),
+        clEnumValN(DIDT_TUIndex, "tu_index", ".debug_tu_index")));
+
+static cl::opt<bool>
+    SummarizeTypes("summarize-types",
+                   cl::desc("Abbreviate the description of type unit entries"));
 
 static void error(StringRef Filename, std::error_code EC) {
   if (!EC)
@@ -87,7 +91,7 @@ static void DumpObjectFile(ObjectFile &Obj, Twine Filename) {
   outs() << Filename.str() << ":\tfile format " << Obj.getFileFormatName()
          << "\n\n";
   // Dump the complete DWARF structure.
-  DICtx->dump(outs(), DumpType);
+  DICtx->dump(outs(), DumpType, false, SummarizeTypes);
 }
 
 static void DumpInput(StringRef Filename) {
@@ -96,25 +100,26 @@ static void DumpInput(StringRef Filename) {
   error(Filename, BuffOrErr.getError());
   std::unique_ptr<MemoryBuffer> Buff = std::move(BuffOrErr.get());
 
-  ErrorOr<std::unique_ptr<Binary>> BinOrErr =
+  Expected<std::unique_ptr<Binary>> BinOrErr =
       object::createBinary(Buff->getMemBufferRef());
-  error(Filename, BinOrErr.getError());
+  if (!BinOrErr)
+    error(Filename, errorToErrorCode(BinOrErr.takeError()));
 
   if (auto *Obj = dyn_cast<ObjectFile>(BinOrErr->get()))
     DumpObjectFile(*Obj, Filename);
   else if (auto *Fat = dyn_cast<MachOUniversalBinary>(BinOrErr->get()))
     for (auto &ObjForArch : Fat->objects()) {
       auto MachOOrErr = ObjForArch.getAsObjectFile();
-      error(Filename, MachOOrErr.getError());
+      error(Filename, errorToErrorCode(MachOOrErr.takeError()));
       DumpObjectFile(**MachOOrErr,
-                     Filename + " (" + ObjForArch.getArchTypeName() + ")");
+                     Filename + " (" + ObjForArch.getArchFlagName() + ")");
     }
 }
 
 /// If the input path is a .dSYM bundle (as created by the dsymutil tool),
 /// replace it with individual entries for each of the object files inside the
 /// bundle otherwise return the input path.
-static std::vector<std::string> expandBundle(std::string InputPath) {
+static std::vector<std::string> expandBundle(const std::string &InputPath) {
   std::vector<std::string> BundlePaths;
   SmallString<256> BundlePath(InputPath);
   // Manually open up the bundle to avoid introducing additional dependencies.
@@ -146,7 +151,7 @@ static std::vector<std::string> expandBundle(std::string InputPath) {
 
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal();
+  sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
@@ -158,7 +163,7 @@ int main(int argc, char **argv) {
 
   // Expand any .dSYM bundles to the individual object files contained therein.
   std::vector<std::string> Objects;
-  for (auto F : InputFilenames) {
+  for (const auto &F : InputFilenames) {
     auto Objs = expandBundle(F);
     Objects.insert(Objects.end(), Objs.begin(), Objs.end());
   }

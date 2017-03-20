@@ -15,12 +15,13 @@
 namespace llvm {
 class RecordStreamer : public MCStreamer {
 public:
-  enum State { NeverSeen, Global, Defined, DefinedGlobal, Used };
+  enum State { NeverSeen, Global, Defined, DefinedGlobal, DefinedWeak, Used,
+               UndefinedWeak};
 
 private:
   StringMap<State> Symbols;
   void markDefined(const MCSymbol &Symbol);
-  void markGlobal(const MCSymbol &Symbol);
+  void markGlobal(const MCSymbol &Symbol, MCSymbolAttr Attribute);
   void markUsed(const MCSymbol &Symbol);
   void visitUsedSymbol(const MCSymbol &Sym) override;
 

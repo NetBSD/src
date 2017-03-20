@@ -1,9 +1,9 @@
-/*	$NetBSD: operational.c,v 1.1.1.4 2014/05/28 09:58:47 tron Exp $	*/
+/*	$NetBSD: operational.c,v 1.1.1.4.6.1 2017/03/20 06:56:16 pgoyette Exp $	*/
 
 /* operational.c - routines to deal with on-the-fly operational attrs */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2014 The OpenLDAP Foundation.
+ * Copyright 2001-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: operational.c,v 1.1.1.4.6.1 2017/03/20 06:56:16 pgoyette Exp $");
 
 #include "portable.h"
 

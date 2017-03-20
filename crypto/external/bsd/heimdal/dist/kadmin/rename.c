@@ -1,4 +1,4 @@
-/*	$NetBSD: rename.c,v 1.1.1.1 2011/04/13 18:14:35 elric Exp $	*/
+/*	$NetBSD: rename.c,v 1.1.1.1.28.1 2017/03/20 06:51:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan

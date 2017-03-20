@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.1.1.3 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: cred.h,v 1.1.1.3.6.1 2017/03/20 06:51:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson

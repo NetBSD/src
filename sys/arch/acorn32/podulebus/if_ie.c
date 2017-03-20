@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.37.2.1 2017/01/07 08:56:09 pgoyette Exp $ */
+/* $NetBSD: if_ie.c,v 1.37.2.2 2017/03/20 06:57:09 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.37.2.1 2017/01/07 08:56:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.37.2.2 2017/03/20 06:57:09 pgoyette Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -452,6 +452,7 @@ ieattach(device_t parent, device_t self, void *aux)
 	
 	/* Signed, dated then sent */
         if_attach (ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, hwaddr);
 
 	/* "Hmm," said nuts, "what if the attach fails" */
@@ -1555,7 +1556,7 @@ ietint(struct ie_softc *sc)
     if ( sc->xmit_free<NTXBUF )
 	iexmit(sc);
 
-    iestart(ifp);
+    if_schedule_deferred_start(ifp);
 }
 
 /* End of if_ie.c */

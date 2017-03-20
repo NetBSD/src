@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.504.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.504.2.2 2017/03/20 06:57:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.504.2.1 2016/08/06 00:19:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.504.2.2 2017/03/20 06:57:48 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.504.2.1 2016/08/06 00:19:09 pgoye
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kmem.h>
@@ -286,6 +287,10 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		goto out;
 	}
 
+	error = vfs_suspend(mp, 0);
+	if (error)
+		goto out;
+
 	mutex_enter(&mp->mnt_updating);
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
@@ -294,12 +299,17 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	/*
 	 * Set the mount level flags.
 	 */
-	if (flags & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_iflag |= IMNT_WANTRDWR;
+	if ((flags & MNT_RDONLY) != (mp->mnt_flag & MNT_RDONLY)) {
+		if ((flags & MNT_RDONLY))
+			mp->mnt_iflag |= IMNT_WANTRDONLY;
+		else
+			mp->mnt_iflag |= IMNT_WANTRDWR;
+	}
 	mp->mnt_flag &= ~MNT_BASIC_FLAGS;
 	mp->mnt_flag |= flags & MNT_BASIC_FLAGS;
+	if ((mp->mnt_iflag & IMNT_WANTRDONLY))
+		mp->mnt_flag &= ~MNT_RDONLY;
+
 	error = VFS_MOUNT(mp, path, data, data_len);
 
 	if (error && data != NULL) {
@@ -320,12 +330,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			error = error2;
 	}
 
-	if (mp->mnt_iflag & IMNT_WANTRDWR)
-		mp->mnt_flag &= ~MNT_RDONLY;
+	if (error == 0 && (mp->mnt_iflag & IMNT_WANTRDONLY))
+		mp->mnt_flag |= MNT_RDONLY;
 	if (error)
 		mp->mnt_flag = saved_flags;
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
-	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+	mp->mnt_iflag &= ~(IMNT_WANTRDONLY | IMNT_WANTRDWR);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 		if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0)
 			vfs_syncer_add_to_worklist(mp);
@@ -334,6 +344,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			vfs_syncer_remove_from_worklist(mp);
 	}
 	mutex_exit(&mp->mnt_updating);
+	vfs_resume(mp);
 	vfs_unbusy(mp, false, NULL);
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
@@ -638,6 +649,7 @@ do_sys_sync(struct lwp *l)
 		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
+		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
@@ -647,6 +659,7 @@ do_sys_sync(struct lwp *l)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_exit(&mp->mnt_updating);
+		fstrans_done(mp);
 		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);

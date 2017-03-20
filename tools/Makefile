@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.186 2016/01/24 22:49:08 christos Exp $
+#	$NetBSD: Makefile,v 1.186.2.1 2017/03/20 06:58:02 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -125,7 +125,7 @@ SUBDIR+= stat .WAIT config
 .if ${MKLLVM} != "no"
 SUBDIR+= \
 	llvm .WAIT \
-	llvm-lib/libLLVMSupport llvm-lib/libLLVMTableGen .WAIT \
+	llvm-lib/libLLVMDemangle llvm-lib/libLLVMSupport llvm-lib/libLLVMTableGen .WAIT \
 	llvm-tblgen llvm-clang-tblgen .WAIT \
 	llvm-include .WAIT \
 	llvm-lib .WAIT \

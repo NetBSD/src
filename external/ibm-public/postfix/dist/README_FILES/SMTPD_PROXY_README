@@ -102,8 +102,8 @@ From then on mail is processed as usual.
 
 The content filter itself is not described here. You can use any filter that is
 SMTP enabled. For non-SMTP capable content filtering software, Bennett Todd's
-SMTP proxy implements a nice PERL/SMTP content filtering framework. See: http:/
-/bent.latency.net/smtpprox/.
+SMTP proxy implements a nice Perl-based framework. See: http://
+bent.latency.net/smtpprox/ or https://github.com/jnorell/smtpprox.
 
                                                Postfix
                   Postfix      filter on     SMTP server    Postfix    Postfix

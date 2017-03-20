@@ -1,4 +1,4 @@
-/*	$NetBSD: t_p2kifs.c,v 1.5 2016/01/25 11:45:57 pooka Exp $	*/
+/*	$NetBSD: t_p2kifs.c,v 1.5.2.1 2017/03/20 06:58:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 ATF_TC(makecn);
 ATF_TC_HEAD(makecn, tc)

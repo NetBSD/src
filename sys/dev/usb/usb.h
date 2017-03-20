@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.113.2.1 2016/11/04 14:49:16 pgoyette Exp $	*/
+/*	$NetBSD: usb.h,v 1.113.2.2 2017/03/20 06:57:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,9 +53,9 @@
 
 #define USB_STACK_VERSION 2
 
-#define USB_MAX_DEVICES 128
-#define USB_MIN_DEVICES 2               /* unused + root HUB */
-#define USB_START_ADDR 0
+#define USB_MAX_DEVICES		128		/* 0, 1-127 */
+#define USB_MIN_DEVICES		2               /* unused + root HUB */
+#define USB_START_ADDR		0
 
 #define USB_CONTROL_ENDPOINT 0
 #define USB_MAX_ENDPOINTS 16

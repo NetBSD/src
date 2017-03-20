@@ -1,0 +1,8 @@
+foo
+unix
+-
+n
+n
+-
+0
+other -o always_bcc=bar

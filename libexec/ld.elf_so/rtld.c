@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.178.2.1 2017/01/07 08:56:05 pgoyette Exp $	 */
+/*	$NetBSD: rtld.c,v 1.178.2.2 2017/03/20 06:57:01 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.178.2.1 2017/01/07 08:56:05 pgoyette Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.178.2.2 2017/03/20 06:57:01 pgoyette Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1071,7 +1071,7 @@ _rtld_objmain_sym(const char *name)
 }
 
 #ifdef __powerpc__
-static void *
+static __noinline void *
 hackish_return_address(void)
 {
 	return __builtin_return_address(1);

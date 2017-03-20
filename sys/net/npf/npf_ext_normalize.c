@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_normalize.c,v 1.3.8.1 2017/01/07 08:56:50 pgoyette Exp $	*/
+/*	$NetBSD: npf_ext_normalize.c,v 1.3.8.2 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.3.8.1 2017/01/07 08:56:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_normalize.c,v 1.3.8.2 2017/03/20 06:57:50 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -143,7 +143,8 @@ npf_normalize_ip4(npf_cache_t *npc, npf_normalize_t *np)
  * npf_normalize: the main routine to normalize IPv4 and/or TCP headers.
  */
 static bool
-npf_normalize(npf_cache_t *npc, void *params, int *decision)
+npf_normalize(npf_cache_t *npc, void *params, const npf_match_info_t *mi,
+    int *decision)
 {
 	npf_normalize_t *np = params;
 	struct tcphdr *th = npc->npc_l4.tcp;

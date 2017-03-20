@@ -1,5 +1,5 @@
 #
-# See slapd.d(5) for details on configuration options.
+# See slapd-config(5) for details on configuration options.
 # This file should NOT be world readable.
 #
 dn: cn=config
@@ -47,6 +47,7 @@ include: file://%SYSCONFDIR%/schema/core.ldif
 #
 dn: olcDatabase=frontend,cn=config
 objectClass: olcDatabaseConfig
+objectClass: olcFrontendConfig
 olcDatabase: frontend
 #
 # Sample global access control policy:
@@ -73,13 +74,13 @@ olcDatabase: frontend
 
 
 #######################################################################
-# BDB database definitions
+# LMDB database definitions
 #######################################################################
 #
-dn: olcDatabase=bdb,cn=config
+dn: olcDatabase=mdb,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olcBdbConfig
-olcDatabase: bdb
+objectClass: olcMdbConfig
+olcDatabase: mdb
 olcSuffix: dc=my-domain,dc=com
 olcRootDN: cn=Manager,dc=my-domain,dc=com
 # Cleartext passwords, especially for the rootdn, should

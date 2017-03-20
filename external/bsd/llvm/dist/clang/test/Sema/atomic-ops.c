@@ -14,11 +14,7 @@ _Static_assert(__GCC_ATOMIC_WCHAR_T_LOCK_FREE == 2, "");
 _Static_assert(__GCC_ATOMIC_SHORT_LOCK_FREE == 2, "");
 _Static_assert(__GCC_ATOMIC_INT_LOCK_FREE == 2, "");
 _Static_assert(__GCC_ATOMIC_LONG_LOCK_FREE == 2, "");
-#ifdef __i386__
-_Static_assert(__GCC_ATOMIC_LLONG_LOCK_FREE == 1, "");
-#else
 _Static_assert(__GCC_ATOMIC_LLONG_LOCK_FREE == 2, "");
-#endif
 _Static_assert(__GCC_ATOMIC_POINTER_LOCK_FREE == 2, "");
 
 _Static_assert(__c11_atomic_is_lock_free(1), "");
@@ -121,7 +117,10 @@ void f(_Atomic(int) *i, const _Atomic(int) *ci,
   __atomic_load(I, *P, memory_order_relaxed, 42); // expected-error {{too many arguments}}
   (int)__atomic_load(I, I, memory_order_seq_cst); // expected-error {{operand of type 'void'}}
   __atomic_load(s1, s2, memory_order_acquire);
-  (void)__atomic_load(I, CI, memory_order_relaxed); // expected-warning {{passing 'const int *' to parameter of type 'int *' discards qualifiers}}
+  __atomic_load(CI, I, memory_order_relaxed);
+  __atomic_load(I, CI, memory_order_relaxed); // expected-warning {{passing 'const int *' to parameter of type 'int *' discards qualifiers}}
+  __atomic_load(CI, CI, memory_order_relaxed); // expected-warning {{passing 'const int *' to parameter of type 'int *' discards qualifiers}}
+
   __c11_atomic_store(i, 1, memory_order_seq_cst);
   __c11_atomic_store(p, 1, memory_order_seq_cst); // expected-warning {{incompatible integer to pointer conversion}}
   (int)__c11_atomic_store(d, 1, memory_order_seq_cst); // expected-error {{operand of type 'void'}}
@@ -171,14 +170,14 @@ void f(_Atomic(int) *i, const _Atomic(int) *ci,
   __atomic_fetch_or(D, 3, memory_order_seq_cst); // expected-error {{must be a pointer to integer}}
   __atomic_fetch_and(s1, 3, memory_order_seq_cst); // expected-error {{must be a pointer to integer}}
 
-  _Bool cmpexch_1 = __c11_atomic_compare_exchange_strong(i, 0, 1, memory_order_seq_cst, memory_order_seq_cst);
-  _Bool cmpexch_2 = __c11_atomic_compare_exchange_strong(p, 0, (int*)1, memory_order_seq_cst, memory_order_seq_cst);
-  _Bool cmpexch_3 = __c11_atomic_compare_exchange_strong(d, (int*)0, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{incompatible pointer types}}
+  _Bool cmpexch_1 = __c11_atomic_compare_exchange_strong(i, I, 1, memory_order_seq_cst, memory_order_seq_cst);
+  _Bool cmpexch_2 = __c11_atomic_compare_exchange_strong(p, P, (int*)1, memory_order_seq_cst, memory_order_seq_cst);
+  _Bool cmpexch_3 = __c11_atomic_compare_exchange_strong(d, I, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{incompatible pointer types}}
   (void)__c11_atomic_compare_exchange_strong(i, CI, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{passing 'const int *' to parameter of type 'int *' discards qualifiers}}
 
-  _Bool cmpexchw_1 = __c11_atomic_compare_exchange_weak(i, 0, 1, memory_order_seq_cst, memory_order_seq_cst);
-  _Bool cmpexchw_2 = __c11_atomic_compare_exchange_weak(p, 0, (int*)1, memory_order_seq_cst, memory_order_seq_cst);
-  _Bool cmpexchw_3 = __c11_atomic_compare_exchange_weak(d, (int*)0, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{incompatible pointer types}}
+  _Bool cmpexchw_1 = __c11_atomic_compare_exchange_weak(i, I, 1, memory_order_seq_cst, memory_order_seq_cst);
+  _Bool cmpexchw_2 = __c11_atomic_compare_exchange_weak(p, P, (int*)1, memory_order_seq_cst, memory_order_seq_cst);
+  _Bool cmpexchw_3 = __c11_atomic_compare_exchange_weak(d, I, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{incompatible pointer types}}
   (void)__c11_atomic_compare_exchange_weak(i, CI, 1, memory_order_seq_cst, memory_order_seq_cst); // expected-warning {{passing 'const int *' to parameter of type 'int *' discards qualifiers}}
 
   _Bool cmpexch_4 = __atomic_compare_exchange_n(I, I, 5, 1, memory_order_seq_cst, memory_order_seq_cst);
@@ -500,4 +499,9 @@ void memory_checks(_Atomic(int) *Ap, int *p, int val) {
   (void)__atomic_compare_exchange_n(p, p, val, 0, memory_order_seq_cst, memory_order_relaxed);
 }
 
-
+void nullPointerWarning(_Atomic(int) *Ap, int *p, int val) {
+  // The 'expected' pointer shouldn't be NULL.
+  (void)__c11_atomic_compare_exchange_strong(Ap, NULL, val, memory_order_relaxed, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
+  (void)atomic_compare_exchange_weak(Ap, ((void*)0), val); // expected-warning {{null passed to a callee that requires a non-null argument}}
+  (void)__atomic_compare_exchange_n(p, NULL, val, 0, memory_order_relaxed, memory_order_relaxed); // expected-warning {{null passed to a callee that requires a non-null argument}}
+}

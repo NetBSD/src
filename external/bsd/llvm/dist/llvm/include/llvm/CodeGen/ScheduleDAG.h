@@ -396,6 +396,17 @@ namespace llvm {
     /// specified node.
     bool addPred(const SDep &D, bool Required = true);
 
+    /// addPredBarrier - This adds a barrier edge to SU by calling
+    /// addPred(), with latency 0 generally or latency 1 for a store
+    /// followed by a load.
+    bool addPredBarrier(SUnit *SU) {
+      SDep Dep(SU, SDep::Barrier);
+      unsigned TrueMemOrderLatency =
+        ((SU->getInstr()->mayStore() && this->getInstr()->mayLoad()) ? 1 : 0);
+      Dep.setLatency(TrueMemOrderLatency);
+      return addPred(Dep);
+    }
+
     /// removePred - This removes the specified edge as a pred of the current
     /// node if it exists.  It also removes the current node as a successor of
     /// the specified node.
@@ -668,24 +679,24 @@ namespace llvm {
   };
 
   template <> struct GraphTraits<SUnit*> {
-    typedef SUnit NodeType;
+    typedef SUnit *NodeRef;
     typedef SUnitIterator ChildIteratorType;
-    static inline NodeType *getEntryNode(SUnit *N) { return N; }
-    static inline ChildIteratorType child_begin(NodeType *N) {
+    static NodeRef getEntryNode(SUnit *N) { return N; }
+    static ChildIteratorType child_begin(NodeRef N) {
       return SUnitIterator::begin(N);
     }
-    static inline ChildIteratorType child_end(NodeType *N) {
+    static ChildIteratorType child_end(NodeRef N) {
       return SUnitIterator::end(N);
     }
   };
 
   template <> struct GraphTraits<ScheduleDAG*> : public GraphTraits<SUnit*> {
-    typedef std::vector<SUnit>::iterator nodes_iterator;
+    typedef pointer_iterator<std::vector<SUnit>::iterator> nodes_iterator;
     static nodes_iterator nodes_begin(ScheduleDAG *G) {
-      return G->SUnits.begin();
+      return nodes_iterator(G->SUnits.begin());
     }
     static nodes_iterator nodes_end(ScheduleDAG *G) {
-      return G->SUnits.end();
+      return nodes_iterator(G->SUnits.end());
     }
   };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.337.2.3 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.337.2.4 2017/03/20 06:57:50 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337.2.3 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337.2.4 2017/03/20 06:57:50 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -349,6 +349,12 @@ ip_init(void)
 #endif /* MBUFTRACE */
 
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
+
+	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
+	if (ipforward_rt_percpu == NULL)
+		panic("failed to allocate ipforward_rt_percpu");
+
+	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 }
 
 static struct in_ifaddr *
@@ -861,13 +867,17 @@ void
 ip_slowtimo(void)
 {
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	ip_reass_slowtimo();
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -899,7 +909,7 @@ ip_dooptions(struct mbuf *m)
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr dst;
 	n_time ntime;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
 	int s;
 
 	dst = ip->ip_dst;
@@ -1089,7 +1099,10 @@ ip_dooptions(struct mbuf *m)
 				ipaddr.sin_addr = dst;
 				_ss = pserialize_read_enter();
 				rcvif = m_get_rcvif(m, &_s);
-				ifa = ifaof_ifpforaddr(sintosa(&ipaddr), rcvif);
+				if (__predict_true(rcvif != NULL)) {
+					ifa = ifaof_ifpforaddr(sintosa(&ipaddr),
+					    rcvif);
+				}
 				m_put_rcvif(rcvif, &_s);
 				if (ifa == NULL) {
 					pserialize_read_exit(_ss);
@@ -1587,23 +1600,25 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	int error, tmp;
 	struct sysctlnode node;
 
+	icmp_mtudisc_lock();
+
 	node = *rnode;
 	tmp = ip_mtudisc_timeout;
 	node.sysctl_data = &tmp;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	if (tmp < 0)
-		return (EINVAL);
-
-	mutex_enter(softnet_lock);
+		goto out;
+	if (tmp < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	ip_mtudisc_timeout = tmp;
 	rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
-
-	mutex_exit(softnet_lock);
-
-	return (0);
+	error = 0;
+out:
+	icmp_mtudisc_unlock();
+	return error;
 }
 
 static int

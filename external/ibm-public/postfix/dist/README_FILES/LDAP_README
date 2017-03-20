@@ -52,14 +52,24 @@ this in the top level of your Postfix source tree should work:
 
     % make tidy
     % make makefiles CCARGS="-I/usr/local/include -DHAS_LDAP" \
-        AUXLIBS="-L/usr/local/lib -lldap -L/usr/local/lib -llber"
+        AUXLIBS_LDAP="-L/usr/local/lib -lldap -L/usr/local/lib -llber"
+
+Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_LDAP. With Postfix
+3.0 and later, the old AUXLIBS variable still supports building a statically-
+loaded LDAP database client, but only the new AUXLIBS_LDAP variable supports
+building a dynamically-loaded or statically-loaded LDAP database client.
+
+    Failure to use the AUXLIBS_LDAP variable will defeat the purpose of dynamic
+    database client loading. Every Postfix executable file will have LDAP
+    database library dependencies. And that was exactly what dynamic database
+    client loading was meant to avoid.
 
 On Solaris 2.x you may have to specify run-time link information, otherwise
 ld.so will not find some of the shared libraries:
 
     % make tidy
     % make makefiles CCARGS="-I/usr/local/include -DHAS_LDAP" \
-        AUXLIBS="-L/usr/local/lib -R/usr/local/lib -lldap \
+        AUXLIBS_LDAP="-L/usr/local/lib -R/usr/local/lib -lldap \
                 -L/usr/local/lib -R/usr/local/lib -llber"
 
 The 'make tidy' command is needed only if you have previously built Postfix

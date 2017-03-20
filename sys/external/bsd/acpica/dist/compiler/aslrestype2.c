@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,6 +126,11 @@ RsDoGeneralRegisterDescriptor (
             Descriptor->GenericReg.AccessSize = (UINT8) InitializerOp->Asl.Value.Integer;
             RsCreateByteField (InitializerOp, ACPI_RESTAG_ACCESSSIZE,
                 CurrentByteOffset + ASL_RESDESC_OFFSET (GenericReg.AccessSize));
+
+            if (Descriptor->GenericReg.AddressSpaceId == ACPI_ADR_SPACE_PLATFORM_COMM)
+            {
+                break;
+            }
 
             if (Descriptor->GenericReg.AccessSize > AML_FIELD_ACCESS_QWORD)
             {

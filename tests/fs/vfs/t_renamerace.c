@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.33 2016/05/04 08:30:22 dholland Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.33.2.1 2017/03/20 06:57:57 pgoyette Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -34,7 +34,7 @@
 #define FSTEST_IMGSIZE (50000 * 512)
 
 #include "../common/h_fsmacros.h"
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 static volatile int quittingtime;
 pid_t wrkpid;

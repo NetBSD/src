@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/02/27 21:47:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2017/03/20 06:56:02 pgoyette Exp $
 
 LIB=	LLVMX86CodeGen
 
@@ -6,16 +6,25 @@ LIB=	LLVMX86CodeGen
 
 .PATH: ${LLVM_SRCDIR}/lib/Target/X86
 
+# Used only with GlobalISel:
+#	X86CallLowering.cpp
+
 SRCS+=	X86AsmPrinter.cpp \
 	X86CallFrameOptimization.cpp \
+	X86CallingConv.cpp \
+	X86EvexToVex.cpp\
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
+	X86FixupBWInsts.cpp \
 	X86FixupLEAs.cpp \
+	X86FixupSetCC.cpp \
 	X86FloatingPoint.cpp \
 	X86FrameLowering.cpp \
 	X86ISelDAGToDAG.cpp \
 	X86ISelLowering.cpp \
+	X86InstrFMA3Info.cpp \
 	X86InstrInfo.cpp \
+	X86InterleavedAccess.cpp \
 	X86MachineFunctionInfo.cpp \
 	X86MCInstLower.cpp \
 	X86OptimizeLEAs.cpp \
@@ -28,6 +37,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86TargetObjectFile.cpp \
 	X86TargetTransformInfo.cpp \
 	X86VZeroUpper.cpp \
+	X86WinAllocaExpander.cpp \
 	X86WinEHState.cpp
 
 TABLEGEN_SRC=		X86.td

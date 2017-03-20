@@ -20,7 +20,7 @@
 xcb_extension_t xcb_damage_id = { "DAMAGE", 0 };
 
 void
-xcb_damage_damage_next (xcb_damage_damage_iterator_t *i  /**< */)
+xcb_damage_damage_next (xcb_damage_damage_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -28,7 +28,7 @@ xcb_damage_damage_next (xcb_damage_damage_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_damage_damage_end (xcb_damage_damage_iterator_t i  /**< */)
+xcb_damage_damage_end (xcb_damage_damage_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -38,15 +38,15 @@ xcb_damage_damage_end (xcb_damage_damage_iterator_t i  /**< */)
 }
 
 xcb_damage_query_version_cookie_t
-xcb_damage_query_version (xcb_connection_t *c  /**< */,
-                          uint32_t          client_major_version  /**< */,
-                          uint32_t          client_minor_version  /**< */)
+xcb_damage_query_version (xcb_connection_t *c,
+                          uint32_t          client_major_version,
+                          uint32_t          client_minor_version)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -66,15 +66,15 @@ xcb_damage_query_version (xcb_connection_t *c  /**< */,
 }
 
 xcb_damage_query_version_cookie_t
-xcb_damage_query_version_unchecked (xcb_connection_t *c  /**< */,
-                                    uint32_t          client_major_version  /**< */,
-                                    uint32_t          client_minor_version  /**< */)
+xcb_damage_query_version_unchecked (xcb_connection_t *c,
+                                    uint32_t          client_major_version,
+                                    uint32_t          client_minor_version)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -94,24 +94,24 @@ xcb_damage_query_version_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_damage_query_version_reply_t *
-xcb_damage_query_version_reply (xcb_connection_t                   *c  /**< */,
+xcb_damage_query_version_reply (xcb_connection_t                   *c,
                                 xcb_damage_query_version_cookie_t   cookie  /**< */,
-                                xcb_generic_error_t               **e  /**< */)
+                                xcb_generic_error_t               **e)
 {
     return (xcb_damage_query_version_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_void_cookie_t
-xcb_damage_create_checked (xcb_connection_t    *c  /**< */,
-                           xcb_damage_damage_t  damage  /**< */,
-                           xcb_drawable_t       drawable  /**< */,
-                           uint8_t              level  /**< */)
+xcb_damage_create_checked (xcb_connection_t    *c,
+                           xcb_damage_damage_t  damage,
+                           xcb_drawable_t       drawable,
+                           uint8_t              level)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_CREATE,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_CREATE,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -133,16 +133,16 @@ xcb_damage_create_checked (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_create (xcb_connection_t    *c  /**< */,
-                   xcb_damage_damage_t  damage  /**< */,
-                   xcb_drawable_t       drawable  /**< */,
-                   uint8_t              level  /**< */)
+xcb_damage_create (xcb_connection_t    *c,
+                   xcb_damage_damage_t  damage,
+                   xcb_drawable_t       drawable,
+                   uint8_t              level)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_CREATE,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_CREATE,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -164,14 +164,14 @@ xcb_damage_create (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_destroy_checked (xcb_connection_t    *c  /**< */,
-                            xcb_damage_damage_t  damage  /**< */)
+xcb_damage_destroy_checked (xcb_connection_t    *c,
+                            xcb_damage_damage_t  damage)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_DESTROY,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_DESTROY,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -190,14 +190,14 @@ xcb_damage_destroy_checked (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_destroy (xcb_connection_t    *c  /**< */,
-                    xcb_damage_damage_t  damage  /**< */)
+xcb_damage_destroy (xcb_connection_t    *c,
+                    xcb_damage_damage_t  damage)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_DESTROY,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_DESTROY,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -216,16 +216,16 @@ xcb_damage_destroy (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_subtract_checked (xcb_connection_t    *c  /**< */,
-                             xcb_damage_damage_t  damage  /**< */,
-                             xcb_xfixes_region_t  repair  /**< */,
-                             xcb_xfixes_region_t  parts  /**< */)
+xcb_damage_subtract_checked (xcb_connection_t    *c,
+                             xcb_damage_damage_t  damage,
+                             xcb_xfixes_region_t  repair,
+                             xcb_xfixes_region_t  parts)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_SUBTRACT,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_SUBTRACT,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -246,16 +246,16 @@ xcb_damage_subtract_checked (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_subtract (xcb_connection_t    *c  /**< */,
-                     xcb_damage_damage_t  damage  /**< */,
-                     xcb_xfixes_region_t  repair  /**< */,
-                     xcb_xfixes_region_t  parts  /**< */)
+xcb_damage_subtract (xcb_connection_t    *c,
+                     xcb_damage_damage_t  damage,
+                     xcb_xfixes_region_t  repair,
+                     xcb_xfixes_region_t  parts)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_SUBTRACT,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_SUBTRACT,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -276,15 +276,15 @@ xcb_damage_subtract (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_add_checked (xcb_connection_t    *c  /**< */,
-                        xcb_drawable_t       drawable  /**< */,
-                        xcb_xfixes_region_t  region  /**< */)
+xcb_damage_add_checked (xcb_connection_t    *c,
+                        xcb_drawable_t       drawable,
+                        xcb_xfixes_region_t  region)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_ADD,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_ADD,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -304,15 +304,15 @@ xcb_damage_add_checked (xcb_connection_t    *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_damage_add (xcb_connection_t    *c  /**< */,
-                xcb_drawable_t       drawable  /**< */,
-                xcb_xfixes_region_t  region  /**< */)
+xcb_damage_add (xcb_connection_t    *c,
+                xcb_drawable_t       drawable,
+                xcb_xfixes_region_t  region)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_damage_id,
-        /* opcode */ XCB_DAMAGE_ADD,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_damage_id,
+        .opcode = XCB_DAMAGE_ADD,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];

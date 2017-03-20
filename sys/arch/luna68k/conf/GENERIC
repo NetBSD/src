@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119.4.1 2017/01/07 08:56:19 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.119.4.2 2017/03/20 06:57:16 pgoyette Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119.4.1 $"
+#ident 		"GENERIC-$Revision: 1.119.4.2 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -150,6 +150,9 @@ config		netbsd root on ? type ?
 mainbus0 at root
 
 clock0	at mainbus0
+
+# LCD on front panel
+lcd0	at mainbus0
 
 # uPD7201 SIO
 sio0	at mainbus0

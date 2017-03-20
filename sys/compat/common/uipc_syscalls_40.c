@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.11.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.11.2.2 2017/03/20 06:57:23 pgoyette Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.11.2.1 2016/08/06 00:19:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.11.2.2 2017/03/20 06:57:23 pgoyette Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -52,7 +52,7 @@ compat_ifconf(u_long cmd, void *data)
 	IFNET_READER_FOREACH(ifp) {
 		struct ifaddr *ifa;
 
-		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_acquire(ifp, &psref);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -126,7 +126,7 @@ compat_ifconf(u_long cmd, void *data)
 			space -= sz;
 		}
 
-		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+		if_release(ifp, &psref);
 	}
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
@@ -139,7 +139,7 @@ compat_ifconf(u_long cmd, void *data)
 
 release_exit:
 	pserialize_read_exit(s);
-	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	if_release(ifp, &psref);
 	curlwp_bindx(bound);
 	return error;
 }

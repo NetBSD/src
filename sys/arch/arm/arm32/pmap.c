@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.335.2.2 2017/01/07 08:56:10 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.335.2.3 2017/03/20 06:57:10 pgoyette Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.335.2.2 2017/01/07 08:56:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.335.2.3 2017/03/20 06:57:10 pgoyette Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -954,6 +954,7 @@ pmap_is_cached(pmap_t pm)
  *       - The specified pmap is 'active' in the cache/tlb.
  */
 
+#ifdef PMAP_INCLUDE_PTE_SYNC
 static inline void
 pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 {
@@ -962,10 +963,9 @@ pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
 	arm_dsb();
 }
 
-#ifdef PMAP_INCLUDE_PTE_SYNC
-#define	PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
+# define PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
 #else
-#define	PTE_SYNC_CURRENT(pm, ptep)	/* nothing */
+# define PTE_SYNC_CURRENT(pm, ptep)	__nothing
 #endif
 
 /*
@@ -1694,7 +1694,7 @@ pmap_l2ptp_ctor(void *arg, void *v, int flags)
 			/*
 			 * Page tables must have the cache-mode set correctly.
 			 */
-			const pt_entry_t npte = (pte & ~L2_S_CACHE_MASK)
+			const pt_entry_t npte = (opte & ~L2_S_CACHE_MASK)
 			    | pte_l2_s_cache_mode_pt;
 			l2pte_set(ptep, npte, opte);
 			PTE_SYNC(ptep);
@@ -1973,7 +1973,7 @@ pmap_vac_me_user(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 			pt_entry_t npte = opte & ~L2_S_CACHE_MASK;
 
 			if ((va != pv->pv_va || pm != pv->pv_pmap)
-			    && l2pte_valid_p(npte)) {
+			    && l2pte_valid_p(opte)) {
 #ifdef PMAP_CACHE_VIVT
 				pmap_cache_wbinv_page(pv->pv_pmap, pv->pv_va,
 				    true, pv->pv_flags);
@@ -2301,7 +2301,7 @@ pmap_vac_me_harder(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 		if (opte == npte)	/* only update is there's a change */
 			continue;
 
-		if (l2pte_valid_p(npte)) {
+		if (l2pte_valid_p(opte)) {
 			pmap_tlb_flush_SE(pv->pv_pmap, pv->pv_va, pv->pv_flags);
 		}
 
@@ -4275,7 +4275,7 @@ pmap_prefetchabt_fixup(void *v)
 	if ((opte & L2_S_PROT_U) == 0 || (opte & L2_XS_XN) == 0)
 		goto out;
 
-	paddr_t pa = l2pte_pa(pte);
+	paddr_t pa = l2pte_pa(opte);
 	struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
 	KASSERT(pg != NULL);
 

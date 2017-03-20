@@ -1,0 +1,10 @@
+#verbose on
+open test-queue-file16a.tmp
+
+# Test the BCC action in milter_header_checks.
+
+header_checks regexp:cleanup_milter.reg16a
+add_header X-SPAM-FLAG NO
+add_header X-SPAM-FLAG YES
+
+close

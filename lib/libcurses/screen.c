@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.24.2.1 2017/01/07 08:56:04 pgoyette Exp $	*/
+/*	$NetBSD: screen.c,v 1.24.2.2 2017/03/20 06:56:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.24.2.1 2017/01/07 08:56:04 pgoyette Exp $");
+__RCSID("$NetBSD: screen.c,v 1.24.2.2 2017/03/20 06:56:59 pgoyette Exp $");
 #endif
 #endif					/* not lint */
 
@@ -45,15 +45,8 @@ __RCSID("$NetBSD: screen.c,v 1.24.2.1 2017/01/07 08:56:04 pgoyette Exp $");
 
 static int filtered;
 
-/*
- * filter has to be called before either initscr or newterm.
- */
-void
-filter(void)
-{
 
-	filtered = TRUE;
-}
+static void	 __delscreen(SCREEN *);
 
 /*
  * set_term --
@@ -72,7 +65,9 @@ set_term(SCREEN *new)
 		old_screen->rawmode = __rawmode;
 		old_screen->noqch = __noqch;
 		old_screen->COLS = COLS;
-		old_screen->LINES = LINES;
+		old_screen->LINES = LINES + __rippedlines(old_screen);
+		old_screen->ESCDELAY = ESCDELAY;
+		old_screen->TABSIZE = TABSIZE;
 		old_screen->COLORS = COLORS;
 		old_screen->COLOR_PAIRS = COLOR_PAIRS;
 		old_screen->GT = __GT;
@@ -87,7 +82,9 @@ set_term(SCREEN *new)
 	__rawmode = new->rawmode;
 	__noqch = new->noqch;
 	COLS = new->COLS;
-	LINES = new->LINES;
+	LINES = new->LINES - __rippedlines(new);
+	ESCDELAY = new->ESCDELAY;
+	TABSIZE = new->TABSIZE;
 	COLORS = new->COLORS;
 	COLOR_PAIRS = new->COLOR_PAIRS;
 	__GT = new->GT;
@@ -124,6 +121,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 {
 	SCREEN *new_screen;
 	char *sp;
+	int rtop;
 
 	sp = type;
 	if (type == NULL && (sp = getenv("TERM")) == NULL)
@@ -137,7 +135,15 @@ newterm(char *type, FILE *outfd, FILE *infd)
 #endif
 
 	new_screen->infd = infd;
-	new_screen->checkfd = fileno(infd);
+	/*
+	 * POSIX standard says this should be set to infd by default,
+	 * but this seems to break nvi by leaving an unrefreshed screen.
+	 * Also, the line breakout optimisation advertised in ncurses
+	 * doesn't actually do anything, so explicitly disabling it here makes
+	 * sense for the time being.
+	 * A caller can always enable it by calling typeahead(3) anyway.
+	 */
+	new_screen->checkfd = -1; // fileno(infd);
 	new_screen->outfd = outfd;
 	new_screen->echoit = new_screen->nl = 1;
 	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
@@ -158,7 +164,8 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->unget_len = 32;
 
 	if ((new_screen->unget_list =
-	    malloc(sizeof(wchar_t) * new_screen->unget_len)) == NULL) {
+	    malloc(sizeof(wchar_t) * new_screen->unget_len)) == NULL)
+	{
 		goto error_exit;
 	}
 	new_screen->unget_pos = 0;
@@ -180,25 +187,27 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	    0, 0, 0, FALSE)) == NULL)
 		goto error_exit;
 
-	if ((new_screen->stdscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == NULL) {
-		delwin(new_screen->curscr);
+	if ((new_screen->__virtscr = __newwin(new_screen, 0,
+	    0, 0, 0, FALSE)) == NULL)
 		goto error_exit;
-	}
+
+	/* If Soft Label Keys are setup, they will ripoffline. */
+	if (__slk_init(new_screen) == ERR)
+		goto error_exit;
+
+	if (__ripoffscreen(new_screen, &rtop) == ERR)
+		goto error_exit;
+
+	new_screen->stdscr = __newwin(new_screen, LINES, 0, rtop, 0, FALSE);
+	if (new_screen->stdscr == NULL)
+		goto error_exit;
 
 	clearok(new_screen->stdscr, 1);
-
-	if ((new_screen->__virtscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == NULL) {
-		delwin(new_screen->curscr);
-		delwin(new_screen->stdscr);
-		goto error_exit;
-	}
 
 	__init_getch(new_screen);
 	__init_acs(new_screen);
 #ifdef HAVE_WCHAR
-	__init_get_wch( new_screen );
+	__init_get_wch(new_screen);
 	__init_wacs(new_screen);
 #endif /* HAVE_WCHAR */
 
@@ -222,8 +231,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	return new_screen;
 
   error_exit:
-	if (new_screen->term != NULL)
-		(void)del_curterm(new_screen->term);
+	__delscreen(new_screen);
 	free(new_screen->unget_list);
 
 	free(new_screen);
@@ -238,13 +246,34 @@ newterm(char *type, FILE *outfd, FILE *infd)
 void
 delscreen(SCREEN *screen)
 {
-        struct __winlist *list;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_SCREEN, "delscreen(%p)\n", screen);
 #endif
+
+	__delscreen(screen);
+
+	  /* free the storage of the keymaps */
+	_cursesi_free_keymap(screen->base_keymap);
+
+	  /* free the Soft Label Keys */
+	__slk_free(screen);
+
+	free(screen->stdbuf);
+	free(screen->unget_list);
+	if (_cursesi_screen == screen)
+		_cursesi_screen = NULL;
+	free(screen);
+}
+
+static void
+__delscreen(SCREEN *screen)
+{
+        struct __winlist *list;
+
 	  /* free up the terminfo stuff */
-	del_curterm(screen->term);
+	if (screen->term != NULL)
+		del_curterm(screen->term);
 
 	  /* walk the window list and kill all the parent windows */
 	while ((list = screen->winlistp) != NULL) {
@@ -253,13 +282,4 @@ delscreen(SCREEN *screen)
 			/* sanity - abort if window didn't remove itself */
 			break;
 	}
-
-	  /* free the storage of the keymaps */
-	_cursesi_free_keymap(screen->base_keymap);
-
-	free(screen->stdbuf);
-	free(screen->unget_list);
-	if (_cursesi_screen == screen)
-		_cursesi_screen = NULL;
-	free(screen);
 }

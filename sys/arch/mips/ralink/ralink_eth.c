@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.9.2.2 2017/01/07 08:56:21 pgoyette Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.9.2.3 2017/03/20 06:57:17 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.9.2.2 2017/01/07 08:56:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.9.2.3 2017/03/20 06:57:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -524,6 +524,7 @@ ralink_eth_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/* init our mii ticker */
@@ -1446,7 +1447,7 @@ ralink_eth_intr(void *arg)
 	}
 
 	/* Try to get more packets going. */
-	ralink_eth_start(&sc->sc_ethercom.ec_if);
+	if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 
 	return 1;
 }

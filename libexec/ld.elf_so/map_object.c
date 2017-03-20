@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.55 2016/06/16 11:34:13 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.55.2.1 2017/03/20 06:57:01 pgoyette Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.55 2016/06/16 11:34:13 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.55.2.1 2017/03/20 06:57:01 pgoyette Exp $");
 #endif /* not lint */
 
 #include <errno.h>

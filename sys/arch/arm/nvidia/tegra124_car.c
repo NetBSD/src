@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.2.4.1 2017/01/07 08:56:11 pgoyette Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.2.4.2 2017/03/20 06:57:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2.4.1 2017/01/07 08:56:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2.4.2 2017/03/20 06:57:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1307,7 +1307,7 @@ tegra124_car_reset_acquire(device_t dev, const void *data, size_t len)
 
 	const u_int reset_id = be32dec(data);
 
-	if (reset_id > __arraycount(tegra124_car_reset_regs) * 32)
+	if (reset_id >= __arraycount(tegra124_car_reset_regs) * 32)
 		return NULL;
 
 	const u_int reg = reset_id / 32;

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.70.2.1 2017/01/07 08:56:08 pgoyette Exp $
+.\"     $NetBSD: vnode.9,v 1.70.2.2 2017/03/20 06:57:07 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 2, 2017
+.Dd January 11, 2017
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -170,15 +170,10 @@ struct vnode {
 	int		v_numoutput;		/* # of pending writes */
 	int		v_writecount;		/* ref count of writers */
 	int		v_holdcnt;		/* page & buffer refs */
-	int		v_synclist_slot;	/* synclist slot index */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op)(void *);	/* vnode operations vector */
-	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
-	TAILQ_ENTRY(vnode) v_synclist;		/* vnodes with dirty bufs */
-	LIST_HEAD(, namecache) v_dnclist;	/* namecaches (children) */
-	LIST_HEAD(, namecache) v_nclist;	/* namecaches (parent) */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -188,7 +183,6 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
-	struct vnlock	v_lock;			/* lock for this vnode */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* notes attached to vnode */
 };
@@ -319,15 +313,6 @@ Its value must only be modified at splbio (see
 It does not track the number of dirty buffers attached to the
 vnode.
 .Pp
-.Em v_dnclist
-and
-.Em v_nclist
-are used by
-.Xr namecache 9
-to maintain the list of associated entries so that
-.Xr cache_purge 9
-can purge them.
-.Pp
 The link to the file system which owns the vnode is recorded by
 .Em v_mount .
 See
@@ -450,9 +435,7 @@ universal disk format file system
 systemV boot file system
 .El
 .Pp
-All vnode locking operations use
-.Em v_lock .
-This lock is acquired by calling
+The vnode lock is acquired by calling
 .Xr vn_lock 9
 and released by calling
 .Xr VOP_UNLOCK 9 .
@@ -478,10 +461,8 @@ locking.
 Multiple-reader locking functions equivalently only in the presence
 of big-lock SMP locking or a uni-processor machine.
 The lock may be held while sleeping.
-While the
-.Em v_lock
-is acquired, the holder is guaranteed that the vnode will not be
-reclaimed or invalidated.
+While the vnode lock is acquired, the holder is guaranteed that the
+vnode will not be reclaimed or invalidated.
 Most file system functions require that you hold the vnode lock on entry.
 See
 .Xr lock 9
@@ -497,9 +478,8 @@ The members
 .Em v_numoutput ,
 .Em v_holdcnt ,
 .Em v_dirtyblkhd ,
-.Em v_cleanblkhd ,
 and
-.Em v_synclist
+.Em v_cleanblkhd
 are modified in interrupt context and must be protected by
 .Xr splbio 9
 unless it is certain that there is no chance an interrupt handler will
@@ -534,7 +514,7 @@ and
 .Em v_holdcnt
 are zero, the vnode is cached.
 .It Fn vrele_async "vp"
-Will asychronously release the vnode in different context than the caller,
+Will asynchronously release the vnode in different context than the caller,
 sometime after the call.
 .It Fn vput "vp"
 Legacy convenience routine for unlocking and releasing

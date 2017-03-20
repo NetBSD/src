@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2016/02/27 21:47:34 joerg Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2017/03/20 06:56:01 pgoyette Exp $
 
 LIB=	LLVMPowerPCCodeGen
 
@@ -9,6 +9,7 @@ LIB=	LLVMPowerPCCodeGen
 SRCS+=	PPCAsmPrinter.cpp \
 	PPCBoolRetToInt.cpp \
 	PPCBranchSelector.cpp \
+	PPCCCState.cpp \
 	PPCCTRLoops.cpp \
 	PPCEarlyReturn.cpp \
 	PPCHazardRecognizers.cpp \
@@ -17,11 +18,11 @@ SRCS+=	PPCAsmPrinter.cpp \
 	PPCISelLowering.cpp \
 	PPCFastISel.cpp \
 	PPCFrameLowering.cpp \
-	PPCLoopDataPrefetch.cpp \
 	PPCLoopPreIncPrep.cpp \
 	PPCMachineFunctionInfo.cpp \
 	PPCMCInstLower.cpp \
 	PPCMIPeephole.cpp \
+	PPCQPXLoadSplat.cpp \
 	PPCRegisterInfo.cpp \
 	PPCSubtarget.cpp \
 	PPCTLSDynamicCall.cpp \

@@ -4,4 +4,5 @@
 .gz - 'GNUz' 'TEXT'
 .tgz - 'GNUz' 'TEXT'
 .html - 'nbsd' 'TEXT'
+.chrp - 'chrp' 'tbxi'
 * - 'nbsd' 'TEXT'

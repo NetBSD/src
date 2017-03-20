@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.24 2015/05/01 16:22:49 christos Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2017/03/20 06:52:03 pgoyette Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	2860k
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
 DBG=		-Os -mmemcpy -fno-unwind-tables

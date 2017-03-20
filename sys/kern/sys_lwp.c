@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.57 2015/07/24 13:02:52 maxv Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.57.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.57 2015/07/24 13:02:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.57.2.1 2017/03/20 06:57:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -822,7 +822,7 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap,
 	if (t->l_name == NULL)
 		name[0] = '\0';
 	else
-		strcpy(name, t->l_name);
+		strlcpy(name, t->l_name, sizeof(name));
 	lwp_unlock(t);
 	mutex_exit(p->p_lock);
 

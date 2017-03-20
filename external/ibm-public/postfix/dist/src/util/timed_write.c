@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_write.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: timed_write.c,v 1.1.1.1.32.1 2017/03/20 06:56:42 pgoyette Exp $	*/
 
 /*++
 /* NAME
@@ -59,7 +59,7 @@
 
 /* timed_write - write with deadline */
 
-ssize_t timed_write(int fd, void *buf, size_t len,
+ssize_t timed_write(int fd, const void *buf, size_t len,
 		            int timeout, void *unused_context)
 {
     ssize_t ret;

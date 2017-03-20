@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-common.h,v 1.1.1.4 2014/05/28 09:58:54 tron Exp $	*/
+/*	$NetBSD: slapd-common.h,v 1.1.1.4.6.1 2017/03/20 06:56:20 pgoyette Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

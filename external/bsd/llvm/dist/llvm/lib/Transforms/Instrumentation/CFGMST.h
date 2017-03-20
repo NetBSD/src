@@ -21,7 +21,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -77,6 +76,14 @@ public:
     auto It = BBInfos.find(BB);
     assert(It->second.get() != nullptr);
     return *It->second.get();
+  }
+
+  // Give BB, return the auxiliary information if it's available.
+  BBInfo *findBBInfo(const BasicBlock *BB) const {
+    auto It = BBInfos.find(BB);
+    if (It == BBInfos.end())
+      return nullptr;
+    return It->second.get();
   }
 
   // Traverse the CFG using a stack. Find all the edges and assign the weight.

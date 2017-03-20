@@ -1,4 +1,4 @@
-; RUN: llc -march=amdgcn -mcpu=tonga < %s | FileCheck --check-prefix=TONGA %s
+; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs < %s | FileCheck --check-prefix=TONGA %s
 
 ; On Tonga and Iceland, limited SGPR availability means care must be taken to
 ; allocate scratch registers correctly. Check that this test compiles without
@@ -6,7 +6,8 @@
 ; TONGA-LABEL: test
 define void @test(<256 x i32> addrspace(1)* %out, <256 x i32> addrspace(1)* %in) {
 entry:
-  %tid = call i32 @llvm.SI.tid() nounwind readnone
+  %mbcnt.lo = call i32 @llvm.amdgcn.mbcnt.lo(i32 -1, i32 0)
+  %tid = call i32 @llvm.amdgcn.mbcnt.hi(i32 -1, i32 %mbcnt.lo)
   %aptr = getelementptr <256 x i32>, <256 x i32> addrspace(1)* %in, i32 %tid
   %a = load <256 x i32>, <256 x i32> addrspace(1)* %aptr
   call void asm sideeffect "", "~{memory}" ()
@@ -21,4 +22,7 @@ entry:
   ret void
 }
 
-declare i32 @llvm.SI.tid() nounwind readnone
+declare i32 @llvm.amdgcn.mbcnt.lo(i32, i32) #0
+declare i32 @llvm.amdgcn.mbcnt.hi(i32, i32) #0
+
+attributes #0 = { nounwind readnone }

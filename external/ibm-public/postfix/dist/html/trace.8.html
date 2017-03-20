@@ -33,10 +33,10 @@ BOUNCE(8)                                                            BOUNCE(8)
        tion is sent even when the log file or the original message  cannot  be
        read.
 
-       Optionally,  a  bounce  (defer, trace) client can request that the per-
-       message log file be deleted when the requested operation  fails.   This
-       is  used  by  clients that cannot retry transactions by themselves, and
-       that depend on retry logic in their own client.
+       Optionally,  a  bounce  (defer,  trace)  client  can  request  that the
+       per-message log file be deleted when  the  requested  operation  fails.
+       This  is  used by clients that cannot retry transactions by themselves,
+       and that depend on retry logic in their own client.
 
 <b>STANDARDS</b>
        <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
@@ -46,6 +46,9 @@ BOUNCE(8)                                                            BOUNCE(8)
        <a href="http://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery Status Notifications)
        <a href="http://tools.ietf.org/html/rfc3834">RFC 3834</a> (Auto-Submitted: message header)
        <a href="http://tools.ietf.org/html/rfc5322">RFC 5322</a> (Internet Message Format)
+       <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a> (Internationalized SMTP)
+       <a href="http://tools.ietf.org/html/rfc6532">RFC 6532</a> (Internationalized Message Format)
+       <a href="http://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized Delivery Status Notifications)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -104,9 +107,9 @@ BOUNCE(8)                                                            BOUNCE(8)
               internal communication channel.
 
        <b><a href="postconf.5.html#internal_mail_filter_classes">internal_mail_filter_classes</a> (empty)</b>
-              What categories of Postfix-generated mail are subject to before-
-              queue content inspection by <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a>, <a href="postconf.5.html#header_checks">header_checks</a> and
-              <a href="postconf.5.html#body_checks">body_checks</a>.
+              What  categories  of  Postfix-generated  mail  are  subject   to
+              before-queue    content    inspection    by   <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a>,
+              <a href="postconf.5.html#header_checks">header_checks</a> and <a href="postconf.5.html#body_checks">body_checks</a>.
 
        <b><a href="postconf.5.html#mail_name">mail_name</a> (Postfix)</b>
               The mail system name that is displayed in Received: headers,  in
@@ -140,6 +143,12 @@ BOUNCE(8)                                                            BOUNCE(8)
               syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
 
+       Available in Postfix 3.0 and later:
+
+       <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
+              Detect that a message requires SMTPUTF8 support for  the  speci-
+              fied mail origin classes.
+
 <b>FILES</b>
        /var/spool/postfix/bounce/* non-delivery records
        /var/spool/postfix/defer/* non-delivery records
@@ -161,6 +170,11 @@ BOUNCE(8)                                                            BOUNCE(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                      BOUNCE(8)
 </pre> </body> </html>

@@ -55,6 +55,17 @@ QMQPD(8)                                                              QMQPD(8)
               Enable or disable recipient validation, built-in content filter-
               ing, or address mapping.
 
+<b>SMTPUTF8 CONTROLS</b>
+       Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
+
+       <b><a href="postconf.5.html#smtputf8_enable">smtputf8_enable</a> (yes)</b>
+              Enable preliminary SMTPUTF8 support for the protocols  described
+              in <a href="http://tools.ietf.org/html/rfc6531">RFC 6531</a>..6533.
+
+       <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
+              Detect  that  a message requires SMTPUTF8 support for the speci-
+              fied mail origin classes.
+
 <b>RESOURCE AND RATE CONTROLS</b>
        <b><a href="postconf.5.html#line_length_limit">line_length_limit</a> (2048)</b>
               Upon input, long lines are chopped up into  pieces  of  at  most
@@ -163,6 +174,11 @@ QMQPD(8)                                                              QMQPD(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                       QMQPD(8)
 </pre> </body> </html>

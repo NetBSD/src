@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/08/10 17:34:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2017/03/20 06:52:28 pgoyette Exp $
 
 PROG_CXX=	llvm-profdata
 NOMAN=		yes
@@ -12,8 +12,14 @@ SRCS=	llvm-profdata.cpp
 LLVM_LIBS+= \
 	ProfileData \
 	IR \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
+
+LDADD+=	-lz
+.if !defined(HOSTPROG)
+DPADD+=	${LIBZ}
+.endif
 
 .include <bsd.prog.mk>

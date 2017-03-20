@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cgd_3des.c,v 1.1.2.2 2017/01/07 08:56:54 pgoyette Exp $	*/
+/*	$NetBSD: t_cgd_3des.c,v 1.1.2.3 2017/03/20 06:57:55 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,7 +48,7 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
-#include "../../h_macros.h"
+#include "h_macros.h"
 
 #define SECSIZE 512
 

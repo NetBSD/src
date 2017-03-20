@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.107.2.3 2017/01/07 08:56:09 pgoyette Exp $	*/
+/*	$NetBSD: locore.S,v 1.107.2.4 2017/03/20 06:57:09 pgoyette Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -210,6 +210,10 @@
 #define TABLESIZE \
   ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * PAGE_SIZE)
+
+/* Amount of VA used to map the kernel, the syms and the preloaded modules */
+#define BOOTMAP_VA_SIZE \
+	(NKL2_KIMG_ENTRIES * (1 << L2_SHIFT) - TABLESIZE - IOM_SIZE)
 
 /*
  * fillkpt - Fill in a kernel page table
@@ -443,7 +447,7 @@ ENTRY(start)
 	testl	%eax,%eax		/* bootinfo = NULL? */
 	jz	bootinfo_finished
 
-	movl	(%eax),%ebx		/* number of entries */
+	movl	(%eax),%ebx		/* bootinfo::bi_nentries */
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	addl	$BOOTINFO_MAXSIZE,%ebp
@@ -462,7 +466,7 @@ bootinfo_entryloop:
 
 	movl	(%ecx),%eax		/* btinfo_common::len (size of entry) */
 	movl	%edx,%edi
-	addl	(%ecx),%edx		/* update dest pointer */
+	addl	%eax,%edx		/* update dest pointer */
 	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
 	jg	bootinfo_overflow
 
@@ -470,20 +474,31 @@ bootinfo_entryloop:
 	movl	%eax,%ecx
 
 	/*
-	 * If any modules were loaded, record where they end.  We'll need to
-	 * skip over them.
+	 * If any modules were loaded, record where they end. 'eblob' is used
+	 * later to compute the initial bootstrap tables.
 	 */
 	cmpl	$BTINFO_MODULELIST,4(%esi) /* btinfo_common::type */
-	jne	0f
+	jne	bootinfo_copy
 
-	pushl	12(%esi)		/* btinfo_modulelist::endpa */
-	popl	RELOC(eblob)
+	/* Skip the modules if we won't have enough VA to map them */
+	movl	12(%esi),%eax		/* btinfo_modulelist::endpa */
+	addl	$PGOFSET,%eax		/* roundup to a page */
+	andl	$~PGOFSET,%eax
+	cmpl	$BOOTMAP_VA_SIZE,%eax
+	jg	bootinfo_skip
+	movl	%eax,RELOC(eblob)
 	addl	$KERNBASE_LO,RELOC(eblob)
 	adcl	$KERNBASE_HI,RELOC(eblob)+4
 
-0:
+bootinfo_copy:
 	rep
 	movsb				/* copy esi -> edi */
+	jmp	bootinfo_next
+
+bootinfo_skip:
+	subl	%ecx,%edx		/* revert dest pointer */
+
+bootinfo_next:
 	popl	%eax
 	popl	%esi
 	popl	%edi
@@ -501,8 +516,8 @@ bootinfo_overflow:
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	subl	%ebx,(%edx)		/* correct the number of entries */
-
 bootinfo_finished:
+
 	/* Load 'esym' */
 	movl	16(%esp),%eax
 	testl	%eax,%eax		/* esym = NULL? */
@@ -647,7 +662,7 @@ no_NOX:
 	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Skip the first MB. */
+	/* Skip the area below the kernel text. */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%ecx
 	shrl	$PGSHIFT,%ecx
 	fillkpt_blank
@@ -1311,16 +1326,15 @@ do_syscall:
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
 	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
 	SWAPGS
 	jnz	2f
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
-	movw	TF_DS(%rsp),%ds
 	movq	TF_RSP(%rsp),%rsp
 	sysretq
 #else
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
@@ -1333,7 +1347,6 @@ do_syscall:
  * then a SIGSEGV will be signalled.
  */
 2:
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	iretq
 

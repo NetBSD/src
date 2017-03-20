@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2016/02/27 21:47:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2017/03/20 06:52:26 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,7 @@ SUBDIR+= \
 	llvm-bcanalyzer \
 	llvm-cov \
 	llvm-cxxdump \
+	llvm-cxxfilt \
 	llvm-diff \
 	llvm-dis \
 	llvm-dwarfdump \
@@ -44,9 +45,11 @@ SUBDIR+= \
 	llvm-profdata \
 	llvm-readobj \
 	llvm-size \
+	llvm-strings \
 	llvm-symbolizer \
 	opt \
-	sancov
+	sancov \
+	sanstats
 .endif
 
 .include <bsd.subdir.mk>

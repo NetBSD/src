@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2016/07/12 13:43:18 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10.2.1 2017/03/20 06:57:11 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2016/07/12 13:43:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10.2.1 2017/03/20 06:57:11 pgoyette Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -223,6 +223,29 @@ struct arm32_pci_chipset arm32_mvpex4_chipset = {
 	mvpex_conf_interrupt,
 };
 struct arm32_pci_chipset arm32_mvpex5_chipset = {
+	NULL,	/* conf_v */
+	mvpex_attach_hook,
+	mvpex_bus_maxdevs,
+	mvpex_make_tag,
+	mvpex_decompose_tag,
+#if NMVPEX_MBUS > 0
+	mvpex_mbus_conf_read,		/* XXXX: always this functions */
+#else
+	mvpex_conf_read,
+#endif
+	mvpex_conf_write,
+	NULL,	/* intr_v */
+	mvpex_intr_map,
+	mvpex_intr_string,
+	mvpex_intr_evcnt,
+	mvpex_intr_establish,
+	mvpex_intr_disestablish,
+#ifdef __HAVE_PCI_CONF_HOOK
+	mvpex_conf_hook,
+#endif
+	mvpex_conf_interrupt,
+};
+struct arm32_pci_chipset arm32_mvpex6_chipset = {
 	NULL,	/* conf_v */
 	mvpex_attach_hook,
 	mvpex_bus_maxdevs,

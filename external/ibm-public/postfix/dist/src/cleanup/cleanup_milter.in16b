@@ -1,0 +1,12 @@
+#verbose on
+open test-queue-file16b.tmp
+
+# Test the add_rcpt_par action
+
+add_rcpt_par foo@example.com notify=never
+add_rcpt_par foo@example.com notify=never
+add_rcpt bar@example.com
+add_rcpt_par bar@example.com orcpt=rfc822;orig-bar@example.com
+add_rcpt_par bar@example.com notify=delay
+
+close

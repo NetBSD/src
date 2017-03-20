@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.8 2015/09/24 14:26:44 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.8.2.1 2017/03/20 06:56:28 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -41,7 +41,7 @@
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
-#include <sys/limits.h>
+#include <sys/syslimits.h>
 #include <sys/linker.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>

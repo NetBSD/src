@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.30 2015/12/22 14:25:58 christos Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.30.2.1 2017/03/20 06:57:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -309,9 +309,7 @@ ATF_TC_BODY(sigfpe_flt, tc)
 
 	if (isQEMU())
 		atf_tc_skip("Test does not run correctly under QEMU");
-#if defined(__powerpc__)
-	atf_tc_skip("Test not valid on powerpc");
-#elif defined(__arm__) && !__SOFTFP__
+#if defined(__arm__) && !__SOFTFP__
 	/*
 	 * Some NEON fpus do not implement IEEE exception handling,
 	 * skip these tests if running on them and compiled for

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/02/27 21:47:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2017/03/20 06:52:27 pgoyette Exp $
 
 PROG_CXX=	lli
 NOMAN=		yes
@@ -36,7 +36,8 @@ LLVM_LIBS+= \
 	Target \
 	MC \
 	IR \
-	Support
+	Support \
+	Demangle
 
 .include "${.PARSEDIR}/../../link.mk"
 

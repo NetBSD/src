@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.119.2.1 2016/11/04 14:49:22 pgoyette Exp $	*/
+/*	$NetBSD: socket.h,v 1.119.2.2 2017/03/20 06:57:53 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -644,6 +644,7 @@ __END_DECLS
 
 __BEGIN_DECLS
 int	accept(int, struct sockaddr * __restrict, socklen_t * __restrict);
+int	accept4(int, struct sockaddr * __restrict, socklen_t * __restrict, int);
 int	bind(int, const struct sockaddr *, socklen_t);
 int	connect(int, const struct sockaddr *, socklen_t);
 int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);

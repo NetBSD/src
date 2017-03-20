@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.17.2.1 2017/03/20 06:58:08 pgoyette Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.17.2.1 2017/03/20 06:58:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -98,12 +98,20 @@ static void
 msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
     const struct stat *st)
 {
+	struct timespec at;
+	struct timespec mt;
+
+	if (stampst.st_ino) 
+	    st = &stampst;
+
 #ifndef HAVE_NBTOOL_CONFIG_H
-	struct timespec at = st->st_atimespec;
-	struct timespec mt = st->st_mtimespec;
+	at = st->st_atimespec;
+	mt = st->st_mtimespec;
 #else
-	struct timespec at = { st->st_atime, 0 };
-	struct timespec mt = { st->st_mtime, 0 };
+	at.tv_sec = st->st_atime;
+	at.tv_nsec = 0;
+	mt.tv_sec = st->st_mtime;
+	mt.tv_nsec = 0;
 #endif
 	unix2dostime(&at, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
 	unix2dostime(&mt, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
