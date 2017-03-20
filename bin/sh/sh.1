@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.125 2017/02/04 23:35:15 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.126 2017/03/20 11:26:07 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1255,6 +1255,39 @@ Shell variables may be referenced by name inside an arithmetic
 expression, without needing a
 .Dq \&$
 sign.
+Variables that are not set, or which have an empty (null string) value,
+used this way evaluate as zero (that is,
+.Dq x
+in arithmetic, as an R-Value, is evaluated as
+.Dq ${x:-0} )
+unless the
+.Nm
+.Fl u
+flag is set, in which case a reference to an unset variable is an error.
+Note that unset variables used in the ${var} form expand to a null
+string, which might result in syntax errors.
+Referencing the value of a variable which is not numeric is an error.
+.Pp
+All of the C expression operators applicable to integers are supported,
+and operate as they would in a C expression, except the unary
+.Dq ++
+and
+.Dq --
+operators (in both prefix and postfix forms) and the
+.Dq \&,
+(comma) operator, which are currently not supported.
+.PP
+It should not be necessary to state that the C operators which
+operate on, or produce, pointer types, are not supported.
+Those include unary
+.Dq \&*
+and
+.Dq \&&
+and the struct and array referencing binary operators:
+.Dq \&. ,
+.Dq \&->
+and
+.Dq \&[ .
 .Ss White Space Splitting (Field Splitting)
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
