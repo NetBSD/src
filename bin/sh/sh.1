@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.126 2017/03/20 11:26:07 kre Exp $
+.\"	$NetBSD: sh.1,v 1.127 2017/03/20 22:17:56 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd February 1, 2017
+.Dd March 20, 2017
 .Dt SH 1
 .ds flags abCEeFfhnuvxIimpqV
 .Os
@@ -1235,13 +1235,23 @@ The format for arithmetic expansion is as follows:
 .Pp
 .Dl $((expression))
 .Pp
-The expression is treated as if it were in double quotes, except
-that a double quote inside the expression is not treated specially.
+The expression in an arithmetic expansion is treated as if it were in
+double quotes, except that a double quote character inside the expression
+is just a normal character (it quotes nothing.)
 The shell expands all tokens in the expression for parameter expansion,
-command substitution, and quote removal.
+command substitution, and quote removal (the only quoting character is
+the backslash
+.Sq \&\e ,
+and only when followed by another
+.Sq \&\e ,
+a dollar sign
+.Sq \&$ ,
+a backquote
+.Sq \&`
+or a newline.)
 .Pp
-Next, the shell treats this as an arithmetic expression and
-substitutes the value of the expression.
+Next, the shell evaluates the expanded result as an arithmetic expression
+and substitutes the calculated value of that expression.
 .Pp
 Arithmetic expressions use a syntax similar to that
 of the C language, and are evaluated using the
@@ -1250,7 +1260,7 @@ data type (this is an extension to
 .Tn POSIX ,
 which requires only
 .Ql long
-arithmetic).
+arithmetic.)
 Shell variables may be referenced by name inside an arithmetic
 expression, without needing a
 .Dq \&$
@@ -1595,7 +1605,7 @@ environment of subsequent commands.
 With
 .Fl n
 the specified names are un-exported.
-Variables can also be un-exported using the unset builtin command.
+Variables can also be un-exported using the unset built in command.
 With
 .Fl x
 (exclude) the specified names are marked not to be exported,
@@ -2216,7 +2226,7 @@ its exit status will be greater than 128.
 Once waited upon, by specific process number or job-id,
 or by a
 .Ic wait
-with no argumentss,
+with no arguments,
 knowledge of the child is removed from the system,
 and it cannot be waited upon again.
 .El
