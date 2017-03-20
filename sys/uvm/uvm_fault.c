@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.198 2017/03/19 23:44:34 riastradh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.199 2017/03/20 15:51:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.198 2017/03/19 23:44:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.199 2017/03/20 15:51:41 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1820,11 +1820,14 @@ uvm_fault_lower_neighbor(
 	UVM_PAGE_OWN(pg, NULL);
 
 	KASSERT(mutex_owned(pg->uobject->vmobjlock));
-	(void) pmap_enter(ufi->orig_map->pmap, currva,
-	    VM_PAGE_TO_PHYS(pg),
+
+	const vm_prot_t mapprot = 
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
-	    flt->enter_prot & MASK(ufi->entry),
-	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
+	    flt->enter_prot & MASK(ufi->entry);
+	const u_int mapflags = 
+	    PMAP_CANFAIL | (flt->wire_mapping ? (mapprot | PMAP_WIRED) : 0);
+	(void) pmap_enter(ufi->orig_map->pmap, currva,
+	    VM_PAGE_TO_PHYS(pg), mapprot, mapflags);
 }
 
 /*
