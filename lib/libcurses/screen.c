@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.32 2017/02/17 11:18:38 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.33 2017/03/20 10:20:16 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.32 2017/02/17 11:18:38 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.33 2017/03/20 10:20:16 roy Exp $");
 #endif
 #endif					/* not lint */
 
@@ -45,8 +45,17 @@ __RCSID("$NetBSD: screen.c,v 1.32 2017/02/17 11:18:38 roy Exp $");
 
 static int filtered;
 
-
 static void	 __delscreen(SCREEN *);
+
+/*
+ * filter has to be called before either initscr or newterm.
+ */
+void
+filter(void)
+{
+
+	filtered = TRUE;
+}
 
 /*
  * set_term --
