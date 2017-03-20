@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_init.c,v 1.4.4.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: ssl_init.c,v 1.4.4.2 2017/03/20 10:59:44 martin Exp $	*/
 
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various
@@ -17,6 +17,7 @@
 #ifdef OPENSSL
 #include "openssl/err.h"
 #include "openssl/evp.h"
+#include "libssl_compat.h"
 
 void	atexit_ssl_cleanup(void);
 
@@ -64,6 +65,7 @@ ssl_check_version(void)
 
 	INIT_SSL();
 }
+
 #endif	/* OPENSSL */
 
 
@@ -86,7 +88,6 @@ keytype_from_text(
 	u_char		digest[EVP_MAX_MD_SIZE];
 	char *		upcased;
 	char *		pch;
-	EVP_MD_CTX	ctx;
 
 	/*
 	 * OpenSSL digest short names are capitalized, so uppercase the
@@ -112,8 +113,12 @@ keytype_from_text(
 
 	if (NULL != pdigest_len) {
 #ifdef OPENSSL
-		EVP_DigestInit(&ctx, EVP_get_digestbynid(key_type));
-		EVP_DigestFinal(&ctx, digest, &digest_len);
+		EVP_MD_CTX	*ctx;
+
+		ctx = EVP_MD_CTX_new();
+		EVP_DigestInit(ctx, EVP_get_digestbynid(key_type));
+		EVP_DigestFinal(ctx, digest, &digest_len);
+		EVP_MD_CTX_free(ctx);
 		if (digest_len > max_digest_len) {
 			fprintf(stderr,
 				"key type %s %u octet digests are too big, max %lu\n",
