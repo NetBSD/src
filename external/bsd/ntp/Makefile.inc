@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14.2.1.2.3 2016/07/14 18:26:51 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.14.2.1.2.4 2017/03/20 10:53:05 martin Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
