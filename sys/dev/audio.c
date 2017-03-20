@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.315 2017/03/16 00:21:30 maya Exp $	*/
+/*	$NetBSD: audio.c,v 1.316 2017/03/20 22:42:39 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.315 2017/03/16 00:21:30 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.316 2017/03/20 22:42:39 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5541,7 +5541,7 @@ mix_write(void *arg)
 			if (cc > cc2)					\
 				cc = cc2;				\
 									\
-			for (m = 0; m < cc / 2; m++) {			\
+			for (m = 0; m < (cc / (name / 8)); m++) {	\
 				orig[m] += (type)((int32_t)(tomix[m] *	\
 				    (vc->sc_swvol + 1)) / (sc->sc_opens * \
 				    256));				\
@@ -5594,7 +5594,7 @@ mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 									\
 		orig = (type *)(sc->sc_pr.s.inp);			\
 									\
-		for (m = 0; m < resid;m++) {				\
+		for (m = 0; m < (resid / (name / 8));m++) {		\
 			i = 0;						\
 			if (&orig[m] >= (type *)sc->sc_pr.s.end) {	\
 				orig = (type *)sc->sc_pr.s.start;	\
@@ -5655,7 +5655,7 @@ saturate_func(struct audio_softc *sc)
 			if (cc > cc1)					\
 				cc = cc1;				\
 									\
-			for (m = 0; m < cc; m++) {			\
+			for (m = 0; m < (cc / (name / 8)); m++) {	\
 				orig[m] = (bigger_type)(orig[m] *	\
 				    (bigger_type)(vc->sc_recswvol) / 256);\
 			}						\
