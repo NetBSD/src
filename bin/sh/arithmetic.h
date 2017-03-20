@@ -1,11 +1,8 @@
-/*	$NetBSD: expand.h,v 1.20 2017/03/20 11:26:07 kre Exp $	*/
+/*	$NetBSD: arithmetic.h,v 1.1 2017/03/20 11:26:07 kre Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Kenneth Almquist.
+ * Copyright (c) 1995
+ *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -31,38 +28,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)expand.h	8.2 (Berkeley) 5/4/95
+ *	@(#)arith.h	1.1 (Berkeley) 5/4/95
+ *
+ * From FreeBSD, from dash
  */
 
-#include <inttypes.h>
+#include "shell.h"
 
-struct strlist {
-	struct strlist *next;
-	char *text;
-};
+#define	DIGITS(var)		(3 + (2 + CHAR_BIT * sizeof((var))) / 3)
 
+#define	ARITH_FORMAT_STR	"%" PRIdMAX
 
-struct arglist {
-	struct strlist *list;
-	struct strlist **lastp;
-};
-
-/*
- * expandarg() flags
- */
-#define EXP_FULL	0x1	/* perform word splitting & file globbing */
-#define EXP_TILDE	0x2	/* do normal tilde expansion */
-#define	EXP_VARTILDE	0x4	/* expand tildes in an assignment */
-#define	EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
-#define EXP_CASE	0x10	/* keeps quotes around for CASE pattern */
-#define EXP_IFS_SPLIT	0x20	/* need to record arguments for ifs breakup */
-#define EXP_IN_QUOTES	0x40	/* don't set EXP_IFS_SPLIT again */
-
-
-union node;
-void expandhere(union node *, int);
-void expandarg(union node *, struct arglist *, int);
-void expari(int);
-int patmatch(char *, char *, int);
-void rmescapes(char *);
-int casematch(union node *, char *);
+intmax_t arith(const char *);
