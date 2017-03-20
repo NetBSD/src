@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.249 2017/03/20 01:05:03 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.250 2017/03/20 01:06:29 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.249 2017/03/20 01:05:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.250 2017/03/20 01:06:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -219,10 +219,10 @@ static int config_finalize_done;
 /* list of all devices */
 static struct devicelist alldevs = TAILQ_HEAD_INITIALIZER(alldevs);
 static kmutex_t alldevs_mtx;
-static volatile bool alldevs_garbage = false;
-static volatile devgen_t alldevs_gen = 1;
-static volatile int alldevs_nread = 0;
-static volatile int alldevs_nwrite = 0;
+static bool alldevs_garbage = false;
+static devgen_t alldevs_gen = 1;
+static int alldevs_nread = 0;
+static int alldevs_nwrite = 0;
 
 static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
