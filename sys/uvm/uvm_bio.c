@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.85 2017/03/20 04:35:04 kre Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.86 2017/03/20 07:31:28 kre Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.85 2017/03/20 04:35:04 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.86 2017/03/20 07:31:28 kre Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -348,10 +348,11 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 
 	if ((access_type & VM_PROT_WRITE) != 0) {
 		KASSERTMSG((trunc_page(umap->writeoff) <= slot_offset),
-		    "out of range write: slot=0x%lx off=0x%llx",
+		    "out of range write: slot=%#"PRIxVSIZE" off=%#"PRIxVADDR,
 		    slot_offset, umap->writeoff);
 		KASSERTMSG((slot_offset < umap->writeoff + umap->writelen),
-		    "out of range write: slot=0x%lx off=0x%lx len=0x%lx",
+		    "out of range write: slot=%#"PRIxVSIZE
+		    "off=%#"PRIxVADDR" len=%#"PRIxVSIZE,
 		    slot_offset, umap->writeoff, umap->writelen);
 	}
 
