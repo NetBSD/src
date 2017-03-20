@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.251 2017/03/20 01:13:07 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.251 2017/03/20 01:13:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1723,18 +1723,15 @@ config_detach(device_t dev, int flags)
 	cfdata_t cf;
 	const struct cfattach *ca;
 	struct cfdriver *cd;
-#ifdef DIAGNOSTIC
-	device_t d;
-#endif
+	device_t d __diagused;
 	int rv = 0;
 
-#ifdef DIAGNOSTIC
 	cf = dev->dv_cfdata;
-	if (cf != NULL && cf->cf_fstate != FSTATE_FOUND &&
-	    cf->cf_fstate != FSTATE_STAR)
-		panic("config_detach: %s: bad device fstate %d",
-		    device_xname(dev), cf ? cf->cf_fstate : -1);
-#endif
+	KASSERTMSG((cf == NULL || cf->cf_fstate == FSTATE_FOUND ||
+		cf->cf_fstate == FSTATE_STAR),
+	    "config_detach: %s: bad device fstate: %d",
+	    device_xname(dev), cf ? cf->cf_fstate : -1);
+
 	cd = dev->dv_cfdriver;
 	KASSERT(cd != NULL);
 
@@ -2093,10 +2090,7 @@ void
 config_pending_decr(device_t dev)
 {
 
-#ifdef DIAGNOSTIC
-	if (config_pending == 0)
-		panic("config_pending_decr: config_pending == 0");
-#endif
+	KASSERT(0 < config_pending);
 	mutex_enter(&config_misc_lock);
 	config_pending--;
 #ifdef DEBUG_AUTOCONF
