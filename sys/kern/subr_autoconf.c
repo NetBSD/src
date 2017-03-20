@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.247 2016/07/19 07:44:03 msaitoh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.248 2017/03/20 00:30:03 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.247 2016/07/19 07:44:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.248 2017/03/20 00:30:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2781,17 +2781,15 @@ deviter_init(deviter_t *di, deviter_flags_t flags)
 
 	memset(di, 0, sizeof(*di));
 
-	mutex_enter(&alldevs_mtx);
 	if ((flags & DEVITER_F_SHUTDOWN) != 0)
 		flags |= DEVITER_F_RW;
 
+	mutex_enter(&alldevs_mtx);
 	if ((flags & DEVITER_F_RW) != 0)
 		alldevs_nwrite++;
 	else
 		alldevs_nread++;
 	di->di_gen = alldevs_gen++;
-	mutex_exit(&alldevs_mtx);
-
 	di->di_flags = flags;
 
 	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
@@ -2814,11 +2812,14 @@ deviter_init(deviter_t *di, deviter_flags_t flags)
 	}
 
 	deviter_reinit(di);
+	mutex_exit(&alldevs_mtx);
 }
 
 static void
 deviter_reinit(deviter_t *di)
 {
+
+	KASSERT(mutex_owned(&alldevs_mtx));
 	if ((di->di_flags & DEVITER_F_RW) != 0)
 		di->di_prev = TAILQ_LAST(&alldevs, devicelist);
 	else
@@ -2828,6 +2829,7 @@ deviter_reinit(deviter_t *di)
 device_t
 deviter_first(deviter_t *di, deviter_flags_t flags)
 {
+
 	deviter_init(di, flags);
 	return deviter_next(di);
 }
@@ -2836,6 +2838,8 @@ static device_t
 deviter_next2(deviter_t *di)
 {
 	device_t dv;
+
+	KASSERT(mutex_owned(&alldevs_mtx));
 
 	dv = di->di_prev;
 
@@ -2855,6 +2859,8 @@ deviter_next1(deviter_t *di)
 {
 	device_t dv;
 
+	KASSERT(mutex_owned(&alldevs_mtx));
+
 	do {
 		dv = deviter_next2(di);
 	} while (dv != NULL && !deviter_visits(di, dv));
@@ -2867,9 +2873,11 @@ deviter_next(deviter_t *di)
 {
 	device_t dv = NULL;
 
+	mutex_enter(&alldevs_mtx);
 	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
 	case 0:
-		return deviter_next1(di);
+		dv = deviter_next1(di);
+		break;
 	case DEVITER_F_LEAVES_FIRST:
 		while (di->di_curdepth >= 0) {
 			if ((dv = deviter_next1(di)) == NULL) {
@@ -2878,7 +2886,7 @@ deviter_next(deviter_t *di)
 			} else if (dv->dv_depth == di->di_curdepth)
 				break;
 		}
-		return dv;
+		break;
 	case DEVITER_F_ROOT_FIRST:
 		while (di->di_curdepth <= di->di_maxdepth) {
 			if ((dv = deviter_next1(di)) == NULL) {
@@ -2887,10 +2895,13 @@ deviter_next(deviter_t *di)
 			} else if (dv->dv_depth == di->di_curdepth)
 				break;
 		}
-		return dv;
+		break;
 	default:
-		return NULL;
+		break;
 	}
+	mutex_exit(&alldevs_mtx);
+
+	return dv;
 }
 
 void
