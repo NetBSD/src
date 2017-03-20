@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.2.6.4 2016/05/11 11:35:38 martin Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.2.6.4.4.1 2017/03/20 10:56:54 martin Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -32,6 +32,56 @@ static	void		fork_blocking_child(blocking_child *);
 static	RETSIGTYPE	worker_sighup(int);
 static	void		send_worker_home_atexit(void);
 static	void		cleanup_after_child(blocking_child *);
+
+static ssize_t
+netread(int fd, void *vb, size_t l)
+{
+	char *b = vb;
+	ssize_t r;
+
+	for(;;)
+		switch (r = read(fd, b, l)) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			/*FALLTHROUGH*/
+		case 0:
+		done:
+			return (ssize_t)(b - (char *)vb);
+		default:
+			l -= r;
+			b += r;
+			if (l == 0)
+				goto done;
+			break;
+		}
+}
+
+
+static ssize_t
+netwrite(int fd, const void *vb, size_t l)
+{
+	const char *b = vb;
+	ssize_t w;
+
+	for(;;)
+		switch (w = write(fd, b, l)) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			/*FALLTHROUGH*/
+		case 0:
+		done:
+			return (ssize_t)(b - (const char *)vb);
+		default:
+			l -= w;
+			b += w;
+			if (l == 0)
+				goto done;
+			break;
+		}
+}
+
 
 /* === functions === */
 /*
@@ -116,24 +166,23 @@ interrupt_worker_sleep(void)
 
 /*
  * harvest_child_status() runs in the parent.
+ *
+ * Note the error handling -- this is an interaction with SIGCHLD.
+ * SIG_IGN on SIGCHLD on some OSes means do not wait but reap
+ * automatically. Since we're not really interested in the result code,
+ * we simply ignore the error.
  */
 static void
 harvest_child_status(
 	blocking_child *	c
 	)
 {
-	if (c->pid)
-	{
+	if (c->pid) {
 		/* Wait on the child so it can finish terminating */
 		if (waitpid(c->pid, NULL, 0) == c->pid)
 			TRACE(4, ("harvested child %d\n", c->pid));
-		else if (errno != ECHILD) {
-			/*
-			 * SIG_IGN on SIGCHLD on some os's means do not wait
-			 * but reap automaticallyi
-			 */
+		else if (errno != ECHILD)
 			msyslog(LOG_ERR, "error waiting on child %d: %m", c->pid);
-		}
 		c->pid = 0;
 	}
 }
@@ -203,7 +252,7 @@ send_blocking_req_internal(
 	void *			data
 	)
 {
-	int octets;
+	long octets;
 	int rc;
 
 	DEBUG_REQUIRE(hdr != NULL);
@@ -216,11 +265,11 @@ send_blocking_req_internal(
 	}
 
 	octets = sizeof(*hdr);
-	rc = write(c->req_write_pipe, hdr, octets);
+	rc = netwrite(c->req_write_pipe, hdr, octets);
 
 	if (rc == octets) {
 		octets = hdr->octets - sizeof(*hdr);
-		rc = write(c->req_write_pipe, data, octets);
+		rc = netwrite(c->req_write_pipe, data, octets);
 
 		if (rc == octets)
 			return 0;
@@ -231,7 +280,7 @@ send_blocking_req_internal(
 			"send_blocking_req_internal: pipe write: %m");
 	else
 		msyslog(LOG_ERR,
-			"send_blocking_req_internal: short write %d of %d",
+			"send_blocking_req_internal: short write %d of %ld",
 			rc, octets);
 
 	/* Fatal error.  Clean up the child process.  */
@@ -255,7 +304,7 @@ receive_blocking_req_internal(
 	req = NULL;
 
 	do {
-		rc = read(c->req_read_pipe, &hdr, sizeof(hdr));
+		rc = netread(c->req_read_pipe, &hdr, sizeof(hdr));
 	} while (rc < 0 && EINTR == errno);
 
 	if (rc < 0) {
@@ -273,7 +322,7 @@ receive_blocking_req_internal(
 		req = emalloc(hdr.octets);
 		memcpy(req, &hdr, sizeof(*req));
 		octets = hdr.octets - sizeof(hdr);
-		rc = read(c->req_read_pipe, (char *)req + sizeof(*req),
+		rc = netread(c->req_read_pipe, (char *)req + sizeof(*req),
 			  octets);
 
 		if (rc < 0)
@@ -310,7 +359,7 @@ send_blocking_resp_internal(
 	DEBUG_REQUIRE(-1 != c->resp_write_pipe);
 
 	octets = resp->octets;
-	rc = write(c->resp_write_pipe, resp, octets);
+	rc = netwrite(c->resp_write_pipe, resp, octets);
 	free(resp);
 
 	if (octets == rc)
@@ -339,7 +388,7 @@ receive_blocking_resp_internal(
 	DEBUG_REQUIRE(c->resp_read_pipe != -1);
 
 	resp = NULL;
-	rc = read(c->resp_read_pipe, &hdr, sizeof(hdr));
+	rc = netread(c->resp_read_pipe, &hdr, sizeof(hdr));
 
 	if (rc < 0) {
 		TRACE(1, ("receive_blocking_resp_internal: pipe read %m\n"));
@@ -357,7 +406,7 @@ receive_blocking_resp_internal(
 		resp = emalloc(hdr.octets);
 		memcpy(resp, &hdr, sizeof(*resp));
 		octets = hdr.octets - sizeof(hdr);
-		rc = read(c->resp_read_pipe,
+		rc = netread(c->resp_read_pipe,
 			  (char *)resp + sizeof(*resp),
 			  octets);
 
@@ -469,7 +518,10 @@ fork_blocking_child(
 	fflush(stdout);
 	fflush(stderr);
 
-	signal_no_reset(SIGCHLD, SIG_IGN);
+	/* [BUG 3050] setting SIGCHLD to SIG_IGN likely causes unwanted
+	 * or undefined effects. We don't do it and leave SIGCHLD alone.
+	 */
+	/* signal_no_reset(SIGCHLD, SIG_IGN); */
 
 	childpid = fork();
 	if (-1 == childpid) {

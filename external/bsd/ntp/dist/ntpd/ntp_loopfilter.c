@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.4.4.4 2016/05/11 11:35:39 martin Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.4.4.4.4.1 2017/03/20 10:56:55 martin Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -703,9 +703,10 @@ local_clock(
 				 * where the FLL becomes effective.
 				 */
 				if (sys_poll >= allan_xpt)
-					clock_frequency += (fp_offset -
-					    clock_offset) / max(ULOGTOD(sys_poll),
-					    mu) * CLOCK_FLL;
+					clock_frequency +=
+					      (fp_offset - clock_offset)
+					    / ( max(ULOGTOD(sys_poll), mu)
+					       * CLOCK_FLL);
 
 				/*
 				 * The PLL frequency gain (numerator) depends on
@@ -715,8 +716,8 @@ local_clock(
 				 */
 				etemp = min(ULOGTOD(allan_xpt), mu);
 				dtemp = 4 * CLOCK_PLL * ULOGTOD(sys_poll);
-				clock_frequency += fp_offset * etemp / (dtemp *
-				    dtemp);
+				clock_frequency +=
+				    fp_offset * etemp / (dtemp * dtemp);
 			}
 			rstclock(EVNT_SYNC, fp_offset);
 			if (fabs(fp_offset) < CLOCK_FLOOR)
