@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.4.4.2.2.3 2016/07/14 18:27:00 martin Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.4.4.2.2.4 2017/03/20 10:53:14 martin Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -150,6 +150,7 @@ struct key_tok ntp_keywords[] = {
 { "cohort",		T_Cohort,		FOLLBY_TOKEN },
 { "mindist",		T_Mindist,		FOLLBY_TOKEN },
 { "maxdist",		T_Maxdist,		FOLLBY_TOKEN },
+{ "bcpollbstep",	T_Bcpollbstep,		FOLLBY_TOKEN },
 { "beacon",		T_Beacon,		FOLLBY_TOKEN },
 { "orphan",		T_Orphan,		FOLLBY_TOKEN },
 { "orphanwait",		T_Orphanwait,		FOLLBY_TOKEN },
