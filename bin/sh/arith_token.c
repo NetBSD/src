@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.1 2017/03/20 11:26:07 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.2 2017/03/20 11:31:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.1 2017/03/20 11:26:07 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.2 2017/03/20 11:31:00 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -79,7 +79,36 @@ arith_token(void)
 	for (;;) {
 		token = *buf;
 
-		switch (token) {
+		if (isdigit(token)) {
+			/*
+			 * Numbers all start with a digit, and nothing
+			 * else does, the number ends wherever
+			 * strtoimax() stops...
+			 */
+			a_t_val.val = strtoimax(buf, &end, 0);
+			arith_buf = end;
+			return ARITH_NUM;
+
+		} else if (is_name(token) {
+			/*
+			 * Variable names all start with an alpha (or '_')
+			 * and nothing else does.  They continue for the
+			 * longest unbroken sequence of alphanumerics ( + _ )
+			 */
+			p = buf;
+			while (buf++, is_in_name(*buf))
+				;
+			a_t_val.name = stalloc(buf - p + 1);
+			memcpy(a_t_val.name, p, buf - p);
+			a_t_val.name[buf - p] = '\0';
+			arith_buf = buf;
+			return ARITH_VAR;
+
+		} else switch (token) {
+			/*
+			 * everything else must be some kind of
+			 * operator, white space, or an error.
+			 */
 		case ' ':
 		case '\t':
 		case '\n':
@@ -90,32 +119,6 @@ arith_token(void)
 			error("arithmetic: unexpected '%c' (%#x) in expression",
 			    token, token);
 			/* NOTREACHED */
-
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			a_t_val.val = strtoimax(buf, &end, 0);
-			arith_buf = end;
-			return ARITH_NUM;
-
-		case 'A': case 'B': case 'C': case 'D': case 'E':
-		case 'F': case 'G': case 'H': case 'I': case 'J':
-		case 'K': case 'L': case 'M': case 'N': case 'O':
-		case 'P': case 'Q': case 'R': case 'S': case 'T':
-		case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
-		case 'a': case 'b': case 'c': case 'd': case 'e':
-		case 'f': case 'g': case 'h': case 'i': case 'j':
-		case 'k': case 'l': case 'm': case 'n': case 'o':
-		case 'p': case 'q': case 'r': case 's': case 't':
-		case 'u': case 'v': case 'w': case 'x': case 'y': case 'z':
-		case '_':
-			p = buf;
-			while (buf++, is_in_name(*buf))
-				;
-			a_t_val.name = stalloc(buf - p + 1);
-			memcpy(a_t_val.name, p, buf - p);
-			a_t_val.name[buf - p] = '\0';
-			arith_buf = buf;
-			return ARITH_VAR;
 
 		case '=':
 			token = ARITH_ASS;
