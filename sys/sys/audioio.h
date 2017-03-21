@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.36 2017/02/10 19:31:42 nat Exp $	*/
+/*	$NetBSD: audioio.h,v 1.37 2017/03/21 07:04:29 nat Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -191,7 +191,8 @@ typedef struct audio_encoding {
 #define  AUDIO_PROP_PLAYBACK	0x10
 #define  AUDIO_PROP_CAPTURE	0x20
 #define AUDIO_GETBUFINFO	_IOR('A', 35, struct audio_info)
-#define AUDIO_SETPROC	_IOW('A', 36, int)
+#define AUDIO_SETCHAN	_IOW('A', 36, int)
+#define AUDIO_GETCHAN	_IOR('A', 37, int)
 
 /*
  * Mixer device

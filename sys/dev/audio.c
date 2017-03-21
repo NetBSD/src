@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.316 2017/03/20 22:42:39 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.317 2017/03/21 07:04:29 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.316 2017/03/20 22:42:39 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.317 2017/03/21 07:04:29 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1525,6 +1525,8 @@ audio_waitio(struct audio_softc *sc, kcondvar_t *chan, struct virtual_channel *v
 
 	found = false;
 	SIMPLEQ_FOREACH(vchan, &sc->sc_audiochan, entries) {
+		if (vchan == SIMPLEQ_FIRST(&sc->sc_audiochan))
+			continue;
 		if (vchan->vc == vc) {
 			found = true;
 			break;
@@ -1660,6 +1662,9 @@ audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	int error;
 	dev_t dev;
 
+	if (fp->f_audioctx == NULL)
+		return EIO;
+
 	dev = fp->f_audioctx->dev;
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
@@ -1692,6 +1697,9 @@ audiowrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	struct virtual_channel *vc;
 	int error;
 	dev_t dev;
+
+	if (fp->f_audioctx == NULL)
+		return EIO;
 
 	dev = fp->f_audioctx->dev;
 
@@ -1726,6 +1734,9 @@ audioioctl(struct file *fp, u_long cmd, void *addr)
 	int error;
 	krw_t rw;
 	dev_t dev;
+
+	if (fp->f_audioctx == NULL)
+		return EIO;
 
 	chan = fp->f_audioctx;
 	dev = chan->dev;
@@ -1773,6 +1784,9 @@ audioioctl(struct file *fp, u_long cmd, void *addr)
 static int
 audiostat(struct file *fp, struct stat *st)
 {
+	if (fp->f_audioctx == NULL)
+		return EIO;
+
 	memset(st, 0, sizeof(*st));
 
 	st->st_dev = fp->f_audioctx->dev;
@@ -1791,6 +1805,9 @@ audiopoll(struct file *fp, int events)
 	struct lwp *l = curlwp;
 	int revents;
 	dev_t dev;
+
+	if (fp->f_audioctx == NULL)
+		return EIO;
 
 	dev = fp->f_audioctx->dev;
 
@@ -2947,6 +2964,8 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	KASSERT(mutex_owned(sc->sc_lock));
 
 	SIMPLEQ_FOREACH(pchan, &sc->sc_audiochan, entries) {
+		if (pchan == SIMPLEQ_FIRST(&sc->sc_audiochan))
+			continue;
 		if (pchan->chan == chan->deschan)
 			break;
 	}
@@ -2962,7 +2981,11 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		return ENXIO;
 	error = 0;
 	switch (cmd) {
-	case AUDIO_SETPROC:
+	case AUDIO_GETCHAN:
+		if ((int *)addr != NULL)
+			*(int*)addr = chan->chan;
+		break;
+	case AUDIO_SETCHAN:
 		if ((int *)addr != NULL && *(int*)addr > 0)
 			chan->deschan = *(int*)addr;
 		break;
