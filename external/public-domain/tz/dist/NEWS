@@ -1,5 +1,21 @@
 News for the tz database
 
+Release 2017b - 2017-03-17 07:30:38 -0700
+
+  Briefly: Haiti has resumed DST.
+
+  Changes to past and future time stamps
+
+    Haiti resumed observance of DST in 2017.  (Thanks to Steffen Thorsen.)
+
+  Changes to past time stamps
+
+    Liberia changed from -004430 to +00 on 1972-01-07, not 1972-05-01.
+
+    Use "MMT" to abbreviate Liberia's time zone before 1972, as "-004430"
+    is one byte over the POSIX limit.  (Problem reported by Derick Rethans.)
+
+
 Release 2017a - 2017-02-28 00:05:36 -0800
 
   Briefly: Southern Chile moves from -04/-03 to -03, and Mongolia
