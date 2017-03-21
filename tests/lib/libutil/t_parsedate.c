@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.26 2017/03/21 20:06:27 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.27 2017/03/21 21:42:18 kre Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.26 2017/03/21 20:06:27 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.27 2017/03/21 21:42:18 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -189,7 +189,7 @@ ATF_TC_BODY(times, tc)
 	parsecheck("12:30 am", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 0, 30, 0);
 	parsecheck("12:30 pm", NULL, NULL, localtime_r,
-		ANY, ANY, ANY, 12, 20, 0);
+		ANY, ANY, ANY, 12, 30, 0);
 
 	/*
 	 * Technically, these are invalid, noon and midnight
