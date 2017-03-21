@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.270 2017/03/18 05:45:48 riastradh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.271 2017/03/21 10:46:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.270 2017/03/18 05:45:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.271 2017/03/21 10:46:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1230,8 +1230,8 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 		if (allocbuf(bp, size, preserve)) {
 			mutex_enter(&bufcache_lock);
 			LIST_REMOVE(bp, b_hash);
+			brelsel(bp, BC_INVAL);
 			mutex_exit(&bufcache_lock);
-			brelse(bp, BC_INVAL);
 			return NULL;
 		}
 	}
