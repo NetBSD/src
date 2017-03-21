@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.19 2016/05/03 13:47:58 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.20 2017/03/21 10:52:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,6 +49,8 @@
  * a quit signal will generate a core dump.
  */
 
+#ifndef SHELL_H
+#define SHELL_H
 #include <sys/param.h>
 
 #define JOBS 1
@@ -83,3 +85,5 @@ extern const char nullstr[1];		/* null string */
 #define TRACE(param)
 #define TRACEV(param)
 #endif
+
+#endif /* SHELL_H */
