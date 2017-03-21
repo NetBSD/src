@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.497 2017/03/08 08:00:09 kardel Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.498 2017/03/21 10:39:52 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.497 2017/03/08 08:00:09 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.498 2017/03/21 10:39:52 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -711,8 +711,8 @@ static int	wm_alloc_txrx_queues(struct wm_softc *);
 static void	wm_free_txrx_queues(struct wm_softc *);
 static int	wm_init_txrx_queues(struct wm_softc *);
 /* Start */
-static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
-    uint32_t *, uint8_t *);
+static int	wm_tx_offload(struct wm_softc *, struct wm_txqueue *,
+    struct wm_txsoft *, uint32_t *, uint8_t *);
 static inline int	wm_select_txqueue(struct ifnet *, struct mbuf *);
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
@@ -6405,10 +6405,9 @@ wm_init_txrx_queues(struct wm_softc *sc)
  *	specified packet.
  */
 static int
-wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
-    uint8_t *fieldsp)
+wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
+    struct wm_txsoft *txs, uint32_t *cmdp, uint8_t *fieldsp)
 {
-	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
 	uint32_t ipcs, tucs, cmd, cmdlen, seg;
@@ -6863,7 +6862,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		    (M_CSUM_TSOv4 | M_CSUM_TSOv6 |
 		    M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 		    M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
-			if (wm_tx_offload(sc, txs, &cksumcmd,
+			if (wm_tx_offload(sc, txq, txs, &cksumcmd,
 					  &cksumfields) != 0) {
 				/* Error message already displayed. */
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
