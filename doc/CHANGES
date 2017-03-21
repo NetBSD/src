@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2265 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2266 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -491,3 +491,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	sh(1): Arithmetic parser imported from dash (via FreeBSD)
 		adding support for all required operators, as well
 		as being smaller and faster.  [kre 20170320]
+	zoneinfo: Import tzdata2017b.  [kre 20170321]
