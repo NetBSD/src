@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.10 2016/12/21 02:46:08 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.11 2017/03/21 04:03:17 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -397,10 +397,51 @@ route_command_get6_cleanup()
 	cleanup
 }
 
+atf_test_case route_default_reject cleanup
+route_default_reject_head()
+{
+
+	atf_set "descr" "tests for making a default route reject"
+	atf_set "require.progs" "rump_server"
+}
+
+route_default_reject_body()
+{
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_add_iface $SOCKSRC shmif0 $BUS_SRCGW
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# From /etc/rc.d/network
+	atf_check -s exit:0 -o match:'add net ::0.0.0.0: gateway ::1' \
+	    rump.route add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
+
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6SRC/64 up
+	$DEBUG && rump.netstat -nr -f inet6
+	atf_check -s exit:0 -o match:"add net default: gateway $IP6SRCGW" \
+	    rump.route add -inet6 default $IP6SRCGW
+	$DEBUG && rump.netstat -nr -f inet6
+	$DEBUG && rump.route -n get -inet6 default
+	atf_check -s exit:0 -o match:'change net default' \
+	    rump.route change -inet6 default -reject
+	$DEBUG && rump.netstat -nr -f inet6
+
+	rump_server_destroy_ifaces
+}
+
+route_default_reject_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case route_non_subnet_gateway
 	atf_add_test_case route_command_get
 	atf_add_test_case route_command_get6
+	atf_add_test_case route_default_reject
 }
