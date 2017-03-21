@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.152 2017/03/19 22:48:00 riastradh Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.153 2017/03/21 09:53:00 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.152 2017/03/19 22:48:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.153 2017/03/21 09:53:00 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -228,15 +228,6 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	if (length < 0)
 		return (EINVAL);
 
-	/*
-	 * Just return and not update modification times.
-	 */
-	if (oip->i_size == length) {
-		/* still do a uvm_vnp_setsize() as writesize may be larger */
-		uvm_vnp_setsize(ovp, length);
-		return (0);
-	}
-
 	fs = oip->i_lfs;
 
 	if (ovp->v_type == VLNK &&
@@ -252,6 +243,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
