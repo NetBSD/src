@@ -1,4 +1,3 @@
-- consider compiling with libevent
 - convert man pages to mdoc
 - make optional features:
 	- without crypto
