@@ -1,4 +1,4 @@
-/*	$NetBSD: xsyslog.c,v 1.3 2017/03/22 17:52:36 roy Exp $	*/
+/*	$NetBSD: xsyslog.c,v 1.4 2017/03/22 19:36:04 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: xsyslog.c,v 1.3 2017/03/22 17:52:36 roy Exp $");
+__RCSID("$NetBSD: xsyslog.c,v 1.4 2017/03/22 19:36:04 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,6 +153,8 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 	char *fmt = fmt_cat;
 	struct iovec iov[7];	/* prog + [ + pid + ]: + fmt + crlf */
 	int opened, iovcnt;
+
+	opened = 0;
 
 #define INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
