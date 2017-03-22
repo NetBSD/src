@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.28 2017/03/22 01:00:19 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.29 2017/03/22 01:50:22 kre Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.28 2017/03/22 01:00:19 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.29 2017/03/22 01:50:22 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -210,6 +210,24 @@ ATF_TC_BODY(times, tc)
 		ANY, ANY, ANY, 12, 0, 0);
 
 	/* end 52010 bug tests */
+
+	parsecheck("12 noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12 midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("12 midday", NULL, NULL, localtime_r,	/* unlikely! */
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12 mn", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+
+	parsecheck("12:00 noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12:00 midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("12:00:00 noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12:00:00 midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
 }
 
 ATF_TC(dsttimes);
