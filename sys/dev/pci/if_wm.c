@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.498 2017/03/21 10:39:52 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.499 2017/03/22 02:56:12 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.498 2017/03/21 10:39:52 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.499 2017/03/22 02:56:12 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6442,7 +6442,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 	}
 
 	if ((m0->m_pkthdr.csum_flags &
-	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4)) != 0) {
+	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_IPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 	} else {
 		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
