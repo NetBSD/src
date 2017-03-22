@@ -1,4 +1,4 @@
-/*	$NetBSD: xsyslog.c,v 1.2 2017/01/12 01:58:39 christos Exp $	*/
+/*	$NetBSD: xsyslog.c,v 1.3 2017/03/22 17:52:36 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: xsyslog.c,v 1.2 2017/01/12 01:58:39 christos Exp $");
+__RCSID("$NetBSD: xsyslog.c,v 1.3 2017/03/22 17:52:36 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -301,10 +301,23 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 
 	/* Output to stderr if requested. */
 	if (data->log_stat & LOG_PERROR) {
+		struct iovec *piov;
+		int piovcnt;
+
 		iov[iovcnt].iov_base = __UNCONST(CRLF + 1);
 		iov[iovcnt].iov_len = 1;
-		(void)writev(STDERR_FILENO, iov, iovcnt + 1);
+		if (data->log_stat & LOG_PTRIM) {
+			piov = &iov[iovcnt - 1];
+			piovcnt = 2;
+		} else {
+			piov = iov;
+			piovcnt = iovcnt + 1;
+		}
+		(void)writev(STDERR_FILENO, piov, piovcnt);
 	}
+
+	if (data->log_stat & LOG_NLOG)
+		goto out;
 
 	/* Get connected, output the message to the local logger. */
 	(*fun->lock)(data);
@@ -345,6 +358,7 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 		(void)close(fd);
 	}
 
+out:
 	if (!(*fun->unlock)(data) && opened)
 		_closelog_unlocked_r(data);
 }
