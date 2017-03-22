@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.9 2017/02/27 06:47:58 chs Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.10 2017/03/22 23:11:09 chs Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -21,7 +21,9 @@ typedef int fp_except;
 
 /* adjust for FP_* and FE_* value differences */ 
 #define	__FPE(x) ((x) >> 3)
+#define	__FEE(x) ((x) << 3)
 #define	__FPR(x) ((x) >> 4)
+#define	__FER(x) ((x) << 4)
 
 #define FP_X_IMP	__FPE(FE_INEXACT)	/* imprecise (loss of precision) */
 #define FP_X_DZ		__FPE(FE_DIVBYZERO)	/* divide-by-zero exception */

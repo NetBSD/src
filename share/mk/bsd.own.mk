@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1006 2017/02/13 16:33:14 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.1007 2017/03/22 23:11:09 chs Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -967,23 +967,24 @@ MKCOMPATMODULES:=	no
 .endif
 
 #
-# Default mips64 to softfloat now.
-# arm is always softfloat unless it isn't
-# emips is always softfloat.
-# coldfire is always softfloat
-# or1k is always softfloat
+# These platforms use softfloat by default.
 #
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
-    (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
-    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
-    ${MACHINE} == "emips"
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MKSOFTFLOAT?=	yes
+.endif
+
+#
+# These platforms always use softfloat.
+#
+.if (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
+    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
+    ${MACHINE} == "emips" || ${MACHINE_CPU} == "sh3"
+MKSOFTFLOAT=	yes
 .endif
 
 .if ${MACHINE} == "emips"
 SOFTFLOAT_BITS=	32
 .endif
-
 
 #
 # We want to build zfs only for amd64 by default for now.
@@ -995,15 +996,15 @@ MKZFS?=		yes
 #
 # DTrace works on amd64, i386 and earm*
 #
-
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
     !empty(MACHINE_ARCH:Mearm*)
 MKDTRACE?=	yes
 MKCTF?=		yes
 .endif
+
 #
-# PIE is enabled on amd64 by default
+# PIE is enabled on many platforms by default.
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
