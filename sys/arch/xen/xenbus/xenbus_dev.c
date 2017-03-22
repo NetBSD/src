@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.11 2017/03/22 21:21:39 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.12 2017/03/22 22:33:32 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.11 2017/03/22 21:21:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.12 2017/03/22 22:33:32 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -153,13 +153,19 @@ xenbus_dev_read(void *v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct uio *uio = ap->a_uio;
-	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_data *u;
 	struct xenbus_dev_lwp *xlwp;
 	int err;
 	off_t offset;
 
-	KASSERT(u != NULL);
+	mutex_enter(&xenbus_dev_open_mtx);
+	u = kfs->kfs_v;
+	if (u == NULL) {
+		mutex_exit(&xenbus_dev_open_mtx);
+		return EBADF;
+	}
 	mutex_enter(&u->mtx);
+	mutex_exit(&xenbus_dev_open_mtx);
 	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
 		if (xlwp->lwp == curlwp) {
 			break;
@@ -221,15 +227,21 @@ xenbus_dev_write(void *v)
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 	struct uio *uio = ap->a_uio;
 
-	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_data *u;
 	struct xenbus_dev_lwp *xlwp;
 	struct xenbus_dev_transaction *trans;
 	void *reply;
 	int err;
 	size_t size;
 
-	KASSERT(u != NULL);
+	mutex_enter(&xenbus_dev_open_mtx);
+	u = kfs->kfs_v;
+	if (u == NULL) {
+		mutex_exit(&xenbus_dev_open_mtx);
+		return EBADF;
+	}
 	mutex_enter(&u->mtx);
+	mutex_exit(&xenbus_dev_open_mtx);
 	SLIST_FOREACH(xlwp, &u->lwps, lwp_next) {
 		if (xlwp->lwp == curlwp) {
 			break;
