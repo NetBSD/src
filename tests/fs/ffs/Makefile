@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2015/01/07 22:24:03 pooka Exp $
+#	$NetBSD: Makefile,v 1.19 2017/03/22 21:33:06 jdolecek Exp $
 #
 
 .include <bsd.own.mk>
@@ -27,6 +27,7 @@ TESTS_C+=	t_snapshot_v2
 TESTS_C+=	t_mount
 TESTS_C+=	t_quota2_1
 TESTS_C+=	t_quota2_remount
+TESTS_C+=	t_update_log
 
 LDADD+=-lrumpfs_ffs						# ffs
 LDADD+=-lrumpdev_fss						# snapshot dev
