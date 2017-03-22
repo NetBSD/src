@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.34 2017/03/22 03:32:09 knakahara Exp $
+.\"	$NetBSD: wm.4,v 1.35 2017/03/22 09:38:10 wiz Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -192,7 +192,7 @@ The default value is 0.
 When you increase this value, both the receive latency and
 the receive throughput will decrease.
 .It Dv WM_EVENT_COUNTERS
-Enable many event counters such as each Tx drop counter and Rx intrrupt
+Enable many event counters such as each Tx drop counter and Rx interrupt
 counter.
 Caution: If this flag is enabled, the number of evcnt entries increase
 very much.
@@ -203,8 +203,8 @@ Setting
 to zero means so-called polling mode, that is, once an interrupt occurs,
 the driver keep processing received packets until
 .Dv WM_RX_PROCESS_LIMIT_DEFAULT .
-Polling mode increases latency a little, however it supresses
-performance degration at high load very well.
+Polling mode increases latency a little, however it suppresses
+performance degradation at high load very well.
 .Pp
 If you want to disable polling mode (to use traditional interrupt
 driven mode), you should set
