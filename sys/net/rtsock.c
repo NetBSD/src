@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.209 2017/03/17 10:05:02 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.210 2017/03/22 07:14:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.209 2017/03/17 10:05:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.210 2017/03/22 07:14:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -604,7 +604,7 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 	struct psref psref_ifa, psref_new_ifa, psref_ifp;
 
 	/*
-	 * new gateway could require new ifaddr, ifp;
+	 * New gateway could require new ifaddr, ifp;
 	 * flags may also be different; ifp may be specified
 	 * by ll sockaddr when protocol address is ambiguous
 	 */
@@ -627,9 +627,11 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 			goto out;
 		}
 	}
-	/* new gateway could require new ifaddr, ifp;
-	   flags may also be different; ifp may be specified
-	   by ll sockaddr when protocol address is ambiguous */
+	/*
+	 * New gateway could require new ifaddr, ifp;
+	 * flags may also be different; ifp may be specified
+	 * by ll sockaddr when protocol address is ambiguous
+	 */
 	new_ifa = route_output_get_ifa(*info, rt, &new_ifp, &psref_new_ifa);
 	if (new_ifa != NULL) {
 		ifa_release(ifa, &psref_ifa);
@@ -648,13 +650,13 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
 			ifa_release(ifa, &psref_ifa);
 	}
 	ifa_release(new_ifa, &psref_new_ifa);
-	if (new_ifp && rt->rt_ifp != new_ifp
-	    && !if_is_deactivated(new_ifp))
+	if (new_ifp && rt->rt_ifp != new_ifp && !if_is_deactivated(new_ifp))
 		rt->rt_ifp = new_ifp;
 	rt_setmetrics(rtm->rtm_inits, rtm, rt);
-	if (rt->rt_flags != info->rti_flags)
-		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF)
-		    | (rt->rt_flags & PRESERVED_RTF);
+	if (rt->rt_flags != info->rti_flags) {
+		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF) |
+		    (rt->rt_flags & PRESERVED_RTF);
+	}
 	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
 out:

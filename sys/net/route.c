@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.192 2017/02/20 04:23:11 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.193 2017/03/22 07:14:18 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.192 2017/02/20 04:23:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.193 2017/03/22 07:14:18 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1186,7 +1186,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	int error = 0, rc;
 	struct rtentry *rt;
 	rtbl_t *rtbl;
-	struct ifaddr *ifa = NULL, *ifa2 = NULL;
+	struct ifaddr *ifa = NULL;
 	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -1292,6 +1292,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 
 		ss = pserialize_read_enter();
 		if (info->rti_info[RTAX_IFP] != NULL) {
+			struct ifaddr *ifa2;
 			ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP]);
 			if (ifa2 != NULL)
 				rt->rt_ifp = ifa2->ifa_ifp;
