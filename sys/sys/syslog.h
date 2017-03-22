@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.40 2017/03/21 11:54:46 roy Exp $	*/
+/*	$NetBSD: syslog.h,v 1.41 2017/03/22 17:52:36 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -168,6 +168,8 @@ CODE facilitynames[] = {
 #define	LOG_NDELAY	0x08	/* don't delay open */
 #define	LOG_NOWAIT	0x10	/* don't wait for console forks: DEPRECATED */
 #define	LOG_PERROR	0x20	/* log to stderr as well */
+#define LOG_PTRIM	0x40	/* trim tag and pid from messages to stderr */
+#define LOG_NLOG	0x80	/* don't write to the system log */
 
 #ifndef _KERNEL
 
