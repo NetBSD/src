@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.27 2017/03/21 21:42:18 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.28 2017/03/22 01:00:19 kre Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.27 2017/03/21 21:42:18 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.28 2017/03/22 01:00:19 kre Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -184,7 +184,12 @@ ATF_TC_BODY(times, tc)
 	parsecheck("noon", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 12, 0, 0);
 
+	/*
+	 * The following tests used to trigger the bug from PR lib/52101
+	 * but that is fixed now.
+	 *
 	atf_tc_expect_fail("PR lib/52101");
+	 */
 
 	parsecheck("12:30 am", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 0, 30, 0);
@@ -203,6 +208,8 @@ ATF_TC_BODY(times, tc)
 		ANY, ANY, ANY, 0, 0, 0);
 	parsecheck("12pm", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 12, 0, 0);
+
+	/* end 52010 bug tests */
 }
 
 ATF_TC(dsttimes);
