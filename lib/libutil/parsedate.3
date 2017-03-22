@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.22 2016/12/23 06:01:41 abhinav Exp $
+.\"     $NetBSD: parsedate.3,v 1.23 2017/03/22 01:49:36 kre Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2015
+.Dd March 22, 2017
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -393,9 +393,21 @@ otherwise
 years less than 100 mean 1900 +
 .Fa year .
 .It 3
+The
+.Fn parsedate
+function accepts
+.Dq "12 am"
+where
+.Dq "12 midnight"
+is correct, and similarly
+.Dq "12 pm"
+for
+.Dq "12 noon" .
+The correct forms are also accepted.
+.It 4
 There are various weird cases that are hard to explain,
 but are nevertheless considered correct.
-.It 4
+.It 5
 It is very hard to specify years BC,
 and in any case,
 conversions of times before the
