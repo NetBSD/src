@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.23 2017/03/22 01:49:36 kre Exp $
+.\"     $NetBSD: parsedate.3,v 1.24 2017/03/22 18:17:42 kre Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -417,4 +417,16 @@ but late 16th century is a rough guide)
 are suspicious at best,
 and depending upon context,
 often just plain wrong.
+.It 6
+Despite what is stated above,
+.Dq next
+is actually 2.
+The input
+.Dq "next January" ,
+instead of producing a timestamp for January of the
+following year, produces one for January 2nd, of the
+current year.
+Use caution with
+.Dq next
+it rarely does what humans expect.
 .El

@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.31 2017/03/22 01:49:36 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.32 2017/03/22 18:17:42 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -659,14 +659,15 @@ RelVal(struct dateinfo *param, time_t v, int type)
 	param->yyRel[i].yyRelVal = v;
 }
 
-
-/* Adjust year from a value that might be abbreviated, to a full value.
+/*
+ * Adjust year from a value that might be abbreviated, to a full value.
  * e.g. convert 70 to 1970.
  * Input Year is either:
  *  - A negative number, which means to use its absolute value (why?)
  *  - A number from 0 to 99, which means a year from 1900 to 1999, or
  *  - The actual year (>=100).
- * Returns the full year. */
+ * Returns the full year.
+ */
 static time_t
 AdjustYear(time_t Year)
 {
