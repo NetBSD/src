@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.269 2017/02/07 21:19:13 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.270 2017/03/22 23:11:09 chs Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -159,8 +159,11 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
+# sh3 defaults to soft-float and specifies hard-float a different way
+.if ${MACHINE_CPU} != "sh3"
 COPTS+=		${${ACTIVE_CC} == "gcc":? -msoft-float :}
 FOPTS+=		-msoft-float
+.endif
 .elif ${MACHINE_ARCH} == "coldfire"
 COPTS+=		-mhard-float
 FOPTS+=		-mhard-float
