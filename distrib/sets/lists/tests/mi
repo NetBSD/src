@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.728 2017/03/11 04:24:52 ozaki-r Exp $
+# $NetBSD: mi,v 1.729 2017/03/22 21:33:06 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1440,6 +1440,7 @@
 ./usr/tests/fs/ffs/t_snapshot				tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/t_snapshot_log			tests-fs-tests		atf,rump
 ./usr/tests/fs/ffs/t_snapshot_v2			tests-fs-tests		atf,rump
+./usr/tests/fs/ffs/t_update_log				tests-fs-tests		atf,rump
 ./usr/tests/fs/fifofs					tests-fs-tests		compattestfile,atf
 ./usr/tests/fs/fifofs/Atffile				tests-fs-tests		atf,rump
 ./usr/tests/fs/fifofs/Kyuafile				tests-fs-tests		atf,rump,kyua
