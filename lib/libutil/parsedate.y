@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.29 2016/06/26 07:09:24 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.30 2017/03/22 00:59:06 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -654,7 +654,9 @@ Convert(
 
     tm.tm_sec = Seconds;
     tm.tm_min = Minutes;
-    tm.tm_hour = Hours + (Meridian == MERpm ? 12 : 0);
+    tm.tm_hour = ((Hours == 12 && Meridian != MER24) ? 0 : Hours) +
+	(Meridian == MERpm ? 12 : 0);
+
     tm.tm_mday = Day;
     tm.tm_mon = Month - 1;
     tm.tm_year = Year - 1900;
