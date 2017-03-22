@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.499 2017/03/22 02:56:12 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.500 2017/03/22 08:44:41 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.499 2017/03/22 02:56:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.500 2017/03/22 08:44:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6575,6 +6575,13 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	}
 
+	/*
+	 * We don't have to write context descriptor for every packet
+	 * except for 82574. For 82574, we must write context descriptor
+	 * for every packet when we use two descriptor queues.
+	 * It would be overhead to write context descriptor for every packet,
+	 * however it does not cause problems.
+	 */
 	/* Fill in the context descriptor. */
 	t = (struct livengood_tcpip_ctxdesc *)
 	    &txq->txq_descs[txq->txq_next];
@@ -7176,6 +7183,14 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		*fieldsp |= NQTXD_FIELDS_TUXSM;
 	}
 
+	/*
+	 * We don't have to write context descriptor for every packet to
+	 * NEWQUEUE controllers, that is 82575, 82576, 82580, I350, I354,
+	 * I210 and I211. It is enough to write once per a Tx queue for these
+	 * controllers.
+	 * It would be overhead to write context descriptor for every packet,
+	 * however it does not cause problems.
+	 */
 	/* Fill in the context descriptor. */
 	txq->txq_nq_descs[txq->txq_next].nqrx_ctx.nqtxc_vl_len =
 	    htole32(vl_len);
