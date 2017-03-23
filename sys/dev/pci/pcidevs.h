@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1273 2017/03/14 04:07:43 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1274 2017/03/23 03:15:16 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1281 2017/03/14 04:06:58 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1282 2017/03/23 03:14:03 msaitoh Exp
  */
 
 /*
@@ -639,6 +639,7 @@
 #define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale Semiconductor */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
+#define	PCI_VENDOR_HUAWEI	0x19e5		/* Huaewi Technology */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
@@ -2549,6 +2550,9 @@
 #define	PCI_PRODUCT_HITACHI_SWC	0x0101		/* MSVCC01/02/03/04 Video Capture Cards */
 #define	PCI_PRODUCT_HITACHI_SH7751	0x3505		/* SH7751 PCI Controller */
 #define	PCI_PRODUCT_HITACHI_SH7751R	0x350e		/* SH7751R PCI Controller */
+
+/* Huawei products */
+#define	PCI_PRODUCT_HUAWEI_HI1710	0x1711		/* Hi1710 BMC */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
