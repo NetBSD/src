@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.32 2017/02/10 08:52:04 maya Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.32 2017/02/10 08:52:04 maya Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.33 2017/03/23 15:50:48 nat Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -411,11 +411,11 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat - (tmpinfo.play.seek
-		    + tmpinfo.blocksize - 1) / tmpinfo.blocksize;
+		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
+		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
+		    tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize
-		    - tmpinfo.play.seek;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
@@ -424,11 +424,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat - (tmpinfo.record.seek +
-		    tmpinfo.blocksize - 1) / tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize
-		    - tmpinfo.record.seek;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
