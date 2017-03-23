@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.780 2017/02/23 03:34:22 kamil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.781 2017/03/23 18:08:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.780 2017/02/23 03:34:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.781 2017/03/23 18:08:06 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1019,7 +1019,7 @@ initgdt(union descriptor *tgdt)
 		pt_entry_t pte;
 
 		pte = pmap_pa2pte((vaddr_t)gdtstore - KERNBASE);
-		pte |= PG_k | PG_RO | xpmap_pg_nx | PG_V;
+		pte |= PG_RO | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)gdtstore, pte,
 		    UVMF_INVLPG) < 0) {
@@ -1223,7 +1223,7 @@ init386(paddr_t first_avail)
 		pt_entry_t pte;
 
 		pte = pmap_pa2pte((vaddr_t)tmpgdt - KERNBASE);
-		pte |= PG_k | PG_RW | xpmap_pg_nx | PG_V;
+		pte |= PG_RW | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)tmpgdt, pte, UVMF_INVLPG) < 0) {
 			panic("tmpgdt page relaim RW update failed.\n");
