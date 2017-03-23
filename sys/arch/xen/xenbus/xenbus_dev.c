@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.12 2017/03/22 22:33:32 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.13 2017/03/23 14:52:36 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.12 2017/03/22 22:33:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.13 2017/03/23 14:52:36 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -374,7 +374,7 @@ xenbus_dev_open(void *v)
 		memset(xlwp, 0, sizeof(*xlwp));
 		xlwp->lwp = curlwp;   
 		SLIST_INIT(&xlwp->transactions);
-		mutex_init(&xlwp->mtx, MUTEX_DEFAULT, IPL_VM);
+		mutex_init(&xlwp->mtx, MUTEX_DEFAULT, IPL_NONE);
 		SLIST_INSERT_HEAD(&u->lwps,
 		    xlwp, lwp_next);  
 	}
