@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.253 2017/03/10 14:54:12 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.254 2017/03/23 17:25:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2017/03/10 14:54:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2017/03/23 17:25:51 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1452,7 +1452,6 @@ typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
-extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 static void
@@ -1642,11 +1641,8 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	/*
-	 * Make LDT gates and memory segments.
+	 * Make LDT memory segments.
 	 */
-	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
 	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
 	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
 	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
@@ -1676,16 +1672,6 @@ init_x86_64(paddr_t first_avail)
 	ldt_segp = (struct mem_segment_descriptor *)(ldtstore + LUDATA32_SEL);
 	set_mem_segment(ldt_segp, 0, x86_btop(VM_MAXUSER_ADDRESS32) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1, 0);
-
-	/*
-	 * Other LDT entries.
-	 */
-	memcpy((struct gate_descriptor *)(ldtstore + LSOL26CALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
-	memcpy((struct gate_descriptor *)(ldtstore + LBSDICALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
 
 	/* CPU-specific IDT exceptions. */
 	for (x = 0; x < NCPUIDT; x++) {
