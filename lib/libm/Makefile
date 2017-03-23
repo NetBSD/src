@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.189 2017/03/22 23:11:08 chs Exp $
+#  $NetBSD: Makefile,v 1.190 2017/03/23 18:26:03 chs Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -206,7 +206,7 @@ COPTS+=	-fno-strict-aliasing
 .endif
 CPPFLAGS+=-DLIBM_SCCS
 
-.if ${MKSOFTFLOAT} != "no"
+.if (${MKSOFTFLOAT} != "no" || ${MACHINE_ARCH} == "m68000")
 .PATH:	${.CURDIR}/softfloat
 .include "${.CURDIR}/../libc/libcincludes.mk"
 CPPFLAGS+=	-I${ARCHDIR}/softfloat
