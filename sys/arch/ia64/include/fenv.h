@@ -208,9 +208,7 @@ int feupdateenv(const fenv_t *__envp);
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-/* We currently provide no external definitions of the functions below. */
-
-static inline int
+__fenv_static inline int
 feenableexcept(int __mask)
 {
 	fenv_t __newfpsr, __oldfpsr;
@@ -221,7 +219,7 @@ feenableexcept(int __mask)
 	return (~__oldfpsr & FE_ALL_EXCEPT);
 }
 
-static inline int
+__fenv_static inline int
 fedisableexcept(int __mask)
 {
 	fenv_t __newfpsr, __oldfpsr;
@@ -232,7 +230,7 @@ fedisableexcept(int __mask)
 	return (~__oldfpsr & FE_ALL_EXCEPT);
 }
 
-static inline int
+__fenv_static inline int
 fegetexcept(void)
 {
 	fenv_t __fpsr;
