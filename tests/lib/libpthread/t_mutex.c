@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.16 2017/03/05 16:08:23 chs Exp $ */
+/* $NetBSD: t_mutex.c,v 1.17 2017/03/23 08:31:00 martin Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.16 2017/03/05 16:08:23 chs Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.17 2017/03/23 08:31:00 martin Exp $");
 
 #include <sys/time.h> /* For timespecadd */
 #include <inttypes.h> /* For UINT16_MAX */
@@ -371,7 +371,6 @@ ATF_TC_BODY(mutex5, tc)
 	PTHREAD_REQUIRE(pthread_join(child, NULL));
 }
 
-static pthread_mutex_t mutex6;
 static int start = 0;
 static uintmax_t high_cnt = 0, low_cnt = 0, MAX_LOOP = 100000000;
 
@@ -399,9 +398,9 @@ high_prio(void* arg)
 		high_cnt = 0;
 		sleep(1);
 	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex6, &ts_lengthy));
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 	if (start == 0) start = 2;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex6));
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 
 	return 0;
 }
@@ -431,10 +430,10 @@ low_prio(void* arg)
 		low_cnt = 0;
 		sleep(1);
 	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex6, &ts_lengthy));
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 	if (start == 0)
 		start = 1;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex6));
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 
 	return 0;
 }
