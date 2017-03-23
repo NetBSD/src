@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.332 2017/01/06 22:53:17 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.333 2017/03/23 21:59:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.332 2017/01/06 22:53:17 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.333 2017/03/23 21:59:55 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1535,7 +1535,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 	 */
 	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
 		KASSERT(signo != 0);
-		proc_stop(p, 1, signo);
+		proc_stop(p, 0, signo);
 		KASSERT(p->p_nrlwps > 0);
 	}
 
@@ -2099,7 +2099,7 @@ sigexit(struct lwp *l, int signo)
  * Put process 'p' into the stopped state and optionally, notify the parent.
  */
 void
-proc_stop(struct proc *p, int notify, int signo)
+proc_stop(struct proc *p, int now, int signo)
 {
 	struct lwp *l;
 
@@ -2110,11 +2110,7 @@ proc_stop(struct proc *p, int notify, int signo)
 	 * LWPs to a halt so they are included in p->p_nrlwps.  We musn't
 	 * unlock between here and the p->p_nrlwps check below.
 	 */
-	p->p_sflag |= PS_STOPPING;
-	if (notify)
-		p->p_sflag |= PS_NOTIFYSTOP;
-	else
-		p->p_sflag &= ~PS_NOTIFYSTOP;
+	p->p_sflag |= PS_STOPPING | PS_NOTIFYSTOP;
 	membar_producer();
 
 	proc_stop_lwps(p);
@@ -2125,7 +2121,7 @@ proc_stop(struct proc *p, int notify, int signo)
 	 * LWP to stop will take care of it.
 	 */
 
-	if (p->p_nrlwps == 0) {
+	if (p->p_nrlwps == 0 || (now && p->p_nrlwps == 1 && p == curproc)) {
 		proc_stop_done(p, true, PS_NOCLDSTOP);
 	} else {
 		/*

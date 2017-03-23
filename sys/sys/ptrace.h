@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.58 2017/02/23 03:34:23 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.59 2017/03/23 21:59:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -208,7 +208,7 @@ int	process_validdbregs(struct lwp *);
 
 int	process_domem(struct lwp *, struct lwp *, struct uio *);
 
-void	process_stoptrace(void);
+void	process_stoptrace(int);
 
 void	proc_reparent(struct proc *, struct proc *);
 void	proc_changeparent(struct proc *, struct proc *);
