@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $	*/
+/*	$NetBSD: fenv.c,v 1.3 2017/03/23 18:27:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2017/03/22 23:11:08 chs Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3 2017/03/23 18:27:29 chs Exp $");
 
 #include "namespace.h"
 
@@ -69,6 +69,9 @@ extern inline int fesetround(int __round);
 extern inline int fegetenv(fenv_t *__envp);
 extern inline int feholdexcept(fenv_t *__envp);
 extern inline int fesetenv(const fenv_t *__envp);
+extern inline int feenableexcept(int __excepts);
+extern inline int fedisableexcept(int __excepts);
+extern inline int fegetexcept(void);
 
 /*
  * It doesn't pay to inline feupdateenv() because it includes one of
