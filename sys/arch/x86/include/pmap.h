@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.63 2017/03/05 09:08:18 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.64 2017/03/23 18:08:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -179,8 +179,6 @@ struct pmap {
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
-
-#define PG_k 0
 
 /*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
