@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.127 2017/03/20 22:17:56 kre Exp $
+.\"	$NetBSD: sh.1,v 1.128 2017/03/23 12:10:53 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2283,6 +2283,14 @@ in the buffer using the control key.
 uses the
 .Xr editline 3
 library.
+See
+.Xr editline 7
+for a list of the possible command bindings,
+and the default settings in
+.Ar emacs
+and
+.Ar vi
+modes.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev CDPATH
@@ -2399,6 +2407,7 @@ argument.
 .\" .Xr profile 4 ,
 .Xr editrc 5 ,
 .Xr passwd 5 ,
+.Xr editline 7 ,
 .Xr environ 7 ,
 .Xr nls 7 ,
 .Xr sysctl 8
