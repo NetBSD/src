@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.177 2017/03/23 21:59:55 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.178 2017/03/24 17:40:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.177 2017/03/23 21:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.178 2017/03/24 17:40:44 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -184,44 +184,6 @@ process_domem(struct lwp *curl /*tracer*/,
 		pmap_procwr(p, addr, len);
 #endif
 	return error;
-}
-
-void
-process_stoptrace(int trapno)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc, *pp;
-
-	mutex_enter(p->p_lock);
-	mutex_enter(proc_lock);
-	pp = p->p_pptr;
-	if (pp->p_pid == 1) {
-		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
-		mutex_exit(p->p_lock);
-		mutex_exit(proc_lock);
-		return;
-	}
-
-	p->p_sigctx.ps_info._signo = SIGTRAP;
-	p->p_sigctx.ps_info._code = trapno;
-	p->p_xsig = SIGTRAP;
-	proc_stop(p, 1, SIGSTOP);
-	mutex_exit(proc_lock);
-
-	if (sigispending(l, 0)) {
-		lwp_lock(l);
-		l->l_flag |= LW_PENDSIG;
-		lwp_unlock(l);
-	}
-	/* Switch and wait until we come to a stop */
-	do {
-		mutex_exit(p->p_lock);
-		lwp_lock(l);
-		mi_switch(l);
-		mutex_enter(p->p_lock);
-	} while (p->p_sflag & PS_STOPPING);
-
-	mutex_exit(p->p_lock);
 }
 #endif	/* KTRACE || PTRACE_HOOKS */
 
