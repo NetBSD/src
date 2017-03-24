@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.504 2017/03/24 10:18:55 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.505 2017/03/24 10:39:10 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.504 2017/03/24 10:18:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.505 2017/03/24 10:39:10 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2563,7 +2563,7 @@ alloc_retry:
 		ifp->if_start = wm_nq_start;
 		/*
 		 * When the number of CPUs is one and the controller can use
-		 * MSII-X, wm(4) use MSI-X but *does not* use multiqueue.
+		 * MSI-X, wm(4) use MSI-X but *does not* use multiqueue.
 		 * That is, wm(4) use two interrupts, one is used for Tx/Rx
 		 * and the other is used for link status changing.
 		 * In this situation, wm_nq_transmit() is disadvantageous
