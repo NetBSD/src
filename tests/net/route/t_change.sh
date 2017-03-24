@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.10 2017/03/22 06:30:00 ozaki-r Exp $
+#	$NetBSD: t_change.sh,v 1.11 2017/03/24 04:06:19 ozaki-r Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -323,7 +323,7 @@ route_change_flags_body()
 	# TODO other flags
 }
 
-route_change_default_flags_cleanup()
+route_change_flags_cleanup()
 {
 
 	env RUMP_SERVER=unix://commsock rump.halt
