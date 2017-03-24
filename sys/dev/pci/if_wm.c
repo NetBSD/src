@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.501 2017/03/24 09:59:05 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.502 2017/03/24 10:01:55 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.501 2017/03/24 09:59:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.502 2017/03/24 10:01:55 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -675,6 +675,8 @@ static void	wm_rxdrain(struct wm_rxqueue *);
 static void	wm_rss_getkey(uint8_t *);
 static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
+static inline bool	wm_is_using_msix(struct wm_softc *);
+static inline bool	wm_is_using_multiqueue(struct wm_softc *);
 static int	wm_softint_establish(struct wm_softc *, int, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
@@ -2559,11 +2561,11 @@ alloc_retry:
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
-		if (sc->sc_nqueues > 1)
+		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_nq_transmit;
 	} else {
 		ifp->if_start = wm_start;
-		if (sc->sc_nqueues > 1)
+		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_transmit;
 	}
 	ifp->if_watchdog = wm_watchdog;
@@ -4042,7 +4044,7 @@ wm_reset(struct wm_softc *sc)
 
 	/* Clear interrupt */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
@@ -4289,7 +4291,7 @@ wm_reset(struct wm_softc *sc)
 	/* Clear any pending interrupt events. */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	reg = CSR_READ(sc, WMREG_ICR);
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
@@ -4587,6 +4589,20 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		sc->sc_nqueues = ncpu;
 }
 
+static inline bool
+wm_is_using_msix(struct wm_softc *sc)
+{
+
+	return (sc->sc_nintrs > 1);
+}
+
+static inline bool
+wm_is_using_multiqueue(struct wm_softc *sc)
+{
+
+	return (sc->sc_nqueues > 1);
+}
+
 static int
 wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
 {
@@ -4844,7 +4860,7 @@ wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
 			eitr |= EITR_CNT_INGR;
 
 		CSR_WRITE(sc, WMREG_EITR(wmq->wmq_intr_idx), eitr);
-	} else if (sc->sc_type == WM_T_82574 && sc->sc_nintrs > 1) {
+	} else if (sc->sc_type == WM_T_82574 && wm_is_using_msix(sc)) {
 		/*
 		 * 82574 has both ITR and EITR. SET EITR when we use
 		 * the multi queue function with MSI-X.
@@ -5136,8 +5152,8 @@ wm_init_locked(struct ifnet *ifp)
 		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
-	/* Set up MSI-X */
-	if (sc->sc_nintrs > 1) {
+	/* Set registers about MSI-X */
+	if (wm_is_using_msix(sc)) {
 		uint32_t ivar;
 		struct wm_queue *wmq;
 		int qid, qintr_idx;
@@ -5250,7 +5266,7 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_IVAR_MISC, ivar);
 		}
 
-		if (sc->sc_nqueues > 1) {
+		if (wm_is_using_multiqueue(sc)) {
 			wm_init_rss(sc);
 
 			/*
@@ -5269,7 +5285,7 @@ wm_init_locked(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
 	    ICR_RXO | ICR_RXT0;
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		uint32_t mask;
 		struct wm_queue *wmq;
 
@@ -5537,7 +5553,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 	 */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	sc->sc_icr = 0;
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
@@ -6379,7 +6395,7 @@ wm_init_txrx_queues(struct wm_softc *sc)
 		 * polling mode is less than default value.
 		 * More tuning and AIM are required.
 		 */
-		if (sc->sc_nqueues > 1)
+		if (wm_is_using_multiqueue(sc))
 			wmq->wmq_itr = 50;
 		else
 			wmq->wmq_itr = sc->sc_itr_init;
