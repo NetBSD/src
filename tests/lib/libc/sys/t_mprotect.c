@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.4 2016/05/28 14:34:49 christos Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.5 2017/03/24 08:18:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.4 2016/05/28 14:34:49 christos Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.5 2017/03/24 08:18:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -47,13 +47,10 @@ __RCSID("$NetBSD: t_mprotect.c,v 1.4 2016/05/28 14:34:49 christos Exp $");
 #include "../common/exec_prot.h"
 
 static long	page = 0;
-static int	pax_global = -1;
-static int	pax_enabled = -1;
 static char	path[] = "mmap";
 
 static void	sighandler(int);
 static bool	paxinit(void);
-static bool	paxset(int, int);
 
 static void
 sighandler(int signo)
@@ -65,6 +62,8 @@ static bool
 paxinit(void)
 {
 	size_t len = sizeof(int);
+	int pax_global = -1;
+	int pax_enabled = -1;
 	int rv;
 
 	rv = sysctlbyname("security.pax.mprotect.global",
@@ -76,30 +75,11 @@ paxinit(void)
 	rv = sysctlbyname("security.pax.mprotect.enabled",
 	    &pax_enabled, &len, NULL, 0);
 
-	return rv == 0;
-}
-
-static bool
-paxset(int global, int enabled)
-{
-	size_t len = sizeof(int);
-	int rv;
-
-	rv = sysctlbyname("security.pax.mprotect.global",
-	    NULL, NULL, &global, len);
-
 	if (rv != 0)
 		return false;
 
-	rv = sysctlbyname("security.pax.mprotect.enabled",
-	    NULL, NULL, &enabled, len);
-
-	if (rv != 0)
-		return false;
-
-	return true;
+	return pax_global == 1 && pax_enabled == 1;
 }
-
 
 ATF_TC_WITH_CLEANUP(mprotect_access);
 ATF_TC_HEAD(mprotect_access, tc)
@@ -188,11 +168,6 @@ ATF_TC_BODY(mprotect_exec, tc)
 		break;
 	}
 
-	if (!paxinit())
-		return;
-	if (pax_enabled == 1 && pax_global == 1)
-		atf_tc_skip("PaX MPROTECT restrictions enabled");
-		
 
 	/*
 	 * Map a page read/write and copy a trivial assembly function inside.
@@ -261,8 +236,8 @@ ATF_TC_BODY(mprotect_pax, tc)
 	size_t i;
 	int rv;
 
-	if (!paxinit() || !paxset(1, 1))
-		return;
+	if (!paxinit())
+		atf_tc_skip("PaX MPROTECT restrictions not enabled");
 
 	/*
 	 * As noted in the original PaX documentation [1],
@@ -302,9 +277,6 @@ ATF_TC_BODY(mprotect_pax, tc)
 	}
 
 out:
-	if (pax_global != -1 && pax_enabled != -1)
-		(void)paxset(pax_global, pax_enabled);
-
 	if (str != NULL)
 		atf_tc_fail("%s", str);
 }
