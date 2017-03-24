@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.221 2016/04/04 23:31:46 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.222 2017/03/24 21:43:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1026,7 +1026,8 @@ struct kinfo_vmentry {
 #define	PROC_PID_STOPFORK	3
 #define	PROC_PID_STOPEXEC	4
 #define	PROC_PID_STOPEXIT	5
-#define	PROC_PID_MAXID		6
+#define	PROC_PID_PAXFLAGS	6
+#define	PROC_PID_MAXID		7
 
 #define	PROC_PID_NAMES { \
 	{ 0, 0 }, \
@@ -1035,6 +1036,7 @@ struct kinfo_vmentry {
 	{ "stopfork", CTLTYPE_INT }, \
 	{ "stopexec", CTLTYPE_INT }, \
 	{ "stopexit", CTLTYPE_INT }, \
+	{ "paxflags", CTLTYPE_INT }, \
 }
 
 /* Limit types from <sys/resources.h> */
@@ -1077,6 +1079,16 @@ struct kinfo_vmentry {
 	{ "soft", CTLTYPE_QUAD }, \
 	{ "hard", CTLTYPE_QUAD }, \
 }
+
+/*
+ * Export PAX flag definitions to userland.
+ *
+ * XXX These are duplicated from sys/pax.h but that header is not
+ * XXX installed.
+ */
+#define	CTL_PROC_PAXFLAGS_ASLR		0x01
+#define	CTL_PROC_PAXFLAGS_MPROTECT	0x02
+#define	CTL_PROC_PAXFLAGS_GUARD		0x04
 
 /*
  * CTL_EMUL definitions
