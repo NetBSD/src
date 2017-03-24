@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.16 2017/03/24 00:52:49 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.17 2017/03/24 21:28:03 macallan Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.16 2017/03/24 00:52:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.17 2017/03/24 21:28:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ struct wcfb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_dpms;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -251,6 +251,7 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 
 	/* make sure video output is on */
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_DPMS_STATE, WC_DPMS_ON);
+	sc->sc_dpms = WSDISPLAYIO_VIDEO_ON;
 
 #if 0
 	/* testing & debugging voodoo */
@@ -425,9 +426,20 @@ wcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
 		    sc->sc_pcitag, data);
 
-	case WSDISPLAYIO_SMODE: {
-		/*int new_mode = *(int*)data, i;*/
+	case WSDISPLAYIO_SVIDEO: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_dpms) {
+			sc->sc_dpms = new_mode;
+			bus_space_write_4(sc->sc_regt, sc->sc_regh,
+			     WC_DPMS_STATE,
+			     (new_mode == WSDISPLAYIO_VIDEO_ON) ?
+			      WC_DPMS_ON : WC_DPMS_STANDBY);
 		}
+		}
+		return 0;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(int*)data = sc->sc_dpms;
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
