@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.503 2017/03/24 10:02:35 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.504 2017/03/24 10:18:55 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.503 2017/03/24 10:02:35 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.504 2017/03/24 10:18:55 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2923,7 +2923,7 @@ wm_tick(void *arg)
 	}
 
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += 0ULL + /* ensure quad_t */
+	ifp->if_ierrors += 0ULL /* ensure quad_t */
 	    + CSR_READ(sc, WMREG_CRCERRS)
 	    + CSR_READ(sc, WMREG_ALGNERRC)
 	    + CSR_READ(sc, WMREG_SYMERRC)
