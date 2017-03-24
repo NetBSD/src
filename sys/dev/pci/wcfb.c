@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.15 2017/03/24 00:51:43 macallan Exp $ */
+/*	$NetBSD: wcfb.c,v 1.16 2017/03/24 00:52:49 macallan Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.15 2017/03/24 00:51:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.16 2017/03/24 00:52:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	        WC_FB8_ADDR1) - sc->sc_fb;
 	sc->sc_fb1 = sc->sc_fbaddr + sc->sc_fb1off;
 	sc->sc_fb8size = 2 * (sc->sc_fb1off - sc->sc_fb0off);
-printf("fb %08x %08x %08x\n", sc->sc_fb0off, sc->sc_fb1off, sc->sc_fb8size);
 
 	sub = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_SUBSYS_ID_REG);
 	aprint_normal("subsys: %08x\n", sub);
