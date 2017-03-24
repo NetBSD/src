@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.178 2017/03/13 11:50:06 leot Exp $
+$NetBSD: acronyms.comp,v 1.179 2017/03/24 12:49:43 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -726,7 +726,7 @@ LVT	local vector table
 LWP	light-weight process
 LZW	Lempel Ziv Welch
 MAC	mandatory access control
-MAC	medium access control
+MAC	{media,medium} access control
 MAC	message authentication {check,code}
 MADT	multiple APIC descriptor table
 MB	megabyte
