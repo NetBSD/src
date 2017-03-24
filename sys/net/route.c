@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.193 2017/03/22 07:14:18 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.194 2017/03/24 03:45:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.193 2017/03/22 07:14:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194 2017/03/24 03:45:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1026,11 +1026,15 @@ ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
 
 		/* XXX we cannot call rtalloc1 if holding the rt lock */
 		if (RT_LOCKED())
-			rt = rtalloc1_locked(dst, 0, true);
+			rt = rtalloc1_locked(gateway, 0, true);
 		else
-			rt = rtalloc1(dst, 0);
+			rt = rtalloc1(gateway, 0);
 		if (rt == NULL)
 			return NULL;
+		if (rt->rt_flags & RTF_GATEWAY) {
+			rt_unref(rt);
+			return NULL;
+		}
 		/*
 		 * Just in case. May not need to do this workaround.
 		 * Revisit when working on rtentry MP-ification.
