@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.254 2017/03/23 17:25:51 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255 2017/03/24 17:09:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2017/03/23 17:25:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2017/03/24 17:09:36 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -170,7 +170,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2017/03/23 17:25:51 maxv Exp $");
 #include <machine/gdt.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/pmc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -1766,8 +1765,6 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
-
-	pmc_init();
 
 	pcb->pcb_dbregs = NULL;
 
