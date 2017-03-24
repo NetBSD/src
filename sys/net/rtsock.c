@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.210 2017/03/22 07:14:18 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.211 2017/03/24 03:45:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.210 2017/03/22 07:14:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.211 2017/03/24 03:45:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -599,22 +599,29 @@ route_output_change(struct rtentry *rt, struct rt_addrinfo *info,
     struct rt_xmsghdr *rtm)
 {
 	int error = 0;
-	struct ifnet *ifp, *new_ifp;
-	struct ifaddr *ifa, *new_ifa;
+	struct ifnet *ifp = NULL, *new_ifp;
+	struct ifaddr *ifa = NULL, *new_ifa;
 	struct psref psref_ifa, psref_new_ifa, psref_ifp;
+	bool newgw;
 
 	/*
 	 * New gateway could require new ifaddr, ifp;
 	 * flags may also be different; ifp may be specified
 	 * by ll sockaddr when protocol address is ambiguous
 	 */
-	ifp = rt_getifp(info, &psref_ifp);
-	ifa = rt_getifa(info, &psref_ifa);
-	if (ifa == NULL) {
-		error = ENETUNREACH;
-		goto out;
+	newgw = info->rti_info[RTAX_GATEWAY] != NULL &&
+	    sockaddr_cmp(info->rti_info[RTAX_GATEWAY], rt->rt_gateway) != 0;
+
+	if (newgw || info->rti_info[RTAX_IFP] != NULL ||
+	    info->rti_info[RTAX_IFA] != NULL) {
+		ifp = rt_getifp(info, &psref_ifp);
+		ifa = rt_getifa(info, &psref_ifa);
+		if (ifa == NULL) {
+			error = ENETUNREACH;
+			goto out;
+		}
 	}
-	if (info->rti_info[RTAX_GATEWAY]) {
+	if (newgw) {
 		error = rt_setgate(rt, info->rti_info[RTAX_GATEWAY]);
 		if (error != 0)
 			goto out;
