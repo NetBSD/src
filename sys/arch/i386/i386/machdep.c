@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.781 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.782 2017/03/24 17:09:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.781 2017/03/23 18:08:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.782 2017/03/24 17:09:36 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -135,7 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.781 2017/03/23 18:08:06 maxv Exp $");
 #include <machine/intr.h>
 #include <machine/kcore.h>
 #include <machine/pio.h>
-#include <machine/pmc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -1409,8 +1408,6 @@ init386(paddr_t first_avail)
 	}
 
 	rw_init(&svr4_fasttrap_lock);
-
-	pmc_init();
 
 	pcb->pcb_dbregs = NULL;
 
