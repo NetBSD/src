@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.244 2017/03/23 18:08:06 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245 2017/03/24 10:58:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.244 2017/03/23 18:08:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245 2017/03/24 10:58:06 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1020,6 +1020,7 @@ pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	npte = pmap_pa2pte(pa);
 	npte |= protection_codes[prot] | PG_V;
 	pmap_pte_set(pte, npte);
+	pmap_pte_flush();
 }
 
 /*
@@ -1058,6 +1059,8 @@ pmap_emap_remove(vaddr_t sva, vsize_t len)
 		pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
 		pmap_pte_set(pte, 0);
 	}
+
+	pmap_pte_flush();
 }
 
 __strict_weak_alias(pmap_kenter_ma, pmap_kenter_pa);
