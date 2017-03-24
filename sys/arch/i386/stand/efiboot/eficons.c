@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: eficons.c,v 1.2 2017/03/24 01:00:47 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -209,9 +209,6 @@ bi_framebuffer(void)
 	EFI_STATUS status;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 	struct btinfo_framebuffer fb;
-	UINT64 res, bestres = 0;
-	UINTN sz;
-	UINT32 i;
 	INT32 bestmode = -1;
 
 	if (efi_gop == NULL) {
@@ -222,7 +219,12 @@ bi_framebuffer(void)
 	if (efi_gop_mode >= 0) {
 		bestmode = efi_gop_mode;
 	} else {
-		/* XXX EDID? EFI_EDID_DISCOVERD_PROTOCOL */
+#if 0
+		UINT64 res, bestres = 0;
+		UINTN sz;
+		UINT32 i;
+
+		/* XXX EDID? EFI_EDID_DISCOVERED_PROTOCOL */
 		for (i = 0; i < efi_gop->Mode->MaxMode; i++) {
 			status = uefi_call_wrapper(efi_gop->QueryMode, 4,
 			    efi_gop, i, &sz, &info);
@@ -237,6 +239,7 @@ bi_framebuffer(void)
 				bestres = res;
 			}
 		}
+#endif
 	}
 	if (bestmode >= 0) {
 		status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
