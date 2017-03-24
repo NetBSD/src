@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.333 2017/03/23 21:59:55 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.334 2017/03/24 17:40:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.333 2017/03/23 21:59:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.334 2017/03/24 17:40:44 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.333 2017/03/23 21:59:55 christos Exp 
 #include <sys/param.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/systm.h>
 #include <sys/wait.h>
 #include <sys/ktrace.h>
@@ -116,6 +117,7 @@ static sigset_t		stopsigmask	__cacheline_aligned;
 sigset_t		sigcantmask	__cacheline_aligned;
 
 static void	ksiginfo_exechook(struct proc *, void *);
+static void	proc_stop(struct proc *, int);
 static void	proc_stop_callout(void *);
 static int	sigchecktrace(void);
 static int	sigpost(struct lwp *, sig_t, int, int);
@@ -1535,7 +1537,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 	 */
 	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
 		KASSERT(signo != 0);
-		proc_stop(p, 0, signo);
+		proc_stop(p, signo);
 		KASSERT(p->p_nrlwps > 0);
 	}
 
@@ -2099,7 +2101,7 @@ sigexit(struct lwp *l, int signo)
  * Put process 'p' into the stopped state and optionally, notify the parent.
  */
 void
-proc_stop(struct proc *p, int now, int signo)
+proc_stop(struct proc *p, int signo)
 {
 	struct lwp *l;
 
@@ -2121,7 +2123,7 @@ proc_stop(struct proc *p, int now, int signo)
 	 * LWP to stop will take care of it.
 	 */
 
-	if (p->p_nrlwps == 0 || (now && p->p_nrlwps == 1 && p == curproc)) {
+	if (p->p_nrlwps == 0) {
 		proc_stop_done(p, true, PS_NOCLDSTOP);
 	} else {
 		/*
@@ -2252,6 +2254,27 @@ proc_unstop(struct proc *p)
 			lwp_unlock(l);
 		}
 	}
+}
+
+void
+proc_stoptrace(int trapno)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc, *pp;
+
+	mutex_enter(p->p_lock);
+	pp = p->p_pptr;
+	if (pp->p_pid == 1) {
+		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
+		mutex_exit(p->p_lock);
+		return;
+	}
+
+	p->p_xsig = SIGTRAP;
+	p->p_sigctx.ps_info._signo = p->p_xsig;
+	p->p_sigctx.ps_info._code = trapno;
+	sigswitch(true, 0, p->p_xsig);
+	mutex_exit(p->p_lock);
 }
 
 static int
