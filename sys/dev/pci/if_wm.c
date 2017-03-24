@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.500 2017/03/22 08:44:41 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.501 2017/03/24 09:59:05 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.500 2017/03/22 08:44:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.501 2017/03/24 09:59:05 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -675,6 +675,7 @@ static void	wm_rxdrain(struct wm_rxqueue *);
 static void	wm_rss_getkey(uint8_t *);
 static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
+static int	wm_softint_establish(struct wm_softc *, int, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
