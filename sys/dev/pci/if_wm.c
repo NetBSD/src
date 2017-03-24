@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.502 2017/03/24 10:01:55 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.503 2017/03/24 10:02:35 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.502 2017/03/24 10:01:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.503 2017/03/24 10:02:35 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2561,10 +2561,21 @@ alloc_retry:
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
+		/*
+		 * When the number of CPUs is one and the controller can use
+		 * MSII-X, wm(4) use MSI-X but *does not* use multiqueue.
+		 * That is, wm(4) use two interrupts, one is used for Tx/Rx
+		 * and the other is used for link status changing.
+		 * In this situation, wm_nq_transmit() is disadvantageous
+		 * because of wm_select_txqueue() and pcq(9) overhead.
+		 */
 		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_nq_transmit;
 	} else {
 		ifp->if_start = wm_start;
+		/*
+		 * wm_transmit() has the same disadvantage as wm_transmit().
+		 */
 		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_transmit;
 	}
@@ -2833,7 +2844,7 @@ wm_watchdog(struct ifnet *ifp)
 
 	/*
 	 * There are still some upper layer processing which call
-	 * ifp->if_start(). e.g. ALTQ
+	 * ifp->if_start(). e.g. ALTQ or one CPU system
 	 */
 	/* Try to get more packets going. */
 	ifp->if_start(ifp);
@@ -7611,12 +7622,12 @@ wm_deferred_start_locked(struct wm_txqueue *txq)
 	}
 
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-		/* XXX need for ALTQ */
+		/* XXX need for ALTQ or one CPU system */
 		if (qid == 0)
 			wm_nq_start_locked(ifp);
 		wm_nq_transmit_locked(ifp, txq);
 	} else {
-		/* XXX need for ALTQ */
+		/* XXX need for ALTQ or one CPU system */
 		if (qid == 0)
 			wm_start_locked(ifp);
 		wm_transmit_locked(ifp, txq);
