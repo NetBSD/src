@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.338 2017/02/23 03:34:23 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.339 2017/03/24 17:40:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -538,7 +538,6 @@ void	syscall_intern(struct proc *);
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
-void	proc_stop(struct proc *, int, int);
 int	proc_uidmatch(kauth_cred_t, kauth_cred_t);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
