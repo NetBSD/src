@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.3 2017/03/11 14:13:39 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.4 2017/03/24 18:30:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3 2017/03/11 14:13:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.4 2017/03/24 18:30:44 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ typedef struct {
 	uint64_t evtval;	/* event selector value */
 	uint32_t ctrmsr;	/* counter MSR */
 	uint64_t ctrval;	/* initial counter value */
+	uint64_t ctrmaxval;	/* maximal counter value */
+	uint64_t ctrmask;
 } pmc_state_t;
 
 static x86_pmc_cpuval_t pmc_val_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
@@ -104,9 +106,7 @@ pmc_read_cpu(void *arg1, void *arg2)
 	pmc_state_t *pmc = (pmc_state_t *)arg1;
 	struct cpu_info *ci = curcpu();
 
-	pmc_val_cpus[cpu_index(ci)].ctrval =
-	    rdmsr(pmc->ctrmsr) & 0xffffffffffULL;
-	pmc_val_cpus[cpu_index(ci)].overfl = 0;
+	pmc_val_cpus[cpu_index(ci)].ctrval = rdmsr(pmc->ctrmsr) & pmc->ctrmask;
 }
 
 static void
@@ -126,11 +126,6 @@ pmc_apply_cpu(void *arg1, void *arg2)
 
 	wrmsr(pmc->ctrmsr, pmc->ctrval);
 	switch (pmc_type) {
-	case PMC_TYPE_I586:
-		wrmsr(MSR_CESR, pmc_state[0].evtval |
-		    (pmc_state[1].evtval << 16));
-		break;
-
 	case PMC_TYPE_I686:
 	case PMC_TYPE_K7:
 	case PMC_TYPE_F10H:
@@ -167,13 +162,6 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 	 * Initialize the event MSR.
 	 */
 	switch (pmc_type) {
-	case PMC_TYPE_I586:
-		pmc->evtval = args->event |
-		    ((args->flags & PMC_SETUP_KERNEL) ? PMC5_CESR_OS : 0) |
-		    ((args->flags & PMC_SETUP_USER) ? PMC5_CESR_USR : 0) |
-		    ((args->flags & PMC_SETUP_EDGE) ? PMC5_CESR_E : 0);
-		break;
-
 	case PMC_TYPE_I686:
 		pmc->evtval = args->event | PMC6_EVTSEL_EN |
 		    (args->unit << PMC6_EVTSEL_UNIT_SHIFT) |
@@ -233,61 +221,52 @@ pmc_init(void)
 {
 	const char *cpu_vendorstr;
 	struct cpu_info *ci;
+	size_t i;
 
 	pmc_type = PMC_TYPE_NONE;
+
+	if (cpu_class != CPUCLASS_686)
+		return;
 
 	ci = curcpu();
 	cpu_vendorstr = (char *)ci->ci_vendor;
 
-	switch (cpu_class) {
-	case CPUCLASS_586:
-		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
-			pmc_type = PMC_TYPE_I586;
-			pmc_ncounters = 2;
-			pmc_state[0].ctrmsr = MSR_CTR0;
-			pmc_state[1].ctrmsr = MSR_CTR1;
-			break;
+	if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
+		/* Right now we're missing Pentium 4 support. */
+		if (cpuid_level == -1 ||
+		    CPUID_TO_FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
+			return;
+		pmc_type = PMC_TYPE_I686;
+		pmc_ncounters = 2;
+		for (i = 0; i < pmc_ncounters; i++) {
+			pmc_state[i].evtmsr = MSR_EVNTSEL0 + i;
+			pmc_state[i].ctrmsr = MSR_PERFCTR0 + i;
+			pmc_state[i].ctrmaxval = (UINT64_C(1) << 40) - 1;
+			pmc_state[i].ctrmask = 0xFFFFFFFFFFULL;
 		}
-
-	case CPUCLASS_686:
-		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
-			/* Right now we're missing Pentium 4 support. */
-			if (cpuid_level == -1 ||
-			    CPUID_TO_FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
-				break;
-			pmc_type = PMC_TYPE_I686;
-			pmc_ncounters = 2;
-			pmc_state[0].evtmsr = MSR_EVNTSEL0;
-			pmc_state[0].ctrmsr = MSR_PERFCTR0;
-			pmc_state[1].evtmsr = MSR_EVNTSEL1;
-			pmc_state[1].ctrmsr = MSR_PERFCTR1;
-		} else if (strncmp(cpu_vendorstr, "AuthenticAMD", 12) == 0) {
-			if (CPUID_TO_FAMILY(ci->ci_signature) == 0x10) {
-				pmc_type = PMC_TYPE_F10H;
-				pmc_ncounters = 4;
-				pmc_state[0].evtmsr = MSR_F10H_EVNTSEL0;
-				pmc_state[0].ctrmsr = MSR_F10H_PERFCTR0;
-				pmc_state[1].evtmsr = MSR_F10H_EVNTSEL1;
-				pmc_state[1].ctrmsr = MSR_F10H_PERFCTR1;
-				pmc_state[2].evtmsr = MSR_F10H_EVNTSEL2;
-				pmc_state[2].ctrmsr = MSR_F10H_PERFCTR2;
-				pmc_state[3].evtmsr = MSR_F10H_EVNTSEL3;
-				pmc_state[3].ctrmsr = MSR_F10H_PERFCTR3;
-			} else {
-				/* XXX: make sure it is at least K7 */
-				pmc_type = PMC_TYPE_K7;
-				pmc_ncounters = 4;
-				pmc_state[0].evtmsr = MSR_K7_EVNTSEL0;
-				pmc_state[0].ctrmsr = MSR_K7_PERFCTR0;
-				pmc_state[1].evtmsr = MSR_K7_EVNTSEL1;
-				pmc_state[1].ctrmsr = MSR_K7_PERFCTR1;
-				pmc_state[2].evtmsr = MSR_K7_EVNTSEL2;
-				pmc_state[2].ctrmsr = MSR_K7_PERFCTR2;
-				pmc_state[3].evtmsr = MSR_K7_EVNTSEL3;
-				pmc_state[3].ctrmsr = MSR_K7_PERFCTR3;
+	} else if (strncmp(cpu_vendorstr, "AuthenticAMD", 12) == 0) {
+		if (CPUID_TO_FAMILY(ci->ci_signature) == 0x10) {
+			pmc_type = PMC_TYPE_F10H;
+			pmc_ncounters = 4;
+			for (i = 0; i < pmc_ncounters; i++) {
+				pmc_state[i].evtmsr = MSR_F10H_EVNTSEL0 + i;
+				pmc_state[i].ctrmsr = MSR_F10H_PERFCTR0 + i;
+				pmc_state[i].ctrmaxval =
+				    (UINT64_C(1) << 48) - 1;
+				pmc_state[i].ctrmask = 0xFFFFFFFFFFFFULL;
+			}
+		} else {
+			/* XXX: make sure it is at least K7 */
+			pmc_type = PMC_TYPE_K7;
+			pmc_ncounters = 4;
+			for (i = 0; i < pmc_ncounters; i++) {
+				pmc_state[i].evtmsr = MSR_K7_EVNTSEL0 + i;
+				pmc_state[i].ctrmsr = MSR_K7_PERFCTR0 + i;
+				pmc_state[i].ctrmaxval =
+				    (UINT64_C(1) << 48) - 1;
+				pmc_state[i].ctrmask = 0xFFFFFFFFFFFFULL;
 			}
 		}
-		break;
 	}
 
 	mutex_init(&pmc_lock, MUTEX_DEFAULT, IPL_NONE);
