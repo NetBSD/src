@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.8 2017/03/25 01:48:31 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.9 2017/03/25 22:08:27 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -706,8 +706,9 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
 		u_char cbuf[2];
-		int c, j = 0;
+		int c, j, npress;
 
+		npress = j = 0;
 		c = dnkbd_raw[key];
 		if (c != 0) {
 			/* fake extended scancode if necessary */
@@ -718,7 +719,9 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 				cbuf[j] |= 0x80;
 			else {
 				/* remember pressed key for autorepeat */
-				memcpy(sc->sc_rep, cbuf, sizeof(sc->sc_rep));
+				if (c & 0x80)
+					sc->sc_rep[npress++] = 0xe0;
+				sc->sc_rep[npress++] = c & 0x7f;
 			}
 			j++;
 		}
@@ -728,9 +731,11 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 			wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 			splx(s);
 			callout_stop(&sc->sc_rawrepeat_ch);
-			sc->sc_nrep = j;
-			callout_schedule(&sc->sc_rawrepeat_ch,
-			    mstohz(REP_DELAY1));
+			sc->sc_nrep = npress;
+			if (npress != 0) {
+				callout_schedule(&sc->sc_rawrepeat_ch,
+				    mstohz(REP_DELAY1));
+			}
 		}
 	} else
 #endif
