@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.12 2017/03/25 18:02:06 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.13 2017/03/25 18:09:44 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.12 2017/03/25 18:02:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.13 2017/03/25 18:09:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = max_channel;
-	adapt->adapt_openings = cmd_per_lun;
+	adapt->adapt_openings = MIN(qsize, cmd_per_lun);
 	adapt->adapt_max_periph = adapt->adapt_openings;
 	adapt->adapt_request = vioscsi_scsipi_request;
 	adapt->adapt_minphys = minphys;
@@ -190,8 +190,8 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = MIN(max_target + 1, 8);
-	chan->chan_nluns = MIN(max_lun + 1, 8);
+	chan->chan_ntargets = MIN(max_target, 16);	/* cap reasonably */
+	chan->chan_nluns = MIN(max_lun, 16);		/* cap reasonably */
 	chan->chan_id = 0;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
