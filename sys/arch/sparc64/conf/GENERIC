@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.197 2017/03/23 11:00:03 martin Exp $
+# $NetBSD: GENERIC,v 1.198 2017/03/25 13:24:08 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.197 $"
+#ident		"GENERIC-$Revision: 1.198 $"
 
 maxusers	64
 
@@ -423,6 +423,15 @@ twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 ld*	at cac? unit ?			# logical disk devices
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
+
+# Virtio devices
+virtio* at pci? dev ? function ?	# Virtio PCI device
+# the baloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
 
 ## Floppy controller and drive found on SPARCstations.
 
