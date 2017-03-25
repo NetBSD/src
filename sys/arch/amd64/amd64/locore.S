@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.122 2017/03/23 17:25:51 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.123 2017/03/25 15:07:21 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -329,7 +329,6 @@
 	.globl	_C_LABEL(bootinfo)
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore)
 
 	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	TABLESIZE
