@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.86 2017/03/08 14:52:07 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.87 2017/03/25 17:19:47 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -10094,4 +10094,10 @@ external/mit/xorg/server/xorg-server/os/Makefile 1.15 (patch)
 	Apply upstream fixes for generation and comparision of
 	MIT-MAGIC-COOKIES, fixing CVE-2017-2624
 	[mrg, ticket #1443]
+
+sys/arch/amd64/amd64/trap.c			1.94
+sys/arch/i386/i386/trap.c			1.287
+
+	Handle #SS faults on iret properly.
+	[maxv, ticket #1446]
 
