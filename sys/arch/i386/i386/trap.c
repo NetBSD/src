@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.262 2011/09/07 09:24:55 reinoud Exp $	*/
+/*	$NetBSD: trap.c,v 1.262.14.1 2017/03/25 17:19:32 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262 2011/09/07 09:24:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.262.14.1 2017/03/25 17:19:32 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -405,6 +405,7 @@ trap(struct trapframe *frame)
 #endif
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
+	case T_STKFLT:
 	case T_TSSFLT:
 		if (p == NULL)
 			goto we_re_toast;
