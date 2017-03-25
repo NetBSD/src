@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.21 2017/03/25 17:50:51 jdolecek Exp $	*/
+/*	$NetBSD: virtio.c,v 1.22 2017/03/25 18:02:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.21 2017/03/25 17:50:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.22 2017/03/25 18:02:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.21 2017/03/25 17:50:51 jdolecek Exp $")
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+#define VIRTIO_PRIVATE
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
@@ -59,6 +61,7 @@ static int	virtio_setup_msix_interrupts(struct virtio_softc *,
 static int	virtio_setup_intx_interrupt(struct virtio_softc *,
 		    struct pci_attach_args *);
 static int	virtio_setup_interrupts(struct virtio_softc *);
+static void	virtio_free_interrupts(struct virtio_softc *);
 static void	virtio_soft_intr(void *arg);
 static void	virtio_init_vq(struct virtio_softc *,
 		    struct virtqueue *, const bool);
@@ -349,7 +352,47 @@ virtio_setup_interrupts(struct virtio_softc *sc)
 		sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
 	}
 
+	KASSERT(sc->sc_soft_ih == NULL);
+	if (sc->sc_flags & VIRTIO_F_PCI_INTR_SOFTINT) {
+		u_int flags = SOFTINT_NET;
+		if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
+			flags |= SOFTINT_MPSAFE;
+
+		sc->sc_soft_ih = softint_establish(flags, virtio_soft_intr, sc);
+		if (sc->sc_soft_ih == NULL) {
+			virtio_free_interrupts(sc);
+			aprint_error_dev(sc->sc_dev,
+			    "failed to establish soft interrupt\n");
+			return -1;
+		}
+	}
+
 	return 0;
+}
+
+static void
+virtio_free_interrupts(struct virtio_softc *sc)
+{
+	for (int i = 0; i < sc->sc_ihs_num; i++) {
+		if (sc->sc_ihs[i] == NULL)
+			continue;
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[i]);
+		sc->sc_ihs[i] = NULL;
+	}
+
+	if (sc->sc_ihs_num > 0)
+		pci_intr_release(sc->sc_pc, sc->sc_ihp, sc->sc_ihs_num);
+
+	if (sc->sc_soft_ih) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
+	}
+
+	if (sc->sc_ihs != NULL) {
+		kmem_free(sc->sc_ihs, sizeof(*sc->sc_ihs) * sc->sc_ihs_num);
+		sc->sc_ihs = NULL;
+	}
+	sc->sc_ihs_num = 0;
 }
 
 static void
@@ -398,7 +441,6 @@ virtio_attach(device_t parent, device_t self, void *aux)
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 
-	/* XXX: use softc as aux... */
 	sc->sc_childdevid = PCI_SUBSYS_ID(id);
 	sc->sc_child = NULL;
 	sc->sc_pa = *pa;
@@ -411,43 +453,34 @@ static int
 virtio_rescan(device_t self, const char *attr, const int *scan_flags)
 {
 	struct virtio_softc *sc;
-	int r;
+	struct virtio_attach_args va;
 
 	sc = device_private(self);
 	if (sc->sc_child)	/* Child already attached? */
 		return 0;
-	config_found_ia(self, attr, sc, NULL);
+
+	memset(&va, 0, sizeof(va));
+	va.sc_childdevid = sc->sc_childdevid;
+
+	config_found_ia(self, attr, &va, NULL);
+
 	if (sc->sc_child == NULL) {
 		aprint_error_dev(self,
 				 "no matching child driver; not configured\n");
 		return 0;
 	}
-	if (sc->sc_child == (void*)1) { /* this shows error */
+	
+	if (sc->sc_child == VIRTIO_CHILD_FAILED) {
 		aprint_error_dev(self,
 				 "virtio configuration failed\n");
-		virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
 		return 0;
 	}
 
-	r = virtio_setup_interrupts(sc);
-	if (r != 0) {
-		aprint_error_dev(self, "failed to setup interrupts\n");
-		virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
-		return 0;
-	}
-
-	sc->sc_soft_ih = NULL;
-	if (sc->sc_flags & VIRTIO_F_PCI_INTR_SOFTINT) {
-		u_int flags = SOFTINT_NET;
-		if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
-			flags |= SOFTINT_MPSAFE;
-
-		sc->sc_soft_ih = softint_establish(flags, virtio_soft_intr, sc);
-		if (sc->sc_soft_ih == NULL)
-			aprint_error(": failed to establish soft interrupt\n");
-	}
-
-	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+	/*
+	 * Make sure child drivers initialize interrupts via call
+	 * to virtio_child_attach_finish().
+	 */
+	KASSERT(sc->sc_ihs_num != 0);
 
 	return 0;
 }
@@ -457,24 +490,18 @@ virtio_detach(device_t self, int flags)
 {
 	struct virtio_softc *sc = device_private(self);
 	int r;
-	int i;
 
-	if (sc->sc_child != 0 && sc->sc_child != (void*)1) {
+	if (sc->sc_child != NULL) {
 		r = config_detach(sc->sc_child, flags);
 		if (r)
 			return r;
 	}
-	KASSERT(sc->sc_child == 0 || sc->sc_child == (void*)1);
-	KASSERT(sc->sc_vqs == 0);
-	for (i = 0; i < sc->sc_ihs_num; i++) {
-		if (sc->sc_ihs[i] == NULL)
-			continue;
-		pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[i]);
-	}
-	pci_intr_release(sc->sc_pc, sc->sc_ihp, sc->sc_ihs_num);
-	if (sc->sc_ihs != NULL)
-		kmem_free(sc->sc_ihs, sizeof(*sc->sc_ihs) * sc->sc_ihs_num);
-	sc->sc_ihs_num = 0;
+
+	/* Check that child detached properly */
+	KASSERT(sc->sc_child == NULL);
+	KASSERT(sc->sc_vqs == NULL);
+	KASSERT(sc->sc_ihs_num == 0);
+
 	if (sc->sc_iosize)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 	sc->sc_iosize = 0;
@@ -860,6 +887,9 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 #define VIRTQUEUE_ALIGN(n)	(((n)+(VIRTIO_PAGE_SIZE-1))&	\
 				 ~(VIRTIO_PAGE_SIZE-1))
 
+	/* Make sure callers allocate vqs in order */
+	KASSERT(sc->sc_nvqs == index);
+
 	memset(vq, 0, sizeof(*vq));
 
 	nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh,
@@ -961,6 +991,9 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 				   "using %d byte (%d entries) "
 				   "indirect descriptors\n",
 				   allocsize3, maxnsegs * vq_size);
+
+	sc->sc_nvqs++;
+
 	return 0;
 
 err:
@@ -1009,6 +1042,8 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	mutex_destroy(&vq->vq_uring_lock);
 	mutex_destroy(&vq->vq_aring_lock);
 	memset(vq, 0, sizeof(*vq));
+
+	sc->sc_nvqs--;
 
 	return 0;
 }
@@ -1335,6 +1370,94 @@ virtio_dequeue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot)
 	vq_free_entry(vq, qe);
 
 	return 0;
+}
+
+/*
+ * Attach a child, fill all the members.
+ */
+void
+virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl, 
+		    struct virtqueue *vqs,
+		    virtio_callback config_change,
+		    virtio_callback intr_hand,
+		    int req_flags, int req_features, const char *feat_bits)
+{
+	char buf[256];
+	int features;
+
+	sc->sc_child = child;
+	sc->sc_ipl = ipl;
+	sc->sc_vqs = vqs;
+	sc->sc_config_change = config_change;
+	sc->sc_intrhand = intr_hand;
+	sc->sc_flags = req_flags;
+
+	features = virtio_negotiate_features(sc, req_features);
+	snprintb(buf, sizeof(buf), feat_bits, features);
+	aprint_normal(": Features: %s\n", buf);
+	aprint_naive("\n");
+}
+
+int
+virtio_child_attach_finish(struct virtio_softc *sc)
+{
+	int r;
+
+	r = virtio_setup_interrupts(sc);
+	if (r != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to setup interrupts\n");
+		virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+		return 1;
+	}
+
+	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
+
+	return 0;
+}
+
+void
+virtio_child_detach(struct virtio_softc *sc)
+{
+	sc->sc_child = NULL;
+	sc->sc_vqs = NULL;
+
+	virtio_device_reset(sc);
+
+	virtio_free_interrupts(sc);
+}
+
+void
+virtio_child_attach_failed(struct virtio_softc *sc)
+{
+	virtio_child_detach(sc);
+
+	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
+
+	sc->sc_child = VIRTIO_CHILD_FAILED;
+}
+
+bus_dma_tag_t
+virtio_dmat(struct virtio_softc *sc)
+{
+	return sc->sc_dmat;
+}
+
+device_t
+virtio_child(struct virtio_softc *sc)
+{
+	return sc->sc_child;
+}
+
+int
+virtio_intrhand(struct virtio_softc *sc)
+{
+	return (sc->sc_intrhand)(sc);
+}
+
+uint32_t
+virtio_features(struct virtio_softc *sc)
+{
+	return sc->sc_features;
 }
 
 MODULE(MODULE_CLASS_DRIVER, virtio, "pci");
