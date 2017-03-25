@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.20 2017/03/25 13:05:09 martin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.21 2017/03/25 17:50:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.20 2017/03/25 13:05:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.21 2017/03/25 17:50:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,8 +204,8 @@ virtio_setup_msix_interrupts(struct virtio_softc *sc,
 	if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
 		pci_intr_setattr(pc, &sc->sc_ihp[idx], PCI_INTR_MPSAFE, true);
 
-	sc->sc_ihs[idx] = pci_intr_establish_xname(pc, sc->sc_ihp[idx], IPL_NET,
-	    virtio_msix_config_intr, sc, device_xname(sc->sc_dev));
+	sc->sc_ihs[idx] = pci_intr_establish_xname(pc, sc->sc_ihp[idx],
+	    sc->sc_ipl, virtio_msix_config_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ihs[idx] == NULL) {
 		aprint_error_dev(self, "couldn't establish MSI-X for config\n");
 		goto error;
@@ -215,8 +215,8 @@ virtio_setup_msix_interrupts(struct virtio_softc *sc,
 	if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
 		pci_intr_setattr(pc, &sc->sc_ihp[idx], PCI_INTR_MPSAFE, true);
 
-	sc->sc_ihs[idx] = pci_intr_establish_xname(pc, sc->sc_ihp[idx], IPL_NET,
-	    virtio_msix_queue_intr, sc, device_xname(sc->sc_dev));
+	sc->sc_ihs[idx] = pci_intr_establish_xname(pc, sc->sc_ihp[idx],
+	    sc->sc_ipl, virtio_msix_queue_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ihs[idx] == NULL) {
 		aprint_error_dev(self, "couldn't establish MSI-X for queues\n");
 		goto error;
@@ -260,7 +260,7 @@ virtio_setup_intx_interrupt(struct virtio_softc *sc,
 		pci_intr_setattr(pc, &sc->sc_ihp[0], PCI_INTR_MPSAFE, true);
 
 	sc->sc_ihs[0] = pci_intr_establish_xname(pc, sc->sc_ihp[0],
-	    IPL_NET, virtio_intr, sc, device_xname(sc->sc_dev));
+	    sc->sc_ipl, virtio_intr, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ihs[0] == NULL) {
 		aprint_error_dev(self, "couldn't establish INTx\n");
 		return -1;
