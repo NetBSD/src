@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.7 2014/04/24 12:10:27 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.8 2017/03/25 01:48:31 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -263,6 +263,7 @@ static int	dnkbd_probe(struct dnkbd_softc *);
 static void	dnkbd_rawrepeat(void *);
 #endif
 static int	dnkbd_send(struct dnkbd_softc *, const uint8_t *, size_t);
+static void	dnkbd_break(struct dnkbd_softc *, int);
 
 int
 dnkbd_match(device_t parent, cfdata_t cf, void *aux)
@@ -308,6 +309,12 @@ dnkbd_attach(device_t parent, device_t self, void *aux)
 	dnkbd_init(sc, 1200, LCR_8BITS | LCR_PEVEN | LCR_PENAB);
 
 	frodo_intr_establish(parent, dnkbd_intr, sc, fa->fa_line, IPL_VM);
+
+	/* send break to reset keyboard state */
+	dnkbd_break(sc, 1);
+	delay(10 * 1000);	/* 10ms for 12 space bits */
+	dnkbd_break(sc, 0);
+	delay(10 * 1000);
 
 	/* probe for keyboard */
 	if (dnkbd_probe(sc) != 0) {
@@ -867,6 +874,24 @@ dnkbd_send(struct dnkbd_softc *sc, const uint8_t *cmdbuf, size_t cmdlen)
 	}
 
 	return 0;
+}
+
+void
+dnkbd_break(struct dnkbd_softc *sc, int onoff)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	uint8_t reg;
+
+	bst = sc->sc_bst;
+	bsh = sc->sc_bsh;
+
+	reg = bus_space_read_1(bst, bsh, com_lctl);
+	if (onoff)
+		reg |= LCR_SBREAK;
+	else
+		reg &= ~LCR_SBREAK;
+	bus_space_write_1(bst, bsh, com_lctl, reg);
 }
 
 int
