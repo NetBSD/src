@@ -1,4 +1,4 @@
-/* $NetBSD: t_mprotect.c,v 1.5 2017/03/24 08:18:27 martin Exp $ */
+/* $NetBSD: t_mprotect.c,v 1.6 2017/03/25 01:39:20 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mprotect.c,v 1.5 2017/03/24 08:18:27 martin Exp $");
+__RCSID("$NetBSD: t_mprotect.c,v 1.6 2017/03/25 01:39:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -62,23 +62,16 @@ static bool
 paxinit(void)
 {
 	size_t len = sizeof(int);
-	int pax_global = -1;
-	int pax_enabled = -1;
+	int pax_flags;
 	int rv;
 
-	rv = sysctlbyname("security.pax.mprotect.global",
-	    &pax_global, &len, NULL, 0);
+	rv = sysctlbyname("proc.curproc.paxflags",
+	    &pax_flags, &len, NULL, 0);
 
 	if (rv != 0)
 		return false;
 
-	rv = sysctlbyname("security.pax.mprotect.enabled",
-	    &pax_enabled, &len, NULL, 0);
-
-	if (rv != 0)
-		return false;
-
-	return pax_global == 1 && pax_enabled == 1;
+	return ((pax_flags & CTL_PROC_PAXFLAGS_MPROTECT) != 0);
 }
 
 ATF_TC_WITH_CLEANUP(mprotect_access);
