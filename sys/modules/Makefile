@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.189 2017/02/16 08:12:43 knakahara Exp $
+#	$NetBSD: Makefile,v 1.190 2017/03/25 23:17:07 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -405,6 +405,7 @@ SUBDIR+=	twa
 SUBDIR+=	twe
 SUBDIR+=	viomb
 SUBDIR+=	virtio
+SUBDIR+=	vioscsi
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot
