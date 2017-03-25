@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.112 2017/03/25 05:51:28 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.113 2017/03/25 05:58:50 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2206,9 +2206,9 @@ If non zero, the process' children will be stopped after
 calls.
 The children are created in the SSTOP state and are never scheduled
 for running before being stopped.
-This feature helps attaching to a process with a debugger such as
+This feature enables attaching to a process with a debugger such as
 .Xr gdb 1
-before it has the opportunity to actually do anything.
+before the process has the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children, and it also
 applies to emulation specific system calls that fork a new process, such as
@@ -2225,7 +2225,7 @@ is created in the SSTOP state and is never scheduled for running
 before being stopped.
 This feature enables attaching to a process with a debugger such as
 .Xr gdb 1
-before it has the opportunity to actually do anything.
+before the process has the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children.
 .It Li proc.pid.stopexit ( Dv PROC_PID_STOPEXIT )
