@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.2 2011/11/19 22:51:24 tls Exp $*/
+/*$NetBSD: ixgbe.c,v 1.2.4.1 2017/03/25 17:35:56 snj Exp $*/
 
 #include "opt_inet.h"
 
@@ -475,6 +475,10 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	adapter->osdep.pc = pa->pa_pc;
 	adapter->osdep.tag = pa->pa_tag;
 	adapter->osdep.dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		adapter->osdep.dmat = pa->pa_dmat64;
+	else
+		adapter->osdep.dmat = pa->pa_dmat;
 
 	ent = ixgbe_lookup(pa);
 
