@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1.1,v 1.1.2.2 2017/03/20 10:58:16 martin Exp $
+# $NetBSD: CHANGES-7.1.1,v 1.1.2.3 2017/03/25 16:58:41 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.1.1
 release:
@@ -193,4 +193,10 @@ external/bsd/ntp/scripts/mkver                  up to 1.12
 
 	Update ntp to 4.2.8p9.
 	[snj, ticket #1389]
+
+sys/arch/amd64/amd64/trap.c			1.94
+sys/arch/i386/i386/trap.c			1.287
+
+	Handle #SS faults on iret properly.
+	[maxv, ticket #1391]
 
