@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.11 2017/03/13 21:06:50 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.12 2017/03/25 18:02:06 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.11 2017/03/13 21:06:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.12 2017/03/25 18:02:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ static void	 vioscsi_attach(device_t, device_t, void *);
 
 static int	 vioscsi_alloc_reqs(struct vioscsi_softc *,
     struct virtio_softc *, int, uint32_t);
+static void	 vioscsi_free_reqs(struct vioscsi_softc *,
+    struct virtio_softc *);
 static void	 vioscsi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
 static int	 vioscsi_vq_done(struct virtqueue *);
@@ -98,10 +100,11 @@ CFATTACH_DECL_NEW(vioscsi, sizeof(struct vioscsi_softc),
 static int
 vioscsi_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct virtio_softc *va = aux;
+	struct virtio_attach_args *va = aux;
 
 	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_SCSI)
 		return 1;
+
 	return 0;
 }
 
@@ -112,11 +115,10 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	struct virtio_softc *vsc = device_private(parent);
 	struct scsipi_adapter *adapt = &sc->sc_adapter;
 	struct scsipi_channel *chan = &sc->sc_channel;
-	uint32_t features;
-	char buf[256];
-	int rv;
+	int rv, qsize = 0, i = 0;
+	int ipl = IPL_BIO;
 
-	if (vsc->sc_child != NULL) {
+	if (virtio_child(vsc) != NULL) {
 		aprint_error(": parent %s already has a child\n",
 		    device_xname(parent));
 		return;
@@ -124,20 +126,9 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	vsc->sc_child = self;
-	vsc->sc_ipl = IPL_BIO;
-	vsc->sc_vqs = sc->sc_vqs;
-	vsc->sc_nvqs = __arraycount(sc->sc_vqs);
-	vsc->sc_config_change = NULL;
-	vsc->sc_intrhand = virtio_vq_intr;
-	vsc->sc_flags = 0;
-
-	vsc->sc_flags |= VIRTIO_F_PCI_INTR_MSIX;
-
-	features = virtio_negotiate_features(vsc, 0);
-	snprintb(buf, sizeof(buf), VIRTIO_COMMON_FLAG_BITS, features);
-	aprint_normal(": Features: %s\n", buf);
-	aprint_naive("\n");
+	virtio_child_attach_start(vsc, self, ipl, sc->sc_vqs,
+    	    NULL, virtio_vq_intr, VIRTIO_F_PCI_INTR_MSIX,
+	    0, VIRTIO_COMMON_FLAG_BITS);
 
 	uint32_t cmd_per_lun = virtio_read_device_config_4(vsc,
 	    VIRTIO_SCSI_CONFIG_CMD_PER_LUN);
@@ -156,7 +147,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_seg_max = seg_max;
 
-	for (size_t i = 0; i < __arraycount(sc->sc_vqs); i++) {
+	for (i = 0; i < __arraycount(sc->sc_vqs); i++) {
 		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAXPHYS,
 		    1 + howmany(MAXPHYS, NBPG), vioscsi_vq_names[i]);
 		if (rv) {
@@ -169,12 +160,17 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 			sc->sc_vqs[i].vq_done = vioscsi_vq_done;
 	}
 
-	int qsize = sc->sc_vqs[VIOSCSI_VQ_REQUEST].vq_num;
-	aprint_normal_dev(sc->sc_dev, "qsize %d\n", qsize);
+	qsize = sc->sc_vqs[VIOSCSI_VQ_REQUEST].vq_num;
 	if (vioscsi_alloc_reqs(sc, vsc, qsize, seg_max))
 		return;
 
-	virtio_start_vq_intr(vsc, &sc->sc_vqs[VIOSCSI_VQ_REQUEST]);
+	aprint_normal_dev(sc->sc_dev,
+	    "cmd_per_lun %zu qsize %zu seg_max %zu max_target %zu"
+	    " max_lun %zu\n",
+	    cmd_per_lun, qsize, seg_max, max_target, max_lun);
+
+	if (virtio_child_attach_finish(vsc) != 0)
+		goto err;
 
 	/*
 	 * Fill in the scsipi_adapter.
@@ -194,12 +190,25 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = max_target + 1;
-	chan->chan_nluns = max_lun + 1;
+	chan->chan_ntargets = MIN(max_target + 1, 8);
+	chan->chan_nluns = MIN(max_lun + 1, 8);
 	chan->chan_id = 0;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
-	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(self, &sc->sc_channel, scsiprint);
+	return;
+
+err:
+	if (qsize > 0)
+		vioscsi_free_reqs(sc, vsc);
+
+	for (i=0; i < __arraycount(sc->sc_vqs); i++) {
+		if (sc->sc_vqs[i].vq_num > 0)
+			virtio_free_vq(vsc, &sc->sc_vqs[i]);
+	}
+
+	virtio_child_attach_failed(vsc);
+
 }
 
 #define XS2DMA(xs) \
@@ -314,7 +323,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	memset(req->cdb, 0, sizeof(req->cdb));
 	memcpy(req->cdb, xs->cmd, xs->cmdlen);
 
-	error = bus_dmamap_load(vsc->sc_dmat, vr->vr_data,
+	error = bus_dmamap_load(virtio_dmat(vsc), vr->vr_data,
 	    xs->data, xs->datalen, NULL, XS2DMA(xs));
 	switch (error) {
 	case 0:
@@ -341,21 +350,21 @@ nomore:
 	error = virtio_enqueue_reserve(vsc, vq, slot, nsegs);
 	if (error) {
 		DPRINTF(("%s: error reserving %d\n", __func__, error));
-		bus_dmamap_unload(vsc->sc_dmat, vr->vr_data);
+		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
 		xs->error = XS_RESOURCE_SHORTAGE;
 		goto nomore;
 	}
 
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_req),
 	    sizeof(struct virtio_scsi_req_hdr),
 	    BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_res),
             sizeof(struct virtio_scsi_res_hdr),
 	    BUS_DMASYNC_PREREAD);
 	if ((xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) != 0)
-		bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
+		bus_dmamap_sync(virtio_dmat(vsc), vr->vr_data, 0, xs->datalen,
 		    XS2DMAPRE(xs));
 
 	virtio_enqueue_p(vsc, vq, slot, vr->vr_control,
@@ -377,7 +386,7 @@ nomore:
 	// XXX: do this better.
 	int timeout = 1000;
 	do {
-		(*vsc->sc_intrhand)(vsc);
+		virtio_intrhand(vsc);
 		if (vr->vr_xs != xs)
 			break;
 		delay(1000);
@@ -403,15 +412,15 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 
 	DPRINTF(("%s: enter\n", __func__));
 
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_req),
 	    sizeof(struct virtio_scsi_req_hdr),
 	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_res),
 	    sizeof(struct virtio_scsi_res_hdr),
 	    BUS_DMASYNC_POSTREAD);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_data, 0, xs->datalen,
 	    XS2DMAPOST(xs));
 
 	xs->status = vr->vr_res.status;
@@ -442,7 +451,7 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	DPRINTF(("%s: done %d, %d, %d\n", __func__,
 	    xs->error, xs->status, xs->resid));
 
-	bus_dmamap_unload(vsc->sc_dmat, vr->vr_data);
+	bus_dmamap_unload(virtio_dmat(vsc), vr->vr_data);
 	vr->vr_xs = NULL;
 
 	scsipi_done(xs);
@@ -452,7 +461,7 @@ static int
 vioscsi_vq_done(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct vioscsi_softc *sc = device_private(vsc->sc_child);
+	struct vioscsi_softc *sc = device_private(virtio_child(vsc));
 	int ret = 0;
 
 	DPRINTF(("%s: enter\n", __func__));
@@ -507,7 +516,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	struct vioscsi_req *vr;
 
 	allocsize = qsize * sizeof(struct vioscsi_req);
-	r = bus_dmamem_alloc(vsc->sc_dmat, allocsize, 0, 0,
+	r = bus_dmamem_alloc(virtio_dmat(vsc), allocsize, 0, 0,
 	    &sc->sc_reqs_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -515,12 +524,12 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 		    allocsize, r);
 		return r;
 	}
-	r = bus_dmamem_map(vsc->sc_dmat, &sc->sc_reqs_segs[0], 1,
+	r = bus_dmamem_map(virtio_dmat(vsc), &sc->sc_reqs_segs[0], 1,
 	    allocsize, &vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "%s: bus_dmamem_map failed, error %d\n", __func__, r);
-		bus_dmamem_free(vsc->sc_dmat, &sc->sc_reqs_segs[0], 1);
+		bus_dmamem_free(virtio_dmat(vsc), &sc->sc_reqs_segs[0], 1);
 		return r;
 	}
 	memset(vaddr, 0, allocsize);
@@ -532,7 +541,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	for (slot=0; slot < qsize; slot++) {
 		vr = &sc->sc_reqs[slot];
 
-		r = bus_dmamap_create(vsc->sc_dmat,
+		r = bus_dmamap_create(virtio_dmat(vsc),
 		    offsetof(struct vioscsi_req, vr_xs), 1,
 		    offsetof(struct vioscsi_req, vr_xs), 0,
 		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_control);
@@ -543,7 +552,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 			goto cleanup;
 		}
 
-		r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, sc->sc_seg_max,
+		r = bus_dmamap_create(virtio_dmat(vsc), MAXPHYS, sc->sc_seg_max,
 		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
 		if (r != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -552,7 +561,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 			goto cleanup;
 		}
 
-		r = bus_dmamap_load(vsc->sc_dmat, vr->vr_control,
+		r = bus_dmamap_load(virtio_dmat(vsc), vr->vr_control,
 		    vr, offsetof(struct vioscsi_req, vr_xs), NULL,
 		    BUS_DMA_NOWAIT);
 		if (r != 0) {
@@ -571,18 +580,43 @@ cleanup:
 
 		if (vr->vr_control) {
 			/* this will also unload the mapping if loaded */
-			bus_dmamap_destroy(vsc->sc_dmat, vr->vr_control);
+			bus_dmamap_destroy(virtio_dmat(vsc), vr->vr_control);
 			vr->vr_control = NULL;
 		}
 
 		if (vr->vr_data) {
-			bus_dmamap_destroy(vsc->sc_dmat, vr->vr_data);
+			bus_dmamap_destroy(virtio_dmat(vsc), vr->vr_data);
 			vr->vr_data = NULL;
 		}
 	}
 
-	bus_dmamem_unmap(vsc->sc_dmat, vaddr, allocsize);
-	bus_dmamem_free(vsc->sc_dmat, &sc->sc_reqs_segs[0], 1);
+	bus_dmamem_unmap(virtio_dmat(vsc), vaddr, allocsize);
+	bus_dmamem_free(virtio_dmat(vsc), &sc->sc_reqs_segs[0], 1);
 
 	return r;
 }
+
+static void
+vioscsi_free_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc)
+{
+	int slot;
+	struct vioscsi_req *vr;
+
+	if (sc->sc_nreqs == 0) {
+		/* Not allocated */
+		return;
+	}
+
+	/* Free request maps */ 
+	for (slot=0; slot < sc->sc_nreqs; slot++) {
+		vr = &sc->sc_reqs[slot];
+
+		bus_dmamap_destroy(virtio_dmat(vsc), vr->vr_control);
+		bus_dmamap_destroy(virtio_dmat(vsc), vr->vr_data);
+	}
+
+	bus_dmamem_unmap(virtio_dmat(vsc), sc->sc_reqs,
+			 sc->sc_nreqs * sizeof(struct vioscsi_req));
+	bus_dmamem_free(virtio_dmat(vsc), &sc->sc_reqs_segs[0], 1);
+}
+
