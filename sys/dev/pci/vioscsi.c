@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.13 2017/03/25 18:09:44 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.14 2017/03/25 18:13:53 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.13 2017/03/25 18:09:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.14 2017/03/25 18:13:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,6 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	uint16_t max_target = virtio_read_device_config_2(vsc,
 	    VIRTIO_SCSI_CONFIG_MAX_TARGET);
 
-	uint16_t max_channel = virtio_read_device_config_2(vsc,
-	    VIRTIO_SCSI_CONFIG_MAX_CHANNEL);
-
 	uint32_t max_lun = virtio_read_device_config_4(vsc,
 	    VIRTIO_SCSI_CONFIG_MAX_LUN);
 
@@ -177,7 +174,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	 */
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = sc->sc_dev;
-	adapt->adapt_nchannels = max_channel;
+	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = MIN(qsize, cmd_per_lun);
 	adapt->adapt_max_periph = adapt->adapt_openings;
 	adapt->adapt_request = vioscsi_scsipi_request;
