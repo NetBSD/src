@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.111 2017/03/24 21:44:13 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.112 2017/03/25 05:51:28 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2204,38 +2204,38 @@ Both are of type integer.
 If non zero, the process' children will be stopped after
 .Xr fork 2
 calls.
-The children is created in the SSTOP state and is never scheduled
+The children are created in the SSTOP state and are never scheduled
 for running before being stopped.
-This feature helps attaching a process with a debugger such as
+This feature helps attaching to a process with a debugger such as
 .Xr gdb 1
-before it had the opportunity to actually do anything.
+before it has the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children, and it also
-apply to emulation specific system calls that fork a new process, such as
+applies to emulation specific system calls that fork a new process, such as
 .Fn sproc
 or
 .Fn clone .
 .It Li proc.pid.stopexec ( Dv PROC_PID_STOPEXEC )
-If non zero, the process will be stopped on next
+If non zero, the process will be stopped on the next
 .Xr exec 3
 call.
 The process created by
 .Xr exec 3
 is created in the SSTOP state and is never scheduled for running
 before being stopped.
-This feature helps attaching a process with a debugger such as
+This feature enables attaching to a process with a debugger such as
 .Xr gdb 1
-before it had the opportunity to actually do anything.
+before it has the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children.
 .It Li proc.pid.stopexit ( Dv PROC_PID_STOPEXIT )
-If non zero, the process will be stopped on when it has cause to exit,
+If non zero, the process will be stopped when it has cause to exit,
 either by way of calling
 .Xr exit 3 ,
 .Xr _exit 2 ,
 or by the receipt of a specific signal.
 The process is stopped before any of its resources or vm space is
-released allowing examination of the termination state of a process
+released allowing examination of the termination state of the process
 before it disappears.
 This feature can be used to examine the final conditions of the
 process's vmspace via
