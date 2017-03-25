@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.19 2016/11/29 22:04:42 uwe Exp $	*/
+/*	$NetBSD: virtio.c,v 1.20 2017/03/25 13:05:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.19 2016/11/29 22:04:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.20 2017/03/25 13:05:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,45 @@ static void	virtio_init_vq(struct virtio_softc *,
 CFATTACH_DECL3_NEW(virtio, sizeof(struct virtio_softc),
     virtio_match, virtio_attach, virtio_detach, NULL, virtio_rescan, NULL,
     DVF_DETACH_SHUTDOWN);
+
+/* we use the legacy virtio spec, so the pci registers are host native
+ * byte order, not pci (i.e. LE) byte order */
+static inline uint16_t
+nbo_bus_space_read_2(bus_space_tag_t space, bus_space_handle_t handle,
+         bus_size_t offset)
+{
+	return le16toh(bus_space_read_2(space, handle, offset));
+}
+
+static inline uint32_t
+nbo_bus_space_read_4(bus_space_tag_t space, bus_space_handle_t handle,
+	bus_size_t offset)
+{
+	return le32toh(bus_space_read_4(space, handle, offset));
+}
+
+static void
+nbo_bus_space_write_2(bus_space_tag_t space, bus_space_handle_t handle,
+	bus_size_t offset, uint16_t value)
+{
+	bus_space_write_2(space, handle, offset, htole16(value));
+}
+
+static void
+nbo_bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle,
+	bus_size_t offset, uint16_t value)
+{
+	bus_space_write_4(space, handle, offset, htole32(value));
+}
+
+/* some functions access registers at 4 byte offset for little/high halves */
+#if BYTE_ORDER == BIG_ENDIAN
+#define REG_HI_OFF	0
+#define	REG_LO_OFF	4
+#else
+#define REG_HI_OFF	4
+#define	REG_LO_OFF	0
+#endif
 
 static void
 virtio_set_status(struct virtio_softc *sc, int status)
@@ -126,8 +165,8 @@ virtio_setup_msix_vectors(struct virtio_softc *sc)
 	offset = VIRTIO_CONFIG_MSI_CONFIG_VECTOR;
 	vector = VIRTIO_MSIX_CONFIG_VECTOR_INDEX;
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, vector);
-	ret = bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
+	nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, vector);
+	ret = nbo_bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
 	aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
 	    vector, ret);
 	if (ret != vector)
@@ -135,13 +174,13 @@ virtio_setup_msix_vectors(struct virtio_softc *sc)
 
 	for (qid = 0; qid < sc->sc_nvqs; qid++) {
 		offset = VIRTIO_CONFIG_QUEUE_SELECT;
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, qid);
+		nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, qid);
 
 		offset = VIRTIO_CONFIG_MSI_QUEUE_VECTOR;
 		vector = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
 
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, vector);
-		ret = bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
+		nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh, offset, vector);
+		ret = nbo_bus_space_read_2(sc->sc_iot, sc->sc_ioh, offset);
 		aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
 		    vector, ret);
 		if (ret != vector)
@@ -473,10 +512,10 @@ virtio_reinit_start(struct virtio_softc *sc)
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		int n;
 		struct virtqueue *vq = &sc->sc_vqs[i];
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+		nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 				  VIRTIO_CONFIG_QUEUE_SELECT,
 				  vq->vq_index);
-		n = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+		n = nbo_bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 				     VIRTIO_CONFIG_QUEUE_SIZE);
 		if (n == 0)	/* vq disappeared */
 			continue;
@@ -486,7 +525,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 			      vq->vq_index);
 		}
 		virtio_init_vq(sc, vq, true);
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  VIRTIO_CONFIG_QUEUE_ADDRESS,
 				  (vq->vq_dmamap->dm_segs[0].ds_addr
 				   / VIRTIO_PAGE_SIZE));
@@ -519,10 +558,10 @@ virtio_negotiate_features(struct virtio_softc *sc, uint32_t guest_features)
 	if (!(device_cfdata(sc->sc_dev)->cf_flags & 1) &&
 	    !(device_cfdata(sc->sc_child)->cf_flags & 1)) /* XXX */
 		guest_features |= VIRTIO_F_RING_INDIRECT_DESC;
-	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	r = nbo_bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 			     VIRTIO_CONFIG_DEVICE_FEATURES);
 	r &= guest_features;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_GUEST_FEATURES, r);
 	sc->sc_features = r;
 	if (r & VIRTIO_F_RING_INDIRECT_DESC)
@@ -546,14 +585,14 @@ virtio_read_device_config_1(struct virtio_softc *sc, int index)
 uint16_t
 virtio_read_device_config_2(struct virtio_softc *sc, int index)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	return nbo_bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 				sc->sc_config_offset + index);
 }
 
 uint32_t
 virtio_read_device_config_4(struct virtio_softc *sc, int index)
 {
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	return nbo_bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				sc->sc_config_offset + index);
 }
 
@@ -562,11 +601,12 @@ virtio_read_device_config_8(struct virtio_softc *sc, int index)
 {
 	uint64_t r;
 
-	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			     sc->sc_config_offset + index + sizeof(uint32_t));
+	r = nbo_bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			     sc->sc_config_offset + index + REG_HI_OFF);
 	r <<= 32;
-	r += bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-			      sc->sc_config_offset + index);
+	r |= nbo_bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			      sc->sc_config_offset + index + REG_LO_OFF);
+	
 	return r;
 }
 
@@ -582,7 +622,7 @@ void
 virtio_write_device_config_2(struct virtio_softc *sc,
 			     int index, uint16_t value)
 {
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 			  sc->sc_config_offset + index, value);
 }
 
@@ -590,7 +630,7 @@ void
 virtio_write_device_config_4(struct virtio_softc *sc,
 			     int index, uint32_t value)
 {
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  sc->sc_config_offset + index, value);
 }
 
@@ -598,11 +638,11 @@ void
 virtio_write_device_config_8(struct virtio_softc *sc,
 			     int index, uint64_t value)
 {
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  sc->sc_config_offset + index,
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  sc->sc_config_offset + index + REG_LO_OFF,
 			  value & 0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-			  sc->sc_config_offset + index + sizeof(uint32_t),
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			  sc->sc_config_offset + index + REG_HI_OFF,
 			  value >> 32);
 }
 
@@ -822,9 +862,9 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	memset(vq, 0, sizeof(*vq));
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_QUEUE_SELECT, index);
-	vq_size = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	vq_size = nbo_bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 				   VIRTIO_CONFIG_QUEUE_SIZE);
 	if (vq_size == 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -880,7 +920,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	}
 
 	/* set the vq address */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_QUEUE_ADDRESS,
 			  (vq->vq_dmamap->dm_segs[0].ds_addr
 			   / VIRTIO_PAGE_SIZE));
@@ -924,7 +964,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	return 0;
 
 err:
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_QUEUE_ADDRESS, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
@@ -955,9 +995,9 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	}
 
 	/* tell device that there's no virtqueue any longer */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_QUEUE_SELECT, vq->vq_index);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	nbo_bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_CONFIG_QUEUE_ADDRESS, 0);
 
 	kmem_free(vq->vq_entries, sizeof(*vq->vq_entries) * vq->vq_num);
@@ -1207,7 +1247,7 @@ notify:
 		vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
 		membar_consumer();
 		if (!(vq->vq_used->flags & VRING_USED_F_NO_NOTIFY))
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			nbo_bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 					  VIRTIO_CONFIG_QUEUE_NOTIFY,
 					  vq->vq_index);
 	}
