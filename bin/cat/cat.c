@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.47 2008/07/20 00:52:39 lukem Exp $	*/
+/* $NetBSD: cat.c,v 1.47.20.1 2017/03/25 17:41:48 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.47 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: cat.c,v 1.47.20.1 2017/03/25 17:41:48 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,18 +172,16 @@ cook_buf(FILE *fp)
 	line = gobble = 0;
 	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
 		if (prev == '\n') {
-			if (ch == '\n') {
-				if (sflag) {
-					if (!gobble && nflag && !bflag)
-						(void)fprintf(stdout,
-							"%6d\t\n", ++line);
-					else if (!gobble && putchar(ch) == EOF)
-						break;
+			if (sflag) {
+				if (ch == '\n') {
+					if (gobble)
+						continue;
 					gobble = 1;
-					continue;
+				} else
+					gobble = 0;
 				}
 				if (nflag) {
-					if (!bflag) {
+					if (!bflag || ch != '\n') {
 						(void)fprintf(stdout,
 						    "%6d\t", ++line);
 						if (ferror(stdout))
@@ -195,13 +193,7 @@ cook_buf(FILE *fp)
 							break;
 					}
 				}
-			} else if (nflag) {
-				(void)fprintf(stdout, "%6d\t", ++line);
-				if (ferror(stdout))
-					break;
 			}
-		}
-		gobble = 0;
 		if (ch == '\n') {
 			if (eflag)
 				if (putchar('$') == EOF)
