@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.15 2017/03/25 18:15:31 jdolecek Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.16 2017/03/25 23:58:35 christos Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.15 2017/03/25 18:15:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.16 2017/03/25 23:58:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,8 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 		goto err;
 
 	aprint_normal_dev(sc->sc_dev,
-	    "cmd_per_lun %zu qsize %zu seg_max %zu max_target %zu"
-	    " max_lun %zu\n",
+	    "cmd_per_lun %u qsize %d seg_max %u max_target %hu"
+	    " max_lun %u\n",
 	    cmd_per_lun, qsize, seg_max, max_target, max_lun);
 
 	if (virtio_child_attach_finish(vsc) != 0)
