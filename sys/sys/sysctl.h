@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.222 2017/03/24 21:43:21 pgoyette Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.223 2017/03/25 05:55:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1018,8 +1018,9 @@ struct kinfo_vmentry {
 #define	PROC_CURPROC	(~((u_int)1 << 31))
 
 /*
- * CTL_PROC tree: either corename (string), or a limit
- * (rlimit.<type>.{hard,soft}, int).
+ * CTL_PROC tree: either corename (string), a limit
+ * (rlimit.<type>.{hard,soft}, int), a process stop
+ * condition, or paxflags.
  */
 #define	PROC_PID_CORENAME	1
 #define	PROC_PID_LIMIT		2
