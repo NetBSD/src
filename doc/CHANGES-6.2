@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.279 2017/03/25 17:18:57 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.280 2017/03/25 17:58:44 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -16459,4 +16459,26 @@ sys/arch/i386/i386/trap.c			1.287
 
 	Handle #SS faults on iret properly.
 	[maxv, ticket #1446]
+
+sys/dev/usb/uplcom.c				1.76
+
+	Avoid a kernel page fault when opening the device.
+	[bad, ticket #1444]
+
+sys/dev/usb/uplcom.c				1.75
+
+	Null suspend/resume handler for uplcom(4).
+	[bad, ticket #1445]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.60 via patch
+
+	Use 64bit DMA tag. If not, a lot of bounce buffer is allocated.
+	PR kern/49968.
+	[msaitoh, ticket #1439]
+
+bin/cat/cat.c					1.57
+
+	When invoked with -se, print a '$' on blank lines.
+	PR bin/51250.
+	[sevan, ticket #1387]
 
