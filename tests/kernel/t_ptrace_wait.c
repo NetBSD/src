@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.77 2017/03/03 12:23:26 kre Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.78 2017/03/25 10:07:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.77 2017/03/03 12:23:26 kre Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.78 2017/03/25 10:07:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7422,8 +7422,6 @@ ATF_TC_BODY(syscall1, tc)
 	struct ptrace_siginfo info;
 	memset(&info, 0, sizeof(info));
 
-	atf_tc_expect_fail("PR kern/52012 PR kern/52018 PR kern/52019");
-
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -7504,8 +7502,6 @@ ATF_TC_BODY(syscallemu1, tc)
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
 #endif
-
-	atf_tc_expect_fail("PR kern/52012");
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
