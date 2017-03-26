@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.23 2017/03/26 10:36:10 martin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.24 2017/03/26 12:36:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.23 2017/03/26 10:36:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.24 2017/03/26 12:36:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1466,13 +1466,6 @@ virtio_features(struct virtio_softc *sc)
 {
 	return sc->sc_features;
 }
-
-struct pci_attach_args *
-virtio_pci_attach_args(struct virtio_softc *sc)
-{
-	return &sc->sc_pa;
-}
-
 
 MODULE(MODULE_CLASS_DRIVER, virtio, "pci");
  
