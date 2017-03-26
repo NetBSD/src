@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.125 2017/03/24 01:14:26 macallan Exp $	*/
+/*	$NetBSD: psycho.c,v 1.126 2017/03/26 12:51:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.125 2017/03/24 01:14:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.126 2017/03/26 12:51:42 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -228,9 +228,13 @@ static	int
 psycho_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	char *model = prom_getpropstring(ma->ma_node, "model");
+	char *model;
 	int i;
 
+	if (ma->ma_node == 0)
+		return 0;	/* no OF node, can't be us */
+
+	model = prom_getpropstring(ma->ma_node, "model");
 	/* match on a name of "pci" and a sabre or a psycho */
 	if (strcmp(ma->ma_name, ROM_PCI_NAME) == 0) {
 		for (i=0; psycho_names[i].p_name; i++)
