@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.77 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.77.14.1 2017/03/26 16:05:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,6 +64,8 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+#define	MAXIOMEM	0xffffffff
 
 #if defined(_KERNEL_OPT)
 #include "opt_kernbase.h"
