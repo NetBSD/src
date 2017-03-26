@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.258 2017/03/11 23:59:02 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.259 2017/03/26 17:16:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.258 2017/03/11 23:59:02 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.259 2017/03/26 17:16:03 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.258 2017/03/11 23:59:02 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.259 2017/03/26 17:16:03 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -722,6 +722,7 @@ Main_SetObjdir(const char *fmt, ...)
 			Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
+			cached_realpath(".OBJDIR", NULL); /* purge */
 			rc = TRUE;
 			if (enterFlag && strcmp(objdir, curdir) != 0)
 				enterFlagObj = TRUE;
@@ -1889,7 +1890,23 @@ cached_realpath(const char *pathname, char *resolved)
 	cache->flags = INTERNAL;
 #endif
     }
+    if (resolved == NULL && strcmp(pathname, ".OBJDIR") == 0) {
+	/* purge any relative paths */
+	Hash_Entry *he, *nhe;
+	Hash_Search hs;
 
+	he = Hash_EnumFirst(&cache->context, &hs);
+	while (he) {
+	    nhe = Hash_EnumNext(&hs);
+	    if (he->name[0] != '/') {
+		if (DEBUG(DIR))
+		    fprintf(stderr, "cached_realpath: purging %s\n", he->name);
+		Hash_DeleteEntry(&cache->context, he);
+	    }
+	    he = nhe;
+	}
+	return NULL;
+    }
     if ((rp = Var_Value(pathname, cache, &cp)) != NULL) {
 	/* a hit */
 	strncpy(resolved, rp, MAXPATHLEN);
