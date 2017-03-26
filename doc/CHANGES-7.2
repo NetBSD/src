@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.4 2017/03/25 16:58:10 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.5 2017/03/26 16:11:59 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -219,4 +219,20 @@ sys/arch/i386/i386/trap.c			1.287
 
 	Handle #SS faults on iret properly.
 	[maxv, ticket #1391]
+
+sys/arch/amd64/include/param.h			1.20
+sys/arch/i386/include/param.h			1.80
+sys/arch/x86/x86/bus_space.c			1.39
+
+	Increase max io mem on amd64.
+	[maya, ticket #1375]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.70 via patch
+
+	Try to be smarter in the rx path: if the packet is small enough
+	copy the data to the mbuf's data area instead of allocating a
+	new page from the pool.
+	While there fix a struct xennet_rxreq leak if xennet_checksum_fill()
+	fails with ENOMEM.
+	[bouyer, ticket #1379]
 
