@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.209 2017/03/25 13:08:38 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.210 2017/03/26 10:36:46 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.209 2017/03/25 13:08:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210 2017/03/26 10:36:46 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -934,8 +934,10 @@ device_register(device_t dev, void *aux)
 		ofnode = PCITAG_NODE(pa->pa_tag);
 	} else if (device_is_a(busdev, "virtio")) {
 		struct virtio_softc *va = aux;
+		struct pci_attach_args *pa = virtio_pci_attach_args(va);
 
-		ofnode = PCITAG_NODE(va->sc_pa.pa_tag);
+		if (pa)
+			ofnode = PCITAG_NODE(pa->pa_tag);
 	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
 	    || device_is_a(busdev, "ledma")) {
 		struct sbus_attach_args *sa = aux;
