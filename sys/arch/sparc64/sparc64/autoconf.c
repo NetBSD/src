@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.210 2017/03/26 10:36:46 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.211 2017/03/26 12:59:29 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210 2017/03/26 10:36:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.211 2017/03/26 12:59:29 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.210 2017/03/26 10:36:46 martin Exp $"
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/virtiovar.h>
 #include <dev/ebus/ebusvar.h>
 #include <dev/sbus/sbusvar.h>
 #include <dev/i2c/i2cvar.h>
@@ -932,12 +931,6 @@ device_register(device_t dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		ofnode = PCITAG_NODE(pa->pa_tag);
-	} else if (device_is_a(busdev, "virtio")) {
-		struct virtio_softc *va = aux;
-		struct pci_attach_args *pa = virtio_pci_attach_args(va);
-
-		if (pa)
-			ofnode = PCITAG_NODE(pa->pa_tag);
 	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
 	    || device_is_a(busdev, "ledma")) {
 		struct sbus_attach_args *sa = aux;
@@ -988,6 +981,8 @@ device_register(device_t dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
+	} else if (device_is_a(dev, "ld")) {
+		ofnode = device_ofnode(busdev);
 	} else if (device_is_a(dev, "vdsk")) {
 		struct cbus_attach_args *ca = aux;
 		ofnode = ca->ca_node;
