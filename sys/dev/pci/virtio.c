@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.24 2017/03/26 12:36:43 martin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.25 2017/03/26 13:51:45 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.24 2017/03/26 12:36:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.25 2017/03/26 13:51:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,8 +844,6 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
 	if (vq->vq_indirect != NULL) {
 		struct vring_desc *vd;
 
-printf("vq_size: %d, vq_maxnsegs: %d\n", vq_size, vq->vq_maxnsegs);
-
 		for (i = 0; i < vq_size; i++) {
 			vd = vq->vq_indirect;
 			vd += vq->vq_maxnsegs * i;
@@ -917,8 +915,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	else
 		allocsize3 = 0;
 	allocsize = allocsize1 + allocsize2 + allocsize3;
-printf("virtio: allocsize1: %d, allocsize2: %d, allocsize3: %d\n",
-   allocsize1, allocsize2, allocsize3);
 
 	/* alloc and map the memory */
 	r = bus_dmamem_alloc(sc->sc_dmat, allocsize, VIRTIO_PAGE_SIZE, 0,
@@ -973,8 +969,6 @@ printf("virtio: allocsize1: %d, allocsize2: %d, allocsize3: %d\n",
 		vq->vq_indirectoffset = allocsize1 + allocsize2;
 		vq->vq_indirect = (void*)(((char*)vq->vq_desc)
 					  + vq->vq_indirectoffset);
-printf("virtio: vq_indirectoffset: %d, vq_indirect: %p\n",
-    vq->vq_indirectoffset, vq->vq_indirect);
 	}
 	vq->vq_bytesize = allocsize;
 	vq->vq_maxsegsize = maxsegsize;
