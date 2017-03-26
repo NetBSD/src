@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.18.14.1 2017/03/26 16:05:40 snj Exp $	*/
 
 #ifdef __x86_64__
 
@@ -26,6 +26,8 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
+
+#define	MAXIOMEM	0xffffffffffff
 
 /*
  * XXXfvdl change this (after bootstrap) to take # of bits from
