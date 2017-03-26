@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.25 2017/03/26 13:51:45 martin Exp $	*/
+/*	$NetBSD: virtio.c,v 1.26 2017/03/26 16:53:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.25 2017/03/26 13:51:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.26 2017/03/26 16:53:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ nbo_bus_space_write_2(bus_space_tag_t space, bus_space_handle_t handle,
 
 static void
 nbo_bus_space_write_4(bus_space_tag_t space, bus_space_handle_t handle,
-	bus_size_t offset, uint16_t value)
+	bus_size_t offset, uint32_t value)
 {
 	bus_space_write_4(space, handle, offset, htole32(value));
 }
