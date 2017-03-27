@@ -53,6 +53,7 @@
 #ifndef KEYRING_H_
 #define KEYRING_H_
 
+#include <stdio.h>
 #include "packet.h"
 #include "packet-parse.h"
 #include "mj.h"
@@ -91,7 +92,7 @@ const pgp_pubkey_t *pgp_get_pubkey(const pgp_key_t *);
 unsigned   pgp_is_key_secret(const pgp_key_t *);
 const pgp_seckey_t *pgp_get_seckey(const pgp_key_t *);
 pgp_seckey_t *pgp_get_writable_seckey(pgp_key_t *);
-pgp_seckey_t *pgp_decrypt_seckey(const pgp_key_t *, void *);
+pgp_seckey_t *pgp_decrypt_seckey(const pgp_key_t *, FILE *);
 
 unsigned   pgp_keyring_fileread(pgp_keyring_t *, const unsigned,
 					const char *);
