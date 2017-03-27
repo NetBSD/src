@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.54 2017/03/27 21:06:50 khorben Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.55 2017/03/27 21:19:12 khorben Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -226,7 +226,7 @@ typedef struct {
 	pgp_seckey_t		*seckey;
 } decrypt_t;
 
-static pgp_cb_ret_t 
+static pgp_cb_ret_t
 decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 {
 	const pgp_contents_t	*content = &pkt->u;
@@ -294,6 +294,20 @@ decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 	return PGP_RELEASE_MEMORY;
 }
 
+static pgp_cb_ret_t
+decrypt_cb_empty(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
+{
+	const pgp_contents_t	*content = &pkt->u;
+
+	switch (pkt->tag) {
+	case PGP_GET_PASSPHRASE:
+		*content->skey_passphrase.passphrase = netpgp_strdup("");
+		return PGP_KEEP_MEMORY;
+	default:
+		return decrypt_cb(pkt, cbinfo);
+	}
+}
+
 /**
 \ingroup Core_Keys
 \brief Decrypts secret key from given keydata with given passphrase
@@ -308,8 +322,18 @@ pgp_decrypt_seckey(const pgp_key_t *key, FILE *passfp)
 	const int	 printerrors = 1;
 	decrypt_t	 decrypt;
 
+	/* XXX first try with an empty passphrase */
 	(void) memset(&decrypt, 0x0, sizeof(decrypt));
 	decrypt.key = key;
+	stream = pgp_new(sizeof(*stream));
+	pgp_keydata_reader_set(stream, key);
+	pgp_set_callback(stream, decrypt_cb_empty, &decrypt);
+	stream->readinfo.accumulate = 1;
+	pgp_parse(stream, !printerrors);
+	if (decrypt.seckey != NULL) {
+		return decrypt.seckey;
+	}
+	/* ask for a passphrase */
 	decrypt.passfp = passfp;
 	stream = pgp_new(sizeof(*stream));
 	pgp_keydata_reader_set(stream, key);
