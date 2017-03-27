@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.53 2017/03/27 21:00:43 khorben Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.54 2017/03/27 21:06:50 khorben Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -302,7 +302,7 @@ decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 \return secret key
 */
 pgp_seckey_t *
-pgp_decrypt_seckey(const pgp_key_t *key, void *passfp)
+pgp_decrypt_seckey(const pgp_key_t *key, FILE *passfp)
 {
 	pgp_stream_t	*stream;
 	const int	 printerrors = 1;
