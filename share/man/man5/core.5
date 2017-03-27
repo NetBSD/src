@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.29 2017/03/26 23:49:28 kamil Exp $
+.\"	$NetBSD: core.5,v 1.30 2017/03/27 07:45:37 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,7 +139,8 @@ information about the process.
 The first note in the note section has a note name of
 .Dq NetBSD-CORE
 and a note type of
-ELF_NOTE_NETBSD_CORE_PROCINFO (1), and contains the following
+.Dv ELF_NOTE_NETBSD_CORE_PROCINFO ( 1 ) ,
+and contains the following
 structure:
 .Bd -literal
 struct netbsd_elfcore_procinfo {
@@ -233,7 +234,7 @@ LWP target of killing signal.
 The second note with name
 .Dq NetBSD-CORE
 is a note type of
-ELF_NOTE_NETBSD_CORE_AUXV (2),
+.Dv ELF_NOTE_NETBSD_CORE_AUXV ( 2 ) ,
 and contains an array of AuxInfo structures.
 .Pp
 The note section also contains additional notes for each
