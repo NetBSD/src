@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.13 2017/03/23 14:52:36 bouyer Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.14 2017/03/27 18:39:55 bouyer Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.13 2017/03/23 14:52:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.14 2017/03/27 18:39:55 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -392,7 +392,7 @@ xenbus_dev_close(void *v)
 	} */ *ap = v;
 	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
-	struct xenbus_dev_data *u = kfs->kfs_v;
+	struct xenbus_dev_data *u;
 	struct xenbus_dev_lwp *xlwp;
 	struct xenbus_dev_transaction *trans;
 
