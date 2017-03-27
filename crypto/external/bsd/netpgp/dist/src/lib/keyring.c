@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.52 2017/03/27 20:55:13 khorben Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.53 2017/03/27 21:00:43 khorben Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -244,7 +244,9 @@ decrypt_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 		break;
 
 	case PGP_GET_PASSPHRASE:
-		(void) pgp_getpassphrase(decrypt->passfp, pass, sizeof(pass));
+		if (pgp_getpassphrase(decrypt->passfp, pass, sizeof(pass)) == 0) {
+			pass[0] = '\0';
+		}
 		*content->skey_passphrase.passphrase = netpgp_strdup(pass);
 		pgp_forget(pass, sizeof(pass));
 		return PGP_KEEP_MEMORY;
