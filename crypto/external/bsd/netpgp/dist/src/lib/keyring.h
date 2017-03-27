@@ -100,7 +100,7 @@ int pgp_keyring_list(pgp_io_t *, const pgp_keyring_t *, const int);
 int pgp_keyring_json(pgp_io_t *, const pgp_keyring_t *, mj_t *, const int);
 
 void pgp_set_seckey(pgp_contents_t *, const pgp_key_t *);
-void pgp_forget(void *, unsigned);
+void pgp_forget(void *, size_t);
 
 const uint8_t *pgp_get_key_id(const pgp_key_t *);
 unsigned pgp_get_userid_count(const pgp_key_t *);
