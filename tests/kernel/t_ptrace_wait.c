@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.78 2017/03/25 10:07:55 skrll Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.79 2017/03/28 01:00:33 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.78 2017/03/25 10:07:55 skrll Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.79 2017/03/28 01:00:33 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6035,7 +6035,7 @@ ATF_TC_BODY(signal6, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 
-	atf_tc_expect_fail("PR kern/51918");
+	atf_tc_expect_timeout("PR kern/51918");
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
