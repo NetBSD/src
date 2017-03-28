@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.169 2017/03/28 10:28:59 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.170 2017/03/28 10:30:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.169 2017/03/28 10:28:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.170 2017/03/28 10:30:27 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3875,14 +3875,16 @@ pci_conf_print_type0(
 #endif
 	}
 
-	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
+	printf("    Cardbus CIS Pointer: 0x%08x\n",
+	    regs[o2i(PCI_CARDBUS_CIS_REG)]);
 
 	rval = regs[o2i(PCI_SUBSYS_ID_REG)];
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
 	/* XXX */
-	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
+	printf("    Expansion ROM Base Address: 0x%08x\n",
+	    regs[o2i(PCI_MAPREG_ROM)]);
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
@@ -3893,8 +3895,8 @@ pci_conf_print_type0(
 	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
 
 	rval = regs[o2i(PCI_INTERRUPT_REG)];
-	printf("    Maximum Latency: 0x%02x\n", (rval >> 24) & 0xff);
-	printf("    Minimum Grant: 0x%02x\n", (rval >> 16) & 0xff);
+	printf("    Maximum Latency: 0x%02x\n", PCI_MAX_LAT(rval));
+	printf("    Minimum Grant: 0x%02x\n", PCI_MIN_GNT(rval));
 	printf("    Interrupt pin: 0x%02x ", PCI_INTERRUPT_PIN(rval));
 	switch (PCI_INTERRUPT_PIN(rval)) {
 	case PCI_INTERRUPT_PIN_NONE:
@@ -4177,7 +4179,7 @@ pci_conf_print_type2(
 		break;
 	}
 	printf("\n");
-	rval = (regs[o2i(0x3c)] >> 16) & 0xffff;
+	rval = (regs[o2i(PCI_BRIDGE_CONTROL_REG)] >> 16) & 0xffff;
 	printf("    Bridge control register: 0x%04x\n", rval);
 	onoff("Parity error response", rval, __BIT(0));
 	onoff("SERR# enable", rval, __BIT(1));
