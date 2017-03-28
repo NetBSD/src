@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.122 2017/03/14 08:20:11 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.123 2017/03/28 10:23:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -653,7 +653,7 @@ typedef u_int8_t pci_revision_t;
 					 * (most significant bits) offset
 					 */
 #define	PCI_MSI_MDATA		0x8	/* Message Data Register offset */
-#define	PCI_MSI_MDATA64		0xC	/* 64-bit Message Data Register
+#define	PCI_MSI_MDATA64		0xc	/* 64-bit Message Data Register
 					 * offset
 					 */
 #define	PCI_MSI_MASK		0x10	/* Vector Mask register */
@@ -1259,7 +1259,7 @@ typedef u_int8_t pci_intr_line_t;
 #define	  PCI_BRIDGE_PREFETCHMEM_64BITS(reg)	((reg) & 0xf)
 
 #define PCI_BRIDGE_PREFETCHBASE32_REG	0x28
-#define PCI_BRIDGE_PREFETCHLIMIT32_REG	0x2C
+#define PCI_BRIDGE_PREFETCHLIMIT32_REG	0x2c
 
 #define PCI_BRIDGE_IOHIGH_REG		0x30
 #define	  PCI_BRIDGE_IOHIGH_BASE_SHIFT		0
@@ -1267,7 +1267,7 @@ typedef u_int8_t pci_intr_line_t;
 #define	  PCI_BRIDGE_IOHIGH_BASE_MASK		0xffff
 #define	  PCI_BRIDGE_IOHIGH_LIMIT_MASK		0xffff
 
-#define PCI_BRIDGE_CONTROL_REG		0x3C
+#define PCI_BRIDGE_CONTROL_REG		0x3c
 #define	  PCI_BRIDGE_CONTROL_SHIFT		16
 #define	  PCI_BRIDGE_CONTROL_MASK		0xffff
 #define   PCI_BRIDGE_CONTROL_PERE		(1 <<  0)
