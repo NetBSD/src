@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.33 2017/03/28 04:09:52 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.34 2017/03/28 04:10:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.33 2017/03/28 04:09:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.34 2017/03/28 04:10:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -190,6 +190,7 @@ struct vioif_softc {
 	uint8_t			sc_mac[ETHER_ADDR_LEN];
 	struct ethercom		sc_ethercom;
 	short			sc_deferred_init_done;
+	bool			sc_link_active;
 
 	/* bus_dmamem */
 	bus_dma_segment_t	sc_hdr_segs[1];
@@ -218,6 +219,7 @@ struct vioif_softc {
 	bus_dmamap_t		sc_ctrl_tbl_mc_dmamap;
 
 	void			*sc_rx_softint;
+	void			*sc_ctl_softint;
 
 	enum {
 		FREE, INUSE, DONE
@@ -269,12 +271,16 @@ static int	vioif_tx_vq_done_locked(struct virtqueue *);
 static void	vioif_tx_drain(struct vioif_softc *);
 
 /* other control */
+static bool	vioif_is_link_up(struct vioif_softc *);
+static void	vioif_update_link_status(struct vioif_softc *);
 static int	vioif_ctrl_rx(struct vioif_softc *, int, bool);
 static int	vioif_set_promisc(struct vioif_softc *, bool);
 static int	vioif_set_allmulti(struct vioif_softc *, bool);
 static int	vioif_set_rx_filter(struct vioif_softc *);
 static int	vioif_rx_filter(struct vioif_softc *);
 static int	vioif_ctrl_vq_done(struct virtqueue *);
+static int	vioif_config_change(struct virtio_softc *);
+static void	vioif_ctl_softint(void *);
 
 CFATTACH_DECL_NEW(vioif, sizeof(struct vioif_softc),
 		  vioif_match, vioif_attach, NULL, NULL);
@@ -524,6 +530,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
+	sc->sc_link_active = false;
 
 	req_flags = 0;
 
@@ -536,7 +543,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	req_flags |= VIRTIO_F_PCI_INTR_MSIX;
 
 	virtio_child_attach_start(vsc, self, IPL_NET, sc->sc_vq,
-	    NULL, virtio_vq_intr, req_flags,
+	    vioif_config_change, virtio_vq_intr, req_flags,
 	    (VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS | VIRTIO_NET_F_CTRL_VQ |
 	     VIRTIO_NET_F_CTRL_RX | VIRTIO_F_NOTIFY_ON_EMPTY),
 	    VIRTIO_NET_FLAG_BITS);
@@ -648,7 +655,13 @@ skip:
 #endif
 	sc->sc_rx_softint = softint_establish(flags, vioif_rx_softint, sc);
 	if (sc->sc_rx_softint == NULL) {
-		aprint_error_dev(self, "cannot establish softint\n");
+		aprint_error_dev(self, "cannot establish rx softint\n");
+		goto err;
+	}
+
+	sc->sc_ctl_softint = softint_establish(flags, vioif_ctl_softint, sc);
+	if (sc->sc_ctl_softint == NULL) {
+		aprint_error_dev(self, "cannot establish ctl softint\n");
 		goto err;
 	}
 
@@ -741,6 +754,7 @@ vioif_init(struct ifnet *ifp)
 
 	vioif_populate_rx_mbufs(sc);
 
+	vioif_update_link_status(sc);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	vioif_rx_filter(sc);
@@ -772,6 +786,7 @@ vioif_stop(struct ifnet *ifp, int disable)
 	vioif_rx_deq(sc);
 	vioif_tx_drain(sc);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_link_active = false;
 
 	if (disable)
 		vioif_rx_drain(sc);
@@ -788,7 +803,8 @@ vioif_start(struct ifnet *ifp)
 
 	VIOIF_TX_LOCK(sc);
 
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING ||
+	    !sc->sc_link_active)
 		goto out;
 
 	if (sc->sc_stopping)
@@ -1501,6 +1517,82 @@ set:
 	}
 
 	return r;
+}
+
+static bool
+vioif_is_link_up(struct vioif_softc *sc)
+{
+	struct virtio_softc *vsc = sc->sc_virtio;
+	uint16_t status;
+
+	if (virtio_features(vsc) & VIRTIO_NET_F_STATUS)
+		status = virtio_read_device_config_2(vsc,
+		    VIRTIO_NET_CONFIG_STATUS);
+	else
+		status = VIRTIO_NET_S_LINK_UP;
+
+	return ((status & VIRTIO_NET_S_LINK_UP) != 0);
+}
+
+/* change link status */
+static void
+vioif_update_link_status(struct vioif_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	bool active, changed;
+	int link;
+
+	active = vioif_is_link_up(sc);
+	changed = false;
+
+	VIOIF_TX_LOCK(sc);
+	if (active) {
+		if (!sc->sc_link_active)
+			changed = true;
+
+		link = LINK_STATE_UP;
+		sc->sc_link_active = true;
+	} else {
+		if (sc->sc_link_active)
+			changed = true;
+
+		link = LINK_STATE_DOWN;
+		sc->sc_link_active = false;
+	}
+	VIOIF_TX_UNLOCK(sc);
+
+	if (changed)
+		if_link_state_change(ifp, link);
+}
+
+static int
+vioif_config_change(struct virtio_softc *vsc)
+{
+	struct vioif_softc *sc = device_private(virtio_child(vsc));
+
+#ifdef VIOIF_SOFTINT_INTR
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+#endif
+
+#ifdef VIOIF_SOFTINT_INTR
+	KASSERT(!cpu_intr_p());
+	vioif_update_link_status(sc);
+	vioif_start(ifp);
+#else
+	softint_schedule(sc->sc_ctl_softint);
+#endif
+
+	return 0;
+}
+
+static void
+vioif_ctl_softint(void *arg)
+{
+	struct vioif_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	vioif_update_link_status(sc);
+	vioif_start(ifp);
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
