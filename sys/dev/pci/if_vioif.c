@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.32 2017/03/25 18:02:06 jdolecek Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.33 2017/03/28 04:09:52 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.32 2017/03/25 18:02:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.33 2017/03/28 04:09:52 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -269,7 +269,6 @@ static int	vioif_tx_vq_done_locked(struct virtqueue *);
 static void	vioif_tx_drain(struct vioif_softc *);
 
 /* other control */
-static int	vioif_updown(struct vioif_softc *, bool);
 static int	vioif_ctrl_rx(struct vioif_softc *, int, bool);
 static int	vioif_set_promisc(struct vioif_softc *, bool);
 static int	vioif_set_allmulti(struct vioif_softc *, bool);
@@ -719,8 +718,17 @@ static int
 vioif_init(struct ifnet *ifp)
 {
 	struct vioif_softc *sc = ifp->if_softc;
+	struct virtio_softc *vsc = sc->sc_virtio;
 
 	vioif_stop(ifp, 0);
+
+	virtio_reinit_start(vsc);
+	virtio_negotiate_features(vsc, virtio_features(vsc));
+	virtio_start_vq_intr(vsc, &sc->sc_vq[VQ_RX]);
+	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQ_TX]);
+	if (sc->sc_has_ctrl)
+		virtio_start_vq_intr(vsc, &sc->sc_vq[VQ_CTRL]);
+	virtio_reinit_end(vsc);
 
 	if (!sc->sc_deferred_init_done) {
 		sc->sc_deferred_init_done = 1;
@@ -733,7 +741,6 @@ vioif_init(struct ifnet *ifp)
 
 	vioif_populate_rx_mbufs(sc);
 
-	vioif_updown(sc, true);
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	vioif_rx_filter(sc);
@@ -754,6 +761,12 @@ vioif_stop(struct ifnet *ifp, int disable)
 	VIOIF_RX_UNLOCK(sc);
 	VIOIF_TX_UNLOCK(sc);
 
+	/* disable interrupts */
+	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQ_RX]);
+	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQ_TX]);
+	if (sc->sc_has_ctrl)
+		virtio_stop_vq_intr(vsc, &sc->sc_vq[VQ_CTRL]);
+
 	/* only way to stop I/O and DMA is resetting... */
 	virtio_reset(vsc);
 	vioif_rx_deq(sc);
@@ -762,15 +775,6 @@ vioif_stop(struct ifnet *ifp, int disable)
 
 	if (disable)
 		vioif_rx_drain(sc);
-
-	virtio_reinit_start(vsc);
-	virtio_negotiate_features(vsc, virtio_features(vsc));
-	virtio_start_vq_intr(vsc, &sc->sc_vq[VQ_RX]);
-	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQ_TX]);
-	if (sc->sc_has_ctrl)
-		virtio_start_vq_intr(vsc, &sc->sc_vq[VQ_CTRL]);
-	virtio_reinit_end(vsc);
-	vioif_updown(sc, false);
 }
 
 static void
@@ -1497,20 +1501,6 @@ set:
 	}
 
 	return r;
-}
-
-/* change link status */
-static int
-vioif_updown(struct vioif_softc *sc, bool isup)
-{
-	struct virtio_softc *vsc = sc->sc_virtio;
-
-	if (!(virtio_features(vsc) & VIRTIO_NET_F_STATUS))
-		return ENODEV;
-	virtio_write_device_config_1(vsc,
-				     VIRTIO_NET_CONFIG_STATUS,
-				     isup?VIRTIO_NET_S_LINK_UP:0);
-	return 0;
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
