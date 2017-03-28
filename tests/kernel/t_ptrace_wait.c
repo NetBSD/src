@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.83 2017/03/28 12:39:07 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.84 2017/03/28 13:16:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.83 2017/03/28 12:39:07 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.84 2017/03/28 13:16:30 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1360,6 +1360,10 @@ ATF_TC_BODY(fork1, tc)
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
+        printf("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
+               "pe_report_event=PTRACE_FORK, state.pe_other_pid=child2) and "
+               "for child2 (TRAP_CHLD, pe_report_event=PTRACE_FORK, "
+                "state.pe_other_pid=child)\n", child);
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
@@ -5328,6 +5332,10 @@ ATF_TC_BODY(siginfo5, tc)
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
+        printf("We expect two SIGTRAP events, for child %d (TRAP_CHLD, "
+               "pe_report_event=PTRACE_FORK, state.pe_other_pid=child2) and "
+               "for child2 (TRAP_CHLD, pe_report_event=PTRACE_FORK, "
+                "state.pe_other_pid=child)\n", child);
 	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	printf("Before calling %s() for the child %d\n", TWAIT_FNAME, child);
