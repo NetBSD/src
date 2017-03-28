@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.26 2017/03/26 16:53:36 jdolecek Exp $	*/
+/*	$NetBSD: virtio.c,v 1.27 2017/03/28 04:10:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.26 2017/03/26 16:53:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.27 2017/03/28 04:10:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -720,10 +720,11 @@ static int
 virtio_msix_config_intr(void *arg)
 {
 	struct virtio_softc *sc = arg;
+	int r = 0;
 
-	/* TODO: handle events */
-	aprint_debug_dev(sc->sc_dev, "%s\n", __func__);
-	return 1;
+	if (sc->sc_config_change != NULL)
+		r = (sc->sc_config_change)(sc);
+	return r;
 }
 
 static void
