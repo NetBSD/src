@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.34 2014/09/05 09:21:54 matt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.35 2017/03/28 18:44:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.34 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.35 2017/03/28 18:44:04 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,12 +166,15 @@ compat_20_netbsd32_statfs(struct lwp *l, const struct compat_20_netbsd32_statfs_
 	if (error != 0)
 		return (error);
 	mp = vp->v_mount;
-	sb = &mp->mnt_stat;
 	vrele(vp);
+	sb = STATVFSBUF_GET();
 	if ((error = dostatvfs(mp, sb, l, 0, 0)) != 0)
-		return (error);
+		goto out;
 	compat_20_netbsd32_from_statvfs(sb, &s32);
-	return copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
+	error = copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
+out:
+	STATVFSBUF_PUT(sb);
+	return error;
 }
 
 int
@@ -191,12 +194,13 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = fp->f_vnode->v_mount;
-	sb = &mp->mnt_stat;
+	sb = STATVFSBUF_GET();
 	if ((error = dostatvfs(mp, sb, l, 0, 0)) != 0)
 		goto out;
 	compat_20_netbsd32_from_statvfs(sb, &s32);
 	error = copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
  out:
+	STATVFSBUF_PUT(sb);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
