@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.41 2017/01/24 09:05:28 ozaki-r Exp $
+ *	$Id: i4b_ipr.c,v 1.42 2017/03/28 08:47:19 ozaki-r Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.41 2017/01/24 09:05:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.42 2017/03/28 08:47:19 ozaki-r Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -1152,11 +1152,9 @@ ipr_tx_queue_empty(void *softc)
 		}
 		else
 		{
-			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
-
 			sc->sc_if.if_obytes += m->m_pkthdr.len;
-
 			sc->sc_if.if_opackets++;
+			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 		}
 	}
 
