@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.82 2017/03/28 03:19:20 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.83 2017/03/28 12:39:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.82 2017/03/28 03:19:20 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.83 2017/03/28 12:39:07 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4407,6 +4407,11 @@ ATF_TC_BODY(step1, tc)
 #endif
 	int happy;
 
+#if defined(__arm__)
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/52119");
+#endif
+
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -4471,6 +4476,11 @@ ATF_TC_BODY(step2, tc)
 #endif
 	int happy;
 	int N = 2;
+
+#if defined(__arm__)
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/52119");
+#endif
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -4540,6 +4550,11 @@ ATF_TC_BODY(step3, tc)
 	int happy;
 	int N = 3;
 
+#if defined(__arm__)
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/52119");
+#endif
+
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -4607,6 +4622,11 @@ ATF_TC_BODY(step4, tc)
 #endif
 	int happy;
 	int N = 4;
+
+#if defined(__arm__)
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/52119");
+#endif
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -5414,6 +5434,11 @@ ATF_TC_BODY(siginfo6, tc)
 	int happy;
 	struct ptrace_siginfo info;
 
+#if defined(__arm__)
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/52119");
+#endif
+
 	memset(&info, 0, sizeof(info));
 
 	printf("Before forking process PID=%d\n", getpid());
@@ -5899,7 +5924,12 @@ ATF_TC_BODY(signal4, tc)
 	sigset_t intmask;
 	int happy;
 
-	atf_tc_expect_fail("PR kern/51918");
+#if defined(__arm__)
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/51918 PR kern/52119");
+#else
+	atf_tc_expect_fail("PR kern/52119");
+#endif
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
