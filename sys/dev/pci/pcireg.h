@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.124 2017/03/28 10:25:11 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.125 2017/03/28 10:47:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -550,8 +550,8 @@ typedef u_int8_t pci_revision_t;
  */
 
 /* Power Management Capability Register */
-#define PCI_PMCR_SHIFT		16
 #define PCI_PMCR		0x02
+#define PCI_PMCR_SHIFT		16
 #define PCI_PMCR_VERSION_MASK	0x0007
 #define PCI_PMCR_VERSION_10	0x0001
 #define PCI_PMCR_VERSION_11	0x0002
@@ -847,8 +847,8 @@ typedef u_int8_t pci_revision_t;
  * Capability ID: 0x09
  * Vendor Specific
  */
+#define PCI_VENDORSPECIFIC	0x02
 #define PCI_VENDORSPECIFIC_SHIFT	16
-#define PCI_VENDORSPECIFIC		0x02
 
 /*
  * Capability ID: 0x0a
@@ -1394,7 +1394,7 @@ struct pci_rom {
  * PCI-X 2.0/ PCI-express Extended Capability List
  */
 
-#define	PCI_EXTCAPLIST_BASE		0x100
+#define	PCI_EXTCAPLIST_BASE	0x100
 
 #define	PCI_EXTCAPLIST_CAP(ecr)		((ecr) & 0xffff)
 #define	PCI_EXTCAPLIST_VERSION(ecr)	(((ecr) >> 16) & 0xf)
@@ -1753,9 +1753,9 @@ struct pci_rom {
 #define	  PCI_SRIOV_VF_MIG_STA_OFFSET	__BITS(31, 3)
 #define	  PCI_SRIOV_VF_MIG_STA_OFFSET_S	3
 #define	  PCI_SRIOV_VF_MIG_STA_OFFSET_M	0x1fffffff
-#define	  PCI_SRIOV_VF_MIG_STA_BIR		__BITS(2, 0)
-#define	  PCI_SRIOV_VF_MIG_STA_BIR_S		0
-#define	  PCI_SRIOV_VF_MIG_STA_BIR_M		0x7
+#define	  PCI_SRIOV_VF_MIG_STA_BIR	__BITS(2, 0)
+#define	  PCI_SRIOV_VF_MIG_STA_BIR_S	0
+#define	  PCI_SRIOV_VF_MIG_STA_BIR_M	0x7
 
 /*
  * Extended capability ID: 0x0011
