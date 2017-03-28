@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.79 2017/03/28 01:00:33 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.80 2017/03/28 01:40:39 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.79 2017/03/28 01:00:33 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.80 2017/03/28 01:40:39 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6014,6 +6014,7 @@ ATF_TC_BODY(signal5, tc)
 ATF_TC(signal6);
 ATF_TC_HEAD(signal6, tc)
 {
+	atf_tc_set_md_var(tc, "timeout", "5");
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that masking SIGTRAP in tracee does not stop tracer from "
 	    "catching PTRACE_FORK breakpoint");
