@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.168 2017/03/17 11:20:16 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.169 2017/03/28 10:28:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.168 2017/03/17 11:20:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.169 2017/03/28 10:28:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2239,7 +2239,7 @@ pci_conf_print_sata_cap(const pcireg_t *regs, int capoff)
 
 	printf("\n  Serial ATA Capability Register\n");
 
-	reg = regs[o2i(capoff + PCI_MSIX_CTL)];
+	reg = regs[o2i(capoff + PCI_SATA_REV)];
 	printf("    Revision register: 0x%04x\n", (reg >> 16) & 0xff);
 	printf("      Revision: %u.%u\n",
 	    (unsigned int)__SHIFTOUT(reg, PCI_SATA_REV_MAJOR),
