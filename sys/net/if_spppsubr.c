@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.167 2017/01/16 15:44:46 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.168 2017/03/28 07:32:16 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.167 2017/01/16 15:44:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.168 2017/03/28 07:32:16 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5080,7 +5080,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		if_start_lock(ifp);
 		sppp_lock_enter(sp);
 	}
-	ifp->if_obytes += m->m_pkthdr.len + 3;
+	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*
