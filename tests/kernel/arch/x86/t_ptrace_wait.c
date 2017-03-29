@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.3 2017/02/25 18:18:29 christos Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.4 2017/03/29 23:50:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.3 2017/02/25 18:18:29 christos Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.4 2017/03/29 23:50:09 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,8 +85,6 @@ union u {
 	} bits;
 };
 
-
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_print);
 ATF_TC_HEAD(dbregs_print, tc)
 {
@@ -143,9 +141,111 @@ ATF_TC_BODY(dbregs_print, tc)
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
-#endif
 
-#if defined(HAVE_DBREGS)
+
+enum dbreg_preserve_mode {
+	dbreg_preserve_mode_none,
+	dbreg_preserve_mode_yield,
+	dbreg_preserve_mode_continued
+};
+
+static void
+dbreg_preserve(int reg, enum dbreg_preserve_mode mode)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+#if defined(TWAIT_HAVE_STATUS)
+	int status;
+#endif
+	struct dbreg r1;
+	struct dbreg r2;
+	size_t i;
+	int watchme;
+
+	printf("Before forking process PID=%d\n", getpid());
+	ATF_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		printf("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		if (mode == dbreg_preserve_mode_continued) {
+			printf("Before raising %s from child\n",
+			       strsignal(sigval));
+			FORKEE_ASSERT(raise(sigval) == 0);
+		}
+
+		printf("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	printf("Call GETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
+
+	printf("State of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
+
+	r1.dr[reg] = (long)(intptr_t)&watchme;
+	printf("Set DR0 (r1.dr[%d]) to new value %" PRIxREGISTER "\n",
+	    reg, r1.dr[reg]);
+
+	printf("New state of the debug registers (r1):\n");
+	for (i = 0; i < __arraycount(r1.dr); i++)
+		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
+
+	printf("Call SETDBREGS for the child process (r1)\n");
+	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
+
+	switch (mode) {
+	case dbreg_preserve_mode_none:
+		break;
+	case dbreg_preserve_mode_yield:
+		printf("Yields a processor voluntarily and gives other "
+		       "threads a chance to run without waiting for an "
+		       "involuntary preemptive switch\n");
+		sched_yield();
+		break;
+	case dbreg_preserve_mode_continued:
+		printf("Call CONTINUE for the child process\n");
+	        ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+		printf("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+		validate_status_stopped(status, sigval);
+		break;
+	}
+
+	printf("Call GETDBREGS for the child process (r2)\n");
+	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
+
+	printf("Assert that (r1) and (r2) are the same\n");
+	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
+
+	printf("Before resuming the child process where it left off and "
+	    "without signal to be sent\n");
+	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_exited(status, exitval);
+
+	printf("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+
 ATF_TC(dbregs_preserve_dr0);
 ATF_TC_HEAD(dbregs_preserve_dr0, tc)
 {
@@ -155,75 +255,9 @@ ATF_TC_HEAD(dbregs_preserve_dr0, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr0, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dr[0]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[0]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(0, dbreg_preserve_mode_none);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr1);
 ATF_TC_HEAD(dbregs_preserve_dr1, tc)
 {
@@ -233,75 +267,9 @@ ATF_TC_HEAD(dbregs_preserve_dr1, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr1, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dr[1]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[1]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(1, dbreg_preserve_mode_none);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr2);
 ATF_TC_HEAD(dbregs_preserve_dr2, tc)
 {
@@ -311,75 +279,9 @@ ATF_TC_HEAD(dbregs_preserve_dr2, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr2, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dr[2]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[2]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(2, dbreg_preserve_mode_none);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr3);
 ATF_TC_HEAD(dbregs_preserve_dr3, tc)
 {
@@ -389,75 +291,9 @@ ATF_TC_HEAD(dbregs_preserve_dr3, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr3, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dr[3]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[3]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(3, dbreg_preserve_mode_none);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr0_yield);
 ATF_TC_HEAD(dbregs_preserve_dr0_yield, tc)
 {
@@ -468,80 +304,9 @@ ATF_TC_HEAD(dbregs_preserve_dr0_yield, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr0_yield, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dr[0]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[0]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Yields a processor voluntarily and gives other threads a "
-	    "chance to run without waiting for an involuntary preemptive "
-	    "switch\n");
-	sched_yield();
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(0, dbreg_preserve_mode_yield);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr1_yield);
 ATF_TC_HEAD(dbregs_preserve_dr1_yield, tc)
 {
@@ -552,80 +317,9 @@ ATF_TC_HEAD(dbregs_preserve_dr1_yield, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr1_yield, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dr[1]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[1]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Yields a processor voluntarily and gives other threads a "
-	    "chance to run without waiting for an involuntary preemptive "
-	    "switch\n");
-	sched_yield();
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(0, dbreg_preserve_mode_yield);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr2_yield);
 ATF_TC_HEAD(dbregs_preserve_dr2_yield, tc)
 {
@@ -636,80 +330,10 @@ ATF_TC_HEAD(dbregs_preserve_dr2_yield, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr2_yield, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dr[2]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[2]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Yields a processor voluntarily and gives other threads a "
-	    "chance to run without waiting for an involuntary preemptive "
-	    "switch\n");
-	sched_yield();
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(0, dbreg_preserve_mode_yield);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
+
 ATF_TC(dbregs_preserve_dr3_yield);
 ATF_TC_HEAD(dbregs_preserve_dr3_yield, tc)
 {
@@ -720,80 +344,9 @@ ATF_TC_HEAD(dbregs_preserve_dr3_yield, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr3_yield, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dr[3]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[3]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Yields a processor voluntarily and gives other threads a "
-	    "chance to run without waiting for an involuntary preemptive "
-	    "switch\n");
-	sched_yield();
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(3, dbreg_preserve_mode_yield);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr0_continued);
 ATF_TC_HEAD(dbregs_preserve_dr0_continued, tc)
 {
@@ -804,86 +357,9 @@ ATF_TC_HEAD(dbregs_preserve_dr0_continued, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr0_continued, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[0] = (long)(intptr_t)&watchme;
-	printf("Set DR0 (r1.dr[0]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[0]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call CONTINUE for the child process\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(0, dbreg_preserve_mode_continued);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr1_continued);
 ATF_TC_HEAD(dbregs_preserve_dr1_continued, tc)
 {
@@ -894,86 +370,9 @@ ATF_TC_HEAD(dbregs_preserve_dr1_continued, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr1_continued, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[1] = (long)(intptr_t)&watchme;
-	printf("Set DR1 (r1.dr[1]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[1]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call CONTINUE for the child process\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(1, dbreg_preserve_mode_continued);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr2_continued);
 ATF_TC_HEAD(dbregs_preserve_dr2_continued, tc)
 {
@@ -984,86 +383,9 @@ ATF_TC_HEAD(dbregs_preserve_dr2_continued, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr2_continued, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[2] = (long)(intptr_t)&watchme;
-	printf("Set DR2 (r1.dr[2]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[2]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call CONTINUE for the child process\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(2, dbreg_preserve_mode_continued);
 }
-#endif
 
-#if defined(HAVE_DBREGS)
 ATF_TC(dbregs_preserve_dr3_continued);
 ATF_TC_HEAD(dbregs_preserve_dr3_continued, tc)
 {
@@ -1074,84 +396,8 @@ ATF_TC_HEAD(dbregs_preserve_dr3_continued, tc)
 
 ATF_TC_BODY(dbregs_preserve_dr3_continued, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	struct dbreg r1;
-	struct dbreg r2;
-	size_t i;
-	int watchme;
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r1, 0) != -1);
-
-	printf("State of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	r1.dr[3] = (long)(intptr_t)&watchme;
-	printf("Set DR3 (r1.dr[3]) to new value %" PRIxREGISTER "\n",
-	    r1.dr[3]);
-
-	printf("New state of the debug registers (r1):\n");
-	for (i = 0; i < __arraycount(r1.dr); i++)
-		printf("r1[%zu]=%" PRIxREGISTER "\n", i, r1.dr[i]);
-
-	printf("Call SETDBREGS for the child process (r1)\n");
-	ATF_REQUIRE(ptrace(PT_SETDBREGS, child, &r1, 0) != -1);
-
-	printf("Call CONTINUE for the child process\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	printf("Call GETDBREGS for the child process (r2)\n");
-	ATF_REQUIRE(ptrace(PT_GETDBREGS, child, &r2, 0) != -1);
-
-	printf("Assert that (r1) and (r2) are the same\n");
-	ATF_REQUIRE(memcmp(&r1, &r2, sizeof(r1)) == 0);
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	dbreg_preserve(3, dbreg_preserve_mode_continued);
 }
-#endif
 
 #if defined(HAVE_DBREGS)
 ATF_TC(dbregs_dr0_trap_variable_writeonly_byte);
