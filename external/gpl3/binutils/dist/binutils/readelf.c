@@ -15666,10 +15666,15 @@ get_netbsd_elfcore_note_type (unsigned e_type)
 {
   static char buff[64];
 
-  if (e_type == NT_NETBSDCORE_PROCINFO)
+  switch (e_type)
     {
+    case NT_NETBSDCORE_PROCINFO:
       /* NetBSD core "procinfo" structure.  */
       return _("NetBSD procinfo structure");
+    case NT_NETBSDCORE_AUXV:
+      return _("NetBSD ELF auxiliary vector data");
+    default:
+      break;
     }
 
   /* As of Jan 2002 there are no other machine-independent notes
