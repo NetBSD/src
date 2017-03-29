@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.19 2017/03/29 19:52:30 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.20 2017/03/29 22:48:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.19 2017/03/29 19:52:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.20 2017/03/29 22:48:03 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.19 2017/03/29 19:52:30 kamil
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/exec_elf.h>
 #include <sys/errno.h>
 #include <sys/exec.h>
 #include <sys/pax.h>
@@ -625,7 +624,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		case PIOD_READ_AUXV:
 			req = PT_READ_D;
 			uio.uio_rw = UIO_READ;
-			tmp = ELF_AUX_ENTRIES * sizeof(AuxInfo);
+			tmp = t->p_execsw->es_arglen;
 			if (uio.uio_offset > tmp)
 				return EIO;
 			if (uio.uio_resid > tmp - uio.uio_offset)
