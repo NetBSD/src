@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.50 2017/03/16 05:23:56 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.51 2017/03/29 23:02:43 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.50 2017/03/16 05:23:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.51 2017/03/29 23:02:43 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -306,14 +306,18 @@ crypto_destroy(bool exit_kthread)
 		mutex_spin_enter(&crypto_ret_q_mtx);
 
 		/* if we have any in-progress requests, don't unload */
-		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq))
+		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq)) {
+			mutex_spin_exit(&crypto_ret_q_mtx);
 			return EBUSY;
+		}
 
 		for (i = 0; i < crypto_drivers_num; i++)
 			if (crypto_drivers[i].cc_sessions != 0)
 				break;
-		if (i < crypto_drivers_num)
+		if (i < crypto_drivers_num) {
+			mutex_spin_exit(&crypto_ret_q_mtx);
 			return EBUSY;
+		}
 
 		/* kick the cryptoret thread and wait for it to exit */
 		crypto_exit_flag = 1;
