@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.80 2017/03/30 09:15:51 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.81 2017/03/30 09:16:52 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.80 2017/03/30 09:15:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.81 2017/03/30 09:16:52 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -413,6 +413,21 @@ vnis_marker(vnode_t *vp)
 {
 
 	return (VNODE_TO_VIMPL(vp)->vi_state == VS_MARKER);
+}
+
+/*
+ * Set vnode to share another vnodes lock.
+ */
+void
+vshare_lock(vnode_t *vp, vnode_t *src_vp)
+{
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
+	vnode_impl_t *src_vip = VNODE_TO_VIMPL(src_vp);
+	krwlock_t *oldlock = vip->vi_lock;
+
+	rw_obj_hold(src_vip->vi_lock);
+	vip->vi_lock = src_vip->vi_lock;
+	rw_obj_free(oldlock);
 }
 
 /*
@@ -1066,7 +1081,7 @@ vcache_alloc(void)
 	vip = pool_cache_get(vcache_pool, PR_WAITOK);
 	memset(vip, 0, sizeof(*vip));
 
-	rw_init(&vip->vi_lock);
+	vip->vi_lock = rw_obj_alloc();
 	/* SLIST_INIT(&vip->vi_hash); */
 	/* LIST_INIT(&vip->vi_nclist); */
 	/* LIST_INIT(&vip->vi_dnclist); */
@@ -1128,7 +1143,7 @@ vcache_free(vnode_impl_t *vip)
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		spec_node_destroy(vp);
 
-	rw_destroy(&vip->vi_lock);
+	rw_obj_free(vip->vi_lock);
 	uvm_obj_destroy(&vp->v_uobj, true);
 	cv_destroy(&vp->v_cv);
 	pool_cache_put(vcache_pool, vip);
