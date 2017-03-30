@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.306 2017/03/16 01:09:24 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.307 2017/03/30 09:10:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.306 2017/03/16 01:09:24 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.307 2017/03/30 09:10:08 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -147,7 +147,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.306 2017/03/16 01:09:24 maya Exp $")
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -721,7 +720,6 @@ lfs_symlink(void *v)
 	if (error)
 		return error;
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = lfs_makeinode(ap->a_vap, dvp, ulr, vpp, ap->a_cnp);
 	if (error) {
 		goto out;
@@ -757,8 +755,6 @@ lfs_symlink(void *v)
 		vrele(*vpp);
 
 out:
-	fstrans_done(dvp->v_mount);
-
 	UNMARK_VNODE(dvp);
 	/* XXX: is it even possible for the symlink to get MARK'd? */
 	UNMARK_VNODE(*vpp);
@@ -809,7 +805,6 @@ lfs_mknod(void *v)
 	if (error)
 		return error;
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
@@ -818,7 +813,6 @@ lfs_mknod(void *v)
 	lfs_unset_dirop(fs, dvp, "mknod");
 
 	if (error) {
-		fstrans_done(dvp->v_mount);
 		vrele(dvp);
 		*vpp = NULL;
 		return (error);
@@ -843,7 +837,6 @@ lfs_mknod(void *v)
 		/* return (error); */
 	}
 
-	fstrans_done(dvp->v_mount);
 	vrele(dvp);
 	KASSERT(error == 0);
 	VOP_UNLOCK(*vpp);
@@ -889,13 +882,10 @@ lfs_create(void *v)
 	if (error)
 		return error;
 
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 	if (error) {
-		fstrans_done(dvp->v_mount);
 		goto out;
 	}
-	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*vpp);
 
@@ -961,8 +951,6 @@ lfs_mkdir(void *v)
 	error = lfs_set_dirop(dvp, NULL);
 	if (error)
 		return error;
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
@@ -1066,8 +1054,6 @@ lfs_mkdir(void *v)
 	}
 
 out:
-	fstrans_done(dvp->v_mount);
-
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
 	if (error) {
@@ -1207,7 +1193,6 @@ lfs_getattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	struct lfs *fs = ip->i_lfs;
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	/*
 	 * Copy from inode table
 	 */
@@ -1245,7 +1230,6 @@ lfs_getattr(void *v)
 	vap->va_bytes = lfs_fsbtob(fs, ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -1329,11 +1313,9 @@ lfs_close(void *v)
 	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
 		return 0;
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
 		LFS_ITIMES(ip, NULL, NULL, NULL);
 	}
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -2266,9 +2248,7 @@ lfs_getextattr(void *v)
 
 	if (ump->um_fstype == ULFS1) {
 #ifdef LFS_EXTATTR
-		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ulfs_getextattr(ap);
-		fstrans_done(vp->v_mount);
 #else
 		error = EOPNOTSUPP;
 #endif
@@ -2298,9 +2278,7 @@ lfs_setextattr(void *v)
 
 	if (ump->um_fstype == ULFS1) {
 #ifdef LFS_EXTATTR
-		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ulfs_setextattr(ap);
-		fstrans_done(vp->v_mount);
 #else
 		error = EOPNOTSUPP;
 #endif
@@ -2330,9 +2308,7 @@ lfs_listextattr(void *v)
 
 	if (ump->um_fstype == ULFS1) {
 #ifdef LFS_EXTATTR
-		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ulfs_listextattr(ap);
-		fstrans_done(vp->v_mount);
 #else
 		error = EOPNOTSUPP;
 #endif
@@ -2360,9 +2336,7 @@ lfs_deleteextattr(void *v)
 
 	if (ump->um_fstype == ULFS1) {
 #ifdef LFS_EXTATTR
-		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ulfs_deleteextattr(ap);
-		fstrans_done(vp->v_mount);
 #else
 		error = EOPNOTSUPP;
 #endif
