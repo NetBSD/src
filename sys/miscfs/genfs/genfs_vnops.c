@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.193 2017/01/11 09:08:59 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.194 2017/03/30 09:16:52 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.193 2017/01/11 09:08:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.194 2017/03/30 09:16:52 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ genfs_deadlock(void *v)
 
 	op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 	if (ISSET(flags, LK_NOWAIT)) {
-		if (! rw_tryenter(&vip->vi_lock, op))
+		if (! rw_tryenter(vip->vi_lock, op))
 			return EBUSY;
 		if (mutex_tryenter(vp->v_interlock)) {
 			error = vdead_check(vp, VDEAD_NOWAIT);
@@ -305,25 +305,25 @@ genfs_deadlock(void *v)
 		} else
 			error = EBUSY;
 		if (error)
-			rw_exit(&vip->vi_lock);
+			rw_exit(vip->vi_lock);
 		return error;
 	}
 
-	rw_enter(&vip->vi_lock, op);
+	rw_enter(vip->vi_lock, op);
 	mutex_enter(vp->v_interlock);
 	error = vdead_check(vp, VDEAD_NOWAIT);
 	if (error == EBUSY) {
-		rw_exit(&vip->vi_lock);
+		rw_exit(vip->vi_lock);
 		error = vdead_check(vp, 0);
 		KASSERT(error == ENOENT);
 		mutex_exit(vp->v_interlock);
-		rw_enter(&vip->vi_lock, op);
+		rw_enter(vip->vi_lock, op);
 		mutex_enter(vp->v_interlock);
 	}
 	KASSERT(error == ENOENT);
 	mutex_exit(vp->v_interlock);
 	if (! ISSET(flags, LK_RETRY)) {
-		rw_exit(&vip->vi_lock);
+		rw_exit(vip->vi_lock);
 		return ENOENT;
 	}
 	return 0;
@@ -341,7 +341,7 @@ genfs_deadunlock(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	rw_exit(&vip->vi_lock);
+	rw_exit(vip->vi_lock);
 
 	return 0;
 }
@@ -367,7 +367,7 @@ genfs_lock(void *v)
 	if (ISSET(flags, LK_NOWAIT)) {
 		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
 			return EBUSY;
-		if (! rw_tryenter(&vip->vi_lock, op)) {
+		if (! rw_tryenter(vip->vi_lock, op)) {
 			fstrans_done(mp);
 			return EBUSY;
 		}
@@ -377,18 +377,18 @@ genfs_lock(void *v)
 		} else
 			error = EBUSY;
 		if (error) {
-			rw_exit(&vip->vi_lock);
+			rw_exit(vip->vi_lock);
 			fstrans_done(mp);
 		}
 		return error;
 	}
 
 	fstrans_start(mp, FSTRANS_SHARED);
-	rw_enter(&vip->vi_lock, op);
+	rw_enter(vip->vi_lock, op);
 	mutex_enter(vp->v_interlock);
 	error = vdead_check(vp, VDEAD_NOWAIT);
 	if (error) {
-		rw_exit(&vip->vi_lock);
+		rw_exit(vip->vi_lock);
 		fstrans_done(mp);
 		error = vdead_check(vp, 0);
 		KASSERT(error == ENOENT);
@@ -410,7 +410,7 @@ genfs_unlock(void *v)
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 	struct mount *mp = vp->v_mount;
 
-	rw_exit(&vip->vi_lock);
+	rw_exit(vip->vi_lock);
 	fstrans_done(mp);
 
 	return 0;
@@ -428,10 +428,10 @@ genfs_islocked(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	if (rw_write_held(&vip->vi_lock))
+	if (rw_write_held(vip->vi_lock))
 		return LK_EXCLUSIVE;
 
-	if (rw_read_held(&vip->vi_lock))
+	if (rw_read_held(vip->vi_lock))
 		return LK_SHARED;
 
 	return 0;

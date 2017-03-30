@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.274 2017/02/17 08:30:00 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.275 2017/03/30 09:16:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -516,6 +516,7 @@ bool	vrecycle(struct vnode *);
 void 	vrele(struct vnode *);
 void 	vrele_async(struct vnode *);
 void	vrele_flush(struct mount *);
+void	vshare_lock(vnode_t *, vnode_t *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 int	vdead_check(struct vnode *, int);
