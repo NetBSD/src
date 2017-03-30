@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.45 2017/03/13 14:24:20 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.46 2017/03/30 09:10:08 hannken Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.45 2017/03/13 14:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.46 2017/03/30 09:10:08 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.45 2017/03/13 14:24:20 riastradh Ex
 #include <sys/dirent.h>
 #include <sys/lockf.h>
 #include <sys/kauth.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -159,9 +158,7 @@ ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-			fstrans_start(vp->v_mount, FSTRANS_SHARED);
 			error = lfs_chkdq(ip, 0, cred, 0);
-			fstrans_done(vp->v_mount);
 			if (error != 0)
 				return error;
 #endif
@@ -262,8 +259,6 @@ ulfs_setattr(void *v)
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 		return (EINVAL);
 	}
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -403,7 +398,6 @@ ulfs_setattr(void *v)
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -424,12 +418,10 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	if (error)
 		return (error);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -461,7 +453,6 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (error)
 		return (error);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
@@ -486,12 +477,10 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, uid, ouid);
 	(void) lfs_chkdq(ip, change, cred, FORCE);
 	(void) lfs_chkiq(ip, 1, cred, FORCE);
-	fstrans_done(vp->v_mount);
 	return (error);
  good:
 #endif /* LFS_QUOTA || LFS_QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -505,21 +494,18 @@ ulfs_remove(void *v)
 	} */ *ap = v;
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
-	struct mount	*mp;
 	int		error;
 	struct ulfs_lookup_results *ulr;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
-	mp = dvp->v_mount;
-	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
+	KASSERT(dvp->v_mount == vp->v_mount); /* XXX Not stable without lock. */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
@@ -534,7 +520,6 @@ ulfs_remove(void *v)
 	else
 		vput(vp);
 	vput(dvp);
-	fstrans_done(mp);
 	return (error);
 }
 
@@ -552,20 +537,18 @@ ulfs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
 	int error;
 	struct ulfs_lookup_results *ulr;
 
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
-	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
+	KASSERT(dvp->v_mount == vp->v_mount); /* XXX Not stable without lock. */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
@@ -600,7 +583,6 @@ ulfs_link(void *v)
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	fstrans_done(mp);
 	return (error);
 }
 
@@ -636,7 +618,6 @@ ulfs_whiteout(void *v)
 
 	case CREATE:
 		/* create a new directory whiteout */
-		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 		KASSERTMSG((fs->um_maxsymlinklen > 0),
 		    "ulfs_whiteout: old format filesystem");
 
@@ -646,7 +627,6 @@ ulfs_whiteout(void *v)
 
 	case DELETE:
 		/* remove an existing directory whiteout */
-		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 		KASSERTMSG((fs->um_maxsymlinklen > 0),
 		    "ulfs_whiteout: old format filesystem");
 
@@ -657,7 +637,6 @@ ulfs_whiteout(void *v)
 		panic("ulfs_whiteout: unknown op");
 		/* NOTREACHED */
 	}
-	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
@@ -696,8 +675,6 @@ ulfs_rmdir(void *v)
 		vput(vp);
 		return (EINVAL);
 	}
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	/*
 	 * Do not remove a directory that is in the process of being renamed.
@@ -747,7 +724,6 @@ ulfs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
-	fstrans_done(dvp->v_mount);
 	vput(dvp);
 	return (error);
 }
