@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.106 2014/11/10 18:46:34 maxv Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.107 2017/03/30 20:16:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.106 2014/11/10 18:46:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.107 2017/03/30 20:16:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,10 @@ procfs_rw(void *v)
 
 	case PFSversion:
 		error = procfs_doversion(curl, p, pfs, uio);
+		break;
+
+	case PFSauxv:
+		error = procfs_doauxv(curl, p, pfs, uio);
 		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP
