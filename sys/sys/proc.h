@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.339 2017/03/24 17:40:44 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.340 2017/03/30 20:17:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -543,6 +543,7 @@ int	proc_uidmatch(kauth_cred_t, kauth_cred_t);
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
+int	proc_getauxv(struct proc *, void **, size_t *);
 
 int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	proc_specific_key_delete(specificdata_key_t);
