@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.129 2017/01/11 12:12:32 joerg Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.130 2017/03/30 09:09:26 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.129 2017/01/11 12:12:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.130 2017/03/30 09:09:26 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1165,9 +1165,6 @@ tmpfs_getpages(void *v)
 	KASSERT(vp->v_type == VREG);
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	node = VP_TO_TMPFS_NODE(vp);
-	uobj = node->tn_spec.tn_reg.tn_aobj;
-
 	/*
 	 * Currently, PGO_PASTEOF is not supported.
 	 */
@@ -1183,6 +1180,12 @@ tmpfs_getpages(void *v)
 
 	if ((flags & PGO_LOCKED) != 0)
 		return EBUSY;
+
+	if (vdead_check(vp, VDEAD_NOWAIT) != 0)
+		return ENOENT;
+
+	node = VP_TO_TMPFS_NODE(vp);
+	uobj = node->tn_spec.tn_reg.tn_aobj;
 
 	if ((flags & PGO_NOTIMESTAMP) == 0) {
 		u_int tflags = 0;
