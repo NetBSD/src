@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_auxv.c,v 1.1 2017/03/30 20:16:29 christos Exp $	*/
+/*	$NetBSD: procfs_auxv.c,v 1.2 2017/03/30 20:21:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_auxv.c,v 1.1 2017/03/30 20:16:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_auxv.c,v 1.2 2017/03/30 20:21:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,6 @@ procfs_doauxv(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if ((error = proc_getauxv(p, &buffer, &bufsize)) != 0)
 		return error;
 
-	/*
-	 * We support reading from an offset, because linux does.
-	 * The map could have changed between the two reads, and
-	 * that could result in junk, but typically it does not.
-	 */
 	if (uio->uio_offset < bufsize)
 		error = uiomove((char *)buffer + uio->uio_offset,
 		    bufsize - uio->uio_offset, uio);
