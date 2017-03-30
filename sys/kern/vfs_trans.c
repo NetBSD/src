@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.39 2017/03/06 10:11:21 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.40 2017/03/30 09:13:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.39 2017/03/06 10:11:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.40 2017/03/30 09:13:01 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -329,15 +329,26 @@ int
 _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 {
 	int s;
+	struct mount *lmp;
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 
-	if ((mp = fstrans_normalize_mount(mp)) == NULL)
+	if ((lmp = fstrans_normalize_mount(mp)) == NULL)
 		return 0;
 
 	ASSERT_SLEEPABLE();
 
-	if ((fli = fstrans_get_lwp_info(mp, true)) == NULL)
+	/*
+	 * Allocate per lwp info for layered file systems to
+	 * get a reference to the mount.  No need to increment
+	 * the reference counter here.
+	 */
+	for (lmp = mp; lmp->mnt_lower; lmp = lmp->mnt_lower) {
+		fli = fstrans_get_lwp_info(lmp, true);
+		KASSERT(fli != NULL);
+	}
+
+	if ((fli = fstrans_get_lwp_info(lmp, true)) == NULL)
 		return 0;
 
 	if (fli->fli_trans_cnt > 0) {
@@ -348,7 +359,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	}
 
 	s = pserialize_read_enter();
-	fmi = mp->mnt_transinfo;
+	fmi = lmp->mnt_transinfo;
 	if (__predict_true(grant_lock(fmi->fmi_state, lock_type))) {
 		fli->fli_trans_cnt = 1;
 		fli->fli_lock_type = lock_type;
@@ -383,9 +394,8 @@ fstrans_done(struct mount *mp)
 
 	if ((mp = fstrans_normalize_mount(mp)) == NULL)
 		return;
-	if ((fli = fstrans_get_lwp_info(mp, true)) == NULL)
-		return;
-
+	fli = fstrans_get_lwp_info(mp, false);
+	KASSERT(fli != NULL);
 	KASSERT(fli->fli_trans_cnt > 0);
 
 	if (fli->fli_trans_cnt > 1) {
