@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.76 2017/03/06 10:07:52 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.77 2017/03/30 09:12:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.76 2017/03/06 10:07:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.77 2017/03/30 09:12:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -543,7 +543,7 @@ vdrain_vrele(vnode_t *vp)
 	KASSERT(mutex_owned(&vdrain_lock));
 
 	mp = vp->v_mount;
-	if (fstrans_start_nowait(mp, FSTRANS_LAZY) != 0)
+	if (fstrans_start_nowait(mp, FSTRANS_SHARED) != 0)
 		return;
 
 	/*
@@ -1518,7 +1518,7 @@ vcache_reclaim(vnode_t *vp)
 	vip->vi_key.vk_key = temp_key;
 	mutex_exit(&vcache_lock);
 
-	fstrans_start(mp, FSTRANS_LAZY);
+	fstrans_start(mp, FSTRANS_SHARED);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
