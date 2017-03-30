@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.77 2017/03/30 09:12:21 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.78 2017/03/30 09:14:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.77 2017/03/30 09:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.78 2017/03/30 09:14:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,6 +184,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.77 2017/03/30 09:12:21 hannken Exp $
 
 /* Flags to vrelel. */
 #define	VRELEL_ASYNC_RELE	0x0001	/* Always defer to vrele thread. */
+#define	VRELEL_FORCE_RELE	0x0002	/* Must always succeed. */
 
 u_int			numvnodes		__cacheline_aligned;
 
@@ -482,7 +483,8 @@ vrele_flush(struct mount *mp)
 		TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
 		mutex_exit(&vdrain_lock);
 
-		vrele(VIMPL_TO_VNODE(vip));
+		mutex_enter(VIMPL_TO_VNODE(vip)->v_interlock);
+		vrelel(VIMPL_TO_VNODE(vip), VRELEL_FORCE_RELE);
 
 		mutex_enter(&vdrain_lock);
 	}
@@ -523,8 +525,10 @@ vdrain_remove(vnode_t *vp)
 	mutex_exit(&vdrain_lock);
 
 	if (vcache_vget(vp) == 0) {
-		if (!vrecycle(vp))
-			vrele(vp);
+		if (!vrecycle(vp)) {
+			mutex_enter(vp->v_interlock);
+			vrelel(vp, VRELEL_FORCE_RELE);
+		}
 	}
 	fstrans_done(mp);
 
@@ -561,7 +565,7 @@ vdrain_vrele(vnode_t *vp)
 	mutex_exit(&vdrain_lock);
 
 	mutex_enter(vp->v_interlock);
-	vrelel(vp, 0);
+	vrelel(vp, VRELEL_FORCE_RELE);
 	fstrans_done(mp);
 
 	mutex_enter(&vdrain_lock);
@@ -704,7 +708,7 @@ vrelel(vnode_t *vp, int flags)
 		if ((curlwp == uvm.pagedaemon_lwp) ||
 		    (flags & VRELEL_ASYNC_RELE) != 0) {
 			defer = true;
-		} else if (curlwp == vdrain_lwp) {
+		} else if ((flags & VRELEL_FORCE_RELE) != 0) {
 			/*
 			 * We have to try harder.
 			 */
@@ -723,7 +727,7 @@ vrelel(vnode_t *vp, int flags)
 		}
 
 		KASSERT(mutex_owned(vp->v_interlock));
-		KASSERT(! (curlwp == vdrain_lwp && defer));
+		KASSERT(! ((flags & VRELEL_FORCE_RELE) != 0 && defer));
 
 		if (defer) {
 			/*
