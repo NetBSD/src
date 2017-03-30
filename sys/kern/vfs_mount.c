@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.50 2017/03/06 10:11:21 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.51 2017/03/30 09:13:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.50 2017/03/06 10:11:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.51 2017/03/30 09:13:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -711,6 +711,12 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 		return ENOMEM;
 	}
 
+	if ((error = fstrans_mount(mp)) != 0) {
+		vfs_unbusy(mp, false, NULL);
+		vfs_destroy(mp);
+		return error;
+	}
+
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 
 	/*
@@ -727,12 +733,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 
 	if (error != 0)
 		goto err_unmounted;
-
-	if (mp->mnt_lower == NULL) {
-		error = fstrans_mount(mp);
-		if (error)
-			goto err_mounted;
-	}
 
 	/*
 	 * Validate and prepare the mount point.
