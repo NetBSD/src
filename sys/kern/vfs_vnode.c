@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.78 2017/03/30 09:14:08 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.79 2017/03/30 09:14:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.78 2017/03/30 09:14:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.79 2017/03/30 09:14:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -212,6 +212,7 @@ static pool_cache_t	vcache_pool;
 static void		lru_requeue(vnode_t *, vnodelst_t *);
 static vnodelst_t *	lru_which(vnode_t *);
 static vnode_impl_t *	vcache_alloc(void);
+static void		vcache_dealloc(vnode_impl_t *);
 static void		vcache_free(vnode_impl_t *);
 static void		vcache_init(void);
 static void		vcache_reinit(void);
@@ -662,6 +663,8 @@ vtryrele(vnode_t *vp)
 static void
 vrelel(vnode_t *vp, int flags)
 {
+	const bool async = ((flags & VRELEL_ASYNC_RELE) != 0);
+	const bool force = ((flags & VRELEL_FORCE_RELE) != 0);
 	bool recycle, defer;
 	int error;
 
@@ -692,62 +695,48 @@ vrelel(vnode_t *vp, int flags)
 #endif
 
 	/*
+	 * First try to get the vnode locked for VOP_INACTIVE().
+	 * Defer vnode release to vdrain_thread if caller requests
+	 * it explicitly, is the pagedaemon or the lock failed.
+	 */
+	if ((curlwp == uvm.pagedaemon_lwp) || async) {
+		defer = true;
+	} else {
+		mutex_exit(vp->v_interlock);
+		error = vn_lock(vp,
+		    LK_EXCLUSIVE | LK_RETRY | (force ? 0 : LK_NOWAIT));
+		defer = (error != 0);
+		mutex_enter(vp->v_interlock);
+	}
+	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(! (force && defer));
+	if (defer) {
+		/*
+		 * Defer reclaim to the kthread; it's not safe to
+		 * clean it here.  We donate it our last reference.
+		 */
+		lru_requeue(vp, &lru_vrele_list);
+		mutex_exit(vp->v_interlock);
+		return;
+	}
+
+	/*
+	 * If the node got another reference while we
+	 * released the interlock, don't try to inactivate it yet.
+	 */
+	if (__predict_false(vtryrele(vp))) {
+		VOP_UNLOCK(vp);
+		mutex_exit(vp->v_interlock);
+		return;
+	}
+
+	/*
 	 * If not clean, deactivate the vnode, but preserve
 	 * our reference across the call to VOP_INACTIVE().
 	 */
-	if (VSTATE_GET(vp) != VS_RECLAIMED) {
-		recycle = false;
-
-		/*
-		 * XXX This ugly block can be largely eliminated if
-		 * locking is pushed down into the file systems.
-		 *
-		 * Defer vnode release to vdrain_thread if caller
-		 * requests it explicitly or is the pagedaemon.
-		 */
-		if ((curlwp == uvm.pagedaemon_lwp) ||
-		    (flags & VRELEL_ASYNC_RELE) != 0) {
-			defer = true;
-		} else if ((flags & VRELEL_FORCE_RELE) != 0) {
-			/*
-			 * We have to try harder.
-			 */
-			mutex_exit(vp->v_interlock);
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			KASSERTMSG((error == 0), "vn_lock failed: %d", error);
-			mutex_enter(vp->v_interlock);
-			defer = false;
-		} else {
-			/* If we can't acquire the lock, then defer. */
-			mutex_exit(vp->v_interlock);
-			error = vn_lock(vp,
-			    LK_EXCLUSIVE | LK_RETRY | LK_NOWAIT);
-			defer = (error != 0);
-			mutex_enter(vp->v_interlock);
-		}
-
-		KASSERT(mutex_owned(vp->v_interlock));
-		KASSERT(! ((flags & VRELEL_FORCE_RELE) != 0 && defer));
-
-		if (defer) {
-			/*
-			 * Defer reclaim to the kthread; it's not safe to
-			 * clean it here.  We donate it our last reference.
-			 */
-			lru_requeue(vp, &lru_vrele_list);
-			mutex_exit(vp->v_interlock);
-			return;
-		}
-
-		/*
-		 * If the node got another reference while we
-		 * released the interlock, don't try to inactivate it yet.
-		 */
-		if (__predict_false(vtryrele(vp))) {
-			VOP_UNLOCK(vp);
-			mutex_exit(vp->v_interlock);
-			return;
-		}
+	if (VSTATE_GET(vp) == VS_RECLAIMED) {
+		VOP_UNLOCK(vp);
+	} else {
 		VSTATE_CHANGE(vp, VS_ACTIVE, VS_BLOCKED);
 		mutex_exit(vp->v_interlock);
 
@@ -759,6 +748,7 @@ vrelel(vnode_t *vp, int flags)
 		 *
 		 * Note that VOP_INACTIVE() will drop the vnode lock.
 		 */
+		recycle = false;
 		VOP_INACTIVE(vp, &recycle);
 		if (recycle) {
 			/* vcache_reclaim() below will drop the lock. */
@@ -1097,6 +1087,26 @@ vcache_alloc(void)
 }
 
 /*
+ * Deallocate a vcache node in state VS_LOADING.
+ *
+ * vcache_lock held on entry and released on return.
+ */
+static void
+vcache_dealloc(vnode_impl_t *vip)
+{
+	vnode_t *vp;
+
+	KASSERT(mutex_owned(&vcache_lock));
+
+	vp = VIMPL_TO_VNODE(vip);
+	mutex_enter(vp->v_interlock);
+	vp->v_op = dead_vnodeop_p;
+	VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
+	mutex_exit(&vcache_lock);
+	vrelel(vp, 0);
+}
+
+/*
  * Free an unused, unreferenced vcache node.
  * v_interlock locked on entry.
  */
@@ -1260,10 +1270,7 @@ again:
 
 	/* If another thread beat us inserting this node, retry. */
 	if (vip != new_vip) {
-		mutex_enter(vp->v_interlock);
-		VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache_lock);
-		vrelel(vp, 0);
+		vcache_dealloc(new_vip);
 		vfs_unbusy(mp, false, NULL);
 		goto again;
 	}
@@ -1275,10 +1282,7 @@ again:
 		mutex_enter(&vcache_lock);
 		SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
 		    new_vip, vnode_impl, vi_hash);
-		mutex_enter(vp->v_interlock);
-		VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache_lock);
-		vrelel(vp, 0);
+		vcache_dealloc(new_vip);
 		vfs_unbusy(mp, false, NULL);
 		KASSERT(*vpp == NULL);
 		return error;
@@ -1329,10 +1333,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	    &vip->vi_key.vk_key_len, &vip->vi_key.vk_key);
 	if (error) {
 		mutex_enter(&vcache_lock);
-		mutex_enter(vp->v_interlock);
-		VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache_lock);
-		vrelel(vp, 0);
+		vcache_dealloc(vip);
 		vfs_unbusy(mp, false, NULL);
 		KASSERT(*vpp == NULL);
 		return error;
@@ -1381,7 +1382,6 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	uint32_t old_hash, new_hash;
 	struct vcache_key old_vcache_key, new_vcache_key;
 	vnode_impl_t *vip, *new_vip;
-	struct vnode *new_vp;
 
 	old_vcache_key.vk_mount = mp;
 	old_vcache_key.vk_key = old_key;
@@ -1395,16 +1395,12 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 
 	new_vip = vcache_alloc();
 	new_vip->vi_key = new_vcache_key;
-	new_vp = VIMPL_TO_VNODE(new_vip);
 
 	/* Insert locked new node used as placeholder. */
 	mutex_enter(&vcache_lock);
 	vip = vcache_hash_lookup(&new_vcache_key, new_hash);
 	if (vip != NULL) {
-		mutex_enter(new_vp->v_interlock);
-		VSTATE_CHANGE(new_vp, VS_LOADING, VS_RECLAIMED);
-		mutex_exit(&vcache_lock);
-		vrelel(new_vp, 0);
+		vcache_dealloc(new_vip);
 		return EEXIST;
 	}
 	SLIST_INSERT_HEAD(&vcache_hashtab[new_hash & vcache_hashmask],
@@ -1456,6 +1452,7 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	new_vp = VIMPL_TO_VNODE(new_vip);
 	mutex_enter(new_vp->v_interlock);
 	VSTATE_ASSERT(VIMPL_TO_VNODE(new_vip), VS_LOADING);
+	mutex_exit(new_vp->v_interlock);
 
 	/* Rekey old node and put it onto its new hashlist. */
 	vip->vi_key = new_vcache_key;
@@ -1469,9 +1466,7 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	/* Remove new node used as placeholder. */
 	SLIST_REMOVE(&vcache_hashtab[new_hash & vcache_hashmask],
 	    new_vip, vnode_impl, vi_hash);
-	VSTATE_CHANGE(new_vp, VS_LOADING, VS_RECLAIMED);
-	mutex_exit(&vcache_lock);
-	vrelel(new_vp, 0);
+	vcache_dealloc(new_vip);
 }
 
 /*
