@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.170 2017/03/28 10:30:27 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.171 2017/03/30 08:44:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.170 2017/03/28 10:30:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.171 2017/03/30 08:44:33 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3097,11 +3097,14 @@ pci_conf_print_sriov_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("    System Page Sizes register: 0x%08x\n", reg);
 	printf("      Page Size: ");
 	if (reg != 0) {
+		int bitpos = ffs(reg) -1;
+
+		/* Assume only one bit is set. */
 #ifdef _KERNEL
-		format_bytes(buf, sizeof(buf), 1LL << (ffs(reg) + 12));
+		format_bytes(buf, sizeof(buf), 1LL << (bitpos + 12));
 #else
-		humanize_number(buf, sizeof(buf), 1LL << (ffs(reg) + 12), "B",
-		    HN_AUTOSCALE, 0);
+		humanize_number(buf, sizeof(buf), 1LL << (bitpos + 12),
+		    "B", HN_AUTOSCALE, 0);
 #endif
 		printf("%s", buf);
 	} else {
