@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.79 2017/03/30 09:14:59 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.80 2017/03/30 09:15:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.79 2017/03/30 09:14:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.80 2017/03/30 09:15:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1556,11 +1556,6 @@ vcache_reclaim(vnode_t *vp)
 	/* Purge name cache. */
 	cache_purge(vp);
 
-	/* Move to dead mount. */
-	vp->v_vflag &= ~VV_ROOT;
-	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
-	vfs_insmntque(vp, dead_rootmount);
-
 	/* Remove from vnode cache. */
 	hash = vcache_hash(&vip->vi_key);
 	mutex_enter(&vcache_lock);
@@ -1578,9 +1573,19 @@ vcache_reclaim(vnode_t *vp)
 	VSTATE_CHANGE(vp, VS_RECLAIMING, VS_RECLAIMED);
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
+	mutex_exit(vp->v_interlock);
 
+	/*
+	 * Move to dead mount.  Must be after changing the operations
+	 * vector as vnode operations enter the mount before using the
+	 * operations vector.  See sys/kern/vnode_if.c.
+	 */
+	vp->v_vflag &= ~VV_ROOT;
+	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
+	vfs_insmntque(vp, dead_rootmount);
+
+	mutex_enter(vp->v_interlock);
 	fstrans_done(mp);
-
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 }
 
