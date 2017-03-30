@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.29 2016/08/20 12:37:09 hannken Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.30 2017/03/30 09:10:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,7 +43,6 @@
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <sys/buf.h>
-#include <sys/fstrans.h>
 #include <sys/vnode.h>
 
 #include "chfs.h"
@@ -653,8 +652,6 @@ chfs_read(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	if (uio->uio_offset >= ip->size)
 		goto out;
 
@@ -737,7 +734,6 @@ out:
 		ip->iflag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
 			if (error) {
-				fstrans_done(vp->v_mount);
 				return error;
 			}
 			error = chfs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -745,7 +741,6 @@ out:
 	}
 
 	dbg("[END]\n");
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -832,8 +827,6 @@ chfs_write(void *v)
 	}
 	if (uio->uio_resid == 0)
 		return (0);
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -1003,7 +996,6 @@ out:
 
 
 	KASSERT(vp->v_size == ip->size);
-	fstrans_done(vp->v_mount);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
 	error = chfs_write_flash_vnode(chmp, ip, ALLOC_NORMAL);
