@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.65 2017/03/09 10:10:02 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.66 2017/03/30 09:12:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.65 2017/03/09 10:10:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.66 2017/03/30 09:12:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -890,7 +890,7 @@ retry:
 		if (pagedaemon) {
 			/* Pagedaemon must not sleep here. */
 			trans_mp = vp->v_mount;
-			error = fstrans_start_nowait(trans_mp, FSTRANS_LAZY);
+			error = fstrans_start_nowait(trans_mp, FSTRANS_SHARED);
 			if (error) {
 				mutex_exit(slock);
 				return error;
@@ -903,7 +903,7 @@ retry:
 			 */
 			mutex_exit(slock);
 			trans_mp = vp->v_mount;
-			fstrans_start(trans_mp, FSTRANS_LAZY);
+			fstrans_start(trans_mp, FSTRANS_SHARED);
 			if (vp->v_mount != trans_mp) {
 				fstrans_done(trans_mp);
 				trans_mp = NULL;
