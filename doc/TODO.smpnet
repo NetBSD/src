@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.10 2017/03/30 04:37:58 ozaki-r Exp $
+$NetBSD: TODO.smpnet,v 1.11 2017/03/30 06:50:53 ozaki-r Exp $
 
 MP-safe components
 ==================
@@ -140,4 +140,8 @@ fstat(1) shows information of bpf instances. Each bpf instance (struct bpf) is
 obtained via kvm(3). bpf_d#_bd_next, bpf_d#_bd_filter and bpf_d#_bd_list
 member variables are obsolete but remain. ifnet#if_xname is also accessed
 via struct bpf_if and obsolete ifnet#if_list is required to remain to not change
-the offset of ifnet#if_xname.
+the offset of ifnet#if_xname. The statistic counters (bpf#bd_rcount,
+bpf#bd_dcount and bpf#bd_ccount) are also victims of this restriction; for
+scalability the statistic counters should be per-CPU and we should stop using
+atomic operations for them however we have to remain the counters and atomic
+operations.
