@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.98 2017/03/22 22:37:41 sevan Exp $
+#	$NetBSD: JORNADA720,v 1.99 2017/03/30 17:40:09 sevan Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 # estimated number of users
 maxusers	32
@@ -115,9 +115,11 @@ options 	NFS_BOOT_DHCP
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
+options 	KDTRACE_HOOKS	# kernel DTrace hooks
+options 	MODULAR		# DTrace is a module (load via modules.conf)
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ? type ?
 #options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0
