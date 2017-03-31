@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19.10.2 2017/01/26 21:54:25 skrll Exp $ */
+/* $NetBSD: uslsa.c,v 1.19.10.3 2017/03/31 09:38:05 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.10.2 2017/01/26 21:54:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.10.3 2017/03/31 09:38:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -286,7 +286,7 @@ uslsa_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 static int
