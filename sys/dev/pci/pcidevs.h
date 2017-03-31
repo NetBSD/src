@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1274 2017/03/23 03:15:16 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1275 2017/03/31 08:54:51 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1282 2017/03/23 03:14:03 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1283 2017/03/31 08:53:56 msaitoh Exp
  */
 
 /*
@@ -1840,6 +1840,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM43227	0x4358		/* BCM43227 2.4GHz 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM43228	0x4359		/* BCM43228 Dualband 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM4313	0x4727		/* BCM4313 802.11b/g/n */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5805	0x5805		/* 5805 Security Processor */
@@ -4553,6 +4554,7 @@
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD_1	0xa002		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGD	0xa011		/* Pineview Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGD_1	0xa012		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_Z170_AHCI	0xa102		/* Z170 AHCI */
 #define	PCI_PRODUCT_INTEL_Z170_3RD_AHCI	0xa106		/* Z170 3rd Party RAID */
 #define	PCI_PRODUCT_INTEL_100SERIES_PCIE_1	0xa110		/* 100 Series PCIE */
@@ -5858,6 +5860,7 @@
 #define	PCI_PRODUCT_RDC_R6061_EHCI	0x6061		/* R6061 USB EHCI */
 
 /* Realtek products */
+#define	PCI_PRODUCT_REALTEK_RTS5208	0x5208		/* RTS5208 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5227	0x5227		/* RTS5227 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5229	0x5229		/* RTS5229 PCI-E Card Reader */
