@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.160 2017/03/06 07:31:15 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.161 2017/03/31 06:49:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.160 2017/03/06 07:31:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.161 2017/03/31 06:49:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -888,7 +888,7 @@ icmp_reflect(struct mbuf *m)
 		 * add on any record-route or timestamp options.
 		 */
 		cp = (u_char *) (ip + 1);
-		if ((opts = ip_srcroute()) == NULL &&
+		if ((opts = ip_srcroute(m)) == NULL &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
