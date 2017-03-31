@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.18.2 2017/01/26 21:54:25 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.18.3 2017/03/31 10:00:15 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.18.2 2017/01/26 21:54:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.18.3 2017/03/31 10:00:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -294,7 +294,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 
 	/* wait if required */
 	if (need_delay > 1)
-		tsleep(&sc->sc_sme, 0, "uthum", (need_delay*hz+999)/1000 + 1);
+		kpause("uthum", false, (need_delay*hz+999)/1000 + 1, NULL);
 
 	/* get answer */
 	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
