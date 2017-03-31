@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.355 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.356 2017/03/31 06:49:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.355 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.356 2017/03/31 06:49:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4004,7 +4004,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		if (inp) {
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
-			inp->inp_options = ip_srcroute();
+			inp->inp_options = ip_srcroute(m);
 			in_pcbstate(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
@@ -4341,7 +4341,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		/*
 		 * Remember the IP options, if any.
 		 */
-		ipopts = ip_srcroute();
+		ipopts = ip_srcroute(m);
 		break;
 #endif
 	default:
