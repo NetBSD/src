@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.729 2017/03/22 21:33:06 jdolecek Exp $
+# $NetBSD: mi,v 1.730 2017/03/31 09:40:15 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3316,6 +3316,7 @@
 ./usr/tests/net/net/t_mtudisc			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_mtudisc6			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ping6_opts		tests-net-tests		atf,rump
+./usr/tests/net/net/t_ping_opts			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_pktinfo			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_raw			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_tcp			tests-net-tests		compattestfile,atf
