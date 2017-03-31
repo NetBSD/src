@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.168 2017/02/07 02:36:48 ozaki-r Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.169 2017/03/31 06:49:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -922,6 +922,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 						    */
 
 #define	PACKET_TAG_MPLS				29 /* Indicate it's for MPLS */
+#define	PACKET_TAG_SRCROUTE			30 /* IPv4 source routing */
 
 /*
  * Return the number of bytes in the mbuf chain, m.
