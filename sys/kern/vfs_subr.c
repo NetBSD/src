@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.460 2017/02/17 08:25:15 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.461 2017/03/31 08:38:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.460 2017/02/17 08:25:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.461 2017/03/31 08:38:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1510,7 +1510,7 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 
 	snprintb(bf, sizeof(bf),
 	    buf_flagbits, bp->b_flags | bp->b_oflags | bp->b_cflags);
-	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
+	(*pr)("  error %d flags %s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
