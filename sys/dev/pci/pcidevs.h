@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1275 2017/03/31 08:54:51 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1276 2017/03/31 09:28:18 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1283 2017/03/31 08:53:56 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1284 2017/03/31 09:27:30 skrll Exp
  */
 
 /*
@@ -1840,7 +1840,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM43227	0x4358		/* BCM43227 2.4GHz 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM43228	0x4359		/* BCM43228 Dualband 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
-#define	PCI_PRODUCT_BROADCOM_BCM4313	0x4727		/* BCM4313 802.11b/g/n */
+#define	PCI_PRODUCT_BROADCOM_BCM4727	0x4727		/* BCM4727 802.11b/g/n */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5805	0x5805		/* 5805 Security Processor */
