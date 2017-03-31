@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.2.2.2.2 2017/01/26 21:54:25 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.2.2.2.3 2017/03/31 10:05:07 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,12 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.2.2.2.2 2017/01/26 21:54:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.2.2.2.3 2017/03/31 10:05:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
 #endif
- 
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

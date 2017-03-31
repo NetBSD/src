@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.124.2.2.2.2 2017/01/26 21:54:24 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.124.2.2.2.3 2017/03/31 10:05:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124.2.2.2.2 2017/01/26 21:54:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124.2.2.2.3 2017/03/31 10:05:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1054,7 +1054,7 @@ ugen_detach(device_t self, int flags)
 			cv_signal(&sc->sc_endpoints[i][IN].cv);
 		/* Wait for processes to go away. */
 		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60)) {
-			printf("%s: %s didn't detach\n", __func__,
+			printf("%s: %s didn't detach\n", __func__, 
 			    device_xname(sc->sc_dev));
 		}
 	}
