@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.352 2017/03/06 07:31:15 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.353 2017/03/31 06:42:19 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.352 2017/03/06 07:31:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.353 2017/03/31 06:42:19 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -270,11 +270,6 @@ static	struct ip_srcrt {
 } ip_srcrt;
 
 static int ip_drainwanted;
-
-struct	sockaddr_in ipaddr = {
-	.sin_len = sizeof(ipaddr),
-	.sin_family = AF_INET,
-};
 
 static void save_rte(u_char *, struct in_addr);
 
@@ -950,6 +945,11 @@ ip_dooptions(struct mbuf *m)
 		case IPOPT_LSRR:
 		case IPOPT_SSRR: {
 			struct psref psref;
+			struct sockaddr_in ipaddr = {
+			    .sin_len = sizeof(ipaddr),
+			    .sin_family = AF_INET,
+			};
+
 			if (ip_allowsrcrt == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_NET_PROHIB;
@@ -1024,6 +1024,11 @@ ip_dooptions(struct mbuf *m)
 
 		case IPOPT_RR: {
 			struct psref psref;
+			struct sockaddr_in ipaddr = {
+			    .sin_len = sizeof(ipaddr),
+			    .sin_family = AF_INET,
+			};
+
 			if (optlen < IPOPT_OFFSET + sizeof(*cp)) {
 				code = &cp[IPOPT_OLEN] - (u_char *)ip;
 				goto bad;
@@ -1090,6 +1095,10 @@ ip_dooptions(struct mbuf *m)
 			case IPOPT_TS_TSANDADDR: {
 				struct ifnet *rcvif;
 				int _s, _ss;
+				struct sockaddr_in ipaddr = {
+				    .sin_len = sizeof(ipaddr),
+				    .sin_family = AF_INET,
+				};
 
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
@@ -1117,7 +1126,12 @@ ip_dooptions(struct mbuf *m)
 				break;
 			}
 
-			case IPOPT_TS_PRESPEC:
+			case IPOPT_TS_PRESPEC: {
+				struct sockaddr_in ipaddr = {
+				    .sin_len = sizeof(ipaddr),
+				    .sin_family = AF_INET,
+				};
+
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
 					code = (u_char *)&ipt->ipt_ptr -
@@ -1135,6 +1149,7 @@ ip_dooptions(struct mbuf *m)
 				pserialize_read_exit(s);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
+			    }
 
 			default:
 				/* XXX can't take &ipt->ipt_flg */
