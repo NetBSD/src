@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.199 2017/01/13 23:00:35 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.200 2017/03/31 08:47:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.199 2017/01/13 23:00:35 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.200 2017/03/31 08:47:04 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -499,6 +499,17 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
+
+	/* if we are being traced, give the owner a chance to interfere */
+	if (p2->p_slflag & PSL_TRACED) {
+		ksiginfo_t ksi;
+
+                KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_CHLD;
+		ksi.ksi_lid = l2->l_lid;
+		kpsignal(p2, &ksi, NULL);
+	}
 
 	/*
 	 * Update stats now that we know the fork was successful.
