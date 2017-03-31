@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.9.18.2 2017/01/26 21:54:24 skrll Exp $	*/
+/*	$NetBSD: uberry.c,v 1.9.18.3 2017/03/31 09:38:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9.18.2 2017/01/26 21:54:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9.18.3 2017/03/31 09:38:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -209,5 +209,5 @@ uberry_detach(device_t self, int flags)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
-	return (0);
+	return 0;
 }

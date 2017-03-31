@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.18.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.18.2 2017/03/31 09:38:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.18.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.18.2 2017/03/31 09:38:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -689,7 +689,7 @@ udsir_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &udsirwrite_filtops;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -698,7 +698,7 @@ udsir_kqfilter(void *h, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -779,7 +779,7 @@ filt_udsirread(struct knote *kn, long hint)
 	struct udsir_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_ur_framelen;
-	return (kn->kn_data > 0);
+	return kn->kn_data > 0;
 }
 
 static void
@@ -800,7 +800,7 @@ filt_udsirwrite(struct knote *kn, long hint)
 	struct udsir_softc *sc = kn->kn_hook;
 
 	kn->kn_data = 0;
-	return (sc->sc_direction != udir_input);
+	return sc->sc_direction != udir_input;
 }
 
 
