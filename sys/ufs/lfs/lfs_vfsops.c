@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.353 2017/03/13 14:24:20 riastradh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.354 2017/04/01 01:50:02 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.353 2017/03/13 14:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.354 2017/04/01 01:50:02 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1097,6 +1097,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_pages = 0;
 	rw_init(&fs->lfs_fraglock);
 	rw_init(&fs->lfs_iflock);
+	cv_init(&fs->lfs_sleeperscv, "lfs_slp");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 
 	/* Set the file system readonly/modify bits. */
@@ -1349,8 +1350,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_sleepers)
-		mtsleep(&fs->lfs_sleepers, PRIBIO + 1, "lfs_sleepers", 0,
-			&lfs_lock);
+		cv_wait(&fs->lfs_sleeperscv, &lfs_lock);
 	mutex_exit(&lfs_lock);
 
 #ifdef LFS_EXTATTR
@@ -1414,6 +1414,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	free(fs->lfs_suflags[1], M_SEGMENT);
 	free(fs->lfs_suflags, M_SEGMENT);
 	lfs_free_resblks(fs);
+	cv_destroy(&fs->lfs_sleeperscv);
 	cv_destroy(&fs->lfs_stopcv);
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);
