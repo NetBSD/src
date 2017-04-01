@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.17 2017/03/23 08:31:00 martin Exp $ */
+/* $NetBSD: t_mutex.c,v 1.18 2017/04/01 17:19:40 martin Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.17 2017/03/23 08:31:00 martin Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.18 2017/04/01 17:19:40 martin Exp $");
 
 #include <sys/time.h> /* For timespecadd */
 #include <inttypes.h> /* For UINT16_MAX */
@@ -492,7 +492,8 @@ ATF_TC_BODY(mutex6, tc)
 	PTHREAD_REQUIRE(pthread_join(low, NULL));
 	PTHREAD_REQUIRE(pthread_join(high, NULL));
 	
-	ATF_REQUIRE_EQ(start, 1);
+	ATF_REQUIRE_EQ_MSG(start, 1, "start = %d, low_cnt =%ju, "
+	    "high_cnt = %ju\n", start, high_cnt, low_cnt);
 }
 
 ATF_TC(mutexattr1);
