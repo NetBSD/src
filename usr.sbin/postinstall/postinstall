@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.212 2017/04/01 20:03:31 roy Exp $
+# $NetBSD: postinstall,v 1.213 2017/04/01 20:14:53 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -908,6 +908,14 @@ do_dhcpcd()
 		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
 		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
 	failed=$(( ${failed} + $? ))
+
+	for lease in "${DEST_DIR}/var/db/dhcpcd-"*.lease*; do
+		[ -f "${lease}" ] || continue
+		new_lease=$(basename "${lease}" | ${SED} -e 's/dhcpcd-//')
+		new_lease="${DEST_DIR}/var/db/dhcpcd/${new_lease}"
+		move_file "${op}" "${lease}" "${new_lease}"
+		failed=$(( ${failed} + $? ))
+	done
 
 	return ${failed}
 }
