@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.124 2017/03/01 10:41:28 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.125 2017/04/01 19:35:56 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.124 2017/03/01 10:41:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.125 2017/04/01 19:35:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -970,6 +970,8 @@ msdosfs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct msdosfs_sync_ctx *c = cl;
 	struct denode *dep;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	dep = VTODE(vp);
 	if (c->waitfor == MNT_LAZY || vp->v_type == VNON ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.264 2017/03/13 14:24:20 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.265 2017/04/01 19:35:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.264 2017/03/13 14:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.265 2017/04/01 19:35:56 riastradh Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -484,9 +484,12 @@ static bool
 lfs_writevnodes_selector(void *cl, struct vnode *vp)
 {
 	struct lfs_writevnodes_ctx *c = cl;
-	struct inode *ip = VTOI(vp);
+	struct inode *ip;
 	int op = c->op;
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	ip = VTOI(vp);
 	if (ip == NULL || vp->v_type == VNON)
 		return false;
 	if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||

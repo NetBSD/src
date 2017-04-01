@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.107 2017/03/30 20:16:29 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.108 2017/04/01 19:35:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.107 2017/03/30 20:16:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.108 2017/04/01 19:35:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,11 @@ static bool
 procfs_revoke_selector(void *arg, struct vnode *vp)
 {
 	struct proc *p = arg;
-	struct pfsnode *pfs = VTOPFS(vp);
+	struct pfsnode *pfs;
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	pfs = VTOPFS(vp);
 
 	return (pfs != NULL && pfs->pfs_pid == p->p_pid);
 }
