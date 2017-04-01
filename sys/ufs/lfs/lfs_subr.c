@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.87 2017/04/01 14:43:00 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.87 2017/04/01 14:43:00 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ lfs_writer_leave(struct lfs *fs)
 	dowakeup = !(--fs->lfs_writer);
 	mutex_exit(&lfs_lock);
 	if (dowakeup)
-		wakeup(&fs->lfs_dirops);
+		cv_broadcast(&fs->lfs_diropscv);
 }
 
 /*
