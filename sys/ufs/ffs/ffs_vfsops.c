@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.350 2017/03/10 20:38:28 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.351 2017/04/01 19:35:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.350 2017/03/10 20:38:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.351 2017/04/01 19:35:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1842,6 +1842,8 @@ ffs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct ffs_sync_ctx *c = cl;
 	struct inode *ip;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	ip = VTOI(vp);
 	/*
