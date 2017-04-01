@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.200 2017/04/01 01:50:02 maya Exp $	*/
+/*	$NetBSD: lfs.h,v 1.201 2017/04/01 14:43:00 maya Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -976,6 +976,7 @@ struct lfs {
 	uint32_t lfs_iocount;		/* number of ios pending */
 	uint32_t lfs_writer;		/* don't allow any dirops to start */
 	uint32_t lfs_dirops;		/* count of active directory ops */
+	kcondvar_t lfs_diropscv;	/* condvar of active directory ops */
 	uint32_t lfs_dirvcount;		/* count of VDIROP nodes in this fs */
 	uint32_t lfs_doifile;		/* Write ifile blocks on next write */
 	uint32_t lfs_nactive;		/* Number of segments since last ckp */
