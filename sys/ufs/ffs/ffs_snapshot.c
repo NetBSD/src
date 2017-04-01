@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.147 2017/03/18 05:29:16 riastradh Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.148 2017/04/01 19:35:56 riastradh Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.147 2017/03/18 05:29:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.148 2017/04/01 19:35:56 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -629,6 +629,8 @@ snapshot_expunge_selector(void *cl, struct vnode *xvp)
 	struct vattr vat;
 	struct snapshot_expunge_ctx *c = cl;
 	struct inode *xp;
+
+	KASSERT(mutex_owned(xvp->v_interlock));
 
 	xp = VTOI(xvp);
 	if (xvp->v_type == VNON || VTOI(xvp) == NULL ||
