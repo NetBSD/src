@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.7 2017/04/01 23:25:08 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.8 2017/04/01 23:28:02 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.7 2017/04/01 23:25:08 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.8 2017/04/01 23:28:02 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -412,7 +412,7 @@ dbregs_trap_variable(int reg, int cond, int len, bool write)
 #endif
 	struct dbreg r1;
 	size_t i;
-	volatile int watchme;
+	volatile int watchme = 0;
 	union u dr7;
 
 	struct ptrace_siginfo info;
