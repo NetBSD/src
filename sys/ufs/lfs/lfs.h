@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.199 2016/06/20 03:25:46 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.200 2017/04/01 01:50:02 maya Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -1018,6 +1018,7 @@ struct lfs {
 	daddr_t  lfs_cleanint[LFS_MAX_CLEANIND]; /* Active cleaning intervals */
 	int 	 lfs_cleanind;		/* Index into intervals */
 	int lfs_sleepers;		/* # procs sleeping this fs */
+	kcondvar_t lfs_sleeperscv;	
 	int lfs_pages;			/* dirty pages blaming this fs */
 	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
