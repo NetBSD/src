@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2114 2017/03/11 16:34:34 christos Exp $
+#	$NetBSD: mi,v 1.2115 2017/04/01 14:31:05 abhinav Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4075,6 +4075,7 @@
 ./usr/share/man/cat2/dup2.0			comp-c-catman		.cat
 ./usr/share/man/cat2/dup3.0			comp-c-catman		.cat
 ./usr/share/man/cat2/errno.0			comp-c-catman		.cat
+./usr/share/man/cat2/EV_SET.0			comp-c-catman		.cat
 ./usr/share/man/cat2/execve.0			comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_fd.0	comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_file.0	comp-c-catman		.cat
@@ -4161,6 +4162,7 @@
 ./usr/share/man/cat2/kevent.0			comp-c-catman		.cat
 ./usr/share/man/cat2/kill.0			comp-c-catman		.cat
 ./usr/share/man/cat2/kqueue.0			comp-c-catman		.cat
+./usr/share/man/cat2/kqueue1.0			comp-c-catman		.cat
 ./usr/share/man/cat2/ktrace.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lchflags.0			comp-c-catman		.cat
 ./usr/share/man/cat2/lchmod.0			comp-c-catman		.cat
@@ -6486,6 +6488,7 @@
 ./usr/share/man/cat3/free_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freeifaddrs.0		comp-c-catman		.cat
+./usr/share/man/cat3/freemntopts.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/frexp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fropen.0			comp-c-catman		.cat
@@ -6636,7 +6639,9 @@
 ./usr/share/man/cat3/getmaxy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getmaxyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getmntinfo.0		comp-c-catman		.cat
+./usr/share/man/cat3/getmntoptnum.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getmntopts.0		comp-c-catman		.cat
+./usr/share/man/cat3/getmntoptstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getmode.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getnameinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getnetbyaddr.0		comp-c-catman		.cat
@@ -11575,6 +11580,7 @@
 ./usr/share/man/html2/dup2.html			comp-c-htmlman		html
 ./usr/share/man/html2/dup3.html			comp-c-htmlman		html
 ./usr/share/man/html2/errno.html		comp-c-htmlman		html
+./usr/share/man/html2/EV_SET.html		comp-c-htmlman		html
 ./usr/share/man/html2/execve.html		comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_fd.html	comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_file.html	comp-c-htmlman		html
@@ -11655,6 +11661,7 @@
 ./usr/share/man/html2/kevent.html		comp-c-htmlman		html
 ./usr/share/man/html2/kill.html			comp-c-htmlman		html
 ./usr/share/man/html2/kqueue.html		comp-c-htmlman		html
+./usr/share/man/html2/kqueue1.html		comp-c-htmlman		html
 ./usr/share/man/html2/ktrace.html		comp-c-htmlman		html
 ./usr/share/man/html2/lchflags.html		comp-c-htmlman		html
 ./usr/share/man/html2/lchmod.html		comp-c-htmlman		html
@@ -13913,6 +13920,7 @@
 ./usr/share/man/html3/free_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/freeaddrinfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/freeifaddrs.html		comp-c-htmlman		html
+./usr/share/man/html3/freemntopts.html		comp-c-htmlman		html
 ./usr/share/man/html3/freopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/frexp.html		comp-c-htmlman		html
 ./usr/share/man/html3/fropen.html		comp-c-htmlman		html
@@ -14062,7 +14070,9 @@
 ./usr/share/man/html3/getmaxy.html		comp-c-htmlman		html
 ./usr/share/man/html3/getmaxyx.html		comp-c-htmlman		html
 ./usr/share/man/html3/getmntinfo.html		comp-c-htmlman		html
+./usr/share/man/html3/getmntoptnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/getmntopts.html		comp-c-htmlman		html
+./usr/share/man/html3/getmntoptstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/getmode.html		comp-c-htmlman		html
 ./usr/share/man/html3/getnameinfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/getnetbyaddr.html		comp-c-htmlman		html
@@ -18844,6 +18854,7 @@
 ./usr/share/man/man2/dup2.2			comp-c-man		.man
 ./usr/share/man/man2/dup3.2			comp-c-man		.man
 ./usr/share/man/man2/errno.2			comp-c-man		.man
+./usr/share/man/man2/EV_SET.2			comp-c-man		.man
 ./usr/share/man/man2/execve.2			comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_fd.2	comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_file.2	comp-c-man		.man
@@ -18929,6 +18940,7 @@
 ./usr/share/man/man2/kevent.2			comp-c-man		.man
 ./usr/share/man/man2/kill.2			comp-c-man		.man
 ./usr/share/man/man2/kqueue.2			comp-c-man		.man
+./usr/share/man/man2/kqueue1.2			comp-c-man		.man
 ./usr/share/man/man2/ktrace.2			comp-c-man		.man
 ./usr/share/man/man2/lchflags.2			comp-c-man		.man
 ./usr/share/man/man2/lchmod.2			comp-c-man		.man
@@ -21253,6 +21265,7 @@
 ./usr/share/man/man3/free_menu.3		comp-c-man		.man
 ./usr/share/man/man3/freeaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/freeifaddrs.3		comp-c-man		.man
+./usr/share/man/man3/freemntopts.3		comp-c-man		.man
 ./usr/share/man/man3/freopen.3			comp-c-man		.man
 ./usr/share/man/man3/frexp.3			comp-c-man		.man
 ./usr/share/man/man3/fropen.3			comp-c-man		.man
@@ -21403,7 +21416,9 @@
 ./usr/share/man/man3/getmaxy.3			comp-c-man		.man
 ./usr/share/man/man3/getmaxyx.3			comp-c-man		.man
 ./usr/share/man/man3/getmntinfo.3		comp-c-man		.man
+./usr/share/man/man3/getmntoptnum.3		comp-c-man		.man
 ./usr/share/man/man3/getmntopts.3		comp-c-man		.man
+./usr/share/man/man3/getmntoptstr.3		comp-c-man		.man
 ./usr/share/man/man3/getmode.3			comp-c-man		.man
 ./usr/share/man/man3/getnameinfo.3		comp-c-man		.man
 ./usr/share/man/man3/getnetbyaddr.3		comp-c-man		.man
