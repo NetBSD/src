@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.309 2017/04/01 14:43:00 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.310 2017/04/01 17:34:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.309 2017/04/01 14:43:00 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.310 2017/04/01 17:34:21 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -167,7 +167,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.309 2017/04/01 14:43:00 maya Exp $")
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern pid_t lfs_writer_daemon;
+extern kcondvar_t lfs_writerd_cv;
 int lfs_ignore_lazy_sync = 1;
 
 static int lfs_openextattr(void *v);
@@ -462,7 +462,7 @@ lfs_fsync(void *v)
 				TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip,
 						  i_lfs_pchain);
 			}
-			wakeup(&lfs_writer_daemon);
+			cv_broadcast(&lfs_writerd_cv);
 			mutex_exit(&lfs_lock);
 		}
 		return 0;
@@ -580,7 +580,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		}
 	}
 	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
-		wakeup(&lfs_writer_daemon);
+		cv_broadcast(&lfs_writerd_cv);
 		mutex_exit(&lfs_lock);
 		preempt();
 		goto restart;

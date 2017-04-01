@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.355 2017/04/01 14:43:00 maya Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.356 2017/04/01 17:34:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.355 2017/04/01 14:43:00 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.356 2017/04/01 17:34:21 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -128,8 +128,9 @@ extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
-pid_t lfs_writer_daemon = 0;
-lwpid_t lfs_writer_lid = 0;
+struct lwp * lfs_writer_daemon = NULL;
+kcondvar_t lfs_writerd_cv;
+
 int lfs_do_flush = 0;
 #ifdef LFS_KERNEL_RFW
 int lfs_do_rfw = 0;
@@ -395,8 +396,8 @@ lfs_writerd(void *arg)
 	int wrote_something = 0;
  
 	mutex_enter(&lfs_lock);
- 	lfs_writer_daemon = curproc->p_pid;
-	lfs_writer_lid = curlwp->l_lid;
+	KASSERTMSG(lfs_writer_daemon == NULL, "more than one LFS writer daemon");
+	lfs_writer_daemon = curlwp;
 	mutex_exit(&lfs_lock);
 
 	/* Take an extra reference to the LFS vfsops. */
@@ -406,9 +407,7 @@ lfs_writerd(void *arg)
  	for (;;) {
 		KASSERT(mutex_owned(&lfs_lock));
 		if (wrote_something == 0)
-			mtsleep(&lfs_writer_daemon, PVM, "lfswriter", hz/10 + 1,
-				&lfs_lock);
-
+			cv_timedwait(&lfs_writerd_cv, &lfs_lock, hz/10 + 1);
 		KASSERT(mutex_owned(&lfs_lock));
 		wrote_something = 0;
 
@@ -508,8 +507,7 @@ lfs_writerd(void *arg)
  		}
 		if (lfsc + skipc == 0) {
 			mutex_enter(&lfs_lock);
-			lfs_writer_daemon = 0;
-			lfs_writer_lid = 0;
+			lfs_writer_daemon = NULL;
 			mutex_exit(&lfs_lock);
 			mutex_exit(&mountlist_lock);
 			break;
@@ -557,6 +555,7 @@ lfs_init(void)
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
 	mutex_init(&lfs_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&lfs_writerd_cv, "lfswrite");
 	cv_init(&locked_queue_cv, "lfsbuf");
 	cv_init(&lfs_writing_cv, "lfsflush");
 }
@@ -572,6 +571,7 @@ lfs_done(void)
 {
 	ulfs_done();
 	mutex_destroy(&lfs_lock);
+	cv_destroy(&lfs_writerd_cv);
 	cv_destroy(&locked_queue_cv);
 	cv_destroy(&lfs_writing_cv);
 	pool_destroy(&lfs_inode_pool);
@@ -1298,7 +1298,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Start the pagedaemon-anticipating daemon */
 	mutex_enter(&lfs_lock);
-	if (lfs_writer_daemon == 0 && lfs_writer_lid == 0 &&
+	if (lfs_writer_daemon == NULL &&
 	    kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");

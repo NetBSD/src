@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.10 2017/03/30 09:10:08 hannken Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.11 2017/04/01 17:34:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.10 2017/03/30 09:10:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.11 2017/04/01 17:34:21 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.10 2017/03/30 09:10:08 hannken Exp $
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern pid_t lfs_writer_daemon;
+extern kcondvar_t lfs_writerd_cv;
 
 static int check_dirty(struct lfs *, struct vnode *, off_t, off_t, off_t, int, int, struct vm_page **);
 
@@ -691,8 +691,8 @@ retry:
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-		} 
-		wakeup(&lfs_writer_daemon);
+		}
+		cv_broadcast(&lfs_writerd_cv);
 		mutex_exit(&lfs_lock);
 		preempt();
 		KASSERT(!mutex_owned(vp->v_interlock));
