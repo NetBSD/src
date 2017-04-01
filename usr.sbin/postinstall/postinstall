@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.211 2017/04/01 19:14:10 roy Exp $
+# $NetBSD: postinstall,v 1.212 2017/04/01 20:03:31 roy Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -902,6 +902,11 @@ do_dhcpcd()
 	move_file "${op}" \
 		"${DEST_DIR}/etc/dhcpcd.secret" \
 		"${DEST_DIR}/var/db/dhcpcd/secret"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
