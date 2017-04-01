@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.354 2017/04/01 01:50:02 maya Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.355 2017/04/01 14:43:00 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.354 2017/04/01 01:50:02 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.355 2017/04/01 14:43:00 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1098,6 +1098,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	rw_init(&fs->lfs_fraglock);
 	rw_init(&fs->lfs_iflock);
 	cv_init(&fs->lfs_sleeperscv, "lfs_slp");
+	cv_init(&fs->lfs_diropscv, "lfs_dirop");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 
 	/* Set the file system readonly/modify bits. */
@@ -1415,6 +1416,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	free(fs->lfs_suflags, M_SEGMENT);
 	lfs_free_resblks(fs);
 	cv_destroy(&fs->lfs_sleeperscv);
+	cv_destroy(&fs->lfs_diropscv);
 	cv_destroy(&fs->lfs_stopcv);
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);
