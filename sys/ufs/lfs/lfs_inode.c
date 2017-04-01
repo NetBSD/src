@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.154 2017/03/31 23:00:21 maya Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.155 2017/04/01 00:40:42 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.154 2017/03/31 23:00:21 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.155 2017/04/01 00:40:42 maya Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -856,7 +856,7 @@ static int
 lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int error;
+	int error = 0;
 	struct lfs *fs;
 	voff_t off;
 
@@ -879,10 +879,9 @@ restart:
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
-		if (error != 0) {
-			mutex_exit(&bufcache_lock);
-			return (error);
-		}
+		if (error)
+			goto exit;
+
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
@@ -901,10 +900,9 @@ restart:
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
-		if (error != 0) {
-			mutex_exit(&bufcache_lock);
-			return (error);
-		}
+		if (error)
+			goto exit;
+
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
@@ -915,8 +913,9 @@ restart:
 		LFS_UNLOCK_BUF(bp);
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
+exit:
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return error;
 }
 
