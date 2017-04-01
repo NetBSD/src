@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.232 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.233 2017/04/01 19:35:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.232 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.233 2017/04/01 19:35:57 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -959,6 +959,8 @@ extern int syncprt;
 static bool
 nfs_sync_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
 }
