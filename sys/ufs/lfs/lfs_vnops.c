@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.308 2017/04/01 01:50:02 maya Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.309 2017/04/01 14:43:00 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.308 2017/04/01 01:50:02 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.309 2017/04/01 14:43:00 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -573,8 +573,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		mutex_enter(&lfs_lock);
 	}
 	while (fs->lfs_writer) {
-		error = mtsleep(&fs->lfs_dirops, (PRIBIO + 1) | PCATCH,
-		    "lfs_sdirop", 0, &lfs_lock);
+		error = cv_wait_sig(&fs->lfs_diropscv, &lfs_lock);
 		if (error == EINTR) {
 			mutex_exit(&lfs_lock);
 			goto unreserve;
