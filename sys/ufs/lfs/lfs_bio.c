@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.136 2017/03/13 14:24:20 riastradh Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.137 2017/04/01 17:34:21 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.136 2017/03/13 14:24:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.137 2017/04/01 17:34:21 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	int error;
 	struct lfs *fs;
 	struct inode *ip;
-	extern pid_t lfs_writer_daemon;
+	extern kcondvar_t lfs_writerd_cv;
 
 	error = 0;
 	ip = VTOI(vp);
@@ -660,7 +660,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * still might want to be flushed.
 		 */
 		++fs->lfs_pdflush;
-		wakeup(&lfs_writer_daemon);
+		cv_broadcast(&lfs_writerd_cv);
 	}
 
 	while (locked_queue_count + INOCOUNT(fs) >= LFS_WAIT_BUFS ||
