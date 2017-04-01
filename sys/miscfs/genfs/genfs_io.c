@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.67 2017/04/01 19:57:54 riastradh Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.68 2017/04/01 23:34:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.67 2017/04/01 19:57:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.68 2017/04/01 23:34:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,6 +508,10 @@ out_err:
 
 /*
  * genfs_getpages_read: Read the pages in with VOP_BMAP/VOP_STRATEGY.
+ *
+ * "glocked" (which is currently not actually used) tells us not whether
+ * the genfs_node is locked on entry (it always is) but whether it was
+ * locked on entry to genfs_getpages.
  */
 static int
 genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
