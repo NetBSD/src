@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.66 2017/03/30 09:12:21 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.67 2017/04/01 19:57:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.66 2017/03/30 09:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.67 2017/04/01 19:57:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,11 +428,11 @@ startover:
 	mutex_exit(uobj->vmobjlock);
 	error = genfs_getpages_read(vp, pgs, npages, startoffset, diskeof,
 	    async, memwrite, blockalloc, glocked);
-	if (error == 0 && async)
-		goto out_err_free;
 	if (!glocked) {
 		genfs_node_unlock(vp);
 	}
+	if (error == 0 && async)
+		goto out_err_free;
 	mutex_enter(uobj->vmobjlock);
 
 	/*
@@ -714,9 +714,6 @@ loopdone:
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
-		if (!glocked) {
-			genfs_node_unlock(vp);
-		}
 		return 0;
 	}
 	if (bp != NULL) {
