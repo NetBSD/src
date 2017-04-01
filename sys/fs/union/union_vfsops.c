@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.77 2017/03/06 10:10:07 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.78 2017/04/01 19:35:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.77 2017/03/06 10:10:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.78 2017/04/01 19:35:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,6 +321,8 @@ static bool
 union_unmount_selector(void *cl, struct vnode *vp)
 {
 	int *count = cl;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	*count += 1;
 	return false;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.205 2017/02/17 08:31:26 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.206 2017/04/01 19:35:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.205 2017/02/17 08:31:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.206 2017/04/01 19:35:57 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -881,6 +881,8 @@ static bool
 ext2fs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct inode *ip;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	ip = VTOI(vp);
 	/*
