@@ -2741,8 +2741,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	unsigned int i;
 	char *msg;
 	bool bootp_copied;
-	const uint8_t *auth;
 #ifdef AUTH
+	const uint8_t *auth;
 	size_t auth_len;
 #endif
 #ifdef IN_IFF_DUPLICATED
@@ -2812,8 +2812,6 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		}
 		LOGDHCP0(LOG_WARNING, "no authentication");
 	}
-#else
-	auth = NULL;
 #endif
 
 	/* RFC 3203 */
@@ -2824,8 +2822,9 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			LOGDHCP(LOG_ERR, "discarding Force Renew");
 			return;
 		}
+#ifdef AUTH
 		if (auth == NULL) {
-			LOGDHCP(LOG_ERR, "unauthenticated Force Renew");
+			LOGDHCP(LOG_ERR, "unauthenticated force renew");
 			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
 				return;
 		}
@@ -2843,6 +2842,9 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			    send_inform, ifp);
 			dhcp_inform(ifp);
 		}
+#else
+		LOGDHCP(LOG_ERR, "unauthenticated force renew");
+#endif
 		return;
 	}
 

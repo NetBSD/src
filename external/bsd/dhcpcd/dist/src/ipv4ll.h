@@ -66,13 +66,13 @@ void ipv4ll_handle_failure(void *);
 int ipv4ll_recvrt(int, const struct rt *);
 #endif
 
-#define	ipv4ll_free(ifp) ipv4ll_freedrop((ifp), 0);
-#define	ipv4ll_drop(ifp) ipv4ll_freedrop((ifp), 1);
+#define	ipv4ll_free(ifp)		ipv4ll_freedrop((ifp), 0);
+#define	ipv4ll_drop(ifp)		ipv4ll_freedrop((ifp), 1);
 void ipv4ll_freedrop(struct interface *, int);
 #else
 #define	IPV4LL_STATE_RUNNING(ifp)	(0)
-#define	ipv4ll_subnet_route(ifp)	(NULL)
-#define	ipv4ll_default_route(ifp)	(NULL)
+#define	ipv4ll_subnetroute(route, ifp)	(0)
+#define	ipv4ll_defaultroute(route, ifp)	(0)
 #define	ipv4ll_handlert(a, b, c)	(0)
 #define	ipv4ll_free(a)			{}
 #define	ipv4ll_drop(a)			{}
