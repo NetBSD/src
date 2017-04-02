@@ -83,38 +83,9 @@ snapshot:
 	tar cf - -C /tmp ${DISTPREFIX} | xz >${DISTFILE}
 	ls -l ${DISTFILE}
 
-import: ${SRCS} hooks
+import: dist
 	rm -rf /tmp/${DISTPREFIX}
 	${INSTALL} -d /tmp/${DISTPREFIX}
-	cp genembedc genembedh /tmp/${DISTPREFIX}
-	cp $$(echo ${SRCS} | sed -e 's/\(dhcpcd-embedded.[ch]\)/\1.in/') \
-		/tmp/${DISTPREFIX}
-	cp dhcpcd.conf dhcpcd-definitions.conf *.in /tmp/${DISTPREFIX}
-	cp dhcpcd-definitions-small.conf *.in /tmp/${DISTPREFIX}
-	cp $$(${CC} ${CPPFLAGS} -DDEPGEN -MM \
-		$$(echo ${SRCS} | sed -e 's/dhcpcd-embedded.c//') | \
-		sed -e 's/^.*\.c //g' -e 's/.*\.c$$//g' -e 's/\\//g' | \
-		tr ' ' '\n' | \
-		sed -e '/^dhcpcd-embedded.h$$/d' | \
-		sed -e '/^compat\//d' | \
-		sed -e '/^crypt\//d' | \
-		sort -u) /tmp/${DISTPREFIX}; \
-	if test -n "${CRYPT_SRCS}"; then \
-		${INSTALL} -d /tmp/${DISTPREFIX}/crypt; \
-		cp ${CRYPT_SRCS} /tmp/${DISTPREFIX}/crypt; \
-		cp $$(${CC} ${CPPFLAGS} -DDEPGEN -MM ${CRYPT_SRCS} | \
-			sed -e 's/^.*c //g' -e 's/.*\.c$$//g' -e 's/\\//g' | \
-			tr ' ' '\n' | sed -e '/\/\.\.\//d'  | \
-			sort -u) /tmp/${DISTPREFIX}/crypt; \
-	fi;
-	if test -n "${COMPAT_SRCS}"; then \
-		${INSTALL} -d /tmp/${DISTPREFIX}/compat; \
-		cp ${COMPAT_SRCS} /tmp/${DISTPREFIX}/compat; \
-		cp $$(${CC} ${CPPFLAGS} -DDEPGEN -MM ${COMPAT_SRCS} | \
-			sed -e 's/^.*c //g' -e 's/.*\.c$$//g' -e 's/\\//g' | \
-			tr ' ' '\n' | \
-			sort -u) /tmp/${DISTPREFIX}/compat; \
-	fi;
-	cd dhcpcd-hooks; ${MAKE} DISTPREFIX=${DISTPREFIX} $@
+	tar xvJpf ${DISTFILE} -C /tmp
 
 include Makefile.inc

@@ -635,9 +635,11 @@ dhcp6_makemessage(struct interface *ifp)
 		if (ifo->mudurl[0])
 			len += sizeof(o) + ifo->mudurl[0];
 
+#ifdef AUTH
 		if ((ifo->auth.options & DHCPCD_AUTH_SENDREQUIRE) !=
 		    DHCPCD_AUTH_SENDREQUIRE)
 			len += sizeof(o); /* Reconfigure Accept */
+#endif
 	}
 
 	len += sizeof(*state->send);
@@ -906,11 +908,12 @@ dhcp6_makemessage(struct interface *ifp)
 		if (ifo->mudurl[0])
 			COPYIN(D6_OPTION_MUDURL,
 			    ifo->mudurl + 1, ifo->mudurl[0]);
-		
 
+#ifdef AUTH
 		if ((ifo->auth.options & DHCPCD_AUTH_SENDREQUIRE) !=
 		    DHCPCD_AUTH_SENDREQUIRE)
 			COPYIN1(D6_OPTION_RECONF_ACCEPT, 0);
+#endif
 
 		if (n_options) {
 			o_lenp = NEXTLEN;
@@ -2885,8 +2888,6 @@ dhcp6_handledata(void *arg)
 		syslog(LOG_WARNING, "%s: no authentication from %s",
 		    ifp->name, ctx->sfrom);
 	}
-#else
-	auth = NULL;
 #endif
 
 	op = dhcp6_get_op(r->type);
@@ -2996,11 +2997,14 @@ dhcp6_handledata(void *arg)
 			return;
 		break;
 	case DHCP6_RECONFIGURE:
+#ifdef AUTH
 		if (auth == NULL) {
+#endif
 			syslog(LOG_ERR, "%s: unauthenticated %s from %s",
 			    ifp->name, op, ctx->sfrom);
 			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
 				return;
+#ifdef AUTH
 		}
 		syslog(LOG_INFO, "%s: %s from %s",
 		    ifp->name, op, ctx->sfrom);
@@ -3041,6 +3045,7 @@ dhcp6_handledata(void *arg)
 			break;
 		}
 		return;
+#endif
 	default:
 		syslog(LOG_ERR, "%s: invalid DHCP6 type %s (%d)",
 		    ifp->name, op, r->type);

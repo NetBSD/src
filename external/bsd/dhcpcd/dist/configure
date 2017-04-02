@@ -83,8 +83,6 @@ for x do
 	--without-arc4random) ARC4RANDOM=no;;
 	--without-strlcpy) STRLCPY=no;;
 	--without-pidfile_lock) PIDFILE_LOCK=no;;
-	--with-printf_m) HAVE_PRINTF_M=yes;;
-	--without-printf_m) HAVE_PRINTF_M=no;;
 	--without-reallocarrray) REALLOCARRAY=no;;
 	--without-md5) MD5=no;;
 	--without-sha2) SHA2=no;;
@@ -832,37 +830,6 @@ fi
 if [ "$DPRINTF" = no ]; then
 	echo "COMPAT_SRCS+=	compat/dprintf.c" >>$CONFIG_MK
 	echo "#include		\"compat/dprintf.h\"" >>$CONFIG_H
-fi
-
-if [ -z "$HAVE_PRINTF_M" ]; then
-	printf "Testing for printf %%m support ..."
-	cat <<EOF >_printf_m.c
-#include <sys/param.h>
-#include <stdio.h>
-#ifdef __GLIBC__
-/* glibc has always had it */
-#elif defined(__UCLIBC_HAS_PRINTF_M_SPEC__)
-/* test uClibc */
-#else
-/* If you're using musl libc (or any other libc with printf %m support),
- * you'll have to pass --with-printf_m to configure to shrink the binary
- * size. */
-#error libc does not support printf %m
-#endif
-int main(void) {
-	return printf("%m\n");
-}
-EOF
-	if $XCC _printf_m.c -o _printf_m 2>&3; then
-		HAVE_PRINTF_M=yes
-	else
-		HAVE_PRINTF_M=no
-	fi
-	echo "$HAVE_PRINTF_M"
-	rm -f _printf_m.c _printf_m
-fi
-if [ "$HAVE_PRINTF_M" = yes ]; then
-	echo "#define HAVE_PRINTF_M" >>$CONFIG_H
 fi
 
 if [ -z "$TAILQ_FOREACH_SAFE" ]; then

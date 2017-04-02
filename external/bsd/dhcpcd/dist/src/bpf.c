@@ -424,7 +424,7 @@ static const struct bpf_insn bpf_arp_filter [] = {
 int
 bpf_arp(struct interface *ifp, int fd)
 {
-	size_t bpf_hw = ((((size_t)ifp->hwlen / 4) + 2) * 2) + 1;
+	size_t bpf_hw = (((sizeof(ifp->hwaddr) / 4) + 2) * 2) + 1;
 	struct bpf_insn bpf[3 + bpf_arp_filter_len + bpf_hw + bpf_arp_extra];
 	struct bpf_insn *bp;
 	struct iarp_state *state;
