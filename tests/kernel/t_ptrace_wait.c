@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.84 2017/03/28 13:16:30 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.85 2017/04/02 00:03:40 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.84 2017/03/28 13:16:30 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.85 2017/04/02 00:03:40 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4394,14 +4394,8 @@ ATF_TC_BODY(fpregs2, tc)
 #endif
 
 #if defined(PT_STEP)
-ATF_TC(step1);
-ATF_TC_HEAD(step1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify single PT_STEP call");
-}
-
-ATF_TC_BODY(step1, tc)
+static void
+ptrace_step(int N)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -4422,12 +4416,12 @@ ATF_TC_BODY(step1, tc)
 		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		happy = check_happy(100);
+		happy = check_happy(999);
 
 		printf("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		FORKEE_ASSERT_EQ(happy, check_happy(100));
+		FORKEE_ASSERT_EQ(happy, check_happy(999));
 
 		printf("Before exiting of the child process\n");
 		_exit(exitval);
@@ -4439,14 +4433,17 @@ ATF_TC_BODY(step1, tc)
 
 	validate_status_stopped(status, sigval);
 
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent (use PT_STEP)\n");
-	ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
+	while (N --> 0) {
+		printf("Before resuming the child process where it left off "
+		    "and without signal to be sent (use PT_STEP)\n");
+		ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
 
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+		printf("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		    child);
 
-	validate_status_stopped(status, SIGTRAP);
+		validate_status_stopped(status, SIGTRAP);
+	}
 
 	printf("Before resuming the child process where it left off and "
 	    "without signal to be sent\n");
@@ -4459,6 +4456,20 @@ ATF_TC_BODY(step1, tc)
 
 	printf("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+#endif
+
+#if defined(PT_STEP)
+ATF_TC(step1);
+ATF_TC_HEAD(step1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify single PT_STEP call");
+}
+
+ATF_TC_BODY(step1, tc)
+{
+	ptrace_step(1);
 }
 #endif
 
@@ -4472,66 +4483,7 @@ ATF_TC_HEAD(step2, tc)
 
 ATF_TC_BODY(step2, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	int happy;
-	int N = 2;
-
-#if defined(__arm__)
-	/* PT_STEP not supported on arm 32-bit */
-	atf_tc_expect_fail("PR kern/52119");
-#endif
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		happy = check_happy(999);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT_EQ(happy, check_happy(999));
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	while (N --> 0) {
-		printf("Before resuming the child process where it left off "
-		    "and without signal to be sent (use PT_STEP)\n");
-		ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
-
-		printf("Before calling %s() for the child\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
-		    child);
-
-		validate_status_stopped(status, SIGTRAP);
-	}
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	ptrace_step(2);
 }
 #endif
 
@@ -4545,66 +4497,7 @@ ATF_TC_HEAD(step3, tc)
 
 ATF_TC_BODY(step3, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	int happy;
-	int N = 3;
-
-#if defined(__arm__)
-	/* PT_STEP not supported on arm 32-bit */
-	atf_tc_expect_fail("PR kern/52119");
-#endif
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		happy = check_happy(999);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT_EQ(happy, check_happy(999));
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	while (N --> 0) {
-		printf("Before resuming the child process where it left off "
-		    "and without signal to be sent (use PT_STEP)\n");
-		ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
-
-		printf("Before calling %s() for the child\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
-		    child);
-
-		validate_status_stopped(status, SIGTRAP);
-	}
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	ptrace_step(3);
 }
 #endif
 
@@ -4618,66 +4511,7 @@ ATF_TC_HEAD(step4, tc)
 
 ATF_TC_BODY(step4, tc)
 {
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	int happy;
-	int N = 4;
-
-#if defined(__arm__)
-	/* PT_STEP not supported on arm 32-bit */
-	atf_tc_expect_fail("PR kern/52119");
-#endif
-
-	printf("Before forking process PID=%d\n", getpid());
-	ATF_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		printf("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		happy = check_happy(999);
-
-		printf("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		FORKEE_ASSERT_EQ(happy, check_happy(999));
-
-		printf("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	printf("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	while (N --> 0) {
-		printf("Before resuming the child process where it left off "
-		    "and without signal to be sent (use PT_STEP)\n");
-		ATF_REQUIRE(ptrace(PT_STEP, child, (void *)1, 0) != -1);
-
-		printf("Before calling %s() for the child\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
-		    child);
-
-		validate_status_stopped(status, SIGTRAP);
-	}
-
-	printf("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	ATF_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	printf("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+	ptrace_step(3);
 }
 #endif
 
