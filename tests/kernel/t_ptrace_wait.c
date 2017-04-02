@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.85 2017/04/02 00:03:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.86 2017/04/02 00:29:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.85 2017/04/02 00:03:40 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.86 2017/04/02 00:29:07 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.85 2017/04/02 00:03:40 kamil Exp $");
 #include <err.h>
 #include <errno.h>
 #include <lwp.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -7445,6 +7446,8 @@ ATF_TC_BODY(syscallemu1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+#include "t_ptrace_x86_wait.h"
+
 ATF_TP_ADD_TCS(tp)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -7576,6 +7579,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, syscall1);
 
 	ATF_TP_ADD_TC(tp, syscallemu1);
+
+	ATF_TP_ADD_TCS_PTRACE_WAIT_X86();
 
 	return atf_no_error();
 }
