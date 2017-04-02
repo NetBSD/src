@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2016/12/14 06:19:59 kamil Exp $
+# $NetBSD: Makefile,v 1.45 2017/04/02 01:49:52 kamil Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,6 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/kernel
 
-TESTS_SUBDIRS=	arch
 TESTS_SUBDIRS+=	kqueue
 TESTS_C=	t_lock
 TESTS_C+=	t_lockf
