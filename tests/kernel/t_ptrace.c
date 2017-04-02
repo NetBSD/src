@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace.c,v 1.19 2017/04/01 23:51:27 kamil Exp $	*/
+/*	$NetBSD: t_ptrace.c,v 1.20 2017/04/02 00:06:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.19 2017/04/01 23:51:27 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace.c,v 1.20 2017/04/02 00:06:09 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -112,7 +112,7 @@ ATF_TC_BODY(attach_pid1_securelevel, tc)
 	    != -1);
 
 	if (level < 0) {
-		atf_tc_skip("Test must be run with securelevel >= 1");
+		atf_tc_skip("Test must be run with securelevel >= 0");
 	}
 
 	ATF_REQUIRE_ERRNO(EPERM, ptrace(PT_ATTACH, 1, NULL, 0) == -1);
