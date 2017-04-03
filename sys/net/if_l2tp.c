@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.3 2017/04/03 10:08:24 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.4 2017/04/03 10:17:17 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.3 2017/04/03 10:08:24 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.4 2017/04/03 10:17:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -217,6 +217,8 @@ l2tpdetach(void)
 	psref_class_destroy(lv_psref_class);
 	pserialize_destroy(l2tp_psz);
 	mutex_destroy(&l2tp_hash.lock);
+
+	mutex_destroy(&l2tp_softcs.lock);
 
 	return error;
 }
