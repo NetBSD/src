@@ -419,13 +419,13 @@ static const struct bpf_insn bpf_arp_filter [] = {
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
 #define bpf_arp_filter_len	__arraycount(bpf_arp_filter)
-#define bpf_arp_extra		(((ARP_ADDRS_MAX + 1) * 2) * 2) + 2
+#define bpf_arp_extra		((((ARP_ADDRS_MAX + 1) * 2) * 2) + 2)
+#define bpf_arp_hw		((((HWADDR_LEN / 4) + 2) * 2) + 1)
 
 int
 bpf_arp(struct interface *ifp, int fd)
 {
-	size_t bpf_hw = (((sizeof(ifp->hwaddr) / 4) + 2) * 2) + 1;
-	struct bpf_insn bpf[3 + bpf_arp_filter_len + bpf_hw + bpf_arp_extra];
+	struct bpf_insn bpf[3+ bpf_arp_filter_len + bpf_arp_hw + bpf_arp_extra];
 	struct bpf_insn *bp;
 	struct iarp_state *state;
 
@@ -449,7 +449,7 @@ bpf_arp(struct interface *ifp, int fd)
 	bp += bpf_arp_filter_len;
 
 	/* Ensure it's not from us. */
-	bp += bpf_cmp_hwaddr(bp, bpf_hw, sizeof(struct arphdr),
+	bp += bpf_cmp_hwaddr(bp, bpf_arp_hw, sizeof(struct arphdr),
 	                     false, ifp->hwaddr, ifp->hwlen);
 
 	state = ARP_STATE(ifp);
