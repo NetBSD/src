@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.319 2017/03/29 06:24:22 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.320 2017/04/03 04:09:12 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.319 2017/03/29 06:24:22 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.320 2017/04/03 04:09:12 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2087,6 +2087,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	n = 1;
 	SIMPLEQ_FOREACH(chan, &sc->sc_audiochan, entries) {
 		if (chan == SIMPLEQ_FIRST(&sc->sc_audiochan))
+			continue;
+		if (chan->chan == MIXER_INUSE)
 			continue;
 		n = chan->chan + 1;
 	}
