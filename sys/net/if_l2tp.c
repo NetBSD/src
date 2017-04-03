@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.2 2017/03/30 06:42:05 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.3 2017/04/03 10:08:24 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.2 2017/03/30 06:42:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.3 2017/04/03 10:08:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -301,6 +301,12 @@ l2tp_clone_destroy(struct ifnet *ifp)
 
 	l2tp_clear_session(sc);
 	l2tp_delete_tunnel(&sc->l2tp_ec.ec_if);
+	/*
+	 * To avoid for l2tp_transmit() to access sc->l2tp_var after free it.
+	 */
+	mutex_enter(&sc->l2tp_lock);
+	l2tp_variant_update(sc, NULL);
+	mutex_exit(&sc->l2tp_lock);
 
 	mutex_enter(&l2tp_softcs.lock);
 	LIST_REMOVE(sc, l2tp_list);
