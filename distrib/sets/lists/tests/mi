@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.732 2017/04/02 21:44:00 kamil Exp $
+# $NetBSD: mi,v 1.733 2017/04/03 05:06:28 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2160,13 +2160,13 @@
 ./usr/tests/kernel/t_posix_fadvise		tests-obsolete		obsolete
 ./usr/tests/kernel/t_posix_fallocate		tests-obsolete		obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace			tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_wait		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_wait3		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_wait4		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_wait6		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_waitid		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/t_ptrace_waitpid		tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_ptrace			tests-obsolete		obsolete
+./usr/tests/kernel/t_ptrace_wait		tests-obsolete		obsolete
+./usr/tests/kernel/t_ptrace_wait3		tests-obsolete		obsolete
+./usr/tests/kernel/t_ptrace_wait4		tests-obsolete		obsolete
+./usr/tests/kernel/t_ptrace_wait6		tests-obsolete		obsolete
+./usr/tests/kernel/t_ptrace_waitid		tests-obsolete		obsolete
+./usr/tests/kernel/t_ptrace_waitpid		tests-obsolete		obsolete
 ./usr/tests/kernel/t_pty			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_sigaction			tests-obsolete		obsolete
