@@ -1,3 +1,5 @@
+/* $NetBSD: quota.h,v 1.7 2017/04/04 12:25:40 sevan Exp $ */
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
