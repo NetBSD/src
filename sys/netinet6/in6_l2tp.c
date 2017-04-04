@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.4 2017/04/04 16:49:15 sevan Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.5 2017/04/04 23:49:18 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.4 2017/04/04 16:49:15 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.5 2017/04/04 23:49:18 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.4 2017/04/04 16:49:15 sevan Exp $");
 #ifdef ALTQ
 #include <altq/altq.h>
 #endif
-
-#include <net/if_vlanvar.h>
 
 /* TODO: IP_TCPMSS support */
 #undef IP_TCPMSS
