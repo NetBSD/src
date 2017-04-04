@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.6 2017/04/04 10:25:38 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.7 2017/04/04 16:49:15 sevan Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,13 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.6 2017/04/04 10:25:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.7 2017/04/04 16:49:15 sevan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
-
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.6 2017/04/04 10:25:38 knakahara Exp $"
 #include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
+#include <net/if_vlanvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -1391,16 +1390,13 @@ l2tp_tcpmss_clamp(struct ifnet *ifp, struct mbuf	*m)
 
 	if (l2tp_need_tcpmss_clamp(ifp)) {
 		struct ether_header *eh;
-#if NVLAN > 0
 		struct ether_vlan_header evh;
-#endif
 
 		/* save ether header */
 		m_copydata(m, 0, sizeof(evh), (void *)&evh);
 		eh = (struct ether_header *)&evh;
 
 		switch (ntohs(eh->ether_type)) {
-#if NVLAN > 0
 		case ETHERTYPE_VLAN: /* Ether + VLAN */
 			if (m->m_pkthdr.len <= sizeof(struct ether_vlan_header))
 				break;
@@ -1430,7 +1426,6 @@ l2tp_tcpmss_clamp(struct ifnet *ifp, struct mbuf	*m)
 				return NULL;
 			*mtod(m, struct ether_vlan_header *) = evh;
 			break;
-#endif /* NVLAN > 0 */
 #ifdef INET
 		case ETHERTYPE_IP: /* Ether + IPv4 */
 			if (m->m_pkthdr.len <= sizeof(struct ether_header))
