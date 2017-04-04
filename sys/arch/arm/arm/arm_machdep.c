@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.50 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.51 2017/04/04 11:46:12 sevan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.50 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.51 2017/04/04 11:46:12 sevan Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -121,10 +121,14 @@ struct cpu_info cpu_info_store = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info *cpu_info[MAXCPUS] = {
+#define	NCPUINFO	MAXCPUS
+#else
+#define	NCPUINFO	1
+#endif
+
+struct cpu_info *cpu_info[NCPUINFO] = {
 	[0] = &cpu_info_store
 };
-#endif
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 #if defined(FPU_VFP)
