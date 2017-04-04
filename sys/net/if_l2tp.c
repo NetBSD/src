@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.7 2017/04/04 16:49:15 sevan Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.8 2017/04/04 23:49:17 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.7 2017/04/04 16:49:15 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.8 2017/04/04 23:49:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.7 2017/04/04 16:49:15 sevan Exp $");
 
 #include <net/if_l2tp.h>
 
-#if NVLAN > 0
 #include <net/if_vlanvar.h>
-#endif
 
 /* TODO: IP_TCPMSS support */
 #undef IP_TCPMSS
@@ -1266,9 +1264,7 @@ l2tp_set_state(struct l2tp_softc *sc, int state)
 	mutex_exit(&sc->l2tp_lock);
 
 #ifdef NOTYET
-#if NVLAN > 0
 	vlan_linkstate_notify(ifp, ifp->if_link_state);
-#endif
 #endif
 }
 
