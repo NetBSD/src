@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.4 2017/04/03 10:17:17 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.5 2017/04/04 04:34:43 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.4 2017/04/03 10:17:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.5 2017/04/04 04:34:43 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -298,6 +298,7 @@ l2tp_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 static int
 l2tp_clone_destroy(struct ifnet *ifp)
 {
+	struct l2tp_variant *var;
 	struct l2tp_softc *sc = container_of(ifp, struct l2tp_softc,
 	    l2tp_ec.ec_if);
 
@@ -307,6 +308,7 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	 * To avoid for l2tp_transmit() to access sc->l2tp_var after free it.
 	 */
 	mutex_enter(&sc->l2tp_lock);
+	var = sc->l2tp_var;
 	l2tp_variant_update(sc, NULL);
 	mutex_exit(&sc->l2tp_lock);
 
@@ -321,7 +323,7 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_fini_pc, NULL);
 	percpu_free(sc->l2tp_ro_percpu, sizeof(struct l2tp_ro));
 
-	kmem_free(sc->l2tp_var, sizeof(struct l2tp_variant));
+	kmem_free(var, sizeof(struct l2tp_variant));
 	mutex_destroy(&sc->l2tp_lock);
 	kmem_free(sc, sizeof(struct l2tp_softc));
 
@@ -1166,10 +1168,13 @@ l2tp_variant_update(struct l2tp_softc *sc, struct l2tp_variant *nvar)
 	 * In the manual of atomic_swap_ptr(3), there is no mention if 2nd
 	 * argument is rewrite or not. So, use sc->l2tp_var instead of nvar.
 	 */
-	if (sc->l2tp_var->lv_psrc != NULL && sc->l2tp_var->lv_pdst != NULL)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
+	if (sc->l2tp_var != NULL) {
+		if (sc->l2tp_var->lv_psrc != NULL
+		    && sc->l2tp_var->lv_pdst != NULL)
+			ifp->if_flags |= IFF_RUNNING;
+		else
+			ifp->if_flags &= ~IFF_RUNNING;
+	}
 }
 
 static int
