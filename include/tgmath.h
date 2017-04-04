@@ -1,3 +1,5 @@
+/* $NetBSD: tgmath.h,v 1.2 2017/04/04 12:25:40 sevan Exp $ */
+
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
