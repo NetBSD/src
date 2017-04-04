@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.85 2017/02/17 08:31:23 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.86 2017/04/04 07:36:38 hannken Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.85 2017/02/17 08:31:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.86 2017/04/04 07:36:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,23 +624,20 @@ getNewVnode(struct vnode **vpp)
 		      NULL, NULL);
 }
 
-#include <ufs/ufs/quota.h>
-#include <ufs/ufs/ufsmount.h>
-/* get the mount structure corresponding to a given device.  Assume
- * device corresponds to a UFS. Return NULL if no device is found.
+/* Get the mount structure corresponding to a given device.
+ * Return NULL if no device is found or the device is not mounted.
  */
 struct mount *devtomp(dev_t dev)
 {
     struct mount *mp;
+    struct vnode *vp;
 
-    mutex_enter(&mountlist_lock);
-    TAILQ_FOREACH(mp, &mountlist, mnt_list) {
-	if ((!strcmp(mp->mnt_op->vfs_name, MOUNT_UFS)) &&
-	    ((VFSTOUFS(mp))->um_dev == (dev_t) dev)) {
-	    /* mount corresponds to UFS and the device matches one we want */
-	    break;
-	}
+    if (spec_node_lookup_by_dev(VBLK, dev, &vp) == 0) {
+	mp = spec_node_getmountedfs(vp);
+	vrele(vp);
+    } else {
+	mp = NULL;
     }
-    mutex_exit(&mountlist_lock);
+
     return mp;
 }
