@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.170 2017/03/30 16:50:32 jdolecek Exp $	*/
+/*	$NetBSD: ccd.c,v 1.171 2017/04/05 18:34:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.170 2017/03/30 16:50:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.171 2017/04/05 18:34:56 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1432,7 +1432,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			if (i == 0)
 				dkcache = j;
 			else
-				dkcache &= j;
+				dkcache = DKCACHE_COMBINE(dkcache, j);
 		}
 
 		*((int *)data) = dkcache;
