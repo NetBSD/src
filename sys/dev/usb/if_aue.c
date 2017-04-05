@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.2.1 2017/04/05 19:54:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,16 +71,16 @@
  * TODO:
  * better error messages from rxstat
  * split out if_auevar.h
- * add thread to avoid register reads from interrupt context
  * more error checks
  * investigate short rx problem
  * proper cleanup on errors
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.2.1 2017/04/05 19:54:19 snj Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_usb.h"
 #include "opt_inet.h"
 #endif
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $");
 #include <sys/sockio.h>
 #include <sys/mutex.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -137,7 +136,7 @@ int	auedebug = 0;
  */
 struct aue_type {
 	struct usb_devno	aue_dev;
-	u_int16_t		aue_flags;
+	uint16_t		aue_flags;
 #define LSYS	0x0001		/* use Linksys reset */
 #define PNA	0x0002		/* has Home PNA */
 #define PII	0x0004		/* Pegasus II chip */
@@ -217,24 +216,27 @@ extern struct cfdriver aue_cd;
 CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
     aue_detach, aue_activate);
 
-Static void aue_multithread(void *);
-
-Static void aue_reset_pegasus_II(struct aue_softc *sc);
+Static void aue_reset_pegasus_II(struct aue_softc *);
 Static int aue_tx_list_init(struct aue_softc *);
+Static void aue_tx_list_free(struct aue_softc *);
 Static int aue_rx_list_init(struct aue_softc *);
+Static void aue_rx_list_free(struct aue_softc *);
 Static int aue_newbuf(struct aue_softc *, struct aue_chain *, struct mbuf *);
 Static int aue_send(struct aue_softc *, struct mbuf *, int);
-Static void aue_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void aue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void aue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void aue_intr(struct usbd_xfer *, void *, usbd_status);
+Static void aue_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void aue_txeof(struct usbd_xfer *, void *, usbd_status);
 Static void aue_tick(void *);
 Static void aue_tick_task(void *);
 Static void aue_start(struct ifnet *);
+Static void aue_start_locked(struct ifnet *);
 Static int aue_ioctl(struct ifnet *, u_long, void *);
-Static void aue_init(void *);
-Static void aue_stop(struct aue_softc *);
+Static int aue_ifflags_cb(struct ethercom *);
+Static int aue_init(struct ifnet *);
+Static int aue_init_locked(struct ifnet *);
+Static void aue_stop(struct ifnet *, int);
+Static void aue_stop_locked(struct ifnet *, int);
 Static void aue_watchdog(struct ifnet *);
-Static int aue_openpipes(struct aue_softc *);
 Static int aue_ifmedia_upd(struct ifnet *);
 
 Static int aue_eeprom_getword(struct aue_softc *, int);
@@ -247,7 +249,7 @@ Static void aue_lock_mii(struct aue_softc *);
 Static void aue_unlock_mii(struct aue_softc *);
 
 Static void aue_setmulti(struct aue_softc *);
-Static u_int32_t aue_crc(void *);
+Static uint32_t aue_crc(void *);
 Static void aue_reset(struct aue_softc *);
 
 Static int aue_csr_read_1(struct aue_softc *, int);
@@ -269,7 +271,7 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 	uByte			val = 0;
 
 	if (sc->aue_dying)
-		return (0);
+		return 0;
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = AUE_UR_READREG;
@@ -282,10 +284,10 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 	if (err) {
 		DPRINTF(("%s: aue_csr_read_1: reg=0x%x err=%s\n",
 		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
-		return (0);
+		return 0;
 	}
 
-	return (val);
+	return val;
 }
 
 Static int
@@ -296,7 +298,7 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 	uWord			val;
 
 	if (sc->aue_dying)
-		return (0);
+		return 0;
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = AUE_UR_READREG;
@@ -309,10 +311,10 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 	if (err) {
 		DPRINTF(("%s: aue_csr_read_2: reg=0x%x err=%s\n",
 		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
-		return (0);
+		return 0;
 	}
 
-	return (UGETW(val));
+	return UGETW(val);
 }
 
 Static int
@@ -323,7 +325,7 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 	uByte			val;
 
 	if (sc->aue_dying)
-		return (0);
+		return 0;
 
 	val = aval;
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -337,10 +339,10 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 	if (err) {
 		DPRINTF(("%s: aue_csr_write_1: reg=0x%x err=%s\n",
 		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -351,7 +353,7 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 	uWord			val;
 
 	if (sc->aue_dying)
-		return (0);
+		return 0;
 
 	USETW(val, aval);
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -365,10 +367,10 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 	if (err) {
 		DPRINTF(("%s: aue_csr_write_2: reg=0x%x err=%s\n",
 		    device_xname(sc->aue_dev), reg, usbd_errstr(err)));
-		return (-1);
+		return -1;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -392,7 +394,7 @@ aue_eeprom_getword(struct aue_softc *sc, int addr)
 		    device_xname(sc->aue_dev));
 	}
 
-	return (aue_csr_read_2(sc, AUE_EE_DATA));
+	return aue_csr_read_2(sc, AUE_EE_DATA);
 }
 
 /*
@@ -435,7 +437,7 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct aue_softc *sc = device_private(dev);
 	int			i;
-	u_int16_t		val;
+	uint16_t		val;
 
 	if (sc->aue_dying) {
 #ifdef DIAGNOSTIC
@@ -458,7 +460,7 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 	if (sc->aue_vendor == USB_VENDOR_ADMTEK &&
 	    sc->aue_product == USB_PRODUCT_ADMTEK_PEGASUS) {
 		if (phy == 3)
-			return (0);
+			return 0;
 	}
 #endif
 
@@ -481,7 +483,7 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 	    device_xname(sc->aue_dev), __func__, phy, reg, val));
 
 	aue_unlock_mii(sc);
-	return (val);
+	return val;
 }
 
 Static void
@@ -548,7 +550,7 @@ aue_miibus_statchg(struct ifnet *ifp)
 	 * register of the Broadcom PHY.
 	 */
 	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
-		u_int16_t auxmode;
+		uint16_t auxmode;
 		auxmode = aue_miibus_readreg(sc->aue_dev, 0, 0x1b);
 		aue_miibus_writereg(sc->aue_dev, 0, 0x1b, auxmode | 0x04);
 	}
@@ -558,10 +560,10 @@ aue_miibus_statchg(struct ifnet *ifp)
 #define AUE_POLY	0xEDB88320
 #define AUE_BITS	6
 
-Static u_int32_t
+Static uint32_t
 aue_crc(void *addrv)
 {
-	u_int32_t		idx, bit, data, crc;
+	uint32_t		idx, bit, data, crc;
 	char *addr = addrv;
 
 	/* Compute CRC for the address value. */
@@ -572,7 +574,7 @@ aue_crc(void *addrv)
 			crc = (crc >> 1) ^ (((crc ^ data) & 1) ? AUE_POLY : 0);
 	}
 
-	return (crc & ((1 << AUE_BITS) - 1));
+	return crc & ((1 << AUE_BITS) - 1);
 }
 
 Static void
@@ -581,7 +583,7 @@ aue_setmulti(struct aue_softc *sc)
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		h = 0, i;
+	uint32_t		h = 0, i;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
@@ -662,7 +664,7 @@ aue_reset(struct aue_softc *sc)
 	 *
 	 * Note: We force all of the GPIO pins low first, *then*
 	 * enable the ones we want.
-  	 */
+	 */
 	if (sc->aue_flags & LSYS) {
 		/* Grrr. LinkSys has to be different from everyone else. */
 		aue_csr_write_1(sc, AUE_GPIO0,
@@ -671,7 +673,7 @@ aue_reset(struct aue_softc *sc)
 		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
 	}
-  	aue_csr_write_1(sc, AUE_GPIO0,
+	aue_csr_write_1(sc, AUE_GPIO0,
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 
 	if (sc->aue_flags & PII)
@@ -699,18 +701,18 @@ aue_match(device_t parent, cfdata_t match, void *aux)
 	 * If this turns out to be more common, we could use a quirk
 	 * table.
 	 */
-	if (uaa->vendor == USB_VENDOR_BELKIN &&
-		uaa->product == USB_PRODUCT_BELKIN_USB2LAN) {
+	if (uaa->uaa_vendor == USB_VENDOR_BELKIN &&
+		uaa->uaa_product == USB_PRODUCT_BELKIN_USB2LAN) {
 		usb_device_descriptor_t *dd;
 
-		dd = usbd_get_device_descriptor(uaa->device);
+		dd = usbd_get_device_descriptor(uaa->uaa_device);
 		if (dd != NULL &&
 			dd->bDeviceClass != UDCLASS_IN_INTERFACE)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 	}
 
-	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return aue_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 /*
@@ -723,12 +725,11 @@ aue_attach(device_t parent, device_t self, void *aux)
 	struct aue_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
 	char			*devinfop;
-	int			s;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	struct ifnet		*ifp;
 	struct mii_data		*mii;
-	usbd_device_handle	dev = uaa->device;
-	usbd_interface_handle	iface;
+	struct usbd_device	*dev = uaa->uaa_device;
+	struct usbd_interface	*iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
@@ -741,7 +742,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
+	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -755,6 +756,9 @@ aue_attach(device_t parent, device_t self, void *aux)
 	usb_init_task(&sc->aue_tick_task, aue_tick_task, sc, 0);
 	usb_init_task(&sc->aue_stop_task, (void (*)(void *))aue_stop, sc, 0);
 	mutex_init(&sc->aue_mii_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->aue_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->aue_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->aue_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 	err = usbd_device2interface_handle(dev, AUE_IFACE_IDX, &iface);
 	if (err) {
@@ -764,24 +768,20 @@ aue_attach(device_t parent, device_t self, void *aux)
 	sc->aue_closing = 0;
 
 	mutex_init(&sc->aue_mcmtx, MUTEX_DRIVER, IPL_NET);
-	cv_init(&sc->aue_domc, "auemc");
 	cv_init(&sc->aue_closemc, "auemccl");
-
-	err = kthread_create(PRI_NONE, 0, NULL,
-		aue_multithread, sc, &sc->aue_thread,
-		"%s-mc", device_xname(sc->aue_dev));
 
 	if (err) {
 		aprint_error_dev(self,
 		    "creating multicast configuration thread\n");
 		return;
 	}
-	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
+	sc->aue_flags = aue_lookup(uaa->uaa_vendor,
+	    uaa->uaa_product)->aue_flags;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;
-	sc->aue_product = uaa->product;
-	sc->aue_vendor = uaa->vendor;
+	sc->aue_product = uaa->uaa_product;
+	sc->aue_vendor = uaa->uaa_vendor;
 
 	id = usbd_get_interface_descriptor(iface);
 
@@ -811,9 +811,6 @@ aue_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-
-	s = splnet();
-
 	/* Reset the adapter. */
 	aue_reset(sc);
 
@@ -832,6 +829,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_init = aue_init;
 	ifp->if_ioctl = aue_ioctl;
 	ifp->if_start = aue_start;
 	ifp->if_watchdog = aue_watchdog;
@@ -857,6 +855,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	ether_set_ifflags_cb(&sc->aue_ec, aue_ifflags_cb);
 	ether_ifattach(ifp, eaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->aue_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -864,7 +863,6 @@ aue_attach(device_t parent, device_t self, void *aux)
 	callout_init(&(sc->aue_stat_ch), 0);
 
 	sc->aue_attached = 1;
-	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev, sc->aue_dev);
 
@@ -882,7 +880,7 @@ aue_detach(device_t self, int flags)
 
 	if (!sc->aue_attached) {
 		/* Detached before attached finished, so just bail out. */
-		return (0);
+		return 0;
 	}
 
 	callout_stop(&sc->aue_stat_ch);
@@ -894,20 +892,18 @@ aue_detach(device_t self, int flags)
 	usb_rem_task(sc->aue_udev, &sc->aue_stop_task);
 
 	sc->aue_closing = 1;
-	cv_signal(&sc->aue_domc);
 
 	mutex_enter(&sc->aue_mcmtx);
 	cv_wait(&sc->aue_closemc,&sc->aue_mcmtx);
 	mutex_exit(&sc->aue_mcmtx);
 
 	mutex_destroy(&sc->aue_mcmtx);
-	cv_destroy(&sc->aue_domc);
 	cv_destroy(&sc->aue_closemc);
 
 	s = splusb();
 
 	if (ifp->if_flags & IFF_RUNNING)
-		aue_stop(sc);
+		aue_stop(ifp, 1);
 
 	rnd_detach_source(&sc->rnd_source);
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
@@ -934,10 +930,13 @@ aue_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev, sc->aue_dev);
 
 	mutex_destroy(&sc->aue_mii_lock);
+	mutex_destroy(&sc->aue_lock);
+	mutex_destroy(&sc->aue_txlock);
+	mutex_destroy(&sc->aue_rxlock);
 #if 0
 	mutex_destroy(&sc->wkmtx);
 #endif
-	return (0);
+	return 0;
 }
 
 int
@@ -972,7 +971,7 @@ aue_newbuf(struct aue_softc *sc, struct aue_chain *c, struct mbuf *m)
 		if (m_new == NULL) {
 			aprint_error_dev(sc->aue_dev, "no memory for rx list "
 			    "-- packet dropped!\n");
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
@@ -980,7 +979,7 @@ aue_newbuf(struct aue_softc *sc, struct aue_chain *c, struct mbuf *m)
 			aprint_error_dev(sc->aue_dev, "no memory for rx "
 			    "list -- packet dropped!\n");
 			m_freem(m_new);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -992,7 +991,7 @@ aue_newbuf(struct aue_softc *sc, struct aue_chain *c, struct mbuf *m)
 	m_adj(m_new, ETHER_ALIGN);
 	c->aue_mbuf = m_new;
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -1010,18 +1009,34 @@ aue_rx_list_init(struct aue_softc *sc)
 		c->aue_sc = sc;
 		c->aue_idx = i;
 		if (aue_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 		if (c->aue_xfer == NULL) {
-			c->aue_xfer = usbd_alloc_xfer(sc->aue_udev);
-			if (c->aue_xfer == NULL)
-				return (ENOBUFS);
-			c->aue_buf = usbd_alloc_buffer(c->aue_xfer, AUE_BUFSZ);
-			if (c->aue_buf == NULL)
-				return (ENOBUFS); /* XXX free xfer */
+			int err = usbd_create_xfer(sc->aue_ep[AUE_ENDPT_RX],
+			    AUE_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->aue_xfer);
+			if (err) {
+				return err;
+			}
+			c->aue_buf = usbd_get_buffer(c->aue_xfer);
 		}
 	}
 
-	return (0);
+	return 0;
+}
+
+Static void
+aue_rx_list_free(struct aue_softc *sc)
+{
+	/* Free RX resources. */
+	for (int i = 0; i < AUE_RX_LIST_CNT; i++) {
+		if (sc->aue_cdata.aue_rx_chain[i].aue_mbuf != NULL) {
+			m_freem(sc->aue_cdata.aue_rx_chain[i].aue_mbuf);
+			sc->aue_cdata.aue_rx_chain[i].aue_mbuf = NULL;
+		}
+		if (sc->aue_cdata.aue_rx_chain[i].aue_xfer != NULL) {
+			usbd_destroy_xfer(sc->aue_cdata.aue_rx_chain[i].aue_xfer);
+			sc->aue_cdata.aue_rx_chain[i].aue_xfer = NULL;
+		}
+	}
 }
 
 Static int
@@ -1040,20 +1055,36 @@ aue_tx_list_init(struct aue_softc *sc)
 		c->aue_idx = i;
 		c->aue_mbuf = NULL;
 		if (c->aue_xfer == NULL) {
-			c->aue_xfer = usbd_alloc_xfer(sc->aue_udev);
-			if (c->aue_xfer == NULL)
-				return (ENOBUFS);
-			c->aue_buf = usbd_alloc_buffer(c->aue_xfer, AUE_BUFSZ);
-			if (c->aue_buf == NULL)
-				return (ENOBUFS);
+			int err = usbd_create_xfer(sc->aue_ep[AUE_ENDPT_TX],
+			    AUE_BUFSZ, USBD_FORCE_SHORT_XFER, 0, &c->aue_xfer);
+			if (err) {
+				return err;
+			}
+			c->aue_buf = usbd_get_buffer(c->aue_xfer);
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static void
-aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+aue_tx_list_free(struct aue_softc *sc)
+{
+	/* Free TX resources. */
+	for (int i = 0; i < AUE_TX_LIST_CNT; i++) {
+		if (sc->aue_cdata.aue_tx_chain[i].aue_mbuf != NULL) {
+			m_freem(sc->aue_cdata.aue_tx_chain[i].aue_mbuf);
+			sc->aue_cdata.aue_tx_chain[i].aue_mbuf = NULL;
+		}
+		if (sc->aue_cdata.aue_tx_chain[i].aue_xfer != NULL) {
+			usbd_destroy_xfer(sc->aue_cdata.aue_tx_chain[i].aue_xfer);
+			sc->aue_cdata.aue_tx_chain[i].aue_xfer = NULL;
+		}
+	}
+}
+
+Static void
+aue_intr(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct aue_softc	*sc = priv;
@@ -1096,13 +1127,13 @@ aue_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
  * the higher level protocols.
  */
 Static void
-aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct aue_chain	*c = priv;
 	struct aue_softc	*sc = c->aue_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mbuf		*m;
-	u_int32_t		total_len;
+	uint32_t		total_len;
 	struct aue_rxpkt	r;
 	int			s;
 
@@ -1180,10 +1211,8 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  done:
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
-	    c, c->aue_buf, AUE_BUFSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
-	    USBD_NO_TIMEOUT, aue_rxeof);
+	usbd_setup_xfer(xfer, c, c->aue_buf, AUE_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->aue_dev),
@@ -1196,7 +1225,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  */
 
 Static void
-aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
+aue_txeof(struct usbd_xfer *xfer, void *priv,
     usbd_status status)
 {
 	struct aue_chain	*c = priv;
@@ -1319,13 +1348,12 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 	 * transfer, however it actually seems to ignore this info
 	 * and base the frame size on the bulk transfer length.
 	 */
-	c->aue_buf[0] = (u_int8_t)m->m_pkthdr.len;
-	c->aue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 8);
+	c->aue_buf[0] = (uint8_t)m->m_pkthdr.len;
+	c->aue_buf[1] = (uint8_t)(m->m_pkthdr.len >> 8);
 	total_len = m->m_pkthdr.len + 2;
 
-	usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_TX],
-	    c, c->aue_buf, total_len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
-	    AUE_TX_TIMEOUT, aue_txeof);
+	usbd_setup_xfer(c->aue_xfer, c, c->aue_buf, total_len,
+	    USBD_FORCE_SHORT_XFER, AUE_TX_TIMEOUT, aue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->aue_xfer);
@@ -1335,18 +1363,28 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 		/* Stop the interface from process context. */
 		usb_add_task(sc->aue_udev, &sc->aue_stop_task,
 		    USB_TASKQ_DRIVER);
-		return (EIO);
+		return EIO;
 	}
 	DPRINTFN(5,("%s: %s: send %d bytes\n", device_xname(sc->aue_dev),
 		    __func__, total_len));
 
 	sc->aue_cdata.aue_tx_cnt++;
 
-	return (0);
+	return 0;
 }
 
 Static void
 aue_start(struct ifnet *ifp)
+{
+	struct aue_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->aue_txlock);
+	aue_start_locked(ifp);
+	mutex_exit(&sc->aue_txlock);
+}
+
+Static void
+aue_start_locked(struct ifnet *ifp)
 {
 	struct aue_softc	*sc = ifp->if_softc;
 	struct mbuf		*m_head = NULL;
@@ -1368,7 +1406,6 @@ aue_start(struct ifnet *ifp)
 		return;
 
 	if (aue_send(sc, m_head, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 
@@ -1388,24 +1425,33 @@ aue_start(struct ifnet *ifp)
 	ifp->if_timer = 5;
 }
 
-Static void
-aue_init(void *xsc)
+Static int
+aue_init(struct ifnet *ifp)
 {
-	struct aue_softc	*sc = xsc;
-	struct ifnet		*ifp = GET_IFP(sc);
+	struct aue_softc	*sc = ifp->if_softc;
+
+	mutex_enter(&sc->aue_lock);
+	int ret = aue_init_locked(ifp);
+	mutex_exit(&sc->aue_lock);
+
+	return ret;
+}
+
+Static int
+aue_init_locked(struct ifnet *ifp)
+{
+	struct aue_softc	*sc = ifp->if_softc;
 	struct mii_data		*mii = GET_MII(sc);
-	int			i, s;
+	int			i;
 	const u_char		*eaddr;
+	usbd_status		err;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
 	if (sc->aue_dying)
-		return;
+		return EIO;
 
-	if (ifp->if_flags & IFF_RUNNING)
-		return;
-
-	s = splnet();
+	aue_stop_locked(ifp, 1);
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1422,18 +1468,54 @@ aue_init(void *xsc)
 	else
 		AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 
+	if (sc->aue_ep[AUE_ENDPT_RX] == NULL) {
+		/* Open RX and TX pipes. */
+		err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_RX],
+		USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_RX]);
+		if (err) {
+			aprint_error_dev(sc->aue_dev, "open rx pipe failed: %s\n",
+			usbd_errstr(err));
+			goto fail;
+		}
+		err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
+		USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_TX]);
+		if (err) {
+			aprint_error_dev(sc->aue_dev, "open tx pipe failed: %s\n",
+			usbd_errstr(err));
+			goto fail1;
+		}
+		err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
+			USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
+			&sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr,
+			AUE_INTR_INTERVAL);
+		if (err) {
+			aprint_error_dev(sc->aue_dev, "open intr pipe failed: %s\n",
+			usbd_errstr(err));
+			goto fail2;
+		}
+	}
 	/* Init TX ring. */
-	if (aue_tx_list_init(sc) == ENOBUFS) {
+	if (aue_tx_list_init(sc)) {
 		aprint_error_dev(sc->aue_dev, "tx list init failed\n");
-		splx(s);
-		return;
+		goto fail3;
 	}
 
 	/* Init RX ring. */
-	if (aue_rx_list_init(sc) == ENOBUFS) {
+	if (aue_rx_list_init(sc)) {
 		aprint_error_dev(sc->aue_dev, "rx list init failed\n");
-		splx(s);
-		return;
+		goto fail4;
+	}
+
+	/* Start up the receive pipe. */
+	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
+		struct aue_chain *c = &sc->aue_cdata.aue_rx_chain[i];
+
+		usbd_setup_xfer(c->aue_xfer, c, c->aue_buf, AUE_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, aue_rxeof);
+		(void)usbd_transfer(c->aue_xfer); /* XXX */
+		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->aue_dev),
+			    __func__));
+
 	}
 
 	/* Load the multicast filter. */
@@ -1446,66 +1528,22 @@ aue_init(void *xsc)
 
 	mii_mediachg(mii);
 
-	if (sc->aue_ep[AUE_ENDPT_RX] == NULL) {
-		if (aue_openpipes(sc)) {
-			splx(s);
-			return;
-		}
-	}
-
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
-
 	callout_reset(&(sc->aue_stat_ch), (hz), (aue_tick), (sc));
-}
+	return 0;
 
-Static int
-aue_openpipes(struct aue_softc *sc)
-{
-	struct aue_chain	*c;
-	usbd_status		err;
-	int i;
-
-	/* Open RX and TX pipes. */
-	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_RX],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_RX]);
-	if (err) {
-		aprint_error_dev(sc->aue_dev, "open rx pipe failed: %s\n",
-		    usbd_errstr(err));
-		return (EIO);
-	}
-	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_TX],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_TX]);
-	if (err) {
-		aprint_error_dev(sc->aue_dev, "open tx pipe failed: %s\n",
-		    usbd_errstr(err));
-		return (EIO);
-	}
-	err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
-	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
-	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr,
-	    AUE_INTR_INTERVAL);
-	if (err) {
-		aprint_error_dev(sc->aue_dev, "open intr pipe failed: %s\n",
-		    usbd_errstr(err));
-		return (EIO);
-	}
-
-	/* Start up the receive pipe. */
-	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
-		c = &sc->aue_cdata.aue_rx_chain[i];
-		usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
-		    c, c->aue_buf, AUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
-		    aue_rxeof);
-		(void)usbd_transfer(c->aue_xfer); /* XXX */
-		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->aue_dev),
-			    __func__));
-
-	}
-	return (0);
+fail4:
+	aue_tx_list_free(sc);
+fail3:
+	usbd_close_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
+fail2:
+	usbd_close_pipe(sc->aue_ep[AUE_ENDPT_TX]);
+fail1:
+	usbd_close_pipe(sc->aue_ep[AUE_ENDPT_RX]);
+fail:
+	return EIO;
 }
 
 /*
@@ -1521,7 +1559,7 @@ aue_ifmedia_upd(struct ifnet *ifp)
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
 	if (sc->aue_dying)
-		return (0);
+		return 0;
 
 	sc->aue_link = 0;
 
@@ -1534,76 +1572,42 @@ Static int
 aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct aue_softc	*sc = ifp->if_softc;
-	struct ifaddr 		*ifa = (struct ifaddr *)data;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 
 	if (sc->aue_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
-
-	switch(command) {
-	case SIOCINITIFADDR:
-		ifp->if_flags |= IFF_UP;
-		aue_init(sc);
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
-			error = 0;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, command, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->aue_if_flags & IFF_PROMISC)) {
-				AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->aue_if_flags & IFF_PROMISC) {
-				AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
-			} else if (!(ifp->if_flags & IFF_RUNNING))
-				aue_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				aue_stop(sc);
-		}
-		sc->aue_if_flags = ifp->if_flags;
-		error = 0;
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				cv_signal(&sc->aue_domc);
-			}
-			error = 0;
-		}
-		break;
-	default:
-		error = ether_ioctl(ifp, command, data);
-		break;
-	}
-
+	error = ether_ioctl(ifp, command, data);
 	splx(s);
 
-	return (error);
+	return error;
+}
+
+Static int
+aue_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct aue_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->aue_lock);
+
+	if (ifp->if_flags & IFF_UP) {
+		if (ifp->if_flags & IFF_RUNNING &&
+		    ifp->if_flags & IFF_PROMISC &&
+		    !(sc->aue_if_flags & IFF_PROMISC)) {
+			AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
+		} else if (ifp->if_flags & IFF_RUNNING &&
+		    !(ifp->if_flags & IFF_PROMISC) &&
+		    sc->aue_if_flags & IFF_PROMISC) {
+			AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
+		}
+	}
+	sc->aue_if_flags = ifp->if_flags;
+	aue_setmulti(sc);
+	mutex_exit(&sc->aue_lock);
+
+	return 0;
 }
 
 Static void
@@ -1634,15 +1638,23 @@ aue_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 Static void
-aue_stop(struct aue_softc *sc)
+aue_stop(struct ifnet *ifp, int disable)
+{
+	struct aue_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->aue_lock);
+	aue_stop_locked(ifp, disable);
+	mutex_exit(&sc->aue_lock);
+}
+
+Static void
+aue_stop_locked(struct ifnet *ifp, int disable)
 {
 	usbd_status		err;
-	struct ifnet		*ifp;
-	int			i;
+	struct aue_softc	*sc = ifp->if_softc;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
-	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
 
 	aue_csr_write_1(sc, AUE_CTL0, 0);
@@ -1671,6 +1683,22 @@ aue_stop(struct aue_softc *sc)
 			printf("%s: abort tx pipe failed: %s\n",
 			    device_xname(sc->aue_dev), usbd_errstr(err));
 		}
+	}
+
+	if (sc->aue_ep[AUE_ENDPT_INTR] != NULL) {
+		err = usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
+		if (err) {
+			printf("%s: abort intr pipe failed: %s\n",
+			    device_xname(sc->aue_dev), usbd_errstr(err));
+		}
+	}
+
+	aue_rx_list_free(sc);
+
+	aue_tx_list_free(sc);
+
+	/* Close pipes */
+	if (sc->aue_ep[AUE_ENDPT_TX] != NULL) {
 		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1680,11 +1708,6 @@ aue_stop(struct aue_softc *sc)
 	}
 
 	if (sc->aue_ep[AUE_ENDPT_INTR] != NULL) {
-		err = usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
-		if (err) {
-			printf("%s: abort intr pipe failed: %s\n",
-			    device_xname(sc->aue_dev), usbd_errstr(err));
-		}
 		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",
@@ -1693,59 +1716,8 @@ aue_stop(struct aue_softc *sc)
 		sc->aue_ep[AUE_ENDPT_INTR] = NULL;
 	}
 
-	/* Free RX resources. */
-	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
-		if (sc->aue_cdata.aue_rx_chain[i].aue_mbuf != NULL) {
-			m_freem(sc->aue_cdata.aue_rx_chain[i].aue_mbuf);
-			sc->aue_cdata.aue_rx_chain[i].aue_mbuf = NULL;
-		}
-		if (sc->aue_cdata.aue_rx_chain[i].aue_xfer != NULL) {
-			usbd_free_xfer(sc->aue_cdata.aue_rx_chain[i].aue_xfer);
-			sc->aue_cdata.aue_rx_chain[i].aue_xfer = NULL;
-		}
-	}
-
-	/* Free TX resources. */
-	for (i = 0; i < AUE_TX_LIST_CNT; i++) {
-		if (sc->aue_cdata.aue_tx_chain[i].aue_mbuf != NULL) {
-			m_freem(sc->aue_cdata.aue_tx_chain[i].aue_mbuf);
-			sc->aue_cdata.aue_tx_chain[i].aue_mbuf = NULL;
-		}
-		if (sc->aue_cdata.aue_tx_chain[i].aue_xfer != NULL) {
-			usbd_free_xfer(sc->aue_cdata.aue_tx_chain[i].aue_xfer);
-			sc->aue_cdata.aue_tx_chain[i].aue_xfer = NULL;
-		}
-	}
-
 	sc->aue_link = 0;
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
-Static void
-aue_multithread(void *arg)
-{
-	struct aue_softc *sc;
-	int s;
-
-	sc = (struct aue_softc *)arg;
-
-	while (1) {
-		mutex_enter(&sc->aue_mcmtx);
-		cv_wait(&sc->aue_domc,&sc->aue_mcmtx);
-		mutex_exit(&sc->aue_mcmtx);
-
-		if (sc->aue_closing)
-			break;
-
-		s = splnet();
-		aue_init(sc);
-		/* XXX called by aue_init, but rc ifconfig hangs without it: */
-		aue_setmulti(sc);
-		splx(s);
-	}
-
-	cv_signal(&sc->aue_closemc);
-
-	kthread_exit(0);
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.20 2011/12/19 19:34:52 jakllsch Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.20.22.1 2017/04/05 19:54:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,27 +37,30 @@
 struct	ucom_softc;
 
 struct ucom_methods {
-	void (*ucom_get_status)(void *sc, int portno, u_char *lsr, u_char *msr);
-	void (*ucom_set)(void *sc, int portno, int reg, int onoff);
+	void (*ucom_get_status)(void *, int, u_char *, u_char *);
+	void (*ucom_set)(void *, int, int, int);
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
-	int (*ucom_param)(void *sc, int portno, struct termios *);
-	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
-			  void *data, int flag, proc_t *p);
-	int (*ucom_open)(void *sc, int portno);
-	void (*ucom_close)(void *sc, int portno);
+	int (*ucom_param)(void *, int, struct termios *);
+	int (*ucom_ioctl)(void *, int, u_long, void *, int, proc_t *);
+	int (*ucom_open)(void *, int);
+	void (*ucom_close)(void *, int);
 	/*
-	 * Note: The 'ptr' and 'count' pointers can be adjusted as follows:
-	 *  ptr: If consuming characters from the start of the buffer,
-	 *       advance '*ptr' to skip the data consumed.
-	 *  count: If consuming characters at the end of the buffer,
-	 *         decrement '*count' by the number of characters consumed.
+	 * Note: The 'ptr' (2nd arg) and 'count' (3rd arg) pointers can be
+	 * adjusted as follows:
+	 *
+	 *  ptr:	If consuming characters from the start of the buffer,
+	 *		advance '*ptr' to skip the data consumed.
+	 *
+	 *  count:	If consuming characters at the end of the buffer,
+	 *		decrement '*count' by the number of characters
+	 *		consumed.
+	 *
 	 * If consuming all characters, set '*count' to zero.
 	 */
-	void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count);
-	void (*ucom_write)(void *sc, int portno, u_char *to, u_char *from,
-			   u_int32_t *count);
+	void (*ucom_read)(void *, int, u_char **, uint32_t *);
+	void (*ucom_write)(void *, int, u_char *, u_char *, uint32_t *);
 };
 
 /* modem control register */
@@ -87,20 +90,26 @@ struct ucom_methods {
 #define	UMSR_DCTS	0x01	/* CTS has changed state */
 
 struct ucom_attach_args {
-	int portno;
-	int bulkin;
-	int bulkout;
-	u_int ibufsize;
-	u_int ibufsizepad;
-	u_int obufsize;
-	u_int opkthdrlen;
-	const char *info;	/* attach message */
-	usbd_device_handle device;
-	usbd_interface_handle iface;
-	const struct ucom_methods *methods;
-	void *arg;
+	int ucaa_portno;
+	int ucaa_bulkin;
+	int ucaa_bulkout;
+	struct usbd_xfer *ucaa_ixfer;
+	struct usbd_pipe *ucaa_ipipe;
+	struct usbd_xfer *ucaa_oxfer;
+	struct usbd_pipe *ucaa_opipe;
+	u_int ucaa_ibufsize;
+	u_int ucaa_ibufsizepad;
+	u_int ucaa_obufsize;
+	u_int ucaa_opkthdrlen;
+	const char *ucaa_info;	/* attach message */
+	struct usbd_device *ucaa_device;
+	struct usbd_interface *ucaa_iface;
+	const struct ucom_methods *ucaa_methods;
+	void *ucaa_arg;
 };
 
 int ucomprint(void *, const char *);
-int ucomsubmatch(device_t t, cfdata_t, const int *, void *);
+int ucomsubmatch(device_t, cfdata_t, const int *, void *);
 void ucom_status_change(struct ucom_softc *);
+void ucomreadcb(struct usbd_xfer *, void *, usbd_status);
+

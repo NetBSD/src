@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.1 2013/09/05 20:49:25 skrll Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.1.8.1 2017/04/05 19:54:16 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.1 2013/09/05 20:49:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.1.8.1 2017/04/05 19:54:16 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ bcmdwc2_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dwc2.sc_dev = self;
 
 	sc->sc_dwc2.sc_iot = aaa->aaa_iot;
-	sc->sc_dwc2.sc_bus.dmatag = aaa->aaa_dmat;
+	sc->sc_dwc2.sc_bus.ub_dmatag = aaa->aaa_dmat;
 	sc->sc_dwc2.sc_params = &bcmdwc2_params;
 
 	error = bus_space_map(aaa->aaa_iot, aaa->aaa_addr, aaa->aaa_size, 0,

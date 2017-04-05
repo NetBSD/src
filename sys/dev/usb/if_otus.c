@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25 2013/10/17 21:07:37 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.4.1 2017/04/05 19:54:19 snj Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,12 +23,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25 2013/10/17 21:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.4.1 2017/04/05 19:54:19 snj Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -129,11 +134,11 @@ Static struct	ieee80211_node *otus_node_alloc(struct ieee80211_node_table *);
 Static int	otus_media_change(struct ifnet *);
 Static int	otus_read_eeprom(struct otus_softc *);
 Static void	otus_newassoc(struct ieee80211_node *, int);
-Static void	otus_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	otus_intr(struct usbd_xfer *, void *, usbd_status);
 Static void	otus_cmd_rxeof(struct otus_softc *, uint8_t *, int);
 Static void	otus_sub_rxeof(struct otus_softc *, uint8_t *, int);
-Static void	otus_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-Static void	otus_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	otus_rxeof(struct usbd_xfer *, void *, usbd_status);
+Static void	otus_txeof(struct usbd_xfer *, void *, usbd_status);
 Static int	otus_tx(struct otus_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct otus_tx_data *);
 Static void	otus_start(struct ifnet *);
@@ -596,9 +601,9 @@ otus_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(DBG_FN, DBG_NO_SC,
 	    "otus_match: vendor=0x%x product=0x%x revision=0x%x\n",
-		    uaa->vendor, uaa->product, uaa->release);
+		    uaa->uaa_vendor, uaa->uaa_product, uaa->uaa_release);
 
-	return usb_lookup(otus_devs, uaa->vendor, uaa->product) != NULL ?
+	return usb_lookup(otus_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -616,7 +621,7 @@ otus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	uaa = aux;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -625,6 +630,8 @@ otus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	cv_init(&sc->sc_task_cv, "otustsk");
+	cv_init(&sc->sc_cmd_cv, "otuscmd");
 	mutex_init(&sc->sc_cmd_mtx,   MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_task_mtx,  MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_tx_mtx,    MUTEX_DEFAULT, IPL_NONE);
@@ -673,8 +680,10 @@ otus_wait_async(struct otus_softc *sc)
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
+	mutex_spin_enter(&sc->sc_task_mtx);
 	while (sc->sc_cmdq.queued > 0)
-		tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
+		cv_wait(&sc->sc_task_cv, &sc->sc_task_mtx);
+	mutex_spin_exit(&sc->sc_task_mtx);
 }
 
 Static int
@@ -715,6 +724,9 @@ otus_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_tx_mtx);
 	mutex_destroy(&sc->sc_task_mtx);
 	mutex_destroy(&sc->sc_cmd_mtx);
+	cv_destroy(&sc->sc_task_cv);
+	cv_destroy(&sc->sc_cmd_cv);
+
 	return 0;
 }
 
@@ -973,7 +985,7 @@ Static int
 otus_open_pipes(struct otus_softc *sc)
 {
 	usb_endpoint_descriptor_t *ed;
-	int i, isize, error;
+	int i, error;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
@@ -990,21 +1002,21 @@ otus_open_pipes(struct otus_softc *sc)
 		    "could not retrieve Rx intr pipe descriptor\n");
 		goto fail;
 	}
-	isize = UGETW(ed->wMaxPacketSize);
-	if (isize == 0) {
+	sc->sc_ibuf_size = UGETW(ed->wMaxPacketSize);
+	if (sc->sc_ibuf_size == 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "invalid Rx intr pipe descriptor\n");
 		goto fail;
 	}
-	sc->sc_ibuf = malloc(isize, M_USBDEV, M_NOWAIT);
+	sc->sc_ibuf = kmem_alloc(sc->sc_ibuf_size, KM_SLEEP);
 	if (sc->sc_ibuf == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate Rx intr buffer\n");
 		goto fail;
 	}
 	error = usbd_open_pipe_intr(sc->sc_iface, AR_EPT_INTR_RX_NO,
-	    USBD_SHORT_XFER_OK, &sc->sc_cmd_rx_pipe, sc, sc->sc_ibuf, isize,
-	    otus_intr, USBD_DEFAULT_INTERVAL);
+	    USBD_SHORT_XFER_OK, &sc->sc_cmd_rx_pipe, sc, sc->sc_ibuf,
+	    sc->sc_ibuf_size, otus_intr, USBD_DEFAULT_INTERVAL);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "could not open Rx intr pipe\n");
 		goto fail;
@@ -1030,23 +1042,21 @@ otus_open_pipes(struct otus_softc *sc)
 		goto fail;
 	}
 
-	if (otus_alloc_tx_data_list(sc) != 0) {
+	if (otus_alloc_tx_data_list(sc)) {
 		aprint_error_dev(sc->sc_dev, "could not allocate Tx xfers\n");
 		goto fail;
 	}
 
-	if (otus_alloc_rx_data_list(sc) != 0) {
+	if (otus_alloc_rx_data_list(sc)) {
 		aprint_error_dev(sc->sc_dev, "could not allocate Rx xfers\n");
 		goto fail;
 	}
 
 	for (i = 0; i < OTUS_RX_DATA_LIST_COUNT; i++) {
-		struct otus_rx_data *data;
+		struct otus_rx_data *data = &sc->sc_rx_data[i];
 
-		data = &sc->sc_rx_data[i];
-		usbd_setup_xfer(data->xfer, sc->sc_data_rx_pipe, data, data->buf,
-		    OTUS_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
-		    USBD_NO_TIMEOUT, otus_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, OTUS_RXBUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, otus_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -1077,7 +1087,7 @@ otus_close_pipes(struct otus_softc *sc)
 		usbd_close_pipe(sc->sc_cmd_rx_pipe);
 	}
 	if (sc->sc_ibuf != NULL)
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_ibuf_size);
 	if (sc->sc_data_tx_pipe != NULL)
 		usbd_close_pipe(sc->sc_data_tx_pipe);
 	if (sc->sc_cmd_tx_pipe != NULL)
@@ -1092,19 +1102,14 @@ otus_alloc_tx_cmd(struct otus_softc *sc)
 	DPRINTFN(DBG_FN, sc, "\n");
 
 	cmd = &sc->sc_tx_cmd;
-	cmd->xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (cmd->xfer == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate xfer\n");
-		return ENOMEM;
-	}
-	cmd->buf = usbd_alloc_buffer(cmd->xfer, OTUS_MAX_TXCMDSZ);
-	if (cmd->buf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate xfer buffer\n");
-		usbd_free_xfer(cmd->xfer);
-		return ENOMEM;
-	}
+
+	int error = usbd_create_xfer(sc->sc_cmd_tx_pipe, OTUS_MAX_TXCMDSZ,
+	    USBD_FORCE_SHORT_XFER, 0, &cmd->xfer);
+	if (error)
+		return error;
+
+	cmd->buf = usbd_get_buffer(cmd->xfer);
+
 	return 0;
 }
 
@@ -1119,7 +1124,7 @@ otus_free_tx_cmd(struct otus_softc *sc)
 
 	mutex_enter(&sc->sc_cmd_mtx);
 	if (sc->sc_tx_cmd.xfer != NULL)
-		usbd_free_xfer(sc->sc_tx_cmd.xfer);
+		usbd_destroy_xfer(sc->sc_tx_cmd.xfer);
 	sc->sc_tx_cmd.xfer = NULL;
 	sc->sc_tx_cmd.buf  = NULL;
 	mutex_exit(&sc->sc_cmd_mtx);
@@ -1141,20 +1146,14 @@ otus_alloc_tx_data_list(struct otus_softc *sc)
 
 		data->sc = sc;  /* Backpointer for callbacks. */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_data_tx_pipe, OTUS_TXBUFSZ,
+		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);
+		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate xfer\n");
-			error = ENOMEM;
 			break;
 		}
-		data->buf = usbd_alloc_buffer(data->xfer, OTUS_TXBUFSZ);
-		if (data->buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate xfer buffer\n");
-			error = ENOMEM;
-			break;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 		/* Append this Tx buffer to our free list. */
 		TAILQ_INSERT_TAIL(&sc->sc_tx_free_list, data, next);
 	}
@@ -1176,7 +1175,7 @@ otus_free_tx_data_list(struct otus_softc *sc)
 
 	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++) {
 		if (sc->sc_tx_data[i].xfer != NULL)
-			usbd_free_xfer(sc->sc_tx_data[i].xfer);
+			usbd_destroy_xfer(sc->sc_tx_data[i].xfer);
 	}
 }
 
@@ -1193,20 +1192,15 @@ otus_alloc_rx_data_list(struct otus_softc *sc)
 
 		data->sc = sc;	/* Backpointer for callbacks. */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_data_rx_pipe, OTUS_RXBUFSZ,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+
+		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate xfer\n");
-			error = ENOMEM;
 			goto fail;
 		}
-		data->buf = usbd_alloc_buffer(data->xfer, OTUS_RXBUFSZ);
-		if (data->buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate xfer buffer\n");
-			error = ENOMEM;
-			goto fail;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 	return 0;
 
@@ -1226,7 +1220,7 @@ otus_free_rx_data_list(struct otus_softc *sc)
 
 	for (i = 0; i < OTUS_RX_DATA_LIST_COUNT; i++)
 		if (sc->sc_rx_data[i].xfer != NULL)
-			usbd_free_xfer(sc->sc_rx_data[i].xfer);
+			usbd_destroy_xfer(sc->sc_rx_data[i].xfer);
 }
 
 Static void
@@ -1251,34 +1245,29 @@ otus_task(void *arg)
 	struct otus_softc *sc;
 	struct otus_host_cmd_ring *ring;
 	struct otus_host_cmd *cmd;
-	int s;
 
 	sc = arg;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
 	/* Process host commands. */
-	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
 	ring = &sc->sc_cmdq;
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
 		mutex_spin_exit(&sc->sc_task_mtx);
-		splx(s);
 
 		/* Callback. */
 		DPRINTFN(DBG_CMD, sc, "cb=%p queued=%d\n", cmd->cb,
 		    ring->queued);
 		cmd->cb(sc, cmd->data);
 
-		s = splusb();
 		mutex_spin_enter(&sc->sc_task_mtx);
 		ring->queued--;
 		ring->next = (ring->next + 1) % OTUS_HOST_CMD_RING_COUNT;
 	}
+	cv_signal(&sc->sc_task_cv);
 	mutex_spin_exit(&sc->sc_task_mtx);
-	wakeup(ring);
-	splx(s);
 }
 
 Static void
@@ -1287,12 +1276,10 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 {
 	struct otus_host_cmd_ring *ring;
 	struct otus_host_cmd *cmd;
-	int s;
+	bool sched = false;
 
 	DPRINTFN(DBG_FN, sc, "cb=%p\n", cb);
 
-
-	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
 	ring = &sc->sc_cmdq;
 	cmd = &ring->cmd[ring->cur];
@@ -1303,13 +1290,12 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 
 	/* If there is no pending command already, schedule a task. */
 	if (++ring->queued == 1) {
-		mutex_spin_exit(&sc->sc_task_mtx);
-		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+		sched = true;
 	}
-	else
-		mutex_spin_exit(&sc->sc_task_mtx);
-	wakeup(ring);
-	splx(s);
+	cv_signal(&sc->sc_task_cv);
+	mutex_spin_exit(&sc->sc_task_mtx);
+	if (sched)
+		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 }
 
 Static int
@@ -1410,7 +1396,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 {
 	struct otus_tx_cmd *cmd;
 	struct ar_cmd_hdr *hdr;
-	int s, xferlen, error;
+	int xferlen, error;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
@@ -1436,14 +1422,12 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	DPRINTFN(DBG_CMD, sc, "sending command code=0x%02x len=%d token=%d\n",
 	    code, ilen, hdr->token);
 
-	s = splusb();
 	cmd->odata = odata;
 	cmd->done = 0;
-	usbd_setup_xfer(cmd->xfer, sc->sc_cmd_tx_pipe, cmd, cmd->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, OTUS_CMD_TIMEOUT, NULL);
+	usbd_setup_xfer(cmd->xfer, cmd, cmd->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, OTUS_CMD_TIMEOUT, NULL);
 	error = usbd_sync_transfer(cmd->xfer);
 	if (error != 0) {
-		splx(s);
 		mutex_exit(&sc->sc_cmd_mtx);
 #if defined(DIAGNOSTIC) || defined(OTUS_DEBUG)	/* XXX: kill some noise */
 		aprint_error_dev(sc->sc_dev,
@@ -1453,9 +1437,8 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 		return EIO;
 	}
 	if (!cmd->done)
-		error = tsleep(cmd, PCATCH, "otuscmd", hz);
+		error = cv_timedwait_sig(&sc->sc_cmd_cv, &sc->sc_cmd_mtx, hz);
 	cmd->odata = NULL;	/* In case answer is received too late. */
-	splx(s);
 	mutex_exit(&sc->sc_cmd_mtx);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -1603,7 +1586,7 @@ otus_newassoc(struct ieee80211_node *ni, int isnew)
 
 /* ARGSUSED */
 Static void
-otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 #if 0
 	struct otus_softc *sc;
@@ -1656,14 +1639,18 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	if ((hdr->code & 0xc0) != 0xc0) {
 		DPRINTFN(DBG_RX, sc, "received reply code=0x%02x len=%d token=%d\n",
 		    hdr->code, hdr->len, hdr->token);
+		mutex_enter(&sc->sc_cmd_mtx);
 		cmd = &sc->sc_tx_cmd;
-		if (__predict_false(hdr->token != cmd->token))
+		if (__predict_false(hdr->token != cmd->token)) {
+			mutex_exit(&sc->sc_cmd_mtx);
 			return;
+		}
 		/* Copy answer into caller's supplied buffer. */
 		if (cmd->odata != NULL)
 			memcpy(cmd->odata, &hdr[1], hdr->len);
 		cmd->done = 1;
-		wakeup(cmd);
+		cv_signal(&sc->sc_cmd_cv);
+		mutex_exit(&sc->sc_cmd_mtx);
 		return;
 	}
 
@@ -1844,7 +1831,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 }
 
 Static void
-otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct otus_rx_data *data;
 	struct otus_softc *sc;
@@ -1896,13 +1883,13 @@ otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
  resubmit:
-	usbd_setup_xfer(xfer, sc->sc_data_rx_pipe, data, data->buf, OTUS_RXBUFSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, otus_rxeof);
+	usbd_setup_xfer(xfer, data, data->buf, OTUS_RXBUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, otus_rxeof);
 	(void)usbd_transfer(data->xfer);
 }
 
 Static void
-otus_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+otus_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct otus_tx_data *data;
 	struct otus_softc *sc;
@@ -2053,8 +2040,8 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	DPRINTFN(DBG_TX, sc, "queued len=%d mac=0x%04x phy=0x%08x rate=%d\n",
 	    head->len, head->macctl, head->phyctl, otus_rates[ridx].rate);
 
-	usbd_setup_xfer(data->xfer, sc->sc_data_tx_pipe, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, OTUS_TX_TIMEOUT, otus_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, OTUS_TX_TIMEOUT, otus_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(
 		    error != USBD_NORMAL_COMPLETION &&
@@ -2108,8 +2095,8 @@ otus_start(struct ifnet *ifp)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m, struct ieee80211_node *);
+			M_CLEARCTX(m);
 			goto sendit;
 		}
 

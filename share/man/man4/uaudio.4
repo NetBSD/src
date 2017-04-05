@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.25 2011/09/20 19:31:47 wiz Exp $
+.\" $NetBSD: uaudio.4,v 1.25.20.1 2017/04/05 19:54:15 snj Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 20, 2011
+.Dd January 26, 2015
 .Dt UAUDIO 4
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ reading.
 .Xr usb 4
 .Rs
 .%T "USB Approved Class Specification Documents"
-.%U http://www.usb.org/developers/devclass_docs/
+.%U http://www.usb.org/developers/docs/devclass_docs/
 .Re
 .Sh HISTORY
 The
@@ -120,6 +120,13 @@ driver
 appeared in
 .Nx 1.5 .
 .Sh BUGS
+Releases 1.0 and 2.0 of the
+.Tn USB
+Audio class specification are not mutually compatible.
+The
+.Nm
+driver only supports devices compliant with Release 1.0.
+.Pp
 There is no support for multiple-endpoints audio stream,
 adaptive recording, async playback, and TYPE-II/III formats.
 .Pp

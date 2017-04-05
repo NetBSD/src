@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.52 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.52.4.1 2017/04/05 19:54:19 snj Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.52 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.52.4.1 2017/04/05 19:54:19 snj Exp $");
 
 #include "ehci.h"
 
@@ -94,7 +94,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NS_USB) {
@@ -127,7 +127,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
@@ -143,7 +143,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, ohci_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
