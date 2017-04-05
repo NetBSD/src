@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.348 2017/04/05 19:40:26 jdolecek Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.348 2017/04/05 19:40:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3723,7 +3723,7 @@ rf_get_component_caches(RF_Raid_t *raidPtr, int *data)
 		}
 	}
 
-	*data = (dkwhole >= 0) ? dkwhole : 0;
+	*data = dkwhole;
 
 	return 0;
 }
