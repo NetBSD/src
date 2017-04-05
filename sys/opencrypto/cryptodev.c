@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.85 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.86 2017/04/05 08:51:04 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.85 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.86 2017/04/05 08:51:04 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,10 +578,10 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 
 
 	crp->crp_ilen = cop->len;
-	/* The reqest is flagged as CRYPTO_F_USER as long as it is running
-	 * in the user IOCTL thread.  This flag lets us skip using the retq for
-	 * the request if it completes immediately. If the request ends up being
-	 * delayed or is not completed immediately the flag is removed.
+	/*
+	 * The request is flagged as CRYPTO_F_USER as long as it is running
+	 * in the user IOCTL thread. However, whether the request completes
+	 * immediately or belatedly is depends on the used encryption driver.
 	 */
 	crp->crp_flags = CRYPTO_F_IOV | (cop->flags & COP_F_BATCH) | CRYPTO_F_USER |
 			flags;
@@ -643,12 +643,9 @@ eagain:
 	mutex_enter(&crypto_mtx);
 
 	/* 
-	 * If the request was going to be completed by the
-	 * ioctl thread then it would have been done by now.
-	 * Remove the F_USER flag so crypto_done() is not confused
-	 * if the crypto device calls it after this point.
+	 * Don't touch crp before returned by any error or recieved
+	 * cv_signal(&crp->crp_cv). It is required to restructure locks.
 	 */
-	crp->crp_flags &= ~(CRYPTO_F_USER);
 
 	switch (error) {
 #ifdef notyet	/* don't loop forever -- but EAGAIN not possible here yet */
