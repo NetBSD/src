@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.55 2015/11/16 09:10:58 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.56 2017/04/05 03:51:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.55 2015/11/16 09:10:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.56 2017/04/05 03:51:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,19 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.55 2015/11/16 09:10:58 msaitoh Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
+#include <dev/pci/ppbvar.h>
 #include <dev/pci/pcidevs.h>
 
 #define	PCIE_SLCSR_NOTIFY_MASK					\
 	(PCIE_SLCSR_ABE | PCIE_SLCSR_PFE | PCIE_SLCSR_MSE |	\
 	 PCIE_SLCSR_PDE | PCIE_SLCSR_CCE | PCIE_SLCSR_HPE)
-
-struct ppb_softc {
-	device_t sc_dev;		/* generic device glue */
-	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
-	pcitag_t sc_tag;		/* ...and tag. */
-
-	pcireg_t sc_pciconfext[48];
-};
 
 static const char pcie_linkspeed_strings[4][5] = {
 	"1.25", "2.5", "5.0", "8.0",
