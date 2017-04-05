@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.51 2017/03/29 23:02:43 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.52 2017/04/05 08:51:04 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.51 2017/03/29 23:02:43 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.52 2017/04/05 08:51:04 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -418,6 +418,9 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 				(*sid) <<= 32;
 				(*sid) |= (lid & 0xffffffff);
 				crypto_drivers[hid].cc_sessions++;
+			} else {
+				DPRINTF(("%s: crypto_drivers[%d].cc_newsession() failed. error=%d\n",
+					__func__, hid, error));
 			}
 			goto done;
 			/*break;*/
@@ -1124,19 +1127,20 @@ crypto_done(struct cryptop *crp)
 	} else {
 		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
-
+#if 0
 		if (crp->crp_flags & CRYPTO_F_USER) {
-			/* the request has completed while
-			 * running in the user context
-			 * so don't queue it - the user
-			 * thread won't sleep when it sees
-			 * the CRYPTO_F_DONE flag.
-			 * This is an optimization to avoid
-			 * unecessary context switches.
+			/*
+			 * TODO:
+			 * If crp->crp_flags & CRYPTO_F_USER and the used
+			 * encryption driver does all the processing in
+			 * the same context, we can skip enqueueing crp_ret_q
+			 * and cv_signal(&cryptoret_cv).
 			 */
 			DPRINTF(("crypto_done[%u]: crp %p CRYPTO_F_USER\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp));
-		} else {
+		} else
+#endif
+		{
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
 			DPRINTF(("crypto_done[%u]: queueing %p\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp));
