@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.271 2017/03/21 10:46:49 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.272 2017/04/05 20:15:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.271 2017/03/21 10:46:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.272 2017/04/05 20:15:49 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -2027,7 +2027,7 @@ nestiobuf_iodone(buf_t *bp)
 void
 nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 {
-	const int b_read = mbp->b_flags & B_READ;
+	const int b_pass = mbp->b_flags & (B_READ|B_MEDIA_FLAGS);
 	struct vnode *vp = mbp->b_vp;
 
 	KASSERT(mbp->b_bcount >= offset + size);
@@ -2035,14 +2035,14 @@ nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 	bp->b_dev = mbp->b_dev;
 	bp->b_objlock = mbp->b_objlock;
 	bp->b_cflags = BC_BUSY;
-	bp->b_flags = B_ASYNC | b_read;
+	bp->b_flags = B_ASYNC | b_pass;
 	bp->b_iodone = nestiobuf_iodone;
 	bp->b_data = (char *)mbp->b_data + offset;
 	bp->b_resid = bp->b_bcount = size;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_private = mbp;
 	BIO_COPYPRIO(bp, mbp);
-	if (!b_read && vp != NULL) {
+	if (BUF_ISWRITE(bp) && vp != NULL) {
 		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
 		mutex_exit(vp->v_interlock);

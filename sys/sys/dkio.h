@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.23 2017/04/05 18:34:56 jdolecek Exp $	*/
+/*	$NetBSD: dkio.h,v 1.24 2017/04/05 20:15:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -85,6 +85,8 @@
 #define	DKCACHE_RCHANGE	0x000100 /* read enable is changeable */
 #define	DKCACHE_WCHANGE	0x000200 /* write enable is changeable */
 #define	DKCACHE_SAVE	0x010000 /* cache parameters are savable/save them */
+#define	DKCACHE_FUA	0x020000 /* Force Unit Access supported */
+#define	DKCACHE_DPO	0x040000 /* Disable Page Out supported */
 
 /*
  * Combine disk cache flags of two drives to get common cache capabilities.
