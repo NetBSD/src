@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.680.2.7 2016/12/14 19:16:14 snj Exp $
+$NetBSD: usbdevs,v 1.680.2.8 2017/04/05 19:54:20 snj Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -876,7 +876,13 @@ product APPLE IPAD_3		0x12a6	Apple iPad 3
 product APPLE IPAD_MINI		0x12ab	Apple iPad Mini
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
 product APPLE BLUETOOTH2	0x8205	Bluetooth
-product APPLE BLUETOOTH_HOST_C	0x821f	Bluetooth USB Host Controller
+product APPLE BLUETOOTH_HOST_1	0x8213	Bluetooth USB Host Controller MacBookPro 7,1
+product APPLE BLUETOOTH_HOST_2	0x8215	Bluetooth USB Host Controller iMac 11,1
+product APPLE BLUETOOTH_HOST_3	0x821a	Bluetooth USB Host Controller MacBookPro 8,2
+product APPLE BLUETOOTH_HOST_4	0x821b	Bluetooth USB Host Controller MacBookAir 3,1 3,2
+product APPLE BLUETOOTH_HOST_5	0x821f	Bluetooth USB Host Controller MacBookAir 4,1
+product APPLE BLUETOOTH_HOST_6	0x8281	Bluetooth USB Host Controller MacMini 5,1
+product APPLE BLUETOOTH_HOST_7	0x828f	Bluetooth USB Host Controller MacBookAir 6,1
 product APPLE BLUETOOTH		0x8300	Bluetooth
 
 /* ArkMicroChips products */
@@ -1228,7 +1234,7 @@ product COREGA RT2870_1		0x002f	RT2870
 product COREGA RT2870_2		0x003c	RT2870
 product COREGA RT2870_3		0x003f	RT2870
 product COREGA RT3070		0x0041	RT3070
-product COREGA RTL8192SU	0x0047	RTL8192SU
+product COREGA CGWLUSBNM	0x0047	CG-WLUSBNM
 product COREGA RTL8192CU	0x0056	RTL8192CU
 product COREGA CGWLUSB300GNM	0x0042	CG-WLUSB300GNM
 product COREGA WLUSB_11_STICK	0x7613	WLAN USB Stick 11
@@ -1362,6 +1368,7 @@ product DLINK RTL8192CU_2	0x3309	RTL8192CU
 product DLINK RTL8192CU_3	0x330a	RTL8192CU
 product DLINK RTL8192CU_4	0x330b	RTL8192CU
 product DLINK DWA131B		0x330d	DWA-131 rev B
+product	DLINK DWA125D1		0x330f  DWA-125 rev D1
 product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F

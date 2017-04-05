@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.9.14.1 2017/04/05 19:54:19 snj Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -146,7 +146,7 @@
 
 struct udav_chain {
 	struct udav_softc	*udav_sc;
-	usbd_xfer_handle	udav_xfer;
+	struct usbd_xfer	*udav_xfer;
 	char			*udav_buf;
 	struct mbuf		*udav_mbuf;
 	int			udav_idx;
@@ -167,17 +167,17 @@ struct udav_cdata {
 
 struct udav_softc {
 	device_t		sc_dev;	/* base device */
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 
 	/* USB */
-	usbd_interface_handle	sc_ctl_iface;
+	struct usbd_interface *	sc_ctl_iface;
 	/* int			sc_ctl_iface_no; */
 	int			sc_bulkin_no; /* bulk in endpoint */
 	int			sc_bulkout_no; /* bulk out endpoint */
 	int			sc_intrin_no; /* intr in endpoint */
-	usbd_pipe_handle	sc_pipe_rx;
-	usbd_pipe_handle	sc_pipe_tx;
-	usbd_pipe_handle	sc_pipe_intr;
+	struct usbd_pipe *	sc_pipe_rx;
+	struct usbd_pipe *	sc_pipe_tx;
+	struct usbd_pipe *	sc_pipe_intr;
 	struct callout		sc_stat_ch;
 	u_int			sc_rx_errs;
 	/* u_int		sc_intr_errs; */
@@ -187,6 +187,9 @@ struct udav_softc {
 	struct ethercom		sc_ec; /* ethernet common */
 	struct mii_data		sc_mii;
 	kmutex_t		sc_mii_lock;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_txlock;
+	kmutex_t		sc_rxlock;
 	int			sc_link;
 #define	sc_media udav_mii.mii_media
 	krndsource_t	rnd_source;
@@ -199,5 +202,7 @@ struct udav_softc {
 	struct usb_task		sc_tick_task;
 	struct usb_task		sc_stop_task;
 
-	u_int16_t		sc_flags;
+	uint16_t		sc_flags;
+
+	struct if_percpuq *	sc_ipq;
 };

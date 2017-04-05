@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.8.2.1 2015/03/21 17:30:43 snj Exp $
+$NetBSD: TODO.usbmp,v 1.8.2.2 2017/04/05 19:54:19 snj Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -9,7 +9,16 @@ flesh out most of usbdi(9).
 usb_event_thread() startup should use something to sync companions
 
 
-usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
+KERNEL_LOCK
+  - auvitek.c
+  - auvitek_dtv.c
+  - emdtv.c
+  - emdtv_dtv.c
+  - ubt.c
+  - uhub.c
+  - usscanner.c
+
+usb_detach_{waitold,wakeup} to cv_{wait,broadcast} conversion:
   - drivers:
       if_aue.c
       if_axe.c
@@ -17,15 +26,12 @@ usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
       if_smsc.c
       if_udav.c
       if_url.c
-      stuirda.c
       ubt.c
-      ucom.c
       ucycom.c
       udsir.c
       uhso.c
       uirda.c
       ulpt.c
-      umass.c		- done, partially done -- need to check umass_scsipi.c change
       urio.c
       uscanner.c
       usscanner.c
@@ -53,27 +59,57 @@ convert uhidev users to MPSAFE:
   uyurex(4)
   - sysmon -- hm?
 
-
-wakeup/tsleep drivers:
+splusb drivers:
+  - auvitek_dtv.c
+  - auvitek_video.c
+  - emdtv_dtv.c
   - if_athn_usb.c
+  - if_aue.c
+  - if_axe.c
+  - if_axen.c
+  - if_cdce.c
+  - if_cue.c
+  - if_kue.c
   - if_otus.c
+  - if_rum.c
   - if_run.c
-  - if_upgt.c
+  - if_smsc.c
+  - if_udav.c
+  - if_upl.c
+  - if_ural.c
+  - if_url.c
+  - if_urndis.c
+  - if_urtw.c
   - if_urtwn.c
   - if_zyd.c
-  - ucom.c
+  - ubt.c
+  - ucycom.c
+  - udsir.c
+  - uhso.c
+  - ukbd.c
+  - ulpt.c
+  - urio.c
+  - uscanner.c
+  - usscanner.c
+  - ustir.c
+  - utoppy.c
+  - uvideo.c
+
+wakeup/tsleep drivers:
+  - if_run.c
+  - if_urtwn.c
+  - if_zyd.c
   - ucycom.c
   - udsir.c
   - uirda.c
-  - ulpt.c
   - umass_isdata.c
+  - ulpt.c
   - ustir.c
   - uthum.c
   - uvscom.c
   - uyurex.c
 
 missing D_MPSAFE drivers:
-  - ucom
   - ucycom
   - ugen		- partially ready
   - uhso
@@ -114,8 +150,8 @@ driver testing:		STATUS
   - uep
   - udl
   - ulpt		attaches ok
-  - uhso		working (must take kernel lock for scsipi)
-  - umass		working (must take kernel lock for scsipi)
+  - uhso		working
+  - umass		working
   - uaudio		working
   - umidi		working
   - uirda
@@ -143,7 +179,7 @@ driver testing:		STATUS
   - uberry
   - uipad
   - urio
-  - uscanner		? (must take kernel lock for scsipi)
+  - uscanner		?
   - usscanner
   - utoppy
   - uyap
@@ -151,9 +187,9 @@ driver testing:		STATUS
   - ugen		mostly done
   - pseye		working
   - uvideo
-  - auvitek		? (must take kernel lock for scsipi)
-  - emdtv		? (must take kernel lock for scsipi)
-  - ubt			working (must take kernel lock for scsipi)
+  - auvitek		?
+  - emdtv		?
+  - ubt			working
   - aubtfwl
   - u3ginit
 ucom attachments:
@@ -161,7 +197,7 @@ ucom attachments:
   - uark
   - ubsa
   - uchcom
-  - uftdi
+  - uftdi		working
   - uipaq
   - umct
   - uplcom		attaches ok
