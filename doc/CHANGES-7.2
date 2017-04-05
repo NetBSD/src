@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.5 2017/03/26 16:11:59 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.6 2017/04/05 19:58:37 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -235,4 +235,314 @@ sys/arch/xen/xen/if_xennet_xenbus.c		1.70 via patch
 	While there fix a struct xennet_rxreq leak if xennet_checksum_fill()
 	fails with ENOMEM.
 	[bouyer, ticket #1379]
+
+share/man/man4/axe.4				netbsd-7-nhusb
+share/man/man4/axen.4				netbsd-7-nhusb
+share/man/man4/cdce.4				netbsd-7-nhusb
+share/man/man4/uaudio.4				netbsd-7-nhusb
+share/man/man4/ucom.4				netbsd-7-nhusb
+share/man/man4/uep.4				netbsd-7-nhusb
+share/man/man4/urtw.4				netbsd-7-nhusb
+share/man/man4/usb.4				netbsd-7-nhusb
+share/man/man4/uyap.4				netbsd-7-nhusb
+share/man/man4/xhci.4				netbsd-7-nhusb
+share/man/man9/usbdi.9				netbsd-7-nhusb
+sys/arch/amd64/conf/ALL				netbsd-7-nhusb
+sys/arch/amd64/conf/GENERIC			netbsd-7-nhusb
+sys/arch/amiga/dev/slhci_zbus.c			netbsd-7-nhusb
+sys/arch/arm/allwinner/awin_otg.c		netbsd-7-nhusb
+sys/arch/arm/allwinner/awin_usb.c		netbsd-7-nhusb
+sys/arch/arm/amlogic/amlogic_dwctwo.c		netbsd-7-nhusb
+sys/arch/arm/at91/at91ohci.c			netbsd-7-nhusb
+sys/arch/arm/broadcom/bcm2835_dwctwo.c		netbsd-7-nhusb
+sys/arch/arm/broadcom/bcm53xx_usb.c		netbsd-7-nhusb
+sys/arch/arm/ep93xx/epohci.c			netbsd-7-nhusb
+sys/arch/arm/gemini/obio_ehci.c			netbsd-7-nhusb
+sys/arch/arm/imx/files.imx23			netbsd-7-nhusb
+sys/arch/arm/imx/imxusb.c			netbsd-7-nhusb
+sys/arch/arm/imx/imxusbreg.h			netbsd-7-nhusb
+sys/arch/arm/omap/obio_ohci.c			netbsd-7-nhusb
+sys/arch/arm/omap/omap3_ehci.c			netbsd-7-nhusb
+sys/arch/arm/omap/omapl1x_ohci.c		netbsd-7-nhusb
+sys/arch/arm/omap/tiotg.c			netbsd-7-nhusb
+sys/arch/arm/s3c2xx0/ohci_s3c24x0.c		netbsd-7-nhusb
+sys/arch/arm/samsung/exynos_usb.c		netbsd-7-nhusb
+sys/arch/arm/xscale/pxa2x0_ohci.c		netbsd-7-nhusb
+sys/arch/arm/zynq/zynq_usb.c			netbsd-7-nhusb
+sys/arch/hpcarm/dev/nbp_slhci.c			netbsd-7-nhusb
+sys/arch/hpcmips/dev/plumohci.c			netbsd-7-nhusb
+sys/arch/i386/conf/ALL				netbsd-7-nhusb
+sys/arch/i386/conf/GENERIC			netbsd-7-nhusb
+sys/arch/i386/pci/gcscehci.c			netbsd-7-nhusb
+sys/arch/luna68k/conf/GENERIC			netbsd-7-nhusb
+sys/arch/mips/adm5120/dev/ahci.c		netbsd-7-nhusb
+sys/arch/mips/adm5120/dev/ahcivar.h		netbsd-7-nhusb
+sys/arch/mips/alchemy/dev/ohci_aubus.c		netbsd-7-nhusb
+sys/arch/mips/atheros/dev/ehci_arbus.c		netbsd-7-nhusb
+sys/arch/mips/atheros/dev/ohci_arbus.c		netbsd-7-nhusb
+sys/arch/mips/conf/files.adm5120		netbsd-7-nhusb
+sys/arch/mips/ralink/ralink_ehci.c		netbsd-7-nhusb
+sys/arch/mips/ralink/ralink_ohci.c		netbsd-7-nhusb
+sys/arch/mips/rmi/rmixl_ehci.c			netbsd-7-nhusb
+sys/arch/mips/rmi/rmixl_ohci.c			netbsd-7-nhusb
+sys/arch/playstation2/dev/ohci_sbus.c		netbsd-7-nhusb
+sys/arch/powerpc/booke/dev/pq3ehci.c		netbsd-7-nhusb
+sys/arch/powerpc/ibm4xx/dev/dwctwo_plb.c	netbsd-7-nhusb
+sys/arch/x68k/dev/slhci_intio.c			netbsd-7-nhusb
+sys/conf/files					netbsd-7-nhusb
+sys/dev/cardbus/ehci_cardbus.c			netbsd-7-nhusb
+sys/dev/cardbus/ohci_cardbus.c			netbsd-7-nhusb
+sys/dev/cardbus/uhci_cardbus.c			netbsd-7-nhusb
+sys/dev/ic/sl811hs.c				netbsd-7-nhusb
+sys/dev/ic/sl811hsvar.h				netbsd-7-nhusb
+sys/dev/isa/slhci_isa.c				netbsd-7-nhusb
+sys/dev/marvell/ehci_mv.c			netbsd-7-nhusb
+sys/dev/pci/ehci_pci.c				netbsd-7-nhusb
+sys/dev/pci/ohci_pci.c				netbsd-7-nhusb
+sys/dev/pci/uhci_pci.c				netbsd-7-nhusb
+sys/dev/pci/xhci_pci.c				netbsd-7-nhusb
+sys/dev/pcmcia/slhci_pcmcia.c			netbsd-7-nhusb
+sys/dev/usb/Makefile.usbdevs			netbsd-7-nhusb
+sys/dev/usb/TODO				netbsd-7-nhusb
+sys/dev/usb/TODO.usbmp				netbsd-7-nhusb
+sys/dev/usb/aubtfwl.c				netbsd-7-nhusb
+sys/dev/usb/auvitek.c				netbsd-7-nhusb
+sys/dev/usb/auvitek_audio.c			netbsd-7-nhusb
+sys/dev/usb/auvitek_dtv.c			netbsd-7-nhusb
+sys/dev/usb/auvitek_i2c.c			netbsd-7-nhusb
+sys/dev/usb/auvitek_video.c			netbsd-7-nhusb
+sys/dev/usb/auvitekvar.h			netbsd-7-nhusb
+sys/dev/usb/ehci.c				netbsd-7-nhusb
+sys/dev/usb/ehcireg.h				netbsd-7-nhusb
+sys/dev/usb/ehcivar.h				netbsd-7-nhusb
+sys/dev/usb/emdtv.c				netbsd-7-nhusb
+sys/dev/usb/emdtv_dtv.c				netbsd-7-nhusb
+sys/dev/usb/emdtv_ir.c				netbsd-7-nhusb
+sys/dev/usb/emdtvvar.h				netbsd-7-nhusb
+sys/dev/usb/ezload.c				netbsd-7-nhusb
+sys/dev/usb/ezload.h				netbsd-7-nhusb
+sys/dev/usb/files.usb				netbsd-7-nhusb
+sys/dev/usb/hid.c				netbsd-7-nhusb
+sys/dev/usb/hid.h				netbsd-7-nhusb
+sys/dev/usb/if_athn_usb.c			netbsd-7-nhusb
+sys/dev/usb/if_athn_usb.h			netbsd-7-nhusb
+sys/dev/usb/if_atu.c				netbsd-7-nhusb
+sys/dev/usb/if_atureg.h				netbsd-7-nhusb
+sys/dev/usb/if_aue.c				netbsd-7-nhusb
+sys/dev/usb/if_auereg.h				netbsd-7-nhusb
+sys/dev/usb/if_axe.c				netbsd-7-nhusb
+sys/dev/usb/if_axen.c				netbsd-7-nhusb
+sys/dev/usb/if_axenreg.h			netbsd-7-nhusb
+sys/dev/usb/if_axereg.h				netbsd-7-nhusb
+sys/dev/usb/if_cdce.c				netbsd-7-nhusb
+sys/dev/usb/if_cdcereg.h			netbsd-7-nhusb
+sys/dev/usb/if_cue.c				netbsd-7-nhusb
+sys/dev/usb/if_cuereg.h				netbsd-7-nhusb
+sys/dev/usb/if_kue.c				netbsd-7-nhusb
+sys/dev/usb/if_kuereg.h				netbsd-7-nhusb
+sys/dev/usb/if_otus.c				netbsd-7-nhusb
+sys/dev/usb/if_otusvar.h			netbsd-7-nhusb
+sys/dev/usb/if_rum.c				netbsd-7-nhusb
+sys/dev/usb/if_rumreg.h				netbsd-7-nhusb
+sys/dev/usb/if_rumvar.h				netbsd-7-nhusb
+sys/dev/usb/if_run.c				netbsd-7-nhusb
+sys/dev/usb/if_runvar.h				netbsd-7-nhusb
+sys/dev/usb/if_smsc.c				netbsd-7-nhusb
+sys/dev/usb/if_smscreg.h			netbsd-7-nhusb
+sys/dev/usb/if_smscvar.h			netbsd-7-nhusb
+sys/dev/usb/if_udav.c				netbsd-7-nhusb
+sys/dev/usb/if_udavreg.h			netbsd-7-nhusb
+sys/dev/usb/if_upgt.c				netbsd-7-nhusb
+sys/dev/usb/if_upgtvar.h			netbsd-7-nhusb
+sys/dev/usb/if_upl.c				netbsd-7-nhusb
+sys/dev/usb/if_ural.c				netbsd-7-nhusb
+sys/dev/usb/if_uralreg.h			netbsd-7-nhusb
+sys/dev/usb/if_uralvar.h			netbsd-7-nhusb
+sys/dev/usb/if_url.c				netbsd-7-nhusb
+sys/dev/usb/if_urlreg.h				netbsd-7-nhusb
+sys/dev/usb/if_urndis.c				netbsd-7-nhusb
+sys/dev/usb/if_urndisreg.h			netbsd-7-nhusb
+sys/dev/usb/if_urtw.c				netbsd-7-nhusb
+sys/dev/usb/if_urtwn.c				netbsd-7-nhusb
+sys/dev/usb/if_urtwn_data.h			netbsd-7-nhusb
+sys/dev/usb/if_urtwnreg.h			netbsd-7-nhusb
+sys/dev/usb/if_urtwnvar.h			netbsd-7-nhusb
+sys/dev/usb/if_urtwreg.h			netbsd-7-nhusb
+sys/dev/usb/if_zyd.c				netbsd-7-nhusb
+sys/dev/usb/if_zydreg.h				netbsd-7-nhusb
+sys/dev/usb/irmce.c				netbsd-7-nhusb
+sys/dev/usb/moscom.c				netbsd-7-nhusb
+sys/dev/usb/motg.c				netbsd-7-nhusb
+sys/dev/usb/motgvar.h				netbsd-7-nhusb
+sys/dev/usb/ohci.c				netbsd-7-nhusb
+sys/dev/usb/ohcireg.h				netbsd-7-nhusb
+sys/dev/usb/ohcivar.h				netbsd-7-nhusb
+sys/dev/usb/pseye.c				netbsd-7-nhusb
+sys/dev/usb/slurm.c				netbsd-7-nhusb
+sys/dev/usb/stuirda.c				netbsd-7-nhusb
+sys/dev/usb/u3g.c				netbsd-7-nhusb
+sys/dev/usb/uark.c				netbsd-7-nhusb
+sys/dev/usb/uatp.c				netbsd-7-nhusb
+sys/dev/usb/uaudio.c				netbsd-7-nhusb
+sys/dev/usb/uberry.c				netbsd-7-nhusb
+sys/dev/usb/ubsa.c				netbsd-7-nhusb
+sys/dev/usb/ubsa_common.c			netbsd-7-nhusb
+sys/dev/usb/ubsavar.h				netbsd-7-nhusb
+sys/dev/usb/ubt.c				netbsd-7-nhusb
+sys/dev/usb/uchcom.c				netbsd-7-nhusb
+sys/dev/usb/ucom.c				netbsd-7-nhusb
+sys/dev/usb/ucomvar.h				netbsd-7-nhusb
+sys/dev/usb/ucycom.c				netbsd-7-nhusb
+sys/dev/usb/udl.c				netbsd-7-nhusb
+sys/dev/usb/udl.h				netbsd-7-nhusb
+sys/dev/usb/udsbr.c				netbsd-7-nhusb
+sys/dev/usb/udsir.c				netbsd-7-nhusb
+sys/dev/usb/uep.c				netbsd-7-nhusb
+sys/dev/usb/uftdi.c				netbsd-7-nhusb
+sys/dev/usb/uftdireg.h				netbsd-7-nhusb
+sys/dev/usb/ugen.c				netbsd-7-nhusb
+sys/dev/usb/ugensa.c				netbsd-7-nhusb
+sys/dev/usb/uhci.c				netbsd-7-nhusb
+sys/dev/usb/uhcireg.h				netbsd-7-nhusb
+sys/dev/usb/uhcivar.h				netbsd-7-nhusb
+sys/dev/usb/uhid.c				netbsd-7-nhusb
+sys/dev/usb/uhidev.c				netbsd-7-nhusb
+sys/dev/usb/uhidev.h				netbsd-7-nhusb
+sys/dev/usb/uhmodem.c				netbsd-7-nhusb
+sys/dev/usb/uhso.c				netbsd-7-nhusb
+sys/dev/usb/uhub.c				netbsd-7-nhusb
+sys/dev/usb/uipad.c				netbsd-7-nhusb
+sys/dev/usb/uipaq.c				netbsd-7-nhusb
+sys/dev/usb/uirda.c				netbsd-7-nhusb
+sys/dev/usb/uirdavar.h				netbsd-7-nhusb
+sys/dev/usb/ukbd.c				netbsd-7-nhusb
+sys/dev/usb/ukbdmap.c				netbsd-7-nhusb
+sys/dev/usb/ukyopon.c				netbsd-7-nhusb
+sys/dev/usb/ukyopon.h				netbsd-7-nhusb
+sys/dev/usb/ulpt.c				netbsd-7-nhusb
+sys/dev/usb/umass.c				netbsd-7-nhusb
+sys/dev/usb/umass_isdata.c			netbsd-7-nhusb
+sys/dev/usb/umass_isdata.h			netbsd-7-nhusb
+sys/dev/usb/umass_quirks.c			netbsd-7-nhusb
+sys/dev/usb/umass_quirks.h			netbsd-7-nhusb
+sys/dev/usb/umass_scsipi.c			netbsd-7-nhusb
+sys/dev/usb/umass_scsipi.h			netbsd-7-nhusb
+sys/dev/usb/umassvar.h				netbsd-7-nhusb
+sys/dev/usb/umcs.c				netbsd-7-nhusb
+sys/dev/usb/umct.c				netbsd-7-nhusb
+sys/dev/usb/umidi.c				netbsd-7-nhusb
+sys/dev/usb/umidi_quirks.c			netbsd-7-nhusb
+sys/dev/usb/umidi_quirks.h			netbsd-7-nhusb
+sys/dev/usb/umodem.c				netbsd-7-nhusb
+sys/dev/usb/umodem_common.c			netbsd-7-nhusb
+sys/dev/usb/umodemvar.h				netbsd-7-nhusb
+sys/dev/usb/ums.c				netbsd-7-nhusb
+sys/dev/usb/uplcom.c				netbsd-7-nhusb
+sys/dev/usb/urio.c				netbsd-7-nhusb
+sys/dev/usb/urio.h				netbsd-7-nhusb
+sys/dev/usb/usb.c				netbsd-7-nhusb
+sys/dev/usb/usb.h				netbsd-7-nhusb
+sys/dev/usb/usb_mem.c				netbsd-7-nhusb
+sys/dev/usb/usb_mem.h				netbsd-7-nhusb
+sys/dev/usb/usb_quirks.c			netbsd-7-nhusb
+sys/dev/usb/usb_quirks.h			netbsd-7-nhusb
+sys/dev/usb/usb_subr.c				netbsd-7-nhusb
+sys/dev/usb/usbdevices.config			netbsd-7-nhusb
+sys/dev/usb/usbdevs				netbsd-7-nhusb
+sys/dev/usb/usbdevs.h				netbsd-7-nhusb
+sys/dev/usb/usbdevs_data.h			netbsd-7-nhusb
+sys/dev/usb/usbdi.c				netbsd-7-nhusb
+sys/dev/usb/usbdi.h				netbsd-7-nhusb
+sys/dev/usb/usbdi_util.c			netbsd-7-nhusb
+sys/dev/usb/usbdi_util.h			netbsd-7-nhusb
+sys/dev/usb/usbdivar.h				netbsd-7-nhusb
+sys/dev/usb/usbhid.h				netbsd-7-nhusb
+sys/dev/usb/usbhist.h				netbsd-7-nhusb
+sys/dev/usb/usbroothub.c			netbsd-7-nhusb
+sys/dev/usb/usbroothub.h			netbsd-7-nhusb
+sys/dev/usb/usbroothub_subr.c			delete
+sys/dev/usb/usbroothub_subr.h			delete
+sys/dev/usb/uscanner.c				netbsd-7-nhusb
+sys/dev/usb/uslsa.c				netbsd-7-nhusb
+sys/dev/usb/usscanner.c				netbsd-7-nhusb
+sys/dev/usb/ustir.c				netbsd-7-nhusb
+sys/dev/usb/uthum.c				netbsd-7-nhusb
+sys/dev/usb/utoppy.c				netbsd-7-nhusb
+sys/dev/usb/uts.c				netbsd-7-nhusb
+sys/dev/usb/uvideo.c				netbsd-7-nhusb
+sys/dev/usb/uvisor.c				netbsd-7-nhusb
+sys/dev/usb/uvscom.c				netbsd-7-nhusb
+sys/dev/usb/uyap.c				netbsd-7-nhusb
+sys/dev/usb/uyap_firmware.h			netbsd-7-nhusb
+sys/dev/usb/uyurex.c				netbsd-7-nhusb
+sys/dev/usb/x1input_rdesc.h			netbsd-7-nhusb
+sys/dev/usb/xhci.c				netbsd-7-nhusb
+sys/dev/usb/xhcireg.h				netbsd-7-nhusb
+sys/dev/usb/xhcivar.h				netbsd-7-nhusb
+sys/dev/usb/xinput_rdesc.h			netbsd-7-nhusb
+sys/external/bsd/common/conf/files.linux	netbsd-7-nhusb
+sys/external/bsd/common/include/linux/err.h	netbsd-7-nhusb
+sys/external/bsd/common/include/linux/kernel.h	netbsd-7-nhusb
+sys/external/bsd/common/include/linux/workqueue.h netbsd-7-nhusb
+sys/external/bsd/common/linux/linux_work.c	netbsd-7-nhusb
+sys/external/bsd/drm2/dist/drm/radeon/atombios_encoders.c netbsd-7-nhusb
+sys/external/bsd/drm2/dist/drm/radeon/radeon_legacy_encoders.c netbsd-7-nhusb
+sys/external/bsd/drm2/drm/files.drmkms		netbsd-7-nhusb
+sys/external/bsd/drm2/i915drm/files.i915drmkms	netbsd-7-nhusb
+sys/external/bsd/drm2/include/linux/err.h	delete
+sys/external/bsd/drm2/include/linux/workqueue.h	delete
+sys/external/bsd/drm2/linux/files.drmkms_linux	netbsd-7-nhusb
+sys/external/bsd/drm2/linux/linux_work.c	delete
+sys/external/bsd/dwc2/dwc2.c			netbsd-7-nhusb
+sys/external/bsd/dwc2/dwc2.h			netbsd-7-nhusb
+sys/external/bsd/dwc2/dwc2var.h			netbsd-7-nhusb
+sys/external/bsd/dwc2/dwctwo2netbsd		netbsd-7-nhusb
+sys/external/bsd/dwc2/conf/files.dwc2		netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_core.c		netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_core.h		netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_coreintr.c	netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_hcd.c		netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_hcd.h		netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_hcdddma.c	netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_hcdintr.c	netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_hcdqueue.c	netbsd-7-nhusb
+sys/external/bsd/dwc2/dist/dwc2_hw.h		netbsd-7-nhusb
+sys/modules/drmkms_linux/Makefile		netbsd-7-nhusb
+sys/modules/i915drmkms/Makefile			netbsd-7-nhusb
+sys/rump/dev/lib/libugenhc/ugenhc.c		netbsd-7-nhusb
+sys/rump/dev/lib/libusb/Makefile		netbsd-7-nhusb
+sys/rump/dev/lib/libusb/USB.ioconf		netbsd-7-nhusb
+sys/rump/dev/lib/libusb/usb_at_ugenhc.c		delete
+sys/rump/dev/lib/libusb/opt/opt_usb.h		delete
+sys/rump/dev/lib/libusb/opt/opt_usbverbose.h	delete
+sys/sys/mbuf.h					netbsd-7-nhusb
+usr.sbin/usbdevs/usbdevs.8			netbsd-7-nhusb
+usr.sbin/usbdevs/usbdevs.c			netbsd-7-nhusb
+
+	Merge netbsd-7-nhusb:
+	- API / infrastructure changes to support memory management changes.
+	- Memory management improvements and bug fixes.
+	- HCDs should now be MP safe
+	- conversion to KERNHIST based debug
+	- FS/LS isoc support on ehci(4).
+	- conversion to kmem(9)
+	- Some USB 3 support - mostly from Takahiro HAYASHI (t-hash).
+	- interrupt transfers now get proper DMA operations
+	- general bug fixes
+	     - kern/48308
+	     - uhub status notification improvements
+	     - umass(4) probe fix (applied to HEAD already)
+	     - ohci(4) short transfer fix
+	- Change the SOFTINT level from NET to SERIAL for the USB softint
+	  handler.  This gives the callback a chance of running when another
+	  softint handler at SOFTINT_NET has blocked holding a lock, e.g.
+	   softnet_lock and most of the network stack.
+	     - kern/49065 - ifconfig tun0 ... sequence locks up system /
+	       lockup: softnet_lock held across usb xfr
+	     - kern/50491 - unkillable wait in usbd_transfer while using usmsc0 
+	       on raspberry pi 2
+	     - kern/51395 - USB Ethernet makes xhci hang
+	- Various improvements to slhci(4)
+	- Various improvements to dwc2(4)
+	[skrll, ticket #1395]
 
