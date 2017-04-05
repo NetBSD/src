@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.126 2016/12/26 23:12:33 pgoyette Exp $ */
+/*     $NetBSD: buf.h,v 1.127 2017/04/05 20:15:49 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,15 +198,20 @@ struct buf {
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
 #define	B_DEVPRIVATE	0x02000000	/* Device driver private flag. */
+#define	B_MEDIA_FUA	0x08000000	/* Set Force Unit Access for media. */
+#define	B_MEDIA_DPO	0x10000000	/* Set Disable Page Out for media. */
 
 #define BUF_FLAGBITS \
     "\20\1AGE\3ASYNC\4BAD\5BUSY\10DELWRI" \
     "\12DONE\13COWDONE\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
-    "\23PHYS\24RAW\25READ\32DEVPRIVATE\33VFLUSH"
+    "\23PHYS\24RAW\25READ\32DEVPRIVATE\33VFLUSH\34MEDIA_FUA\35MEDIA_DPO"
 
 /* Avoid weird code due to B_WRITE being a "pseudo flag" */
 #define BUF_ISREAD(bp)	(((bp)->b_flags & B_READ) == B_READ)
 #define BUF_ISWRITE(bp)	(((bp)->b_flags & B_READ) == B_WRITE)
+
+/* Media flags, to be passed for nested I/O */
+#define B_MEDIA_FLAGS	(B_MEDIA_FUA|B_MEDIA_DPO)
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
