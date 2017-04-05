@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.92 2017/03/17 03:19:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.93 2017/04/05 20:38:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.92 2017/03/17 03:19:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.93 2017/04/05 20:38:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.92 2017/03/17 03:19:46 riastradh Exp
 static struct sysctllog *wapbl_sysctl;
 static int wapbl_flush_disk_cache = 1;
 static int wapbl_verbose_commit = 0;
+static int wapbl_allow_fuadpo = 0; 	/* switched off by default for now */
 
 static inline size_t wapbl_space_free(size_t, off_t, off_t);
 
@@ -230,6 +231,16 @@ struct wapbl {
 	u_char *wl_buffer;	/* l:   buffer for wapbl_buffered_write() */
 	daddr_t wl_buffer_dblk;	/* l:   buffer disk block address */
 	size_t wl_buffer_used;	/* l:   buffer current use */
+
+	int wl_dkcache;		/* r: 	disk cache flags */
+#define WAPBL_USE_FUA(wl)	\
+		(wapbl_allow_fuadpo && ISSET((wl)->wl_dkcache, DKCACHE_FUA))
+#define WAPBL_JFLAGS(wl)	\
+		(WAPBL_USE_FUA(wl) ? (wl)->wl_jwrite_flags : 0)
+#define WAPBL_MFLAGS(wl)	\
+		(WAPBL_USE_FUA(wl) ? (wl)->wl_mwrite_flags : 0)
+	int wl_jwrite_flags;	/* r: 	journal write flags */
+	int wl_mwrite_flags;	/* r:	metadata write flags */
 };
 
 #ifdef WAPBL_DEBUG_PRINT
@@ -280,6 +291,8 @@ static void wapbl_deallocation_free(struct wapbl *, struct wapbl_dealloc *,
 
 static void wapbl_evcnt_init(struct wapbl *);
 static void wapbl_evcnt_free(struct wapbl *);
+
+static void wapbl_dkcache_init(struct wapbl *);
 
 #if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
@@ -335,6 +348,18 @@ wapbl_sysctl_init(void)
 		       SYSCTL_DESCR("show time and size of wapbl log commits"),
 		       NULL, 0, &wapbl_verbose_commit, 0,
 		       CTL_CREATE, CTL_EOL);
+	if (rv)
+		return rv;
+
+	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "allow_fuadpo",
+		       SYSCTL_DESCR("allow use of FUA/DPO instead of cash flush if available"),
+		       NULL, 0, &wapbl_allow_fuadpo, 0,
+		       CTL_CREATE, CTL_EOL);
+	if (rv)
+		return rv;
+
 	return rv;
 }
 
@@ -389,6 +414,30 @@ wapbl_evcnt_free(struct wapbl *wl)
 	evcnt_detach(&wl->wl_ev_journalwrite);
 	evcnt_detach(&wl->wl_ev_metawrite);
 	evcnt_detach(&wl->wl_ev_cacheflush);
+}
+
+static void
+wapbl_dkcache_init(struct wapbl *wl)
+{
+	int error;
+
+	/* Get disk cache flags */
+	error = VOP_IOCTL(wl->wl_devvp, DIOCGCACHE, &wl->wl_dkcache,
+	    FWRITE, FSCRED);
+	if (error) {
+		/* behave as if there was a write cache */
+		wl->wl_dkcache = DKCACHE_WRITE;
+	}
+
+	/* Use FUA instead of cache flush if available */
+	if (ISSET(wl->wl_dkcache, DKCACHE_FUA)) {
+		wl->wl_jwrite_flags |= B_MEDIA_FUA;
+		wl->wl_mwrite_flags |= B_MEDIA_FUA;
+	}
+
+	/* Use DPO for journal writes if available */
+	if (ISSET(wl->wl_dkcache, DKCACHE_DPO))
+		wl->wl_jwrite_flags |= B_MEDIA_DPO;
 }
 
 static int
@@ -562,6 +611,8 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	wapbl_inodetrk_init(wl, WAPBL_INODETRK_SIZE);
 
 	wapbl_evcnt_init(wl);
+
+	wapbl_dkcache_init(wl);
 
 	/* Initialize the commit header */
 	{
@@ -809,7 +860,6 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	struct buf *bp;
 	int error;
 
-	KASSERT((flags & ~(B_WRITE | B_READ)) == 0);
 	KASSERT(devvp->v_type == VBLK);
 
 	if ((flags & (B_WRITE | B_READ)) == B_WRITE) {
@@ -823,7 +873,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 
 	bp = getiobuf(devvp, true);
 	bp->b_flags = flags;
-	bp->b_cflags = BC_BUSY; /* silly & dubious */
+	bp->b_cflags = BC_BUSY;	/* mandatory, asserted by biowait() */
 	bp->b_dev = devvp->v_rdev;
 	bp->b_data = data;
 	bp->b_bufsize = bp->b_resid = bp->b_bcount = len;
@@ -898,7 +948,8 @@ wapbl_buffered_flush(struct wapbl *wl)
 		return 0;
 
 	error = wapbl_doio(wl->wl_buffer, wl->wl_buffer_used,
-	    wl->wl_devvp, wl->wl_buffer_dblk, B_WRITE);
+	    wl->wl_devvp, wl->wl_buffer_dblk,
+	    B_WRITE | WAPBL_JFLAGS(wl));
 	wl->wl_buffer_used = 0;
 
 	wl->wl_ev_journalwrite.ev_count++;
@@ -948,12 +999,10 @@ wapbl_buffered_write(void *data, size_t len, struct wapbl *wl, daddr_t pbn)
 	if (len >= resid) {
 		memcpy(wl->wl_buffer + wl->wl_buffer_used, data, resid);
 		wl->wl_buffer_used += resid;
-		error = wapbl_doio(wl->wl_buffer, wl->wl_buffer_used,
-		    wl->wl_devvp, wl->wl_buffer_dblk, B_WRITE);
+		error = wapbl_buffered_flush(wl);
 		data = (uint8_t *)data + resid;
 		len -= resid;
 		wl->wl_buffer_dblk = pbn + btodb(resid);
-		wl->wl_buffer_used = 0;
 		if (error)
 			return error;
 	}
@@ -1500,6 +1549,13 @@ wapbl_biodone(struct buf *bp)
 	}
 
 	/*
+	 * Make sure that the buf doesn't retain the media flags, so that
+	 * e.g. wapbl_allow_fuadpo has immediate effect on any following I/O.
+	 * The flags will be set again if needed by another I/O.
+	 */
+	bp->b_flags &= ~B_MEDIA_FLAGS;
+
+	/*
 	 * Release the buffer here. wapbl_flush() may wait for the
 	 * log to become empty and we better unbusy the buffer before
 	 * wapbl_flush() returns.
@@ -1754,6 +1810,10 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 		}
 		bp->b_iodone = wapbl_biodone;
 		bp->b_private = we;
+
+		/* make sure the block is saved sync when FUA in use */
+		bp->b_flags |= WAPBL_MFLAGS(wl);
+
 		bremfree(bp);
 		wapbl_remove_buf_locked(wl, bp);
 		mutex_exit(&wl->wl_mtx);
@@ -2201,7 +2261,8 @@ wapbl_cache_sync(struct wapbl *wl, const char *msg)
 	int force = 1;
 	int error;
 
-	if (!wapbl_flush_disk_cache) {
+	/* Skip full cache sync if disabled, or when using FUA */
+	if (!wapbl_flush_disk_cache || WAPBL_USE_FUA(wl)) {
 		return 0;
 	}
 	if (verbose) {
