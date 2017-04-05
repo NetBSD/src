@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.34 2017/01/11 07:03:59 ozaki-r Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.35 2017/04/05 03:47:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.34 2017/01/11 07:03:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.35 2017/04/05 03:47:51 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -142,6 +142,9 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 	struct ifaddr *ifa;
 	const struct sockaddr_dl *asdl, *nsdl;
 	struct psref psref;
+
+	if (ifp != NULL)
+		KASSERT(if_ioctl_locked(ifp));
 
 	switch (cmd) {
 	case SIOCALIFADDR:
