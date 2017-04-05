@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.389 2017/03/28 08:47:19 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.390 2017/04/05 03:47:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.389 2017/03/28 08:47:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.390 2017/04/05 03:47:51 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2496,8 +2496,15 @@ if_slowtimo(void *arg)
 int
 ifpromisc(struct ifnet *ifp, int pswitch)
 {
-	int pcount, ret;
+	int pcount, ret = 0;
 	short nflags;
+	bool need_unlock = false;
+
+	/* XXX if_ioctl_lock may or may not be held here */
+	if (ifp->if_ioctl_lock != NULL && !mutex_owned(ifp->if_ioctl_lock)) {
+		mutex_enter(ifp->if_ioctl_lock);
+		need_unlock = true;
+	}
 
 	pcount = ifp->if_pcount;
 	if (pswitch) {
@@ -2507,11 +2514,11 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 		 * consult IFF_PROMISC when it is brought up.
 		 */
 		if (ifp->if_pcount++ != 0)
-			return 0;
+			goto out;
 		nflags = ifp->if_flags | IFF_PROMISC;
 	} else {
 		if (--ifp->if_pcount > 0)
-			return 0;
+			goto out;
 		nflags = ifp->if_flags & ~IFF_PROMISC;
 	}
 	ret = if_flags_set(ifp, nflags);
@@ -2519,6 +2526,10 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	if (ret != 0) {
 		ifp->if_pcount = pcount;
 	}
+
+out:
+	if (need_unlock)
+		mutex_exit(ifp->if_ioctl_lock);
 	return ret;
 }
 
@@ -2678,6 +2689,8 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
+
+	KASSERT(if_ioctl_locked(ifp));
 
 	switch (cmd) {
 	case SIOCSIFCAP:
@@ -3056,6 +3069,15 @@ out:
 	return error;
 }
 
+bool
+if_ioctl_locked(struct ifnet *ifp)
+{
+
+	KASSERT(ifp->if_ioctl_lock != NULL);
+
+	return mutex_owned(ifp->if_ioctl_lock);
+}
+
 /*
  * Return interface configuration
  * of system.  List may be used
@@ -3299,13 +3321,22 @@ int
 if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 {
 	int rc;
+	bool need_unlock = false;
+
+	/* XXX if_ioctl_lock may or may not be held here */
+	if (ifp->if_ioctl_lock != NULL && !mutex_owned(ifp->if_ioctl_lock)) {
+		mutex_enter(ifp->if_ioctl_lock);
+		need_unlock = true;
+	}
 
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
 	else if (src ||
-		/* FIXME: may not hold if_ioctl_lock */
 	         (rc = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
 		rc = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ifa);
+
+	if (need_unlock)
+		mutex_exit(ifp->if_ioctl_lock);
 
 	return rc;
 }
@@ -3347,6 +3378,13 @@ int
 if_flags_set(ifnet_t *ifp, const short flags)
 {
 	int rc;
+	bool need_unlock = false;
+
+	/* XXX if_ioctl_lock may or may not be held here */
+	if (ifp->if_ioctl_lock != NULL && !mutex_owned(ifp->if_ioctl_lock)) {
+		mutex_enter(ifp->if_ioctl_lock);
+		need_unlock = true;
+	}
 
 	if (ifp->if_setflags != NULL)
 		rc = (*ifp->if_setflags)(ifp, flags);
@@ -3364,18 +3402,23 @@ if_flags_set(ifnet_t *ifp, const short flags)
                  * setting/clearing only IFF_PROMISC if the interface
                  * isn't IFF_UP.  Uphold that tradition.
 		 */
-		if (chgdflags == IFF_PROMISC && (ifp->if_flags & IFF_UP) == 0)
-			return 0;
+		if (chgdflags == IFF_PROMISC && (ifp->if_flags & IFF_UP) == 0) {
+			rc = 0;
+			goto out;
+		}
 
 		memset(&ifr, 0, sizeof(ifr));
 
 		ifr.ifr_flags = flags & ~IFF_CANTCHANGE;
-		/* FIXME: may not hold if_ioctl_lock */
 		rc = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
 
 		if (rc != 0 && cantflags != 0)
 			ifp->if_flags ^= cantflags;
 	}
+
+out:
+	if (need_unlock)
+		mutex_exit(ifp->if_ioctl_lock);
 
 	return rc;
 }
@@ -3385,6 +3428,13 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 {
 	int rc;
 	struct ifreq ifr;
+	bool need_unlock = false;
+
+	/* XXX if_ioctl_lock may or may not be held here */
+	if (ifp->if_ioctl_lock != NULL && !mutex_owned(ifp->if_ioctl_lock)) {
+		mutex_enter(ifp->if_ioctl_lock);
+		need_unlock = true;
+	}
 
 	if (ifp->if_mcastop != NULL)
 		rc = (*ifp->if_mcastop)(ifp, cmd, sa);
@@ -3392,6 +3442,9 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 		ifreq_setaddr(cmd, &ifr, sa);
 		rc = (*ifp->if_ioctl)(ifp, cmd, &ifr);
 	}
+
+	if (need_unlock)
+		mutex_exit(ifp->if_ioctl_lock);
 
 	return rc;
 }
