@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.720 2017/03/05 19:22:10 snj Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.721 2017/04/06 16:30:33 macallan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -159,6 +159,7 @@
 #define	USB_VENDOR_ANNABOOKS	0x04ed		/* Annabooks */
 #define	USB_VENDOR_JVC	0x04f1		/* JVC */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics */
+#define	USB_VENDOR_ELAN	0x04f3		/* ELAN Microelectronics */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries */
 #define	USB_VENDOR_DALLAS	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_AIPTEK2	0x04fc		/* AIPTEK International */
