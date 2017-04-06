@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.88 2017/04/01 14:53:48 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.89 2017/04/06 02:38:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.88 2017/04/01 14:53:48 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.89 2017/04/06 02:38:08 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,9 +317,8 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	mutex_exit(&lfs_lock);
 	fs->lfs_cleanind = 0;
 
-#ifdef DEBUG
 	LFS_ENTER_LOG("seglock", __FILE__, __LINE__, 0, flags, curproc->p_pid);
-#endif
+
 	/* Drain fragment size changes out */
 	rw_enter(&fs->lfs_fraglock, RW_WRITER);
 
@@ -487,9 +486,8 @@ lfs_segunlock(struct lfs *fs)
 		 * to complete.
 		 */
 		if (!ckp) {
-#ifdef DEBUG
 			LFS_ENTER_LOG("segunlock_std", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
@@ -533,9 +531,9 @@ lfs_segunlock(struct lfs *fs)
 					lfs_auto_segclean(fs);
 			}
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
-#ifdef DEBUG
+
 			LFS_ENTER_LOG("segunlock_ckp", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
