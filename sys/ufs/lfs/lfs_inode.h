@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.18 2017/04/06 02:38:08 maya Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.19 2017/04/06 03:21:01 maya Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -238,10 +238,8 @@ extern int lfs_lognum;
 extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 #  define LFS_BWRITE_LOG(bp) lfs_bwrite_log((bp), __FILE__, __LINE__)
 #  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) do {\
-	int _s;								\
 									\
 	mutex_enter(&lfs_lock);						\
-	_s = splbio();							\
 	lfs_log[lfs_lognum].op = theop;					\
 	lfs_log[lfs_lognum].file = thefile;				\
 	lfs_log[lfs_lognum].line = (theline);				\
@@ -249,7 +247,6 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 	lfs_log[lfs_lognum].block = (lbn);				\
 	lfs_log[lfs_lognum].flags = (theflags);				\
 	lfs_lognum = (lfs_lognum + 1) % LFS_LOGLENGTH;			\
-	splx(_s);							\
 	mutex_exit(&lfs_lock);						\
 } while (0)
 
