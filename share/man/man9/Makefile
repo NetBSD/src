@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.403 2017/03/10 09:08:47 martin Exp $
+#       $NetBSD: Makefile,v 1.404 2017/04/06 01:54:17 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -899,6 +899,7 @@ MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 
 MLINKS+=ubc.9 ubc_alloc.9 ubc.9 ubc_release.9 ubc.9 ubc_uiomove.9
+MLINKS+=ubc.9 ubc_zerorange.9 ubc.9 ubc_purge.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \
