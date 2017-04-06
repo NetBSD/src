@@ -2138,8 +2138,8 @@ parse_config_line(struct dhcpcd_ctx *ctx, const char *ifname,
 			continue;
 
 		if (cf_options[i].has_arg == required_argument && !line) {
-			fprintf(stderr,
-			    PACKAGE ": option requires an argument -- %s\n",
+			syslog(LOG_ERR,
+			    PACKAGE ": option requires an argument -- %s",
 			    opt);
 			return -1;
 		}
