@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.52 2017/04/05 08:51:04 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.53 2017/04/06 09:39:12 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.52 2017/04/05 08:51:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.53 2017/04/06 09:39:12 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -420,7 +420,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 				crypto_drivers[hid].cc_sessions++;
 			} else {
 				DPRINTF(("%s: crypto_drivers[%d].cc_newsession() failed. error=%d\n",
-					__func__, hid, error));
+					__func__, hid, err));
 			}
 			goto done;
 			/*break;*/
