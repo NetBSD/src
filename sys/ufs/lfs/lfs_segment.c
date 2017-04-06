@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.267 2017/04/06 02:38:08 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.268 2017/04/06 03:15:03 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.267 2017/04/06 02:38:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.268 2017/04/06 03:15:03 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1304,12 +1304,10 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 	int j, blksinblk;
 
 	ASSERT_SEGLOCK(sp->fs);
-	/*
-	 * If full, finish this segment.  We may be doing I/O, so
-	 * release and reacquire the splbio().
-	 */
 	KASSERTMSG((sp->vp != NULL),
 	    "lfs_gatherblock: Null vp in segment");
+
+	/* If full, finish this segment. */
 	fs = sp->fs;
 	blksinblk = howmany(bp->b_bcount, lfs_sb_getbsize(fs));
 	if (sp->sum_bytes_left < sizeof(int32_t) * blksinblk ||
