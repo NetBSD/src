@@ -1494,7 +1494,7 @@ main(int argc, char **argv)
 #ifdef USE_SIGNALS
 		case 'k':
 			sig = SIGALRM;
-			siga = "ARLM";
+			siga = "ALRM";
 			break;
 		case 'n':
 			sig = SIGHUP;
