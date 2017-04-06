@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.404 2017/04/06 01:54:17 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.405 2017/04/06 02:23:26 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -851,7 +851,7 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splsched.9 spl.9 splserial.9 \
 	spl.9 splsoftclock.9 spl.9 splsoftnet.9 spl.9 splsoftserial.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9 \
-	spl.9 splsoftbio.9
+	spl.9 splsoftbio.9 spl.9 splbio.9
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=sysctl.9 old_sysctl.9 \
