@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.206 2017/04/04 21:07:50 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.207 2017/04/06 00:02:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.206 2017/04/04 21:07:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.207 2017/04/06 00:02:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1147,11 +1147,6 @@ puffs_vnop_getattr(void *v)
 static void
 zerofill_lastpage(struct vnode *vp, voff_t off)
 {
-	char zbuf[MAX_PAGE_SIZE];
-	struct iovec iov;
-	struct uio uio;
-	vsize_t len;
-	int error;
 
 	if (trunc_page(off) == off)
 		return;
@@ -1159,27 +1154,8 @@ zerofill_lastpage(struct vnode *vp, voff_t off)
 	if (vp->v_writecount == 0)
 		return;
 
-	len = round_page(off) - off;
-	KASSERT(len < sizeof(zbuf));
-	memset(zbuf, 0, len);
-
-	iov.iov_base = zbuf;
-	iov.iov_len = len;
-	UIO_SETUP_SYSSPACE(&uio);
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = off;
-	uio.uio_resid = len;
-	uio.uio_rw = UIO_WRITE;
-
-	error = ubc_uiomove(&vp->v_uobj, &uio, len,
-			    UVM_ADV_SEQUENTIAL, UBC_WRITE|UBC_UNMAP_FLAG(vp));
-	if (error) {
-		DPRINTF(("zero-fill 0x%" PRIxVSIZE "@0x%" PRIx64 
-			 " failed: error = %d\n", len, off, error));
-	}
-
-	return;
+	vsize_t len = round_page(off) - off;
+	ubc_zerorange(&vp->v_uobj, off, len, UBC_WRITE|UBC_UNMAP_FLAG(vp));
 }
 
 static int
