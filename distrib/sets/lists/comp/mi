@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2117 2017/04/06 04:28:57 pgoyette Exp $
+#	$NetBSD: mi,v 1.2118 2017/04/06 05:08:17 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4013,6 +4013,7 @@
 ./usr/share/man/cat1/unifdefall.0		comp-c-catman		.cat
 ./usr/share/man/cat1/xstr.0			comp-c-catman		.cat
 ./usr/share/man/cat1/yacc.0			comp-c-catman		.cat
+./usr/share/man/cat2/EV_SET.0			comp-c-catman		.cat
 ./usr/share/man/cat2/_Exit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/__clone.0			comp-c-catman		.cat
 ./usr/share/man/cat2/__quotactl.0		comp-c-catman		.cat
@@ -4075,7 +4076,6 @@
 ./usr/share/man/cat2/dup2.0			comp-c-catman		.cat
 ./usr/share/man/cat2/dup3.0			comp-c-catman		.cat
 ./usr/share/man/cat2/errno.0			comp-c-catman		.cat
-./usr/share/man/cat2/EV_SET.0			comp-c-catman		.cat
 ./usr/share/man/cat2/execve.0			comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_fd.0	comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_file.0	comp-c-catman		.cat
@@ -11210,9 +11210,9 @@
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_alloc.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ubc_purge.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_uiomove.0		comp-sys-catman		.cat
-./usr/share/man/cat9/ubc_purge.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ubc_zerorange.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ucas.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ucom.0			comp-sys-catman		.cat
@@ -11522,6 +11522,7 @@
 ./usr/share/man/html1/unifdefall.html		comp-c-htmlman		html
 ./usr/share/man/html1/xstr.html			comp-c-htmlman		html
 ./usr/share/man/html1/yacc.html			comp-c-htmlman		html
+./usr/share/man/html2/EV_SET.html		comp-c-htmlman		html
 ./usr/share/man/html2/_Exit.html		comp-c-htmlman		html
 ./usr/share/man/html2/__clone.html		comp-c-htmlman		html
 ./usr/share/man/html2/__quotactl.html		comp-c-htmlman		html
@@ -11582,7 +11583,6 @@
 ./usr/share/man/html2/dup2.html			comp-c-htmlman		html
 ./usr/share/man/html2/dup3.html			comp-c-htmlman		html
 ./usr/share/man/html2/errno.html		comp-c-htmlman		html
-./usr/share/man/html2/EV_SET.html		comp-c-htmlman		html
 ./usr/share/man/html2/execve.html		comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_fd.html	comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_file.html	comp-c-htmlman		html
@@ -18494,9 +18494,9 @@
 ./usr/share/man/html9/uao_reference.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ubc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_alloc.html		comp-sys-htmlman	html
+./usr/share/man/html9/ubc_purge.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_release.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_uiomove.html		comp-sys-htmlman	html
-./usr/share/man/html9/ubc_purge.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_zerorange.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ucas.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ucom.html			comp-sys-htmlman	html
@@ -18796,6 +18796,7 @@
 ./usr/share/man/man1/unifdefall.1		comp-util-man		.man
 ./usr/share/man/man1/xstr.1			comp-c-man		.man
 ./usr/share/man/man1/yacc.1			comp-c-man		.man
+./usr/share/man/man2/EV_SET.2			comp-c-man		.man
 ./usr/share/man/man2/_Exit.2			comp-c-man		.man
 ./usr/share/man/man2/__clone.2			comp-c-man		.man
 ./usr/share/man/man2/__quotactl.2		comp-c-man		.man
@@ -18858,7 +18859,6 @@
 ./usr/share/man/man2/dup2.2			comp-c-man		.man
 ./usr/share/man/man2/dup3.2			comp-c-man		.man
 ./usr/share/man/man2/errno.2			comp-c-man		.man
-./usr/share/man/man2/EV_SET.2			comp-c-man		.man
 ./usr/share/man/man2/execve.2			comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_fd.2	comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_file.2	comp-c-man		.man
@@ -25986,9 +25986,9 @@
 ./usr/share/man/man9/uao_reference.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc.9			comp-sys-man		.man
 ./usr/share/man/man9/ubc_alloc.9		comp-sys-man		.man
+./usr/share/man/man9/ubc_purge.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_release.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_uiomove.9		comp-sys-man		.man
-./usr/share/man/man9/ubc_purge.9		comp-sys-man		.man
 ./usr/share/man/man9/ubc_zerorange.9		comp-sys-man		.man
 ./usr/share/man/man9/ucas.9			comp-sys-man		.man
 ./usr/share/man/man9/ucom.9			comp-sys-man		.man
