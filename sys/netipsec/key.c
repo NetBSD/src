@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.103 2017/02/23 07:57:09 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.104 2017/04/06 09:20:07 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.103 2017/02/23 07:57:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.104 2017/04/06 09:20:07 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #ifdef __FreeBSD__
 #include "opt_inet6.h"
@@ -45,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.103 2017/02/23 07:57:09 ozaki-r Exp $");
 #include "opt_ipsec.h"
 #ifdef __NetBSD__
 #include "opt_gateway.h"
+#endif
 #endif
 
 #include <sys/types.h>
@@ -447,6 +449,9 @@ static void *key_newbuf (const void *, u_int);
 #ifdef INET6
 static int key_ismyaddr6 (const struct sockaddr_in6 *);
 #endif
+
+static void sysctl_net_keyv2_setup(struct sysctllog **);
+static void sysctl_net_key_compat_setup(struct sysctllog **);
 
 /* flags for key_cmpsaidx() */
 #define CMP_HEAD	1	/* protocol, addresses. */
@@ -1986,7 +1991,8 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	/* Invalidate the ipflow cache, as well. */
 	ipflow_invalidate_all(0);
 #ifdef INET6
-	ip6flow_invalidate_all(0);
+	if (in6_present)
+		ip6flow_invalidate_all(0);
 #endif /* INET6 */
 #endif /* GATEWAY */
 #endif /* __NetBSD__ */
@@ -7815,6 +7821,9 @@ key_init(void)
 {
 	static ONCE_DECL(key_init_once);
 
+	sysctl_net_keyv2_setup(NULL);
+	sysctl_net_key_compat_setup(NULL);
+
 	RUN_ONCE(&key_init_once, key_do_init);
 }
 
@@ -8306,7 +8315,8 @@ sysctl_net_key_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(pfkeystat_percpu, PFKEY_NSTATS));
 }
 
-SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
+static void
+sysctl_net_keyv2_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -8388,7 +8398,8 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
  * and to share a single API, these names appear under { CTL_NET, PF_KEY }
  * for both IPSEC and KAME IPSEC.
  */
-SYSCTL_SETUP(sysctl_net_key_compat_setup, "sysctl net.key subtree setup for IPSEC")
+static void
+sysctl_net_key_compat_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

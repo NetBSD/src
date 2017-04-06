@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.70 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.71 2017/04/06 09:20:07 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,17 +32,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.71 2017/04/06 09:20:07 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #ifdef __FreeBSD__
 #include "opt_inet6.h"
 #endif
 #include "opt_ipsec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2523,6 +2525,11 @@ ipsec_attach(void)
 {
 
 	ipsecstat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
+
+	sysctl_net_inet_ipsec_setup(NULL);
+#ifdef INET6
+	sysctl_net_inet6_ipsec6_setup(NULL);
+#endif
 
 	ah_attach();
 	esp_attach();
