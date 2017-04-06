@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.237 2017/04/05 03:47:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.238 2017/04/06 03:54:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -968,7 +968,6 @@ int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
 int	if_flags_set(struct ifnet *, const short);
 int	if_clone_list(int, char *, int *);
-bool	if_ioctl_locked(struct ifnet *);
 
 struct	ifnet *ifunit(const char *);
 struct	ifnet *if_get(const char *, struct psref *);
