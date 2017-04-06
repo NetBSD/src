@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2116 2017/04/06 01:54:40 pgoyette Exp $
+#	$NetBSD: mi,v 1.2117 2017/04/06 04:28:57 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -18497,7 +18497,7 @@
 ./usr/share/man/html9/ubc_release.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_uiomove.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ubc_purge.html		comp-sys-htmlman	html
-./usr/share/man/html9/ubc_range.html		comp-sys-htmlman	html
+./usr/share/man/html9/ubc_zerorange.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ucas.html			comp-sys-htmlman	html
 ./usr/share/man/html9/ucom.html			comp-sys-htmlman	html
 ./usr/share/man/html9/uiomove.html		comp-sys-htmlman	html
