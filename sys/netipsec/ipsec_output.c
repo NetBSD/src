@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.41 2015/03/30 03:51:50 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.42 2017/04/06 09:20:07 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,14 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.41 2015/03/30 03:51:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.42 2017/04/06 09:20:07 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
  */
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #ifdef __FreeBSD__
 #include "opt_inet6.h"
+#endif
 #endif
 
 #include <sys/param.h>
