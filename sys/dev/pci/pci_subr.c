@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.171 2017/03/30 08:44:33 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.172 2017/04/06 08:57:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.171 2017/03/30 08:44:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.172 2017/04/06 08:57:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -778,7 +778,7 @@ pci_conf_print_common(
 	onoff("Interrupt disable", rval, PCI_COMMAND_INTERRUPT_DISABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
-	onoff("Immediate Readness", rval, PCI_STATUS_IMMD_READNESS);
+	onoff("Immediate Readiness", rval, PCI_STATUS_IMMD_READNESS);
 	onoff2("Interrupt status", rval, PCI_STATUS_INT_STATUS, "active",
 	    "inactive");
 	onoff("Capability List support", rval, PCI_STATUS_CAPLIST_SUPPORT);
@@ -1898,7 +1898,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Attention Button Pressed Enabled", reg, PCIE_SLCSR_ABE);
 		onoff("Power Fault Detected Enabled", reg, PCIE_SLCSR_PFE);
 		onoff("MRL Sensor Changed Enabled", reg, PCIE_SLCSR_MSE);
-		onoff("Presense Detect Changed Enabled", reg, PCIE_SLCSR_PDE);
+		onoff("Presence Detect Changed Enabled", reg, PCIE_SLCSR_PDE);
 		onoff("Command Completed Interrupt Enabled", reg,
 		    PCIE_SLCSR_CCE);
 		onoff("Hot-Plug Interrupt Enabled", reg, PCIE_SLCSR_HPE);
@@ -1946,7 +1946,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Attention Button Pressed", reg, PCIE_SLCSR_ABP);
 		onoff("Power Fault Detected", reg, PCIE_SLCSR_PFD);
 		onoff("MRL Sensor Changed", reg, PCIE_SLCSR_MSC);
-		onoff("Presense Detect Changed", reg, PCIE_SLCSR_PDC);
+		onoff("Presence Detect Changed", reg, PCIE_SLCSR_PDC);
 		onoff("Command Completed", reg, PCIE_SLCSR_CC);
 		onoff("MRL Open", reg, PCIE_SLCSR_MS);
 		onoff("Card Present in slot", reg, PCIE_SLCSR_PDS);
@@ -2013,7 +2013,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("      TPH Completer Supported: ");
 	switch (__SHIFTOUT(reg, PCIE_DCAP2_TPH_COMP)) {
 	case 0:
-		printf("Not supportted\n");
+		printf("Not supported\n");
 		break;
 	case 1:
 		printf("TPH\n");
@@ -2086,7 +2086,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	pci_print_pcie_compl_timeout(reg & PCIE_DCSR2_COMPT_VAL);
 	onoff("Completion Timeout Disabled", reg, PCIE_DCSR2_COMPT_DIS);
 	onoff("ARI Forwarding Enabled", reg, PCIE_DCSR2_ARI_FWD);
-	onoff("AtomicOp Rquester Enabled", reg, PCIE_DCSR2_ATOM_REQ);
+	onoff("AtomicOp Requester Enabled", reg, PCIE_DCSR2_ATOM_REQ);
 	onoff("AtomicOp Egress Blocking", reg, PCIE_DCSR2_ATOM_EBLK);
 	onoff("IDO Request Enabled", reg, PCIE_DCSR2_IDO_REQ);
 	onoff("IDO Completion Enabled", reg, PCIE_DCSR2_IDO_COMP);
@@ -2447,7 +2447,7 @@ pci_conf_print_aer_cap_control(pcireg_t reg, bool *tlp_prefix_log)
 	onoff("ECRC Generation Capable", reg, PCI_AER_ECRC_GEN_CAPABLE);
 	onoff("ECRC Generation Enable", reg, PCI_AER_ECRC_GEN_ENABLE);
 	onoff("ECRC Check Capable", reg, PCI_AER_ECRC_CHECK_CAPABLE);
-	onoff("ECRC Check Enab", reg, PCI_AER_ECRC_CHECK_ENABLE);
+	onoff("ECRC Check Enable", reg, PCI_AER_ECRC_CHECK_ENABLE);
 	onoff("Multiple Header Recording Capable", reg,
 	    PCI_AER_MULT_HDR_CAPABLE);
 	onoff("Multiple Header Recording Enable", reg,PCI_AER_MULT_HDR_ENABLE);
