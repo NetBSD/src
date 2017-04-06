@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.729 2017/03/05 19:21:17 snj Exp $
+$NetBSD: usbdevs,v 1.730 2017/04/06 16:30:09 macallan Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ vendor SAMSUNG		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
+vendor ELAN		0x04f3  ELAN Microelectronics
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor AIPTEK2		0x04fc	AIPTEK International
