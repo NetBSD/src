@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.90 2017/04/06 02:55:22 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.91 2017/04/06 03:12:48 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.90 2017/04/06 02:55:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.91 2017/04/06 03:12:48 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 {
 	struct lfs_res_blk *re;
 	void *r;
-	int i, s, start;
+	int i, start;
 	unsigned int h;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
@@ -224,9 +224,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 				r = re->p;
 				KASSERT(re->size >= size);
 				h = lfs_mhash(r);
-				s = splbio();
 				LIST_INSERT_HEAD(&fs->lfs_reshash[h], re, res);
-				splx(s);
 				mutex_exit(&lfs_lock);
 				return r;
 			}
@@ -246,32 +244,28 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 void
 lfs_free(struct lfs *fs, void *p, int type)
 {
-	int s;
 	unsigned int h;
 	res_t *re;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	h = lfs_mhash(p);
 	mutex_enter(&lfs_lock);
-	s = splbio();
 	LIST_FOREACH(re, &fs->lfs_reshash[h], res) {
 		if (re->p == p) {
 			KASSERT(re->inuse == 1);
 			LIST_REMOVE(re, res);
 			re->inuse = 0;
 			wakeup(&fs->lfs_resblk);
-			splx(s);
 			mutex_exit(&lfs_lock);
 			return;
 		}
 	}
 
 	for (int i = 0; i < LFS_N_TOTAL; i++) {
-		KDASSERTMSG(fs->lfs_resblk[i].p != p,
+		KDASSERTMSG(fs->lfs_resblk[i].p == p,
 		    "lfs_free: inconsistent reserved block");
 	}
 
-	splx(s);
 	mutex_exit(&lfs_lock);
 
 	/*
