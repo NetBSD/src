@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.266 2017/04/06 01:54:23 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.267 2017/04/06 02:38:08 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.266 2017/04/06 01:54:23 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.267 2017/04/06 02:38:08 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -730,9 +730,9 @@ lfs_segwrite(struct mount *mp, int flags)
 		int loopcount = 0;
 #endif
 		do {
-#ifdef DEBUG
+
 			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			fs->lfs_flags &= ~LFS_IFDIRTY;
 			mutex_exit(&lfs_lock);
