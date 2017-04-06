@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.91 2017/04/06 03:12:48 maya Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.92 2017/04/06 03:21:01 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.91 2017/04/06 03:12:48 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.92 2017/04/06 03:21:01 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,7 @@ lfs_unmark_dirop(struct lfs *fs)
 static void
 lfs_auto_segclean(struct lfs *fs)
 {
-	int i, error, s, waited;
+	int i, error, waited;
 
 	ASSERT_SEGLOCK(fs);
 	/*
@@ -398,11 +398,9 @@ lfs_auto_segclean(struct lfs *fs)
 
 			/* Make sure the sb is written before we clean */
 			mutex_enter(&lfs_lock);
-			s = splbio();
 			while (waited == 0 && fs->lfs_sbactive)
 				mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs asb",
 					0, &lfs_lock);
-			splx(s);
 			mutex_exit(&lfs_lock);
 			waited = 1;
 

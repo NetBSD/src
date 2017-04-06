@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.268 2017/04/06 03:15:03 maya Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.269 2017/04/06 03:21:01 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.268 2017/04/06 03:15:03 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.269 2017/04/06 03:21:01 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2384,7 +2384,6 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct buf *bp;
 	struct vnode *devvp = VTOI(fs->lfs_ivnode)->i_devvp;
-	int s;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	if (fs->lfs_is64) {
@@ -2398,13 +2397,11 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	 * So, block here if a superblock write is in progress.
 	 */
 	mutex_enter(&lfs_lock);
-	s = splbio();
 	while (fs->lfs_sbactive) {
 		mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0,
 			&lfs_lock);
 	}
 	fs->lfs_sbactive = daddr;
-	splx(s);
 	mutex_exit(&lfs_lock);
 
 	/* Set timestamp of this version of the superblock */
