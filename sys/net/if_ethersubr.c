@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.241 2017/04/05 03:47:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.242 2017/04/06 03:54:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.241 2017/04/05 03:47:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242 2017/04/06 03:54:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1350,8 +1350,6 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	const struct sockaddr_dl *sdl;
 	static const uint8_t zero[ETHER_ADDR_LEN];
 	int error;
-
-	KASSERT(if_ioctl_locked(ifp));
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
