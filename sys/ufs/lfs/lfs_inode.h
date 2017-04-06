@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.17 2017/04/06 01:54:23 maya Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.18 2017/04/06 02:38:08 maya Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -273,6 +273,7 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 # else /* ! DEBUG */
 #  define LFS_BCLEAN_LOG(fs, bp)
 #  define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp)->b_vp, (bp))
+#  define LFS_ENTER_LOG(theop, thefile, theline, lbn, theflags, thepid) __nothing
 #  define DLOG(a)
 # endif /* ! DEBUG */
 #else /* ! _KERNEL */
