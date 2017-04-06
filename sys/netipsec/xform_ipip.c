@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.42 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.43 2017/04/06 09:20:07 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,17 +39,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.42 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.43 2017/04/06 09:20:07 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
  */
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #ifdef __FreeBSD__
 #include "opt_inet6.h"
 #include "opt_random_ip_id.h"
 #endif /* __FreeBSD__ */
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

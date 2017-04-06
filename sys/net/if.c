@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.391 2017/04/06 03:54:59 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.392 2017/04/06 09:20:07 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.391 2017/04/06 03:54:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.392 2017/04/06 09:20:07 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -138,9 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.391 2017/04/06 03:54:59 ozaki-r Exp $");
 #include <net/pfil.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifndef IPSEC
 #include <netinet/ip_encap.h>
-#endif
 #include <net/bpf.h>
 
 #ifdef INET6
@@ -292,7 +290,7 @@ ifinit(void)
 
 	if_sysctl_setup(NULL);
 
-#if (defined(INET) || defined(INET6)) && !defined(IPSEC)
+#if (defined(INET) || defined(INET6))
 	encapinit();
 #endif
 
