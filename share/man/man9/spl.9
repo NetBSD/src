@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.40 2017/04/06 02:23:26 pgoyette Exp $
+.\"	$NetBSD: spl.9,v 1.41 2017/04/06 03:00:13 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -36,6 +36,8 @@
 .Nm splhigh ,
 .Nm splvm ,
 .Nm splbio ,
+.Nm splnet ,
+.Nm spltty ,
 .Nm splsched ,
 .Nm splsoftbio ,
 .Nm splsoftclock ,
@@ -52,9 +54,13 @@
 .Ft int
 .Fn splsched void
 .Ft int
+.Fn splvm void
+.Ft int
 .Fn splbio void
 .Ft int
-.Fn splvm void
+.Fn splnet void
+.Ft int
+.Fn spltty void
 .Ft int
 .Fn splsoftbio void
 .Ft int
@@ -172,10 +178,13 @@ A future release of the system may allow the automatic acquisition of
 .Dv kernel_lock
 to be disabled for individual interrupt handlers.
 .Pp
-.Fn splbio
-is a synonym for
+.Fn splbio ,
+.Fn splnet ,
+and
+.Fn spltty
+are synonyms for
 .Fn splvm .
-Its use is deprecated; all new code should use
+Their use is deprecated; all new code should use
 .Fn splvm .
 .It Fn splsoftserial , IPL_SOFTSERIAL
 .Pp
