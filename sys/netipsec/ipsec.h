@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.38 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.39 2017/04/06 09:20:07 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -378,6 +378,12 @@ INITFN void ipe4_attach(void);
 INITFN void ipe4_attach(void);
 INITFN void tcpsignature_attach(void);
 
-INITFN void ipsec_attach(void);
+void ipsec_attach(void);
+
+void sysctl_net_inet_ipsec_setup(struct sysctllog **);
+#ifdef INET6
+void sysctl_net_inet6_ipsec6_setup(struct sysctllog **);
+#endif
+
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_IPSEC_H_ */
