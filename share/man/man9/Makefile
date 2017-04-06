@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.406 2017/04/06 02:24:51 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.407 2017/04/06 10:46:52 abhinav Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -302,7 +302,8 @@ MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
-	extent.9 extent_print.9
+	extent.9 extent_print.9 extent.9 extent_alloc1.9 \
+	extent.9 extent_alloc_subregion1.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=file.9 closef.9 \
