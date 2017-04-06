@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.265 2017/04/01 19:35:56 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.266 2017/04/06 01:54:23 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.265 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.266 2017/04/06 01:54:23 maya Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2572,7 +2572,11 @@ lfs_cluster_aiodone(struct buf *bp)
 
 		tbp->b_flags &= ~B_GATHERED;
 
-		LFS_BCLEAN_LOG(fs, tbp);
+#ifdef DEBUG
+		if ((tbp)->b_vp == (fs)->lfs_ivnode)
+			LFS_ENTER_LOG("clear", __FILE__, __LINE__,
+			    tbp->b_lblkno, tbp->b_flags, curproc->p_pid);
+#endif
 
 		mutex_enter(&bufcache_lock);
 		if (tbp->b_iodone == NULL) {
