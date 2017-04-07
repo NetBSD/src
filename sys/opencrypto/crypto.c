@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.53 2017/04/06 09:39:12 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.54 2017/04/07 12:17:57 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.53 2017/04/06 09:39:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.54 2017/04/07 12:17:57 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -119,45 +119,6 @@ static	TAILQ_HEAD(crprethead, cryptop) crp_ret_q =	/* callback queues */
 		TAILQ_HEAD_INITIALIZER(crp_ret_q);
 static	TAILQ_HEAD(krprethead, cryptkop) crp_ret_kq =
 		TAILQ_HEAD_INITIALIZER(crp_ret_kq);
-
-/*
- * XXX these functions are ghastly hacks for when the submission
- * XXX routines discover a request that was not CBIMM is already
- * XXX done, and must be yanked from the retq (where _done) put it
- * XXX as cryptoret won't get the chance.  The queue is walked backwards
- * XXX as the request is generally the last one queued.
- *
- *	 call with the lock held, or else.
- */
-int
-crypto_ret_q_remove(struct cryptop *crp)
-{
-	struct cryptop * acrp, *next;
-
-	TAILQ_FOREACH_REVERSE_SAFE(acrp, &crp_ret_q, crprethead, crp_next, next) {
-		if (acrp == crp) {
-			TAILQ_REMOVE(&crp_ret_q, crp, crp_next);
-			crp->crp_flags &= (~CRYPTO_F_ONRETQ);
-			return 1;
-		}
-	}
-	return 0;
-}
-
-int
-crypto_ret_kq_remove(struct cryptkop *krp)
-{
-	struct cryptkop * akrp, *next;
-
-	TAILQ_FOREACH_REVERSE_SAFE(akrp, &crp_ret_kq, krprethead, krp_next, next) {
-		if (akrp == krp) {
-			TAILQ_REMOVE(&crp_ret_kq, krp, krp_next);
-			krp->krp_flags &= (~CRYPTO_F_ONRETQ);
-			return 1;
-		}
-	}
-	return 0;
-}
 
 /*
  * Crypto op and desciptor data structures are allocated
