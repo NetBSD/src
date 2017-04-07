@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.62 2016/12/22 04:54:54 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.63 2017/04/07 03:31:50 ozaki-r Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.62 2016/12/22 04:54:54 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.63 2017/04/07 03:31:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -161,12 +161,16 @@ struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
 static bool encap_head_updating = false;
 #endif
 
+static bool encap_initialized = false;
 /*
  * must be done before other encap interfaces initialization.
  */
 void
 encapinit(void)
 {
+
+	if (encap_initialized)
+		return;
 
 	encaptab.psz = pserialize_create();
 	encaptab.elem_class = psref_class_create("encapelem", IPL_SOFTNET);
@@ -176,6 +180,8 @@ encapinit(void)
 	mutex_init(&encap_whole.lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&encap_whole.cv, "ip_encap cv");
 	encap_whole.busy = NULL;
+
+	encap_initialized = true;
 }
 
 void
