@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.63 2017/04/07 00:56:14 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.64 2017/04/07 07:21:58 pgoyette Exp $
 .\"
 .\" This file is in the public domain.
 .Dd April 7, 2017
@@ -51,7 +51,7 @@ such as
 .Xr execv 3
 .Pc ,
 it will stop before executing the first instruction of the new image and emit
-.Dv SIGRAP
+.Dv SIGTRAP
 with
 .Dv si_code
 set to
@@ -145,7 +145,7 @@ debug registers must not be exposed in mcontext
 userland must not be allowed to set a trap on the kernel
 .El
 .Pp
-A debugger might reuse a port specific symbols,
+A debugger might reuse port specific symbols,
 to help writing portable code as described in the port specific part of the
 .In sys/ptrace.h
 header.
@@ -419,7 +419,6 @@ typedef struct ptrace_event {
 } ptrace_event_t;
 .Ed
 .Pp
-Where
 .Fa pe_set_event
 is the set of events to be reported.
 This set is formed by OR'ing together the following values:
