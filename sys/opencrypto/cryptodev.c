@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.87 2017/04/07 12:15:51 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.88 2017/04/07 12:17:57 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.87 2017/04/07 12:15:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.88 2017/04/07 12:17:57 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,13 +668,6 @@ eagain:
 			(uint32_t)cse->sid, &crp->crp_cv, crp));
 		cv_wait(&crp->crp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
 	}
-	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
-		/* XXX this should never happen now with the CRYPTO_F_USER flag
-		 * changes.
-		 */
-		DPRINTF(("cryptodev_op: DONE, not woken by cryptoret.\n"));
-		(void)crypto_ret_q_remove(crp);
-	}
 	mutex_exit(&crypto_mtx);
 	cv_destroy(&crp->crp_cv);
 
@@ -894,10 +887,6 @@ cryptodev_key(struct crypt_kop *kop)
 	mutex_enter(&crypto_mtx);
 	while (!(krp->krp_flags & CRYPTO_F_DQRETQ)) {
 		cv_wait(&krp->krp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
-	}
-	if (krp->krp_flags & CRYPTO_F_ONRETQ) {
-		DPRINTF(("cryptodev_key: DONE early, not via cryptoret.\n"));
-		(void)crypto_ret_kq_remove(krp);
 	}
 	mutex_exit(&crypto_mtx);
 
