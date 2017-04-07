@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.62 2017/02/23 08:11:09 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.63 2017/04/07 00:56:14 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd February 23, 2017
+.Dd April 7, 2017
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -535,11 +535,10 @@ argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
 .Pp
 In order to pass faked signal to the tracee,
-the signal type must match the signal passed to process with
-.Dv PT_CONTINUE ,
-.Dv PT_DETACH
+the signal type must match the signal passed to the process with
+.Dv PT_CONTINUE
 or
-.Dv PT_STEP .
+.Dv PT_SYSCALL .
 .It Dv PT_GET_SIGINFO
 This request can be used to determine signal information that was received by
 a debugger
