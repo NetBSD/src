@@ -1,9 +1,13 @@
-# $NetBSD: newvers.mk,v 1.1 2015/09/06 06:13:16 uebayasi Exp $
+# $NetBSD: newvers.mk,v 1.2 2017/04/08 18:24:09 christos Exp $
 
 MKREPRO?=no
 
 .if ${MKREPRO} == "yes"
-_NVFLAGS=${NVFLAGS} -r
+.	if ${MKREPRO_TIMESTAMP:U0} != 0
+_NVFLAGS=${NVFLAGS} -r ${MKREPRO_TIMESTAMP} -i ${KERNEL_BUILD:T} -m ${MACHINE}
+.	else
+_NVFLAGS=${NVFLAGS} -R
+.	endif
 .else
 _NVFLAGS=${NVFLAGS}
 .endif
