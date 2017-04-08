@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.35 2016/01/20 12:49:21 jklos Exp $
+# $NetBSD: Makefile.bootprogs,v 1.36 2017/04/08 19:53:19 christos Exp $
 
 NOMAN=			# defined
 
@@ -34,17 +34,8 @@ CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 CWARNFLAGS+=	-Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 CFLAGS+=	-Werror ${CWARNFLAGS}
 
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists(version)
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "alpha"
+.include "${S}/conf/newvers_stand.mk"
 
-SRCS+=	vers.c
-CLEANFILES+= vers.c
-.endif
 
 # For descriptions of regions available to bootstrap programs, see
 # section 3.4.1.2 (pp. III 3-14 - III 3-18) of the second edition of

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 2016/02/21 14:50:05 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3 2017/04/08 19:53:20 christos Exp $
 
 NODEBUG=yes
 RELOC=	120000
@@ -34,12 +34,7 @@ CFLAGS+=	-Os -msoft-float -Wno-main
 CFLAGS+=	-fno-builtin
 CFLAGS+=	-mdisable-fpregs -mfast-indirect-calls -mpa-risc-1-0
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version hppa ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 CPPFLAGS+=		-D_STANDALONE -Dhppa ${DEBUGFLAGS}
 CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}

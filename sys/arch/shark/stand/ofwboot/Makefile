@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2014/01/12 15:26:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2017/04/08 19:53:22 christos Exp $
 
 NOMAN=		# defined
 
@@ -9,7 +9,7 @@ S=		${.CURDIR}/../../../..
 
 WARNS=		2
 PROG=		ofwboot
-SRCS=		srt0.S Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
+SRCS=		srt0.S Locore.c alloc.c boot.c ofdev.c net.c netif_of.c
 CFLAGS+=	-ffreestanding -Wno-main
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-DSUPPORT_DHCP -I${.CURDIR}
@@ -35,8 +35,6 @@ RELOC=		f0000000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c
-
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR}/../../.. -I${S}
 CPPFLAGS+=	-DRELOC=0x${RELOC}
 CFLAGS+=	-fno-unwind-tables
@@ -60,15 +58,12 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "shark" ${NEWVERSWHAT}
-
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${_MKTARGET_LINK}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${.TARGET}.aout \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${.TARGET}.aout ${.TARGET}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
