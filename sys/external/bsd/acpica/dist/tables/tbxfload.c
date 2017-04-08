@@ -163,6 +163,17 @@ AcpiTbLoadNamespace (
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
 
+#ifdef __ia64__
+    /*
+     * For ia64 ski emulator
+     */
+    if (AcpiGbl_DsdtIndex == ACPI_INVALID_TABLE_INDEX)
+    {
+        Status = AE_NO_ACPI_TABLES;
+        goto UnlockAndExit;
+    }
+#endif
+    
     /*
      * Load the namespace. The DSDT is required, but any SSDT and
      * PSDT tables are optional. Verify the DSDT.
