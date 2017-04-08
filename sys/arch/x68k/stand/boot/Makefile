@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2016/06/25 14:35:58 isaki Exp $
+#	$NetBSD: Makefile,v 1.28 2017/04/08 19:53:23 christos Exp $
 
 NOMAN=		# defined
 
@@ -31,12 +31,7 @@ COMMONDIR=	$M/stand/common
 .PATH:		${COMMONDIR}
 .PATH:		${.CURDIR}/../boot
 
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-vers.c:	${VERSIONFILE}
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh \
-	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
 CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
