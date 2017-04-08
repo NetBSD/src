@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.14 2015/09/25 16:05:17 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.15 2017/04/08 00:25:49 kamil Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,19 +39,26 @@
 #ifndef _MIPS_PTRACE_H_
 #define _MIPS_PTRACE_H_
 
-/*#define	PT_STEP		(PT_FIRSTMACH + 0)*/
+/* MIPS PT_STEP PT_FIRSTMACH+0 might be defined by a port specific header */
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 
+#ifdef PT_STEP
+#define	PT_SETSTEP	(PT_FIRSTMACH + 5)
+#define	PT_CLEARSTEP	(PT_FIRSTMACH + 6)
+#endif
+
 #define PT_MACHDEP_STRINGS \
-	"(unused)", \
+	"PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_regs[35]
