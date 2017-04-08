@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2014/01/12 15:26:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.29 2017/04/08 19:53:22 christos Exp $
 
 NOMAN=	# defined
 
@@ -38,7 +38,7 @@ LIBCRTBEGIN=
 LIBCRTEND=
 
 PROG=	boot
-SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
+SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c build.c
 
 # @@@ dev_net.c should really be in libsa, but it doesn't
 # declare ip_convertaddr correctly, so I put it here _temporarily_.
@@ -46,7 +46,7 @@ SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
 SRCS+=	dev_net.c
 
 CLEANFILES+= srt0.o boot.elf boot.raw limits.h
-CLEANFILES+= vers.c build.c build	# generated dynamically
+CLEANFILES+= build.c build	# generated dynamically
 
 BINDIR=	/usr/mdec
 #LIBS=	${SALIB} ${KERNLIB} ${ZLIB}
@@ -82,8 +82,7 @@ srt0.o: ${.CURDIR}/srt0.s
 build.c:
 	${HOST_SH} ${.CURDIR}/newvers.sh
 
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "next68k"
+.include "${S}/conf/newvers_stand.mk"
 
 #installboot: ${.CURDIR}/installboot.sh
 #	@rm -f installboot

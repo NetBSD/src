@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.55 2014/12/24 00:36:09 matt Exp $
+#	$NetBSD: Makefile,v 1.56 2017/04/08 19:53:21 christos Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c alloc.c vers.c
+SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c alloc.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-ffreestanding
@@ -48,7 +48,7 @@ RELOC=		E00000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
+CLEANFILES+=	${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
@@ -77,10 +77,7 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
-.PHONY: vers.c
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 all realall: ${PROG} ${PROG}.xcf ${PROG}.elf
 
