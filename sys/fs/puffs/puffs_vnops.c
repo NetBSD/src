@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.207 2017/04/06 00:02:19 christos Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.208 2017/04/08 08:49:44 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.207 2017/04/06 00:02:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.208 2017/04/08 08:49:44 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1252,6 +1252,7 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 		pn->pn_serversize = vap->va_size;
 		if (flags & SETATTR_CHSIZE)
 			uvm_vnp_setsize(vp, vap->va_size);
+		puffs_updatenode(pn, PUFFS_UPDATECTIME | PUFFS_UPDATEMTIME, 0);
 	}
 
 	return 0;
