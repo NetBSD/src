@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.9 2016/11/25 02:19:19 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.10 2017/04/08 00:25:49 kamil Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -42,15 +42,21 @@
 /* 3 and 4 are for FPE registers */
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 5)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 6)
+#ifndef _KERNEL
+#define PT_SETSTEP	(PT_FIRSTMACH + 7) /* Not implemented */
+#define PT_CLEARSTEP	(PT_FIRSTMACH + 8) /* Not implemented */
+#endif
 
 #define PT_MACHDEP_STRINGS \
-	"(unused)", \
+	"PT_STEP", \
 	"PT_GETREGS", \
 	"PT_SETREGS", \
 	"old PT_GETFPREGS", \
 	"old PT_SETFPREGS", \
 	"PT_GETFPREGS", \
-	"PT_SETFPREGS",
+	"PT_SETFPREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(_r)		(_r)->r_pc
