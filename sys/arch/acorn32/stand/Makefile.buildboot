@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile.buildboot,v 1.22 2017/02/22 12:44:21 maya Exp $
+#	$NetBSD: Makefile.buildboot,v 1.23 2017/04/08 19:53:19 christos Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
-
-KLINK_MACHINE=	acorn32
 
 SRCS=	${PROGSOURCE}
 NOMAN=# defined
@@ -31,15 +29,10 @@ RELOC=8000
 LINKFLAGS+=-N -Ttext ${RELOC}
 .endif
 
+.include "${S}/conf/newvers_stand.mk"
+
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
-
-SRCS+=		vers.c
-CLEANFILES+=	vers.c
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version ${KLINK_MACHINE} ${NEWVERSWHAT}
 
 CPPFLAGS+=	-D_STANDALONE 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
