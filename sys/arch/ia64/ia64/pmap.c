@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.35 2017/04/08 18:08:33 scole Exp $ */
+/* $NetBSD: pmap.c,v 1.36 2017/04/08 20:59:27 scole Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2017/04/08 18:08:33 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2017/04/08 20:59:27 scole Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2110,11 +2110,12 @@ void
 pmap_kremove(vaddr_t va, vsize_t size)
 {
 	struct ia64_lpte *pte;
-
+	vaddr_t eva = va + size;
+	
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(va=%#lx)", va, 0, 0, 0);
 
-	while (size > 0) {
+	while (va < eva) {
 		pte = pmap_find_kpte(va);
 		if (pmap_present(pte)) {
 			KASSERT(pmap_managed(pte) != 0);
@@ -2123,7 +2124,6 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			pmap_clear_present(pte);
 		}
 		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
 	}
 }
 
