@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.172 2016/07/03 14:24:59 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.173 2017/04/08 00:25:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -255,6 +255,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
 #define	LP_VFORKWAIT	0x00000200 /* Waiting at vfork() for a child */
+#define	LP_SINGLESTEP	0x00000400 /* Single step thread in ptrace(2) */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
