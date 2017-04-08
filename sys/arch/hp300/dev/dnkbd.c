@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.9 2017/03/25 22:08:27 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.10 2017/04/08 17:04:56 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -188,11 +188,6 @@ struct dnkbd_softc {
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int		sc_rawkbd;
-	int		sc_nrep;
-	char		sc_rep[2];	/* at most, one key */
-	struct callout	sc_rawrepeat_ch;
-#define	REP_DELAY1	400
-#define	REP_DELAYN	100
 #endif
 };
 
@@ -259,9 +254,6 @@ static int	dnkbd_intr(void *);
 static int	dnkbd_pollin(struct dnkbd_softc *, u_int);
 static int	dnkbd_pollout(struct dnkbd_softc *, int);
 static int	dnkbd_probe(struct dnkbd_softc *);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-static void	dnkbd_rawrepeat(void *);
-#endif
 static int	dnkbd_send(struct dnkbd_softc *, const uint8_t *, size_t);
 static void	dnkbd_break(struct dnkbd_softc *, int);
 
@@ -300,10 +292,6 @@ dnkbd_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&sc->sc_bellstop_tmo, 0);
 	callout_setfunc(&sc->sc_bellstop_tmo, dnkbd_bellstop, sc);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	callout_init(&sc->sc_rawrepeat_ch, 0);
-	callout_setfunc(&sc->sc_rawrepeat_ch, dnkbd_rawrepeat, sc);
-#endif
 
 	/* reset the port */
 	dnkbd_init(sc, 1200, LCR_8BITS | LCR_PEVEN | LCR_PENAB);
@@ -706,9 +694,9 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
 		u_char cbuf[2];
-		int c, j, npress;
+		int c, j;
 
-		npress = j = 0;
+		j = 0;
 		c = dnkbd_raw[key];
 		if (c != 0) {
 			/* fake extended scancode if necessary */
@@ -717,12 +705,6 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 			cbuf[j] = c & 0x7f;
 			if (type == WSCONS_EVENT_KEY_UP)
 				cbuf[j] |= 0x80;
-			else {
-				/* remember pressed key for autorepeat */
-				if (c & 0x80)
-					sc->sc_rep[npress++] = 0xe0;
-				sc->sc_rep[npress++] = c & 0x7f;
-			}
 			j++;
 		}
 
@@ -730,12 +712,6 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 			s = spltty();
 			wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 			splx(s);
-			callout_stop(&sc->sc_rawrepeat_ch);
-			sc->sc_nrep = npress;
-			if (npress != 0) {
-				callout_schedule(&sc->sc_rawrepeat_ch,
-				    mstohz(REP_DELAY1));
-			}
 		}
 	} else
 #endif
@@ -745,21 +721,6 @@ dnevent_kbd_internal(struct dnkbd_softc *sc, int dat)
 		splx(s);
 	}
 }
-
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-void
-dnkbd_rawrepeat(void *v)
-{
-	struct dnkbd_softc *sc = v;
-	int s;
-
-	s = spltty();
-	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
-	splx(s);
-
-	callout_schedule(&sc->sc_rawrepeat_ch, mstohz(REP_DELAYN));
-}
-#endif
 
 #if NWSMOUSE > 0
 void
@@ -1040,7 +1001,6 @@ dnkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		callout_stop(&sc->sc_rawrepeat_ch);
 		return 0;
 #endif
 	}
