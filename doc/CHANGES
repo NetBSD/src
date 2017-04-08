@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2268 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2269 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -493,3 +493,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		as being smaller and faster.  [kre 20170320]
 	zoneinfo: Import tzdata2017b.  [kre 20170321]
 	dhcpcd(8): Import dhcpcd-7.0.0-beta2 [roy 20170402]
+	ptrace(2): Add operations to single step specified threads:
+		PT_SETSTEP and PT_CLEARSTEP [kamil 20170408]
