@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.65 2017/04/08 00:56:38 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.66 2017/04/08 00:58:35 kamil Exp $
 .\"
 .\" This file is in the public domain.
 .Dd April 7, 2017
@@ -410,7 +410,7 @@ Otherwise this operation is the same as
 Intercept and ignore a system call before it has been executed, for use with
 .Dv PT_SYSCALL .
 This operation shall be called for syscall entry trap from
-.Dv PT_STSCALL .
+.Dv PT_SYSCALL .
 To resume execution after intercepting the system call,
 another
 .Dv PT_SYSCALL
