@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2017/02/08 18:01:12 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2017/04/08 18:01:22 scole Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
-	struct pmap *ci_pmap;		/* current pmap */
+	struct pmap *ci_pmap;		/* current pmap */ /* XXX FreeBSD has *pcb_current_pmap in pcb ? */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
@@ -111,6 +111,7 @@ struct cpu_info {
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_clock;		/* clock counter */
 	uint64_t ci_clockadj;		/* clock adjust */
+	uint64_t ci_vhpt;		/* address of vhpt */
 };
 
 
