@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.25 2017/03/22 23:11:07 chs Exp $	*/
+/*	$NetBSD: fenv.h,v 1.26 2017/04/09 15:29:07 christos Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,9 +52,9 @@ typedef int fenv_t;
  * Common definitions for softfloat.
  */
 
-typedef int fexcept_t;
-
 #ifndef __HAVE_FENV_SOFTFLOAT_DEFS
+
+typedef int fexcept_t;
 
 typedef struct {
 	int	__flags;
