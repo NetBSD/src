@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2017/04/08 19:53:21 christos Exp $	
+#	$NetBSD: Makefile,v 1.6 2017/04/09 22:50:02 christos Exp $	
 
 S=	${.CURDIR}/../../../../..
 
@@ -17,6 +17,8 @@ CPPFLAGS+=	-DLOADER -DLIBKERN_OPTIMISE_SPACE -DHEAP_VARIABLE
 # Always add MI sources
 .PATH: ${.CURDIR}/../../common
 .include "${.CURDIR}/../../common/Makefile.inc"
+
+.include "${S}/conf/newvers_stand.mk"
 
 # need to do this after common stuff pulled in
 SRCS.loader.sym:=	start.S conf.c efimd.c main.c ${SRCS}
@@ -54,6 +56,5 @@ DPADD=		${LIBEFI} ${LIBLIST}
 # Cross dependencies between LIBEFI and LIB(SA|KERN). Need to elaborate below.
 LDADD=		${LIBEFI} ${LIBLIST} ${LIBEFI} ${LIBLIST}
 
-.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
