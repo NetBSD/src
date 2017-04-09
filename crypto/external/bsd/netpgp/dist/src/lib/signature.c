@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.34 2012/03/05 02:20:18 christos Exp $");
+__RCSID("$NetBSD: signature.c,v 1.35 2017/04/09 22:44:34 khorben Exp $");
 #endif
 
 #include <sys/types.h>
@@ -905,7 +905,7 @@ open_output_file(pgp_output_t **output,
 	if (outname) {
 		fd = pgp_setup_file_write(output, outname, overwrite);
 	} else {
-		unsigned        flen = (unsigned)(strlen(inname) + 4 + 1);
+		size_t          flen = strlen(inname) + 4 + 1;
 		char           *f = NULL;
 
 		if ((f = calloc(1, flen)) == NULL) {
