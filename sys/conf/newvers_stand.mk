@@ -1,4 +1,4 @@
-#	$NetBSD: newvers_stand.mk,v 1.1 2017/04/08 19:53:54 christos Exp $
+#	$NetBSD: newvers_stand.mk,v 1.2 2017/04/09 14:52:14 christos Exp $
 
 VERSIONFILE?=version
 VERSIONMACHINE?=${MACHINE}
@@ -10,7 +10,7 @@ SRCS+=		vers.c
 CLEANFILES+=	vers.c
 
 .if ${MKREPRO:Uno} == "yes"
-.	if ${MKREPRO_TIMESTAMP:U0} != 0}
+.	if ${MKREPRO_TIMESTAMP:U0} != 0
 VERSIONFLAGS+=-D ${MKREPRO_TIMESTAMP}
 .	else
 VERSIONFLAGS+=-d
