@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.buildboot,v 1.23 2017/04/08 19:53:19 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.24 2017/04/09 16:29:46 christos Exp $
 
 S?=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../lib
+
+KLINK_MACHINE= acorn32
 
 SRCS=	${PROGSOURCE}
 NOMAN=# defined
