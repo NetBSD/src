@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.4 2017/03/22 23:11:09 chs Exp $	*/
+/*	$NetBSD: fenv.h,v 1.5 2017/04/09 15:15:34 christos Exp $	*/
 
 /* 
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
@@ -42,7 +42,6 @@ typedef int fexcept_t;
 
 #include <arm/vfpreg.h>
 
-typedef int fenv_t;
 #define __FENV_GET_FLAGS(__envp)	__SHIFTOUT(*(__envp), VFP_FPSCR_CSUM)
 #define __FENV_GET_MASK(__envp)		__SHIFTOUT(*(__envp), VFP_FPSCR_ESUM)
 #define __FENV_GET_ROUND(__envp)	__SHIFTOUT(*(__envp), VFP_FPSCR_RMODE)
