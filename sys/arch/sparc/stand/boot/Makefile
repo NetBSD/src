@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2017/04/08 19:53:23 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2017/04/09 20:51:55 christos Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -31,15 +31,6 @@ LINKFLAGS=-N -e start -Map $@.map
 .MAIN: all
 realall: ${FILES}
 
-.for RELOC in ${RELOCS}
-boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -S -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
-	    ${LIBSA} ${LIBZ} ${LIBKERN}
-	${SIZE} ${.TARGET}.tmp
-	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
-	rm -f ${.TARGET}.tmp
-CLEANFILES+=	boot.${RELOC}.map
-.endfor
 
 # conjure up a magic header that is accepted by all Sun PROMS;
 # see installboot.c for details.
@@ -58,3 +49,13 @@ CLEANFILES+=	bootjs.net.map
 .include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
+
+.for RELOC in ${RELOCS}
+boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -S -o ${.TARGET}.tmp ${LINKFLAGS} -Ttext ${RELOC} ${OBJS} \
+	    ${LIBSA} ${LIBZ} ${LIBKERN}
+	${SIZE} ${.TARGET}.tmp
+	${OBJCOPY} -O binary ${.TARGET}.tmp ${.TARGET}
+	rm -f ${.TARGET}.tmp
+CLEANFILES+=	boot.${RELOC}.map
+.endfor
