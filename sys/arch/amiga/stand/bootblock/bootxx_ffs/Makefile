@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.24 2017/04/08 19:53:20 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2017/04/09 14:51:52 christos Exp $
+
+.include <bsd.init.mk>
+.include <bsd.sys.mk>
 
 ### what we need:
 
-S=	${.CURDIR}/../../../../..
-DIR_SA = 	${S}/lib/libsa
-DIR_KERN=	${S}/lib/libkern
-DIR_KERN_MD=	${S}/lib/libkern/arch/$(MACHINE_ARCH)
-DIR_LIBC=	${S}/../common/lib/libc
+DIR_TOP=	${.CURDIR}/../../../../..
+DIR_SA = 	${DIR_TOP}/lib/libsa
+DIR_KERN=	${DIR_TOP}/lib/libkern
+DIR_KERN_MD=	${DIR_TOP}/lib/libkern/arch/$(MACHINE_ARCH)
+DIR_LIBC=	${DIR_TOP}/../common/lib/libc
 
 .PATH:  ${.CURDIR}/../boot $(DIR_SA) $(DIR_KERN) $(DIR_KERN_MD) \
 	${DIR_LIBC}/gen ${DIR_LIBC}/arch/m68k/gen \
@@ -14,6 +17,7 @@ DIR_LIBC=	${S}/../common/lib/libc
 	${DIR_LIBC}/quad ${DIR_LIBC}/arch/m68k/quad \
 	${DIR_LIBC}/string ${DIR_LIBC}/arch/m68k/string
 
+S=		${DIR_TOP}
 
 # prefer our assembler versions over assembler, and assembler over C:
 
@@ -24,7 +28,7 @@ FILES= bootxx_ffs bootxx_fd
 BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
-COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
+COBJS+=  lseek.o open.o vers.o read.o close.o dev.o errno.o
 COBJS+=  ufs.o ustarfs.o panic.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
@@ -42,6 +46,10 @@ DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -D_PRIMARY_BOOT -DSERCONSOLE
 realall: ${FILES}
 
 CLEANFILES += bootxx_ffs bootxx_fd x.out f.out xxstart.o fdstart.o libboot.a
+
+VERSIONFILE=${.CURDIR}/../boot/version
+VERSIONFLAGS+=-n
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>
@@ -112,10 +120,6 @@ fdstart.o: ${.CURDIR}/../boot//bbstart.s
 libboot.a: ${OBJS}
 	${_MKTARGET_BUILD}
 	${AR} crs $@ $> && ${RANLIB} $@
-
-VERSIONFILE=${.CURDIR}/../boot/version
-VERSIONFLAGS=-n
-.include "${S}/conf/newvers_stand.mk"
 
 # make sure these are built:
 
