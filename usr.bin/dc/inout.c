@@ -1,3 +1,4 @@
+/*	$NetBSD: inout.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
 /*	$OpenBSD: inout.c,v 1.20 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
@@ -15,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: inout.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
 
 #include <ctype.h>
 #include <err.h>
@@ -129,7 +132,7 @@ src_getlinestring(struct source *src)
 		ch = src_getcharstring(src);
 		if (ch == EOF)
 			break;
-		buf[i++] = ch;
+		buf[i++] = (char)ch;
 		if (ch == '\n')
 			break;
 	}
@@ -191,9 +194,9 @@ readnumber(struct source *src, u_int base)
 	while ((ch = (*src->vtable->readchar)(src)) != EOF) {
 
 		if ('0' <= ch && ch <= '9')
-			v = ch - '0';
+			v = (BN_ULONG)(ch - '0');
 		else if ('A' <= ch && ch <= 'F')
-			v = ch - 'A' + 10;
+			v = (BN_ULONG)(ch - 'A' + 10);
 		else if (ch == '_') {
 			sign = true;
 			continue;
@@ -218,7 +221,7 @@ readnumber(struct source *src, u_int base)
 			bn_check(BN_add_word(n->number, v));
 	}
 	if (base != 10) {
-		scale_number(n->number, n->scale);
+		scale_number(n->number, (int)n->scale);
 		for (i = 0; i < n->scale; i++)
 			(void)BN_div_word(n->number, base);
 	}
@@ -230,7 +233,8 @@ readnumber(struct source *src, u_int base)
 char *
 read_string(struct source *src)
 {
-	int count, i, sz, new_sz, ch;
+	size_t count, i, sz, new_sz;
+	int ch;
 	char *p;
 	bool escape;
 
@@ -258,7 +262,7 @@ read_string(struct source *src)
 				p = breallocarray(p, 1, new_sz + 1);
 				sz = new_sz;
 			}
-			p[i++] = ch;
+			p[i++] = (char)ch;
 		}
 	}
 	p[i] = '\0';
@@ -272,7 +276,7 @@ get_digit(u_long num, int digits, u_int base)
 
 	if (base <= 16) {
 		p = bmalloc(2);
-		p[0] = num >= 10 ? num + 'A' - 10 : num + '0';
+		p[0] = (char)(num >= 10 ? num + 'A' - 10 : num + '0');
 		p[1] = '\0';
 	} else {
 		if (asprintf(&p, "%0*lu", digits, num) == -1)
@@ -287,8 +291,7 @@ printnumber(FILE *f, const struct number *b, u_int base)
 	struct number	*int_part, *fract_part;
 	int		digits;
 	char		buf[11];
-	size_t		sz;
-	int		i;
+	size_t		sz, i;
 	struct stack	stack;
 	char		*p;
 
@@ -337,7 +340,7 @@ printnumber(FILE *f, const struct number *b, u_int base)
 		bn_check(BN_one(&mult));
 		BN_init(&stop);
 		bn_check(BN_one(&stop));
-		scale_number(&stop, b->scale);
+		scale_number(&stop, (int)b->scale);
 
 		i = 0;
 		while (BN_cmp(&mult, &stop) < 0) {
