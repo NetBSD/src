@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.323 2017/04/05 20:15:49 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.324 2017/04/10 18:20:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.323 2017/04/05 20:15:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.324 2017/04/10 18:20:43 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1823,7 +1823,7 @@ sd_getcache(struct sd_softc *sd, int *bitsp)
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
-	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big);
+	    sizeof(scsipi_sense.pages.caching_params), 8, XS_CTL_SILENT, &big);
 	if (error)
 		return (error);
 
@@ -1852,7 +1852,7 @@ sd_getcache(struct sd_softc *sd, int *bitsp)
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
 	    sizeof(scsipi_sense.pages.caching_params),
-	    SMS_PCTRL_CHANGEABLE|8, 0, &big);
+	    SMS_PCTRL_CHANGEABLE|8, XS_CTL_SILENT, &big);
 	if (error == 0) {
 		if (big)
 			pages = (void *)(&scsipi_sense.header.big + 1);
