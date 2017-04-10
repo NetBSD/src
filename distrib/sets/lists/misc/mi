@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.202 2017/02/09 13:26:56 szptvlfn Exp $
+# $NetBSD: mi,v 1.203 2017/04/10 16:39:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -584,6 +584,8 @@
 ./usr/share/doc/reference/ref1/csh/csh7.png			misc-usd-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref1/csh/csh8.png			misc-usd-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref1/csh/csh9.png			misc-usd-doc		doc,html,groffhtmldoc
+./usr/share/doc/reference/ref1/dc/dc.ps.gz			misc-usd-doc		doc
+./usr/share/doc/reference/ref1/dc/dc.txt			misc-usd-doc		doc
 ./usr/share/doc/reference/ref1/ex/reference.html		misc-usd-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref1/ex/reference.ps.gz		misc-usd-doc		doc
 ./usr/share/doc/reference/ref1/ex/reference.txt			misc-usd-doc		doc
