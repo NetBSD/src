@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1428 2017/04/02 19:37:03 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1429 2017/04/10 16:44:46 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1689,3 +1689,16 @@ Mailing List:	https://sourceforge.net/projects/gnu-efi/
 Responsible:
 License:	BSD-like (3-clause)
 Location:	sys/external/bsd/gnu-efi
+
+Package:	dc
+Version:	20170410
+Current Vers:	20170410
+Maintainer:	The OpenBSD Project
+Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/dc
+Home Page:	http://www.openbsd.org/
+Mailing List:	
+License:	BSD
+Responsible:	christos
+Location:	usr.bin/dc
+Notes:
+		Uses OpenSSL's bignum
