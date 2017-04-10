@@ -1,4 +1,4 @@
-/*	$NetBSD: bc.y,v 1.1 2017/04/10 02:28:23 phil Exp $ */
+/*	$NetBSD: bc.y,v 1.2 2017/04/10 15:13:04 christos Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -618,7 +618,7 @@ expression		:  named_expression ASSIGN_OP
 			| expression '%' expression
 			    {
 			      if (($1 & EX_VOID) || ($3 & EX_VOID))
-				yyerror ("void expression with %");
+				yyerror ("void expression with %%");
 			      generate ("%");
 			      $$ = ($1 | $3) & ~EX_PAREN;
 			    }
