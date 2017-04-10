@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.158 2017/02/14 01:11:27 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.159 2017/04/10 16:38:40 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -294,6 +294,7 @@
 ./usr/share/doc/reference/ref1
 ./usr/share/doc/reference/ref1/atf
 ./usr/share/doc/reference/ref1/bzip2
+./usr/share/doc/reference/ref1/dc
 ./usr/share/doc/reference/ref1/config
 ./usr/share/doc/reference/ref1/csh
 ./usr/share/doc/reference/ref1/ex
