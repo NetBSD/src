@@ -1,3 +1,4 @@
+/*	$NetBSD: bcode.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
 /*	$OpenBSD: bcode.c,v 1.51 2017/02/26 11:29:55 otto Exp $	*/
 
 /*
@@ -15,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bcode.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
 
 #include <err.h>
 #include <limits.h>
@@ -227,7 +230,7 @@ sighandler(int ignored)
 void
 init_bmachine(bool extended_registers)
 {
-	int i;
+	size_t i;
 
 	bmachine.extended_regs = extended_registers;
 	bmachine.reg_array_size = bmachine.extended_regs ?
@@ -342,12 +345,12 @@ static unsigned long factors[] = {
 void
 scale_number(BIGNUM *n, int s)
 {
-	int abs_scale;
+	size_t abs_scale;
 
 	if (s == 0)
 		return;
 
-	abs_scale = s > 0 ? s : -s;
+	abs_scale = (size_t)(s > 0 ? s : -s);
 
 	if (abs_scale < sizeof(factors)/sizeof(factors[0])) {
 		if (s > 0)
@@ -415,7 +418,7 @@ split_number(const struct number *n, BIGNUM *i, BIGNUM *f)
 void
 normalize(struct number *n, u_int s)
 {
-	scale_number(n->number, s - n->scale);
+	scale_number(n->number, (int)(s - n->scale));
 	n->scale = s;
 }
 
@@ -785,7 +788,7 @@ readreg(void)
 		} else
 			idx = (ch1 << 8) + ch2 + UCHAR_MAX + 1;
 	}
-	if (idx < 0 || idx >= bmachine.reg_array_size) {
+	if (idx < 0 || (size_t)idx >= bmachine.reg_array_size) {
 		warnx("internal error: reg num = %d", idx);
 		idx = -1;
 	}
@@ -1244,7 +1247,7 @@ bexp(void)
 			bn_check(BN_one(one));
 			ctx = BN_CTX_new();
 			bn_checkp(ctx);
-			scale_number(one, r->scale + rscale);
+			scale_number(one, (int)(r->scale + rscale));
 
 			if (BN_is_zero(r->number))
 				warnx("divide by zero");
@@ -1683,11 +1686,10 @@ eval_string(char *p)
 	}
 	if (bmachine.readsp == bmachine.readstack_sz - 1) {
 		size_t newsz = bmachine.readstack_sz * 2;
-		struct source *stack;
-		stack = reallocarray(bmachine.readstack, newsz,
-		    sizeof(struct source));
-		if (stack == NULL)
-			err(1, "recursion too deep");
+		struct source *stack = bmachine.readstack;
+		int ret = reallocarr(&stack, newsz, sizeof(struct source));
+		if (ret)
+			errc(1, ret, "recursion too deep");
 		bmachine.readstack_sz = newsz;
 		bmachine.readstack = stack;
 	}

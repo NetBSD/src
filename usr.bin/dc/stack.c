@@ -1,3 +1,4 @@
+/*	$NetBSD: stack.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
 /*	$OpenBSD: stack.c,v 1.14 2016/03/27 15:55:13 otto Exp $	*/
 
 /*
@@ -15,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: stack.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
 
 #include <err.h>
 #include <stdlib.h>
@@ -93,7 +96,7 @@ stack_dup_value(const struct value *a, struct value *copy)
 size_t
 stack_size(const struct stack *stack)
 {
-	return stack->sp + 1;
+	return (size_t)(stack->sp + 1);
 }
 
 void
@@ -129,7 +132,7 @@ stack_grow(struct stack *stack)
 {
 	size_t new_size;
 
-	if (++stack->sp == stack->size) {
+	if ((size_t)++stack->sp == stack->size) {
 		new_size = stack->size * 2 + 1;
 		stack->stack = breallocarray(stack->stack,
 		    new_size, sizeof(*stack->stack));

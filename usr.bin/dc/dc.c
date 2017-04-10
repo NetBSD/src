@@ -1,3 +1,4 @@
+/*	$NetBSD: dc.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
 /*	$OpenBSD: dc.c,v 1.18 2016/07/17 17:30:47 otto Exp $	*/
 
 /*
@@ -15,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dc.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
 
 #include <sys/stat.h>
 #include <err.h>
@@ -27,13 +30,11 @@
 
 static __dead void	usage(void);
 
-extern char		*__progname;
-
 static __dead void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-x] [-e expression] [file]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 
@@ -91,8 +92,10 @@ dc_main(int argc, char *argv[])
 		if (file == NULL)
 			err(1, "cannot open file %s", argv[0]);
 
+#ifdef __OpenBSD__
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
+#endif
 
 		if (fstat(fileno(file), &st) == -1)
 			err(1, "%s", argv[0]);
@@ -109,8 +112,10 @@ dc_main(int argc, char *argv[])
 		 return (0);
 	}
 
+#ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+#endif
 
 	src_setstream(&src, stdin);
 	reset_bmachine(&src);

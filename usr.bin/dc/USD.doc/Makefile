@@ -1,13 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 2004/02/01 15:18:01 jmc Exp $
+#	$NetBSD: Makefile,v 1.2 2017/04/10 16:37:48 christos Exp $
 
-DIR=	usd/05.dc
+SECTION=reference/ref1
+ARTICLE=dc
 SRCS=	dc
 MACROS=	-ms
-
-paper.ps: ${SRCS}
-	${EQN} ${SRCS} | ${ROFF} > ${.TARGET}
-
-paper.txt: ${SRCS}
-	${EQN} -Tascii ${SRCS} | ${ROFF} -Tascii > ${.TARGET}
 
 .include <bsd.doc.mk>
