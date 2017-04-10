@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.36 2017/04/09 00:02:30 dholland Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.37 2017/04/10 15:04:32 dholland Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.36 2017/04/09 00:02:30 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.37 2017/04/10 15:04:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -135,12 +135,15 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
 		}
 		linux_to_native_timespec(&ts, &lts);
 	}
-	return linux_do_futex(l, uap, retval, &ts);
+	return linux_do_futex(l, uap, &ts, retval);
 }
 
+/*
+ * Note: TS can't be const because ts2timo destroys it.
+ */
 int
 linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
-	register_t *retval, struct timespec *ts)
+	struct timespec *ts, register_t *retval)
 {
 	/* {
 		syscallarg(int *) uaddr;
