@@ -1,4 +1,4 @@
-/*	$NetBSD: proto.h,v 1.1 2017/04/10 02:28:23 phil Exp $ */
+/*	$NetBSD: proto.h,v 1.2 2017/04/10 15:13:22 christos Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -80,16 +80,20 @@ int insert_id_rec (id_rec **root, id_rec *new_id);
 void init_tree (void);
 int lookup (char *name, int namekind);
 void *bc_malloc (size_t);
-void out_of_memory (void);
+void out_of_memory (void) __attribute__((__noreturn__));
 void welcome (void);
 void warranty (const char *);
 void show_bc_version (void);
 void limits (void);
-void yyerror (const char *str ,...);
-void ct_warn (const char *mesg ,...);
-void rt_error (const char *mesg ,...);
-void rt_warn (const char *mesg ,...);
-void bc_exit (int);
+void yyerror (const char *str, ...)
+    __attribute__((__format__ (__printf__, 1, 2)));
+void ct_warn (const char *mesg, ...)
+    __attribute__((__format__ (__printf__, 1, 2)));
+void rt_error (const char *mesg, ...)
+    __attribute__((__format__ (__printf__, 1, 2)));
+void rt_warn (const char *mesg, ...)
+    __attribute__((__format__ (__printf__, 1, 2)));
+void bc_exit (int) __attribute__((__noreturn__));
 
 /* From load.c */
 void init_load (void);
@@ -101,7 +105,7 @@ void load_code (const char *code);
 /* From main.c */
 int open_new_file (void);
 void new_yy_file (FILE *file);
-void use_quit (int);
+void use_quit (int) __attribute__((__noreturn__));
 
 /* From storage.c */
 void init_storage (void);
