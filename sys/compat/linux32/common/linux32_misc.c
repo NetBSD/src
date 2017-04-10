@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.25 2014/11/22 13:12:22 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.26 2017/04/10 15:04:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.25 2014/11/22 13:12:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.26 2017/04/10 15:04:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -262,7 +262,7 @@ linux32_sys_futex(struct lwp *l,
 		}
 		linux32_to_native_timespec(&ts, &lts);
 	}
-	return linux_do_futex(l, &ua, retval, &ts);
+	return linux_do_futex(l, &ua, &ts, retval);
 }
 
 int
