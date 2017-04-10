@@ -1,3 +1,4 @@
+/*	$NetBSD: mem.c,v 1.2 2017/04/10 16:37:48 christos Exp $	*/
 /*	$OpenBSD: mem.c,v 1.7 2015/02/16 20:53:34 jca Exp $	*/
 
 /*
@@ -15,6 +16,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mem.c,v 1.2 2017/04/10 16:37:48 christos Exp $");
 
 #include <openssl/err.h>
 
@@ -70,12 +73,10 @@ bmalloc(size_t sz)
 void *
 breallocarray(void *p, size_t nmemb, size_t size)
 {
-	void *q;
-
-	q = reallocarray(p, nmemb, size);
-	if (q == NULL)
-		err(1, NULL);
-	return q;
+	int ret = reallocarr(&p, nmemb, size);
+	if (ret)
+		errc(1, ret, NULL);
+	return p;
 }
 
 char *
