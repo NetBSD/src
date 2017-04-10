@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.47 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.48 2017/04/10 14:19:22 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.47 2017/04/06 09:20:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.48 2017/04/10 14:19:22 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -183,31 +183,31 @@ static int
 esp_init(struct secasvar *sav, const struct xformsw *xsp)
 {
 	const struct enc_xform *txform;
-	struct cryptoini cria, crie;
+	struct cryptoini cria, crie, *cr;
 	int keylen;
 	int error;
 
 	txform = esp_algorithm_lookup(sav->alg_enc);
 	if (txform == NULL) {
-		DPRINTF(("esp_init: unsupported encryption algorithm %d\n",
-			sav->alg_enc));
+		DPRINTF(("%s: unsupported encryption algorithm %d\n", __func__,
+		    sav->alg_enc));
 		return EINVAL;
 	}
 	if (sav->key_enc == NULL) {
-		DPRINTF(("esp_init: no encoding key for %s algorithm\n",
-			 txform->name));
+		DPRINTF(("%s: no encoding key for %s algorithm\n", __func__,
+		    txform->name));
 		return EINVAL;
 	}
 	if ((sav->flags&(SADB_X_EXT_OLD|SADB_X_EXT_IV4B)) == SADB_X_EXT_IV4B) {
-		DPRINTF(("esp_init: 4-byte IV not supported with protocol\n"));
+		DPRINTF(("%s: 4-byte IV not supported with protocol\n",
+		    __func__));
 		return EINVAL;
 	}
 	keylen = _KEYLEN(sav->key_enc);
 	if (txform->minkey > keylen || keylen > txform->maxkey) {
-		DPRINTF(("esp_init: invalid key length %u, must be in "
-			"the range [%u..%u] for algorithm %s\n",
-			keylen, txform->minkey, txform->maxkey,
-			txform->name));
+		DPRINTF(("%s: invalid key length %u, must be in "
+		    "the range [%u..%u] for algorithm %s\n", __func__,
+		    keylen, txform->minkey, txform->maxkey, txform->name));
 		return EINVAL;
 	}
 
@@ -226,8 +226,9 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 	sav->tdb_xform = xsp;
 	sav->tdb_encalgxform = txform;
 
-	if (sav->alg_enc == SADB_X_EALG_AESGCM16 ||
-	    sav->alg_enc == SADB_X_EALG_AESGMAC) {
+	switch (sav->alg_enc) {
+	case SADB_X_EALG_AESGCM16:
+	case SADB_X_EALG_AESGMAC:
 		switch (keylen) {
 		case 20:
 			sav->alg_auth = SADB_X_AALG_AES128GMAC;
@@ -241,11 +242,19 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 			sav->alg_auth = SADB_X_AALG_AES256GMAC;
 			sav->tdb_authalgxform = &auth_hash_gmac_aes_256;
 			break;
-		}
+		default:
+			DPRINTF(("%s: invalid key length %u, must be either of "
+				"20, 28 or 36\n", __func__, keylen));
+			return EINVAL;
+                }
+
 		memset(&cria, 0, sizeof(cria));
 		cria.cri_alg = sav->tdb_authalgxform->type;
 		cria.cri_klen = _KEYBITS(sav->key_enc);
 		cria.cri_key = _KEYBUF(sav->key_enc);
+		break;
+	default:
+		break;
 	}
 
 	/* Initialize crypto session. */
@@ -258,20 +267,19 @@ esp_init(struct secasvar *sav, const struct xformsw *xsp)
 	if (sav->tdb_authalgxform && sav->tdb_encalgxform) {
 		/* init both auth & enc */
 		crie.cri_next = &cria;
-		error = crypto_newsession(&sav->tdb_cryptoid,
-					  &crie, crypto_support);
+		cr = &crie;
 	} else if (sav->tdb_encalgxform) {
-		error = crypto_newsession(&sav->tdb_cryptoid,
-					  &crie, crypto_support);
+		cr = &crie;
 	} else if (sav->tdb_authalgxform) {
-		error = crypto_newsession(&sav->tdb_cryptoid,
-					  &cria, crypto_support);
+		cr = &cria;
 	} else {
 		/* XXX cannot happen? */
-		DPRINTF(("esp_init: no encoding OR authentication xform!\n"));
-		error = EINVAL;
+		DPRINTF(("%s: no encoding OR authentication xform!\n",
+		    __func__));
+		return EINVAL;
 	}
-	return error;
+
+	return crypto_newsession(&sav->tdb_cryptoid, cr, crypto_support);
 }
 
 /*
