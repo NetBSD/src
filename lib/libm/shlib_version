@@ -1,8 +1,0 @@
-#	$NetBSD: shlib_version,v 1.15 2017/01/20 22:10:38 maya Exp $
-#	Remember to update distrib/sets/lists/base/shl.* when changing
-#
-# things we wish to do on next major version bump:
-# - remove compatibility cabs
-# - hide isinff
-major=0
-minor=11

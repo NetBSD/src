@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.84 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: viaide.c,v 1.84.18.1 2017/04/10 22:57:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,11 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.84 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.84.18.1 2017/04/10 22:57:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -1071,8 +1070,7 @@ via_vt6421_chansetup(struct pciide_softc *sc, int channel)
 
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_queue = ata_queue_alloc(1);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s channel %d: "
 		    "can't allocate memory for command queue",

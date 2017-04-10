@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.27 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.27.18.1 2017/04/10 22:57:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,10 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.27 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.27.18.1 2017/04/10 22:57:03 jdolecek Exp $");
 
 #include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -375,8 +374,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		cp->name = NULL;
 		cp->ata_channel.ch_channel = channel;
 		cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-		cp->ata_channel.ch_queue =
-		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		cp->ata_channel.ch_queue = ata_queue_alloc(1);
 		if (cp->ata_channel.ch_queue == NULL) {
 			aprint_error("%s channel %d: "
 			    "can't allocate memory for command queue\n",

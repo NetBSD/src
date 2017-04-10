@@ -1,3 +1,0 @@
-2015-02-28  James Bowman  <james.bowman@ftdichip.com>
-
-	* basic.s, allinsn.exp, testutils.inc: New files.

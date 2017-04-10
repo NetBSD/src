@@ -1,5 +1,0 @@
-RUN: not llvm-dwp %p/../Inputs/compress/a.dwo -o %t 2>&1 | FileCheck %s
-
-REQUIRES: nozlib
-
-CHECK: error: zlib not available

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92 2014/09/10 07:04:48 matt Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.1 2017/04/10 22:57:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -45,7 +45,9 @@ struct ata_xfer {
 
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;
-	int	c_drive;
+	uint16_t c_drive;
+	int8_t c_slot;			/* queue slot # */
+	uint8_t c_hwslot;		/* hardware slot # */
 
 	void	*c_cmd;			/* private request structure pointer */
 	void	*c_databuf;		/* pointer to data buffer */
@@ -81,9 +83,12 @@ struct ata_xfer {
 struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
 	int queue_freeze; /* freeze count for the queue */
-	struct ata_xfer *active_xfer; /* active command */
 	int queue_flags;	/* flags for this queue */
-#define QF_IDLE_WAIT   0x01    /* someone is wants the controller idle */
+#define QF_IDLE_WAIT	0x01    /* someone is wants the controller idle */
+#define QF_SHARED	0x02	/* this queue is shared */
+	int queue_active; /* number of active transfers */
+	int queue_openings; /* max number of active transfers */
+	struct ata_xfer *active_xfers[1]; /* active command */
 };
 
 /* ATA bus instance state information. */
@@ -447,8 +452,12 @@ void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 #define	ATAXF_CANSLEEP	0x00
 #define	ATAXF_NOSLEEP	0x01
 
+void	ata_activate_xfer(struct ata_channel *, struct ata_xfer *);
+void	ata_deactivate_xfer(struct ata_channel *, struct ata_xfer *);
+
 void	ata_exec_xfer(struct ata_channel *, struct ata_xfer *);
 void	ata_kill_pending(struct ata_drive_datas *);
+void	ata_kill_active(struct ata_channel *, int);
 void	ata_reset_channel(struct ata_channel *, int);
 
 int	ata_addref(struct ata_channel *);
@@ -464,7 +473,16 @@ void	ata_probe_caps(struct ata_drive_datas *);
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif
 void	ata_queue_idle(struct ata_queue *);
+struct ata_queue *
+	ata_queue_alloc(int openings);
+void	ata_queue_free(struct ata_queue *);
+struct ata_xfer *
+	ata_queue_hwslot_to_xfer(struct ata_queue *, int);
+
 void	ata_delay(int, const char *, int);
+
+bool	ata_waitdrain_check(struct ata_channel *, int);
+bool	ata_waitdrain_xfer_check(struct ata_channel *, struct ata_xfer *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_ATA_ATAVAR_H_ */

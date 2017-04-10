@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30 2017/01/03 01:30:15 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.1 2017/04/10 22:57:02 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,12 +79,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30 2017/01/03 01:30:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.1 2017/04/10 22:57:02 jdolecek Exp $");
 
 #include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
@@ -290,8 +290,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	sc->sc_chanarray[port] = chp;
 	chp->ch_channel = port;
 	chp->ch_atac = &sc->sc_atac;
-	chp->ch_queue = malloc(sizeof(struct ata_queue),
-			       M_DEVBUF, M_NOWAIT|M_ZERO);
+	chp->ch_queue = ata_queue_alloc(1);	// XXX
 	if (chp->ch_queue == NULL) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "port %d: can't allocate memory "
@@ -481,7 +480,7 @@ siisata_intr_port(struct siisata_channel *schp)
 
 	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
 	chp = &schp->ata_channel;
-	xfer = chp->ch_queue->active_xfer;
+	xfer = chp->ch_queue->active_xfers[0];
 	slot = SIISATA_NON_NCQ_SLOT;
 
 	pis = PRREAD(sc, PRX(chp->ch_channel, PRO_PIS));
@@ -625,6 +624,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
+	struct ata_xfer *xfer;
 
 	SIISATA_DEBUG_PRINT(("%s: %s\n", SIISATANAME(sc), __func__),
 	    DEBUG_FUNCS);
@@ -640,9 +640,8 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 		DELAY(10);
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_SERROR),
 	    PRREAD(sc, PRX(chp->ch_channel, PRO_SERROR)));
-	if (chp->ch_queue->active_xfer) {
-		chp->ch_queue->active_xfer->c_kill_xfer(chp,
-		    chp->ch_queue->active_xfer, KILL_RESET);
+	if ((xfer = chp->ch_queue->active_xfers[0]) != NULL) {
+		(*xfer->c_kill_xfer)(chp, xfer, KILL_RESET);
 	}
 
 	return;
@@ -943,13 +942,11 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 		ata_c->flags |= AT_ERROR;
 	}
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
-		siisata_cmd_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
-		return 0;
-	} else
+	ata_deactivate_xfer(chp, xfer);
+
+	if (!ata_waitdrain_xfer_check(chp, xfer)) {
 		siisata_cmd_done(chp, xfer, slot);
+	}
 
 	return 0;
 }
@@ -998,8 +995,8 @@ siisata_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	if (PRREAD(sc, PRSX(chp->ch_channel, slot, PRSO_RTC)))
 		ata_c->flags |= AT_XFDONE;
 
-	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
+
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
 	else if (ata_c->callback)
@@ -1156,15 +1153,14 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, schp->sch_datad[slot]);
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
-		siisata_bio_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
+	ata_deactivate_xfer(chp, xfer);
+
+	if (ata_waitdrain_xfer_check(chp, xfer)) {
 		return 0;
 	}
 
-	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
+
 	ata_bio->flags |= ATA_ITSDONE;
 	if (chp->ch_status & WDCS_DWF) {
 		ata_bio->error = ERR_DF;
@@ -1195,7 +1191,7 @@ void
 siisata_timeout(void *v)
 {
 	struct ata_channel *chp = (struct ata_channel *)v;
-	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
+	struct ata_xfer *xfer = chp->ch_queue->active_xfers[0];
 	int slot = SIISATA_NON_NCQ_SLOT;
 	int s = splbio();
 	SIISATA_DEBUG_PRINT(("%s: %p\n", __func__, xfer), DEBUG_INTR);
@@ -1680,14 +1676,13 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, schp->sch_datad[slot]);
 
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
-		siisata_atapi_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
+	ata_deactivate_xfer(chp, xfer);
+
+	if (!ata_waitdrain_xfer_check(chp, xfer)) {
+		sc_xfer->error = XS_DRIVER_STUFFUP;
 		return 0; /* XXX verify */
 	}
 
-	chp->ch_queue->active_xfer = NULL;
 	ata_free_xfer(chp, xfer);
 	sc_xfer->resid = sc_xfer->datalen;
 	sc_xfer->resid -= PRREAD(sc, PRSX(chp->ch_channel, slot, PRSO_RTC));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.30 2013/10/07 19:51:55 jakllsch Exp $	*/
+/*	$NetBSD: cypide.c,v 1.30.18.1 2017/04/10 22:57:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,11 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.30 2013/10/07 19:51:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.30.18.1 2017/04/10 22:57:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -149,8 +148,7 @@ cy693_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	cp->name = PCIIDE_CHANNEL_NAME(0);
 	cp->ata_channel.ch_channel = 0;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_queue = ata_queue_alloc(1);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s primary channel: "
 		    "can't allocate memory for command queue",

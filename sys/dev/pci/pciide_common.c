@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.62 2016/10/13 17:11:09 jdolecek Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.62.4.1 2017/04/10 22:57:03 jdolecek Exp $	*/
 
 
 /*
@@ -70,10 +70,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.62 2016/10/13 17:11:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.62.4.1 2017/04/10 22:57:03 jdolecek Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -210,7 +209,7 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 #endif
 		}
 
-		free(cp->ata_channel.ch_queue, M_DEVBUF);
+		ata_queue_free(cp->ata_channel.ch_queue);
 		cp->ata_channel.atabus = NULL;
 	}
 
@@ -877,8 +876,7 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT|M_ZERO);
+	cp->ata_channel.ch_queue = ata_queue_alloc(1);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283 2017/03/29 09:04:35 msaitoh Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.1 2017/04/10 22:57:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283 2017/03/29 09:04:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.1 2017/04/10 22:57:02 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -872,7 +872,8 @@ wdcintr(void *arg)
 	}
 
 	ATADEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	xfer = chp->ch_queue->active_xfer;
+	KASSERT(chp->ch_queue->queue_openings == 1);
+	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
 #ifdef DIAGNOSTIC
 	if (xfer == NULL)
 		panic("wdcintr: no xfer");
@@ -933,7 +934,8 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 	 * if the current command if on an ATAPI device, issue a
 	 * ATAPI_SOFT_RESET
 	 */
-	xfer = chp->ch_queue->active_xfer;
+	KASSERT(chp->ch_queue->queue_openings == 1);
+	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
 	if (xfer && xfer->c_chp == chp && (xfer->c_flags & C_ATAPI)) {
 		wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 		if (flags & AT_WAIT)
@@ -977,12 +979,11 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 			    xfer, c_xferchain);
 			TAILQ_INSERT_TAIL(&reset_xfer, xfer, c_xferchain);
 		}
-		xfer = chp->ch_queue->active_xfer;
+		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
 		if (xfer) {
 			if (xfer->c_chp != chp)
 				ata_reset_channel(xfer->c_chp, flags);
 			else {
-				callout_stop(&chp->ch_callout);
 #if NATA_DMA || NATA_PIOBM
 				/*
 				 * If we're waiting for DMA, stop the
@@ -995,7 +996,7 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 					chp->ch_flags &= ~ATACH_DMA_WAIT;
 				}
 #endif
-				chp->ch_queue->active_xfer = NULL;
+				ata_deactivate_xfer(chp, xfer);
 				if ((flags & AT_RST_EMERG) == 0)
 					xfer->c_kill_xfer(
 					    chp, xfer, KILL_RESET);
@@ -1231,7 +1232,7 @@ __wdcwait(struct ata_channel *chp, int mask, int bits, int timeout)
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && xtime > WDCNDELAY_DEBUG) {
-		struct ata_xfer *xfer = chp->ch_queue->active_xfer;
+		struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    device_xname(chp->ch_atac->atac_dev),
@@ -1326,12 +1327,13 @@ wdctimeout(void *arg)
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
-	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 	int s;
 
 	ATADEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
 
 	s = splbio();
+	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
+	KASSERT(xfer != NULL);
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "lost interrupt");
 		printf("\ttype: %s tc_bcount: %d tc_skip: %d\n",
@@ -1663,8 +1665,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 		ata_c->r_device &= 0xf0;
 	}
-	callout_stop(&chp->ch_callout);
-	chp->ch_queue->active_xfer = NULL;
+
+	ata_deactivate_xfer(chp, xfer);
+
 	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
 		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
@@ -1672,12 +1675,10 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 			    wd_aux_ctlr, WDCTL_4BIT);
 		delay(10); /* some drives need a little delay here */
 	}
-	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
-		__wdccommand_kill_xfer(chp, xfer, KILL_GONE);
-		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
-	} else
+
+	if (!ata_waitdrain_xfer_check(chp, xfer)) {
 		__wdccommand_done_end(chp, xfer);
+	}
 }
 
 static void
@@ -1849,7 +1850,7 @@ static void
 __wdcerror(struct ata_channel *chp, const char *msg)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
+	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
 
 	if (xfer == NULL)
 		aprint_error("%s:%d: %s\n", device_xname(atac->atac_dev),

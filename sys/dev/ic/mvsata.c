@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.1 2017/04/10 22:57:02 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.1 2017/04/10 22:57:02 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -630,7 +630,7 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 		xfer = mvport->port_reqtbl[i].xfer;
 		if (xfer == NULL)
 			continue;
-		chp->ch_queue->active_xfer = xfer;
+		chp->ch_queue->active_xfers[0] = xfer;
 		xfer->c_kill_xfer(chp, xfer, KILL_RESET);
 	}
 
@@ -1447,14 +1447,14 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_bio->bcount = xfer->c_bcount;
 
 	/* mark controller inactive and free xfer */
-	KASSERT(chp->ch_queue->active_xfer != NULL);
-	chp->ch_queue->active_xfer = NULL;
+	KASSERT(chp->ch_queue->active_xfers[0] != NULL);
+	ata_deactivate_xfer(chp, xfer);
 	ata_free_xfer(chp, xfer);
 
 	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		ata_bio->error = ERR_NODEV;
 		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
+		wakeup(chp->ch_queue->active_xfers);
 	}
 	ata_bio->flags |= ATA_ITSDONE;
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
@@ -1812,8 +1812,9 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 			    (uint64_t)(ata_c->r_device & 0x0f) << 24;
 		}
 	}
-	callout_stop(&chp->ch_callout);
-	chp->ch_queue->active_xfer = NULL;
+
+	ata_deactivate_xfer(chp, xfer);
+
 	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT);
@@ -1822,7 +1823,7 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (chp->ch_drive[xfer->c_drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		mvsata_wdc_cmd_kill_xfer(chp, xfer, KILL_GONE);
 		chp->ch_drive[xfer->c_drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
+		wakeup(chp->ch_queue->active_xfers);
 	} else
 		mvsata_wdc_cmd_done_end(chp, xfer);
 }
@@ -2390,15 +2391,16 @@ mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	DPRINTFN(1, ("%s:%d:%d: mvsata_atapi_done: flags 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags));
-	callout_stop(&chp->ch_callout);
+
 	/* mark controller inactive and free the command */
-	chp->ch_queue->active_xfer = NULL;
+
+	ata_deactivate_xfer(chp, xfer);
 	ata_free_xfer(chp, xfer);
 
 	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
+		wakeup(chp->ch_queue->active_xfers);
 	}
 
 	DPRINTFN(1, ("%s:%d: mvsata_atapi_done: scsipi_done\n",
@@ -2460,8 +2462,8 @@ mvsata_edma_enqueue(struct mvsata_port *mvport, struct ata_bio *ata_bio,
 		return rv;
 
 	KASSERT(mvport->port_reqtbl[quetag].xfer == NULL);
-	KASSERT(chp->ch_queue->active_xfer != NULL);
-	mvport->port_reqtbl[quetag].xfer = chp->ch_queue->active_xfer;
+	KASSERT(chp->ch_queue->active_xfers[0] != NULL);
+	mvport->port_reqtbl[quetag].xfer = chp->ch_queue->active_xfers[0];
 
 	/* setup EDMA Physical Region Descriptors (ePRD) Table Data */
 	data_dmamap = mvport->port_reqtbl[quetag].data_dmamap;
@@ -2574,8 +2576,8 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 #endif
 		crpb = mvport->port_crpb + erpqop;
 		quetag = CRPB_CHOSTQUETAG(le16toh(crpb->id));
-		KASSERT(chp->ch_queue->active_xfer != NULL);
-		xfer = chp->ch_queue->active_xfer;
+		KASSERT(chp->ch_queue->active_xfers[0] != NULL);
+		xfer = chp->ch_queue->active_xfers[0];
 		KASSERT(xfer == mvport->port_reqtbl[quetag].xfer);
 #ifdef DIAGNOSTIC
 		if (xfer == NULL)
@@ -2763,9 +2765,9 @@ mvsata_bdma_init(struct mvsata_port *mvport, struct scsipi_xfer *sc_xfer,
 	if (rv != 0)
 		return rv;
 
-	KASSERT(chp->ch_queue->active_xfer != NULL);
+	KASSERT(chp->ch_queue->active_xfers[0] != NULL);
 	KASSERT(mvport->port_reqtbl[quetag].xfer == NULL);
-	mvport->port_reqtbl[quetag].xfer = chp->ch_queue->active_xfer;
+	mvport->port_reqtbl[quetag].xfer = chp->ch_queue->active_xfers[0];
 
 	/* setup EDMA Physical Region Descriptors (ePRD) Table Data */
 	data_dmamap = mvport->port_reqtbl[quetag].data_dmamap;
@@ -2886,6 +2888,7 @@ mvsata_port_init(struct mvsata_hc *mvhc, int port)
 	chp->ch_channel = channel;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &mvport->port_ata_queue;
+	chp->ch_queue->queue_openings = 1;	// XXX
 	sc->sc_ata_channels[channel] = chp;
 
 	rv = mvsata_wdc_reg_init(mvport, sc->sc_wdcdev.regs + channel);
@@ -3449,7 +3452,7 @@ mvsata_edma_setup_crqb(struct mvsata_port *mvport, int erqqip, int quetag,
 	uint8_t cmd, head;
 	int i;
 	const int drive =
-	    mvport->port_ata_channel.ch_queue->active_xfer->c_drive;
+	    mvport->port_ata_channel.ch_queue->active_xfers[0]->c_drive;
 
 	eprd_addr = mvport->port_eprd_dmamap->dm_segs[0].ds_addr +
 	    mvport->port_reqtbl[quetag].eprd_offset;
@@ -3697,7 +3700,7 @@ mvsata_edma_setup_crqb_gen2e(struct mvsata_port *mvport, int erqqip, int quetag,
 	uint32_t ctrlflg, rw;
 	uint8_t cmd, head;
 	const int drive =
-	    mvport->port_ata_channel.ch_queue->active_xfer->c_drive;
+	    mvport->port_ata_channel.ch_queue->active_xfers[0]->c_drive;
 
 	eprd_addr = mvport->port_eprd_dmamap->dm_segs[0].ds_addr +
 	    mvport->port_reqtbl[quetag].eprd_offset;

@@ -1,3 +1,0 @@
-@set UPDATED 21 November 2016
-@set EDITION 4.2.8p9
-@set VERSION 4.2.8p9
