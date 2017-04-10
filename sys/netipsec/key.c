@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.104 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.105 2017/04/10 14:02:25 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.104 2017/04/06 09:20:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.105 2017/04/10 14:02:25 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.104 2017/04/06 09:20:07 ozaki-r Exp $");
 #include <sys/syslog.h>
 #include <sys/once.h>
 #include <sys/cprng.h>
+#include <sys/psref.h>
+#include <sys/lwp.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -4169,16 +4171,23 @@ static int
 key_ismyaddr6(const struct sockaddr_in6 *sin6)
 {
 	struct in6_ifaddr *ia;
-	const struct in6_multi *in6m;
 	int s;
+	struct psref psref;
+	int bound;
+	int ours = 1;
 
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
+		bool ingroup;
+
 		if (key_sockaddrcmp((const struct sockaddr *)&sin6,
 		    (const struct sockaddr *)&ia->ia_addr, 0) == 0) {
 			pserialize_read_exit(s);
-			return 1;
+			goto ours;
 		}
+		ia6_acquire(ia, &psref);
+		pserialize_read_exit(s);
 
 		/*
 		 * XXX Multicast
@@ -4186,19 +4195,26 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 		 * about IPv4 multicast??
 		 * XXX scope
 		 */
-		in6m = in6_lookup_multi(&sin6->sin6_addr, ia->ia_ifp);
-		if (in6m) {
-			pserialize_read_exit(s);
-			return 1;
+		ingroup = in6_multi_group(&sin6->sin6_addr, ia->ia_ifp);
+		if (ingroup) {
+			ia6_release(ia, &psref);
+			goto ours;
 		}
+
+		s = pserialize_read_enter();
+		ia6_release(ia, &psref);
 	}
 	pserialize_read_exit(s);
 
 	/* loopback, just for safety */
 	if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
-		return 1;
+		goto ours;
 
-	return 0;
+	ours = 0;
+ours:
+	curlwp_bindx(bound);
+
+	return ours;
 }
 #endif /*INET6*/
 
