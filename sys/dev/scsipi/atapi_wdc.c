@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.1 2017/04/10 22:57:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.1 2017/04/10 22:57:03 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1083,16 +1083,12 @@ wdc_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ATADEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags), DEBUG_XFERS);
-	callout_stop(&chp->ch_callout);
-	/* mark controller inactive and free the command */
-	chp->ch_queue->active_xfer = NULL;
+
+	ata_deactivate_xfer(chp, xfer);
 	ata_free_xfer(chp, xfer);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (ata_waitdrain_check(chp, drive))
 		sc_xfer->error = XS_DRIVER_STUFFUP;
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
-	}
 
 	ATADEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
 	scsipi_done(sc_xfer);

@@ -1,5 +1,0 @@
-dn: cn=John Doe,ou=users,dc=example,dc=com
-changetype: modify
-replace: uid
-uid: 3
-

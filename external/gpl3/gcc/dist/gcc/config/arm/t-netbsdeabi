@@ -1,8 +1,0 @@
-# NetBSD has (will have) "non-native" libraries in /usr/lib/<arch>.
-
-MULTILIB_OPTIONS = mabi=aapcs-linux/mabi=apcs-gnu
-MULTILIB_DIRNAMES = eabi oabi
-MULTILIB_OSDIRNAMES = . ../lib/oabi
-
-LIBGCC = stmp-multilib
-INSTALL_LIBGCC = install-multilib

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.105 2015/01/02 19:42:06 christos Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.105.6.1 2017/04/10 22:57:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105 2015/01/02 19:42:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.1 2017/04/10 22:57:02 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -808,13 +808,11 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_bio->bcount = xfer->c_bcount;
 
 	/* mark controller inactive and free xfer */
-	chp->ch_queue->active_xfer = NULL;
+	ata_deactivate_xfer(chp, xfer);
 	ata_free_xfer(chp, xfer);
 
-	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
+	if (ata_waitdrain_check(chp, drive)) {
 		ata_bio->error = ERR_NODEV;
-		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(&chp->ch_queue->active_xfer);
 	}
 	ata_bio->flags |= ATA_ITSDONE;
 	ATADEBUG_PRINT(("wdc_ata_done: drv_done\n"), DEBUG_XFERS);
