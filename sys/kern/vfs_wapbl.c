@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.93 2017/04/05 20:38:53 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.94 2017/04/10 19:52:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.93 2017/04/05 20:38:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.94 2017/04/10 19:52:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -199,7 +199,7 @@ struct wapbl {
 	size_t wl_bufcount;	/* m:	Count of buffers in wl_bufs */
 	size_t wl_bcount;	/* m:	Total bcount of wl_bufs */
 
-	LIST_HEAD(, buf) wl_bufs; /* m:	Buffers in current transaction */
+	TAILQ_HEAD(, buf) wl_bufs; /* m: Buffers in current transaction */
 
 	kcondvar_t wl_reclaimable_cv;	/* m (obviously) */
 	size_t wl_reclaimable_bytes; /* m:	Amount of space available for
@@ -542,7 +542,7 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	rw_init(&wl->wl_rwlock);
 	mutex_init(&wl->wl_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&wl->wl_reclaimable_cv, "wapblrec");
-	LIST_INIT(&wl->wl_bufs);
+	TAILQ_INIT(&wl->wl_bufs);
 	SIMPLEQ_INIT(&wl->wl_entries);
 
 	wl->wl_logvp = vp;
@@ -750,7 +750,7 @@ wapbl_discard(struct wapbl *wl)
 	 */
 	mutex_enter(&bufcache_lock);
 	mutex_enter(&wl->wl_mtx);
-	while ((bp = LIST_FIRST(&wl->wl_bufs)) != NULL) {
+	while ((bp = TAILQ_FIRST(&wl->wl_bufs)) != NULL) {
 		if (bbusy(bp, 0, 0, &wl->wl_mtx) == 0) {
 			/*
 			 * The buffer will be unlocked and
@@ -791,7 +791,7 @@ wapbl_discard(struct wapbl *wl)
 	KASSERT(wl->wl_bufbytes == 0);
 	KASSERT(wl->wl_bcount == 0);
 	KASSERT(wl->wl_bufcount == 0);
-	KASSERT(LIST_EMPTY(&wl->wl_bufs));
+	KASSERT(TAILQ_EMPTY(&wl->wl_bufs));
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
 	KASSERT(TAILQ_EMPTY(&wl->wl_dealloclist));
@@ -826,7 +826,7 @@ wapbl_stop(struct wapbl *wl, int force)
 	KASSERT(wl->wl_bufbytes == 0);
 	KASSERT(wl->wl_bcount == 0);
 	KASSERT(wl->wl_bufcount == 0);
-	KASSERT(LIST_EMPTY(&wl->wl_bufs));
+	KASSERT(TAILQ_EMPTY(&wl->wl_bufs));
 	KASSERT(wl->wl_dealloccnt == 0);
 	KASSERT(SIMPLEQ_EMPTY(&wl->wl_entries));
 	KASSERT(wl->wl_inohashcnt == 0);
@@ -1180,7 +1180,7 @@ wapbl_add_buf(struct wapbl *wl, struct buf * bp)
 
 	mutex_enter(&wl->wl_mtx);
 	if (bp->b_flags & B_LOCKED) {
-		LIST_REMOVE(bp, b_wapbllist);
+		TAILQ_REMOVE(&wl->wl_bufs, bp, b_wapbllist);
 		WAPBL_PRINTF(WAPBL_PRINT_BUFFER2,
 		   ("wapbl_add_buf thread %d.%d re-adding buf %p "
 		    "with %d bytes %d bcount\n",
@@ -1198,7 +1198,7 @@ wapbl_add_buf(struct wapbl *wl, struct buf * bp)
 		    curproc->p_pid, curlwp->l_lid, bp, bp->b_bufsize,
 		    bp->b_bcount));
 	}
-	LIST_INSERT_HEAD(&wl->wl_bufs, bp, b_wapbllist);
+	TAILQ_INSERT_TAIL(&wl->wl_bufs, bp, b_wapbllist);
 	mutex_exit(&wl->wl_mtx);
 
 	bp->b_flags |= B_LOCKED;
@@ -1236,7 +1236,7 @@ wapbl_remove_buf_locked(struct wapbl * wl, struct buf *bp)
 	wl->wl_bufcount--;
 	KASSERT((wl->wl_bufcount == 0) == (wl->wl_bufbytes == 0));
 	KASSERT((wl->wl_bufcount == 0) == (wl->wl_bcount == 0));
-	LIST_REMOVE(bp, b_wapbllist);
+	TAILQ_REMOVE(&wl->wl_bufs, bp, b_wapbllist);
 
 	bp->b_flags &= ~B_LOCKED;
 }
@@ -1799,12 +1799,10 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	SIMPLEQ_INSERT_TAIL(&wl->wl_entries, we, we_entries);
 
 	/*
-	 * this flushes bufs in reverse order than they were queued
-	 * it shouldn't matter, but if we care we could use TAILQ instead.
-	 * XXX Note they will get put on the lru queue when they flush
-	 * so we might actually want to change this to preserve order.
+	 * This flushes bufs in order than they were queued, so the LRU
+	 * order is preserved.
 	 */
-	while ((bp = LIST_FIRST(&wl->wl_bufs)) != NULL) {
+	while ((bp = TAILQ_FIRST(&wl->wl_bufs)) != NULL) {
 		if (bbusy(bp, 0, 0, &wl->wl_mtx)) {
 			continue;
 		}
@@ -1969,8 +1967,8 @@ wapbl_print(struct wapbl *wl,
 	if (full) {
 		int cnt = 0;
 		(*pr)("bufs =");
-		LIST_FOREACH(bp, &wl->wl_bufs, b_wapbllist) {
-			if (!LIST_NEXT(bp, b_wapbllist)) {
+		TAILQ_FOREACH(bp, &wl->wl_bufs, b_wapbllist) {
+			if (!TAILQ_NEXT(bp, b_wapbllist)) {
 				(*pr)(" %p", bp);
 			} else if ((++cnt % 6) == 0) {
 				(*pr)(" %p,\n\t", bp);
@@ -2406,7 +2404,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 
 	KASSERT(rw_write_held(&wl->wl_rwlock));
 
-	bp = LIST_FIRST(&wl->wl_bufs);
+	bp = TAILQ_FIRST(&wl->wl_bufs);
 
 	while (bp) {
 		int cnt;
@@ -2438,7 +2436,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			wc->wc_blocks[wc->wc_blkcount].wc_dlen = bp->b_bcount;
 			wc->wc_len += bp->b_bcount;
 			wc->wc_blkcount++;
-			bp = LIST_NEXT(bp, b_wapbllist);
+			bp = TAILQ_NEXT(bp, b_wapbllist);
 		}
 		if (wc->wc_len % blocklen != 0) {
 			padding = blocklen - wc->wc_len % blocklen;
@@ -2461,7 +2459,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			    bp->b_bcount, &off);
 			if (error)
 				return error;
-			bp = LIST_NEXT(bp, b_wapbllist);
+			bp = TAILQ_NEXT(bp, b_wapbllist);
 		}
 		if (padding) {
 			void *zero;
