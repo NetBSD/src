@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.95 2017/04/10 21:34:37 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.96 2017/04/10 21:36:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.95 2017/04/10 21:34:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.96 2017/04/10 21:36:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.95 2017/04/10 21:34:37 jdolecek Exp 
 static struct sysctllog *wapbl_sysctl;
 static int wapbl_flush_disk_cache = 1;
 static int wapbl_verbose_commit = 0;
-static int wapbl_allow_fuadpo = 0; 	/* switched off by default for now */
+static int wapbl_allow_dpofua = 0; 	/* switched off by default for now */
 static int wapbl_journal_iobufs = 4;
 
 static inline size_t wapbl_space_free(size_t, off_t, off_t);
@@ -237,7 +237,7 @@ struct wapbl {
 
 	int wl_dkcache;		/* r: 	disk cache flags */
 #define WAPBL_USE_FUA(wl)	\
-		(wapbl_allow_fuadpo && ISSET((wl)->wl_dkcache, DKCACHE_FUA))
+		(wapbl_allow_dpofua && ISSET((wl)->wl_dkcache, DKCACHE_FUA))
 #define WAPBL_JFLAGS(wl)	\
 		(WAPBL_USE_FUA(wl) ? (wl)->wl_jwrite_flags : 0)
 #define WAPBL_MFLAGS(wl)	\
@@ -356,9 +356,9 @@ wapbl_sysctl_init(void)
 
 	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "allow_fuadpo",
+		       CTLTYPE_INT, "allow_dpofua",
 		       SYSCTL_DESCR("allow use of FUA/DPO instead of cash flush if available"),
-		       NULL, 0, &wapbl_allow_fuadpo, 0,
+		       NULL, 0, &wapbl_allow_dpofua, 0,
 		       CTL_CREATE, CTL_EOL);
 	if (rv)
 		return rv;
