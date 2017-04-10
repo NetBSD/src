@@ -1,2 +1,0 @@
-softfp_wrap_start := '\#ifdef __ARM_ARCH_6M__'
-softfp_wrap_end := '\#endif'

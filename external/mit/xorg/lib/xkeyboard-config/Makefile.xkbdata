@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.xkbdata,v 1.3 2017/02/13 06:11:01 snj Exp $
-
-XKBDISTDIR=	${X11SRCDIR.xkeyboard-config}/${XKBNAME}
-
-.PATH:		${XKBDISTDIR}
-
-FILESDIR=	${X11LIBDIR}/xkb/${XKBNAME}

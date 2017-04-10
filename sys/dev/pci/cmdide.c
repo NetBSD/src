@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.38 2012/09/03 15:38:17 kiyohara Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.38.28.1 2017/04/10 22:57:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,11 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.38 2012/09/03 15:38:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.38.28.1 2017/04/10 22:57:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -165,8 +164,7 @@ cmd_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 		cp->ata_channel.ch_queue =
 		    sc->pciide_channels[0].ata_channel.ch_queue;
 	} else {
-		cp->ata_channel.ch_queue =
-		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		cp->ata_channel.ch_queue = ata_queue_alloc(1);
 	}
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
@@ -521,8 +519,7 @@ cmd680_channel_map(const struct pci_attach_args *pa, struct pciide_softc *sc,
 	cp->ata_channel.ch_channel = channel;
 	cp->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 
-	cp->ata_channel.ch_queue =
-	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+	cp->ata_channel.ch_queue = ata_queue_alloc(1);
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
