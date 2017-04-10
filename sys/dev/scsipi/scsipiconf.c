@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.42 2016/11/20 15:37:19 mlelstv Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.43 2017/04/10 21:53:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.42 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.43 2017/04/10 21:53:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,6 @@ int scsi_verbose_loaded = 0;
 int
 scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 {
-	scsipi_load_verbose();
 	if (scsi_verbose_loaded)
 		return scsipi_print_sense(xs, verbosity);
 	else
@@ -82,7 +81,6 @@ scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 void
 scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
 {
-	scsipi_load_verbose();
 	if (scsi_verbose_loaded)
 		scsipi_print_sense_data(sense, verbosity);
 }
@@ -108,16 +106,6 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
 	mutex_exit(chan_mtx(periph->periph_channel));
 
 	return rc;
-}
-
-/* 
- * Load the scsiverbose module
- */   
-void
-scsipi_load_verbose(void)
-{
-	if (scsi_verbose_loaded == 0)
-		module_autoload("scsiverbose", MODULE_CLASS_MISC);
 }
 
 /*
