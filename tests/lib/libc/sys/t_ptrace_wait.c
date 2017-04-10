@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.2 2017/04/08 00:25:50 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.3 2017/04/10 16:45:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.2 2017/04/08 00:25:50 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.3 2017/04/10 16:45:57 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1320,11 +1320,6 @@ ATF_TC_BODY(fork1, tc)
 	const int slen = sizeof(state);
 	ptrace_event_t event;
 	const int elen = sizeof(event);
-
-#if defined(__sparc__) || defined(__alpha__) || defined(__arm__)
-	/* ptrace(2) PTRACE_FORK fails on some platforms */
-	atf_tc_expect_fail("PR kern/52117");
-#endif
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
@@ -5190,11 +5185,6 @@ ATF_TC_BODY(siginfo5, tc)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 	struct ptrace_siginfo info;
-
-#if defined(__sparc__) || defined(__alpha__) || defined(__arm__)
-	/* ptrace(2) PTRACE_FORK fails on some platforms */
-	atf_tc_expect_fail("PR kern/52117");
-#endif
 
 	memset(&info, 0, sizeof(info));
 
