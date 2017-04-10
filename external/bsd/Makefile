@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.56 2017/01/07 19:53:49 christos Exp $
+#	$NetBSD: Makefile,v 1.57 2017/04/10 02:59:35 phil Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	acpica am-utils bind byacc cron dhcpcd ekermit elftosb \
+SUBDIR=	acpica am-utils bc bind byacc cron dhcpcd ekermit elftosb \
 	fetch file flex less \
 	libarchive libevent liblzf libpcap mdocml \
 	ntp openresolv tcpdump tmux top tre wpa
