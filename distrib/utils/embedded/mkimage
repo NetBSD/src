@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.63 2017/04/11 18:04:08 jmcneill Exp $
+# $NetBSD: mkimage,v 1.64 2017/04/11 21:06:30 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -235,9 +235,6 @@ do
 	compare="$((${newsize} * 2 * 1024))"
 done                      
 
-echo ${bar} Adding label ${bar}
-make_label > ${tmp}/label
-${DISKLABEL} -R -F ${image} ${tmp}/label
 if [ -n "${msdosid}" ]; then
 	echo ${bar} Running fdisk ${bar}
 	initsecs=$((${init} * 1024))
@@ -251,7 +248,15 @@ if [ -n "${msdosid}" ]; then
 		ffssize="$(expr ${imagesecs} - ${ffsstart})"
 		${FDISK} -f -u -1 -s 169/${ffsstart}/${ffssize} -F ${image}
 	fi
+
+	echo ${bar} Adding label ${bar}
+	make_label > ${tmp}/label
+	${DISKLABEL} -R -F ${image} ${tmp}/label
 elif [ -n "${netbsdid}" ]; then
+	echo ${bar} Adding label ${bar}
+	make_label > ${tmp}/label
+	${DISKLABEL} -R -F ${image} ${tmp}/label
+
 	echo ${bar} Running fdisk ${bar}
 	${FDISK} -f -i ${image}
 	${FDISK} -f -a -u -0 -s 169/${init} ${image}
