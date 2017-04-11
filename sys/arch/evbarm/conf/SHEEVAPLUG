@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.39 2014/08/03 09:18:16 martin Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.39.2.1 2017/04/11 16:55:39 martin Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -300,7 +300,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 uaudio* at uhub? port ? configuration ?
 
 # USB MIDI
-umidi* at uhub? port ? configuration ?
+#umidi* at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
