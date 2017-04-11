@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.127 2016/08/20 12:37:08 hannken Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.128 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.127 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.128 2017/04/11 14:25:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -836,7 +836,7 @@ fdesc_kqfilter(void *v)
 int
 fdesc_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -848,7 +848,7 @@ fdesc_inactive(void *v)
 	 */
 	if (fd->fd_type == Fctty || fd->fd_type == Fdesc)
 		vp->v_type = VNON;
-	VOP_UNLOCK(vp);
+
 	return (0);
 }
 
