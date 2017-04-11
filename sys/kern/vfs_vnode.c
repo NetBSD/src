@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.82 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.83 2017/04/11 14:45:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.82 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.83 2017/04/11 14:45:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -765,12 +765,8 @@ vrelel(vnode_t *vp, int flags)
 		 */
 		recycle = false;
 		VOP_INACTIVE(vp, &recycle);
-		VOP_UNLOCK(vp);
-		if (recycle) {
-			/* vcache_reclaim() below will drop the lock. */
-			if (vn_lock(vp, LK_EXCLUSIVE) != 0)
-				recycle = false;
-		}
+		if (!recycle)
+			VOP_UNLOCK(vp);
 		mutex_enter(vp->v_interlock);
 		VSTATE_CHANGE(vp, VS_BLOCKED, VS_ACTIVE);
 		if (!recycle) {
@@ -796,6 +792,7 @@ vrelel(vnode_t *vp, int flags)
 		 */
 		if (recycle) {
 			VSTATE_ASSERT(vp, VS_ACTIVE);
+			/* vcache_reclaim drops the lock. */
 			vcache_reclaim(vp);
 		}
 		KASSERT(vp->v_usecount > 0);
