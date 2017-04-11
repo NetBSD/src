@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1552 2017/04/06 14:35:15 wiz Exp $
+# $NetBSD: mi,v 1.1553 2017/04/11 00:03:16 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -12,7 +12,7 @@
 ./usr/share/info/cpp.info			man-util-info		gcccmds,info
 ./usr/share/info/cvs.info			man-cvs-info		cvs,info
 ./usr/share/info/cvsclient.info			man-cvs-info		cvs,info
-./usr/share/info/dc.info			man-util-info		info
+./usr/share/info/dc.info			man-obsolete		obsolete
 ./usr/share/info/diff.info			man-util-info		info
 ./usr/share/info/dir				man-info-share		info
 ./usr/share/info/flex.info			man-computil-info	info
