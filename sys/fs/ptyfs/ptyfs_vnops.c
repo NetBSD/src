@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.52 2016/08/20 12:37:07 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.53 2017/04/11 14:24:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.52 2016/08/20 12:37:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.53 2017/04/11 14:24:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ ptyfs_reclaim(void *v)
 int
 ptyfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -240,7 +240,7 @@ ptyfs_inactive(void *v)
 
 	if (ptyfs->ptyfs_type == PTYFSptc)
 		ptyfs_clr_active(vp->v_mount, ptyfs->ptyfs_pty);
-	VOP_UNLOCK(vp);
+
 	return 0;
 }
 

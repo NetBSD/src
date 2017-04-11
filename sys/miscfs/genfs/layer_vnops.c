@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.61 2017/03/30 09:16:52 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.62 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.61 2017/03/30 09:16:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.62 2017/04/11 14:25:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ layer_fsync(void *v)
 int
 layer_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -602,7 +602,7 @@ layer_inactive(void *v)
 	 * like they do in the name lookup cache code.
 	 * That's too much work for now.
 	 */
-	VOP_UNLOCK(vp);
+
 	return 0;
 }
 

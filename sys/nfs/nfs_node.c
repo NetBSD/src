@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.119 2016/08/20 12:37:09 hannken Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.120 2017/04/11 14:25:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.119 2016/08/20 12:37:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.120 2017/04/11 14:25:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -179,7 +179,7 @@ nfs_nget1(struct mount *mntp, nfsfh_t *fhp, int fhsize, struct nfsnode **npp,
 int
 nfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -202,8 +202,6 @@ nfs_inactive(void *v)
 	if (vp->v_type == VDIR && np->n_dircache)
 		nfs_invaldircache(vp,
 		    NFS_INVALDIRCACHE_FORCE | NFS_INVALDIRCACHE_KEEPEOF);
-
-	VOP_UNLOCK(vp);
 
 	if (sp != NULL) {
 		workqueue_enqueue(nfs_sillyworkq, &sp->s_work, NULL);

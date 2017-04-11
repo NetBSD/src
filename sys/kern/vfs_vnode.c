@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.81 2017/03/30 09:16:52 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.82 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.81 2017/03/30 09:16:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.82 2017/04/11 14:25:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -761,10 +761,11 @@ vrelel(vnode_t *vp, int flags)
 		 * the described file has been deleted, then recycle
 		 * the vnode.
 		 *
-		 * Note that VOP_INACTIVE() will drop the vnode lock.
+		 * Note that VOP_INACTIVE() will not drop the vnode lock.
 		 */
 		recycle = false;
 		VOP_INACTIVE(vp, &recycle);
+		VOP_UNLOCK(vp);
 		if (recycle) {
 			/* vcache_reclaim() below will drop the lock. */
 			if (vn_lock(vp, LK_EXCLUSIVE) != 0)
@@ -1553,9 +1554,10 @@ vcache_reclaim(vnode_t *vp)
 
 	/*
 	 * Disassociate the underlying file system from the vnode.
-	 * Note that the VOP_INACTIVE will unlock the vnode.
+	 * Note that the VOP_INACTIVE will not unlock the vnode.
 	 */
 	VOP_INACTIVE(vp, &recycle);
+	VOP_UNLOCK(vp);
 	if (VOP_RECLAIM(vp)) {
 		vnpanic(vp, "%s: cannot reclaim", __func__);
 	}
