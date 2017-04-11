@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.320 2017/04/03 04:09:12 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.321 2017/04/11 23:49:17 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.320 2017/04/03 04:09:12 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.321 2017/04/11 23:49:17 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3601,7 +3601,7 @@ audio_pint(void *v)
 	vc = chan->vc;
 	blksize = vc->sc_mpr.blksize;
 
-	if (sc->sc_dying == true)
+	if (sc->sc_dying == true || sc->sc_opens == 0)
 		return;
 
 	if (vc->sc_draining == true) {
@@ -3818,7 +3818,7 @@ audio_rint(void *v)
 
 	KASSERT(mutex_owned(sc->sc_intr_lock));
 
-	if (sc->sc_dying == true)
+	if (sc->sc_dying == true || sc->sc_recopens == 0)
 		return;
 
 	blksize = audio_stream_get_used(&sc->sc_rr.s);
@@ -5418,6 +5418,7 @@ mix_read(void *arg)
 	vc = chan->vc;
 	blksize = vc->sc_mrr.blksize;
 	cc = blksize;
+	error = 0;
 
 	if (sc->hw_if->trigger_input && sc->sc_rec_started == false) {
 		DPRINTF(("%s: call trigger_input\n", __func__));
@@ -5429,11 +5430,11 @@ mix_read(void *arg)
 		error = sc->hw_if->start_input(sc->hw_hdl,
 		    vc->sc_mrr.s.inp, blksize,
 		    audio_rint, (void *)sc);
-		if (error) {
-			/* XXX does this really help? */
-			DPRINTF(("audio_upmix restart failed: %d\n", error));
-			audio_clear(sc, 0);
-		}
+	}
+	if (error) {
+		/* XXX does this really help? */
+		DPRINTF(("audio_upmix restart failed: %d\n", error));
+		audio_clear(sc, SIMPLEQ_FIRST(&sc->sc_audiochan)->vc);
 	}
 	sc->sc_rec_started = true;
 
@@ -5547,7 +5548,7 @@ mix_write(void *arg)
 	if (error) {
 		/* XXX does this really help? */
 		DPRINTF(("audio_mix restart failed: %d\n", error));
-		audio_clear(sc, 0);
+		audio_clear(sc, SIMPLEQ_FIRST(&sc->sc_audiochan)->vc);
 		sc->sc_trigger_started = false;
 	}
 }
