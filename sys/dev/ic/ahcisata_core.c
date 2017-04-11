@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.1 2017/04/10 22:57:02 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.2 2017/04/11 18:13:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.1 2017/04/10 22:57:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.2 2017/04/11 18:13:17 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1433,7 +1433,7 @@ static void
 ahci_timeout(void *v)
 {
 	struct ata_channel *chp = (struct ata_channel *)v;
-	struct ata_xfer *xfer = chp->ch_queue->active_xfers[0];
+	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0); /* XXX slot */
 #ifdef AHCI_DEBUG
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 #endif

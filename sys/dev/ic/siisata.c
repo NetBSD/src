@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.1 2017/04/10 22:57:02 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.2 2017/04/11 18:13:17 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.1 2017/04/10 22:57:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.2 2017/04/11 18:13:17 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -480,7 +480,7 @@ siisata_intr_port(struct siisata_channel *schp)
 
 	sc = (struct siisata_softc *)schp->ata_channel.ch_atac;
 	chp = &schp->ata_channel;
-	xfer = chp->ch_queue->active_xfers[0];
+	xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0); /* XXX slot */
 	slot = SIISATA_NON_NCQ_SLOT;
 
 	pis = PRREAD(sc, PRX(chp->ch_channel, PRO_PIS));
@@ -640,7 +640,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 		DELAY(10);
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_SERROR),
 	    PRREAD(sc, PRX(chp->ch_channel, PRO_SERROR)));
-	if ((xfer = chp->ch_queue->active_xfers[0]) != NULL) {
+	if ((xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0)) != NULL) { /* XXX slot */
 		(*xfer->c_kill_xfer)(chp, xfer, KILL_RESET);
 	}
 
@@ -1191,7 +1191,7 @@ void
 siisata_timeout(void *v)
 {
 	struct ata_channel *chp = (struct ata_channel *)v;
-	struct ata_xfer *xfer = chp->ch_queue->active_xfers[0];
+	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0); /* XXX slot */
 	int slot = SIISATA_NON_NCQ_SLOT;
 	int s = splbio();
 	SIISATA_DEBUG_PRINT(("%s: %p\n", __func__, xfer), DEBUG_INTR);
