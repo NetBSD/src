@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.46 2017/03/30 09:10:08 hannken Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.47 2017/04/11 05:48:04 riastradh Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.46 2017/03/30 09:10:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.47 2017/04/11 05:48:04 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -127,6 +127,8 @@ ulfs_open(void *v)
 		int		a_mode;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
+
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
 
 	/*
 	 * Files marked append-only must be opened for appending.
@@ -208,8 +210,11 @@ ulfs_access(void *v)
 	int		error;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	mode = ap->a_mode;
+
+	KASSERT(VOP_ISLOCKED(vp));
+
+	ip = VTOI(vp);
 
 	error = ulfs_check_possible(vp, ip, mode, ap->a_cred);
 	if (error)
@@ -243,12 +248,15 @@ ulfs_setattr(void *v)
 
 	vap = ap->a_vap;
 	vp = ap->a_vp;
-	ip = VTOI(vp);
-	fs = ip->i_lfs;
 	cred = ap->a_cred;
 	l = curlwp;
 	action = KAUTH_VNODE_WRITE_FLAGS;
 	changing_sysflags = false;
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
 
 	/*
 	 * Check for unsettable attributes.
@@ -411,6 +419,8 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	struct inode	*ip;
 	int		error;
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	ip = VTOI(vp);
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
@@ -440,6 +450,9 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	gid_t		ogid;
 	int64_t		change;
 #endif
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	ip = VTOI(vp);
 	error = 0;
 
@@ -497,10 +510,14 @@ ulfs_remove(void *v)
 	int		error;
 	struct ulfs_lookup_results *ulr;
 
-	vp = ap->a_vp;
 	dvp = ap->a_dvp;
+	vp = ap->a_vp;
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(dvp->v_mount == vp->v_mount);
+
 	ip = VTOI(vp);
-	KASSERT(dvp->v_mount == vp->v_mount); /* XXX Not stable without lock. */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
@@ -541,9 +558,9 @@ ulfs_link(void *v)
 	int error;
 	struct ulfs_lookup_results *ulr;
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
-	KASSERT(dvp->v_mount == vp->v_mount); /* XXX Not stable without lock. */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
@@ -551,6 +568,11 @@ ulfs_link(void *v)
 
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
+		VOP_ABORTOP(dvp, cnp);
+		goto out2;
+	}
+	if (vp->v_mount != dvp->v_mount) {
+		error = ENOENT;
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -604,6 +626,8 @@ ulfs_whiteout(void *v)
 	struct lfs *fs = ump->um_lfs;
 	struct ulfs_lookup_results *ulr;
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
@@ -654,11 +678,15 @@ ulfs_rmdir(void *v)
 	int			error;
 	struct ulfs_lookup_results *ulr;
 
-	vp = ap->a_vp;
 	dvp = ap->a_dvp;
+	vp = ap->a_vp;
 	cnp = ap->a_cnp;
-	ip = VTOI(vp);
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	dp = VTOI(dvp);
+	ip = VTOI(vp);
 
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
@@ -759,6 +787,9 @@ ulfs_readdir(void *v)
 	size_t		skipbytes;
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
+
+	KASSERT(VOP_ISLOCKED(vp));
+
 	uio = ap->a_uio;
 	count = uio->uio_resid;
 	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
@@ -884,6 +915,8 @@ ulfs_readlink(void *v)
 	struct lfs *fs = ump->um_lfs;
 	int		isize;
 
+	KASSERT(VOP_ISLOCKED(vp));
+
 	/*
 	 * The test against um_maxsymlinklen is off by one; it should
 	 * theoretically be <=, not <. However, it cannot be changed
@@ -941,6 +974,8 @@ ulfsspec_read(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
+	KASSERT(VOP_ISLOCKED(ap->a_vp));
+
 	/*
 	 * Set access flag.
 	 */
@@ -961,6 +996,8 @@ ulfsspec_write(void *v)
 		int		a_ioflag;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
+
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
 
 	/*
 	 * Set update and change flags.
@@ -983,6 +1020,8 @@ ulfsfifo_read(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
+	KASSERT(VOP_ISLOCKED(ap->a_vp));
+
 	/*
 	 * Set access flag.
 	 */
@@ -1002,6 +1041,8 @@ ulfsfifo_write(void *v)
 		int		a_ioflag;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
+
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
 
 	/*
 	 * Set update and change flags.
@@ -1140,6 +1181,8 @@ ulfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         struct inode *ip = VTOI(vp);
         int error, delta, bshift, bsize;
         UVMHIST_FUNC("ulfs_gop_alloc"); UVMHIST_CALLED(ubchist);
+
+	KASSERT(genfs_node_wrlocked(vp));
 
         error = 0;
         bshift = vp->v_mount->mnt_fs_bshift;
