@@ -1696,6 +1696,14 @@ static void *
 bsd_global_init(void *ctx)
 {
 	struct bsd_driver_global *global;
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = {
+		RTM_IEEE80211,
+#ifndef HOSTAPD
+		RTM_IFINFO, RTM_IFANNOUNCE,
+#endif
+	};
+#endif
 
 	global = os_zalloc(sizeof(*global));
 	if (global == NULL)
@@ -1717,6 +1725,13 @@ bsd_global_init(void *ctx)
 			   strerror(errno));
 		goto fail;
 	}
+
+#ifdef RO_MSGFILTER
+	if (setsockopt(global->route, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) < 0)
+		wpa_printf(MSG_ERROR, "setsockopt[PF_ROUTE,RO_MSGFILTER]: %s",
+			   strerror(errno));
+#endif
 
 #ifdef HOSTAPD
 	eloop_register_read_sock(global->route, bsd_wireless_event_receive,
