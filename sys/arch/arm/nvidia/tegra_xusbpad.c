@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusbpad.c,v 1.3 2017/01/21 15:41:55 skrll Exp $ */
+/* $NetBSD: tegra_xusbpad.c,v 1.4 2017/04/11 11:32:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_tegra.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.3 2017/01/21 15:41:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.4 2017/04/11 11:32:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +55,9 @@ struct tegra_xusbpad_softc {
 	bus_space_handle_t	sc_bsh;
 };
 
-void	padregdump(void);
+#ifdef TEGRA_XUSBPAD_DEBUG
+static void	padregdump(void);
+#endif
 
 static void	tegra_xusbpad_setup(struct tegra_xusbpad_softc * const);
 
@@ -100,9 +104,15 @@ tegra_xusbpad_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": XUSB PADCTL\n");
 
+#ifdef TEGRA_XUSBPAD_DEBUG
 	padregdump();
+#endif
+
 	tegra_xusbpad_setup(sc);
+
+#ifdef TEGRA_XUSBPAD_DEBUG
 	padregdump();
+#endif
 }
 
 static void
@@ -158,7 +168,8 @@ tegra_xusbpad_sata_enable(void)
 	}
 }
 
-void
+#ifdef TEGRA_XUSBPAD_DEBUG
+static void
 padregdump(void)
 {
 	bus_space_tag_t bst;
@@ -176,14 +187,19 @@ padregdump(void)
 		printf("\n");
 	}
 }
+#endif
 
 static void
 tegra_xusbpad_setup(struct tegra_xusbpad_softc * const sc)
 {
 	const uint32_t skucalib = tegra_fuse_read(TEGRA_FUSE_SKU_CALIB_REG);
+#ifdef TEGRA_XUSBPAD_DEBUG
 	uint32_t val;
+#endif
 
+#ifdef TEGRA_XUSBPAD_DEBUG
 	printf("SKU CALIB 0x%x\n", skucalib);
+#endif
 	const uint32_t hcl[3] = {
 		(skucalib >>  0) & 0x3f,
 		(skucalib >> 15) & 0x3f,
@@ -194,12 +210,14 @@ tegra_xusbpad_setup(struct tegra_xusbpad_softc * const sc)
 	const uint32_t htra = (skucalib >> 7) & 0xf;
 
 
+#ifdef TEGRA_XUSBPAD_DEBUG
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PAD_MUX_REG is 0x%x\n", val);
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PORT_CAP_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PORT_CAP_REG is 0x%x\n", val);
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_SS_PORT_MAP_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_SS_PORT_MAP_REG is 0x%x\n", val);
+#endif
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG, (0<<0)|(0<<2)|(1<<4));
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PORT_CAP_REG, (1<<0)|(1<<4)|(1<<8));
@@ -325,12 +343,12 @@ tegra_xusbpad_setup(struct tegra_xusbpad_softc * const sc)
 	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(8), 0);
 	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(9), 0);
 
+#ifdef TEGRA_XUSBPAD_DEBUG
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PAD_MUX_REG is 0x%x\n", val);
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PORT_CAP_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PORT_CAP_REG is 0x%x\n", val);
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_SS_PORT_MAP_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_SS_PORT_MAP_REG is 0x%x\n", val);
-
-
+#endif
 }
