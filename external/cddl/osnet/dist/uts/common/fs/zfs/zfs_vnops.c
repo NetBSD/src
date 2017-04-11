@@ -5533,7 +5533,7 @@ zfs_netbsd_link(void *v)
 static int
 zfs_netbsd_inactive(void *v)
 {
-	struct vop_inactive_args *ap = v;
+	struct vop_inactive_v2_args *ap = v;
 	vnode_t *vp = ap->a_vp;
 	znode_t	*zp = VTOZ(vp);
 
@@ -5543,7 +5543,7 @@ zfs_netbsd_inactive(void *v)
 	 * vrele() will call us again.
 	 */
 	*ap->a_recycle = (zp->z_unlinked != 0);
-	VOP_UNLOCK(vp);
+
 	return (0);
 }
 

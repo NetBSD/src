@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.54 2016/08/20 12:37:08 hannken Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.55 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.54 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.55 2017/04/11 14:25:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ smbfs_reclaim(void *v)
 int
 smbfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -289,7 +289,6 @@ smbfs_inactive(void *v)
 		smbfs_attr_cacheremove(vp);
 	}
 	*ap->a_recycle = ((vp->v_type == VNON) || (np->n_flag & NGONE) != 0);
-	VOP_UNLOCK(vp);
 
 	return (0);
 }
