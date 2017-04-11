@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.52 2016/12/16 09:09:38 ozaki-r Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.53 2017/04/11 14:29:23 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1652,10 +1652,26 @@ sock_open(void)
 static void
 rtsock_open(void)
 {
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = {
+		RTM_ADD, RTM_DELETE,
+		RTM_NEWADDR, RTM_DELADDR,
+#ifdef RTM_IFANNOUNCE
+		RTM_IFANNOUNCE,
+#endif
+		RTM_IFINFO,
+	};
+#endif
+
 	if ((rtsock = prog_socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
+#ifdef RO_MSGFILTER
+	if (setsockopt(rtsock, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter) == -1))
+		syslog(LOG_ERR, "<%s> RO_MSGFILTER: %m", __func__);
+#endif
 }
 
 struct rainfo *
