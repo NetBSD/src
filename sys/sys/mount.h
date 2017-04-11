@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.221 2017/03/06 10:10:07 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.222 2017/04/11 07:46:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -494,7 +494,14 @@ void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
 
 int	usermount_common_policy(struct mount *, u_long);
+
+typedef struct mount_iterator mount_iterator_t; /* Opaque. */
+void	mountlist_iterator_init(mount_iterator_t **);
+void	mountlist_iterator_destroy(mount_iterator_t *);
+struct mount *mountlist_iterator_next(mount_iterator_t *);
+struct mount *_mountlist_next(struct mount *);
 void	mountlist_append(struct mount *);
+void	mountlist_remove(struct mount *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
