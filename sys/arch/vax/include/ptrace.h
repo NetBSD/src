@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.7 2017/04/08 00:25:49 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8 2017/04/11 07:45:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+
 
 #define PT_STEP         (PT_FIRSTMACH + 0)
 #define PT_GETREGS      (PT_FIRSTMACH + 1)
