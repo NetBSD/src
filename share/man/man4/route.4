@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.29 2017/04/11 13:55:54 roy Exp $
+.\"	$NetBSD: route.4,v 1.30 2017/04/11 18:20:03 roy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd March 5, 2017
+.Dd April 11, 2017
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -187,7 +187,7 @@ For example, to only get specific messages:
 unsigned char rtfilter[] = { RTM_IFINFO, RTM_IFANNOUNCE };
 
 if (setsockopt(routefd, PF_ROUTE, RO_MSGFILTER,
-    &rtfilter, sizeof(rtfilter)) == -1)
+    &rtfilter, (socklen_t)sizeof(rtfilter)) == -1)
 	err(1, "setsockopt(RO_MSGFILTER)");
 .Ed
 .Pp
