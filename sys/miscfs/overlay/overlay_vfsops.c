@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.66 2017/03/30 09:13:01 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.67 2017/04/11 07:51:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.66 2017/03/30 09:13:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.67 2017/04/11 07:51:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,9 +149,6 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	nmp = kmem_zalloc(sizeof(struct overlay_mount), KM_SLEEP);
 
 	mp->mnt_data = nmp;
-	nmp->ovm_vfs = lowerrootvp->v_mount;
-	if (nmp->ovm_vfs->mnt_flag & MNT_LOCAL)
-		mp->mnt_flag |= MNT_LOCAL;
 
 	/*
 	 * Make sure that the mount point is sufficiently initialized
@@ -191,7 +188,10 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		return error;
-	mp->mnt_lower = nmp->ovm_vfs;
+
+	mp->mnt_lower = lowerrootvp->v_mount;
+	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
+		mp->mnt_flag |= MNT_LOCAL;
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
