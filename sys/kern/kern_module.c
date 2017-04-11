@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.120 2017/02/01 01:51:07 maya Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.121 2017/04/11 14:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.120 2017/02/01 01:51:07 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.121 2017/04/11 14:31:55 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.120 2017/02/01 01:51:07 maya Exp $
 #include <sys/kthread.h>
 #include <sys/sysctl.h>
 #include <sys/lock.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -607,6 +608,14 @@ int
 module_autoload(const char *filename, modclass_t modclass)
 {
 	int error;
+
+	if (rootvnode == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: trying to load `%s' before root is mounted\n",
+		    __func__, filename);
+#endif
+		return;
+	}
 
 	kernconfig_lock();
 
