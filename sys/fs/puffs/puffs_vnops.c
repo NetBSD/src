@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.208 2017/04/08 08:49:44 hannken Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.209 2017/04/11 14:24:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.208 2017/04/08 08:49:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.209 2017/04/11 14:24:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1311,7 +1311,7 @@ callinactive(struct puffs_mount *pmp, puffs_cookie_t ck, int iaflag)
 int
 puffs_vnop_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
@@ -1329,7 +1329,6 @@ puffs_vnop_inactive(void *v)
 	 * cookie was stall and the node likely already reclaimed. 
 	 */
 	if (vp->v_type == VNON) {
-		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -1415,7 +1414,6 @@ puffs_vnop_inactive(void *v)
 	*ap->a_recycle = recycle;
 
 	mutex_exit(&pnode->pn_sizemtx);
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

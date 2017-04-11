@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.99 2017/03/01 10:42:45 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.100 2017/04/11 14:25:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.99 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.100 2017/04/11 14:25:01 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -77,7 +77,7 @@ extern int prtactive;
 int
 ufs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
@@ -150,7 +150,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp);
+
 	return (allerror);
 }
 

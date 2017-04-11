@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.23 2017/04/08 08:51:02 hannken Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.24 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.23 2017/04/08 08:51:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.24 2017/04/11 14:25:00 riastradh Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -1010,7 +1010,7 @@ v7fs_readdir(void *v)
 int
 v7fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 				    struct vnode *a_vp;
 				    bool *a_recycle;
 				    } */ *a = v;
@@ -1025,8 +1025,6 @@ v7fs_inactive(void *v)
 	} else {
 		*a->a_recycle = true;
 	}
-
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

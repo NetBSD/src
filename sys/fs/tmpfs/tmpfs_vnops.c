@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.130 2017/03/30 09:09:26 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.131 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.130 2017/03/30 09:09:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.131 2017/04/11 14:25:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1035,7 +1035,7 @@ tmpfs_readlink(void *v)
 int
 tmpfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -1054,7 +1054,6 @@ tmpfs_inactive(void *v)
 	} else {
 		*ap->a_recycle = false;
 	}
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

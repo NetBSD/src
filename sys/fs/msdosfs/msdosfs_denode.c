@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.53 2017/03/01 10:41:28 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.54 2017/04/11 14:24:59 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.53 2017/03/01 10:41:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.54 2017/04/11 14:24:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,7 +569,7 @@ msdosfs_reclaim(void *v)
 int
 msdosfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -616,7 +616,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
-	VOP_UNLOCK(vp);
+
 	return (error);
 }
 

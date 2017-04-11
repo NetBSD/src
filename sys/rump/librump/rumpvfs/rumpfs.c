@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.145 2017/03/01 10:44:47 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.146 2017/04/11 14:25:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.145 2017/03/01 10:44:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.146 2017/04/11 14:25:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1592,7 +1592,7 @@ rump_vop_success(void *v)
 static int
 rump_vop_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -1611,7 +1611,6 @@ rump_vop_inactive(void *v)
 	}
 	*ap->a_recycle = (rn->rn_flags & RUMPNODE_CANRECLAIM) ? true : false;
 
-	VOP_UNLOCK(vp);
 	return 0;
 }
 
