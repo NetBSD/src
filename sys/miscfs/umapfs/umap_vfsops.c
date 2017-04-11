@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.98 2017/03/30 09:13:01 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.99 2017/04/11 07:51:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.98 2017/03/30 09:13:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.99 2017/04/11 07:51:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,9 +145,6 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	amp = kmem_zalloc(sizeof(struct umap_mount), KM_SLEEP);
 	mp->mnt_data = amp;
-	amp->umapm_vfs = lowerrootvp->v_mount;
-	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
-		mp->mnt_flag |= MNT_LOCAL;
 
 	/*
 	 * Now copy in the number of entries and maps for umap mapping.
@@ -226,7 +223,10 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		return error;
-	mp->mnt_lower = amp->umapm_vfs;
+
+	mp->mnt_lower = lowerrootvp->v_mount;
+	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
+		mp->mnt_flag |= MNT_LOCAL;
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
