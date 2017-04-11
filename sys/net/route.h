@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.111 2016/12/19 11:17:00 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.112 2017/04/11 13:55:54 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -249,6 +249,11 @@ struct rt_msghdr {
 #define RTM_NEWADDR	0x16	/* address being added to iface */
 #define RTM_DELADDR	0x17	/* address being removed from iface */
 #define RTM_CHGADDR	0x18	/* address properties changed */
+
+/*
+ * setsockopt defines used for the filtering.
+ */
+#define	RO_MSGFILTER	1	/* array of which rtm_type to send to client */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
