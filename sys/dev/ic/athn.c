@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.15 2017/02/02 10:05:35 nonaka Exp $	*/
+/*	$NetBSD: athn.c,v 1.16 2017/04/11 17:27:54 jmcneill Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.15 2017/02/02 10:05:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.16 2017/04/11 17:27:54 jmcneill Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -557,7 +557,12 @@ athn_intr(void *xsc)
 	if (!sc->sc_ops.intr_status(sc))
 		return 0;
 
+	AR_WRITE(sc, AR_INTR_ASYNC_MASK, 0);
+	AR_WRITE(sc, AR_INTR_SYNC_MASK, 0);
+	AR_WRITE_BARRIER(sc);
+
 	softint_schedule(sc->sc_soft_ih);
+
 	return 1;
 }
 
@@ -578,6 +583,10 @@ athn_softintr(void *xsc)
 		return;
 
 	sc->sc_ops.intr(sc);
+
+	AR_WRITE(sc, AR_INTR_ASYNC_MASK, AR_INTR_MAC_IRQ);
+	AR_WRITE(sc, AR_INTR_SYNC_MASK, sc->sc_isync);
+	AR_WRITE_BARRIER(sc);
 }
 
 Static void
