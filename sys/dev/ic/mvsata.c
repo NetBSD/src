@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.2 2017/04/11 18:13:17 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.3 2017/04/11 18:14:47 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.2 2017/04/11 18:13:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.3 2017/04/11 18:14:47 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1453,7 +1453,7 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	ata_deactivate_xfer(chp, xfer);
 	ata_free_xfer(chp, xfer);
 
-	if (ata_waitdrain_check(chp, drive)) {
+	if (ata_waitdrain_check(chp, drive))
 		ata_bio->error = ERR_NODEV;
 	ata_bio->flags |= ATA_ITSDONE;
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
