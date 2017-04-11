@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.211 2017/03/24 03:45:02 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.212 2017/04/11 13:55:55 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.211 2017/03/24 03:45:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.212 2017/04/11 13:55:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -177,6 +177,13 @@ static void rt_adjustcount(int, int);
 
 static const struct protosw COMPATNAME(route_protosw)[];
 
+struct routecb {
+	struct rawcb	rocb_rcb;
+	unsigned int	rocb_msgfilter;
+#define	RTMSGFILTER(m)	(1U << (m))
+};
+#define sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
+
 static void
 rt_adjustcount(int af, int cnt)
 {
@@ -200,14 +207,49 @@ rt_adjustcount(int af, int cnt)
 }
 
 static int
+COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
+    struct rawcb *rp)
+{
+	struct routecb *rop = (struct routecb *)rp;
+	struct rt_xmsghdr *rtm;
+
+	KASSERT(m != NULL);
+	KASSERT(proto != NULL);
+	KASSERT(rp != NULL);
+
+	/* Wrong family for this socket. */
+	if (proto->sp_family != PF_ROUTE)
+		return ENOPROTOOPT;
+
+	/* If no filter set, just return. */
+	if (rop->rocb_msgfilter == 0)
+		return 0;
+
+	/* Ensure we can access rtm_type */
+	if (m->m_len <
+	    offsetof(struct rt_xmsghdr, rtm_type) + sizeof(rtm->rtm_type))
+		return EINVAL;
+
+	rtm = mtod(m, struct rt_xmsghdr *);
+	/* If the rtm type is filtered out, return a positive. */
+	if (!(rop->rocb_msgfilter & RTMSGFILTER(rtm->rtm_type)))
+		return EEXIST;
+
+	/* Passed the filter. */
+	return 0;
+}
+
+static int
 COMPATNAME(route_attach)(struct socket *so, int proto)
 {
 	struct rawcb *rp;
+	struct routecb *rop;
 	int s, error;
 
 	KASSERT(sotorawcb(so) == NULL);
-	rp = kmem_zalloc(sizeof(*rp), KM_SLEEP);
-	rp->rcb_len = sizeof(*rp);
+	rop = kmem_zalloc(sizeof(*rop), KM_SLEEP);
+	rp = &rop->rocb_rcb;
+	rp->rcb_len = sizeof(*rop);
 	so->so_pcb = rp;
 
 	s = splsoftnet();
@@ -215,11 +257,12 @@ COMPATNAME(route_attach)(struct socket *so, int proto)
 		rt_adjustcount(rp->rcb_proto.sp_protocol, 1);
 		rp->rcb_laddr = &COMPATNAME(route_info).ri_src;
 		rp->rcb_faddr = &COMPATNAME(route_info).ri_dst;
+		rp->rcb_filter = COMPATNAME(route_filter);
 	}
 	splx(s);
 
 	if (error) {
-		kmem_free(rp, sizeof(*rp));
+		kmem_free(rop, sizeof(*rop));
 		so->so_pcb = NULL;
 		return error;
 	}
@@ -978,6 +1021,56 @@ flush:
     }
 out:
 	curlwp_bindx(bound);
+	return error;
+}
+
+static int
+route_ctloutput(int op, struct socket *so, struct sockopt *sopt)
+{
+	struct routecb *rop = sotoroutecb(so);
+	int error = 0;
+	unsigned char *rtm_type;
+	size_t len;
+	unsigned int msgfilter;
+
+	KASSERT(solocked(so));
+
+	if (sopt->sopt_level != AF_ROUTE) {
+		error = ENOPROTOOPT;
+	} else switch (op) {
+	case PRCO_SETOPT:
+		switch (sopt->sopt_name) {
+		case RO_MSGFILTER:
+			msgfilter = 0;
+			for (rtm_type = sopt->sopt_data, len = sopt->sopt_size;
+			     len != 0;
+			     rtm_type++, len -= sizeof(*rtm_type))
+			{
+				/* Guard against overflowing our storage. */
+				if (*rtm_type >= sizeof(msgfilter) * CHAR_BIT) {
+					error = EOVERFLOW;
+					break;
+				}
+				msgfilter |= RTMSGFILTER(*rtm_type);
+			}
+			if (error == 0)
+				rop->rocb_msgfilter = msgfilter;
+			break;
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+		break;
+	case PRCO_GETOPT:
+		switch (sopt->sopt_name) {
+		case RO_MSGFILTER:
+			error = ENOTSUP;
+			break;
+		default:
+			error = ENOPROTOOPT;
+			break;
+		}
+	}
 	return error;
 }
 
@@ -1946,6 +2039,7 @@ static const struct protosw COMPATNAME(route_protosw)[] = {
 		.pr_flags = PR_ATOMIC|PR_ADDR,
 		.pr_input = raw_input,
 		.pr_ctlinput = raw_ctlinput,
+		.pr_ctloutput = route_ctloutput,
 		.pr_usrreqs = &route_usrreqs,
 		.pr_init = raw_init,
 	},
