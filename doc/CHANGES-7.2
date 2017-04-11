@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.7 2017/04/08 16:16:25 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.8 2017/04/11 16:56:31 martin Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -555,4 +555,16 @@ sys/arch/evbmips/loongson/gdium_machdep.c	1.8
 
 	Adapt to netbsd-7-nhusb.
 	[skrll, ticket #1399]
+
+etc/ssh/ssh_known_hosts				1.10
+
+	Update ssh keys of various NetBSD.org machines.
+ 	[spz, ticket #1393]
+
+sys/arch/evbarm/conf/SHEEVAPLUG			1.45
+sys/arch/evbarm/conf/TWINTAIL			1.65
+
+	Comment out more USB options to to fix build.
+	[skrll, ticket #1400]
+
 
