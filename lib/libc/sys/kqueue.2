@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.38 2017/04/02 14:27:11 abhinav Exp $
+.\"	$NetBSD: kqueue.2,v 1.39 2017/04/11 11:06:39 abhinav Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -92,13 +92,14 @@ on the returned file descriptor:
 .It Dv O_CLOEXEC
 Set the close on exec property.
 .It Dv O_NONBLOCK
-Sets non-blocking I/O.
+Set non-blocking I/O.
 .It Dv O_NOSIGPIPE
 Return
 .Er EPIPE
 instead of raising
 .Dv SIGPIPE .
 .El
+.Pp
 The queue is not inherited by a child created with
 .Xr fork 2 .
 .\" However, if
