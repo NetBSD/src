@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.1 2017/04/10 22:57:02 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.2 2017/04/11 18:15:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -88,7 +88,9 @@ struct ata_queue {
 #define QF_SHARED	0x02	/* this queue is shared */
 	int queue_active; /* number of active transfers */
 	int queue_openings; /* max number of active transfers */
+#ifdef ATABUS_PRIVATE
 	struct ata_xfer *active_xfers[1]; /* active command */
+#endif
 };
 
 /* ATA bus instance state information. */
