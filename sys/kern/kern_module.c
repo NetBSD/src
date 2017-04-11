@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.122 2017/04/11 14:37:07 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.123 2017/04/11 21:15:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.122 2017/04/11 14:37:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.123 2017/04/11 21:15:57 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -609,7 +609,7 @@ module_autoload(const char *filename, modclass_t modclass)
 {
 	int error;
 
-	if (rootvnode == NULL) {
+	if (rootvp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("%s: trying to load `%s' before root is mounted\n",
 		    __func__, filename);
