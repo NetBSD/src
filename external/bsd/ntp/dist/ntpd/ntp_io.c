@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.23 2016/06/03 20:39:02 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.24 2017/04/11 14:17:34 roy Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -4795,6 +4795,50 @@ init_async_notifications()
 #else
 	int fd = socket(PF_ROUTE, SOCK_RAW, 0);
 #endif
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = {
+#ifdef RTM_NEWADDR
+		RTM_NEWADDR,
+#endif
+#ifdef RTM_DELADDR
+		RTM_DELADDR,
+#endif
+#ifdef RTM_ADD
+		RTM_ADD,
+#endif
+#ifdef RTM_DELETE
+		RTM_DELETE,
+#endif
+#ifdef RTM_REDIRECT
+		RTM_REDIRECT,
+#endif
+#ifdef RTM_CHANGE
+		RTM_CHANGE,
+#endif
+#ifdef RTM_LOSING
+		RTM_LOSING,
+#endif
+#ifdef RTM_IFINFO
+		RTM_IFINFO,
+#endif
+#ifdef RTM_IFANNOUNCE
+		RTM_IFANNOUNCE,
+#endif
+#ifdef RTM_NEWLINK
+		RTM_NEWLINK,
+#endif
+#ifdef RTM_DELLINK
+		RTM_DELLINK,
+#endif
+#ifdef RTM_NEWROUTE
+		RTM_NEWROUTE,
+#endif
+#ifdef RTM_DELROUTE
+		RTM_DELROUTE,
+#endif
+	};
+#endif /* !RO_MSGFILTER */
+
 	if (fd < 0) {
 		msyslog(LOG_ERR,
 			"unable to open routing socket (%m) - using polled interface update");
@@ -4814,6 +4858,11 @@ init_async_notifications()
 			"bind failed on routing socket (%m) - using polled interface update");
 		return;
 	}
+#endif
+#ifdef RO_MSGFILTER
+	if (setsockopt(fd, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) == -1)
+		msyslog(LOG_ERR, "RO_MSGFILTER: %m");
 #endif
 	make_socket_nonblocking(fd);
 #if defined(HAVE_SIGNALED_IO)

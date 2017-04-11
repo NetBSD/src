@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.41 2016/10/07 15:49:58 christos Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.42 2017/04/11 14:21:35 roy Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.41 2016/10/07 15:49:58 christos Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.42 2017/04/11 14:21:35 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -108,6 +108,10 @@ main(int argc, char **argv)
 	struct msghdr msg;
 	struct iovec iov[1];
 	char buf[2048];
+	unsigned char msgfilter[] = {
+		RTM_IFINFO, RTM_IFANNOUNCE,
+		RTM_NEWADDR, RTM_DELADDR,
+	};
 
 	openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
 	while ((c = getopt(argc, argv, "qvhic:n:u:d:A:D:")) != -1) {
@@ -191,6 +195,9 @@ main(int argc, char **argv)
 		syslog(LOG_ERR, "error opening routing socket: %m");
 		exit(EXIT_FAILURE);
 	}
+	if (setsockopt(s, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) < 0)
+		syslog(LOG_ERR, "RO_MSGFILTER: %m");
 
 	if (!inhibit_initial)
 		run_initial_ups();
