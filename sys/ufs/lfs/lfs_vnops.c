@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.312 2017/04/11 06:01:03 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.313 2017/04/11 14:25:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.312 2017/04/11 06:01:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.313 2017/04/11 14:25:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -519,8 +519,9 @@ out:
 int
 lfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 
 	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
@@ -535,7 +536,6 @@ lfs_inactive(void *v)
 		mutex_enter(&lfs_lock);
 		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
 		mutex_exit(&lfs_lock);
-		VOP_UNLOCK(ap->a_vp);
 		return 0;
 	}
 

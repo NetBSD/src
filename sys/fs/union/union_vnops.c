@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.64 2017/03/06 10:08:49 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.65 2017/04/11 14:25:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.64 2017/03/06 10:08:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.65 2017/04/11 14:25:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1558,7 +1558,7 @@ union_abortop(void *v)
 int
 union_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		bool *a_recycle;
@@ -1588,7 +1588,6 @@ union_inactive(void *v)
 	}
 
 	*ap->a_recycle = ((un->un_cflags & UN_CACHED) == 0);
-	VOP_UNLOCK(vp);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.30 2017/03/30 09:10:46 hannken Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.31 2017/04/11 14:25:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1452,7 +1452,7 @@ chfs_readlink(void *v)
 int
 chfs_inactive(void *v)
 {
-	struct vnode *vp = ((struct vop_inactive_args *) v)->a_vp;
+	struct vnode *vp = ((struct vop_inactive_v2_args *) v)->a_vp;
 	struct chfs_inode *ip = VTOI(vp);
 	struct chfs_vnode_cache *chvc;
 	dbg("inactive | vno: %llu\n", (unsigned long long)ip->ino);
@@ -1463,12 +1463,10 @@ chfs_inactive(void *v)
 	if (ip->ino) {
 		chvc = ip->chvc;
 		if (chvc->nlink)
-			*((struct vop_inactive_args *) v)->a_recycle = 0;
+			*((struct vop_inactive_v2_args *) v)->a_recycle = 0;
 	} else {
-		*((struct vop_inactive_args *) v)->a_recycle = 1;
+		*((struct vop_inactive_v2_args *) v)->a_recycle = 1;
 	}
-
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

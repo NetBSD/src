@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.60 2016/08/20 12:37:07 hannken Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.61 2017/04/11 14:24:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.60 2016/08/20 12:37:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.61 2017/04/11 14:24:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,18 +205,17 @@ ntfs_getattr(void *v)
 int
 ntfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp __unused = ap->a_vp;
 #ifdef NTFS_DEBUG
 	struct ntnode *ip = VTONT(vp);
 #endif
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
-
-	VOP_UNLOCK(vp);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
