@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.39 2017/04/11 11:06:39 abhinav Exp $
+.\"	$NetBSD: kqueue.2,v 1.40 2017/04/11 17:59:23 abhinav Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -133,7 +133,8 @@ If
 is a
 .No non- Ns Dv NULL
 pointer, it specifies a maximum interval to wait
-for an event, which will be interpreted as a struct timespec.
+for an event, which will be interpreted as a
+.Li struct timespec .
 If
 .Fa timeout
 is a
@@ -146,7 +147,7 @@ To effect a poll, the
 argument should be
 .No non- Ns Dv NULL ,
 pointing to a zero-valued
-.Va timespec
+.Xr timespec 3
 structure.
 The same array may be used for the
 .Fa changelist
@@ -644,6 +645,7 @@ The specified process to attach to does not exist.
 .Xr unlink 2 ,
 .Xr write 2 ,
 .Xr signal 3 ,
+.Xr timespec 3 ,
 .Xr kfilter_register 9 ,
 .Xr knote 9
 .Rs
