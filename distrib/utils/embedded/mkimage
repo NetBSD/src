@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.62 2017/03/14 06:37:39 skrll Exp $
+# $NetBSD: mkimage,v 1.63 2017/04/11 18:04:08 jmcneill Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,6 +80,28 @@ cleanup() {
 getsize() {
 	set -- $(ls -l $1)
 	echo $5
+}
+
+getsectors() {
+	case "$1" in
+	*g)
+		m=1073741824
+		v=${1%g}
+		;;
+	*m)
+		m=1048576
+		v=${1%m}
+		;;
+	*k)
+		m=1024
+		v=${1%k}
+		;;
+	*[0-9b])
+		m=1
+		v=${1%b}
+		;;
+	esac
+	echo $((m * v / 512))
 }
 
 usage() {
@@ -188,8 +210,8 @@ populate
 
 if [ -n "${msdosid}" ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
-	${MAKEFS} -N ${release}/etc -t msdos \
-	    -O $((${init} / 2))m -s $((${boot} / 2 + ${init} / 2))m \
+	${MAKEFS} -N ${release}/etc -t msdos -o volume_label=NETBSD \
+	    -O $((${init} / 2))m -s $((${boot} / 2))m \
 	    ${image} ${mnt}/boot
 fi
 
@@ -220,7 +242,15 @@ if [ -n "${msdosid}" ]; then
 	echo ${bar} Running fdisk ${bar}
 	initsecs=$((${init} * 1024))
 	bootsecs=$((${boot} * 1024))
+	${FDISK} -f -i ${image}
 	${FDISK} -f -a -u -0 -s ${msdosid}/${initsecs}/${bootsecs} -F ${image}
+	if [ -z "${bootonly}" ]; then
+		ffsstart="$(getsectors ${ffsoffset})"
+		imagesize="$(getsize "${image}")"
+		imagesecs="$(getsectors ${imagesize})"
+		ffssize="$(expr ${imagesecs} - ${ffsstart})"
+		${FDISK} -f -u -1 -s 169/${ffsstart}/${ffssize} -F ${image}
+	fi
 elif [ -n "${netbsdid}" ]; then
 	echo ${bar} Running fdisk ${bar}
 	${FDISK} -f -i ${image}
