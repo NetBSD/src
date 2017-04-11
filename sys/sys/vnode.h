@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.275 2017/03/30 09:16:53 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.276 2017/04/11 06:47:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -553,6 +553,23 @@ int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 void	vn_ra_allocctx(struct vnode *);
 int	vn_fifo_bypass(void *);
+
+#ifdef DIAGNOSTIC
+static inline bool
+vn_locked(struct vnode *_vp)
+{
+
+	return (_vp->v_vflag & VV_LOCKSWORK) == 0 ||
+	    VOP_ISLOCKED(_vp) == LK_EXCLUSIVE;
+}
+
+static inline bool
+vn_anylocked(struct vnode *_vp)
+{
+
+	return (_vp->v_vflag & VV_LOCKSWORK) == 0 || VOP_ISLOCKED(_vp);
+}
+#endif
 
 /* initialise global vnode management */
 void	vntblinit(void);
