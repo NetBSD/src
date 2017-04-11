@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.276 2017/04/11 06:47:25 riastradh Exp $	*/
+/*	$NetBSD: vnode.h,v 1.277 2017/04/11 14:29:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -379,10 +379,6 @@ extern unsigned int	numvnodes;	/* current number of vnodes */
 #define	VDESC_VP1_WILLRELE	0x00000002
 #define	VDESC_VP2_WILLRELE	0x00000004
 #define	VDESC_VP3_WILLRELE	0x00000008
-#define	VDESC_VP0_WILLUNLOCK	0x00000100
-#define	VDESC_VP1_WILLUNLOCK	0x00000200
-#define	VDESC_VP2_WILLUNLOCK	0x00000400
-#define	VDESC_VP3_WILLUNLOCK	0x00000800
 #define	VDESC_VP0_WILLPUT	0x00000101
 #define	VDESC_VP1_WILLPUT	0x00000202
 #define	VDESC_VP2_WILLPUT	0x00000404
