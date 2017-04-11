@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.311 2017/04/11 05:48:04 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.312 2017/04/11 06:01:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.311 2017/04/11 05:48:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.312 2017/04/11 06:01:03 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2272,7 +2272,7 @@ lfs_closeextattr(void *v)
 
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
-	ip = VTOI(ap->a_vp);
+	ip = VTOI(vp);
 	ump = ip->i_ump;
 
 	/* Not supported for ULFS1 file systems. */
