@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.194 2017/03/30 09:16:52 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.195 2017/04/11 14:29:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.194 2017/03/30 09:16:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.195 2017/04/11 14:29:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,9 +226,6 @@ genfs_eopnotsupp(void *v)
 					vput(vp);
 					vp_last = vp;
 				}
-				break;
-			case VDESC_VP0_WILLUNLOCK:
-				VOP_UNLOCK(vp);
 				break;
 			case VDESC_VP0_WILLRELE:
 				vrele(vp);
