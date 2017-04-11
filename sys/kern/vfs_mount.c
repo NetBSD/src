@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.51 2017/03/30 09:13:01 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.52 2017/04/11 07:46:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.51 2017/03/30 09:13:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.52 2017/04/11 07:46:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,6 +94,22 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.51 2017/03/30 09:13:01 hannken Exp $
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
+enum mountlist_type {
+	ME_MOUNT,
+	ME_MARKER
+};
+struct mountlist_entry {
+	TAILQ_ENTRY(mountlist_entry) me_list;	/* Mount list. */
+	struct mount *me_mount;			/* Actual mount if ME_MOUNT,
+						   current mount else. */
+	enum mountlist_type me_type;		/* Mount or marker. */
+};
+struct mount_iterator {
+	struct mountlist_entry mi_entry;
+};
+
+static TAILQ_HEAD(mountlist, mountlist_entry) mount_list;
+
 static struct vnode *vfs_vnode_iterator_next1(struct vnode_iterator *,
     bool (*)(void *, struct vnode *), void *, bool);
 
@@ -119,6 +135,7 @@ void
 vfs_mount_sysinit(void)
 {
 
+	TAILQ_INIT(&mount_list);
 	TAILQ_INIT(&mountlist);
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -769,9 +786,7 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	cache_purge(vp);
 	mp->mnt_iflag &= ~IMNT_WANTRDWR;
 
-	mutex_enter(&mountlist_lock);
-	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_append(mp);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		vfs_syncer_add_to_worklist(mp);
 	vp->v_mountedhere = mp;
@@ -931,9 +946,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		coveredvp->v_mountedhere = NULL;
 		VOP_UNLOCK(coveredvp);
 	}
-	mutex_enter(&mountlist_lock);
-	TAILQ_REMOVE(&mountlist, mp, mnt_list);
-	mutex_exit(&mountlist_lock);
+	mountlist_remove(mp);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	if (used_syncer)
@@ -1439,10 +1452,156 @@ makefstype(const char *type)
 	return rv;
 }
 
+static struct mountlist_entry *
+mountlist_alloc(enum mountlist_type type, struct mount *mp)
+{
+	struct mountlist_entry *me;
+
+	me = kmem_zalloc(sizeof(*me), KM_SLEEP);
+	me->me_mount = mp;
+	me->me_type = type;
+
+	return me;
+}
+
+static void
+mountlist_free(struct mountlist_entry *me)
+{
+
+	kmem_free(me, sizeof(*me));
+}
+
+void
+mountlist_iterator_init(mount_iterator_t **mip)
+{
+	struct mountlist_entry *me;
+
+	me = mountlist_alloc(ME_MARKER, NULL);
+	mutex_enter(&mountlist_lock);
+	TAILQ_INSERT_HEAD(&mount_list, me, me_list);
+	mutex_exit(&mountlist_lock);
+	*mip = (mount_iterator_t *)me;
+}
+
+void
+mountlist_iterator_destroy(mount_iterator_t *mi)
+{
+	struct mountlist_entry *marker = &mi->mi_entry;
+
+	if (marker->me_mount != NULL)
+		vfs_unbusy(marker->me_mount, false, NULL);
+
+	mutex_enter(&mountlist_lock);
+	TAILQ_REMOVE(&mount_list, marker, me_list);
+	mutex_exit(&mountlist_lock);
+
+	mountlist_free(marker);
+
+}
+
+/*
+ * Return the next mount or NULL for this iterator.
+ * Mark it busy on success.
+ */
+struct mount *
+mountlist_iterator_next(mount_iterator_t *mi)
+{
+	struct mountlist_entry *me, *marker = &mi->mi_entry;
+	struct mount *mp;
+
+	if (marker->me_mount != NULL) {
+		vfs_unbusy(marker->me_mount, false, NULL);
+		marker->me_mount = NULL;
+	}
+
+	mutex_enter(&mountlist_lock);
+	for (;;) {
+		KASSERT(marker->me_type == ME_MARKER);
+
+		me = TAILQ_NEXT(marker, me_list);
+		if (me == NULL) {
+			/* End of list: keep marker and return. */
+			mutex_exit(&mountlist_lock);
+			return NULL;
+		}
+		TAILQ_REMOVE(&mount_list, marker, me_list);
+		TAILQ_INSERT_AFTER(&mount_list, me, marker, me_list);
+
+		/* Skip other markers. */
+		if (me->me_type != ME_MOUNT)
+			continue;
+
+		/* Take an initial reference for vfs_busy() below. */
+		mp = me->me_mount;
+		KASSERT(mp != NULL);
+		atomic_inc_uint(&mp->mnt_refcnt);
+		mutex_exit(&mountlist_lock);
+
+		/* Try to mark this mount busy and return on success. */
+		if (vfs_busy(mp, NULL) == 0) {
+			vfs_destroy(mp);
+			marker->me_mount = mp;
+			return mp;
+		}
+		vfs_destroy(mp);
+		mutex_enter(&mountlist_lock);
+	}
+}
+
+/*
+ * Attach new mount to the end of the mount list.
+ */
 void
 mountlist_append(struct mount *mp)
 {
+	struct mountlist_entry *me;
+
+	me = mountlist_alloc(ME_MOUNT, mp);
 	mutex_enter(&mountlist_lock);
+	TAILQ_INSERT_TAIL(&mount_list, me, me_list);
 	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
+}
+
+/*
+ * Remove mount from mount list.
+ */void
+mountlist_remove(struct mount *mp)
+{
+	struct mountlist_entry *me;
+
+	mutex_enter(&mountlist_lock);
+	TAILQ_FOREACH(me, &mount_list, me_list)
+		if (me->me_type == ME_MOUNT && me->me_mount == mp)
+			break;
+	KASSERT(me != NULL);
+	TAILQ_REMOVE(&mount_list, me, me_list);
+	TAILQ_REMOVE(&mountlist, mp, mnt_list);
+	mutex_exit(&mountlist_lock);
+	mountlist_free(me);
+}
+
+/*
+ * Unlocked variant to traverse the mountlist.
+ * To be used from DDB only.
+ */
+struct mount *
+_mountlist_next(struct mount *mp)
+{
+	struct mountlist_entry *me;
+
+	if (mp == NULL) {
+		me = TAILQ_FIRST(&mount_list);
+	} else {
+		TAILQ_FOREACH(me, &mount_list, me_list)
+			if (me->me_type == ME_MOUNT && me->me_mount == mp)
+				break;
+		if (me != NULL)
+			me = TAILQ_NEXT(me, me_list);
+	}
+
+	while (me != NULL && me->me_type != ME_MOUNT)
+		me = TAILQ_NEXT(me, me_list);
+
+	return (me ? me->me_mount : NULL);
 }
