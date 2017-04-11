@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.28 2016/09/21 10:50:23 roy Exp $
+.\"	$NetBSD: route.4,v 1.29 2017/04/11 13:55:54 roy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd September 15, 2016
+.Dd March 5, 2017
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -173,6 +173,23 @@ A process may ignore all messages from the routing socket
 by doing a
 .Xr shutdown 2
 system call for further input.
+.Pp
+A process can specify which route message types it's interested in by passing
+an array of route messsage types to the
+.Xr setsockopt 2
+call with the
+.Dv RO_MSGFILTER
+option at the
+.Dv PF_ROUTE
+level.
+For example, to only get specific messages:
+.Bd -literal -offset indent
+unsigned char rtfilter[] = { RTM_IFINFO, RTM_IFANNOUNCE };
+
+if (setsockopt(routefd, PF_ROUTE, RO_MSGFILTER,
+    &rtfilter, sizeof(rtfilter)) == -1)
+	err(1, "setsockopt(RO_MSGFILTER)");
+.Ed
 .Pp
 If a route is in use when it is deleted,
 the routing entry will be marked down and removed from the routing table,
