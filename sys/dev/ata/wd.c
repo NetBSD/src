@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428 2017/03/05 23:07:12 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.1 2017/04/12 21:59:14 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.1 2017/04/12 21:59:14 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -150,7 +150,7 @@ const struct bdevsw wd_bdevsw = {
 	.d_dump = wddump,
 	.d_psize = wdsize,
 	.d_discard = wddiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw wd_cdevsw = {
@@ -165,7 +165,7 @@ const struct cdevsw wd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = wddiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 /*
@@ -181,11 +181,9 @@ struct wd_ioctl {
 	struct wd_softc *wi_softc;
 };
 
-LIST_HEAD(, wd_ioctl) wi_head;
-
 struct	wd_ioctl *wi_find(struct buf *);
 void	wi_free(struct wd_ioctl *);
-struct	wd_ioctl *wi_get(void);
+struct	wd_ioctl *wi_get(struct wd_softc *);
 void	wdioctlstrategy(struct buf *);
 
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
@@ -297,10 +295,12 @@ wdattach(device_t parent, device_t self, void *aux)
 
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 	callout_init(&wd->sc_restart_ch, 0);
+	mutex_init(&wd->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
 #endif
+	LIST_INIT(&wd->wi_head);
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
 	wd->drvp = adev->adev_drv_data;
@@ -458,7 +458,7 @@ int
 wddetach(device_t self, int flags)
 {
 	struct wd_softc *sc = device_private(self);
-	int bmaj, cmaj, i, mn, rc, s;
+	int bmaj, cmaj, i, mn, rc;
 
 	if ((rc = disk_begindetach(&sc->sc_dk, wdlastclose, self, flags)) != 0)
 		return rc;
@@ -477,7 +477,7 @@ wddetach(device_t self, int flags)
 	/* Delete all of our wedges. */
 	dkwedge_delall(&sc->sc_dk);
 
-	s = splbio();
+	mutex_enter(&sc->sc_lock);
 
 	/* Kill off any queued buffers. */
 	bufq_drain(sc->sc_q);
@@ -486,7 +486,7 @@ wddetach(device_t self, int flags)
 	if (flags & DETACH_POWEROFF)
 		wd_standby(sc, AT_POLL);
 
-	splx(s);
+	mutex_exit(&sc->sc_lock);
 	bufq_free(sc->sc_q);
 
 	/* Detach disk. */
@@ -502,6 +502,7 @@ wddetach(device_t self, int flags)
 	}
 	sc->sc_bscount = 0;
 #endif
+	KASSERT(LIST_EMPTY(&sc->wi_head));
 
 	pmf_device_deregister(self);
 
@@ -527,7 +528,6 @@ wdstrategy(struct buf *bp)
 	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	daddr_t blkno;
-	int s;
 
 	ATADEBUG_PRINT(("wdstrategy (%s)\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
@@ -604,11 +604,11 @@ wdstrategy(struct buf *bp)
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
-	s = splbio();
+	mutex_enter(&wd->sc_lock);
 	disk_wait(&wd->sc_dk);
 	bufq_put(wd->sc_q, bp);
 	wdstart(wd);
-	splx(s);
+	mutex_exit(&wd->sc_lock);
 	return;
 done:
 	/* Toss transfer; we're done early. */
@@ -651,9 +651,8 @@ static void
 wd_split_mod15_write(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
-	struct wd_softc *sc =
+	struct wd_softc *wd =
 	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
-	int s;
 
 	if (__predict_false(bp->b_error != 0)) {
 		/*
@@ -681,26 +680,28 @@ wd_split_mod15_write(struct buf *bp)
 	bp->b_cflags = obp->b_cflags;
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / DEV_BSIZE);
-	bp->b_rawblkno += (bp->b_bcount / sc->sc_blksize);
-	s = splbio();
-	wdstart1(sc, bp);
-	splx(s);
+	bp->b_rawblkno += (bp->b_bcount / wd->sc_blksize);
+	mutex_enter(&wd->sc_lock);
+	wdstart1(wd, bp);
+	mutex_exit(&wd->sc_lock);
 	return;
 
  done:
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
-	s = splbio();
+	mutex_enter(&wd->sc_lock);
 	putiobuf(bp);
 	biodone(obp);
-	sc->openings++;
-	splx(s);
+	wd->openings++;
+	mutex_exit(&wd->sc_lock);
 	/* wddone() will call wdstart() */
 }
 
 void
 wdstart1(struct wd_softc *wd, struct buf *bp)
 {
+	/* already locked */
+	KASSERT(mutex_owned(&wd->sc_lock));
 
 	/*
 	 * Deal with the "split mod15 write" quirk.  We just divide the
@@ -716,7 +717,6 @@ wdstart1(struct wd_softc *wd, struct buf *bp)
 			    ((bp->b_bcount / 512) % 15) == 1)) {
 		struct buf *nbp;
 
-		/* already at splbio */
 		nbp = getiobuf(NULL, false);
 		if (__predict_false(nbp == NULL)) {
 			/* No memory -- fail the iop. */
@@ -757,6 +757,7 @@ wdstart1(struct wd_softc *wd, struct buf *bp)
 	wd->sc_wdc_bio.blkdone =0;
 	KASSERT(bp == wd->sc_bp || wd->sc_bp == NULL);
 	wd->sc_bp = bp;
+
 	/*
 	 * If we're retrying, retry in single-sector mode. This will give us
 	 * the sector number of the problem, and will eventually allow the
@@ -899,13 +900,12 @@ wdrestart(void *v)
 {
 	struct wd_softc *wd = v;
 	struct buf *bp = wd->sc_bp;
-	int s;
 
 	ATADEBUG_PRINT(("wdrestart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
-	s = splbio();
+	mutex_enter(&wd->sc_lock);
 	wdstart1(v, bp);
-	splx(s);
+	mutex_exit(&wd->sc_lock);
 }
 
 static void
@@ -1125,7 +1125,6 @@ wdgetdisklabel(struct wd_softc *wd)
 {
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	const char *errstring;
-	int s;
 
 	ATADEBUG_PRINT(("wdgetdisklabel\n"), DEBUG_FUNCS);
 
@@ -1136,9 +1135,9 @@ wdgetdisklabel(struct wd_softc *wd)
 	wd->sc_badsect[0] = -1;
 
 	if (wd->drvp->state > RESET) {
-		s = splbio();
+		mutex_enter(&wd->sc_lock);
 		wd->drvp->drive_flags |= ATA_DRIVE_RESET;
-		splx(s);
+		mutex_exit(&wd->sc_lock);
 	}
 	errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
 				  RAW_PART), wdstrategy, lp,
@@ -1151,9 +1150,9 @@ wdgetdisklabel(struct wd_softc *wd)
 		 * again.  XXX This is a kluge.
 		 */
 		if (wd->drvp->state > RESET) {
-			s = splbio();
+			mutex_enter(&wd->sc_lock);
 			wd->drvp->drive_flags |= ATA_DRIVE_RESET;
-			splx(s);
+			mutex_exit(&wd->sc_lock);
 		}
 		errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
@@ -1164,9 +1163,9 @@ wdgetdisklabel(struct wd_softc *wd)
 	}
 
 	if (wd->drvp->state > RESET) {
-		s = splbio();
+		mutex_enter(&wd->sc_lock);
 		wd->drvp->drive_flags |= ATA_DRIVE_RESET;
-		splx(s);
+		mutex_exit(&wd->sc_lock);
 	}
 #ifdef HAS_BAD144_HANDLING
 	if ((lp->d_flags & D_BADSECT) != 0)
@@ -1218,7 +1217,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
 	struct wd_softc *wd =
 	    device_lookup_private(&wd_cd, WDUNIT(dev));
-	int error, s;
+	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1331,9 +1330,9 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		    wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (wd->drvp->state > RESET) {
-				s = splbio();
+				mutex_enter(&wd->sc_lock);
 				wd->drvp->drive_flags |= ATA_DRIVE_RESET;
-				splx(s);
+				mutex_exit(&wd->sc_lock);
 			}
 			if (xfer == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1434,8 +1433,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		atareq_t *atareq = (atareq_t *) addr;
 		int error1;
 
-		wi = wi_get();
-		wi->wi_softc = wd;
+		wi = wi_get(wd);
 		wi->wi_atareq = *atareq;
 
 		if (atareq->datalen && atareq->flags &
@@ -1487,10 +1485,10 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	    {
 		struct disk_strategy *dks = (void *)addr;
 
-		s = splbio();
+		mutex_enter(&wd->sc_lock);
 		strlcpy(dks->dks_name, bufq_getstrategyname(wd->sc_q),
 		    sizeof(dks->dks_name));
-		splx(s);
+		mutex_exit(&wd->sc_lock);
 		dks->dks_paramlen = 0;
 
 		return 0;
@@ -1514,11 +1512,11 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		if (error) {
 			return error;
 		}
-		s = splbio();
+		mutex_enter(&wd->sc_lock);
 		old = wd->sc_q;
 		bufq_move(new, old);
 		wd->sc_q = new;
-		splx(s);
+		mutex_exit(&wd->sc_lock);
 		bufq_free(old);
 
 		return 0;
@@ -2008,16 +2006,18 @@ wd_shutdown(device_t dev, int how)
  * scsipi_ioctl.c
  */
 struct wd_ioctl *
-wi_get(void)
+wi_get(struct wd_softc *wd)
 {
 	struct wd_ioctl *wi;
-	int s;
 
 	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
+	wi->wi_softc = wd;
 	buf_init(&wi->wi_bp);
-	s = splbio();
-	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
-	splx(s);
+
+	mutex_enter(&wd->sc_lock);
+	LIST_INSERT_HEAD(&wd->wi_head, wi, wi_list);
+	mutex_exit(&wd->sc_lock);
+
 	return (wi);
 }
 
@@ -2028,11 +2028,11 @@ wi_get(void)
 void
 wi_free(struct wd_ioctl *wi)
 {
-	int s;
+	struct wd_softc *wd = wi->wi_softc;
 
-	s = splbio();
+	mutex_enter(&wd->sc_lock);
 	LIST_REMOVE(wi, wi_list);
-	splx(s);
+	mutex_exit(&wd->sc_lock);
 	buf_destroy(&wi->wi_bp);
 	free(wi, M_TEMP);
 }
@@ -2044,14 +2044,16 @@ wi_free(struct wd_ioctl *wi)
 struct wd_ioctl *
 wi_find(struct buf *bp)
 {
+	struct wd_softc *wd =
+	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
 	struct wd_ioctl *wi;
-	int s;
 
-	s = splbio();
-	for (wi = wi_head.lh_first; wi != 0; wi = wi->wi_list.le_next)
+	mutex_enter(&wd->sc_lock);
+	LIST_FOREACH(wi, &wd->wi_head, wi_list) {
 		if (bp == &wi->wi_bp)
 			break;
-	splx(s);
+	}
+	mutex_exit(&wd->sc_lock);
 	return (wi);
 }
 

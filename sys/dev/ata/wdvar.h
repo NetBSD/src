@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43 2016/07/22 04:08:10 jakllsch Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.1 2017/04/12 21:59:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -39,7 +39,9 @@ struct wd_softc {
 	struct disk sc_dk;
 	struct bufq_state *sc_q;
 	struct callout sc_restart_ch;
+	kmutex_t sc_lock;
 	int sc_quirks;			/* any quirks drive might have */
+
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transfered */
@@ -71,6 +73,8 @@ struct wd_softc {
 	u_int sc_bscount;
 #endif
 	krndsource_t	rnd_source;
+
+	LIST_HEAD(, wd_ioctl) wi_head;
 };
 
 #define sc_drive sc_wdc_bio.drive
