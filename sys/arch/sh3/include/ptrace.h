@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.13 2017/04/08 00:25:49 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.14 2017/04/12 18:18:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -71,7 +71,9 @@
 #define PTRACE_REG_SP(r)	r->r_r15
 #define PTRACE_REG_INTV(r)	r->r_r0
 
+#define PTRACE_BREAKPOINT_TRAP	0xc3
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xc3, 0xc3 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("trapa %0" :: "i"(PTRACE_BREAKPOINT_TRAP))
 #define PTRACE_BREAKPOINT_SIZE	2
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8 2017/04/11 07:45:36 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.9 2017/04/12 18:18:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -54,4 +54,5 @@
 #define PTRACE_REG_INTRV(r)	(r)->r0
 
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x03 })
+#define PTRACE_BREAKPOINT_ASM	__asm __volatile("bpt")
 #define PTRACE_BREAKPOINT_SIZE	1
