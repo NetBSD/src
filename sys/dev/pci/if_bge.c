@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.301 2017/04/12 05:50:52 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.302 2017/04/12 05:59:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.301 2017/04/12 05:50:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.302 2017/04/12 05:59:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4073,6 +4073,10 @@ alloc_retry:
 	 */
 	evcnt_attach_dynamic(&sc->bge_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->bge_dev), "intr");
+	evcnt_attach_dynamic(&sc->bge_ev_intr_spurious, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->bge_dev), "intr_spurious");
+	evcnt_attach_dynamic(&sc->bge_ev_intr_spurious2, EVCNT_TYPE_INTR,
+	    NULL, device_xname(sc->bge_dev), "intr_spurious2");
 	evcnt_attach_dynamic(&sc->bge_ev_tx_xoff, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->bge_dev), "tx_xoff");
 	evcnt_attach_dynamic(&sc->bge_ev_tx_xon, EVCNT_TYPE_MISC,
