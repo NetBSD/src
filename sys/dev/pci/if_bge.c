@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.302 2017/04/12 05:59:43 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.303 2017/04/12 06:04:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.302 2017/04/12 05:59:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.303 2017/04/12 06:04:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3421,9 +3421,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	sc->bge_chipid = bge_chipid(pa);
 	sc->bge_phy_addr = bge_phy_addr(sc);
 
-	if ((pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
-	        &sc->bge_pciecap, NULL) != 0)
-	    || (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)) {
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
+	    &sc->bge_pciecap, NULL) != 0) {
 		/* PCIe */
 		sc->bge_flags |= BGEF_PCIE;
 		/* Extract supported maximum payload size. */
@@ -3436,6 +3435,9 @@ bge_attach(device_t parent, device_t self, void *aux)
 		else
 			sc->bge_expmrq = 4096;
 		bge_set_max_readrq(sc);
+	} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785) {
+		/* PCIe without PCIe cap */
+		sc->bge_flags |= BGEF_PCIE;
 	} else if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
 		BGE_PCISTATE_PCI_BUSMODE) == 0) {
 		/* PCI-X */
