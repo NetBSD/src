@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.40 2017/03/30 09:13:01 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.41 2017/04/12 10:23:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.40 2017/03/30 09:13:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.41 2017/04/12 10:23:35 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -871,7 +871,7 @@ fstrans_dump(int full)
 				fstrans_print_lwp(p, l, full == 1);
 
 	printf("Fstrans state by mount:\n");
-	TAILQ_FOREACH(mp, &mountlist, mnt_list)
+	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp))
 		fstrans_print_mount(mp, full == 1);
 }
 #endif /* defined(DDB) */
