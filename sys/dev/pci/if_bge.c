@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.303 2017/04/12 06:04:34 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.304 2017/04/12 06:22:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.303 2017/04/12 06:04:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.304 2017/04/12 06:22:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4257,6 +4257,13 @@ bge_reset(struct bge_softc *sc)
 	 */
 	bge_writemem_ind(sc, BGE_SRAM_FW_MB, BGE_SRAM_FW_MB_MAGIC);
 
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780) {
+		val = CSR_READ_4(sc, BGE_PCIE_LINKCTL);
+		val = (val & ~BGE_PCIE_LINKCTL_L1_PLL_PDEN)
+		    | BGE_PCIE_LINKCTL_L1_PLL_PDDIS;
+		CSR_WRITE_4(sc, BGE_PCIE_LINKCTL, val);
+	}
+
 	/* 5718 reset step 6, 57XX step 7 */
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS | BGE_32BITTIME_66MHZ;
 	/*
@@ -5508,6 +5515,26 @@ bge_init(struct ifnet *ifp)
 		reg &= ~BGE_CPMU_HST_ACC_MACCLK_MASK;
 		reg |= BGE_CPMU_HST_ACC_MACCLK_6_25;
 		CSR_WRITE_4(sc, BGE_CPMU_HST_ACC, reg);
+	}
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780) {
+		reg = CSR_READ_4(sc, BGE_PCIE_PWRMNG_THRESH);
+		reg = (reg & ~BGE_PCIE_PWRMNG_L1THRESH_MASK)
+		    | BGE_PCIE_PWRMNG_L1THRESH_4MS
+		    | BGE_PCIE_PWRMNG_EXTASPMTMR_EN;
+		CSR_WRITE_4(sc, BGE_PCIE_PWRMNG_THRESH, reg);
+
+		reg = CSR_READ_4(sc, BGE_PCIE_EIDLE_DELAY);
+		reg = (reg & ~BGE_PCIE_EIDLE_DELAY_MASK)
+		    | BGE_PCIE_EIDLE_DELAY_13CLK;
+		CSR_WRITE_4(sc, BGE_PCIE_EIDLE_DELAY, reg);
+
+		/* XXX clear correctable error count */
+
+		reg = CSR_READ_4(sc, BGE_PCIE_LINKCTL);
+		reg = (reg & ~BGE_PCIE_LINKCTL_L1_PLL_PDEN)
+		    | BGE_PCIE_LINKCTL_L1_PLL_PDDIS;
+		CSR_WRITE_4(sc, BGE_PCIE_LINKCTL, reg);
 	}
 
 	bge_sig_post_reset(sc, BGE_RESET_START);
