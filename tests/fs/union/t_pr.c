@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.10 2017/03/26 18:26:05 maya Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.11 2017/04/12 15:12:55 riastradh Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -63,6 +63,8 @@ ATF_TC_BODY(multilayer2, tc)
 {
 	struct union_args unionargs;
 
+	atf_tc_expect_fail("PR kern/2423");
+
 	rump_init();
 
 	if (rump_sys_mkdir("/Tunion", 0777) == -1)
@@ -101,6 +103,8 @@ ATF_TC_BODY(cyclic, tc)
 {
 	struct union_args unionargs;
 
+	atf_tc_expect_fail("PR kern/3645");
+
 	rump_init();
 
 	if (rump_sys_mkdir("/Tunion", 0777) == -1)
@@ -128,6 +132,8 @@ ATF_TC_HEAD(cyclic2, tc)
 ATF_TC_BODY(cyclic2, tc)
 {
 	struct union_args unionargs;
+
+	atf_tc_expect_fail("PR kern/4597");
 
 	rump_init();
 
