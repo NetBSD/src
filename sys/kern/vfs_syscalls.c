@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.509 2017/03/07 11:54:16 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.510 2017/04/12 10:28:39 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.509 2017/03/07 11:54:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.510 2017/04/12 10:28:39 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -641,14 +641,12 @@ struct ctldebug debug0 = { "syncprt", &syncprt };
 void
 do_sys_sync(struct lwp *l)
 {
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	int asyncflag;
 
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -660,9 +658,8 @@ do_sys_sync(struct lwp *l)
 		}
 		mutex_exit(&mp->mnt_updating);
 		fstrans_done(mp);
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 #ifdef DEBUG
 	if (syncprt)
 		vfs_bufstats();
@@ -1251,39 +1248,32 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
     register_t *retval)
 {
 	int root = 0;
+	mount_iterator_t *iter;
 	struct proc *p = l->l_proc;
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	struct statvfs *sb;
 	size_t count, maxcount;
 	int error = 0;
 
 	sb = STATVFSBUF_GET();
 	maxcount = bufsize / entry_sz;
-	mutex_enter(&mountlist_lock);
 	count = 0;
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sb, l, flags, 0);
 			if (error) {
-				vfs_unbusy(mp, false, &nmp);
 				error = 0;
 				continue;
 			}
 			error = copyfn(sb, sfsp, entry_sz);
-			if (error) {
-				vfs_unbusy(mp, false, NULL);
+			if (error)
 				goto out;
-			}
 			sfsp = (char *)sfsp + entry_sz;
 			root |= strcmp(sb->f_mntonname, "/") == 0;
 		}
 		count++;
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
 
 	if (root == 0 && p->p_cwdi->cwdi_rdir) {
 		/*
@@ -1305,6 +1295,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 	else
 		*retval = count;
 out:
+	mountlist_iterator_destroy(iter);
 	STATVFSBUF_PUT(sb);
 	return error;
 }
