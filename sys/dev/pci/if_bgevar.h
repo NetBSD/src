@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.21 2015/11/18 10:26:57 msaitoh Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.22 2017/04/12 05:50:52 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -326,6 +326,8 @@ struct bge_softc {
 	 * Event counters.
 	 */
 	struct evcnt bge_ev_intr;	/* interrupts */
+	struct evcnt bge_ev_intr_spurious;  /* spurious intr. (taged status) */
+	struct evcnt bge_ev_intr_spurious2; /* spurious interrupts */
 	struct evcnt bge_ev_tx_xoff;	/* send PAUSE(len>0) packets */
 	struct evcnt bge_ev_tx_xon;	/* send PAUSE(len=0) packets */
 	struct evcnt bge_ev_rx_xoff;	/* receive PAUSE(len>0) packets */
