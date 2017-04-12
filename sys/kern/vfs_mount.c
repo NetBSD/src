@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.52 2017/04/11 07:46:37 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.53 2017/04/12 10:35:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.52 2017/04/11 07:46:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.53 2017/04/12 10:35:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -234,11 +234,9 @@ vfs_getnewfsid(struct mount *mp)
 		++xxxfs_mntid;
 	tfsid.__fsid_val[0] = makedev(mtype & 0xff, xxxfs_mntid);
 	tfsid.__fsid_val[1] = mtype;
-	if (!TAILQ_EMPTY(&mountlist)) {
-		while (vfs_getvfs(&tfsid)) {
-			tfsid.__fsid_val[0]++;
-			xxxfs_mntid++;
-		}
+	while (vfs_getvfs(&tfsid)) {
+		tfsid.__fsid_val[0]++;
+		xxxfs_mntid++;
 	}
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = tfsid.__fsid_val[0];
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
@@ -253,17 +251,18 @@ vfs_getnewfsid(struct mount *mp)
 struct mount *
 vfs_getvfs(fsid_t *fsid)
 {
+	mount_iterator_t *iter;
 	struct mount *mp;
 
-	mutex_enter(&mountlist_lock);
-	TAILQ_FOREACH(mp, &mountlist, mnt_list) {
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		if (mp->mnt_stat.f_fsidx.__fsid_val[0] == fsid->__fsid_val[0] &&
 		    mp->mnt_stat.f_fsidx.__fsid_val[1] == fsid->__fsid_val[1]) {
-			mutex_exit(&mountlist_lock);
-			return (mp);
+			mountlist_iterator_destroy(iter);
+			return mp;
 		}
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 	return NULL;
 }
 
@@ -832,6 +831,7 @@ err_unmounted:
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
 {
+	mount_iterator_t *iter;
 	struct mount *cmp;
 	vnode_t *coveredvp;
 	int error, async, used_syncer, used_extattr;
@@ -845,14 +845,14 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	/*
 	 * No unmount below layered mounts.
 	 */
-	mutex_enter(&mountlist_lock);
-	TAILQ_FOREACH(cmp, &mountlist, mnt_list) {
+	mountlist_iterator_init(&iter);
+	while ((cmp = mountlist_iterator_next(iter)) != NULL) {
 		if (cmp->mnt_lower == mp) {
-			mutex_exit(&mountlist_lock);
+			mountlist_iterator_destroy(iter);
 			return EBUSY;
 		}
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 
 	/*
 	 * XXX Freeze syncer.  Must do this before locking the
@@ -983,38 +983,57 @@ vfs_unmount_print(struct mount *mp, const char *pfx)
 	    mp->mnt_stat.f_fstypename);
 }
 
-bool
-vfs_unmount_forceone(struct lwp *l)
+/*
+ * Return the mount with the highest generation less than "gen".
+ */
+static struct mount *
+vfs_unmount_next(uint64_t gen)
 {
+	mount_iterator_t *iter;
 	struct mount *mp, *nmp;
-	int error;
 
 	nmp = NULL;
 
-	TAILQ_FOREACH_REVERSE(mp, &mountlist, mntlist, mnt_list) {
-		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen) {
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
+		if ((nmp == NULL || mp->mnt_gen > nmp->mnt_gen) && 
+		    mp->mnt_gen < gen) {
+			if (nmp != NULL)
+				vfs_destroy(nmp);
 			nmp = mp;
+			atomic_inc_uint(&nmp->mnt_refcnt);
 		}
 	}
-	if (nmp == NULL) {
+	mountlist_iterator_destroy(iter);
+
+	return nmp;
+}
+
+bool
+vfs_unmount_forceone(struct lwp *l)
+{
+	struct mount *mp;
+	int error;
+
+	mp = vfs_unmount_next(mountgen);
+	if (mp == NULL) {
 		return false;
 	}
 
 #ifdef DEBUG
 	printf("forcefully unmounting %s (%s)...\n",
-	    nmp->mnt_stat.f_mntonname, nmp->mnt_stat.f_mntfromname);
+	    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
-	atomic_inc_uint(&nmp->mnt_refcnt);
-	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
-		vfs_unmount_print(nmp, "forcefully ");
+	if ((error = dounmount(mp, MNT_FORCE, l)) == 0) {
+		vfs_unmount_print(mp, "forcefully ");
 		return true;
 	} else {
-		vfs_destroy(nmp);
+		vfs_destroy(mp);
 	}
 
 #ifdef DEBUG
 	printf("forceful unmount of %s failed with error %d\n",
-	    nmp->mnt_stat.f_mntonname, error);
+	    mp->mnt_stat.f_mntonname, error);
 #endif
 
 	return false;
@@ -1023,17 +1042,23 @@ vfs_unmount_forceone(struct lwp *l)
 bool
 vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 {
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	bool any_error = false, progress = false;
+	uint64_t gen;
 	int error;
 
-	TAILQ_FOREACH_REVERSE_SAFE(mp, &mountlist, mntlist, mnt_list, nmp) {
+	gen = mountgen;
+	for (;;) {
+		mp = vfs_unmount_next(gen);
+		if (mp == NULL)
+			break;
+		gen = mp->mnt_gen;
+
 #ifdef DEBUG
 		printf("unmounting %p %s (%s)...\n",
 		    (void *)mp, mp->mnt_stat.f_mntonname,
 		    mp->mnt_stat.f_mntfromname);
 #endif
-		atomic_inc_uint(&mp->mnt_refcnt);
 		if ((error = dounmount(mp, force ? MNT_FORCE : 0, l)) == 0) {
 			vfs_unmount_print(mp, "");
 			progress = true;
@@ -1229,10 +1254,15 @@ done:
 		vrele(rootvp);
 	}
 	if (error == 0) {
+		mount_iterator_t *iter;
 		struct mount *mp;
 		extern struct cwdinfo cwdi0;
 
-		mp = TAILQ_FIRST(&mountlist);
+		mountlist_iterator_init(&iter);
+		mp = mountlist_iterator_next(iter);
+		KASSERT(mp != NULL);
+		mountlist_iterator_destroy(iter);
+
 		mp->mnt_flag |= MNT_ROOTFS;
 		mp->mnt_op->vfs_refcount++;
 		error = fstrans_mount(mp);
