@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.321 2017/04/11 23:49:17 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.322 2017/04/12 14:15:50 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.321 2017/04/11 23:49:17 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.322 2017/04/12 14:15:50 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3789,9 +3789,13 @@ audio_mix(void *v)
 	if (sc->sc_saturate == true && sc->sc_opens > 1)
 		saturate_func(sc);
 
+	vc = SIMPLEQ_FIRST(&sc->sc_audiochan)->vc;
 	cb = &sc->sc_pr;
-	if (sc->sc_writeme == true)
-		cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, blksize);
+	inp = cb->s.inp;
+	cc = blksize - (inp - cb->s.start) % blksize;
+	if (sc->sc_writeme == false)
+		audio_pint_silence(sc, cb, inp, cc, vc);
+	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, blksize);
 	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
