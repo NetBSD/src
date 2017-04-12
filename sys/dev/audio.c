@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.322 2017/04/12 14:15:50 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.323 2017/04/12 14:21:12 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.322 2017/04/12 14:15:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.323 2017/04/12 14:21:12 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -882,9 +882,9 @@ bad_rec:
 #ifdef AUDIO_PM_IDLE
 	callout_schedule(&sc->sc_idle_counter, audio_idle_timeout * hz);
 #endif
-	kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
+	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    audio_rec_thread, sc, &sc->sc_recthread, "audiorec");
-	kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
+	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    audio_play_thread, sc, &sc->sc_playthread, "audiomix");
 	audiorescan(self, "audio", NULL);
 }
