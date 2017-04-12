@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.506 2017/04/05 10:44:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.507 2017/04/12 05:08:00 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.506 2017/04/05 10:44:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.507 2017/04/12 05:08:00 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -477,9 +477,13 @@ struct wm_softc {
 
 	void *sc_ihs[WM_MAX_NINTR];	/*
 					 * interrupt cookie.
-					 * legacy and msi use sc_ihs[0].
+					 * - legacy and msi use sc_ihs[0] only
+					 * - msix use sc_ihs[0] to sc_ihs[nintrs-1]
 					 */
-	pci_intr_handle_t *sc_intrs;	/* legacy and msi use sc_intrs[0] */
+	pci_intr_handle_t *sc_intrs;	/*
+					 * legacy and msi use sc_intrs[0] only
+					 * msix use sc_intrs[0] to sc_ihs[nintrs-1]
+					 */
 	int sc_nintrs;			/* number of interrupts */
 
 	int sc_link_intr_idx;		/* index of MSI-X tables */
