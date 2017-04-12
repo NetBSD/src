@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.1 2017/04/12 21:59:14 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.2 2017/04/12 22:28:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.1 2017/04/12 21:59:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.2 2017/04/12 22:28:20 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -294,7 +294,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	wd->sc_dev = self;
 
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
-	callout_init(&wd->sc_restart_ch, 0);
+	callout_init(&wd->sc_restart_ch, CALLOUT_MPSAFE);
 	mutex_init(&wd->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
@@ -794,14 +794,17 @@ void
 wddone(void *v)
 {
 	struct wd_softc *wd = device_private(v);
-	struct buf *bp = wd->sc_bp;
+	struct buf *bp;
 	const char *errmsg;
 	int do_perror = 0;
 
 	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
-	if (bp == NULL)
-		return;
+
+	mutex_enter(&wd->sc_lock);
+	if ((bp = wd->sc_bp) == NULL)
+		goto out;
+
 	bp->b_resid = wd->sc_wdc_bio.bcount;
 	switch (wd->sc_wdc_bio.error) {
 	case ERR_DMA:
@@ -837,7 +840,7 @@ retry2:
 			wd->retries++;
 			callout_reset(&wd->sc_restart_ch, RECOVERYTIME,
 			    wdrestart, wd);
-			return;
+			goto out;
 		}
 
 #ifdef WD_SOFTBADSECT
@@ -893,6 +896,9 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	KASSERT(wd->sc_bp != NULL);
 	wd->sc_bp = NULL;
 	wdstart(wd);
+
+out:
+	mutex_exit(&wd->sc_lock);
 }
 
 void
