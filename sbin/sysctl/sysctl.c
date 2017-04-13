@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.158 2016/07/31 23:30:28 dholland Exp $ */
+/*	$NetBSD: sysctl.c,v 1.159 2017/04/13 14:46:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.158 2016/07/31 23:30:28 dholland Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.159 2017/04/13 14:46:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,9 @@ static const struct handlespec {
 	{ "/net/[^/]+/[^/]+/pcblist",		printother, NULL,
 						"netstat' or 'sockstat" },
 	{ "/net/(inet|inet6)/[^/]+/stats",	printother, NULL, "netstat"},
+	{ "/net/inet/(ipip|esp|ah|ipcomp)/.*_stats",
+						printother, NULL, "netstat"},
+	{ "/net/inet/ipsec/ipsecstats",		printother, NULL, "netstat"},
 	{ "/net/bpf/(stats|peers)",		printother, NULL, "netstat"},
 
 	{ "/net/inet.*/tcp.*/deb.*",		printother, NULL, "trpt" },
