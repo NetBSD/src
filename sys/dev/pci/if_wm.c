@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.507 2017/04/12 05:08:00 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508 2017/04/13 10:37:36 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.507 2017/04/12 05:08:00 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508 2017/04/13 10:37:36 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -172,6 +172,16 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
  */
 #define WM_MAX_NQUEUEINTR	16
 #define WM_MAX_NINTR		(WM_MAX_NQUEUEINTR + 1)
+
+#ifndef WM_DISABLE_MSI
+#define	WM_DISABLE_MSI 0
+#endif
+#ifndef WM_DISABLE_MSIX
+#define	WM_DISABLE_MSIX 0
+#endif
+
+int wm_disable_msi = WM_DISABLE_MSI;
+int wm_disable_msix = WM_DISABLE_MSIX;
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -1831,6 +1841,17 @@ wm_attach(device_t parent, device_t self, void *aux)
 	counts[PCI_INTR_TYPE_MSIX] = sc->sc_nqueues + 1;
 	counts[PCI_INTR_TYPE_MSI] = 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
+	/* overridden by disable flags */
+	if (wm_disable_msi != 0) {
+		counts[PCI_INTR_TYPE_MSI] = 0;
+		if (wm_disable_msix != 0) {
+			max_type = PCI_INTR_TYPE_INTX;
+			counts[PCI_INTR_TYPE_MSIX] = 0;
+		}
+	} else if (wm_disable_msix != 0) {
+		max_type = PCI_INTR_TYPE_MSI;
+		counts[PCI_INTR_TYPE_MSIX] = 0;
+	}
 
 alloc_retry:
 	if (pci_intr_alloc(pa, &sc->sc_intrs, counts, max_type) != 0) {

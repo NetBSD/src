@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.35 2017/03/22 09:38:10 wiz Exp $
+.\"	$NetBSD: wm.4,v 1.36 2017/04/13 10:37:36 knakahara Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -196,6 +196,12 @@ Enable many event counters such as each Tx drop counter and Rx interrupt
 counter.
 Caution: If this flag is enabled, the number of evcnt entries increase
 very much.
+.It Dv WM_DISABLE_MSI
+If this option is set non-zero value, this driver does not use msi.
+The default value is 0.
+.It Dv WM_DISABLE_MSIX
+If this option is set non-zero value, this driver does not use msix.
+The default value is 0.
 .El
 .Pp
 Setting
