@@ -1,4 +1,4 @@
-/*	$NetBSD: emalloc.c,v 1.7 2016/01/08 21:35:38 christos Exp $	*/
+/*	$NetBSD: emalloc.c,v 1.8 2017/04/13 20:17:42 christos Exp $	*/
 
 /*
  * emalloc - return new memory obtained from the system.  Belch if none.
@@ -85,10 +85,11 @@ ereallocz(
 #define MUL_NO_OVERFLOW	((size_t)1 << (sizeof(size_t) * 4))
 
 void *
-oreallocarray(
+oreallocarrayxz(
 	void *optr,
 	size_t nmemb,
-	size_t size
+	size_t size,
+	size_t extra
 #ifdef EREALLOC_CALLSITE		/* ntp_malloc.h */
 	,
 	const char *	file,
@@ -108,9 +109,9 @@ oreallocarray(
 		exit(1);
 	}
 #ifndef EREALLOC_CALLSITE
-	return ereallocz(optr, (size * nmemb), 0, FALSE);
+	return ereallocz(optr, extra + (size * nmemb), 0, TRUE);
 #else
-	return ereallocz(optr, (size * nmemb), 0, FALSE, file, line);
+	return ereallocz(optr, extra + (size * nmemb), 0, TRUE, file, line);
 #endif
 }
 
