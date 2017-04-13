@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1284 2017/03/31 09:27:30 skrll Exp $
+$NetBSD: pcidevs,v 1.1285 2017/04/13 04:04:13 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1797,6 +1797,9 @@ product BROADCOM BCM57765	0x16b4	BCM57765 Integrated Gigabit Ethernet
 product BROADCOM BCM57785	0x16b5	BCM57785 Integrated Gigabit Ethernet
 product BROADCOM BCM57795	0x16b6	BCM57795 10/100/1000 Ethernet
 product BROADCOM BCM57782	0x16b7	BCM57782 10/100/1000 Ethernet
+product BROADCOM SDMMC		0x16bc	BCM577x5 SDMMC
+product BROADCOM MS		0x16be	BCM577x5 Memstick
+product BROADCOM XD		0x16bf	BCM577x5 xD
 product BROADCOM BCM5702_ALT	0x16c6	BCM5702 10/100/1000 Ethernet
 product BROADCOM BCM5703_ALT	0x16c7	BCM5703 10/100/1000 Ethernet
 product BROADCOM BCM5781	0x16dd	BCM5781 Integrated Gigabit Ethernet
