@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.3 2017/02/07 09:14:52 skrll Exp $ */
+/* $NetBSD: fdtbus.c,v 1.4 2017/04/13 22:12:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.3 2017/02/07 09:14:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.4 2017/04/13 22:12:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.3 2017/02/07 09:14:52 skrll Exp $");
 #include <dev/ofw/openfirm.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#define	FDT_MAX_PATH	256
 
 static int	fdt_match(device_t, cfdata_t, void *);
 static void	fdt_attach(device_t, device_t, void *);
@@ -153,9 +155,13 @@ static int
 fdt_print(void *aux, const char *pnp)
 {
 	const struct fdt_attach_args * const faa = aux;
+	char buf[FDT_MAX_PATH];
+	const char *name = buf;
 
 	if (pnp) {
-		aprint_normal("%s at %s", faa->faa_name, pnp);
+		if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
+			name = faa->faa_name;
+		aprint_normal("%s at %s", name, pnp);
 	}
 
 	return UNCONF;
