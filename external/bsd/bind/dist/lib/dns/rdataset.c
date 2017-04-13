@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.9 2017/02/09 00:23:27 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.10 2017/04/13 19:11:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2014, 2015, 2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
