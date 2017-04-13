@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.178 2017/03/24 17:40:44 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.179 2017/04/13 07:58:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.178 2017/03/24 17:40:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.179 2017/04/13 07:58:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -177,12 +177,13 @@ process_domem(struct lwp *curl /*tracer*/,
 	if (error != 0)
 		return error;
 	error = uvm_io(&vm->vm_map, uio, pax_mprotect_prot(l));
-	uvmspace_free(vm);
 
 #ifdef PMAP_NEED_PROCWR
 	if (error == 0 && uio->uio_rw == UIO_WRITE)
 		pmap_procwr(p, addr, len);
 #endif
+	uvmspace_free(vm);
+
 	return error;
 }
 #endif	/* KTRACE || PTRACE_HOOKS */
