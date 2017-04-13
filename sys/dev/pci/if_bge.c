@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.304 2017/04/12 06:22:16 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.305 2017/04/13 04:27:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.304 2017/04/12 06:22:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.305 2017/04/13 04:27:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -743,6 +743,7 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5906_A2, "BCM5906 A2" },
 	{ BGE_CHIPID_BCM57765_A0, "BCM57765 A0" },
 	{ BGE_CHIPID_BCM57765_B0, "BCM57765 B0" },
+	{ BGE_CHIPID_BCM57766_A0, "BCM57766 A0" },
 	{ BGE_CHIPID_BCM57780_A0, "BCM57780 A0" },
 	{ BGE_CHIPID_BCM57780_A1, "BCM57780 A1" },
 
@@ -2319,6 +2320,11 @@ bge_chipinit(struct bge_softc *sc)
 			CSR_WRITE_4(sc, BGE_MODE_CTL, mode_ctl);
 		}
 		if (BGE_CHIPREV(sc->bge_chipid) != BGE_CHIPREV_57765_AX) {
+			/*
+			 * For the 57766 and non Ax versions of 57765, bootcode
+			 * needs to setup the PCIE Fast Training Sequence (FTS)
+			 * value to prevent transmit hangs.
+			 */
 			reg = CSR_READ_4(sc, BGE_CPMU_PADRNG_CTL);
 			CSR_WRITE_4(sc, BGE_CPMU_PADRNG_CTL,
 			    reg | BGE_CPMU_PADRNG_CTL_RDIV2);
@@ -3266,7 +3272,9 @@ bge_chipid(const struct pci_attach_args *pa)
 		case PCI_PRODUCT_BROADCOM_BCM57765:
 		case PCI_PRODUCT_BROADCOM_BCM57766:
 		case PCI_PRODUCT_BROADCOM_BCM57781:
+		case PCI_PRODUCT_BROADCOM_BCM57782:
 		case PCI_PRODUCT_BROADCOM_BCM57785:
+		case PCI_PRODUCT_BROADCOM_BCM57786:
 		case PCI_PRODUCT_BROADCOM_BCM57791:
 		case PCI_PRODUCT_BROADCOM_BCM57795:
 			id = pci_conf_read(pa->pa_pc, pa->pa_tag,
@@ -5518,6 +5526,8 @@ bge_init(struct ifnet *ifp)
 	}
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780) {
+		pcireg_t aercap;
+
 		reg = CSR_READ_4(sc, BGE_PCIE_PWRMNG_THRESH);
 		reg = (reg & ~BGE_PCIE_PWRMNG_L1THRESH_MASK)
 		    | BGE_PCIE_PWRMNG_L1THRESH_4MS
@@ -5529,7 +5539,11 @@ bge_init(struct ifnet *ifp)
 		    | BGE_PCIE_EIDLE_DELAY_13CLK;
 		CSR_WRITE_4(sc, BGE_PCIE_EIDLE_DELAY, reg);
 
-		/* XXX clear correctable error count */
+		/* Clear correctable error */
+		if (pci_get_ext_capability(sc->sc_pc, sc->sc_pcitag,
+		    PCI_EXTCAP_AER, &aercap, NULL) != 0)
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+			    aercap + PCI_AER_COR_STATUS, 0xffffffff);
 
 		reg = CSR_READ_4(sc, BGE_PCIE_LINKCTL);
 		reg = (reg & ~BGE_PCIE_LINKCTL_L1_PLL_PDEN)
