@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.259 2017/03/26 17:16:03 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.260 2017/04/13 13:55:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.259 2017/03/26 17:16:03 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.260 2017/04/13 13:55:23 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.259 2017/03/26 17:16:03 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.260 2017/04/13 13:55:23 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -691,21 +691,14 @@ Boolean
 Main_SetObjdir(const char *fmt, ...)
 {
 	struct stat sb;
-	char *p, *path;
-	char buf[MAXPATHLEN + 1], pbuf[MAXPATHLEN + 1];
+	char *path;
+	char buf[MAXPATHLEN + 1];
 	Boolean rc = FALSE;
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(path = pbuf, MAXPATHLEN, fmt, ap);
+	vsnprintf(path = buf, MAXPATHLEN, fmt, ap);
 	va_end(ap);
-
-	/* expand variable substitutions */
-	if (strchr(path, '$') != 0) {
-		snprintf(buf, MAXPATHLEN, "%s", path);
-		path = p = Var_Subst(NULL, buf, VAR_GLOBAL, VARF_WANTRES);
-	} else
-		p = NULL;
 
 	if (path[0] != '/') {
 		snprintf(buf, MAXPATHLEN, "%s/%s", curdir, path);
@@ -729,19 +722,28 @@ Main_SetObjdir(const char *fmt, ...)
 		}
 	}
 
-	free(p);
 	return rc;
 }
 
 static Boolean
 Main_SetVarObjdir(const char *var, const char *suffix)
 {
-	char *p1, *path;
-	if ((path = Var_Value(var, VAR_CMD, &p1)) == NULL)
+	char *p, *path, *xpath;
+
+	if ((path = Var_Value(var, VAR_CMD, &p)) == NULL)
 		return FALSE;
 
-	(void)Main_SetObjdir("%s%s", path, suffix);
-	free(p1);
+	/* expand variable substitutions */
+	if (strchr(path, '$') != 0)
+		xpath = Var_Subst(NULL, path, VAR_GLOBAL, VARF_WANTRES);
+	else
+		xpath = path;
+
+	(void)Main_SetObjdir("%s%s", xpath, suffix);
+
+	if (xpath != path)
+		free(xpath);
+	free(p);
 	return TRUE;
 }
 
