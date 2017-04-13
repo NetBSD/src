@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.8 2017/04/04 23:49:17 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.9 2017/04/13 00:12:10 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.8 2017/04/04 23:49:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.9 2017/04/13 00:12:10 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -110,6 +110,7 @@ static struct {
 static struct {
 	kmutex_t lock;
 	struct pslist_head *lists;
+	u_long mask;
 } l2tp_hash __cacheline_aligned = {
 	.lists = NULL,
 };
@@ -140,7 +141,7 @@ static int	l2tp_set_tunnel(struct ifnet *, struct sockaddr *,
 		    struct sockaddr *);
 static void	l2tp_delete_tunnel(struct ifnet *);
 
-static int	id_hash_func(uint32_t);
+static int	id_hash_func(uint32_t, u_long);
 
 static void	l2tp_variant_update(struct l2tp_softc *, struct l2tp_variant *);
 static int	l2tp_set_session(struct l2tp_softc *, uint32_t, uint32_t);
@@ -1002,24 +1003,22 @@ l2tp_delete_tunnel(struct ifnet *ifp)
 }
 
 static int
-id_hash_func(uint32_t id)
+id_hash_func(uint32_t id, u_long mask)
 {
 	uint32_t hash;
 
 	hash = (id >> 16) ^ id;
 	hash = (hash >> 4) ^ hash;
 
-	return hash & (L2TP_ID_HASH_SIZE - 1);
+	return hash & mask;
 }
 
 static void
 l2tp_hash_init(void)
 {
-	u_long mask;
 
 	l2tp_hash.lists = hashinit(L2TP_ID_HASH_SIZE, HASH_PSLIST, true,
-	    &mask);
-	KASSERT(mask == (L2TP_ID_HASH_SIZE - 1));
+	    &l2tp_hash.mask);
 }
 
 static int
@@ -1029,19 +1028,19 @@ l2tp_hash_fini(void)
 
 	mutex_enter(&l2tp_hash.lock);
 
-	for (i = 0; i < L2TP_ID_HASH_SIZE; i++) {
+	for (i = 0; i < l2tp_hash.mask + 1; i++) {
 		if (PSLIST_WRITER_FIRST(&l2tp_hash.lists[i], struct l2tp_softc,
 			l2tp_hash) != NULL) {
 			mutex_exit(&l2tp_hash.lock);
 			return EBUSY;
 		}
 	}
-	for (i = 0; i < L2TP_ID_HASH_SIZE; i++)
+	for (i = 0; i < l2tp_hash.mask + 1; i++)
 		PSLIST_DESTROY(&l2tp_hash.lists[i]);
 
 	mutex_exit(&l2tp_hash.lock);
 
-	hashdone(l2tp_hash.lists, HASH_PSLIST, L2TP_ID_HASH_SIZE - 1);
+	hashdone(l2tp_hash.lists, HASH_PSLIST, l2tp_hash.mask);
 
 	return 0;
 }
@@ -1075,7 +1074,7 @@ l2tp_set_session(struct l2tp_softc *sc, uint32_t my_sess_id,
 	l2tp_variant_update(sc, nvar);
 	mutex_exit(&sc->l2tp_lock);
 
-	idx = id_hash_func(nvar->lv_my_sess_id);
+	idx = id_hash_func(nvar->lv_my_sess_id, l2tp_hash.mask);
 	if ((ifp->if_flags & IFF_DEBUG) != 0)
 		log(LOG_DEBUG, "%s: add hash entry: sess_id=%" PRIu32 ", idx=%" PRIu32 "\n",
 		    sc->l2tp_ec.ec_if.if_xname, nvar->lv_my_sess_id, idx);
@@ -1124,7 +1123,7 @@ l2tp_lookup_session_ref(uint32_t id, struct psref *psref)
 	int s;
 	struct l2tp_softc *sc;
 
-	idx = id_hash_func(id);
+	idx = id_hash_func(id, l2tp_hash.mask);
 
 	s = pserialize_read_enter();
 	PSLIST_READER_FOREACH(sc, &l2tp_hash.lists[idx], struct l2tp_softc,
