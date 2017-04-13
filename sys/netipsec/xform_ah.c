@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.46 2017/04/13 01:32:57 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.47 2017/04/13 16:38:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.46 2017/04/13 01:32:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.47 2017/04/13 16:38:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -123,6 +123,8 @@ static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
 
 static int ah_input_cb(struct cryptop*);
 static int ah_output_cb(struct cryptop*);
+
+const uint8_t ah_stats[256] = { SADB_AALG_STATS_INIT };
 
 /*
  * NB: this is public for use by the PF_KEY support.
@@ -875,7 +877,7 @@ ah_input_cb(struct cryptop *crp)
 		error = crp->crp_etype;
 		goto bad;
 	} else {
-		AH_STATINC(AH_STAT_HIST + sav->alg_auth);
+		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
 		crypto_freereq(crp);		/* No longer needed. */
 		crp = NULL;
 	}
@@ -1283,7 +1285,7 @@ ah_output_cb(struct cryptop *crp)
 		error = EINVAL;
 		goto bad;
 	}
-	AH_STATINC(AH_STAT_HIST + sav->alg_auth);
+	AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
 
 	/*
 	 * Copy original headers (with the new protocol number) back

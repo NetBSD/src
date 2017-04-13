@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.49 2017/04/13 01:32:57 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.50 2017/04/13 16:38:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.49 2017/04/13 01:32:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.50 2017/04/13 16:38:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -108,6 +108,8 @@ static	int esp_max_ivlen;		/* max iv length over all algorithms */
 
 static int esp_input_cb(struct cryptop *op);
 static int esp_output_cb(struct cryptop *crp);
+
+const uint8_t esp_stats[256] = { SADB_EALG_STATS_INIT };
 
 /*
  * NB: this is public for use by the PF_KEY support.
@@ -583,7 +585,7 @@ esp_input_cb(struct cryptop *crp)
 		error = EINVAL;
 		goto bad;
 	}
-	ESP_STATINC(ESP_STAT_HIST + sav->alg_enc);
+	ESP_STATINC(ESP_STAT_HIST + esp_stats[sav->alg_enc]);
 
 	/* If authentication was performed, check now. */
 	if (esph != NULL) {
@@ -592,7 +594,7 @@ esp_input_cb(struct cryptop *crp)
 		 * the verification for us.  Otherwise we need to
 		 * check the authentication calculation.
 		 */
-		AH_STATINC(AH_STAT_HIST + sav->alg_auth);
+		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
 		if (mtag == NULL) {
 			/* Copy the authenticator from the packet */
 			m_copydata(m, m->m_pkthdr.len - esph->authsize,
@@ -1021,9 +1023,9 @@ esp_output_cb(struct cryptop *crp)
 		error = EINVAL;
 		goto bad;
 	}
-	ESP_STATINC(ESP_STAT_HIST + sav->alg_enc);
+	ESP_STATINC(ESP_STAT_HIST + esp_stats[sav->alg_enc]);
 	if (sav->tdb_authalgxform != NULL)
-		AH_STATINC(AH_STAT_HIST + sav->alg_auth);
+		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
 
 	/* Release crypto descriptors. */
 	free(tc, M_XDATA);
