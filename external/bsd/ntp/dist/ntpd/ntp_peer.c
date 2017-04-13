@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.10 2016/11/22 03:09:30 christos Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.11 2017/04/13 20:17:42 christos Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -163,7 +163,7 @@ getmorepeermem(void)
 	int i;
 	struct peer *peers;
 
-	peers = emalloc_zero(INC_PEER_ALLOC * sizeof(*peers));
+	peers = eallocarray(INC_PEER_ALLOC, sizeof(*peers));
 
 	for (i = INC_PEER_ALLOC - 1; i >= 0; i--)
 		LINK_SLIST(peer_free, &peers[i], p_link);
@@ -311,7 +311,8 @@ findpeer(
 	for (p = peer_hash[hash]; p != NULL; p = p->adr_link) {
 
 		/* [Bug 3072] ensure interface of peer matches */
-		if (p->dstadr != rbufp->dstadr)
+		/* [Bug 3356] ... if NOT a broadcast peer!     */
+		if (p->hmode != MODE_BCLIENT && p->dstadr != rbufp->dstadr)
 			continue;
 
 		/* ensure peer source address matches */
