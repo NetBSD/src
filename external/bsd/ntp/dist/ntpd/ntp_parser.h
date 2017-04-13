@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.h,v 1.1.1.13 2016/11/22 01:34:59 christos Exp $	*/
+/*	$NetBSD: ntp_parser.h,v 1.1.1.14 2017/04/13 19:17:30 christos Exp $	*/
 
 /* A Bison parser, made by GNU Bison 3.0.4.  */
 
@@ -448,7 +448,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 51 "../../ntpd/ntp_parser.y" /* yacc.c:1909  */
+#line 51 "ntp_parser.y" /* yacc.c:1909  */
 
 	char *			String;
 	double			Double;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.1.1.13 2016/11/22 01:35:01 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.1.1.14 2017/04/13 19:17:29 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -649,19 +649,19 @@ tos_option
 
 tos_option_int_keyword
 	:	T_Bcpollbstep
+	|	T_Beacon
 	|	T_Ceiling
 	|	T_Floor
+	|	T_Maxclock
+	|	T_Minclock
+	|	T_Minsane
 	|	T_Orphan
 	|	T_Orphanwait
-	|	T_Minsane
-	|	T_Beacon
 	;
 
 tos_option_dbl_keyword
 	:	T_Mindist
 	|	T_Maxdist
-	|	T_Minclock
-	|	T_Maxclock
 	;
 
 
@@ -805,7 +805,7 @@ access_control_command
 						  lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
-	|	T_Restrict ip_address T_Mask ip_address ac_flag_list
+	|	T_Restrict address T_Mask ip_address ac_flag_list
 		{
 			restrict_node *rn;
 

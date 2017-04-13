@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.1.1.11 2016/11/22 01:34:59 christos Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.1.1.12 2017/04/13 19:17:30 christos Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -1309,8 +1309,7 @@ loop_config(
 		if (freq < HUFFPUFF)
 			freq = HUFFPUFF;
 		sys_hufflen = (int)(freq / HUFFPUFF);
-		sys_huffpuff = emalloc(sizeof(sys_huffpuff[0]) *
-		    sys_hufflen);
+		sys_huffpuff = eallocarray(sys_hufflen, sizeof(sys_huffpuff[0]));
 		for (i = 0; i < sys_hufflen; i++)
 			sys_huffpuff[i] = 1e9;
 		sys_mindly = 1e9;

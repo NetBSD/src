@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.9 2016/11/22 01:35:05 christos Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.1.1.10 2017/04/13 19:17:27 christos Exp $	*/
 
 /*
  * ntp_intres.c - Implements a generic blocking worker child or thread,
@@ -412,7 +412,7 @@ blocking_getaddrinfo(
 			cp += sizeof(*ai);
 
 			/* transform ai_canonname into offset */
-			if (NULL != serialized_ai->ai_canonname) {
+			if (NULL != ai->ai_canonname) {
 				serialized_ai->ai_canonname = (char *)canons_octets;
 				canons_octets += strlen(ai->ai_canonname) + 1;
 			}

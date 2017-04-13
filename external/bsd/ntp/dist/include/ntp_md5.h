@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_md5.h,v 1.1.1.8 2016/01/08 21:21:23 christos Exp $	*/
+/*	$NetBSD: ntp_md5.h,v 1.1.1.9 2017/04/13 19:17:26 christos Exp $	*/
 
 /*
  * ntp_md5.h: deal with md5.h headers
@@ -10,6 +10,7 @@
 
 #ifdef OPENSSL
 # include "openssl/evp.h"
+# include "libssl_compat.h"
 #else	/* !OPENSSL follows */
 /*
  * Provide OpenSSL-alike MD5 API if we're not using OpenSSL
@@ -25,6 +26,9 @@
 # endif
 
   typedef MD5_CTX			EVP_MD_CTX;
+
+# define EVP_MD_CTX_free(c)		free(c)
+# define EVP_MD_CTX_new()		calloc(1, sizeof(MD5_CTX))
 # define EVP_get_digestbynid(t)		NULL
 # define EVP_md5()			NULL
 # define EVP_MD_CTX_init(c)

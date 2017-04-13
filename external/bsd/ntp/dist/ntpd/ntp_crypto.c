@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.1.1.12 2016/11/22 01:35:00 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.1.1.13 2017/04/13 19:17:31 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -24,11 +24,15 @@
 #include "ntp_calendar.h"
 #include "ntp_leapsec.h"
 
+#include "openssl/asn1.h"
 #include "openssl/bn.h"
+#include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/evp.h"
+#include "openssl/opensslv.h"
 #include "openssl/pem.h"
 #include "openssl/rand.h"
+#include "openssl/x509.h"
 #include "openssl/x509v3.h"
 #include "libssl_compat.h"
 
@@ -195,7 +199,7 @@ static	int	crypto_gq	(struct exten *, struct peer *);
 static	int	crypto_mv	(struct exten *, struct peer *);
 static	int	crypto_send	(struct exten *, struct value *, int);
 static	tstamp_t crypto_time	(void);
-static	void	asn_to_calendar		(ASN1_TIME *, struct calendar*);
+static	void	asn_to_calendar		(const ASN1_TIME *, struct calendar*);
 static	struct cert_info *cert_parse (const u_char *, long, tstamp_t);
 static	int	cert_sign	(struct exten *, struct value *);
 static	struct cert_info *cert_install (struct exten *, struct peer *);
@@ -2012,7 +2016,7 @@ crypto_time()
 static
 void
 asn_to_calendar	(
-	ASN1_TIME *asn1time,	/* pointer to ASN1_TIME structure */
+	const ASN1_TIME *asn1time,	/* pointer to ASN1_TIME structure */
 	struct calendar *pjd	/* pointer to result */
 	)
 {
@@ -3189,8 +3193,8 @@ cert_sign(
 	serial = ASN1_INTEGER_new();
 	ASN1_INTEGER_set(serial, tstamp);
 	X509_set_serialNumber(cert, serial);
-	X509_gmtime_adj(X509_get_notBefore(cert), 0L);
-	X509_gmtime_adj(X509_get_notAfter(cert), YEAR);
+	X509_gmtime_adj(X509_getm_notBefore(cert), 0L);
+	X509_gmtime_adj(X509_getm_notAfter(cert), YEAR);
 	subj = X509_get_issuer_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
 	    hostval.ptr, strlen((const char *)hostval.ptr), -1, 0);
@@ -3499,8 +3503,8 @@ cert_parse(
 		return (NULL);
 	}
 	ret->issuer = estrdup(pch + 3);
-	asn_to_calendar(X509_get_notBefore(cert), &(ret->first));
-	asn_to_calendar(X509_get_notAfter(cert), &(ret->last));
+	asn_to_calendar(X509_get0_notBefore(cert), &(ret->first));
+	asn_to_calendar(X509_get0_notAfter(cert), &(ret->last));
 
 	/*
 	 * Extract extension fields. These are ad hoc ripoffs of
@@ -3924,7 +3928,8 @@ crypto_setup(void)
 		RAND_seed(&seed, sizeof(l_fp));
 		RAND_write_file(randfile);
 		DPRINTF(1, ("crypto_setup: OpenSSL version %lx random seed file %s bytes read %d\n",
-			    SSLeay(), randfile, bytes));
+			    OpenSSL_version_num(), randfile, bytes));
+
 	}
 
 	/*
