@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.7 2016/01/05 21:53:48 marty Exp $ */
+/* $NetBSD: fdtvar.h,v 1.8 2017/04/13 22:12:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -166,5 +166,6 @@ bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
+bool		fdtbus_get_path(int, char *, size_t);
 
 #endif /* _DEV_FDT_FDTVAR_H */
