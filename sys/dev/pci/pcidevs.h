@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1276 2017/03/31 09:28:18 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1277 2017/04/13 04:04:39 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1284 2017/03/31 09:27:30 skrll Exp
+ *	NetBSD: pcidevs,v 1.1285 2017/04/13 04:04:13 msaitoh Exp
  */
 
 /*
@@ -1804,6 +1804,9 @@
 #define	PCI_PRODUCT_BROADCOM_BCM57785	0x16b5		/* BCM57785 Integrated Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57795	0x16b6		/* BCM57795 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57782	0x16b7		/* BCM57782 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_SDMMC	0x16bc		/* BCM577x5 SDMMC */
+#define	PCI_PRODUCT_BROADCOM_MS	0x16be		/* BCM577x5 Memstick */
+#define	PCI_PRODUCT_BROADCOM_XD	0x16bf		/* BCM577x5 xD */
 #define	PCI_PRODUCT_BROADCOM_BCM5702_ALT	0x16c6		/* BCM5702 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5703_ALT	0x16c7		/* BCM5703 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5781	0x16dd		/* BCM5781 Integrated Gigabit Ethernet */
