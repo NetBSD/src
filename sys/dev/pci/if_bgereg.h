@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.92 2017/04/12 06:22:16 msaitoh Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.93 2017/04/13 04:27:46 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -349,6 +349,7 @@
 #define	BGE_CHIPID_BCM5720_A0		0x05720000
 #define	BGE_CHIPID_BCM57765_A0		0x57785000
 #define	BGE_CHIPID_BCM57765_B0		0x57785100
+#define	BGE_CHIPID_BCM57766_A0		0x57766000
 
 /* shorthand one */
 #define BGE_ASICREV(x)			((x) >> 12)
