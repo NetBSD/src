@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.48 2017/04/10 14:19:22 christos Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.49 2017/04/13 01:32:57 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.48 2017/04/10 14:19:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.49 2017/04/13 01:32:57 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -116,8 +116,7 @@ static int esp_output_cb(struct cryptop *crp);
 const struct enc_xform *
 esp_algorithm_lookup(int alg)
 {
-	if (alg >= ESP_ALG_MAX)
-		return NULL;
+
 	switch (alg) {
 	case SADB_EALG_DESCBC:
 		return &enc_xform_des;
