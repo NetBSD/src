@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.13 2017/04/13 21:20:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.13 2017/04/13 21:20:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,9 +116,11 @@ static struct clk *tegra124_clk_pllx = NULL;
 void
 tegra124_cpuinit(void)
 {
-	const int node = OF_finddevice("/i2c@0,7000d000");
+	int node = OF_finddevice("/i2c@7000d000");
+	if (node == -1)
+		node = OF_finddevice("/i2c@0,7000d000"); /* old DTB */
 	if (node == -1) {
-		aprint_error("cpufreq: ERROR: couldn't find i2c@0,7000d000\n");
+		aprint_error("cpufreq: ERROR: couldn't find i2c@7000d000\n");
 		return;
 	}
 	i2c_tag_t ic = fdtbus_get_i2c_tag(node);
