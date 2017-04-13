@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.305 2017/04/13 04:27:46 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.306 2017/04/13 09:25:33 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.305 2017/04/13 04:27:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.306 2017/04/13 09:25:33 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4767,12 +4767,14 @@ bge_intr(void *xsc)
 	if (sc->bge_flags & BGEF_TAGGED_STATUS) {
 		if (sc->bge_lasttag == statustag &&
 		    (~pcistate & intrmask)) {
+			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious);
 			return (0);
 		}
 		sc->bge_lasttag = statustag;
 	} else {
 		if (!(statusword & BGE_STATFLAG_UPDATED) &&
 		    !(~pcistate & intrmask)) {
+			BGE_EVCNT_INCR(sc->bge_ev_intr_spurious2);
 			return (0);
 		}
 		statustag = 0;
