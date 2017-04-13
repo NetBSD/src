@@ -393,5 +393,13 @@ sleep 1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo "I:check 'rndc \"\"' is handled ($n)"
+ret=0
+$RNDCCMD "" > rndc.out.test$n 2>&1 && ret=1
+grep "rndc: '' failed: failure" rndc.out.test$n > /dev/null
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:exit status: $status"
 exit $status
