@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.6 2016/05/01 23:32:00 christos Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.7 2017/04/13 20:17:42 christos Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -87,7 +87,7 @@ create_buffers(int nbufs)
 	buffer_shortfall = 0;
 
 #ifndef DEBUG
-	bufp = emalloc_zero(abuf * sizeof(*bufp));
+	bufp = eallocarray(abuf, sizeof(*bufp));
 #endif
 
 	for (i = 0; i < abuf; i++) {
