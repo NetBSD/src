@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.32 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.33 2017/04/13 16:38:32 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.32 2017/04/06 09:20:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.33 2017/04/13 16:38:32 christos Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -91,11 +91,11 @@ SYSCTL_STRUCT(_net_inet_ipcomp, IPSECCTL_STATS,
 static int ipcomp_input_cb(struct cryptop *crp);
 static int ipcomp_output_cb(struct cryptop *crp);
 
+const uint8_t ipcomp_stats[256] = { SADB_CALG_STATS_INIT };
+
 const struct comp_algo *
 ipcomp_algorithm_lookup(int alg)
 {
-	if (alg >= IPCOMP_ALG_MAX)
-		return NULL;
 	switch (alg) {
 	case SADB_X_CALG_DEFLATE:
 		return &comp_algo_deflate_nogrow;
@@ -297,7 +297,7 @@ ipcomp_input_cb(struct cryptop *crp)
 		error = EINVAL;
 		goto bad;
 	}
-	IPCOMP_STATINC(IPCOMP_STAT_HIST + sav->alg_comp);
+	IPCOMP_STATINC(IPCOMP_STAT_HIST + ipcomp_stats[sav->alg_comp]);
 
 	/* Update the counters */
 	IPCOMP_STATADD(IPCOMP_STAT_IBYTES, m->m_pkthdr.len - skip - hlen);
@@ -560,7 +560,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		error = EINVAL;
 		goto bad;
 	}
-	IPCOMP_STATINC(IPCOMP_STAT_HIST + sav->alg_comp);
+	IPCOMP_STATINC(IPCOMP_STAT_HIST + ipcomp_stats[sav->alg_comp]);
 
 	if (rlen > crp->crp_olen) {
 		/* Inject IPCOMP header */
