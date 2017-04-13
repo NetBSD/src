@@ -1,4 +1,4 @@
-#	$NetBSD: vchain,v 1.8 2016/12/14 15:48:55 hannken Exp $
+#	$NetBSD: vchain,v 1.9 2017/04/13 09:52:18 hannken Exp $
 
 #	@(#)vchain	8.1 (Berkeley) 6/10/93
 #
@@ -53,14 +53,18 @@ print vnode chains for all mount points
 end
 
 define mountdump
-	set $mp=mountlist.tqh_first
-	while ($mp)
-		printf "%s on %s type %s, (mp 0x%x, privdata 0x%x)\n", \
-		    $mp->mnt_stat->f_mntfromname, $mp->mnt_stat->f_mntonname, \
-		    $mp->mnt_op->vfs_name, $mp, $mp->mnt_data
-		set $mp=$mp->mnt_list.tqe_next
-		if ((const void *)$mp == (const void *)&mountlist)
-			set $mp = 0
+	set $me=mount_list.tqh_first
+	while ($me)
+		if ($me->me_type == ME_MOUNT)
+			set $mp = $me->me_mount
+			printf "%s on %s type %s, (mp 0x%x, privdata 0x%x)\n", \
+			    $mp->mnt_stat->f_mntfromname, \
+			    $mp->mnt_stat->f_mntonname, \
+			    $mp->mnt_op->vfs_name, $mp, $mp->mnt_data
+		end
+		set $me=$me->me_list.tqe_next
+		if ((const void *)$me == (const void *)&mount_list)
+			set $me = 0
 		end
 	end
 end
