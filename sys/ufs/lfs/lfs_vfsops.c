@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.356 2017/04/01 17:34:21 maya Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.357 2017/04/13 09:57:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.356 2017/04/01 17:34:21 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.357 2017/04/13 09:57:28 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -387,11 +387,11 @@ struct pool lfs_lbnentry_pool;
 static void
 lfs_writerd(void *arg)
 {
- 	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+ 	struct mount *mp;
  	struct lfs *fs;
 	struct vfsops *vfs = NULL;
  	int fsflags;
-	int skipc;
 	int lfsc;
 	int wrote_something = 0;
  
@@ -446,14 +446,9 @@ lfs_writerd(void *arg)
  		 * Look through the list of LFSs to see if any of them
  		 * have requested pageouts.
  		 */
- 		mutex_enter(&mountlist_lock);
+ 		mountlist_iterator_init(&iter);
 		lfsc = 0;
-		skipc = 0;
- 		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
- 			if (vfs_busy(mp, &nmp)) {
-				++skipc;
- 				continue;
- 			}
+		while ((mp = mountlist_iterator_next(iter)) != NULL) {
 			KASSERT(!mutex_owned(&lfs_lock));
  			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
  			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
@@ -468,7 +463,6 @@ lfs_writerd(void *arg)
 				if (lfs_sb_getnextseg(fs) < lfs_sb_getcurseg(fs) && fs->lfs_nowrap) {
 					/* Don't try to write if we're suspended */
 					mutex_exit(&lfs_lock);
-					vfs_unbusy(mp, false, &nmp);
 					continue;
 				}
 				if (LFS_STARVED_FOR_SEGS(fs)) {
@@ -476,7 +470,6 @@ lfs_writerd(void *arg)
 
 					DLOG((DLOG_FLUSH, "lfs_writerd: need cleaning before writing possible\n"));
 					lfs_wakeup_cleaner(fs);
-					vfs_unbusy(mp, false, &nmp);
 					continue;
 				}
 
@@ -503,21 +496,19 @@ lfs_writerd(void *arg)
 				mutex_exit(&lfs_lock);
  			}
 			KASSERT(!mutex_owned(&lfs_lock));
- 			vfs_unbusy(mp, false, &nmp);
  		}
-		if (lfsc + skipc == 0) {
+		if (lfsc == 0) {
 			mutex_enter(&lfs_lock);
 			lfs_writer_daemon = NULL;
 			mutex_exit(&lfs_lock);
-			mutex_exit(&mountlist_lock);
+			mountlist_iterator_destroy(iter);
 			break;
 		}
- 		mutex_exit(&mountlist_lock);
+ 		mountlist_iterator_destroy(iter);
  
  		mutex_enter(&lfs_lock);
  	}
 	KASSERT(!mutex_owned(&lfs_lock));
-	KASSERT(!mutex_owned(&mountlist_lock));
 
 	/* Give up our extra reference so the module can be unloaded. */
 	mutex_enter(&vfs_list_lock);
