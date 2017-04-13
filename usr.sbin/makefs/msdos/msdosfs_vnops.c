@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.18 2017/02/16 18:50:05 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.18 2017/02/16 18:50:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -440,31 +440,29 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		return 0;
 
 	/* Don't bother to try to write files larger than the fs limit */
-	if (st->st_size > MSDOSFS_FILESIZE_MAX) {
-		errno = EFBIG;
-		return -1;
-	}
+	if (st->st_size > MSDOSFS_FILESIZE_MAX)
+		return EFBIG;
 
 	nsize = st->st_size;
 	DPRINTF(("%s(nsize=%zu, osize=%zu)\n", __func__, nsize, osize));
 	if (nsize > osize) {
-		if ((error = deextend(dep, nsize, NULL)) != 0) {
-			errno = error;
-			return -1;
-		}
-		if ((error = msdosfs_updatede(dep)) != 0) {
-			errno = error;
-			return -1;
-		}
+		if ((error = deextend(dep, nsize, NULL)) != 0)
+			return error;
+		if ((error = msdosfs_updatede(dep)) != 0)
+			return error;
 	}
 
-	if ((fd = open(path, O_RDONLY)) == -1)
-		err(1, "open %s", path);
+	if ((fd = open(path, O_RDONLY)) == -1) {
+		error = errno;
+		DPRINTF((1, "open %s: %s", path, strerror(error)));
+		return error;
+	}
 
 	if ((dat = mmap(0, nsize, PROT_READ, MAP_FILE | MAP_PRIVATE, fd, 0))
 	    == MAP_FAILED) {
-		DPRINTF(("%s: mmap %s %s", __func__, node->name,
-		    strerror(errno)));
+		error = errno;
+		DPRINTF(("%s: mmap %s: %s", __func__, node->name,
+		    strerror(error)));
 		close(fd);
 		goto out;
 	}
@@ -478,6 +476,7 @@ msdosfs_wfile(const char *path, struct denode *dep, fsnode *node)
 		cn = dep->de_StartCluster;
 		if (cn == MSDOSFSROOT) {
 			DPRINTF(("%s: bad lbn %lu", __func__, cn));
+			error = EINVAL;
 			goto out;
 		}
 		bn = cntobn(pmp, cn);
