@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.387 2017/03/22 03:32:09 knakahara Exp $
+#	$NetBSD: files.pci,v 1.388 2017/04/13 10:37:36 knakahara Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -693,6 +693,8 @@ file	dev/pci/if_wm.c			wm
 defflag	opt_if_wm.h	WM_EVENT_COUNTERS
 defparam opt_if_wm.h	WM_RX_PROCESS_LIMIT_DEFAULT
 			WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+			WM_DISABLE_MSI
+			WM_DISABLE_MSIX
 
 # Broadcom 570x Gigabit Ethernet
 device	bge: ether, ifnet, arp, mii, mii_bitbang
