@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.4 2017/04/13 22:12:53 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.5 2017/04/13 22:27:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.4 2017/04/13 22:12:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.5 2017/04/13 22:27:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,11 +102,6 @@ fdt_scan(device_t self, const struct fdt_attach_args *faa, const char *devname)
 		struct fdt_attach_args nfaa = *faa;
 		nfaa.faa_phandle = child;
 
-		/* Only attach to nodes with a compatible property */
-		len = OF_getproplen(child, "compatible");
-		if (len <= 0)
-			continue;
-
 		/* If there is a "status" property, make sure it is "okay" */
 		len = OF_getproplen(child, "status");
 		if (len > 0) {
@@ -157,6 +152,10 @@ fdt_print(void *aux, const char *pnp)
 	const struct fdt_attach_args * const faa = aux;
 	char buf[FDT_MAX_PATH];
 	const char *name = buf;
+
+	/* Skip "not configured" for nodes w/o compatible property */
+	if (OF_getproplen(faa->faa_phandle, "compatible") <= 0)
+		return QUIET;
 
 	if (pnp) {
 		if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
