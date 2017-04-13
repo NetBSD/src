@@ -1,4 +1,4 @@
-/*	$NetBSD: libssl_compat.c,v 1.1.1.1 2016/11/22 01:35:04 christos Exp $	*/
+/*	$NetBSD: libssl_compat.c,v 1.1.1.2 2017/04/13 19:17:27 christos Exp $	*/
 
 /*
  * libssl_compat.c -- OpenSSL v1.1 compatibility functions
@@ -17,15 +17,18 @@
  * ---------------------------------------------------------------------
  */
 #include "config.h"
-
-#include <string.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-
 #include "ntp_types.h"
 
 /* ----------------------------------------------------------------- */
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#ifdef OPENSSL
+# include <string.h>
+# include <openssl/bn.h>
+# include <openssl/evp.h>
+#endif
+/* ----------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------- */
+#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
 /* ----------------------------------------------------------------- */
 
 #include "libssl_compat.h"
@@ -327,7 +330,7 @@ sslshim_X509_get_signature_nid(
 }
 
 /* ----------------------------------------------------------------- */
-#else /* OPENSSL_VERSION_NUMBER >= v1.1.0 */
+#else /* OPENSSL && OPENSSL_VERSION_NUMBER >= v1.1.0 */
 /* ----------------------------------------------------------------- */
 
 NONEMPTY_TRANSLATION_UNIT
