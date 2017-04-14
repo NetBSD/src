@@ -34,7 +34,6 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #include <arpa/nameser.h> /* after normal includes for sunos */
@@ -46,6 +45,7 @@
 #include "dhcp.h"
 #include "if.h"
 #include "ipv6.h"
+#include "logerr.h"
 
 /* Support very old arpa/nameser.h as found in OpenBSD */
 #ifndef NS_MAXDNAME
@@ -921,7 +921,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			    prefix, opt, 1, od, ol, ifname))
 				return 1;
 			else
-				syslog(LOG_ERR, "%s: %s %d: %m",
+				logerr("%s: %s %d",
 				    ifname, __func__, opt->option);
 		}
 		return 0;
@@ -932,7 +932,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		if (opt->type & OT_INDEX) {
 			if (opt->index > 999) {
 				errno = ENOBUFS;
-				syslog(LOG_ERR, "%s: %m", __func__);
+				logerr(__func__);
 				return 0;
 			}
 		}
@@ -940,7 +940,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		    (opt->type & OT_INDEX ? 3 : 0);
 		pfx = malloc(e);
 		if (pfx == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logerr(__func__);
 			return 0;
 		}
 		if (opt->type & OT_INDEX)
@@ -958,8 +958,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		eo = dhcp_optlen(eopt, ol);
 		if (eo == -1) {
 			if (env == NULL)
-				syslog(LOG_ERR,
-				    "%s: %s %d.%d/%zu: "
+				logerrx("%s: %s %d.%d/%zu: "
 				    "malformed embedded option",
 				    ifname, __func__, opt->option,
 				    eopt->option, i);
@@ -973,8 +972,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			 * option which is optional. */
 			if (env == NULL &&
 			    (ol != 0 || !(eopt->type & OT_OPTIONAL)))
-				syslog(LOG_ERR,
-				    "%s: %s %d.%d/%zu: missing embedded option",
+				logerrx("%s: %s %d.%d/%zu: missing embedded option",
 				    ifname, __func__, opt->option,
 				    eopt->option, i);
 			goto out;
@@ -988,8 +986,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			    pfx, eopt, ov, od, (size_t)eo, ifname))
 				n++;
 			else if (env == NULL)
-				syslog(LOG_ERR,
-				    "%s: %s %d.%d/%zu: %m",
+				logerr("%s: %s %d.%d/%zu",
 				    ifname, __func__,
 				    opt->option, eopt->option, i);
 		}
