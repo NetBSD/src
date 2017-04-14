@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.90 2017/03/24 17:09:37 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.91 2017/04/14 04:43:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.90 2017/03/24 17:09:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.91 2017/04/14 04:43:47 kamil Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -1185,11 +1185,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CPU_SSE2);
 
 	const_sysctl(clog, "fpu_save", CTLTYPE_INT, x86_fpu_save,
-	    CTL_CREATE);
+	    CPU_FPU_SAVE);
 	const_sysctl(clog, "fpu_save_size", CTLTYPE_INT, x86_fpu_save_size,
-	    CTL_CREATE);
+	    CPU_FPU_SAVE_SIZE);
 	const_sysctl(clog, "xsave_features", CTLTYPE_QUAD, x86_xsave_features,
-	    CTL_CREATE);
+	    CPU_XSAVE_FEATURES);
 
 #ifndef XEN
 	const_sysctl(clog, "biosbasemem", CTLTYPE_INT, biosbasemem,
