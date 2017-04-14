@@ -16,7 +16,7 @@ DISTINFOSIGN=	${DISTINFO}.asc
 
 CLEANFILES+=	*.tar.xz
 
-.PHONY:		hooks import import-bsd test
+.PHONY:		hooks import import-bsd tests
 
 .SUFFIXES:	.in
 
@@ -26,8 +26,10 @@ all: config.h
 depend: config.h
 	for x in ${SUBDIRS}; do cd $$x; ${MAKE} $@; cd ..; done
 
-test:
-	cd $@; ${MAKE} $@; ./$@
+tests:
+	cd $@; ${MAKE} $@
+
+test: tests
 
 hooks:
 	cd $@; ${MAKE}
@@ -43,7 +45,7 @@ proginstall:
 
 clean:
 	rm -rf cov-int
-	for x in ${SUBDIRS} test; do cd $$x; ${MAKE} $@; cd ..; done
+	for x in ${SUBDIRS} tests; do cd $$x; ${MAKE} $@; cd ..; done
 
 distclean: clean
 	rm -f config.h config.mk config.log \

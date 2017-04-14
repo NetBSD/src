@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 2, 2017
+.Dd April 11, 2017
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Op Fl h , Fl Fl hostname Ar hostname
 .Op Fl I , Fl Fl clientid Ar clientid
 .Op Fl i , Fl Fl vendorclassid Ar vendorclassid
+.Op Fl j , Fl Fl logfile Ar logfile
 .Op Fl l , Fl Fl leasetime Ar seconds
 .Op Fl m , Fl Fl metric Ar metric
 .Op Fl O , Fl Fl nooption Ar option
@@ -259,7 +260,7 @@ This requires persistent storage and not all DHCP servers work with it so it
 is not enabled by default.
 .Nm
 generates the DUID and stores it in
-.Pa @DBDIR@/dhcpcd.duid .
+.Pa @DBDIR@/duid .
 This file should not be copied to other hosts.
 .It Fl d , Fl Fl debug
 Echo debug messages to the stderr and syslog.
@@ -342,6 +343,18 @@ For example
 If not set then none is sent.
 Some badly configured DHCP servers reject unknown vendorclassids.
 To work around it, try and impersonate Windows by using the MSFT vendorclassid.
+.It Fl j , Fl Fl logfile Ar logfile
+Writes to the specified
+.Ar logfile
+rather than
+.Xr syslog 3 .
+The
+.Ar logfile
+is s reopened when
+.Nm
+receives the
+.Dv SIGUSR2
+signal.
 .It Fl k , Fl Fl release Op Ar interface
 This causes an existing
 .Nm

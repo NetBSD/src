@@ -119,7 +119,7 @@ struct dhcpcd_ctx {
 	char pidfile[sizeof(PIDFILE) + IF_NAMESIZE + 1];
 	const char *cffile;
 	unsigned long long options;
-	int log_opts;
+	char *logfile;
 	int argc;
 	char **argv;
 	int ifac;	/* allowed interfaces */

@@ -1,5 +1,5 @@
 /*
- * dhcpcd: BPF arp and bootp filtering
+ * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -25,21 +25,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef BPF_HEADER
-#define BPF_HEADER
+#include "test.h"
 
-#define BPF_EOF			1 << 0
-#define BPF_PARTIALCSUM		2 << 0
+int main(void)
+{
+	int r = 0;
 
-#include "dhcpcd.h"
+	if (test_hmac_md5())
+		r = -1;
 
-extern const char *bpf_name;
-size_t bpf_frame_header_len(const struct interface *);
-int bpf_open(struct interface *, int (*)(struct interface *, int));
-int bpf_close(struct interface *, int);
-int bpf_attach(int, void *, unsigned int);
-ssize_t bpf_send(const struct interface *, int, uint16_t, const void *, size_t);
-ssize_t bpf_read(struct interface *, int, void *, size_t, int *);
-int bpf_arp(struct interface *, int);
-int bpf_bootp(struct interface *, int);
-#endif
+	return r;
+}
