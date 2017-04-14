@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.21 2017/02/02 02:52:10 ozaki-r Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.22 2017/04/14 02:43:28 ozaki-r Exp $
 #
 
 LIB=		rumpnet
@@ -10,6 +10,7 @@ COMMENT=	Rump kernel networking faction
 	${RUMPTOP}/../netatalk					\
 	${RUMPTOP}/../netinet					\
 	${RUMPTOP}/../netinet6					\
+	${RUMPTOP}/../netipsec					\
 	${RUMPTOP}/../compat/common
 
 SRCS=	net_stub.c netisr.c rump_net.c
