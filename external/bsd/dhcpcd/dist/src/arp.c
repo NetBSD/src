@@ -38,7 +38,6 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #define ELOOP_QUEUE 5
@@ -52,6 +51,7 @@
 #include "if.h"
 #include "if-options.h"
 #include "ipv4ll.h"
+#include "logerr.h"
 
 #if defined(ARP) && (!defined(KERNEL_RFC5227) || defined(ARPING))
 #define ARP_LEN								      \
@@ -152,7 +152,7 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 	}
 	if (ifn) {
 #ifdef ARP_DEBUG
-		syslog(LOG_DEBUG, "%s: ignoring ARP from self", ifp->name);
+		logdebugx("%s: ignoring ARP from self", ifp->name);
 #endif
 		return;
 	}
@@ -180,7 +180,7 @@ arp_close(struct interface *ifp)
 
 	if ((state = ARP_STATE(ifp)) != NULL && state->fd != -1) {
 		eloop_event_delete(ifp->ctx->eloop, state->fd);
-		bpf_close(state->fd);
+		bpf_close(ifp, state->fd);
 		state->fd = -1;
 	}
 }
@@ -202,7 +202,7 @@ arp_read(void *arg)
 	while (!(flags & BPF_EOF)) {
 		bytes = bpf_read(ifp, state->fd, buf, sizeof(buf), &flags);
 		if (bytes == -1) {
-			syslog(LOG_ERR, "%s: arp bpf_read: %m", ifp->name);
+			logerr("%s: %s", __func__, ifp->name);
 			arp_close(ifp);
 			return;
 		}
@@ -222,7 +222,7 @@ arp_open(struct interface *ifp)
 	if (state->fd == -1) {
 		state->fd = bpf_open(ifp, bpf_arp);
 		if (state->fd == -1) {
-			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
+			logerr("%s: %s", __func__, ifp->name);
 			return -1;
 		}
 		eloop_event_add(ifp->ctx->eloop, state->fd, arp_read, ifp);
@@ -256,13 +256,12 @@ arp_probe1(void *arg)
 		tv.tv_nsec = 0;
 		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probed, astate);
 	}
-	syslog(LOG_DEBUG,
-	    "%s: ARP probing %s (%d of %d), next in %0.1f seconds",
+	logdebugx("%s: ARP probing %s (%d of %d), next in %0.1f seconds",
 	    ifp->name, inet_ntoa(astate->addr),
 	    astate->probes ? astate->probes : PROBE_NUM, PROBE_NUM,
 	    timespec_to_double(&tv));
 	if (arp_request(ifp, 0, astate->addr.s_addr) == -1)
-		syslog(LOG_ERR, "send_arp: %m");
+		logerr(__func__);
 }
 
 void
@@ -270,15 +269,16 @@ arp_probe(struct arp_state *astate)
 {
 
 	if (arp_open(astate->iface) == -1) {
-		syslog(LOG_ERR, "%s: %s: %m", __func__, astate->iface->name);
+		logerr(__func__);
 		return;
 	} else {
 		const struct iarp_state *state = ARP_CSTATE(astate->iface);
 
-		bpf_arp(astate->iface, state->fd);
+		if (bpf_arp(astate->iface, state->fd) == -1)
+			logerr(__func__);
 	}
 	astate->probes = 0;
-	syslog(LOG_DEBUG, "%s: probing for %s",
+	logdebugx("%s: probing for %s",
 	    astate->iface->name, inet_ntoa(astate->addr));
 	arp_probe1(astate);
 }
@@ -311,18 +311,16 @@ arp_announce1(void *arg)
 	astate->claims++;
 #else
 	if (++astate->claims < ANNOUNCE_NUM)
-		syslog(LOG_DEBUG,
-		    "%s: ARP announcing %s (%d of %d), "
+		logdebugx("%s: ARP announcing %s (%d of %d), "
 		    "next in %d.0 seconds",
 		    ifp->name, inet_ntoa(astate->addr),
 		    astate->claims, ANNOUNCE_NUM, ANNOUNCE_WAIT);
 	else
-		syslog(LOG_DEBUG,
-		    "%s: ARP announcing %s (%d of %d)",
+		logdebugx("%s: ARP announcing %s (%d of %d)",
 		    ifp->name, inet_ntoa(astate->addr),
 		    astate->claims, ANNOUNCE_NUM);
 	if (arp_request(ifp, astate->addr.s_addr, astate->addr.s_addr) == -1)
-		syslog(LOG_ERR, "arp_request: %m");
+		logerr(__func__);
 #endif
 	eloop_timeout_add_sec(ifp->ctx->eloop, ANNOUNCE_WAIT,
 	    astate->claims < ANNOUNCE_NUM ? arp_announce1 : arp_announced,
@@ -335,7 +333,7 @@ arp_announce(struct arp_state *astate)
 
 #ifndef KERNEL_RFC5227
 	if (arp_open(astate->iface) == -1) {
-		syslog(LOG_ERR, "%s: %s: %m", __func__, astate->iface->name);
+		logerr(__func__);
 		return;
 	}
 #endif
@@ -352,13 +350,13 @@ arp_report_conflicted(const struct arp_state *astate,
 	if (amsg != NULL) {
 		char buf[HWADDR_LEN * 3];
 
-		syslog(LOG_ERR, "%s: hardware address %s claims %s",
+		logerrx("%s: hardware address %s claims %s",
 		    astate->iface->name,
 		    hwaddr_ntoa(amsg->sha, astate->iface->hwlen,
 		    buf, sizeof(buf)),
 		    inet_ntoa(astate->failed));
 	} else
-		syslog(LOG_ERR, "%s: DAD detected %s",
+		logerrx("%s: DAD detected %s",
 		    astate->iface->name, inet_ntoa(astate->failed));
 }
 
@@ -389,7 +387,7 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 	        ifp->if_data[IF_DATA_ARP] = malloc(sizeof(*state));
 		state = ARP_STATE(ifp);
 		if (state == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logerr(__func__);
 			return NULL;
 		}
 		state->fd = -1;
@@ -400,7 +398,7 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 	}
 
 	if ((astate = calloc(1, sizeof(*astate))) == NULL) {
-		syslog(LOG_ERR, "%s: %s: %m", ifp->name, __func__);
+		logerr(__func__);
 		return NULL;
 	}
 	astate->iface = ifp;
@@ -409,7 +407,8 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 	state = ARP_STATE(ifp);
 	TAILQ_INSERT_TAIL(&state->arp_states, astate, next);
 
-	bpf_arp(ifp, state->fd);
+	if (bpf_arp(ifp, state->fd) == -1)
+		logerr(__func__); /* try and continue */
 
 	return astate;
 }
@@ -444,7 +443,8 @@ arp_free(struct arp_state *astate)
 		free(state);
 		ifp->if_data[IF_DATA_ARP] = NULL;
 	} else
-		bpf_arp(ifp, state->fd);
+		if (bpf_arp(ifp, state->fd) == -1)
+			logerr(__func__);
 }
 
 static void
