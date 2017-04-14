@@ -1,11 +1,11 @@
-# $NetBSD: shl.mi,v 1.165 2017/04/14 02:43:27 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.166 2017/04/14 15:21:28 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.206.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot,crypto
-./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot,lvm
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libevent.so.4.1.debug			comp-sys-debug	debug,dynamicroot
