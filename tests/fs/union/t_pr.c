@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.11 2017/04/12 15:12:55 riastradh Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.12 2017/04/14 01:30:38 riastradh Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -63,7 +63,7 @@ ATF_TC_BODY(multilayer2, tc)
 {
 	struct union_args unionargs;
 
-	atf_tc_expect_fail("PR kern/2423");
+	atf_tc_expect_signal(-1, "PR kern/2423");
 
 	rump_init();
 
@@ -103,7 +103,7 @@ ATF_TC_BODY(cyclic, tc)
 {
 	struct union_args unionargs;
 
-	atf_tc_expect_fail("PR kern/3645");
+	atf_tc_expect_signal(-1, "PR kern/3645");
 
 	rump_init();
 
@@ -133,7 +133,7 @@ ATF_TC_BODY(cyclic2, tc)
 {
 	struct union_args unionargs;
 
-	atf_tc_expect_fail("PR kern/4597");
+	atf_tc_expect_signal(-1, "PR kern/4597");
 
 	rump_init();
 
