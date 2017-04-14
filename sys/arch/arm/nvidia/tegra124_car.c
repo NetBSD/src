@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.8 2017/01/12 01:12:08 maya Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.9 2017/04/14 09:50:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.8 2017/01/12 01:12:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.9 2017/04/14 09:50:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -636,6 +636,7 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_PLLP_OUTC_REG, CAR_PLLP_OUTC_OUT5_CLKEN),
 	CLK_GATE_U("xusb_host", "xusb_host_src", CAR_DEV_U_XUSB_HOST),
 	CLK_GATE_W("xusb_ss", "xusb_ss_src", CAR_DEV_W_XUSB_SS),
+	CLK_GATE_X("gpu", "pll_ref", CAR_DEV_X_GPU),
 };
 
 struct tegra124_car_rst {
