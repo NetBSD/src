@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.14 2017/03/06 07:15:47 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.15 2017/04/14 02:56:48 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -170,6 +170,8 @@ stop_nc_server()
 BASIC_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet \
     -lrumpnet_shmif -lrumpdev"
 FS_LIBS="$BASIC_LIBS -lrumpvfs -lrumpfs_ffs"
+CRYPTO_LIBS="$BASIC_LIBS -lrumpvfs -lrumpdev_opencrypto \
+    -lrumpkern_z -lrumpkern_crypto"
 
 # We cannot keep variables between test phases, so need to store in files
 _rump_server_socks=./.__socks
@@ -213,6 +215,24 @@ rump_server_fs_start()
 	local sock=$1
 	local _libs=
 	local libs="$FS_LIBS"
+
+	shift 1
+	_libs="$*"
+
+	for lib in $_libs; do
+		libs="$libs -lrumpnet_$lib"
+	done
+
+	_rump_server_start_common $sock $libs
+
+	return 0
+}
+
+rump_server_crypto_start()
+{
+	local sock=$1
+	local _libs=
+	local libs="$CRYPTO_LIBS"
 
 	shift 1
 	_libs="$*"
