@@ -58,7 +58,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -71,6 +70,7 @@
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "ipv6nd.h"
+#include "logerr.h"
 
 void
 if_free(struct interface *ifp)
@@ -225,8 +225,7 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
 				if (errno != EEXIST)
-					syslog(LOG_ERR,
-					    "%s: if_addrflags: %s: %m",
+					logerr("%s: if_addrflags: %s",
 					    __func__,
 					    inet_ntoa(addr->sin_addr));
 				continue;
@@ -252,8 +251,7 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			    ifa->ifa_name);
 			if (addrflags == -1) {
 				if (errno != EEXIST)
-					syslog(LOG_ERR,
-					    "%s: if_addrflags6:  %m", __func__);
+					logerr("%s: if_addrflags6", __func__);
 				continue;
 			}
 #endif
@@ -361,15 +359,15 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		}
 
 		if (if_vimaster(ctx, spec.devname) == 1) {
-			syslog(argc ? LOG_ERR : LOG_DEBUG,
-			    "%s: is a Virtual Interface Master, skipping",
+			logfunc_t *logfunc = argc != 0 ? logerrx : logdebugx;
+			logfunc("%s: is a Virtual Interface Master, skipping",
 			    spec.devname);
 			continue;
 		}
 
 		ifp = calloc(1, sizeof(*ifp));
 		if (ifp == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logerr(__func__);
 			break;
 		}
 		ifp->ctx = ctx;
@@ -413,8 +411,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 				    ctx->ifac == 0 && active &&
 				    !if_hasconf(ctx, ifp->name))
 				{
-					syslog(LOG_DEBUG,
-					    "%s: ignoring due to"
+					logdebugx("%s: ignoring due to"
 					    " interface type and"
 					    " no config",
 					    ifp->name);
@@ -448,8 +445,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 				    !if_hasconf(ctx, ifp->name))
 					active = IF_INACTIVE;
 				if (active)
-					syslog(LOG_WARNING,
-					    "%s: unsupported"
+					logwarnx("%s: unsupported"
 					    " interface type %.2x",
 					    ifp->name, sdl->sdl_type);
 				/* Pretend it's ethernet */
@@ -494,8 +490,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 #ifndef AF_LINK
 			default:
 				if (active)
-					syslog(LOG_WARNING,
-					    "%s: unsupported"
+					logwarnx("%s: unsupported"
 					    " interface family %.2x",
 					    ifp->name, ifp->family);
 				break;
@@ -506,7 +501,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (!(ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))) {
 			/* Handle any platform init for the interface */
 			if (active != IF_INACTIVE && if_init(ifp) == -1) {
-				syslog(LOG_ERR, "%s: if_init: %m", ifp->name);
+				logerr("%s: if_init", ifp->name);
 				if_free(ifp);
 				continue;
 			}
@@ -515,7 +510,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			if (if_getmtu(ifp) < MTU_MIN && active &&
 			    if_setmtu(ifp, MTU_MIN) == -1)
 			{
-				syslog(LOG_ERR, "%s: if_setmtu: %m", ifp->name);
+				logerr("%s: if_setmtu", ifp->name);
 				if_free(ifp);
 				continue;
 			}

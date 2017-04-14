@@ -40,7 +40,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -52,6 +51,7 @@
 #include "if-options.h"
 #include "ipv4.h"
 #include "ipv4ll.h"
+#include "logerr.h"
 #include "route.h"
 #include "script.h"
 #include "sa.h"
@@ -382,8 +382,8 @@ inet_routerhostroute(struct rt_head *routes, struct interface *ifp)
 				char buf[INET_MAX_ADDRSTRLEN];
 
 				ifo->options |= DHCPCD_ROUTER_HOST_ROUTE_WARNED;
-				syslog(LOG_WARNING,
-				    "%s: forcing router %s through interface",
+				logwarnx("%s: forcing router %s through "
+				    "interface",
 				    ifp->name,
 				    sa_addrtop(&rt->rt_gateway,
 				    buf, sizeof(buf)));
@@ -397,8 +397,7 @@ inet_routerhostroute(struct rt_head *routes, struct interface *ifp)
 			char buf[INET_MAX_ADDRSTRLEN];
 
 			ifo->options |= DHCPCD_ROUTER_HOST_ROUTE_WARNED;
-			syslog(LOG_WARNING,
-			    "%s: router %s requires a host route",
+			logwarnx("%s: router %s requires a host route",
 			    ifp->name,
 			    sa_addrtop(&rt->rt_gateway, buf, sizeof(buf)));
 		}
@@ -462,14 +461,14 @@ ipv4_deladdr(struct ipv4_addr *addr, int keeparp)
 	UNUSED(keeparp);
 #endif
 
-	syslog(LOG_DEBUG, "%s: deleting IP address %s",
+	logdebugx("%s: deleting IP address %s",
 	    addr->iface->name, addr->saddr);
 
 	r = if_address(RTM_DELADDR, addr);
 	if (r == -1 &&
 	    errno != EADDRNOTAVAIL && errno != ESRCH &&
 	    errno != ENXIO && errno != ENODEV)
-		syslog(LOG_ERR, "%s: %s: %m", addr->iface->name, __func__);
+		logerr("%s: %s", addr->iface->name, __func__);
 
 #ifdef ARP
 	if (!keeparp && (astate = arp_find(addr->iface, &addr->addr)) != NULL)
@@ -525,7 +524,7 @@ ipv4_getstate(struct interface *ifp)
 	        ifp->if_data[IF_DATA_IPV4] = malloc(sizeof(*state));
 		state = IPV4_STATE(ifp);
 		if (state == NULL) {
-			syslog(LOG_ERR, "%s: %m", __func__);
+			logerr(__func__);
 			return NULL;
 		}
 		TAILQ_INIT(&state->addrs);
@@ -593,7 +592,7 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 #endif
 
 	if ((state = ipv4_getstate(ifp)) == NULL) {
-		syslog(LOG_ERR, "%s: ipv4_getstate: %m", __func__);
+		logerr(__func__);
 		return NULL;
 	}
 	if (ifp->options->options & DHCPCD_NOALIAS) {
@@ -606,7 +605,7 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 	}
 
 	if ((ia = malloc(sizeof(*ia))) == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+		logerr(__func__);
 		return NULL;
 	}
 
@@ -623,19 +622,19 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 #ifdef ALIAS_ADDR
 	blank = (ia->alias[0] == '\0');
 	if ((replaced = ipv4_aliasaddr(ia, &replaced_ia)) == -1) {
-		syslog(LOG_ERR, "%s: ipv4_aliasaddr: %m", ifp->name);
+		logerr("%s: ipv4_aliasaddr", ifp->name);
 		free(ia);
 		return NULL;
 	}
 	if (blank)
-		syslog(LOG_DEBUG, "%s: aliased %s", ia->alias, ia->saddr);
+		logdebugx("%s: aliased %s", ia->alias, ia->saddr);
 #endif
 
-	syslog(LOG_DEBUG, "%s: adding IP address %s broadcast %s",
+	logdebugx("%s: adding IP address %s broadcast %s",
 	    ifp->name, ia->saddr, inet_ntoa(*bcast));
 	if (if_address(RTM_NEWADDR, ia) == -1) {
 		if (errno != EEXIST)
-			syslog(LOG_ERR, "%s: if_addaddress: %m",
+			logerr("%s: if_addaddress",
 			    __func__);
 		free(ia);
 		return NULL;
@@ -750,14 +749,13 @@ ipv4_applyaddr(void *arg)
 		    nstate->addr->addr.s_addr == lease->addr.s_addr)
 		{
 			if (r == 0) {
-				syslog(LOG_INFO,
-				    "%s: preferring %s on %s",
+				loginfox("%s: preferring %s on %s",
 				    ifp->name,
 				    inet_ntoa(lease->addr),
 				    ifn->name);
 				return;
 			}
-			syslog(LOG_INFO, "%s: preferring %s on %s",
+			loginfox("%s: preferring %s on %s",
 			    ifn->name,
 			    inet_ntoa(lease->addr),
 			    ifp->name);
@@ -782,7 +780,7 @@ ipv4_applyaddr(void *arg)
 	if (ia &&
 	    ia->mask.s_addr == lease->mask.s_addr &&
 	    ia->brd.s_addr == lease->brd.s_addr)
-		syslog(LOG_DEBUG, "%s: IP address %s already exists",
+		logdebugx("%s: IP address %s already exists",
 		    ifp->name, ia->saddr);
 	else {
 #if __linux__
@@ -799,8 +797,7 @@ ipv4_applyaddr(void *arg)
 
 	ia = ipv4_iffindaddr(ifp, &lease->addr, NULL);
 	if (ia == NULL) {
-		syslog(LOG_ERR, "%s: added address vanished",
-		    ifp->name);
+		logerrx("%s: added address vanished", ifp->name);
 		return;
 	}
 #if defined(ARP) && defined(IN_IFF_NOTUSEABLE)
@@ -868,7 +865,7 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 	case RTM_NEWADDR:
 		if (ia == NULL) {
 			if ((ia = malloc(sizeof(*ia))) == NULL) {
-				syslog(LOG_ERR, "%s: %m", __func__);
+				logerr(__func__);
 				return;
 			}
 			ia->iface = ifp;

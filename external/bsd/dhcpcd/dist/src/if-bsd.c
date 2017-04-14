@@ -66,7 +66,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #if defined(OpenBSD) && OpenBSD >= 201411
@@ -84,6 +83,7 @@
 #include "ipv4ll.h"
 #include "ipv6.h"
 #include "ipv6nd.h"
+#include "logerr.h"
 #include "route.h"
 #include "sa.h"
 
@@ -120,6 +120,22 @@ int
 if_opensockets_os(struct dhcpcd_ctx *ctx)
 {
 	struct priv *priv;
+#if defined(RO_MSGFILTER) || defined(ROUTE_MSGFILTER)
+	unsigned char msgfilter[] = {
+	    RTM_IFINFO,
+#ifdef RTM_IFANNOUNCE
+	    RTM_IFANNOUNCE,
+#endif
+	    RTM_ADD, RTM_CHANGE, RTM_DELETE,
+#ifdef RTM_CHGADDR
+	    RTM_CHGADDR,
+#endif
+	    RTM_NEWADDR, RTM_DELADDR
+	};
+#ifdef ROUTE_MSGFILTER
+	unsigned int i, msgfilter_mask;
+#endif
+#endif
 
 	if ((priv = malloc(sizeof(*priv))) == NULL)
 		return -1;
@@ -137,6 +153,21 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 #define SOCK_FLAGS	(SOCK_CLOEXEC | SOCK_NONBLOCK)
 	ctx->link_fd = xsocket(PF_ROUTE, SOCK_RAW | SOCK_FLAGS, AF_UNSPEC);
 #undef SOCK_FLAGS
+
+#if defined(RO_MSGFILTER)
+	if (setsockopt(ctx->link_fd, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) == -1)
+		logerr(__func__);
+#elif defined(ROUTE_MSGFILTER)
+	/* Convert the array into a bitmask. */
+	msgfilter_mask = 0;
+	for (i = 0; i < __arraycount(msgfilter); i++)
+		msgfilter_mask |= ROUTE_FILTER(msgfilter[i]);
+	if (setsockopt(ctx->link_fd, PF_ROUTE, ROUTE_MSGFILTER,
+	    &msgfilter_mask, sizeof(msgfilter_mask)) == -1)
+		logerr(__func__);
+#endif
+
 	return ctx->link_fd == -1 ? -1 : 0;
 }
 
@@ -922,6 +953,10 @@ if_rtm(struct dhcpcd_ctx *ctx, const struct rt_msghdr *rtm)
 	if (if_ownmsgpid(ctx, rtm->rtm_pid, rtm->rtm_seq))
 		return;
 
+	/* Ignore errors. */
+	if (rtm->rtm_errno != 0)
+		return;
+
 	if (if_copyrt(ctx, &rt, rtm) == -1)
 		return;
 
@@ -1037,8 +1072,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 			ifr_sin->sin_family = AF_INET;
 			ifr_sin->sin_addr = addr;
 			if (ioctl(ctx->pf_inet_fd, SIOCGIFADDR, &ifr) == 0) {
-				syslog(LOG_WARNING,
-				    "%s: ignored false RTM_DELADDR for %s",
+				logwarnx("%s: ignored false RTM_DELADDR for %s",
 				    ifp->name, inet_ntoa(addr));
 				break;
 			}
@@ -1049,7 +1083,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		if (ifam->ifam_type == RTM_DELADDR)
 			addrflags = 0 ;
 		else if ((addrflags = if_addrflags(ifp, &addr, NULL)) == -1) {
-			syslog(LOG_ERR, "%s: if_addrflags: %s: %m",
+			logerr("%s: if_addrflags: %s",
 			    ifp->name, inet_ntoa(addr));
 			break;
 		}
@@ -1075,7 +1109,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		if (ifam->ifam_type == RTM_DELADDR)
 		    addrflags = 0;
 		else if ((addrflags = if_addrflags6(ifp, &addr6, NULL)) == -1) {
-			syslog(LOG_ERR, "%s: if_addrflags6: %m", ifp->name);
+			logerr("%s: if_addrflags6", ifp->name);
 			break;
 		}
 #endif
@@ -1316,8 +1350,8 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		if (!(ctx->options & DHCPCD_TEST) &&
 		    flags & ND6_IFF_AUTO_LINKLOCAL)
 		{
-			syslog(LOG_DEBUG,
-			    "%s: disabling Kernel IPv6 auto link-local support",
+			logdebugx("%s: disabling Kernel IPv6 auto "
+			    "link-local support",
 			    ifp->name);
 			flags &= ~ND6_IFF_AUTO_LINKLOCAL;
 		}
@@ -1334,8 +1368,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		if (!(ctx->options & DHCPCD_TEST) &&
 		    flags & ND6_IFF_ACCEPT_RTADV)
 		{
-			syslog(LOG_DEBUG,
-			    "%s: disabling Kernel IPv6 RA support",
+			logdebugx("%s: disabling Kernel IPv6 RA support",
 			    ifp->name);
 			flags &= ~ND6_IFF_ACCEPT_RTADV;
 		}
@@ -1352,15 +1385,13 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 
 		if (nd.ndi.flags != (uint32_t)flags) {
 			if (ctx->options & DHCPCD_TEST) {
-				syslog(LOG_WARNING,
-				    "%s: interface not IPv6 enabled",
+				logwarnx("%s: interface not IPv6 enabled",
 				    ifp->name);
 				return -1;
 			}
 			nd.ndi.flags = (uint32_t)flags;
 			if (ioctl(s, SIOCSIFINFO_FLAGS, &nd) == -1) {
-				syslog(LOG_ERR, "%s: SIOCSIFINFO_FLAGS: %m",
-				    ifp->name);
+				logerr("%s: SIOCSIFINFO_FLAGS", ifp->name);
 				return -1;
 			}
 		}
@@ -1370,14 +1401,14 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		 * LLADDR auto configuration are disabled where applicable. */
 #ifdef SIOCIFAFATTACH
 		if (af_attach(s, ifp, AF_INET6) == -1) {
-			syslog(LOG_ERR, "%s: af_attach: %m", ifp->name);
+			logerr("%s: af_attach", ifp->name);
 			return -1;
 		}
 #endif
 
 #ifdef SIOCGIFXFLAGS
 		if (set_ifxflags(s, ifp) == -1) {
-			syslog(LOG_ERR, "%s: set_ifxflags: %m", ifp->name);
+			logerr("%s: set_ifxflags", ifp->name);
 			return -1;
 		}
 #endif
@@ -1403,14 +1434,14 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 #ifdef IPV6CTL_ACCEPT_RTADV
 	ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
 	if (ra == -1)
-		/* The sysctl probably doesn't exist, but this isn't an
-		 * error as such so just log it and continue */
-		syslog(errno == ENOENT ? LOG_DEBUG : LOG_WARNING,
-		    "IPV6CTL_ACCEPT_RTADV: %m");
+		if (errno == ENOENT)
+			ra = 0;
+		else
+			logerr("IPV6CTL_ACCEPT_RTADV");
 	else if (ra != 0 && !(ctx->options & DHCPCD_TEST)) {
-		syslog(LOG_DEBUG, "disabling Kernel IPv6 RA support");
+		logdebugx("disabling Kernel IPv6 RA support");
 		if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 0) == -1) {
-			syslog(LOG_ERR, "IPV6CTL_ACCEPT_RTADV: %m");
+			logerr("IPV6CTL_ACCEPT_RTADV");
 			return ra;
 		}
 		ra = 0;
@@ -1422,7 +1453,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp)
 		 * and prefixes so the kernel does not expire prefixes
 		 * and default routes we are trying to own. */
 		if (if_raflush(s) == -1)
-			syslog(LOG_WARNING, "if_raflush: %m");
+			logwarn("if_raflush");
 	}
 
 	ctx->ra_global = ra;

@@ -42,7 +42,7 @@
 
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
-#define IF_OPTS "146bc:de:f:gh:i:kl:m:no:pqr:s:t:u:v:wxy:z:" \
+#define IF_OPTS "146bc:de:f:gh:i:j:kl:m:no:pqr:s:t:u:v:wxy:z:" \
 		"ABC:DEF:HI:JKLMNO:PQ:S:TUVW:X:Z:"
 #define NOERR_IF_OPTS		":" IF_OPTS
 

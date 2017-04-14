@@ -1,5 +1,5 @@
 /*
- * dhcpcd - DHCP client daemon
+ * logerr: errx with logging
  * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -25,19 +25,53 @@
  * SUCH DAMAGE.
  */
 
-#ifndef DPRINTF_H
-#define DPRINTF_H
+#ifndef LOGERR_H
+#define LOGERR_H
 
-#include <stdarg.h>
+#include <sys/param.h>
 
 #ifndef __printflike
-# if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-#  define __printflike(a, b) __attribute__((format(printf, a, b)))
-# else
-#  define __printflike(a, b)
-# endif
+#if __GNUC__ > 2 || defined(__INTEL_COMPILER)
+#define	__printflike(a, b) __attribute__((format(printf, a, b)))
+#else
+#define	__printflike
+#endif
+#endif /* !__printflike */
+
+__printflike(1, 2) typedef void logfunc_t(const char *, ...);
+
+__printflike(1, 2) void logdebug(const char *, ...);
+__printflike(1, 2) void logdebugx(const char *, ...);
+__printflike(1, 2) void loginfo(const char *, ...);
+__printflike(1, 2) void loginfox(const char *, ...);
+__printflike(1, 2) void logwarn(const char *, ...);
+__printflike(1, 2) void logwarnx(const char *, ...);
+__printflike(1, 2) void logerr(const char *, ...);
+#define	LOGERROR	logerr("%s: %d", __FILE__, __LINE__)
+__printflike(1, 2) void logerrx(const char *, ...);
+
+void logsetopts(unsigned int);
+#define	LOGERR_DEBUG	(1U << 6)
+#define	LOGERR_QUIET	(1U << 7)
+#define	LOGERR_LOG	(1U << 11)
+#define	LOGERR_LOG_DATE	(1U << 12)
+#define	LOGERR_LOG_HOST	(1U << 13)
+#define	LOGERR_LOG_TAG	(1U << 14)
+#define	LOGERR_LOG_PID	(1U << 15)
+#define	LOGERR_ERR	(1U << 21)
+#define	LOGERR_ERR_DATE	(1U << 22)
+#define	LOGERR_ERR_HOST	(1U << 23)
+#define	LOGERR_ERR_TAG	(1U << 24)
+#define	LOGERR_ERR_PID	(1U << 25)
+
+/* To build tag support or not. */
+//#define	LOGERR_TAG
+#if defined(LOGERR_TAG)
+void logsettag(const char *);
 #endif
 
-__printflike(2, 0) int vdprintf(int, const char * __restrict, va_list);
-__printflike(2, 3) int dprintf(int, const char * __restrict, ...);
+int logopen(const char *);
+void logclose(void);
+int logreopen(void);
+
 #endif

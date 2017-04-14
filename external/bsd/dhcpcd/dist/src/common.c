@@ -45,13 +45,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "common.h"
 #include "dhcpcd.h"
 #include "if-options.h"
+#include "logerr.h"
 
 /* Most route(4) messages are less than 256 bytes. */
 #define IOVEC_BUFSIZ	256
@@ -63,9 +63,8 @@ setvar(char **e, const char *prefix, const char *var, const char *value)
 
 	if (prefix)
 		len += strlen(prefix) + 1;
-	*e = malloc(len);
-	if (*e == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+	if ((*e = malloc(len)) == NULL) {
+		logerr(__func__);
 		return -1;
 	}
 	if (prefix)

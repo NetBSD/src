@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -45,6 +44,7 @@
 #include "control.h"
 #include "eloop.h"
 #include "if.h"
+#include "logerr.h"
 
 #ifndef SUN_LEN
 #define SUN_LEN(su) \
@@ -141,7 +141,7 @@ control_handle_data(void *arg)
 		}
 		*ap = NULL;
 		if (dhcpcd_handleargs(fd->ctx, fd, argc, argvp) == -1) {
-			syslog(LOG_ERR, "%s: dhcpcd_handleargs: %m", __func__);
+			logerr(__func__);
 			if (errno != EINTR && errno != EAGAIN) {
 				control_delete(fd);
 				return;
@@ -366,7 +366,7 @@ control_writeone(void *arg)
 	iov[1].iov_base = data->data;
 	iov[1].iov_len = data->data_len;
 	if (writev(fd->fd, iov, 2) == -1) {
-		syslog(LOG_ERR, "%s: writev fd %d: %m", __func__, fd->fd);
+		logerr(__func__);
 		if (errno != EINTR && errno != EAGAIN)
 			control_delete(fd);
 		return;

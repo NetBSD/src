@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2017 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ vdprintf(int fd, const char * __restrict fmt, va_list va)
 	if ((e = dup(fd)) == -1)
 		return -1;
 
-	if ((fp = fdopen(e, "w")) == NULL) {
+	if ((fp = fdopen(e, "a")) == NULL) {
 		close(e);
 		return -1;
 	}
@@ -62,4 +62,3 @@ dprintf(int fd, const char * __restrict fmt, ...)
 	va_end(va);
 	return e;
 }
-

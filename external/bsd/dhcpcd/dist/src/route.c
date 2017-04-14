@@ -31,7 +31,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -41,6 +40,7 @@
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "ipv6.h"
+#include "logerr.h"
 #include "route.h"
 #include "sa.h"
 
@@ -74,27 +74,27 @@ rt_desc(const char *cmd, const struct rt *rt)
 
 	if (rt->rt_flags & RTF_HOST) {
 		if (gateway_unspec)
-			syslog(LOG_INFO, "%s: %s host route to %s",
+			loginfox("%s: %s host route to %s",
 			    ifname, cmd, dest);
 		else
-			syslog(LOG_INFO, "%s: %s host route to %s via %s",
+			loginfox("%s: %s host route to %s via %s",
 			    ifname, cmd, dest, gateway);
 	} else if (sa_is_unspecified(&rt->rt_dest) &&
 		   sa_is_unspecified(&rt->rt_netmask))
 	{
 		if (gateway_unspec)
-			syslog(LOG_INFO, "%s: %s default route",
+			loginfox("%s: %s default route",
 			    ifname, cmd);
 		else
-			syslog(LOG_INFO, "%s: %s default route via %s",
+			loginfox("%s: %s default route via %s",
 			    ifname, cmd, gateway);
 	} else if (gateway_unspec)
-		syslog(LOG_INFO, "%s: %s%s route to %s/%d",
+		loginfox("%s: %s%s route to %s/%d",
 		    ifname, cmd,
 		    rt->rt_flags & RTF_REJECT ? " reject" : "",
 		    dest, prefix);
 	else
-		syslog(LOG_INFO, "%s: %s%s route to %s/%d via %s",
+		loginfox("%s: %s%s route to %s/%d via %s",
 		    ifname, cmd,
 		    rt->rt_flags & RTF_REJECT ? " reject" : "",
 		    dest, prefix, gateway);
@@ -156,7 +156,7 @@ rt_new(struct interface *ifp)
 	if ((rt = TAILQ_FIRST(&ctx->froutes)) != NULL)
 		TAILQ_REMOVE(&ctx->froutes, rt, rt_next);
 	else if ((rt = malloc(sizeof(*rt))) == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+		logerr(__func__);
 		return NULL;
 	}
 	memset(rt, 0, sizeof(*rt));
@@ -327,7 +327,7 @@ rt_add(struct rt *nrt, struct rt *ort)
 		if (if_route(RTM_CHANGE, nrt) != -1)
 			return true;
 		if (errno != ESRCH)
-			syslog(LOG_ERR, "if_route (CHG): %m");
+			logerr("if_route (CHG)");
 	}
 
 #ifdef HAVE_ROUTE_METRIC
@@ -336,7 +336,7 @@ rt_add(struct rt *nrt, struct rt *ort)
 	if (if_route(RTM_ADD, nrt) != -1) {
 		if (ort != NULL) {
 			if (if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
-				syslog(LOG_ERR, "if_route (DEL): %m");
+				logerr("if_route (DEL)");
 			rt_kfree(ort);
 		}
 		return true;
@@ -355,7 +355,7 @@ rt_add(struct rt *nrt, struct rt *ort)
 #endif
 	if (ort != NULL) {
 		if (if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
-			syslog(LOG_ERR, "if_route (DEL): %m");
+			logerr("if_route (DEL)");
 		else
 			rt_kfree(ort);
 	}
@@ -375,7 +375,7 @@ rt_add(struct rt *nrt, struct rt *ort)
 #ifdef HAVE_ROUTE_METRIC
 logerr:
 #endif
-	syslog(LOG_ERR, "if_route (ADD): %m");
+	logerr("if_route (ADD)");
 	return false;
 }
 
@@ -387,7 +387,7 @@ rt_delete(struct rt *rt)
 	rt_desc("deleting", rt);
 	retval = if_route(RTM_DELETE, rt) == -1 ? false : true;
 	if (!retval && errno != ENOENT && errno != ESRCH)
-		syslog(LOG_ERR, "%s: if_delroute: %m", rt->rt_ifp->name);
+		logerr(__func__);
 	/* Remove the route from our kernel table so we can add a
 	 * IPv4LL default route if possible. */
 	else

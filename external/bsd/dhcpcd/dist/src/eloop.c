@@ -40,7 +40,7 @@
 #include <unistd.h>
 
 /* config.h should define HAVE_KQUEUE, HAVE_EPOLL, etc. */
-#ifdef HAVE_CONFIG_H
+#if defined(HAVE_CONFIG_H) && !defined(NO_CONFIG_H)
 #include "config.h"
 #endif
 
@@ -52,12 +52,15 @@
 /* Assume BSD has a working sys/queue.h and kqueue(2) interface. */
 #define HAVE_SYS_QUEUE_H
 #define HAVE_KQUEUE
-#elif defined(__linux__)
-/* Assume Linux has a working epoll(3) interface. */
+#define WARN_SELECT
+#elif defined(__linux__) || defined(__sun)
+/* Assume Linux and Solaris have a working epoll(3) interface. */
 #define HAVE_EPOLL
+#define WARN_SELECT
 #else
 /* pselect(2) is a POSIX standard. */
 #define HAVE_PSELECT
+#define WARN_SELECT
 #endif
 #endif
 
@@ -115,6 +118,22 @@
 #include <sys/select.h>
 #endif
 #include <poll.h>
+#endif
+
+#ifdef WARN_SELECT
+#if defined(HAVE_KQUEUE)
+#pragma message("Compiling eloop with kqueue(2) support.")
+#elif defined(HAVE_EPOLL)
+#pragma message("Compiling eloop with epoll(7) support.")
+#elif defined(HAVE_PSELECT)
+#pragma message("Compiling eloop with pselect(2) support.")
+#elif defined(HAVE_PPOLL)
+#pragma message("Compiling eloop with ppoll(2) support.")
+#elif defined(HAVE_POLLTS)
+#pragma message("Compiling eloop with pollts(2) support.")
+#else
+#error Unknown select mechanism for eloop
+#endif
 #endif
 
 /* Our structures require TAILQ macros, which really every libc should
@@ -855,6 +874,7 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 
 	assert(eloop != NULL);
 
+	eloop->exitnow = 0;
 	for (;;) {
 		if (eloop->exitnow)
 			break;

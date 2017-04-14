@@ -33,7 +33,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #define ELOOP_QUEUE 6
@@ -45,6 +44,7 @@
 #include "if-options.h"
 #include "ipv4.h"
 #include "ipv4ll.h"
+#include "logerr.h"
 #include "sa.h"
 #include "script.h"
 
@@ -189,7 +189,7 @@ ipv4ll_probed(struct arp_state *astate)
 #ifdef IN_IFF_NOTREADY
 	if (ia == NULL || ia->addr_flags & IN_IFF_NOTREADY)
 #endif
-		syslog(LOG_INFO, "%s: using IPv4LL address %s",
+		loginfox("%s: using IPv4LL address %s",
 		  ifp->name, inet_ntoa(astate->addr));
 	if (ia == NULL) {
 		if (ifp->ctx->options & DHCPCD_TEST)
@@ -202,7 +202,7 @@ ipv4ll_probed(struct arp_state *astate)
 #ifdef IN_IFF_NOTREADY
 	if (ia->addr_flags & IN_IFF_NOTREADY)
 		return;
-	syslog(LOG_DEBUG, "%s: DAD completed for %s",
+	logdebugx("%s: DAD completed for %s",
 	    ifp->name, inet_ntoa(astate->addr));
 #endif
 test:
@@ -274,7 +274,7 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 	    astate->failed.s_addr == state->addr->addr.s_addr)
 	{
 #ifdef KERNEL_RFC5227
-		syslog(LOG_WARNING, "%s: IPv4LL defence failed for %s",
+		logwarnx("%s: IPv4LL defence failed for %s",
 		    ifp->name, state->addr->saddr);
 #else
 		struct timespec now, defend;
@@ -291,14 +291,13 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 		defend.tv_nsec = state->defend.tv_nsec;
 		clock_gettime(CLOCK_MONOTONIC, &now);
 		if (timespeccmp(&defend, &now, >))
-			syslog(LOG_WARNING,
-			    "%s: IPv4LL %d second defence failed for %s",
+			logwarnx("%s: IPv4LL %d second defence failed for %s",
 			    ifp->name, DEFEND_INTERVAL, state->addr->saddr);
 		else if (arp_request(ifp,
 		    state->addr->addr.s_addr, state->addr->addr.s_addr) == -1)
-			syslog(LOG_ERR, "%s: arp_request: %m", __func__);
+			logerr(__func__);
 		else {
-			syslog(LOG_DEBUG, "%s: defended IPv4LL address %s",
+			logdebugx("%s: defended IPv4LL address %s",
 			    ifp->name, state->addr->saddr);
 			state->defend = now;
 			return;
@@ -318,7 +317,7 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 
 	arp_cancel(astate);
 	if (++state->conflicts == MAX_CONFLICTS)
-		syslog(LOG_ERR, "%s: failed to acquire an IPv4LL address",
+		logerr("%s: failed to acquire an IPv4LL address",
 		    ifp->name);
 	astate->addr.s_addr = ipv4ll_pickaddr(astate);
 	eloop_timeout_add_sec(ifp->ctx->eloop,
@@ -350,7 +349,7 @@ ipv4ll_start(void *arg)
 	if ((state = IPV4LL_STATE(ifp)) == NULL) {
 		ifp->if_data[IF_DATA_IPV4LL] = calloc(1, sizeof(*state));
 		if ((state = IPV4LL_STATE(ifp)) == NULL) {
-			syslog(LOG_ERR, "%s: calloc %m", __func__);
+			logerr(__func__);
 			return;
 		}
 	}
@@ -407,19 +406,17 @@ ipv4ll_start(void *arg)
 		astate->addr = ia->addr;
 #ifdef IN_IFF_TENTATIVE
 		if (ia->addr_flags & (IN_IFF_TENTATIVE | IN_IFF_DETACHED)) {
-			syslog(LOG_INFO,
-			    "%s: waiting for DAD to complete on %s",
+			loginfox("%s: waiting for DAD to complete on %s",
 			    ifp->name, inet_ntoa(ia->addr));
 			return;
 		}
-		syslog(LOG_INFO, "%s: using IPv4LL address %s",
-		    ifp->name, ia->saddr);
+		loginfox("%s: using IPv4LL address %s", ifp->name, ia->saddr);
 #endif
 		ipv4ll_probed(astate);
 		return;
 	}
 
-	syslog(LOG_INFO, "%s: probing for an IPv4LL address", ifp->name);
+	loginfox("%s: probing for an IPv4LL address", ifp->name);
 	astate->addr.s_addr = ipv4ll_pickaddr(astate);
 #ifdef IN_IFF_TENTATIVE
 	ipv4ll_probed(astate);
