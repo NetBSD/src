@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.12 2017/02/19 07:47:00 rin Exp $
+#	$NetBSD: EXYNOS,v 1.13 2017/04/14 22:55:06 jmcneill Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -203,9 +203,7 @@ armgtmr0	at armperiph?			# Generic Timer
 
 # On-board I/O
 exynosfdt0	at mainbus?
-fdt0		at exynosfdt0 
-simplebus*	at fdt?
-fdt*		at simplebus?
+fdt?		at fdtbus?
 
 fregulator*	at fdt?
 

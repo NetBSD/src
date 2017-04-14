@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.5 2017/04/13 22:27:07 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.6 2017/04/14 22:55:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.5 2017/04/13 22:27:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.6 2017/04/14 22:55:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,17 @@ static int
 fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *faa = aux;
+	const char * const compatible[] = { "simple-bus", NULL };
+	int match;
 
 	if (!OF_child(faa->faa_phandle))
 		return 0;
 
-	return 1;
+	match = of_match_compatible(faa->faa_phandle, compatible);
+	if (match)
+		return match;
+
+	return OF_finddevice("/") == faa->faa_phandle;
 }
 
 static void
