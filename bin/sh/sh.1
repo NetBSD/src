@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.130 2017/04/14 08:40:30 abhinav Exp $
+.\"	$NetBSD: sh.1,v 1.131 2017/04/14 08:48:01 abhinav Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1286,7 +1286,7 @@ and
 operators (in both prefix and postfix forms) and the
 .Dq \&,
 (comma) operator, which are currently not supported.
-.PP
+.Pp
 It should not be necessary to state that the C operators which
 operate on, or produce, pointer types, are not supported.
 Those include unary
@@ -1970,7 +1970,6 @@ variables.
 With the
 .Fl p
 option specified the output will be formatted suitably for non-interactive use.
-.Pp
 .It return [ Ar n ]
 Stop executing the current function or a dot command with return value of
 .Ar n
@@ -2168,7 +2167,6 @@ the current limit is displayed.
 Limits of an arbitrary process can be displayed or set using the
 .Xr sysctl 8
 utility.
-.Pp
 .It umask Op Ar mask
 Set the value of umask (see
 .Xr umask 2 )
