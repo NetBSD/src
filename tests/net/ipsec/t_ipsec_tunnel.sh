@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel.sh,v 1.1 2017/04/14 02:56:49 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel.sh,v 1.2 2017/04/14 03:35:40 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -312,11 +312,15 @@ add_test_tunnel_mode()
 	local ipproto=$1
 	local proto=$2
 	local algo=$3
+	local expected_failure=$4
 	local _algo=$(echo $algo | sed 's/-//g')
-	local name= desc=
+	local name= desc= expected_failure_code=
 
 	name="ipsec_tunnel_${ipproto}_${proto}_${_algo}"
 	desc="Tests of IPsec ($ipproto) tunnel mode with $proto ($algo)"
+	if [ "$expected_failure" = yes ]; then
+		expected_failure_code="atf_expect_fail 'PR kern/52161';"
+	fi
 
 	atf_test_case ${name} cleanup
 	eval "								\
@@ -325,6 +329,7 @@ add_test_tunnel_mode()
 	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
 	    };								\
 	    ${name}_body() {						\
+	        $expected_failure_code					\
 	        test_tunnel_common $ipproto $proto $algo;		\
 	        rump_server_destroy_ifaces;				\
 	    };								\
@@ -347,6 +352,10 @@ atf_init_test_cases()
 
 	for algo in $AH_AUTHENTICATION_ALGORITHMS; do
 		add_test_tunnel_mode ipv4 ah $algo
-		add_test_tunnel_mode ipv6 ah $algo
+		if [ $algo = null ]; then
+			add_test_tunnel_mode ipv6 ah $algo
+		else
+			add_test_tunnel_mode ipv6 ah $algo yes
+		fi
 	done
 }
