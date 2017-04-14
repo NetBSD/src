@@ -28,7 +28,6 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syslog.h>
 #include <string.h>
 
 #define _INDEV
@@ -36,6 +35,7 @@
 #include "dev.h"
 #include "eloop.h"
 #include "dhcpcd.h"
+#include "logerr.h"
 
 int
 dev_initialized(struct dhcpcd_ctx *ctx, const char *ifname)
@@ -61,7 +61,7 @@ dev_stop1(struct dhcpcd_ctx *ctx, int stop)
 
 	if (ctx->dev) {
 		if (stop)
-			syslog(LOG_DEBUG, "dev: unloaded %s", ctx->dev->name);
+			logdebugx("dev: unloaded %s", ctx->dev->name);
 		eloop_event_delete(ctx->eloop, ctx->dev_fd);
 		ctx->dev->stop();
 		free(ctx->dev);
@@ -93,18 +93,18 @@ dev_start2(struct dhcpcd_ctx *ctx, const char *name)
 	snprintf(file, sizeof(file), DEVDIR "/%s", name);
 	h = dlopen(file, RTLD_LAZY);
 	if (h == NULL) {
-		syslog(LOG_ERR, "dlopen: %s", dlerror());
+		logerrx("dlopen: %s", dlerror());
 		return -1;
 	}
 	fptr = (void (*)(struct dev *, const struct dev_dhcpcd *))
 	    dlsym(h, "dev_init");
 	if (fptr == NULL) {
-		syslog(LOG_ERR, "dlsym: %s", dlerror());
+		logerrx("dlsym: %s", dlerror());
 		dlclose(h);
 		return -1;
 	}
 	if ((ctx->dev = calloc(1, sizeof(*ctx->dev))) == NULL) {
-		syslog(LOG_ERR, "%s: calloc: %m", __func__);
+		logerr("%s: calloc", __func__);
 		dlclose(h);
 		return -1;
 	}
@@ -116,7 +116,7 @@ dev_start2(struct dhcpcd_ctx *ctx, const char *name)
 		dlclose(h);
 		return -1;
 	}
-	syslog(LOG_INFO, "dev: loaded %s", ctx->dev->name);
+	loginfox("dev: loaded %s", ctx->dev->name);
 	ctx->dev_handle = h;
 	return r;
 }
@@ -129,7 +129,7 @@ dev_start1(struct dhcpcd_ctx *ctx)
 	int r;
 
 	if (ctx->dev) {
-		syslog(LOG_ERR, "dev: already started %s", ctx->dev->name);
+		logerrx("dev: already started %s", ctx->dev->name);
 		return -1;
 	}
 
@@ -138,7 +138,7 @@ dev_start1(struct dhcpcd_ctx *ctx)
 
 	dp = opendir(DEVDIR);
 	if (dp == NULL) {
-		syslog(LOG_DEBUG, "dev: %s: %m", DEVDIR);
+		logdebug("dev: %s", DEVDIR);
 		return 0;
 	}
 
@@ -171,8 +171,7 @@ dev_start(struct dhcpcd_ctx *ctx)
 {
 
 	if (ctx->dev_fd != -1) {
-		syslog(LOG_ERR, "%s: already started on fd %d", __func__,
-		    ctx->dev_fd);
+		logerrx("%s: already started on fd %d", __func__, ctx->dev_fd);
 		return ctx->dev_fd;
 	}
 
@@ -181,7 +180,7 @@ dev_start(struct dhcpcd_ctx *ctx)
 		if (eloop_event_add(ctx->eloop, ctx->dev_fd,
 		    dev_handle_data, ctx) == -1)
 		{
-			syslog(LOG_ERR, "%s: eloop_event_add: %m", __func__);
+			logerr(__func__);
 			dev_stop1(ctx, 1);
 			return -1;
 		}
