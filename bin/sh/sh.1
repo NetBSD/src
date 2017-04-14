@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.129 2017/04/03 14:08:37 abhinav Exp $
+.\"	$NetBSD: sh.1,v 1.130 2017/04/14 08:40:30 abhinav Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1701,12 +1701,12 @@ can be accessed are determined by the value of the
 variable.
 The value of first or last or both are one of the following:
 .Bl -tag -width 5n
-.It [+]number
+.It Oo Cm + Oc Ns Ar number
 A positive number representing a command number; command numbers can be
 displayed with the
 .Fl l
 option.
-.It \-number
+.It Cm \- Ns Ar number
 A negative decimal number representing the command that was executed
 number of commands previously.
 For example, \-1 is the immediately previous command.
