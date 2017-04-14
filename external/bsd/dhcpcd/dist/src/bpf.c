@@ -48,13 +48,13 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 
 #include "common.h"
 #include "arp.h"
 #include "bpf.h"
 #include "dhcp.h"
 #include "if.h"
+#include "logerr.h"
 
 #define	ARP_ADDRS_MAX	3
 
@@ -150,7 +150,7 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 		goto eexit;
 	if (pv.bv_major != BPF_MAJOR_VERSION ||
 	    pv.bv_minor < BPF_MINOR_VERSION) {
-		syslog(LOG_ERR, "BPF version mismatch - recompile");
+		logerrx("BPF version mismatch - recompile");
 		goto eexit;
 	}
 
@@ -174,7 +174,6 @@ bpf_open(struct interface *ifp, int (*filter)(struct interface *, int))
 			goto eexit;
 		state->buffer = nb;
 		state->buffer_size = buf_len;
-		state->buffer_len = state->buffer_pos = 0;
 	}
 
 #ifdef BIOCIMMEDIATE
@@ -222,8 +221,6 @@ bpf_read(struct interface *ifp, int fd, void *data, size_t len, int *flags)
 		bytes = -1;
 		memcpy(&packet, state->buffer + state->buffer_pos,
 		    sizeof(packet));
-		if (packet.bh_caplen != packet.bh_datalen)
-			goto next; /* Incomplete packet, drop. */
 		if (state->buffer_pos + packet.bh_caplen + packet.bh_hdrlen >
 		    state->buffer_len)
 			goto next; /* Packet beyond buffer, drop. */
@@ -287,6 +284,16 @@ bpf_send(const struct interface *ifp, int fd, uint16_t protocol,
 	return writev(fd, iov, 2);
 }
 #endif
+
+int
+bpf_close(struct interface *ifp, int fd)
+{
+	struct ipv4_state *state = IPV4_STATE(ifp);
+
+	/* Rewind the buffer on closing. */
+	state->buffer_len = state->buffer_pos = 0;
+	return close(fd);
+}
 
 static unsigned int
 bpf_cmp_hwaddr(struct bpf_insn *bpf, size_t bpf_len, size_t off,
@@ -428,6 +435,7 @@ bpf_arp(struct interface *ifp, int fd)
 	struct bpf_insn bpf[3+ bpf_arp_filter_len + bpf_arp_hw + bpf_arp_extra];
 	struct bpf_insn *bp;
 	struct iarp_state *state;
+	uint16_t arp_len;
 
 	if (fd == -1)
 		return 0;
@@ -438,6 +446,7 @@ bpf_arp(struct interface *ifp, int fd)
 	case ARPHRD_ETHER:
 		memcpy(bp, bpf_arp_ether, sizeof(bpf_arp_ether));
 		bp += bpf_arp_ether_len;
+		arp_len = sizeof(struct ether_header)+sizeof(struct ether_arp);
 		break;
 	default:
 		errno = EINVAL;
@@ -465,13 +474,13 @@ bpf_arp(struct interface *ifp, int fd)
 		TAILQ_FOREACH(astate, &state->arp_states, next) {
 			if (++naddrs > ARP_ADDRS_MAX) {
 				errno = ENOBUFS;
-				syslog(LOG_ERR, "%s: %m", __func__);
+				logerr(__func__);
 				break;
 			}
 			BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K,
 			             htonl(astate->addr.s_addr), 0, 1);
 			bp++;
-			BPF_SET_STMT(bp, BPF_RET + BPF_K, BPF_WHOLEPACKET);
+			BPF_SET_STMT(bp, BPF_RET + BPF_K, arp_len);
 			bp++;
 		}
 
@@ -496,8 +505,7 @@ bpf_arp(struct interface *ifp, int fd)
 			BPF_SET_JUMP(bp, BPF_JMP + BPF_JEQ + BPF_K,
 			             htonl(astate->addr.s_addr), 0, 1);
 			bp++;
-			BPF_SET_STMT(bp, BPF_RET + BPF_K,
-			             BPF_WHOLEPACKET);
+			BPF_SET_STMT(bp, BPF_RET + BPF_K, arp_len);
 			bp++;
 		}
 
