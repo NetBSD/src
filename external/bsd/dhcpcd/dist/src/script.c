@@ -38,7 +38,6 @@
 #include <spawn.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
@@ -49,6 +48,7 @@
 #include "if-options.h"
 #include "ipv4ll.h"
 #include "ipv6nd.h"
+#include "logerr.h"
 #include "script.h"
 
 /* Allow the OS to define another script env var name */
@@ -127,7 +127,7 @@ make_var(const char *prefix, const char *var)
 
 	len = strlen(prefix) + strlen(var) + 2;
 	if ((v = malloc(len)) == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+		logerr(__func__);
 		return NULL;
 	}
 	snprintf(v, len, "%s_%s", prefix, var);
@@ -176,7 +176,7 @@ append_config(char ***env, size_t *len,
 			}
 			nep = realloc(ne, sizeof(char *) * (j + 1));
 			if (nep == NULL) {
-				syslog(LOG_ERR, "%s: %m", __func__);
+				logerr(__func__);
 				free(p);
 				ret = -1;
 				break;
@@ -573,7 +573,7 @@ dumplease:
 	return (ssize_t)elen;
 
 eexit:
-	syslog(LOG_ERR, "%s: %m", __func__);
+	logerr(__func__);
 	if (env) {
 		nenv = env;
 		while (*nenv)
@@ -685,7 +685,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	/* Make our env */
 	elen = (size_t)make_env(ifp, reason, &env);
 	if (elen == (size_t)-1) {
-		syslog(LOG_ERR, "%s: make_env: %m", ifp->name);
+		logerr(__func__);
 		return -1;
 	}
 
@@ -696,7 +696,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	argv[0] = ifp->options->script ? ifp->options->script : UNCONST(SCRIPT);
 	argv[1] = NULL;
-	syslog(LOG_DEBUG, "%s: executing `%s' %s", ifp->name, argv[0], reason);
+	logdebugx("%s: executing `%s' %s", ifp->name, argv[0], reason);
 
 	/* Resize for PATH and RC_SVCNAME */
 	svcname = getenv(RC_SVCNAME);
@@ -736,22 +736,22 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	pid = exec_script(ifp->ctx, argv, env);
 	if (pid == -1)
-		syslog(LOG_ERR, "%s: %s: %m", __func__, argv[0]);
+		logerr("%s: %s", __func__, argv[0]);
 	else if (pid != 0) {
 		/* Wait for the script to finish */
 		while (waitpid(pid, &status, 0) == -1) {
 			if (errno != EINTR) {
-				syslog(LOG_ERR, "waitpid: %m");
+				logerr("%s: waitpid", __func__);
 				status = 0;
 				break;
 			}
 		}
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status))
-				syslog(LOG_ERR, "%s: %s: WEXITSTATUS %d",
+				logerrx("%s: %s: WEXITSTATUS %d",
 				    __func__, argv[0], WEXITSTATUS(status));
 		} else if (WIFSIGNALED(status))
-			syslog(LOG_ERR, "%s: %s: %s",
+			logerrx("%s: %s: %s",
 			    __func__, argv[0], strsignal(WTERMSIG(status)));
 	}
 
@@ -766,13 +766,12 @@ send_listeners:
 			elen = (size_t)arraytostr((const char *const *)env,
 			    &bigenv);
 			if ((ssize_t)elen == -1) {
-				syslog(LOG_ERR, "%s: arraytostr: %m",
-				    ifp->name);
+				logerr("%s: arraytostr", ifp->name);
 				    break;
 			}
 		}
 		if (control_queue(fd, bigenv, elen, 1) == -1)
-			syslog(LOG_ERR, "%s: control_queue: %m", __func__);
+			logerr("%s: control_queue", __func__);
 		else
 			status = 1;
 	}
@@ -786,7 +785,7 @@ out:
 		free(*ep++);
 	free(env);
 	if (elen == 0) {
-		syslog(LOG_ERR, "%s: malloc: %m", __func__);
+		logerr(__func__);
 		return -1;
 	}
 	return WEXITSTATUS(status);
