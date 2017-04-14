@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.48 2017/04/14 18:06:11 christos Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.49 2017/04/14 22:29:17 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.48 2017/04/14 18:06:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.49 2017/04/14 22:29:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -425,7 +425,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 				/* Zeroize all other options. */
 				count = ptr[off + 1];
-				memcpy(ptr + off, ipseczeroes, count);
+				memcpy(ptr, ipseczeroes, count);
 				off += count;
 				break;
 			}
@@ -722,14 +722,12 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Allocate IPsec-specific opaque crypto info. */
-	if (mtag == NULL) {
-		tc = (struct tdb_crypto *) malloc(sizeof (struct tdb_crypto) +
-			skip + rplen + authsize, M_XDATA, M_NOWAIT|M_ZERO);
-	} else {
-		/* Hash verification has already been done successfully. */
-		tc = (struct tdb_crypto *) malloc(sizeof (struct tdb_crypto),
-						    M_XDATA, M_NOWAIT|M_ZERO);
-	}
+	size_t size = sizeof(*tc);
+	size_t extra = skip + rplen + authsize;
+	if (mtag == NULL)
+		size += extra;
+
+	tc = malloc(size, M_XDATA, M_NOWAIT|M_ZERO);
 	if (tc == NULL) {
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
 		AH_STATINC(AH_STAT_CRYPTO);
@@ -738,7 +736,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		return ENOBUFS;
 	}
 
-	error = m_makewritable(&m, 0, skip + rplen + authsize, M_NOWAIT);
+	error = m_makewritable(&m, 0, extra, M_NOWAIT);
 	if (error) {
 		m_freem(m);
 		DPRINTF(("%s: failed to copyback_cow\n", __func__));
@@ -754,8 +752,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		 * Save the authenticator, the skipped portion of the packet,
 		 * and the AH header.
 		 */
-		m_copydata(m, 0, skip + rplen + authsize, (tc + 1));
-
+		m_copydata(m, 0, extra, (tc + 1));
 		/* Zeroize the authenticator on the packet. */
 		m_copyback(m, skip + rplen, authsize, ipseczeroes);
 
@@ -788,8 +785,8 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_skip = skip;
 	tc->tc_ptr = mtag; /* Save the mtag we've identified. */
 
-	DPRINTF(("%s: hash over %d bytes, skip %d: "
-		 "crda len %d skip %d inject %d\n", __func__,
+	DPRINTF(("%s: mtag %p hash over %d bytes, skip %d: "
+		 "crda len %d skip %d inject %d\n", __func__, mtag,
 		 crp->crp_ilen, tc->tc_skip,
 		 crda->crd_len, crda->crd_skip, crda->crd_inject));
 
@@ -906,10 +903,10 @@ ah_input_cb(struct cryptop *crp)
 	 */
 	if (mtag == NULL) {
 		ptr = (char *) (tc + 1);
+		const u_int8_t *pppp = ptr + skip + rplen;
 
 		/* Verify authenticator. */
-		if (!consttime_memequal(ptr + skip + rplen, calc, authsize)) {
-			u_int8_t *pppp = ptr + skip+rplen;
+		if (!consttime_memequal(pppp, calc, authsize)) {
 			DPRINTF(("%s: authentication hash mismatch " \
 			    "over %d bytes " \
 			    "for packet in SA %s/%08lx:\n" \
@@ -1012,9 +1009,9 @@ ah_output(
 	struct tdb_crypto *tc;
 	struct mbuf *mi;
 	struct cryptop *crp;
-	u_int16_t iplen;
+	uint16_t iplen;
 	int error, rplen, authsize, maxpacketsize, roff;
-	u_int8_t prot;
+	uint8_t prot;
 	struct newah *ah;
 
 	IPSEC_SPLASSERT_SOFTNET("ah_output");
@@ -1029,16 +1026,19 @@ ah_output(
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
 
+	size_t ipoffs;
 	/* Check for maximum packet size violations. */
 	switch (sav->sah->saidx.dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		maxpacketsize = IP_MAXPACKET;
+		ipoffs = offsetof(struct ip, ip_len);
 		break;
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		maxpacketsize = IPV6_MAXPACKET;
+		ipoffs = offsetof(struct ip6_hdr, ip6_plen);
 		break;
 #endif /* INET6 */
 	default:
@@ -1145,8 +1145,7 @@ ah_output(
 	crda->crd_klen = _KEYBITS(sav->key_auth);
 
 	/* Allocate IPsec-specific opaque crypto info. */
-	tc = (struct tdb_crypto *) malloc(
-		sizeof(struct tdb_crypto) + skip, M_XDATA, M_NOWAIT|M_ZERO);
+	tc = malloc(sizeof(*tc) + skip, M_XDATA, M_NOWAIT|M_ZERO);
 	if (tc == NULL) {
 		crypto_freereq(crp);
 		DPRINTF(("%s: failed to allocate tdb_crypto\n", __func__));
@@ -1155,48 +1154,29 @@ ah_output(
 		goto bad;
 	}
 
+	uint8_t *pext = (char *)(tc + 1);
 	/* Save the skipped portion of the packet. */
-	m_copydata(m, 0, skip, (tc + 1));
+	m_copydata(m, 0, skip, pext);
 
 	/*
 	 * Fix IP header length on the header used for
 	 * authentication. We don't need to fix the original
 	 * header length as it will be fixed by our caller.
 	 */
-	switch (sav->sah->saidx.dst.sa.sa_family) {
-#ifdef INET
-	case AF_INET:
-		bcopy(((char *)(tc + 1)) +
-		    offsetof(struct ip, ip_len),
-		    &iplen, sizeof(u_int16_t));
-		iplen = htons(ntohs(iplen) + rplen + authsize);
-		m_copyback(m, offsetof(struct ip, ip_len),
-		    sizeof(u_int16_t), &iplen);
-		break;
-#endif /* INET */
-
-#ifdef INET6
-	case AF_INET6:
-		bcopy(((char *)(tc + 1)) +
-		    offsetof(struct ip6_hdr, ip6_plen),
-		    &iplen, sizeof(u_int16_t));
-		iplen = htons(ntohs(iplen) + rplen + authsize);
-		m_copyback(m, offsetof(struct ip6_hdr, ip6_plen),
-		    sizeof(u_int16_t), &iplen);
-		break;
-#endif /* INET6 */
-	}
+	memcpy(&iplen, pext + ipoffs, sizeof(iplen));
+	iplen = htons(ntohs(iplen) + rplen + authsize);
+	m_copyback(m, ipoffs, sizeof(iplen), &iplen);
 
 	/* Fix the Next Header field in saved header. */
-	((u_int8_t *) (tc + 1))[protoff] = IPPROTO_AH;
+	pext[protoff] = IPPROTO_AH;
 
 	/* Update the Next Protocol field in the IP header. */
 	prot = IPPROTO_AH;
-	m_copyback(m, protoff, sizeof(u_int8_t), &prot);
+	m_copyback(m, protoff, sizeof(prot), &prot);
 
 	/* "Massage" the packet headers for crypto processing. */
 	error = ah_massage_headers(&m, sav->sah->saidx.dst.sa.sa_family,
-			skip, ahx->type, 1);
+	    skip, ahx->type, 1);
 	if (error != 0) {
 		m = NULL;	/* mbuf was free'd by ah_massage_headers. */
 		free(tc, M_XDATA);
