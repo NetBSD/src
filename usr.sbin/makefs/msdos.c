@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.19 2017/04/13 17:20:59 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.20 2017/04/14 15:40:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.19 2017/04/13 17:20:59 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.20 2017/04/14 15:40:35 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -157,9 +157,9 @@ msdos_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 	assert(root != NULL);
 	assert(fsopts != NULL);
 
-	fsopts->size = fsopts->offset + fsopts->maxsize;
+	fsopts->size = fsopts->maxsize;
 	msdos_opt->options.create_size = MAX(msdos_opt->options.create_size,
-		fsopts->size);
+	    fsopts->offset + fsopts->size);
 	msdos_opt->options.offset = fsopts->offset;
 	if (msdos_opt->options.bytes_per_sector == 0) {
 		if (fsopts->sectorsize == -1)
