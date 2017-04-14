@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusbpad.c,v 1.4 2017/04/11 11:32:51 jmcneill Exp $ */
+/* $NetBSD: tegra_xusbpad.c,v 1.5 2017/04/14 00:19:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.4 2017/04/11 11:32:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.5 2017/04/14 00:19:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,8 +58,6 @@ struct tegra_xusbpad_softc {
 #ifdef TEGRA_XUSBPAD_DEBUG
 static void	padregdump(void);
 #endif
-
-static void	tegra_xusbpad_setup(struct tegra_xusbpad_softc * const);
 
 static struct tegra_xusbpad_softc *xusbpad_softc = NULL;
 
@@ -103,16 +101,6 @@ tegra_xusbpad_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": XUSB PADCTL\n");
-
-#ifdef TEGRA_XUSBPAD_DEBUG
-	padregdump();
-#endif
-
-	tegra_xusbpad_setup(sc);
-
-#ifdef TEGRA_XUSBPAD_DEBUG
-	padregdump();
-#endif
 }
 
 static void
@@ -189,15 +177,23 @@ padregdump(void)
 }
 #endif
 
-static void
-tegra_xusbpad_setup(struct tegra_xusbpad_softc * const sc)
+void
+tegra_xusbpad_xhci_enable(void)
 {
+	struct tegra_xusbpad_softc * const sc = xusbpad_softc;
 	const uint32_t skucalib = tegra_fuse_read(TEGRA_FUSE_SKU_CALIB_REG);
 #ifdef TEGRA_XUSBPAD_DEBUG
 	uint32_t val;
 #endif
 
+	if (sc == NULL) {
+		aprint_error("%s: xusbpad driver not loaded\n", __func__);
+		return;
+	}
+
+
 #ifdef TEGRA_XUSBPAD_DEBUG
+	padregdump(void);
 	printf("SKU CALIB 0x%x\n", skucalib);
 #endif
 	const uint32_t hcl[3] = {
@@ -350,5 +346,7 @@ tegra_xusbpad_setup(struct tegra_xusbpad_softc * const sc)
 	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PORT_CAP_REG is 0x%x\n", val);
 	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_SS_PORT_MAP_REG);
 	device_printf(sc->sc_dev, "XUSB_PADCTL_SS_PORT_MAP_REG is 0x%x\n", val);
+
+	padregdump();
 #endif
 }
