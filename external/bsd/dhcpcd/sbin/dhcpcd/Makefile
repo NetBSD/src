@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2017/04/13 18:12:32 roy Exp $
+# $NetBSD: Makefile,v 1.39 2017/04/14 07:55:55 roy Exp $
 #
 
 WARNS?=		6
@@ -14,7 +14,7 @@ SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		if-bsd.c
 
 # Need to generate this for dependencies
-DPSRCS+=	dhcpcd-embedded.h
+DPSRCS+=	dhcpcd-embedded.h dhcpcd-embedded.c
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
