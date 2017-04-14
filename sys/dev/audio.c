@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.323 2017/04/12 14:21:12 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.324 2017/04/14 00:05:46 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.323 2017/04/12 14:21:12 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.324 2017/04/14 00:05:46 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -882,9 +882,9 @@ bad_rec:
 #ifdef AUDIO_PM_IDLE
 	callout_schedule(&sc->sc_idle_counter, audio_idle_timeout * hz);
 #endif
-	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
+	kthread_create(PRI_SOFTBIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    audio_rec_thread, sc, &sc->sc_recthread, "audiorec");
-	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
+	kthread_create(PRI_SOFTBIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
 	    audio_play_thread, sc, &sc->sc_playthread, "audiomix");
 	audiorescan(self, "audio", NULL);
 }
@@ -5893,9 +5893,11 @@ audio_play_thread(void *v)
 		}
 		mutex_exit(sc->sc_intr_lock);
 
-		mutex_enter(sc->sc_lock);
-		audio_mix(sc);
-		mutex_exit(sc->sc_lock);
+		while (audio_stream_get_used(&sc->sc_pr.s) < sc->sc_pr.blksize) {
+			mutex_enter(sc->sc_lock);
+			audio_mix(sc);
+			mutex_exit(sc->sc_lock);
+		}
 	}
 }
 
