@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.116 2017/02/16 08:12:44 knakahara Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.117 2017/04/14 02:43:28 ozaki-r Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.116 2017/02/16 08:12:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.117 2017/04/14 02:43:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -185,16 +185,53 @@ PR_WRAP_CTLOUTPUT(sctp_ctloutput)
 #endif
 
 #if defined(IPSEC)
+
+#ifdef IPSEC_RUMPKERNEL
+/*
+ * .pr_input = ipsec6_common_input won't be resolved on loading
+ * the ipsec shared library. We need a wrapper anyway.
+ */
+static int
+ipsec6_common_input_wrapper(struct mbuf **mp, int *offp, int proto)
+{
+
+	if (ipsec_enabled) {
+		return ipsec6_common_input(mp, offp, proto);
+	} else {
+		m_freem(*mp);
+		return IPPROTO_DONE;
+	}
+}
+#define	ipsec6_common_input	ipsec6_common_input_wrapper
+
+/* The ctlinput functions may not be loaded */
+#define	IPSEC_WRAP_CTLINPUT(name)			\
+static void *						\
+name##_wrapper(int a, const struct sockaddr *b, void *c)\
+{							\
+	void *rv;					\
+	KERNEL_LOCK(1, NULL);				\
+	if (ipsec_enabled)				\
+		rv = name(a, b, c);			\
+	else						\
+		rv = NULL;				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}
+IPSEC_WRAP_CTLINPUT(ah6_ctlinput)
+IPSEC_WRAP_CTLINPUT(esp6_ctlinput)
+
+#else /* !IPSEC_RUMPKERNEL */
+
 PR_WRAP_CTLINPUT(ah6_ctlinput)
-
-#define	ah6_ctlinput	ah6_ctlinput_wrapper
-#endif
-
-#if defined(IPSEC)
 PR_WRAP_CTLINPUT(esp6_ctlinput)
 
+#endif /* !IPSEC_RUMPKERNEL */
+
+#define	ah6_ctlinput	ah6_ctlinput_wrapper
 #define	esp6_ctlinput	esp6_ctlinput_wrapper
-#endif
+
+#endif /* IPSEC */
 
 static void
 tcp6_init(void)
