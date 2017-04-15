@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.4 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.5 2017/04/15 23:54:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.4 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.5 2017/04/15 23:54:41 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -566,12 +566,13 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	    chp->ch_channel, is, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_INTR);
 
+	slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
+		& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
+	if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
+		return;
+
 	if (is & (AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 	    AHCI_P_IX_OFS | AHCI_P_IX_UFS)) {
-		slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
-			& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
-		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-			return;
 		/* stop channel */
 		ahci_channel_stop(sc, chp, 0);
 		if (slot != 0) {
@@ -600,14 +601,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		    == 0)
 			ahci_channel_start(sc, chp, 0, 0);
 	} else {
-		slot = 0; /* XXX */
 		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, slot);
-		is = AHCI_READ(sc, AHCI_P_IS(chp->ch_channel));
-		AHCIDEBUG_PRINT(("ahci_intr_port port %d is 0x%x act 0x%x CI 0x%x\n",
-		    chp->ch_channel, is, achp->ahcic_cmds_active,
-		    AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))), DEBUG_INTR);
-		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-			return;
 		if ((AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)) & (1 << slot))
 		    == 0) {
 			xfer->c_intr(chp, xfer, 0);
