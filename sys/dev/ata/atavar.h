@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.2 2017/04/11 18:15:03 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.3 2017/04/15 12:01:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -37,6 +37,38 @@
 #include <dev/scsipi/atapiconf.h>
 
 /*
+ * Parameters/state needed by the controller to perform an ATA bio.
+ */
+struct ata_bio {
+	volatile uint16_t flags;/* cmd flags */
+/* 			0x0001	free, was ATA_NOSLEEP */
+#define	ATA_POLL	0x0002	/* poll for completion */
+#define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
+#define	ATA_SINGLE	0x0008	/* transfer must be done in singlesector mode */
+#define	ATA_LBA		0x0010	/* transfer uses LBA addressing */
+#define	ATA_READ	0x0020	/* transfer is a read (otherwise a write) */
+#define	ATA_CORR	0x0040	/* transfer had a corrected error */
+#define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA addressing */
+	daddr_t		blkno;	/* block addr */
+	daddr_t		blkdone;/* number of blks transferred */
+	daddr_t		nblks;	/* number of block currently transferring */
+	int		nbytes;	/* number of bytes currently transferring */
+	long		bcount;	/* total number of bytes */
+	char		*databuf;/* data buffer address */
+	volatile int	error;
+#define	NOERROR 	0	/* There was no error (r_error invalid) */
+#define	ERROR		1	/* check r_error */
+#define	ERR_DF		2	/* Drive fault */
+#define	ERR_DMA		3	/* DMA error */
+#define	TIMEOUT		4	/* device timed out */
+#define	ERR_NODEV	5	/* device has been gone */
+#define ERR_RESET	6	/* command was terminated by channel reset */
+	uint8_t		r_error;/* copy of error register */
+	int		retries;/* number of xfer retry */
+	struct buf	*bp;
+};
+
+/*
  * Description of a command to be handled by an ATA controller.  These
  * commands are queued in a list.
  */
@@ -47,7 +79,6 @@ struct ata_xfer {
 	struct ata_channel *c_chp;
 	uint16_t c_drive;
 	int8_t c_slot;			/* queue slot # */
-	uint8_t c_hwslot;		/* hardware slot # */
 
 	void	*c_cmd;			/* private request structure pointer */
 	void	*c_databuf;		/* pointer to data buffer */
@@ -56,8 +87,15 @@ struct ata_xfer {
 	int	c_dscpoll;		/* counter for dsc polling (ATAPI) */
 	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
 
+	union {
+		struct ata_bio	c_bio;	/* block I/O context */
+	} u;
+#define c_bio	u.c_bio
+
 	/* Link on the command queue. */
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
+	TAILQ_ENTRY(ata_xfer) c_activechain;
+	STAILQ_ENTRY(ata_xfer) c_restartchain;
 
 	/* Low-level protocol handlers. */
 	void	(*c_start)(struct ata_channel *, struct ata_xfer *);
@@ -79,17 +117,18 @@ struct ata_xfer {
 #define KILL_GONE 1 /* device is gone */
 #define KILL_RESET 2 /* xfer was reset */
 
-/* Per-channel queue of ata_xfers.  May be shared by multiple channels. */
+/* Per-channel queue of ata_xfers */
 struct ata_queue {
 	TAILQ_HEAD(, ata_xfer) queue_xfer; /* queue of pending commands */
 	int queue_freeze; /* freeze count for the queue */
 	int queue_flags;	/* flags for this queue */
-#define QF_IDLE_WAIT	0x01    /* someone is wants the controller idle */
-#define QF_SHARED	0x02	/* this queue is shared */
+#define QF_IDLE_WAIT	0x01    /* someone wants the controller idle */
 	int queue_active; /* number of active transfers */
 	int queue_openings; /* max number of active transfers */
 #ifdef ATABUS_PRIVATE
-	struct ata_xfer *active_xfers[1]; /* active command */
+	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
+	uint32_t queue_xfers_avail;		/* available xfers mask */
+	struct ata_xfer queue_xfers[0];		/* xfers */
 #endif
 };
 
@@ -176,10 +215,15 @@ struct ata_drive_datas {
 #endif
 
 	/* Callbacks into the drive's driver. */
-	void	(*drv_done)(void *);	/* transfer is done */
+	void	(*drv_done)(void *, struct ata_xfer *);	/* transfer is done */
 
-	device_t drv_softc;	/* ATA drives softc, if any */
+	device_t drv_softc;		/* ATA drives softc, if any */
 	void *chnl_softc;		/* channel softc */
+
+	/* Context used for I/O */
+	struct disklabel *lp;	/* pointer to drive's label info */
+	uint8_t		multi;	/* # of blocks to transfer in multi-mode */
+	daddr_t	badsect[127];	/* 126 plus trailing -1 marker */
 };
 
 /* User config flags that force (or disable) the use of a mode */
@@ -194,39 +238,6 @@ struct ata_drive_datas {
 #define ATA_CONFIG_UDMA_SET	0x0800
 #define ATA_CONFIG_UDMA_DISABLE	0x0700
 #define ATA_CONFIG_UDMA_OFF	8
-
-/*
- * Parameters/state needed by the controller to perform an ATA bio.
- */
-struct ata_bio {
-	volatile uint16_t flags;/* cmd flags */
-/* 			0x0001	free, was ATA_NOSLEEP */
-#define	ATA_POLL	0x0002	/* poll for completion */
-#define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
-#define	ATA_SINGLE	0x0008	/* transfer must be done in singlesector mode */
-#define	ATA_LBA		0x0010	/* transfer uses LBA addressing */
-#define	ATA_READ	0x0020	/* transfer is a read (otherwise a write) */
-#define	ATA_CORR	0x0040	/* transfer had a corrected error */
-#define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA addressing */
-	int		multi;	/* # of blocks to transfer in multi-mode */
-	struct disklabel *lp;	/* pointer to drive's label info */
-	daddr_t		blkno;	/* block addr */
-	daddr_t		blkdone;/* number of blks transferred */
-	daddr_t		nblks;	/* number of block currently transferring */
-	int		nbytes;	/* number of bytes currently transferring */
-	long		bcount;	/* total number of bytes */
-	char		*databuf;/* data buffer address */
-	volatile int	error;
-#define	NOERROR 	0	/* There was no error (r_error invalid) */
-#define	ERROR		1	/* check r_error */
-#define	ERR_DF		2	/* Drive fault */
-#define	ERR_DMA		3	/* DMA error */
-#define	TIMEOUT		4	/* device timed out */
-#define	ERR_NODEV	5	/* device has been gone */
-#define ERR_RESET	6	/* command was terminated by channel reset */
-	uint8_t		r_error;/* copy of error register */
-	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
-};
 
 /*
  * ATA/ATAPI commands description
@@ -289,7 +300,7 @@ struct ata_command {
  */
 struct ata_bustype {
 	int	bustype_type;	/* symbolic name of type */
-	int	(*ata_bio)(struct ata_drive_datas *, struct ata_bio *);
+	int	(*ata_bio)(struct ata_drive_datas *, struct ata_xfer *);
 	void	(*ata_reset_drive)(struct ata_drive_datas *, int, uint32_t *);
 	void	(*ata_reset_channel)(struct ata_channel *, int);
 /* extra flags for ata_reset_*(), in addition to AT_* */
@@ -422,10 +433,6 @@ struct atac_softc {
 	/* Driver callback to probe for drives. */
 	void (*atac_probe)(struct ata_channel *);
 
-	/* Optional callbacks to lock/unlock hardware. */
-	int  (*atac_claim_hw)(struct ata_channel *, int);
-	void (*atac_free_hw)(struct ata_channel *);
-
 	/*
 	 * Optional callbacks to set drive mode.  Required for anything
 	 * but basic PIO operation.
@@ -449,7 +456,7 @@ int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 #define CMD_ERR   1
 #define CMD_AGAIN 2
 
-struct ata_xfer *ata_get_xfer(int);
+struct ata_xfer *ata_get_xfer(struct ata_channel *);
 void	ata_free_xfer(struct ata_channel *, struct ata_xfer *);
 #define	ATAXF_CANSLEEP	0x00
 #define	ATAXF_NOSLEEP	0x01
