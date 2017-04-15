@@ -1,4 +1,4 @@
-.\"	$NetBSD: locking.9,v 1.3 2017/04/15 14:00:30 skrll Exp $
+.\"	$NetBSD: locking.9,v 1.4 2017/04/15 18:00:32 sevan Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2015
+.Dd April 15, 2017
 .Dt LOCKING 9
 .Os
 .Sh NAME
@@ -37,14 +37,14 @@
 The
 .Nx
 kernel provides several synchronization and interrupt control primitives.
-This manpage aims at giving an overview of these interfaces and their proper
+This man page aims to give an overview of these interfaces and their proper
 application.
-This document includes also basic kernel thread control primitives and rough
+Also included are basic kernel thread control primitives and a rough
 overview of the
 .Nx
 kernel design.
 .Sh KERNEL OVERVIEW
-The aim of the kernel synchronization, kernel thread, and interrupt control is:
+The aim of synchronization, threads and interrupt control in the kernel is:
 .Bl -bullet -offset indent
 .It
 To control concurrent access to shared resources (critical sections).
@@ -53,7 +53,7 @@ Spawn tasks from an interrupt in the thread context.
 .It
 Mask interrupts from threads.
 .It
-Scale to multiple CPUs.
+Scale on multiple CPU system.
 .El
 .Pp
 There are three types of contexts in the
@@ -62,31 +62,31 @@ kernel:
 .Bl -bullet -offset indent
 .It
 .Em Thread context
-- here run processes (represented by
+- running processes (represented by
 .Dv struct proc )
 and light-weight processes (represented by
-.Dv struct lwp
-and known as kernel threads).
+.Dv struct lwp ,
+also known as kernel threads).
 Code in this context can sleep, block resources and possess address-space.
 .It
 .Em Software interrupt context
-- it's limited thread context.
+- limited by thread context.
 Code in this context must be processed shortly.
 These interrupts don't possess any address space context.
 Software interrupts are a way of deferring hardware interrupts to do more
 expensive processing at a lower interrupt priority.
 .It
 .Em Hard interrupt context
-- code must be processed as quickly as possible.
-It's forbidden for a code here to sleep or access long-awaited resources.
+- Code in this context must be processed as quickly as possible.
+It is forbidden for a piece of code to sleep or access long-awaited resources here.
 .El
 .Pp
 The main differences between processes and kernel threads are:
 .Bl -bullet -offset indent
 .It
-Single process can own multiple kernel threads (LWPs).
+A single process can own multiple kernel threads (LWPs).
 .It
-Process possesses address space context to map userland address space.
+A process possesses address space context to map userland address space.
 .It
 Processes are designed for userland executables and kernel threads for
 in-kernel tasks.
@@ -95,10 +95,6 @@ The only process running in the kernel-space is
 (called swapper).
 .El
 .Sh INTERFACES
-The
-.Nx
-kernel is written to run across multiple unicore and multicore CPUs.
-The following lists lists alphabetically.
 .Ss Atomic memory operations
 The
 .Nm atomic_ops
@@ -136,21 +132,18 @@ They can be used to implement
 .Dq lockless
 access to data structures where the necessary barrier conditions are well
 understood.
-.Pp
-See
-.Xr mb 9 .
 .Ss Mutual exclusion primitives
 Thread-base adaptive mutexes.
 These are lightweight,
 exclusive locks that use threads as the focus of synchronization activity.
-Adaptive mutexes typically behave like spinlock,
+Adaptive mutexes typically behave like spinlocks,
 but under specific conditions an attempt to acquire an already held adaptive
 mutex may cause the acquiring thread to sleep.
 Sleep activity occurs rarely.
 Busy-waiting is typically more efficient because mutex hold times are most
 often short.
 In contrast to pure spinlocks,
-a thread holding an adaptive mutex may be preempted in the kernel,
+a thread holding an adaptive mutex may be pre-empted in the kernel,
 which can allow for reduced latency where soft real-time application are in use
 on the system.
 .Pp
@@ -164,7 +157,7 @@ registered for a process during
 .Xr cpu_switchto 9 .
 If a process is found to have been preempted during a restartable sequence,
 then its execution is rolled-back to the start of the sequence by resetting its
-program counter saved in its process control block (PCB).
+program counter which is saved in its process control block (PCB).
 .Pp
 See
 .Xr ras 9 .
@@ -186,11 +179,10 @@ See
 .Ss Machine-independent software interrupt framework
 The software interrupt framework is designed to provide a generic software
 interrupt mechanism which can be used any time a low-priority callback is
-needed.
-It allows dynamic registration of software interrupts for loadable drivers and
-protocol stacks,
-prioritization and fair queuing of software interrupts,
-and allows machine-dependent optimizations to reduce cost.
+required.
+It allows dynamic registration of software interrupts for loadable drivers,
+protocol stacks, software interrupt prioritization, software interrupt fair
+queuing and allows machine-dependent optimizations to reduce cost.
 .Pp
 See
 .Xr softint 9 .
@@ -227,17 +219,16 @@ processed in a thread context.
 See
 .Xr workqueue 9 .
 .Sh USAGE
-The following table describes legal usage of the
+The following table describes in which contexts the use of the
 .Nx
-interfaces in different contexts.
-The synchronization primitives available in more then one context
-can be used to protect shared resources between these overlapping contexts.
+kernel interfaces are valid.
+Synchronization primitives which are available in more than one context
+can be used to protect shared resources between the contexts they overlap.
 .Bl -column -offset indent \
 "xxxxxxxxxxxx " "xxxxxxx " "xxxxxxx " "xxxxxxx "
 .It Sy interface Ta Sy thread Ta Sy softirq Ta Sy hardirq
 .It Xr atomic_ops 3 Ta yes Ta yes Ta yes
 .It Xr condvar 9 Ta yes Ta partly Ta no
-.It Xr mb 9 Ta yes Ta yes Ta yes
 .It Xr membar_ops 3 Ta yes Ta yes Ta yes
 .It Xr mutex 9 Ta yes Ta depends Ta depends
 .It Xr rwlock 9 Ta yes Ta yes Ta no
@@ -251,7 +242,6 @@ can be used to protect shared resources between these overlapping contexts.
 .Xr atomic_ops 3 ,
 .Xr membar_ops 3 ,
 .Xr condvar 9 ,
-.Xr mb 9 ,
 .Xr mutex 9 ,
 .Xr ras 9 ,
 .Xr rwlock 9 ,
@@ -260,9 +250,9 @@ can be used to protect shared resources between these overlapping contexts.
 .Xr splraiseipl 9 ,
 .Xr workqueue 9
 .Sh HISTORY
-The initial SMP support was introduced in the
+Initial SMP support was introduced in
 .Nx 2.0
-and was designed with the giant kernel lock.
+and was designed with a giant kernel lock.
 Through
 .Nx 4.0 ,
 the kernel used spinlocks and a per-CPU interrupt priority level (the
@@ -272,21 +262,22 @@ These mechanisms did not lend themselves well to a multiprocessor environment
 supporting kernel preemption.
 The use of thread based (lock) synchronization was limited and the available
 synchronization primitive (lockmgr) was inefficient and slow to execute.
-In
 .Nx 5.0
-there were introduced massive performance improvements on multicore hardware
-by Andrew Doran under a sponsorship of The
+introduced massive performance improvements on multicore hardware
+by Andrew Doran.
+This work was sponsored by The
 .Nx
 Foundation.
 .Pp
-This file first appeared in
+A
+.Nm
+manual first appeared in
 .Nx 8.0
 and was inspired by the corresponding
-.Nm locking
-manpages from
+.Nm
+manuals in
 .Fx
 and
 .Dx .
-Already existing documentation was used to compile this manpage.
 .Sh AUTHORS
-.An Kamil Rytarowski
+.An Kamil Rytarowski Aq Mt kamil@NetBSD.org .
