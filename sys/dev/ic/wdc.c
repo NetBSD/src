@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.1 2017/04/10 22:57:02 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.2 2017/04/15 12:01:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.1 2017/04/10 22:57:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.2 2017/04/15 12:01:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1377,8 +1377,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	    drvp->drive), DEBUG_FUNCS);
 
 	/* set up an xfer and queue. Wait for completion */
-	xfer = ata_get_xfer(ata_c->flags & AT_WAIT ? ATAXF_CANSLEEP :
-	    ATAXF_NOSLEEP);
+	xfer = ata_get_xfer(chp);
 	if (xfer == NULL) {
 		return ATACMD_TRY_AGAIN;
 	 }

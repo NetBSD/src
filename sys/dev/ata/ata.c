@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.2 2017/04/11 18:15:03 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.3 2017/04/15 12:01:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.2 2017/04/11 18:15:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.3 2017/04/15 12:01:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.2 2017/04/11 18:15:03 jdolecek Exp $
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
-#include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/ataio.h>
@@ -45,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.2 2017/04/11 18:15:03 jdolecek Exp $
 #include <sys/intr.h>
 #include <sys/bus.h>
 #include <sys/once.h>
+#include <sys/bitops.h>
 
 #define ATABUS_PRIVATE
 
@@ -84,7 +84,6 @@ int atadebug_mask = ATADEBUG_MASK;
 #endif
 
 static ONCE_DECL(ata_init_ctrl);
-static struct pool ata_xfer_pool;
 
 /*
  * A queue of atabus instances, used to ensure the same bus probe order
@@ -139,8 +138,6 @@ static int
 atabus_init(void)
 {
 
-	pool_init(&ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0,
-	    "ataspl", NULL, IPL_BIO);
 	TAILQ_INIT(&atabus_initq_head);
 	mutex_init(&atabus_qlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&atabus_qcv, "atainitq");
@@ -187,29 +184,18 @@ ata_queue_reset(struct ata_queue *chq)
 {
 	/* make sure that we can use polled commands */
 	TAILQ_INIT(&chq->queue_xfer);
+	TAILQ_INIT(&chq->active_xfers);
 	chq->queue_freeze = 0;
 	chq->queue_active = 0;
-	for (u_int i = 0; i < chq->queue_openings; i++) {
-		chq->active_xfers[0] = NULL;
-	}
 }
 
 struct ata_xfer *
 ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 {
 	KASSERT(hwslot < chq->queue_openings);
-	if (chq->queue_openings == 1) {
-		struct ata_xfer *xfer = chq->active_xfers[0];
-		KASSERT(xfer == NULL || xfer->c_hwslot == hwslot);
-		return xfer;
-	}
-	for (u_int i = 0; i < chq->queue_openings; i++) {
-		struct ata_xfer *xfer = chq->active_xfers[i];
-		if (xfer != NULL && xfer->c_hwslot == hwslot) {
-			return xfer;
-		}
-	}
-	return NULL;
+	KASSERT((chq->queue_xfers_avail & __BIT(hwslot)) == 0);
+
+	return &chq->queue_xfers[hwslot];
 }
 
 struct ata_queue *
@@ -217,10 +203,11 @@ ata_queue_alloc(int openings)
 {
 	if (openings == 0)
 		openings = 1;
-	struct ata_queue *chq = malloc(offsetof(struct ata_queue, active_xfers[openings]),
+	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
 	    M_DEVBUF, M_WAITOK);
 	if (chq != NULL) {
 		chq->queue_openings = openings;
+		chq->queue_xfers_avail = (1 << openings) - 1;
 		ata_queue_reset(chq);
 	}
 	return chq;
@@ -520,11 +507,9 @@ atabus_thread(void *arg)
 			 */
 			chq->queue_freeze--;
 			u_int active __diagused = 0;
-			for (i = 0; i < chq->queue_openings; i++) {
-				if ((xfer = chq->active_xfers[i]) != NULL) {
-					(*xfer->c_start)(xfer->c_chp, xfer);
-					active++;
-				}
+			TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
+				(*xfer->c_start)(xfer->c_chp, xfer);
+				active++;
 			}
 			KASSERT(active == chq->queue_active);
 		} else if (chq->queue_freeze > 1)
@@ -961,7 +946,6 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	/* complete xfer setup */
 	xfer->c_chp = chp;
-	xfer->c_slot = 0;
 
 	/* insert at the end of command list */
 	TAILQ_INSERT_TAIL(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
@@ -1053,11 +1037,6 @@ atastart(struct ata_channel *chp)
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0)
 		panic("atastart: channel waiting for irq");
 #endif
-	if (atac->atac_claim_hw) {
-		if (!(*atac->atac_claim_hw)(chp, 0))
-			return;
-	}
-
 	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
 	    chp->ch_channel, xfer->c_drive), DEBUG_XFERS);
 	if (drvp->drive_flags & ATA_DRIVE_RESET) {
@@ -1065,18 +1044,6 @@ atastart(struct ata_channel *chp)
 		drvp->state = 0;
 	}
 
-	if (chq->queue_openings == 1) {
-		xfer->c_slot = 0;
-		xfer->c_hwslot = 0;
-	} else {
-		for (u_int slot = 0; slot < chq->queue_openings; slot++) {
-			if (chq->active_xfers[slot] == NULL) {
-				xfer->c_slot = slot;
-				xfer->c_hwslot = slot;
-				break;
-			}
-		}
-	}
 	ata_activate_xfer(chp, xfer);
 
 	if (atac->atac_cap & ATAC_CAP_NOIRQ)
@@ -1086,26 +1053,34 @@ atastart(struct ata_channel *chp)
 }
 
 struct ata_xfer *
-ata_get_xfer(int flags)
+ata_get_xfer(struct ata_channel *chp)
 {
-	struct ata_xfer *xfer;
+	struct ata_queue *chq = chp->ch_queue;
+	struct ata_xfer *xfer = NULL;
 	int s;
+	uint32_t avail, slot;
 
 	s = splbio();
-	xfer = pool_get(&ata_xfer_pool,
-	    ((flags & ATAXF_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
+	avail = ffs32(chq->queue_xfers_avail);
+	if (avail == 0)
+		goto out;
+
+	slot = avail - 1;
+	xfer = &chq->queue_xfers[slot];
+	chq->queue_xfers_avail &= ~__BIT(slot);
+
+	memset(xfer, 0, sizeof(struct ata_xfer));
+	xfer->c_slot = slot;
+
+out:
 	splx(s);
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct ata_xfer));
-	}
-	xfer->c_slot = -1;
 	return xfer;
 }
 
 void
 ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct atac_softc *atac = chp->ch_atac;
+	struct ata_queue *chq = chp->ch_queue;
 	int s;
 
 	if (xfer->c_flags & C_WAITACT) {
@@ -1126,10 +1101,9 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 #endif
 
-	if (atac->atac_free_hw)
-		(*atac->atac_free_hw)(chp);
 	s = splbio();
-	pool_put(&ata_xfer_pool, xfer);
+	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
+	chq->queue_xfers_avail |= __BIT(xfer->c_slot);
 	splx(s);
 }
 
@@ -1138,13 +1112,12 @@ ata_activate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_queue * const chq = chp->ch_queue;
 
-	KASSERT(xfer->c_slot >= 0);
 	KASSERT(chq->queue_active < chq->queue_openings);
-	KASSERT(chq->active_xfers[xfer->c_slot] == NULL);
+	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
 
 	TAILQ_REMOVE(&chq->queue_xfer, xfer, c_xferchain);
+	TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
 
-	chq->active_xfers[xfer->c_slot] = xfer;
 	chq->queue_active++;
 }
 
@@ -1153,17 +1126,14 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_queue * const chq = chp->ch_queue;
 
-	KASSERT(xfer->c_slot >= 0);
 	KASSERT(chq->queue_active > 0);
-	KASSERT(chq->active_xfers[xfer->c_slot] == xfer);
+	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
 
 	//if ((xfer->c_flags & C_TIMEOU) == 0)
 	callout_stop(&chp->ch_callout);
 
-	chq->active_xfers[xfer->c_slot] = NULL;
+	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
 	chq->queue_active--;
-
-	xfer->c_slot = -1;
 }
 
 
@@ -1172,7 +1142,7 @@ ata_waitdrain_check(struct ata_channel *chp, int drive)
 {
 	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(chp->ch_queue->active_xfers);
+		wakeup(&chp->ch_queue->active_xfers);
 		return true;
 	}
 	return false;
@@ -1185,7 +1155,7 @@ ata_waitdrain_xfer_check(struct ata_channel *chp, struct ata_xfer *xfer)
 	if (chp->ch_drive[drive].drive_flags & ATA_DRIVE_WAITDRAIN) {
 		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
 		chp->ch_drive[drive].drive_flags &= ~ATA_DRIVE_WAITDRAIN;
-		wakeup(chp->ch_queue->active_xfers);
+		wakeup(&chp->ch_queue->active_xfers);
 		return true;
 	}
 	return false;
@@ -1200,12 +1170,10 @@ void
 ata_kill_active(struct ata_channel *chp, int reason)
 {
 	struct ata_queue * const chq = chp->ch_queue;
-	for (u_int i = 0;
-	     chq->queue_active > 0 && i < chq->queue_openings; i++) {
-		struct ata_xfer *xfer = chq->active_xfers[i];
-		if (xfer != NULL) {
-			(*xfer->c_kill_xfer)(xfer->c_chp, xfer, reason);
-		}
+	struct ata_xfer *xfer, *xfernext;
+
+	TAILQ_FOREACH_SAFE(xfer, &chq->active_xfers, c_activechain, xfernext) {
+		(*xfer->c_kill_xfer)(xfer->c_chp, xfer, reason);
 	}
 }
 
@@ -1233,12 +1201,13 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 
 	while (chq->queue_active > 0) {
 		if (chq->queue_openings == 1 && chp->ch_ndrives > 1) {
-			xfer = chq->active_xfers[0];
+			xfer = TAILQ_FIRST(&chq->active_xfers);
+			KASSERT(xfer != NULL);
 			if (xfer->c_chp != chp || xfer->c_drive != drvp->drive)
 				break;
 		}
 		drvp->drive_flags |= ATA_DRIVE_WAITDRAIN;
-		(void) tsleep(&chq->active_xfers[0], PRIBIO, "atdrn", 0);
+		(void) tsleep(&chq->active_xfers, PRIBIO, "atdrn", 0);
 	}
 	splx(s);
 }

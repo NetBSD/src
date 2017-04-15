@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.2 2017/04/11 18:13:17 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.3 2017/04/15 12:01:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.2 2017/04/11 18:13:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.3 2017/04/15 12:01:23 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -57,7 +57,7 @@ int ahcidebug_mask = 0;
 static void ahci_probe_drive(struct ata_channel *);
 static void ahci_setup_channel(struct ata_channel *);
 
-static int  ahci_ata_bio(struct ata_drive_datas *, struct ata_bio *);
+static int  ahci_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static int  ahci_do_reset_drive(struct ata_channel *, int, int, uint32_t *);
 static void ahci_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 static void ahci_reset_channel(struct ata_channel *, int);
@@ -930,8 +930,7 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	AHCIDEBUG_PRINT(("ahci_exec_command port %d CI 0x%x\n",
 	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
-	xfer = ata_get_xfer(ata_c->flags & AT_WAIT ? ATAXF_CANSLEEP :
-	    ATAXF_NOSLEEP);
+	xfer = ata_get_xfer(chp);
 	if (xfer == NULL) {
 		return ATACMD_TRY_AGAIN;
 	}
@@ -1164,23 +1163,18 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 }
 
 static int
-ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
+ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct ata_xfer *xfer;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	AHCIDEBUG_PRINT(("ahci_ata_bio port %d CI 0x%x\n",
 	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
-	xfer = ata_get_xfer(ATAXF_NOSLEEP);
-	if (xfer == NULL) {
-		return ATACMD_TRY_AGAIN;
-	}
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->c_drive = drvp->drive;
-	xfer->c_cmd = ata_bio;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = ahci_bio_start;
@@ -1195,7 +1189,7 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int slot = 0 /* XXX slot */;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
@@ -1275,13 +1269,12 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	int slot = 0;  /* XXX slot */
 	int drive = xfer->c_drive;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	AHCIDEBUG_PRINT(("ahci_bio_kill_xfer channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
 
 	achp->ahcic_cmds_active &= ~(1 << slot);
-	ata_free_xfer(chp, xfer);
 	ata_bio->flags |= ATA_ITSDONE;
 	switch (reason) {
 	case KILL_GONE:
@@ -1295,14 +1288,14 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 		panic("ahci_bio_kill_xfer");
 	}
 	ata_bio->r_error = WDCE_ABRT;
-	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
+	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 }
 
 static int
 ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	int slot = 0; /* XXX slot */
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -1329,7 +1322,6 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	if (ata_waitdrain_xfer_check(chp, xfer)) {
 		return 0;
 	}
-	ata_free_xfer(chp, xfer);
 	ata_bio->flags |= ATA_ITSDONE;
 	if (chp->ch_status & WDCS_DWF) { 
 		ata_bio->error = ERR_DF;
@@ -1352,7 +1344,7 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
 		ata_bio->bcount -= le32toh(achp->ahcic_cmdh[slot].cmdh_prdbc);
 	AHCIDEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
-	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
+	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 	atastart(chp);
 	return 0;
 }
@@ -1569,7 +1561,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 			scsipi_done(sc_xfer);
 			return;
 		}
-		xfer = ata_get_xfer(ATAXF_NOSLEEP);
+		xfer = ata_get_xfer(atac->atac_channels[channel]);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);

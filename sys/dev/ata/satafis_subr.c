@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.7 2012/07/22 17:57:57 jakllsch Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.7.28.1 2017/04/15 12:01:23 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7 2012/07/22 17:57:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7.28.1 2017/04/15 12:01:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,10 +100,11 @@ satafis_rhd_construct_cmd(struct ata_command *ata_c, uint8_t *fis)
 void
 satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 {
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
+	struct ata_drive_datas *drvp = &xfer->c_chp->ch_drive[xfer->c_drive];
 	int nblks;
 
-	nblks = xfer->c_bcount / ata_bio->lp->d_secsize;
+	nblks = xfer->c_bcount / drvp->lp->d_secsize;
 
 	memset(fis, 0, RHD_FISLEN);
 

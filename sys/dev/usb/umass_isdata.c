@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.33 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.33.4.1 2017/04/15 12:01:24 jdolecek Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.33.4.1 2017/04/15 12:01:24 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,7 +93,7 @@ struct uisdata_softc {
 
 	struct ata_drive_datas	sc_drv_data;
 	struct isd200_config	sc_isd_config;
-	void			*sc_ata_bio;
+	struct ata_xfer		*sc_ata_xfer;
 	u_long			sc_skip;
 };
 
@@ -108,8 +108,8 @@ int	uisdatadebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-int  uisdata_bio(struct ata_drive_datas *, struct ata_bio *);
-int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
+int  uisdata_bio(struct ata_drive_datas *, struct ata_xfer *);
+int  uisdata_bio1(struct ata_drive_datas *, struct ata_xfer *);
 void uisdata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void uisdata_reset_channel(struct ata_channel *, int);
 int  uisdata_exec_command(struct ata_drive_datas *, struct ata_command *);
@@ -220,6 +220,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	adev.adev_drv_data = &scbus->sc_drv_data;
 	scbus->sc_drv_data.drive_type = ATA_DRIVET_ATA;
 	scbus->sc_drv_data.chnl_softc = sc;
+#error chnl_softc is used by ata_get_xfer() as ata_channel
 	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 
 	return 0;
@@ -230,13 +231,14 @@ void
 uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 {
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
-	struct ata_bio *ata_bio = priv;
+	struct ata_xfer *xfer = priv;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int s;
 
 	DPRINTF(("%s: residue=%d status=%d\n", __func__, residue, status));
 
 	s = splbio();
-	scbus->sc_ata_bio = NULL;
+	scbus->sc_ata_xfer = NULL;
 	if (status != STATUS_CMD_OK)
 		ata_bio->error = ERR_DF; /* ??? */
 	else
@@ -251,7 +253,7 @@ uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		ata_bio->bcount += residue;
 	} else if (ata_bio->bcount > 0) {
 		DPRINTF(("%s: continue\n", __func__));
-		(void)uisdata_bio1(&scbus->sc_drv_data, ata_bio); /*XXX save drv*/
+		(void)uisdata_bio1(&scbus->sc_drv_data, xfer); /*XXX save drv*/
 		splx(s);
 		return;
 	}
@@ -260,27 +262,29 @@ uisdata_bio_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		DPRINTF(("%s: wakeup %p\n", __func__, ata_bio));
 		wakeup(ata_bio);
 	} else {
-		(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc);
+		(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc,
+		    xfer);
 	}
 	splx(s);
 }
 
 int
-uisdata_bio(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
+uisdata_bio(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 {
 	struct umass_softc *sc = drv->chnl_softc;
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 
 	scbus->sc_skip = 0;
-	return uisdata_bio1(drv, ata_bio);
+	return uisdata_bio1(drv, xfer);
 }
 
 int
-uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
+uisdata_bio1(struct ata_drive_datas *drv, struct ata_xfer *xfer)
 {
 	struct umass_softc *sc = drv->chnl_softc;
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 	struct isd200_config *cf = &scbus->sc_isd_config;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_cmd ata;
 	uint16_t cyl;
 	uint8_t head, sect;
@@ -298,11 +302,11 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		return ATACMD_COMPLETE;
 	}
 
-	if (scbus->sc_ata_bio != NULL) {
+	if (scbus->sc_ata_xfer != NULL) {
 		printf("%s: multiple uisdata_bio\n", __func__);
 		return ATACMD_TRY_AGAIN;
 	} else
-		scbus->sc_ata_bio = ata_bio;
+		scbus->sc_ata_xfer = xfer;
 
 	if (ata_bio->flags & ATA_LBA) {
 		sect = (ata_bio->blkno >> 0) & 0xff;
@@ -311,11 +315,11 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		head |= WDSD_LBA;
 	} else {
 		int blkno = ata_bio->blkno;
-		sect = blkno % ata_bio->lp->d_nsectors;
+		sect = blkno % drv->lp->d_nsectors;
 		sect++;    /* Sectors begin with 1, not 0. */
-		blkno /= ata_bio->lp->d_nsectors;
-		head = blkno % ata_bio->lp->d_ntracks;
-		blkno /= ata_bio->lp->d_ntracks;
+		blkno /= drv->lp->d_nsectors;
+		head = blkno % drv->lp->d_ntracks;
+		blkno /= drv->lp->d_ntracks;
 		cyl = blkno;
 		head |= WDSD_CHS;
 	}
@@ -324,8 +328,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	if (ata_bio->flags & ATA_SINGLE)
 		nblks = 1;
 	else
-		nblks = min(ata_bio->multi, nbytes / ata_bio->lp->d_secsize);
-	nbytes = nblks * ata_bio->lp->d_secsize;
+		nblks = min(drv->multi, nbytes / drv->lp->d_secsize);
+	nbytes = nblks * drv->lp->d_secsize;
 	ata_bio->nblks = nblks;
 	ata_bio->nbytes = nbytes;
 
@@ -364,7 +368,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		 ata_bio->bcount, drv->drive));
 	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof(ata),
 				  ata_bio->databuf + scbus->sc_skip, nbytes,
-				  dir, ATA_DELAY, 0, uisdata_bio_cb, ata_bio);
+				  dir, ATA_DELAY, 0, uisdata_bio_cb, xfer);
 
 	while (ata_bio->flags & ATA_POLL) {
 		DPRINTF(("%s: tsleep %p\n", __func__, ata_bio));
@@ -496,17 +500,19 @@ uisdata_kill_pending(struct ata_drive_datas *drv)
 {
 	struct umass_softc *sc = drv->chnl_softc;
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
-	struct ata_bio *ata_bio = scbus->sc_ata_bio;
+	struct ata_xfer *xfer = scbus->sc_ata_xfer;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 
 	DPRINTFN(-1,("%s\n", __func__));
 
-	if (ata_bio == NULL)
+	if (xfer == NULL)
 		return;
-	scbus->sc_ata_bio = NULL;
+
+	scbus->sc_ata_xfer = NULL;
 	ata_bio->flags |= ATA_ITSDONE;
 	ata_bio->error = ERR_NODEV;
 	ata_bio->r_error = WDCE_ABRT;
-	(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc);
+	(*scbus->sc_drv_data.drv_done)(scbus->sc_drv_data.drv_softc, xfer);
 }
 
 int

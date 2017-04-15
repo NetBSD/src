@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.1 2017/04/12 21:59:14 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.2 2017/04/15 12:01:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -43,11 +43,8 @@ struct wd_softc {
 	int sc_quirks;			/* any quirks drive might have */
 
 	/* IDE disk soft states */
-	struct ata_bio sc_wdc_bio; /* current transfer */
-	struct buf *sc_bp; /* buf being transfered */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
 	const struct ata_bustype *atabus;
-	int openings;
 	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
 #define	WDF_WLABEL	0x004 /* label is writable */
@@ -66,8 +63,6 @@ struct wd_softc {
 	uint32_t sc_capacity28; /* capacity accessible with LBA28 commands */
 	uint32_t sc_blksize; /* logical block size, in bytes */
 
-	int retries; /* number of xfer retry */
-
 #ifdef WD_SOFTBADSECT
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
 	u_int sc_bscount;
@@ -75,11 +70,8 @@ struct wd_softc {
 	krndsource_t	rnd_source;
 
 	LIST_HEAD(, wd_ioctl) wi_head;
-};
 
-#define sc_drive sc_wdc_bio.drive
-#define sc_mode sc_wdc_bio.mode
-#define sc_multi sc_wdc_bio.multi
-#define sc_badsect sc_wdc_bio.badsect
+	STAILQ_HEAD(, ata_xfer) xfer_restart;
+};
 
 #endif /* _DEV_ATA_WDVAR_H_ */
