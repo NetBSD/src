@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.2 2017/04/15 12:01:23 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.3 2017/04/15 17:14:11 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.2 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.3 2017/04/15 17:14:11 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1366,10 +1366,10 @@ wdctimeout(void *arg)
 }
 
 int
-wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
+wdc_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct ata_xfer *xfer;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int s, ret;
 
 	ATADEBUG_PRINT(("wdc_exec_command %s:%d:%d\n",
@@ -1377,11 +1377,6 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	    drvp->drive), DEBUG_FUNCS);
 
 	/* set up an xfer and queue. Wait for completion */
-	xfer = ata_get_xfer(chp);
-	if (xfer == NULL) {
-		return ATACMD_TRY_AGAIN;
-	 }
-
 	if (chp->ch_atac->atac_cap & ATAC_CAP_NOIRQ)
 		ata_c->flags |= AT_POLL;
 	if (ata_c->flags & AT_POLL)
@@ -1391,7 +1386,6 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_cmd = ata_c;
 	xfer->c_start = __wdccommand_start;
 	xfer->c_intr = __wdccommand_intr;
 	xfer->c_kill_xfer = __wdccommand_kill_xfer;
@@ -1426,7 +1420,7 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	int drive = xfer->c_drive;
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	ATADEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
@@ -1487,7 +1481,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int bcount = ata_c->bcount;
 	char *data = ata_c->data;
 	int wflags;
@@ -1598,7 +1592,7 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	ATADEBUG_PRINT(("__wdccommand_done %s:%d:%d flags 0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
@@ -1683,10 +1677,9 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 __wdccommand_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	ata_c->flags |= AT_DONE;
-	ata_free_xfer(chp, xfer);
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
 	else if (ata_c->callback)
@@ -1699,7 +1692,7 @@ static void
 __wdccommand_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	switch (reason) {
 	case KILL_GONE:

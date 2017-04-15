@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.3 2017/04/15 12:01:23 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.4 2017/04/15 17:14:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -69,6 +69,64 @@ struct ata_bio {
 };
 
 /*
+ * ATA/ATAPI commands description
+ *
+ * This structure defines the interface between the ATA/ATAPI device driver
+ * and the controller for short commands. It contains the command's parameter,
+ * the length of data to read/write (if any), and a function to call upon
+ * completion.
+ * If no sleep is allowed, the driver can poll for command completion.
+ * Once the command completed, if the error registered is valid, the flag
+ * AT_ERROR is set and the error register value is copied to r_error .
+ * A separate interface is needed for read/write or ATAPI packet commands
+ * (which need multiple interrupts per commands).
+ */
+struct ata_command {
+	/* ATA parameters */
+	uint64_t r_lba;		/* before & after */
+	uint16_t r_count;	/* before & after */
+	union {
+		uint16_t r_features; /* before */
+		uint8_t r_error; /* after */
+	};
+	union {
+		uint8_t r_command; /* before */
+		uint8_t r_status; /* after */
+	};
+	uint8_t r_device;	/* before & after */
+
+	uint8_t r_st_bmask;	/* status register mask to wait for before
+				   command */
+	uint8_t r_st_pmask;	/* status register mask to wait for after
+				   command */
+	volatile uint16_t flags;
+
+#define AT_READ     0x0001 /* There is data to read */
+#define AT_WRITE    0x0002 /* There is data to write (excl. with AT_READ) */
+#define AT_WAIT     0x0008 /* wait in controller code for command completion */
+#define AT_POLL     0x0010 /* poll for command completion (no interrupts) */
+#define AT_DONE     0x0020 /* command is done */
+#define AT_XFDONE   0x0040 /* data xfer is done */
+#define AT_ERROR    0x0080 /* command is done with error */
+#define AT_TIMEOU   0x0100 /* command timed out */
+#define AT_DF       0x0200 /* Drive fault */
+#define AT_RESET    0x0400 /* command terminated by channel reset */
+#define AT_GONE     0x0800 /* command terminated because device is gone */
+#define AT_READREG  0x1000 /* Read registers on completion */
+#define AT_LBA      0x2000 /* LBA28 */
+#define AT_LBA48    0x4000 /* LBA48 */
+
+	int timeout;		/* timeout (in ms) */
+	void *data;		/* Data buffer address */
+	int bcount;		/* number of bytes to transfer */
+	void (*callback)(void *); /* command to call once command completed */
+	void *callback_arg;	/* argument passed to *callback() */
+};
+
+/* Forward declaration for ata_xfer */
+struct scsipi_xfer;
+
+/*
  * Description of a command to be handled by an ATA controller.  These
  * commands are queued in a list.
  */
@@ -80,7 +138,6 @@ struct ata_xfer {
 	uint16_t c_drive;
 	int8_t c_slot;			/* queue slot # */
 
-	void	*c_cmd;			/* private request structure pointer */
 	void	*c_databuf;		/* pointer to data buffer */
 	int	c_bcount;		/* byte count left */
 	int	c_skip;			/* bytes already transferred */
@@ -88,9 +145,13 @@ struct ata_xfer {
 	int	c_lenoff;		/* offset to c_bcount (ATAPI) */
 
 	union {
-		struct ata_bio	c_bio;	/* block I/O context */
+		struct ata_bio	c_bio;		/* ATA transfer */
+		struct ata_command c_ata_c;	/* ATA command */ 
+		struct scsipi_xfer *c_scsipi;	/* SCSI transfer */
 	} u;
 #define c_bio	u.c_bio
+#define c_ata_c	u.c_ata_c
+#define c_scsipi u.c_scsipi
 
 	/* Link on the command queue. */
 	TAILQ_ENTRY(ata_xfer) c_xferchain;
@@ -127,6 +188,7 @@ struct ata_queue {
 	int queue_openings; /* max number of active transfers */
 #ifdef ATABUS_PRIVATE
 	TAILQ_HEAD(, ata_xfer) active_xfers; 	/* active commands */
+	uint32_t active_xfers_used;		/* mask of active commands */
 	uint32_t queue_xfers_avail;		/* available xfers mask */
 	struct ata_xfer queue_xfers[0];		/* xfers */
 #endif
@@ -240,61 +302,6 @@ struct ata_drive_datas {
 #define ATA_CONFIG_UDMA_OFF	8
 
 /*
- * ATA/ATAPI commands description
- *
- * This structure defines the interface between the ATA/ATAPI device driver
- * and the controller for short commands. It contains the command's parameter,
- * the length of data to read/write (if any), and a function to call upon
- * completion.
- * If no sleep is allowed, the driver can poll for command completion.
- * Once the command completed, if the error registered is valid, the flag
- * AT_ERROR is set and the error register value is copied to r_error .
- * A separate interface is needed for read/write or ATAPI packet commands
- * (which need multiple interrupts per commands).
- */
-struct ata_command {
-	/* ATA parameters */
-	uint64_t r_lba;		/* before & after */
-	uint16_t r_count;	/* before & after */
-	union {
-		uint16_t r_features; /* before */
-		uint8_t r_error; /* after */
-	};
-	union {
-		uint8_t r_command; /* before */
-		uint8_t r_status; /* after */
-	};
-	uint8_t r_device;	/* before & after */
-
-	uint8_t r_st_bmask;	/* status register mask to wait for before
-				   command */
-	uint8_t r_st_pmask;	/* status register mask to wait for after
-				   command */
-	volatile uint16_t flags;
-
-#define AT_READ     0x0001 /* There is data to read */
-#define AT_WRITE    0x0002 /* There is data to write (excl. with AT_READ) */
-#define AT_WAIT     0x0008 /* wait in controller code for command completion */
-#define AT_POLL     0x0010 /* poll for command completion (no interrupts) */
-#define AT_DONE     0x0020 /* command is done */
-#define AT_XFDONE   0x0040 /* data xfer is done */
-#define AT_ERROR    0x0080 /* command is done with error */
-#define AT_TIMEOU   0x0100 /* command timed out */
-#define AT_DF       0x0200 /* Drive fault */
-#define AT_RESET    0x0400 /* command terminated by channel reset */
-#define AT_GONE     0x0800 /* command terminated because device is gone */
-#define AT_READREG  0x1000 /* Read registers on completion */
-#define AT_LBA      0x2000 /* LBA28 */
-#define AT_LBA48    0x4000 /* LBA48 */
-
-	int timeout;		/* timeout (in ms) */
-	void *data;		/* Data buffer address */
-	int bcount;		/* number of bytes to transfer */
-	void (*callback)(void *); /* command to call once command completed */
-	void *callback_arg;	/* argument passed to *callback() */
-};
-
-/*
  * ata_bustype.  The first field must be compatible with scsipi_bustype,
  * as it's used for autoconfig by both ata and atapi drivers.
  */
@@ -308,7 +315,7 @@ struct ata_bustype {
 #define	AT_RST_NOCMD 0x20000 /* XXX has to go - temporary until we have tagged queuing */
 
 	int	(*ata_exec_command)(struct ata_drive_datas *,
-				    struct ata_command *);
+				    struct ata_xfer *);
 
 #define	ATACMD_COMPLETE		0x01
 #define	ATACMD_QUEUED		0x02

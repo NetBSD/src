@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.2 2017/04/15 12:01:24 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.3 2017/04/15 17:14:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.2 2017/04/15 12:01:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.3 2017/04/15 17:14:11 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -169,7 +169,7 @@ wdc_atapi_kill_pending(struct scsipi_periph *periph)
 static void
 wdc_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	/* remove this command from xfer queue */
 	switch (reason) {
@@ -196,25 +196,25 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct atac_softc *atac = &wdc->sc_atac;
 	struct wdc_regs *wdr = &wdc->regs[chan->chan_channel];
 	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
-	struct ata_command ata_c;
+	struct ata_xfer xfer;
 
-	memset(&ata_c, 0, sizeof(struct ata_command));
-	ata_c.r_command = ATAPI_SOFT_RESET;
-	ata_c.r_st_bmask = 0;
-	ata_c.r_st_pmask = 0;
-	ata_c.flags = AT_WAIT | AT_POLL;
-	ata_c.timeout = WDC_RESET_WAIT;
-	if (wdc_exec_command(&chp->ch_drive[drive], &ata_c) != ATACMD_COMPLETE) {
+	memset(&xfer, 0, sizeof(xfer));
+	xfer.c_ata_c.r_command = ATAPI_SOFT_RESET;
+	xfer.c_ata_c.r_st_bmask = 0;
+	xfer.c_ata_c.r_st_pmask = 0;
+	xfer.c_ata_c.flags = AT_WAIT | AT_POLL;
+	xfer.c_ata_c.timeout = WDC_RESET_WAIT;
+	if (wdc_exec_command(&chp->ch_drive[drive], &xfer) != ATACMD_COMPLETE) {
 		printf("wdc_atapi_get_params: ATAPI_SOFT_RESET failed for"
 		    " drive %s:%d:%d: driver failed\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive);
 		panic("wdc_atapi_get_params");
 	}
-	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_SOFT_RESET "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
-		    ata_c.r_error), DEBUG_PROBE);
+		    xfer.c_ata_c.r_error), DEBUG_PROBE);
 		return -1;
 	}
 	chp->ch_drive[drive].state = 0;
@@ -227,7 +227,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		ATADEBUG_PRINT(("wdc_atapi_get_params: ATAPI_IDENTIFY_DEVICE "
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
-		    ata_c.r_error), DEBUG_PROBE);
+		    xfer.c_ata_c.r_error), DEBUG_PROBE);
 		return -1;
 	}
 	return 0;
@@ -424,7 +424,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			xfer->c_flags &= ~C_DMA;
 #endif	/* NATA_DMA */
 
-		xfer->c_cmd = sc_xfer;
+		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = wdc_atapi_start;
@@ -454,7 +454,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (sc_xfer->xs_control & XS_CTL_POLL) ? AT_POLL : 0;
 	const char *errstring;
@@ -690,7 +690,7 @@ wdc_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, i, retries=0;
 	int ire;
@@ -994,7 +994,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
 	/* wait for DSC if needed */
@@ -1077,7 +1077,7 @@ static void
 wdc_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	int drive = xfer->c_drive;
 
 	ATADEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
@@ -1102,7 +1102,7 @@ wdc_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	wdccommandshort(chp, xfer->c_drive, ATAPI_SOFT_RESET);
 	drvp->state = 0;
