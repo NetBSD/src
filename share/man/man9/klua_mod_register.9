@@ -1,0 +1,113 @@
+.\"	$NetBSD: klua_mod_register.9,v 1.1 2017/04/15 03:33:05 kamil Exp $
+.\"
+.\" Copyright (c) 2015 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Kamil Rytarowski.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 14, 2015
+.Dt KLUA_MOD_REGISTER 9
+.Os
+.Sh NAME
+.Nm klua_mod_register ,
+.Nm klua_mod_unregister
+.Nd Lua kernel bindings
+.Sh SYNOPSIS
+.In sys/lua.h
+.Ft void
+.Fn klua_mod_register "const char *name" "lua_CFunction open"
+.Ft void
+.Fn klua_mod_unregister "const char *name"
+.Sh DESCRIPTION
+The Lua kernel bindings are designed to provide functionality to Lua scripts
+not available in the language itself, e.g. to access core kernel functionality.
+This mechanism is utilizing the lua_modules functionality.
+.Pp
+The lua_module structure is declared as follows:
+.Bd -literal
+struct lua_module {
+        char                    mod_name[LUA_MAX_MODNAME];
+        lua_CFunction           open;
+        int                     refcount;
+        LIST_ENTRY(lua_module)  mod_next;
+};
+.Ed
+.Pp
+The
+.Ft mod_name
+defines the unique name of a module.
+A C function must use the standard Lua protocol in order to communicate with
+Lua, this is part is maintained with the
+.Ft open
+element in the standard Lua way.
+.Ft refcount
+protects the module from unplogging it when in use.
+The last parameter
+.Ft mod_next
+is used for the standard container
+.Xr LIST 3 .
+.Pp
+The
+.Fn klua_mod_register
+function registers new function available to the
+.Xr lua 9
+device and possible to be used in a Lua code by the
+.Dv require
+directive.
+.Dv require
+might be used by
+.Xr luactl 8
+or by the special meaning of the
+.Dv require
+in the kernel Lua version.
+The
+.Fa name
+parameter is a unique identifier of the kernel Lua module.
+.Fa open
+points to a function used in the C and Lua cooperation,
+defined with the appropriate standard Lua API.
+.Pp
+Once registered a C function must be deregistered with the
+.Fn klua_mod_unregister
+function.
+This function takes as its parameter the unique literal identifier of the
+extending module.
+.Sh EXAMPLES
+A set of example modules is available in the
+.Pa src/sys/modules/examples
+directory hierarchy.
+.Sh SEE ALSO
+.Xr lua 1 ,
+.Xr luac 1 ,
+.Xr intro 3lua ,
+.Xr lua 4 ,
+.Xr klua_close 9 ,
+.Xr klua_lock 9 ,
+.Xr klua_newstate 9 ,
+.Xr klua_unlock 9 ,
+.Xr kluaL_newstate 9 ,
+.Xr intro 9lua
+.Sh AUTHORS
+.An Kamil Rytarowski
