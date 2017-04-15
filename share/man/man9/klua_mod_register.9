@@ -1,4 +1,4 @@
-.\"	$NetBSD: klua_mod_register.9,v 1.2 2017/04/15 04:07:52 wiz Exp $
+.\"	$NetBSD: klua_mod_register.9,v 1.3 2017/04/15 04:44:14 sevan Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 14, 2015
+.Dd April 15, 2017
 .Dt KLUA_MOD_REGISTER 9
 .Os
 .Sh NAME
@@ -42,8 +42,8 @@
 .Fn klua_mod_unregister "const char *name"
 .Sh DESCRIPTION
 The Lua kernel bindings are designed to provide functionality to Lua scripts
-not available in the language itself, e.g. to access core kernel functionality.
-This mechanism uses the lua_modules functionality.
+normally not available in the language itself, e.g. to access core kernel functionality.
+This is achieved by utilizing the lua_modules functionality.
 .Pp
 The lua_module structure is declared as follows:
 .Bd -literal
@@ -59,43 +59,42 @@ The
 .Ft mod_name
 defines the unique name of a module.
 A C function must use the standard Lua protocol in order to communicate with
-Lua, this is part is maintained with the
+Lua, this part is maintained with the
 .Ft open
 element in the standard Lua way.
 .Ft refcount
-protects the module from unloading it when in use.
-The last parameter
-.Ft mod_next
+protects the module from being unloaded whilst still in use.
+The last parameter,
+.Ft mod_next,
 is used for the standard container
 .Xr LIST 3 .
 .Pp
 The
 .Fn klua_mod_register
-function registers a new function available to the
+function registers a new function which is made available to the
 .Xr lua 9
-device and possible to be used in a Lua code by the
+device and Lua code using the
 .Dv require
-directive.
+directive. 
+The
 .Dv require
-might be used by
+directive can be called from
 .Xr luactl 8
-or by the special meaning of the
-.Dv require
-in the kernel Lua version.
+and the kernel Lua version.
 The
 .Fa name
 parameter is a unique identifier of the kernel Lua module.
 .Fa open
-points to a function used in the C and Lua cooperation,
+points to a function used in the C to Lua binding,
 defined with the appropriate standard Lua API.
 .Pp
-Once registered, a C function must be deregistered with the
+Once registered, a C function can be unregistered with the
 .Fn klua_mod_unregister
 function.
-This function takes as its parameter the unique literal identifier of the
+This function takes as its parameter, the unique literal identifier of the
 extending module.
 .Sh EXAMPLES
-A set of example modules is available in the
+A set of example modules are available in the
 .Pa src/sys/modules/examples
 directory hierarchy.
 .Sh SEE ALSO
