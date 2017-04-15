@@ -1,4 +1,4 @@
-.\"	$NetBSD: klua_lock.9,v 1.2 2017/04/15 04:08:24 wiz Exp $
+.\"	$NetBSD: klua_lock.9,v 1.3 2017/04/15 05:01:59 sevan Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 14, 2015
+.Dd April 15, 2017
 .Dt KLUA_LOCK 9
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ driver.
 A
 .Xr driver 9
 can be extended with dynamically managed Lua code with optional functionality
-to be injected from userland with the
+injected from userland with the
 .Xr luactl 8
 utility.
 .Pp
@@ -81,18 +81,18 @@ typedef struct _klua_State {
 The first element
 .Ft L
 of the structure points to a standard Lua state structure.
-The second
+The second element
 .Ft ks_lock
-is used to protect the integrity in cross-thread access to the Lua state.
-The third one
+is used to protect integrity during cross-thread access to the Lua state.
+The third element
 .Ft ks_user
-points whether the structure was created from the kernel space or userland.
+indicates whether the structure was created from the kernel space or user land.
 This parameter is used in the logic of
 .Xr luactl 8 ,
-prohibiting the case of creating a state from kernel and destroying it in
-the userland.
+to prohibit the destruction of state from an opposing side.
+Destroying kernel state from user land for example.
 .Pp
-The kernel Lua API is designed after the userland Lua API.
+The kernel Lua API is designed after the user land Lua API.
 .Ss List of Functions
 .Bl -column "kluaL_newstateX" "luaL_newstateX" "create a Lua state with custom allocatorX"
 .It Sy kernel API Ta Sy userland API Ta Sy Description
@@ -107,7 +107,7 @@ The
 .Fn klua_lock
 and
 .Fn klua_unlock
-functions must be used before and after use of the
+functions must be used before and after the use of the
 .Ft klua_State
 structure.
 The Lua state is not thread safe and this is the standard mechanism to overcome
@@ -120,7 +120,6 @@ utility when accessing
 The
 .Fn klua_close
 function destroys the kernel Lua state.
-It should be used after prior creation.
 .Pp
 The
 .Fn klua_newstate
@@ -135,15 +134,15 @@ defined by the proper Lua release and an opaque pointer
 that Lua passes to the allocator in every call.
 The
 .Ft name
-parameter identifies the kernel Lua state with a text literal and must not
-begin with the
+parameter identifies the kernel Lua state with a text literal.
+It must not begin with the
 .Dq _
 character and must be unique for the
 .Xr lua 9
 device.
 The
 .Ft desc
-parameter optionally describes the Lua state with plain text.
+parameter describes the Lua state in plain text.
 The
 .Ft ipl
 argument is used to define the type of
