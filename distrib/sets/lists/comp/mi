@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2122 2017/04/15 03:33:05 kamil Exp $
+#	$NetBSD: mi,v 1.2123 2017/04/15 13:52:51 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10614,6 +10614,7 @@
 ./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
+./usr/share/man/cat9/locking.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockmgr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockmgr_printinfo.0	comp-sys-catman		.cat
@@ -17929,6 +17930,7 @@
 ./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
+./usr/share/man/html9/locking.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lockinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lockmgr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lockmgr_printinfo.html	comp-sys-htmlman	html
@@ -25398,6 +25400,7 @@
 ./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
+./usr/share/man/man9/locking.9			comp-sys-man		.man
 ./usr/share/man/man9/lockinit.9			comp-sys-man		.man
 ./usr/share/man/man9/lockmgr.9			comp-sys-man		.man
 ./usr/share/man/man9/lockmgr_printinfo.9	comp-sys-man		.man
