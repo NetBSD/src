@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smscvar.h,v 1.3.4.6 2017/01/31 11:41:14 skrll Exp $	*/
+/*	$NetBSD: if_smscvar.h,v 1.3.4.7 2017/04/15 14:38:44 skrll Exp $	*/
 
 /*	$OpenBSD: if_smscreg.h,v 1.2 2012/09/27 12:38:11 jsg Exp $	*/
 /*-
@@ -57,6 +57,7 @@ struct smsc_softc {
 	struct usbd_device *	sc_udev;
 	bool			sc_dying;
 	bool			sc_stopping;
+	bool			sc_ttpending;
 
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	struct ethercom		sc_ec;
@@ -86,6 +87,7 @@ struct smsc_softc {
 	kmutex_t		sc_txlock;
 	kmutex_t		sc_rxlock;
 	kmutex_t		sc_mii_lock;
+	kcondvar_t		sc_detachcv;
 
 	struct smsc_cdata	sc_cdata;
 	callout_t		sc_stat_ch;
