@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.5 2017/04/15 18:02:09 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.6 2017/04/15 20:22:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.5 2017/04/15 18:02:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.6 2017/04/15 20:22:41 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -446,7 +446,7 @@ wdattach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_verbose_dev(self,
-	    "drive supports %sFUA, %sNCQ (queue depth max %d, used %u)\n",
+	    "drive supports %sFUA, %sNCQ (queue depth max %d, using %u)\n",
 	    (wd->sc_flags & (WDF_WFUA|WDF_NCQ)) ? "" : "no ",
 	    (wd->sc_flags & WDF_NCQ) ? "" : "no ",
 	    max_depth, adev->adev_openings);
