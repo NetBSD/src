@@ -1,4 +1,4 @@
-.\"	$NetBSD: klua_mod_register.9,v 1.1 2017/04/15 03:33:05 kamil Exp $
+.\"	$NetBSD: klua_mod_register.9,v 1.2 2017/04/15 04:07:52 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The Lua kernel bindings are designed to provide functionality to Lua scripts
 not available in the language itself, e.g. to access core kernel functionality.
-This mechanism is utilizing the lua_modules functionality.
+This mechanism uses the lua_modules functionality.
 .Pp
 The lua_module structure is declared as follows:
 .Bd -literal
@@ -63,7 +63,7 @@ Lua, this is part is maintained with the
 .Ft open
 element in the standard Lua way.
 .Ft refcount
-protects the module from unplogging it when in use.
+protects the module from unloading it when in use.
 The last parameter
 .Ft mod_next
 is used for the standard container
@@ -71,7 +71,7 @@ is used for the standard container
 .Pp
 The
 .Fn klua_mod_register
-function registers new function available to the
+function registers a new function available to the
 .Xr lua 9
 device and possible to be used in a Lua code by the
 .Dv require
@@ -89,7 +89,7 @@ parameter is a unique identifier of the kernel Lua module.
 points to a function used in the C and Lua cooperation,
 defined with the appropriate standard Lua API.
 .Pp
-Once registered a C function must be deregistered with the
+Once registered, a C function must be deregistered with the
 .Fn klua_mod_unregister
 function.
 This function takes as its parameter the unique literal identifier of the
