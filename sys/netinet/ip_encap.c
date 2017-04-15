@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.63 2017/04/07 03:31:50 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.64 2017/04/15 17:06:45 riastradh Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.63 2017/04/07 03:31:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.64 2017/04/15 17:06:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -274,8 +274,6 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
 		struct psref elem_psref;
 
-		membar_datadep_consumer();
-
 		if (ep->af != AF_INET)
 			continue;
 		if (ep->proto >= 0 && ep->proto != proto)
@@ -441,8 +439,6 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 #endif
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
 		struct psref elem_psref;
-
-		membar_datadep_consumer();
 
 		if (ep->af != AF_INET6)
 			continue;
@@ -678,8 +674,6 @@ encap_attach(int af, int proto,
 	/* check if anyone have already attached with exactly same config */
 	pss = pserialize_read_enter();
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
-		membar_datadep_consumer();
-
 		if (ep->af != af)
 			continue;
 		if (ep->proto != proto)
@@ -920,8 +914,6 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
 		struct psref elem_psref;
 
-		membar_datadep_consumer();
-
 		if (ep->af != AF_INET6)
 			continue;
 		if (ep->proto >= 0 && ep->proto != nxt)
@@ -959,8 +951,6 @@ encap_detach(const struct encaptab *cookie)
 	KASSERT(encap_lock_held());
 
 	PSLIST_WRITER_FOREACH(p, &encap_table, struct encaptab, chain) {
-		membar_datadep_consumer();
-
 		if (p == ep) {
 			error = encap_remove(p);
 			if (error)
