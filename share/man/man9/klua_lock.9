@@ -1,4 +1,4 @@
-.\"	$NetBSD: klua_lock.9,v 1.1 2017/04/15 03:33:05 kamil Exp $
+.\"	$NetBSD: klua_lock.9,v 1.2 2017/04/15 04:08:24 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,14 +92,14 @@ This parameter is used in the logic of
 prohibiting the case of creating a state from kernel and destroying it in
 the userland.
 .Pp
-The kernel Lua API is designed after ther userland Lua API.
+The kernel Lua API is designed after the userland Lua API.
 .Ss List of Functions
-.Bl -column "copysignX" "gammaX3XX" "inverse trigonometric funcX"
-.It Sy kernel API Sy userland API Sy Description
+.Bl -column "kluaL_newstateX" "luaL_newstateX" "create a Lua state with custom allocatorX"
+.It Sy kernel API Ta Sy userland API Ta Sy Description
 .It Xr klua_lock 3 Ta lua_lock Ta lock a Lua state
 .It Xr klua_unlock 3 Ta lua_unlock Ta unlock a Lua state
 .It Xr klua_close 3 Ta lua_close Ta destroy a Lua state
-.It Xr klua_newstate 3 Ta lua_newstate Ta create a Lua state with cusom allocator
+.It Xr klua_newstate 3 Ta lua_newstate Ta create a Lua state with custom allocator
 .It Xr kluaL_newstate 3 Ta luaL_newstate Ta create a Lua state
 .El
 .Pp
@@ -126,9 +126,9 @@ The
 .Fn klua_newstate
 and
 .Fn kluaL_newstate
-functions are used to create and register new kernel Lua state.
+functions are used to create and register a new kernel Lua state.
 .Fn klua_newstate
-takes additional standard parameter of type
+takes an additional standard parameter of type
 .Fa f ,
 defined by the proper Lua release and an opaque pointer
 .Fa ud
@@ -149,7 +149,7 @@ The
 argument is used to define the type of
 .Xr mutex 9
 by the system interrupt priority level.
-.Sh RETURN FUNCTIONS
+.Sh RETURN VALUES
 The
 .Fn klua_lock ,
 .Fn klua_unlock ,
