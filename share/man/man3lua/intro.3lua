@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.3lua,v 1.6 2016/01/19 10:11:02 mbalmer Exp $
+.\"	$NetBSD: intro.3lua,v 1.7 2017/04/15 23:33:52 sevan Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Marc Balmer <mbalmer@NetBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 19, 2016
+.Dd April 16, 2017
 .Dt INTRO 3lua
 .Os
 .Sh NAME
@@ -59,6 +59,9 @@ functionality.
 .Sh SEE ALSO
 .Xr lua 1 ,
 .Xr luac 1 ,
+.Xr gpio 3lua ,
+.Xr sqlite 3lua ,
+.Xr syslog 3lua ,
 .Xr intro 9lua
 .Sh HISTORY
 An
