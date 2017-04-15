@@ -1,4 +1,4 @@
-.\"	$NetBSD: locking.9,v 1.1 2017/04/15 13:52:51 kamil Exp $
+.\"	$NetBSD: locking.9,v 1.2 2017/04/15 13:57:47 skrll Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ kernel:
 - here run processes (represented by
 .Dv struct proc )
 and light-weight processes (represented by
-.Dv struc lwp
+.Dv struct lwp
 and known as kernel threads).
 Code in this context can sleep, block resources and posses address-space.
 .It
