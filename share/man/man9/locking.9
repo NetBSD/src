@@ -1,0 +1,292 @@
+.\"	$NetBSD: locking.9,v 1.1 2017/04/15 13:52:51 kamil Exp $
+.\"
+.\" Copyright (c) 2015 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Kamil Rytarowski.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 17, 2015
+.Dt LOCKING 9
+.Os
+.Sh NAME
+.Nm locking
+.Nd introduction to the kernel synchronization and interrupt control
+.Sh DESCRIPTION
+The
+.Nx
+kernel provides several synchronization and interrupt control primitives.
+This manpage aims at giving an overview of these interfaces and their proper
+application.
+This document includes also basic kernel thread control primitives and rough
+overview of the
+.Nx
+kernel design.
+.Sh KERNEL OVERVIEW
+The aim of the kernel synchronization, kernel thread, and interrupt control is:
+.Bl -bullet -offset indent
+.It
+To control concurrent access to shared resources (critical sections).
+.It
+Spawn tasks from an interrupt in the thread context.
+.It
+Mask interrupts from threads.
+.It
+Scale to multiple CPUs.
+.El
+.Pp
+There are three types of contexts in the
+.Nx
+kernel:
+.Bl -bullet -offset indent
+.It
+.Em Thread context
+- here run processes (represented by
+.Dv struct proc )
+and light-weight processes (represented by
+.Dv struc lwp
+and known as kernel threads).
+Code in this context can sleep, block resources and posses address-space.
+.It
+.Em Software interrupt context
+- it's limited thread context.
+Code in this context must be processed shortly.
+These interrupts don't possess any address space context.
+Software interrupts are a way of deferring hardware interrupts to do more
+expensive processing at a lower interrupt priority.
+.It
+.Em Hard interrupt context
+- code must be processed as quickly as possible.
+It's forbidden for a code here to sleep or access long-awaited resources.
+.El
+.Pp
+The main differences between processes and kernel threads are:
+.Bl -bullet -offset indent
+.It
+Single process can own multiple kernel threads (LWPs).
+.It
+Process possesses address space context to map userland address space.
+.It
+Processes are designed for userland executables and kernel threads for
+in-kernel tasks.
+The only process running in the kernel-space is
+.Dv proc0
+(called swapper).
+.El
+.Sh INTERFACES
+The
+.Nx
+kernel is written to run across multiple unicore and multicore CPUs.
+The following lists lists alphabetically.
+.Ss Atomic memory operations
+The
+.Nm atomic_ops
+family of functions provide atomic memory operations.
+There are 7 classes of atomic memory operations available:
+addition, logical
+.Dq and ,
+compare-and-swap, decrement, increment, logical
+.Dq or ,
+swap.
+.Pp
+See
+.Xr atomic_ops 3 .
+.Ss Condition variables
+Condition variables (CVs) are used in the kernel to synchronize access to
+resources that are limited (for example, memory) and to wait for pending I/O
+operations to complete.
+.Pp
+See
+.Xr condvar 9 .
+.Ss Memory access barrier operations
+The
+.Nm membar_ops
+family of functions provide memory access barrier operations necessary for
+synchronization in multiprocessor execution environments that have relaxed load
+and store order.
+.Pp
+See
+.Xr membar_ops 3 .
+.Ss Memory barriers
+The memory barriers can be used to control the order in which memory accesses
+occur, and thus the order in which those accesses become visible to other
+processors.
+They can be used to implement
+.Dq lockless
+access to data structures where the necessary barrier conditions are well
+understood.
+.Pp
+See
+.Xr mb 9 .
+.Ss Mutual exclusion primitives
+Thread-base adaptive mutexes.
+These are lightweight,
+exclusive locks that use threads as the focus of synchronization activity.
+Adaptive mutexes typically behave like spinlock,
+but under specific conditions an attempt to acquire an already held adaptive
+mutex may cause the acquiring thread to sleep.
+Sleep activity occurs rarely.
+Busy-waiting is typically more efficient because mutex hold times are most
+often short.
+In contrast to pure spinlocks,
+a thread holding an adaptive mutex may be preempted in the kernel,
+which can allow for reduced latency where soft real-time application are in use
+on the system.
+.Pp
+See
+.Xr mutex 9 .
+.Ss Restartable atomic sequences
+Restartable atomic sequences are user code only sequences which are guaranteed
+to execute without preemption.
+This property is assured by checking the set of restartable atomic sequences
+registered for a process during
+.Xr cpu_switchto 9 .
+If a process is found to have been preempted during a restartable sequence,
+then its execution is rolled-back to the start of the sequence by resetting its
+program counter saved in its process control block (PCB).
+.Pp
+See
+.Xr ras 9 .
+.Ss Reader / writer lock primitives
+Reader / writer locks (RW locks) are used in the kernel to synchronize access
+to an object among LWPs (lightweight processes) and soft interrupt handlers.
+In addition to the capabilities provided by mutexes,
+RW locks distinguish between read (shared) and write (exclusive) access.
+.Pp
+See
+.Xr rwlock 9 .
+.Ss Functions to modify system interrupt priority level
+These functions raise and lower the interrupt priority level.
+They are used by kernel code to block interrupts in critical sections,
+in order to protect data structures.
+.Pp
+See
+.Xr spl 9 .
+.Ss Machine-independent software interrupt framework
+The software interrupt framework is designed to provide a generic software
+interrupt mechanism which can be used any time a low-priority callback is
+needed.
+It allows dynamic registration of software interrupts for loadable drivers and
+protocol stacks,
+prioritization and fair queuing of software interrupts,
+and allows machine-dependent optimizations to reduce cost.
+.Pp
+See
+.Xr softint 9 .
+.Ss Functions to raise the system priority level
+The
+.Nm splraiseipl
+function raises the system priority level to the level specified by
+.Dv icookie ,
+which should be a value returned by
+.Xr makeiplcookie 9 .
+In general, device drivers should not make use of this interface.
+To ensure correct synchronization,
+device drivers should use the
+.Xr condvar 9 ,
+.Xr mutex 9 ,
+and
+.Xr rwlock 9
+interfaces.
+.Pp
+See
+.Xr splraiseipl 9 .
+.Ss Passive serialization mechanism
+Passive serialization is a reader / writer synchronization mechanism designed
+for lock-less read operations.
+The read operations may happen from software interrupt at
+.Dv IPL_SOFTCLOCK .
+.Pp
+See
+.Xr pserialize 9 .
+.Ss Simple do-it-in-thread-context framework
+The workqueue utility routines are provided to defer work which is needed to be
+processed in a thread context.
+.Pp
+See
+.Xr workqueue 9 .
+.Sh USAGE
+The following table describes legal usage of the
+.Nx
+interfaces in different contexts.
+The synchronization primitives available in more then one context
+can be used to protect shared resources between these overlapping contexts.
+.Bl -column -offset indent \
+"xxxxxxxxxxxx " "xxxxxxx " "xxxxxxx " "xxxxxxx "
+.It Sy interface Ta Sy thread Ta Sy softirq Ta Sy hardirq
+.It Xr atomic_ops 3 Ta yes Ta yes Ta yes
+.It Xr condvar 9 Ta yes Ta partly Ta no
+.It Xr mb 9 Ta yes Ta yes Ta yes
+.It Xr membar_ops 3 Ta yes Ta yes Ta yes
+.It Xr mutex 9 Ta yes Ta depends Ta depends
+.It Xr rwlock 9 Ta yes Ta yes Ta no
+.It Xr softint 9 Ta yes Ta yes Ta yes
+.It Xr spl 9 Ta yes Ta no Ta no
+.It Xr splraiseipl 9 Ta yes Ta no Ta no
+.It Xr pserialize 9 Ta yes Ta yes Ta no
+.It Xr workqueue 9 Ta yes Ta yes Ta yes
+.El
+.Sh SEE ALSO
+.Xr atomic_ops 3 ,
+.Xr membar_ops 3 ,
+.Xr condvar 9 ,
+.Xr mb 9 ,
+.Xr mutex 9 ,
+.Xr ras 9 ,
+.Xr rwlock 9 ,
+.Xr softint 9 ,
+.Xr spl 9 ,
+.Xr splraiseipl 9 ,
+.Xr workqueue 9
+.Sh HISTORY
+The initial SMP support was introduced in the
+.Nx 2.0
+and was designed with the giant kernel lock.
+Through
+.Nx 4.0 ,
+the kernel used spinlocks and a per-CPU interrupt priority level (the
+.Xr spl 9
+system).
+These mechanisms did not lend themselves well to a multiprocessor environment
+supporting kernel preemption.
+The use of thread based (lock) synchronization was limited and the available
+synchronization primitive (lockmgr) was inefficient and slow to execute.
+In
+.Nx 5.0
+there were introduced massive performance improvements on multicore hardware
+by Andrew Doran under a sponsorship of The
+.Nx
+Foundation.
+.Pp
+This file first appeared in
+.Nx 8.0
+and was inspired by the corresponding
+.Nm locking
+manpages from
+.Fx
+and
+.Dx .
+Already existing documentation was used to compile this manpage.
+.Sh AUTHORS
+.An Kamil Rytarowski
