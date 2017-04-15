@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.4 2017/04/15 17:14:11 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.5 2017/04/15 18:02:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.4 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.5 2017/04/15 18:02:09 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -425,6 +425,33 @@ wdattach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "WARNING: block size %u "
 		    "might not actually work\n", wd->sc_blksize);
 	}
+
+	/*
+	 * Probe WRITE DMA FUA EXT. Support is mandatory for devices
+	 * supporting LBA48, but nevertheless confirm with the feature flag.
+	 */
+	if (wd->sc_flags & WDF_LBA48
+	    && (wd->sc_params.atap_cmd_def & ATA_CMDE_WFE)) {
+		wd->sc_flags |= WDF_WFUA;
+	}
+
+	/* Probe NCQ support - READ/WRITE FPDMA QUEUED command support */
+	uint8_t max_depth = 1;
+	if (wd->sc_params.atap_sata_caps & SATA_NATIVE_CMDQ) {
+		wd->sc_flags |= WDF_NCQ;
+
+		max_depth = (wd->sc_params.atap_queuedepth & 0x0f) + 1;
+
+		/* XXX adjust adev_openings */
+	}
+
+	aprint_verbose_dev(self,
+	    "drive supports %sFUA, %sNCQ (queue depth max %d, used %u)\n",
+	    (wd->sc_flags & (WDF_WFUA|WDF_NCQ)) ? "" : "no ",
+	    (wd->sc_flags & WDF_NCQ) ? "" : "no ",
+	    max_depth, adev->adev_openings);
+
+
 out:
 	/*
 	 * Initialize and attach the disk structure.
