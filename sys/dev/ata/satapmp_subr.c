@@ -1,4 +1,4 @@
-/*	$NetBSD: satapmp_subr.c,v 1.12 2013/05/03 20:02:08 jakllsch Exp $	*/
+/*	$NetBSD: satapmp_subr.c,v 1.12.24.1 2017/04/15 17:14:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2012 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12 2013/05/03 20:02:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12.24.1 2017/04/15 17:14:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: satapmp_subr.c,v 1.12 2013/05/03 20:02:08 jakllsch E
 static int
 satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 {
-	struct ata_command ata_c;
+	struct ata_xfer xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
 
@@ -60,39 +60,39 @@ satapmp_read_8(struct ata_channel *chp, int port, int reg, uint64_t *value)
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 
-	memset(&ata_c, 0, sizeof(struct ata_command));
+	memset(&xfer, 0, sizeof(xfer));
 
-	ata_c.r_command = PMPC_READ_PORT;
-	ata_c.r_features = reg;
-	ata_c.r_device = port;
-	ata_c.timeout = 3000; /* 3s */
-	ata_c.r_st_bmask = 0;
-	ata_c.r_st_pmask = WDCS_DRDY;
-	ata_c.flags = AT_LBA48 | AT_READREG | AT_WAIT;
+	xfer.c_ata_c.r_command = PMPC_READ_PORT;
+	xfer.c_ata_c.r_features = reg;
+	xfer.c_ata_c.r_device = port;
+	xfer.c_ata_c.timeout = 3000; /* 3s */
+	xfer.c_ata_c.r_st_bmask = 0;
+	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer.c_ata_c.flags = AT_LBA48 | AT_READREG | AT_WAIT;
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-	    &ata_c) != ATACMD_COMPLETE) {
+	    &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d read failed\n", port, reg);
 		return EIO;
 	}
-	if (ata_c.flags & (AT_TIMEOU | AT_DF)) {
+	if (xfer.c_ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d read failed, flags 0x%x\n",
-		    port, reg, ata_c.flags);
+		    port, reg, xfer.c_ata_c.flags);
 		return EIO;
 	}
-	if (ata_c.flags & AT_ERROR) {
+	if (xfer.c_ata_c.flags & AT_ERROR) {
 		aprint_verbose_dev(chp->atabus,
 		    "PMP port %d register %d read failed, error 0x%x\n",
-		    port, reg, ata_c.r_error);
+		    port, reg, xfer.c_ata_c.r_error);
 		return EIO;
 	}
 
-	*value = ((uint64_t)((ata_c.r_lba >> 24) & 0xffffff) << 40) |
-		((uint64_t)((ata_c.r_count >> 8) & 0xff) << 32) |
-		((uint64_t)((ata_c.r_lba >> 0) & 0xffffff) << 8) |
-		((uint64_t)((ata_c.r_count >> 0) & 0xff) << 0);
+	*value = ((uint64_t)((xfer.c_ata_c.r_lba >> 24) & 0xffffff) << 40) |
+		((uint64_t)((xfer.c_ata_c.r_count >> 8) & 0xff) << 32) |
+		((uint64_t)((xfer.c_ata_c.r_lba >> 0) & 0xffffff) << 8) |
+		((uint64_t)((xfer.c_ata_c.r_count >> 0) & 0xff) << 0);
 
 	return 0;
 }
@@ -114,7 +114,7 @@ satapmp_read(struct ata_channel *chp, int port, int reg, uint32_t *value)
 static int
 satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 {
-	struct ata_command ata_c;
+	struct ata_xfer xfer;
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp;
 
@@ -124,36 +124,36 @@ satapmp_write_8(struct ata_channel *chp, int port, int reg, uint64_t value)
 	drvp = &chp->ch_drive[PMP_PORT_CTL];
 	KASSERT(drvp->drive == PMP_PORT_CTL);
 
-	memset(&ata_c, 0, sizeof(struct ata_command));
+	memset(&xfer, 0, sizeof(xfer));
 
-	ata_c.r_command = PMPC_WRITE_PORT;
-	ata_c.r_features = reg;
-	ata_c.r_device = port;
-	ata_c.r_lba = (((value >> 40) & 0xffffff) << 24) |
+	xfer.c_ata_c.r_command = PMPC_WRITE_PORT;
+	xfer.c_ata_c.r_features = reg;
+	xfer.c_ata_c.r_device = port;
+	xfer.c_ata_c.r_lba = (((value >> 40) & 0xffffff) << 24) |
 		      (((value >>  8) & 0xffffff) <<  0);
-	ata_c.r_count = (((value >> 32) & 0xff) << 8) |
+	xfer.c_ata_c.r_count = (((value >> 32) & 0xff) << 8) |
 			(((value >>  0) & 0xff) << 0);
-	ata_c.timeout = 3000; /* 3s */
-	ata_c.r_st_bmask = 0;
-	ata_c.r_st_pmask = WDCS_DRDY;
-	ata_c.flags = AT_LBA48 | AT_WAIT;
+	xfer.c_ata_c.timeout = 3000; /* 3s */
+	xfer.c_ata_c.r_st_bmask = 0;
+	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
+	xfer.c_ata_c.flags = AT_LBA48 | AT_WAIT;
 
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-	    &ata_c) != ATACMD_COMPLETE) {
+	    &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d write failed\n", port, reg);
 		return EIO;
 	}
-	if (ata_c.flags & (AT_TIMEOU | AT_DF)) {
+	if (xfer.c_ata_c.flags & (AT_TIMEOU | AT_DF)) {
 		aprint_error_dev(chp->atabus,
 		    "PMP port %d register %d write failed, flags 0x%x\n",
-		    port, reg, ata_c.flags);
+		    port, reg, xfer.c_ata_c.flags);
 		return EIO;
 	}
-	if (ata_c.flags & AT_ERROR) {
+	if (xfer.c_ata_c.flags & AT_ERROR) {
 		aprint_verbose_dev(chp->atabus,
 		    "PMP port %d register %d write failed, error 0x%x\n",
-		    port, reg, ata_c.r_error);
+		    port, reg, xfer.c_ata_c.r_error);
 		return EIO;
 	}
 	return 0;

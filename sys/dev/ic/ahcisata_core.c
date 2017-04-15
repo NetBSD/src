@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.3 2017/04/15 12:01:23 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.4 2017/04/15 17:14:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.3 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.4 2017/04/15 17:14:11 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -61,7 +61,7 @@ static int  ahci_ata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static int  ahci_do_reset_drive(struct ata_channel *, int, int, uint32_t *);
 static void ahci_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 static void ahci_reset_channel(struct ata_channel *, int);
-static int  ahci_exec_command(struct ata_drive_datas *, struct ata_command *);
+static int  ahci_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 static int  ahci_ata_addref(struct ata_drive_datas *);
 static void ahci_ata_delref(struct ata_drive_datas *);
 static void ahci_killpending(struct ata_drive_datas *);
@@ -919,10 +919,10 @@ ahci_setup_channel(struct ata_channel *chp)
 }
 
 static int
-ahci_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
+ahci_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct ata_xfer *xfer;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int ret;
 	int s;
 
@@ -930,10 +930,6 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	AHCIDEBUG_PRINT(("ahci_exec_command port %d CI 0x%x\n",
 	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_XFERS);
-	xfer = ata_get_xfer(chp);
-	if (xfer == NULL) {
-		return ATACMD_TRY_AGAIN;
-	}
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
 	if (ata_c->flags & AT_WAIT)
@@ -941,7 +937,6 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_cmd = ata_c;
 	xfer->c_start = ahci_cmd_start;
 	xfer->c_intr = ahci_cmd_complete;
 	xfer->c_kill_xfer = ahci_cmd_kill_xfer;
@@ -973,7 +968,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int slot = xfer->c_slot;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
@@ -1059,7 +1054,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 static void
 ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	AHCIDEBUG_PRINT(("ahci_cmd_kill_xfer channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
 
@@ -1081,7 +1076,7 @@ static int
 ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	int slot = 0; /* XXX slot */
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 
@@ -1119,7 +1114,7 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	uint16_t *idwordbuf;
 	int i;
 
@@ -1153,7 +1148,6 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	if (achp->ahcic_cmdh[slot].cmdh_prdbc)
 		ata_c->flags |= AT_XFDONE;
 
-	ata_free_xfer(chp, xfer);
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
 	else if (ata_c->callback)
@@ -1572,7 +1566,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 			xfer->c_flags |= C_POLL;
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
-		xfer->c_cmd = sc_xfer;
+		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = ahci_atapi_start;
@@ -1600,7 +1594,7 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	int slot = 0 /* XXX slot */;
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
@@ -1683,7 +1677,7 @@ static int
 ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	int slot = xfer->c_slot; /* XXX slot */
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 
@@ -1740,7 +1734,7 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 static void
 ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	int slot = 0; /* XXX slot */
 

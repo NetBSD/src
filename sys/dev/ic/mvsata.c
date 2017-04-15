@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.4 2017/04/15 12:01:23 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.5 2017/04/15 17:14:11 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.4 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.5 2017/04/15 17:14:11 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -111,7 +111,7 @@ static void mvsata_probe_drive(struct ata_channel *);
 static int mvsata_bio(struct ata_drive_datas *, struct ata_xfer *);
 static void mvsata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 static void mvsata_reset_channel(struct ata_channel *, int);
-static int mvsata_exec_command(struct ata_drive_datas *, struct ata_command *);
+static int mvsata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 static int mvsata_addref(struct ata_drive_datas *);
 static void mvsata_delref(struct ata_drive_datas *);
 static void mvsata_killpending(struct ata_drive_datas *);
@@ -550,7 +550,6 @@ mvsata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	    (ata_bio->flags & ATA_SINGLE) == 0)
 		xfer->c_flags |= C_DMA;
 	xfer->c_drive = drvp->drive;
-	xfer->c_cmd = ata_bio;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = mvsata_bio_start;
@@ -644,13 +643,13 @@ mvsata_reset_channel(struct ata_channel *chp, int flags)
 
 
 static int
-mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
+mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 #ifdef MVSATA_DEBUG
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 #endif
-	struct ata_xfer *xfer;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int rv, s;
 
 	DPRINTFN(1, ("%s:%d: mvsata_exec_command: drive=%d, bcount=%d,"
@@ -660,9 +659,6 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	    drvp->drive, ata_c->bcount, ata_c->r_lba, ata_c->r_count,
 	    ata_c->r_features, ata_c->r_device, ata_c->r_command));
 
-	xfer = ata_get_xfer(chp);
-	if (xfer == NULL)
-		return ATACMD_TRY_AGAIN;
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
 	if (ata_c->flags & AT_WAIT)
@@ -670,7 +666,6 @@ mvsata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_cmd = ata_c;
 	xfer->c_start = mvsata_wdc_cmd_start;
 	xfer->c_intr = mvsata_wdc_cmd_intr;
 	xfer->c_kill_xfer = mvsata_wdc_cmd_kill_xfer;
@@ -786,7 +781,7 @@ mvsata_atapi_scsipi_request(struct scsipi_channel *chan,
 			xfer->c_flags |= C_POLL;
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
-		xfer->c_cmd = sc_xfer;
+		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = mvsata_atapi_start;
@@ -1058,7 +1053,7 @@ mvsata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct mvsata_softc *sc = device_private(MVSATA_DEV2(mvport));
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 	u_int16_t cyl;
@@ -1300,7 +1295,7 @@ mvsata_bio_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
 	DPRINTFN(2, ("%s:%d: mvsata_bio_intr: drive=%d\n",
@@ -1394,7 +1389,7 @@ mvsata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 
 	DPRINTFN(2, ("%s:%d: mvsata_bio_kill_xfer: drive=%d\n",
@@ -1427,7 +1422,7 @@ static void
 mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 
 	DPRINTFN(2, ("%s:%d: mvsata_bio_done: drive=%d, flags=0x%x\n",
@@ -1568,7 +1563,7 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	int drive = xfer->c_drive;
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	DPRINTFN(1, ("%s:%d: mvsata_cmd_start: drive=%d\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel, drive));
@@ -1627,7 +1622,7 @@ mvsata_wdc_cmd_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int bcount = ata_c->bcount;
 	char *data = ata_c->data;
 	int wflags;
@@ -1728,7 +1723,7 @@ mvsata_wdc_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 			 int reason)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	DPRINTFN(1, ("%s:%d: mvsata_cmd_kill_xfer: drive=%d\n",
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel, xfer->c_drive));
@@ -1753,7 +1748,7 @@ mvsata_wdc_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct atac_softc *atac = chp->ch_atac;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	DPRINTFN(1, ("%s:%d: mvsata_cmd_done: drive=%d, flags=0x%x\n",
 	    device_xname(atac->atac_dev), chp->ch_channel, xfer->c_drive,
@@ -1823,7 +1818,7 @@ static void
 mvsata_wdc_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 
 	/* EDMA restart, if enabled */
 	if (mvport->port_edmamode != nodma) {
@@ -1832,7 +1827,6 @@ mvsata_wdc_cmd_done_end(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 
 	ata_c->flags |= AT_DONE;
-	ata_free_xfer(chp, xfer);
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
 	else if (ata_c->callback)
@@ -1849,7 +1843,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct mvsata_softc *sc = (struct mvsata_softc *)chp->ch_atac;
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct atac_softc *atac = &sc->sc_wdcdev.sc_atac;
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	const int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
 	const char *errstring;
@@ -2034,7 +2028,7 @@ mvsata_atapi_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int len, phase, ire, error, retries=0, i;
 	void *cmd;
@@ -2251,7 +2245,7 @@ mvsata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 		       int reason)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	/* remove this command from xfer queue */
 	switch (reason) {
@@ -2277,7 +2271,7 @@ mvsata_atapi_reset(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	mvsata_pmp_select(mvport, xfer->c_drive);
 
@@ -2298,7 +2292,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 	struct ata_channel *chp = xfer->c_chp;
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
 	/* wait for DSC if needed */
@@ -2376,7 +2370,7 @@ static void
 mvsata_atapi_done(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct atac_softc *atac = chp->ch_atac;
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 	int drive = xfer->c_drive;
 
 	DPRINTFN(1, ("%s:%d:%d: mvsata_atapi_done: flags 0x%x\n",
@@ -2584,7 +2578,7 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 
 		chp->ch_status = CRPB_CDEVSTS(le16toh(crpb->rspflg));
 		chp->ch_error = CRPB_CEDMASTS(le16toh(crpb->rspflg));
-		ata_bio = xfer->c_cmd;
+		ata_bio = &xfer->c_bio;
 		ata_bio->error = NOERROR;
 		ata_bio->r_error = 0;
 		if (chp->ch_status & WDCS_ERR)
@@ -2644,7 +2638,7 @@ mvsata_edma_handle(struct mvsata_port *mvport, struct ata_xfer *xfer1)
 static int
 mvsata_edma_wait(struct mvsata_port *mvport, struct ata_xfer *xfer, int timeout)
 {
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int xtime;
 
 	for (xtime = 0;  xtime < timeout / 10; xtime++) {
@@ -2700,7 +2694,7 @@ mvsata_edma_rqq_remove(struct mvsata_port *mvport, struct ata_xfer *xfer)
 		if (mvport->port_reqtbl[i].xfer == NULL)
 			continue;
 
-		ata_bio = mvport->port_reqtbl[i].xfer->c_cmd;
+		ata_bio = &mvport->port_reqtbl[i].xfer->c_bio;
 		if (mvport->port_reqtbl[i].xfer == xfer) {
 			/* remove xfer from EDMA request queue */
 			bus_dmamap_sync(mvport->port_dmat,
