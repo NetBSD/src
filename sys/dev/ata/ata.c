@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.3 2017/04/15 12:01:23 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.4 2017/04/15 17:14:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.3 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.4 2017/04/15 17:14:11 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -192,10 +192,18 @@ ata_queue_reset(struct ata_queue *chq)
 struct ata_xfer *
 ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 {
-	KASSERT(hwslot < chq->queue_openings);
-	KASSERT((chq->queue_xfers_avail & __BIT(hwslot)) == 0);
+	struct ata_xfer *xfer;
 
-	return &chq->queue_xfers[hwslot];
+	KASSERT(hwslot < chq->queue_openings);
+	KASSERT(hwslot == 0 || (chq->queue_xfers_avail & __BIT(hwslot)) == 0);
+
+	/* Usually the first entry will be the one */
+	TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
+		if (xfer->c_slot == hwslot)
+			return xfer;
+	}
+
+	panic("%s: xfer with slot %d not found", __func__, hwslot);
 }
 
 struct ata_queue *
@@ -204,7 +212,7 @@ ata_queue_alloc(int openings)
 	if (openings == 0)
 		openings = 1;
 	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
-	    M_DEVBUF, M_WAITOK);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	if (chq != NULL) {
 		chq->queue_openings = openings;
 		chq->queue_xfers_avail = (1 << openings) - 1;
@@ -768,7 +776,7 @@ int
 ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
     struct ataparams *prms)
 {
-	struct ata_command ata_c;
+	struct ata_xfer xfer;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	char *tb;
@@ -779,42 +787,42 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
-	memset(&ata_c, 0, sizeof(struct ata_command));
+	memset(&xfer, 0, sizeof(xfer));
 
 	if (drvp->drive_type == ATA_DRIVET_ATA) {
-		ata_c.r_command = WDCC_IDENTIFY;
-		ata_c.r_st_bmask = WDCS_DRDY;
-		ata_c.r_st_pmask = WDCS_DRQ;
-		ata_c.timeout = 3000; /* 3s */
+		xfer.c_ata_c.r_command = WDCC_IDENTIFY;
+		xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
+		xfer.c_ata_c.r_st_pmask = WDCS_DRQ;
+		xfer.c_ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_type == ATA_DRIVET_ATAPI) {
-		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
-		ata_c.r_st_bmask = 0;
-		ata_c.r_st_pmask = WDCS_DRQ;
-		ata_c.timeout = 10000; /* 10s */
+		xfer.c_ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
+		xfer.c_ata_c.r_st_bmask = 0;
+		xfer.c_ata_c.r_st_pmask = WDCS_DRQ;
+		xfer.c_ata_c.timeout = 10000; /* 10s */
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_ERR;
 		goto out;
 	}
-	ata_c.flags = AT_READ | flags;
-	ata_c.data = tb;
-	ata_c.bcount = DEV_BSIZE;
+	xfer.c_ata_c.flags = AT_READ | flags;
+	xfer.c_ata_c.data = tb;
+	xfer.c_ata_c.bcount = DEV_BSIZE;
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&ata_c) != ATACMD_COMPLETE) {
+						&xfer) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_AGAIN;
 		goto out;
 	}
-	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
-		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
+		    xfer.c_ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		rv = CMD_ERR;
 		goto out;
 	}
 	/* if we didn't read any data something is wrong */
-	if ((ata_c.flags & AT_XFDONE) == 0) {
+	if ((xfer.c_ata_c.flags & AT_XFDONE) == 0) {
 		rv = CMD_ERR;
 		goto out;
 	}
@@ -868,24 +876,24 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 int
 ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 {
-	struct ata_command ata_c;
+	struct ata_xfer xfer;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 
 	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	memset(&ata_c, 0, sizeof(struct ata_command));
+	memset(&xfer, 0, sizeof(xfer));
 
-	ata_c.r_command = SET_FEATURES;
-	ata_c.r_st_bmask = 0;
-	ata_c.r_st_pmask = 0;
-	ata_c.r_features = WDSF_SET_MODE;
-	ata_c.r_count = mode;
-	ata_c.flags = flags;
-	ata_c.timeout = 1000; /* 1s */
+	xfer.c_ata_c.r_command = SET_FEATURES;
+	xfer.c_ata_c.r_st_bmask = 0;
+	xfer.c_ata_c.r_st_pmask = 0;
+	xfer.c_ata_c.r_features = WDSF_SET_MODE;
+	xfer.c_ata_c.r_count = mode;
+	xfer.c_ata_c.flags = flags;
+	xfer.c_ata_c.timeout = 1000; /* 1s */
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&ata_c) != ATACMD_COMPLETE)
+						&xfer) != ATACMD_COMPLETE)
 		return CMD_AGAIN;
-	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;
 	}
 	return CMD_OK;
@@ -1113,11 +1121,11 @@ ata_activate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ata_queue * const chq = chp->ch_queue;
 
 	KASSERT(chq->queue_active < chq->queue_openings);
-	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
+	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) == 0);
 
 	TAILQ_REMOVE(&chq->queue_xfer, xfer, c_xferchain);
 	TAILQ_INSERT_TAIL(&chq->active_xfers, xfer, c_activechain);
-
+	chq->active_xfers_used |= __BIT(xfer->c_slot);
 	chq->queue_active++;
 }
 
@@ -1127,12 +1135,13 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ata_queue * const chq = chp->ch_queue;
 
 	KASSERT(chq->queue_active > 0);
-	KASSERT((chq->queue_xfers_avail & __BIT(xfer->c_slot)) == 0);
+	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) != 0);
 
 	//if ((xfer->c_flags & C_TIMEOU) == 0)
 	callout_stop(&chp->ch_callout);
 
 	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
+	chq->active_xfers_used &= ~__BIT(xfer->c_slot);
 	chq->queue_active--;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.3 2017/04/15 12:01:23 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.4 2017/04/15 17:14:11 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.3 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.4 2017/04/15 17:14:11 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,7 @@ void siisata_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 void siisata_bio_start(struct ata_channel *, struct ata_xfer *);
 int siisata_bio_complete(struct ata_channel *, struct ata_xfer *, int);
 void siisata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
-int siisata_exec_command(struct ata_drive_datas *, struct ata_command *);
+int siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
 
 void siisata_timeout(void *);
 
@@ -762,10 +762,10 @@ siisata_setup_channel(struct ata_channel *chp)
 }
 
 int
-siisata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
+siisata_exec_command(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct ata_xfer *xfer;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int ret;
 	int s;
 
@@ -773,9 +773,6 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
 
-	xfer = ata_get_xfer(chp);
-	if (xfer == NULL)
-		return ATACMD_TRY_AGAIN;
 	if (ata_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
 	if (ata_c->flags & AT_WAIT)
@@ -783,7 +780,6 @@ siisata_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	xfer->c_drive = drvp->drive;
 	xfer->c_databuf = ata_c->data;
 	xfer->c_bcount = ata_c->bcount;
-	xfer->c_cmd = ata_c;
 	xfer->c_start = siisata_cmd_start;
 	xfer->c_intr = siisata_cmd_complete;
 	xfer->c_kill_xfer = siisata_cmd_kill_xfer;
@@ -821,7 +817,7 @@ void
 siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	int slot = SIISATA_NON_NCQ_SLOT;
 	struct siisata_prb *prb;
 	int i;
@@ -902,7 +898,7 @@ siisata_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 {
 	int slot = SIISATA_NON_NCQ_SLOT;
 
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	switch (reason) {
 	case KILL_GONE:
 		ata_c->flags |= AT_GONE;
@@ -920,7 +916,7 @@ siisata_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 int
 siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 {
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 #ifdef SIISATA_DEBUG
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 #endif
@@ -956,7 +952,7 @@ siisata_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	uint32_t fis[howmany(RDH_FISLEN,sizeof(uint32_t))];
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
-	struct ata_command *ata_c = xfer->c_cmd;
+	struct ata_command *ata_c = &xfer->c_ata_c;
 	uint16_t *idwordbuf;
 	int i;
 
@@ -994,8 +990,6 @@ siisata_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	if (PRREAD(sc, PRSX(chp->ch_channel, slot, PRSO_RTC)))
 		ata_c->flags |= AT_XFDONE;
 
-	ata_free_xfer(chp, xfer);
-
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
 	else if (ata_c->callback)
@@ -1019,7 +1013,6 @@ siisata_ata_bio(struct ata_drive_datas *drvp, struct ata_xfer *xfer)
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->c_drive = drvp->drive;
-	xfer->c_cmd = ata_bio;
 	xfer->c_databuf = ata_bio->databuf;
 	xfer->c_bcount = ata_bio->bcount;
 	xfer->c_start = siisata_bio_start;
@@ -1035,7 +1028,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_prb *prb;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int slot = SIISATA_NON_NCQ_SLOT;
 	int i;
 
@@ -1101,7 +1094,7 @@ siisata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 	int slot = SIISATA_NON_NCQ_SLOT;
 
@@ -1132,7 +1125,7 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
-	struct ata_bio *ata_bio = xfer->c_cmd;
+	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
 
 	schp->sch_active_slots &= ~__BIT(slot);
@@ -1373,7 +1366,7 @@ void
 siisata_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
     int reason)
 {
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	/* remove this command from xfer queue */
 	switch (reason) {
@@ -1541,7 +1534,7 @@ siisata_atapi_scsipi_request(struct scsipi_channel *chan,
 			xfer->c_flags |= C_POLL;
 		xfer->c_drive = drive;
 		xfer->c_flags |= C_ATAPI;
-		xfer->c_cmd = sc_xfer;
+		xfer->c_scsipi = sc_xfer;
 		xfer->c_databuf = sc_xfer->data;
 		xfer->c_bcount = sc_xfer->datalen;
 		xfer->c_start = siisata_atapi_start;
@@ -1570,7 +1563,7 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct siisata_prb *prbp;
 
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	int slot = SIISATA_NON_NCQ_SLOT;
 	int i;
@@ -1650,7 +1643,7 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
-	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
+	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
 
 	SIISATA_DEBUG_PRINT(
 	    ("%s: %s()\n", SIISATANAME(sc), __func__), DEBUG_INTR);
