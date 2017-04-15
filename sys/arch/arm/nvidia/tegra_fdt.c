@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fdt.c,v 1.2 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_fdt.c,v 1.3 2017/04/15 00:35:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.2 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.3 2017/04/15 00:35:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,17 +65,29 @@ void
 tegrafdt_attach(device_t parent, device_t self, void *aux)
 {
 	const char *tegrafdt_init[] = {
-		"interrupt-controller",
-		"clock",
-		"pinmux",
-		"gpio",
-		"regulators",
-		"fuse",
-		"dma",
-		"pmc",
-		"memory-controller",
-		"i2c",
-		"usb-phy"
+		/* interrupt controllers */
+		"nvidia,tegra124-ictlr",
+		"arm,cortex-a15-gic",
+		/* clocks */
+		"nvidia,tegra124-car",
+		"nvidia,tegra124-dfll",
+		/* pinmux */
+		"nvidia,tegra124-pinmux",
+		"nvidia,tegra124-gpio",
+		/* regulators */
+		"regulator-fixed",
+		/* fuse */
+		"nvidia,tegra124-efuse",
+		/* dma */
+		"nvidia,tegra124-apbdma",
+		/* pmc */
+		"nvidia,tegra124-pmc",
+		/* memory controller */
+		"nvidia,tegra124-mc",
+		/* i2c */
+		"nvidia,tegra124-i2c",
+		/* usb phy */
+		"nvidia,tegra124-usb-phy",
 	};
 
 	tegrafdt_found = true;
