@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.44 2017/04/14 22:35:05 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.44 2017/04/14 22:35:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp $");
 
 /*
  * IP-inside-IP processing
@@ -144,7 +144,7 @@ ip4_input6(struct mbuf **m, int *offp, int proto)
 #if 0
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && ((*m)->m_flags & M_IPSEC) == 0) {
-		DPRINTF(("ip4_input6: dropped due to policy\n"));
+		DPRINTF(("%s: dropped due to policy\n", __func__));
 		IPIP_STATINC(IPIP_STAT_PDROPS);
 		m_freem(*m);
 		return IPPROTO_DONE;
@@ -166,7 +166,7 @@ ip4_input(struct mbuf *m, int off, int proto)
 #if 0
 	/* If we do not accept IP-in-IP explicitly, drop.  */
 	if (!ipip_allow && (m->m_flags & M_IPSEC) == 0) {
-		DPRINTF(("ip4_input: dropped due to policy\n"));
+		DPRINTF(("%s: dropped due to policy\n", __func__));
 		IPIP_STATINC(IPIP_STAT_PDROPS);
 		m_freem(m);
 		return;
@@ -195,10 +195,10 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 #ifdef INET6
 	register struct sockaddr_in6 *sin6;
 	struct ip6_hdr *ip6 = NULL;
-	u_int8_t itos;
+	uint8_t itos;
 #endif
-	u_int8_t otos;
-	u_int8_t v;
+	uint8_t otos;
+	uint8_t v;
 	int hlen;
 
 	IPIP_STATINC(IPIP_STAT_IPACKETS);
@@ -217,8 +217,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif
         default:
-		DPRINTF(("_ipip_input: bad protocol version 0x%x (%u) "
-			"for outer header\n", v, v>>4));
+		DPRINTF(("%s: bad protocol version 0x%x (%u) "
+		    "for outer header\n", __func__, v, v>>4));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		m_freem(m);
 		return /* EAFNOSUPPORT */;
@@ -227,7 +227,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	/* Bring the IP header in the first mbuf, if not there already */
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
-			DPRINTF(("ipip_input: m_pullup (1) failed\n"));
+			DPRINTF(("%s: m_pullup (1) failed\n", __func__));
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			return;
 		}
@@ -257,7 +257,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif
 	default:
-		panic("ipip_input: unknown ip version %u (outer)", v>>4);
+		panic("%s: unknown ip version %u (outer)", __func__, v >> 4);
 	}
 
 	/* Remove outer IP header */
@@ -285,8 +285,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif
 	default:
-		DPRINTF(("_ipip_input: bad protocol version 0x%x (%u) "
-			"for inner header\n", v, v>>4));
+		DPRINTF(("%s: bad protocol version %#x (%u) "
+		    "for inner header\n", __func__, v, v >> 4));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		m_freem(m);
 		return; /* EAFNOSUPPORT */
@@ -297,7 +297,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	 */
 	if (m->m_len < hlen) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
-			DPRINTF(("ipip_input: m_pullup (2) failed\n"));
+			DPRINTF(("%s: m_pullup (2) failed\n", __func__));
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			return;
 		}
@@ -323,11 +323,11 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		ip_ecn_egress(ip6_ipsec_ecn, &otos, &itos);
 		ip6->ip6_flow &= ~htonl(0xff << 20);
-		ip6->ip6_flow |= htonl((u_int32_t) itos << 20);
+		ip6->ip6_flow |= htonl((uint32_t) itos << 20);
                 break;
 #endif
 	default:
-		panic("ipip_input: unknown ip version %u (inner)", v>>4);
+		panic("%s: unknown ip version %u (inner)", __func__, v>>4);
 	}
 
 	/* Check for local address spoofing. */
@@ -400,7 +400,7 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 		break;
 #endif
 	default:
-		panic("ipip_input: should never reach here");
+		panic("%s: should never reach here", __func__);
 	}
 
 	int s = splnet();
@@ -421,22 +421,22 @@ ipip_output(
 )
 {
 	const struct secasvar *sav;
-	u_int8_t tp, otos;
+	uint8_t tp, otos;
 	struct secasindex *saidx;
 	int error;
 #ifdef INET
-	u_int8_t itos;
+	uint8_t itos;
 	struct ip *ipo;
 #endif /* INET */
 #ifdef INET6
 	struct ip6_hdr *ip6, *ip6o;
 #endif /* INET6 */
 
-	IPSEC_SPLASSERT_SOFTNET("ipip_output");
+	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	sav = isr->sav;
-	IPSEC_ASSERT(sav != NULL, ("ipip_output: null SA"));
-	IPSEC_ASSERT(sav->sah != NULL, ("ipip_output: null SAH"));
+	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
+	IPSEC_ASSERT(sav->sah != NULL, ("%s: null SAH", __func__));
 
 	/* XXX Deal with empty TDB source/destination addresses. */
 
@@ -450,8 +450,8 @@ ipip_output(
 		if (saidx->src.sa.sa_family != AF_INET ||
 		    saidx->src.sin.sin_addr.s_addr == INADDR_ANY ||
 		    saidx->dst.sin.sin_addr.s_addr == INADDR_ANY) {
-			DPRINTF(("ipip_output: unspecified tunnel endpoint "
-			    "address in SA %s/%08lx\n",
+			DPRINTF(("%s: unspecified tunnel endpoint "
+			    "address in SA %s/%08lx\n", __func__,
 			    ipsec_address(&saidx->dst),
 			    (u_long) ntohl(sav->spi)));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
@@ -461,7 +461,7 @@ ipip_output(
 
 		M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 		if (m == 0) {
-			DPRINTF(("ipip_output: M_PREPEND failed\n"));
+			DPRINTF(("%s: M_PREPEND failed\n", __func__));
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			error = ENOBUFS;
 			goto bad;
@@ -490,7 +490,7 @@ ipip_output(
 			/* Save ECN notification */
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_tos),
-			    sizeof(u_int8_t), &itos);
+			    sizeof(uint8_t), &itos);
 
 			ipo->ip_p = IPPROTO_IPIP;
 
@@ -500,17 +500,17 @@ ipip_output(
 			 */
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_off),
-			    sizeof(u_int16_t), &ipo->ip_off);
+			    sizeof(uint16_t), &ipo->ip_off);
 			ipo->ip_off &= ~ IP_OFF_CONVERT(IP_DF | IP_MF | IP_OFFMASK);
 		}
 #ifdef INET6
 		else if (tp == (IPV6_VERSION >> 4)) {
-			u_int32_t itos32;
+			uint32_t itos32;
 
 			/* Save ECN notification. */
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip6_hdr, ip6_flow),
-			    sizeof(u_int32_t), &itos32);
+			    sizeof(uint32_t), &itos32);
 			itos = ntohl(itos32) >> 20;
 			ipo->ip_p = IPPROTO_IPV6;
 			ipo->ip_off = 0;
@@ -531,8 +531,8 @@ ipip_output(
 		if (IN6_IS_ADDR_UNSPECIFIED(&saidx->dst.sin6.sin6_addr) ||
 		    saidx->src.sa.sa_family != AF_INET6 ||
 		    IN6_IS_ADDR_UNSPECIFIED(&saidx->src.sin6.sin6_addr)) {
-			DPRINTF(("ipip_output: unspecified tunnel endpoint "
-			    "address in SA %s/%08lx\n",
+			DPRINTF(("%s: unspecified tunnel endpoint "
+			    "address in SA %s/%08lx\n", __func__,
 			    ipsec_address(&saidx->dst),
 			    (u_long) ntohl(sav->spi)));
 			IPIP_STATINC(IPIP_STAT_UNSPEC);
@@ -551,7 +551,7 @@ ipip_output(
 
 		M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 		if (m == 0) {
-			DPRINTF(("ipip_output: M_PREPEND failed\n"));
+			DPRINTF(("%s: M_PREPEND failed\n", __func__));
 			IPIP_STATINC(IPIP_STAT_HDROPS);
 			error = ENOBUFS;
 			goto bad;
@@ -575,7 +575,7 @@ ipip_output(
 		if (tp == IPVERSION) {
 			/* Save ECN notification */
 			m_copydata(m, sizeof(struct ip6_hdr) +
-			    offsetof(struct ip, ip_tos), sizeof(u_int8_t),
+			    offsetof(struct ip, ip_tos), sizeof(uint8_t),
 			    &itos);
 
 			/* This is really IPVERSION. */
@@ -583,12 +583,12 @@ ipip_output(
 		} else
 #endif /* INET */
 			if (tp == (IPV6_VERSION >> 4)) {
-				u_int32_t itos32;
+				uint32_t itos32;
 
 				/* Save ECN notification. */
 				m_copydata(m, sizeof(struct ip6_hdr) +
 				    offsetof(struct ip6_hdr, ip6_flow),
-				    sizeof(u_int32_t), &itos32);
+				    sizeof(uint32_t), &itos32);
 				itos = ntohl(itos32) >> 20;
 
 				ip6o->ip6_nxt = IPPROTO_IPV6;
@@ -598,13 +598,13 @@ ipip_output(
 
 		otos = 0;
 		ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
-		ip6o->ip6_flow |= htonl((u_int32_t) otos << 20);
+		ip6o->ip6_flow |= htonl((uint32_t) otos << 20);
 		break;
 #endif /* INET6 */
 
 	default:
 nofamily:
-		DPRINTF(("ipip_output: unsupported protocol family %u\n",
+		DPRINTF(("%s: unsupported protocol family %u\n", __func__,
 		    saidx->dst.sa.sa_family));
 		IPIP_STATINC(IPIP_STAT_FAMILY);
 		error = EAFNOSUPPORT;		/* XXX diffs from openbsd */
@@ -669,7 +669,7 @@ ipe4_input(
 )
 {
 	/* This is a rather serious mistake, so no conditional printing. */
-	printf("ipe4_input: should never be called\n");
+	printf("%s: should never be called\n", __func__);
 	if (m)
 		m_freem(m);
 	return EOPNOTSUPP;

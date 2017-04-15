@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.49 2017/04/14 22:29:17 christos Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.50 2017/04/15 22:01:57 christos Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.49 2017/04/14 22:29:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.50 2017/04/15 22:01:57 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.49 2017/04/14 22:29:17 christos Exp $
  */
 #define HDRSIZE(sav) \
 	(((sav)->flags & SADB_X_EXT_OLD) ? \
-		sizeof (struct ah) : sizeof (struct ah) + sizeof (u_int32_t))
+		sizeof(struct ah) : sizeof(struct ah) + sizeof(uint32_t))
 /*
  * Return authenticator size in bytes.  The old protocol is known
  * to use a fixed 16-byte authenticator.  The new algorithm gets
@@ -121,8 +121,8 @@ SYSCTL_STRUCT(_net_inet_ah, IPSECCTL_STATS,
 
 static unsigned char ipseczeroes[256];	/* larger than an ip6 extension hdr */
 
-static int ah_input_cb(struct cryptop*);
-static int ah_output_cb(struct cryptop*);
+static int ah_input_cb(struct cryptop *);
+static int ah_output_cb(struct cryptop *);
 
 const uint8_t ah_stats[256] = { SADB_AALG_STATS_INIT };
 
@@ -169,10 +169,10 @@ ah_hdrsiz(const struct secasvar *sav)
 			("%s: null xform", __func__));
 		/*XXX not right for null algorithm--does it matter??*/
 		authsize = AUTHSIZE(sav);
-		size = roundup(authsize, sizeof (u_int32_t)) + HDRSIZE(sav);
+		size = roundup(authsize, sizeof(uint32_t)) + HDRSIZE(sav);
 	} else {
 		/* default guess */
-		size = sizeof (struct ah) + sizeof (u_int32_t) + 16;
+		size = sizeof(struct ah) + sizeof(uint32_t) + 16;
 	}
 	return size;
 }
@@ -223,7 +223,7 @@ ah_init0(struct secasvar *sav, const struct xformsw *xsp,
 	sav->tdb_authalgxform = thash;
 
 	/* Initialize crypto session. */
-	memset(cria, 0, sizeof (*cria));
+	memset(cria, 0, sizeof(*cria));
 	cria->cri_alg = sav->tdb_authalgxform->type;
 	cria->cri_klen = _KEYBITS(sav->key_auth);
 	cria->cri_key = _KEYBUF(sav->key_auth);
@@ -284,6 +284,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #ifdef INET6
 	struct ip6_ext *ip6e;
 	struct ip6_hdr ip6;
+	struct ip6_rthdr *rh;
 	int alloc, ad, nxt;
 #endif /* INET6 */
 
@@ -325,7 +326,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
   #define TOHOST(x) (ntohs(x))
 #endif
 		if (!out) {
-			u_int16_t inlen = TOHOST(ip->ip_len);
+			uint16_t inlen = TOHOST(ip->ip_len);
 
 #ifdef __FreeBSD__
 			ip->ip_len = htons(inlen + skip);
@@ -408,9 +409,10 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * will look like.
 				 */
 				if (out)
-					bcopy(ptr + off + ptr[off + 1] -
+					memcpy(&ip->ip_dst,
+					    ptr + off + ptr[off + 1] -
 					    sizeof(struct in_addr),
-					    &(ip->ip_dst), sizeof(struct in_addr));
+					    sizeof(struct in_addr));
 
 				/* Fall through */
 			default:
@@ -472,8 +474,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		/* Let's deal with the remaining headers (if any). */
 		if (skip - sizeof(struct ip6_hdr) > 0) {
 			if (m->m_len <= skip) {
-				ptr = (unsigned char *) malloc(
-				    skip - sizeof(struct ip6_hdr),
+				ptr = malloc(skip - sizeof(struct ip6_hdr),
 				    M_XDATA, M_NOWAIT);
 				if (ptr == NULL) {
 					DPRINTF(("%s: failed to allocate "
@@ -561,47 +562,43 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 				 * Always include routing headers in
 				 * computation.
 				 */
-				{
-					struct ip6_rthdr *rh;
+				ip6e = (struct ip6_ext *) (ptr + off);
+				rh = (struct ip6_rthdr *)(ptr + off);
+				/*
+				 * must adjust content to make it look like
+				 * its final form (as seen at the final
+				 * destination).
+				 * we only know how to massage type 0 routing
+				 * header.
+				 */
+				if (out && rh->ip6r_type == IPV6_RTHDR_TYPE_0) {
+					struct ip6_rthdr0 *rh0;
+					struct in6_addr *addr, finaldst;
+					int i;
 
-					ip6e = (struct ip6_ext *) (ptr + off);
-					rh = (struct ip6_rthdr *)(ptr + off);
-					/*
-					 * must adjust content to make it look like
-					 * its final form (as seen at the final
-					 * destination).
-					 * we only know how to massage type 0 routing
-					 * header.
-					 */
-					if (out && rh->ip6r_type == IPV6_RTHDR_TYPE_0) {
-						struct ip6_rthdr0 *rh0;
-						struct in6_addr *addr, finaldst;
-						int i;
+					rh0 = (struct ip6_rthdr0 *)rh;
+					addr = (struct in6_addr *)(rh0 + 1);
 
-						rh0 = (struct ip6_rthdr0 *)rh;
-						addr = (struct in6_addr *)(rh0 + 1);
+					for (i = 0; i < rh0->ip6r0_segleft; i++)
+						in6_clearscope(&addr[i]);
 
-						for (i = 0; i < rh0->ip6r0_segleft; i++)
-							in6_clearscope(&addr[i]);
+					finaldst = addr[rh0->ip6r0_segleft - 1];
+					memmove(&addr[1], &addr[0],
+						sizeof(struct in6_addr) *
+						(rh0->ip6r0_segleft - 1));
 
-						finaldst = addr[rh0->ip6r0_segleft - 1];
-						memmove(&addr[1], &addr[0],
-							sizeof(struct in6_addr) *
-							(rh0->ip6r0_segleft - 1));
+					m_copydata(m, 0, sizeof(ip6), &ip6);
+					addr[0] = ip6.ip6_dst;
+					ip6.ip6_dst = finaldst;
+					m_copyback(m, 0, sizeof(ip6), &ip6);
 
-						m_copydata(m, 0, sizeof(ip6), &ip6);
-						addr[0] = ip6.ip6_dst;
-						ip6.ip6_dst = finaldst;
-						m_copyback(m, 0, sizeof(ip6), &ip6);
-
-						rh0->ip6r0_segleft = 0;
-					}
-
-					/* advance */
-					off += ((ip6e->ip6e_len + 1) << 3);
-					nxt = ip6e->ip6e_nxt;
-					break;
+					rh0->ip6r0_segleft = 0;
 				}
+
+				/* advance */
+				off += ((ip6e->ip6e_len + 1) << 3);
+				nxt = ip6e->ip6e_nxt;
+				break;
 
 			default:
 				DPRINTF(("%s: unexpected IPv6 header type %d\n",
@@ -643,7 +640,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	struct cryptodesc *crda;
 	struct cryptop *crp;
 
-	IPSEC_SPLASSERT_SOFTNET("ah_input");
+	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
 	IPSEC_ASSERT(sav->key_auth != NULL,
@@ -673,13 +670,13 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	}
 
 	/* Verify AH header length. */
-	hl = ah->ah_len * sizeof (u_int32_t);
+	hl = ah->ah_len * sizeof(uint32_t);
 	ahx = sav->tdb_authalgxform;
 	authsize = AUTHSIZE(sav);
-	if (hl != authsize + rplen - sizeof (struct ah)) {
+	if (hl != authsize + rplen - sizeof(struct ah)) {
 		DPRINTF(("%s: bad authenticator length %u (expecting %lu)"
 			" for packet in SA %s/%08lx\n", __func__,
-			hl, (u_long) (authsize + rplen - sizeof (struct ah)),
+			hl, (u_long) (authsize + rplen - sizeof(struct ah)),
 			ipsec_address(&sav->sah->saidx.dst),
 			(u_long) ntohl(sav->spi)));
 		AH_STATINC(AH_STAT_BADAUTHL);
@@ -717,7 +714,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 		if (tdbi->proto == sav->sah->saidx.proto &&
 		    tdbi->spi == sav->spi &&
 		    !memcmp(&tdbi->dst, &sav->sah->saidx.dst,
-			  sizeof (union sockaddr_union)))
+			  sizeof(union sockaddr_union)))
 			break;
 	}
 
@@ -822,20 +819,20 @@ ah_input_cb(struct cryptop *crp)
 	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
-	u_int8_t nxt;
+	uint8_t nxt;
 	char *ptr;
 	int s, authsize;
-	u_int16_t dport;
-	u_int16_t sport;
+	uint16_t dport;
+	uint16_t sport;
 
-	tc = (struct tdb_crypto *) crp->crp_opaque;
+	tc = crp->crp_opaque;
 	IPSEC_ASSERT(tc != NULL, ("%s: null opaque crypto data area!",
 	    __func__));
 	skip = tc->tc_skip;
 	nxt = tc->tc_nxt;
 	protoff = tc->tc_protoff;
-	mtag = (struct m_tag *) tc->tc_ptr;
-	m = (struct mbuf *) crp->crp_buf;
+	mtag = tc->tc_ptr;
+	m = crp->crp_buf;
 
 
 	/* find the source port for NAT-T */
@@ -902,8 +899,8 @@ ah_input_cb(struct cryptop *crp)
 	 * it has been verified by an IPsec-aware NIC.
 	 */
 	if (mtag == NULL) {
-		ptr = (char *) (tc + 1);
-		const u_int8_t *pppp = ptr + skip + rplen;
+		ptr = (char *)(tc + 1);
+		const uint8_t *pppp = ptr + skip + rplen;
 
 		/* Verify authenticator. */
 		if (!consttime_memequal(pppp, calc, authsize)) {
@@ -928,13 +925,13 @@ ah_input_cb(struct cryptop *crp)
 		}
 
 		/* Fix the Next Protocol field. */
-		((u_int8_t *) ptr)[protoff] = nxt;
+		ptr[protoff] = nxt;
 
 		/* Copyback the saved (uncooked) network headers. */
 		m_copyback(m, 0, skip, ptr);
 	} else {
 		/* Fix the Next Protocol field. */
-		m_copyback(m, protoff, sizeof(u_int8_t), &nxt);
+		m_copyback(m, protoff, sizeof(uint8_t), &nxt);
 	}
 
 	free(tc, M_XDATA), tc = NULL;			/* No longer needed */
@@ -948,10 +945,10 @@ ah_input_cb(struct cryptop *crp)
 	 * Update replay sequence number, if appropriate.
 	 */
 	if (sav->replay) {
-		u_int32_t seq;
+		uint32_t seq;
 
 		m_copydata(m, skip + offsetof(struct newah, ah_seq),
-			   sizeof (seq), &seq);
+		    sizeof(seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			AH_STATINC(AH_STAT_REPLAY);
 			error = ENOBUFS;			/*XXX as above*/
@@ -1014,7 +1011,7 @@ ah_output(
 	uint8_t prot;
 	struct newah *ah;
 
-	IPSEC_SPLASSERT_SOFTNET("ah_output");
+	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	sav = isr->sav;
 	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
@@ -1096,8 +1093,8 @@ ah_output(
 	ah = (struct newah *)(mtod(mi, char *) + roff);
 
 	/* Initialize the AH header. */
-	m_copydata(m, protoff, sizeof(u_int8_t), &ah->ah_nxt);
-	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(u_int32_t);
+	m_copydata(m, protoff, sizeof(uint8_t), &ah->ah_nxt);
+	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(uint32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
 
@@ -1221,11 +1218,11 @@ ah_output_cb(struct cryptop *crp)
 	void *ptr;
 	int s, err;
 
-	tc = (struct tdb_crypto *) crp->crp_opaque;
+	tc = crp->crp_opaque;
 	IPSEC_ASSERT(tc != NULL, ("%s: null opaque data area!", __func__));
 	skip = tc->tc_skip;
 	ptr = (tc + 1);
-	m = (struct mbuf *) crp->crp_buf;
+	m = crp->crp_buf;
 
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
