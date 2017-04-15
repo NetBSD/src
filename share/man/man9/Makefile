@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.408 2017/04/15 03:33:05 kamil Exp $
+#       $NetBSD: Makefile,v 1.409 2017/04/15 13:52:51 kamil Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -31,7 +31,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	ioctl.9 ipkdb.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
 	kcpuset.9 kernhist.9 klua_lock.9 klua_mod_register.9 kmem.9 kpause.9 \
 	kfilter_register.9 knote.9 \
-	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
+	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
 	LWP_CACHE_CREDS.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
