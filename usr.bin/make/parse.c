@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.218 2017/03/01 16:39:49 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.219 2017/04/16 19:53:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.218 2017/03/01 16:39:49 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.219 2017/04/16 19:53:58 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.218 2017/03/01 16:39:49 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.219 2017/04/16 19:53:58 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1085,15 +1085,15 @@ ParseDoSrc(int tOp, const char *src)
  *-----------------------------------------------------------------------
  */
 static int
-ParseFindMain(void *gnp, void *dummy)
+ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   	  *gn = (GNode *)gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
-	return (dummy ? 1 : 1);
+	return 1;
     } else {
-	return (dummy ? 0 : 0);
+	return 0;
     }
 }
 
@@ -1131,10 +1131,10 @@ ParseAddDir(void *path, void *name)
  *-----------------------------------------------------------------------
  */
 static int
-ParseClearPath(void *path, void *dummy)
+ParseClearPath(void *path, void *dummy MAKE_ATTR_UNUSED)
 {
     Dir_ClearPath((Lst) path);
-    return(dummy ? 0 : 0);
+    return 0;
 }
 
 /*-
