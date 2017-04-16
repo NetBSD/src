@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.223 2017/04/16 21:37:37 riastradh Exp $	*/
+/*	$NetBSD: parse.c,v 1.224 2017/04/16 21:38:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.223 2017/04/16 21:37:37 riastradh Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.224 2017/04/16 21:38:38 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.223 2017/04/16 21:37:37 riastradh Exp $");
+__RCSID("$NetBSD: parse.c,v 1.224 2017/04/16 21:38:38 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2546,7 +2546,7 @@ ParseTraditionalInclude(char *line)
     if (*file == '\0') {
 	Parse_Error(PARSE_FATAL,
 		     "Filename missing from \"include\"");
-	return;
+	goto out;
     }
 
     for (file = all_files; !done; file = cp + 1) {
@@ -2561,6 +2561,7 @@ ParseTraditionalInclude(char *line)
 
 	Parse_include_file(file, FALSE, FALSE, silent);
     }
+out:
     free(all_files);
 }
 #endif
