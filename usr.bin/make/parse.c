@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.219 2017/04/16 19:53:58 riastradh Exp $	*/
+/*	$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.219 2017/04/16 19:53:58 riastradh Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.219 2017/04/16 19:53:58 riastradh Exp $");
+__RCSID("$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -527,7 +527,7 @@ loadfile(const char *path, int fd)
 		if (lf->buf != MAP_FAILED) {
 			/* succeeded */
 			if (lf->len == lf->maplen && lf->buf[lf->len - 1] != '\n') {
-				char *b = malloc(lf->len + 1);
+				char *b = bmake_malloc(lf->len + 1);
 				b[lf->len] = '\n';
 				memcpy(b, lf->buf, lf->len++);
 				munmap(lf->buf, lf->maplen);

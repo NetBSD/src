@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.260 2017/04/13 13:55:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.261 2017/04/16 20:00:58 maya Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.260 2017/04/13 13:55:23 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.261 2017/04/16 20:00:58 maya Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.260 2017/04/13 13:55:23 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.261 2017/04/16 20:00:58 maya Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -323,7 +323,7 @@ parse_debug_options(const char *argvalue)
 				goto debug_setbuf;
 			}
 			len = strlen(modules);
-			fname = malloc(len + 20);
+			fname = bmake_malloc(len + 20);
 			memcpy(fname, modules, len + 1);
 			/* Let the filename be modified by the pid */
 			if (strcmp(fname + len - 3, ".%d") == 0)
