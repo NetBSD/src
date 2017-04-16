@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.12 2015/12/23 11:58:10 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.13 2017/04/16 12:22:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.12 2015/12/23 11:58:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.13 2017/04/16 12:22:18 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -284,7 +284,6 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 {
 	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
 	struct tegra_crtc *crtc;
-	struct clk *clk_parent;
 	bus_addr_t offset;
 	bus_size_t size;
 	u_int intr;
@@ -346,12 +345,8 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	tegra_pmc_remove_clamping(pmc_partid);
 
 	/* Set parent clock */
-	clk_parent = clk_get("pll_d2_out0");
-	if (clk_parent == NULL) {
-		DRM_ERROR("couldn't find pll_d2_out0\n");
-		return -EIO;
-	}
-	error = clk_set_parent(sc->sc_clk_dc[index], clk_parent);
+	error = clk_set_parent(sc->sc_clk_dc[index],
+	    sc->sc_clk_dc_parent[index]);
 	if (error) {
 		DRM_ERROR("failed to set crtc %d clock parent: %d\n",
 		    index, error);
@@ -368,7 +363,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	/* Leave reset */
 	fdtbus_reset_deassert(sc->sc_rst_dc[index]);
 
-	crtc->clk_parent = clk_parent;
+	crtc->clk_parent = sc->sc_clk_dc_parent[index];
 
 	DC_WRITE(crtc, DC_CMD_INT_ENABLE_REG, DC_CMD_INT_V_BLANK);
 
