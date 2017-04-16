@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.6 2017/04/16 12:32:03 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.7 2017/04/16 12:50:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.6 2017/04/16 12:32:03 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.7 2017/04/16 12:50:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5739,6 +5739,7 @@ ATF_TC_BODY(signal2, tc)
 ATF_TC(signal3);
 ATF_TC_HEAD(signal3, tc)
 {
+	atf_tc_set_md_var(tc, "timeout", "5");
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that masking SIGTRAP in tracee does not stop tracer from "
 	    "catching software breakpoints");
@@ -5755,7 +5756,14 @@ ATF_TC_BODY(signal3, tc)
 #endif
 	sigset_t intmask;
 
+#if defined(__sparc__) && !defined(__sparc64__)
+	atf_tc_expect_timeout("PR kern/52167");
+
+	// timeout wins, failure still valid
+	// atf_tc_expect_fail("PR kern/51918");
+#else
 	atf_tc_expect_fail("PR kern/51918");
+#endif
 
 	printf("Before forking process PID=%d\n", getpid());
 	ATF_REQUIRE((child = fork()) != -1);
