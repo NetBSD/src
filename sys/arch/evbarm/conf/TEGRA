@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.13 2017/04/14 22:55:06 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.14 2017/04/16 12:29:40 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -36,6 +36,7 @@ armgtmr0	at armperiph?				# ARM Generic Timer
 tegrafdt0	at mainbus?
 fdt*		at fdtbus?
 
+fclock*		at fdt?
 fregulator*	at fdt?
 gpiokeys*	at fdt?
 
