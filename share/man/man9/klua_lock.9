@@ -1,4 +1,4 @@
-.\"	$NetBSD: klua_lock.9,v 1.4 2017/04/15 18:03:02 sevan Exp $
+.\"	$NetBSD: klua_lock.9,v 1.5 2017/04/16 06:36:03 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,13 +86,13 @@ The second element
 is used to protect integrity during cross-thread access to the Lua state.
 The third element
 .Ft ks_user
-indicates whether the structure was created from the kernel space or user land.
+indicates whether the structure was created from the kernel space or userland.
 This parameter is used in the logic of
 .Xr luactl 8 ,
 to prohibit the destruction of state from an opposing side.
-Destroying kernel state from user land for example.
+Destroying kernel state from userland for example.
 .Pp
-The kernel Lua API is designed after the user land Lua API.
+The kernel Lua API is designed after the userland Lua API.
 .Ss List of Functions
 .Bl -column "kluaL_newstateX" "luaL_newstateX" "create a Lua state with custom allocatorX"
 .It Sy kernel API Ta Sy userland API Ta Sy Description
