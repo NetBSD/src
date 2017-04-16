@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.70 2017/04/16 19:53:58 riastradh Exp $	*/
+/*	$NetBSD: dir.c,v 1.71 2017/04/16 21:14:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.70 2017/04/16 19:53:58 riastradh Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.71 2017/04/16 21:14:47 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.70 2017/04/16 19:53:58 riastradh Exp $");
+__RCSID("$NetBSD: dir.c,v 1.71 2017/04/16 21:14:47 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1315,8 +1315,14 @@ Dir_FindFile(const char *name, Lst path)
 	    fprintf(debug_file, "   Trying exact path matches...\n");
 	}
 
-	if (!hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
-	    return *file?file:NULL;
+	if (!hasLastDot && cur && ((file = DirLookupAbs(cur, name, cp))
+		!= NULL)) {
+	    if (file[0] == '\0') {
+		free(file);
+		return NULL;
+	    }
+	    return file;
+	}
 
 	(void)Lst_Open(path);
 	while ((ln = Lst_Next(path)) != NULL) {
@@ -1325,13 +1331,23 @@ Dir_FindFile(const char *name, Lst path)
 		continue;
 	    if ((file = DirLookupAbs(p, name, cp)) != NULL) {
 		Lst_Close(path);
-		return *file?file:NULL;
+		if (file[0] == '\0') {
+		    free(file);
+		    return NULL;
+		}
+		return file;
 	    }
 	}
 	Lst_Close(path);
 
-	if (hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
-	    return *file?file:NULL;
+	if (hasLastDot && cur && ((file = DirLookupAbs(cur, name, cp))
+		!= NULL)) {
+	    if (file[0] == '\0') {
+		free(file);
+		return NULL;
+	    }
+	    return file;
+	}
     }
 
     /*
