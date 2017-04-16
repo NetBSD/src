@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.5 2017/04/16 12:03:25 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.6 2017/04/16 12:32:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.5 2017/04/16 12:03:25 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.6 2017/04/16 12:32:03 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7453,6 +7453,11 @@ ATF_TC_BODY(syscallemu1, tc)
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
+#endif
+
+#if defined(__sparc__) && !defined(__sparc64__)
+	/* syscallemu does not work on sparc (32-bit) */
+	atf_tc_expect_fail("PR kern/52166");
 #endif
 
 	printf("Before forking process PID=%d\n", getpid());
