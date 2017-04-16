@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $	*/
+/*	$NetBSD: suff.c,v 1.86 2017/04/16 20:38:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.86 2017/04/16 20:38:18 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $");
+__RCSID("$NetBSD: suff.c,v 1.86 2017/04/16 20:38:18 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -135,6 +135,7 @@ __RCSID("$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $");
  *				order to find the node.
  */
 
+#include    	  <assert.h>
 #include    	  <stdio.h>
 #include	  "make.h"
 #include	  "hash.h"
@@ -1905,6 +1906,13 @@ SuffFindArchiveDeps(GNode *gn, Lst slst)
      */
     eoarch = strchr(gn->name, '(');
     eoname = strchr(eoarch, ')');
+
+    /*
+     * Caller guarantees the format `libname(member)', via
+     * Arch_ParseArchive.
+     */
+    assert(eoarch != NULL);
+    assert(eoname != NULL);
 
     *eoname = '\0';	  /* Nuke parentheses during suffix search */
     *eoarch = '\0';	  /* So a suffix can be found */
