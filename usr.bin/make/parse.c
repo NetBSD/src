@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $	*/
+/*	$NetBSD: parse.c,v 1.221 2017/04/16 21:03:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.221 2017/04/16 21:03:13 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $");
+__RCSID("$NetBSD: parse.c,v 1.221 2017/04/16 21:03:13 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -129,6 +129,7 @@ __RCSID("$NetBSD: parse.c,v 1.220 2017/04/16 20:00:58 maya Exp $");
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -548,9 +549,15 @@ loadfile(const char *path, int fd)
 	while (1) {
 		assert(bufpos <= lf->len);
 		if (bufpos == lf->len) {
+			if (lf->len > SIZE_MAX/2) {
+				errno = EFBIG;
+				Error("%s: file too large", path);
+				exit(1);
+			}
 			lf->len *= 2;
 			lf->buf = bmake_realloc(lf->buf, lf->len);
 		}
+		assert(bufpos < lf->len);
 		result = read(fd, lf->buf + bufpos, lf->len - bufpos);
 		if (result < 0) {
 			Error("%s: read error: %s", path, strerror(errno));
