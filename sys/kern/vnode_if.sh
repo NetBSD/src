@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.63 2017/04/11 14:29:32 riastradh Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.64 2017/04/16 17:18:28 riastradh Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -370,8 +370,9 @@ function offsets() {
 				word = "RELE";
 			}
 			printf(" | VDESC_VP%s_WILL%s", vpnum, word);
-			vpnum++;
 		}
+		if (argtype[i] == "struct vnode *")
+			vpnum++;
 	}
 	print ",";
 	# vp offsets
