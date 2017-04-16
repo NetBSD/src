@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.13 2017/04/13 21:20:44 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.14 2017/04/16 12:26:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.13 2017/04/13 21:20:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.14 2017/04/16 12:26:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,14 +116,14 @@ static struct clk *tegra124_clk_pllx = NULL;
 void
 tegra124_cpuinit(void)
 {
-	int node = OF_finddevice("/i2c@7000d000");
-	if (node == -1)
-		node = OF_finddevice("/i2c@0,7000d000"); /* old DTB */
-	if (node == -1) {
+	int i2c_node = OF_finddevice("/i2c@7000d000");
+	if (i2c_node == -1)
+		i2c_node = OF_finddevice("/i2c@0,7000d000"); /* old DTB */
+	if (i2c_node == -1) {
 		aprint_error("cpufreq: ERROR: couldn't find i2c@7000d000\n");
 		return;
 	}
-	i2c_tag_t ic = fdtbus_get_i2c_tag(node);
+	i2c_tag_t ic = fdtbus_get_i2c_tag(i2c_node);
 
 	/* Set VDD_CPU voltage to 1.4V */
 	const u_int target_mv = 1400;
@@ -143,7 +143,9 @@ tegra124_cpuinit(void)
 
 	tegra124_speedo_init();
 
-	tegra124_clk_pllx = clk_get("pll_x");
+	int cpu_node = OF_finddevice("/cpus/cpu@0");
+	if (cpu_node != -1)
+		tegra124_clk_pllx = fdtbus_clock_get(cpu_node, "pll_x");
 	if (tegra124_clk_pllx == NULL) {
 		aprint_error("cpufreq: ERROR: couldn't find pll_x\n");
 		return;
