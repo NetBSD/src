@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.16 2017/04/16 18:05:35 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.17 2017/04/16 22:38:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.16 2017/04/16 18:05:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.17 2017/04/16 22:38:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.16 2017/04/16 18:05:35 jmcneill Exp
 #include <arm/nvidia/tegra_var.h>
 
 #include <dev/fdt/fdtvar.h>
+
+/* Interrupt handle flags */
+#define	IH_MPSAFE	0x80000000
 
 static int	tegra_pcie_match(device_t, cfdata_t, void *);
 static void	tegra_pcie_attach(device_t, device_t, void *);
@@ -591,11 +594,12 @@ tegra_pcie_intr_evcnt(void *v, pci_intr_handle_t ih)
 static int
 tegra_pcie_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data)
 {
-	struct tegra_pcie_ih *pcie_ih = (struct tegra_pcie_ih *)*ih;
-
 	switch (attr) {
 	case PCI_INTR_MPSAFE:
-		pcie_ih->ih_mpsafe = data;
+		if (data)
+			*ih |= IH_MPSAFE;
+		else
+			*ih &= ~IH_MPSAFE;
 		return 0;
 	default:
 		return ENODEV;
@@ -616,7 +620,7 @@ tegra_pcie_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 	pcie_ih->ih_callback = callback;
 	pcie_ih->ih_arg = arg;
 	pcie_ih->ih_ipl = ipl;
-	pcie_ih->ih_mpsafe = 0;
+	pcie_ih->ih_mpsafe = (ih & IH_MPSAFE) != 0;
 
 	mutex_enter(&sc->sc_lock);
 	TAILQ_INSERT_TAIL(&sc->sc_intrs, pcie_ih, ih_entry);
