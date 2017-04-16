@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.8 2017/04/14 22:55:06 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.9 2017/04/16 12:29:20 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -13,6 +13,10 @@ file	dev/fdt/fdtbus.c			fdt
 device	fregulator
 attach	fregulator at fdt
 file	dev/fdt/fixedregulator.c		fregulator
+
+device	fclock: clk
+attach	fclock at fdt
+file	dev/fdt/fixedclock.c			fclock
 
 device	gpiokeys
 attach	gpiokeys at fdt
