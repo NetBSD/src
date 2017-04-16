@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.221 2017/04/16 21:03:13 riastradh Exp $	*/
+/*	$NetBSD: parse.c,v 1.222 2017/04/16 21:35:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.221 2017/04/16 21:03:13 riastradh Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.222 2017/04/16 21:35:08 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.221 2017/04/16 21:03:13 riastradh Exp $");
+__RCSID("$NetBSD: parse.c,v 1.222 2017/04/16 21:35:08 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1678,10 +1678,12 @@ ParseDoDependency(char *line)
 	}
 	if (paths) {
 	    Lst_Destroy(paths, NULL);
+	    paths = NULL;
 	}
 	if (specType == ExPath)
 	    Dir_SetPATH();
     } else {
+	assert(paths == NULL);
 	while (*line) {
 	    /*
 	     * The targets take real sources, so we must beware of archive
@@ -1740,6 +1742,7 @@ ParseDoDependency(char *line)
     }
 
 out:
+    assert(paths == NULL);
     if (curTargs)
 	    Lst_Destroy(curTargs, NULL);
 }
