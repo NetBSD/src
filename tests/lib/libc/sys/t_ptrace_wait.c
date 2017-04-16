@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.4 2017/04/12 18:18:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.5 2017/04/16 12:03:25 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.4 2017/04/12 18:18:00 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.5 2017/04/16 12:03:25 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5832,7 +5832,10 @@ ATF_TC_BODY(signal4, tc)
 	int happy;
 
 #if defined(__arm__)
-	atf_tc_expect_fail("PR kern/52119");
+	/* PT_STEP not supported on arm 32-bit */
+	atf_tc_expect_fail("PR kern/51918 PR kern/52119");
+#else
+	atf_tc_expect_fail("PR kern/52118");
 #endif
 
 	printf("Before forking process PID=%d\n", getpid());
