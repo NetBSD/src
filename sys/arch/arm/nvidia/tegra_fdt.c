@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fdt.c,v 1.3 2017/04/15 00:35:12 jmcneill Exp $ */
+/* $NetBSD: tegra_fdt.c,v 1.4 2017/04/16 12:27:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.3 2017/04/15 00:35:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.4 2017/04/16 12:27:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,32 +64,6 @@ tegrafdt_match(device_t parent, cfdata_t cf, void *aux)
 void
 tegrafdt_attach(device_t parent, device_t self, void *aux)
 {
-	const char *tegrafdt_init[] = {
-		/* interrupt controllers */
-		"nvidia,tegra124-ictlr",
-		"arm,cortex-a15-gic",
-		/* clocks */
-		"nvidia,tegra124-car",
-		"nvidia,tegra124-dfll",
-		/* pinmux */
-		"nvidia,tegra124-pinmux",
-		"nvidia,tegra124-gpio",
-		/* regulators */
-		"regulator-fixed",
-		/* fuse */
-		"nvidia,tegra124-efuse",
-		/* dma */
-		"nvidia,tegra124-apbdma",
-		/* pmc */
-		"nvidia,tegra124-pmc",
-		/* memory controller */
-		"nvidia,tegra124-mc",
-		/* i2c */
-		"nvidia,tegra124-i2c",
-		/* usb phy */
-		"nvidia,tegra124-usb-phy",
-	};
-
 	tegrafdt_found = true;
 
 	aprint_naive("\n");
@@ -101,8 +75,6 @@ tegrafdt_attach(device_t parent, device_t self, void *aux)
 		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
 		.faa_dmat = &tegra_dma_tag,
 		.faa_phandle = OF_peer(0),
-		.faa_init = tegrafdt_init,
-		.faa_ninit = __arraycount(tegrafdt_init)
 	};
 	config_found(self, &faa, NULL);
 
