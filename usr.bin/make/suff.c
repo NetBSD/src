@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.84 2016/06/30 05:34:04 dholland Exp $	*/
+/*	$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.84 2016/06/30 05:34:04 dholland Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.84 2016/06/30 05:34:04 dholland Exp $");
+__RCSID("$NetBSD: suff.c,v 1.85 2017/04/16 19:53:58 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -762,11 +762,9 @@ Suff_AddTransform(char *line)
  *-----------------------------------------------------------------------
  */
 int
-Suff_EndTransform(void *gnp, void *dummy)
+Suff_EndTransform(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode *gn = (GNode *)gnp;
-
-    (void)dummy;
 
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
@@ -2597,22 +2595,19 @@ Suff_End(void)
 
 /********************* DEBUGGING FUNCTIONS **********************/
 
-static int SuffPrintName(void *s, void *dummy)
+static int SuffPrintName(void *s, void *dummy MAKE_ATTR_UNUSED)
 {
-    (void)dummy;
 
     fprintf(debug_file, "%s ", ((Suff *)s)->name);
     return 0;
 }
 
 static int
-SuffPrintSuff(void *sp, void *dummy)
+SuffPrintSuff(void *sp, void *dummy MAKE_ATTR_UNUSED)
 {
     Suff    *s = (Suff *)sp;
     int	    flags;
     int	    flag;
-
-    (void)dummy;
 
     fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
 
@@ -2650,11 +2645,9 @@ SuffPrintSuff(void *sp, void *dummy)
 }
 
 static int
-SuffPrintTrans(void *tp, void *dummy)
+SuffPrintTrans(void *tp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   *t = (GNode *)tp;
-
-    (void)dummy;
 
     fprintf(debug_file, "%-16s: ", t->name);
     Targ_PrintType(t->type);
