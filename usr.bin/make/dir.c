@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.69 2017/01/31 06:54:23 sjg Exp $	*/
+/*	$NetBSD: dir.c,v 1.70 2017/04/16 19:53:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.69 2017/01/31 06:54:23 sjg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.70 2017/04/16 19:53:58 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.69 2017/01/31 06:54:23 sjg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.70 2017/04/16 19:53:58 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -803,11 +803,11 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static int
-DirPrintWord(void *word, void *dummy)
+DirPrintWord(void *word, void *dummy MAKE_ATTR_UNUSED)
 {
     fprintf(debug_file, "%s ", (char *)word);
 
-    return(dummy ? 0 : 0);
+    return 0;
 }
 
 /*-
@@ -1851,10 +1851,10 @@ Dir_PrintDirectories(void)
 }
 
 static int
-DirPrintDir(void *p, void *dummy)
+DirPrintDir(void *p, void *dummy MAKE_ATTR_UNUSED)
 {
     fprintf(debug_file, "%s ", ((Path *)p)->name);
-    return (dummy ? 0 : 0);
+    return 0;
 }
 
 void
