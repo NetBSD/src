@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.15 2016/08/17 00:22:56 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.16 2017/04/16 18:05:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.15 2016/08/17 00:22:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.16 2017/04/16 18:05:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,7 @@ struct tegra_pcie_ih {
 	int			(*ih_callback)(void *);
 	void			*ih_arg;
 	int			ih_ipl;
+	int			ih_mpsafe;
 	TAILQ_ENTRY(tegra_pcie_ih) ih_entry;
 };
 
@@ -109,6 +110,8 @@ static int	tegra_pcie_intr_map(const struct pci_attach_args *,
 static const char *tegra_pcie_intr_string(void *, pci_intr_handle_t,
 					  char *, size_t);
 const struct evcnt *tegra_pcie_intr_evcnt(void *, pci_intr_handle_t);
+static int	tegra_pcie_intr_setattr(void *, pci_intr_handle_t *, int,
+					uint64_t);
 static void *	tegra_pcie_intr_establish(void *, pci_intr_handle_t,
 					 int, int (*)(void *), void *);
 static void	tegra_pcie_intr_disestablish(void *, void *);
@@ -181,8 +184,8 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM, 0,
-	    tegra_pcie_intr, sc);
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_pcie_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -248,8 +251,15 @@ tegra_pcie_legacy_intr(struct tegra_pcie_softc *sc)
 		TAILQ_FOREACH(pcie_ih, &sc->sc_intrs, ih_entry) {
 			int (*callback)(void *) = pcie_ih->ih_callback;
 			void *arg = pcie_ih->ih_arg;
+			const int mpsafe = pcie_ih->ih_mpsafe;
 			mutex_exit(&sc->sc_lock);
+
+			if (!mpsafe)
+				KERNEL_LOCK(1, curlwp);
 			rv += callback(arg);
+			if (!mpsafe)
+				KERNEL_UNLOCK_ONE(curlwp);
+
 			mutex_enter(&sc->sc_lock);
 			if (lastgen != sc->sc_intrgen)
 				break;
@@ -434,6 +444,7 @@ tegra_pcie_init(pci_chipset_tag_t pc, void *priv)
 	pc->pc_intr_map = tegra_pcie_intr_map;
 	pc->pc_intr_string = tegra_pcie_intr_string;
 	pc->pc_intr_evcnt = tegra_pcie_intr_evcnt;
+	pc->pc_intr_setattr = tegra_pcie_intr_setattr;
 	pc->pc_intr_establish = tegra_pcie_intr_establish;
 	pc->pc_intr_disestablish = tegra_pcie_intr_disestablish;
 }
@@ -577,6 +588,20 @@ tegra_pcie_intr_evcnt(void *v, pci_intr_handle_t ih)
 	return NULL;
 }
 
+static int
+tegra_pcie_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data)
+{
+	struct tegra_pcie_ih *pcie_ih = (struct tegra_pcie_ih *)*ih;
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		pcie_ih->ih_mpsafe = data;
+		return 0;
+	default:
+		return ENODEV;
+	}
+}
+
 static void *
 tegra_pcie_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg)
@@ -591,6 +616,7 @@ tegra_pcie_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 	pcie_ih->ih_callback = callback;
 	pcie_ih->ih_arg = arg;
 	pcie_ih->ih_ipl = ipl;
+	pcie_ih->ih_mpsafe = 0;
 
 	mutex_enter(&sc->sc_lock);
 	TAILQ_INSERT_TAIL(&sc->sc_intrs, pcie_ih, ih_entry);
