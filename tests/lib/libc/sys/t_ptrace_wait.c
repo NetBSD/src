@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.7 2017/04/16 12:50:59 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.8 2017/04/16 13:09:40 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.7 2017/04/16 12:50:59 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.8 2017/04/16 13:09:40 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -413,6 +413,8 @@ ATF_TC_BODY(attach2, tc)
 	int status;
 #endif
 
+	atf_tc_expect_fail("PR kern/52168");
+
 	printf("Spawn tracee\n");
 	ATF_REQUIRE(msg_open(&parent_tracee) == 0);
 	tracee = atf_utils_fork();
@@ -494,6 +496,7 @@ ATF_TC_BODY(attach2, tc)
 	msg_close(&parent_tracer);
 	msg_close(&parent_tracee);
 
+	ATF_REQUIRE(0 && "In order to get reliable failure, abort");
 }
 #endif
 
