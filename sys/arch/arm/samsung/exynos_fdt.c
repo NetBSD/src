@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_fdt.c,v 1.3 2015/12/27 12:21:12 jmcneill Exp $ */
+/* $NetBSD: exynos_fdt.c,v 1.4 2017/04/16 15:52:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.3 2015/12/27 12:21:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.4 2017/04/16 15:52:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,14 +64,6 @@ exynosfdt_match(device_t parent, cfdata_t cf, void *aux)
 void
 exynosfdt_attach(device_t parent, device_t self, void *aux)
 {
-	const char *exynosfdt_init[] = {
-		"interrupt-controller",
-		"clock-controller",
-		"pinctrl",
-		"i2c",
-		"phy"
-	};
-
 	exynosfdt_found = true;
 
 	aprint_naive("\n");
@@ -83,8 +75,6 @@ exynosfdt_attach(device_t parent, device_t self, void *aux)
 		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
 		.faa_dmat = &exynos_bus_dma_tag,
 		.faa_phandle = OF_peer(0),
-		.faa_init = exynosfdt_init,
-		.faa_ninit = __arraycount(exynosfdt_init)
 	};
 	config_found(self, &faa, NULL);
 }
