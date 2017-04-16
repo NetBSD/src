@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.6 2016/01/30 00:00:56 riastradh Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.7 2017/04/16 12:28:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.6 2016/01/30 00:00:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.7 2017/04/16 12:28:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,7 +126,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 		"hdmi-supply", "pll-supply", "vdd-supply"
 	};
 	struct fdtbus_regulator *reg;
-	struct clk *pll_p_out0;
 	u_int n, ndc;
 
 	sc->sc_dev = self;
@@ -192,24 +191,7 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	pll_p_out0 = clk_get("pll_p_out0");
-	if (pll_p_out0 == NULL) {
-		aprint_error_dev(self, "couldn't get clock pll_p_out0\n");
-		return;
-	}
 	fdtbus_reset_assert(sc->sc_rst_host1x);
-	error = clk_set_parent(sc->sc_clk_host1x, pll_p_out0);
-	if (error) {
-		aprint_error_dev(self, "couldn't set host1x clock parent: %d\n",
-		    error);
-		return;
-	}
-	error = clk_set_rate(sc->sc_clk_host1x, 408000000);
-	if (error) {
-		aprint_error_dev(self, "couldn't set host1x frequency: %d\n",
-		    error);
-		return;
-	}
 	error = clk_enable(sc->sc_clk_host1x);
 	if (error) {
 		aprint_error_dev(self, "couldn't enable clock host1x: %d\n",
@@ -217,7 +199,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	fdtbus_reset_deassert(sc->sc_rst_host1x);
-	clk_put(pll_p_out0);
 
 	prop_dictionary_get_bool(prop, "force-dvi", &sc->sc_force_dvi);
 
