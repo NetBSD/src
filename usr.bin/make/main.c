@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.261 2017/04/16 20:00:58 maya Exp $	*/
+/*	$NetBSD: main.c,v 1.262 2017/04/16 20:14:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.261 2017/04/16 20:00:58 maya Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.262 2017/04/16 20:14:49 riastradh Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.261 2017/04/16 20:00:58 maya Exp $");
+__RCSID("$NetBSD: main.c,v 1.262 2017/04/16 20:14:49 riastradh Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -183,6 +183,7 @@ static const char *	tracefile;
 static void		MainParseArgs(int, char **);
 static int		ReadMakefile(const void *, const void *);
 static void		usage(void) MAKE_ATTR_DEAD;
+static void		purge_cached_realpaths(void);
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
@@ -715,7 +716,7 @@ Main_SetObjdir(const char *fmt, ...)
 			Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
-			cached_realpath(".OBJDIR", NULL); /* purge */
+			purge_cached_realpaths();
 			rc = TRUE;
 			if (enterFlag && strcmp(objdir, curdir) != 0)
 				enterFlagObj = TRUE;
@@ -1873,42 +1874,56 @@ usage(void)
 	exit(2);
 }
 
-
 /*
  * realpath(3) can get expensive, cache results...
  */
+static GNode *cached_realpaths = NULL;
+
+static GNode *
+get_cached_realpaths(void)
+{
+
+    if (!cached_realpaths) {
+	cached_realpaths = Targ_NewGN("Realpath");
+#ifndef DEBUG_REALPATH_CACHE
+	cached_realpaths->flags = INTERNAL;
+#endif
+    }
+
+    return cached_realpaths;
+}
+
+/* purge any relative paths */
+static void
+purge_cached_realpaths(void)
+{
+    GNode *cache = get_cached_realpaths();
+    Hash_Entry *he, *nhe;
+    Hash_Search hs;
+
+    he = Hash_EnumFirst(&cache->context, &hs);
+    while (he) {
+	nhe = Hash_EnumNext(&hs);
+	if (he->name[0] != '/') {
+	    if (DEBUG(DIR))
+		fprintf(stderr, "cached_realpath: purging %s\n", he->name);
+	    Hash_DeleteEntry(&cache->context, he);
+	}
+	he = nhe;
+    }
+}
+
 char *
 cached_realpath(const char *pathname, char *resolved)
 {
-    static GNode *cache;
+    GNode *cache;
     char *rp, *cp;
 
     if (!pathname || !pathname[0])
 	return NULL;
 
-    if (!cache) {
-	cache = Targ_NewGN("Realpath");
-#ifndef DEBUG_REALPATH_CACHE
-	cache->flags = INTERNAL;
-#endif
-    }
-    if (resolved == NULL && strcmp(pathname, ".OBJDIR") == 0) {
-	/* purge any relative paths */
-	Hash_Entry *he, *nhe;
-	Hash_Search hs;
+    cache = get_cached_realpaths();
 
-	he = Hash_EnumFirst(&cache->context, &hs);
-	while (he) {
-	    nhe = Hash_EnumNext(&hs);
-	    if (he->name[0] != '/') {
-		if (DEBUG(DIR))
-		    fprintf(stderr, "cached_realpath: purging %s\n", he->name);
-		Hash_DeleteEntry(&cache->context, he);
-	    }
-	    he = nhe;
-	}
-	return NULL;
-    }
     if ((rp = Var_Value(pathname, cache, &cp)) != NULL) {
 	/* a hit */
 	strncpy(resolved, rp, MAXPATHLEN);
