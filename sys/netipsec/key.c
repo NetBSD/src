@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.105 2017/04/10 14:02:25 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.106 2017/04/17 05:48:18 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.105 2017/04/10 14:02:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.106 2017/04/17 05:48:18 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -6121,7 +6121,7 @@ key_getsizes_ah(const struct auth_hash *ah, int alg,
 		switch (alg) {
 		case SADB_X_AALG_MD5:	*ksmin = *ksmax = 16; break;
 		case SADB_X_AALG_SHA:	*ksmin = *ksmax = 20; break;
-		case SADB_X_AALG_NULL:	*ksmin = 1; *ksmax = 256; break;
+		case SADB_X_AALG_NULL:	*ksmin = 0; *ksmax = 256; break;
 		default:
 			DPRINTF(("key_getsizes_ah: unknown AH algorithm %u\n",
 				alg));
