@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1152 2017/02/26 12:41:50 rin Exp $
+# $NetBSD: GENERIC,v 1.1153 2017/04/17 08:59:37 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1152 $"
+#ident		"GENERIC-$Revision: 1.1153 $"
 
 maxusers	64		# estimated number of users
 
@@ -1359,6 +1359,9 @@ ucom*	at u3g?
 # USB generic serial port (e.g., data over cellular)
 ugensa* at uhub? port ?
 ucom*	at ugensa?
+
+# Araneus Alea II TRNG
+#ualea* at uhub? port ? configuration ? interface ?
 
 # IrDA and Consumer Ir devices
 
