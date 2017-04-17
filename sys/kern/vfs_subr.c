@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.462 2017/04/12 10:26:33 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.463 2017/04/17 08:34:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.462 2017/04/12 10:26:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.463 2017/04/17 08:34:27 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -775,7 +775,7 @@ sched_sync(void *arg)
 		 * Sync mounts whose dirty time has expired.
 		 */
 		mountlist_iterator_init(&iter);
-		while ((mp = mountlist_iterator_next(iter)) != NULL) {
+		while ((mp = mountlist_iterator_trynext(iter)) != NULL) {
 			if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0 ||
 			    mp->mnt_synclist_slot != syncer_delayno) {
 				continue;

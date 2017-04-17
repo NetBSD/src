@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.57 2017/04/17 08:32:55 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.57 2017/04/17 08:32:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -311,13 +311,17 @@ vfs_rele(struct mount *mp)
  * => The caller must hold a pre-existing reference to the mount.
  * => Will fail if the file system is being unmounted, or is unmounted.
  */
-int
-vfs_busy(struct mount *mp)
+static inline int
+_vfs_busy(struct mount *mp, bool wait)
 {
 
 	KASSERT(mp->mnt_refcnt > 0);
 
-	mutex_enter(&mp->mnt_unmounting);
+	if (wait) {
+		mutex_enter(&mp->mnt_unmounting);
+	} else if (!mutex_tryenter(&mp->mnt_unmounting)) {
+		return EBUSY;
+	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		mutex_exit(&mp->mnt_unmounting);
 		return ENOENT;
@@ -327,6 +331,20 @@ vfs_busy(struct mount *mp)
 	mutex_exit(&mp->mnt_unmounting);
 	vfs_ref(mp);
 	return 0;
+}
+
+int
+vfs_busy(struct mount *mp)
+{
+
+	return _vfs_busy(mp, true);
+}
+
+int
+vfs_trybusy(struct mount *mp)
+{
+
+	return _vfs_busy(mp, false);
 }
 
 /*
@@ -1524,11 +1542,12 @@ mountlist_iterator_destroy(mount_iterator_t *mi)
  * Return the next mount or NULL for this iterator.
  * Mark it busy on success.
  */
-struct mount *
-mountlist_iterator_next(mount_iterator_t *mi)
+static inline struct mount *
+_mountlist_iterator_next(mount_iterator_t *mi, bool wait)
 {
 	struct mountlist_entry *me, *marker = &mi->mi_entry;
 	struct mount *mp;
+	int error;
 
 	if (marker->me_mount != NULL) {
 		vfs_unbusy(marker->me_mount);
@@ -1559,7 +1578,11 @@ mountlist_iterator_next(mount_iterator_t *mi)
 		mutex_exit(&mountlist_lock);
 
 		/* Try to mark this mount busy and return on success. */
-		if (vfs_busy(mp) == 0) {
+		if (wait)
+			error = vfs_busy(mp);
+		else
+			error = vfs_trybusy(mp);
+		if (error == 0) {
 			vfs_rele(mp);
 			marker->me_mount = mp;
 			return mp;
@@ -1567,6 +1590,20 @@ mountlist_iterator_next(mount_iterator_t *mi)
 		vfs_rele(mp);
 		mutex_enter(&mountlist_lock);
 	}
+}
+
+struct mount *
+mountlist_iterator_next(mount_iterator_t *mi)
+{
+
+	return _mountlist_iterator_next(mi, true);
+}
+
+struct mount *
+mountlist_iterator_trynext(mount_iterator_t *mi)
+{
+
+	return _mountlist_iterator_next(mi, false);
 }
 
 /*
