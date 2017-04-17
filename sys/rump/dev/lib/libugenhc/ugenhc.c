@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.24 2016/04/23 10:15:30 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.25 2017/04/17 05:11:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.24 2016/04/23 10:15:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.25 2017/04/17 05:11:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -489,7 +489,7 @@ rhscintr(void *arg)
 		 */
 
 		for (;;) {
-			fd = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &error);
+			error = rumpuser_open(buf, RUMPUSER_OPEN_RDWR, &fd);
 			if (fd == -1)
 				break;
 
