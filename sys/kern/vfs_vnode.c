@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.85 2017/04/16 16:48:08 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.86 2017/04/17 08:31:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.85 2017/04/16 16:48:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.86 2017/04/17 08:31:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1595,7 +1595,7 @@ vcache_reclaim(vnode_t *vp)
 	 * operations vector.  See sys/kern/vnode_if.c.
 	 */
 	vp->v_vflag &= ~VV_ROOT;
-	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
+	vfs_ref(dead_rootmount);
 	vfs_insmntque(vp, dead_rootmount);
 
 	mutex_enter(vp->v_interlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.100 2016/12/26 08:21:09 skrll Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.100 2016/12/26 08:21:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.101 2017/04/17 08:31:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1097,7 +1097,7 @@ puffs_sop_thread(void *arg)
 			 * We know the mountpoint is still alive because
 			 * the thread that is us (poetic?) is still alive.
 			 */
-			atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
+			vfs_ref(mp);
 			break;
 		}
 
@@ -1137,7 +1137,7 @@ puffs_sop_thread(void *arg)
 	 */
 	if (unmountme) {
 		(void)dounmount(mp, MNT_FORCE, curlwp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 	}
 
 	kthread_exit(0);
@@ -1182,13 +1182,13 @@ puffs_msgif_close(void *ctx)
 	}
 
 	/* Won't access pmp from here anymore */
-	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
+	vfs_ref(mp);
 	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
 	/* Detach from VFS. */
 	(void)dounmount(mp, MNT_FORCE, curlwp);
-	vfs_destroy(mp);
+	vfs_rele(mp);
 
 	return 0;
 }

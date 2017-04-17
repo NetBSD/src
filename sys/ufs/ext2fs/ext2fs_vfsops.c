@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.206 2017/04/01 19:35:57 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.207 2017/04/17 08:31:02 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.206 2017/04/01 19:35:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.207 2017/04/17 08:31:02 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -280,7 +280,7 @@ ext2fs_mountroot(void)
 
 	if ((error = ext2fs_mountfs(rootvp, mp)) != 0) {
 		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return error;
 	}
 	mountlist_append(mp);
