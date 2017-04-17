@@ -1,4 +1,4 @@
-/*	$NetBSD: t_canfilter.c,v 1.1.2.3 2017/02/05 12:18:20 bouyer Exp $	*/
+/*	$NetBSD: t_canfilter.c,v 1.1.2.4 2017/04/17 20:41:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_canfilter.c,v 1.1.2.3 2017/02/05 12:18:20 bouyer Exp $");
+__RCSID("$NetBSD: t_canfilter.c,v 1.1.2.4 2017/04/17 20:41:26 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -198,7 +198,7 @@ ATF_TC_BODY(canfilter_null, tc)
 	int s, rv;
 	struct can_frame cf_send, cf_receive;
 	struct can_filter cfi[2];
-	int cfilen;
+	socklen_t cfilen;
 
 	rump_init();
 	cancfg_rump_createif(ifname);
@@ -396,12 +396,9 @@ ATF_TC_HEAD(canfilter_get, tc)
 ATF_TC_BODY(canfilter_get, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv;
-	struct sockaddr_can sa;
-	struct ifreq ifr;
-	struct can_frame cf_send, cf_receive;
+	int s;
 	struct can_filter cfi[2];
-	int cfilen;
+	socklen_t cfilen;
 
 	rump_init();
 	cancfg_rump_createif(ifname);
@@ -444,7 +441,7 @@ ATF_TC_BODY(canfilter_get, tc)
 	ATF_CHECK_MSG(cfilen == sizeof(struct can_filter) * 2,
 	    "CAN_RAW_FILTER returns wrong len (%d)", cfilen);
 	ATF_CHECK_MSG(cfi[0].can_id == MY_ID &&
-	    cfi[0].can_mask == CAN_SFF_MASK | CAN_EFF_FLAG,
+	    cfi[0].can_mask == (CAN_SFF_MASK | CAN_EFF_FLAG),
 	    "CAN_RAW_FILTER returns wrong filter 0 (%d, %d)",
 	    cfi[0].can_id, cfi[0].can_mask);
 	ATF_CHECK_MSG(cfi[1].can_id == MY_ID + 1 &&
