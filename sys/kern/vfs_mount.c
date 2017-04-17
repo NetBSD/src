@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.56 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.57 2017/04/17 08:32:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.56 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.57 2017/04/17 08:32:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,7 +148,6 @@ struct mount *
 vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
-	int error __diagused;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	if (mp == NULL)
@@ -160,8 +159,6 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_unmounting, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	error = vfs_busy(mp);
-	KASSERT(error == 0);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
 
@@ -184,6 +181,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 {
 	struct vfsops *vfsp = NULL;
 	struct mount *mp;
+	int error __diagused;
 
 	mutex_enter(&vfs_list_lock);
 	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
@@ -199,6 +197,8 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 
 	if ((mp = vfs_mountalloc(vfsp, NULL)) == NULL)
 		return ENOMEM;
+	error = vfs_busy(mp);
+	KASSERT(error == 0);
 	mp->mnt_flag = MNT_RDONLY;
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name,
 	    sizeof(mp->mnt_stat.f_fstypename));
@@ -721,7 +721,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	}
 
 	if ((error = fstrans_mount(mp)) != 0) {
-		vfs_unbusy(mp);
 		vfs_rele(mp);
 		return error;
 	}
@@ -789,7 +788,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 
 	/* Hold an additional reference to the mount across VFS_START(). */
 	vfs_ref(mp);
-	vfs_unbusy(mp);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
        if (error) {
@@ -810,7 +808,6 @@ err_unmounted:
 	vp->v_mountedhere = NULL;
 	mutex_exit(&mp->mnt_updating);
 	fstrans_unmount(mp);
-	vfs_unbusy(mp);
 	vfs_rele(mp);
 
 	return error;
