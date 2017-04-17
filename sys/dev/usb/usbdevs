@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.730 2017/04/06 16:30:09 macallan Exp $
+$NetBSD: usbdevs,v 1.731 2017/04/17 08:59:37 riastradh Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -484,6 +484,7 @@ vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor CYBERTAN		0x129b	CyberTAN Technology
 vendor HUAWEI		0x12d1	Huawei Technologies
+vendor ARANEUS		0x12d8	Araneus Information Systems Oy
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -760,6 +761,9 @@ product AGFA SNAPSCANE20	0x2091	SnapScan e20
 product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
+
+/* Araneus products */
+product ARANEUS ALEA_II		0x0001	Alea II TRNG
 
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B
