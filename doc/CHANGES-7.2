@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.8 2017/04/11 16:56:31 martin Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.9 2017/04/17 06:08:12 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -567,4 +567,51 @@ sys/arch/evbarm/conf/TWINTAIL			1.65
 	Comment out more USB options to to fix build.
 	[skrll, ticket #1400]
 
+sys/compat/linux/arch/alpha/linux_syscall.h	regen
+sys/compat/linux/arch/alpha/linux_syscallargs.h	regen
+sys/compat/linux/arch/alpha/linux_syscalls.c	regen
+sys/compat/linux/arch/alpha/linux_sysent.c	regen
+sys/compat/linux/arch/alpha/syscalls.master	1.92 via patch
+sys/compat/linux/arch/amd64/linux_syscall.h	regen
+sys/compat/linux/arch/amd64/linux_syscallargs.h	regen
+sys/compat/linux/arch/amd64/linux_syscalls.c	regen
+sys/compat/linux/arch/amd64/linux_sysent.c	regen
+sys/compat/linux/arch/amd64/syscalls.master	1.58 via patch
+sys/compat/linux/arch/arm/linux_syscall.h	regen
+sys/compat/linux/arch/arm/linux_syscallargs.h	regen
+sys/compat/linux/arch/arm/linux_syscalls.c	regen
+sys/compat/linux/arch/arm/linux_sysent.c	regen
+sys/compat/linux/arch/arm/syscalls.master	1.65 via patch
+sys/compat/linux/arch/i386/linux_syscall.h	regen
+sys/compat/linux/arch/i386/linux_syscallargs.h	regen
+sys/compat/linux/arch/i386/linux_syscalls.c	regen
+sys/compat/linux/arch/i386/linux_sysent.c	regen
+sys/compat/linux/arch/i386/syscalls.master	1.122 via patch
+sys/compat/linux/arch/m68k/linux_syscall.h	regen
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
+sys/compat/linux/arch/m68k/linux_syscalls.c	regen
+sys/compat/linux/arch/m68k/linux_sysent.c	regen
+sys/compat/linux/arch/m68k/syscalls.master	1.91 via patch
+sys/compat/linux/arch/mips/linux_syscall.h	regen
+sys/compat/linux/arch/mips/linux_syscallargs.h	regen
+sys/compat/linux/arch/mips/linux_syscalls.c	regen
+sys/compat/linux/arch/mips/linux_sysent.c	regen
+sys/compat/linux/arch/mips/syscalls.master	1.61 via patch
+sys/compat/linux/arch/powerpc/linux_syscall.h	regen
+sys/compat/linux/arch/powerpc/linux_syscallargs.h	regen
+sys/compat/linux/arch/powerpc/linux_syscalls.c	regen
+sys/compat/linux/arch/powerpc/linux_sysent.c	regen
+sys/compat/linux/arch/powerpc/syscalls.master	1.70 via patch
+sys/compat/linux/common/linux_misc.c		1.234
+sys/compat/linux/common/linux_signal.h		1.31
+
+	Add pselect6 Linux system call.
+	[manu, ticket #1354]
+
+sys/arch/amd64/conf/XEN3_DOM0			1.126
+sys/arch/i386/conf/XEN3_DOM0			1.104
+sys/arch/xen/x86/xen_pmap.c			1.25
+
+	Make xen dom0 SMP bootable again.  Disabled by default.
+	[khorben, ticket #1367]
 
