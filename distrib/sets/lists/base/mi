@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1150 2017/01/13 11:21:47 nonaka Exp $
+# $NetBSD: mi,v 1.1150.2.1 2017/04/17 20:35:00 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1167,6 +1167,7 @@
 ./usr/include/net80211				base-c-usr
 ./usr/include/netatalk				base-c-usr
 ./usr/include/netbt				base-c-usr
+./usr/include/netcan				base-c-usr
 ./usr/include/netccitt				base-obsolete		obsolete
 ./usr/include/netinet				base-c-usr
 ./usr/include/netinet6				base-c-usr

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2102 2017/01/11 12:02:24 joerg Exp $
+#	$NetBSD: mi,v 1.2102.2.1 2017/04/17 20:35:00 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2271,6 +2271,8 @@
 ./usr/include/netbt/l2cap.h			comp-c-include
 ./usr/include/netbt/rfcomm.h			comp-c-include
 ./usr/include/netbt/sco.h			comp-c-include
+./usr/include/netcan/can.h			comp-c-include
+./usr/include/netcan/can_link.h			comp-c-include
 ./usr/include/netccitt/dll.h			comp-obsolete		obsolete
 ./usr/include/netccitt/hd_var.h			comp-obsolete		obsolete
 ./usr/include/netccitt/hdlc.h			comp-obsolete		obsolete
@@ -3555,6 +3557,8 @@
 ./usr/lib/librumpnet_net_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_netbt.a			comp-c-lib		rump
 ./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpnet_netcan.a			comp-c-lib		rump
+./usr/lib/librumpnet_netcan_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpnet_netinet.a			comp-c-lib		rump
 ./usr/lib/librumpnet_netinet6.a			comp-c-lib		rump
 ./usr/lib/librumpnet_netinet6_p.a		comp-c-proflib		rump,profile

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.796 2017/01/02 12:38:16 roy Exp $
+# $NetBSD: shl.mi,v 1.796.2.1 2017/04/17 20:35:00 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -712,6 +712,9 @@
 ./usr/lib/librumpnet_netbt.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_netbt.so.0			base-rump-shlib		rump
 ./usr/lib/librumpnet_netbt.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpnet_netcan.so			base-rump-shlib		rump
+./usr/lib/librumpnet_netcan.so.0		base-rump-shlib		rump
+./usr/lib/librumpnet_netcan.so.0.0		base-rump-shlib		rump
 ./usr/lib/librumpnet_netinet.so			base-rump-shlib		rump
 ./usr/lib/librumpnet_netinet.so.0		base-rump-shlib		rump
 ./usr/lib/librumpnet_netinet.so.0.0		base-rump-shlib		rump
