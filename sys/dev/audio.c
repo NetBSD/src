@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.324 2017/04/14 00:05:46 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.325 2017/04/17 20:17:08 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.324 2017/04/14 00:05:46 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.325 2017/04/17 20:17:08 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -641,7 +641,7 @@ bad_rec:
 	}
 
 	sc->sc_lastgain = 128;
-	sc->sc_saturate = true;
+	sc->sc_saturate = 16;
 	sc->sc_multiuser = false;
 	mutex_exit(sc->sc_lock);
 
@@ -837,8 +837,8 @@ bad_rec:
 
 		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
 			CTLFLAG_READWRITE,
-			CTLTYPE_BOOL, "saturate",
-			SYSCTL_DESCR("saturate to max. volume"),
+			CTLTYPE_INT, "saturate",
+			SYSCTL_DESCR("saturate to max. volume this many channels"),
 			NULL, 0,
 			&sc->sc_saturate, 0,
 			CTL_HW, node->sysctl_num,
@@ -3786,7 +3786,7 @@ audio_mix(void *v)
 				sc->schedule_rih = true;
 	}
 	mutex_enter(sc->sc_intr_lock);
-	if (sc->sc_saturate == true && sc->sc_opens > 1)
+	if (sc->sc_opens < sc->sc_saturate && sc->sc_opens > 1)
 		saturate_func(sc);
 
 	vc = SIMPLEQ_FIRST(&sc->sc_audiochan)->vc;
