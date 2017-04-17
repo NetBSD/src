@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.41 2017/04/12 10:23:35 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.42 2017/04/17 08:31:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.41 2017/04/12 10:23:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.42 2017/04/17 08:31:02 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -179,7 +179,7 @@ fstrans_mount_dtor(struct mount *mp)
 	mutex_exit(&fstrans_mount_lock);
 
 	kmem_free(fmi, sizeof(*fmi));
-	vfs_destroy(mp);
+	vfs_rele(mp);
 }
 
 /*

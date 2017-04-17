@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.351 2017/04/01 19:35:56 riastradh Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.352 2017/04/17 08:31:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.351 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.352 2017/04/17 08:31:02 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -378,7 +378,7 @@ ffs_mountroot(void)
 	mp->mnt_flag |= MNT_FORCE;
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
 		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 	mp->mnt_flag &= ~MNT_FORCE;

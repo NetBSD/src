@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.54 2017/04/17 08:29:58 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.55 2017/04/17 08:31:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.54 2017/04/17 08:29:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.55 2017/04/17 08:31:02 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -264,10 +264,22 @@ vfs_getvfs(fsid_t *fsid)
 }
 
 /*
+ * Take a reference to a mount structure.
+ */
+void
+vfs_ref(struct mount *mp)
+{
+
+	KASSERT(mp->mnt_refcnt > 0 || mutex_owned(&mountlist_lock));
+
+	atomic_inc_uint(&mp->mnt_refcnt);
+}
+
+/*
  * Drop a reference to a mount structure, freeing if the last reference.
  */
 void
-vfs_destroy(struct mount *mp)
+vfs_rele(struct mount *mp)
 {
 
 	if (__predict_true((int)atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
@@ -315,7 +327,7 @@ vfs_busy(struct mount *mp, struct mount **nextp)
 	++mp->mnt_busynest;
 	KASSERT(mp->mnt_busynest != 0);
 	mutex_exit(&mp->mnt_unmounting);
-	atomic_inc_uint(&mp->mnt_refcnt);
+	vfs_ref(mp);
 	return 0;
 }
 
@@ -340,7 +352,7 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 	mp->mnt_busynest--;
 	mutex_exit(&mp->mnt_unmounting);
 	if (!keepref) {
-		vfs_destroy(mp);
+		vfs_rele(mp);
 	}
 }
 
@@ -460,7 +472,7 @@ vfs_insmntque(vnode_t *vp, struct mount *mp)
 
 	if (omp != NULL) {
 		/* Release reference to old mount. */
-		vfs_destroy(omp);
+		vfs_rele(omp);
 	}
 }
 
@@ -716,7 +728,7 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 
 	if ((error = fstrans_mount(mp)) != 0) {
 		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return error;
 	}
 
@@ -791,7 +803,7 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 		(void)start_extattr(mp);
 	}
 	/* Drop reference held for VFS_START(). */
-	vfs_destroy(mp);
+	vfs_rele(mp);
 	*vpp = NULL;
 	return error;
 
@@ -804,7 +816,7 @@ err_unmounted:
 	mutex_exit(&mp->mnt_updating);
 	fstrans_unmount(mp);
 	vfs_unbusy(mp, false, NULL);
-	vfs_destroy(mp);
+	vfs_rele(mp);
 
 	return error;
 }
@@ -941,7 +953,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	vfs_hooks_unmount(mp);
 
 	fstrans_unmount(mp);
-	vfs_destroy(mp);	/* reference from mount() */
+	vfs_rele(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP) {
 		vrele(coveredvp);
 	}
@@ -986,9 +998,9 @@ vfs_unmount_next(uint64_t gen)
 		if ((nmp == NULL || mp->mnt_gen > nmp->mnt_gen) && 
 		    mp->mnt_gen < gen) {
 			if (nmp != NULL)
-				vfs_destroy(nmp);
+				vfs_rele(nmp);
 			nmp = mp;
-			atomic_inc_uint(&nmp->mnt_refcnt);
+			vfs_ref(nmp);
 		}
 	}
 	mountlist_iterator_destroy(iter);
@@ -1015,7 +1027,7 @@ vfs_unmount_forceone(struct lwp *l)
 		vfs_unmount_print(mp, "forcefully ");
 		return true;
 	} else {
-		vfs_destroy(mp);
+		vfs_rele(mp);
 	}
 
 #ifdef DEBUG
@@ -1050,7 +1062,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			vfs_unmount_print(mp, "");
 			progress = true;
 		} else {
-			vfs_destroy(mp);
+			vfs_rele(mp);
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -1551,16 +1563,16 @@ mountlist_iterator_next(mount_iterator_t *mi)
 		/* Take an initial reference for vfs_busy() below. */
 		mp = me->me_mount;
 		KASSERT(mp != NULL);
-		atomic_inc_uint(&mp->mnt_refcnt);
+		vfs_ref(mp);
 		mutex_exit(&mountlist_lock);
 
 		/* Try to mark this mount busy and return on success. */
 		if (vfs_busy(mp, NULL) == 0) {
-			vfs_destroy(mp);
+			vfs_rele(mp);
 			marker->me_mount = mp;
 			return mp;
 		}
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		mutex_enter(&mountlist_lock);
 	}
 }

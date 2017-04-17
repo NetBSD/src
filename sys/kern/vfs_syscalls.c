@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.510 2017/04/12 10:28:39 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.511 2017/04/17 08:31:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.510 2017/04/12 10:28:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.511 2017/04/17 08:31:02 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -595,14 +595,14 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	pathbuf_destroy(pb);
 
 	mp = vp->v_mount;
-	atomic_inc_uint(&mp->mnt_refcnt);
+	vfs_ref(mp);
 	VOP_UNLOCK(vp);
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
 	if (error) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 
@@ -611,7 +611,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 */
 	if (mp->mnt_flag & MNT_ROOTFS) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (EINVAL);
 	}
 
@@ -620,13 +620,13 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 */
 	if ((vp->v_vflag & VV_ROOT) == 0) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (EINVAL);
 	}
 
 	vrele(vp);
 	error = dounmount(mp, SCARG(uap, flags), l);
-	vfs_destroy(mp);
+	vfs_rele(mp);
 	return error;
 }
 
