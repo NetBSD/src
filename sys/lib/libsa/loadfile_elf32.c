@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.36 2017/02/23 12:13:59 nonaka Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.37 2017/04/17 17:44:48 uwe Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -321,7 +321,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		goto freephdr;
 	}
 
-	for (first = 1, i = 0; i < elf->e_phnum; i++) {
+	first = 1;
+	for (i = 0; i < elf->e_phnum; i++) {
 		internalize_phdr(elf->e_ident[EI_DATA], &phdr[i]);
 
 #ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
@@ -471,7 +472,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * string table that isn't referenced by a symbol
 		 * table.
 		 */
-		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		first = 1;
+		for (i = 0; i < elf->e_shnum; i++) {
 			if (i == elf->e_shstrndx) {
 				/* already loaded this section */
 				continue;
