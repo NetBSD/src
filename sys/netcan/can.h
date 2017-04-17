@@ -1,4 +1,4 @@
-/*	$NetBSD: can.h,v 1.1.2.3 2017/01/16 18:03:38 bouyer Exp $	*/
+/*	$NetBSD: can.h,v 1.1.2.4 2017/04/17 20:32:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -118,12 +118,6 @@ struct can_filter {
 #define CAN_INV_FILTER 0x20000000U
 
 #ifdef _NETBSD_SOURCE
-
-/* CAN sockets ioctl */
-
-#define SIOCSCANBAUD	_IOW('i', 134, int) /* set interface speed */
-#define SIOCGCANBAUD	_IOR('i', 135, int) /* get interface speed */
-
 #ifdef _KERNEL
 
 #define	satoscan(sa)	((struct sockaddr_can *)(sa))

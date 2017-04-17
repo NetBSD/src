@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.6 2017/02/05 19:44:53 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.7 2017/04/17 20:32:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.6 2017/02/05 19:44:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.7 2017/04/17 20:32:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,77 @@ can_init(void)
 /*
  * Generic control operations (ioctl's).
  */
+static int
+can_get_netlink(struct ifnet *ifp, struct ifdrv *ifd)
+{
+	struct canif_softc *csc = ifp->if_softc;
+
+	if (ifp->if_dlt != DLT_CAN_SOCKETCAN || csc == NULL)
+		return EOPNOTSUPP;
+
+	switch(ifd->ifd_cmd) {
+	case CANGLINKTIMECAP:
+		if (ifd->ifd_len != sizeof(struct can_link_timecaps))
+			return EINVAL;
+		return copyout(&csc->csc_timecaps, ifd->ifd_data, ifd->ifd_len);
+	case CANGLINKTIMINGS:
+		if (ifd->ifd_len != sizeof(struct can_link_timings))
+			return EINVAL;
+		return copyout(&csc->csc_timings, ifd->ifd_data, ifd->ifd_len);
+	case CANGLINKMODE:
+		if (ifd->ifd_len != sizeof(uint32_t))
+			return EINVAL;
+		return copyout(&csc->csc_linkmodes, ifd->ifd_data, ifd->ifd_len);
+	}
+	return EOPNOTSUPP;
+}
+
+static int
+can_set_netlink(struct ifnet *ifp, struct ifdrv *ifd)
+{
+	struct canif_softc *csc = ifp->if_softc;
+	uint32_t mode;
+	int error;
+
+	if (ifp->if_dlt != DLT_CAN_SOCKETCAN || csc == NULL)
+		return EOPNOTSUPP;
+
+	error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+	            (void *)SIOCSDRVSPEC, NULL);
+	if (error != 0)
+		return error;
+
+	if ((ifp->if_flags & IFF_UP) != 0) {
+		return EBUSY;
+	}
+
+	switch(ifd->ifd_cmd) {
+	case CANSLINKTIMINGS:
+		if (ifd->ifd_len != sizeof(struct can_link_timings))
+			return EINVAL;
+		return copyin(ifd->ifd_data, &csc->csc_timings, ifd->ifd_len);
+
+	case CANSLINKMODE:
+	case CANCLINKMODE:
+		if (ifd->ifd_len != sizeof(uint32_t))
+			return EINVAL;
+		error = copyout(ifd->ifd_data, &mode, ifd->ifd_len);
+		if (error)
+			return error;
+		if ((mode & csc->csc_timecaps.cltc_linkmode_caps) != mode)
+			return EINVAL;
+		/* XXX locking */
+		if (ifd->ifd_cmd == CANSLINKMODE)
+			csc->csc_linkmodes |= mode;
+		else
+			csc->csc_linkmodes &= ~mode;
+		return 0;
+	}
+	return EOPNOTSUPP;
+}
+
 /* ARGSUSED */
 static int
 can_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
@@ -98,12 +169,16 @@ can_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	struct can_ifreq *cfr = (struct can_ifreq *)data;
 	int error = 0;
 #endif
-
+	if (ifp == NULL)
+		return (EOPNOTSUPP);
 
 	switch (cmd) {
-
+	case SIOCGDRVSPEC:
+		return can_get_netlink(ifp, (struct ifdrv *) data);
+	case SIOCSDRVSPEC:
+		return can_set_netlink(ifp, (struct ifdrv *) data);
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
+		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
 	}

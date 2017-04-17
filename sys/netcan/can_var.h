@@ -1,4 +1,4 @@
-/*	$NetBSD: can_var.h,v 1.1.2.4 2017/02/05 17:37:10 bouyer Exp $	*/
+/*	$NetBSD: can_var.h,v 1.1.2.5 2017/04/17 20:32:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -33,12 +33,25 @@
 #define _NETCAN_CAN_VAR_H_
 
 #include <sys/queue.h>
+#include <sys/device.h>
+#include <netcan/can_link.h>
 
 struct can_ifreq {
 	char            cfr_name[IFNAMSIZ];	/* if name, e.g. "sja0" */
 };
 
 #ifdef _KERNEL
+
+/*
+ * common structure for CAN interface drivers. Should be at the start of
+ * each driver's softc.
+ */
+struct canif_softc {
+	device_t csc_dev;
+	struct can_link_timecaps csc_timecaps; /* timing capabilities */
+	struct can_link_timings csc_timings; /* operating timing values */
+	uint32_t csc_linkmodes;
+};
 
 extern struct ifqueue canintrq;
 extern struct domain candomain;
