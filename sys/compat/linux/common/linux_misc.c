@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.229 2014/05/29 10:35:27 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.229.2.1 2017/04/17 05:19:09 snj Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.229 2014/05/29 10:35:27 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.229.2.1 2017/04/17 05:19:09 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -920,6 +920,87 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds,
 	}
 
 	return 0;
+}
+
+/*
+ * Derived from FreeBSD's sys/compat/linux/linux_misc.c:linux_pselect6()
+ * which was contributed by Dmitry Chagin
+ * https://svnweb.freebsd.org/base?view=revision&revision=283403
+ */
+int
+linux_sys_pselect6(struct lwp *l,
+	const struct linux_sys_pselect6_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) nfds;
+		syscallarg(fd_set *) readfds;
+		syscallarg(fd_set *) writefds;
+		syscallarg(fd_set *) exceptfds;
+		syscallarg(struct timespec *) timeout;
+		syscallarg(linux_sized_sigset_t *) ss;
+	} */
+	struct timespec uts, ts0, ts1, *tsp;
+	linux_sized_sigset_t lsss;
+	struct linux_timespec lts;
+	linux_sigset_t lss;
+	sigset_t *ssp;
+	sigset_t ss;
+	int error;
+
+	ssp = NULL;
+	if (SCARG(uap, ss) != NULL) {
+		if ((error = copyin(SCARG(uap, ss), &lsss, sizeof(lsss))) != 0)
+			return (error);
+		if (lsss.ss_len != sizeof(lss))
+			return (EINVAL);
+		if (lsss.ss != NULL) {
+			if ((error = copyin(lsss.ss, &lss, sizeof(lss))) != 0)
+				return (error);
+			linux_to_native_sigset(&ss, &lss);
+			ssp = &ss;
+		}
+	}
+
+	if (SCARG(uap, timeout) != NULL) {
+		error = copyin(SCARG(uap, timeout), &lts, sizeof(lts));
+		if (error != 0)
+			return (error);
+		linux_to_native_timespec(&uts, &lts);
+
+		if (itimespecfix(&uts))
+			return (EINVAL);
+
+		nanotime(&ts0);
+		tsp = &uts;
+	} else {
+		tsp = NULL;
+	}
+
+	error = selcommon(retval, SCARG(uap, nfds), SCARG(uap, readfds),
+	    SCARG(uap, writefds), SCARG(uap, exceptfds), tsp, ssp);
+
+	if (error == 0 && tsp != NULL) {
+		if (retval != 0) {
+			/*
+			 * Compute how much time was left of the timeout,
+			 * by subtracting the current time and the time
+			 * before we started the call, and subtracting
+			 * that result from the user-supplied value.
+			 */
+			nanotime(&ts1);
+			timespecsub(&ts1, &ts0, &ts1);
+			timespecsub(&uts, &ts1, &uts);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
+		} else {
+			timespecclear(&uts);
+		}
+
+		native_to_linux_timespec(&lts, &uts);
+		error = copyout(&lts, SCARG(uap, timeout), sizeof(lts));
+	}
+
+	return (error);
 }
 
 int
