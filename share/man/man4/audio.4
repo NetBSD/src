@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.77 2017/04/17 20:17:08 nat Exp $
+.\"	$NetBSD: audio.4,v 1.78 2017/04/17 22:40:06 nat Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,6 @@ variables.
 .It hw.driverN.precision
 .It hw.driverN.frequency
 .It hw.driverN.channels
-.It hw.driverN.saturate
 .It hw.driverN.multiuser
 .El
 .Pp
@@ -124,20 +123,6 @@ hw.hdafg0.channels, hw.hdafg0.precision, hw.hdafg0.frequency.
 .Pp
 For best results, values close to the underlying hardware should be chosen.
 These variables may only be changed when the sampling device is not in use.
-.Pp
-An additional
-.Xr sysctl 8
-variable controls how the samples are combined, hw.driverN.saturate.
-.Pp
-By default is set to 16.
-This means that volumes are not adjusted for the first 16 channels to be mixed.
-All virtual channels will use the
-.Em maximum
-set master volume unless the virtual channel volume is lowered by the user.
-.Pp
-If a greater number of channels are opened all channels are
-.Em divided
-evenly in volume with respect to the master volume.
 .Pp
 An additional
 .Xr sysctl 8
