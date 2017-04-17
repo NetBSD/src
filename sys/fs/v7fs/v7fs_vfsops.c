@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.14 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.15 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.14 2017/04/17 08:31:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.15 2017/04/17 08:32:01 hannken Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -579,14 +579,14 @@ v7fs_mountroot(void)
 
 	if ((error = v7fs_mountfs(rootvp, mp, _BYTE_ORDER))) {
 		DPRINTF("mountfs error=%d\n", error);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		vfs_rele(mp);
 		return error;
 	}
 
 	mountlist_append(mp);
 
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	return 0;
 }
