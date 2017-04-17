@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.511 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.512 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.511 2017/04/17 08:31:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.512 2017/04/17 08:32:01 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -282,7 +282,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	if (vfs_busy(mp, NULL)) {
+	if (vfs_busy(mp)) {
 		error = EPERM;
 		goto out;
 	}
@@ -345,7 +345,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	}
 	mutex_exit(&mp->mnt_updating);
 	vfs_resume(mp);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
 	    (flags & MNT_EXTATTR)) {
@@ -438,7 +438,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if ((vp->v_vflag & VV_ROOT) == 0)
 		return EINVAL;
 
-	if (vfs_busy(mp, NULL))
+	if (vfs_busy(mp))
 		return EPERM;
 
 	mutex_enter(&mp->mnt_updating);
@@ -448,7 +448,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mutex_exit(&mp->mnt_updating);
 
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (error);
 }
 
@@ -1347,12 +1347,12 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		goto out;
 	}
 	while ((mp = vp->v_mountedhere) != NULL) {
-		error = vfs_busy(mp, NULL);
+		error = vfs_busy(mp);
 		vput(vp);
 		if (error != 0)
 			goto out;
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error)
 			goto out;
 		vp = tdp;

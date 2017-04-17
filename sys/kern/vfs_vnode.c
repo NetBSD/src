@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.86 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.87 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.86 2017/04/17 08:31:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.87 2017/04/17 08:32:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1267,7 +1267,7 @@ again:
 	mutex_exit(&vcache_lock);
 
 	/* Allocate and initialize a new vcache / vnode pair. */
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	if (error)
 		return error;
 	new_vip = vcache_alloc();
@@ -1284,7 +1284,7 @@ again:
 	/* If another thread beat us inserting this node, retry. */
 	if (vip != new_vip) {
 		vcache_dealloc(new_vip);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		goto again;
 	}
 	mutex_exit(&vcache_lock);
@@ -1296,7 +1296,7 @@ again:
 		SLIST_REMOVE(&vcache_hashtab[hash & vcache_hashmask],
 		    new_vip, vnode_impl, vi_hash);
 		vcache_dealloc(new_vip);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		KASSERT(*vpp == NULL);
 		return error;
 	}
@@ -1306,7 +1306,8 @@ again:
 	vfs_insmntque(vp, mp);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 		vp->v_vflag |= VV_MPSAFE;
-	vfs_unbusy(mp, true, NULL);
+	vfs_ref(mp);
+	vfs_unbusy(mp);
 
 	/* Finished loading, finalize node. */
 	mutex_enter(&vcache_lock);
@@ -1334,7 +1335,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	*vpp = NULL;
 
 	/* Allocate and initialize a new vcache / vnode pair. */
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	if (error)
 		return error;
 	vip = vcache_alloc();
@@ -1347,7 +1348,7 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	if (error) {
 		mutex_enter(&vcache_lock);
 		vcache_dealloc(vip);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		KASSERT(*vpp == NULL);
 		return error;
 	}
@@ -1371,7 +1372,8 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	vfs_insmntque(vp, mp);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 		vp->v_vflag |= VV_MPSAFE;
-	vfs_unbusy(mp, true, NULL);
+	vfs_ref(mp);
+	vfs_unbusy(mp);
 
 	/* Finished loading, finalize node. */
 	mutex_enter(&vcache_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.55 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.56 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.55 2017/04/17 08:31:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.56 2017/04/17 08:32:01 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -160,7 +160,7 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_unmounting, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	KASSERT(error == 0);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
@@ -312,12 +312,10 @@ vfs_rele(struct mount *mp)
  * => Will fail if the file system is being unmounted, or is unmounted.
  */
 int
-vfs_busy(struct mount *mp, struct mount **nextp)
+vfs_busy(struct mount *mp)
 {
 
 	KASSERT(mp->mnt_refcnt > 0);
-
-	KASSERT(nextp == NULL);
 
 	mutex_enter(&mp->mnt_unmounting);
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
@@ -340,20 +338,16 @@ vfs_busy(struct mount *mp, struct mount **nextp)
  * => If nextp != NULL, acquire mountlist_lock.
  */
 void
-vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
+vfs_unbusy(struct mount *mp)
 {
 
 	KASSERT(mp->mnt_refcnt > 0);
-
-	KASSERT(nextp == NULL);
 
 	mutex_enter(&mp->mnt_unmounting);
 	KASSERT(mp->mnt_busynest != 0);
 	mp->mnt_busynest--;
 	mutex_exit(&mp->mnt_unmounting);
-	if (!keepref) {
-		vfs_rele(mp);
-	}
+	vfs_rele(mp);
 }
 
 struct vnode_iterator {
@@ -727,7 +721,7 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	}
 
 	if ((error = fstrans_mount(mp)) != 0) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		vfs_rele(mp);
 		return error;
 	}
@@ -794,7 +788,8 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	mutex_exit(&mp->mnt_updating);
 
 	/* Hold an additional reference to the mount across VFS_START(). */
-	vfs_unbusy(mp, true, NULL);
+	vfs_ref(mp);
+	vfs_unbusy(mp);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
        if (error) {
@@ -815,7 +810,7 @@ err_unmounted:
 	vp->v_mountedhere = NULL;
 	mutex_exit(&mp->mnt_updating);
 	fstrans_unmount(mp);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	vfs_rele(mp);
 
 	return error;
@@ -1518,7 +1513,7 @@ mountlist_iterator_destroy(mount_iterator_t *mi)
 	struct mountlist_entry *marker = &mi->mi_entry;
 
 	if (marker->me_mount != NULL)
-		vfs_unbusy(marker->me_mount, false, NULL);
+		vfs_unbusy(marker->me_mount);
 
 	mutex_enter(&mountlist_lock);
 	TAILQ_REMOVE(&mountlist, marker, me_list);
@@ -1539,7 +1534,7 @@ mountlist_iterator_next(mount_iterator_t *mi)
 	struct mount *mp;
 
 	if (marker->me_mount != NULL) {
-		vfs_unbusy(marker->me_mount, false, NULL);
+		vfs_unbusy(marker->me_mount);
 		marker->me_mount = NULL;
 	}
 
@@ -1567,7 +1562,7 @@ mountlist_iterator_next(mount_iterator_t *mi)
 		mutex_exit(&mountlist_lock);
 
 		/* Try to mark this mount busy and return on success. */
-		if (vfs_busy(mp, NULL) == 0) {
+		if (vfs_busy(mp) == 0) {
 			vfs_rele(mp);
 			marker->me_mount = mp;
 			return mp;

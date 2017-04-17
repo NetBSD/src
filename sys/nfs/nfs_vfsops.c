@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.234 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.235 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.234 2017/04/17 08:31:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.235 2017/04/17 08:32:01 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -380,7 +380,7 @@ nfs_mountroot(void)
 	mountlist_append(mp);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
 	vn_lock(vp, LK_SHARED | LK_RETRY);
@@ -435,7 +435,7 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, const char *mntname, struct mount
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp, l);
 	if (error) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		vfs_rele(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
