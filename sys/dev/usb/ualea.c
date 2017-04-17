@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.1 2017/04/17 08:59:37 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.2 2017/04/17 09:16:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.1 2017/04/17 08:59:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.2 2017/04/17 09:16:13 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -55,11 +55,7 @@ struct ualea_softc {
 	struct usbd_xfer	*sc_xfer;
 	bool			sc_attached:1;
 	bool			sc_inflight:1;
-	/*
-	 * attached true->false only under lock
-	 * inflight false->true only under lock
-	 * issue xfer only under lock, if attached=true and inflight=false
-	 */
+	/* lock covers sc_attached, sc_inflight, and usbd_transfer(sc_xfer) */
 };
 
 static int	ualea_match(device_t, cfdata_t, void *);
@@ -228,5 +224,7 @@ ualea_xfer_done(struct usbd_xfer *xfer, void *cookie, usbd_status status)
 
 out:
 	/* Allow subsequent transfers.  */
+	mutex_enter(&sc->sc_lock);
 	sc->sc_inflight = false;
+	mutex_exit(&sc->sc_lock);
 }
