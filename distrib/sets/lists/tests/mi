@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.734 2017/04/14 02:56:48 ozaki-r Exp $
+# $NetBSD: mi,v 1.735 2017/04/17 09:06:55 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1341,11 +1341,13 @@
 ./usr/tests/crypto/opencrypto			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/opencrypto/Atffile		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/Kyuafile		tests-crypto-tests	compattestfile,atf,crypto,kyua
+./usr/tests/crypto/opencrypto/h_aescbc		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_aesctr1		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_aesctr2		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_arc4		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_camellia	tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_cbcdes		tests-crypto-tests	compattestfile,atf,crypto
+./usr/tests/crypto/opencrypto/h_cbc3des		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_comp		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_comp_zlib	tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/opencrypto/h_comp_zlib_rnd	tests-crypto-tests	compattestfile,atf,crypto
