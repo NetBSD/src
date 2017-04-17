@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.344 2017/02/25 16:48:03 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.345 2017/04/17 14:52:52 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.344 2017/02/25 16:48:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.345 2017/04/17 14:52:52 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -424,13 +424,13 @@ static struct evcnt pmap_ev_exec_synced =
    PMAP_EVCNT_INITIALIZER("exec pages synced");
 static struct evcnt pmap_ev_exec_synced_map =
    PMAP_EVCNT_INITIALIZER("exec pages synced (MP)");
-#ifndef ARM_MMU_EXTENDED
 static struct evcnt pmap_ev_exec_synced_unmap =
    PMAP_EVCNT_INITIALIZER("exec pages synced (UM)");
 static struct evcnt pmap_ev_exec_synced_remap =
    PMAP_EVCNT_INITIALIZER("exec pages synced (RM)");
 static struct evcnt pmap_ev_exec_synced_clearbit =
    PMAP_EVCNT_INITIALIZER("exec pages synced (DG)");
+#ifndef ARM_MMU_EXTENDED
 static struct evcnt pmap_ev_exec_synced_kremove =
    PMAP_EVCNT_INITIALIZER("exec pages synced (KU)");
 #endif
@@ -1052,12 +1052,10 @@ pmap_enter_pv(struct vm_page_md *md, paddr_t pa, struct pv_entry *pv, pmap_t pm,
 	 * for this page, make sure to sync the I-cache.
 	 */
 	if (PV_IS_EXEC_P(flags)) {
-#ifndef ARM_MMU_EXTENDED
 		if (!PV_IS_EXEC_P(md->pvh_attrs)) {
 			pmap_syncicache_page(md, pa);
 			PMAPCOUNT(exec_synced_map);
 		}
-#endif
 		PMAPCOUNT(exec_mappings);
 	}
 #endif
@@ -1131,26 +1129,19 @@ pmap_remove_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 
 			PMAPCOUNT(unmappings);
 #ifdef PMAP_CACHE_VIPT
-			if (!(pv->pv_flags & PVF_WRITE))
-				break;
 			/*
 			 * If this page has had an exec mapping, then if
 			 * this was the last mapping, discard the contents,
 			 * otherwise sync the i-cache for this page.
 			 */
 			if (PV_IS_EXEC_P(md->pvh_attrs)) {
-#ifdef ARM_MMU_EXTENDED
-				md->pvh_attrs &= ~PVF_EXEC;
-				PMAPCOUNT(exec_discarded_unmap);
-#else
 				if (SLIST_EMPTY(&md->pvh_list)) {
 					md->pvh_attrs &= ~PVF_EXEC;
 					PMAPCOUNT(exec_discarded_unmap);
-				} else {
+				} else if (pv->pv_flags & PVF_WRITE) {
 					pmap_syncicache_page(md, pa);
 					PMAPCOUNT(exec_synced_unmap);
 				}
-#endif /* ARM_MMU_EXTENDED */
 			}
 #endif /* PMAP_CACHE_VIPT */
 			break;
@@ -1262,7 +1253,6 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 			md->pvh_attrs |= PVF_WRITE;
 		}
 	}
-#ifndef ARM_MMU_EXTENDED
 	/*
 	 * We have two cases here: the first is from enter_pv (new exec
 	 * page), the second is a combined pmap_remove_pv/pmap_enter_pv.
@@ -1275,6 +1265,7 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 		pmap_syncicache_page(md, pa);
 		PMAPCOUNT(exec_synced_remap);
 	}
+#ifndef ARM_MMU_EXTENDED
 	KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 #endif /* !ARM_MMU_EXTENDED */
 #endif /* PMAP_CACHE_VIPT */
@@ -2324,12 +2315,12 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 	struct pv_entry *pv;
 #ifdef PMAP_CACHE_VIPT
 	const bool want_syncicache = PV_IS_EXEC_P(md->pvh_attrs);
+	bool need_syncicache = false;
 #ifdef ARM_MMU_EXTENDED
 	const u_int execbits = (maskbits & PVF_EXEC) ? L2_XS_XN : 0;
 #else
 	const u_int execbits = 0;
 	bool need_vac_me_harder = false;
-	bool need_syncicache = false;
 #endif
 #else
 	const u_int execbits = 0;
@@ -2345,12 +2336,9 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 	 * then we know we definitely need to sync or discard it.
 	 */
 	if (want_syncicache) {
-#ifdef ARM_MMU_EXTENDED
-		if (md->pvh_attrs & PVF_MOD)
-			md->pvh_attrs &= ~PVF_EXEC;
-#else
-		need_syncicache = md->pvh_attrs & PVF_MOD;
-#endif
+		if (md->pvh_attrs & PVF_MOD) {
+			need_syncicache = true;
+		}
 	}
 #endif
 	KASSERT(pmap_page_locked_p(md));
@@ -2361,7 +2349,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 	md->pvh_attrs &= ~(maskbits & (PVF_MOD | PVF_REF));
 
 	if (SLIST_EMPTY(&md->pvh_list)) {
-#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
+#if defined(PMAP_CACHE_VIPT)
 		if (need_syncicache) {
 			/*
 			 * No one has it mapped, so just discard it.  The next
@@ -2472,9 +2460,9 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 						PMAP_VALIDATE_MD_PAGE(md);
 					}
 				}
-#ifndef ARM_MMU_EXTENDED
 				if (want_syncicache)
 					need_syncicache = true;
+#ifndef ARM_MMU_EXTENDED
 				need_vac_me_harder = true;
 #endif
 #endif /* PMAP_CACHE_VIPT */
@@ -2528,7 +2516,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		    pm, va, opte, npte));
 	}
 
-#if defined(PMAP_CACHE_VIPT) && !defined(ARM_MMU_EXTENDED)
+#if defined(PMAP_CACHE_VIPT)
 	/*
 	 * If we need to sync the I-cache and we haven't done it yet, do it.
 	 */
@@ -2538,7 +2526,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		pmap_acquire_page_lock(md);
 		PMAPCOUNT(exec_synced_clearbit);
 	}
-
+#ifndef ARM_MMU_EXTENDED
 	/*
 	 * If we are changing this to read-only, we need to call vac_me_harder
 	 * so we can change all the read-only pages to cacheable.  We pretend
@@ -2548,7 +2536,8 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		if (md->pvh_attrs & PVF_NC)
 			pmap_vac_me_harder(md, pa, NULL, 0);
 	}
-#endif /* PMAP_CACHE_VIPT && !ARM_MMU_EXTENDED */
+#endif /* !ARM_MMU_EXTENDED */
+#endif /* PMAP_CACHE_VIPT */
 }
 
 /*
@@ -4730,9 +4719,12 @@ out:
 void
 pmap_procwr(struct proc *p, vaddr_t va, int len)
 {
+#ifndef ARM_MMU_EXTENDED
+
 	/* We only need to do anything if it is the current process. */
 	if (p == curproc)
 		cpu_icache_sync_range(va, len);
+#endif
 }
 
 /*
