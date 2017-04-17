@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.222 2017/04/11 07:46:37 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.223 2017/04/17 08:29:58 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -105,11 +105,9 @@ struct vattr;
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
- * array of operations and an instance record.  The file systems are
- * put on a doubly linked list.
+ * array of operations and an instance record.
  */
 struct mount {
-	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
@@ -466,10 +464,8 @@ extern time_t	metadelay;
 void	vfs_syncer_add_to_worklist(struct mount *);
 void	vfs_syncer_remove_from_worklist(struct mount *);
 
-extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
-extern  kmutex_t mountlist_lock;
 extern	kmutex_t vfs_list_lock;
 
 void	vfs_mount_sysinit(void);
