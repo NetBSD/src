@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.358 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.359 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.358 2017/04/17 08:31:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.359 2017/04/17 08:32:01 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -595,7 +595,7 @@ lfs_mountroot(void)
 		return (error);
 	}
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		vfs_rele(mp);
 		return (error);
 	}
@@ -604,7 +604,7 @@ lfs_mountroot(void)
 	fs = ump->um_lfs;
 	lfs_sb_setfsmnt(fs, mp->mnt_stat.f_mntonname);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	setrootfstime((time_t)lfs_sb_gettstamp(VFSTOULFS(mp)->um_lfs));
 	return (0);
 }
