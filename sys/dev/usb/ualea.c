@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.2 2017/04/17 09:16:13 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.3 2017/04/17 15:43:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.2 2017/04/17 09:16:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.3 2017/04/17 15:43:40 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -142,7 +142,9 @@ ualea_attach(device_t parent, device_t self, void *aux)
 	    ualea_xfer_done);
 
 	/* Success!  We are ready to run.  */
+	mutex_enter(&sc->sc_lock);
 	sc->sc_attached = true;
+	mutex_exit(&sc->sc_lock);
 
 	/* Get some initial entropy now.  */
 	ualea_get(RND_POOLBITS/NBBY, sc);
