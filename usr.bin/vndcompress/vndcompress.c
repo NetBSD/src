@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.27 2017/04/16 23:50:40 riastradh Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.28 2017/04/17 00:02:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.27 2017/04/16 23:50:40 riastradh Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.28 2017/04/17 00:02:45 riastradh Exp $");
 
 #include <sys/endian.h>
 #include <sys/stat.h>
@@ -438,7 +438,7 @@ compress_init(int argc, char **argv, const struct options *O,
 
 	int oflags;
 	if (!ISSET(O->flags, FLAG_r))
-		oflags = (O_WRONLY | O_TRUNC | O_CREAT); /* XXX O_EXCL?  */
+		oflags = (O_WRONLY | O_TRUNC | O_CREAT);
 	else if (!ISSET(O->flags, FLAG_R))
 		oflags = (O_RDWR | O_CREAT);
 	else

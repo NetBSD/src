@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.12 2017/04/16 23:50:40 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.13 2017/04/17 00:03:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.12 2017/04/16 23:50:40 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.13 2017/04/17 00:03:33 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -70,7 +70,6 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		err(1, "open(%s)", cloop2_pathname);
 
 	const int image_fd = open(image_pathname,
-	    /* XXX O_EXCL, not O_TRUNC */
 	    (O_WRONLY | O_CREAT | O_TRUNC), 0777);
 	if (image_fd == -1)
 		err(1, "open(%s)", image_pathname);
