@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.302 2017/04/14 02:43:27 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.303 2017/04/17 08:59:37 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -169,6 +169,7 @@
 ./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_scsitest_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpdev_ualea_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ugenhc_pic.a		comp-c-piclib		picinstall,rump

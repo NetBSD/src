@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2123 2017/04/15 13:52:51 kamil Exp $
+#	$NetBSD: mi,v 1.2124 2017/04/17 08:59:37 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3457,6 +3457,8 @@
 ./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ubt.a			comp-c-lib		rump
 ./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpdev_ualea.a			comp-c-lib		rump
+./usr/lib/librumpdev_ualea_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ucom.a			comp-c-lib		rump
 ./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpdev_ugenhc.a			comp-c-lib		rump
