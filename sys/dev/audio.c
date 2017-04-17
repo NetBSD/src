@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.325 2017/04/17 20:17:08 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.326 2017/04/17 22:40:06 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.325 2017/04/17 20:17:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.326 2017/04/17 22:40:06 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -257,7 +257,6 @@ void	audio_play_thread(void *);
 void	audio_rec_thread(void *);
 void	recswvol_func(struct audio_softc *, struct audio_ringbuffer *,
 		      size_t, struct virtual_channel *);
-void	saturate_func(struct audio_softc *);
 void	mix_func(struct audio_softc *, struct audio_ringbuffer *,
 		 struct virtual_channel *);
 void	mix_write(void *);
@@ -641,7 +640,6 @@ bad_rec:
 	}
 
 	sc->sc_lastgain = 128;
-	sc->sc_saturate = 16;
 	sc->sc_multiuser = false;
 	mutex_exit(sc->sc_lock);
 
@@ -832,15 +830,6 @@ bad_rec:
 			SYSCTL_DESCR("intermediate channels"),
 			audio_sysctl_channels, 0,
 			(void *)sc, 0,
-			CTL_HW, node->sysctl_num,
-			CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(&sc->sc_log, 0, NULL, NULL,
-			CTLFLAG_READWRITE,
-			CTLTYPE_INT, "saturate",
-			SYSCTL_DESCR("saturate to max. volume this many channels"),
-			NULL, 0,
-			&sc->sc_saturate, 0,
 			CTL_HW, node->sysctl_num,
 			CTL_CREATE, CTL_EOL);
 
@@ -3786,8 +3775,6 @@ audio_mix(void *v)
 				sc->schedule_rih = true;
 	}
 	mutex_enter(sc->sc_intr_lock);
-	if (sc->sc_opens < sc->sc_saturate && sc->sc_opens > 1)
-		saturate_func(sc);
 
 	vc = SIMPLEQ_FIRST(&sc->sc_audiochan)->vc;
 	cb = &sc->sc_pr;
@@ -5557,12 +5544,14 @@ mix_write(void *arg)
 	}
 }
 
-#define DEF_MIX_FUNC(name, type)					\
+#define DEF_MIX_FUNC(name, type, MINVAL, MAXVAL)		\
 	static void						\
 	mix_func##name(struct audio_softc *sc, struct audio_ringbuffer *cb, \
 		  struct virtual_channel *vc)				\
 	{								\
 		int blksize, cc, cc1, cc2, m, resid;			\
+		int64_t product;					\
+		int64_t result;						\
 		type *orig, *tomix;					\
 									\
 		blksize = sc->sc_pr.blksize;				\
@@ -5581,9 +5570,15 @@ mix_write(void *arg)
 				cc = cc2;				\
 									\
 			for (m = 0; m < (cc / (name / 8)); m++) {	\
-				orig[m] += (type)((int32_t)(tomix[m] *	\
-				    (vc->sc_swvol + 1)) / (sc->sc_opens * \
-				    256));				\
+				tomix[m] = tomix[m] *			\
+				    (int32_t)(vc->sc_swvol) / 255;	\
+				result = orig[m] + tomix[m];		\
+				product = orig[m] * tomix[m];		\
+				if (orig[m] > 0 && tomix[m] > 0)	\
+					result -= product / MAXVAL;	\
+				else if (orig[m] < 0 && tomix[m] < 0)	\
+					result -= product / MINVAL;	\
+				orig[m] = result;			\
 			}						\
 									\
 			if (&orig[m] >= (type *)sc->sc_pr.s.end)	\
@@ -5595,9 +5590,9 @@ mix_write(void *arg)
 		}							\
 	}								\
 
-DEF_MIX_FUNC(8, int8_t);
-DEF_MIX_FUNC(16, int16_t);
-DEF_MIX_FUNC(32, int32_t);
+DEF_MIX_FUNC(8, int8_t, INT8_MIN, INT8_MAX);
+DEF_MIX_FUNC(16, int16_t, INT16_MIN, INT16_MAX);
+DEF_MIX_FUNC(32, int32_t, INT32_MIN, INT32_MAX);
 
 void
 mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
@@ -5613,63 +5608,6 @@ mix_func(struct audio_softc *sc, struct audio_ringbuffer *cb,
 	case 24:
 	case 32:
 		mix_func32(sc, cb, vc);
-		break;
-	default:
-		break;
-	}
-}
-
-#define DEF_SATURATE_FUNC(name, type, max_type, min_type)		\
-	static void						\
-	saturate_func##name(struct audio_softc *sc)			\
-	{								\
-		int blksize, m, i, resid;				\
-		type *orig;						\
-									\
-		blksize = sc->sc_pr.blksize;				\
-		resid = blksize;					\
-		if (sc->sc_trigger_started == false)			\
-			resid *= 2;					\
-									\
-		orig = (type *)(sc->sc_pr.s.inp);			\
-									\
-		for (m = 0; m < (resid / (name / 8));m++) {		\
-			i = 0;						\
-			if (&orig[m] >= (type *)sc->sc_pr.s.end) {	\
-				orig = (type *)sc->sc_pr.s.start;	\
-				resid -= m;				\
-				m = 0;					\
-			}						\
-			if (orig[m] != 0) {				\
-				if (orig[m] > 0)			\
-					i = max_type / orig[m];		\
-				else					\
-					i = min_type / orig[m];	 	\
-			}						\
-			if (i > sc->sc_opens)				\
-				i = sc->sc_opens;			\
-			orig[m] *= i;					\
-		}							\
-	}								\
-
-
-DEF_SATURATE_FUNC(8, int8_t, INT8_MAX, INT8_MIN);
-DEF_SATURATE_FUNC(16, int16_t, INT16_MAX, INT16_MIN);
-DEF_SATURATE_FUNC(32, int32_t, INT32_MAX, INT32_MIN);
-
-void
-saturate_func(struct audio_softc *sc)
-{
-	switch (sc->sc_precision) {
-	case 8:
-		saturate_func8(sc);
-		break;
-	case 16:
-		saturate_func16(sc);
-		break;
-	case 24:
-	case 32:
-		saturate_func32(sc);
 		break;
 	default:
 		break;
