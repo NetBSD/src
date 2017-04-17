@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012,2013,2014,2015 Alistair Crooks <agc@NetBSD.org>
+ * Copyright (c) 2012,2013,2014,2015,2016 Alistair Crooks <agc@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 
 #include <inttypes.h>
 #include <limits.h>
-#include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +53,243 @@
 #include "rsa.h"
 #include "verify.h"
 
+/* 64bit key ids */
+#define PGPV_KEYID_LEN		8
+#define PGPV_STR_KEYID_LEN	(PGPV_KEYID_LEN + PGPV_KEYID_LEN + 1)
+
+/* bignum structure */
+typedef struct pgpv_bignum_t {
+	void			*bn;	/* hide the implementation details */
+	uint16_t		 bits;	/* cached number of bits */
+} pgpv_bignum_t;
+
+/* right now, our max binary digest length is 20 bytes */
+#define PGPV_MAX_HASH_LEN	64
+
+/* fingerprint */
+typedef struct pgpv_fingerprint_t {
+	uint8_t			hashalg;	/* algorithm for digest */
+	uint8_t			v[PGPV_MAX_HASH_LEN];	/* the digest */
+	uint32_t		len;		/* its length */
+} pgpv_fingerprint_t;
+
+/* specify size for array of bignums */
+#define PGPV_MAX_PUBKEY_BN	4
+
+/* public key */
+typedef struct pgpv_pubkey_t {
+	pgpv_fingerprint_t	 fingerprint;	/* key fingerprint i.e. digest */
+	uint8_t			 keyid[PGPV_KEYID_LEN];	/* last 8 bytes of v4 keys */
+	int64_t		 	 birth;		/* creation time */
+	int64_t			 expiry;	/* expiry time */
+	pgpv_bignum_t		 bn[PGPV_MAX_PUBKEY_BN]; /* bignums */
+	uint8_t			 keyalg;	/* key algorithm */
+	uint8_t			 hashalg;	/* hash algorithm */
+	uint8_t			 version;	/* key version */
+} pgpv_pubkey_t;
+
+#define PGPV_MAX_SESSKEY_BN	2
+
+/* a (size, byte array) string */
+typedef struct pgpv_string_t {
+	size_t			 size;
+	uint8_t			*data;
+	uint8_t			 allocated;
+} pgpv_string_t;
+
+typedef struct pgpv_ref_t {
+	void			*vp;
+	size_t			 offset;
+	unsigned		 mem;
+} pgpv_ref_t;
+
+#define PGPV_MAX_SECKEY_BN	4
+
+typedef struct pgpv_compress_t {
+	pgpv_string_t		 s;
+	uint8_t			 compalg;
+} pgpv_compress_t;
+
+/* a packet dealing with trust */
+typedef struct pgpv_trust_t {
+	uint8_t			level;
+	uint8_t			amount;
+} pgpv_trust_t;
+
+/* a signature sub packet */
+typedef struct pgpv_sigsubpkt_t {
+	pgpv_string_t		 s;
+	uint8_t			 tag;
+	uint8_t			 critical;
+} pgpv_sigsubpkt_t;
+
+#define PGPV_MAX_SIG_BN		2
+
+typedef struct pgpv_signature_t {
+	uint8_t			 signer[PGPV_KEYID_LEN]; /* key id of signer */
+	pgpv_ref_t		 hashstart;
+	uint8_t			*hash2;
+	uint8_t			*mpi;
+	int64_t			 birth;
+	int64_t			 keyexpiry;
+	int64_t			 expiry;
+	uint32_t		 hashlen;
+	uint8_t			 version;
+	uint8_t			 type;
+	uint8_t			 keyalg;
+	uint8_t			 hashalg;
+	uint8_t			 trustlevel;
+	uint8_t			 trustamount;
+	pgpv_bignum_t		 bn[PGPV_MAX_SIG_BN];
+	char			*regexp;
+	char			*pref_key_server;
+	char			*policy;
+	char			*features;
+	char			*why_revoked;
+	uint8_t			*revoke_fingerprint;
+	uint8_t			 revoke_alg;
+	uint8_t			 revoke_sensitive;
+	uint8_t			 trustsig;
+	uint8_t			 revocable;
+	uint8_t			 pref_symm_alg;
+	uint8_t			 pref_hash_alg;
+	uint8_t			 pref_compress_alg;
+	uint8_t			 key_server_modify;
+	uint8_t			 notation;
+	uint8_t			 type_key;
+	uint8_t			 primary_userid;
+	uint8_t			 revoked;	/* subtract 1 to get real reason, 0 == not revoked */
+} pgpv_signature_t;
+
+/* a signature packet */
+typedef struct pgpv_sigpkt_t {
+	pgpv_signature_t	 sig;
+	uint16_t		 subslen;
+	uint16_t		 unhashlen;
+	ARRAY(uint64_t,	 	 subpackets);
+} pgpv_sigpkt_t;
+
+/* a one-pass signature packet */
+typedef struct pgpv_onepass_t {
+	uint8_t			 keyid[PGPV_KEYID_LEN];
+	uint8_t			 version;
+	uint8_t			 type;
+	uint8_t			 hashalg;
+	uint8_t			 keyalg;
+	uint8_t			 nested;
+} pgpv_onepass_t;
+
+/* a literal data packet */
+typedef struct pgpv_litdata_t {
+	pgpv_string_t		 filename;
+	pgpv_string_t		 s;
+	uint32_t		 secs;
+	uint8_t			 namelen;
+	char			 format;
+	unsigned		 mem;
+	size_t			 offset;
+	size_t			 len;
+} pgpv_litdata_t;
+
+/* user attributes - images */
+typedef struct pgpv_userattr_t {
+	size_t 			 len;
+	ARRAY(pgpv_string_t, 	 subattrs);
+} pgpv_userattr_t;
+
+/* a general PGP packet */
+typedef struct pgpv_pkt_t {
+	uint8_t			 tag;
+	uint8_t			 newfmt;
+	uint8_t			 allocated;
+	uint8_t			 mement;
+	size_t			 offset;
+	pgpv_string_t		 s;
+	union {
+		pgpv_sigpkt_t	sigpkt;
+		pgpv_onepass_t	onepass;
+		pgpv_litdata_t	litdata;
+		pgpv_compress_t	compressed;
+		pgpv_trust_t	trust;
+		pgpv_pubkey_t	pubkey;
+		pgpv_string_t	userid;
+		pgpv_userattr_t	userattr;
+	} u;
+} pgpv_pkt_t;
+
+/* a memory structure */
+typedef struct pgpv_mem_t {
+	size_t			 size;
+	size_t			 cc;
+	uint8_t			*mem;
+	FILE			*fp;
+	uint8_t			 dealloc;
+	const char		*allowed;	/* the types of packet that are allowed */
+} pgpv_mem_t;
+
+/* packet parser */
+
+typedef struct pgpv_signed_userid_t {
+	pgpv_string_t	 	 userid;
+	ARRAY(uint64_t, 	 signatures);
+	uint8_t			 primary_userid;
+	uint8_t			 revoked;
+} pgpv_signed_userid_t;
+
+typedef struct pgpv_signed_userattr_t {
+	pgpv_userattr_t	 	 userattr;
+	ARRAY(uint64_t, 	 signatures);
+	uint8_t			 revoked;
+} pgpv_signed_userattr_t;
+
+typedef struct pgpv_signed_subkey_t {
+	pgpv_pubkey_t	 	 subkey;
+	pgpv_signature_t 	 revoc_self_sig;
+	ARRAY(uint64_t, 	 signatures);
+} pgpv_signed_subkey_t;
+
+typedef struct pgpv_primarykey_t {
+	pgpv_pubkey_t 		 primary;
+	pgpv_signature_t 	 revoc_self_sig;
+	ARRAY(uint64_t, 	 signatures);
+	ARRAY(uint64_t, 	 signed_userids);
+	ARRAY(uint64_t, 	 signed_userattrs);
+	ARRAY(uint64_t, 	 signed_subkeys);
+	size_t			 fmtsize;
+	uint8_t			 primary_userid;
+} pgpv_primarykey_t;
+
+/* everything stems from this structure */
+struct pgpv_t {
+	ARRAY(pgpv_pkt_t, 	 pkts);		/* packet array */
+	ARRAY(pgpv_primarykey_t, primaries);	/* array of primary keys */
+	ARRAY(pgpv_mem_t,	 areas);	/* areas we read packets from */
+	ARRAY(size_t,	 	 datastarts);	/* starts of data packets */
+	ARRAY(pgpv_signature_t,	 signatures);	/* all signatures */
+	ARRAY(pgpv_signed_userid_t, signed_userids); /* all signed userids */
+	ARRAY(pgpv_signed_userattr_t, signed_userattrs); /* all signed user attrs */
+	ARRAY(pgpv_signed_subkey_t, signed_subkeys); /* all signed subkeys */
+	ARRAY(pgpv_sigsubpkt_t,	 subpkts);	/* all sub packets */
+	size_t		 	 pkt;		/* when parsing, current pkt number */
+	const char		*op;		/* the operation we're doing */
+	unsigned		 ssh;		/* using ssh keys */
+};
+
+#define PGPV_REASON_LEN		128
+
+/* when searching, we define a cursor, and fill in an array of subscripts */
+struct pgpv_cursor_t {
+	pgpv_t			*pgp;			/* pointer to pgp tree */
+	char			*field;			/* field we're searching on */
+	char			*op;			/* operation we're doing */
+	char			*value;			/* value we're searching for */
+	void			*ptr;			/* for regexps etc */
+	ARRAY(uint32_t,	 	 found);		/* array of matched pimary key subscripts */
+	ARRAY(size_t,	 	 datacookies);		/* cookies to retrieve matched data */
+	int64_t			 sigtime;		/* time of signature */
+	char			 why[PGPV_REASON_LEN];	/* reason for bad signature */
+};
+
 #ifndef USE_ARG
 #define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
@@ -68,6 +304,10 @@
 
 #ifndef MIN
 #define MIN(a,b)			(((a)<(b))?(a):(b))
+#endif
+
+#ifndef howmany
+#define howmany(x, y)   		(((x)+((y)-1))/(y))
 #endif
 
 #define BITS_TO_BYTES(b)		(((b) + (CHAR_BIT - 1)) / CHAR_BIT)
@@ -98,7 +338,7 @@
 #define PUBKEY_RSA_SIGN			3
 #define PUBKEY_ELGAMAL_ENCRYPT		16
 #define PUBKEY_DSA			17
-#define PUBKEY_ELLIPTIC_CURVE		18
+#define PUBKEY_ECDH			18
 #define PUBKEY_ECDSA			19
 #define PUBKEY_ELGAMAL_ENCRYPT_OR_SIGN	20
 
@@ -177,7 +417,7 @@ typedef struct obuf_t {
 } obuf_t;
 
 /* grow the buffer, if needed */
-static bool
+static int
 growbuf(obuf_t *obuf, size_t cc)
 {
 	size_t	 newalloc;
@@ -187,51 +427,27 @@ growbuf(obuf_t *obuf, size_t cc)
 		newalloc = howmany(obuf->alloc + cc, 128) * 128;
 		newv = realloc(obuf->v, newalloc);
 		if (newv == NULL) {
-			return false;
+			return 0;
 		}
 		obuf->v = newv;
 		obuf->alloc = newalloc;
 	}
-	return true;
+	return 1;
 }
 
 /* add a fixed-length area of memory */
-static bool
-obuf_add_mem(obuf_t *obuf, const char *s, size_t len)
+static int
+obuf_add_mem(obuf_t *obuf, const void *s, size_t len)
 {
 	if (obuf && s && len > 0) {
 		if (!growbuf(obuf, len)) {
-			return false;
+			return 0;
 		}
 		memcpy(&obuf->v[obuf->c], s, len);
 		obuf->c += len;
-		return true;
+		return 1;
 	}
-	return false;
-}
-
-/* varargs-based printf to string */
-__printflike(2, 3)
-static bool
-obuf_printf(obuf_t *obuf, const char *fmt, ...)
-{
-	va_list	 args;
-	char	*cp;
-	bool	 ret;
-	int	 cc;
-
-	if (obuf && fmt) {
-		ret = true;
-		va_start(args, fmt);
-		cc = vasprintf(&cp, fmt, args);
-		va_end(args);
-		if (cc > 0) {
-			ret = obuf_add_mem(obuf, cp, (size_t)cc);
-			free(cp);
-		}
-		return ret;
-	}
-	return false;
+	return 0;
 }
 
 /* read a file into the pgpv_mem_t struct */
@@ -287,7 +503,7 @@ static uint8_t *
 get_ref(pgpv_ref_t *ref)
 {
 	pgpv_mem_t	*mem;
-	pgpv_t		*pgp = (pgpv_t *)ref->vp;;
+	pgpv_t		*pgp = (pgpv_t *)ref->vp;
 
 	mem = &ARRAY_ELEMENT(pgp->areas, ref->mem);
 	return &mem->mem[ref->offset];
@@ -485,13 +701,15 @@ static size_t
 fmt_binary(obuf_t *obuf, const uint8_t *bin, unsigned len)
 {
 	unsigned	i;
+	char		newbuf[3];
 
 	for (i = 0 ; i < len ; i++) {
-		if (!obuf_printf(obuf, "%02hhx", bin[i])) {
-			return false;
+		snprintf(newbuf, sizeof(newbuf), "%02hhx", bin[i]);
+		if (!obuf_add_mem(obuf, newbuf, 2)) {
+			return 0;
 		}
 	}
-	return true;
+	return 1;
 }
 
 /* format an mpi into memory */
@@ -620,21 +838,28 @@ pgpv_calc_fingerprint(pgpv_fingerprint_t *fingerprint, pgpv_pubkey_t *pubkey, co
 }
 
 /* format a fingerprint into memory */
-static bool
+static int
 fmt_fingerprint(obuf_t *obuf, pgpv_fingerprint_t *fingerprint, const char *name)
 {
 	unsigned	i;
+	char		newbuf[3];
+	int		cc;
 
-	if (!obuf_printf(obuf, "%s ", name)) {
-		return false;
+	if (!obuf_add_mem(obuf, name, strlen(name)) ||
+	    !obuf_add_mem(obuf, " ", 1)) {
+		return 0;
 	}
 	for (i = 0 ; i < fingerprint->len ; i++) {
-		if (!obuf_printf(obuf, "%02hhx%s",
-			fingerprint->v[i], (i % 2 == 1) ? " " : "")) {
-				return false;
+		cc = snprintf(newbuf, sizeof(newbuf), "%02hhx",
+			fingerprint->v[i]);
+		if (!obuf_add_mem(obuf, newbuf, cc)) {
+			return 0;
+		}
+		if (i % 2 == 1 && !obuf_add_mem(obuf, " ", 1)) {
+			return 0;
 		}
 	}
-	return obuf_printf(obuf, "\n");
+	return obuf_add_mem(obuf, "\n", 1);
 }
 
 /* calculate keyid from a pubkey */
@@ -650,18 +875,18 @@ calc_keyid(pgpv_pubkey_t *key, const char *hashtype)
 static void
 str_to_keyid(const char *s, uint8_t *keyid)
 {
-	uint64_t	u64;
+	uint64_t	u;
 
-	u64 = (uint64_t)strtoull(s, NULL, 16);
-	u64 =   ((u64 & 0x00000000000000FFUL) << 56) | 
-		((u64 & 0x000000000000FF00UL) << 40) | 
-		((u64 & 0x0000000000FF0000UL) << 24) | 
-		((u64 & 0x00000000FF000000UL) <<  8) | 
-		((u64 & 0x000000FF00000000UL) >>  8) | 
-		((u64 & 0x0000FF0000000000UL) >> 24) | 
-		((u64 & 0x00FF000000000000UL) >> 40) | 
-		((u64 & 0xFF00000000000000UL) >> 56);
-	memcpy(keyid, &u64, PGPV_KEYID_LEN);
+	u = (uint64_t)strtoull(s, NULL, 16);
+	u =     ((u & 0x00000000000000FFULL) << 56) | 
+		((u & 0x000000000000FF00ULL) << 40) | 
+		((u & 0x0000000000FF0000ULL) << 24) | 
+		((u & 0x00000000FF000000ULL) <<  8) | 
+		((u & 0x000000FF00000000ULL) >>  8) | 
+		((u & 0x0000FF0000000000ULL) >> 24) | 
+		((u & 0x00FF000000000000ULL) >> 40) | 
+		((u & 0xFF00000000000000ULL) >> 56);
+	memcpy(keyid, &u, PGPV_KEYID_LEN);
 }
 
 #define PKT_ALWAYS_ON			0x80
@@ -735,26 +960,32 @@ fmt_time(obuf_t *obuf, const char *header, int64_t n, const char *trailer, int r
 	time_t		elapsed;
 	time_t		now;
 	time_t		t;
+	char		newbuf[128];
+	int		cc;
 
 	t = (time_t)n;
 	now = time(NULL);
 	elapsed = now - t;
 	gmtime_r(&t, &tm);            
-	if (!obuf_printf(obuf, "%s%04d-%02d-%02d", header,
-		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday)) {
-			return false;
+	cc = snprintf(newbuf, sizeof(newbuf), "%04d-%02d-%02d",
+		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+	if (!obuf_add_mem(obuf, header, strlen(header)) ||
+	    !obuf_add_mem(obuf, newbuf, cc)) {
+		return 0;
 	}
 	if (relative) {
-		if (!obuf_printf(obuf, " (%lldy %lldm %lldd %lldh %s)",
+		cc = snprintf(newbuf, sizeof(newbuf),
+			" (%lldy %lldm %lldd %lldh %s)",
 			llabs((long long)elapsed / YEARSECS),
 			llabs(((long long)elapsed % YEARSECS) / MONSECS),
 			llabs(((long long)elapsed % MONSECS) / DAYSECS),
 			llabs(((long long)elapsed % DAYSECS) / HOURSECS),
-			(now > t) ? "ago" : "ahead")) {
-				return false;
+			(now > t) ? "ago" : "ahead");
+		if (!obuf_add_mem(obuf, newbuf, cc)) {
+			return 0;
 		}
 	}
-	return obuf_printf(obuf, "%s", trailer);
+	return (*trailer) ? obuf_add_mem(obuf, trailer, strlen(trailer)) : 1;
 }
 
 /* dump key mpis to stdout */
@@ -844,7 +1075,7 @@ read_signature_mpis(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 
 /* add the signature sub packet to the signature packet */
 static int
-add_subpacket(pgpv_sigpkt_t *sigpkt, uint8_t tag, uint8_t *p, uint16_t len)
+add_subpacket(pgpv_t *pgp, pgpv_sigpkt_t *sigpkt, uint8_t tag, uint8_t *p, uint16_t len)
 {
 	pgpv_sigsubpkt_t	subpkt;
 
@@ -853,13 +1084,14 @@ add_subpacket(pgpv_sigpkt_t *sigpkt, uint8_t tag, uint8_t *p, uint16_t len)
 	subpkt.critical = 0;
 	subpkt.tag = tag;
 	subpkt.s.data = p;
-	ARRAY_APPEND(sigpkt->subpkts, subpkt);
+	ARRAY_APPEND(sigpkt->subpackets, ARRAY_COUNT(pgp->subpkts));
+	ARRAY_APPEND(pgp->subpkts, subpkt);
 	return 1;
 }
 
 /* read the subpackets in the signature */
 static int
-read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
+read_sig_subpackets(pgpv_t *pgp, pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 {
 	pgpv_sigsubpkt_t	 subpkt;
 	const int		 is_subpkt = 0;
@@ -891,10 +1123,10 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 			sigpkt->sig.keyexpiry = (int64_t)get_32(p);
 			break;
 		case SUBPKT_ISSUER:
-			sigpkt->sig.signer = p;
+			memcpy(sigpkt->sig.signer, p, sizeof(sigpkt->sig.signer));
 			break;
 		case SUBPKT_SIGNER_ID:
-			sigpkt->sig.signer = p;
+			memcpy(sigpkt->sig.signer, p, sizeof(sigpkt->sig.signer));
 			break;
 		case SUBPKT_TRUST_SIG:
 			sigpkt->sig.trustsig = *p;
@@ -950,7 +1182,8 @@ read_sig_subpackets(pgpv_sigpkt_t *sigpkt, uint8_t *p, size_t pktlen)
 		}
 		subpkt.s.data = p;
 		p += subpkt.s.size - 1;
-		ARRAY_APPEND(sigpkt->subpkts, subpkt);
+		ARRAY_APPEND(sigpkt->subpackets, ARRAY_COUNT(pgp->subpkts));
+		ARRAY_APPEND(pgp->subpkts, subpkt);
 	}
 	return 1;
 }
@@ -974,11 +1207,11 @@ read_sigpkt(pgpv_t *pgp, uint8_t mement, pgpv_sigpkt_t *sigpkt, uint8_t *p, size
 		sigpkt->sig.hashlen = lenlen;
 		/* put birthtime into a subpacket */
 		sigpkt->sig.type = *p++;
-		add_subpacket(sigpkt, SUBPKT_SIG_BIRTH, p, sizeof(uint32_t));
+		add_subpacket(pgp, sigpkt, SUBPKT_SIG_BIRTH, p, sizeof(uint32_t));
 		sigpkt->sig.birth = (int64_t)get_32(p);
 		p += sizeof(uint32_t);
-		sigpkt->sig.signer = p;
-		add_subpacket(sigpkt, SUBPKT_SIGNER_ID, p, PGPV_KEYID_LEN);
+		memcpy(sigpkt->sig.signer, p, sizeof(sigpkt->sig.signer));
+		add_subpacket(pgp, sigpkt, SUBPKT_SIGNER_ID, p, PGPV_KEYID_LEN);
 		p += PGPV_KEYID_LEN;
 		sigpkt->sig.keyalg = *p++;
 		sigpkt->sig.hashalg = *p++;
@@ -994,12 +1227,14 @@ read_sigpkt(pgpv_t *pgp, uint8_t mement, pgpv_sigpkt_t *sigpkt, uint8_t *p, size
 		sigpkt->sig.hashalg = *p++;
 		sigpkt->subslen = get_16(p);
 		p += sizeof(sigpkt->subslen);
-		if (!read_sig_subpackets(sigpkt, p, pktlen)) {
+		if (!read_sig_subpackets(pgp, sigpkt, p, pktlen)) {
 			printf("read_sigpkt: can't read sig subpackets, v4\n");
 			return 0;
 		}
-		if (!sigpkt->sig.signer) {
-			sigpkt->sig.signer = get_ref(&sigpkt->sig.hashstart) + 16;
+		if (sigpkt->sig.signer[0] == 0x0) {
+			memcpy(sigpkt->sig.signer,
+				get_ref(&sigpkt->sig.hashstart) + 16,
+				sizeof(sigpkt->sig.signer));
 		}
 		p += sigpkt->subslen;
 		sigpkt->sig.hashlen = (unsigned)(p - base);
@@ -1223,8 +1458,9 @@ read_litdata(pgpv_t *pgp, pgpv_litdata_t *litdata, uint8_t *p, size_t size)
 		printf("weird litdata format %u\n", litdata->format);
 		break;
 	}
-	litdata->namelen = p[cc++];
-	litdata->filename = &p[cc];
+	litdata->filename.size = litdata->namelen = p[cc++];
+	litdata->filename.data = &p[cc];
+	litdata->filename.allocated = 0;
 	cc += litdata->namelen;
 	litdata->secs = get_32(&p[cc]);
 	cc += 4;
@@ -1296,6 +1532,7 @@ read_pkt(pgpv_t *pgp, pgpv_mem_t *mem)
 	case USERID_PKT:
 		pkt.u.userid.size = pkt.s.size;
 		pkt.u.userid.data = pkt.s.data;
+		pkt.u.userid.allocated = 0;
 		break;
 	case COMPRESSED_DATA_PKT:
 		read_compressed(pgp, &pkt.u.compressed, pkt.s.data, pkt.s.size);
@@ -1379,13 +1616,15 @@ recog_userid(pgpv_t *pgp, pgpv_signed_userid_t *userid)
 	pkt = &ARRAY_ELEMENT(pgp->pkts, pgp->pkt);
 	userid->userid.size = pkt->s.size;
 	userid->userid.data = pkt->s.data;
+	userid->userid.allocated = 0;
 	pgp->pkt += 1;
 	while (pkt_is(pgp, SIGNATURE_PKT)) {
 		if (!recog_signature(pgp, &signature)) {
 			printf("recog_userid: can't recognise signature/trust\n");
 			return 0;
 		}
-		ARRAY_APPEND(userid->sigs, signature);
+		ARRAY_APPEND(userid->signatures, ARRAY_COUNT(pgp->signatures));
+		ARRAY_APPEND(pgp->signatures, signature);
 		if (signature.primary_userid) {
 			userid->primary_userid = signature.primary_userid;
 		}
@@ -1414,7 +1653,8 @@ recog_userattr(pgpv_t *pgp, pgpv_signed_userattr_t *userattr)
 			printf("recog_userattr: can't recognise signature/trust\n");
 			return 0;
 		}
-		ARRAY_APPEND(userattr->sigs, signature);
+		ARRAY_APPEND(userattr->signatures, ARRAY_COUNT(pgp->signatures));
+		ARRAY_APPEND(pgp->signatures, signature);
 		if (signature.revoked) {
 			userattr->revoked = signature.revoked;
 		}
@@ -1448,7 +1688,8 @@ recog_subkey(pgpv_t *pgp, pgpv_signed_subkey_t *subkey)
 			printf("recog_subkey: bad signature/trust at %zu\n", pgp->pkt);
 			return 0;
 		}
-		ARRAY_APPEND(subkey->sigs, signature);
+		ARRAY_APPEND(subkey->signatures, ARRAY_COUNT(pgp->signatures));
+		ARRAY_APPEND(pgp->signatures, signature);
 		if (signature.keyexpiry) {
 			/* XXX - check it's a good key expiry */
 			subkey->subkey.expiry = signature.keyexpiry;
@@ -1503,25 +1744,31 @@ numkeybits(const pgpv_pubkey_t *pubkey)
 }
 
 /* print a public key */
-static bool
+static int
 fmt_pubkey(obuf_t *obuf, pgpv_pubkey_t *pubkey, const char *leader)
 {
-	if (!obuf_printf(obuf, "%s %u/%s ", leader, numkeybits(pubkey), fmtkeyalg(pubkey->keyalg))) {
-		return false;
+	char	newbuf[128];
+	int	cc;
+
+	cc = snprintf(newbuf, sizeof(newbuf), " %u/%s ",
+		numkeybits(pubkey), fmtkeyalg(pubkey->keyalg));
+	if (!obuf_add_mem(obuf, leader, strlen(leader)) ||
+	    !obuf_add_mem(obuf, newbuf, cc)) {
+		return 0;
 	}
 	if (!fmt_binary(obuf, pubkey->keyid, PGPV_KEYID_LEN)) {
-		return false;
+		return 0;
 	}
 	if (!fmt_time(obuf, " ", pubkey->birth, "", 0)) {
-		return false;
+		return 0;
 	}
 	if (pubkey->expiry) {
 		if (!fmt_time(obuf, " [Expiry ", pubkey->birth + pubkey->expiry, "]", 0)) {
-			return false;
+			return 0;
 		}
 	}
-	if (!obuf_printf(obuf, "\n")) {
-		return false;
+	if (!obuf_add_mem(obuf, "\n", 1)) {
+		return 0;
 	}
 	return fmt_fingerprint(obuf, &pubkey->fingerprint, "fingerprint  ");
 }
@@ -1530,60 +1777,68 @@ fmt_pubkey(obuf_t *obuf, pgpv_pubkey_t *pubkey, const char *leader)
 #define COMPROMISED	(0x02 + 1)
 
 /* format a userid - used to order the userids when formatting */
-static bool
-fmt_userid(obuf_t *obuf, pgpv_primarykey_t *primary, uint8_t u)
+static int
+fmt_userid(obuf_t *obuf, pgpv_t *pgp, pgpv_primarykey_t *primary, uint8_t u)
 {
 	pgpv_signed_userid_t	*userid;
+	const char		*s;
+	uint64_t		 id;
 
-	userid = &ARRAY_ELEMENT(primary->signed_userids, u);
-	return obuf_printf(obuf, "uid           %.*s%s\n",
-			(int)userid->userid.size, userid->userid.data,
-			(userid->revoked == COMPROMISED) ? " [COMPROMISED AND REVOKED]" :
-			(userid->revoked) ? " [REVOKED]" : "");
+	id = ARRAY_ELEMENT(primary->signed_userids, u);
+	userid = &ARRAY_ELEMENT(pgp->signed_userids, id);
+	s = (userid->revoked == COMPROMISED) ? " [COMPROMISED AND REVOKED]\n" :
+		(userid->revoked) ? " [REVOKED]\n" : "\n";
+	return obuf_add_mem(obuf, "uid           ", 14) &&
+		obuf_add_mem(obuf, userid->userid.data, userid->userid.size) &&
+		obuf_add_mem(obuf, s, strlen(s));
 }
 
 /* format a trust sig - used to order the userids when formatting */
-static bool
-fmt_trust(obuf_t *obuf, pgpv_signed_userid_t *userid, uint32_t u)
+static int
+fmt_trust(obuf_t *obuf, pgpv_signature_t *sig)
 {
-	pgpv_signature_t	*sig;
-
-	sig = &ARRAY_ELEMENT(userid->sigs, u);
-	if (!obuf_printf(obuf, "trust          ")) {
-		return false;
+	if (!obuf_add_mem(obuf, "trust          ", 15) ||
+	    !fmt_binary(obuf, sig->signer, PGPV_KEYID_LEN)) {
+		return 0;
 	}
-	if (!fmt_binary(obuf, sig->signer, 8)) {
-		return false;
-	}
-	return obuf_printf(obuf, "\n");
+	return obuf_add_mem(obuf, "\n", 1);
 }
 
 /* print a primary key, per RFC 4880 */
-static bool
-fmt_primary(obuf_t *obuf, pgpv_primarykey_t *primary, unsigned subkey, const char *modifiers)
+static int
+fmt_primary(obuf_t *obuf, pgpv_t *pgp, pgpv_primarykey_t *primary, unsigned subkey, const char *modifiers)
 {
 	pgpv_signed_userid_t	*userid;
+	pgpv_signed_subkey_t	*signed_subkey;
 	pgpv_pubkey_t		*pubkey;
 	unsigned		 i;
 	unsigned		 j;
+	uint64_t		 id;
 
-	pubkey = (subkey == 0) ? &primary->primary : &ARRAY_ELEMENT(primary->signed_subkeys, subkey - 1).subkey;
-	if (!fmt_pubkey(obuf, pubkey, "signature    ")) {
-		return false;
+	if (subkey == 0) {
+		pubkey = &primary->primary;
+	} else {
+		id = ARRAY_ELEMENT(primary->signed_subkeys, subkey);
+		pubkey = &ARRAY_ELEMENT(pgp->signed_subkeys, id).subkey;
 	}
-	if (!fmt_userid(obuf, primary, primary->primary_userid)) {
-		return false;
+	if (!fmt_pubkey(obuf, pubkey, "signature    ")) {
+		return 0;
+	}
+	if (!fmt_userid(obuf, pgp, primary, primary->primary_userid)) {
+		return 0;
 	}
 	for (i = 0 ; i < ARRAY_COUNT(primary->signed_userids) ; i++) {
 		if (i != primary->primary_userid) {
-			if (!fmt_userid(obuf, primary, i)) {
-				return false;
+			if (!fmt_userid(obuf, pgp, primary, i)) {
+				return 0;
 			}
 			if (strcasecmp(modifiers, "trust") == 0) {
-				userid = &ARRAY_ELEMENT(primary->signed_userids, i);
-				for (j = 0 ; j < ARRAY_COUNT(userid->sigs) ; j++) {
-					if (!fmt_trust(obuf, userid, j)) {
-						return false;
+				id = ARRAY_ELEMENT(primary->signed_userids, i);
+				userid = &ARRAY_ELEMENT(pgp->signed_userids, id);
+				for (j = 0 ; j < ARRAY_COUNT(userid->signatures) ; j++) {
+					if (!fmt_trust(obuf, &ARRAY_ELEMENT(pgp->signatures,
+							ARRAY_ELEMENT(userid->signatures, j)))) {
+						return 0;
 					}
 				}
 			}
@@ -1591,12 +1846,14 @@ fmt_primary(obuf_t *obuf, pgpv_primarykey_t *primary, unsigned subkey, const cha
 	}
 	if (strcasecmp(modifiers, "subkeys") == 0) {
 		for (i = 0 ; i < ARRAY_COUNT(primary->signed_subkeys) ; i++) {
-			if (!fmt_pubkey(obuf, &ARRAY_ELEMENT(primary->signed_subkeys, i).subkey, "encryption")) {
-				return false;
+			id = ARRAY_ELEMENT(primary->signed_subkeys, i);
+			signed_subkey = &ARRAY_ELEMENT(pgp->signed_subkeys, id);
+			if (!fmt_pubkey(obuf, &signed_subkey->subkey, "encryption")) {
+				return 0;
 			}
 		}
 	}
-	return obuf_printf(obuf, "\n");
+	return obuf_add_mem(obuf, "\n", 1);
 }
 
 
@@ -1675,8 +1932,8 @@ lowlevel_rsa_public_check(const uint8_t *encbuf, int enclen, uint8_t *dec, const
 		printf("rsa r padding check failed\n");
 	}
 err:
-	PGPV_BN_free(encbn);
-	PGPV_BN_free(decbn);
+	PGPV_BN_clear_free(encbn);
+	PGPV_BN_clear_free(decbn);
 	if (decbuf != NULL) {
 		(void) memset(decbuf, 0x0, nbytes);
 		free(decbuf);
@@ -1699,8 +1956,8 @@ rsa_public_decrypt(int enclen, const unsigned char *enc, unsigned char *dec, RSA
 	pub.n = PGPV_BN_dup(rsa->n);
 	pub.e = PGPV_BN_dup(rsa->e);
 	ret = lowlevel_rsa_public_check(enc, enclen, dec, &pub);
-	PGPV_BN_free(pub.n);
-	PGPV_BN_free(pub.e);
+	PGPV_BN_clear_free(pub.n);
+	PGPV_BN_clear_free(pub.e);
 	return ret;
 }
 
@@ -1793,12 +2050,12 @@ bignum_is_bad(PGPV_BIGNUM *bn)
 static int
 verify_dsa_sig(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_pubkey_t *pubkey)
 {
+	PGPV_BIGNUM	 *M;
+	PGPV_BIGNUM	 *W;
+	PGPV_BIGNUM	 *t1;
 	unsigned	  qbits;
 	uint8_t		  calcnum[128];
 	uint8_t		  signum[128];
-	PGPV_BIGNUM		 *M;
-	PGPV_BIGNUM		 *W;
-	PGPV_BIGNUM		 *t1;
 	int		  ret;
 
 	if (pubkey->bn[DSA_P].bn == NULL ||
@@ -1850,13 +2107,13 @@ verify_dsa_sig(uint8_t *calculated, unsigned calclen, pgpv_bignum_t *sig, pgpv_p
 	ret = memcmp(calcnum, signum, BITS_TO_BYTES(qbits)) == 0;
 done:
 	if (M) {
-		PGPV_BN_free(M);
+		PGPV_BN_clear_free(M);
 	}
 	if (W) {
-		PGPV_BN_free(W);
+		PGPV_BN_clear_free(W);
 	}
 	if (t1) {
-		PGPV_BN_free(t1);
+		PGPV_BN_clear_free(t1);
 	}
 	return ret;
 }
@@ -1983,6 +2240,20 @@ find_bin_string(const void *blockarg, size_t blen, const void *pat, size_t plen)
 	return NULL;
 }
 
+/* store string in allocated memory */
+static uint8_t *
+pgpv_strdup(const char *s)
+{
+	uint8_t	*cp;
+	size_t	 len;
+
+	len = strlen(s);
+	if ((cp = calloc(len + 1, 1)) != NULL) {
+		memcpy(cp, s, len);
+	}
+	return cp;
+}
+
 #define SIGSTART	"-----BEGIN PGP SIGNATURE-----\n"
 #define SIGEND		"-----END PGP SIGNATURE-----\n"
 
@@ -2015,7 +2286,8 @@ read_ascii_armor(pgpv_cursor_t *cursor, pgpv_mem_t *mem, const char *filename)
 	litdata.tag = LITDATA_PKT;
 	litdata.s.data = p;
 	litdata.u.litdata.offset = (size_t)(p - mem->mem);
-	litdata.u.litdata.filename = (uint8_t *)strdup(filename);
+	litdata.u.litdata.filename.data = pgpv_strdup(filename);
+	litdata.u.litdata.filename.allocated = 1;
 	if ((p = find_bin_string(datastart = p, mem->size - litdata.offset, SIGSTART, sizeof(SIGSTART) - 1)) == NULL) {
 		snprintf(cursor->why, sizeof(cursor->why),
 			"malformed armor - no sig - at %zu", (size_t)(p - mem->mem));
@@ -2085,10 +2357,8 @@ setup_data(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 {
 	FILE		*fp;
 	char		 buf[BUFSIZ];
-	int		 rv;
 
 	if (cursor == NULL || pgp == NULL || p == NULL) {
-		snprintf(cursor->why, sizeof(cursor->why), "No input data");
 		return 0;
 	}
 	memset(cursor, 0x0, sizeof(*cursor));
@@ -2106,19 +2376,19 @@ setup_data(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 			return 0;
 		}
 		if (is_armored(buf, sizeof(buf))) {
-			rv = read_ascii_armor_file(cursor, p);
+			read_ascii_armor_file(cursor, p);
 		} else {
-			rv = read_binary_file(pgp, "signature", "%s", (const char *)p);
+			read_binary_file(pgp, "signature", "%s", (const char *)p);
 		}
 		fclose(fp);
 	} else {
 		if (is_armored(p, (size_t)size)) {
-			rv = read_ascii_armor_memory(cursor, p, (size_t)size);
+			read_ascii_armor_memory(cursor, p, (size_t)size);
 		} else {
-			rv = read_binary_memory(pgp, "signature", p, (size_t)size);
+			read_binary_memory(pgp, "signature", p, (size_t)size);
 		}
 	}
-	return rv;
+	return 1;
 }
 
 /* get the data and size from litdata packet */
@@ -2196,7 +2466,8 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 			/* XXX - check it's a good key expiry */
 			primary->primary.expiry = signature.keyexpiry;
 		}
-		ARRAY_APPEND(primary->direct_sigs, signature);
+		ARRAY_APPEND(primary->signatures, ARRAY_COUNT(pgp->signatures));
+		ARRAY_APPEND(pgp->signatures, signature);
 	}
 	/* some keys out there have user ids where they shouldn't */
 	do {
@@ -2204,7 +2475,8 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 			printf("recog_primary_key: not userid\n");
 			return 0;
 		}
-		ARRAY_APPEND(primary->signed_userids, userid);
+		ARRAY_APPEND(primary->signed_userids, ARRAY_COUNT(pgp->signed_userids));
+		ARRAY_APPEND(pgp->signed_userids, userid);
 		if (userid.primary_userid) {
 			primary->primary_userid = ARRAY_COUNT(primary->signed_userids) - 1;
 		}
@@ -2213,7 +2485,8 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 				printf("recog_primary_key: not signed secondary userid\n");
 				return 0;
 			}
-			ARRAY_APPEND(primary->signed_userids, userid);
+			ARRAY_APPEND(primary->signed_userids, ARRAY_COUNT(pgp->signed_userids));
+			ARRAY_APPEND(pgp->signed_userids, userid);
 			if (userid.primary_userid) {
 				primary->primary_userid = ARRAY_COUNT(primary->signed_userids) - 1;
 			}
@@ -2223,7 +2496,8 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 				printf("recog_primary_key: not signed user attribute\n");
 				return 0;
 			}
-			ARRAY_APPEND(primary->signed_userattrs, userattr);
+			ARRAY_APPEND(primary->signed_userattrs, ARRAY_COUNT(pgp->signed_userattrs));
+			ARRAY_APPEND(pgp->signed_userattrs, userattr);
 		}
 		while (pkt_is(pgp, PUB_SUBKEY_PKT)) {
 			if (!recog_subkey(pgp, &subkey)) {
@@ -2231,7 +2505,8 @@ recog_primary_key(pgpv_t *pgp, pgpv_primarykey_t *primary)
 				return 0;
 			}
 			calc_keyid(&subkey.subkey, "sha1");
-			ARRAY_APPEND(primary->signed_subkeys, subkey);
+			ARRAY_APPEND(primary->signed_subkeys, ARRAY_COUNT(pgp->signed_subkeys));
+			ARRAY_APPEND(pgp->signed_subkeys, subkey);
 		}
 	} while (pgp->pkt < ARRAY_COUNT(pgp->pkts) && pkt_is(pgp, USERID_PKT));
 	primary->fmtsize = estimate_primarykey_size(primary);
@@ -2351,6 +2626,7 @@ read_ssh_file(pgpv_t *pgp, pgpv_primarykey_t *primary, const char *fmt, ...)
 	char			*space;
 	char		 	*buf;
 	char		 	*bin;
+	char			 newbuf[2048];
 	char			 f[1024];
 	int			 ok;
 	int			 cc;
@@ -2466,13 +2742,18 @@ read_ssh_file(pgpv_t *pgp, pgpv_primarykey_t *primary, const char *fmt, ...)
 				space + 1);
 		}
 		calc_keyid(pubkey, "sha1");
-		userid.userid.size = asprintf((char **)(void *)&userid.userid.data,
-						"%s (%s) %s",
-						hostname,
-						f,
-						owner);
-		ARRAY_APPEND(primary->signed_userids, userid);
-		primary->fmtsize = estimate_primarykey_size(primary) + 1024;
+		cc = snprintf(newbuf, sizeof(newbuf), "%s (%s) %s",
+			hostname, f, owner);
+		userid.userid.size = cc;
+		userid.userid.allocated = 1;
+		if ((userid.userid.data = calloc(1, cc + 1)) == NULL) {
+			ok = 0;
+		} else {
+			memcpy(userid.userid.data, newbuf, cc);
+			ARRAY_APPEND(primary->signed_userids, ARRAY_COUNT(pgp->signed_userids));
+			ARRAY_APPEND(pgp->signed_userids, userid);
+			primary->fmtsize = estimate_primarykey_size(primary) + 1024;
+		}
 	}
 	(void) free(bin);
 	(void) free(buf);
@@ -2533,7 +2814,8 @@ fixup_detached(pgpv_cursor_t *cursor, const char *f)
 	litdata.s.data = mem->mem;
 	litdata.u.litdata.format = LITDATA_BINARY;
 	litdata.u.litdata.offset = 0;
-	litdata.u.litdata.filename = (uint8_t *)strdup(original);
+	litdata.u.litdata.filename.data = pgpv_strdup(original);
+	litdata.u.litdata.filename.allocated = 1;
 	litdata.u.litdata.mem = ARRAY_COUNT(cursor->pgp->areas) - 1;
 	litdata.u.litdata.len = litdata.s.size = mem->size;
 	ARRAY_APPEND(cursor->pgp->pkts, litdata);
@@ -2592,63 +2874,6 @@ match_sig(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_pubkey_t *pub
 	return 1;
 }
 
-/* check return value from getenv */
-static const char *
-nonnull_getenv(const char *key)
-{
-	char	*value;
-
-	return ((value = getenv(key)) == NULL) ? "" : value;
-}
-
-/************************************************************************/
-/* start of exported functions */
-/************************************************************************/
-
-/* close all stuff */
-int
-pgpv_close(pgpv_t *pgp)
-{
-	unsigned	i;
-
-	if (pgp == NULL) {
-		return 0;
-	}
-	for (i = 0 ; i < ARRAY_COUNT(pgp->areas) ; i++) {
-		if (ARRAY_ELEMENT(pgp->areas, i).size > 0) {
-			closemem(&ARRAY_ELEMENT(pgp->areas, i));
-		}
-	}
-	return 1;
-}
-
-#define NO_SUBKEYS	0
-
-/* return the formatted entry for the primary key desired */
-size_t
-pgpv_get_entry(pgpv_t *pgp, unsigned ent, char **s, const char *modifiers)
-{
-	unsigned	subkey;
-	unsigned	prim;
-	obuf_t		obuf;
-
-	prim = ((ent >> 8) & 0xffffff);
-	subkey = (ent & 0xff);
-	if (s == NULL || pgp == NULL || prim >= ARRAY_COUNT(pgp->primaries)) {
-		return 0;
-	}
-	*s = NULL;
-	if (modifiers == NULL || (strcasecmp(modifiers, "trust") != 0 && strcasecmp(modifiers, "subkeys") != 0)) {
-		modifiers = "no-subkeys";
-	}
-	memset(&obuf, 0x0, sizeof(obuf));
-	if (!fmt_primary(&obuf, &ARRAY_ELEMENT(pgp->primaries, prim), subkey, modifiers)) {
-		return 0;
-	}
-	*s = (char *)obuf.v;
-	return obuf.c;
-}
-
 /* fixup key id, with birth, keyalg and hashalg value from signature */
 static int
 fixup_ssh_keyid(pgpv_t *pgp, pgpv_signature_t *signature, const char *hashtype)
@@ -2672,6 +2897,7 @@ find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid, unsigned *sub)
 	pgpv_primarykey_t	*prim;
 	unsigned		 i;
 	unsigned		 j;
+	uint64_t		 n;
 	uint8_t			 binkeyid[PGPV_KEYID_LEN];
 	size_t			 off;
 	size_t			 cmp;
@@ -2694,7 +2920,8 @@ find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid, unsigned *sub)
 			return i;
 		}
 		for (j = 0 ; j < ARRAY_COUNT(prim->signed_subkeys) ; j++) {
-			subkey = &ARRAY_ELEMENT(prim->signed_subkeys, j);
+			n = ARRAY_ELEMENT(prim->signed_subkeys, j);
+			subkey = &ARRAY_ELEMENT(pgp->signed_subkeys, n);
 			if (memcmp(&subkey->subkey.keyid[off], &binkeyid[off], cmp) == 0) {
 				*sub = j + 1;
 				return i;
@@ -2707,10 +2934,11 @@ find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid, unsigned *sub)
 
 /* match the signature with the id indexed by 'primary' */
 static int
-match_sig_id(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_litdata_t *litdata, unsigned primary, unsigned sub)
+match_sig_id(pgpv_cursor_t *cursor, pgpv_t *pgp, pgpv_signature_t *signature, pgpv_litdata_t *litdata, unsigned primary, unsigned sub)
 {
 	pgpv_primarykey_t	*prim;
 	pgpv_pubkey_t		*pubkey;
+	uint64_t		 n;
 	uint8_t			*data;
 	size_t			 insize;
 
@@ -2722,7 +2950,8 @@ match_sig_id(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_litdata_t 
 		return match_sig(cursor, signature, pubkey, data, insize);
 	}
 	prim = &ARRAY_ELEMENT(cursor->pgp->primaries, primary);
-	pubkey = &ARRAY_ELEMENT(prim->signed_subkeys, sub - 1).subkey;
+	n = ARRAY_ELEMENT(prim->signed_subkeys, sub - 1);
+	pubkey = &ARRAY_ELEMENT(pgp->signed_subkeys, n).subkey;
 	return match_sig(cursor, signature, pubkey, data, insize);
 }
 
@@ -2756,6 +2985,153 @@ get_packet_type(uint8_t tag)
 	}
 }
 
+/* check return value from getenv */
+static const char *
+nonnull_getenv(const char *key)
+{
+	char	*value;
+
+	return ((value = getenv(key)) == NULL) ? "" : value;
+}
+
+/* free an array of bignums */
+static void
+free_bn_array(pgpv_bignum_t *v, unsigned n)
+{
+	unsigned	i;
+
+	for (i = 0 ; i < n ; i++) {
+		PGPV_BN_clear_free(v[i].bn);
+		v[i].bn = NULL;
+	}
+}
+
+/************************************************************************/
+/* start of exported functions */
+/************************************************************************/
+
+/* close all stuff */
+int
+pgpv_close(pgpv_t *pgp)
+{
+	pgpv_primarykey_t	*primary;
+	pgpv_pkt_t		*pkt;
+	uint64_t		 n;
+	unsigned		 i;
+	unsigned		 j;
+
+	if (pgp == NULL) {
+		return 0;
+	}
+	for (i = 0 ; i < ARRAY_COUNT(pgp->areas) ; i++) {
+		if (ARRAY_ELEMENT(pgp->areas, i).size > 0) {
+			closemem(&ARRAY_ELEMENT(pgp->areas, i));
+		}
+	}
+        ARRAY_FREE(pgp->areas);
+        for (i = 0 ; i < ARRAY_COUNT(pgp->pkts) ; i++) {
+                pkt = &ARRAY_ELEMENT(pgp->pkts, i);
+                switch(pkt->tag) {
+                case SIGNATURE_PKT:
+                        ARRAY_FREE(pkt->u.sigpkt.subpackets);
+                        break;
+                case LITDATA_PKT:
+			if (pkt->u.litdata.filename.allocated) {
+				free(pkt->u.litdata.filename.data);
+			}
+                        break;
+		case PUBKEY_PKT:
+			free_bn_array(pkt->u.pubkey.bn, PGPV_MAX_PUBKEY_BN);
+			break;
+                case USERID_PKT:
+			if (pkt->u.userid.allocated) {
+				free(pkt->u.userid.data);
+			}
+                        break;
+                case USER_ATTRIBUTE_PKT:
+                        ARRAY_FREE(pkt->u.userattr.subattrs);
+                        break;
+                }
+        }
+        ARRAY_FREE(pgp->pkts);
+	for (i = 0 ; i < ARRAY_COUNT(pgp->primaries) ; i++) {
+		primary = &ARRAY_ELEMENT(pgp->primaries, i);
+		free_bn_array(primary->primary.bn, PGPV_MAX_PUBKEY_BN);
+		ARRAY_FREE(primary->signatures);
+		for (j = 0 ; j < ARRAY_COUNT(primary->signed_userids) ; j++) {
+			n = ARRAY_ELEMENT(primary->signed_userids, j);
+			ARRAY_FREE(ARRAY_ELEMENT(pgp->signed_userids, n).signatures);
+		}
+		ARRAY_FREE(primary->signed_userids);
+		ARRAY_FREE(primary->signed_userattrs);
+		ARRAY_FREE(primary->signed_subkeys);
+	}
+	for (i = 0 ; i < ARRAY_COUNT(pgp->signatures) ; i++) {
+		free_bn_array(ARRAY_ELEMENT(pgp->signatures, i).bn, PGPV_MAX_SIG_BN);
+	}
+	for (i = 0 ; i < ARRAY_COUNT(pgp->signed_subkeys) ; i++) {
+		free_bn_array(ARRAY_ELEMENT(pgp->signed_subkeys, i).subkey.bn, PGPV_MAX_SIG_BN);
+	}
+	ARRAY_FREE(pgp->primaries);
+	ARRAY_FREE(pgp->datastarts);
+	ARRAY_FREE(pgp->signatures);
+	ARRAY_FREE(pgp->signed_userids);
+	ARRAY_FREE(pgp->signed_userattrs);
+	ARRAY_FREE(pgp->signed_subkeys);
+	ARRAY_FREE(pgp->subpkts);
+	return 1;
+}
+
+/* free resources attached to cursor */
+int
+pgpv_cursor_close(pgpv_cursor_t *cursor)
+{
+	if (cursor) {
+		ARRAY_FREE(cursor->datacookies);
+		ARRAY_FREE(cursor->found);
+	}
+	return 0;
+}
+
+/* return the formatted entry for the primary key desired */
+size_t
+pgpv_get_entry(pgpv_t *pgp, unsigned ent, char **s, const char *modifiers)
+{
+	unsigned	subkey;
+	unsigned	prim;
+	obuf_t		obuf;
+
+	prim = ((ent >> 8) & 0xffffff);
+	subkey = (ent & 0xff);
+	if (s == NULL || pgp == NULL || prim >= ARRAY_COUNT(pgp->primaries)) {
+		return 0;
+	}
+	*s = NULL;
+	if (modifiers == NULL || (strcasecmp(modifiers, "trust") != 0 && strcasecmp(modifiers, "subkeys") != 0)) {
+		modifiers = "no-subkeys";
+	}
+	memset(&obuf, 0x0, sizeof(obuf));
+	if (!fmt_primary(&obuf, pgp, &ARRAY_ELEMENT(pgp->primaries, prim), subkey, modifiers)) {
+		return 0;
+	}
+	*s = (char *)obuf.v;
+	return obuf.c;
+}
+
+/* make a new pgpv struct */
+pgpv_t *
+pgpv_new(void)
+{
+	return calloc(1, sizeof(pgpv_t));
+}
+
+/* make a new pgpv_cursor struct */
+pgpv_cursor_t *
+pgpv_new_cursor(void)
+{
+	return calloc(1, sizeof(pgpv_cursor_t));
+}
+
 /* get an element from the found array */
 int
 pgpv_get_cursor_element(pgpv_cursor_t *cursor, size_t element)
@@ -2782,6 +3158,7 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 		return 0;
 	}
 	if (!setup_data(cursor, pgp, p, size)) {
+		snprintf(cursor->why, sizeof(cursor->why), "No input data");
 		return 0;
 	}
 	if (ARRAY_COUNT(cursor->pgp->pkts) == ARRAY_LAST(cursor->pgp->datastarts) + 1) {
@@ -2844,7 +3221,7 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 			(int)obuf.c, (char *)obuf.v);
 		return 0;
 	}
-	if (!match_sig_id(cursor, signature, litdata, (unsigned)j, sub)) {
+	if (!match_sig_id(cursor, pgp, signature, litdata, (unsigned)j, sub)) {
 		snprintf(cursor->why, sizeof(cursor->why),
 			"Signature does not match %.*s",
 			(int)obuf.c, (char *)obuf.v);
@@ -2958,4 +3335,28 @@ pgpv_dump(pgpv_t *pgp, char **data)
 		cc += n;
 	}
 	return cc;
+}
+
+/* return cursor field as a number */
+int64_t
+pgpv_get_cursor_num(pgpv_cursor_t *cursor, const char *field)
+{
+	if (cursor && field) {
+		if (strcmp(field, "sigtime") == 0) {
+			return cursor->sigtime;
+		}
+	}
+	return 0;
+}
+
+/* return cursor field as a string */
+char *
+pgpv_get_cursor_str(pgpv_cursor_t *cursor, const char *field)
+{
+	if (cursor && field) {
+		if (strcmp(field, "why") == 0) {
+			return cursor->why;
+		}
+	}
+	return 0;
 }
