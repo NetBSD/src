@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.191.2.1 2017/04/17 20:35:00 bouyer Exp $
+# $NetBSD: mi,v 1.191.2.2 2017/04/17 20:48:36 bouyer Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -307,6 +307,7 @@
 ./usr/libdata/debug/sbin/blacklistctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/blacklistd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
+./usr/libdata/debug/sbin/canconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ccdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/chown.debug		comp-sysutil-debug	debug
