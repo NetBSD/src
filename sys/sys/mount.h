@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.225 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.226 2017/04/17 08:34:27 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -417,6 +417,7 @@ bool	vfs_unmountall(struct lwp *);	    /* unmount file systems */
 bool	vfs_unmountall1(struct lwp *, bool, bool);
 bool	vfs_unmount_forceone(struct lwp *);
 int 	vfs_busy(struct mount *);
+int 	vfs_trybusy(struct mount *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
 void	vfs_unbusy(struct mount *);
 int	vfs_attach(struct vfsops *);
@@ -496,6 +497,7 @@ typedef struct mount_iterator mount_iterator_t; /* Opaque. */
 void	mountlist_iterator_init(mount_iterator_t **);
 void	mountlist_iterator_destroy(mount_iterator_t *);
 struct mount *mountlist_iterator_next(mount_iterator_t *);
+struct mount *mountlist_iterator_trynext(mount_iterator_t *);
 struct mount *_mountlist_next(struct mount *);
 void	mountlist_append(struct mount *);
 void	mountlist_remove(struct mount *);
