@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.53 2017/04/12 10:35:10 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.54 2017/04/17 08:29:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.53 2017/04/12 10:35:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.54 2017/04/17 08:29:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,8 +108,6 @@ struct mount_iterator {
 	struct mountlist_entry mi_entry;
 };
 
-static TAILQ_HEAD(mountlist, mountlist_entry) mount_list;
-
 static struct vnode *vfs_vnode_iterator_next1(struct vnode_iterator *,
     bool (*)(void *, struct vnode *), void *, bool);
 
@@ -117,10 +115,10 @@ static struct vnode *vfs_vnode_iterator_next1(struct vnode_iterator *,
 vnode_t *			rootvnode;
 
 /* Mounted filesystem list. */
-struct mntlist			mountlist;
-kmutex_t			mountlist_lock;
-int vnode_offset_next_by_mount	/* XXX: ugly hack for pstat.c */
-    = offsetof(vnode_impl_t, vi_mntvnodes.tqe_next);
+static TAILQ_HEAD(mountlist, mountlist_entry) mountlist;
+static kmutex_t			mountlist_lock;
+int vnode_offset_next_by_lru	/* XXX: ugly hack for pstat.c */
+    = offsetof(vnode_impl_t, vi_lrulist.tqe_next);
 
 kmutex_t			mntvnode_lock;
 kmutex_t			vfs_list_lock;
@@ -135,7 +133,6 @@ void
 vfs_mount_sysinit(void)
 {
 
-	TAILQ_INIT(&mount_list);
 	TAILQ_INIT(&mountlist);
 	mutex_init(&mountlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -308,21 +305,16 @@ vfs_busy(struct mount *mp, struct mount **nextp)
 
 	KASSERT(mp->mnt_refcnt > 0);
 
+	KASSERT(nextp == NULL);
+
 	mutex_enter(&mp->mnt_unmounting);
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		mutex_exit(&mp->mnt_unmounting);
-		if (nextp != NULL) {
-			KASSERT(mutex_owned(&mountlist_lock));
-			*nextp = TAILQ_NEXT(mp, mnt_list);
-		}
 		return ENOENT;
 	}
 	++mp->mnt_busynest;
 	KASSERT(mp->mnt_busynest != 0);
 	mutex_exit(&mp->mnt_unmounting);
-	if (nextp != NULL) {
-		mutex_exit(&mountlist_lock);
-	}
 	atomic_inc_uint(&mp->mnt_refcnt);
 	return 0;
 }
@@ -341,19 +333,14 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 
 	KASSERT(mp->mnt_refcnt > 0);
 
-	if (nextp != NULL) {
-		mutex_enter(&mountlist_lock);
-	}
+	KASSERT(nextp == NULL);
+
 	mutex_enter(&mp->mnt_unmounting);
 	KASSERT(mp->mnt_busynest != 0);
 	mp->mnt_busynest--;
 	mutex_exit(&mp->mnt_unmounting);
 	if (!keepref) {
 		vfs_destroy(mp);
-	}
-	if (nextp != NULL) {
-		KASSERT(mutex_owned(&mountlist_lock));
-		*nextp = TAILQ_NEXT(mp, mnt_list);
 	}
 }
 
@@ -1508,7 +1495,7 @@ mountlist_iterator_init(mount_iterator_t **mip)
 
 	me = mountlist_alloc(ME_MARKER, NULL);
 	mutex_enter(&mountlist_lock);
-	TAILQ_INSERT_HEAD(&mount_list, me, me_list);
+	TAILQ_INSERT_HEAD(&mountlist, me, me_list);
 	mutex_exit(&mountlist_lock);
 	*mip = (mount_iterator_t *)me;
 }
@@ -1522,7 +1509,7 @@ mountlist_iterator_destroy(mount_iterator_t *mi)
 		vfs_unbusy(marker->me_mount, false, NULL);
 
 	mutex_enter(&mountlist_lock);
-	TAILQ_REMOVE(&mount_list, marker, me_list);
+	TAILQ_REMOVE(&mountlist, marker, me_list);
 	mutex_exit(&mountlist_lock);
 
 	mountlist_free(marker);
@@ -1554,8 +1541,8 @@ mountlist_iterator_next(mount_iterator_t *mi)
 			mutex_exit(&mountlist_lock);
 			return NULL;
 		}
-		TAILQ_REMOVE(&mount_list, marker, me_list);
-		TAILQ_INSERT_AFTER(&mount_list, me, marker, me_list);
+		TAILQ_REMOVE(&mountlist, marker, me_list);
+		TAILQ_INSERT_AFTER(&mountlist, me, marker, me_list);
 
 		/* Skip other markers. */
 		if (me->me_type != ME_MOUNT)
@@ -1588,8 +1575,7 @@ mountlist_append(struct mount *mp)
 
 	me = mountlist_alloc(ME_MOUNT, mp);
 	mutex_enter(&mountlist_lock);
-	TAILQ_INSERT_TAIL(&mount_list, me, me_list);
-	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	TAILQ_INSERT_TAIL(&mountlist, me, me_list);
 	mutex_exit(&mountlist_lock);
 }
 
@@ -1601,12 +1587,11 @@ mountlist_remove(struct mount *mp)
 	struct mountlist_entry *me;
 
 	mutex_enter(&mountlist_lock);
-	TAILQ_FOREACH(me, &mount_list, me_list)
+	TAILQ_FOREACH(me, &mountlist, me_list)
 		if (me->me_type == ME_MOUNT && me->me_mount == mp)
 			break;
 	KASSERT(me != NULL);
-	TAILQ_REMOVE(&mount_list, me, me_list);
-	TAILQ_REMOVE(&mountlist, mp, mnt_list);
+	TAILQ_REMOVE(&mountlist, me, me_list);
 	mutex_exit(&mountlist_lock);
 	mountlist_free(me);
 }
@@ -1621,9 +1606,9 @@ _mountlist_next(struct mount *mp)
 	struct mountlist_entry *me;
 
 	if (mp == NULL) {
-		me = TAILQ_FIRST(&mount_list);
+		me = TAILQ_FIRST(&mountlist);
 	} else {
-		TAILQ_FOREACH(me, &mount_list, me_list)
+		TAILQ_FOREACH(me, &mountlist, me_list)
 			if (me->me_type == ME_MOUNT && me->me_mount == mp)
 				break;
 		if (me != NULL)
