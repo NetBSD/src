@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.207 2017/04/17 08:59:37 riastradh Exp $
+# $NetBSD: mi,v 1.208 2017/04/17 09:06:55 knakahara Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1585,10 +1585,12 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_srptest.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_threadstest.debug	tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug,atf,crypto,compattestfile
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aescbc.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr1.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_aesctr2.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_arc4.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_camellia.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_cbc3des.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_cbcdes.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_comp.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_comp_zlib.debug		tests-crypto-debug	debug,atf,crypto,compattestfile
