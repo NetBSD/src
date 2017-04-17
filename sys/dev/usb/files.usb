@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.142 2016/11/25 12:45:28 skrll Exp $
+#	$NetBSD: files.usb,v 1.143 2017/04/17 08:59:37 riastradh Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -544,3 +544,8 @@ file	dev/usb/if_rsu.c		rsu
 device	udsir: irbus, irdasir
 attach	udsir at usbifif
 file	dev/usb/udsir.c			udsir
+
+# Araneus Alea II TRNG
+device	ualea
+attach	ualea at usbifif
+file	dev/usb/ualea.c			ualea
