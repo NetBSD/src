@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.807 2017/04/14 02:43:27 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.808 2017/04/17 08:59:37 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -550,6 +550,9 @@
 ./usr/lib/librumpdev_sysmon.so			base-rump-shlib		rump
 ./usr/lib/librumpdev_sysmon.so.0		base-rump-shlib		rump
 ./usr/lib/librumpdev_sysmon.so.0.0		base-rump-shlib		rump
+./usr/lib/librumpdev_ualea.so			base-rump-shlib		rump
+./usr/lib/librumpdev_ualea.so.0			base-rump-shlib		rump
+./usr/lib/librumpdev_ualea.so.0.0		base-rump-shlib		rump
 ./usr/lib/librumpdev_ubt.so			base-rump-shlib		rump
 ./usr/lib/librumpdev_ubt.so.0			base-rump-shlib		rump
 ./usr/lib/librumpdev_ubt.so.0.0			base-rump-shlib		rump
