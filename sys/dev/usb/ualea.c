@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.3 2017/04/17 15:43:40 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.4 2017/04/17 16:42:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.3 2017/04/17 15:43:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.4 2017/04/17 16:42:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -103,7 +103,7 @@ ualea_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_udev = udev;
 	sc->sc_uif = uif;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	rndsource_setcb(&sc->sc_rnd, ualea_get, sc);
 	rnd_attach_source(&sc->sc_rnd, device_xname(self), RND_TYPE_RNG,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
