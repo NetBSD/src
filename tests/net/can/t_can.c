@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.1.2.6 2017/02/05 12:18:20 bouyer Exp $	*/
+/*	$NetBSD: t_can.c,v 1.1.2.7 2017/04/17 20:41:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.1.2.6 2017/02/05 12:18:20 bouyer Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.1.2.7 2017/04/17 20:41:26 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,13 +99,11 @@ ATF_TC_HEAD(cannoown, tc)
 ATF_TC_BODY(cannoown, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v, vlen;
+	int s, rv, v;
+	socklen_t vlen;
 	struct sockaddr_can sa;
-	socklen_t salen;
 	int ifindex;
 	struct can_frame cf_send, cf_receive;
-	fd_set rfds;
-	struct timeval tmout;
 
 	rump_init();
 	cancfg_rump_createif(ifname);
@@ -175,7 +173,8 @@ ATF_TC_HEAD(canwritelo, tc)
 ATF_TC_BODY(canwritelo, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v, vlen;
+	int s, rv, v;
+	socklen_t vlen;
 	struct can_frame cf_send, cf_receive;
 
 	rump_init();
@@ -245,7 +244,6 @@ ATF_TC_BODY(canwriteunbound, tc)
 {
 	const char ifname[] = "canlo0";
 	int s, rv;
-	struct sockaddr_can sa;
 	struct can_frame cf_send;
 
 	rump_init();
@@ -282,7 +280,7 @@ ATF_TC_HEAD(cansendtolo, tc)
 ATF_TC_BODY(cansendtolo, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, v, rv;
+	int s, rv;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
@@ -345,7 +343,7 @@ ATF_TC_HEAD(cansendtowrite, tc)
 ATF_TC_BODY(cansendtowrite, tc)
 {
 	const char ifname[] = "canlo0";
-	int s, rv, v;
+	int s, rv;
 	struct sockaddr_can sa;
 	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive;
@@ -411,7 +409,6 @@ ATF_TC_BODY(canreadlocal, tc)
 	const char ifname[] = "canlo0";
 	int s1, rv1;
 	int s2, rv2;
-	int v;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
 
 	rump_init();
@@ -474,9 +471,7 @@ ATF_TC_BODY(canrecvfrom, tc)
 	const char ifname[] = "canlo0";
 	int s1, rv1;
 	int s2, rv2;
-	int v;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
-	socklen_t salen;
 	int ifindex;
 	struct sockaddr_can sa;
 
@@ -541,14 +536,9 @@ ATF_TC_BODY(canbindfilter, tc)
 	const char ifname2[] = "canlo1";
 	int s1, rv1;
 	int s2, rv2;
-	int v;
 	struct sockaddr_can sa;
 	int ifindex2;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
-	socklen_t salen;
-	fd_set rfds;
-	struct timeval tmout;
 
 	rump_init();
 	cancfg_rump_createif(ifname);
@@ -613,9 +603,9 @@ ATF_TC_BODY(cannoloop, tc)
 	const char ifname[] = "canlo0";
 	int s1, rv1;
 	int s2, rv2;
-	int v, vlen;
+	int v;
+	socklen_t vlen;
 	struct sockaddr_can sa;
-	struct ifreq ifr;
 	struct can_frame cf_send, cf_receive1, cf_receive2;
 	socklen_t salen;
 	int ifindex;
@@ -696,7 +686,7 @@ ATF_TC_BODY(cannoloop, tc)
 		ATF_CHECK_MSG(sa.can_family == AF_CAN,
 		    "recvfrom provided wrong %d family", sa.can_family);
 		ATF_CHECK_MSG(salen == sizeof(sa),
-		    "recvfrom provided wrong size %d (!= %d)",
+		    "recvfrom provided wrong size %d (!= %ld)",
 		    salen, sizeof(sa));
 		ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 		   "recvfrom provided wrong ifindex %d (!= %d)",
@@ -718,7 +708,7 @@ ATF_TC_BODY(cannoloop, tc)
 		ATF_CHECK_MSG(sa.can_family == AF_CAN,
 		    "recvfrom provided wrong %d family", sa.can_family);
 		ATF_CHECK_MSG(salen == sizeof(sa),
-		    "recvfrom provided wrong size %d (!= %d)",
+		    "recvfrom provided wrong size %d (!= %ld)",
 		    salen, sizeof(sa));
 		ATF_CHECK_MSG(sa.can_ifindex == ifindex,
 		   "recvfrom provided wrong ifindex %d (!= %d)",
