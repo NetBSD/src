@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1150.2.1 2017/04/17 20:35:00 bouyer Exp $
+# $NetBSD: mi,v 1.1150.2.2 2017/04/17 20:48:36 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -445,6 +445,7 @@
 ./sbin/blacklistctl				base-sysutil-root
 ./sbin/blacklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
+./sbin/canconfig				base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root
 ./sbin/chown					base-sysutil-root

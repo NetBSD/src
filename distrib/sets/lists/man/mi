@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1545 2017/01/07 20:49:23 christos Exp $
+# $NetBSD: mi,v 1.1545.2.1 2017/04/17 20:48:36 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2365,6 +2365,7 @@
 ./usr/share/man/cat8/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/bozohttpd.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman	.cat
+./usr/share/man/cat8/canconfig.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/btattach.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btconfig.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btcontrol.0		man-obsolete		obsolete
@@ -5337,6 +5338,7 @@
 ./usr/share/man/html8/bounce.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/bozohttpd.html		man-netutil-htmlman	html
 ./usr/share/man/html8/brconfig.html		man-netutil-htmlman	html
+./usr/share/man/html8/canconfig.html		man-netutil-htmlman	html
 ./usr/share/man/html8/btattach.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/btconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/btdevctl.html		man-sysutil-htmlman	html
@@ -8344,6 +8346,7 @@
 ./usr/share/man/man8/bounce.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/bozohttpd.8		man-netutil-man		.man
 ./usr/share/man/man8/brconfig.8			man-netutil-man		.man
+./usr/share/man/man8/canconfig.8		man-netutil-man		.man
 ./usr/share/man/man8/btattach.8			man-sysutil-man		.man
 ./usr/share/man/man8/btconfig.8			man-sysutil-man		.man
 ./usr/share/man/man8/btcontrol.8		man-obsolete		obsolete
