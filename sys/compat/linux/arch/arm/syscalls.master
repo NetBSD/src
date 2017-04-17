@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61 2014/05/31 08:51:19 njoly Exp $
+	$NetBSD: syscalls.master,v 1.61.2.1 2017/04/17 05:19:09 snj Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -530,7 +530,10 @@
 			    linux_umode_t mode); }
 334	STD		{ int|linux_sys||faccessat(int fd, const char *path, \
 			    int amode); }
-335	UNIMPL		pselect6
+335	STD		{ int|linux_sys||pselect6(int nfds, fd_set *readfds, \
+			    fd_set *writefds, fd_set *exceptfds, \
+			    struct linux_timespec *timeout, \
+			    linux_sized_sigset_t *ss); }
 336	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
