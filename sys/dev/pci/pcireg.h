@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.125 2017/03/28 10:47:44 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.126 2017/04/17 09:33:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1001,6 +1001,9 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_SLCSR_HPE		__BIT(5)       /* Hot Plug Interrupt Enable */
 #define PCIE_SLCSR_AIC		__BITS(7, 6)   /* Attention Indicator Control*/
 #define PCIE_SLCSR_PIC		__BITS(9, 8)   /* Power Indicator Control */
+#define PCIE_SLCSR_IND_ON	0x1	       /* Attn/Power Indicator On */
+#define PCIE_SLCSR_IND_BLINK	0x2	       /* Attn/Power Indicator Blink */
+#define PCIE_SLCSR_IND_OFF	0x3	       /* Attn/Power Indicator Off */
 #define PCIE_SLCSR_PCC		__BIT(10)      /*
 						* Power Controller Control:
 						* 0: Power on, 1: Power off.

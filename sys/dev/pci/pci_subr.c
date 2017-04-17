@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.172 2017/04/06 08:57:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.173 2017/04/17 09:33:00 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.172 2017/04/06 08:57:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.173 2017/04/17 09:33:00 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1907,13 +1907,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		case 0x0:
 			printf("reserved\n");
 			break;
-		case 0x1:
+		case PCIE_SLCSR_IND_ON:
 			printf("on\n");
 			break;
-		case 0x2:
+		case PCIE_SLCSR_IND_BLINK:
 			printf("blink\n");
 			break;
-		case 0x3:
+		case PCIE_SLCSR_IND_OFF:
 			printf("off\n");
 			break;
 		}
@@ -1922,13 +1922,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		case 0x0:
 			printf("reserved\n");
 			break;
-		case 0x1:
+		case PCIE_SLCSR_IND_ON:
 			printf("on\n");
 			break;
-		case 0x2:
+		case PCIE_SLCSR_IND_BLINK:
 			printf("blink\n");
 			break;
-		case 0x3:
+		case PCIE_SLCSR_IND_OFF:
 			printf("off\n");
 			break;
 		}
