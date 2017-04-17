@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.25 2017/04/17 05:11:05 riastradh Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.26 2017/04/17 07:13:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.25 2017/04/17 05:11:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.26 2017/04/17 07:13:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -603,7 +603,7 @@ rumpusb_device_bulk_start(struct usbd_xfer *xfer)
 	endpt = UE_GET_ADDR(endpt);
 	KASSERT(endpt < UGEN_NEPTS);
 
-	buf = KERNADDR(&xfer->ux_dmabuf, 0);
+	buf = xfer->ux_buf;
 	done = 0;
 	if ((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS) {
 		for (i = 0, len = 0; i < xfer->ux_nframes; i++)
