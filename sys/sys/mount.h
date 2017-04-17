@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.224 2017/04/17 08:31:02 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.225 2017/04/17 08:32:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -416,9 +416,9 @@ void	vfs_sync_all(struct lwp *);
 bool	vfs_unmountall(struct lwp *);	    /* unmount file systems */
 bool	vfs_unmountall1(struct lwp *, bool, bool);
 bool	vfs_unmount_forceone(struct lwp *);
-int 	vfs_busy(struct mount *, struct mount **);
+int 	vfs_busy(struct mount *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
-void	vfs_unbusy(struct mount *, bool, struct mount **);
+void	vfs_unbusy(struct mount *);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
