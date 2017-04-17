@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2017/01/15 20:27:33 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2017/04/17 20:32:27 bouyer Exp $
 
 KDIR=	/sys/netcan
 INCSDIR= /usr/include/netcan
 
-INCS=	can.h
+INCS=	can.h can_link.h
 
 .include <bsd.kinc.mk>
