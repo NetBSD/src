@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.714 2017/01/14 01:44:13 christos Exp $
+# $NetBSD: mi,v 1.714.2.1 2017/04/17 20:35:00 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -154,6 +154,7 @@
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/bpfilter				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/bpfjit				tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/can					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/carp					tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/fdpass				tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug		compattestfile,atf
@@ -3216,6 +3217,10 @@
 ./usr/tests/net/bpfjit/t_cop			tests-net-tests		atf,rump,sljit
 ./usr/tests/net/bpfjit/t_extmem			tests-net-tests		atf,rump,sljit
 ./usr/tests/net/bpfjit/t_mbuf			tests-net-tests		atf,rump,sljit
+./usr/tests/net/can				tests-net-tests		compattestfile,atf
+./usr/tests/net/can/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/can/t_can			tests-net-tests		atf,rump
+./usr/tests/net/can/t_canfilter			tests-net-tests		atf,rump
 ./usr/tests/net/carp				tests-net-tests		compattestfile,atf
 ./usr/tests/net/carp/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/carp/Kyuafile			tests-net-tests		atf,rump,kyua
