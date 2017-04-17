@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.14 2017/04/16 12:26:04 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.15 2017/04/17 00:43:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.14 2017/04/16 12:26:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.15 2017/04/17 00:43:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -224,6 +224,9 @@ tegra124_cpufreq_set_rate(u_int rate)
 {
 	const u_int nrates = __arraycount(tegra124_cpufreq_rates);
 	const struct tegra124_cpufreq_rate *r = NULL;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int error;
 
 	if (tegra124_speedo_rate_ok(rate) == false)
 		return EINVAL;
@@ -237,7 +240,15 @@ tegra124_cpufreq_set_rate(u_int rate)
 	if (r == NULL)
 		return EINVAL;
 
-	return clk_set_rate(tegra124_clk_pllx, r->rate * 1000000);
+	error = clk_set_rate(tegra124_clk_pllx, r->rate * 1000000);
+	if (error == 0) {
+		rate = tegra124_cpufreq_get_rate();
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			ci->ci_data.cpu_cc_freq = rate * 1000000;
+		}
+	}
+
+	return error;
 }
 
 static u_int
