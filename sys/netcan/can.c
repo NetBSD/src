@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.7 2017/04/17 20:32:27 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.8 2017/04/18 20:37:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.7 2017/04/17 20:32:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.8 2017/04/18 20:37:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,13 @@ can_ifattach(struct ifnet *ifp) {
 	ifp->if_dlt = DLT_CAN_SOCKETCAN;
 	ifp->if_output = NULL; /* unused */
 	IFQ_SET_READY(&ifp->if_snd);
+}
+
+void
+can_ifinit_timings(struct canif_softc *csc)
+{
+	/* uninitialized parameters is all-one */
+	memset(&csc->csc_timings, 0xff, sizeof(struct can_link_timings));
 }
 
 static int

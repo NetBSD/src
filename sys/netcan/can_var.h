@@ -1,4 +1,4 @@
-/*	$NetBSD: can_var.h,v 1.1.2.5 2017/04/17 20:32:27 bouyer Exp $	*/
+/*	$NetBSD: can_var.h,v 1.1.2.6 2017/04/18 20:37:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ extern struct domain candomain;
 extern const struct pr_usrreqs can_usrreqs;
 
 void can_ifattach(struct ifnet *);
+void can_ifinit_timings(struct canif_softc *);
 void can_mbuf_tag_clean(struct mbuf *);
 void can_input(struct ifnet *, struct mbuf *);
 void *can_ctlinput(int, struct sockaddr *, void *);
