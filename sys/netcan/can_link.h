@@ -1,4 +1,4 @@
-/*	$NetBSD: can_link.h,v 1.1.2.1 2017/04/17 20:32:27 bouyer Exp $	*/
+/*	$NetBSD: can_link.h,v 1.1.2.2 2017/04/18 20:36:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ struct can_link_timecaps {
 
 /* get/set timing parameters */
 struct can_link_timings {
-	uint32_t clt_clock_freq; /* prescaler input clock, in hz */
 	uint32_t clt_brp;	/* prescaler value */
 	uint32_t clt_prop;	/* Propagation segment in tq */
 	uint32_t clt_ps1;	/* Phase segment 1 in tq */
