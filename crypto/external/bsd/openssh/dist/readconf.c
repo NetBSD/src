@@ -1,6 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.20 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.262 2016/10/25 04:08:13 jsg Exp $ */
-
+/*	$NetBSD: readconf.c,v 1.21 2017/04/18 18:41:46 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.270 2017/03/10 04:27:32 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.21 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -83,7 +82,7 @@ __RCSID("$NetBSD: readconf.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
 
    Host books.com
      RemoteForward 9999 shadows.cs.hut.fi:9999
-     Cipher 3des
+     Ciphers 3des-cbc
 
    Host fascist.blob.com
      Port 23123
@@ -98,7 +97,7 @@ __RCSID("$NetBSD: readconf.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
      PublicKeyAuthentication no
 
    Host *.su
-     Cipher none
+     Ciphers aes128-ctr
      PasswordAuthentication no
 
    Host vpn.fake.com
@@ -182,6 +181,44 @@ static struct {
 	const char *name;
 	OpCodes opcode;
 } keywords[] = {
+	/* Deprecated options */
+	{ "fallbacktorsh", oDeprecated },
+	{ "globalknownhostsfile2", oDeprecated },
+	{ "rhostsauthentication", oDeprecated },
+	{ "userknownhostsfile2", oDeprecated },
+	{ "useroaming", oDeprecated },
+	{ "usersh", oDeprecated },
+
+	/* Unsupported options */
+	{ "afstokenpassing", oUnsupported },
+	{ "kerberosauthentication", oUnsupported },
+	{ "kerberostgtpassing", oUnsupported },
+
+	/* Sometimes-unsupported options */
+#if defined(GSSAPI)
+	{ "gssapiauthentication", oGssAuthentication },
+	{ "gssapidelegatecredentials", oGssDelegateCreds },
+# else
+	{ "gssapiauthentication", oUnsupported },
+	{ "gssapidelegatecredentials", oUnsupported },
+#endif
+#ifdef ENABLE_PKCS11
+	{ "smartcarddevice", oPKCS11Provider },
+	{ "pkcs11provider", oPKCS11Provider },
+# else
+	{ "smartcarddevice", oUnsupported },
+	{ "pkcs11provider", oUnsupported },
+#endif
+#ifdef WITH_SSH1
+	{ "rsaauthentication", oRSAAuthentication },
+	{ "rhostsrsaauthentication", oRhostsRSAAuthentication },
+	{ "compressionlevel", oCompressionLevel },
+# else
+	{ "rsaauthentication", oUnsupported },
+	{ "rhostsrsaauthentication", oUnsupported },
+	{ "compressionlevel", oUnsupported },
+#endif
+
 	{ "forwardagent", oForwardAgent },
 	{ "forwardx11", oForwardX11 },
 	{ "forwardx11trusted", oForwardX11Trusted },
@@ -190,14 +227,11 @@ static struct {
 	{ "xauthlocation", oXAuthLocation },
 	{ "gatewayports", oGatewayPorts },
 	{ "useprivilegedport", oUsePrivilegedPort },
-	{ "rhostsauthentication", oDeprecated },
 	{ "passwordauthentication", oPasswordAuthentication },
 	{ "kbdinteractiveauthentication", oKbdInteractiveAuthentication },
 	{ "kbdinteractivedevices", oKbdInteractiveDevices },
-	{ "rsaauthentication", oRSAAuthentication },
 	{ "pubkeyauthentication", oPubkeyAuthentication },
 	{ "dsaauthentication", oPubkeyAuthentication },		    /* alias */
-	{ "rhostsrsaauthentication", oRhostsRSAAuthentication },
 	{ "hostbasedauthentication", oHostbasedAuthentication },
 	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
 	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
@@ -220,8 +254,6 @@ static struct {
 	{ "gssapiauthentication", oUnsupported },
 	{ "gssapidelegatecredentials", oUnsupported },
 #endif
-	{ "fallbacktorsh", oDeprecated },
-	{ "usersh", oDeprecated },
 	{ "identityfile", oIdentityFile },
 	{ "identityfile2", oIdentityFile },			/* obsolete */
 	{ "identitiesonly", oIdentitiesOnly },
@@ -243,15 +275,12 @@ static struct {
 	{ "match", oMatch },
 	{ "escapechar", oEscapeChar },
 	{ "globalknownhostsfile", oGlobalKnownHostsFile },
-	{ "globalknownhostsfile2", oDeprecated },
 	{ "userknownhostsfile", oUserKnownHostsFile },
-	{ "userknownhostsfile2", oDeprecated },
 	{ "connectionattempts", oConnectionAttempts },
 	{ "batchmode", oBatchMode },
 	{ "checkhostip", oCheckHostIP },
 	{ "stricthostkeychecking", oStrictHostKeyChecking },
 	{ "compression", oCompression },
-	{ "compressionlevel", oCompressionLevel },
 	{ "tcpkeepalive", oTCPKeepAlive },
 	{ "keepalive", oTCPKeepAlive },				/* obsolete */
 	{ "numberofpasswordprompts", oNumberOfPasswordPrompts },
@@ -260,13 +289,6 @@ static struct {
 	{ "preferredauthentications", oPreferredAuthentications },
 	{ "hostkeyalgorithms", oHostKeyAlgorithms },
 	{ "bindaddress", oBindAddress },
-#ifdef ENABLE_PKCS11
-	{ "smartcarddevice", oPKCS11Provider },
-	{ "pkcs11provider", oPKCS11Provider },
-#else
-	{ "smartcarddevice", oUnsupported },
-	{ "pkcs11provider", oUnsupported },
-#endif
 	{ "clearallforwardings", oClearAllForwardings },
 	{ "enablesshkeysign", oEnableSSHKeysign },
 	{ "verifyhostkeydns", oVerifyHostKeyDNS },
@@ -287,7 +309,6 @@ static struct {
 	{ "localcommand", oLocalCommand },
 	{ "permitlocalcommand", oPermitLocalCommand },
 	{ "visualhostkey", oVisualHostKey },
-	{ "useroaming", oDeprecated },
 	{ "kexalgorithms", oKexAlgorithms },
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
@@ -848,11 +869,11 @@ process_config_line_depth(Options *options, struct passwd *pw, const char *host,
 		activep = &cmdline;
 	}
 
-	/* Strip trailing whitespace */
+	/* Strip trailing whitespace. Allow \f (form feed) at EOL only */
 	if ((len = strlen(line)) == 0)
 		return 0;
 	for (len--; len > 0; len--) {
-		if (strchr(WHITESPACE, line[len]) == NULL)
+		if (strchr(WHITESPACE "\f", line[len]) == NULL)
 			break;
 		line[len] = '\0';
 	}
@@ -1252,7 +1273,7 @@ parse_int:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		if (!ciphers_valid(*arg == '+' ? arg + 1 : arg))
+		if (*arg != '-' && !ciphers_valid(*arg == '+' ? arg + 1 : arg))
 			fatal("%.200s line %d: Bad SSH2 cipher spec '%s'.",
 			    filename, linenum, arg ? arg : "<NONE>");
 		if (*activep && options->ciphers == NULL)
@@ -1263,7 +1284,7 @@ parse_int:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.", filename, linenum);
-		if (!mac_valid(*arg == '+' ? arg + 1 : arg))
+		if (*arg != '-' && !mac_valid(*arg == '+' ? arg + 1 : arg))
 			fatal("%.200s line %d: Bad SSH2 Mac spec '%s'.",
 			    filename, linenum, arg ? arg : "<NONE>");
 		if (*activep && options->macs == NULL)
@@ -1275,7 +1296,8 @@ parse_int:
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.",
 			    filename, linenum);
-		if (!kex_names_valid(*arg == '+' ? arg + 1 : arg))
+		if (*arg != '-' &&
+		    !kex_names_valid(*arg == '+' ? arg + 1 : arg))
 			fatal("%.200s line %d: Bad SSH2 KexAlgorithms '%s'.",
 			    filename, linenum, arg ? arg : "<NONE>");
 		if (*activep && options->kex_algorithms == NULL)
@@ -1289,7 +1311,8 @@ parse_keytypes:
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing argument.",
 			    filename, linenum);
-		if (!sshkey_names_valid2(*arg == '+' ? arg + 1 : arg, 1))
+		if (*arg != '-' &&
+		    !sshkey_names_valid2(*arg == '+' ? arg + 1 : arg, 1))
 			fatal("%s line %d: Bad key types '%s'.",
 				filename, linenum, arg ? arg : "<NONE>");
 		if (*activep && *charptr == NULL)
@@ -1557,6 +1580,7 @@ parse_keytypes:
 			if (r == GLOB_NOMATCH) {
 				debug("%.200s line %d: include %s matched no "
 				    "files",filename, linenum, arg2);
+				free(arg2);
 				continue;
 			} else if (r != 0)
 				fatal("%.200s line %d: glob failed for %s.",
@@ -1573,6 +1597,11 @@ parse_keytypes:
 				    flags | SSHCONF_CHECKPERM |
 				    (oactive ? 0 : SSHCONF_NEVERMATCH),
 				    activep, depth + 1);
+				if (r != 1 && errno != ENOENT) {
+					fatal("Can't open user config file "
+					    "%.100s: %.100s", gl.gl_pathv[i],
+					    strerror(errno));
+				}
 				/*
 				 * don't let Match in includes clobber the
 				 * containing file's Match state.
@@ -1775,7 +1804,7 @@ read_config_file_depth(const char *filename, struct passwd *pw,
     int flags, int *activep, int depth)
 {
 	FILE *f;
-	char line[1024];
+	char line[4096];
 	int linenum;
 	int bad_options = 0;
 
@@ -1805,6 +1834,8 @@ read_config_file_depth(const char *filename, struct passwd *pw,
 	while (fgets(line, sizeof(line), f)) {
 		/* Update line number counter. */
 		linenum++;
+		if (strlen(line) == sizeof(line) - 1)
+			fatal("%s line %d too long", filename, linenum);
 		if (process_config_line_depth(options, pw, host, original_host,
 		    line, filename, linenum, activep, flags, depth) != 0)
 			bad_options++;
@@ -2572,10 +2603,10 @@ dump_cfg_forwards(OpCodes code, u_int count, const struct Forward *fwds)
 	/* oDynamicForward */
 	for (i = 0; i < count; i++) {
 		fwd = &fwds[i];
-		if (code == oDynamicForward &&
+		if (code == oDynamicForward && fwd->connect_host != NULL &&
 		    strcmp(fwd->connect_host, "socks") != 0)
 			continue;
-		if (code == oLocalForward &&
+		if (code == oLocalForward && fwd->connect_host != NULL &&
 		    strcmp(fwd->connect_host, "socks") == 0)
 			continue;
 		printf("%s", lookup_opcode_name(code));
@@ -2648,8 +2679,10 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_fmtint(oProxyUseFdpass, o->proxy_use_fdpass);
 	dump_cfg_fmtint(oPubkeyAuthentication, o->pubkey_authentication);
 	dump_cfg_fmtint(oRequestTTY, o->request_tty);
+#ifdef WITH_RSA1
 	dump_cfg_fmtint(oRhostsRSAAuthentication, o->rhosts_rsa_authentication);
 	dump_cfg_fmtint(oRSAAuthentication, o->rsa_authentication);
+#endif
 	dump_cfg_fmtint(oStreamLocalBindUnlink, o->fwd_opts.streamlocal_bind_unlink);
 	dump_cfg_fmtint(oStrictHostKeyChecking, o->strict_host_key_checking);
 	dump_cfg_fmtint(oTCPKeepAlive, o->tcp_keep_alive);
@@ -2661,7 +2694,9 @@ dump_client_config(Options *o, const char *host)
 
 	/* Integer options */
 	dump_cfg_int(oCanonicalizeMaxDots, o->canonicalize_max_dots);
+#ifdef WITH_SSH1
 	dump_cfg_int(oCompressionLevel, o->compression_level);
+#endif
 	dump_cfg_int(oConnectionAttempts, o->connection_attempts);
 	dump_cfg_int(oForwardX11Timeout, o->forward_x11_timeout);
 	dump_cfg_int(oNumberOfPasswordPrompts, o->number_of_password_prompts);
@@ -2681,7 +2716,9 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_string(oLocalCommand, o->local_command);
 	dump_cfg_string(oLogLevel, log_level_name(o->log_level));
 	dump_cfg_string(oMacs, o->macs ? o->macs : KEX_CLIENT_MAC);
+#ifdef ENABLE_PKCS11
 	dump_cfg_string(oPKCS11Provider, o->pkcs11_provider);
+#endif
 	dump_cfg_string(oPreferredAuthentications, o->preferred_authentications);
 	dump_cfg_string(oPubkeyAcceptedKeyTypes, o->pubkey_key_types);
 	dump_cfg_string(oRevokedHostKeys, o->revoked_host_keys);
