@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2274 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2275 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -500,3 +500,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	bind: Import version 9.10.4-P8. [christos 20170413]
 	ntp: Import ntp 4.2.8p10. [christos 20170413]
 	dhcpcd: Import dhcpcd 7.0.0-beta3 [roy 20170414]
+	OpenSSH: Imported 7.5. [christos 20170418]
