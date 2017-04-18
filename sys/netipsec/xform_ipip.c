@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.46 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,17 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.46 2017/04/18 05:25:32 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
  */
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#include "opt_random_ip_id.h"
-#endif /* __FreeBSD__ */
 #endif
 
 #include <sys/param.h>
@@ -71,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp
 #include <netinet/ip_ecn.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_encap.h>
-#ifdef __FreeBSD__
-#include <netinet/ipprotosw.h>
-#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_private.h>
@@ -88,9 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netipsec/ipsec6.h>
-#  ifdef __FreeBSD__
-#  include <netinet6/ip6_ecn.h>
-#  endif
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6protosw.h>
 #endif
@@ -99,11 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.45 2017/04/15 22:01:57 christos Exp
 #include <netipsec/key_debug.h>
 #include <netipsec/ipsec_osdep.h>
 
-#ifdef __FreeBSD__
-typedef void	pr_in_input_t (struct mbuf *, int, int); /* XXX FIX THIS */
-#else
 typedef void	pr_in_input_t (struct mbuf *m, ...);
-#endif
 
 /*
  * We can control the acceptance of IP4 packets by altering the sysctl
@@ -123,9 +109,6 @@ SYSCTL_STRUCT(_net_inet_ipip, IPSECCTL_STATS,
 
 #endif
 
-#ifdef __FreeBSD__
-static
-#endif
 void ipe4_attach(void);
 
 
@@ -476,14 +459,7 @@ ipip_output(
 		ipo->ip_sum = 0;
 		ipo->ip_src = saidx->src.sin.sin_addr;
 		ipo->ip_dst = saidx->dst.sin.sin_addr;
-
-#if defined(__NetBSD__)
 		ipo->ip_id = ip_newid(NULL);
-#elif defined(RANDOM_IP_ID)
-		ipo->ip_id = ip_randomid();
-#else
-		ipo->ip_id = htons(ip_id++);
-#endif
 
 		/* If the inner protocol is IP... */
 		if (tp == IPVERSION) {

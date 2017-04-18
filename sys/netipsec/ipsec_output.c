@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.42 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.43 2017/04/18 05:25:32 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,16 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.42 2017/04/06 09:20:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.43 2017/04/18 05:25:32 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
  */
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
 #endif
 
 #include <sys/param.h>
@@ -59,11 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.42 2017/04/06 09:20:07 ozaki-r Ex
 #include <netinet/ip_var.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_ecn.h>
-#ifdef INET6
-#  ifdef __FreeBSD__
-#  include <netinet6/ip6_ecn.h>
-#  endif
-#endif
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -119,11 +111,6 @@ ipsec_register_done(struct mbuf *m, int * error)
 static int
 ipsec_reinject_ipstack(struct mbuf *m, int af)
 {
-#ifdef INET
-#ifdef __FreeBSD__
-	struct ip *ip;
-#endif /* __FreeBSD_ */
-#endif /* INET */
 #if defined(INET) || defined(INET6)
 	int rv;
 #endif
@@ -131,12 +118,6 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-#ifdef __FreeBSD__
-		ip = mtod(m, struct ip *);
-		/* FreeBSD ip_output() expects ip_len, ip_off in host endian */
-		ip->ip_len = ntohs(ip->ip_len);
-		ip->ip_off = ntohs(ip->ip_off);
-#endif /* __FreeBSD_ */
 		KERNEL_LOCK(1, NULL);
 		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT|IP_NOIPNEWID,
 		    NULL, NULL);
@@ -520,10 +501,7 @@ ipsec4_process_packet(
 				break;
 			default:		/* propagate to outer header */
 				setdf = ip->ip_off;
-#ifndef __FreeBSD__
-		/* On FreeBSD, ip_off and ip_len assumed in host endian. */
 				setdf = ntohs(setdf);
-#endif
 				setdf = htons(setdf & IP_DF);
 				break;
 			}
