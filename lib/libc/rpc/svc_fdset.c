@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.15 2015/11/10 20:56:20 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.16 2017/04/18 11:35:34 maya Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.15 2015/11/10 20:56:20 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.16 2017/04/18 11:35:34 maya Exp $");
 
 
 #include "reentrant.h"
@@ -387,6 +387,8 @@ fd_set *
 svc_fdset_copy(const fd_set *orig)
 {
 	int size = svc_fdset_getsize(0);
+	if (size == -1)
+		return NULL;
 	fd_set *copy = calloc(1, __NFD_BYTES(size));
 	if (copy == NULL)
 		return NULL;
