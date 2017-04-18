@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.1 2017/04/10 02:28:23 phil Exp $ */
+/*	$NetBSD: execute.c,v 1.2 2017/04/18 04:35:18 maya Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -313,8 +313,7 @@ execute (void)
       
       case 'h' : /* Halt the machine. */
 	bc_exit (0);
-        /* NOTREACHED */
-        break;
+	/* NOTREACHED */
 
       case 'i' : /* increment number */
 	var_name = byte(&pc);

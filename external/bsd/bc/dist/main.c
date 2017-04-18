@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2017/04/10 02:28:23 phil Exp $ */
+/*	$NetBSD: main.c,v 1.2 2017/04/18 04:35:18 maya Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -113,7 +113,7 @@ parse_args (int argc, char **argv)
 	case 'h':  /* help */
 	  usage(argv[0]);
 	  bc_exit (0);
-	  break;
+	  /* NOTREACHED */
 
 	case 'i':  /* force interactive */
 	  interactive = TRUE;
@@ -134,7 +134,7 @@ parse_args (int argc, char **argv)
 	case 'v':  /* Print the version. */
 	  show_bc_version ();
 	  bc_exit (0);
-	  break;
+	  /* NOTREACHED */
 
 	case 'w':  /* Non standard features give warnings. */
 	  warn_not_std = TRUE;
@@ -270,7 +270,6 @@ main (int argc, char **argv)
     printf ("\n");
 
   bc_exit (0);
-  return 0; // to keep the compiler from complaining
 }
 
 
