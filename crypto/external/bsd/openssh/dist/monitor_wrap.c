@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.16 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.17 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.89 2016/08/13 17:47:41 markus Exp $ */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.16 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.17 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>

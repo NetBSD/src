@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.h,v 1.6 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: sftp-common.h,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: sftp-common.h,v 1.12 2015/01/14 13:54:13 djm Exp $ */
 
 /*

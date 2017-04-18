@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.c,v 1.6 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: uidswap.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: uidswap.c,v 1.39 2015/06/24 01:49:19 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: uidswap.c,v 1.6 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: uidswap.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 #include <sys/param.h>
 #include <errno.h>
 #include <pwd.h>

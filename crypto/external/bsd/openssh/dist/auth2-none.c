@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-none.c,v 1.6 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: auth2-none.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: auth2-none.c,v 1.18 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.6 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>

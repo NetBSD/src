@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.11 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.12 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: pathnames.h,v 1.25 2016/03/31 05:24:06 dtucker Exp $ */
 
 /*

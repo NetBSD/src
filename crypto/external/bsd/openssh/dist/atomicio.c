@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.c,v 1.7 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: atomicio.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: atomicio.c,v 1.28 2016/07/27 23:18:12 djm Exp $ */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: atomicio.c,v 1.7 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: atomicio.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
 #include <sys/param.h>
 #include <sys/uio.h>
 

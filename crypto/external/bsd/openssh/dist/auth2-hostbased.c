@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.10 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: auth2-hostbased.c,v 1.11 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: auth2-hostbased.c,v 1.26 2016/03/07 19:02:43 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.10 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.11 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-skey.c,v 1.4 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: auth-skey.c,v 1.5 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: auth-skey.c,v 1.27 2007/01/21 01:41:54 stevesk Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: auth-skey.c,v 1.4 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: auth-skey.c,v 1.5 2017/04/18 18:41:46 christos Exp $");
 
 #ifdef SKEY
 

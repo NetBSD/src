@@ -1,6 +1,5 @@
-/*	$NetBSD: channels.c,v 1.17 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: channels.c,v 1.356 2016/10/18 17:32:54 dtucker Exp $ */
-
+/*	$NetBSD: channels.c,v 1.18 2017/04/18 18:41:46 christos Exp $	*/
+/* $OpenBSD: channels.c,v 1.357 2017/02/01 02:59:09 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.17 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.18 2017/04/18 18:41:46 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -3084,7 +3083,7 @@ channel_input_port_open(int type, u_int32_t seq, void *ctxt)
 	}
 	packet_check_eom();
 	c = channel_connect_to_port(host, host_port,
-	    "connected socket", originator_string);
+	    "connected socket", originator_string, NULL, NULL);
 	free(originator_string);
 	free(host);
 	if (c == NULL) {
@@ -4052,9 +4051,13 @@ channel_connect_ctx_free(struct channel_connect *cctx)
 	memset(cctx, 0, sizeof(*cctx));
 }
 
-/* Return CONNECTING channel to remote host:port or local socket path */
+/*
+ * Return CONNECTING channel to remote host:port or local socket path,
+ * passing back the failure reason if appropriate.
+ */
 static Channel *
-connect_to(const char *name, int port, const char *ctype, const char *rname)
+connect_to_reason(const char *name, int port, const char *ctype,
+    const char *rname, int *reason, const char **errmsg)
 {
 	struct addrinfo hints;
 	int gaierr;
@@ -4095,7 +4098,12 @@ connect_to(const char *name, int port, const char *ctype, const char *rname)
 		hints.ai_family = IPv4or6;
 		hints.ai_socktype = SOCK_STREAM;
 		snprintf(strport, sizeof strport, "%d", port);
-		if ((gaierr = getaddrinfo(name, strport, &hints, &cctx.aitop)) != 0) {
+		if ((gaierr = getaddrinfo(name, strport, &hints, &cctx.aitop))
+		    != 0) {
+			if (errmsg != NULL)
+				*errmsg = ssh_gai_strerror(gaierr);
+			if (reason != NULL)
+				*reason = SSH2_OPEN_CONNECT_FAILED;
 			error("connect_to %.100s: unknown host (%s)", name,
 			    ssh_gai_strerror(gaierr));
 			return NULL;
@@ -4116,6 +4124,13 @@ connect_to(const char *name, int port, const char *ctype, const char *rname)
 	    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT, 0, rname, 1);
 	c->connect_ctx = cctx;
 	return c;
+}
+
+/* Return CONNECTING channel to remote host:port or local socket path */
+static Channel *
+connect_to(const char *name, int port, const char *ctype, const char *rname)
+{
+	return connect_to_reason(name, port, ctype, rname, NULL, NULL);
 }
 
 /*
@@ -4162,7 +4177,8 @@ channel_connect_by_listen_path(const char *path, const char *ctype, const char *
 
 /* Check if connecting to that port is permitted and connect. */
 Channel *
-channel_connect_to_port(const char *host, u_short port, const char *ctype, const char *rname)
+channel_connect_to_port(const char *host, u_short port, const char *ctype,
+    const char *rname, int *reason, const char **errmsg)
 {
 	int i, permit, permit_adm = 1;
 
@@ -4187,9 +4203,11 @@ channel_connect_to_port(const char *host, u_short port, const char *ctype, const
 	if (!permit || !permit_adm) {
 		logit("Received request to connect to host %.100s port %d, "
 		    "but the request was denied.", host, port);
+		if (reason != NULL)
+			*reason = SSH2_OPEN_ADMINISTRATIVELY_PROHIBITED;
 		return NULL;
 	}
-	return connect_to(host, port, ctype, rname);
+	return connect_to_reason(host, port, ctype, rname, reason, errmsg);
 }
 
 /* Check if connecting to that path is permitted and connect. */

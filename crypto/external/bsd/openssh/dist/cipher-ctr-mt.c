@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher-ctr-mt.c,v 1.7 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: cipher-ctr-mt.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
 /*
  * OpenSSH Multi-threaded AES-CTR Cipher
  *

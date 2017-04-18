@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgex.c,v 1.5 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: kexgex.c,v 1.6 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: kexgex.c,v 1.29 2015/01/19 20:16:15 markus Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgex.c,v 1.5 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: kexgex.c,v 1.6 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>

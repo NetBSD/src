@@ -1,11 +1,11 @@
-/*	$NetBSD: key.c,v 1.20 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.21 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: key.c,v 1.130 2016/05/02 09:36:42 djm Exp $ */
 /*
  * placed in the public domain
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: key.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.21 2017/04/18 18:41:46 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <errno.h>
