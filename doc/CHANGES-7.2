@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.9 2017/04/17 06:08:12 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.10 2017/04/18 19:54:52 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -608,10 +608,10 @@ sys/compat/linux/common/linux_signal.h		1.31
 	Add pselect6 Linux system call.
 	[manu, ticket #1354]
 
-sys/arch/amd64/conf/XEN3_DOM0			1.126
-sys/arch/i386/conf/XEN3_DOM0			1.104
+sys/arch/amd64/conf/XEN3_DOM0			1.126, 1.134 via patch
+sys/arch/i386/conf/XEN3_DOM0			1.104, 1.112 via patch
 sys/arch/xen/x86/xen_pmap.c			1.25
 
 	Make xen dom0 SMP bootable again.  Disabled by default.
-	[khorben, ticket #1367]
+	[khorben/bouyer, ticket #1367]
 
