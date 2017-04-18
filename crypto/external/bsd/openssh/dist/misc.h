@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.11 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.12 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: misc.h,v 1.61 2016/11/30 00:28:31 dtucker Exp $ */
 
 /*

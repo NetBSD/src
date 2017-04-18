@@ -1,4 +1,4 @@
-/*	$NetBSD: readpassphrase.h,v 1.4 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: readpassphrase.h,v 1.5 2017/04/18 18:41:46 christos Exp $	*/
 /*	$OpenBSD: readpassphrase.h,v 1.1 2000/11/21 00:48:38 millert Exp $	*/
 
 /*

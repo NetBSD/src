@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.7 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.8 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: dispatch.c,v 1.27 2015/05/01 07:10:01 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dispatch.c,v 1.7 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: dispatch.c,v 1.8 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 
 #include <signal.h>
