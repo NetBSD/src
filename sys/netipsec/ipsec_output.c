@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.43 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.44 2017/04/18 05:26:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.43 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.44 2017/04/18 05:26:42 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -161,11 +161,11 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
 
-	IPSEC_ASSERT(m != NULL, ("ipsec_process_done: null mbuf"));
-	IPSEC_ASSERT(isr != NULL, ("ipsec_process_done: null ISR"));
+	KASSERT(m != NULL);
+	KASSERT(isr != NULL);
 	sav = isr->sav;
-	IPSEC_ASSERT(sav != NULL, ("ipsec_process_done: null SA"));
-	IPSEC_ASSERT(sav->sah != NULL, ("ipsec_process_done: null SAH"));
+	KASSERT(sav != NULL);
+	KASSERT(sav->sah != NULL);
 
 	saidx = &sav->sah->saidx;
 
@@ -316,8 +316,8 @@ do {									\
 	struct secasvar *sav;
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_nextisr");
-	IPSEC_ASSERT(af == AF_INET || af == AF_INET6,
-		("ipsec_nextisr: invalid address family %u", af));
+	KASSERTMSG(af == AF_INET || af == AF_INET6,
+	    "invalid address family %u", af);
 again:
 	/*
 	 * Craft SA index to search for proper SA.  Note that
@@ -396,9 +396,9 @@ again:
 	sav = isr->sav;
 	/* sav may be NULL here if we have an USE rule */
 	if (sav == NULL) {		
-		IPSEC_ASSERT(ipsec_get_reqlevel(isr) == IPSEC_LEVEL_USE,
-			("ipsec_nextisr: no SA found, but required; level %u",
-			ipsec_get_reqlevel(isr)));
+		KASSERTMSG(ipsec_get_reqlevel(isr) == IPSEC_LEVEL_USE,
+		    "no SA found, but required; level %u",
+		    ipsec_get_reqlevel(isr));
 		isr = isr->next;
 		/* 
 		 * No more rules to apply, return NULL isr and no error 
@@ -438,7 +438,7 @@ again:
 	}
 	return isr;
 bad:
-	IPSEC_ASSERT(*error != 0, ("ipsec_nextisr: error return w/ no error code"));
+	KASSERTMSG(*error != 0, "error return w/ no error code");
 	return NULL;
 #undef IPSEC_OSTAT
 }
@@ -460,8 +460,8 @@ ipsec4_process_packet(
 	struct ip *ip;
 	int s, error, i, off;
 
-	IPSEC_ASSERT(m != NULL, ("ipsec4_process_packet: null mbuf"));
-	IPSEC_ASSERT(isr != NULL, ("ipsec4_process_packet: null isr"));
+	KASSERT(m != NULL);
+	KASSERT(isr != NULL);
 
 	s = splsoftnet();			/* insure SA contents don't change */
 
@@ -695,8 +695,8 @@ ipsec6_process_packet(
 	int s, error, i, off;
 	union sockaddr_union *dst;
 
-	IPSEC_ASSERT(m != NULL, ("ipsec6_process_packet: null mbuf"));
-	IPSEC_ASSERT(isr != NULL, ("ipsec6_process_packet: null isr"));
+	KASSERT(m != NULL);
+	KASSERT(isr != NULL);
 
 	s = splsoftnet();   /* insure SA contents don't change */
 

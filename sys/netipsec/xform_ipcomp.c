@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.35 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.36 2017/04/18 05:26:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.35 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.36 2017/04/18 05:26:42 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -243,9 +243,8 @@ ipcomp_input_cb(struct cryptop *crp)
 	uint16_t dport;
 	uint16_t sport;
 
+	KASSERT(crp->crp_opaque != NULL);
 	tc = crp->crp_opaque;
-	IPSEC_ASSERT(tc != NULL, ("%s: null opaque crypto data area!",
-	    __func__));
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	m = crp->crp_buf;
@@ -265,10 +264,9 @@ ipcomp_input_cb(struct cryptop *crp)
 	}
 
 	saidx = &sav->sah->saidx;
-	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
-		saidx->dst.sa.sa_family == AF_INET6,
-		("%s: unexpected protocol family %u", __func__,
-		 saidx->dst.sa.sa_family));
+	KASSERTMSG(saidx->dst.sa.sa_family == AF_INET ||
+	    saidx->dst.sa.sa_family == AF_INET6,
+	    "unexpected protocol family %u", saidx->dst.sa.sa_family);
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {
@@ -387,10 +385,10 @@ ipcomp_output(
 	struct tdb_crypto *tc;
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
+	KASSERT(isr->sav != NULL);
 	sav = isr->sav;
-	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
+	KASSERT(sav->tdb_compalgxform != NULL);
 	ipcompx = sav->tdb_compalgxform;
-	IPSEC_ASSERT(ipcompx != NULL, ("%s: null compression xform", __func__));
 
 	ralen = m->m_pkthdr.len - skip;	/* Raw payload length before comp. */
     
@@ -519,9 +517,8 @@ ipcomp_output_cb(struct cryptop *crp)
 	uint16_t cpi;
 	struct ipcomp * ipcomp;
 
-
+	KASSERT(crp->crp_opaque != NULL);
 	tc = crp->crp_opaque;
-	IPSEC_ASSERT(tc != NULL, ("%s: null opaque data area!", __func__));
 	m = crp->crp_buf;
 	skip = tc->tc_skip;
 	rlen = crp->crp_ilen - skip;
@@ -537,7 +534,7 @@ ipcomp_output_cb(struct cryptop *crp)
 		error = ENOBUFS;		/*XXX*/
 		goto bad;
 	}
-	IPSEC_ASSERT(isr->sav == sav, ("%s: SA changed", __func__));
+	KASSERTMSG(isr->sav == sav, "SA changed");
 
 	/* Check for crypto errors */
 	if (crp->crp_etype) {

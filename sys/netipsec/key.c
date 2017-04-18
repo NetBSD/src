@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.107 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.108 2017/04/18 05:26:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.107 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.108 2017/04/18 05:26:42 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -531,23 +531,19 @@ struct callout key_timehandler_ch;
 
 #define	SA_ADDREF(p) do {						\
 	(p)->refcnt++;							\
-	IPSEC_ASSERT((p)->refcnt != 0,					\
-		("SA refcnt overflow at %s:%u", __FILE__, __LINE__));	\
+	KASSERTMSG((p)->refcnt != 0, "SA refcnt overflow");		\
 } while (0)
 #define	SA_DELREF(p) do {						\
-	IPSEC_ASSERT((p)->refcnt > 0,					\
-		("SA refcnt underflow at %s:%u", __FILE__, __LINE__));	\
+	KASSERTMSG((p)->refcnt > 0, "SA refcnt underflow");		\
 	(p)->refcnt--;							\
 } while (0)
 
 #define	SP_ADDREF(p) do {						\
 	(p)->refcnt++;							\
-	IPSEC_ASSERT((p)->refcnt != 0,					\
-		("SP refcnt overflow at %s:%u", __FILE__, __LINE__));	\
+	KASSERTMSG((p)->refcnt != 0, "SP refcnt overflow");		\
 } while (0)
 #define	SP_DELREF(p) do {						\
-	IPSEC_ASSERT((p)->refcnt > 0,					\
-		("SP refcnt underflow at %s:%u", __FILE__, __LINE__));	\
+	KASSERTMSG((p)->refcnt > 0, "SP refcnt underflow");		\
 	(p)->refcnt--;							\
 } while (0)
 
@@ -598,9 +594,9 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 	struct secpolicy *sp;
 	int s;
 
-	IPSEC_ASSERT(spidx != NULL, ("key_allocsp: null spidx"));
-	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-		("key_allocsp: invalid direction %u", dir));
+	KASSERT(spidx != NULL);
+	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
+	    "invalid direction %u", dir);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP %s from %s:%u\n", __func__, where, tag));
@@ -655,9 +651,9 @@ key_allocsp2(u_int32_t spi,
 	struct secpolicy *sp;
 	int s;
 
-	IPSEC_ASSERT(dst != NULL, ("key_allocsp2: null dst"));
-	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-		("key_allocsp2: invalid direction %u", dir));
+	KASSERT(dst != NULL);
+	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
+	    "invalid direction %u", dir);
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP %s from %s:%u\n", __func__, where, tag));
@@ -792,11 +788,11 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 	u_int level;
 	int error;
 
-	IPSEC_ASSERT(isr != NULL, ("key_checkrequest: null isr"));
-	IPSEC_ASSERT(saidx != NULL, ("key_checkrequest: null saidx"));
-	IPSEC_ASSERT(saidx->mode == IPSEC_MODE_TRANSPORT ||
-		saidx->mode == IPSEC_MODE_TUNNEL,
-		("key_checkrequest: unexpected policy %u", saidx->mode));
+	KASSERT(isr != NULL);
+	KASSERT(saidx != NULL);
+	KASSERTMSG(saidx->mode == IPSEC_MODE_TRANSPORT ||
+	    saidx->mode == IPSEC_MODE_TUNNEL,
+	    "unexpected policy %u", saidx->mode);
 
 	/* get current level */
 	level = ipsec_get_reqlevel(isr);
@@ -867,7 +863,7 @@ key_checkrequest(struct ipsecrequest *isr, const struct secasindex *saidx)
 
 	if (level != IPSEC_LEVEL_REQUIRE) {
 		/* XXX sigh, the interface to this routine is botched */
-		IPSEC_ASSERT(isr->sav == NULL, ("key_checkrequest: unexpected SA"));
+		KASSERTMSG(isr->sav == NULL, "unexpected SA");
 		return 0;
 	} else {
 		return ENOENT;
@@ -993,8 +989,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 
 			key_sa_chgstate(d, SADB_SASTATE_DEAD);
 
-			IPSEC_ASSERT(d->refcnt > 0,
-				("key_do_allocsa_policy: bogus ref count"));
+			KASSERT(d->refcnt > 0);
 
 			satype = key_proto2satype(d->sah->saidx.proto);
 			if (satype == 0)
@@ -1105,7 +1100,7 @@ key_allocsa(
 	else
 		chkport = PORT_NONE;
 
-	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
+	KASSERT(dst != NULL);
 
 	/*
 	 * XXX IPCOMP case
@@ -1218,7 +1213,7 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 {
 	struct secpolicy *sp = *spp;
 
-	IPSEC_ASSERT(sp != NULL, ("key_freesp: null sp"));
+	KASSERT(sp != NULL);
 
 	SP_DELREF(sp);
 
@@ -1240,7 +1235,7 @@ void
 key_freeso(struct socket *so)
 {
 	/* sanity check */
-	IPSEC_ASSERT(so != NULL, ("key_freeso: null so"));
+	KASSERT(so != NULL);
 
 	switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET
@@ -1292,14 +1287,16 @@ key_freeso(struct socket *so)
 static void
 key_freesp_so(struct secpolicy **sp)
 {
-	IPSEC_ASSERT(sp != NULL && *sp != NULL, ("key_freesp_so: null sp"));
+
+	KASSERT(sp != NULL);
+	KASSERT(*sp != NULL);
 
 	if ((*sp)->policy == IPSEC_POLICY_ENTRUST ||
 	    (*sp)->policy == IPSEC_POLICY_BYPASS)
 		return;
 
-	IPSEC_ASSERT((*sp)->policy == IPSEC_POLICY_IPSEC,
-		("key_freesp_so: invalid policy %u", (*sp)->policy));
+	KASSERTMSG((*sp)->policy == IPSEC_POLICY_IPSEC,
+	    "invalid policy %u", (*sp)->policy);
 	KEY_FREESP(sp);
 }
 
@@ -1313,7 +1310,7 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 {
 	struct secasvar *sav = *psav;
 
-	IPSEC_ASSERT(sav != NULL, ("key_freesav: null sav"));
+	KASSERT(sav != NULL);
 
 	SA_DELREF(sav);
 
@@ -1337,13 +1334,12 @@ key_delsp(struct secpolicy *sp)
 {
 	int s;
 
-	IPSEC_ASSERT(sp != NULL, ("key_delsp: null sp"));
+	KASSERT(sp != NULL);
 
 	key_sp_dead(sp);
 
-	IPSEC_ASSERT(sp->refcnt == 0,
-		("key_delsp: SP with references deleted (refcnt %u)",
-		sp->refcnt));
+	KASSERTMSG(sp->refcnt == 0,
+	    "SP with references deleted (refcnt %u)", sp->refcnt);
 
 	s = splsoftnet();	/*called from softclock()*/
 
@@ -1377,7 +1373,7 @@ key_getsp(const struct secpolicyindex *spidx)
 {
 	struct secpolicy *sp;
 
-	IPSEC_ASSERT(spidx != NULL, ("key_getsp: null spidx"));
+	KASSERT(spidx != NULL);
 
 	LIST_FOREACH(sp, &sptree[spidx->dir], chain) {
 		if (sp->state == IPSEC_SPSTATE_DEAD)
@@ -2863,7 +2859,7 @@ key_newsah(const struct secasindex *saidx)
 {
 	struct secashead *newsah;
 
-	IPSEC_ASSERT(saidx != NULL, ("key_newsaidx: null saidx"));
+	KASSERT(saidx != NULL);
 
 	newsah = (struct secashead *)
 		malloc(sizeof(struct secashead), M_SECA, M_NOWAIT|M_ZERO);
@@ -3035,9 +3031,10 @@ done:
 static void
 key_delsav(struct secasvar *sav)
 {
-	IPSEC_ASSERT(sav != NULL, ("key_delsav: null sav"));
-	IPSEC_ASSERT(sav->refcnt == 0,
-		("key_delsav: reference count %u > 0", sav->refcnt));
+
+	KASSERT(sav != NULL);
+	KASSERTMSG(sav->refcnt == 0,
+	    "reference count %u > 0", sav->refcnt);
 
 	/* remove from SA header */
 	if (__LIST_CHAINED(sav))
@@ -6047,9 +6044,8 @@ key_getcomb_esp(void)
 		if (ipsec_esp_auth)
 			m = key_getcomb_ah();
 		else {
-			IPSEC_ASSERT(l <= MLEN,
-				("key_getcomb_esp: l=%u > MLEN=%lu",
-				l, (u_long) MLEN));
+			KASSERTMSG(l <= MLEN,
+			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m) {
 				M_ALIGN(m, l);
@@ -6064,8 +6060,7 @@ key_getcomb_esp(void)
 		totlen = 0;
 		for (n = m; n; n = n->m_next)
 			totlen += n->m_len;
-		IPSEC_ASSERT((totlen % l) == 0,
-			("key_getcomb_esp: totlen=%u, l=%u", totlen, l));
+		KASSERTMSG((totlen % l) == 0, "totlen=%u, l=%u", totlen, l);
 
 		for (off = 0; off < totlen; off += l) {
 			n = m_pulldown(m, off, l, &o);
@@ -6150,9 +6145,8 @@ key_getcomb_ah(void)
 			continue;
 
 		if (!m) {
-			IPSEC_ASSERT(l <= MLEN,
-				("key_getcomb_ah: l=%u > MLEN=%lu",
-				l, (u_long) MLEN));
+			KASSERTMSG(l <= MLEN,
+			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m) {
 				M_ALIGN(m, l);
@@ -6195,9 +6189,8 @@ key_getcomb_ipcomp(void)
 			continue;
 
 		if (!m) {
-			IPSEC_ASSERT(l <= MLEN,
-				("key_getcomb_ipcomp: l=%u > MLEN=%lu",
-				l, (u_long) MLEN));
+			KASSERTMSG(l <= MLEN,
+			    "l=%u > MLEN=%lu", l, (u_long) MLEN);
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m) {
 				M_ALIGN(m, l);
@@ -6297,10 +6290,9 @@ key_acquire(const struct secasindex *saidx, struct secpolicy *sp)
 	u_int32_t seq;
 
 	/* sanity check */
-	IPSEC_ASSERT(saidx != NULL, ("key_acquire: null saidx"));
+	KASSERT(saidx != NULL);
 	satype = key_proto2satype(saidx->proto);
-	IPSEC_ASSERT(satype != 0,
-		("key_acquire: null satype, protocol %u", saidx->proto));
+	KASSERTMSG(satype != 0, "null satype, protocol %u", saidx->proto);
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/*
@@ -7923,8 +7915,9 @@ key_getuserfqdn(void)
 void
 key_sa_recordxfer(struct secasvar *sav, struct mbuf *m)
 {
-	IPSEC_ASSERT(sav != NULL, ("key_sa_recordxfer: Null secasvar"));
-	IPSEC_ASSERT(m != NULL, ("key_sa_recordxfer: Null mbuf"));
+
+	KASSERT(sav != NULL);
+	KASSERT(m != NULL);
 	if (!sav->lft_c)
 		return;
 
