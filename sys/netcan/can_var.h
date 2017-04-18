@@ -1,4 +1,4 @@
-/*	$NetBSD: can_var.h,v 1.1.2.6 2017/04/18 20:37:38 bouyer Exp $	*/
+/*	$NetBSD: can_var.h,v 1.1.2.7 2017/04/18 21:29:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ struct can_ifreq {
 };
 
 #ifdef _KERNEL
+#include <sys/socketvar.h>
 
 /*
  * common structure for CAN interface drivers. Should be at the start of
