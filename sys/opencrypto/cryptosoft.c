@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.48 2017/04/13 01:24:34 ozaki-r Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.49 2017/04/18 17:05:05 maya Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.48 2017/04/13 01:24:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.49 2017/04/18 17:05:05 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,7 +759,6 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
 	if (result < crd->crd_len) {
 		adj = result - crd->crd_len;
 		if (outtype == CRYPTO_BUF_MBUF) {
-			adj = result - crd->crd_len;
 			m_adj((struct mbuf *)buf, adj);
 		}
 		/* Don't adjust the iov_len, it breaks the kmem_free */
