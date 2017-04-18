@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: ssh-ecdsa.c,v 1.10 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: ssh-ecdsa.c,v 1.13 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.10 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
