@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.173 2017/04/17 09:33:00 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.174 2017/04/18 10:00:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.173 2017/04/17 09:33:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.174 2017/04/18 10:00:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2675,7 +2675,7 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		parbsel = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT);
 		printf("        Port Arbitration Select: 0x%x\n", parbsel);
 		n = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_VC_ID);
-		printf("        VC ID %d\n", n);
+		printf("        VC ID: %d\n", n);
 		onoff("  VC Enable", reg, PCI_VC_RESOURCE_CTL_VC_ENABLE);
 
 		reg = regs[o2i(extcapoff + PCI_VC_RESOURCE_STA(i))] >> 16;
