@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.5 2017/03/24 19:21:06 maxv Exp $	*/
+/*	$NetBSD: pmc.c,v 1.6 2017/04/18 15:14:28 maya Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.5 2017/03/24 19:21:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.6 2017/04/18 15:14:28 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static x86_pmc_cpuval_t pmc_val_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
 static kmutex_t pmc_lock;
 
 static pmc_state_t pmc_state[PMC_NCOUNTERS];
-static int pmc_ncounters __read_mostly;
+static uint32_t pmc_ncounters __read_mostly;
 static int pmc_type __read_mostly;
 
 static int
