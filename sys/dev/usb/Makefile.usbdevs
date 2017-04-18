@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.usbdevs,v 1.9 2017/04/18 19:03:43 riastradh Exp $
+#	$NetBSD: Makefile.usbdevs,v 1.10 2017/04/18 19:04:25 riastradh Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is
 #
@@ -11,7 +11,7 @@
 #     and bump the kernel version in "src/sys/sys/param.h".
 # 5.) Commit "src/sys/dev/usb/usbdevs.h" and "src/sys/dev/usb/usbdevs_data.h";
 #     if you changed them, also commit "src/sys/dev/usb/usb.h" and
-#     "src/sys/sys/param/h".
+#     "src/sys/sys/param.h".
 
 
 .include <bsd.own.mk>
