@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.722 2017/04/17 09:03:50 riastradh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.723 2017/04/18 19:10:58 riastradh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.731 2017/04/17 08:59:37 riastradh Exp
+ *	NetBSD: usbdevs,v 1.732 2017/04/18 19:09:12 riastradh Exp
  */
 
 /*
@@ -770,7 +770,7 @@
 #define	USB_PRODUCT_AGFA_SNAPSCANE52	0x20fd		/* SnapScan e52 */
 
 /* Araneus products */
-#define	USB_PRODUCT_ARANEUS_ALEA_II	0x0001		/* Alea II TRNG */
+#define	USB_PRODUCT_ARANEUS_ALEA	0x0001		/* Alea I/II TRNG */
 
 /* Aincomm products */
 #define	USB_PRODUCT_AINCOMM_AWU2000B	0x1001		/* AWU2000B */
