@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.6 2017/03/12 10:19:40 martin Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.7 2017/04/18 12:17:12 flxd Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.6 2017/03/12 10:19:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.7 2017/04/18 12:17:12 flxd Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -95,6 +95,7 @@ struct bus_space vlpci_memt;
 static void
 regwrite_1(struct vlpci_softc * const sc, uint8_t off, uint8_t val)
 {
+
 	mutex_spin_enter(&sc->sc_lock);
 	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 0, off);
 	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 1, val);
@@ -124,14 +125,17 @@ vlpci_dump_window(struct vlpci_softc *sc, int num)
 	addr |= regread_1(sc, regaddr + 1) << 16;
 	attr = regread_1(sc, regaddr + 2);
 	size = 0x00010000 << ((attr & 0x1c) >> 2);
-	printf("memory window #%d at %08x size %08x flags %x\n", num, addr, size, attr);
+	printf("memory window #%d at %08x size %08x flags %x\n", num, addr,
+	    size, attr);
 }
 
 static int
-vlpci_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable, bus_space_handle_t *bshp)
+vlpci_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
+    bus_space_handle_t *bshp)
 {
+
 	*bshp = vlpci_mem_vaddr - 0x02000000 + bpa;
-printf("%s: %08lx -> %08lx\n", __func__, bpa, *bshp);
+	printf("%s: %08lx -> %08lx\n", __func__, bpa, *bshp);
 	return(0);
 }
 
@@ -143,10 +147,10 @@ vlpci_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 
 	ret = vlpci_mem_paddr + addr + off;
 
-	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE)
 		return (arm_btop(ret) | ARM32_MMAP_WRITECOMBINE);
-	} else
-		return arm_btop(ret);	
+	else
+		return arm_btop(ret);
 }
 
 static int
@@ -202,7 +206,7 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	regwrite_1(sc, 0x81, 0x1);
 
 	regwrite_1(sc, 0x82, 0x08); /* PCI dynamic acceleration decoding enable */
-	regwrite_1(sc, 0x83, 0x08); 
+	regwrite_1(sc, 0x83, 0x08);
 	printf("reg 0x83 %02x\n", regread_1(sc, 0x83));
 
 #if 1
@@ -217,7 +221,7 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	vlpci_mem_paddr = 0x02000000;	/* get from OF! */
-	
+
 	/*
 	 * we map in 1MB at 0x02000000, so program window #1 accordingly
 	 */
@@ -231,7 +235,7 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	vlpci_memt.bs_cookie = (void *)vlpci_mem_vaddr;
 	vlpci_memt.bs_map = vlpci_map;
 	vlpci_memt.bs_mmap = vlpci_mmap;
-	 
+
 	pc->pc_conf_v = sc;
 	pc->pc_attach_hook = vlpci_pc_attach_hook;
 	pc->pc_bus_maxdevs = vlpci_pc_bus_maxdevs;
@@ -266,9 +270,9 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_bus = 0;
 
-printf("dma %lx %lx, %lx\n", isa_bus_dma_tag._ranges[0].dr_sysbase,
-			 isa_bus_dma_tag._ranges[0].dr_busbase,
-			 isa_bus_dma_tag._ranges[0].dr_len);
+	printf("dma %lx %lx, %lx\n", isa_bus_dma_tag._ranges[0].dr_sysbase,
+	    isa_bus_dma_tag._ranges[0].dr_busbase,
+	    isa_bus_dma_tag._ranges[0].dr_len);
 
 	vlpci_dump_window(sc, 0);
 	vlpci_dump_window(sc, 1);
@@ -286,18 +290,21 @@ vlpci_pc_attach_hook(device_t parent, device_t self,
 static int
 vlpci_pc_bus_maxdevs(void *v, int busno)
 {
+
 	return busno == 0 ? 32 : 0;
 }
 
 static pcitag_t
 vlpci_pc_make_tag(void *v, int b, int d, int f)
 {
+
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 static void
 vlpci_pc_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 {
+
 	if (bp)
 		*bp = (tag >> 16) & 0xff;
 	if (dp)
@@ -356,6 +363,7 @@ vlpci_pc_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 static int
 vlpci_pc_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 {
+
 	switch (pa->pa_intrpin) {
 	default:
 	case 0:
@@ -375,13 +383,14 @@ vlpci_pc_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 
 	if (ih == PCI_INTERRUPT_PIN_NONE)
 		return NULL;
-	snprintf(buf, len, "irq %2lu", ih);
+	snprintf(buf, len, "irq %lu", ih);
 	return buf;
 }
 
 static const struct evcnt *
 vlpci_pc_intr_evcnt(void *v, pci_intr_handle_t ih)
 {
+
 	return NULL;
 }
 
@@ -389,6 +398,7 @@ static void *
 vlpci_pc_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
     int (*callback)(void *), void *arg)
 {
+
 	if (pih == 0)
 		return NULL;
 
@@ -406,6 +416,7 @@ vlpci_pc_intr_disestablish(void *v, void *w)
 static int
 vlpci_pc_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 {
+
 	return PCI_CONF_DEFAULT /*& ~PCI_CONF_ENABLE_BM*/;
 }
 #endif
@@ -414,5 +425,6 @@ static void
 vlpci_pc_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz,
     int *ilinep)
 {
+
 	*ilinep = 0xff; /* XXX */
 }
