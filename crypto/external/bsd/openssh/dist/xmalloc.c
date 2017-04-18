@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.9 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: xmalloc.c,v 1.33 2016/02/15 09:47:49 dtucker Exp $ */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.8 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.9 2017/04/18 18:41:46 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>

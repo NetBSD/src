@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.6 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.7 2017/04/18 18:41:46 christos Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.45 2016/07/21 01:39:35 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.6 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.7 2017/04/18 18:41:46 christos Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
