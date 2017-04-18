@@ -1,4 +1,4 @@
-/*	$NetBSD: vlpci.c,v 1.7 2017/04/18 12:17:12 flxd Exp $	*/
+/*	$NetBSD: vlpci.c,v 1.8 2017/04/18 14:11:42 flxd Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.7 2017/04/18 12:17:12 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.8 2017/04/18 14:11:42 flxd Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -49,6 +49,17 @@ __KERNEL_RCSID(0, "$NetBSD: vlpci.c,v 1.7 2017/04/18 12:17:12 flxd Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 #include <arm/pci_machdep.h>
+
+#include <shark/ofw/vlpci.h>
+
+#define VLPCI_ADDON_DEV_NO	6
+#define VLPCI_IRQ		10
+
+#define VLPCI_PCI_MEM_BASE	0x02000000
+#define VLPCI_PCI_MEM_SZ	1048576
+
+#define VLPCI_VL_MEM_BASE	0x08000000
+#define VLPCI_VL_MEM_SZ		4194304
 
 static int	vlpci_match(device_t, struct cfdata *, void *);
 static void	vlpci_attach(device_t, device_t, void *);
@@ -97,8 +108,10 @@ regwrite_1(struct vlpci_softc * const sc, uint8_t off, uint8_t val)
 {
 
 	mutex_spin_enter(&sc->sc_lock);
-	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 0, off);
-	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 1, val);
+	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, VLPCI_INTREG_IDX_OFF,
+	    off);
+	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, VLPCI_INTREG_DATA_OFF,
+	    val);
 	mutex_spin_exit(&sc->sc_lock);
 }
 
@@ -108,8 +121,10 @@ regread_1(struct vlpci_softc * const sc, uint8_t off)
 	uint8_t reg;
 
 	mutex_spin_enter(&sc->sc_lock);
-	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, 0, off);
-	reg = bus_space_read_1(&isa_io_bs_tag, sc->sc_reg_ioh, 1);
+	bus_space_write_1(&isa_io_bs_tag, sc->sc_reg_ioh, VLPCI_INTREG_IDX_OFF,
+	    off);
+	reg = bus_space_read_1(&isa_io_bs_tag, sc->sc_reg_ioh,
+	    VLPCI_INTREG_DATA_OFF);
 	mutex_spin_exit(&sc->sc_lock);
 	return reg;
 }
@@ -117,14 +132,14 @@ regread_1(struct vlpci_softc * const sc, uint8_t off)
 static void
 vlpci_dump_window(struct vlpci_softc *sc, int num)
 {
-	int regaddr = 0x87 + 3 * num;
+	int regaddr = VLPCI_PCI_WND_HIADDR_REG(num);
 	uint32_t addr, size;
 	uint8_t attr;
 
 	addr = regread_1(sc, regaddr) << 24;
 	addr |= regread_1(sc, regaddr + 1) << 16;
 	attr = regread_1(sc, regaddr + 2);
-	size = 0x00010000 << ((attr & 0x1c) >> 2);
+	size = 0x00010000 << __SHIFTOUT(attr, VLPCI_PCI_WND_ATTR_SZ);
 	printf("memory window #%d at %08x size %08x flags %x\n", num, addr,
 	    size, attr);
 }
@@ -134,7 +149,7 @@ vlpci_map(void *t, bus_addr_t bpa, bus_size_t size, int cacheable,
     bus_space_handle_t *bshp)
 {
 
-	*bshp = vlpci_mem_vaddr - 0x02000000 + bpa;
+	*bshp = vlpci_mem_vaddr - VLPCI_PCI_MEM_BASE + bpa;
 	printf("%s: %08lx -> %08lx\n", __func__, bpa, *bshp);
 	return(0);
 }
@@ -151,6 +166,25 @@ vlpci_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 		return (arm_btop(ret) | ARM32_MMAP_WRITECOMBINE);
 	else
 		return arm_btop(ret);
+}
+
+static void
+vlpci_steer_irq(struct vlpci_softc * const sc)
+{
+	const unsigned int_ctl[] = {
+		VLPCI_INT_CTL_INTA, VLPCI_INT_CTL_INTB,
+		VLPCI_INT_CTL_INTC, VLPCI_INT_CTL_INTD
+	};
+	uint8_t val;
+
+	for (size_t i = 0; i < __arraycount(int_ctl); i++) {
+		val = regread_1(sc, VLPCI_INT_CTL_REG(int_ctl[i]));
+		val &= ~VLPCI_INT_CTL_INT2IRQ(int_ctl[i]);
+		val |= VLPCI_INT_CTL_ENA(int_ctl[i]);
+		val |= __SHIFTIN(VLPCI_INT_CTL_IRQ(VLPCI_IRQ),
+		    VLPCI_INT_CTL_INT2IRQ(int_ctl[i]));
+		regwrite_1(sc, VLPCI_INT_CTL_REG(int_ctl[i]), val);
+	}
 }
 
 static int
@@ -170,6 +204,8 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	struct vlpci_softc * const sc = device_private(self);
 	pci_chipset_tag_t const pc = &sc->sc_pc;
 	struct pcibus_attach_args pba;
+	pcitag_t tag;
+	pcireg_t cmd;
 
 	aprint_normal("\n");
 
@@ -177,24 +213,27 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	memset(&pba, 0, sizeof(pba));
 
-	if (bus_space_map(&isa_io_bs_tag, 0xa8, 0x2,
+	if (bus_space_map(&isa_io_bs_tag, VLPCI_INTREG_BASE, VLPCI_INTREG_SZ,
 	    0, &sc->sc_reg_ioh) != 0) {
-		aprint_error_dev(self, "failed to map 0xa8-9\n");
+		aprint_error_dev(self, "failed to map internal reg port\n");
 		return;
 	}
-	if (bus_space_map(&isa_io_bs_tag, 0xcf8, 0x8,
+	if (bus_space_map(&isa_io_bs_tag, VLPCI_CFGREG_BASE, VLPCI_CFGREG_SZ,
 	    0, &sc->sc_conf_ioh) != 0) {
-		aprint_error_dev(self, "failed to map 0xcf8-f\n");
+		aprint_error_dev(self, "failed to map configuration port\n");
 		return;
 	}
 
 	/* Enable VLB/PCI bridge */
-	regwrite_1(sc, 0x96, 0x18); /* enable LOCAL#, compatible mode */
-	regwrite_1(sc, 0x93, 0x60); /* IOCHCK# on IOCHCK#/NMI */
-	regwrite_1(sc, 0x86, 0x61); /* invert all INTx to IRQ */
-	regwrite_1(sc, 0x97, 0x00); /* don't do per-INTx conversions */
-	regwrite_1(sc, 0x91, 0xbb); /* enable INT[AB] to IRQ 10 */
-	regwrite_1(sc, 0x90, 0xbb); /* enable INT[CD] to IRQ 10 */
+	regwrite_1(sc, VLPCI_MISC_1_REG, VLPCI_MISC_1_LOCAL_PIN |
+	    VLPCI_MISC_1_COMPAT_ISA_BOFF);
+	regwrite_1(sc, VLPCI_MISC_CTL_REG, __SHIFTIN(VLPCI_MISC_CTL_HIADDR_DIS,
+	    VLPCI_MISC_CTL_HIADDR) | VLPCI_MISC_CTL_IOCHCK_PIN);
+	regwrite_1(sc, VLPCI_CFG_MISC_CTL_REG,
+	    __SHIFTIN(VLPCI_CFG_MISC_CTL_INT_CTL_CONV,
+	    VLPCI_CFG_MISC_CTL_INT_CTL) | VLPCI_CFG_MISC_CTL_LREQI_LGNTO_PIN);
+	regwrite_1(sc, VLPCI_IRQ_MODE_REG, 0x00); /* don't do per-INTx conversions */
+	vlpci_steer_irq(sc);
 	/*
 	 * XXX
 	 * set memory size to 255MB, so the bridge knows which cycles go to RAM
@@ -203,31 +242,41 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	 * ... or that's the theory. OF puts PCI BARS at 0x02000000 which
 	 * overlaps with when we do this and pci memory access doesn't work.
 	 */
-	regwrite_1(sc, 0x81, 0x1);
+	regwrite_1(sc, VLPCI_OBD_MEM_SZ_REG, 1);
 
-	regwrite_1(sc, 0x82, 0x08); /* PCI dynamic acceleration decoding enable */
-	regwrite_1(sc, 0x83, 0x08);
-	printf("reg 0x83 %02x\n", regread_1(sc, 0x83));
+	regwrite_1(sc, VLPCI_BUF_CTL_REG, VLPCI_BUF_CTL_PCI_DYN_ACC_DEC);
+	regwrite_1(sc, VLPCI_VL_TIM_REG, VLPCI_VL_TIM_OBD_MEM_1ST_DAT);
+	printf("reg 0x83 %02x\n", regread_1(sc, VLPCI_VL_TIM_REG));
 
 #if 1
 	/* program window #0 to 0x08000000 */
-	regwrite_1(sc, 0x87, 0x08);
-	regwrite_1(sc, 0x88, 0x00);
-	regwrite_1(sc, 0x89, 0x38);	/* VL, unbuffered, 4MB */
+	regwrite_1(sc, VLPCI_PCI_WND_HIADDR_REG(VLPCI_PCI_WND_NO_1),
+	    VLPCI_PCI_WND_HIADDR_MEM(VLPCI_VL_MEM_BASE));
+	regwrite_1(sc, VLPCI_PCI_WND_LOADDR_REG(VLPCI_PCI_WND_NO_1),
+	    VLPCI_PCI_WND_LOADDR_MEM(VLPCI_VL_MEM_BASE));
+	regwrite_1(sc, VLPCI_PCI_WND_ATTR_REG(VLPCI_PCI_WND_NO_1),
+	    VLPCI_PCI_WND_ATTR_VL |
+	    __SHIFTIN(VLPCI_PCI_WND_ATTR_SZ_MEM(VLPCI_VL_MEM_SZ),
+	    VLPCI_PCI_WND_ATTR_SZ));
 #else
-	regwrite_1(sc, 0x87, 0x00);
-	regwrite_1(sc, 0x88, 0x00);
-	regwrite_1(sc, 0x89, 0x00);
+	regwrite_1(sc, VLPCI_PCI_WND_HIADDR_REG(VLPCI_PCI_WND_NO_1), 0x00);
+	regwrite_1(sc, VLPCI_PCI_WND_LOADDR_REG(VLPCI_PCI_WND_NO_1), 0x00);
+	regwrite_1(sc, VLPCI_PCI_WND_ATTR_REG(VLPCI_PCI_WND_NO_1), 0x00);
 #endif
 
-	vlpci_mem_paddr = 0x02000000;	/* get from OF! */
+	vlpci_mem_paddr = VLPCI_PCI_MEM_BASE;	/* get from OF! */
 
 	/*
 	 * we map in 1MB at 0x02000000, so program window #1 accordingly
 	 */
-	regwrite_1(sc, 0x8a, vlpci_mem_paddr >> 24);
-	regwrite_1(sc, 0x8b, (vlpci_mem_paddr >> 16) & 0xff);
-	regwrite_1(sc, 0x8c, 0x90);	/* PCI, unbuffered, 1MB */
+	regwrite_1(sc, VLPCI_PCI_WND_HIADDR_REG(VLPCI_PCI_WND_NO_2),
+	    VLPCI_PCI_WND_HIADDR_MEM(vlpci_mem_paddr));
+	regwrite_1(sc, VLPCI_PCI_WND_LOADDR_REG(VLPCI_PCI_WND_NO_2),
+	    VLPCI_PCI_WND_LOADDR_MEM(vlpci_mem_paddr));
+	regwrite_1(sc, VLPCI_PCI_WND_ATTR_REG(VLPCI_PCI_WND_NO_2),
+	    VLPCI_PCI_WND_ATTR_PCI |
+	    __SHIFTIN(VLPCI_PCI_WND_ATTR_SZ_MEM(VLPCI_PCI_MEM_SZ),
+	    VLPCI_PCI_WND_ATTR_SZ));
 
 	/* now map in some of the memory space */
 	printf("vlpci_mem_vaddr %08lx\n", vlpci_mem_vaddr);
@@ -257,11 +306,10 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	pc->pc_conf_interrupt = vlpci_pc_conf_interrupt;
 
 	/* try to assure IO space is enabled on the default device-function */
-	vlpci_pc_conf_write(sc, vlpci_pc_make_tag(sc, 0, 6, 0),
-	    PCI_COMMAND_STATUS_REG,
-	    vlpci_pc_conf_read(sc, vlpci_pc_make_tag(sc, 0, 6, 0),
-	    PCI_COMMAND_STATUS_REG) |
-	    PCI_COMMAND_IO_ENABLE);
+	tag = vlpci_pc_make_tag(sc, 0, VLPCI_ADDON_DEV_NO, 0);
+	cmd = vlpci_pc_conf_read(sc, tag, PCI_COMMAND_STATUS_REG);
+	vlpci_pc_conf_write(sc, tag, PCI_COMMAND_STATUS_REG,
+	    cmd | PCI_COMMAND_IO_ENABLE);
 
 	pba.pba_flags = PCI_FLAGS_IO_OKAY | PCI_FLAGS_MEM_OKAY;
 	pba.pba_iot = &isa_io_bs_tag;
@@ -274,9 +322,9 @@ vlpci_attach(device_t parent, device_t self, void *aux)
 	    isa_bus_dma_tag._ranges[0].dr_busbase,
 	    isa_bus_dma_tag._ranges[0].dr_len);
 
-	vlpci_dump_window(sc, 0);
-	vlpci_dump_window(sc, 1);
-	vlpci_dump_window(sc, 2);
+	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_1);
+	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_2);
+	vlpci_dump_window(sc, VLPCI_PCI_WND_NO_3);
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
@@ -325,9 +373,10 @@ vlpci_pc_conf_read(void *v, pcitag_t tag, int offset)
 		return 0xffffffff;
 
 	mutex_spin_enter(&sc->sc_lock);
-	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh, 0,
-	    0x80000000UL|tag|offset);
-	ret = bus_space_read_4(&isa_io_bs_tag, sc->sc_conf_ioh, 4);
+	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh,
+	    VLPCI_CFGREG_ADDR_OFF, 0x80000000UL|tag|offset);
+	ret = bus_space_read_4(&isa_io_bs_tag, sc->sc_conf_ioh,
+	    VLPCI_CFGREG_DATA_OFF);
 	mutex_spin_exit(&sc->sc_lock);
 
 #if 0
@@ -354,9 +403,10 @@ vlpci_pc_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 #endif
 
 	mutex_spin_enter(&sc->sc_lock);
-	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh, 0,
-	    0x80000000UL|tag|offset);
-	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh, 4, val);
+	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh,
+	    VLPCI_CFGREG_ADDR_OFF, 0x80000000UL|tag|offset);
+	bus_space_write_4(&isa_io_bs_tag, sc->sc_conf_ioh,
+	    VLPCI_CFGREG_DATA_OFF, val);
 	mutex_spin_exit(&sc->sc_lock);
 }
 
@@ -372,7 +422,7 @@ vlpci_pc_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	case 2:
 	case 3:
 	case 4:
-		*ih = 10;
+		*ih = VLPCI_IRQ;
 		return 0;
 	}
 }
