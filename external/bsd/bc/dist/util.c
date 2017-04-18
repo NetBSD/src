@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1 2017/04/10 02:28:23 phil Exp $ */
+/*	$NetBSD: util.c,v 1.2 2017/04/18 04:35:18 maya Exp $ */
 
 /*
  * Copyright (C) 1991-1994, 1997, 2006, 2008, 2012-2017 Free Software Foundation, Inc.
@@ -628,7 +628,6 @@ lookup (char *name, int  namekind)
   yyerror ("End of util.c/lookup() reached.  Please report this bug.");
   bc_exit (1);
   /*NOTREACHED*/
-  return 0;
 }
 
 /* Print out the limits of this program. */
