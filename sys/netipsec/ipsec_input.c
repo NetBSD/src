@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.39 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.40 2017/04/18 05:26:42 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.39 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.40 2017/04/18 05:26:42 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -134,7 +134,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	IPSEC_ISTAT(sproto, ESP_STAT_INPUT, AH_STAT_INPUT,
 		IPCOMP_STAT_INPUT);
 
-	IPSEC_ASSERT(m != NULL, ("ipsec_common_input: null packet"));
+	KASSERT(m != NULL);
 
 	if ((sproto == IPPROTO_ESP && !esp_enable) ||
 	    (sproto == IPPROTO_AH && !ah_enable) ||
@@ -285,17 +285,16 @@ ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec4_common_input_cb");
 
-	IPSEC_ASSERT(m != NULL, ("ipsec4_common_input_cb: null mbuf"));
-	IPSEC_ASSERT(sav != NULL, ("ipsec4_common_input_cb: null SA"));
-	IPSEC_ASSERT(sav->sah != NULL, ("ipsec4_common_input_cb: null SAH"));
+	KASSERT(m != NULL);
+	KASSERT(sav != NULL);
+	KASSERT(sav->sah != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
-	IPSEC_ASSERT(af == AF_INET, ("ipsec4_common_input_cb: unexpected af %u",af));
+	KASSERTMSG(af == AF_INET, "unexpected af %u", af);
 	sproto = saidx->proto;
-	IPSEC_ASSERT(sproto == IPPROTO_ESP || sproto == IPPROTO_AH ||
-		sproto == IPPROTO_IPCOMP,
-		("ipsec4_common_input_cb: unexpected security protocol %u",
-		sproto));
+	KASSERTMSG(sproto == IPPROTO_ESP || sproto == IPPROTO_AH ||
+	    sproto == IPPROTO_IPCOMP,
+	    "unexpected security protocol %u", sproto);
 
 	/* Sanity check */
 	if (m == NULL) {
@@ -474,8 +473,7 @@ ipsec6_common_input(struct mbuf **mp, int *offp, int proto)
 				l = (ip6e.ip6e_len + 2) << 2;
 			else
 				l = (ip6e.ip6e_len + 1) << 3;
-			IPSEC_ASSERT(l > 0,
-			  ("ipsec6_common_input: l went zero or negative"));
+			KASSERT(l > 0);
 
 			nxt = ip6e.ip6e_nxt;
 		} while (protoff + l < *offp);
@@ -517,18 +515,16 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	u_int8_t prot, nxt8;
 	int error, nest;
 
-	IPSEC_ASSERT(m != NULL, ("ipsec6_common_input_cb: null mbuf"));
-	IPSEC_ASSERT(sav != NULL, ("ipsec6_common_input_cb: null SA"));
-	IPSEC_ASSERT(sav->sah != NULL, ("ipsec6_common_input_cb: null SAH"));
+	KASSERT(m != NULL);
+	KASSERT(sav != NULL);
+	KASSERT(sav->sah != NULL);
 	saidx = &sav->sah->saidx;
 	af = saidx->dst.sa.sa_family;
-	IPSEC_ASSERT(af == AF_INET6,
-		("ipsec6_common_input_cb: unexpected af %u", af));
+	KASSERTMSG(af == AF_INET6, "unexpected af %u", af);
 	sproto = saidx->proto;
-	IPSEC_ASSERT(sproto == IPPROTO_ESP || sproto == IPPROTO_AH ||
-		sproto == IPPROTO_IPCOMP,
-		("ipsec6_common_input_cb: unexpected security protocol %u",
-		sproto));
+	KASSERTMSG(sproto == IPPROTO_ESP || sproto == IPPROTO_AH ||
+	    sproto == IPPROTO_IPCOMP,
+	    "unexpected security protocol %u", sproto);
 
 	/* Sanity check */
 	if (m == NULL) {

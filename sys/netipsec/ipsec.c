@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.72 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.73 2017/04/18 05:26:41 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.72 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.73 2017/04/18 05:26:41 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -439,14 +439,14 @@ ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
 {
 	struct secpolicy *sp;
 
-	IPSEC_ASSERT(tdbi != NULL, ("%s: null tdbi", __func__));
-	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    ("%s: invalid direction %u", __func__, dir));
+	KASSERT(tdbi != NULL);
+	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
+	    "invalid direction %u", dir);
 
 	sp = KEY_ALLOCSP2(tdbi->spi, &tdbi->dst, tdbi->proto, dir);
 	if (sp == NULL)			/*XXX????*/
 		sp = KEY_ALLOCSP_DEFAULT(tdbi->dst.sa.sa_family);
-	IPSEC_ASSERT(sp != NULL, ("%s: null SP", __func__));
+	KASSERT(sp != NULL);
 	return sp;
 }
 
@@ -470,20 +470,20 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 	struct secpolicy *sp;
 	int af;
 
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
-	IPSEC_ASSERT(inp != NULL, ("%s: null inpcb", __func__));
-	IPSEC_ASSERT(error != NULL, ("%s: null error", __func__));
-	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    ("%s: invalid direction %u", __func__, dir));
+	KASSERT(m != NULL);
+	KASSERT(inp != NULL);
+	KASSERT(error != NULL);
+	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
+	    "invalid direction %u", dir);
 
-	IPSEC_ASSERT(PCB_SOCKET(inp) != NULL, ("%s: null socket", __func__));
+	KASSERT(PCB_SOCKET(inp) != NULL);
 
 	/* XXX FIXME inpcb/in6pcb  vs socket*/
 	af = PCB_FAMILY(inp);
-	IPSEC_ASSERT(af == AF_INET || af == AF_INET6,
-	    ("%s: unexpected protocol family %u", __func__, af));
+	KASSERTMSG(af == AF_INET || af == AF_INET6,
+	    "unexpected protocol family %u", af);
 
-	IPSEC_ASSERT(inp->inph_sp != NULL, ("null PCB policy cache"));
+	KASSERT(inp->inph_sp != NULL);
 	/* If we have a cached entry, and if it is still valid, use it. */
 	IPSEC_STATINC(IPSEC_STAT_SPDCACHELOOKUP);
 	currsp = ipsec_checkpcbcache(m, /*inpcb_hdr*/inp->inph_sp, dir);
@@ -518,7 +518,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 	if (*error)
 		return NULL;
 
-	IPSEC_ASSERT(pcbsp != NULL, ("%s: null pcbsp", __func__));
+	KASSERT(pcbsp != NULL);
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
 		currsp = pcbsp->sp_in;
@@ -527,7 +527,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 		currsp = pcbsp->sp_out;
 		break;
 	}
-	IPSEC_ASSERT(currsp != NULL, ("%s: null currsp", __func__));
+	KASSERT(currsp != NULL);
 
 	if (pcbsp->priv) {			/* when privilieged socket */
 		switch (currsp->policy) {
@@ -578,9 +578,8 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 			}
 		}
 	}
-	IPSEC_ASSERT(sp != NULL,
-	    ("%s: null SP (priv %u policy %u", __func__, pcbsp->priv,
-	    currsp->policy));
+	KASSERTMSG(sp != NULL, "null SP (priv %u policy %u", pcbsp->priv,
+	    currsp->policy);
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 	    printf("DP %s (priv %u policy %u) allocates SP:%p (refcnt %u)\n",
 	    __func__, pcbsp->priv, currsp->policy, sp, sp->refcnt));
@@ -604,10 +603,10 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 	struct secpolicyindex spidx;
 	struct secpolicy *sp;
 
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
-	IPSEC_ASSERT(error != NULL, ("%s: null error", __func__));
-	IPSEC_ASSERT(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    ("%s: invalid direction %u", __func__, dir));
+	KASSERT(m != NULL);
+	KASSERT(error != NULL);
+	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
+	    "invalid direction %u", dir);
 
 	sp = NULL;
 
@@ -628,7 +627,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 
 	if (sp == NULL)			/* no SP found, use system default */
 		sp = KEY_ALLOCSP_DEFAULT(spidx.dst.sa.sa_family);
-	IPSEC_ASSERT(sp != NULL, ("%s: null SP", __func__));
+	KASSERT(sp != NULL);
 	return sp;
 }
 
@@ -647,13 +646,11 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	} else
 		sp = ipsec_getpolicybysock(m, dir, IN4PCB_TO_PCB(inp), error);
 	if (sp == NULL) {
-		IPSEC_ASSERT(*error != 0,
-		    ("%s: getpolicy failed w/o error", __func__));
+		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
 		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		return NULL;
 	}
-	IPSEC_ASSERT(*error == 0, ("%s: sp w/ error set to %u", __func__,
-	    *error));
+	KASSERTMSG(*error == 0, "sp w/ error set to %u", *error);
 	switch (sp->policy) {
 	case IPSEC_POLICY_ENTRUST:
 	default:
@@ -894,13 +891,11 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	} else
 		sp = ipsec_getpolicybysock(m, dir, IN6PCB_TO_PCB(in6p), error);
 	if (sp == NULL) {
-		IPSEC_ASSERT(*error != 0, ("%s: getpolicy failed w/o error",
-		    __func__));
+		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
 		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		return NULL;
 	}
-	IPSEC_ASSERT(*error == 0, ("%s: sp w/ error set to %u", __func__,
-	    *error));
+	KASSERTMSG(*error == 0, "sp w/ error set to %u", *error);
 	switch (sp->policy) {
 	case IPSEC_POLICY_ENTRUST:
 	default:
@@ -934,10 +929,10 @@ ipsec4_setspidx_inpcb(struct mbuf *m, struct inpcb *pcb)
 {
 	int error;
 
-	IPSEC_ASSERT(pcb != NULL, ("%s: null pcb", __func__));
-	IPSEC_ASSERT(pcb->inp_sp != NULL, ("%s: null inp_sp", __func__));
-	IPSEC_ASSERT(pcb->inp_sp->sp_out != NULL && pcb->inp_sp->sp_in != NULL,
-	    ("%s: null sp_in || sp_out", __func__));
+	KASSERT(pcb != NULL);
+	KASSERT(pcb->inp_sp != NULL);
+	KASSERT(pcb->inp_sp->sp_out != NULL);
+	KASSERT(pcb->inp_sp->sp_in != NULL);
 
 	error = ipsec_setspidx(m, &pcb->inp_sp->sp_in->spidx, 1);
 	if (error == 0) {
@@ -960,11 +955,10 @@ ipsec6_setspidx_in6pcb(struct mbuf *m, struct in6pcb *pcb)
 	struct secpolicyindex *spidx;
 	int error;
 
-	IPSEC_ASSERT(pcb != NULL, ("%s: null pcb", __func__));
-	IPSEC_ASSERT(pcb->in6p_sp != NULL, ("%s: null inp_sp", __func__));
-	IPSEC_ASSERT(pcb->in6p_sp->sp_out != NULL &&
-	    pcb->in6p_sp->sp_in != NULL, ("%s: null sp_in || sp_out",
-	    __func__));
+	KASSERT(pcb != NULL);
+	KASSERT(pcb->in6p_sp != NULL);
+	KASSERT(pcb->in6p_sp->sp_out != NULL);
+	KASSERT(pcb->in6p_sp->sp_in != NULL);
 
 	memset(&pcb->in6p_sp->sp_in->spidx, 0, sizeof(*spidx));
 	memset(&pcb->in6p_sp->sp_out->spidx, 0, sizeof(*spidx));
@@ -1005,7 +999,7 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	int len;
 	int error;
 
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
+	KASSERT(m != NULL);
 
 	/*
 	 * validate m->m_pkthdr.len.  we see incorrect length if we
@@ -1071,9 +1065,8 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	int off;
 
 	/* sanity check */
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
-	IPSEC_ASSERT(m->m_pkthdr.len >= sizeof(struct ip),
-	    ("%s: packet too short", __func__));
+	KASSERT(m != NULL);
+	KASSERTMSG(m->m_pkthdr.len >= sizeof(struct ip), "packet too short");
 
 	/* NB: ip_input() flips it into host endian XXX need more checking */
 	if (m->m_len >= sizeof(struct ip)) {
@@ -1504,7 +1497,7 @@ ipsec4_set_policy(struct inpcb *inp, int optname, const void *request,
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
 
-	IPSEC_ASSERT(inp->inp_sp != NULL, ("%s: null inp->in_sp", __func__));
+	KASSERT(inp->inp_sp != NULL);
 
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
@@ -1533,7 +1526,7 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 	/* sanity check. */
 	if (inp == NULL || request == NULL || mp == NULL)
 		return EINVAL;
-	IPSEC_ASSERT(inp->inp_sp != NULL, ("%s: null inp_sp", __func__));
+	KASSERT(inp->inp_sp != NULL);
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
@@ -1559,7 +1552,8 @@ ipsec4_get_policy(struct inpcb *inp, const void *request, size_t len,
 int
 ipsec4_delete_pcbpolicy(struct inpcb *inp)
 {
-	IPSEC_ASSERT(inp != NULL, ("%s: null inp", __func__));
+
+	KASSERT(inp != NULL);
 
 	if (inp->inp_sp == NULL)
 		return 0;
@@ -1620,7 +1614,7 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 	/* sanity check. */
 	if (in6p == NULL || request == NULL || mp == NULL)
 		return EINVAL;
-	IPSEC_ASSERT(in6p->in6p_sp != NULL, ("%s: null in6p_sp", __func__));
+	KASSERT(in6p->in6p_sp != NULL);
 	if (len < sizeof(*xpl))
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
@@ -1645,7 +1639,8 @@ ipsec6_get_policy(struct in6pcb *in6p, const void *request, size_t len,
 int
 ipsec6_delete_pcbpolicy(struct in6pcb *in6p)
 {
-	IPSEC_ASSERT(in6p != NULL, ("%s: null in6p", __func__));
+
+	KASSERT(in6p != NULL);
 
 	if (in6p->in6p_sp == NULL)
 		return 0;
@@ -1676,12 +1671,12 @@ ipsec_get_reqlevel(const struct ipsecrequest *isr)
 	u_int esp_trans_deflev, esp_net_deflev;
 	u_int ah_trans_deflev, ah_net_deflev;
 
-	IPSEC_ASSERT(isr != NULL && isr->sp != NULL, ("%s: null argument",
-	    __func__));
-	IPSEC_ASSERT(isr->sp->spidx.src.sa.sa_family ==
-	    isr->sp->spidx.dst.sa.sa_family,
-	    ("%s: af family mismatch, src %u, dst %u", __func__,
-	    isr->sp->spidx.src.sa.sa_family, isr->sp->spidx.dst.sa.sa_family));
+	KASSERT(isr != NULL);
+	KASSERT(isr->sp != NULL);
+	KASSERTMSG(
+	    isr->sp->spidx.src.sa.sa_family == isr->sp->spidx.dst.sa.sa_family,
+	    "af family mismatch, src %u, dst %u",
+	    isr->sp->spidx.src.sa.sa_family, isr->sp->spidx.dst.sa.sa_family);
 
 /* XXX note that we have ipseclog() expanded here - code sync issue */
 #define IPSEC_CHECK_DEFAULT(lev) 					\
@@ -1789,8 +1784,8 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 		return 0;
 	}
 
-	IPSEC_ASSERT(sp->policy == IPSEC_POLICY_IPSEC,
-	    ("%s: invalid policy %u", __func__, sp->policy));
+	KASSERTMSG(sp->policy == IPSEC_POLICY_IPSEC,
+	    "invalid policy %u", sp->policy);
 
 	/* XXX should compare policy against ipsec header history */
 
@@ -1851,7 +1846,7 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 	int error;
 	int result;
 
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
+	KASSERT(m != NULL);
 
 	/* get SP for this packet.
 	 * When we are called from ip_forward(), we call
@@ -1937,8 +1932,8 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 		return 0;
 	}
 
-	IPSEC_ASSERT(sp->policy == IPSEC_POLICY_IPSEC,
-	    ("%s: invalid policy %u", __func__, sp->policy));
+	KASSERTMSG(sp->policy == IPSEC_POLICY_IPSEC,
+	    "invalid policy %u", sp->policy);
 
 	siz = 0;
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
@@ -1988,9 +1983,8 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 	int error;
 	size_t size;
 
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
-	IPSEC_ASSERT(inp == NULL || inp->inp_socket != NULL,
-	    ("%s: socket w/o inpcb", __func__));
+	KASSERT(m != NULL);
+	KASSERTMSG(inp == NULL || inp->inp_socket != NULL, "socket w/o inpcb");
 
 	/* get SP for this packet.
 	 * When we are called from ip_forward(), we call
@@ -2025,9 +2019,9 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 	int error;
 	size_t size;
 
-	IPSEC_ASSERT(m != NULL, ("%s: null mbuf", __func__));
-	IPSEC_ASSERT(in6p == NULL || in6p->in6p_socket != NULL,
-	    ("%s: socket w/o inpcb", __func__));
+	KASSERT(m != NULL);
+	KASSERTMSG(in6p == NULL || in6p->in6p_socket != NULL,
+	    "socket w/o inpcb");
 
 	/* get SP for this packet */
 	/* XXX Is it right to call with IP_FORWARDING. */
@@ -2070,8 +2064,8 @@ ipsec_chkreplay(u_int32_t seq, const struct secasvar *sav)
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
-	IPSEC_ASSERT(sav != NULL, ("%s: Null SA", __func__));
-	IPSEC_ASSERT(sav->replay != NULL, ("%s: Null replay state", __func__));
+	KASSERT(sav != NULL);
+	KASSERT(sav->replay != NULL);
 
 	replay = sav->replay;
 
@@ -2128,8 +2122,8 @@ ipsec_updatereplay(u_int32_t seq, const struct secasvar *sav)
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
-	IPSEC_ASSERT(sav != NULL, ("%s: Null SA", __func__));
-	IPSEC_ASSERT(sav->replay != NULL, ("%s: Null replay state", __func__));
+	KASSERT(sav != NULL);
+	KASSERT(sav->replay != NULL);
 
 	replay = sav->replay;
 
@@ -2279,8 +2273,7 @@ ipsec_logsastr(const struct secasvar *sav)
 	char *p;
 	const struct secasindex *saidx = &sav->sah->saidx;
 
-	IPSEC_ASSERT(saidx->src.sa.sa_family == saidx->dst.sa.sa_family,
-	    ("%s: address family mismatch", __func__));
+	KASSERT(saidx->src.sa.sa_family == saidx->dst.sa.sa_family);
 
 	p = buf;
 	snprintf(buf, sizeof(buf), "SA(SPI=%u ", (u_int32_t)ntohl(sav->spi));
