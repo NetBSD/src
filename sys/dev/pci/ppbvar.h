@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbvar.h,v 1.1 2017/04/05 03:51:36 msaitoh Exp $	*/
+/*	$NetBSD: ppbvar.h,v 1.2 2017/04/18 05:21:34 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbvar.h,v 1.1 2017/04/05 03:51:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbvar.h,v 1.2 2017/04/18 05:21:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -47,6 +48,16 @@ struct ppb_softc {
 	device_t sc_dev;		/* generic device glue */
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
+	pci_intr_handle_t *sc_pihp;
+	void *sc_intrhand;
+	int sc_pciecapoff;
+	struct evcnt sc_ev_intr;	/* interrupts */
+	struct evcnt sc_ev_abp;		/*  Attention Button Pressed */
+	struct evcnt sc_ev_pfd;		/*  Power Fault Detected */
+	struct evcnt sc_ev_msc;		/*  MRL Sensor Changed */
+	struct evcnt sc_ev_pdc;		/*  Presence Detect Changed */
+	struct evcnt sc_ev_cc;		/*  Command Completed */
+	struct evcnt sc_ev_lacs;	/*  Data Link Layer State Changed */
 
 	pcireg_t sc_pciconfext[48];
 };
