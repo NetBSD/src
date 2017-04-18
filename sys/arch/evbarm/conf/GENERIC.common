@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.14 2016/11/26 13:59:45 christos Exp $
+#	$NetBSD: GENERIC.common,v 1.14.2.1 2017/04/18 21:31:48 bouyer Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -46,6 +46,7 @@ options 	IPSEC		# IP security
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+options 	CAN		# CAN bus support
 
 # JIT compiler for bpfilter
 #options 	SLJIT
@@ -148,6 +149,7 @@ pseudo-device	drvctl			# driver control
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
+pseudo-device	canloop			# CAN loopback
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	ppp			# Point-to-Point Protocol
