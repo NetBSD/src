@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.98 2017/04/18 11:44:37 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.99 2017/04/18 11:49:50 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.98 2017/04/18 11:44:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.99 2017/04/18 11:49:50 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.98 2017/04/18 11:44:37 knakahara Exp $");
 #include <sys/atomic.h>
 #include <sys/xcall.h>
 #include <sys/interrupt.h>
+#include <sys/reboot.h> /* for AB_VERBOSE */
 
 #include <sys/kauth.h>
 #include <sys/conf.h>
@@ -1081,10 +1082,11 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	(*pic->pic_hwunmask)(pic, pin);
 	mutex_exit(&cpu_lock);
 
-	DPRINTF(("allocated pic %s type %s pin %d level %d to %s slot %d "
-	    "idt entry %d\n",
-	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    device_xname(ci->ci_dev), slot, idt_vec));
+	if (bootverbose)
+		aprint_verbose("allocated pic %s type %s pin %d level %d to %s slot %d "
+		    "idt entry %d\n",
+		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
+		    device_xname(ci->ci_dev), slot, idt_vec);
 
 	return (ih);
 }
