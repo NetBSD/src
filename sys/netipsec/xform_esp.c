@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.51 2017/04/15 22:01:57 christos Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.52 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,13 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.51 2017/04/15 22:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.52 2017/04/18 05:25:32 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
 #include "opt_ipsec.h"
 #endif
 
@@ -79,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.51 2017/04/15 22:01:57 christos Exp 
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #include <netipsec/ipsec6.h>
-#  ifdef __FreeBSD__
-#  include <netinet6/ip6_ecn.h>
-#  endif
 #endif
 
 #include <netipsec/key.h>
@@ -1096,7 +1090,3 @@ esp_attach(void)
 	xform_register(&esp_xformsw);
 #undef MAXIV
 }
-#ifdef __FreeBSD__
-SYSINIT(esp_xform_init, SI_SUB_DRIVERS, SI_ORDER_FIRST, esp_attach, NULL)
-#else
-#endif
