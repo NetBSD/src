@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.39 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.40 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -119,7 +119,6 @@ struct inpcbpolicy {
 	struct secpolicy *sp_out;
 	int priv;			/* privileged socket ? */
 
-#ifdef __NetBSD__
 	/* cached policy */
 	struct {
 		struct secpolicy *cachesp;
@@ -132,14 +131,11 @@ struct inpcbpolicy {
 	} sp_cache[3];			/* XXX 3 == IPSEC_DIR_MAX */
 	int sp_cacheflags;
 #define	IPSEC_PCBSP_CONNECTED	1
-#endif /* __NetBSD__ */
 };
 
-#ifdef __NetBSD__
 #define	IPSEC_PCB_SKIP_IPSEC(inpp, dir)					\
 	((inpp)->sp_cache[(dir)].cachehint == IPSEC_PCBHINT_NO &&	\
 	 (inpp)->sp_cache[(dir)].cachegen == ipsec_spdgen)
-#endif /* __NetBSD__ */
 
 /* SP acquiring list table. */
 struct secspacq {
@@ -241,13 +237,11 @@ extern int crypto_support;
 /* for openbsd compatibility */
 #define	DPRINTF(x)	do { if (ipsec_debug) printf x; } while (0)
 
-#ifdef __NetBSD__
 void ipsec_pcbconn (struct inpcbpolicy *);
 void ipsec_pcbdisconn (struct inpcbpolicy *);
 void ipsec_invalpcbcacheall (void);
 
 extern u_int ipsec_spdgen;
-#endif /* __NetBSD__ */
 
 struct tdb_ident;
 struct secpolicy *ipsec_getpolicy (const struct tdb_ident*, u_int);
@@ -310,12 +304,8 @@ int ipsec_chkreplay (u_int32_t, const struct secasvar *);
 int ipsec_updatereplay (u_int32_t, const struct secasvar *);
 
 size_t ipsec4_hdrsiz (struct mbuf *, u_int, struct inpcb *);
-#ifdef __FreeBSD__
-size_t ipsec_hdrsiz_tcp (struct tcpcb *);
-#else
 size_t ipsec4_hdrsiz_tcp (struct tcpcb *);
 #define ipsec4_getpolicybyaddr ipsec_getpolicybyaddr
-#endif
 
 union sockaddr_union;
 const char *ipsec_address(const union sockaddr_union* sa);

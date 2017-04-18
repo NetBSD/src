@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.34 2017/04/15 22:01:57 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.35 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,14 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.34 2017/04/15 22:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.35 2017/04/18 05:25:32 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
 #endif
 
 #include <sys/param.h>
@@ -674,7 +671,3 @@ ipcomp_attach(void)
 	ipcompstat_percpu = percpu_alloc(sizeof(uint64_t) * IPCOMP_NSTATS);
 	xform_register(&ipcomp_xformsw);
 }
-
-#ifdef __FreeBSD__
-SYSINIT(ipcomp_xform_init, SI_SUB_DRIVERS, SI_ORDER_FIRST, ipcomp_attach, NULL)
-#endif /* __FreeBSD__ */
