@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.38 2017/04/17 18:06:30 uwe Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.39 2017/04/18 06:39:54 uwe Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -571,10 +571,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				PROGRESS(("]"));
 		}
 		DEALLOC(shp, sz);
-	}
-
-	if (shstr) {
-	    DEALLOC(shstr, shstrsz);
+		if (shstr)
+			DEALLOC(shstr, shstrsz);
 	}
 
 	/*
