@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.12 2011/05/16 10:05:23 drochner Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.13 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,15 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.12 2011/05/16 10:05:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.13 2017/04/18 05:25:32 ozaki-r Exp $");
 
 /*
  * IPsec-specific mbuf routines.
  */
-
-#ifdef __FreeBSD__
-#include "opt_param.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

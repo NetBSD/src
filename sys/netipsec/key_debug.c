@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.14 2017/04/06 09:20:07 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.15 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,14 +33,11 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.14 2017/04/06 09:20:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.15 2017/04/18 05:25:32 ozaki-r Exp $");
 #endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
 #endif
 
 #include <sys/types.h>
@@ -626,12 +623,10 @@ kdebug_mbufhdr(const struct mbuf *m)
 	}
 
 	if (m->m_flags & M_EXT) {
-#ifdef __FreeBSD__ /* mbuf differences */
 		printf("  m_ext{ ext_buf:%p ext_free:%p "
-		       "ext_size:%u ext_ref:%p }\n",
+		       "ext_size:%lu ext_refcnt:%u }\n",
 			m->m_ext.ext_buf, m->m_ext.ext_free,
-			m->m_ext.ext_size, m->m_ext.ext_ref);
-#endif /* __FreeBSD__ */
+			m->m_ext.ext_size, m->m_ext.ext_refcnt);
 	}
 
 	return;

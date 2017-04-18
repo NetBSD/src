@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.106 2017/04/17 05:48:18 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.107 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.106 2017/04/17 05:48:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.107 2017/04/18 05:25:32 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -40,13 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.106 2017/04/17 05:48:18 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
 #include "opt_ipsec.h"
-#ifdef __NetBSD__
 #include "opt_gateway.h"
-#endif
 #endif
 
 #include <sys/types.h>
@@ -1985,7 +1980,6 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		}
     	}
 
-#if defined(__NetBSD__)
 	/* Invalidate all cached SPD pointers in the PCBs. */
 	ipsec_invalpcbcacheall();
 
@@ -1997,7 +1991,6 @@ key_spdadd(struct socket *so, struct mbuf *m,
 		ip6flow_invalidate_all(0);
 #endif /* INET6 */
 #endif /* GATEWAY */
-#endif /* __NetBSD__ */
 
     {
 	struct mbuf *n, *mpolicy;
@@ -2152,12 +2145,10 @@ key_spddelete(struct socket *so, struct mbuf *m,
 	key_sp_unlink(sp);	/* XXX jrs ordering */
 	KEY_FREESP(&sp);	/* ref gained by key_getspbyid */
 
-#if defined(__NetBSD__)
 	/* Invalidate all cached SPD pointers in the PCBs. */
 	ipsec_invalpcbcacheall();
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
-#endif /* __NetBSD__ */
 
     {
 	struct mbuf *n;
@@ -2222,12 +2213,10 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 	KEY_FREESP(&sp);	/* ref gained by key_getsp */
 	sp = NULL;
 
-#if defined(__NetBSD__)
 	/* Invalidate all cached SPD pointers in the PCBs. */
 	ipsec_invalpcbcacheall();
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
-#endif /* __NetBSD__ */
 
     {
 	struct mbuf *n, *nn;
@@ -2445,12 +2434,10 @@ key_spdflush(struct socket *so, struct mbuf *m,
 		}
 	}
 
-#if defined(__NetBSD__)
 	/* Invalidate all cached SPD pointers in the PCBs. */
 	ipsec_invalpcbcacheall();
 
 	/* We're deleting policy; no need to invalidate the ipflow cache. */
-#endif /* __NetBSD__ */
 
 	if (sizeof(struct sadb_msg) > m->m_len + M_TRAILINGSPACE(m)) {
 		ipseclog((LOG_DEBUG, "key_spdflush: No more memory.\n"));

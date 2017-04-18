@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.50 2017/04/15 22:01:57 christos Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.51 2017/04/18 05:25:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,13 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.50 2017/04/15 22:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.51 2017/04/18 05:25:32 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
 #include "opt_ipsec.h"
 #endif
 
@@ -77,9 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.50 2017/04/15 22:01:57 christos Exp $
 #include <netinet6/ip6_var.h>
 #include <netinet6/scope6_var.h>
 #include <netipsec/ipsec6.h>
-#  ifdef __FreeBSD__
-#  include <netinet6/ip6_ecn.h>
-#  endif
 #endif
 
 #include <netipsec/key.h>
@@ -320,19 +314,10 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		 * (presumably ip_input() deducted it before we got here?)
 		 * whereas on NetBSD, we should not.
 		 */
-#ifdef __FreeBSD__
-  #define TOHOST(x) (x)
-#else
-  #define TOHOST(x) (ntohs(x))
-#endif
 		if (!out) {
-			uint16_t inlen = TOHOST(ip->ip_len);
+			uint16_t inlen = ntohs(ip->ip_len);
 
-#ifdef __FreeBSD__
-			ip->ip_len = htons(inlen + skip);
-#else  /*!__FreeBSD__ */
 			ip->ip_len = htons(inlen);
-#endif /*!__FreeBSD__ */
 
 			if (alg == CRYPTO_MD5_KPDK || alg == CRYPTO_SHA1_KPDK)
 				ip->ip_off  &= IP_OFF_CONVERT(IP_DF);
@@ -1318,7 +1303,3 @@ ah_attach(void)
 	ahstat_percpu = percpu_alloc(sizeof(uint64_t) * AH_NSTATS);
 	xform_register(&ah_xformsw);
 }
-
-#ifdef __FreeBSD__
-SYSINIT(ah_xform_init, SI_SUB_PROTO_DOMAIN, SI_ORDER_MIDDLE, ah_attach, NULL);
-#endif
