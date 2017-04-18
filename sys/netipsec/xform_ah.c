@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.51 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.52 2017/04/18 05:26:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.51 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.52 2017/04/18 05:26:42 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -159,8 +159,7 @@ ah_hdrsiz(const struct secasvar *sav)
 
 	if (sav != NULL) {
 		int authsize;
-		IPSEC_ASSERT(sav->tdb_authalgxform != NULL,
-			("%s: null xform", __func__));
+		KASSERT(sav->tdb_authalgxform != NULL);
 		/*XXX not right for null algorithm--does it matter??*/
 		authsize = AUTHSIZE(sav);
 		size = roundup(authsize, sizeof(uint32_t)) + HDRSIZE(sav);
@@ -627,11 +626,9 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
-	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
-	IPSEC_ASSERT(sav->key_auth != NULL,
-		("%s: null authentication key", __func__));
-	IPSEC_ASSERT(sav->tdb_authalgxform != NULL,
-		("%s: null authentication xform", __func__));
+	KASSERT(sav != NULL);
+	KASSERT(sav->key_auth != NULL);
+	KASSERT(sav->tdb_authalgxform != NULL);
 
 	/* Figure out header size. */
 	rplen = HDRSIZE(sav);
@@ -680,7 +677,7 @@ ah_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	}
 
 	crda = crp->crp_desc;
-	IPSEC_ASSERT(crda != NULL, ("%s: null crypto descriptor", __func__));
+	KASSERT(crda != NULL);
 
 	crda->crd_skip = 0;
 	crda->crd_len = m->m_pkthdr.len;
@@ -810,9 +807,8 @@ ah_input_cb(struct cryptop *crp)
 	uint16_t dport;
 	uint16_t sport;
 
+	KASSERT(crp->crp_opaque != NULL);
 	tc = crp->crp_opaque;
-	IPSEC_ASSERT(tc != NULL, ("%s: null opaque crypto data area!",
-	    __func__));
 	skip = tc->tc_skip;
 	nxt = tc->tc_nxt;
 	protoff = tc->tc_protoff;
@@ -835,10 +831,9 @@ ah_input_cb(struct cryptop *crp)
 	}
 
 	saidx = &sav->sah->saidx;
-	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
-		saidx->dst.sa.sa_family == AF_INET6,
-		("%s: unexpected protocol family %u", __func__,
-		 saidx->dst.sa.sa_family));
+	KASSERTMSG(saidx->dst.sa.sa_family == AF_INET ||
+	    saidx->dst.sa.sa_family == AF_INET6,
+	    "unexpected protocol family %u", saidx->dst.sa.sa_family);
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
@@ -999,9 +994,9 @@ ah_output(
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
 	sav = isr->sav;
-	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
+	KASSERT(sav != NULL);
+	KASSERT(sav->tdb_authalgxform != NULL);
 	ahx = sav->tdb_authalgxform;
-	IPSEC_ASSERT(ahx != NULL, ("%s: null authentication xform", __func__));
 
 	AH_STATINC(AH_STAT_OUTPUT);
 
@@ -1203,8 +1198,8 @@ ah_output_cb(struct cryptop *crp)
 	void *ptr;
 	int s, err;
 
+	KASSERT(crp->crp_opaque != NULL);
 	tc = crp->crp_opaque;
-	IPSEC_ASSERT(tc != NULL, ("%s: null opaque data area!", __func__));
 	skip = tc->tc_skip;
 	ptr = (tc + 1);
 	m = crp->crp_buf;
@@ -1220,7 +1215,7 @@ ah_output_cb(struct cryptop *crp)
 		error = ENOBUFS;		/*XXX*/
 		goto bad;
 	}
-	IPSEC_ASSERT(isr->sav == sav, ("%s: SA changed\n", __func__));
+	KASSERTMSG(isr->sav == sav, "SA changed");
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
