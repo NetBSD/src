@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.4 2017/04/17 16:42:07 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.5 2017/04/18 19:09:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.4 2017/04/17 16:42:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.5 2017/04/18 19:09:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -68,7 +68,7 @@ CFATTACH_DECL_NEW(ualea, sizeof(struct ualea_softc),
     ualea_match, ualea_attach, ualea_detach, NULL);
 
 static const struct usb_devno ualea_devs[] = {
-	{ USB_VENDOR_ARANEUS,	USB_PRODUCT_ARANEUS_ALEA_II },
+	{ USB_VENDOR_ARANEUS,	USB_PRODUCT_ARANEUS_ALEA },
 };
 
 static int

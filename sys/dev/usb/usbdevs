@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.731 2017/04/17 08:59:37 riastradh Exp $
+$NetBSD: usbdevs,v 1.732 2017/04/18 19:09:12 riastradh Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -763,7 +763,7 @@ product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 
 /* Araneus products */
-product ARANEUS ALEA_II		0x0001	Alea II TRNG
+product ARANEUS ALEA		0x0001	Alea I/II TRNG
 
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B
