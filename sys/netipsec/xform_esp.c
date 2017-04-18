@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.52 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.53 2017/04/18 05:26:42 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.52 2017/04/18 05:25:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.53 2017/04/18 05:26:42 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -147,8 +147,7 @@ esp_hdrsiz(const struct secasvar *sav)
 
 	if (sav != NULL) {
 		/*XXX not right for null algorithm--does it matter??*/
-		IPSEC_ASSERT(sav->tdb_encalgxform != NULL,
-			("%s: SA with null xform", __func__));
+		KASSERT(sav->tdb_encalgxform != NULL);
 		if (sav->flags & SADB_X_EXT_OLD)
 			size = sizeof(struct esp);
 		else
@@ -312,12 +311,11 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
-	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
-	IPSEC_ASSERT(sav->tdb_encalgxform != NULL,
-	    ("%s: null encoding xform", __func__));
-	IPSEC_ASSERT((skip&3) == 0 && (m->m_pkthdr.len&3) == 0,
-	    ("%s: misaligned packet, skip %u pkt len %u", __func__,
-	    skip, m->m_pkthdr.len));
+	KASSERT(sav != NULL);
+	KASSERT(sav->tdb_encalgxform != NULL);
+	KASSERTMSG((skip&3) == 0 && (m->m_pkthdr.len&3) == 0,
+	    "misaligned packet, skip %u pkt len %u",
+	    skip, m->m_pkthdr.len);
 
 	/* XXX don't pullup, just copy header */
 	IP6_EXTHDR_GET(esp, struct newesp *, m, skip, sizeof(struct newesp));
@@ -405,10 +403,10 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 	tc->tc_ptr = mtag;
 
 	if (esph) {
-		struct cryptodesc *crda = crp->crp_desc;
+		struct cryptodesc *crda;
 
-		IPSEC_ASSERT(crda != NULL, ("%s: null ah crypto descriptor",
-		    __func__));
+		KASSERT(crp->crp_desc != NULL);
+		crda = crp->crp_desc;
 
 		/* Authentication descriptor */
 		crda->crd_skip = skip;
@@ -455,8 +453,7 @@ esp_input(struct mbuf *m, const struct secasvar *sav, int skip, int protoff)
 
 	/* Decryption descriptor */
 	if (espx) {
-		IPSEC_ASSERT(crde != NULL, ("%s: null esp crypto descriptor",
-		    __func__));
+		KASSERTMSG(crde != NULL, "null esp crypto descriptor");
 		crde->crd_skip = skip + hlen;
 		if (espx->type == CRYPTO_AES_GMAC)
 			crde->crd_len = 0;
@@ -507,7 +504,6 @@ esp_input_cb(struct cryptop *crp)
 	uint8_t lastthree[3], aalg[AH_ALEN_MAX];
 	int s, hlen, skip, protoff, error;
 	struct mbuf *m;
-	struct cryptodesc *crd __diagused;
 	const struct auth_hash *esph;
 	struct tdb_crypto *tc;
 	struct m_tag *mtag;
@@ -517,12 +513,10 @@ esp_input_cb(struct cryptop *crp)
 	uint16_t dport;
 	uint16_t sport;
 
-	crd = crp->crp_desc;
-	IPSEC_ASSERT(crd != NULL, ("%s: null crypto descriptor!", __func__));
+	KASSERT(crp->crp_desc != NULL);
+	KASSERT(crp->crp_opaque != NULL);
 
 	tc = crp->crp_opaque;
-	IPSEC_ASSERT(tc != NULL, ("%s: null opaque crypto data area!",
-	    __func__));
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
 	mtag = tc->tc_ptr;
@@ -546,10 +540,9 @@ esp_input_cb(struct cryptop *crp)
 	}
 
 	saidx = &sav->sah->saidx;
-	IPSEC_ASSERT(saidx->dst.sa.sa_family == AF_INET ||
+	KASSERTMSG(saidx->dst.sa.sa_family == AF_INET ||
 	    saidx->dst.sa.sa_family == AF_INET6,
-	    ("%s: unexpected protocol family %u", __func__,
-	    saidx->dst.sa.sa_family));
+	    "unexpected protocol family %u", saidx->dst.sa.sa_family);
 
 	esph = sav->tdb_authalgxform;
 
@@ -738,11 +731,11 @@ esp_output(
 
 	IPSEC_SPLASSERT_SOFTNET(__func__);
 
+	KASSERT(isr->sav != NULL);
 	sav = isr->sav;
-	IPSEC_ASSERT(sav != NULL, ("%s: null SA", __func__));
 	esph = sav->tdb_authalgxform;
+	KASSERT(sav->tdb_encalgxform != NULL);
 	espx = sav->tdb_encalgxform;
-	IPSEC_ASSERT(espx != NULL, ("%s: null encoding xform", __func__));
 
 	if (sav->flags & SADB_X_EXT_OLD)
 		hlen = sizeof(struct esp) + sav->ivlen;
@@ -969,8 +962,8 @@ esp_output_cb(struct cryptop *crp)
 	struct mbuf *m;
 	int s, err, error;
 
+	KASSERT(crp->crp_opaque != NULL);
 	tc = crp->crp_opaque;
-	IPSEC_ASSERT(tc != NULL, ("%s: null opaque data area!", __func__));
 	m = crp->crp_buf;
 
 	s = splsoftnet();
@@ -986,8 +979,8 @@ esp_output_cb(struct cryptop *crp)
 		error = ENOBUFS;		/*XXX*/
 		goto bad;
 	}
-	IPSEC_ASSERT(isr->sav == sav,
-	    ("%s: SA changed was %p now %p", __func__, isr->sav, sav));
+	KASSERTMSG(isr->sav == sav,
+	    "SA changed was %p now %p", isr->sav, sav);
 
 	/* Check for crypto errors. */
 	if (crp->crp_etype) {
