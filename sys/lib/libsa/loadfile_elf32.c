@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.39 2017/04/18 06:39:54 uwe Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.40 2017/04/18 07:44:20 uwe Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -482,8 +482,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			case SHT_PROGBITS:
 				if (boot_load_ctf && shstr) {
 					/* got a CTF section? */
-					if (strncmp(".SUNW_ctf",
-					    &shstr[shp[i].sh_name], 10) == 0) {
+					if (strncmp(&shstr[shp[i].sh_name],
+						    ".SUNW_ctf", 10) == 0) {
 						goto havesym;
 					}
 				}
