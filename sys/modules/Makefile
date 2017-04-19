@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.190 2017/03/25 23:17:07 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.191 2017/04/19 00:01:38 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -131,6 +131,7 @@ SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
 SUBDIR+=	swwdog
 SUBDIR+=	tmpfs
+SUBDIR+=	ualea
 SUBDIR+=	uatp
 SUBDIR+=	udf
 SUBDIR+=	umap
