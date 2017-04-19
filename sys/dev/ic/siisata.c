@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.4 2017/04/15 17:14:11 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.5 2017/04/19 20:49:17 jdolecek Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.4 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.5 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -865,8 +865,8 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, mstohz(ata_c->timeout),
-		    siisata_timeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(ata_c->timeout),
+		    siisata_timeout, xfer);
 		goto out;
 	}
 
@@ -881,7 +881,7 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 
 	if ((ata_c->flags & AT_DONE) == 0) {
-		siisata_timeout(chp);
+		siisata_timeout(xfer);
 	}
 
 	/* reenable interrupts */
@@ -928,7 +928,7 @@ siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	if (xfer->c_flags & C_TIMEOU)
 		ata_c->flags |= AT_TIMEOU;
 	else
-		callout_stop(&chp->ch_callout);
+		callout_stop(&xfer->c_timo_callout);
 
 	if (chp->ch_status & WDCS_BSY) {
 		ata_c->flags |= AT_TIMEOU;
@@ -1067,8 +1067,8 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, mstohz(ATA_DELAY),
-		    siisata_timeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(ATA_DELAY),
+		    siisata_timeout, xfer);
 		goto out;
 	}
 
@@ -1133,7 +1133,7 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	if (xfer->c_flags & C_TIMEOU) {
 		ata_bio->error = TIMEOUT;
 	} else {
-		callout_stop(&chp->ch_callout);
+		callout_stop(&xfer->c_timo_callout);
 		ata_bio->error = NOERROR;
 	}
 
@@ -1178,8 +1178,8 @@ siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 void
 siisata_timeout(void *v)
 {
-	struct ata_channel *chp = (struct ata_channel *)v;
-	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0); /* XXX slot */
+	struct ata_xfer *xfer = v;
+	struct ata_channel *chp = xfer->c_chp;
 	int slot = SIISATA_NON_NCQ_SLOT;
 	int s = splbio();
 	SIISATA_DEBUG_PRINT(("%s: %p\n", __func__, xfer), DEBUG_INTR);
@@ -1612,8 +1612,8 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((xfer->c_flags & C_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
-		    siisata_timeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
+		    siisata_timeout, xfer);
 		goto out;
 	}
 
@@ -1627,7 +1627,7 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		DELAY(1000);
 	}
 	if ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
-		siisata_timeout(chp);
+		siisata_timeout(xfer);
 	}
 	/* reenable interrupts */
 	siisata_enable_port_interrupt(chp);
@@ -1654,7 +1654,7 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 	if (xfer->c_flags & C_TIMEOU) {
 		sc_xfer->error = XS_TIMEOUT;
 	} else {
-		callout_stop(&chp->ch_callout);
+		callout_stop(&xfer->c_timo_callout);
 		sc_xfer->error = XS_NOERROR;
 	}
 

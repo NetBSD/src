@@ -1,4 +1,4 @@
-/* $NetBSD: satafis_subr.c,v 1.7.28.1 2017/04/15 12:01:23 jdolecek Exp $ */
+/* $NetBSD: satafis_subr.c,v 1.7.28.2 2017/04/19 20:49:17 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2009 Jonathan A. Kollasch.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7.28.1 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satafis_subr.c,v 1.7.28.2 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,12 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 {
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	struct ata_drive_datas *drvp = &xfer->c_chp->ch_drive[xfer->c_drive];
-	int nblks;
+	uint16_t count, features;
+	uint8_t device;
 
-	nblks = xfer->c_bcount / drvp->lp->d_secsize;
+	count = xfer->c_bcount / drvp->lp->d_secsize;
+	features = 0;
+	device = WDSD_LBA;
 
 	memset(fis, 0, RHD_FISLEN);
 
@@ -113,27 +116,32 @@ satafis_rhd_construct_bio(struct ata_xfer *xfer, uint8_t *fis)
 	if (ata_bio->flags & ATA_LBA48) {
 		fis[rhd_command] = (ata_bio->flags & ATA_READ) ?
 		    WDCC_READDMA_EXT : WDCC_WRITEDMA_EXT;
+
+		atacmd_toncq(xfer, &fis[rhd_command], &count, &features,
+		    &device);
 	} else {
 		fis[rhd_command] =
 		    (ata_bio->flags & ATA_READ) ? WDCC_READDMA : WDCC_WRITEDMA;
 	}
+	fis[rhd_features0] = (features >> 0) & 0xff;
 
 	fis[rhd_lba0] = (ata_bio->blkno >> 0) & 0xff;
 	fis[rhd_lba1] = (ata_bio->blkno >> 8) & 0xff;
 	fis[rhd_lba2] = (ata_bio->blkno >> 16) & 0xff;
 	if ((ata_bio->flags & ATA_LBA48) != 0) {
-		fis[rhd_dh] = WDSD_LBA;
+		fis[rhd_dh] = device;
 		fis[rhd_lba3] = (ata_bio->blkno >> 24) & 0xff;
 		fis[rhd_lba4] = (ata_bio->blkno >> 32) & 0xff;
 		fis[rhd_lba5] = (ata_bio->blkno >> 40) & 0xff;
+		fis[rhd_features1] = (features >> 8) & 0xff;
 	} else {
 		fis[rhd_dh] = ((ata_bio->blkno >> 24) & 0x0f) |
 		    (((ata_bio->flags & ATA_LBA) != 0) ? WDSD_LBA : 0);
 	}
 
-	fis[rhd_count0] = nblks & 0xff;
+	fis[rhd_count0] = count & 0xff;
 	if ((ata_bio->flags & ATA_LBA48) != 0) {
-		fis[rhd_count1] = (nblks >> 8) & 0xff;
+		fis[rhd_count1] = (count >> 8) & 0xff;
 	}
 }
 

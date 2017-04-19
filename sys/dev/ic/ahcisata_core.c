@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.6 2017/04/15 23:58:31 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.7 2017/04/19 20:49:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.6 2017/04/15 23:58:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.7 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -299,7 +299,8 @@ ahci_attach(struct ahci_softc *sc)
 	    (sc->sc_atac.atac_nchannels == 1 ? "" : "s"), 
 	    sc->sc_ncmds, (sc->sc_ncmds == 1 ? "" : "s"), buf);
 
-	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA;
+	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA
+		| ((sc->sc_ahci_cap & AHCI_CAP_NCQ) ? ATAC_CAP_NCQ : 0);
 	sc->sc_atac.atac_cap |= sc->sc_atac_capflags;
 	sc->sc_atac.atac_pio_cap = 4;
 	sc->sc_atac.atac_dma_cap = 2;
@@ -365,7 +366,7 @@ ahci_attach(struct ahci_softc *sc)
 		sc->sc_chanarray[i] = chp;
 		chp->ch_channel = i;
 		chp->ch_atac = &sc->sc_atac;
-		chp->ch_queue = ata_queue_alloc(1); // XXX sc_ncmds
+		chp->ch_queue = ata_queue_alloc(sc->sc_ncmds);
 		if (chp->ch_queue == NULL) {
 			aprint_error("%s port %d: can't allocate memory for "
 			    "command queue", AHCINAME(sc), i);
@@ -566,19 +567,19 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	    chp->ch_channel, is, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_INTR);
 
-	slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
-		& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
-	if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-		return;
-
 	if (is & (AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 	    AHCI_P_IX_OFS | AHCI_P_IX_UFS)) {
+#if 1
+	printf("ahci_intr_port %s port %d is 0x%x CI 0x%x\n", AHCINAME(sc),
+	    chp->ch_channel, is, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)));
+#endif
+		slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
+			& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
+		/* XXX iterate */
+		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
+			return;
 		/* stop channel */
 		ahci_channel_stop(sc, chp, 0);
-		if (slot != 0) {
-			printf("ahci_intr_port: slot %d\n", slot);
-			panic("ahci_intr_port");
-		}
 		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, slot);
 		if (is & AHCI_P_IX_TFES) {
 			tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
@@ -601,10 +602,17 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 		    == 0)
 			ahci_channel_start(sc, chp, 0, 0);
 	} else {
-		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, slot);
-		if ((AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)) & (1 << slot))
-		    == 0) {
-			xfer->c_intr(chp, xfer, 0);
+		uint32_t clear = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))
+			| AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
+
+		for (slot=0; slot < sc->sc_ncmds; slot++) {
+			if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
+				return;
+			if ((clear & (1 << slot)) == 0) {
+				xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
+				    slot);
+				xfer->c_intr(chp, xfer, 0);
+			}
 		}
 	}
 }
@@ -896,7 +904,7 @@ ahci_probe_drive(struct ata_channel *chp)
 		AHCI_WRITE(sc, AHCI_P_IE(chp->ch_channel),
 		    AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |
-		    AHCI_P_IX_PSS | AHCI_P_IX_DHRS);
+		    AHCI_P_IX_PSS | AHCI_P_IX_DHRS | AHCI_P_IX_SDBS);
 		/* wait 500ms before actually starting operations */
 		tsleep(&sc, PRIBIO, "ahciprb", mstohz(500));
 		break;
@@ -1015,8 +1023,8 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, mstohz(ata_c->timeout),
-		    ahci_timeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(ata_c->timeout),
+		    ahci_timeout, xfer);
 		return;
 	}
 	/*
@@ -1216,6 +1224,8 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	chp->ch_flags |= ATACH_IRQ_WAIT;
 	chp->ch_status = 0;
+	if (xfer->c_flags & C_NCQ)
+		AHCI_WRITE(sc, AHCI_P_SACT(chp->ch_channel), 1 << xfer->c_slot);
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << xfer->c_slot);
 	/* and says we started this command */
@@ -1223,8 +1233,8 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((xfer->c_flags & C_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, mstohz(ATA_DELAY),
-		    ahci_timeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(ATA_DELAY),
+		    ahci_timeout, xfer);
 		return;
 	}
 	/*
@@ -1409,18 +1419,34 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp,
 static void
 ahci_timeout(void *v)
 {
-	struct ata_channel *chp = (struct ata_channel *)v;
-	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0); /* XXX slot */
-#ifdef AHCI_DEBUG
+	struct ata_xfer *xfer = v;
+	struct ata_channel *chp = xfer->c_chp;
+	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
-#endif
-	int s = splbio();
-	AHCIDEBUG_PRINT(("ahci_timeout xfer %p intr %#x ghc %08x is %08x\n", xfer, AHCI_READ(sc, AHCI_P_IS(chp->ch_channel)), AHCI_READ(sc, AHCI_GHC), AHCI_READ(sc, AHCI_IS)), DEBUG_INTR);
-	
-	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
+	int s;
+
+	s = splbio();
+	AHCIDEBUG_PRINT(("ahci_timeout intr %#x ghc %08x is %08x\n",
+	    AHCI_READ(sc, AHCI_P_IS(chp->ch_channel)),
+	    AHCI_READ(sc, AHCI_GHC),
+	    AHCI_READ(sc, AHCI_IS)), DEBUG_INTR);
+
+	uint32_t active = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))
+			| AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
+	aprint_error_dev(sc->sc_atac.atac_dev,
+	    "timeout xfer slot %d active 0x%x\n", xfer->c_slot, active);
+
+	/*
+	 * The command must be active - otherwise the timeout should have been
+	 * stopped.
+	 */
+	KASSERT((achp->ahcic_cmds_active & (1 << xfer->c_slot)) != 0);
+
+	/* Mark as timed out unless the xfer is actually finished */
+	if ((active & (1 << xfer->c_slot)) != 0)
 		xfer->c_flags |= C_TIMEOU;
-		xfer->c_intr(chp, xfer, 0);
-	}
+	xfer->c_intr(chp, xfer, 0);
+
 	splx(s);
 }
 
@@ -1637,8 +1663,8 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((xfer->c_flags & C_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
-		    ahci_timeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
+		    ahci_timeout, xfer);
 		return;
 	}
 	/*

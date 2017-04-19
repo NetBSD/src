@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.35.6.5 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.35.6.6 2017/04/19 20:49:17 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.5 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.35.6.6 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1139,7 +1139,7 @@ again:
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&chp->ch_callout,
+				callout_reset(&xfer->c_timo_callout,
 				    ATA_DELAY / 1000 * hz,
 				    mvsata_edma_timeout, xfer);
 			/* wait for irq */
@@ -1226,8 +1226,8 @@ do_pio:
 
 		/* start timeout machinery */
 		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&chp->ch_callout,
-			    ATA_DELAY / 1000 * hz, wdctimeout, chp);
+			callout_reset(&xfer->c_timo_callout,
+			    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;
@@ -1429,7 +1429,7 @@ mvsata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	    device_xname(MVSATA_DEV2(mvport)), chp->ch_channel, xfer->c_drive,
 	    (u_int)xfer->c_flags));
 
-	callout_stop(&chp->ch_callout);
+	callout_stop(&xfer->c_timo_callout);
 
 	/* EDMA restart, if enabled */
 	if (!(xfer->c_flags & C_DMA) && mvport->port_edmamode != nodma) {
@@ -1605,8 +1605,8 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, ata_c->timeout / 1000 * hz,
-		    wdctimeout, chp);
+		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
+		    wdctimeout, xfer);
 		return;
 	}
 	/*
@@ -1707,8 +1707,8 @@ again:
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for intr */
-			callout_reset(&chp->ch_callout,
-			    mstohz(ata_c->timeout), wdctimeout, chp);
+			callout_reset(&xfer->c_timo_callout,
+			    mstohz(ata_c->timeout), wdctimeout, xfer);
 			return 1;
 		} else
 			goto again;
@@ -1946,8 +1946,8 @@ ready:
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
-		    wdctimeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
+		    wdctimeout, xfer);
 
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
 	switch (wdc_wait_for_unbusy(chp, ATAPI_DELAY, wait_flags)  < 0) {
@@ -2315,7 +2315,7 @@ mvsata_atapi_phase_complete(struct ata_xfer *xfer)
 				mvsata_atapi_reset(chp, xfer);
 				return;
 			} else
-				callout_reset(&chp->ch_callout, 1,
+				callout_reset(&xfer->c_timo_callout, 1,
 				    mvsata_atapi_polldsc, xfer);
 			return;
 		}

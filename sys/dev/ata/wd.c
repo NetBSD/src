@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.6 2017/04/15 20:22:41 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.7 2017/04/19 20:49:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.6 2017/04/15 20:22:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.7 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -425,32 +425,6 @@ wdattach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "WARNING: block size %u "
 		    "might not actually work\n", wd->sc_blksize);
 	}
-
-	/*
-	 * Probe WRITE DMA FUA EXT. Support is mandatory for devices
-	 * supporting LBA48, but nevertheless confirm with the feature flag.
-	 */
-	if (wd->sc_flags & WDF_LBA48
-	    && (wd->sc_params.atap_cmd_def & ATA_CMDE_WFE)) {
-		wd->sc_flags |= WDF_WFUA;
-	}
-
-	/* Probe NCQ support - READ/WRITE FPDMA QUEUED command support */
-	uint8_t max_depth = 1;
-	if (wd->sc_params.atap_sata_caps & SATA_NATIVE_CMDQ) {
-		wd->sc_flags |= WDF_NCQ;
-
-		max_depth = (wd->sc_params.atap_queuedepth & 0x0f) + 1;
-
-		/* XXX adjust adev_openings */
-	}
-
-	aprint_verbose_dev(self,
-	    "drive supports %sFUA, %sNCQ (queue depth max %d, using %u)\n",
-	    (wd->sc_flags & (WDF_WFUA|WDF_NCQ)) ? "" : "no ",
-	    (wd->sc_flags & WDF_NCQ) ? "" : "no ",
-	    max_depth, adev->adev_openings);
-
 
 out:
 	/*
@@ -823,6 +797,13 @@ fail:
 	     xfer->c_bio.bcount / wd->sc_dk.dk_label->d_secsize) >
 	    wd->sc_capacity28)
 		xfer->c_bio.flags |= ATA_LBA48;
+
+	/* If NCQ was negotiated, always use it */
+	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ) {
+		xfer->c_bio.flags |= ATA_LBA48;
+		xfer->c_flags |= C_NCQ;
+	}
+
 	if (wd->sc_flags & WDF_LBA)
 		xfer->c_bio.flags |= ATA_LBA;
 	if (bp->b_flags & B_READ)
@@ -1917,6 +1898,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 {
 	struct ataparams params;
 	struct ata_xfer xfer;
+	int error;
 
 	if (wd_get_params(wd, AT_WAIT, &params) != 0)
 		return EIO;
@@ -1930,7 +1912,7 @@ wd_setcache(struct wd_softc *wd, int bits)
 	    (bits & DKCACHE_SAVE) != 0)
 		return EOPNOTSUPP;
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 	xfer.c_ata_c.r_command = SET_FEATURES;
 	xfer.c_ata_c.r_st_bmask = 0;
 	xfer.c_ata_c.r_st_pmask = 0;
@@ -1943,23 +1925,32 @@ wd_setcache(struct wd_softc *wd, int bits)
 	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "wd_setcache command not complete\n");
-		return EIO;
+		error = EIO;
+		goto out;
 	}
+
 	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_setcache: status=%s\n", sbuf);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
-	return 0;
+
+	error = 0;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return error;
 }
 
 static int
 wd_standby(struct wd_softc *wd, int flags)
 {
 	struct ata_xfer xfer;
+	int error;
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 	xfer.c_ata_c.r_command = WDCC_STANDBY_IMMED;
 	xfer.c_ata_c.r_st_bmask = WDCS_DRDY;
 	xfer.c_ata_c.r_st_pmask = WDCS_DRDY;
@@ -1968,27 +1959,35 @@ wd_standby(struct wd_softc *wd, int flags)
 	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "standby immediate command didn't complete\n");
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	if (xfer.c_ata_c.flags & AT_ERROR) {
 		if (xfer.c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
-			return ENODEV;
+			error = ENODEV;
+			goto out;
 		}
 	}
 	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_standby: status=%s\n", sbuf);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
-	return 0;
+	error = 0;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return error;
 }
 
 int
 wd_flushcache(struct wd_softc *wd, int flags)
 {
 	struct ata_xfer xfer;
+	int error;
 
 	/*
 	 * WDCC_FLUSHCACHE is here since ATA-4, but some drives report
@@ -1998,7 +1997,8 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	    ((wd->sc_params.atap_cmd_set2 & WDC_CMD2_FC) == 0 ||
 	    wd->sc_params.atap_cmd_set2 == 0xffff))
 		return ENODEV;
-	memset(&xfer, 0, sizeof(xfer));
+
+	ata_xfer_init(&xfer, true);
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
 	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0) {
 		xfer.c_ata_c.r_command = WDCC_FLUSHCACHE_EXT;
@@ -2012,12 +2012,14 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	if (wd->atabus->ata_exec_command(wd->drvp, &xfer) != ATACMD_COMPLETE) {
 		aprint_error_dev(wd->sc_dev,
 		    "flush cache command didn't complete\n");
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	if (xfer.c_ata_c.flags & AT_ERROR) {
 		if (xfer.c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
-			return ENODEV;
+			error = ENODEV;
+			goto out;
 		}
 	}
 	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
@@ -2025,15 +2027,21 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
 		    sbuf);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
-	return 0;
+	error = 0;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return error;
 }
 
 int
 wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 {
 	struct ata_xfer xfer;
+	int error;
 	unsigned char *req;
 
 	if (part != RAW_PART)
@@ -2049,7 +2057,7 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 	req[6] = size & 0xff;
 	req[7] = (size >> 8) & 0xff;
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 	xfer.c_ata_c.r_command = ATA_DATA_SET_MANAGEMENT;
 	xfer.c_ata_c.r_count = 1;
 	xfer.c_ata_c.r_features = ATA_SUPPORT_DSM_TRIM;
@@ -2063,13 +2071,15 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 		aprint_error_dev(wd->sc_dev,
 		    "trim command didn't complete\n");
 		kmem_free(req, 512);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 	kmem_free(req, 512);
 	if (xfer.c_ata_c.flags & AT_ERROR) {
 		if (xfer.c_ata_c.r_error == WDCE_ABRT) {
 			/* command not supported */
-			return ENODEV;
+			error = ENODEV;
+			goto out;
 		}
 	}
 	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
@@ -2077,9 +2087,14 @@ wd_trim(struct wd_softc *wd, int part, daddr_t bno, long size)
 		snprintb(sbuf, sizeof(sbuf), at_errbits, xfer.c_ata_c.flags);
 		aprint_error_dev(wd->sc_dev, "wd_trim: status=%s\n",
 		    sbuf);
-		return EIO;
+		error = EIO;
+		goto out;
 	}
-	return 0;
+	error = 0;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return error;
 }
 
 bool
@@ -2211,10 +2226,10 @@ wdioctlstrategy(struct buf *bp)
 		printf("wdioctlstrategy: "
 		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
-		goto bad;
+		goto out;
 	}
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 
 	/*
 	 * Abort if physio broke up the transfer
@@ -2223,7 +2238,7 @@ wdioctlstrategy(struct buf *bp)
 	if (bp->b_bcount != wi->wi_atareq.datalen) {
 		printf("physio split wd ioctl request... cannot proceed\n");
 		error = EIO;
-		goto bad;
+		goto out;
 	}
 
 	/*
@@ -2235,7 +2250,7 @@ wdioctlstrategy(struct buf *bp)
 	    (bp->b_bcount / wi_sector_size(wi)) >=
 	     (1 << NBBY)) {
 		error = EINVAL;
-		goto bad;
+		goto out;
 	}
 
 	/*
@@ -2244,7 +2259,7 @@ wdioctlstrategy(struct buf *bp)
 
 	if (wi->wi_atareq.timeout == 0) {
 		error = EINVAL;
-		goto bad;
+		goto out;
 	}
 
 	if (wi->wi_atareq.flags & ATACMD_READ)
@@ -2275,7 +2290,8 @@ wdioctlstrategy(struct buf *bp)
 	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &xfer)
 	    != ATACMD_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
-		goto bad;
+		error = EIO;
+		goto out;
 	}
 
 	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
@@ -2301,11 +2317,10 @@ wdioctlstrategy(struct buf *bp)
 		}
 	}
 
-	bp->b_error = 0;
-	biodone(bp);
-	return;
-bad:
+out:
+	ata_xfer_destroy(&xfer);
 	bp->b_error = error;
-	bp->b_resid = bp->b_bcount;
+	if (error)
+		bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
