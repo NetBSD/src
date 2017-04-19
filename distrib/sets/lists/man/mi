@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1553 2017/04/11 00:03:16 kre Exp $
+# $NetBSD: mi,v 1.1554 2017/04/19 00:17:30 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1809,6 +1809,7 @@
 ./usr/share/man/cat4/twe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/u3g.0			man-sys-catman		.cat
+./usr/share/man/cat4/ualea.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uark.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uatp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uaudio.0			man-sys-catman		.cat
@@ -4845,6 +4846,7 @@
 ./usr/share/man/html4/twe.html			man-sys-htmlman		html
 ./usr/share/man/html4/txp.html			man-sys-htmlman		html
 ./usr/share/man/html4/u3g.html			man-sys-htmlman		html
+./usr/share/man/html4/ualea.html		man-sys-htmlman		html
 ./usr/share/man/html4/uark.html		man-sys-htmlman		html
 ./usr/share/man/html4/uatp.html		man-sys-htmlman		html
 ./usr/share/man/html4/uaudio.html		man-sys-htmlman		html
@@ -7801,6 +7803,7 @@
 ./usr/share/man/man4/twe.4			man-sys-man		.man
 ./usr/share/man/man4/txp.4			man-sys-man		.man
 ./usr/share/man/man4/u3g.4			man-sys-man		.man
+./usr/share/man/man4/ualea.4			man-sys-man		.man
 ./usr/share/man/man4/uark.4			man-sys-man		.man
 ./usr/share/man/man4/uatp.4			man-sys-man		.man
 ./usr/share/man/man4/uaudio.4			man-sys-man		.man
