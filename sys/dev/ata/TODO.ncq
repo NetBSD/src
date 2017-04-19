@@ -1,5 +1,8 @@
 ahci with NCQ gets frequent timeouts, something's amiss
 
+under QEMU, the mounted AHCI drive doesn't show directories for ls,
+but cd, mkdir, stat and creating files wroks just fine - what do?
+
 ata_xfer_*() uses wd->drvp->chnl_softc as ata_channel, but it's umass
 softc for wd? at umass*
 
