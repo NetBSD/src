@@ -1,4 +1,4 @@
-/*	$NetBSD: canconfig.c,v 1.1.2.1 2017/04/17 20:48:36 bouyer Exp $	*/
+/*	$NetBSD: canconfig.c,v 1.1.2.2 2017/04/19 17:51:16 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: canconfig.c,v 1.1.2.1 2017/04/17 20:48:36 bouyer Exp $");
+__RCSID("$NetBSD: canconfig.c,v 1.1.2.2 2017/04/19 17:51:16 bouyer Exp $");
 #endif
 
 
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 
 	/* If the timings changed, update them. */
 	if (g_clt_updated &&
-	    do_cmd(sock, canifname, CANGLINKTIMINGS, &g_clt, sizeof(g_clt), 1) < 0) 
+	    do_cmd(sock, canifname, CANSLINKTIMINGS, &g_clt, sizeof(g_clt), 1) < 0) 
 		err(1, "unable to set can link timings");
 
 	/* If the flags changed, update them. */
@@ -313,8 +313,7 @@ status(int sock, const char *canifname)
 	printb("flags", ifr.ifr_flags, IFFBITS);
 	printf("\n");
 
-	printf("\tTimings:\n");
-	show_timings(sock, canifname, "\t\t");
+	show_timings(sock, canifname, "\t");
 
 }
 
@@ -340,7 +339,7 @@ show_timings(int sock, const char *canifname, const char *prefix)
 	humanize_number(hbuf, sizeof(hbuf), cltc.cltc_clock_freq, "Hz", 0,
 	    HN_AUTOSCALE | HN_NOSPACE | HN_DIVISOR_1000);
 
-	printf("%scaps:\n", prefix);
+	printf("%stiming caps:\n", prefix);
 	printf("%s  clock %s, brp [%d..%d]/%d, prop_seg [%d..%d]\n",
 	    prefix, hbuf,
 	    cltc.cltc_brp_min, cltc.cltc_brp_max, cltc.cltc_brp_inc,
@@ -352,12 +351,14 @@ show_timings(int sock, const char *canifname, const char *prefix)
 	    cltc.cltc_sjw_max);
 	printf("%s  ", prefix);
 	printb("capabilities", cltc.cltc_linkmode_caps, CAN_IFFBITS);
-	printf("%soperational:\n", prefix);
+	printf("\n");
+	printf("%soperational timings:\n", prefix);
 	printf("%s  brp %d prop_seg %d, phase_seg1 %d, phase_seg2 %d, sjw %d\n",
 	    prefix,
 	    clt.clt_brp, clt.clt_prop, clt.clt_ps1, clt.clt_ps2, clt.clt_sjw);
 	printf("%s  ", prefix);
 	printb("mode", linkmode, CAN_IFFBITS);
+	printf("\n");
 }
 
 static int
@@ -417,7 +418,7 @@ do_canflag(int sock, const char *canifname, uint32_t flag, int set)
 		cmd = CANSLINKMODE;
 	else
 		cmd = CANCLINKMODE;
-	return do_cmd(sock, canifname, cmd, &flag, sizeof(flag), 1);
+	return do_cmd(sock, canifname, cmd, &flag, sizeof(flag), set);
 }
 
 static void
