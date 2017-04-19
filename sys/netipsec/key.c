@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.112 2017/04/19 07:19:46 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.113 2017/04/19 09:22:17 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.112 2017/04/19 07:19:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.113 2017/04/19 09:22:17 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1465,176 +1465,11 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 	case IPSEC_POLICY_ENTRUST:
 	case IPSEC_POLICY_BYPASS:
 		newsp->req = NULL;
-		break;
+		*error = 0;
+		return newsp;
 
 	case IPSEC_POLICY_IPSEC:
-	    {
-		int tlen;
-		const struct sadb_x_ipsecrequest *xisr;
-		uint16_t xisr_reqid;
-		struct ipsecrequest **p_isr = &newsp->req;
-
-		/* validity check */
-		if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
-			ipseclog((LOG_DEBUG,
-			    "key_msg2sp: Invalid msg length.\n"));
-			KEY_FREESP(&newsp);
-			*error = EINVAL;
-			return NULL;
-		}
-
-		tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
-		xisr = (const struct sadb_x_ipsecrequest *)(xpl0 + 1);
-
-		while (tlen > 0) {
-			/* length check */
-			if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
-				ipseclog((LOG_DEBUG, "key_msg2sp: "
-					"invalid ipsecrequest length.\n"));
-				KEY_FREESP(&newsp);
-				*error = EINVAL;
-				return NULL;
-			}
-
-			/* allocate request buffer */
-			KMALLOC(*p_isr, struct ipsecrequest *, sizeof(**p_isr));
-			if ((*p_isr) == NULL) {
-				ipseclog((LOG_DEBUG,
-				    "key_msg2sp: No more memory.\n"));
-				KEY_FREESP(&newsp);
-				*error = ENOBUFS;
-				return NULL;
-			}
-			memset(*p_isr, 0, sizeof(**p_isr));
-
-			/* set values */
-			(*p_isr)->next = NULL;
-
-			switch (xisr->sadb_x_ipsecrequest_proto) {
-			case IPPROTO_ESP:
-			case IPPROTO_AH:
-			case IPPROTO_IPCOMP:
-				break;
-			default:
-				ipseclog((LOG_DEBUG,
-				    "key_msg2sp: invalid proto type=%u\n",
-				    xisr->sadb_x_ipsecrequest_proto));
-				KEY_FREESP(&newsp);
-				*error = EPROTONOSUPPORT;
-				return NULL;
-			}
-			(*p_isr)->saidx.proto = xisr->sadb_x_ipsecrequest_proto;
-
-			switch (xisr->sadb_x_ipsecrequest_mode) {
-			case IPSEC_MODE_TRANSPORT:
-			case IPSEC_MODE_TUNNEL:
-				break;
-			case IPSEC_MODE_ANY:
-			default:
-				ipseclog((LOG_DEBUG,
-				    "key_msg2sp: invalid mode=%u\n",
-				    xisr->sadb_x_ipsecrequest_mode));
-				KEY_FREESP(&newsp);
-				*error = EINVAL;
-				return NULL;
-			}
-			(*p_isr)->saidx.mode = xisr->sadb_x_ipsecrequest_mode;
-
-			switch (xisr->sadb_x_ipsecrequest_level) {
-			case IPSEC_LEVEL_DEFAULT:
-			case IPSEC_LEVEL_USE:
-			case IPSEC_LEVEL_REQUIRE:
-				break;
-			case IPSEC_LEVEL_UNIQUE:
-				xisr_reqid = xisr->sadb_x_ipsecrequest_reqid;
-				/* validity check */
-				/*
-				 * If range violation of reqid, kernel will
-				 * update it, don't refuse it.
-				 */
-				if (xisr_reqid > IPSEC_MANUAL_REQID_MAX) {
-					ipseclog((LOG_DEBUG,
-					    "key_msg2sp: reqid=%d range "
-					    "violation, updated by kernel.\n",
-					    xisr_reqid));
-					xisr_reqid = 0;
-				}
-
-				/* allocate new reqid id if reqid is zero. */
-				if (xisr_reqid == 0) {
-					u_int16_t reqid;
-					if ((reqid = key_newreqid()) == 0) {
-						KEY_FREESP(&newsp);
-						*error = ENOBUFS;
-						return NULL;
-					}
-					(*p_isr)->saidx.reqid = reqid;
-				} else {
-				/* set it for manual keying. */
-					(*p_isr)->saidx.reqid = xisr_reqid;
-				}
-				break;
-
-			default:
-				ipseclog((LOG_DEBUG, "key_msg2sp: invalid level=%u\n",
-					xisr->sadb_x_ipsecrequest_level));
-				KEY_FREESP(&newsp);
-				*error = EINVAL;
-				return NULL;
-			}
-			(*p_isr)->level = xisr->sadb_x_ipsecrequest_level;
-
-			/* set IP addresses if there */
-			if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
-				const struct sockaddr *paddr;
-
-				paddr = (const struct sockaddr *)(xisr + 1);
-
-				/* validity check */
-				if (paddr->sa_len
-				    > sizeof((*p_isr)->saidx.src)) {
-					ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
-						"address length.\n"));
-					KEY_FREESP(&newsp);
-					*error = EINVAL;
-					return NULL;
-				}
-				memcpy(&(*p_isr)->saidx.src, paddr, paddr->sa_len);
-
-				paddr = (const struct sockaddr *)((const char *)paddr
-							+ paddr->sa_len);
-
-				/* validity check */
-				if (paddr->sa_len
-				    > sizeof((*p_isr)->saidx.dst)) {
-					ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
-						"address length.\n"));
-					KEY_FREESP(&newsp);
-					*error = EINVAL;
-					return NULL;
-				}
-				memcpy(&(*p_isr)->saidx.dst, paddr, paddr->sa_len);
-			}
-
-			(*p_isr)->sav = NULL;
-			(*p_isr)->sp = newsp;
-
-			/* initialization for the next. */
-			p_isr = &(*p_isr)->next;
-			tlen -= xisr->sadb_x_ipsecrequest_len;
-
-			/* validity check */
-			if (tlen < 0) {
-				ipseclog((LOG_DEBUG, "key_msg2sp: becoming tlen < 0.\n"));
-				KEY_FREESP(&newsp);
-				*error = EINVAL;
-				return NULL;
-			}
-
-			xisr = (const struct sadb_x_ipsecrequest *)((const char *)xisr
-			                 + xisr->sadb_x_ipsecrequest_len);
-		}
-	    }
+		/* Continued */
 		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_msg2sp: invalid policy type.\n"));
@@ -1642,6 +1477,175 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		*error = EINVAL;
 		return NULL;
 	}
+
+	/* IPSEC_POLICY_IPSEC */
+    {
+	int tlen;
+	const struct sadb_x_ipsecrequest *xisr;
+	uint16_t xisr_reqid;
+	struct ipsecrequest **p_isr = &newsp->req;
+
+	/* validity check */
+	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
+		ipseclog((LOG_DEBUG,
+		    "key_msg2sp: Invalid msg length.\n"));
+		KEY_FREESP(&newsp);
+		*error = EINVAL;
+		return NULL;
+	}
+
+	tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
+	xisr = (const struct sadb_x_ipsecrequest *)(xpl0 + 1);
+
+	while (tlen > 0) {
+		/* length check */
+		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
+			ipseclog((LOG_DEBUG, "key_msg2sp: "
+				"invalid ipsecrequest length.\n"));
+			KEY_FREESP(&newsp);
+			*error = EINVAL;
+			return NULL;
+		}
+
+		/* allocate request buffer */
+		KMALLOC(*p_isr, struct ipsecrequest *, sizeof(**p_isr));
+		if ((*p_isr) == NULL) {
+			ipseclog((LOG_DEBUG,
+			    "key_msg2sp: No more memory.\n"));
+			KEY_FREESP(&newsp);
+			*error = ENOBUFS;
+			return NULL;
+		}
+		memset(*p_isr, 0, sizeof(**p_isr));
+
+		/* set values */
+		(*p_isr)->next = NULL;
+
+		switch (xisr->sadb_x_ipsecrequest_proto) {
+		case IPPROTO_ESP:
+		case IPPROTO_AH:
+		case IPPROTO_IPCOMP:
+			break;
+		default:
+			ipseclog((LOG_DEBUG,
+			    "key_msg2sp: invalid proto type=%u\n",
+			    xisr->sadb_x_ipsecrequest_proto));
+			KEY_FREESP(&newsp);
+			*error = EPROTONOSUPPORT;
+			return NULL;
+		}
+		(*p_isr)->saidx.proto = xisr->sadb_x_ipsecrequest_proto;
+
+		switch (xisr->sadb_x_ipsecrequest_mode) {
+		case IPSEC_MODE_TRANSPORT:
+		case IPSEC_MODE_TUNNEL:
+			break;
+		case IPSEC_MODE_ANY:
+		default:
+			ipseclog((LOG_DEBUG,
+			    "key_msg2sp: invalid mode=%u\n",
+			    xisr->sadb_x_ipsecrequest_mode));
+			KEY_FREESP(&newsp);
+			*error = EINVAL;
+			return NULL;
+		}
+		(*p_isr)->saidx.mode = xisr->sadb_x_ipsecrequest_mode;
+
+		switch (xisr->sadb_x_ipsecrequest_level) {
+		case IPSEC_LEVEL_DEFAULT:
+		case IPSEC_LEVEL_USE:
+		case IPSEC_LEVEL_REQUIRE:
+			break;
+		case IPSEC_LEVEL_UNIQUE:
+			xisr_reqid = xisr->sadb_x_ipsecrequest_reqid;
+			/* validity check */
+			/*
+			 * If range violation of reqid, kernel will
+			 * update it, don't refuse it.
+			 */
+			if (xisr_reqid > IPSEC_MANUAL_REQID_MAX) {
+				ipseclog((LOG_DEBUG,
+				    "key_msg2sp: reqid=%d range "
+				    "violation, updated by kernel.\n",
+				    xisr_reqid));
+				xisr_reqid = 0;
+			}
+
+			/* allocate new reqid id if reqid is zero. */
+			if (xisr_reqid == 0) {
+				u_int16_t reqid;
+				if ((reqid = key_newreqid()) == 0) {
+					KEY_FREESP(&newsp);
+					*error = ENOBUFS;
+					return NULL;
+				}
+				(*p_isr)->saidx.reqid = reqid;
+			} else {
+			/* set it for manual keying. */
+				(*p_isr)->saidx.reqid = xisr_reqid;
+			}
+			break;
+
+		default:
+			ipseclog((LOG_DEBUG, "key_msg2sp: invalid level=%u\n",
+				xisr->sadb_x_ipsecrequest_level));
+			KEY_FREESP(&newsp);
+			*error = EINVAL;
+			return NULL;
+		}
+		(*p_isr)->level = xisr->sadb_x_ipsecrequest_level;
+
+		/* set IP addresses if there */
+		if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
+			const struct sockaddr *paddr;
+
+			paddr = (const struct sockaddr *)(xisr + 1);
+
+			/* validity check */
+			if (paddr->sa_len
+			    > sizeof((*p_isr)->saidx.src)) {
+				ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
+					"address length.\n"));
+				KEY_FREESP(&newsp);
+				*error = EINVAL;
+				return NULL;
+			}
+			memcpy(&(*p_isr)->saidx.src, paddr, paddr->sa_len);
+
+			paddr = (const struct sockaddr *)((const char *)paddr
+						+ paddr->sa_len);
+
+			/* validity check */
+			if (paddr->sa_len
+			    > sizeof((*p_isr)->saidx.dst)) {
+				ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
+					"address length.\n"));
+				KEY_FREESP(&newsp);
+				*error = EINVAL;
+				return NULL;
+			}
+			memcpy(&(*p_isr)->saidx.dst, paddr, paddr->sa_len);
+		}
+
+		(*p_isr)->sav = NULL;
+		(*p_isr)->sp = newsp;
+
+		/* initialization for the next. */
+		p_isr = &(*p_isr)->next;
+		tlen -= xisr->sadb_x_ipsecrequest_len;
+
+		/* validity check */
+		if (tlen < 0) {
+			ipseclog((LOG_DEBUG, "key_msg2sp: becoming tlen < 0.\n"));
+			KEY_FREESP(&newsp);
+			*error = EINVAL;
+			return NULL;
+		}
+
+		xisr = (const struct sadb_x_ipsecrequest *)((const char *)xisr
+				 + xisr->sadb_x_ipsecrequest_len);
+	}
+    }
 
 	*error = 0;
 	return newsp;
