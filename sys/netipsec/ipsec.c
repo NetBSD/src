@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.76 2017/04/19 03:40:58 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.77 2017/04/19 03:42:11 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.76 2017/04/19 03:40:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.77 2017/04/19 03:42:11 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -264,10 +264,10 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 
 	pcbsp->sp_cache[dir].cachesp->lastused = time_second;
 	pcbsp->sp_cache[dir].cachesp->refcnt++;
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-	    printf("DP %s cause refcnt++:%d SP:%p\n", __func__,
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP cause refcnt++:%d SP:%p\n",
 	    pcbsp->sp_cache[dir].cachesp->refcnt,
-	    pcbsp->sp_cache[dir].cachesp));
+	    pcbsp->sp_cache[dir].cachesp);
 	return pcbsp->sp_cache[dir].cachesp;
 }
 
@@ -298,10 +298,10 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	pcbsp->sp_cache[dir].cachesp = sp;
 	if (pcbsp->sp_cache[dir].cachesp) {
 		pcbsp->sp_cache[dir].cachesp->refcnt++;
-		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		    printf("DP %s cause refcnt++:%d SP:%p\n", __func__,
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+		    "DP cause refcnt++:%d SP:%p\n",
 		    pcbsp->sp_cache[dir].cachesp->refcnt,
-		    pcbsp->sp_cache[dir].cachesp));
+		    pcbsp->sp_cache[dir].cachesp);
 
 		/*
 		 * If the PCB is connected, we can remember a hint to
@@ -378,8 +378,7 @@ key_allocsp_default(int af, const char *where, int tag)
 {
 	struct secpolicy *sp;
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-	    printf("DP %s from %s:%u\n", __func__, where, tag));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
     switch(af) {
         case AF_INET:
@@ -391,9 +390,8 @@ key_allocsp_default(int af, const char *where, int tag)
             break;
 #endif
         default:
-	        KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		    printf("%s: unexpected protocol family %u\n", __func__,
-                    af));
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+		    "unexpected protocol family %u\n", af);
             return NULL;
     }
 
@@ -405,8 +403,8 @@ key_allocsp_default(int af, const char *where, int tag)
 	}
 	sp->refcnt++;
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP, printf("DP %s returns SP:%p (%u)\n",
-	    __func__, sp, sp->refcnt));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP returns SP:%p (%u)\n",
+	    sp, sp->refcnt);
 	return sp;
 }
 #define	KEY_ALLOCSP_DEFAULT(af) \
@@ -571,9 +569,9 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
 	}
 	KASSERTMSG(sp != NULL, "null SP (priv %u policy %u", pcbsp->priv,
 	    currsp->policy);
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-	    printf("DP %s (priv %u policy %u) allocates SP:%p (refcnt %u)\n",
-	    __func__, pcbsp->priv, currsp->policy, sp, sp->refcnt));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP (priv %u policy %u) allocates SP:%p (refcnt %u)\n",
+	    pcbsp->priv, currsp->policy, sp, sp->refcnt);
 	ipsec_fillpcbcache(pcbsp, m, sp, dir);
 	return sp;
 }
@@ -1001,16 +999,16 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	for (n = m; n; n = n->m_next)
 		len += n->m_len;
 	if (m->m_pkthdr.len != len) {
-		KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s: total of m_len(%d) "
-		    "!= pkthdr.len(%d), ignored.\n", __func__, len,
-		    m->m_pkthdr.len));
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
+		    "total of m_len(%d) != pkthdr.len(%d), ignored.\n",
+		    len, m->m_pkthdr.len);
 		return EINVAL;
 	}
 
 	if (m->m_pkthdr.len < sizeof(struct ip)) {
-		KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s: pkthdr.len(%d) < "
-		    "sizeof(struct ip), ignored.\n", __func__,
-		    m->m_pkthdr.len));
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
+		    "pkthdr.len(%d) < sizeof(struct ip), ignored.\n",
+		    m->m_pkthdr.len);
 		return EINVAL;
 	}
 
@@ -1031,9 +1029,9 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 #ifdef INET6
 	case 6:
 		if (m->m_pkthdr.len < sizeof(struct ip6_hdr)) {
-			KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s: "
+			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
 			    "pkthdr.len(%d) < sizeof(struct ip6_hdr), "
-			    "ignored.\n", __func__, m->m_pkthdr.len));
+			    "ignored.\n", m->m_pkthdr.len);
 			return EINVAL;
 		}
 		error = ipsec6_setspidx_ipaddr(m, spidx);
@@ -1043,8 +1041,8 @@ ipsec_setspidx(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		return 0;
 #endif
 	default:
-		KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s: unknown IP version "
-		    "%u, ignored.\n", __func__, v));
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
+		    "unknown IP version %u, ignored.\n", v);
 		return EINVAL;
 	}
 }
@@ -1180,8 +1178,10 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx,
 	if (m == NULL)
 		panic("%s: NULL pointer was passed", __func__);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s:\n", __func__);
-	    kdebug_mbuf(m));
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
+		printf("%s:\n", __func__);
+		kdebug_mbuf(m);
+	}
 
 	/* set default */
 	spidx->ul_proto = IPSEC_ULPROTO_ANY;
@@ -1421,8 +1421,10 @@ ipsec_set_policy(
 		return EINVAL;
 	xpl = (const struct sadb_x_policy *)request;
 
-	KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s: passed policy\n", __func__);
-	    kdebug_sadb_x_policy((const struct sadb_ext *)xpl));
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
+		printf("%s: passed policy\n", __func__);
+		kdebug_sadb_x_policy((const struct sadb_ext *)xpl);
+	}
 
 	/* check policy type */
 	/* ipsec_set_policy() accepts IPSEC, ENTRUST and BYPASS. */
@@ -1447,8 +1449,10 @@ ipsec_set_policy(
 	/* clear old SP and set new SP */
 	KEY_FREESP(policy);
 	*policy = newsp;
-	KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s: new policy\n", __func__);
-	    kdebug_secpolicy(newsp));
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
+		printf("%s: new policy\n", __func__);
+		kdebug_secpolicy(newsp);
+	}
 
 	return 0;
 }
@@ -1468,8 +1472,10 @@ ipsec_get_policy(struct secpolicy *policy, struct mbuf **mp)
 	}
 
 	(*mp)->m_type = MT_DATA;
-	KEYDEBUG(KEYDEBUG_IPSEC_DUMP, printf("%s:\n", __func__);
-	    kdebug_mbuf(*mp));
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
+		printf("%s:\n", __func__);
+		kdebug_mbuf(*mp);
+	}
 
 	return 0;
 }
@@ -1763,8 +1769,10 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 	struct ipsecrequest *isr;
 	int need_auth;
 
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA, printf("%s: using SP\n", __func__);
-	    kdebug_secpolicy(sp));
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
+		printf("%s: using SP\n", __func__);
+		kdebug_secpolicy(sp);
+	}
 
 	/* check policy */
 	switch (sp->policy) {
@@ -1787,9 +1795,8 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 		switch (isr->saidx.proto) {
 		case IPPROTO_ESP:
 			if ((m->m_flags & M_DECRYPTED) == 0) {
-				KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
-				    printf("%s: ESP m_flags:%x\n", __func__,
-				    m->m_flags));
+				KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
+				    "ESP m_flags:%x\n", m->m_flags);
 				return 1;
 			}
 
@@ -1797,18 +1804,16 @@ ipsec_in_reject(const struct secpolicy *sp, const struct mbuf *m)
 				isr->sav != NULL &&
 				isr->sav->tdb_authalgxform != NULL &&
 				(m->m_flags & M_AUTHIPDGM) == 0) {
-				KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
-				    printf("%s: ESP/AH m_flags:%x\n", __func__,
-				    m->m_flags));
+				KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
+				    "ESP/AH m_flags:%x\n", m->m_flags);
 				return 1;
 			}
 			break;
 		case IPPROTO_AH:
 			need_auth = 1;
 			if ((m->m_flags & M_AUTHIPHDR) == 0) {
-				KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
-				    printf("%s: AH m_flags:%x\n", __func__,
-				    m->m_flags));
+				KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DUMP,
+				    "AH m_flags:%x\n", m->m_flags);
 				return 1;
 			}
 			break;
@@ -1913,8 +1918,10 @@ ipsec_hdrsiz(const struct secpolicy *sp)
 	const struct ipsecrequest *isr;
 	size_t siz;
 
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA, printf("%s: using SP\n", __func__);
-	    kdebug_secpolicy(sp));
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
+		printf("%s: using SP\n", __func__);
+		kdebug_secpolicy(sp);
+	}
 
 	switch (sp->policy) {
 	case IPSEC_POLICY_DISCARD:
@@ -1989,8 +1996,8 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 
 	if (sp != NULL) {
 		size = ipsec_hdrsiz(sp);
-		KEYDEBUG(KEYDEBUG_IPSEC_DATA, printf("%s: size:%lu.\n",
-		    __func__, (unsigned long)size));
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%lu.\n",
+		    (unsigned long)size);
 
 		KEY_FREESP(&sp);
 	} else {
@@ -2026,8 +2033,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 	if (sp == NULL)
 		return 0;
 	size = ipsec_hdrsiz(sp);
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-	    printf("%s: size:%zu.\n", __func__, size));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_DATA, "size:%zu.\n", size);
 	KEY_FREESP(&sp);
 
 	return size;
