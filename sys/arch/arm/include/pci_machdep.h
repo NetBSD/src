@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.11 2017/04/16 18:02:50 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.12 2017/04/19 12:58:59 jmcneill Exp $	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -36,6 +36,8 @@
 /*
  * Machine-specific definitions for PCI autoconfiguration.
  */
+
+#include <sys/errno.h>
 
 /*
  * Types provided to machine-independent PCI code
@@ -115,5 +117,14 @@ struct arm32_pci_chipset {
 #endif
 #define	pci_conf_interrupt(c, b, d, i, s, p)				\
     (*(c)->pc_conf_interrupt)((c)->pc_conf_v, (b), (d), (i), (s), (p))
+
+static inline int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ihp,
+    int attr, uint64_t data)
+{
+	if (!pc->pc_intr_setattr)
+		return ENODEV;
+	return pc->pc_intr_setattr(pc, ihp, attr, data);
+}
 
 #endif	/* _ARM_PCI_MACHDEP_H_ */
