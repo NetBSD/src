@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.110 2017/04/19 03:40:58 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.111 2017/04/19 03:42:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.110 2017/04/19 03:40:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.111 2017/04/19 03:42:11 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -597,19 +597,20 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
 	    "invalid direction %u", dir);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u\n", __func__, where, tag));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 		printf("*** objects\n");
-		kdebug_secpolicyindex(spidx));
+		kdebug_secpolicyindex(spidx);
+	}
 
 	LIST_FOREACH(sp, &sptree[dir], chain) {
-		KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+		if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 			printf("*** in SPD\n");
-			kdebug_secpolicyindex(&sp->spidx));
+			kdebug_secpolicyindex(&sp->spidx);
+		}
 
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
@@ -628,9 +629,9 @@ found:
 	}
 	splx(s);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
-		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP return SP:%p (ID=%u) refcnt %u\n",
+	    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0);
 	return sp;
 }
 
@@ -654,20 +655,21 @@ key_allocsp2(u_int32_t spi,
 	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
 	    "invalid direction %u", dir);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u\n", __func__, where, tag));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
 	/* get a SP entry */
 	s = splsoftnet();	/*called from softclock()*/
-	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 		printf("*** objects\n");
 		printf("spi %u proto %u dir %u\n", spi, proto, dir);
-		kdebug_sockaddr(&dst->sa));
+		kdebug_sockaddr(&dst->sa);
+	}
 
 	LIST_FOREACH(sp, &sptree[dir], chain) {
-		KEYDEBUG(KEYDEBUG_IPSEC_DATA,
+		if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DATA)) {
 			printf("*** in SPD\n");
-			kdebug_secpolicyindex(&sp->spidx));
+			kdebug_secpolicyindex(&sp->spidx);
+		}
 
 		if (sp->state == IPSEC_SPSTATE_DEAD)
 			continue;
@@ -692,9 +694,9 @@ found:
 	}
 	splx(s);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
-		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP return SP:%p (ID=%u) refcnt %u\n",
+	    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0);
 	return sp;
 }
 
@@ -715,8 +717,7 @@ key_gettunnel(const struct sockaddr *osrc,
 	struct ipsecrequest *r1, *r2, *p;
 	struct secpolicyindex spidx;
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u\n", __func__, where, tag));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
 	if (isrc->sa_family != idst->sa_family) {
 		ipseclog((LOG_ERR, "protocol family mismatched %d != %d\n.",
@@ -769,9 +770,9 @@ found:
 	}
 	splx(s);
 done:
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s return SP:%p (ID=%u) refcnt %u\n", __func__,
-		    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP return SP:%p (ID=%u) refcnt %u\n",
+	    sp, sp ? sp->id : 0, sp ? sp->refcnt : 0);
 	return sp;
 }
 
@@ -1049,9 +1050,9 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 
 	if (candidate) {
 		SA_ADDREF(candidate);
-		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP %s cause refcnt++:%d SA:%p\n", __func__,
-			    candidate->refcnt, candidate));
+		KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+		    "DP cause refcnt++:%d SA:%p\n",
+		    candidate->refcnt, candidate);
 	}
 	return candidate;
 }
@@ -1119,9 +1120,9 @@ key_allocsa(
 			must_check_alg = 1;
 		}
 	}
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u check_spi=%d, check_alg=%d\n",
-		    __func__, where, tag, must_check_spi, must_check_alg));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP from %s:%u check_spi=%d, check_alg=%d\n",
+	    where, tag, must_check_spi, must_check_alg);
 
 
 	/*
@@ -1143,36 +1144,35 @@ key_allocsa(
 		for (stateidx = 0; stateidx < arraysize; stateidx++) {
 			state = saorder_state_valid[stateidx];
 			LIST_FOREACH(sav, &sah->savtree[state], chain) {
-				KEYDEBUG(KEYDEBUG_MATCH,
-				    printf("try match spi %#x, %#x\n",
-						ntohl(spi), ntohl(sav->spi)));
+				KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+				    "try match spi %#x, %#x\n",
+				    ntohl(spi), ntohl(sav->spi));
 				/* sanity check */
 				KEY_CHKSASTATE(sav->state, state, "key_allocsav");
 				/* do not return entries w/ unusable state */
 				if (sav->state != SADB_SASTATE_MATURE &&
 				    sav->state != SADB_SASTATE_DYING) {
-					KEYDEBUG(KEYDEBUG_MATCH,
-					    printf("bad state %d\n",
-						sav->state));
+					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+					    "bad state %d\n", sav->state);
 					continue;
 				}
 				if (proto != sav->sah->saidx.proto) {
-					KEYDEBUG(KEYDEBUG_MATCH,
-					    printf("proto fail %d != %d\n",
-						proto, sav->sah->saidx.proto));
+					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+					    "proto fail %d != %d\n",
+					    proto, sav->sah->saidx.proto);
 					continue;
 				}
 				if (must_check_spi && spi != sav->spi) {
-					KEYDEBUG(KEYDEBUG_MATCH,
-					    printf("spi fail %#x != %#x\n",
-						ntohl(spi), ntohl(sav->spi)));
+					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+					    "spi fail %#x != %#x\n",
+					    ntohl(spi), ntohl(sav->spi));
 					continue;
 				}
 				/* XXX only on the ipcomp case */
 				if (must_check_alg && algo != sav->alg_comp) {
-					KEYDEBUG(KEYDEBUG_MATCH,
-					    printf("algo fail %d != %d\n",
-						algo, sav->alg_comp));
+					KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+					    "algo fail %d != %d\n",
+					    algo, sav->alg_comp);
 					continue;
 				}
 
@@ -1197,9 +1197,8 @@ key_allocsa(
 done:
 	splx(s);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s return SA:%p; refcnt %u\n", __func__,
-		    sav, sav ? sav->refcnt : 0));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP return SA:%p; refcnt %u\n", sav, sav ? sav->refcnt : 0);
 	return sav;
 }
 
@@ -1216,9 +1215,9 @@ _key_freesp(struct secpolicy **spp, const char* where, int tag)
 
 	SP_DELREF(sp);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
-		    __func__, sp, sp->id, where, tag, sp->refcnt));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP SP:%p (ID=%u) from %s:%u; refcnt now %u\n",
+	    sp, sp->id, where, tag, sp->refcnt);
 
 	if (sp->refcnt == 0) {
 		*spp = NULL;
@@ -1313,10 +1312,9 @@ key_freesav(struct secasvar **psav, const char* where, int tag)
 
 	SA_DELREF(sav);
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
-		    __func__, sav, (u_long)ntohl(sav->spi), where, tag,
-		    sav->refcnt));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP SA:%p (SPI %lu) from %s:%u; refcnt now %u\n",
+	    sav, (u_long)ntohl(sav->spi), where, tag, sav->refcnt);
 
 	if (sav->refcnt == 0) {
 		*psav = NULL;
@@ -1429,9 +1427,8 @@ key_newsp(const char* where, int tag)
 		newsp->req = NULL;
 	}
 
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u return SP:%p\n", __func__,
-		    where, tag, newsp));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP from %s:%u return SP:%p\n", where, tag, newsp);
 	return newsp;
 }
 
@@ -3011,9 +3008,8 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	LIST_INSERT_TAIL(&sah->savtree[SADB_SASTATE_LARVAL], newsav,
 			secasvar, chain);
 done:
-	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-		printf("DP %s from %s:%u return SP:%p\n", __func__,
-		    where, tag, newsav));
+	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+	    "DP from %s:%u return SP:%p\n", where, tag, newsav);
 
 	return newsav;
 }
@@ -4426,8 +4422,8 @@ key_portcomp(in_port_t port1, in_port_t port2, int howport)
 		/*FALLTHROUGH*/
 	case PORT_STRICT:
 		if (port1 != port2) {
-			KEYDEBUG(KEYDEBUG_MATCH,
-			    printf("port fail %d != %d\n", port1, port2));
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "port fail %d != %d\n", port1, port2);
 			return 1;
 		}
 		return 0;
@@ -4448,39 +4444,36 @@ key_sockaddrcmp(
 	const struct sockaddr_in6 *sin61, *sin62;
 
 	if (sa1->sa_family != sa2->sa_family || sa1->sa_len != sa2->sa_len) {
-		KEYDEBUG(KEYDEBUG_MATCH,
-		    printf("fam/len fail %d != %d || %d != %d\n",
+		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+		    "fam/len fail %d != %d || %d != %d\n",
 			sa1->sa_family, sa2->sa_family, sa1->sa_len,
-			sa2->sa_len));
+			sa2->sa_len);
 		return 1;
 	}
 
 	switch (sa1->sa_family) {
 	case AF_INET:
 		if (sa1->sa_len != sizeof(struct sockaddr_in)) {
-			KEYDEBUG(KEYDEBUG_MATCH,
-			    printf("len fail %d != %zu\n",
-				sa1->sa_len, sizeof(struct sockaddr_in)));
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "len fail %d != %zu\n",
+			    sa1->sa_len, sizeof(struct sockaddr_in));
 			return 1;
 		}
 		sin1 = (const struct sockaddr_in *)sa1;
 		sin2 = (const struct sockaddr_in *)sa2;
 		if (sin1->sin_addr.s_addr != sin2->sin_addr.s_addr) {
-			KEYDEBUG(KEYDEBUG_MATCH,
-			    printf("addr fail %#x != %#x\n",
-				sin1->sin_addr.s_addr,
-				sin2->sin_addr.s_addr));
+			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+			    "addr fail %#x != %#x\n",
+			    sin1->sin_addr.s_addr, sin2->sin_addr.s_addr);
 			return 1;
 		}
 		if (key_portcomp(sin1->sin_port, sin2->sin_port, howport)) {
 			return 1;
 		}
-		KEYDEBUG(KEYDEBUG_MATCH,
-		    printf("addr success %#x[%d] == %#x[%d]\n",
-			sin1->sin_addr.s_addr,
-			sin1->sin_port,
-			sin2->sin_addr.s_addr,
-			sin2->sin_port));
+		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
+		    "addr success %#x[%d] == %#x[%d]\n",
+		    sin1->sin_addr.s_addr, sin1->sin_port,
+		    sin2->sin_addr.s_addr, sin2->sin_port);
 		break;
 	case AF_INET6:
 		sin61 = (const struct sockaddr_in6 *)sa1;
@@ -5447,9 +5440,9 @@ key_getsavbyseq(struct secashead *sah, u_int32_t seq)
 
 		if (sav->seq == seq) {
 			SA_ADDREF(sav);
-			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-				printf("DP %s cause refcnt++:%d SA:%p\n",
-				    __func__, sav->refcnt, sav));
+			KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP,
+			    "DP cause refcnt++:%d SA:%p\n",
+			    sav->refcnt, sav);
 			return sav;
 		}
 	}
@@ -7330,9 +7323,10 @@ key_parse(struct mbuf *m, struct socket *so)
 		panic("key_parse: NULL pointer is passed");
 
 #if 0	/*kdebug_sadb assumes msg in linear buffer*/
-	KEYDEBUG(KEYDEBUG_KEY_DUMP,
+	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
 		ipseclog((LOG_DEBUG, "key_parse: passed sadb_msg\n"));
-		kdebug_sadb(msg));
+		kdebug_sadb(msg);
+	}
 #endif
 
 	if (m->m_len < sizeof(struct sadb_msg)) {
