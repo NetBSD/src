@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.51 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.52 2017/04/19 03:42:11 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.51 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.52 2017/04/19 03:42:11 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -119,7 +119,8 @@ key_output(struct mbuf *m, struct socket *so)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("key_output: not M_PKTHDR ??");
 
-	KEYDEBUG(KEYDEBUG_KEY_DUMP, kdebug_mbuf(m));
+	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP))
+		kdebug_mbuf(m);
 
 	msg = mtod(m, struct sadb_msg *);
 	PFKEY_STATINC(PFKEY_STAT_OUT_MSGTYPE + msg->sadb_msg_type);
@@ -205,9 +206,10 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 	if (so == 0 || msg == 0)
 		panic("key_sendup: NULL pointer was passed");
 
-	KEYDEBUG(KEYDEBUG_KEY_DUMP,
+	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
 		printf("key_sendup: \n");
-		kdebug_sadb(msg));
+		kdebug_sadb(msg);
+	}
 
 	/*
 	 * we increment statistics here, just in case we have ENOBUFS
