@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.73 2017/04/18 05:26:41 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.74 2017/04/19 03:28:19 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.73 2017/04/18 05:26:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.74 2017/04/19 03:28:19 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -2273,7 +2273,9 @@ ipsec_logsastr(const struct secasvar *sav)
 	char *p;
 	const struct secasindex *saidx = &sav->sah->saidx;
 
-	KASSERT(saidx->src.sa.sa_family == saidx->dst.sa.sa_family);
+	KASSERTMSG(saidx->src.sa.sa_family == saidx->dst.sa.sa_family,
+	    "af family mismatch, src %u, dst %u",
+	    saidx->src.sa.sa_family, saidx->dst.sa.sa_family);
 
 	p = buf;
 	snprintf(buf, sizeof(buf), "SA(SPI=%u ", (u_int32_t)ntohl(sav->spi));
