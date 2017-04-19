@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.14 2017/04/18 05:26:42 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.15 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.14 2017/04/18 05:26:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.15 2017/04/19 03:39:14 ozaki-r Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.14 2017/04/18 05:26:42 ozaki-r Exp 
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
 
-#include <netipsec/ipsec_osdep.h>
 #include <net/net_osdep.h>
 
 /*
