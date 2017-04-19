@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.109 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.110 2017/04/19 03:40:58 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.109 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.110 2017/04/19 03:40:58 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1759,11 +1759,8 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 			continue;
 
 		if (idx == SADB_EXT_RESERVED) {
+			CTASSERT(PFKEY_ALIGN8(sizeof(struct sadb_msg)) <= MHLEN);
 			len = PFKEY_ALIGN8(sizeof(struct sadb_msg));
-#ifdef DIAGNOSTIC
-			if (len > MHLEN)
-				panic("assumption failed");
-#endif
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
 			if (!n)
 				goto fail;
@@ -2241,10 +2238,7 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, char *) + off);
 	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-#ifdef DIAGNOSTIC
-	if (off != len)
-		panic("length inconsistency in key_spddelete2");
-#endif
+	KASSERTMSG(off == len, "length inconsistency");
 
 	n->m_next = m_copym(m, mhp->extoff[SADB_X_EXT_POLICY],
 	    mhp->extlen[SADB_X_EXT_POLICY], M_DONTWAIT);
@@ -5043,10 +5037,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 	m_sa->sadb_sa_spi = htonl(spi);
 	off += PFKEY_ALIGN8(sizeof(struct sadb_sa));
 
-#ifdef DIAGNOSTIC
-	if (off != len)
-		panic("length inconsistency in key_getspi");
-#endif
+	KASSERTMSG(off == len, "length inconsistency");
 
 	n->m_next = key_gather_mbuf(m, mhp, 0, 2, SADB_EXT_ADDRESS_SRC,
 	    SADB_EXT_ADDRESS_DST);
@@ -6808,10 +6799,7 @@ key_register(struct socket *so, struct mbuf *m,
 		}
 	}
 
-#ifdef DIAGNOSTIC
-	if (off != len)
-		panic("length assumption failed in key_register");
-#endif
+	KASSERTMSG(off == len, "length inconsistency");
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_REGISTERED);
