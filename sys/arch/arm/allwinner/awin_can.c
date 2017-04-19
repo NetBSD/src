@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.1 2017/04/18 21:30:38 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.2 2017/04/19 17:54:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.1 2017/04/18 21:30:38 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.2 2017/04/19 17:54:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -119,8 +119,9 @@ awin_can_match(device_t parent, cfdata_t cf, void *aux)
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
 	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
 
-	if (!awin_gpio_pinset_available(pinset))
+	if (!awin_gpio_pinset_available(pinset)) {
 		return 0;
+	}
 
 	return 1;
 }
@@ -465,6 +466,9 @@ awin_can_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if ((ifp->if_flags & IFF_UP) != 0 &&
 			    (ifp->if_flags & IFF_RUNNING) == 0) {
 				error = awin_can_ifup(sc);
+				if (error) {
+					ifp->if_flags &= ~IFF_UP;
+				}
 			} else if ((ifp->if_flags & IFF_UP) == 0 &&
 			    (ifp->if_flags & IFF_RUNNING) != 0) {
 				awin_can_ifdown(sc);
@@ -493,7 +497,7 @@ awin_can_enter_reset(struct awin_can_softc *sc)
 		val |= AWIN_CAN_MODSEL_RST;
 		awin_can_write(sc, AWIN_CAN_MODSEL_REG, val);
 		val = awin_can_read(sc, AWIN_CAN_MODSEL_REG);
-		if (val & AWIN_CAN_MODSEL_REG)
+		if (val & AWIN_CAN_MODSEL_RST)
 			return;
 	}
 	printf("%s: couldn't enter reset mode\n", device_xname(sc->sc_dev));
@@ -510,7 +514,7 @@ awin_can_exit_reset(struct awin_can_softc *sc)
 		val &= ~AWIN_CAN_MODSEL_RST;
 		awin_can_write(sc, AWIN_CAN_MODSEL_REG, val);
 		val = awin_can_read(sc, AWIN_CAN_MODSEL_REG);
-		if ((val & AWIN_CAN_MODSEL_REG) == 0)
+		if ((val & AWIN_CAN_MODSEL_RST) == 0)
 			return;
 	}
 	printf("%s: couldn't leave reset mode\n", device_xname(sc->sc_dev));
