@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.7 2017/04/19 20:49:17 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.8 2017/04/19 21:02:43 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.7 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.8 2017/04/19 21:02:43 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -793,9 +793,10 @@ fail:
 	else
 		xfer->c_bio.flags = 0;
 	if (wd->sc_flags & WDF_LBA48 &&
-	    (xfer->c_bio.blkno +
+	    (((xfer->c_bio.blkno +
 	     xfer->c_bio.bcount / wd->sc_dk.dk_label->d_secsize) >
-	    wd->sc_capacity28)
+	    wd->sc_capacity28) ||
+	    ((xfer->c_bio.bcount / wd->sc_dk.dk_label->d_secsize) > 128)))
 		xfer->c_bio.flags |= ATA_LBA48;
 
 	/* If NCQ was negotiated, always use it */
@@ -977,10 +978,21 @@ wdminphys(struct buf *bp)
 {
 	const struct wd_softc * const wd =
 	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
+	uint32_t maxsectors;
 
-	if (bp->b_bcount > (wd->sc_blksize * 128)) {
-		bp->b_bcount = (wd->sc_blksize * 128);
-	}
+	/*
+	 * The limit is actually 65536 for LBA48 and 256 for non-LBA48,
+	 * but that requires to pass set the count for the ATA command
+	 * to 0, which is somewhat error prone, so better stay safe.
+	 */
+	if (wd->sc_flags & WDF_LBA48)
+		maxsectors = 65535;
+	else
+		maxsectors = 128;
+
+	if (bp->b_bcount > (wd->sc_blksize * maxsectors))
+		bp->b_bcount = (wd->sc_blksize * maxsectors);
+
 	minphys(bp);
 }
 

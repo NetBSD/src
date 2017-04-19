@@ -5,8 +5,6 @@ softc for wd? at umass*
 
 protect more of wddone() with mutex?
 
-wdminphys() - LBA48 has maximum 65536 sectors
-
 refactor mvsata to reuse (more of) ata_wdc.c?
 
 NCQ ICC - investigate and set/get the behaviour with timeouts
