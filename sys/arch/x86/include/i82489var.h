@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.16 2016/11/25 14:12:56 maxv Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.17 2017/04/19 06:43:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,12 +94,6 @@ extern void Xrecurse_lapic_ltimer(void);
 #define LAPIC_PIN_LVINT0	3
 #define LAPIC_PIN_LVINT1	4
 #define LAPIC_PIN_LVERR		5
-
-extern void Xintr_lapic0(void);
-extern void Xintr_lapic2(void);
-extern void Xintr_lapic3(void);
-extern void Xintr_lapic4(void);
-extern void Xintr_lapic5(void);
 
 
 struct cpu_info;
