@@ -1,4 +1,4 @@
-/*	$NetBSD: if_canloop.c,v 1.1.2.4 2017/02/05 17:37:10 bouyer Exp $	*/
+/*	$NetBSD: if_canloop.c,v 1.1.2.5 2017/04/19 22:17:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.4 2017/02/05 17:37:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_canloop.c,v 1.1.2.5 2017/04/19 22:17:56 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_can.h"
@@ -164,9 +164,9 @@ canloop_ifstart(struct ifnet *ifp)
 
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("canloop_output: no header mbuf");
+		m_set_rcvif(m, ifp);
 		if (ifp->if_flags & IFF_LOOPBACK)
 			bpf_mtap_af(ifp, AF_CAN, m);
-		m_set_rcvif(m, ifp);
 
 		pktlen = m->m_pkthdr.len;
 		ifp->if_opackets++;
@@ -178,7 +178,6 @@ canloop_ifstart(struct ifnet *ifp)
 #else
 		printf("%s: can't handle CAN packet\n", ifp->if_xname);
 		m_freem(m);
-		error = EAFNOSUPPORT;
 #endif
 	}
 
