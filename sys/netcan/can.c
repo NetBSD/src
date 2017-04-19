@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.9 2017/04/19 17:52:37 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.10 2017/04/19 22:19:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.9 2017/04/19 17:52:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.10 2017/04/19 22:19:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,24 +214,20 @@ static int
 can_output(struct mbuf *m, struct canpcb *canp)
 {
 	struct ifnet *ifp;
-	int error = 0;
 	struct m_tag *sotag;
 
 	if (canp == NULL) {
 		printf("can_output: no pcb\n");
-		error = EINVAL;
-		return error;
+		return EINVAL;
 	}
 	ifp = canp->canp_ifp;
 	if (ifp == 0) {
-		error = EDESTADDRREQ;
-		goto bad;
+		return EDESTADDRREQ;
 	}
 	sotag = m_tag_get(PACKET_TAG_SO, sizeof(struct socket *), PR_NOWAIT);
 	if (sotag == NULL) {
 		ifp->if_oerrors++;
-		error = ENOMEM;
-		goto bad;
+		return ENOMEM;
 	}
 	*(struct socket **)(sotag + 1) = canp->canp_socket;
 	m_tag_prepend(m, sotag);
@@ -240,10 +236,7 @@ can_output(struct mbuf *m, struct canpcb *canp)
 		can_output_cnt++;
 		return ifq_enqueue(ifp, m);
 	} else
-		error = EMSGSIZE;
-bad:
-	m_freem(m);
-	return (error);
+		return EMSGSIZE;
 }
 
 /*
@@ -255,6 +248,9 @@ can_mbuf_tag_clean(struct mbuf *m)
 	struct m_tag *sotag;
 
 	sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
+	if (sotag)
+		m_tag_unlink(m, sotag);
+
 	m_tag_delete_nonpersistent(m);
 	if (sotag)
 		m_tag_prepend(m, sotag);
@@ -285,9 +281,9 @@ can_input(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		IF_ENQUEUE(inq, m);
 		IFQ_UNLOCK(inq);
-		schednetisr(NETISR_CAN);
 		ifp->if_ipackets++;
 		ifp->if_ibytes += m->m_pkthdr.len;
+		schednetisr(NETISR_CAN);
 	}
 }
 
@@ -356,7 +352,7 @@ canintr(void)
 				 * we can't be sure we won't need 
 				 * the original mbuf later so copy 
 				 */
-				mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+				mc = m_copypacket(m, M_NOWAIT);
 				if (mc == NULL) {
 					/* deliver this mbuf and abort */
 					mc = m;
@@ -574,11 +570,15 @@ can_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 	int s;
 
 	if (control && control->m_len) {
-		return EINVAL;
+		m_freem(control);
+		error = EINVAL;
+		goto err;
 	}
 	if (m->m_len > sizeof(struct can_frame) ||
-	   m->m_len < offsetof(struct can_frame, can_dlc))
-		return EINVAL;
+	   m->m_len < offsetof(struct can_frame, can_dlc)) {
+		error = EINVAL;
+		goto err;
+	}
 
 	/* we expect all data in the first mbuf */
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -586,20 +586,24 @@ can_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 
 	if (nam) {
 		if ((so->so_state & SS_ISCONNECTED) != 0) {
-			return EISCONN;
+			error = EISCONN;
+			goto err;
 		}
 		s = splnet();
 		error = can_pcbbind(canp, (struct sockaddr_can *)nam, l);
 		if (error) {
 			splx(s);
-			return error;
+			goto err;
 		}
 	} else {
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
-			return EDESTADDRREQ;
+			error =  EDESTADDRREQ;
+			goto err;
 		}
 	}
 	error = can_output(m, canp);
+	if (error)
+		goto err;
 	if (nam) {
 		struct sockaddr_can lscan;
 		memset(&lscan, 0, sizeof(lscan));
@@ -607,6 +611,10 @@ can_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		lscan.can_len = sizeof(lscan);
 		can_pcbbind(canp, &lscan, l);
 	}
+	return 0;
+
+err:
+	m_freem(m);
 	return error;
 }
 
