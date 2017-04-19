@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.44 2017/04/18 05:26:42 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.45 2017/04/19 03:39:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.44 2017/04/18 05:26:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.45 2017/04/19 03:39:14 ozaki-r Exp $");
 
 /*
  * IPsec output processing.
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.44 2017/04/18 05:26:42 ozaki-r Ex
 #include <netipsec/key.h>
 #include <netipsec/keydb.h>
 #include <netipsec/key_debug.h>
-#include <netipsec/ipsec_osdep.h>
 
 #include <net/net_osdep.h>		/* ovbcopy() in ipsec6_encapsulate() */
 
@@ -563,7 +562,7 @@ ipsec4_process_packet(
 					goto bad;
 				}
 				ip = mtod(m, struct ip *);
-				ip->ip_off |= IP_OFF_CONVERT(IP_DF);
+				ip->ip_off |= htons(IP_DF);
 			}
 		}
 	}
