@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.8 2017/04/19 21:02:43 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.9 2017/04/19 21:42:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.8 2017/04/19 21:02:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.9 2017/04/19 21:42:39 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -809,6 +809,14 @@ fail:
 		xfer->c_bio.flags |= ATA_LBA;
 	if (bp->b_flags & B_READ)
 		xfer->c_bio.flags |= ATA_READ;
+	if (bp->b_flags & B_MEDIA_FUA) {
+		/* If not using NCQ, the command WRITE DMA FUA EXT is LBA48 */
+		KASSERT((wd->sc_flags & WDF_LBA48) != 0);
+		if ((xfer->c_flags & C_NCQ) == 0)
+			xfer->c_bio.flags |= ATA_LBA48;
+
+		xfer->c_bio.flags |= ATA_FUA;
+	}
 
 	/* Instrumentation. */
 	disk_busy(&wd->sc_dk);
@@ -982,7 +990,7 @@ wdminphys(struct buf *bp)
 
 	/*
 	 * The limit is actually 65536 for LBA48 and 256 for non-LBA48,
-	 * but that requires to pass set the count for the ATA command
+	 * but that requires to set the count for the ATA command
 	 * to 0, which is somewhat error prone, so better stay safe.
 	 */
 	if (wd->sc_flags & WDF_LBA48)
@@ -1899,6 +1907,9 @@ wd_getcache(struct wd_softc *wd, int *bitsp)
 	*bitsp = DKCACHE_WCHANGE | DKCACHE_READ;
 	if (params.atap_cmd1_en & WDC_CMD1_CACHE)
 		*bitsp |= DKCACHE_WRITE;
+
+	if (wd->drvp->drive_flags & (ATA_DRIVE_NCQ|ATA_DRIVE_WFUA))
+		*bitsp |= DKCACHE_FUA;
 
 	return 0;
 }

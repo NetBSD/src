@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.43 2013/10/30 15:37:49 drochner Exp $	*/
+/*	$NetBSD: atareg.h,v 1.43.18.1 2017/04/19 21:42:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -144,6 +144,7 @@
 
 #define	WDCC_READDMA_EXT	0x25	/* read 48-bit addressing with DMA */
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
+#define	WDCC_WRITEDMA_FUA_EXT	0x3d	/* write 48-bit addr with DMA & FUA */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <dev/ata/ataconf.h>
@@ -248,6 +249,7 @@ atacmd_tostatq(int cmd32)
 #define	WDSD_IBM		0xa0	/* forced to 512 byte sector, ecc */
 #define	WDSD_CHS		0x00	/* cylinder/head/sector addressing */
 #define	WDSD_LBA		0x40	/* logical block addressing */
+#define	WDSD_FUA		0x80	/* Forced Unit Access (FUA) */
 
 /* Commands for ATAPI devices */
 #define	ATAPI_CHECK_POWER_MODE	0xe5

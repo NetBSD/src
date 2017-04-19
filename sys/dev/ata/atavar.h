@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.5 2017/04/19 20:49:17 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.6 2017/04/19 21:42:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -49,6 +49,7 @@ struct ata_bio {
 #define	ATA_READ	0x0020	/* transfer is a read (otherwise a write) */
 #define	ATA_CORR	0x0040	/* transfer had a corrected error */
 #define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA addressing */
+#define	ATA_FUA		0x0100	/* transfer uses FUA */
 	daddr_t		blkno;	/* block addr */
 	daddr_t		blkdone;/* number of blks transferred */
 	daddr_t		nblks;	/* number of block currently transferring */

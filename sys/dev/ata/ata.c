@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.5 2017/04/19 20:49:17 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.6 2017/04/19 21:42:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.5 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.6 2017/04/19 21:42:39 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1980,8 +1980,14 @@ void
 atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
     uint16_t *features, uint8_t *device)
 {
-	if ((xfer->c_flags & C_NCQ) == 0)
+	if ((xfer->c_flags & C_NCQ) == 0) {
+		/* FUA handling for non-NCQ drives */
+		if (xfer->c_bio.flags & ATA_FUA
+		    && *cmd == WDCC_WRITEDMA_EXT)
+			*cmd = WDCC_WRITEDMA_FUA_EXT;
+
 		return;
+	}
 
 	*cmd = (xfer->c_bio.flags & ATA_READ) ?
 	    WDCC_READ_FPDMA_QUEUED : WDCC_WRITE_FPDMA_QUEUED;
@@ -1993,5 +1999,6 @@ atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
 	*count = (xfer->c_slot << 3);
 
 	/* other device flags */
-	/* XXX FUA handling */
+	if (xfer->c_bio.flags & ATA_FUA)
+		*device |= WDSD_FUA;
 }
