@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.75 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.76 2017/04/19 03:40:58 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.75 2017/04/19 03:39:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.76 2017/04/19 03:40:58 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -219,18 +219,10 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	default:
 		return NULL;
 	}
-#ifdef DIAGNOSTIC
-	if (pcbsp == NULL) {
-		printf("%s: NULL pcbsp\n", __func__);
-		/* XXX panic? */
-		return NULL;
-	}
-#endif
 
-#ifdef DIAGNOSTIC
-	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
-		panic("dir too big in ipsec_checkpcbcache");
-#endif
+	KASSERT(pcbsp != NULL);
+	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
+
 	/* SPD table change invalidate all the caches. */
 	if (ipsec_spdgen != pcbsp->sp_cache[dir].cachegen) {
 		ipsec_invalpcbcache(pcbsp, dir);
