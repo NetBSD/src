@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.55 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.56 2017/04/19 00:20:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -193,6 +193,7 @@ struct rtk_softc {
 #define RTKQ_CMDSTOP		0x00000200	/* set STOPREQ on stop */
 #define RTKQ_PHYWAKE_PM		0x00000400	/* wake PHY from power down */
 #define RTKQ_RXDV_GATED		0x00000800
+#define RTKQ_IM_HW		0x00001000	/* HW interrupt mitigation */
 
 	bus_dma_tag_t		sc_dmat;
 
