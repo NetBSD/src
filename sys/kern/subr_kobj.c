@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.59 2016/08/02 12:23:08 martin Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.60 2017/04/19 06:19:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.59 2016/08/02 12:23:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.60 2017/04/19 06:19:02 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -646,11 +646,13 @@ kobj_unload(kobj_t ko)
 	 * Notify MD code that a module has been unloaded.
 	 */
 	if (ko->ko_loaded) {
-		error = kobj_machdep(ko, (void *)ko->ko_text_address,
-		    ko->ko_text_size, false);
-		if (error != 0)
-			kobj_error(ko, "machine dependent deinit failed (text) %d",
-			    error);
+		if (ko->ko_text_address != 0) {
+			error = kobj_machdep(ko, (void *)ko->ko_text_address,
+			    ko->ko_text_size, false);
+			if (error != 0)
+				kobj_error(ko, "machine dependent deinit failed"
+			    " (text) %d", error);
+		}
 
 		if (ko->ko_data_address != 0) {
 			error = kobj_machdep(ko, (void *)ko->ko_data_address,
@@ -762,36 +764,38 @@ kobj_affix(kobj_t ko, const char *name)
 	 *
 	 * Most architectures use this opportunity to flush their caches.
 	 */
-	if (error == 0) {
+	if (error == 0 && ko->ko_text_address != 0) {
 		error = kobj_machdep(ko, (void *)ko->ko_text_address,
 		    ko->ko_text_size, true);
 		if (error != 0)
-			kobj_error(ko, "machine dependent init failed (text) %d",
-			    error);
+			kobj_error(ko, "machine dependent init failed (text)"
+			    " %d", error);
+	}
 
-		if (ko->ko_data_address != 0) {
-			error = kobj_machdep(ko, (void *)ko->ko_data_address,
-			    ko->ko_data_size, true);
-			if (error != 0)
-				kobj_error(ko, "machine dependent init failed"
-				    "(data) %d", error);
-		}
+	if (error == 0 && ko->ko_data_address != 0) {
+		error = kobj_machdep(ko, (void *)ko->ko_data_address,
+		    ko->ko_data_size, true);
+		if (error != 0)
+			kobj_error(ko, "machine dependent init failed (data)"
+			    " %d", error);
+	}
 
-		if (ko->ko_rodata_address != 0) {
-			error = kobj_machdep(ko, (void *)ko->ko_rodata_address,
-			    ko->ko_rodata_size, true);
-			if (error != 0)
-				kobj_error(ko, "machine dependent init failed"
-				    "(rodata) %d", error);
-		}
-
-		ko->ko_loaded = true;
+	if (error == 0 && ko->ko_rodata_address != 0) {
+		error = kobj_machdep(ko, (void *)ko->ko_rodata_address,
+		    ko->ko_rodata_size, true);
+		if (error != 0)
+			kobj_error(ko, "machine dependent init failed (rodata)"
+			    " %d", error);
 	}
 
 	if (error == 0) {
+		ko->ko_loaded = true;
+
 		/* Change the memory protections, when needed. */
-		uvm_km_protect(module_map, ko->ko_text_address,
-		     ko->ko_text_size, VM_PROT_READ|VM_PROT_EXECUTE);
+		if (ko->ko_text_address != 0) {
+			uvm_km_protect(module_map, ko->ko_text_address,
+			     ko->ko_text_size, VM_PROT_READ|VM_PROT_EXECUTE);
+		}
 		if (ko->ko_rodata_address != 0) {
 			uvm_km_protect(module_map, ko->ko_rodata_address,
 			    ko->ko_rodata_size, VM_PROT_READ);
