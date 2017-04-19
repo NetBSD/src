@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.303 2017/02/20 16:05:34 rin Exp $
+#	$NetBSD: bsd.prog.mk,v 1.304 2017/04/19 23:41:00 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -156,6 +156,7 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	m \
 	magic \
 	menu \
+	netpgpverify \
 	objc \
 	ossaudio \
 	pam \
