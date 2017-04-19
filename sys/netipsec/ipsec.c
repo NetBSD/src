@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.78 2017/04/19 03:43:34 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.79 2017/04/19 07:14:45 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.78 2017/04/19 03:43:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.79 2017/04/19 07:14:45 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -283,10 +283,8 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	default:
 		return EINVAL;
 	}
-#ifdef DIAGNOSTIC
-	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
-		panic("dir too big in ipsec_fillpcbcache");
-#endif
+
+	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
 
 	if (pcbsp->sp_cache[dir].cachesp)
 		KEY_FREESP(&pcbsp->sp_cache[dir].cachesp);
