@@ -1,4 +1,4 @@
-/*	$NetBSD: ualea.c,v 1.5 2017/04/18 19:09:12 riastradh Exp $	*/
+/*	$NetBSD: ualea.c,v 1.6 2017/04/19 00:01:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.5 2017/04/18 19:09:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ualea.c,v 1.6 2017/04/19 00:01:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/device_if.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/rndpool.h>
 #include <sys/rndsource.h>
 
@@ -229,4 +230,33 @@ out:
 	mutex_enter(&sc->sc_lock);
 	sc->sc_inflight = false;
 	mutex_exit(&sc->sc_lock);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ualea, NULL);
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+ualea_modcmd(modcmd_t cmd, void *aux)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_ualea,
+		    cfattach_ioconf_ualea, cfdata_ioconf_ualea);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_ualea,
+		    cfattach_ioconf_ualea, cfdata_ioconf_ualea);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
