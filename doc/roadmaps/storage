@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.21 2017/01/13 10:14:58 dholland Exp $
+$NetBSD: storage,v 1.22 2017/04/19 21:48:58 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -228,11 +228,6 @@ Semi-relatedly, it is also time for scsipi to become MPSAFE.
  - Flush cache commands via DIOCCACHESYNC currently doesn't wait for completion;
    it must not poll since that corrupts command queue, but it should use
    a condition variable to wait for the flush to actually finish
- - NVMe controllers supports write cache administration via GET/SET FEATURE, but
-   driver doesn't currently implement the cache ioctls, leading to somewhat
-   ugly dkctl(1) output; it would be fairly simple to add this, but would
-   require ld(4) attachment code changed to support passing arbitrary ioctls
-   to attachments
  - There is no clear timeframe or release target for these points.
  - Contact msaitoh or agc for further information.
 
