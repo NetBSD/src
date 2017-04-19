@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $	 */
+/* $NetBSD: if_bce.c,v 1.45 2017/04/19 06:52:11 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.44 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.45 2017/04/19 06:52:11 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -298,8 +298,9 @@ bce_attach(device_t parent, device_t self, void *aux)
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, NULL)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (pmode == 3) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR)
+		    & PCI_PMCSR_STATE_MASK;
+		if (pmode == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -308,10 +309,10 @@ bce_attach(device_t parent, device_t self, void *aux)
 			    "unable to wake up from power state D3\n");
 			return;
 		}
-		if (pmode != 0) {
+		if (pmode != PCI_PMCSR_STATE_D0) {
 			aprint_normal_dev(self,
 			    "waking up from power state D%d\n", pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR, 0);
 		}
 	}
 	if (pci_intr_map(pa, &ih)) {
