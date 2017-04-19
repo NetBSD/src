@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.283.2.3 2017/04/15 17:14:11 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.283.2.4 2017/04/19 20:49:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.3 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.283.2.4 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1323,7 +1323,8 @@ wdc_dmawait(struct ata_channel *chp, struct ata_xfer *xfer, int timeout)
 void
 wdctimeout(void *arg)
 {
-	struct ata_channel *chp = (struct ata_channel *)arg;
+	struct ata_xfer *xfer = arg;
+	struct ata_channel *chp = xfer->c_chp;
 #if NATA_DMA || NATA_PIOBM
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 #endif
@@ -1332,7 +1333,6 @@ wdctimeout(void *arg)
 	ATADEBUG_PRINT(("wdctimeout\n"), DEBUG_FUNCS);
 
 	s = splbio();
-	struct ata_xfer *xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0);
 	KASSERT(xfer != NULL);
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "lost interrupt");
@@ -1355,7 +1355,7 @@ wdctimeout(void *arg)
 		 * in case it will miss another irq while in this transfer
 		 * We arbitray chose it to be 1s
 		 */
-		callout_reset(&chp->ch_callout, hz, wdctimeout, chp);
+		callout_reset(&xfer->c_timo_callout, hz, wdctimeout, xfer);
 		xfer->c_flags |= C_TIMEOU;
 		chp->ch_flags &= ~ATACH_IRQ_WAIT;
 		KASSERT(xfer->c_intr != NULL);
@@ -1464,8 +1464,8 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if ((ata_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-		callout_reset(&chp->ch_callout, ata_c->timeout / 1000 * hz,
-		    wdctimeout, chp);
+		callout_reset(&xfer->c_timo_callout, ata_c->timeout / 1000 * hz,
+		    wdctimeout, xfer);
 		return;
 	}
 	/*
@@ -1574,8 +1574,8 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		ata_c->flags |= AT_XFDONE;
 		if ((ata_c->flags & AT_POLL) == 0) {
 			chp->ch_flags |= ATACH_IRQ_WAIT; /* wait for interrupt */
-			callout_reset(&chp->ch_callout,
-			    mstohz(ata_c->timeout), wdctimeout, chp);
+			callout_reset(&xfer->c_timo_callout,
+			    mstohz(ata_c->timeout), wdctimeout, xfer);
 			return 1;
 		} else {
 			goto again;

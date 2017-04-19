@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.123.4.3 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.123.4.4 2017/04/19 20:49:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.3 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.123.4.4 2017/04/19 20:49:17 jdolecek Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -197,8 +197,10 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 	struct wdc_regs *wdr = &wdc->regs[chan->chan_channel];
 	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
 	struct ata_xfer xfer;
+	int rv;
 
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
+
 	xfer.c_ata_c.r_command = ATAPI_SOFT_RESET;
 	xfer.c_ata_c.r_st_bmask = 0;
 	xfer.c_ata_c.r_st_pmask = 0;
@@ -215,7 +217,8 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
 		    xfer.c_ata_c.r_error), DEBUG_PROBE);
-		return -1;
+		rv = -1;
+		goto out;
 	}
 	chp->ch_drive[drive].state = 0;
 
@@ -228,9 +231,14 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
 		    "failed for drive %s:%d:%d: error 0x%x\n",
 		    device_xname(atac->atac_dev), chp->ch_channel, drive,
 		    xfer.c_ata_c.r_error), DEBUG_PROBE);
-		return -1;
+		rv = -1;
+		goto out;
 	}
-	return 0;
+	rv = 0;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return rv;
 }
 
 static void
@@ -564,8 +572,8 @@ ready:
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
-		callout_reset(&chp->ch_callout, mstohz(sc_xfer->timeout),
-		    wdctimeout, chp);
+		callout_reset(&xfer->c_timo_callout, mstohz(sc_xfer->timeout),
+		    wdctimeout, xfer);
 
 	if (wdc->select)
 		wdc->select(chp, xfer->c_drive);
@@ -1020,7 +1028,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 				wdc_atapi_reset(chp, xfer);
 				return;
 			} else
-				callout_reset(&chp->ch_callout, 1,
+				callout_reset(&xfer->c_timo_callout, 1,
 				    wdc_atapi_polldsc, xfer);
 			return;
 		}

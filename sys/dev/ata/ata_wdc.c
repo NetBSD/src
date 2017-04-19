@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.105.6.2 2017/04/15 12:01:23 jdolecek Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.105.6.3 2017/04/19 20:49:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.2 2017/04/15 12:01:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.105.6.3 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -409,6 +409,8 @@ again:
 		}
 #if NATA_DMA
 		if (xfer->c_flags & C_DMA) {
+			uint16_t count = nblks, features = 0;
+
 			ata_bio->nblks = nblks;
 			ata_bio->nbytes = xfer->c_bcount;
 			cmd = (ata_bio->flags & ATA_READ) ?
@@ -448,11 +450,17 @@ again:
 				return;
 			}
 			if (ata_bio->flags & ATA_LBA48) {
-			    wdccommandext(chp, xfer->c_drive, atacmd_to48(cmd),
-				ata_bio->blkno, nblks, 0, WDSD_LBA);
+			    uint8_t device = WDSD_LBA;
+			    cmd = atacmd_to48(cmd);
+
+			    atacmd_toncq(xfer, &cmd, &count, &features,
+			        &device);
+
+			    wdccommandext(chp, xfer->c_drive, cmd,
+				ata_bio->blkno, count, features, device);
 			} else {
 			    wdccommand(chp, xfer->c_drive, cmd, cyl,
-				head, sect, nblks, 0);
+				head, sect, count, features);
 			}
 			/* start the DMA channel */
 			(*wdc->dma_start)(wdc->dma_arg,
@@ -460,8 +468,8 @@ again:
 			chp->ch_flags |= ATACH_DMA_WAIT;
 			/* start timeout machinery */
 			if ((xfer->c_flags & C_POLL) == 0)
-				callout_reset(&chp->ch_callout,
-				    ATA_DELAY / 1000 * hz, wdctimeout, chp);
+				callout_reset(&xfer->c_timo_callout,
+				    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -532,8 +540,8 @@ again:
 		}
 		/* start timeout machinery */
 		if ((xfer->c_flags & C_POLL) == 0)
-			callout_reset(&chp->ch_callout,
-			    ATA_DELAY / 1000 * hz, wdctimeout, chp);
+			callout_reset(&xfer->c_timo_callout,
+			    ATA_DELAY / 1000 * hz, wdctimeout, xfer);
 	} else if (ata_bio->nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
 		nblks = xfer->c_bcount / drvp->lp->d_secsize;
@@ -796,7 +804,7 @@ wdc_ata_bio_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	    xfer->c_drive, (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
-	callout_stop(&chp->ch_callout);
+	callout_stop(&xfer->c_timo_callout);
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;

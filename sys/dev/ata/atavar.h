@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.4 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.5 2017/04/19 20:49:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -131,13 +131,15 @@ struct scsipi_xfer;
  * commands are queued in a list.
  */
 struct ata_xfer {
-	volatile u_int c_flags;	/* command state flags */
+	struct callout c_timo_callout;	/* timeout callout handle */
 
+#define c_startzero	c_chp
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;
 	uint16_t c_drive;
 	int8_t c_slot;			/* queue slot # */
 
+	volatile u_int c_flags;		/* command state flags */
 	void	*c_databuf;		/* pointer to data buffer */
 	int	c_bcount;		/* byte count left */
 	int	c_skip;			/* bytes already transferred */
@@ -173,6 +175,7 @@ struct ata_xfer {
 #define C_WAITACT	0x0020		/* wakeup when active */
 #define C_FREE		0x0040		/* call ata_free_xfer() asap */
 #define C_PIOBM		0x0080		/* command uses busmastering PIO */
+#define	C_NCQ		0x0100		/* command is queued  */
 
 /* reasons for c_kill_xfer() */
 #define KILL_GONE 1 /* device is gone */
@@ -219,7 +222,7 @@ struct ata_drive_datas {
 	uint8_t drive;		/* drive number */
 	int8_t ata_vers;	/* ATA version supported */
 	uint16_t drive_flags;	/* bitmask for drives present/absent and cap */
-#define	ATA_DRIVE_CAP32		0x0001
+#define	ATA_DRIVE_CAP32		0x0001	/* 32-bit transfer capable */
 #define	ATA_DRIVE_DMA		0x0002
 #define	ATA_DRIVE_UDMA		0x0004
 #define	ATA_DRIVE_MODE		0x0008	/* the drive reported its mode */
@@ -227,6 +230,8 @@ struct ata_drive_datas {
 #define	ATA_DRIVE_WAITDRAIN	0x0020	/* device is waiting for the queue to drain */
 #define	ATA_DRIVE_NOSTREAM	0x0040	/* no stream methods on this drive */
 #define ATA_DRIVE_ATAPIDSCW	0x0080	/* needs to wait for DSC in phase_complete */
+#define ATA_DRIVE_WFUA		0x0100	/* drive supports WRITE DMA FUA EXT */
+#define ATA_DRIVE_NCQ		0x0200	/* drive supports NCQ */
 
 	uint8_t drive_type;
 #define	ATA_DRIVET_NONE		0
@@ -267,6 +272,8 @@ struct ata_drive_datas {
 #define READY          1
 
 #if NATA_DMA
+	uint8_t drv_openings;		/* # of command tags */
+
 	/* numbers of xfers and DMA errs. Used by ata_dmaerr() */
 	uint8_t n_dmaerrs;
 	uint32_t n_xfers;
@@ -340,7 +347,6 @@ struct ata_bustype {
 struct ata_device {
 	const struct ata_bustype *adev_bustype;
 	int adev_channel;
-	int adev_openings;
 	struct ata_drive_datas *adev_drv_data;
 };
 
@@ -348,7 +354,6 @@ struct ata_device {
  * Per-channel data
  */
 struct ata_channel {
-	struct callout ch_callout;	/* callout handle */
 	int ch_channel;			/* location */
 	struct atac_softc *ch_atac;	/* ATA controller softc */
 
@@ -413,6 +418,7 @@ struct atac_softc {
 #define	ATAC_CAP_ATAPI_NOSTREAM 0x0080	/* don't use stream funcs on ATAPI */
 #define	ATAC_CAP_NOIRQ	0x1000		/* controller never interrupts */
 #define	ATAC_CAP_RAID	0x4000		/* controller "supports" RAID */
+#define ATAC_CAP_NCQ	0x8000		/* controller supports NCQ */
 
 	uint8_t	atac_pio_cap;		/* highest PIO mode supported */
 #if NATA_DMA
@@ -489,8 +495,10 @@ void	ata_probe_caps(struct ata_drive_datas *);
 void	ata_dmaerr(struct ata_drive_datas *, int);
 #endif
 void	ata_queue_idle(struct ata_queue *);
+void	ata_xfer_init(struct ata_xfer *, bool);
+void	ata_xfer_destroy(struct ata_xfer *);
 struct ata_queue *
-	ata_queue_alloc(int openings);
+	ata_queue_alloc(uint8_t openings);
 void	ata_queue_free(struct ata_queue *);
 struct ata_xfer *
 	ata_queue_hwslot_to_xfer(struct ata_queue *, int);
@@ -499,6 +507,10 @@ void	ata_delay(int, const char *, int);
 
 bool	ata_waitdrain_check(struct ata_channel *, int);
 bool	ata_waitdrain_xfer_check(struct ata_channel *, struct ata_xfer *);
+
+void	atacmd_toncq(struct ata_xfer *, uint8_t *, uint16_t *, uint16_t *,
+	    uint8_t *);
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_ATA_ATAVAR_H_ */

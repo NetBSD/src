@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.4 2017/04/15 17:14:11 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.5 2017/04/19 20:49:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.4 2017/04/15 17:14:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.5 2017/04/19 20:49:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -195,7 +195,7 @@ ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 	struct ata_xfer *xfer;
 
 	KASSERT(hwslot < chq->queue_openings);
-	KASSERT(hwslot == 0 || (chq->queue_xfers_avail & __BIT(hwslot)) == 0);
+	KASSERT((chq->active_xfers_used & __BIT(hwslot)) != 0);
 
 	/* Usually the first entry will be the one */
 	TAILQ_FOREACH(xfer, &chq->active_xfers, c_activechain) {
@@ -203,27 +203,71 @@ ata_queue_hwslot_to_xfer(struct ata_queue *chq, int hwslot)
 			return xfer;
 	}
 
-	panic("%s: xfer with slot %d not found", __func__, hwslot);
+	panic("%s: xfer with slot %d not found (active %x)", __func__, hwslot,
+	    chq->active_xfers_used);
+}
+
+void
+ata_xfer_init(struct ata_xfer *xfer, bool zero)
+{
+	if (zero)
+		memset(xfer, 0, sizeof(*xfer));
+
+	callout_init(&xfer->c_timo_callout, 0); 	/* XXX MPSAFE */
+}
+
+void
+ata_xfer_destroy(struct ata_xfer *xfer)
+{
+	callout_halt(&xfer->c_timo_callout, NULL);	/* XXX MPSAFE */
+	callout_destroy(&xfer->c_timo_callout);
 }
 
 struct ata_queue *
-ata_queue_alloc(int openings)
+ata_queue_alloc(uint8_t openings)
 {
 	if (openings == 0)
 		openings = 1;
+
+	/*
+	 * While hw supports up to 32 tags, in practice we must never
+	 * allow 32 active commands, since that would signal same as
+	 * channel error. So just limit this to 31.
+	 */
+	if (openings > 31)
+		openings = 31;
+
 	struct ata_queue *chq = malloc(offsetof(struct ata_queue, queue_xfers[openings]),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
-	if (chq != NULL) {
-		chq->queue_openings = openings;
-		chq->queue_xfers_avail = (1 << openings) - 1;
-		ata_queue_reset(chq);
-	}
+
+	chq->queue_openings = openings;
+	chq->queue_xfers_avail = (1 << openings) - 1;
+	ata_queue_reset(chq);
+
+	for (uint8_t i = 0; i < openings; i++)
+		ata_xfer_init(&chq->queue_xfers[i], false);
+
 	return chq;
+}
+
+static void
+ata_queue_downsize(struct ata_queue *chq, uint8_t openings)
+{
+	KASSERT(chq->queue_active == 0);
+	KASSERT(TAILQ_FIRST(&chq->queue_xfer) == NULL);
+	KASSERT(openings < chq->queue_openings);
+
+	chq->queue_openings = openings;
+	chq->queue_xfers_avail = (1 << openings) - 1;
+	ata_queue_reset(chq);
 }
 
 void
 ata_queue_free(struct ata_queue *chq)
 {
+	for (uint8_t i = 0; i < chq->queue_openings; i++)
+		ata_xfer_destroy(&chq->queue_xfers[i]);
+
 	free(chq, M_DEVBUF);
 }
 
@@ -239,11 +283,6 @@ ata_channel_attach(struct ata_channel *chp)
 
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
-
-	/* XXX callout_destroy */
-	callout_init(&chp->ch_callout, 0);
-
-	chq->queue_openings = 1;	/* XXX */
 
 	ata_queue_reset(chq);
 
@@ -397,7 +436,6 @@ atabusconfig_thread(void *arg)
 		memset(&adev, 0, sizeof(struct ata_device));
 		adev.adev_bustype = atac->atac_bustype_ata;
 		adev.adev_channel = chp->ch_channel;
-		adev.adev_openings = chp->ch_queue->queue_openings;
 		adev.adev_drv_data = &chp->ch_drive[i];
 		chp->ch_drive[i].drv_softc = config_found_ia(atabus_sc->sc_dev,
 		    "ata_hl", &adev, ataprint);
@@ -787,7 +825,7 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 
 	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
-	memset(&xfer, 0, sizeof(xfer));
+	ata_xfer_init(&xfer, true);
 
 	if (drvp->drive_type == ATA_DRIVET_ATA) {
 		xfer.c_ata_c.r_command = WDCC_IDENTIFY;
@@ -870,6 +908,7 @@ ata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	rv = CMD_OK;
  out:
 	kmem_free(tb, DEV_BSIZE);
+	ata_xfer_destroy(&xfer);
 	return rv;
 }
 
@@ -877,11 +916,13 @@ int
 ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 {
 	struct ata_xfer xfer;
+	int rv;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 
 	ATADEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	memset(&xfer, 0, sizeof(xfer));
+
+	ata_xfer_init(&xfer, true);
 
 	xfer.c_ata_c.r_command = SET_FEATURES;
 	xfer.c_ata_c.r_st_bmask = 0;
@@ -891,12 +932,20 @@ ata_set_mode(struct ata_drive_datas *drvp, uint8_t mode, uint8_t flags)
 	xfer.c_ata_c.flags = flags;
 	xfer.c_ata_c.timeout = 1000; /* 1s */
 	if ((*atac->atac_bustype_ata->ata_exec_command)(drvp,
-						&xfer) != ATACMD_COMPLETE)
-		return CMD_AGAIN;
-	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		return CMD_ERR;
+						&xfer) != ATACMD_COMPLETE) {
+		rv = CMD_AGAIN;
+		goto out;
 	}
-	return CMD_OK;
+	if (xfer.c_ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		rv = CMD_ERR;
+		goto out;
+	}
+
+	rv = CMD_OK;
+
+out:
+	ata_xfer_destroy(&xfer);
+	return rv;
 }
 
 #if NATA_DMA
@@ -990,7 +1039,7 @@ atastart(struct ata_channel *chp)
 {
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_queue *chq = chp->ch_queue;
-	struct ata_xfer *xfer;
+	struct ata_xfer *xfer, *axfer;
 
 #ifdef ATA_DEBUG
 	int spl1, spl2;
@@ -1024,6 +1073,15 @@ atastart(struct ata_channel *chp)
 
 	KASSERT(chp->ch_ndrives == 1 || chq->queue_openings == 1);
 
+	/*
+	 * Can only take NCQ command if there are no current active
+	 * commands, or if the active commands are NCQ. Need only check
+	 * first xfer.
+	 */
+	axfer = TAILQ_FIRST(&chp->ch_queue->active_xfers);
+	if (axfer && (axfer->c_flags & C_NCQ) == 0)
+		return;
+
 	/* adjust chp, in case we have a shared queue */
 	chp = xfer->c_chp;
 	KASSERT(chp->ch_queue == chq);
@@ -1042,7 +1100,8 @@ atastart(struct ata_channel *chp)
 		return;
 	}
 #ifdef DIAGNOSTIC
-	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0)
+	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0
+	    && chp->ch_queue->queue_openings == 1)
 		panic("atastart: channel waiting for irq");
 #endif
 	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
@@ -1077,7 +1136,9 @@ ata_get_xfer(struct ata_channel *chp)
 	xfer = &chq->queue_xfers[slot];
 	chq->queue_xfers_avail &= ~__BIT(slot);
 
-	memset(xfer, 0, sizeof(struct ata_xfer));
+	/* zero everything after the callout member */
+	memset(&xfer->c_startzero, 0,
+	    sizeof(struct ata_xfer) - offsetof(struct ata_xfer, c_startzero));
 	xfer->c_slot = slot;
 
 out:
@@ -1137,8 +1198,7 @@ ata_deactivate_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 	KASSERT(chq->queue_active > 0);
 	KASSERT((chq->active_xfers_used & __BIT(xfer->c_slot)) != 0);
 
-	//if ((xfer->c_flags & C_TIMEOU) == 0)
-	callout_stop(&chp->ch_callout);
+	callout_stop(&xfer->c_timo_callout);
 
 	TAILQ_REMOVE(&chq->active_xfers, xfer, c_activechain);
 	chq->active_xfers_used &= ~__BIT(xfer->c_slot);
@@ -1360,6 +1420,13 @@ ata_print_modes(struct ata_channel *chp)
 #endif
 		    )
 			aprint_verbose(" (using DMA)");
+
+		if (drvp->drive_flags & ATA_DRIVE_NCQ)
+			aprint_verbose(", NCQ (%d tags)",
+			    chp->ch_queue->queue_openings);
+		else if (drvp->drive_flags & ATA_DRIVE_WFUA)
+			aprint_verbose(", WRITE DMA FUA EXT");
+			
 #endif	/* NATA_DMA || NATA_PIOBM */
 		aprint_verbose("\n");
 	}
@@ -1433,7 +1500,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
 	device_t drv_dev = drvp->drv_softc;
-	int i, printed, s;
+	int i, printed = 0, s;
 	const char *sep = "";
 	int cf_flags;
 
@@ -1485,7 +1552,6 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	 */
 	if (params.atap_extensions != 0xffff &&
 	    (params.atap_extensions & WDC_EXT_MODES)) {
-		printed = 0;
 		/*
 		 * XXX some drives report something wrong here (they claim to
 		 * support PIO mode 8 !). As mode is coded on 3 bits in
@@ -1610,7 +1676,6 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				break;
 			}
 		}
-		aprint_verbose("\n");
 	}
 
 	s = splbio();
@@ -1659,6 +1724,37 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		}
 		splx(s);
 	}
+
+	/*
+	 * Probe WRITE DMA FUA EXT. Support is mandatory for devices
+	 * supporting LBA48, but nevertheless confirm with the feature flag.
+	 */
+	if (drvp->drive_flags & ATA_DRIVE_DMA) {
+		if ((params.atap_cmd2_en & ATA_CMD2_LBA48) != 0
+		    && (params.atap_cmd_def & ATA_CMDE_WFE)) {
+			drvp->drive_flags |= ATA_DRIVE_WFUA;
+			aprint_verbose("%s WRITE DMA FUA", sep);
+			sep = ",";
+		}
+	}
+
+	/* Probe NCQ support - READ/WRITE FPDMA QUEUED command support */
+	s = splbio();
+	drvp->drv_openings = 1;
+	if (params.atap_sata_caps & SATA_NATIVE_CMDQ) {
+		if (atac->atac_cap & ATAC_CAP_NCQ)
+			drvp->drive_flags |= ATA_DRIVE_NCQ;
+		drvp->drv_openings = (params.atap_queuedepth & 0x0f) + 1;
+		aprint_verbose("%s NCQ (%d tags)", sep, drvp->drv_openings);
+		sep = ",";
+	}
+	if (drvp->drv_openings < chp->ch_queue->queue_openings)
+		ata_queue_downsize(chp->ch_queue, drvp->drv_openings);
+	splx(s);
+
+	if (printed)
+		aprint_verbose("\n");
+
 #if NATA_UDMA
 	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
@@ -1878,4 +1974,24 @@ ata_delay(int ms, const char *msg, int flags)
 	} else {
 		kpause(msg, false, mstohz(ms), NULL);
 	}
+}
+
+void
+atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
+    uint16_t *features, uint8_t *device)
+{
+	if ((xfer->c_flags & C_NCQ) == 0)
+		return;
+
+	*cmd = (xfer->c_bio.flags & ATA_READ) ?
+	    WDCC_READ_FPDMA_QUEUED : WDCC_WRITE_FPDMA_QUEUED;
+
+	/* for FPDMA the block count is in features */
+	*features = *count;
+
+	/* NCQ tag */
+	*count = (xfer->c_slot << 3);
+
+	/* other device flags */
+	/* XXX FUA handling */
 }
