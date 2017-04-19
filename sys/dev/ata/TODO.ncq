@@ -1,0 +1,20 @@
+ahci with NCQ gets frequent timeouts, something's amiss
+
+ata_xfer_*() uses wd->drvp->chnl_softc as ata_channel, but it's umass
+softc for wd? at umass*
+
+protect more of wddone() with mutex?
+
+wdminphys() - LBA48 has maximum 65536 sectors
+
+refactor mvsata to reuse (more of) ata_wdc.c?
+
+NCQ ICC - investigate and set/get the behaviour with timeouts
+
+implement DIOCGCACHE/DIOCCACHESYNC for ld@ataraid? just passthrough, like ccd
+
+MSI/MSI-X support for AHCI
+
+fix all 'XXX slot' 
+
+malloc(M_CANFAIL) actually doesn't do anything
