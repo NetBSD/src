@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.79 2017/04/19 07:14:45 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.80 2017/04/19 07:19:46 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.79 2017/04/19 07:14:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.80 2017/04/19 07:19:46 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -1172,9 +1172,7 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx,
 	struct udphdr uh;
 	struct icmp6_hdr icmph;
 
-	/* sanity check */
-	if (m == NULL)
-		panic("%s: NULL pointer was passed", __func__);
+	KASSERT(m != NULL);
 
 	if (KEYDEBUG_ON(KEYDEBUG_IPSEC_DUMP)) {
 		printf("%s:\n", __func__);
@@ -1282,9 +1280,8 @@ ipsec_init_policy(struct socket *so, struct inpcbpolicy **policy)
 {
 	struct inpcbpolicy *new;
 
-	/* sanity check. */
-	if (so == NULL || policy == NULL)
-		panic("%s: NULL pointer was passed", __func__);
+	KASSERT(so != NULL);
+	KASSERT(policy != NULL);
 
 	new = malloc(sizeof(*new), M_SECA, M_NOWAIT|M_ZERO);
 	if (new == NULL) {
@@ -1878,9 +1875,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 	int error;
 	int result;
 
-	/* sanity check */
-	if (m == NULL)
-		return 0;	/* XXX should be panic ? */
+	KASSERT(m != NULL);
 
 	/* get SP for this packet.
 	 * When we are called from ip_forward(), we call

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.111 2017/04/19 03:42:11 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.112 2017/04/19 07:19:46 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.111 2017/04/19 03:42:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.112 2017/04/19 07:19:46 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -956,9 +956,8 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 		/* Which SA is the better ? */
 
 		/* sanity check 2 */
-		if (candidate->lft_c == NULL || sav->lft_c == NULL)
-			panic("key_do_allocsa_policy: "
-			    "lifetime_current is NULL");
+		KASSERT(candidate->lft_c != NULL);
+		KASSERT(sav->lft_c != NULL);
 
 		/* What the best method is to compare ? */
 		if (key_prefered_oldsa) {
@@ -1442,11 +1441,9 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 {
 	struct secpolicy *newsp;
 
-	/* sanity check */
-	if (xpl0 == NULL)
-		panic("key_msg2sp: NULL pointer was passed");
-	if (len < sizeof(*xpl0))
-		panic("key_msg2sp: invalid length");
+	KASSERT(xpl0 != NULL);
+	KASSERT(len >= sizeof(*xpl0));
+
 	if (len != PFKEY_EXTLEN(xpl0)) {
 		ipseclog((LOG_DEBUG, "key_msg2sp: Invalid msg length.\n"));
 		*error = EINVAL;
@@ -1674,9 +1671,7 @@ key_sp2msg(const struct secpolicy *sp)
 	char *p;
 	struct mbuf *m;
 
-	/* sanity check. */
-	if (sp == NULL)
-		panic("key_sp2msg: NULL pointer was passed");
+	KASSERT(sp != NULL);
 
 	tlen = key_getspreqmsglen(sp);
 
@@ -1740,8 +1735,8 @@ key_gather_mbuf(struct mbuf *m, const struct sadb_msghdr *mhp,
 	struct mbuf *result = NULL, *n;
 	int len;
 
-	if (m == NULL || mhp == NULL)
-		panic("null pointer passed to key_gather");
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
 
 	va_start(ap, nitem);
 	for (i = 0; i < nitem; i++) {
@@ -1831,9 +1826,10 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	struct secpolicy *newsp;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_spdadd: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
@@ -2080,9 +2076,10 @@ key_spddelete(struct socket *so, struct mbuf *m,
 	struct secpolicyindex spidx;
 	struct secpolicy *sp;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_spddelete: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL ||
@@ -2178,9 +2175,10 @@ key_spddelete2(struct socket *so, struct mbuf *m,
 	u_int32_t id;
 	struct secpolicy *sp;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_spddelete2: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
@@ -2277,9 +2275,10 @@ key_spdget(struct socket *so, struct mbuf *m,
 	struct secpolicy *sp;
 	struct mbuf *n;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_spdget: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_X_EXT_POLICY] == NULL ||
 	    mhp->extlen[SADB_X_EXT_POLICY] < sizeof(struct sadb_x_policy)) {
@@ -2327,13 +2326,10 @@ key_spdacquire(const struct secpolicy *sp)
 	struct secspacq *newspacq;
 	int error;
 
-	/* sanity check */
-	if (sp == NULL)
-		panic("key_spdacquire: NULL pointer is passed");
-	if (sp->req != NULL)
-		panic("key_spdacquire: called but there is request");
-	if (sp->policy != IPSEC_POLICY_IPSEC)
-		panic("key_spdacquire: policy mismathed. IPsec is expected");
+	KASSERT(sp != NULL);
+	KASSERTMSG(sp->req == NULL, "called but there is request");
+	KASSERTMSG(sp->policy == IPSEC_POLICY_IPSEC,
+	    "policy mismathed. IPsec is expected");
 
 	/* Get an entry to check whether sent message or not. */
 	if ((newspacq = key_getspacq(&sp->spidx)) != NULL) {
@@ -2397,9 +2393,10 @@ key_spdflush(struct socket *so, struct mbuf *m,
 	struct secpolicy *sp;
 	u_int dir;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_spdflush: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (m->m_len != PFKEY_ALIGN8(sizeof(struct sadb_msg)))
 		return key_senderror(so, m, EINVAL);
@@ -2519,10 +2516,10 @@ key_spddump(struct socket *so, struct mbuf *m0,
 	int ok, s;
 	pid_t pid;
 
-	/* sanity check */
-	if (so == NULL || m0 == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_spddump: NULL pointer is passed");
-
+	KASSERT(so != NULL);
+	KASSERT(m0 != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	pid = mhp->msg->sadb_msg_pid;
 	/*
@@ -2589,9 +2586,10 @@ key_nat_map(struct socket *so, struct mbuf *m,
 	struct sadb_address *iaddr, *raddr;
 	struct sadb_x_nat_t_frag *frag;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_nat_map: NULL pointer is passed.");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_X_EXT_NAT_T_TYPE] == NULL ||
 		mhp->ext[SADB_X_EXT_NAT_T_SPORT] == NULL ||
@@ -2743,9 +2741,7 @@ key_spdexpire(struct secpolicy *sp)
 	/* XXX: Why do we lock ? */
 	s = splsoftnet();	/*called from softclock()*/
 
-	/* sanity check */
-	if (sp == NULL)
-		panic("key_spdexpire: NULL pointer is passed");
+	KASSERT(sp != NULL);
 
 	/* set msg header */
 	m = key_setsadbmsg(SADB_X_SPDEXPIRE, 0, 0, 0, 0, 0);
@@ -2877,9 +2873,7 @@ key_delsah(struct secashead *sah)
 	int s;
 	int zombie = 0;
 
-	/* sanity check */
-	if (sah == NULL)
-		panic("key_delsah: NULL pointer is passed");
+	KASSERT(sah != NULL);
 
 	s = splsoftnet();	/*called from softclock()*/
 
@@ -2944,9 +2938,10 @@ key_newsav(struct mbuf *m, const struct sadb_msghdr *mhp,
 	struct secasvar *newsav;
 	const struct sadb_sa *xsa;
 
-	/* sanity check */
-	if (m == NULL || mhp == NULL || mhp->msg == NULL || sah == NULL)
-		panic("key_newsa: NULL pointer is passed");
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
+	KASSERT(sah != NULL);
 
 	KMALLOC(newsav, struct secasvar *, sizeof(struct secasvar));
 	if (newsav == NULL) {
@@ -3176,9 +3171,9 @@ key_setsaval(struct secasvar *sav, struct mbuf *m,
 {
 	int error = 0;
 
-	/* sanity check */
-	if (m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_setsaval: NULL pointer is passed");
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* initialization */
 	sav->replay = NULL;
@@ -4101,9 +4096,7 @@ key_ismyaddr(const struct sockaddr *sa)
 	int s;
 #endif
 
-	/* sanity check */
-	if (sa == NULL)
-		panic("key_ismyaddr: NULL pointer is passed");
+	KASSERT(sa != NULL);
 
 	switch (sa->sa_family) {
 #ifdef INET
@@ -4917,9 +4910,10 @@ key_getspi(struct socket *so, struct mbuf *m,
 	u_int16_t reqid;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_getspi: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	if (mhp->ext[SADB_EXT_ADDRESS_SRC] == NULL ||
 	    mhp->ext[SADB_EXT_ADDRESS_DST] == NULL) {
@@ -5283,9 +5277,10 @@ key_update(struct socket *so, struct mbuf *m, const struct sadb_msghdr *mhp)
 	u_int16_t reqid;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_update: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
@@ -5480,9 +5475,10 @@ key_add(struct socket *so, struct mbuf *m,
 	u_int16_t reqid;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_add: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
@@ -5594,9 +5590,10 @@ key_setident(struct secashead *sah, struct mbuf *m,
 	const struct sadb_ident *idsrc, *iddst;
 	int idsrclen, iddstlen;
 
-	/* sanity check */
-	if (sah == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_setident: NULL pointer is passed");
+	KASSERT(sah != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* don't make buffer if not there */
 	if (mhp->ext[SADB_EXT_IDENTITY_SRC] == NULL &&
@@ -5662,9 +5659,9 @@ key_getmsgbuf_x1(struct mbuf *m, const struct sadb_msghdr *mhp)
 {
 	struct mbuf *n;
 
-	/* sanity check */
-	if (m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_getmsgbuf_x1: NULL pointer is passed");
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 1, 15, SADB_EXT_RESERVED,
@@ -5716,9 +5713,10 @@ key_delete(struct socket *so, struct mbuf *m,
 	u_int16_t proto;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_delete: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
@@ -5908,9 +5906,10 @@ key_get(struct socket *so, struct mbuf *m,
 	u_int16_t proto;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_get: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
@@ -6546,9 +6545,10 @@ key_acquire2(struct socket *so, struct mbuf *m,
 	u_int16_t proto;
 	int error;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_acquire2: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/*
 	 * Error message from KMd.
@@ -6660,9 +6660,10 @@ key_register(struct socket *so, struct mbuf *m,
 {
 	struct secreg *reg, *newreg = 0;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_register: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* check for invalid register message */
 	if (mhp->msg->sadb_msg_satype >= sizeof(regtree)/sizeof(regtree[0]))
@@ -6809,9 +6810,7 @@ key_freereg(struct socket *so)
 	struct secreg *reg;
 	int i;
 
-	/* sanity check */
-	if (so == NULL)
-		panic("key_freereg: NULL pointer is passed");
+	KASSERT(so != NULL);
 
 	/*
 	 * check whether existing or not.
@@ -6855,13 +6854,11 @@ key_expire(struct secasvar *sav)
 	/* XXX: Why do we lock ? */
 	s = splsoftnet();	/*called from softclock()*/
 
-	/* sanity check */
-	if (sav == NULL)
-		panic("key_expire: NULL pointer is passed");
-	if (sav->sah == NULL)
-		panic("key_expire: Why was SA index in SA NULL");
-	if ((satype = key_proto2satype(sav->sah->saidx.proto)) == 0)
-		panic("key_expire: invalid proto is passed");
+	KASSERT(sav != NULL);
+	KASSERT(sav->sah != NULL);
+
+	satype = key_proto2satype(sav->sah->saidx.proto);
+	KASSERTMSG(satype != 0, "invalid proto is passed");
 
 	/* set msg header */
 	m = key_setsadbmsg(SADB_EXPIRE, 0, satype, sav->seq, 0, sav->refcnt);
@@ -6985,9 +6982,9 @@ key_flush(struct socket *so, struct mbuf *m,
 	u_int8_t state;
 	u_int stateidx;
 
-	/* sanity check */
-	if (so == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_flush: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	if ((proto = key_satype2proto(mhp->msg->sadb_msg_satype)) == 0) {
@@ -7157,9 +7154,10 @@ key_dump(struct socket *so, struct mbuf *m0,
 	int s;
 	int error, len, ok;
 
-	/* sanity check */
-	if (so == NULL || m0 == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_dump: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m0 != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	/* map satype to proto */
 	satype = mhp->msg->sadb_msg_satype;
@@ -7228,9 +7226,10 @@ key_promisc(struct socket *so, struct mbuf *m,
 {
 	int olen;
 
-	/* sanity check */
-	if (so == NULL || m == NULL || mhp == NULL || mhp->msg == NULL)
-		panic("key_promisc: NULL pointer is passed");
+	KASSERT(so != NULL);
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(mhp->msg != NULL);
 
 	olen = PFKEY_UNUNIT64(mhp->msg->sadb_msg_len);
 
@@ -7318,9 +7317,8 @@ key_parse(struct mbuf *m, struct socket *so)
 	int error;
 	int target;
 
-	/* sanity check */
-	if (m == NULL || so == NULL)
-		panic("key_parse: NULL pointer is passed");
+	KASSERT(m != NULL);
+	KASSERT(so != NULL);
 
 #if 0	/*kdebug_sadb assumes msg in linear buffer*/
 	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
@@ -7567,8 +7565,7 @@ key_senderror(struct socket *so, struct mbuf *m, int code)
 {
 	struct sadb_msg *msg;
 
-	if (m->m_len < sizeof(struct sadb_msg))
-		panic("invalid mbuf passed to key_senderror");
+	KASSERT(m->m_len >= sizeof(struct sadb_msg));
 
 	msg = mtod(m, struct sadb_msg *);
 	msg->sadb_msg_errno = code;
@@ -7589,11 +7586,9 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 	int extlen;
 	int toff;
 
-	/* sanity check */
-	if (m == NULL || mhp == NULL)
-		panic("key_align: NULL pointer is passed");
-	if (m->m_len < sizeof(struct sadb_msg))
-		panic("invalid mbuf passed to key_align");
+	KASSERT(m != NULL);
+	KASSERT(mhp != NULL);
+	KASSERT(m->m_len >= sizeof(struct sadb_msg));
 
 	/* initialize */
 	memset(mhp, 0, sizeof(*mhp));
@@ -7819,9 +7814,8 @@ key_checktunnelsanity(
     void *dst
 )
 {
-	/* sanity check */
-	if (sav->sah == NULL)
-		panic("sav->sah == NULL at key_checktunnelsanity");
+
+	KASSERT(sav->sah != NULL);
 
 	/* XXX: check inner IP header */
 
@@ -7956,8 +7950,8 @@ key_sa_routechange(struct sockaddr *dst)
 static void
 key_sa_chgstate(struct secasvar *sav, u_int8_t state)
 {
-	if (sav == NULL)
-		panic("key_sa_chgstate called with sav == NULL");
+
+	KASSERT(sav != NULL);
 
 	if (sav->state == state)
 		return;
