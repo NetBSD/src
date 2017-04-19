@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.45 2017/04/19 06:52:11 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.46 2017/04/19 07:35:44 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.45 2017/04/19 06:52:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.46 2017/04/19 07:35:44 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -196,6 +196,11 @@ static const struct bce_product {
 		PCI_VENDOR_BROADCOM,
 		PCI_PRODUCT_BROADCOM_BCM4401_B0,
 		"Broadcom BCM4401-B0 10/100 Ethernet"
+	},
+	{
+		PCI_VENDOR_BROADCOM,
+		PCI_PRODUCT_BROADCOM_BCM4401_B1,
+		"Broadcom BCM4401-B1 10/100 Ethernet"
 	},
 	{
 
