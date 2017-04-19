@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.20 2017/04/18 18:41:46 christos Exp $
+#	$NetBSD: sshd_config,v 1.21 2017/04/19 15:34:25 christos Exp $
 #	$OpenBSD: sshd_config,v 1.101 2017/03/14 07:19:07 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -74,11 +74,8 @@ AuthorizedKeysFile	.ssh/authorized_keys
 #PrintLastLog yes
 #TCPKeepAlive yes
 #UseLogin no
-<<<<<<< sshd_config
 #UsePrivilegeSeparation sandbox
 UsePam yes
-=======
->>>>>>> 1.1.1.15
 #PermitUserEnvironment no
 #Compression delayed
 #ClientAliveInterval 0
