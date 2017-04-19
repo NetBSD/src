@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.74 2017/04/19 03:28:19 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.75 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.74 2017/04/19 03:28:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.75 2017/04/19 03:39:14 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -101,8 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.74 2017/04/19 03:28:19 ozaki-r Exp $");
 
 #include <netipsec/xform.h>
 
-#include <netipsec/ipsec_osdep.h>
-
 #include <net/net_osdep.h>
 
 int ipsec_used = 0;
@@ -155,7 +153,7 @@ static int ipsec_invalpcbcache (struct inpcbpolicy *, int);
 int	crypto_support = 0;
 
 static struct secpolicy *ipsec_getpolicybysock(struct mbuf *, u_int,
-	PCB_T *, int *);
+    struct inpcb_hdr *, int *);
 
 #ifdef __FreeBSD__
 /* net.inet.ipsec */
@@ -463,7 +461,8 @@ ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
  * NOTE: IPv6 mapped address concern is implemented here.
  */
 static struct secpolicy *
-ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
+ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
+    int *error)
 {
 	struct inpcbpolicy *pcbsp = NULL;
 	struct secpolicy *currsp = NULL;	/* policy on socket */
@@ -476,10 +475,10 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
 	    "invalid direction %u", dir);
 
-	KASSERT(PCB_SOCKET(inp) != NULL);
+	KASSERT(inp->inph_socket != NULL);
 
 	/* XXX FIXME inpcb/in6pcb  vs socket*/
-	af = PCB_FAMILY(inp);
+	af = inp->inph_af;
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
 	    "unexpected protocol family %u", af);
 
@@ -495,7 +494,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 
 	switch (af) {
 	case AF_INET: {
-		struct inpcb *in4p = PCB_TO_IN4PCB(inp);
+		struct inpcb *in4p = (struct inpcb *)inp;
 		/* set spidx in pcb */
 		*error = ipsec4_setspidx_inpcb(m, in4p);
 		pcbsp = in4p->inp_sp;
@@ -504,7 +503,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 
 #if defined(INET6)
 	case AF_INET6: {
-		struct in6pcb *in6p = PCB_TO_IN6PCB(inp);
+		struct in6pcb *in6p = (struct in6pcb *)inp;
 		/* set spidx in pcb */
 		*error = ipsec6_setspidx_in6pcb(m, in6p);
 		pcbsp = in6p->in6p_sp;
@@ -644,7 +643,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (inp == NULL || inp->inp_socket == NULL) {
 		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
 	} else
-		sp = ipsec_getpolicybysock(m, dir, IN4PCB_TO_PCB(inp), error);
+		sp = ipsec_getpolicybysock(m, dir, (struct inpcb_hdr *)inp, error);
 	if (sp == NULL) {
 		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
 		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
@@ -889,7 +888,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (in6p == NULL || in6p->in6p_socket == NULL) {
 		sp = ipsec_getpolicybyaddr(m, dir, flag, error);
 	} else
-		sp = ipsec_getpolicybysock(m, dir, IN6PCB_TO_PCB(in6p), error);
+		sp = ipsec_getpolicybysock(m, dir, (struct inpcb_hdr *)in6p, error);
 	if (sp == NULL) {
 		KASSERTMSG(*error != 0, "getpolicy failed w/o error");
 		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
@@ -1071,7 +1070,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	/* NB: ip_input() flips it into host endian XXX need more checking */
 	if (m->m_len >= sizeof(struct ip)) {
 		struct ip *ip = mtod(m, struct ip *);
-		if (ip->ip_off & IP_OFF_CONVERT(IP_MF | IP_OFFMASK))
+		if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
 			goto done;
 		off = ip->ip_hl << 2;
 		nxt = ip->ip_p;
@@ -1079,7 +1078,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		struct ip ih;
 
 		m_copydata(m, 0, sizeof (struct ip), &ih);
-		if (ih.ip_off & IP_OFF_CONVERT(IP_MF | IP_OFFMASK))
+		if (ih.ip_off & htons(IP_MF | IP_OFFMASK))
 			goto done;
 		off = ih.ip_hl << 2;
 		nxt = ih.ip_p;
@@ -1856,7 +1855,7 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
-					   IN4PCB_TO_PCB(inp), &error);
+					   (struct inpcb_hdr *)inp, &error);
 
 	if (sp != NULL) {
 		result = ipsec_in_reject(sp, m);
@@ -1896,7 +1895,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 		sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, IPSEC_DIR_INBOUND,
-			IN6PCB_TO_PCB(in6p),
+			(struct inpcb_hdr *)in6p,
 			&error);
 
 	if (sp != NULL) {
@@ -1994,7 +1993,7 @@ ipsec4_hdrsiz(struct mbuf *m, u_int dir, struct inpcb *inp)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, dir,
-					   IN4PCB_TO_PCB(inp), &error);
+					   (struct inpcb_hdr *)inp, &error);
 
 	if (sp != NULL) {
 		size = ipsec_hdrsiz(sp);
@@ -2029,7 +2028,7 @@ ipsec6_hdrsiz(struct mbuf *m, u_int dir, struct in6pcb *in6p)
 		sp = ipsec_getpolicybyaddr(m, dir, IP_FORWARDING, &error);
 	else
 		sp = ipsec_getpolicybysock(m, dir,
-			IN6PCB_TO_PCB(in6p),
+			(struct inpcb_hdr *)in6p,
 			&error);
 
 	if (sp == NULL)

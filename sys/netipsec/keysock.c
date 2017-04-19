@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.50 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.51 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.50 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.51 2017/04/19 03:39:14 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.50 2016/06/10 13:27:16 ozaki-r Exp $")
 #include <netipsec/keysock.h>
 #include <netipsec/key_debug.h>
 
-#include <netipsec/ipsec_osdep.h>
 #include <netipsec/ipsec_private.h>
 
 struct key_cb {
@@ -341,7 +340,7 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 		PFKEY_STATINC(PFKEY_STAT_IN_MSGTYPE + msg->sadb_msg_type);
 	}
 
-	LIST_FOREACH(rp, &rawcb_list, rcb_list)
+	LIST_FOREACH(rp, &rawcb, rcb_list)
 	{
 		struct socket * kso = rp->rcb_socket;
 		if (rp->rcb_proto.sp_family != PF_KEY)

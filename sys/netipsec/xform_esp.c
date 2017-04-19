@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.53 2017/04/18 05:26:42 ozaki-r Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.54 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.53 2017/04/18 05:26:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.54 2017/04/19 03:39:14 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -52,9 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.53 2017/04/18 05:26:42 ozaki-r Exp $
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
-/*#include <sys/random.h>*/
 #include <sys/sysctl.h>
 #include <sys/socketvar.h> /* for softnet_lock */
+#include <sys/cprng.h>
 
 #include <net/if.h>
 
@@ -80,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.53 2017/04/18 05:26:42 ozaki-r Exp $
 
 #include <netipsec/key.h>
 #include <netipsec/key_debug.h>
-
-#include <netipsec/ipsec_osdep.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
@@ -848,7 +846,7 @@ esp_output(
 	 */
 	switch (sav->flags & SADB_X_EXT_PMASK) {
 	case SADB_X_EXT_PRAND:
-		(void) read_random(pad, padding - 2);
+		(void) cprng_fast(pad, padding - 2);
 		break;
 	case SADB_X_EXT_PZERO:
 		memset(pad, 0, padding - 2);
@@ -1059,7 +1057,7 @@ static struct xformsw esp_xformsw = {
 	NULL,
 };
 
-INITFN void
+void
 esp_attach(void)
 {
 

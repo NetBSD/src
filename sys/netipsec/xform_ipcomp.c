@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.36 2017/04/18 05:26:42 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.37 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.36 2017/04/18 05:26:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.37 2017/04/19 03:39:14 ozaki-r Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.36 2017/04/18 05:26:42 ozaki-r Ex
 
 #include <netipsec/key.h>
 #include <netipsec/key_debug.h>
-
-#include <netipsec/ipsec_osdep.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/deflate.h>
@@ -662,7 +660,7 @@ static struct xformsw ipcomp_xformsw = {
 	NULL,
 };
 
-INITFN void
+void
 ipcomp_attach(void)
 {
 	ipcompstat_percpu = percpu_alloc(sizeof(uint64_t) * IPCOMP_NSTATS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.40 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.41 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -48,7 +48,6 @@
 #ifdef _KERNEL
 
 #include <netipsec/keydb.h>
-#include <netipsec/ipsec_osdep.h>
 
 /*
  * Security Policy Index
@@ -361,12 +360,12 @@ const char *ipsec_strerror (void);
 
 #ifdef _KERNEL
 /* External declarations of per-file init functions */
-INITFN void ah_attach(void);
-INITFN void esp_attach(void);
-INITFN void ipcomp_attach(void);
-INITFN void ipe4_attach(void);
-INITFN void ipe4_attach(void);
-INITFN void tcpsignature_attach(void);
+void ah_attach(void);
+void esp_attach(void);
+void ipcomp_attach(void);
+void ipe4_attach(void);
+void ipe4_attach(void);
+void tcpsignature_attach(void);
 
 void ipsec_attach(void);
 

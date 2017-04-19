@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.47 2017/04/18 05:26:42 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.48 2017/04/19 03:39:14 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.47 2017/04/18 05:26:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.48 2017/04/19 03:39:14 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.47 2017/04/18 05:26:42 ozaki-r Exp 
 
 #include <netipsec/key.h>
 #include <netipsec/key_debug.h>
-#include <netipsec/ipsec_osdep.h>
 
 typedef void	pr_in_input_t (struct mbuf *m, ...);
 
@@ -477,7 +476,7 @@ ipip_output(
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_off),
 			    sizeof(uint16_t), &ipo->ip_off);
-			ipo->ip_off &= ~ IP_OFF_CONVERT(IP_DF | IP_MF | IP_OFFMASK);
+			ipo->ip_off &= ~ htons(IP_DF | IP_MF | IP_OFFMASK);
 		}
 #ifdef INET6
 		else if (tp == (IPV6_VERSION >> 4)) {
@@ -693,7 +692,7 @@ ipe4_encapcheck(struct mbuf *m,
 	return ((m->m_flags & M_IPSEC) != 0 ? 1 : 0);
 }
 
-INITFN void
+void
 ipe4_attach(void)
 {
 
@@ -717,8 +716,3 @@ ipe4_attach(void)
 #endif
 	encap_lock_exit();
 }
-
-#ifdef SYSINIT
-SYSINIT(ipe4_xform_init, SI_SUB_PROTO_DOMAIN, SI_ORDER_MIDDLE, ipe4_attach, NULL);
-#endif
-
