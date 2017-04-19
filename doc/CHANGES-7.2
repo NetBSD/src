@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.2,v 1.1.2.10 2017/04/18 19:54:52 snj Exp $
+# $NetBSD: CHANGES-7.2,v 1.1.2.11 2017/04/19 17:17:17 snj Exp $
 
 A complete list of changes from the NetBSD 7.1 release to the NetBSD 7.2
 release:
@@ -603,7 +603,7 @@ sys/compat/linux/arch/powerpc/linux_syscalls.c	regen
 sys/compat/linux/arch/powerpc/linux_sysent.c	regen
 sys/compat/linux/arch/powerpc/syscalls.master	1.70 via patch
 sys/compat/linux/common/linux_misc.c		1.234
-sys/compat/linux/common/linux_signal.h		1.31
+sys/compat/linux/common/linux_signal.h		1.31, 1.32
 
 	Add pselect6 Linux system call.
 	[manu, ticket #1354]
@@ -614,4 +614,29 @@ sys/arch/xen/x86/xen_pmap.c			1.25
 
 	Make xen dom0 SMP bootable again.  Disabled by default.
 	[khorben/bouyer, ticket #1367]
+
+sys/arch/powerpc/powerpc/locore_subr.S		1.55
+
+	PR 44387: Fix hangs where a softint thread is blocked
+	waiting for a mutex that is not held.
+	[phx, ticket #1382]
+
+sys/dev/pci/if_wm.c				1.497
+
+	Fix panic on shutdown.  PR kern/52039.
+	[kardel, ticket #1385]
+
+bin/sh/expand.c					1.102
+
+	Fix for the "${unset-var#$(cmd1)}$(cmd2)" runs the wrong 
+	ommand bug.
+	[kre, ticket #1388]
+
+sys/rump/dev/lib/libugenhc/ugenhc.c		1.25, 1.26
+
+	Fix order of outputs in rumpuser_open call.
+	Fix bulk xfer buffer with usedma = false.
+
+	Now ugenhc works again after a four-year hiatus.
+	[skrll, ticket #1403]
 
