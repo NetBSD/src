@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.113 2017/04/19 09:22:17 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.114 2017/04/19 09:23:19 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.113 2017/04/19 09:22:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.114 2017/04/19 09:23:19 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1489,9 +1489,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
 		ipseclog((LOG_DEBUG,
 		    "key_msg2sp: Invalid msg length.\n"));
-		KEY_FREESP(&newsp);
 		*error = EINVAL;
-		return NULL;
+		goto free_exit;
 	}
 
 	tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
@@ -1502,9 +1501,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
 			ipseclog((LOG_DEBUG, "key_msg2sp: "
 				"invalid ipsecrequest length.\n"));
-			KEY_FREESP(&newsp);
 			*error = EINVAL;
-			return NULL;
+			goto free_exit;
 		}
 
 		/* allocate request buffer */
@@ -1512,9 +1510,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		if ((*p_isr) == NULL) {
 			ipseclog((LOG_DEBUG,
 			    "key_msg2sp: No more memory.\n"));
-			KEY_FREESP(&newsp);
 			*error = ENOBUFS;
-			return NULL;
+			goto free_exit;
 		}
 		memset(*p_isr, 0, sizeof(**p_isr));
 
@@ -1530,9 +1527,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			ipseclog((LOG_DEBUG,
 			    "key_msg2sp: invalid proto type=%u\n",
 			    xisr->sadb_x_ipsecrequest_proto));
-			KEY_FREESP(&newsp);
 			*error = EPROTONOSUPPORT;
-			return NULL;
+			goto free_exit;
 		}
 		(*p_isr)->saidx.proto = xisr->sadb_x_ipsecrequest_proto;
 
@@ -1545,9 +1541,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			ipseclog((LOG_DEBUG,
 			    "key_msg2sp: invalid mode=%u\n",
 			    xisr->sadb_x_ipsecrequest_mode));
-			KEY_FREESP(&newsp);
 			*error = EINVAL;
-			return NULL;
+			goto free_exit;
 		}
 		(*p_isr)->saidx.mode = xisr->sadb_x_ipsecrequest_mode;
 
@@ -1575,9 +1570,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			if (xisr_reqid == 0) {
 				u_int16_t reqid;
 				if ((reqid = key_newreqid()) == 0) {
-					KEY_FREESP(&newsp);
 					*error = ENOBUFS;
-					return NULL;
+					goto free_exit;
 				}
 				(*p_isr)->saidx.reqid = reqid;
 			} else {
@@ -1589,9 +1583,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		default:
 			ipseclog((LOG_DEBUG, "key_msg2sp: invalid level=%u\n",
 				xisr->sadb_x_ipsecrequest_level));
-			KEY_FREESP(&newsp);
 			*error = EINVAL;
-			return NULL;
+			goto free_exit;
 		}
 		(*p_isr)->level = xisr->sadb_x_ipsecrequest_level;
 
@@ -1606,9 +1599,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			    > sizeof((*p_isr)->saidx.src)) {
 				ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
 					"address length.\n"));
-				KEY_FREESP(&newsp);
 				*error = EINVAL;
-				return NULL;
+				goto free_exit;
 			}
 			memcpy(&(*p_isr)->saidx.src, paddr, paddr->sa_len);
 
@@ -1620,9 +1612,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 			    > sizeof((*p_isr)->saidx.dst)) {
 				ipseclog((LOG_DEBUG, "key_msg2sp: invalid request "
 					"address length.\n"));
-				KEY_FREESP(&newsp);
 				*error = EINVAL;
-				return NULL;
+				goto free_exit;
 			}
 			memcpy(&(*p_isr)->saidx.dst, paddr, paddr->sa_len);
 		}
@@ -1637,9 +1628,8 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 		/* validity check */
 		if (tlen < 0) {
 			ipseclog((LOG_DEBUG, "key_msg2sp: becoming tlen < 0.\n"));
-			KEY_FREESP(&newsp);
 			*error = EINVAL;
-			return NULL;
+			goto free_exit;
 		}
 
 		xisr = (const struct sadb_x_ipsecrequest *)((const char *)xisr
@@ -1649,6 +1639,10 @@ key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error)
 
 	*error = 0;
 	return newsp;
+
+free_exit:
+	KEY_FREESP(&newsp);
+	return NULL;
 }
 
 static u_int16_t
