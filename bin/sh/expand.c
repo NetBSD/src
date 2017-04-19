@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.91 2014/01/20 14:05:51 roy Exp $	*/
+/*	$NetBSD: expand.c,v 1.91.4.1 2017/04/19 17:09:38 snj Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.91 2014/01/20 14:05:51 roy Exp $");
+__RCSID("$NetBSD: expand.c,v 1.91.4.1 2017/04/19 17:09:38 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -753,8 +753,10 @@ again: /* jump here after setting a variable with ${var=text} */
 	case VSTRIMLEFTMAX:
 	case VSTRIMRIGHT:
 	case VSTRIMRIGHTMAX:
-		if (!set)
+		if (!set) {
+			set = 1;  /* allow argbackq to be advanced if needed */
 			break;
+		}
 		/*
 		 * Terminate the string and start recording the pattern
 		 * right after it
