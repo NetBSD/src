@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.46 2016/12/19 14:10:57 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.47 2017/04/20 13:11:35 joerg Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.46 2016/12/19 14:10:57 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.47 2017/04/20 13:11:35 joerg Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -690,7 +690,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 		errx(EXIT_FAILURE, "memory allocation failed");
 
 	*bufp = NULL;
-	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
+	if (archive_read_support_filter_all(a) != ARCHIVE_OK ||
 	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
 	    archive_read_open_filename(a, file, 65536) != ARCHIVE_OK ||
 	    archive_read_next_header(a, &ae) != ARCHIVE_OK)
@@ -701,7 +701,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 	for (;;) {
 		r = archive_read_data(a, buf + off, *len - off);
 		if (r == ARCHIVE_OK) {
-			archive_read_finish(a);
+			archive_read_free(a);
 			*bufp = buf;
 			*len = off;
 			return 0;
@@ -717,7 +717,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 				if (mflags.verbosity)
 					warnx("File too large: %s", file);
 				free(buf);
-				archive_read_finish(a);
+				archive_read_free(a);
 				return -1;
 			}
 			buf = erealloc(buf, *len);
@@ -726,7 +726,7 @@ read_and_decompress(const char *file, void **bufp, size_t *len)
 
 archive_error:
 	warnx("Error while reading `%s': %s", file, archive_error_string(a));
-	archive_read_finish(a);
+	archive_read_free(a);
 	return -1;
 }
 
