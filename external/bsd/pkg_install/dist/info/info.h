@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.1.1.6 2017/04/20 13:12:47 joerg Exp $ */
+/* $NetBSD: info.h,v 1.2 2017/04/20 13:18:23 joerg Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
