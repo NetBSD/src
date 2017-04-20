@@ -396,6 +396,18 @@ CONFIGURATION
 
                  Default: ``no''
 
+     MKSTRIPSYM  Can be set to ``yes'' or ``no''.  Indicates whether all local
+                 symbols should be stripped from shared libraries.  If ``yes'',
+                 strip all local symbols from shared libraries; the affect is
+                 equivalent to -x option of ld(1). If ``no'', strip only
+                 temporary local symbols; the affect is equivalent to -X
+                 option of ld(1). Keeping non-temporary local symbols such as
+                 static function names is useful on using DTrace for userland
+                 libraries and getting a backtrace from a rump kernel loading
+                 shared libraries.
+
+                 Default: ``yes''
+
      MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an
                  unprivileged install will occur.  The user, group,
                  permissions, and file flags, will not be set on the installed

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.270 2017/03/22 23:11:09 chs Exp $
+#	$NetBSD: bsd.sys.mk,v 1.271 2017/04/20 09:29:11 ozaki-r Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -308,6 +308,11 @@ OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][dx]' -K '[$$][dx]\.*'
 # ARM big endian needs to preserve $a/$d/$t symbols for the linker.
 OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][adt]' -K '[$$][adt]\.*'
 .endif
+
+.if ${MKSTRIPSYM:Uyes} == "yes"
 OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x} ${OBJCOPYLIBFLAGS_EXTRA}
+.else
+OBJCOPYLIBFLAGS?=-X ${OBJCOPYLIBFLAGS_EXTRA}
+.endif
 
 .endif	# !defined(_BSD_SYS_MK_)

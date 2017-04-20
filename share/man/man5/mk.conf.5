@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.72 2017/02/16 17:15:26 rin Exp $
+.\"	$NetBSD: mk.conf.5,v 1.73 2017/04/20 09:29:10 ozaki-r Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -782,6 +782,21 @@ Indicates whether RCS IDs, for use with
 .Xr ident 1 ,
 should be stripped from program binaries and shared libraries.
 .DFLTn
+.
+.It Sy MKSTRIPSYM
+.YorN
+Indicates whether all local symbols should be stripped from shared libraries.
+If
+.Dq yes ,
+strip all local symbols from shared libraries;
+the affect is equivalent to -x option of ld(1). If
+.Dq no ,
+strip only temporary local symbols; the affect is equivalent
+to -X option of ld(1). Keeping non-temporary local symbols
+such as static function names is useful on using DTrace for
+userland libraries and getting a backtrace from a rump kernel
+loading shared libraries.
+.DFLTy
 .
 .It Sy MKUNPRIVED
 .YorN
