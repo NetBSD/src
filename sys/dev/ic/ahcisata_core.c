@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.7 2017/04/19 20:49:17 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.8 2017/04/20 19:24:25 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.7 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.8 2017/04/20 19:24:25 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -607,7 +607,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 
 		for (slot=0; slot < sc->sc_ncmds; slot++) {
 			if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-				return;
+				continue;
 			if ((clear & (1 << slot)) == 0) {
 				xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
 				    slot);
