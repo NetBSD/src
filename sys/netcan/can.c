@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.11 2017/04/20 12:59:11 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.12 2017/04/20 17:29:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.11 2017/04/20 12:59:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.12 2017/04/20 17:29:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,8 @@ canintr(void)
 			sender_canp = sotocanpcb(so);
 			m_tag_delete(m, sotag);
 			/* if the sender doesn't want loopback, don't do it */
-			if (sender_canp->canp_flags & CANP_NO_LOOPBACK) {
+			if (sender_canp &&
+			    (sender_canp->canp_flags & CANP_NO_LOOPBACK) != 0) {
 				m_freem(m);
 				continue;
 			}
