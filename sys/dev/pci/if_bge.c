@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.307 2017/04/20 09:03:04 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.308 2017/04/20 09:18:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.307 2017/04/20 09:03:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.308 2017/04/20 09:18:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,11 +585,11 @@ static const struct bge_product {
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57760,
-	  "Broadcom BCM57760 Fast Ethernet",
+	  "Broadcom BCM57760 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57761,
-	  "Broadcom BCM57761 Fast Ethernet",
+	  "Broadcom BCM57761 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57762,
@@ -597,47 +597,47 @@ static const struct bge_product {
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57765,
-	  "Broadcom BCM57765 Fast Ethernet",
+	  "Broadcom BCM57765 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57766,
-	  "Broadcom BCM57766 Fast Ethernet",
+	  "Broadcom BCM57766 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57780,
-	  "Broadcom BCM57780 Fast Ethernet",
+	  "Broadcom BCM57780 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57781,
-	  "Broadcom BCM57781 Fast Ethernet",
+	  "Broadcom BCM57781 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57782,
-	  "Broadcom BCM57782 Fast Ethernet",
+	  "Broadcom BCM57782 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57785,
-	  "Broadcom BCM57785 Fast Ethernet",
+	  "Broadcom BCM57785 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57786,
-	  "Broadcom BCM57786 Fast Ethernet",
+	  "Broadcom BCM57786 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57788,
-	  "Broadcom BCM57788 Fast Ethernet",
+	  "Broadcom BCM57788 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57790,
-	  "Broadcom BCM57790 Fast Ethernet",
+	  "Broadcom BCM57790 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57791,
-	  "Broadcom BCM57791 Fast Ethernet",
+	  "Broadcom BCM57791 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM57795,
-	  "Broadcom BCM57795 Fast Ethernet",
+	  "Broadcom BCM57795 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
