@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1433 2017/04/18 18:44:06 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1434 2017/04/20 14:39:36 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -710,8 +710,8 @@ for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	2.8.4
-Current Vers:	2.8.5 (legacy) / 3.2.0 (stable)
+Version:	3.3.2pre
+Current Vers:	3.3.1
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/downloads
 Home Page: 	http://libarchive.github.com/
@@ -1145,8 +1145,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20120221
-Current Vers:	20120221
+Version:	20170419
+Current Vers:	20170419
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
 Mailing List:	tech-pkg@NetBSD.org
