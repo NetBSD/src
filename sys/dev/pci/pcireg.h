@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.126 2017/04/17 09:33:00 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.127 2017/04/20 08:45:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1921,6 +1921,53 @@ struct pci_rom {
  * Extended capability ID: 0x001d
  * Downstream Port Containment
  */
+
+#define	PCI_DPC_CCR	0x04	/* Capability and Control Register */
+#define	PCI_DPCCAP_IMSGN	__BITS(4, 0)   /* Interrupt Message Number */
+#define	PCI_DPCCAP_RPEXT	__BIT(5)       /* RP Extensions for DPC */
+#define	PCI_DPCCAP_POISONTLPEB	__BIT(6)       /* Poisoned TLP Egress Blckng.*/
+#define	PCI_DPCCAP_SWTRIG	__BIT(7)       /* DPC Software Triggering */
+#define	PCI_DPCCAP_RPPIOLOGSZ	__BITS(11, 8)  /* RP PIO Log Size */
+#define	PCI_DPCCAP_DLACTECORS	__BIT(12)      /* DL_Active ERR_COR Signaling*/
+#define	PCI_DPCCTL_TIRGEN	__BITS(17, 16) /* DPC Trigger Enable */
+#define	PCI_DPCCTL_COMPCTL	__BIT(18)      /* DPC Completion Control */
+#define	PCI_DPCCTL_IE		__BIT(19)      /* DPC Interrupt Enable */
+#define	PCI_DPCCTL_ERRCOREN	__BIT(20)      /* DPC ERR_COR enable */
+#define	PCI_DPCCTL_POISONTLPEB	__BIT(21)      /* Poisoned TLP Egress Blckng.*/
+#define	PCI_DPCCTL_SWTRIG	__BIT(22)      /* DPC Software Trigger */
+#define	PCI_DPCCTL_DLACTECOR	__BIT(23)      /* DL_Active ERR_COR Enable */
+
+#define	PCI_DPC_STATESID 0x08	/* Status and Error Source ID Register */
+#define	PCI_DPCSTAT_TSTAT	__BIT(0)       /* DPC Trigger Staus */
+#define	PCI_DPCSTAT_TREASON	__BITS(2, 1)   /* DPC Trigger Reason */
+#define	PCI_DPCSTAT_ISTAT	__BIT(3)       /* DPC Interrupt Status */
+#define	PCI_DPCSTAT_RPBUSY	__BIT(4)       /* DPC RP Busy */
+#define	PCI_DPCSTAT_TRIGREXT	__BITS(6, 5)   /* DPC Trigger Reason Extntn. */
+#define	PCI_DPCSTAT_RPPIOFEP	__BITS(12, 8)  /* RP PIO First Error Pointer */
+#define	PCI_DPCESID		__BITS(31, 16) /* DPC Error Source ID */
+
+#define	PCI_DPC_RPPIO_STAT 0x0c	/* RP PIO Status Register */
+#define	PCI_DPC_RPPIO_CFGUR_CPL	__BIT(0)       /* CfgReq received UR Complt. */
+#define	PCI_DPC_RPPIO_CFGCA_CPL	__BIT(1)       /* CfgReq received CA Complt. */
+#define	PCI_DPC_RPPIO_CFG_CTO	__BIT(2)       /* CfgReq Completion Timeout */
+#define	PCI_DPC_RPPIO_IOUR_CPL	__BIT(8)       /* I/OReq received UR Complt. */
+#define	PCI_DPC_RPPIO_IOCA_CPL	__BIT(9)       /* I/OReq received CA Complt. */
+#define	PCI_DPC_RPPIO_IO_CTO	__BIT(10)      /* I/OReq Completion Timeout */
+#define	PCI_DPC_RPPIO_MEMUR_CPL	__BIT(16)      /* MemReq received UR Complt. */
+#define	PCI_DPC_RPPIO_MEMCA_CPL	__BIT(17)      /* MemReq received CA Complt. */
+#define	PCI_DPC_RPPIO_MEM_CTO	__BIT(18)      /* MemReq Completion Timeout */
+	
+#define	PCI_DPC_RPPIO_MASK 0x10	/* RP PIO Mask Register */
+  /* Bits are the same as RP PIO Status Register */
+#define	PCI_DPC_RPPIO_SEVE 0x14	/* RP PIO Severity Register */
+  /* Same */
+#define	PCI_DPC_RPPIO_SYSERR 0x18 /* RP PIO SysError Register */
+  /* Same */
+#define	PCI_DPC_RPPIO_EXCPT 0x1c /* RP PIO Exception Register */
+  /* Same */
+#define	PCI_DPC_RPPIO_HLOG 0x20	/* RP PIO Header Log Register */
+#define	PCI_DPC_RPPIO_IMPSLOG 0x30 /* RP PIO ImpSpec Log Register */
+#define	PCI_DPC_RPPIO_TLPPLOG 0x34 /* RP PIO TPL Prefix Log Register */
 
 /*
  * Extended capability ID: 0x001e
