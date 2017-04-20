@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.176 2017/03/02 05:29:31 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.177 2017/04/20 08:45:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.176 2017/03/02 05:29:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.177 2017/04/20 08:45:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -191,6 +191,8 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct inpcb *inp;
 	int s;
+
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET);
 
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)

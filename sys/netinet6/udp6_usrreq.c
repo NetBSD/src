@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.127 2017/01/24 07:09:25 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.128 2017/04/20 08:45:09 ozaki-r Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.127 2017/01/24 07:09:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.128 2017/04/20 08:45:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -343,17 +343,16 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
-	struct in6pcb *in6p = NULL;
+	struct in6pcb *in6p;
 
-	if (!so)
-		return;
-	if (so->so_proto->pr_domain->dom_family != AF_INET6)
-		return;
+	KASSERT(so != NULL);
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET6);
 	in6p = sotoin6pcb(so);
+	KASSERT(in6p != NULL);
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (ipsec_used && so != NULL && ipsec6_in_reject_so(m, so)) {
+	if (ipsec_used && ipsec6_in_reject_so(m, so)) {
 		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp6_error(n, ICMP6_DST_UNREACH,
@@ -363,11 +362,11 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 #endif /*IPSEC*/
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-		if (in6p && (in6p->in6p_flags & IN6P_CONTROLOPTS
+		if (in6p->in6p_flags & IN6P_CONTROLOPTS
 #ifdef SO_OTIMESTAMP
 		    || in6p->in6p_socket->so_options & SO_OTIMESTAMP
 #endif
-		    || in6p->in6p_socket->so_options & SO_TIMESTAMP)) {
+		    || in6p->in6p_socket->so_options & SO_TIMESTAMP) {
 			struct ip6_hdr *ip6 = mtod(n, struct ip6_hdr *);
 			ip6_savecontrol(in6p, &opts, ip6, n);
 		}
