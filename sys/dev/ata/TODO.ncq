@@ -1,6 +1,3 @@
-ahci with NCQ gets frequent timeouts, something's amiss; improve message
-to use dev for the drive, not the controller
-
 under QEMU, the mounted AHCI drive doesn't show directories for ls,
 but cd, mkdir, stat and creating files wroks just fine - what do?
 
