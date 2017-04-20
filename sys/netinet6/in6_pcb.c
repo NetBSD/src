@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.159 2017/03/02 05:26:24 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.160 2017/04/20 08:45:09 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.159 2017/03/02 05:26:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.160 2017/04/20 08:45:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -157,6 +157,8 @@ in6_pcballoc(struct socket *so, void *v)
 	struct inpcbtable *table = v;
 	struct in6pcb *in6p;
 	int s;
+
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET6);
 
 	in6p = pool_get(&in6pcb_pool, PR_NOWAIT);
 	if (in6p == NULL)
