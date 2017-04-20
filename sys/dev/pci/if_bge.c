@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.306 2017/04/13 09:25:33 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.307 2017/04/20 09:03:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.306 2017/04/13 09:25:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.307 2017/04/20 09:03:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3785,7 +3785,7 @@ alloc_retry:
 	 * we use tagged status only for MSI case on BCM5717. Otherwise
 	 * MSI on BCM5717 does not work.
 	 */
-	if (BGE_IS_5717_PLUS(sc) && sc->bge_flags & BGEF_MSI)
+	if (BGE_IS_57765_PLUS(sc) && sc->bge_flags & BGEF_MSI)
 		sc->bge_flags |= BGEF_TAGGED_STATUS;
 
 	/*
