@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.174 2017/04/18 10:00:26 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.175 2017/04/20 05:48:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.174 2017/04/18 10:00:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.175 2017/04/20 05:48:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1894,7 +1894,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 
 		/* Slot Control Register */
 		reg = regs[o2i(capoff + PCIE_SLCSR)];
-		printf("    Slot Control Register: %04x\n", reg & 0xffff);
+		printf("    Slot Control Register: 0x%04x\n", reg & 0xffff);
 		onoff("Attention Button Pressed Enabled", reg, PCIE_SLCSR_ABE);
 		onoff("Power Fault Detected Enabled", reg, PCIE_SLCSR_PFE);
 		onoff("MRL Sensor Changed Enabled", reg, PCIE_SLCSR_MSE);
@@ -1958,7 +1958,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	if (check_rootport == true) {
 		/* Root Control Register */
 		reg = regs[o2i(capoff + PCIE_RCR)];
-		printf("    Root Control Register: %04x\n", reg & 0xffff);
+		printf("    Root Control Register: 0x%04x\n", reg & 0xffff);
 		onoff("SERR on Correctable Error Enable", reg,
 		    PCIE_RCR_SERR_CER);
 		onoff("SERR on Non-Fatal Error Enable", reg,
