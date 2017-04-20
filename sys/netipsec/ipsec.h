@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.41 2017/04/19 03:39:14 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.42 2017/04/20 03:41:47 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -170,6 +170,10 @@ struct secspacq {
 #define IPSEC_DIR_OUTBOUND	2
 #define IPSEC_DIR_MAX		3
 #define IPSEC_DIR_INVALID	4
+
+#define IPSEC_DIR_IS_VALID(dir)		((dir) >= 0 && (dir) <= IPSEC_DIR_MAX)
+#define IPSEC_DIR_IS_INOROUT(dir)	((dir) == IPSEC_DIR_INBOUND || \
+					 (dir) == IPSEC_DIR_OUTBOUND)
 
 /* Policy level */
 /*

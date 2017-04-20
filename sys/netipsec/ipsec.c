@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.80 2017/04/19 07:19:46 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.81 2017/04/20 03:41:47 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.80 2017/04/19 07:19:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.81 2017/04/20 03:41:47 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -211,15 +211,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 {
 	struct secpolicyindex spidx;
 
-	switch (dir) {
-	case IPSEC_DIR_INBOUND:
-	case IPSEC_DIR_OUTBOUND:
-	case IPSEC_DIR_ANY:
-		break;
-	default:
-		return NULL;
-	}
-
+	KASSERT(IPSEC_DIR_IS_VALID(dir));
 	KASSERT(pcbsp != NULL);
 	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
 
@@ -276,14 +268,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 	struct secpolicy *sp, int dir)
 {
 
-	switch (dir) {
-	case IPSEC_DIR_INBOUND:
-	case IPSEC_DIR_OUTBOUND:
-		break;
-	default:
-		return EINVAL;
-	}
-
+	KASSERT(IPSEC_DIR_IS_INOROUT(dir));
 	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
 
 	if (pcbsp->sp_cache[dir].cachesp)
@@ -426,8 +411,7 @@ ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
 	struct secpolicy *sp;
 
 	KASSERT(tdbi != NULL);
-	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    "invalid direction %u", dir);
+	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
 	sp = KEY_ALLOCSP2(tdbi->spi, &tdbi->dst, tdbi->proto, dir);
 	if (sp == NULL)			/*XXX????*/
@@ -460,8 +444,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
 	KASSERT(m != NULL);
 	KASSERT(inp != NULL);
 	KASSERT(error != NULL);
-	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    "invalid direction %u", dir);
+	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
 	KASSERT(inp->inph_socket != NULL);
 
@@ -592,8 +575,7 @@ ipsec_getpolicybyaddr(struct mbuf *m, u_int dir, int flag, int *error)
 
 	KASSERT(m != NULL);
 	KASSERT(error != NULL);
-	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    "invalid direction %u", dir);
+	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
 	sp = NULL;
 
