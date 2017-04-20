@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.231 2017/03/03 07:13:06 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.232 2017/04/20 08:45:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.231 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.232 2017/04/20 08:45:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -468,21 +468,13 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
-	struct inpcb *inp = NULL;
+	struct inpcb *inp;
 
 	if (!so)
 		return;
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		inp = sotoinpcb(so);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		break;
-#endif
-	default:
-		return;
-	}
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET);
+	inp = sotoinpcb(so);
+	KASSERT(inp != NULL);
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
@@ -496,11 +488,11 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 #endif /*IPSEC*/
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-		if (inp && (inp->inp_flags & INP_CONTROLOPTS
+		if (inp->inp_flags & INP_CONTROLOPTS
 #ifdef SO_OTIMESTAMP
 			 || so->so_options & SO_OTIMESTAMP
 #endif
-			 || so->so_options & SO_TIMESTAMP)) {
+			 || so->so_options & SO_TIMESTAMP) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
 		}
