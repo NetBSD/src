@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.9.4.4.4.1 2017/03/20 10:56:56 martin Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.9.4.4.4.2 2017/04/20 06:45:16 snj Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -778,31 +778,42 @@ dump_hex_printable(
 	size_t		len
 	)
 {
-	const char *	cdata;
-	const char *	rowstart;
-	size_t		idx;
-	size_t		rowlen;
-	u_char		uch;
+	/* every line shows at most 16 bytes, so we need a buffer of
+	 *   4 * 16 (2 xdigits, 1 char, one sep for xdigits)
+	 * + 2 * 1  (block separators)
+	 * + <LF> + <NUL>
+	 *---------------
+	 *  68 bytes
+	 */
+	static const char s_xdig[16] = "0123456789ABCDEF";
 
-	cdata = data;
-	while (len > 0) {
-		rowstart = cdata;
-		rowlen = min(16, len);
-		for (idx = 0; idx < rowlen; idx++) {
-			uch = *(cdata++);
-			printf("%02x ", uch);
-		}
-		for ( ; idx < 16 ; idx++)
-			printf("   ");
-		cdata = rowstart;
-		for (idx = 0; idx < rowlen; idx++) {
-			uch = *(cdata++);
-			printf("%c", (isprint(uch))
-					 ? uch
-					 : '.');
-		}
-		printf("\n");
+	char lbuf[68];
+	int  ch, rowlen;
+	const u_char * cdata = data;
+	char *xptr, *pptr;
+
+	while (len) {
+		memset(lbuf, ' ', sizeof(lbuf));
+		xptr = lbuf;
+		pptr = lbuf + 3*16 + 2;
+
+		rowlen = (len > 16) ? 16 : (int)len;
 		len -= rowlen;
+		
+		do {
+			ch = *cdata++;
+			
+			*xptr++ = s_xdig[ch >> 4  ];
+			*xptr++ = s_xdig[ch & 0x0F];
+			if (++xptr == lbuf + 3*8)
+				++xptr;
+
+			*pptr++ = isprint(ch) ? (char)ch : '.';
+		} while (--rowlen);
+
+		*pptr++ = '\n';
+		*pptr   = '\0';
+		fputs(lbuf, stdout);
 	}
 }
 
@@ -864,6 +875,9 @@ getresponse(
 	uint32_t tospan;	/* timeout span (max delay) */
 	uint32_t todiff;	/* current delay */
 
+	memset(offsets, 0, sizeof(offsets));
+	memset(counts , 0, sizeof(counts ));
+	
 	/*
 	 * This is pretty tricky.  We may get between 1 and MAXFRAG packets
 	 * back in response to the request.  We peel the data out of
@@ -924,10 +938,12 @@ getresponse(
 		todiff = (((uint32_t)time(NULL)) - tobase) & 0x7FFFFFFFu;
 		if ((n > 0) && (todiff > tospan)) {
 			n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
-			n = 0; /* faked timeout return from 'select()'*/
+			n -= n; /* faked timeout return from 'select()',
+				 * execute RMW cycle on 'n'
+				 */
 		}
 		
-		if (n == 0) {
+		if (n <= 0) {
 			/*
 			 * Timed out.  Return what we have
 			 */
@@ -962,7 +978,7 @@ getresponse(
 		}
 
 		n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
-		if (n == -1) {
+		if (n < 0) {
 			warning("read");
 			return -1;
 		}
