@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.117 2017/04/20 09:29:10 ozaki-r Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.118 2017/04/20 09:47:41 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -703,10 +703,18 @@ Indicates whether all local symbols should be stripped from shared libraries.
 If
 .Dq yes ,
 strip all local symbols from shared libraries;
-the affect is equivalent to -x option of ld(1). If
+the affect is equivalent to the
+.Fl x
+option of
+.Xr  ld 1 .
+If
 .Dq no ,
 strip only temporary local symbols; the affect is equivalent
-to -X option of ld(1). Keeping non-temporary local symbols
+to the
+.Fl X
+option of
+.Xr ld 1 .
+Keeping non-temporary local symbols
 such as static function names is useful on using DTrace for
 userland libraries and getting a backtrace from a rump kernel
 loading shared libraries.
