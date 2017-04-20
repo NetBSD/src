@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.134 2017/04/17 09:54:59 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.135 2017/04/20 09:56:27 msaitoh Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -369,6 +369,7 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
