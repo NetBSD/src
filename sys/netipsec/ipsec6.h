@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.16 2017/04/18 05:25:32 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.17 2017/04/20 08:46:07 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -67,11 +67,6 @@ struct secpolicy *ipsec6_checkpolicy (struct mbuf *, u_int,
 struct secpolicy * ipsec6_check_policy(struct mbuf *, 
 				struct in6pcb *, int, int*,int*);
 int ipsec6_in_reject (struct mbuf *, struct in6pcb *);
-/*
- * KAME ipsec6_in_reject_so(struct mbuf*, struct so)  compatibility shim
- */
-#define ipsec6_in_reject_so(m, _so) \
-  ipsec6_in_reject(m, ((_so) == NULL? NULL : sotoin6pcb(_so)))
 
 struct tcp6cb;
 
