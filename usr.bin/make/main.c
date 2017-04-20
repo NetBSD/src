@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.263 2017/04/19 04:54:17 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.264 2017/04/20 03:57:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.263 2017/04/19 04:54:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.264 2017/04/20 03:57:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.263 2017/04/19 04:54:17 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.264 2017/04/20 03:57:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -355,6 +355,32 @@ debug_setbuf:
 	}
 }
 
+/*
+ * does path contain any relative components
+ */
+static int
+is_relpath(const char *path)
+{
+	const char *cp;
+
+	if (path[0] != '/')
+		return TRUE;
+	cp = path;
+	do {
+		cp = strstr(cp, "/.");
+		if (!cp)
+			break;
+		cp += 2;
+		if (cp[0] == '/' || cp[0] == '\0')
+			return TRUE;
+		else if (cp[0] == '.') {
+			if (cp[1] == '/' || cp[1] == '\0')
+				return TRUE;
+		}
+	} while (cp);
+	return FALSE;
+}
+
 /*-
  * MainParseArgs --
  *	Parse a given argument vector. Called from main() and from
@@ -446,7 +472,7 @@ rearg:
 				(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 				exit(2);
 			}
-			if (argvalue[0] == '/' &&
+			if (!is_relpath(argvalue) &&
 			    stat(argvalue, &sa) != -1 &&
 			    stat(curdir, &sb) != -1 &&
 			    sa.st_ino == sb.st_ino &&
