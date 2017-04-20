@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.232 2017/04/20 08:45:09 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.232 2017/04/20 08:45:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.233 2017/04/20 08:46:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -470,15 +470,14 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 	struct mbuf *n;
 	struct inpcb *inp;
 
-	if (!so)
-		return;
+	KASSERT(so != NULL);
 	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET);
 	inp = sotoinpcb(so);
 	KASSERT(inp != NULL);
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (ipsec_used && so != NULL && ipsec4_in_reject_so(m, so)) {
+	if (ipsec_used && ipsec4_in_reject(m, inp)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
