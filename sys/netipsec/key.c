@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.115 2017/04/20 03:41:47 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.116 2017/04/20 06:27:08 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.115 2017/04/20 03:41:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.116 2017/04/20 06:27:08 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -594,8 +594,7 @@ key_allocsp(const struct secpolicyindex *spidx, u_int dir, const char* where, in
 	int s;
 
 	KASSERT(spidx != NULL);
-	KASSERTMSG(dir == IPSEC_DIR_INBOUND || dir == IPSEC_DIR_OUTBOUND,
-	    "invalid direction %u", dir);
+	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
 	KEYDEBUG_PRINTF(KEYDEBUG_IPSEC_STAMP, "DP from %s:%u\n", where, tag);
 
