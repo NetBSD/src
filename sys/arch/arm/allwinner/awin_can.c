@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.3 2017/04/20 13:00:52 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.4 2017/04/20 17:30:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.3 2017/04/20 13:00:52 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.4 2017/04/20 17:30:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -303,6 +303,7 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 		printf("can_input2\n");
 		can_input(ifp, m); /* loopback */
 		sc->sc_m_transmit = NULL;
+		ifp->if_timer = 0;
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m);
@@ -382,13 +383,17 @@ awin_can_err_intr(struct awin_can_softc *sc, uint32_t irq, uint32_t sts)
 	struct ifnet * const ifp = sc->sc_ifp;
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	int txerr = 0;
+	uint32_t reg;
 
 	if (irq & AWIN_CAN_INT_DATA_OR) {
 		ifp->if_ierrors++;
 		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_CLR_OR);
 	}
 	if (irq & AWIN_CAN_INT_ERR) {
-		/* XXX todo */
+		reg = awin_can_read(sc, AWIN_CAN_REC_REG);
+		printf("%s: ERR interrupt status 0x%x counters 0x%x\n",
+		    device_xname(sc->sc_dev), sts, reg);
+
 	}
 	if (irq & AWIN_CAN_INT_BERR) {
 		if (sts & AWIN_CAN_STA_TX)
@@ -397,7 +402,8 @@ awin_can_err_intr(struct awin_can_softc *sc, uint32_t irq, uint32_t sts)
 			ifp->if_ierrors++;
 	}
 	if (irq & AWIN_CAN_INT_ERR_PASSIVE) {
-		/* XXX todo */
+		printf("%s: PASSV interrupt status 0x%x\n",
+		    device_xname(sc->sc_dev), sts);
 	}
 	if (irq & AWIN_CAN_INT_ARB_LOST) {
 		txerr++;
@@ -459,7 +465,7 @@ awin_can_ifup(struct awin_can_softc * const sc)
 	uint32_t reg;
 
 	/* setup timings and mode - has to be done in reset */
-	reg = 0;
+	reg = AWIN_CAN_MODSEL_RST;
 	if (sc->sc_linkmodes & CAN_LINKMODE_LISTENONLY)
 		reg |= AWIN_CAN_MODSEL_LST_ONLY;
 
