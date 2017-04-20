@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.175 2017/04/20 05:48:38 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.176 2017/04/20 08:45:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.175 2017/04/20 05:48:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.176 2017/04/20 08:45:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3525,7 +3525,145 @@ pci_conf_print_lnr_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("      LNR Registration Limit: %u\n", num);
 }
 
-/* XXX pci_conf_print_dpc_cap */
+static void
+pci_conf_print_dpc_pio(pcireg_t r)
+{
+	onoff("Cfg Request received UR Completion", r,PCI_DPC_RPPIO_CFGUR_CPL);
+	onoff("Cfg Request received CA Completion", r,PCI_DPC_RPPIO_CFGCA_CPL);
+	onoff("Cfg Request Completion Timeout", r, PCI_DPC_RPPIO_CFG_CTO);
+	onoff("I/O Request received UR Completion", r, PCI_DPC_RPPIO_IOUR_CPL);
+	onoff("I/O Request received CA Completion", r, PCI_DPC_RPPIO_IOCA_CPL);
+	onoff("I/O Request Completion Timeout", r, PCI_DPC_RPPIO_IO_CTO);
+	onoff("Mem Request received UR Completion", r,PCI_DPC_RPPIO_MEMUR_CPL);
+	onoff("Mem Request received CA Completion", r,PCI_DPC_RPPIO_MEMCA_CPL);
+	onoff("Mem Request Completion Timeout", r, PCI_DPC_RPPIO_MEM_CTO);
+}
+
+static void
+pci_conf_print_dpc_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t reg, cap, ctl, stat, errsrc;
+	const char *trigstr;
+	bool rpext;
+
+	printf("\n  Downstream Port Containment\n");
+
+	reg = regs[o2i(extcapoff + PCI_DPC_CCR)];
+	cap = reg & 0xffff;
+	ctl = reg >> 16;
+	rpext = (reg & PCI_DPCCAP_RPEXT) ? true : false;
+	printf("    DPC Capability register: 0x%04x\n", cap);
+	printf("      DPC Interrupt Message Number: %02x\n",
+	    (unsigned int)(cap & PCI_DPCCAP_IMSGN));
+	onoff("RP Extensions for DPC", reg, PCI_DPCCAP_RPEXT);
+	onoff("Poisoned TLP Egress Blocking Supported", reg,
+	    PCI_DPCCAP_POISONTLPEB);
+	onoff("DPC Software Triggering Supported", reg, PCI_DPCCAP_SWTRIG);
+	printf("      RP PIO Log Size: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPCCAP_RPPIOLOGSZ));
+	onoff("DL_Active ERR_COR Signaling Supported", reg,
+	    PCI_DPCCAP_DLACTECORS);
+	printf("    DPC Control register: 0x%04x\n", ctl);
+	switch (__SHIFTOUT(reg, PCI_DPCCTL_TIRGEN)) {
+	case 0:
+		trigstr = "disabled";
+		break;
+	case 1:
+		trigstr = "enabled(ERR_FATAL)";
+		break;
+	case 2:
+		trigstr = "enabled(ERR_NONFATAL or ERR_FATAL)";
+		break;
+	default:
+		trigstr = "(reserverd)";
+		break;
+	}
+	printf("      DPC Trigger Enable: %s\n", trigstr);
+	printf("      DPC Completion Control: %s Completion Status\n",
+	    (reg & PCI_DPCCTL_COMPCTL)
+	    ? "Unsupported Request(UR)" : "Completer Abort(CA)");
+	onoff("DPC Interrupt Enable", reg, PCI_DPCCTL_IE);
+	onoff("DPC ERR_COR Enable", reg, PCI_DPCCTL_ERRCOREN);
+	onoff("Poisoned TLP Egress Blocking Enable", reg,
+	    PCI_DPCCTL_POISONTLPEB);
+	onoff("DPC Software Trigger", reg, PCI_DPCCTL_SWTRIG);
+	onoff("DL_Active ERR_COR Enable", reg, PCI_DPCCTL_DLACTECOR);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_STATESID)];
+	stat = reg & 0xffff;
+	errsrc = reg >> 16;
+	printf("    DPC Status register: 0x%04x\n", stat);
+	onoff("DPC Trigger Status", reg, PCI_DPCSTAT_TSTAT);
+	switch (__SHIFTOUT(reg, PCI_DPCSTAT_TREASON)) {
+	case 0:
+		trigstr = "an unmasked uncorrectable error";
+		break;
+	case 1:
+		trigstr = "receiving an ERR_NONFATAL";
+		break;
+	case 2:
+		trigstr = "receiving an ERR_FATAL";
+		break;
+	case 3:
+		trigstr = "DPC Trigger Reason Extension field";
+		break;
+	}
+	printf("      DPC Trigger Reason: Due to %s\n", trigstr);
+	onoff("DPC Interrupt Status", reg, PCI_DPCSTAT_ISTAT);
+	if (rpext)
+		onoff("DPC RP Busy", reg, PCI_DPCSTAT_RPBUSY);
+	switch (__SHIFTOUT(reg, PCI_DPCSTAT_TREASON)) {
+	case 0:
+		trigstr = "Due to RP PIO error";
+		break;
+	case 1:
+		trigstr = "Due to the DPC Software trigger bit";
+		break;
+	default:
+		trigstr = "(reserved)";
+		break;
+	}
+	printf("      DPC Trigger Reason Extension: %s\n", trigstr);
+	if (rpext)
+		printf("      RP PIO First Error Pointer: %02x\n",
+		    (unsigned int)__SHIFTOUT(reg, PCI_DPCSTAT_RPPIOFEP));
+	printf("    DPC Error Source ID register: 0x%04x\n", errsrc);
+
+	if (!rpext)
+		return;
+	/*
+	 * All of the following registers are implemented by a device which has
+	 * RP Extensions for DPC
+	 */
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_STAT)];
+	printf("    RP PIO Status Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_MASK)];
+	printf("    RP PIO Mask Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_SEVE)];
+	printf("    RP PIO Severity Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_SYSERR)];
+	printf("    RP PIO SysError Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_EXCPT)];
+	printf("    RP PIO Exception Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	printf("    RP PIO Header Log Register: start from 0x%03x\n",
+	    extcapoff + PCI_DPC_RPPIO_HLOG);
+	printf("    RP PIO ImpSpec Log Register: start from 0x%03x\n",
+	    extcapoff + PCI_DPC_RPPIO_IMPSLOG);
+	printf("    RP PIO TPL Prefix Log Register: start from 0x%03x\n",
+	    extcapoff + PCI_DPC_RPPIO_TLPPLOG);
+}
+
 
 static int
 pci_conf_l1pm_cap_tposcale(unsigned char scale)
@@ -3714,7 +3852,7 @@ static struct {
 	{ PCI_EXTCAP_LN_REQ,	"LN Requester",
 	  pci_conf_print_lnr_cap },
 	{ PCI_EXTCAP_DPC,	"Downstream Port Containment",
-	  NULL },
+	  pci_conf_print_dpc_cap },
 	{ PCI_EXTCAP_L1PM,	"L1 PM Substates",
 	  pci_conf_print_l1pm_cap },
 	{ PCI_EXTCAP_PTM,	"Precision Time Management",
