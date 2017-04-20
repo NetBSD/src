@@ -1,10 +1,12 @@
-ahci with NCQ gets frequent timeouts, something's amiss
+ahci with NCQ gets frequent timeouts, something's amiss; improve message
+to use dev for the drive, not the controller
 
 under QEMU, the mounted AHCI drive doesn't show directories for ls,
 but cd, mkdir, stat and creating files wroks just fine - what do?
 
-ata_xfer_*() uses wd->drvp->chnl_softc as ata_channel, but it's umass
-softc for wd? at umass*
+test wd* at umass?, confirm the ata_channel kludge works
+
+set PRIO/ICC for NCQ transfers for BPRIO_TIMECRITICAL/BPRIO_TIMELIMITED
 
 protect more of wddone() with mutex?
 

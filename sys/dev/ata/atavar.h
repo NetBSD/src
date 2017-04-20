@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.6 2017/04/19 21:42:39 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.7 2017/04/20 20:14:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -288,7 +288,7 @@ struct ata_drive_datas {
 	void	(*drv_done)(void *, struct ata_xfer *);	/* transfer is done */
 
 	device_t drv_softc;		/* ATA drives softc, if any */
-	void *chnl_softc;		/* channel softc */
+	struct ata_channel *chnl_softc;	/* channel softc */
 
 	/* Context used for I/O */
 	struct disklabel *lp;	/* pointer to drive's label info */
