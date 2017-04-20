@@ -1,4 +1,4 @@
-/*	$NetBSD: libssl_compat.h,v 1.1.1.1.10.2 2017/03/20 10:59:44 martin Exp $	*/
+/*	$NetBSD: libssl_compat.h,v 1.1.1.1.10.3 2017/04/20 06:47:38 snj Exp $	*/
 
 /*
  * libssl_compat.h -- OpenSSL v1.1 compatibility shims
@@ -25,6 +25,18 @@
 #include "openssl/evp.h"
 #include "openssl/dsa.h"
 #include "openssl/rsa.h"
+
+#ifndef OPENSSL_VERSION_NUMBER
+#define OPENSSL_VERSION_NUMBER SSLEAY_VERSION_NUMBER
+#endif
+
+#ifndef OPENSSL_VERSION_TEXT
+#define OPENSSL_VERSION_TEXT SSLEAY_VERSION_TEXT
+#endif
+
+#ifndef OPENSSL_VERSION
+#define OPENSSL_VERSION SSLEAY_VERSION
+#endif
 
 /* ----------------------------------------------------------------- */
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
@@ -94,6 +106,13 @@ extern int	sslshim_X509_get_signature_nid(const X509 *x);
 #define DSA_set0_key		sslshim_DSA_set0_key
 
 #define X509_get_signature_nid	sslshim_X509_get_signature_nid
+
+#define OpenSSL_version_num	SSLeay
+#define OpenSSL_version		SSLeay_version
+#define X509_get0_notBefore	X509_get_notBefore
+#define X509_getm_notBefore	X509_get_notBefore
+#define X509_get0_notAfter	X509_get_notAfter
+#define X509_getm_notAfter	X509_get_notAfter
 
 /* ----------------------------------------------------------------- */
 #endif /* OPENSSL_VERSION_NUMBER < v1.1.0 */

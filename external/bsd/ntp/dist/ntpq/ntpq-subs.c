@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.7.4.4 2016/05/11 11:35:39 martin Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.7.4.5 2017/04/20 06:47:42 snj Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -3616,11 +3616,13 @@ reslist(
 				if (NULL == val) {
 					row.flagstr[0] = '\0';
 					comprende = TRUE;
-				} else {
-					len = strlen(val);
+				} else if ((len = strlen(val)) < sizeof(row.flagstr)) {
 					memcpy(row.flagstr, val, len);
 					row.flagstr[len] = '\0';
 					comprende = TRUE;
+				} else {
+					 /* no flags, and still !comprende */
+					row.flagstr[0] = '\0';
 				}
 			}
 			break;
