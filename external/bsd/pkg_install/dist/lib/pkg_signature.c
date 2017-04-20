@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $	*/
+/*	$NetBSD: pkg_signature.c,v 1.1.1.8 2017/04/20 13:12:47 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $");
+__RCSID("$NetBSD: pkg_signature.c,v 1.1.1.8 2017/04/20 13:12:47 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: pkg_signature.c,v 1.1.1.7 2010/02/20 04:41:58 joerg Exp $");
 #endif
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdlib.h>
 #ifndef NETBSD
 #include <nbcompat/sha2.h>
@@ -159,7 +160,7 @@ verify_signature_close_cb(struct archive *archive, void *cookie)
 {
 	struct signature_archive *state = cookie;
 
-	archive_read_finish(state->archive);
+	archive_read_free(state->archive);
 	free_signature_int(state);
 	return 0;
 }
@@ -325,15 +326,12 @@ pkg_verify_signature(const char *archive_name, struct archive **archive,
 
 	*pkgname = NULL;
 
-	state = xmalloc(sizeof(*state));
-	state->sign_blocks = NULL;
-	state->sign_buf = NULL;
-	state->archive = NULL;
+	state = xcalloc(sizeof(*state), 1);
 
 	r = read_file_from_archive(archive_name, *archive, entry, HASH_FNAME,
 	    &hash_file, &hash_len);
 	if (r == -1) {
-		archive_read_finish(*archive);
+		archive_read_free(*archive);
 		*archive = NULL;
 		free(state);
 		goto no_valid_signature;
@@ -348,7 +346,7 @@ pkg_verify_signature(const char *archive_name, struct archive **archive,
 	r = read_file_from_archive(archive_name, *archive, entry, SIGNATURE_FNAME,
 	    &signature_file, &signature_len);
 	if (r == -1) {
-		archive_read_finish(*archive);
+		archive_read_free(*archive);
 		*archive = NULL;
 		free(state);
 		free(hash_file);
@@ -359,7 +357,7 @@ pkg_verify_signature(const char *archive_name, struct archive **archive,
 			    entry, GPG_SIGNATURE_FNAME,
 			    &signature_file, &signature_len);
 		if (r == -1) {
-			archive_read_finish(*archive);
+			archive_read_free(*archive);
 			*archive = NULL;
 			free(state);
 			free(hash_file);
@@ -369,8 +367,8 @@ pkg_verify_signature(const char *archive_name, struct archive **archive,
 			free(state);
 			goto no_valid_signature;
 		}
-		has_sig = !detached_gpg_verify(hash_file, hash_len,
-		    signature_file, signature_len, gpg_keyring_verify);
+		has_sig = !gpg_verify(hash_file, hash_len, gpg_keyring_verify,
+		    signature_file, signature_len);
 
 		free(signature_file);
 	} else {
@@ -402,13 +400,11 @@ pkg_verify_signature(const char *archive_name, struct archive **archive,
 
 	state->archive = *archive;
 
-	a = archive_read_new();
-	archive_read_support_compression_all(a);
-	archive_read_support_format_all(a);
+	a = prepare_archive();
 	if (archive_read_open(a, state, NULL, verify_signature_read_cb,
 	    verify_signature_close_cb)) {
 		warnx("Can't open signed package file");
-		archive_read_finish(a);
+		archive_read_free(a);
 		goto no_valid_signature;
 	}
 	*archive = a;
@@ -451,13 +447,11 @@ extract_pkgname(int fd)
 	ssize_t len;
 	int r;
 
-	a = archive_read_new();
-	archive_read_support_compression_all(a);
-	archive_read_support_format_all(a);
+	a = prepare_archive();
 	if (archive_read_open_fd(a, fd, 1024)) {
 		warnx("Cannot open binary package: %s",
 		    archive_error_string(a));
-		archive_read_finish(a);
+		archive_read_free(a);
 		return NULL;
 	}
 
@@ -465,17 +459,17 @@ extract_pkgname(int fd)
 	if (r != ARCHIVE_OK) {
 		warnx("Cannot extract package name: %s",
 		    r == ARCHIVE_EOF ? "EOF" : archive_error_string(a));
-		archive_read_finish(a);
+		archive_read_free(a);
 		return NULL;
 	}
 	if (strcmp(archive_entry_pathname(entry), "+CONTENTS") != 0) {
 		warnx("Invalid binary package, doesn't start with +CONTENTS");
-		archive_read_finish(a);
+		archive_read_free(a);
 		return NULL;
 	}
 	if (archive_entry_size(entry) > SSIZE_MAX - 1) {
 		warnx("+CONTENTS too large to process");
-		archive_read_finish(a);
+		archive_read_free(a);
 		return NULL;
 	}
 
@@ -485,12 +479,12 @@ extract_pkgname(int fd)
 	if (archive_read_data(a, buf, len) != len) {
 		warnx("Short read when extracing +CONTENTS");
 		free(buf);
-		archive_read_finish(a);
+		archive_read_free(a);
 		return NULL;
 	}
 	buf[len] = '\0';
 
-	archive_read_finish(a);
+	archive_read_free(a);
 
 	parse_plist(&plist, buf);
 	free(buf);
@@ -582,7 +576,6 @@ pkg_sign_x509(const char *name, const char *output, const char *key_file, const 
 	archive_entry_set_size(sign_entry, signature_len);
 
 	pkg = archive_write_new();
-	archive_write_set_compression_none(pkg);
 	archive_write_set_format_ar_bsd(pkg);
 	archive_write_open_filename(pkg, output);
 
@@ -611,7 +604,7 @@ pkg_sign_x509(const char *name, const char *output, const char *key_file, const 
 	archive_write_finish_entry(pkg);
 	archive_entry_free(entry);
 
-	archive_write_finish(pkg);
+	archive_write_free(pkg);
 
 	close(fd);
 
@@ -676,7 +669,6 @@ pkg_sign_gpg(const char *name, const char *output)
 	archive_entry_set_size(sign_entry, signature_len);
 
 	pkg = archive_write_new();
-	archive_write_set_compression_none(pkg);
 	archive_write_set_format_ar_bsd(pkg);
 	archive_write_open_filename(pkg, output);
 
@@ -705,7 +697,7 @@ pkg_sign_gpg(const char *name, const char *output)
 	archive_write_finish_entry(pkg);
 	archive_entry_free(entry);
 
-	archive_write_finish(pkg);
+	archive_write_free(pkg);
 
 	close(fd);
 
