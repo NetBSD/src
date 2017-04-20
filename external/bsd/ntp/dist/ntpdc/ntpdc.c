@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.7.4.1.2.3 2016/07/14 18:27:01 martin Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.7.4.1.2.4 2017/04/20 06:42:20 snj Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -651,7 +651,7 @@ getresponse(
 	todiff = (((uint32_t)time(NULL)) - tobase) & 0x7FFFFFFFu;
 	if ((n > 0) && (todiff > tospan)) {
 		n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
-		n = 0; /* faked timeout return from 'select()'*/
+		n -= n; /* faked timeout return from 'select()'*/
 	}
 	
 	if (n == 0) {

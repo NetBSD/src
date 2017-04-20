@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.6.4.1.2.1 2015/11/08 01:55:29 riz Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.6.4.1.2.2 2017/04/20 06:42:19 snj Exp $	*/
 
 
 /* ntp_scanner.c
@@ -894,7 +894,6 @@ yylex(void)
 		}
 	}
 
-	instring = FALSE;
 	if (FOLLBY_STRING == followedby)
 		followedby = FOLLBY_TOKEN;
 

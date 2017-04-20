@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.2.6.2.2.3 2017/03/20 10:53:14 martin Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.2.6.2.2.4 2017/04/20 06:42:18 snj Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -26,6 +26,8 @@
 	int			worker_process;
 	addremove_io_fd_func	addremove_io_fd;
 static	volatile int		worker_sighup_received;
+int	saved_argc = 0;
+char	**saved_argv;
 
 /* === function prototypes === */
 static	void		fork_blocking_child(blocking_child *);
@@ -33,53 +35,59 @@ static	RETSIGTYPE	worker_sighup(int);
 static	void		send_worker_home_atexit(void);
 static	void		cleanup_after_child(blocking_child *);
 
-static ssize_t
-netread(int fd, void *vb, size_t l)
-{
-	char *b = vb;
-	ssize_t r;
+/* === I/O helpers === */
+/* Since we have signals enabled, there's a good chance that blocking IO
+ * via pipe suffers from EINTR -- and this goes for both directions.
+ * The next two wrappers will loop until either all the data is written
+ * or read, plus handling the EOF condition on read. They may return
+ * zero if no data was transferred at all, and effectively every return
+ * value that differs from the given transfer length signifies an error
+ * condition.
+ */
 
-	for(;;)
-		switch (r = read(fd, b, l)) {
-		case -1:
-			if (errno == EINTR)
-				continue;
-			/*FALLTHROUGH*/
-		case 0:
-		done:
-			return (ssize_t)(b - (char *)vb);
-		default:
+static size_t
+netread(
+	int		fd,
+	void *		vb,
+	size_t		l
+	)
+{
+	char *		b = vb;
+	ssize_t		r;
+
+	while (l) {
+		r = read(fd, b, l);
+		if (r > 0) {
 			l -= r;
 			b += r;
-			if (l == 0)
-				goto done;
-			break;
+		} else if (r == 0 || errno != EINTR) {
+			l = 0;
 		}
+	}
+	return (size_t)(b - (char *)vb);
 }
 
 
-static ssize_t
-netwrite(int fd, const void *vb, size_t l)
+static size_t
+netwrite(
+	int		fd,
+	const void *	vb,
+	size_t		l
+	)
 {
-	const char *b = vb;
-	ssize_t w;
+	const char *	b = vb;
+	ssize_t		w;
 
-	for(;;)
-		switch (w = write(fd, b, l)) {
-		case -1:
-			if (errno == EINTR)
-				continue;
-			/*FALLTHROUGH*/
-		case 0:
-		done:
-			return (ssize_t)(b - (const char *)vb);
-		default:
+	while (l) {
+		w = write(fd, b, l);
+		if (w > 0) {
 			l -= w;
 			b += w;
-			if (l == 0)
-				goto done;
-			break;
+		} else if (errno != EINTR) {
+			l = 0;
 		}
+	}
+	return (size_t)(b - (const char *)vb);
 }
 
 
@@ -252,8 +260,8 @@ send_blocking_req_internal(
 	void *			data
 	)
 {
-	long octets;
-	int rc;
+	size_t	octets;
+	size_t	rc;
 
 	DEBUG_REQUIRE(hdr != NULL);
 	DEBUG_REQUIRE(data != NULL);
@@ -270,18 +278,13 @@ send_blocking_req_internal(
 	if (rc == octets) {
 		octets = hdr->octets - sizeof(*hdr);
 		rc = netwrite(c->req_write_pipe, data, octets);
-
 		if (rc == octets)
 			return 0;
 	}
 
-	if (rc < 0)
-		msyslog(LOG_ERR,
-			"send_blocking_req_internal: pipe write: %m");
-	else
-		msyslog(LOG_ERR,
-			"send_blocking_req_internal: short write %d of %ld",
-			rc, octets);
+	msyslog(LOG_ERR,
+		"send_blocking_req_internal: short write (%zu of %zu), %m",
+		rc, octets);
 
 	/* Fatal error.  Clean up the child process.  */
 	req_child_exit(c);
@@ -296,41 +299,32 @@ receive_blocking_req_internal(
 {
 	blocking_pipe_header	hdr;
 	blocking_pipe_header *	req;
-	int			rc;
-	long			octets;
+	size_t			rc;
+	size_t			octets;
 
 	DEBUG_REQUIRE(-1 != c->req_read_pipe);
 
 	req = NULL;
+	rc = netread(c->req_read_pipe, &hdr, sizeof(hdr));
 
-	do {
-		rc = netread(c->req_read_pipe, &hdr, sizeof(hdr));
-	} while (rc < 0 && EINTR == errno);
-
-	if (rc < 0) {
-		msyslog(LOG_ERR,
-			"receive_blocking_req_internal: pipe read %m");
-	} else if (0 == rc) {
+	if (0 == rc) {
 		TRACE(4, ("parent closed request pipe, child %d terminating\n",
 			  c->pid));
 	} else if (rc != sizeof(hdr)) {
 		msyslog(LOG_ERR,
-			"receive_blocking_req_internal: short header read %d of %lu",
-			rc, (u_long)sizeof(hdr));
+			"receive_blocking_req_internal: short header read (%zu of %zu), %m",
+			rc, sizeof(hdr));
 	} else {
 		INSIST(sizeof(hdr) < hdr.octets && hdr.octets < 4 * 1024);
 		req = emalloc(hdr.octets);
 		memcpy(req, &hdr, sizeof(*req));
 		octets = hdr.octets - sizeof(hdr);
-		rc = netread(c->req_read_pipe, (char *)req + sizeof(*req),
-			  octets);
+		rc = netread(c->req_read_pipe, (char *)(req + 1),
+			     octets);
 
-		if (rc < 0)
+		if (rc != octets)
 			msyslog(LOG_ERR,
-				"receive_blocking_req_internal: pipe data read %m");
-		else if (rc != octets)
-			msyslog(LOG_ERR,
-				"receive_blocking_req_internal: short read %d of %ld",
+				"receive_blocking_req_internal: short read (%zu of %zu), %m",
 				rc, octets);
 		else if (BLOCKING_REQ_MAGIC != req->magic_sig)
 			msyslog(LOG_ERR,
@@ -353,8 +347,8 @@ send_blocking_resp_internal(
 	blocking_pipe_header *	resp
 	)
 {
-	long	octets;
-	int	rc;
+	size_t	octets;
+	size_t	rc;
 
 	DEBUG_REQUIRE(-1 != c->resp_write_pipe);
 
@@ -365,12 +359,8 @@ send_blocking_resp_internal(
 	if (octets == rc)
 		return 0;
 
-	if (rc < 0)
-		TRACE(1, ("send_blocking_resp_internal: pipe write %m\n"));
-	else
-		TRACE(1, ("send_blocking_resp_internal: short write %d of %ld\n",
-			  rc, octets));
-
+	TRACE(1, ("send_blocking_resp_internal: short write (%zu of %zu), %m\n",
+		  rc, octets));
 	return -1;
 }
 
@@ -382,21 +372,19 @@ receive_blocking_resp_internal(
 {
 	blocking_pipe_header	hdr;
 	blocking_pipe_header *	resp;
-	int			rc;
-	long			octets;
+	size_t			rc;
+	size_t			octets;
 
 	DEBUG_REQUIRE(c->resp_read_pipe != -1);
 
 	resp = NULL;
 	rc = netread(c->resp_read_pipe, &hdr, sizeof(hdr));
 
-	if (rc < 0) {
-		TRACE(1, ("receive_blocking_resp_internal: pipe read %m\n"));
-	} else if (0 == rc) {
+	if (0 == rc) {
 		/* this is the normal child exited indication */
 	} else if (rc != sizeof(hdr)) {
-		TRACE(1, ("receive_blocking_resp_internal: short header read %d of %lu\n",
-			  rc, (u_long)sizeof(hdr)));
+		TRACE(1, ("receive_blocking_resp_internal: short header read (%zu of %zu), %m\n",
+			  rc, sizeof(hdr)));
 	} else if (BLOCKING_RESP_MAGIC != hdr.magic_sig) {
 		TRACE(1, ("receive_blocking_resp_internal: header mismatch (0x%x)\n",
 			  hdr.magic_sig));
@@ -406,24 +394,21 @@ receive_blocking_resp_internal(
 		resp = emalloc(hdr.octets);
 		memcpy(resp, &hdr, sizeof(*resp));
 		octets = hdr.octets - sizeof(hdr);
-		rc = netread(c->resp_read_pipe,
-			  (char *)resp + sizeof(*resp),
-			  octets);
+		rc = netread(c->resp_read_pipe, (char *)(resp + 1),
+			     octets);
 
-		if (rc < 0)
-			TRACE(1, ("receive_blocking_resp_internal: pipe data read %m\n"));
-		else if (rc < octets)
-			TRACE(1, ("receive_blocking_resp_internal: short read %d of %ld\n",
+		if (rc != octets)
+			TRACE(1, ("receive_blocking_resp_internal: short read (%zu of %zu), %m\n",
 				  rc, octets));
 		else
 			return resp;
 	}
 
 	cleanup_after_child(c);
-
+	
 	if (resp != NULL)
 		free(resp);
-
+	
 	return NULL;
 }
 
@@ -553,6 +538,22 @@ fork_blocking_child(
 	 */
 	c->pid = getpid();
 	worker_process = TRUE;
+
+	/*
+	 * Change the process name of the child to avoid confusion
+	 * about ntpd trunning twice.
+	 */
+	if (saved_argc != 0) {
+		int argcc;
+		int argvlen = 0;
+		/* Clear argv */
+		for (argcc = 0; argcc < saved_argc; argcc++) {
+			int l = strlen(saved_argv[argcc]);
+			argvlen += l + 1;
+			memset(saved_argv[argcc], 0, l);
+		}
+		strlcpy(saved_argv[0], "ntpd: asynchronous dns resolver", argvlen);
+	}
 
 	/*
 	 * In the child, close all files except stdin, stdout, stderr,

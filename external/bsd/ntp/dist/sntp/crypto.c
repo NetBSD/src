@@ -1,10 +1,10 @@
-/*	$NetBSD: crypto.c,v 1.5.4.1.2.3 2017/03/20 10:53:17 martin Exp $	*/
+/*	$NetBSD: crypto.c,v 1.5.4.1.2.4 2017/04/20 06:42:23 snj Exp $	*/
 
 #include <config.h>
 #include "crypto.h"
 #include <ctype.h>
 #include "isc/string.h"
-#include "libssl_compat.h"
+#include "ntp_md5.h"
 
 struct key *key_ptr;
 size_t key_cnt = 0;
