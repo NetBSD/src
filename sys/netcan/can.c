@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.10 2017/04/19 22:19:12 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.11 2017/04/20 12:59:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.10 2017/04/19 22:19:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.11 2017/04/20 12:59:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ can_set_netlink(struct ifnet *ifp, struct ifdrv *ifd)
 	case CANCLINKMODE:
 		if (ifd->ifd_len != sizeof(uint32_t))
 			return EINVAL;
-		error = copyout(ifd->ifd_data, &mode, ifd->ifd_len);
+		error = copyin(ifd->ifd_data, &mode, ifd->ifd_len);
 		if (error)
 			return error;
 		if ((mode & csc->csc_timecaps.cltc_linkmode_caps) != mode)
@@ -215,6 +215,7 @@ can_output(struct mbuf *m, struct canpcb *canp)
 {
 	struct ifnet *ifp;
 	struct m_tag *sotag;
+	struct canif_softc *csc;
 
 	if (canp == NULL) {
 		printf("can_output: no pcb\n");
@@ -224,6 +225,11 @@ can_output(struct mbuf *m, struct canpcb *canp)
 	if (ifp == 0) {
 		return EDESTADDRREQ;
 	}
+	csc = ifp->if_softc;
+	if (csc && (csc->csc_linkmodes & CAN_LINKMODE_LISTENONLY)) {
+		return ENETUNREACH;
+	}
+		
 	sotag = m_tag_get(PACKET_TAG_SO, sizeof(struct socket *), PR_NOWAIT);
 	if (sotag == NULL) {
 		ifp->if_oerrors++;
@@ -602,8 +608,6 @@ can_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		}
 	}
 	error = can_output(m, canp);
-	if (error)
-		goto err;
 	if (nam) {
 		struct sockaddr_can lscan;
 		memset(&lscan, 0, sizeof(lscan));
@@ -611,6 +615,8 @@ can_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		lscan.can_len = sizeof(lscan);
 		can_pcbbind(canp, &lscan, l);
 	}
+	if (error)
+		goto err;
 	return 0;
 
 err:
