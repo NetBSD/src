@@ -1,4 +1,4 @@
-.\" $NetBSD: ln.1,v 1.27 2017/04/20 21:50:50 christos Exp $
+.\" $NetBSD: ln.1,v 1.28 2017/04/20 22:57:30 christos Exp $
 .\"-
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -37,8 +37,9 @@
 .Dt LN 1
 .Os
 .Sh NAME
-.Nm ln ,
-.Nm link
+.\" .Nm ln ,
+.\" .Nm link
+.Nm ln
 .Nd link files
 .Sh SYNOPSIS
 .Nm
@@ -53,8 +54,8 @@
 .Op Fl hnv
 .Ar source_file ...
 .Ar target_dir
-.Nm link
-.Ar source_file Ar target_file
+.\" .Nm link
+.\" .Ar source_file Ar target_file
 .Sh DESCRIPTION
 The
 .Nm
@@ -204,15 +205,15 @@ makes links in
 .Ar target_dir
 to all the named source files.
 The links made will have the same name as the files being linked to.
-.Pp
-When the utility is called as
-.Nm link ,
-exactly two arguments must be supplied,
-neither of which may specify a directory.
-No options may be supplied in this simple mode of operation,
-which performs a
-.Xr link 2
-operation using the two passed arguments.
+.\" .Pp
+.\" When the utility is called as
+.\" .Nm link ,
+.\" exactly two arguments must be supplied,
+.\" neither of which may specify a directory.
+.\" No options may be supplied in this simple mode of operation,
+.\" which performs a
+.\" .Xr link 2
+.\" operation using the two passed arguments.
 .Sh EXAMPLES
 Create a symbolic link named
 .Pa /home/src
@@ -307,11 +308,11 @@ The
 .Nm
 utility conforms to
 .St -p1003.2-92 .
-.Pp
-The simplified
-.Nm link
-command conforms to
-.St -susv2 .
+.\" .Pp
+.\" The simplified
+.\" .Nm link
+.\" command conforms to
+.\" .St -susv2 .
 .Sh HISTORY
 An
 .Nm
