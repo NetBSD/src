@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.356 2017/03/31 06:49:44 ozaki-r Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.357 2017/04/20 08:46:07 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.356 2017/03/31 06:49:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.357 2017/04/20 08:46:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1484,7 +1484,7 @@ findpcb:
 #ifdef INET6
 			else if (in6p &&
 			    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
-			    && ipsec6_in_reject_so(m, in6p->in6p_socket)) {
+			    && ipsec6_in_reject(m, in6p)) {
 				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 				goto drop;
 			}
@@ -1835,7 +1835,8 @@ findpcb:
 					switch (af) {
 #ifdef INET
 					case AF_INET:
-						if (!ipsec4_in_reject_so(m, so))
+						KASSERT(sotoinpcb(so) == inp);
+						if (!ipsec4_in_reject(m, inp))
 							break;
 						IPSEC_STATINC(
 						    IPSEC_STAT_IN_POLVIO);
@@ -1844,7 +1845,8 @@ findpcb:
 #endif
 #ifdef INET6
 					case AF_INET6:
-						if (!ipsec6_in_reject_so(m, so))
+						KASSERT(sotoin6pcb(so) == in6p);
+						if (!ipsec6_in_reject(m, in6p))
 							break;
 						IPSEC6_STATINC(
 						    IPSEC_STAT_IN_POLVIO);
