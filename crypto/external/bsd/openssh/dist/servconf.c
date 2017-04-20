@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.23 2017/04/18 18:41:46 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.24 2017/04/20 13:22:59 joerg Exp $	*/
 
 /* $OpenBSD: servconf.c,v 1.306 2017/03/14 07:19:07 djm Exp $ */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.23 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.24 2017/04/20 13:22:59 joerg Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -1064,13 +1064,6 @@ static const struct multistate multistate_gatewayports[] = {
 	{ "clientspecified",		2 },
 	{ "yes",			1 },
 	{ "no",				0 },
-	{ NULL, -1 }
-};
-static const struct multistate multistate_privsep[] = {
-	{ "yes",			PRIVSEP_NOSANDBOX },
-	{ "sandbox",			PRIVSEP_ON },
-	{ "nosandbox",			PRIVSEP_NOSANDBOX },
-	{ "no",				PRIVSEP_OFF },
 	{ NULL, -1 }
 };
 static const struct multistate multistate_tcpfwd[] = {
