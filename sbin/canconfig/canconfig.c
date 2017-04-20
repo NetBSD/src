@@ -1,4 +1,4 @@
-/*	$NetBSD: canconfig.c,v 1.1.2.2 2017/04/19 17:51:16 bouyer Exp $	*/
+/*	$NetBSD: canconfig.c,v 1.1.2.3 2017/04/20 12:59:54 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: canconfig.c,v 1.1.2.2 2017/04/19 17:51:16 bouyer Exp $");
+__RCSID("$NetBSD: canconfig.c,v 1.1.2.3 2017/04/20 12:59:54 bouyer Exp $");
 #endif
 
 
@@ -77,6 +77,8 @@ static void	cmd_phase_seg1(const struct command *, int, const char *, char **);
 static void	cmd_phase_seg2(const struct command *, int, const char *, char **);
 static void	cmd_sjw(const struct command *, int, const char *, char **);
 static void	cmd_3samples(const struct command *, int, const char *, char **);
+static void	cmd_listenonly(const struct command *, int, const char *, char **);
+static void	cmd_loopback(const struct command *, int, const char *, char **);
 
 static const struct command command_table[] = {
 	{ "up",			0,	0,		cmd_up },
@@ -90,6 +92,12 @@ static const struct command command_table[] = {
 
 	{ "3samples",		0,	0,		cmd_3samples },
 	{ "-3samples",		0,	CMD_INVERT,	cmd_3samples },
+
+	{ "listenonly",		0,	0,		cmd_listenonly },
+	{ "-listenonly",	0,	CMD_INVERT,	cmd_listenonly },
+
+	{ "loopback",		0,	0,		cmd_loopback },
+	{ "-loopback",		0,	CMD_INVERT,	cmd_loopback },
 
 	{ NULL,			0,	0,		NULL },
 };
@@ -225,6 +233,8 @@ usage(void)
 		"<canif> phase_seg2 <value>",
 		"<canif> sjw <value>",
 		"<canif> 3samples | -3samples",
+		"<canif> listenonly | -listenonly",
+		"<canif> loopback | -loopback",
 		NULL,
 	};
 	extern const char *__progname;
@@ -353,7 +363,7 @@ show_timings(int sock, const char *canifname, const char *prefix)
 	printb("capabilities", cltc.cltc_linkmode_caps, CAN_IFFBITS);
 	printf("\n");
 	printf("%soperational timings:\n", prefix);
-	printf("%s  brp %d prop_seg %d, phase_seg1 %d, phase_seg2 %d, sjw %d\n",
+	printf("%s  brp %d, prop_seg %d, phase_seg1 %d, phase_seg2 %d, sjw %d\n",
 	    prefix,
 	    clt.clt_brp, clt.clt_prop, clt.clt_ps1, clt.clt_ps2, clt.clt_sjw);
 	printf("%s  ", prefix);
@@ -418,7 +428,7 @@ do_canflag(int sock, const char *canifname, uint32_t flag, int set)
 		cmd = CANSLINKMODE;
 	else
 		cmd = CANCLINKMODE;
-	return do_cmd(sock, canifname, cmd, &flag, sizeof(flag), set);
+	return do_cmd(sock, canifname, cmd, &flag, sizeof(flag), 1);
 }
 
 static void
@@ -506,12 +516,31 @@ cmd_sjw(const struct command *cmd, int sock, const char *bridge,
 	g_clt.clt_sjw = val;
 	g_clt_updated=1;
 }
-
 static void
 cmd_3samples(const struct command *cmd, int sock, const char *canifname,
     char **argv)
 {
         if (do_canflag(sock, canifname, CAN_LINKMODE_3SAMPLES,
+	    (cmd->cmd_flags & CMD_INVERT) ? 0 : 1) < 0)
+		err(1, "%s", cmd->cmd_keyword);
+
+}
+
+static void
+cmd_listenonly(const struct command *cmd, int sock, const char *canifname,
+    char **argv)
+{
+        if (do_canflag(sock, canifname, CAN_LINKMODE_LISTENONLY,
+	    (cmd->cmd_flags & CMD_INVERT) ? 0 : 1) < 0)
+		err(1, "%s", cmd->cmd_keyword);
+
+}
+
+static void
+cmd_loopback(const struct command *cmd, int sock, const char *canifname,
+    char **argv)
+{
+        if (do_canflag(sock, canifname, CAN_LINKMODE_LOOPBACK,
 	    (cmd->cmd_flags & CMD_INVERT) ? 0 : 1) < 0)
 		err(1, "%s", cmd->cmd_keyword);
 

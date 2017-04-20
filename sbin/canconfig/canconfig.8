@@ -1,4 +1,4 @@
-.\"	$NetBSD: canconfig.8,v 1.1.2.1 2017/04/17 20:48:36 bouyer Exp $
+.\"	$NetBSD: canconfig.8,v 1.1.2.2 2017/04/20 12:59:54 bouyer Exp $
 .\"
 .\" Copyright (c) 2017 Manuel Bouyer.
  *
@@ -100,6 +100,16 @@ set the number of tq for the Synchronisation Jump Width.
 enables triple-sampling.
 .It Cm -3samples
 disables triple-sampling.
+.It Cm listenonly
+enables listenonly mode. In this mode the controller is passive, and
+doesn't send ACKs on the bus.
+.It Cm -listenonly
+disables listenonly mode.
+.It Cm loopback
+enables loopback mode. In this mode, the controller doens't expect ACK from
+the bus.
+.It Cm -loopback
+disables loopback mode.
 .El
 .Sh EXAMPLES
 TODO
