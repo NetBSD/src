@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.2 2017/04/19 17:54:18 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.3 2017/04/20 13:00:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.2 2017/04/19 17:54:18 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.3 2017/04/20 13:00:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,15 @@ __KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.2 2017/04/19 17:54:18 bouyer Exp 
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
+
+/* shortcut for all error interrupts */
+#define AWIN_CAN_INT_ALLERRS (\
+	AWIN_CAN_INT_BERR | \
+	AWIN_CAN_INT_ARB_LOST | \
+	AWIN_CAN_INT_ERR_PASSIVE | \
+	AWIN_CAN_INT_DATA_OR | \
+	AWIN_CAN_INT_ERR \
+    )
 
 struct awin_can_softc {
 	struct canif_softc sc_cansc;
@@ -164,6 +173,8 @@ awin_can_attach(device_t parent, device_t self, void *aux)
 	    CAN_LINKMODE_3SAMPLES | CAN_LINKMODE_LISTENONLY |
 	    CAN_LINKMODE_LOOPBACK;
 	can_ifinit_timings(&sc->sc_cansc);
+	sc->sc_timings.clt_prop = 0;
+	sc->sc_timings.clt_sjw = 1;
 
 	aprint_naive("\n");
 	aprint_normal(": CAN bus controller\n");
@@ -222,6 +233,7 @@ awin_can_rx_intr(struct awin_can_softc *sc)
 	int dlc;
 	int regd, i;
 
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	reg0v = awin_can_read(sc, AWIN_CAN_TXBUF0_REG);
 	dlc = reg0v & AWIN_CAN_TXBUF0_DL;
 
@@ -268,6 +280,7 @@ awin_can_rx_intr(struct awin_can_softc *sc)
 	ifp->if_ibytes += m->m_len;
 	m_set_rcvif(m, ifp);
 	bpf_mtap(ifp, m);
+	printf("can_input1\n");
 	can_input(ifp, m);
 }
 
@@ -281,11 +294,13 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 	uint32_t reg0val;
 	int i;
 
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	if ((m = sc->sc_m_transmit) != NULL) {
 		ifp->if_obytes += m->m_len;
 		ifp->if_opackets++;
 		can_mbuf_tag_clean(m);
 		m_set_rcvif(m, ifp);
+		printf("can_input2\n");
 		can_input(ifp, m); /* loopback */
 		sc->sc_m_transmit = NULL;
 	}
@@ -331,9 +346,66 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 	}
 	awin_can_write(sc, AWIN_CAN_TXBUF0_REG, reg0val);
 
-	awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_TANS_REQ);
+	if (sc->sc_linkmodes & CAN_LINKMODE_LOOPBACK) {
+		awin_can_write(sc, AWIN_CAN_CMD_REG,
+			AWIN_CAN_CMD_TANS_REQ | AWIN_CAN_CMD_SELF_REQ);
+	} else {
+		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_TANS_REQ);
+	}
 	ifp->if_flags |= IFF_OACTIVE;
+	ifp->if_timer = 5;
 	bpf_mtap(ifp, m);
+}
+
+static int
+awin_can_tx_abort(struct awin_can_softc *sc)
+{
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	if (sc->sc_m_transmit) {
+		m_freem(sc->sc_m_transmit);
+		sc->sc_m_transmit = NULL;
+		sc->sc_ifp->if_timer = 0;
+		/*
+		 * the transmit abort will trigger a TX interrupt
+		 * which will restart the queue or cleae OACTIVE,
+		 * as appropriate
+		 */
+		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_ABT_REQ);
+		return 1;
+	}
+	return 0;
+}
+
+static void
+awin_can_err_intr(struct awin_can_softc *sc, uint32_t irq, uint32_t sts)
+{
+	struct ifnet * const ifp = sc->sc_ifp;
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	int txerr = 0;
+
+	if (irq & AWIN_CAN_INT_DATA_OR) {
+		ifp->if_ierrors++;
+		awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_CLR_OR);
+	}
+	if (irq & AWIN_CAN_INT_ERR) {
+		/* XXX todo */
+	}
+	if (irq & AWIN_CAN_INT_BERR) {
+		if (sts & AWIN_CAN_STA_TX)
+			txerr++;
+		if (sts & AWIN_CAN_STA_RX)
+			ifp->if_ierrors++;
+	}
+	if (irq & AWIN_CAN_INT_ERR_PASSIVE) {
+		/* XXX todo */
+	}
+	if (irq & AWIN_CAN_INT_ARB_LOST) {
+		txerr++;
+	}
+	if (txerr) {
+		ifp->if_oerrors += txerr;
+		(void) awin_can_tx_abort(sc);
+	}
 }
 
 int
@@ -357,6 +429,9 @@ awin_can_intr(void *arg)
 				awin_can_rx_intr(sc);
 				sts = awin_can_read(sc, AWIN_CAN_STA_REG);
 			}
+		}
+		if (irq & AWIN_CAN_INT_ALLERRS) {
+			awin_can_err_intr(sc, irq, sts);
 		}
 		awin_can_write(sc, AWIN_CAN_INT_REG, irq);
                 rnd_add_uint32(&sc->sc_rnd_source, irq);
@@ -424,7 +499,7 @@ awin_can_ifup(struct awin_can_softc * const sc)
 
 	awin_can_exit_reset(sc);
 	awin_can_write(sc, AWIN_CAN_INTE_REG,
-	    AWIN_CAN_INT_TX_FLAG | AWIN_CAN_INT_RX_FLAG);
+	    AWIN_CAN_INT_TX_FLAG | AWIN_CAN_INT_RX_FLAG | AWIN_CAN_INT_ALLERRS);
 	sc->sc_ifp->if_flags |= IFF_RUNNING;
 	return 0;
 }
@@ -433,6 +508,7 @@ static void
 awin_can_ifdown(struct awin_can_softc * const sc)
 {
 	sc->sc_ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sc_ifp->if_timer = 0;
 	awin_can_enter_reset(sc);
 	awin_can_write(sc, AWIN_CAN_INTE_REG, 0);
 	awin_can_write(sc, AWIN_CAN_INT_REG,
@@ -484,6 +560,22 @@ awin_can_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 void
 awin_can_ifwatchdog(struct ifnet *ifp)
 {
+	struct awin_can_softc * const sc = ifp->if_softc;
+	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
+
+	mutex_enter(&sc->sc_intr_lock);
+	printf("irq 0x%x en 0x%x mode 0x%x status 0x%x timings 0x%x err 0x%x\n",
+	    awin_can_read(sc, AWIN_CAN_INT_REG),
+	    awin_can_read(sc, AWIN_CAN_INTE_REG),
+	    awin_can_read(sc, AWIN_CAN_MODSEL_REG),
+	    awin_can_read(sc, AWIN_CAN_STA_REG),
+	    awin_can_read(sc, AWIN_CAN_BUS_TIME_REG),
+	    awin_can_read(sc, AWIN_CAN_REC_REG));
+	/* if there is a transmit in progress abort */
+	if (awin_can_tx_abort(sc)) {
+		ifp->if_oerrors++;
+	}
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
