@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2017/04/08 19:53:21 christos Exp $
+#	$NetBSD: Makefile,v 1.57 2017/04/20 18:39:28 uwe Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -49,12 +49,11 @@ RELOC=		E00000
 ENTRY=		_start
 
 CLEANFILES+=	${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
+CLEANFILES+=	${XCOFFXTRAOBJ}
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
-
-CLEANFILES+= ${XCOFFXTRAOBJ}
 
 ### find out what to use for libkern
 KERN_AS=	library
