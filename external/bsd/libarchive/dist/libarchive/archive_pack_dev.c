@@ -1,4 +1,4 @@
-/*	$NetBSD: archive_pack_dev.c,v 1.1.1.1 2017/04/20 12:55:35 joerg Exp $	*/
+/*	$NetBSD: archive_pack_dev.c,v 1.2 2017/04/20 13:01:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 #endif
 #if !defined(lint)
-__RCSID("$NetBSD: archive_pack_dev.c,v 1.1.1.1 2017/04/20 12:55:35 joerg Exp $");
+__RCSID("$NetBSD: archive_pack_dev.c,v 1.2 2017/04/20 13:01:40 joerg Exp $");
 #endif /* not lint */
 
 #ifdef HAVE_LIMITS_H
