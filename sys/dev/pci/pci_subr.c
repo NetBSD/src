@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.176 2017/04/20 08:45:25 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.177 2017/04/21 09:01:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.176 2017/04/20 08:45:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.177 2017/04/21 09:01:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2281,6 +2281,9 @@ pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
 	onoff("Transaction Pending", reg, PCI_AFSR_TP);
 }
 
+/* XXX pci_conf_print_ea_cap */
+/* XXX pci_conf_print_fpb_cap */
+
 static struct {
 	pcireg_t cap;
 	const char *name;
@@ -2309,6 +2312,7 @@ static struct {
 	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
 	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap},
 	{ PCI_CAP_EA,		"Enhanced Allocation", NULL }
+	{ PCI_CAP_FPB,		"Flattening Portal Bridge", NULL }
 };
 
 static int
@@ -3783,6 +3787,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
 /* XXX pci_conf_print_vf_resizbar_cap */
+/* XXX pci_conf_print_hierarchyid_cap */
 
 #undef	MS
 #undef	SM
@@ -3866,6 +3871,8 @@ static struct {
 	{ PCI_EXTCAP_DESIGVNDSP, "Designated Vendor-Specific",
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
+	  NULL },
+	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 };
 

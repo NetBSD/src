@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.127 2017/04/20 08:45:25 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.128 2017/04/21 09:01:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -543,6 +543,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_SATA		0x12
 #define	PCI_CAP_PCIAF		0x13
 #define	PCI_CAP_EA		0x14	/* Enhanced Allocation (EA) */
+#define	PCI_CAP_FPB		0x15	/* Flattening Portal Bridge (FPB) */
 
 /*
  * Capability ID: 0x01
@@ -1441,6 +1442,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_RTR		0x0022	/* Readiness Time Reporting */
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
 #define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
+#define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
 
 /*
  * Extended capability ID: 0x0001
