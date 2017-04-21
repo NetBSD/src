@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.6 2017/04/13 22:12:53 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.7 2017/04/21 21:08:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.6 2017/04/13 22:12:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.7 2017/04/21 21:08:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,7 +161,7 @@ fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 {
 	bus_addr_t addr;
 	bus_size_t size;
-	uint8_t *buf;
+	const uint8_t *buf;
 	int len;
 
 	const int addr_cells = fdtbus_get_addr_cells(phandle);
@@ -169,24 +169,17 @@ fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 	if (addr_cells == -1 || size_cells == -1)
 		return -1;
 
+	buf = fdt_getprop(fdtbus_get_data(),
+	    fdtbus_phandle2offset(phandle), "reg", &len);
+	if (buf == NULL || len <= 0)
+		return -1;
+
 	const u_int reglen = size_cells * 4 + addr_cells * 4;
 	if (reglen == 0)
 		return -1;
 
-	len = OF_getproplen(phandle, "reg");
-	if (len <= 0)
+	if (index >= len / reglen)
 		return -1;
-
-	const u_int nregs = len / reglen;
-
-	if (index >= nregs)
-		return -1;
-
-	buf = kmem_alloc(len, KM_SLEEP);
-	if (buf == NULL)
-		return -1;
-
-	len = OF_getprop(phandle, "reg", buf, len);
 
 	switch (addr_cells) {
 	case 0:
@@ -220,8 +213,6 @@ fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 		*paddr = addr;
 	if (psize)
 		*psize = size;
-
-	kmem_free(buf, len);
 
 	return 0;
 }
