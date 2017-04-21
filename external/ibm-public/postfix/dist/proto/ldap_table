@@ -148,30 +148,30 @@
 #	With Postfix 2.2 and later this parameter supports the
 #	following '%' expansions:
 # .RS
-# .IP "\fB\fB%%\fR\fR"
+# .IP "\fB%%\fR"
 #	This is replaced by a literal '%' character.
-# .IP "\fB\fB%s\fR\fR"
+# .IP "\fB%s\fR"
 #	This is replaced by the input key.
 #	RFC 2253 quoting is used to make sure that the input key
 #	does not add unexpected metacharacters.
-# .IP "\fB\fB%u\fR\fR"
+# .IP "\fB%u\fR"
 #	When the input key is an address of the form user@domain, \fB%u\fR
 #	is replaced by the (RFC 2253) quoted local part of the address.
 #	Otherwise, \fB%u\fR is replaced by the entire search string.
 #	If the localpart is empty, the search is suppressed and returns
 #	no results.
-# .IP "\fB\fB%d\fR\fR"
+# .IP "\fB%d\fR"
 #	When the input key is an address of the form user@domain, \fB%d\fR
 #	is replaced by the (RFC 2253) quoted domain part of the address.
 #	Otherwise, the search is suppressed and returns no results.
-# .IP "\fB\fB%[SUD]\fR\fR"
+# .IP "\fB%[SUD]\fR"
 #	For the \fBsearch_base\fR parameter, the upper-case equivalents
 #	of the above expansions behave identically to their lower-case
 #	counter-parts. With the \fBresult_format\fR parameter (previously
 #	called \fBresult_filter\fR see the COMPATIBILITY section and below),
 #	they expand to the corresponding components of input key rather
 #	than the result value.
-# .IP "\fB\fB%[1-9]\fR\fR"
+# .IP "\fB%[1-9]\fR"
 #	The patterns %1, %2, ... %9 are replaced by the corresponding
 #	most significant component of the input key's domain. If the
 #	input key is \fIuser@mail.example.com\fR, then %1 is \fBcom\fR,
@@ -191,23 +191,23 @@
 #
 #	This parameter supports the following '%' expansions:
 # .RS
-# .IP "\fB\fB%%\fR\fR"
+# .IP "\fB%%\fR"
 #	This is replaced by a literal '%' character. (Postfix 2.2 and later).
-# .IP "\fB\fB%s\fR\fR"
+# .IP "\fB%s\fR"
 #	This is replaced by the input key.
 #	RFC 2254 quoting is used to make sure that the input key
 #	does not add unexpected metacharacters.
-# .IP "\fB\fB%u\fR\fR"
+# .IP "\fB%u\fR"
 #	When the input key is an address of the form user@domain, \fB%u\fR
 #	is replaced by the (RFC 2254) quoted local part of the address.
 #	Otherwise, \fB%u\fR is replaced by the entire search string.
 #	If the localpart is empty, the search is suppressed and returns
 #	no results.
-# .IP "\fB\fB%d\fR\fR"
+# .IP "\fB%d\fR"
 #	When the input key is an address of the form user@domain, \fB%d\fR
 #	is replaced by the (RFC 2254) quoted domain part of the address.
 #	Otherwise, the search is suppressed and returns no results.
-# .IP "\fB\fB%[SUD]\fR\fR"
+# .IP "\fB%[SUD]\fR"
 #	The upper-case equivalents of the above expansions behave in the
 #	\fBquery_filter\fR parameter identically to their lower-case
 #	counter-parts. With the \fBresult_format\fR parameter (previously
@@ -217,7 +217,7 @@
 # .IP
 #	The above %S, %U and %D expansions are available with Postfix 2.2
 #	and later.
-# .IP "\fB\fB%[1-9]\fR\fR"
+# .IP "\fB%[1-9]\fR"
 #	The patterns %1, %2, ... %9 are replaced by the corresponding
 #	most significant component of the input key's domain. If the
 #	input key is \fIuser@mail.example.com\fR, then %1 is \fBcom\fR,
@@ -243,21 +243,21 @@
 #	to append (or prepend) text to the result. This parameter supports
 #	the following '%' expansions:
 # .RS
-# .IP "\fB\fB%%\fR\fR"
+# .IP "\fB%%\fR"
 #	This is replaced by a literal '%' character. (Postfix 2.2 and later).
-# .IP "\fB\fB%s\fR\fR"
+# .IP "\fB%s\fR"
 #	This is replaced by the value of the result attribute. When
 #	result is empty it is skipped.
 # .IP "\fB%u\fR
 #	When the result attribute value is an address of the form
 #	user@domain, \fB%u\fR is replaced by the local part of the
 #	address. When the result has an empty localpart it is skipped.
-# .IP "\fB\fB%d\fR\fR"
+# .IP "\fB%d\fR"
 #	When a result attribute value is an address of the form
 #	user@domain, \fB%d\fR is replaced by the domain part of
 #	the attribute value. When the result is unqualified it
 #	is skipped.
-# .IP "\fB\fB%[SUD1-9]\fR\fB"
+# .IP "\fB%[SUD1-9]\fR"
 #	The upper-case and decimal digit expansions interpolate
 #	the parts of the input key rather than the result. Their
 #	behavior is identical to that described with \fBquery_filter\fR,
@@ -594,7 +594,7 @@
 #	server.  Don't set this with LDAP SSL (the SSL session is setup
 #	automatically when the TCP connection is opened).
 # .IP "\fBtls_ca_cert_dir (No default; set either this or tls_ca_cert_file)\fR"
-#	Directory containing X509 Certificate Authority certificates
+#	Directory containing X509 Certification Authority certificates
 #	in PEM format which are to be recognized by the client in
 #	SSL/TLS connections. The files each contain one CA certificate.
 #	The files are looked up by the CA subject name hash value,
@@ -606,7 +606,7 @@
 #	utility (from the OpenSSL distribution) to create the
 #	necessary links.
 # .IP "\fBtls_ca_cert_file (No default; set either this or tls_ca_cert_dir)\fR"
-#	File containing the X509 Certificate Authority certificates
+#	File containing the X509 Certification Authority certificates
 #	in PEM format which are to be recognized by the client in
 #	SSL/TLS connections. This setting takes precedence over
 #	tls_ca_cert_dir.

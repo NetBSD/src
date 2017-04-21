@@ -1,4 +1,4 @@
-/*	$NetBSD: test-changelist.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: test-changelist.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $	*/
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
  *
@@ -27,9 +27,9 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test-changelist.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: test-changelist.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $");
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>
 #else
@@ -37,11 +37,11 @@ __RCSID("$NetBSD: test-changelist.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef _EVENT_HAVE_SYS_TIME_H
+#ifdef EVENT__HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 
-#ifdef _EVENT_HAVE_SYS_SOCKET_H
+#ifdef EVENT__HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 #include <fcntl.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: test-changelist.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $
 #include <time.h>
 
 struct cpu_usage_timer {
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE thread;
 	FILETIME usertimeBegin;
 	FILETIME kerneltimeBegin;
@@ -67,7 +67,7 @@ struct cpu_usage_timer {
 static void
 start_cpu_usage_timer(struct cpu_usage_timer *timer)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	int r;
 	FILETIME createtime, exittime;
 	timer->thread = GetCurrentThread();
@@ -80,7 +80,7 @@ start_cpu_usage_timer(struct cpu_usage_timer *timer)
 
 	evutil_gettimeofday(&timer->timeBegin, NULL);
 }
-#ifdef WIN32
+#ifdef _WIN32
 static ev_int64_t
 filetime_to_100nsec(const FILETIME *ft)
 {
@@ -107,7 +107,7 @@ static void
 get_cpu_usage(struct cpu_usage_timer *timer, double *secElapsedOut,
     double *secUsedOut, double *usageOut)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	double usertime_seconds, kerneltime_seconds;
 	FILETIME createtime, exittime, usertimeEnd, kerneltimeEnd;
 	int r;
@@ -117,7 +117,7 @@ get_cpu_usage(struct cpu_usage_timer *timer, double *secElapsedOut,
 	struct timeval timeEnd, timeDiff;
 	double secondsPassed, secondsUsed;
 
-#ifdef WIN32
+#ifdef _WIN32
 	r = GetThreadTimes(timer->thread, &createtime, &exittime,
 	    &usertimeEnd, &kerneltimeEnd);
 	if (r==0) printf("GetThreadTimes failed.");
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 
 	double usage, secPassed, secUsed;
 
-#ifdef WIN32
+#ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;
 
@@ -186,15 +186,16 @@ main(int argc, char **argv)
 		return (1);
 
 	/* Initalize the event library */
-	base = event_base_new();
+	if (!(base = event_base_new()))
+		return (1);
 
 	/* Initalize a timeout to terminate the test */
 	timeout = evtimer_new(base,timeout_cb,&timeout);
 	/* and watch for writability on one end of the pipe */
 	ev = event_new(base,pair[1],EV_WRITE | EV_PERSIST, write_cb, &ev);
 
-	tv.tv_sec  = 5;
-	tv.tv_usec = 0;
+	tv.tv_sec  = 1;
+	tv.tv_usec = 500*1000;
 
 	evtimer_add(timeout, &tv);
 

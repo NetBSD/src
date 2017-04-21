@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.63 2015/10/25 02:47:17 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.63.4.1 2017/04/21 16:54:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.63 2015/10/25 02:47:17 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.63.4.1 2017/04/21 16:54:17 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,13 +107,17 @@ static int	wincols = 80;
 #define	SHOW_STATS_1	(1<<2)
 #define	SHOW_STATS_2	(1<<3)
 #define	SHOW_STATS_X	(1<<4)
+#define	SHOW_STATS_Y	(1<<5)
 #define	SHOW_TOTALS	(1<<7)
-#define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X)
+#define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X | SHOW_STATS_Y)
 
 static void cpustats(void);
 static void drive_stats(double);
 static void drive_stats2(double);
 static void drive_statsx(double);
+static void drive_statsy(double);
+static void drive_statsy_io(double, double, double);
+static void drive_statsy_q(double, double, double, double, double, double);
 static void sig_header(int);
 static volatile int do_header;
 static void header(void);
@@ -128,7 +132,7 @@ main(int argc, char *argv[])
 	struct timespec	tv;
 	struct ttysize ts;
 
-	while ((ch = getopt(argc, argv, "Cc:dDITw:x")) != -1)
+	while ((ch = getopt(argc, argv, "Cc:dDITw:xy")) != -1)
 		switch (ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)
@@ -159,6 +163,10 @@ main(int argc, char *argv[])
 			todo &= ~SHOW_STATS_ALL;
 			todo |= SHOW_STATS_X;
 			break;
+		case 'y':
+			todo &= ~SHOW_STATS_ALL;
+			todo |= SHOW_STATS_Y;
+			break;
 		case '?':
 		default:
 			usage();
@@ -171,6 +179,10 @@ main(int argc, char *argv[])
 	if (ISSET(todo, SHOW_STATS_X)) {
 		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL);
 		todo |= SHOW_STATS_X;
+	}
+	if (ISSET(todo, SHOW_STATS_Y)) {
+		todo &= ~(SHOW_CPU | SHOW_TTY | SHOW_STATS_ALL | SHOW_TOTALS);
+		todo |= SHOW_STATS_Y;
 	}
 
 	if (ioctl(STDOUT_FILENO, TIOCGSIZE, &ts) != -1) {
@@ -197,7 +209,7 @@ main(int argc, char *argv[])
 		if (todo == 0)
 			errx(1, "no drives");
 	}
-	if (ISSET(todo, SHOW_STATS_X))
+	if (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y))
 		lines = ndrives;
 	else
 		lines = 1;
@@ -254,6 +266,13 @@ header(void)
 			    "device  read KB/t    r/s   time     MB/s");
 			(void)printf(" write KB/t    w/s   time     MB/s\n");
 		}
+		return;
+	}
+
+	if (ISSET(todo, SHOW_STATS_Y)) {
+		(void)printf("device  read KB/t    r/s     MB/s write KB/t    w/s     MB/s");
+		(void)printf("   wait   actv  wsvc_t  asvc_t  wtime   time");
+		(void)printf("\n");
 		return;
 	}
 
@@ -423,6 +442,77 @@ drive_statsx(double etime)
 }
 
 static void
+drive_statsy_io(double elapsed, double count, double volume)
+{
+	double kbps;
+
+	/* average Kbytes per transfer */
+	if (count)
+		kbps = (volume / 1024.0) / count;
+	else
+		kbps = 0.0;
+	(void)printf(" %8.2f", kbps);
+
+	/* average transfers (per second) */
+	(void)printf(" %6.0f", count / elapsed);
+
+	/* average megabytes (per second) */
+	(void)printf(" %8.2f", volume / (1024.0 * 1024) / elapsed);
+}
+
+static void
+drive_statsy_q(double elapsed, double busy, double wait, double busysum, double waitsum, double count)
+{
+	/* average wait queue length */
+	(void)printf(" %6.1f", waitsum / elapsed);
+
+	/* average busy queue length */
+	(void)printf(" %6.1f", busysum / elapsed);
+
+	/* average wait time */
+	(void)printf(" %7.2f", count > 0 ? waitsum / count * 1000.0 : 0.0);
+
+	/* average service time */
+	(void)printf(" %7.2f", count > 0 ? busysum / count * 1000.0 : 0.0);
+
+	/* time waiting for drive activity */
+	(void)printf(" %6.2f", wait / elapsed);
+
+	/* time busy in drive activity */
+	(void)printf(" %6.2f", busy / elapsed);
+}
+
+static void
+drive_statsy(double etime)
+{
+	size_t dn;
+	double atime, await, abusysum, awaitsum;
+
+	for (dn = 0; dn < ndrive; ++dn) {
+		if (!cur.select[dn])
+			continue;
+
+		(void)printf("%-8.8s", cur.name[dn]);
+
+		atime = (double)cur.time[dn].tv_sec +
+		    ((double)cur.time[dn].tv_usec / (double)1000000);
+		await = (double)cur.wait[dn].tv_sec +
+		    ((double)cur.wait[dn].tv_usec / (double)1000000);
+		abusysum = (double)cur.busysum[dn].tv_sec +
+		    ((double)cur.busysum[dn].tv_usec / (double)1000000);
+		awaitsum = (double)cur.waitsum[dn].tv_sec +
+		    ((double)cur.waitsum[dn].tv_usec / (double)1000000);
+
+		drive_statsy_io(etime, cur.rxfer[dn], cur.rbytes[dn]);
+		(void)printf("  ");
+		drive_statsy_io(etime, cur.wxfer[dn], cur.wbytes[dn]);
+		drive_statsy_q(etime, atime, await, abusysum, awaitsum, cur.rxfer[dn]+cur.wxfer[dn]);
+
+		(void)printf("\n");
+	}
+}
+
+static void
 cpustats(void)
 {
 	int state;
@@ -442,7 +532,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] "
+	(void)fprintf(stderr, "usage: iostat [-CdDITxy] [-c count] "
 	    "[-w wait] [drives]\n");
 	exit(1);
 }
@@ -464,6 +554,11 @@ display(void)
 
 	if (ISSET(todo, SHOW_STATS_X)) {
 		drive_statsx(etime);
+		goto out;
+	}
+
+	if (ISSET(todo, SHOW_STATS_Y)) {
+		drive_statsy(etime);
 		goto out;
 	}
 
@@ -525,14 +620,15 @@ selectdrives(int argc, char *argv[])
 		 * Pick up to defdrives (or all if -x is given) drives
 		 * if none specified.
 		 */
-		maxdrives = (ISSET(todo, SHOW_STATS_X) ||
+		maxdrives = (ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y) ||
 			     (int)ndrive < defdrives)
 			? (int)(ndrive) : defdrives;
 		for (i = 0; i < maxdrives; i++) {
 			cur.select[i] = 1;
 
 			++ndrives;
-			if (!ISSET(todo, SHOW_STATS_X) && ndrives == defdrives)
+			if (!ISSET(todo, SHOW_STATS_X | SHOW_STATS_Y) &&
+			    ndrives == defdrives)
 				break;
 		}
 	}

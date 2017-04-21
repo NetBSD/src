@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.16 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.16.2.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -86,9 +86,10 @@
 /* The machine-dependent ptrace(2) requests. */
 #define	PT_GETXMMREGS		(PT_FIRSTMACH + 5)
 #define	PT_SETXMMREGS		(PT_FIRSTMACH + 6)
-#define PT_READ_WATCHPOINT	(PT_FIRSTMACH + 7)
-#define PT_WRITE_WATCHPOINT	(PT_FIRSTMACH + 8)
-#define PT_COUNT_WATCHPOINTS	(PT_FIRSTMACH + 9)
+#define	PT_GETDBREGS		(PT_FIRSTMACH + 7)
+#define	PT_SETDBREGS		(PT_FIRSTMACH + 8)
+#define	PT_SETSTEP		(PT_FIRSTMACH + 9)
+#define	PT_CLEARSTEP		(PT_FIRSTMACH + 10)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
@@ -98,9 +99,11 @@
 	"PT_SETFPREGS", \
 	"PT_GETXMMREGS", \
 	"PT_SETXMMREGS", \
-	"PT_READ_WATCHPOINT", \
-	"PT_WRITE_WATCHPOINT", \
-	"PT_COUNT_WATCHPOINTS"
+	"PT_GETDBREGS", \
+	"PT_SETDBREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
+
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->r_eip
@@ -111,34 +114,6 @@
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xcc })
 #define PTRACE_BREAKPOINT_SIZE	1
 #define PTRACE_BREAKPOINT_ADJ	sizeof(PTRACE_BREAKPOINT)
-
-#define __HAVE_PTRACE_WATCHPOINTS
-
-/*
- * This MD structure translates into x86_hw_watchpoint
- *
- * pw_address - 0 represents disabled hardware watchpoint
- *
- * conditions:
- *     0b00 - execution
- *     0b01 - data write
- *     0b10 - io read/write (not implemented)
- *     0b11 - data read/write
- *
- * length:
- *     0b00 - 1 byte
- *     0b01 - 2 bytes
- *     0b10 - undefined
- *     0b11 - 4 bytes
- *
- * Helper symbols for conditions and length are available in <x86/dbregs.h>
- *
- */
-struct mdpw {
-	void	*md_address;
-	int	 md_condition;
-	int	 md_length;
-};
 
 #ifdef _KERNEL
 

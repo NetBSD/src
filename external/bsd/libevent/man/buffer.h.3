@@ -1,14 +1,15 @@
-.TH "event2/buffer.h" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "event2/buffer.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-event2/buffer.h \- 
-Functions for buffering data for network sending or receiving\&.  
+event2/buffer.h \- Functions for buffering data for network sending or receiving\&.  
 
 .SH SYNOPSIS
 .br
 .PP
-\fC#include <event2/event-config\&.h>\fP
+\fC#include <event2/visibility\&.h>\fP
+.br
+\fC#include <event2/event\-config\&.h>\fP
 .br
 \fC#include <stdarg\&.h>\fP
 .br
@@ -39,6 +40,22 @@ Functions for buffering data for network sending or receiving\&.
 
 .in +1c
 .ti -1c
+.RI "#define \fBEVBUF_FS_CLOSE_ON_FREE\fP   0x01"
+.br
+.RI "\fIFlag for creating evbuffer_file_segment: If this flag is set, then when the evbuffer_file_segment is freed and no longer in use by any evbuffer, the underlying fd is closed\&. \fP"
+.ti -1c
+.RI "#define \fBEVBUF_FS_DISABLE_LOCKING\fP   0x08"
+.br
+.RI "\fIFlag for creating evbuffer_file_segment: Do not allocate a lock for this segment\&. \fP"
+.ti -1c
+.RI "#define \fBEVBUF_FS_DISABLE_MMAP\fP   0x02"
+.br
+.RI "\fIFlag for creating evbuffer_file_segment: Disable memory-map based implementations\&. \fP"
+.ti -1c
+.RI "#define \fBEVBUF_FS_DISABLE_SENDFILE\fP   0x04"
+.br
+.RI "\fIFlag for creating evbuffer_file_segment: Disable direct fd-to-fd implementations (including sendfile and splice)\&. \fP"
+.ti -1c
 .RI "#define \fBEVBUFFER_CB_ENABLED\fP   1"
 .br
 .RI "\fIIf this flag is not set, then a callback is temporarily disabled, and should not be invoked\&. \fP"
@@ -51,11 +68,15 @@ Functions for buffering data for network sending or receiving\&.
 
 .in +1c
 .ti -1c
-.RI "typedef void(* \fBevbuffer_cb_func\fP )(struct \fBevbuffer\fP *buffer, const struct \fBevbuffer_cb_info\fP *info, void *arg)"
+.RI "typedef void(* \fBevbuffer_cb_func\fP) (struct \fBevbuffer\fP *buffer, const struct \fBevbuffer_cb_info\fP *info, void *arg)"
 .br
 .RI "\fIType definition for a callback that is invoked whenever data is added or removed from an evbuffer\&. \fP"
 .ti -1c
-.RI "typedef void(* \fBevbuffer_ref_cleanup_cb\fP )(const void *data, size_t datalen, void *extra)"
+.RI "typedef void(* \fBevbuffer_file_segment_cleanup_cb\fP) (struct evbuffer_file_segment const *seg, int flags, void *arg)"
+.br
+.RI "\fIA cleanup function for a evbuffer_file_segment added to an evbuffer for reference\&. \fP"
+.ti -1c
+.RI "typedef void(* \fBevbuffer_ref_cleanup_cb\fP) (const void *data, size_t datalen, void *extra)"
 .br
 .RI "\fIA cleanup function for a piece of memory added to an evbuffer by reference\&. \fP"
 .in -1c
@@ -63,183 +84,211 @@ Functions for buffering data for network sending or receiving\&.
 
 .in +1c
 .ti -1c
-.RI "enum \fBevbuffer_eol_style\fP { \fBEVBUFFER_EOL_ANY\fP, \fBEVBUFFER_EOL_CRLF\fP, \fBEVBUFFER_EOL_CRLF_STRICT\fP, \fBEVBUFFER_EOL_LF\fP }"
+.RI "enum \fBevbuffer_eol_style\fP { \fBEVBUFFER_EOL_ANY\fP, \fBEVBUFFER_EOL_CRLF\fP, \fBEVBUFFER_EOL_CRLF_STRICT\fP, \fBEVBUFFER_EOL_LF\fP, \fBEVBUFFER_EOL_NUL\fP }
+.RI "\fIUsed to tell evbuffer_readln what kind of line-ending to look for\&. \fP""
 .br
-.RI "\fIUsed to tell evbuffer_readln what kind of line-ending to look for\&. \fP"
 .ti -1c
-.RI "enum \fBevbuffer_ptr_how\fP { \fBEVBUFFER_PTR_SET\fP, \fBEVBUFFER_PTR_ADD\fP }"
+.RI "enum \fBevbuffer_ptr_how\fP { \fBEVBUFFER_PTR_SET\fP, \fBEVBUFFER_PTR_ADD\fP }
+.RI "\fIDefines how to adjust an \fBevbuffer_ptr\fP by \fBevbuffer_ptr_set()\fP \fP""
 .br
-.RI "\fIDefines how to adjust an \fBevbuffer_ptr\fP by \fBevbuffer_ptr_set()\fP \fP"
 .in -1c
 .SS "Functions"
 
 .in +1c
 .ti -1c
-.RI "int \fBevbuffer_add\fP (struct \fBevbuffer\fP *buf, const void *data, size_t datlen)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add\fP (struct \fBevbuffer\fP *buf, const void *data, size_t datlen)"
 .br
 .RI "\fIAppend data to the end of an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_add_buffer\fP (struct \fBevbuffer\fP *outbuf, struct \fBevbuffer\fP *inbuf)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_buffer\fP (struct \fBevbuffer\fP *outbuf, struct \fBevbuffer\fP *inbuf)"
 .br
 .RI "\fIMove all data from one evbuffer into another evbuffer\&. \fP"
 .ti -1c
-.RI "struct evbuffer_cb_entry * \fBevbuffer_add_cb\fP (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb_func\fP cb, void *cbarg)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_buffer_reference\fP (struct \fBevbuffer\fP *outbuf, struct \fBevbuffer\fP *inbuf)"
+.br
+.RI "\fICopy data from one evbuffer into another evbuffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct evbuffer_cb_entry * \fBevbuffer_add_cb\fP (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb_func\fP cb, void *cbarg)"
 .br
 .RI "\fIAdd a new callback to an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_add_file\fP (struct \fBevbuffer\fP *outbuf, int fd, ev_off_t offset, ev_off_t length)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_file\fP (struct \fBevbuffer\fP *outbuf, int fd, ev_off_t offset, ev_off_t length)"
 .br
 .RI "\fICopy data from a file into the evbuffer for writing to a socket\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_add_printf\fP (struct \fBevbuffer\fP *buf, const char *fmt,\&.\&.\&.)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_file_segment\fP (struct \fBevbuffer\fP *buf, struct evbuffer_file_segment *seg, ev_off_t offset, ev_off_t length)"
+.br
+.RI "\fIInsert some or all of an evbuffer_file_segment at the end of an evbuffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL size_t \fBevbuffer_add_iovec\fP (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_iovec\fP *vec, int n_vec)"
+.br
+.RI "\fIAppend data from 1 or more iovec's to an evbuffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_printf\fP (struct \fBevbuffer\fP *buf, const char *fmt,\&.\&.\&.)"
 .br
 .RI "\fIAppend a formatted string to the end of an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_add_reference\fP (struct \fBevbuffer\fP *outbuf, const void *data, size_t datlen, \fBevbuffer_ref_cleanup_cb\fP cleanupfn, void *cleanupfn_arg)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_reference\fP (struct \fBevbuffer\fP *outbuf, const void *data, size_t datlen, \fBevbuffer_ref_cleanup_cb\fP cleanupfn, void *cleanupfn_arg)"
 .br
 .RI "\fIReference memory into an evbuffer without copying\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_add_vprintf\fP (struct \fBevbuffer\fP *buf, const char *fmt, va_list ap)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_add_vprintf\fP (struct \fBevbuffer\fP *buf, const char *fmt, va_list ap)"
 .br
 .RI "\fIAppend a va_list formatted string to the end of an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_cb_clear_flags\fP (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *cb, ev_uint32_t flags)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_cb_clear_flags\fP (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *cb, ev_uint32_t flags)"
 .br
 .RI "\fIChange the flags that are set for a callback on a buffer by removing some\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_cb_set_flags\fP (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *cb, ev_uint32_t flags)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_cb_set_flags\fP (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *cb, ev_uint32_t flags)"
 .br
 .RI "\fIChange the flags that are set for a callback on a buffer by adding more\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_clear_flags\fP (struct \fBevbuffer\fP *buf, ev_uint64_t flags)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_clear_flags\fP (struct \fBevbuffer\fP *buf, ev_uint64_t flags)"
 .br
 .RI "\fIChange the flags that are set for an evbuffer by removing some\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_commit_space\fP (struct \fBevbuffer\fP *buf, struct \fBevbuffer_iovec\fP *vec, int n_vecs)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_commit_space\fP (struct \fBevbuffer\fP *buf, struct \fBevbuffer_iovec\fP *vec, int n_vecs)"
 .br
 .RI "\fICommits previously reserved space\&. \fP"
 .ti -1c
-.RI "ev_ssize_t \fBevbuffer_copyout\fP (struct \fBevbuffer\fP *buf, void *data_out, size_t datlen)"
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBevbuffer_copyout\fP (struct \fBevbuffer\fP *buf, void *data_out, size_t datlen)"
 .br
 .RI "\fIRead data from an evbuffer, and leave the buffer unchanged\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_defer_callbacks\fP (struct \fBevbuffer\fP *buffer, struct \fBevent_base\fP *base)"
+.RI "EVENT2_EXPORT_SYMBOL ev_ssize_t \fBevbuffer_copyout_from\fP (struct \fBevbuffer\fP *buf, const struct \fBevbuffer_ptr\fP *pos, void *data_out, size_t datlen)"
+.br
+.RI "\fIRead data from the middle of an evbuffer, and leave the buffer unchanged\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_defer_callbacks\fP (struct \fBevbuffer\fP *buffer, struct \fBevent_base\fP *base)"
 .br
 .RI "\fIForce all the callbacks on an evbuffer to be run, not immediately after the evbuffer is altered, but instead from inside the event loop\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_drain\fP (struct \fBevbuffer\fP *buf, size_t len)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_drain\fP (struct \fBevbuffer\fP *buf, size_t len)"
 .br
 .RI "\fIRemove a specified number of bytes data from the beginning of an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_enable_locking\fP (struct \fBevbuffer\fP *buf, void *lock)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_enable_locking\fP (struct \fBevbuffer\fP *buf, void *lock)"
 .br
 .RI "\fIEnable locking on an evbuffer so that it can safely be used by multiple threads at the same time\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_expand\fP (struct \fBevbuffer\fP *buf, size_t datlen)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_expand\fP (struct \fBevbuffer\fP *buf, size_t datlen)"
 .br
 .RI "\fIExpands the available space in an evbuffer\&. \fP"
 .ti -1c
-.RI "void \fBevbuffer_free\fP (struct \fBevbuffer\fP *buf)"
+.RI "EVENT2_EXPORT_SYMBOL void \fBevbuffer_file_segment_add_cleanup_cb\fP (struct evbuffer_file_segment *seg, \fBevbuffer_file_segment_cleanup_cb\fP cb, void *arg)"
+.br
+.RI "\fIAdd cleanup callback and argument for the callback to an evbuffer_file_segment\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBevbuffer_file_segment_free\fP (struct evbuffer_file_segment *seg)"
+.br
+.RI "\fIFree an evbuffer_file_segment\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL struct evbuffer_file_segment * \fBevbuffer_file_segment_new\fP (int fd, ev_off_t offset, ev_off_t length, unsigned flags)"
+.br
+.RI "\fICreate and return a new evbuffer_file_segment for reading data from a file and sending it out via an evbuffer\&. \fP"
+.ti -1c
+.RI "EVENT2_EXPORT_SYMBOL void \fBevbuffer_free\fP (struct \fBevbuffer\fP *buf)"
 .br
 .RI "\fIDeallocate storage for an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_freeze\fP (struct \fBevbuffer\fP *buf, int at_front)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_freeze\fP (struct \fBevbuffer\fP *buf, int at_front)"
 .br
 .RI "\fIPrevent calls that modify an evbuffer from succeeding\&. \fP"
 .ti -1c
-.RI "size_t \fBevbuffer_get_contiguous_space\fP (const struct \fBevbuffer\fP *buf)"
+.RI "EVENT2_EXPORT_SYMBOL size_t \fBevbuffer_get_contiguous_space\fP (const struct \fBevbuffer\fP *buf)"
 .br
 .RI "\fIReturns the number of contiguous available bytes in the first buffer chain\&. \fP"
 .ti -1c
-.RI "size_t \fBevbuffer_get_length\fP (const struct \fBevbuffer\fP *buf)"
+.RI "EVENT2_EXPORT_SYMBOL size_t \fBevbuffer_get_length\fP (const struct \fBevbuffer\fP *buf)"
 .br
 .RI "\fIReturns the total number of bytes stored in the evbuffer\&. \fP"
 .ti -1c
-.RI "void \fBevbuffer_lock\fP (struct \fBevbuffer\fP *buf)"
+.RI "EVENT2_EXPORT_SYMBOL void \fBevbuffer_lock\fP (struct \fBevbuffer\fP *buf)"
 .br
 .RI "\fIAcquire the lock on an evbuffer\&. \fP"
 .ti -1c
-.RI "struct \fBevbuffer\fP * \fBevbuffer_new\fP (void)"
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevbuffer\fP * \fBevbuffer_new\fP (void)"
 .br
 .RI "\fIAllocate storage for a new evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_peek\fP (struct \fBevbuffer\fP *buffer, ev_ssize_t len, struct \fBevbuffer_ptr\fP *start_at, struct \fBevbuffer_iovec\fP *vec_out, int n_vec)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_peek\fP (struct \fBevbuffer\fP *buffer, ev_ssize_t len, struct \fBevbuffer_ptr\fP *start_at, struct \fBevbuffer_iovec\fP *vec_out, int n_vec)"
 .br
 .RI "\fIFunction to peek at data inside an evbuffer without removing it or copying it out\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_prepend\fP (struct \fBevbuffer\fP *buf, const void *data, size_t size)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_prepend\fP (struct \fBevbuffer\fP *buf, const void *data, size_t size)"
 .br
 .RI "\fIPrepends data to the beginning of the evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_prepend_buffer\fP (struct \fBevbuffer\fP *dst, struct \fBevbuffer\fP *src)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_prepend_buffer\fP (struct \fBevbuffer\fP *dst, struct \fBevbuffer\fP *src)"
 .br
 .RI "\fIPrepends all data from the src evbuffer to the beginning of the dst evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_ptr_set\fP (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_ptr\fP *ptr, size_t position, enum \fBevbuffer_ptr_how\fP how)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_ptr_set\fP (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_ptr\fP *ptr, size_t position, enum \fBevbuffer_ptr_how\fP how)"
 .br
 .RI "\fISets the search pointer in the buffer to position\&. \fP"
 .ti -1c
-.RI "unsigned char * \fBevbuffer_pullup\fP (struct \fBevbuffer\fP *buf, ev_ssize_t size)"
+.RI "EVENT2_EXPORT_SYMBOL unsigned char * \fBevbuffer_pullup\fP (struct \fBevbuffer\fP *buf, ev_ssize_t size)"
 .br
 .RI "\fIMakes the data at the beginning of an evbuffer contiguous\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_read\fP (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fP fd, int howmuch)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_read\fP (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fP fd, int howmuch)"
 .br
 .RI "\fIRead from a file descriptor and store the result in an evbuffer\&. \fP"
 .ti -1c
-.RI "char * \fBevbuffer_readln\fP (struct \fBevbuffer\fP *buffer, size_t *n_read_out, enum \fBevbuffer_eol_style\fP eol_style)"
+.RI "EVENT2_EXPORT_SYMBOL char * \fBevbuffer_readln\fP (struct \fBevbuffer\fP *buffer, size_t *n_read_out, enum \fBevbuffer_eol_style\fP eol_style)"
 .br
 .RI "\fIRead a single line from an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_remove\fP (struct \fBevbuffer\fP *buf, void *data, size_t datlen)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_remove\fP (struct \fBevbuffer\fP *buf, void *data, size_t datlen)"
 .br
 .RI "\fIRead data from an evbuffer and drain the bytes read\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_remove_buffer\fP (struct \fBevbuffer\fP *src, struct \fBevbuffer\fP *dst, size_t datlen)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_remove_buffer\fP (struct \fBevbuffer\fP *src, struct \fBevbuffer\fP *dst, size_t datlen)"
 .br
 .RI "\fIRead data from an evbuffer into another evbuffer, draining the bytes from the source buffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_remove_cb\fP (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb_func\fP cb, void *cbarg)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_remove_cb\fP (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb_func\fP cb, void *cbarg)"
 .br
 .RI "\fIRemove a callback from an evbuffer, given the function and argument used to add it\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_remove_cb_entry\fP (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *ent)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_remove_cb_entry\fP (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *ent)"
 .br
 .RI "\fIRemove a callback from an evbuffer, given a handle returned from evbuffer_add_cb\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_reserve_space\fP (struct \fBevbuffer\fP *buf, ev_ssize_t size, struct \fBevbuffer_iovec\fP *vec, int n_vec)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_reserve_space\fP (struct \fBevbuffer\fP *buf, ev_ssize_t size, struct \fBevbuffer_iovec\fP *vec, int n_vec)"
 .br
 .RI "\fIReserves space in the last chain or chains of an evbuffer\&. \fP"
 .ti -1c
-.RI "struct \fBevbuffer_ptr\fP \fBevbuffer_search\fP (struct \fBevbuffer\fP *buffer, const char *what, size_t len, const struct \fBevbuffer_ptr\fP *start)"
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevbuffer_ptr\fP \fBevbuffer_search\fP (struct \fBevbuffer\fP *buffer, const char *what, size_t len, const struct \fBevbuffer_ptr\fP *start)"
 .br
 .RI "\fISearch for a string within an evbuffer\&. \fP"
 .ti -1c
-.RI "struct \fBevbuffer_ptr\fP \fBevbuffer_search_eol\fP (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_ptr\fP *start, size_t *eol_len_out, enum \fBevbuffer_eol_style\fP eol_style)"
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevbuffer_ptr\fP \fBevbuffer_search_eol\fP (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_ptr\fP *start, size_t *eol_len_out, enum \fBevbuffer_eol_style\fP eol_style)"
 .br
 .RI "\fISearch for an end-of-line string within an evbuffer\&. \fP"
 .ti -1c
-.RI "struct \fBevbuffer_ptr\fP \fBevbuffer_search_range\fP (struct \fBevbuffer\fP *buffer, const char *what, size_t len, const struct \fBevbuffer_ptr\fP *start, const struct \fBevbuffer_ptr\fP *end)"
+.RI "EVENT2_EXPORT_SYMBOL struct \fBevbuffer_ptr\fP \fBevbuffer_search_range\fP (struct \fBevbuffer\fP *buffer, const char *what, size_t len, const struct \fBevbuffer_ptr\fP *start, const struct \fBevbuffer_ptr\fP *end)"
 .br
 .RI "\fISearch for a string within part of an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_set_flags\fP (struct \fBevbuffer\fP *buf, ev_uint64_t flags)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_set_flags\fP (struct \fBevbuffer\fP *buf, ev_uint64_t flags)"
 .br
 .RI "\fIChange the flags that are set for an evbuffer by adding more\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_unfreeze\fP (struct \fBevbuffer\fP *buf, int at_front)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_unfreeze\fP (struct \fBevbuffer\fP *buf, int at_front)"
 .br
 .RI "\fIRe-enable calls that modify an evbuffer\&. \fP"
 .ti -1c
-.RI "void \fBevbuffer_unlock\fP (struct \fBevbuffer\fP *buf)"
+.RI "EVENT2_EXPORT_SYMBOL void \fBevbuffer_unlock\fP (struct \fBevbuffer\fP *buf)"
 .br
 .RI "\fIRelease the lock on an evbuffer\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_write\fP (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fP fd)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_write\fP (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fP fd)"
 .br
 .RI "\fIWrite the contents of an evbuffer to a file descriptor\&. \fP"
 .ti -1c
-.RI "int \fBevbuffer_write_atmost\fP (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fP fd, ev_ssize_t howmuch)"
+.RI "EVENT2_EXPORT_SYMBOL int \fBevbuffer_write_atmost\fP (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fP fd, ev_ssize_t howmuch)"
 .br
 .RI "\fIWrite some of the contents of an evbuffer to a file descriptor\&. \fP"
 .in -1c
@@ -268,6 +317,14 @@ In Libevent 2\&.0 and later, evbuffers are represented using a linked list of me
 As the contents of an evbuffer can be stored in multiple different memory blocks, it cannot be accessed directly\&. Instead, \fBevbuffer_pullup()\fP can be used to force a specified number of bytes to be contiguous\&. This will cause memory reallocation and memory copies if the data is split across multiple blocks\&. It is more efficient, however, to use \fBevbuffer_peek()\fP if you don't require that the memory to be contiguous\&. 
 .SH "Macro Definition Documentation"
 .PP 
+.SS "#define EVBUF_FS_DISABLE_LOCKING   0x08"
+
+.PP
+Flag for creating evbuffer_file_segment: Do not allocate a lock for this segment\&. If this option is set, then neither the segment nor any evbuffer it is added to may ever be accessed from more than one thread at a time\&. 
+.SS "#define EVBUF_FS_DISABLE_SENDFILE   0x04"
+
+.PP
+Flag for creating evbuffer_file_segment: Disable direct fd-to-fd implementations (including sendfile and splice)\&. You might want to use this option if data needs to be taken from the evbuffer by any means other than writing it to the network: the sendfile backend is fast, but it only works for sending files directly to the network\&. 
 .SS "#define EVBUFFER_CB_ENABLED   1"
 
 .PP
@@ -287,7 +344,7 @@ If this flag is set, then we will not use \fBevbuffer_peek()\fP, \fBevbuffer_rem
 This flag is on by default for bufferevents that can take advantage of it; you should never actually need to set it on a bufferevent's output buffer\&. 
 .SH "Typedef Documentation"
 .PP 
-.SS "typedef void(* evbuffer_cb_func)(struct \fBevbuffer\fP *buffer, const struct \fBevbuffer_cb_info\fP *info, void *arg)"
+.SS "typedef void(* evbuffer_cb_func) (struct \fBevbuffer\fP *buffer, const struct \fBevbuffer_cb_info\fP *info, void *arg)"
 
 .PP
 Type definition for a callback that is invoked whenever data is added or removed from an evbuffer\&. An evbuffer may have one or more callbacks set at a time\&. The order in which they are executed is undefined\&.
@@ -306,7 +363,7 @@ If a callback adds or removes data from the buffer or from another buffer, this 
 .RE
 .PP
 
-.SS "typedef void(* evbuffer_ref_cleanup_cb)(const void *data, size_t datalen, void *extra)"
+.SS "typedef void(* evbuffer_ref_cleanup_cb) (const void *data, size_t datalen, void *extra)"
 
 .PP
 A cleanup function for a piece of memory added to an evbuffer by reference\&. 
@@ -338,6 +395,9 @@ An EOL is a CR followed by an LF\&.
 .TP
 \fB\fIEVBUFFER_EOL_LF \fP\fP
 An EOL is a LF\&. 
+.TP
+\fB\fIEVBUFFER_EOL_NUL \fP\fP
+An EOL is a NUL character (that is, a single byte with value 0) 
 .SS "enum \fBevbuffer_ptr_how\fP"
 
 .PP
@@ -360,7 +420,7 @@ Sets the pointer to the position; can be called on with an uninitialized \fBevbu
 Advances the pointer by adding to the current position\&. 
 .SH "Function Documentation"
 .PP 
-.SS "int evbuffer_add (struct \fBevbuffer\fP *buf, const void *data, size_tdatlen)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add (struct \fBevbuffer\fP * buf, const void * data, size_t datlen)"
 
 .PP
 Append data to the end of an evbuffer\&. 
@@ -380,7 +440,7 @@ Append data to the end of an evbuffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_add_buffer (struct \fBevbuffer\fP *outbuf, struct \fBevbuffer\fP *inbuf)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_buffer (struct \fBevbuffer\fP * outbuf, struct \fBevbuffer\fP * inbuf)"
 
 .PP
 Move all data from one evbuffer into another evbuffer\&. This is a destructive add\&. The data from one buffer moves into the other buffer\&. However, no unnecessary memory copies occur\&.
@@ -403,7 +463,27 @@ Move all data from one evbuffer into another evbuffer\&. This is a destructive a
 .RE
 .PP
 
-.SS "struct evbuffer_cb_entry* evbuffer_add_cb (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb_func\fPcb, void *cbarg)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_buffer_reference (struct \fBevbuffer\fP * outbuf, struct \fBevbuffer\fP * inbuf)"
+
+.PP
+Copy data from one evbuffer into another evbuffer\&. This is a non-destructive add\&. The data from one buffer is copied into the other buffer\&. However, no unnecessary memory copies occur\&.
+.PP
+Note that buffers already containing buffer references can't be added to other buffers\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIoutbuf\fP the output buffer 
+.br
+\fIinbuf\fP the input buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 if successful, or -1 if an error occurred 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL struct evbuffer_cb_entry* evbuffer_add_cb (struct \fBevbuffer\fP * buffer, \fBevbuffer_cb_func\fP cb, void * cbarg)"
 
 .PP
 Add a new callback to an evbuffer\&. Subsequent calls to \fBevbuffer_add_cb()\fP add new callbacks\&. To remove this callback, call evbuffer_remove_cb or evbuffer_remove_cb_entry\&.
@@ -423,7 +503,7 @@ a handle to the callback on success, or NULL on failure\&.
 .RE
 .PP
 
-.SS "int evbuffer_add_file (struct \fBevbuffer\fP *outbuf, intfd, ev_off_toffset, ev_off_tlength)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_file (struct \fBevbuffer\fP * outbuf, int fd, ev_off_t offset, ev_off_t length)"
 
 .PP
 Copy data from a file into the evbuffer for writing to a socket\&. This function avoids unnecessary data copies between userland and kernel\&. If sendfile is available and the EVBUFFER_FLAG_DRAINS_TO_FD flag is set, it uses those functions\&. Otherwise, it tries to use mmap (or CreateFileMapping on Windows)\&.
@@ -431,6 +511,8 @@ Copy data from a file into the evbuffer for writing to a socket\&. This function
 The function owns the resulting file descriptor and will close it when finished transferring data\&.
 .PP
 The results of using \fBevbuffer_remove()\fP or \fBevbuffer_pullup()\fP on evbuffers whose data was added using this function are undefined\&.
+.PP
+For more fine-grained control, use evbuffer_add_file_segment\&.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -440,7 +522,7 @@ The results of using \fBevbuffer_remove()\fP or \fBevbuffer_pullup()\fP on evbuf
 .br
 \fIoffset\fP the offset from which to read data 
 .br
-\fIlength\fP how much data to read 
+\fIlength\fP how much data to read, or -1 to read as much as possible\&. (-1 requires that 'fd' support fstat\&.) 
 .RE
 .PP
 \fBReturns:\fP
@@ -449,7 +531,51 @@ The results of using \fBevbuffer_remove()\fP or \fBevbuffer_pullup()\fP on evbuf
 .RE
 .PP
 
-.SS "int evbuffer_add_printf (struct \fBevbuffer\fP *buf, const char *fmt, \&.\&.\&.)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_file_segment (struct \fBevbuffer\fP * buf, struct evbuffer_file_segment * seg, ev_off_t offset, ev_off_t length)"
+
+.PP
+Insert some or all of an evbuffer_file_segment at the end of an evbuffer\&. Note that the offset and length parameters of this function have a different meaning from those provided to evbuffer_file_segment_new: When you create the segment, the offset is the offset \fIwithin the file\fP, and the length is the length \fIof the segment\fP, whereas when you add a segment to an evbuffer, the offset is \fIwithin the segment\fP and the length is the length of the _part of the segment you want to use\&.
+.PP
+In other words, if you have a 10 KiB file, and you create an evbuffer_file_segment for it with offset 20 and length 1000, it will refer to bytes 20\&.\&.1019 inclusive\&. If you then pass this segment to evbuffer_add_file_segment and specify an offset of 20 and a length of 50, you will be adding bytes 40\&.\&.99 inclusive\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuf\fP the evbuffer to append to 
+.br
+\fIseg\fP the segment to add 
+.br
+\fIoffset\fP the offset within the segment to start from 
+.br
+\fIlength\fP the amount of data to add, or -1 to add it all\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+0 on success, -1 on failure\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL size_t evbuffer_add_iovec (struct \fBevbuffer\fP * buffer, struct \fBevbuffer_iovec\fP * vec, int n_vec)"
+
+.PP
+Append data from 1 or more iovec's to an evbuffer\&. Calculates the number of bytes needed for an iovec structure and guarantees all data will fit into a single chain\&. Can be used in lieu of functionality which calls \fBevbuffer_add()\fP constantly before being used to increase performance\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuffer\fP the destination buffer 
+.br
+\fIvec\fP the source iovec 
+.br
+\fIn_vec\fP the number of iovec structures\&. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of bytes successfully written to the output buffer\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_printf (struct \fBevbuffer\fP * buf, const char * fmt,  \&.\&.\&.)"
 
 .PP
 Append a formatted string to the end of an evbuffer\&. The string is formated as printf\&.
@@ -474,7 +600,7 @@ evutil_printf(), \fBevbuffer_add_vprintf()\fP
 .RE
 .PP
 
-.SS "int evbuffer_add_reference (struct \fBevbuffer\fP *outbuf, const void *data, size_tdatlen, \fBevbuffer_ref_cleanup_cb\fPcleanupfn, void *cleanupfn_arg)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_reference (struct \fBevbuffer\fP * outbuf, const void * data, size_t datlen, \fBevbuffer_ref_cleanup_cb\fP cleanupfn, void * cleanupfn_arg)"
 
 .PP
 Reference memory into an evbuffer without copying\&. The memory needs to remain valid until all the added data has been read\&. This function keeps just a reference to the memory without actually incurring the overhead of a copy\&.
@@ -498,7 +624,7 @@ Reference memory into an evbuffer without copying\&. The memory needs to remain 
 .RE
 .PP
 
-.SS "int evbuffer_add_vprintf (struct \fBevbuffer\fP *buf, const char *fmt, va_listap)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_add_vprintf (struct \fBevbuffer\fP * buf, const char * fmt, va_list ap)"
 
 .PP
 Append a va_list formatted string to the end of an evbuffer\&. 
@@ -518,7 +644,7 @@ The number of bytes added if successful, or -1 if an error occurred\&.
 .RE
 .PP
 
-.SS "int evbuffer_cb_clear_flags (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *cb, ev_uint32_tflags)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_cb_clear_flags (struct \fBevbuffer\fP * buffer, struct evbuffer_cb_entry * cb, ev_uint32_t flags)"
 
 .PP
 Change the flags that are set for a callback on a buffer by removing some\&. 
@@ -538,7 +664,7 @@ Change the flags that are set for a callback on a buffer by removing some\&.
 .RE
 .PP
 
-.SS "int evbuffer_cb_set_flags (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *cb, ev_uint32_tflags)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_cb_set_flags (struct \fBevbuffer\fP * buffer, struct evbuffer_cb_entry * cb, ev_uint32_t flags)"
 
 .PP
 Change the flags that are set for a callback on a buffer by adding more\&. 
@@ -558,7 +684,7 @@ Change the flags that are set for a callback on a buffer by adding more\&.
 .RE
 .PP
 
-.SS "int evbuffer_clear_flags (struct \fBevbuffer\fP *buf, ev_uint64_tflags)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_clear_flags (struct \fBevbuffer\fP * buf, ev_uint64_t flags)"
 
 .PP
 Change the flags that are set for an evbuffer by removing some\&. 
@@ -578,7 +704,7 @@ Change the flags that are set for an evbuffer by removing some\&.
 .RE
 .PP
 
-.SS "int evbuffer_commit_space (struct \fBevbuffer\fP *buf, struct \fBevbuffer_iovec\fP *vec, intn_vecs)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_commit_space (struct \fBevbuffer\fP * buf, struct \fBevbuffer_iovec\fP * vec, int n_vecs)"
 
 .PP
 Commits previously reserved space\&. Commits some of the space previously reserved with \fBevbuffer_reserve_space()\fP\&. It then becomes available for reading\&.
@@ -607,7 +733,7 @@ If you want to commit less data than you got reserved space for, modify the iov_
 .RE
 .PP
 
-.SS "ev_ssize_t evbuffer_copyout (struct \fBevbuffer\fP *buf, void *data_out, size_tdatlen)"
+.SS "EVENT2_EXPORT_SYMBOL ev_ssize_t evbuffer_copyout (struct \fBevbuffer\fP * buf, void * data_out, size_t datlen)"
 
 .PP
 Read data from an evbuffer, and leave the buffer unchanged\&. If more bytes are requested than are available in the evbuffer, we only extract as many bytes as were available\&.
@@ -627,11 +753,33 @@ the number of bytes read, or -1 if we can't drain the buffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_defer_callbacks (struct \fBevbuffer\fP *buffer, struct \fBevent_base\fP *base)"
+.SS "EVENT2_EXPORT_SYMBOL ev_ssize_t evbuffer_copyout_from (struct \fBevbuffer\fP * buf, const struct \fBevbuffer_ptr\fP * pos, void * data_out, size_t datlen)"
+
+.PP
+Read data from the middle of an evbuffer, and leave the buffer unchanged\&. If more bytes are requested than are available in the evbuffer, we only extract as many bytes as were available\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIbuf\fP the evbuffer to be read from 
+.br
+\fIpos\fP the position to start reading from 
+.br
+\fIdata_out\fP the destination buffer to store the result 
+.br
+\fIdatlen\fP the maximum size of the destination buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+the number of bytes read, or -1 if we can't drain the buffer\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_defer_callbacks (struct \fBevbuffer\fP * buffer, struct \fBevent_base\fP * base)"
 
 .PP
 Force all the callbacks on an evbuffer to be run, not immediately after the evbuffer is altered, but instead from inside the event loop\&. This can be used to serialize all the callbacks to a single thread of execution\&. 
-.SS "int evbuffer_drain (struct \fBevbuffer\fP *buf, size_tlen)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_drain (struct \fBevbuffer\fP * buf, size_t len)"
 
 .PP
 Remove a specified number of bytes data from the beginning of an evbuffer\&. 
@@ -649,7 +797,7 @@ Remove a specified number of bytes data from the beginning of an evbuffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_enable_locking (struct \fBevbuffer\fP *buf, void *lock)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_enable_locking (struct \fBevbuffer\fP * buf, void * lock)"
 
 .PP
 Enable locking on an evbuffer so that it can safely be used by multiple threads at the same time\&. NOTE: when locking is enabled, the lock will be held when callbacks are invoked\&. This could result in deadlock if you aren't careful\&. Plan accordingly!
@@ -667,7 +815,7 @@ Enable locking on an evbuffer so that it can safely be used by multiple threads 
 .RE
 .PP
 
-.SS "int evbuffer_expand (struct \fBevbuffer\fP *buf, size_tdatlen)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_expand (struct \fBevbuffer\fP * buf, size_t datlen)"
 
 .PP
 Expands the available space in an evbuffer\&. Expands the available space in the evbuffer to at least datlen, so that appending datlen additional bytes will not require any new allocations\&.
@@ -685,7 +833,41 @@ Expands the available space in an evbuffer\&. Expands the available space in the
 .RE
 .PP
 
-.SS "void evbuffer_free (struct \fBevbuffer\fP *buf)"
+.SS "EVENT2_EXPORT_SYMBOL void evbuffer_file_segment_add_cleanup_cb (struct evbuffer_file_segment * seg, \fBevbuffer_file_segment_cleanup_cb\fP cb, void * arg)"
+
+.PP
+Add cleanup callback and argument for the callback to an evbuffer_file_segment\&. The cleanup callback will be invoked when no more references to the evbuffer_file_segment exist\&. 
+.SS "EVENT2_EXPORT_SYMBOL void evbuffer_file_segment_free (struct evbuffer_file_segment * seg)"
+
+.PP
+Free an evbuffer_file_segment\&. It is safe to call this function even if the segment has been added to one or more evbuffers\&. The evbuffer_file_segment will not be freed until no more references to it exist\&. 
+.SS "EVENT2_EXPORT_SYMBOL struct evbuffer_file_segment* evbuffer_file_segment_new (int fd, ev_off_t offset, ev_off_t length, unsigned flags)"
+
+.PP
+Create and return a new evbuffer_file_segment for reading data from a file and sending it out via an evbuffer\&. This function avoids unnecessary data copies between userland and kernel\&. Where available, it uses sendfile or splice\&.
+.PP
+The file descriptor must not be closed so long as any evbuffer is using this segment\&.
+.PP
+The results of using \fBevbuffer_remove()\fP or \fBevbuffer_pullup()\fP or any other function that reads bytes from an evbuffer on any evbuffer containing the newly returned segment are undefined, unless you pass the EVBUF_FS_DISABLE_SENDFILE flag to this function\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIfd\fP an open file to read from\&. 
+.br
+\fIoffset\fP an index within the file at which to start reading 
+.br
+\fIlength\fP how much data to read, or -1 to read as much as possible\&. (-1 requires that 'fd' support fstat\&.) 
+.br
+\fIflags\fP any number of the EVBUF_FS_* flags 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+a new evbuffer_file_segment, or NULL on failure\&. 
+.RE
+.PP
+
+.SS "EVENT2_EXPORT_SYMBOL void evbuffer_free (struct \fBevbuffer\fP * buf)"
 
 .PP
 Deallocate storage for an evbuffer\&. 
@@ -696,7 +878,7 @@ Deallocate storage for an evbuffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_freeze (struct \fBevbuffer\fP *buf, intat_front)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_freeze (struct \fBevbuffer\fP * buf, int at_front)"
 
 .PP
 Prevent calls that modify an evbuffer from succeeding\&. A buffer may frozen at the front, at the back, or at both the front and the back\&.
@@ -716,7 +898,7 @@ If the front of a buffer is frozen, operations that drain data from the front of
 .RE
 .PP
 
-.SS "size_t evbuffer_get_contiguous_space (const struct \fBevbuffer\fP *buf)"
+.SS "EVENT2_EXPORT_SYMBOL size_t evbuffer_get_contiguous_space (const struct \fBevbuffer\fP * buf)"
 
 .PP
 Returns the number of contiguous available bytes in the first buffer chain\&. This is useful when processing data that might be split into multiple chains, or that might all be in the first chain\&. Calls to \fBevbuffer_pullup()\fP that cause reallocation and copying of data can thus be avoided\&.
@@ -732,7 +914,7 @@ Returns the number of contiguous available bytes in the first buffer chain\&. Th
 .RE
 .PP
 
-.SS "size_t evbuffer_get_length (const struct \fBevbuffer\fP *buf)"
+.SS "EVENT2_EXPORT_SYMBOL size_t evbuffer_get_length (const struct \fBevbuffer\fP * buf)"
 
 .PP
 Returns the total number of bytes stored in the evbuffer\&. 
@@ -748,11 +930,11 @@ the number of bytes stored in the evbuffer
 .RE
 .PP
 
-.SS "void evbuffer_lock (struct \fBevbuffer\fP *buf)"
+.SS "EVENT2_EXPORT_SYMBOL void evbuffer_lock (struct \fBevbuffer\fP * buf)"
 
 .PP
 Acquire the lock on an evbuffer\&. Has no effect if locking was not enabled with evbuffer_enable_locking\&. 
-.SS "struct \fBevbuffer\fP* evbuffer_new (void)"
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevbuffer\fP* evbuffer_new (void)"
 
 .PP
 Allocate storage for a new evbuffer\&. 
@@ -763,7 +945,7 @@ a pointer to a newly allocated evbuffer struct, or NULL if an error occurred
 .RE
 .PP
 
-.SS "int evbuffer_peek (struct \fBevbuffer\fP *buffer, ev_ssize_tlen, struct \fBevbuffer_ptr\fP *start_at, struct \fBevbuffer_iovec\fP *vec_out, intn_vec)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_peek (struct \fBevbuffer\fP * buffer, ev_ssize_t len, struct \fBevbuffer_ptr\fP * start_at, struct \fBevbuffer_iovec\fP * vec_out, int n_vec)"
 
 .PP
 Function to peek at data inside an evbuffer without removing it or copying it out\&. Pointers to the data are returned by filling the 'vec_out' array with pointers to one or more extents of data inside the buffer\&.
@@ -790,7 +972,7 @@ The number of extents needed\&. This may be less than n_vec if we didn't need al
 .RE
 .PP
 
-.SS "int evbuffer_prepend (struct \fBevbuffer\fP *buf, const void *data, size_tsize)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_prepend (struct \fBevbuffer\fP * buf, const void * data, size_t size)"
 
 .PP
 Prepends data to the beginning of the evbuffer\&. 
@@ -810,7 +992,7 @@ Prepends data to the beginning of the evbuffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_prepend_buffer (struct \fBevbuffer\fP *dst, struct \fBevbuffer\fP *src)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_prepend_buffer (struct \fBevbuffer\fP * dst, struct \fBevbuffer\fP * src)"
 
 .PP
 Prepends all data from the src evbuffer to the beginning of the dst evbuffer\&. 
@@ -828,10 +1010,14 @@ Prepends all data from the src evbuffer to the beginning of the dst evbuffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_ptr_set (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_ptr\fP *ptr, size_tposition, enum \fBevbuffer_ptr_how\fPhow)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_ptr_set (struct \fBevbuffer\fP * buffer, struct \fBevbuffer_ptr\fP * ptr, size_t position, enum \fBevbuffer_ptr_how\fP how)"
 
 .PP
-Sets the search pointer in the buffer to position\&. If \fBevbuffer_ptr\fP is not initialized\&. This function can only be called with EVBUFFER_PTR_SET\&.
+Sets the search pointer in the buffer to position\&. There are two ways to use this function: you can call evbuffer_ptr_set(buf, &pos, N, EVBUFFER_PTR_SET) to move 'pos' to a position 'N' bytes after the start of the buffer, or evbuffer_ptr_set(buf, &pos, N, EVBUFFER_PTR_ADD) to move 'pos' forward by 'N' bytes\&.
+.PP
+If \fBevbuffer_ptr\fP is not initialized, this function can only be called with EVBUFFER_PTR_SET\&.
+.PP
+An \fBevbuffer_ptr\fP can represent any position from the start of the buffer to a position immediately after the end of the buffer\&.
 .PP
 \fBParameters:\fP
 .RS 4
@@ -850,7 +1036,7 @@ Sets the search pointer in the buffer to position\&. If \fBevbuffer_ptr\fP is no
 .RE
 .PP
 
-.SS "unsigned char* evbuffer_pullup (struct \fBevbuffer\fP *buf, ev_ssize_tsize)"
+.SS "EVENT2_EXPORT_SYMBOL unsigned char* evbuffer_pullup (struct \fBevbuffer\fP * buf, ev_ssize_t size)"
 
 .PP
 Makes the data at the beginning of an evbuffer contiguous\&. 
@@ -864,11 +1050,11 @@ Makes the data at the beginning of an evbuffer contiguous\&.
 .PP
 \fBReturns:\fP
 .RS 4
-a pointer to the contiguous memory array 
+a pointer to the contiguous memory array, or NULL if param size requested more data than is present in the buffer\&. 
 .RE
 .PP
 
-.SS "int evbuffer_read (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fPfd, inthowmuch)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_read (struct \fBevbuffer\fP * buffer, \fBevutil_socket_t\fP fd, int howmuch)"
 
 .PP
 Read from a file descriptor and store the result in an evbuffer\&. 
@@ -893,7 +1079,7 @@ the number of bytes read, or -1 if an error occurred
 .RE
 .PP
 
-.SS "char* evbuffer_readln (struct \fBevbuffer\fP *buffer, size_t *n_read_out, enum \fBevbuffer_eol_style\fPeol_style)"
+.SS "EVENT2_EXPORT_SYMBOL char* evbuffer_readln (struct \fBevbuffer\fP * buffer, size_t * n_read_out, enum \fBevbuffer_eol_style\fP eol_style)"
 
 .PP
 Read a single line from an evbuffer\&. Reads a line terminated by an EOL as determined by the evbuffer_eol_style argument\&. Returns a newly allocated nul-terminated string; the caller must free the returned value\&. The EOL is not included in the returned string\&.
@@ -913,7 +1099,7 @@ pointer to a single line, or NULL if an error occurred
 .RE
 .PP
 
-.SS "int evbuffer_remove (struct \fBevbuffer\fP *buf, void *data, size_tdatlen)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_remove (struct \fBevbuffer\fP * buf, void * data, size_t datlen)"
 
 .PP
 Read data from an evbuffer and drain the bytes read\&. If more bytes are requested than are available in the evbuffer, we only extract as many bytes as were available\&.
@@ -933,7 +1119,7 @@ the number of bytes read, or -1 if we can't drain the buffer\&.
 .RE
 .PP
 
-.SS "int evbuffer_remove_buffer (struct \fBevbuffer\fP *src, struct \fBevbuffer\fP *dst, size_tdatlen)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_remove_buffer (struct \fBevbuffer\fP * src, struct \fBevbuffer\fP * dst, size_t datlen)"
 
 .PP
 Read data from an evbuffer into another evbuffer, draining the bytes from the source buffer\&. This function avoids copy operations to the extent possible\&.
@@ -955,7 +1141,7 @@ the number of bytes read
 .RE
 .PP
 
-.SS "int evbuffer_remove_cb (struct \fBevbuffer\fP *buffer, \fBevbuffer_cb_func\fPcb, void *cbarg)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_remove_cb (struct \fBevbuffer\fP * buffer, \fBevbuffer_cb_func\fP cb, void * cbarg)"
 
 .PP
 Remove a callback from an evbuffer, given the function and argument used to add it\&. 
@@ -966,7 +1152,7 @@ Remove a callback from an evbuffer, given the function and argument used to add 
 .RE
 .PP
 
-.SS "int evbuffer_remove_cb_entry (struct \fBevbuffer\fP *buffer, struct evbuffer_cb_entry *ent)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_remove_cb_entry (struct \fBevbuffer\fP * buffer, struct evbuffer_cb_entry * ent)"
 
 .PP
 Remove a callback from an evbuffer, given a handle returned from evbuffer_add_cb\&. Calling this function invalidates the handle\&.
@@ -977,7 +1163,7 @@ Remove a callback from an evbuffer, given a handle returned from evbuffer_add_cb
 .RE
 .PP
 
-.SS "int evbuffer_reserve_space (struct \fBevbuffer\fP *buf, ev_ssize_tsize, struct \fBevbuffer_iovec\fP *vec, intn_vec)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_reserve_space (struct \fBevbuffer\fP * buf, ev_ssize_t size, struct \fBevbuffer_iovec\fP * vec, int n_vec)"
 
 .PP
 Reserves space in the last chain or chains of an evbuffer\&. Makes space available in the last chain or chains of an evbuffer that can be arbitrarily written to by a user\&. The space does not become available for reading until it has been committed with \fBevbuffer_commit_space()\fP\&.
@@ -1012,7 +1198,7 @@ the number of provided extents, or -1 on error\&.
 .RE
 .PP
 
-.SS "struct \fBevbuffer_ptr\fP evbuffer_search (struct \fBevbuffer\fP *buffer, const char *what, size_tlen, const struct \fBevbuffer_ptr\fP *start)"
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevbuffer_ptr\fP evbuffer_search (struct \fBevbuffer\fP * buffer, const char * what, size_t len, const struct \fBevbuffer_ptr\fP * start)"
 
 .PP
 Search for a string within an evbuffer\&. 
@@ -1034,7 +1220,7 @@ a struct \fBevbuffer_ptr\fP whose 'pos' field has the offset of the first occurr
 .RE
 .PP
 
-.SS "struct \fBevbuffer_ptr\fP evbuffer_search_eol (struct \fBevbuffer\fP *buffer, struct \fBevbuffer_ptr\fP *start, size_t *eol_len_out, enum \fBevbuffer_eol_style\fPeol_style)"
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevbuffer_ptr\fP evbuffer_search_eol (struct \fBevbuffer\fP * buffer, struct \fBevbuffer_ptr\fP * start, size_t * eol_len_out, enum \fBevbuffer_eol_style\fP eol_style)"
 
 .PP
 Search for an end-of-line string within an evbuffer\&. 
@@ -1056,7 +1242,7 @@ a struct \fBevbuffer_ptr\fP whose 'pos' field has the offset of the first occurr
 .RE
 .PP
 
-.SS "struct \fBevbuffer_ptr\fP evbuffer_search_range (struct \fBevbuffer\fP *buffer, const char *what, size_tlen, const struct \fBevbuffer_ptr\fP *start, const struct \fBevbuffer_ptr\fP *end)"
+.SS "EVENT2_EXPORT_SYMBOL struct \fBevbuffer_ptr\fP evbuffer_search_range (struct \fBevbuffer\fP * buffer, const char * what, size_t len, const struct \fBevbuffer_ptr\fP * start, const struct \fBevbuffer_ptr\fP * end)"
 
 .PP
 Search for a string within part of an evbuffer\&. 
@@ -1080,7 +1266,7 @@ a struct \fBevbuffer_ptr\fP whose 'pos' field has the offset of the first occurr
 .RE
 .PP
 
-.SS "int evbuffer_set_flags (struct \fBevbuffer\fP *buf, ev_uint64_tflags)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_set_flags (struct \fBevbuffer\fP * buf, ev_uint64_t flags)"
 
 .PP
 Change the flags that are set for an evbuffer by adding more\&. 
@@ -1100,7 +1286,7 @@ Change the flags that are set for an evbuffer by adding more\&.
 .RE
 .PP
 
-.SS "int evbuffer_unfreeze (struct \fBevbuffer\fP *buf, intat_front)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_unfreeze (struct \fBevbuffer\fP * buf, int at_front)"
 
 .PP
 Re-enable calls that modify an evbuffer\&. 
@@ -1118,11 +1304,11 @@ Re-enable calls that modify an evbuffer\&.
 .RE
 .PP
 
-.SS "void evbuffer_unlock (struct \fBevbuffer\fP *buf)"
+.SS "EVENT2_EXPORT_SYMBOL void evbuffer_unlock (struct \fBevbuffer\fP * buf)"
 
 .PP
 Release the lock on an evbuffer\&. Has no effect if locking was not enabled with evbuffer_enable_locking\&. 
-.SS "int evbuffer_write (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fPfd)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_write (struct \fBevbuffer\fP * buffer, \fBevutil_socket_t\fP fd)"
 
 .PP
 Write the contents of an evbuffer to a file descriptor\&. The evbuffer will be drained after the bytes have been successfully written\&.
@@ -1145,7 +1331,7 @@ the number of bytes written, or -1 if an error occurred
 .RE
 .PP
 
-.SS "int evbuffer_write_atmost (struct \fBevbuffer\fP *buffer, \fBevutil_socket_t\fPfd, ev_ssize_thowmuch)"
+.SS "EVENT2_EXPORT_SYMBOL int evbuffer_write_atmost (struct \fBevbuffer\fP * buffer, \fBevutil_socket_t\fP fd, ev_ssize_t howmuch)"
 
 .PP
 Write some of the contents of an evbuffer to a file descriptor\&. The evbuffer will be drained after the bytes have been successfully written\&.

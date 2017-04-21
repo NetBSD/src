@@ -1,4 +1,4 @@
-/*	$NetBSD: test_dbinfo.c,v 1.1.1.1 2011/04/13 18:14:42 elric Exp $	*/
+/*	$NetBSD: test_dbinfo.c,v 1.1.1.1.32.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -40,8 +40,8 @@ static int help_flag;
 static int version_flag;
 
 struct getargs args[] = {
-    { "help",		'h',	arg_flag,   &help_flag },
-    { "version",	0,	arg_flag,   &version_flag }
+    { "help",		'h',	arg_flag,   &help_flag,    NULL, NULL },
+    { "version",	0,	arg_flag,   &version_flag, NULL, NULL }
 };
 
 static int num_args = sizeof(args) / sizeof(args[0]);

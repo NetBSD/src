@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_trigger.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_trigger.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -71,7 +71,7 @@ struct inet_trigger {
 
 /* inet_trigger_event - disconnect from peer */
 
-static void inet_trigger_event(int event, char *context)
+static void inet_trigger_event(int event, void *context)
 {
     struct inet_trigger *ip = (struct inet_trigger *) context;
     static const char *myname = "inet_trigger_event";
@@ -86,7 +86,7 @@ static void inet_trigger_event(int event, char *context)
     if (close(ip->fd) < 0)
 	msg_warn("%s: close %s: %m", myname, ip->service);
     myfree(ip->service);
-    myfree((char *) ip);
+    myfree((void *) ip);
 }
 
 
@@ -126,7 +126,7 @@ int     inet_trigger(const char *service, const char *buf, ssize_t len, int time
      * Wakeup when the peer disconnects, or when we lose patience.
      */
     if (timeout > 0)
-	event_request_timer(inet_trigger_event, (char *) ip, timeout + 100);
-    event_enable_read(fd, inet_trigger_event, (char *) ip);
+	event_request_timer(inet_trigger_event, (void *) ip, timeout + 100);
+    event_enable_read(fd, inet_trigger_event, (void *) ip);
     return (0);
 }

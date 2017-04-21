@@ -1,10 +1,10 @@
-/*	$NetBSD: suffixmassage.c,v 1.1.1.4 2014/05/28 09:58:50 tron Exp $	*/
+/*	$NetBSD: suffixmassage.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* suffixmassage.c - massages ldap backend dns */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,9 @@
  * 
  * 4. This notice may not be removed or altered.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: suffixmassage.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 

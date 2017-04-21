@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.10 2017/01/14 06:36:52 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.10.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.10 2017/01/14 06:36:52 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.10.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -202,16 +202,19 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 #ifdef PT_SETFPREGS
 	case PT_SETFPREGS:
 #endif
-#ifdef __HAVE_PTRACE_WATCHPOINTS
-	case PT_READ_WATCHPOINT:
-	case PT_WRITE_WATCHPOINT:
-	case PT_COUNT_WATCHPOINTS:
+#ifdef PT_GETDBREGS
+	case PT_GETDBREGS:
+#endif
+#ifdef PT_SETDBREGS
+	case PT_SETDBREGS:
 #endif
 	case PT_SET_EVENT_MASK:
 	case PT_GET_EVENT_MASK:
 	case PT_GET_PROCESS_STATE:
 	case PT_SET_SIGINFO:
 	case PT_GET_SIGINFO:
+	case PT_SET_SIGMASK:
+	case PT_GET_SIGMASK:
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
@@ -226,6 +229,8 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 #ifdef PT_STEP
 	case PT_STEP:
+	case PT_SETSTEP:
+	case PT_CLEARSTEP:
 #endif
 	case PT_CONTINUE:
 	case PT_KILL:
@@ -234,6 +239,8 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_SYSCALL:
 	case PT_SYSCALLEMU:
 	case PT_DUMPCORE:
+	case PT_RESUME:
+	case PT_SUSPEND:
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -292,9 +299,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 {
 	struct proc *p = l->l_proc;
 	struct lwp *lt;
-#ifdef PT_STEP
 	struct lwp *lt2;
-#endif
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
@@ -303,9 +308,6 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	struct ptrace_state ps;
 	struct ptrace_lwpinfo pl;
 	struct ptrace_siginfo psi;
-#ifdef __HAVE_PTRACE_WATCHPOINTS
-	struct ptrace_watchpoint pw;
-#endif
 	struct vmspace *vm;
 	int error, write, tmp, pheld;
 	int signo = 0;
@@ -404,6 +406,10 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
 	case  PT_IO:
+	case  PT_SET_SIGINFO:
+	case  PT_GET_SIGINFO:
+	case  PT_SET_SIGMASK:
+	case  PT_GET_SIGMASK:
 #ifdef PT_GETREGS
 	case  PT_GETREGS:
 #endif
@@ -416,10 +422,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 #endif
-#ifdef __HAVE_PTRACE_WATCHPOINTS
-	case  PT_READ_WATCHPOINT:
-	case  PT_WRITE_WATCHPOINT:
-	case  PT_COUNT_WATCHPOINTS:
+#ifdef PT_GETDBREGS
+	case  PT_GETDBREGS:
+#endif
+#ifdef PT_SETDBREGS
+	case  PT_SETDBREGS:
 #endif
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
@@ -447,12 +454,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_DUMPCORE:
 #ifdef PT_STEP
 	case  PT_STEP:
+	case  PT_SETSTEP:
+	case  PT_CLEARSTEP:
 #endif
 	case  PT_SET_EVENT_MASK:
 	case  PT_GET_EVENT_MASK:
 	case  PT_GET_PROCESS_STATE:
-	case  PT_SET_SIGINFO:
-	case  PT_GET_SIGINFO:
+	case  PT_RESUME:
+	case  PT_SUSPEND:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -527,6 +536,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	switch (req) {
 #ifdef PT_STEP
 	case PT_STEP:
+	case PT_SETSTEP:
+	case PT_CLEARSTEP:
 #endif
 	case PT_CONTINUE:
 	case PT_DETACH:
@@ -619,15 +630,13 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		case PIOD_READ_AUXV:
 			req = PT_READ_D;
 			uio.uio_rw = UIO_READ;
-			tmp = t->p_execsw->es_arglen * PROC_PTRSZ(t);
+			tmp = t->p_execsw->es_arglen;
 			if (uio.uio_offset > tmp)
 				return EIO;
 			if (uio.uio_resid > tmp - uio.uio_offset)
 				uio.uio_resid = tmp - uio.uio_offset;
 			piod.piod_len = iov.iov_len = uio.uio_resid;
 			error = process_auxv_offset(t, &uio);
-			if (error)
-				return error;
 			break;
 		default:
 			error = EINVAL;
@@ -753,6 +762,34 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			break;
 		}
 
+		/* Prevent process deadlock */
+		if (resume_all) {
+#ifdef PT_STEP
+			if (req == PT_STEP) {
+				if (lt->l_flag & LW_WSUSPEND) {
+					error = EDEADLK;
+					break;
+				}
+			} else
+#endif
+			{
+				error = EDEADLK;
+				LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
+					if ((lt2->l_flag & LW_WSUSPEND) == 0) {
+						error = 0;
+						break;
+					}
+				}
+				if (error != 0)
+					break;
+			}
+		} else {
+			if (lt->l_flag & LW_WSUSPEND) {
+				error = EDEADLK;
+				break;
+			}
+		}
+
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)addr != (int *)1) {
 			error = process_set_pc(lt, addr);
@@ -766,13 +803,18 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		 * the requested thread, and clear it for other threads.
 		 */
 		LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
-			if (lt != lt2) {
+			if (ISSET(lt2->l_pflag, LP_SINGLESTEP)) {
+				lwp_lock(lt2);
+				process_sstep(lt2, 1);
+				lwp_unlock(lt2);
+			} else if (lt != lt2) {
 				lwp_lock(lt2);
 				process_sstep(lt2, 0);
 				lwp_unlock(lt2);
 			}
 		}
-		error = process_sstep(lt, req == PT_STEP);
+		error = process_sstep(lt,
+		    ISSET(lt->l_pflag, LP_SINGLESTEP) || req == PT_STEP);
 		if (error)
 			break;
 #endif
@@ -787,6 +829,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 			/* not being traced any more */
 			t->p_opptr = NULL;
+
+			/* clear single step */
+			LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
+				CLR(lt2->l_pflag, LP_SINGLESTEP);
+			}
+			CLR(lt->l_pflag, LP_SINGLESTEP);
 		}
 	sendsig:
 		t->p_fpid = 0;
@@ -830,6 +878,36 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 		SET(t->p_slflag, PSL_SYSCALLEMU);
 		break;
+
+#ifdef PT_STEP
+	case  PT_SETSTEP:
+		write = 1;
+
+	case  PT_CLEARSTEP:
+		/* write = 0 done above. */
+
+		tmp = data;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+
+		if (ISSET(lt->l_flag, LW_SYSTEM))
+			error = EINVAL;
+		else if (write)
+			SET(lt->l_pflag, LP_SINGLESTEP);
+		else
+			CLR(lt->l_pflag, LP_SINGLESTEP);
+		break;
+#endif
 
 	case  PT_KILL:
 		/* just send the process a KILL signal. */
@@ -966,15 +1044,18 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (lt) {
 			lwp_addref(lt);
 			pl.pl_lwpid = lt->l_lid;
+
+			if (lt->l_flag & LW_WSUSPEND)
+				pl.pl_event = PL_EVENT_SUSPENDED;
 			/*
 			 * If we match the lwp, or it was sent to every lwp,
 			 * we set PL_EVENT_SIGNAL.
 			 * XXX: ps_lwp == 0 means everyone and noone, so
 			 * check ps_signo too.
 			 */
-			if (lt->l_lid == t->p_sigctx.ps_lwp
-			    || (t->p_sigctx.ps_lwp == 0 &&
-			        t->p_sigctx.ps_info._signo))
+			else if (lt->l_lid == t->p_sigctx.ps_lwp
+			         || (t->p_sigctx.ps_lwp == 0 &&
+			             t->p_sigctx.ps_info._signo))
 				pl.pl_event = PL_EVENT_SIGNAL;
 		}
 		mutex_exit(t->p_lock);
@@ -1039,6 +1120,67 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		if (error)
 			break;
 
+		break;
+
+	case  PT_SET_SIGMASK:
+		write = 1;
+
+	case  PT_GET_SIGMASK:
+		/* write = 0 done above. */
+
+		tmp = data;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+
+		if (lt->l_flag & LW_SYSTEM)
+			error = EINVAL;
+		else if (write == 1) {
+			error = copyin(addr, &lt->l_sigmask, sizeof(sigset_t));
+			sigminusset(&sigcantmask, &lt->l_sigmask);
+		} else
+			error = copyout(&lt->l_sigmask, addr, sizeof(sigset_t));
+			
+		break;
+
+	case  PT_RESUME:
+		write = 1;
+
+	case  PT_SUSPEND:
+		/* write = 0 done above. */
+
+		tmp = data;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+		if (lt->l_flag & LW_SYSTEM) {
+			error = EINVAL;
+		} else {
+			lwp_lock(lt);
+			if (write == 0)
+				lt->l_flag |= LW_WSUSPEND;
+			else
+				lt->l_flag &= ~LW_WSUSPEND;
+			lwp_unlock(lt);
+		}
 		break;
 
 #ifdef PT_SETREGS
@@ -1128,29 +1270,17 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		break;
 #endif
 
-#ifdef __HAVE_PTRACE_WATCHPOINTS
-		/*
-		 * The "write" variable is used as type of operation.
-		 * Possible values:
-		 *	0 - return the number of supported hardware watchpoints
-		 *	1 - set new watchpoint value
-		 *	2 - get existing watchpoint image
-		 */
-	case  PT_WRITE_WATCHPOINT:
+#ifdef PT_SETDBREGS
+	case  PT_SETDBREGS:
 		write = 1;
-	case  PT_READ_WATCHPOINT:
-		/* write = 0 done above */
-
-		if (data != sizeof(pw)) {
-			DPRINTF(("ptrace(%d): %d != %zu\n", req,
-			    data, sizeof(pe)));
-			error = EINVAL;
-			break;
-		}
-		error = copyin(addr, &pw, sizeof(pw));
-		if (error)
-			break;
-		tmp = pw.pw_lwpid;
+		/*FALLTHROUGH*/
+#endif
+#ifdef PT_GETDBREGS
+	case  PT_GETDBREGS:
+		/* write = 0 done above. */
+#endif
+#if defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
+		tmp = data;
 		if (tmp != 0 && t->p_nlwps > 1) {
 			lwp_delref(lt);
 			mutex_enter(t->p_lock);
@@ -1163,15 +1293,23 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			lwp_addref(lt);
 			mutex_exit(t->p_lock);
 		}
-		++write;
-	case  PT_COUNT_WATCHPOINTS:
-		if (!process_validwatchpoint(lt))
+		if (!process_validdbregs(lt))
 			error = EINVAL;
 		else {
-			lwp_lock(lt);
-			error = ptm->ptm_dowatchpoint(l, lt, write, &pw, addr,
-			    retval);
-			lwp_unlock(lt);
+			error = proc_vmspace_getref(p, &vm);
+			if (error)
+				break;
+			iov.iov_base = addr;
+			iov.iov_len = PROC_DBREGSZ(p);
+			uio.uio_iov = &iov;
+			uio.uio_iovcnt = 1;
+			uio.uio_offset = 0;
+			uio.uio_resid = iov.iov_len;
+			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+			uio.uio_vmspace = vm;
+
+			error = ptm->ptm_dodbregs(l, lt, &uio);
+			uvmspace_free(vm);
 		}
 		break;
 #endif
@@ -1293,6 +1431,55 @@ process_validfpregs(struct lwp *l)
 #endif
 }
 
+int
+process_dodbregs(struct lwp *curl /*tracer*/,
+    struct lwp *l /*traced*/,
+    struct uio *uio)
+{
+#if defined(PT_GETDBREGS) || defined(PT_SETDBREGS)
+	int error;
+	struct dbreg r;
+	char *kv;
+	size_t kl;
+
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
+		return EINVAL;
+
+	kl = sizeof(r);
+	kv = (char *)&r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	error = process_read_dbregs(l, &r, &kl);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_stat != LSSTOP)
+			error = EBUSY;
+		else
+			error = process_write_dbregs(l, &r, kl);
+	}
+	uio->uio_offset = 0;
+	return error;
+#else
+	return EINVAL;
+#endif
+}
+
+int
+process_validdbregs(struct lwp *l)
+{
+
+#if defined(PT_SETDBREGS) || defined(PT_GETDBREGS)
+	return (l->l_flag & LW_SYSTEM) == 0;
+#else
+	return 0;
+#endif
+}
+
 static int
 process_auxv_offset(struct proc *p, struct uio *uio)
 {
@@ -1317,45 +1504,6 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 		uio->uio_resid = off - uio->uio_offset;
 #endif
 	return 0;
-}
-
-int
-process_dowatchpoint(struct lwp *curl /*tracer*/, struct lwp *l /*traced*/,
-    int operation, struct ptrace_watchpoint *pw, void *addr,
-    register_t *retval)
-{
-
-#ifdef __HAVE_PTRACE_WATCHPOINTS
-	int error;
-
-	KASSERT(operation >= 0);
-	KASSERT(operation <= 2);
-
-	switch (operation) {
-	case 0:
-		return process_count_watchpoints(l, retval);
-	case 1:
-		error = process_read_watchpoint(l, pw);
-		if (error)
-			return error;
-		return copyout(pw, addr, sizeof(*pw));
-	default:
-		return process_write_watchpoint(l, pw);
-	}
-#else
-	return EINVAL;
-#endif
-}
-
-int
-process_validwatchpoint(struct lwp *l)
-{
-
-#ifdef __HAVE_PTRACE_WATCHPOINTS
-	return (l->l_flag & LW_SYSTEM) == 0;
-#else
-	return 0;
-#endif
 }
 #endif /* PTRACE */
 

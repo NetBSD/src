@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/07/03 17:07:38 abhinav Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2017/04/21 16:53:04 bouyer Exp $
 
 .include <bsd.init.mk>
 
@@ -10,6 +10,7 @@ SQLITE_CHECKPOINT_PASSIVE.3 \
 SQLITE_CONFIG_SINGLETHREAD.3 \
 SQLITE_CREATE_INDEX.3 \
 SQLITE_DBCONFIG_LOOKASIDE.3 \
+SQLITE_DBCONFIG_MAINDBNAME.3 \
 SQLITE_DBSTATUS_LOOKASIDE_USED.3 \
 SQLITE_DENY.3 \
 SQLITE_DETERMINISTIC.3 \
@@ -32,12 +33,14 @@ SQLITE_STATUS_MEMORY_USED.3 \
 SQLITE_STMTSTATUS_FULLSCAN_STEP.3 \
 SQLITE_SYNC_NORMAL.3 \
 SQLITE_TESTCTRL_FIRST.3 \
+SQLITE_TRACE_STMT.3 \
 SQLITE_UTF8.3 \
 SQLITE_VERSION.3 \
 SQLITE_VTAB_CONSTRAINT_SUPPORT.3 \
 sqlite3.3 \
 sqlite3_aggregate_context.3 \
 sqlite3_aggregate_count.3 \
+sqlite3_api_routines.3 \
 sqlite3_auto_extension.3 \
 sqlite3_backup.3 \
 sqlite3_backup_init.3 \
@@ -55,6 +58,7 @@ sqlite3_blob_write.3 \
 sqlite3_busy_handler.3 \
 sqlite3_busy_timeout.3 \
 sqlite3_cancel_auto_extension.3 \
+sqlite3_changegroup.3 \
 sqlite3_changes.3 \
 sqlite3_changeset_iter.3 \
 sqlite3_clear_bindings.3 \
@@ -137,6 +141,7 @@ sqlite3_snapshot_cmp.3 \
 sqlite3_snapshot_free.3 \
 sqlite3_snapshot_get.3 \
 sqlite3_snapshot_open.3 \
+sqlite3_snapshot_recover.3 \
 sqlite3_soft_heap_limit.3 \
 sqlite3_soft_heap_limit64.3 \
 sqlite3_sql.3 \
@@ -158,6 +163,7 @@ sqlite3_test_control.3 \
 sqlite3_threadsafe.3 \
 sqlite3_total_changes.3 \
 sqlite3_trace.3 \
+sqlite3_trace_v2.3 \
 sqlite3_unlock_notify.3 \
 sqlite3_update_hook.3 \
 sqlite3_uri_parameter.3 \
@@ -177,7 +183,10 @@ sqlite3_wal_autocheckpoint.3 \
 sqlite3_wal_checkpoint.3 \
 sqlite3_wal_checkpoint_v2.3 \
 sqlite3_wal_hook.3 \
+sqlite3changegroup_add.3 \
+sqlite3changegroup_delete.3 \
 sqlite3changegroup_new.3 \
+sqlite3changegroup_output.3 \
 sqlite3changeset_apply.3 \
 sqlite3changeset_apply_strm.3 \
 sqlite3changeset_concat.3 \

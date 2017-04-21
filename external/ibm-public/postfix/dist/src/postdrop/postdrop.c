@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.4 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.4.16.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -96,6 +96,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -137,8 +142,10 @@
 #include <cleanup_user.h>
 #include <record.h>
 #include <rec_type.h>
+#include <mail_dict.h>
 #include <user_acl.h>
 #include <rec_attr_map.h>
+#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -306,15 +313,17 @@ int     main(int argc, char **argv)
      * perform some sanity checks on the input.
      */
     mail_conf_read();
-    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
-	msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
+    /* Re-evaluate mail_task() after reading main.cf. */
+    msg_syslog_init(mail_task("postdrop"), LOG_PID, LOG_FACILITY);
     get_mail_conf_str_table(str_table);
 
     /*
      * Mail submission access control. Should this be in the user-land gate,
      * or in the daemon process?
      */
-    if ((errstr = check_user_acl_byuid(var_submit_acl, uid)) != 0)
+    mail_dict_init();
+    if ((errstr = check_user_acl_byuid(VAR_SUBMIT_ACL, var_submit_acl,
+				       uid)) != 0)
 	msg_fatal("User %s(%ld) is not allowed to submit mail",
 		  errstr, (long) uid);
 
@@ -329,7 +338,7 @@ int     main(int argc, char **argv)
      * This program is installed with setgid privileges. Strip the process
      * environment so that we don't have to trust the C library.
      */
-    import_env = argv_split(var_import_environ, ", \t\r\n");
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
     clean_env(import_env->argv);
     argv_free(import_env);
 
@@ -373,7 +382,7 @@ int     main(int argc, char **argv)
     dst = mail_stream_file(MAIL_QUEUE_MAILDROP, MAIL_CLASS_PUBLIC,
 			   var_pickup_service, 0444);
     attr_print(VSTREAM_OUT, ATTR_FLAG_NONE,
-	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, dst->id,
+	       SEND_ATTR_STR(MAIL_ATTR_QUEUEID, dst->id),
 	       ATTR_TYPE_END);
     vstream_fflush(VSTREAM_OUT);
     postdrop_path = mystrdup(VSTREAM_PATH(dst->stream));
@@ -392,7 +401,7 @@ int     main(int argc, char **argv)
      * Allow attribute records if the attribute specifies the MIME body type
      * (sendmail -B).
      */
-    vstream_control(VSTREAM_IN, VSTREAM_CTL_PATH, "stdin", VSTREAM_CTL_END);
+    vstream_control(VSTREAM_IN, CA_VSTREAM_CTL_PATH("stdin"), CA_VSTREAM_CTL_END);
     buf = vstring_alloc(100);
     expected = segment_info;
     /* Override time information from the untrusted caller. */
@@ -515,8 +524,8 @@ int     main(int argc, char **argv)
      * Send the completion status to the caller and terminate.
      */
     attr_print(VSTREAM_OUT, ATTR_FLAG_NONE,
-	       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
-	       ATTR_TYPE_STR, MAIL_ATTR_WHY, "",
+	       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
+	       SEND_ATTR_STR(MAIL_ATTR_WHY, ""),
 	       ATTR_TYPE_END);
     vstream_fflush(VSTREAM_OUT);
     exit(status);

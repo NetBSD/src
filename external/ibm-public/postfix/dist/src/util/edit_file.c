@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: edit_file.c,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -184,7 +184,7 @@
 #define EDIT_FILE_FREE(ep) do { \
 	myfree((ep)->final_path); \
 	myfree((ep)->tmp_path); \
-	myfree((char *) (ep)); \
+	myfree((void *) (ep)); \
     } while (0)
 
 /* edit_file_open - open and lock file with deterministic temporary pathname */
@@ -225,7 +225,7 @@ EDIT_FILE *edit_file_open(const char *path, int flags, mode_t mode)
 	 * should replace the stat() call below by lstat().
 	 */
 	if ((ep->tmp_fp = vstream_fopen(ep->tmp_path, flags & ~(O_TRUNC),
-				    EDIT_FILE_MODE)) == 0) {
+					EDIT_FILE_MODE)) == 0) {
 	    saved_errno = errno;
 	    EDIT_FILE_FREE(ep);
 	    errno = saved_errno;

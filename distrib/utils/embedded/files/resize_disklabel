@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: resize_disklabel,v 1.1 2015/04/06 20:19:28 jmcneill Exp $
+# $NetBSD: resize_disklabel,v 1.1.6.1 2017/04/21 16:51:15 bouyer Exp $
 #
 
 # PROVIDE: resize_disklabel
@@ -31,6 +31,30 @@ get_rawpart_sectors()
 	disk=$1
 	rawpart=$2
 	/sbin/disklabel $disk | grep "^ $rawpart:" | awk '{ print $2; }'
+}
+
+grow_mbrpart()
+{
+	disk=$1
+	rawpart=$(get_rawpart)
+
+	eval $(/sbin/fdisk -S $disk)
+	if [ ! "$PART1ID" = "169" ]; then
+		warn "No NetBSD partition found in MBR partition #1"
+		return
+	fi
+
+	ts=$(($(get_total_sectors $disk) - ${PART1START}))
+	rs=${PART1SIZE}
+
+	if [ "$ts" = "$rs" ]; then
+		return
+	fi
+
+	oldsize=$(($rs * 512 / 1024 / 1024))
+	newsize=$(($ts * 512 / 1024 / 1024))
+	echo "Growing $disk MBR partition #1 (${oldsize}MB -> ${newsize}MB)"
+	/sbin/fdisk -f -u -1 -s 169/${PART1START}/${ts} ${disk}
 }
 
 grow_disklabel()
@@ -64,6 +88,7 @@ resize_disklabel_start()
 		return
 	fi
 
+	grow_mbrpart "${resize_disklabel_disk}"
 	grow_disklabel "${resize_disklabel_disk}" "${resize_disklabel_part}"
 }
 

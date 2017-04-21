@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.12 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: userret.h,v 1.12.2.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,18 +74,13 @@ static __inline void userret(struct lwp *);
 static __inline void
 userret(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	/*
-	 * Never mix debug registers with single step, while technically
-	 * possible on x86 CPUs, it adds unnecessary complications we do
-	 * not want to handle it.
-	 */
-	if ((l->l_md.md_regs->tf_eflags & PSL_T) == 0 &&
-	    l->l_md.md_flags & MDL_X86_HW_WATCHPOINTS)
-		set_x86_hw_watchpoints(l);
+	if (pcb->pcb_dbregs)
+		x86_dbregs_set(l);
 	else
-		clear_x86_hw_watchpoints();
+		x86_dbregs_clear(l);
 }

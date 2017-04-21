@@ -1,4 +1,4 @@
-/*	$NetBSD: scache_single.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: scache_single.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -82,8 +82,8 @@ typedef struct {
     SCACHE_SINGLE_DEST dest;		/* one cached binding */
 } SCACHE_SINGLE;
 
-static void scache_single_expire_endp(int, char *);
-static void scache_single_expire_dest(int, char *);
+static void scache_single_expire_endp(int, void *);
+static void scache_single_expire_dest(int, void *);
 
 #define SCACHE_SINGLE_ENDP_BUSY(sp)	(VSTRING_LEN(sp->endp.endp_label) > 0)
 #define SCACHE_SINGLE_DEST_BUSY(sp)	(VSTRING_LEN(sp->dest.dest_label) > 0)
@@ -99,7 +99,7 @@ static void scache_single_free_endp(SCACHE_SINGLE *sp)
     if (msg_verbose)
 	msg_info("%s: %s", myname, STR(sp->endp.endp_label));
 
-    event_cancel_timer(scache_single_expire_endp, (char *) sp);
+    event_cancel_timer(scache_single_expire_endp, (void *) sp);
     if (sp->endp.fd >= 0 && close(sp->endp.fd) < 0)
 	msg_warn("close session endpoint %s: %m", STR(sp->endp.endp_label));
     VSTRING_RESET(sp->endp.endp_label);
@@ -111,7 +111,7 @@ static void scache_single_free_endp(SCACHE_SINGLE *sp)
 
 /* scache_single_expire_endp - discard expired session */
 
-static void scache_single_expire_endp(int unused_event, char *context)
+static void scache_single_expire_endp(int unused_event, void *context)
 {
     SCACHE_SINGLE *sp = (SCACHE_SINGLE *) context;
 
@@ -136,7 +136,7 @@ static void scache_single_save_endp(SCACHE *scache, int endp_ttl,
     vstring_strcpy(sp->endp.endp_label, endp_label);
     vstring_strcpy(sp->endp.endp_prop, endp_prop);
     sp->endp.fd = fd;
-    event_request_timer(scache_single_expire_endp, (char *) sp, endp_ttl);
+    event_request_timer(scache_single_expire_endp, (void *) sp, endp_ttl);
 
     if (msg_verbose)
 	msg_info("%s: %s fd=%d", myname, endp_label, fd);
@@ -180,7 +180,7 @@ static void scache_single_free_dest(SCACHE_SINGLE *sp)
 	msg_info("%s: %s -> %s", myname, STR(sp->dest.dest_label),
 		 STR(sp->dest.endp_label));
 
-    event_cancel_timer(scache_single_expire_dest, (char *) sp);
+    event_cancel_timer(scache_single_expire_dest, (void *) sp);
     VSTRING_RESET(sp->dest.dest_label);
     VSTRING_TERMINATE(sp->dest.dest_label);
     VSTRING_RESET(sp->dest.dest_prop);
@@ -191,7 +191,7 @@ static void scache_single_free_dest(SCACHE_SINGLE *sp)
 
 /* scache_single_expire_dest - discard expired destination/endpoint binding */
 
-static void scache_single_expire_dest(int unused_event, char *context)
+static void scache_single_expire_dest(int unused_event, void *context)
 {
     SCACHE_SINGLE *sp = (SCACHE_SINGLE *) context;
 
@@ -226,7 +226,7 @@ static void scache_single_save_dest(SCACHE *scache, int dest_ttl,
 	vstring_strcpy(sp->dest.dest_prop, dest_prop);
 	vstring_strcpy(sp->dest.endp_label, endp_label);
     }
-    event_request_timer(scache_single_expire_dest, (char *) sp, dest_ttl);
+    event_request_timer(scache_single_expire_dest, (void *) sp, dest_ttl);
 
     if (msg_verbose)
 	msg_info("%s: %s -> %s%s", myname, dest_label, endp_label,
@@ -286,7 +286,7 @@ static void scache_single_free(SCACHE *scache)
     vstring_free(sp->dest.dest_prop);
     vstring_free(sp->dest.endp_label);
 
-    myfree((char *) sp);
+    myfree((void *) sp);
 }
 
 /* scache_single_create - initialize */

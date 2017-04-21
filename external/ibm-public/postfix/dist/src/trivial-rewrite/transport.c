@@ -1,4 +1,4 @@
-/*	$NetBSD: transport.c,v 1.1.1.3 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: transport.c,v 1.1.1.3.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -101,7 +101,8 @@ TRANSPORT_INFO *transport_pre_init(const char *transport_maps_name,
     tp = (TRANSPORT_INFO *) mymalloc(sizeof(*tp));
     tp->transport_path = maps_create(transport_maps_name, transport_maps,
 				     DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
-				     | DICT_FLAG_NO_REGSUB);
+				     | DICT_FLAG_NO_REGSUB
+				     | DICT_FLAG_UTF8_REQUEST);
     tp->wildcard_channel = tp->wildcard_nexthop = 0;
     tp->wildcard_errno = 0;
     tp->expire = 0;
@@ -126,7 +127,7 @@ void    transport_free(TRANSPORT_INFO *tp)
 	vstring_free(tp->wildcard_channel);
     if (tp->wildcard_nexthop)
 	vstring_free(tp->wildcard_nexthop);
-    myfree((char *) tp);
+    myfree((void *) tp);
 }
 
 /* update_entry - update from transport table entry */
@@ -154,7 +155,8 @@ static void update_entry(const char *new_channel, const char *new_nexthop,
 	vstring_strcpy(channel, new_channel);
 	if (*new_nexthop != 0)
 	    vstring_strcpy(nexthop, new_nexthop);
-	else if (strcmp(STR(channel), MAIL_SERVICE_ERROR) != 0)
+	else if (strcmp(STR(channel), MAIL_SERVICE_ERROR) != 0
+		 && strcmp(STR(channel), MAIL_SERVICE_RETRY) != 0)
 	    vstring_strcpy(nexthop, rcpt_domain);
 	else
 	    vstring_strcpy(nexthop, "Address is undeliverable");

@@ -1,4 +1,4 @@
-.\"	$NetBSD: transport.5,v 1.1.1.2 2010/06/17 18:06:28 tron Exp $
+.\"	$NetBSD: transport.5,v 1.1.1.2.32.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH TRANSPORT 5 
 .ad
@@ -12,18 +12,18 @@ Postfix transport table format
 .nf
 \fBpostmap /etc/postfix/transport\fR
 
-\fBpostmap -q "\fIstring\fB" /etc/postfix/transport\fR
+\fBpostmap \-q "\fIstring\fB" /etc/postfix/transport\fR
 
-\fBpostmap -q - /etc/postfix/transport <\fIinputfile\fR
+\fBpostmap \-q \- /etc/postfix/transport <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
 The optional \fBtransport\fR(5) table specifies a mapping from email
-addresses to message delivery transports and next-hop destinations.
+addresses to message delivery transports and next\-hop destinations.
 Message delivery transports such as \fBlocal\fR or \fBsmtp\fR
-are defined in the \fBmaster.cf\fR file, and next-hop
+are defined in the \fBmaster.cf\fR file, and next\-hop
 destinations are typically hosts or domain names. The
-table is searched by the \fBtrivial-rewrite\fR(8) daemon.
+table is searched by the \fBtrivial\-rewrite\fR(8) daemon.
 
 This mapping overrides the default \fItransport\fR:\fInexthop\fR
 selection that is built into Postfix:
@@ -60,11 +60,11 @@ file after changing the corresponding transport table.
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
-Alternatively, the table can be provided as a regular-expression
+Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In those case, the lookups
+can be directed to TCP\-based server. In those case, the lookups
 are done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
+"REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
 .na
 .nf
@@ -84,10 +84,10 @@ The input format for the \fBpostmap\fR(1) command is as follows:
 When \fIpattern\fR matches the recipient address or domain, use the
 corresponding \fIresult\fR.
 .IP "blank lines and comments"
-Empty lines and whitespace-only lines are ignored, as
-are lines whose first non-whitespace character is a `#'.
-.IP "multi-line text"
-A logical line starts with non-whitespace text. A line that
+Empty lines and whitespace\-only lines are ignored, as
+are lines whose first non\-whitespace character is a `#'.
+.IP "multi\-line text"
+A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .PP
 The \fIpattern\fR specifies an email address, a domain name, or
@@ -122,12 +122,12 @@ string \fBtransport_maps\fR is not listed in the
 Otherwise, a domain name matches itself and its subdomains.
 .IP "\fB*\fI transport\fR:\fInexthop\fR"
 The special pattern \fB*\fR represents any address (i.e. it
-functions as the wild-card pattern, and is unique to Postfix
+functions as the wild\-card pattern, and is unique to Postfix
 transport tables).
 .PP
 Note 1: the null recipient address is looked up as
 \fB$empty_address_recipient\fR@\fB$myhostname\fR (default:
-mailer-daemon@hostname).
+mailer\-daemon@hostname).
 
 Note 2: \fIuser@domain\fR or \fIuser+extension@domain\fR
 lookup is available in Postfix 2.0 and later.
@@ -146,7 +146,7 @@ The transport field specifies the name of a mail delivery transport
 \fBmaster.cf\fR file).
 
 The interpretation of the nexthop field is transport
-dependent. In the case of SMTP, specify a service on a non-default
+dependent. In the case of SMTP, specify a service on a non\-default
 port as \fIhost\fR:\fIservice\fR, and disable MX (mail exchanger)
 DNS lookups with [\fIhost\fR] or [\fIhost\fR]:\fIport\fR. The [] form
 is required when you specify an IP address instead of a hostname.
@@ -155,10 +155,10 @@ A null \fItransport\fR and null \fInexthop\fR result means "do
 not change": use the delivery transport and nexthop information
 that would be used when the entire transport table did not exist.
 
-A non-null \fItransport\fR field with a null \fInexthop\fR field
+A non\-null \fItransport\fR field with a null \fInexthop\fR field
 resets the nexthop information to the recipient domain.
 
-A null \fItransport\fR field with non-null \fInexthop\fR field
+A null \fItransport\fR field with non\-null \fInexthop\fR field
 does not modify the transport information.
 .SH "EXAMPLES"
 .na
@@ -174,7 +174,7 @@ destinations.
 .nf
      \fB\&my.domain    :\fR
      \fB\&.my.domain   :\fR
-     \fB*            smtp:outbound-relay.my.domain\fR
+     \fB*            smtp:outbound\-relay.my.domain\fR
 .fi
 
 In order to send mail for \fBexample.com\fR and its subdomains
@@ -246,7 +246,7 @@ nor is \fIuser+foo@domain\fR looked up as \fIuser@domain\fR.
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
 
-The \fBtrivial-rewrite\fR(8) server disallows regular
+The \fBtrivial\-rewrite\fR(8) server disallows regular
 expression substitution of $1 etc. in regular expression
 lookup tables, because that could open a security hole
 (Postfix version 2.3 and later).
@@ -256,7 +256,7 @@ lookup tables, because that could open a security hole
 .ad
 .fi
 This section describes how the table lookups change when lookups
-are directed to a TCP-based server. For a description of the TCP
+are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
 This feature is not available up to and including Postfix version 2.4.
 
@@ -284,7 +284,7 @@ List of transport lookup tables.
 .SH "SEE ALSO"
 .na
 .nf
-trivial-rewrite(8), rewrite and resolve addresses
+trivial\-rewrite(8), rewrite and resolve addresses
 master(5), master.cf file format
 postconf(5), configuration parameters
 postmap(1), Postfix lookup table manager
@@ -313,3 +313,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

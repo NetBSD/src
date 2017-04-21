@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.67 2017/01/03 00:58:05 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.67.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ u_int		npf_ifmap_register(npf_t *, const char *);
 void		npf_ifmap_flush(npf_t *);
 u_int		npf_ifmap_getid(npf_t *, const ifnet_t *);
 const char *	npf_ifmap_getname(npf_t *, const u_int);
+void		npf_ifmap_copyname(npf_t *, u_int, char *, size_t);
 
 void		npf_ifaddr_sync(npf_t *, ifnet_t *);
 void		npf_ifaddr_flush(npf_t *, ifnet_t *);
@@ -339,7 +340,7 @@ void		npf_ruleset_gc(npf_ruleset_t *);
 
 npf_rule_t *	npf_ruleset_inspect(npf_cache_t *, const npf_ruleset_t *,
 		    const int, const int);
-int		npf_rule_conclude(const npf_rule_t *, int *);
+int		npf_rule_conclude(const npf_rule_t *, npf_match_info_t *);
 
 /* Rule interface. */
 npf_rule_t *	npf_rule_alloc(npf_t *, prop_dictionary_t);
@@ -366,7 +367,8 @@ npf_rproc_t *	npf_rproc_create(prop_dictionary_t);
 void		npf_rproc_acquire(npf_rproc_t *);
 void		npf_rproc_release(npf_rproc_t *);
 const char *	npf_rproc_getname(const npf_rproc_t *);
-bool		npf_rproc_run(npf_cache_t *, npf_rproc_t *, int *);
+bool		npf_rproc_run(npf_cache_t *, npf_rproc_t *,
+		    const npf_match_info_t *, int *);
 
 /* State handling. */
 bool		npf_state_init(npf_cache_t *, npf_state_t *);

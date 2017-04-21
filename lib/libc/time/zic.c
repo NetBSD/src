@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.67 2016/11/05 23:09:37 kre Exp $	*/
+/*	$NetBSD: zic.c,v 1.67.2.1 2017/04/21 16:53:09 bouyer Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,13 +10,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.67 2016/11/05 23:09:37 kre Exp $");
+__RCSID("$NetBSD: zic.c,v 1.67.2.1 2017/04/21 16:53:09 bouyer Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
-#include "locale.h"
 #include "tzfile.h"
 
+#include <fcntl.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <unistd.h>
@@ -128,9 +129,13 @@ extern int	optind;
 # define link(from, to) (errno = ENOTSUP, -1)
 #endif
 #if ! HAVE_SYMLINK
-# define lstat(name, st) stat(name, st)
+# define readlink(file, buf, size) (errno = ENOTSUP, -1)
 # define symlink(from, to) (errno = ENOTSUP, -1)
 # define S_ISLNK(m) 0
+#endif
+#ifndef AT_SYMLINK_FOLLOW
+# define linkat(fromdir, from, todir, to, flag) \
+    (itssymlink(from) ? (errno = ENOTSUP, -1) : link(from, to))
 #endif
 
 static void	addtt(zic_t starttime, int type);
@@ -149,7 +154,8 @@ static void	inrule(char ** fields, int nfields);
 static bool	inzcont(char ** fields, int nfields);
 static bool	inzone(char ** fields, int nfields);
 static bool	inzsub(char **, int, int);
-static int	itsdir(const char * name);
+static bool	itsdir(const char *);
+static bool	itssymlink(const char *);
 static bool	is_alpha(char a);
 static char	lowerit(char);
 static void	mkdirs(char const *, bool);
@@ -810,9 +816,9 @@ relname(char const *from, char const *to)
   for (i = 0; f[i] && f[i] == to[i]; i++)
     if (f[i] == '/')
       dir_len = i + 1;
-  for (; f[i]; i++)
-    dotdots += f[i] == '/' && f[i - 1] != '/';
-  taillen = i - dir_len;
+  for (; to[i]; i++)
+    dotdots += to[i] == '/' && to[i - 1] != '/';
+  taillen = strlen(f + dir_len);
   dotdotetcsize = 3 * dotdots + taillen + 1;
   if (dotdotetcsize <= linksize) {
     if (!result)
@@ -824,10 +830,18 @@ relname(char const *from, char const *to)
   return result;
 }
 
+/* Hard link FROM to TO, following any symbolic links.
+   Return 0 if successful, an error number otherwise.  */
+static int
+hardlinkerr(char const *from, char const *to)
+{
+  int r = linkat(AT_FDCWD, from, AT_FDCWD, to, AT_SYMLINK_FOLLOW);
+  return r == 0 ? 0 : errno;
+}
+
 static void
 dolink(char const *fromfield, char const *tofield, bool staysymlink)
 {
-	int fromisdir;
 	bool todirs_made = false;
 	int link_errno;
 
@@ -835,15 +849,13 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 	** We get to be careful here since
 	** there's a fair chance of root running us.
 	*/
-	fromisdir = itsdir(fromfield);
-	if (fromisdir) {
-		char const *e = strerror(fromisdir < 0 ? errno : EPERM);
+	if (itsdir(fromfield)) {
 		fprintf(stderr, _("%s: link from %s/%s failed: %s\n"),
-			progname, directory, fromfield, e);
+			progname, directory, fromfield, strerror(EPERM));
 		exit(EXIT_FAILURE);
 	}
 	if (staysymlink)
-	  staysymlink = itsdir(tofield) == 2;
+	  staysymlink = itssymlink(tofield);
 	if (remove(tofield) == 0)
 	  todirs_made = true;
 	else if (errno != ENOENT) {
@@ -852,12 +864,11 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 	    progname, directory, tofield, e);
 	  exit(EXIT_FAILURE);
 	}
-	link_errno = (staysymlink ? ENOTSUP
-		      : link(fromfield, tofield) == 0 ? 0 : errno);
+	link_errno = staysymlink ? ENOTSUP : hardlinkerr(fromfield, tofield);
 	if (link_errno == ENOENT && !todirs_made) {
 	  mkdirs(tofield, true);
 	  todirs_made = true;
-	  link_errno = link(fromfield, tofield) == 0 ? 0 : errno;
+	  link_errno = hardlinkerr(fromfield, tofield);
 	}
 	if (link_errno != 0) {
 	  bool absolute = *fromfield == '/';
@@ -947,28 +958,35 @@ static const zic_t early_time = (WORK_AROUND_GNOME_BUG_730332
 				 ? BIG_BANG
 				 : MINVAL(zic_t, TIME_T_BITS_IN_FILE));
 
-/* Return 1 if NAME is a directory, 2 if a symbolic link, 0 if
-   something else, -1 (setting errno) if trouble.  */
-static int
-itsdir(char const *name)
+/* Return true if NAME is a directory.  */
+static bool
+itsdir(const char *name)
 {
 	struct stat st;
-	int res = lstat(name, &st);
-	if (res == 0) {
+	int res = stat(name, &st);
 #ifdef S_ISDIR
-		return S_ISDIR(st.st_mode) ? 1 : S_ISLNK(st.st_mode) ? 2 : 0;
-#else
+	if (res == 0)
+		return S_ISDIR(st.st_mode) != 0;
+#endif
+	if (res == 0 || errno == EOVERFLOW) {
 		size_t n = strlen(name);
 		char *nameslashdot = emalloc(n + 3);
 		bool dir;
 		memcpy(nameslashdot, name, n);
 		strcpy(&nameslashdot[n], &"/."[! (n && name[n - 1] != '/')]);
-		dir = lstat(nameslashdot, &st) == 0;
+		dir = stat(nameslashdot, &st) == 0 || errno == EOVERFLOW;
 		free(nameslashdot);
 		return dir;
-#endif
 	}
-	return -1;
+	return false;
+}
+
+/* Return true if NAME is a symbolic link.  */
+static bool
+itssymlink(char const *name)
+{
+  char c;
+  return 0 <= readlink(name, &c, 1);
 }
 
 /*
@@ -2367,6 +2385,9 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	bool			do_extend;
 	int			version;
 	ptrdiff_t lastatmax = -1;
+	zic_t one = 1;
+	zic_t y2038_boundary = one << 31;
+	zic_t max_year0;
 
 	max_abbr_len = 2 + max_format_len + max_abbrvar_len;
 	max_envvar_len = 2 * max_abbr_len + 5 * 9;
@@ -2462,12 +2483,13 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 	}
 	/*
 	** For the benefit of older systems,
-	** generate data from 1900 through 2037.
+	** generate data from 1900 through 2038.
 	*/
 	if (min_year > 1900)
 		min_year = 1900;
-	if (max_year < 2037)
-		max_year = 2037;
+	max_year0 = max_year;
+	if (max_year < 2038)
+		max_year = 2038;
 	for (i = 0; i < zonecount; ++i) {
 		/*
 		** A guess that may well be corrected later.
@@ -2507,8 +2529,12 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				rp->r_todo = year >= rp->r_loyear &&
 						year <= rp->r_hiyear &&
 						yearistype(year, rp->r_yrtype);
-				if (rp->r_todo)
+				if (rp->r_todo) {
 					rp->r_temp = rpytime(rp, year);
+					rp->r_todo
+					  = (rp->r_temp < y2038_boundary
+					     || year <= max_year0);
+				}
 			}
 			for ( ; ; ) {
 				ptrdiff_t	k;
@@ -3121,7 +3147,8 @@ mp = _("time zone abbreviation differs from POSIX standard");
 	
 /* Ensure that the directories of ARGNAME exist, by making any missing
    ones.  If ANCESTORS, do this only for ARGNAME's ancestors; otherwise,
-   do it for ARGNAME too.  Exit with failure if there is trouble.  */
+   do it for ARGNAME too.  Exit with failure if there is trouble.
+   Do not consider an existing non-directory to be trouble.  */
 static void
 mkdirs(char const *argname, bool ancestors)
 {
@@ -3149,8 +3176,11 @@ mkdirs(char const *argname, bool ancestors)
 		** is checked anyway if the mkdir fails.
 		*/
 		if (mkdir(name, MKDIR_UMASK) != 0) {
+			/* For speed, skip itsdir if errno == EEXIST.  Since
+			   mkdirs is called only after open fails with ENOENT
+			   on a subfile, EEXIST implies itsdir here.  */
 			int err = errno;
-			if (err != EEXIST && itsdir(name) < 0) {
+			if (err != EEXIST && !itsdir(name)) {
 				error(_("%s: Can't create directory %s: %s"),
 				      progname, name, strerror(err));
 				exit(EXIT_FAILURE);

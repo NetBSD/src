@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.11 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: canohost.c,v 1.11.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
 /* $OpenBSD: canohost.c,v 1.73 2016/03/07 19:02:43 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.11 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.11.2.1 2017/04/21 16:50:56 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

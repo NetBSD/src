@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.75 2015/08/21 01:52:08 uebayasi Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.75.4.1 2017/04/21 16:53:28 bouyer Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,

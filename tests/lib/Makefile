@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.27 2016/11/16 21:36:23 kamil Exp $
+# $NetBSD: Makefile,v 1.27.2.1 2017/04/21 16:54:10 bouyer Exp $
 
 .include <bsd.own.mk>
 
 TESTS_SUBDIRS=	csu libbluetooth libc libcrypt libcurses libevent libexecinfo \
 		libm libobjc libposix libppath libprop libpthread \
-		libpthread_dbg librefuse librt libtre libusbhid libutil \
+		librefuse librt libtre libusbhid libutil \
 		semaphore
 
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)

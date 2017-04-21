@@ -1,10 +1,10 @@
-/*	$NetBSD: getpass.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: getpass.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* getpass.c -- get password from user */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.
@@ -31,6 +31,9 @@
  * and distributed as part of U-MICH LDAP.  It was adapted for use in
  * -llutil by Kurt D. Zeilenga and subsequently rewritten by Howard Chu.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: getpass.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.371 2017/01/10 08:45:45 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.371.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.371 2017/01/10 08:45:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.371.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -138,9 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.371 2017/01/10 08:45:45 ozaki-r Exp $");
 #include <net/pfil.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifndef IPSEC
 #include <netinet/ip_encap.h>
-#endif
 #include <net/bpf.h>
 
 #ifdef INET6
@@ -176,7 +174,7 @@ static size_t			if_indexlim = 0;
 static uint64_t			index_gen;
 /* Mutex to protect the above objects. */
 kmutex_t			ifnet_mtx __cacheline_aligned;
-struct psref_class		*ifnet_psref_class __read_mostly;
+static struct psref_class	*ifnet_psref_class __read_mostly;
 static pserialize_t		ifnet_psz;
 
 static kmutex_t			if_clone_mtx;
@@ -188,6 +186,7 @@ struct psref_class		*ifa_psref_class __read_mostly;
 
 static int	if_delroute_matcher(struct rtentry *, void *);
 
+static bool if_is_unit(const char *);
 static struct if_clone *if_clone_lookup(const char *, int *);
 
 static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -291,7 +290,7 @@ ifinit(void)
 
 	if_sysctl_setup(NULL);
 
-#if (defined(INET) || defined(INET6)) && !defined(IPSEC)
+#if (defined(INET) || defined(INET6))
 	encapinit();
 #endif
 
@@ -378,6 +377,7 @@ int
 if_nulltransmit(struct ifnet *ifp, struct mbuf *m)
 {
 
+	m_freem(m);
 	return ENXIO;
 }
 
@@ -518,6 +518,23 @@ if_deactivate_sadl(struct ifnet *ifp)
 	ifafree(ifa);
 }
 
+static void
+if_replace_sadl(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	struct ifaddr *old;
+
+	KASSERT(ifp->if_dl != NULL);
+
+	old = ifp->if_dl;
+
+	ifaref(ifa);
+	/* XXX Update if_dl and if_sadl atomically */
+	ifp->if_dl = ifa;
+	ifp->if_sadl = satosdl(ifa->ifa_addr);
+
+	ifafree(old);
+}
+
 void
 if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
     const struct sockaddr_dl *sdl)
@@ -526,11 +543,11 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa0,
 	struct ifaddr *ifa;
 	int bound = curlwp_bind();
 
-	s = splnet();
+	KASSERT(ifa_held(ifa0));
 
-	if_deactivate_sadl(ifp);
+	s = splsoftnet();
 
-	if_sadl_setrefs(ifp, ifa0);
+	if_replace_sadl(ifp, ifa0);
 
 	ss = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
@@ -567,7 +584,7 @@ if_free_sadl(struct ifnet *ifp)
 
 	KASSERT(ifp->if_sadl != NULL);
 
-	s = splnet();
+	s = splsoftnet();
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
@@ -702,6 +719,7 @@ if_initialize(ifnet_t *ifp)
 	PSLIST_INIT(&ifp->if_addr_pslist);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&ifp->if_multiaddrs);
 
 	IFNET_LOCK();
 	if_getindex(ifp);
@@ -774,13 +792,7 @@ if_percpuq_softint(void *arg)
 
 	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
 		ifp->if_ipackets++;
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
 		bpf_mtap(ifp, m);
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-#endif
 
 		ifp->_if_input(ifp, m);
 	}
@@ -995,8 +1007,11 @@ if_deferred_start_softint(void *arg)
 static void
 if_deferred_start_common(struct ifnet *ifp)
 {
+	int s;
 
+	s = splnet();
 	if_start_lock(ifp);
+	splx(s);
 }
 
 static inline bool
@@ -1072,13 +1087,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(!cpu_intr_p());
 
 	ifp->if_ipackets++;
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
 	bpf_mtap(ifp, m);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
 
 	ifp->_if_input(ifp, m);
 }
@@ -1126,7 +1135,7 @@ if_attachdomain1(struct ifnet *ifp)
 	struct domain *dp;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
@@ -1148,7 +1157,7 @@ if_deactivate(struct ifnet *ifp)
 {
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	ifp->if_output	 = if_nulloutput;
 	ifp->_if_input	 = if_nullinput;
@@ -1360,11 +1369,7 @@ again:
 		if (family == AF_LINK)
 			continue;
 		dp = pffinddomain(family);
-#ifdef DIAGNOSTIC
-		if (dp == NULL)
-			panic("if_detach: no domain for AF %d",
-			    family);
-#endif
+		KASSERTMSG(dp != NULL, "no domain for AF %d", family);
 		/*
 		 * XXX These PURGEIF calls are redundant with the
 		 * purge-all-families calls below, but are left in for
@@ -1537,6 +1542,8 @@ if_clone_create(const char *name)
 	struct ifnet *ifp;
 	struct psref psref;
 
+	KASSERT(mutex_owned(&if_clone_mtx));
+
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return EINVAL;
@@ -1559,6 +1566,8 @@ if_clone_destroy(const char *name)
 	struct if_clone *ifc;
 	struct ifnet *ifp;
 	struct psref psref;
+
+	KASSERT(mutex_owned(&if_clone_mtx));
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
@@ -1585,6 +1594,19 @@ if_clone_destroy(const char *name)
 	return (*ifc->ifc_destroy)(ifp);
 }
 
+static bool
+if_is_unit(const char *name)
+{
+
+	while(*name != '\0') {
+		if (*name < '0' || *name > '9')
+			return false;
+		name++;
+	}
+
+	return true;
+}
+
 /*
  * Look up a network interface cloner.
  */
@@ -1596,10 +1618,13 @@ if_clone_lookup(const char *name, int *unitp)
 	char *dp, ifname[IFNAMSIZ + 3];
 	int unit;
 
+	KASSERT(mutex_owned(&if_clone_mtx));
+
 	strcpy(ifname, "if_");
 	/* separate interface name from unit */
+	/* TODO: search unit number from backward */
 	for (dp = ifname + 3, cp = name; cp - name < IFNAMSIZ &&
-	    *cp && (*cp < '0' || *cp > '9');)
+	    *cp && !if_is_unit(cp);)
 		*dp++ = *cp++;
 
 	if (cp == name || cp - name == IFNAMSIZ || !*cp)
@@ -1613,8 +1638,13 @@ again:
 	}
 
 	if (ifc == NULL) {
-		if (*ifname == '\0' ||
-		    module_autoload(ifname, MODULE_CLASS_DRIVER))
+		int error;
+		if (*ifname == '\0')
+			return NULL;
+		mutex_exit(&if_clone_mtx);
+		error = module_autoload(ifname, MODULE_CLASS_DRIVER);
+		mutex_enter(&if_clone_mtx);
+		if (error)
 			return NULL;
 		*ifname = '\0';
 		goto again;
@@ -1641,8 +1671,10 @@ void
 if_clone_attach(struct if_clone *ifc)
 {
 
+	mutex_enter(&if_clone_mtx);
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
+	mutex_exit(&if_clone_mtx);
 }
 
 /*
@@ -1652,8 +1684,10 @@ void
 if_clone_detach(struct if_clone *ifc)
 {
 
+	mutex_enter(&if_clone_mtx);
 	LIST_REMOVE(ifc, ifc_list);
 	if_cloners_count--;
+	mutex_exit(&if_clone_mtx);
 }
 
 /*
@@ -1666,14 +1700,17 @@ if_clone_list(int buf_count, char *buffer, int *total)
 	struct if_clone *ifc;
 	int count, error = 0;
 
+	mutex_enter(&if_clone_mtx);
 	*total = if_cloners_count;
 	if ((dst = buffer) == NULL) {
 		/* Just asking how many there are. */
-		return 0;
+		goto out;
 	}
 
-	if (buf_count < 0)
-		return EINVAL;
+	if (buf_count < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	count = (if_cloners_count < buf_count) ?
 	    if_cloners_count : buf_count;
@@ -1681,13 +1718,17 @@ if_clone_list(int buf_count, char *buffer, int *total)
 	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
 	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
 		(void)strncpy(outbuf, ifc->ifc_name, sizeof(outbuf));
-		if (outbuf[sizeof(outbuf) - 1] != '\0')
-			return ENAMETOOLONG;
+		if (outbuf[sizeof(outbuf) - 1] != '\0') {
+			error = ENAMETOOLONG;
+			goto out;
+		}
 		error = copyout(outbuf, dst, sizeof(outbuf));
 		if (error != 0)
 			break;
 	}
 
+out:
+	mutex_exit(&if_clone_mtx);
 	return error;
 }
 
@@ -2502,14 +2543,8 @@ ifunit(const char *name)
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
-	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_indexlim)
-			return NULL;
-		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || if_is_deactivated(ifp))
-			return NULL;
-		return ifp;
-	}
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0'))
+		return if_byindex(unit);
 
 	ifp = NULL;
 	s = pserialize_read_enter();
@@ -2548,14 +2583,8 @@ if_get(const char *name, struct psref *psref)
 	/*
 	 * If the number took all of the name, then it's a valid ifindex.
 	 */
-	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
-		if (unit >= if_indexlim)
-			return NULL;
-		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || if_is_deactivated(ifp))
-			return NULL;
-		return ifp;
-	}
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0'))
+		return if_get_byindex(unit, psref);
 
 	ifp = NULL;
 	s = pserialize_read_enter();
@@ -2592,7 +2621,7 @@ if_byindex(u_int idx)
 {
 	ifnet_t *ifp;
 
-	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
 	if (ifp != NULL && if_is_deactivated(ifp))
 		ifp = NULL;
 	return ifp;
@@ -2610,9 +2639,7 @@ if_get_byindex(u_int idx, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
-	if (ifp != NULL && if_is_deactivated(ifp))
-		ifp = NULL;
+	ifp = if_byindex(idx);
 	if (__predict_true(ifp != NULL))
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
 	pserialize_read_exit(s);
@@ -2621,12 +2648,12 @@ if_get_byindex(u_int idx, struct psref *psref)
 }
 
 /*
- * XXX it's safe only if the passed ifp is guaranteed to not be freed,
- * for example the ifp is already held or some other object is held which
- * guarantes the ifp to not be freed indirectly.
+ * Note that it's safe only if the passed ifp is guaranteed to not be freed,
+ * for example using pserialize or the ifp is already held or some other
+ * object is held which guarantes the ifp to not be freed indirectly.
  */
 void
-if_acquire_NOMPSAFE(struct ifnet *ifp, struct psref *psref)
+if_acquire(struct ifnet *ifp, struct psref *psref)
 {
 
 	KASSERT(ifp->if_index != 0);
@@ -2704,12 +2731,12 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		ifr = data;
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
-			s = splnet();
+			s = splsoftnet();
 			if_down(ifp);
 			splx(s);
 		}
 		if (ifr->ifr_flags & IFF_UP && (ifp->if_flags & IFF_UP) == 0) {
-			s = splnet();
+			s = splsoftnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -3010,7 +3037,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			int s = splnet();
+			int s = splsoftnet();
 			if_up(ifp);
 			splx(s);
 		}
@@ -3180,6 +3207,8 @@ static int
 if_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, error;
+	size_t pktlen = m->m_pkthdr.len;
+	bool mcast = (m->m_flags & M_MCAST) != 0;
 
 	s = splnet();
 
@@ -3189,8 +3218,8 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len;;
-	if (m->m_flags & M_MCAST)
+	ifp->if_obytes += pktlen;
+	if (mcast)
 		ifp->if_omcasts++;
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
@@ -3214,9 +3243,11 @@ if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		KERNEL_UNLOCK_ONE(NULL);
 		error = (*ifp->if_transmit)(ifp, m);
+		/* mbuf is alredy freed */
 	}
 #else /* !ALTQ */
 	error = (*ifp->if_transmit)(ifp, m);
+	/* mbuf is alredy freed */
 #endif /* !ALTQ */
 
 	return error;

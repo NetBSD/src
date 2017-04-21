@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.1.6.1 2017/04/21 16:53:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,12 +170,12 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save floating point register context, if any. */
 	KASSERT(l == curlwp);
-	if (fpu_valid_p()) {
+	if (fpu_valid_p(l)) {
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
 		 */
-		fpu_save();
+		fpu_save(l);
 
 		struct pcb * const pcb = lwp_getpcb(l);
 		*(struct fpreg *)mcp->__fregs = pcb->pcb_fpregs;
@@ -224,7 +224,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_FPU) {
 		KASSERT(l == curlwp);
 		/* Tell PCU we are replacing the FPU contents. */
-		fpu_replace();
+		fpu_replace(l);
 
 		/*
 		 * The PCB FP regs struct includes the FP CSR, so use the

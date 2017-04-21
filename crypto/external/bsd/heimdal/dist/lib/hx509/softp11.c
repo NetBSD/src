@@ -1,4 +1,4 @@
-/*	$NetBSD: softp11.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: softp11.c,v 1.1.1.2.10.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2008 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #define CRYPTOKI_EXPORTS 1
 
 #include "hx_locl.h"
-#include "pkcs11.h"
+#include "ref/pkcs11.h"
 
 #define OBJECT_ID_MASK		0xfff
 #define HANDLE_OBJECT_ID(h)	((h) & OBJECT_ID_MASK)
@@ -545,6 +545,8 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
 	CK_FLAGS flags;
 
 	type = CKO_PRIVATE_KEY;
+
+        /* Note to static analyzers: `o' is still referred to via globals */
 	o = add_st_object();
 	if (o == NULL) {
 	    ret = CKR_DEVICE_MEMORY;
@@ -595,6 +597,7 @@ add_cert(hx509_context hxctx, void *ctx, hx509_cert cert)
     hx509_xfree(issuer_data.data);
     hx509_xfree(subject_data.data);
 
+    /* Note to static analyzers: `o' is still referred to via globals */
     return 0;
 }
 
@@ -617,7 +620,11 @@ add_certificate(const char *cert_file,
 
     if (pin) {
 	char *str;
-	asprintf(&str, "PASS:%s", pin);
+	ret = asprintf(&str, "PASS:%s", pin);
+	if (ret == -1 || !str) {
+	    st_logf("failed to allocate memory\n");
+	    return CKR_GENERAL_ERROR;
+	}
 
 	hx509_lock_init(context, &lock);
 	hx509_lock_command_string(lock, str);
@@ -817,6 +824,7 @@ get_config_file_for_user(void)
 
 #ifndef _WIN32
     char *home = NULL;
+    int ret;
 
     if (!issuid()) {
         fn = getenv("SOFTPKCS11RC");
@@ -830,9 +838,11 @@ get_config_file_for_user(void)
             home = pw->pw_dir;
     }
     if (fn == NULL) {
-        if (home)
-            asprintf(&fn, "%s/.soft-token.rc", home);
-        else
+        if (home) {
+            ret = asprintf(&fn, "%s/.soft-token.rc", home);
+	    if (ret == -1)
+		fn = NULL;
+        } else
             fn = strdup("/etc/soft-token.rc");
     }
 #else  /* Windows */
@@ -1207,8 +1217,13 @@ C_Login(CK_SESSION_HANDLE hSession,
     VERIFY_SESSION_HANDLE(hSession, NULL);
 
     if (pPin != NULL_PTR) {
-	asprintf(&pin, "%.*s", (int)ulPinLen, pPin);
-	st_logf("type: %d password: %s\n", (int)userType, pin);
+	int aret;
+
+	aret = asprintf(&pin, "%.*s", (int)ulPinLen, pPin);
+	if (aret != -1 && pin)
+		st_logf("type: %d password: %s\n", (int)userType, pin);
+	else
+		st_logf("memory error: asprintf failed\n");
     }
 
     /*

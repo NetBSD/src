@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_connect.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: unix_connect.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -62,15 +62,15 @@ int     unix_connect(const char *addr, int block_mode, int timeout)
 {
 #undef sun
     struct sockaddr_un sun;
-    int     len = strlen(addr);
+    ssize_t len = strlen(addr);
     int     sock;
 
     /*
      * Translate address information to internal form.
      */
-    if (len >= (int) sizeof(sun.sun_path))
+    if (len >= sizeof(sun.sun_path))
 	msg_fatal("unix-domain name too long: %s", addr);
-    memset((char *) &sun, 0, sizeof(sun));
+    memset((void *) &sun, 0, sizeof(sun));
     sun.sun_family = AF_UNIX;
 #ifdef HAS_SUN_LEN
     sun.sun_len = len + 1;
@@ -88,7 +88,7 @@ int     unix_connect(const char *addr, int block_mode, int timeout)
      */
     if (timeout > 0) {
 	non_blocking(sock, NON_BLOCKING);
-	if (timed_connect(sock, (struct sockaddr *) & sun, sizeof(sun), timeout) < 0) {
+	if (timed_connect(sock, (struct sockaddr *) &sun, sizeof(sun), timeout) < 0) {
 	    close(sock);
 	    return (-1);
 	}
@@ -102,7 +102,7 @@ int     unix_connect(const char *addr, int block_mode, int timeout)
      */
     else {
 	non_blocking(sock, block_mode);
-	if (sane_connect(sock, (struct sockaddr *) & sun, sizeof(sun)) < 0
+	if (sane_connect(sock, (struct sockaddr *) &sun, sizeof(sun)) < 0
 	    && errno != EINPROGRESS) {
 	    close(sock);
 	    return (-1);

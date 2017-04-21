@@ -9,26 +9,25 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-dccp.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-dccp.c,v 1.5.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Datagram Congestion Control Protocol (DCCP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
-#include "extract.h"			/* must come after interface.h */
+#include "extract.h"
 #include "ip.h"
-#ifdef INET6
 #include "ip6.h"
-#endif
 #include "ipproto.h"
 
 /* RFC4340: Datagram Congestion Control Protocol (DCCP) */
@@ -206,17 +205,16 @@ static inline u_int dccp_csum_coverage(const struct dccp_hdr* dh, u_int len)
 static int dccp_cksum(netdissect_options *ndo, const struct ip *ip,
 	const struct dccp_hdr *dh, u_int len)
 {
-	return nextproto4_cksum(ndo, ip, (const uint8_t *)(void *)dh, len,
+	return nextproto4_cksum(ndo, ip, (const uint8_t *)(const void *)dh, len,
 				dccp_csum_coverage(dh, len), IPPROTO_DCCP);
 }
 
-#ifdef INET6
-static int dccp6_cksum(const struct ip6_hdr *ip6, const struct dccp_hdr *dh, u_int len)
+static int dccp6_cksum(netdissect_options *ndo, const struct ip6_hdr *ip6,
+	const struct dccp_hdr *dh, u_int len)
 {
-	return nextproto6_cksum(ip6, (const uint8_t *)(void *)dh, len,
+	return nextproto6_cksum(ndo, ip6, (const uint8_t *)(const void *)dh, len,
 				dccp_csum_coverage(dh, len), IPPROTO_DCCP);
 }
-#endif
 
 static const char *dccp_reset_code(uint8_t code)
 {
@@ -277,9 +275,7 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 {
 	const struct dccp_hdr *dh;
 	const struct ip *ip;
-#ifdef INET6
 	const struct ip6_hdr *ip6;
-#endif
 	const u_char *cp;
 	u_short sport, dport;
 	u_int hlen;
@@ -288,13 +284,11 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 
 	dh = (const struct dccp_hdr *)bp;
 
-	ip = (struct ip *)data2;
-#ifdef INET6
+	ip = (const struct ip *)data2;
 	if (IP_V(ip) == 6)
 		ip6 = (const struct ip6_hdr *)data2;
 	else
 		ip6 = NULL;
-#endif /*INET6*/
 
 	/* make sure we have enough data to look at the X bit */
 	cp = (const u_char *)(dh + 1);
@@ -321,14 +315,11 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 	dport = EXTRACT_16BITS(&dh->dccph_dport);
 	hlen = dh->dccph_doff * 4;
 
-#ifdef INET6
 	if (ip6) {
 		ND_PRINT((ndo, "%s.%d > %s.%d: ",
 			  ip6addr_string(ndo, &ip6->ip6_src), sport,
 			  ip6addr_string(ndo, &ip6->ip6_dst), dport));
-	} else
-#endif /*INET6*/
-	{
+	} else {
 		ND_PRINT((ndo, "%s.%d > %s.%d: ",
 			  ipaddr_string(ndo, &ip->ip_src), sport,
 			  ipaddr_string(ndo, &ip->ip_dst), dport));
@@ -358,10 +349,8 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 		ND_PRINT((ndo, "cksum 0x%04x ", dccp_sum));
 		if (IP_V(ip) == 4)
 			sum = dccp_cksum(ndo, ip, dh, len);
-#ifdef INET6
 		else if (IP_V(ip) == 6)
-			sum = dccp6_cksum(ip6, dh, len);
-#endif
+			sum = dccp6_cksum(ndo, ip6, dh, len);
 		if (sum != 0)
 			ND_PRINT((ndo, "(incorrect -> 0x%04x)",in_cksum_shouldbe(dccp_sum, sum)));
 		else
@@ -375,8 +364,8 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 	dccph_type = DCCPH_TYPE(dh);
 	switch (dccph_type) {
 	case DCCP_PKT_REQUEST: {
-		struct dccp_hdr_request *dhr =
-			(struct dccp_hdr_request *)(bp + fixed_hdrlen);
+		const struct dccp_hdr_request *dhr =
+			(const struct dccp_hdr_request *)(bp + fixed_hdrlen);
 		fixed_hdrlen += 4;
 		if (len < fixed_hdrlen) {
 			ND_PRINT((ndo, "truncated-%s - %u bytes missing!",
@@ -391,8 +380,8 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 		break;
 	}
 	case DCCP_PKT_RESPONSE: {
-		struct dccp_hdr_response *dhr =
-			(struct dccp_hdr_response *)(bp + fixed_hdrlen);
+		const struct dccp_hdr_response *dhr =
+			(const struct dccp_hdr_response *)(bp + fixed_hdrlen);
 		fixed_hdrlen += 12;
 		if (len < fixed_hdrlen) {
 			ND_PRINT((ndo, "truncated-%s - %u bytes missing!",
@@ -452,8 +441,8 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 		ND_PRINT((ndo, "%s ", tok2str(dccp_pkt_type_str, "", dccph_type)));
 		break;
 	case DCCP_PKT_RESET: {
-		struct dccp_hdr_reset *dhr =
-			(struct dccp_hdr_reset *)(bp + fixed_hdrlen);
+		const struct dccp_hdr_reset *dhr =
+			(const struct dccp_hdr_reset *)(bp + fixed_hdrlen);
 		fixed_hdrlen += 12;
 		if (len < fixed_hdrlen) {
 			ND_PRINT((ndo, "truncated-%s - %u bytes missing!",
@@ -503,7 +492,6 @@ void dccp_print(netdissect_options *ndo, const u_char *bp, const u_char *data2,
 
 	/* process options */
 	if (hlen > fixed_hdrlen){
-		const u_char *cp;
 		u_int optlen;
 		cp = bp + fixed_hdrlen;
 		ND_PRINT((ndo, " <"));

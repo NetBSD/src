@@ -1,12 +1,12 @@
-/*	$NetBSD: mstring.c,v 1.4 2016/01/09 22:05:33 christos Exp $	*/
+/*	$NetBSD: mstring.c,v 1.4.4.1 2017/04/21 16:51:21 bouyer Exp $	*/
 
-/* Id: mstring.c,v 1.6 2014/04/22 23:36:31 tom Exp  */
+/* Id: mstring.c,v 1.7 2016/12/02 17:57:21 tom Exp  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mstring.c,v 1.4 2016/01/09 22:05:33 christos Exp $");
+__RCSID("$NetBSD: mstring.c,v 1.4.4.1 2017/04/21 16:51:21 bouyer Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -165,20 +165,20 @@ strnscmp(const char *a, const char *b)
 {
     while (1)
     {
-	while (isspace((unsigned char)*a))
+	while (isspace(UCH(*a)))
 	    a++;
-	while (isspace((unsigned char)*b))
+	while (isspace(UCH(*b)))
 	    b++;
 	while (*a && *a == *b)
 	    a++, b++;
-	if (isspace((unsigned char)*a))
+	if (isspace(UCH(*a)))
 	{
-	    if (isalnum((unsigned char)a[-1]) && isalnum((unsigned char)*b))
+	    if (isalnum(UCH(a[-1])) && isalnum(UCH(*b)))
 		break;
 	}
-	else if (isspace((unsigned char)*b))
+	else if (isspace(UCH(*b)))
 	{
-	    if (isalnum((unsigned char)b[-1]) && isalnum((unsigned char)*a))
+	    if (isalnum(UCH(b[-1])) && isalnum(UCH(*a)))
 		break;
 	}
 	else
@@ -194,7 +194,7 @@ strnshash(const char *s)
 
     while (*s)
     {
-	if (!isspace((unsigned char)*s))
+	if (!isspace(UCH(*s)))
 	    h = (h << 5) - h + (unsigned char)*s;
 	s++;
     }

@@ -119,7 +119,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               With locally submitted mail, append the string  "@$<a href="postconf.5.html#myorigin">myorigin</a>"  to
               mail addresses without domain information.
 
-       <b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> (yes)</b>
+       <b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a> (Postfix</b> &gt;<b>= 3.0: no, Postfix</b> &lt; <b>3.0: yes)</b>
               With  locally  submitted mail, append the string ".$<a href="postconf.5.html#mydomain">mydomain</a>" to
               addresses that have no ".domain" information.
 
@@ -164,44 +164,45 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               <a href="postconf.5.html#virtual_mailbox_domains">box_domains</a>, or $<a href="postconf.5.html#relay_domains">relay_domains</a>.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf -d' output)</b>
-              What Postfix features match subdomains of "domain.tld" automati-
-              cally, instead of requiring an explicit ".domain.tld" pattern.
+              A  list of Postfix features where the pattern "example.com" also
+              matches subdomains  of  example.com,  instead  of  requiring  an
+              explicit ".example.com" pattern.
 
        <b><a href="postconf.5.html#relayhost">relayhost</a> (empty)</b>
-              The next-hop destination of non-local mail; overrides  non-local
+              The  next-hop destination of non-local mail; overrides non-local
               domains in recipient addresses.
 
        <b><a href="postconf.5.html#transport_maps">transport_maps</a> (empty)</b>
-              Optional  lookup  tables with mappings from recipient address to
+              Optional lookup tables with mappings from recipient  address  to
               (message delivery transport, next-hop destination).
 
        Available in Postfix version 2.3 and later:
 
        <b><a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> (empty)</b>
-              A sender-dependent override for the global  <a href="postconf.5.html#relayhost">relayhost</a>  parameter
+              A  sender-dependent  override for the global <a href="postconf.5.html#relayhost">relayhost</a> parameter
               setting.
 
        Available in Postfix version 2.5 and later:
 
        <b><a href="postconf.5.html#empty_address_relayhost_maps_lookup_key">empty_address_relayhost_maps_lookup_key</a> (</b>&lt;&gt;<b>)</b>
-              The  <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a>  search string that will be
+              The <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> search string that  will  be
               used instead of the null sender address.
 
        Available in Postfix version 2.7 and later:
 
        <b><a href="postconf.5.html#empty_address_default_transport_maps_lookup_key">empty_address_default_transport_maps_lookup_key</a> (</b>&lt;&gt;<b>)</b>
-              The <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a> search  string  that
+              The  <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a>  search string that
               will be used instead of the null sender address.
 
        <b><a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a> (empty)</b>
-              A  sender-dependent  override  for  the global <a href="postconf.5.html#default_transport">default_transport</a>
+              A sender-dependent override  for  the  global  <a href="postconf.5.html#default_transport">default_transport</a>
               parameter setting.
 
 <b>ADDRESS VERIFICATION CONTROLS</b>
-       Postfix version 2.1 introduces sender and recipient  address  verifica-
+       Postfix  version  2.1 introduces sender and recipient address verifica-
        tion.  This feature is implemented by sending probe email messages that
-       are not actually delivered.  By default,  address  verification  probes
-       use  the  same  route  as regular mail. To override specific aspects of
+       are  not  actually  delivered.  By default, address verification probes
+       use the same route as regular mail. To  override  specific  aspects  of
        message routing for address verification probes, specify one or more of
        the following:
 
@@ -210,7 +211,7 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               ification probes.
 
        <b><a href="postconf.5.html#address_verify_virtual_transport">address_verify_virtual_transport</a> ($<a href="postconf.5.html#virtual_transport">virtual_transport</a>)</b>
-              Overrides the <a href="postconf.5.html#virtual_transport">virtual_transport</a> parameter  setting  for  address
+              Overrides  the  <a href="postconf.5.html#virtual_transport">virtual_transport</a>  parameter setting for address
               verification probes.
 
        <b><a href="postconf.5.html#address_verify_relay_transport">address_verify_relay_transport</a> ($<a href="postconf.5.html#relay_transport">relay_transport</a>)</b>
@@ -218,11 +219,11 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               ification probes.
 
        <b><a href="postconf.5.html#address_verify_default_transport">address_verify_default_transport</a> ($<a href="postconf.5.html#default_transport">default_transport</a>)</b>
-              Overrides the <a href="postconf.5.html#default_transport">default_transport</a> parameter  setting  for  address
+              Overrides  the  <a href="postconf.5.html#default_transport">default_transport</a>  parameter setting for address
               verification probes.
 
        <b><a href="postconf.5.html#address_verify_relayhost">address_verify_relayhost</a> ($<a href="postconf.5.html#relayhost">relayhost</a>)</b>
-              Overrides  the <a href="postconf.5.html#relayhost">relayhost</a> parameter setting for address verifica-
+              Overrides the <a href="postconf.5.html#relayhost">relayhost</a> parameter setting for address  verifica-
               tion probes.
 
        <b><a href="postconf.5.html#address_verify_transport_maps">address_verify_transport_maps</a> ($<a href="postconf.5.html#transport_maps">transport_maps</a>)</b>
@@ -233,34 +234,34 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
 
        <b><a href="postconf.5.html#address_verify_sender_dependent_relayhost_maps">address_verify_sender_dependent_relayhost_maps</a>          ($<a href="postconf.5.html#sender_dependent_relayhost_maps">sender_depen</a>-</b>
        <b><a href="postconf.5.html#sender_dependent_relayhost_maps">dent_relayhost_maps</a>)</b>
-              Overrides  the <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> parameter setting
+              Overrides the <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> parameter  setting
               for address verification probes.
 
        Available in Postfix version 2.7 and later:
 
        <b><a href="postconf.5.html#address_verify_sender_dependent_default_transport_maps">address_verify_sender_dependent_default_transport_maps</a>  ($<a href="postconf.5.html#sender_dependent_default_transport_maps">sender_depen</a>-</b>
        <b><a href="postconf.5.html#sender_dependent_default_transport_maps">dent_default_transport_maps</a>)</b>
-              Overrides the <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a>  parameter
+              Overrides  the <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a> parameter
               setting for address verification probes.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process  may  take  to  handle  a
+              How  much  time  a  Postfix  daemon process may take to handle a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#empty_address_recipient">empty_address_recipient</a> (MAILER-DAEMON)</b>
               The recipient of mail addressed to the null address.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The  time  limit  for  sending  or receiving information over an
+              The time limit for sending  or  receiving  information  over  an
               internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time that an idle Postfix  daemon  process
+              The  maximum  amount of time that an idle Postfix daemon process
               waits for an incoming connection before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
@@ -281,21 +282,21 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
               The location of the Postfix top-level queue directory.
 
        <b><a href="postconf.5.html#show_user_unknown_table_name">show_user_unknown_table_name</a> (yes)</b>
-              Display the name of the recipient table in  the  "User  unknown"
+              Display  the  name  of the recipient table in the "User unknown"
               responses.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
 
        Available in Postfix version 2.0 and later:
 
        <b><a href="postconf.5.html#helpful_warnings">helpful_warnings</a> (yes)</b>
-              Log  warnings about problematic configuration settings, and pro-
+              Log warnings about problematic configuration settings, and  pro-
               vide helpful suggestions.
 
 <b>SEE ALSO</b>
@@ -317,6 +318,11 @@ TRIVIAL-REWRITE(8)                                          TRIVIAL-REWRITE(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                             TRIVIAL-REWRITE(8)
 </pre> </body> </html>

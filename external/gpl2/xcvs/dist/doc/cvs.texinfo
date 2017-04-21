@@ -9541,7 +9541,7 @@ cannot commit to a specific revision on a branch.
 Refuse to commit files unless the user has registered a valid edit on the
 file via @code{cvs edit}.  This is most useful when @samp{commit -c}
 and @samp{edit -c} have been placed in all @file{.cvsrc} files.
-A commit can be forced anyways by either regestering an edit retroactively
+A commit can be forced anyways by either registering an edit retroactively
 via @code{cvs edit} (no changes to the file will be lost) or using the
 @code{-f} option to commit.  Support for @code{commit -c} requires both
 client and a server versions 1.12.10 or greater.

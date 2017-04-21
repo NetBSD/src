@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.57 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.57.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.57 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.57.2.1 2017/04/21 16:53:53 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -373,6 +373,14 @@ const struct ubt_devno {
 	{   /* Apple Bluetooth Host Controller MacBookAir 6,1 */
 	    USB_VENDOR_APPLE,
 	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_7,
+	    -1,
+	    -1,
+	    -1,
+	    UMATCH_VENDOR_PRODUCT
+	},
+	{   /* Apple Bluetooth Host Controller MacBookPro 9,2 */
+	    USB_VENDOR_APPLE,
+	    USB_PRODUCT_APPLE_BLUETOOTH_HOST_8,
 	    -1,
 	    -1,
 	    -1,

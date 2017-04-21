@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.175 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.175.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.175 2016/11/02 00:11:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.175.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -155,9 +155,6 @@ process_domem(struct lwp *curl /*tracer*/,
 	int error;
 
 	size_t len;
-#ifdef PMAP_NEED_PROCWR
-	vaddr_t	addr;
-#endif
 
 	error = 0;
 	len = uio->uio_resid;
@@ -166,7 +163,7 @@ process_domem(struct lwp *curl /*tracer*/,
 		return 0;
 
 #ifdef PMAP_NEED_PROCWR
-	addr = uio->uio_offset;
+	vaddr_t	addr = uio->uio_offset;
 #endif
 
 	vm = p->p_vmspace;
@@ -180,41 +177,14 @@ process_domem(struct lwp *curl /*tracer*/,
 	if (error != 0)
 		return error;
 	error = uvm_io(&vm->vm_map, uio, pax_mprotect_prot(l));
-	uvmspace_free(vm);
 
 #ifdef PMAP_NEED_PROCWR
 	if (error == 0 && uio->uio_rw == UIO_WRITE)
 		pmap_procwr(p, addr, len);
 #endif
+	uvmspace_free(vm);
+
 	return error;
-}
-
-void
-process_stoptrace(void)
-{
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc, *pp;
-
-	mutex_enter(proc_lock);
-	mutex_enter(p->p_lock);
-	pp = p->p_pptr;
-	if (pp->p_pid == 1) {
-		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
-		mutex_exit(p->p_lock);
-		mutex_exit(proc_lock);
-		return;
-	}
-
-	p->p_xsig = SIGTRAP;
-	proc_stop(p, 1, SIGSTOP);
-	mutex_exit(proc_lock);
-
-	if (sigispending(l, 0)) {
-		lwp_lock(l);
-		l->l_flag |= LW_PENDSIG;
-		lwp_unlock(l);
-	}
-	mutex_exit(p->p_lock);
 }
 #endif	/* KTRACE || PTRACE_HOOKS */
 

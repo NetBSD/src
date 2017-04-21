@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.39 2015/12/20 22:47:59 christos Exp $
+#	$NetBSD: Makefile.image,v 1.39.4.1 2017/04/21 16:51:08 bouyer Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -43,6 +43,7 @@ GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
 MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
+PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 .endif
 
 .if !target(${WORKBUILT})					# {
@@ -131,7 +132,7 @@ ${IMAGETAR}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS}
 	${_MKTARGET_CREATE}
 	( cd ${WORKDIR}; \
 	  GZIP=${GZIP_FLAGS:Q} \
-	  ${TOOL_PAX} --use-compress-program=${TOOL_GZIP:Q} \
+	  ${TOOL_PAX} ${PAX_TIMESTAMP} --use-compress-program=${TOOL_GZIP:Q} \
 	      -ON ${NETBSDSRCDIR}/etc -wdM <${.OBJDIR}/${WORKSPEC} \
 	) > ${.TARGET}.tmp \
 	&& mv ${.TARGET}.tmp ${.TARGET}

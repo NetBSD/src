@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/09/11 23:04:09 joerg Exp $
+# $NetBSD: Makefile,v 1.2.12.1 2017/04/21 16:50:54 bouyer Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -15,7 +15,7 @@ LIBDPLIBS+=	krb5	${.CURDIR}/../libkrb5 \
 		asn1	${.CURDIR}/../libasn1 \
 		roken	${.CURDIR}/../libroken
 
-SRCS=		afssys.c afskrb5.c common.c
+SRCS=		afssys.c afskrb5.c common.c rxkad_kdf.c
 
 INCS=		kafs.h
 INCSDIR=	/usr/include/krb5

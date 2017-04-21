@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.83 2016/11/19 09:22:03 maxv Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.83.2.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,11 +118,6 @@
     trunc_page(USRSTACK - MAXSSIZ - (sz))
 #define VM_DEFAULT_ADDRESS_BOTTOMUP(da, sz) \
     round_page((vaddr_t)(da) + (vsize_t)MIN(maxdmap, MAXDSIZ_BU))
-
-/* XXX max. amount of KVM to be used by buffers. */
-#ifndef VM_MAX_KERNEL_BUF
-#define VM_MAX_KERNEL_BUF	(384 * 1024 * 1024)
-#endif
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

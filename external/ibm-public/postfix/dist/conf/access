@@ -29,12 +29,12 @@
 #        LDAP or SQL, the same lookups are  done  as  for  ordinary
 #        indexed files.
 # 
-#        Alternatively,  the  table  can  be provided as a regular-
-#        expression map where patterns are given as regular expres-
-#        sions,  or lookups can be directed to TCP-based server. In
-#        those cases, the lookups are done in a slightly  different
-#        way  as  described below under "REGULAR EXPRESSION TABLES"
-#        or "TCP-BASED TABLES".
+#        Alternatively,  the  table  can  be  provided  as  a regu-
+#        lar-expression map where patterns  are  given  as  regular
+#        expressions,  or  lookups  can  be  directed  to TCP-based
+#        server. In those cases, the lookups are done in a slightly
+#        different way as described below under "REGULAR EXPRESSION
+#        TABLES" or "TCP-BASED TABLES".
 # 
 # CASE FOLDING
 #        The search string is folded to lowercase  before  database
@@ -202,11 +202,11 @@
 #               421 text (Postfix 2.3 and later)
 # 
 #               521 text (Postfix 2.6 and later)
-#                      After responding with the  numerical  three-
-#                      digit  code and text, disconnect immediately
-#                      from the SMTP client.  This  frees  up  SMTP
-#                      server  resources  so  that they can be made
-#                      available to another SMTP client.
+#                      After   responding   with   the    numerical
+#                      three-digit  code and text, disconnect imme-
+#                      diately from the SMTP client.  This frees up
+#                      SMTP  server  resources  so that they can be
+#                      made available to another SMTP client.
 # 
 #                      Note: The "521" response should be used only
 #                      with  botnets and other malware where inter-
@@ -265,8 +265,7 @@
 #               same  SMTP  MAIL  transaction, only the last action
 #               will be used.
 # 
-#               This feature is not  part  of  the  stable  Postfix
-#               release.
+#               This feature is available in Postfix 3.0 and later.
 # 
 #        DISCARD optional text...
 #               Claim  successful delivery and silently discard the
@@ -356,12 +355,21 @@
 #        REDIRECT user@domain
 #               After  the  message  is queued, send the message to
 #               the  specified  address  instead  of  the  intended
-#               recipient(s).
+#               recipient(s).  When multiple REDIRECT actions fire,
+#               only the last one takes effect.
 # 
-#               Note:  this action overrides the FILTER action, and
-#               currently affects all recipients of the message.
+#               Note: this action overrides the FILTER action,  and
+#               currently  overrides all recipients of the message.
 # 
 #               This feature is available in Postfix 2.1 and later.
+# 
+#        INFO optional text...
+#               Log an informational record with the optional text,
+#               together with client information and if  available,
+#               with  helo, sender, recipient and protocol informa-
+#               tion.
+# 
+#               This feature is available in Postfix 3.0 and later.
 # 
 #        WARN optional text...
 #               Log a warning with the optional text, together with
@@ -476,5 +484,10 @@
 #        IBM T.J. Watson Research
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
+# 
+#        Wietse Venema
+#        Google, Inc.
+#        111 8th Avenue
+#        New York, NY 10011, USA
 # 
 #                                                                      ACCESS(5)

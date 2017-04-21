@@ -1,4 +1,4 @@
-/*	$NetBSD: dlpisubs.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: dlpisubs.c,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $	*/
 
 /*
  * This code is derived from code formerly in pcap-dlpi.c, originally
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dlpisubs.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: dlpisubs.c,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -191,8 +191,8 @@ pcap_process_pkts(pcap_t *p, pcap_handler callback, u_char *user,
 			pkthdr.len = origlen;
 			pkthdr.caplen = caplen;
 			/* Insure caplen does not exceed snapshot */
-			if (pkthdr.caplen > p->snapshot)
-				pkthdr.caplen = p->snapshot;
+			if (pkthdr.caplen > (bpf_u_int32)p->snapshot)
+				pkthdr.caplen = (bpf_u_int32)p->snapshot;
 			(*callback)(user, &pkthdr, pk);
 			if (++n >= count && !PACKET_COUNT_IS_UNLIMITED(count)) {
 				p->cc = ep - bufp;
@@ -260,8 +260,29 @@ pcap_process_mactype(pcap_t *p, u_int mactype)
 		break;
 #endif
 
+#ifdef DL_IPV4
+	case DL_IPV4:
+		p->linktype = DLT_IPV4;
+		p->offset = 0;
+		break;
+#endif
+
+#ifdef DL_IPV6
+	case DL_IPV6:
+		p->linktype = DLT_IPV6;
+		p->offset = 0;
+		break;
+#endif
+
+#ifdef DL_IPNET
+	case DL_IPNET:
+		p->linktype = DLT_IPNET;
+		p->offset = 0;
+		break;
+#endif
+
 	default:
-		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "unknown mactype %u",
+		pcap_snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "unknown mactype 0x%x",
 		    mactype);
 		retv = -1;
 	}
@@ -331,7 +352,7 @@ int
 pcap_alloc_databuf(pcap_t *p)
 {
 	p->bufsize = PKTBUFSIZE;
-	p->buffer = (u_char *)malloc(p->bufsize + p->offset);
+	p->buffer = malloc(p->bufsize + p->offset);
 	if (p->buffer == NULL) {
 		strlcpy(p->errbuf, pcap_strerror(errno), PCAP_ERRBUF_SIZE);
 		return (-1);
@@ -367,6 +388,6 @@ strioctl(int fd, int cmd, int len, char *dp)
 static void
 pcap_stream_err(const char *func, int err, char *errbuf)
 {
-	snprintf(errbuf, PCAP_ERRBUF_SIZE, "%s: %s", func, pcap_strerror(err));
+	pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE, "%s: %s", func, pcap_strerror(err));
 }
 #endif

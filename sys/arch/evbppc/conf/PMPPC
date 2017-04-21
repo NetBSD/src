@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.39 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: PMPPC,v 1.39.2.1 2017/04/21 16:53:26 bouyer Exp $
 #
 #	PMPPC
 #
@@ -81,6 +81,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	NFSSERVER	# Network File System server

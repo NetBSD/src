@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.119 2016/12/27 09:34:44 maya Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.119.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.119 2016/12/27 09:34:44 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.119.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -570,20 +570,31 @@ int
 module_load(const char *filename, int flags, prop_dictionary_t props,
 	    modclass_t modclass)
 {
+	module_t *mod;
 	int error;
+
+	/* Test if we already have the module loaded before
+	 * authorizing so we have the opportunity to return EEXIST. */
+	kernconfig_lock();
+	mod = module_lookup(filename);
+	if (mod != NULL) {
+		module_print("%s module `%s' already loaded",
+		    "requested", filename);
+		error = EEXIST;
+		goto out;
+	}
 
 	/* Authorize. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
 	    0, (void *)(uintptr_t)MODCTL_LOAD, NULL, NULL);
-	if (error != 0) {
-		return error;
-	}
+	if (error != 0)
+		goto out;
 
-	kernconfig_lock();
 	error = module_do_load(filename, false, flags, props, NULL, modclass,
 	    false);
-	kernconfig_unlock();
 
+out:
+	kernconfig_unlock();
 	return error;
 }
 

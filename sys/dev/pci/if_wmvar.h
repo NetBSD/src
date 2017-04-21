@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.32 2016/10/28 06:27:11 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.32.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -168,7 +168,7 @@ typedef enum {
 	WMPHY_I217,
 	WMPHY_82580,
 	WMPHY_VF,
-	WMPHY_210
+	WMPHY_I210
 } wm_phy_type;
 
 

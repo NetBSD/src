@@ -1,4 +1,4 @@
-/*	$NetBSD: generate_seq_number.c,v 1.1.1.1 2011/04/13 18:15:33 elric Exp $	*/
+/*	$NetBSD: generate_seq_number.c,v 1.1.1.1.32.1 2017/04/21 16:50:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan

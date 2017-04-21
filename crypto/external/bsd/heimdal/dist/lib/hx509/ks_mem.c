@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_mem.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: ks_mem.c,v 1.1.1.2.10.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan

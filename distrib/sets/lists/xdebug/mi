@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: mi,v 1.25.2.1 2017/04/21 16:51:14 bouyer Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						-unknown-	debuglib,xorg,compatx11dir
 ./usr/X11R7/lib/libFS_g.a				-unknown-	debuglib,xorg,compatx11file
@@ -89,10 +89,11 @@
 ./usr/X11R7/lib/libxcb-shape_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-shm_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-sync_g.a				-unknown-	debuglib,xorg,compatx11file
-./usr/X11R7/lib/libxcb-xevie_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libxcb-xevie_g.a			-unknown-	obsolete
 ./usr/X11R7/lib/libxcb-xf86dri_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xfixes_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xinerama_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libxcb-xinput_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xkb_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xtest_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libxcb-xv_g.a				-unknown-	debuglib,xorg,compatx11file

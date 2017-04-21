@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_print.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsn_print.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /*	the specified attribute print routine. dsn_print() is meant
 /*	to be passed as a call-back to attr_print(), thusly:
 /*
-/*	... ATTR_TYPE_FUNC, dsn_print, (void *) dsn, ...
+/*	... SEND_ATTR_FUNC(dsn_print, (void *) dsn), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -58,13 +58,13 @@ int     dsn_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
      * be sanitized after all the ad-hoc DSN read/write code is replaced.
      */
     ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_STATUS, dsn->status,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_DTYPE, dsn->dtype,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_DTEXT, dsn->dtext,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_MTYPE, dsn->mtype,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_MNAME, dsn->mname,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_ACTION, dsn->action,
-		   ATTR_TYPE_STR, MAIL_ATTR_WHY, dsn->reason,
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_STATUS, dsn->status),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_DTYPE, dsn->dtype),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_DTEXT, dsn->dtext),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_MTYPE, dsn->mtype),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_MNAME, dsn->mname),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_ACTION, dsn->action),
+		   SEND_ATTR_STR(MAIL_ATTR_WHY, dsn->reason),
 		   ATTR_TYPE_END);
     return (ret);
 }

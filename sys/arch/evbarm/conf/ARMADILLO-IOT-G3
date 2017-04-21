@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.4 2016/11/26 13:59:45 christos Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.4.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -103,6 +103,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
@@ -132,6 +133,7 @@ file-system	PTYFS		# /dev/ptm support
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postscreen.8,v 1.1.1.4 2014/07/06 19:27:46 tron Exp $
+.\"	$NetBSD: postscreen.8,v 1.1.1.4.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH POSTSCREEN 8 
 .ad
@@ -23,11 +23,11 @@ SMTP server processes available for legitimate clients, and
 delays the onset of server overload conditions.
 
 This program should not be used on SMTP ports that receive
-mail from end-user clients (MUAs). In a typical deployment,
+mail from end\-user clients (MUAs). In a typical deployment,
 \fBpostscreen\fR(8) handles the MX service on TCP port 25,
 while MUA clients submit mail via the \fBsubmission\fR
 service on TCP port 587 which requires client authentication.
-Alternatively, a site could set up a dedicated, non-postscreen,
+Alternatively, a site could set up a dedicated, non\-postscreen,
 "port 25" server that provides \fBsubmission\fR service and
 client authentication, but no MX service.
 
@@ -38,11 +38,11 @@ off the connection immediately to a Postfix SMTP server
 process. This minimizes the overhead for legitimate mail.
 
 By default, \fBpostscreen\fR(8) logs statistics and hands
-off every connection to a Postfix SMTP server process, while
+off each connection to a Postfix SMTP server process, while
 excluding clients in mynetworks from all tests (primarily,
-to avoid problems with non-standard SMTP implementations
-in network appliances).  This mode is useful for non-destructive
-testing.
+to avoid problems with non\-standard SMTP implementations
+in network appliances).  This default mode blocks no clients,
+and is useful for non\-destructive testing.
 
 In a typical production setting, \fBpostscreen\fR(8) is
 configured to reject mail from clients that fail one or
@@ -58,7 +58,7 @@ traffic.
 .nf
 .ad
 .fi
-The \fBpostscreen\fR(8) server is moderately security-sensitive.
+The \fBpostscreen\fR(8) server is moderately security\-sensitive.
 It talks to untrusted clients on the network. The process
 can be run chrooted at fixed low privilege.
 .SH "STANDARDS"
@@ -66,7 +66,7 @@ can be run chrooted at fixed low privilege.
 .nf
 RFC 821 (SMTP protocol)
 RFC 1123 (Host requirements)
-RFC 1652 (8bit-MIME transport)
+RFC 1652 (8bit\-MIME transport)
 RFC 1869 (SMTP service extensions)
 RFC 1870 (Message Size Declaration)
 RFC 1985 (ETRN command)
@@ -76,7 +76,7 @@ Not: RFC 2920 (SMTP Pipelining)
 RFC 3207 (STARTTLS command)
 RFC 3461 (SMTP DSN Extension)
 RFC 3463 (Enhanced Status Codes)
-RFC 5321 (SMTP protocol, including multi-line 220 banners)
+RFC 5321 (SMTP protocol, including multi\-line 220 banners)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -84,18 +84,18 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 .SH BUGS
 .ad
 .fi
-The \fBpostscreen\fR(8) built-in SMTP protocol engine
+The \fBpostscreen\fR(8) built\-in SMTP protocol engine
 currently does not announce support for AUTH, XCLIENT or
 XFORWARD.
 If you need to make these services available
 on port 25, then do not enable the optional "after 220
 server greeting" tests, and do not use DNSBLs that reject
-traffic from dial-up and residential networks.
+traffic from dial\-up and residential networks.
 
 The optional "after 220 server greeting" tests involve
-\fBpostscreen\fR(8)'s built-in SMTP protocol engine. When
+\fBpostscreen\fR(8)'s built\-in SMTP protocol engine. When
 these tests succeed, \fBpostscreen\fR(8) adds the client
-to the temporary whitelist, but it cannot not hand off the
+to the temporary whitelist, but it cannot hand off the
 "live" connection to a Postfix SMTP server process in the
 middle of a session.  Instead, \fBpostscreen\fR(8) defers
 attempts to deliver mail with a 4XX status, and waits for
@@ -119,10 +119,10 @@ The text below provides only a parameter summary. See
 \fBpostconf\fR(5) for more details including examples.
 
 NOTE: Some \fBpostscreen\fR(8) parameters implement
-stress-dependent behavior.  This is supported only when the
-default parameter value is stress-dependent (that is, it
-looks like ${stress?X}${stress:Y}, or it is the $\fIname\fR
-of an smtpd parameter with a stress-dependent default).
+stress\-dependent behavior.  This is supported only when the
+default parameter value is stress\-dependent (that is, it
+looks like ${stress?{X}:{Y}}, or it is the $\fIname\fR
+of an smtpd parameter with a stress\-dependent default).
 Other parameters always evaluate as if the \fBstress\fR
 parameter value is the empty string.
 .SH "COMPATIBILITY CONTROLS"
@@ -141,6 +141,10 @@ to a remote SMTP client.
 A case insensitive list of EHLO keywords (pipelining, starttls,
 auth, etc.) that the \fBpostscreen\fR(8) server will not send in the EHLO
 response to a remote SMTP client.
+.PP
+Available in Postfix version 3.1 and later:
+.IP "\fBdns_ncache_ttl_fix_enable (no)\fR"
+Enable a workaround for future libc incompatibility.
 .SH "TROUBLE SHOOTING CONTROLS"
 .na
 .nf
@@ -163,7 +167,7 @@ the sender.
 .fi
 Available in Postfix version 2.10 and later:
 .IP "\fBpostscreen_upstream_proxy_protocol (empty)\fR"
-The name of the proxy protocol used by an optional before-postscreen
+The name of the proxy protocol used by an optional before\-postscreen
 proxy agent.
 .IP "\fBpostscreen_upstream_proxy_timeout (5s)\fR"
 The time limit for the proxy protocol specified with the
@@ -196,7 +200,7 @@ on the same MTA. Larger sites would have to share the
 which would introduce a common point of failure.
 .IP "\fBpostscreen_whitelist_interfaces (static:all)\fR"
 A list of local \fBpostscreen\fR(8) server IP addresses where a
-non-whitelisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
+non\-whitelisted remote SMTP client can obtain \fBpostscreen\fR(8)'s temporary
 whitelist status.
 .SH "BEFORE 220 GREETING TESTS"
 .na
@@ -231,12 +235,12 @@ The action that \fBpostscreen\fR(8) takes when a remote SMTP client speaks
 before its turn within the time specified with the postscreen_greet_wait
 parameter.
 .IP "\fBpostscreen_greet_banner ($smtpd_banner)\fR"
-The \fItext\fR in the optional "220-\fItext\fR..." server
+The \fItext\fR in the optional "220\-\fItext\fR..." server
 response that
 \fBpostscreen\fR(8) sends ahead of the real Postfix SMTP server's "220
 text..." response, in an attempt to confuse bad SMTP clients so
-that they speak before their turn (pre-greet).
-.IP "\fBpostscreen_greet_wait (${stress?2}${stress:6}s)\fR"
+that they speak before their turn (pre\-greet).
+.IP "\fBpostscreen_greet_wait (normal: 6s, overload: 2s)\fR"
 The amount of time that \fBpostscreen\fR(8) will wait for an SMTP
 client to send a command before its turn, and for DNS blocklist
 lookup results to arrive (default: up to 2 seconds under stress,
@@ -250,6 +254,10 @@ Available in Postfix version 2.11 and later:
 Allow a remote SMTP client to skip "before" and "after 220
 greeting" protocol tests, based on its combined DNSBL score as
 defined with the postscreen_dnsbl_sites parameter.
+.PP
+Available in Postfix version 3.0 and later:
+.IP "\fBpostscreen_dnsbl_timeout (10s)\fR"
+The time limit for DNSBL or DNSWL lookups.
 .SH "AFTER 220 GREETING TESTS"
 .na
 .nf
@@ -278,10 +286,10 @@ Require that a remote SMTP client sends HELO or EHLO before
 commencing a MAIL transaction.
 .IP "\fBpostscreen_non_smtp_command_action (drop)\fR"
 The action that \fBpostscreen\fR(8) takes when a remote SMTP client sends
-non-SMTP commands as specified with the postscreen_forbidden_commands
+non\-SMTP commands as specified with the postscreen_forbidden_commands
 parameter.
 .IP "\fBpostscreen_non_smtp_command_enable (no)\fR"
-Enable "non-SMTP command" tests in the \fBpostscreen\fR(8) server.
+Enable "non\-SMTP command" tests in the \fBpostscreen\fR(8) server.
 .IP "\fBpostscreen_pipelining_action (enforce)\fR"
 The action that \fBpostscreen\fR(8) takes when a remote SMTP client
 sends
@@ -305,9 +313,14 @@ temporary whitelist entry before it is removed.
 .IP "\fBpostscreen_bare_newline_ttl (30d)\fR"
 The amount of time that \fBpostscreen\fR(8) will use the result from
 a successful "bare newline" SMTP protocol test.
-.IP "\fBpostscreen_dnsbl_ttl (1h)\fR"
-The amount of time that \fBpostscreen\fR(8) will use the result from
-a successful DNS blocklist test.
+.IP "\fBpostscreen_dnsbl_max_ttl (${postscreen_dnsbl_ttl?{$postscreen_dnsbl_ttl}:{1}}h)\fR"
+The maximum amount of time that \fBpostscreen\fR(8) will use the
+result from a successful DNS\-based reputation test before a
+client IP address is required to pass that test again.
+.IP "\fBpostscreen_dnsbl_min_ttl (60s)\fR"
+The minimum amount of time that \fBpostscreen\fR(8) will use the
+result from a successful DNS\-based reputation test before a
+client IP address is required to pass that test again.
 .IP "\fBpostscreen_greet_ttl (1d)\fR"
 The amount of time that \fBpostscreen\fR(8) will use the result from
 a successful PREGREET test.
@@ -331,22 +344,22 @@ allowed to have
 with the \fBpostscreen\fR(8) daemon.
 .IP "\fBpostscreen_command_count_limit (20)\fR"
 The limit on the total number of commands per SMTP session for
-\fBpostscreen\fR(8)'s built-in SMTP protocol engine.
-.IP "\fBpostscreen_command_time_limit (${stress?10}${stress:300}s)\fR"
+\fBpostscreen\fR(8)'s built\-in SMTP protocol engine.
+.IP "\fBpostscreen_command_time_limit (normal: 300s, overload: 10s)\fR"
 The time limit to read an entire command line with \fBpostscreen\fR(8)'s
-built-in SMTP protocol engine.
+built\-in SMTP protocol engine.
 .IP "\fBpostscreen_post_queue_limit ($default_process_limit)\fR"
 The number of clients that can be waiting for service from a
 real Postfix SMTP server process.
 .IP "\fBpostscreen_pre_queue_limit ($default_process_limit)\fR"
-The number of non-whitelisted clients that can be waiting for
+The number of non\-whitelisted clients that can be waiting for
 a decision whether they will receive service from a real Postfix
 SMTP server
 process.
 .IP "\fBpostscreen_watchdog_timeout (10s)\fR"
 How much time a \fBpostscreen\fR(8) process may take to respond to
 a remote SMTP client command or to perform a cache operation before it
-is terminated by a built-in watchdog timer.
+is terminated by a built\-in watchdog timer.
 .SH "STARTTLS CONTROLS"
 .na
 .nf
@@ -354,7 +367,7 @@ is terminated by a built-in watchdog timer.
 .fi
 .IP "\fBpostscreen_tls_security_level ($smtpd_tls_security_level)\fR"
 The SMTP TLS security level for the \fBpostscreen\fR(8) server; when
-a non-empty value is specified, this overrides the obsolete parameters
+a non\-empty value is specified, this overrides the obsolete parameters
 postscreen_use_tls and postscreen_enforce_tls.
 .IP "\fBtlsproxy_service_name (tlsproxy)\fR"
 The name of the \fBtlsproxy\fR(8) service entry in master.cf.
@@ -381,15 +394,15 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub-second delay values.
+sub\-second delay values.
 .IP "\fBcommand_directory (see 'postconf -d' output)\fR"
 The location of all postfix administrative commands.
 .IP "\fBmax_idle (100s)\fR"
 The maximum amount of time that an idle Postfix daemon process waits
 for an incoming connection before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
@@ -419,9 +432,9 @@ POSTSCREEN_README, Postfix Postscreen Howto
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 .ad
 .fi
 This service was introduced with Postfix version 2.8.
@@ -436,3 +449,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

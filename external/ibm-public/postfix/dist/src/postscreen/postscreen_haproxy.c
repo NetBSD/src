@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_haproxy.c,v 1.1.1.1 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen_haproxy.c,v 1.1.1.1.16.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -71,7 +71,7 @@ typedef struct {
 
 /* psc_endpt_haproxy_event - read or time event */
 
-static void psc_endpt_haproxy_event(int event, char *context)
+static void psc_endpt_haproxy_event(int event, void *context)
 {
     const char *myname = "psc_endpt_haproxy_event";
     PSC_HAPROXY_STATE *state = (PSC_HAPROXY_STATE *) context;
@@ -109,8 +109,8 @@ static void psc_endpt_haproxy_event(int event, char *context)
 	    } else {
 		read_len = 1;
 	    }
-	    vstream_control(state->stream, VSTREAM_CTL_BUFSIZE, read_len,
-			    VSTREAM_CTL_END);
+	    vstream_control(state->stream, CA_VSTREAM_CTL_BUFSIZE(read_len),
+			    CA_VSTREAM_CTL_END);
 	}
 	/* Drain the VSTREAM buffer, otherwise this pseudo-thread will hang. */
 	do {
@@ -159,14 +159,14 @@ static void psc_endpt_haproxy_event(int event, char *context)
 	PSC_CLEAR_EVENT_REQUEST(vstream_fileno(state->stream),
 				psc_endpt_haproxy_event, context);
 	vstream_control(state->stream,
-			VSTREAM_CTL_BUFSIZE, (ssize_t) VSTREAM_BUFSIZE,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_BUFSIZE(VSTREAM_BUFSIZE),
+			CA_VSTREAM_CTL_END);
 	state->notify(status, state->stream,
 		      &smtp_client_addr, &smtp_client_port,
 		      &smtp_server_addr, &smtp_server_port);
 	/* Note: the stream may be closed at this point. */
 	vstring_free(state->buffer);
-	myfree((char *) state);
+	myfree((void *) state);
     }
 }
 
@@ -192,5 +192,5 @@ void    psc_endpt_haproxy_lookup(VSTREAM *stream,
      * Read the haproxy line.
      */
     PSC_READ_EVENT_REQUEST(vstream_fileno(stream), psc_endpt_haproxy_event,
-			   (char *) state, var_psc_uproxy_tmout);
+			   (void *) state, var_psc_uproxy_tmout);
 }

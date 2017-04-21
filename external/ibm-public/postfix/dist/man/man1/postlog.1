@@ -1,4 +1,4 @@
-.\"	$NetBSD: postlog.1,v 1.1.1.1 2009/06/23 10:08:32 tron Exp $
+.\"	$NetBSD: postlog.1,v 1.1.1.1.36.1 2017/04/21 16:52:45 bouyer Exp $
 .\"
 .TH POSTLOG 1 
 .ad
@@ -6,18 +6,18 @@
 .SH NAME
 postlog
 \-
-Postfix-compatible logging utility
+Postfix\-compatible logging utility
 .SH "SYNOPSIS"
 .na
 .nf
 .fi
 .ad
-\fBpostlog\fR [\fB-iv\fR] [\fB-c \fIconfig_dir\fR]
-[\fB-p \fIpriority\fB] [\fB-t \fItag\fR] [\fItext...\fR]
+\fBpostlog\fR [\fB\-iv\fR] [\fB\-c \fIconfig_dir\fR]
+[\fB\-p \fIpriority\fR] [\fB\-t \fItag\fR] [\fItext...\fR]
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpostlog\fR(1) command implements a Postfix-compatible logging
+The \fBpostlog\fR(1) command implements a Postfix\-compatible logging
 interface for use in, for example, shell scripts.
 
 By default, \fBpostlog\fR(1) logs the \fItext\fR given on the command
@@ -29,20 +29,23 @@ Logging is sent to \fBsyslogd\fR(8); when the standard error stream
 is connected to a terminal, logging is sent there as well.
 
 The following options are implemented:
-.IP "\fB-c \fIconfig_dir\fR"
+.IP "\fB\-c \fIconfig_dir\fR"
 Read the \fBmain.cf\fR configuration file in the named directory
 instead of the default configuration directory.
-.IP \fB-i\fR
+.IP \fB\-i\fR
 Include the process ID in the logging tag.
-.IP "\fB-p \fIpriority\fR"
-Specifies the logging severity: \fBinfo\fR (default), \fBwarn\fR,
-\fBerror\fR, \fBfatal\fR, or \fBpanic\fR.
-.IP "\fB-t \fItag\fR"
+.IP "\fB\-p \fIpriority\fR (default: \fBinfo\fR)"
+Specifies the logging severity: \fBinfo\fR, \fBwarn\fR,
+\fBerror\fR, \fBfatal\fR, or \fBpanic\fR. With Postfix 3.1
+and later, the program will pause for 1 second after reporting
+a \fBfatal\fR or \fBpanic\fR condition, just like other
+Postfix programs.
+.IP "\fB\-t \fItag\fR"
 Specifies the logging tag, that is, the identifying name that
 appears at the beginning of each logging record. A default tag
 is used when none is specified.
-.IP \fB-v\fR
-Enable verbose logging for debugging purposes. Multiple \fB-v\fR
+.IP \fB\-v\fR
+Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
 .SH "ENVIRONMENT"
 .na
@@ -87,3 +90,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

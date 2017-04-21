@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.125 2013/09/14 13:09:55 joerg Exp $ */
+/* $NetBSD: isp.c,v 1.125.14.1 2017/04/21 16:53:46 bouyer Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.125 2013/09/14 13:09:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.125.14.1 2017/04/21 16:53:46 bouyer Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -5114,7 +5114,7 @@ again:
 			 * If somebody updated the output pointer, then reset
 			 * optr to be one more than the updated amount.
 			 */
-			while (tsto != oop) {
+			if (tsto != oop) {
 				optr = ISP_NXT_QENTRY(tsto,
 				    RESULT_QUEUE_LEN(isp));
 			}

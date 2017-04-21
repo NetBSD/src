@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.52 2016/02/18 18:29:14 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.52.4.1 2017/04/21 16:54:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.52 2016/02/18 18:29:14 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.52.4.1 2017/04/21 16:54:14 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.52 2016/02/18 18:29:14 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.52.4.1 2017/04/21 16:54:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -427,7 +427,7 @@ For_Iterate(void *v_arg, size_t *ret_len)
     for (cp = cmd_cp; (cp = strchr(cp, '$')) != NULL;) {
 	char ech;
 	ch = *++cp;
-	if ((ch == '(' && (ech = ')')) || (ch == '{' && (ech = '}'))) {
+	if ((ch == '(' && (ech = ')', 1)) || (ch == '{' && (ech = '}', 1))) {
 	    cp++;
 	    /* Check variable name against the .for loop variables */
 	    STRLIST_FOREACH(var, &arg->vars, i) {

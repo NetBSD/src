@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.100 2013/06/23 07:28:36 dholland Exp $	*/
+/*	$NetBSD: setup.c,v 1.100.14.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.100 2013/06/23 07:28:36 dholland Exp $");
+__RCSID("$NetBSD: setup.c,v 1.100.14.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,9 @@ __RCSID("$NetBSD: setup.c,v 1.100 2013/06/23 07:28:36 dholland Exp $");
 static void badsb(int, const char *);
 static int calcsb(const char *, int, struct fs *);
 static int readsb(int);
+#ifndef NO_APPLE_UFS
 static int readappleufs(void);
+#endif
 
 int16_t sblkpostbl[256];
 
@@ -527,19 +529,26 @@ setup(const char *dev, const char *origdev)
 	else
 		usedsoftdep = 0;
 
+#ifndef NO_APPLE_UFS
 	if (!forceimage && dkw.dkw_parent[0]) 
 		if (strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
 			isappleufs = 1;
 
 	if (readappleufs())
 		isappleufs = 1;
+#endif
 
-	dirblksiz = UFS_DIRBLKSIZ;
 	if (isappleufs)
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	else
+		dirblksiz = UFS_DIRBLKSIZ;
 
 	if (debug)
+#ifndef NO_APPLE_UFS
 		printf("isappleufs = %d, dirblksiz = %d\n", isappleufs, dirblksiz);
+#else
+		printf("dirblksiz = %d\n", dirblksiz);
+#endif
 
 	if (sblock->fs_flags & FS_DOQUOTA2) {
 		/* allocate the quota hash table */
@@ -580,6 +589,7 @@ badsblabel:
 	return (0);
 }
 
+#ifndef NO_APPLE_UFS
 static int
 readappleufs(void)
 {
@@ -684,6 +694,7 @@ readappleufs(void)
 	}
 	return 1;
 }
+#endif /* !NO_APPLE_UFS */
 
 /*
  * Detect byte order. Return 0 if valid magic found, -1 otherwise.
@@ -696,6 +707,7 @@ detect_byteorder(struct fs *fs, int sblockoff)
 		/* Likely to be the first alternate of a fs with 64k blocks */
 		return -1;
 	if (fs->fs_magic == FS_UFS1_MAGIC || fs->fs_magic == FS_UFS2_MAGIC) {
+#ifndef NO_FFS_EI
 		if (endian == 0 || BYTE_ORDER == endian) {
 			needswap = 0;
 			doswap = do_blkswap = do_dirswap = 0;
@@ -703,8 +715,11 @@ detect_byteorder(struct fs *fs, int sblockoff)
 			needswap = 1;
 			doswap = do_blkswap = do_dirswap = 1;
 		}
+#endif
 		return 0;
-	} else if (fs->fs_magic == FS_UFS1_MAGIC_SWAPPED ||
+	}
+#ifndef NO_FFS_EI
+	else if (fs->fs_magic == FS_UFS1_MAGIC_SWAPPED ||
 		   fs->fs_magic == FS_UFS2_MAGIC_SWAPPED) {
 		if (endian == 0 || BYTE_ORDER != endian) {
 			needswap = 1;
@@ -715,6 +730,7 @@ detect_byteorder(struct fs *fs, int sblockoff)
 		}
 		return 0;
 	}
+#endif
 	return -1;
 }
 
@@ -1027,8 +1043,11 @@ calcsb(const char *dev, int devfd, struct fs *fs)
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}
-	if (strcmp(dkw.dkw_ptype, DKW_PTYPE_FFS) &&
-	    strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS)) {
+	if (strcmp(dkw.dkw_ptype, DKW_PTYPE_FFS)
+#ifndef NO_APPLE_UFS
+	 && strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS)
+#endif
+	) {
 		pfatal("%s: NOT LABELED AS A BSD FILE SYSTEM (%s)\n",
 		    dev, dkw.dkw_ptype);
 		return (0);

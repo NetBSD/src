@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.120 2017/01/10 10:13:24 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.120.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -842,6 +842,24 @@ int chgat(int, attr_t, short, const void *);
 int wchgat(WINDOW *, int, attr_t, short, const void *);
 int mvchgat(int, int, int, attr_t, short, const void *);
 int mvwchgat(WINDOW *, int, int, int, attr_t, short, const void *);
+
+/* Soft Label Keys. */
+int	 slk_attroff(const chtype);
+int	 slk_attr_off(const attr_t, void *);
+int	 slk_attron(const chtype);
+int	 slk_attr_on(const attr_t, void *);
+int	 slk_attrset(const chtype);
+int	 slk_attr_set(const attr_t, short, void *);
+int	 slk_clear(void);
+int	 slk_color(short);
+int	 slk_init(int);
+char	*slk_label(int);
+int	 slk_noutrefresh(void);
+int	 slk_refresh(void);
+int	 slk_restore(void);
+int	 slk_set(int, const char *, int);
+int	 slk_touch(void);
+int	 slk_wset(int, const wchar_t *, int);
 
 /* wide-character support routines */
 /* return ERR when HAVE_WCHAR is not defined */

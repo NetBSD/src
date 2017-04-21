@@ -1,10 +1,10 @@
-/*	$NetBSD: addpartial-overlay.c,v 1.1.1.4 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: addpartial-overlay.c,v 1.1.1.4.10.1 2017/04/21 16:52:22 bouyer Exp $	*/
 
 /* addpartial-overlay.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright (C) 2004 Virginia Tech, David Hawes.
  * All rights reserved.
  *
@@ -30,6 +30,9 @@
  * useful for replicating from sources that are not LDAPs where it is easier to
  * build entire records than to determine the changes (i.e. a database). 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: addpartial-overlay.c,v 1.1.1.4.10.1 2017/04/21 16:52:22 bouyer Exp $");
 
 #include "portable.h" 
 #include "slap.h"

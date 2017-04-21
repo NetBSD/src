@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.94 2017/01/13 06:11:56 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.94.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.94 2017/01/13 06:11:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.94.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -733,7 +733,7 @@ vlan_start(struct ifnet *ifp)
 
 #ifdef ALTQ
 		/*
-		 * KERNEL_LOCK is required for ALTQ even if NET_MPSAFE if defined.
+		 * KERNEL_LOCK is required for ALTQ even if NET_MPSAFE is defined.
 		 */
 		KERNEL_LOCK(1, NULL);
 		/*
@@ -841,19 +841,17 @@ vlan_start(struct ifnet *ifp)
 			}
 		}
 
-		/*
-		 * Send it, precisely as the parent's output routine
-		 * would have.  We are already running at splnet.
-		 */
-		if ((p->if_flags & IFF_RUNNING) != 0) {
-			error = if_transmit_lock(p, m);
-			if (error) {
-				/* mbuf is already freed */
-				ifp->if_oerrors++;
-				continue;
-			}
+		if ((p->if_flags & IFF_RUNNING) == 0) {
+			m_freem(m);
+			continue;
 		}
 
+		error = if_transmit_lock(p, m);
+		if (error) {
+			/* mbuf is already freed */
+			ifp->if_oerrors++;
+			continue;
+		}
 		ifp->if_opackets++;
 	}
 

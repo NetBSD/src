@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.22 2016/11/01 14:46:31 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.22.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.22 2016/11/01 14:46:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.22.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,10 @@ static void	nvme_ns_sync_fill(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
 static void	nvme_ns_sync_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
+static void	nvme_getcache_fill(struct nvme_queue *, struct nvme_ccb *,
+		    void *);
+static void	nvme_getcache_done(struct nvme_queue *, struct nvme_ccb *,
+		    struct nvme_cqe *);
 
 static void	nvme_pt_fill(struct nvme_queue *, struct nvme_ccb *,
 		    void *);
@@ -106,6 +110,8 @@ static void	nvme_pt_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
 static int	nvme_command_passthrough(struct nvme_softc *,
 		    struct nvme_pt_command *, uint16_t, struct lwp *, bool);
+
+static int	nvme_get_number_of_queues(struct nvme_softc *, u_int *);
 
 #define NVME_TIMO_QOP		5	/* queue create and delete timeout */
 #define NVME_TIMO_IDENT		10	/* probe identify timeout */
@@ -170,6 +176,9 @@ nvme_version(struct nvme_softc *sc, uint32_t ver)
 		break;
 	case NVME_VS_1_2:
 		v = "1.2";
+		break;
+	case NVME_VS_1_2_1:
+		v = "1.2.1";
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev, "unknown version 0x%08x\n", ver);
@@ -333,6 +342,7 @@ nvme_attach(struct nvme_softc *sc)
 	uint32_t reg;
 	u_int dstrd;
 	u_int mps = PAGE_SHIFT;
+	u_int ioq_allocated;
 	uint16_t adminq_entries = nvme_adminq_size;
 	uint16_t ioq_entries = nvme_ioq_size;
 	int i;
@@ -394,6 +404,17 @@ nvme_attach(struct nvme_softc *sc)
 	/* reallocate ccbs of admin queue with new max sgl. */
 	nvme_ccbs_free(sc->sc_admin_q);
 	nvme_ccbs_alloc(sc->sc_admin_q, sc->sc_admin_q->q_entries);
+
+	if (sc->sc_use_mq) {
+		/* Limit the number of queues to the number allocated in HW */
+		if (nvme_get_number_of_queues(sc, &ioq_allocated) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to get number of queues\n");
+			goto disable;
+		}
+		if (sc->sc_nq > ioq_allocated)
+			sc->sc_nq = ioq_allocated;
+	}
 
 	sc->sc_q = kmem_zalloc(sizeof(*sc->sc_q) * sc->sc_nq, KM_SLEEP);
 	if (sc->sc_q == NULL) {
@@ -706,6 +727,9 @@ nvme_ns_io_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 
 	htolem64(&sqe->slba, ccb->nnc_blkno);
 
+	if (ISSET(ccb->nnc_flags, NVME_NS_CTX_F_FUA))
+		htolem16(&sqe->ioflags, NVM_SQE_IO_FUA);
+
 	/* guaranteed by upper layers, but check just in case */
 	KASSERT((ccb->nnc_datasize % ccb->nnc_secsize) == 0);
 	htolem16(&sqe->nlb, (ccb->nnc_datasize / ccb->nnc_secsize) - 1);
@@ -736,7 +760,18 @@ nvme_ns_io_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	nvme_ccb_put(q, ccb);
 
-	nnc_done(nnc_cookie, bp, lemtoh16(&cqe->flags));
+	nnc_done(nnc_cookie, bp, lemtoh16(&cqe->flags), lemtoh32(&cqe->cdw0));
+}
+
+/*
+ * If there is no volatile write cache, it makes no sense to issue
+ * flush commands or query for the status.
+ */
+bool
+nvme_has_volatile_write_cache(struct nvme_softc *sc)
+{
+	/* sc_identify is filled during attachment */
+	return  ((sc->sc_identify.vwc & NVME_ID_CTRLR_VWC_PRESENT) != 0);
 }
 
 int
@@ -786,7 +821,52 @@ nvme_ns_sync_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 
 	nvme_ccb_put(q, ccb);
 
-	nnc_done(cookie, NULL, lemtoh16(&cqe->flags));
+	nnc_done(cookie, NULL, lemtoh16(&cqe->flags), lemtoh32(&cqe->cdw0));
+}
+
+/*
+ * Get status of volatile write cache. Always asynchronous.
+ */
+int
+nvme_admin_getcache(struct nvme_softc *sc, void *cookie, nvme_nnc_done nnc_done)
+{
+	struct nvme_ccb *ccb;
+	struct nvme_queue *q = sc->sc_admin_q;
+
+	ccb = nvme_ccb_get(q);
+	if (ccb == NULL)
+		return EAGAIN;
+
+	ccb->ccb_done = nvme_getcache_done;
+	ccb->ccb_cookie = cookie;
+
+	/* namespace context */
+	ccb->nnc_flags = 0;
+	ccb->nnc_done = nnc_done;
+
+	nvme_q_submit(sc, q, ccb, nvme_getcache_fill);
+	return 0;
+}
+
+static void
+nvme_getcache_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
+{
+	struct nvme_sqe *sqe = slot;
+
+	sqe->opcode = NVM_ADMIN_GET_FEATURES;
+	sqe->cdw10 = NVM_FEATURE_VOLATILE_WRITE_CACHE;
+}
+
+static void
+nvme_getcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
+    struct nvme_cqe *cqe)
+{
+	void *cookie = ccb->ccb_cookie;
+	nvme_nnc_done nnc_done = ccb->nnc_done;
+
+	nvme_ccb_put(q, ccb);
+
+	nnc_done(cookie, NULL, lemtoh16(&cqe->flags), lemtoh32(&cqe->cdw0));
 }
 
 void
@@ -868,8 +948,8 @@ nvme_pt_done(struct nvme_queue *q, struct nvme_ccb *ccb, struct nvme_cqe *cqe)
 		bus_dmamap_unload(sc->sc_dmat, dmap);
 	}
 
-	pt->cpl.cdw0 = cqe->cdw0;
-	pt->cpl.flags = cqe->flags & ~NVME_CQE_PHASE;
+	pt->cpl.cdw0 = lemtoh32(&cqe->cdw0);
+	pt->cpl.flags = lemtoh16(&cqe->flags) & ~NVME_CQE_PHASE;
 }
 
 static int
@@ -1268,6 +1348,40 @@ nvme_fill_identify(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 	sqe->opcode = NVM_ADMIN_IDENTIFY;
 	htolem64(&sqe->entry.prp[0], NVME_DMA_DVA(mem));
 	htolem32(&sqe->cdw10, 1);
+}
+
+static int
+nvme_get_number_of_queues(struct nvme_softc *sc, u_int *nqap)
+{
+	struct nvme_pt_command pt;
+	struct nvme_ccb *ccb;
+	uint16_t ncqa, nsqa;
+	int rv;
+
+	ccb = nvme_ccb_get(sc->sc_admin_q);
+	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
+
+	memset(&pt, 0, sizeof(pt));
+	pt.cmd.opcode = NVM_ADMIN_GET_FEATURES;
+	pt.cmd.cdw10 = NVM_FEATURE_NUMBER_OF_QUEUES;
+
+	ccb->ccb_done = nvme_pt_done;
+	ccb->ccb_cookie = &pt;
+
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_pt_fill, NVME_TIMO_QOP);
+
+	nvme_ccb_put(sc->sc_admin_q, ccb);
+
+	if (rv != 0) {
+		*nqap = 0;
+		return EIO;
+	}
+
+	ncqa = pt.cpl.cdw0 >> 16;
+	nsqa = pt.cpl.cdw0 & 0xffff;
+	*nqap = MIN(ncqa, nsqa) + 1;
+
+	return 0;
 }
 
 static int

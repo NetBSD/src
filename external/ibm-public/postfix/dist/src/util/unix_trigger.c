@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_trigger.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: unix_trigger.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -69,7 +69,7 @@ struct unix_trigger {
 
 /* unix_trigger_event - disconnect from peer */
 
-static void unix_trigger_event(int event, char *context)
+static void unix_trigger_event(int event, void *context)
 {
     struct unix_trigger *up = (struct unix_trigger *) context;
     static const char *myname = "unix_trigger_event";
@@ -84,7 +84,7 @@ static void unix_trigger_event(int event, char *context)
     if (close(up->fd) < 0)
 	msg_warn("%s: close %s: %m", myname, up->service);
     myfree(up->service);
-    myfree((char *) up);
+    myfree((void *) up);
 }
 
 /* unix_trigger - wakeup UNIX-domain server */
@@ -127,7 +127,7 @@ int     unix_trigger(const char *service, const char *buf, ssize_t len, int time
      * Wakeup when the peer disconnects, or when we lose patience.
      */
     if (timeout > 0)
-	event_request_timer(unix_trigger_event, (char *) up, timeout + 100);
-    event_enable_read(fd, unix_trigger_event, (char *) up);
+	event_request_timer(unix_trigger_event, (void *) up, timeout + 100);
+    event_enable_read(fd, unix_trigger_event, (void *) up);
     return (0);
 }

@@ -992,7 +992,7 @@ this_tok:
 		     parent->type == EQN_MATRIX))
 			parent = parent->parent;
 		/* Close out any "singleton" lists. */
-		while (parent && parent->type == EQN_LISTONE &&
+		while (parent->type == EQN_LISTONE &&
 		    parent->args == parent->expectargs)
 			parent = parent->parent;
 		break;

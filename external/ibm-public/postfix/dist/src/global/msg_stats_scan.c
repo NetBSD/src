@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_stats_scan.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: msg_stats_scan.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /*	using the specified attribute scan routine. msg_stats_scan()
 /*	is meant to be passed as a call-back to attr_scan(), thusly:
 /*
-/*	... ATTR_SCAN_FUNC, msg_stats_scan, (void *) &stats, ...
+/*	... RECV_ATTR_FUNC(msg_stats_scan, (void *) &stats), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -72,11 +72,11 @@ int     msg_stats_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
      * gracefully reject attempts to extend it.
      */
     ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		  ATTR_TYPE_DATA, MAIL_ATTR_TIME, buf,
+		  RECV_ATTR_DATA(MAIL_ATTR_TIME, buf),
 		  ATTR_TYPE_END);
     if (ret == 1) {
 	if (LEN(buf) == sizeof(*stats)) {
-	    memcpy((char *) stats, STR(buf), sizeof(*stats));
+	    memcpy((void *) stats, STR(buf), sizeof(*stats));
 	} else {
 	    msg_warn("msg_stats_scan: size mis-match: %u != %u",
 		     (unsigned) LEN(buf), (unsigned) sizeof(*stats));

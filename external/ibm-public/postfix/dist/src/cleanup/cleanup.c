@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.c,v 1.5 2013/09/25 19:12:35 tron Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.5.12.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -23,6 +23,9 @@
 /*	This task is delegated to the \fBtrivial-rewrite\fR(8) daemon.
 /* .IP \(bu
 /*	Eliminate duplicate envelope recipient addresses.
+/* .IP \(bu
+/*	Remove message headers: \fBBcc\fR, \fBContent-Length\fR,
+/*	\fBResent-Bcc\fR, \fBReturn-Path\fR.
 /* .PP
 /*	The following address transformations are optional:
 /* .IP \(bu
@@ -90,6 +93,11 @@
 /*	Available in Postfix version 2.9 and later:
 /* .IP "\fBenable_long_queue_ids (no)\fR"
 /*	Enable long, non-repeating, queue IDs (queue file names).
+/* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBmessage_drop_headers (bcc, content-length, resent-bcc, return-path)\fR"
+/*	Names of message headers that the \fBcleanup\fR(8) daemon will remove
+/*	after applying \fBheader_checks\fR(5) and before invoking Milter applications.
 /* BUILT-IN CONTENT FILTERING CONTROLS
 /* .ad
 /* .fi
@@ -183,6 +191,12 @@
 /* .IP "\fBmilter_header_checks (empty)\fR"
 /*	Optional lookup tables for content inspection of message headers
 /*	that are produced by Milter applications.
+/* .PP
+/*	Available in Postfix version 3.1 and later:
+/* .IP "\fBmilter_macro_defaults (empty)\fR"
+/*	Optional list of \fIname=value\fR pairs that specify default
+/*	values for arbitrary macros that Postfix may send to Milter
+/*	applications.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -314,6 +328,20 @@
 /*	from each original recipient.
 /* .IP "\fBvirtual_alias_recursion_limit (1000)\fR"
 /*	The maximal nesting depth of virtual alias expansion.
+/* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBvirtual_alias_address_length_limit (1000)\fR"
+/*	The maximal length of an email address after virtual alias expansion.
+/* SMTPUTF8 CONTROLS
+/* .ad
+/* .fi
+/*	Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
+/* .IP "\fBsmtputf8_enable (yes)\fR"
+/*	Enable preliminary SMTPUTF8 support for the protocols described
+/*	in RFC 6531..6533.
+/* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
+/*	Detect that a message requires SMTPUTF8 support for the specified
+/*	mail origin classes.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -393,6 +421,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -453,10 +486,10 @@ static void cleanup_service(VSTREAM *src, char *unused_service, char **argv)
      * about the whole operation.
      */
     attr_print(src, ATTR_FLAG_NONE,
-	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, state->queue_id,
+	       SEND_ATTR_STR(MAIL_ATTR_QUEUEID, state->queue_id),
 	       ATTR_TYPE_END);
     if (attr_scan(src, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &flags,
+		  RECV_ATTR_INT(MAIL_ATTR_FLAGS, &flags),
 		  ATTR_TYPE_END) != 1) {
 	state->errs |= CLEANUP_STAT_BAD;
 	flags = 0;
@@ -492,7 +525,7 @@ static void cleanup_service(VSTREAM *src, char *unused_service, char **argv)
      */
     if (CLEANUP_OUT_OK(state) == 0 && type > 0) {
 	while (type != REC_TYPE_END
-	       && (type = rec_get(src, buf, 0)) > 0) {
+	       && (type = rec_get_raw(src, buf, 0, REC_FLAG_NONE)) > 0) {
 	    if (type == REC_TYPE_MILT_COUNT) {
 		int     milter_count = atoi(vstring_str(buf));
 
@@ -515,11 +548,11 @@ static void cleanup_service(VSTREAM *src, char *unused_service, char **argv)
      */
     status = cleanup_flush(state);		/* in case state is modified */
     attr_print(src, ATTR_FLAG_NONE,
-	       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
-	       ATTR_TYPE_STR, MAIL_ATTR_WHY,
-	       (state->flags & CLEANUP_FLAG_SMTP_REPLY)
-	       && state->smtp_reply ? state->smtp_reply :
-	       state->reason ? state->reason : "",
+	       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
+	       SEND_ATTR_STR(MAIL_ATTR_WHY,
+			     (state->flags & CLEANUP_FLAG_SMTP_REPLY)
+			     && state->smtp_reply ? state->smtp_reply :
+			     state->reason ? state->reason : ""),
 	       ATTR_TYPE_END);
     cleanup_free(state);
 
@@ -564,15 +597,14 @@ int     main(int argc, char **argv)
      * Pass control to the single-threaded service skeleton.
      */
     single_server_main(argc, argv, cleanup_service,
-		       MAIL_SERVER_BOOL_TABLE, cleanup_bool_table,
-		       MAIL_SERVER_INT_TABLE, cleanup_int_table,
-		       MAIL_SERVER_BOOL_TABLE, cleanup_bool_table,
-		       MAIL_SERVER_STR_TABLE, cleanup_str_table,
-		       MAIL_SERVER_TIME_TABLE, cleanup_time_table,
-		       MAIL_SERVER_PRE_INIT, cleanup_pre_jail,
-		       MAIL_SERVER_POST_INIT, cleanup_post_jail,
-		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
-		       MAIL_SERVER_IN_FLOW_DELAY,
-		       MAIL_SERVER_UNLIMITED,
+		       CA_MAIL_SERVER_INT_TABLE(cleanup_int_table),
+		       CA_MAIL_SERVER_BOOL_TABLE(cleanup_bool_table),
+		       CA_MAIL_SERVER_STR_TABLE(cleanup_str_table),
+		       CA_MAIL_SERVER_TIME_TABLE(cleanup_time_table),
+		       CA_MAIL_SERVER_PRE_INIT(cleanup_pre_jail),
+		       CA_MAIL_SERVER_POST_INIT(cleanup_post_jail),
+		       CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
+		       CA_MAIL_SERVER_IN_FLOW_DELAY,
+		       CA_MAIL_SERVER_UNLIMITED,
 		       0);
 }

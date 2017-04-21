@@ -1,11 +1,11 @@
-/*	$NetBSD: apr1.c,v 1.1.1.1 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: apr1.c,v 1.1.1.1.14.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /*
  * This file is derived from OpenLDAP Software. All of the modifications to
  * OpenLDAP Software represented in the following file were developed by
  * Devin J. Pohly <djpohly@gmail.com>. I have not assigned rights and/or
- * interest in this work to any party. 
+ * interest in this work to any party.
  *
  * The extensions to OpenLDAP Software herein are subject to the following
  * notice:
@@ -14,7 +14,7 @@
  * Portions Copyright 2011 Howard Chu
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted only as authorized by the OpenLDAP Public
- * License. 
+ * License.
  *
  * A portion of this code is used in accordance with the Beer-ware License,
  * revision 42, as noted.
@@ -121,21 +121,21 @@ static int chk_phk(
 {
 	unsigned char digest[LUTIL_MD5_BYTES];
 	unsigned char *orig_pass;
-	int rc, n;
+	int rc;
 	struct berval salt;
+	size_t decode_len = LUTIL_BASE64_DECODE_LEN(passwd->bv_len);
 
 	/* safety check */
-	n = LUTIL_BASE64_DECODE_LEN(passwd->bv_len);
-	if (n <= sizeof(digest))
+	if (decode_len <= sizeof(digest))
 		return LUTIL_PASSWD_ERR;
 
 	/* base64 un-encode password hash */
-	orig_pass = (unsigned char *) ber_memalloc((size_t) (n + 1));
+	orig_pass = (unsigned char *) ber_memalloc(decode_len + 1);
 
 	if (orig_pass == NULL)
 		return LUTIL_PASSWD_ERR;
 
-	rc = lutil_b64_pton(passwd->bv_val, orig_pass, passwd->bv_len);
+	rc = lutil_b64_pton(passwd->bv_val, orig_pass, decode_len);
 
 	if (rc <= (int) sizeof(digest)) {
 		ber_memfree(orig_pass);
@@ -145,7 +145,7 @@ static int chk_phk(
 	salt.bv_val = (char *) &orig_pass[sizeof(digest)];
 	salt.bv_len = rc - sizeof(digest);
 
-	do_phk_hash(cred, magic, &salt, digest);
+	do_phk_hash(cred, &salt, magic, digest);
 
 	if (text)
 		*text = NULL;
@@ -194,12 +194,12 @@ static int hash_phk(
 
 	/* generate random salt */
 	if (lutil_entropy( (unsigned char *) salt.bv_val, salt.bv_len) < 0)
-		return LUTIL_PASSWD_ERR; 
+		return LUTIL_PASSWD_ERR;
 	/* limit it to characters in the 64-char set */
 	for (n = 0; n < salt.bv_len; n++)
 		salt.bv_val[n] = apr64[salt.bv_val[n] % (sizeof(apr64) - 1)];
 
-	do_phk_hash(passwd, magic, &salt, digest_buf);
+	do_phk_hash(passwd, &salt, magic, digest_buf);
 
 	if (text)
 		*text = NULL;

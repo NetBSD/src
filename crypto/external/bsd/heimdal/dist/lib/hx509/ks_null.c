@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_null.c,v 1.1.1.1 2011/04/13 18:15:11 elric Exp $	*/
+/*	$NetBSD: ks_null.c,v 1.1.1.1.32.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -89,7 +89,10 @@ struct hx509_keyset_ops keyset_null = {
     NULL,
     null_iter_start,
     null_iter,
-    null_iter_end
+    null_iter_end,
+    NULL,
+    NULL,
+    NULL
 };
 
 void

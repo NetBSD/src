@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2009/04/14 22:15:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.32.1 2017/04/21 16:54:15 bouyer Exp $
 
 .if (${MACHINE_ARCH} == "i386")
 PROG=	pmc
-
-LDADD+=	-li386
-DPADD+=	${LIBI386}
 .else
 MAN=	pmc.1
 .endif

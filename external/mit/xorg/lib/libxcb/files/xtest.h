@@ -28,7 +28,7 @@ extern xcb_extension_t xcb_test_id;
  * @brief xcb_test_get_version_cookie_t
  **/
 typedef struct xcb_test_get_version_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_test_get_version_cookie_t;
 
 /** Opcode for xcb_test_get_version. */
@@ -38,23 +38,23 @@ typedef struct xcb_test_get_version_cookie_t {
  * @brief xcb_test_get_version_request_t
  **/
 typedef struct xcb_test_get_version_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint8_t  major_version; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t minor_version; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint8_t  major_version;
+    uint8_t  pad0;
+    uint16_t minor_version;
 } xcb_test_get_version_request_t;
 
 /**
  * @brief xcb_test_get_version_reply_t
  **/
 typedef struct xcb_test_get_version_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  major_version; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint16_t minor_version; /**<  */
+    uint8_t  response_type;
+    uint8_t  major_version;
+    uint16_t sequence;
+    uint32_t length;
+    uint16_t minor_version;
 } xcb_test_get_version_reply_t;
 
 typedef enum xcb_test_cursor_t {
@@ -66,7 +66,7 @@ typedef enum xcb_test_cursor_t {
  * @brief xcb_test_compare_cursor_cookie_t
  **/
 typedef struct xcb_test_compare_cursor_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_test_compare_cursor_cookie_t;
 
 /** Opcode for xcb_test_compare_cursor. */
@@ -76,21 +76,21 @@ typedef struct xcb_test_compare_cursor_cookie_t {
  * @brief xcb_test_compare_cursor_request_t
  **/
 typedef struct xcb_test_compare_cursor_request_t {
-    uint8_t      major_opcode; /**<  */
-    uint8_t      minor_opcode; /**<  */
-    uint16_t     length; /**<  */
-    xcb_window_t window; /**<  */
-    xcb_cursor_t cursor; /**<  */
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    xcb_window_t window;
+    xcb_cursor_t cursor;
 } xcb_test_compare_cursor_request_t;
 
 /**
  * @brief xcb_test_compare_cursor_reply_t
  **/
 typedef struct xcb_test_compare_cursor_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  same; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
+    uint8_t  response_type;
+    uint8_t  same;
+    uint16_t sequence;
+    uint32_t length;
 } xcb_test_compare_cursor_reply_t;
 
 /** Opcode for xcb_test_fake_input. */
@@ -100,19 +100,19 @@ typedef struct xcb_test_compare_cursor_reply_t {
  * @brief xcb_test_fake_input_request_t
  **/
 typedef struct xcb_test_fake_input_request_t {
-    uint8_t      major_opcode; /**<  */
-    uint8_t      minor_opcode; /**<  */
-    uint16_t     length; /**<  */
-    uint8_t      type; /**<  */
-    uint8_t      detail; /**<  */
-    uint8_t      pad0[2]; /**<  */
-    uint32_t     time; /**<  */
-    xcb_window_t root; /**<  */
-    uint8_t      pad1[8]; /**<  */
-    int16_t      rootX; /**<  */
-    int16_t      rootY; /**<  */
-    uint8_t      pad2[7]; /**<  */
-    uint8_t      deviceid; /**<  */
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    uint8_t      type;
+    uint8_t      detail;
+    uint8_t      pad0[2];
+    uint32_t     time;
+    xcb_window_t root;
+    uint8_t      pad1[8];
+    int16_t      rootX;
+    int16_t      rootY;
+    uint8_t      pad2[7];
+    uint8_t      deviceid;
 } xcb_test_fake_input_request_t;
 
 /** Opcode for xcb_test_grab_control. */
@@ -122,11 +122,11 @@ typedef struct xcb_test_fake_input_request_t {
  * @brief xcb_test_grab_control_request_t
  **/
 typedef struct xcb_test_grab_control_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint8_t  impervious; /**<  */
-    uint8_t  pad0[3]; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint8_t  impervious;
+    uint8_t  pad0[3];
 } xcb_test_grab_control_request_t;
 
 /**
@@ -138,9 +138,9 @@ typedef struct xcb_test_grab_control_request_t {
  *
  */
 xcb_test_get_version_cookie_t
-xcb_test_get_version (xcb_connection_t *c  /**< */,
-                      uint8_t           major_version  /**< */,
-                      uint16_t          minor_version  /**< */);
+xcb_test_get_version (xcb_connection_t *c,
+                      uint8_t           major_version,
+                      uint16_t          minor_version);
 
 /**
  *
@@ -154,9 +154,9 @@ xcb_test_get_version (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_test_get_version_cookie_t
-xcb_test_get_version_unchecked (xcb_connection_t *c  /**< */,
-                                uint8_t           major_version  /**< */,
-                                uint16_t          minor_version  /**< */);
+xcb_test_get_version_unchecked (xcb_connection_t *c,
+                                uint8_t           major_version,
+                                uint16_t          minor_version);
 
 /**
  * Return the reply
@@ -173,9 +173,9 @@ xcb_test_get_version_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_test_get_version_reply_t *
-xcb_test_get_version_reply (xcb_connection_t               *c  /**< */,
+xcb_test_get_version_reply (xcb_connection_t               *c,
                             xcb_test_get_version_cookie_t   cookie  /**< */,
-                            xcb_generic_error_t           **e  /**< */);
+                            xcb_generic_error_t           **e);
 
 /**
  *
@@ -186,9 +186,9 @@ xcb_test_get_version_reply (xcb_connection_t               *c  /**< */,
  *
  */
 xcb_test_compare_cursor_cookie_t
-xcb_test_compare_cursor (xcb_connection_t *c  /**< */,
-                         xcb_window_t      window  /**< */,
-                         xcb_cursor_t      cursor  /**< */);
+xcb_test_compare_cursor (xcb_connection_t *c,
+                         xcb_window_t      window,
+                         xcb_cursor_t      cursor);
 
 /**
  *
@@ -202,9 +202,9 @@ xcb_test_compare_cursor (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_test_compare_cursor_cookie_t
-xcb_test_compare_cursor_unchecked (xcb_connection_t *c  /**< */,
-                                   xcb_window_t      window  /**< */,
-                                   xcb_cursor_t      cursor  /**< */);
+xcb_test_compare_cursor_unchecked (xcb_connection_t *c,
+                                   xcb_window_t      window,
+                                   xcb_cursor_t      cursor);
 
 /**
  * Return the reply
@@ -221,9 +221,9 @@ xcb_test_compare_cursor_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_test_compare_cursor_reply_t *
-xcb_test_compare_cursor_reply (xcb_connection_t                  *c  /**< */,
+xcb_test_compare_cursor_reply (xcb_connection_t                  *c,
                                xcb_test_compare_cursor_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */);
+                               xcb_generic_error_t              **e);
 
 /**
  *
@@ -237,14 +237,14 @@ xcb_test_compare_cursor_reply (xcb_connection_t                  *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
-                             uint8_t           type  /**< */,
-                             uint8_t           detail  /**< */,
-                             uint32_t          time  /**< */,
-                             xcb_window_t      root  /**< */,
-                             int16_t           rootX  /**< */,
-                             int16_t           rootY  /**< */,
-                             uint8_t           deviceid  /**< */);
+xcb_test_fake_input_checked (xcb_connection_t *c,
+                             uint8_t           type,
+                             uint8_t           detail,
+                             uint32_t          time,
+                             xcb_window_t      root,
+                             int16_t           rootX,
+                             int16_t           rootY,
+                             uint8_t           deviceid);
 
 /**
  *
@@ -255,14 +255,14 @@ xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_test_fake_input (xcb_connection_t *c  /**< */,
-                     uint8_t           type  /**< */,
-                     uint8_t           detail  /**< */,
-                     uint32_t          time  /**< */,
-                     xcb_window_t      root  /**< */,
-                     int16_t           rootX  /**< */,
-                     int16_t           rootY  /**< */,
-                     uint8_t           deviceid  /**< */);
+xcb_test_fake_input (xcb_connection_t *c,
+                     uint8_t           type,
+                     uint8_t           detail,
+                     uint32_t          time,
+                     xcb_window_t      root,
+                     int16_t           rootX,
+                     int16_t           rootY,
+                     uint8_t           deviceid);
 
 /**
  *
@@ -276,8 +276,8 @@ xcb_test_fake_input (xcb_connection_t *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_test_grab_control_checked (xcb_connection_t *c  /**< */,
-                               uint8_t           impervious  /**< */);
+xcb_test_grab_control_checked (xcb_connection_t *c,
+                               uint8_t           impervious);
 
 /**
  *
@@ -288,8 +288,8 @@ xcb_test_grab_control_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_test_grab_control (xcb_connection_t *c  /**< */,
-                       uint8_t           impervious  /**< */);
+xcb_test_grab_control (xcb_connection_t *c,
+                       uint8_t           impervious);
 
 
 #ifdef __cplusplus

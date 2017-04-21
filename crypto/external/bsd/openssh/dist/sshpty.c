@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.c,v 1.6 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: sshpty.c,v 1.6.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: sshpty.c,v 1.31 2016/11/29 03:54:50 dtucker Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.6 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.6.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>

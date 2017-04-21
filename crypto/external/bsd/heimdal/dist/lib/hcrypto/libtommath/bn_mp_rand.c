@@ -1,4 +1,4 @@
-/*	$NetBSD: bn_mp_rand.c,v 1.1.1.2 2014/04/24 12:45:31 pettai Exp $	*/
+/*	$NetBSD: bn_mp_rand.c,v 1.1.1.2.10.1 2017/04/21 16:50:47 bouyer Exp $	*/
 
 #include <tommath.h>
 #ifdef BN_MP_RAND_C
@@ -31,7 +31,7 @@ mp_rand (mp_int * a, int digits)
 
   /* first place a random non-zero digit */
   do {
-    d = ((mp_digit) abs (rand ())) & MP_MASK;
+    d = ((mp_digit) labs (rand ())) & MP_MASK;
   } while (d == 0);
 
   if ((res = mp_add_d (a, d, a)) != MP_OKAY) {
@@ -43,7 +43,7 @@ mp_rand (mp_int * a, int digits)
       return res;
     }
 
-    if ((res = mp_add_d (a, ((mp_digit) abs (rand ())), a)) != MP_OKAY) {
+    if ((res = mp_add_d (a, ((mp_digit) labs (rand ())), a)) != MP_OKAY) {
       return res;
     }
   }

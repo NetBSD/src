@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.18 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.18.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
 /* $OpenBSD: auth.c,v 1.119 2016/12/15 21:29:05 dtucker Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.18 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.18.2.1 2017/04/21 16:50:56 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>

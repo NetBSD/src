@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.1.1.3 2014/07/06 19:27:46 tron Exp $
+.\"	$NetBSD: local.8,v 1.1.1.3.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -39,9 +39,9 @@ See also under ADDRESS EXTENSION below for a few exceptions.
 .nf
 .ad
 .fi
-The system administrator can set up one or more system-wide
-\fBsendmail\fR-style alias databases.
-Users can have \fBsendmail\fR-style ~/.\fBforward\fR files.
+The system administrator can set up one or more system\-wide
+\fBsendmail\fR\-style alias databases.
+Users can have \fBsendmail\fR\-style ~/.\fBforward\fR files.
 Mail for \fIname\fR is delivered to the alias \fIname\fR, to
 destinations in ~\fIname\fR/.\fBforward\fR, to the mailbox owned
 by the user \fIname\fR, or it is sent back as undeliverable.
@@ -75,7 +75,7 @@ An alias or ~/.\fBforward\fR file may list any combination of external
 commands, destination file names, \fB:include:\fR directives, or
 mail addresses.
 See \fBaliases\fR(5) for a precise description. Each line in a
-user's .\fBforward\fR file has the same syntax as the right-hand part
+user's .\fBforward\fR file has the same syntax as the right\-hand part
 of an alias.
 
 When an address is found in its own alias expansion, delivery is
@@ -97,30 +97,30 @@ number of remembered recipients.
 .nf
 .ad
 .fi
-For the sake of reliability, forwarded mail is re-submitted as
-a new message, so that each recipient has a separate on-file
+For the sake of reliability, forwarded mail is re\-submitted as
+a new message, so that each recipient has a separate on\-file
 delivery status record.
 
 In order to stop mail forwarding loops early, the software adds an
 optional
-\fBDelivered-To:\fR header with the final envelope recipient address. If
+\fBDelivered\-To:\fR header with the final envelope recipient address. If
 mail arrives for a recipient that is already listed in a
-\fBDelivered-To:\fR header, the message is bounced.
+\fBDelivered\-To:\fR header, the message is bounced.
 .SH "MAILBOX DELIVERY"
 .na
 .nf
 .ad
 .fi
-The default per-user mailbox is a file in the UNIX mail spool
+The default per\-user mailbox is a file in the UNIX mail spool
 directory (\fB/var/mail/\fIuser\fR or \fB/var/spool/mail/\fIuser\fR);
 the location can be specified with the \fBmail_spool_directory\fR
 configuration parameter. Specify a name ending in \fB/\fR for
-\fBqmail\fR-compatible \fBmaildir\fR delivery.
+\fBqmail\fR\-compatible \fBmaildir\fR delivery.
 
-Alternatively, the per-user mailbox can be a file in the user's home
+Alternatively, the per\-user mailbox can be a file in the user's home
 directory with a name specified via the \fBhome_mailbox\fR
 configuration parameter. Specify a relative path name. Specify a name
-ending in \fB/\fR for \fBqmail\fR-compatible \fBmaildir\fR delivery.
+ending in \fB/\fR for \fBqmail\fR\-compatible \fBmaildir\fR delivery.
 
 Mailbox delivery can be delegated to an external command specified
 with the \fBmailbox_command_maps\fR and \fBmailbox_command\fR
@@ -141,13 +141,13 @@ message transport
 for recipients that are not found in the aliases(5) or UNIX
 passwd database.
 
-In the case of UNIX-style mailbox delivery,
+In the case of UNIX\-style mailbox delivery,
 the \fBlocal\fR(8) daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 envelope header to each message, prepends an
-\fBX-Original-To:\fR header with the recipient address as given to
+\fBX\-Original\-To:\fR header with the recipient address as given to
 Postfix, prepends an
-optional \fBDelivered-To:\fR header
-with the final envelope recipient address, prepends a \fBReturn-Path:\fR
+optional \fBDelivered\-To:\fR header
+with the final envelope recipient address, prepends a \fBReturn\-Path:\fR
 header with the envelope sender address, prepends a \fB>\fR character
 to lines beginning with "\fBFrom \fR", and appends an empty line.
 The mailbox is locked for exclusive access while delivery is in
@@ -156,11 +156,11 @@ mailbox to its original length.
 
 In the case of \fBmaildir\fR delivery, the local daemon prepends
 an optional
-\fBDelivered-To:\fR header with the final envelope recipient address,
+\fBDelivered\-To:\fR header with the final envelope recipient address,
 prepends an
-\fBX-Original-To:\fR header with the recipient address as given to
+\fBX\-Original\-To:\fR header with the recipient address as given to
 Postfix,
-and prepends a \fBReturn-Path:\fR header with the envelope sender
+and prepends a \fBReturn\-Path:\fR header with the envelope sender
 address.
 .SH "EXTERNAL COMMAND DELIVERY"
 .na
@@ -193,20 +193,20 @@ parameter.
 The command is executed directly where possible. Assistance by the
 shell (\fB/bin/sh\fR on UNIX systems) is used only when the command
 contains shell magic characters, or when the command invokes a shell
-built-in command.
+built\-in command.
 
 A limited amount of command output (standard output and standard
-error) is captured for inclusion with non-delivery status reports.
+error) is captured for inclusion with non\-delivery status reports.
 A command is forcibly terminated if it does not complete within
 \fBcommand_time_limit\fR seconds.  Command exit status codes are
 expected to follow the conventions defined in <\fBsysexits.h\fR>.
 Exit status 0 means normal successful completion.
 
-Postfix version 2.3 and later support RFC 3463-style enhanced
-status codes.  If a command terminates with a non-zero exit
+Postfix version 2.3 and later support RFC 3463\-style enhanced
+status codes.  If a command terminates with a non\-zero exit
 status, and the command output begins with an enhanced
 status code, this status code takes precedence over the
-non-zero exit status.
+non\-zero exit status.
 
 A limited amount of message context is exported via environment
 variables. Characters that may have special meaning to the shell
@@ -257,7 +257,7 @@ SASL username specified in the remote client AUTH command.
 Available as of Postfix 2.2.
 .PP
 The \fBPATH\fR environment variable is always reset to a
-system-dependent default path, and environment variables
+system\-dependent default path, and environment variables
 whose names are blessed by the \fBexport_environment\fR
 configuration parameter are exported unchanged.
 
@@ -265,11 +265,11 @@ The current working directory is the mail queue directory.
 
 The \fBlocal\fR(8) daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 envelope header to each message, prepends an
-\fBX-Original-To:\fR header with the recipient address as given to
+\fBX\-Original\-To:\fR header with the recipient address as given to
 Postfix, prepends an
-optional \fBDelivered-To:\fR
+optional \fBDelivered\-To:\fR
 header with the final recipient envelope address, prepends a
-\fBReturn-Path:\fR header with the sender envelope address,
+\fBReturn\-Path:\fR header with the sender envelope address,
 and appends no empty line.
 .SH "EXTERNAL FILE DELIVERY"
 .na
@@ -277,23 +277,23 @@ and appends no empty line.
 .ad
 .fi
 The delivery format depends on the destination filename syntax.
-The default is to use UNIX-style mailbox format.  Specify a name
-ending in \fB/\fR for \fBqmail\fR-compatible \fBmaildir\fR delivery.
+The default is to use UNIX\-style mailbox format.  Specify a name
+ending in \fB/\fR for \fBqmail\fR\-compatible \fBmaildir\fR delivery.
 
 The \fBallow_mail_to_files\fR configuration parameter restricts
 delivery to external files. The default setting (\fBalias,
 forward\fR) forbids file destinations in \fB:include:\fR files.
 
-In the case of UNIX-style mailbox delivery,
+In the case of UNIX\-style mailbox delivery,
 the \fBlocal\fR(8) daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 envelope header to each message, prepends an
-\fBX-Original-To:\fR header with the recipient address as given to
+\fBX\-Original\-To:\fR header with the recipient address as given to
 Postfix, prepends an
-optional \fBDelivered-To:\fR
+optional \fBDelivered\-To:\fR
 header with the final recipient envelope address, prepends a \fB>\fR
 character to lines beginning with "\fBFrom \fR", and appends an
 empty line.
-The envelope sender address is available in the \fBReturn-Path:\fR
+The envelope sender address is available in the \fBReturn\-Path:\fR
 header.
 When the destination is a regular file, it is locked for exclusive
 access while delivery is in progress. In case of problems, an attempt
@@ -301,11 +301,11 @@ is made to truncate a regular file to its original length.
 
 In the case of \fBmaildir\fR delivery, the local daemon prepends
 an optional
-\fBDelivered-To:\fR header with the final envelope recipient address,
+\fBDelivered\-To:\fR header with the final envelope recipient address,
 and prepends an
-\fBX-Original-To:\fR header with the recipient address as given to
+\fBX\-Original\-To:\fR header with the recipient address as given to
 Postfix.
-The envelope sender address is available in the \fBReturn-Path:\fR
+The envelope sender address is available in the \fBReturn\-Path:\fR
 header.
 .SH "ADDRESS EXTENSION"
 .na
@@ -355,7 +355,7 @@ the postmaster is notified of bounces and of other trouble.
 .fi
 The \fBlocal\fR(8) delivery agent needs a dual personality
 1) to access the private Postfix queue and IPC mechanisms,
-2) to impersonate the recipient and deliver to recipient-specified
+2) to impersonate the recipient and deliver to recipient\-specified
 files or commands. It is therefore security sensitive.
 
 The \fBlocal\fR(8) delivery agent disallows regular expression
@@ -375,9 +375,9 @@ or of external files is never checkpointed to file. As a result,
 the program may occasionally deliver more than once to a command or
 external file. Better safe than sorry.
 
-Mutually-recursive aliases or ~/.\fBforward\fR files are not detected
+Mutually\-recursive aliases or ~/.\fBforward\fR files are not detected
 early.  The resulting mail forwarding loop is broken by the use of the
-\fBDelivered-To:\fR message header.
+\fBDelivered\-To:\fR message header.
 .SH "CONFIGURATION PARAMETERS"
 .na
 .nf
@@ -397,30 +397,36 @@ The text below provides only a parameter summary. See
 .IP "\fBbiff (yes)\fR"
 Whether or not to use the local biff service.
 .IP "\fBexpand_owner_alias (no)\fR"
-When delivering to an alias "aliasname" that has an "owner-aliasname"
+When delivering to an alias "aliasname" that has an "owner\-aliasname"
 companion alias, set the envelope sender address to the expansion
-of the "owner-aliasname" alias.
+of the "owner\-aliasname" alias.
 .IP "\fBowner_request_special (yes)\fR"
-Give special treatment to owner-listname and listname-request
+Give special treatment to owner\-listname and listname\-request
 address localparts: don't split such addresses when the
-recipient_delimiter is set to "-".
+recipient_delimiter is set to "\-".
 .IP "\fBsun_mailtool_compatibility (no)\fR"
 Obsolete SUN mailtool compatibility feature.
 .PP
 Available in Postfix version 2.3 and later:
 .IP "\fBfrozen_delivered_to (yes)\fR"
-Update the \fBlocal\fR(8) delivery agent's idea of the Delivered-To:
+Update the \fBlocal\fR(8) delivery agent's idea of the Delivered\-To:
 address (see prepend_delivered_header) only once, at the start of
-a delivery attempt; do not update the Delivered-To: address while
+a delivery attempt; do not update the Delivered\-To: address while
 expanding aliases or .forward files.
 .PP
 Available in Postfix version 2.5.3 and later:
 .IP "\fBstrict_mailbox_ownership (yes)\fR"
 Defer delivery when a mailbox file is not owned by its recipient.
 .IP "\fBreset_owner_alias (no)\fR"
-Reset the \fBlocal\fR(8) delivery agent's idea of the owner-alias
+Reset the \fBlocal\fR(8) delivery agent's idea of the owner\-alias
 attribute, when delivering mail to a child alias that does not have
 its own owner alias.
+.PP
+Available in Postfix version 3.0 and later:
+.IP "\fBlocal_delivery_status_filter ($default_delivery_status_filter)\fR"
+Optional filter for the \fBlocal\fR(8) delivery agent to change the
+status code or explanatory text of successful or unsuccessful
+deliveries.
 .SH "DELIVERY METHOD CONTROLS"
 .na
 .nf
@@ -435,9 +441,9 @@ fallback_transport, and luser_relay.
 The alias databases that are used for \fBlocal\fR(8) delivery.
 .IP "\fBforward_path (see 'postconf -d' output)\fR"
 The \fBlocal\fR(8) delivery agent search list for finding a .forward
-file with user-specified delivery methods.
+file with user\-specified delivery methods.
 .IP "\fBmailbox_transport_maps (empty)\fR"
-Optional lookup tables with per-recipient message delivery
+Optional lookup tables with per\-recipient message delivery
 transports to use for \fBlocal\fR(8) mailbox delivery, whether or not the
 recipients are found in the UNIX passwd database.
 .IP "\fBmailbox_transport (empty)\fR"
@@ -445,7 +451,7 @@ Optional message delivery transport that the \fBlocal\fR(8) delivery
 agent should use for mailbox delivery to all local recipients,
 whether or not they are found in the UNIX passwd database.
 .IP "\fBmailbox_command_maps (empty)\fR"
-Optional lookup tables with per-recipient external commands to use
+Optional lookup tables with per\-recipient external commands to use
 for \fBlocal\fR(8) mailbox delivery.
 .IP "\fBmailbox_command (empty)\fR"
 Optional external command that the \fBlocal\fR(8) delivery agent should
@@ -454,9 +460,9 @@ use for mailbox delivery.
 Optional pathname of a mailbox file relative to a \fBlocal\fR(8) user's
 home directory.
 .IP "\fBmail_spool_directory (see 'postconf -d' output)\fR"
-The directory where \fBlocal\fR(8) UNIX-style mailboxes are kept.
+The directory where \fBlocal\fR(8) UNIX\-style mailboxes are kept.
 .IP "\fBfallback_transport_maps (empty)\fR"
-Optional lookup tables with per-recipient message delivery
+Optional lookup tables with per\-recipient message delivery
 transports for recipients that the \fBlocal\fR(8) delivery agent could
 not find in the \fBaliases\fR(5) or UNIX password database.
 .IP "\fBfallback_transport (empty)\fR"
@@ -464,7 +470,7 @@ Optional message delivery transport that the \fBlocal\fR(8) delivery
 agent should use for names that are not found in the \fBaliases\fR(5)
 or UNIX password database.
 .IP "\fBluser_relay (empty)\fR"
-Optional catch-all destination for unknown \fBlocal\fR(8) recipients.
+Optional catch\-all destination for unknown \fBlocal\fR(8) recipients.
 .PP
 Available in Postfix version 2.2 and later:
 .IP "\fBcommand_execution_directory (empty)\fR"
@@ -484,7 +490,7 @@ file or \fBbounce\fR(8) logfile.
 .IP "\fBstale_lock_time (500s)\fR"
 The time after which a stale exclusive mailbox lockfile is removed.
 .IP "\fBmailbox_delivery_lock (see 'postconf -d' output)\fR"
-How to lock a UNIX-style \fBlocal\fR(8) mailbox before attempting delivery.
+How to lock a UNIX\-style \fBlocal\fR(8) mailbox before attempting delivery.
 .SH "RESOURCE AND RATE CONTROLS"
 .na
 .nf
@@ -545,18 +551,18 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub-second delay values.
+sub\-second delay values.
 .IP "\fBexport_environment (see 'postconf -d' output)\fR"
 The list of environment variables that a Postfix process will export
-to non-Postfix processes.
+to non\-Postfix processes.
 .IP "\fBipc_timeout (3600s)\fR"
 The time limit for sending or receiving information over an internal
 communication channel.
 .IP "\fBlocal_command_shell (empty)\fR"
-Optional shell program for \fBlocal\fR(8) delivery to non-Postfix command.
+Optional shell program for \fBlocal\fR(8) delivery to non\-Postfix command.
 .IP "\fBmax_idle (100s)\fR"
 The maximum amount of time that an idle Postfix daemon process waits
 for an incoming connection before terminating voluntarily.
@@ -565,17 +571,17 @@ The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
 .IP "\fBprepend_delivered_header (command, file, forward)\fR"
 The message delivery contexts where the Postfix \fBlocal\fR(8) delivery
-agent prepends a Delivered-To:  message header with the address
+agent prepends a Delivered\-To:  message header with the address
 that the mail was delivered to.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBpropagate_unmatched_extensions (canonical, virtual)\fR"
 What address lookup tables copy an address extension from the lookup
 key to the lookup result.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBrecipient_delimiter (empty)\fR"
 The set of characters that can separate a user name from its
 extension (example: user+foo), or a .forward file name from its
@@ -592,8 +598,8 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .na
 .nf
 The following are examples; details differ between systems.
-$HOME/.forward, per-user aliasing
-/etc/aliases, system-wide alias database
+$HOME/.forward, per\-user aliasing
+/etc/aliases, system\-wide alias database
 /var/spool/mail, system mailboxes
 .SH "SEE ALSO"
 .na
@@ -612,12 +618,12 @@ syslogd(8), system logging
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
 .ad
 .fi
-The \fBDelivered-To:\fR message header appears in the \fBqmail\fR
+.ad
+.fi
+The \fBDelivered\-To:\fR message header appears in the \fBqmail\fR
 system by Daniel Bernstein.
 
 The \fImaildir\fR structure appears in the \fBqmail\fR system
@@ -629,3 +635,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

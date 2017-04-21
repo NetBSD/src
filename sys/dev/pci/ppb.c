@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.55 2015/11/16 09:10:58 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.55.4.1 2017/04/21 16:53:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,36 +31,41 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.55 2015/11/16 09:10:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.55.4.1 2017/04/21 16:53:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
+#include <dev/pci/ppbvar.h>
 #include <dev/pci/pcidevs.h>
 
 #define	PCIE_SLCSR_NOTIFY_MASK					\
 	(PCIE_SLCSR_ABE | PCIE_SLCSR_PFE | PCIE_SLCSR_MSE |	\
 	 PCIE_SLCSR_PDE | PCIE_SLCSR_CCE | PCIE_SLCSR_HPE)
 
-struct ppb_softc {
-	device_t sc_dev;		/* generic device glue */
-	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
-	pcitag_t sc_tag;		/* ...and tag. */
-
-	pcireg_t sc_pciconfext[48];
-};
-
 static const char pcie_linkspeed_strings[4][5] = {
 	"1.25", "2.5", "5.0", "8.0",
 };
 
-static bool		ppb_resume(device_t, const pmf_qual_t *);
-static bool		ppb_suspend(device_t, const pmf_qual_t *);
+int	ppb_printevent = 0; /* Print event type if the value is not 0 */
+
+static int	ppbmatch(device_t, cfdata_t, void *);
+static void	ppbattach(device_t, device_t, void *);
+static int	ppbdetach(device_t, int);
+static void	ppbchilddet(device_t, device_t);
+static int	ppb_intr(void *);
+static bool	ppb_resume(device_t, const pmf_qual_t *);
+static bool	ppb_suspend(device_t, const pmf_qual_t *);
+
+CFATTACH_DECL3_NEW(ppb, sizeof(struct ppb_softc),
+    ppbmatch, ppbattach, ppbdetach, NULL, NULL, ppbchilddet,
+    DVF_DETACH_SHUTDOWN);
 
 static int
 ppbmatch(device_t parent, cfdata_t match, void *aux)
@@ -98,7 +103,7 @@ ppbmatch(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-ppb_fix_pcie(device_t self)
+ppb_print_pcie(device_t self)
 {
 	struct ppb_softc *sc = device_private(self);
 	pcireg_t reg;
@@ -188,14 +193,6 @@ ppb_fix_pcie(device_t self)
 		aprint_normal(">\n");
 		break;
 	}
-
-	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCIE_SLCSR);
-	if (reg & PCIE_SLCSR_NOTIFY_MASK) {
-		aprint_debug_dev(self, "disabling notification events\n");
-		reg &= ~PCIE_SLCSR_NOTIFY_MASK;
-		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    off + PCIE_SLCSR, reg);
-	}
 }
 
 static void
@@ -205,7 +202,9 @@ ppbattach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
-	pcireg_t busdata;
+	char const *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
+	pcireg_t busdata, reg;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -220,7 +219,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ppb_fix_pcie(self);
+	ppb_print_pcie(self);
 
 #if 0
 	/*
@@ -233,6 +232,78 @@ ppbattach(device_t parent, device_t self, void *aux)
 		panic("ppbattach: bus in tag (%d) != bus in reg (%d)",
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
+
+	/* Check for PCI Express capabilities and setup hotplug support. */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    &sc->sc_pciecapoff, &reg) && (reg & PCIE_XCAP_SI)) {
+#if 0
+		/*
+		 * XXX Initialize workqueue or something else for
+		 * HotPlug support.
+		 */
+#endif
+
+		if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0) == 0)
+			sc->sc_intrhand = pci_intr_establish_xname(pc,
+			    sc->sc_pihp[0], IPL_BIO, ppb_intr, sc,
+			    device_xname(sc->sc_dev));
+
+		if (sc->sc_intrhand) {
+			pcireg_t slcap, slcsr, val;
+
+			intrstr = pci_intr_string(pc, sc->sc_pihp[0], intrbuf,
+			    sizeof(intrbuf));
+			aprint_normal_dev(self, "%s\n", intrstr);
+
+			/* Clear any pending events */
+			slcsr = pci_conf_read(pc, pa->pa_tag,
+			    sc->sc_pciecapoff + PCIE_SLCSR);
+			pci_conf_write(pc, pa->pa_tag,
+			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
+
+			/* Enable interrupt. */
+			slcap = pci_conf_read(pc, pa->pa_tag,
+			    sc->sc_pciecapoff + PCIE_SLCAP);
+			val = 0;
+			if (slcap & PCIE_SLCAP_ABP)
+				val |= PCIE_SLCSR_ABE;
+			if (slcap & PCIE_SLCAP_PCP)
+				val |= PCIE_SLCSR_PFE;
+			if (slcap & PCIE_SLCAP_MSP)
+				val |= PCIE_SLCSR_MSE;
+			if ((slcap & PCIE_SLCAP_NCCS) == 0)
+				val |= PCIE_SLCSR_CCE;
+			/* Attention indicator off by default */
+			if (slcap & PCIE_SLCAP_AIP) {
+				val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
+				    PCIE_SLCSR_AIC);
+			}
+			/* Power indicator */
+			if (slcap & PCIE_SLCAP_PIP) {
+				/*
+				 * Indicator off:
+				 *  a) card not present
+				 *  b) power fault
+				 *  c) MRL sensor off
+				 */
+				if (((slcsr & PCIE_SLCSR_PDS) == 0)
+				    || ((slcsr & PCIE_SLCSR_PFD) != 0)
+				    || (((slcap & PCIE_SLCAP_MSP) != 0)
+					&& ((slcsr & PCIE_SLCSR_MS) != 0)))
+					val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
+					    PCIE_SLCSR_PIC);
+				else
+					val |= __SHIFTIN(PCIE_SLCSR_IND_ON,
+					    PCIE_SLCSR_PIC);
+			}
+
+			val |= PCIE_SLCSR_DLLSCE | PCIE_SLCSR_HPE
+			    | PCIE_SLCSR_PDE;
+			slcsr = val;
+			pci_conf_write(pc, pa->pa_tag,
+			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
+		}
+	}
 
 	if (!pmf_device_register(self, ppb_suspend, ppb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -255,13 +326,39 @@ ppbattach(device_t parent, device_t self, void *aux)
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 
+	/* Attach event counters */
+	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
+	    device_xname(sc->sc_dev), "Interrupt");
+	evcnt_attach_dynamic(&sc->sc_ev_abp, EVCNT_TYPE_MISC, NULL,
+	    device_xname(sc->sc_dev), "Attention Button Pressed");
+	evcnt_attach_dynamic(&sc->sc_ev_pfd, EVCNT_TYPE_MISC, NULL,
+	    device_xname(sc->sc_dev), "Power Fault Detected");
+	evcnt_attach_dynamic(&sc->sc_ev_msc, EVCNT_TYPE_MISC, NULL,
+	    device_xname(sc->sc_dev), "MRL Sensor Changed");
+	evcnt_attach_dynamic(&sc->sc_ev_pdc, EVCNT_TYPE_MISC, NULL,
+	    device_xname(sc->sc_dev), "Presence Detect Changed");
+	evcnt_attach_dynamic(&sc->sc_ev_cc, EVCNT_TYPE_MISC, NULL,
+	    device_xname(sc->sc_dev), "Command Completed");
+	evcnt_attach_dynamic(&sc->sc_ev_lacs, EVCNT_TYPE_MISC, NULL,
+	    device_xname(sc->sc_dev), "Data Link Layer State Changed");
+
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
 static int
 ppbdetach(device_t self, int flags)
 {
+	struct ppb_softc *sc = device_private(self);
 	int rc;
+
+	/* Detach event counters */
+	evcnt_detach(&sc->sc_ev_intr);
+	evcnt_detach(&sc->sc_ev_abp);
+	evcnt_detach(&sc->sc_ev_pfd);
+	evcnt_detach(&sc->sc_ev_msc);
+	evcnt_detach(&sc->sc_ev_pdc);
+	evcnt_detach(&sc->sc_ev_cc);
+	evcnt_detach(&sc->sc_ev_lacs);
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
@@ -282,8 +379,6 @@ ppb_resume(device_t dv, const pmf_qual_t *qual)
 			pci_conf_write(sc->sc_pc, sc->sc_tag, off,
 			    sc->sc_pciconfext[(off - 0x40)/4]);
 	}
-
-	ppb_fix_pcie(dv);
 
 	return true;
 }
@@ -307,6 +402,67 @@ ppbchilddet(device_t self, device_t child)
 	/* we keep no references to child devices, so do nothing */
 }
 
-CFATTACH_DECL3_NEW(ppb, sizeof(struct ppb_softc),
-    ppbmatch, ppbattach, ppbdetach, NULL, NULL, ppbchilddet,
-    DVF_DETACH_SHUTDOWN);
+static int
+ppb_intr(void *arg)
+{
+	struct ppb_softc *sc = arg;
+	device_t dev = sc->sc_dev;
+	pcireg_t reg;
+
+	sc->sc_ev_intr.ev_count++;
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    sc->sc_pciecapoff + PCIE_SLCSR);
+
+	/* Clear interrupts. */
+	pci_conf_write(sc->sc_pc, sc->sc_tag,
+	    sc->sc_pciecapoff + PCIE_SLCSR, reg);
+
+	/* Attention Button Pressed */
+	if (reg & PCIE_SLCSR_ABP) {
+		sc->sc_ev_abp.ev_count++;
+		if (ppb_printevent)
+			device_printf(dev, "Attention Button Pressed\n");
+	}
+
+	/* Power Fault Detected */
+	if (reg & PCIE_SLCSR_PFD) {
+		sc->sc_ev_pfd.ev_count++;
+		if (ppb_printevent)
+			device_printf(dev, "Power Fault Detected\n");
+	}
+
+	/* MRL Sensor Changed */
+	if (reg & PCIE_SLCSR_MSC) {
+		sc->sc_ev_msc.ev_count++;
+		if (ppb_printevent)
+			device_printf(dev, "MRL Sensor Changed\n");
+	}
+
+	/* Presence Detect Changed */
+	if (reg & PCIE_SLCSR_PDC) {
+		sc->sc_ev_pdc.ev_count++;
+		if (ppb_printevent)
+			device_printf(dev, "Presence Detect Changed\n");
+		if (reg & PCIE_SLCSR_PDS) {
+			/* XXX Insert */
+		} else {
+			/* XXX Remove */
+		}
+	}
+
+	/* Command Completed */
+	if (reg & PCIE_SLCSR_CC) {
+		sc->sc_ev_cc.ev_count++;
+		if (ppb_printevent)
+			device_printf(dev, "Command Completed\n");
+	}
+
+	/* Data Link Layer State Changed */
+	if (reg & PCIE_SLCSR_LACS) {
+		sc->sc_ev_lacs.ev_count++;
+		if (ppb_printevent)
+			device_printf(dev, "Data Link Layer State Changed\n");
+	}
+
+	return 0;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.9 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.9.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -85,8 +85,8 @@
 /* .IP TLScontext->peer_status
 /*	A bitmask field that records the status of the peer certificate
 /*	verification. This consists of one or more of
-/*	TLS_CERT_FLAG_PRESENT, TLS_CERT_FLAG_ALTNAME, TLS_CERT_FLAG_TRUSTED
-/*	and TLS_CERT_FLAG_MATCHED.
+/*	TLS_CERT_FLAG_PRESENT, TLS_CERT_FLAG_ALTNAME, TLS_CERT_FLAG_TRUSTED,
+/*	TLS_CERT_FLAG_MATCHED and TLS_CERT_FLAG_SECURED.
 /* .IP TLScontext->peer_CN
 /*	Extracted CommonName of the peer, or zero-length string if the
 /*	information could not be extracted.
@@ -142,6 +142,7 @@
 #include <stringops.h>
 #include <msg.h>
 #include <iostuff.h>			/* non-blocking */
+#include <midna_domain.h>
 
 /* Global library. */
 
@@ -300,6 +301,8 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
      */
     tls_check_version();
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
     /*
      * Initialize the OpenSSL library by the book! To start with, we must
      * initialize the algorithms. We want cleartext error messages instead of
@@ -307,6 +310,7 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
      */
     SSL_load_error_strings();
     OpenSSL_add_ssl_algorithms();
+#endif
 
     /*
      * Create an application data index for SSL objects, so that we can
@@ -348,13 +352,26 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
      * we want to be as compatible as possible, so we will start off with a
      * SSLv2 greeting allowing the best we can offer: TLSv1. We can restrict
      * this with the options setting later, anyhow.
+     * 
+     * OpenSSL 1.1.0-dev deprecates SSLv23_client_method() in favour of
+     * TLS_client_method(), with the change in question signalled via a new
+     * TLS_ANY_VERSION macro.
      */
     ERR_clear_error();
-    if ((client_ctx = SSL_CTX_new(SSLv23_client_method())) == 0) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && defined(TLS_ANY_VERSION)
+    client_ctx = SSL_CTX_new(TLS_client_method());
+#else
+    client_ctx = SSL_CTX_new(SSLv23_client_method());
+#endif
+    if (client_ctx == 0) {
 	msg_warn("cannot allocate client SSL_CTX: disabling TLS support");
 	tls_print_errors();
 	return (0);
     }
+#ifdef SSL_SECOP_PEER
+    /* Backwards compatible security as a base for opportunistic TLS. */
+    SSL_CTX_set_security_level(client_ctx, 0);
+#endif
 
     /*
      * See the verify callback in tls_verify.c
@@ -424,11 +441,17 @@ TLS_APPL_STATE *tls_client_init(const TLS_CLIENT_INIT_PROPS *props)
     }
 
     /*
+     * 2015-12-05: Ephemeral RSA removed from OpenSSL 1.1.0-dev
+     */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+    /*
      * According to the OpenSSL documentation, temporary RSA key is needed
      * export ciphers are in use. We have to provide one, so well, we just do
      * it.
      */
     SSL_CTX_set_tmp_rsa_callback(client_ctx, tls_tmp_rsa_cb);
+#endif
 
     /*
      * Finally, the setup for the server certificate checking, done "by the
@@ -513,6 +536,7 @@ static int match_servername(const char *certid,
     const char *hname = props->host;
     const char *domain;
     const char *parent;
+    const char *aname;
     int     match_subdomain;
     int     i;
     int     idlen;
@@ -520,6 +544,27 @@ static int match_servername(const char *certid,
 
     if ((cmatch_argv = props->matchargv) == 0)
 	return 0;
+
+#ifndef NO_EAI
+
+    /*
+     * DNS subjectAltNames are required to be ASCII.
+     * 
+     * Per RFC 6125 Section 6.4.4 Matching the CN-ID, follows the same rules
+     * (6.4.1, 6.4.2 and 6.4.3) that apply to subjectAltNames.  In
+     * particular, 6.4.2 says that the reference identifier is coerced to
+     * ASCII, but no conversion is stated or implied for the CN-ID, so it
+     * seems it only matches if it is all ASCII.  Otherwise, it is some other
+     * sort of name.
+     */
+    if (!allascii(certid))
+	return (0);
+    if (!allascii(nexthop) && (aname = midna_domain_to_ascii(nexthop)) != 0) {
+	if (msg_verbose)
+	    msg_info("%s asciified to %s", nexthop, aname);
+	nexthop = aname;
+    }
+#endif
 
     /*
      * Match the certid against each pattern until we find a match.
@@ -535,10 +580,47 @@ static int match_servername(const char *certid,
 	    match_subdomain = 1;
 	} else {
 	    domain = cmatch_argv->argv[i];
-	    if (*domain == '.' && domain[1] != '\0') {
-		++domain;
-		match_subdomain = 1;
+	    if (*domain == '.') {
+		if (domain[1]) {
+		    ++domain;
+		    match_subdomain = 1;
+		}
 	    }
+#ifndef NO_EAI
+
+	    /*
+	     * Besides U+002E (full stop) IDNA2003 allows labels to be
+	     * separated by any of the Unicode variants U+3002 (ideographic
+	     * full stop), U+FF0E (fullwidth full stop), and U+FF61
+	     * (halfwidth ideographic full stop). Their respective UTF-8
+	     * encodings are: E38082, EFBC8E and EFBDA1.
+	     * 
+	     * IDNA2008 does not permit (upper) case and other variant
+	     * differences in U-labels. The midna_domain_to_ascii() function,
+	     * based on UTS46, normalizes such differences away.
+	     * 
+	     * The IDNA to_ASCII conversion does not allow empty leading labels,
+	     * so we handle these explicitly here.
+	     */
+	    else {
+		unsigned char *cp = (unsigned char *) domain;
+
+		if ((cp[0] == 0xe3 && cp[1] == 0x80 && cp[2] == 0x82)
+		    || (cp[0] == 0xef && cp[1] == 0xbc && cp[2] == 0x8e)
+		    || (cp[0] == 0xef && cp[1] == 0xbd && cp[2] == 0xa1)) {
+		    if (domain[3]) {
+			domain = domain + 3;
+			match_subdomain = 1;
+		    }
+		}
+	    }
+	    if (!allascii(domain)
+		&& (aname = midna_domain_to_ascii(domain)) != 0) {
+		if (msg_verbose)
+		    msg_info("%s asciified to %s", domain, aname);
+		domain = aname;
+	    }
+#endif
 	}
 
 	/*
@@ -768,10 +850,10 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     /*
      * When certificate verification is required, log trust chain validation
      * errors even when disabled by default for opportunistic sessions. For
-     * "dane" this only applies when using trust-anchor associations.
+     * DANE this only applies when using trust-anchor associations.
      */
     if (TLS_MUST_TRUST(props->tls_level)
-	&& (props->tls_level != TLS_LEV_DANE || TLS_DANE_HASTA(props->dane)))
+      && (!TLS_DANE_BASED(props->tls_level) || TLS_DANE_HASTA(props->dane)))
 	log_mask |= TLS_LOG_UNTRUSTED;
 
     if (log_mask & TLS_LOG_VERBOSE)
@@ -790,8 +872,8 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
 		 props->namaddr, props->protocols);
 	return (0);
     }
-    /* The DANE level requires SSLv3 or later, not SSLv2. */
-    if (props->tls_level == TLS_LEV_DANE)
+    /* DANE requires SSLv3 or later, not SSLv2. */
+    if (TLS_DANE_BASED(props->tls_level))
 	protomask |= TLS_PROTOCOL_SSLv2;
 
     /*
@@ -873,6 +955,12 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     if (protomask != 0)
 	SSL_set_options(TLScontext->con, TLS_SSL_OP_PROTOMASK(protomask));
 
+#ifdef SSL_SECOP_PEER
+    /* When authenticating the peer, use 80-bit plus OpenSSL security level */
+    if (TLS_MUST_MATCH(props->tls_level))
+	SSL_set_security_level(TLScontext->con, 1);
+#endif
+
     /*
      * XXX To avoid memory leaks we must always call SSL_SESSION_free() after
      * calling SSL_set_session(), regardless of whether or not the session
@@ -886,7 +974,7 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
 	}
     }
 #ifdef TLSEXT_MAXLEN_host_name
-    if (props->tls_level == TLS_LEV_DANE
+    if (TLS_DANE_BASED(props->tls_level)
 	&& strlen(props->host) <= TLSEXT_MAXLEN_host_name) {
 
 	/*
@@ -1043,13 +1131,25 @@ TLS_SESS_STATE *tls_client_start(const TLS_CLIENT_START_PROPS *props)
     tls_stream_start(props->stream, TLScontext);
 
     /*
+     * Fully secured only if trusted, matched and not insecure like halfdane.
+     * Should perhaps also exclude "verify" (as opposed to "secure") here,
+     * because that can be subject to insecure MX indirection, but that's
+     * rather incompatible.  Users have been warned.
+     */
+    if (TLS_CERT_IS_PRESENT(TLScontext)
+	&& TLS_CERT_IS_TRUSTED(TLScontext)
+	&& TLS_CERT_IS_MATCHED(TLScontext)
+	&& !TLS_NEVER_SECURED(props->tls_level))
+	TLScontext->peer_status |= TLS_CERT_FLAG_SECURED;
+
+    /*
      * All the key facts in a single log entry.
      */
     if (log_mask & TLS_LOG_SUMMARY)
 	msg_info("%s TLS connection established to %s: %s with cipher %s "
 		 "(%d/%d bits)",
 		 !TLS_CERT_IS_PRESENT(TLScontext) ? "Anonymous" :
-		 TLS_CERT_IS_MATCHED(TLScontext) ? "Verified" :
+		 TLS_CERT_IS_SECURED(TLScontext) ? "Verified" :
 		 TLS_CERT_IS_TRUSTED(TLScontext) ? "Trusted" : "Untrusted",
 	      props->namaddr, TLScontext->protocol, TLScontext->cipher_name,
 		 TLScontext->cipher_usebits, TLScontext->cipher_algbits);

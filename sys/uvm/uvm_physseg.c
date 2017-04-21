@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.6 2016/12/29 12:58:38 rin Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.6.4.1 2017/04/21 16:54:09 bouyer Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -166,7 +166,7 @@ uvm_physseg_alloc(size_t sz)
 	if (__predict_false(uvm.page_init_done == false)) {
 		if (sz % sizeof(struct uvm_physseg))
 			panic("%s: tried to alloc size other than multiple"
-			    "of struct uvm_physseg at boot\n", __func__);
+			    " of struct uvm_physseg at boot\n", __func__);
 
 		size_t n = sz / sizeof(struct uvm_physseg);
 		nseg += n;
@@ -200,7 +200,7 @@ uvm_physseg_free(void *p, size_t sz)
 	if (__predict_false(uvm.page_init_done == false)) {
 		if (sz % sizeof(struct uvm_physseg))
 			panic("%s: tried to free size other than struct uvm_physseg"
-			    "at boot\n", __func__);
+			    " at boot\n", __func__);
 
 	}
 
@@ -213,7 +213,7 @@ uvm_physseg_free(void *p, size_t sz)
 	    (struct uvm_physseg *)p < (uvm_physseg + VM_PHYSSEG_MAX)) {
 		if (sz % sizeof(struct uvm_physseg))
 			panic("%s: tried to free() other than struct uvm_physseg"
-			    "from static array\n", __func__);
+			    " from static array\n", __func__);
 
 		if ((sz / sizeof(struct uvm_physseg)) >= VM_PHYSSEG_MAX)
 			panic("%s: tried to free() the entire static array!", __func__);
@@ -1226,7 +1226,7 @@ bool
 uvm_physseg_unplug(paddr_t pfn, size_t pages)
 {
 	uvm_physseg_t upm;
-	paddr_t off = 0, start, end;
+	paddr_t off = 0, start __diagused, end;
 	struct uvm_physseg *seg;
 
 	upm = uvm_physseg_find(pfn, &off);
@@ -1246,9 +1246,6 @@ uvm_physseg_unplug(paddr_t pfn, size_t pages)
 		return false;
 	}
 
-#ifndef DIAGNOSTIC
-	(void) start;
-#endif
 	KASSERT(pfn == start + off); /* sanity */
 
 	if (__predict_true(uvm.page_init_done == true)) {
@@ -1349,7 +1346,7 @@ uvm_physseg_unplug(paddr_t pfn, size_t pages)
 		uvm_physseg_graph.nentries++;
 #else /* UVM_HOTPLUG */
 		panic("%s: can't unplug() from the middle of a segment without"
-		    "UVM_HOTPLUG\n",  __func__);
+		    " UVM_HOTPLUG\n",  __func__);
 		/* NOTREACHED */
 #endif /* UVM_HOTPLUG */
 		return true;

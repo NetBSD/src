@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_bounce.c,v 1.1.1.2 2010/06/17 18:06:42 tron Exp $	*/
+/*	$NetBSD: cleanup_bounce.c,v 1.1.1.2.32.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -231,14 +231,14 @@ int     cleanup_bounce(CLEANUP_STATE *state)
 	    bounce_err =
 		bounce_flush(BOUNCE_FLAG_CLEAN,
 			     state->queue_name, state->queue_id,
-			     encoding, state->sender, dsn_envid,
-			     dsn_ret);
+			     encoding, state->smtputf8, state->sender,
+			     dsn_envid, dsn_ret);
 	} else {
 	    bounce_err =
 		bounce_flush_verp(BOUNCE_FLAG_CLEAN,
 				  state->queue_name, state->queue_id,
-				  encoding, state->sender, dsn_envid,
-				  dsn_ret, state->verp_delims);
+				  encoding, state->smtputf8, state->sender,
+				  dsn_envid, dsn_ret, state->verp_delims);
 	}
 	if (bounce_err != 0) {
 	    msg_warn("%s: bounce message failure", state->queue_id);

@@ -1,4 +1,4 @@
-/*$NetBSD: ixgbe_netbsd.h,v 1.5 2016/12/01 06:56:28 msaitoh Exp $*/
+/*$NetBSD: ixgbe_netbsd.h,v 1.5.2.1 2017/04/21 16:53:52 bouyer Exp $*/
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,9 @@
 #ifndef _IXGBE_NETBSD_H
 #define _IXGBE_NETBSD_H
 
+#if 0 /* Enable this if you don't want to use TX multiqueue function */
 #define	IXGBE_LEGACY_TX	1
+#endif
 
 #define	ETHERCAP_VLAN_HWFILTER	0
 #define	ETHERCAP_VLAN_HWCSUM	0

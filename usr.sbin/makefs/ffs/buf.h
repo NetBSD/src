@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.10 2015/03/29 05:52:59 agc Exp $	*/
+/*	$NetBSD: buf.h,v 1.10.4.1 2017/04/21 16:54:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -87,7 +88,20 @@ struct buf *	getblk(struct vnode *, daddr_t, int, int, int);
 #define	BC_AGE		0
 
 #define min(a, b) MIN((a), (b))
-#define microtime(tv) gettimeofday((tv), NULL)
+
+static inline void
+microtime(struct timeval *tv)
+{
+	extern struct stat stampst;
+
+	if (stampst.st_ino) {
+		tv->tv_sec = stampst.st_mtime;
+		tv->tv_usec = 0;
+	} else {
+	    gettimeofday((tv), NULL);
+	}
+}
+
 #define KASSERT(a)
 #define IO_SYNC	1
 

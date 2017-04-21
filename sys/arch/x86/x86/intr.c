@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.96 2016/12/06 15:09:04 maxv Exp $	*/
+/*	$NetBSD: intr.c,v 1.96.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.96 2016/12/06 15:09:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.96.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.96 2016/12/06 15:09:04 maxv Exp $");
 #include <sys/atomic.h>
 #include <sys/xcall.h>
 #include <sys/interrupt.h>
+#include <sys/reboot.h> /* for AB_VERBOSE */
 
 #include <sys/kauth.h>
 #include <sys/conf.h>
@@ -925,13 +926,10 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	const char *intrstr;
 	char intrstr_buf[INTRIDBUF];
 
-#ifdef DIAGNOSTIC
-	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
-		panic("%s: bad legacy IRQ value", __func__);
-
-	if (legacy_irq == -1 && pic == &i8259_pic)
-		panic("intr_establish: non-legacy IRQ on i8259");
-#endif
+	KASSERTMSG((legacy_irq == -1 || (0 <= legacy_irq && legacy_irq < 16)),
+	    "bad legacy IRQ value: %d", legacy_irq);
+	KASSERTMSG((legacy_irq != -1 || pic != &i8259_pic),
+	    "non-legacy IRQ on i8259");
 
 	ih = kmem_alloc(sizeof(*ih), KM_SLEEP);
 	if (ih == NULL) {
@@ -1084,12 +1082,11 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	(*pic->pic_hwunmask)(pic, pin);
 	mutex_exit(&cpu_lock);
 
-#ifdef INTRDEBUG
-	printf("allocated pic %s type %s pin %d level %d to %s slot %d "
-	    "idt entry %d\n",
-	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    device_xname(ci->ci_dev), slot, idt_vec);
-#endif
+	if (bootverbose || cpu_index(ci) != 0)
+		aprint_verbose("allocated pic %s type %s pin %d level %d to %s slot %d "
+		    "idt entry %d\n",
+		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
+		    device_xname(ci->ci_dev), slot, idt_vec);
 
 	return (ih);
 }
@@ -1171,11 +1168,9 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	/* If the source is free we can drop it now. */
 	intr_source_free(ci, ih->ih_slot, pic, idtvec);
 
-#ifdef INTRDEBUG
-	printf("%s: remove slot %d (pic %s pin %d vec %d)\n",
+	DPRINTF(("%s: remove slot %d (pic %s pin %d vec %d)\n",
 	    device_xname(ci->ci_dev), ih->ih_slot, pic->pic_name,
-	    ih->ih_pin, idtvec);
-#endif
+	    ih->ih_pin, idtvec));
 }
 
 static int

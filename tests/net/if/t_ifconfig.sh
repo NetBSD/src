@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.14 2016/10/01 22:15:04 kre Exp $
+# $NetBSD: t_ifconfig.sh,v 1.14.2.1 2017/04/21 16:54:12 bouyer Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -181,7 +181,7 @@ ifconfig_options_body()
 
 	# ifconfig -C
 	#   -C shows all of the interface cloners available on the system
-	atf_check -s exit:0 -o match:'shmif lo carp' rump.ifconfig -C
+	atf_check -s exit:0 -o match:'shmif carp lo' rump.ifconfig -C
 
 	unset RUMP_SERVER
 }
@@ -324,10 +324,167 @@ ifconfig_parameters_cleanup()
 	env RUMP_SERVER=${RUMP_SERVER2} rump.halt
 }
 
+ifconfig_up_down_common()
+{
+	local family=$1
+	local ip=$2
+
+	if [ $family = inet6 ]; then
+		rump_server_start $RUMP_SERVER1 netinet6
+	else
+		rump_server_start $RUMP_SERVER1
+	fi
+	rump_server_add_iface $RUMP_SERVER1 shmif0 bus1
+
+	export RUMP_SERVER=$RUMP_SERVER1
+	rump.ifconfig shmif0
+
+	# Set the same number of trials to make the following test
+	# work for both IPv4 and IPv6
+	if [ $family = inet6 ]; then
+		atf_check -s exit:0 -o ignore \
+		    rump.sysctl -w net.inet6.ip6.dad_count=5
+	else
+		atf_check -s exit:0 -o ignore \
+		    rump.sysctl -w net.inet.ip.dad_count=5
+	fi
+
+	#
+	# Assign an address and up the interface at once
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 $family $ip/24 up
+	# UP
+	atf_check -s exit:0 \
+	    -o match:'shmif0.*UP.*RUNNING' rump.ifconfig shmif0
+	# The address is TENTATIVE
+	atf_check -s exit:0 \
+	    -o match:"$ip.*TENTATIVE" rump.ifconfig shmif0
+	# Waiting for DAD completion
+	atf_check -s exit:0 rump.ifconfig -w 10
+	# The address left TENTATIVE
+	atf_check -s exit:0 \
+	    -o not-match:"$ip.*TENTATIVE" rump.ifconfig shmif0
+
+	#
+	# ifconfig down
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 down
+	atf_check -s exit:0 \
+	    -o not-match:'shmif0.*UP.*RUNNING' rump.ifconfig shmif0
+	# The address becomes DETATCHED
+	atf_check -s exit:0 \
+	    -o match:"$ip.*DETACHED" rump.ifconfig shmif0
+	# ifconfig up
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+	# The address becomes TENTATIVE
+	atf_check -s exit:0 \
+	    -o match:"$ip.*TENTATIVE" rump.ifconfig shmif0
+	# Waiting for DAD completion
+	atf_check -s exit:0 rump.ifconfig -w 10
+	# The address left TENTATIVE
+	atf_check -s exit:0 \
+	    -o not-match:"$ip.*TENTATIVE" rump.ifconfig shmif0
+
+	# Clean up
+	atf_check -s exit:0 rump.ifconfig shmif0 $family $ip delete
+
+	#
+	# Assign an address
+	#
+	atf_check -s exit:0 rump.ifconfig shmif0 $family $ip/24
+	# UP automatically
+	atf_check -s exit:0 \
+	    -o match:'shmif0.*UP.*RUNNING' rump.ifconfig shmif0
+	# Need some delay
+	sleep 1
+	# The IP becomes TENTATIVE
+	atf_check -s exit:0 \
+	    -o match:"$ip.*TENTATIVE" rump.ifconfig shmif0
+	# Waiting for DAD completion
+	atf_check -s exit:0 rump.ifconfig -w 10
+	# The address left TENTATIVE
+	atf_check -s exit:0 \
+	    -o not-match:"$ip.*TENTATIVE" rump.ifconfig shmif0
+
+	rump_server_destroy_ifaces
+}
+
+atf_test_case ifconfig_up_down_ipv4 cleanup
+ifconfig_up_down_ipv4_head()
+{
+	atf_set "descr" "tests of interface up/down (IPv4)"
+	atf_set "require.progs" "rump_server"
+}
+
+ifconfig_up_down_ipv4_body()
+{
+
+	ifconfig_up_down_common inet 10.0.0.1
+}
+
+ifconfig_up_down_ipv4_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ifconfig_up_down_ipv6 cleanup
+ifconfig_up_down_ipv6_head()
+{
+	atf_set "descr" "tests of interface up/down (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+ifconfig_up_down_ipv6_body()
+{
+
+	ifconfig_up_down_common inet6 fc00::1
+}
+
+ifconfig_up_down_ipv6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ifconfig_number cleanup
+ifconfig_number_head()
+{
+	atf_set "descr" "tests of passing a number (if_index) to ifconfig"
+	atf_set "require.progs" "rump_server"
+}
+
+ifconfig_number_body()
+{
+
+	rump_server_start $RUMP_SERVER1
+	rump_server_add_iface $RUMP_SERVER1 shmif0 bus1
+
+	export RUMP_SERVER=$RUMP_SERVER1
+	atf_check -s not-exit:0 -e match:'Device not configured' rump.ifconfig 0
+	atf_check -s exit:0 rump.ifconfig 1 # lo0
+	atf_check -s exit:0 rump.ifconfig 2 # shmif0
+	atf_check -s not-exit:0 -e match:'Device not configured' rump.ifconfig 3
+
+	rump_server_destroy_ifaces
+}
+
+ifconfig_number_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case ifconfig_create_destroy
 	atf_add_test_case ifconfig_options
 	atf_add_test_case ifconfig_parameters
+	atf_add_test_case ifconfig_up_down_ipv4
+	atf_add_test_case ifconfig_up_down_ipv6
+	atf_add_test_case ifconfig_number
 }

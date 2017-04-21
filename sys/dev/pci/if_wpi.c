@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.75 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.75.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.75 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.75.2.1 2017/04/21 16:53:48 bouyer Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -125,6 +125,7 @@ static void	wpi_tx_intr(struct wpi_softc *, struct wpi_rx_desc *);
 static void	wpi_cmd_intr(struct wpi_softc *, struct wpi_rx_desc *);
 static void	wpi_notif_intr(struct wpi_softc *);
 static int	wpi_intr(void *);
+static void	wpi_softintr(void *);
 static void	wpi_read_eeprom(struct wpi_softc *);
 static void	wpi_read_eeprom_channels(struct wpi_softc *, int);
 static void	wpi_read_eeprom_group(struct wpi_softc *, int);
@@ -206,7 +207,6 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	const char *intrstr;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
-	pci_intr_handle_t ih;
 	pcireg_t data;
 	int ac, error;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -256,19 +256,27 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_sh = memh;
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error_dev(self, "could not map interrupt\n");
-		return;
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, wpi_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(self, "could not establish softint\n");
+		goto unmap;
 	}
 
-	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, wpi_intr, sc);
+	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
+		aprint_error_dev(self, "could not map interrupt\n");
+		goto failsi;
+	}
+
+	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
+	    wpi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto failia;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -277,7 +285,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	 */
 	if ((error = wpi_reset(sc)) != 0) {
 		aprint_error_dev(self, "could not reset adapter\n");
-		return;
+		goto failih;
 	}
 
 	/*
@@ -285,7 +293,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	 */
 	if ((error = wpi_alloc_fwmem(sc)) != 0) {
 		aprint_error_dev(self, "could not allocate firmware memory\n");
-		return;
+		goto failih;
 	}
 
 	/*
@@ -358,9 +366,12 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
-	if_attach(ifp);
-	if_deferred_start_init(ifp, NULL);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
+
 	/* override default methods */
 	ic->ic_node_alloc = wpi_node_alloc;
 	ic->ic_newassoc = wpi_newassoc;
@@ -404,6 +415,13 @@ fail3:	while (--ac >= 0)
 	wpi_free_rpool(sc);
 fail2:	wpi_free_shared(sc);
 fail1:	wpi_free_fwmem(sc);
+failih:	pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
+	sc->sc_ih = NULL;
+failia:	pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
+	sc->sc_pihp = NULL;
+failsi:	softint_disestablish(sc->sc_soft_ih);
+	sc->sc_soft_ih = NULL;
+unmap:	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 }
 
 static int
@@ -432,6 +450,15 @@ wpi_detach(device_t self, int flags __unused)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
+	if (sc->sc_pihp != NULL) {
+		pci_intr_release(sc->sc_pct, sc->sc_pihp, 1);
+		sc->sc_pihp = NULL;
+	}
+	if (sc->sc_soft_ih != NULL) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
+	}
+
 	mutex_enter(&sc->sc_rsw_mtx);
 	sc->sc_dying = 1;
 	cv_signal(&sc->sc_rsw_cv);
@@ -1456,7 +1483,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
-	int data_off, error;
+	int data_off, error, s;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
@@ -1544,6 +1571,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	/* finalize mbuf */
 	m_set_rcvif(m, ifp);
 
+	s = splnet();
+
 	if (sc->sc_drvbpf != NULL) {
 		struct wpi_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -1589,6 +1618,8 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 	/* release node reference */
 	ieee80211_free_node(ni);
+
+	splx(s);
 }
 
 static void
@@ -1599,11 +1630,14 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 	struct wpi_tx_data *data = &ring->data[desc->idx];
 	struct wpi_tx_stat *stat = (struct wpi_tx_stat *)(desc + 1);
 	struct wpi_node *wn = (struct wpi_node *)data->ni;
+	int s;
 
 	DPRINTFN(4, ("tx done: qid=%d idx=%d retries=%d nkill=%d rate=%x "
 	    "duration=%d status=%x\n", desc->qid, desc->idx, stat->ntries,
 	    stat->nkill, stat->rate, le32toh(stat->duration),
 	    le32toh(stat->status)));
+
+	s = splnet();
 
 	/*
 	 * Update rate control statistics for the node.
@@ -1631,7 +1665,9 @@ wpi_tx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc)
 
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	if_schedule_deferred_start(ifp);
+	wpi_start(ifp);
+
+	splx(s);
 }
 
 static void
@@ -1661,6 +1697,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp =  ic->ic_ifp;
 	uint32_t hw;
+	int s;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->shared_dma.map, 0,
 	    sizeof(struct wpi_shared), BUS_DMASYNC_POSTREAD);
@@ -1716,6 +1753,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 			DPRINTF(("state changed to %x\n", le32toh(*status)));
 
 			if (le32toh(*status) & 1) {
+				s = splnet();
 				/* the radio button has to be pushed */
 				/* wake up thread to signal powerd */
 				cv_signal(&sc->sc_rsw_cv);
@@ -1724,6 +1762,7 @@ wpi_notif_intr(struct wpi_softc *sc)
 				/* turn the interface down */
 				ifp->if_flags &= ~IFF_UP;
 				wpi_stop(ifp, 1);
+				splx(s);
 				return;	/* no further processing */
 			}
 			break;
@@ -1752,10 +1791,11 @@ wpi_notif_intr(struct wpi_softc *sc)
 			DPRINTF(("scan finished nchan=%d status=%d chan=%d\n",
 			    scan->nchan, scan->status, scan->chan));
 
+			s = splnet();
 			sc->is_scanning = false;
 			if (ic->ic_state == IEEE80211_S_SCAN)
 				ieee80211_next_scan(ic);
-
+			splx(s);
 			break;
 		}
 		}
@@ -1772,7 +1812,6 @@ static int
 wpi_intr(void *arg)
 {
 	struct wpi_softc *sc = arg;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
 	uint32_t r;
 
 	r = WPI_READ(sc, WPI_INTR);
@@ -1783,6 +1822,22 @@ wpi_intr(void *arg)
 
 	/* disable interrupts */
 	WPI_WRITE(sc, WPI_MASK, 0);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+wpi_softintr(void *arg)
+{
+	struct wpi_softc *sc = arg;
+	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	uint32_t r;
+
+	r = WPI_READ(sc, WPI_INTR);
+	if (r == 0 || r == 0xffffffff)
+		goto out;
+
 	/* ack interrupts */
 	WPI_WRITE(sc, WPI_INTR, r);
 
@@ -1791,7 +1846,7 @@ wpi_intr(void *arg)
 		aprint_error_dev(sc->sc_dev, "fatal firmware error\n");
 		ifp->if_flags &= ~IFF_UP;
 		wpi_stop(ifp, 1);
-		return 1;
+		return;
 	}
 
 	if (r & WPI_RX_INTR)
@@ -1800,11 +1855,10 @@ wpi_intr(void *arg)
 	if (r & WPI_ALIVE_INTR)	/* firmware initialized */
 		wakeup(sc);
 
+ out:
 	/* re-enable interrupts */
 	if (ifp->if_flags & IFF_UP)
 		WPI_WRITE(sc, WPI_MASK, WPI_INTR_MASK);
-
-	return 1;
 }
 
 static uint8_t

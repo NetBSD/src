@@ -1,4 +1,4 @@
-.\"	$NetBSD: postsuper.1,v 1.1.1.2 2013/01/02 18:58:44 tron Exp $
+.\"	$NetBSD: postsuper.1,v 1.1.1.2.16.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH POSTSUPER 1 
 .ad
@@ -11,10 +11,10 @@ Postfix superintendent
 .na
 .nf
 .fi
-\fBpostsuper\fR [\fB-psSv\fR]
-[\fB-c \fIconfig_dir\fR] [\fB-d \fIqueue_id\fR]
-        [\fB-h \fIqueue_id\fR] [\fB-H \fIqueue_id\fR]
-        [\fB-r \fIqueue_id\fR] [\fIdirectory ...\fR]
+\fBpostsuper\fR [\fB\-psSv\fR]
+[\fB\-c \fIconfig_dir\fR] [\fB\-d \fIqueue_id\fR]
+        [\fB\-h \fIqueue_id\fR] [\fB\-H \fIqueue_id\fR]
+        [\fB\-r \fIqueue_id\fR] [\fIdirectory ...\fR]
 .SH DESCRIPTION
 .ad
 .fi
@@ -25,35 +25,35 @@ such as listing or flushing the mail queue.
 
 By default, \fBpostsuper\fR(1) performs the operations
 requested with the
-\fB-s\fR and \fB-p\fR command-line options on all Postfix queue
-directories - this includes the \fBincoming\fR, \fBactive\fR and
+\fB\-s\fR and \fB\-p\fR command\-line options on all Postfix queue
+directories \- this includes the \fBincoming\fR, \fBactive\fR and
 \fBdeferred\fR directories with mail files and the \fBbounce\fR,
 \fBdefer\fR, \fBtrace\fR and \fBflush\fR directories with log files.
 
 Options:
-.IP "\fB-c \fIconfig_dir\fR"
+.IP "\fB\-c \fIconfig_dir\fR"
 The \fBmain.cf\fR configuration file is in the named directory
 instead of the default configuration directory. See also the
 MAIL_CONFIG environment setting below.
-.IP "\fB-d \fIqueue_id\fR"
+.IP "\fB\-d \fIqueue_id\fR"
 Delete one message with the named queue ID from the named
 mail queue(s) (default: \fBhold\fR, \fBincoming\fR, \fBactive\fR and
 \fBdeferred\fR).
 
-If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
+If a \fIqueue_id\fR of \fB\-\fR is specified, the program reads
 queue IDs from standard input. For example, to delete all mail
 with exactly one recipient \fBuser@example.com\fR:
 .sp
 .nf
-mailq | tail +2 | grep -v '^ *(' | awk  \'BEGIN { RS = "" }
+mailq | tail +2 | grep \-v '^ *(' | awk  \'BEGIN { RS = "" }
     # $7=sender, $8=recipient1, $9=recipient2
     { if ($8 == "user@example.com" && $9 == "")
           print $1 }
-\' | tr -d '*!' | postsuper -d -
+\' | tr \-d '*!' | postsuper \-d \-
 .fi
 .sp
-Specify "\fB-d ALL\fR" to remove all messages; for example, specify
-"\fB-d ALL deferred\fR" to delete all mail in the \fBdeferred\fR queue.
+Specify "\fB\-d ALL\fR" to remove all messages; for example, specify
+"\fB\-d ALL deferred\fR" to delete all mail in the \fBdeferred\fR queue.
 As a safety measure, the word \fBALL\fR must be specified in upper
 case.
 .sp
@@ -79,17 +79,17 @@ can distinguish within a second).
 \fBpostsuper\fR(1) deletes the new message, instead of the old
 message that it should have deleted.
 .RE
-.IP "\fB-h \fIqueue_id\fR"
+.IP "\fB\-h \fIqueue_id\fR"
 Put mail "on hold" so that no attempt is made to deliver it.
 Move one message with the named queue ID from the named
 mail queue(s) (default: \fBincoming\fR, \fBactive\fR and
 \fBdeferred\fR) to the \fBhold\fR queue.
 
-If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
+If a \fIqueue_id\fR of \fB\-\fR is specified, the program reads
 queue IDs from standard input.
 .sp
-Specify "\fB-h ALL\fR" to hold all messages; for example, specify
-"\fB-h ALL deferred\fR" to hold all mail in the \fBdeferred\fR queue.
+Specify "\fB\-h ALL\fR" to hold all messages; for example, specify
+"\fB\-h ALL deferred\fR" to hold all mail in the \fBdeferred\fR queue.
 As a safety measure, the word \fBALL\fR must be specified in upper
 case.
 .sp
@@ -99,37 +99,37 @@ or \fBbounce_queue_lifetime\fR setting. It becomes subject to
 expiration after it is released from "hold".
 .sp
 This feature is available in Postfix 2.0 and later.
-.IP "\fB-H \fIqueue_id\fR"
+.IP "\fB\-H \fIqueue_id\fR"
 Release mail that was put "on hold".
 Move one message with the named queue ID from the named
 mail queue(s) (default: \fBhold\fR) to the \fBdeferred\fR queue.
 
-If a \fIqueue_id\fR of \fB-\fR is specified, the program reads
+If a \fIqueue_id\fR of \fB\-\fR is specified, the program reads
 queue IDs from standard input.
 .sp
-Note: specify "\fBpostsuper -r\fR" to release mail that was kept on
+Note: specify "\fBpostsuper \-r\fR" to release mail that was kept on
 hold for a significant fraction of \fB$maximal_queue_lifetime\fR
 or \fB$bounce_queue_lifetime\fR, or longer.
 .sp
-Specify "\fB-H ALL\fR" to release all mail that is "on hold".
+Specify "\fB\-H ALL\fR" to release all mail that is "on hold".
 As a safety measure, the word \fBALL\fR must be specified in upper
 case.
 .sp
 This feature is available in Postfix 2.0 and later.
-.IP \fB-p\fR
+.IP \fB\-p\fR
 Purge old temporary files that are left over after system or
 software crashes.
-.IP "\fB-r \fIqueue_id\fR"
+.IP "\fB\-r \fIqueue_id\fR"
 Requeue the message with the named queue ID from the named
 mail queue(s) (default: \fBhold\fR, \fBincoming\fR, \fBactive\fR and
 \fBdeferred\fR).
-To requeue multiple messages, specify multiple \fB-r\fR
-command-line options.
+To requeue multiple messages, specify multiple \fB\-r\fR
+command\-line options.
 
-Alternatively, if a \fIqueue_id\fR of \fB-\fR is specified,
+Alternatively, if a \fIqueue_id\fR of \fB\-\fR is specified,
 the program reads queue IDs from standard input.
 .sp
-Specify "\fB-r ALL\fR" to requeue all messages. As a safety
+Specify "\fB\-r ALL\fR" to requeue all messages. As a safety
 measure, the word \fBALL\fR must be specified in upper case.
 .sp
 A requeued message is moved to the \fBmaildrop\fR queue,
@@ -164,7 +164,7 @@ the wrong message file when it is executed while the Postfix mail
 system is running, but no harm should be done.
 .sp
 This feature is available in Postfix 1.1 and later.
-.IP \fB-s\fR
+.IP \fB\-s\fR
 Structure check and structure repair.  This should be done once
 before Postfix startup.
 .RS
@@ -196,13 +196,13 @@ procedure is as follows:
 Run \fBpostsuper\fR(1) repeatedly until it stops reporting
 file name changes.
 .RE
-.IP \fB-S\fR
-A redundant version of \fB-s\fR that requires that long
+.IP \fB\-S\fR
+A redundant version of \fB\-s\fR that requires that long
 file names also match the message file inode number. This
 option exists for testing purposes, and is available with
 Postfix 2.9 and later.
-.IP \fB-v\fR
-Enable verbose logging for debugging purposes. Multiple \fB-v\fR
+.IP \fB\-v\fR
+Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
 .SH DIAGNOSTICS
 .ad
@@ -210,9 +210,9 @@ options make the software increasingly verbose.
 Problems are reported to the standard error stream and to
 \fBsyslogd\fR(8).
 
-\fBpostsuper\fR(1) reports the number of messages deleted with \fB-d\fR,
-the number of messages requeued with \fB-r\fR, and the number of
-messages whose queue file name was fixed with \fB-s\fR. The report
+\fBpostsuper\fR(1) reports the number of messages deleted with \fB\-d\fR,
+the number of messages requeued with \fB\-r\fR, and the number of
+messages whose queue file name was fixed with \fB\-s\fR. The report
 is written to the standard error stream and to \fBsyslogd\fR(8).
 .SH "ENVIRONMENT"
 .na
@@ -245,7 +245,7 @@ the hash_queue_names parameter.
 The names of queue directories that are split across multiple
 subdirectory levels.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
@@ -254,11 +254,11 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .PP
 Available in Postfix version 2.9 and later:
 .IP "\fBenable_long_queue_ids (no)\fR"
-Enable long, non-repeating, queue IDs (queue file names).
+Enable long, non\-repeating, queue IDs (queue file names).
 .SH "SEE ALSO"
 .na
 .nf
-sendmail(1), Sendmail-compatible user interface
+sendmail(1), Sendmail\-compatible user interface
 postqueue(1), unprivileged queue operations
 .SH "LICENSE"
 .na
@@ -273,3 +273,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

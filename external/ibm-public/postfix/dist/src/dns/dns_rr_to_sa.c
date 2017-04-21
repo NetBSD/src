@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr_to_sa.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: dns_rr_to_sa.c,v 1.1.1.1.36.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -56,7 +56,7 @@
 
 /* dns_rr_to_sa - resource record to socket address */
 
-int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
+int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr *sa,
 		             SOCKADDR_SIZE *sa_length)
 {
     SOCKADDR_SIZE sock_addr_len;
@@ -69,7 +69,7 @@ int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
 	    errno = ENOSPC;
 	    return (-1);
 	} else {
-	    memset((char *) SOCK_ADDR_IN_PTR(sa), 0, sock_addr_len);
+	    memset((void *) SOCK_ADDR_IN_PTR(sa), 0, sock_addr_len);
 	    SOCK_ADDR_IN_FAMILY(sa) = AF_INET;
 	    SOCK_ADDR_IN_PORT(sa) = port;
 	    SOCK_ADDR_IN_ADDR(sa) = IN_ADDR(rr->data);
@@ -88,7 +88,7 @@ int     dns_rr_to_sa(DNS_RR *rr, unsigned port, struct sockaddr * sa,
 	    errno = ENOSPC;
 	    return (-1);
 	} else {
-	    memset((char *) SOCK_ADDR_IN6_PTR(sa), 0, sock_addr_len);
+	    memset((void *) SOCK_ADDR_IN6_PTR(sa), 0, sock_addr_len);
 	    SOCK_ADDR_IN6_FAMILY(sa) = AF_INET6;
 	    SOCK_ADDR_IN6_PORT(sa) = port;
 	    SOCK_ADDR_IN6_ADDR(sa) = IN6_ADDR(rr->data);
@@ -128,7 +128,7 @@ int     main(int argc, char **argv)
     MAI_HOSTADDR_STR hostaddr;
     MAI_SERVPORT_STR portnum;
     struct sockaddr_storage ss;
-    struct sockaddr *sa = (struct sockaddr *) & ss;
+    struct sockaddr *sa = (struct sockaddr *) &ss;
     SOCKADDR_SIZE sa_length = sizeof(ss);
     VSTRING *why;
     int     type;

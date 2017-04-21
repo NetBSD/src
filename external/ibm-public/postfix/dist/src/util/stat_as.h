@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_as.h,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: stat_as.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _STAT_AS_H_INCLUDED_
 #define _STAT_AS_H_INCLUDED_
@@ -16,7 +16,7 @@
 
  /* External interface. */
 
-extern int stat_as(const char *, struct stat *, uid_t, gid_t);
+extern int WARN_UNUSED_RESULT stat_as(const char *, struct stat *, uid_t, gid_t);
 
 /* LICENSE
 /* .ad

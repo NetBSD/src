@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc.xxx,v 1.8 2010/02/11 09:06:50 roy Exp $
+#	$NetBSD: Makefile.inc.xxx,v 1.8.34.1 2017/04/21 16:51:14 bouyer Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
 IMAGESIZE=	7m
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 IMAGEENDIAN?=	be
 MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst

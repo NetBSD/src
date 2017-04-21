@@ -1,10 +1,10 @@
-/*	$NetBSD: fetch.c,v 1.1.1.1 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.1.1.1.14.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* fetch.c - routines for fetching data at URLs */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -19,6 +19,9 @@
 /* This work was initially developed by Kurt D. Zeilenga for
  * inclusion in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: fetch.c,v 1.1.1.1.14.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 
@@ -52,9 +55,22 @@ ldif_open_url(
 		/* we don't check for LDAP_DIRSEP since URLs should contain '/' */
 		if ( urlstr[0] == '/' && urlstr[1] == '/' ) {
 			urlstr += 2;
-			/* path must be absolute if authority is present */
-			if ( urlstr[0] != '/' )
+			/* path must be absolute if authority is present
+			 * technically, file://hostname/path is also legal but we don't
+			 * accept a non-empty hostname
+			 */
+			if ( urlstr[0] != '/' ) {
+#ifdef _WIN32
+				/* An absolute path in improper file://C:/foo/bar format */
+				if ( urlstr[1] != ':' )
+#endif
 				return NULL;
+			}
+#ifdef _WIN32
+			/* An absolute path in proper file:///C:/foo/bar format */
+			if ( urlstr[2] == ':' )
+				urlstr++;
+#endif
 		}
 
 		p = ber_strdup( urlstr );

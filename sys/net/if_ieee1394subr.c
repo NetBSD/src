@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.58 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.58.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.58 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.58.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -154,10 +154,21 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (unicast && (!nd6_storelladdr(ifp, rt, m0, dst,
-		    hwdst->iha_uid, IEEE1394_ADDR_LEN))) {
-			/* something bad happened */
-			return 0;
+#if 0
+		/*
+		 * XXX This code was in nd6_storelladdr, which was replaced with
+		 * nd6_resolve, but it never be used because nd6_storelladdr was
+		 * called only if unicast. Should it be enabled?
+		 */
+		if (m0->m_flags & M_BCAST)
+			memcpy(hwdst->iha_uid, ifp->if_broadcastaddr,
+			    MIN(IEEE1394_ADDR_LEN, ifp->if_addrlen));
+#endif
+		if (unicast) {
+			error = nd6_resolve(ifp, rt, m0, dst, hwdst->iha_uid,
+			    IEEE1394_ADDR_LEN);
+			if (error != 0)
+				return error == EWOULDBLOCK ? 0 : error;
 		}
 		etype = htons(ETHERTYPE_IPV6);
 		break;

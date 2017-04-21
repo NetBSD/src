@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.2,v 1.21 2017/01/14 06:55:40 kamil Exp $
+.\"	$NetBSD: siginfo.2,v 1.21.2.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -231,6 +231,8 @@ Object-specific hardware error
 Process breakpoint
 .It TRAP_CHLD
 Process child trap
+.It TRAP_DBREG
+Process hardware debug register trap
 .It TRAP_EXEC
 Process exec trap
 .It TRAP_LWP
@@ -370,21 +372,27 @@ are
 extensions.
 .Pp
 The
+.Dv TRAP_CHLD ,
+.Dv TRAP_DBREG ,
 .Dv TRAP_EXEC
-signal specific reason of
+and
+.Dv TRAP_LWP
+signal specific reasons of
 .Dv SIGTRAP
-is
+are
 .Nx
-extension.
+extensions.
 .Sh HISTORY
 The
 .Nm
 functionality first appeared in
 .At V.4 .
 .Pp
-.Dv TRAP_CHLD
-and
+.Dv TRAP_CHLD ,
+.Dv TRAP_DBREG ,
 .Dv TRAP_EXEC
+and
+.Dv TRAP_LWP
 first appeared
 in
 .Nx 8 .

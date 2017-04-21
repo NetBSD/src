@@ -1,4 +1,4 @@
-.\"	$NetBSD: cleanup.8,v 1.1.1.4 2013/09/25 19:06:25 tron Exp $
+.\"	$NetBSD: cleanup.8,v 1.1.1.4.12.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH CLEANUP 8 
 .ad
@@ -20,15 +20,18 @@ manager of its arrival.
 
 The \fBcleanup\fR(8) daemon always performs the following transformations:
 .IP \(bu
-Insert missing message headers: (\fBResent-\fR) \fBFrom:\fR,
-\fBTo:\fR, \fBMessage-Id:\fR, and \fBDate:\fR.
+Insert missing message headers: (\fBResent\-\fR) \fBFrom:\fR,
+\fBTo:\fR, \fBMessage\-Id:\fR, and \fBDate:\fR.
 .IP \(bu
 Transform envelope and header addresses to the standard
-\fIuser@fully-qualified-domain\fR form that is expected by other
+\fIuser@fully\-qualified\-domain\fR form that is expected by other
 Postfix programs.
-This task is delegated to the \fBtrivial-rewrite\fR(8) daemon.
+This task is delegated to the \fBtrivial\-rewrite\fR(8) daemon.
 .IP \(bu
 Eliminate duplicate envelope recipient addresses.
+.IP \(bu
+Remove message headers: \fBBcc\fR, \fBContent\-Length\fR,
+\fBResent\-Bcc\fR, \fBReturn\-Path\fR.
 .PP
 The following address transformations are optional:
 .IP \(bu
@@ -67,7 +70,7 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 .SH BUGS
 .ad
 .fi
-Table-driven rewriting rules make it hard to express \fBif then
+Table\-driven rewriting rules make it hard to express \fBif then
 else\fR and other logical relationships.
 .SH "CONFIGURATION PARAMETERS"
 .na
@@ -93,31 +96,36 @@ message contains no To: or Cc: message header.
 Available in Postfix version 2.1 only:
 .IP "\fBenable_errors_to (no)\fR"
 Report mail delivery errors to the address specified with the
-non-standard Errors-To: message header, instead of the envelope
+non\-standard Errors\-To: message header, instead of the envelope
 sender address (this feature is removed with Postfix version 2.2, is
 turned off by default with Postfix version 2.1, and is always turned on
 with older Postfix versions).
 .PP
 Available in Postfix version 2.6 and later:
 .IP "\fBalways_add_missing_headers (no)\fR"
-Always add (Resent-) From:, To:, Date: or Message-ID: headers
+Always add (Resent\-) From:, To:, Date: or Message\-ID: headers
 when not present.
 .PP
 Available in Postfix version 2.9 and later:
 .IP "\fBenable_long_queue_ids (no)\fR"
-Enable long, non-repeating, queue IDs (queue file names).
+Enable long, non\-repeating, queue IDs (queue file names).
+.PP
+Available in Postfix version 3.0 and later:
+.IP "\fBmessage_drop_headers (bcc, content\-length, resent\-bcc, return\-path)\fR"
+Names of message headers that the \fBcleanup\fR(8) daemon will remove
+after applying \fBheader_checks\fR(5) and before invoking Milter applications.
 .SH "BUILT-IN CONTENT FILTERING CONTROLS"
 .na
 .nf
 .ad
 .fi
-Postfix built-in content filtering is meant to stop a flood of
+Postfix built\-in content filtering is meant to stop a flood of
 worms or viruses. It is not a general content filter.
 .IP "\fBbody_checks (empty)\fR"
 Optional lookup tables for content inspection as specified in
 the \fBbody_checks\fR(5) manual page.
 .IP "\fBheader_checks (empty)\fR"
-Optional lookup tables for content inspection of primary non-MIME
+Optional lookup tables for content inspection of primary non\-MIME
 message headers, as specified in the \fBheader_checks\fR(5) manual page.
 .PP
 Available in Postfix version 2.0 and later:
@@ -128,7 +136,7 @@ prefer to use that term) is subjected to body_checks inspection.
 Optional lookup tables for content inspection of MIME related
 message headers, as described in the \fBheader_checks\fR(5) manual page.
 .IP "\fBnested_header_checks ($header_checks)\fR"
-Optional lookup tables for content inspection of non-MIME message
+Optional lookup tables for content inspection of non\-MIME message
 headers in attached messages, as described in the \fBheader_checks\fR(5)
 manual page.
 .PP
@@ -158,7 +166,7 @@ for communication with a Milter application; prior to Postfix 2.6
 the default protocol is 2.
 .IP "\fBmilter_default_action (tempfail)\fR"
 The default action when a Milter (mail filter) application is
-unavailable or mis-configured.
+unavailable or mis\-configured.
 .IP "\fBmilter_macro_daemon_name ($myhostname)\fR"
 The {daemon_name} macro value for Milter (mail filter) applications.
 .IP "\fBmilter_macro_v ($mail_name $mail_version)\fR"
@@ -192,7 +200,7 @@ The macros that are sent to version 3 or higher Milter (mail
 filter) applications after an unknown SMTP command.
 .IP "\fBmilter_end_of_data_macros (see 'postconf -d' output)\fR"
 The macros that are sent to Milter (mail filter) applications
-after the message end-of-data.
+after the message end\-of\-data.
 .PP
 Available in Postfix version 2.5 and later:
 .IP "\fBmilter_end_of_header_macros (see 'postconf -d' output)\fR"
@@ -203,6 +211,12 @@ Available in Postfix version 2.7 and later:
 .IP "\fBmilter_header_checks (empty)\fR"
 Optional lookup tables for content inspection of message headers
 that are produced by Milter applications.
+.PP
+Available in Postfix version 3.1 and later:
+.IP "\fBmilter_macro_defaults (empty)\fR"
+Optional list of \fIname=value\fR pairs that specify default
+values for arbitrary macros that Postfix may send to Milter
+applications.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf
@@ -218,19 +232,19 @@ The maximal recursion level that the MIME processor will handle.
 .IP "\fBstrict_8bitmime (no)\fR"
 Enable both strict_7bit_headers and strict_8bitmime_body.
 .IP "\fBstrict_7bit_headers (no)\fR"
-Reject mail with 8-bit text in message headers.
+Reject mail with 8\-bit text in message headers.
 .IP "\fBstrict_8bitmime_body (no)\fR"
-Reject 8-bit message body text without 8-bit MIME content encoding
+Reject 8\-bit message body text without 8\-bit MIME content encoding
 information.
 .IP "\fBstrict_mime_encoding_domain (no)\fR"
-Reject mail with invalid Content-Transfer-Encoding: information
+Reject mail with invalid Content\-Transfer\-Encoding: information
 for the message/* or multipart/* MIME content types.
 .PP
 Available in Postfix version 2.5 and later:
 .IP "\fBdetect_8bit_encoding_header (yes)\fR"
 Automatically detect 8BITMIME body content by looking at
-Content-Transfer-Encoding: message headers; historically, this
-behavior was hard-coded to be "always on".
+Content\-Transfer\-Encoding: message headers; historically, this
+behavior was hard\-coded to be "always on".
 .SH "AUTOMATIC BCC RECIPIENT CONTROLS"
 .na
 .nf
@@ -244,19 +258,19 @@ that is received by the Postfix mail system.
 .PP
 Available in Postfix version 2.1 and later:
 .IP "\fBsender_bcc_maps (empty)\fR"
-Optional BCC (blind carbon-copy) address lookup tables, indexed
+Optional BCC (blind carbon\-copy) address lookup tables, indexed
 by sender address.
 .IP "\fBrecipient_bcc_maps (empty)\fR"
-Optional BCC (blind carbon-copy) address lookup tables, indexed by
+Optional BCC (blind carbon\-copy) address lookup tables, indexed by
 recipient address.
 .SH "ADDRESS TRANSFORMATION CONTROLS"
 .na
 .nf
 .ad
 .fi
-Address rewriting is delegated to the \fBtrivial-rewrite\fR(8) daemon.
+Address rewriting is delegated to the \fBtrivial\-rewrite\fR(8) daemon.
 The \fBcleanup\fR(8) server implements table driven address mapping.
-.IP "\fBempty_address_recipient (MAILER-DAEMON)\fR"
+.IP "\fBempty_address_recipient (MAILER\-DAEMON)\fR"
 The recipient of mail addressed to the null address.
 .IP "\fBcanonical_maps (empty)\fR"
 Optional address mapping lookup tables for message headers and
@@ -342,6 +356,22 @@ The maximal number of addresses that virtual alias expansion produces
 from each original recipient.
 .IP "\fBvirtual_alias_recursion_limit (1000)\fR"
 The maximal nesting depth of virtual alias expansion.
+.PP
+Available in Postfix version 3.0 and later:
+.IP "\fBvirtual_alias_address_length_limit (1000)\fR"
+The maximal length of an email address after virtual alias expansion.
+.SH "SMTPUTF8 CONTROLS"
+.na
+.nf
+.ad
+.fi
+Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
+.IP "\fBsmtputf8_enable (yes)\fR"
+Enable preliminary SMTPUTF8 support for the protocols described
+in RFC 6531..6533.
+.IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
+Detect that a message requires SMTPUTF8 support for the specified
+mail origin classes.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf
@@ -352,10 +382,10 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub-second delay values.
+sub\-second delay values.
 .IP "\fBdelay_warning_time (0h)\fR"
 The time after which the sender receives a copy of the message
 headers of mail that is still queued.
@@ -371,14 +401,14 @@ process will service before terminating voluntarily.
 .IP "\fBmyhostname (see 'postconf -d' output)\fR"
 The internet hostname of this mail system.
 .IP "\fBmyorigin ($myhostname)\fR"
-The domain name that locally-posted mail appears to come
+The domain name that locally\-posted mail appears to come
 from, and that locally posted mail is delivered to.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBsoft_bounce (no)\fR"
 Safety net to keep mail queued that would otherwise be returned to
 the sender.
@@ -390,7 +420,7 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .PP
 Available in Postfix version 2.1 and later:
 .IP "\fBenable_original_recipient (yes)\fR"
-Enable support for the X-Original-To message header.
+Enable support for the X\-Original\-To message header.
 .SH "FILES"
 .na
 .nf
@@ -399,7 +429,7 @@ Enable support for the X-Original-To message header.
 .SH "SEE ALSO"
 .na
 .nf
-trivial-rewrite(8), address rewriting
+trivial\-rewrite(8), address rewriting
 qmgr(8), queue manager
 header_checks(5), message header content inspection
 body_checks(5), body parts content inspection
@@ -433,3 +463,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

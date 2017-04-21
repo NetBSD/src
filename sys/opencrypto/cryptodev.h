@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.28 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.28.4.1 2017/04/21 16:54:07 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -88,6 +88,10 @@
 #include <sys/ioccom.h>
 #include <sys/condvar.h>
 #include <sys/time.h>
+
+#if defined(_KERNEL_OPT)
+#include "opt_ocf.h"
+#endif
 
 /* Some initial values */
 #define CRYPTO_DRIVERS_INITIAL	4
@@ -469,6 +473,7 @@ struct cryptop {
 #define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 #define	CRYPTO_F_USER		0x0100	/* Request is in user context */
 #define	CRYPTO_F_MORE		0x0200	/* more data to follow */
+#define	CRYPTO_F_DQRETQ		0x0400	/* Dequeued from crp_ret_{,k}q */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -641,17 +646,11 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
 
 #ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
 #ifndef DPRINTF
-#define DPRINTF(a) uprintf a
-#endif
-#ifndef DCPRINTF
-#define DCPRINTF(a) printf a
+#define DPRINTF(a) printf a
 #endif
 #else
 #ifndef DPRINTF
 #define DPRINTF(a)
-#endif
-#ifndef DCPRINTF
-#define DCPRINTF(a)
 #endif
 #endif
 

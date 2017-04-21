@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.9 2016/10/04 16:46:20 christos Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.9.2.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.9 2016/10/04 16:46:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.9.2.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.9 2016/10/04 16:46:20 christos Exp $
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern pid_t lfs_writer_daemon;
+extern kcondvar_t lfs_writerd_cv;
 
 static int check_dirty(struct lfs *, struct vnode *, off_t, off_t, off_t, int, int, struct vm_page **);
 
@@ -466,6 +466,7 @@ lfs_putpages(void *v)
 	bool seglocked, sync, pagedaemon, reclaim;
 	struct vm_page *pg, *busypg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
+	struct mount *trans_mp;
 	int oreclaim = 0;
 	int donewriting = 0;
 #ifdef DEBUG
@@ -478,6 +479,7 @@ lfs_putpages(void *v)
 	sync = (ap->a_flags & PGO_SYNCIO) != 0;
 	reclaim = (ap->a_flags & PGO_RECLAIM) != 0;
 	pagedaemon = (curlwp == uvm.pagedaemon_lwp);
+	trans_mp = NULL;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -487,6 +489,7 @@ lfs_putpages(void *v)
 		return 0;
 	}
 
+retry:
 	/*
 	 * If there are no pages, don't do anything.
 	 */
@@ -497,6 +500,8 @@ lfs_putpages(void *v)
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
+		if (trans_mp)
+			fstrans_done(trans_mp);
 		mutex_exit(vp->v_interlock);
 		
 		/* Remove us from paging queue, if we were on it */
@@ -587,6 +592,33 @@ lfs_putpages(void *v)
 		return r;
 	}
 
+	if (trans_mp /* && (ap->a_flags & PGO_CLEANIT) != 0 */) {
+		if (pagedaemon) {
+			/* Pagedaemon must not sleep here. */
+			trans_mp = vp->v_mount;
+			error = fstrans_start_nowait(trans_mp, FSTRANS_SHARED);
+			if (error) {
+				mutex_exit(vp->v_interlock);
+				return error;
+			}
+		} else {
+			/*
+			 * Cannot use vdeadcheck() here as this operation
+			 * usually gets used from VOP_RECLAIM().  Test for
+			 * change of v_mount instead and retry on change.
+			 */
+			mutex_exit(vp->v_interlock);
+			trans_mp = vp->v_mount;
+			fstrans_start(trans_mp, FSTRANS_SHARED);
+			if (vp->v_mount != trans_mp) {
+				fstrans_done(trans_mp);
+				trans_mp = NULL;
+			}
+		}
+		mutex_enter(vp->v_interlock);
+		goto retry;
+	}
+
 	/* Set PGO_BUSYFAIL to avoid deadlocks */
 	ap->a_flags |= PGO_BUSYFAIL;
 
@@ -607,7 +639,8 @@ lfs_putpages(void *v)
 		if (r < 0) {
 			/* Pages are busy with another process */
 			mutex_exit(vp->v_interlock);
-			return EDEADLK;
+			error = EDEADLK;
+			goto out;
 		}
 		if (r > 0) /* Some pages are dirty */
 			break;
@@ -624,7 +657,8 @@ lfs_putpages(void *v)
 		ip->i_lfs_iflags &= ~LFSI_NO_GOP_WRITE;
 		if (r != EDEADLK) {
 			KASSERT(!mutex_owned(vp->v_interlock));
- 			return r;
+ 			error = r;
+			goto out;
 		}
 
 		/* One of the pages was busy.  Start over. */
@@ -657,12 +691,13 @@ lfs_putpages(void *v)
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-		} 
-		wakeup(&lfs_writer_daemon);
+		}
+		cv_broadcast(&lfs_writerd_cv);
 		mutex_exit(&lfs_lock);
 		preempt();
 		KASSERT(!mutex_owned(vp->v_interlock));
-		return EWOULDBLOCK;
+		error = EWOULDBLOCK;
+		goto out;
 	}
 
 	/*
@@ -724,7 +759,7 @@ lfs_putpages(void *v)
 		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
 		if (error != 0) {
 			KASSERT(!mutex_owned(vp->v_interlock));
- 			return error;
+ 			goto out;
 		}
 		mutex_enter(vp->v_interlock);
 		lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
@@ -851,7 +886,7 @@ lfs_putpages(void *v)
 	 */
 	if (seglocked) {
 		KASSERT(!mutex_owned(vp->v_interlock));
-		return error;
+		goto out;
 	}
 
 	/* Clean up FIP and send it to disk. */
@@ -892,6 +927,10 @@ lfs_putpages(void *v)
 		}
 		mutex_exit(vp->v_interlock);
 	}
+
+out:;
+	if (trans_mp)
+		fstrans_done(trans_mp);
 	KASSERT(!mutex_owned(vp->v_interlock));
 	return error;
 }

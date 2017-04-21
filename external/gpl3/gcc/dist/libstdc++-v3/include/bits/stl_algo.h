@@ -1736,11 +1736,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		      _RandomAccessIterator __result_last)
     {
       typedef typename iterator_traits<_InputIterator>::value_type
-	_InputValueType __unused;
+	_InputValueType __attribute__((__unused__));
       typedef typename iterator_traits<_RandomAccessIterator>::value_type
-	_OutputValueType __unused;
+	_OutputValueType __attribute__((__unused__));
       typedef typename iterator_traits<_RandomAccessIterator>::difference_type
-	_DistanceType __unused;
+	_DistanceType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_InputIteratorConcept<_InputIterator>)
@@ -1786,11 +1786,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		      _Compare __comp)
     {
       typedef typename iterator_traits<_InputIterator>::value_type
-	_InputValueType __unused;
+	_InputValueType __attribute__((__unused__));
       typedef typename iterator_traits<_RandomAccessIterator>::value_type
-	_OutputValueType __unused;
+	_OutputValueType __attribute__((__unused__));
       typedef typename iterator_traits<_RandomAccessIterator>::difference_type
-	_DistanceType __unused;
+	_DistanceType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_InputIteratorConcept<_InputIterator>)
@@ -2019,7 +2019,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		const _Tp& __val, _Compare __comp)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
@@ -2076,7 +2076,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		const _Tp& __val)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
@@ -2108,7 +2108,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		const _Tp& __val, _Compare __comp)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
@@ -2182,7 +2182,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		const _Tp& __val)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
@@ -2219,7 +2219,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		const _Tp& __val, _Compare __comp)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
@@ -2255,7 +2255,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
                   const _Tp& __val)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)
@@ -2290,7 +2290,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
                   const _Tp& __val, _Compare __comp)
     {
       typedef typename iterator_traits<_ForwardIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_ForwardIteratorConcept<_ForwardIterator>)

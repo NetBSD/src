@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.44 2016/12/15 09:28:03 ozaki-r Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.44.2.1 2017/04/21 16:53:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.44 2016/12/15 09:28:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.44.2.1 2017/04/21 16:53:30 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -160,6 +160,7 @@ mcsetup(struct mc_softc	*sc, u_int8_t *lladdr)
 	ifp->if_watchdog = mcwatchdog;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, lladdr);
 
 	return (0);
@@ -510,7 +511,7 @@ mc_tint(struct mc_softc *sc)
 
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_if.if_timer = 0;
-	mcstart(&sc->sc_if);
+	if_schedule_deferred_start(&sc->sc_if);
 }
 
 void

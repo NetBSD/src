@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_TRACE 3
 .Os
 .Sh NAME
@@ -6,19 +6,23 @@
 .Nm sqlite3_profile
 .Nd Tracing And Profiling Functions
 .Sh SYNOPSIS
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_trace
 .Fa "sqlite3*"
 .Fa "void(*xTrace)(void*,const char*)"
 .Fa "void*"
 .Fc
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_profile
 .Fa "sqlite3*"
 .Fa "void(*xProfile)(void*,const char*,sqlite3_uint64)"
 .Fa "void*"
 .Fc
 .Sh DESCRIPTION
+These routines are deprecated.
+Use the sqlite3_trace_v2() interface instead of the
+routines described here.
+.Pp
 These routines register callback functions that can be used for tracing
 and profiling the execution of SQL statements.
 .Pp
@@ -47,4 +51,5 @@ callback.
 The sqlite3_profile() function is considered experimental and is subject
 to change in future versions of SQLite.
 .Sh SEE ALSO
-.Xr sqlite3_step 3
+.Xr sqlite3_step 3 ,
+.Xr sqlite3_trace_v2 3

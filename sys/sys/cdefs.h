@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.129 2016/12/27 21:52:01 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.129.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -305,6 +305,20 @@
 #else
 #define	__unreachable()	do {} while (/*CONSTCOND*/0)
 #endif
+
+/*
+ * To be used when an empty body is required like:
+ *
+ * #ifdef DEBUG
+ * # define dprintf(a) printf(a)
+ * #else
+ * # define dprintf(a) __nothing
+ * #endif
+ *
+ * We use ((void)0) instead of do {} while (0) so that it
+ * works on , expressions.
+ */
+#define __nothing	((void)0)
 
 #if defined(__cplusplus)
 #define	__BEGIN_EXTERN_C	extern "C" {

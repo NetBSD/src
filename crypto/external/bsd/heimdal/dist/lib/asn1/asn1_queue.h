@@ -1,4 +1,4 @@
-/*	$NetBSD: asn1_queue.h,v 1.1.1.2 2011/04/14 14:08:19 elric Exp $	*/
+/*	$NetBSD: asn1_queue.h,v 1.1.1.2.32.1 2017/04/21 16:50:45 bouyer Exp $	*/
 
 /*	NetBSD: queue.h,v 1.38 2004/04/18 14:12:05 lukem Exp	*/
 /*	Id */

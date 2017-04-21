@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.75 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: pf.c,v 1.75.2.1 2017/04/21 16:53:54 bouyer Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.75 2016/12/08 05:16:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.75.2.1 2017/04/21 16:53:54 bouyer Exp $");
 
 #include "pflog.h"
 
@@ -5553,7 +5553,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (IN6_IS_SCOPE_EMBEDDABLE(&dst.sin6_addr))
 		dst.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
-		(void)nd6_output(ifp, ifp, m0, &dst, NULL);
+		(void)ip6_if_output(ifp, ifp, m0, &dst, NULL);
 	} else {
 		in6_ifstat_inc(ifp, ifs6_in_toobig);
 		if (r->rt != PF_DUPTO)

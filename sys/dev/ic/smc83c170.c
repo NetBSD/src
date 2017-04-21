@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.84 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.84.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.84 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.84.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -291,6 +291,7 @@ epic_attach(struct epic_softc *sc)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	/*
@@ -797,7 +798,7 @@ epic_intr(void *arg)
 		/*
 		 * Try to get more packets going.
 		 */
-		epic_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 
 	/*

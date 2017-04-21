@@ -1,4 +1,4 @@
-#	$NetBSD: LINKITSMART7688,v 1.1 2016/10/05 15:54:58 ryo Exp $
+#	$NetBSD: LINKITSMART7688,v 1.1.6.1 2017/04/21 16:53:26 bouyer Exp $
 #
 # MediaTek MT7688
 #
@@ -104,6 +104,7 @@ file-system	TMPFS		# Efficient memory file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FF snapshot support

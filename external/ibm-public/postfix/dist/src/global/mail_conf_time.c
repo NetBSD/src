@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_time.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
+/*	$NetBSD: mail_conf_time.c,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -32,6 +32,12 @@
 /*	int	def_unit;
 /*	int	min;
 /*	int	max;
+/*
+/*	void	check_mail_conf_time(name, intval, min, max)
+/*	const char *name;
+/*	int	intval;
+/*	int	min;
+/*	int	max;
 /* DESCRIPTION
 /*	This module implements configuration parameter support
 /*	for time interval values. The conversion routines understand
@@ -54,6 +60,9 @@
 /*	get_mail_conf_time_table() and get_mail_conf_time_fn_table() initialize
 /*	lists of variables, as directed by their table arguments. A table
 /*	must be terminated by a null entry.
+/*
+/*	check_mail_conf_time() terminates the program with a fatal
+/*	runtime error when the time does not meet its requirements.
 /* DIAGNOSTICS
 /*	Fatal errors: malformed numerical value, unknown time unit.
 /* BUGS
@@ -71,6 +80,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -107,7 +121,7 @@ static int convert_mail_conf_time(const char *name, int *intval, int def_unit)
 
 /* check_mail_conf_time - validate integer value */
 
-static void check_mail_conf_time(const char *name, int intval, int min, int max)
+void    check_mail_conf_time(const char *name, int intval, int min, int max)
 {
     if (min && intval < min)
 	msg_fatal("invalid %s: %d (min %d)", name, intval, min);
@@ -126,9 +140,11 @@ static int get_def_time_unit(const char *name, const char *defval)
 	    msg_panic("parameter %s: missing time unit in default value: %s",
 		      name, defval);
 	if (ISALPHA(*cp)) {
+#if 0
 	    if (cp[1] != 0)
 		msg_panic("parameter %s: bad time unit in default value: %s",
 			  name, defval);
+#endif
 	    return (*cp);
 	}
     }
@@ -153,7 +169,7 @@ int     get_mail_conf_time(const char *name, const char *defval, int min, int ma
 /* get_mail_conf_time2 - evaluate integer-valued configuration variable */
 
 int     get_mail_conf_time2(const char *name1, const char *name2,
-			            int defval, int def_unit, int min, int max)
+			         int defval, int def_unit, int min, int max)
 {
     int     intval;
     char   *name;
@@ -181,7 +197,7 @@ void    set_mail_conf_time_int(const char *name, int value)
 {
     char    buf[BUFSIZ];		/* yeah! crappy code! */
 
-    sprintf(buf, "%ds", value);		        /* yeah! more crappy code! */
+    sprintf(buf, "%ds", value);			/* yeah! more crappy code! */
     mail_conf_update(name, buf);
 }
 

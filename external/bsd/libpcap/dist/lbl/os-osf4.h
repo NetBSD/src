@@ -1,4 +1,4 @@
-/*	$NetBSD: os-osf4.h,v 1.3 2015/03/31 21:39:43 christos Exp $	*/
+/*	$NetBSD: os-osf4.h,v 1.3.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  */
 
 /* Prototypes missing in Digital UNIX 4.x */
-int	snprintf(char *, size_t, const char *, ...);
-int	vsnprintf(char *, size_t, const char *, va_list);
+int	pcap_snprintf(char *, size_t, const char *, ...);
+int	pcap_vsnprintf(char *, size_t, const char *, va_list);
 int	pfopen(char *, int);
 

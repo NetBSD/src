@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,32 +8,35 @@
 /* SYNOPSIS
 /*	#include <post_mail.h>
 /*
-/*	VSTREAM	*post_mail_fopen(sender, recipient, filter_class, trace_flags,
-/*		queue_id)
+/*	VSTREAM	*post_mail_fopen(sender, recipient, source_class, trace_flags,
+/*		utf8_flags, queue_id)
 /*	const char *sender;
 /*	const char *recipient;
-/*	int	filter_class;
+/*	int	source_class;
 /*	int	trace_flags;
+/*	int	utf8_flags;
 /*	VSTRING *queue_id;
 /*
-/*	VSTREAM	*post_mail_fopen_nowait(sender, recipient,
-/*					filter_class, trace_flags, queue_id)
+/*	VSTREAM	*post_mail_fopen_nowait(sender, recipient, source_class,
+/*					trace_flags, utf8_flags, queue_id)
 /*	const char *sender;
 /*	const char *recipient;
-/*	int	filter_class;
+/*	int	source_class;
 /*	int	trace_flags;
+/*	int	utf8_flags;
 /*	VSTRING *queue_id;
 /*
-/*	void	post_mail_fopen_async(sender, recipient,
-/*					filter_class, trace_flags,
+/*	void	post_mail_fopen_async(sender, recipient, source_class,
+/*					trace_flags, utf8_flags,
 /*					queue_id, notify, context)
 /*	const char *sender;
 /*	const char *recipient;
-/*	int	filter_class;
+/*	int	source_class;
 /*	int	trace_flags;
+/*	int	utf8_flags;
 /*	VSTRING *queue_id;
-/*	void	(*notify)(VSTREAM *stream, char *context);
-/*	char	*context;
+/*	void	(*notify)(VSTREAM *stream, void *context);
+/*	void	*context;
 /*
 /*	int	post_mail_fprintf(stream, format, ...)
 /*	VSTREAM	*stream;
@@ -53,6 +56,11 @@
 /*
 /*	int	post_mail_fclose(stream)
 /*	VSTREAM	*STREAM;
+/*
+/*	void	post_mail_fclose_async(stream, notify, context)
+/*	VSTREAM	*stream;
+/*	void	(*notify)(int status, void *context);
+/*	void	*context;
 /* DESCRIPTION
 /*	This module provides a convenient interface for the most
 /*	common case of sending one message to one recipient. It
@@ -90,6 +98,11 @@
 /*
 /*	post_mail_fclose() completes the posting of a message.
 /*
+/*	post_mail_fclose_async() completes the posting of a message
+/*	and upon completion invokes the caller-specified notify
+/*	routine, with the cleanup status and caller-specified context
+/*	as arguments.
+/*
 /*	Arguments:
 /* .IP sender
 /*	The sender envelope address. It is up to the application
@@ -97,13 +110,17 @@
 /* .IP recipient
 /*	The recipient envelope address. It is up to the application
 /*	to produce To: headers.
-/* .IP filter_class
-/*	The internal mail filtering class, as defined in
-/*	\fB<int_filt.h>\fR.  Depending on the setting of the
-/*	internal_mail_filter_classes parameter the message will or
-/*	won't be subject to content inspection.
+/* .IP source_class
+/*	The message source class, as defined in \fB<mail_proto.h>\fR.
+/*	Depending on the setting of the internal_mail_source_classes
+/*	and smtputf8_autodetect_classes parameters, the message
+/*	will or won't be subject to content inspection or SMTPUTF8
+/*	autodetection.
 /* .IP trace_flags
 /*	Message tracing flags as specified in \fB<deliver_request.h>\fR.
+/* .IP utf8_flags
+/*	Flags defined in <smtputf8.h>. Flags other than
+/*	SMTPUTF8_FLAG_REQUESTED are ignored.
 /* .IP queue_id
 /*	Null pointer, or pointer to buffer that receives the queue
 /*	ID of the new message.
@@ -173,38 +190,58 @@
 typedef struct {
     char   *sender;
     char   *recipient;
-    int     filter_class;
+    int     source_class;
     int     trace_flags;
+    int     utf8_flags;
     POST_MAIL_NOTIFY notify;
     void   *context;
     VSTREAM *stream;
     VSTRING *queue_id;
 } POST_MAIL_STATE;
 
+ /*
+  * Call-back state for asynchronous close requests.
+  */
+typedef struct {
+    int     status;
+    VSTREAM *stream;
+    POST_MAIL_FCLOSE_NOTIFY notify;
+    void   *context;
+} POST_MAIL_FCLOSE_STATE;
+
 /* post_mail_init - initial negotiations */
 
 static void post_mail_init(VSTREAM *stream, const char *sender,
 			           const char *recipient,
-			           int filter_class, int trace_flags,
-			           VSTRING *queue_id)
+			           int source_class, int trace_flags,
+			           int utf8_flags, VSTRING *queue_id)
 {
     VSTRING *id = queue_id ? queue_id : vstring_alloc(100);
     struct timeval now;
     const char *date;
-    int cleanup_flags =
-	int_filt_flags(filter_class) | CLEANUP_FLAG_MASK_INTERNAL;
+    int     cleanup_flags =
+    int_filt_flags(source_class) | CLEANUP_FLAG_MASK_INTERNAL
+    | smtputf8_autodetect(source_class)
+    | ((utf8_flags & SMTPUTF8_FLAG_REQUESTED) ? CLEANUP_FLAG_SMTPUTF8 : 0);
 
     GETTIMEOFDAY(&now);
     date = mail_date(now.tv_sec);
 
     /*
+     * XXX Don't flush buffers while sending the initial message records.
+     * That would cause deadlock between verify(8) and cleanup(8) servers.
+     */
+    vstream_control(stream, VSTREAM_CTL_BUFSIZE, 2 * VSTREAM_BUFSIZE,
+		    VSTREAM_CTL_END);
+
+    /*
      * Negotiate with the cleanup service. Give up if we can't agree.
      */
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, id),
 		  ATTR_TYPE_END) != 1
 	|| attr_print(stream, ATTR_FLAG_NONE,
-		      ATTR_TYPE_INT, MAIL_ATTR_FLAGS, cleanup_flags,
+		      SEND_ATTR_INT(MAIL_ATTR_FLAGS, cleanup_flags),
 		      ATTR_TYPE_END) != 0)
 	msg_fatal("unable to contact the %s service", var_cleanup_service);
 
@@ -237,35 +274,38 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
 /* post_mail_fopen - prepare for posting a message */
 
 VSTREAM *post_mail_fopen(const char *sender, const char *recipient,
-			         int filter_class, int trace_flags,
-			         VSTRING *queue_id)
+			         int source_class, int trace_flags,
+			         int utf8_flags, VSTRING *queue_id)
 {
     VSTREAM *stream;
 
     stream = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
-    post_mail_init(stream, sender, recipient, filter_class, trace_flags,
-		   queue_id);
+    post_mail_init(stream, sender, recipient, source_class, trace_flags,
+		   utf8_flags, queue_id);
     return (stream);
 }
 
 /* post_mail_fopen_nowait - prepare for posting a message */
 
 VSTREAM *post_mail_fopen_nowait(const char *sender, const char *recipient,
-				        int filter_class, int trace_flags,
-				        VSTRING *queue_id)
+				        int source_class, int trace_flags,
+				        int utf8_flags, VSTRING *queue_id)
 {
     VSTREAM *stream;
 
     if ((stream = mail_connect(MAIL_CLASS_PUBLIC, var_cleanup_service,
 			       BLOCKING)) != 0)
-	post_mail_init(stream, sender, recipient, filter_class, trace_flags,
-		       queue_id);
+	post_mail_init(stream, sender, recipient, source_class, trace_flags,
+		       utf8_flags, queue_id);
+    else
+	msg_warn("connect to %s/%s: %m",
+		 MAIL_CLASS_PUBLIC, var_cleanup_service);
     return (stream);
 }
 
 /* post_mail_open_event - handle asynchronous connection events */
 
-static void post_mail_open_event(int event, char *context)
+static void post_mail_open_event(int event, void *context)
 {
     POST_MAIL_STATE *state = (POST_MAIL_STATE *) context;
     const char *myname = "post_mail_open_event";
@@ -284,12 +324,13 @@ static void post_mail_open_event(int event, char *context)
 	event_disable_readwrite(vstream_fileno(state->stream));
 	non_blocking(vstream_fileno(state->stream), BLOCKING);
 	post_mail_init(state->stream, state->sender,
-		       state->recipient, state->filter_class,
-		       state->trace_flags, state->queue_id);
+		       state->recipient, state->source_class,
+		       state->trace_flags, state->utf8_flags,
+		       state->queue_id);
 	myfree(state->sender);
 	myfree(state->recipient);
 	state->notify(state->stream, state->context);
-	myfree((char *) state);
+	myfree((void *) state);
 	return;
 
 	/*
@@ -307,7 +348,7 @@ static void post_mail_open_event(int event, char *context)
 	myfree(state->sender);
 	myfree(state->recipient);
 	state->notify((VSTREAM *) 0, state->context);
-	myfree((char *) state);
+	myfree((void *) state);
 	return;
 
 	/*
@@ -321,7 +362,7 @@ static void post_mail_open_event(int event, char *context)
 	myfree(state->sender);
 	myfree(state->recipient);
 	state->notify((VSTREAM *) 0, state->context);
-	myfree((char *) state);
+	myfree((void *) state);
 	return;
 
 	/*
@@ -335,8 +376,8 @@ static void post_mail_open_event(int event, char *context)
 /* post_mail_fopen_async - prepare for posting a message */
 
 void    post_mail_fopen_async(const char *sender, const char *recipient,
-			              int filter_class, int trace_flags,
-			              VSTRING *queue_id,
+			              int source_class, int trace_flags,
+			              int utf8_flags, VSTRING *queue_id,
 			              void (*notify) (VSTREAM *, void *),
 			              void *context)
 {
@@ -347,8 +388,9 @@ void    post_mail_fopen_async(const char *sender, const char *recipient,
     state = (POST_MAIL_STATE *) mymalloc(sizeof(*state));
     state->sender = mystrdup(sender);
     state->recipient = mystrdup(recipient);
-    state->filter_class = filter_class;
+    state->source_class = source_class;
     state->trace_flags = trace_flags;
+    state->utf8_flags = utf8_flags;
     state->notify = notify;
     state->context = context;
     state->stream = stream;
@@ -360,7 +402,7 @@ void    post_mail_fopen_async(const char *sender, const char *recipient,
      */
     if (stream != 0) {
 	event_enable_read(vstream_fileno(stream), post_mail_open_event,
-			   (void *) state);
+			  (void *) state);
 	event_request_timer(post_mail_open_event, (void *) state,
 			    var_daemon_timeout);
     } else {
@@ -415,10 +457,101 @@ int     post_mail_fclose(VSTREAM *cleanup)
 	rec_fputs(cleanup, REC_TYPE_END, "");
 	if (vstream_fflush(cleanup)
 	    || attr_scan(cleanup, ATTR_FLAG_MISSING,
-			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
 			 ATTR_TYPE_END) != 1)
 	    status = CLEANUP_STAT_WRITE;
     }
     (void) vstream_fclose(cleanup);
     return (status);
+}
+
+/* post_mail_fclose_event - event handler */
+
+static void post_mail_fclose_event(int event, void *context)
+{
+    POST_MAIL_FCLOSE_STATE *state = (POST_MAIL_FCLOSE_STATE *) context;
+    int     status = state->status;
+
+    switch (event) {
+
+	/*
+	 * Final server reply. Pick up the completion status.
+	 */
+    case EVENT_READ:
+	if (status == 0) {
+	    if (vstream_ferror(state->stream) != 0
+		|| attr_scan(state->stream, ATTR_FLAG_MISSING,
+			     ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+			     ATTR_TYPE_END) != 1)
+		status = CLEANUP_STAT_WRITE;
+	}
+	break;
+
+	/*
+	 * No response or error.
+	 */
+    default:
+	msg_warn("error talking to service: %s", var_cleanup_service);
+	status = CLEANUP_STAT_WRITE;
+	break;
+    }
+
+    /*
+     * Stop the watchdog timer, and disable further read events that end up
+     * calling this function.
+     */
+    event_cancel_timer(post_mail_fclose_event, context);
+    event_disable_readwrite(vstream_fileno(state->stream));
+
+    /*
+     * Notify the requestor and clean up.
+     */
+    state->notify(status, state->context);
+    (void) vstream_fclose(state->stream);
+    myfree((void *) state);
+}
+
+/* post_mail_fclose_async - finish posting of message */
+
+void    post_mail_fclose_async(VSTREAM *stream,
+			         void (*notify) (int status, void *context),
+			               void *context)
+{
+    POST_MAIL_FCLOSE_STATE *state;
+    int     status = 0;
+
+
+    /*
+     * Send the message end marker only when there were no errors.
+     */
+    if (vstream_ferror(stream) != 0) {
+	status = CLEANUP_STAT_WRITE;
+    } else {
+	rec_fputs(stream, REC_TYPE_XTRA, "");
+	rec_fputs(stream, REC_TYPE_END, "");
+	if (vstream_fflush(stream))
+	    status = CLEANUP_STAT_WRITE;
+    }
+
+    /*
+     * Bundle up the suspended state.
+     */
+    state = (POST_MAIL_FCLOSE_STATE *) mymalloc(sizeof(*state));
+    state->status = status;
+    state->stream = stream;
+    state->notify = notify;
+    state->context = context;
+
+    /*
+     * To keep interfaces as simple as possible we report all errors via the
+     * same interface as all successes.
+     */
+    if (status == 0) {
+	event_enable_read(vstream_fileno(stream), post_mail_fclose_event,
+			  (void *) state);
+	event_request_timer(post_mail_fclose_event, (void *) state,
+			    var_daemon_timeout);
+    } else {
+	event_request_timer(post_mail_fclose_event, (void *) state, 0);
+    }
 }

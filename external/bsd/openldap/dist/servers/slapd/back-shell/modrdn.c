@@ -1,10 +1,10 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* modrdn.c - shell backend modrdn function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@
  * This work was originally developed by the University of Michigan
  * (as part of U-MICH LDAP).
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: modrdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $");
 
 #include "portable.h"
 

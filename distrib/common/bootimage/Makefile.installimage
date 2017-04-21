@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.4 2012/11/03 14:25:32 tsutsui Exp $
+#	$NetBSD: Makefile.installimage,v 1.4.18.1 2017/04/21 16:51:09 bouyer Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -62,7 +62,7 @@ INSTIMG_RELEASEDIR?=	${RELEASEMACHINEDIR}/installation/installimage
 MKDIR?=		mkdir -p
 
 install_image: check_INSTIMGBASE check_RELEASEDIR ${IMGBASE}.img.gz
-	${MKDIR} ${INSTIMG_RELEASEDIR}
+	${MKDIR} ${MKDIRPERM} ${INSTIMG_RELEASEDIR}
 	${RELEASE_INSTALL} ${IMGBASE}.img.gz ${INSTIMG_RELEASEDIR}
 	# note ${MAKESUM} will be calculated in src/etc/Makefile
 

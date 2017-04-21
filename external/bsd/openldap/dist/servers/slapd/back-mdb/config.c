@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.1 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* config.c - mdb backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: config.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -80,6 +83,11 @@ static ConfigTable mdbcfg[] = {
 		mdb_cf_gen, "( OLcfgDbAt:0.3 NAME 'olcDbMode' "
 		"DESC 'Unix permissions of database files' "
 		"SYNTAX OMsDirectoryString SINGLE-VALUE )", NULL, NULL },
+	{ "rtxnsize", "entries", 2, 2, 0, ARG_UINT|ARG_OFFSET,
+		(void *)offsetof(struct mdb_info, mi_rtxn_size),
+		"( OLcfgDbAt:12.5 NAME 'olcDbRtxnSize' "
+		"DESC 'Number of entries to process in one read transaction' "
+		"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 	{ "searchstack", "depth", 2, 2, 0, ARG_INT|ARG_MAGIC|MDB_SSTACK,
 		mdb_cf_gen, "( OLcfgDbAt:1.9 NAME 'olcDbSearchStack' "
 		"DESC 'Depth of search stack in IDLs' "
@@ -96,8 +104,8 @@ static ConfigOCs mdbocs[] = {
 		"SUP olcDatabaseConfig "
 		"MUST olcDbDirectory "
 		"MAY ( olcDbCheckpoint $ olcDbEnvFlags $ "
-		"olcDbNoSync $ olcDbIndex $ olcDbMaxReaders $ olcDbMaxsize $ "
-		"olcDbMode $ olcDbSearchStack ) )",
+		"olcDbNoSync $ olcDbIndex $ olcDbMaxReaders $ olcDbMaxSize $ "
+		"olcDbMode $ olcDbSearchStack $ olcDbRtxnSize ) )",
 		 	Cft_Database, mdbcfg },
 	{ NULL, 0, NULL }
 };
@@ -408,6 +416,9 @@ mdb_cf_gen( ConfigArgs *c )
 					mdb->mi_dbenv_flags ^= mdb_envflags[i].mask;
 				} else {
 					/* unknown keyword */
+					snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: unknown keyword \"%s\"",
+						c->argv[0], c->argv[i] );
+					Debug( LDAP_DEBUG_CONFIG, "%s %s\n", c->log, c->cr_msg, 0 );
 					rc = 1;
 				}
 			}
@@ -610,7 +621,10 @@ mdb_cf_gen( ConfigArgs *c )
 				mdb->mi_dbenv_flags |= mdb_envflags[j].mask;
 			} else {
 				/* unknown keyword */
-				rc = 1;
+				snprintf( c->cr_msg, sizeof( c->cr_msg ), "%s: unknown keyword \"%s\"",
+					c->argv[0], c->argv[i] );
+				Debug( LDAP_DEBUG_ANY, "%s %s\n", c->log, c->cr_msg, 0 );
+				return 1;
 			}
 		}
 		}
@@ -621,23 +635,25 @@ mdb_cf_gen( ConfigArgs *c )
 			c->argc - 1, &c->argv[1], &c->reply);
 
 		if( rc != LDAP_SUCCESS ) return 1;
-		c->cleanup = mdb_cf_cleanup;
 		mdb->mi_flags |= MDB_OPEN_INDEX;
-		if (( mdb->mi_flags & MDB_IS_OPEN ) && !mdb->mi_index_task ) {
-			/* Start the task as soon as we finish here. Set a long
-			 * interval (10 hours) so that it only gets scheduled once.
-			 */
-			if ( c->be->be_suffix == NULL || BER_BVISNULL( &c->be->be_suffix[0] ) ) {
-				fprintf( stderr, "%s: "
-					"\"index\" must occur after \"suffix\".\n",
-					c->log );
-				return 1;
+		if ( mdb->mi_flags & MDB_IS_OPEN ) {
+			c->cleanup = mdb_cf_cleanup;
+			if ( !mdb->mi_index_task ) {
+				/* Start the task as soon as we finish here. Set a long
+				 * interval (10 hours) so that it only gets scheduled once.
+				 */
+				if ( c->be->be_suffix == NULL || BER_BVISNULL( &c->be->be_suffix[0] ) ) {
+					fprintf( stderr, "%s: "
+						"\"index\" must occur after \"suffix\".\n",
+						c->log );
+					return 1;
+				}
+				ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
+				mdb->mi_index_task = ldap_pvt_runqueue_insert( &slapd_rq, 36000,
+					mdb_online_index, c->be,
+					LDAP_XSTRING(mdb_online_index), c->be->be_suffix[0].bv_val );
+				ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 			}
-			ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
-			mdb->mi_index_task = ldap_pvt_runqueue_insert( &slapd_rq, 36000,
-				mdb_online_index, c->be,
-				LDAP_XSTRING(mdb_online_index), c->be->be_suffix[0].bv_val );
-			ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 		}
 		break;
 

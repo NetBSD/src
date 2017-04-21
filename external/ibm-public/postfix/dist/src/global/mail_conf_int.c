@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf_int.c,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
+/*	$NetBSD: mail_conf_int.c,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -36,6 +36,12 @@
 /*	int	defval;
 /*	int	min;
 /*	int	max;
+/*
+/*	void	check_mail_conf_int(name, intval, min, max)
+/*	const char *name;
+/*	int	intval;
+/*	int	min;
+/*	int	max;
 /* DESCRIPTION
 /*	This module implements configuration parameter support
 /*	for integer values.
@@ -61,6 +67,9 @@
 /*
 /*	get_mail_conf_int2() concatenates the two names and is otherwise
 /*	identical to get_mail_conf_int().
+/*
+/*	check_mail_conf_int() exits with a fatal run-time error
+/*	when the integer value does not meet its requirements.
 /* DIAGNOSTICS
 /*	Fatal errors: malformed numerical value.
 /* SEE ALSO
@@ -115,7 +124,7 @@ static int convert_mail_conf_int(const char *name, int *intval)
 
 /* check_mail_conf_int - validate integer value */
 
-static void check_mail_conf_int(const char *name, int intval, int min, int max)
+void    check_mail_conf_int(const char *name, int intval, int min, int max)
 {
     if (min && intval < min)
 	msg_fatal("invalid %s parameter value %d < %d", name, intval, min);

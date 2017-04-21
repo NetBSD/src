@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_strflags.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: cleanup_strflags.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -55,6 +55,8 @@ static struct cleanup_flag_map cleanup_flag_map[] = {
     CLEANUP_FLAG_MAP_OK, "enable_address_mapping",
     CLEANUP_FLAG_MILTER, "enable_milters",
     CLEANUP_FLAG_SMTP_REPLY, "enable_smtp_reply",
+    CLEANUP_FLAG_SMTPUTF8, "smtputf8_requested",
+    CLEANUP_FLAG_AUTOUTF8, "smtputf8_autodetect",
 };
 
 /* cleanup_strflags - map flags code to printable string */

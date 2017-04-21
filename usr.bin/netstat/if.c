@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91 2017/01/11 01:25:05 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.91.2.1 2017/04/21 16:54:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.91 2017/01/11 01:25:05 ozaki-r Exp $");
+__RCSID("$NetBSD: if.c,v 1.91.2.1 2017/04/21 16:54:15 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,9 @@ intpr_sysctl(void)
 {
 	struct if_msghdr *ifm;
 	int mib[6] = { CTL_NET, AF_ROUTE, 0, 0, NET_RT_IFLIST, 0 };
-	char *buf = NULL, *next, *lim, *cp;
+	static char *buf = NULL;
+	static size_t olen;
+	char *next, *lim, *cp;
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;
 	struct if_data *ifd = NULL;
@@ -183,8 +185,12 @@ intpr_sysctl(void)
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
+	if (len > olen) {
+		free(buf);
+		if ((buf = malloc(len)) == NULL)
+			err(1, NULL);
+		olen = len;
+	}
 	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 
@@ -547,7 +553,7 @@ print_addr(const int ifindex, struct sockaddr *sa,
 			struct in6_multi inm;
 			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
 		
-			multiaddr = (u_long)ifaddr->in6.ia6_multiaddrs.lh_first;
+			multiaddr = (u_long)ifaddr->in6._ia6_multiaddrs.lh_first;
 			while (multiaddr != 0) {
 				kread(multiaddr, (char *)&inm, sizeof inm);
 				ia6_print(&inm.in6m_addr);
@@ -1057,14 +1063,20 @@ fetchifs(void)
 	struct if_data *ifd = NULL;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	struct sockaddr_dl *sdl;
-	char *buf, *next, *lim;
+	static char *buf = NULL;
+	static size_t olen;
+	char *next, *lim;
 	char name[IFNAMSIZ];
 	size_t len;
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
 		err(1, "sysctl");
-	if ((buf = malloc(len)) == NULL)
-		err(1, NULL);
+	if (len > olen) {
+		free(buf);
+		if ((buf = malloc(len)) == NULL)
+			err(1, NULL);
+		olen = len;
+	}
 	if (prog_sysctl(mib, 6, buf, &len, NULL, 0) == -1)
 		err(1, "sysctl");
 

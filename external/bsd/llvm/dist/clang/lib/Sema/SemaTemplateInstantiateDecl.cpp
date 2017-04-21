@@ -1219,8 +1219,10 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   ClassTemplateDecl *Inst
     = ClassTemplateDecl::Create(SemaRef.Context, DC, D->getLocation(),
-                                D->getIdentifier(), InstParams, RecordInst,
-                                PrevClassTemplate);
+                                D->getIdentifier(), InstParams, RecordInst);
+  assert(!(isFriend && Owner->isDependentContext()));
+  Inst->setPreviousDecl(PrevClassTemplate);
+
   RecordInst->setDescribedClassTemplate(Inst);
 
   if (isFriend) {
@@ -4085,7 +4087,6 @@ void Sema::InstantiateVariableInitializer(
     }
 
     if (!Init.isInvalid()) {
-      bool TypeMayContainAuto = true;
       Expr *InitExpr = Init.get();
 
       if (Var->hasAttr<DLLImportAttr>() &&
@@ -4094,9 +4095,9 @@ void Sema::InstantiateVariableInitializer(
         // Do not dynamically initialize dllimport variables.
       } else if (InitExpr) {
         bool DirectInit = OldVar->isDirectInit();
-        AddInitializerToDecl(Var, InitExpr, DirectInit, TypeMayContainAuto);
+        AddInitializerToDecl(Var, InitExpr, DirectInit);
       } else
-        ActOnUninitializedDecl(Var, TypeMayContainAuto);
+        ActOnUninitializedDecl(Var);
     } else {
       // FIXME: Not too happy about invalidating the declaration
       // because of a bogus initializer.
@@ -4119,7 +4120,7 @@ void Sema::InstantiateVariableInitializer(
     if (Var->isCXXForRangeDecl())
       return;
 
-    ActOnUninitializedDecl(Var, false);
+    ActOnUninitializedDecl(Var);
   }
 }
 
@@ -4995,8 +4996,12 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     NamedDecl *Result = nullptr;
     // FIXME: If the name is a dependent name, this lookup won't necessarily
     // find it. Does that ever matter?
-    if (D->getDeclName()) {
-      DeclContext::lookup_result Found = ParentDC->lookup(D->getDeclName());
+    if (auto Name = D->getDeclName()) {
+      DeclarationNameInfo NameInfo(Name, D->getLocation());
+      Name = SubstDeclarationNameInfo(NameInfo, TemplateArgs).getName();
+      if (!Name)
+        return nullptr;
+      DeclContext::lookup_result Found = ParentDC->lookup(Name);
       Result = findInstantiationOf(Context, D, Found.begin(), Found.end());
     } else {
       // Since we don't have a name for the entity we're looking for,

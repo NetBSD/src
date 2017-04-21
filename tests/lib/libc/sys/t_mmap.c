@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.11 2017/01/13 20:43:11 christos Exp $ */
+/* $NetBSD: t_mmap.c,v 1.11.2.1 2017/04/21 16:54:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,9 +55,10 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.11 2017/01/13 20:43:11 christos Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.11.2.1 2017/04/21 16:54:11 bouyer Exp $");
 
 #include <sys/param.h>
+#include <sys/disklabel.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -73,7 +74,6 @@ __RCSID("$NetBSD: t_mmap.c,v 1.11 2017/01/13 20:43:11 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <paths.h>
-#include <machine/disklabel.h>
 
 static long	page = 0;
 static char	path[] = "mmap";

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.5 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.5.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -146,9 +146,13 @@
 #include <tok822.h>
 #include <mail_addr_map.h>
 #include <ext_prop.h>
+#include <namadr_list.h>
+#include <match_parent_style.h>
 #include <lex_822.h>
 #include <dsn_mask.h>
 #include <xtext.h>
+#include <uxtext.h>
+#include <smtputf8.h>
 
 /* Application-specific. */
 
@@ -233,6 +237,11 @@ char   *xfer_request[SMTP_STATE_LAST] = {
     "QUIT command",
 };
 
+ /*
+  * Note: MIME downgrade never happens for mail that must be delivered with
+  * SMTPUTF8 (the sender requested SMTPUTF8, AND the delivery request
+  * involves at least one UTF-8 envelope address or header value.
+  */
 #define SMTP_MIME_DOWNGRADE(session, request) \
     (var_disable_mime_oconv == 0 \
      && (session->features & SMTP_FEATURE_8BITMIME) == 0 \
@@ -255,6 +264,24 @@ HBC_CALL_BACKS smtp_hbc_callbacks[1] = {
     smtp_hbc_logger,
     smtp_text_out,
 };
+
+static int smtp_vrfy_tgt;
+
+/* smtp_vrfy_init - initialize */
+
+void    smtp_vrfy_init(void)
+{
+    static const NAME_CODE vrfy_init_table[] = {
+	SMTP_VRFY_TGT_RCPT, SMTP_STATE_RCPT,
+	SMTP_VRFY_TGT_DATA, SMTP_STATE_DATA,
+	0,
+    };
+
+    if ((smtp_vrfy_tgt = name_code(vrfy_init_table, NAME_CODE_FLAG_NONE,
+				   var_smtp_vrfy_tgt)) == 0)
+	msg_fatal("bad protocol stage: \"%s = %s\"",
+		  VAR_SMTP_VRFY_TGT, var_smtp_vrfy_tgt);
+}
 
 /* smtp_helo - perform initial handshake with SMTP server */
 
@@ -300,6 +327,20 @@ int     smtp_helo(SMTP_STATE *state)
     const char *NOCLOBBER where;
 
     /*
+     * Skip the plaintext SMTP handshake when connecting in SMTPS mode.
+     */
+#ifdef USE_TLS
+    if (var_smtp_tls_wrappermode
+	&& (state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
+	/* XXX Mix-up of per-session and per-request flags. */
+	state->misc_flags |= SMTP_MISC_FLAG_IN_STARTTLS;
+	tls_helo_status = smtp_start_tls(state);
+	state->misc_flags &= ~SMTP_MISC_FLAG_IN_STARTTLS;
+	return (tls_helo_status);
+    }
+#endif
+
+    /*
      * Prepare for disaster.
      */
     smtp_stream_setup(state->session->stream, var_smtp_helo_tmout,
@@ -311,7 +352,8 @@ int     smtp_helo(SMTP_STATE *state)
      * If not recursing after STARTTLS, examine the server greeting banner
      * and decide if we are going to send EHLO as the next command.
      */
-    if ((state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
+    if (var_smtp_tls_wrappermode
+	|| (state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) == 0) {
 
 	/*
 	 * Read and parse the server's SMTP greeting banner.
@@ -336,7 +378,7 @@ int     smtp_helo(SMTP_STATE *state)
 	 * now.
 	 */
 #ifdef USE_TLS
-	if (session->tls->level == TLS_LEV_INVALID)
+	if (state->tls->level == TLS_LEV_INVALID)
 	    /* Warning is already logged. */
 	    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
 				   SMTP_RESP_FAKE(&fake, "4.7.0"),
@@ -354,10 +396,10 @@ int     smtp_helo(SMTP_STATE *state)
 		&& (pix_bug_words =
 		    maps_find(smtp_pix_bug_maps,
 			      STR(iter->addr), 0)) != 0) {
-		pix_bug_source = SMTP_X(PIX_BUG_MAPS);
+		pix_bug_source = VAR_LMTP_SMTP(PIX_BUG_MAPS);
 	    } else {
 		pix_bug_words = var_smtp_pix_bug_words;
-		pix_bug_source = SMTP_X(PIX_BUG_WORDS);
+		pix_bug_source = VAR_LMTP_SMTP(PIX_BUG_WORDS);
 	    }
 	    if (*pix_bug_words) {
 		pix_bug_mask = name_mask_opt(pix_bug_source, pix_bug_table,
@@ -549,6 +591,9 @@ int     smtp_helo(SMTP_STATE *state)
 		} else if (strcasecmp(word, "DSN") == 0) {
 		    if ((discard_mask & EHLO_MASK_DSN) == 0)
 			session->features |= SMTP_FEATURE_DSN;
+		} else if (strcasecmp(word, "SMTPUTF8") == 0) {
+		    if ((discard_mask & EHLO_MASK_SMTPUTF8) == 0)
+			session->features |= SMTP_FEATURE_SMTPUTF8;
 		}
 		n++;
 	    }
@@ -557,6 +602,59 @@ int     smtp_helo(SMTP_STATE *state)
     if (msg_verbose)
 	msg_info("server features: 0x%x size %.0f",
 		 session->features, (double) session->size_limit);
+
+    /*
+     * Decide if this delivery requires SMTPUTF8 server support.
+     * 
+     * For now, we require that the remote SMTP server supports SMTPUTF8 when
+     * the sender requested SMTPUTF8 support.
+     * 
+     * XXX EAI Refine this to: the sender requested SMTPUTF8 support AND the
+     * delivery request involves at least one UTF-8 envelope address or
+     * header value.
+     * 
+     * If the sender requested SMTPUTF8 support but the delivery request
+     * involves no UTF-8 envelope address or header value, then we could
+     * still deliver such mail to a non-SMTPUTF8 server, except that we must
+     * either uxtext-encode ORCPT parameters or not send them. We cannot
+     * encode the ORCPT in xtext, because legacy SMTP requires that the
+     * unencoded address consist entirely of printable (graphic and white
+     * space) characters from the US-ASCII repertoire (RFC 3461 section 4). A
+     * correct uxtext encoder will produce a result that an xtext decoder
+     * will pass through unchanged.
+     * 
+     * XXX Should we try to encode headers with RFC 2047 when delivering to a
+     * non-SMTPUTF8 server? That could make life easier for mailing lists.
+     */
+#define DELIVERY_REQUIRES_SMTPUTF8 \
+	((request->smtputf8 & SMTPUTF8_FLAG_REQUESTED) \
+	&& (request->smtputf8 & ~SMTPUTF8_FLAG_REQUESTED))
+
+    /*
+     * Require that the server supports SMTPUTF8 when delivery requires
+     * SMTPUTF8.
+     * 
+     * Fix 20140706: moved this before negotiating TLS, AUTH, and so on.
+     */
+    if ((session->features & SMTP_FEATURE_SMTPUTF8) == 0
+	&& DELIVERY_REQUIRES_SMTPUTF8)
+	return (smtp_mesg_fail(state, DSN_BY_LOCAL_MTA,
+			       SMTP_RESP_FAKE(&fake, "5.6.7"),
+			       "SMTPUTF8 is required, "
+			       "but was not offered by host %s",
+			       session->namaddr));
+
+    /*
+     * Fix 20140706: don't do silly things when the remote server announces
+     * SMTPUTF8 but not 8BITMIME support. Our primary mission is to deliver
+     * mail, not to force people into compliance.
+     */
+    if ((session->features & SMTP_FEATURE_SMTPUTF8) != 0
+	&& (session->features & SMTP_FEATURE_8BITMIME) == 0) {
+	msg_info("host %s offers SMTPUTF8 support, but not 8BITMIME",
+		 session->namaddr);
+	session->features |= SMTP_FEATURE_8BITMIME;
+    }
 
     /*
      * We use SMTP command pipelining if the server said it supported it.
@@ -645,14 +743,14 @@ int     smtp_helo(SMTP_STATE *state)
 	 */
 	if ((session->features & SMTP_FEATURE_STARTTLS) &&
 	    var_smtp_tls_note_starttls_offer &&
-	    session->tls->level <= TLS_LEV_NONE)
+	    state->tls->level <= TLS_LEV_NONE)
 	    msg_info("Host offered STARTTLS: [%s]", STR(iter->host));
 
 	/*
 	 * Decide whether or not to send STARTTLS.
 	 */
 	if ((session->features & SMTP_FEATURE_STARTTLS) != 0
-	    && smtp_tls_ctx != 0 && session->tls->level >= TLS_LEV_MAY) {
+	    && smtp_tls_ctx != 0 && state->tls->level >= TLS_LEV_MAY) {
 
 	    /*
 	     * Prepare for disaster.
@@ -692,7 +790,7 @@ int     smtp_helo(SMTP_STATE *state)
 	     * although support for it was announced in the EHLO response.
 	     */
 	    session->features &= ~SMTP_FEATURE_STARTTLS;
-	    if (TLS_REQUIRED(session->tls->level))
+	    if (TLS_REQUIRED(state->tls->level))
 		return (smtp_site_fail(state, STR(iter->host), resp,
 		    "TLS is required, but host %s refused to start TLS: %s",
 				       session->namaddr,
@@ -707,7 +805,7 @@ int     smtp_helo(SMTP_STATE *state)
 	 * block. When TLS is required we must never, ever, end up in
 	 * plain-text mode.
 	 */
-	if (TLS_REQUIRED(session->tls->level)) {
+	if (TLS_REQUIRED(state->tls->level)) {
 	    if (!(session->features & SMTP_FEATURE_STARTTLS)) {
 		return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
 				       SMTP_RESP_FAKE(&fake, "4.7.4"),
@@ -807,19 +905,19 @@ static int smtp_start_tls(SMTP_STATE *state)
 			 ctx = smtp_tls_ctx,
 			 stream = session->stream,
 			 timeout = var_smtp_starttls_tmout,
-			 tls_level = session->tls->level,
+			 tls_level = state->tls->level,
 			 nexthop = session->tls_nexthop,
 			 host = STR(iter->host),
 			 namaddr = session->namaddrport,
 			 serverid = vstring_str(serverid),
 			 helo = session->helo,
-			 protocols = session->tls->protocols,
-			 cipher_grade = session->tls->grade,
+			 protocols = state->tls->protocols,
+			 cipher_grade = state->tls->grade,
 			 cipher_exclusions
-			 = vstring_str(session->tls->exclusions),
-			 matchargv = session->tls->matchargv,
+			 = vstring_str(state->tls->exclusions),
+			 matchargv = state->tls->matchargv,
 			 mdalg = var_smtp_tls_fpt_dgst,
-			 dane = session->tls->dane);
+			 dane = state->tls->dane);
     vstring_free(serverid);
 
     if (session->tls_context == 0) {
@@ -828,7 +926,7 @@ static int smtp_start_tls(SMTP_STATE *state)
 	 * We must avoid further I/O, the peer is in an undefined state.
 	 */
 	(void) vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
-	DONT_USE_DEAD_SESSION;
+	DONT_USE_FORBIDDEN_SESSION;
 
 	/*
 	 * If TLS is optional, try delivery to the same server over a
@@ -839,16 +937,17 @@ static int smtp_start_tls(SMTP_STATE *state)
 	 * authentication. If the server doesn't announce SASL support over
 	 * plaintext connections, then we don't want delivery to fail with
 	 * "relay access denied".
+	 * 
+	 * If TLS is opportunistic, don't throttle the destination, otherwise if
+	 * the mail is volume is high enough we may have difficulty ever
+	 * draining even the deferred mail, as new mail provides a constant
+	 * stream of negative feedback.
 	 */
-	if (session->tls->level == TLS_LEV_MAY
-#ifdef USE_SASL_AUTH
-	    && !(var_smtp_sasl_enable
-		 && *var_smtp_sasl_passwd
-		 && smtp_sasl_passwd_lookup(session))
-#endif
-	    )
+	if (PLAINTEXT_FALLBACK_OK_AFTER_STARTTLS_FAILURE)
 	    RETRY_AS_PLAINTEXT;
-	return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+	return (smtp_misc_fail(state, state->tls->level == TLS_LEV_MAY ?
+			       SMTP_NOTHROTTLE : SMTP_THROTTLE,
+			       DSN_BY_LOCAL_MTA,
 			       SMTP_RESP_FAKE(&fake, "4.7.5"),
 			       "Cannot start TLS: handshake failure"));
     }
@@ -866,12 +965,12 @@ static int smtp_start_tls(SMTP_STATE *state)
      * match bits always coincide, but it is fine to report the wrong
      * end-entity certificate as untrusted rather than unmatched.
      */
-    if (TLS_MUST_TRUST(session->tls->level))
+    if (TLS_MUST_TRUST(state->tls->level))
 	if (!TLS_CERT_IS_TRUSTED(session->tls_context))
 	    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
 				   SMTP_RESP_FAKE(&fake, "4.7.5"),
 				   "Server certificate not trusted"));
-    if (TLS_MUST_MATCH(session->tls->level))
+    if (TLS_MUST_MATCH(state->tls->level))
 	if (!TLS_CERT_IS_MATCHED(session->tls_context))
 	    return (smtp_site_fail(state, DSN_BY_LOCAL_MTA,
 				   SMTP_RESP_FAKE(&fake, "4.7.5"),
@@ -1046,7 +1145,7 @@ static void smtp_header_rewrite(void *context, int header_class,
 	    vstring_strcat(buf, ": ");
 	    tok822_externalize(buf, tree, TOK822_STR_HEAD);
 	}
-	myfree((char *) addr_list);
+	myfree((void *) addr_list);
 	tok822_free_tree(tree);
     }
 
@@ -1191,7 +1290,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	    DONT_CACHE_THIS_SESSION; \
 	vstring_free(next_command); \
 	if (survivors) \
-	    myfree((char *) survivors); \
+	    myfree((void *) survivors); \
 	if (session->mime_state) \
 	    session->mime_state = mime_state_free(session->mime_state); \
 	return (x); \
@@ -1387,6 +1486,19 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	    }
 
 	    /*
+	     * Request SMTPUTF8 when the remote SMTP server supports SMTPUTF8
+	     * and the sender requested SMTPUTF8 support.
+	     * 
+	     * If the sender requested SMTPUTF8 but the remote SMTP server does
+	     * not support SMTPUTF8, then we have already determined earlier
+	     * that delivering this message without SMTPUTF8 will not break
+	     * the SMTPUTF8 promise that was made to the sender.
+	     */
+	    if ((session->features & SMTP_FEATURE_SMTPUTF8) != 0
+		&& (request->smtputf8 & SMTPUTF8_FLAG_REQUESTED) != 0)
+		vstring_strcat(next_command, " SMTPUTF8");
+
+	    /*
 	     * We authenticate the local MTA only, but not the sender.
 	     */
 #ifdef USE_SASL_AUTH
@@ -1440,24 +1552,41 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 			    vstring_str(session->scratch));
 	    if (session->features & SMTP_FEATURE_DSN) {
 		/* XXX DSN xtext encode address value not type. */
-		if (rcpt->dsn_orcpt[0]) {
-		    xtext_quote(session->scratch, rcpt->dsn_orcpt, "+=");
-		    vstring_sprintf_append(next_command, " ORCPT=%s",
-					   vstring_str(session->scratch));
-		} else if (rcpt->orig_addr[0]) {
+		const char *orcpt_type_addr = rcpt->dsn_orcpt;
+
+		/* Fix 20140706: don't use empty rcpt->orig_addr. */
+		if (orcpt_type_addr[0] == 0 && rcpt->orig_addr[0] != 0) {
 		    quote_822_local(session->scratch, rcpt->orig_addr);
-		    vstring_sprintf(session->scratch2, "rfc822;%s",
+		    vstring_sprintf(session->scratch2, "%s;%s",
+		    /* Fix 20140707: sender must request SMTPUTF8. */
+				    (request->smtputf8 != 0
+			      && !allascii(vstring_str(session->scratch))) ?
+				    "utf-8" : "rfc822",
 				    vstring_str(session->scratch));
-		    xtext_quote(session->scratch, vstring_str(session->scratch2), "+=");
-		    vstring_sprintf_append(next_command, " ORCPT=%s",
-					   vstring_str(session->scratch));
+		    orcpt_type_addr = vstring_str(session->scratch2);
+		}
+		if (orcpt_type_addr[0] != 0) {
+		    /* Fix 20140706: don't send unquoted ORCPT. */
+		    /* Fix 20140707: quoting method must match orcpt type. */
+		    /* Fix 20140707: handle uxtext encoder errors. */
+		    if (strncasecmp(orcpt_type_addr, "utf-8;", 6) == 0) {
+			if (uxtext_quote(session->scratch,
+					 orcpt_type_addr, "+=") != 0)
+			    vstring_sprintf_append(next_command, " ORCPT=%s",
+					     vstring_str(session->scratch));
+		    } else {
+			xtext_quote(session->scratch, orcpt_type_addr, "=");
+			vstring_sprintf_append(next_command, " ORCPT=%s",
+					     vstring_str(session->scratch));
+		    }
 		}
 		if (rcpt->dsn_notify)
 		    vstring_sprintf_append(next_command, " NOTIFY=%s",
 					   dsn_notify_str(rcpt->dsn_notify));
 	    }
 	    if ((next_rcpt = send_rcpt + 1) == SMTP_RCPT_LEFT(state))
-		next_state = DEL_REQ_TRACE_ONLY(request->flags) ?
+		next_state = (DEL_REQ_TRACE_ONLY(request->flags)
+			      && smtp_vrfy_tgt == SMTP_STATE_RCPT) ?
 		    SMTP_STATE_ABORT : SMTP_STATE_DATA;
 	    break;
 
@@ -1682,7 +1811,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 				       "unexpected server message");
 			msg_warn("server %s violates %s policy",
 				 session->namaddr,
-				 SMTP_X(TLS_BLK_EARLY_MAIL_REPLY));
+				 VAR_LMTP_SMTP(TLS_BLK_EARLY_MAIL_REPLY));
 			mail_from_rejected = 1;
 		    }
 #endif
@@ -1724,7 +1853,8 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 			    }
 			    ++nrcpt;
 			    /* If trace-only, mark the recipient done. */
-			    if (DEL_REQ_TRACE_ONLY(request->flags)) {
+			    if (DEL_REQ_TRACE_ONLY(request->flags)
+				&& smtp_vrfy_tgt == SMTP_STATE_RCPT) {
 				translit(resp->str, "\n", " ");
 				smtp_rcpt_done(state, resp, rcpt);
 			    }
@@ -1738,7 +1868,8 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		    }
 		    /* If trace-only, send RSET instead of DATA. */
 		    if (++recv_rcpt == SMTP_RCPT_LEFT(state))
-			recv_state = DEL_REQ_TRACE_ONLY(request->flags) ?
+			recv_state = (DEL_REQ_TRACE_ONLY(request->flags)
+				      && smtp_vrfy_tgt == SMTP_STATE_RCPT) ?
 			    SMTP_STATE_ABORT : SMTP_STATE_DATA;
 		    /* XXX Also: record if non-delivering session. */
 		    break;
@@ -1749,6 +1880,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		     * receiver can apply a course correction.
 		     */
 		case SMTP_STATE_DATA:
+		    recv_state = SMTP_STATE_DOT;
 		    if (resp->code / 100 != 3) {
 			if (nrcpt > 0)
 			    smtp_mesg_fail(state, STR(iter->host), resp,
@@ -1758,7 +1890,30 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 					   xfer_request[SMTP_STATE_DATA]);
 			nrcpt = -1;
 		    }
-		    recv_state = SMTP_STATE_DOT;
+
+		    /*
+		     * In the case of a successful address probe with target
+		     * equal to DATA, the remote server is now in the DATA
+		     * state, and therefore we must not make any further
+		     * attempt to send or receive on this connection. This
+		     * means that we cannot not reuse the general-purpose
+		     * course-correction logic below which sends RSET (and
+		     * perhaps QUIT). Instead we "jump" straight to the exit
+		     * and force an unceremonious disconnect.
+		     */
+		    else if (DEL_REQ_TRACE_ONLY(request->flags)
+			     && smtp_vrfy_tgt == SMTP_STATE_DATA) {
+			for (nrcpt = 0; nrcpt < recv_rcpt; nrcpt++) {
+			    rcpt = request->rcpt_list.info + nrcpt;
+			    if (!SMTP_RCPT_ISMARKED(rcpt)) {
+				translit(resp->str, "\n", " ");
+				SMTP_RESP_SET_DSN(resp, "2.0.0");
+				smtp_rcpt_done(state, resp, rcpt);
+			    }
+			}
+			DONT_CACHE_THIS_SESSION;
+			send_state = recv_state = SMTP_STATE_LAST;
+		    }
 		    break;
 
 		    /*
@@ -2010,7 +2165,7 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 					     "unreadable mail queue entry");
 		    /* Bailing out, abort stream with prejudice */
 		    (void) vstream_fpurge(session->stream, VSTREAM_PURGE_BOTH);
-		    DONT_USE_DEAD_SESSION;
+		    DONT_USE_FORBIDDEN_SESSION;
 		    /* If bounce_append() succeeded, status is still 0 */
 		    if (state->status == 0)
 			(void) mark_corrupt(state->src);

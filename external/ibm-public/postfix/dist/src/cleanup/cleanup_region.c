@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_region.c,v 1.1.1.2 2013/01/02 18:58:55 tron Exp $	*/
+/*	$NetBSD: cleanup_region.c,v 1.1.1.2.16.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -114,7 +114,7 @@ static CLEANUP_REGION *cleanup_region_free(CLEANUP_REGION *regions)
 
     for (rp = regions; rp != 0; rp = next) {
 	next = rp->next;
-	myfree((char *) rp);
+	myfree((void *) rp);
     }
     return (0);
 }
@@ -139,7 +139,7 @@ void    cleanup_region_init(CLEANUP_STATE *state)
 			  state->xtra_offset - state->append_hdr_pt_target);
     if (msg_verbose)
 	msg_info("%s: body start %ld len %ld",
-	      myname, (long) state->body_regions->start, (long) state->body_regions->len);
+		 myname, (long) state->body_regions->start, (long) state->body_regions->len);
 }
 
 /* cleanup_region_open - open existing region or create new region */

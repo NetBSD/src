@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.4 2013/01/02 18:59:01 tron Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.1.1.4.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -279,7 +279,8 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
      */
     if (*var_mbox_transp_maps && transp_maps == 0)
 	transp_maps = maps_create(VAR_MBOX_TRANSP_MAPS, var_mbox_transp_maps,
-				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
+				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB
+				  | DICT_FLAG_UTF8_REQUEST);
     /* The -1 is a hint for the down-stream deliver_completed() function. */
     if (transp_maps
 	&& (map_transport = maps_find(transp_maps, state.msg_attr.user,
@@ -334,10 +335,11 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
 
     if (*var_mailbox_cmd_maps && cmd_maps == 0)
 	cmd_maps = maps_create(VAR_MAILBOX_CMD_MAPS, var_mailbox_cmd_maps,
-			       DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+			       DICT_FLAG_LOCK | DICT_FLAG_PARANOID
+			       | DICT_FLAG_UTF8_REQUEST);
 
     if (cmd_maps && (map_command = maps_find(cmd_maps, state.msg_attr.user,
-				    DICT_FLAG_NONE)) != 0) {
+					     DICT_FLAG_NONE)) != 0) {
 	status = deliver_command(state, usr_attr, map_command);
     } else if (cmd_maps && cmd_maps->error != 0) {
 	/* Details in the logfile. */

@@ -1,10 +1,10 @@
-/*	$NetBSD: autogroup.c,v 1.1.1.4 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: autogroup.c,v 1.1.1.4.10.1 2017/04/21 16:52:23 bouyer Exp $	*/
 
 /* autogroup.c - automatic group overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2014 The OpenLDAP Foundation.
+ * Copyright 2007-2016 The OpenLDAP Foundation.
  * Portions Copyright 2007 Michał Szulczyński.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.
@@ -26,6 +26,9 @@
  *   Christian Manal
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: autogroup.c,v 1.1.1.4.10.1 2017/04/21 16:52:23 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -39,6 +42,8 @@
 #ifndef SLAPD_MEMBEROF_ATTR
 #define	SLAPD_MEMBEROF_ATTR	"memberOf"
 #endif
+
+static slap_overinst	autogroup;
 
 /* Filter represents the memberURL of a group. */
 typedef struct autogroup_filter_t {
@@ -113,6 +118,8 @@ autogroup_add_member_to_group( Operation *op, BerValue *dn, BerValue *ndn, autog
 	BerValue	*vals, *nvals;
 	slap_callback	cb = { NULL, slap_null_cb, NULL, NULL };
 	Operation	o = *op;
+	unsigned long opid = op->o_opid;
+	OpExtra oex;
 
 	assert( dn != NULL );
 	assert( ndn != NULL );
@@ -135,20 +142,31 @@ autogroup_add_member_to_group( Operation *op, BerValue *dn, BerValue *ndn, autog
 	modlist->sml_flags = SLAP_MOD_INTERNAL;
 	modlist->sml_next = NULL;
 
+	o.o_opid = 0;	/* shared with op, saved above */
 	o.o_tag = LDAP_REQ_MODIFY;
 	o.o_callback = &cb;
 	o.orm_modlist = modlist;
+	o.o_dn = op->o_bd->be_rootdn;
+	o.o_ndn = op->o_bd->be_rootndn;
 	o.o_req_dn = age->age_dn;
 	o.o_req_ndn = age->age_ndn;
 	o.o_permissive_modify = 1;
+	o.o_dont_replicate = 1;
+	o.orm_no_opattrs = 1;
 	o.o_managedsait = SLAP_CONTROL_CRITICAL;
 	o.o_relax = SLAP_CONTROL_CRITICAL;
+
+	oex.oe_key = (void *)&autogroup;
+	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
 
 	o.o_bd->bd_info = (BackendInfo *)on->on_info;
 	(void)op->o_bd->be_modify( &o, &sreply );
 	o.o_bd->bd_info = (BackendInfo *)on;
 
+	LDAP_SLIST_REMOVE( &o.o_extra, &oex, OpExtra, oe_next );
+
 	slap_mods_free( modlist, 1 );
+	op->o_opid = opid;
 
 	return sreply.sr_err;
 }
@@ -158,24 +176,18 @@ autogroup_add_member_to_group( Operation *op, BerValue *dn, BerValue *ndn, autog
 **	age	- the group to which the values will be added
 */
 static int
-autogroup_add_member_values_to_group( Operation *op, Entry *e, autogroup_entry_t *age, AttributeDescription *attrdesc )
+autogroup_add_member_values_to_group( Operation *op, struct berval *dn, autogroup_entry_t *age, Attribute *attr )
 {
 	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
 	Modifications	modlist;
 	SlapReply	sreply = {REP_RESULT};
-	Attribute	*attr;
 	slap_callback	cb = { NULL, slap_null_cb, NULL, NULL };
 	Operation	o = *op;
+	unsigned long opid = op->o_opid;
+	OpExtra oex;
 
-	assert( e != NULL );
 	Debug(LDAP_DEBUG_TRACE, "==> autogroup_add_member_values_to_group adding <%s> to <%s>\n",
-		e->e_name.bv_val, age->age_dn.bv_val, 0);
-
-	attr = attrs_find( e->e_attrs, attrdesc );
-	if (!attr) {
-		// Nothing to add
-		return LDAP_SUCCESS;
-	}
+		dn->bv_val, age->age_dn.bv_val, 0);
 
 	modlist.sml_op = LDAP_MOD_ADD;
 	modlist.sml_desc = age->age_def->agd_member_ad;
@@ -186,18 +198,28 @@ autogroup_add_member_values_to_group( Operation *op, Entry *e, autogroup_entry_t
 	modlist.sml_flags = SLAP_MOD_INTERNAL;
 	modlist.sml_next = NULL;
 
+	o.o_opid = 0;
 	o.o_tag = LDAP_REQ_MODIFY;
 	o.o_callback = &cb;
 	o.orm_modlist = &modlist;
+	o.o_dn = op->o_bd->be_rootdn;
+	o.o_ndn = op->o_bd->be_rootndn;
 	o.o_req_dn = age->age_dn;
 	o.o_req_ndn = age->age_ndn;
 	o.o_permissive_modify = 1;
+	o.o_dont_replicate = 1;
+	o.orm_no_opattrs = 1;
 	o.o_managedsait = SLAP_CONTROL_CRITICAL;
 	o.o_relax = SLAP_CONTROL_CRITICAL;
+
+	oex.oe_key = (void *)&autogroup;
+	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
 
 	o.o_bd->bd_info = (BackendInfo *)on->on_info;
 	(void)op->o_bd->be_modify( &o, &sreply );
 	o.o_bd->bd_info = (BackendInfo *)on;
+	op->o_opid = opid;
+	LDAP_SLIST_REMOVE( &o.o_extra, &oex, OpExtra, oe_next );
 
 	return sreply.sr_err;
 }
@@ -216,6 +238,8 @@ autogroup_delete_member_from_group( Operation *op, BerValue *dn, BerValue *ndn, 
 	BerValue	*vals, *nvals;
 	slap_callback	cb = { NULL, slap_null_cb, NULL, NULL };
 	Operation	o = *op;
+	unsigned long opid = op->o_opid;
+	OpExtra oex;
 
 	if ( dn == NULL || ndn == NULL ) {
 		Debug(LDAP_DEBUG_TRACE, "==> autogroup_delete_member_from_group removing all members from <%s>\n",
@@ -247,21 +271,32 @@ autogroup_delete_member_from_group( Operation *op, BerValue *dn, BerValue *ndn, 
 	modlist->sml_flags = SLAP_MOD_INTERNAL;
 	modlist->sml_next = NULL;
 
+	o.o_opid = 0;
 	o.o_callback = &cb;
 	o.o_tag = LDAP_REQ_MODIFY;
 	o.orm_modlist = modlist;
+	o.o_dn = op->o_bd->be_rootdn;
+	o.o_ndn = op->o_bd->be_rootndn;
 	o.o_req_dn = age->age_dn;
 	o.o_req_ndn = age->age_ndn;
 	o.o_relax = SLAP_CONTROL_CRITICAL;
 	o.o_managedsait = SLAP_CONTROL_CRITICAL;
 	o.o_permissive_modify = 1;
+	o.o_dont_replicate = 1;
+	o.orm_no_opattrs = 1;
+
+	oex.oe_key = (void *)&autogroup;
+	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
 
 	o.o_bd->bd_info = (BackendInfo *)on->on_info;
 	(void)op->o_bd->be_modify( &o, &sreply );
 	o.o_bd->bd_info = (BackendInfo *)on;
 
+	LDAP_SLIST_REMOVE( &o.o_extra, &oex, OpExtra, oe_next );
+
 	slap_mods_free( modlist, 1 );
 
+	op->o_opid = opid;
 	return sreply.sr_err;
 }
 
@@ -270,24 +305,18 @@ autogroup_delete_member_from_group( Operation *op, BerValue *dn, BerValue *ndn, 
 **      age     - the group from which the values will be deleted
 */
 static int
-autogroup_delete_member_values_from_group( Operation *op, Entry *e, autogroup_entry_t *age, AttributeDescription *attrdesc )
+autogroup_delete_member_values_from_group( Operation *op, struct berval *dn, autogroup_entry_t *age, Attribute *attr )
 {
         slap_overinst   *on = (slap_overinst *)op->o_bd->bd_info;
         Modifications   modlist;
         SlapReply       sreply = {REP_RESULT};
-        Attribute       *attr;
         slap_callback   cb = { NULL, slap_null_cb, NULL, NULL };
         Operation       o = *op;
+	unsigned long opid = op->o_opid;
+	OpExtra oex;
 
-        assert( e != NULL );
         Debug(LDAP_DEBUG_TRACE, "==> autogroup_delete_member_values_from_group removing <%s> from <%s>\n",
-                e->e_name.bv_val, age->age_dn.bv_val, 0);
-
-        attr = attrs_find( e->e_attrs, attrdesc );
-        if (!attr) {
-                // Nothing to add
-                return LDAP_SUCCESS;
-        }
+			dn->bv_val, age->age_dn.bv_val, 0);
 
         modlist.sml_op = LDAP_MOD_DELETE;
         modlist.sml_desc = age->age_def->agd_member_ad;
@@ -298,18 +327,29 @@ autogroup_delete_member_values_from_group( Operation *op, Entry *e, autogroup_en
         modlist.sml_flags = SLAP_MOD_INTERNAL;
         modlist.sml_next = NULL;
 
+	o.o_opid = 0;
         o.o_tag = LDAP_REQ_MODIFY;
         o.o_callback = &cb;
         o.orm_modlist = &modlist;
+		o.o_dn = op->o_bd->be_rootdn;
+		o.o_ndn = op->o_bd->be_rootndn;
         o.o_req_dn = age->age_dn;
         o.o_req_ndn = age->age_ndn;
         o.o_permissive_modify = 1;
+	o.o_dont_replicate = 1;
+	o.orm_no_opattrs = 1;
         o.o_managedsait = SLAP_CONTROL_CRITICAL;
         o.o_relax = SLAP_CONTROL_CRITICAL;
+
+	oex.oe_key = (void *)&autogroup;
+	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
 
         o.o_bd->bd_info = (BackendInfo *)on->on_info;
         (void)op->o_bd->be_modify( &o, &sreply );
         o.o_bd->bd_info = (BackendInfo *)on;
+	op->o_opid = opid;
+
+	LDAP_SLIST_REMOVE( &o.o_extra, &oex, OpExtra, oe_next );
 
         return sreply.sr_err;
 }
@@ -462,6 +502,7 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 	slap_callback		cb = { 0 };
 	slap_callback		null_cb = { NULL, slap_null_cb, NULL, NULL };
 	autogroup_ga_t		agg;
+	OpExtra oex;
 
 	Debug(LDAP_DEBUG_TRACE, "==> autogroup_add_members_from_filter <%s>\n",
 		age->age_dn.bv_val, 0, 0);
@@ -469,6 +510,8 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 	o.ors_attrsonly = 0;
 	o.o_tag = LDAP_REQ_SEARCH;
 
+	o.o_dn = op->o_bd->be_rootdn;
+	o.o_ndn = op->o_bd->be_rootndn;
 	o.o_req_dn = agf->agf_dn;
 	o.o_req_ndn = agf->agf_ndn;
 
@@ -481,6 +524,7 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 	o.ors_tlimit = SLAP_NO_LIMIT;
 	o.ors_slimit = SLAP_NO_LIMIT;
 	o.ors_attrs =  agf->agf_anlist ? agf->agf_anlist : slap_anlist_no_attrs;
+	o.o_do_not_cache = 1;
 
 	agg.agg_group = age;
 	agg.agg_filter = agf;
@@ -505,23 +549,36 @@ autogroup_add_members_from_filter( Operation *op, Entry *e, autogroup_entry_t *a
 	o.o_bd->bd_info = (BackendInfo *)on;	
 
 	if ( modify == 1 && agg.agg_mod ) {
+		unsigned long opid = op->o_opid;
+
 		rs_reinit( &rs, REP_RESULT );
 
 		o = *op;
+		o.o_opid = 0;
 		o.o_callback = &null_cb;
 		o.o_tag = LDAP_REQ_MODIFY;
 		o.orm_modlist = agg.agg_mod;
+		o.o_dn = op->o_bd->be_rootdn;
+		o.o_ndn = op->o_bd->be_rootndn;
 		o.o_req_dn = age->age_dn;
 		o.o_req_ndn = age->age_ndn;
 		o.o_relax = SLAP_CONTROL_CRITICAL;
 		o.o_managedsait = SLAP_CONTROL_NONCRITICAL;
 		o.o_permissive_modify = 1;
+		o.o_dont_replicate = 1;
+		o.orm_no_opattrs = 1;
+
+	oex.oe_key = (void *)&autogroup;
+	LDAP_SLIST_INSERT_HEAD( &o.o_extra, &oex, oe_next );
 
 		o.o_bd->bd_info = (BackendInfo *)on->on_info;
 		(void)op->o_bd->be_modify( &o, &rs );
 		o.o_bd->bd_info = (BackendInfo *)on;	
 
+	LDAP_SLIST_REMOVE( &o.o_extra, &oex, OpExtra, oe_next );
+
 		slap_mods_free(agg.agg_mod, 1);
+		op->o_opid = opid;
 	}
 
 	return 0;
@@ -622,7 +679,11 @@ autogroup_add_group( Operation *op, autogroup_info_t *agi, autogroup_def_t *agd,
 			if ( lud->lud_filter != NULL ) {
 				ber_str2bv( lud->lud_filter, 0, 1, &agf->agf_filterstr);
 				agf->agf_filter = str2filter( lud->lud_filter );
-			}			
+			} else {
+				Debug( LDAP_DEBUG_TRACE, "autogroup_add_group: URL filter is missing <%s>\n", bv->bv_val,0,0);
+				/* FIXME: error? */
+				goto cleanup;
+			}
 
 			if ( lud->lud_attrs != NULL ) {
 				int i;
@@ -635,25 +696,32 @@ autogroup_add_group( Operation *op, autogroup_info_t *agi, autogroup_def_t *agd,
 					Debug( LDAP_DEBUG_ANY, "autogroup_add_group: too many attributes specified in url <%s>\n",
 						bv->bv_val, 0, 0);
 					/* FIXME: error? */
+					filter_free( agf->agf_filter );
+					ch_free( agf->agf_filterstr.bv_val );
+					ch_free( agf->agf_dn.bv_val );
+					ch_free( agf->agf_ndn.bv_val );
 					ldap_free_urldesc( lud );
-					ch_free( agf ); 
+					ch_free( agf );
 					continue;
 				}
-					
+
 				agf->agf_anlist = str2anlist( NULL, lud->lud_attrs[0], "," );
 
 				if ( agf->agf_anlist == NULL ) {
 					Debug( LDAP_DEBUG_ANY, "autogroup_add_group: unable to find AttributeDescription \"%s\".\n",
-						lud->lud_attrs[0], 0, 0 );		
+						lud->lud_attrs[0], 0, 0 );
 					/* FIXME: error? */
+					filter_free( agf->agf_filter );
+					ch_free( agf->agf_filterstr.bv_val );
+					ch_free( agf->agf_dn.bv_val );
+					ch_free( agf->agf_ndn.bv_val );
 					ldap_free_urldesc( lud );
-					ch_free( agf ); 
+					ch_free( agf );
 					continue;
 				}
 			}
 
 			agf->agf_next = NULL;
-
 
 			if( (*agep)->age_filter == NULL ) {
 				(*agep)->age_filter = agf;
@@ -679,6 +747,8 @@ autogroup_add_group( Operation *op, autogroup_info_t *agi, autogroup_def_t *agd,
 
 cleanup:;
 
+			ch_free( agf->agf_ndn.bv_val );
+			ch_free( agf->agf_dn.bv_val );
 			ldap_free_urldesc( lud );				
 			ch_free( agf ); 
 		}
@@ -711,6 +781,76 @@ autogroup_group_add_cb( Operation *op, SlapReply *rs )
 	return 0;
 }
 
+typedef struct ag_addinfo {
+	slap_overinst *on;
+	Entry *e;
+	autogroup_def_t		*agd;
+} ag_addinfo;
+
+static int
+autogroup_add_entry_cb( Operation *op, SlapReply *rs )
+{
+	slap_callback *sc = op->o_callback;
+	ag_addinfo *aa = sc->sc_private;
+	slap_overinst *on = aa->on;
+	autogroup_info_t	*agi = (autogroup_info_t *)on->on_bi.bi_private;
+	BackendInfo *bi = op->o_bd->bd_info;
+
+	if ( rs->sr_err != LDAP_SUCCESS )
+		goto done;
+
+	op->o_bd->bd_info = (BackendInfo *)on;
+	ldap_pvt_thread_mutex_lock( &agi->agi_mutex );
+	if ( aa->agd ) {
+		autogroup_add_group( op, agi, aa->agd, aa->e, NULL, 1 , 0);
+	} else {
+		autogroup_entry_t	*age;
+		autogroup_filter_t	*agf;
+		struct berval odn, ondn;
+		int rc;
+
+		/* must use rootdn when calling test_filter */
+		odn = op->o_dn;
+		ondn = op->o_ndn;
+		op->o_dn = op->o_bd->be_rootdn;
+		op->o_ndn = op->o_bd->be_rootndn;
+
+		for ( age = agi->agi_entry; age ; age = age->age_next ) {
+			ldap_pvt_thread_mutex_lock( &age->age_mutex );
+
+			/* Check if any of the filters are the suffix to the entry DN.
+			   If yes, we can test that filter against the entry. */
+
+			for ( agf = age->age_filter; agf ; agf = agf->agf_next ) {
+				if ( dnIsSuffix( &op->o_req_ndn, &agf->agf_ndn ) ) {
+					rc = test_filter( op, aa->e, agf->agf_filter );
+					if ( rc == LDAP_COMPARE_TRUE ) {
+						if ( agf->agf_anlist ) {
+							Attribute *a = attr_find( aa->e->e_attrs, agf->agf_anlist[0].an_desc );
+							if ( a )
+								autogroup_add_member_values_to_group( op, &op->o_req_dn, age, a );
+						} else {
+							autogroup_add_member_to_group( op, &aa->e->e_name, &aa->e->e_nname, age );
+						}
+						break;
+					}
+				}
+			}
+			ldap_pvt_thread_mutex_unlock( &age->age_mutex );
+		}
+		op->o_dn = odn;
+		op->o_ndn = ondn;
+	}
+	ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
+
+	op->o_bd->bd_info = bi;
+
+done:
+	op->o_callback = sc->sc_next;
+	op->o_tmpfree( sc, op->o_tmpmemctx );
+
+	return SLAP_CB_CONTINUE;
+}
 
 /*
 ** When adding a group, we first strip any existing members,
@@ -722,14 +862,20 @@ autogroup_add_entry( Operation *op, SlapReply *rs)
 	slap_overinst		*on = (slap_overinst *)op->o_bd->bd_info;
 	autogroup_info_t	*agi = (autogroup_info_t *)on->on_bi.bi_private;
 	autogroup_def_t		*agd = agi->agi_def;
-	autogroup_entry_t	*age;
-	autogroup_filter_t	*agf;
-	int			rc = 0;
+	slap_callback	*sc = NULL;
+	ag_addinfo	*aa = NULL;
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_add_entry <%s>\n", 
 		op->ora_e->e_name.bv_val, 0, 0);
 
-	ldap_pvt_thread_mutex_lock( &agi->agi_mutex );		
+	sc = op->o_tmpcalloc( sizeof(slap_callback) + sizeof(ag_addinfo), 1, op->o_tmpmemctx );
+	sc->sc_private = (sc+1);
+	sc->sc_response = autogroup_add_entry_cb;
+	aa = sc->sc_private;
+	aa->on = on;
+	aa->e = op->ora_e;
+	sc->sc_next = op->o_callback;
+	op->o_callback = sc;
 
 	/* Check if it's a group. */
 	for ( ; agd ; agd = agd->agd_next ) {
@@ -747,36 +893,11 @@ autogroup_add_entry( Operation *op, SlapReply *rs)
 			/* We don't want any member attributes added by the user. */
 			modify_delete_values( op->ora_e, &mod, /* permissive */ 1, &text, textbuf, sizeof( textbuf ) );
 
-			autogroup_add_group( op, agi, agd, op->ora_e, NULL, 1 , 0);
-			ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );		
-			return SLAP_CB_CONTINUE;
+			aa->agd = agd;
+
+			break;
 		}
 	}
-
-	
-	for ( age = agi->agi_entry; age ; age = age->age_next ) {
-		ldap_pvt_thread_mutex_lock( &age->age_mutex );		
-
-		/* Check if any of the filters are the suffix to the entry DN. 
-		   If yes, we can test that filter against the entry. */
-
-		for ( agf = age->age_filter; agf ; agf = agf->agf_next ) {
-			if ( dnIsSuffix( &op->o_req_ndn, &agf->agf_ndn ) ) {
-				rc = test_filter( op, op->ora_e, agf->agf_filter );
-				if ( rc == LDAP_COMPARE_TRUE ) {
-					if ( agf->agf_anlist ) {
-						autogroup_add_member_values_to_group( op, op->ora_e, age, agf->agf_anlist[0].an_desc );
-					} else {
-						autogroup_add_member_to_group( op, &op->ora_e->e_name, &op->ora_e->e_nname, age );
-					}
-					break;
-				}
-			}
-		}
-		ldap_pvt_thread_mutex_unlock( &age->age_mutex );		
-	}
-
-	ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );		
 
 	return SLAP_CB_CONTINUE;
 }
@@ -848,6 +969,13 @@ autogroup_delete_entry( Operation *op, SlapReply *rs)
 	autogroup_filter_t	*agf;
 	Entry			*e;
 	int			matched_group = 0, rc = 0;
+	struct berval odn, ondn;
+	OpExtra *oex;
+
+	LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+		if ( oex->oe_key == (void *)&autogroup )
+			return SLAP_CB_CONTINUE;
+	}
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_delete_entry <%s>\n", op->o_req_dn.bv_val, 0, 0);
 
@@ -891,6 +1019,11 @@ autogroup_delete_entry( Operation *op, SlapReply *rs)
 	/* Check if the entry matches any of the groups.
 	   If yes, we can delete the entry from that group. */
 
+	odn = op->o_dn;
+	ondn = op->o_ndn;
+	op->o_dn = op->o_bd->be_rootdn;
+	op->o_ndn = op->o_bd->be_rootndn;
+
 	for ( age = agi->agi_entry ; age ; age = age->age_next ) {
 		ldap_pvt_thread_mutex_lock( &age->age_mutex );		
 
@@ -914,6 +1047,8 @@ autogroup_delete_entry( Operation *op, SlapReply *rs)
 		}
 		ldap_pvt_thread_mutex_unlock( &age->age_mutex );
 	}
+	op->o_dn = odn;
+	op->o_ndn = ondn;
 
 	overlay_entry_release_ov( op, e, 0, on );
 	ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );		
@@ -931,12 +1066,18 @@ autogroup_response( Operation *op, SlapReply *rs )
 	autogroup_filter_t	*agf;
 	BerValue		new_dn, new_ndn, pdn;
 	Entry			*e, *group;
-	Attribute		*a, *ea;
+	Attribute		*a, *ea, *attrs;
 	int			is_olddn, is_newdn, is_value_refresh, dn_equal;
+	OpExtra *oex;
+
+	LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+		if ( oex->oe_key == (void *)&autogroup )
+			break;
+	}
 
 	/* Handle all cases where a refresh of the group is needed */
 	if ( op->o_tag == LDAP_REQ_DELETE || op->o_tag == LDAP_REQ_MODIFY ) {
-		if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS && !get_manageDSAit( op ) ) {
+		if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS && !oex ) {
 
 			ldap_pvt_thread_mutex_lock( &agi->agi_mutex );
 
@@ -959,7 +1100,7 @@ autogroup_response( Operation *op, SlapReply *rs )
 			ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 		}
 	} else if ( op->o_tag == LDAP_REQ_MODRDN ) {
-		if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS && !get_manageDSAit( op )) {
+		if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS && !oex ) {
 
 			Debug( LDAP_DEBUG_TRACE, "==> autogroup_response MODRDN from <%s>\n", op->o_req_dn.bv_val, 0, 0);
 
@@ -1040,16 +1181,17 @@ autogroup_response( Operation *op, SlapReply *rs )
 				and add it's DN to the group.
 			   If 1 is true, and 2 is false, we delete the entry's DN from the group.
 			*/
+			attrs = attrs_dup( e->e_attrs );
+			overlay_entry_release_ov( op, e, 0, on );
 			for ( age = agi->agi_entry ; age ; age = age->age_next ) {
 				is_olddn = 0;
 				is_newdn = 0;
 				is_value_refresh = 0;
 
-
 				ldap_pvt_thread_mutex_lock( &age->age_mutex );
 
 				if ( age->age_filter && age->age_filter->agf_anlist ) {
-					ea = attrs_find( e->e_attrs, age->age_filter->agf_anlist[0].an_desc );
+					ea = attrs_find( attrs, age->age_filter->agf_anlist[0].an_desc );
 				}
 				else {
 					ea = NULL;
@@ -1069,7 +1211,7 @@ autogroup_response( Operation *op, SlapReply *rs )
 						op->o_tmpfree( new_dn.bv_val, op->o_tmpmemctx );
 						op->o_tmpfree( new_ndn.bv_val, op->o_tmpmemctx );
 
-						overlay_entry_release_ov( op, e, 0, on );
+						attrs_free( attrs );
 						ldap_pvt_thread_mutex_unlock( &age->age_mutex );
 						ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 						return SLAP_CB_CONTINUE;
@@ -1115,20 +1257,32 @@ autogroup_response( Operation *op, SlapReply *rs )
 				}
 				if ( is_olddn == 1 && is_newdn == 0 ) {
 					if ( ea )
-						autogroup_delete_member_values_from_group( op, e, age, age->age_filter->agf_anlist[0].an_desc );
+						autogroup_delete_member_values_from_group( op, &new_dn, age, ea );
 					else
 						autogroup_delete_member_from_group( op, &op->o_req_dn, &op->o_req_ndn, age );
 				} else
 				if ( is_olddn == 0 && is_newdn == 1 ) {
+					Entry etmp;
+					struct berval odn, ondn;
+					etmp.e_name = op->o_req_dn;
+					etmp.e_nname = op->o_req_ndn;
+					etmp.e_attrs = attrs;
+					odn = op->o_dn;
+					ondn = op->o_ndn;
+					op->o_dn = op->o_bd->be_rootdn;
+					op->o_ndn = op->o_bd->be_rootndn;
+
 					for ( agf = age->age_filter; agf; agf = agf->agf_next ) {
-						if ( test_filter( op, e, agf->agf_filter ) == LDAP_COMPARE_TRUE ) {
-							if ( ea )
-								autogroup_add_member_values_to_group( op, e, age, age->age_filter->agf_anlist[0].an_desc );
-							else
+						if ( test_filter( op, &etmp, agf->agf_filter ) == LDAP_COMPARE_TRUE ) {
+							if ( ea ) {
+								autogroup_add_member_values_to_group( op, &new_dn, age, ea );
+							} else
 								autogroup_add_member_to_group( op, &new_dn, &new_ndn, age );
 							break;
 						}
 					}
+					op->o_dn = odn;
+					op->o_ndn = ondn;
 				} else
 				if ( is_olddn == 1 && is_newdn == 1 && dn_equal != 0 ) {
 					if ( ea ) {
@@ -1151,14 +1305,16 @@ autogroup_response( Operation *op, SlapReply *rs )
 			op->o_tmpfree( new_dn.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( new_ndn.bv_val, op->o_tmpmemctx );
 
-			overlay_entry_release_ov( op, e, 0, on );
+			attrs_free( attrs );
 
 			ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );			
 		}
 	}
 
 	if ( op->o_tag == LDAP_REQ_MODIFY ) {
-		if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS  && !get_manageDSAit( op ) ) {
+		if ( rs->sr_type == REP_RESULT && rs->sr_err == LDAP_SUCCESS  && !oex ) {
+			Entry etmp;
+			struct berval odn, ondn;
 			Debug( LDAP_DEBUG_TRACE, "==> autogroup_response MODIFY <%s>\n", op->o_req_dn.bv_val, 0, 0);
 
 			ldap_pvt_thread_mutex_lock( &agi->agi_mutex );			
@@ -1214,7 +1370,6 @@ autogroup_response( Operation *op, SlapReply *rs )
 
 									autogroup_add_group( op, agi, group_agd, NULL, &op->o_req_ndn, 1, 1);
 
-									overlay_entry_release_ov( op, e, 0, on );
 									ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 									return SLAP_CB_CONTINUE;
 								}
@@ -1233,7 +1388,7 @@ autogroup_response( Operation *op, SlapReply *rs )
 				}
 			}
 
-			/* When modifing any of the attributes of an entry, we must
+			/* When modifying any of the attributes of an entry, we must
 			   check if the entry is in any of our groups, and if
 			   the modified entry maches any of the filters of that group.
 
@@ -1242,15 +1397,24 @@ autogroup_response( Operation *op, SlapReply *rs )
 			   If the entry doesn't exist in a group, but matches a filter, 
 				we add it to that group.
 			*/
+			attrs = attrs_dup( e->e_attrs );
+			overlay_entry_release_ov( op, e, 0, on );
+			etmp.e_name = op->o_req_dn;
+			etmp.e_nname = op->o_req_ndn;
+			etmp.e_attrs = attrs;
+			odn = op->o_dn;
+			ondn = op->o_ndn;
+			op->o_dn = op->o_bd->be_rootdn;
+			op->o_ndn = op->o_bd->be_rootndn;
+
 			for ( age = agi->agi_entry ; age ; age = age->age_next ) {
 				is_olddn = 0;
 				is_newdn = 0;
 
-
 				ldap_pvt_thread_mutex_lock( &age->age_mutex );
 
 				if ( age->age_filter && age->age_filter->agf_anlist ) {
-					ea = attrs_find( e->e_attrs, age->age_filter->agf_anlist[0].an_desc );
+					ea = attrs_find( attrs, age->age_filter->agf_anlist[0].an_desc );
 				}
 				else {
 					ea = NULL;
@@ -1261,9 +1425,11 @@ autogroup_response( Operation *op, SlapReply *rs )
 					Debug( LDAP_DEBUG_TRACE, "autogroup_response MODIFY cannot get entry for <%s>\n", 
 						age->age_dn.bv_val, 0, 0);
 
-					overlay_entry_release_ov( op, e, 0, on );
+					attrs_free( attrs );
 					ldap_pvt_thread_mutex_unlock( &age->age_mutex );
 					ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
+					op->o_dn = odn;
+					op->o_ndn = ondn;
 					return SLAP_CB_CONTINUE;
 				}
 
@@ -1284,7 +1450,7 @@ autogroup_response( Operation *op, SlapReply *rs )
 
 				for ( agf = age->age_filter ; agf ; agf = agf->agf_next ) {
 					if ( dnIsSuffix( &op->o_req_ndn, &agf->agf_ndn ) ) {
-						if ( test_filter( op, e, agf->agf_filter ) == LDAP_COMPARE_TRUE ) {
+						if ( test_filter( op, &etmp, agf->agf_filter ) == LDAP_COMPARE_TRUE ) {
 							is_newdn = 1;
 							break;
 						}
@@ -1293,13 +1459,13 @@ autogroup_response( Operation *op, SlapReply *rs )
 
 				if ( is_olddn == 1 && is_newdn == 0 ) {
 					if(ea)
-						autogroup_delete_member_values_from_group( op, e, age, age->age_filter->agf_anlist[0].an_desc );
+						autogroup_delete_member_values_from_group( op, &op->o_req_dn, age, ea );
 					else
 						autogroup_delete_member_from_group( op, &op->o_req_dn, &op->o_req_ndn, age );
 				} else
 				if ( is_olddn == 0 && is_newdn == 1 ) {
 					if(ea)
-						autogroup_add_member_values_to_group( op, e, age, age->age_filter->agf_anlist[0].an_desc );
+						autogroup_add_member_values_to_group( op, &op->o_req_dn, age, ea );
 					else
 						autogroup_add_member_to_group( op, &op->o_req_dn, &op->o_req_ndn, age );
 				} 
@@ -1307,7 +1473,9 @@ autogroup_response( Operation *op, SlapReply *rs )
 				ldap_pvt_thread_mutex_unlock( &age->age_mutex );
 			}
 
-			overlay_entry_release_ov( op, e, 0, on );
+			op->o_dn = odn;
+			op->o_ndn = ondn;
+			attrs_free( attrs );
 
 			ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 		}
@@ -1357,9 +1525,12 @@ autogroup_modify_entry( Operation *op, SlapReply *rs)
 	autogroup_entry_t	*age;
 	Entry			*e;
 	Attribute		*a;
+	struct berval odn, ondn;
+	OpExtra *oex;
 
-	if ( get_manageDSAit( op ) ) {
-		return SLAP_CB_CONTINUE;
+	LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+		if ( oex->oe_key == (void *)&autogroup )
+			return SLAP_CB_CONTINUE;
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_modify_entry <%s>\n", op->o_req_dn.bv_val, 0, 0);
@@ -1371,6 +1542,11 @@ autogroup_modify_entry( Operation *op, SlapReply *rs)
 		ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 		return SLAP_CB_CONTINUE;
 	}
+
+	odn = op->o_dn;
+	ondn = op->o_ndn;
+	op->o_dn = op->o_bd->be_rootdn;
+	op->o_ndn = op->o_bd->be_rootndn;
 
 	/* Must refresh groups if a matching member value is modified OR filter contains memberOf=DN */
 	for ( age = agi->agi_entry; age ; age = age->age_next ) {
@@ -1395,6 +1571,8 @@ autogroup_modify_entry( Operation *op, SlapReply *rs)
 			}
 		}
 	}
+	op->o_dn = odn;
+	op->o_ndn = ondn;
 
 	a = attrs_find( e->e_attrs, slap_schema.si_ad_objectClass );
 
@@ -1435,9 +1613,8 @@ autogroup_modify_entry( Operation *op, SlapReply *rs)
 				}
 			}
 
-			overlay_entry_release_ov( op, e, 0, on );
-			ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
-			return SLAP_CB_CONTINUE;
+			/* an entry may only have one dynamic group class */
+			break;
 		}
 	}
 
@@ -1456,9 +1633,12 @@ autogroup_modrdn_entry( Operation *op, SlapReply *rs)
 	autogroup_info_t	*agi = (autogroup_info_t *)on->on_bi.bi_private;
 	autogroup_entry_t	*age;
 	Entry			*e;
+	struct berval odn, ondn;
+	OpExtra *oex;
 
-	if ( get_manageDSAit( op ) ) {
-		return SLAP_CB_CONTINUE;
+	LDAP_SLIST_FOREACH( oex, &op->o_extra, oe_next ) {
+		if ( oex->oe_key == (void *)&autogroup )
+			return SLAP_CB_CONTINUE;
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "==> autogroup_modrdn_entry <%s>\n", op->o_req_dn.bv_val, 0, 0);
@@ -1470,6 +1650,11 @@ autogroup_modrdn_entry( Operation *op, SlapReply *rs)
 		ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );
 		return SLAP_CB_CONTINUE;
 	}
+
+	odn = op->o_dn;
+	ondn = op->o_ndn;
+	op->o_dn = op->o_bd->be_rootdn;
+	op->o_ndn = op->o_bd->be_rootndn;
 
 	/* Must check if a dn is modified */
 	for ( age = agi->agi_entry; age ; age = age->age_next ) {
@@ -1485,6 +1670,8 @@ autogroup_modrdn_entry( Operation *op, SlapReply *rs)
 			}
 		}
 	}
+	op->o_dn = odn;
+	op->o_ndn = ondn;
 
 	overlay_entry_release_ov( op, e, 0, on );
 	ldap_pvt_thread_mutex_unlock( &agi->agi_mutex );			
@@ -1530,7 +1717,7 @@ static ConfigDriver	ag_cfgen;
 
 static ConfigTable agcfg[] = {
 	{ "autogroup-attrset", "group-oc> <URL-ad> <member-ad",
-		3, 4, 0, ARG_MAGIC|AG_ATTRSET, ag_cfgen,
+		4, 4, 0, ARG_MAGIC|AG_ATTRSET, ag_cfgen,
 		"( OLcfgCtAt:2.1 NAME 'olcAGattrSet' "
 			"DESC 'Automatic groups: <group objectClass>, <URL attributeDescription>, <member attributeDescription>' "
 			"EQUALITY caseIgnoreMatch "
@@ -1906,6 +2093,7 @@ autogroup_db_open(
 	op->ors_tlimit = SLAP_NO_LIMIT;
 	op->ors_slimit = SLAP_NO_LIMIT;
 	op->ors_attrs =  slap_anlist_no_attrs;
+	op->o_do_not_cache = 1;
 
 	op->o_bd = be;
 	op->o_bd->bd_info = (BackendInfo *)on->on_info;
@@ -2015,8 +2203,6 @@ autogroup_db_destroy(
 
 	return 0;
 }
-
-static slap_overinst	autogroup = { { NULL } };
 
 static
 int

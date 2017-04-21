@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.37 2016/11/10 06:44:35 macallan Exp $	*/
+/*	$NetBSD: schizo.c,v 1.37.2.1 2017/04/21 16:53:37 bouyer Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.37 2016/11/10 06:44:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.37.2.1 2017/04/21 16:53:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -157,12 +157,12 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
 
-	sc->sc_ver = prom_getpropint(sc->sc_node, "version#", 0);
-
 	sc->sc_dev = self;
 	sc->sc_node = ma->ma_node;
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
+
+	sc->sc_ver = prom_getpropint(sc->sc_node, "version#", 0);
 
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[1].ur_paddr - 0x10000UL,
 	    sizeof(struct schizo_regs), 0,

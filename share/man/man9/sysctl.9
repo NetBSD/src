@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.18 2011/12/04 18:34:20 jym Exp $
+.\"	$NetBSD: sysctl.9,v 1.18.26.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -622,18 +622,18 @@ during the following stages of a machine's lifetime:
 .Pp
 .Bl -bullet -compact
 .It
-initialization -- when the kernel is booting
+initialization \(em when the kernel is booting
 .It
-autoconfiguration -- when devices are being probed at boot time
+autoconfiguration \(em when devices are being probed at boot time
 .It
 .Dq plug and play
-device attachment -- when a PC-Card, USB, or other device is plugged
+device attachment \(em when a PC-Card, USB, or other device is plugged
 in or attached
 .It
-module initialization -- when a module is being loaded
+module initialization \(em when a module is being loaded
 .It
 .Dq run-time
--- when a process creates a node via the
+\(em when a process creates a node via the
 .Xr sysctl 3
 interface
 .El

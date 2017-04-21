@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_state.c,v 1.1.1.4 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: postscreen_state.c,v 1.1.1.4.10.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -63,7 +63,8 @@
 /*	psc_new_session_state() creates a new session state object
 /*	for the specified client stream, and increments the
 /*	psc_check_queue_length counter.  The flags and per-test time
-/*	stamps are initialized with PSC_INIT_TESTS().  The addr and
+/*	stamps are initialized with PSC_INIT_TESTS(), or for concurrent
+/*	sessions, with PSC_INIT_TEST_FLAGS_ONLY().  The addr and
 /*	port arguments are null-terminated strings with the remote
 /*	SMTP client endpoint. The _reply members are set to
 /*	polite "try again" SMTP replies. The protocol member is set
@@ -151,10 +152,8 @@ PSC_STATE *psc_new_session_state(VSTREAM *stream,
 				         const char *server_port)
 {
     PSC_STATE *state;
-    HTABLE_INFO *ht;
 
     state = (PSC_STATE *) mymalloc(sizeof(*state));
-    PSC_INIT_TESTS(state);
     if ((state->smtp_client_stream = stream) != 0)
 	psc_check_queue_length++;
     state->smtp_server_fd = (-1);
@@ -190,10 +189,19 @@ PSC_STATE *psc_new_session_state(VSTREAM *stream,
     /*
      * Update the per-client session count.
      */
-    if ((ht = htable_locate(psc_client_concurrency, client_addr)) == 0)
-	ht = htable_enter(psc_client_concurrency, client_addr, (char *) 0);
-    ht->value += 1;
-    state->client_concurrency = CAST_CHAR_PTR_TO_INT(ht->value);
+    if ((state->client_info = (PSC_CLIENT_INFO *)
+	 htable_find(psc_client_concurrency, client_addr)) == 0) {
+	state->client_info = (PSC_CLIENT_INFO *)
+	    mymalloc(sizeof(state->client_info[0]));
+	(void) htable_enter(psc_client_concurrency, client_addr,
+			    (void *) state->client_info);
+	PSC_INIT_TESTS(state);
+	state->client_info->concurrency = 1;
+	state->client_info->pass_new_count = 0;
+    } else {
+	PSC_INIT_TEST_FLAGS_ONLY(state);
+	state->client_info->concurrency += 1;
+    }
 
     return (state);
 }
@@ -212,9 +220,8 @@ void    psc_free_session_state(PSC_STATE *state)
 			    state->smtp_client_addr)) == 0)
 	msg_panic("%s: unknown client address: %s",
 		  myname, state->smtp_client_addr);
-    if (--(ht->value) == 0)
-	htable_delete(psc_client_concurrency, state->smtp_client_addr,
-		      (void (*) (char *)) 0);
+    if (--(state->client_info->concurrency) == 0)
+	htable_delete(psc_client_concurrency, state->smtp_client_addr, myfree);
 
     if (state->smtp_client_stream != 0) {
 	event_server_disconnect(state->smtp_client_stream);
@@ -240,7 +247,7 @@ void    psc_free_session_state(PSC_STATE *state)
 	vstring_free(state->cmd_buffer);
     if (state->expand_buf)
 	vstring_free(state->expand_buf);
-    myfree((char *) state);
+    myfree((void *) state);
 
     if (psc_check_queue_length < 0 || psc_post_queue_length < 0)
 	msg_panic("bad queue length: check_queue=%d, post_queue=%d",

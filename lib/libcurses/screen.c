@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.29 2017/01/11 20:43:03 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.29.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.29 2017/01/11 20:43:03 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.29.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif
 #endif					/* not lint */
 
@@ -45,8 +45,17 @@ __RCSID("$NetBSD: screen.c,v 1.29 2017/01/11 20:43:03 roy Exp $");
 
 static int filtered;
 
-
 static void	 __delscreen(SCREEN *);
+
+/*
+ * filter has to be called before either initscr or newterm.
+ */
+void
+filter(void)
+{
+
+	filtered = TRUE;
+}
 
 /*
  * set_term --
@@ -66,6 +75,8 @@ set_term(SCREEN *new)
 		old_screen->noqch = __noqch;
 		old_screen->COLS = COLS;
 		old_screen->LINES = LINES + __rippedlines(old_screen);
+		old_screen->ESCDELAY = ESCDELAY;
+		old_screen->TABSIZE = TABSIZE;
 		old_screen->COLORS = COLORS;
 		old_screen->COLOR_PAIRS = COLOR_PAIRS;
 		old_screen->GT = __GT;
@@ -81,6 +92,8 @@ set_term(SCREEN *new)
 	__noqch = new->noqch;
 	COLS = new->COLS;
 	LINES = new->LINES - __rippedlines(new);
+	ESCDELAY = new->ESCDELAY;
+	TABSIZE = new->TABSIZE;
 	COLORS = new->COLORS;
 	COLOR_PAIRS = new->COLOR_PAIRS;
 	__GT = new->GT;
@@ -131,7 +144,15 @@ newterm(char *type, FILE *outfd, FILE *infd)
 #endif
 
 	new_screen->infd = infd;
-	new_screen->checkfd = fileno(infd);
+	/*
+	 * POSIX standard says this should be set to infd by default,
+	 * but this seems to break nvi by leaving an unrefreshed screen.
+	 * Also, the line breakout optimisation advertised in ncurses
+	 * doesn't actually do anything, so explicitly disabling it here makes
+	 * sense for the time being.
+	 * A caller can always enable it by calling typeahead(3) anyway.
+	 */
+	new_screen->checkfd = -1; // fileno(infd);
 	new_screen->outfd = outfd;
 	new_screen->echoit = new_screen->nl = 1;
 	new_screen->pfast = new_screen->rawmode = new_screen->noqch = 0;
@@ -179,6 +200,10 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	    0, 0, 0, FALSE)) == NULL)
 		goto error_exit;
 
+	/* If Soft Label Keys are setup, they will ripoffline. */
+	if (__slk_init(new_screen) == ERR)
+		goto error_exit;
+
 	if (__ripoffscreen(new_screen, &rtop) == ERR)
 		goto error_exit;
 
@@ -191,7 +216,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	__init_getch(new_screen);
 	__init_acs(new_screen);
 #ifdef HAVE_WCHAR
-	__init_get_wch( new_screen );
+	__init_get_wch(new_screen);
 	__init_wacs(new_screen);
 #endif /* HAVE_WCHAR */
 
@@ -239,6 +264,9 @@ delscreen(SCREEN *screen)
 
 	  /* free the storage of the keymaps */
 	_cursesi_free_keymap(screen->base_keymap);
+
+	  /* free the Soft Label Keys */
+	__slk_free(screen);
 
 	free(screen->stdbuf);
 	free(screen->unget_list);

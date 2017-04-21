@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20 2016/09/18 14:20:23 christos Exp $
+# $NetBSD: INSTALL,v 1.20.2.1 2017/04/21 16:53:29 bouyer Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -129,6 +129,9 @@ config		netbsd root on ? type ?
 mainbus0 at root
 
 clock0	at mainbus0
+
+# LCD on front panel
+lcd0	at mainbus0
 
 # uPD7201 SIO
 sio0	at mainbus0

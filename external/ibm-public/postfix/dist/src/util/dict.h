@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.1.1.5 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: dict.h,v 1.1.1.5.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -41,9 +41,37 @@ typedef struct DICT_OWNER {
     uid_t   uid;			/* use only if status == UNTRUSTED */
 } DICT_OWNER;
 
+ /*
+  * Note that trust levels are not in numerical order.
+  */
 #define DICT_OWNER_UNKNOWN	(-1)	/* ex: unauthenticated tcp, proxy */
 #define DICT_OWNER_TRUSTED	(!1)	/* ex: root-owned config file */
 #define DICT_OWNER_UNTRUSTED	(!0)	/* ex: non-root config file */
+
+ /*
+  * When combining tables with different provenance, we initialize to the
+  * highest trust level, and remember the lowest trust level that we find
+  * during aggregation. If we combine tables that are owned by different
+  * untrusted users, the resulting provenance is "unknown".
+  */
+#define DICT_OWNER_AGGREGATE_INIT(dst) { \
+	(dst).status = DICT_OWNER_TRUSTED; \
+	(dst).uid = 0; \
+    } while (0)
+
+ /*
+  * The following is derived from the 3x3 transition matrix.
+  */
+#define DICT_OWNER_AGGREGATE_UPDATE(dst, src) do { \
+	if ((dst).status == DICT_OWNER_TRUSTED \
+	    || (src).status == DICT_OWNER_UNKNOWN) { \
+	    (dst) = (src); \
+	} else if ((dst).status == (src).status \
+		&& (dst).uid != (src).uid) { \
+	    (dst).status = DICT_OWNER_UNKNOWN; \
+	    (dst).uid = ~0; \
+	} \
+    } while (0)
 
  /*
   * Generic dictionary interface - in reality, a dictionary extends this
@@ -67,6 +95,7 @@ typedef struct DICT {
     DICT_OWNER owner;			/* provenance */
     int     error;			/* last operation only */
     DICT_JMP_BUF *jbuf;			/* exception handling */
+    struct DICT_UTF8_BACKUP *utf8_backup;	/* see below */
 } DICT;
 
 extern DICT *dict_alloc(const char *, const char *, ssize_t);
@@ -100,6 +129,10 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_OPEN_LOCK	(1<<16)	/* perm lock if not multi-writer safe */
 #define DICT_FLAG_BULK_UPDATE	(1<<17)	/* optimize for bulk updates */
 #define DICT_FLAG_MULTI_WRITER	(1<<18)	/* multi-writer safe map */
+#define DICT_FLAG_UTF8_REQUEST	(1<<19)	/* activate UTF-8 if possible */
+#define DICT_FLAG_UTF8_ACTIVE	(1<<20)	/* UTF-8 proxy layer is present */
+
+#define DICT_FLAG_UTF8_MASK	(DICT_FLAG_UTF8_REQUEST)
 
  /* IMPORTANT: Update the dict_mask[] table when the above changes */
 
@@ -131,8 +164,14 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_RQST_MASK	(DICT_FLAG_FOLD_ANY | DICT_FLAG_LOCK | \
 				DICT_FLAG_DUP_REPLACE | DICT_FLAG_DUP_WARN | \
 				DICT_FLAG_DUP_IGNORE | DICT_FLAG_SYNC_UPDATE | \
-				DICT_FLAG_PARANOID)
+				DICT_FLAG_PARANOID | DICT_FLAG_UTF8_MASK)
 #define DICT_FLAG_INST_MASK	~(DICT_FLAG_IMPL_MASK | DICT_FLAG_RQST_MASK)
+
+ /*
+  * Feature tests.
+  */
+#define DICT_NEED_UTF8_ACTIVATION(enable, flags) \
+	((enable) && ((flags) & DICT_FLAG_UTF8_MASK))
 
  /*
   * dict->error values. Errors must be negative; smtpd_check depends on this.
@@ -167,6 +206,9 @@ extern DICT *dict_debug(DICT *);
   * Interface for dictionary types.
   */
 extern ARGV *dict_mapnames(void);
+typedef void (*DICT_MAPNAMES_EXTEND_FN) (ARGV *);
+extern DICT_MAPNAMES_EXTEND_FN dict_mapnames_extend(DICT_MAPNAMES_EXTEND_FN);
+
 
  /*
   * High-level interface, with logical dictionary names.
@@ -186,21 +228,36 @@ extern int dict_error(const char *);
  /*
   * Low-level interface, with physical dictionary handles.
   */
+typedef DICT *(*DICT_OPEN_FN) (const char *, int, int);
+typedef DICT_OPEN_FN (*DICT_OPEN_EXTEND_FN) (const char *);
 extern DICT *dict_open(const char *, int, int);
 extern DICT *dict_open3(const char *, const char *, int, int);
-extern void dict_open_register(const char *, DICT *(*) (const char *, int, int));
+extern void dict_open_register(const char *, DICT_OPEN_FN);
+extern DICT_OPEN_EXTEND_FN dict_open_extend(DICT_OPEN_EXTEND_FN);
 
 #define dict_get(dp, key)	((const char *) (dp)->lookup((dp), (key)))
 #define dict_put(dp, key, val)	(dp)->update((dp), (key), (val))
 #define dict_del(dp, key)	(dp)->delete((dp), (key))
 #define dict_seq(dp, f, key, val) (dp)->sequence((dp), (f), (key), (val))
 #define dict_close(dp)		(dp)->close(dp)
-typedef void (*DICT_WALK_ACTION) (const char *, DICT *, char *);
-extern void dict_walk(DICT_WALK_ACTION, char *);
+typedef void (*DICT_WALK_ACTION) (const char *, DICT *, void *);
+extern void dict_walk(DICT_WALK_ACTION, void *);
 extern int dict_changed(void);
 extern const char *dict_changed_name(void);
 extern const char *dict_flags_str(int);
 extern int dict_flags_mask(const char *);
+extern void dict_type_override(DICT *, const char *);
+
+ /*
+  * Check and convert UTF-8 keys and values.
+  */
+typedef struct DICT_UTF8_BACKUP {
+    const char *(*lookup) (struct DICT *, const char *);
+    int     (*update) (struct DICT *, const char *, const char *);
+    int     (*delete) (struct DICT *, const char *);
+} DICT_UTF8_BACKUP;
+
+extern DICT *dict_utf8_activate(DICT *);
 
  /*
   * Driver for interactive or scripted tests.
@@ -212,12 +269,13 @@ void    dict_test(int, char **);
   * functionality.
   */
 extern int dict_allow_surrogate;
-extern DICT *dict_surrogate(const char *, const char *, int, int, const char *,...);
+extern DICT *PRINTFLIKE(5, 6) dict_surrogate(const char *, const char *, int, int, const char *,...);
 
  /*
   * This name is reserved for matchlist error handling.
   */
 #define DICT_TYPE_NOFILE	"non-existent"
+#define DICT_TYPE_NOUTF8	"non-UTF-8"
 
  /*
   * Duplicated from vstream(3). This should probably be abstracted out.
@@ -230,13 +288,13 @@ extern DICT *dict_surrogate(const char *, const char *, int, int, const char *,.
   * systems have bugs in their implementation.
   */
 #ifdef NO_SIGSETJMP
-#define dict_setjmp(stream)		setjmp((stream)->jbuf[0])
-#define dict_longjmp(stream, val)	longjmp((stream)->jbuf[0], (val))
+#define dict_setjmp(dict)	setjmp((dict)->jbuf[0])
+#define dict_longjmp(dict, val)	longjmp((dict)->jbuf[0], (val))
 #else
-#define dict_setjmp(stream)		sigsetjmp((stream)->jbuf[0], 1)
-#define dict_longjmp(stream, val)	siglongjmp((stream)->jbuf[0], (val))
+#define dict_setjmp(dict)	sigsetjmp((dict)->jbuf[0], 1)
+#define dict_longjmp(dict, val)	siglongjmp((dict)->jbuf[0], (val))
 #endif
-#define dict_isjmp(stream)		((stream)->jbuf != 0)
+#define dict_isjmp(dict)	((dict)->jbuf != 0)
 
  /*
   * Temporary API. If exception handling proves to be useful,

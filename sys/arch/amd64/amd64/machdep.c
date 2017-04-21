@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246.2.1 2017/04/21 16:53:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246.2.1 2017/04/21 16:53:21 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -175,6 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.246 2016/12/26 17:54:06 cherry Exp $")
 #include <machine/specialreg.h>
 #include <machine/bootinfo.h>
 #include <x86/fpu.h>
+#include <x86/dbregs.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
@@ -282,6 +283,7 @@ void (*delay_func)(unsigned int) = xen_delay;
 void (*initclock_func)(void) = xen_initclocks;
 #endif
 
+struct pool x86_dbregspl;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -319,8 +321,6 @@ int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
 void init_x86_64(paddr_t);
-
-static int valid_user_selector(struct lwp *, uint64_t);
 
 /*
  * Machine-dependent startup code
@@ -471,11 +471,11 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_gs = 0;
 	pcb->pcb_rsp0 = (uvm_lwp_getuarea(l) + USPACE - 16) & ~0xf;
 	pcb->pcb_iopl = SEL_KPL;
+	pcb->pcb_dbregs = NULL;
 
 	pmap_kernel()->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 #if !defined(XEN)
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -803,20 +803,15 @@ sparse_dump_mark(void)
 	     upm = uvm_physseg_get_next(upm)) {
 		paddr_t pfn;
 
-		if (uvm_physseg_valid_p(upm) == false)
-			break;
-
-		const paddr_t startpfn = uvm_physseg_get_start(upm);
-		const paddr_t endpfn = uvm_physseg_get_end(upm);
-
-		KASSERT(startpfn != -1 && endpfn != -1);
-
 		/*
 		 * We assume that seg->start to seg->end are
 		 * uvm_page_physload()ed
 		 */
-		for (pfn = startpfn; pfn <= endpfn; pfn++) {
+		for (pfn = uvm_physseg_get_start(upm);
+		     pfn < uvm_physseg_get_end(upm);
+		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
+
 			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
 			    (pg->uobject && pg->uobject->pgops)) {
 				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
@@ -1323,10 +1318,12 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	fpu_save_area_clear(l, pack->ep_osversion >= 699002600
 	    ? __NetBSD_NPXCW__ : __NetBSD_COMPAT_NPXCW__);
 	pcb->pcb_flags = 0;
+	if (pcb->pcb_dbregs != NULL) {
+		pool_put(&x86_dbregspl, pcb->pcb_dbregs);
+		pcb->pcb_dbregs = NULL;
+	}
 
 	l->l_proc->p_flag &= ~PK_32;
-
-	memset(l->l_md.md_watchpoint, 0, sizeof(*l->l_md.md_watchpoint));
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
@@ -1454,7 +1451,6 @@ typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
-extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 static void
@@ -1498,6 +1494,7 @@ init_x86_64(paddr_t first_avail)
 	struct region_descriptor region;
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
+	struct pcb *pcb;
 #ifndef XEN
 	extern paddr_t local_apic_pa;
 	int ist;
@@ -1517,8 +1514,8 @@ init_x86_64(paddr_t first_avail)
 
 	use_pae = 1; /* PAE always enabled in long mode */
 
+	pcb = lwp_getpcb(&lwp0);
 #ifdef XEN
-	struct pcb *pcb = lwp_getpcb(&lwp0);
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
@@ -1643,11 +1640,8 @@ init_x86_64(paddr_t first_avail)
 #endif
 
 	/*
-	 * Make LDT gates and memory segments.
+	 * Make LDT memory segments.
 	 */
-	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
 	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
 	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
 	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
@@ -1677,16 +1671,6 @@ init_x86_64(paddr_t first_avail)
 	ldt_segp = (struct mem_segment_descriptor *)(ldtstore + LUDATA32_SEL);
 	set_mem_segment(ldt_segp, 0, x86_btop(VM_MAXUSER_ADDRESS32) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1, 0);
-
-	/*
-	 * Other LDT entries.
-	 */
-	memcpy((struct gate_descriptor *)(ldtstore + LSOL26CALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
-	memcpy((struct gate_descriptor *)(ldtstore + LBSDICALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
 
 	/* CPU-specific IDT exceptions. */
 	for (x = 0; x < NCPUIDT; x++) {
@@ -1781,6 +1765,13 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
+
+	pcb->pcb_dbregs = NULL;
+
+	x86_dbregs_setup_initdbstate();
+
+	pool_init(&x86_dbregspl, sizeof(struct dbreg), 16, 0, 0, "dbregs",
+	    NULL, IPL_NONE);
 }
 
 void
@@ -1907,12 +1898,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 int
 cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 {
-	const __greg_t *gr;
-	uint16_t sel;
-	int error;
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
+	const __greg_t *gr;
+	uint16_t sel;
 
 	gr = mcp->__gregs;
 
@@ -1920,47 +1910,33 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		return EINVAL;
 
 	if (__predict_false(pmap->pm_ldt != NULL)) {
-		error = valid_user_selector(l, gr[_REG_ES]);
-		if (error != 0)
-			return error;
-
-		error = valid_user_selector(l, gr[_REG_FS]);
-		if (error != 0)
-			return error;
-
-		error = valid_user_selector(l, gr[_REG_GS]);
-		if (error != 0)
-			return error;
-
+		/* Only when the LDT is user-set (with USER_LDT) */
 		if ((gr[_REG_DS] & 0xffff) == 0)
 			return EINVAL;
-		error = valid_user_selector(l, gr[_REG_DS]);
-		if (error != 0)
-			return error;
-
 #ifndef XEN
 		if ((gr[_REG_SS] & 0xffff) == 0)
 			return EINVAL;
-		error = valid_user_selector(l, gr[_REG_SS]);
-		if (error != 0)
-			return error;
+		if (!USERMODE(gr[_REG_CS], gr[_REG_RFLAGS]))
+			return EINVAL;
 #endif
 	} else {
 #define VUD(sel) \
     ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUF(sel) /* XXX: Shouldn't this be FSEL32? */ \
+    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUG(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
+#define VUC(sel) \
+    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
+
 		sel = gr[_REG_ES] & 0xffff;
 		if (sel != 0 && !VUD(sel))
 			return EINVAL;
 
-/* XXX: Shouldn't this be FSEL32? */
-#define VUF(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_DSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_FS] & 0xffff;
 		if (sel != 0 && !VUF(sel))
 			return EINVAL;
 
-#define VUG(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_GSEL32(sel) : VALID_USER_DSEL(sel))
 		sel = gr[_REG_GS] & 0xffff;
 		if (sel != 0 && !VUG(sel))
 			return EINVAL;
@@ -1973,17 +1949,12 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 		sel = gr[_REG_SS] & 0xffff;
 		if (!VUD(sel))
 			return EINVAL;
-#endif
 
+		sel = gr[_REG_CS] & 0xffff;
+		if (!VUC(sel))
+			return EINVAL;
+#endif
 	}
-
-#ifndef XEN
-#define VUC(sel) \
-    ((p->p_flag & PK_32) ? VALID_USER_CSEL32(sel) : VALID_USER_CSEL(sel))
-	sel = gr[_REG_CS] & 0xffff;
-	if (!VUC(sel))
-		return EINVAL;
-#endif
 
 	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
@@ -1994,55 +1965,6 @@ void
 cpu_initclocks(void)
 {
 	(*initclock_func)();
-}
-
-static int
-valid_user_selector(struct lwp *l, uint64_t seg)
-{
-	int off, len;
-	char *dt;
-	struct mem_segment_descriptor *sdp;
-	struct proc *p = l->l_proc;
-	struct pmap *pmap= p->p_vmspace->vm_map.pmap;
-	uint64_t base;
-
-	seg &= 0xffff;
-
-	if (seg == 0)
-		return 0;
-
-	off = (seg & 0xfff8);
-	if (seg & SEL_LDT) {
-		if (pmap->pm_ldt != NULL) {
-			len = pmap->pm_ldt_len; /* XXX broken */
-			dt = (char *)pmap->pm_ldt;
-		} else {
-			dt = ldtstore;
-			len = LDT_SIZE;
-		}
-
-		if (off > (len - 8))
-			return EINVAL;
-	} else {
-		CTASSERT(GUDATA_SEL & SEL_LDT);
-		KASSERT(seg != GUDATA_SEL);
-		CTASSERT(GUDATA32_SEL & SEL_LDT);
-		KASSERT(seg != GUDATA32_SEL);
-		return EINVAL;
-	}
-
-	sdp = (struct mem_segment_descriptor *)(dt + off);
-	if (sdp->sd_type < SDT_MEMRO || sdp->sd_p == 0)
-		return EINVAL;
-
-	base = ((uint64_t)sdp->sd_hibase << 32) | ((uint64_t)sdp->sd_lobase);
-	if (sdp->sd_gran == 1)
-		base <<= PAGE_SHIFT;
-
-	if (base >= VM_MAXUSER_ADDRESS)
-		return EINVAL;
-
-	return 0;
 }
 
 int

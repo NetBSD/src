@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.3 2011/10/28 07:09:49 tron Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.1.1.3.28.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -131,11 +131,6 @@
 /* .IP MIME_OPT_REPORT_NESTING
 /*	Report errors that set the MIME_ERR_NESTING error flag
 /*	(see above).
-/* .IP MIME_OPT_RECURSE_ALL_MESSAGE
-/*	Recurse into message/anything types other than message/rfc822.
-/*	This feature can detect "bad" information in headers of
-/*	message/partial and message/external-body types. It must
-/*	not be used with 8-bit -> 7-bit MIME transformations.
 /* .IP MIME_OPT_DOWNGRADE
 /*	Transform content that claims to be 8-bit into quoted-printable.
 /*	Where appropriate, update Content-Transfer-Encoding: message
@@ -337,6 +332,7 @@ struct MIME_STATE {
 #define MIME_STYPE_RFC822	2
 #define MIME_STYPE_PARTIAL	3
 #define MIME_STYPE_EXTERN_BODY	4
+#define MIME_STYPE_GLOBAL	5
 
  /*
   * MIME parser states. We steal from the public interface.
@@ -486,7 +482,7 @@ static void mime_state_pop(MIME_STATE *state)
     state->nesting_level -= 1;
     state->stack = stack->next;
     myfree(stack->boundary);
-    myfree((char *) stack);
+    myfree((void *) stack);
 }
 
 /* mime_state_alloc - create MIME state machine */
@@ -534,7 +530,7 @@ MIME_STATE *mime_state_free(MIME_STATE *state)
 	mime_state_pop(state);
     if (state->token_buffer)
 	vstring_free(state->token_buffer);
-    myfree((char *) state);
+    myfree((void *) state);
     return (0);
 }
 
@@ -593,6 +589,8 @@ static void mime_state_content_type(MIME_STATE *state,
 		    state->curr_stype = MIME_STYPE_PARTIAL;
 		else if (TOKEN_MATCH(state->token[2], "external-body"))
 		    state->curr_stype = MIME_STYPE_EXTERN_BODY;
+		else if (TOKEN_MATCH(state->token[2], "global"))
+		    state->curr_stype = MIME_STYPE_GLOBAL;
 	    }
 	    return;
 	}
@@ -897,7 +895,8 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	 */
 	if ((state->static_flags & MIME_OPT_DOWNGRADE)
 	    && state->curr_domain != MIME_ENC_7BIT) {
-	    if (state->curr_ctype == MIME_CTYPE_MESSAGE
+	    if ((state->curr_ctype == MIME_CTYPE_MESSAGE
+		 && state->curr_stype != MIME_STYPE_GLOBAL)
 		|| state->curr_ctype == MIME_CTYPE_MULTIPART)
 		cp = CU_CHAR_PTR("7bit");
 	    else
@@ -965,8 +964,14 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	    if (len == 0) {
 		state->body_offset = 0;		/* XXX */
 		if (state->curr_ctype == MIME_CTYPE_MESSAGE) {
-		    if (state->curr_stype == MIME_STYPE_RFC822
-		    || (state->static_flags & MIME_OPT_RECURSE_ALL_MESSAGE))
+		    if (state->curr_stype == MIME_STYPE_RFC822)
+			SET_MIME_STATE(state, MIME_STATE_NESTED,
+				       MIME_CTYPE_TEXT, MIME_STYPE_PLAIN,
+				       MIME_ENC_7BIT, MIME_ENC_7BIT);
+		    else if (state->curr_stype == MIME_STYPE_GLOBAL
+			 && ((state->static_flags & MIME_OPT_DOWNGRADE) == 0
+			     || state->curr_domain == MIME_ENC_7BIT))
+			/* XXX EAI: inspect encoded message/global. */
 			SET_MIME_STATE(state, MIME_STATE_NESTED,
 				       MIME_CTYPE_TEXT, MIME_STYPE_PLAIN,
 				       MIME_ENC_7BIT, MIME_ENC_7BIT);
@@ -1226,6 +1231,7 @@ static void err_print(void *unused_context, int err_flag,
 int     var_header_limit = 2000;
 int     var_mime_maxdepth = 20;
 int     var_mime_bound_len = 2000;
+char   *var_drop_hdrs = DEF_DROP_HDRS;
 
 int     main(int unused_argc, char **argv)
 {

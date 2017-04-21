@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.17 2016/11/25 12:14:49 knakahara Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.17.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.17 2016/11/25 12:14:49 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.17.2.1 2017/04/21 16:53:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,6 @@ retry:
 	}
 	sc->sc_use_mq = alloced_counts[intr_type] > 1;
 	sc->sc_nq = sc->sc_use_mq ? alloced_counts[intr_type] - 1 : 1;
-
 
 	return 0;
 }

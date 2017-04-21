@@ -1,4 +1,4 @@
-.\"	$NetBSD: socketmap_table.5,v 1.1.1.1 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: socketmap_table.5,v 1.1.1.1.14.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH SOCKETMAP_TABLE 5 
 .ad
@@ -10,13 +10,13 @@ Postfix socketmap table lookup client
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" socketmap:inet:\fIhost\fB:\fIport\fB:\fIname\fR
+\fBpostmap \-q "\fIstring\fB" socketmap:inet:\fIhost\fB:\fIport\fB:\fIname\fR
 .br
-\fBpostmap -q "\fIstring\fB" socketmap:unix:\fIpathname\fB:\fIname\fR
+\fBpostmap \-q "\fIstring\fB" socketmap:unix:\fIpathname\fB:\fIname\fR
 
-\fBpostmap -q - socketmap:inet:\fIhost\fB:\fIport\fB:\fIname\fB <\fIinputfile\fR
+\fBpostmap \-q \- socketmap:inet:\fIhost\fB:\fIport\fB:\fIname\fB <\fIinputfile\fR
 .br
-\fBpostmap -q - socketmap:unix:\fIpathname\fB:\fIname\fB <\fIinputfile\fR
+\fBpostmap \-q \- socketmap:unix:\fIpathname\fB:\fIname\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -25,7 +25,7 @@ rewriting. mail routing or policy lookup.
 
 The Postfix socketmap client expects TCP endpoint names of
 the form \fBinet:\fIhost\fB:\fIport\fB:\fIname\fR, or
-UNIX-domain endponts of the form \fBunix:\fIpathname\fB:\fIname\fR.
+UNIX\-domain endpoints of the form \fBunix:\fIpathname\fB:\fIname\fR.
 In both cases, \fIname\fR specifies the name field in a
 socketmap client request (see "REQUEST FORMAT" below).
 .SH "PROTOCOL"
@@ -42,15 +42,17 @@ reply are sent as one netstring object.
 .ad
 .fi
 The socketmap protocol supports only the lookup request.
+The request has the following form:
 
+.IP "\fB\fIname\fB <space> \fIkey\fR"
+Search the named socketmap for the specified key.
+.PP
 Postfix will not generate partial search keys such as domain
 names without one or more subdomains, network addresses
-without one or more least-significant octets, or email
+without one or more least\-significant octets, or email
 addresses without the localpart, address extension or domain
 portion. This behavior is also found with cidr:, pcre:, and
 regexp: tables.
-.IP "\fB\fIname\fB <space> \fIkey\fR"
-Search the named socketmap for the specified key.
 .SH "REPLY FORMAT"
 .na
 .nf
@@ -66,12 +68,12 @@ The requested data was not found.
 .IP "\fBTEMP <space> \fIreason\fR"
 .IP "\fBTIMEOUT <space> \fIreason\fR"
 .IP "\fBPERM <space> \fIreason\fR"
-The request failed. The reason, if non-empty, is descriptive
+The request failed. The reason, if non\-empty, is descriptive
 text.
 .SH "SECURITY"
 .na
 .nf
-This map cannot be used for security-sensitive information,
+This map cannot be used for security\-sensitive information,
 because neither the connection nor the server are authenticated.
 .SH "SEE ALSO"
 .na
@@ -102,9 +104,9 @@ The protocol limits are not yet configurable.
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 Socketmap support was introduced with Postfix version 2.10.
 .SH "AUTHOR(S)"
 .na
@@ -113,3 +115,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

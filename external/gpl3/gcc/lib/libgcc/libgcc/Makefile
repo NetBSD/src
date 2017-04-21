@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2016/03/31 06:59:44 martin Exp $
+#	$NetBSD: Makefile,v 1.26.4.1 2017/04/21 16:52:43 bouyer Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -23,7 +23,7 @@ LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 .endif
 
 # XXXGCC5 GCC 5.3 has all these in libgcc and we have them in libc.
-.if ${MKSOFTFLOAT} == "yes"
+.if ${MKSOFTFLOAT} != "no"
 LIB2ADD_EDITED= ${G_LIB2ADD:T:Nfloatsisf.c:Nfloatunsisf.c:Nfloatsidf.c:Nfloatunsidf.c:Nfixsfsi.c:Nextendsfdf2.c:Naddsf3.c:Nmulsf3.c:Ndivsf3.c:Nadddf3.c:Nsubdf3.c:Nmuldf3.c:Ndivdf3.c:Nfixdfsi.c:S/.asm/.S/}
 .else
 LIB2ADD_EDITED=	${G_LIB2ADD:T:S/.asm/.S/}

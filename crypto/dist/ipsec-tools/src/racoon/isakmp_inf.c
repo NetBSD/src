@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.50 2013/04/12 09:53:10 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.50.16.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -720,6 +720,7 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 #endif
 #ifdef ENABLE_FRAG
 	iph1->frag = 0;
+	iph1->frag_last_index = 0;
 	iph1->frag_chain = NULL;
 #endif
 

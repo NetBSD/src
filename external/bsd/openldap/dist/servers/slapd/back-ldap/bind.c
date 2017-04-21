@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* bind.c - ldap backend bind function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -22,6 +22,9 @@
  * in OpenLDAP Software and subsequently enhanced by Pierangelo
  * Masarati.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bind.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -275,6 +278,8 @@ retry:;
 		if ( ldap_back_retry( &lc, op, rs, LDAP_BACK_BIND_SERR ) ) {
 			goto retry;
 		}
+		if ( !lc )
+			return( rc );
 	}
 
 	ldap_pvt_thread_mutex_lock( &li->li_counter_mutex );
@@ -1577,6 +1582,12 @@ retry:;
 			op->o_tag = o_tag;
 			rs->sr_text = "Proxy can't contact remote server";
 			send_ldap_result( op, rs );
+			/* if we originally bound and wanted rebind-as-user, must drop
+			 * the connection now because we just discarded the credentials.
+			 * ITS#7464, #8142
+			 */
+			if ( LDAP_BACK_SAVECRED( li ) && SLAP_IS_AUTHZ_BACKEND( op ) )
+				rs->sr_err = SLAPD_DISCONNECT;
 		}
 
 		rc = 0;
@@ -1849,7 +1860,7 @@ retry:;
 		 * LDAP_COMPARE_{TRUE|FALSE}) */
 		default:
 			/* only touch when activity actually took place... */
-			if ( li->li_idle_timeout && lc ) {
+			if ( li->li_idle_timeout ) {
 				lc->lc_time = op->o_time;
 			}
 

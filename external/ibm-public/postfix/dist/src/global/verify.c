@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -70,14 +70,11 @@
 #include <sys_defs.h>
 #include <string.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
 #include <vstring.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -107,8 +104,9 @@ int     verify_append(const char *queue_id, MSG_STATS *stats,
     if (var_verify_neg_cache || vrfy_stat == DEL_RCPT_STAT_OK) {
 	req_stat = verify_clnt_update(recipient->orig_addr, vrfy_stat,
 				      my_dsn.reason);
-	if (req_stat == VRFY_STAT_OK && strcasecmp(recipient->address,
-						 recipient->orig_addr) != 0)
+	/* Two verify updates for one verify request! */
+	if (req_stat == VRFY_STAT_OK
+	  && strcasecmp_utf8(recipient->address, recipient->orig_addr) != 0)
 	    req_stat = verify_clnt_update(recipient->address, vrfy_stat,
 					  my_dsn.reason);
     } else {

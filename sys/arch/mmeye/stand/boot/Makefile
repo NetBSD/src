@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/01/16 01:15:34 christos Exp $
+#	$NetBSD: Makefile,v 1.4.14.1 2017/04/21 16:53:32 bouyer Exp $
 
 NOMAN=		# defined
 
@@ -12,9 +12,8 @@ PROG=		boot
 SRCS=		entry.S
 SRCS+=		boot.c bootinfo.c clock.c conf.c cons.c devopen.c prf.c tgets.c
 SRCS+=		com.c scif.c wd.c wdc.c
-SRCS+=		vers.c
 
-CLEANFILES+=	vers.c ${PROG}
+CLEANFILES+=	${PROG}
 
 #MMEYE_CPU=	SH3
 MMEYE_CPU=	SH4
@@ -73,9 +72,6 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "mmeye"
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
@@ -85,6 +81,8 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	TOOL_AWK=${TOOL_AWK} TOOL_HEXDUMP=${TOOL_HEXDUMP} \
 	    ${HOST_SH} $(.CURDIR)/deflate.sh ${.TARGET}.bin
 .endif
+
+.include "${S}/conf/newvers_stand.mk"
 
 cleandir distclean: .WAIT cleanlibdir
 

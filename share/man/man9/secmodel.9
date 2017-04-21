@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.20 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: secmodel.9,v 1.20.12.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -56,8 +56,8 @@ and above-super-user restrictions known as
 .Em securelevel )
 while decoupling it easily from the system.
 .Pp
-It is possible to modify the security model -- either slightly or using an
-entirely different model -- by attaching/detaching
+It is possible to modify the security model \(em either slightly or
+using an entirely different model \(em by attaching/detaching
 .Xr kauth 9
 listeners.
 This can be done via the
@@ -296,7 +296,7 @@ security model, even if it would allow the request, it could still be denied.
 .It
 If you attach this listener as the only listener for the network scope,
 there are many other requests that will be deferred and, eventually,
-denied -- which may not be desired.
+denied \(em which may not be desired.
 .El
 .Pp
 That's why before implementing listeners, it should be clear whether they
@@ -321,8 +321,8 @@ locks.
 This is a requirement from kernel code to allow designing security models
 where the request should be dispatched to userspace or a different host.
 .It
-Private listener data -- such as internal data-structures -- is entirely
-under the responsibility of the developer.
+Private listener data \(em such as internal data structures \(em is
+entirely under the responsibility of the developer.
 Locking, synchronization, and garbage collection are all things that
 .Xr kauth 9
 does

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.144 2016/07/14 05:00:51 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.144.4.1 2017/04/21 16:53:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -480,15 +480,21 @@ vtophys(vaddr_t va)
 extern int pmap_needs_pte_sync;
 #if defined(_KERNEL_OPT)
 /*
+ * Perform compile time evaluation of PMAP_NEEDS_PTE_SYNC when only a
+ * single MMU type is selected.
+ *
  * StrongARM SA-1 caches do not have a write-through mode.  So, on these,
- * we need to do PTE syncs.  If only SA-1 is configured, then evaluate
- * this at compile time.
+ * we need to do PTE syncs. Additionally, V6 MMUs also need PTE syncs.
+ * Finally, MEMC, GENERIC and XSCALE MMUs do not need PTE syncs.
+ *
+ * Use run time evaluation for all other cases.
+ * 
  */
-#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0) && (ARM_NMMUS == 1)
+#if (ARM_NMMUS == 1)
+#if (ARM_MMU_SA1 + ARM_MMU_V6 != 0)
 #define	PMAP_INCLUDE_PTE_SYNC
-#if (ARM_MMU_V6 > 0)
 #define	PMAP_NEEDS_PTE_SYNC	1
-#elif (ARM_MMU_SA1 == 0)
+#elif (ARM_MMU_MEMC + ARM_MMU_GENERIC + ARM_MMU_XSCALE != 0)
 #define	PMAP_NEEDS_PTE_SYNC	0
 #endif
 #endif

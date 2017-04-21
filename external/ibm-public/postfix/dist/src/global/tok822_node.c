@@ -1,4 +1,4 @@
-/*	$NetBSD: tok822_node.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: tok822_node.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -76,6 +76,6 @@ TOK822 *tok822_free(TOK822 *tp)
 {
     if (tp->vstr)
 	vstring_free(tp->vstr);
-    myfree((char *) tp);
+    myfree((void *) tp);
     return (0);
 }

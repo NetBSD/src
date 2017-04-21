@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.3 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.3.10.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -34,6 +34,8 @@
 /*	int	lflags;
 /*	unsigned *ltype;
 /* AUXILIARY FUNCTIONS
+/*	extern int var_dns_ncache_ttl_fix;
+/*
 /*	int	dns_lookup_r(name, type, rflags, list, fqdn, why, rcode)
 /*	const char *name;
 /*	unsigned type;
@@ -64,6 +66,16 @@
 /*	int	*rcode;
 /*	int	lflags;
 /*	unsigned *ltype;
+/*
+/*	int	dns_lookup_x(name, type, rflags, list, fqdn, why, rcode, lflags)
+/*	const char *name;
+/*	unsigned type;
+/*	unsigned rflags;
+/*	DNS_RR	**list;
+/*	VSTRING *fqdn;
+/*	VSTRING *why;
+/*	int	*rcode;
+/*	unsigned lflags;
 /* DESCRIPTION
 /*	dns_lookup() looks up DNS resource records. When requested to
 /*	look up data other than type CNAME, it will follow a limited
@@ -76,8 +88,14 @@
 /*	dns_lookup_l() and dns_lookup_v() allow the user to specify
 /*	a list of resource types.
 /*
-/*	dns_lookup_r(), dns_lookup_rl() and dns_lookup_rv() provide
-/*	additional information.
+/*	dns_lookup_x, dns_lookup_r(), dns_lookup_rl() and dns_lookup_rv()
+/*	accept or return additional information.
+/*
+/*	The var_dns_ncache_ttl_fix variable controls a workaround
+/*	for res_search(3) implementations that break the
+/*	DNS_REQ_FLAG_NCACHE_TTL feature. The workaround does not
+/*	support EDNS0 or DNSSEC, but it should be sufficient for
+/*	DNSBL/DNSWL lookups.
 /* INPUTS
 /* .ad
 /* .fi
@@ -102,18 +120,33 @@
 /*	implement DNSSEC.
 /* .RE
 /* .IP lflags
-/*	Multi-type request control for dns_lookup_l() and dns_lookup_v().
-/*	For convenience, DNS_REQ_FLAG_NONE requests no special
-/*	processing. Invoke dns_lookup() for all specified resource
-/*	record types in the specified order, and merge their results.
+/*	Flags that control the operation of the dns_lookup*()
+/*	functions.  DNS_REQ_FLAG_NONE requests no special processing.
 /*	Otherwise, specify one or more of the following:
 /* .RS
 /* .IP DNS_REQ_FLAG_STOP_INVAL
+/*	This flag is used by dns_lookup_l() and dns_lookup_v().
 /*	Invoke dns_lookup() for the resource types in the order as
 /*	specified, and return when dns_lookup() returns DNS_INVAL.
+/* .IP DNS_REQ_FLAG_STOP_NULLMX
+/*	This flag is used by dns_lookup_l() and dns_lookup_v().
+/*	Invoke dns_lookup() for the resource types in the order as
+/*	specified, and return when dns_lookup() returns DNS_NULLMX.
+/* .IP DNS_REQ_FLAG_STOP_MX_POLICY
+/*	This flag is used by dns_lookup_l() and dns_lookup_v().
+/*	Invoke dns_lookup() for the resource types in the order as
+/*	specified, and return when dns_lookup() returns DNS_POLICY
+/*	for an MX query.
 /* .IP DNS_REQ_FLAG_STOP_OK
+/*	This flag is used by dns_lookup_l() and dns_lookup_v().
 /*	Invoke dns_lookup() for the resource types in the order as
 /*	specified, and return when dns_lookup() returns DNS_OK.
+/* .IP DNS_REQ_FLAG_NCACHE_TTL
+/*	When the lookup result status is DNS_NOTFOUND, return the
+/*	SOA record(s) from the authority section in the reply, if
+/*	available. The per-record reply TTL specifies how long the
+/*	DNS_NOTFOUND answer is valid. The caller should pass the
+/*	record(s) to dns_rr_free().
 /* .RE
 /* .IP ltype
 /*	The resource record types to be looked up. In the case of
@@ -139,8 +172,16 @@
 /*	\fIwhy\fR argument accordingly:
 /* .IP DNS_OK
 /*	The DNS query succeeded.
+/* .IP DNS_POLICY
+/*	The DNS query succeeded, but the answer did not pass the
+/*	policy filter.
 /* .IP DNS_NOTFOUND
 /*	The DNS query succeeded; the requested information was not found.
+/* .IP DNS_NULLMX
+/*	The DNS query succeeded; the requested service is unavailable.
+/*	This is returned when the list argument is not a null
+/*	pointer, and an MX lookup result contains a null server
+/*	name (so-called "nullmx" record).
 /* .IP DNS_INVAL
 /*	The DNS query succeeded; the result failed the valid_hostname() test.
 /*
@@ -173,6 +214,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -190,8 +236,13 @@
 #include <valid_hostname.h>
 #include <stringops.h>
 
+/* Global library. */
+
+#include <mail_params.h>
+
 /* DNS library. */
 
+#define LIBDNS_INTERNAL
 #include "dns.h"
 
 /* Local stuff. */
@@ -201,6 +252,7 @@
   */
 #define DEF_DNS_REPLY_SIZE	4096	/* in case we're using TCP */
 #define MAX_DNS_REPLY_SIZE	65536	/* in case we're using TCP */
+#define MAX_DNS_QUERY_SIZE	2048	/* XXX */
 
 typedef struct DNS_REPLY {
     unsigned char *buf;			/* raw reply data */
@@ -209,15 +261,23 @@ typedef struct DNS_REPLY {
     int     dnssec_ad;			/* DNSSEC AD bit */
     int     query_count;		/* number of queries */
     int     answer_count;		/* number of answers */
+    int     auth_count;			/* number of authority records */
     unsigned char *query_start;		/* start of query data */
     unsigned char *answer_start;	/* start of answer data */
     unsigned char *end;			/* first byte past reply */
 } DNS_REPLY;
 
+ /*
+  * Test/set primitives to determine if the reply buffer contains a server
+  * response. We use this when the caller requests DNS_REQ_FLAG_NCACHE_TTL,
+  * and the DNS server replies that the requested record does not exist.
+  */
+#define TEST_HAVE_DNS_REPLY_PACKET(r)	((r)->end > (r)->buf)
+#define SET_HAVE_DNS_REPLY_PACKET(r, l)	((r)->end = (r)->buf + (l))
+#define SET_NO_DNS_REPLY_PACKET(r)	((r)->end = (r)->buf)
+
 #define INET_ADDR_LEN	4		/* XXX */
 #define INET6_ADDR_LEN	16		/* XXX */
-
-/* dns_query - query name server and pre-parse the reply */
 
 #if __RES < 20030124
 
@@ -240,16 +300,158 @@ res_nsearch(res_state statp, const char *dname, int class, int type,
 	return res_search(dname, class, type, answer, anslen);
 }
 
+
+static int
+res_nmkquery(res_state statp, int op, const char *dname, int class,
+    int type, const u_char *data, int datalen, const u_char *newrr,
+    u_char *buf, int buflen)
+{
+	return res_mkquery(op, dname, class, type, data, datalen, newrr,
+	    buf, buflen);
+}
+
 #endif
 
-static int dns_query(const char *name, int type, int flags,
-		             DNS_REPLY *reply, VSTRING *why)
+ /*
+  * To improve postscreen's whitelisting support, we need to know how long a
+  * DNSBL "not found" answer is valid. The 2010 implementation assumed it was
+  * valid for 3600 seconds. That is too long by 2015 standards.
+  * 
+  * Instead of guessing, Postfix 3.1 and later implement RFC 2308 (DNS NCACHE),
+  * where a DNS server provides the TTL of a "not found" response as the TTL
+  * of an SOA record in the authority section.
+  * 
+  * Unfortunately, the res_search() and res_query() API gets in the way. These
+  * functions overload their result value, the server reply length, and
+  * return -1 when the requested record does not exist. With libbind-based
+  * implementations, the server response is still available in an application
+  * buffer, thanks to the promise that res_query() and res_search() invoke
+  * res_send(), which returns the full server response even if the requested
+  * record does not exist.
+  * 
+  * If this promise is broken (for example, res_search() does not call
+  * res_send(), but some non-libbind implementation that updates the
+  * application buffer only when the requested record exists), then we have a
+  * way out by setting the var_dns_ncache_ttl_fix variable. This enables a
+  * limited res_query() clone that should be sufficient for DNSBL / DNSWL
+  * lookups.
+  * 
+  * The libunbound API does not comingle the reply length and reply status
+  * information, but that will have to wait until it is safe to make
+  * libunbound a mandatory dependency for Postfix.
+  */
+
+/* dns_res_query - a res_query() clone that can return negative replies */
+
+static int dns_res_query(res_state res, const char *name, int class, int type,
+    unsigned char *answer, int anslen)
+{
+    unsigned char msg_buf[MAX_DNS_QUERY_SIZE];
+    HEADER *reply_header = (HEADER *) answer;
+    int     len;
+
+    /*
+     * Differences with res_query() from libbind:
+     * 
+     * - This function returns a positive server reply length not only in case
+     * of success, but in all cases where a server reply is available that
+     * passes the preliminary checks in res_send().
+     * 
+     * - This function clears h_errno in case of success. The caller must use
+     * h_errno instead of the return value to decide if the lookup was
+     * successful.
+     * 
+     * - No support for EDNS0 and DNSSEC (including turning off EDNS0 after
+     * error). That should be sufficient for DNS reputation lookups where the
+     * reply contains a small number of IP addresses.  TXT records are out of
+     * scope for this workaround.
+     */
+    reply_header->rcode = NOERROR;
+
+#define NO_MKQUERY_DATA_BUF     ((unsigned char *) 0)
+#define NO_MKQUERY_DATA_LEN     ((int) 0)
+#define NO_MKQUERY_NEWRR        ((unsigned char *) 0)
+
+    if ((len = res_nmkquery(res, QUERY, name, class, type, NO_MKQUERY_DATA_BUF,
+	NO_MKQUERY_DATA_LEN, NO_MKQUERY_NEWRR, msg_buf, sizeof(msg_buf))) < 0) {
+	SET_H_ERRNO(NO_RECOVERY);
+	if (msg_verbose)
+	    msg_info("res_mkquery() failed");
+	return (len);
+    } else if ((len = res_nsend(res, msg_buf, len, answer, anslen)) < 0) {
+	SET_H_ERRNO(TRY_AGAIN);
+	if (msg_verbose)
+	    msg_info("res_send() failed");
+	return (len);
+    } else {
+	switch (reply_header->rcode) {
+	case NXDOMAIN:
+	    SET_H_ERRNO(HOST_NOT_FOUND);
+	    break;
+	case NOERROR:
+	    if (reply_header->ancount != 0)
+		SET_H_ERRNO(0);
+	    else
+		SET_H_ERRNO(NO_DATA);
+	    break;
+	case SERVFAIL:
+	    SET_H_ERRNO(TRY_AGAIN);
+	    break;
+	default:
+	    SET_H_ERRNO(NO_RECOVERY);
+	    break;
+	}
+	return (len);
+    }
+}
+
+/* dns_res_search - res_search() that can return negative replies */
+
+static int dns_res_search(res_state res, const char *name, int class, int type,
+    unsigned char *answer, int anslen, int keep_notfound)
+{
+    int     len;
+
+    /*
+     * Differences with res_search() from libbind:
+     * 
+     * - With a non-zero keep_notfound argument, this function returns a
+     * positive server reply length not only in case of success, but also in
+     * case of a "notfound" reply status. The keep_notfound argument is
+     * usually zero, which allows us to avoid an unnecessary memset() call in
+     * the most common use case.
+     * 
+     * - This function clears h_errno in case of success. The caller must use
+     * h_errno instead of the return value to decide if a lookup was
+     * successful.
+     */
+#define NOT_FOUND_H_ERRNO(he) ((he) == HOST_NOT_FOUND || (he) == NO_DATA)
+
+    if (keep_notfound)
+	/* Prepare for returning a null-padded server reply. */
+	memset(answer, 0, anslen);
+    len = res_nquery(res, name, class, type, answer, anslen);
+    if (len > 0) {
+	SET_H_ERRNO(0);
+    } else if (keep_notfound && NOT_FOUND_H_ERRNO(h_errno)) {
+	/* Expect to return a null-padded server reply. */
+	len = anslen;
+    }
+    return (len);
+}
+
+/* dns_query - query name server and pre-parse the reply */
+
+
+static int dns_query(const char *name, int type, unsigned flags,
+    DNS_REPLY *reply, VSTRING *why, unsigned lflags)
 {
     HEADER *reply_header;
     int     len;
     unsigned long saved_options;
     /* For efficiency, we are not called from multiple threads */
     static struct __res_state res;
+    int     keep_notfound = (lflags & DNS_REQ_FLAG_NCACHE_TTL);
 
     /*
      * Initialize the reply buffer.
@@ -300,12 +502,18 @@ static int dns_query(const char *name, int type, int flags,
     for (;;) {
 	res.options &= ~saved_options;
 	res.options |= flags;
-	len = res_nsearch(&res, name, C_IN, type, reply->buf, reply->buf_len);
+	if (keep_notfound && var_dns_ncache_ttl_fix) {
+	    len = dns_res_query(&res, (char *) name, C_IN, type, reply->buf,
+				reply->buf_len);
+	} else {
+	    len = dns_res_search(&res, (char *) name, C_IN, type, reply->buf,
+				 reply->buf_len, keep_notfound);
+	}
 	res.options &= ~flags;
 	res.options |= saved_options;
 	reply_header = (HEADER *) reply->buf;
 	reply->rcode = reply_header->rcode;
-	if (len < 0) {
+	if (h_errno != 0) {
 	    if (why)
 		vstring_sprintf(why, "Host or domain name not found. "
 				"Name service error for name=%s type=%s: %s",
@@ -318,20 +526,32 @@ static int dns_query(const char *name, int type, int flags,
 		return (DNS_FAIL);
 	    case HOST_NOT_FOUND:
 	    case NO_DATA:
+		if (keep_notfound)
+		    break;
+		SET_NO_DNS_REPLY_PACKET(reply);
 		return (DNS_NOTFOUND);
 	    default:
 		return (DNS_RETRY);
 	    }
+	} else {
+	    if (msg_verbose)
+		msg_info("dns_query: %s (%s): OK", name, dns_strtype(type));
 	}
-	if (msg_verbose)
-	    msg_info("dns_query: %s (%s): OK", name, dns_strtype(type));
 
 	if (reply_header->tc == 0 || reply->buf_len >= MAX_DNS_REPLY_SIZE)
 	    break;
 	reply->buf = (unsigned char *)
-	    myrealloc((char *) reply->buf, 2 * reply->buf_len);
+	    myrealloc((void *) reply->buf, 2 * reply->buf_len);
 	reply->buf_len *= 2;
     }
+
+    /*
+     * Future proofing. If this reaches the panic call, then some code change
+     * introduced a bug.
+     */
+    if (len < 0)
+	msg_panic("dns_query: bad length %d (h_errno=%s)",
+		  len, dns_strerror(h_errno));
 
     /*
      * Paranoia.
@@ -351,12 +571,28 @@ static int dns_query(const char *name, int type, int flags,
 #else
     reply->dnssec_ad = 0;
 #endif
-    reply->end = reply->buf + len;
+    SET_HAVE_DNS_REPLY_PACKET(reply, len);
     reply->query_start = reply->buf + sizeof(HEADER);
     reply->answer_start = 0;
     reply->query_count = ntohs(reply_header->qdcount);
     reply->answer_count = ntohs(reply_header->ancount);
-    return (DNS_OK);
+    reply->auth_count = ntohs(reply_header->nscount);
+    if (msg_verbose > 1)
+	msg_info("dns_query: reply len=%d ancount=%d nscount=%d",
+		 len, reply->answer_count, reply->auth_count);
+
+    /*
+     * Future proofing. If this reaches the panic call, then some code change
+     * introduced a bug.
+     */
+    if (h_errno == 0) {
+	return (DNS_OK);
+    } else if (keep_notfound) {
+	return (DNS_NOTFOUND);
+    } else {
+	msg_panic("dns_query: unexpected reply status: %s",
+		  dns_strerror(h_errno));
+    }
 }
 
 /* dns_skip_query - skip query data in name server reply */
@@ -365,7 +601,6 @@ static int dns_skip_query(DNS_REPLY *reply)
 {
     int     query_count = reply->query_count;
     unsigned char *pos = reply->query_start;
-    char    temp[DNS_NAME_LEN];
     int     len;
 
     /*
@@ -375,7 +610,7 @@ static int dns_skip_query(DNS_REPLY *reply)
     while (query_count-- > 0) {
 	if (pos >= reply->end)
 	    return DNS_RETRY;
-	len = dn_expand(reply->buf, reply->end, pos, temp, DNS_NAME_LEN);
+	len = dn_skipname(pos, reply->end);
 	if (len < 0)
 	    return (DNS_RETRY);
 	pos += len + QFIXEDSZ;
@@ -452,6 +687,8 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
 {
     char    temp[DNS_NAME_LEN];
     char   *tempbuf = temp;
+    UINT32_TYPE soa_buf[5];
+    int     comp_len;
     ssize_t data_len;
     unsigned pref = 0;
     unsigned char *src;
@@ -483,6 +720,9 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
 	GETSHORT(pref, pos);
 	if (dn_expand(reply->buf, reply->end, pos, temp, sizeof(temp)) < 0)
 	    return (DNS_RETRY);
+	/* Don't even think of returning an invalid hostname to the caller. */
+	if (*temp == 0)
+	    return (DNS_NULLMX);		/* TODO: descriptive text */
 	if (!valid_rr_name(temp, "resource data", fixed->type, reply))
 	    return (DNS_INVAL);
 	data_len = strlen(temp) + 1;
@@ -540,6 +780,35 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
 	data_len = fixed->length;
 	tempbuf = (char *) pos;
 	break;
+
+	/*
+	 * We use the SOA record TTL to determine the negative reply TTL. We
+	 * save the time fields in the SOA record for debugging, but for now
+	 * we don't bother saving the source host and mailbox information, as
+	 * that would require changes to the DNS_RR structure and APIs. See
+	 * also code in dns_strrecord().
+	 */
+    case T_SOA:
+	comp_len = dn_skipname(pos, reply->end);
+	if (comp_len < 0)
+	    return (DNS_RETRY);
+	pos += comp_len;
+	comp_len = dn_skipname(pos, reply->end);
+	if (comp_len < 0)
+	    return (DNS_RETRY);
+	pos += comp_len;
+	if (reply->end - pos < sizeof(soa_buf)) {
+	    msg_warn("extract_answer: bad SOA length: %d", fixed->length);
+	    return (DNS_RETRY);
+	}
+	GETLONG(soa_buf[0], pos);		/* Serial */
+	GETLONG(soa_buf[1], pos);		/* Refresh */
+	GETLONG(soa_buf[2], pos);		/* Retry */
+	GETLONG(soa_buf[3], pos);		/* Expire */
+	GETLONG(soa_buf[4], pos);		/* Ncache TTL */
+	tempbuf = (char *) soa_buf;
+	data_len = sizeof(soa_buf);
+	break;
     }
     *list = dns_rr_create(orig_name, rr_name, fixed->type, fixed->class,
 			  fixed->ttl, pref, tempbuf, data_len);
@@ -584,8 +853,6 @@ static int dns_get_answer(const char *orig_name, DNS_REPLY *reply, int type,
 	if ((status = dns_skip_query(reply)) < 0)
 	    return (status);
     pos = reply->answer_start;
-    if (rrlist)
-	*rrlist = 0;
 
     /*
      * Either this, or use a GOTO for emergency exits. The purpose is to
@@ -642,6 +909,8 @@ static int dns_get_answer(const char *orig_name, DNS_REPLY *reply, int type,
 		    resource_found++;
 		    rr->dnssec_valid = *maybe_secure ? reply->dnssec_ad : 0;
 		    *rrlist = dns_rr_append(*rrlist, rr);
+		} else if (status == DNS_NULLMX) {
+		    CORRUPT(status);		/* TODO: use better name */
 		} else if (not_found_status != DNS_RETRY)
 		    not_found_status = status;
 	    } else
@@ -669,11 +938,11 @@ static int dns_get_answer(const char *orig_name, DNS_REPLY *reply, int type,
     return (not_found_status);
 }
 
-/* dns_lookup_r - DNS lookup user interface */
+/* dns_lookup_x - DNS lookup user interface */
 
-int     dns_lookup_r(const char *name, unsigned type, unsigned flags,
+int     dns_lookup_x(const char *name, unsigned type, unsigned flags,
 		             DNS_RR **rrlist, VSTRING *fqdn, VSTRING *why,
-		             int *rcode)
+		             int *rcode, unsigned lflags)
 {
     char    cname[DNS_NAME_LEN];
     int     c_len = sizeof(cname);
@@ -684,6 +953,13 @@ int     dns_lookup_r(const char *name, unsigned type, unsigned flags,
     const char *orig_name = name;
 
     /*
+     * Reset results early. DNS_OK is not the only status that returns
+     * resource records; DNS_NOTFOUND will do that too, if requested.
+     */
+    if (rrlist)
+	*rrlist = 0;
+
+    /*
      * DJBDNS produces a bogus A record when given a numerical hostname.
      */
     if (valid_hostaddr(name, DONT_GRIPE)) {
@@ -691,6 +967,8 @@ int     dns_lookup_r(const char *name, unsigned type, unsigned flags,
 	    vstring_sprintf(why,
 		   "Name service error for %s: invalid host or domain name",
 			    name);
+	if (rcode)
+	    *rcode = NXDOMAIN;
 	SET_H_ERRNO(HOST_NOT_FOUND);
 	return (DNS_NOTFOUND);
     }
@@ -703,6 +981,8 @@ int     dns_lookup_r(const char *name, unsigned type, unsigned flags,
 	    vstring_sprintf(why,
 		   "Name service error for %s: invalid host or domain name",
 			    name);
+	if (rcode)
+	    *rcode = NXDOMAIN;
 	SET_H_ERRNO(HOST_NOT_FOUND);
 	return (DNS_NOTFOUND);
     }
@@ -716,11 +996,25 @@ int     dns_lookup_r(const char *name, unsigned type, unsigned flags,
 	/*
 	 * Perform the DNS lookup, and pre-parse the name server reply.
 	 */
-	status = dns_query(name, type, flags, &reply, why);
+	status = dns_query(name, type, flags, &reply, why, lflags);
 	if (rcode)
 	    *rcode = reply.rcode;
-	if (status != DNS_OK)
+	if (status != DNS_OK) {
+
+	    /*
+	     * If the record does not exist, and we have a copy of the server
+	     * response, try to extract the negative caching TTL for the SOA
+	     * record in the authority section. DO NOT return an error if an
+	     * SOA record is malformed.
+	     */
+	    if (status == DNS_NOTFOUND && TEST_HAVE_DNS_REPLY_PACKET(&reply)
+		&& reply.auth_count > 0) {
+		reply.answer_count = reply.auth_count;	/* XXX TODO: Fix API */
+		(void) dns_get_answer(orig_name, &reply, T_SOA, rrlist, fqdn,
+				      cname, c_len, &maybe_secure);
+	    }
 	    return (status);
+	}
 
 	/*
 	 * Extract resource records of the requested type. Pick up CNAME
@@ -734,8 +1028,33 @@ int     dns_lookup_r(const char *name, unsigned type, unsigned flags,
 		vstring_sprintf(why, "Name service error for name=%s type=%s: "
 				"Malformed or unexpected name server reply",
 				name, dns_strtype(type));
-	    /* FALLTHROUGH */
+	    return (status);
+	case DNS_NULLMX:
+	    if (why)
+		vstring_sprintf(why, "Domain %s does not accept mail (nullMX)",
+				name);
+	    SET_H_ERRNO(NO_DATA);
+	    return (status);
 	case DNS_OK:
+	    if (rrlist && dns_rr_filter_maps) {
+		if (dns_rr_filter_execute(rrlist) < 0) {
+		    if (why)
+			vstring_sprintf(why,
+					"Error looking up name=%s type=%s: "
+					"Invalid DNS reply filter syntax",
+					name, dns_strtype(type));
+		    dns_rr_free(*rrlist);
+		    *rrlist = 0;
+		    status = DNS_RETRY;
+		} else if (*rrlist == 0) {
+		    if (why)
+			vstring_sprintf(why,
+					"Error looking up name=%s type=%s: "
+					"DNS reply filter drops all results",
+					name, dns_strtype(type));
+		    status = DNS_POLICY;
+		}
+	    }
 	    return (status);
 	case DNS_RECURSE:
 	    if (msg_verbose)
@@ -766,37 +1085,73 @@ int     dns_lookup_rl(const char *name, unsigned flags, DNS_RR **rrlist,
 		              int lflags,...)
 {
     va_list ap;
-    unsigned type;
+    unsigned type, next;
     int     status = DNS_NOTFOUND;
+    int     hpref_status = INT_MIN;
+    VSTRING *hpref_rtext = 0;
+    int     hpref_rcode;
+    int     hpref_h_errno;
     DNS_RR *rr;
-    int     non_err = 0;
-    int     soft_err = 0;
+
+    /* Save intermediate highest-priority result. */
+#define SAVE_HPREF_STATUS() do { \
+	hpref_status = status; \
+	if (rcode) \
+	    hpref_rcode = *rcode; \
+	if (why && status != DNS_OK) \
+	    vstring_strcpy(hpref_rtext ? hpref_rtext : \
+			   (hpref_rtext = vstring_alloc(VSTRING_LEN(why))), \
+			   vstring_str(why)); \
+	hpref_h_errno = h_errno; \
+    } while (0)
+
+    /* Restore intermediate highest-priority result. */
+#define RESTORE_HPREF_STATUS() do { \
+	status = hpref_status; \
+	if (rcode) \
+	    *rcode = hpref_rcode; \
+	if (why && status != DNS_OK) \
+	    vstring_strcpy(why, vstring_str(hpref_rtext)); \
+	SET_H_ERRNO(hpref_h_errno); \
+    } while (0)
 
     if (rrlist)
 	*rrlist = 0;
     va_start(ap, lflags);
-    while ((type = va_arg(ap, unsigned)) != 0) {
+    for (type = va_arg(ap, unsigned); type != 0; type = next) {
+	next = va_arg(ap, unsigned);
 	if (msg_verbose)
 	    msg_info("lookup %s type %s flags %d",
 		     name, dns_strtype(type), flags);
-	status = dns_lookup_r(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
-			      fqdn, why, rcode);
+	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
+			      fqdn, why, rcode, lflags);
+	if (rrlist && rr)
+	    *rrlist = dns_rr_append(*rrlist, rr);
 	if (status == DNS_OK) {
-	    non_err = 1;
-	    if (rrlist)
-		*rrlist = dns_rr_append(*rrlist, rr);
 	    if (lflags & DNS_REQ_FLAG_STOP_OK)
 		break;
 	} else if (status == DNS_INVAL) {
 	    if (lflags & DNS_REQ_FLAG_STOP_INVAL)
 		break;
-	} else if (status == DNS_RETRY) {
-	    soft_err = 1;
+	} else if (status == DNS_POLICY) {
+	    if (type == T_MX && (lflags & DNS_REQ_FLAG_STOP_MX_POLICY))
+		break;
+	} else if (status == DNS_NULLMX) {
+	    if (lflags & DNS_REQ_FLAG_STOP_NULLMX)
+		break;
 	}
 	/* XXX Stop after NXDOMAIN error. */
+	if (next == 0)
+	    break;
+	if (status >= hpref_status)
+	    SAVE_HPREF_STATUS();		/* save last info */
     }
     va_end(ap);
-    return (non_err ? DNS_OK : soft_err ? DNS_RETRY : status);
+    if (status < hpref_status)
+	RESTORE_HPREF_STATUS();			/* else report last info */
+    if (hpref_rtext)
+	vstring_free(hpref_rtext);
+    return (status);
 }
 
 /* dns_lookup_rv - DNS lookup interface with types vector */
@@ -805,33 +1160,47 @@ int     dns_lookup_rv(const char *name, unsigned flags, DNS_RR **rrlist,
 		              VSTRING *fqdn, VSTRING *why, int *rcode,
 		              int lflags, unsigned *types)
 {
-    unsigned type;
+    unsigned type, next;
     int     status = DNS_NOTFOUND;
+    int     hpref_status = INT_MIN;
+    VSTRING *hpref_rtext = 0;
+    int     hpref_rcode;
+    int     hpref_h_errno;
     DNS_RR *rr;
-    int     non_err = 0;
-    int     soft_err = 0;
 
     if (rrlist)
 	*rrlist = 0;
-    while ((type = *types++) != 0) {
+    for (type = *types++; type != 0; type = next) {
+	next = *types++;
 	if (msg_verbose)
 	    msg_info("lookup %s type %s flags %d",
 		     name, dns_strtype(type), flags);
-	status = dns_lookup_r(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
-			      fqdn, why, rcode);
+	status = dns_lookup_x(name, type, flags, rrlist ? &rr : (DNS_RR **) 0,
+			      fqdn, why, rcode, lflags);
+	if (rrlist && rr)
+	    *rrlist = dns_rr_append(*rrlist, rr);
 	if (status == DNS_OK) {
-	    non_err = 1;
-	    if (rrlist)
-		*rrlist = dns_rr_append(*rrlist, rr);
 	    if (lflags & DNS_REQ_FLAG_STOP_OK)
 		break;
 	} else if (status == DNS_INVAL) {
 	    if (lflags & DNS_REQ_FLAG_STOP_INVAL)
 		break;
-	} else if (status == DNS_RETRY) {
-	    soft_err = 1;
+	} else if (status == DNS_POLICY) {
+	    if (type == T_MX && (lflags & DNS_REQ_FLAG_STOP_MX_POLICY))
+		break;
+	} else if (status == DNS_NULLMX) {
+	    if (lflags & DNS_REQ_FLAG_STOP_NULLMX)
+		break;
 	}
 	/* XXX Stop after NXDOMAIN error. */
+	if (next == 0)
+	    break;
+	if (status >= hpref_status)
+	    SAVE_HPREF_STATUS();		/* save last info */
     }
-    return (non_err ? DNS_OK : soft_err ? DNS_RETRY : status);
+    if (status < hpref_status)
+	RESTORE_HPREF_STATUS();			/* else report last info */
+    if (hpref_rtext)
+	vstring_free(hpref_rtext);
+    return (status);
 }

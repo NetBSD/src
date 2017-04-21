@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2016/12/15 12:04:17 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.88.2.1 2017/04/21 16:53:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2016/12/15 12:04:17 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88.2.1 2017/04/21 16:53:21 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -154,7 +154,7 @@ int	trapdebug = 0;
 #define	IDTVEC(name)	__CONCAT(X, name)
 
 #ifdef TRAP_SIGDEBUG
-static void frame_dump(struct trapframe *);
+static void frame_dump(struct trapframe *, struct pcb *);
 #endif
 
 static void *
@@ -194,8 +194,8 @@ trap_print(const struct trapframe *frame, const lwp_t *l)
 	}
 	printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 
-	printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 %lx "
-	    "ilevel %x rsp %lx\n",
+	printf("trap type %d code %#lx rip %#lx cs %#lx rflags %#lx cr2 %#lx "
+	    "ilevel %#x rsp %#lx\n",
 	    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
 	    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 
@@ -222,7 +222,6 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	struct pcb *pcb;
 	extern char fusuintrfailure[], kcopy_fault[];
-	extern char IDTVEC(oosyscall)[];
 	extern char IDTVEC(osyscall)[];
 	extern char IDTVEC(syscall32)[];
 #ifndef XEN
@@ -301,6 +300,7 @@ trap(struct trapframe *frame)
 	case T_PROTFLT:
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
+	case T_STKFLT:
 	case T_TSSFLT:
 		if (p == NULL)
 			goto we_re_toast;
@@ -373,6 +373,10 @@ kernelfault:
 			break;
 		case 0x848e:	/* mov 0xa8(%rsp),%es (8e 84 24 a8 00 00 00) */
 		case 0x9c8e:	/* mov 0xb0(%rsp),%ds (8e 9c 24 b0 00 00 00) */
+#ifdef USER_LDT
+		case 0xa48e:	/* mov 0xa0(%rsp),%fs (8e a4 24 a0 00 00 00) */
+		case 0xac8e:	/* mov 0x98(%rsp),%gs (8e ac 24 98 00 00 00) */
+#endif
 			/*
 			 * We faulted loading one of the user segment registers.
 			 * The stack frame containing the user registers is
@@ -404,9 +408,9 @@ kernelfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): BUS/SEGV (%x) at rip %lx addr %lx\n",
+		printf("pid %d.%d (%s): BUS/SEGV (%#x) at rip %#lx addr %#lx\n",
 		    p->p_pid, l->l_lid, p->p_comm, type, frame->tf_rip, rcr2());
-		frame_dump(frame);
+		frame_dump(frame, pcb);
 #endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type & ~T_USER;
@@ -438,9 +442,9 @@ kernelfault:
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 #ifdef TRAP_SIGDEBUG
-		printf("pid %d.%d (%s): ILL at rip %lx addr %lx\n",
+		printf("pid %d.%d (%s): ILL at rip %#lx addr %#lx\n",
 		    p->p_pid, l->l_lid, p->p_comm, frame->tf_rip, rcr2());
-		frame_dump(frame);
+		frame_dump(frame, pcb);
 #endif
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGILL;
@@ -666,7 +670,7 @@ faultcommon:
 		    "error %d trap %d cr2 %p\n", p->p_pid, l->l_lid, p->p_comm,
 		    ksi.ksi_signo, frame->tf_rip, va, error, ksi.ksi_trap,
 		    ksi.ksi_addr);
-		frame_dump(frame);
+		frame_dump(frame, pcb);
 #endif
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		break;
@@ -683,12 +687,11 @@ faultcommon:
 		 * in kernel space because that is useful when
 		 * debugging the kernel.
 		 */
-		if (user_trap_x86_hw_watchpoint())
+		if (x86_dbregs_user_trap())
 			break;
 
 		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
-		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
+		if (frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
 		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
 			frame->tf_rflags &= ~PSL_T;
 			return;
@@ -706,7 +709,10 @@ faultcommon:
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = type & ~T_USER;
-			if (type == (T_BPTFLT|T_USER))
+			if (x86_dbregs_user_trap()) {
+				x86_dbregs_store_dr6(l);
+				ksi.ksi_code = TRAP_DBREG;
+			} else if (type == (T_BPTFLT|T_USER))
 				ksi.ksi_code = TRAP_BRKPT;
 			else
 				ksi.ksi_code = TRAP_TRACE;
@@ -756,32 +762,36 @@ startlwp(void *arg)
 }
 
 #ifdef TRAP_SIGDEBUG
-static void
-frame_dump(struct trapframe *tf)
+void
+frame_dump(struct trapframe *tf, struct pcb *pcb)
 {
 	int i;
 	unsigned long *p;
 
-	printf("rip %p  rsp %p  rfl %p\n",
-	    (void *)tf->tf_rip, (void *)tf->tf_rsp, (void *)tf->tf_rflags);
-	printf("rdi %p  rsi %p  rdx %p\n",
-	    (void *)tf->tf_rdi, (void *)tf->tf_rsi, (void *)tf->tf_rdx);
-	printf("rcx %p  r8  %p  r9  %p\n",
-	    (void *)tf->tf_rcx, (void *)tf->tf_r8, (void *)tf->tf_r9);
-	printf("r10 %p  r11 %p  r12 %p\n",
-	    (void *)tf->tf_r10, (void *)tf->tf_r11, (void *)tf->tf_r12);
-	printf("r13 %p  r14 %p  r15 %p\n",
-	    (void *)tf->tf_r13, (void *)tf->tf_r14, (void *)tf->tf_r15);
-	printf("rbp %p  rbx %p  rax %p\n",
-	    (void *)tf->tf_rbp, (void *)tf->tf_rbx, (void *)tf->tf_rax);
-	printf("cs %lx  ds %lx  es %lx  fs %lx  gs %lx  ss %lx\n",
+	printf("trapframe %p\n", tf);
+	printf("rip 0x%016lx  rsp 0x%016lx  rfl 0x%016lx\n",
+	    tf->tf_rip, tf->tf_rsp, tf->tf_rflags);
+	printf("rdi 0x%016lx  rsi 0x%016lx  rdx 0x%016lx\n",
+	    tf->tf_rdi, tf->tf_rsi, tf->tf_rdx);
+	printf("rcx 0x%016lx  r8  0x%016lx  r9  0x%016lx\n",
+	    tf->tf_rcx, tf->tf_r8, tf->tf_r9);
+	printf("r10 0x%016lx  r11 0x%016lx  r12 0x%016lx\n",
+	    tf->tf_r10, tf->tf_r11, tf->tf_r12);
+	printf("r13 0x%016lx  r14 0x%016lx  r15 0x%016lx\n",
+	    tf->tf_r13, tf->tf_r14, tf->tf_r15);
+	printf("rbp 0x%016lx  rbx 0x%016lx  rax 0x%016lx\n",
+	    tf->tf_rbp, tf->tf_rbx, tf->tf_rax);
+	printf("cs 0x%04lx  ds 0x%04lx  es 0x%04lx  "
+	       "fs 0x%04lx  gs 0x%04lx  ss 0x%04lx\n",
 		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
 		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
-
+	printf("fsbase 0x%016lx gsbase 0x%016lx\n",
+	       pcb->pcb_fs, pcb->pcb_gs);
 	printf("\n");
 	printf("Stack dump:\n");
 	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)
-		printf("   0x%.16lx  0x%.16lx  0x%.16lx 0x%.16lx\n", *p, p[1], p[2], p[3]);
+		printf(" 0x%.16lx  0x%.16lx  0x%.16lx  0x%.16lx\n",
+		       p[0], p[1], p[2], p[3]);
 	printf("\n");
 }
 #endif

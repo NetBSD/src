@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1150.2.2 2017/04/17 20:48:36 bouyer Exp $
+# $NetBSD: mi,v 1.1150.2.3 2017/04/21 16:51:13 bouyer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -150,22 +150,33 @@
 ./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root
 ./libdata/firmware/if_iwm			base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-3160-ucode	base-firmware-root
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-3168-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-7260-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-7265-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-8000-ucode	base-firmware-root
+./libdata/firmware/if_iwm/LICENSE.iwlwifi-8265-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-3160-ucode	base-firmware-root
+./libdata/firmware/if_iwm/README.iwlwifi-3168-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-7260-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-7265-ucode	base-firmware-root
 ./libdata/firmware/if_iwm/README.iwlwifi-8000-ucode	base-firmware-root
-./libdata/firmware/if_iwm/iwlwifi-3160-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/README.iwlwifi-8265-ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-3160-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-3160-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-3160-9.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-3168-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7260-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-7260-9.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7265-17.ucode	base-firmware-root
 ./libdata/firmware/if_iwm/iwlwifi-7265-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-obsolete	obsolete
-./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-firmware-root
-./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-7265D-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-obsolete	obsolete
+./libdata/firmware/if_iwm/iwlwifi-8000C-22.ucode	base-firmware-root
+./libdata/firmware/if_iwm/iwlwifi-8265-22.ucode	base-firmware-root
 ./libdata/firmware/if_iwn			base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root
@@ -811,6 +822,7 @@
 ./usr/bin/mset					base-obsolete		obsolete
 ./usr/bin/msgs					base-util-bin
 ./usr/bin/nbsvtool				base-crypto-bin		crypto
+./usr/bin/nc					base-netutil-bin
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netpgp				base-crypto-bin		crypto
 ./usr/bin/netpgpkeys				base-crypto-bin		crypto
@@ -1224,6 +1236,7 @@
 ./usr/lib/lua/5.1				base-obsolete		obsolete
 ./usr/lib/lua/5.3				base-sys-usr		compatfile
 ./usr/lib/npf					base-obsolete		obsolete
+./usr/lib/postfix				base-postfix-usr
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -1593,6 +1606,7 @@
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-obsolete		obsolete
+./usr/sbin/bta2dpd				base-sysutil-bin
 ./usr/sbin/btattach				base-sysutil-bin
 ./usr/sbin/btconfig				base-sysutil-bin
 ./usr/sbin/btcontrol				base-obsolete		obsolete
@@ -2186,6 +2200,7 @@
 ./usr/share/examples/npf/l2tp_gw-npf.conf	base-netutil-examples   share
 ./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples   share
 ./usr/share/examples/npf/treetablefile		base-netutil-examples   share
+./usr/share/examples/nsd			base-netutil-examples   share
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/pf				base-netutil-examples
 ./usr/share/examples/postfix			base-postfix-examples
@@ -2209,6 +2224,7 @@
 ./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	share
 ./usr/share/examples/wsmoused			base-sysutil-examples
 ./usr/share/examples/wsmoused/wsmoused.conf	base-sysutil-examples	share
+./usr/share/examples/unbound			base-netutil-examples   share
 ./usr/share/games				base-games-share
 ./usr/share/games/atc				base-games-share
 ./usr/share/games/boggle			base-games-share
@@ -5407,6 +5423,7 @@
 ./usr/share/zoneinfo/America/Porto_Acre		base-sys-share		share
 ./usr/share/zoneinfo/America/Porto_Velho	base-sys-share		share
 ./usr/share/zoneinfo/America/Puerto_Rico	base-sys-share		share
+./usr/share/zoneinfo/America/Punta_Arenas	base-sys-share		share
 ./usr/share/zoneinfo/America/Rainy_River	base-sys-share		share
 ./usr/share/zoneinfo/America/Rankin_Inlet	base-sys-share		share
 ./usr/share/zoneinfo/America/Recife		base-sys-share		share

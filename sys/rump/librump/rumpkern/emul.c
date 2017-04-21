@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.180 2016/12/22 16:05:15 cherry Exp $	*/
+/*	$NetBSD: emul.c,v 1.180.2.1 2017/04/21 16:54:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,11 +26,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.180 2016/12/22 16:05:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.180.2.1 2017/04/21 16:54:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/reboot.h>
@@ -239,6 +240,25 @@ rump_delay(unsigned int us)
 void (*delay_func)(unsigned int) = rump_delay;
 __strong_alias(delay,rump_delay);
 __strong_alias(_delay,rump_delay);
+
+/* Weak aliases for fstrans to be used unless librumpvfs is present. */
+
+int rump__fstrans_start(struct mount *, enum fstrans_lock_type, int);
+int
+rump__fstrans_start(struct mount *mp, enum fstrans_lock_type lock, int wait)
+{
+
+	return 0;
+}
+__weak_alias(_fstrans_start,rump__fstrans_start);
+
+void rump_fstrans_done(struct mount *);
+void
+rump_fstrans_done(struct mount *mp)
+{
+
+}
+__weak_alias(fstrans_done,rump_fstrans_done);
 
 /*
  * Provide weak aliases for tty routines used by printf.

@@ -1,9 +1,9 @@
-/*	$NetBSD: attrs.h,v 1.1.1.2 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: attrs.h,v 1.1.1.2.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /*
    attrs.h - wrapper macros for the gcc __attribute__(()) directive
 
-   Copyright (C) 2007, 2008 Arthur de Jong
+   Copyright (C) 2007, 2008, 2012 Arthur de Jong
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@
 #define COMPAT__ATTRS_H 1
 
 /* macro for testing the version of GCC */
-#define GCC_VERSION(major,minor) \
+#define GCC_VERSION(major, minor)                                           \
   ((__GNUC__ > (major)) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor)))
 
 /* These are macros to use some gcc-specific flags in case the're available
@@ -36,7 +36,7 @@
 
 /* this is used to flag function parameters that are not used in the function
    body. */
-#if GCC_VERSION(3,0)
+#if GCC_VERSION(3, 0)
 #define UNUSED(x)   x __attribute__((__unused__))
 #else
 #define UNUSED(x)   x
@@ -44,16 +44,16 @@
 
 /* this is used to add extra format checking to the function calls as if this
    was a printf()-like function */
-#if GCC_VERSION(3,0)
-#define LIKE_PRINTF(format_idx,arg_idx) \
-                    __attribute__((__format__(__printf__,format_idx,arg_idx)))
+#if GCC_VERSION(3, 0)
+#define LIKE_PRINTF(format_idx, arg_idx)                                    \
+                    __attribute__((__format__(__printf__, format_idx, arg_idx)))
 #else
-#define LIKE_PRINTF(format_idx,arg_idx) /* no attribute */
+#define LIKE_PRINTF(format_idx, arg_idx) /* no attribute */
 #endif
 
-/* indicates that the function is "pure": it's result is purely based on
+/* indicates that the function is "pure": its result is purely based on
    the parameters and has no side effects or used static data */
-#if GCC_VERSION(3,0)
+#if GCC_VERSION(3, 0)
 #define PURE        __attribute__((__pure__))
 #else
 #define PURE        /* no attribute */
@@ -61,21 +61,21 @@
 
 /* the function returns a new data structure that has been freshly
    allocated */
-#if GCC_VERSION(3,0)
+#if GCC_VERSION(3, 0)
 #define LIKE_MALLOC __attribute__((__malloc__))
 #else
 #define LIKE_MALLOC /* no attribute */
 #endif
 
 /* the function's return value should be used by the caller */
-#if GCC_VERSION(3,4)
+#if GCC_VERSION(3, 4)
 #define MUST_USE    __attribute__((__warn_unused_result__))
 #else
 #define MUST_USE    /* no attribute */
 #endif
 
 /* the function's return value should be used by the caller */
-#if GCC_VERSION(2,5)
+#if GCC_VERSION(2, 5)
 #define NORETURN    __attribute__((__noreturn__))
 #else
 #define NORETURN    /* no attribute */

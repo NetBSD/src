@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient_list.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: recipient_list.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -147,7 +147,7 @@ void    recipient_list_add(RECIPIENT_LIST *list, long offset,
     if (list->len >= list->avail) {
 	new_avail = list->avail * 2;
 	list->info = (RECIPIENT *)
-	    myrealloc((char *) list->info, new_avail * sizeof(RECIPIENT));
+	    myrealloc((void *) list->info, new_avail * sizeof(RECIPIENT));
 	list->avail = new_avail;
     }
     list->info[list->len].orig_addr = mystrdup(orig_rcpt);
@@ -185,9 +185,9 @@ void    recipient_list_free(RECIPIENT_LIST *list)
     RECIPIENT *rcpt;
 
     for (rcpt = list->info; rcpt < list->info + list->len; rcpt++) {
-	myfree((char *) rcpt->dsn_orcpt);
-	myfree((char *) rcpt->orig_addr);
-	myfree((char *) rcpt->address);
+	myfree((void *) rcpt->dsn_orcpt);
+	myfree((void *) rcpt->orig_addr);
+	myfree((void *) rcpt->address);
     }
-    myfree((char *) list->info);
+    myfree((void *) list->info);
 }

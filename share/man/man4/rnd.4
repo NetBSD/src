@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.23 2016/05/06 03:04:14 riastradh Exp $
+.\"	$NetBSD: rnd.4,v 1.23.4.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,7 +120,7 @@ that any computationally bounded attacker who tries to distinguish
 outputs from uniform random cannot do more than negligibly better than
 uniform random guessing.
 .Sh ENTROPY
-The operating system contiuously makes observations of hardware
+The operating system continuously makes observations of hardware
 devices, such as network packet timings, disk seek delays, and
 keystrokes.
 The observations are combined into a seed for a cryptographic
@@ -180,7 +180,7 @@ command queries information about entropy sources and the entropy pool,
 and can control which entropy sources the operating system uses or
 ignores.
 .Pp
-256 bits of entropy is typically considered intractible to guess with
+256 bits of entropy is typically considered intractable to guess with
 classical computers and with current models of the capabilities of
 quantum computers.
 .Pp

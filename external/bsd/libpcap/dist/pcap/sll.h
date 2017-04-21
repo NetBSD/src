@@ -1,4 +1,4 @@
-/*	$NetBSD: sll.h,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+/*	$NetBSD: sll.h,v 1.2.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -125,5 +125,7 @@ struct sll_header {
  */
 #define LINUX_SLL_P_802_3	0x0001	/* Novell 802.3 frames without 802.2 LLC header */
 #define LINUX_SLL_P_802_2	0x0004	/* 802.2 frames (not D/I/X Ethernet) */
+#define LINUX_SLL_P_CAN		0x000C	/* CAN frames, with SocketCAN pseudo-headers */
+#define LINUX_SLL_P_CANFD	0x000D	/* CAN FD frames, with SocketCAN pseudo-headers */
 
 #endif

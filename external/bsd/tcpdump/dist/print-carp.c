@@ -34,14 +34,20 @@
  *
  */
 
-#define NETDISSECT_REWORKED
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-carp.c,v 1.1.1.3.4.1 2017/04/21 16:52:35 bouyer Exp $");
+#endif
+
+/* \summary: Common Address Redundancy Protocol (CARP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h" /* for checksum structure and functions */
+#include "netdissect.h" /* for checksum structure and functions */
 #include "extract.h"
 
 void

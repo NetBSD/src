@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_local.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: resolve_local.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -71,7 +71,8 @@ void    resolve_local_init(void)
     /* Allow on-the-fly update to make testing easier. */
     if (resolve_local_list)
 	string_list_free(resolve_local_list);
-    resolve_local_list = string_list_init(MATCH_FLAG_RETURN, var_mydest);
+    resolve_local_list = string_list_init(VAR_MYDEST, MATCH_FLAG_RETURN,
+					  var_mydest);
 }
 
 /* resolve_local - match domain against list of local destinations */

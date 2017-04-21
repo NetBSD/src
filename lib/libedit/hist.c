@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.30 2016/11/07 15:30:18 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.30.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.30 2016/11/07 15:30:18 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.30.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -102,6 +102,7 @@ hist_get(EditLine *el)
 {
 	const wchar_t *hp;
 	int h;
+	size_t blen, hlen;
 
 	if (el->el_history.eventno == 0) {	/* if really the current line */
 		(void) wcsncpy(el->el_line.buffer, el->el_history.buf,
@@ -127,14 +128,16 @@ hist_get(EditLine *el)
 		return CC_ERROR;
 
 	for (h = 1; h < el->el_history.eventno; h++)
-		if ((hp = HIST_NEXT(el)) == NULL) {
-			el->el_history.eventno = h;
-			return CC_ERROR;
-		}
-	(void) wcsncpy(el->el_line.buffer, hp,
-			(size_t)(el->el_line.limit - el->el_line.buffer));
-	el->el_line.buffer[el->el_line.limit - el->el_line.buffer - 1] = '\0';
-	el->el_line.lastchar = el->el_line.buffer + wcslen(el->el_line.buffer);
+		if ((hp = HIST_NEXT(el)) == NULL)
+			goto out;
+
+	hlen = wcslen(hp) + 1;
+	blen = (size_t)(el->el_line.limit - el->el_line.buffer);
+	if (hlen > blen && !ch_enlargebufs(el, hlen))
+		goto out;
+
+	memcpy(el->el_line.buffer, hp, hlen * sizeof(*hp));
+	el->el_line.lastchar = el->el_line.buffer + hlen - 1;
 
 	if (el->el_line.lastchar > el->el_line.buffer
 	    && el->el_line.lastchar[-1] == '\n')
@@ -150,6 +153,10 @@ hist_get(EditLine *el)
 		el->el_line.cursor = el->el_line.lastchar;
 
 	return CC_REFRESH;
+out:
+	el->el_history.eventno = h;
+	return CC_ERROR;
+
 }
 
 

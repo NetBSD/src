@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.44 2016/12/28 21:55:04 christos Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.44.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.44 2016/12/28 21:55:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.44.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -201,6 +201,7 @@ npf_ruleset_insert(npf_ruleset_t *rlset, npf_rule_t *rl)
 
 	rlset->rs_rules[n] = rl;
 	rlset->rs_nitems++;
+	rl->r_id = ++rlset->rs_idcnt;
 
 	if (rl->r_skip_to < ++n) {
 		rl->r_skip_to = SKIPTO_ADJ_FLAG | n;
@@ -426,6 +427,7 @@ npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 		LIST_INSERT_HEAD(&rlset->rs_gc, rl, r_aentry);
 		rl = rl->r_next;
 	}
+	rlset->rs_idcnt = 0;
 	return 0;
 }
 
@@ -986,10 +988,11 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
  * => Returns ENETUNREACH if "block" and 0 if "pass".
  */
 int
-npf_rule_conclude(const npf_rule_t *rl, int *retfl)
+npf_rule_conclude(const npf_rule_t *rl, npf_match_info_t *mi)
 {
 	/* If not passing - drop the packet. */
-	*retfl = rl->r_attr;
+	mi->mi_retfl = rl->r_attr;
+	mi->mi_rid = rl->r_id;
 	return (rl->r_attr & NPF_RULE_PASS) ? 0 : ENETUNREACH;
 }
 

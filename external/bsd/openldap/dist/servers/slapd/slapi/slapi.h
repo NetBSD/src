@@ -1,9 +1,9 @@
-/*	$NetBSD: slapi.h,v 1.1.1.4 2014/05/28 09:58:53 tron Exp $	*/
+/*	$NetBSD: slapi.h,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2014 The OpenLDAP Foundation.
+ * Copyright 2002-2016 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *

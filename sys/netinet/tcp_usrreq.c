@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.213 2016/11/18 06:50:04 knakahara Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.213.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.213 2016/11/18 06:50:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.213.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1210,21 +1210,31 @@ tcp_purgeif(struct socket *so, struct ifnet *ifp)
 
 	s = splsoftnet();
 
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	switch (so->so_proto->pr_domain->dom_family) {
 #ifdef INET
 	case PF_INET:
 		in_pcbpurgeif0(&tcbtable, ifp);
+#ifdef NET_MPSAFE
+		mutex_exit(softnet_lock);
+#endif
 		in_purgeif(ifp);
+#ifdef NET_MPSAFE
+		mutex_enter(softnet_lock);
+#endif
 		in_pcbpurgeif(&tcbtable, ifp);
 		break;
 #endif
 #ifdef INET6
 	case PF_INET6:
 		in6_pcbpurgeif0(&tcbtable, ifp);
+#ifdef NET_MPSAFE
+		mutex_exit(softnet_lock);
+#endif
 		in6_purgeif(ifp);
+#ifdef NET_MPSAFE
+		mutex_enter(softnet_lock);
+#endif
 		in6_pcbpurgeif(&tcbtable, ifp);
 		break;
 #endif
@@ -1232,9 +1242,7 @@ tcp_purgeif(struct socket *so, struct ifnet *ifp)
 		error = EAFNOSUPPORT;
 		break;
 	}
-#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
-#endif
 	splx(s);
 
 	return error;

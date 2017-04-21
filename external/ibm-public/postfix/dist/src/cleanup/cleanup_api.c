@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_api.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_api.c,v 1.1.1.1.36.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -77,6 +77,11 @@
 /*	to translate the result into human-readable text.
 /*
 /*	cleanup_free() destroys its argument.
+/* .IP CLEANUP_FLAG_SMTPUTF8
+/*	Request SMTPUTF8 support when delivering mail.
+/* .IP CLEANUP_FLAG_AUTOUTF8
+/*	Autodetection: request SMTPUTF8 support if the message
+/*	contains an UTF8 message header, sender, or recipient.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* SEE ALSO
@@ -114,6 +119,7 @@
 #include <mail_stream.h>
 #include <mail_flow.h>
 #include <rec_type.h>
+#include <smtputf8.h>
 
 /* Milter library. */
 
@@ -195,6 +201,8 @@ void    cleanup_control(CLEANUP_STATE *state, int flags)
     } else {
 	state->err_mask = ~0;
     }
+    if (state->flags & CLEANUP_FLAG_SMTPUTF8)
+	state->smtputf8 = SMTPUTF8_FLAG_REQUESTED;
 }
 
 /* cleanup_flush - finish queue file */
@@ -298,13 +306,13 @@ int     cleanup_flush(CLEANUP_STATE *state)
 	    state->queue_name = mystrdup(MAIL_QUEUE_HOLD);
 #endif
 	    mail_stream_ctl(state->handle,
-			    MAIL_STREAM_CTL_QUEUE, state->queue_name,
-			    MAIL_STREAM_CTL_CLASS, (char *) 0,
-			    MAIL_STREAM_CTL_SERVICE, (char *) 0,
+			    CA_MAIL_STREAM_CTL_QUEUE(state->queue_name),
+			    CA_MAIL_STREAM_CTL_CLASS((char *) 0),
+			    CA_MAIL_STREAM_CTL_SERVICE((char *) 0),
 #ifdef DELAY_ACTION
-			    MAIL_STREAM_CTL_DELAY, state->defer_delay,
+			    CA_MAIL_STREAM_CTL_DELAY(state->defer_delay),
 #endif
-			    MAIL_STREAM_CTL_END);
+			    CA_MAIL_STREAM_CTL_END);
 	    junk = cleanup_path;
 	    cleanup_path = mystrdup(VSTREAM_PATH(state->handle->stream));
 	    myfree(junk);

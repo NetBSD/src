@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.35 2014/02/20 15:11:36 joerg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.35.14.1 2017/04/21 16:53:37 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -94,7 +94,8 @@ filename(char *str, char *ppart)
 			 * if not, lp is the delimiter between device and
 			 * path.  if the last component was a block device.
 			 */
-			if (!strcmp(devtype, "block")) {
+			if (strcmp(devtype, "block") == 0
+			    || strcmp(devtype, "scsi") == 0) {
 				/* search for arguments */
 				DPRINTF(("filename: hunting for arguments "
 				       "in %s\n", lp));
@@ -410,7 +411,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (_prom_getprop(handle, "device_type", b.buf, sizeof b.buf) < 0)
 		return ENXIO;
 	DPRINTF(("devopen: %s is a %s device\n", fname, b.buf));
-	if (!strcmp(b.buf, "block")) {
+	if (strcmp(b.buf, "block") == 0 || strcmp(b.buf, "scsi") == 0) {
 		pp = strrchr(fname, ':');
 		if (pp && pp[1] >= 'a' && pp[1] <= 'f' && pp[2] == 0) {
 			savedpart = pp[1];
@@ -459,7 +460,7 @@ open_again:
 	DPRINTF(("devopen: %s is now open\n", fname));
 	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
-	if (!strcmp(b.buf, "block")) {
+	if (strcmp(b.buf, "block") == 0 || strcmp(b.buf, "scsi") == 0) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mynetworks.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _MYNETWORKS_H_INCLUDED_
 #define _MYNETWORKS_H_INCLUDED_
@@ -17,6 +17,7 @@
   * External interface.
   */
 extern const char *mynetworks(void);
+extern const char *mynetworks_host(void);
 
 /* LICENSE
 /* .ad

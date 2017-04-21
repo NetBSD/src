@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.1.1.4 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: dns.h,v 1.1.1.4.10.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
@@ -54,6 +54,13 @@
 	(cp) += 4; \
 }
 
+#endif
+
+/*
+ * Disable DNSSEC at compile-time even if RES_USE_DNSSEC is available
+ */
+#ifdef NO_DNSSEC
+#undef RES_USE_DNSSEC
 #endif
 
  /*
@@ -156,6 +163,11 @@ extern const char *dns_strtype(unsigned);
 extern unsigned dns_type(const char *);
 
  /*
+  * dns_strrecord.c
+  */
+extern char *dns_strrecord(VSTRING *, DNS_RR *);
+
+ /*
   * dns_rr.c
   */
 extern DNS_RR *dns_rr_create(const char *, const char *,
@@ -209,15 +221,19 @@ extern int dns_rr_eq_sa(DNS_RR *, struct sockaddr *);
  /*
   * dns_lookup.c
   */
-extern int dns_lookup_r(const char *, unsigned, unsigned, DNS_RR **,
-			        VSTRING *, VSTRING *, int *);
+extern int dns_lookup_x(const char *, unsigned, unsigned, DNS_RR **,
+			        VSTRING *, VSTRING *, int *, unsigned);
 extern int dns_lookup_rl(const char *, unsigned, DNS_RR **, VSTRING *,
 			         VSTRING *, int *, int,...);
 extern int dns_lookup_rv(const char *, unsigned, DNS_RR **, VSTRING *,
 			         VSTRING *, int *, int, unsigned *);
 
 #define dns_lookup(name, type, rflags, list, fqdn, why) \
-    dns_lookup_r((name), (type), (rflags), (list), (fqdn), (why), (int *) 0)
+    dns_lookup_x((name), (type), (rflags), (list), (fqdn), (why), (int *) 0, \
+	(unsigned) 0)
+#define dns_lookup_r(name, type, rflags, list, fqdn, why, rcode) \
+    dns_lookup_x((name), (type), (rflags), (list), (fqdn), (why), (rcode), \
+	(unsigned) 0)
 #define dns_lookup_l(name, rflags, list, fqdn, why, lflags, ...) \
     dns_lookup_rl((name), (rflags), (list), (fqdn), (why), (int *) 0, \
 	(lflags), __VA_ARGS__)
@@ -230,23 +246,61 @@ extern int dns_lookup_rv(const char *, unsigned, DNS_RR **, VSTRING *,
   */
 #define DNS_REQ_FLAG_STOP_OK	(1<<0)
 #define DNS_REQ_FLAG_STOP_INVAL	(1<<1)
+#define DNS_REQ_FLAG_STOP_NULLMX (1<<2)
+#define DNS_REQ_FLAG_STOP_MX_POLICY (1<<3)
+#define DNS_REQ_FLAG_NCACHE_TTL	(1<<4)
 #define DNS_REQ_FLAG_NONE	(0)
 
  /*
   * Status codes. Failures must have negative codes so they will not collide
   * with valid counts of answer records etc.
+  * 
+  * When a function queries multiple record types for one name, it issues one
+  * query for each query record type. Each query returns a (status, rcode,
+  * text). Only one of these (status, rcode, text) will be returned to the
+  * caller. The selection is based on the status code precedence.
+  * 
+  * - Return DNS_OK (and the corresponding rcode) as long as any query returned
+  * DNS_OK. If this is changed, then code needs to be added to prevent memory
+  * leaks.
+  * 
+  * - Return DNS_RETRY (and the corresponding rcode and text) instead of any
+  * hard negative result.
+  * 
+  * - Return DNS_NOTFOUND (and the corresponding rcode and text) only when all
+  * queries returned DNS_NOTFOUND.
+  * 
+  * DNS_POLICY ranks higher than DNS_RETRY because there was a DNS_OK result,
+  * but the reply filter dropped it. This is a very soft error.
+  * 
+  * Below is the precedence order. The order between DNS_RETRY and DNS_NOTFOUND
+  * is arbitrary.
   */
-#define DNS_INVAL	(-5)		/* query ok, malformed reply */
+#define DNS_RECURSE	(-7)		/* internal only: recursion needed */
+#define DNS_NOTFOUND	(-6)		/* query ok, data not found */
+#define DNS_NULLMX	(-5)		/* query ok, service unavailable */
 #define DNS_FAIL	(-4)		/* query failed, don't retry */
-#define DNS_NOTFOUND	(-3)		/* query ok, data not found */
+#define DNS_INVAL	(-3)		/* query ok, malformed reply */
 #define DNS_RETRY	(-2)		/* query failed, try again */
-#define DNS_RECURSE	(-1)		/* recursion needed */
+#define DNS_POLICY	(-1)		/* query ok, all records dropped */
 #define DNS_OK		0		/* query succeeded */
 
  /*
   * How long can a DNS name or single text value be?
   */
 #define DNS_NAME_LEN	1024
+
+ /*
+  * dns_rr_filter.c.
+  */
+extern void dns_rr_filter_compile(const char *, const char *);
+
+#ifdef LIBDNS_INTERNAL
+#include <maps.h>
+extern MAPS *dns_rr_filter_maps;
+extern int dns_rr_filter_execute(DNS_RR **);
+
+#endif
 
 /* LICENSE
 /* .ad

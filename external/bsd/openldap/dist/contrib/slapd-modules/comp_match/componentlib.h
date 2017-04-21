@@ -1,4 +1,4 @@
-/*	$NetBSD: componentlib.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: componentlib.h,v 1.1.1.2.34.1 2017/04/21 16:52:23 bouyer Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
@@ -13,6 +13,9 @@
 
 #ifndef _H_COMPONENT_MODULE
 #define _H_COMPONENT_MODULE
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: componentlib.h,v 1.1.1.2.34.1 2017/04/21 16:52:23 bouyer Exp $");
 
 #include "portable.h"
 #include <ac/string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.155 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.155.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.155 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.155.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -158,9 +158,9 @@ in6_pcballoc(struct socket *so, void *v)
 	struct in6pcb *in6p;
 	int s;
 
-	s = splnet();
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET6);
+
 	in6p = pool_get(&in6pcb_pool, PR_NOWAIT);
-	splx(s);
 	if (in6p == NULL)
 		return (ENOBUFS);
 	memset((void *)in6p, 0, sizeof(*in6p));
@@ -175,14 +175,12 @@ in6_pcballoc(struct socket *so, void *v)
 	if (ipsec_enabled) {
 		int error = ipsec_init_pcbpolicy(so, &in6p->in6p_sp);
 		if (error != 0) {
-			s = splnet();
 			pool_put(&in6pcb_pool, in6p);
-			splx(s);
 			return error;
 		}
 	}
 #endif /* IPSEC */
-	s = splnet();
+	s = splsoftnet();
 	TAILQ_INSERT_HEAD(&table->inpt_queue, (struct inpcb_hdr*)in6p,
 	    inph_queue);
 	LIST_INSERT_HEAD(IN6PCBHASH_PORT(table, in6p->in6p_lport),
@@ -631,7 +629,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 #endif
 	so->so_pcb = NULL;
 
-	s = splnet();
+	s = splsoftnet();
 	in6_pcbstate(in6p, IN6P_ATTACHED);
 	LIST_REMOVE(&in6p->in6p_head, inph_lhash);
 	TAILQ_REMOVE(&in6p->in6p_table->inpt_queue, &in6p->in6p_head,
@@ -848,9 +846,15 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
+		bool need_unlock = false;
 		if (in6p->in6p_af != AF_INET6)
 			continue;
 
+		/* The caller holds either one of in6ps' lock */
+		if (!in6p_locked(in6p)) {
+			in6p_lock(in6p);
+			need_unlock = true;
+		}
 		im6o = in6p->in6p_moptions;
 		if (im6o) {
 			/*
@@ -866,9 +870,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			 * XXX controversial - is it really legal for kernel
 			 * to force this?
 			 */
-			for (imm = im6o->im6o_memberships.lh_first;
-			     imm != NULL; imm = nimm) {
-				nimm = imm->i6mm_chain.le_next;
+			LIST_FOREACH_SAFE(imm, &im6o->im6o_memberships,
+			    i6mm_chain, nimm) {
 				if (imm->i6mm_maddr->in6m_ifp == ifp) {
 					LIST_REMOVE(imm, i6mm_chain);
 					in6_leavegroup(imm);
@@ -876,6 +879,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			}
 		}
 		in_purgeifmcast(in6p->in6p_v4moptions, ifp);
+		if (need_unlock)
+			in6p_unlock(in6p);
 	}
 }
 

@@ -1,4 +1,4 @@
-.\" $NetBSD: pdc.4,v 1.1 2014/02/24 07:23:40 skrll Exp $
+.\" $NetBSD: pdc.4,v 1.1.16.1 2017/04/21 16:53:17 bouyer Exp $
 .\"
 .\" $OpenBSD: pdc.4,v 1.6 2007/06/01 19:54:10 aanriot Exp $
 .\"
@@ -26,7 +26,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 1, 2007
+.Dd February 17, 2017
 .Dt PDC 4 hppa
 .Os
 .Sh NAME
@@ -517,7 +517,7 @@ Bit-0 in the
 .Dq power
 register address being set specifies the power button being depressed.
 No dampening is required, unlike with the
-.Xr lasi 4
+.Xr hppa/lasi 4
 power circuit.
 .It Fn pdc "PDC_SOFT_POWER" "PDC_SOFT_POWER_ENABLE" "ptr" "stat"
 Enable (zero
@@ -708,9 +708,9 @@ Invalid argument
 Aborted by powerfail
 .El
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr io 4 ,
-.Xr lasi 4
+.Xr hppa/intro 4 ,
+.Xr hppa/io 4 ,
+.Xr hppa/lasi 4
 .Rs
 .%T PA-RISC 1.1 Firmware Architecture Reference Specification
 .%A Hewlett-Packard

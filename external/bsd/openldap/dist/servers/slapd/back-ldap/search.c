@@ -1,10 +1,10 @@
-/*	$NetBSD: search.c,v 1.1.1.5 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.5.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* search.c - ldap backend search function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -22,6 +22,9 @@
  * in OpenLDAP Software and subsequently enhanced by Pierangelo
  * Masarati.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: search.c,v 1.1.1.5.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -340,7 +343,7 @@ retry:
 
 		} else {
 			/* only touch when activity actually took place... */
-			if ( li->li_idle_timeout && lc ) {
+			if ( li->li_idle_timeout ) {
 				lc->lc_time = op->o_time;
 			}
 
@@ -647,6 +650,13 @@ finish:;
 		ldap_back_release_conn( li, lc );
 	}
 
+	if ( rs->sr_err == LDAP_UNAVAILABLE &&
+		/* if we originally bound and wanted rebind-as-user, must drop
+		 * the connection now because we just discarded the credentials.
+		 * ITS#7464, #8142
+		 */
+		LDAP_BACK_SAVECRED( li ) && SLAP_IS_AUTHZ_BACKEND( op ) )
+		rs->sr_err = SLAPD_DISCONNECT;
 	return rs->sr_err;
 }
 
@@ -902,9 +912,7 @@ ldap_back_entry_get(
 	ldapinfo_t	*li = (ldapinfo_t *) op->o_bd->be_private;
 
 	ldapconn_t	*lc = NULL;
-	int		rc,
-			do_not_cache;
-	ber_tag_t	tag;
+	int		rc;
 	struct berval	bdn;
 	LDAPMessage	*result = NULL,
 			*e = NULL;
@@ -913,20 +921,20 @@ ldap_back_entry_get(
 	SlapReply	rs;
 	int		do_retry = 1;
 	LDAPControl	**ctrls = NULL;
+	Operation op2 = *op;
 
 	*ent = NULL;
 
 	/* Tell getconn this is a privileged op */
-	do_not_cache = op->o_do_not_cache;
-	tag = op->o_tag;
-	/* do not cache */
-	op->o_do_not_cache = 1;
+	op2.o_do_not_cache = 1;
+	/* use rootdn to be doubly explicit this is privileged */
+	op2.o_dn = op->o_bd->be_rootdn;
+	op2.o_ndn = op->o_bd->be_rootndn;
 	/* ldap_back_entry_get() is an entry lookup, so it does not need
 	 * to know what the entry is being looked up for */
-	op->o_tag = LDAP_REQ_SEARCH;
-	rc = ldap_back_dobind( &lc, op, &rs, LDAP_BACK_DONTSEND );
-	op->o_do_not_cache = do_not_cache;
-	op->o_tag = tag;
+	op2.o_tag = LDAP_REQ_SEARCH;
+	op2.o_ctrls = NULL;
+	rc = ldap_back_dobind( &lc, &op2, &rs, LDAP_BACK_DONTSEND );
 	if ( !rc ) {
 		return rs.sr_err;
 	}
@@ -956,8 +964,8 @@ ldap_back_entry_get(
 	}
 
 retry:
-	ctrls = op->o_ctrls;
-	rc = ldap_back_controls_add( op, &rs, lc, &ctrls );
+	ctrls = NULL;
+	rc = ldap_back_controls_add( &op2, &rs, lc, &ctrls );
 	if ( rc != LDAP_SUCCESS ) {
 		goto cleanup;
 	}
@@ -969,9 +977,9 @@ retry:
 	if ( rc != LDAP_SUCCESS ) {
 		if ( rc == LDAP_SERVER_DOWN && do_retry ) {
 			do_retry = 0;
-			if ( ldap_back_retry( &lc, op, &rs, LDAP_BACK_DONTSEND ) ) {
+			if ( ldap_back_retry( &lc, &op2, &rs, LDAP_BACK_DONTSEND ) ) {
 				/* if the identity changed, there might be need to re-authz */
-				(void)ldap_back_controls_free( op, &rs, &ctrls );
+				(void)ldap_back_controls_free( &op2, &rs, &ctrls );
 				goto retry;
 			}
 		}
@@ -998,7 +1006,7 @@ retry:
 	}
 
 cleanup:
-	(void)ldap_back_controls_free( op, &rs, &ctrls );
+	(void)ldap_back_controls_free( &op2, &rs, &ctrls );
 
 	if ( result ) {
 		ldap_msgfree( result );

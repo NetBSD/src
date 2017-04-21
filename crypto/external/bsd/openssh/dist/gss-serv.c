@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: gss-serv.c,v 1.29 2015/05/22 03:50:02 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

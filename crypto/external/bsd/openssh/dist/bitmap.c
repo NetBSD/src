@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmap.c,v 1.4 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: bitmap.c,v 1.4.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
 /*
  * Copyright (c) 2015 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: bitmap.c,v 1.4 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: bitmap.c,v 1.4.2.1 2017/04/21 16:50:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <string.h>

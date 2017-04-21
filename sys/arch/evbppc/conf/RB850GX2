@@ -1,4 +1,4 @@
-#	$NetBSD: RB850GX2,v 1.1 2015/01/30 15:04:35 nonaka Exp $
+#	$NetBSD: RB850GX2,v 1.1.6.1 2017/04/21 16:53:26 bouyer Exp $
 #
 #	RouterBOARD RB850Gx2
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"RB850GX2-$Revision: 1.1 $"
+ident 		"RB850GX2-$Revision: 1.1.6.1 $"
 
 maxusers	32
 
@@ -92,6 +92,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server

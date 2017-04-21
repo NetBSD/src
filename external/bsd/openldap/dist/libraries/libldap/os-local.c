@@ -1,10 +1,10 @@
-/*	$NetBSD: os-local.c,v 1.7 2014/05/28 10:12:43 tron Exp $	*/
+/*	$NetBSD: os-local.c,v 1.7.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* os-local.c -- platform-specific domain socket code */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,9 @@
  * and that due credit is given to PADL Software Pty Ltd. This software
  * is provided ``as is'' without express or implied warranty.  
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: os-local.c,v 1.7.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

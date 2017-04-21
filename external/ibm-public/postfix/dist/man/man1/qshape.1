@@ -1,4 +1,4 @@
-.\"	$NetBSD: qshape.1,v 1.1.1.1 2009/06/23 10:08:32 tron Exp $
+.\"	$NetBSD: qshape.1,v 1.1.1.1.36.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH QSHAPE 1 
 .ad
@@ -11,11 +11,11 @@ Print Postfix queue domain and age distribution
 .na
 .nf
 .fi
-\fBqshape\fR [\fB-s\fR] [\fB-p\fR] [\fB-m \fImin_subdomains\fR]
-        [\fB-b \fIbucket_count\fR] [\fB-t \fIbucket_time\fR]
-        [\fB-l\fR] [\fB-w \fIterminal_width\fR]
-        [\fB-N \fIbatch_msg_count\fR] [\fB-n \fIbatch_top_domains\fR]
-        [\fB-c \fIconfig_directory\fR] [\fIqueue_name\fR ...]
+\fBqshape\fR [\fB\-s\fR] [\fB\-p\fR] [\fB\-m \fImin_subdomains\fR]
+        [\fB\-b \fIbucket_count\fR] [\fB\-t \fIbucket_time\fR]
+        [\fB\-l\fR] [\fB\-w \fIterminal_width\fR]
+        [\fB\-N \fIbatch_msg_count\fR] [\fB\-n \fIbatch_top_domains\fR]
+        [\fB\-c \fIconfig_directory\fR] [\fIqueue_name\fR ...]
 .SH DESCRIPTION
 .ad
 .fi
@@ -27,36 +27,36 @@ the \fBmail_owner\fR specified in \fBmain.cf\fR (typically
 \fBpostfix\fR).
 
 Options:
-.IP \fB-s\fR
+.IP \fB\-s\fR
 Display the sender domain distribution instead of the recipient
 domain distribution.  By default the recipient distribution is
 displayed. There can be more recipients than messages, but as
 each message has only one sender, the sender distribution is a
 message distribution.
-.IP \fB-p\fR
+.IP \fB\-p\fR
 Generate aggregate statistics for parent domains. Top level domains
 are not shown, nor are domains with fewer than \fImin_subdomains\fR
 subdomains. The names of parent domains are shown with a leading dot,
 (e.g. \fI.example.com\fR).
-.IP "\fB-m \fImin_subdomains\fR"
-When used with the \fB-p\fR option, sets the minimum subdomain count
+.IP "\fB\-m \fImin_subdomains\fR"
+When used with the \fB\-p\fR option, sets the minimum subdomain count
 needed to show a separate line for a parent domain. The default is 5.
-.IP "\fB-b \fIbucket_count\fR"
+.IP "\fB\-b \fIbucket_count\fR"
 The age distribution is broken up into a sequence of geometrically
 increasing intervals. This option sets the number of intervals
 or "buckets". Each bucket has a maximum queue age that is twice
 as large as that of the previous bucket. The last bucket has no
 age limit.
-.IP "\fB-t \fIbucket_time\fR"
+.IP "\fB\-t \fIbucket_time\fR"
 The age limit in minutes for the first time bucket. The default
 value is 5, meaning that the first bucket counts messages between
 0 and 5 minutes old.
-.IP "\fB-l\fR"
+.IP "\fB\-l\fR"
 Instead of using a geometric age sequence, use a linear age sequence,
 in other words simple multiples of \fBbucket_time\fR.
 
 This feature is available in Postfix 2.2 and later.
-.IP "\fB-w \fIterminal_width\fR"
+.IP "\fB\-w \fIterminal_width\fR"
 The output is right justified, with the counts for the last
 bucket shown on the 80th column, the \fIterminal_width\fR can be
 adjusted for wider screens allowing more buckets to be displayed
@@ -67,16 +67,16 @@ are shown with the prefix replaced by a '+' character. Truncated
 parent domain rows are shown as '.+' followed by the last 16 bytes
 of the domain name. If this is still too narrow to show the domain
 name and all the counters, the terminal_width limit is violated.
-.IP "\fB-N \fIbatch_msg_count\fR"
+.IP "\fB\-N \fIbatch_msg_count\fR"
 When the output device is a terminal, intermediate results are
 shown each "batch_msg_count" messages. This produces usable results
 in a reasonable time even when the deferred queue is large. The
 default is to show intermediate results every 1000 messages.
-.IP "\fB-n \fIbatch_top_domains\fR"
+.IP "\fB\-n \fIbatch_top_domains\fR"
 When reporting intermediate or final results to a termainal, report
 only the top "batch_top_domains" domains. The default limit is 20
 domains.
-.IP "\fB-c \fIconfig_directory\fR"
+.IP "\fB\-c \fIconfig_directory\fR"
 The \fBmain.cf\fR configuration file is in the named directory
 instead of the default configuration directory.
 .PP

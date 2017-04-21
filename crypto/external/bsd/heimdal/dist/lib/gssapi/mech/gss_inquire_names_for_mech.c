@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_inquire_names_for_mech.c,v 1.1.1.1 2011/04/13 18:14:46 elric Exp $	*/
+/*	$NetBSD: gss_inquire_names_for_mech.c,v 1.1.1.1.32.1 2017/04/21 16:50:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson

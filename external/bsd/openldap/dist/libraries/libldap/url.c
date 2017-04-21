@@ -1,10 +1,10 @@
-/*	$NetBSD: url.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: url.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* LIBLDAP url.c -- LDAP URL (RFC 4516) related routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@
  *
  *  We also tolerate URLs that look like: <ldapurl> and <URL:ldapurl>
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: url.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

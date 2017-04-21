@@ -1564,7 +1564,7 @@ encoded authentication information: </p>
 <p> The <strong>mmencode</strong> command is part of the metamail
 software. </p>
 
-<li> <p> Using Perl <b>MIME::Base64</b>: </p>
+<li> <p> Using Perl <b>MIME::Base64</b> (from http://www.cpan.org/): </p>
 
 <blockquote>
 <pre>
@@ -1573,7 +1573,7 @@ software. </p>
 </pre>
 </blockquote>
 
-<p> MIME::Base64 is available from http://www.cpan.org/. </p>
+<p> If the username or password contain "@", you must specify "\@". </p>
 
 <li> <p> Using the <b>gen-auth</b> script: </p>
 
@@ -1659,6 +1659,8 @@ second part sets up the username/password information.  </p>
 <pre>
 /etc/postfix/main.cf:
     smtp_sasl_auth_enable = yes
+    smtp_tls_security_level = encrypt
+    smtp_sasl_tls_security_options = noanonymous
     relayhost = [mail.isp.example]
     # Alternative form:
     # relayhost = [mail.isp.example]:submission
@@ -1672,6 +1674,11 @@ second part sets up the username/password information.  </p>
 client-side authentication. We will configure the client's username
 and password information in the second part of the example. </p>
 </li>
+
+<li> <p> The <code>smtp_tls_security_level</code> setting ensures
+that the connection to the remote smtp server will be encrypted, and
+<code>smtp_sasl_tls_security_options</code> removes the prohibition on
+plaintext passwords. </p>
 
 <li> <p> The <code>relayhost</code> setting forces the Postfix SMTP
 to send all remote messages to the specified mail server instead
@@ -1781,7 +1788,7 @@ resort.  </p>
 <pre>
 /etc/postfix/sasl_passwd:
     # Per-sender authentication; see also /etc/postfix/sender_relay.
-    user1@example.com               username2:password2
+    user1@example.com               username1:password1
     user2@example.net               username2:password2
     # Login information for the default relayhost.
     [mail.isp.example]              username:password

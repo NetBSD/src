@@ -1,4 +1,4 @@
-/*	$NetBSD: unknown.c,v 1.5 2013/09/25 19:12:35 tron Exp $	*/
+/*	$NetBSD: unknown.c,v 1.5.12.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -111,7 +111,8 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
      */
     if (*var_fbck_transp_maps && transp_maps == 0)
 	transp_maps = maps_create(VAR_FBCK_TRANSP_MAPS, var_fbck_transp_maps,
-				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB);
+				  DICT_FLAG_LOCK | DICT_FLAG_NO_REGSUB
+				  | DICT_FLAG_UTF8_REQUEST);
     /* The -1 is a hint for the down-stream deliver_completed() function. */
     if (transp_maps
 	&& (map_transport = maps_find(transp_maps, state.msg_attr.user,
@@ -140,7 +141,7 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
     if (*var_luser_relay) {
 	state.msg_attr.unmatched = 0;
 	expand_luser = vstring_alloc(100);
-	local_expand(expand_luser, var_luser_relay, &state, &usr_attr, (char *) 0);
+	local_expand(expand_luser, var_luser_relay, &state, &usr_attr, (void *) 0);
 	status = deliver_resolve_addr(state, usr_attr, STR(expand_luser));
 	vstring_free(expand_luser);
 	return (status);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.5 2016/02/05 23:46:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.5.4.1 2017/04/21 16:53:59 bouyer Exp $	*/
 
 	/*
  * Copyright 2011 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.5 2016/02/05 23:46:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.5.4.1 2017/04/21 16:53:59 bouyer Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
@@ -163,7 +163,7 @@ struct nv50_dmac {
 	/* Protects against concurrent pushbuf access to this channel, lock is
 	 * grabbed by evo_wait (if the pushbuf reservation is successful) and
 	 * dropped again by evo_kick. */
-	struct mutex lock;
+	struct spinlock lock;
 };
 
 static void
@@ -187,7 +187,7 @@ nv50_dmac_destroy(struct nouveau_object *core, struct nv50_dmac *dmac)
 	}
 
 #ifdef __NetBSD__
-	linux_mutex_destroy(&dmac->lock);
+	spin_lock_destroy(&dmac->lock);
 #endif
 
 	nv50_chan_destroy(core, &dmac->base);
@@ -323,11 +323,7 @@ nv50_dmac_create(struct nouveau_object *core, u32 bclass, u8 head,
 	u32 pushbuf = *(u32 *)data;
 	int ret;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dmac->lock);
-#else
-	mutex_init(&dmac->lock);
-#endif
+	spin_lock_init(&dmac->lock);
 
 #ifdef __NetBSD__
     {
@@ -495,13 +491,13 @@ evo_wait(void *evoc, int nr)
 	struct nv50_dmac *dmac = evoc;
 	u32 put = nv_ro32(dmac->base.user, 0x0000) / 4;
 
-	mutex_lock(&dmac->lock);
+	spin_lock(&dmac->lock);
 	if (put + nr >= (PAGE_SIZE / 4) - 8) {
 		dmac->ptr[put] = 0x20000000;
 
 		nv_wo32(dmac->base.user, 0x0000, 0x00000000);
 		if (!nv_wait(dmac->base.user, 0x0004, ~0, 0x00000000)) {
-			mutex_unlock(&dmac->lock);
+			spin_unlock(&dmac->lock);
 			NV_ERROR(dmac->base.user, "channel stalled\n");
 			return NULL;
 		}
@@ -517,7 +513,7 @@ evo_kick(u32 *push, void *evoc)
 {
 	struct nv50_dmac *dmac = evoc;
 	nv_wo32(dmac->base.user, 0x0000, (push - dmac->ptr) << 2);
-	mutex_unlock(&dmac->lock);
+	spin_unlock(&dmac->lock);
 }
 
 #define evo_mthd(p,m,s) *((p)++) = (((s) << 18) | (m))

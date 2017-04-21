@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.95 2016/12/13 20:42:20 christos Exp $
+#	$NetBSD: INSTALL,v 1.95.2.1 2017/04/21 16:53:36 bouyer Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -19,7 +19,7 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 ## The miniroot size must be kept in sync manually with the size of
 ## the `ramdisk' image (which is built in distrib/sparc/ramdisk).
-options 	MEMORY_DISK_ROOT_SIZE=1800	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=2000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 pseudo-device	md			# memory disk device (ramdisk)

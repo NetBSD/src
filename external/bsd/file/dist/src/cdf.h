@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.h,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.7.4.1 2017/04/21 16:51:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -131,6 +131,7 @@ typedef struct {
 	void *sst_tab;
 	size_t sst_len;
 	size_t sst_dirlen;
+	size_t sst_ss;
 } cdf_stream_t;
 
 typedef struct {
@@ -279,7 +280,7 @@ typedef struct {
 
 typedef struct {
 	size_t cat_num;
-	cdf_catalog_entry_t cat_e[0];
+	cdf_catalog_entry_t cat_e[1];
 } cdf_catalog_t;
 
 struct timespec;
@@ -316,12 +317,11 @@ int cdf_read_property_info(const cdf_stream_t *, const cdf_header_t *, uint32_t,
 int cdf_read_user_stream(const cdf_info_t *, const cdf_header_t *,
     const cdf_sat_t *, const cdf_sat_t *, const cdf_stream_t *,
     const cdf_dir_t *, const char *, cdf_stream_t *);
-#define cdf_read_catalog(info, header, sat, ssat, stream, dir, scn) \
-    cdf_read_user_stream(info, header, sat, ssat, stream, dir, "Catalog", \
-    scn)
-#define cdf_read_encrypted_package(info, header, sat, ssat, stream, dir, scn) \
-    cdf_read_user_stream(info, header, sat, ssat, stream, dir, \
-    "EncryptedPackage", scn)
+int cdf_find_stream(const cdf_dir_t *, const char *, int);
+int cdf_zero_stream(cdf_stream_t *);
+int cdf_read_doc_summary_info(const cdf_info_t *, const cdf_header_t *,
+    const cdf_sat_t *, const cdf_sat_t *, const cdf_stream_t *,
+    const cdf_dir_t *, cdf_stream_t *);
 int cdf_read_summary_info(const cdf_info_t *, const cdf_header_t *,
     const cdf_sat_t *, const cdf_sat_t *, const cdf_stream_t *,
     const cdf_dir_t *, cdf_stream_t *);
@@ -341,8 +341,8 @@ char *cdf_u16tos8(char *, size_t, const uint16_t *);
 #ifdef CDF_DEBUG
 void cdf_dump_header(const cdf_header_t *);
 void cdf_dump_sat(const char *, const cdf_sat_t *, size_t);
-void cdf_dump(void *, size_t);
-void cdf_dump_stream(const cdf_header_t *, const cdf_stream_t *);
+void cdf_dump(const void *, size_t);
+void cdf_dump_stream(const cdf_stream_t *);
 void cdf_dump_dir(const cdf_info_t *, const cdf_header_t *, const cdf_sat_t *,
     const cdf_sat_t *, const cdf_stream_t *, const cdf_dir_t *);
 void cdf_dump_property_info(const cdf_property_info_t *, size_t);

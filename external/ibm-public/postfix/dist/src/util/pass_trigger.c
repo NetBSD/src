@@ -1,4 +1,4 @@
-/*	$NetBSD: pass_trigger.c,v 1.1.1.1 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: pass_trigger.c,v 1.1.1.1.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -71,7 +71,7 @@ struct pass_trigger {
 
 /* pass_trigger_event - disconnect from peer */
 
-static void pass_trigger_event(int event, char *context)
+static void pass_trigger_event(int event, void *context)
 {
     struct pass_trigger *pp = (struct pass_trigger *) context;
     static const char *myname = "pass_trigger_event";
@@ -91,7 +91,7 @@ static void pass_trigger_event(int event, char *context)
     if (close(pp->pass_fd[1]) < 0)
 	msg_warn("%s: close pipe: %m", myname);
     myfree(pp->service);
-    myfree((char *) pp);
+    myfree((void *) pp);
 }
 
 /* pass_trigger - wakeup local server */
@@ -147,7 +147,7 @@ int     pass_trigger(const char *service, const char *buf, ssize_t len, int time
      * Wakeup when the peer disconnects, or when we lose patience.
      */
     if (timeout > 0)
-	event_request_timer(pass_trigger_event, (char *) pp, timeout + 100);
-    event_enable_read(connect_fd, pass_trigger_event, (char *) pp);
+	event_request_timer(pass_trigger_event, (void *) pp, timeout + 100);
+    event_enable_read(connect_fd, pass_trigger_event, (void *) pp);
     return (0);
 }

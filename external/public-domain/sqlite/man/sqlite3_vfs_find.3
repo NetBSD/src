@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_VFS_FIND 3
 .Os
 .Sh NAME
@@ -7,16 +7,16 @@
 .Nm sqlite3_vfs_unregister
 .Nd Virtual File System Objects
 .Sh SYNOPSIS
-.Ft sqlite3_vfs *SQLITE_STDCALL 
+.Ft sqlite3_vfs *
 .Fo sqlite3_vfs_find
 .Fa "const char *zVfsName"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_vfs_register
 .Fa "sqlite3_vfs*"
 .Fa "int makeDflt"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_vfs_unregister
 .Fa "sqlite3_vfs*"
 .Fc

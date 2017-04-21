@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_cthreads.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: thr_cthreads.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* thr_cthreads.c - wrapper for mach cthreads */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,6 +18,9 @@
 /* This work was initially developed by Luke Howard for inclusion
  * in U-MICH LDAP 3.3.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: thr_cthreads.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

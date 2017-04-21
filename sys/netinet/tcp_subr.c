@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.269 2017/01/02 01:18:42 christos Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.269.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.269 2017/01/02 01:18:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.269.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -649,7 +649,6 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 #endif
 	int family;	/* family on packet, not inpcb/in6pcb! */
 	struct tcphdr *th;
-	struct socket *so;
 
 	if (tp != NULL && (flags & TH_RST) == 0) {
 #ifdef DIAGNOSTIC
@@ -892,15 +891,6 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 #endif
 	}
 
-	if (tp && tp->t_inpcb)
-		so = tp->t_inpcb->inp_socket;
-#ifdef INET6
-	else if (tp && tp->t_in6pcb)
-		so = tp->t_in6pcb->in6p_socket;
-#endif
-	else
-		so = NULL;
-
 	if (tp != NULL && tp->t_inpcb != NULL) {
 		ro = &tp->t_inpcb->inp_route;
 #ifdef DIAGNOSTIC
@@ -941,12 +931,14 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
-		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0), NULL, so);
+		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0), NULL,
+		    tp ? tp->t_inpcb : NULL);
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = ip6_output(m, NULL, ro, 0, NULL, so, NULL);
+		error = ip6_output(m, NULL, ro, 0, NULL,
+		    tp ? tp->t_in6pcb : NULL, NULL);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.122 2016/06/10 13:27:13 ozaki-r Exp $	*/
+/*	$NetBSD: ath.c,v 1.122.4.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.122 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.122.4.1 2017/04/21 16:53:46 bouyer Exp $");
 #endif
 
 /*
@@ -197,6 +197,23 @@ static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 
 static void	ath_bpfattach(struct ath_softc *);
 static void	ath_announce(struct ath_softc *);
+
+#ifdef __NetBSD__
+#define	ATH_TASK_FUNC(__func)						\
+static void __CONCAT(__func, _si)(void *arg)				\
+{									\
+	__func(arg, 1);							\
+}
+ATH_TASK_FUNC(ath_rx_proc);
+ATH_TASK_FUNC(ath_rxorn_proc);
+ATH_TASK_FUNC(ath_fatal_proc);
+ATH_TASK_FUNC(ath_bmiss_proc);
+ATH_TASK_FUNC(ath_bstuck_proc);
+ATH_TASK_FUNC(ath_radar_proc);
+ATH_TASK_FUNC(ath_tx_proc_q0);
+ATH_TASK_FUNC(ath_tx_proc_q0123);
+ATH_TASK_FUNC(ath_tx_proc);
+#endif
 
 int ath_dwelltime = 200;		/* 5 channels/second */
 int ath_calinterval = 30;		/* calibrate every 30 secs */
@@ -856,9 +873,18 @@ ath_fatal_proc(void *arg, int pending)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	if_printf(ifp, "hardware error; resetting\n");
+#ifdef __NetBSD__
+	s = splnet();
+#endif
 	ath_reset(ifp);
+#ifdef __NetBSD__
+	splx(s);
+#endif
 }
 
 static void
@@ -866,9 +892,18 @@ ath_rxorn_proc(void *arg, int pending)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	if_printf(ifp, "rx FIFO overrun; resetting\n");
+#ifdef __NetBSD__
+	s = splnet();
+#endif
 	ath_reset(ifp);
+#ifdef __NetBSD__
+	splx(s);
+#endif
 }
 
 static void
@@ -876,6 +911,7 @@ ath_bmiss_proc(void *arg, int pending)
 {
 	struct ath_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
+	NET_LOCK_GIANT_FUNC_INIT();
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: pending %u\n", __func__, pending);
 	KASSERTMSG(ic->ic_opmode == IEEE80211_M_STA,
@@ -2374,10 +2410,19 @@ ath_bstuck_proc(void *arg, int pending)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	if_printf(ifp, "stuck beacon; resetting (bmiss count %u)\n",
 		sc->sc_bmisscount);
+#ifdef __NetBSD__
+	s = splnet();
+#endif
 	ath_reset(ifp);
+#ifdef __NetBSD__
+	splx(s);
+#endif
 }
 
 /*
@@ -3011,6 +3056,7 @@ ath_rx_proc(void *arg, int npending)
 	int16_t nf;
 	u_int64_t tsf;
 	uint8_t rxerr_tap, rxerr_mon;
+	NET_LOCK_GIANT_FUNC_INIT();
 
 	NET_LOCK_GIANT();		/* XXX */
 
@@ -4186,6 +4232,9 @@ ath_tx_proc_q0(void *arg, int npending)
 {
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	if (txqactive(sc->sc_ah, 0) && ath_tx_processq(sc, &sc->sc_txq[0]) > 0){
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
@@ -4196,7 +4245,13 @@ ath_tx_proc_q0(void *arg, int npending)
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
 
+#ifdef __NetBSD__
+	s = splnet();
+#endif
 	ath_start(ifp);
+#ifdef __NetBSD__
+	splx(s);
+#endif
 }
 
 /*
@@ -4209,6 +4264,9 @@ ath_tx_proc_q0123(void *arg, int npending)
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
 	int nacked;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	/*
 	 * Process each active queue.
@@ -4231,7 +4289,13 @@ ath_tx_proc_q0123(void *arg, int npending)
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
 
+#ifdef __NetBSD__
+	s = splnet();
+#endif
 	ath_start(ifp);
+#ifdef __NetBSD__
+	splx(s);
+#endif
 }
 
 /*
@@ -4243,6 +4307,9 @@ ath_tx_proc(void *arg, int npending)
 	struct ath_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_if;
 	int i, nacked;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	/*
 	 * Process each active queue.
@@ -4258,7 +4325,13 @@ ath_tx_proc(void *arg, int npending)
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
 
+#ifdef __NetBSD__
+	s = splnet();
+#endif
 	ath_start(ifp);
+#ifdef __NetBSD__
+	splx(s);
+#endif
 }
 
 static void

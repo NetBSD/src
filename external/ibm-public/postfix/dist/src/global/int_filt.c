@@ -1,4 +1,4 @@
-/*	$NetBSD: int_filt.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: int_filt.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -16,13 +16,14 @@
 /*	the internal_mail_filter_classes configuration parameter.
 /*
 /*	Specify one of the following:
-/* .IP INT_FILT_MASK_NONE
-/*	Mail that must be excluded from inspection (address probes, etc.).
-/* .IP INT_FILT_MASK_NOTIFY
+/* .IP MAIL_SRC_MASK_NOTIFY
 /*	Postmaster notifications from the smtpd(8) and smtp(8)
 /*	protocol adapters.
-/* .IP INT_FILT_MASK_BOUNCE
+/* .IP MAIL_SRC_MASK_BOUNCE
 /*	Delivery status notifications from the bounce(8) server.
+/* .PP
+/*	Other MAIL_SRC_MASK_XXX arguments are permited but will
+/*	have no effect.
 /* DIAGNOSTICS
 /*	Fatal: invalid mail category name.
 /* LICENSE
@@ -49,6 +50,7 @@
 
 #include <mail_params.h>
 #include <cleanup_user.h>
+#include <mail_proto.h>
 #include <int_filt.h>
 
 /* int_filt_flags - map mail class to submission flags */
@@ -56,8 +58,13 @@
 int     int_filt_flags(int class)
 {
     static const NAME_MASK table[] = {
-	INT_FILT_CLASS_NOTIFY, INT_FILT_MASK_NOTIFY,
-	INT_FILT_CLASS_BOUNCE, INT_FILT_MASK_BOUNCE,
+	MAIL_SRC_NAME_NOTIFY, MAIL_SRC_MASK_NOTIFY,
+	MAIL_SRC_NAME_BOUNCE, MAIL_SRC_MASK_BOUNCE,
+	MAIL_SRC_NAME_SENDMAIL, 0,
+	MAIL_SRC_NAME_SMTPD, 0,
+	MAIL_SRC_NAME_QMQPD, 0,
+	MAIL_SRC_NAME_FORWARD, 0,
+	MAIL_SRC_NAME_VERIFY, 0,
 	0,
     };
     int     filtered_classes = 0;

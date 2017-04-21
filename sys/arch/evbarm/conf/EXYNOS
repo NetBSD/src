@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.11 2016/08/19 18:08:50 maxv Exp $
+#	$NetBSD: EXYNOS,v 1.11.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -73,6 +73,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -202,9 +203,7 @@ armgtmr0	at armperiph?			# Generic Timer
 
 # On-board I/O
 exynosfdt0	at mainbus?
-fdt0		at exynosfdt0 
-simplebus*	at fdt?
-fdt*		at simplebus?
+fdt*		at fdtbus?
 
 fregulator*	at fdt?
 

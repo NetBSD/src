@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_pvt.h,v 1.1.1.4 2014/05/28 09:58:40 tron Exp $	*/
+/*	$NetBSD: ldap_pvt.h,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -128,6 +128,13 @@ ldap_pvt_gmtime_unlock LDAP_P(( void ));
 struct lutil_tm;
 LDAP_F( void )
 ldap_pvt_gettime LDAP_P(( struct lutil_tm * ));
+
+#ifdef _WIN32
+#define gettimeofday(tv,tz)	ldap_pvt_gettimeofday(tv,tz)
+struct timeval;
+LDAP_F( int )
+ldap_pvt_gettimeofday LDAP_P(( struct timeval *tv, void *unused ));
+#endif
 
 /* use this macro to allocate buffer for ldap_pvt_csnstr */
 #define LDAP_PVT_CSNSTR_BUFSIZE	64

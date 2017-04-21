@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.6 2009/08/22 00:04:22 joerg Exp $
+.\"	$NetBSD: boot.8,v 1.6.32.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 Stephen M. Rumble
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2007
+.Dd February 17, 2017
 .Dt BOOT 8 sgimips
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ a Volume Header, which contains a boot loader and other standalone utilities.
 Booting
 .Nx
 requires that we write our bootloader into to the volume header using
-.Xr sgivol 8 .
+.Xr sgimips/sgivol 8 .
 .Pp
 Once a bootloader is present in the volume header, it may be executed
 directly by the PROM either manually, or at boot time using the
@@ -101,7 +101,7 @@ as a BOOTP server.
 .Sh SEE ALSO
 .Xr dhcpd.conf 5 ,
 .Xr dhcpd 8 ,
-.Xr sgivol 8
+.Xr sgimips/sgivol 8
 .Sh CAVEATS
 Some older PROM revisions do not support loading of ELF images.
 The build system automatically prepares ECOFF versions, which are

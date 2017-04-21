@@ -1,4 +1,33 @@
-/*	$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $	*/
+/*	$NetBSD: pmc.c,v 1.17.34.1 2017/04/21 16:54:15 bouyer Exp $	*/
+
+/*
+ * Copyright (c) 2017 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,12 +66,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.17.34.1 2017/04/21 16:54:15 bouyer Exp $");
 #endif
 
+#include <inttypes.h>
 #include <sys/types.h>
+#include <sys/stdbool.h>
 #include <machine/sysarch.h>
 #include <machine/specialreg.h>
+#include <machine/param.h>
 #include <sys/wait.h>
 #include <err.h>
 #include <errno.h>
@@ -52,59 +84,34 @@ __RCSID("$NetBSD: pmc.c,v 1.17 2009/01/18 07:05:53 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 
-struct pmc_name2val {
+#if defined(__i386__)
+typedef struct i386_pmc_info_args x86_pmc_info_args_t;
+typedef struct i386_pmc_startstop_args x86_pmc_startstop_args_t;
+typedef struct i386_pmc_read_args x86_pmc_read_args_t;
+#else /* amd64 */
+typedef struct x86_64_pmc_info_args x86_pmc_info_args_t;
+typedef struct x86_64_pmc_startstop_args x86_pmc_startstop_args_t;
+typedef struct x86_64_pmc_read_args x86_pmc_read_args_t;
+#endif
+
+typedef struct {
 	const char *name;
-	int val;
-	int unit;
-};
+	uint32_t val;
+	uint32_t unit;
+} pmc_name2val_t;
 
-static const struct pmc_name2val i586_names[] = {
-	{ "tlb-data-miss",		PMC5_DATA_TLB_MISS,		0 },
-	{ "tlb-ins-miss",		PMC5_INST_TLB_MISS,		0 },
-	{ "l1cache-ins-miss", 		PMC5_INST_CACHE_MISS,		0 },
-	{ "l1cache-data-miss",		PMC5_DATA_RW_MISS,		0 },
-	{ "l1cache-data-miss-read",	PMC5_DATA_READ_MISS,		0 },
-	{ "l1cache-data-miss-write",	PMC5_DATA_WRITE_MISS,		0 },
-	{ "l1cache-writeback",		PMC5_DATA_LINES_WBACK,		0 },
-	{ "l1cache-writeback-hit",	PMC5_WRITE_M_E,			0 },
-	{ "l2cache-data-snoop",		PMC5_DATA_CACHE_SNOOP,		0 },
-	{ "l2cache-data-snoop-hit",	PMC5_DATA_CACHE_SNOOP_HIT,	0 },
-	{ "mem-read",			PMC5_DATA_READ,			0 },
-	{ "mem-write",			PMC5_DATA_WRITE,		0 },
-	{ "mem-access",			PMC5_DATA_RW,			0 },
-	{ "mem-access-both-pipes",	PMC5_MEM_ACCESS_BOTH_PIPES,	0 },
-	{ "mem-bank-conflicts",		PMC5_BANK_CONFLICTS,		0 },
-	{ "mem-misalign-ref",		PMC5_MISALIGNED_DATA,		0 },
-	{ "mem-uncached-read",		PMC5_NONCACHE_MEM_READ,		0 },
-	{ "seg-load-any",		PMC5_SEGMENT_REG_LOAD,		0 },
-	{ "branch",			PMC5_BRANCHES,			0 },
-	{ "branch-btb-hit",		PMC5_BTB_HITS,			0 },
-	{ "branch-taken",		PMC5_BRANCH_TAKEN,		0 },
-	{ "ins-read",			PMC5_INST_READ,			0 },
-	{ "ins-pipeline-flush",		PMC5_PIPELINE_FLUSH,		0 },
-	{ "ins-executed",		PMC5_INST_EXECUTED,		0 },
-	{ "ins-executed-vpipe",		PMC5_INST_EXECUTED_V_PIPE,	0 },
-	{ "ins-stall-agi",		PMC5_AGI_STALL,			0 },
-	{ "ins-stall-write",		PMC5_WRITE_BACKUP_STALL,	0 },
-	{ "ins-stall-data",		PMC5_DATA_READ_STALL,		0 },
-	{ "ins-stall-writeline",	PMC5_WRITE_E_M_STALL,		0 },
-	{ "bus-utilization",		PMC5_BUS_UTILIZATION,		0 },
-	{ "bus-locked",			PMC5_LOCKED_BUS,		0 },
-	{ "bus-io-cycle",		PMC5_IO_CYCLE,			0 },
-	{ "fpu-flops", 			PMC5_FLOPS,			0 },
-	{ "int-hw",			PMC5_HARDWARE_INTR,		0 },
-	{ "break-match0",		PMC5_BP0_MATCH,			0 },
-	{ "break-match1",		PMC5_BP1_MATCH,			0 },
-	{ "break-match2",		PMC5_BP2_MATCH,			0 },
-	{ "break-match3",		PMC5_BP3_MATCH,			0 },
-};
+typedef struct {
+	int type;
+	const pmc_name2val_t *pmc_names;
+	size_t size;
+} pmc_name2val_cpu_t;
 
-static const struct pmc_name2val i686_names[] = {
+static const pmc_name2val_t i686_names[] = {
 	{ "mem-refs",			PMC6_DATA_MEM_REFS,		0 },
 	{ "l1cache-lines",		PMC6_DCU_LINES_IN,		0 },
 	{ "l1cache-mlines",		PMC6_DCU_M_LINES_IN,		0 },
 	{ "l1cache-mlines-evict",	PMC6_DCU_M_LINES_OUT,		0 },
-	{ "l1cache-miss-wait",		PMC6_DCU_MISS_OUTSTANDING, 	0 },
+	{ "l1cache-miss-wait",		PMC6_DCU_MISS_OUTSTANDING,	0 },
 	{ "ins-fetch",			PMC6_IFU_IFETCH,		0 },
 	{ "ins-fetch-misses",		PMC6_IFU_IFETCH_MISS,		0 },
 	{ "itlb-misses",		PMC6_IFU_IFETCH_MISS,		0 },
@@ -226,66 +233,39 @@ static const struct pmc_name2val i686_names[] = {
 	{ "seg-rename-retire",		PMC6_RET_SEG_RENAMES,		0 },
 };
 
-static const struct pmc_name2val k7_names[] = {
-	{ "seg-load-all",		K7_SEGMENT_REG_LOADS,		0x7f },
-	{ "seg-load-es",		K7_SEGMENT_REG_LOADS,		0x01 },
-	{ "seg-load-cs",		K7_SEGMENT_REG_LOADS,		0x02 },
-	{ "seg-load-ss",		K7_SEGMENT_REG_LOADS,		0x04 },
-	{ "seg-load-ds",		K7_SEGMENT_REG_LOADS,		0x08 },
-	{ "seg-load-fs",		K7_SEGMENT_REG_LOADS,		0x10 },
-	{ "seg-load-gs",		K7_SEGMENT_REG_LOADS,		0x20 },
-	{ "seg-load-hs",		K7_SEGMENT_REG_LOADS,		0x40 },
-	{ "seg-load-stall",		K7_SEGMENT_LOAD_STALL,		0 },
+static const pmc_name2val_t k7_names[] = {
 	{ "l1cache-access",		K7_DATA_CACHE_ACCESS,		0 },
-	{ "l1cache-miss",		K7_DATA_CACHE_MISS,	 	0 },
-	{ "l1cache-refill",		K7_DATA_CACHE_REFILL,	 	0x1f },
-	{ "l1cache-refill-invalid",	K7_DATA_CACHE_REFILL,	 	0x01 },
-	{ "l1cache-refill-shared",	K7_DATA_CACHE_REFILL,	 	0x02 },
-	{ "l1cache-refill-exclusive",	K7_DATA_CACHE_REFILL,	 	0x04 },
-	{ "l1cache-refill-owner",	K7_DATA_CACHE_REFILL,	 	0x08 },
-	{ "l1cache-refill-modified",	K7_DATA_CACHE_REFILL,	 	0x10 },
-	{ "l1cache-load",		K7_DATA_CACHE_REFILL_SYSTEM, 	0x1f },
-	{ "l1cache-load-invalid",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x01 },
-	{ "l1cache-load-shared",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x02 },
-	{ "l1cache-load-exclusive",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x04 },
-	{ "l1cache-load-owner",		K7_DATA_CACHE_REFILL_SYSTEM, 	0x08 },
-	{ "l1cache-load-modified",	K7_DATA_CACHE_REFILL_SYSTEM, 	0x10 },
-	{ "l1cache-writeback",		K7_DATA_CACHE_WBACK,	 	0x1f },
-	{ "l1cache-writeback-invalid",	K7_DATA_CACHE_WBACK,	 	0x01 },
-	{ "l1cache-writeback-shared",	K7_DATA_CACHE_WBACK,	 	0x02 },
-	{ "l1cache-writeback-exclusive",K7_DATA_CACHE_WBACK,	 	0x04 },
-	{ "l1cache-writeback-owner",	K7_DATA_CACHE_WBACK,	 	0x08 },
-	{ "l1cache-writeback-modified",	K7_DATA_CACHE_WBACK,	 	0x10 },
-	{ "l2cache-access",		K7_L2_REQUEST,			0xff },
-	{ "l2cache-tag-read",		K7_L2_REQUEST,			0x01 },
-	{ "l2cache-tag-write",		K7_L2_REQUEST,			0x02 },
-	{ "l2cache-inst-read",		K7_L2_REQUEST,			0x04 },
-	{ "l2cache-inst-load",		K7_L2_REQUEST,			0x08 },
-	{ "l2cache-data-store",		K7_L2_REQUEST,			0x10 },
-	{ "l2cache-data-loadmem",	K7_L2_REQUEST,			0x20 },
-	{ "l2cache-data-write",		K7_L2_REQUEST,			0x40 },
-	{ "l2cache-data-move",		K7_L2_REQUEST,			0x80 },
-	{ "l2cache-access-busy",	K7_L2_REQUEST_BUSY,		0 },
-	{ "l2cache-hit",		K7_L2_DTLB_HIT,		 	0 },
-	{ "l2cache-miss",		K7_L2_DTLB_MISS,	 	0 },
+	{ "l1cache-miss",		K7_DATA_CACHE_MISS,		0 },
+	{ "l1cache-refill",		K7_DATA_CACHE_REFILL,		0x1f },
+	{ "l1cache-refill-invalid",	K7_DATA_CACHE_REFILL,		0x01 },
+	{ "l1cache-refill-shared",	K7_DATA_CACHE_REFILL,		0x02 },
+	{ "l1cache-refill-exclusive",	K7_DATA_CACHE_REFILL,		0x04 },
+	{ "l1cache-refill-owner",	K7_DATA_CACHE_REFILL,		0x08 },
+	{ "l1cache-refill-modified",	K7_DATA_CACHE_REFILL,		0x10 },
+	{ "l1cache-load",		K7_DATA_CACHE_REFILL_SYSTEM,	0x1f },
+	{ "l1cache-load-invalid",	K7_DATA_CACHE_REFILL_SYSTEM,	0x01 },
+	{ "l1cache-load-shared",	K7_DATA_CACHE_REFILL_SYSTEM,	0x02 },
+	{ "l1cache-load-exclusive",	K7_DATA_CACHE_REFILL_SYSTEM,	0x04 },
+	{ "l1cache-load-owner",		K7_DATA_CACHE_REFILL_SYSTEM,	0x08 },
+	{ "l1cache-load-modified",	K7_DATA_CACHE_REFILL_SYSTEM,	0x10 },
+	{ "l1cache-writeback",		K7_DATA_CACHE_WBACK,		0x1f },
+	{ "l1cache-writeback-invalid",	K7_DATA_CACHE_WBACK,		0x01 },
+	{ "l1cache-writeback-shared",	K7_DATA_CACHE_WBACK,		0x02 },
+	{ "l1cache-writeback-exclusive",K7_DATA_CACHE_WBACK,		0x04 },
+	{ "l1cache-writeback-owner",	K7_DATA_CACHE_WBACK,		0x08 },
+	{ "l1cache-writeback-modified",	K7_DATA_CACHE_WBACK,		0x10 },
+	{ "l1DTLB-miss",		K7_L1_DTLB_MISS,		0 },
+	{ "l2DTLB-miss",		K7_L2_DTLB_MISS,		0 },
+	{ "l1ITLB-miss",		K7_L1_ITLB_MISS,		0 },
+	{ "l2ITLB-miss",		K7_L2_ITLB_MISS,		0 },
 	{ "mem-misalign-ref",		K7_MISALIGNED_DATA_REF,		0 },
-	{ "mem-access",			K7_SYSTEM_REQUEST,		0 },
-	{ "mem-access-uc",		K7_SYSTEM_REQUEST_TYPE,		0x01 },
-	{ "mem-access-wc",		K7_SYSTEM_REQUEST_TYPE,		0x04 },
-	{ "mem-access-wt",		K7_SYSTEM_REQUEST_TYPE,		0x10 },
-	{ "mem-access-wp",		K7_SYSTEM_REQUEST_TYPE,		0x20 },
-	{ "mem-access-wb",		K7_SYSTEM_REQUEST_TYPE,		0x40 },
 	{ "ins-fetch",			K7_IFU_IFETCH,			0 },
 	{ "ins-fetch-miss",		K7_IFU_IFETCH_MISS,		0 },
 	{ "ins-refill-l2",		K7_IFU_REFILL_FROM_L2,		0 },
-	{ "ins-refill-mem",		K7_IFU_REFILL_FROM_SYSTEM,	0 },
-	{ "ins-fetch-stall",		K7_IFU_STALL,			0 },
+	{ "ins-refill-sys",		K7_IFU_REFILL_FROM_SYSTEM,	0 },
 	{ "ins-retired",		K7_RETIRED_INST,		0 },
-	{ "ins-empty",			K7_INSTRUCTION_DECODER_EMPTY,	0 },
-	{ "itlb-miss-l1",		K7_ITLB_L1_MISS,		0 },
-	{ "itlb-miss-l2",		K7_ITLB_L2_MISS,		0 },
 	{ "ops-retired",		K7_RETIRED_OPS,			0 },
-	{ "branch-retired",		K7_RETIRED_BRANCHES,		0 },
+	{ "branch-retired",		K7_RETIRED_BRANCH,		0 },
 	{ "branch-miss-retired",	K7_RETIRED_BRANCH_MISPREDICTED,	0 },
 	{ "branch-taken-retired",	K7_RETIRED_TAKEN_BRANCH,	0 },
 	{ "branch-taked-miss-retired",
@@ -293,215 +273,340 @@ static const struct pmc_name2val k7_names[] = {
 	{ "branch-far-retired",
 	    K7_RETIRED_FAR_CONTROL_TRANSFER,		0 },
 	{ "branch-resync-retired",	K7_RETIRED_RESYNC_BRANCH,	0 },
-	{ "branch-near-retired",	K7_RETIRED_NEAR_RETURNS,	0 },
-	{ "branch-near-miss-retired",
-	    K7_RETIRED_NEAR_RETURNS_MISPREDICTED,	0 },
-	{ "branch-indirect-miss-retired",
-	    K7_RETIRED_INDIRECT_MISPREDICTED,	0 },
 	{ "int-hw",			K7_HW_INTR_RECV,		0 },
 	{ "int-cycles-masked",		K7_CYCLES_INT_MASKED,		0 },
 	{ "int-cycles-masked-pending",
 	    K7_CYCLES_INT_PENDING_AND_MASKED, 0 },
-	{ "break-match0",		K7_BP0_MATCH,			0 },
-	{ "break-match1",		K7_BP1_MATCH,			0 },
-	{ "break-match2",		K7_BP2_MATCH,			0 },
-	{ "break-match3",		K7_BP3_MATCH,			0 },
 };
 
-static struct pmc_name2val_cpus {
-	int type;
-	const struct pmc_name2val *pmc_names;
-	int size;
-} pmc_cpus[] = {
-	{ PMC_TYPE_I586, i586_names,
-	  sizeof(i586_names)/sizeof(struct pmc_name2val) },
+static const pmc_name2val_t f10h_names[] = {
+	{ "seg-load-all",		F10H_SEGMENT_REG_LOADS,		0x7f },
+	{ "seg-load-es",		F10H_SEGMENT_REG_LOADS,		0x01 },
+	{ "seg-load-cs",		F10H_SEGMENT_REG_LOADS,		0x02 },
+	{ "seg-load-ss",		F10H_SEGMENT_REG_LOADS,		0x04 },
+	{ "seg-load-ds",		F10H_SEGMENT_REG_LOADS,		0x08 },
+	{ "seg-load-fs",		F10H_SEGMENT_REG_LOADS,		0x10 },
+	{ "seg-load-gs",		F10H_SEGMENT_REG_LOADS,		0x20 },
+	{ "seg-load-hs",		F10H_SEGMENT_REG_LOADS,		0x40 },
+	{ "l1cache-access",		F10H_DATA_CACHE_ACCESS,		0 },
+	{ "l1cache-miss",		F10H_DATA_CACHE_MISS,		0 },
+	{ "l1cache-refill",		F10H_DATA_CACHE_REFILL_FROM_L2,	0x1f },
+	{ "l1cache-refill-invalid",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x01 },
+	{ "l1cache-refill-shared",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x02 },
+	{ "l1cache-refill-exclusive",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x04 },
+	{ "l1cache-refill-owner",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x08 },
+	{ "l1cache-refill-modified",	F10H_DATA_CACHE_REFILL_FROM_L2,	0x10 },
+	{ "l1cache-load",		F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x1f },
+	{ "l1cache-load-invalid",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x01 },
+	{ "l1cache-load-shared",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x02 },
+	{ "l1cache-load-exclusive",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x04 },
+	{ "l1cache-load-owner",		F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x08 },
+	{ "l1cache-load-modified",	F10H_DATA_CACHE_REFILL_FROM_NORTHBRIDGE,0x10 },
+	{ "l1cache-writeback",		F10H_CACHE_LINES_EVICTED,	0x1f },
+	{ "l1cache-writeback-invalid",	F10H_CACHE_LINES_EVICTED,	0x01 },
+	{ "l1cache-writeback-shared",	F10H_CACHE_LINES_EVICTED,	0x02 },
+	{ "l1cache-writeback-exclusive",F10H_CACHE_LINES_EVICTED,	0x04 },
+	{ "l1cache-writeback-owner",	F10H_CACHE_LINES_EVICTED,	0x08 },
+	{ "l1cache-writeback-modified",	F10H_CACHE_LINES_EVICTED,	0x10 },
+	{ "l1DTLB-hit-all",		F10H_L1_DTLB_HIT,		0x07 },
+	{ "l1DTLB-hit-4Kpage",		F10H_L1_DTLB_HIT,		0x01 },
+	{ "l1DTLB-hit-2Mpage",		F10H_L1_DTLB_HIT,		0x02 },
+	{ "l1DTLB-hit-1Gpage",		F10H_L1_DTLB_HIT,		0x04 },
+	{ "l1DTLB-miss-all",		F10H_L1_DTLB_MISS,		0x07 },
+	{ "l1DTLB-miss-4Kpage",		F10H_L1_DTLB_MISS,		0x01 },
+	{ "l1DTLB-miss-2Mpage",		F10H_L1_DTLB_MISS,		0x02 },
+	{ "l1DTLB-miss-1Gpage",		F10H_L1_DTLB_MISS,		0x04 },
+	{ "l2DTLB-miss-all",		F10H_L2_DTLB_MISS,		0x03 },
+	{ "l2DTLB-miss-4Kpage",		F10H_L2_DTLB_MISS,		0x01 },
+	{ "l2DTLB-miss-2Mpage",		F10H_L2_DTLB_MISS,		0x02 },
+	/* l2DTLB-miss-1Gpage: reserved on some revisions, so disabled */
+	{ "l1ITLB-miss",		F10H_L1_ITLB_MISS,		0 },
+	{ "l2ITLB-miss-all",		F10H_L2_ITLB_MISS,		0x03 },
+	{ "l2ITLB-miss-4Kpage",		F10H_L2_ITLB_MISS,		0x01 },
+	{ "l2ITLB-miss-2Mpage",		F10H_L2_ITLB_MISS,		0x02 },
+	{ "mem-misalign-ref",		F10H_MISALIGNED_ACCESS,		0 },
+	{ "ins-fetch",			F10H_INSTRUCTION_CACHE_FETCH,	0 },
+	{ "ins-fetch-miss",		F10H_INSTRUCTION_CACHE_MISS,	0 },
+	{ "ins-refill-l2",		F10H_INSTRUCTION_CACHE_REFILL_FROM_L2,	0 },
+	{ "ins-refill-sys",		F10H_INSTRUCTION_CACHE_REFILL_FROM_SYS,	0 },
+	{ "ins-fetch-stall",		F10H_INSTRUCTION_FETCH_STALL,	0 },
+	{ "ins-retired",		F10H_RETIRED_INSTRUCTIONS,	0 },
+	{ "ins-empty",			F10H_DECODER_EMPTY,	0 },
+	{ "ops-retired",		F10H_RETIRED_UOPS,		0 },
+	{ "branch-retired",		F10H_RETIRED_BRANCH,		0 },
+	{ "branch-miss-retired",	F10H_RETIRED_MISPREDICTED_BRANCH,0 },
+	{ "branch-taken-retired",	F10H_RETIRED_TAKEN_BRANCH,	0 },
+	{ "branch-taken-miss-retired",	F10H_RETIRED_TAKEN_BRANCH_MISPREDICTED,	0 },
+	{ "branch-far-retired", 	F10H_RETIRED_FAR_CONTROL_TRANSFER, 0 },
+	{ "branch-resync-retired",	F10H_RETIRED_BRANCH_RESYNC,	0 },
+	{ "branch-near-retired",	F10H_RETIRED_NEAR_RETURNS,	0 },
+	{ "branch-near-miss-retired",	F10H_RETIRED_NEAR_RETURNS_MISPREDICTED,	0 },
+	{ "branch-indirect-miss-retired", F10H_RETIRED_INDIRECT_BRANCH_MISPREDICTED,	0 },
+	{ "int-hw",			F10H_INTERRUPTS_TAKEN,		0 },
+	{ "int-cycles-masked",		F10H_INTERRUPTS_MASKED_CYCLES,	0 },
+	{ "int-cycles-masked-pending",
+	    F10H_INTERRUPTS_MASKED_CYCLES_INTERRUPT_PENDING, 0 },
+	{ "fpu-exceptions",		F10H_FPU_EXCEPTIONS, 0 },
+	{ "break-match0",		F10H_DR0_BREAKPOINT_MATCHES,	0 },
+	{ "break-match1",		F10H_DR1_BREAKPOINT_MATCHES,	0 },
+	{ "break-match2",		F10H_DR2_BREAKPOINT_MATCHES,	0 },
+	{ "break-match3",		F10H_DR3_BREAKPOINT_MATCHES,	0 },
+};
+
+static const pmc_name2val_cpu_t pmc_cpus[] = {
 	{ PMC_TYPE_I686, i686_names,
-	  sizeof(i686_names)/sizeof(struct pmc_name2val) },
+	  sizeof(i686_names) / sizeof(pmc_name2val_t) },
 	{ PMC_TYPE_K7, k7_names,
-	  sizeof(k7_names)/sizeof(struct pmc_name2val) },
+	  sizeof(k7_names) / sizeof(pmc_name2val_t) },
+	{ PMC_TYPE_F10H, f10h_names,
+	  sizeof(f10h_names) / sizeof(pmc_name2val_t) },
 };
 
+/* -------------------------------------------------------------------------- */
 
-static const struct pmc_name2val_cpus *
-pmc_lookup_cpu(int type)
+static void usage(void) __dead;
+
+static void pmc_list(const pmc_name2val_cpu_t *, char **);
+static void pmc_start(const pmc_name2val_cpu_t *, char **);
+static void pmc_stop(const pmc_name2val_cpu_t *, char **);
+
+static const pmc_name2val_cpu_t *pmc_lookup_cpu(int);
+static const pmc_name2val_t *pmc_find_event(const pmc_name2val_cpu_t *,
+    const char *);
+
+static int x86_pmc_info(x86_pmc_info_args_t *);
+static int x86_pmc_startstop(x86_pmc_startstop_args_t *);
+static int x86_pmc_read(x86_pmc_read_args_t *);
+
+static uint32_t pmc_ncounters;
+
+static struct cmdtab {
+	const char *label;
+	bool takesargs;
+	bool argsoptional;
+	void (*func)(const pmc_name2val_cpu_t *, char **);
+} const pmc_cmdtab[] = {
+	{ "list",	false, false, pmc_list },
+	{ "start",	true,  false, pmc_start },
+	{ "stop",	false, false, pmc_stop },
+	{ NULL,		false, false, NULL },
+};
+
+static void usage(void)
 {
-	size_t i;
+	const char *progname = getprogname();
 
-	for (i = 0; i < sizeof(pmc_cpus)/sizeof(struct pmc_name2val_cpus);
-	    i++) {
-		if (pmc_cpus[i].type == type)
-			return (&pmc_cpus[i]);
-	}
-	return (NULL);
-}
-
-
-static const struct pmc_name2val *
-find_pmc_name(const struct pmc_name2val_cpus *pncp, const char *name)
-{
-	int i;
-	const struct pmc_name2val *pnp = NULL;
-
-	for (i = 0; i < pncp->size; i++) {
-		if (strcmp(pncp->pmc_names[i].name, name) == 0) {
-			pnp = &pncp->pmc_names[i];
-			break;
-		}
-	}
-
-	return (pnp);
+	fprintf(stderr, "usage: %s list\n", progname);
+	fprintf(stderr, "       %s start [name:option ...]\n", progname);
+	fprintf(stderr, "       %s stop\n", progname);
+	exit(EXIT_FAILURE);
+	/* NOTREACHED */
 }
 
 static void
-list_pmc_names(const struct pmc_name2val_cpus *pncp)
+pmc_list(const pmc_name2val_cpu_t *pncp, char **argv)
 {
-	int i, n, left, pairs;
+	size_t i, n, mid;
 
-	(void)printf("Supported performance counter events:\n");
+	printf("Supported performance counter events:\n");
 	n = pncp->size;
-	pairs = n / 2;
-	left = n % 2;
+	mid = n / 2;
 
-	for (i = 0; i < pairs; i++)
-		(void)printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
-		    pncp->pmc_names[i * 2 + 1].name);
-	if (left != 0)
-		(void)printf("\t%37s\n", pncp->pmc_names[n - 1].name);
+	for (i = 0; i < mid; i++)
+		printf("    %-37s %-37s\n", pncp->pmc_names[i].name,
+		    pncp->pmc_names[mid + i].name);
+	if ((n % 2) != 0)
+		printf("    %-37s\n", pncp->pmc_names[n - 1].name);
 }
 
-static void usage(void) __dead;
-static void usage(void)
+static void
+pmc_start(const pmc_name2val_cpu_t *pncp, char **argv)
 {
+	x86_pmc_startstop_args_t pmcargs[PMC_NCOUNTERS], *pmcarg;
+	char *tokens[PMC_NCOUNTERS][2], *event, *options;
+	const pmc_name2val_t *pnp;
+	uint32_t flags;
+	size_t n, i;
 
-	(void)fprintf(stderr, "usage: %s -h\n"
-			"       %s -C\n"
-			"       %s -c <event> command [options] ...\n",
-	    getprogname(), getprogname(), getprogname());
-	exit(1);
+	for (n = 0; n < pmc_ncounters; n++) {
+		if (argv[n] == NULL)
+			break;
+		tokens[n][0] = strtok(argv[n], ":");
+		tokens[n][1] = strtok(NULL, ":");
+		if (tokens[n][1] == NULL)
+			usage();
+	}
+
+	for (i = 0; i < n; i++) {
+		pmcarg = &pmcargs[i];
+		event = tokens[i][0];
+		options = tokens[i][1];
+
+		pnp = pmc_find_event(pncp, event);
+		if (pnp == NULL)
+			errx(EXIT_FAILURE, "Unable to find '%s'", event);
+		flags = 0;
+		if (strchr(options, 'u'))
+			flags |= PMC_SETUP_USER;
+		if (strchr(options, 'k'))
+			flags |= PMC_SETUP_KERNEL;
+		if (flags == 0)
+			errx(EXIT_FAILURE, "Missing counter option");
+
+		memset(pmcarg, 0, sizeof(*pmcarg));
+		pmcarg->counter = i;
+		pmcarg->event = pnp->val;
+		pmcarg->unit = pnp->unit;
+		pmcarg->flags = flags;
+	}
+
+	for (i = 0; i < n; i++) {
+		pmcarg = &pmcargs[i];
+		if (x86_pmc_startstop(pmcarg) < 0)
+			errx(EXIT_FAILURE, "Unable to start counter #%zu", i);
+		printf("Counter #%zu started\n", i);
+	}
+}
+
+static void
+pmc_stop(const pmc_name2val_cpu_t *pncp, char **argv)
+{
+	x86_pmc_cpuval_t cpuval[PMC_NCOUNTERS][MAXCPUS];
+	x86_pmc_startstop_args_t pmcstop;
+	x86_pmc_read_args_t pmcread;
+	size_t i, j, n, nval = 0;
+
+	/* Read the values. */
+	for (n = 0; n < pmc_ncounters; n++) {
+		memset(&pmcread, 0, sizeof(pmcread));
+		pmcread.counter = n;
+		pmcread.values = (x86_pmc_cpuval_t *)&cpuval[n];
+		pmcread.nval = MAXCPUS;
+		if (x86_pmc_read(&pmcread) < 0) {
+			if (errno == ENOENT) {
+				/*
+				 * This counter is not running. So we stop the
+				 * iteration here, since the next counters
+				 * won't be running either.
+				 */
+				break;
+			}
+			errx(EXIT_FAILURE, "Unable to read counter #%zu", n);
+		}
+		nval = pmcread.nval;
+	}
+
+	/* Display the results. Should probably be revisited. */
+	printf("Counter\t\t");
+	for (i = 0; i < nval; i++) {
+		printf("cpu%zu\t\t", i);
+	}
+	printf("\n");
+	printf("-------\t\t");
+	for (i = 0; i < nval; i++) {
+		printf("----\t\t");
+	}
+	printf("\n");
+	for (i = 0; i < n; i++) {
+		printf("%zu\t\t", i);
+		for (j = 0; j < nval; j++) {
+			printf("%" PRIu64 "\t\t", cpuval[i][j].ctrval);
+		}
+		printf("\n");
+	}
+
+	/* Stop the counters. */
+	for (i = 0; i < n; i++) {
+		memset(&pmcstop, 0, sizeof(pmcstop));
+		pmcstop.counter = i;
+		if (x86_pmc_startstop(&pmcstop) < 0)
+			errx(EXIT_FAILURE, "Unable to stop counter #%zu", i);
+		printf("Counter #%zu stopped\n", i);
+	}
+}
+
+static const pmc_name2val_cpu_t *
+pmc_lookup_cpu(int type)
+{
+	size_t i, n = sizeof(pmc_cpus) / sizeof(pmc_name2val_cpu_t);
+
+	for (i = 0; i < n; i++) {
+		if (pmc_cpus[i].type == type)
+			return &pmc_cpus[i];
+	}
+
+	return NULL;
+}
+
+static const pmc_name2val_t *
+pmc_find_event(const pmc_name2val_cpu_t *pncp, const char *name)
+{
+	size_t i;
+
+	for (i = 0; i < pncp->size; i++) {
+		if (strcmp(pncp->pmc_names[i].name, name) == 0)
+			return &pncp->pmc_names[i];
+	}
+
+	return NULL;
+}
+
+static int
+x86_pmc_info(x86_pmc_info_args_t *args)
+{
+	if (sysarch(X86_PMC_INFO, args) == -1)
+		return -1;
+	return 0;
+}
+
+static int
+x86_pmc_startstop(x86_pmc_startstop_args_t *args)
+{
+	if (sysarch(X86_PMC_STARTSTOP, args) == -1)
+		return -1;
+	return 0;
+}
+
+static int
+x86_pmc_read(x86_pmc_read_args_t *args)
+{
+	if (sysarch(X86_PMC_READ, args) == -1)
+		return -1;
+	return 0;
 }
 
 int
 main(int argc, char **argv)
 {
-	int c, status, ret0, ret1, errn0, errn1;
-	const char * volatile event = "unknown";
-	const struct pmc_name2val_cpus *pncp;
-	const struct pmc_name2val *pnp;
-	struct i386_pmc_info_args pi;
-	struct i386_pmc_startstop_args pss0, pss1;
-	struct i386_pmc_read_args pr0, pr1;
-	pid_t pid;
+	const pmc_name2val_cpu_t *pncp;
+	x86_pmc_info_args_t pmcinfo;
+	const struct cmdtab *ct;
 
 	setprogname(argv[0]);
-	errn0 = errn1 = 0;
+	argv += 1;
 
-	if (i386_pmc_info(&pi) < 0)
-		errx(2, "PMC support is not compiled into the kernel");
+	if (x86_pmc_info(&pmcinfo) < 0)
+		errx(EXIT_FAILURE, "PMC support not compiled into the kernel");
+	if (pmcinfo.vers != 1)
+		errx(EXIT_FAILURE, "Wrong PMC version");
+	pmc_ncounters = pmcinfo.nctrs;
 
-	pncp = pmc_lookup_cpu(pi.type);
+	pncp = pmc_lookup_cpu(pmcinfo.type);
 	if (pncp == NULL)
-		errx(3, "PMC counters are not supported for your CPU (0x%x)",
-		    pi.type);
+		errx(EXIT_FAILURE, "PMC type 0x%x not recognized",
+		    pmcinfo.type);
 
-	pnp = NULL;
-	while ((c = getopt(argc, argv, "Cc:h")) != -1) {
-		switch (c) {
-		case 'C':
-			if (argc != 2)
+	for (ct = pmc_cmdtab; ct->label != NULL; ct++) {
+		if (strcmp(argv[0], ct->label) == 0) {
+			if (!ct->argsoptional &&
+			    ((ct->takesargs == 0) ^ (argv[1] == NULL)))
+			{
 				usage();
-			/*
-			 * Just clear both counters. Useful if
-			 * a previous run got killed and did not
-			 * clean up.
-			 */
-			(void)memset(&pss0, 0, sizeof pss0);
-			(void)i386_pmc_startstop(&pss0);
-			pss0.counter = 1;
-			(void)i386_pmc_startstop(&pss0);
-			return 0;
-		case 'c':
-			event = optarg;
-			pnp = find_pmc_name(pncp, event);
+			}
+			(*ct->func)(pncp, argv + 1);
 			break;
-		case 'h':
-			if (argc != 2)
-				usage();
-			list_pmc_names(pncp);
-			return 0;
-		default:
-			usage();
 		}
 	}
-
-	if (pnp == NULL || argc <= optind)
-		usage();
-
-	(void)memset(&pss0, 0, sizeof pss0);
-	(void)memset(&pss1, 0, sizeof pss1);
-	pss0.event = pss1.event = pnp->val;
-	pss0.unit = pss1.unit = pnp->unit;
-	pss0.flags = PMC_SETUP_USER;
-	pss0.counter = 0;
-	pss1.flags = PMC_SETUP_KERNEL;
-	pss1.counter = 1;
-
-	/*
-	 * XXX should catch signals and tidy up in the parent.
-	 */
-	if (i386_pmc_startstop(&pss0) < 0)
-		err(4, "pmc_start user");
-	pss0.flags = 0;
-	if (i386_pmc_startstop(&pss1) < 0)
-		err(5, "pmc_start kernel");
-	pss1.flags = 0;
-
-	pid = vfork();
-
-	switch(pid) {
-	case -1:
-		err(5, "vfork");
-	case 0:
-		(void)execvp(argv[optind], &argv[optind]);
-		err(6, "execvp");
-	}
-
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_IGN);
-
-	if (waitpid(pid, &status, 0) == -1)
-		err(6, "waitpid");
-	if (!WIFEXITED(status))
-		return 0;
-
-	/*
-	 * Do not immediately exit on errors below. The counters
-	 * must be stopped first, or subsequent runs will get
-	 * EBUSY.
-	 */
-	pr0.counter = 0;
-	ret0 = i386_pmc_read(&pr0);
-	if (ret0 < 0)
-		errn0 = errno;
-	pr1.counter = 1;
-	ret1 = i386_pmc_read(&pr1);
-	if (ret1 < 0)
-		errn1 = errno;
-
-	if (i386_pmc_startstop(&pss0) < 0)
-		warn("pmc_stop user");
-	if (i386_pmc_startstop(&pss1) < 0)
-		warn("pmc_stop kernel");
-
-	if (ret0 < 0) {
-		errno = errn0;
-		err(6, "pmc_read");
-	}
-	if (ret1 < 0) {
-		errno = errn1;
-		err(7, "pmc_read");
-	}
-
-	(void)printf("%s: user %llu kernel %llu\n", event, pr0.val, pr1.val);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.40 2013/11/24 17:20:00 jakllsch Exp $	*/
+/*	$NetBSD: libi386.h,v 1.40.14.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -26,6 +26,9 @@
  *
  */
 
+#ifndef	__I386_STAND_LIBI386_H__
+#define	__I386_STAND_LIBI386_H__
+
 typedef unsigned long physaddr_t;
 
 /* this is in startup code */
@@ -40,6 +43,7 @@ void multiboot(physaddr_t, physaddr_t, physaddr_t);
 
 int exec_netbsd(const char *, physaddr_t, int, int, void (*)(void));
 int exec_multiboot(const char *, char *);
+int count_netbsd(const char *, u_long *);
 
 void delay(int);
 int getbasemem(void);
@@ -144,3 +148,5 @@ void userconf_add(char *);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);
+
+#endif	/* __I386_STAND_LIBI386_H__ */

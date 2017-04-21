@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.41 2015/04/21 11:10:29 pooka Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.41.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.41 2015/04/21 11:10:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.41.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	}
 
 	error = lwp_create(&lwp0, &proc0, uaddr, LWP_DETACHED, NULL,
-	    0, func, arg, &l, lc);
+	    0, func, arg, &l, lc, &lwp0.l_sigmask, &lwp0.l_sigstk);
 	if (error) {
 		uvm_uarea_system_free(uaddr);
 		return error;

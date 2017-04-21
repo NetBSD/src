@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.1.1.2 2013/01/02 18:59:13 tron Exp $	*/
+/*	$NetBSD: msg.h,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _MSG_H_INCLUDED_
 #define _MSG_H_INCLUDED_
@@ -45,7 +45,7 @@ extern void msg_error_clear(void);
 extern MSG_CLEANUP_FN msg_cleanup(MSG_CLEANUP_FN);
 
 extern void PRINTFLIKE(4, 5) msg_rate_delay(time_t *, int,
-				          void (*log_fn) (const char *,...),
+	              void PRINTFPTRLIKE(1, 2) (*log_fn) (const char *,...),
 					            const char *,...);
 
 /* LICENSE
@@ -53,10 +53,10 @@ extern void PRINTFLIKE(4, 5) msg_rate_delay(time_t *, int,
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
 /* AUTHOR(S)
-/*      Wietse Venema
-/*      IBM T.J. Watson Research
-/*      P.O. Box 704
-/*      Yorktown Heights, NY 10598, USA
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
 /*--*/
 
 #endif

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.2 2014/08/16 08:43:12 apb Exp $
+.\"	$NetBSD: dosboot.8,v 1.2.6.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd August 16, 2014
+.Dd February 17, 2017
 .Dt DOSBOOT 8 x86
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ in the current
 directory.
 .Nm
 shares common code with the standard boot loader,
-.Xr boot 8 .
+.Xr x86/boot 8 .
 .Pp
 The recognized options are:
 .Bl -tag -width "-adqsv" -offset 04n
@@ -93,11 +93,11 @@ Another device or partition can be specified
 by prepending a block device name in terms of
 .Nx ,
 followed by a colon (see
-.Xr boot 8
+.Xr x86/boot 8
 and examples).
 .It Fl adqsv
 Flags passed to the kernel, see
-.Xr boot 8 .
+.Xr x86/boot 8 .
 .El
 .Pp
 The commands accepted after the
@@ -113,7 +113,7 @@ Boot
 See
 .Cm boot
 in
-.Xr boot 8
+.Xr x86/boot 8
 for full details.
 .It Ic dev Op device
 Set the default device and partition for subsequent file system operations.
@@ -169,7 +169,7 @@ dosboot -u fd0a:netbsd -s
 .Ed
 .Sh SEE ALSO
 .Xr release 7 ,
-.Xr boot 8
+.Xr x86/boot 8
 .Sh HISTORY
 The
 .Nx Ns Tn /x86

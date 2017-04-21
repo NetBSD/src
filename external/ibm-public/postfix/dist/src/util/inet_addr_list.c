@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_list.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_addr_list.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -80,7 +80,7 @@ void    inet_addr_list_init(INET_ADDR_LIST *list)
 /* inet_addr_list_append - append address to internet address list */
 
 void    inet_addr_list_append(INET_ADDR_LIST *list,
-			              struct sockaddr * addr)
+			              struct sockaddr *addr)
 {
     const char *myname = "inet_addr_list_append";
     MAI_HOSTADDR_STR hostaddr;
@@ -94,7 +94,7 @@ void    inet_addr_list_append(INET_ADDR_LIST *list,
     if (list->used >= list->size) {
 	new_size = list->size * 2;
 	list->addrs = (struct sockaddr_storage *)
-	    myrealloc((char *) list->addrs, sizeof(*list->addrs) * new_size);
+	    myrealloc((void *) list->addrs, sizeof(*list->addrs) * new_size);
 	list->size = new_size;
     }
     memcpy(list->addrs + list->used++, addr, SOCK_ADDR_LEN(addr));
@@ -143,7 +143,7 @@ void    inet_addr_list_uniq(INET_ADDR_LIST *list)
 
 void    inet_addr_list_free(INET_ADDR_LIST *list)
 {
-    myfree((char *) list->addrs);
+    myfree((void *) list->addrs);
 }
 
 #ifdef TEST

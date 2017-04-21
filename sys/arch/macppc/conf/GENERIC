@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.327 2017/01/02 03:22:30 sevan Exp $
+# $NetBSD: GENERIC,v 1.327.2.1 2017/04/21 16:53:30 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.327 $"
+#ident 		"GENERIC-$Revision: 1.327.2.1 $"
 
 maxusers	32
 
@@ -87,9 +87,10 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Wedge support
 options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
 options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
-#options		DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
-#options		DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
-#options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
+#options	DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
+#options	DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS

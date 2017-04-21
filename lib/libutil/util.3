@@ -1,4 +1,4 @@
-.\"     $NetBSD: util.3,v 1.24 2011/08/29 12:39:50 jruoho Exp $
+.\"     $NetBSD: util.3,v 1.24.28.1 2017/04/21 16:53:12 bouyer Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 29, 2011
+.Dd March 31, 2017
 .Dt UTIL 3
 .Os
 .Sh NAME
@@ -57,15 +57,23 @@ library and the associated functions are implemented within the
 directory.
 .Sh LIST OF FUNCTIONS
 .Bl -column ".Xr sockaddr_snprintf 3" -compact
-.It Sy Name	Description
+.It Sy Name Ta Sy Description
 .It Xr disklabel_dkcksum 3 Ta compute the checksum for a disklabel
 .It Xr disklabel_scan 3 Ta scan a buffer for a valid disklabel
+.It Xr efun 3 Ta error checked utility functions
 .It Xr forkpty 3 Ta tty utility function
 .It Xr getbootfile 3 Ta get the name of the booted kernel file
+.It Xr getbyteorder 3 Ta get the current byte order
+.It Xr getdiskrawname 3 Ta get the the block/character device name for a disk
+.It Xr getfsspecname 3 Ta get the underlying wedge name from a label
+.It Xr getfstypename 3 Ta convert a partition file system type integer to a wedge
+partition type name
 .It Xr getlabeloffset 3 Ta get the sector number and offset of the disklabel
 .It Xr getlabelsector 3 Ta get the sector number and offset of the disklabel
 .It Xr getmaxpartitions 3 Ta get the maximum number of partitions allowed per disk
+.It Xr getmntopts 3 Ta scan mount options
 .It Xr getrawpartition 3 Ta get the system ``raw'' partition
+.It Xr kinfo_getvmmap 3 Ta get per-process memory map information
 .It Xr login 3 Ta login utility function
 .It Xr login_cap 3 Ta query login.conf database about a user class
 .It Xr login_close 3 Ta query login.conf database about a user class
@@ -85,6 +93,7 @@ directory.
 .It Xr openpty 3 Ta tty utility function
 .It Xr pidfile 3 Ta write a daemon pid file
 .It Xr pidlock 3 Ta locks based on files containing PIDs
+.It Xr proc_compare 3 Ta compare two processes' interactivity
 .It Xr pw_abort 3 Ta passwd file update function
 .It Xr pw_copy 3 Ta utility function for interactive passwd file updates
 .It Xr pw_edit 3 Ta utility function for interactive passwd file updates
@@ -97,6 +106,7 @@ directory.
 .It Xr pw_prompt 3 Ta utility function for interactive passwd file updates
 .It Xr pw_scan 3 Ta utility function for interactive passwd file updates
 .It Xr pw_setprefix 3 Ta passwd file update function
+.It Xr raise_default_signal 3 Ta raise the default signal handler
 .It Xr secure_path 3 Ta determine if a file appears to be ``secure''
 .It Xr setclasscontext 3 Ta query login.conf database about a user class
 .It Xr setusercontext 3 Ta query login.conf database about a user class

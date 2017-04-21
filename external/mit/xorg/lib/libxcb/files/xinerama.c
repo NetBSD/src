@@ -19,7 +19,7 @@
 xcb_extension_t xcb_xinerama_id = { "XINERAMA", 0 };
 
 void
-xcb_xinerama_screen_info_next (xcb_xinerama_screen_info_iterator_t *i  /**< */)
+xcb_xinerama_screen_info_next (xcb_xinerama_screen_info_iterator_t *i)
 {
     --i->rem;
     ++i->data;
@@ -27,7 +27,7 @@ xcb_xinerama_screen_info_next (xcb_xinerama_screen_info_iterator_t *i  /**< */)
 }
 
 xcb_generic_iterator_t
-xcb_xinerama_screen_info_end (xcb_xinerama_screen_info_iterator_t i  /**< */)
+xcb_xinerama_screen_info_end (xcb_xinerama_screen_info_iterator_t i)
 {
     xcb_generic_iterator_t ret;
     ret.data = i.data + i.rem;
@@ -37,15 +37,15 @@ xcb_xinerama_screen_info_end (xcb_xinerama_screen_info_iterator_t i  /**< */)
 }
 
 xcb_xinerama_query_version_cookie_t
-xcb_xinerama_query_version (xcb_connection_t *c  /**< */,
-                            uint8_t           major  /**< */,
-                            uint8_t           minor  /**< */)
+xcb_xinerama_query_version (xcb_connection_t *c,
+                            uint8_t           major,
+                            uint8_t           minor)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -65,15 +65,15 @@ xcb_xinerama_query_version (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_query_version_cookie_t
-xcb_xinerama_query_version_unchecked (xcb_connection_t *c  /**< */,
-                                      uint8_t           major  /**< */,
-                                      uint8_t           minor  /**< */)
+xcb_xinerama_query_version_unchecked (xcb_connection_t *c,
+                                      uint8_t           major,
+                                      uint8_t           minor)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_QUERY_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_QUERY_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -93,22 +93,22 @@ xcb_xinerama_query_version_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_query_version_reply_t *
-xcb_xinerama_query_version_reply (xcb_connection_t                     *c  /**< */,
+xcb_xinerama_query_version_reply (xcb_connection_t                     *c,
                                   xcb_xinerama_query_version_cookie_t   cookie  /**< */,
-                                  xcb_generic_error_t                 **e  /**< */)
+                                  xcb_generic_error_t                 **e)
 {
     return (xcb_xinerama_query_version_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_xinerama_get_state_cookie_t
-xcb_xinerama_get_state (xcb_connection_t *c  /**< */,
-                        xcb_window_t      window  /**< */)
+xcb_xinerama_get_state (xcb_connection_t *c,
+                        xcb_window_t      window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_GET_STATE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_GET_STATE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -127,14 +127,14 @@ xcb_xinerama_get_state (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_get_state_cookie_t
-xcb_xinerama_get_state_unchecked (xcb_connection_t *c  /**< */,
-                                  xcb_window_t      window  /**< */)
+xcb_xinerama_get_state_unchecked (xcb_connection_t *c,
+                                  xcb_window_t      window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_GET_STATE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_GET_STATE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -153,22 +153,22 @@ xcb_xinerama_get_state_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_get_state_reply_t *
-xcb_xinerama_get_state_reply (xcb_connection_t                 *c  /**< */,
+xcb_xinerama_get_state_reply (xcb_connection_t                 *c,
                               xcb_xinerama_get_state_cookie_t   cookie  /**< */,
-                              xcb_generic_error_t             **e  /**< */)
+                              xcb_generic_error_t             **e)
 {
     return (xcb_xinerama_get_state_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_xinerama_get_screen_count_cookie_t
-xcb_xinerama_get_screen_count (xcb_connection_t *c  /**< */,
-                               xcb_window_t      window  /**< */)
+xcb_xinerama_get_screen_count (xcb_connection_t *c,
+                               xcb_window_t      window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_GET_SCREEN_COUNT,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_GET_SCREEN_COUNT,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -187,14 +187,14 @@ xcb_xinerama_get_screen_count (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_get_screen_count_cookie_t
-xcb_xinerama_get_screen_count_unchecked (xcb_connection_t *c  /**< */,
-                                         xcb_window_t      window  /**< */)
+xcb_xinerama_get_screen_count_unchecked (xcb_connection_t *c,
+                                         xcb_window_t      window)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_GET_SCREEN_COUNT,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_GET_SCREEN_COUNT,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -213,23 +213,23 @@ xcb_xinerama_get_screen_count_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_get_screen_count_reply_t *
-xcb_xinerama_get_screen_count_reply (xcb_connection_t                        *c  /**< */,
+xcb_xinerama_get_screen_count_reply (xcb_connection_t                        *c,
                                      xcb_xinerama_get_screen_count_cookie_t   cookie  /**< */,
-                                     xcb_generic_error_t                    **e  /**< */)
+                                     xcb_generic_error_t                    **e)
 {
     return (xcb_xinerama_get_screen_count_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_xinerama_get_screen_size_cookie_t
-xcb_xinerama_get_screen_size (xcb_connection_t *c  /**< */,
-                              xcb_window_t      window  /**< */,
-                              uint32_t          screen  /**< */)
+xcb_xinerama_get_screen_size (xcb_connection_t *c,
+                              xcb_window_t      window,
+                              uint32_t          screen)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_GET_SCREEN_SIZE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_GET_SCREEN_SIZE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -249,15 +249,15 @@ xcb_xinerama_get_screen_size (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_get_screen_size_cookie_t
-xcb_xinerama_get_screen_size_unchecked (xcb_connection_t *c  /**< */,
-                                        xcb_window_t      window  /**< */,
-                                        uint32_t          screen  /**< */)
+xcb_xinerama_get_screen_size_unchecked (xcb_connection_t *c,
+                                        xcb_window_t      window,
+                                        uint32_t          screen)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_GET_SCREEN_SIZE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_GET_SCREEN_SIZE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -277,21 +277,21 @@ xcb_xinerama_get_screen_size_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_xinerama_get_screen_size_reply_t *
-xcb_xinerama_get_screen_size_reply (xcb_connection_t                       *c  /**< */,
+xcb_xinerama_get_screen_size_reply (xcb_connection_t                       *c,
                                     xcb_xinerama_get_screen_size_cookie_t   cookie  /**< */,
-                                    xcb_generic_error_t                   **e  /**< */)
+                                    xcb_generic_error_t                   **e)
 {
     return (xcb_xinerama_get_screen_size_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_xinerama_is_active_cookie_t
-xcb_xinerama_is_active (xcb_connection_t *c  /**< */)
+xcb_xinerama_is_active (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_IS_ACTIVE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_IS_ACTIVE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -309,13 +309,13 @@ xcb_xinerama_is_active (xcb_connection_t *c  /**< */)
 }
 
 xcb_xinerama_is_active_cookie_t
-xcb_xinerama_is_active_unchecked (xcb_connection_t *c  /**< */)
+xcb_xinerama_is_active_unchecked (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_IS_ACTIVE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_IS_ACTIVE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -333,15 +333,15 @@ xcb_xinerama_is_active_unchecked (xcb_connection_t *c  /**< */)
 }
 
 xcb_xinerama_is_active_reply_t *
-xcb_xinerama_is_active_reply (xcb_connection_t                 *c  /**< */,
+xcb_xinerama_is_active_reply (xcb_connection_t                 *c,
                               xcb_xinerama_is_active_cookie_t   cookie  /**< */,
-                              xcb_generic_error_t             **e  /**< */)
+                              xcb_generic_error_t             **e)
 {
     return (xcb_xinerama_is_active_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_xinerama_query_screens_sizeof (const void  *_buffer  /**< */)
+xcb_xinerama_query_screens_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_xinerama_query_screens_reply_t *_aux = (xcb_xinerama_query_screens_reply_t *)_buffer;
@@ -372,13 +372,13 @@ xcb_xinerama_query_screens_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_xinerama_query_screens_cookie_t
-xcb_xinerama_query_screens (xcb_connection_t *c  /**< */)
+xcb_xinerama_query_screens (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_QUERY_SCREENS,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_QUERY_SCREENS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -396,13 +396,13 @@ xcb_xinerama_query_screens (xcb_connection_t *c  /**< */)
 }
 
 xcb_xinerama_query_screens_cookie_t
-xcb_xinerama_query_screens_unchecked (xcb_connection_t *c  /**< */)
+xcb_xinerama_query_screens_unchecked (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xinerama_id,
-        /* opcode */ XCB_XINERAMA_QUERY_SCREENS,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xinerama_id,
+        .opcode = XCB_XINERAMA_QUERY_SCREENS,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -420,19 +420,19 @@ xcb_xinerama_query_screens_unchecked (xcb_connection_t *c  /**< */)
 }
 
 xcb_xinerama_screen_info_t *
-xcb_xinerama_query_screens_screen_info (const xcb_xinerama_query_screens_reply_t *R  /**< */)
+xcb_xinerama_query_screens_screen_info (const xcb_xinerama_query_screens_reply_t *R)
 {
     return (xcb_xinerama_screen_info_t *) (R + 1);
 }
 
 int
-xcb_xinerama_query_screens_screen_info_length (const xcb_xinerama_query_screens_reply_t *R  /**< */)
+xcb_xinerama_query_screens_screen_info_length (const xcb_xinerama_query_screens_reply_t *R)
 {
     return R->number;
 }
 
 xcb_xinerama_screen_info_iterator_t
-xcb_xinerama_query_screens_screen_info_iterator (const xcb_xinerama_query_screens_reply_t *R  /**< */)
+xcb_xinerama_query_screens_screen_info_iterator (const xcb_xinerama_query_screens_reply_t *R)
 {
     xcb_xinerama_screen_info_iterator_t i;
     i.data = (xcb_xinerama_screen_info_t *) (R + 1);
@@ -442,9 +442,9 @@ xcb_xinerama_query_screens_screen_info_iterator (const xcb_xinerama_query_screen
 }
 
 xcb_xinerama_query_screens_reply_t *
-xcb_xinerama_query_screens_reply (xcb_connection_t                     *c  /**< */,
+xcb_xinerama_query_screens_reply (xcb_connection_t                     *c,
                                   xcb_xinerama_query_screens_cookie_t   cookie  /**< */,
-                                  xcb_generic_error_t                 **e  /**< */)
+                                  xcb_generic_error_t                 **e)
 {
     return (xcb_xinerama_query_screens_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }

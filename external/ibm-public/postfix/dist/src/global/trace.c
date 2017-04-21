@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: trace.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -123,11 +123,11 @@ int     trace_append(int flags, const char *id, MSG_STATS *stats,
     my_dsn.reason = vstring_str(why);
 
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_trace_service,
-			    ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND,
-			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-			    ATTR_TYPE_FUNC, rcpt_print, (void *) rcpt,
-			    ATTR_TYPE_FUNC, dsn_print, (void *) &my_dsn,
+			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND),
+			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+			    SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
+			    SEND_ATTR_FUNC(dsn_print, (void *) &my_dsn),
 			    ATTR_TYPE_END) != 0) {
 	msg_warn("%s: %s service failure", id, var_trace_service);
 	req_stat = -1;
@@ -147,14 +147,14 @@ int     trace_flush(int flags, const char *queue, const char *id,
 		            const char *dsn_envid, int dsn_ret)
 {
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_trace_service,
-			    ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_TRACE,
-			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-			    ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
-			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
-			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
+			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_TRACE),
+			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+			    SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
+			    SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+			    SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
+			    SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
 			    ATTR_TYPE_END) == 0) {
 	return (0);
     } else {

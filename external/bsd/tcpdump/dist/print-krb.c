@@ -23,17 +23,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-krb.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-krb.c,v 1.5.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Kerberos printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 static const char tstr[] = " [|kerberos]";
@@ -161,7 +162,7 @@ krb4_print(netdissect_options *ndo,
 #define IS_LENDIAN(kp)	(((kp)->type & 0x01) != 0)
 #define KTOHSP(kp, cp)	(IS_LENDIAN(kp) ? EXTRACT_LE_16BITS(cp) : EXTRACT_16BITS(cp))
 
-	kp = (struct krb *)cp;
+	kp = (const struct krb *)cp;
 
 	if ((&kp->type) >= ndo->ndo_snapend) {
 		ND_PRINT((ndo, "%s", tstr));
@@ -232,7 +233,7 @@ krb_print(netdissect_options *ndo,
 {
 	register const struct krb *kp;
 
-	kp = (struct krb *)dat;
+	kp = (const struct krb *)dat;
 
 	if (dat >= ndo->ndo_snapend) {
 		ND_PRINT((ndo, "%s", tstr));

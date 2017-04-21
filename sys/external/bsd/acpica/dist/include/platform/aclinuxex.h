@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -144,14 +144,24 @@ AcpiOsReadable (
     return TRUE;
 }
 
+static inline ACPI_STATUS
+AcpiOsInitializeDebugger (
+    void)
+{
+    return AE_OK;
+}
+
+static inline void
+AcpiOsTerminateDebugger (
+    void)
+{
+    return;
+}
+
 
 /*
  * OSL interfaces added by Linux
  */
-void
-EarlyAcpiOsUnmapMemory (
-    void __iomem            *Virt,
-    ACPI_SIZE               Size);
 
 #endif /* __KERNEL__ */
 

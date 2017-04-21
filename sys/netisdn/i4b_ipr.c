@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.40 2016/12/15 09:35:24 ozaki-r Exp $
+ *	$Id: i4b_ipr.c,v 1.40.2.1 2017/04/21 16:54:06 bouyer Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.40 2016/12/15 09:35:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.40.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -406,6 +406,7 @@ iripattach(void)
 		bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
 		bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int));
+		bpf_mtap_softint_init(&sc->sc_if);
 #endif
 #endif
 	}
@@ -1070,7 +1071,7 @@ error:
 		mm.m_len = 4;
 		mm.m_data = (char *)&af;
 
-		bpf_mtap(&sc->sc_if, &mm); /* XXX not in softint */
+		bpf_mtap_softint(&sc->sc_if, &mm);
 	}
 #endif /* NBPFILTER > 0  || NBPF > 0 */
 
@@ -1151,11 +1152,9 @@ ipr_tx_queue_empty(void *softc)
 		}
 		else
 		{
-			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
-
 			sc->sc_if.if_obytes += m->m_pkthdr.len;
-
 			sc->sc_if.if_opackets++;
+			IF_ENQUEUE(sc->sc_ilt->tx_queue, m);
 		}
 	}
 

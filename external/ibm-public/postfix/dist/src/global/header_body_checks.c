@@ -1,4 +1,4 @@
-/*	$NetBSD: header_body_checks.c,v 1.1.1.3 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: header_body_checks.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,7 @@
 /*		void	(*prepend) (void *context, int rec_type,
 /*				const char *buf, ssize_t len, off_t offset);
 /*		char	*(*extend) (void *context, const char *command,
-/*				int cmd_len, const char *cmd_args,
+/*				ssize_t cmd_len, const char *cmd_args,
 /*				const char *where, const char *line,
 /*				ssize_t line_len, off_t offset);
 /*	} HBC_CALL_BACKS;
@@ -187,7 +187,7 @@
   * Something that is guaranteed to be different from a real string result
   * from header/body_checks.
   */
-char hbc_checks_error;
+char    hbc_checks_error;
 const char hbc_checks_unknown;
 
  /*
@@ -230,7 +230,7 @@ static char *hbc_action(void *context, HBC_CALL_BACKS *cb,
 			        ssize_t line_len, off_t offset)
 {
     const char *cmd_args = cmd + strcspn(cmd, " \t");
-    int     cmd_len = cmd_args - cmd;
+    ssize_t cmd_len = cmd_args - cmd;
     char   *ret;
 
     /*
@@ -416,7 +416,7 @@ void    _hbc_checks_free(HBC_CHECKS *hbc, ssize_t len)
     for (mp = hbc->map_info; mp < hbc->map_info + len; mp++)
 	if (mp->maps)
 	    maps_free(mp->maps);
-    myfree((char *) hbc);
+    myfree((void *) hbc);
 }
 
  /*
@@ -431,6 +431,7 @@ void    _hbc_checks_free(HBC_CHECKS *hbc, ssize_t len)
 #include <vstream.h>
 #include <msg_vstream.h>
 #include <rec_streamlf.h>
+#include <mail_params.h>
 
 typedef struct {
     HBC_CHECKS *header_checks;
@@ -558,6 +559,7 @@ static void err_print(void *unused_context, int err_flag,
 int     var_header_limit = 2000;
 int     var_mime_maxdepth = 20;
 int     var_mime_bound_len = 2000;
+char   *var_drop_hdrs = DEF_DROP_HDRS;
 
 int     main(int argc, char **argv)
 {

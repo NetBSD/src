@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.121 2016/12/02 20:53:36 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.121.2.1 2017/04/21 16:53:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.121 2016/12/02 20:53:36 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.121.2.1 2017/04/21 16:53:12 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -89,7 +89,8 @@ __RCSID("$NetBSD: hijack.c,v 1.121 2016/12/02 20:53:36 christos Exp $");
 enum dualcall {
 	DUALCALL_WRITE, DUALCALL_WRITEV, DUALCALL_PWRITE, DUALCALL_PWRITEV,
 	DUALCALL_IOCTL, DUALCALL_FCNTL,
-	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_BIND, DUALCALL_CONNECT,
+	DUALCALL_SOCKET, DUALCALL_ACCEPT, DUALCALL_PACCEPT,
+	DUALCALL_BIND, DUALCALL_CONNECT,
 	DUALCALL_GETPEERNAME, DUALCALL_GETSOCKNAME, DUALCALL_LISTEN,
 	DUALCALL_RECVFROM, DUALCALL_RECVMSG,
 	DUALCALL_SENDTO, DUALCALL_SENDMSG,
@@ -267,6 +268,7 @@ struct sysnames {
 } syscnames[] = {
 	{ DUALCALL_SOCKET,	S(REALSOCKET),	RSYS_NAME(SOCKET)	},
 	{ DUALCALL_ACCEPT,	"accept",	RSYS_NAME(ACCEPT)	},
+	{ DUALCALL_PACCEPT,	"paccept",	RSYS_NAME(PACCEPT)	},
 	{ DUALCALL_BIND,	"bind",		RSYS_NAME(BIND)		},
 	{ DUALCALL_CONNECT,	"connect",	RSYS_NAME(CONNECT)	},
 	{ DUALCALL_GETPEERNAME,	"getpeername",	RSYS_NAME(GETPEERNAME)	},
@@ -1324,6 +1326,35 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 		op_accept = GETSYSCALL(host, ACCEPT);
 	}
 	fd = op_accept(s, addr, addrlen);
+	if (fd != -1 && isrump)
+		fd = fd_rump2host(fd);
+	else
+		fd = fd_host2host(fd);
+
+	DPRINTF((" <- %d\n", fd));
+
+	return fd;
+}
+
+int
+paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
+    const sigset_t * restrict sigmask, int flags)
+{
+	int (*op_paccept)(int, struct sockaddr *, socklen_t *,
+	    const sigset_t * restrict, int);
+	int fd;
+	bool isrump;
+
+	isrump = fd_isrump(s);
+
+	DPRINTF(("paccept -> %d", s));
+	if (isrump) {
+		op_paccept = GETSYSCALL(rump, PACCEPT);
+		s = fd_host2rump(s);
+	} else {
+		op_paccept = GETSYSCALL(host, PACCEPT);
+	}
+	fd = op_paccept(s, addr, addrlen, sigmask, flags);
 	if (fd != -1 && isrump)
 		fd = fd_rump2host(fd);
 	else

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2015/09/30 14:22:02 phx Exp $
+# $NetBSD: GENERIC,v 1.91.4.1 2017/04/21 16:53:35 bouyer Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.91.4.1 $"
 
 maxusers	32
 
@@ -90,6 +90,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -115,6 +116,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server

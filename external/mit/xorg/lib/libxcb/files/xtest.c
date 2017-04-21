@@ -19,15 +19,15 @@
 xcb_extension_t xcb_test_id = { "XTEST", 0 };
 
 xcb_test_get_version_cookie_t
-xcb_test_get_version (xcb_connection_t *c  /**< */,
-                      uint8_t           major_version  /**< */,
-                      uint16_t          minor_version  /**< */)
+xcb_test_get_version (xcb_connection_t *c,
+                      uint8_t           major_version,
+                      uint16_t          minor_version)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_GET_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_GET_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -48,15 +48,15 @@ xcb_test_get_version (xcb_connection_t *c  /**< */,
 }
 
 xcb_test_get_version_cookie_t
-xcb_test_get_version_unchecked (xcb_connection_t *c  /**< */,
-                                uint8_t           major_version  /**< */,
-                                uint16_t          minor_version  /**< */)
+xcb_test_get_version_unchecked (xcb_connection_t *c,
+                                uint8_t           major_version,
+                                uint16_t          minor_version)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_GET_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_GET_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -77,23 +77,23 @@ xcb_test_get_version_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_test_get_version_reply_t *
-xcb_test_get_version_reply (xcb_connection_t               *c  /**< */,
+xcb_test_get_version_reply (xcb_connection_t               *c,
                             xcb_test_get_version_cookie_t   cookie  /**< */,
-                            xcb_generic_error_t           **e  /**< */)
+                            xcb_generic_error_t           **e)
 {
     return (xcb_test_get_version_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_test_compare_cursor_cookie_t
-xcb_test_compare_cursor (xcb_connection_t *c  /**< */,
-                         xcb_window_t      window  /**< */,
-                         xcb_cursor_t      cursor  /**< */)
+xcb_test_compare_cursor (xcb_connection_t *c,
+                         xcb_window_t      window,
+                         xcb_cursor_t      cursor)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_COMPARE_CURSOR,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_COMPARE_CURSOR,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -113,15 +113,15 @@ xcb_test_compare_cursor (xcb_connection_t *c  /**< */,
 }
 
 xcb_test_compare_cursor_cookie_t
-xcb_test_compare_cursor_unchecked (xcb_connection_t *c  /**< */,
-                                   xcb_window_t      window  /**< */,
-                                   xcb_cursor_t      cursor  /**< */)
+xcb_test_compare_cursor_unchecked (xcb_connection_t *c,
+                                   xcb_window_t      window,
+                                   xcb_cursor_t      cursor)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_COMPARE_CURSOR,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_COMPARE_CURSOR,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -141,28 +141,28 @@ xcb_test_compare_cursor_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_test_compare_cursor_reply_t *
-xcb_test_compare_cursor_reply (xcb_connection_t                  *c  /**< */,
+xcb_test_compare_cursor_reply (xcb_connection_t                  *c,
                                xcb_test_compare_cursor_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */)
+                               xcb_generic_error_t              **e)
 {
     return (xcb_test_compare_cursor_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_void_cookie_t
-xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
-                             uint8_t           type  /**< */,
-                             uint8_t           detail  /**< */,
-                             uint32_t          time  /**< */,
-                             xcb_window_t      root  /**< */,
-                             int16_t           rootX  /**< */,
-                             int16_t           rootY  /**< */,
-                             uint8_t           deviceid  /**< */)
+xcb_test_fake_input_checked (xcb_connection_t *c,
+                             uint8_t           type,
+                             uint8_t           detail,
+                             uint32_t          time,
+                             xcb_window_t      root,
+                             int16_t           rootX,
+                             int16_t           rootY,
+                             uint8_t           deviceid)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_FAKE_INPUT,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_FAKE_INPUT,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -190,20 +190,20 @@ xcb_test_fake_input_checked (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_test_fake_input (xcb_connection_t *c  /**< */,
-                     uint8_t           type  /**< */,
-                     uint8_t           detail  /**< */,
-                     uint32_t          time  /**< */,
-                     xcb_window_t      root  /**< */,
-                     int16_t           rootX  /**< */,
-                     int16_t           rootY  /**< */,
-                     uint8_t           deviceid  /**< */)
+xcb_test_fake_input (xcb_connection_t *c,
+                     uint8_t           type,
+                     uint8_t           detail,
+                     uint32_t          time,
+                     xcb_window_t      root,
+                     int16_t           rootX,
+                     int16_t           rootY,
+                     uint8_t           deviceid)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_FAKE_INPUT,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_FAKE_INPUT,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -231,14 +231,14 @@ xcb_test_fake_input (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_test_grab_control_checked (xcb_connection_t *c  /**< */,
-                               uint8_t           impervious  /**< */)
+xcb_test_grab_control_checked (xcb_connection_t *c,
+                               uint8_t           impervious)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_GRAB_CONTROL,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_GRAB_CONTROL,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];
@@ -258,14 +258,14 @@ xcb_test_grab_control_checked (xcb_connection_t *c  /**< */,
 }
 
 xcb_void_cookie_t
-xcb_test_grab_control (xcb_connection_t *c  /**< */,
-                       uint8_t           impervious  /**< */)
+xcb_test_grab_control (xcb_connection_t *c,
+                       uint8_t           impervious)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_test_id,
-        /* opcode */ XCB_TEST_GRAB_CONTROL,
-        /* isvoid */ 1
+        .count = 2,
+        .ext = &xcb_test_id,
+        .opcode = XCB_TEST_GRAB_CONTROL,
+        .isvoid = 1
     };
 
     struct iovec xcb_parts[4];

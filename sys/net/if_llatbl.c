@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.16 2016/12/21 08:47:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.16.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -33,6 +33,7 @@
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include "arp.h"
@@ -794,7 +795,7 @@ llatbl_lle_show(struct llentry_sa *la)
 		char l3s[INET6_ADDRSTRLEN];
 
 		sin6 = (struct sockaddr_in6 *)&la->l3_addr;
-		ip6_sprintf(l3s, &sin6->sin6_addr);
+		IN6_PRINT(l3s, &sin6->sin6_addr);
 		db_printf(" l3_addr=%s\n", l3s);
 		break;
 	}

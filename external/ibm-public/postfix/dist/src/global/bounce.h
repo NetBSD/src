@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: bounce.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _BOUNCE_H_INCLUDED_
 #define _BOUNCE_H_INCLUDED_
@@ -29,14 +29,15 @@
   */
 extern int bounce_append(int, const char *, MSG_STATS *, RECIPIENT *,
 			         const char *, DSN *);
-extern int bounce_flush(int, const char *, const char *, const char *,
+extern int bounce_flush(int, const char *, const char *, const char *, int,
 			        const char *, const char *, int);
-extern int bounce_flush_verp(int, const char *, const char *, const char *,
+extern int bounce_flush_verp(int, const char *, const char *, const char *, int,
 		             const char *, const char *, int, const char *);
-extern int bounce_one(int, const char *, const char *, const char *,
+extern int bounce_one(int, const char *, const char *, const char *, int,
 		              const char *, const char *,
 		              int, MSG_STATS *, RECIPIENT *,
 		              const char *, DSN *);
+extern void bounce_client_init(const char *, const char *);
 
  /*
   * Bounce/defer protocol commands.
@@ -66,6 +67,25 @@ extern int bounce_one(int, const char *, const char *, const char *,
   * Backwards compatibility.
   */
 #define BOUNCE_FLAG_KEEP	BOUNCE_FLAG_NONE
+
+ /*
+  * Start of private API.
+  */
+
+#ifdef DSN_INTERN
+
+#include <dsn_filter.h>
+
+extern DSN_FILTER *delivery_status_filter;
+
+extern int bounce_append_intern(int, const char *, MSG_STATS *, RECIPIENT *,
+				        const char *, DSN *);
+extern int bounce_one_intern(int, const char *, const char *, const char *,
+			             int, const char *, const char *,
+			             int, MSG_STATS *, RECIPIENT *,
+			             const char *, DSN *);
+
+#endif
 
 /* LICENSE
 /* .ad

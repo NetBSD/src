@@ -965,7 +965,7 @@ void ixgbe_restore_mdd_vf_X550(struct ixgbe_hw *hw, u32 vf)
 		num_qs = 4;  /* 32 VFs / pools */
 		bitmask = 0x0000000F;
 		break;
-	default:            /* 64 VFs / pools */
+	default:	    /* 64 VFs / pools */
 		num_qs = 2;
 		bitmask = 0x00000003;
 		break;

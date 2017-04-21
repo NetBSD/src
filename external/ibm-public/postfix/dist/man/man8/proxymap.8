@@ -1,4 +1,4 @@
-.\"	$NetBSD: proxymap.8,v 1.1.1.3 2013/09/25 19:06:25 tron Exp $
+.\"	$NetBSD: proxymap.8,v 1.1.1.3.12.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH PROXYMAP 8 
 .ad
@@ -14,14 +14,14 @@ Postfix lookup table proxy server
 .SH DESCRIPTION
 .ad
 .fi
-The \fBproxymap\fR(8) server provides read-only or read-write
+The \fBproxymap\fR(8) server provides read\-only or read\-write
 table lookup service to Postfix processes. These services are
 implemented with distinct service names: \fBproxymap\fR and
 \fBproxywrite\fR, respectively. The purpose of these services is:
 .IP \(bu
 To overcome chroot restrictions. For example, a chrooted SMTP
 server needs access to the system passwd file in order to
-reject mail for non-existent local addresses, but it is not
+reject mail for non\-existent local addresses, but it is not
 practical to maintain a copy of the passwd file in the chroot
 jail.  The solution:
 .sp
@@ -43,9 +43,9 @@ virtual_alias_maps =
 The total number of connections is limited by the number of
 proxymap server processes.
 .IP \(bu
-To provide single-updater functionality for lookup tables
+To provide single\-updater functionality for lookup tables
 that do not reliably support multiple writers (i.e. all
-file-based tables).
+file\-based tables).
 .PP
 The \fBproxymap\fR(8) server implements the following requests:
 .IP "\fBopen\fR \fImaptype:mapname flags\fR"
@@ -65,7 +65,7 @@ The reply is the request completion status code.
 The \fImaptype:mapname\fR and \fIflags\fR are the same
 as with the \fBopen\fR request.
 .sp
-To implement single-updater maps, specify a process limit
+To implement single\-updater maps, specify a process limit
 of 1 in the master.cf file entry for the \fBproxywrite\fR
 service.
 .sp
@@ -123,16 +123,16 @@ not be used to look up sensitive information such as UNIX user or
 group IDs, mailbox file/directory names or external commands.
 
 In Postfix version 2.2 and later, the proxymap client recognizes
-requests to access a table for security-sensitive purposes,
+requests to access a table for security\-sensitive purposes,
 and opens the table directly. This allows the same main.cf
-setting to be used by sensitive and non-sensitive processes.
+setting to be used by sensitive and non\-sensitive processes.
 
-Postfix-writable data files should be stored under a dedicated
+Postfix\-writable data files should be stored under a dedicated
 directory that is writable only by the Postfix mail system,
-such as the Postfix-owned \fBdata_directory\fR.
+such as the Postfix\-owned \fBdata_directory\fR.
 
-In particular, Postfix-writable files should never exist
-in root-owned directories. That would open up a particular
+In particular, Postfix\-writable files should never exist
+in root\-owned directories. That would open up a particular
 type of security hole where ownership of a file or directory
 does not match the provider of its content.
 .SH DIAGNOSTICS
@@ -143,13 +143,13 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 .ad
 .fi
 The \fBproxymap\fR(8) server provides service to multiple clients,
-and must therefore not be used for tables that have high-latency
+and must therefore not be used for tables that have high\-latency
 lookups.
 
-The \fBproxymap\fR(8) read-write service does not explicitly
+The \fBproxymap\fR(8) read\-write service does not explicitly
 close lookup tables (even if it did, this could not be relied on,
 because the process may be terminated between table updates).
-The read-write service should therefore not be used with tables that
+The read\-write service should therefore not be used with tables that
 leave persistent storage in an inconsistent state between
 updates (for example, CDB). Tables that support "sync on
 update" should be safe (for example, Berkeley DB) as should
@@ -170,11 +170,11 @@ The text below provides only a parameter summary. See
 The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdata_directory (see 'postconf -d' output)\fR"
-The directory with Postfix-writable data files (for example:
-caches, pseudo-random numbers).
+The directory with Postfix\-writable data files (for example:
+caches, pseudo\-random numbers).
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBipc_timeout (3600s)\fR"
 The time limit for sending or receiving information over an internal
 communication channel.
@@ -184,21 +184,21 @@ for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
 The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBproxy_read_maps (see 'postconf -d' output)\fR"
 The lookup tables that the \fBproxymap\fR(8) server is allowed to
-access for the read-only service.
+access for the read\-only service.
 .PP
 Available in Postfix 2.5 and later:
 .IP "\fBdata_directory (see 'postconf -d' output)\fR"
-The directory with Postfix-writable data files (for example:
-caches, pseudo-random numbers).
+The directory with Postfix\-writable data files (for example:
+caches, pseudo\-random numbers).
 .IP "\fBproxy_write_maps (see 'postconf -d' output)\fR"
 The lookup tables that the \fBproxymap\fR(8) server is allowed to
-access for the read-write service.
+access for the read\-write service.
 .SH "SEE ALSO"
 .na
 .nf
@@ -220,9 +220,9 @@ DATABASE_README, Postfix lookup table overview
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 .ad
 .fi
 The proxymap service was introduced with Postfix 2.0.
@@ -233,3 +233,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

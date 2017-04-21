@@ -2,7 +2,7 @@
  * Copyright (C) 2000, Richard Sharpe
  *
  * This software may be distributed either under the terms of the
- * BSD-style licence that accompanies tcpdump or under the GNU GPL
+ * BSD-style license that accompanies tcpdump or under the GNU GPL
  * version 2 or later.
  *
  * print-beep.c
@@ -11,19 +11,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-beep.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-beep.c,v 1.4.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Blocks Extensible Exchange Protocol (BEEP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 /* Check for a string but not go beyond length
  * Return TRUE on match, FALSE otherwise

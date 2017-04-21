@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reuse.c,v 1.1.1.4 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_reuse.c,v 1.1.1.4.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -182,9 +182,6 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     }
     state->session = session;
     session->state = state;
-#ifdef USE_TLS
-    session->tls = state->tls;			/* TEMPORARY */
-#endif
 
     /*
      * Send an RSET probe to verify that the session is still good.
@@ -203,7 +200,7 @@ static SMTP_SESSION *smtp_reuse_common(SMTP_STATE *state, int fd,
     /*
      * Update the list of used cached addresses.
      */
-    htable_enter(state->cache_used, STR(iter->addr), (char *) 0);
+    htable_enter(state->cache_used, STR(iter->addr), (void *) 0);
 
     return (session);
 }

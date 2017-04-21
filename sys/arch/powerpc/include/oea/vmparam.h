@@ -197,8 +197,4 @@
 #define	VM_PHYS_SIZE		(USRIOSIZE * PAGE_SIZE)
 #endif
 
-#ifndef VM_MAX_KERNEL_BUF
-#define	VM_MAX_KERNEL_BUF	(SEGMENT_LENGTH * 3 / 4)
-#endif
-
 #endif /* _POWERPC_OEA_VMPARAM_H_ */

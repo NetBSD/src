@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map1n.c,v 1.1.1.5 2015/02/21 11:56:48 tron Exp $	*/
+/*	$NetBSD: cleanup_map1n.c,v 1.1.1.5.4.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -48,10 +48,6 @@
 #include <sys_defs.h>
 #include <string.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <mymalloc.h>
@@ -59,6 +55,7 @@
 #include <argv.h>
 #include <vstring.h>
 #include <dict.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -141,7 +138,7 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 	    if ((lookup = mail_addr_map(maps, STR(state->temp1), propagate)) != 0) {
 		saved_lhs = mystrdup(argv->argv[arg]);
 		for (i = 0; i < lookup->argc; i++) {
-		    if (strlen(lookup->argv[i]) > var_line_limit) {
+		    if (strlen(lookup->argv[i]) > var_virt_addrlen_limit) {
 			msg_warn("%s: unreasonable %s result %.300s... -- "
 				 "message not accepted, try again later",
 			     state->queue_id, maps->title, lookup->argv[i]);
@@ -161,7 +158,7 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, const char *addr,
 		    /*
 		     * Allow an address to expand into itself once.
 		     */
-		    if (strcasecmp(saved_lhs, STR(state->temp1)) == 0)
+		    if (strcasecmp_utf8(saved_lhs, STR(state->temp1)) == 0)
 			been_here_fixed(been_here, saved_lhs);
 		}
 		myfree(saved_lhs);

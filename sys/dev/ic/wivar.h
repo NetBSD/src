@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.65 2011/08/15 18:24:34 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.65.38.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -83,6 +83,7 @@ struct wi_softc	{
 	struct ieee80211com	sc_ic;
 	u_int32_t		sc_ic_flags;	/* backup of ic->ic_flags */
 	void			*sc_ih;		/* interrupt handler */
+	void			*sc_soft_ih;
 	int			(*sc_enable)(device_t, int);
 	void			(*sc_reset)(struct wi_softc *);
 

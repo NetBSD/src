@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_trace_service.c,v 1.1.1.2 2012/02/17 08:36:04 tron Exp $	*/
+/*	$NetBSD: bounce_trace_service.c,v 1.1.1.2.18.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,12 +8,15 @@
 /* SYNOPSIS
 /*	#include "bounce_service.h"
 /*
-/*	int     bounce_trace_service(flags, queue_name, queue_id, encoding,
-/*					sender, char *envid, int ret, templates)
+/*	int     bounce_trace_service(flags, service, queue_name, queue_id,
+/*					encoding, smtputf8, sender, envid,
+/*					ret, templates)
 /*	int	flags;
+/*	char	*service;
 /*	char	*queue_name;
 /*	char	*queue_id;
 /*	char	*encoding;
+/*	int	smtputf8;
 /*	char	*sender;
 /*	char	*envid;
 /*	int	ret;
@@ -57,6 +60,7 @@
 
 #include <msg.h>
 #include <vstream.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -66,6 +70,7 @@
 #include <mail_addr.h>
 #include <mail_error.h>
 #include <dsn_mask.h>
+#include <rec_type.h>
 #include <deliver_request.h>		/* USR_VRFY and RECORD flags */
 
 /* Application-specific. */
@@ -78,6 +83,7 @@
 
 int     bounce_trace_service(int flags, char *service, char *queue_name,
 			             char *queue_id, char *encoding,
+			             int smtputf8,
 			             char *recipient, char *dsn_envid,
 			             int unused_dsn_ret,
 			             BOUNCE_TEMPLATES *ts)
@@ -99,7 +105,7 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
      */
 #define NULL_SENDER		MAIL_ADDR_EMPTY	/* special address */
 
-    if (strcasecmp(recipient, mail_addr_double_bounce()) == 0) {
+    if (strcasecmp_utf8(recipient, mail_addr_double_bounce()) == 0) {
 	msg_info("%s: not sending trace/success notification for "
 		 "double-bounce message", queue_id);
 	return (0);
@@ -136,7 +142,7 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
 #define NON_DSN_FLAGS (DEL_REQ_FLAG_USR_VRFY | DEL_REQ_FLAG_RECORD)
 
     bounce_info = bounce_mail_init(service, queue_name, queue_id,
-				   encoding, dsn_envid,
+				   encoding, smtputf8, dsn_envid,
 				   flags & NON_DSN_FLAGS ?
 				   ts->verify : ts->success);
 
@@ -173,8 +179,9 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
      */
     new_id = vstring_alloc(10);
     if ((bounce = post_mail_fopen_nowait(sender, recipient,
-					 INT_FILT_MASK_BOUNCE,
+					 MAIL_SRC_MASK_BOUNCE,
 					 NULL_TRACE_FLAGS,
+					 smtputf8,
 					 new_id)) != 0) {
 	count = -1;
 	if (bounce_header(bounce, bounce_info, recipient,

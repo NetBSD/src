@@ -1,7 +1,5 @@
 S=	${.CURDIR}/../../../../..
 
-VERSIONFILE= ${.CURDIR}/version
-
 .include "../Makefile.booters"
 
 NOPIE=		yes
@@ -13,7 +11,7 @@ STRIP=		# We must not strip skiload at install time.
 
 SRCS=		conf.c copy.c delay.c devicename.c efi_stub.c exit.c \
 		main.c skiconsole.c pal_stub.S sal_stub.c skifs.c ssc.c \
-		start.S time.c vers.c acpi_stub.c bootinfo.c exec.c
+		start.S time.c acpi_stub.c bootinfo.c exec.c
 
 CPPFLAGS+=	-DLOADER -DSKIFS
 CPPFLAGS+=	-I${S}
@@ -31,17 +29,15 @@ LDFLAGS=	-Wl,-T${LDSCRIPT} -symbolic -nostdlib #-shared
 
 ${PROG}: ${LDSCRIPT}
 
-CLEANFILES+=	vers.c skiload ${OBJS}
+CLEANFILES+=	skiload ${OBJS}
 
 NEWVERSWHAT=	"ia64 SKI boot" ${MACHINE_ARCH}
-
-vers.c: ${VERSIONFILE} ${SOURCES}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 DPADD=		${LIBLIST}
 
 # Cross dependencies between LIB(SA|KERN). Need to elaborate below.
 LDADD=		${LIBLIST} ${LIBLIST}
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>

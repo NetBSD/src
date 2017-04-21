@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: extern.h,v 1.15.30.1 2017/04/21 16:53:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -52,7 +52,23 @@ extern int	avgfilesize;	/* expected average file size */
 extern int	avgfpdir;	/* expected number of files per directory */
 extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
+extern int	quotas;		/* filesystem quota to enable */
+
+#ifndef NO_FFS_EI
 extern int	needswap;	/* Filesystem not in native byte order */
+#else
+/* Disable Endian-Independent FFS support for install media */
+#define		needswap		(0)
+#define		ffs_cg_swap(a, b, c)	__nothing
+#define		ffs_csum_swap(a, b, c)	__nothing
+#define		ffs_dinode1_swap(a, b)	__nothing
+#define		ffs_sb_swap(a, b)	__nothing
+#endif
+
+#ifndef NO_APPLE_UFS
 extern int	isappleufs; /* Filesystem is Apple UFS */
 extern char	*appleufs_volname;	/* Apple UFS volume name */
-extern int	quotas;		/* filesystem quota to enable */
+#else
+/* Disable Apple UFS support for install media */
+#define		isappleufs		(0)
+#endif

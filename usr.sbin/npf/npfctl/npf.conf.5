@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.46 2017/01/03 01:29:49 rmind Exp $
+.\"    $NetBSD: npf.conf.5,v 1.46.2.1 2017/04/21 16:54:18 bouyer Exp $
 .\"
 .\" Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 3, 2017
+.Dd January 19, 2017
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -228,11 +228,15 @@ For example:
 .Bd -literal
 procedure "someproc" {
 	log: npflog0
-	normalize: "random-id", "min-ttl" 64
+	normalize: "random-id", "min-ttl" 64, "max-mss" 1432
 }
 .Ed
 .Pp
 In this case, the procedure calls the logging and normalisation modules.
+Traffic normalisation has a set of different mechanisms.
+In the example above, the normalisation procedure has arguments which
+apply the following mechanisms: IPv4 ID randomisation, Don't Fragment (DF)
+flag cleansing, minimum TTL enforcement and TCP MSS "clamping".
 .Ss Misc
 Text after a hash
 .Pq Sq #
@@ -275,9 +279,9 @@ table-def	= "table" table-id "type" ( "hash" | "tree" | "cdb" )
 ; Mapping for address translation.
 
 map		= "map" interface
-		  ( "static" [ "algo" algorithm ] | "dynamic" )
+		  ( "static" [ "algo" algorithm ] | "dynamic" ) [ proto ]
 		  net-seg ( "->" | "<-" | "<->" ) net-seg
-		  [ "pass" filt-opts ]
+		  [ "pass" [ proto ] filt-opts ]
 
 ; Rule procedure definition.  The name should be in the double quotes.
 ;
@@ -295,8 +299,7 @@ group		= "group" ( "default" | group-opts ) "{" rule-list "}"
 group-opts	= name-string [ "in" | "out" ] [ "on" interface ]
 rule-list	= [ rule new-line ] rule-list
 
-npf-filter	= [ "family" family-opt ] [ "proto" protocol [ proto-opts ] ]
-		  ( "all" | filt-opts )
+npf-filter	= [ "family" family-opt ] [ proto ] ( "all" | filt-opts )
 static-rule	= ( "block" [ block-opts ] | "pass" )
 		  [ "stateful" | "stateful-ends" ]
 		  [ "in" | out" ] [ "final" ] [ "on" interface ]
@@ -306,6 +309,7 @@ static-rule	= ( "block" [ block-opts ] | "pass" )
 dynamic-ruleset	= "ruleset" group-opts
 rule		= static-rule | dynamic-ruleset
 
+proto		= "proto" protocol [ proto-opts ]
 block-opts	= "return-rst" | "return-icmp" | "return"
 family-opt	= "inet4" | "inet6"
 proto-opts	= "flags" tcp-flags [ "/" tcp-flag-mask ] |
@@ -345,7 +349,7 @@ alg "icmp"
 # Note: if $ext_if has multiple IP address (e.g. IPv6 as well),
 # then the translation address has to be specified explicitly.
 map $ext_if dynamic 10.1.1.0/24 -> $ext_if
-map $ext_if dynamic 10.1.1.2 port 22 <- $ext_if port 9022
+map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
 
 procedure "log" {
 	# Note: npf_ext_log kernel module should be loaded, if not built-in.

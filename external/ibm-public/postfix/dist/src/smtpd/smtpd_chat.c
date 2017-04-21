@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_chat.c,v 1.1.1.3 2013/01/02 18:59:09 tron Exp $	*/
+/*	$NetBSD: smtpd_chat.c,v 1.1.1.3.16.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -170,7 +170,7 @@ void    smtpd_chat_reply(SMTPD_STATE *state, const char *format,...)
 	&& (*(cp = STR(state->buffer)) == '4' || *cp == '5'))
 	smtp_reply_footer(state->buffer, 0, var_smtpd_rej_footer,
 			  STR(smtpd_expand_filter), smtpd_expand_lookup,
-			  (char *) state);
+			  (void *) state);
 
     /* All 5xx replies must have a 5.xx.xx detail code. */
     for (cp = STR(state->buffer), end = cp + strlen(STR(state->buffer));;) {
@@ -229,7 +229,7 @@ void    smtpd_chat_reply(SMTPD_STATE *state, const char *format,...)
 
 /* print_line - line_wrap callback */
 
-static void print_line(const char *str, int len, int indent, char *context)
+static void print_line(const char *str, int len, int indent, void *context)
 {
     VSTREAM *notice = (VSTREAM *) context;
 
@@ -266,8 +266,8 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
 
     notice = post_mail_fopen_nowait(mail_addr_double_bounce(),
 				    var_error_rcpt,
-				    INT_FILT_MASK_NOTIFY,
-				    NULL_TRACE_FLAGS, NO_QUEUE_ID);
+				    MAIL_SRC_MASK_NOTIFY, NULL_TRACE_FLAGS,
+				    SMTPUTF8_FLAG_NONE, NO_QUEUE_ID);
     if (notice == 0) {
 	msg_warn("postmaster notify: %m");
 	return;
@@ -283,7 +283,7 @@ void    smtpd_chat_notify(SMTPD_STATE *state)
     argv_terminate(state->history);
     for (cpp = state->history->argv; *cpp; cpp++)
 	line_wrap(printable(*cpp, '?'), LENGTH, INDENT, print_line,
-		  (char *) notice);
+		  (void *) notice);
     post_mail_fputs(notice, "");
     if (state->reason)
 	post_mail_fprintf(notice, "Session aborted, reason: %s", state->reason);

@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopwm.c,v 1.5 2016/07/14 04:00:45 msaitoh Exp $ */
+/* $NetBSD: gpiopwm.c,v 1.5.4.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -104,7 +104,8 @@ gpiopwm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal(" [%d]", sc->sc_map.pm_map[0]);
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	callout_init(&sc->sc_pulse, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_pulse, gpiopwm_pulse, sc);

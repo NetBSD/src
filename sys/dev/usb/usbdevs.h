@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.719 2016/12/12 16:43:14 bouyer Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.719.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.728 2016/12/12 16:41:08 bouyer Exp
+ *	NetBSD: usbdevs,v 1.732 2017/04/18 19:09:12 riastradh Exp
  */
 
 /*
@@ -159,6 +159,7 @@
 #define	USB_VENDOR_ANNABOOKS	0x04ed		/* Annabooks */
 #define	USB_VENDOR_JVC	0x04f1		/* JVC */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics */
+#define	USB_VENDOR_ELAN	0x04f3		/* ELAN Microelectronics */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries */
 #define	USB_VENDOR_DALLAS	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_AIPTEK2	0x04fc		/* AIPTEK International */
@@ -490,6 +491,7 @@
 #define	USB_VENDOR_BELKIN2	0x1293		/* Belkin Components */
 #define	USB_VENDOR_CYBERTAN	0x129b		/* CyberTAN Technology */
 #define	USB_VENDOR_HUAWEI	0x12d1		/* Huawei Technologies */
+#define	USB_VENDOR_ARANEUS	0x12d8		/* Araneus Information Systems Oy */
 #define	USB_VENDOR_AINCOMM	0x12fd		/* Aincomm */
 #define	USB_VENDOR_MOBILITY	0x1342		/* Mobility */
 #define	USB_VENDOR_DICKSMITH	0x1371		/* Dick Smith Electronics */
@@ -767,6 +769,9 @@
 #define	USB_PRODUCT_AGFA_SNAPSCANE26	0x2097		/* SnapScan e26 */
 #define	USB_PRODUCT_AGFA_SNAPSCANE52	0x20fd		/* SnapScan e52 */
 
+/* Araneus products */
+#define	USB_PRODUCT_ARANEUS_ALEA	0x0001		/* Alea I/II TRNG */
+
 /* Aincomm products */
 #define	USB_PRODUCT_AINCOMM_AWU2000B	0x1001		/* AWU2000B */
 
@@ -890,6 +895,7 @@
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_5	0x821f		/* Bluetooth USB Host Controller MacBookAir 4,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_6	0x8281		/* Bluetooth USB Host Controller MacMini 5,1 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_7	0x828f		/* Bluetooth USB Host Controller MacBookAir 6,1 */
+#define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_8	0x821d		/* Bluetooth USB Host Controller MacBookPro 9,2 */
 #define	USB_PRODUCT_APPLE_BLUETOOTH	0x8300		/* Bluetooth */
 
 /* ArkMicroChips products */

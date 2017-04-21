@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.140 2016/07/07 06:55:42 msaitoh Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.140.4.1 2017/04/21 16:53:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.140 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.140.4.1 2017/04/21 16:53:54 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -1223,7 +1223,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
-	char namebuf[16];
+	char namebuf[32];
 	struct wsdisplay_font fd;
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	struct wsdisplay_scroll_data *ksdp, *usdp;

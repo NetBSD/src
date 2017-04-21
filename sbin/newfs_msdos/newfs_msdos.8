@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.21 2016/09/12 05:09:39 sevan Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.21.2.1 2017/04/21 16:53:14 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" From: $FreeBSD: src/sbin/newfs_msdos/newfs_msdos.8,v 1.13 2001/08/14 10:01:48 ru Exp $
 .\"
-.Dd September 12, 2016
+.Dd February 16, 2017
 .Dt NEWFS_MSDOS 8
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Op Fl o Ar hidden
 .Op Fl r Ar reserved
 .Op Fl s Ar total
+.Op Fl T Ar timestamp
 .Op Fl u Ar track-size
 .Ar special
 .Op Ar disktype
@@ -147,6 +148,13 @@ Number of hidden sectors.
 Number of reserved sectors.
 .It Fl s Ar total
 File system size.
+.It Fl T At timestamp
+Specify a timestamp to be used for file system creation so that
+it can be consistent for reproducible builds.
+The timestamp can be a pathname, where the timestamps are derived from
+that file, a parseable date for parsedate(3) (this option is not
+yet available in the tools build), or an integer value interpreted
+as the number of seconds from the Epoch.
 .It Fl u Ar track-size
 Number of sectors per track.
 .El

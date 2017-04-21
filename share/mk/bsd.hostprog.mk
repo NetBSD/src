@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.76 2016/01/01 17:06:21 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.76.4.1 2017/04/21 16:53:20 bouyer Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -48,7 +48,6 @@ LIBPCI?=	/usr/lib/libpci.a
 LIBPLOT?=	/usr/lib/libplot.a
 LIBPOSIX?=	/usr/lib/libposix.a
 LIBPTHREAD?=    /usr/lib/libpthread.a
-LIBPTHREAD_DBG?=/usr/lib/libpthread_dbg.a
 LIBPUFFS?=	/usr/lib/libpuffs.a
 LIBQUOTA?=	/usr/lib/libquota.a
 LIBRESOLV?=	/usr/lib/libresolv.a

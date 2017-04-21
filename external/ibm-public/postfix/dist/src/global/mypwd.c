@@ -1,4 +1,4 @@
-/*	$NetBSD: mypwd.c,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: mypwd.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -46,7 +46,7 @@
 /*	time, which is bad.
 /* DIAGNOSTICS
 /*	mypwnam_err() and mypwuid_err() return a non-zero system
-/*	error code when the lookup could not be performed. They 
+/*	error code when the lookup could not be performed. They
 /*	return zero, plus a null struct mypasswd pointer, when the
 /*	requested information was not found.
 /*
@@ -154,11 +154,11 @@ static struct mypasswd *mypwenter(const struct passwd * pwd)
      * This makes the lookup result dependent on program history. But, it was
      * already history-dependent before we added this extra check.
      */
-    htable_enter(mypwcache_name, mypwd->pw_name, (char *) mypwd);
-    if (binhash_locate(mypwcache_uid, (char *) &mypwd->pw_uid,
+    htable_enter(mypwcache_name, mypwd->pw_name, (void *) mypwd);
+    if (binhash_locate(mypwcache_uid, (void *) &mypwd->pw_uid,
 		       sizeof(mypwd->pw_uid)) == 0)
-	binhash_enter(mypwcache_uid, (char *) &mypwd->pw_uid,
-		      sizeof(mypwd->pw_uid), (char *) mypwd);
+	binhash_enter(mypwcache_uid, (void *) &mypwd->pw_uid,
+		      sizeof(mypwd->pw_uid), (void *) mypwd);
     return (mypwd);
 }
 
@@ -200,7 +200,7 @@ int     mypwuid_err(uid_t uid, struct mypasswd ** result)
      * Find the info in the cache or in the password database.
      */
     if ((mypwd = (struct mypasswd *)
-	 binhash_find(mypwcache_uid, (char *) &uid, sizeof(uid))) == 0) {
+	 binhash_find(mypwcache_uid, (void *) &uid, sizeof(uid))) == 0) {
 #ifdef HAVE_POSIX_GETPW_R
 	char    pwstore[GETPW_R_BUFSIZ];
 	struct passwd pwbuf;
@@ -300,17 +300,17 @@ void    mypwfree(struct mypasswd * mypwd)
      * See mypwenter() for the reason behind the binhash_locate() test.
      */
     if (--mypwd->refcount == 0) {
-	htable_delete(mypwcache_name, mypwd->pw_name, (void (*) (char *)) 0);
-	if (binhash_locate(mypwcache_uid, (char *) &mypwd->pw_uid,
+	htable_delete(mypwcache_name, mypwd->pw_name, (void (*) (void *)) 0);
+	if (binhash_locate(mypwcache_uid, (void *) &mypwd->pw_uid,
 			   sizeof(mypwd->pw_uid)))
-	    binhash_delete(mypwcache_uid, (char *) &mypwd->pw_uid,
-			   sizeof(mypwd->pw_uid), (void (*) (char *)) 0);
+	    binhash_delete(mypwcache_uid, (void *) &mypwd->pw_uid,
+			   sizeof(mypwd->pw_uid), (void (*) (void *)) 0);
 	myfree(mypwd->pw_name);
 	myfree(mypwd->pw_passwd);
 	myfree(mypwd->pw_gecos);
 	myfree(mypwd->pw_dir);
 	myfree(mypwd->pw_shell);
-	myfree((char *) mypwd);
+	myfree((void *) mypwd);
     }
 }
 
@@ -364,7 +364,7 @@ int     main(int argc, char **argv)
     msg_info("name_cache=%d uid_cache=%d",
 	     mypwcache_name->used, mypwcache_uid->used);
 
-    myfree((char *) mypwd);
+    myfree((void *) mypwd);
     return (0);
 }
 

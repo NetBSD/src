@@ -1,4 +1,4 @@
-/*	$NetBSD: postsuper.c,v 1.1.1.2 2013/01/02 18:59:06 tron Exp $	*/
+/*	$NetBSD: postsuper.c,v 1.1.1.2.16.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -253,6 +253,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -432,7 +437,7 @@ static int postrename(const char *old, const char *new)
     if ((ret = sane_rename(old, new)) < 0) {
 	if (errno != ENOENT
 	    || mail_queue_mkdirs(new) < 0
-	    || sane_rename(old, new) < 0)
+	    || (ret = sane_rename(old, new)) < 0)
 	    if (errno != ENOENT)
 		msg_fatal("rename file %s as %s: %m", old, new);
     } else {
@@ -728,7 +733,7 @@ static int fix_queue_id(const char *actual_path, const char *actual_queue,
 
 static void super(const char **queues, int action)
 {
-    ARGV   *hash_queue_names = argv_split(var_hash_queue_names, " \t\r\n,");
+    ARGV   *hash_queue_names = argv_split(var_hash_queue_names, CHARS_COMMA_SP);
     VSTRING *actual_path = vstring_alloc(10);
     VSTRING *wanted_path = vstring_alloc(10);
     struct stat st;
@@ -1225,8 +1230,8 @@ int     main(int argc, char **argv)
      * configuration directory location.
      */
     mail_conf_read();
-    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
-	msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
+    /* Re-evaluate mail_task() after reading main.cf. */
+    msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     if (chdir(var_queue_dir))
 	msg_fatal("chdir %s: %m", var_queue_dir);
 

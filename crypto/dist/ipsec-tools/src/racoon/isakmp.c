@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.75 2016/03/09 22:27:17 christos Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.75.4.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1077,6 +1077,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 		iph1->frag = 1;
 	else
 		iph1->frag = 0;
+	iph1->frag_last_index = 0;
 	iph1->frag_chain = NULL;
 #endif
 	iph1->approval = NULL;
@@ -1181,6 +1182,7 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 #endif
 #ifdef ENABLE_FRAG
 	iph1->frag = 0;
+	iph1->frag_last_index = 0;
 	iph1->frag_chain = NULL;
 #endif
 	iph1->approval = NULL;

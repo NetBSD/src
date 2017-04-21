@@ -1,4 +1,4 @@
-/*	$NetBSD: addr_match_list.c,v 1.1.1.3 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: addr_match_list.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	#include <addr_match_list.h>
 /*
-/*	ADDR_MATCH_LIST *addr_match_list_init(flags, pattern_list)
+/*	ADDR_MATCH_LIST *addr_match_list_init(pname, flags, pattern_list)
+/*	const char *pname;
 /*	int	flags;
 /*	const char *pattern_list;
 /*
@@ -36,7 +37,8 @@
 /*	A host matches a list when its address matches a pattern.
 /*	The matching process is case insensitive.
 /*
-/*	addr_match_list_init() performs initializations. The first
+/*	addr_match_list_init() performs initializations. The pname
+/*	argument specifies error reporting context. The flags
 /*	argument is the bit-wise OR of zero or more of the following:
 /* .IP MATCH_FLAG_RETURN
 /*	Request that addr_match_list_match() logs a warning and
@@ -44,7 +46,7 @@
 /*	error code, instead of raising a fatal error.
 /* .PP
 /*	Specify MATCH_FLAG_NONE to request none of the above.
-/*	The second argument is a list of patterns, or the absolute
+/*	The last argument is a list of patterns, or the absolute
 /*	pathname of a file with patterns.
 /*
 /*	addr_match_list_match() matches the specified host address
@@ -83,13 +85,15 @@
 
 #ifdef TEST
 
-#include <msg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <msg.h>
 #include <vstream.h>
 #include <vstring_vstream.h>
 #include <msg_vstream.h>
+#include <dict.h>
+#include <stringops.h>			/* util_utf8_enable */
 
 static void usage(char *progname)
 {
@@ -115,7 +119,10 @@ int     main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = addr_match_list_init(MATCH_FLAG_PARENT | MATCH_FLAG_RETURN, argv[optind]);
+    dict_allow_surrogate = 1;
+    util_utf8_enable = 1;
+    list = addr_match_list_init("command line", MATCH_FLAG_PARENT
+				| MATCH_FLAG_RETURN, argv[optind]);
     addr = argv[optind + 1];
     if (strcmp(addr, "-") == 0) {
 	VSTRING *buf = vstring_alloc(100);

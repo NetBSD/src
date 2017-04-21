@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.75 2016/05/30 17:26:29 dholland Exp $	*/
+/*	$NetBSD: ls.c,v 1.75.4.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.75 2016/05/30 17:26:29 dholland Exp $");
+__RCSID("$NetBSD: ls.c,v 1.75.4.1 2017/04/21 16:50:42 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
 int f_grouponly;		/* long listing without owner */
 int f_humanize;			/* humanize the size field */
-int f_commas;           /* separate size field with comma */
+int f_commas;			/* separate size field with comma */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */

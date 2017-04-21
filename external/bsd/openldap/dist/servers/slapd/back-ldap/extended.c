@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* extended.c - ldap backend extended routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,6 +20,9 @@
  * in OpenLDAP Software and subsequently enhanced by Pierangelo
  * Masarati. 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: extended.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -203,7 +206,7 @@ retry:
 
 		} else {
 			/* only touch when activity actually took place... */
-			if ( li->li_idle_timeout && lc ) {
+			if ( li->li_idle_timeout ) {
 				lc->lc_time = op->o_time;
 			}
 
@@ -334,7 +337,7 @@ retry:
 
 		} else {
 			/* only touch when activity actually took place... */
-			if ( li->li_idle_timeout && lc ) {
+			if ( li->li_idle_timeout ) {
 				lc->lc_time = op->o_time;
 			}
 

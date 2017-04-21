@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.c,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_conf.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -135,7 +135,7 @@ static void mail_conf_checkdir(const char *config_dir)
 	if (split_nameval(vstring_str(buf), &name, &value) == 0
 	    && (strcmp(name, VAR_CONFIG_DIRS) == 0
 		|| strcmp(name, VAR_MULTI_CONF_DIRS) == 0)) {
-	    while (found == 0 && (cp = mystrtok(&value, ", \t\r\n")) != 0)
+	    while (found == 0 && (cp = mystrtok(&value, CHARS_COMMA_SP)) != 0)
 		if (strcmp(cp, config_dir) == 0)
 		    found = 1;
 	}
@@ -196,10 +196,10 @@ void    mail_conf_suck(void)
 
 /* mail_conf_flush - discard configuration dictionary */
 
-void mail_conf_flush(void)
+void    mail_conf_flush(void)
 {
     if (dict_handle(CONFIG_DICT) != 0)
-        dict_unregister(CONFIG_DICT);
+	dict_unregister(CONFIG_DICT);
 }
 
 /* mail_conf_eval - expand macros in string */

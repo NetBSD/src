@@ -1,11 +1,9 @@
-#	$NetBSD: files.obs600,v 1.2 2013/11/21 14:03:02 kiyohara Exp $
+#	$NetBSD: files.obs600,v 1.2.14.1 2017/04/21 16:53:26 bouyer Exp $
 #
 # obs600-specific configuration info
 
 file	arch/evbppc/obs405/obs600_autoconf.c
 file	arch/evbppc/obs405/obs600_machdep.c
-
-file	kern/subr_disk_mbr.c			disk
 
 include "dev/usb/files.usb"
 

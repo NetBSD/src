@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.13 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.13.4.1 2017/04/21 16:52:13 bouyer Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -232,8 +232,10 @@ static	RETSIGTYPE	no_debug	(int);
 # endif	/* !DEBUG */
 #endif	/* !SIM && !SYS_WINNT */
 
+#ifndef WORK_FORK
 int	saved_argc;
 char **	saved_argv;
+#endif
 
 #ifndef SIM
 int		ntpdmain		(int, char **);

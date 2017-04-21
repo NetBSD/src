@@ -22,6 +22,8 @@
  * complete PPP support.
  */
 
+/* \summary: Point to Point Protocol (PPP) printer */
+
 /*
  * TODO:
  * o resolve XXX as much as possible
@@ -31,15 +33,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ppp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-ppp.c,v 1.6.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #ifdef __bsdi__
 #include <net/slcompress.h>
@@ -48,7 +49,7 @@ __RCSID("$NetBSD: print-ppp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 
 #include <stdlib.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 #include "ppp.h"
@@ -948,6 +949,9 @@ handle_pap(netdissect_options *ndo,
 
 	switch (code) {
 	case PAP_AREQ:
+		/* A valid Authenticate-Request is 6 or more octets long. */
+		if (len < 6)
+			goto trunc;
 		if (length - (p - p0) < 1)
 			return;
 		ND_TCHECK(*p);
@@ -976,6 +980,13 @@ handle_pap(netdissect_options *ndo,
 		break;
 	case PAP_AACK:
 	case PAP_ANAK:
+		/* Although some implementations ignore truncation at
+		 * this point and at least one generates a truncated
+		 * packet, RFC 1334 section 2.2.2 clearly states that
+		 * both AACK and ANAK are at least 5 bytes long.
+		 */
+		if (len < 5)
+			goto trunc;
 		if (length - (p - p0) < 1)
 			return;
 		ND_TCHECK(*p);
@@ -1675,6 +1686,11 @@ ppp_hdlc_if_print(netdissect_options *ndo,
 		return (chdlc_if_print(ndo, h, p));
 
 	default:
+		if (caplen < 4) {
+			ND_PRINT((ndo, "[|ppp]"));
+			return (caplen);
+		}
+
 		if (ndo->ndo_eflag)
 			ND_PRINT((ndo, "%02x %02x %d ", p[0], p[1], length));
 		p += 2;

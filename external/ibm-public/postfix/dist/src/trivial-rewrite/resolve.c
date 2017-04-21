@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.7 2015/09/12 08:20:37 tron Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.7.4.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -9,6 +9,9 @@
 /*	#include "trivial-rewrite.h"
 /*
 /*	void	resolve_init(void)
+/*
+/*	int	resolve_class(domain)
+/*	const char *domain;
 /*
 /*	void	resolve_proto(context, stream)
 /*	RES_CONTEXT *context;
@@ -22,6 +25,9 @@
 /*	resolve_init() initializes data structures that are private
 /*	to this module. It should be called once before using the
 /*	actual resolver routines.
+/*
+/*	resolve_class() returns the address class for the specified
+/*	domain, or -1 in case of error.
 /*
 /*	resolve_proto() implements the client-server protocol:
 /*	read one address in FQDN form, reply with a (transport,
@@ -40,6 +46,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -59,7 +70,7 @@
 #include <vstream.h>
 #include <vstring_vstream.h>
 #include <split_at.h>
-#include <valid_hostname.h>
+#include <valid_utf8_hostname.h>
 #include <stringops.h>
 #include <mymalloc.h>
 
@@ -124,6 +135,7 @@
   */
 
 #define STR	vstring_str
+#define LEN	VSTRING_LEN
 
  /*
   * Some of the lists that define the address domain classes.
@@ -133,6 +145,38 @@ static STRING_LIST *virt_alias_doms;
 static STRING_LIST *virt_mailbox_doms;
 
 static MAPS *relocated_maps;
+
+/* resolve_class - determine domain address class */
+
+int     resolve_class(const char *domain)
+{
+    int     ret;
+
+    /*
+     * Same order as in resolve_addr().
+     */
+    if ((ret = resolve_local(domain)) != 0)
+	return (ret > 0 ? RESOLVE_CLASS_LOCAL : -1);
+    if (virt_alias_doms) {
+	if (string_list_match(virt_alias_doms, domain))
+	    return (RESOLVE_CLASS_ALIAS);
+	if (virt_alias_doms->error)
+	    return (-1);
+    }
+    if (virt_mailbox_doms) {
+	if (string_list_match(virt_mailbox_doms, domain))
+	    return (RESOLVE_CLASS_VIRTUAL);
+	if (virt_mailbox_doms->error)
+	    return (-1);
+    }
+    if (relay_domains) {
+	if (string_list_match(relay_domains, domain))
+	    return (RESOLVE_CLASS_RELAY);
+	if (relay_domains->error)
+	    return (-1);
+    }
+    return (RESOLVE_CLASS_DEFAULT);
+}
 
 /* resolve_addr - resolve address according to rule set */
 
@@ -331,7 +375,6 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	    tree->head = tok822_scan(var_empty_addr, &tree->tail);
 	    continue;
 	}
-
 	/* XXX Re-resolve with @$myhostname for backwards compatibility. */
 	if (domain == 0 && saved_domain == 0) {
 	    tok822_sub_append(tree, tok822_alloc('@', (char *) 0));
@@ -379,12 +422,16 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
      */
     tok822_internalize(nextrcpt, tree, TOK822_STR_DEFL);
     rcpt_domain = strrchr(STR(nextrcpt), '@') + 1;
-    if (rcpt_domain == 0)
+    if (rcpt_domain == (char *) 1)
 	msg_panic("no @ in address: \"%s\"", STR(nextrcpt));
     if (*rcpt_domain == '[') {
 	if (!valid_mailhost_literal(rcpt_domain, DONT_GRIPE))
 	    *flags |= RESOLVE_FLAG_ERROR;
-    } else if (!valid_hostname(rcpt_domain, DONT_GRIPE)) {
+    } else if (var_smtputf8_enable
+	       && valid_utf8_string(STR(nextrcpt), LEN(nextrcpt)) == 0) {
+	*flags |= RESOLVE_FLAG_ERROR;
+    } else if (!valid_utf8_hostname(var_smtputf8_enable, rcpt_domain,
+				    DONT_GRIPE)) {
 	if (var_resolve_num_dom && valid_hostaddr(rcpt_domain, DONT_GRIPE)) {
 	    vstring_insert(nextrcpt, rcpt_domain - STR(nextrcpt), "[", 1);
 	    vstring_strcat(nextrcpt, "]");
@@ -458,7 +505,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 			     rcpt_domain, VAR_VIRT_ALIAS_DOMS,
 			     VAR_RELAY_DOMAINS);
 #if 0
-		if (strcasecmp(rcpt_domain, var_myorigin) == 0)
+		if (strcasecmp_utf8(rcpt_domain, var_myorigin) == 0)
 		    msg_warn("do not list $%s (%s) in %s",
 			   VAR_MYORIGIN, var_myorigin, VAR_VIRT_ALIAS_DOMS);
 #endif
@@ -552,7 +599,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 		    msg_warn("%s: ignoring null lookup result for %s",
 			     rp->snd_relay_maps_name, sender_key);
 		    relay = 0;
-		} else if (strcasecmp(relay, "DUNNO") == 0)
+		} else if (strcasecmp_utf8(relay, "DUNNO") == 0)
 		    relay = 0;
 	    } else if (rp->snd_relay_info
 		       && rp->snd_relay_info->error != 0) {
@@ -720,8 +767,8 @@ int     resolve_proto(RES_CONTEXT *context, VSTREAM *stream)
     int     flags;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, query,
+		  RECV_ATTR_STR(MAIL_ATTR_SENDER, sender),
+		  RECV_ATTR_STR(MAIL_ATTR_ADDR, query),
 		  ATTR_TYPE_END) != 2)
 	return (-1);
 
@@ -734,11 +781,11 @@ int     resolve_proto(RES_CONTEXT *context, VSTREAM *stream)
 		 STR(nexthop), STR(nextrcpt), flags);
 
     attr_print(stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, server_flags,
-	       ATTR_TYPE_STR, MAIL_ATTR_TRANSPORT, STR(channel),
-	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, STR(nexthop),
-	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, STR(nextrcpt),
-	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
+	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, server_flags),
+	       SEND_ATTR_STR(MAIL_ATTR_TRANSPORT, STR(channel)),
+	       SEND_ATTR_STR(MAIL_ATTR_NEXTHOP, STR(nexthop)),
+	       SEND_ATTR_STR(MAIL_ATTR_RECIP, STR(nextrcpt)),
+	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
 	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream) != 0) {
@@ -760,20 +807,23 @@ void    resolve_init(void)
 
     if (*var_virt_alias_doms)
 	virt_alias_doms =
-	    string_list_init(MATCH_FLAG_RETURN, var_virt_alias_doms);
+	    string_list_init(VAR_VIRT_ALIAS_DOMS, MATCH_FLAG_RETURN,
+			     var_virt_alias_doms);
 
     if (*var_virt_mailbox_doms)
 	virt_mailbox_doms =
-	    string_list_init(MATCH_FLAG_RETURN, var_virt_mailbox_doms);
+	    string_list_init(VAR_VIRT_MAILBOX_DOMS, MATCH_FLAG_RETURN,
+			     var_virt_mailbox_doms);
 
     if (*var_relay_domains)
 	relay_domains =
-	    domain_list_init(MATCH_FLAG_RETURN
+	    domain_list_init(VAR_RELAY_DOMAINS, MATCH_FLAG_RETURN
 			     | match_parent_style(VAR_RELAY_DOMAINS),
 			     var_relay_domains);
 
     if (*var_relocated_maps)
 	relocated_maps =
 	    maps_create(VAR_RELOCATED_MAPS, var_relocated_maps,
-			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+			| DICT_FLAG_UTF8_REQUEST);
 }

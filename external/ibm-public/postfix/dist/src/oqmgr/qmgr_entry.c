@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.1 2009/06/23 10:08:50 tron Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.1.36.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -240,7 +240,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
     qmgr_recipient_count -= entry->rcpt_list.len;
     recipient_list_free(&entry->rcpt_list);
 
-    myfree((char *) entry);
+    myfree((void *) entry);
 
     /*
      * Maintain back-to-back delivery status.

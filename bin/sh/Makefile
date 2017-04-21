@@ -1,16 +1,15 @@
-#	$NetBSD: Makefile,v 1.102 2016/02/27 18:34:12 christos Exp $
+#	$NetBSD: Makefile,v 1.102.4.1 2017/04/21 16:50:42 bouyer Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
 
-YHEADER=1
 PROG=	sh
-SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
-	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
-	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c \
-	test.c kill.c syntax.c
-GENSRCS=arith.c arith_lex.c builtins.c init.c nodes.c
-GENHDRS=arith.h builtins.h nodes.h token.h nodenames.h
+SHSRCS=	alias.c arith_token.c arithmetic.c cd.c echo.c error.c eval.c exec.c \
+	expand.c histedit.c input.c jobs.c mail.c main.c memalloc.c \
+	miscbltin.c mystring.c options.c parser.c redir.c show.c trap.c \
+	output.c var.c test.c kill.c syntax.c
+GENSRCS=builtins.c init.c nodes.c
+GENHDRS=builtins.h nodes.h token.h nodenames.h
 SRCS=	${SHSRCS} ${GENSRCS}
 
 DPSRCS+=${GENHDRS}
@@ -18,20 +17,10 @@ DPSRCS+=${GENHDRS}
 LDADD+=	-ll -ledit -lterminfo
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMINFO}
 
-LFLAGS=	-8	# 8-bit lex scanner for arithmetic
-
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
 	AWK=${TOOL_AWK:Q} \
 	SED=${TOOL_SED:Q}
-
-# The .depend file can get references to these temporary files
-.OPTIONAL: lex.yy.c y.tab.c
-
-.ifdef CRUNCHEDPROG
-LFLAGS+=-L
-YFLAGS+=-l
-.endif
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 #XXX: For testing only.
@@ -53,8 +42,8 @@ SRCS+=printf.c
 	${NETBSDSRCDIR}/usr.bin/printf \
 	${NETBSDSRCDIR}/bin/kill
 
-CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
-CLEANFILES+= trace
+CLEANFILES+= ${GENSRCS} ${GENHDRS} sh.html1
+CLEANFILES+= trace.*
 
 token.h: mktokens
 	${_MKTARGET_CREATE}

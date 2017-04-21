@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_scache.h,v 1.1.1.2 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_scache.h,v 1.1.1.2.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _TLS_SCACHE_H_INCLUDED_
 #define _TLS_SCACHE_H_INCLUDED_
@@ -33,8 +33,8 @@ typedef struct {
 
 #define TLS_TICKET_NAMELEN	16	/* RFC 5077 ticket key name length */
 #define TLS_TICKET_IVLEN	16	/* RFC 5077 ticket IV length */
-#define TLS_TICKET_KEYLEN	16	/* AES-128-CBC key size */
-#define TLS_TICKET_MACLEN	16	/* SHA-256 collision strength */
+#define TLS_TICKET_KEYLEN	32	/* AES-256-CBC key size */
+#define TLS_TICKET_MACLEN	32	/* RFC 5077 HMAC key size */
 #define TLS_SESSION_LIFEMIN	120	/* May you live to 120! */
 
 typedef struct TLS_TICKET_KEY {

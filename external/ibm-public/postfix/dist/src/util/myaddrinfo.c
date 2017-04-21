@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.1.1.3 2012/12/18 09:02:23 tron Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.1.1.3.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -237,7 +237,7 @@ static struct ipv4addrinfo *clone_ipv4addrinfo(struct ipv4addrinfo * tp)
 
     ip = (struct ipv4addrinfo *) mymalloc(sizeof(*ip));
     *ip = *tp;
-    ip->info.ai_addr = (struct sockaddr *) & (ip->sin);
+    ip->info.ai_addr = (struct sockaddr *) &(ip->sin);
     return (ip);
 }
 
@@ -250,13 +250,13 @@ static void init_ipv4addrinfo(struct ipv4addrinfo * ip, int socktype)
      * Portability: null pointers aren't necessarily all-zero bits, so we
      * make explicit assignments to all the pointers that we're aware of.
      */
-    memset((char *) ip, 0, sizeof(*ip));
+    memset((void *) ip, 0, sizeof(*ip));
     ip->info.ai_family = PF_INET;
     ip->info.ai_socktype = socktype;
     ip->info.ai_protocol = 0;			/* XXX */
     ip->info.ai_addrlen = sizeof(ip->sin);
     ip->info.ai_canonname = 0;
-    ip->info.ai_addr = (struct sockaddr *) & (ip->sin);
+    ip->info.ai_addr = (struct sockaddr *) &(ip->sin);
     ip->info.ai_next = 0;
     ip->sin.sin_family = AF_INET;
 #ifdef HAS_SA_LEN
@@ -295,8 +295,8 @@ static int find_service(const char *service, int socktype)
 /* hostname_to_sockaddr_pf - hostname to binary address form */
 
 int     hostname_to_sockaddr_pf(const char *hostname, int pf,
-			             const char *service, int socktype,
-			             struct addrinfo ** res)
+				        const char *service, int socktype,
+				        struct addrinfo ** res)
 {
 #ifdef EMULATE_IPV4_ADDRINFO
 
@@ -426,7 +426,7 @@ int     hostname_to_sockaddr_pf(const char *hostname, int pf,
     struct addrinfo hints;
     int     err;
 
-    memset((char *) &hints, 0, sizeof(hints));
+    memset((void *) &hints, 0, sizeof(hints));
     hints.ai_family = (pf != PF_UNSPEC) ? pf : inet_proto_info()->ai_family;
     hints.ai_socktype = service ? socktype : MAI_SOCKTYPE;
     if (!hostname) {
@@ -579,7 +579,7 @@ int     hostaddr_to_sockaddr(const char *hostaddr, const char *service,
 
 /* sockaddr_to_hostaddr - binary address to printable address form */
 
-int     sockaddr_to_hostaddr(const struct sockaddr * sa, SOCKADDR_SIZE salen,
+int     sockaddr_to_hostaddr(const struct sockaddr *sa, SOCKADDR_SIZE salen,
 			             MAI_HOSTADDR_STR *hostaddr,
 			             MAI_SERVPORT_STR *portnum,
 			             int unused_socktype)
@@ -630,7 +630,7 @@ int     sockaddr_to_hostaddr(const struct sockaddr * sa, SOCKADDR_SIZE salen,
 
 /* sockaddr_to_hostname - binary address to printable hostname */
 
-int     sockaddr_to_hostname(const struct sockaddr * sa, SOCKADDR_SIZE salen,
+int     sockaddr_to_hostname(const struct sockaddr *sa, SOCKADDR_SIZE salen,
 			             MAI_HOSTNAME_STR *hostname,
 			             MAI_SERVNAME_STR *service,
 			             int socktype)
@@ -754,7 +754,7 @@ void    freeaddrinfo(struct addrinfo * ai)
 	if (ap->ai_canonname)
 	    myfree(ap->ai_canonname);
 	/* ap->ai_addr is allocated within this memory block */
-	myfree((char *) ap);
+	myfree((void *) ap);
     }
 }
 
@@ -798,16 +798,27 @@ char   *gai_strerror(int ecode)
   * A test program that takes some info from the command line and runs it
   * forward and backward through the above conversion routines.
   */
+#include <stdlib.h>
 #include <msg.h>
 #include <vstream.h>
 #include <msg_vstream.h>
+
+static int compare_family(const void *a, const void *b)
+{
+    struct addrinfo *resa = *(struct addrinfo **) a;
+    struct addrinfo *resb = *(struct addrinfo **) b;
+
+    return (resa->ai_family - resb->ai_family);
+}
 
 int     main(int argc, char **argv)
 {
     struct addrinfo *info;
     struct addrinfo *ip;
+    struct addrinfo **resv;
     MAI_HOSTNAME_STR host;
     MAI_HOSTADDR_STR addr;
+    size_t  len, n;
     int     err;
 
     msg_vstream_init(argv[0], VSTREAM_ERR);
@@ -823,7 +834,14 @@ int     main(int argc, char **argv)
 	msg_info("hostname_to_sockaddr(%s): %s",
 	  argv[2], err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
     } else {
-	for (ip = info; ip != 0; ip = ip->ai_next) {
+	for (len = 0, ip = info; ip != 0; ip = ip->ai_next)
+	    len += 1;
+	resv = (struct addrinfo **) mymalloc(len * sizeof(*resv));
+	for (len = 0, ip = info; ip != 0; ip = ip->ai_next)
+	    resv[len++] = ip;
+	qsort((void *) resv, len, sizeof(*resv), compare_family);
+	for (n = 0; n < len; n++) {
+	    ip = resv[n];
 	    if ((err = sockaddr_to_hostaddr(ip->ai_addr, ip->ai_addrlen, &addr,
 					 (MAI_SERVPORT_STR *) 0, 0)) != 0) {
 		msg_info("sockaddr_to_hostaddr: %s",
@@ -841,6 +859,7 @@ int     main(int argc, char **argv)
 	    msg_info("%s -> %s", addr.buf, host.buf);
 	}
 	freeaddrinfo(info);
+	myfree((void *) resv);
     }
 
     msg_info("=== host address %s ===", argv[3]);

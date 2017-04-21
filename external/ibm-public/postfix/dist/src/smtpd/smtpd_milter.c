@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_milter.c,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_milter.c,v 1.1.1.1.36.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -36,6 +41,7 @@
 /* Utility library. */
 
 #include <split_at.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -73,14 +79,6 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
 	state->expand_buf = vstring_alloc(10);
 
     /*
-     * Canonicalize the name.
-     */
-    if (*name != '{') {				/* } */
-	vstring_sprintf(state->expand_buf, "{%s}", name);
-	name = STR(state->expand_buf);
-    }
-
-    /*
      * System macros.
      */
     if (strcmp(name, S8_MAC_DAEMON_NAME) == 0)
@@ -94,7 +92,7 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
     if (strcmp(name, S8_MAC__) == 0) {
 	vstring_sprintf(state->expand_buf, "%s [%s]",
 			state->reverse_name, state->addr);
-	if (strcasecmp(state->name, state->reverse_name) != 0)
+	if (strcasecmp_utf8(state->name, state->reverse_name) != 0)
 	    vstring_strcat(state->expand_buf, " (may be forged)");
 	return (STR(state->expand_buf));
     }
@@ -144,7 +142,7 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
     /*
      * MAIL FROM macros.
      */
-#define IF_SASL_ENABLED(s) (smtpd_sasl_is_active(state) && (s) ? (s) : 0)
+#define IF_SASL_ENABLED(s) ((s) ? (s) : 0)
 
     if (strcmp(name, S8_MAC_I) == 0)
 	return (state->queue_id);
@@ -161,7 +159,7 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
 	    return (0);
 	if (state->sender[0] == 0)
 	    return ("");
-	reply = smtpd_resolve_addr(state->sender);
+	reply = smtpd_resolve_addr(state->recipient, state->sender);
 	/* Sendmail 8.13 does not externalize the null string. */
 	if (STR(reply->recipient)[0])
 	    quote_821_local(state->expand_buf, STR(reply->recipient));
@@ -172,13 +170,13 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
     if (strcmp(name, S8_MAC_MAIL_HOST) == 0) {
 	if (state->sender == 0)
 	    return (0);
-	reply = smtpd_resolve_addr(state->sender);
+	reply = smtpd_resolve_addr(state->recipient, state->sender);
 	return (STR(reply->nexthop));
     }
     if (strcmp(name, S8_MAC_MAIL_MAILER) == 0) {
 	if (state->sender == 0)
 	    return (0);
-	reply = smtpd_resolve_addr(state->sender);
+	reply = smtpd_resolve_addr(state->recipient, state->sender);
 	return (STR(reply->transport));
     }
 
@@ -196,7 +194,7 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
 	    cp = split_at(STR(state->expand_buf), ' ');
 	    return (cp ? split_at(cp, ' ') : cp);
 	}
-	reply = smtpd_resolve_addr(state->recipient);
+	reply = smtpd_resolve_addr(state->sender, state->recipient);
 	/* Sendmail 8.13 does not externalize the null string. */
 	if (STR(reply->recipient)[0])
 	    quote_821_local(state->expand_buf, STR(reply->recipient));
@@ -213,7 +211,7 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
 	    (void) split_at(STR(state->expand_buf), ' ');
 	    return (STR(state->expand_buf));
 	}
-	reply = smtpd_resolve_addr(state->recipient);
+	reply = smtpd_resolve_addr(state->sender, state->recipient);
 	return (STR(reply->nexthop));
     }
     if (strcmp(name, S8_MAC_RCPT_MAILER) == 0) {
@@ -221,7 +219,7 @@ const char *smtpd_milter_eval(const char *name, void *ptr)
 	    return (0);
 	if (state->milter_reject_text)
 	    return (S8_RCPT_MAILER_ERROR);
-	reply = smtpd_resolve_addr(state->recipient);
+	reply = smtpd_resolve_addr(state->sender, state->recipient);
 	return (STR(reply->transport));
     }
     return (0);

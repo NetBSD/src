@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite.c,v 1.1.1.1 2009/06/23 10:08:58 tron Exp $	*/
+/*	$NetBSD: rewrite.c,v 1.1.1.1.36.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -107,6 +111,7 @@ void    rewrite_tree(RWR_CONTEXT *context, TOK822 *tree)
     TOK822 *domain;
     TOK822 *bang;
     TOK822 *local;
+    VSTRING *vstringval;
 
     /*
      * XXX If you change this module, quote_822_local.c, or tok822_parse.c,
@@ -188,6 +193,10 @@ void    rewrite_tree(RWR_CONTEXT *context, TOK822 *tree)
      * Append missing .domain, but leave broken forms ending in @ alone. This
      * merely makes diagnostics more accurate by leaving bogus addresses
      * alone.
+     * 
+     * Backwards-compatibility warning: warn for "user@localhost" when there is
+     * no "localhost" in mydestination or in any other address class with an
+     * explicit domain list.
      */
     if (var_append_dot_mydomain != 0
 	&& REW_PARAM_VALUE(context->domain) != 0
@@ -196,6 +205,22 @@ void    rewrite_tree(RWR_CONTEXT *context, TOK822 *tree)
 	&& domain != tree->tail
 	&& tok822_find_type(domain, TOK822_DOMLIT) == 0
 	&& tok822_find_type(domain, '.') == 0) {
+	if (warn_compat_break_app_dot_mydomain
+	    && (vstringval = domain->next->vstr) != 0) {
+	    if (strcasecmp(vstring_str(vstringval), "localhost") != 0) {
+		msg_info("using backwards-compatible default setting "
+			 VAR_APP_DOT_MYDOMAIN "=yes to rewrite \"%s\" to "
+			 "\"%s.%s\"", vstring_str(vstringval),
+			 vstring_str(vstringval), var_mydomain);
+	    } else if (resolve_class("localhost") == RESOLVE_CLASS_DEFAULT) {
+		msg_info("using backwards-compatible default setting "
+			 VAR_APP_DOT_MYDOMAIN "=yes to rewrite \"%s\" to "
+			 "\"%s.%s\"; please add \"localhost\" to "
+			 "mydestination or other address class",
+			 vstring_str(vstringval), vstring_str(vstringval),
+			 var_mydomain);
+	    }
+	}
 	tok822_sub_append(tree, tok822_alloc('.', (char *) 0));
 	tok822_sub_append(tree, tok822_scan(REW_PARAM_VALUE(context->domain),
 					    (TOK822 **) 0));
@@ -221,8 +246,8 @@ int     rewrite_proto(VSTREAM *stream)
     TOK822 *tree;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_RULE, ruleset,
-		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, address,
+		  RECV_ATTR_STR(MAIL_ATTR_RULE, ruleset),
+		  RECV_ATTR_STR(MAIL_ATTR_ADDR, address),
 		  ATTR_TYPE_END) != 2)
 	return (-1);
 
@@ -258,8 +283,8 @@ int     rewrite_proto(VSTREAM *stream)
 		 vstring_str(address), vstring_str(result));
 
     attr_print(stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, server_flags,
-	       ATTR_TYPE_STR, MAIL_ATTR_ADDR, vstring_str(result),
+	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, server_flags),
+	       SEND_ATTR_STR(MAIL_ATTR_ADDR, vstring_str(result)),
 	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream) != 0) {

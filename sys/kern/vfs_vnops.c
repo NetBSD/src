@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.193 2015/02/04 07:09:37 msaitoh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.193.4.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.193 2015/02/04 07:09:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.193.4.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #include "veriexec.h"
 
@@ -210,12 +210,14 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 				 va.va_vaflags |= VA_EXCLUSIVE;
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
-			vput(ndp->ni_dvp);
-			if (error)
+			if (error) {
+				vput(ndp->ni_dvp);
 				goto out;
+			}
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			vput(ndp->ni_dvp);
 		} else {
 			VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
 			if (ndp->ni_dvp == ndp->ni_vp)
@@ -374,13 +376,13 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred)
 {
 	int error;
 
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (flags & FWRITE) {
 		mutex_enter(vp->v_interlock);
 		KASSERT(vp->v_writecount > 0);
 		vp->v_writecount--;
 		mutex_exit(vp->v_interlock);
 	}
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flags, cred);
 	vput(vp);
 	return (error);

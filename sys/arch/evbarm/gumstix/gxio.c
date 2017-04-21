@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.24 2016/10/28 19:00:48 christos Exp $ */
+/*	$NetBSD: gxio.c,v 1.24.2.1 2017/04/21 16:53:26 bouyer Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.24 2016/10/28 19:00:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.24.2.1 2017/04/21 16:53:26 bouyer Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -88,7 +88,7 @@ CFATTACH_DECL_NEW(gxio, sizeof(struct gxio_softc),
 #endif
 
 void gxio_config(void);
-void gxio_config_expansion(char *);
+void gxio_config_expansion(const char *);
 #if defined(GUMSTIX)
 static void basix_config(void);
 static void cfstix_config(void);
@@ -662,48 +662,54 @@ gxio_config(void)
 }
 #endif
 
-void
-gxio_config_expansion(char *expansion)
+static int
+gxio_find_default_expansion(void)
 {
-	int i, d, s;
+#ifdef GXIO_DEFAULT_EXPANSION
+	int i;
 
+	/* Find out the default expansion */
+	for (i = 0; gxioconflist[i].name != NULL; i++)
+		if (strncasecmp(gxioconflist[i].name, GXIO_DEFAULT_EXPANSION,
+		    strlen(gxioconflist[i].name) + 1) == 0)
+			break;
+	return gxioconflist[i].name == NULL ? -1 : i;
+#else
+	return -1;
+#endif
+}
+
+void
+gxio_config_expansion(const char *expansion)
+{
+	int i, d;
+
+	d = gxio_find_default_expansion();
+
+	/* Print information about expansions */
+	printf("supported expansions:\n");
+	for (i = 0; gxioconflist[i].name != NULL; i++)
+		printf("  %s%s\n", gxioconflist[i].name,
+		    i == d ? " (DEFAULT)" : "");
+
+	
 	if (expansion == NULL) {
 		printf("not specified 'expansion=' in the boot args.\n");
-		s = -1;
+		i = -1;
 	} else {
 		for (i = 0; gxioconflist[i].name != NULL; i++)
 			if (strncasecmp(gxioconflist[i].name, expansion,
-					strlen(gxioconflist[i].name) + 1) == 0)
+			    strlen(gxioconflist[i].name) + 1) == 0)
 				break;
-		if (gxioconflist[i].name == NULL)
+		if (gxioconflist[i].name == NULL) {
 			printf("unknown expansion specified: %s\n", expansion);
-		s = i;
-	}
-#ifdef GXIO_DEFAULT_EXPANSION
-	for (i = 0; gxioconflist[i].name != NULL; i++)
-		if (strncasecmp(gxioconflist[i].name, GXIO_DEFAULT_EXPANSION,
-					strlen(gxioconflist[i].name) + 1) == 0)
-			break;
-	d = i;
-#else
-	d = -1;
-#endif
-	printf("supported expansions:\n");
-	for (i = 0; gxioconflist[i].name != NULL; i++)
-		printf("  %s%s\n",
-		    gxioconflist[i].name,
-		    i == d ? " (DEFAULT)" : "");
-
-	if (s < 0 || gxioconflist[i].name == NULL) {
-#ifdef GXIO_DEFAULT_EXPANSION
-		expansion = __UNCONST(GXIO_DEFAULT_EXPANSION);
-#else
-		return;
-#endif
+			i = -1;
+		}
 	}
 
+	/* Do some magic stuff for PEPPER */
 #if defined(PEPPER)
-	if (s < 0) {
+	if (i < 0) {
 		struct pepper_board_id {
 			unsigned int device_vendor;
 #define GUMSTIX_PEPPER          0x30000200	/* 1st gen */
@@ -730,10 +736,29 @@ gxio_config_expansion(char *expansion)
 	}
 #endif
 
-	printf("configure %s expansion (%s)\n",
-	    (s < 0 || gxioconflist[i].name == NULL) ? "default" : "specified",
-	    expansion);
-	gxioconflist[(s < 0 || gxioconflist[i].name == NULL) ? d : s].config();
+	/*
+	 * Now proceed to configure the default expansion if one was
+	 * specified (and found) or return.
+	 */
+	const char *toconfigure;
+	if (i < 0) {
+#ifdef GXIO_DEFAULT_EXPANSION
+		if (d == -1) {
+			printf("default expansion (%s) not found\n", 
+			    GXIO_DEFAULT_EXPANSION);
+			return;
+		}
+		expansion = GXIO_DEFAULT_EXPANSION;
+		i = d;
+		toconfigure = "default";
+#else
+		return;
+#endif
+	} else
+		toconfigure = "specified";
+
+	printf("configure %s expansion (%s)\n", toconfigure, expansion);
+	gxioconflist[i].config();
 }
 
 

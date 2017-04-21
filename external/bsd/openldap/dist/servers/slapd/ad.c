@@ -1,10 +1,10 @@
-/*	$NetBSD: ad.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: ad.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* ad.c - routines for dealing with attribute descriptions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ad.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -273,6 +276,7 @@ int slap_bv2ad(
 
 				if( rc == 0 && (unsigned)optlen == tags[i].bv_len ) {
 					/* duplicate (ignore) */
+					ntags--;
 					goto done;
 
 				} else if ( rc > 0 ||
@@ -770,7 +774,8 @@ int slap_bv2undef_ad(
 
 		desc->ad_cname.bv_len = bv->bv_len;
 		desc->ad_cname.bv_val = (char *)(desc+1);
-		strcpy(desc->ad_cname.bv_val, bv->bv_val);
+		strncpy(desc->ad_cname.bv_val, bv->bv_val, bv->bv_len);
+		desc->ad_cname.bv_val[bv->bv_len] = '\0';
 
 		/* canonical to upper case */
 		ldap_pvt_str2upper( desc->ad_cname.bv_val );

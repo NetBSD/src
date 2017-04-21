@@ -1,4 +1,4 @@
-/*	$NetBSD: test-time.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: test-time.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $	*/
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -27,7 +27,8 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test-time.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: test-time.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $");
+#include "util-internal.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -35,7 +36,7 @@ __RCSID("$NetBSD: test-time.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #include <sys/time.h>
 #endif
@@ -51,14 +52,12 @@ int called = 0;
 
 struct event *ev[NEVENT];
 
+struct evutil_weakrand_state weakrand_state;
+
 static int
 rand_int(int n)
 {
-#ifdef WIN32
-	return (int)(rand() % n);
-#else
-	return (int)(random() % n);
-#endif
+	return evutil_weakrand_(&weakrand_state) % n;
 }
 
 static void
@@ -74,7 +73,7 @@ time_cb(evutil_socket_t fd, short event, void *arg)
 			j = rand_int(NEVENT);
 			tv.tv_sec = 0;
 			tv.tv_usec = rand_int(50000);
-			if (tv.tv_usec % 2)
+			if (tv.tv_usec % 2 || called < NEVENT)
 				evtimer_add(ev[j], &tv);
 			else
 				evtimer_del(ev[j]);
@@ -87,7 +86,7 @@ main(int argc, char **argv)
 {
 	struct timeval tv;
 	int i;
-#ifdef WIN32
+#ifdef _WIN32
 	WORD wVersionRequested;
 	WSADATA wsaData;
 
@@ -95,6 +94,8 @@ main(int argc, char **argv)
 
 	(void) WSAStartup(wVersionRequested, &wsaData);
 #endif
+
+	evutil_weakrand_seed_(&weakrand_state, 0);
 
 	/* Initalize the event library */
 	event_init();
@@ -111,6 +112,8 @@ main(int argc, char **argv)
 
 	event_dispatch();
 
+
+	printf("%d, %d\n", called, NEVENT);
 	return (called < NEVENT);
 }
 

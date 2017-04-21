@@ -1,10 +1,10 @@
-/*	$NetBSD: qmqp-sink.c,v 1.1.1.2 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: qmqp-sink.c,v 1.1.1.2.12.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
 /*	qmqp-sink 1
 /* SUMMARY
-/*	multi-threaded QMQP test server
+/*	parallelized QMQP test server
 /* SYNOPSIS
 /* .fi
 /*	\fBqmqp-sink\fR [\fB-46cv\fR] [\fB-x \fItime\fR]
@@ -38,7 +38,7 @@
 /* .IP \fB-v\fR
 /*	Increase verbosity. Specify \fB-v -v\fR to see some of the QMQP
 /*	conversation.
-/* .IP "\fB-x \fItime\fR
+/* .IP "\fB-x \fItime\fR"
 /*	Terminate after \fItime\fR seconds. This is to facilitate memory
 /*	leak testing.
 /* SEE ALSO
@@ -52,6 +52,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -113,7 +118,7 @@ static void send_reply(SINK_STATE *state)
 
 /* read_data - read over-all netstring data */
 
-static void read_data(int unused_event, char *context)
+static void read_data(int unused_event, void *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
     int     fd = vstream_fileno(state->stream);
@@ -137,7 +142,7 @@ static void read_data(int unused_event, char *context)
 	    send_reply(state);
 	    return;
 	}
-	vstream_fseek(state->stream, 0L, 0);
+	vstream_fpurge(state->stream, VSTREAM_PURGE_BOTH);
     }
 
     /*
@@ -149,7 +154,7 @@ static void read_data(int unused_event, char *context)
 
 /* read_length - read over-all netstring length */
 
-static void read_length(int event, char *context)
+static void read_length(int event, void *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
 
@@ -194,30 +199,31 @@ static void disconnect(SINK_STATE *state)
 {
     event_disable_readwrite(vstream_fileno(state->stream));
     vstream_fclose(state->stream);
-    myfree((char *) state);
+    myfree((void *) state);
 }
 
 /* connect_event - handle connection events */
 
-static void connect_event(int unused_event, char *context)
+static void connect_event(int unused_event, void *context)
 {
-    int     sock = CAST_CHAR_PTR_TO_INT(context);
-    struct sockaddr sa;
-    SOCKADDR_SIZE len = sizeof(sa);
+    int     sock = CAST_ANY_PTR_TO_INT(context);
+    struct sockaddr_storage ss;
+    SOCKADDR_SIZE len = sizeof(ss);
+    struct sockaddr *sa = (struct sockaddr *) &ss;
     SINK_STATE *state;
     int     fd;
 
-    if ((fd = accept(sock, &sa, &len)) >= 0) {
+    if ((fd = accept(sock, sa, &len)) >= 0) {
 	if (msg_verbose)
 	    msg_info("connect (%s)",
 #ifdef AF_LOCAL
-		     sa.sa_family == AF_LOCAL ? "AF_LOCAL" :
+		     sa->sa_family == AF_LOCAL ? "AF_LOCAL" :
 #else
-		     sa.sa_family == AF_UNIX ? "AF_UNIX" :
+		     sa->sa_family == AF_UNIX ? "AF_UNIX" :
 #endif
-		     sa.sa_family == AF_INET ? "AF_INET" :
+		     sa->sa_family == AF_INET ? "AF_INET" :
 #ifdef AF_INET6
-		     sa.sa_family == AF_INET6 ? "AF_INET6" :
+		     sa->sa_family == AF_INET6 ? "AF_INET6" :
 #endif
 		     "unknown protocol family");
 	non_blocking(fd, NON_BLOCKING);
@@ -225,13 +231,13 @@ static void connect_event(int unused_event, char *context)
 	state->stream = vstream_fdopen(fd, O_RDWR);
 	vstream_tweak_sock(state->stream);
 	netstring_setup(state->stream, var_tmout);
-	event_enable_read(fd, read_length, (char *) state);
+	event_enable_read(fd, read_length, (void *) state);
     }
 }
 
 /* terminate - voluntary exit */
 
-static void terminate(int unused_event, char *unused_context)
+static void terminate(int unused_event, void *unused_context)
 {
     exit(0);
 }
@@ -252,7 +258,6 @@ int     main(int argc, char **argv)
     int     ch;
     int     ttl;
     const char *protocols = INET_PROTO_NAME_ALL;
-    INET_PROTO_INFO *proto_info;
 
     /*
      * Fingerprint executables and core dumps.
@@ -289,7 +294,7 @@ int     main(int argc, char **argv)
 	case 'x':
 	    if ((ttl = atoi(optarg)) <= 0)
 		usage(argv[0]);
-	    event_request_timer(terminate, (char *) 0, ttl);
+	    event_request_timer(terminate, (void *) 0, ttl);
 	    break;
 	default:
 	    usage(argv[0]);
@@ -303,7 +308,7 @@ int     main(int argc, char **argv)
     /*
      * Initialize.
      */
-    proto_info = inet_proto_init("protocols", protocols);
+    (void) inet_proto_init("protocols", protocols);
     buffer = vstring_alloc(1024);
     if (strncmp(argv[optind], "unix:", 5) == 0) {
 	sock = unix_listen(argv[optind] + 5, backlog, BLOCKING);
@@ -316,7 +321,7 @@ int     main(int argc, char **argv)
     /*
      * Start the event handler.
      */
-    event_enable_read(sock, connect_event, CAST_INT_TO_CHAR_PTR(sock));
+    event_enable_read(sock, connect_event, CAST_INT_TO_VOID_PTR(sock));
     for (;;)
 	event_loop(-1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_debug.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_debug.c,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -61,7 +61,9 @@ static const char *dict_debug_lookup(DICT *dict, const char *key)
     DICT   *real_dict = dict_debug->real_dict;
     const char *result;
 
+    real_dict->flags = dict->flags;
     result = dict_get(real_dict, key);
+    dict->flags = real_dict->flags;
     msg_info("%s:%s lookup: \"%s\" = \"%s\"", dict->type, dict->name, key,
 	     result ? result : real_dict->error ? "error" : "not_found");
     DICT_ERR_VAL_RETURN(dict, real_dict->error, result);
@@ -75,7 +77,9 @@ static int dict_debug_update(DICT *dict, const char *key, const char *value)
     DICT   *real_dict = dict_debug->real_dict;
     int     result;
 
+    real_dict->flags = dict->flags;
     result = dict_put(real_dict, key, value);
+    dict->flags = real_dict->flags;
     msg_info("%s:%s update: \"%s\" = \"%s\": %s", dict->type, dict->name,
 	     key, value, result == 0 ? "success" : real_dict->error ?
 	     "error" : "failed");
@@ -90,7 +94,9 @@ static int dict_debug_delete(DICT *dict, const char *key)
     DICT   *real_dict = dict_debug->real_dict;
     int     result;
 
+    real_dict->flags = dict->flags;
     result = dict_del(real_dict, key);
+    dict->flags = real_dict->flags;
     msg_info("%s:%s delete: \"%s\": %s", dict->type, dict->name, key,
 	     result == 0 ? "success" : real_dict->error ?
 	     "error" : "failed");
@@ -106,7 +112,9 @@ static int dict_debug_sequence(DICT *dict, int function,
     DICT   *real_dict = dict_debug->real_dict;
     int     result;
 
+    real_dict->flags = dict->flags;
     result = dict_seq(real_dict, function, key, value);
+    dict->flags = real_dict->flags;
     if (result == 0)
 	msg_info("%s:%s sequence: \"%s\" = \"%s\"", dict->type, dict->name,
 		 *key, *value);

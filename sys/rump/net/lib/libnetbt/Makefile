@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/10/19 16:16:38 pooka Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2017/04/21 16:54:08 bouyer Exp $
 #
 
 NOLINT=	#defined
@@ -18,11 +18,6 @@ SRCS=	bt_proto.c bt_sysctl.c						\
 	rfcomm_dlc.c rfcomm_session.c rfcomm_socket.c rfcomm_upper.c	\
 	sco_socket.c sco_upper.c
 
-.if ${HAVE_GCC:U} == "48"
-.if ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el"
-COPTS.l2cap_signal.c=	-O0
-.endif
-.endif
 SRCS+=	netbt_component.c
 
 .include <bsd.lib.mk>

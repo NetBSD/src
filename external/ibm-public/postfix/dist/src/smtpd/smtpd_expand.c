@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_expand.c,v 1.1.1.1 2011/03/02 19:32:37 tron Exp $	*/
+/*	$NetBSD: smtpd_expand.c,v 1.1.1.1.32.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -22,7 +22,7 @@
 /*	const char *smtpd_expand_lookup(name, unused_mode, context)
 /*	const char *name;
 /*	int	unused_mode;
-/*	char	*context;
+/*	void	*context;
 /*	const char *template;
 /* DESCRIPTION
 /*	This module expands session-related macros.
@@ -174,7 +174,7 @@ static const char *smtpd_expand_addr(VSTRING *buf, const char *addr,
 /* smtpd_expand_lookup - generic SMTP attribute $name expansion */
 
 const char *smtpd_expand_lookup(const char *name, int unused_mode,
-				        char *context)
+				        void *context)
 {
     SMTPD_STATE *state = (SMTPD_STATE *) context;
     time_t  now;
@@ -223,7 +223,7 @@ const char *smtpd_expand_lookup(const char *name, int unused_mode,
 	return (smtpd_expand_addr(state->expand_buf, state->recipient,
 				  name, CONST_LEN(MAIL_ATTR_RECIP)));
     } if (STREQ(name, MAIL_ATTR_LOCALTIME)) {
-	if (time(&now) == (time_t) - 1)
+	if (time(&now) == (time_t) -1)
 	    msg_fatal("time lookup failed: %m");
 	lt = localtime(&now);
 	VSTRING_RESET(state->expand_buf);
@@ -245,5 +245,5 @@ int     smtpd_expand(SMTPD_STATE *state, VSTRING *result,
 		             const char *template, int flags)
 {
     return (mac_expand(result, template, flags, STR(smtpd_expand_filter),
-		       smtpd_expand_lookup, (char *) state));
+		       smtpd_expand_lookup, (void *) state));
 }

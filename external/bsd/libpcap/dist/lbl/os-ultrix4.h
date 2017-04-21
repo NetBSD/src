@@ -1,4 +1,4 @@
-/*	$NetBSD: os-ultrix4.h,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+/*	$NetBSD: os-ultrix4.h,v 1.2.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -25,7 +25,6 @@
 int	bcmp(const char *, const char *, u_int);
 void	bcopy(const void *, void *, u_int);
 void	bzero(void *, u_int);
-void	endservent(void);
 int	getopt(int, char * const *, const char *);
 #ifdef __STDC__
 struct timeval;

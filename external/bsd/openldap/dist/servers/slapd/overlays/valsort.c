@@ -1,10 +1,10 @@
-/*	$NetBSD: valsort.c,v 1.1.1.4 2014/05/28 09:58:53 tron Exp $	*/
+/*	$NetBSD: valsort.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* valsort.c - sort attribute values */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * Portions copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -25,6 +25,9 @@
  * This overlay sorts the values of multi-valued attributes when returning
  * them in a search response.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: valsort.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
+
 #include "portable.h"
 
 #ifdef SLAPD_OVER_VALSORT

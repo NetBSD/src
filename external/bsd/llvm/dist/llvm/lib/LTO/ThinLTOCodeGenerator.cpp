@@ -284,7 +284,8 @@ public:
       const FunctionImporter::ExportSetTy &ExportList,
       const std::map<GlobalValue::GUID, GlobalValue::LinkageTypes> &ResolvedODR,
       const GVSummaryMapTy &DefinedFunctions,
-      const DenseSet<GlobalValue::GUID> &PreservedSymbols) {
+      const DenseSet<GlobalValue::GUID> &PreservedSymbols, unsigned OptLevel,
+      const TargetMachineBuilder &TMBuilder) {
     if (CachePath.empty())
       return;
 
@@ -306,11 +307,41 @@ public:
 
     SHA1 Hasher;
 
+    // Include the parts of the LTO configuration that affect code generation.
+    auto AddString = [&](StringRef Str) {
+      Hasher.update(Str);
+      Hasher.update(ArrayRef<uint8_t>{0});
+    };
+    auto AddUnsigned = [&](unsigned I) {
+      uint8_t Data[4];
+      Data[0] = I;
+      Data[1] = I >> 8;
+      Data[2] = I >> 16;
+      Data[3] = I >> 24;
+      Hasher.update(ArrayRef<uint8_t>{Data, 4});
+    };
+
     // Start with the compiler revision
     Hasher.update(LLVM_VERSION_STRING);
 #ifdef HAVE_LLVM_REVISION
     Hasher.update(LLVM_REVISION);
 #endif
+
+    // Hash the optimization level and the target machine settings.
+    AddString(TMBuilder.MCpu);
+    // FIXME: Hash more of Options. For now all clients initialize Options from
+    // command-line flags (which is unsupported in production), but may set
+    // RelaxELFRelocations. The clang driver can also pass FunctionSections,
+    // DataSections and DebuggerTuning via command line flags.
+    AddUnsigned(TMBuilder.Options.RelaxELFRelocations);
+    AddUnsigned(TMBuilder.Options.FunctionSections);
+    AddUnsigned(TMBuilder.Options.DataSections);
+    AddUnsigned((unsigned)TMBuilder.Options.DebuggerTuning);
+    AddString(TMBuilder.MAttr);
+    if (TMBuilder.RelocModel)
+      AddUnsigned(*TMBuilder.RelocModel);
+    AddUnsigned(TMBuilder.CGOptLevel);
+    AddUnsigned(OptLevel);
 
     Hasher.update(ArrayRef<uint8_t>((uint8_t *)&ModHash[0], sizeof(ModHash)));
     for (auto F : ExportList)
@@ -798,11 +829,22 @@ static std::string writeGeneratedObject(int count, StringRef CacheEntryPath,
 
 // Main entry point for the ThinLTO processing
 void ThinLTOCodeGenerator::run() {
+  // Prepare the resulting object vector
+  assert(ProducedBinaries.empty() && "The generator should not be reused");
+  if (SavedObjectsDirectoryPath.empty())
+    ProducedBinaries.resize(Modules.size());
+  else {
+    sys::fs::create_directories(SavedObjectsDirectoryPath);
+    bool IsDir;
+    sys::fs::is_directory(SavedObjectsDirectoryPath, IsDir);
+    if (!IsDir)
+      report_fatal_error("Unexistent dir: '" + SavedObjectsDirectoryPath + "'");
+    ProducedBinaryFiles.resize(Modules.size());
+  }
+
   if (CodeGenOnly) {
     // Perform only parallel codegen and return.
     ThreadPool Pool;
-    assert(ProducedBinaries.empty() && "The generator should not be reused");
-    ProducedBinaries.resize(Modules.size());
     int count = 0;
     for (auto &ModuleBuffer : Modules) {
       Pool.async([&](int count) {
@@ -814,7 +856,12 @@ void ThinLTOCodeGenerator::run() {
                                               /*IsImporting*/ false);
 
         // CodeGen
-        ProducedBinaries[count] = codegen(*TheModule);
+        auto OutputBuffer = codegen(*TheModule);
+        if (SavedObjectsDirectoryPath.empty())
+          ProducedBinaries[count] = std::move(OutputBuffer);
+        else
+          ProducedBinaryFiles[count] = writeGeneratedObject(
+              count, "", SavedObjectsDirectoryPath, *OutputBuffer);
       }, count++);
     }
 
@@ -835,18 +882,6 @@ void ThinLTOCodeGenerator::run() {
     WriteIndexToFile(*Index, OS);
   }
 
-  // Prepare the resulting object vector
-  assert(ProducedBinaries.empty() && "The generator should not be reused");
-  if (SavedObjectsDirectoryPath.empty())
-    ProducedBinaries.resize(Modules.size());
-  else {
-    sys::fs::create_directories(SavedObjectsDirectoryPath);
-    bool IsDir;
-    sys::fs::is_directory(SavedObjectsDirectoryPath, IsDir);
-    if (!IsDir)
-      report_fatal_error("Unexistent dir: '" + SavedObjectsDirectoryPath + "'");
-    ProducedBinaryFiles.resize(Modules.size());
-  }
 
   // Prepare the module map.
   auto ModuleMap = generateModuleMap(Modules);
@@ -928,7 +963,8 @@ void ThinLTOCodeGenerator::run() {
         ModuleCacheEntry CacheEntry(CacheOptions.Path, *Index, ModuleIdentifier,
                                     ImportLists[ModuleIdentifier], ExportList,
                                     ResolvedODR[ModuleIdentifier],
-                                    DefinedFunctions, GUIDPreservedSymbols);
+                                    DefinedFunctions, GUIDPreservedSymbols,
+                                    OptLevel, TMBuilder);
         auto CacheEntryPath = CacheEntry.getEntryPath();
 
         {

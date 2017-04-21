@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_j1f.c,v 1.11 2007/08/20 16:01:38 drochner Exp $");
+__RCSID("$NetBSD: e_j1f.c,v 1.11.58.1 2017/04/21 16:53:11 bouyer Exp $");
 #endif
 
 #include "namespace.h"
@@ -232,13 +232,12 @@ ponef(float x)
 	float z,r,s;
         int32_t ix;
 
-	p = q = 0;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
-        if(ix>=0x41000000)     {p = pr8; q= ps8;}
-        else if(ix>=0x40f71c58){p = pr5; q= ps5;}
-        else if(ix>=0x4036db68){p = pr3; q= ps3;}
-        else if(ix>=0x40000000){p = pr2; q= ps2;}
+        if(ix>=0x41000000)         {p = pr8; q= ps8;}
+        else if(ix>=0x40f71c58)    {p = pr5; q= ps5;}
+        else if(ix>=0x4036db68)    {p = pr3; q= ps3;}
+        else /*if(ix>=0x40000000)*/{p = pr2; q= ps2;}
         z = one/(x*x);
         r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
         s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*q[4]))));
@@ -331,17 +330,16 @@ qonef(float x)
 	float  s,r,z;
 	int32_t ix;
 
-	p = q = 0;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;
 	/* [inf, 8]		(8      41000000) */
-	if(ix>=0x41000000)     {p = qr8; q= qs8;}
+	if(ix>=0x41000000)         {p = qr8; q= qs8;}
 	/* [8, 4.5454]		(4.5454 409173eb) */
-	else if(ix>=0x409173eb){p = qr5; q= qs5;}
+	else if(ix>=0x409173eb)    {p = qr5; q= qs5;}
 	/* [4.5454, 2.8570] 	(2.8570	4036d917) */
-	else if(ix>=0x4036d917){p = qr3; q= qs3;}
+	else if(ix>=0x4036d917)    {p = qr3; q= qs3;}
 	/* [2.8570, 2]		(2 	40000000) */
-	else if(ix>=0x40000000){p = qr2; q= qs2;}
+	else /*if(ix>=0x40000000)*/{p = qr2; q= qs2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));

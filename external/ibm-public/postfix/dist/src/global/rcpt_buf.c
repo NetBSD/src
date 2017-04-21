@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_buf.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: rcpt_buf.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -112,7 +112,7 @@ void    rcpb_free(RCPT_BUF *rcpt)
     vstring_free(rcpt->dsn_orcpt);
     vstring_free(rcpt->orig_addr);
     vstring_free(rcpt->address);
-    myfree((char *) rcpt);
+    myfree((void *) rcpt);
 }
 
 /* rcpb_scan - receive recipient buffer */
@@ -128,11 +128,11 @@ int     rcpb_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
      * can be fixed after all the ad-hoc read/write code is replaced.
      */
     ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		  ATTR_TYPE_STR, MAIL_ATTR_ORCPT, rcpt->orig_addr,
-		  ATTR_TYPE_STR, MAIL_ATTR_RECIP, rcpt->address,
-		  ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, &rcpt->offset,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_ORCPT, rcpt->dsn_orcpt,
-		  ATTR_TYPE_INT, MAIL_ATTR_DSN_NOTIFY, &rcpt->dsn_notify,
+		  RECV_ATTR_STR(MAIL_ATTR_ORCPT, rcpt->orig_addr),
+		  RECV_ATTR_STR(MAIL_ATTR_RECIP, rcpt->address),
+		  RECV_ATTR_LONG(MAIL_ATTR_OFFSET, &rcpt->offset),
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_ORCPT, rcpt->dsn_orcpt),
+		  RECV_ATTR_INT(MAIL_ATTR_DSN_NOTIFY, &rcpt->dsn_notify),
 		  ATTR_TYPE_END);
     return (ret == 5 ? 1 : -1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.c,v 1.1.1.2 2013/01/02 18:58:57 tron Exp $	*/
+/*	$NetBSD: dict_proxy.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -25,7 +25,7 @@
 /*	closed after $ipc_idle seconds of idle time, or after $ipc_ttl
 /*	seconds of activity.
 /* SECURITY
-/*      The proxy map server is not meant to be a trusted process. Proxy
+/*	The proxy map server is not meant to be a trusted process. Proxy
 /*	maps must not be used to look up security sensitive information
 /*	such as user/group IDs, output files, or external commands.
 /* SEE ALSO
@@ -121,16 +121,16 @@ static int dict_proxy_sequence(DICT *dict, int function,
 	errno = 0;
 	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_SEQUENCE,
-		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict->name,
-		       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, request_flags,
-		       ATTR_TYPE_INT, MAIL_ATTR_FUNC, function,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, PROXY_REQ_SEQUENCE),
+		       SEND_ATTR_STR(MAIL_ATTR_TABLE, dict->name),
+		       SEND_ATTR_INT(MAIL_ATTR_FLAGS, request_flags),
+		       SEND_ATTR_INT(MAIL_ATTR_FUNC, function),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
-			 ATTR_TYPE_STR, MAIL_ATTR_KEY, dict_proxy->reskey,
-			 ATTR_TYPE_STR, MAIL_ATTR_VALUE, dict_proxy->result,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
+			 RECV_ATTR_STR(MAIL_ATTR_KEY, dict_proxy->reskey),
+			 RECV_ATTR_STR(MAIL_ATTR_VALUE, dict_proxy->result),
 			 ATTR_TYPE_END) != 3) {
 	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", myname, VSTREAM_PATH(stream));
@@ -158,6 +158,9 @@ static int dict_proxy_sequence(DICT *dict, int function,
 	    case PROXY_STAT_RETRY:
 		*key = *value = 0;
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_RETRY, DICT_STAT_ERROR);
+	    case PROXY_STAT_CONFIG:
+		*key = *value = 0;
+		DICT_ERR_VAL_RETURN(dict, DICT_ERR_CONFIG, DICT_STAT_ERROR);
 	    default:
 		msg_warn("%s sequence failed for table \"%s\" function %d: "
 			 "unexpected reply status %d",
@@ -196,15 +199,15 @@ static const char *dict_proxy_lookup(DICT *dict, const char *key)
 	errno = 0;
 	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_LOOKUP,
-		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict->name,
-		       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, request_flags,
-		       ATTR_TYPE_STR, MAIL_ATTR_KEY, key,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, PROXY_REQ_LOOKUP),
+		       SEND_ATTR_STR(MAIL_ATTR_TABLE, dict->name),
+		       SEND_ATTR_INT(MAIL_ATTR_FLAGS, request_flags),
+		       SEND_ATTR_STR(MAIL_ATTR_KEY, key),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
-			 ATTR_TYPE_STR, MAIL_ATTR_VALUE, dict_proxy->result,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
+			 RECV_ATTR_STR(MAIL_ATTR_VALUE, dict_proxy->result),
 			 ATTR_TYPE_END) != 2) {
 	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", myname, VSTREAM_PATH(stream));
@@ -228,6 +231,8 @@ static const char *dict_proxy_lookup(DICT *dict, const char *key)
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, (char *) 0);
 	    case PROXY_STAT_RETRY:
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_RETRY, (char *) 0);
+	    case PROXY_STAT_CONFIG:
+		DICT_ERR_VAL_RETURN(dict, DICT_ERR_CONFIG, (char *) 0);
 	    default:
 		msg_warn("%s lookup failed for table \"%s\" key \"%s\": "
 			 "unexpected reply status %d",
@@ -264,15 +269,15 @@ static int dict_proxy_update(DICT *dict, const char *key, const char *value)
 	errno = 0;
 	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_UPDATE,
-		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict->name,
-		       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, request_flags,
-		       ATTR_TYPE_STR, MAIL_ATTR_KEY, key,
-		       ATTR_TYPE_STR, MAIL_ATTR_VALUE, value,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, PROXY_REQ_UPDATE),
+		       SEND_ATTR_STR(MAIL_ATTR_TABLE, dict->name),
+		       SEND_ATTR_INT(MAIL_ATTR_FLAGS, request_flags),
+		       SEND_ATTR_STR(MAIL_ATTR_KEY, key),
+		       SEND_ATTR_STR(MAIL_ATTR_VALUE, value),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
 			 ATTR_TYPE_END) != 1) {
 	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", myname, VSTREAM_PATH(stream));
@@ -295,6 +300,8 @@ static int dict_proxy_update(DICT *dict, const char *key, const char *value)
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_FAIL);
 	    case PROXY_STAT_RETRY:
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_RETRY, DICT_STAT_ERROR);
+	    case PROXY_STAT_CONFIG:
+		DICT_ERR_VAL_RETURN(dict, DICT_ERR_CONFIG, DICT_STAT_ERROR);
 	    default:
 		msg_warn("%s update failed for table \"%s\" key \"%s\": "
 			 "unexpected reply status %d",
@@ -331,14 +338,14 @@ static int dict_proxy_delete(DICT *dict, const char *key)
 	errno = 0;
 	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_DELETE,
-		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict->name,
-		       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, request_flags,
-		       ATTR_TYPE_STR, MAIL_ATTR_KEY, key,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, PROXY_REQ_DELETE),
+		       SEND_ATTR_STR(MAIL_ATTR_TABLE, dict->name),
+		       SEND_ATTR_INT(MAIL_ATTR_FLAGS, request_flags),
+		       SEND_ATTR_STR(MAIL_ATTR_KEY, key),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
 			 ATTR_TYPE_END) != 1) {
 	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno !=
 					     ENOENT))
@@ -362,6 +369,8 @@ static int dict_proxy_delete(DICT *dict, const char *key)
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_FAIL);
 	    case PROXY_STAT_RETRY:
 		DICT_ERR_VAL_RETURN(dict, DICT_ERR_RETRY, DICT_STAT_ERROR);
+	    case PROXY_STAT_CONFIG:
+		DICT_ERR_VAL_RETURN(dict, DICT_ERR_CONFIG, DICT_STAT_ERROR);
 	    default:
 		msg_warn("%s delete failed for table \"%s\" key \"%s\": "
 			 "unexpected reply status %d",
@@ -467,14 +476,14 @@ DICT   *dict_proxy_open(const char *map, int open_flags, int dict_flags)
 	stream = clnt_stream_access(dict_proxy->clnt);
 	errno = 0;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, PROXY_REQ_OPEN,
-		       ATTR_TYPE_STR, MAIL_ATTR_TABLE, dict_proxy->dict.name,
-		     ATTR_TYPE_INT, MAIL_ATTR_FLAGS, dict_proxy->inst_flags,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, PROXY_REQ_OPEN),
+		       SEND_ATTR_STR(MAIL_ATTR_TABLE, dict_proxy->dict.name),
+		     SEND_ATTR_INT(MAIL_ATTR_FLAGS, dict_proxy->inst_flags),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
-			 ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &server_flags,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
+			 RECV_ATTR_INT(MAIL_ATTR_FLAGS, &server_flags),
 			 ATTR_TYPE_END) != 2) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: service %s: %m", VSTREAM_PATH(stream), myname);

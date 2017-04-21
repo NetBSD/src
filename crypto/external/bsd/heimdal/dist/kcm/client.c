@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.2 2014/04/24 12:45:27 pettai Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2.10.1 2017/04/21 16:50:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -45,11 +45,13 @@ kcm_ccache_resolve_client(krb5_context context,
 			  kcm_ccache *ccache)
 {
     krb5_error_code ret;
+    const char *estr;
 
     ret = kcm_ccache_resolve(context, name, ccache);
     if (ret) {
-	kcm_log(1, "Failed to resolve cache %s: %s",
-		name, krb5_get_err_text(context, ret));
+	estr = krb5_get_error_message(context, ret);
+	kcm_log(1, "Failed to resolve cache %s: %s", name, estr);
+	krb5_free_error_message(context, estr);
 	return ret;
     }
 
@@ -69,11 +71,13 @@ kcm_ccache_destroy_client(krb5_context context,
 {
     krb5_error_code ret;
     kcm_ccache ccache;
+    const char *estr;
 
     ret = kcm_ccache_resolve(context, name, &ccache);
     if (ret) {
-	kcm_log(1, "Failed to resolve cache %s: %s",
-		name, krb5_get_err_text(context, ret));
+	estr = krb5_get_error_message(context, ret);
+	kcm_log(1, "Failed to resolve cache %s: %s", name, estr);
+	krb5_free_error_message(context, estr);
 	return ret;
     }
 
@@ -94,6 +98,7 @@ kcm_ccache_new_client(krb5_context context,
 {
     krb5_error_code ret;
     kcm_ccache ccache;
+    const char *estr;
 
     /* We insist the ccache name starts with UID or UID: */
     if (name_constraints != 0) {
@@ -129,8 +134,9 @@ kcm_ccache_new_client(krb5_context context,
     if (ret == KRB5_FCC_NOFILE) {
 	ret = kcm_ccache_new(context, name, &ccache);
 	if (ret) {
-	    kcm_log(1, "Failed to initialize cache %s: %s",
-		    name, krb5_get_err_text(context, ret));
+	    estr = krb5_get_error_message(context, ret);
+	    kcm_log(1, "Failed to initialize cache %s: %s", name, estr);
+	    krb5_free_error_message(context, estr);
 	    return ret;
 	}
 
@@ -141,8 +147,9 @@ kcm_ccache_new_client(krb5_context context,
     } else {
 	ret = kcm_zero_ccache_data(context, ccache);
 	if (ret) {
-	    kcm_log(1, "Failed to empty cache %s: %s",
-		    name, krb5_get_err_text(context, ret));
+	    estr = krb5_get_error_message(context, ret);
+	    kcm_log(1, "Failed to empty cache %s: %s", name, estr);
+	    krb5_free_error_message(context, estr);
 	    kcm_release_ccache(context, ccache);
 	    return ret;
 	}

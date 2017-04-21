@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/23 07:36:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2017/04/21 16:53:00 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@
 
 # makekeys is now done src/tools
 SUBDIR+=bdftopcf fc-cache ucs2any
-SUBDIR+=mkfontscale .WAIT xkbcomp
+SUBDIR+=mkfontscale
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>

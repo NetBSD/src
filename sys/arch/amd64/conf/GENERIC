@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.450 2017/01/12 05:24:36 ryo Exp $
+# $NetBSD: GENERIC,v 1.450.2.1 2017/04/21 16:53:22 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.450 $"
+#ident		"GENERIC-$Revision: 1.450.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -80,6 +80,8 @@ est0		at cpu0		# Intel Enhanced SpeedStep (non-ACPI)
 #odcm0		at cpu0		# On-demand clock modulation
 powernow0	at cpu0		# AMD PowerNow! and Cool'n'Quiet (non-ACPI)
 vmt0		at cpu0		# VMware Tools
+
+#options 	PMC		# performance-monitoring counters support
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
@@ -143,6 +145,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
@@ -1057,6 +1060,9 @@ ucom*	at u3g?
 ugensa* at uhub? port ?
 ucom*	at ugensa?
 
+# Araneus Alea I/II TRNG
+#ualea* at uhub? port ? configuration ? interface ?
+
 # IrDA and Consumer Ir devices
 
 # Toshiba Oboe
@@ -1271,6 +1277,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+pseudo-device	l2tp			# L2TPv3 interface
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	pfsync			# PF sync if

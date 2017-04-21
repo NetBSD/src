@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_version.c,v 1.1.1.2 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_version.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -165,7 +165,7 @@ MAIL_VERSION *mail_version_parse(const char *string, const char **why)
     if ((err = mail_version_worker(mp, saved_string)) != 0) {
 	*why = err;
 	myfree(saved_string);
-	myfree((char *) mp);
+	myfree((void *) mp);
 	return (0);
     } else {
 	return (mp);
@@ -177,7 +177,7 @@ MAIL_VERSION *mail_version_parse(const char *string, const char **why)
 void    mail_version_free(MAIL_VERSION *mp)
 {
     myfree(mp->program);
-    myfree((char *) mp);
+    myfree((void *) mp);
 }
 
 /* get_mail_version - return parsed mail version string */

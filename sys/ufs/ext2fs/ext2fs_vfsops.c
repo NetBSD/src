@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.204 2016/08/25 07:18:35 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.204.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.204 2016/08/25 07:18:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.204.2.1 2017/04/21 16:54:08 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -139,7 +139,7 @@ struct vfsops ext2fs_vfsops = {
 	.vfs_mountroot = ext2fs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -279,8 +279,8 @@ ext2fs_mountroot(void)
 	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return error;
 	}
 	mountlist_append(mp);
@@ -288,7 +288,7 @@ ext2fs_mountroot(void)
 	fs = ump->um_e2fs;
 	ext2fs_sb_setmountinfo(fs, mp);
 	(void)ext2fs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
 	return 0;
 }
@@ -881,6 +881,8 @@ static bool
 ext2fs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct inode *ip;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	ip = VTOI(vp);
 	/*

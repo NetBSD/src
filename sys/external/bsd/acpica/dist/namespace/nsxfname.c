@@ -6,7 +6,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -177,8 +177,6 @@ AcpiGetName (
     ACPI_BUFFER             *Buffer)
 {
     ACPI_STATUS             Status;
-    ACPI_NAMESPACE_NODE     *Node;
-    const char              *NodeName;
 
 
     /* Parameter validation */
@@ -194,16 +192,6 @@ AcpiGetName (
         return (Status);
     }
 
-    if (NameType == ACPI_FULL_PATHNAME ||
-        NameType == ACPI_FULL_PATHNAME_NO_TRAILING)
-    {
-        /* Get the full pathname (From the namespace root) */
-
-        Status = AcpiNsHandleToPathname (Handle, Buffer,
-            NameType == ACPI_FULL_PATHNAME ? FALSE : TRUE);
-        return (Status);
-    }
-
     /*
      * Wants the single segment ACPI name.
      * Validate handle and convert to a namespace Node
@@ -214,30 +202,20 @@ AcpiGetName (
         return (Status);
     }
 
-    Node = AcpiNsValidateHandle (Handle);
-    if (!Node)
+    if (NameType == ACPI_FULL_PATHNAME ||
+        NameType == ACPI_FULL_PATHNAME_NO_TRAILING)
     {
-        Status = AE_BAD_PARAMETER;
-        goto UnlockAndExit;
+        /* Get the full pathname (From the namespace root) */
+
+        Status = AcpiNsHandleToPathname (Handle, Buffer,
+            NameType == ACPI_FULL_PATHNAME ? FALSE : TRUE);
     }
-
-    /* Validate/Allocate/Clear caller buffer */
-
-    Status = AcpiUtInitializeBuffer (Buffer, ACPI_PATH_SEGMENT_LENGTH);
-    if (ACPI_FAILURE (Status))
+    else
     {
-        goto UnlockAndExit;
+        /* Get the single name */
+
+        Status = AcpiNsHandleToName (Handle, Buffer);
     }
-
-    /* Just copy the ACPI name from the Node and zero terminate it */
-
-    NodeName = __UNCONST(AcpiUtGetNodeName (Node));
-    ACPI_MOVE_NAME (Buffer->Pointer, NodeName);
-    ((char *) Buffer->Pointer) [ACPI_NAME_SIZE] = 0;
-    Status = AE_OK;
-
-
-UnlockAndExit:
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
     return (Status);

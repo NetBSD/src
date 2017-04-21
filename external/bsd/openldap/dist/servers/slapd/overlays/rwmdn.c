@@ -1,10 +1,10 @@
-/*	$NetBSD: rwmdn.c,v 1.1.1.4 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: rwmdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* rwmdn.c - massages dns */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -23,6 +23,9 @@
  * Masarati.
  */
 
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rwmdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 

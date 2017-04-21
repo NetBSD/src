@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.114 2016/09/17 06:29:50 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.114.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,9 +53,9 @@
 
 #define USB_STACK_VERSION 2
 
-#define USB_MAX_DEVICES 128
-#define USB_MIN_DEVICES 2               /* unused + root HUB */
-#define USB_START_ADDR 0
+#define USB_MAX_DEVICES		128		/* 0, 1-127 */
+#define USB_MIN_DEVICES		2               /* unused + root HUB */
+#define USB_START_ADDR		0
 
 #define USB_CONTROL_ENDPOINT 0
 #define USB_MAX_ENDPOINTS 16

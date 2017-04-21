@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.3 2016/08/11 01:54:30 nonaka Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.3.2.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.3 2016/08/11 01:54:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.3.2.1 2017/04/21 16:53:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,6 +50,9 @@ static bool	sdhc_acpi_resume(device_t, const pmf_qual_t *);
 
 struct sdhc_acpi_softc {
 	struct sdhc_softc sc;
+	bus_space_tag_t sc_memt;
+	bus_space_handle_t sc_memh;
+	bus_size_t sc_memsize;
 	int sc_irq;
 
 	ACPI_HANDLE sc_crs, sc_srs;
@@ -59,13 +62,57 @@ struct sdhc_acpi_softc {
 CFATTACH_DECL_NEW(sdhc_acpi, sizeof(struct sdhc_acpi_softc),
     sdhc_acpi_match, sdhc_acpi_attach, sdhc_acpi_detach, NULL);
 
-static uint32_t sdhc_acpi_intr(void *);
+static uint32_t	sdhc_acpi_intr(void *);
+static void	sdhc_acpi_intel_emmc_hw_reset(struct sdhc_softc *,
+		    struct sdhc_host *);
 
-static const char * const sdhc_acpi_ids[] = {
-	"80860F14",
-	"80860F16",
-	NULL
+static const struct sdhc_acpi_slot {
+	const char *hid;
+	const char *uid;
+	int type;
+#define	SLOT_TYPE_SD	0	/* SD or SDIO */
+#define	SLOT_TYPE_EMMC	1	/* eMMC */
+} sdhc_acpi_slot_map[] = {
+	{ "80865ACA",	NULL,	SLOT_TYPE_SD },
+	{ "80865ACC",	NULL,	SLOT_TYPE_EMMC },
+	{ "80865AD0",	NULL,	SLOT_TYPE_SD },
+	{ "80860F14",   "1",	SLOT_TYPE_EMMC },
+	{ "80860F14",   "3",	SLOT_TYPE_SD },
+	{ "80860F16",   NULL,	SLOT_TYPE_SD },
+	{ "INT33BB",	"2",	SLOT_TYPE_SD },
+	{ "INT33BB",	"3",	SLOT_TYPE_SD },
+	{ "INT33C6",	NULL,	SLOT_TYPE_SD },
+	{ "INT3436",	NULL,	SLOT_TYPE_SD },
+	{ "INT344D",	NULL,	SLOT_TYPE_SD },
+	{ "PNP0D40",	NULL,	SLOT_TYPE_SD },
+	{ "PNP0FFF",	"3",	SLOT_TYPE_SD },
 };
+
+static const struct sdhc_acpi_slot *
+sdhc_acpi_find_slot(ACPI_DEVICE_INFO *ad)
+{
+	const struct sdhc_acpi_slot *slot;
+	const char *hid, *uid;
+	size_t i;
+
+	hid = ad->HardwareId.String;
+	uid = ad->UniqueId.String;
+
+	if (!(ad->Valid & ACPI_VALID_HID) || hid == NULL)
+		return NULL;
+
+	for (i = 0; i < __arraycount(sdhc_acpi_slot_map); i++) {
+		slot = &sdhc_acpi_slot_map[i];
+		if (strcmp(hid, slot->hid) == 0) {
+			if (slot->uid == NULL ||
+			    ((ad->Valid & ACPI_VALID_UID) != 0 &&
+			     uid != NULL &&
+			     strcmp(uid, slot->uid) == 0))
+				return slot;
+		}
+	}
+	return NULL;
+}
 
 static int
 sdhc_acpi_match(device_t parent, cfdata_t match, void *opaque)
@@ -75,7 +122,7 @@ sdhc_acpi_match(device_t parent, cfdata_t match, void *opaque)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	return acpi_match_hid(aa->aa_node->ad_devinfo, sdhc_acpi_ids);
+	return sdhc_acpi_find_slot(aa->aa_node->ad_devinfo) != NULL;
 }
 
 static void
@@ -83,16 +130,21 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 {
 	struct sdhc_acpi_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = opaque;
+	const struct sdhc_acpi_slot *slot;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
-	bus_space_handle_t memh;
 	ACPI_STATUS rv;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
 	sc->sc.sc_host = NULL;
+	sc->sc_memt = aa->aa_memt;
 	sc->sc_irq = -1;
+
+	slot = sdhc_acpi_find_slot(aa->aa_node->ad_devinfo);
+	if (slot->type == SLOT_TYPE_EMMC)
+		sc->sc.sc_vendor_hw_reset = sdhc_acpi_intel_emmc_hw_reset;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
@@ -116,9 +168,10 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "incomplete resources\n");
 		goto cleanup;
 	}
+	sc->sc_memsize = mem->ar_length;
 
-	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0,
-	    &memh)) {
+	if (bus_space_map(sc->sc_memt, mem->ar_base, sc->sc_memsize, 0,
+	    &sc->sc_memh)) {
 		aprint_error_dev(self, "couldn't map registers\n");
 		goto cleanup;
 	}
@@ -128,22 +181,23 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
-		goto cleanup;
+		goto unmap;
 	}
 	sc->sc_irq = irq->ar_irq;
 
 	sc->sc.sc_host = kmem_zalloc(sizeof(struct sdhc_host *), KM_NOSLEEP);
 	if (sc->sc.sc_host == NULL) {
 		aprint_error_dev(self, "couldn't alloc memory\n");
-		goto cleanup;
+		goto intr_disestablish;
 	}
 
 	/* Enable DMA transfer */
 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 
-	if (sdhc_host_found(&sc->sc, aa->aa_memt, memh, mem->ar_length) != 0) {
+	if (sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh,
+	    sc->sc_memsize) != 0) {
 		aprint_error_dev(self, "couldn't initialize host\n");
-		goto cleanup;
+		goto fail;
 	}
 
 	if (!pmf_device_register1(self, sdhc_suspend, sdhc_acpi_resume,
@@ -154,15 +208,23 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	acpi_resource_cleanup(&res);
 	return;
 
-cleanup:
-	acpi_resource_cleanup(&res);
-	if (sc->sc_crs_buffer.Pointer)
-		ACPI_FREE(sc->sc_crs_buffer.Pointer);
+fail:
+	if (sc->sc.sc_host != NULL)
+		kmem_free(sc->sc.sc_host, sizeof(struct sdhc_host *));
+	sc->sc.sc_host = NULL;
+intr_disestablish:
 	if (sc->sc_irq >= 0)
 		/* XXX acpi_intr_disestablish? */
 		AcpiOsRemoveInterruptHandler(sc->sc_irq, sdhc_acpi_intr);
-	if (sc->sc.sc_host != NULL)
-		kmem_free(sc->sc.sc_host, sizeof(struct sdhc_host *));
+	sc->sc_irq = -1;
+unmap:
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsize);
+	sc->sc_memsize = 0;
+cleanup:
+	if (sc->sc_crs_buffer.Pointer)
+		ACPI_FREE(sc->sc_crs_buffer.Pointer);
+	sc->sc_crs_buffer.Pointer = NULL;
+	acpi_resource_cleanup(&res);
 }
 
 static int
@@ -172,9 +234,6 @@ sdhc_acpi_detach(device_t self, int flags)
 	int rv;
 
 	pmf_device_deregister(self);
-
-	if (sc->sc_crs_buffer.Pointer)
-		ACPI_FREE(sc->sc_crs_buffer.Pointer);
 
 	rv = sdhc_detach(&sc->sc, flags);
 	if (rv)
@@ -186,6 +245,12 @@ sdhc_acpi_detach(device_t self, int flags)
 
 	if (sc->sc.sc_host != NULL)
 		kmem_free(sc->sc.sc_host, sizeof(struct sdhc_host *));
+
+	if (sc->sc_memsize > 0)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsize);
+
+	if (sc->sc_crs_buffer.Pointer)
+		ACPI_FREE(sc->sc_crs_buffer.Pointer);
 
 	return 0;
 }
@@ -214,4 +279,26 @@ sdhc_acpi_intr(void *context)
 	if (!sdhc_intr(&sc->sc))
 		return ACPI_INTERRUPT_NOT_HANDLED;
 	return ACPI_INTERRUPT_HANDLED;
+}
+
+static void
+sdhc_acpi_intel_emmc_hw_reset(struct sdhc_softc *sc, struct sdhc_host *hp)
+{
+	kmutex_t *plock = sdhc_host_lock(hp);
+	uint8_t reg;
+
+	mutex_enter(plock);
+
+	reg = sdhc_host_read_1(hp, SDHC_POWER_CTL);
+	reg |= 0x10;
+	sdhc_host_write_1(hp, SDHC_POWER_CTL, reg);
+
+	sdmmc_delay(10);
+
+	reg &= ~0x10;
+	sdhc_host_write_1(hp, SDHC_POWER_CTL, reg);
+
+	sdmmc_delay(1000);
+
+	mutex_exit(plock);
 }

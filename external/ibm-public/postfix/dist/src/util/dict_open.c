@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.7 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.1.1.7.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -41,11 +41,23 @@
 /*	void	dict_close(dict)
 /*	DICT	*dict;
 /*
+/*	typedef DICT *(*DICT_OPEN_FN) (const char *, int, int);
+/*
 /*	dict_open_register(type, open)
-/*	char	*type;
-/*	DICT	*(*open) (const char *, int, int);
+/*	const char *type;
+/*	DICT_OPEN_FN open;
+/*
+/*	typedef DICT_OPEN_FN (*DICT_OPEN_EXTEND_FN)(const char *type);
+/*
+/*	DICT_OPEN_EXTEND_FN dict_open_extend(call_back)
+/*	DICT_OPEN_EXTEND_FN call_back;
 /*
 /*	ARGV	*dict_mapnames()
+/*
+/*	typedef ARGV *(*DICT_MAPNAMES_EXTEND_FN)(ARGV *names);
+/*
+/*	DICT_MAPNAMES_EXTEND_FN dict_mapnames_extend(call_back)
+/*	DICT_MAPNAMES_EXTEND_FN call_back;
 /*
 /*	int	dict_isjmp(dict)
 /*	DICT	*dict;
@@ -56,6 +68,10 @@
 /*	int	dict_longjmp(dict, val)
 /*	DICT	*dict;
 /*	int	val;
+/*
+/*	void	dict_type_override(dict, type)
+/*	DICT	*dict;
+/*	const char *type;
 /* DESCRIPTION
 /*	This module implements a low-level interface to multiple
 /*	physical dictionary types.
@@ -109,11 +125,14 @@
 /*	With databases whose lookup fields are fixed-case strings,
 /*	fold the search string to lower case before accessing the
 /*	database.  This includes hash:, cdb:, dbm:. nis:, ldap:,
-/*	*sql.
+/*	*sql. WARNING: case folding is supported only for ASCII or
+/*	valid UTF-8.
 /* .IP DICT_FLAG_FOLD_MUL
 /*	With databases where one lookup field can match both upper
 /*	and lower case, fold the search key to lower case before
-/*	accessing the database. This includes regexp: and pcre:
+/*	accessing the database. This includes regexp: and pcre:.
+/*	WARNING: case folding is supported only for ASCII or valid
+/*	UTF-8.
 /* .IP DICT_FLAG_FOLD_ANY
 /*	Short-hand for (DICT_FLAG_FOLD_FIX | DICT_FLAG_FOLD_MUL).
 /* .IP DICT_FLAG_SYNC_UPDATE
@@ -139,6 +158,12 @@
 /*	and must trap exceptions from the database client with dict_setjmp().
 /* .IP DICT_FLAG_DEBUG
 /*	Enable additional logging.
+/* .IP DICT_FLAG_UTF8_REQUEST
+/*	With util_utf8_enable != 0, require that lookup/update/delete
+/*	keys and values are valid UTF-8. Skip a lookup/update/delete
+/*	request with a non-UTF-8 key, skip an update request with
+/*	a non-UTF-8 value, and fail a lookup request with a non-UTF-8
+/*	value.
 /* .PP
 /*	Specify DICT_FLAG_NONE for no special processing.
 /*
@@ -169,6 +194,10 @@
 /*	dict_open3() takes separate arguments for dictionary type and
 /*	name, but otherwise performs the same functions as dict_open().
 /*
+/*	The dict_get(), dict_put(), dict_del(), and dict_seq()
+/*	macros evaluate their first argument multiple times.
+/*	These names should have been in uppercase.
+/*
 /*	dict_get() retrieves the value stored in the named dictionary
 /*	under the given key. A null pointer means the value was not found.
 /*	As with dict_lookup(), the result is owned by the lookup table
@@ -192,20 +221,34 @@
 /*
 /*	dict_open_register() adds support for a new dictionary type.
 /*
+/*	dict_open_extend() registers a call-back function that looks
+/*	up the dictionary open() function for a type that is not
+/*	registered, or null in case of error. The result value is
+/*	the last previously-registered call-back or null.
+/*
 /*	dict_mapnames() returns a sorted list with the names of all available
 /*	dictionary types.
+/*
+/*	dict_mapnames_extend() registers a call-back function that
+/*	enumerates additional dictionary type names. The result
+/*	will be sorted by dict_mapnames().  The result value
+/*	is the last previously-registered call-back or null.
 /*
 /*	dict_setjmp() saves processing context and makes that context
 /*	available for use with dict_longjmp().  Normally, dict_setjmp()
 /*	returns zero.  A non-zero result means that dict_setjmp()
 /*	returned through a dict_longjmp() call; the result is the
-/*	\fIval\fR argment given to dict_longjmp(). dict_isjmp()
+/*	\fIval\fR argument given to dict_longjmp(). dict_isjmp()
 /*	returns non-zero when dict_setjmp() and dict_longjmp()
 /*	are enabled for a given dictionary.
 /*
 /*	NB: non-local jumps such as dict_longjmp() are not safe for
 /*	jumping out of any routine that manipulates DICT data.
 /*	longjmp() like calls are best avoided in signal handlers.
+/*
+/*	dict_type_override() changes the symbolic dictionary type.
+/*	This is used by dictionaries whose internals are based on
+/*	some other dictionary type.
 /* DIAGNOSTICS
 /*	Fatal error: open error, unsupported dictionary type, attempt to
 /*	update non-writable dictionary.
@@ -249,10 +292,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <argv.h>
@@ -278,6 +317,10 @@
 #include <dict_thash.h>
 #include <dict_sockmap.h>
 #include <dict_fail.h>
+#include <dict_pipe.h>
+#include <dict_random.h>
+#include <dict_union.h>
+#include <dict_inline.h>
 #include <stringops.h>
 #include <split_at.h>
 #include <htable.h>
@@ -288,29 +331,20 @@
   */
 typedef struct {
     char   *type;
-    struct DICT *(*open) (const char *, int, int);
+    DICT_OPEN_FN open;
 } DICT_OPEN_INFO;
 
 static const DICT_OPEN_INFO dict_open_info[] = {
-#ifdef HAS_CDB
-    DICT_TYPE_CDB, dict_cdb_open,
-#endif
     DICT_TYPE_ENVIRON, dict_env_open,
     DICT_TYPE_HT, dict_ht_open,
     DICT_TYPE_UNIX, dict_unix_open,
     DICT_TYPE_TCP, dict_tcp_open,
-#ifdef HAS_SDBM
-    DICT_TYPE_SDBM, dict_sdbm_open,
-#endif
 #ifdef HAS_DBM
     DICT_TYPE_DBM, dict_dbm_open,
 #endif
 #ifdef HAS_DB
     DICT_TYPE_HASH, dict_hash_open,
     DICT_TYPE_BTREE, dict_btree_open,
-#endif
-#ifdef HAS_LMDB
-    DICT_TYPE_LMDB, dict_lmdb_open,
 #endif
 #ifdef HAS_NIS
     DICT_TYPE_NIS, dict_nis_open,
@@ -321,9 +355,6 @@ static const DICT_OPEN_INFO dict_open_info[] = {
 #ifdef HAS_NETINFO
     DICT_TYPE_NETINFO, dict_ni_open,
 #endif
-#ifdef HAS_PCRE
-    DICT_TYPE_PCRE, dict_pcre_open,
-#endif
 #ifdef HAS_POSIX_REGEXP
     DICT_TYPE_REGEXP, dict_regexp_open,
 #endif
@@ -332,10 +363,40 @@ static const DICT_OPEN_INFO dict_open_info[] = {
     DICT_TYPE_THASH, dict_thash_open,
     DICT_TYPE_SOCKMAP, dict_sockmap_open,
     DICT_TYPE_FAIL, dict_fail_open,
+    DICT_TYPE_PIPE, dict_pipe_open,
+    DICT_TYPE_RANDOM, dict_random_open,
+    DICT_TYPE_UNION, dict_union_open,
+    DICT_TYPE_INLINE, dict_inline_open,
+#ifndef USE_DYNAMIC_MAPS
+#ifdef HAS_PCRE
+    DICT_TYPE_PCRE, dict_pcre_open,
+#endif
+#ifdef HAS_CDB
+    DICT_TYPE_CDB, dict_cdb_open,
+#endif
+#ifdef HAS_SDBM
+    DICT_TYPE_SDBM, dict_sdbm_open,
+#endif
+#ifdef HAS_LMDB
+    DICT_TYPE_LMDB, dict_lmdb_open,
+#endif
+#endif					/* !USE_DYNAMIC_MAPS */
     0,
 };
 
 static HTABLE *dict_open_hash;
+
+ /*
+  * Extension hooks.
+  */
+static DICT_OPEN_EXTEND_FN dict_open_extend_hook;
+static DICT_MAPNAMES_EXTEND_FN dict_mapnames_extend_hook;
+
+ /*
+  * Workaround.
+  */
+DEFINE_DICT_LMDB_MAP_SIZE;
+DEFINE_DICT_DB_CACHE_SIZE;
 
 /* dict_open_init - one-off initialization */
 
@@ -349,7 +410,7 @@ static void dict_open_init(void)
     dict_open_hash = htable_create(10);
 
     for (dp = dict_open_info; dp->type; dp++)
-	htable_enter(dict_open_hash, dp->type, (char *) dp);
+	htable_enter(dict_open_hash, dp->type, (void *) dp);
 }
 
 /* dict_open - open dictionary */
@@ -377,6 +438,7 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
 {
     const char *myname = "dict_open";
     DICT_OPEN_INFO *dp;
+    DICT_OPEN_FN open_fn;
     DICT   *dict;
 
     if (*dict_type == 0 || *dict_name == 0)
@@ -384,9 +446,16 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
 		  dict_type, dict_name);
     if (dict_open_hash == 0)
 	dict_open_init();
-    if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0)
-	return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
+    if ((dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type)) == 0) {
+	if (dict_open_extend_hook != 0
+	    && (open_fn = dict_open_extend_hook(dict_type)) != 0) {
+	    dict_open_register(dict_type, open_fn);
+	    dp = (DICT_OPEN_INFO *) htable_find(dict_open_hash, dict_type);
+	}
+	if (dp == 0)
+	    return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
 			     "unsupported dictionary type: %s", dict_type));
+    }
     if ((dict = dp->open(dict_name, open_flags, dict_flags)) == 0)
 	return (dict_surrogate(dict_type, dict_name, open_flags, dict_flags,
 			    "cannot open %s:%s: %m", dict_type, dict_name));
@@ -407,25 +476,40 @@ DICT   *dict_open3(const char *dict_type, const char *dict_name,
 	    msg_fatal("%s:%s: unable to get exclusive lock: %m",
 		      dict_type, dict_name);
     }
+    /* Last step: insert proxy for UTF-8 syntax checks and casefolding. */
+    if ((dict->flags & DICT_FLAG_UTF8_ACTIVE) == 0
+	&& DICT_NEED_UTF8_ACTIVATION(util_utf8_enable, dict_flags))
+	dict = dict_utf8_activate(dict);
     return (dict);
 }
 
 /* dict_open_register - register dictionary type */
 
-void    dict_open_register(const char *type,
-			           DICT *(*open) (const char *, int, int))
+void    dict_open_register(const char *type, DICT_OPEN_FN open)
 {
     const char *myname = "dict_open_register";
     DICT_OPEN_INFO *dp;
+    HTABLE_INFO *ht;
 
     if (dict_open_hash == 0)
 	dict_open_init();
     if (htable_find(dict_open_hash, type))
 	msg_panic("%s: dictionary type exists: %s", myname, type);
     dp = (DICT_OPEN_INFO *) mymalloc(sizeof(*dp));
-    dp->type = mystrdup(type);
     dp->open = open;
-    htable_enter(dict_open_hash, dp->type, (char *) dp);
+    ht = htable_enter(dict_open_hash, type, (void *) dp);
+    dp->type = ht->key;
+}
+
+/* dict_open_extend - register alternate dictionary search routine */
+
+DICT_OPEN_EXTEND_FN dict_open_extend(DICT_OPEN_EXTEND_FN new_cb)
+{
+    DICT_OPEN_EXTEND_FN old_cb;
+
+    old_cb = dict_open_extend_hook;
+    dict_open_extend_hook = new_cb;
+    return (old_cb);
 }
 
 /* dict_sort_alpha_cpp - qsort() callback */
@@ -451,11 +535,32 @@ ARGV   *dict_mapnames()
 	dp = (DICT_OPEN_INFO *) ht[0]->value;
 	argv_add(mapnames, dp->type, ARGV_END);
     }
+    if (dict_mapnames_extend_hook != 0)
+	(void) dict_mapnames_extend_hook(mapnames);
     qsort((void *) mapnames->argv, mapnames->argc, sizeof(mapnames->argv[0]),
 	  dict_sort_alpha_cpp);
-    myfree((char *) ht_info);
+    myfree((void *) ht_info);
     argv_terminate(mapnames);
     return mapnames;
+}
+
+/* dict_mapnames_extend - register alternate dictionary type list routine */
+
+DICT_MAPNAMES_EXTEND_FN dict_mapnames_extend(DICT_MAPNAMES_EXTEND_FN new_cb)
+{
+    DICT_MAPNAMES_EXTEND_FN old_cb;
+
+    old_cb = dict_mapnames_extend_hook;
+    dict_mapnames_extend_hook = new_cb;
+    return (old_cb);
+}
+
+/* dict_type_override - disguise a dictionary type */
+
+void    dict_type_override(DICT *dict, const char *type)
+{
+    myfree(dict->type);
+    dict->type = mystrdup(type);
 }
 
 #ifdef TEST

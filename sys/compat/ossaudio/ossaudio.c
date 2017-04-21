@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.69 2014/09/05 09:21:55 matt Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.69.6.1 2017/04/21 16:53:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.69 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.69.6.1 2017/04/21 16:53:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -619,12 +619,11 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		}
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat -
-		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
+		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
+		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
 		    tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes =
-		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETOSPACE = %d\n",
@@ -641,12 +640,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 		}
 		setblocksize(fp, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat -
-		    (tmpinfo.record.seek + tmpinfo.blocksize - 1) /
-		    tmpinfo.blocksize;
-                bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes =
-		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.record.seek;
+		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_GETISPACE %d %d %d %d = %d\n",

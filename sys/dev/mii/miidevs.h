@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.127 2015/08/14 01:26:38 knakahara Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.127.4.1 2017/04/21 16:53:47 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.124 2015/08/14 01:23:17 knakahara Exp
+ *	NetBSD: miidevs,v 1.125 2017/02/01 05:46:21 msaitoh Exp
  */
 
 /*-
@@ -322,6 +322,8 @@
 #define	MII_STR_yyINTEL_I82562ET	"i82562ET 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
+#define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
+#define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"
 #define	MII_MODEL_yyINTEL_I82566	0x0039
 #define	MII_STR_yyINTEL_I82566	"i82566 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I82577	0x0005
@@ -330,13 +332,17 @@
 #define	MII_STR_INTEL_I82579	"i82579 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I217	0x000a
 #define	MII_STR_INTEL_I217	"i217 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I82580	0x003a
+#define	MII_STR_INTEL_I82580	"82580 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I350	0x003b
+#define	MII_STR_INTEL_I350	"I350 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I210	0x0000
 #define	MII_STR_xxMARVELL_I210	"I210 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
+#define	MII_MODEL_ATHEROS_I82578	0x0004
+#define	MII_STR_ATHEROS_I82578	"Intel 82578 10/100/1000 media interface"
 
-#define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
-#define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"
 
 /* JMicron PHYs */
 #define	MII_MODEL_JMICRON_JMC250	0x0021
@@ -385,8 +391,12 @@
 #define	MII_STR_xxMARVELL_E1145	"Marvell 88E1145 Quad Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E6060	0x0010
 #define	MII_STR_xxMARVELL_E6060	"Marvell 88E6060 6-Port 10/100 Fast Ethernet Switch"
+#define	MII_MODEL_xxMARVELL_I347	0x001c
+#define	MII_STR_xxMARVELL_I347	"Intel I347-AT4 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1512	0x001d
 #define	MII_STR_xxMARVELL_E1512	"Marvell 88E1512 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1340M	0x001f
+#define	MII_STR_xxMARVELL_E1340M	"Marvell 88E1340 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1118	0x0022

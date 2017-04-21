@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.12 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.12.2.1 2017/04/21 16:53:52 bouyer Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.12 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.12.2.1 2017/04/21 16:53:52 bouyer Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -82,6 +82,7 @@ static void	malo_pcmcia_disable(struct malo_softc *);
 static void	cmalo_attach(void *);
 static void	cmalo_detach(void *);
 static int	cmalo_intr(void *);
+static void	cmalo_softintr(void *);
 
 static void	cmalo_start(struct ifnet *);
 static int	cmalo_ioctl(struct ifnet *, u_long, void *);
@@ -178,6 +179,12 @@ malo_pcmcia_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, cmalo_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish softint\n");
+		return;
+	}
+
 	malo_pcmcia_enable(sc);
 
 	cfe = pa->pf->cfe;
@@ -199,6 +206,9 @@ fail:
 	if (sc->sc_flags & MALO_DEVICE_ATTACHED)
 		return;
 
+	softint_disestablish(sc->sc_soft_ih);
+	sc->sc_soft_ih = NULL;
+
 	pcmcia_function_unconfigure(pa->pf);
 	return;
 }
@@ -211,6 +221,8 @@ malo_pcmcia_detach(device_t dev, int flags)
 
 	cmalo_detach(sc);
 	malo_pcmcia_disable(sc);
+	softint_disestablish(sc->sc_soft_ih);
+	sc->sc_soft_ih = NULL;
 	pcmcia_function_unconfigure(psc->sc_pf);
 
 	return 0;
@@ -355,9 +367,11 @@ cmalo_attach(void *arg)
 	}
 
 	/* attach interface */
-	if_attach(ifp);
-	if_deferred_start_init(ifp, NULL);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = cmalo_newstate;
@@ -414,7 +428,7 @@ static int
 cmalo_intr(void *arg)
 {
 	struct malo_softc *sc = arg;
-	uint16_t intr = 0;
+	uint16_t intr;
 
 	/* read interrupt reason */
 	intr = MALO_READ_2(sc, MALO_REG_HOST_INTR_CAUSE);
@@ -428,15 +442,27 @@ cmalo_intr(void *arg)
 	/* disable interrupts */
 	cmalo_intr_mask(sc, 0);
 
+	DPRINTF(2, "%s: interrupt handler called (intr = 0x%04x)\n",
+	    device_xname(sc->sc_dev), intr);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+cmalo_softintr(void *arg)
+{
+	struct malo_softc *sc = arg;
+	uint16_t intr;
+
+	/* read interrupt reason */
+	intr = MALO_READ_2(sc, MALO_REG_HOST_INTR_CAUSE);
+	if (intr == 0 || intr == 0xffff)
+		goto out;
+
 	/* acknowledge interrupt */
 	MALO_WRITE_2(sc, MALO_REG_HOST_INTR_CAUSE,
 	    intr & MALO_VAL_HOST_INTR_MASK_ON);
-
-	/* enable interrupts */
-	cmalo_intr_mask(sc, 1);
-
-	DPRINTF(2, "%s: interrupt handler called (intr = 0x%04x)\n",
-	    device_xname(sc->sc_dev), intr);
 
 	if (intr & MALO_VAL_HOST_INTR_TX)
 		/* TX frame sent */
@@ -456,7 +482,9 @@ cmalo_intr(void *arg)
 		/* event */
 		cmalo_event(sc);
 
-	return 1;
+ out:
+	/* enable interrupts */
+	cmalo_intr_mask(sc, 1);
 }
 
 
@@ -914,7 +942,7 @@ static void
 cmalo_stop(struct malo_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-        struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->sc_if;
 
 	/* device down */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1060,13 +1088,16 @@ static void
 cmalo_tx_done(struct malo_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
+	int s;
 
 	DPRINTF(2, "%s: TX done\n", device_xname(sc->sc_dev));
 
+	s = splnet();
 	ifp->if_opackets++;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	if_schedule_deferred_start(ifp);
+	cmalo_start(ifp);
+	splx(s);
 }
 
 static void

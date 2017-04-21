@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/09/27 19:18:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2017/04/21 16:52:59 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,11 @@ DPADD+=	${LIBRT}
 NOMAN=	# defined
 
 PKGDIST=	${LIB}
+# XXX PTHREAD_LIBS really should be -pthread for more general
+# XXX but the package doesn't really do this.
+PKGCONFIG_SED_FLAGS= \
+        -e "s,@XPROTO_CFLAGS@,-I${X11INCDIR},; \
+	    s,@PTHREAD_LIBS@,-lpthread,"
 
 COPTS.xshmfence_semaphore.c += -Wno-stack-protector
 

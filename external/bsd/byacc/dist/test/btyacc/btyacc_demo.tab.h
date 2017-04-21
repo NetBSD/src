@@ -1,4 +1,4 @@
-/*	$NetBSD: btyacc_demo.tab.h,v 1.1.1.3 2016/01/09 21:59:47 christos Exp $	*/
+/*	$NetBSD: btyacc_demo.tab.h,v 1.1.1.3.4.1 2017/04/21 16:51:21 bouyer Exp $	*/
 
 #ifndef _demo__defines_h_
 #define _demo__defines_h_
@@ -34,5 +34,19 @@ typedef union {
     } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
 extern YYSTYPE demo_lval;
+
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+/* Default: YYLTYPE is the text position type. */
+typedef struct YYLTYPE
+{
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+    unsigned source;
+} YYLTYPE;
+#define YYLTYPE_IS_DECLARED 1
+#endif
+#define YYRHSLOC(rhs, k) ((rhs)[k])
 
 #endif /* _demo__defines_h_ */

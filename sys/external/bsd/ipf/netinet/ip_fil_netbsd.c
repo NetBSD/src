@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.21 2016/12/28 19:53:02 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.21.2.1 2017/04/21 16:54:00 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.21 2016/12/28 19:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.21.2.1 2017/04/21 16:54:00 bouyer Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1478,7 +1478,7 @@ ipf_fastroute6(struct mbuf *m0, struct mbuf **mpp, fr_info_t *fin,
 # endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 # if __NetBSD_Version__ >= 499001100
-			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
+			error = ip6_if_output(ifp, ifp, m0, satocsin6(dst), rt);
 # else
 			error = nd6_output(ifp, ifp, m0, dst6, rt);
 # endif

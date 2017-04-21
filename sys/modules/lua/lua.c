@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.18 2016/07/14 04:00:46 msaitoh Exp $ */
+/*	$NetBSD: lua.c,v 1.18.4.1 2017/04/21 16:54:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -141,7 +141,8 @@ lua_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_state_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_state_cv, "luastate");
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Sysctl to provide some control over behaviour */
         sysctl_createv(&sc->sc_log, 0, NULL, &node,
@@ -400,8 +401,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (pb == NULL)
 					return ENOMEM;
 				NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, pb);
-				pathbuf_destroy(pb);
 				error = vn_open(&nd, FREAD, 0);
+				pathbuf_destroy(pb);
 				if (error) {
 					if (lua_verbose)
 						device_printf(sc->sc_dev,

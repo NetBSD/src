@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpf.c,v 1.6 2017/01/13 21:30:42 christos Exp $	*/
+/*	$NetBSD: t_bpf.c,v 1.6.2.1 2017/04/21 16:54:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpf.c,v 1.6 2017/01/13 21:30:42 christos Exp $");
+__RCSID("$NetBSD: t_bpf.c,v 1.6.2.1 2017/04/21 16:54:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: t_bpf.c,v 1.6 2017/01/13 21:30:42 christos Exp $");
 
 #include <net/if.h>
 #include <net/bpf.h>
+#include <net/dlt.h>
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -166,6 +167,171 @@ ATF_TC_BODY(bpfwritetrunc, tc)
 }
 #endif /* #if (SIZE_MAX > UINT_MAX) */
 
+ATF_TC(bpf_ioctl_BLEN);
+ATF_TC_HEAD(bpf_ioctl_BLEN, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks behaviors of BIOCGBLEN and "
+	    "BIOCSBLEN");
+}
+
+ATF_TC_BODY(bpf_ioctl_BLEN, tc)
+{
+	struct ifreq ifr;
+	int ifnum, bpfd;
+	u_int blen = 0;
+
+	RZ(rump_init());
+	RZ(rump_pub_shmif_create(NULL, &ifnum));
+	sprintf(ifr.ifr_name, "shmif%d", ifnum);
+
+	RL(bpfd = rump_sys_open("/dev/bpf", O_RDWR));
+
+	RL(rump_sys_ioctl(bpfd, BIOCGBLEN, &blen));
+	ATF_REQUIRE(blen != 0);
+	blen = 100;
+	RL(rump_sys_ioctl(bpfd, BIOCSBLEN, &blen));
+	RL(rump_sys_ioctl(bpfd, BIOCGBLEN, &blen));
+	ATF_REQUIRE_EQ(blen, 100);
+
+	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+
+	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCSBLEN, &blen), -1,
+	    "Don't allow to change buflen after binding bpf to an interface");
+}
+
+ATF_TC(bpf_ioctl_PROMISC);
+ATF_TC_HEAD(bpf_ioctl_PROMISC, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks behaviors of BIOCPROMISC");
+}
+
+ATF_TC_BODY(bpf_ioctl_PROMISC, tc)
+{
+	struct ifreq ifr;
+	int ifnum, bpfd;
+
+	RZ(rump_init());
+	RZ(rump_pub_shmif_create(NULL, &ifnum));
+	sprintf(ifr.ifr_name, "shmif%d", ifnum);
+
+	RL(bpfd = rump_sys_open("/dev/bpf", O_RDWR));
+
+	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCPROMISC, NULL), -1,
+	    "Don't allow to call ioctl(BIOCPROMISC) without interface");
+
+	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+
+	RL(rump_sys_ioctl(bpfd, BIOCPROMISC, NULL));
+	/* TODO check if_flags */
+}
+
+ATF_TC(bpf_ioctl_SETIF);
+ATF_TC_HEAD(bpf_ioctl_SETIF, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks behaviors of BIOCSETIF");
+}
+
+ATF_TC_BODY(bpf_ioctl_SETIF, tc)
+{
+	struct ifreq ifr;
+	int ifnum, bpfd;
+
+	RZ(rump_init());
+
+	RL(bpfd = rump_sys_open("/dev/bpf", O_RDWR));
+
+	RZ(rump_pub_shmif_create(NULL, &ifnum));
+	sprintf(ifr.ifr_name, "shmif%d", ifnum);
+	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+
+	/* Change the listening interface */
+	RZ(rump_pub_shmif_create(NULL, &ifnum));
+	sprintf(ifr.ifr_name, "shmif%d", ifnum);
+	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+}
+
+ATF_TC(bpf_ioctl_DLT);
+ATF_TC_HEAD(bpf_ioctl_DLT, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks behaviors of BIOCGDLT and "
+	    "BIOCSDLT");
+}
+
+ATF_TC_BODY(bpf_ioctl_DLT, tc)
+{
+	struct ifreq ifr;
+	int ifnum, bpfd;
+	u_int dlt;
+
+	RZ(rump_init());
+	RL(bpfd = rump_sys_open("/dev/bpf", O_RDWR));
+	RZ(rump_pub_shmif_create(NULL, &ifnum));
+	sprintf(ifr.ifr_name, "shmif%d", ifnum);
+
+	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCGDLT, &dlt), -1,
+	    "Don't allow to get a DLT without interfaces");
+
+	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+
+	RL(rump_sys_ioctl(bpfd, BIOCGDLT, &dlt));
+	ATF_REQUIRE(dlt == DLT_EN10MB);
+
+	dlt = DLT_NULL;
+	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCSDLT, &dlt), -1,
+	    "Don't allow to set a DLT that doesn't match any listening "
+	    "interfaces");
+}
+
+ATF_TC(bpf_ioctl_GDLTLIST);
+ATF_TC_HEAD(bpf_ioctl_GDLTLIST, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks behaviors of BIOCGDLTLIST");
+}
+
+ATF_TC_BODY(bpf_ioctl_GDLTLIST, tc)
+{
+	struct ifreq ifr;
+	int ifnum, bpfd;
+	struct bpf_dltlist dltlist;
+
+	RZ(rump_init());
+	RL(bpfd = rump_sys_open("/dev/bpf", O_RDWR));
+	RZ(rump_pub_shmif_create(NULL, &ifnum));
+	sprintf(ifr.ifr_name, "shmif%d", ifnum);
+
+	dltlist.bfl_len = 0;
+	dltlist.bfl_list = NULL;
+	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist), -1,
+	    "Don't allow to get a DLT list without interfaces");
+
+	RL(rump_sys_ioctl(bpfd, BIOCSETIF, &ifr));
+
+	/* Get the size of an avaiable DLT list */
+	dltlist.bfl_len = 0;
+	dltlist.bfl_list = NULL;
+	RL(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist));
+	ATF_REQUIRE(dltlist.bfl_len == 1);
+
+	/* Get an avaiable DLT list */
+	dltlist.bfl_list = calloc(sizeof(u_int), 1);
+	dltlist.bfl_len = 1;
+	RL(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist));
+	ATF_REQUIRE(dltlist.bfl_len == 1);
+	ATF_REQUIRE(dltlist.bfl_list[0] == DLT_EN10MB);
+
+	/* Get an avaiable DLT list with a less buffer (fake with bfl_len) */
+	dltlist.bfl_len = 0;
+	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(bpfd, BIOCGDLTLIST, &dltlist), -1,
+	    "This should fail with ENOMEM");
+
+	free(dltlist.bfl_list);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -173,5 +339,10 @@ ATF_TP_ADD_TCS(tp)
 #if (SIZE_MAX > UINT_MAX)
 	ATF_TP_ADD_TC(tp, bpfwritetrunc);
 #endif
+	ATF_TP_ADD_TC(tp, bpf_ioctl_BLEN);
+	ATF_TP_ADD_TC(tp, bpf_ioctl_PROMISC);
+	ATF_TP_ADD_TC(tp, bpf_ioctl_SETIF);
+	ATF_TP_ADD_TC(tp, bpf_ioctl_DLT);
+	ATF_TP_ADD_TC(tp, bpf_ioctl_GDLTLIST);
 	return atf_no_error();
 }

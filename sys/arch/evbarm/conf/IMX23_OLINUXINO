@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.15 2016/12/13 20:42:17 christos Exp $
+# $Id: IMX23_OLINUXINO,v 1.15.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -123,6 +123,8 @@ file-system	PROCFS
 file-system	PTYFS
 file-system	NFS
 
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 options		WAPBL
 
 pseudo-device	pty		# pseudo-terminals

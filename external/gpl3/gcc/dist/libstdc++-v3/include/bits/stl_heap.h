@@ -263,7 +263,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
     {
       typedef typename iterator_traits<_RandomAccessIterator>::value_type
-	_ValueType __unused;
+	_ValueType __attribute__((__unused__));
 
       // concept requirements
       __glibcxx_function_requires(_Mutable_RandomAccessIteratorConcept<

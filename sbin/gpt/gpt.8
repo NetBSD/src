@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.50 2016/11/01 16:15:51 jdolecek Exp $
+.\" $NetBSD: gpt.8,v 1.50.2.1 2017/04/21 16:53:13 bouyer Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd November 1, 2016
+.Dd February 15, 2017
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Op Fl nrqv
 .Op Fl m Ar mediasize
 .Op Fl s Ar sectorsize
+.Op Fl T Ar timestamp
 .Ar command
 .Op Ar command_options
 .Ar device
@@ -94,6 +95,13 @@ Override the default sector size for the device (obtained
 from the kernel if possible) or
 .Dv 512
 for plain files.
+.It Fl T Ar timestamp
+Specify a timestamp to be used for uuid generation so that uuids
+are not random and can be consistent for reproducible builds.
+The timestamp can be a pathname, where the timestamps are derived from
+that file, a parseable date for parsedate(3) (this option is not
+yet available in the tools build), or an integer value interpreted
+as the number of seconds from the Epoch.
 .It Fl v
 Controls the verbosity level.
 The level increases with every occurrence of this option.
@@ -638,7 +646,7 @@ nas# gpt show wd3
   3907029167           1         Sec GPT header
 nas# gpt add -s 10486224 -t swap -i 1 wd3
 nas# gpt label -i 1 -l swap_1 wd3
-parition 1 on rwd3d labeled swap_1
+partition 1 on rwd3d labeled swap_1
 nas# gpt show wd3
        start        size  index  contents
            0           1         PMBR

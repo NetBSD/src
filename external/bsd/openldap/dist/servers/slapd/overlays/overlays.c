@@ -1,10 +1,10 @@
-/*	$NetBSD: overlays.c,v 1.1.1.4 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: overlays.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* overlays.c - Static overlay framework */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Copyright 2003 by Howard Chu.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * This work was initially developed by Howard Chu for inclusion in
  * OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: overlays.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 

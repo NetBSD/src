@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.29 2016/06/26 07:09:24 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.29.4.1 2017/04/21 16:53:12 bouyer Exp $");
 #endif
 
 #include <stdio.h>
@@ -64,10 +64,10 @@ typedef enum _DSTMODE {
 } DSTMODE;
 
 /*
-**  Meridian:  am, pm, or 24-hour style.
+**  Meridian:  am, pm, or 24-hour style (plus "noon" and "midnight").
 */
 typedef enum _MERIDIAN {
-    MERam, MERpm, MER24
+    MERam, MERpm, MER24, MER_NOON, MER_MN
 } MERIDIAN;
 
 
@@ -191,22 +191,58 @@ at_number:
 
 time:
 	  tUNUMBER tMERIDIAN {
-		param->yyHour = $1;
 		param->yyMinutes = 0;
 		param->yySeconds = 0;
-		param->yyMeridian = $2;
+		if ($2 == MER_NOON || $2 == MER_MN) {
+			if ($1 == 12) {
+				switch ($2) {
+				case MER_NOON: param->yyHour = 12; break;
+				case MER_MN  : param->yyHour = 0;  break;
+				default:	/* impossible */;  break;
+				}
+				param->yyMeridian = MER24;
+			} else
+				YYREJECT;
+		} else {
+			param->yyHour = $1;
+			param->yyMeridian = $2;
+		}
 	  }
 	| tUNUMBER ':' tUNUMBER o_merid {
-		param->yyHour = $1;
 		param->yyMinutes = $3;
 		param->yySeconds = 0;
-		param->yyMeridian = $4;
+		if ($4 == MER_NOON || $4 == MER_MN) {
+			if ($1 == 12 && $3 == 0) {
+				switch ($4) {
+				case MER_NOON: param->yyHour = 12; break;
+				case MER_MN  : param->yyHour = 0;  break;
+				default:	/* impossible */;  break;
+				}
+				param->yyMeridian = MER24;
+			} else
+				YYREJECT;
+		} else {
+			param->yyHour = $1;
+			param->yyMeridian = $4;
+		}
 	  }
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
-		param->yyHour = $1;
 		param->yyMinutes = $3;
 		param->yySeconds = $5;
-		param->yyMeridian = $6;
+		if ($6 == MER_NOON || $6 == MER_MN) {
+			if ($1 == 12 && $3 == 0 && $5 == 0) {
+				switch ($6) {
+				case MER_NOON: param->yyHour = 12; break;
+				case MER_MN  : param->yyHour = 0;  break;
+				default:	/* impossible */;  break;
+				}
+				param->yyMeridian = MER24;
+			} else
+				YYREJECT;
+		} else {
+			param->yyHour = $1;
+			param->yyMeridian = $6;
+		}
 	  }
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
 		param->yyHour = $1;
@@ -223,7 +259,16 @@ time:
 		/* Tues midnight --> Weds 00:00, midnight Tues -> Tues 00:00 */
 		if ($1 == 0 && param->yyHaveDay)
 			param->yyDayNumber++;
-	}
+	  }
+	| tUNUMBER tTIME {
+		if ($1 == 12 && ($2 == 0 || $2 == 12)) {
+			param->yyHour = $2;
+			param->yyMinutes = 0;
+			param->yySeconds = 0;
+			param->yyMeridian = MER24;
+		} else
+			YYREJECT;
+	  }
 ;
 
 time_numericzone:
@@ -362,6 +407,7 @@ number:
 o_merid:
 	  /* empty */		{ $$ = MER24; }
 	| tMERIDIAN		{ $$ = $1; }
+	| tTIME			{ $$ = $1 == 0 ? MER_MN : MER_NOON; }
 ;
 
 %%
@@ -613,14 +659,15 @@ RelVal(struct dateinfo *param, time_t v, int type)
 	param->yyRel[i].yyRelVal = v;
 }
 
-
-/* Adjust year from a value that might be abbreviated, to a full value.
+/*
+ * Adjust year from a value that might be abbreviated, to a full value.
  * e.g. convert 70 to 1970.
  * Input Year is either:
  *  - A negative number, which means to use its absolute value (why?)
  *  - A number from 0 to 99, which means a year from 1900 to 1999, or
  *  - The actual year (>=100).
- * Returns the full year. */
+ * Returns the full year.
+ */
 static time_t
 AdjustYear(time_t Year)
 {
@@ -654,7 +701,9 @@ Convert(
 
     tm.tm_sec = Seconds;
     tm.tm_min = Minutes;
-    tm.tm_hour = Hours + (Meridian == MERpm ? 12 : 0);
+    tm.tm_hour = ((Hours == 12 && Meridian != MER24) ? 0 : Hours) +
+	(Meridian == MERpm ? 12 : 0);
+
     tm.tm_mday = Day;
     tm.tm_mon = Month - 1;
     tm.tm_year = Year - 1900;

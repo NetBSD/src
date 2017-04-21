@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.368 2017/01/08 17:40:44 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.368.2.1 2017/04/21 16:53:20 bouyer Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -577,6 +577,11 @@ _LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
+.if ${MKSTRIPSYM:Uyes} == "yes"
+_LIBLDOPTS+=	-Wl,-x
+.else
+_LIBLDOPTS+=	-Wl,-X
+.endif
 
 # gcc -shared now adds -lc automatically. For libraries other than libc and
 # libgcc* we add as a dependency the installed shared libc. For libc and
@@ -635,7 +640,7 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .endif
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} \
+	${LIBCC} ${LDLIBC} -shared ${SHLIB_SHFLAGS} \
 	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.14 2015/11/30 23:34:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.14.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.14 2015/11/30 23:34:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.14.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -248,7 +248,7 @@ trace_enter(register_t code, const struct sysent *sy, const void *args)
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED)) {
-		process_stoptrace();
+		proc_stoptrace(TRAP_SCE);
 		if (curlwp->l_proc->p_slflag & PSL_SYSCALLEMU) {
 			/* tracer will emulate syscall for us */
 			error = EJUSTRETURN;
@@ -288,8 +288,9 @@ trace_exit(register_t code, const struct sysent *sy, const void *args,
 	
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED|PSL_SYSCALLEMU)) ==
-	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace();
+	    (PSL_SYSCALL|PSL_TRACED)) {
+		proc_stoptrace(TRAP_SCX);
+	}
 	CLR(p->p_slflag, PSL_SYSCALLEMU);
 #endif
 }

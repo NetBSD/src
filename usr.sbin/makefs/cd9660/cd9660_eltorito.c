@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.20.16.1 2017/04/21 16:54:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.20.16.1 2017/04/21 16:54:17 bouyer Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -56,10 +56,11 @@ static struct boot_catalog_entry *cd9660_boot_setup_validation_entry(char);
 static struct boot_catalog_entry *cd9660_boot_setup_default_entry(
     struct cd9660_boot_image *);
 static struct boot_catalog_entry *cd9660_boot_setup_section_head(char);
-static struct boot_catalog_entry *cd9660_boot_setup_validation_entry(char);
 #if 0
 static u_char cd9660_boot_get_system_type(struct cd9660_boot_image *);
 #endif
+
+static struct cd9660_boot_image *default_boot_image;
 
 int
 cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
@@ -175,8 +176,14 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 
 	new_image->serialno = diskStructure->image_serialno++;
 
+	new_image->platform_id = new_image->system;
+
 	/* TODO : Need to do anything about the boot image in the tree? */
 	diskStructure->is_bootable = 1;
+
+	/* First boot image is initial/default entry. */
+	if (default_boot_image == NULL)
+		default_boot_image = new_image;
 
 	return 1;
 }
@@ -209,6 +216,13 @@ cd9660_eltorito_add_boot_option(iso9660_disk *diskStructure,
 		image->loadSegment = strtoul(value, &eptr, 16);
 		if (eptr == value || *eptr != '\0' || errno != ERANGE) {
 			warn("%s: strtoul", __func__);
+			return 0;
+		}
+	} else if (strcmp(option_string, "platformid") == 0) {
+		if (strcmp(value, "efi") == 0)
+			image->platform_id = ET_SYS_EFI;
+		else {
+			warn("%s: unknown platform: %s", __func__, value);
 			return 0;
 		}
 	} else {
@@ -342,12 +356,12 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	int used_sectors;
 	int num_entries = 0;
 	int catalog_sectors;
-	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head,
+	struct boot_catalog_entry *x86_head, *mac_head, *ppc_head, *efi_head,
 		*valid_entry, *default_entry, *temp, *head, **headp, *next;
 	struct cd9660_boot_image *tmp_disk;
 
 	headp = NULL;
-	x86_head = mac_head = ppc_head = NULL;
+	x86_head = mac_head = ppc_head = efi_head = NULL;
 
 	/* If there are no boot disks, don't bother building boot information */
 	if (TAILQ_EMPTY(&diskStructure->boot_images))
@@ -391,14 +405,25 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	sector = first_sector + catalog_sectors;
 	TAILQ_FOREACH(tmp_disk, &diskStructure->boot_images, image_list) {
 		tmp_disk->sector = sector;
-		sector += tmp_disk->num_sectors;
+		sector += tmp_disk->num_sectors /
+		    (diskStructure->sectorSize / 512);
 	}
 
 	LIST_INSERT_HEAD(&diskStructure->boot_entries, valid_entry, ll_struct);
 
 	/* Step 1b: Initial/default entry */
 	/* TODO : PARAM */
-	tmp_disk = TAILQ_FIRST(&diskStructure->boot_images);
+	if (default_boot_image != NULL) {
+		struct cd9660_boot_image *tcbi;
+		TAILQ_FOREACH(tcbi, &diskStructure->boot_images, image_list) {
+			if (tcbi == default_boot_image) {
+				tmp_disk = tcbi;
+				break;
+			}
+		}
+	}
+	if (tmp_disk == NULL)
+		tmp_disk = TAILQ_FIRST(&diskStructure->boot_images);
 	default_entry = cd9660_boot_setup_default_entry(tmp_disk);
 	if (default_entry == NULL) {
 		warnx("Error: memory allocation failed in cd9660_setup_boot");
@@ -409,14 +434,18 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 
 	/* Todo: multiple default entries? */
 
-	tmp_disk = TAILQ_NEXT(tmp_disk, image_list);
+	tmp_disk = TAILQ_FIRST(&diskStructure->boot_images);
 
+	head = NULL;
 	temp = default_entry;
 
 	/* If multiple boot images are given : */
-	while (tmp_disk != NULL) {
+	for (; tmp_disk != NULL; tmp_disk = TAILQ_NEXT(tmp_disk, image_list)) {
+		if (tmp_disk == default_boot_image)
+			continue;
+
 		/* Step 2: Section header */
-		switch (tmp_disk->system) {
+		switch (tmp_disk->platform_id) {
 		case ET_SYS_X86:
 			headp = &x86_head;
 			break;
@@ -426,6 +455,9 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 		case ET_SYS_MAC:
 			headp = &mac_head;
 			break;
+		case ET_SYS_EFI:
+			headp = &efi_head;
+			break;
 		default:
 			warnx("%s: internal error: unknown system type",
 			    __func__);
@@ -434,7 +466,7 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 
 		if (*headp == NULL) {
 			head =
-			    cd9660_boot_setup_section_head(tmp_disk->system);
+			  cd9660_boot_setup_section_head(tmp_disk->platform_id);
 			if (head == NULL) {
 				warnx("Error: memory allocation failed in "
 				      "cd9660_setup_boot");
@@ -459,8 +491,10 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 			head = next;
 
 		LIST_INSERT_AFTER(head, temp, ll_struct);
-		tmp_disk = TAILQ_NEXT(tmp_disk, image_list);
 	}
+
+	if (head != NULL)
+		head->entry_data.SH.header_indicator[0] = ET_SECTION_HEADER_LAST;
 
 	/* TODO: Remaining boot disks when implemented */
 

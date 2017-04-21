@@ -1,4 +1,4 @@
-/*	$NetBSD: npfd_log.c,v 1.8 2017/01/07 16:48:03 christos Exp $	*/
+/*	$NetBSD: npfd_log.c,v 1.8.2.1 2017/04/21 16:54:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfd_log.c,v 1.8 2017/01/07 16:48:03 christos Exp $");
+__RCSID("$NetBSD: npfd_log.c,v 1.8.2.1 2017/04/21 16:54:18 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,8 @@ npfd_log_gethdr(npfd_log_t *ctx, struct pcap_file_header*hdr)
 	case 1:
 		if (hdr->magic != TCPDUMP_MAGIC ||
 		    hdr->version_major != PCAP_VERSION_MAJOR ||
-		    hdr->version_minor != PCAP_VERSION_MINOR)
+		    hdr->version_minor != PCAP_VERSION_MINOR ||
+		    hdr->sigfigs != (u_int)pcap_get_tstamp_precision(ctx->pcap))
 			goto out;
 		break;
 	default:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.22 2017/01/10 10:13:24 roy Exp $
+.\"	$NetBSD: curses_screen.3,v 1.22.2.1 2017/04/21 16:53:10 bouyer Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 9, 2017
+.Dd January 24, 2017
 .Dt CURSES_SCREEN 3
 .Os
 .Sh NAME
@@ -307,3 +307,8 @@ functions are
 .Em ncurses
 extension to the Curses library and was added in
 .Nx 8.0 .
+.Sh BUGS
+There is currently an issue with cursor movement in a 1 line sized window
+which causes the screen to scroll up.
+This can obviously be seen when using
+.Fn ripoffline .

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2015/08/25 00:08:56 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.3.4.1 2017/04/21 16:54:08 bouyer Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet6
@@ -13,3 +13,8 @@ SRCS+=	dest6.c frag6.c icmp6.c in6.c in6_cksum.c in6_ifattach.c	\
 	udp6_output.c udp6_usrreq.c
 
 CPPFLAGS+=	-DPORTALGO_INET6_DEFAULT=PORTALGO_RANDOM_START
+
+# IPSEC
+CPPFLAGS+=	-DIPSEC
+# To write rump-specific wrappers
+CPPFLAGS.in6_proto.c+=	-DIPSEC_RUMPKERNEL

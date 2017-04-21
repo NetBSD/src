@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.6 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: smtpd_sasl_proto.c,v 1.1.1.6.12.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -25,9 +25,6 @@
 /*	char	*smtpd_sasl_mail_opt(state, sender)
 /*	SMTPD_STATE *state;
 /*	const char *sender;
-/*
-/*	void	smtpd_sasl_mail_log(state)
-/*	SMTPD_STATE *state;
 /*
 /*	void	smtpd_sasl_mail_reset(state)
 /*	SMTPD_STATE *state;
@@ -65,9 +62,6 @@
 /*	smtpd_sasl_mail_opt() implements the SASL-specific AUTH=sender
 /*	option to the MAIL FROM command. The result is an error response
 /*	in case of problems.
-/*
-/*	smtpd_sasl_mail_log() logs SASL-specific information after
-/*	processing the MAIL FROM command.
 /*
 /*	smtpd_sasl_mail_reset() performs cleanup for the SASL-specific
 /*	AUTH=sender option to the MAIL FROM command.
@@ -253,34 +247,6 @@ char   *smtpd_sasl_mail_opt(SMTPD_STATE *state, const char *addr)
 	printable(state->sasl_sender, '?');
     }
     return (0);
-}
-
-/* smtpd_sasl_mail_log - SASL-specific MAIL FROM logging */
-
-void    smtpd_sasl_mail_log(SMTPD_STATE *state)
-{
-
-    /*
-     * See also: smtpd.c, for a shorter client= logfile record.
-     */
-#define PRINT_OR_NULL(cond, str) \
-	    ((cond) ? (str) : "")
-#define PRINT2_OR_NULL(cond, name, value) \
-	    PRINT_OR_NULL((cond), (name)), PRINT_OR_NULL((cond), (value))
-
-    msg_info("%s: client=%s%s%s%s%s%s%s%s%s%s%s",
-	     (state->queue_id ? state->queue_id : "NOQUEUE"),
-	     state->namaddr,
-	     PRINT2_OR_NULL(state->sasl_method,
-			    ", sasl_method=", state->sasl_method),
-	     PRINT2_OR_NULL(state->sasl_username,
-			    ", sasl_username=", state->sasl_username),
-	     PRINT2_OR_NULL(state->sasl_sender,
-			    ", sasl_sender=", state->sasl_sender),
-	     PRINT2_OR_NULL(HAVE_FORWARDED_IDENT(state),
-			    ", orig_queue_id=", FORWARD_IDENT(state)),
-	     PRINT2_OR_NULL(HAVE_FORWARDED_CLIENT_ATTR(state),
-			    ", orig_client=", FORWARD_NAMADDR(state)));
 }
 
 /* smtpd_sasl_mail_reset - SASL-specific MAIL FROM cleanup */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_popen.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: vstream_popen.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -20,38 +20,38 @@
 /*	argument is as with vstream_fopen(). The child's standard input and
 /*	standard output are redirected to the stream, which is based on a
 /*	socketpair or other suitable local IPC. vstream_popen() takes a list
-/*	of (key, value) arguments, terminated by VSTREAM_POPEN_END. The key
-/*	argument specifies what value will follow. The following is a listing
-/*	of key codes together with the expected value type.
+/*	of macros with zero or more arguments, terminated by
+/*	CA_VSTREAM_POPEN_END.  The following is a listing of macros
+/*	with the expected argument type.
 /* .RS
-/* .IP "VSTREAM_POPEN_COMMAND (char *)"
+/* .IP "CA_VSTREAM_POPEN_COMMAND(const char *)"
 /*	Specifies the command to execute as a string. The string is
 /*	passed to the shell when it contains shell meta characters
 /*	or when it appears to be a shell built-in command, otherwise
 /*	the command is executed without invoking a shell.
-/*	One of VSTREAM_POPEN_COMMAND or VSTREAM_POPEN_ARGV must be specified.
-/* .IP "VSTREAM_POPEN_ARGV (char **)"
+/*	One of CA_VSTREAM_POPEN_COMMAND or VSTREAM_POPEN_ARGV must be specified.
+/* .IP "CA_VSTREAM_POPEN_ARGV(char **)"
 /*	The command is specified as an argument vector. This vector is
 /*	passed without further inspection to the \fIexecvp\fR() routine.
-/*	One of VSTREAM_POPEN_COMMAND or VSTREAM_POPEN_ARGV must be specified.
-/*	See also the VSTREAM_POPEN_SHELL attribute below.
-/* .IP "VSTREAM_POPEN_ENV (char **)"
+/*	One of CA_VSTREAM_POPEN_COMMAND or VSTREAM_POPEN_ARGV must be specified.
+/*	See also the CA_VSTREAM_POPEN_SHELL attribute below.
+/* .IP "CA_VSTREAM_POPEN_ENV(char **)"
 /*	Additional environment information, in the form of a null-terminated
 /*	list of name, value, name, value, ... elements. By default only the
 /*	command search path is initialized to _PATH_DEFPATH.
-/* .IP "VSTREAM_POPEN_EXPORT (char **)"
+/* .IP "CA_VSTREAM_POPEN_EXPORT(char **)"
 /*	This argument is passed to clean_env().
 /*	Null-terminated array of names of environment parameters
 /*	that can be exported. By default, everything is exported.
-/* .IP "VSTREAM_POPEN_UID (uid_t)"
+/* .IP "CA_VSTREAM_POPEN_UID(uid_t)"
 /*	The user ID to execute the command as. The user ID must be non-zero.
-/* .IP "VSTREAM_POPEN_GID (gid_t)"
+/* .IP "CA_VSTREAM_POPEN_GID(gid_t)"
 /*	The group ID to execute the command as. The group ID must be non-zero.
-/* .IP "VSTREAM_POPEN_SHELL (char *)"
+/* .IP "CA_VSTREAM_POPEN_SHELL(const char *)"
 /*	The shell to use when executing the command specified with
-/*	VSTREAM_POPEN_COMMAND. This shell is invoked regardless of the
+/*	CA_VSTREAM_POPEN_COMMAND. This shell is invoked regardless of the
 /*	command content.
-/* .IP "VSTREAM_POPEN_WAITPID_FN ((*)(pid_t, WAIT_STATUS_T *, int))"
+/* .IP "CA_VSTREAM_POPEN_WAITPID_FN(pid_t (*)(pid_t, WAIT_STATUS_T *, int))"
 /*	waitpid()-like function to reap the child exit status when
 /*	vstream_pclose() is called.
 /* .RE
@@ -257,7 +257,7 @@ VSTREAM *vstream_popen(int flags,...)
 	    execvp(args.argv[0], args.argv);
 	    msg_fatal("%s: execvp %s: %m", myname, args.argv[0]);
 	} else if (args.shell && *args.shell) {
-	    argv = argv_split(args.shell, " \t\r\n");
+	    argv = argv_split(args.shell, CHARS_SPACE);
 	    argv_add(argv, args.command, (char *) 0);
 	    argv_terminate(argv);
 	    execvp(argv->argv[0], argv->argv);

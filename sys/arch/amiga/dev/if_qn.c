@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.43 2016/12/15 09:28:02 ozaki-r Exp $ */
+/*	$NetBSD: if_qn.c,v 1.43.2.1 2017/04/21 16:53:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.43 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.43.2.1 2017/04/21 16:53:22 bouyer Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -237,6 +237,7 @@ qnattach(device_t parent, device_t self, void *aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, myaddr);
 
 #ifdef QN_DEBUG
@@ -292,7 +293,7 @@ qninit(struct qn_softc *sc)
 	*sc->nic_reset = ENABLE_DLC;
 
 	/* Attempt to start output, if any. */
-	qnstart(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 /*
@@ -779,7 +780,7 @@ qnintr(void *arg)
 		qn_rint(sc, rint);
 
 	if ((sc->sc_ethercom.ec_if.if_flags & IFF_OACTIVE) == 0)
-		qnstart(&sc->sc_ethercom.ec_if);
+		if_schedule_deferred_start(&sc->sc_ethercom.ec_if);
 	else if (return_tintmask == 1)
 		*sc->nic_t_mask = tintmask;
 

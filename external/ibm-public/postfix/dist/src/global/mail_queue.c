@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.c,v 1.1.1.2 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_queue.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -173,7 +173,7 @@ const char *mail_queue_dir(VSTRING *buf, const char *queue_name,
     }
     if (hash_buf == 0) {
 	hash_buf = vstring_alloc(100);
-	hash_queue_names = argv_split(var_hash_queue_names, " \t\r\n,");
+	hash_queue_names = argv_split(var_hash_queue_names, CHARS_COMMA_SP);
     }
 
     /*
@@ -194,7 +194,7 @@ const char *mail_queue_dir(VSTRING *buf, const char *queue_name,
 		queue_id = STR(usec_buf);
 	    }
 	    vstring_strcat(buf,
-		       dir_forest(hash_buf, queue_id, var_hash_queue_depth));
+		      dir_forest(hash_buf, queue_id, var_hash_queue_depth));
 	    break;
 	}
     }
@@ -417,7 +417,7 @@ VSTREAM *mail_queue_enter(const char *queue_name, mode_t mode,
     }
 
     stream = vstream_fdopen(fd, O_RDWR);
-    vstream_control(stream, VSTREAM_CTL_PATH, STR(path_buf), VSTREAM_CTL_END);
+    vstream_control(stream, CA_VSTREAM_CTL_PATH(STR(path_buf)), CA_VSTREAM_CTL_END);
     return (stream);
 }
 

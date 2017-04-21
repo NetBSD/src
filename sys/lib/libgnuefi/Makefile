@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/03/22 08:25:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2017/04/21 16:54:03 bouyer Exp $
 
 LIB=	gnuefi
 LIBISPRIVATE?= yes
@@ -8,13 +8,9 @@ GNUEFI_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
 GNUEFI_USE_LOADFILE?= no		# Generic executable loading support
 GNUEFI_ENABLE_LS_OP?= no		# Filesystems ls operation
 
-CPPFLAGS=	-I${GNUEFIDIR} ${GNUEFICPPFLAGS} ${GNUEFIMISCCPPFLAGS}
+GNUEFIDIST=	${GNUEFIDIR}/../../external/bsd/gnu-efi/dist
 
-.if ${MACHINE_ARCH} == "i386"
-GNUEFIARCH=ia32
-.else
-GNUEFIARCH=${MACHINE_ARCH}
-.endif
+CPPFLAGS=	-I${GNUEFIDIR} ${GNUEFICPPFLAGS} ${GNUEFIMISCCPPFLAGS}
 
 .if defined(GNUEFI_EXTRADIR)
 .-include "${GNUEFI_EXTRADIR}/Makefile.inc"
@@ -22,7 +18,37 @@ GNUEFIARCH=${MACHINE_ARCH}
 
 .include <bsd.own.mk>
 
-.PATH.c: ${GNUEFIDIR} ${GNUEFIDIR}/../../external/bsd/gnu-efi/dist/lib/${GNUEFIARCH} ${GNUEFIDIR}/../../external/bsd/gnu-efi/dist/lib ${GNUEFIDIR}/../../external/bsd/gnu-efi/dist/lib/runtime
+LIBGNUEFI_ARCH?=	${MACHINE_ARCH}
+LIBGNUEFI_CPU?=		${MACHINE_CPU}
+
+.if ${LIBGNUEFI_ARCH} == "i386"
+GNUEFIARCH=ia32
+.else
+GNUEFIARCH=${LIBGNUEFI_ARCH}
+.endif
+
+.if defined(LIBGNUEFI_ARCH) && !empty(LIBGNUEFI_ARCH) && \
+	    exists(${GNUEFIDIR}/arch/${LIBGNUEFI_ARCH})
+ARCHSUBDIR=	${LIBGNUEFI_ARCH}
+.elif defined(MACHINE_ARCH) && !empty(MACHINE_ARCH) && \
+	    exists(${GNUEFIDIR}/arch/${MACHINE_ARCH})
+ARCHSUBDIR=	${MACHINE_ARCH}
+.elif defined(MACHINE_CPU) && !empty(MACHINE_CPU) && \
+	    exists(${GNUEFIDIR}/arch/${MACHINE_CPU})
+ARCHSUBDIR=	${MACHINE_CPU}
+.endif
+
+M= ${GNUEFIDIR}/arch/${ARCHSUBDIR}
+
+.if exists($M/Makefile.inc)
+CPPFLAGS+= -I$M
+.PATH.c: $M
+.PATH.S: $M
+.include "$M/Makefile.inc"
+.endif
+
+.PATH.c: ${GNUEFIDIR} ${GNUEFIDIST}/lib/${GNUEFIARCH} ${GNUEFIDIST}/lib ${GNUEFIDIST}/lib/runtime
+.PATH.S: ${GNUEFIDIR} ${GNUEFIDIST}/lib/${GNUEFIARCH} ${GNUEFIDIST}/lib ${GNUEFIDIST}/lib/runtime
 
 SRCS+=	boxdraw.c smbios.c console.c crc.c data.c debug.c dpath.c \
 	error.c event.c guid.c hand.c hw.c init.c lock.c \
@@ -30,6 +56,7 @@ SRCS+=	boxdraw.c smbios.c console.c crc.c data.c debug.c dpath.c \
 	rtlock.c efirtlib.c rtstr.c vm.c rtdata.c \
 	initplat.c math.c
 
+CWARNFLAGS.gcc+= -Wno-unused-but-set-variable
 COPTS.boxdraw.c= -Wno-missing-field-initializers
 COPTS.guid.c= -Wno-missing-field-initializers
 COPTS.smbios.c= -Wno-int-to-pointer-cast

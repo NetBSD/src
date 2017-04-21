@@ -1,4 +1,4 @@
-/*	$NetBSD: mvect.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: mvect.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _MVECT_H_INCLUDED_
 #define _MVECT_H_INCLUDED_
@@ -16,18 +16,18 @@
  /*
   * Generic memory vector interface.
   */
-typedef void (*MVECT_FN) (char *, int);
+typedef void (*MVECT_FN) (char *, ssize_t);
 
 typedef struct {
     char   *ptr;
-    int     elsize;
-    int     nelm;
+    ssize_t elsize;
+    ssize_t nelm;
     MVECT_FN init_fn;
     MVECT_FN wipe_fn;
 } MVECT;
 
-extern char *mvect_alloc(MVECT *, int, int, MVECT_FN, MVECT_FN);
-extern char *mvect_realloc(MVECT *, int);
+extern char *mvect_alloc(MVECT *, ssize_t, ssize_t, MVECT_FN, MVECT_FN);
+extern char *mvect_realloc(MVECT *, ssize_t);
 extern char *mvect_free(MVECT *);
 
 /* LICENSE

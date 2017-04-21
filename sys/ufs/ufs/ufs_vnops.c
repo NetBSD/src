@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.234 2016/11/09 04:12:55 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.234.2.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.234 2016/11/09 04:12:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.234.2.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.234 2016/11/09 04:12:55 dholland Exp
 #include <sys/lockf.h>
 #include <sys/kauth.h>
 #include <sys/wapbl.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -154,14 +153,11 @@ ufs_create(void *v)
 	 * UFS_WAPBL_BEGIN(dvp->v_mount) performed by successful
 	 * ufs_makeinode
 	 */
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = ufs_makeinode(ap->a_vap, dvp, ulr, ap->a_vpp, ap->a_cnp);
 	if (error) {
-		fstrans_done(dvp->v_mount);
 		return (error);
 	}
 	UFS_WAPBL_END(dvp->v_mount);
-	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*ap->a_vpp);
 	return (0);
@@ -197,7 +193,6 @@ ufs_mknod(void *v)
 	 * UFS_WAPBL_BEGIN(dvp->v_mount) performed by successful
 	 * ufs_makeinode
 	 */
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	if ((error = ufs_makeinode(vap, ap->a_dvp, ulr, vpp, ap->a_cnp)) != 0)
 		goto out;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -207,7 +202,6 @@ ufs_mknod(void *v)
 	UFS_WAPBL_END(ap->a_dvp->v_mount);
 	VOP_UNLOCK(*vpp);
 out:
-	fstrans_done(ap->a_dvp->v_mount);
 	if (error != 0) {
 		*vpp = NULL;
 		return (error);
@@ -256,10 +250,8 @@ ufs_close(void *v)
 	struct vnode	*vp;
 
 	vp = ap->a_vp;
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -284,9 +276,7 @@ ufs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
 #if defined(QUOTA) || defined(QUOTA2)
-			fstrans_start(vp->v_mount, FSTRANS_SHARED);
 			error = chkdq(ip, 0, cred, 0);
-			fstrans_done(vp->v_mount);
 			if (error != 0)
 				return error;
 #endif
@@ -364,7 +354,6 @@ ufs_getattr(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	vap = ap->a_vap;
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	UFS_ITIMES(vp, NULL, NULL, NULL);
 
 	/*
@@ -430,7 +419,6 @@ ufs_getattr(void *v)
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -473,8 +461,6 @@ ufs_setattr(void *v)
 	}
 
 	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -635,7 +621,6 @@ ufs_setattr(void *v)
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -658,13 +643,11 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	if (error)
 		return (error);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -696,7 +679,6 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (error)
 		return (error);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 #if defined(QUOTA) || defined(QUOTA2)
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
@@ -721,13 +703,11 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, uid, ouid);
 	(void) chkdq(ip, change, cred, FORCE);
 	(void) chkiq(ip, 1, cred, FORCE);
-	fstrans_done(vp->v_mount);
 	return (error);
  good:
 #endif /* QUOTA || QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -755,7 +735,6 @@ ufs_remove(void *v)
 	ulr = &VTOI(dvp)->i_crap;
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
@@ -774,7 +753,6 @@ ufs_remove(void *v)
 	else
 		vput(vp);
 	vput(dvp);
-	fstrans_done(mp);
 	return (error);
 }
 
@@ -806,7 +784,6 @@ ufs_link(void *v)
 	ulr = &VTOI(dvp)->i_crap;
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
 		VOP_ABORTOP(dvp, cnp);
@@ -850,7 +827,6 @@ ufs_link(void *v)
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	fstrans_done(mp);
 	return (error);
 }
 
@@ -886,14 +862,12 @@ ufs_whiteout(void *v)
 
 	case CREATE:
 		/* create a new directory whiteout */
-		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 		error = UFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error)
 			break;
-#ifdef DIAGNOSTIC
-		if (ump->um_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
-#endif
+
+		KASSERTMSG((ump->um_maxsymlinklen > 0),
+		    "ufs_whiteout: old format filesystem");
 
 		newdir = pool_cache_get(ufs_direct_cache, PR_WAITOK);
 		newdir->d_ino = UFS_WINO;
@@ -908,14 +882,12 @@ ufs_whiteout(void *v)
 
 	case DELETE:
 		/* remove an existing directory whiteout */
-		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 		error = UFS_WAPBL_BEGIN(dvp->v_mount);
 		if (error)
 			break;
-#ifdef DIAGNOSTIC
-		if (ump->um_maxsymlinklen <= 0)
-			panic("ufs_whiteout: old format filesystem");
-#endif
+
+		KASSERTMSG((ump->um_maxsymlinklen > 0),
+		    "ufs_whiteout: old format filesystem");
 
 		cnp->cn_flags &= ~DOWHITEOUT;
 		error = ufs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);
@@ -925,7 +897,6 @@ ufs_whiteout(void *v)
 		/* NOTREACHED */
 	}
 	UFS_WAPBL_END(dvp->v_mount);
-	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
@@ -949,8 +920,6 @@ ufs_mkdir(void *v)
 	struct ufsmount		*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
 	struct ufs_lookup_results *ulr;
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
@@ -1072,7 +1041,6 @@ ufs_mkdir(void *v)
 		vput(tvp);
 	}
  out:
-	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
@@ -1111,8 +1079,6 @@ ufs_rmdir(void *v)
 		vput(vp);
 		return (EINVAL);
 	}
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	/*
 	 * Do not remove a directory that is in the process of being renamed.
@@ -1172,7 +1138,6 @@ ufs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
-	fstrans_done(dvp->v_mount);
 	vput(dvp);
 	return (error);
 }
@@ -1205,7 +1170,6 @@ ufs_symlink(void *v)
 	 * UFS_WAPBL_BEGIN(dvp->v_mount) performed by successful
 	 * ufs_makeinode
 	 */
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
 	KASSERT(ap->a_vap->va_type == VLNK);
 	error = ufs_makeinode(ap->a_vap, ap->a_dvp, ulr, vpp, ap->a_cnp);
 	if (error)
@@ -1239,7 +1203,6 @@ ufs_symlink(void *v)
 	if (error)
 		vrele(vp);
 out:
-	fstrans_done(ap->a_dvp->v_mount);
 	return (error);
 }
 

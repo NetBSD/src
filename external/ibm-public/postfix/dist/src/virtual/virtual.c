@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.1.1.3 2013/01/02 18:59:15 tron Exp $	*/
+/*	$NetBSD: virtual.c,v 1.1.1.3.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -247,6 +247,12 @@
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
 /*	The mail system name that is prepended to the process name in syslog
 /*	records, so that "smtpd" becomes, for example, "postfix/smtpd".
+/* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBvirtual_delivery_status_filter ($default_delivery_status_filter)\fR"
+/*	Optional filter for the \fBvirtual\fR(8) delivery agent to change the
+/*	delivery status code or explanatory text of successful or unsuccessful
+/*	deliveries.
 /* SEE ALSO
 /*	qmgr(8), queue manager
 /*	bounce(8), delivery status reports
@@ -278,6 +284,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*
 /*	Andrew McNamara
 /*	andrewm@connect.com.au
@@ -336,6 +347,7 @@ char   *var_virt_mailbox_lock;
 long    var_virt_mailbox_limit;
 char   *var_mail_spool_dir;		/* XXX dependency fix */
 bool    var_strict_mbox_owner;
+char   *var_virt_dsn_filter;
 
  /*
   * Mappings.
@@ -452,15 +464,18 @@ static void post_init(char *unused_name, char **unused_argv)
      */
     virtual_mailbox_maps =
 	maps_create(VAR_VIRT_MAILBOX_MAPS, var_virt_mailbox_maps,
-		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID
+		    | DICT_FLAG_UTF8_REQUEST);
 
     virtual_uid_maps =
 	maps_create(VAR_VIRT_UID_MAPS, var_virt_uid_maps,
-		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID
+		    | DICT_FLAG_UTF8_REQUEST);
 
     virtual_gid_maps =
 	maps_create(VAR_VIRT_GID_MAPS, var_virt_gid_maps,
-		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID);
+		    DICT_FLAG_LOCK | DICT_FLAG_PARANOID
+		    | DICT_FLAG_UTF8_REQUEST);
 
     virtual_mbox_lock_mask = mbox_lock_mask(var_virt_mailbox_lock);
 }
@@ -512,6 +527,7 @@ int     main(int argc, char **argv)
 	VAR_VIRT_GID_MAPS, DEF_VIRT_GID_MAPS, &var_virt_gid_maps, 0, 0,
 	VAR_VIRT_MAILBOX_BASE, DEF_VIRT_MAILBOX_BASE, &var_virt_mailbox_base, 1, 0,
 	VAR_VIRT_MAILBOX_LOCK, DEF_VIRT_MAILBOX_LOCK, &var_virt_mailbox_lock, 1, 0,
+	VAR_VIRT_DSN_FILTER, DEF_VIRT_DSN_FILTER, &var_virt_dsn_filter, 0, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE bool_table[] = {
@@ -525,13 +541,15 @@ int     main(int argc, char **argv)
     MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, local_service,
-		       MAIL_SERVER_INT_TABLE, int_table,
-		       MAIL_SERVER_LONG_TABLE, long_table,
-		       MAIL_SERVER_STR_TABLE, str_table,
-		       MAIL_SERVER_BOOL_TABLE, bool_table,
-		       MAIL_SERVER_PRE_INIT, pre_init,
-		       MAIL_SERVER_POST_INIT, post_init,
-		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
-		       MAIL_SERVER_PRIVILEGED,
+		       CA_MAIL_SERVER_INT_TABLE(int_table),
+		       CA_MAIL_SERVER_LONG_TABLE(long_table),
+		       CA_MAIL_SERVER_STR_TABLE(str_table),
+		       CA_MAIL_SERVER_BOOL_TABLE(bool_table),
+		       CA_MAIL_SERVER_PRE_INIT(pre_init),
+		       CA_MAIL_SERVER_POST_INIT(post_init),
+		       CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
+		       CA_MAIL_SERVER_PRIVILEGED,
+		       CA_MAIL_SERVER_BOUNCE_INIT(VAR_VIRT_DSN_FILTER,
+						  &var_virt_dsn_filter),
 		       0);
 }

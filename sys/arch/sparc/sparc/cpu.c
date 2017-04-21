@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.248 2014/07/25 17:21:32 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.248.12.1 2017/04/21 16:53:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.248 2014/07/25 17:21:32 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.248.12.1 2017/04/21 16:53:36 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1986,6 +1986,12 @@ struct cpu_conf {
 	{ CPU_SUN4M, 1, 3, 1, ANY, "CY7C611", &module_cypress },
 	{ CPU_SUN4M, 1, 0xe, 1, 7, "RT620/625", &module_hypersparc },
 	{ CPU_SUN4M, 1, 0xf, 1, 7, "RT620/625", &module_hypersparc },
+	{ CPU_SUN4M, 4, 0, 0, 1, "SuperSPARC v3", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 2, "SuperSPARC v4", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 3, "SuperSPARC v5", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 8, "SuperSPARC II v1", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 10, "SuperSPARC II v2", &module_viking },
+	{ CPU_SUN4M, 4, 0, 0, 12, "SuperSPARC II v3", &module_viking },
 	{ CPU_SUN4M, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55", &module_viking },
 	{ CPU_SUN4M, 4, 1, 0, ANY, "TMS390Z50 v1", &module_viking },
 	{ CPU_SUN4M, 4, 1, 4, ANY, "TMS390S10", &module_ms1 },

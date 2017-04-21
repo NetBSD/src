@@ -1,10 +1,10 @@
-/*	$NetBSD: error.c,v 1.11 2016/01/09 22:05:33 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.11.4.1 2017/04/21 16:51:21 bouyer Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.11 2016/01/09 22:05:33 christos Exp $");
-/* Id: error.c,v 1.11 2014/04/07 22:22:49 tom Exp  */
+__RCSID("$NetBSD: error.c,v 1.11.4.1 2017/04/21 16:51:21 bouyer Exp $");
+/* Id: error.c,v 1.14 2016/12/02 18:35:55 tom Exp  */
 
 /* routines for printing error messages  */
 
@@ -271,11 +271,12 @@ unknown_rhs(int i)
 }
 
 void
-default_action_warning(void)
+default_action_warning(char *s)
 {
     fprintf(stderr,
-	    "%s: w - line %d of \"%s\", the default action assigns an \
-undefined value to $$\n", myname, lineno, input_file_name);
+	    "%s: w - line %d of \"%s\", the default action for %s assigns an \
+undefined value to $$\n",
+	    myname, lineno, input_file_name, s);
 }
 
 void

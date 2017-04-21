@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.17 2015/09/06 06:01:00 dholland Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.17.4.1 2017/04/21 16:53:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -103,6 +103,7 @@ struct ipw_softc {
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 	void				*sc_ih;
+	void				*sc_soft_ih;
 	pci_chipset_tag_t		sc_pct;
 	pcitag_t			sc_pcitag;
 	bus_size_t			sc_sz;

@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.93 2015/04/21 03:19:03 riastradh Exp $	*/
+/*	$NetBSD: namei.h,v 1.93.4.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.37 2015/04/21 03:18:21 riastradh Exp 
+ *   from: NetBSD: namei.src,v 1.41 2017/03/21 10:20:12 riastradh Exp 
  */
 
 /*
@@ -209,21 +209,30 @@ struct nameidata {
  * accessed and mostly read-only data is toward the front, with
  * infrequently accessed data and the lock towards the rear.  The
  * lock is then more likely to be in a seperate cache line.
+ *
+ * Locking rules:
+ *
+ *      -       stable after initialization
+ *      L       namecache_lock
+ *      C       struct nchcpu::cpu_lock
+ *      L/C     insert needs L, read needs L or any C,
+ *              must hold L and all C after (or during) delete before free
+ *      N       struct namecache::nc_lock
  */
-struct	namecache {
-	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
-	LIST_ENTRY(namecache) nc_vhash;	/* directory hash chain */
-	struct	vnode *nc_dvp;		/* vnode of parent of name */
-	struct	vnode *nc_vp;		/* vnode the name refers to */
-	int	nc_flags;		/* copy of componentname's ISWHITEOUT */
-	char	nc_nlen;		/* length of name */
-	char	nc_name[NCHNAMLEN];	/* segment name */
-	void	*nc_gcqueue;		/* queue for garbage collection */
-	TAILQ_ENTRY(namecache) nc_lru;	/* psuedo-lru chain */
-	LIST_ENTRY(namecache) nc_dvlist;
-	LIST_ENTRY(namecache) nc_vlist;
-	kmutex_t nc_lock;		/* lock on this entry */
-	int	nc_hittime;		/* last time scored a hit */
+struct namecache {
+	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
+	LIST_ENTRY(namecache) nc_vhash;	/* L directory hash chain */
+	struct	vnode *nc_dvp;		/* N vnode of parent of name */
+	struct	vnode *nc_vp;		/* N vnode the name refers to */
+	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
+	char	nc_nlen;		/* - length of name */
+	char	nc_name[NCHNAMLEN];	/* - segment name */
+	void	*nc_gcqueue;		/* N queue for garbage collection */
+	TAILQ_ENTRY(namecache) nc_lru;	/* L psuedo-lru chain */
+	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
+	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
+	kmutex_t nc_lock;		/*   lock on this entry */
+	int	nc_hittime;		/* N last time scored a hit */
 };
 
 #ifdef _KERNEL
@@ -282,9 +291,9 @@ void	cache_purge1(struct vnode *, const char *, size_t, int);
 #define	PURGE_PARENTS	1
 #define	PURGE_CHILDREN	2
 #define	cache_purge(vp)	cache_purge1((vp),NULL,0,PURGE_PARENTS|PURGE_CHILDREN)
-int	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
+bool	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
 			int *, struct vnode **);
-int	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
+bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *,

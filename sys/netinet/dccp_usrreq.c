@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.10 2016/12/13 08:29:03 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.10.2.1 2017/04/21 16:54:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.10 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.10.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -377,11 +377,12 @@ dccp_input(struct mbuf *m, ...)
 
 #ifdef INET6
 			if (isipv6) {
+				char ip6buf[INET6_ADDRSTRLEN];
 				strlcpy(dbuf, "[", sizeof dbuf);
-				strlcat(dbuf, ip6_sprintf(&ip6->ip6_dst), sizeof dbuf);
+				strlcat(dbuf, IN6_PRINT(ip6buf, &ip6->ip6_dst), sizeof dbuf);
 				strlcat(dbuf, "]", sizeof dbuf);
 				strlcpy(sbuf, "[", sizeof sbuf);
-				strlcat(sbuf, ip6_sprintf(&ip6->ip6_src), sizeof sbuf);
+				strlcat(sbuf, IN6_PRINT(ip6buf, &ip6->ip6_src), sizeof sbuf);
 				strlcat(sbuf, "]", sizeof sbuf);
 			} else
 #endif
@@ -1619,7 +1620,7 @@ again:
 		DCCP_DEBUG((LOG_INFO, "Calling ip_output, mbuf->m_len = %u, mbuf->m_pkthdr.len = %u\n", m->m_len, m->m_pkthdr.len));
 		error = ip_output(m, inp->inp_options, &inp->inp_route,
 		    (inp->inp_socket->so_options & SO_DONTROUTE), 0, 
-				  inp->inp_socket);
+				  inp);
 	}
 
 	if (error) {

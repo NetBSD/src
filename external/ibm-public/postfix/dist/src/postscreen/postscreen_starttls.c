@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_starttls.c,v 1.1.1.2 2013/01/02 18:59:04 tron Exp $	*/
+/*	$NetBSD: postscreen_starttls.c,v 1.1.1.2.16.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -87,7 +87,7 @@ static char *psc_tlsp_service = 0;
 
 /* psc_starttls_finish - complete negotiation with TLS proxy */
 
-static void psc_starttls_finish(int event, char *context)
+static void psc_starttls_finish(int event, void *context)
 {
     const char *myname = "psc_starttls_finish";
     PSC_STARTTLS *starttls_state = (PSC_STARTTLS *) context;
@@ -109,7 +109,7 @@ static void psc_starttls_finish(int event, char *context)
      * and one when resuming the dummy SMTP engine.
      */
     if (event != EVENT_TIME)
-	event_cancel_timer(psc_starttls_finish, (char *) starttls_state);
+	event_cancel_timer(psc_starttls_finish, (void *) starttls_state);
 
     /*
      * Receive the "TLS is available" indication.
@@ -120,7 +120,7 @@ static void psc_starttls_finish(int event, char *context)
      */
     if (event != EVENT_READ
 	|| attr_scan(tlsproxy_stream, ATTR_FLAG_STRICT,
-		     ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+		     RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
 		     ATTR_TYPE_END) != 1 || status == 0) {
 
 	/*
@@ -169,8 +169,8 @@ static void psc_starttls_finish(int event, char *context)
 	 */
 	vstream_fpurge(smtp_state->smtp_client_stream, VSTREAM_PURGE_BOTH);
 	vstream_control(smtp_state->smtp_client_stream,
-			VSTREAM_CTL_SWAP_FD, tlsproxy_stream,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_SWAP_FD(tlsproxy_stream),
+			CA_VSTREAM_CTL_END);
 	vstream_fclose(tlsproxy_stream);	/* direct-to-client stream! */
 	smtp_state->flags |= PSC_STATE_FLAG_USING_TLS;
     }
@@ -178,8 +178,8 @@ static void psc_starttls_finish(int event, char *context)
     /*
      * Resume the postscreen(8) dummy SMTP engine and clean up.
      */
-    starttls_state->resume_event(event, (char *) smtp_state);
-    myfree((char *) starttls_state);
+    starttls_state->resume_event(event, (void *) smtp_state);
+    myfree((void *) starttls_state);
 }
 
 /* psc_starttls_open - open negotiations with TLS proxy */
@@ -206,7 +206,7 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
 	msg_warn("connect to %s service: %m", psc_tlsp_service);
 	PSC_SEND_REPLY(smtp_state,
 		    "454 4.7.0 TLS not available due to local problem\r\n");
-	event_request_timer(resume_event, (char *) smtp_state, 0);
+	event_request_timer(resume_event, (void *) smtp_state, 0);
 	return;
     }
     if (msg_verbose)
@@ -228,17 +228,17 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
     vstring_sprintf(remote_endpt, "[%s]:%s", smtp_state->smtp_client_addr,
 		    smtp_state->smtp_client_port);
     attr_print(tlsproxy_stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_STR, MAIL_ATTR_REMOTE_ENDPT, STR(remote_endpt),
-	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, TLS_PROXY_FLAG_ROLE_SERVER,
-	       ATTR_TYPE_INT, MAIL_ATTR_TIMEOUT, psc_normal_cmd_time_limit,
-	       ATTR_TYPE_STR, MAIL_ATTR_SERVER_ID, MAIL_SERVICE_SMTPD,	/* XXX */
+	       SEND_ATTR_STR(MAIL_ATTR_REMOTE_ENDPT, STR(remote_endpt)),
+	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, TLS_PROXY_FLAG_ROLE_SERVER),
+	       SEND_ATTR_INT(MAIL_ATTR_TIMEOUT, psc_normal_cmd_time_limit),
+	       SEND_ATTR_STR(MAIL_ATTR_SERVER_ID, MAIL_SERVICE_SMTPD),	/* XXX */
 	       ATTR_TYPE_END);
     if (vstream_fflush(tlsproxy_stream) != 0) {
 	msg_warn("error sending request to %s service: %m", psc_tlsp_service);
 	vstream_fclose(tlsproxy_stream);
 	PSC_SEND_REPLY(smtp_state,
 		    "454 4.7.0 TLS not available due to local problem\r\n");
-	event_request_timer(resume_event, (char *) smtp_state, 0);
+	event_request_timer(resume_event, (void *) smtp_state, 0);
 	return;
     }
 
@@ -250,5 +250,5 @@ void    psc_starttls_open(PSC_STATE *smtp_state, EVENT_NOTIFY_FN resume_event)
     starttls_state->resume_event = resume_event;
     starttls_state->smtp_state = smtp_state;
     PSC_READ_EVENT_REQUEST(vstream_fileno(tlsproxy_stream), psc_starttls_finish,
-			   (char *) starttls_state, TLSPROXY_INIT_TIMEOUT);
+			   (void *) starttls_state, TLSPROXY_INIT_TIMEOUT);
 }

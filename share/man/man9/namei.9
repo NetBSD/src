@@ -1,6 +1,6 @@
-.\"     $NetBSD: namei.9,v 1.37 2016/05/07 08:52:10 wiz Exp $
+.\"     $NetBSD: namei.9,v 1.37.4.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
-.\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2005, 2006, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 6, 2016
+.Dd March 18, 2017
 .Dt NAMEI 9
 .Os
 .Sh NAME
@@ -76,69 +76,62 @@ for name-to-inode conversion, in the days before the
 .Xr vfs 9
 interface was implemented.
 .Pp
-Except for the simple forms, the arguments passed to the functions are
-encapsulated in the
-.Em nameidata
-structure.
-The public interface to this structure is as follows.
-.Bl -offset indent
+All access to the
+.Nm
+interface must be in process context.
+Pathname lookups cannot be done in interrupt context.
+.Pp
+In the general form of
+.Nm ,
+a caller must:
+.Bl -enum -compact
 .It
-It contains a member
-.Em ni_erootdir
-that may be set to the emulation root directory before the call if
-the
-.Dv EMULROOTSET
-flag is also set and
-.Dv TRYEMULROOT
-is in effect.
-This is only necessary (or allowed) if the emulation root is not yet
-set in the current process.
+Allocate storage for a
+.Ft struct nameidata
+object
+.Fa nd .
 .It
-It contains a member
-.Em ni_vp
-that upon successful return contains the result vnode.
+Initialize
+.Fa nd
+with
+.Fn NDINIT
+and optionally
+.Fn NDAT
+to specify the arguments to a lookup.
 .It
-It contains a member
-.Em ni_dvp
-that upon successful return contains the vnode of the directory
-containing the result vnode or
-.Dv NULL .
-If the
-.Dv LOCKPARENT
-flag is set, the containing vnode is returned; otherwise this field is
-left set to
-.Dv NULL .
+Call
+.Fn namei
+and handle failure if it returns a nonzero error code.
 .It
-It contains a member
-.Em ni_cnd
-that is a
-.Em componentname
-structure (described in just a moment).
-This may be used by callers to pass to certain vnode operations that
-operate on pathnames.
+Read the resulting vnode out of
+.Fa nd Ns Li .ni_vp .
+If requested with
+.Dv LOCKPARENT ,
+read the directory vnode out of
+.Fa nd Ns Li .ni_dvp .
+.It
+For directory operations, use the
+.Ft struct componentname
+object stored at
+.Fa nd Ns Li .ni_cnd .
 .El
 .Pp
-The other fields in the structure should not be examined or altered
-directly.
+The other fields of
+.Ft struct nameidata
+should not be examined or altered directly.
+.Pp
 Note that the
 .Xr nfs 4
-code misuses the
-.Em nameidata
-structure and currently has an incestuous relationship with the
+code misuses
+.Ft struct nameidata
+and currently has an incestuous relationship with the
 .Nm
 code.
 This is gradually being cleaned up.
-Other code should initialize the
-.Em nameidata
-structure with the
-.Fn NDINIT
-macro and perhaps also the
-.Fn NDAT
-macro.
 .Pp
 The
-.Em componentname
-structure has the following layout:
+.Ft struct componentname
+type has the following layout:
 .Bd -literal
 struct componentname {
 	/*
@@ -155,6 +148,7 @@ struct componentname {
 	size_t		cn_consume;	/* chars to consume in lookup */
 };
 .Ed
+.Pp
 This structure contains the information about a single directory
 component name, along with certain other information required by vnode
 operations.
@@ -201,184 +195,308 @@ are being consumed.
 New uses of this feature are discouraged and should be discussed.
 .El
 .Ss Operating modes
-The
+Each lookup happens in one of the following modes, specified by
+callers of
+.Nm
+with
+.Fn NDINIT
+and specified internally by
+.Nm
+to
+.Xr VOP_LOOKUP 9 :
+.Bl -bullet -compact
+.It
+Callers of
+.Nm
+specify the mode for the last component of a lookup.
+.It
+Internally,
+.Nm
+recursively calls
+.Xr VOP_LOOKUP 9
+in
 .Dv LOOKUP
-mode is the baseline behavior, for all ordinary lookups that simply
-return a vnode.
-In this mode, if the requested object does not exist,
+mode for each directory component, and then finally calls
+.Xr VOP_LOOKUP 9
+in the caller-specified mode for the last component.
+.El
+Each mode can fail in different ways \(em for example,
+.Dv LOOKUP
+mode fails with
 .Er ENOENT
-is returned.
-.Pp
-The
+if no entry exists, but
 .Dv CREATE
-mode is used when doing the lookup for operations that create names in
-the file system namespace, such as
-.Xr mkdir 2 .
-In this mode, if the requested name already exists,
-.Er EEXIST
-is returned.
-Otherwise if the requested name does not exist, the lookup succeeds
-and the returned vnode
-.Em ni_vp
-is set to
-.Dv NULL .
+mode succeeds with a
+.Dv NULL
+vnode.
+.Bl -tag -width LOOKUP
+.It Dv LOOKUP
+Yield the vnode for an existing entry.
+Callers specify
+.Dv LOOKUP
+for operations on existing vnodes:
+.Xr stat 2 ,
+.Xr open 2
+without
+.Dv O_CREATE ,
+etc.
 .Pp
-The
+File systems:
+.Bl -dash -compact
+.It
+MUST refuse if user lacks lookup permission for directory.
+.It
+SHOULD use
+.Xr namecache 9
+to cache lookup results.
+.El
+.Pp
+.Bl -tag -compact -width ENAMETOOLONG
+.It Bq Er ENOENT
+No entry exists.
+.El
+.It Dv CREATE
+Yield the vnode for an existing entry; or, if there is none, yield
+.Dv NULL
+and hint that it will soon be created.
+Callers specify
+.Dv CREATE
+for operations that may create directory entries:
+.Xr mkdir 2 ,
+.Xr open 2
+with
+.Dv O_CREATE ,
+etc.
+.Pp
+File systems:
+.Bl -dash -compact
+.It
+MUST refuse if user lacks lookup permission for directory.
+.It
+MUST refuse if no entry exists and user lacks write permission for
+directory.
+.It
+MUST refuse if no entry exists and file system is read-only.
+.It
+SHOULD NOT use
+.Xr namecache 9
+to cache negative lookup results.
+.It
+SHOULD save lookup hints internally in the directory for a subsequent
+operation to create a directory entry.
+.El
+.Pp
+.Bl -tag -compact -width ENAMETOOLONG
+.It Bq Er EPERM
+The user lacks lookup permission for the directory.
+.It Bq Er EPERM
+No entry exists and the user lacks write permission for the directory.
+.It Bq Er EROFS
+No entry exists and the file system is read-only.
+.El
+.It Dv DELETE
+Yield the vnode of an existing entry, and hint that it will soon be
+deleted.
+Callers specify
 .Dv DELETE
-mode is used when doing the lookup for operations that remove names
-from the file system namespace, such as
-.Xr rmdir 2 ;
-and the
+for operations that delete directory entries:
+.Xr unlink 2 ,
+.Xr rmdir 2 ,
+etc.
+.Pp
+File systems:
+.Bl -dash -compact
+.It
+MUST refuse if user lacks lookup permission for directory.
+.It
+MUST refuse if entry exists and user lacks write permission for
+directory.
+.It
+MUST refuse if entry exists and file system is read-only.
+.It
+SHOULD NOT use
+.Xr namecache 9
+to cache lookup results.
+.It
+SHOULD save lookup hints internally in the directory for a subsequent
+operation to delete a directory entry.
+.El
+.Pp
+.Bl -tag -compact -width ENAMETOOLONG
+.It Bq Er ENOENT
+No entry exists.
+.It Bq Er EPERM
+The user lacks lookup permission for the directory.
+.It Bq Er EPERM
+An entry exists and the user lacks write permission for the directory.
+.It Bq Er EROFS
+An entry exists and the file system is read-only.
+.El
+.It Dv RENAME
+Yield the vnode of an existing entry, and hint that it will soon be
+overwritten; or, if there is none, yield
+.Dv NULL ,
+and hint that it will soon be created.
+.Pp
+Callers specify
 .Dv RENAME
-mode is used when doing (one of the) lookups for
+for an entry that is about to be created or overwritten, namely for the
+target of
 .Xr rename 2 .
 .Pp
-The mode may affect both the
-.Xr VOP_LOOKUP 9
-implementation of the file system involved and the internal operation
+File systems:
+.Bl -dash -compact
+.It
+MUST refuse if user lacks lookup permission for directory.
+.It
+MUST refuse if user lacks write permission for directory.
+.It
+MUST refuse if file system is read-only.
+.It
+SHOULD NOT use
+.Xr namecache 9
+to cache lookup results.
+.It
+SHOULD save lookup hints internally in the directory for a subsequent
+operation to create or overwrite a directory entry.
+.El
+.Pp
+.Bl -tag -compact -width ENAMETOOLONG
+.It Bq Er EPERM
+The user lacks lookup permission for the directory.
+.It Bq Er EPERM
+The user lacks write permission for the directory.
+.It Bq Er EROFS
+The file system is read-only.
+.El
+.El
+.Pp
+If a caller decides not to perform a operation it hinted at by a
+destructive operating mode
+.Pq Dv CREATE , Dv DELETE , No or Dv RENAME ,
+it SHOULD call
+.Xr VOP_ABORTOP 9
+to release the hints.
+If a file system fails to perform such an operation, it SHOULD call
+.Xr VOP_ABORTOP 9
+to release the hints.
+However, the current code is inconsistent about this, and every
+implementation of
+.Xr VOP_ABORTOP 9
+does nothing.
+.Ss Flags
+The following flags may be specified by
+.Em callers
 of
 .Nm ,
-such as interactions with the
-.Xr namecache 9 .
-In
-.Xr ffs 4 ,
-for example, the
-.Xr VOP_LOOKUP 9
-implementation reacts to
-.Dv CREATE ,
-.Dv DELETE ,
-and
-.Dv RENAME
-by computing additional information needed to operate on directory
-entries.
-This information is consumed by the vnode operations expected to be
-called subsequently.
-If one of these modes is used (and owing to failure or whatever other
-circumstances) the eventual vnode operation is not called,
-.Xr VOP_ABORTOP 9
-should be used to ensure the state involved is cleaned up correctly.
-.Ss Flags
-The following flags may appear.
-Some are set by
-.Nm ;
-some are set by
-.Xr VOP_LOOKUP 9 ;
-some are set by the caller in the
-.Fa flags
-argument of
-.Fn NDINIT .
-Not all possible combinations are sensible or legal.
-.Bl -tag -offset indent -width NOCROSSMOUNT -compact
+and MUST NOT be used by file systems:
+.Bl -tag -width NOCROSSMOUNT
 .It Dv FOLLOW
-Follow symbolic links encountered as the last path component.
-Used by operations that do not address symbolic links directly, e.g.
+Follow symbolic links in the last path component.
+Used by operations that do not address symbolic links directly, such as
 .Xr stat 2 .
-Does not affect symbolic links found in the middle of a path.
-Set by the caller.
-Used internally.
+(Does not affect symbolic links found in the middle of a path.)
 .It Dv NOFOLLOW
-Do not follow symbolic links encountered as the last path component.
-Used by operations that address symbolic links explicitly, such as
+Do not follow symbolic links in the last path component.
+Used by operations that address symbolic links directly, such as
 .Xr lstat 2 .
-Set by the caller.
-Used internally.
-Note: the value of
-.Dv NOFOLLOW is 0 ;
-it exists on the grounds that every
-.Nm
-call should explicitly choose either
+.Pp
+Note: The value of
+.Dv NOFOLLOW
+is 0.
+We define the constant to let callers say either
 .Dv FOLLOW
 or
-.Dv NOFOLLOW .
+.Dv NOFOLLOW
+explicitly.
 .It Dv LOCKLEAF
-Upon successful completion, the resultant named vnode
-.Em ni_vp
-is to be left locked.
-(Otherwise, the vnode is unlocked before
-.Nm
-returns.)
-Set by the caller; used internally.
+On successful lookup, lock the vnode, if any, in
+.Fa ndp Ns Li ->ni_vp .
+Without this flag, it would be unlocked.
 .It Dv LOCKPARENT
-Upon successful completion, the parent directory containing the named
-vnode is left locked and returned in
-.Em ni_dvp
-as described above.
-Otherwise,
-.Em ni_dvp
-is set to
-.Dv NULL .
-Set by the caller; used internally.
+On successful lookup, lock and return the directory vnode in
+.Fa ndp Ns Li ->ni_dvp .
+Without this flag, it is not returned at all.
 .It Dv TRYEMULROOT
-If set, the path is looked up in emulation root of the current process
-first.
+If set, the path is looked up in the emulation root of the current
+process first.
 If that fails, the system root is used.
-Set by the caller; used internally.
 .It Dv EMULROOTSET
-As described above, indicates that the caller has set
-.Em ni_erootdir
+Indicates that the caller has set
+.Fa ndp Ns Li ->ni_erootdir
 prior to calling
 .Nm .
-This is only useful or permitted when the emulation in the
-current process is partway through being set up.
-Set by the caller; used internally.
+This is only useful or permitted when the emulation in the current
+process is partway through being set up.
 .It Dv NOCHROOT
 Bypass normal
 .Xr chroot 8
 handling for absolute paths.
-Set by the caller and used internally.
 .It Dv NOCROSSMOUNT
 Do not cross mount points.
-Set by the caller and used internally.
 .It Dv RDONLY
 Enforce read-only behavior.
-Set by the caller and used internally.
-May also be used by file-system-level vnode functions.
-.It Dv DOWHITEOUT
-Allow whiteouts to be seen as objects instead of functioning as
-.Dq nothing there .
-Set by the caller; used by vnode functions.
-.It Dv ISWHITEOUT
-The current path component is a whiteout.
-Set by
-.Xr VOP_LOOKUP 9
-implementations and consumed by other vnode functions and the
-.Xr namecache 9 .
-.It Dv ISDOTDOT
-The current pathname component is ``..''.
-Set internally; used by vnode operations.
-.It Dv ISLASTCN
-The current path component is the last component found in the
-pathname.
-Set internally; used by vnode functions.
-.It Dv REQUIREDIR
-The current object to be looked up must be a directory.
-Set and used internally; any external references are abusive.
 .It Dv CREATEDIR
 Accept slashes after a component name that does not exist.
 This only makes sense in
 .Dv CREATE
 mode and when creating a directory.
-Set by the caller and used internally.
 .It Dv NOCACHE
-The name looked up should not be entered in the
-.Xr namecache 9 .
-Set and used internally.
-(Currently sometimes set by callers, but most likely this is
-improper/incorrect.)
-May also be used by file-system-level vnode functions.
+Do not cache the lookup result for the last component name.
+This is used only with the
+.Dv RENAME
+mode for the target; the cache entry would be invalidated immediately.
+.El
+.Pp
+The following flag may be set by a caller of
+.Nm
+and tested by a file system in
+.Xr VOP_LOOKUP 9
+or other subsequent directory operations:
+.Bl -tag -width NOCROSSMOUNT
+.It Dv DOWHITEOUT
+Allow whiteouts to be seen as objects instead of functioning as
+.Dq nothing there .
+.El
+.Pp
+The following flags are set by namei for calling
+.Xr VOP_LOOKUP 9 :
+.Bl -tag -width NOCROSSMOUNT
+.It Dv ISDOTDOT
+The current pathname component is
+.Dq Li .. .
+May be tested by subsequent directory operations too.
+.It Dv ISLASTCN
+The current pathname component is the last component found in the
+pathname.
+Guaranteed to remain set in subsequent directory operations.
+.It Dv REQUIREDIR
+The current object to be looked up must be a directory.
+May not be used by subsequent directory operations.
 .It Dv MAKEENTRY
-The current pathname component should be added to the
+The lookup result for the current pathname component should be added to
+the
 .Xr namecache 9 .
-Set and used internally.
-Also abused by the
-.Xr nfs 4
-code.
+May be used to make additional caching decisions, e.g. to store an
+mtime for determining whether our cache for a remote vnode is stale.
+May not be used by subsequent directory operatoins.
+.El
+.Pp
+A file system may set the following flag on return from
+.Xr VOP_LOOKUP 9
+for use by
+.Nm ,
+.Xr namecache 9 ,
+and subsequent directory operations:
+.Bl -tag -width NOCROSSMOUNT
+.It Dv ISWHITEOUT
+The object at the current pathname component is a whiteout.
 .El
 .Pp
 The following additional historic flags have been removed from
 .Nx
 and should be handled as follows if porting code from elsewhere:
-.Bl -tag -offset indent -width NOCROSSMOUNT -compact
+.Bl -tag -width NOCROSSMOUNT
 .It Dv INRENAME
 Part of a misbegotten and incorrect locking scheme.
 Any file-system-level code using this is presumptively incorrect.
@@ -411,12 +529,8 @@ Related to SAVENAME.
 Any uses can be replaced with
 .Dq true .
 .El
-All access to the
-.Nm
-interface must be in process context.
-Pathname lookups cannot be done in interrupt context.
 .Sh FUNCTIONS
-.Bl -tag -width compact
+.Bl -tag -width abcd
 .It Fn NDINIT "ndp" "op" "flags" "pathbuf"
 Initialise a nameidata structure pointed to by
 .Fa ndp
@@ -736,7 +850,7 @@ The control flow within the
 portions of
 .Pa vfs_lookup.c
 is as follows.
-.Bl -tag
+.Bl -tag -width namei_tryemulrootXX
 .It Fn namei
 does a complete path lookup by calling
 .Fn namei_init ,

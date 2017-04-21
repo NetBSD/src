@@ -1,9 +1,9 @@
-/*	$NetBSD: rq.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: rq.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -18,6 +18,9 @@
 /* This work was initially developed by Jong Hyuk Choi for inclusion
  * in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rq.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

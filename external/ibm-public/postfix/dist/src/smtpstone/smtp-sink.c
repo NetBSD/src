@@ -1,10 +1,10 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.5 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: smtp-sink.c,v 1.1.1.5.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
 /*	smtp-sink 1
 /* SUMMARY
-/*	multi-threaded SMTP/LMTP test server
+/*	parallelized SMTP/LMTP test server
 /* SYNOPSIS
 /* .fi
 /*	\fBsmtp-sink\fR [\fIoptions\fR] [\fBinet:\fR][\fIhost\fR]:\fIport\fR
@@ -97,6 +97,11 @@
 /* .IP "\fB-h\fI hostname\fR"
 /*	Use \fIhostname\fR in the SMTP greeting, in the HELO response,
 /*	and in the EHLO response. The default hostname is "smtp-sink".
+/* .IP "\fB-H\fI delay\fR"
+/*	Delay the first read operation after receiving DATA (time
+/*	in seconds). Combine with a large test message and a small
+/*	TCP window size (see the \fB-T\fR option) to test the Postfix
+/*	client write_wait() implementation.
 /* .IP \fB-L\fR
 /*	Enable LMTP instead of SMTP.
 /* .IP "\fB-m \fIcount\fR (default: 256)"
@@ -108,6 +113,8 @@
 /*	Terminate after receiving \fIcount\fR messages.
 /* .IP "\fB-n \fIcount\fR"
 /*	Terminate after \fIcount\fR sessions.
+/* .IP \fB-N\fR
+/*	Do not announce support for DSN.
 /* .IP \fB-p\fR
 /*	Do not announce support for ESMTP command pipelining.
 /* .IP \fB-P\fR
@@ -152,7 +159,7 @@
 /*	An optional string that is prepended to each message that is
 /*	written to a dump file (see the dump file format description
 /*	below). The following C escape sequences are supported: \ea
-/*	(bell), \eb (backslace), \ef (formfeed), \en (newline), \er
+/*	(bell), \eb (backspace), \ef (formfeed), \en (newline), \er
 /*	(carriage return), \et (horizontal tab), \ev (vertical tab),
 /*	\e\fIddd\fR (up to three octal digits) and \e\e (the backslash
 /*	character).
@@ -228,7 +235,7 @@
 /*	software. This three-line header marks the end of the headers
 /*	provided by \fBsmtp-sink\fR, and is formatted as follows:
 /* .RS
-/* .IP "\fBfrom \fIhelo\fB ([\fIaddr\fB])\fR"
+/* .IP "\fBfrom \fIhelo\fR ([\fIaddr\fR])"
 /*	The HELO or EHLO command argument and client IP address.
 /*	If the client did not send HELO or EHLO, the client IP
 /*	address is used instead.
@@ -250,6 +257,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -354,9 +366,9 @@ static char *hard_error_resp = HARD_ERROR_RESP;
 static int command_read(SINK_STATE *);
 static int data_read(SINK_STATE *);
 static void disconnect(SINK_STATE *);
-static void read_timeout(int, char *);
-static void read_event(int, char *);
-static int count;
+static void read_timeout(int, void *);
+static void read_event(int, void *);
+static int show_count;
 static int sess_count;
 static int quit_count;
 static int mesg_count;
@@ -371,10 +383,12 @@ static int disable_saslauth;
 static int disable_xclient;
 static int disable_xforward;
 static int disable_enh_status;
+static int disable_dsn;
 static int max_client_count = DEF_MAX_CLIENT_COUNT;
 static int client_count;
 static int sock;
 static int abort_delay = -1;
+static int data_read_delay = 0;
 
 static char *single_template;		/* individual template */
 static char *shared_template;		/* shared template */
@@ -630,6 +644,8 @@ static void ehlo_response(SINK_STATE *state, const char *args)
 	smtp_printf(state->stream, "250-XFORWARD NAME ADDR PROTO HELO");
     if (!disable_enh_status)
 	smtp_printf(state->stream, "250-ENHANCEDSTATUSCODES");
+    if (!disable_dsn)
+	smtp_printf(state->stream, "250-DSN");
     /* RFC 821/2821/5321: Format is replycode<SPACE>optional-text<CRLF> */
     smtp_printf(state->stream, "250 ");
     SMTP_FLUSH(state->stream);
@@ -720,13 +736,35 @@ static void rcpt_response(SINK_STATE *state, const char *args)
 
 /* abort_event - delayed abort after DATA command */
 
-static void abort_event(int unused_event, char *context)
+static void abort_event(int unused_event, void *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
 
     smtp_printf(state->stream, "550 This violates SMTP");
     SMTP_FLUSH(state->stream);
     disconnect(state);
+}
+
+/* delay_read_event - resume input event handling */
+
+static void delay_read_event(int event, void *context)
+{
+    SINK_STATE *state = (SINK_STATE *) context;
+
+    if (event != EVENT_TIME)
+	msg_panic("delay_read_event: non-timer event %d", event);
+
+    event_enable_read(vstream_fileno(state->stream), read_event, (void *) state);
+    event_request_timer(read_timeout, (void *) state, var_tmout);
+}
+
+/* delay_read - temporarily suspend input event handling */
+
+static void delay_read(SINK_STATE *state, int delay)
+{
+    event_disable_readwrite(vstream_fileno(state->stream));
+    event_cancel_timer(read_timeout, (void *) state);
+    event_request_timer(delay_read_event, (void *) state, delay);
 }
 
 /* data_response - respond to DATA command */
@@ -744,11 +782,14 @@ static void data_response(SINK_STATE *state, const char *unused_args)
     SMTP_FLUSH(state->stream);
     if (abort_delay < 0) {
 	state->read_fn = data_read;
+	/* Todo: move into code that invokes the command response function. */
+	if (data_read_delay > 0)
+	    delay_read(state, data_read_delay);
     } else {
 	/* Stop reading, send premature 550, and disconnect. */
 	event_disable_readwrite(vstream_fileno(state->stream));
-	event_cancel_timer(read_event, (char *) state);
-	event_request_timer(abort_event, (char *) state, abort_delay);
+	event_cancel_timer(read_event, (void *) state);
+	event_request_timer(abort_event, (void *) state, abort_delay);
     }
     if (state->dump_file)
 	mail_file_finish_header(state);
@@ -799,7 +840,7 @@ static void quit_response(SINK_STATE *state, const char *unused_args)
 {
     smtp_printf(state->stream, "221 Bye");
     smtp_flush(state->stream);			/* not: SMTP_FLUSH */
-    if (count)
+    if (show_count)
 	quit_count++;
 }
 
@@ -818,7 +859,7 @@ static void conn_response(SINK_STATE *state, const char *unused_args)
 
 /* delay_event - delayed command response */
 
-static void delay_event(int unused_event, char *context)
+static void delay_event(int unused_event, void *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
 
@@ -852,8 +893,8 @@ static void delay_event(int unused_event, char *context)
     state->delayed_response = 0;
 
     /* Resume input event handling after the delayed response. */
-    event_enable_read(vstream_fileno(state->stream), read_event, (char *) state);
-    event_request_timer(read_timeout, (char *) state, var_tmout);
+    event_enable_read(vstream_fileno(state->stream), read_event, (void *) state);
+    event_request_timer(read_timeout, (void *) state, var_tmout);
 }
 
 /* data_read - read data from socket */
@@ -910,9 +951,9 @@ static int data_read(SINK_STATE *state)
 	    if (state->dump_file)
 		mail_file_finish(state);
 	    mail_cmd_reset(state);
-	    if (count || max_msg_quit_count > 0) {
+	    if (show_count || max_msg_quit_count > 0) {
 		mesg_count++;
-		if (count)
+		if (show_count)
 		    do_stats();
 		if (max_msg_quit_count > 0 && mesg_count >= max_msg_quit_count)
 		    exit(0);
@@ -1007,7 +1048,7 @@ static void set_cmds_flags(const char *cmds, int flags)
     char   *cmd;
 
     saved_cmds = cp = mystrdup(cmds);
-    while ((cmd = mystrtok(&cp, " \t\r\n,")) != 0)
+    while ((cmd = mystrtok(&cp, CHARS_COMMA_SP)) != 0)
 	set_cmd_flags(cmd, flags);
     myfree(saved_cmds);
 }
@@ -1085,8 +1126,8 @@ static int command_resp(SINK_STATE *state, SINK_COMMAND *cmdp,
 		 /* NOP */ ;
 	/* Suspend input event handling while delaying the command response. */
 	event_disable_readwrite(vstream_fileno(state->stream));
-	event_cancel_timer(read_timeout, (char *) state);
-	event_request_timer(delay_event, (char *) state, delay);
+	event_cancel_timer(read_timeout, (void *) state);
+	event_request_timer(delay_event, (void *) state, delay);
 	state->delayed_response = cmdp->response;
 	state->delayed_args = mystrdup(args);
     } else {
@@ -1205,7 +1246,7 @@ static int command_read(SINK_STATE *state)
 
 /* read_timeout - handle timer event */
 
-static void read_timeout(int unused_event, char *context)
+static void read_timeout(int unused_event, void *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
 
@@ -1220,7 +1261,7 @@ static void read_timeout(int unused_event, char *context)
 
 /* read_event - handle command or data read events */
 
-static void read_event(int unused_event, char *context)
+static void read_event(int unused_event, void *context)
 {
     SINK_STATE *state = (SINK_STATE *) context;
 
@@ -1265,18 +1306,18 @@ static void read_event(int unused_event, char *context)
      * Reset the idle timer. Wait until the next input event, or until the
      * idle timer goes off.
      */
-    event_request_timer(read_timeout, (char *) state, var_tmout);
+    event_request_timer(read_timeout, (void *) state, var_tmout);
 }
 
-static void connect_event(int, char *);
+static void connect_event(int, void *);
 
 /* disconnect - handle disconnection events */
 
 static void disconnect(SINK_STATE *state)
 {
     event_disable_readwrite(vstream_fileno(state->stream));
-    event_cancel_timer(read_timeout, (char *) state);
-    if (count) {
+    event_cancel_timer(read_timeout, (void *) state);
+    if (show_count) {
 	sess_count++;
 	do_stats();
     }
@@ -1289,42 +1330,43 @@ static void disconnect(SINK_STATE *state)
     mail_cmd_reset(state);
     if (state->delayed_args)
 	myfree(state->delayed_args);
-    myfree((char *) state);
+    myfree((void *) state);
     if (max_quit_count > 0 && quit_count >= max_quit_count)
 	exit(0);
     if (client_count-- == max_client_count)
-	event_enable_read(sock, connect_event, (char *) 0);
+	event_enable_read(sock, connect_event, (void *) 0);
 }
 
 /* connect_event - handle connection events */
 
-static void connect_event(int unused_event, char *unused_context)
+static void connect_event(int unused_event, void *unused_context)
 {
-    struct sockaddr sa;
-    SOCKADDR_SIZE len = sizeof(sa);
+    struct sockaddr_storage ss;
+    SOCKADDR_SIZE len = sizeof(ss);
+    struct sockaddr *sa = (struct sockaddr *) &ss;
     SINK_STATE *state;
     int     fd;
 
-    if ((fd = sane_accept(sock, &sa, &len)) >= 0) {
+    if ((fd = sane_accept(sock, sa, &len)) >= 0) {
 	/* Safety: limit the number of open sockets and capture files. */
 	if (++client_count == max_client_count)
 	    event_disable_readwrite(sock);
 	state = (SINK_STATE *) mymalloc(sizeof(*state));
-	if (strchr((char *) proto_info->sa_family_list, sa.sa_family))
-	    SOCKADDR_TO_HOSTADDR(&sa, len, &state->client_addr,
-				 (MAI_SERVPORT_STR *) 0, sa.sa_family);
+	if (strchr((char *) proto_info->sa_family_list, sa->sa_family))
+	    SOCKADDR_TO_HOSTADDR(sa, len, &state->client_addr,
+				 (MAI_SERVPORT_STR *) 0, sa->sa_family);
 	else
 	    strncpy(state->client_addr.buf, "local", sizeof("local"));
 	if (msg_verbose)
 	    msg_info("connect (%s %s)",
 #ifdef AF_LOCAL
-		     sa.sa_family == AF_LOCAL ? "AF_LOCAL" :
+		     sa->sa_family == AF_LOCAL ? "AF_LOCAL" :
 #else
-		     sa.sa_family == AF_UNIX ? "AF_UNIX" :
+		     sa->sa_family == AF_UNIX ? "AF_UNIX" :
 #endif
-		     sa.sa_family == AF_INET ? "AF_INET" :
+		     sa->sa_family == AF_INET ? "AF_INET" :
 #ifdef AF_INET6
-		     sa.sa_family == AF_INET6 ? "AF_INET6" :
+		     sa->sa_family == AF_INET6 ? "AF_INET6" :
 #endif
 		     "unknown protocol family",
 		     state->client_addr.buf);
@@ -1342,7 +1384,7 @@ static void connect_event(int unused_event, char *unused_context)
 	state->delayed_args = 0;
 	/* Initialize file capture attributes. */
 #ifdef AF_INET6
-	if (sa.sa_family == AF_INET6)
+	if (sa->sa_family == AF_INET6)
 	    state->addr_prefix = "ipv6:";
 	else
 #endif
@@ -1380,8 +1422,8 @@ static void connect_event(int unused_event, char *unused_context)
 	    if (command_resp(state, command_table, "connect", "") < 0)
 		disconnect(state);
 	    else if (command_table->delay == 0) {
-		event_enable_read(fd, read_event, (char *) state);
-		event_request_timer(read_timeout, (char *) state, var_tmout);
+		event_enable_read(fd, read_event, (void *) state);
+		event_request_timer(read_timeout, (void *) state, var_tmout);
 	    }
 	}
     }
@@ -1423,7 +1465,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "468aA:b:B:cCd:D:eEf:Fh:Ln:m:M:pPq:Q:r:R:s:S:t:T:u:vw:W:")) > 0) {
+    while ((ch = GETOPT(argc, argv, "468aA:b:B:cCd:D:eEf:Fh:H:Ln:m:M:NpPq:Q:r:R:s:S:t:T:u:vw:W:")) > 0) {
 	switch (ch) {
 	case '4':
 	    protocols = INET_PROTO_NAME_IPV4;
@@ -1456,7 +1498,7 @@ int     main(int argc, char **argv)
 		hard_error_resp = optarg;
 	    break;
 	case 'c':
-	    count++;
+	    show_count++;
 	    break;
 	case 'C':
 	    disable_xclient = 1;
@@ -1485,6 +1527,10 @@ int     main(int argc, char **argv)
 	case 'h':
 	    var_myhostname = optarg;
 	    break;
+	case 'H':
+	    if ((data_read_delay = atoi(optarg)) <= 0)
+		msg_fatal("bad data read delay: %s", optarg);
+	    break;
 	case 'L':
 	    enable_lmtp = 1;
 	    break;
@@ -1499,6 +1545,9 @@ int     main(int argc, char **argv)
 	case 'n':
 	    if ((max_quit_count = atoi(optarg)) <= 0)
 		msg_fatal("bad quit count: %s", optarg);
+	    break;
+	case 'N':
+	    disable_dsn = 1;
 	    break;
 	case 'p':
 	    disable_pipelining = 1;
@@ -1590,7 +1639,7 @@ int     main(int argc, char **argv)
     /*
      * Start the event handler.
      */
-    event_enable_read(sock, connect_event, (char *) 0);
+    event_enable_read(sock, connect_event, (void *) 0);
     for (;;)
 	event_loop(-1);
 }

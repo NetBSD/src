@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.131 2016/09/15 14:40:43 christos Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.131.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.131 2016/09/15 14:40:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.131.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -205,7 +205,7 @@ __CTASSERT(offsetof(struct ifbifconf, ifbic_buf) == offsetof(struct ifbaconf, if
 #define ACQUIRE_GLOBAL_LOCKS()	do {					\
 					KERNEL_LOCK(1, NULL);		\
 					mutex_enter(softnet_lock);	\
-					__s = splnet();			\
+					__s = splsoftnet();		\
 				} while (0)
 #define RELEASE_GLOBAL_LOCKS()	do {					\
 					splx(__s);			\
@@ -456,7 +456,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 	struct bridge_iflist *bif;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 
 	bridge_stop(ifp, 1);
 
@@ -509,7 +509,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	const struct bridge_control *bc = NULL; /* XXXGCC */
 	int s, error = 0;
 
-	/* Authorize command before calling splnet(). */
+	/* Authorize command before calling splsoftnet(). */
 	switch (cmd) {
 	case SIOCGDRVSPEC:
 	case SIOCSDRVSPEC:
@@ -535,7 +535,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
-	s = splnet();
+	s = splsoftnet();
 
 	switch (cmd) {
 	case SIOCGDRVSPEC:
@@ -552,7 +552,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
-		/* BC_F_SUSER is checked above, before splnet(). */
+		/* BC_F_SUSER is checked above, before splsoftnet(). */
 
 		if ((bc->bc_flags & (BC_F_XLATEIN|BC_F_XLATEOUT)) == 0
 		    && (ifd->ifd_len != bc->bc_argsize
@@ -735,11 +735,6 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	if (ifs == NULL)
 		return (ENOENT);
 
-	if (sc->sc_if.if_mtu != ifs->if_mtu) {
-		error = EINVAL;
-		goto out;
-	}
-
 	if (ifs->if_bridge == sc) {
 		error = EEXIST;
 		goto out;
@@ -765,6 +760,12 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
+		if (sc->sc_if.if_mtu != ifs->if_mtu) {
+			error = EINVAL;
+			goto out;
+		}
+		/* FALLTHROUGH */
+	case IFT_L2TP:
 		if ((error = ether_enable_vlan_mtu(ifs)) > 0)
 			goto out;
 		/*
@@ -840,6 +841,7 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
+	case IFT_L2TP:
 		/*
 		 * Take the interface out of promiscuous mode.
 		 * Don't call it with holding a spin lock.
@@ -898,6 +900,7 @@ bridge_ioctl_sifflags(struct bridge_softc *sc, void *arg)
 	if (req->ifbr_ifsflags & IFBIF_STP) {
 		switch (bif->bif_ifp->if_type) {
 		case IFT_ETHER:
+		case IFT_L2TP:
 			/* These can do spanning tree. */
 			break;
 
@@ -1519,13 +1522,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				}
 			}
 
-#ifndef NET_MPSAFE
-			s = splnet();
-#endif
 			bridge_enqueue(sc, dst_if, mc, 0);
-#ifndef NET_MPSAFE
-			splx(s);
-#endif
 
 			if ((m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
 			    dst_if != ifp)
@@ -1548,7 +1545,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				mc->m_flags &= ~M_PROMISC;
 
 #ifndef NET_MPSAFE
-				s = splnet();
+				s = splsoftnet();
 #endif
 				ether_input(dst_if, mc);
 #ifndef NET_MPSAFE
@@ -1582,13 +1579,7 @@ next:
 		return (0);
 	}
 
-#ifndef NET_MPSAFE
-	s = splnet();
-#endif
 	bridge_enqueue(sc, dst_if, m, 0);
-#ifndef NET_MPSAFE
-	splx(s);
-#endif
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.231 2015/11/02 09:57:43 pgoyette Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.231.4.1 2017/04/21 16:54:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.231 2015/11/02 09:57:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.231.4.1 2017/04/21 16:54:07 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -122,7 +122,7 @@ struct vfsops nfs_vfsops = {
 	.vfs_mountroot = nfs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -380,7 +380,7 @@ nfs_mountroot(void)
 	mountlist_append(mp);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	/* Get root attributes (for the time). */
 	vn_lock(vp, LK_SHARED | LK_RETRY);
@@ -435,8 +435,8 @@ nfs_mount_diskless(struct nfs_dlmount *ndmntp, const char *mntname, struct mount
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp, l);
 	if (error) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
 	} else
@@ -959,6 +959,8 @@ extern int syncprt;
 static bool
 nfs_sync_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: edit_file.h,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: edit_file.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _EDIT_FILE_H_INCLUDED_
 #define _EDIT_FILE_H_INCLUDED_
@@ -33,7 +33,7 @@ typedef struct {
 #define EDIT_FILE_SUFFIX ".tmp"
 
 extern EDIT_FILE *edit_file_open(const char *, int, mode_t);
-extern int edit_file_close(EDIT_FILE *);
+extern int WARN_UNUSED_RESULT edit_file_close(EDIT_FILE *);
 extern void edit_file_cleanup(EDIT_FILE *);
 
 /* LICENSE

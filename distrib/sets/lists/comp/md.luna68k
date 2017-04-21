@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.21 2016/12/03 17:38:02 tsutsui Exp $
+# $NetBSD: md.luna68k,v 1.21.2.1 2017/04/21 16:51:13 bouyer Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/luna68k				comp-c-include
 ./usr/include/luna68k/_G_config.h		comp-obsolete		obsolete
@@ -27,6 +27,7 @@
 ./usr/include/luna68k/int_types.h		comp-c-include
 ./usr/include/luna68k/intr.h			comp-c-include
 ./usr/include/luna68k/kcore.h			comp-c-include
+./usr/include/luna68k/lcd.h			comp-c-include
 ./usr/include/luna68k/limits.h			comp-c-include
 ./usr/include/luna68k/lock.h			comp-c-include
 ./usr/include/luna68k/math.h			comp-c-include

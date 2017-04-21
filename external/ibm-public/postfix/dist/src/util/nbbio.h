@@ -1,4 +1,4 @@
-/*	$NetBSD: nbbio.h,v 1.1.1.1 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: nbbio.h,v 1.1.1.1.32.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _NBBIO_H_INCLUDED_
 #define _NBBIO_H_INCLUDED_
@@ -21,14 +21,14 @@
  /*
   * External interface. All structure members are private.
   */
-typedef void (*NBBIO_ACTION) (int, char *);
+typedef void (*NBBIO_ACTION) (int, void *);
 
 typedef struct {
     int     fd;				/* socket file descriptor */
     ssize_t bufsize;			/* read/write buffer size */
     char   *label;			/* diagnostics */
     NBBIO_ACTION action;		/* call-back routine */
-    char   *context;			/* call-back context */
+    void   *context;			/* call-back context */
     int     flags;			/* buffer-pair status */
 
     char   *read_buf;			/* start of buffer */
@@ -66,7 +66,7 @@ typedef struct {
 #define NBBIO_ACTIVE_FLAGS(np)		((np)->flags & NBBIO_MASK_ACTIVE)
 #define NBBIO_ERROR_FLAGS(np)		((np)->flags & NBBIO_MASK_ERROR)
 
-extern NBBIO *nbbio_create(int, ssize_t, const char *, NBBIO_ACTION, char *);
+extern NBBIO *nbbio_create(int, ssize_t, const char *, NBBIO_ACTION, void *);
 extern void nbbio_free(NBBIO *);
 extern void nbbio_enable_read(NBBIO *, int);
 extern void nbbio_enable_write(NBBIO *, int);

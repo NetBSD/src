@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.19 2016/02/05 03:38:50 dholland Exp $
+/	$NetBSD: units.lib,v 1.19.4.1 2017/04/21 16:54:15 bouyer Exp $
 
 / primitive units
 
@@ -651,4 +651,10 @@ linenyarncount		900 ft/pound
 worstedyarncount	1680 ft/pound
 metricyarncount		meter/gram
 jewlerspoint		2 milligram
+
+/ thai measurements
+
+wah			2 m
+ngan			400 m2
+rai			1600 m2
 

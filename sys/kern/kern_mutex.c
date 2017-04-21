@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.63 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.63.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.63 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.63.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.63 2016/07/07 06:55:43 msaitoh Exp 
     LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    mutex_abort(mtx, __func__, msg)
+    mutex_abort(__func__, __LINE__, mtx, msg)
 
 #if defined(LOCKDEBUG)
 
@@ -261,8 +261,8 @@ __strong_alias(mutex_spin_enter,mutex_vector_enter);
 __strong_alias(mutex_spin_exit,mutex_vector_exit);
 #endif
 
-static void		mutex_abort(kmutex_t *, const char *, const char *);
-static void		mutex_dump(volatile void *);
+static void	mutex_abort(const char *, size_t, kmutex_t *, const char *);
+static void	mutex_dump(volatile void *);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
@@ -307,11 +307,11 @@ mutex_dump(volatile void *cookie)
  *	we ask the compiler to not inline it.
  */
 void __noinline
-mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
+mutex_abort(const char *func, size_t line, kmutex_t *mtx, const char *msg)
 {
 
-	LOCKDEBUG_ABORT(mtx, (MUTEX_SPIN_P(mtx) ?
-	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
+	LOCKDEBUG_ABORT(func, line, mtx, (MUTEX_SPIN_P(mtx) ?
+	    &mutex_spin_lockops : &mutex_adaptive_lockops), msg);
 }
 
 /*

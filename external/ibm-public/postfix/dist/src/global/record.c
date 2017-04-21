@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.1.1.2 2010/06/17 18:06:51 tron Exp $	*/
+/*	$NetBSD: record.c,v 1.1.1.2.32.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -58,7 +58,7 @@
 /*	int	rec_pad(stream, type, len)
 /*	VSTREAM *stream;
 /*	int	type;
-/*	int	len;
+/*	ssize_t	len;
 /*
 /*	REC_SPACE_NEED(buflen, reclen)
 /*	ssize_t	buflen;
@@ -179,6 +179,7 @@ int     rec_put_type(VSTREAM *stream, int type, off_t offset)
 
     if (vstream_fseek(stream, offset, SEEK_SET) < 0
 	|| VSTREAM_PUTC(type, stream) != type) {
+	msg_warn("%s: seek or write error", VSTREAM_PATH(stream));
 	return (REC_TYPE_ERROR);
     } else {
 	return (type);
@@ -306,8 +307,12 @@ int     rec_get_raw(VSTREAM *stream, VSTRING *buf, ssize_t maxsize, int flags)
 	    continue;
 	if (type == REC_TYPE_DTXT && (flags & REC_FLAG_SKIP_DTXT) != 0)
 	    continue;
-	if (type == REC_TYPE_END && (flags & REC_FLAG_SEEK_END) != 0)
-	    (void) vstream_fseek(stream, (off_t) 0, SEEK_END);
+	if (type == REC_TYPE_END && (flags & REC_FLAG_SEEK_END) != 0
+	    && vstream_fseek(stream, (off_t) 0, SEEK_END) < 0) {
+	    msg_warn("%s: seek error after reading END record: %m",
+		     VSTREAM_PATH(stream));
+	    return (REC_TYPE_ERROR);
+	}
 	break;
     }
     return (type);
@@ -400,7 +405,7 @@ int     rec_fputs(VSTREAM *stream, int type, const char *str)
 
 /* rec_pad - write padding record */
 
-int     rec_pad(VSTREAM *stream, int type, int len)
+int     rec_pad(VSTREAM *stream, int type, ssize_t len)
 {
     int     width = len - 2;		/* type + length */
 

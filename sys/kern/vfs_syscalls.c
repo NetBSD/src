@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.505 2016/07/31 20:34:04 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.505.2.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.505 2016/07/31 20:34:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.505.2.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.505 2016/07/31 20:34:04 dholland 
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kmem.h>
@@ -281,10 +282,14 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	if (vfs_busy(mp, NULL)) {
+	if (vfs_busy(mp)) {
 		error = EPERM;
 		goto out;
 	}
+
+	error = vfs_suspend(mp, 0);
+	if (error)
+		goto out;
 
 	mutex_enter(&mp->mnt_updating);
 
@@ -294,12 +299,17 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	/*
 	 * Set the mount level flags.
 	 */
-	if (flags & MNT_RDONLY)
-		mp->mnt_flag |= MNT_RDONLY;
-	else if (mp->mnt_flag & MNT_RDONLY)
-		mp->mnt_iflag |= IMNT_WANTRDWR;
+	if ((flags & MNT_RDONLY) != (mp->mnt_flag & MNT_RDONLY)) {
+		if ((flags & MNT_RDONLY))
+			mp->mnt_iflag |= IMNT_WANTRDONLY;
+		else
+			mp->mnt_iflag |= IMNT_WANTRDWR;
+	}
 	mp->mnt_flag &= ~MNT_BASIC_FLAGS;
 	mp->mnt_flag |= flags & MNT_BASIC_FLAGS;
+	if ((mp->mnt_iflag & IMNT_WANTRDONLY))
+		mp->mnt_flag &= ~MNT_RDONLY;
+
 	error = VFS_MOUNT(mp, path, data, data_len);
 
 	if (error && data != NULL) {
@@ -320,12 +330,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			error = error2;
 	}
 
-	if (mp->mnt_iflag & IMNT_WANTRDWR)
-		mp->mnt_flag &= ~MNT_RDONLY;
+	if (error == 0 && (mp->mnt_iflag & IMNT_WANTRDONLY))
+		mp->mnt_flag |= MNT_RDONLY;
 	if (error)
 		mp->mnt_flag = saved_flags;
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
-	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+	mp->mnt_iflag &= ~(IMNT_WANTRDONLY | IMNT_WANTRDWR);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0) {
 		if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0)
 			vfs_syncer_add_to_worklist(mp);
@@ -334,7 +344,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 			vfs_syncer_remove_from_worklist(mp);
 	}
 	mutex_exit(&mp->mnt_updating);
-	vfs_unbusy(mp, false, NULL);
+	vfs_resume(mp);
+	vfs_unbusy(mp);
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
 	    (flags & MNT_EXTATTR)) {
@@ -427,7 +438,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if ((vp->v_vflag & VV_ROOT) == 0)
 		return EINVAL;
 
-	if (vfs_busy(mp, NULL))
+	if (vfs_busy(mp))
 		return EPERM;
 
 	mutex_enter(&mp->mnt_updating);
@@ -437,7 +448,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mutex_exit(&mp->mnt_updating);
 
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (error);
 }
 
@@ -584,14 +595,14 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	pathbuf_destroy(pb);
 
 	mp = vp->v_mount;
-	atomic_inc_uint(&mp->mnt_refcnt);
+	vfs_ref(mp);
 	VOP_UNLOCK(vp);
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
 	if (error) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 
@@ -600,7 +611,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 */
 	if (mp->mnt_flag & MNT_ROOTFS) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (EINVAL);
 	}
 
@@ -609,13 +620,13 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 */
 	if ((vp->v_vflag & VV_ROOT) == 0) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		return (EINVAL);
 	}
 
 	vrele(vp);
 	error = dounmount(mp, SCARG(uap, flags), l);
-	vfs_destroy(mp);
+	vfs_rele(mp);
 	return error;
 }
 
@@ -630,14 +641,13 @@ struct ctldebug debug0 = { "syncprt", &syncprt };
 void
 do_sys_sync(struct lwp *l)
 {
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	int asyncflag;
 
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
+		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
@@ -647,9 +657,9 @@ do_sys_sync(struct lwp *l)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_exit(&mp->mnt_updating);
-		vfs_unbusy(mp, false, &nmp);
+		fstrans_done(mp);
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 #ifdef DEBUG
 	if (syncprt)
 		vfs_bufstats();
@@ -1238,39 +1248,32 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
     register_t *retval)
 {
 	int root = 0;
+	mount_iterator_t *iter;
 	struct proc *p = l->l_proc;
-	struct mount *mp, *nmp;
+	struct mount *mp;
 	struct statvfs *sb;
 	size_t count, maxcount;
 	int error = 0;
 
 	sb = STATVFSBUF_GET();
 	maxcount = bufsize / entry_sz;
-	mutex_enter(&mountlist_lock);
 	count = 0;
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		if (vfs_busy(mp, &nmp)) {
-			continue;
-		}
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sb, l, flags, 0);
 			if (error) {
-				vfs_unbusy(mp, false, &nmp);
 				error = 0;
 				continue;
 			}
 			error = copyfn(sb, sfsp, entry_sz);
-			if (error) {
-				vfs_unbusy(mp, false, NULL);
+			if (error)
 				goto out;
-			}
 			sfsp = (char *)sfsp + entry_sz;
 			root |= strcmp(sb->f_mntonname, "/") == 0;
 		}
 		count++;
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
 
 	if (root == 0 && p->p_cwdi->cwdi_rdir) {
 		/*
@@ -1292,6 +1295,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 	else
 		*retval = count;
 out:
+	mountlist_iterator_destroy(iter);
 	STATVFSBUF_PUT(sb);
 	return error;
 }
@@ -1343,12 +1347,12 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		goto out;
 	}
 	while ((mp = vp->v_mountedhere) != NULL) {
-		error = vfs_busy(mp, NULL);
+		error = vfs_busy(mp);
 		vput(vp);
 		if (error != 0)
 			goto out;
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error)
 			goto out;
 		vp = tdp;

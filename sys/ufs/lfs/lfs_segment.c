@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.263 2015/10/19 04:21:48 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.263.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.263 2015/10/19 04:21:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.263.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -484,9 +484,12 @@ static bool
 lfs_writevnodes_selector(void *cl, struct vnode *vp)
 {
 	struct lfs_writevnodes_ctx *c = cl;
-	struct inode *ip = VTOI(vp);
+	struct inode *ip;
 	int op = c->op;
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	ip = VTOI(vp);
 	if (ip == NULL || vp->v_type == VNON)
 		return false;
 	if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
@@ -727,9 +730,9 @@ lfs_segwrite(struct mount *mp, int flags)
 		int loopcount = 0;
 #endif
 		do {
-#ifdef DEBUG
+
 			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			fs->lfs_flags &= ~LFS_IFDIRTY;
 			mutex_exit(&lfs_lock);
@@ -906,10 +909,8 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 			    ip->i_lfs_fragsize[i] < lfs_sb_getbsize(fs))
 				++frag;
 	}
-#ifdef DIAGNOSTIC
-	if (frag > 1)
-		panic("lfs_writefile: more than one fragment!");
-#endif
+	KASSERTMSG((frag <= 1),
+	    "lfs_writefile: more than one fragment! frag=%d", frag);
 	if (IS_FLUSHING(fs, vp) ||
 	    (frag == 0 && (lfs_writeindir || (sp->seg_flags & SEGM_CKP)))) {
 		lfs_gather(fs, sp, vp, lfs_match_indir);
@@ -992,27 +993,21 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 	 */
 	if (daddr != LFS_UNUSED_DADDR) {
 		u_int32_t oldsn = lfs_dtosn(fs, daddr);
-#ifdef DIAGNOSTIC
-		int ndupino = (sp->seg_number == oldsn) ? sp->ndupino : 0;
-#endif
+		int ndupino __diagused =
+		    (sp->seg_number == oldsn) ? sp->ndupino : 0;
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-#ifdef DIAGNOSTIC
-		if (sup->su_nbytes + DINOSIZE(fs) * ndupino < DINOSIZE(fs)) {
-			printf("lfs_writeinode: negative bytes "
-			       "(segment %" PRIu32 " short by %d, "
-			       "oldsn=%" PRIu32 ", cursn=%" PRIu32
-			       ", daddr=%" PRId64 ", su_nbytes=%u, "
-			       "ndupino=%d)\n",
-			       lfs_dtosn(fs, daddr),
-			       (int)DINOSIZE(fs) *
-				   (1 - sp->ndupino) - sup->su_nbytes,
-			       oldsn, sp->seg_number, daddr,
-			       (unsigned int)sup->su_nbytes,
-			       sp->ndupino);
-			panic("lfs_writeinode: negative bytes");
-			sup->su_nbytes = DINOSIZE(fs);
-		}
-#endif
+		KASSERTMSG(((sup->su_nbytes + DINOSIZE(fs)*ndupino)
+			>= DINOSIZE(fs)),
+		    "lfs_writeinode: negative bytes "
+		    "(segment %" PRIu32 " short by %d, "
+		    "oldsn=%" PRIu32 ", cursn=%" PRIu32
+		    ", daddr=%" PRId64 ", su_nbytes=%u, "
+		    "ndupino=%d)\n",
+		    lfs_dtosn(fs, daddr),
+		    (int)DINOSIZE(fs) * (1 - sp->ndupino) - sup->su_nbytes,
+		    oldsn, sp->seg_number, daddr,
+		    (unsigned int)sup->su_nbytes,
+		    sp->ndupino);
 		DLOG((DLOG_SU, "seg %d -= %d for ino %d inode\n",
 		      lfs_dtosn(fs, daddr), DINOSIZE(fs), ino));
 		sup->su_nbytes -= DINOSIZE(fs);
@@ -1309,14 +1304,10 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 	int j, blksinblk;
 
 	ASSERT_SEGLOCK(sp->fs);
-	/*
-	 * If full, finish this segment.  We may be doing I/O, so
-	 * release and reacquire the splbio().
-	 */
-#ifdef DIAGNOSTIC
-	if (sp->vp == NULL)
-		panic ("lfs_gatherblock: Null vp in segment");
-#endif
+	KASSERTMSG((sp->vp != NULL),
+	    "lfs_gatherblock: Null vp in segment");
+
+	/* If full, finish this segment. */
 	fs = sp->fs;
 	blksinblk = howmany(bp->b_bcount, lfs_sb_getbsize(fs));
 	if (sp->sum_bytes_left < sizeof(int32_t) * blksinblk ||
@@ -1545,37 +1536,26 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	 */
 	if (daddr > 0) {
 		u_int32_t oldsn = lfs_dtosn(fs, daddr);
-#ifdef DIAGNOSTIC
-		int ndupino;
+		int ndupino __diagused = (sp && sp->seg_number == oldsn ?
+		    sp->ndupino : 0);
 
-		if (sp && sp->seg_number == oldsn) {
-			ndupino = sp->ndupino;
-		} else {
-			ndupino = 0;
-		}
-#endif
 		KASSERT(oldsn < lfs_sb_getnseg(fs));
 		if (lbn >= 0 && lbn < ULFS_NDADDR)
 			osize = ip->i_lfs_fragsize[lbn];
 		else
 			osize = lfs_sb_getbsize(fs);
 		LFS_SEGENTRY(sup, fs, oldsn, bp);
-#ifdef DIAGNOSTIC
-		if (sup->su_nbytes + DINOSIZE(fs) * ndupino < osize) {
-			printf("lfs_updatemeta: negative bytes "
-			       "(segment %" PRIu32 " short by %" PRId64
-			       ")\n", lfs_dtosn(fs, daddr),
-			       (int64_t)osize -
-			       (DINOSIZE(fs) * ndupino + sup->su_nbytes));
-			printf("lfs_updatemeta: ino %llu, lbn %" PRId64
-			       ", addr = 0x%" PRIx64 "\n",
-			       (unsigned long long)ip->i_number, lbn, daddr);
-			printf("lfs_updatemeta: ndupino=%d\n", ndupino);
-			panic("lfs_updatemeta: negative bytes");
-			sup->su_nbytes = osize -
-			    DINOSIZE(fs) * ndupino;
-		}
-#endif
+		KASSERTMSG(((sup->su_nbytes + DINOSIZE(fs)*ndupino) >= osize),
+		    "lfs_updatemeta: negative bytes "
+		    "(segment %" PRIu32 " short by %" PRId64
+		    ")\n"
+		    "lfs_updatemeta: ino %llu, lbn %" PRId64
+		    ", addr = 0x%" PRIx64 "\n"
+		    "lfs_updatemeta: ndupino=%d",
+		    lfs_dtosn(fs, daddr),
+		    (int64_t)osize - (DINOSIZE(fs) * ndupino + sup->su_nbytes),
+		    (unsigned long long)ip->i_number, lbn, daddr,
+		    ndupino);
 		DLOG((DLOG_SU, "seg %" PRIu32 " -= %d for ino %d lbn %" PRId64
 		      " db 0x%" PRIx64 "\n",
 		      lfs_dtosn(fs, daddr), osize,
@@ -2292,15 +2272,13 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		cbp->b_cflags |= BC_BUSY;
 		cbp->b_bcount = 0;
 
-#if defined(DEBUG) && defined(DIAGNOSTIC)
-		if (bpp - sp->bpp > (lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs))
-		    / sizeof(int32_t)) {
-			panic("lfs_writeseg: real bpp overwrite");
-		}
-		if (bpp - sp->bpp > lfs_segsize(fs) / lfs_sb_getfsize(fs)) {
-			panic("lfs_writeseg: theoretical bpp overwrite");
-		}
-#endif
+		KASSERTMSG((bpp - sp->bpp <=
+			(lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs))
+			/ sizeof(int32_t)),
+		    "lfs_writeseg: real bpp overwrite");
+		KASSERTMSG((bpp - sp->bpp <=
+			lfs_segsize(fs) / lfs_sb_getfsize(fs)),
+		    "lfs_writeseg: theoretical bpp overwrite");
 
 		/*
 		 * Construct the cluster.
@@ -2329,17 +2307,13 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 							     LFS_NB_CLUSTER);
 				cl->flags |= LFS_CL_MALLOC;
 			}
-#ifdef DIAGNOSTIC
-			if (lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno +
-					      btodb(bp->b_bcount - 1))) !=
-			    sp->seg_number) {
-				printf("blk size %d daddr %" PRIx64
-				    " not in seg %d\n",
-				    bp->b_bcount, bp->b_blkno,
-				    sp->seg_number);
-				panic("segment overwrite");
-			}
-#endif
+			KASSERTMSG((lfs_dtosn(fs, LFS_DBTOFSB(fs, bp->b_blkno +
+					btodb(bp->b_bcount - 1))) ==
+				sp->seg_number),
+			    "segment overwrite: blk size %d daddr %" PRIx64
+			    " not in seg %d\n",
+			    bp->b_bcount, bp->b_blkno,
+			    sp->seg_number);
 
 #ifdef LFS_USE_B_INVAL
 			/*
@@ -2410,29 +2384,24 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct buf *bp;
 	struct vnode *devvp = VTOI(fs->lfs_ivnode)->i_devvp;
-	int s;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-#ifdef DIAGNOSTIC
 	if (fs->lfs_is64) {
 		KASSERT(fs->lfs_dlfs_u.u_64.dlfs_magic == LFS64_MAGIC);
 	} else {
 		KASSERT(fs->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC);
 	}
-#endif
 	/*
 	 * If we can write one superblock while another is in
 	 * progress, we risk not having a complete checkpoint if we crash.
 	 * So, block here if a superblock write is in progress.
 	 */
 	mutex_enter(&lfs_lock);
-	s = splbio();
 	while (fs->lfs_sbactive) {
 		mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0,
 			&lfs_lock);
 	}
 	fs->lfs_sbactive = daddr;
-	splx(s);
 	mutex_exit(&lfs_lock);
 
 	/* Set timestamp of this version of the superblock */
@@ -2598,7 +2567,11 @@ lfs_cluster_aiodone(struct buf *bp)
 
 		tbp->b_flags &= ~B_GATHERED;
 
-		LFS_BCLEAN_LOG(fs, tbp);
+#ifdef DEBUG
+		if ((tbp)->b_vp == (fs)->lfs_ivnode)
+			LFS_ENTER_LOG("clear", __FILE__, __LINE__,
+			    tbp->b_lblkno, tbp->b_flags, curproc->p_pid);
+#endif
 
 		mutex_enter(&bufcache_lock);
 		if (tbp->b_iodone == NULL) {
@@ -2684,10 +2657,8 @@ lfs_cluster_aiodone(struct buf *bp)
 			wakeup(&cl->seg->seg_iocount);
 	}
 	mutex_enter(&lfs_lock);
-#ifdef DIAGNOSTIC
-	if (fs->lfs_iocount == 0)
-		panic("lfs_cluster_aiodone: zero iocount");
-#endif
+	KASSERTMSG((fs->lfs_iocount != 0),
+	    "lfs_cluster_aiodone: zero iocount");
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 	mutex_exit(&lfs_lock);

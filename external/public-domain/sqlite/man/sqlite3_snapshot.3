@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_SNAPSHOT 3
 .Os
 .Sh NAME
 .Nm sqlite3_snapshot
 .Nd Database Snapshot
 .Sh SYNOPSIS
-.Vt typedef struct sqlite3_snapshot sqlite3_snapshot;
+.Vt typedef struct sqlite3_snapshot { unsigned char hidden[48]; } sqlite3_snapshot;
 .Sh DESCRIPTION
 An instance of the snapshot object records the state of a WAL mode
 database for some specific point in history.

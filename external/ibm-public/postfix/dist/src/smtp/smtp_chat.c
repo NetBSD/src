@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_chat.c,v 1.1.1.4 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_chat.c,v 1.1.1.4.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -367,7 +367,7 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
 		msg_warn("to prevent loss of mail, turn off command pipelining "
 			 "for %s with the %s parameter",
 			 STR(session->iterator->addr),
-			 SMTP_X(EHLO_DIS_MAPS));
+			 VAR_LMTP_SMTP(EHLO_DIS_MAPS));
 	}
     }
 
@@ -423,7 +423,7 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
 
 /* print_line - line_wrap callback */
 
-static void print_line(const char *str, int len, int indent, char *context)
+static void print_line(const char *str, int len, int indent, void *context)
 {
     VSTREAM *notice = (VSTREAM *) context;
 
@@ -460,8 +460,8 @@ void    smtp_chat_notify(SMTP_SESSION *session)
 
     notice = post_mail_fopen_nowait(mail_addr_double_bounce(),
 				    var_error_rcpt,
-				    INT_FILT_MASK_NOTIFY,
-				    NULL_TRACE_FLAGS, NO_QUEUE_ID);
+				    MAIL_SRC_MASK_NOTIFY, NULL_TRACE_FLAGS,
+				    SMTPUTF8_FLAG_NONE, NO_QUEUE_ID);
     if (notice == 0) {
 	msg_warn("postmaster notify: %m");
 	return;
@@ -481,7 +481,7 @@ void    smtp_chat_notify(SMTP_SESSION *session)
     argv_terminate(session->history);
     for (cpp = session->history->argv; *cpp; cpp++)
 	line_wrap(printable(*cpp, '?'), LENGTH, INDENT, print_line,
-		  (char *) notice);
+		  (void *) notice);
     post_mail_fputs(notice, "");
     post_mail_fprintf(notice, "For other details, see the local mail logfile");
     (void) post_mail_fclose(notice);

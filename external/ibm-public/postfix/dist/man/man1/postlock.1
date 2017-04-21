@@ -1,4 +1,4 @@
-.\"	$NetBSD: postlock.1,v 1.1.1.1 2009/06/23 10:08:32 tron Exp $
+.\"	$NetBSD: postlock.1,v 1.1.1.1.36.1 2017/04/21 16:52:45 bouyer Exp $
 .\"
 .TH POSTLOCK 1 
 .ad
@@ -11,24 +11,24 @@ lock mail folder and execute command
 .na
 .nf
 .fi
-\fBpostlock\fR [\fB-c \fIconfig_dir\fB] [\fB-l \fIlock_style\fB]
-        [\fB-v\fR] \fIfile command...\fR
+\fBpostlock\fR [\fB\-c \fIconfig_dir\fR] [\fB\-l \fIlock_style\fR]
+        [\fB\-v\fR] \fIfile command...\fR
 .SH DESCRIPTION
 .ad
 .fi
 The \fBpostlock\fR(1) command locks \fIfile\fR for exclusive
 access, and executes \fIcommand\fR. The locking method is
-compatible with the Postfix UNIX-style local delivery agent.
+compatible with the Postfix UNIX\-style local delivery agent.
 
 Options:
-.IP "\fB-c \fIconfig_dir\fR"
+.IP "\fB\-c \fIconfig_dir\fR"
 Read the \fBmain.cf\fR configuration file in the named directory
 instead of the default configuration directory.
-.IP "\fB-l \fIlock_style\fR"
+.IP "\fB\-l \fIlock_style\fR"
 Override the locking method specified via the
 \fBmailbox_delivery_lock\fR configuration parameter (see below).
-.IP \fB-v\fR
-Enable verbose logging for debugging purposes. Multiple \fB-v\fR
+.IP \fB\-v\fR
+Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
 .PP
 Arguments:
@@ -82,7 +82,7 @@ file or \fBbounce\fR(8) logfile.
 .IP "\fBstale_lock_time (500s)\fR"
 The time after which a stale exclusive mailbox lockfile is removed.
 .IP "\fBmailbox_delivery_lock (see 'postconf -d' output)\fR"
-How to lock a UNIX-style \fBlocal\fR(8) mailbox before attempting delivery.
+How to lock a UNIX\-style \fBlocal\fR(8) mailbox before attempting delivery.
 .SH "RESOURCE AND RATE CONTROLS"
 .na
 .nf
@@ -117,3 +117,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_m.c,v 1.1.1.3 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: tls_m.c,v 1.1.1.3.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* tls_m.c - Handle tls/ssl using Mozilla NSS. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,6 +18,9 @@
 /* ACKNOWLEDGEMENTS: Initial version written by Howard Chu. 
  * Additional support by Rich Megginson.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tls_m.c,v 1.1.1.3.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

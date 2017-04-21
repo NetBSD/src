@@ -26,7 +26,6 @@
 #include <sys/ptrace.h>
 
 #include <pthread.h>
-#include <pthread_dbg.h>
 
 #include "symtab.h"
 #include "symfile.h"
@@ -78,13 +77,9 @@ static ptid_t cached_thread;
 
 struct target_ops nbsd_thread_ops;
 
-struct td_proc_callbacks_t nbsd_thread_callbacks;
-
 static ptid_t find_active_thread (void);
 static void nbsd_update_thread_list (struct target_ops *);
 
-
-static td_proc_t *main_ta;
 
 struct nbsd_thread_proc_arg {
   struct target_ops *ops;
@@ -100,36 +95,6 @@ struct string_map
     int num;
     char *str;
   };
-
-static char *
-td_err_string (int errcode)
-{
-  static struct string_map
-    td_err_table[] =
-  {
-    {TD_ERR_OK, "generic \"call succeeded\""},
-    {TD_ERR_ERR, "generic error."},
-    {TD_ERR_NOSYM, "symbol not found"},
-    {TD_ERR_NOOBJ, "no object can be found to satisfy query"},
-    {TD_ERR_BADTHREAD, "thread can not answer request"},
-    {TD_ERR_INUSE, "debugging interface already in use for this process"},
-    {TD_ERR_NOLIB, "process is not using libpthread"},
-    {TD_ERR_NOMEM, "out of memory"},
-    {TD_ERR_IO, "process callback error"},
-    {TD_ERR_INVAL, "invalid argument"},
-  };
-  const int td_err_size = sizeof td_err_table / sizeof (struct string_map);
-  int i;
-  static char buf[90];
-
-  for (i = 0; i < td_err_size; i++)
-    if (td_err_table[i].num == errcode)
-      return td_err_table[i].str;
-
-  sprintf (buf, "Unknown thread_db error code: %d", errcode);
-
-  return buf;
-}
 
 static void
 nbsd_thread_activate (void)
@@ -172,11 +137,6 @@ nbsd_thread_attach (struct target_ops *ops, const char *args, int from_tty)
 static void
 nbsd_thread_post_attach (struct target_ops *ops, int pid)
 {
-#if 0
-  struct target_ops *beneath = find_target_beneath (ops);
-  beneath->to_post_attach (ops, pid);
-#endif
-
   if (nbsd_thread_present && !nbsd_thread_active)
     nbsd_thread_activate ();
 }
@@ -195,7 +155,6 @@ nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 {
   struct target_ops *beneath = find_target_beneath (ops);
   unpush_target (ops);
-  td_close (main_ta);
   /* Ordinarily, gdb caches solib information, but this means that it
      won't call the new_obfile hook on a reattach. Clear the symbol file
      cache so that attach -> detach -> attach works. */
@@ -207,22 +166,6 @@ nbsd_thread_detach (struct target_ops *ops, const char *args, int from_tty)
 
 static int nsusp;
 static int nsuspalloc;
-static td_thread_t **susp;
-
-#ifdef notdef
-static int
-thread_resume_suspend_cb (td_thread_t *th, void *arg)
-{
-  int val;
-  ptid_t *pt = arg;
-  td_thread_info_t ti;
-
-  if (td_thr_info (th, &ti) != 0)
-      return -1;
-
-  return 0;
-}
-#endif
 
 static void
 nbsd_thread_resume (struct target_ops *ops, ptid_t ptid, int step,
@@ -245,27 +188,10 @@ nbsd_thread_resume (struct target_ops *ops, ptid_t ptid, int step,
 }
 
 
-static void
-nbsd_thread_unsuspend(void)
-{
-  int i, val;
-
-  for (i = 0; i < nsusp; i++)
-    {
-      val = td_thr_resume(susp[i]);
-      if (val != 0)
-	error ("nbsd_thread_unsuspend: td_thr_resume(%p): %s", susp[i],
-	       td_err_string (val));
-    }
-  nsusp = 0;
-}
-  
 static ptid_t
 find_active_thread (void)
 {
   int val;
-  td_thread_t *thread;
-  td_thread_info_t ti;
   struct ptrace_lwpinfo pl;
 
   if (!ptid_equal (cached_thread, minus_one_ptid))
@@ -305,8 +231,6 @@ nbsd_thread_wait (struct target_ops *ops, ptid_t ptid,
 
   rtnval = beneath->to_wait (beneath, ptid, ourstatus, options);
 
-  nbsd_thread_unsuspend();
-
   if (nbsd_thread_active && (ourstatus->kind != TARGET_WAITKIND_EXITED))
     {
       rtnval = find_active_thread ();
@@ -324,7 +248,6 @@ nbsd_thread_fetch_registers (struct target_ops *ops, struct regcache *cache,
     int regno)
 {
   struct target_ops *beneath = find_target_beneath (ops);
-  td_thread_t *thread;
   gregset_t gregs;
 #ifdef HAVE_FPREGS
   fpregset_t fpregs;
@@ -349,7 +272,6 @@ nbsd_thread_store_registers (struct target_ops *ops, struct regcache *cache,
     int regno)
 {
   struct target_ops *beneath = find_target_beneath (ops);
-  td_thread_t *thread;
   gregset_t gregs;
 #ifdef HAVE_FPREGS
   fpregset_t fpregs;
@@ -412,7 +334,6 @@ static char *
 nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 {
   static char buf[100];
-  td_thread_t *th;
   char name[32];
 
   if ((ptid_get_lwp(ptid) == 0) && 
@@ -423,23 +344,6 @@ nbsd_pid_to_str (struct target_ops *ops, ptid_t ptid)
 
   return buf;
 }
-
-
-#ifdef notdef
-static void
-nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
-{
-  int regval;
-  td_thread_t *dummy;
-
-  if (strncmp (bfd_section_name (abfd, asect), ".reg/", 5) != 0)
-    return;
-
-  regval = atoi (bfd_section_name (abfd, asect) + 5);
-
-  add_thread (ptid_build (ptid_get_pid (main_ptid), regval, 0));
-}
-#endif
 
 /* This routine is called whenever a new symbol table is read in, or when all
    symbol tables are removed.  libthread_db can only be initialized when it
@@ -467,18 +371,6 @@ nbsd_thread_new_objfile (struct objfile *objfile)
     goto quit;
 
 
-  /* Now, initialize the thread debugging library.  This needs to be
-     done after the shared libraries are located because it needs
-     information from the user's thread library.  */
-  val = td_open (&nbsd_thread_callbacks, &main_arg, &main_ta);
-  if (val == TD_ERR_NOLIB)
-    goto quit;
-  else if (val != 0)
-    {
-      warning ("nbsd_thread_new_objfile: td_open: %s", td_err_string (val));
-      goto quit;
-    }
-
   nbsd_thread_present = 1;
 
   if ((nbsd_thread_core == 0) && 
@@ -496,8 +388,6 @@ static int
 nbsd_thread_alive (struct target_ops *ops, ptid_t ptid)
 {
   struct target_ops *beneath = find_target_beneath (ops);
-  td_thread_t *th;
-  td_thread_info_t ti;
   int val;
 
   if (nbsd_thread_active)
@@ -781,7 +671,6 @@ void
 _initialize_nbsd_thread (void)
 {
   init_nbsd_thread_ops ();
-  init_nbsd_proc_callbacks ();
 
   add_target (&nbsd_thread_ops);
 

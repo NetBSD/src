@@ -1,8 +1,8 @@
-# $NetBSD: XEN3_DOM0,v 1.127 2017/01/12 05:24:36 ryo Exp $
+# $NetBSD: XEN3_DOM0,v 1.127.2.1 2017/04/21 16:53:22 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
-#options 	MULTIPROCESSOR	# (experimental)
+#options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -86,6 +86,7 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 #options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
 #options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
+#options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
 # File systems
 file-system	FFS		# UFS
@@ -368,6 +369,7 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -802,6 +804,7 @@ hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 cinclude "arch/amd64/conf/GENERIC.local"
+cinclude "arch/amd64/conf/XEN3_DOM0.local"
 
 # Pseudo-Devices
 

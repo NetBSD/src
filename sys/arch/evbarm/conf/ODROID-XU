@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-XU,v 1.6 2015/10/29 00:15:48 mrg Exp $
+#	$NetBSD: ODROID-XU,v 1.6.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	ODROID-XU -- ODROID-XU Exynos5410 based kernel
 #
@@ -57,6 +57,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support

@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.13 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: uatp.c,v 1.13.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.13 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.13.2.1 2017/04/21 16:53:53 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -514,7 +514,6 @@ struct uatp_softc {
 
 	callout_t sc_untap_callout;	/* Releases button after tap.  */
 	kmutex_t sc_tap_mutex;		/* Protects the following fields.  */
-	kcondvar_t sc_tap_cv;		/* Signalled by untap callout.  */
 	enum uatp_tap_state sc_tap_state;	/* Current tap state.  */
 	unsigned int sc_tapping_fingers;	/* No. fingers tapping.  */
 	unsigned int sc_tapped_fingers;	/* No. fingers of last tap.  */
@@ -2019,7 +2018,6 @@ tap_initialize(struct uatp_softc *sc)
 	callout_init(&sc->sc_untap_callout, 0);
 	callout_setfunc(&sc->sc_untap_callout, untap_callout, sc);
 	mutex_init(&sc->sc_tap_mutex, MUTEX_DEFAULT, IPL_SOFTUSB);
-	cv_init(&sc->sc_tap_cv, "uatptap");
 }
 
 static void
@@ -2028,7 +2026,6 @@ tap_finalize(struct uatp_softc *sc)
 	/* XXX Can the callout still be scheduled here?  */
 	callout_destroy(&sc->sc_untap_callout);
 	mutex_destroy(&sc->sc_tap_mutex);
-	cv_destroy(&sc->sc_tap_cv);
 }
 
 static void
@@ -2056,6 +2053,7 @@ tap_disable(struct uatp_softc *sc)
 static void
 tap_reset(struct uatp_softc *sc)
 {
+
 	callout_stop(&sc->sc_untap_callout);
 	mutex_enter(&sc->sc_tap_mutex);
 	tap_transition_initial(sc);
@@ -2067,19 +2065,9 @@ tap_reset(struct uatp_softc *sc)
 static void
 tap_reset_wait(struct uatp_softc *sc)
 {
-	bool fired = callout_stop(&sc->sc_untap_callout);
 
+	callout_halt(&sc->sc_untap_callout, NULL);
 	mutex_enter(&sc->sc_tap_mutex);
-	if (fired)
-		while (sc->sc_tap_state == TAP_STATE_TAPPED)
-			if (cv_timedwait(&sc->sc_tap_cv, &sc->sc_tap_mutex,
-				mstohz(1000))) {
-				aprint_error_dev(uatp_dev(sc),
-				    "tap timeout\n");
-				break;
-			}
-	if (sc->sc_tap_state == TAP_STATE_TAPPED)
-		aprint_error_dev(uatp_dev(sc), "%s error\n", __func__);
 	tap_transition_initial(sc);
 	mutex_exit(&sc->sc_tap_mutex);
 }
@@ -2380,8 +2368,6 @@ untap_callout(void *arg)
 		break;
 	}
 	TAP_DEBUG_POST(sc);
-	/* XXX Broadcast only if state was TAPPED?  */
-	cv_broadcast(&sc->sc_tap_cv);
 	mutex_exit(&sc->sc_tap_mutex);
 }
 

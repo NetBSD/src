@@ -1,10 +1,10 @@
-/*	$NetBSD: syntax.c,v 1.1.1.4 2014/05/28 09:58:48 tron Exp $	*/
+/*	$NetBSD: syntax.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* syntax.c - routines to manage syntax definitions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: syntax.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -226,6 +229,7 @@ syn_add(
 			{
 				Debug( LDAP_DEBUG_ANY, "syn_add(%s): exactly one substitute syntax must be present\n",
 					ssyn->ssyn_syn.syn_oid, 0, 0 );
+				SLAP_FREE( ssyn );
 				return SLAP_SCHERR_SYN_SUBST_NOT_SPECIFIED;
 			}
 
@@ -233,6 +237,7 @@ syn_add(
 			if ( subst == NULL ) {
 				Debug( LDAP_DEBUG_ANY, "syn_add(%s): substitute syntax %s not found\n",
 					ssyn->ssyn_syn.syn_oid, (*lsei)->lsei_values[0], 0 );
+				SLAP_FREE( ssyn );
 				return SLAP_SCHERR_SYN_SUBST_NOT_FOUND;
 			}
 			break;

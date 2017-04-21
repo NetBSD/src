@@ -1,10 +1,10 @@
-/*	$NetBSD: dbcache.c,v 1.1.1.4 2014/05/28 09:58:48 tron Exp $	*/
+/*	$NetBSD: dbcache.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* dbcache.c - manage cache of open databases */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dbcache.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -197,6 +200,8 @@ bdb_db_cache(
 			"bdb_db_cache: db_open(%s) failed: %s (%d)\n",
 			name->bv_val, db_strerror(rc), rc );
 		ldap_pvt_thread_mutex_unlock( &bdb->bi_database_mutex );
+		db->bdi_db->close( db->bdi_db, 0 );
+		ch_free( db );
 		return rc;
 	}
 

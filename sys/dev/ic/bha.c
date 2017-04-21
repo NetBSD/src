@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.76 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: bha.c,v 1.76.4.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.76 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.76.4.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -1574,6 +1574,7 @@ bha_finish_ccbs(struct bha_softc *sc)
 
 		case BHA_MBI_ABORT:
 		case BHA_MBI_UNKNOWN:
+		case BHA_MBI_BADCCB:
 			/*
 			 * Even if the CCB wasn't found, we clear it anyway.
 			 * See preceding comment.

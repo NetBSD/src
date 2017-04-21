@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2014/08/10 17:58:51 joerg Exp $
+#	$NetBSD: Makefile,v 1.47.10.1 2017/04/21 16:51:11 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,7 @@ IMAGE=		ramdisk.fs
 #   src/sys/arch/macppc/conf/INSTALL
 #   src/sys/arch/macppc/conf/GENERIC_MD
 IMAGESIZE=	2560k
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
 DBG=		-Os

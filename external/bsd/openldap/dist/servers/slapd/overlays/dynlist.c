@@ -1,10 +1,10 @@
-/*	$NetBSD: dynlist.c,v 1.1.1.5 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: dynlist.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* dynlist.c - dynamic list overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * Portions Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
@@ -21,6 +21,9 @@
  * This work was initially developed by Pierangelo Masarati
  * for SysNet s.n.c., for inclusion in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dynlist.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1160,6 +1163,12 @@ done_uri:;
 					filter_free( filter );
 				}
 
+				while ( dlm != NULL ) {
+					dlml = dlm;
+					dlm = dlm->dlm_next;
+					ch_free( dlml );
+				}
+
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
 					c->log, c->cr_msg, 0 );
 
@@ -1176,7 +1185,8 @@ done_uri:;
 				c->argv[ attridx ] );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
 				c->log, c->cr_msg, 0 );
-			return 1;
+			rc = 1;
+			goto done_uri;
 		}
 
 		if ( !is_at_subtype( ad->ad_type, slap_schema.si_ad_labeledURI->ad_type ) ) {
@@ -1186,7 +1196,8 @@ done_uri:;
 				c->argv[ attridx ] );
 			Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
 				c->log, c->cr_msg, 0 );
-			return 1;
+			rc = 1;
+			goto done_uri;
 		}
 
 		attridx++;
@@ -1215,7 +1226,8 @@ done_uri:;
 						i - 3, c->argv[ i ] );
 					Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
 						c->log, c->cr_msg, 0 );
-					return 1;
+					rc = 1;
+					goto done_uri;
 				}
 				arg = cp + 1;
 			}
@@ -1228,7 +1240,8 @@ done_uri:;
 					i - 3, c->argv[ i ] );
 				Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
 					c->log, c->cr_msg, 0 );
-				return 1;
+				rc = 1;
+				goto done_uri;
 			}
 
 			dlmp = (dynlist_map_t *)ch_calloc( 1, sizeof( dynlist_map_t ) );
@@ -1257,7 +1270,8 @@ done_uri:;
 						c->valx );
 					Debug( LDAP_DEBUG_ANY, "%s: %s.\n",
 						c->log, c->cr_msg, 0 );
-					return 1;
+					rc = 1;
+					goto done_uri;
 				}
 				dlip = &(*dlip)->dli_next;
 			}

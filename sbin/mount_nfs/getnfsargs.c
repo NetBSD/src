@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.16 2013/06/29 22:56:26 christos Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.16.14.1 2017/04/21 16:53:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.16 2013/06/29 22:56:26 christos Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.16.14.1 2017/04/21 16:53:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ tryagain:
 			 * socket.
 			 */
 			clp = clnt_tp_create(hostp, RPCPROG_MNT, mntvers,
-			     mnttcp_ok ? nconf : getnetconfigent("udp"));
+			     mnttcp_ok ? nconf : getnetconfigent(netid));
 			if (clp == NULL) {
 				if ((opflags & ISBGRND) == 0) {
 					clnt_pcreateerror(

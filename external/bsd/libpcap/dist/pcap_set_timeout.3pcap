@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_set_timeout.3pcap,v 1.2 2014/11/19 19:33:30 christos Exp $
+.\"	$NetBSD: pcap_set_timeout.3pcap,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP_SET_TIMEOUT 3PCAP "16 April 2014"
+.TH PCAP_SET_TIMEOUT 3PCAP "1 December 2015"
 .SH NAME
 pcap_set_timeout \- set the read timeout for a not-yet-activated
 capture handle
@@ -38,10 +38,15 @@ sets the read timeout that will be used on a capture handle when
 the handle is activated to
 .IR to_ms ,
 which is in units of milliseconds.
+.LP
+The behavior, if the timeout isn't specified, is undefined.  We
+recommend always setting the timeout to a non-zero value unless
+immediate mode is set, in which case the timeout has no effect.
 .SH RETURN VALUE
 .B pcap_set_timeout()
 returns 0 on success or
 .B PCAP_ERROR_ACTIVATED
 if called on a capture handle that has been activated.
 .SH SEE ALSO
-pcap(3PCAP), pcap_create(3PCAP), pcap_activate(3PCAP)
+pcap(3PCAP), pcap_create(3PCAP), pcap_activate(3PCAP),
+pcap_set_immediate_mode(3PCAP)

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.20 2016/03/19 20:57:48 mrg Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.20.4.1 2017/04/21 16:53:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2016/03/19 20:57:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20.4.1 2017/04/21 16:53:21 bouyer Exp $");
 
 
 #ifdef DEBUG
@@ -132,7 +132,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_regs[R_SP] = alpha_pal_rdusp();
 
  	/* save the floating-point state, if necessary, then copy it. */
-	fpu_save();
+	fpu_save(l);
 	frame.sf_sc.sc_ownedfp = fpu_valid_p(l);
 	memcpy((struct fpreg *)frame.sf_sc.sc_fpregs, &pcb->pcb_fp,
 	    sizeof(struct fpreg));
@@ -281,7 +281,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
 	pcb = lwp_getpcb(l);
-	fpu_discard(true);
+	fpu_discard(l, true);
 	memcpy(&pcb->pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	pcb->pcb_fp.fpr_cr = ksc.sc_fpcr;

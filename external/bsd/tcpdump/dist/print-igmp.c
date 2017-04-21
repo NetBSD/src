@@ -21,19 +21,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-igmp.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-igmp.c,v 1.5.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Internet Group Management Protocol (IGMP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
-#include "extract.h"            /* must come after interface.h */
+#include "extract.h"
 
 #ifndef IN_CLASSD
 #define IN_CLASSD(i) (((int32_t)(i) & 0xf0000000) == 0xe0000000)
@@ -209,7 +210,7 @@ print_igmpv3_query(netdissect_options *ndo,
                    register const u_char *bp, register u_int len)
 {
     u_int mrc;
-    int mrt;
+    u_int mrt;
     u_int nsrcs;
     register u_int i;
 
@@ -231,7 +232,7 @@ print_igmpv3_query(netdissect_options *ndo,
         if (mrt < 600) {
             ND_PRINT((ndo, "%.1fs", mrt * 0.1));
         } else {
-            relts_print(ndo, mrt / 10);
+            unsigned_relts_print(ndo, mrt / 10);
         }
 	ND_PRINT((ndo, "]"));
     }
@@ -332,7 +333,7 @@ igmp_print(netdissect_options *ndo,
         break;
     }
 
-    if (ndo->ndo_vflag && ND_TTEST2(bp[0], len)) {
+    if (ndo->ndo_vflag && len >= 4 && ND_TTEST2(bp[0], len)) {
         /* Check the IGMP checksum */
         vec[0].ptr = bp;
         vec[0].len = len;

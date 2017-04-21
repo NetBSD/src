@@ -1,10 +1,10 @@
-/*	$NetBSD: shellutil.c,v 1.1.1.4 2014/05/28 09:58:53 tron Exp $	*/
+/*	$NetBSD: shellutil.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* shellutil.c - common routines useful when building shell-based backends */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,9 @@
  * (as part of U-MICH LDAP).
  */
 
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: shellutil.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 

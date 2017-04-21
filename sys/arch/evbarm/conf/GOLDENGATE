@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GOLDENGATE,v 1.12 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: GOLDENGATE,v 1.12.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	GOLDENGATE -- Cortina GOLDENGATE Eval Board Kernel
 #
@@ -52,6 +52,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support

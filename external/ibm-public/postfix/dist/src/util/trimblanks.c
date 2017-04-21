@@ -1,4 +1,4 @@
-/*	$NetBSD: trimblanks.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: trimblanks.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /*
 /*	char	*trimblanks(string, len)
 /*	char	*string;
-/*	int	len;
+/*	ssize_t	len;
 /* DESCRIPTION
 /*	trimblanks() returns a pointer to the beginning of the trailing
 /*	whitespace in \fIstring\fR, or a pointer to the string terminator
@@ -36,7 +36,7 @@
 
 #include "stringops.h"
 
-char   *trimblanks(char *string, int len)
+char   *trimblanks(char *string, ssize_t len)
 {
     char   *curr;
 

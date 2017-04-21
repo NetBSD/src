@@ -1,4 +1,4 @@
-# $NetBSD: HAWK,v 1.6 2015/08/21 01:52:07 uebayasi Exp $
+# $NetBSD: HAWK,v 1.6.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	HAWK -- TI OMAPL138 based Board Kernel
 #
@@ -33,6 +33,8 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental

@@ -64,12 +64,6 @@ static uint8_t prefix_sha256[] = {
 	0x65, 0x03, 0x04, 0x02, 0x01, 0x05, 0x00, 0x04, 0x20
 };
 
-static uint64_t	prefix_tiger[] = {
-	0x0123456789ABCDEFLL,
-	0xFEDCBA9876543210LL,
-	0xF096A5B4C3B2E187LL
-};
-
 static uint8_t prefix_rmd160[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2B, 0x24,
 	0x03, 0x02, 0x01, 0x05, 0x00, 0x04, 0x14
@@ -99,9 +93,6 @@ digest_alg_size(unsigned alg)
 		return 32;
 	case SHA512_HASH_ALG:
 		return 64;
-	case TIGER_HASH_ALG:
-	case TIGER2_HASH_ALG:
-		return TIGER_DIGEST_LENGTH;
 	default:
 		printf("hash_any: bad algorithm\n");
 		return 0;
@@ -151,20 +142,6 @@ digest_init(digest_t *hash, const uint32_t hashalg)
 		hash->len = sizeof(prefix_sha512);
 		hash->ctx = &hash->u.sha512ctx;
 		return 1;
-	case TIGER_HASH_ALG:
-		netpgpv_TIGER_Init(&hash->u.tigerctx);
-		hash->size = TIGER_DIGEST_LENGTH;
-		hash->prefix = prefix_tiger;
-		hash->len = sizeof(prefix_tiger);
-		hash->ctx = &hash->u.tigerctx;
-		return 1;
-	case TIGER2_HASH_ALG:
-		netpgpv_TIGER2_Init(&hash->u.tigerctx);
-		hash->size = TIGER_DIGEST_LENGTH;
-		hash->prefix = prefix_tiger;
-		hash->len = sizeof(prefix_tiger);
-		hash->ctx = &hash->u.tigerctx;
-		return 1;
 	default:
 		printf("hash_any: bad algorithm\n");
 		return 0;
@@ -182,8 +159,6 @@ static rec_t	hashalgs[] = {
 	{	"ripemd",	RIPEMD_HASH_ALG	},
 	{	"sha256",	SHA256_HASH_ALG	},
 	{	"sha512",	SHA512_HASH_ALG	},
-	{	"tiger",	TIGER_HASH_ALG	},
-	{	"tiger2",	TIGER2_HASH_ALG	},
 	{	NULL,		0		}
 };
 
@@ -223,10 +198,6 @@ digest_update(digest_t *hash, const uint8_t *data, size_t length)
 	case SHA512_HASH_ALG:
 		netpgpv_SHA512_Update(hash->ctx, data, length);
 		return 1;
-	case TIGER_HASH_ALG:
-	case TIGER2_HASH_ALG:
-		netpgpv_TIGER_Update(hash->ctx, data, length);
-		return 1;
 	default:
 		printf("hash_any: bad algorithm\n");
 		return 0;
@@ -254,9 +225,6 @@ digest_final(uint8_t *out, digest_t *hash)
 		break;
 	case SHA512_HASH_ALG:
 		netpgpv_SHA512_Final(out, hash->ctx);
-		break;
-	case TIGER_HASH_ALG:
-		netpgpv_TIGER_Final(out, hash->ctx);
 		break;
 	default:
 		printf("hash_any: bad algorithm\n");

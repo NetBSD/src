@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.4 2011/03/02 19:32:24 tron Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.4.30.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -99,6 +99,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -141,6 +146,7 @@
 #include <input_transp.h>
 #include <rec_attr_map.h>
 #include <mail_version.h>
+#include <smtputf8.h>
 
 /* Single-threaded server skeleton. */
 
@@ -200,7 +206,7 @@ static int cleanup_service_error_reason(PICKUP_INFO *info, int status,
      */
     if (reason == 0 || *reason == 0)
 	msg_warn("%s: error writing %s: %s",
-		  info->path, info->id, cleanup_strerror(status));
+		 info->path, info->id, cleanup_strerror(status));
     return ((status & (CLEANUP_STAT_BAD | CLEANUP_STAT_RCPT)) ?
 	    REMOVE_MESSAGE_FILE : KEEP_MESSAGE_FILE);
 }
@@ -397,8 +403,8 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      */
     rec_fputs(cleanup, REC_TYPE_END, "");
     if (attr_scan(cleanup, ATTR_FLAG_MISSING,
-		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
-		  ATTR_TYPE_STR, MAIL_ATTR_WHY, buf,
+		  RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
+		  RECV_ATTR_STR(MAIL_ATTR_WHY, buf),
 		  ATTR_TYPE_END) != 2)
 	return (cleanup_service_error(info, CLEANUP_STAT_WRITE));
 
@@ -467,13 +473,15 @@ static int pickup_file(PICKUP_INFO *info)
     /* As documented in postsuper(1). */
     if (MAIL_IS_REQUEUED(info))
 	cleanup_flags &= ~CLEANUP_FLAG_MILTER;
+    else
+	cleanup_flags |= smtputf8_autodetect(MAIL_SRC_MASK_SENDMAIL);
 
     cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, var_cleanup_service);
     if (attr_scan(cleanup, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buf,
+		  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, buf),
 		  ATTR_TYPE_END) != 1
 	|| attr_print(cleanup, ATTR_FLAG_NONE,
-		      ATTR_TYPE_INT, MAIL_ATTR_FLAGS, cleanup_flags,
+		      SEND_ATTR_INT(MAIL_ATTR_FLAGS, cleanup_flags),
 		      ATTR_TYPE_END) != 0) {
 	status = KEEP_MESSAGE_FILE;
     } else {
@@ -508,7 +516,7 @@ static void pickup_free(PICKUP_INFO *info)
 
 /* pickup_service - service client */
 
-static void pickup_service(char *unused_buf, int unused_len,
+static void pickup_service(char *unused_buf, ssize_t unused_len,
 			           char *unused_service, char **argv)
 {
     SCAN_DIR *scan;
@@ -604,9 +612,9 @@ int     main(int argc, char **argv)
      * submissions.
      */
     trigger_server_main(argc, argv, pickup_service,
-			MAIL_SERVER_STR_TABLE, str_table,
-			MAIL_SERVER_POST_INIT, post_jail_init,
-			MAIL_SERVER_SOLITARY,
-			MAIL_SERVER_WATCHDOG, &var_daemon_timeout,
+			CA_MAIL_SERVER_STR_TABLE(str_table),
+			CA_MAIL_SERVER_POST_INIT(post_jail_init),
+			CA_MAIL_SERVER_SOLITARY,
+			CA_MAIL_SERVER_WATCHDOG(&var_daemon_timeout),
 			0);
 }

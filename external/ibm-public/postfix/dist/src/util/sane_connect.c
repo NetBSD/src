@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_connect.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_connect.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -43,7 +43,7 @@
 
 /* sane_connect - sanitize connect() results */
 
-int     sane_connect(int sock, struct sockaddr * sa, SOCKADDR_SIZE len)
+int     sane_connect(int sock, struct sockaddr *sa, SOCKADDR_SIZE len)
 {
 
     /*
@@ -61,7 +61,7 @@ int     sane_connect(int sock, struct sockaddr * sa, SOCKADDR_SIZE len)
 	int     on = 1;
 
 	(void) setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,
-			  (char *) &on, sizeof(on));
+			  (void *) &on, sizeof(on));
     }
     return (connect(sock, sa, len));
 }

@@ -18,17 +18,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-msdp.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-msdp.c,v 1.4.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Multicast Source Discovery Protocol (MSDP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 

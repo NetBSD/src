@@ -1,10 +1,10 @@
-/*	$NetBSD: getpeereid.c,v 1.1.1.5 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: getpeereid.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* getpeereid.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,9 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1			/* Needed for glibc struct ucred */
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: getpeereid.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: schema-map.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: schema-map.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -22,6 +22,9 @@
  * by OpenLDAP Software.  Additional significant contributors include
  * Pierangelo Masarati and Mark Adamson.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: schema-map.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $");
 
 #include "portable.h"
 
@@ -423,6 +426,7 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 				Debug( LDAP_DEBUG_TRACE, "backsql_oc_get_attr_mapping(): "
 					"unable to fetch attribute \"%s\": %s (%d)\n",
 					buf, text, rc );
+				ch_free( at_map );
 				return BACKSQL_AVL_STOP;
 			}
 		}
@@ -471,6 +475,7 @@ backsql_oc_get_attr_mapping( void *v_oc, void *v_bas )
 					"in objectClass \"%s\" map\n",
 					at_map->bam_ad->ad_cname.bv_val,
 					oc_map->bom_oc->soc_cname.bv_val, 0 );
+			ch_free( at_map );
 		}
 
 		if ( !BER_BVISNULL( &bas->bas_bi->sql_upper_func ) &&
@@ -622,6 +627,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 			Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 				"unable to parse id=\"%s\"\n", 
 				oc_row.cols[ 0 ], 0, 0 );
+			ch_free( oc_map );
 			return LDAP_OTHER;
 		}
 
@@ -630,6 +636,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 			Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 				"objectClass \"%s\" is not defined in schema\n", 
 				oc_row.cols[ 1 ], 0, 0 );
+			ch_free( oc_map );
 			return LDAP_OTHER;	/* undefined objectClass ? */
 		}
 		
@@ -648,6 +655,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 			Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 				"unable to parse expect_return=\"%s\" for objectClass \"%s\"\n", 
 				oc_row.cols[ delete_proc_idx + 1 ], oc_row.cols[ 1 ], 0 );
+			ch_free( oc_map );
 			return LDAP_OTHER;
 		}
 
@@ -668,6 +676,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 						text, rc );
 				backsql_PrintErrors( bi->sql_db_env, dbh,
 						sth, rc );
+				ch_free( oc_map );
 				return LDAP_OTHER;
 			}
 		}
@@ -682,6 +691,7 @@ backsql_load_schema_map( backsql_info *bi, SQLHDBC dbh )
 			Debug( LDAP_DEBUG_TRACE, "backsql_load_schema_map(): "
 					"duplicate objectClass \"%s\" in objectClass map\n",
 					oc_map->bom_oc->soc_cname.bv_val, 0, 0 );
+			ch_free( oc_map );
 			return LDAP_OTHER;
 		}
 		if ( avl_insert( &bi->sql_oc_by_id, oc_map, backsql_cmp_oc_id, avl_dup_error ) == -1 ) {

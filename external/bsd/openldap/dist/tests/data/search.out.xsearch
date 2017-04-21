@@ -635,6 +635,9 @@ dn: dc=example,dc=com
 dc: example
 o: Example, Inc.
 
+dn: dc=example,dc=com
+dc: example
+
 dn: cn=Subschema
 attributeTypes: ( 0.9.2342.19200300.100.1.25 NAME ( 'dc' 'domainComponent' ) D
  ESC 'RFC1274/2247: domain component' EQUALITY caseIgnoreIA5Match SUBSTR caseI

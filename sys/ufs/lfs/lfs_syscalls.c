@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.172 2015/10/15 06:15:48 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.172.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.172 2015/10/15 06:15:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.172.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -253,7 +253,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	cnt = blkcnt;
 
-	if ((error = vfs_busy(mntp, NULL)) != 0)
+	if ((error = vfs_busy(mntp)) != 0)
 		return (error);
 
 	/*
@@ -465,10 +465,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 		numrefed--;
 	}
 
-#ifdef DIAGNOSTIC
-	if (numrefed != 0)
-		panic("lfs_markv: numrefed=%d", numrefed);
-#endif
+	KASSERTMSG((numrefed == 0), "lfs_markv: numrefed=%d", numrefed);
 	DLOG((DLOG_CLEAN, "lfs_markv: writing %d blks %d inos (check point)\n",
 	      nblkwritten, ninowritten));
 
@@ -482,7 +479,7 @@ lfs_markv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	lfs_segunlock(fs);
 
-	vfs_unbusy(mntp, false, NULL);
+	vfs_unbusy(mntp);
 	if (error)
 		return (error);
 	else if (do_again)
@@ -511,11 +508,8 @@ err3:
 	}
 
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp, false, NULL);
-#ifdef DIAGNOSTIC
-	if (numrefed != 0)
-		panic("lfs_markv: numrefed=%d", numrefed);
-#endif
+	vfs_unbusy(mntp);
+	KASSERTMSG((numrefed == 0), "lfs_markv: numrefed=%d", numrefed);
 
 	return (error);
 }
@@ -657,7 +651,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
 
-	if ((error = vfs_busy(mntp, NULL)) != 0)
+	if ((error = vfs_busy(mntp)) != 0)
 		return (error);
 
 	ump = VFSTOULFS(mntp);
@@ -769,12 +763,9 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		numrefed--;
 	}
 
-#ifdef DIAGNOSTIC
-	if (numrefed != 0)
-		panic("lfs_bmapv: numrefed=%d", numrefed);
-#endif
+	KASSERTMSG((numrefed == 0), "lfs_bmapv: numrefed=%d", numrefed);
 
-	vfs_unbusy(mntp, false, NULL);
+	vfs_unbusy(mntp);
 
 	return 0;
 }
@@ -813,7 +804,7 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	fs = VFSTOULFS(mntp)->um_lfs;
 	segnum = SCARG(uap, segment);
 
-	if ((error = vfs_busy(mntp, NULL)) != 0)
+	if ((error = vfs_busy(mntp)) != 0)
 		return (error);
 
 	KERNEL_LOCK(1, NULL);
@@ -821,7 +812,7 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	error = lfs_do_segclean(fs, segnum);
 	lfs_segunlock(fs);
 	KERNEL_UNLOCK_ONE(NULL);
-	vfs_unbusy(mntp, false, NULL);
+	vfs_unbusy(mntp);
 	return error;
 }
 

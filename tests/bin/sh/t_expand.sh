@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.8 2016/04/29 18:29:17 christos Exp $
+# $NetBSD: t_expand.sh,v 1.8.4.1 2017/04/21 16:54:09 bouyer Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -227,6 +227,8 @@ iteration_on_null_or_missing_parameter_body() {
 		'N=; set -- ${N:-}; for X; do echo "[$X]"; done'
 }
 
+####### The remaining tests use the following helper functions ...
+
 nl='
 '
 reset()
@@ -311,6 +313,8 @@ check()
 
 results()
 {
+	test -n "$1" && atf_expect_fail "$1"
+
 	test -z "${TEST_ID}" && return 0
 	test -z "${TEST_FAILURES}" && return 0
 
@@ -318,9 +322,12 @@ results()
 	echo >&2 "While testing '${TEST_ID}'"
 	echo >&2 " - - - - - - - - - - - - - - - - -"
 	echo >&2 "${TEST_FAILURES}"
+
 	atf_fail \
- "Test ${TEST_ID}: $TEST_FAIL_COUNT subtests (of $TEST_NUM) failed - see stderr"
+ "Test ${TEST_ID}: $TEST_FAIL_COUNT (of $TEST_NUM) subtests failed - see stderr"
 }
+
+####### End helpers
 
 atf_test_case shell_params
 shell_params_head() {
@@ -366,15 +373,312 @@ shell_params_body() {
 	results
 }
 
+atf_test_case var_with_embedded_cmdsub
+var_with_embedded_cmdsub_head() {
+	atf_set "descr" "Test expansion of vars with embedded cmdsub"
+}
+var_with_embedded_cmdsub_body() {
+
+	reset var_with_embedded_cmdsub
+
+	check 'unset x; echo ${x-$(echo a)}$(echo b)'  'ab' 0	#1
+	check 'unset x; echo ${x:-$(echo a)}$(echo b)' 'ab' 0	#2
+	check 'x=""; echo ${x-$(echo a)}$(echo b)'     'b'  0	#3
+	check 'x=""; echo ${x:-$(echo a)}$(echo b)'    'ab' 0	#4
+	check 'x=c; echo ${x-$(echo a)}$(echo b)'      'cb' 0	#5
+	check 'x=c; echo ${x:-$(echo a)}$(echo b)'     'cb' 0	#6
+
+	check 'unset x; echo ${x+$(echo a)}$(echo b)'  'b'  0	#7
+	check 'unset x; echo ${x:+$(echo a)}$(echo b)' 'b'  0	#8
+	check 'x=""; echo ${x+$(echo a)}$(echo b)'     'ab' 0	#9
+	check 'x=""; echo ${x:+$(echo a)}$(echo b)'    'b'  0	#10
+	check 'x=c; echo ${x+$(echo a)}$(echo b)'      'ab' 0	#11
+	check 'x=c; echo ${x:+$(echo a)}$(echo b)'     'ab' 0	#12
+
+	check 'unset x; echo ${x=$(echo a)}$(echo b)'  'ab' 0	#13
+	check 'unset x; echo ${x:=$(echo a)}$(echo b)' 'ab' 0	#14
+	check 'x=""; echo ${x=$(echo a)}$(echo b)'     'b'  0	#15
+	check 'x=""; echo ${x:=$(echo a)}$(echo b)'    'ab' 0	#16
+	check 'x=c; echo ${x=$(echo a)}$(echo b)'      'cb' 0	#17
+	check 'x=c; echo ${x:=$(echo a)}$(echo b)'     'cb' 0	#18
+
+	check 'unset x; echo ${x?$(echo a)}$(echo b)'  ''   2	#19
+	check 'unset x; echo ${x:?$(echo a)}$(echo b)' ''   2	#20
+	check 'x=""; echo ${x?$(echo a)}$(echo b)'     'b'  0	#21
+	check 'x=""; echo ${x:?$(echo a)}$(echo b)'    ''   2	#22
+	check 'x=c; echo ${x?$(echo a)}$(echo b)'      'cb' 0	#23
+	check 'x=c; echo ${x:?$(echo a)}$(echo b)'     'cb' 0	#24
+
+	check 'unset x; echo ${x%$(echo a)}$(echo b)'  'b'  0	#25
+	check 'unset x; echo ${x%%$(echo a)}$(echo b)' 'b'  0	#26
+	check 'x=""; echo ${x%$(echo a)}$(echo b)'     'b'  0	#27
+	check 'x=""; echo ${x%%$(echo a)}$(echo b)'    'b'  0	#28
+	check 'x=c; echo ${x%$(echo a)}$(echo b)'      'cb' 0	#29
+	check 'x=c; echo ${x%%$(echo a)}$(echo b)'     'cb' 0	#30
+	check 'x=aa; echo ${x%$(echo "*a")}$(echo b)'  'ab' 0	#31
+	check 'x=aa; echo ${x%%$(echo "*a")}$(echo b)' 'b'  0	#32
+
+	check 'unset x; echo ${x#$(echo a)}$(echo b)'  'b'  0	#33
+	check 'unset x; echo ${x##$(echo a)}$(echo b)' 'b'  0	#34
+	check 'x=""; echo ${x#$(echo a)}$(echo b)'     'b'  0	#35
+	check 'x=""; echo ${x##$(echo a)}$(echo b)'    'b'  0	#36
+	check 'x=c; echo ${x#$(echo a)}$(echo b)'      'cb' 0	#37
+	check 'x=c; echo ${x##$(echo a)}$(echo b)'     'cb' 0	#38
+	check 'x=aa; echo ${x#$(echo "*a")}$(echo b)'  'ab' 0	#39
+	check 'x=aa; echo ${x##$(echo "*a")}$(echo b)' 'b'  0	#40
+
+	results
+}
+
+atf_test_case dollar_star
+dollar_star_head() {
+	atf_set "descr" 'Test expansion of various aspects of $*'
+}
+dollar_star_body() {
+
+	reset # dollar_star
+
+	check 'set -- a b c; echo $# $*'		'3 a b c'	0  # 1
+	check 'set -- a b c; echo $# "$*"'		'3 a b c'	0  # 2
+	check 'set -- a "b c"; echo $# $*'		'2 a b c'	0  # 3
+	check 'set -- a "b c"; echo $# "$*"'		'2 a b c'	0  # 4
+	check 'set -- a b c; set -- $* ; echo $# $*'	'3 a b c'	0  # 5
+	check 'set -- a b c; set -- "$*" ; echo $# $*'	'1 a b c'	0  # 6
+	check 'set -- a "b c"; set -- $* ; echo $# $*'	'3 a b c'	0  # 7
+	check 'set -- a "b c"; set -- "$*" ; echo $# $*' \
+							'1 a b c'	0  # 8
+
+	check 'IFS=". "; set -- a b c; echo $# $*'	'3 a b c'	0  # 9
+	check 'IFS=". "; set -- a b c; echo $# "$*"'	'3 a.b.c'	0  #10
+	check 'IFS=". "; set -- a "b c"; echo $# $*'	'2 a b c'	0  #11
+	check 'IFS=". "; set -- a "b c"; echo $# "$*"'	'2 a.b c'	0  #12
+	check 'IFS=". "; set -- a "b.c"; echo $# $*'	'2 a b c'	0  #13
+	check 'IFS=". "; set -- a "b.c"; echo $# "$*"'	'2 a.b.c'	0  #14
+	check 'IFS=". "; set -- a b c; set -- $* ; echo $# $*' \
+							'3 a b c'	0  #15
+	check 'IFS=". "; set -- a b c; set -- "$*" ; echo $# $*' \
+							'1 a b c'	0  #16
+	check 'IFS=". "; set -- a "b c"; set -- $* ; echo $# $*' \
+							'3 a b c'	0  #17
+	check 'IFS=". "; set -- a "b c"; set -- "$*" ; echo $# $*' \
+							'1 a b c'	0  #18
+	check 'IFS=". "; set -- a b c; set -- $* ; echo $# "$*"' \
+							'3 a.b.c'	0  #19
+	check 'IFS=". "; set -- a b c; set -- "$*" ; echo $# "$*"' \
+							'1 a.b.c'	0  #20
+	check 'IFS=". "; set -- a "b c"; set -- $* ; echo $# "$*"' \
+							'3 a.b.c'	0  #21
+	check 'IFS=". "; set -- a "b c"; set -- "$*" ; echo $# "$*"' \
+							'1 a.b c'	0  #22
+
+	results
+}
+
+atf_test_case dollar_star_in_word
+dollar_star_in_word_head() {
+	atf_set "descr" 'Test expansion $* occurring in word of ${var:-word}'
+}
+dollar_star_in_word_body() {
+
+	reset dollar_star_in_word
+
+	unset xXx			; # just in case!
+
+	# Note that the expected results for these tests are identical
+	# to those from the dollar_star test.   It should never make
+	# a difference whether we expand $* or ${unset:-$*}
+
+	# (note expanding ${unset:-"$*"} is different, that is not tested here)
+
+	check 'set -- a b c; echo $# ${xXx:-$*}'		'3 a b c' 0  # 1
+	check 'set -- a b c; echo $# "${xXx:-$*}"'		'3 a b c' 0  # 2
+	check 'set -- a "b c"; echo $# ${xXx:-$*}'		'2 a b c' 0  # 3
+	check 'set -- a "b c"; echo $# "${xXx:-$*}"'		'2 a b c' 0  # 4
+	check 'set -- a b c; set -- ${xXx:-$*} ; echo $# $*'	'3 a b c' 0  # 5
+	check 'set -- a b c; set -- "${xXx:-$*}" ; echo $# $*'	'1 a b c' 0  # 6
+	check 'set -- a "b c"; set -- ${xXx:-$*} ; echo $# $*'	'3 a b c' 0  # 7
+	check 'set -- a "b c"; set -- "${xXx:-$*}" ; echo $# $*' \
+								'1 a b c' 0  # 8
+
+	check 'IFS=". "; set -- a b c; echo $# ${xXx:-$*}'	'3 a b c' 0  # 9
+	check 'IFS=". "; set -- a b c; echo $# "${xXx:-$*}"'	'3 a.b.c' 0  #10
+	check 'IFS=". "; set -- a "b c"; echo $# ${xXx:-$*}'	'2 a b c' 0  #11
+	check 'IFS=". "; set -- a "b c"; echo $# "${xXx:-$*}"'	'2 a.b c' 0  #12
+	check 'IFS=". "; set -- a "b.c"; echo $# ${xXx:-$*}'	'2 a b c' 0  #13
+	check 'IFS=". "; set -- a "b.c"; echo $# "${xXx:-$*}"'	'2 a.b.c' 0  #14
+	check 'IFS=". ";set -- a b c;set -- ${xXx:-$*};echo $# ${xXx:-$*}' \
+								'3 a b c' 0  #15
+	check 'IFS=". ";set -- a b c;set -- "${xXx:-$*}";echo $# ${xXx:-$*}' \
+								'1 a b c' 0  #16
+	check 'IFS=". ";set -- a "b c";set -- ${xXx:-$*};echo $# ${xXx:-$*}' \
+								'3 a b c' 0  #17
+	check 'IFS=". ";set -- a "b c";set -- "${xXx:-$*}";echo $# ${xXx:-$*}' \
+								'1 a b c' 0  #18
+	check 'IFS=". ";set -- a b c;set -- ${xXx:-$*};echo $# "${xXx:-$*}"' \
+								'3 a.b.c' 0  #19
+	check 'IFS=". ";set -- a b c;set -- "$*";echo $# "$*"' \
+								'1 a.b.c' 0  #20
+	check 'IFS=". ";set -- a "b c";set -- $*;echo $# "$*"' \
+								'3 a.b.c' 0  #21
+	check 'IFS=". ";set -- a "b c";set -- "$*";echo $# "$*"' \
+								'1 a.b c' 0  #22
+
+	results
+}
+
+atf_test_case dollar_star_with_empty_ifs
+dollar_star_with_empty_ifs_head() {
+	atf_set "descr" 'Test expansion of $* with IFS=""'
+}
+dollar_star_with_empty_ifs_body() {
+
+	reset dollar_star_with_empty_ifs
+
+	check 'IFS=""; set -- a b c; echo $# $*'	'3 a b c'	0  # 1
+	check 'IFS=""; set -- a b c; echo $# "$*"'	'3 abc'		0  # 2
+	check 'IFS=""; set -- a "b c"; echo $# $*'	'2 a b c'	0  # 3
+	check 'IFS=""; set -- a "b c"; echo $# "$*"'	'2 ab c'	0  # 4
+	check 'IFS=""; set -- a "b.c"; echo $# $*'	'2 a b.c'	0  # 5
+	check 'IFS=""; set -- a "b.c"; echo $# "$*"'	'2 ab.c'	0  # 6
+	check 'IFS=""; set -- a b c; set -- $* ; echo $# $*' \
+							'3 a b c'	0  # 7
+	check 'IFS=""; set -- a b c; set -- "$*" ; echo $# $*' \
+							'1 abc'		0  # 8
+	check 'IFS=""; set -- a "b c"; set -- $* ; echo $# $*' \
+							'2 a b c'	0  # 9
+	check 'IFS=""; set -- a "b c"; set -- "$*" ; echo $# $*' \
+							'1 ab c'	0  #10
+	check 'IFS=""; set -- a b c; set -- $* ; echo $# "$*"' \
+							'3 abc'		0  #11
+	check 'IFS=""; set -- a b c; set -- "$*" ; echo $# "$*"' \
+							'1 abc'		0  #12
+	check 'IFS=""; set -- a "b c"; set -- $* ; echo $# "$*"' \
+							'2 ab c'	0  #13
+	check 'IFS=""; set -- a "b c"; set -- "$*" ; echo $# "$*"' \
+							'1 ab c'	0  #14
+
+	results	  # FIXED: 'PR bin/52090 expect 7 of 14 subtests to fail'
+}
+
+atf_test_case dollar_star_in_word_empty_ifs
+dollar_star_in_word_empty_ifs_head() {
+	atf_set "descr" 'Test expansion of ${unset:-$*} with IFS=""'
+}
+dollar_star_in_word_empty_ifs_body() {
+
+	reset dollar_star_in_word_empty_ifs
+
+	unset xXx			; # just in case
+
+	# Note that the expected results for these tests are identical
+	# to those from the dollar_star_with_empty_ifs test.   It should
+	# never make a difference whether we expand $* or ${unset:-$*}
+
+	# (note expanding ${unset:-"$*"} is different, that is not tested here)
+
+	check 'IFS="";set -- a b c;echo $# ${xXx:-$*}'		'3 a b c' 0  # 1
+	check 'IFS="";set -- a b c;echo $# "${xXx:-$*}"'	'3 abc'	  0  # 2
+	check 'IFS="";set -- a "b c";echo $# ${xXx:-$*}'	'2 a b c' 0  # 3
+	check 'IFS="";set -- a "b c";echo $# "${xXx:-$*}"'	'2 ab c'  0  # 4
+	check 'IFS="";set -- a "b.c";echo $# ${xXx:-$*}'	'2 a b.c' 0  # 5
+	check 'IFS="";set -- a "b.c";echo $# "${xXx:-$*}"'	'2 ab.c'  0  # 6
+	check 'IFS="";set -- a b c;set -- ${xXx:-$*};echo $# ${xXx:-$*}' \
+								'3 a b c' 0  # 7
+	check 'IFS="";set -- a b c;set -- "${xXx:-$*}";echo $# ${xXx:-$*}' \
+								'1 abc'   0  # 8
+	check 'IFS="";set -- a "b c";set -- ${xXx:-$*};echo $# ${xXx:-$*}' \
+								'2 a b c' 0  # 9
+	check 'IFS="";set -- a "b c";set -- "${xXx:-$*}";echo $# ${xXx:-$*}' \
+								'1 ab c'  0  #10
+	check 'IFS="";set -- a b c;set -- ${xXx:-$*};echo $# "${xXx:-$*}"' \
+								'3 abc'	  0  #11
+	check 'IFS="";set -- a b c;set -- "${xXx:-$*}";echo $# "${xXx:-$*}"' \
+								'1 abc'	  0  #12
+	check 'IFS="";set -- a "b c";set -- ${xXx:-$*};echo $# "${xXx:-$*}"' \
+								'2 ab c'  0  #13
+	check 'IFS="";set -- a "b c";set -- "${xXx:-$*}";echo $# "${xXx:-$*}"' \
+								'1 ab c'  0  #14
+
+	results	  # FIXED: 'PR bin/52090 expect 7 of 14 subtests to fail'
+}
+
+atf_test_case dollar_star_in_quoted_word
+dollar_star_in_quoted_word_head() {
+	atf_set "descr" 'Test expansion $* occurring in word of ${var:-"word"}'
+}
+dollar_star_in_quoted_word_body() {
+
+	reset dollar_star_in_quoted_word
+
+	unset xXx			; # just in case!
+
+	check 'set -- a b c; echo $# ${xXx:-"$*"}'		'3 a b c' 0  # 1
+	check 'set -- a "b c"; echo $# ${xXx:-"$*"}'		'2 a b c' 0  # 2
+	check 'set -- a b c; set -- ${xXx:-"$*"} ; echo $# ${xXx-"$*"}' \
+								'1 a b c' 0  # 3
+	check 'set -- a "b c"; set -- ${xXx:-"$*"} ; echo $# ${xXx-"$*"}' \
+								'1 a b c' 0  # 4
+	check 'set -- a b c; set -- ${xXx:-"$*"} ; echo $# ${xXx-"$*"}' \
+								'1 a b c' 0  # 5
+	check 'set -- a "b c"; set -- ${xXx:-"$*"} ; echo $# ${xXx-$*}' \
+								'1 a b c' 0  # 6
+	check 'set -- a b c; set -- ${xXx:-$*} ; echo $# ${xXx-"$*"}' \
+								'3 a b c' 0  # 7
+	check 'set -- a "b c"; set -- ${xXx:-$*} ; echo $# ${xXx-"$*"}' \
+								'3 a b c' 0  # 8
+
+	check 'IFS=". "; set -- a b c; echo $# ${xXx:-"$*"}'	'3 a.b.c' 0  # 9
+	check 'IFS=". "; set -- a "b c"; echo $# ${xXx:-"$*"}'	'2 a.b c' 0  #10
+	check 'IFS=". "; set -- a "b.c"; echo $# ${xXx:-"$*"}'	'2 a.b.c' 0  #11
+	check 'IFS=". ";set -- a b c;set -- ${xXx:-"$*"};echo $# ${xXx:-"$*"}' \
+								'1 a.b.c' 0  #12
+      check 'IFS=". ";set -- a "b c";set -- ${xXx:-"$*"};echo $# ${xXx:-"$*"}' \
+								'1 a.b c' 0  #13
+	check 'IFS=". ";set -- a b c;set -- ${xXx:-$*};echo $# ${xXx:-"$*"}' \
+								'3 a.b.c' 0  #14
+	check 'IFS=". ";set -- a "b c";set -- ${xXx:-$*};echo $# ${xXx:-"$*"}' \
+								'3 a.b.c' 0  #15
+	check 'IFS=". ";set -- a b c;set -- ${xXx:-"$*"};echo $# ${xXx:-$*}' \
+								'1 a b c' 0  #16
+	check 'IFS=". ";set -- a "b c";set -- ${xXx:-"$*"};echo $# ${xXx:-$*}' \
+								'1 a b c' 0  #17
+
+	check 'IFS="";set -- a b c;echo $# ${xXx:-"$*"}'	'3 abc'   0  #18
+	check 'IFS="";set -- a "b c";echo $# ${xXx:-"$*"}'	'2 ab c'  0  #19
+	check 'IFS="";set -- a "b.c";echo $# ${xXx:-"$*"}'	'2 ab.c'  0  #20
+	check 'IFS="";set -- a b c;set -- ${xXx:-"$*"};echo $# ${xXx:-"$*"}' \
+								'1 abc'   0  #21
+	check 'IFS="";set -- a "b c";set -- ${xXx:-"$*"};echo $# ${xXx:-"$*"}' \
+								'1 ab c'  0  #22
+	check 'IFS="";set -- a b c;set -- ${xXx:-$*};echo $# ${xXx:-"$*"}' \
+								'3 abc'   0  #23
+	check 'IFS="";set -- a "b c";set -- ${xXx:-$*};echo $# ${xXx:-"$*"}' \
+								'2 ab c'  0  #24
+	check 'IFS="";set -- a b c;set -- ${xXx:-"$*"};echo $# ${xXx:-$*}' \
+								'1 abc'   0  #25
+	check 'IFS="";set -- a "b c";set -- ${xXx:-"$*"};echo $# ${xXx:-$*}' \
+								'1 ab c'  0  #26
+
+	results	  # FIXED: 'PR bin/52090 - 2 of 26 subtests expected to fail'
+}
+
 atf_init_test_cases() {
+	# Listed here in the order ATF runs them, not the order from above
+
+	atf_add_test_case arithmetic
 	atf_add_test_case dollar_at
 	atf_add_test_case dollar_at_with_text
-	atf_add_test_case strip
-	atf_add_test_case varpattern_backslashes
-	atf_add_test_case arithmetic
+	atf_add_test_case dollar_star
+	atf_add_test_case dollar_star_in_quoted_word
+	atf_add_test_case dollar_star_in_word
+	atf_add_test_case dollar_star_in_word_empty_ifs
+	atf_add_test_case dollar_star_with_empty_ifs
 	atf_add_test_case iteration_on_null_parameter
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter
 	atf_add_test_case iteration_on_null_or_missing_parameter
 	atf_add_test_case shell_params
+	atf_add_test_case strip
+	atf_add_test_case var_with_embedded_cmdsub
+	atf_add_test_case varpattern_backslashes
 }

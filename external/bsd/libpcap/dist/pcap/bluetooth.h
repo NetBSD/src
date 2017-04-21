@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.3 2015/03/31 21:39:43 christos Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.3.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
@@ -33,8 +33,8 @@
  * By Paolo Abeni <paolo.abeni@email.it>
  */
 
-#ifndef _PCAP_BLUETOOTH_STRUCTS_H__
-#define _PCAP_BLUETOOTH_STRUCTS_H__
+#ifndef lib_pcap_bluetooth_h
+#define lib_pcap_bluetooth_h
 
 /*
  * Header prepended libpcap to each bluetooth h4 frame,

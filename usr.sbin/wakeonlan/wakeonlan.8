@@ -1,6 +1,6 @@
-.\" $NetBSD: wakeonlan.8,v 1.1 2012/05/26 01:58:20 uebayasi Exp $
+.\" $NetBSD: wakeonlan.8,v 1.1.24.1 2017/04/21 16:54:19 bouyer Exp $
 .\"
-.\" Copyright (c) 2009, 2010 Marc Balmer <marc@msys.ch>
+.\" Copyright (c) 2009 - 2017 Marc Balmer <marc@msys.ch>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 25, 2012
+.Dd February 26, 2017
 .Dt WAKEONLAN 8
 .Os
 .Sh NAME
@@ -43,8 +43,7 @@ If there is only one Ethernet device available that is up and running, then the
 argument can be omitted.
 .Ar lladdr
 is the link layer address of the remote machine.
-This can be specified as the actual hardware address
-(six hexadecimal numbers separated by colons)
+This can be specified as a hardware address
 or as a hostname entry in
 .Pa /etc/ethers .
 .Nm

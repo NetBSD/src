@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.229 2016/11/18 06:50:04 knakahara Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.229.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.229 2016/11/18 06:50:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.229.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -468,25 +468,16 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 {
 	struct mbuf *opts = NULL;
 	struct mbuf *n;
-	struct inpcb *inp = NULL;
+	struct inpcb *inp;
 
-	if (!so)
-		return;
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		inp = sotoinpcb(so);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		break;
-#endif
-	default:
-		return;
-	}
+	KASSERT(so != NULL);
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET);
+	inp = sotoinpcb(so);
+	KASSERT(inp != NULL);
 
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
-	if (ipsec_used && so != NULL && ipsec4_in_reject_so(m, so)) {
+	if (ipsec_used && ipsec4_in_reject(m, inp)) {
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
@@ -496,11 +487,11 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 #endif /*IPSEC*/
 
 	if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
-		if (inp && (inp->inp_flags & INP_CONTROLOPTS
+		if (inp->inp_flags & INP_CONTROLOPTS
 #ifdef SO_OTIMESTAMP
 			 || so->so_options & SO_OTIMESTAMP
 #endif
-			 || so->so_options & SO_TIMESTAMP)) {
+			 || so->so_options & SO_TIMESTAMP) {
 			struct ip *ip = mtod(n, struct ip *);
 			ip_savecontrol(inp, &opts, ip, n);
 		}
@@ -848,7 +839,7 @@ udp_output(struct mbuf *m, struct inpcb *inp)
 
 	return (ip_output(m, inp->inp_options, ro,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-	    inp->inp_moptions, inp->inp_socket));
+	    inp->inp_moptions, inp));
 
 release:
 	m_freem(m);
@@ -1140,15 +1131,17 @@ udp_purgeif(struct socket *so, struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	in_pcbpurgeif0(&udbtable, ifp);
-	in_purgeif(ifp);
-	in_pcbpurgeif(&udbtable, ifp);
-#ifndef NET_MPSAFE
+#ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
+	in_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
+	in_pcbpurgeif(&udbtable, ifp);
+	mutex_exit(softnet_lock);
 	splx(s);
 
 	return 0;

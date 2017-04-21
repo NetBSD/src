@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.48 2014/11/09 17:48:08 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.48.6.1 2017/04/21 16:53:42 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48 2014/11/09 17:48:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48.6.1 2017/04/21 16:53:42 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
 
 #ifdef PPC_HAVE_FPU
-	fpu_save();
+	fpu_save(l);
 #endif
 	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpreg, sizeof(frame.lfp_regs));
 

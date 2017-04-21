@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rr.c,v 1.1.1.3 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: dns_rr.c,v 1.1.1.3.10.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -143,7 +143,7 @@ void    dns_rr_free(DNS_RR *rr)
 	    dns_rr_free(rr->next);
 	myfree(rr->qname);
 	myfree(rr->rname);
-	myfree((char *) rr);
+	myfree((void *) rr);
     }
 }
 
@@ -158,7 +158,7 @@ DNS_RR *dns_rr_copy(DNS_RR *src)
      * Combine struct assignment and data copy in one block copy operation.
      */
     dst = (DNS_RR *) mymalloc(len);
-    memcpy((char *) dst, (char *) src, len);
+    memcpy((void *) dst, (void *) src, len);
     dst->qname = mystrdup(src->qname);
     dst->rname = mystrdup(src->rname);
     dst->next = 0;
@@ -267,7 +267,7 @@ DNS_RR *dns_rr_sort(DNS_RR *list, int (*compar) (DNS_RR *, DNS_RR *))
     /*
      * Sort by user-specified criterion.
      */
-    qsort((char *) rr_array, len, sizeof(*rr_array), dns_rr_sort_callback);
+    qsort((void *) rr_array, len, sizeof(*rr_array), dns_rr_sort_callback);
 
     /*
      * Fix the links.
@@ -280,7 +280,7 @@ DNS_RR *dns_rr_sort(DNS_RR *list, int (*compar) (DNS_RR *, DNS_RR *))
     /*
      * Cleanup.
      */
-    myfree((char *) rr_array);
+    myfree((void *) rr_array);
     dns_rr_sort_user = saved_user;
     return (list);
 }
@@ -327,7 +327,7 @@ DNS_RR *dns_rr_shuffle(DNS_RR *list)
     /*
      * Cleanup.
      */
-    myfree((char *) rr_array);
+    myfree((void *) rr_array);
     return (list);
 }
 

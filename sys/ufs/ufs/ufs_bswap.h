@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.21 2016/04/29 03:05:04 christos Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.21.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -45,7 +45,7 @@
 #define	UFS_IPNEEDSWAP(ip)	((void)(ip), 0)
 #endif
 
-#if !defined(_KERNEL) || defined(FFS_EI)
+#if (!defined(_KERNEL) && !defined(NO_FFS_EI)) || defined(FFS_EI)
 /* inlines for access to swapped data */
 static inline u_int16_t
 ufs_rw16(uint16_t a, int ns)

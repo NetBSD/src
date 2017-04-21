@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.460 2017/01/08 17:57:37 christos Exp $
+.\"	$NetBSD: options.4,v 1.460.2.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 8, 2017
+.Dd March 9, 2017
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -634,6 +634,12 @@ Functions for use in
 to check lock chains etc. are also enabled.
 These checks are very expensive and can decrease performance on
 multi-processor machines by a factor of three.
+.It Cd options KDTRACE_HOOKS
+Adds hooks for the DTrace tracing facility, which allows users to
+analyze many aspects of system and application behavior.
+See
+.Xr dtrace 1
+for details.
 .It Cd options KSTACK_CHECK_MAGIC
 Check kernel stack usage and panic if stack overflow is detected.
 This check is performance sensitive because it scans stack on each context
@@ -971,6 +977,33 @@ This enables for example sshfs:
 .El
 .Ss File System Options
 .Bl -ohang
+.It Cd options DISKLABEL_EI
+Enable
+.Dq Endian-Independent
+.Xr disklabel 5
+support.
+This allows a system to recognize a disklabel written in the other byte order.
+For writing, when a label already exists, its byte order is preserved.
+Otherwise, a new label is written in the native byte order.
+To specify the byte order explicitly, the
+.Fl F
+option of
+.Xr disklabel 8
+should be used with the
+.Fl B
+option in order to avoid using
+.Xr ioctl 2 ,
+which results in the default behavior explained above.
+At the moment this option is restricted to the following ports:
+amd64, bebox, emips, epoc32, evbarm, i386, ibmnws, landisk, mvmeppc, prep,
+.\" riscv,
+rs6000, sandpoint,
+.\" usermode,
+xen, and zaurus;
+also to machines of the
+.\" evbarm64,
+evbmips and evbppc ports that support
+Master Boot Record (MBR).
 .It Cd options MAGICLINKS
 Enables the expansion of special strings
 .Po
@@ -2216,9 +2249,6 @@ Each buffer header
 requires MAXBSIZE (machine dependent, but usually 65536) bytes.
 The default value is machine dependent, but is usually equal to the
 value of BUFPAGES.
-If an architecture dependent VM_MAX_KERNEL_BUF constant is defined
-then NBUF may be reduced at run time so that the storage allocated
-for buffer headers doesn't exceed that limit.
 .It Cd options BUFPAGES=value
 These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as

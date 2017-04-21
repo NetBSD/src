@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscall.h,v 1.53 2017/01/13 06:19:35 christos Exp $ */
+/* $NetBSD: ibcs2_syscall.h,v 1.53.2.1 2017/04/21 16:53:40 bouyer Exp $ */
 
 /*
  * System call numbers.

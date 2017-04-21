@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.191 2016/12/23 09:36:55 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.191.2.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.191 2016/12/23 09:36:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.191.2.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1867,7 +1867,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 	     uvm_physseg_valid_p(i);
 	     i = uvm_physseg_get_next(i)) {
 		for (pfn = uvm_physseg_get_start(i);
-		     pfn <= uvm_physseg_get_end(i);
+		     pfn < uvm_physseg_get_end(i);
 		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 

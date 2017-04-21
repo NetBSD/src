@@ -1,4 +1,4 @@
-/*	$NetBSD: record.h,v 1.1.1.2 2010/06/17 18:06:51 tron Exp $	*/
+/*	$NetBSD: record.h,v 1.1.1.2.32.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _RECORD_H_INCLUDED_
 #define _RECORD_H_INCLUDED_
@@ -40,7 +40,7 @@ extern int rec_put_type(VSTREAM *, int, off_t);
 extern int PRINTFLIKE(3, 4) rec_fprintf(VSTREAM *, int, const char *,...);
 extern int rec_fputs(VSTREAM *, int, const char *);
 extern int rec_goto(VSTREAM *, const char *);
-extern int rec_pad(VSTREAM *, int, int);
+extern int rec_pad(VSTREAM *, int, ssize_t);
 
 #define REC_PUT_BUF(v, t, b) rec_put((v), (t), vstring_str(b), VSTRING_LEN(b))
 

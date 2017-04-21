@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.12 2014/12/29 15:29:38 hannken Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.12.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.12 2014/12/29 15:29:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.12.4.1 2017/04/21 16:54:02 bouyer Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -369,8 +369,11 @@ v7fs_statvfs(struct mount *mp, struct statvfs *f)
 static bool
 v7fs_sync_selector(void *cl, struct vnode *vp)
 {
-	struct v7fs_node *v7fs_node = vp->v_data;
+	struct v7fs_node *v7fs_node;
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	v7fs_node = vp->v_data;
 	if (v7fs_node == NULL)
 		return false;
 	if (!v7fs_inode_allocated(&v7fs_node->inode))
@@ -576,14 +579,14 @@ v7fs_mountroot(void)
 
 	if ((error = v7fs_mountfs(rootvp, mp, _BYTE_ORDER))) {
 		DPRINTF("mountfs error=%d\n", error);
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return error;
 	}
 
 	mountlist_append(mp);
 
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	return 0;
 }

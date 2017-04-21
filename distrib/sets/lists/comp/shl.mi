@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.299.2.1 2017/04/17 20:35:00 bouyer Exp $
+# $NetBSD: shl.mi,v 1.299.2.2 2017/04/21 16:51:13 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -133,7 +133,7 @@
 ./usr/lib/libproc.so.0				comp-c-shlib		compatfile,dtrace
 ./usr/lib/libproc_pic.a				comp-c-piclib		compatfile,dtrace,picinstall
 ./usr/lib/libprop_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libpthread_dbg_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libpthread_dbg_pic.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpuffs_pic.a			comp-puffs-piclib	compatfile,picinstall
 ./usr/lib/libquota_pic.a			comp-c-piclib		compatfile,picinstall
@@ -169,6 +169,7 @@
 ./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_scsitest_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpdev_ualea_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ugenhc_pic.a		comp-c-piclib		picinstall,rump
@@ -218,6 +219,7 @@
 ./usr/lib/librumpnet_bpfjit_pic.a		comp-c-piclib		picinstall,rump,sljit
 ./usr/lib/librumpnet_bridge_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_gif_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpnet_l2tp_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_net80211_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_net_pic.a			comp-c-piclib		picinstall,rump
@@ -225,6 +227,7 @@
 ./usr/lib/librumpnet_netcan_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_netinet6_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpnet_netipsec_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_netmpls_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_npf_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_pic.a			comp-c-piclib		compatfile,picinstall,rump

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.226 2016/12/15 04:49:15 nonaka Exp $	*/
+/*	$NetBSD: fetch.c,v 1.226.2.1 2017/04/21 16:54:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.226 2016/12/15 04:49:15 nonaka Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.226.2.1 2017/04/21 16:54:14 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -855,7 +855,6 @@ print_connect(FETCH *fin, const struct urlinfo *ui)
 #define C_OK 0
 #define C_CLEANUP 1
 #define C_IMPROPER 2
-#define C_RESTART 3
 
 static int
 getresponseline(FETCH *fin, char *buf, size_t buflen, int *len)
@@ -949,6 +948,52 @@ parse_posinfo(const char **cp, struct posinfo *pi)
 #endif
 	return 0;
 }
+
+#ifndef NO_AUTH
+static void
+do_auth(int hcode, const char *url, const char *penv, struct authinfo *wauth,
+    struct authinfo *pauth, char **auth, const char *message,
+    volatile int *rval)
+{
+	struct authinfo aauth;
+	char *response;
+
+	if (hcode == 401)
+		aauth = *wauth;
+	else
+		aauth = *pauth;
+
+	if (verbose || aauth.auth == NULL ||
+	    aauth.user == NULL || aauth.pass == NULL)
+		fprintf(ttyout, "%s\n", message);
+	if (EMPTYSTRING(*auth)) {
+		warnx("No authentication challenge provided by server");
+		return;
+	}
+
+	if (aauth.auth != NULL) {
+		char reply[10];
+
+		fprintf(ttyout, "Authorization failed. Retry (y/n)? ");
+		if (get_line(stdin, reply, sizeof(reply), NULL) < 0) {
+			return;
+		}
+		if (tolower((unsigned char)reply[0]) != 'y')
+			return;
+
+		aauth.user = NULL;
+		aauth.pass = NULL;
+	}
+
+	if (auth_url(*auth, &response, &aauth) == 0) {
+		*rval = fetch_url(url, penv,
+		    hcode == 401 ? pauth->auth : response,
+		    hcode == 401 ? response: wauth->auth);
+		memset(response, 0, strlen(response));
+		FREEPTR(response);
+	}
+}
+#endif
 
 static int
 negotiate_connection(FETCH *fin, const char *url, const char *penv,
@@ -1085,49 +1130,8 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 #ifndef NO_AUTH
 	case 401:
 	case 407:
-	    {
-		struct authinfo aauth;
-		char **authp;
-
-		if (hcode == 401)
-			aauth = *wauth;
-		else
-			aauth = *pauth;
-		
-		if (verbose || aauth.auth == NULL ||
-		    aauth.user == NULL || aauth.pass == NULL)
-			fprintf(ttyout, "%s\n", message);
-		if (EMPTYSTRING(*auth)) {
-			warnx(
-		    "No authentication challenge provided by server");
-			goto cleanup_fetch_url;
-		}
-
-		if (aauth.auth != NULL) {
-			char reply[10];
-
-			fprintf(ttyout,
-			    "Authorization failed. Retry (y/n)? ");
-			if (get_line(stdin, reply, sizeof(reply), NULL)
-			    < 0) {
-				goto cleanup_fetch_url;
-			}
-			if (tolower((unsigned char)reply[0]) != 'y')
-				goto cleanup_fetch_url;
-			aauth.user = NULL;
-			aauth.pass = NULL;
-		}
-
-		authp = &aauth.auth;
-		if (auth_url(*auth, authp, &aauth) == 0) {
-			*rval = fetch_url(url, penv,
-			    hcode == 401 ? pauth->auth : aauth.auth,
-			    hcode == 401 ? aauth.auth : wauth->auth);
-			memset(*authp, 0, strlen(*authp));
-			FREEPTR(*authp);
-		}
+		do_auth(hcode, url, penv, wauth, pauth, auth, message, rval);
 		goto cleanup_fetch_url;
-	    }
 #endif
 	default:
 		if (message)
@@ -1153,8 +1157,9 @@ out:
 
 #ifdef WITH_SSL
 static int
-connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
-    struct authinfo *pauth, char **auth, int *hasleading)
+connectmethod(FETCH *fin, const char *url, const char *penv,
+    struct urlinfo *oui, struct urlinfo *ui, struct authinfo *wauth,
+    struct authinfo *pauth, char **auth, int *hasleading, volatile int *rval)
 {
 	void *ssl;
 	int hcode, rv;
@@ -1219,30 +1224,7 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 		break;
 #ifndef NO_AUTH
 	case 407:
-		if (verbose || pauth->auth == NULL ||
-		    pauth->user == NULL || pauth->pass == NULL)
-			fprintf(ttyout, "%s\n", message);
-		if (EMPTYSTRING(*auth)) {
-			warnx("No authentication challenge provided by server");
-			goto cleanup_fetch_url;
-		}
-
-		if (pauth->auth != NULL) {
-			char reply[10];
-
-			fprintf(ttyout, "Authorization failed. Retry (y/n)? ");
-			if (get_line(stdin, reply, sizeof(reply), NULL)
-			    < 0) {
-				goto cleanup_fetch_url;
-			}
-			if (tolower((unsigned char)reply[0]) != 'y')
-				goto cleanup_fetch_url;
-			pauth->user = NULL;
-			pauth->pass = NULL;
-		}
-
-		if (auth_url(*auth, &pauth->auth, pauth) == 0)
-			goto restart_fetch_url;
+		do_auth(hcode, url, penv, wauth, pauth, auth, message, rval);
 		goto cleanup_fetch_url;
 #endif
 	default:
@@ -1253,7 +1235,7 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 		goto cleanup_fetch_url;
 	}
 
-	if ((ssl = fetch_start_ssl(s, oui->host)) == NULL)
+	if ((ssl = fetch_start_ssl(fetch_fileno(fin), oui->host)) == NULL)
 		goto cleanup_fetch_url;
 	fetch_set_ssl(fin, ssl);
 
@@ -1264,9 +1246,6 @@ improper:
 	goto out;
 cleanup_fetch_url:
 	rv = C_CLEANUP;
-	goto out;
-restart_fetch_url:
-	rv = C_RESTART;
 	goto out;
 out:
 	FREEPTR(message);
@@ -1369,6 +1348,12 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			savefile = ftp_strdup(cp + 1);
 		else
 			savefile = ftp_strdup(decodedpath);
+		/*
+		 * Use the first URL we requested not the name after a
+		 * possible redirect, but careful to save it because our
+		 * "safety" check is the match to outfile.
+		 */
+		outfile = ftp_strdup(savefile);
 	}
 	DPRINTF("%s: savefile `%s'\n", __func__, savefile);
 	if (EMPTYSTRING(savefile)) {
@@ -1474,12 +1459,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hasleading = 0;
 #ifdef WITH_SSL
 		if (isproxy && oui.utype == HTTPS_URL_T) {
-			switch (connectmethod(s, fin, &oui, &ui, &pauth, &auth,
-			    &hasleading)) {
-			case C_RESTART:
-				rval = fetch_url(url, penv, pauth.auth,
-				    wauth.auth);
-				/*FALLTHROUGH*/
+			switch (connectmethod(fin, url, penv, &oui, &ui,
+			    &wauth, &pauth, &auth, &hasleading, &rval)) {
 			case C_CLEANUP:
 				goto cleanup_fetch_url;
 			case C_IMPROPER:

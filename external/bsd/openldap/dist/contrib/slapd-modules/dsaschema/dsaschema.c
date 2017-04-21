@@ -1,10 +1,10 @@
-/*	$NetBSD: dsaschema.c,v 1.1.1.4 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: dsaschema.c,v 1.1.1.4.10.1 2017/04/21 16:52:23 bouyer Exp $	*/
 
 /* dsaschema.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

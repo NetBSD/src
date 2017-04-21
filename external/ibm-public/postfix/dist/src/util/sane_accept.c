@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_accept.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_accept.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -46,7 +46,7 @@
 
 /* sane_accept - sanitize accept() error returns */
 
-int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
+int     sane_accept(int sock, struct sockaddr *sa, SOCKADDR_SIZE *len)
 {
     static int accept_ok_errors[] = {
 	EAGAIN,
@@ -121,7 +121,7 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
 	int     on = 1;
 
 	(void) setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE,
-			  (char *) &on, sizeof(on));
+			  (void *) &on, sizeof(on));
     }
     return (fd);
 }

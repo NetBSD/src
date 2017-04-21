@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.11 2016/12/15 09:28:02 ozaki-r Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.11.2.1 2017/04/21 16:53:23 bouyer Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.11 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.11.2.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -728,8 +728,8 @@ gmac_rxproduce(gmac_hwqueue_t *hwq, size_t free_min)
 		d->d_bufaddr = htole32(map->dm_segs->ds_addr);
 		for (m0 = hwq->hwq_ifq.ifq_head; m0 != NULL; m0 = m0->m_nextpkt)
 			KASSERT(m0 != m);
-		IF_ENQUEUE(&hwq->hwq_ifq, m);
 		m->m_len = d - hwq->hwq_base;
+		IF_ENQUEUE(&hwq->hwq_ifq, m);
 		aprint_debug(
 		    "gmac_rxproduce(%p): m=%p %zu@%p=%#x/%#x/%#x/%#x\n", hwq,
 		    m, d - hwq->hwq_base, d, d->d_desc0, d->d_desc1,

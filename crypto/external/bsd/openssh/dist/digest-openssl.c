@@ -1,4 +1,4 @@
-/* $OpenBSD: digest-openssl.c,v 1.5 2014/12/21 22:27:56 djm Exp $ */
+/* $OpenBSD: digest-openssl.c,v 1.6 2017/03/10 02:59:51 dtucker Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-openssl.c,v 1.4 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: digest-openssl.c,v 1.4.2.1 2017/04/21 16:50:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -143,7 +143,7 @@ ssh_digest_final(struct ssh_digest_ctx *ctx, u_char *d, size_t dlen)
 	const struct ssh_digest *digest = ssh_digest_by_alg(ctx->alg);
 	u_int l = dlen;
 
-	if (dlen > UINT_MAX)
+	if (digest == NULL || dlen > UINT_MAX)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (dlen < digest->digest_len) /* No truncation allowed */
 		return SSH_ERR_INVALID_ARGUMENT;

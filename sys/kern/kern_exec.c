@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.440 2017/01/09 00:31:30 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.440.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.440 2017/01/09 00:31:30 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.440.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1411,10 +1411,11 @@ calcargs(struct execve_data * restrict data, const size_t argenvstrlen)
 	    data->ed_argc +		/* char *argv[] */
 	    1 +				/* \0 */
 	    data->ed_envc +		/* char *env[] */
-	    1 +				/* \0 */
-	    epp->ep_esch->es_arglen;	/* auxinfo */
+	    1;				/* \0 */
 
-	return (nargenvptrs * ptrsz(epp)) + argenvstrlen;
+	return (nargenvptrs * ptrsz(epp))	/* pointers */
+	    + argenvstrlen			/* strings */
+	    + epp->ep_esch->es_arglen;		/* auxinfo */
 }
 
 static size_t
@@ -1665,9 +1666,8 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	    argc +			/* char *argv[] */
 	    1 +				/* \0 */
 	    envc +			/* char *env[] */
-	    1 +				/* \0 */
-	    /* XXX auxinfo multiplied by ptr size? */
-	    pack->ep_esch->es_arglen);	/* auxinfo */
+	    1) +			/* \0 */
+	    pack->ep_esch->es_arglen;	/* auxinfo */
 	sp = argp;
 
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
@@ -2531,7 +2531,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 
 	/* create LWP */
 	lwp_create(l1, p2, uaddr, 0, NULL, 0, spawn_return, spawn_data,
-	    &l2, l1->l_class);
+	    &l2, l1->l_class, &l1->l_sigmask, &l1->l_sigstk);
 	l2->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/*

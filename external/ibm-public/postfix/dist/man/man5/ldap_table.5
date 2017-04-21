@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldap_table.5,v 1.1.1.3 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: ldap_table.5,v 1.1.1.3.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH LDAP_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix LDAP client configuration
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" ldap:/etc/postfix/\fIfilename\fR
+\fBpostmap \-q "\fIstring\fB" ldap:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - ldap:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+\fBpostmap \-q \- ldap:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -26,10 +26,10 @@ In order to use LDAP lookups, define an LDAP source as a lookup
 table in main.cf, for example:
 
 .nf
-    alias_maps = ldap:/etc/postfix/ldap-aliases.cf
+    alias_maps = ldap:/etc/postfix/ldap\-aliases.cf
 .fi
 
-The file /etc/postfix/ldap-aliases.cf has the same format as
+The file /etc/postfix/ldap\-aliases.cf has the same format as
 the Postfix main.cf file, and can specify the parameters
 described below. An example is given at the end of this manual.
 
@@ -55,7 +55,7 @@ parameter below would be defined in main.cf as
 "\fIldapsource\fR_server_host".
 
 Note: with this form, the passwords for the LDAP sources are
-written in main.cf, which is normally world-readable.  Support
+written in main.cf, which is normally world\-readable.  Support
 for this form will be removed in a future Postfix version.
 
 For backwards compatibility with the pre
@@ -162,30 +162,30 @@ The RFC2253 base DN at which to conduct the search, e.g.
 With Postfix 2.2 and later this parameter supports the
 following '%' expansions:
 .RS
-.IP "\fB\fB%%\fR\fR"
+.IP "\fB%%\fR"
 This is replaced by a literal '%' character.
-.IP "\fB\fB%s\fR\fR"
+.IP "\fB%s\fR"
 This is replaced by the input key.
 RFC 2253 quoting is used to make sure that the input key
 does not add unexpected metacharacters.
-.IP "\fB\fB%u\fR\fR"
+.IP "\fB%u\fR"
 When the input key is an address of the form user@domain, \fB%u\fR
 is replaced by the (RFC 2253) quoted local part of the address.
 Otherwise, \fB%u\fR is replaced by the entire search string.
 If the localpart is empty, the search is suppressed and returns
 no results.
-.IP "\fB\fB%d\fR\fR"
+.IP "\fB%d\fR"
 When the input key is an address of the form user@domain, \fB%d\fR
 is replaced by the (RFC 2253) quoted domain part of the address.
 Otherwise, the search is suppressed and returns no results.
-.IP "\fB\fB%[SUD]\fR\fR"
-For the \fBsearch_base\fR parameter, the upper-case equivalents
-of the above expansions behave identically to their lower-case
-counter-parts. With the \fBresult_format\fR parameter (previously
+.IP "\fB%[SUD]\fR"
+For the \fBsearch_base\fR parameter, the upper\-case equivalents
+of the above expansions behave identically to their lower\-case
+counter\-parts. With the \fBresult_format\fR parameter (previously
 called \fBresult_filter\fR see the COMPATIBILITY section and below),
 they expand to the corresponding components of input key rather
 than the result value.
-.IP "\fB\fB%[1-9]\fR\fR"
+.IP "\fB%[1\-9]\fR"
 The patterns %1, %2, ... %9 are replaced by the corresponding
 most significant component of the input key's domain. If the
 input key is \fIuser@mail.example.com\fR, then %1 is \fBcom\fR,
@@ -205,33 +205,33 @@ e.g.
 
 This parameter supports the following '%' expansions:
 .RS
-.IP "\fB\fB%%\fR\fR"
+.IP "\fB%%\fR"
 This is replaced by a literal '%' character. (Postfix 2.2 and later).
-.IP "\fB\fB%s\fR\fR"
+.IP "\fB%s\fR"
 This is replaced by the input key.
 RFC 2254 quoting is used to make sure that the input key
 does not add unexpected metacharacters.
-.IP "\fB\fB%u\fR\fR"
+.IP "\fB%u\fR"
 When the input key is an address of the form user@domain, \fB%u\fR
 is replaced by the (RFC 2254) quoted local part of the address.
 Otherwise, \fB%u\fR is replaced by the entire search string.
 If the localpart is empty, the search is suppressed and returns
 no results.
-.IP "\fB\fB%d\fR\fR"
+.IP "\fB%d\fR"
 When the input key is an address of the form user@domain, \fB%d\fR
 is replaced by the (RFC 2254) quoted domain part of the address.
 Otherwise, the search is suppressed and returns no results.
-.IP "\fB\fB%[SUD]\fR\fR"
-The upper-case equivalents of the above expansions behave in the
-\fBquery_filter\fR parameter identically to their lower-case
-counter-parts. With the \fBresult_format\fR parameter (previously
+.IP "\fB%[SUD]\fR"
+The upper\-case equivalents of the above expansions behave in the
+\fBquery_filter\fR parameter identically to their lower\-case
+counter\-parts. With the \fBresult_format\fR parameter (previously
 called \fBresult_filter\fR see the COMPATIBILITY section and below),
 they expand to the corresponding components of input key rather
 than the result value.
 .IP
 The above %S, %U and %D expansions are available with Postfix 2.2
 and later.
-.IP "\fB\fB%[1-9]\fR\fR"
+.IP "\fB%[1\-9]\fR"
 The patterns %1, %2, ... %9 are replaced by the corresponding
 most significant component of the input key's domain. If the
 input key is \fIuser@mail.example.com\fR, then %1 is \fBcom\fR,
@@ -246,8 +246,8 @@ and later.
 .IP
 The "domain" parameter described below limits the input
 keys to addresses in matching domains. When the "domain"
-parameter is non-empty, LDAP queries for unqualified
-addresses or addresses in non-matching domains are suppressed
+parameter is non\-empty, LDAP queries for unqualified
+addresses or addresses in non\-matching domains are suppressed
 and return no results.
 
 NOTE: DO NOT put quotes around the \fBquery_filter\fR parameter.
@@ -257,22 +257,22 @@ Format template applied to result attributes. Most commonly used
 to append (or prepend) text to the result. This parameter supports
 the following '%' expansions:
 .RS
-.IP "\fB\fB%%\fR\fR"
+.IP "\fB%%\fR"
 This is replaced by a literal '%' character. (Postfix 2.2 and later).
-.IP "\fB\fB%s\fR\fR"
+.IP "\fB%s\fR"
 This is replaced by the value of the result attribute. When
 result is empty it is skipped.
 .IP "\fB%u\fR
 When the result attribute value is an address of the form
 user@domain, \fB%u\fR is replaced by the local part of the
 address. When the result has an empty localpart it is skipped.
-.IP "\fB\fB%d\fR\fR"
+.IP "\fB%d\fR"
 When a result attribute value is an address of the form
 user@domain, \fB%d\fR is replaced by the domain part of
 the attribute value. When the result is unqualified it
 is skipped.
-.IP "\fB\fB%[SUD1-9]\fR\fB"
-The upper-case and decimal digit expansions interpolate
+.IP "\fB%[SUD1\-9]\fR"
+The upper\-case and decimal digit expansions interpolate
 the parts of the input key rather than the result. Their
 behavior is identical to that described with \fBquery_filter\fR,
 and in fact because the input key is known in advance, lookups
@@ -305,7 +305,7 @@ NOTE: DO NOT put quotes around the result format!
 .IP "\fBdomain (default: no domain list)\fR"
 This is a list of domain names, paths to files, or
 dictionaries. When specified, only fully qualified search
-keys with a *non-empty* localpart and a matching domain
+keys with a *non\-empty* localpart and a matching domain
 are eligible for lookup: 'user' lookups, bare domain lookups
 and "@domain" lookups are not performed. This can significantly
 reduce the query load on the LDAP server.
@@ -360,13 +360,13 @@ URL that selects all attributes, in which case the selected
 attributes will be the full set of result attributes in the
 Postfix table.
 
-If an LDAP URL attribute-descriptor or the corresponding Postfix
-LDAP table result attribute (but not both) uses RFC 2255 sub-type
+If an LDAP URL attribute\-descriptor or the corresponding Postfix
+LDAP table result attribute (but not both) uses RFC 2255 sub\-type
 options ("attr;option"), the attribute requested from the LDAP server
-will include the sub-type option. In all other cases, the URL
+will include the sub\-type option. In all other cases, the URL
 attribute and the table attribute must match exactly. Attributes
 with options in both the URL and the Postfix table are requested
-only when the options are identical. LDAP attribute-descriptor
+only when the options are identical. LDAP attribute\-descriptor
 options are very rarely used, most LDAP users will not
 need to concern themselves with this level of nuanced detail.
 .IP "\fBterminal_result_attribute (default: empty)\fR"
@@ -375,7 +375,7 @@ entry, all other result attributes are ignored and only the terminal
 result attributes are returned. This is useful for delegating expansion
 of group members to a particular host, by using an optional "maildrop"
 attribute on selected groups to route the group to a specific host,
-where the group is expanded, possibly via mailing-list manager or
+where the group is expanded, possibly via mailing\-list manager or
 other special processing.
 
 .nf
@@ -390,7 +390,7 @@ the default value "maildrop".
 
 This feature is available with Postfix 2.4 or later.
 .IP "\fBleaf_result_attribute (default: empty)\fR"
-When one or more special result attributes are found in a non-terminal
+When one or more special result attributes are found in a non\-terminal
 (see above) LDAP entry, leaf result attributes are excluded from the
 expansion of that entry. This is useful when expanding groups and the
 desired mail address attribute(s) of the member objects obtained via
@@ -483,7 +483,7 @@ Cache support has been dropped from OpenLDAP as of release
 2.1.13.
 .IP "\fBrecursion_limit (default: 1000)\fR"
 A limit on the nesting depth of DN and URL special result
-attribute evaluation. The limit must be a non-zero positive
+attribute evaluation. The limit must be a non\-zero positive
 number.
 .IP "\fBexpansion_limit (default: 0)\fR"
 A limit on the total number of result elements returned
@@ -500,10 +500,10 @@ involves nested LDAP queries, each of which is separately
 subjected to this limit.
 
 Note: even a single LDAP entry can generate multiple lookup
-results, via multiple result attributes and/or multi-valued
+results, via multiple result attributes and/or multi\-valued
 result attributes. This limit caps the per search resource
 utilization on the LDAP server, not the final multiplicity
-of the lookup result. It is analogous to the "-z" option
+of the lookup result. It is analogous to the "\-z" option
 of "ldapsearch".
 .IP "\fBdereference (default: 0)\fR"
 When to dereference LDAP aliases. (Note that this has
@@ -523,7 +523,7 @@ always
 See ldap.h or the ldap_open(3) or ldapsearch(1) man pages
 for more information. And if you're using an LDAP package
 that has other possible values, please bring it to the
-attention of the postfix-users@postfix.org mailing list.
+attention of the postfix\-users@postfix.org mailing list.
 .IP "\fBchase_referrals (default: 0)\fR"
 Sets (or clears) LDAP_OPT_REFERRALS (requires LDAP version
 3 support).
@@ -549,7 +549,7 @@ bind times out, or if it does, the duration of the timeout is
 determined by the LDAP and SASL libraries.
 
 It is best to use tables that use SASL binds via proxymap(8), this
-way the requesting process can time-out the proxymap request. This
+way the requesting process can time\-out the proxymap request. This
 also lets you tailer the process environment by overriding the
 proxymap(8) import_environment setting in master.cf(5). Special
 environment settings may be needed to configure GSSAPI credential
@@ -612,7 +612,7 @@ Whether or not to issue STARTTLS upon connection to the
 server.  Don't set this with LDAP SSL (the SSL session is setup
 automatically when the TCP connection is opened).
 .IP "\fBtls_ca_cert_dir (No default; set either this or tls_ca_cert_file)\fR"
-Directory containing X509 Certificate Authority certificates
+Directory containing X509 Certification Authority certificates
 in PEM format which are to be recognized by the client in
 SSL/TLS connections. The files each contain one CA certificate.
 The files are looked up by the CA subject name hash value,
@@ -624,7 +624,7 @@ of other properties of the certificates. Use the c_rehash
 utility (from the OpenSSL distribution) to create the
 necessary links.
 .IP "\fBtls_ca_cert_file (No default; set either this or tls_ca_cert_dir)\fR"
-File containing the X509 Certificate Authority certificates
+File containing the X509 Certification Authority certificates
 in PEM format which are to be recognized by the client in
 SSL/TLS connections. This setting takes precedence over
 tls_ca_cert_dir.
@@ -686,10 +686,10 @@ Assume that in main.cf, you have:
 
 .nf
     alias_maps = hash:/etc/aliases,
-            ldap:/etc/postfix/ldap-aliases.cf
+            ldap:/etc/postfix/ldap\-aliases.cf
 .fi
 
-and in ldap:/etc/postfix/ldap-aliases.cf you have:
+and in ldap:/etc/postfix/ldap\-aliases.cf you have:
 
 .nf
     server_host = ldap.example.com

@@ -1,10 +1,10 @@
-/*	$NetBSD: unique.c,v 1.1.1.5 2014/05/28 09:58:53 tron Exp $	*/
+/*	$NetBSD: unique.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* unique.c - attribute uniqueness module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *
@@ -22,6 +22,9 @@
  * Emily Backes at Symas Corporation.  This work was sponsored by
  * Hewlett-Packard.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: unique.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -825,47 +828,6 @@ unique_db_destroy(
 	return 0;
 }
 
-static int
-unique_open(
-	BackendDB *be,
-	ConfigReply *cr
-)
-{
-	Debug(LDAP_DEBUG_TRACE, "unique_open: overlay initialized\n", 0, 0, 0);
-
-	return 0;
-}
-
-
-/*
-** Leave unique_data but wipe out config
-**
-*/
-
-static int
-unique_close(
-	BackendDB *be,
-	ConfigReply *cr
-)
-{
-	slap_overinst *on	= (slap_overinst *) be->bd_info;
-	unique_data **privatep = (unique_data **) &on->on_bi.bi_private;
-	unique_data *private = *privatep;
-
-	Debug(LDAP_DEBUG_TRACE, "==> unique_close\n", 0, 0, 0);
-
-	if ( private ) {
-		unique_domain *domains = private->domains;
-		unique_domain *legacy = private->legacy;
-
-		unique_free_domain ( domains );
-		unique_free_domain ( legacy );
-		memset ( private, 0, sizeof ( unique_data ) );
-	}
-
-	return ( 0 );
-}
-
 
 /*
 ** search callback
@@ -1083,7 +1045,10 @@ unique_add(
 
 	/* skip the checks if the operation has manageDsaIt control in it
 	 * (for replication) */
-	if ( op->o_managedsait > SLAP_CONTROL_IGNORED ) {
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED
+	     && access_allowed ( op, op->ora_e,
+				 slap_schema.si_ad_entry, NULL,
+				 ACL_MANAGE, NULL ) ) {
 		Debug(LDAP_DEBUG_TRACE, "unique_add: administrative bypass, skipping\n", 0, 0, 0);
 		return rc;
 	}
@@ -1202,6 +1167,7 @@ unique_modify(
 	unique_domain *domain;
 	Operation nop = *op;
 	Modifications *m;
+	Entry *e = NULL;
 	char *key, *kp;
 	struct berval bvkey;
 	int rc = SLAP_CB_CONTINUE;
@@ -1211,9 +1177,18 @@ unique_modify(
 
 	/* skip the checks if the operation has manageDsaIt control in it
 	 * (for replication) */
-	if ( op->o_managedsait > SLAP_CONTROL_IGNORED ) {
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED
+	     && overlay_entry_get_ov(op, &op->o_req_ndn, NULL, NULL, 0, &e, on) == LDAP_SUCCESS
+	     && e
+	     && access_allowed ( op, e,
+				 slap_schema.si_ad_entry, NULL,
+				 ACL_MANAGE, NULL ) ) {
 		Debug(LDAP_DEBUG_TRACE, "unique_modify: administrative bypass, skipping\n", 0, 0, 0);
+		overlay_entry_release_ov( op, e, 0, on );
 		return rc;
+	}
+	if ( e ) {
+		overlay_entry_release_ov( op, e, 0, on );
 	}
 
 	for ( domain = legacy ? legacy : domains;
@@ -1321,6 +1296,7 @@ unique_modrdn(
 	unique_domain *legacy = private->legacy;
 	unique_domain *domain;
 	Operation nop = *op;
+	Entry *e = NULL;
 	char *key, *kp;
 	struct berval bvkey;
 	LDAPRDN	newrdn;
@@ -1332,9 +1308,18 @@ unique_modrdn(
 
 	/* skip the checks if the operation has manageDsaIt control in it
 	 * (for replication) */
-	if ( op->o_managedsait > SLAP_CONTROL_IGNORED ) {
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED
+	     && overlay_entry_get_ov(op, &op->o_req_ndn, NULL, NULL, 0, &e, on) == LDAP_SUCCESS
+	     && e
+	     && access_allowed ( op, e,
+				 slap_schema.si_ad_entry, NULL,
+				 ACL_MANAGE, NULL ) ) {
 		Debug(LDAP_DEBUG_TRACE, "unique_modrdn: administrative bypass, skipping\n", 0, 0, 0);
+		overlay_entry_release_ov( op, e, 0, on );
 		return rc;
+	}
+	if ( e ) {
+		overlay_entry_release_ov( op, e, 0, on );
 	}
 
 	for ( domain = legacy ? legacy : domains;
@@ -1467,8 +1452,6 @@ unique_initialize()
 	unique.on_bi.bi_type = "unique";
 	unique.on_bi.bi_db_init = unique_db_init;
 	unique.on_bi.bi_db_destroy = unique_db_destroy;
-	unique.on_bi.bi_db_open = unique_open;
-	unique.on_bi.bi_db_close = unique_close;
 	unique.on_bi.bi_op_add = unique_add;
 	unique.on_bi.bi_op_modify = unique_modify;
 	unique.on_bi.bi_op_modrdn = unique_modrdn;

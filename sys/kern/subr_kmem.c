@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.62 2016/02/29 00:34:17 chs Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.62.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -100,7 +100,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.62 2016/02/29 00:34:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.62.4.1 2017/04/21 16:54:02 bouyer Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_kmem.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callback.h>

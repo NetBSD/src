@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.15 2017/01/13 11:21:47 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.15.2.1 2017/04/21 16:53:47 bouyer Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.24 2016/09/21 13:53:18 stsp Exp 	*/
 
 /*
@@ -174,6 +174,8 @@ struct iwm_fw_info {
 		} fw_sect[IWM_UCODE_SECT_MAX];
 		size_t fw_totlen;
 		int fw_count;
+		int is_dual_cpus;
+		uint32_t paging_mem_size;
 	} fw_sects[IWM_UCODE_TYPE_MAX];
 };
 
@@ -236,6 +238,16 @@ struct iwm_dma_info {
 	bus_addr_t		paddr;
 	void 			*vaddr;
 	bus_size_t		size;
+};
+
+/**
+ * struct iwm_fw_paging
+ * @fw_paging_block: dma memory info
+ * @fw_paging_size: page size
+ */
+struct iwm_fw_paging {
+	struct iwm_dma_info fw_paging_block;
+	uint32_t fw_paging_size;
 };
 
 #define IWM_TX_RING_COUNT	256
@@ -356,7 +368,6 @@ struct iwm_softc {
 	struct ieee80211com sc_ic;
 
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
-	int sc_newstate_pending;
 
 	struct ieee80211_amrr sc_amrr;
 	struct callout sc_calib_to;
@@ -373,7 +384,6 @@ struct iwm_softc {
 	pcireg_t sc_pciid;
 	const void *sc_ih;
 	void *sc_soft_ih;
-	uint32_t sc_soft_flags;
 
 	/* TX scheduler rings. */
 	struct iwm_dma_info		sched_dma;
@@ -413,7 +423,7 @@ struct iwm_softc {
 	int sc_capaflags;
 	int sc_capa_max_probe_len;
 	int sc_capa_n_scan_channels;
-	uint32_t sc_ucode_api;
+	uint8_t sc_ucode_api[howmany(IWM_NUM_UCODE_TLV_API, NBBY)];
 	uint8_t sc_enabled_capa[howmany(IWM_NUM_UCODE_TLV_CAPA, NBBY)];
 	char sc_fw_mcc[3];
 
@@ -476,6 +486,14 @@ struct iwm_softc {
 	/* should the MAC access REQ be asserted when a command is in flight.
 	 * This is due to a HW bug in 7260, 3160 and 7265. */
 	int apmg_wake_up_wa;
+
+	/*
+	 * Paging parameters - All of the parameters should be set by the
+	 * opmode when paging is enabled
+	 */
+	struct iwm_fw_paging fw_paging_db[IWM_NUM_OF_FW_PAGING_BLOCKS];
+	uint16_t num_of_paging_blk;
+	uint16_t num_of_pages_in_last_blk;
 
 	struct sysctllog *sc_clog;
 

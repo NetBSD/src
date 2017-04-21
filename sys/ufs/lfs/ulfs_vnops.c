@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.44 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.44.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.44 2016/06/20 03:36:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.44.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.44 2016/06/20 03:36:09 dholland Exp
 #include <sys/dirent.h>
 #include <sys/lockf.h>
 #include <sys/kauth.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
@@ -129,6 +128,8 @@ ulfs_open(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
+
 	/*
 	 * Files marked append-only must be opened for appending.
 	 */
@@ -159,9 +160,7 @@ ulfs_check_possible(struct vnode *vp, struct inode *ip, mode_t mode,
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-			fstrans_start(vp->v_mount, FSTRANS_SHARED);
 			error = lfs_chkdq(ip, 0, cred, 0);
-			fstrans_done(vp->v_mount);
 			if (error != 0)
 				return error;
 #endif
@@ -211,8 +210,11 @@ ulfs_access(void *v)
 	int		error;
 
 	vp = ap->a_vp;
-	ip = VTOI(vp);
 	mode = ap->a_mode;
+
+	KASSERT(VOP_ISLOCKED(vp));
+
+	ip = VTOI(vp);
 
 	error = ulfs_check_possible(vp, ip, mode, ap->a_cred);
 	if (error)
@@ -246,12 +248,15 @@ ulfs_setattr(void *v)
 
 	vap = ap->a_vap;
 	vp = ap->a_vp;
-	ip = VTOI(vp);
-	fs = ip->i_lfs;
 	cred = ap->a_cred;
 	l = curlwp;
 	action = KAUTH_VNODE_WRITE_FLAGS;
 	changing_sysflags = false;
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
 
 	/*
 	 * Check for unsettable attributes.
@@ -262,8 +267,6 @@ ulfs_setattr(void *v)
 	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 		return (EINVAL);
 	}
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (vap->va_flags != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -403,7 +406,6 @@ ulfs_setattr(void *v)
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -417,6 +419,8 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	struct inode	*ip;
 	int		error;
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	ip = VTOI(vp);
 
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_SECURITY, vp,
@@ -424,12 +428,10 @@ ulfs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	if (error)
 		return (error);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -448,6 +450,9 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	gid_t		ogid;
 	int64_t		change;
 #endif
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	ip = VTOI(vp);
 	error = 0;
 
@@ -461,7 +466,6 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (error)
 		return (error);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
@@ -486,12 +490,10 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, uid, ouid);
 	(void) lfs_chkdq(ip, change, cred, FORCE);
 	(void) lfs_chkiq(ip, 1, cred, FORCE);
-	fstrans_done(vp->v_mount);
 	return (error);
  good:
 #endif /* LFS_QUOTA || LFS_QUOTA2 */
 	ip->i_flag |= IN_CHANGE;
-	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -505,21 +507,22 @@ ulfs_remove(void *v)
 	} */ *ap = v;
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
-	struct mount	*mp;
 	int		error;
 	struct ulfs_lookup_results *ulr;
 
-	vp = ap->a_vp;
 	dvp = ap->a_dvp;
+	vp = ap->a_vp;
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(dvp->v_mount == vp->v_mount);
+
 	ip = VTOI(vp);
-	mp = dvp->v_mount;
-	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
 		error = EPERM;
@@ -534,7 +537,6 @@ ulfs_remove(void *v)
 	else
 		vput(vp);
 	vput(dvp);
-	fstrans_done(mp);
 	return (error);
 }
 
@@ -552,22 +554,25 @@ ulfs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
 	struct componentname *cnp = ap->a_cnp;
-	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
 	int error;
 	struct ulfs_lookup_results *ulr;
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(dvp != vp);
 	KASSERT(vp->v_type != VDIR);
-	KASSERT(mp == vp->v_mount); /* XXX Not stable without lock.  */
 
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	fstrans_start(mp, FSTRANS_SHARED);
 	error = vn_lock(vp, LK_EXCLUSIVE);
 	if (error) {
+		VOP_ABORTOP(dvp, cnp);
+		goto out2;
+	}
+	if (vp->v_mount != dvp->v_mount) {
+		error = ENOENT;
 		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
@@ -600,7 +605,6 @@ ulfs_link(void *v)
  out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
-	fstrans_done(mp);
 	return (error);
 }
 
@@ -622,6 +626,8 @@ ulfs_whiteout(void *v)
 	struct lfs *fs = ump->um_lfs;
 	struct ulfs_lookup_results *ulr;
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	/* XXX should handle this material another way */
 	ulr = &VTOI(dvp)->i_crap;
 	ULFS_CHECK_CRAPCOUNTER(VTOI(dvp));
@@ -636,11 +642,8 @@ ulfs_whiteout(void *v)
 
 	case CREATE:
 		/* create a new directory whiteout */
-		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-#ifdef DIAGNOSTIC
-		if (fs->um_maxsymlinklen <= 0)
-			panic("ulfs_whiteout: old format filesystem");
-#endif
+		KASSERTMSG((fs->um_maxsymlinklen > 0),
+		    "ulfs_whiteout: old format filesystem");
 
 		error = ulfs_direnter(dvp, ulr, NULL,
 				      cnp, ULFS_WINO, LFS_DT_WHT,  NULL);
@@ -648,11 +651,8 @@ ulfs_whiteout(void *v)
 
 	case DELETE:
 		/* remove an existing directory whiteout */
-		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-#ifdef DIAGNOSTIC
-		if (fs->um_maxsymlinklen <= 0)
-			panic("ulfs_whiteout: old format filesystem");
-#endif
+		KASSERTMSG((fs->um_maxsymlinklen > 0),
+		    "ulfs_whiteout: old format filesystem");
 
 		cnp->cn_flags &= ~DOWHITEOUT;
 		error = ulfs_dirremove(dvp, ulr, NULL, cnp->cn_flags, 0);
@@ -661,7 +661,6 @@ ulfs_whiteout(void *v)
 		panic("ulfs_whiteout: unknown op");
 		/* NOTREACHED */
 	}
-	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
@@ -679,11 +678,15 @@ ulfs_rmdir(void *v)
 	int			error;
 	struct ulfs_lookup_results *ulr;
 
-	vp = ap->a_vp;
 	dvp = ap->a_dvp;
+	vp = ap->a_vp;
 	cnp = ap->a_cnp;
-	ip = VTOI(vp);
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	dp = VTOI(dvp);
+	ip = VTOI(vp);
 
 	/* XXX should handle this material another way */
 	ulr = &dp->i_crap;
@@ -700,8 +703,6 @@ ulfs_rmdir(void *v)
 		vput(vp);
 		return (EINVAL);
 	}
-
-	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
 	/*
 	 * Do not remove a directory that is in the process of being renamed.
@@ -751,7 +752,6 @@ ulfs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
-	fstrans_done(dvp->v_mount);
 	vput(dvp);
 	return (error);
 }
@@ -787,6 +787,9 @@ ulfs_readdir(void *v)
 	size_t		skipbytes;
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
+
+	KASSERT(VOP_ISLOCKED(vp));
+
 	uio = ap->a_uio;
 	count = uio->uio_resid;
 	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
@@ -912,6 +915,8 @@ ulfs_readlink(void *v)
 	struct lfs *fs = ump->um_lfs;
 	int		isize;
 
+	KASSERT(VOP_ISLOCKED(vp));
+
 	/*
 	 * The test against um_maxsymlinklen is off by one; it should
 	 * theoretically be <=, not <. However, it cannot be changed
@@ -969,6 +974,8 @@ ulfsspec_read(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
+	KASSERT(VOP_ISLOCKED(ap->a_vp));
+
 	/*
 	 * Set access flag.
 	 */
@@ -989,6 +996,8 @@ ulfsspec_write(void *v)
 		int		a_ioflag;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
+
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
 
 	/*
 	 * Set update and change flags.
@@ -1011,6 +1020,8 @@ ulfsfifo_read(void *v)
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
 
+	KASSERT(VOP_ISLOCKED(ap->a_vp));
+
 	/*
 	 * Set access flag.
 	 */
@@ -1030,6 +1041,8 @@ ulfsfifo_write(void *v)
 		int		a_ioflag;
 		kauth_cred_t	a_cred;
 	} */ *ap = v;
+
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
 
 	/*
 	 * Set update and change flags.
@@ -1168,6 +1181,8 @@ ulfs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
         struct inode *ip = VTOI(vp);
         int error, delta, bshift, bsize;
         UVMHIST_FUNC("ulfs_gop_alloc"); UVMHIST_CALLED(ubchist);
+
+	KASSERT(genfs_node_wrlocked(vp));
 
         error = 0;
         bshift = vp->v_mount->mnt_fs_bshift;

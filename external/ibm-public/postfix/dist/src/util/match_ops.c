@@ -1,4 +1,4 @@
-/*	$NetBSD: match_ops.c,v 1.1.1.2 2013/01/02 18:59:13 tron Exp $	*/
+/*	$NetBSD: match_ops.c,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -70,10 +70,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -101,9 +97,9 @@ static int match_error(MATCH_LIST *list, const char *fmt,...)
     vstring_vsprintf(buf, fmt, ap);
     va_end(ap);
     if (list->flags & MATCH_FLAG_RETURN) {
-	msg_warn("%s", vstring_str(buf));
+	msg_warn("%s: %s", list->pname, vstring_str(buf));
     } else {
-	msg_fatal("%s", vstring_str(buf));
+	msg_fatal("%s: %s", list->pname, vstring_str(buf));
     }
     vstring_free(buf);
     return (0);
@@ -117,7 +113,7 @@ int     match_string(MATCH_LIST *list, const char *string, const char *pattern)
     DICT   *dict;
 
     if (msg_verbose)
-	msg_info("%s: %s ~? %s", myname, string, pattern);
+	msg_info("%s: %s: %s ~? %s", myname, list->pname, string, pattern);
 
     /*
      * Try dictionary lookup: exact match.
@@ -134,9 +130,10 @@ int     match_string(MATCH_LIST *list, const char *string, const char *pattern)
     }
 
     /*
-     * Try an exact string match.
+     * Try an exact string match. Note that the string and pattern are
+     * already casefolded.
      */
-    if (strcasecmp(string, pattern) == 0) {
+    if (strcmp(string, pattern) == 0) {
 	return (1);
     }
 
@@ -158,7 +155,7 @@ int     match_hostname(MATCH_LIST *list, const char *name, const char *pattern)
     DICT   *dict;
 
     if (msg_verbose)
-	msg_info("%s: %s ~? %s", myname, name, pattern);
+	msg_info("%s: %s: %s ~? %s", myname, list->pname, name, pattern);
 
     /*
      * Try dictionary lookup: exact match and parent domains.
@@ -173,9 +170,9 @@ int     match_hostname(MATCH_LIST *list, const char *name, const char *pattern)
 	    if (entry == name || (dict->flags & DICT_FLAG_FIXED)) {
 		match = (dict_get(dict, entry) != 0);
 		if (msg_verbose > 1)
-		    msg_info("%s: lookup %s:%s %s: %s",
-			     myname, dict->type, dict->name, entry,
-			     match ? "found" : "notfound");
+		    msg_info("%s: %s: lookup %s:%s %s: %s",
+			     myname, list->pname, dict->type, dict->name,
+			     entry, match ? "found" : "notfound");
 		if (match != 0)
 		    break;
 		if ((list->error = dict->error) != 0)
@@ -191,23 +188,25 @@ int     match_hostname(MATCH_LIST *list, const char *name, const char *pattern)
     }
 
     /*
-     * Try an exact match with the host name.
+     * Try an exact match with the host name. Note that the name and the
+     * pattern are already casefolded.
      */
-    if (strcasecmp(name, pattern) == 0) {
+    if (strcmp(name, pattern) == 0) {
 	return (1);
     }
 
     /*
-     * See if the pattern is a parent domain of the hostname.
+     * See if the pattern is a parent domain of the hostname. Note that the
+     * name and the pattern are already casefolded.
      */
     else {
 	if (list->flags & MATCH_FLAG_PARENT) {
 	    pd = name + strlen(name) - strlen(pattern);
-	    if (pd > name && pd[-1] == '.' && strcasecmp(pd, pattern) == 0)
+	    if (pd > name && pd[-1] == '.' && strcmp(pd, pattern) == 0)
 		return (1);
 	} else if (pattern[0] == '.') {
 	    pd = name + strlen(name) - strlen(pattern);
-	    if (pd > name && strcasecmp(pd, pattern) == 0)
+	    if (pd > name && strcmp(pd, pattern) == 0)
 		return (1);
 	}
     }
@@ -226,7 +225,7 @@ int     match_hostaddr(MATCH_LIST *list, const char *addr, const char *pattern)
     int     rc;
 
     if (msg_verbose)
-	msg_info("%s: %s ~? %s", myname, addr, pattern);
+	msg_info("%s: %s: %s ~? %s", myname, list->pname, addr, pattern);
 
 #define V4_ADDR_STRING_CHARS	"01234567890."
 #define V6_ADDR_STRING_CHARS	V4_ADDR_STRING_CHARS "abcdefABCDEF:"
@@ -249,15 +248,16 @@ int     match_hostaddr(MATCH_LIST *list, const char *addr, const char *pattern)
     }
 
     /*
-     * Try an exact match with the host address.
+     * Try an exact match with the host address. Note that the address and
+     * pattern are already casefolded.
      */
     if (pattern[0] != '[') {
-	if (strcasecmp(addr, pattern) == 0)
+	if (strcmp(addr, pattern) == 0)
 	    return (1);
     } else {
 	size_t  addr_len = strlen(addr);
 
-	if (strncasecmp(addr, pattern + 1, addr_len) == 0
+	if (strncmp(addr, pattern + 1, addr_len) == 0
 	    && strcmp(pattern + 1 + addr_len, "]") == 0)
 	    return (1);
     }
@@ -273,7 +273,7 @@ int     match_hostaddr(MATCH_LIST *list, const char *addr, const char *pattern)
      * - Don't bother unless the pattern is either an IPv6 address or net/mask.
      * 
      * We can safely skip IPv4 address patterns because their form is
-     * unambiguous and they did not match in the strcasecmp() calls above.
+     * unambiguous and they did not match in the strcmp() calls above.
      * 
      * XXX We MUST skip (parent) domain names, which may appear in NAMADR_LIST
      * input, to avoid triggering false cidr_match_parse() errors.

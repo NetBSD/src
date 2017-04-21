@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdiskrawname.3,v 1.2 2012/04/08 16:06:23 wiz Exp $
+.\"	$NetBSD: getdiskrawname.3,v 1.2.20.1 2017/04/21 16:53:12 bouyer Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,8 @@
 .Dt GETDISKRAWNAME 3
 .Os
 .Sh NAME
-.Nm getdiskrawname
+.Nm getdiskrawname ,
+.Nm getdiskcookedname
 .Nd get the the block/character device name for a disk
 .Sh LIBRARY
 .Lb libutil
@@ -47,13 +48,13 @@ The
 .Fn getdiskrawname
 function converts the
 .Fa name
-argument thar contains a path to a disk block device node to the
+argument that contains a path to a disk block device node to the
 path that contains the corresponding character device node.
 The
 .Fn getdiskcookedname
 function converts the
 .Fa name
-argument thar contains a path to a disk character device node to the
+argument that contains a path to a disk character device node to the
 path that contains the corresponding block device node.
 .Sh RETURN VALUES
 On success the absolute pathname of the underlying device node is returned.

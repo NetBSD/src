@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.282 2016/08/17 22:03:02 skrll Exp $ */
+/*	$NetBSD: wdc.c,v 1.282.2.1 2017/04/21 16:53:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.282 2016/08/17 22:03:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.282.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -698,7 +698,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	ret_value = __wdcwait_reset(chp, ret_value, poll);
 	s = splbio();
 #endif
-	ATADEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
+	ATADEBUG_PRINT(("%s:%d: after reset, ret_value=%#x\n",
 	    __func__, chp->ch_channel, ret_value), DEBUG_PROBE);
 
 	/* if reset failed, there's nothing here */

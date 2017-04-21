@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.76 2016/12/08 05:16:34 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.76.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.76 2016/12/08 05:16:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.76.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -141,27 +141,32 @@ static struct in6_addrpolicy *match_addrsel_policy(struct sockaddr_in6 *);
  * If necessary, this function lookups the routing table and returns
  * an entry to the caller for later use.
  */
-#if 0				/* diabled ad-hoc */
+#if 0				/* disabled ad-hoc */
 #define REPLACE(r) do {\
+	char _buf1[INET6_ADDRSTRLEN], _buf2[INET6_ADDRSTRLEN]; \
 	if ((r) < sizeof(ip6stat.ip6s_sources_rule) / \
 		sizeof(ip6stat.ip6s_sources_rule[0])) /* check for safety */ \
 		ip6stat.ip6s_sources_rule[(r)]++; \
-	/* printf("in6_selectsrc: replace %s with %s by %d\n", ia_best ? ip6_sprintf(&ia_best->ia_addr.sin6_addr) : "none", ip6_sprintf(&ia->ia_addr.sin6_addr), (r)); */ \
+	printf("%s: replace %s with %s by %d\n", __func__, ia_best ? \
+	    IN6_PRINT(_buf1, &ia_best->ia_addr.sin6_addr) : "none", \
+	    IN6_PRINT(_buf2, &ia->ia_addr.sin6_addr), (r)); \
 	goto replace; \
-} while(0)
+} while(/*CONSTCOND*/0)
 #define NEXT(r) do {\
 	if ((r) < sizeof(ip6stat.ip6s_sources_rule) / \
 		sizeof(ip6stat.ip6s_sources_rule[0])) /* check for safety */ \
 		ip6stat.ip6s_sources_rule[(r)]++; \
-	/* printf("in6_selectsrc: keep %s against %s by %d\n", ia_best ? ip6_sprintf(&ia_best->ia_addr.sin6_addr) : "none", ip6_sprintf(&ia->ia_addr.sin6_addr), (r)); */ \
+	printf("%s: keep %s against %s by %d\n", ia_best ? \
+	    IN6_PRINT(_buf1, &ia_best->ia_addr.sin6_addr) : "none", \
+	    IN6_PRINT(_buf2, &ia->ia_addr.sin6_addr), (r)); \
 	goto next; 		/* XXX: we can't use 'continue' here */ \
-} while(0)
+} while(/*CONSTCOND*/0)
 #define BREAK(r) do { \
 	if ((r) < sizeof(ip6stat.ip6s_sources_rule) / \
 		sizeof(ip6stat.ip6s_sources_rule[0])) /* check for safety */ \
 		ip6stat.ip6s_sources_rule[(r)]++; \
 	goto out; 		/* XXX: we can't use 'break' here */ \
-} while(0)
+} while(/*CONSTCOND*/0)
 #else
 #define REPLACE(r) goto replace
 #define NEXT(r) goto next
@@ -606,11 +611,13 @@ in6_selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	if (dstsock->sin6_addr.s6_addr32[0] == 0 &&
 	    dstsock->sin6_addr.s6_addr32[1] == 0 &&
 	    !IN6_IS_ADDR_LOOPBACK(&dstsock->sin6_addr)) {
+		char ip6buf[INET6_ADDRSTRLEN];
 		printf("in6_selectroute: strange destination %s\n",
-		       ip6_sprintf(&dstsock->sin6_addr));
+		       IN6_PRINT(ip6buf, &dstsock->sin6_addr));
 	} else {
+		char ip6buf[INET6_ADDRSTRLEN];
 		printf("in6_selectroute: destination = %s%%%d\n",
-		       ip6_sprintf(&dstsock->sin6_addr),
+		       IN6_PRINT(ip6buf, &dstsock->sin6_addr),
 		       dstsock->sin6_scope_id); /* for debug */
 	}
 #endif
@@ -766,7 +773,7 @@ getroute:
 	    !if_is_deactivated(rt->rt_ifa->ifa_ifp)) {
 		if_put(*retifp, psref);
 		*retifp = rt->rt_ifa->ifa_ifp;
-		if_acquire_NOMPSAFE(*retifp, psref);
+		if_acquire(*retifp, psref);
 	}
 out:
 	rtcache_unref(rt, ro);

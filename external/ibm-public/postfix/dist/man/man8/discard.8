@@ -1,4 +1,4 @@
-.\"	$NetBSD: discard.8,v 1.1.1.2 2014/07/06 19:27:46 tron Exp $
+.\"	$NetBSD: discard.8,v 1.1.1.2.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH DISCARD 8 
 .ad
@@ -17,14 +17,14 @@ Postfix discard mail delivery agent
 The Postfix \fBdiscard\fR(8) delivery agent processes
 delivery requests from
 the queue manager. Each request specifies a queue file, a sender
-address, a next-hop destination that is treated as the reason for
+address, a next\-hop destination that is treated as the reason for
 discarding the mail, and recipient information.
-The reason may be prefixed with an RFC 3463-compatible detail code.
+The reason may be prefixed with an RFC 3463\-compatible detail code.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
 
 The \fBdiscard\fR(8) delivery agent pretends to deliver all recipients
-in the delivery request, logs the "next-hop" destination
+in the delivery request, logs the "next\-hop" destination
 as the reason for discarding the mail, updates the
 queue file, and either marks recipients as finished or informs the
 queue manager that delivery should be tried again at a later time.
@@ -36,7 +36,7 @@ daemon as appropriate.
 .nf
 .ad
 .fi
-The \fBdiscard\fR(8) mailer is not security-sensitive. It does not talk
+The \fBdiscard\fR(8) mailer is not security\-sensitive. It does not talk
 to the network, and can be run chrooted at fixed low privilege.
 .SH "STANDARDS"
 .na
@@ -65,11 +65,11 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub-second delay values.
-.IP "\fBdouble_bounce_sender (double-bounce)\fR"
+sub\-second delay values.
+.IP "\fBdouble_bounce_sender (double\-bounce)\fR"
 The sender address of postmaster notifications that are generated
 by the mail system.
 .IP "\fBipc_timeout (3600s)\fR"
@@ -81,12 +81,12 @@ for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
 The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
@@ -108,9 +108,9 @@ syslogd(8), system logging
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 This service was introduced with Postfix version 2.2.
 .SH "AUTHOR(S)"
 .na
@@ -123,3 +123,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

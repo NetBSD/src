@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.c,v 1.1.1.4 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: db_common.c,v 1.1.1.4.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -38,7 +38,7 @@
 /*
 /*	\fIdb_common_parse\fR parses query and result substitution templates.
 /*	It must be called for each template before any calls to
-/*	\fIdb_common_expand\fR. The \fIctx\fB argument must be initialized to
+/*	\fIdb_common_expand\fR. The \fIctx\fR argument must be initialized to
 /*	a reference to a (void *)0 before the first template is parsed, this
 /*	causes memory for the context to be allocated and the new pointer is
 /*	stored in *ctx. When the dictionary is closed, this memory must be
@@ -258,7 +258,8 @@ void    db_common_parse_domain(CFG_PARSER *parser, void *ctxPtr)
 
     domainlist = cfg_get_str(parser, "domain", "", 0, 0);
     if (*domainlist) {
-	ctx->domain = string_list_init(MATCH_FLAG_RETURN, domainlist);
+	ctx->domain = string_list_init(parser->name, MATCH_FLAG_RETURN,
+				       domainlist);
 	if (ctx->domain == 0)
 
 	    /*
@@ -292,7 +293,7 @@ void    db_common_free_ctx(void *ctxPtr)
 
     if (ctx->domain)
 	string_list_free(ctx->domain);
-    myfree((char *) ctxPtr);
+    myfree((void *) ctxPtr);
 }
 
 /* db_common_expand - expand query and result templates */

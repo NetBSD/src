@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.107 2017/01/04 15:45:18 christos Exp $
+# $NetBSD: mi,v 1.107.2.1 2017/04/21 16:51:14 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -150,6 +150,8 @@
 ./@MODULEDIR@/if_gif/if_gif.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_gre				base-kernel-modules	kmod
 ./@MODULEDIR@/if_gre/if_gre.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_l2tp				base-kernel-modules	kmod
+./@MODULEDIR@/if_l2tp/if_l2tp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_loop				base-kernel-modules	kmod
 ./@MODULEDIR@/if_loop/if_loop.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_mpls				base-kernel-modules	kmod
@@ -356,6 +358,8 @@
 ./@MODULEDIR@/twe/twe.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/uatp				base-kernel-modules	kmod
 ./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ualea				base-kernel-modules	kmod
+./@MODULEDIR@/ualea/ualea.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
 ./@MODULEDIR@/udf/udf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/umap				base-kernel-modules	kmod

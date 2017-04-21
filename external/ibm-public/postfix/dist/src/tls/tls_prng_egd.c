@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_prng_egd.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_prng_egd.c,v 1.1.1.1.36.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -161,7 +161,7 @@ int     tls_prng_egd_close(TLS_PRNG_SRC *egd)
 	msg_info("%s: close EGD server %s", myname, egd->name);
     err = close(egd->fd);
     myfree(egd->name);
-    myfree((char *) egd);
+    myfree((void *) egd);
     return (err);
 }
 

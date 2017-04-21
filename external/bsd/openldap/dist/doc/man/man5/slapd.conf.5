@@ -1,5 +1,5 @@
 .TH SLAPD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2014 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2016 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -1732,6 +1732,7 @@ the contextCSN is stored in the context entry.
 .B [filter=<filter str>]
 .B [scope=sub|one|base|subord]
 .B [attrs=<attr list>]
+.B [exattrs=<attr list>]
 .B [attrsonly]
 .B [sizelimit=<limit>]
 .B [timelimit=<limit>]
@@ -1753,7 +1754,7 @@ the contextCSN is stored in the context entry.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
-.B [tls_ciphersuite=<ciphers>]
+.B [tls_cipher_suite=<ciphers>]
 .B [tls_crlcheck=none|peer|all]
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [suffixmassage=<real DN>]
@@ -1811,6 +1812,19 @@ a consumer requested limitation on the number of entries that can be returned
 by the LDAP Content Synchronization operation; as such, it is intended
 to implement partial replication based on the size of the replicated database
 and on the time required by the synchronization.
+Note, however, that any provider-side limits for the replication identity
+will be enforced by the provider regardless of the limits requested
+by the LDAP Content Synchronization operation, much like for any other
+search operation.
+.B exattrs
+option may also be used to specify attributes that should be omitted
+from incoming entries.
+The \fBscope\fP defaults to \fBsub\fP, the \fBfilter\fP defaults to
+\fB(objectclass=*)\fP, and there is no default \fBsearchbase\fP. The
+\fBattrs\fP list defaults to \fB"*,+"\fP to return all user and operational
+attributes, and \fBattrsonly\fP and \fBexattrs\fP are unset by default.
+The \fBsizelimit\fP and \fBtimelimit\fP only
+accept "unlimited" and positive integers, and both default to "unlimited".
 Note, however, that any provider-side limits for the replication identity
 will be enforced by the provider regardless of the limits requested
 by the LDAP Content Synchronization operation, much like for any other

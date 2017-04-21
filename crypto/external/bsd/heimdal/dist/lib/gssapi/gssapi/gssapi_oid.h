@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_oid.h,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: gssapi_oid.h,v 1.1.1.2.10.1 2017/04/21 16:50:45 bouyer Exp $	*/
 
 /* Generated file */
 #ifndef GSSAPI_GSSAPI_OID

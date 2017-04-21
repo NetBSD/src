@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.15 2016/12/13 20:42:20 christos Exp $
+# $NetBSD: ENCPP1,v 1.15.2.1 2017/04/21 16:53:35 bouyer Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.15 $"
+#ident 		"ENCPP1-$Revision: 1.15.2.1 $"
 
 maxusers	32
 
@@ -77,6 +77,8 @@ file-system 	PROCFS
 #file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
 
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 options 	INET

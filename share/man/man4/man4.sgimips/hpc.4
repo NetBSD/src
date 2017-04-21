@@ -1,4 +1,4 @@
-.\"	$NetBSD: hpc.4,v 1.12 2008/04/30 13:10:56 martin Exp $
+.\"	$NetBSD: hpc.4,v 1.12.50.1 2017/04/21 16:53:17 bouyer Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 22, 2006
+.Dd February 17, 2017
 .Dt HPC 4 sgimips
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh DESCRIPTION
 .Nm
 interfaces the peripherals connected to it to the
-.Xr gio 4
+.Xr sgimips/gio 4
 bus.
 .Nm
 is found on the Personal Iris 4D/3x, Indigo, Indy, Challenge S, Challenge M,
@@ -79,9 +79,9 @@ controller
 Zilog Z8530 UART
 .El
 .Sh SEE ALSO
-.Xr gio 4 ,
-.Xr imc 4 ,
-.Xr pic 4
+.Xr sgimips/gio 4 ,
+.Xr sgimips/imc 4 ,
+.Xr sgimips/pic 4
 .Sh HISTORY
 The
 .Nm

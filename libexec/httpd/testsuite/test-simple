@@ -1,23 +1,33 @@
 #! /bin/sh
-# $NetBSD: test-simple,v 1.3 2016/12/27 12:09:19 schmonz Exp $
+# $NetBSD: test-simple,v 1.3.2.1 2017/04/21 16:53:13 bouyer Exp $
 
-test="$1"
-bozohttpd="$2"
-datadir="$3"
-verbose="$4"
+test="$1"; shift
+bozohttpd="$1"; shift
+datadir="$1"; shift
+curdir="$1"; shift
+verbose="$1"; shift
+
+in="$curdir/$test.in"
+out="$curdir/$test.out"
+tmpout="tmp.$test.out"
+tmperr="tmp.$test.err"
 
 if [ "yes" = "$verbose" ]; then
 	echo "Running test $test"
 else
-	exec 2>tmp.$test.err
+	exec 2>"$tmperr"
 fi
 
 bozotestport=11111
 
-${bozohttpd} ${datadir} < $test.in > tmp.$test.out
-if ./html_cmp cmp $test.out tmp.$test.out; then
+${bozohttpd} "$@" "${datadir}" < "$in" > "$tmpout"
+if "$curdir/html_cmp" cmp "$out" "$tmpout"; then
 	exit 0
 else
-	[ "yes" = "$verbose" ] || echo "Failed test $test: `cat tmp.$test.err; echo; ./html_cmp diff $test.out tmp.$test.out`"
+	if [ "yes" = "$verbose" ]; then
+		echo "Failed test $test:"
+		cat "$tmperr"
+		$curdir/html_cmp diff "$out" "$tmpout"
+	fi
 	exit 1
 fi

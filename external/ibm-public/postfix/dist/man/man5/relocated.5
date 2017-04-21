@@ -1,4 +1,4 @@
-.\"	$NetBSD: relocated.5,v 1.1.1.1 2009/06/23 10:08:34 tron Exp $
+.\"	$NetBSD: relocated.5,v 1.1.1.1.36.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH RELOCATED 5 
 .ad
@@ -27,11 +27,11 @@ file after changing the corresponding relocated table.
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
-Alternatively, the table can be provided as a regular-expression
+Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In those case, the lookups
+can be directed to TCP\-based server. In those case, the lookups
 are done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
+"REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 
 Table lookups are case insensitive.
 .SH "CASE FOLDING"
@@ -59,10 +59,10 @@ An entry has one of the following form:
 Where \fInew_location\fR specifies contact information such as
 an email address, or perhaps a street address or telephone number.
 .IP \(bu
-Empty lines and whitespace-only lines are ignored, as
-are lines whose first non-whitespace character is a `#'.
+Empty lines and whitespace\-only lines are ignored, as
+are lines whose first non\-whitespace character is a `#'.
 .IP \(bu
-A logical line starts with non-whitespace text. A line that
+A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .SH "TABLE SEARCH ORDER"
 .na
@@ -98,7 +98,7 @@ When a mail address localpart contains the optional recipient delimiter
 .fi
 This section describes how the table lookups change when the table
 is given in the form of regular expressions or when lookups are
-directed to a TCP-based server. For a description of regular
+directed to a TCP\-based server. For a description of regular
 expression lookup table syntax, see \fBregexp_table\fR(5) or
 \fBpcre_table\fR(5). For a description of the TCP client/server
 table lookup protocol, see \fBtcp_table\fR(5).
@@ -121,7 +121,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .ad
 .fi
 This section describes how the table lookups change when lookups
-are directed to a TCP-based server. For a description of the TCP
+are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
 This feature is not available up to and including Postfix version 2.4.
 
@@ -153,14 +153,14 @@ You need to stop and start Postfix when this parameter changes.
 .IP \fBmydestination\fR
 List of domains that this mail system considers local.
 .IP \fBmyorigin\fR
-The domain that is appended to locally-posted mail.
+The domain that is appended to locally\-posted mail.
 .IP \fBproxy_interfaces\fR
 Other interfaces that this machine receives mail on by way of a
 proxy agent or network address translator.
 .SH "SEE ALSO"
 .na
 .nf
-trivial-rewrite(8), address resolver
+trivial\-rewrite(8), address resolver
 postmap(1), Postfix lookup table manager
 postconf(5), configuration parameters
 .SH "README FILES"
@@ -187,3 +187,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

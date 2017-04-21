@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_template.c,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: bounce_template.c,v 1.1.1.1.36.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -119,6 +119,9 @@
 #include <split_at.h>
 #include <stringops.h>
 #include <mymalloc.h>
+#ifndef NO_EAI
+#include <midna_domain.h>
+#endif
 
 /* Global library. */
 
@@ -201,6 +204,21 @@ static const BOUNCE_TIME_PARAMETER time_parameter[] = {
 };
 
  /*
+  * Parameters whose value may have to be converted to UTF-8 for presentation
+  * purposes.
+  */
+typedef struct {
+    const char *param_name;		/* parameter name */
+    char  **value;			/* parameter value */
+} BOUNCE_STR_PARAMETER;
+
+static const BOUNCE_STR_PARAMETER str_parameter[] = {
+    VAR_MYHOSTNAME, &var_myhostname,
+    VAR_MYDOMAIN, &var_mydomain,
+    0, 0,
+};
+
+ /*
   * SLMs.
   */
 #define STR(x) vstring_str(x)
@@ -222,9 +240,9 @@ void    bounce_template_free(BOUNCE_TEMPLATE *tp)
 {
     if (tp->buffer) {
 	myfree(tp->buffer);
-	myfree((char *) tp->origin);
+	myfree((void *) tp->origin);
     }
-    myfree((char *) tp);
+    myfree((void *) tp);
 }
 
 /* bounce_template_reset - reset template to default */
@@ -232,7 +250,7 @@ void    bounce_template_free(BOUNCE_TEMPLATE *tp)
 static void bounce_template_reset(BOUNCE_TEMPLATE *tp)
 {
     myfree(tp->buffer);
-    myfree((char *) tp->origin);
+    myfree((void *) tp->origin);
     *tp = *(tp->prototype);
 }
 
@@ -288,6 +306,10 @@ static void bounce_template_parse_buffer(BOUNCE_TEMPLATE *tp)
 
     /*
      * Parse pseudo-header labels and values.
+     * 
+     * XXX EAI: allow UTF8 in template headers when responding to SMTPUTF8
+     * message. Sending SMTPUTF8 in reponse to non-SMTPUTF8 mail would make
+     * no sense.
      */
 #define GETLINE(line, buf) \
         (((line) = (buf)) != 0 ? ((buf) = split_at((buf), '\n'), (line)) : 0)
@@ -367,7 +389,7 @@ static void bounce_template_parse_buffer(BOUNCE_TEMPLATE *tp)
     while (cp) {
 	cpp[cpp_used++] = cp;
 	if (cpp_used >= cpp_len) {
-	    cpp = (char **) myrealloc((char *) cpp,
+	    cpp = (char **) myrealloc((void *) cpp,
 				      sizeof(*cpp) * 2 * cpp_len);
 	    cpp_len *= 2;
 	}
@@ -380,13 +402,16 @@ static void bounce_template_parse_buffer(BOUNCE_TEMPLATE *tp)
 /* bounce_template_lookup - lookup $name value */
 
 static const char *bounce_template_lookup(const char *key, int unused_mode,
-					          char *context)
+					          void *context)
 {
     BOUNCE_TEMPLATE *tp = (BOUNCE_TEMPLATE *) context;
     const BOUNCE_TIME_PARAMETER *bp;
     const BOUNCE_TIME_DIVISOR *bd;
+    const BOUNCE_STR_PARAMETER *sp;
     static VSTRING *buf;
     int     result;
+    const char *asc_val;
+    const char *utf8_val;
 
     /*
      * Look for parameter names that can have a time unit suffix, and scale
@@ -424,6 +449,33 @@ static const char *bounce_template_lookup(const char *key, int unused_mode,
 		      key + bp->param_name_len + 1, key);
 	}
     }
+
+    /*
+     * Look for parameter names that may have to be up-converted for
+     * presentation purposes.
+     */
+#ifndef NO_EAI
+    if (var_smtputf8_enable) {
+	for (sp = str_parameter; sp->param_name; sp++) {
+	    if (strcmp(key, sp->param_name) == 0) {
+		asc_val = sp->value[0];
+		if (!allascii(asc_val)) {
+		    msg_warn("%s: conversion \"%s\" failed: "
+			     "non-ASCII input value: \"%s\"",
+			     tp->origin, key, asc_val);
+		    return (asc_val);
+		} else if ((utf8_val = midna_domain_to_utf8(asc_val)) == 0) {
+		    msg_warn("%s: conversion \"%s\" failed: "
+			     "input value: \"%s\"",
+			     tp->origin, key, asc_val);
+		    return (asc_val);
+		} else {
+		    return (utf8_val);
+		}
+	    }
+	}
+    }
+#endif
     return (mail_conf_lookup_eval(key));
 }
 
@@ -451,14 +503,13 @@ void    bounce_template_expand(BOUNCE_XP_PUT_FN out_fn, VSTREAM *fp,
     VSTRING *buf = vstring_alloc(100);
     const char **cpp;
     int     stat;
-    const char *filter = "\t !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
     if (tp->flags & BOUNCE_TMPL_FLAG_NEW_BUFFER)
 	bounce_template_parse_buffer(tp);
 
     for (cpp = tp->message_text; *cpp; cpp++) {
-	stat = mac_expand(buf, *cpp, MAC_EXP_FLAG_NONE, filter,
-			  bounce_template_lookup, (char *) tp);
+	stat = mac_expand(buf, *cpp, MAC_EXP_FLAG_PRINTABLE, (char *) 0,
+			  bounce_template_lookup, (void *) tp);
 	if (stat & MAC_PARSE_ERROR)
 	    msg_fatal("%s: bad $name syntax in %s template: %s",
 		      tp->origin, tp->class, *cpp);

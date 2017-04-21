@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertype.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: ethertype.h,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996
@@ -113,6 +113,9 @@
 #endif
 #ifndef ETHERTYPE_PPPOES
 #define ETHERTYPE_PPPOES	0x8864
+#endif
+#ifndef ETHERTYPE_8021AD
+#define ETHERTYPE_8021AD	0x88a8
 #endif
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000

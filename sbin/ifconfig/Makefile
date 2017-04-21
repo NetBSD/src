@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2015/05/19 08:14:38 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.56.4.1 2017/04/21 16:53:13 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -7,34 +7,25 @@
 
 .include <bsd.own.mk>
 
-RUMPPRG=ifconfig
-MAN=	ifconfig.8
+RUMPPRG=	ifconfig
+MAN=		ifconfig.8
 
-#DBG+=-g
-SRCS= af_atalk.c af_link.c carp.c
+SRCS=		af_atalk.c af_link.c carp.c
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/dist/pf/
+SRCS+=		pfsync.c
+
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
-SRCS+= af_inet6.c
+SRCS+=		af_inet6.c
 .endif
 
-.include "Makefile.inc"
+.include "Makefile.common"
 
 .PATH:		${.CURDIR}/../../lib/libc/net
-RUMPSRCS= getifaddrs.c getnameinfo.c if_indextoname.c
+RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c
 .if (${MKRUMP} != "no")
-CPPFLAGS+= -DRUMP_ACTION
-.endif
-
-.ifdef SMALLPROG
-CPPFLAGS+=-DSMALL
-.endif
-
-CPPFLAGS+=-I${NETBSDSRCDIR}/sys/dist/pf/
-SRCS+= pfsync.c
-
-.if ${MACHINE_ARCH} == "m68000"
-# XXX workaround for gcc -O1 bug (PR bin/40036 and toolchain/40066)
-COPTS.ifconfig.c+= -fno-loop-optimize
+CPPFLAGS+=	-DRUMP_ACTION
 .endif
 
 .include <bsd.prog.mk>

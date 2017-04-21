@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.c,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: base64_code.c,v 1.1.1.2.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -165,7 +165,7 @@ VSTRING *base64_decode_opt(VSTRING *result, const char *in, ssize_t len,
     if (un_b64 == 0) {
 	un_b64 = (unsigned char *) mymalloc(CHARS_PER_BYTE);
 	memset(un_b64, INVALID, CHARS_PER_BYTE);
-	for (cp = to_b64; cp < to_b64 + sizeof(to_b64); cp++)
+	for (cp = to_b64; cp < to_b64 + sizeof(to_b64) - 1; cp++)
 	    un_b64[*cp] = cp - to_b64;
     }
 
@@ -203,53 +203,25 @@ VSTRING *base64_decode_opt(VSTRING *result, const char *in, ssize_t len,
 #define STR(x)	vstring_str(x)
 #define LEN(x)	VSTRING_LEN(x)
 
-#define TESXT 	"this is a test!"
-
 int     main(int unused_argc, char **unused_argv)
 {
     VSTRING *b1 = vstring_alloc(1);
     VSTRING *b2 = vstring_alloc(1);
-    char   *test = TESXT;
-    char   *test2 = TESXT TESXT;
+    char    test[256];
+    int     n;
 
-#define DECODE(b,x,l) { \
-	if (base64_decode((b),(x),(l)) == 0) \
-	    msg_panic("bad base64: %s", (x)); \
-    }
-#define VERIFY(b,t) { \
-	if (strcmp((b), (t)) != 0) \
-	    msg_panic("bad test: %s", (b)); \
-    }
-
-    base64_encode(b1, test, strlen(test));
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test);
-
-    base64_encode(b1, test, strlen(test));
-    base64_encode(b2, STR(b1), LEN(b1));
-    base64_encode(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    DECODE(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test);
-
-    base64_encode(b1, test, strlen(test));
-    base64_encode(b2, STR(b1), LEN(b1));
-    base64_encode(b1, STR(b2), LEN(b2));
-    base64_encode(b2, STR(b1), LEN(b1));
-    base64_encode(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    DECODE(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    DECODE(b1, STR(b2), LEN(b2));
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test);
-
-    base64_encode(b1, test, strlen(test));
-    base64_encode_opt(b1, test, strlen(test), BASE64_FLAG_APPEND);
-    DECODE(b2, STR(b1), LEN(b1));
-    VERIFY(STR(b2), test2);
-
+    for (n = 0; n < sizeof(test); n++)
+	test[n] = n;
+    base64_encode(b1, test, sizeof(test));
+    if (base64_decode(b2, STR(b1), LEN(b1)) == 0)
+	msg_panic("bad base64: %s", STR(b1));
+    if (LEN(b2) != sizeof(test))
+	msg_panic("bad decode length: %ld != %ld",
+		  (long) LEN(b2), (long) sizeof(test));
+    for (n = 0; n < sizeof(test); n++)
+	if (STR(b2)[n] != test[n])
+	    msg_panic("bad decode value %d != %d",
+		      (unsigned char) STR(b2)[n], (unsigned char) test[n]);
     vstring_free(b1);
     vstring_free(b2);
     return (0);

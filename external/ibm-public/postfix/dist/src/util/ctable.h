@@ -1,4 +1,4 @@
-/*	$NetBSD: ctable.h,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: ctable.h,v 1.1.1.2.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _CTABLE_H_INCLUDED_
 #define _CTABLE_H_INCLUDED_
@@ -22,7 +22,7 @@
 typedef void *(*CTABLE_CREATE_FN) (const char *, void *);
 typedef void (*CTABLE_DELETE_FN) (void *, void *);
 
-extern CTABLE *ctable_create(int, CTABLE_CREATE_FN, CTABLE_DELETE_FN, void *);
+extern CTABLE *ctable_create(ssize_t, CTABLE_CREATE_FN, CTABLE_DELETE_FN, void *);
 extern void ctable_free(CTABLE *);
 extern void ctable_walk(CTABLE *, void (*) (const char *, const void *));
 extern const void *ctable_locate(CTABLE *, const char *);

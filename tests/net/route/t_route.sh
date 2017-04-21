@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.10 2016/12/21 02:46:08 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.10.2.1 2017/04/21 16:54:13 bouyer Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -45,6 +45,8 @@ IP6DSTGW=fc00:0:0:2::1
 IP6DST=fc00:0:0:2::2
 BUS_SRCGW=bus1
 BUS_DSTGW=bus2
+# command_add
+SOCKHOST=unix://commsock1
 
 DEBUG=${DEBUG:-false}
 TIMEOUT=1
@@ -397,10 +399,153 @@ route_command_get6_cleanup()
 	cleanup
 }
 
+atf_test_case route_default_reject cleanup
+route_default_reject_head()
+{
+
+	atf_set "descr" "tests for making a default route reject"
+	atf_set "require.progs" "rump_server"
+}
+
+route_default_reject_body()
+{
+
+	rump_server_start $SOCKSRC netinet6
+	rump_server_add_iface $SOCKSRC shmif0 $BUS_SRCGW
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# From /etc/rc.d/network
+	atf_check -s exit:0 -o match:'add net ::0.0.0.0: gateway ::1' \
+	    rump.route add -inet6 ::0.0.0.0 -prefixlen 104 ::1 -reject
+
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6SRC/64 up
+	$DEBUG && rump.netstat -nr -f inet6
+	atf_check -s exit:0 -o match:"add net default: gateway $IP6SRCGW" \
+	    rump.route add -inet6 default $IP6SRCGW
+	$DEBUG && rump.netstat -nr -f inet6
+	$DEBUG && rump.route -n get -inet6 default
+	atf_check -s exit:0 -o match:'change net default' \
+	    rump.route change -inet6 default -reject
+	$DEBUG && rump.netstat -nr -f inet6
+
+	rump_server_destroy_ifaces
+}
+
+route_default_reject_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case route_command_add cleanup
+route_command_add_head()
+{
+
+	atf_set "descr" "tests of route add command"
+	atf_set "require.progs" "rump_server"
+}
+
+route_command_add_body()
+{
+
+	rump_server_start $SOCKHOST
+
+	export RUMP_SERVER=${SOCKHOST}
+	rump_server_add_iface $SOCKHOST shmif0 $BUS
+	atf_check -s exit:0 rump.ifconfig shmif0 10.0.0.1/24
+
+	# Accept the route whose gateway is in a subnet of interface address
+	atf_check -s exit:0 -o ignore rump.route add \
+	    -net 10.0.1.0/24 10.0.0.2
+	atf_check -s exit:0 -o ignore rump.route add \
+	    -host 10.0.2.1 10.0.0.3
+
+	# Accept the route whose gateway is an interface
+	atf_check -s exit:0 -o ignore rump.route add \
+	    -net 10.0.3.0/24 -connected -link -iface shmif0
+
+	# Accept the route whose gateway is reachable and not RTF_GATEWAY
+	atf_check -s exit:0 -o ignore rump.route add \
+	    -net 10.0.4.0/24 10.0.3.1
+
+	# Don't accept the route whose destination is reachable and
+	# gateway is unreachable
+	atf_check -s not-exit:0 -o ignore -e match:'unreachable' rump.route add \
+	    -net 10.0.1.0/26 10.0.5.1
+
+	# Don't accept the route whose gateway is reachable and RTF_GATEWAY
+	atf_check -s not-exit:0 -o ignore -e ignore rump.route add \
+	    -net 10.0.6.0/24 10.0.1.1
+
+	rump_server_destroy_ifaces
+}
+
+route_command_add_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case route_command_add6 cleanup
+route_command_add6_head()
+{
+
+	atf_set "descr" "tests of route add command (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+route_command_add6_body()
+{
+
+	rump_server_start $SOCKHOST netinet6
+
+	export RUMP_SERVER=${SOCKHOST}
+	rump_server_add_iface $SOCKHOST shmif0 $BUS
+	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::1/64
+
+	# Accept the route whose gateway is in a subnet of interface address
+	atf_check -s exit:0 -o ignore rump.route add -inet6\
+	    -net fc00:1::0/64 fc00::2
+	atf_check -s exit:0 -o ignore rump.route add -inet6\
+	    -host fc00:2::1 fc00::3
+
+	# Accept the route whose gateway is an interface
+	atf_check -s exit:0 -o ignore rump.route add -inet6\
+	    -net fc00:3::0/64 -connected -link -iface shmif0
+
+	# Accept the route whose gateway is reachable and not RTF_GATEWAY
+	atf_check -s exit:0 -o ignore rump.route add -inet6\
+	    -net fc00:4::0/64 fc00:3::1
+
+	# Don't accept the route whose destination is reachable and
+	# gateway is unreachable
+	atf_check -s not-exit:0 -o ignore -e match:'unreachable' rump.route add \
+	    -inet6 -net fc00::4/128 fc00:5::1
+
+	# Don't accept the route whose gateway is reachable and RTF_GATEWAY
+	atf_check -s not-exit:0 -o ignore -e match:'unreachable' rump.route add \
+	    -inet6 -net fc00:6::0/64 fc00:1::1
+
+	rump_server_destroy_ifaces
+}
+
+route_command_add6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case route_non_subnet_gateway
 	atf_add_test_case route_command_get
 	atf_add_test_case route_command_get6
+	atf_add_test_case route_default_reject
+	atf_add_test_case route_command_add
+	atf_add_test_case route_command_add6
 }

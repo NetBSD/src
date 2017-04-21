@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn_command.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: spawn_command.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -16,46 +16,46 @@
 /*
 /*	Arguments:
 /* .IP key
-/*	Specifies what value will follow. spawn_command() takes a list
-/*	of (key, value) arguments, terminated by SPAWN_CMD_END. The
-/*	following is a listing of key codes together with the expected
-/*	value type.
+/*	spawn_command() takes a list of macros with arguments,
+/*	terminated by CA_SPAWN_CMD_END which has no arguments. The
+/*	following is a listing of macros and expected argument
+/*	types.
 /* .RS
-/* .IP "SPAWN_CMD_COMMAND (char *)"
+/* .IP "CA_SPAWN_CMD_COMMAND(const char *)"
 /*	Specifies the command to execute as a string. The string is
 /*	passed to the shell when it contains shell meta characters
 /*	or when it appears to be a shell built-in command, otherwise
 /*	the command is executed without invoking a shell.
-/*	One of SPAWN_CMD_COMMAND or SPAWN_CMD_ARGV must be specified.
+/*	One of CA_SPAWN_CMD_COMMAND or CA_SPAWN_CMD_ARGV must be specified.
 /*	See also the SPAWN_CMD_SHELL attribute below.
-/* .IP "SPAWN_CMD_ARGV (char **)"
+/* .IP "CA_SPAWN_CMD_ARGV(char **)"
 /*	The command is specified as an argument vector. This vector is
 /*	passed without further inspection to the \fIexecvp\fR() routine.
-/*	One of SPAWN_CMD_COMMAND or SPAWN_CMD_ARGV must be specified.
-/* .IP "SPAWN_CMD_ENV (char **)"
+/*	One of CA_SPAWN_CMD_COMMAND or CA_SPAWN_CMD_ARGV must be specified.
+/* .IP "CA_SPAWN_CMD_ENV(char **)"
 /*	Additional environment information, in the form of a null-terminated
 /*	list of name, value, name, value, ... elements. By default only the
 /*	command search path is initialized to _PATH_DEFPATH.
-/* .IP "SPAWN_CMD_EXPORT (char **)"
+/* .IP "CA_SPAWN_CMD_EXPORT(char **)"
 /*	Null-terminated array of names of environment parameters that can
 /*	be exported. By default, everything is exported.
-/* .IP "SPAWN_CMD_STDIN (int)"
-/* .IP "SPAWN_CMD_STDOUT (int)"
-/* .IP "SPAWN_CMD_STDERR (int)"
+/* .IP "CA_SPAWN_CMD_STDIN(int)"
+/* .IP "CA_SPAWN_CMD_STDOUT(int)"
+/* .IP "CA_SPAWN_CMD_STDERR(int)"
 /*	Each of these specifies I/O redirection of one of the standard file
 /*	descriptors for the command.
-/* .IP "SPAWN_CMD_UID (uid_t)"
+/* .IP "CA_SPAWN_CMD_UID(uid_t)"
 /*	The user ID to execute the command as. The value -1 is reserved
 /*	and cannot be specified.
-/* .IP "SPAWN_CMD_GID (gid_t)"
+/* .IP "CA_SPAWN_CMD_GID(gid_t)"
 /*	The group ID to execute the command as. The value -1 is reserved
 /*	and cannot be specified.
-/* .IP "SPAWN_CMD_TIME_LIMIT (int)"
+/* .IP "CA_SPAWN_CMD_TIME_LIMIT(int)"
 /*	The amount of time in seconds the command is allowed to run before
 /*	it is terminated with SIGKILL. The default is no time limit.
-/* .IP "SPAWN_CMD_SHELL (char *)"
+/* .IP "CA_SPAWN_CMD_SHELL(const char *)"
 /*	The shell to use when executing the command specified with
-/*	SPAWN_CMD_COMMAND. This shell is invoked regardless of the
+/*	CA_SPAWN_CMD_COMMAND. This shell is invoked regardless of the
 /*	command content.
 /* .RE
 /* DIAGNOSTICS
@@ -278,7 +278,7 @@ WAIT_STATUS_T spawn_command(int key,...)
 	    execvp(args.argv[0], args.argv);
 	    msg_fatal("%s: execvp %s: %m", myname, args.argv[0]);
 	} else if (args.shell && *args.shell) {
-	    argv = argv_split(args.shell, " \t\r\n");
+	    argv = argv_split(args.shell, CHARS_SPACE);
 	    argv_add(argv, args.command, (char *) 0);
 	    argv_terminate(argv);
 	    execvp(argv->argv[0], argv->argv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.118 2016/12/17 13:49:05 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.118.2.1 2017/04/21 16:53:21 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -211,6 +211,10 @@
   ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * PAGE_SIZE)
 
+/* Amount of VA used to map the kernel, the syms and the preloaded modules */
+#define BOOTMAP_VA_SIZE \
+	(NKL2_KIMG_ENTRIES * (1 << L2_SHIFT) - TABLESIZE - IOM_SIZE)
+
 /*
  * fillkpt - Fill in a kernel page table
  *	eax = pte (page frame | control | status)
@@ -325,7 +329,6 @@
 	.globl	_C_LABEL(bootinfo)
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore)
 
 	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	TABLESIZE
@@ -443,7 +446,7 @@ ENTRY(start)
 	testl	%eax,%eax		/* bootinfo = NULL? */
 	jz	bootinfo_finished
 
-	movl	(%eax),%ebx		/* number of entries */
+	movl	(%eax),%ebx		/* bootinfo::bi_nentries */
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	addl	$BOOTINFO_MAXSIZE,%ebp
@@ -462,7 +465,7 @@ bootinfo_entryloop:
 
 	movl	(%ecx),%eax		/* btinfo_common::len (size of entry) */
 	movl	%edx,%edi
-	addl	(%ecx),%edx		/* update dest pointer */
+	addl	%eax,%edx		/* update dest pointer */
 	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
 	jg	bootinfo_overflow
 
@@ -470,20 +473,31 @@ bootinfo_entryloop:
 	movl	%eax,%ecx
 
 	/*
-	 * If any modules were loaded, record where they end.  We'll need to
-	 * skip over them.
+	 * If any modules were loaded, record where they end. 'eblob' is used
+	 * later to compute the initial bootstrap tables.
 	 */
 	cmpl	$BTINFO_MODULELIST,4(%esi) /* btinfo_common::type */
-	jne	0f
+	jne	bootinfo_copy
 
-	pushl	12(%esi)		/* btinfo_modulelist::endpa */
-	popl	RELOC(eblob)
+	/* Skip the modules if we won't have enough VA to map them */
+	movl	12(%esi),%eax		/* btinfo_modulelist::endpa */
+	addl	$PGOFSET,%eax		/* roundup to a page */
+	andl	$~PGOFSET,%eax
+	cmpl	$BOOTMAP_VA_SIZE,%eax
+	jg	bootinfo_skip
+	movl	%eax,RELOC(eblob)
 	addl	$KERNBASE_LO,RELOC(eblob)
 	adcl	$KERNBASE_HI,RELOC(eblob)+4
 
-0:
+bootinfo_copy:
 	rep
 	movsb				/* copy esi -> edi */
+	jmp	bootinfo_next
+
+bootinfo_skip:
+	subl	%ecx,%edx		/* revert dest pointer */
+
+bootinfo_next:
 	popl	%eax
 	popl	%esi
 	popl	%edi
@@ -501,8 +515,8 @@ bootinfo_overflow:
 	movl	$RELOC(bootinfo),%ebp
 	movl	%ebp,%edx
 	subl	%ebx,(%edx)		/* correct the number of entries */
-
 bootinfo_finished:
+
 	/* Load 'esym' */
 	movl	16(%esp),%eax
 	testl	%eax,%eax		/* esym = NULL? */
@@ -647,7 +661,7 @@ no_NOX:
 	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Skip the first MB. */
+	/* Skip the area below the kernel text. */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%ecx
 	shrl	$PGSHIFT,%ecx
 	fillkpt_blank
@@ -1310,16 +1324,15 @@ do_syscall:
 	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
 	movw	TF_ES(%rsp),%es
+	movw	TF_DS(%rsp),%ds
 	SWAPGS
 	jnz	2f
 #ifndef XEN
 	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
 	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
-	movw	TF_DS(%rsp),%ds
 	movq	TF_RSP(%rsp),%rsp
 	sysretq
 #else
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
@@ -1332,7 +1345,6 @@ do_syscall:
  * then a SIGSEGV will be signalled.
  */
 2:
-	movw	TF_DS(%rsp),%ds
 	addq	$TF_RIP,%rsp
 	iretq
 
@@ -1384,27 +1396,6 @@ NENTRY(lwp_trampoline)
 	call	*%r12
 	jmp	.Lsyscall_checkast
 END(lwp_trampoline)
-
-/*
- * oosyscall()
- *
- * Old call gate entry for syscall. only needed if we're
- * going to support running old i386 NetBSD 1.0 or ibcs2 binaries, etc,
- * on NetBSD/amd64.
- * The 64bit call gate can't request that arguments be copied from the
- * user stack (which the i386 code uses to get a gap for the flags).
- * push/pop are <read>:<modify_sp>:<write> cycles.
- */
-IDTVEC(oosyscall)
-	/* Set rflags in trap frame. */
-	pushq	(%rsp)		/* move user's %eip */
-	pushq	16(%rsp)	/* and %cs */
-	popq	8(%rsp)
-	pushfq
-	popq	16(%rsp)
-	pushq	$7		/* size of instruction for restart */
-	jmp	osyscall1
-IDTVEC_END(oosyscall)
 
 /*
  * osyscall()

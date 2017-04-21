@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.14 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.14.4.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -40,9 +40,7 @@
 
 #include <net/pfkeyv2.h>
 #include <netipsec/keydb.h>
-#ifdef __NetBSD__
 #include <netinet6/in6_pcb.h>
-#endif
 
 #ifdef _KERNEL
 extern int ip6_esp_trans_deflev;
@@ -67,13 +65,8 @@ int ipsec6_get_policy (struct in6pcb *, const void *, size_t, struct mbuf **);
 struct secpolicy *ipsec6_checkpolicy (struct mbuf *, u_int, 
     u_int, int *, struct in6pcb *);
 struct secpolicy * ipsec6_check_policy(struct mbuf *, 
-				const struct socket *, int, int*,int*);
+				struct in6pcb *, int, int*,int*);
 int ipsec6_in_reject (struct mbuf *, struct in6pcb *);
-/*
- * KAME ipsec6_in_reject_so(struct mbuf*, struct so)  compatibility shim
- */
-#define ipsec6_in_reject_so(m, _so) \
-  ipsec6_in_reject(m, ((_so) == NULL? NULL : sotoin6pcb(_so)))
 
 struct tcp6cb;
 
@@ -83,22 +76,14 @@ size_t ipsec6_hdrsiz_tcp (struct tcpcb*);
 struct ip6_hdr;
 const char *ipsec6_logpacketstr (struct ip6_hdr *, u_int32_t);
 
-#ifdef __NetBSD__
 /* NetBSD protosw ctlin entrypoint */
 void * esp6_ctlinput(int, const struct sockaddr *, void *);
 void * ah6_ctlinput(int, const struct sockaddr *, void *);
-#endif /* __NetBSD__ */
 
 struct m_tag;
 int ipsec6_common_input(struct mbuf **, int *, int);
 int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, 
 									int, int, struct m_tag *);
-
-#ifdef __FreeBSD__
-/* FreeBSD protosw ctlin entrypoint */
-void esp6_ctlinput(int, struct sockaddr *, void *);
-#endif /* __FreeBSD__ */
-
 int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *);
 #endif /*_KERNEL*/
 

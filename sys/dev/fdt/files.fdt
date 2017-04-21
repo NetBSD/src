@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.7 2015/12/30 04:23:39 marty Exp $
+# $NetBSD: files.fdt,v 1.7.4.1 2017/04/21 16:53:45 bouyer Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -6,17 +6,17 @@ defflag	opt_fdt.h				FDT: libfdt, ofw_subr
 
 define	fdtbus { } : clk
 
-device	fdt { }
+device	fdt { } : fdtbus
 attach	fdt at fdtbus
 file	dev/fdt/fdtbus.c			fdt
-
-device	simplebus : fdtbus
-attach	simplebus at fdt
-file	dev/fdt/simplebus.c			simplebus
 
 device	fregulator
 attach	fregulator at fdt
 file	dev/fdt/fixedregulator.c		fregulator
+
+device	fclock: clk
+attach	fclock at fdt
+file	dev/fdt/fixedclock.c			fclock
 
 device	gpiokeys
 attach	gpiokeys at fdt

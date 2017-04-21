@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd_peer.c,v 1.1.1.4 2013/09/25 19:06:34 tron Exp $	*/
+/*	$NetBSD: qmqpd_peer.c,v 1.1.1.4.12.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -81,7 +81,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
     SOCKADDR_SIZE sa_length;
     INET_PROTO_INFO *proto_info = inet_proto_info();
 
-    sa = (struct sockaddr *) & ss;
+    sa = (struct sockaddr *) &ss;
     sa_length = sizeof(ss);
 
     /*
@@ -190,7 +190,7 @@ void    qmqpd_peer_init(QMQPD_STATE *state)
 		sa_length = res0->ai_addrlen;
 		if (sa_length > sizeof(ss))
 		    sa_length = sizeof(ss);
-		memcpy((char *) sa, res0->ai_addr, sa_length);
+		memcpy((void *) sa, res0->ai_addr, sa_length);
 		freeaddrinfo(res0);
 	    }
 

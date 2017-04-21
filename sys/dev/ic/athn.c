@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.13 2016/05/26 05:01:12 ozaki-r Exp $	*/
+/*	$NetBSD: athn.c,v 1.13.4.1 2017/04/21 16:53:46 bouyer Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.13 2016/05/26 05:01:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.13.4.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -118,6 +118,7 @@ Static void	athn_tx_reclaim(struct athn_softc *, int);
 Static void	athn_watchdog(struct ifnet *);
 Static void	athn_write_serdes(struct athn_softc *,
 		    const struct athn_serdes *);
+Static void	athn_softintr(void *);
 
 #ifdef ATHN_BT_COEXISTENCE
 Static void	athn_btcoex_disable(struct athn_softc *);
@@ -188,6 +189,14 @@ athn_attach(struct athn_softc *sc)
 	athn_set_power_sleep(sc);
 
 	if (!(sc->sc_flags & ATHN_FLAG_USB)) {
+		sc->sc_soft_ih = softint_establish(SOFTINT_NET, athn_softintr,
+		    sc);
+		if (sc->sc_soft_ih == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "could not establish softint\n");
+			return EINVAL;
+		}
+
 		error = sc->sc_ops.dma_alloc(sc);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -329,15 +338,22 @@ athn_attach(struct athn_softc *sc)
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = athn_init;
-	ifp->if_ioctl = athn_ioctl;
-	ifp->if_start = athn_start;
-	ifp->if_watchdog = athn_watchdog;
+	if (!ifp->if_init)
+		ifp->if_init = athn_init;
+	if (!ifp->if_ioctl)
+		ifp->if_ioctl = athn_ioctl;
+	if (!ifp->if_start)
+		ifp->if_start = athn_start;
+	if (!ifp->if_watchdog)
+		ifp->if_watchdog = athn_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	ic->ic_node_alloc = athn_node_alloc;
 	ic->ic_newassoc = athn_newassoc;
@@ -378,6 +394,11 @@ athn_detach(struct athn_softc *sc)
 
 		/* Free Tx/Rx DMA resources. */
 		sc->sc_ops.dma_free(sc);
+
+		if (sc->sc_soft_ih != NULL) {
+			softint_disestablish(sc->sc_soft_ih);
+			sc->sc_soft_ih = NULL;
+		}
 	}
 	/* Free ROM copy. */
 	if (sc->sc_eep != NULL) {
@@ -533,7 +554,39 @@ athn_intr(void *xsc)
 		 */
 		return 0;
 
-	return sc->sc_ops.intr(sc);
+	if (!sc->sc_ops.intr_status(sc))
+		return 0;
+
+	AR_WRITE(sc, AR_INTR_ASYNC_MASK, 0);
+	AR_WRITE(sc, AR_INTR_SYNC_MASK, 0);
+	AR_WRITE_BARRIER(sc);
+
+	softint_schedule(sc->sc_soft_ih);
+
+	return 1;
+}
+
+Static void
+athn_softintr(void *xsc)
+{
+	struct athn_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_if;
+
+	if (!IS_UP_AND_RUNNING(ifp))
+		return;
+
+	if (!device_activation(sc->sc_dev, DEVACT_LEVEL_DRIVER))
+		/*
+		 * The hardware is not ready/present, don't touch anything.
+		 * Note this can happen early on if the IRQ is shared.
+		 */
+		return;
+
+	sc->sc_ops.intr(sc);
+
+	AR_WRITE(sc, AR_INTR_ASYNC_MASK, AR_INTR_MAC_IRQ);
+	AR_WRITE(sc, AR_INTR_SYNC_MASK, sc->sc_isync);
+	AR_WRITE_BARRIER(sc);
 }
 
 Static void

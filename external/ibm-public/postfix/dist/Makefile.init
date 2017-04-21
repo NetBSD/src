@@ -1,7 +1,8 @@
 # Usage: 
-#	make makefiles [CC=compiler] [OPT=compiler-flags] [DEBUG=debug-flags]
+#	make makefiles [name=value]...
 #
-# The defaults are: CC=gcc, OPT=-O, and DEBUG=-g. Examples:
+# See makedefs for a descripton of available options.
+# Examples:
 #
 #	make makefiles
 #	make makefiles CC="purify cc"

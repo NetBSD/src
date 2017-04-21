@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.91 2016/08/07 02:42:32 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.91.2.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.91 2016/08/07 02:42:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.91.2.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -368,13 +368,12 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 
 				/* get the block for the next iteration */
 				idaddr = lfs_iblock_get(fs, ibp->b_data, indirs[i].in_off);
-#ifdef DEBUG
+
 				if (vp == fs->lfs_ivnode) {
 					LFS_ENTER_LOG("balloc", __FILE__,
 						__LINE__, indirs[i].in_lbn,
 						ibp->b_flags, curproc->p_pid);
 				}
-#endif
 				/*
 				 * Write out the updated indirect block. Note
 				 * that this writes it out even if we didn't
@@ -450,13 +449,13 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			lfs_iblock_set(fs, ibp->b_data, idp->in_off, UNWRITTEN);
-#ifdef DEBUG
+
 			if (vp == fs->lfs_ivnode) {
 				LFS_ENTER_LOG("balloc", __FILE__,
 					__LINE__, idp->in_lbn,
 					ibp->b_flags, curproc->p_pid);
 			}
-#endif
+
 			VOP_BWRITE(ibp->b_vp, ibp);
 		}
 	} else if (bpp && !(bp->b_oflags & (BO_DONE|BO_DELWRI))) {

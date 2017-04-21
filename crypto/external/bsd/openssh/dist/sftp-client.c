@@ -1,6 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.17 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.125 2016/09/12 01:22:38 deraadt Exp $ */
-
+/*	$NetBSD: sftp-client.c,v 1.17.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.126 2017/01/03 05:46:51 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -23,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.17 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.17.2.1 2017/04/21 16:50:57 bouyer Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -586,6 +585,8 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 
 		if ((r = sshbuf_get_u32(msg, &count)) != 0)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		if (count > SSHBUF_SIZE_MAX)
+			fatal("%s: nonsensical number of entries", __func__);
 		if (count == 0)
 			break;
 		debug3("Received %d SSH2_FXP_NAME responses", count);

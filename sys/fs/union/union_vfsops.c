@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.75.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.75.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.75 2015/07/23 09:45:21 hannken Ex
 #include <sys/kauth.h>
 #include <sys/module.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <fs/union/union.h>
 
 MODULE(MODULE_CLASS_VFS, union, NULL);
@@ -251,6 +252,8 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		goto bad;
 
+	mp->mnt_lower = um->um_uppervp->v_mount;
+
 	switch (um->um_op) {
 	case UNMNT_ABOVE:
 		cp = "<above>:";
@@ -318,6 +321,8 @@ static bool
 union_unmount_selector(void *cl, struct vnode *vp)
 {
 	int *count = cl;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	*count += 1;
 	return false;
@@ -534,7 +539,7 @@ struct vfsops union_vfsops = {
 	.vfs_done = union_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = union_renamelock_enter,
 	.vfs_renamelock_exit = union_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

@@ -16,19 +16,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-eigrp.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-eigrp.c,v 1.6.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Enhanced Interior Gateway Routing Protocol (EIGRP) printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 

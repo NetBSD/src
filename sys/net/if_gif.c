@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.124 2016/12/14 11:19:15 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.124.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.124 2016/12/14 11:19:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.124.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -448,22 +448,13 @@ gif_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int family;
 	int len;
-#ifndef GIF_MPSAFE
-	int s;
-#endif
 	int error;
 
 	sc = ifp->if_softc;
 
 	/* output processing */
 	while (1) {
-#ifndef GIF_MPSAFE
-		s = splnet();
-#endif
 		IFQ_DEQUEUE(&sc->gif_if.if_snd, m);
-#ifndef GIF_MPSAFE
-		splx(s);
-#endif
 		if (m == NULL)
 			break;
 
@@ -587,9 +578,6 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 {
 	pktqueue_t *pktq;
 	size_t pktlen;
-#ifndef GIF_MPSAFE
-	int s;
-#endif
 
 	if (ifp == NULL) {
 		/* just in case */
@@ -624,18 +612,12 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 		return;
 	}
 
-#ifndef GIF_MPSAFE
-	s = splnet();
-#endif
 	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
 		ifp->if_ibytes += pktlen;
 		ifp->if_ipackets++;
 	} else {
 		m_freem(m);
 	}
-#ifndef GIF_MPSAFE
-	splx(s);
-#endif
 }
 
 /* XXX how should we handle IPv6 scope on SIOC[GS]IFPHYADDR? */

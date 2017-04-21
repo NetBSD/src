@@ -1,4 +1,4 @@
-/*	$NetBSD: myflock.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: myflock.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _MYFLOCK_H_INCLUDED_
 #define _MYFLOCK_H_INCLUDED_
@@ -16,7 +16,7 @@
  /*
   * External interface.
   */
-extern int myflock(int, int, int);
+extern int WARN_UNUSED_RESULT myflock(int, int, int);
 
  /*
   * Lock styles.

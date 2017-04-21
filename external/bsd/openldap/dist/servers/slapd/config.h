@@ -1,10 +1,10 @@
-/*	$NetBSD: config.h,v 1.1.1.4 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: config.h,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* config.h - configuration abstraction structure */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -146,7 +146,7 @@ typedef struct config_args_s {
 		int v_int;
 		unsigned v_uint;
 		long v_long;
-		unsigned long v_ulong;
+		size_t v_ulong;
 		ber_len_t v_ber_t;
 		char *v_string;
 		struct berval v_bv;
@@ -198,6 +198,7 @@ int config_add_vals(ConfigTable *ct, ConfigArgs *c);
 void init_config_argv( ConfigArgs *c );
 int init_config_attrs(ConfigTable *ct);
 int init_config_ocs( ConfigOCs *ocs );
+void config_parse_ldif( ConfigArgs *c );
 int config_parse_vals(ConfigTable *ct, ConfigArgs *c, int valx);
 int config_parse_add(ConfigTable *ct, ConfigArgs *c, int valx);
 int read_config_file(const char *fname, int depth, ConfigArgs *cf,

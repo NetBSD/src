@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2017/01/13 01:14:27 christos Exp $
+#	$NetBSD: Makefile,v 1.25.2.1 2017/04/21 16:52:43 bouyer Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -78,6 +78,11 @@ CPPFLAGS.parallel_settings.cc += -D_GLIBCXX_PARALLEL
 CPPFLAGS.compatibility-parallel_list.cc += -D_GLIBCXX_PARALLEL
 
 cp-demangle.d cp-demangle.o: cp-demangle.h
+
+.if ${MACHINE_ARCH} == "i386"
+COPTS.random.cc += -Wno-error=psabi
+COPTS.cow-string-inst.cc += -Wno-error=psabi
+.endif
 
 # XXX
 MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward

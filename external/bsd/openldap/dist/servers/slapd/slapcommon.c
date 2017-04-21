@@ -1,10 +1,10 @@
-/*	$NetBSD: slapcommon.c,v 1.1.1.4 2014/05/28 09:58:48 tron Exp $	*/
+/*	$NetBSD: slapcommon.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* slapcommon.c - common routine for the slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -25,6 +25,9 @@
  *    Howard Chu
  *    Pierangelo Masarati
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: slapcommon.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -439,6 +442,7 @@ slap_tool_init(
 			}
 
 			if ( ludp->lud_dn != NULL && ludp->lud_dn[0] != '\0' ) {
+				ch_free( subtree );
 				subtree = ludp->lud_dn;
 				ludp->lud_dn = NULL;
 			}
@@ -524,6 +528,7 @@ slap_tool_init(
 			case SLAPCAT:
 			case SLAPSCHEMA:
 				/* dump subtree */
+				ch_free( subtree );
 				subtree = ch_strdup( optarg );
 				break;
 			}
@@ -781,6 +786,11 @@ slap_tool_init(
 		ber_memfree( nbase.bv_val );
 		BER_BVZERO( &nbase );
 
+		if( be == NULL ) {
+			fprintf( stderr, "%s: slap_init no backend for \"%s\"\n",
+				progname, base.bv_val );
+			exit( EXIT_FAILURE );
+		}
 		switch ( tool ) {
 		case SLAPACL:
 			goto startup;
@@ -789,11 +799,6 @@ slap_tool_init(
 			break;
 		}
 
-		if( be == NULL ) {
-			fprintf( stderr, "%s: slap_init no backend for \"%s\"\n",
-				progname, base.bv_val );
-			exit( EXIT_FAILURE );
-		}
 		/* If the named base is a glue master, operate on the
 		 * entire context
 		 */
@@ -998,6 +1003,7 @@ slap_tool_update_ctxcsn(
 				fprintf( stderr, "%s: couldn't create context entry\n", progname );
 				rc = EXIT_FAILURE;
 			}
+			entry_free( ctxcsn_e );
 		} else {
 			fprintf( stderr, "%s: context entry is missing\n", progname );
 			rc = EXIT_FAILURE;
@@ -1005,9 +1011,14 @@ slap_tool_update_ctxcsn(
 	} else {
 		ctxcsn_e = be->be_entry_get( be, ctxcsn_id );
 		if ( ctxcsn_e != NULL ) {
+			Operation op = { 0 };
 			Entry *e = entry_dup( ctxcsn_e );
-			int change;
 			Attribute *attr = attr_find( e->e_attrs, slap_schema.si_ad_contextCSN );
+
+			int change;
+			op.o_bd = be;
+			be_entry_release_r( &op, ctxcsn_e );
+
 			if ( attr ) {
 				int		i;
 

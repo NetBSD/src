@@ -1,4 +1,4 @@
-/*	$NetBSD: test_x500.c,v 1.1.1.1 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: test_x500.c,v 1.1.1.1.16.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2011 Kungliga Tekniska Högskolan

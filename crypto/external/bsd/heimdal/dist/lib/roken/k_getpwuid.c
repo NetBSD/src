@@ -1,4 +1,4 @@
-/*	$NetBSD: k_getpwuid.c,v 1.1.1.1 2011/04/13 18:15:42 elric Exp $	*/
+/*	$NetBSD: k_getpwuid.c,v 1.1.1.1.32.1 2017/04/21 16:50:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.6 2015/03/19 21:22:59 joerg Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.6.4.1 2017/04/21 16:53:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.6 2015/03/19 21:22:59 joerg Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.6.4.1 2017/04/21 16:53:08 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,8 +42,8 @@ __RCSID("$NetBSD: flt_rounds.c,v 1.6 2015/03/19 21:22:59 joerg Exp $");
 
 static const int map[] = {
 	1,	/* round to nearest */
-	2,	/* round to positive infinity */
-	3,	/* round to negative infinity */
+	3,	/* round to positive infinity */
+	2,	/* round to negative infinity */
 	0	/* round to zero */
 };
 

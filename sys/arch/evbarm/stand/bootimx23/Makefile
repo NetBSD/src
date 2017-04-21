@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2014/07/22 17:46:59 bouyer Exp $
+# $Id: Makefile,v 1.14.12.1 2017/04/21 16:53:26 bouyer Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -13,11 +13,7 @@ CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	${ARM_APCS_FLAGS}
-.if ${HAVE_LLVM:Uno} != "no" || ${HAVE_GCC:U0} >= 48
 CPPFLAGS+=	-marm
-.else
-CPPFLAGS+=	-mno-thumb -mno-thumb-interwork
-.endif
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DDIAGNOSTIC
 DBG=		-g

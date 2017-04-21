@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.c,v 1.1.1.2 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: msg_output.c,v 1.1.1.2.12.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -130,7 +130,7 @@ void    msg_output(MSG_OUTPUT_FN output_fn)
     if (msg_output_fn_count == 0)
 	msg_output_fn = (MSG_OUTPUT_FN *) mymalloc(sizeof(*msg_output_fn));
     else
-	msg_output_fn = (MSG_OUTPUT_FN *) myrealloc((char *) msg_output_fn,
+	msg_output_fn = (MSG_OUTPUT_FN *) myrealloc((void *) msg_output_fn,
 			(msg_output_fn_count + 1) * sizeof(*msg_output_fn));
     msg_output_fn[msg_output_fn_count++] = output_fn;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.39 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.39.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.39 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.39.2.1 2017/04/21 16:53:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,8 @@ static int	ld_twe_detach(device_t, int);
 static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
 			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
-static int	ld_twe_flush(struct ld_softc *, int);
+static int	ld_twe_flush(struct ld_softc *, bool);
+static int	ld_twe_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(device_t, cfdata_t, void *);
 static int	ld_twe_start(struct ld_softc *, struct buf *);
@@ -112,7 +113,7 @@ ld_twe_attach(device_t parent, device_t self, void *aux)
 	ld->sc_maxqueuecnt = twe->sc_openings;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
-	ld->sc_flush = ld_twe_flush;
+	ld->sc_ioctl = ld_twe_ioctl;
 
 	typestr = twe_describe_code(twe_table_unittype, td->td_type);
 	if (typestr == NULL) {
@@ -266,7 +267,7 @@ ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 static int
-ld_twe_flush(struct ld_softc *ld, int flags)
+ld_twe_flush(struct ld_softc *ld, bool poll)
 {
 	struct ld_twe_softc *sc = (void *) ld;
 	struct twe_softc *twe = device_private(device_parent(ld->sc_dv));
@@ -286,7 +287,7 @@ ld_twe_flush(struct ld_softc *ld, int flags)
 	tc->tc_unit = sc->sc_hwunit;
 	tc->tc_count = 0;
 
-	if (flags & LDFL_POLL) {
+	if (poll) {
 		/*
 		 * Polled commands must not sit on the software queue.  Wait
 		 * up to 2 seconds for the command to complete.
@@ -313,6 +314,24 @@ ld_twe_flush(struct ld_softc *ld, int flags)
 	}
 
 	return (rv);
+}
+
+static int
+ld_twe_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
+{
+        int error;
+
+        switch (cmd) {
+        case DIOCCACHESYNC:
+		error = ld_twe_flush(ld, poll);
+		break;
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	return error;
 }
 
 static void

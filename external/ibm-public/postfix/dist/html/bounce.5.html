@@ -153,6 +153,20 @@ BOUNCE(5)                                                            BOUNCE(5)
               expressed in the time unit specified by <i>suffix</i>.  See above under
               <b><a href="postconf.5.html#delay_warning_time">delay_warning_time</a></b> for possible <i>suffix</i> values.
 
+       <b><a href="postconf.5.html#mydomain">mydomain</a></b>
+              Expands into the value of the <b><a href="postconf.5.html#mydomain">mydomain</a></b>  parameter.   With  "smt-
+              putf8_enable  = yes", this replaces ACE labels (xn--mumble) with
+              their UTF-8 equivalent.
+
+              This feature is available in Postfix 3.0.
+
+       <b><a href="postconf.5.html#myhostname">myhostname</a></b>
+              Expands into the value of the <b><a href="postconf.5.html#myhostname">myhostname</a></b> parameter.  With  "smt-
+              putf8_enable  = yes", this replaces ACE labels (xn--mumble) with
+              their UTF-8 equivalent.
+
+              This feature is available in Postfix 3.0.
+
        The usage and specification of template message text is subject to  the
        following restrictions:
 
@@ -181,6 +195,11 @@ BOUNCE(5)                                                            BOUNCE(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                      BOUNCE(5)
 </pre> </body> </html>

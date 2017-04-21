@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.57 2014/11/09 18:08:07 maxv Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.57.6.1 2017/04/21 16:54:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.57 2014/11/09 18:08:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.57.6.1 2017/04/21 16:54:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,10 @@ const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_inactive_desc,	layer_inactive },
 	{ &vop_reclaim_desc,	layer_reclaim },
 	{ &vop_lock_desc,	layer_lock },
+	{ &vop_unlock_desc,	layer_unlock },
+	{ &vop_islocked_desc,	layer_islocked },
 	{ &vop_open_desc,	layer_open },
+	{ &vop_close_desc,	layer_close },
 	{ &vop_setattr_desc,	layer_setattr },
 	{ &vop_access_desc,	layer_access },
 	{ &vop_remove_desc,	layer_remove },

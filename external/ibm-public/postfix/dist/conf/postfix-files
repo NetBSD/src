@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.5 2014/07/06 19:45:50 tron Exp $
+#	$NetBSD: postfix-files,v 1.5.10.1 2017/04/21 16:52:45 bouyer Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -10,9 +10,10 @@
 # Postfix configuration files. See the respective manual pages within
 # the script files.
 #
-# Do not list $command_directory in this file, or it will be blown
-# away by a future Postfix uninstallation procedure. You would not
-# want to lose all files in /usr/sbin.
+# Do not list $command_directory or $shlib_directory in this file,
+# or it will be blown away by a future Postfix uninstallation
+# procedure. You would not want to lose all files in /usr/sbin or
+# /usr/local/lib.
 #
 # Each record in this file describes one file or directory.
 # Fields are separated by ":". Specify a null field as "-".
@@ -45,6 +46,8 @@
 # it is a good idea to "u" all the files that have special ownership or
 # permissions, so that running "make install" fixes any glitches.
 #
+# Note: order matters. Update shared libraries and database plugins
+# before daemon/command-line programs.
 $config_directory:d:root:-:755:u
 $data_directory:d:$mail_owner:-:700:uc
 $daemon_directory:d:root:-:755:u
@@ -66,6 +69,27 @@ $queue_directory/public:d:$mail_owner:$setgid_group:710:uc
 $queue_directory/pid:d:root:-:755:uc
 $queue_directory/saved:d:$mail_owner:-:700:ucr
 $queue_directory/trace:d:$mail_owner:-:700:ucr
+# Update shared libraries and plugins before daemon or command-line programs.
+$shlib_directory/lib${LIB_PREFIX}util${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/lib${LIB_PREFIX}global${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/lib${LIB_PREFIX}dns${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/lib${LIB_PREFIX}tls${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/lib${LIB_PREFIX}master${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}cdb${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}ldap${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}lmdb${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}mysql${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}pcre${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}pgsql${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}sdbm${LIB_SUFFIX}:f:root:-:755
+$shlib_directory/${LIB_PREFIX}sqlite${LIB_SUFFIX}:f:root:-:755
+$meta_directory/dynamicmaps.cf.d:d:root:-:755
+$meta_directory/dynamicmaps.cf:f:root:-:644
+$meta_directory/main.cf.proto:f:root:-:644
+#$meta_directory/makedefs.out:f:root:-:644
+$meta_directory/master.cf.proto:f:root:-:644
+$meta_directory/postfix-files.d:d:root:-:755
+$meta_directory/postfix-files:f:root:-:644
 $daemon_directory/anvil:f:root:-:755
 $daemon_directory/bounce:f:root:-:755
 $daemon_directory/cleanup:f:root:-:755
@@ -73,17 +97,19 @@ $daemon_directory/discard:f:root:-:755
 $daemon_directory/dnsblog:f:root:-:755
 $daemon_directory/error:f:root:-:755
 $daemon_directory/flush:f:root:-:755
-#$daemon_directory/lmtp:f:root:-:755
 $daemon_directory/local:f:root:-:755
-$daemon_directory/main.cf:f:root:-:644
-$daemon_directory/master.cf:f:root:-:644
+$daemon_directory/main.cf:f:root:-:644:o
+$daemon_directory/master.cf:f:root:-:644:o
 $daemon_directory/master:f:root:-:755
 $daemon_directory/oqmgr:f:root:-:755
 $daemon_directory/pickup:f:root:-:755
 $daemon_directory/pipe:f:root:-:755
 $daemon_directory/post-install:f:root:-:755
-$daemon_directory/postfix-files:f:root:-:644
+# In case meta_directory == daemon_directory.
+#$daemon_directory/postfix-files:f:root:-:644:o
+#$daemon_directory/postfix-files.d:d:root:-:755:o
 $daemon_directory/postfix-script:f:root:-:755
+$daemon_directory/postfix-tls-script:f:root:-:755
 $daemon_directory/postfix-wrapper:f:root:-:755
 $daemon_directory/postmulti-script:f:root:-:755
 $daemon_directory/postscreen:f:root:-:755
@@ -130,10 +156,8 @@ $sample_directory/header_checks:f:root:-:644:p1
 $config_directory/install.cf:f:root:-:644:o
 #$config_directory/main.cf.default:f:root:-:644:1
 $config_directory/main.cf:f:root:-:644:p
-#$config_directory/makedefs.out:f:root:-:644:1
 $config_directory/master.cf:f:root:-:644:p
 $config_directory/pcre_table:f:root:-:644:o
-$config_directory/postfix-files:f:root:-:644:o
 $config_directory/regexp_table:f:root:-:644:o
 $sample_directory/relocated:f:root:-:644:p1
 $config_directory/tcp_table:f:root:-:644:o
@@ -150,6 +174,7 @@ $manpage_directory/man1/postcat.1:f:root:-:644
 $manpage_directory/man1/postconf.1:f:root:-:644
 $manpage_directory/man1/postdrop.1:f:root:-:644
 $manpage_directory/man1/postfix.1:f:root:-:644
+$manpage_directory/man1/postfix-tls.1:f:root:-:644
 $manpage_directory/man1/postkick.1:f:root:-:644
 $manpage_directory/man1/postlock.1:f:root:-:644
 $manpage_directory/man1/postlog.1:f:root:-:644
@@ -254,6 +279,7 @@ $readme_directory/BACKSCATTER_README:f:root:-:644
 $readme_directory/BASIC_CONFIGURATION_README:f:root:-:644
 $readme_directory/BUILTIN_FILTER_README:f:root:-:644
 #$readme_directory/CDB_README:f:root:-:644
+$readme_directory/COMPATIBILITY_README:f:root:-:644
 $readme_directory/CONNECTION_CACHE_README:f:root:-:644
 $readme_directory/CONTENT_INSPECTION_README:f:root:-:644
 $readme_directory/DATABASE_README:f:root:-:644
@@ -311,6 +337,7 @@ $html_directory/BACKSCATTER_README.html:f:root:-:644
 $html_directory/BASIC_CONFIGURATION_README.html:f:root:-:644
 $html_directory/BUILTIN_FILTER_README.html:f:root:-:644
 #$html_directory/CDB_README.html:f:root:-:644
+$html_directory/COMPATIBILITY_README.html:f:root:-:644
 $html_directory/CONNECTION_CACHE_README.html:f:root:-:644
 $html_directory/CONTENT_INSPECTION_README.html:f:root:-:644
 #$html_directory/CYRUS_README.html:f:root:-:644:o

@@ -1,10 +1,10 @@
-/*	$NetBSD: smbk5pwd.c,v 1.1.1.5 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: smbk5pwd.c,v 1.1.1.5.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* smbk5pwd.c - Overlay for managing Samba and Heimdal passwords */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -68,7 +68,8 @@ static ObjectClass *oc_krb5KDCEntry;
 
 #ifdef DO_SAMBA
 #ifdef HAVE_GNUTLS
-#include <gcrypt.h>
+#include <nettle/des.h>
+#include <nettle/md4.h>
 typedef unsigned char DES_cblock[8];
 #elif HAVE_OPENSSL
 #include <openssl/des.h>
@@ -195,11 +196,7 @@ static void lmhash(
 #ifdef HAVE_OPENSSL
 	DES_key_schedule schedule;
 #elif defined(HAVE_GNUTLS)
-	gcry_cipher_hd_t h = NULL;
-	gcry_error_t err;
-
-	err = gcry_cipher_open( &h, GCRY_CIPHER_DES, GCRY_CIPHER_MODE_CBC, 0 );
-	if ( err ) return;
+	struct des_ctx ctx;
 #endif
 
 	strncpy( UcasePassword, passwd->bv_val, 14 );
@@ -208,19 +205,12 @@ static void lmhash(
 
 	lmPasswd_to_key( UcasePassword, &key );
 #ifdef HAVE_GNUTLS
-	err = gcry_cipher_setkey( h, &key, sizeof(key) );
-	if ( err == 0 ) {
-		err = gcry_cipher_encrypt( h, &hbuf[0], sizeof(key), &StdText, sizeof(key) );
-		if ( err == 0 ) {
-			gcry_cipher_reset( h );
-			lmPasswd_to_key( &UcasePassword[7], &key );
-			err = gcry_cipher_setkey( h, &key, sizeof(key) );
-			if ( err == 0 ) {
-				err = gcry_cipher_encrypt( h, &hbuf[1], sizeof(key), &StdText, sizeof(key) );
-			}
-		}
-		gcry_cipher_close( h );
-	}
+	des_set_key( &ctx, key );
+	des_encrypt( &ctx, sizeof(key), hbuf[0], StdText );
+
+	lmPasswd_to_key( &UcasePassword[7], &key );
+	des_set_key( &ctx, key );
+	des_encrypt( &ctx, sizeof(key), hbuf[1], StdText );
 #elif defined(HAVE_OPENSSL)
 	des_set_key_unchecked( &key, schedule );
 	des_ecb_encrypt( &StdText, &hbuf[0], schedule , DES_ENCRYPT );
@@ -245,6 +235,8 @@ static void nthash(
 	char hbuf[HASHLEN];
 #ifdef HAVE_OPENSSL
 	MD4_CTX ctx;
+#elif defined(HAVE_GNUTLS)
+	struct md4_ctx ctx;
 #endif
 
 	if (passwd->bv_len > MAX_PWLEN*2)
@@ -255,7 +247,9 @@ static void nthash(
 	MD4_Update( &ctx, passwd->bv_val, passwd->bv_len );
 	MD4_Final( (unsigned char *)hbuf, &ctx );
 #elif defined(HAVE_GNUTLS)
-	gcry_md_hash_buffer(GCRY_MD_MD4, hbuf, passwd->bv_val, passwd->bv_len );
+	md4_init( &ctx );
+	md4_update( &ctx, passwd->bv_len, (unsigned char *)passwd->bv_val );
+	md4_digest( &ctx, sizeof(hbuf), (unsigned char *)hbuf );
 #endif
 
 	hexify( hbuf, hash );
@@ -919,17 +913,12 @@ smbk5pwd_cf_func( ConfigArgs *c )
 		}
 #endif /* ! DO_SHADOW */
 
-		{
-			BackendDB	db = *c->be;
-
-			/* Re-initialize the module, because
-			 * the configuration might have changed */
-			db.bd_info = (BackendInfo *)on;
-			rc = smbk5pwd_modules_init( pi );
-			if ( rc ) {
-				pi->mode = mode;
-				return 1;
-			}
+		/* Re-initialize the module, because
+		 * the configuration might have changed */
+		rc = smbk5pwd_modules_init( pi );
+		if ( rc ) {
+			pi->mode = mode;
+			return 1;
 		}
 
 		} break;
@@ -976,7 +965,7 @@ smbk5pwd_modules_init( smbk5pwd_t *pi )
 	dummy_ad;
 
 	/* this is to silence the unused var warning */
-	dummy_ad.name = NULL;
+	(void) dummy_ad;
 
 #ifdef DO_KRB5
 	if ( SMBK5PWD_DO_KRB5( pi ) && oc_krb5KDCEntry == NULL ) {

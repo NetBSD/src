@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.98 2016/03/06 18:49:42 christos Exp $
+# $NetBSD: rc.subr,v 1.98.4.1 2017/04/21 16:51:17 bouyer Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,15 @@
 : ${RC_PID:=$$} ; export RC_PID
 nl='
 ' # a literal newline
+
+# RC variables to clear on start.
+_env_clear_rc_vars="
+RC_PID=
+_rc_pid=
+_rc_original_stdout_fd=
+_rc_original_stderr_fd=
+_rc_postprocessor_fd=
+"
 
 #
 #	functions
@@ -665,14 +674,14 @@ EOF
 			echo "Starting ${name}."
 			if [ -n "$_chroot" ]; then
 				_doit="\
-${_env:+env $_env }\
+$_env_clear_rc_vars $_env \
 ${_nice:+nice -n $_nice }\
 chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
 $_chroot $command $rc_flags $command_args"
 			else
 				_doit="\
 ${_chdir:+cd $_chdir; }\
-${_env:+env $_env }\
+$_env_clear_rc_vars $_env \
 ${_nice:+nice -n $_nice }\
 $command $rc_flags $command_args"
 				if [ -n "$_user" ]; then

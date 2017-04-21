@@ -1,4 +1,4 @@
-.\"	$NetBSD: tlsproxy.8,v 1.1.1.4 2014/07/06 19:27:46 tron Exp $
+.\"	$NetBSD: tlsproxy.8,v 1.1.1.4.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH TLSPROXY 8 
 .ad
@@ -14,11 +14,11 @@ Postfix TLS proxy
 .SH DESCRIPTION
 .ad
 .fi
-The \fBtlsproxy\fR(8) server implements a server-side TLS
-proxy. It is used by \fBpostscreen\fR(8) to talk SMTP-over-TLS
+The \fBtlsproxy\fR(8) server implements a server\-side TLS
+proxy. It is used by \fBpostscreen\fR(8) to talk SMTP\-over\-TLS
 with remote SMTP clients that are not whitelisted (including
 clients whose whitelist status has expired),
-but it should also work for non-SMTP protocols.
+but it should also work for non\-SMTP protocols.
 
 Although one \fBtlsproxy\fR(8) process can serve multiple
 sessions at the same time, it is a good idea to allow the
@@ -44,7 +44,7 @@ the remote SMTP client file descriptor to \fBtlsproxy\fR(8),
 and sends the plaintext 220 greeting to the remote SMTP
 client.  This triggers TLS negotiations between the remote
 SMTP client and \fBtlsproxy\fR(8).  Upon completion of the
-TLS-level handshake, \fBtlsproxy\fR(8) translates between
+TLS\-level handshake, \fBtlsproxy\fR(8) translates between
 plaintext from/to \fBpostscreen\fR(8) and ciphertext to/from
 the remote SMTP client.
 .SH "SECURITY"
@@ -52,7 +52,7 @@ the remote SMTP client.
 .nf
 .ad
 .fi
-The \fBtlsproxy\fR(8) server is moderately security-sensitive.
+The \fBtlsproxy\fR(8) server is moderately security\-sensitive.
 It talks to untrusted clients on the network. The process
 can be run chrooted at fixed low privilege.
 .SH DIAGNOSTICS
@@ -102,10 +102,10 @@ File with the Postfix \fBtlsproxy\fR(8) server DSA certificate in PEM
 format.
 .IP "\fBtlsproxy_tls_dh1024_param_file ($smtpd_tls_dh1024_param_file)\fR"
 File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
-should use with non-export EDH ciphers.
+should use with non\-export EDH ciphers.
 .IP "\fBtlsproxy_tls_dh512_param_file ($smtpd_tls_dh512_param_file)\fR"
 File with DH parameters that the Postfix \fBtlsproxy\fR(8) server
-should use with export-grade EDH ciphers.
+should use with export\-grade EDH ciphers.
 .IP "\fBtlsproxy_tls_dkey_file ($smtpd_tls_dkey_file)\fR"
 File with the Postfix \fBtlsproxy\fR(8) server DSA private key in PEM
 format.
@@ -117,13 +117,13 @@ File with the Postfix \fBtlsproxy\fR(8) server ECDSA private key in
 PEM format.
 .IP "\fBtlsproxy_tls_eecdh_grade ($smtpd_tls_eecdh_grade)\fR"
 The Postfix \fBtlsproxy\fR(8) server security grade for ephemeral
-elliptic-curve Diffie-Hellman (EECDH) key exchange.
+elliptic\-curve Diffie\-Hellman (EECDH) key exchange.
 .IP "\fBtlsproxy_tls_exclude_ciphers ($smtpd_tls_exclude_ciphers)\fR"
 List of ciphers or cipher types to exclude from the \fBtlsproxy\fR(8)
 server cipher list at all TLS security levels.
 .IP "\fBtlsproxy_tls_fingerprint_digest ($smtpd_tls_fingerprint_digest)\fR"
 The message digest algorithm to construct remote SMTP
-client-certificate
+client\-certificate
 fingerprints.
 .IP "\fBtlsproxy_tls_key_file ($smtpd_tls_key_file)\fR"
 File with the Postfix \fBtlsproxy\fR(8) server RSA private key in PEM
@@ -148,7 +148,7 @@ With mandatory TLS encryption, require a trusted remote SMTP
 client certificate in order to allow TLS connections to proceed.
 .IP "\fBtlsproxy_tls_security_level ($smtpd_tls_security_level)\fR"
 The SMTP TLS security level for the Postfix \fBtlsproxy\fR(8) server;
-when a non-empty value is specified, this overrides the obsolete
+when a non\-empty value is specified, this overrides the obsolete
 parameters smtpd_use_tls and smtpd_enforce_tls.
 .PP
 Available in Postfix version 2.11 and later:
@@ -174,7 +174,7 @@ require that clients use TLS encryption.
 .fi
 .IP "\fBtlsproxy_watchdog_timeout (10s)\fR"
 How much time a \fBtlsproxy\fR(8) process may take to process local
-or remote I/O before it is terminated by a built-in watchdog timer.
+or remote I/O before it is terminated by a built\-in watchdog timer.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf
@@ -183,9 +183,9 @@ or remote I/O before it is terminated by a built-in watchdog timer.
 .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
 The default location of the Postfix main.cf and master.cf
 configuration files.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
@@ -205,9 +205,9 @@ syslogd(5), system logging
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 .ad
 .fi
 This service was introduced with Postfix version 2.8.
@@ -218,3 +218,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

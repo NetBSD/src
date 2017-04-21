@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_tls_policy.c,v 1.1.1.2 2015/02/21 11:56:56 tron Exp $	*/
+/*	$NetBSD: smtp_tls_policy.c,v 1.1.1.2.4.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -100,7 +100,7 @@
 #include <mymalloc.h>
 #include <vstring.h>
 #include <stringops.h>
-#include <valid_hostname.h>
+#include <valid_utf8_hostname.h>
 #include <ctable.h>
 
 /* Global library. */
@@ -132,16 +132,20 @@ static MAPS *tls_per_site;		/* lookup table(s) */
 void    smtp_tls_list_init(void)
 {
     if (*var_smtp_tls_policy) {
-	tls_policy = maps_create(SMTP_X(TLS_POLICY), var_smtp_tls_policy,
-				 DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+	tls_policy = maps_create(VAR_LMTP_SMTP(TLS_POLICY),
+				 var_smtp_tls_policy,
+				 DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+				 | DICT_FLAG_UTF8_REQUEST);
 	if (*var_smtp_tls_per_site)
 	    msg_warn("%s ignored when %s is not empty.",
-		     SMTP_X(TLS_PER_SITE), SMTP_X(TLS_POLICY));
+		     VAR_LMTP_SMTP(TLS_PER_SITE), VAR_LMTP_SMTP(TLS_POLICY));
 	return;
     }
     if (*var_smtp_tls_per_site) {
-	tls_per_site = maps_create(SMTP_X(TLS_PER_SITE), var_smtp_tls_per_site,
-				   DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+	tls_per_site = maps_create(VAR_LMTP_SMTP(TLS_PER_SITE),
+				   var_smtp_tls_per_site,
+				   DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+				   | DICT_FLAG_UTF8_REQUEST);
     }
 }
 
@@ -242,7 +246,7 @@ static void tls_policy_lookup_one(SMTP_TLS_POLICY *tls, int *site_level,
     }
     saved_policy = policy = mystrdup(lookup);
 
-    if ((tok = mystrtok(&policy, "\t\n\r ,")) == 0) {
+    if ((tok = mystrtok(&policy, CHARS_COMMA_SP)) == 0) {
 	msg_warn("%s: invalid empty policy", WHERE);
 	INVALID_RETURN(tls->why, site_level);
     }
@@ -257,7 +261,7 @@ static void tls_policy_lookup_one(SMTP_TLS_POLICY *tls, int *site_level,
      * Warn about ignored attributes when TLS is disabled.
      */
     if (*site_level < TLS_LEV_MAY) {
-	while ((tok = mystrtok(&policy, "\t\n\r ,")) != 0)
+	while ((tok = mystrtok(&policy, CHARS_COMMA_SP)) != 0)
 	    msg_warn("%s: ignoring attribute \"%s\" with TLS disabled",
 		     WHERE, tok);
 	FREE_RETURN;
@@ -267,7 +271,7 @@ static void tls_policy_lookup_one(SMTP_TLS_POLICY *tls, int *site_level,
      * Errors in attributes may have security consequences, don't ignore
      * errors that can degrade security.
      */
-    while ((tok = mystrtok(&policy, "\t\n\r ,")) != 0) {
+    while ((tok = mystrtok(&policy, CHARS_COMMA_SP)) != 0) {
 	if ((err = split_nameval(tok, &name, &val)) != 0) {
 	    msg_warn("%s: malformed attribute/value pair \"%s\": %s",
 		     WHERE, tok, err);
@@ -377,7 +381,7 @@ static void tls_policy_lookup(SMTP_TLS_POLICY *tls, int *site_level,
      * 
      * XXX UNIX-domain connections query with the pathname as destination.
      */
-    if (!valid_hostname(site_name, DONT_GRIPE)) {
+    if (!valid_utf8_hostname(var_smtputf8_enable, site_name, DONT_GRIPE)) {
 	tls_policy_lookup_one(tls, site_level, site_name, site_class);
 	return;
     }
@@ -397,7 +401,7 @@ static int load_tas(TLS_DANE *dane, const char *files)
     char   *file;
 
     do {
-	if ((file = mystrtok(&buf, "\t\n\r ,")) != 0)
+	if ((file = mystrtok(&buf, CHARS_COMMA_SP)) != 0)
 	    ret = tls_dane_load_trustfile(dane, file);
     } while (file && ret);
 
@@ -434,7 +438,9 @@ static void set_cipher_grade(SMTP_TLS_POLICY *tls)
 	also_exclude = "eNULL";
 	break;
 
+    case TLS_LEV_HALF_DANE:
     case TLS_LEV_DANE:
+    case TLS_LEV_DANE_ONLY:
     case TLS_LEV_FPRINT:
     case TLS_LEV_VERIFY:
     case TLS_LEV_SECURE:
@@ -493,7 +499,7 @@ static void *policy_create(const char *unused_key, void *context)
     } else if (tls_per_site) {
 	tls_site_lookup(tls, &site_level, dest, "next-hop destination");
 	if (site_level != TLS_LEV_INVALID
-	    && strcasecmp(dest, host) != 0)
+	    && strcasecmp_utf8(dest, host) != 0)
 	    tls_site_lookup(tls, &site_level, host, "server hostname");
 
 	/*
@@ -532,7 +538,7 @@ static void *policy_create(const char *unused_key, void *context)
      * "dane-only" changes to "dane" once we obtain the requisite TLSA
      * records.
      */
-    if (tls->level == TLS_LEV_DANE || tls->level == TLS_LEV_DANE_ONLY)
+    if (TLS_DANE_BASED(tls->level))
 	dane_init(tls, iter);
     if (tls->level == TLS_LEV_INVALID)
 	return ((void *) tls);
@@ -560,14 +566,16 @@ static void *policy_create(const char *unused_key, void *context)
     case TLS_LEV_NONE:
     case TLS_LEV_MAY:
     case TLS_LEV_ENCRYPT:
+    case TLS_LEV_HALF_DANE:
     case TLS_LEV_DANE:
+    case TLS_LEV_DANE_ONLY:
 	break;
     case TLS_LEV_FPRINT:
 	if (tls->dane == 0)
 	    tls->dane = tls_dane_alloc();
 	if (!TLS_DANE_HASEE(tls->dane)) {
 	    tls_dane_add_ee_digests(tls->dane, var_smtp_tls_fpt_dgst,
-				    var_smtp_tls_fpt_cmatch, "\t\n\r, ");
+				    var_smtp_tls_fpt_cmatch, CHARS_COMMA_SP);
 	    if (!TLS_DANE_HASEE(tls->dane)) {
 		msg_warn("nexthop domain %s: configured at fingerprint "
 		       "security level, but with no fingerprints to match.",
@@ -583,7 +591,7 @@ static void *policy_create(const char *unused_key, void *context)
 	    tls->matchargv =
 		argv_split(tls->level == TLS_LEV_VERIFY ?
 			   var_smtp_tls_vfy_cmatch : var_smtp_tls_sec_cmatch,
-			   "\t\n\r, :");
+			   CHARS_COMMA_SP ":");
 	if (*var_smtp_tls_tafile) {
 	    if (tls->dane == 0)
 		tls->dane = tls_dane_alloc();
@@ -622,7 +630,7 @@ static void policy_delete(void *item, void *unused_context)
 	tls_dane_free(tls->dane);
     dsb_free(tls->why);
 
-    myfree((char *) tls);
+    myfree((void *) tls);
 }
 
 /* smtp_tls_policy_cache_query - cached lookup of TLS policy */
@@ -710,7 +718,7 @@ static int global_tls_level(void)
 
 #define NONDANE_CONFIG	0		/* Administrator's fault */
 #define NONDANE_DEST	1		/* Remote server's fault */
-#define DANE_UNUSABLE	2		/* Remote server's fault */
+#define DANE_CANTAUTH	2		/* Remote server's fault */
 
 static void PRINTFLIKE(4, 5) dane_incompat(SMTP_TLS_POLICY *tls,
 					           SMTP_ITERATOR *iter,
@@ -721,7 +729,7 @@ static void PRINTFLIKE(4, 5) dane_incompat(SMTP_TLS_POLICY *tls,
 
     va_start(ap, fmt);
     if (tls->level == TLS_LEV_DANE) {
-	tls->level = (errtype == DANE_UNUSABLE) ? TLS_LEV_ENCRYPT : TLS_LEV_MAY;
+	tls->level = (errtype == DANE_CANTAUTH) ? TLS_LEV_ENCRYPT : TLS_LEV_MAY;
 	if (errtype == NONDANE_CONFIG)
 	    vmsg_warn(fmt, ap);
 	else if (msg_verbose)
@@ -788,8 +796,15 @@ static void dane_init(SMTP_TLS_POLICY *tls, SMTP_ITERATOR *iter)
 		      STR(iter->dest), policy_name(tls->level));
 	return;
     }
-    /* When the MX name is present and insecure, DANE does not apply. */
-    if (iter->mx && !iter->mx->dnssec_valid) {
+
+    /*
+     * When the MX name is present and insecure, DANE may not apply, we then
+     * either fail if DANE is mandatory or use regular opportunistic TLS if
+     * the insecure MX level is "may".
+     */
+    if (iter->mx && !iter->mx->dnssec_valid
+	&& (tls->level == TLS_LEV_DANE_ONLY ||
+	    smtp_tls_insecure_mx_policy <= TLS_LEV_MAY)) {
 	dane_incompat(tls, iter, NONDANE_DEST, "non DNSSEC destination");
 	return;
     }
@@ -821,9 +836,27 @@ static void dane_init(SMTP_TLS_POLICY *tls, SMTP_ITERATOR *iter)
      * given verifier some of the CAs are surely not trustworthy).
      */
     if (tls_dane_unusable(dane)) {
-	dane_incompat(tls, iter, DANE_UNUSABLE, "TLSA records unusable");
+	dane_incompat(tls, iter, DANE_CANTAUTH, "TLSA records unusable");
 	tls_dane_free(dane);
 	return;
+    }
+
+    /*
+     * Perhaps downgrade to "encrypt" if MX is insecure.
+     */
+    if (iter->mx && !iter->mx->dnssec_valid) {
+	if (smtp_tls_insecure_mx_policy == TLS_LEV_ENCRYPT) {
+	    dane_incompat(tls, iter, DANE_CANTAUTH,
+			  "Verification not possible, MX RRset is insecure");
+	    tls_dane_free(dane);
+	    return;
+	}
+	if (tls->level != TLS_LEV_DANE
+	    || smtp_tls_insecure_mx_policy != TLS_LEV_DANE)
+	    msg_panic("wrong state for insecure MX host DANE policy");
+
+	/* For correct logging in tls_client_start() */
+	tls->level = TLS_LEV_HALF_DANE;
     }
 
     /*
@@ -842,7 +875,6 @@ static void dane_init(SMTP_TLS_POLICY *tls, SMTP_ITERATOR *iter)
     } else if (!TLS_DANE_HASEE(dane))
 	msg_panic("empty DANE match list");
     tls->dane = dane;
-    tls->level = TLS_LEV_DANE;
     return;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.23 2017/01/11 21:44:50 maya Exp $ */
+/* $NetBSD: spdmem.c,v 1.23.2.1 2017/04/21 16:53:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.23 2017/01/11 21:44:50 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.23.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -909,11 +909,15 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 		}
 	}
 
+/*
+ * Note that the ddr4_xxx_ftb fields are actually signed offsets from
+ * the corresponding mtb value, so we might have to subtract 256!
+ */
 #define	__DDR4_VALUE(field) ((s->sm_ddr4.ddr4_##field##_mtb * 125 +	\
 			     s->sm_ddr4.ddr4_##field##_ftb) - 		\
 			    ((s->sm_ddr4.ddr4_##field##_ftb > 127)?256:0))
 	/*
-	 * For now, the only value for mtb is 1 = 125ps, and ftp = 1ps 
+	 * For now, the only value for mtb is 0 = 125ps, and ftb = 1ps 
 	 * so we don't need to figure out the time-base units - just
 	 * hard-code them for now.
 	 */
@@ -930,10 +934,6 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	    1 << s->sm_ddr4.ddr4_bankgroups,
 	    cycle_time / 1000, cycle_time % 1000);
 
-/*
- * Note that the ddr4_xxx_ftb fields are actually signed offsets from
- * the corresponding mtb value, so we might have to subtract 256!
- */
 
 	tAA_clocks =  __DDR4_VALUE(tAAmin)  * 1000 / cycle_time;
 	tRCD_clocks = __DDR4_VALUE(tRCDmin) * 1000 / cycle_time;

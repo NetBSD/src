@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.1.1.4 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: argv.c,v 1.1.1.4.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -90,7 +90,8 @@
 /*	position.
 /*
 /*	argv_replace_one() replaces one string at the specified
-/*	position.
+/*	position. The old string is destroyed after the update is
+/*	made.
 /*
 /*	argv_delete() deletes the specified number of elements
 /*	starting at the specified array position. The result is
@@ -140,8 +141,8 @@ ARGV   *argv_free(ARGV *argvp)
 
     for (cpp = argvp->argv; cpp < argvp->argv + argvp->argc; cpp++)
 	myfree(*cpp);
-    myfree((char *) argvp->argv);
-    myfree((char *) argvp);
+    myfree((void *) argvp->argv);
+    myfree((void *) argvp);
     return (0);
 }
 
@@ -189,7 +190,7 @@ static void argv_extend(ARGV *argvp)
 
     new_len = argvp->len * 2;
     argvp->argv = (char **)
-	myrealloc((char *) argvp->argv, (new_len + 1) * sizeof(char *));
+	myrealloc((void *) argvp->argv, (new_len + 1) * sizeof(char *));
     argvp->len = new_len;
 }
 
@@ -293,6 +294,7 @@ void    argv_insert_one(ARGV *argvp, ssize_t where, const char *arg)
 
 void    argv_replace_one(ARGV *argvp, ssize_t where, const char *arg)
 {
+    char   *temp;
 
     /*
      * Sanity check.
@@ -300,8 +302,9 @@ void    argv_replace_one(ARGV *argvp, ssize_t where, const char *arg)
     if (where < 0 || where >= argvp->argc)
 	msg_panic("argv_replace_one bad position: %ld", (long) where);
 
-    myfree(argvp->argv[where]);
+    temp = argvp->argv[where];
     argvp->argv[where] = mystrdup(arg);
+    myfree(temp);
 }
 
 /* argv_delete - remove string(s) from array */

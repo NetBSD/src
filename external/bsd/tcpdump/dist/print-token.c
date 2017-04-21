@@ -26,19 +26,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-token.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-token.c,v 1.4.4.1 2017/04/21 16:52:36 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Token Ring printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 #include "ether.h"
@@ -118,14 +119,13 @@ token_hdr_print(netdissect_options *ndo,
 	srcname = etheraddr_string(ndo, fsrc);
 	dstname = etheraddr_string(ndo, fdst);
 
-	if (ndo->ndo_vflag)
-		ND_PRINT((ndo, "%02x %02x %s %s %d: ",
+	if (!ndo->ndo_qflag)
+		ND_PRINT((ndo, "%02x %02x ",
 		       trp->token_ac,
-		       trp->token_fc,
-		       srcname, dstname,
-		       length));
-	else
-		ND_PRINT((ndo, "%s %s %d: ", srcname, dstname, length));
+		       trp->token_fc));
+	ND_PRINT((ndo, "%s > %s, length %u: ",
+	       srcname, dstname,
+	       length));
 }
 
 static const char *broadcast_indicator[] = {
@@ -154,8 +154,9 @@ u_int
 token_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen)
 {
 	const struct token_header *trp;
-	u_short extracted_ethertype;
+	int llc_hdrlen;
 	struct ether_header ehdr;
+	struct lladdr_info src, dst;
 	u_int route_len = 0, hdr_len = TOKEN_HDRLEN;
 	int seg;
 
@@ -208,6 +209,11 @@ token_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen
 			token_hdr_print(ndo, trp, length, ESRC(&ehdr), EDST(&ehdr));
 	}
 
+	src.addr = ESRC(&ehdr);
+	src.addr_string = etheraddr_string;
+	dst.addr = EDST(&ehdr);
+	dst.addr_string = etheraddr_string;
+
 	/* Skip over token ring MAC header and routing information */
 	length -= hdr_len;
 	p += hdr_len;
@@ -216,20 +222,14 @@ token_print(netdissect_options *ndo, const u_char *p, u_int length, u_int caplen
 	/* Frame Control field determines interpretation of packet */
 	if (FRAME_TYPE(trp) == TOKEN_FC_LLC) {
 		/* Try to print the LLC-layer header & higher layers */
-		if (llc_print(ndo, p, length, caplen, ESRC(&ehdr), EDST(&ehdr),
-		    &extracted_ethertype) == 0) {
-			/* ether_type not known, print raw packet */
-			if (!ndo->ndo_eflag)
-				token_hdr_print(ndo, trp,
-				    length + TOKEN_HDRLEN + route_len,
-				    ESRC(&ehdr), EDST(&ehdr));
-			if (extracted_ethertype) {
-				ND_PRINT((ndo, "(LLC %s) ",
-			etherproto_string(htons(extracted_ethertype))));
-			}
+		llc_hdrlen = llc_print(ndo, p, length, caplen, &src, &dst);
+		if (llc_hdrlen < 0) {
+			/* packet type not known, print raw packet */
 			if (!ndo->ndo_suppress_default_print)
 				ND_DEFAULTPRINT(p, caplen);
+			llc_hdrlen = -llc_hdrlen;
 		}
+		hdr_len += llc_hdrlen;
 	} else {
 		/* Some kinds of TR packet we cannot handle intelligently */
 		/* XXX - dissect MAC packets if frame type is 0 */

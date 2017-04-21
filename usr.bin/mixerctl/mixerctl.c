@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.26 2012/10/28 02:01:15 isaki Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.26.16.1 2017/04/21 16:54:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.26 2012/10/28 02:01:15 isaki Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.26.16.1 2017/04/21 16:54:15 bouyer Exp $");
 #endif
 
 #include <stdio.h>
@@ -60,6 +60,8 @@ struct field {
 
 mixer_ctrl_t *values;
 mixer_devinfo_t *infos;
+
+static const char mixer_path[] = _PATH_MIXER;
 
 static char *
 catstr(char *p, char *q)
@@ -316,6 +318,15 @@ prarg(int fd, char *arg, const char *sep)
 		prfield(p, sep, vflag), fprintf(out, "\n");
 }
 
+static inline void __dead
+usage(void)
+{
+	fprintf(out, "%s [-d file] [-v] [-n] name ...\n", prog);
+	fprintf(out, "%s [-d file] [-v] [-n] -w name=value ...\n",prog);
+	fprintf(out, "%s [-d file] [-v] [-n] -a\n", prog);
+	exit(0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -328,7 +339,7 @@ main(int argc, char **argv)
 
 	file = getenv("MIXERDEVICE");
 	if (file == NULL)
-		file = _PATH_MIXER;
+		file = mixer_path;
 
 	prog = *argv;
 
@@ -352,19 +363,18 @@ main(int argc, char **argv)
 			break;
 		case '?':
 		default:
-		usage:
-			fprintf(out, "%s [-d file] [-v] [-n] name ...\n", prog);
-			fprintf(out, "%s [-d file] [-v] [-n] -w name=value ...\n",prog);
-			fprintf(out, "%s [-d file] [-v] [-n] -a\n", prog);
-			exit(0);
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
+	if (aflag ? (argc != 0 || wflag) : argc == 0)
+		usage();
+
 	fd = open(file, O_RDWR);
-	/* Try with mixer0. */
-	if (fd < 0 && strcmp(file, _PATH_MIXER) == 0) {
+	/* Try with mixer0 but only if using the default device. */
+	if (fd < 0 && file == mixer_path) {
 		file = _PATH_MIXER0;
 		fd = open(file, O_RDWR);
 	}
@@ -442,6 +452,6 @@ main(int argc, char **argv)
 			argv++;
 		}
 	} else
-		goto usage;
+		usage();
 	exit(0);
 }

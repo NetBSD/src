@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.336 2016/07/19 02:04:06 pgoyette Exp $
+#	$NetBSD: BRANCHES,v 1.336.2.1 2017/04/21 16:51:16 bouyer Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -299,6 +299,17 @@ Maintainer:	7.0 Release Engineering <releng-7@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
+
+Branch:		netbsd-7-1
+Description:	Tracking security/critical fixes for NetBSD 7.1
+Status:		Active
+Start Date:	15 Mar 2017
+End Date:
+Base Tag:	netbsd-7-1-RELEASE
+Maintainer:	NetBSD 7 Release Engineering <releng-7@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
 ########################################################################
 # Individual developers' branches (Active/Dormant):
 ########################################################################
@@ -382,6 +393,17 @@ Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
+
+Branch:		bouyer-socketcan
+Description:	Implement a CAN socket layer compatible with linux SocketCAN
+Status:		Active
+Start Date:	Sun Jan 15 2017
+End Date:
+Base Tag:	bouyer-socketcan-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		src/
+Notes:		Some documentation on SocketCAN is there:
+		https://www.kernel.org/doc/Documentation/networking/can.txt
 
 Branch:		cherry-xenmp
 Description:	Port i386 and amd64 Xen kernels to run MP
@@ -854,16 +876,6 @@ Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
 
-Branch:		bouyer-quota2
-Description:	modernise disk quotas
-Status:		Active
-Start Date:	Thu Jan 20 2011
-End Date:
-Base Tag:	bouyer-quota2-base
-Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
-Scope:		src/
-Notes:
-
 Branch:		pgoyette-localcount
 Description:	Implement localcount reference counting as proposed by
 		riastradh@
@@ -919,6 +931,16 @@ Base Tag:	bouyer-xeni386-base
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		kernel
 Notes:		
+
+Branch:		bouyer-quota2
+Description:	modernise disk quotas
+Status:		Terminated
+Start Date:	Thu Jan 20 2011
+End Date:	March 06 2011
+Base Tag:	bouyer-quota2-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		src/
+Notes:
 
 Branch: 	chap-midi
 Description:	Renovation of MIDI support

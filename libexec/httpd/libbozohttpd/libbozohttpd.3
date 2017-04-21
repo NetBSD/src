@@ -1,4 +1,4 @@
-.\" $NetBSD: libbozohttpd.3,v 1.3 2014/03/18 18:20:38 riastradh Exp $
+.\" $NetBSD: libbozohttpd.3,v 1.3.18.1 2017/04/21 16:53:13 bouyer Exp $
 .\"
 .\" $eterna: libbozohttpd.3,v 1.2 2010/05/10 02:48:23 mrg Exp $
 .\"
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 2009
+.Dd February 2, 2017
 .Dt LIBBOZOHTTPD 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .In bozohttpd.h
 .Ft int
 .Fo bozo_set_pref
-.Fa "bozoprefs_t *prefs" "char *name" "char *value"
+.Fa "bozohttpd_t *httpd" "bozoprefs_t *prefs" "char *name" "char *value"
 .Fc
 .Ft char *
 .Fo bozo_get_pref

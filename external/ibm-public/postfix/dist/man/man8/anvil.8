@@ -1,4 +1,4 @@
-.\"	$NetBSD: anvil.8,v 1.1.1.1 2009/06/23 10:08:34 tron Exp $
+.\"	$NetBSD: anvil.8,v 1.1.1.1.36.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH ANVIL 8 
 .ad
@@ -24,7 +24,7 @@ by the Postfix \fBmaster\fR(8) server.
 
 In the following text, \fBident\fR specifies a (service,
 client) combination. The exact syntax of that information
-is application-dependent; the \fBanvil\fR(8) server does
+is application\-dependent; the \fBanvil\fR(8) server does
 not care.
 .SH "CONNECTION COUNT/RATE CONTROL"
 .na
@@ -146,6 +146,27 @@ combination specified with \fBident\fR:
     \fBstatus=0\fR
     \fBrate=\fInumber\fR
 .fi
+.SH "AUTH RATE CONTROL"
+.na
+.nf
+.ad
+.fi
+To register an AUTH request send the following request
+to the \fBanvil\fR(8) server:
+
+.nf
+    \fBrequest=auth\fR
+    \fBident=\fIstring\fR
+.fi
+
+The \fBanvil\fR(8) server answers with the number of auth
+requests per unit time for the (service, client) combination
+specified with \fBident\fR:
+
+.nf
+    \fBstatus=0\fR
+    \fBrate=\fInumber\fR
+.fi
 .SH "SECURITY"
 .na
 .nf
@@ -154,12 +175,12 @@ combination specified with \fBident\fR:
 The \fBanvil\fR(8) server does not talk to the network or to local
 users, and can run chrooted at fixed low privilege.
 
-The \fBanvil\fR(8) server maintains an in-memory table with
+The \fBanvil\fR(8) server maintains an in\-memory table with
 information about recent clients requests.  No persistent
 state is kept because standard system library routines are
-not sufficiently robust for update-intensive applications.
+not sufficiently robust for update\-intensive applications.
 
-Although the in-memory state is kept only temporarily, this
+Although the in\-memory state is kept only temporarily, this
 may require a lot of memory on systems that handle connections
 from many remote clients.  To reduce memory usage, reduce
 the time unit over which state is kept.
@@ -199,7 +220,7 @@ it does not explicitly limit them.
 .nf
 .ad
 .fi
-On low-traffic mail systems, changes to \fBmain.cf\fR are
+On low\-traffic mail systems, changes to \fBmain.cf\fR are
 picked up automatically as \fBanvil\fR(8) processes run for
 only a limited amount of time. On other mail systems, use
 the command "\fBpostfix reload\fR" to speed up a change.
@@ -217,7 +238,7 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBipc_timeout (3600s)\fR"
 The time limit for sending or receiving information over an internal
 communication channel.
@@ -227,9 +248,9 @@ for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
 The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
@@ -258,9 +279,9 @@ TUNING_README, performance tuning
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 .ad
 .fi
 The anvil service is available in Postfix 2.2 and later.
@@ -271,3 +292,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

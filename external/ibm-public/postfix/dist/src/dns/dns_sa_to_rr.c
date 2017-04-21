@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_sa_to_rr.c,v 1.1.1.2 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: dns_sa_to_rr.c,v 1.1.1.2.10.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -52,7 +52,7 @@
 
 /* dns_sa_to_rr - socket address to resource record */
 
-DNS_RR *dns_sa_to_rr(const char *hostname, unsigned pref, struct sockaddr * sa)
+DNS_RR *dns_sa_to_rr(const char *hostname, unsigned pref, struct sockaddr *sa)
 {
 #define DUMMY_TTL	0
 
@@ -76,9 +76,11 @@ DNS_RR *dns_sa_to_rr(const char *hostname, unsigned pref, struct sockaddr * sa)
   * Stand-alone test program.
   */
 #ifdef TEST
+#include <stdlib.h>
 #include <vstream.h>
 #include <myaddrinfo.h>
 #include <inet_proto.h>
+#include <mymalloc.h>
 
 static const char *myname;
 
@@ -87,11 +89,21 @@ static NORETURN usage(void)
     msg_fatal("usage: %s hostname", myname);
 }
 
+static int compare_family(const void *a, const void *b)
+{
+    struct addrinfo *resa = *(struct addrinfo **) a;
+    struct addrinfo *resb = *(struct addrinfo **) b;
+
+    return (resa->ai_family - resb->ai_family);
+}
+
 int     main(int argc, char **argv)
 {
     MAI_HOSTADDR_STR hostaddr;
     struct addrinfo *res0;
     struct addrinfo *res;
+    struct addrinfo **resv;
+    size_t  len, n;
     DNS_RR *rr;
     int     aierr;
 
@@ -104,8 +116,14 @@ int     main(int argc, char **argv)
     while (*++argv) {
 	if ((aierr = hostname_to_sockaddr(argv[0], (char *) 0, 0, &res0)) != 0)
 	    msg_fatal("%s: %s", argv[0], MAI_STRERROR(aierr));
-	for (res = res0; res != 0; res = res->ai_next) {
-	    if ((rr = dns_sa_to_rr(argv[0], 0, res->ai_addr)) == 0)
+	for (len = 0, res = res0; res != 0; res = res->ai_next)
+	    len += 1;
+	resv = (struct addrinfo **) mymalloc(len * sizeof(*resv));
+	for (len = 0, res = res0; res != 0; res = res->ai_next)
+	    resv[len++] = res;
+	qsort((void *) resv, len, sizeof(*resv), compare_family);
+	for (n = 0; n < len; n++) {
+	    if ((rr = dns_sa_to_rr(argv[0], 0, resv[n]->ai_addr)) == 0)
 		msg_fatal("dns_sa_to_rr: %m");
 	    if (dns_rr_to_pa(rr, &hostaddr) == 0)
 		msg_fatal("dns_rr_to_pa: %m");
@@ -114,6 +132,7 @@ int     main(int argc, char **argv)
 	    dns_rr_free(rr);
 	}
 	freeaddrinfo(res0);
+	myfree((void *) resv);
     }
     return (0);
 }

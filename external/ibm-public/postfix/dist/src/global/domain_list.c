@@ -1,4 +1,4 @@
-/*	$NetBSD: domain_list.c,v 1.1.1.2 2013/01/02 18:58:57 tron Exp $	*/
+/*	$NetBSD: domain_list.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	#include <domain_list.h>
 /*
-/*	DOMAIN_LIST *domain_list_init(flags, pattern_list)
+/*	DOMAIN_LIST *domain_list_init(pname, flags, pattern_list)
+/*	const char *pname;
 /*	int	flags;
 /*	const char *pattern_list;
 /*
@@ -35,7 +36,8 @@
 /*	insensitive. In order to reverse the result, precede a
 /*	pattern with an exclamation point (!).
 /*
-/*	domain_list_init() performs initializations. The first argument
+/*	domain_list_init() performs initializations. The pname
+/*	argument specifies error reporting context. The flags argument
 /*	is the bit-wise OR of zero or more of the following:
 /* .IP MATCH_FLAG_PARENT
 /*	The hostname pattern foo.com matches itself and any name below
@@ -47,7 +49,7 @@
 /*	code, instead of raising a fatal error.
 /* .PP
 /*	Specify MATCH_FLAG_NONE to request none of the above.
-/*	The second argument is a list of domain patterns, or the name of
+/*	The last argument is a list of domain patterns, or the name of
 /*	a file containing domain patterns.
 /*
 /*	domain_list_match() matches the specified host or domain name
@@ -85,11 +87,13 @@
 
 #ifdef TEST
 
-#include <msg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <msg.h>
 #include <vstream.h>
 #include <msg_vstream.h>
+#include <dict.h>
+#include <stringops.h>			/* util_utf8_enable */
 
 static void usage(char *progname)
 {
@@ -115,7 +119,10 @@ int     main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = domain_list_init(MATCH_FLAG_PARENT | MATCH_FLAG_RETURN, argv[optind]);
+    dict_allow_surrogate = 1;
+    util_utf8_enable = 1;
+    list = domain_list_init("command line", MATCH_FLAG_PARENT
+			    | MATCH_FLAG_RETURN, argv[optind]);
     host = argv[optind + 1];
     vstream_printf("%s: %s\n", host, domain_list_match(list, host) ?
 		   "YES" : list->error == 0 ? "NO" : "ERROR");

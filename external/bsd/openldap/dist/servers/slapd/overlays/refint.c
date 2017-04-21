@@ -1,10 +1,10 @@
-/*	$NetBSD: refint.c,v 1.1.1.5 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: refint.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* refint.c - referential integrity module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * This work was initially developed by Symas Corp. for inclusion in
  * OpenLDAP Software.  This work was sponsored by Hewlett-Packard.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: refint.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -76,6 +79,7 @@ typedef struct refint_q {
 	BerValue oldndn;
 	BerValue newdn;
 	BerValue newndn;
+	int do_sub;
 } refint_q;
 
 typedef struct refint_data_s {
@@ -88,8 +92,14 @@ typedef struct refint_data_s {
 	struct re_s *qtask;
 	refint_q *qhead;
 	refint_q *qtail;
+	BackendDB *db;
 	ldap_pvt_thread_mutex_t qmutex;
 } refint_data;
+
+typedef struct refint_pre_s {
+	slap_overinst *on;
+	int do_sub;
+} refint_pre;
 
 #define	RUNQ_INTERVAL	36000	/* a long time */
 
@@ -316,8 +326,21 @@ refint_db_destroy(
 
 	if ( on->on_bi.bi_private ) {
 		refint_data *id = on->on_bi.bi_private;
+		refint_attrs *ii, *ij;
+
 		on->on_bi.bi_private = NULL;
 		ldap_pvt_thread_mutex_destroy( &id->qmutex );
+
+		for(ii = id->attrs; ii; ii = ij) {
+			ij = ii->next;
+			ch_free(ii);
+		}
+
+		ch_free( id->nothing.bv_val );
+		BER_BVZERO( &id->nothing );
+		ch_free( id->nnothing.bv_val );
+		BER_BVZERO( &id->nnothing );
+
 		ch_free( id );
 	}
 	return(0);
@@ -346,16 +369,43 @@ refint_open(
 		ber_dupbv( &id->refint_dn, &refint_dn );
 		ber_dupbv( &id->refint_ndn, &refint_ndn );
 	}
+
+	/*
+	** find the backend that matches our configured basedn;
+	** make sure it exists and has search and modify methods;
+	**
+	*/
+
+	if ( on->on_info->oi_origdb != frontendDB ) {
+		BackendDB *db = select_backend(&id->dn, 1);
+
+		if ( db ) {
+			BackendInfo *bi;
+			if ( db == be )
+				bi = on->on_info->oi_orig;
+			else
+				bi = db->bd_info;
+			if ( !bi->bi_op_search || !bi->bi_op_modify ) {
+				Debug( LDAP_DEBUG_CONFIG,
+					"refint_response: backend missing search and/or modify\n",
+					0, 0, 0 );
+				return -1;
+			}
+			id->db = db;
+		} else {
+			Debug( LDAP_DEBUG_CONFIG,
+				"refint_response: no backend for our baseDN %s??\n",
+				id->dn.bv_val, 0, 0 );
+			return -1;
+		}
+	}
 	return(0);
 }
 
 
 /*
-** foreach configured attribute:
-**	free it;
 ** free our basedn;
-** reset on_bi.bi_private;
-** free our config data;
+** free our refintdn
 **
 */
 
@@ -367,20 +417,9 @@ refint_close(
 {
 	slap_overinst *on	= (slap_overinst *) be->bd_info;
 	refint_data *id	= on->on_bi.bi_private;
-	refint_attrs *ii, *ij;
-
-	for(ii = id->attrs; ii; ii = ij) {
-		ij = ii->next;
-		ch_free(ii);
-	}
-	id->attrs = NULL;
 
 	ch_free( id->dn.bv_val );
 	BER_BVZERO( &id->dn );
-	ch_free( id->nothing.bv_val );
-	BER_BVZERO( &id->nothing );
-	ch_free( id->nnothing.bv_val );
-	BER_BVZERO( &id->nnothing );
 	ch_free( id->refint_dn.bv_val );
 	BER_BVZERO( &id->refint_dn );
 	ch_free( id->refint_ndn.bv_val );
@@ -436,6 +475,8 @@ refint_search_cb(
 
 			na = NULL;
 
+			/* Are we doing subtree matching or simple equality? */
+			if ( rq->do_sub ) {
 			for(i = 0, b = a->a_nvals; b[i].bv_val; i++) {
 				if(dnIsSuffix(&b[i], &rq->oldndn)) {
 					is_exact = b[i].bv_len == rq->oldndn.bv_len;
@@ -507,9 +548,24 @@ refint_search_cb(
 					ber_bvarray_add_x( &na->new_nvals, &dn, op->o_tmpmemctx );
 				}
 			}
+			} else {
+				/* entry has no children, just equality matching */
+				is_exact = attr_valfind( a,
+					SLAP_MR_EQUALITY|SLAP_MR_ASSERTED_VALUE_NORMALIZED_MATCH|
+					SLAP_MR_ATTRIBUTE_VALUE_NORMALIZED_MATCH, &rq->oldndn, &i, NULL );
+				if ( is_exact == LDAP_SUCCESS ) {
+					na = op->o_tmpcalloc( 1,
+						sizeof( refint_attrs ),
+						op->o_tmpmemctx );
+					na->next = ip->attrs;
+					ip->attrs = na;
+					na->attr = ia->attr;
+					na->ra_numvals = 1;
+				}
+			}
 
 			/* Deleting/replacing all values and a nothing DN is configured? */
-			if ( na && na->ra_numvals == i && !BER_BVISNULL(&dd->nothing) )
+			if ( na && na->ra_numvals == a->a_numvals && !BER_BVISNULL(&dd->nothing) )
 				na->dont_empty = 1;
 
 			Debug( LDAP_DEBUG_TRACE, "refint_search_cb: %s: %s (#%d)\n",
@@ -531,21 +587,25 @@ refint_repair(
 	Operation		op2;
 	unsigned long	opid;
 	int		rc;
+	int	cache;
 
 	op->o_callback->sc_response = refint_search_cb;
 	op->o_req_dn = op->o_bd->be_suffix[ 0 ];
 	op->o_req_ndn = op->o_bd->be_nsuffix[ 0 ];
 	op->o_dn = op->o_bd->be_rootdn;
 	op->o_ndn = op->o_bd->be_rootndn;
+	cache = op->o_do_not_cache;
+	op->o_do_not_cache = 1;
 
 	/* search */
 	rc = op->o_bd->be_search( op, &rs );
+	op->o_do_not_cache = cache;
 
 	if ( rc != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_TRACE,
 			"refint_repair: search failed: %d\n",
 			rc, 0, 0 );
-		return 0;
+		return rc;
 	}
 
 	/* safety? paranoid just in case */
@@ -708,6 +768,7 @@ refint_qtask( void *ctx, void *arg )
 	Filter ftop, *fptr;
 	refint_q *rq;
 	refint_attrs *ip;
+	int pausing = 0, rc = 0;
 
 	connection_fake_init( &conn, &opbuf, ctx );
 	op = &opbuf.ob_op;
@@ -727,11 +788,9 @@ refint_qtask( void *ctx, void *arg )
 	ftop.f_or = NULL;
 	op->ors_filter = &ftop;
 	for(ip = id->attrs; ip; ip = ip->next) {
+		/* this filter can be either EQUALITY or EXT */
 		fptr = op->o_tmpcalloc( sizeof(Filter) + sizeof(MatchingRuleAssertion),
 			1, op->o_tmpmemctx );
-		/* Use (attr:dnSubtreeMatch:=value) to catch subtree rename
-		 * and subtree delete where supported */
-		fptr->f_choice = LDAP_FILTER_EXT;
 		fptr->f_mra = (MatchingRuleAssertion *)(fptr+1);
 		fptr->f_mr_rule = mr_dnSubtreeMatch;
 		fptr->f_mr_rule_text = mr_dnSubtreeMatch->smr_bvoid;
@@ -745,6 +804,11 @@ refint_qtask( void *ctx, void *arg )
 		dependent_data	*dp, *dp_next;
 		refint_attrs *ra, *ra_next;
 
+		if ( ldap_pvt_thread_pool_pausing( &connection_pool ) > 0 ) {
+			pausing = 1;
+			break;
+		}
+
 		/* Dequeue an op */
 		ldap_pvt_thread_mutex_lock( &id->qmutex );
 		rq = id->qhead;
@@ -757,8 +821,15 @@ refint_qtask( void *ctx, void *arg )
 		if ( !rq )
 			break;
 
-		for (fptr = ftop.f_or; fptr; fptr = fptr->f_next )
+		for (fptr = ftop.f_or; fptr; fptr = fptr->f_next ) {
 			fptr->f_mr_value = rq->oldndn;
+			/* Use (attr:dnSubtreeMatch:=value) to catch subtree rename
+			 * and subtree delete where supported */
+			if (rq->do_sub)
+				fptr->f_choice = LDAP_FILTER_EXT;
+			else
+				fptr->f_choice = LDAP_FILTER_EQUALITY;
+		}
 
 		filter2bv_x( op, op->ors_filter, &op->ors_filterstr );
 
@@ -780,7 +851,7 @@ refint_qtask( void *ctx, void *arg )
 
 		if ( rq->db != NULL ) {
 			op->o_bd = rq->db;
-			refint_repair( op, id, rq );
+			rc = refint_repair( op, id, rq );
 
 		} else {
 			BackendDB	*be;
@@ -793,7 +864,7 @@ refint_qtask( void *ctx, void *arg )
 
 				if ( be->be_search && be->be_modify ) {
 					op->o_bd = be;
-					refint_repair( op, id, rq );
+					rc = refint_repair( op, id, rq );
 				}
 			}
 		}
@@ -813,6 +884,17 @@ refint_qtask( void *ctx, void *arg )
 			op->o_tmpfree( dp, op->o_tmpmemctx );
 		}
 		op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );
+		if ( rc == LDAP_BUSY ) {
+			pausing = 1;
+			/* re-queue this op */
+			ldap_pvt_thread_mutex_lock( &id->qmutex );
+			rq->next = id->qhead;
+			id->qhead = rq;
+			if ( !id->qtail )
+				id->qtail = rq;
+			ldap_pvt_thread_mutex_unlock( &id->qmutex );
+			break;
+		}
 
 		if ( !BER_BVISNULL( &rq->newndn )) {
 			ch_free( rq->newndn.bv_val );
@@ -833,7 +915,14 @@ refint_qtask( void *ctx, void *arg )
 	/* wait until we get explicitly scheduled again */
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 	ldap_pvt_runqueue_stoptask( &slapd_rq, id->qtask );
-	ldap_pvt_runqueue_resched( &slapd_rq,id->qtask, 1 );
+	if ( pausing ) {
+		/* try to run again as soon as the pause is done */
+		id->qtask->interval.tv_sec = 0;
+		ldap_pvt_runqueue_resched( &slapd_rq, id->qtask, 0 );
+		id->qtask->interval.tv_sec = RUNQ_INTERVAL;
+	} else {
+		ldap_pvt_runqueue_resched( &slapd_rq,id->qtask, 1 );
+	}
 	ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
 
 	return NULL;
@@ -850,60 +939,29 @@ refint_response(
 	SlapReply *rs
 )
 {
-	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
-	refint_data *id = on->on_bi.bi_private;
+	refint_pre *rp;
+	slap_overinst *on;
+	refint_data *id;
 	BerValue pdn;
-	int ac;
 	refint_q *rq;
-	BackendDB *db = NULL;
 	refint_attrs *ip;
+	int ac;
 
 	/* If the main op failed or is not a Delete or ModRdn, ignore it */
 	if (( op->o_tag != LDAP_REQ_DELETE && op->o_tag != LDAP_REQ_MODRDN ) ||
 		rs->sr_err != LDAP_SUCCESS )
 		return SLAP_CB_CONTINUE;
 
-	/*
-	** validate (and count) the list of attrs;
-	**
-	*/
-
-	for(ip = id->attrs, ac = 0; ip; ip = ip->next, ac++);
-	if(!ac) {
-		Debug( LDAP_DEBUG_TRACE,
-			"refint_response called without any attributes\n", 0, 0, 0 );
-		return SLAP_CB_CONTINUE;
-	}
-
-	/*
-	** find the backend that matches our configured basedn;
-	** make sure it exists and has search and modify methods;
-	**
-	*/
-
-	if ( on->on_info->oi_origdb != frontendDB ) {
-		db = select_backend(&id->dn, 1);
-
-		if ( db ) {
-			if ( !db->be_search || !db->be_modify ) {
-				Debug( LDAP_DEBUG_TRACE,
-					"refint_response: backend missing search and/or modify\n",
-					0, 0, 0 );
-				return SLAP_CB_CONTINUE;
-			}
-		} else {
-			Debug( LDAP_DEBUG_TRACE,
-				"refint_response: no backend for our baseDN %s??\n",
-				id->dn.bv_val, 0, 0 );
-			return SLAP_CB_CONTINUE;
-		}
-	}
+	rp = op->o_callback->sc_private;
+	on = rp->on;
+	id = on->on_bi.bi_private;
 
 	rq = ch_calloc( 1, sizeof( refint_q ));
 	ber_dupbv( &rq->olddn, &op->o_req_dn );
 	ber_dupbv( &rq->oldndn, &op->o_req_ndn );
-	rq->db = db;
+	rq->db = id->db;
 	rq->rdata = id;
+	rq->do_sub = rp->do_sub;
 
 	if ( op->o_tag == LDAP_REQ_MODRDN ) {
 		if ( op->oq_modrdn.rs_newSup ) {
@@ -952,6 +1010,47 @@ refint_response(
 	return SLAP_CB_CONTINUE;
 }
 
+/* Check if the target entry exists and has children.
+ * Do nothing if target doesn't exist.
+ */
+static int
+refint_preop(
+	Operation *op,
+	SlapReply *rs
+)
+{
+	slap_overinst *on = (slap_overinst *) op->o_bd->bd_info;
+	refint_data *id = on->on_bi.bi_private;
+	Entry *e;
+	int rc;
+
+	/* are any attrs configured? */
+	if ( !id->attrs )
+		return SLAP_CB_CONTINUE;
+
+	rc = overlay_entry_get_ov( op, &op->o_req_ndn, NULL, NULL, 0, &e, on );
+	if ( rc == LDAP_SUCCESS ) {
+		slap_callback *sc = op->o_tmpcalloc( 1,
+			sizeof(slap_callback)+sizeof(refint_pre), op->o_tmpmemctx );
+		refint_pre *rp = (refint_pre *)(sc+1);
+		rp->on = on;
+		rp->do_sub = 1;	/* assume there are children */
+		if ( op->o_bd->be_has_subordinates ) {
+			int has = 0;
+			rc = op->o_bd->be_has_subordinates( op, e, &has );
+			/* there definitely are not children */
+			if ( rc == LDAP_SUCCESS && has == LDAP_COMPARE_FALSE )
+				rp->do_sub = 0;
+		}
+		overlay_entry_release_ov( op, e, 0, on );
+		sc->sc_response = refint_response;
+		sc->sc_private = rp;
+		sc->sc_next = op->o_callback;
+		op->o_callback = sc;
+	}
+	return SLAP_CB_CONTINUE;
+}
+
 /*
 ** init_module is last so the symbols resolve "for free" --
 ** it expects to be called automagically during dynamic module initialization
@@ -974,7 +1073,8 @@ int refint_initialize() {
 	refint.on_bi.bi_db_destroy = refint_db_destroy;
 	refint.on_bi.bi_db_open = refint_open;
 	refint.on_bi.bi_db_close = refint_close;
-	refint.on_response = refint_response;
+	refint.on_bi.bi_op_delete = refint_preop;
+	refint.on_bi.bi_op_modrdn = refint_preop;
 
 	refint.on_bi.bi_cf_ocs = refintocs;
 	rc = config_register_schema ( refintcfg, refintocs );

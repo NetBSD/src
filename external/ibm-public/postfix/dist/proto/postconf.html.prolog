@@ -42,18 +42,41 @@ that starts with whitespace continues a logical line. </p>
 
 <ul>
 
-<li> <p> The expressions "$name", "${name}" or "$(name)" are
-recursively replaced by the value of the named parameter. </p>
+<li> <p> The expressions "$name" and "${name}" are recursively
+replaced with the value of the named parameter, except where noted.
+An undefined parameter value is replaced with the empty value.  </p>
 
-<li> <p> The expression "${name?value}" expands to "value" when
-"$name" is non-empty. This form is supported with Postfix version
-2.2 and later. </p>
+<li> <p> The expressions "${name?value}" and "${name?{value}}" are
+replaced with "value" when "$name" is non-empty. These forms are
+supported with Postfix versions &ge; 2.2 and &ge; 3.0, respectively.
+</p>
 
-<li> <p> The expression "${name:value}" expands to "value" when
-"$name" is empty. This form is supported with Postfix version 2.2
-and later.  </p>
+<li> <p> The expressions "${name:value}" and "${name?{value}}" are
+replaced with "value" when "$name" is empty. These forms are supported
+with Postfix versions &ge; 2.2 and &ge; 3.0, respectively.  </p>
+
+<li> <p> The expression "${name?{value1}:{value2}}" is replaced
+with "value1" when "$name" is non-empty, and with "value2" when
+"$name" is empty.  The "{}" is required for "value1", optional for
+"value2".  This form is supported with Postfix versions &ge; 3.0.
+</p>
+
+<li> <p> The first item inside "${...}" may be a logical expression
+of the form: "{value3} == {value4}". Besides the "==" (equality)
+operator Postfix supports "!=" (inequality), "&lt;", "&le;", "&ge;",
+and "&gt;". The comparison is numerical when both operands are all
+digits, otherwise the comparison is lexicographical. These forms
+are supported with Postfix versions &ge; 3.0. </p>
+
+<li> <p> Each "value" is subject to recursive named parameter and
+logical expression evaluation, except where noted.  </p>
+
+<li> <p> Whitespace before or after each "{value}" is ignored. </p>
 
 <li> <p> Specify "$$" to produce a single "$" character. </p>
+
+<li> <p> The legacy form "$(...)" is equivalent to the preferred
+form "${...}". </p>
 
 </ul>
 

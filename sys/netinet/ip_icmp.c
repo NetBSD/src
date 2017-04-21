@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.154.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.154.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $"
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h> /* For softnet_lock */
 #include <sys/kmem.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.154 2016/12/12 03:55:57 ozaki-r Exp $"
 #include <netinet/in_proto.h>
 #include <netinet/icmp_var.h>
 #include <netinet/icmp_private.h>
+#include <netinet/wqinput.h>
 
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
@@ -169,10 +171,17 @@ static int icmp_rediraccept = 1;
 static int icmp_redirtimeout = 600;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
+/* Protect mtudisc and redirect stuffs */
+static kmutex_t icmp_mtx __cacheline_aligned;
+
 static void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 
 static void sysctl_netinet_icmp_setup(struct sysctllog **);
+
+/* workqueue-based pr_input */
+static struct wqinput *icmp_wqinput;
+static void _icmp_input(struct mbuf *, int, int);
 
 void
 icmp_init(void)
@@ -180,16 +189,31 @@ icmp_init(void)
 
 	sysctl_netinet_icmp_setup(NULL);
 
+	mutex_init(&icmp_mtx, MUTEX_DEFAULT, IPL_NONE);
 	/*
 	 * This is only useful if the user initializes redirtimeout to
 	 * something other than zero.
 	 */
-	if (icmp_redirtimeout != 0) {
-		icmp_redirect_timeout_q =
-			rt_timer_queue_create(icmp_redirtimeout);
-	}
+	mutex_enter(&icmp_mtx);
+	icmp_redirect_timeout_q = rt_timer_queue_create(icmp_redirtimeout);
+	mutex_exit(&icmp_mtx);
 
 	icmpstat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP_NSTATS);
+	icmp_wqinput = wqinput_create("icmp", _icmp_input);
+}
+
+void
+icmp_mtudisc_lock(void)
+{
+
+	mutex_enter(&icmp_mtx);
+}
+
+void
+icmp_mtudisc_unlock(void)
+{
+
+	mutex_exit(&icmp_mtx);
 }
 
 /*
@@ -198,17 +222,23 @@ icmp_init(void)
 void
 icmp_mtudisc_callback_register(void (*func)(struct in_addr))
 {
-	struct icmp_mtudisc_callback *mc;
+	struct icmp_mtudisc_callback *mc, *new;
 
+	new = kmem_alloc(sizeof(*mc), KM_SLEEP);
+
+	mutex_enter(&icmp_mtx);
 	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list)) {
-		if (mc->mc_func == func)
+		if (mc->mc_func == func) {
+			mutex_exit(&icmp_mtx);
+			kmem_free(new, sizeof(*mc));
 			return;
+		}
 	}
 
-	mc = kmem_alloc(sizeof(*mc), KM_SLEEP);
-	mc->mc_func = func;
-	LIST_INSERT_HEAD(&icmp_mtudisc_callbacks, mc, mc_list);
+	new->mc_func = func;
+	LIST_INSERT_HEAD(&icmp_mtudisc_callbacks, new, mc_list);
+	mutex_exit(&icmp_mtx);
 }
 
 /*
@@ -383,10 +413,9 @@ struct sockaddr_in icmpmask = {
 /*
  * Process a received ICMP message.
  */
-void
-icmp_input(struct mbuf *m, ...)
+static void
+_icmp_input(struct mbuf *m, int hlen, int proto)
 {
-	int proto;
 	struct icmp *icp;
 	struct ip *ip = mtod(m, struct ip *);
 	int icmplen;
@@ -394,14 +423,7 @@ icmp_input(struct mbuf *m, ...)
 	struct in_ifaddr *ia;
 	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
-	int hlen;
-	va_list ap;
 	struct rtentry *rt;
-
-	va_start(ap, m);
-	hlen = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
 
 	/*
 	 * Locate icmp structure in mbuf, and check
@@ -563,7 +585,7 @@ icmp_input(struct mbuf *m, ...)
 	case ICMP_MASKREQ: {
 		struct ifnet *rcvif;
 		int s, ss;
-		struct ifaddr *ifa;
+		struct ifaddr *ifa = NULL;
 
 		if (icmpmaskrepl == 0)
 			break;
@@ -582,7 +604,8 @@ icmp_input(struct mbuf *m, ...)
 			icmpdst.sin_addr = ip->ip_dst;
 		ss = pserialize_read_enter();
 		rcvif = m_get_rcvif(m, &s);
-		ifa = ifaof_ifpforaddr(sintosa(&icmpdst), rcvif);
+		if (__predict_true(rcvif != NULL))
+			ifa = ifaof_ifpforaddr(sintosa(&icmpdst), rcvif);
 		m_put_rcvif(rcvif, &s);
 		if (ifa == NULL) {
 			pserialize_read_exit(ss);
@@ -640,6 +663,7 @@ reflect:
 		rt = NULL;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    NULL, RTF_GATEWAY | RTF_HOST, sintosa(&icmpgw), &rt);
+		mutex_enter(&icmp_mtx);
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			i = rt_timer_add(rt, icmp_redirect_timeout,
 					 icmp_redirect_timeout_q);
@@ -651,6 +675,7 @@ reflect:
 				    IN_PRINT(buf, &icp->icmp_ip.ip_dst), i);
 			}
 		}
+		mutex_exit(&icmp_mtx);
 		if (rt != NULL)
 			rt_unref(rt);
 
@@ -682,6 +707,20 @@ raw:
 freeit:
 	m_freem(m);
 	return;
+}
+
+void
+icmp_input(struct mbuf *m, ...)
+{
+	int hlen, proto;
+	va_list ap;
+
+	va_start(ap, m);
+	hlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
+	va_end(ap);
+
+	wqinput_input(icmp_wqinput, m, hlen, proto);
 }
 
 /*
@@ -849,7 +888,7 @@ icmp_reflect(struct mbuf *m)
 		 * add on any record-route or timestamp options.
 		 */
 		cp = (u_char *) (ip + 1);
-		if ((opts = ip_srcroute()) == NULL &&
+		if ((opts = ip_srcroute(m)) == NULL &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			MCLAIM(opts, m->m_owner);
 			opts->m_len = sizeof(struct in_addr);
@@ -1002,14 +1041,18 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	int error, tmp;
 	struct sysctlnode node;
 
+	mutex_enter(&icmp_mtx);
+
 	node = *rnode;
 	node.sysctl_data = &tmp;
 	tmp = icmp_redirtimeout;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	if (tmp < 0)
-		return (EINVAL);
+		goto out;
+	if (tmp < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	icmp_redirtimeout = tmp;
 
 	/*
@@ -1028,8 +1071,10 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 		icmp_redirect_timeout_q =
 		    rt_timer_queue_create(icmp_redirtimeout);
 	}
-
-	return (0);
+	error = 0;
+out:
+	mutex_exit(&icmp_mtx);
+	return error;
 }
 
 static int
@@ -1156,9 +1201,9 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 		rt = nrt;
 	}
 
-	if (ip_mtudisc_timeout_q == NULL)
-		ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
+	mutex_enter(&icmp_mtx);
 	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
+	mutex_exit(&icmp_mtx);
 	if (error) {
 		rt_unref(rt);
 		return;
@@ -1215,9 +1260,11 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 	 * Notify protocols that the MTU for this destination
 	 * has changed.
 	 */
+	mutex_enter(&icmp_mtx);
 	for (mc = LIST_FIRST(&icmp_mtudisc_callbacks); mc != NULL;
 	     mc = LIST_NEXT(mc, mc_list))
 		(*mc->mc_func)(faddr);
+	mutex_exit(&icmp_mtx);
 }
 
 /*

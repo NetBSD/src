@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_map11.c,v 1.1.1.3 2014/07/06 19:27:49 tron Exp $	*/
+/*	$NetBSD: cleanup_map11.c,v 1.1.1.3.10.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -67,16 +67,13 @@
 #include <sys_defs.h>
 #include <string.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
 #include <vstring.h>
 #include <dict.h>
 #include <mymalloc.h>
+#include <stringops.h>
 
 /* Global library. */
 
@@ -116,7 +113,7 @@ int     cleanup_map11_external(CLEANUP_STATE *state, VSTRING *addr,
 	    saved_addr = mystrdup(STR(addr));
 	    did_rewrite |= strcmp(new_addr->argv[0], STR(addr));
 	    vstring_strcpy(addr, new_addr->argv[0]);
-	    expand_to_self = !strcasecmp(saved_addr, STR(addr));
+	    expand_to_self = !strcasecmp_utf8(saved_addr, STR(addr));
 	    myfree(saved_addr);
 	    argv_free(new_addr);
 	    if (expand_to_self)

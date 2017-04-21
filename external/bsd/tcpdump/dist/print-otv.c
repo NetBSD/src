@@ -13,14 +13,22 @@
  * Original code by Francesco Fondelli (francesco dot fondelli, gmail dot com)
  */
 
-#define NETDISSECT_REWORKED
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-otv.c,v 1.1.1.2.4.1 2017/04/21 16:52:35 bouyer Exp $");
+#endif
+
+/* \summary: Overlay Transport Virtualization (OTV) printer */
+
+/* specification: draft-hasmit-otv-04 */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 /*
@@ -39,27 +47,31 @@ void
 otv_print(netdissect_options *ndo, const u_char *bp, u_int len)
 {
     uint8_t flags;
-    uint32_t overlay_id;
-    uint32_t instance_id;
-
-    if (len < 8) {
-        ND_PRINT((ndo, "[|OTV]"));
-        return;
-    }
-
-    flags = *bp;
-    bp += 1;
-
-    overlay_id = EXTRACT_24BITS(bp);
-    bp += 3;
-
-    instance_id = EXTRACT_24BITS(bp);
-    bp += 4;
 
     ND_PRINT((ndo, "OTV, "));
-    ND_PRINT((ndo, "flags [%s] (0x%02x), ", flags & 0x08 ? "I" : ".", flags));
-    ND_PRINT((ndo, "overlay %u, ", overlay_id));
-    ND_PRINT((ndo, "instance %u\n", instance_id));
+    if (len < 8)
+        goto trunc;
 
-    ether_print(ndo, bp, len - 8, len - 8, NULL, NULL);
+    ND_TCHECK(*bp);
+    flags = *bp;
+    ND_PRINT((ndo, "flags [%s] (0x%02x), ", flags & 0x08 ? "I" : ".", flags));
+    bp += 1;
+
+    ND_TCHECK2(*bp, 3);
+    ND_PRINT((ndo, "overlay %u, ", EXTRACT_24BITS(bp)));
+    bp += 3;
+
+    ND_TCHECK2(*bp, 3);
+    ND_PRINT((ndo, "instance %u\n", EXTRACT_24BITS(bp)));
+    bp += 3;
+
+    /* Reserved */
+    ND_TCHECK(*bp);
+    bp += 1;
+
+    ether_print(ndo, bp, len - 8, ndo->ndo_snapend - bp, NULL, NULL);
+    return;
+
+trunc:
+    ND_PRINT((ndo, " [|OTV]"));
 }

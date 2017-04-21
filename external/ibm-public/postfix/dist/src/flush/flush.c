@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.1.1.2 2013/01/02 18:58:55 tron Exp $	*/
+/*	$NetBSD: flush.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -104,8 +104,9 @@
 /*	The maximal number of incoming connections that a Postfix daemon
 /*	process will service before terminating voluntarily.
 /* .IP "\fBparent_domain_matches_subdomains (see 'postconf -d' output)\fR"
-/*	What Postfix features match subdomains of "domain.tld" automatically,
-/*	instead of requiring an explicit ".domain.tld" pattern.
+/*	A list of Postfix features where the pattern "example.com" also
+/*	matches subdomains of example.com,
+/*	instead of requiring an explicit ".example.com" pattern.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -145,6 +146,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -173,6 +179,7 @@
 #include <stringops.h>
 #include <safe_open.h>
 #include <warn_stat.h>
+#include <midna_domain.h>
 
 /* Global library. */
 
@@ -258,6 +265,15 @@ static VSTRING *flush_site_to_path(VSTRING *path, const char *site)
     int     ch;
 
     /*
+     * Convert the name to ASCII, so that we don't to end up with non-ASCII
+     * names in the file system. The IDNA library functions fold case.
+     */
+#ifndef NO_EAI
+    if ((site = midna_domain_to_ascii(site)) == 0)
+	return (0);
+#endif
+
+    /*
      * Allocate buffer on the fly; caller still needs to clean up.
      */
     if (path == 0)
@@ -268,7 +284,7 @@ static VSTRING *flush_site_to_path(VSTRING *path, const char *site)
      */
     for (ptr = site; (ch = *(unsigned const char *) ptr) != 0; ptr++)
 	if (ISALNUM(ch))
-	    VSTRING_ADDCH(path, ch);
+	    VSTRING_ADDCH(path, tolower(ch));
 	else
 	    VSTRING_ADDCH(path, '_');
     VSTRING_TERMINATE(path);
@@ -299,7 +315,8 @@ static int flush_add_service(const char *site, const char *queue_id)
     /*
      * Map site to path and update log.
      */
-    site_path = flush_site_to_path((VSTRING *) 0, site);
+    if ((site_path = flush_site_to_path((VSTRING *) 0, site)) == 0)
+	return (FLUSH_STAT_DENY);
     status = flush_add_path(STR(site_path), queue_id);
     vstring_free(site_path);
 
@@ -375,7 +392,8 @@ static int flush_send_service(const char *site, int how)
     /*
      * Map site name to path name and flush the log.
      */
-    site_path = flush_site_to_path((VSTRING *) 0, site);
+    if ((site_path = flush_site_to_path((VSTRING *) 0, site)) == 0)
+	return (FLUSH_STAT_DENY);
     status = flush_send_path(STR(site_path), how);
     vstring_free(site_path);
 
@@ -563,7 +581,7 @@ static int flush_send_path(const char *path, int how)
 			 myname, path, STR(queue_file));
 	}
     }
-    htable_free(dup_filter, (void (*) (char *)) 0);
+    htable_free(dup_filter, (void (*) (void *)) 0);
     vstring_free(queue_file);
     vstring_free(queue_id);
 
@@ -708,7 +726,7 @@ static int flush_request_receive(VSTREAM *client_stream, VSTRING *request)
     else {
 	if (attr_scan(client_stream,
 		      ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
-		      ATTR_TYPE_STR, MAIL_ATTR_REQ, request,
+		      RECV_ATTR_STR(MAIL_ATTR_REQ, request),
 		      ATTR_TYPE_END) != 1) {
 	    return (-1);
 	}
@@ -750,50 +768,49 @@ static void flush_service(VSTREAM *client_stream, char *unused_service,
 	    site = vstring_alloc(10);
 	    queue_id = vstring_alloc(10);
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			  ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
-			  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
+			  RECV_ATTR_STR(MAIL_ATTR_SITE, site),
+			  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, queue_id),
 			  ATTR_TYPE_END) == 2
 		&& mail_queue_id_ok(STR(queue_id)))
-		status = flush_add_service(lowercase(STR(site)), STR(queue_id));
+		status = flush_add_service(STR(site), STR(queue_id));
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
 		       ATTR_TYPE_END);
 	} else if (STREQ(STR(request), FLUSH_REQ_SEND_SITE)) {
 	    site = vstring_alloc(10);
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			  ATTR_TYPE_STR, MAIL_ATTR_SITE, site,
+			  RECV_ATTR_STR(MAIL_ATTR_SITE, site),
 			  ATTR_TYPE_END) == 1)
-		status = flush_send_service(lowercase(STR(site)),
-					    UNTHROTTLE_BEFORE);
+		status = flush_send_service(STR(site), UNTHROTTLE_BEFORE);
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
 		       ATTR_TYPE_END);
 	} else if (STREQ(STR(request), FLUSH_REQ_SEND_FILE)) {
 	    queue_id = vstring_alloc(10);
 	    if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-			  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, queue_id,
+			  RECV_ATTR_STR(MAIL_ATTR_QUEUEID, queue_id),
 			  ATTR_TYPE_END) == 1)
 		status = flush_send_file_service(STR(queue_id));
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
 		       ATTR_TYPE_END);
 	} else if (STREQ(STR(request), FLUSH_REQ_REFRESH)
 		   || STREQ(STR(request), wakeup)) {
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, FLUSH_STAT_OK,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, FLUSH_STAT_OK),
 		       ATTR_TYPE_END);
 	    vstream_fflush(client_stream);
 	    (void) flush_refresh_service(var_fflush_refresh);
 	} else if (STREQ(STR(request), FLUSH_REQ_PURGE)) {
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, FLUSH_STAT_OK,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, FLUSH_STAT_OK),
 		       ATTR_TYPE_END);
 	    vstream_fflush(client_stream);
 	    (void) flush_refresh_service(0);
 	}
     } else
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, status,
+		   SEND_ATTR_INT(MAIL_ATTR_STATUS, status),
 		   ATTR_TYPE_END);
     vstring_free(request);
     if (site)
@@ -806,7 +823,7 @@ static void flush_service(VSTREAM *client_stream, char *unused_service,
 
 static void pre_jail_init(char *unused_name, char **unused_argv)
 {
-    flush_domains = domain_list_init(MATCH_FLAG_RETURN
+    flush_domains = domain_list_init(VAR_FFLUSH_DOMAINS, MATCH_FLAG_RETURN
 				   | match_parent_style(VAR_FFLUSH_DOMAINS),
 				     var_fflush_domains);
 }
@@ -829,8 +846,8 @@ int     main(int argc, char **argv)
     MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, flush_service,
-		       MAIL_SERVER_TIME_TABLE, time_table,
-		       MAIL_SERVER_PRE_INIT, pre_jail_init,
-		       MAIL_SERVER_UNLIMITED,
+		       CA_MAIL_SERVER_TIME_TABLE(time_table),
+		       CA_MAIL_SERVER_PRE_INIT(pre_jail_init),
+		       CA_MAIL_SERVER_UNLIMITED,
 		       0);
 }

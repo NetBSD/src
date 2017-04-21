@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.6 2016/04/02 08:48:35 skrll Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.6.4.1 2017/04/21 16:53:26 bouyer Exp $
 #
 #	VEXPRESS_A15 -- Versatile Express A15 kernel
 #
@@ -54,6 +54,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support

@@ -1,10 +1,10 @@
-/*	$NetBSD: null.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: null.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* null.c - the null backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2014 The OpenLDAP Foundation.
+ * Copyright 2002-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,6 +20,9 @@
  * in OpenLDAP Software.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: null.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -28,18 +31,23 @@
 #include "slap.h"
 #include "config.h"
 
-struct null_info {
+typedef struct null_info {
 	int	ni_bind_allowed;
+	int ni_dosearch;
 	ID	ni_nextid;
-};
-
-static ConfigDriver null_cf_gen;
+	Entry *ni_entry;
+} null_info;
 
 static ConfigTable nullcfg[] = {
-	{ "bind", "true|FALSE", 1, 2, 0, ARG_ON_OFF|ARG_MAGIC,
-		null_cf_gen,
+	{ "bind", "true|FALSE", 1, 2, 0, ARG_ON_OFF|ARG_OFFSET,
+		(void *)offsetof(null_info, ni_bind_allowed),
 		"( OLcfgDbAt:8.1 NAME 'olcDbBindAllowed' "
 		"DESC 'Allow binds to this database' "
+		"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
+	{ "dosearch", "true|FALSE", 1, 2, 0, ARG_ON_OFF|ARG_OFFSET,
+		(void *)offsetof(null_info, ni_dosearch),
+		"( OLcfgDbAt:8.2 NAME 'olcDbDoSearch' "
+		"DESC 'Return an entry on searches' "
 		"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED,
 		NULL, NULL, NULL, NULL }
@@ -50,11 +58,40 @@ static ConfigOCs nullocs[] = {
 		"NAME 'olcNullConfig' "
 		"DESC 'Null backend ocnfiguration' "
 		"SUP olcDatabaseConfig "
-		"MAY ( olcDbBindAllowed ) )",
+		"MAY ( olcDbBindAllowed $ olcDbDoSearch ) )",
 		Cft_Database, nullcfg },
 	{ NULL, 0, NULL }
 };
 
+
+static int
+null_back_db_open( BackendDB *be, ConfigReply *cr )
+{
+	struct null_info *ni = (struct null_info *) be->be_private;
+	struct berval bv[2];
+	AttributeDescription *ad = NULL;
+	const char *text;
+	Entry *e;
+
+	if ( ni->ni_dosearch ) {
+		e = entry_alloc();
+		e->e_name = be->be_suffix[0];
+		e->e_nname = be->be_nsuffix[0];
+
+		dnRdn( &e->e_nname, &bv[0] );
+		bv[1].bv_val = strchr(bv[0].bv_val, '=') + 1;
+		bv[1].bv_len = bv[0].bv_len - (bv[1].bv_val -
+			bv[0].bv_val);
+		bv[0].bv_len -= bv[1].bv_len + 1;
+		slap_bv2ad( &bv[0], &ad, &text );
+		attr_merge_one( e, ad, &bv[1], NULL );
+
+		ber_str2bv("extensibleObject", 0, 0, &bv[0]);
+		attr_merge_one( e, slap_schema.si_ad_objectClass, &bv[0], NULL);
+		ni->ni_entry = e;
+	}
+	return 0;
+}
 
 /* LDAP operations */
 
@@ -247,6 +284,21 @@ null_back_false( Operation *op, SlapReply *rs )
 	return null_back_respond( op, rs, LDAP_COMPARE_FALSE );
 }
 
+static int
+null_back_search( Operation *op, SlapReply *rs )
+{
+	struct null_info *ni = (struct null_info *) op->o_bd->be_private;
+
+	if ( ni->ni_entry ) {
+		rs->sr_entry = ni->ni_entry;
+		rs->sr_flags = 0;
+
+		rs->sr_attrs = op->ors_attrs;
+		rs->sr_operational_attrs = NULL;
+		send_search_entry( op, rs );
+	}
+	return null_back_respond( op, rs, LDAP_SUCCESS );
+}
 
 /* for overlays */
 static int
@@ -262,6 +314,15 @@ null_back_entry_get(
 	return oc || at ? LDAP_NO_SUCH_ATTRIBUTE : LDAP_BUSY;
 }
 
+static int
+null_back_entry_release(
+	Operation *op,
+	Entry *e,
+	int rw )
+{
+	/* we reuse our entry, don't free it */
+	return 0;
+}
 
 /* Slap tools */
 
@@ -313,23 +374,6 @@ null_tool_entry_put( BackendDB *be, Entry *e, struct berval *text )
 /* Setup */
 
 static int
-null_cf_gen( ConfigArgs *c )
-{
-	struct null_info *ni = (struct null_info *) c->be->be_private;
-
-	if ( c->op == SLAP_CONFIG_EMIT ) {
-		c->value_int = ni->ni_bind_allowed;
-		return LDAP_SUCCESS;
-	} else if ( c->op == LDAP_MOD_DELETE ) {
-		ni->ni_bind_allowed = 0;
-		return LDAP_SUCCESS;
-	}
-
-	ni->ni_bind_allowed = c->value_int;
-	return LDAP_SUCCESS;
-}
-
-static int
 null_back_db_init( BackendDB *be, ConfigReply *cr )
 {
 	struct null_info *ni = ch_calloc( 1, sizeof(struct null_info) );
@@ -343,6 +387,12 @@ null_back_db_init( BackendDB *be, ConfigReply *cr )
 static int
 null_back_db_destroy( Backend *be, ConfigReply *cr )
 {
+	struct null_info *ni = be->be_private;
+
+	if ( ni->ni_entry ) {
+		entry_free( ni->ni_entry );
+		ni->ni_entry = NULL;
+	}
 	free( be->be_private );
 	return 0;
 }
@@ -381,13 +431,13 @@ null_back_initialize( BackendInfo *bi )
 
 	bi->bi_db_init = null_back_db_init;
 	bi->bi_db_config = config_generic_wrapper;
-	bi->bi_db_open = 0;
+	bi->bi_db_open = null_back_db_open;
 	bi->bi_db_close = 0;
 	bi->bi_db_destroy = null_back_db_destroy;
 
 	bi->bi_op_bind = null_back_bind;
 	bi->bi_op_unbind = 0;
-	bi->bi_op_search = null_back_success;
+	bi->bi_op_search = null_back_search;
 	bi->bi_op_compare = null_back_false;
 	bi->bi_op_modify = null_back_success;
 	bi->bi_op_modrdn = null_back_success;
@@ -403,6 +453,7 @@ null_back_initialize( BackendInfo *bi )
 	bi->bi_connection_destroy = 0;
 
 	bi->bi_entry_get_rw = null_back_entry_get;
+	bi->bi_entry_release_rw = null_back_entry_release;
 
 	bi->bi_tool_entry_open = null_tool_entry_open;
 	bi->bi_tool_entry_close = null_tool_entry_close;

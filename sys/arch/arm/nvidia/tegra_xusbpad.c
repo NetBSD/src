@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusbpad.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_xusbpad.c,v 1.2.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_tegra.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.2.4.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_xusbpad.c,v 1.2 2015/12/13 17:39:19 jmcneill E
 
 #include <dev/fdt/fdtvar.h>
 
+#define TEGRA_FUSE_SKU_CALIB_REG 0xf0
+
 static int	tegra_xusbpad_match(device_t, cfdata_t, void *);
 static void	tegra_xusbpad_attach(device_t, device_t, void *);
 
@@ -50,6 +54,10 @@ struct tegra_xusbpad_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 };
+
+#ifdef TEGRA_XUSBPAD_DEBUG
+static void	padregdump(void);
+#endif
 
 static struct tegra_xusbpad_softc *xusbpad_softc = NULL;
 
@@ -146,4 +154,199 @@ tegra_xusbpad_sata_enable(void)
 	if (retry == 0) {
 		printf("WARNING: SATA PHY power-on failed\n");
 	}
+}
+
+#ifdef TEGRA_XUSBPAD_DEBUG
+static void
+padregdump(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t i;
+	u_int j;
+
+	tegra_xusbpad_get_bs(&bst, &bsh);
+
+	for (i = 0x000; i < 0x160; ) {
+		printf("0x%03jx:", (uintmax_t)i);
+		for (j = 0; i < 0x160 && j < 0x10; j += 4, i += 4) {
+			printf(" %08x", bus_space_read_4(bst, bsh, i));
+		}
+		printf("\n");
+	}
+}
+#endif
+
+void
+tegra_xusbpad_xhci_enable(void)
+{
+	struct tegra_xusbpad_softc * const sc = xusbpad_softc;
+	const uint32_t skucalib = tegra_fuse_read(TEGRA_FUSE_SKU_CALIB_REG);
+#ifdef TEGRA_XUSBPAD_DEBUG
+	uint32_t val;
+#endif
+
+	if (sc == NULL) {
+		aprint_error("%s: xusbpad driver not loaded\n", __func__);
+		return;
+	}
+
+
+#ifdef TEGRA_XUSBPAD_DEBUG
+	padregdump(void);
+	printf("SKU CALIB 0x%x\n", skucalib);
+#endif
+	const uint32_t hcl[3] = {
+		(skucalib >>  0) & 0x3f,
+		(skucalib >> 15) & 0x3f,
+		(skucalib >> 15) & 0x3f,
+	};
+	const uint32_t hic = (skucalib >> 13) & 3;
+	const uint32_t hsl = (skucalib >> 11) & 3;
+	const uint32_t htra = (skucalib >> 7) & 0xf;
+
+
+#ifdef TEGRA_XUSBPAD_DEBUG
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG);
+	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PAD_MUX_REG is 0x%x\n", val);
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PORT_CAP_REG);
+	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PORT_CAP_REG is 0x%x\n", val);
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_SS_PORT_MAP_REG);
+	device_printf(sc->sc_dev, "XUSB_PADCTL_SS_PORT_MAP_REG is 0x%x\n", val);
+#endif
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG, (0<<0)|(0<<2)|(1<<4));
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PORT_CAP_REG, (1<<0)|(1<<4)|(1<<8));
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_SS_PORT_MAP_REG, (2<<0)|(7<<4));
+
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_BIAS_PAD_CTL0_REG,
+	    __SHIFTIN(hsl, XUSB_PADCTL_USB2_BIAS_PAD_CTL0_HS_SQUELCH_LEVEL) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_BIAS_PAD_CTL0_HS_DISCON_LEVEL_VAL,
+		      XUSB_PADCTL_USB2_BIAS_PAD_CTL0_HS_DISCON_LEVEL),
+	    XUSB_PADCTL_USB2_BIAS_PAD_CTL0_HS_SQUELCH_LEVEL |
+	    XUSB_PADCTL_USB2_BIAS_PAD_CTL0_HS_DISCON_LEVEL);
+
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh,
+	    XUSB_PADCTL_USB2_OTG_PAD0_CTL0_REG,
+	    __SHIFTIN(hcl[0],
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_CURR_LEVEL) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW_VAL,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW_VAL(0),
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW),
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_CURR_LEVEL |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD2 |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD_ZI);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh,
+	    XUSB_PADCTL_USB2_OTG_PAD1_CTL0_REG,
+	    __SHIFTIN(hcl[1],
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_CURR_LEVEL) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW_VAL,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW_VAL(1),
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW),
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_CURR_LEVEL |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD2 |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD_ZI);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh,
+	    XUSB_PADCTL_USB2_OTG_PAD2_CTL0_REG,
+	    __SHIFTIN(hcl[2],
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_CURR_LEVEL) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW_VAL,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW) |
+	    __SHIFTIN(XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW_VAL(2),
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW),
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_CURR_LEVEL |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_HS_SLEW |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_LS_RSLEW |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD2 |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD_ZI);
+
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh,
+	    XUSB_PADCTL_USB2_OTG_PAD0_CTL1_REG,
+	    __SHIFTIN(htra,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL1_TERM_RANGE_ADJ) |
+	    __SHIFTIN(hic,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL1_HS_IREF_CAP),
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_TERM_RANGE_ADJ |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_HS_IREF_CAP |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DR |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_CHRP_FORCE_POWERUP |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DISC_FORCE_POWERUP);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh,
+	    XUSB_PADCTL_USB2_OTG_PAD1_CTL1_REG,
+	    __SHIFTIN(htra,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL1_TERM_RANGE_ADJ) |
+	    __SHIFTIN(hic,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL1_HS_IREF_CAP),
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_TERM_RANGE_ADJ |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_HS_IREF_CAP |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DR |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_CHRP_FORCE_POWERUP |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DISC_FORCE_POWERUP);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh,
+	    XUSB_PADCTL_USB2_OTG_PAD2_CTL1_REG,
+	    __SHIFTIN(htra,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL1_TERM_RANGE_ADJ) |
+	    __SHIFTIN(hic,
+		      XUSB_PADCTL_USB2_OTG_PAD_CTL1_HS_IREF_CAP),
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_TERM_RANGE_ADJ |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_HS_IREF_CAP |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DR |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_CHRP_FORCE_POWERUP |
+	    XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DISC_FORCE_POWERUP);
+
+	//tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_BATTERY_CHRG_BIASPAD_REG, 0, 1); /* PD_OTG */
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD0_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD1_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD2_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD0_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD2);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD1_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD2);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD2_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD2);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD0_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD_ZI);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD1_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD_ZI);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD2_CTL0_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL0_PD_ZI);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD0_CTL1_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DR);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD1_CTL1_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DR);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_OTG_PAD2_CTL1_REG, 0, XUSB_PADCTL_USB2_OTG_PAD_CTL1_PD_DR);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_BIAS_PAD_CTL0_REG, 0, XUSB_PADCTL_USB2_BIAS_PAD_CTL0_PD);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_BIAS_PAD_CTL0_REG, 0, XUSB_PADCTL_USB2_BIAS_PAD_CTL0_PD_TRK);
+
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG,
+	    0, XUSB_PADCTL_ELPG_PROGRAM_SSP0_ELPG_CLAMP_EN);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG,
+	    0, XUSB_PADCTL_ELPG_PROGRAM_SSP0_ELPG_CLAMP_EN_EARLY);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG,
+	    0, XUSB_PADCTL_ELPG_PROGRAM_SSP0_ELPG_VCORE_DOWN);
+
+	DELAY(200);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0, __BIT(26));
+	DELAY(200);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0, __BIT(25));
+	DELAY(200);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_ELPG_PROGRAM_REG, 0, __BIT(24));
+	DELAY(200);
+
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, 0, __BITS(22,16));
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(4), 0);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(8), 0);
+	tegra_reg_set_clear(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_OC_DET_REG, __BIT(9), 0);
+
+#ifdef TEGRA_XUSBPAD_DEBUG
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PAD_MUX_REG);
+	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PAD_MUX_REG is 0x%x\n", val);
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_USB2_PORT_CAP_REG);
+	device_printf(sc->sc_dev, "XUSB_PADCTL_USB2_PORT_CAP_REG is 0x%x\n", val);
+	val = bus_space_read_4(sc->sc_bst, sc->sc_bsh, XUSB_PADCTL_SS_PORT_MAP_REG);
+	device_printf(sc->sc_dev, "XUSB_PADCTL_SS_PORT_MAP_REG is 0x%x\n", val);
+
+	padregdump();
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.9 2014/09/17 11:02:55 joerg Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.9.4.1 2017/04/21 16:53:07 bouyer Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.9 2014/09/17 11:02:55 joerg Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.9.4.1 2017/04/21 16:53:07 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -29,7 +29,7 @@ fpsetsticky(fp_except sticky)
 	new = old & ~(0x1f << 2); 
 	new |= (sticky & 0x1f) << 2;
 
-	__asm(".set push; .set noat; ctc1 %0,$31; .set pop" : "=r" (new));
+	__asm(".set push; .set noat; ctc1 %0,$31; .set pop" : : "r" (new));
 
 	return (old >> 2) & 0x1f;
 }

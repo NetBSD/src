@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_misc.c,v 1.1.1.2 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postconf_misc.c,v 1.1.1.2.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -53,7 +53,10 @@ void    pcf_set_config_dir(void)
 
     if (var_config_dir)
 	myfree(var_config_dir);
-    var_config_dir = mystrdup((config_dir = safe_getenv(CONF_ENV_PATH)) != 0 ?
-			      config_dir : DEF_CONFIG_DIR);	/* XXX */
-    set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
+    if ((config_dir = safe_getenv(CONF_ENV_PATH)) != 0) {
+	var_config_dir = mystrdup(config_dir);
+	set_mail_conf_str(VAR_CONFIG_DIR, var_config_dir);
+    } else {
+	var_config_dir = mystrdup(DEF_CONFIG_DIR);
+    }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: single_server.c,v 1.1.1.5 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: single_server.c,v 1.1.1.5.12.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -38,63 +38,63 @@
 /*	The argv argument specifies command-line arguments left over
 /*	after options processing.
 /* .PP
-/*	Optional arguments are specified as a null-terminated (key, value)
-/*	list. Keys and expected values are:
-/* .IP "MAIL_SERVER_INT_TABLE (CONFIG_INT_TABLE *)"
+/*	Optional arguments are specified as a null-terminated list
+/*	with macros that have zero or more arguments:
+/* .IP "CA_MAIL_SERVER_INT_TABLE(CONFIG_INT_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_LONG_TABLE (CONFIG_LONG_TABLE *)"
+/* .IP "CA_MAIL_SERVER_LONG_TABLE(CONFIG_LONG_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_STR_TABLE (CONFIG_STR_TABLE *)"
+/* .IP "CA_MAIL_SERVER_STR_TABLE(CONFIG_STR_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_BOOL_TABLE (CONFIG_BOOL_TABLE *)"
+/* .IP "CA_MAIL_SERVER_BOOL_TABLE(CONFIG_BOOL_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_TIME_TABLE (CONFIG_TIME_TABLE *)"
+/* .IP "CA_MAIL_SERVER_TIME_TABLE(CONFIG_TIME_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_RAW_TABLE (CONFIG_RAW_TABLE *)"
+/* .IP "CA_MAIL_SERVER_RAW_TABLE(CONFIG_RAW_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed. Raw parameters are not subjected to $name
 /*	evaluation.
-/* .IP "MAIL_SERVER_NINT_TABLE (CONFIG_NINT_TABLE *)"
+/* .IP "CA_MAIL_SERVER_NINT_TABLE(CONFIG_NINT_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_NBOOL_TABLE (CONFIG_NBOOL_TABLE *)"
+/* .IP "CA_MAIL_SERVER_NBOOL_TABLE(CONFIG_NBOOL_TABLE *)"
 /*	A table with configurable parameters, to be loaded from the
 /*	global Postfix configuration file. Tables are loaded in the
 /*	order as specified, and multiple instances of the same type
 /*	are allowed.
-/* .IP "MAIL_SERVER_PRE_INIT (void *(char *service_name, char **argv))"
+/* .IP "CA_MAIL_SERVER_PRE_INIT(void *(char *service_name, char **argv))"
 /*	A pointer to a function that is called once
 /*	by the skeleton after it has read the global configuration file
 /*	and after it has processed command-line arguments, but before
 /*	the skeleton has optionally relinquished the process privileges.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
-/* .IP "MAIL_SERVER_POST_INIT (void *(char *service_name, char **argv))"
+/* .IP "CA_MAIL_SERVER_POST_INIT(void *(char *service_name, char **argv))"
 /*	A pointer to a function that is called once
 /*	by the skeleton after it has optionally relinquished the process
 /*	privileges, but before servicing client connection requests.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
-/* .IP "MAIL_SERVER_LOOP (int *(char *service_name, char **argv))"
+/* .IP "CA_MAIL_SERVER_LOOP(int *(char *service_name, char **argv))"
 /*	A pointer to function that is executed from
 /*	within the event loop, whenever an I/O or timer event has happened,
 /*	or whenever nothing has happened for a specified amount of time.
@@ -102,24 +102,27 @@
 /*	the next event. Specify -1 to wait for "as long as it takes".
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
-/* .IP "MAIL_SERVER_EXIT (void *(void))"
+/* .IP "CA_MAIL_SERVER_EXIT(void *(void))"
 /*	A pointer to function that is executed immediately before normal
 /*	process termination.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
-/* .IP "MAIL_SERVER_PRE_ACCEPT (void *(char *service_name, char **argv))"
+/* .IP "CA_MAIL_SERVER_PRE_ACCEPT(void *(char *service_name, char **argv))"
 /*	Function to be executed prior to accepting a new connection.
 /* .sp
 /*	Only the last instance of this parameter type is remembered.
-/* .IP "MAIL_SERVER_IN_FLOW_DELAY (none)"
+/* .IP "CA_MAIL_SERVER_IN_FLOW_DELAY(none)"
 /*	Pause $in_flow_delay seconds when no "mail flow control token"
 /*	is available. A token is consumed for each connection request.
-/* .IP MAIL_SERVER_SOLITARY
+/* .IP CA_MAIL_SERVER_SOLITARY
 /*	This service must be configured with process limit of 1.
-/* .IP MAIL_SERVER_UNLIMITED
+/* .IP CA_MAIL_SERVER_UNLIMITED
 /*	This service must be configured with process limit of 0.
-/* .IP MAIL_SERVER_PRIVILEGED
+/* .IP CA_MAIL_SERVER_PRIVILEGED
 /*	This service must be configured as privileged.
+/* .IP "CA_MAIL_SERVER_BOUNCE_INIT(const char *, const char **)"
+/*	Initialize the DSN filter for the bounce/defer service
+/*	clients with the specified map source and map names.
 /* .PP
 /*	The var_use_limit variable limits the number of clients that
 /*	a server can service before it commits suicide.
@@ -196,6 +199,7 @@
 #include <resolve_local.h>
 #include <mail_flow.h>
 #include <mail_version.h>
+#include <bounce.h>
 
 /* Process manager. */
 
@@ -213,7 +217,7 @@ static int use_count;
 static void (*single_server_service) (VSTREAM *, char *, char **);
 static char *single_server_name;
 static char **single_server_argv;
-static void (*single_server_accept) (int, char *);
+static void (*single_server_accept) (int, void *);
 static void (*single_server_onexit) (char *, char **);
 static void (*single_server_pre_accept) (char *, char **);
 static VSTREAM *single_server_lock;
@@ -231,7 +235,7 @@ static NORETURN single_server_exit(void)
 
 /* single_server_abort - terminate after abnormal master exit */
 
-static void single_server_abort(int unused_event, char *unused_context)
+static void single_server_abort(int unused_event, void *unused_context)
 {
     if (msg_verbose)
 	msg_info("master disconnect -- exiting");
@@ -240,7 +244,7 @@ static void single_server_abort(int unused_event, char *unused_context)
 
 /* single_server_timeout - idle time exceeded */
 
-static void single_server_timeout(int unused_event, char *unused_context)
+static void single_server_timeout(int unused_event, void *unused_context)
 {
     if (msg_verbose)
 	msg_info("idle timeout -- exiting");
@@ -268,9 +272,9 @@ static void single_server_wakeup(int fd, HTABLE *attr)
     stream = vstream_fdopen(fd, O_RDWR);
     tmp = concatenate(single_server_name, " socket", (char *) 0);
     vstream_control(stream,
-		    VSTREAM_CTL_PATH, tmp,
-		    VSTREAM_CTL_CONTEXT, (char *) attr,
-		    VSTREAM_CTL_END);
+		    CA_VSTREAM_CTL_PATH(tmp),
+		    CA_VSTREAM_CTL_CONTEXT((void *) attr),
+		    CA_VSTREAM_CTL_END);
     myfree(tmp);
     timed_ipc_setup(stream);
     if (master_notify(var_pid, single_server_generation, MASTER_STAT_TAKEN) < 0)
@@ -287,16 +291,16 @@ static void single_server_wakeup(int fd, HTABLE *attr)
     if (use_count < INT_MAX)
 	use_count++;
     if (var_idle_limit > 0)
-	event_request_timer(single_server_timeout, (char *) 0, var_idle_limit);
+	event_request_timer(single_server_timeout, (void *) 0, var_idle_limit);
     if (attr)
 	htable_free(attr, myfree);
 }
 
 /* single_server_accept_local - accept client connection request */
 
-static void single_server_accept_local(int unused_event, char *context)
+static void single_server_accept_local(int unused_event, void *context)
 {
-    int     listen_fd = CAST_CHAR_PTR_TO_INT(context);
+    int     listen_fd = CAST_ANY_PTR_TO_INT(context);
     int     time_left = -1;
     int     fd;
 
@@ -307,7 +311,7 @@ static void single_server_accept_local(int unused_event, char *context)
      * master process has gone away unexpectedly.
      */
     if (var_idle_limit > 0)
-	time_left = event_cancel_timer(single_server_timeout, (char *) 0);
+	time_left = event_cancel_timer(single_server_timeout, (void *) 0);
 
     if (single_server_pre_accept)
 	single_server_pre_accept(single_server_name, single_server_argv);
@@ -320,7 +324,7 @@ static void single_server_accept_local(int unused_event, char *context)
 	if (errno != EAGAIN)
 	    msg_error("accept connection: %m");
 	if (time_left >= 0)
-	    event_request_timer(single_server_timeout, (char *) 0, time_left);
+	    event_request_timer(single_server_timeout, (void *) 0, time_left);
 	return;
     }
     single_server_wakeup(fd, (HTABLE *) 0);
@@ -330,9 +334,9 @@ static void single_server_accept_local(int unused_event, char *context)
 
 /* single_server_accept_pass - accept descriptor */
 
-static void single_server_accept_pass(int unused_event, char *context)
+static void single_server_accept_pass(int unused_event, void *context)
 {
-    int     listen_fd = CAST_CHAR_PTR_TO_INT(context);
+    int     listen_fd = CAST_ANY_PTR_TO_INT(context);
     int     time_left = -1;
     int     fd;
     HTABLE *attr = 0;
@@ -344,7 +348,7 @@ static void single_server_accept_pass(int unused_event, char *context)
      * master process has gone away unexpectedly.
      */
     if (var_idle_limit > 0)
-	time_left = event_cancel_timer(single_server_timeout, (char *) 0);
+	time_left = event_cancel_timer(single_server_timeout, (void *) 0);
 
     if (single_server_pre_accept)
 	single_server_pre_accept(single_server_name, single_server_argv);
@@ -357,7 +361,7 @@ static void single_server_accept_pass(int unused_event, char *context)
 	if (errno != EAGAIN)
 	    msg_error("accept connection: %m");
 	if (time_left >= 0)
-	    event_request_timer(single_server_timeout, (char *) 0, time_left);
+	    event_request_timer(single_server_timeout, (void *) 0, time_left);
 	return;
     }
     single_server_wakeup(fd, attr);
@@ -367,9 +371,9 @@ static void single_server_accept_pass(int unused_event, char *context)
 
 /* single_server_accept_inet - accept client connection request */
 
-static void single_server_accept_inet(int unused_event, char *context)
+static void single_server_accept_inet(int unused_event, void *context)
 {
-    int     listen_fd = CAST_CHAR_PTR_TO_INT(context);
+    int     listen_fd = CAST_ANY_PTR_TO_INT(context);
     int     time_left = -1;
     int     fd;
 
@@ -380,7 +384,7 @@ static void single_server_accept_inet(int unused_event, char *context)
      * master process has gone away unexpectedly.
      */
     if (var_idle_limit > 0)
-	time_left = event_cancel_timer(single_server_timeout, (char *) 0);
+	time_left = event_cancel_timer(single_server_timeout, (void *) 0);
 
     if (single_server_pre_accept)
 	single_server_pre_accept(single_server_name, single_server_argv);
@@ -393,7 +397,7 @@ static void single_server_accept_inet(int unused_event, char *context)
 	if (errno != EAGAIN)
 	    msg_error("accept connection: %m");
 	if (time_left >= 0)
-	    event_request_timer(single_server_timeout, (char *) 0, time_left);
+	    event_request_timer(single_server_timeout, (void *) 0, time_left);
 	return;
     }
     single_server_wakeup(fd, (HTABLE *) 0);
@@ -432,6 +436,8 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     char   *generation;
     int     msg_vstream_needed = 0;
     int     redo_syslog_init = 0;
+    const char *dsn_filter_title;
+    const char **dsn_filter_maps;
 
     /*
      * Process environment options as early as we can.
@@ -477,11 +483,6 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      * override compiled-in defaults or configured parameter values.
      */
     mail_conf_suck();
-
-    /*
-     * Register dictionaries that use higher-level interfaces and protocols.
-     */
-    mail_dict_init();
 
     /*
      * After database open error, continue execution with reduced
@@ -563,6 +564,12 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
 
     /*
+     * Register higher-level dictionaries and initialize the support for
+     * dynamically-loaded dictionarles.
+     */
+    mail_dict_init();
+
+    /*
      * If not connected to stdin, stdin must not be a terminal.
      */
     if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
@@ -633,6 +640,11 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 		msg_fatal("service %s requires privileged operation",
 			  service_name);
 	    break;
+	case MAIL_SERVER_BOUNCE_INIT:
+	    dsn_filter_title = va_arg(ap, const char *);
+	    dsn_filter_maps = va_arg(ap, const char **);
+	    bounce_client_init(dsn_filter_title, *dsn_filter_maps);
+	    break;
 	default:
 	    msg_panic("%s: unknown argument type: %d", myname, key);
 	}
@@ -688,7 +700,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      */
     if (stream == 0 && !alone) {
 	lock_path = concatenate(DEF_PID_DIR, "/", transport,
-				".", service_name, (char *) 0);
+				".", service_name, (void *) 0);
 	why = vstring_alloc(1);
 	if ((single_server_lock = safe_open(lock_path, O_CREAT | O_RDWR, 0600,
 				      (struct stat *) 0, -1, -1, why)) == 0)
@@ -733,9 +745,9 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      */
     if (stream != 0) {
 	vstream_control(stream,
-			VSTREAM_CTL_DOUBLE,
-			VSTREAM_CTL_WRITE_FD, STDOUT_FILENO,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_DOUBLE,
+			CA_VSTREAM_CTL_WRITE_FD(STDOUT_FILENO),
+			CA_VSTREAM_CTL_END);
 	service(stream, single_server_name, single_server_argv);
 	vstream_fflush(stream);
 	single_server_exit();
@@ -748,16 +760,16 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
      * when the master process terminated abnormally.
      */
     if (var_idle_limit > 0)
-	event_request_timer(single_server_timeout, (char *) 0, var_idle_limit);
+	event_request_timer(single_server_timeout, (void *) 0, var_idle_limit);
     for (fd = MASTER_LISTEN_FD; fd < MASTER_LISTEN_FD + socket_count; fd++) {
-	event_enable_read(fd, single_server_accept, CAST_INT_TO_CHAR_PTR(fd));
+	event_enable_read(fd, single_server_accept, CAST_INT_TO_VOID_PTR(fd));
 	close_on_exec(fd, CLOSE_ON_EXEC);
     }
-    event_enable_read(MASTER_STATUS_FD, single_server_abort, (char *) 0);
+    event_enable_read(MASTER_STATUS_FD, single_server_abort, (void *) 0);
     close_on_exec(MASTER_STATUS_FD, CLOSE_ON_EXEC);
     close_on_exec(MASTER_FLOW_READ, CLOSE_ON_EXEC);
     close_on_exec(MASTER_FLOW_WRITE, CLOSE_ON_EXEC);
-    watchdog = watchdog_create(var_daemon_timeout, (WATCHDOG_FN) 0, (char *) 0);
+    watchdog = watchdog_create(var_daemon_timeout, (WATCHDOG_FN) 0, (void *) 0);
 
     /*
      * The event loop, at last.

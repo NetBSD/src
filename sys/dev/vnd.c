@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.258 2016/08/05 08:21:24 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.258.2.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.258 2016/08/05 08:21:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.258.2.1 2017/04/21 16:53:44 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -2071,8 +2071,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	        if (error) {
 			config_cfdriver_detach(&vnd_cd);
+#ifdef DIAGNOSTIC
 			aprint_error("%s: unable to register cfattach for \n"
 			    "%s, error %d", __func__, vnd_cd.cd_name, error);
+#endif
 			break;
 		}
 
@@ -2087,8 +2089,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
 			config_cfdriver_detach(&vnd_cd);
+#ifdef DIAGNOSTIC
                         aprint_error("%s: unable to attach %s devsw, "
                             "error %d", __func__, vnd_cd.cd_name, error);
+#endif
 			break;
 		}
 #endif
@@ -2108,8 +2112,10 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                 if (error) { 
                         (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
                             &vnd_cdevsw, &vnd_cmajor);
+#ifdef DIAGNOSTIC
                         aprint_error("%s: failed to detach %s cfattach, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
+#endif
                         break;
                 }
                 error = config_cfdriver_detach(&vnd_cd);
@@ -2117,9 +2123,11 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                         (void)config_cfattach_attach(vnd_cd.cd_name, &vnd_ca); 
                         (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
                             &vnd_cdevsw, &vnd_cmajor);
+#ifdef DIAGNOSTIC
                         aprint_error("%s: failed to detach %s cfdriver, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
                         break;
+#endif
                 }
 #endif
 		break;

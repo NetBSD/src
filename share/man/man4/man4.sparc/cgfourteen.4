@@ -1,4 +1,4 @@
-.\"	$NetBSD: cgfourteen.4,v 1.9 2016/06/09 15:00:26 abhinav Exp $
+.\"	$NetBSD: cgfourteen.4,v 1.9.4.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The President and Fellows of Harvard College.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Based on tcx.4,
 .\"	NetBSD: tcx.4,v 1.2 1996/06/21 22:35:06 pk Exp
 .\"
-.Dd June 10, 2016
+.Dd February 17, 2017
 .Dt CGFOURTEEN 4 sparc
 .Os
 .Sh NAME
@@ -63,17 +63,17 @@ driver supports the minimal ioctl's needed to run
 .Xr Xorg 1 .
 .Pp
 The driver operates by default in
-.Xr cgthree 4
+.Xr sparc/cgthree 4
 emulation mode, i.e.
 in 8-bit unaccelerated mode.
 This emulation does include support for the hardware cursor present on the
 .Nm cgfourteen ,
 however.
 .Sh SEE ALSO
-.Xr bwtwo 4 ,
-.Xr cgeight 4 ,
-.Xr cgfour 4 ,
-.Xr cgsix 4 ,
-.Xr cgthree 4 ,
-.Xr cgtwo 4 ,
-.Xr tcx 4
+.Xr sparc/bwtwo 4 ,
+.Xr sparc/cgeight 4 ,
+.Xr sparc/cgfour 4 ,
+.Xr sparc/cgsix 4 ,
+.Xr sparc/cgthree 4 ,
+.Xr sparc/cgtwo 4 ,
+.Xr sparc/tcx 4

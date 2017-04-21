@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_local.c,v 1.3 2010/06/17 18:18:16 tron Exp $	*/
+/*	$NetBSD: inet_addr_local.c,v 1.3.32.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -118,6 +118,8 @@
   * -- Dean Strik (dcs)
   */
 
+#ifndef HAVE_GETIFADDRS
+
 /* ial_socket - make socket for ioctl() operations */
 
 static int ial_socket(int af)
@@ -146,6 +148,8 @@ static int ial_socket(int af)
     }
     return (sock);
 }
+
+#endif
 
 #ifdef HAVE_GETIFADDRS
 
@@ -231,9 +235,7 @@ static int ial_getifaddrs(INET_ADDR_LIST *addr_list,
     return (0);
 }
 
-#endif					/* HAVE_GETIFADDRS */
-
-#ifdef HAS_SIOCGLIF
+#elif defined(HAS_SIOCGLIF)		/* HAVE_GETIFADDRS */
 
 /*
  * The SIOCLIF* ioctls are the successors of SIOCGIF* on the Solaris
@@ -284,7 +286,7 @@ static int ial_siocglif(INET_ADDR_LIST *addr_list,
 
     the_end = (struct lifreq *) (lifc.lifc_buf + lifc.lifc_len);
     for (lifr = lifc.lifc_req; lifr < the_end;) {
-	sa = (struct sockaddr *) & lifr->lifr_addr;
+	sa = (struct sockaddr *) &lifr->lifr_addr;
 	if (sa->sa_family != af) {
 	    lifr = NEXT_INTERFACE(lifr);
 	    continue;
@@ -306,13 +308,13 @@ static int ial_siocglif(INET_ADDR_LIST *addr_list,
 	inet_addr_list_append(addr_list, sa);
 	if (mask_list) {
 	    lifr_mask = (struct lifreq *) mymalloc(sizeof(struct lifreq));
-	    memcpy((char *) lifr_mask, (char *) lifr, sizeof(struct lifreq));
+	    memcpy((void *) lifr_mask, (void *) lifr, sizeof(struct lifreq));
 	    if (ioctl(sock, SIOCGLIFNETMASK, lifr_mask) < 0)
 		msg_fatal("%s: ioctl(SIOCGLIFNETMASK): %m", myname);
 	    /* XXX: Check whether sa_len/family are honoured --dcs */
 	    inet_addr_list_append(mask_list,
-				(struct sockaddr *) & lifr_mask->lifr_addr);
-	    myfree((char *) lifr_mask);
+				  (struct sockaddr *) &lifr_mask->lifr_addr);
+	    myfree((void *) lifr_mask);
 	}
 	lifr = NEXT_INTERFACE(lifr);
     }
@@ -398,7 +400,7 @@ static int ial_siocgif(INET_ADDR_LIST *addr_list,
 		inet_addr_list_append(addr_list, &ifr->ifr_addr);
 		if (mask_list) {
 		    ifr_mask = (struct ifreq *) mymalloc(IFREQ_SIZE(ifr));
-		    memcpy((char *) ifr_mask, (char *) ifr, IFREQ_SIZE(ifr));
+		    memcpy((void *) ifr_mask, (void *) ifr, IFREQ_SIZE(ifr));
 		    if (ioctl(sock, SIOCGIFNETMASK, ifr_mask) < 0)
 			msg_fatal("%s: ioctl SIOCGIFNETMASK: %m", myname);
 
@@ -412,7 +414,7 @@ static int ial_siocgif(INET_ADDR_LIST *addr_list,
 		    ifr_mask->ifr_addr.sa_len = sizeof(struct sockaddr_in);
 #endif
 		    inet_addr_list_append(mask_list, &ifr_mask->ifr_addr);
-		    myfree((char *) ifr_mask);
+		    myfree((void *) ifr_mask);
 		}
 	    }
 	}
@@ -428,7 +430,7 @@ static int ial_siocgif(INET_ADDR_LIST *addr_list,
 		    struct sockaddr_in6 mask6;
 
 		    mask6 = *SOCK_ADDR_IN6_PTR(sa);
-		    memset((char *) &mask6.sin6_addr, ~0,
+		    memset((void *) &mask6.sin6_addr, ~0,
 			   sizeof(mask6.sin6_addr));
 		    inet_addr_list_append(mask_list, SOCK_ADDR_PTR(&mask6));
 		}
@@ -478,7 +480,7 @@ static int ial_procnet_ifinet6(INET_ADDR_LIST *addr_list,
      */
     if ((fp = fopen(_PATH_PROCNET_IFINET6, "r")) != 0) {
 	addrbuf = vstring_alloc(MAI_V6ADDR_BYTES + 1);
-	memset((char *) &addr, 0, sizeof(addr));
+	memset((void *) &addr, 0, sizeof(addr));
 	addr.sin6_family = AF_INET6;
 #ifdef HAS_SA_LEN
 	addr.sin6_len = sizeof(addr);
@@ -497,7 +499,7 @@ static int ial_procnet_ifinet6(INET_ADDR_LIST *addr_list,
 	    addr.sin6_addr = *(struct in6_addr *) vstring_str(addrbuf);
 	    inet_addr_list_append(addr_list, SOCK_ADDR_PTR(&addr));
 
-	    memset((char *) &mask.sin6_addr, ~0, sizeof(mask.sin6_addr));
+	    memset((void *) &mask.sin6_addr, ~0, sizeof(mask.sin6_addr));
 	    mask_addr((unsigned char *) &mask.sin6_addr,
 		      sizeof(mask.sin6_addr), plen);
 	    inet_addr_list_append(mask_list, SOCK_ADDR_PTR(&mask));

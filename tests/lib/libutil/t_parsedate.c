@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.25 2016/06/22 15:01:38 kre Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.25.4.1 2017/04/21 16:54:12 bouyer Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.25 2016/06/22 15:01:38 kre Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.25.4.1 2017/04/21 16:54:12 bouyer Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -84,6 +84,9 @@ parsecheck(const char *datestr, const time_t *reftime, const int *zoff,
 
 	ATF_CHECK_MSG((t = parsedate(datestr, reftime, zoff)) != -1,
 	    "parsedate(%s) returned -1\n", argstr);
+	if (t == -1)
+		return;
+
 	ATF_CHECK(time_to_tm(&t, &tm) != NULL);
 	if (year != ANY)
 		ATF_CHECK_MSG(tm.tm_year + 1900 == year,
@@ -180,6 +183,51 @@ ATF_TC_BODY(times, tc)
 		ANY, ANY, ANY, 0, 0, 0);
 	parsecheck("noon", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 12, 0, 0);
+
+	/*
+	 * The following tests used to trigger the bug from PR lib/52101
+	 * but that is fixed now.
+	 *
+	atf_tc_expect_fail("PR lib/52101");
+	 */
+
+	parsecheck("12:30 am", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 30, 0);
+	parsecheck("12:30 pm", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 30, 0);
+
+	/*
+	 * Technically, these are invalid, noon and midnight
+	 * are neither am, nor pm, but this is what people expect...
+	 */
+	parsecheck("12:00:00 am", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("12:00:00 pm", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12am", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("12pm", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+
+	/* end 52101 bug tests */
+
+	parsecheck("12 noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12 midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("12 midday", NULL, NULL, localtime_r,	/* unlikely! */
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12 mn", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+
+	parsecheck("12:00 noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12:00 midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("12:00:00 noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("12:00:00 midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
 }
 
 ATF_TC(dsttimes);

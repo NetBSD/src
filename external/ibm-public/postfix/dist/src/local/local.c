@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.1.1.4 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: local.c,v 1.1.1.4.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -387,6 +387,12 @@
 /*	Reset the \fBlocal\fR(8) delivery agent's idea of the owner-alias
 /*	attribute, when delivering mail to a child alias that does not have
 /*	its own owner alias.
+/* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBlocal_delivery_status_filter ($default_delivery_status_filter)\fR"
+/*	Optional filter for the \fBlocal\fR(8) delivery agent to change the
+/*	status code or explanatory text of successful or unsuccessful
+/*	deliveries.
 /* DELIVERY METHOD CONTROLS
 /* .ad
 /* .fi
@@ -575,6 +581,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -665,6 +676,7 @@ int     local_ext_prop_mask;
 int     local_deliver_hdr_mask;
 int     local_mbox_lock_mask;
 MAPS   *alias_maps;
+char   *var_local_dsn_filter;
 
 /* local_deliver - deliver message with extreme prejudice */
 
@@ -702,6 +714,7 @@ static int local_deliver(DELIVER_REQUEST *rqst, char *service)
     state.msg_attr.fp = rqst->fp;
     state.msg_attr.offset = rqst->data_offset;
     state.msg_attr.encoding = rqst->encoding;
+    state.msg_attr.smtputf8 = rqst->smtputf8;
     state.msg_attr.sender = rqst->sender;
     state.msg_attr.dsn_envid = rqst->dsn_envid;
     state.msg_attr.dsn_ret = rqst->dsn_ret;
@@ -859,7 +872,8 @@ static void pre_init(char *unused_name, char **unused_argv)
     }
     alias_maps = maps_create("aliases", var_alias_maps,
 			     DICT_FLAG_LOCK | DICT_FLAG_PARANOID
-			     | DICT_FLAG_FOLD_FIX);
+			     | DICT_FLAG_FOLD_FIX
+			     | DICT_FLAG_UTF8_REQUEST);
 
     flush_init();
 }
@@ -900,6 +914,7 @@ int     main(int argc, char **argv)
 	VAR_DELIVER_HDR, DEF_DELIVER_HDR, &var_deliver_hdr, 0, 0,
 	VAR_MAILBOX_LOCK, DEF_MAILBOX_LOCK, &var_mailbox_lock, 1, 0,
 	VAR_MAILBOX_CMD_MAPS, DEF_MAILBOX_CMD_MAPS, &var_mailbox_cmd_maps, 0, 0,
+	VAR_LOCAL_DSN_FILTER, DEF_LOCAL_DSN_FILTER, &var_local_dsn_filter, 0, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE bool_table[] = {
@@ -928,15 +943,17 @@ int     main(int argc, char **argv)
     MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, local_service,
-		       MAIL_SERVER_INT_TABLE, int_table,
-		       MAIL_SERVER_LONG_TABLE, long_table,
-		       MAIL_SERVER_STR_TABLE, str_table,
-		       MAIL_SERVER_RAW_TABLE, raw_table,
-		       MAIL_SERVER_BOOL_TABLE, bool_table,
-		       MAIL_SERVER_TIME_TABLE, time_table,
-		       MAIL_SERVER_PRE_INIT, pre_init,
-		       MAIL_SERVER_POST_INIT, post_init,
-		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
-		       MAIL_SERVER_PRIVILEGED,
+		       CA_MAIL_SERVER_INT_TABLE(int_table),
+		       CA_MAIL_SERVER_LONG_TABLE(long_table),
+		       CA_MAIL_SERVER_STR_TABLE(str_table),
+		       CA_MAIL_SERVER_RAW_TABLE(raw_table),
+		       CA_MAIL_SERVER_BOOL_TABLE(bool_table),
+		       CA_MAIL_SERVER_TIME_TABLE(time_table),
+		       CA_MAIL_SERVER_PRE_INIT(pre_init),
+		       CA_MAIL_SERVER_POST_INIT(post_init),
+		       CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
+		       CA_MAIL_SERVER_PRIVILEGED,
+		       CA_MAIL_SERVER_BOUNCE_INIT(VAR_LOCAL_DSN_FILTER,
+						  &var_local_dsn_filter),
 		       0);
 }

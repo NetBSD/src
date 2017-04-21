@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.165 2016/12/27 13:49:58 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.165.2.1 2017/04/21 16:54:05 bouyer Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.165 2016/12/27 13:49:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.165.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -716,6 +716,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 #endif
 	int s, error = 0;
 	uint16_t protocol;
+	size_t pktlen;
 
 	s = splnet();
 
@@ -902,11 +903,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		h->protocol = protocol;
 	}
 
-
+	pktlen = m->m_pkthdr.len;
 #ifdef SPPPSUBR_MPSAFE
 	error = if_transmit_lock(ifp, m);
 	if (error == 0)
-		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+		ifp->if_obytes += pktlen + sp->pp_framebytes;
 #else /* !SPPPSUBR_MPSAFE */
 	error = ifq_enqueue2(ifp, ifq, m);
 
@@ -921,7 +922,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if_start_lock(ifp);
 			sppp_lock_enter(sp);
 		}
-		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+		ifp->if_obytes += pktlen + sp->pp_framebytes;
 	}
 #endif /* !SPPPSUBR_MPSAFE */
 	sppp_lock_exit(sp);
@@ -1382,14 +1383,16 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 		m_freem(m);
 		++ifp->if_oerrors;
 		return;
-	} else
-		IF_ENQUEUE(&sp->pp_cpq, m);
+	}
+
+	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+	IF_ENQUEUE(&sp->pp_cpq, m);
+
 	if (! (ifp->if_flags & IFF_OACTIVE)) {
 		sppp_lock_exit(sp);
 		if_start_lock(ifp);
 		sppp_lock_enter(sp);
 	}
-	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*
@@ -1452,16 +1455,16 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		m_freem(m);
 		++ifp->if_oerrors;
 		return;
-	} else
-		IF_ENQUEUE(&sp->pp_cpq, m);
+	}
+
+	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+	IF_ENQUEUE(&sp->pp_cpq, m);
 
 	if (! (ifp->if_flags & IFF_OACTIVE)) {
 		sppp_lock_exit(sp);
 		if_start_lock(ifp);
 		sppp_lock_enter(sp);
 	}
-
-	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*
@@ -3584,6 +3587,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	int ifidcount;
 	int type;
 	int collision, nohisaddr;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	KASSERT(sppp_locked(sp));
 
@@ -3690,7 +3694,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 
 				if (debug) {
 					addlog(" %s [%s]",
-					    ip6_sprintf(&desiredaddr),
+					    IN6_PRINT(ip6buf, &desiredaddr),
 					    sppp_cp_type_name(type));
 				}
 				continue;
@@ -3712,7 +3716,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				memcpy(&p[2], &suggestaddr.s6_addr[8], 8);
 			}
 			if (debug)
-				addlog(" %s [%s]", ip6_sprintf(&desiredaddr),
+				addlog(" %s [%s]", IN6_PRINT(ip6buf, &desiredaddr),
 				    sppp_cp_type_name(type));
 			break;
 		}
@@ -3739,7 +3743,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 
 		if (debug) {
 			addlog(" send %s suggest %s\n",
-			    sppp_cp_type_name(type), ip6_sprintf(&suggestaddr));
+			    sppp_cp_type_name(type), IN6_PRINT(ip6buf, &suggestaddr));
 		}
 		sppp_cp_send(sp, PPP_IPV6CP, type, h->ident, rlen, buf);
 	}
@@ -3818,6 +3822,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	struct in6_addr suggestaddr;
+	char ip6buf[INET6_ADDRSTRLEN];
 
 	KASSERT(sppp_locked(sp));
 
@@ -3857,7 +3862,7 @@ sppp_ipv6cp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			sp->ipv6cp.opts |= (1 << IPV6CP_OPT_IFID);
 			if (debug)
 				addlog(" [suggestaddr %s]",
-				       ip6_sprintf(&suggestaddr));
+				       IN6_PRINT(ip6buf, &suggestaddr));
 #ifdef IPV6CP_MYIFID_DYN
 			/*
 			 * When doing dynamic address assignment,
@@ -5071,14 +5076,16 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		m_freem(m);
 		++ifp->if_oerrors;
 		return;
-	} else
-		IF_ENQUEUE(&sp->pp_cpq, m);
+	}
+
+	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+	IF_ENQUEUE(&sp->pp_cpq, m);
+
 	if (! (ifp->if_flags & IFF_OACTIVE)) {
 		sppp_lock_exit(sp);
 		if_start_lock(ifp);
 		sppp_lock_enter(sp);
 	}
-	ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
 /*

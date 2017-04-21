@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-genr.c,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: gss-genr.c,v 1.8.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: gss-genr.c,v 1.24 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*

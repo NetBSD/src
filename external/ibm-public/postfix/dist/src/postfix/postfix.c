@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.1.1.4 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postfix.c,v 1.1.1.4.10.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -56,7 +56,7 @@
 /*	earliest convenience.
 /* .IP \fBstatus\fR
 /*	Indicate if the Postfix mail system is currently running.
-/* .IP "\fBset-permissions\fR \fB[\fIname\fR=\fIvalue ...\fB]\fR
+/* .IP "\fBset-permissions\fR [\fIname\fR=\fIvalue ...\fR]"
 /*	Set the ownership and permissions of Postfix related files and
 /*	directories, as specified in the \fBpostfix-files\fR file.
 /* .sp
@@ -68,7 +68,13 @@
 /*	This feature is available in Postfix 2.1 and later.  With
 /*	Postfix 2.0 and earlier, use "\fB$config_directory/post-install
 /*	set-permissions\fR".
-/* .IP "\fBupgrade-configuration\fR \fB[\fIname\fR=\fIvalue ...\fB]\fR
+/* .IP "\fBtls\fR \fIsubcommand\fR"
+/*	Enable opportunistic TLS in the Postfix SMTP client or
+/*	server, and manage Postfix SMTP server TLS private keys and
+/*	certificates.  See postfix-tls(1) for documentation.
+/* .sp
+/*	This feature is available in Postfix 3.1 and later.
+/* .IP "\fBupgrade-configuration\fR [\fIname\fR=\fIvalue ...\fR]"
 /*	Update the \fBmain.cf\fR and \fBmaster.cf\fR files with information
 /*	that Postfix needs in order to run: add or update services, and add
 /*	or update configuration parameter settings.
@@ -118,48 +124,60 @@
 /* .fi
 /*	The following \fBmain.cf\fR configuration parameters are
 /*	exported as environment variables with the same names:
+/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+/*	The default location of the Postfix main.cf and master.cf
+/*	configuration files.
 /* .IP "\fBcommand_directory (see 'postconf -d' output)\fR"
 /*	The location of all postfix administrative commands.
 /* .IP "\fBdaemon_directory (see 'postconf -d' output)\fR"
 /*	The directory with Postfix support programs and daemon programs.
-/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
-/*	The default location of the Postfix main.cf and master.cf
-/*	configuration files.
-/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-/*	The location of the Postfix top-level queue directory.
-/* .IP "\fBmail_owner (postfix)\fR"
-/*	The UNIX system account that owns the Postfix queue and most Postfix
-/*	daemon processes.
-/* .IP "\fBsetgid_group (postdrop)\fR"
-/*	The group ownership of set-gid Postfix commands and of group-writable
-/*	Postfix directories.
-/* .IP "\fBsendmail_path (see 'postconf -d' output)\fR"
-/*	A Sendmail compatibility feature that specifies the location of
-/*	the Postfix \fBsendmail\fR(1) command.
-/* .IP "\fBnewaliases_path (see 'postconf -d' output)\fR"
-/*	Sendmail compatibility feature that specifies the location of the
-/*	\fBnewaliases\fR(1) command.
-/* .IP "\fBmailq_path (see 'postconf -d' output)\fR"
-/*	Sendmail compatibility feature that specifies where the Postfix
-/*	\fBmailq\fR(1) command is installed.
 /* .IP "\fBhtml_directory (see 'postconf -d' output)\fR"
 /*	The location of Postfix HTML files that describe how to build,
 /*	configure or operate a specific Postfix subsystem or feature.
+/* .IP "\fBmail_owner (postfix)\fR"
+/*	The UNIX system account that owns the Postfix queue and most Postfix
+/*	daemon processes.
+/* .IP "\fBmailq_path (see 'postconf -d' output)\fR"
+/*	Sendmail compatibility feature that specifies where the Postfix
+/*	\fBmailq\fR(1) command is installed.
 /* .IP "\fBmanpage_directory (see 'postconf -d' output)\fR"
 /*	Where the Postfix manual pages are installed.
+/* .IP "\fBnewaliases_path (see 'postconf -d' output)\fR"
+/*	Sendmail compatibility feature that specifies the location of the
+/*	\fBnewaliases\fR(1) command.
+/* .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
+/*	The location of the Postfix top-level queue directory.
 /* .IP "\fBreadme_directory (see 'postconf -d' output)\fR"
 /*	The location of Postfix README files that describe how to build,
 /*	configure or operate a specific Postfix subsystem or feature.
+/* .IP "\fBsendmail_path (see 'postconf -d' output)\fR"
+/*	A Sendmail compatibility feature that specifies the location of
+/*	the Postfix \fBsendmail\fR(1) command.
+/* .IP "\fBsetgid_group (postdrop)\fR"
+/*	The group ownership of set-gid Postfix commands and of group-writable
+/*	Postfix directories.
 /* .PP
 /*	Available in Postfix version 2.5 and later:
 /* .IP "\fBdata_directory (see 'postconf -d' output)\fR"
 /*	The directory with Postfix-writable data files (for example:
 /*	caches, pseudo-random numbers).
 /* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBmeta_directory (see 'postconf -d' output)\fR"
+/*	The location of non-executable files that are shared among
+/*	multiple Postfix instances, such as postfix-files, dynamicmaps.cf,
+/*	and the multi-instance template files main.cf.proto and master.cf.proto.
+/* .IP "\fBshlib_directory (see 'postconf -d' output)\fR"
+/*	The location of Postfix dynamically-linked libraries
+/*	(libpostfix-*.so), and the default location of Postfix database
+/*	plugins (postfix-*.so) that have a relative pathname in the
+/*	dynamicmaps.cf file.
+/* .PP
+/*	Available in Postfix version 3.1 and later:
+/* .IP "\fBopenssl_path (openssl)\fR"
+/*	The location of the OpenSSL command line program \fBopenssl\fR(1).
+/* .PP
 /*	Other configuration parameters:
-/* .IP "\fBconfig_directory (see 'postconf -d' output)\fR"
-/*	The default location of the Postfix main.cf and master.cf
-/*	configuration files.
 /* .IP "\fBimport_environment (see 'postconf -d' output)\fR"
 /*	The list of environment parameters that a Postfix process will
 /*	import from a non-Postfix parent process.
@@ -206,12 +224,14 @@
 /*	$daemon_directory/postfix-files, file/directory permissions
 /*	$daemon_directory/postfix-script, administrative commands
 /*	$daemon_directory/post-install, post-installation configuration
+/*	$daemon_directory/dynamicmaps.cf, plug-in database clients
 /* SEE ALSO
 /*	Commands:
 /*	postalias(1), create/update/query alias database
 /*	postcat(1), examine Postfix queue file
 /*	postconf(1), Postfix configuration utility
 /*	postfix(1), Postfix control program
+/*	postfix-tls(1), Postfix TLS management
 /*	postkick(1), trigger Postfix daemon
 /*	postlock(1), Postfix-compatible locking
 /*	postlog(1), Postfix-compatible logging
@@ -306,6 +326,11 @@
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
 /*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
+/*
 /*	TLS support by:
 /*	Lutz Jaenicke
 /*	Brandenburg University of Technology
@@ -366,6 +391,7 @@
 #include <mail_conf.h>
 #include <mail_params.h>
 #include <mail_version.h>
+#include <mail_parm_split.h>
 
 /* Additional installation parameters. */
 
@@ -490,12 +516,26 @@ int     main(int argc, char **argv)
     get_mail_conf_str_table(str_table);
 
     /*
+     * Alert the sysadmin that the backwards-compatible settings are still in
+     * effect.
+     */
+    if (var_compat_level < CUR_COMPAT_LEVEL) {
+	msg_info("Postfix is running with backwards-compatible default "
+		 "settings");
+	msg_info("See http://www.postfix.org/COMPATIBILITY_README.html "
+		 "for details");
+	msg_info("To disable backwards compatibility use \"postconf "
+		 VAR_COMPAT_LEVEL "=%d\" and \"postfix reload\"",
+		 CUR_COMPAT_LEVEL);
+    }
+
+    /*
      * Environment import filter, to enforce consistent behavior whether this
      * command is started by hand, or at system boot time. This is necessary
      * because some shell scripts use environment settings to override
      * main.cf settings.
      */
-    import_env = argv_split(var_import_environ, ", \t\r\n");
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
     clean_env(import_env->argv);
     argv_free(import_env);
 
@@ -505,8 +545,10 @@ int     main(int argc, char **argv)
     check_setenv(VAR_COMMAND_DIR, var_command_dir);	/* main.cf */
     check_setenv(VAR_DAEMON_DIR, var_daemon_dir);	/* main.cf */
     check_setenv(VAR_DATA_DIR, var_data_dir);	/* main.cf */
+    check_setenv(VAR_META_DIR, var_meta_dir);	/* main.cf */
     check_setenv(VAR_QUEUE_DIR, var_queue_dir);	/* main.cf */
     check_setenv(VAR_CONFIG_DIR, var_config_dir);	/* main.cf */
+    check_setenv(VAR_SHLIB_DIR, var_shlib_dir);	/* main.cf */
 
     /*
      * Do we want to keep adding things here as shell scripts evolve?
@@ -536,7 +578,7 @@ int     main(int argc, char **argv)
      * Run the management script.
      */
     if (force_single_instance
-	|| argv_split(var_multi_conf_dirs, "\t\r\n, ")->argc == 0) {
+	|| argv_split(var_multi_conf_dirs, CHARS_COMMA_SP)->argc == 0) {
 	script = concatenate(var_daemon_dir, "/postfix-script", (char *) 0);
 	if (optind < 1)
 	    msg_panic("bad optind value");
@@ -552,7 +594,7 @@ int     main(int argc, char **argv)
 	if (*var_multi_wrapper == 0)
 	    msg_fatal("multi-instance support is requested, but %s is empty",
 		      VAR_MULTI_WRAPPER);
-	my_argv = argv_split(var_multi_wrapper, " \t\r\n");
+	my_argv = argv_split(var_multi_wrapper, CHARS_SPACE);
 	do {
 	    argv_add(my_argv, argv[optind], (char *) 0);
 	} while (argv[optind++] != 0);

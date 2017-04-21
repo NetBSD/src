@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.11 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.11.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
 /* $OpenBSD: auth2-chall.c,v 1.44 2016/05/02 08:49:03 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.11 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.11.2.1 2017/04/21 16:50:56 bouyer Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>

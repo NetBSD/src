@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_map.c,v 1.1.1.2 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_addr_map.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -177,7 +177,8 @@ int     main(int argc, char **argv)
     msg_verbose = 1;
     if (chdir(var_queue_dir) < 0)
 	msg_fatal("chdir %s: %m", var_queue_dir);
-    path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+    path = maps_create(argv[0], argv[1], DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX \
+		       | DICT_FLAGS_UTF8_REQUEST);
     while (vstring_fgets_nonl(buffer, VSTREAM_IN)) {
 	msg_info("=== Address extension on, extension propagation on ===");
 	UPDATE(var_rcpt_delim, "+");

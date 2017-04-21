@@ -96,6 +96,7 @@ olcConstraintAttribute: mail
 olcConstraintAttribute: mail count 1 restrict="ldap:///ou=groups,$BASEDN??one"
 olcConstraintAttribute: mail regex ^[[:alnum:]]+@example.com$
 olcConstraintAttribute: description count 2
+olcConstraintAttribute: jpegPhoto count 0
 # cn value has to be concatenated givenName SP sn
 olcConstraintAttribute: cn,sn,givenName
   set "(this/givenName + [ ] + this/sn) & this/cn"

@@ -1,10 +1,10 @@
-/*	$NetBSD: distproc.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: distproc.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* distproc.c - implement distributed procedures */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -21,6 +21,9 @@
  * in OpenLDAP Software.
  * Based on back-ldap and slapo-chain, developed by Howard Chu
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: distproc.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -425,7 +428,8 @@ distproc_ldadd( CfEntryInfo *p, Entry *e, ConfigArgs *ca )
 		Debug( LDAP_DEBUG_ANY, "slapd-distproc: "
 			"unable to init %sunderlying database \"%s\".\n",
 			lc->lc_common_li == NULL ? "common " : "", e->e_name.bv_val, 0 );
-		return LDAP_CONSTRAINT_VIOLATION;
+		rc = LDAP_CONSTRAINT_VIOLATION;
+		goto done;
 	}
 
 	li = ca->be->be_private;

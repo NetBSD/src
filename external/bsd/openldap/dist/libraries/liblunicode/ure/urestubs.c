@@ -1,9 +1,9 @@
-/*	$NetBSD: urestubs.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: urestubs.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,9 @@
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* Id: urestubs.c,v 1.2 1999/09/21 15:47:44 mleisher Exp " */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: urestubs.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 #include <ac/bytes.h>
@@ -125,5 +128,5 @@ _ure_matches_properties(unsigned long props, ucs4_t c)
 		}
 	}
 
-	return ucisprop( mask1, mask2, c );
+	return ucisprop( c, mask1, mask2 );
 }

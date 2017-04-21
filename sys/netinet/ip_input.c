@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.347 2016/12/12 03:55:57 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.347.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.347 2016/12/12 03:55:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.347.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -253,30 +253,23 @@ EVCNT_ATTACH_STATIC(ip_swcsum);
 #endif /* INET_CSUM_COUNTERS */
 
 /*
- * We need to save the IP options in case a protocol wants to respond
+ * Used to save the IP options in case a protocol wants to respond
  * to an incoming packet over the same route if the packet got here
  * using IP source routing.  This allows connection establishment and
  * maintenance when the remote end is on a network that is not known
  * to us.
  */
-
-static int	ip_nhops = 0;
-
-static	struct ip_srcrt {
-	struct	in_addr dst;			/* final destination */
-	char	nop;				/* one NOP to align */
-	char	srcopt[IPOPT_OFFSET + 1];	/* OPTVAL, OLEN and OFFSET */
-	struct	in_addr route[MAX_IPOPTLEN/sizeof(struct in_addr)];
-} ip_srcrt;
+struct ip_srcrt {
+	int		isr_nhops;		   /* number of hops */
+	struct in_addr	isr_dst;		   /* final destination */
+	char		isr_nop;		   /* one NOP to align */
+	char		isr_hdr[IPOPT_OFFSET + 1]; /* OPTVAL, OLEN & OFFSET */
+	struct in_addr	isr_routes[MAX_IPOPTLEN/sizeof(struct in_addr)];
+};
 
 static int ip_drainwanted;
 
-struct	sockaddr_in ipaddr = {
-	.sin_len = sizeof(ipaddr),
-	.sin_family = AF_INET,
-};
-
-static void save_rte(u_char *, struct in_addr);
+static void save_rte(struct mbuf *, u_char *, struct in_addr);
 
 #ifdef MBUFTRACE
 struct mowner ip_rx_mowner = MOWNER_INIT("internet", "rx");
@@ -353,6 +346,8 @@ ip_init(void)
 	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
 	if (ipforward_rt_percpu == NULL)
 		panic("failed to allocate ipforward_rt_percpu");
+
+	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 }
 
 static struct in_ifaddr *
@@ -667,7 +662,6 @@ ip_input(struct mbuf *m)
 	 * error was detected (causing an icmp message
 	 * to be sent and the original packet to be freed).
 	 */
-	ip_nhops = 0;		/* for source routed packets */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m)) {
 		m = NULL;
 		goto out;
@@ -866,13 +860,17 @@ void
 ip_slowtimo(void)
 {
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	ip_reass_slowtimo();
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -904,7 +902,7 @@ ip_dooptions(struct mbuf *m)
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr dst;
 	n_time ntime;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
 	int s;
 
 	dst = ip->ip_dst;
@@ -944,6 +942,11 @@ ip_dooptions(struct mbuf *m)
 		case IPOPT_LSRR:
 		case IPOPT_SSRR: {
 			struct psref psref;
+			struct sockaddr_in ipaddr = {
+			    .sin_len = sizeof(ipaddr),
+			    .sin_family = AF_INET,
+			};
+
 			if (ip_allowsrcrt == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_NET_PROHIB;
@@ -981,7 +984,7 @@ ip_dooptions(struct mbuf *m)
 				/*
 				 * End of source route.  Should be for us.
 				 */
-				save_rte(cp, ip->ip_src);
+				save_rte(m, cp, ip->ip_src);
 				break;
 			}
 			/*
@@ -1018,6 +1021,11 @@ ip_dooptions(struct mbuf *m)
 
 		case IPOPT_RR: {
 			struct psref psref;
+			struct sockaddr_in ipaddr = {
+			    .sin_len = sizeof(ipaddr),
+			    .sin_family = AF_INET,
+			};
+
 			if (optlen < IPOPT_OFFSET + sizeof(*cp)) {
 				code = &cp[IPOPT_OLEN] - (u_char *)ip;
 				goto bad;
@@ -1084,6 +1092,10 @@ ip_dooptions(struct mbuf *m)
 			case IPOPT_TS_TSANDADDR: {
 				struct ifnet *rcvif;
 				int _s, _ss;
+				struct sockaddr_in ipaddr = {
+				    .sin_len = sizeof(ipaddr),
+				    .sin_family = AF_INET,
+				};
 
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
@@ -1094,7 +1106,10 @@ ip_dooptions(struct mbuf *m)
 				ipaddr.sin_addr = dst;
 				_ss = pserialize_read_enter();
 				rcvif = m_get_rcvif(m, &_s);
-				ifa = ifaof_ifpforaddr(sintosa(&ipaddr), rcvif);
+				if (__predict_true(rcvif != NULL)) {
+					ifa = ifaof_ifpforaddr(sintosa(&ipaddr),
+					    rcvif);
+				}
 				m_put_rcvif(rcvif, &_s);
 				if (ifa == NULL) {
 					pserialize_read_exit(_ss);
@@ -1108,7 +1123,12 @@ ip_dooptions(struct mbuf *m)
 				break;
 			}
 
-			case IPOPT_TS_PRESPEC:
+			case IPOPT_TS_PRESPEC: {
+				struct sockaddr_in ipaddr = {
+				    .sin_len = sizeof(ipaddr),
+				    .sin_family = AF_INET,
+				};
+
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
 					code = (u_char *)&ipt->ipt_ptr -
@@ -1126,6 +1146,7 @@ ip_dooptions(struct mbuf *m)
 				pserialize_read_exit(s);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
+			    }
 
 			default:
 				/* XXX can't take &ipt->ipt_flg */
@@ -1202,16 +1223,25 @@ ip_rtaddr(struct in_addr dst, struct psref *psref)
  * up later by ip_srcroute if the receiver is interested.
  */
 static void
-save_rte(u_char *option, struct in_addr dst)
+save_rte(struct mbuf *m, u_char *option, struct in_addr dst)
 {
+	struct ip_srcrt *isr;
+	struct m_tag *mtag;
 	unsigned olen;
 
 	olen = option[IPOPT_OLEN];
-	if (olen > sizeof(ip_srcrt) - (1 + sizeof(dst)))
+	if (olen > sizeof(isr->isr_hdr) + sizeof(isr->isr_routes))
 		return;
-	memcpy((void *)ip_srcrt.srcopt, (void *)option, olen);
-	ip_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
-	ip_srcrt.dst = dst;
+
+	mtag = m_tag_get(PACKET_TAG_SRCROUTE, sizeof(*isr), M_NOWAIT);
+	if (mtag == NULL)
+		return;
+	isr = (struct ip_srcrt *)(mtag + 1);
+
+	memcpy(isr->isr_hdr, option, olen);
+	isr->isr_nhops = (olen - IPOPT_OFFSET - 1) / sizeof(struct in_addr);
+	isr->isr_dst = dst;
+	m_tag_prepend(m, mtag);
 }
 
 /*
@@ -1220,36 +1250,43 @@ save_rte(u_char *option, struct in_addr dst)
  * The first hop is placed before the options, will be removed later.
  */
 struct mbuf *
-ip_srcroute(void)
+ip_srcroute(struct mbuf *m0)
 {
 	struct in_addr *p, *q;
 	struct mbuf *m;
+	struct ip_srcrt *isr;
+	struct m_tag *mtag;
 
-	if (ip_nhops == 0)
+	mtag = m_tag_find(m0, PACKET_TAG_SRCROUTE, NULL);
+	if (mtag == NULL)
 		return NULL;
+	isr = (struct ip_srcrt *)(mtag + 1);
+
+	if (isr->isr_nhops == 0)
+		return NULL;
+
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
-	if (m == 0)
+	if (m == NULL)
 		return NULL;
 
 	MCLAIM(m, &inetdomain.dom_mowner);
-#define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
+#define OPTSIZ	(sizeof(isr->isr_nop) + sizeof(isr->isr_hdr))
 
-	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + srcrt header) */
-	m->m_len = ip_nhops * sizeof(struct in_addr) + sizeof(struct in_addr) +
-	    OPTSIZ;
+	/* length is (nhops+1)*sizeof(addr) + sizeof(nop + header) */
+	m->m_len = (isr->isr_nhops + 1) * sizeof(struct in_addr) + OPTSIZ;
 
 	/*
 	 * First save first hop for return route
 	 */
-	p = &ip_srcrt.route[ip_nhops - 1];
+	p = &(isr->isr_routes[isr->isr_nhops - 1]);
 	*(mtod(m, struct in_addr *)) = *p--;
 
 	/*
 	 * Copy option fields and padding (nop) to mbuf.
 	 */
-	ip_srcrt.nop = IPOPT_NOP;
-	ip_srcrt.srcopt[IPOPT_OFFSET] = IPOPT_MINOFF;
-	memmove(mtod(m, char *) + sizeof(struct in_addr), &ip_srcrt.nop,
+	isr->isr_nop = IPOPT_NOP;
+	isr->isr_hdr[IPOPT_OFFSET] = IPOPT_MINOFF;
+	memmove(mtod(m, char *) + sizeof(struct in_addr), &isr->isr_nop,
 	    OPTSIZ);
 	q = (struct in_addr *)(mtod(m, char *) +
 	    sizeof(struct in_addr) + OPTSIZ);
@@ -1258,14 +1295,15 @@ ip_srcroute(void)
 	 * Record return path as an IP source route,
 	 * reversing the path (pointers are now aligned).
 	 */
-	while (p >= ip_srcrt.route) {
+	while (p >= isr->isr_routes) {
 		*q++ = *p--;
 	}
 	/*
 	 * Last hop goes to final destination.
 	 */
-	*q = ip_srcrt.dst;
-	return (m);
+	*q = isr->isr_dst;
+	m_tag_delete(m0, mtag);
+	return m;
 }
 
 const int inetctlerrmap[PRC_NCMDS] = {
@@ -1594,23 +1632,25 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	int error, tmp;
 	struct sysctlnode node;
 
+	icmp_mtudisc_lock();
+
 	node = *rnode;
 	tmp = ip_mtudisc_timeout;
 	node.sysctl_data = &tmp;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	if (tmp < 0)
-		return (EINVAL);
-
-	mutex_enter(softnet_lock);
+		goto out;
+	if (tmp < 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	ip_mtudisc_timeout = tmp;
 	rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
-
-	mutex_exit(softnet_lock);
-
-	return (0);
+	error = 0;
+out:
+	icmp_mtudisc_unlock();
+	return error;
 }
 
 static int

@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3CHANGESET_APPLY 3
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@ A table is considered compatible if all of the following are true:
 The table has the same name as the name recorded in the changeset,
 and 
 .It
-The table has the same number of columns as recorded in the changeset,
+The table has at least as many columns as recorded in the changeset,
 and 
 .It
 The table has primary key columns in the same position as recorded
@@ -89,6 +89,10 @@ of the non-primary key fields contains a value different from the original
 row value stored in the changeset, the conflict-handler function is
 invoked with SQLITE_CHANGESET_DATA as the second
 argument.
+If the database table has more columns than are recorded in the changeset,
+only the values of those non-primary key fields are compared against
+the current database contents - any trailing database table columns
+are ignored.
 .Pp
 If no row with matching primary key values is found in the database,
 the conflict-handler function is invoked with SQLITE_CHANGESET_NOTFOUND
@@ -102,6 +106,8 @@ This includes the case where the DELETE operation is attempted because
 an earlier call to the conflict handler function returned SQLITE_CHANGESET_REPLACE.
 .It INSERT ChangesFor each INSERT change, an attempt is made to insert
 the new row into the database.
+If the changeset row contains fewer fields than the database table,
+the trailing fields are populated with their default values.
 .Pp
 If the attempt to insert the row fails because the database already
 contains a row with the same primary key values, the conflict handler
@@ -116,15 +122,15 @@ an earlier call to the conflict handler function returned SQLITE_CHANGESET_REPLA
 .It UPDATE ChangesFor each UPDATE change, this function checks if the
 target database contains a row with the same primary key value (or
 values) as the original row values stored in the changeset.
-If it does, and the values stored in all non-primary key columns also
-match the values stored in the changeset the row is updated within
+If it does, and the values stored in all modified non-primary key columns
+also match the values stored in the changeset the row is updated within
 the target database.
 .Pp
 If a row with matching primary key values is found, but one or more
-of the non-primary key fields contains a value different from an original
-row value stored in the changeset, the conflict-handler function is
-invoked with SQLITE_CHANGESET_DATA as the second
-argument.
+of the modified non-primary key fields contains a value different from
+an original row value stored in the changeset, the conflict-handler
+function is invoked with SQLITE_CHANGESET_DATA
+as the second argument.
 Since UPDATE changes only contain values for non-primary key fields
 that are to be modified, only those fields need to match the original
 values to avoid the SQLITE_CHANGESET_DATA conflict-handler callback.

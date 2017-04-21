@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.1.1.5 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.1.1.5.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -188,12 +188,22 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
  /*
   * System library.
   */
 #include <sys_defs.h>
+#include <errno.h>
+
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
  /*
   * Utility library.
@@ -333,7 +343,7 @@ static int ask_client_cert;
   * become part of the TLS library.
   */
 
-static void tlsp_ciphertext_event(int, char *);
+static void tlsp_ciphertext_event(int, void *);
 
 #define TLSP_INIT_TIMEOUT	100
 
@@ -390,7 +400,7 @@ static int tlsp_eval_tls_error(TLSP_STATE *state, int err)
     case SSL_ERROR_NONE:
 	if (state->ssl_last_err != SSL_ERROR_NONE) {
 	    event_disable_readwrite(ciphertext_fd);
-	    event_request_timer(tlsp_ciphertext_event, (char *) state,
+	    event_request_timer(tlsp_ciphertext_event, (void *) state,
 				state->timeout);
 	    state->ssl_last_err = SSL_ERROR_NONE;
 	}
@@ -405,10 +415,10 @@ static int tlsp_eval_tls_error(TLSP_STATE *state, int err)
 	    event_disable_readwrite(ciphertext_fd);
 	if (state->ssl_last_err != SSL_ERROR_WANT_WRITE) {
 	    event_enable_write(ciphertext_fd, tlsp_ciphertext_event,
-			       (char *) state);
+			       (void *) state);
 	    state->ssl_last_err = SSL_ERROR_WANT_WRITE;
 	}
-	event_request_timer(tlsp_ciphertext_event, (char *) state,
+	event_request_timer(tlsp_ciphertext_event, (void *) state,
 			    state->timeout);
 	return (0);
 
@@ -421,10 +431,10 @@ static int tlsp_eval_tls_error(TLSP_STATE *state, int err)
 	    event_disable_readwrite(ciphertext_fd);
 	if (state->ssl_last_err != SSL_ERROR_WANT_READ) {
 	    event_enable_read(ciphertext_fd, tlsp_ciphertext_event,
-			      (char *) state);
+			      (void *) state);
 	    state->ssl_last_err = SSL_ERROR_WANT_READ;
 	}
-	event_request_timer(tlsp_ciphertext_event, (char *) state,
+	event_request_timer(tlsp_ciphertext_event, (void *) state,
 			    state->timeout);
 	return (0);
 
@@ -472,8 +482,9 @@ static void tlsp_strategy(TLSP_STATE *state)
 	}
 	if ((state->req_flags & TLS_PROXY_FLAG_SEND_CONTEXT) != 0
 	    && (attr_print(state->plaintext_stream, ATTR_FLAG_NONE,
-			   ATTR_TYPE_FUNC, tls_proxy_context_print,
-			   (char *) state->tls_context, ATTR_TYPE_END) != 0
+			   SEND_ATTR_FUNC(tls_proxy_context_print,
+					  (void *) state->tls_context),
+			   ATTR_TYPE_END) != 0
 		|| vstream_fflush(state->plaintext_stream) != 0)) {
 	    msg_warn("cannot send TLS context: %m");
 	    tlsp_state_free(state);
@@ -602,7 +613,7 @@ static void tlsp_strategy(TLSP_STATE *state)
 
 /* tlsp_plaintext_event - plaintext was read/written */
 
-static void tlsp_plaintext_event(int event, char *context)
+static void tlsp_plaintext_event(int event, void *context)
 {
     TLSP_STATE *state = (TLSP_STATE *) context;
 
@@ -625,7 +636,7 @@ static void tlsp_plaintext_event(int event, char *context)
 
 /* tlsp_ciphertext_event - ciphertext is ready to read/write */
 
-static void tlsp_ciphertext_event(int event, char *context)
+static void tlsp_ciphertext_event(int event, void *context)
 {
     TLSP_STATE *state = (TLSP_STATE *) context;
 
@@ -720,7 +731,7 @@ static void tlsp_start_tls(TLSP_STATE *state)
 
 /* tlsp_get_fd_event - receive final postscreen(8) hand-off information */
 
-static void tlsp_get_fd_event(int event, char *context)
+static void tlsp_get_fd_event(int event, void *context)
 {
     const char *myname = "tlsp_get_fd_event";
     TLSP_STATE *state = (TLSP_STATE *) context;
@@ -733,7 +744,9 @@ static void tlsp_get_fd_event(int event, char *context)
      */
     event_disable_readwrite(plaintext_fd);
     if (event != EVENT_TIME)
-	event_cancel_timer(tlsp_get_fd_event, (char *) state);
+	event_cancel_timer(tlsp_get_fd_event, (void *) state);
+    else
+	errno = ETIMEDOUT;
 
     /*
      * Initialize plaintext-related session state.  Once we have this behind
@@ -755,7 +768,7 @@ static void tlsp_get_fd_event(int event, char *context)
     state->plaintext_buf = nbbio_create(plaintext_fd,
 					VSTREAM_BUFSIZE, "postscreen",
 					tlsp_plaintext_event,
-					(char *) state);
+					(void *) state);
 
     /*
      * Perform the TLS layer before-handshake initialization. We perform the
@@ -771,7 +784,7 @@ static void tlsp_get_fd_event(int event, char *context)
 
 /* tlsp_get_request_event - receive initial postscreen(8) hand-off info */
 
-static void tlsp_get_request_event(int event, char *context)
+static void tlsp_get_request_event(int event, void *context)
 {
     const char *myname = "tlsp_get_request_event";
     TLSP_STATE *state = (TLSP_STATE *) context;
@@ -797,7 +810,9 @@ static void tlsp_get_request_event(int event, char *context)
      * and redefine read events on success.
      */
     if (event != EVENT_TIME)
-	event_cancel_timer(tlsp_get_request_event, (char *) state);
+	event_cancel_timer(tlsp_get_request_event, (void *) state);
+    else
+	errno = ETIMEDOUT;
 
     /*
      * We must send some data, after receiving the request attributes and
@@ -806,10 +821,10 @@ static void tlsp_get_request_event(int event, char *context)
      */
     if (event != EVENT_READ
 	|| attr_scan(plaintext_stream, ATTR_FLAG_STRICT,
-		     ATTR_TYPE_STR, MAIL_ATTR_REMOTE_ENDPT, remote_endpt,
-		     ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &req_flags,
-		     ATTR_TYPE_INT, MAIL_ATTR_TIMEOUT, &timeout,
-		     ATTR_TYPE_STR, MAIL_ATTR_SERVER_ID, server_id,
+		     RECV_ATTR_STR(MAIL_ATTR_REMOTE_ENDPT, remote_endpt),
+		     RECV_ATTR_INT(MAIL_ATTR_FLAGS, &req_flags),
+		     RECV_ATTR_INT(MAIL_ATTR_TIMEOUT, &timeout),
+		     RECV_ATTR_STR(MAIL_ATTR_SERVER_ID, server_id),
 		     ATTR_TYPE_END) != 4) {
 	msg_warn("%s: receive request attributes: %m", myname);
 	event_disable_readwrite(plaintext_fd);
@@ -824,7 +839,7 @@ static void tlsp_get_request_event(int event, char *context)
     ready = ((req_flags & TLS_PROXY_FLAG_ROLE_SERVER) != 0
 	     && tlsp_server_ctx != 0);
     if (attr_print(plaintext_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, ready,
+		   SEND_ATTR_INT(MAIL_ATTR_STATUS, ready),
 		   ATTR_TYPE_END) != 0
 	|| vstream_fflush(plaintext_stream) != 0
 	|| ready == 0) {
@@ -849,8 +864,8 @@ static void tlsp_get_request_event(int event, char *context)
 		 "(bogus_direction)", state->remote_endpt);
 	state->req_flags = req_flags;
 	state->timeout = timeout + 10;		/* XXX */
-	event_enable_read(plaintext_fd, tlsp_get_fd_event, (char *) state);
-	event_request_timer(tlsp_get_fd_event, (char *) state,
+	event_enable_read(plaintext_fd, tlsp_get_fd_event, (void *) state);
+	event_request_timer(tlsp_get_fd_event, (void *) state,
 			    TLSP_INIT_TIMEOUT);
 	return;
     }
@@ -879,16 +894,16 @@ static void tlsp_service(VSTREAM *plaintext_stream,
      */
     non_blocking(plaintext_fd, NON_BLOCKING);
     vstream_control(plaintext_stream,
-		    VSTREAM_CTL_PATH, "plaintext",
-		    VSTREAM_CTL_TIMEOUT, 5,
-		    VSTREAM_CTL_END);
+		    CA_VSTREAM_CTL_PATH("plaintext"),
+		    CA_VSTREAM_CTL_TIMEOUT(5),
+		    CA_VSTREAM_CTL_END);
 
     /*
      * Receive postscreen's remote SMTP client address/port and socket.
      */
     state = tlsp_state_create(service, plaintext_stream);
-    event_enable_read(plaintext_fd, tlsp_get_request_event, (char *) state);
-    event_request_timer(tlsp_get_request_event, (char *) state,
+    event_enable_read(plaintext_fd, tlsp_get_request_event, (void *) state);
+    event_request_timer(tlsp_get_request_event, (void *) state,
 			TLSP_INIT_TIMEOUT);
 }
 
@@ -1104,16 +1119,16 @@ int     main(int argc, char **argv)
      * Pass control to the single-threaded service skeleton.
      */
     event_server_main(argc, argv, tlsp_service,
-		      MAIL_SERVER_INT_TABLE, int_table,
-		      MAIL_SERVER_NINT_TABLE, nint_table,
-		      MAIL_SERVER_STR_TABLE, str_table,
-		      MAIL_SERVER_BOOL_TABLE, bool_table,
-		      MAIL_SERVER_NBOOL_TABLE, nbool_table,
-		      MAIL_SERVER_TIME_TABLE, time_table,
-		      MAIL_SERVER_PRE_INIT, pre_jail_init,
-		      MAIL_SERVER_POST_INIT, post_jail_init,
-		      MAIL_SERVER_SLOW_EXIT, tlsp_drain,
-		      MAIL_SERVER_WATCHDOG, &var_tlsp_watchdog,
+		      CA_MAIL_SERVER_INT_TABLE(int_table),
+		      CA_MAIL_SERVER_NINT_TABLE(nint_table),
+		      CA_MAIL_SERVER_STR_TABLE(str_table),
+		      CA_MAIL_SERVER_BOOL_TABLE(bool_table),
+		      CA_MAIL_SERVER_NBOOL_TABLE(nbool_table),
+		      CA_MAIL_SERVER_TIME_TABLE(time_table),
+		      CA_MAIL_SERVER_PRE_INIT(pre_jail_init),
+		      CA_MAIL_SERVER_POST_INIT(post_jail_init),
+		      CA_MAIL_SERVER_SLOW_EXIT(tlsp_drain),
+		      CA_MAIL_SERVER_WATCHDOG(&var_tlsp_watchdog),
 		      0);
 }
 

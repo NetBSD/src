@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.38 2012/01/27 18:53:07 para Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.38.32.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.38 2012/01/27 18:53:07 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.38.32.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ x86_bus_space_init(void)
 	ioport_ex = extent_create("ioport", 0x0, 0xffff,
 	    (void *)ioport_ex_storage, sizeof(ioport_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff,
+	iomem_ex = extent_create("iomem", 0x0, MAXIOMEM,
 	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 

@@ -1,11 +1,11 @@
-.\"	$NetBSD: amdpcib.4,v 1.2 2010/08/06 16:44:06 jruoho Exp $
+.\"	$NetBSD: amdpcib.4,v 1.2.34.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\"     $OpenBSD: amdpcib.4,v 1.4 2007/10/08 12:48:21 jmc Exp $
 .\"
 .\" Marc Balmer, 2007. Public Domain.
 .\" Jukka Ruohonen, 2010. Public Domain.
 .\"
-.Dd August 8, 2010
+.Dd February 17, 2017
 .Dt AMDPCIB 4 x86
 .Os
 .Sh NAME
@@ -23,9 +23,9 @@ driver provides support for the AMD-8111
 bridge and implements a 32/64-bit
 14.3 MHz (or variable) timecounter using the HPET timer.
 .Sh SEE ALSO
-.Xr hpet 4 ,
 .Xr isa 4 ,
-.Xr pci 4
+.Xr pci 4 ,
+.Xr x86/hpet 4
 .Rs
 .%A Advanced Micro Devices
 .%T AMD-8111 HyperTransport I/O Hub

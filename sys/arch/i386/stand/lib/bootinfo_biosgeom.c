@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.22 2013/05/16 19:06:44 christos Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.22.18.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -78,7 +78,6 @@ bi_getbiosgeom(void)
 		return;
 
 	for (i = nvalid = 0; i < MAX_BIOSDISKS && nvalid < nhd; i++) {
-
 		d.dev = 0x80 + i;
 
 		if (set_geometry(&d, &ed))

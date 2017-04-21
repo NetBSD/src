@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.254 2016/12/10 23:12:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.254.2.1 2017/04/21 16:54:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.254 2016/12/10 23:12:39 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.254.2.1 2017/04/21 16:54:14 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.254 2016/12/10 23:12:39 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.254.2.1 2017/04/21 16:54:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -183,6 +183,7 @@ static const char *	tracefile;
 static void		MainParseArgs(int, char **);
 static int		ReadMakefile(const void *, const void *);
 static void		usage(void) MAKE_ATTR_DEAD;
+static void		purge_cached_realpaths(void);
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
@@ -323,7 +324,7 @@ parse_debug_options(const char *argvalue)
 				goto debug_setbuf;
 			}
 			len = strlen(modules);
-			fname = malloc(len + 20);
+			fname = bmake_malloc(len + 20);
 			memcpy(fname, modules, len + 1);
 			/* Let the filename be modified by the pid */
 			if (strcmp(fname + len - 3, ".%d") == 0)
@@ -354,6 +355,32 @@ debug_setbuf:
 	}
 }
 
+/*
+ * does path contain any relative components
+ */
+static int
+is_relpath(const char *path)
+{
+	const char *cp;
+
+	if (path[0] != '/')
+		return TRUE;
+	cp = path;
+	do {
+		cp = strstr(cp, "/.");
+		if (!cp)
+			break;
+		cp += 2;
+		if (cp[0] == '/' || cp[0] == '\0')
+			return TRUE;
+		else if (cp[0] == '.') {
+			if (cp[1] == '/' || cp[1] == '\0')
+				return TRUE;
+		}
+	} while (cp);
+	return FALSE;
+}
+
 /*-
  * MainParseArgs --
  *	Parse a given argument vector. Called from main() and from
@@ -376,6 +403,7 @@ MainParseArgs(int argc, char **argv)
 	int arginc;
 	char *argvalue;
 	const char *getopt_def;
+	struct stat sa, sb;
 	char *optscan;
 	Boolean inOption, dashDash = FALSE;
 	char found_path[MAXPATHLEN + 1];	/* for searching for sys.mk */
@@ -444,6 +472,12 @@ rearg:
 				(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 				exit(2);
 			}
+			if (!is_relpath(argvalue) &&
+			    stat(argvalue, &sa) != -1 &&
+			    stat(curdir, &sb) != -1 &&
+			    sa.st_ino == sb.st_ino &&
+			    sa.st_dev == sb.st_dev)
+				strncpy(curdir, argvalue, MAXPATHLEN);
 			ignorePWD = TRUE;
 			break;
 		case 'D':
@@ -684,25 +718,20 @@ Boolean
 Main_SetObjdir(const char *fmt, ...)
 {
 	struct stat sb;
-	char *p, *path;
-	char buf[MAXPATHLEN + 1], pbuf[MAXPATHLEN + 1];
+	char *path;
+	char buf[MAXPATHLEN + 1];
 	Boolean rc = FALSE;
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsnprintf(path = pbuf, MAXPATHLEN, fmt, ap);
+	vsnprintf(path = buf, MAXPATHLEN, fmt, ap);
 	va_end(ap);
 
-	/* expand variable substitutions */
-	if (strchr(path, '$') != 0) {
-		snprintf(buf, MAXPATHLEN, "%s", path);
-		path = p = Var_Subst(NULL, buf, VAR_GLOBAL, VARF_WANTRES);
-	} else
-		p = NULL;
-
 	if (path[0] != '/') {
-		snprintf(buf, MAXPATHLEN, "%s/%s", curdir, path);
-		path = buf;
+		char buf2[MAXPATHLEN + 1];
+		
+		snprintf(buf2, MAXPATHLEN, "%s/%s", curdir, path);
+		path = buf2;
 	}
 
 	/* look for the directory and try to chdir there */
@@ -715,25 +744,35 @@ Main_SetObjdir(const char *fmt, ...)
 			Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
+			purge_cached_realpaths();
 			rc = TRUE;
 			if (enterFlag && strcmp(objdir, curdir) != 0)
 				enterFlagObj = TRUE;
 		}
 	}
 
-	free(p);
 	return rc;
 }
 
 static Boolean
 Main_SetVarObjdir(const char *var, const char *suffix)
 {
-	char *p1, *path;
-	if ((path = Var_Value(var, VAR_CMD, &p1)) == NULL)
+	char *p, *path, *xpath;
+
+	if ((path = Var_Value(var, VAR_CMD, &p)) == NULL)
 		return FALSE;
 
-	(void)Main_SetObjdir("%s%s", path, suffix);
-	free(p1);
+	/* expand variable substitutions */
+	if (strchr(path, '$') != 0)
+		xpath = Var_Subst(NULL, path, VAR_GLOBAL, VARF_WANTRES);
+	else
+		xpath = path;
+
+	(void)Main_SetObjdir("%s%s", xpath, suffix);
+
+	if (xpath != path)
+		free(xpath);
+	free(p);
 	return TRUE;
 }
 
@@ -1038,6 +1077,8 @@ main(int argc, char **argv)
 #ifdef USE_META
 	meta_init();
 #endif
+	Dir_Init(NULL);		/* Dir_* safe to call from MainParseArgs */
+
 	/*
 	 * First snag any flags out of the MAKE environment variable.
 	 * (Note this is *not* MAKEFLAGS since /bin/make uses that and it's
@@ -1279,7 +1320,8 @@ main(int argc, char **argv)
 	    fprintf(debug_file, "job_pipe %d %d, maxjobs %d, tokens %d, compat %d\n",
 		jp_0, jp_1, maxJobs, maxJobTokens, compatMake);
 
-	Main_ExportMAKEFLAGS(TRUE);	/* initial export */
+	if (!printVars)
+	    Main_ExportMAKEFLAGS(TRUE);	/* initial export */
 	
 
 	/*
@@ -1860,25 +1902,55 @@ usage(void)
 	exit(2);
 }
 
-
 /*
  * realpath(3) can get expensive, cache results...
  */
+static GNode *cached_realpaths = NULL;
+
+static GNode *
+get_cached_realpaths(void)
+{
+
+    if (!cached_realpaths) {
+	cached_realpaths = Targ_NewGN("Realpath");
+#ifndef DEBUG_REALPATH_CACHE
+	cached_realpaths->flags = INTERNAL;
+#endif
+    }
+
+    return cached_realpaths;
+}
+
+/* purge any relative paths */
+static void
+purge_cached_realpaths(void)
+{
+    GNode *cache = get_cached_realpaths();
+    Hash_Entry *he, *nhe;
+    Hash_Search hs;
+
+    he = Hash_EnumFirst(&cache->context, &hs);
+    while (he) {
+	nhe = Hash_EnumNext(&hs);
+	if (he->name[0] != '/') {
+	    if (DEBUG(DIR))
+		fprintf(stderr, "cached_realpath: purging %s\n", he->name);
+	    Hash_DeleteEntry(&cache->context, he);
+	}
+	he = nhe;
+    }
+}
+
 char *
 cached_realpath(const char *pathname, char *resolved)
 {
-    static GNode *cache;
+    GNode *cache;
     char *rp, *cp;
 
     if (!pathname || !pathname[0])
 	return NULL;
 
-    if (!cache) {
-	cache = Targ_NewGN("Realpath");
-#ifndef DEBUG_REALPATH_CACHE
-	cache->flags = INTERNAL;
-#endif
-    }
+    cache = get_cached_realpaths();
 
     if ((rp = Var_Value(pathname, cache, &cp)) != NULL) {
 	/* a hit */

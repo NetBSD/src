@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary_util.3,v 1.8 2011/10/17 09:24:54 wiz Exp $
+.\"	$NetBSD: prop_dictionary_util.3,v 1.8.30.1 2017/04/21 16:50:42 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,7 @@
     "const char *key" "prop_object_t obj"
 .Sh DESCRIPTION
 The
-.Nm prop_dictionary_util
+.Fn prop_dictionary_util
 family of functions are provided to make getting and setting values in
 dictionaries more convenient in some applications.
 .Pp
@@ -174,7 +174,7 @@ function adds the object to the dictionary and releases it.
 The object is also released on failure.
 .Sh RETURN VALUES
 The
-.Nm prop_dictionary_util
+.Fn prop_dictionary_util
 getter functions return
 .Dv true
 if the object exists in the dictionary and the value is in-range, or
@@ -182,7 +182,7 @@ if the object exists in the dictionary and the value is in-range, or
 otherwise.
 .Pp
 The
-.Nm prop_dictionary_util
+.Fn prop_dictionary_util
 setter functions return
 .Dv true
 if creating the object and storing it in the dictionary is successful, or
@@ -195,6 +195,6 @@ otherwise.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

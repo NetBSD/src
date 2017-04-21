@@ -1,4 +1,4 @@
-/*	$NetBSD: local_expand.c,v 1.1.1.2 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: local_expand.c,v 1.1.1.2.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -112,7 +112,7 @@ typedef struct {
 
 /* local_expand_lookup - mac_expand() lookup routine */
 
-static const char *local_expand_lookup(const char *name, int mode, char *ptr)
+static const char *local_expand_lookup(const char *name, int mode, void *ptr)
 {
     LOCAL_EXP *local = (LOCAL_EXP *) ptr;
     static char rcpt_delim[2];
@@ -175,6 +175,6 @@ int     local_expand(VSTRING *result, const char *pattern,
     local.usr_attr = usr_attr;
     local.status = 0;
     expand_status = mac_expand(result, pattern, MAC_EXP_FLAG_NONE,
-			       filter, local_expand_lookup, (char *) &local);
+			       filter, local_expand_lookup, (void *) &local);
     return (local.status | expand_status);
 }

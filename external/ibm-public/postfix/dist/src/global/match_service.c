@@ -1,4 +1,4 @@
-/*	$NetBSD: match_service.c,v 1.1.1.3 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: match_service.c,v 1.1.1.3.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -100,7 +100,7 @@ static void match_service_compat(ARGV *argv)
 
 ARGV   *match_service_init(const char *patterns)
 {
-    const char *delim = " ,\t\r\n";
+    const char *delim = CHARS_COMMA_SP;
     ARGV   *list = argv_alloc(1);
     char   *saved_patterns = mystrdup(patterns);
     char   *bp = saved_patterns;

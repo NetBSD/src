@@ -1,4 +1,4 @@
-.\"	$NetBSD: nisplus_table.5,v 1.1.1.2 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: nisplus_table.5,v 1.1.1.2.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH NISPLUS_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix NIS+ client
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" "nisplus:[\fIname\fB=%s];\fIname.name.\fB"\fR
+\fBpostmap \-q "\fIstring\fB" "nisplus:[\fIname\fB=%s];\fIname.name.\fB"\fR
 
-\fBpostmap -q - "nisplus:[\fIname\fB=%s];\fIname.name.\fB" <\fIinputfile\fR
+\fBpostmap \-q \- "nisplus:[\fIname\fB=%s];\fIname.name.\fB" <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -22,9 +22,9 @@ Alternatively, lookup tables can be specified as NIS+
 databases.
 
 To find out what types of lookup tables your Postfix system
-supports use the "\fBpostconf -m\fR" command.
+supports use the "\fBpostconf \-m\fR" command.
 
-To test Postfix NIS+ lookup tables, use the "\fBpostmap -q\fR"
+To test Postfix NIS+ lookup tables, use the "\fBpostmap \-q\fR"
 command as described in the SYNOPSIS above.
 .SH "QUERY SYNTAX"
 .na
@@ -91,7 +91,7 @@ The Secure Mailer license must be distributed with this software.
 .na
 .nf
 Geoff Gibbs
-UK-HGMP-RC
+UK\-HGMP\-RC
 Hinxton
 Cambridge
 CB10 1SB, UK
@@ -101,3 +101,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

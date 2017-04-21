@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.1.1.5 2014/07/06 19:27:55 tron Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.1.1.5.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -142,7 +142,7 @@ static SMTP_SESSION *smtp_connect_unix(SMTP_ITERATOR *iter, DSN_BUF *why,
     /*
      * Initialize.
      */
-    memset((char *) &sock_un, 0, sizeof(sock_un));
+    memset((void *) &sock_un, 0, sizeof(sock_un));
     sock_un.sun_family = AF_UNIX;
 #ifdef HAS_SUN_LEN
     sock_un.sun_len = len + 1;
@@ -209,12 +209,12 @@ static SMTP_SESSION *smtp_connect_addr(SMTP_ITERATOR *iter, DSN_BUF *why,
 #ifdef HAS_IPV6
     if (sa->sa_family == AF_INET6) {
 	bind_addr = var_smtp_bind_addr6;
-	bind_var = SMTP_X(BIND_ADDR6);
+	bind_var = VAR_LMTP_SMTP(BIND_ADDR6);
     } else
 #endif
     if (sa->sa_family == AF_INET) {
 	bind_addr = var_smtp_bind_addr;
-	bind_var = SMTP_X(BIND_ADDR);
+	bind_var = VAR_LMTP_SMTP(BIND_ADDR);
     } else
 	bind_var = bind_addr = "";
     if (*bind_addr) {
@@ -370,7 +370,7 @@ static void smtp_cleanup_session(SMTP_STATE *state)
 {
     DELIVER_REQUEST *request = state->request;
     SMTP_SESSION *session = state->session;
-    int     bad_session;
+    int     throttled;
 
     /*
      * Inform the postmaster of trouble.
@@ -399,7 +399,7 @@ static void smtp_cleanup_session(SMTP_STATE *state)
      * physical bindings; caching a session under its own hostname provides
      * no performance benefit, given the way smtp_connect() works.
      */
-    bad_session = THIS_SESSION_IS_BAD;		/* smtp_quit() may fail */
+    throttled = THIS_SESSION_IS_THROTTLED;	/* smtp_quit() may fail */
     if (THIS_SESSION_IS_EXPIRED)
 	smtp_quit(state);			/* also disables caching */
     if (THIS_SESSION_IS_CACHED
@@ -419,7 +419,7 @@ static void smtp_cleanup_session(SMTP_STATE *state)
      * next-hop destination. Otherwise we could end up skipping over the
      * available and more preferred servers.
      */
-    if (HAVE_NEXTHOP_STATE(state) && !bad_session)
+    if (HAVE_NEXTHOP_STATE(state) && !throttled)
 	FREE_NEXTHOP_STATE(state);
 
     /*
@@ -442,9 +442,9 @@ static void smtp_cleanup_session(SMTP_STATE *state)
      * engage in a session, spend a lot of time delivering a message, find
      * that it fails, and then connect to an alternate host.
      */
-    memset((char *) &request->msg_stats.conn_setup_done, 0,
+    memset((void *) &request->msg_stats.conn_setup_done, 0,
 	   sizeof(request->msg_stats.conn_setup_done));
-    memset((char *) &request->msg_stats.deliver_done, 0,
+    memset((void *) &request->msg_stats.deliver_done, 0,
 	   sizeof(request->msg_stats.deliver_done));
     request->msg_stats.reuse_count = 0;
 }
@@ -473,6 +473,13 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
     SMTP_ITERATOR *iter = state->iterator;
     SMTP_SESSION *session;
     DSN_BUF *why = state->why;
+
+    /*
+     * Do not silently ignore an unused setting.
+     */
+    if (*var_fallback_relay)
+	msg_warn("ignoring \"%s = %s\" setting for non-TCP connections",
+		 VAR_LMTP_FALLBACK, var_fallback_relay);
 
     /*
      * It's too painful to weave this code into the SMTP connection
@@ -524,12 +531,11 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
     if ((state->session = session) != 0) {
 	session->state = state;
 #ifdef USE_TLS
-	session->tls = state->tls;		/* TEMPORARY */
 	session->tls_nexthop = var_myhostname;	/* for TLS_LEV_SECURE */
-	if (session->tls->level == TLS_LEV_MAY) {
+	if (state->tls->level == TLS_LEV_MAY) {
 	    msg_warn("%s: opportunistic TLS encryption is not appropriate "
 		     "for unix-domain destinations.", myname);
-	    session->tls->level = TLS_LEV_NONE;
+	    state->tls->level = TLS_LEV_NONE;
 	}
 #endif
 	/* All delivery errors bounce or defer. */
@@ -541,7 +547,7 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
 	 */
 	if ((session->features & SMTP_FEATURE_FROM_CACHE) == 0
 	    && smtp_helo(state) != 0) {
-	    if (!THIS_SESSION_IS_DEAD
+	    if (!THIS_SESSION_IS_FORBIDDEN
 		&& vstream_ferror(session->stream) == 0
 		&& vstream_feof(session->stream) == 0)
 		smtp_quit(state);
@@ -675,9 +681,6 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
 	if ((state->misc_flags & SMTP_MISC_FLAG_FINAL_NEXTHOP)
 	    && *addr_list == 0)
 	    state->misc_flags |= SMTP_MISC_FLAG_FINAL_SERVER;
-#ifdef USE_TLS
-	session->tls = state->tls;		/* TEMPORARY */
-#endif
 	smtp_xfer(state);
 	smtp_cleanup_session(state);
     }
@@ -735,9 +738,6 @@ static int smtp_reuse_session(SMTP_STATE *state, DNS_RR **addr_list,
 	    if ((state->misc_flags & SMTP_MISC_FLAG_FINAL_NEXTHOP)
 		&& next == 0)
 		state->misc_flags |= SMTP_MISC_FLAG_FINAL_SERVER;
-#ifdef USE_TLS
-	    session->tls = state->tls;		/* TEMPORARY */
-#endif
 	    smtp_xfer(state);
 	    smtp_cleanup_session(state);
 	}
@@ -770,20 +770,15 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
     }
 
     /*
-     * First try to deliver to the indicated destination, then try to deliver
-     * to the optional fall-back relays.
-     * 
-     * Future proofing: do a null destination sanity check in case we allow the
-     * primary destination to be a list (it could be just separators).
+     * Future proofing: do a null destination sanity check in case we allow
+     * the primary destination to be a list (it could be just separators).
      */
     sites = argv_alloc(1);
     argv_add(sites, nexthop, (char *) 0);
     if (sites->argc == 0)
 	msg_panic("null destination: \"%s\"", nexthop);
     non_fallback_sites = sites->argc;
-    /* When we are lmtp(8) var_fallback_relay is null */
-    if (smtp_mode)
-	argv_split_append(sites, var_fallback_relay, ", \t\r\n");
+    argv_split_append(sites, var_fallback_relay, CHARS_COMMA_SP);
 
     /*
      * Don't give up after a hard host lookup error until we have tried the
@@ -824,14 +819,15 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    state->misc_flags |= SMTP_MISC_FLAG_FINAL_NEXTHOP;
 
 	/*
-	 * Parse the destination. Default is to use the SMTP port. Look up
-	 * the address instead of the mail exchanger when a quoted host is
-	 * specified, or when DNS lookups are disabled.
+	 * Parse the destination. If no TCP port is specified, use the port
+	 * that is reserved for the protocol (SMTP or LMTP).
 	 */
 	dest_buf = smtp_parse_destination(dest, def_service, &domain, &port);
-	if (var_helpful_warnings && ntohs(port) == 465) {
-	    msg_info("CLIENT wrappermode (port smtps/465) is unimplemented");
-	    msg_info("instead, send to (port submission/587) with STARTTLS");
+	if (var_helpful_warnings && var_smtp_tls_wrappermode == 0
+	    && ntohs(port) == 465) {
+	    msg_info("SMTPS wrappermode (TCP port 465) requires setting "
+		     "\"%s = yes\", and \"%s = encrypt\" (or stronger)",
+		     VAR_LMTP_SMTP(TLS_WRAPPER), VAR_LMTP_SMTP(TLS_LEVEL));
 	}
 #define NO_HOST	""				/* safety */
 #define NO_ADDR	""				/* safety */
@@ -839,8 +835,9 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	SMTP_ITER_INIT(iter, dest, NO_HOST, NO_ADDR, port, state);
 
 	/*
-	 * Resolve an SMTP server. Skip mail exchanger lookups when a quoted
-	 * host is specified, or when DNS lookups are disabled.
+	 * Resolve an SMTP or LMTP server. In the case of SMTP, skip mail
+	 * exchanger lookups when a quoted host is specified or when DNS
+	 * lookups are disabled.
 	 */
 	if (msg_verbose)
 	    msg_info("connecting to %s port %d", domain, ntohs(port));
@@ -891,11 +888,13 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * 
 	 * Opportunistic (a.k.a. on-demand) session caching on request by the
 	 * queue manager. This is turned temporarily when a destination has a
-	 * high volume of mail in the active queue.
+	 * high volume of mail in the active queue. When the surge reaches
+	 * its end, the queue manager requests that connections be retrieved
+	 * but not stored.
 	 */
 	if (addr_list && (state->misc_flags & SMTP_MISC_FLAG_FIRST_NEXTHOP)) {
 	    smtp_cache_policy(state, domain);
-	    if (state->misc_flags & SMTP_MISC_FLAG_CONN_STORE)
+	    if (state->misc_flags & SMTP_MISC_FLAG_CONN_CACHE_MASK)
 		SET_NEXTHOP_STATE(state, dest);
 	}
 
@@ -964,6 +963,13 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		continue;
 		/* XXX Assume there is no code at the end of this loop. */
 	    }
+	    if (var_smtp_tls_wrappermode
+		&& state->tls->level < TLS_LEV_ENCRYPT) {
+		msg_warn("%s requires \"%s = encrypt\" (or stronger)",
+		      VAR_LMTP_SMTP(TLS_WRAPPER), VAR_LMTP_SMTP(TLS_LEVEL));
+		continue;
+		/* XXX Assume there is no code at the end of this loop. */
+	    }
 	    /* Disable TLS when retrying after a handshake failure */
 	    if (retry_plain) {
 		state->tls->level = TLS_LEV_NONE;
@@ -978,8 +984,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    if ((state->session = session) != 0) {
 		session->state = state;
 #ifdef USE_TLS
-		session->tls = state->tls;	/* TEMPORARY */
-		session->tls_nexthop = domain;	/* for TLS_LEV_SECURE */
+		session->tls_nexthop = domain;
 #endif
 		if (addr->pref == domain_best_pref)
 		    session->features |= SMTP_FEATURE_BEST_MX;
@@ -1006,7 +1011,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		     * When a TLS handshake fails, the stream is marked
 		     * "dead" to avoid further I/O over a broken channel.
 		     */
-		    if (!THIS_SESSION_IS_DEAD
+		    if (!THIS_SESSION_IS_FORBIDDEN
 			&& vstream_ferror(session->stream) == 0
 			&& vstream_feof(session->stream) == 0)
 			smtp_quit(state);
@@ -1018,6 +1023,19 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 			&& next == 0)
 			state->misc_flags |= SMTP_MISC_FLAG_FINAL_SERVER;
 		    smtp_xfer(state);
+#ifdef USE_TLS
+
+		    /*
+		     * When opportunistic TLS fails after the STARTTLS
+		     * handshake, try the same address again, with TLS
+		     * disabled. See also the RETRY_AS_PLAINTEXT macro.
+		     */
+		    if ((retry_plain = session->tls_retry_plain) != 0) {
+			--sess_count;
+			--addr_count;
+			next = addr;
+		    }
+#endif
 		}
 		smtp_cleanup_session(state);
 	    } else {
@@ -1058,7 +1076,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * Pay attention to what could be configuration problems, and pretend
 	 * that these are recoverable rather than bouncing the mail.
 	 */
-	else if (!SMTP_HAS_SOFT_DSN(why) && smtp_mode) {
+	else if (!SMTP_HAS_SOFT_DSN(why)) {
 
 	    /*
 	     * The fall-back destination did not resolve as expected, or it
@@ -1073,8 +1091,13 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	    /*
 	     * The next-hop relayhost did not resolve as expected, or it is
 	     * refusing to talk to us, or mail for it loops back to us.
+	     * 
+	     * XXX There is no equivalent safety net for mis-configured
+	     * sender-dependent relay hosts. The trivial-rewrite resolver
+	     * would have to flag the result, and the queue manager would
+	     * have to provide that information to delivery agents.
 	     */
-	    else if (strcmp(sites->argv[0], var_relayhost) == 0) {
+	    else if (smtp_mode && strcmp(sites->argv[0], var_relayhost) == 0) {
 		msg_warn("%s configuration problem", VAR_RELAYHOST);
 		vstring_strcpy(why->status, "4.3.5");
 		/* XXX Keep the diagnostic code and MTA. */
@@ -1084,7 +1107,7 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	     * Mail for the next-hop destination loops back to myself. Pass
 	     * the mail to the best_mx_transport or bounce it.
 	     */
-	    else if (SMTP_HAS_LOOP_DSN(why) && *var_bestmx_transp) {
+	    else if (smtp_mode && SMTP_HAS_LOOP_DSN(why) && *var_bestmx_transp) {
 		dsb_reset(why);			/* XXX */
 		state->status = deliver_pass_all(MAIL_CLASS_PRIVATE,
 						 var_bestmx_transp,
@@ -1137,9 +1160,6 @@ int     smtp_connect(SMTP_STATE *state)
     }
 
     /*
-     * With SMTP we can have indirection via MX host lookup, as well as an
-     * optional fall-back relayhost that we must avoid when we are MX host.
-     * 
      * XXX We don't add support for "unix:" or "inet:" prefixes in SMTP
      * destinations, because that would break compatibility with existing
      * Postfix configurations that have a host with such a name.

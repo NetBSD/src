@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.57 2016/09/17 02:29:11 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.57.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.57 2016/09/17 02:29:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.57.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include "opt_pax.h"
 
@@ -578,7 +578,7 @@ pax_aslr_offset(vaddr_t align)
 	uint32_t rand;
 	vaddr_t offset;
 
-	pax_align = align == 0 ? PGSHIFT : align;
+	pax_align = align == 0 ? PAGE_SIZE : align;
 	l2 = ilog2(pax_align);
 
 	rand = cprng_fast32();
@@ -590,7 +590,8 @@ pax_aslr_offset(vaddr_t align)
 #define	PAX_TRUNC(a, b)	((a) & ~((b) - 1))
 
 	delta = PAX_ASLR_DELTA(rand, l2, PAX_ASLR_DELTA_EXEC_LEN);
-	offset = PAX_TRUNC(delta, pax_align) + PAGE_SIZE;
+	offset = PAX_TRUNC(delta, pax_align);
+	offset = MAX(offset, pax_align);
 
 	PAX_DPRINTF("rand=%#x l2=%#zx pax_align=%#zx delta=%#zx offset=%#jx",
 	    rand, l2, pax_align, delta, (uintmax_t)offset);
@@ -608,9 +609,9 @@ pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
 	if (pax_aslr_flags & PAX_ASLR_EXEC_OFFSET)
 		goto out;
 #endif
-	return pax_aslr_offset(align) + PAGE_SIZE;
+	return pax_aslr_offset(align);
 out:
-	return MAX(align, PAGE_SIZE);
+	return 0;
 }
 
 voff_t

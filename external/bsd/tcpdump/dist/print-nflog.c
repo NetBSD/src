@@ -25,23 +25,29 @@
  * DAMAGE.
  */
 
-#define NETDISSECT_REWORKED
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-nflog.c,v 1.1.1.3.4.1 2017/04/21 16:52:35 bouyer Exp $");
+#endif
+
+/* \summary: DLT_NFLOG printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 #if defined(DLT_NFLOG) && defined(HAVE_PCAP_NFLOG_H)
 #include <pcap/nflog.h>
 
 static const struct tok nflog_values[] = {
 	{ AF_INET,		"IPv4" },
-#ifdef INET6
+#ifdef AF_INET6
 	{ AF_INET6,		"IPv6" },
-#endif /*INET6*/
+#endif /*AF_INET6*/
 	{ 0,			NULL }
 };
 
@@ -81,7 +87,7 @@ nflog_if_print(netdissect_options *ndo,
 		return h_size;
 	}
 
-	if (!(hdr->nflog_version) == 0) {
+	if (hdr->nflog_version != 0) {
 		ND_PRINT((ndo, "version %u (unknown)", hdr->nflog_version));
 		return h_size;
 	}

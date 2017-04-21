@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $ */
+/* $NetBSD: fenv.c,v 1.1.4.1 2017/04/21 16:53:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.1.4.1 2017/04/21 16:53:11 bouyer Exp $");
+
+#include "namespace.h"
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -41,6 +43,23 @@ __RCSID("$NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
 
 #include <riscv/sysreg.h>
 
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
+
 /*
  * The following constant represents the default floating-point environment
  * (that is, the one installed at program startup) and has type pointer to
@@ -50,7 +69,7 @@ __RCSID("$NetBSD: fenv.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
  * that manage the floating-point environment, namely fesetenv() and
  * feupdateenv().
  */
-fenv_t __fe_dfl_env = __SHIFTIN(FCSR_FRM_RNE, FCSR_FRM);
+const fenv_t __fe_dfl_env = __SHIFTIN(FCSR_FRM_RNE, FCSR_FRM);
 
 /*
  * The feclearexcept() function clears the supported floating-point exceptions

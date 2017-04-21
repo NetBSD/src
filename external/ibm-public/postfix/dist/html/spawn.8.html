@@ -16,9 +16,10 @@ SPAWN(8)                                                              SPAWN(8)
        The  <a href="spawn.8.html"><b>spawn</b>(8)</a> daemon provides the Postfix equivalent of <b>inetd</b>.  It lis-
        tens on a port as specified in the Postfix <a href="master.5.html"><b>master.cf</b></a> file and spawns an
        external  command whenever a connection is established.  The connection
-       can be made over local IPC (such as UNIX-domain sockets) or  over  non-
-       local  IPC (such as TCP sockets).  The command's standard input, output
-       and error streams are connected directly to the communication endpoint.
+       can be made over local  IPC  (such  as  UNIX-domain  sockets)  or  over
+       non-local  IPC  (such  as  TCP sockets).  The command's standard input,
+       output and error streams are connected directly  to  the  communication
+       endpoint.
 
        This daemon expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process manager.
 
@@ -137,6 +138,11 @@ SPAWN(8)                                                              SPAWN(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                       SPAWN(8)
 </pre> </body> </html>

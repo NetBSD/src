@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_template.h,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: bounce_template.h,v 1.1.1.1.36.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 #ifndef _BOUNCE_TEMPLATE_H_INCLUDED_
 #define _BOUNCE_TEMPLATE_H_INCLUDED_
@@ -52,7 +52,7 @@ typedef struct BOUNCE_TEMPLATE {
 #define bounce_template_encoding(t)	((t)->mime_encoding)
 #define bounce_template_charset(t)	((t)->mime_charset)
 
-typedef int (*BOUNCE_XP_PRN_FN) (VSTREAM *, const char *, ...);
+typedef int PRINTFPTRLIKE(2, 3) (*BOUNCE_XP_PRN_FN) (VSTREAM *, const char *,...);
 typedef int (*BOUNCE_XP_PUT_FN) (VSTREAM *, const char *);
 
 extern BOUNCE_TEMPLATE *bounce_template_create(const BOUNCE_TEMPLATE *);

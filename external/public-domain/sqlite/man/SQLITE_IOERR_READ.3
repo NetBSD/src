@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE_IOERR_READ 3
 .Os
 .Sh NAME
@@ -56,7 +56,8 @@
 .Nm SQLITE_NOTICE_RECOVER_WAL ,
 .Nm SQLITE_NOTICE_RECOVER_ROLLBACK ,
 .Nm SQLITE_WARNING_AUTOINDEX ,
-.Nm SQLITE_AUTH_USER
+.Nm SQLITE_AUTH_USER ,
+.Nm SQLITE_OK_LOAD_PERMANENTLY
 .Nd Extended Result Codes
 .Sh SYNOPSIS
 .Fd #define SQLITE_IOERR_READ
@@ -114,6 +115,7 @@
 .Fd #define SQLITE_NOTICE_RECOVER_ROLLBACK
 .Fd #define SQLITE_WARNING_AUTOINDEX
 .Fd #define SQLITE_AUTH_USER
+.Fd #define SQLITE_OK_LOAD_PERMANENTLY
 .Sh DESCRIPTION
 In its default configuration, SQLite API routines return one of 30
 integer result codes.
@@ -122,8 +124,8 @@ coarse-grained.
 They do not provide as much information about problems as programmers
 might like.
 In an effort to address this, newer versions of SQLite (version 3.3.8
-and later) include support for additional result codes that provide
-more detailed information about errors.
+dateof:3.3.8 and later) include support for additional
+result codes that provide more detailed information about errors.
 These extended result codes are enabled or disabled
 on a per database connection basis using the sqlite3_extended_result_codes()
 API.

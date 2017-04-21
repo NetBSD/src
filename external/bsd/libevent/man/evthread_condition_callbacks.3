@@ -1,10 +1,8 @@
-.TH "evthread_condition_callbacks" 3 "Tue Jan 27 2015" "libevent" \" -*- nroff -*-
+.TH "evthread_condition_callbacks" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-evthread_condition_callbacks \- 
-.PP
-This structure describes the interface a threading library uses for condition variables\&.  
+evthread_condition_callbacks \- This structure describes the interface a threading library uses for condition variables\&.  
 
 .SH SYNOPSIS
 .br
@@ -42,7 +40,7 @@ This structure describes the interface a threading library uses for condition va
 It's used to tell evthread_set_condition_callbacks how to use locking on this platform\&. 
 .SH "Field Documentation"
 .PP 
-.SS "void*(* evthread_condition_callbacks::alloc_condition)(unsigned condtype)"
+.SS "void*(* evthread_condition_callbacks::alloc_condition) (unsigned condtype)"
 
 .PP
 Function to allocate and initialize a new condition variable\&. Returns the condition variable on success, and NULL on failure\&. The 'condtype' argument will be 0 with this API version\&. 
@@ -50,15 +48,15 @@ Function to allocate and initialize a new condition variable\&. Returns the cond
 
 .PP
 The current version of the conditions API\&. Set this to EVTHREAD_CONDITION_API_VERSION 
-.SS "void(* evthread_condition_callbacks::free_condition)(void *cond)"
+.SS "void(* evthread_condition_callbacks::free_condition) (void *cond)"
 
 .PP
 Function to free a condition variable\&. 
-.SS "int(* evthread_condition_callbacks::signal_condition)(void *cond, int broadcast)"
+.SS "int(* evthread_condition_callbacks::signal_condition) (void *cond, int broadcast)"
 
 .PP
 Function to signal a condition variable\&. If 'broadcast' is 1, all threads waiting on 'cond' should be woken; otherwise, only on one thread is worken\&. Should return 0 on success, -1 on failure\&. This function will only be called while holding the associated lock for the condition\&. 
-.SS "int(* evthread_condition_callbacks::wait_condition)(void *cond, void *lock, const struct timeval *timeout)"
+.SS "int(* evthread_condition_callbacks::wait_condition) (void *cond, void *lock, const struct timeval *timeout)"
 
 .PP
 Function to wait for a condition variable\&. The lock 'lock' will be held when this function is called; should be released while waiting for the condition to be come signalled, and should be held again when this function returns\&. If timeout is provided, it is interval of seconds to wait for the event to become signalled; if it is NULL, the function should wait indefinitely\&.

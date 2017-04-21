@@ -1,4 +1,4 @@
-/* $NetBSD: ibmcd.c,v 1.2 2016/07/14 10:19:06 msaitoh Exp $ */
+/* $NetBSD: ibmcd.c,v 1.2.4.1 2017/04/21 16:53:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 2012 Marc Balmer <marc@msys.ch>
@@ -114,7 +114,8 @@ ibmcd_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": IBM 4810 BSP cash drawer\n");
 
 #if (__NetBSD_Version__ >= 600000000)
-	pmf_device_register(self, ibmcd_suspend, ibmcd_resume);
+	if (!pmf_device_register(self, ibmcd_suspend, ibmcd_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 #endif
 	/* Initialize pins array */
 	sc->sc_gpio_pins[PIN_OPEN].pin_num = 0;

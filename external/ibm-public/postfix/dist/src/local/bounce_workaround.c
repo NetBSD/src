@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_workaround.c,v 1.1.1.4 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: bounce_workaround.c,v 1.1.1.4.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,7 @@
 /*	Attributes describing alias, include or forward expansion.
 /*	A table with the results from expanding aliases or lists.
 /*	A table with delivered-to: addresses taken from the message.
+/* 	The non-delivery status must be either 4.X.X or 5.X.X.
 /* DIAGNOSTICS
 /*	Fatal errors: out of memory. The result is non-zero when
 /*	the operation should be tried again. Warnings: malformed
@@ -123,10 +124,13 @@ int     bounce_workaround(LOCAL_STATE state)
 	    SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
 	}
 	myfree(owner_alias);
-	if (alias_maps->error != 0)
+	if (alias_maps->error != 0) {
 	    /* At this point, canon_owner == 0. */
+	    dsb_simple(state.msg_attr.why, "4.3.0",
+		       "alias database unavailable");
 	    return (defer_append(BOUNCE_FLAGS(state.request),
 				 BOUNCE_ATTR(state.msg_attr)));
+	}
     }
 
     /*
@@ -134,8 +138,11 @@ int     bounce_workaround(LOCAL_STATE state)
      * substitute sender address, before completion of the delivery request.
      */
     if (canon_owner) {
-	rcpt_stat = bounce_one(BOUNCE_FLAGS(state.request),
-			       BOUNCE_ONE_ATTR(state.msg_attr));
+	rcpt_stat =
+	    (STR(state.msg_attr.why->status)[0] == '4' ?
+	     defer_one : bounce_one)
+	    (BOUNCE_FLAGS(state.request),
+	     BOUNCE_ONE_ATTR(state.msg_attr));
 	vstring_free(canon_owner);
     }
 
@@ -144,8 +151,11 @@ int     bounce_workaround(LOCAL_STATE state)
      * delivery request.
      */
     else {
-	rcpt_stat = bounce_append(BOUNCE_FLAGS(state.request),
-				  BOUNCE_ATTR(state.msg_attr));
+	rcpt_stat =
+	    (STR(state.msg_attr.why->status)[0] == '4' ?
+	     defer_append : bounce_append)
+	    (BOUNCE_FLAGS(state.request),
+	     BOUNCE_ATTR(state.msg_attr));
     }
     return (rcpt_stat);
 }

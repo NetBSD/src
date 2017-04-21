@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_debug.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: thr_debug.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* thr_debug.c - wrapper around the chosen thread wrapper, for debugging. */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,6 +99,9 @@
  *                 Purify reports these as "potential leaks" (PLK).
  *                 I have not checked other malloc debuggers.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: thr_debug.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

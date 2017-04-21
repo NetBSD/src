@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.27 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.27.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -18,7 +18,7 @@ options 	ALLWINNER_A31
 options 	AWIN_CONSOLE_EARLY
 options 	AWIN_GPIO_IGNORE_FW
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 makeoptions	DEBUG="-g"	# compile full symbol table

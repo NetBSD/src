@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.35 2016/08/20 12:37:06 hannken Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.35.2.1 2017/04/21 16:54:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.35 2016/08/20 12:37:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.35.2.1 2017/04/21 16:54:00 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ cd9660_done(void)
 int
 cd9660_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -116,7 +116,6 @@ cd9660_inactive(void *v)
 	 */
 	ip->i_flag = 0;
 	*ap->a_recycle = (ip->inode.iso_mode == 0);
-	VOP_UNLOCK(vp);
 	return error;
 }
 

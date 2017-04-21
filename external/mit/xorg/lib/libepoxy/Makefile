@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/08/18 07:44:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2017/04/21 16:52:58 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,8 @@ CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/src
 CPPFLAGS+=	${X11FLAGS.CONNECTION}
 
 PKGCONFIG=	epoxy
+PKGCONFIG_SED_FLAGS= \
+        -e "s,@DLOPEN_LIBS@,,"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

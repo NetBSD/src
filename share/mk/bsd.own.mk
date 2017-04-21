@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1002 2017/01/10 13:47:18 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1002.2.1 2017/04/21 16:53:20 bouyer Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -718,6 +718,9 @@ DEBUGGRP?=	wheel
 DEBUGOWN?=	root
 DEBUGMODE?=	${NONBINMODE}
 
+MKDIRMODE?=	0755
+MKDIRPERM?=	-m ${MKDIRMODE}
+
 #
 # Data-driven table using make variables to control how
 # toolchain-dependent targets and shared libraries are built
@@ -964,23 +967,24 @@ MKCOMPATMODULES:=	no
 .endif
 
 #
-# Default mips64 to softfloat now.
-# arm is always softfloat unless it isn't
-# emips is always softfloat.
-# coldfire is always softfloat
-# or1k is always softfloat
+# These platforms use softfloat by default.
 #
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
-    (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
-    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
-    ${MACHINE} == "emips"
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 MKSOFTFLOAT?=	yes
+.endif
+
+#
+# These platforms always use softfloat.
+#
+.if (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
+    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
+    ${MACHINE} == "emips" || ${MACHINE_CPU} == "sh3"
+MKSOFTFLOAT=	yes
 .endif
 
 .if ${MACHINE} == "emips"
 SOFTFLOAT_BITS=	32
 .endif
-
 
 #
 # We want to build zfs only for amd64 by default for now.
@@ -992,15 +996,15 @@ MKZFS?=		yes
 #
 # DTrace works on amd64, i386 and earm*
 #
-
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
     !empty(MACHINE_ARCH:Mearm*)
 MKDTRACE?=	yes
 MKCTF?=		yes
 .endif
+
 #
-# PIE is enabled on amd64 by default
+# PIE is enabled on many platforms by default.
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
@@ -1094,23 +1098,28 @@ MKARZERO ?= ${MKREPRO}
 
 #
 # MK* options which default to "no".  Note that MKZFS has a different
-# default for some platforms, see above.
+# default for some platforms, see above.  Please keep alphabetically
+# sorted with at most one letter per line.
 #
 _MKVARS.no= \
 	MKARZERO \
 	MKBSDGREP MKBSDTAR \
-	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCRYPTO_RC5 MKCTF MKDEBUG \
-	MKDEBUGLIB MKDTRACE MKEXTSRC MKGROFFHTMLDOC \
-	MKKYUA MKLLD MKLLDB MKLINT \
-	MKMANZ MKMCLINKER MKOBJDIRS \
-	MKSLJIT \
-	MKLIBCXX MKLLVM MKNSD MKPCC \
-	MKPIGZGZIP \
-	MKRADEONFIRMWARE \
-	MKREPRO \
-	MKSOFTFLOAT MKSTRIPIDENT MKTPM \
-	MKXORG_SERVER \
-	MKUNPRIVED MKUPDATE MKX11 MKX11MOTIF MKZFS
+	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCRYPTO_RC5 MKCTF \
+	MKDEBUG MKDEBUGLIB MKDTRACE \
+	MKEXTSRC \
+	MKGROFFHTMLDOC \
+	MKKYUA \
+	MKLIBCXX MKLLD MKLLDB MKLLVM MKLINT \
+	MKMANZ MKMCLINKER \
+	MKNSD \
+	MKOBJDIRS \
+	MKPCC MKPIGZGZIP \
+	MKRADEONFIRMWARE MKREPRO \
+	MKSLJIT MKSOFTFLOAT MKSTRIPIDENT \
+	MKTPM \
+	MKUNPRIVED MKUPDATE \
+	MKX11 MKX11MOTIF MKXORG_SERVER \
+	MKZFS
 .for var in ${_MKVARS.no}
 ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
 .endfor
@@ -1401,7 +1410,7 @@ HAVE_XORG_GLAMOR?=	no
 
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \
-	xkbcomp xorg-cf-files imake xbiff xkeyboard-config \
+	xorg-cf-files imake xbiff xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
 	glu glw mesa-demos MesaGLUT MesaLib MesaLib7 \
@@ -1416,7 +1425,7 @@ HAVE_XORG_GLAMOR?=	no
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xtrap xkbutils xkbcomp \
-	xkeyboard-config xinput xcb-util xorg-docs \
+	xinput xcb-util xorg-docs \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \

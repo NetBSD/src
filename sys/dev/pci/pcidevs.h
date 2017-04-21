@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1270 2017/01/15 04:44:01 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1270.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1278 2017/01/15 04:43:27 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1286 2017/04/19 06:53:52 msaitoh Exp
  */
 
 /*
@@ -639,6 +639,7 @@
 #define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale Semiconductor */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
+#define	PCI_VENDOR_HUAWEI	0x19e5		/* Huaewi Technology */
 #define	PCI_VENDOR_ASPEED	0x1a03		/* ASPEED Technology */
 #define	PCI_VENDOR_AWT	0x1a3b		/* AWT */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
@@ -1803,6 +1804,9 @@
 #define	PCI_PRODUCT_BROADCOM_BCM57785	0x16b5		/* BCM57785 Integrated Gigabit Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57795	0x16b6		/* BCM57795 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM57782	0x16b7		/* BCM57782 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_SDMMC	0x16bc		/* BCM577x5 SDMMC */
+#define	PCI_PRODUCT_BROADCOM_MS	0x16be		/* BCM577x5 Memstick */
+#define	PCI_PRODUCT_BROADCOM_XD	0x16bf		/* BCM577x5 xD */
 #define	PCI_PRODUCT_BROADCOM_BCM5702_ALT	0x16c6		/* BCM5702 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5703_ALT	0x16c7		/* BCM5703 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5781	0x16dd		/* BCM5781 Integrated Gigabit Ethernet */
@@ -1810,7 +1814,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5753M	0x16fd		/* BCM5753M 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5753F	0x16fe		/* BCM5753F 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5903M	0x16ff		/* BCM5903M 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_BROADCOM_BCM4401_B0	0x170c		/* BCM4401-B0 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM4401_B1	0x170c		/* BCM4401-B1 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901	0x170d		/* BCM5901 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5901A2	0x170e		/* BCM5901A 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_BCM5906	0x1712		/* BCM5906 NetLink Fast Ethernet */
@@ -1839,6 +1843,8 @@
 #define	PCI_PRODUCT_BROADCOM_BCM43227	0x4358		/* BCM43227 2.4GHz 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM43228	0x4359		/* BCM43228 Dualband 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM4401_B0	0x4401		/* BCM4401-B0 10/100 Ethernet */
+#define	PCI_PRODUCT_BROADCOM_BCM4727	0x4727		/* BCM4727 802.11b/g/n */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5805	0x5805		/* 5805 Security Processor */
@@ -2550,6 +2556,9 @@
 #define	PCI_PRODUCT_HITACHI_SH7751	0x3505		/* SH7751 PCI Controller */
 #define	PCI_PRODUCT_HITACHI_SH7751R	0x350e		/* SH7751R PCI Controller */
 
+/* Huawei products */
+#define	PCI_PRODUCT_HUAWEI_HI1710	0x1711		/* Hi1710 BMC */
+
 /* IBM products */
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
 #define	PCI_PRODUCT_IBM_ALTALITE	0x0005		/* CPU Bridge - Alta Lite */
@@ -2765,6 +2774,7 @@
 #define	PCI_PRODUCT_INTEL_CORE4G_S_ULT_GT3	0x0a2a		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_1	0x0a2b		/* HD Graphics */
 #define	PCI_PRODUCT_INTEL_CORE4G_R_ULT_GT3_2	0x0a2e		/* Iris Graphics 5100 */
+#define	PCI_PRODUCT_INTEL_DC_P3520_SSD	0x0a53		/* SSD DC P3520 */
 #define	PCI_PRODUCT_INTEL_HASWELL_HOST_DRAM	0x0c00		/* Haswell Host Bridge, DRAM */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE16	0x0c01		/* Haswell PCI-E x16 Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_PCIE8	0x0c05		/* Haswell PCI-E x8 Controller */
@@ -3446,7 +3456,8 @@
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_8260_2	0x24f4		/* Dual Band Wireless AC 8260 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_4165_1	0x24f5		/* Dual Band Wireless AC 4165 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_4165_2	0x24f6		/* Dual Band Wireless AC 4165 */
-#define	PCI_PRODUCT_INTEL_WIFI_LINK_8265_2	0x24fd		/* Dual Band Wireless AC 8265 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_3168	0x24fb		/* Dual Band Wireless AC 3168 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_8265	0x24fd		/* Dual Band Wireless AC 8265 */
 #define	PCI_PRODUCT_INTEL_82820_MCH	0x2501		/* 82820 MCH (Camino) */
 #define	PCI_PRODUCT_INTEL_82820_AGP	0x250f		/* 82820 AGP */
 #define	PCI_PRODUCT_INTEL_82850_HB	0x2530		/* 82850 Host */
@@ -4547,6 +4558,7 @@
 #define	PCI_PRODUCT_INTEL_PINEVIEW_IGD_1	0xa002		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGD	0xa011		/* Pineview Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGD_1	0xa012		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_Z170_AHCI	0xa102		/* Z170 AHCI */
 #define	PCI_PRODUCT_INTEL_Z170_3RD_AHCI	0xa106		/* Z170 3rd Party RAID */
 #define	PCI_PRODUCT_INTEL_100SERIES_PCIE_1	0xa110		/* 100 Series PCIE */
@@ -5468,6 +5480,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9800_GT	0x0614		/* GeForce 9800 GT */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9600_GT	0x0622		/* GeForce 9600 GT */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9500_GT	0x0640		/* GeForce 9500 GT */
+#define	PCI_PRODUCT_NVIDIA_TESLA_M2050	0x06de		/* GF100GL (Tesla M2050) */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_9300_GE_1	0x06e0		/* GeForce 9300 GE */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE8400GS	0x06e4		/* GeForce 8400 GS */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE9300M_GS	0x06e9		/* GeForce 9300M GS */
@@ -5533,6 +5546,9 @@
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_11	0x0ada		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_12	0x0adb		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_210_HDA	0x0be3		/* GeForce 210 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_GF100_HDA	0x0be5		/* GF100 HD Audio */
+#define	PCI_PRODUCT_NVIDIA_GF108_HDA	0x0bea		/* GF108 HD Audio */
+#define	PCI_PRODUCT_NVIDIA_GF116_HDA	0x0bee		/* GF116 HD Audio */
 #define	PCI_PRODUCT_NVIDIA_GF_GT640M	0x0fd2		/* GeForce GT 640M */
 #define	PCI_PRODUCT_NVIDIA_GT520	0x1040		/* GeForce GT 520 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_510	0x1042		/* GeForce 510 */
@@ -5848,6 +5864,7 @@
 #define	PCI_PRODUCT_RDC_R6061_EHCI	0x6061		/* R6061 USB EHCI */
 
 /* Realtek products */
+#define	PCI_PRODUCT_REALTEK_RTS5208	0x5208		/* RTS5208 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5209	0x5209		/* RTS5209 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5227	0x5227		/* RTS5227 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5229	0x5229		/* RTS5229 PCI-E Card Reader */

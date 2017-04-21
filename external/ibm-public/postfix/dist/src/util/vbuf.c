@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf.c,v 1.1.1.2 2013/01/02 18:59:14 tron Exp $	*/
+/*	$NetBSD: vbuf.c,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -25,12 +25,12 @@
 /*
 /*	ssize_t	vbuf_read(bp, buf, len)
 /*	VBUF	*bp;
-/*	char	*buf;
+/*	void	*buf;
 /*	ssize_t	len;
 /*
 /*	ssize_t	vbuf_write(bp, buf, len)
 /*	VBUF	*bp;
-/*	const char *buf;
+/*	const void *buf;
 /*	ssize_t	len;
 /*
 /*	int	vbuf_err(bp)
@@ -97,7 +97,7 @@
 /*
 /*	vbuf_timeout() is a macro that returns non-zero if a timeout error
 /*	condition was detected while reading or writing the buffer. The
-/*	error status can be reset by calling vbuf_clearerr(). 
+/*	error status can be reset by calling vbuf_clearerr().
 /*
 /*	vbuf_err() is a macro that returns non-zero if a non-EOF error
 /*	(including timeout) condition was detected while reading or writing
@@ -158,7 +158,7 @@
 int     vbuf_unget(VBUF *bp, int ch)
 {
     if ((ch & 0xff) != ch || -bp->cnt >= bp->len) {
-	bp->flags |= VBUF_FLAG_RD_ERR;		/* This error affects reads! */
+	bp->flags |= VBUF_FLAG_RD_ERR;	/* This error affects reads! */
 	return (VBUF_EOF);
     } else {
 	bp->cnt--;
@@ -183,10 +183,10 @@ int     vbuf_put(VBUF *bp, int ch)
 
 /* vbuf_read - bulk read from buffer */
 
-ssize_t vbuf_read(VBUF *bp, char *buf, ssize_t len)
+ssize_t vbuf_read(VBUF *bp, void *buf, ssize_t len)
 {
     ssize_t count;
-    char   *cp;
+    void   *cp;
     ssize_t n;
 
 #if 0
@@ -209,10 +209,10 @@ ssize_t vbuf_read(VBUF *bp, char *buf, ssize_t len)
 
 /* vbuf_write - bulk write to buffer */
 
-ssize_t vbuf_write(VBUF *bp, const char *buf, ssize_t len)
+ssize_t vbuf_write(VBUF *bp, const void *buf, ssize_t len)
 {
     ssize_t count;
-    const char *cp;
+    const void *cp;
     ssize_t n;
 
 #if 0

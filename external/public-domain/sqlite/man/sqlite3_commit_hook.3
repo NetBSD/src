@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_COMMIT_HOOK 3
 .Os
 .Sh NAME
@@ -6,13 +6,13 @@
 .Nm sqlite3_rollback_hook
 .Nd Commit And Rollback Notification Callbacks
 .Sh SYNOPSIS
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_commit_hook
 .Fa "sqlite3*"
 .Fa "int(*)(void*)"
 .Fa "void*"
 .Fc
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_rollback_hook
 .Fa "sqlite3*"
 .Fa "void(*)(void *)"

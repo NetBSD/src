@@ -1,10 +1,10 @@
-/*	$NetBSD: tools.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: tools.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* tools.c - tools for slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tools.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -834,6 +837,11 @@ int bdb_tool_entry_reindex(
 		return -1;
 	}
 
+	op.o_hdr = &ohdr;
+	op.o_bd = be;
+	op.o_tmpmemctx = NULL;
+	op.o_tmpmfuncs = &ch_mfuncs;
+
 	if (! (slapMode & SLAP_TOOL_QUICK)) {
 	rc = TXN_BEGIN( bi->bi_dbenv, NULL, &tid, bi->bi_db_opflags );
 	if( rc != 0 ) {
@@ -857,11 +865,6 @@ int bdb_tool_entry_reindex(
 	Debug( LDAP_DEBUG_TRACE,
 		"=> " LDAP_XSTRING(bdb_tool_entry_reindex) "( %ld, \"%s\" )\n",
 		(long) id, e->e_dn, 0 );
-
-	op.o_hdr = &ohdr;
-	op.o_bd = be;
-	op.o_tmpmemctx = NULL;
-	op.o_tmpmfuncs = &ch_mfuncs;
 
 	rc = bdb_tool_index_add( &op, tid, e );
 

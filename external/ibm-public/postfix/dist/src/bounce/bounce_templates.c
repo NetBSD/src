@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_templates.c,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: bounce_templates.c,v 1.1.1.1.36.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -240,7 +240,7 @@ void    bounce_templates_free(BOUNCE_TEMPLATES *bs)
     bounce_template_free(bs->delay);
     bounce_template_free(bs->success);
     bounce_template_free(bs->verify);
-    myfree((char *) bs);
+    myfree((void *) bs);
 }
 
 /* bounce_templates_load - load template or group from stream */
@@ -301,7 +301,7 @@ void    bounce_templates_load(VSTREAM *fp, BOUNCE_TEMPLATES *ts)
 	    }
 	    if (vstream_feof(fp))
 		msg_warn("%s, line %d: missing \"%s\" end marker",
-			  VSTREAM_PATH(fp), lineno, value);
+			 VSTREAM_PATH(fp), lineno, value);
 	    member_name = STR(saved_member_name);
 	    value = STR(multi_line_buf);
 	}

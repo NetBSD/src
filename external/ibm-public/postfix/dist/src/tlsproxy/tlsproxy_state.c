@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy_state.c,v 1.1.1.2 2013/01/02 18:59:10 tron Exp $	*/
+/*	$NetBSD: tlsproxy_state.c,v 1.1.1.2.16.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -127,7 +127,7 @@ void    tlsp_state_free(TLSP_STATE *state)
 	(void) close(state->ciphertext_fd);
     }
     if (state->ciphertext_timer)
-	event_cancel_timer(state->ciphertext_timer, (char *) state);
+	event_cancel_timer(state->ciphertext_timer, (void *) state);
     if (state->remote_endpt) {
 	msg_info("DISCONNECT %s", state->remote_endpt);
 	myfree(state->remote_endpt);
@@ -136,7 +136,7 @@ void    tlsp_state_free(TLSP_STATE *state)
 	myfree(state->server_id);
     if (state->tls_context)
 	tls_free_context(state->tls_context);
-    myfree((char *) state);
+    myfree((void *) state);
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.5 2016/05/14 21:19:05 chs Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.5.4.1 2017/04/21 16:52:40 bouyer Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -47,10 +47,9 @@ uintptr_t kernelbase = (uintptr_t)KERN_BASE;
 
 #define INKERNEL(va) ((intptr_t)(va) < 0)
 
-struct amd64_frame {     
+struct amd64_frame {
 	struct amd64_frame	*f_frame;
-	uintptr_t		 f_retaddr; 
-	uintptr_t		 f_arg0;
+	uintptr_t		 f_retaddr;
 };
 
 typedef unsigned long vm_offset_t;
@@ -355,7 +354,8 @@ dtrace_getarg(int arg, int aframes)
 	for (i = 1; i <= aframes; i++) {
 		fp = fp->f_frame;
 
-		if (fp->f_retaddr == (long)dtrace_invop_callsite) {
+		if (P2ROUNDUP(fp->f_retaddr, 16) ==
+		    (long)dtrace_invop_callsite) {
 			/*
 			 * In the case of amd64, we will use the pointer to the
 			 * regs structure that was pushed when we took the
@@ -369,13 +369,36 @@ dtrace_getarg(int arg, int aframes)
 			 * we're seeking is passed in registers, we can just
 			 * load it directly.
 			 */
-			struct reg *rp = (struct reg *)((uintptr_t)&fp[1] +
-			    sizeof (uintptr_t));
+			struct trapframe *tf = (struct trapframe *)&fp[1];
 
 			if (arg <= inreg) {
-				stack = (uintptr_t *)&rp->regs[_REG_RDI];
+				switch (arg) {
+				case 0:
+					stack = (uintptr_t *)&tf->tf_rdi;
+					break;
+				case 1:
+					stack = (uintptr_t *)&tf->tf_rsi;
+					break;
+				case 2:
+					stack = (uintptr_t *)&tf->tf_rdx;
+					break;
+				case 3:
+					stack = (uintptr_t *)&tf->tf_rcx;
+					break;
+				case 4:
+					stack = (uintptr_t *)&tf->tf_r8;
+					break;
+				case 5:
+					stack = (uintptr_t *)&tf->tf_r9;
+					break;
+				default:
+					KASSERT(0);
+					stack = NULL;
+					break;
+				}
+				arg = 0;
 			} else {
-				stack = (uintptr_t *)(rp->regs[_REG_RSP]);
+				stack = (uintptr_t *)(tf->tf_rsp);
 				arg -= inreg;
 			}
 			goto load;

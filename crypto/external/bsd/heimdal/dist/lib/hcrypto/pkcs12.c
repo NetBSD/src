@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs12.c,v 1.1.1.2 2014/04/24 12:45:30 pettai Exp $	*/
+/*	$NetBSD: pkcs12.c,v 1.1.1.2.10.1 2017/04/21 16:50:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -34,15 +34,11 @@
  */
 
 #include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <krb5/roken.h>
 #include <assert.h>
 
 #include <pkcs12.h>
 #include <bn.h>
-
-#include <krb5/roken.h>
 
 int
 PKCS12_key_gen(const void *key, size_t keylen,

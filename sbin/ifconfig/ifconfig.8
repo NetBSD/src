@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.111 2016/09/11 22:10:47 sevan Exp $
+.\"	$NetBSD: ifconfig.8,v 1.111.2.1 2017/04/21 16:53:13 bouyer Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd January 7, 2016.
+.Dd January 19, 2017
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -462,7 +462,7 @@ wireless clients directly (default).
 .It Fl apbridge
 .Pq IEEE 802.11 devices only
 When operating as an access point, pass packets through
-the system so that they can be forwared using some other mechanism.
+the system so that they can be forwarded using some other mechanism.
 Disabling the internal bridging is useful when traffic
 is to be processed with packet filtering.
 .It Cm pass Ar passphrase
@@ -509,8 +509,7 @@ flag may be used to display long SSIDs.
 also causes received information elements to be displayed symbolically.
 The interface must be up before any scanning operation.
 Only the super-user can use this command.
-.It Cm tunnel Ar src_addr Ns Oo Ar ,src_port Oc Ar dest_addr Ns Oo Ar ,dest_port
-.Oc
+.It Cm tunnel Ar src_addr Ns Oo Ar ,src_port Oc Ar dest_addr Ns Oo Ar ,dest_port Oc
 .Pq IP tunnel devices only
 Configure the physical source and destination address for IP tunnel
 interfaces, including
@@ -534,6 +533,25 @@ UDP header.
 Unconfigure the physical source and destination address for IP tunnel
 interfaces previously configured with
 .Cm tunnel .
+.It Cm session Ar local_session Ar remote_session
+.Pq L2TPv3 devices only
+Configure local session id and remote session id for L2TPv3
+interface.
+The length of session id is 4 bytes.
+.It Cm deletesession
+Unconfigure the local session id and remote session id for
+L2TPv3 interface previously configured with
+.Cm session .
+.It Cm cookie Ar local_cookie_length Ar local_cookie  Ar remote_cookie_length Ar remote_cookie
+.Pq L2TPv3 devices only
+Configure local cookie and remote cookie for L2TPv3 interface.
+The cookie length must be 4 or 8 bytes.
+Generally, cookies are managed by daemon.
+So, this command would be used for test or debug only.
+.It Cm deletecookie
+Unconfigure the local cookie and remote cookie for L2TPv3
+interface previously configured with
+.Cm cookie .
 .It Cm create
 Create the specified network pseudo-device.
 .It Cm destroy

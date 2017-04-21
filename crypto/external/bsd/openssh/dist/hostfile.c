@@ -1,6 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.67 2016/09/17 18:00:27 tedu Exp $ */
-
+/*	$NetBSD: hostfile.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.68 2017/03/10 04:26:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -421,19 +420,24 @@ write_host_entry(FILE *f, const char *host, const char *ip,
     const struct sshkey *key, int store_hash)
 {
 	int r, success = 0;
-	char *hashed_host = NULL;
+	char *hashed_host = NULL, *lhost;
+
+	lhost = xstrdup(host);
+	lowercase(lhost);
 
 	if (store_hash) {
-		if ((hashed_host = host_hash(host, NULL, 0)) == NULL) {
+		if ((hashed_host = host_hash(lhost, NULL, 0)) == NULL) {
 			error("%s: host_hash failed", __func__);
+			free(lhost);
 			return 0;
 		}
 		fprintf(f, "%s ", hashed_host);
 	} else if (ip != NULL)
-		fprintf(f, "%s,%s ", host, ip);
-	else
-		fprintf(f, "%s ", host);
-
+		fprintf(f, "%s,%s ", lhost, ip);
+	else {
+		fprintf(f, "%s ", lhost);
+	}
+	free(lhost);
 	if ((r = sshkey_write(key, f)) == 0)
 		success = 1;
 	else

@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_GET_AUXDATA 3
 .Os
 .Sh NAME
@@ -6,12 +6,12 @@
 .Nm sqlite3_set_auxdata
 .Nd Function Auxiliary Data
 .Sh SYNOPSIS
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_get_auxdata
 .Fa "sqlite3_context*"
 .Fa "int N"
 .Fc
-.Ft void SQLITE_STDCALL 
+.Ft void 
 .Fo sqlite3_set_auxdata
 .Fa "sqlite3_context*"
 .Fa "int N"
@@ -48,13 +48,13 @@ once, when the metadata is discarded.
 SQLite is free to discard the metadata at any time, including: 
 .Bl -bullet
 .It
-when the corresponding function parameter changes, or 
+when the corresponding function parameter changes  , or 
 .It
 when sqlite3_reset() or sqlite3_finalize()
-is called for the SQL statement, or 
+is called for the SQL statement  , or 
 .It
-when sqlite3_set_auxdata() is invoked again on the same parameter,
-or 
+when sqlite3_set_auxdata() is invoked again on the same parameter 
+, or 
 .It
 during the original sqlite3_set_auxdata() call when a memory allocation
 error occurs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_compat.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: sys_compat.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -354,7 +354,7 @@ int     inet_pton(int af, const char *src, void *dst)
 	       && strcmp(src, "255.255.255.255") != 0) {
 	return (0);
     } else {
-	memcpy(dst, (char *) &addr, sizeof(addr));
+	memcpy(dst, (void *) &addr, sizeof(addr));
 	return (1);
     }
 }

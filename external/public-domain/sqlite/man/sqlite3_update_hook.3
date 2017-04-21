@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_UPDATE_HOOK 3
 .Os
 .Sh NAME
 .Nm sqlite3_update_hook
 .Nd Data Change Notification Callbacks
 .Sh SYNOPSIS
-.Ft void *SQLITE_STDCALL 
+.Ft void *
 .Fo sqlite3_update_hook
 .Fa "sqlite3*"
 .Fa "void(*)(void *,int ,char const *,char const *,sqlite3_int64)"
@@ -39,7 +39,7 @@ The update hook is not invoked when WITHOUT ROWID tables
 are modified.
 .Pp
 In the current implementation, the update hook is not invoked when
-duplication rows are deleted because of an  ON CONFLICT REPLACE
+conflicting rows are deleted because of an  ON CONFLICT REPLACE
 clause.
 Nor is the update hook invoked when rows are deleted using the truncate optimization.
 The exceptions defined in this paragraph might change in a future release

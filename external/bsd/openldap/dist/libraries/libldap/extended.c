@@ -1,9 +1,9 @@
-/*	$NetBSD: extended.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: extended.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 
@@ -26,6 +29,57 @@
 
 #include "ldap-int.h"
 #include "ldap_log.h"
+
+BerElement *
+ldap_build_extended_req(
+	LDAP			*ld,
+	LDAP_CONST char	*reqoid,
+	struct berval	*reqdata,
+	LDAPControl		**sctrls,
+	LDAPControl		**cctrls,
+	ber_int_t		*msgidp )
+{
+	BerElement *ber;
+	int rc;
+
+	/* create a message to send */
+	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
+		return( NULL );
+	}
+
+	LDAP_NEXT_MSGID( ld, *msgidp );
+	if ( reqdata != NULL ) {
+		rc = ber_printf( ber, "{it{tstON}", /* '}' */
+			*msgidp, LDAP_REQ_EXTENDED,
+			LDAP_TAG_EXOP_REQ_OID, reqoid,
+			LDAP_TAG_EXOP_REQ_VALUE, reqdata );
+
+	} else {
+		rc = ber_printf( ber, "{it{tsN}", /* '}' */
+			*msgidp, LDAP_REQ_EXTENDED,
+			LDAP_TAG_EXOP_REQ_OID, reqoid );
+	}
+
+	if( rc == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	/* Put Server Controls */
+	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	if ( ber_printf( ber, /*{*/ "N}" ) == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	return( ber );
+}
 
 /*
  * LDAPv3 Extended Operation Request
@@ -70,42 +124,10 @@ ldap_extended_operation(
 		return( ld->ld_errno );
 	}
 
-	/* create a message to send */
-	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
-		ld->ld_errno = LDAP_NO_MEMORY;
+	ber = ldap_build_extended_req( ld, reqoid, reqdata,
+		sctrls, cctrls, &id );
+	if ( !ber )
 		return( ld->ld_errno );
-	}
-
-	LDAP_NEXT_MSGID( ld, id );
-	if ( reqdata != NULL ) {
-		rc = ber_printf( ber, "{it{tstON}", /* '}' */
-			id, LDAP_REQ_EXTENDED,
-			LDAP_TAG_EXOP_REQ_OID, reqoid,
-			LDAP_TAG_EXOP_REQ_VALUE, reqdata );
-
-	} else {
-		rc = ber_printf( ber, "{it{tsN}", /* '}' */
-			id, LDAP_REQ_EXTENDED,
-			LDAP_TAG_EXOP_REQ_OID, reqoid );
-	}
-
-	if( rc == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return( ld->ld_errno );
-	}
-
-	/* Put Server Controls */
-	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
-
-	if ( ber_printf( ber, /*{*/ "N}" ) == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return( ld->ld_errno );
-	}
 
 	/* send the message */
 	*msgidp = ldap_send_initial_request( ld, LDAP_REQ_EXTENDED, NULL, ber, id );

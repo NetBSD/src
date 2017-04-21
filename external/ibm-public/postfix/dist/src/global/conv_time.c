@@ -1,4 +1,4 @@
-/*	$NetBSD: conv_time.c,v 1.1.1.2 2011/03/02 19:32:13 tron Exp $	*/
+/*	$NetBSD: conv_time.c,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -37,6 +37,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -70,7 +75,7 @@ int     conv_time(const char *strval, int *timval, int def_unit)
     errno = 0;
     intval = longval = strtol(strval, &end, 10);
     if (*strval == 0 || errno == ERANGE || longval != intval || intval < 0
-	|| (*end != 0 && end[1] != 0))
+	/* || (*end != 0 && end[1] != 0) */)
 	return (0);
 
     switch (*end ? *end : def_unit) {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp_table.5,v 1.1.1.2 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: tcp_table.5,v 1.1.1.2.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH TCP_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix client/server table lookup protocol
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" tcp:\fIhost:port\fR
+\fBpostmap \-q "\fIstring\fB" tcp:\fIhost:port\fR
 
-\fBpostmap -q - tcp:\fIhost:port\fB <\fIinputfile\fR
+\fBpostmap \-q \- tcp:\fIhost:port\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -22,9 +22,9 @@ rewriting or mail routing. These tables are usually in
 can be directed to a TCP server.
 
 To find out what types of lookup tables your Postfix system
-supports use the "\fBpostconf -m\fR" command.
+supports use the "\fBpostconf \-m\fR" command.
 
-To test lookup tables, use the "\fBpostmap -q\fR" command as
+To test lookup tables, use the "\fBpostmap \-q\fR" command as
 described in the SYNOPSIS above.
 .SH "PROTOCOL DESCRIPTION"
 .na
@@ -71,7 +71,7 @@ the text contains an encoded version of the requested data.
 .nf
 .ad
 .fi
-In request and reply parameters, the character %, each non-printing
+In request and reply parameters, the character %, each non\-printing
 character, and each whitespace character must be replaced by %XX,
 where XX is the corresponding ASCII hexadecimal character value. The
 hexadecimal codes can be specified in any case (upper, lower, mixed).
@@ -85,7 +85,7 @@ is guaranteed to not contain the % or NEWLINE character.
 .ad
 .fi
 Do not use TCP lookup tables for security critical purposes.
-The client-server connection is not protected and the server
+The client\-server connection is not protected and the server
 is not authenticated.
 .SH BUGS
 .ad
@@ -124,3 +124,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

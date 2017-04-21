@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2005-2014 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2005-2016 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Configuring slapd
@@ -667,10 +667,8 @@ The {{EX:starttls}} parameter specifies use of the StartTLS extended
 operation to establish a TLS session before authenticating to the provider.
 If the {{EX:critical}} argument is supplied, the session will be aborted
 if the StartTLS request fails.  Otherwise the syncrepl session continues
-without TLS.  Note that the main slapd TLS settings are not used by the
-syncrepl engine; by default the TLS parameters from a {{ldap.conf}}(5)
-configuration file will be used.  TLS settings may be specified here,
-in which case any {{ldap.conf}}(5) settings will be completely ignored.
+without TLS.  The tls_reqcert setting defaults to {{EX:"demand"}} and the
+other TLS settings default to the same as the main slapd TLS settings.
 
 Rather than replicating whole entries, the consumer can query logs
 of data modifications.  This mode of operation is referred to as

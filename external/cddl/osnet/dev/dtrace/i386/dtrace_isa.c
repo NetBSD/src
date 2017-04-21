@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.4 2016/05/14 21:19:05 chs Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.4.4.1 2017/04/21 16:52:40 bouyer Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -45,7 +45,6 @@ uintptr_t kernelbase = (uintptr_t)KERNBASE;
 struct i386_frame {
 	struct i386_frame	*f_frame;
 	int			 f_retaddr;
-	int			 f_arg0;
 };
 
 typedef	unsigned long	vm_offset_t;
@@ -405,24 +404,29 @@ zero:
 uint64_t
 dtrace_getarg(int arg, int aframes)
 {
-	uintptr_t val;
+	struct trapframe *frame;
 	struct i386_frame *fp = (struct i386_frame *)dtrace_getfp();
-	uintptr_t *stack;
+	uintptr_t *stack, val;
 	int i;
 
 	for (i = 1; i <= aframes; i++) {
 		fp = fp->f_frame;
 
-		if (fp->f_retaddr == (long)dtrace_invop_callsite) {
+		if (P2ROUNDUP(fp->f_retaddr, 16) ==
+		    (long)dtrace_invop_callsite) {
 			/*
 			 * If we pass through the invalid op handler, we will
-			 * use the pointer that it passed to the stack as the
-			 * second argument to dtrace_invop() as the pointer to
-			 * the stack.  When using this stack, we must step
-			 * beyond the EIP/RIP that was pushed when the trap was
-			 * taken -- hence the "+ 1" below.
+			 * use the trap frame pointer that it pushed on the
+			 * stack as the second argument to dtrace_invop() as
+			 * the pointer to the stack.
 			 */
-			stack = ((uintptr_t **)&fp[1])[1] + 1;
+			frame = (struct trapframe *)(((uintptr_t **)&fp[1])[1]);
+
+			/*
+			 * Skip the three hardware-saved registers and the
+			 * return address.
+			 */
+			stack = (uintptr_t *)&frame->tf_esp + 1;
 			goto load;
 		}
 	}

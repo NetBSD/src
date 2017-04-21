@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.728 2016/12/12 16:41:08 bouyer Exp $
+$NetBSD: usbdevs,v 1.728.2.1 2017/04/21 16:53:53 bouyer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ vendor SAMSUNG		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
+vendor ELAN		0x04f3  ELAN Microelectronics
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor AIPTEK2		0x04fc	AIPTEK International
@@ -483,6 +484,7 @@ vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor CYBERTAN		0x129b	CyberTAN Technology
 vendor HUAWEI		0x12d1	Huawei Technologies
+vendor ARANEUS		0x12d8	Araneus Information Systems Oy
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -760,6 +762,9 @@ product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 
+/* Araneus products */
+product ARANEUS ALEA		0x0001	Alea I/II TRNG
+
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B
 
@@ -883,6 +888,7 @@ product APPLE BLUETOOTH_HOST_4	0x821b	Bluetooth USB Host Controller MacBookAir 3
 product APPLE BLUETOOTH_HOST_5	0x821f	Bluetooth USB Host Controller MacBookAir 4,1
 product APPLE BLUETOOTH_HOST_6	0x8281	Bluetooth USB Host Controller MacMini 5,1
 product APPLE BLUETOOTH_HOST_7	0x828f	Bluetooth USB Host Controller MacBookAir 6,1
+product APPLE BLUETOOTH_HOST_8	0x821d	Bluetooth USB Host Controller MacBookPro 9,2
 product APPLE BLUETOOTH		0x8300	Bluetooth
 
 /* ArkMicroChips products */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sqlite.c,v 1.1.1.3 2013/01/02 18:58:57 tron Exp $	*/
+/*	$NetBSD: dict_sqlite.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -167,7 +167,8 @@ static const char *dict_sqlite_lookup(DICT *dict, const char *name)
     /*
      * Don't frustrate future attempts to make Postfix UTF-8 transparent.
      */
-    if (!valid_utf_8(name, strlen(name))) {
+    if ((dict->flags & DICT_FLAG_UTF8_ACTIVE) == 0
+	&& !valid_utf8_string(name, strlen(name))) {
 	if (msg_verbose)
 	    msg_info("%s: %s: Skipping lookup of non-UTF-8 key '%s'",
 		     myname, dict_sqlite->parser->name, name);
@@ -233,7 +234,7 @@ static const char *dict_sqlite_lookup(DICT *dict, const char *name)
     while ((status = sqlite3_step(sql_stmt)) != SQLITE_DONE) {
 	if (status == SQLITE_ROW) {
 	    if (db_common_expand(dict_sqlite->ctx, dict_sqlite->result_format,
-				 (char *) sqlite3_column_text(sql_stmt, 0),
+			    (const char *) sqlite3_column_text(sql_stmt, 0),
 				 name, result, 0)
 		&& dict_sqlite->expansion_limit > 0
 		&& ++expansion > dict_sqlite->expansion_limit) {

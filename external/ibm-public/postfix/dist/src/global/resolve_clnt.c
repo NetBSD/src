@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve_clnt.c,v 1.1.1.2 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: resolve_clnt.c,v 1.1.1.2.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -233,17 +233,17 @@ void    resolve_clnt(const char *class, const char *sender,
 	errno = 0;
 	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, class,
-		       ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-		       ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, class),
+		       SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+		       SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &server_flags,
-		       ATTR_TYPE_STR, MAIL_ATTR_TRANSPORT, reply->transport,
-			 ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, reply->nexthop,
-			 ATTR_TYPE_STR, MAIL_ATTR_RECIP, reply->recipient,
-			 ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &reply->flags,
+			 RECV_ATTR_INT(MAIL_ATTR_FLAGS, &server_flags),
+		       RECV_ATTR_STR(MAIL_ATTR_TRANSPORT, reply->transport),
+			 RECV_ATTR_STR(MAIL_ATTR_NEXTHOP, reply->nexthop),
+			 RECV_ATTR_STR(MAIL_ATTR_RECIP, reply->recipient),
+			 RECV_ATTR_INT(MAIL_ATTR_FLAGS, &reply->flags),
 			 ATTR_TYPE_END) != 5) {
 	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		msg_warn("problem talking to service %s: %m",

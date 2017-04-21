@@ -47,7 +47,9 @@ multiple times, for up to $<a href="postconf.5.html#max_use">max_use</a> incomin
 
 <li><a href="#protocol">Policy protocol description</a>
 
-<li><a href="#client_config">Policy client/server configuration</a>
+<li><a href="#client_config">Simple policy client/server configuration</a>
+
+<li><a href="#advanced">Advanced policy client configuration</a>
 
 <li><a href="#greylist">Example: greylist policy server</a>
 
@@ -104,6 +106,10 @@ etrn_domain=
 stress=
 <b>Postfix version 2.9 and later:</b>
 ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
+<b>Postfix version 3.0 and later:</b>
+client_port=1234
+<b>Postfix version 3.1 and later:</b>
+policy_context=submission
 [empty line]
 </pre>
 </blockquote>
@@ -191,6 +197,10 @@ ccert_pubkey_fingerprint=68:B3:29:DA:98:93:E3:40:99:C7:D8:AD:5C:B9:C9:40
     <li> <p> The "stress" attribute is either empty or "yes".  See
     the <a href="STRESS_README.html">STRESS_README</a> document for further information. </p>
 
+    <li> <p> The "policy_context" attribute provides a way to pass
+    information that is not available via other attributes (Postfix
+    version 3.1 and later). </p>
+
 </ul>
 
 <p> The following is specific to SMTPD delegated policy requests:
@@ -227,7 +237,7 @@ the request permanently. </p>
 Instead the server must log a warning and disconnect.  Postfix will
 retry the request at some later time.  </p>
 
-<h2><a name="client_config">Policy client/server configuration</a></h2>
+<h2><a name="client_config">Simple policy client/server configuration</a></h2>
 
 <p> The Postfix delegated policy client can connect to a TCP socket
 or to a UNIX-domain socket. Examples: </p>
@@ -264,6 +274,7 @@ daemon, you would use something like this: </p>
  9         <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/policy 
 10         ...
 11     <a href="postconf.5.html#transport_time_limit">policy_time_limit</a> = 3600
+12     # <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> = 1
 </pre>
 </blockquote>
 
@@ -303,6 +314,10 @@ of a <a href="master.5.html">master.cf</a> service name (in the above example, "
 built-in suffix (in the above example: "_time_limit").  </p>
 </blockquote>
 
+<li> <p> Line 12: specify <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> to
+avoid error-recovery delays with policy servers that cannot
+maintain a persistent connection. </p>
+
 <li> <p> With Solaris &lt; 9, or Postfix &lt; 2.10 on any Solaris
 version, use TCP sockets instead of UNIX-domain sockets: </p>
 
@@ -321,13 +336,19 @@ version, use TCP sockets instead of UNIX-domain sockets: </p>
  9         <a href="postconf.5.html#check_policy_service">check_policy_service</a> inet:127.0.0.1:9998
 10         ...
 11     127.0.0.1:9998_time_limit = 3600
+12     # <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> = 1
 </pre>
 </blockquote>
 
-<p> Other configuration parameters that control the client side of
-the policy delegation protocol: </p>
+<p> Configuration parameters that control the client side of the
+policy delegation protocol: </p>
 
 <ul>
+
+<li> <p> <a href="postconf.5.html#smtpd_policy_service_default_action">smtpd_policy_service_default_action</a> (default: 451 4.3.5
+Server configuration problem): The default action when an SMTPD
+policy service request fails.  Available with Postfix 3.0 and
+later. </p>
 
 <li> <p> <a href="postconf.5.html#smtpd_policy_service_max_idle">smtpd_policy_service_max_idle</a> (default: 300s): The amount
 of time before the Postfix SMTP server closes an unused policy
@@ -337,10 +358,103 @@ client connection. </p>
 of time before the Postfix SMTP server closes an active policy
 client connection. </p>
 
+<li> <p> <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> (default: 0): The maximal
+number of requests per policy connection, or zero (no limit).
+Available with Postfix 3.0 and later. </p>
+
 <li> <p> <a href="postconf.5.html#smtpd_policy_service_timeout">smtpd_policy_service_timeout</a> (default: 100s): The time
 limit to connect to, send to or receive from a policy server. </p>
 
+<li> <p> <a href="postconf.5.html#smtpd_policy_service_try_limit">smtpd_policy_service_try_limit</a> (default: 2): The maximal
+number of attempts to send an SMTPD policy service request before
+giving up.  Available with Postfix 3.0 and later.  </p>
+
+<li> <p> <a href="postconf.5.html#smtpd_policy_service_retry_delay">smtpd_policy_service_retry_delay</a> (default: 1s): The delay
+between attempts to resend a failed SMTPD policy service request.
+Available with Postfix 3.0 and later.  </p>
+
+<li> <p> <a href="postconf.5.html#smtpd_policy_service_policy_context">smtpd_policy_service_policy_context</a> (default: empty):
+Optional information that is passed in the "policy_context" attribute
+of an SMTPD policy service request (originally, to share the same
+SMTPD service endpoint among multiple <a href="postconf.5.html#check_policy_service">check_policy_service</a> clients).
+Available with Postfix 3.1 and later.  </p>
+
 </ul>
+
+<p> Configuration parameters that control the server side of the
+policy delegation protocol: </p>
+
+<ul>
+
+<li> <p> <a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>): The
+maximal amount of time the policy daemon is allowed to run before
+it is terminated. The <i>transport</i> is the service name of the
+<a href="master.5.html">master.cf</a> entry for the policy daemon service. In the above
+examples, the service name is "policy" or "127.0.0.1:9998". </p>
+
+</ul>
+
+<h2><a name="advanced">Advanced policy client configuration</a></h2>
+
+<p> The previous section lists a number of Postfix <a href="postconf.5.html">main.cf</a> parameters
+that control time limits and other settings for all policy clients.
+This is sufficient for simple configurations. With more complex
+configurations it becomes desirable to have different settings per
+policy client. This is supported with Postfix 3.0 and later. </p>
+
+<p> The following example shows a "non-critical" policy service
+with a short timeout, and with "DUNNO" as default action when the
+service is unvailable. The "DUNNO" action causes Postfix to ignore
+the result. </p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
+3         ...
+4         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+5         <a href="postconf.5.html#check_policy_service">check_policy_service</a> { inet:host:port, 
+6             timeout=10s, default_action=DUNNO }
+8         ...
+</pre>
+</blockquote>
+
+<p> Instead of a server endpoint, we now have a list enclosed in {}. </p>
+
+<ul>
+
+<li> <p> Line 5: The first item in the list is the server endpoint.
+This supports the exact same "inet" and "unix" syntax as described
+earlier. </p>
+
+<li> <p> Line 6: The remainder of the list contains per-client
+settings. These settings override global <a href="postconf.5.html">main.cf</a> parameters,
+and have the same name as those parameters, without the
+"smtpd_policy_service_" prefix.  </p>
+
+</ul>
+
+<p> Inside the list, syntax is similar to what we already know from
+<a href="postconf.5.html">main.cf</a>: items separated by space or comma. There is one difference:
+<b>you must enclose a setting in parentheses, as in "{ name = value
+}", if you want to have space or comma within a value or around
+"="</b>.  This comes in handy when different policy servers require
+different default actions with different SMTP status codes or text:
+</p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
+3         ...
+4         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
+5         <a href="postconf.5.html#check_policy_service">check_policy_service</a> {
+6           inet:host:port1, 
+7           { default_action = 451 4.3.5 See <a href="http://www.example.com/support1">http://www.example.com/support1</a> }
+8         } 
+9         ...
+</pre>
+</blockquote>
 
 <h2><a name="greylist">Example: greylist policy server</a></h2>
 
@@ -413,6 +527,7 @@ processes only: </p>
  9         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
 10         <a href="postconf.5.html#check_policy_service">check_policy_service</a> unix:private/greylist
 11         ...
+12     # <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> = 1
 </pre>
 </blockquote>
 
@@ -451,6 +566,10 @@ of a <a href="master.5.html">master.cf</a> service name (in the above example, "
 a built-in suffix (in the above example: "_time_limit").  </p>
 </blockquote>
 
+<li> <p> Line 12: specify <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> to
+avoid error-recovery delays with policy servers that cannot
+maintain a persistent connection. </p>
+
 </ul>
 
 <p> With Solaris &lt; 9, or Postfix &lt; 2.10 on any Solaris
@@ -471,6 +590,7 @@ client/server configuration</a>" section above.  </p>
  9         <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a> 
 10         <a href="postconf.5.html#check_policy_service">check_policy_service</a> inet:127.0.0.1:9998
 11         ...
+12     # <a href="postconf.5.html#smtpd_policy_service_request_limit">smtpd_policy_service_request_limit</a> = 1
 </pre>
 </blockquote>
 

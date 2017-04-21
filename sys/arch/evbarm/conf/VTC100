@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.10 2016/10/18 14:48:11 kiyohara Exp $
+#	$NetBSD: VTC100,v 1.10.2.1 2017/04/21 16:53:26 bouyer Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -133,7 +134,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
-#options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

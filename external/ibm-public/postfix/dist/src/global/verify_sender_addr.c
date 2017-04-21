@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_sender_addr.c,v 1.1.1.2 2013/09/25 19:06:31 tron Exp $	*/
+/*	$NetBSD: verify_sender_addr.c,v 1.1.1.2.12.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -60,15 +60,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
 #include <vstring.h>
 #include <events.h>
+#include <stringops.h>
 
 /* Global library */
 
@@ -223,7 +220,7 @@ const char *valid_verify_sender_addr(const char *their_addr)
 	base_len = my_at_domain - STR(time_indep_sender_buf);
     else
 	base_len = LEN(time_indep_sender_buf);
-    if (strncasecmp(STR(time_indep_sender_buf), their_addr, base_len) != 0)
+    if (strncasecmp_utf8(STR(time_indep_sender_buf), their_addr, base_len) != 0)
 	return (0);				/* sender localpart mis-match */
 
     /*
@@ -232,7 +229,8 @@ const char *valid_verify_sender_addr(const char *their_addr)
     if ((their_at_domain = strchr(their_addr, '@')) == 0 && my_at_domain != 0)
 	return (0);				/* sender domain mis-match */
     if (their_at_domain != 0
-    && (my_at_domain == 0 || strcasecmp(their_at_domain, my_at_domain) != 0))
+	&& (my_at_domain == 0
+	    || strcasecmp_utf8(their_at_domain, my_at_domain) != 0))
 	return (0);				/* sender domain mis-match */
 
     /*

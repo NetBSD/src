@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.35 2016/04/24 18:24:47 christos Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.35.4.1 2017/04/21 16:53:12 bouyer Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2015 Matthew R. Green
+ * Copyright (c) 1997-2017 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -235,7 +235,8 @@ parse_search_string(bozo_httpreq_t *request, const char *query, size_t *args_len
 	 */
 	*args_len = 1;
 	/* count '+' in str */
-	for (s = str; (s = strchr(s, '+')); (*args_len)++);
+	for (s = str; (s = strchr(s, '+')); (*args_len)++)
+		s++;
 	
 	args = bozomalloc(httpd, sizeof(*args) * (*args_len + 1));
  

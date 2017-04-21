@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.36 2016/07/04 15:45:38 kiyohara Exp $
+#	$NetBSD: BEAGLEBONE,v 1.36.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -133,7 +134,8 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
-#options 	KDTRACE_HOOKS	# kernel DTrace hooks
+options 	KDTRACE_HOOKS	# kernel DTrace hooks
+options 	MODULAR 	# DTrace is a module (load via modules.conf)
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

@@ -1,4 +1,4 @@
-/*	$NetBSD: master_spawn.c,v 1.1.1.3 2013/01/02 18:59:01 tron Exp $	*/
+/*	$NetBSD: master_spawn.c,v 1.1.1.3.16.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -86,7 +86,7 @@ static void master_unthrottle(MASTER_SERV *serv);
 
 /* master_unthrottle_wrapper - in case (char *) != (struct *) */
 
-static void master_unthrottle_wrapper(int unused_event, char *ptr)
+static void master_unthrottle_wrapper(int unused_event, void *ptr)
 {
     MASTER_SERV *serv = (MASTER_SERV *) ptr;
 
@@ -109,7 +109,7 @@ static void master_unthrottle(MASTER_SERV *serv)
      */
     if ((serv->flags & MASTER_FLAG_THROTTLE) != 0) {
 	serv->flags &= ~MASTER_FLAG_THROTTLE;
-	event_cancel_timer(master_unthrottle_wrapper, (char *) serv);
+	event_cancel_timer(master_unthrottle_wrapper, (void *) serv);
 	if (msg_verbose)
 	    msg_info("throttle released for command %s", serv->path);
 	master_avail_listen(serv);
@@ -128,7 +128,7 @@ static void master_throttle(MASTER_SERV *serv)
      */
     if ((serv->flags & MASTER_FLAG_THROTTLE) == 0) {
 	serv->flags |= MASTER_FLAG_THROTTLE;
-	event_request_timer(master_unthrottle_wrapper, (char *) serv,
+	event_request_timer(master_unthrottle_wrapper, (void *) serv,
 			    serv->throttle_delay);
 	if (msg_verbose)
 	    msg_info("throttling command %s", serv->path);
@@ -249,8 +249,8 @@ void    master_spawn(MASTER_SERV *serv)
 	proc->gen = master_generation;
 	proc->use_count = 0;
 	proc->avail = 0;
-	binhash_enter(master_child_table, (char *) &pid,
-		      sizeof(pid), (char *) proc);
+	binhash_enter(master_child_table, (void *) &pid,
+		      sizeof(pid), (void *) proc);
 	serv->total_proc++;
 	master_avail_more(serv, proc);
 	if (serv->flags & MASTER_FLAG_CONDWAKE) {
@@ -280,9 +280,9 @@ static void master_delete_child(MASTER_PROC *proc)
 	master_avail_less(serv, proc);
     else
 	master_avail_listen(serv);
-    binhash_delete(master_child_table, (char *) &proc->pid,
-		   sizeof(proc->pid), (void (*) (char *)) 0);
-    myfree((char *) proc);
+    binhash_delete(master_child_table, (void *) &proc->pid,
+		   sizeof(proc->pid), (void (*) (void *)) 0);
+    myfree((void *) proc);
 }
 
 /* master_reap_child - reap dead children */
@@ -303,7 +303,7 @@ void    master_reap_child(void)
 	if (msg_verbose)
 	    msg_info("master_reap_child: pid %d", pid);
 	if ((proc = (MASTER_PROC *) binhash_find(master_child_table,
-					  (char *) &pid, sizeof(pid))) == 0)
+					  (void *) &pid, sizeof(pid))) == 0)
 	    msg_panic("master_reap: unknown pid: %d", pid);
 	serv = proc->serv;
 
@@ -312,7 +312,21 @@ void    master_reap_child(void)
 	(MASTER_MARKED_FOR_DELETION(serv) \
 	    && WTERMSIG(status) == MASTER_KILL_SIGNAL)
 
+	/*
+	 * XXX The code for WIFSTOPPED() is here in case some buggy kernel
+	 * reports WIFSTOPPED() events to a Postfix daemon's parent process
+	 * (the master(8) daemon) instead of the tracing process (e.g., gdb).
+	 * 
+	 * The WIFSTOPPED() test prevents master(8) from deleting its record of
+	 * a child process that is stopped. That would cause a master(8)
+	 * panic (unknown child) when the child terminates.
+	 */
 	if (!NORMAL_EXIT_STATUS(status)) {
+	    if (WIFSTOPPED(status)) {
+		msg_warn("process %s pid %d stopped by signal %d",
+			 serv->path, pid, WSTOPSIG(status));
+		continue;
+	    }
 	    if (WIFEXITED(status))
 		msg_warn("process %s pid %d exit status %d",
 			 serv->path, pid, WEXITSTATUS(status));
@@ -351,6 +365,6 @@ void    master_delete_children(MASTER_SERV *serv)
     }
     while (serv->total_proc > 0)
 	master_reap_child();
-    myfree((char *) list);
+    myfree((void *) list);
     master_unthrottle(serv);
 }

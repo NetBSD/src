@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.154 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.154.4.1 2017/04/21 16:53:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.154 2016/04/04 07:37:07 ozaki-r Exp $");
+__RCSID("$NetBSD: route.c,v 1.154.4.1 2017/04/21 16:53:15 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1348,7 +1348,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_DELADDR:
 	case RTM_CHGADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		(void)printf("metric %d, flags: ", ifam->ifam_metric);
+		(void)printf("pid %d, metric %d, flags: ",
+		    ifam->ifam_pid, ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
 		break;

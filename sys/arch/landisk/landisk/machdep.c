@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2016/12/17 01:32:22 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20.2.1 2017/04/21 16:53:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2016/12/17 01:32:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20.2.1 2017/04/21 16:53:29 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -219,7 +219,7 @@ landisk_startup(int howto, void *bi)
 	physmem = atop(IOM_RAM_SIZE);
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(kernend)));
 	uvm_page_physload(
-		physmem, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
+		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
 		kernend, atop(IOM_RAM_BEGIN + IOM_RAM_SIZE),
 		VM_FREELIST_DEFAULT);
 

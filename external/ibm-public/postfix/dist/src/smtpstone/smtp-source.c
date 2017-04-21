@@ -1,10 +1,10 @@
-/*	$NetBSD: smtp-source.c,v 1.1.1.4 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: smtp-source.c,v 1.1.1.4.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
 /*	smtp-source 1
 /* SUMMARY
-/*	multi-threaded SMTP/LMTP test generator
+/*	parallelized SMTP/LMTP test generator
 /* SYNOPSIS
 /* .fi
 /*	\fBsmtp-source\fR [\fIoptions\fR] [\fBinet:\fR]\fIhost\fR[:\fIport\fR]
@@ -108,6 +108,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -218,21 +223,21 @@ static int allow_reject = 0;
 
 static void enqueue_connect(SESSION *);
 static void start_connect(SESSION *);
-static void connect_done(int, char *);
-static void read_banner(int, char *);
+static void connect_done(int, void *);
+static void read_banner(int, void *);
 static void send_helo(SESSION *);
-static void helo_done(int, char *);
+static void helo_done(int, void *);
 static void send_mail(SESSION *);
-static void mail_done(int, char *);
-static void send_rcpt(int, char *);
-static void rcpt_done(int, char *);
-static void send_data(int, char *);
-static void data_done(int, char *);
-static void dot_done(int, char *);
-static void send_rset(int, char *);
-static void rset_done(int, char *);
+static void mail_done(int, void *);
+static void send_rcpt(int, void *);
+static void rcpt_done(int, void *);
+static void send_data(int, void *);
+static void data_done(int, void *);
+static void dot_done(int, void *);
+static void send_rset(int, void *);
+static void rset_done(int, void *);
 static void send_quit(SESSION *);
-static void quit_done(int, char *);
+static void quit_done(int, void *);
 static void close_session(SESSION *);
 
 /* random_interval - generate a random value in 0 .. (small) interval */
@@ -279,7 +284,7 @@ static int socket_error(int sock)
      */
     error = 0;
     error_len = sizeof(error);
-    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (char *) &error, &error_len) < 0)
+    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *) &error, &error_len) < 0)
 	return (-1);
     if (error) {
 	errno = error;
@@ -307,7 +312,7 @@ static RESPONSE *response(VSTREAM *stream, VSTRING *buf)
      */
     if (rdata.buf == 0) {
 	rdata.buf = vstring_alloc(100);
-	vstring_ctl(rdata.buf, VSTRING_CTL_MAXLEN, (ssize_t) var_line_limit, 0);
+	vstring_ctl(rdata.buf, CA_VSTRING_CTL_MAXLEN(var_line_limit), 0);
     }
 
     /*
@@ -362,7 +367,7 @@ static char *exception_text(int except)
 static void startup(SESSION *session)
 {
     if (message_count-- <= 0) {
-	myfree((char *) session);
+	myfree((void *) session);
 	session_count--;
 	return;
     }
@@ -375,7 +380,7 @@ static void startup(SESSION *session)
 
 /* start_event - invoke startup from timer context */
 
-static void start_event(int unused_event, char *context)
+static void start_event(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
 
@@ -387,10 +392,10 @@ static void start_event(int unused_event, char *context)
 static void start_another(SESSION *session)
 {
     if (random_delay > 0) {
-	event_request_timer(start_event, (char *) session,
+	event_request_timer(start_event, (void *) session,
 			    random_interval(random_delay));
     } else if (fixed_delay > 0) {
-	event_request_timer(start_event, (char *) session, fixed_delay);
+	event_request_timer(start_event, (void *) session, fixed_delay);
     } else {
 	startup(session);
     }
@@ -461,11 +466,11 @@ static void start_connect(SESSION *session)
     (void) non_blocking(fd, NON_BLOCKING);
     linger.l_onoff = 1;
     linger.l_linger = 0;
-    if (setsockopt(fd, SOL_SOCKET, SO_LINGER, (char *) &linger,
+    if (setsockopt(fd, SOL_SOCKET, SO_LINGER, (void *) &linger,
 		   sizeof(linger)) < 0)
 	msg_warn("setsockopt SO_LINGER %d: %m", linger.l_linger);
     session->stream = vstream_fdopen(fd, O_RDWR);
-    event_enable_write(fd, connect_done, (char *) session);
+    event_enable_write(fd, connect_done, (void *) session);
     smtp_timeout_setup(session->stream, var_timeout);
     if (inet_windowsize > 0)
 	set_inet_windowsize(fd, inet_windowsize);
@@ -475,7 +480,7 @@ static void start_connect(SESSION *session)
 
 /* connect_done - send message sender info */
 
-static void connect_done(int unused_event, char *context)
+static void connect_done(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     int     fd = vstream_fileno(session->stream);
@@ -490,7 +495,7 @@ static void connect_done(int unused_event, char *context)
 	non_blocking(fd, BLOCKING);
 	/* Disable write events. */
 	event_disable_readwrite(fd);
-	event_enable_read(fd, read_banner, (char *) session);
+	event_enable_read(fd, read_banner, (void *) session);
 	dequeue_connect(session);
 	/* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
 	if (sa->sa_family == AF_INET
@@ -504,7 +509,7 @@ static void connect_done(int unused_event, char *context)
 
 /* read_banner - receive SMTP server greeting */
 
-static void read_banner(int unused_event, char *context)
+static void read_banner(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -554,12 +559,12 @@ static void send_helo(SESSION *session)
     /*
      * Prepare for the next event.
      */
-    event_enable_read(vstream_fileno(session->stream), helo_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), helo_done, (void *) session);
 }
 
 /* helo_done - handle HELO response */
 
-static void helo_done(int unused_event, char *context)
+static void helo_done(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -604,12 +609,12 @@ static void send_mail(SESSION *session)
     /*
      * Prepare for the next event.
      */
-    event_enable_read(vstream_fileno(session->stream), mail_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), mail_done, (void *) session);
 }
 
 /* mail_done - handle MAIL response */
 
-static void mail_done(int unused, char *context)
+static void mail_done(int unused, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -640,7 +645,7 @@ static void mail_done(int unused, char *context)
 
 /* send_rcpt - send recipient address */
 
-static void send_rcpt(int unused_event, char *context)
+static void send_rcpt(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     int     except;
@@ -663,12 +668,12 @@ static void send_rcpt(int unused_event, char *context)
     /*
      * Prepare for the next event.
      */
-    event_enable_read(vstream_fileno(session->stream), rcpt_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), rcpt_done, (void *) session);
 }
 
 /* rcpt_done - handle RCPT completion */
 
-static void rcpt_done(int unused, char *context)
+static void rcpt_done(int unused, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -705,7 +710,7 @@ static void rcpt_done(int unused, char *context)
 
 /* send_data - send DATA command */
 
-static void send_data(int unused_event, char *context)
+static void send_data(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     int     except;
@@ -720,12 +725,12 @@ static void send_data(int unused_event, char *context)
     /*
      * Prepare for the next event.
      */
-    event_enable_read(vstream_fileno(session->stream), data_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), data_done, (void *) session);
 }
 
 /* data_done - send message content */
 
-static void data_done(int unused, char *context)
+static void data_done(int unused, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -806,12 +811,12 @@ static void data_done(int unused, char *context)
     /*
      * Prepare for the next event.
      */
-    event_enable_read(vstream_fileno(session->stream), dot_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), dot_done, (void *) session);
 }
 
 /* dot_done - send QUIT or start another transaction */
 
-static void dot_done(int unused_event, char *context)
+static void dot_done(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -850,17 +855,17 @@ static void dot_done(int unused_event, char *context)
 
 /* send_rset - send RSET command */
 
-static void send_rset(int unused_event, char *context)
+static void send_rset(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
 
     command(session->stream, "RSET");
-    event_enable_read(vstream_fileno(session->stream), rset_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), rset_done, (void *) session);
 }
 
 /* rset_done - handle RSET reply */
 
-static void rset_done(int unused_event, char *context)
+static void rset_done(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
     RESPONSE *resp;
@@ -899,12 +904,12 @@ static void rset_done(int unused_event, char *context)
 static void send_quit(SESSION *session)
 {
     command(session->stream, "QUIT");
-    event_enable_read(vstream_fileno(session->stream), quit_done, (char *) session);
+    event_enable_read(vstream_fileno(session->stream), quit_done, (void *) session);
 }
 
 /* quit_done - disconnect */
 
-static void quit_done(int unused_event, char *context)
+static void quit_done(int unused_event, void *context)
 {
     SESSION *session = (SESSION *) context;
 
@@ -951,7 +956,6 @@ int     main(int argc, char **argv)
     struct addrinfo *res;
     int     aierr;
     const char *protocols = INET_PROTO_NAME_ALL;
-    INET_PROTO_INFO *proto_info;
     char   *message_file = 0;
 
     /*
@@ -1104,19 +1108,19 @@ int     main(int argc, char **argv)
     /*
      * Translate endpoint address to internal form.
      */
-    proto_info = inet_proto_init("protocols", protocols);
+    (void) inet_proto_init("protocols", protocols);
     if (strncmp(argv[optind], "unix:", 5) == 0) {
 	path = argv[optind] + 5;
 	path_len = strlen(path);
 	if (path_len >= (int) sizeof(sun.sun_path))
 	    msg_fatal("unix-domain name too long: %s", path);
-	memset((char *) &sun, 0, sizeof(sun));
+	memset((void *) &sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 #ifdef HAS_SUN_LEN
 	sun.sun_len = path_len + 1;
 #endif
 	memcpy(sun.sun_path, path, path_len);
-	sa = (struct sockaddr *) & sun;
+	sa = (struct sockaddr *) &sun;
 	sa_length = sizeof(sun);
     } else {
 	if (strncmp(argv[optind], "inet:", 5) == 0)
@@ -1127,11 +1131,11 @@ int     main(int argc, char **argv)
 	if ((aierr = hostname_to_sockaddr(host, port, SOCK_STREAM, &res)) != 0)
 	    msg_fatal("%s: %s", argv[optind], MAI_STRERROR(aierr));
 	myfree(buf);
-	sa = (struct sockaddr *) & ss;
+	sa = (struct sockaddr *) &ss;
 	if (res->ai_addrlen > sizeof(ss))
 	    msg_fatal("address length %d > buffer length %d",
 		      (int) res->ai_addrlen, (int) sizeof(ss));
-	memcpy((char *) sa, res->ai_addr, res->ai_addrlen);
+	memcpy((void *) sa, res->ai_addr, res->ai_addrlen);
 	sa_length = res->ai_addrlen;
 #ifdef HAS_SA_LEN
 	sa->sa_len = sa_length;
@@ -1145,7 +1149,7 @@ int     main(int argc, char **argv)
      */
     if (buffer == 0) {
 	buffer = vstring_alloc(100);
-	vstring_ctl(buffer, VSTRING_CTL_MAXLEN, (ssize_t) var_line_limit, 0);
+	vstring_ctl(buffer, CA_VSTRING_CTL_MAXLEN(var_line_limit), 0);
     }
 
     /*

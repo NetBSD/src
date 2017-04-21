@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_send.c,v 1.1.1.4 2013/09/25 19:06:33 tron Exp $	*/
+/*	$NetBSD: postscreen_send.c,v 1.1.1.4.12.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -119,7 +119,7 @@ int     psc_send_reply(PSC_STATE *state, const char *text)
     if (*var_psc_rej_footer && (*text == '4' || *text == '5'))
 	smtp_reply_footer(state->send_buf, start, var_psc_rej_footer,
 			  STR(psc_expand_filter), psc_expand_lookup,
-			  (char *) state);
+			  (void *) state);
 
     /*
      * Do a best effort sending text, but don't block when the output is
@@ -137,7 +137,7 @@ int     psc_send_reply(PSC_STATE *state, const char *text)
 
 /* psc_send_socket_close_event - file descriptor has arrived or timeout */
 
-static void psc_send_socket_close_event(int event, char *context)
+static void psc_send_socket_close_event(int event, void *context)
 {
     const char *myname = "psc_send_socket_close_event";
     PSC_STATE *state = (PSC_STATE *) context;
@@ -211,11 +211,12 @@ void    psc_send_socket(PSC_STATE *state)
 	(LOCAL_SEND_FD(server_fd,
 		       vstream_fileno(state->smtp_client_stream)) < 0
 	 || (attr_print(fp, ATTR_FLAG_NONE,
-	  ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, state->smtp_client_addr,
-	  ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_PORT, state->smtp_client_port,
-	  ATTR_TYPE_STR, MAIL_ATTR_ACT_SERVER_ADDR, state->smtp_server_addr,
-	  ATTR_TYPE_STR, MAIL_ATTR_ACT_SERVER_PORT, state->smtp_server_port,
+	  SEND_ATTR_STR(MAIL_ATTR_ACT_CLIENT_ADDR, state->smtp_client_addr),
+	  SEND_ATTR_STR(MAIL_ATTR_ACT_CLIENT_PORT, state->smtp_client_port),
+	  SEND_ATTR_STR(MAIL_ATTR_ACT_SERVER_ADDR, state->smtp_server_addr),
+	  SEND_ATTR_STR(MAIL_ATTR_ACT_SERVER_PORT, state->smtp_server_port),
 			ATTR_TYPE_END) || vstream_fflush(fp)));
+    /* XXX Note: no read between attr_print() and vstream_fdclose(). */
     (void) vstream_fdclose(fp);
     if (pass_err != 0) {
 	msg_warn("cannot pass connection to service %s: %m",
@@ -240,7 +241,7 @@ void    psc_send_socket(PSC_STATE *state)
 #endif
 	PSC_ADD_SERVER_STATE(state, server_fd);
 	PSC_READ_EVENT_REQUEST(state->smtp_server_fd, psc_send_socket_close_event,
-			       (char *) state, PSC_SEND_SOCK_NOTIFY_TIMEOUT);
+			       (void *) state, PSC_SEND_SOCK_NOTIFY_TIMEOUT);
 	return;
     }
 }

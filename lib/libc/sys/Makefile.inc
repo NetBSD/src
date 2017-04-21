@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.231 2016/07/03 14:24:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.231.4.1 2017/04/21 16:53:09 bouyer Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -9,17 +9,17 @@ SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
 SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
-	clock_getcpuclockid.c
+	clock_getcpuclockid.c accept4.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
-SRCS+=	__clone.S __vfork14.S brk.S exect.S fork.S pipe.S \
+SRCS+=	__clone.S __vfork14.S brk.S fork.S pipe.S \
 	getcontext.S \
 	ptrace.S sbrk.S shmat.S \
 	syscall.S __syscall.S __clone.S cerror.S
 
 _LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
-	Lint_getcontext.c Lint_exect.c Lint_pipe.c Lint_ptrace.c \
+	Lint_getcontext.c Lint_pipe.c Lint_ptrace.c \
 	Lint_sbrk.c Lint___sigaction14.c Lint_syscall.c Lint___syscall.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
@@ -130,7 +130,7 @@ ASM=	access.S acct.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
 	openat.S \
-	paccept.S pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
+	pathconf.S pipe2.S pmc_get_info.S pmc_control.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
@@ -170,7 +170,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S \
 	fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
-	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
+	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S paccept.S poll.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S _sched_protect.S \
@@ -324,6 +324,8 @@ MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
+MLINKS+=kqueue.2 kqueue1.2
+MLINKS+=kqueue.2 EV_SET.2
 MLINKS+=_ksem.2 _ksem_open.2
 MLINKS+=_ksem.2 _ksem_close.2
 MLINKS+=_ksem.2 _ksem_init.2
@@ -379,6 +381,6 @@ MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=wait.2 wait6.2 wait.2 waitid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
 MLINKS+=pipe.2 pipe2.2
-MLINKS+=accept.2 paccept.2
+MLINKS+=accept.2 paccept.2 accept.2 accept4.2
 MLINKS+=nanosleep.2 clock_nanosleep.2
 MLINKS+=clock_getcpuclockid2.2 clock_getcpuclockid.2

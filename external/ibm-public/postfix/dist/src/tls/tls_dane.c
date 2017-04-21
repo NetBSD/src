@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dane.c,v 1.1.1.2 2015/09/12 08:20:36 tron Exp $	*/
+/*	$NetBSD: tls_dane.c,v 1.1.1.2.4.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -163,6 +163,10 @@
 
 #include <sys_defs.h>
 #include <ctype.h>
+
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 #ifdef USE_TLS
 #include <string.h>
@@ -475,7 +479,7 @@ static void dane_init(void)
 		 VAR_TLS_DANE_AGILITY, var_tls_dane_agility);
     } else if (add_digest(fullmtype, 0)) {
 	save = cp = mystrdup(var_tls_dane_digests);
-	while ((tok = mystrtok(&cp, "\t\n\r ,")) != 0) {
+	while ((tok = mystrtok(&cp, CHARS_COMMA_SP)) != 0) {
 	    if ((d = add_digest(tok, ++digest_pref)) == 0) {
 		signalg = 0;
 		signmd = 0;
@@ -549,7 +553,7 @@ static void ta_cert_insert(TLS_DANE *d, X509 *x)
 {
     TLS_CERTS *new = (TLS_CERTS *) mymalloc(sizeof(*new));
 
-    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(x);
     new->cert = x;
     new->next = d->certs;
     d->certs = new;
@@ -563,7 +567,7 @@ static void free_ta_certs(TLS_DANE *d)
     for (head = d->certs; head; head = next) {
 	next = head->next;
 	X509_free(head->cert);
-	myfree((char *) head);
+	myfree((void *) head);
     }
 }
 
@@ -571,7 +575,7 @@ static void ta_pkey_insert(TLS_DANE *d, EVP_PKEY *k)
 {
     TLS_PKEYS *new = (TLS_PKEYS *) mymalloc(sizeof(*new));
 
-    CRYPTO_add(&k->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    EVP_PKEY_up_ref(k);
     new->pkey = k;
     new->next = d->pkeys;
     d->pkeys = new;
@@ -585,7 +589,7 @@ static void free_ta_pkeys(TLS_DANE *d)
     for (head = d->pkeys; head; head = next) {
 	next = head->next;
 	EVP_PKEY_free(head->pkey);
-	myfree((char *) head);
+	myfree((void *) head);
     }
 }
 
@@ -597,7 +601,7 @@ static void tlsa_free(TLS_TLSA *tlsa)
 	argv_free(tlsa->certs);
     if (tlsa->pkeys)
 	argv_free(tlsa->pkeys);
-    myfree((char *) tlsa);
+    myfree((void *) tlsa);
 }
 
 /* tls_dane_free - free a TLS_DANE structure */
@@ -626,7 +630,7 @@ void    tls_dane_free(TLS_DANE *dane)
     if (dane->base_domain)
 	myfree(dane->base_domain);
 
-    myfree((char *) dane);
+    myfree((void *) dane);
 }
 
 /* dane_free - ctable style */
@@ -1404,12 +1408,8 @@ int     tls_dane_match(TLS_SESS_STATE *TLScontext, int usage,
 
 static int push_ext(X509 *cert, X509_EXTENSION *ext)
 {
-    x509_extension_stack_t *exts;
-
     if (ext) {
-	if ((exts = cert->cert_info->extensions) == 0)
-	    exts = cert->cert_info->extensions = sk_X509_EXTENSION_new_null();
-	if (exts && sk_X509_EXTENSION_push(exts, ext))
+	if (X509_add_ext(cert, ext, -1))
 	    return 1;
 	X509_EXTENSION_free(ext);
     }
@@ -1467,7 +1467,7 @@ static int add_akid(X509 *cert, AUTHORITY_KEYID *akid)
      * self-signature checks!
      */
     id = ((akid && akid->keyid) ? akid->keyid : 0);
-    if (id && ASN1_STRING_length(id) == 1 && *ASN1_STRING_data(id) == c)
+    if (id && ASN1_STRING_length(id) == 1 && *ASN1_STRING_get0_data(id) == c)
 	c = 1;
 
     if ((akid = AUTHORITY_KEYID_new()) != 0
@@ -1540,7 +1540,7 @@ static void grow_chain(TLS_SESS_STATE *TLScontext, int trusted, X509 *cert)
     if (cert) {
 	if (trusted && !X509_add1_trust_object(cert, serverAuth))
 	    msg_fatal("out of memory");
-	CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
+	X509_up_ref(cert);
 	if (!sk_X509_push(*xs, cert))
 	    msg_fatal("out of memory");
     }
@@ -1585,10 +1585,10 @@ static void wrap_key(TLS_SESS_STATE *TLScontext, int depth,
      */
     if (!X509_set_version(cert, 2)
 	|| !set_serial(cert, akid, subject)
-	|| !X509_set_subject_name(cert, name)
 	|| !set_issuer_name(cert, akid)
-	|| !X509_gmtime_adj(X509_get_notBefore(cert), -30 * 86400L)
-	|| !X509_gmtime_adj(X509_get_notAfter(cert), 30 * 86400L)
+	|| !X509_gmtime_adj(X509_getm_notBefore(cert), -30 * 86400L)
+	|| !X509_gmtime_adj(X509_getm_notAfter(cert), 30 * 86400L)
+	|| !X509_set_subject_name(cert, name)
 	|| !X509_set_pubkey(cert, key ? key : signkey)
 	|| !add_ext(0, cert, NID_basic_constraints, "CA:TRUE")
 	|| (key && !add_akid(cert, akid))
@@ -1642,7 +1642,7 @@ static void wrap_cert(TLS_SESS_STATE *TLScontext, X509 *tacert, int depth)
     cert = d2i_X509(0, (D2I_const unsigned char **) &buf, len);
     if (!cert || (buf - asn1) != len)
 	msg_panic("d2i_X509 failed to decode TA certificate");
-    myfree((char *) asn1);
+    myfree((void *) asn1);
 
     grow_chain(TLScontext, UNTRUSTED, cert);
 
@@ -1722,8 +1722,8 @@ static void set_trust(TLS_SESS_STATE *TLScontext, X509_STORE_CTX *ctx)
     int     depth = 0;
     EVP_PKEY *takey;
     X509   *ca;
-    X509   *cert = ctx->cert;		/* XXX: Accessor? */
-    x509_stack_t *in = ctx->untrusted;	/* XXX: Accessor? */
+    X509   *cert = X509_STORE_CTX_get0_cert(ctx);
+    x509_stack_t *in = X509_STORE_CTX_get0_untrusted(ctx);
 
     /* shallow copy */
     if ((in = sk_X509_dup(in)) == 0)
@@ -1804,7 +1804,7 @@ static int dane_cb(X509_STORE_CTX *ctx, void *app_ctx)
 {
     const char *myname = "dane_cb";
     TLS_SESS_STATE *TLScontext = (TLS_SESS_STATE *) app_ctx;
-    X509   *cert = ctx->cert;		/* XXX: accessor? */
+    X509   *cert = X509_STORE_CTX_get0_cert(ctx);
 
     /*
      * Degenerate case: depth 0 self-signed cert.
@@ -1834,9 +1834,9 @@ static int dane_cb(X509_STORE_CTX *ctx, void *app_ctx)
      * Check that setting the untrusted chain updates the expected structure
      * member at the expected offset.
      */
-    X509_STORE_CTX_trusted_stack(ctx, TLScontext->trusted);
-    X509_STORE_CTX_set_chain(ctx, TLScontext->untrusted);
-    if (ctx->untrusted != TLScontext->untrusted)
+    X509_STORE_CTX_set0_trusted_stack(ctx, TLScontext->trusted);
+    X509_STORE_CTX_set0_untrusted(ctx, TLScontext->untrusted);
+    if (X509_STORE_CTX_get0_untrusted(ctx) != TLScontext->untrusted)
 	msg_panic("%s: OpenSSL ABI change", myname);
 
     return X509_verify_cert(ctx);
@@ -1941,8 +1941,8 @@ static void add_tlsa(TLS_DANE *dane, char *argv[])
 
     digest = tls_data_fprint((char *) buf, len, *mdname ? mdname : signalg);
     dane_add(dane, u, s, *mdname ? mdname : signalg, digest);
-    myfree((char *) digest);
-    myfree((char *) buf);
+    myfree((void *) digest);
+    myfree((void *) buf);
 }
 
 static x509_stack_t *load_chain(const char *chainfile)
@@ -2054,6 +2054,10 @@ static int match_servername(const char *certid, ARGV *margv)
     int     domlen;
 
     /*
+     * XXX EAI support.
+     */
+
+    /*
      * Match the certid against each pattern until we find a match.
      */
     for (i = 0; i < margv->argc; ++i) {
@@ -2161,8 +2165,10 @@ static SSL_CTX *ctx_init(const char *CAfile)
     tls_param_init();
     tls_check_version();
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     SSL_load_error_strings();
     SSL_library_init();
+#endif
 
     if (!tls_validate_digest(LN_sha1))
 	msg_fatal("%s digest algorithm not available", LN_sha1);

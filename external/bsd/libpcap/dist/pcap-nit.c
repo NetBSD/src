@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-nit.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
+/*	$NetBSD: pcap-nit.c,v 1.3.4.1 2017/04/21 16:51:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-nit.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
+__RCSID("$NetBSD: pcap-nit.c,v 1.3.4.1 2017/04/21 16:51:34 bouyer Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -119,11 +119,11 @@ pcap_read_nit(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 		if (cc < 0) {
 			if (errno == EWOULDBLOCK)
 				return (0);
-			snprintf(p->errbuf, sizeof(p->errbuf), "pcap_read: %s",
+			pcap_snprintf(p->errbuf, sizeof(p->errbuf), "pcap_read: %s",
 				pcap_strerror(errno));
 			return (-1);
 		}
-		bp = p->buffer;
+		bp = (u_char *)p->buffer;
 	} else
 		bp = p->bp;
 
@@ -173,7 +173,7 @@ pcap_read_nit(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 			continue;
 
 		default:
-			snprintf(p->errbuf, sizeof(p->errbuf),
+			pcap_snprintf(p->errbuf, sizeof(p->errbuf),
 			    "bad nit state %d", nh->nh_state);
 			return (-1);
 		}
@@ -211,7 +211,7 @@ pcap_inject_nit(pcap_t *p, const void *buf, size_t size)
 	strncpy(sa.sa_data, device, sizeof(sa.sa_data));
 	ret = sendto(p->fd, buf, size, 0, &sa, sizeof(sa));
 	if (ret == -1) {
-		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "send: %s",
+		pcap_snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "send: %s",
 		    pcap_strerror(errno));
 		return (-1);
 	}
@@ -254,7 +254,7 @@ nit_setflags(pcap_t *p)
 		nioc.nioc_flags |= NF_PROMISC;
 
 	if (ioctl(p->fd, SIOCSNIT, &nioc) < 0) {
-		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "SIOCSNIT: %s",
+		pcap_snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "SIOCSNIT: %s",
 		    pcap_strerror(errno));
 		return (-1);
 	}
@@ -285,15 +285,22 @@ pcap_activate_nit(pcap_t *p)
 	memset(p, 0, sizeof(*p));
 	p->fd = fd = socket(AF_NIT, SOCK_RAW, NITPROTO_RAW);
 	if (fd < 0) {
-		snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+		pcap_snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 		    "socket: %s", pcap_strerror(errno));
 		goto bad;
 	}
 	snit.snit_family = AF_NIT;
-	(void)strncpy(snit.snit_ifname, p->opt.source, NITIFSIZ);
+	(void)strncpy(snit.snit_ifname, p->opt.device, NITIFSIZ);
 
 	if (bind(fd, (struct sockaddr *)&snit, sizeof(snit))) {
-		snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
+		/*
+		 * XXX - there's probably a particular bind error that
+		 * means "there's no such device" and a particular bind
+		 * error that means "that device doesn't support NIT";
+		 * they might be the same error, if they both end up
+		 * meaning "NIT doesn't know about that device".
+		 */
+		pcap_snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 		    "bind: %s: %s", snit.snit_ifname, pcap_strerror(errno));
 		goto bad;
 	}
@@ -306,7 +313,7 @@ pcap_activate_nit(pcap_t *p)
 	p->linktype = DLT_EN10MB;
 
 	p->bufsize = BUFSPACE;
-	p->buffer = (u_char *)malloc(p->bufsize);
+	p->buffer = malloc(p->bufsize);
 	if (p->buffer == NULL) {
 		strlcpy(p->errbuf, pcap_strerror(errno), PCAP_ERRBUF_SIZE);
 		goto bad;
@@ -353,11 +360,11 @@ pcap_activate_nit(pcap_t *p)
 }
 
 pcap_t *
-pcap_create_interface(const char *device, char *ebuf)
+pcap_create_interface(const char *device _U_, char *ebuf)
 {
 	pcap_t *p;
 
-	p = pcap_create_common(device, ebuf, sizeof (struct pcap_nit));
+	p = pcap_create_common(ebuf, sizeof (struct pcap_nit));
 	if (p == NULL)
 		return (NULL);
 
@@ -365,8 +372,18 @@ pcap_create_interface(const char *device, char *ebuf)
 	return (p);
 }
 
+/*
+ * XXX - there's probably a particular bind error that means "that device
+ * doesn't support NIT"; if so, we should try a bind and use that.
+ */
+static int
+can_be_bound(const char *name _U_)
+{
+	return (1);
+}
+
 int
 pcap_platform_finddevs(pcap_if_t **alldevsp, char *errbuf)
 {
-	return (0);
+	return (pcap_findalldevs_interfaces(alldevsp, errbuf, can_be_bound));
 }

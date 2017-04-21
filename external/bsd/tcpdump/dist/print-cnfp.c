@@ -25,6 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* \summary: Cisco NetFlow protocol printer */
+
 /*
  * Cisco NetFlow protocol
  *
@@ -35,20 +37,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-cnfp.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-cnfp.c,v 1.5.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 

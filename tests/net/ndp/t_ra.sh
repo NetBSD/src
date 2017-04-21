@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.24 2017/01/13 08:11:01 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.24.2.1 2017/04/21 16:54:12 bouyer Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -94,6 +94,29 @@ shmif0:\
 _EOF
 }
 
+create_rtadvdconfig_rltime()
+{
+	local time=$1
+
+	cat << _EOF > ${CONFIG}
+shmif0:\
+	:mtu#1300:maxinterval#4:mininterval#3:rltime#$time:
+_EOF
+	$DEBUG && cat ${CONFIG}
+}
+
+create_rtadvdconfig_vltime()
+{
+	local addr=$1
+	local time=$2
+
+	cat << _EOF > ${CONFIG}
+shmif0:\
+	:mtu#1300:maxinterval#4:mininterval#3:addr="$addr":vltime#$time:
+_EOF
+	$DEBUG && cat ${CONFIG}
+}
+
 start_rtadvd()
 {
 	local sock=$1
@@ -124,7 +147,7 @@ check_entries()
 	atf_check -s exit:0 -o match:"${ll_srv}%shmif0 \(reachable\)" rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
 	atf_check -s exit:0 \
-	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +(23h59m|1d0h0m)..s S R" \
+	    -o match:"$ll_srv%shmif0 +$mac_srv +shmif0 +$ONEDAYISH S R" \
 	    rump.ndp -n -a
 	atf_check -s exit:0 -o match:$addr_prefix rump.ndp -n -a
 	atf_check -s exit:0 \
@@ -253,7 +276,7 @@ ra_flush_prefix_entries_body()
 	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
 	atf_check -s exit:0 -o empty rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -311,7 +334,7 @@ ra_flush_defrouter_entries_body()
 	atf_check -s exit:0 -o empty rump.ndp -r
 	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
 	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
-	atf_check -s exit:0 -o match:'(23h59m|1d0h0m)..s S R' rump.ndp -n -a
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
 	unset RUMP_SERVER
@@ -689,6 +712,136 @@ ra_temporary_address_cleanup()
 	cleanup
 }
 
+atf_test_case ra_defrouter_expiration cleanup
+ra_defrouter_expiration_head()
+{
+
+	atf_set "descr" "Tests for default router expiration"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_defrouter_expiration_body()
+{
+	local expire_time=5
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	init_server $RUMPSRV
+
+	create_rtadvdconfig_rltime $expire_time
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' \
+	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	unset RUMP_SERVER
+
+	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
+
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
+
+	export RUMP_SERVER=${RUMPCLI}
+
+	# Terminate rtadvd to prevent new RA messages from coming
+	# Note that ifconfig down; kill -TERM doesn't work
+	kill -KILL `cat ${PIDFILE}`
+
+	# Wait until the default routers and prefix entries are expired
+	sleep $expire_time
+
+	$DEBUG && dump_entries
+
+	# Give nd6_timer a chance to sweep default routers and prefix entries
+	sleep 2
+
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o not-match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o match:'No advertising router' rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ifconfig shmif0 inet6
+	unset RUMP_SERVER
+
+	rump_server_destroy_ifaces
+}
+
+ra_defrouter_expiration_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case ra_prefix_expiration cleanup
+ra_prefix_expiration_head()
+{
+
+	atf_set "descr" "Tests for prefix expiration"
+	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
+}
+
+ra_prefix_expiration_body()
+{
+	local expire_time=5
+
+	rump_server_fs_start $RUMPSRV netinet6
+	rump_server_start $RUMPCLI netinet6
+
+	setup_shmif0 ${RUMPSRV} ${IP6SRV}
+	setup_shmif0 ${RUMPCLI} ${IP6CLI}
+
+	init_server $RUMPSRV
+
+	create_rtadvdconfig_vltime "${IP6SRV_PREFIX}:" $expire_time
+
+	export RUMP_SERVER=${RUMPCLI}
+	atf_check -s exit:0 -o match:'0.->.1' \
+	    rump.sysctl -w net.inet6.ip6.accept_rtadv=1
+	unset RUMP_SERVER
+
+	start_rtadvd $RUMPSRV $PIDFILE
+	sleep $WAITTIME
+
+	check_entries $RUMPCLI $RUMPSRV $IP6SRV_PREFIX
+
+	export RUMP_SERVER=${RUMPCLI}
+
+	# Terminate rtadvd to prevent new RA messages from coming
+	# Note that ifconfig down; kill -TERM doesn't work
+	kill -KILL `cat ${PIDFILE}`
+
+	# Wait until the default routers and prefix entries are expired
+	sleep $expire_time
+
+	$DEBUG && dump_entries
+
+	# Give nd6_timer a chance to sweep default routers and prefix entries
+	sleep 2
+
+	$DEBUG && dump_entries
+	atf_check -s exit:0 -o match:'if=shmif0' rump.ndp -r
+	atf_check -s exit:0 -o empty rump.ndp -p
+	atf_check -s exit:0 -o match:'linkmtu=1300' rump.ndp -n -i shmif0
+	atf_check -s exit:0 -o match:"$ONEDAYISH S R" rump.ndp -n -a
+	atf_check -s exit:0 -o match:'fc00:1:' rump.ndp -n -a
+	atf_check -s exit:0 -o not-match:'fc00:1:' rump.ifconfig shmif0 inet6
+	unset RUMP_SERVER
+
+	rump_server_destroy_ifaces
+}
+
+ra_prefix_expiration_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -700,4 +853,6 @@ atf_init_test_cases()
 	atf_add_test_case ra_multiple_routers_single_prefix
 	atf_add_test_case ra_multiple_routers_maxifprefixes
 	atf_add_test_case ra_temporary_address
+	atf_add_test_case ra_defrouter_expiration
+	atf_add_test_case ra_prefix_expiration
 }

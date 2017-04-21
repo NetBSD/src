@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.5,v 1.8 2008/04/30 13:10:57 martin Exp $
+.\" $NetBSD: ttyaction.5,v 1.8.48.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@ The first two fields are delimited with blanks or tabs,
 and the command field is all text to the end of the line.
 Either or both of first two fields may contain wildcard
 match patterns as implemented by the
-.Fn fnmatch
+.Xr fnmatch 3
 library function.
 .Pp
 All command strings are executed by passing them to

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.141 2016/09/13 07:01:08 martin Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.141.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -247,6 +247,7 @@ struct lwp;
 struct msghdr;
 struct stat;
 struct knote;
+struct sockaddr_big;
 
 struct	mbuf *getsombuf(struct socket *, int);
 
@@ -346,16 +347,24 @@ int	sockopt_setmbuf(struct sockopt *, struct mbuf *);
 struct mbuf *sockopt_getmbuf(const struct sockopt *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
+int	copyout_sockname_sb(struct sockaddr *, unsigned int *,
+    int , struct sockaddr_big *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
 void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
 int	do_sys_getpeername(int, struct sockaddr *);
 int	do_sys_getsockname(int, struct sockaddr *);
+
 int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int,
 	    const void *, size_t, register_t *);
+int	do_sys_sendmsg_so(struct lwp *, int, struct socket *, file_t *,
+	    struct msghdr *, int, const void *, size_t, register_t *);
+
 int	do_sys_recvmsg(struct lwp *, int, struct msghdr *,
-	    const void *, size_t,
-	    struct mbuf **, struct mbuf **, register_t *);
+	    const void *, size_t, struct mbuf **, struct mbuf **, register_t *);
+int	do_sys_recvmsg_so(struct lwp *, int, struct socket *,
+	    struct msghdr *mp, const void *, size_t, struct mbuf **,
+	    struct mbuf **, register_t *);
 
 int	do_sys_bind(struct lwp *, int, struct sockaddr *);
 int	do_sys_connect(struct lwp *, int, struct sockaddr *);

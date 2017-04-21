@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.30 2015/07/06 02:43:26 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.30.4.1 2017/04/21 16:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.30 2015/07/06 02:43:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.30.4.1 2017/04/21 16:53:34 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,13 +63,13 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&vec_ops);
+	return pcu_valid_p(&vec_ops, l);
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	return pcu_discard(&vec_ops, true);
+	return pcu_discard(&vec_ops, l, true);
 }
 
 void
@@ -166,7 +166,8 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 	KASSERT(l == curlwp);
 
 	/* we don't need to save the state, just drop it */
-	pcu_discard(&vec_ops, true);
+	pcu_discard(&vec_ops, l, true);
+
 	memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs, sizeof (pcb->pcb_vr.vreg));
 	pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
 	pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
@@ -187,7 +188,7 @@ vec_save_to_mcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	/*
 	 * If we're the AltiVec owner, dump its context to the PCB first.
 	 */
-	pcu_save(&vec_ops);
+	pcu_save(&vec_ops, l);
 
 	mcp->__gregs[_REG_MSR] |= PSL_VEC;
 	mcp->__vrf.__vscr = pcb->pcb_vr.vscr;

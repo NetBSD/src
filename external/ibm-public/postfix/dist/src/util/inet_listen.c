@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_listen.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_listen.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -142,15 +142,15 @@ int     inet_listen(const char *addr, int backlog, int block_mode)
     if ((sock = socket(res->ai_family, res->ai_socktype, 0)) < 0)
 	msg_fatal("socket: %m");
 #ifdef HAS_IPV6
-# if defined(IPV6_V6ONLY) && !defined(BROKEN_AI_PASSIVE_NULL_HOST)
+#if defined(IPV6_V6ONLY) && !defined(BROKEN_AI_PASSIVE_NULL_HOST)
     if (res->ai_family == AF_INET6
 	&& setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-		      (char *) &on, sizeof(on)) < 0)
+		      (void *) &on, sizeof(on)) < 0)
 	msg_fatal("setsockopt(IPV6_V6ONLY): %m");
-# endif
+#endif
 #endif
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-		   (char *) &on, sizeof(on)) < 0)
+		   (void *) &on, sizeof(on)) < 0)
 	msg_fatal("setsockopt(SO_REUSEADDR): %m");
     if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
 	SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
@@ -173,5 +173,5 @@ int     inet_accept(int fd)
     struct sockaddr_storage ss;
     SOCKADDR_SIZE ss_len = sizeof(ss);
 
-    return (sane_accept(fd, (struct sockaddr *) & ss, &ss_len));
+    return (sane_accept(fd, (struct sockaddr *) &ss, &ss_len));
 }

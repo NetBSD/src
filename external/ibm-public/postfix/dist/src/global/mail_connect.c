@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_connect.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_connect.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -24,6 +24,7 @@
 /*
 /*	mail_connect() attempts to connect to the UNIX-domain socket of
 /*	the named subsystem. The result is a null pointer in case of failure.
+/*	By default this function provides no errno logging.
 /*
 /*	mail_connect_wait() is like mail_connect(), but keeps trying until
 /*	the connection succeeds. However, mail_connect_wait() terminates
@@ -96,8 +97,8 @@ VSTREAM *mail_connect(const char *class, const char *name, int block_mode)
 	timed_ipc_setup(stream);
 	sock_name = concatenate(path, " socket", (char *) 0);
 	vstream_control(stream,
-			VSTREAM_CTL_PATH, sock_name,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_PATH(sock_name),
+			CA_VSTREAM_CTL_END);
 	myfree(sock_name);
     }
     myfree(path);

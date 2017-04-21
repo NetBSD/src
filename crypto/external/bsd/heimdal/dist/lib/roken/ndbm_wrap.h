@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm_wrap.h,v 1.1.1.2 2011/04/14 14:09:30 elric Exp $	*/
+/*	$NetBSD: ndbm_wrap.h,v 1.1.1.2.32.1 2017/04/21 16:50:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Kungliga Tekniska Högskolan

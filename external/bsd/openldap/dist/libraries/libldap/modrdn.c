@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,9 @@
  * 	Juan C. Gomez
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: modrdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -50,6 +53,65 @@
  *	}
  */
 
+BerElement *
+ldap_build_moddn_req(
+	LDAP *ld,
+	LDAP_CONST char *dn,
+	LDAP_CONST char *newrdn,
+	LDAP_CONST char *newSuperior,
+	int deleteoldrdn,
+	LDAPControl **sctrls,
+	LDAPControl **cctrls,
+	ber_int_t *msgidp )
+{
+	BerElement	*ber;
+	int rc;
+
+	/* create a message to send */
+	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
+		return( NULL );
+	}
+
+	LDAP_NEXT_MSGID( ld, *msgidp );
+	if( newSuperior != NULL ) {
+		/* must be version 3 (or greater) */
+		if ( ld->ld_version < LDAP_VERSION3 ) {
+			ld->ld_errno = LDAP_NOT_SUPPORTED;
+			ber_free( ber, 1 );
+			return( NULL );
+		}
+		rc = ber_printf( ber, "{it{ssbtsN}", /* '}' */ 
+			*msgidp, LDAP_REQ_MODDN,
+			dn, newrdn, (ber_int_t) deleteoldrdn,
+			LDAP_TAG_NEWSUPERIOR, newSuperior );
+
+	} else {
+		rc = ber_printf( ber, "{it{ssbN}", /* '}' */ 
+			*msgidp, LDAP_REQ_MODDN,
+			dn, newrdn, (ber_int_t) deleteoldrdn );
+	}
+
+	if ( rc < 0 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	/* Put Server Controls */
+	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	rc = ber_printf( ber, /*{*/ "N}" );
+	if ( rc < 0 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	return( ber );
+}
 
 /*
  * ldap_rename - initiate an ldap extended modifyDN operation.
@@ -85,48 +147,10 @@ ldap_rename(
 	rc = ldap_int_client_controls( ld, cctrls );
 	if( rc != LDAP_SUCCESS ) return rc;
 
-	/* create a message to send */
-	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
-		return( LDAP_NO_MEMORY );
-	}
-
-	LDAP_NEXT_MSGID( ld, id );
-	if( newSuperior != NULL ) {
-		/* must be version 3 (or greater) */
-		if ( ld->ld_version < LDAP_VERSION3 ) {
-			ld->ld_errno = LDAP_NOT_SUPPORTED;
-			ber_free( ber, 1 );
-			return( ld->ld_errno );
-		}
-		rc = ber_printf( ber, "{it{ssbtsN}", /* '}' */ 
-			id, LDAP_REQ_MODDN,
-			dn, newrdn, (ber_int_t) deleteoldrdn,
-			LDAP_TAG_NEWSUPERIOR, newSuperior );
-
-	} else {
-		rc = ber_printf( ber, "{it{ssbN}", /* '}' */ 
-			id, LDAP_REQ_MODDN,
-			dn, newrdn, (ber_int_t) deleteoldrdn );
-	}
-
-	if ( rc < 0 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return( ld->ld_errno );
-	}
-
-	/* Put Server Controls */
-	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
-		ber_free( ber, 1 );
+	ber = ldap_build_moddn_req( ld, dn, newrdn, newSuperior,
+		deleteoldrdn, sctrls, cctrls, &id );
+	if( !ber )
 		return ld->ld_errno;
-	}
-
-	rc = ber_printf( ber, /*{*/ "N}" );
-	if ( rc < 0 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return( ld->ld_errno );
-	}
 
 	/* send the message */
 	*msgidp = ldap_send_initial_request( ld, LDAP_REQ_MODRDN, dn, ber, id );

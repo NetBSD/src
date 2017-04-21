@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,6 +103,9 @@ AcpiPsGetArguments (
 
     ACPI_FUNCTION_TRACE_PTR (PsGetArguments, WalkState);
 
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+        "Get arguments for opcode [%s]\n", Op->Common.AmlOpName));
 
     switch (Op->Common.AmlOpcode)
     {

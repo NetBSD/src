@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2017/01/14 21:20:39 christos Exp $
+# $NetBSD: Makefile,v 1.7.2.1 2017/04/21 16:53:05 bouyer Exp $
 
 .include <bsd.init.mk>
 
@@ -85,7 +85,7 @@ liblzma.pc:	${XZSRCDIR}/src/liblzma/liblzma.pc.in
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
 .if ${MACHINE_ARCH} == "i386"
-COPTS += -Wno-error=psabi
+COPTS += ${${ACTIVE_CC} == "gcc":? -Wno-error=psabi :}
 .endif
 
 CLEANFILES+=	liblzma.pc

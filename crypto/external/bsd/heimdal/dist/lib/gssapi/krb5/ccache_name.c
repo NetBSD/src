@@ -1,4 +1,4 @@
-/*	$NetBSD: ccache_name.c,v 1.1.1.1 2011/04/13 18:14:44 elric Exp $	*/
+/*	$NetBSD: ccache_name.c,v 1.1.1.1.32.1 2017/04/21 16:50:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan

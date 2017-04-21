@@ -1,4 +1,4 @@
-/* $NetBSD: vbox_drv.c,v 1.2 2011/08/28 17:18:31 jmcneill Exp $ */
+/* $NetBSD: vbox_drv.c,v 1.2.38.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vbox_drv.c,v 1.2 2011/08/28 17:18:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vbox_drv.c,v 1.2.38.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #include "drmP.h"
 #include "drm.h"
@@ -69,7 +69,8 @@ vboxdrm_attach(device_t parent, device_t self, void *opaque)
 	struct pci_attach_args *pa = opaque;
 	struct drm_device *dev = device_private(self);
 
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	dev->driver = kmem_zalloc(sizeof(struct drm_driver_info), KM_SLEEP);
 	if (dev->driver == NULL) {

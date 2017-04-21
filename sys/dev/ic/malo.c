@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.8 2016/06/10 13:27:13 ozaki-r Exp $ */
+/*	$NetBSD: malo.c,v 1.8.4.1 2017/04/21 16:53:46 bouyer Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.8 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.8.4.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -314,13 +314,34 @@ malo_intr(void *arg)
 		/* not for us */
 		return (0);
 
+	/* disable interrupts */
+	malo_ctl_read4(sc, MALO_REG_A2H_INTERRUPT_CAUSE);
+	malo_ctl_write4(sc, MALO_REG_A2H_INTERRUPT_CAUSE, 0);
+	malo_ctl_write4(sc, MALO_REG_A2H_INTERRUPT_MASK, 0);
+	malo_ctl_write4(sc, MALO_REG_A2H_INTERRUPT_STATUS_MASK, 0);
+
+	softint_schedule(sc->sc_soft_ih);
+	return (1);
+}
+
+void
+malo_softintr(void *arg)
+{
+	struct malo_softc *sc = arg;
+	uint32_t status;
+
+	status = malo_ctl_read4(sc, MALO_REG_A2H_INTERRUPT_CAUSE);
+	if (status == 0xffffffff || status == 0)
+		goto out;	/* not for us */
+
 	if (status & MALO_A2HRIC_BIT_TX_DONE)
 		malo_tx_intr(sc);
 	if (status & MALO_A2HRIC_BIT_RX_RDY)
 		malo_rx_intr(sc);
 	if (status & MALO_A2HRIC_BIT_OPC_DONE) {
 		/* XXX cmd done interrupt handling doesn't work yet */
-		DPRINTF(1, "%s: got cmd done interrupt\n", device_xname(sc->sc_dev));
+		DPRINTF(1, "%s: got cmd done interrupt\n",
+		    device_xname(sc->sc_dev));
 		//malo_cmd_response(sc);
 	}
 
@@ -332,7 +353,12 @@ malo_intr(void *arg)
 	/* just ack the interrupt */
 	malo_ctl_write4(sc, MALO_REG_A2H_INTERRUPT_CAUSE, 0);
 
-	return (1);
+out:
+	/* enable interrupts */
+	malo_ctl_write4(sc, MALO_REG_A2H_INTERRUPT_MASK, 0x1f);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
+	malo_ctl_write4(sc, MALO_REG_A2H_INTERRUPT_STATUS_MASK, 0x1f);
+	malo_ctl_barrier(sc, BUS_SPACE_BARRIER_WRITE);
 }
 
 int
@@ -396,8 +422,11 @@ malo_attach(struct malo_softc *sc)
 	aprint_normal(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* attach interface */
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
 
 	/* post attach vector functions */
 	sc->sc_newstate = ic->ic_newstate;
@@ -1300,9 +1329,11 @@ malo_tx_intr(struct malo_softc *sc)
 	struct malo_tx_desc *desc;
 	struct malo_tx_data *data;
 	struct malo_node *rn;
-	int stat;
+	int stat, s;
 
 	DPRINTF(2, "%s: %s\n", device_xname(sc->sc_dev), __func__);
+
+	s = splnet();
 
 	stat = sc->sc_txring.stat;
 	for (;;) {
@@ -1362,6 +1393,8 @@ next:
 	sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	malo_start(ifp);
+
+	splx(s);
 }
 
 static int
@@ -1498,7 +1531,7 @@ malo_rx_intr(struct malo_softc *sc)
 	struct ieee80211_node *ni;
 	struct mbuf *mnew, *m;
 	uint32_t rxRdPtr, rxWrPtr;
-	int error, i;
+	int error, i, s;
 
 	rxRdPtr = malo_mem_read4(sc, sc->sc_RxPdRdPtr);
 	rxWrPtr = malo_mem_read4(sc, sc->sc_RxPdWrPtr);
@@ -1578,6 +1611,8 @@ malo_rx_intr(struct malo_softc *sc)
 		memmove(m->m_data +6, m->m_data, 26);
 		m_adj(m, 8);
 
+		s = splnet();
+
 		if (sc->sc_drvbpf != NULL) {
 			struct malo_rx_radiotap_hdr *tap = &sc->sc_rxtap;
 
@@ -1598,6 +1633,8 @@ malo_rx_intr(struct malo_softc *sc)
 
 		/* node is no longer needed */
 		ieee80211_free_node(ni);
+
+		splx(s);
 
 skip:
 		desc->rxctrl = 0;

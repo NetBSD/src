@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.142 2016/08/20 12:37:09 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.142.2.1 2017/04/21 16:54:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.142 2016/08/20 12:37:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.142.2.1 2017/04/21 16:54:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1012,6 +1012,7 @@ rump_vop_rmdir(void *v)
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 	rn->rn_parent = NULL;
+	rn->rn_va.va_nlink = 0;
 
 out:
 	vput(dvp);
@@ -1040,6 +1041,7 @@ rump_vop_remove(void *v)
 
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+	rn->rn_va.va_nlink = 0;
 
 	vput(dvp);
 	vput(vp);
@@ -1590,7 +1592,7 @@ rump_vop_success(void *v)
 static int
 rump_vop_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -1609,7 +1611,6 @@ rump_vop_inactive(void *v)
 	}
 	*ap->a_recycle = (rn->rn_flags & RUMPNODE_CANRECLAIM) ? true : false;
 
-	VOP_UNLOCK(vp);
 	return 0;
 }
 
@@ -1776,7 +1777,7 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_mountroot =	rumpfs_mountroot,
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
-	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_suspendctl =	genfs_suspendctl,
 	.vfs_renamelock_enter =	genfs_renamelock_enter,
 	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,
@@ -1818,9 +1819,21 @@ rumpfs_mountfs(struct mount *mp)
 int
 rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
-	int error;
+	int error, flags;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		return 0;
+	}
 	if (mp->mnt_flag & MNT_UPDATE) {
+		if ((mp->mnt_iflag & IMNT_WANTRDONLY)) {
+			/* Changing from read/write to read-only. */
+			flags = WRITECLOSE;
+			if ((mp->mnt_flag & MNT_FORCE))
+				flags |= FORCECLOSE;
+			error = vflush(mp, NULL, flags);
+			if (error)
+				return error;
+		}
 		return 0;
 	}
 
@@ -1962,7 +1975,7 @@ rumpfs_mountroot()
 		panic("set_statvfs_info failed for rootfs: %d", error);
 
 	mp->mnt_flag &= ~MNT_RDONLY;
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	return 0;
 }

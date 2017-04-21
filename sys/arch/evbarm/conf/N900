@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.22 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: N900,v 1.22.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -47,6 +47,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support

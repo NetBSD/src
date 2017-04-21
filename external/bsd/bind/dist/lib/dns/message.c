@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.21 2017/01/12 08:21:32 spz Exp $	*/
+/*	$NetBSD: message.c,v 1.21.2.1 2017/04/21 16:51:20 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -1221,8 +1221,8 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 {
 	isc_region_t r;
 	unsigned int count, rdatalen;
-	dns_name_t *name;
-	dns_name_t *name2;
+	dns_name_t *name = NULL;
+	dns_name_t *name2 = NULL;
 	dns_offsets_t *offsets;
 	dns_rdataset_t *rdataset = NULL;
 	dns_rdatalist_t *rdatalist;
@@ -1232,7 +1232,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	dns_rdata_t *rdata;
 	dns_ttl_t ttl;
 	dns_namelist_t *section;
-	isc_boolean_t free_name, free_rdataset;
+	isc_boolean_t free_name = ISC_FALSE, free_rdataset = ISC_FALSE;
 	isc_boolean_t preserve_order, best_effort, seen_problem;
 	isc_boolean_t issigzero;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_lmdb.h,v 1.1.1.1 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_lmdb.h,v 1.1.1.1.14.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _DICT_LMDB_H_INCLUDED_
 #define _DICT_LMDB_H_INCLUDED_
@@ -29,7 +29,9 @@ extern DICT *dict_lmdb_open(const char *, int, int);
   * XXX Should be part of the DICT interface.
   */
 extern size_t dict_lmdb_map_size;
-extern unsigned int dict_lmdb_max_readers;
+
+ /* Minimum size without SIGSEGV. */
+#define DEFINE_DICT_LMDB_MAP_SIZE size_t dict_lmdb_map_size = 8192
 
 /* LICENSE
 /* .ad

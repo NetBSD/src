@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.37 2016/12/15 12:56:52 kre Exp $
+# $NetBSD: shl.mi,v 1.37.2.1 2017/04/21 16:51:14 bouyer Exp $
 ./usr/libdata/debug/usr/X11R7/lib	-unknown-		xorg,debug,compatx11dir
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libximcp.so.2.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common/libxlcDef.so.2.0.debug	obsolete		xorg,obsolete
@@ -90,10 +90,11 @@
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-shape.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-shm.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-sync.so.1.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libxcb-xevie.so.0.1.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libxcb-xevie.so.0.1.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xf86dri.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xfixes.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xinerama.so.0.1.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libxcb-xinput.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xkb.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xtest.so.0.1.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libxcb-xv.so.0.1.debug	-unknown-		xorg,debug,compatx11file

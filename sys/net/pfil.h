@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.32 2016/12/26 23:21:49 christos Exp $	*/
+/*	$NetBSD: pfil.h,v 1.32.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -59,6 +59,7 @@ typedef struct pfil_head	pfil_head_t;
 
 #ifdef _KERNEL
 
+void	pfil_init(void);
 int	pfil_run_hooks(pfil_head_t *, struct mbuf **, struct ifnet *, int);
 void	pfil_run_addrhooks(pfil_head_t *, unsigned long, struct ifaddr *);
 void	pfil_run_ifhooks(pfil_head_t *, unsigned long, struct ifnet *);

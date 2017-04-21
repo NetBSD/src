@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.95 2016/11/03 03:53:32 pgoyette Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.95.2.1 2017/04/21 16:54:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.95 2016/11/03 03:53:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.95.2.1 2017/04/21 16:54:04 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -386,20 +386,25 @@ procfs_loadvnode(struct mount *mp, struct vnode *vp,
 		vp->v_type = VREG;
 		break;
 
-	case PFSmap:	/* /proc/N/map = -r--r--r-- */
-	case PFSmaps:	/* /proc/N/maps = -r--r--r-- */
-	case PFSstatus:	/* /proc/N/status = -r--r--r-- */
-	case PFSstat:	/* /proc/N/stat = -r--r--r-- */
+	case PFSmap:		/* /proc/N/map = -r-------- */
+	case PFSmaps:		/* /proc/N/maps = -r-------- */
+	case PFSauxv:		/* /proc/N/auxv = -r-------- */
+		pfs->pfs_mode = S_IRUSR;
+		vp->v_type = VREG;
+		break;
+
+	case PFSstatus:		/* /proc/N/status = -r--r--r-- */
+	case PFSstat:		/* /proc/N/stat = -r--r--r-- */
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
-	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
+	case PFSemul:		/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case PFScpustat:	/* /proc/stat = -r--r--r-- */
 	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
-	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
-	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
+	case PFSuptime:		/* /proc/uptime = -r--r--r-- */
+	case PFSmounts:		/* /proc/mounts = -r--r--r-- */
 	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
-	case PFSstatm:	/* /proc/N/statm = -r--r--r-- */
+	case PFSstatm:		/* /proc/N/statm = -r--r--r-- */
 	case PFSversion:	/* /proc/version = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
@@ -473,7 +478,7 @@ struct vfsops procfs_vfsops = {
 	.vfs_done = procfs_done,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

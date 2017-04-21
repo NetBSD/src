@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.122 2014/04/05 23:36:10 khorben Exp $	*/
+/*	$NetBSD: inetd.c,v 1.122.10.1 2017/04/21 16:54:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.122 2014/04/05 23:36:10 khorben Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.122.10.1 2017/04/21 16:54:17 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -850,7 +850,7 @@ config(void)
 			}
 			(void)unlink(sep->se_service);
 			strlcpy(sep->se_ctrladdr_un.sun_path,
-			    sep->se_service, n);
+			    sep->se_service, n + 1);
 			sep->se_ctrladdr_un.sun_family = AF_LOCAL;
 			sep->se_ctrladdr_size = (int)(n +
 			    sizeof(sep->se_ctrladdr_un) -

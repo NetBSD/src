@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.2.34.1 2017/04/21 16:52:23 bouyer Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
@@ -10,6 +10,9 @@
  * This work originally developed by Sang Seok Lim
  * 2004/06/18	03:20:00	slim@OpenLDAP.org
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: init.c,v 1.1.1.2.34.1 2017/04/21 16:52:23 bouyer Exp $");
 
 #include "portable.h"
 #include <ac/string.h>

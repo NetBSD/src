@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_state.c,v 1.1.1.2 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_state.c,v 1.1.1.2.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -108,9 +108,9 @@ void    smtp_state_free(SMTP_STATE *state)
     if (state->endp_prop)
 	vstring_free(state->endp_prop);
     if (state->cache_used)
-	htable_free(state->cache_used, (void (*) (char *)) 0);
+	htable_free(state->cache_used, (void (*) (void *)) 0);
     if (state->why)
 	dsb_free(state->why);
 
-    myfree((char *) state);
+    myfree((void *) state);
 }

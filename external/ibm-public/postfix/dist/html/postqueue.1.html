@@ -10,10 +10,19 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        postqueue - Postfix queue control
 
 <b>SYNOPSIS</b>
+   <b>To flush the mail queue</b>:
+
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-f</b>
+
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-i</b> <i>queue</i><b>_</b><i>id</i>
-       <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-p</b>
+
        <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-s</b> <i>site</i>
+
+   <b>To list the mail queue</b>:
+
+       <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-j</b>
+
+       <b>postqueue</b> [<b>-v</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] <b>-p</b>
 
 <b>DESCRIPTION</b>
        The  <a href="postqueue.1.html"><b>postqueue</b>(1)</a>  command  implements  the  Postfix user interface for
@@ -45,6 +54,14 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               contacting the <a href="flush.8.html"><b>flush</b>(8)</a> server.
 
               This feature is available with Postfix version 2.4 and later.
+
+       <b>-j</b>     Produce a queue listing in JSON format, based on output from the
+              <a href="showq.8.html">showq(8)</a> daemon.  The result is a stream of zero  or  more  JSON
+              objects,  one per queue file.  Each object is followed by a new-
+              line character to support simple streaming  parsers.  See  "<b>JSON</b>
+              <b>OBJECT FORMAT</b>" below for details.
+
+              This feature is available in Postfix 3.1 and later.
 
        <b>-p</b>     Produce a traditional sendmail-style queue listing.  This option
               implements the traditional  <b>mailq</b>  command,  by  contacting  the
@@ -78,36 +95,84 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               options  make  the  software increasingly verbose. As of Postfix
               2.3, this option is available for the super-user only.
 
+<b>JSON OBJECT FORMAT</b>
+       Each JSON object represents one queue file; it is emitted as  a  single
+       text line followed by a newline character.
+
+       Object members have string values unless indicated otherwise.  Programs
+       should ignore object members that are not listed here; the list of mem-
+       bers is expected to grow over time.
+
+       <b>queue_name</b>
+              The  name  of  the queue where the message was found.  Note that
+              the contents of the mail queue may  change  while  it  is  being
+              listed;  some  messages may appear more than once, and some mes-
+              sages may be missed.
+
+       <b>queue_id</b>
+              The queue file name. The queue_id may be reused within a Postfix
+              instance unless "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> = true" and time is mono-
+              tonic.  Even then, the queue_id is not  expected  to  be  unique
+              between  different  Postfix  instances.   Management  tools that
+              require a unique name  should  combine  the  queue_id  with  the
+              <a href="postconf.5.html#myhostname">myhostname</a> setting of the Postfix instance.
+
+       <b>arrival_time</b>
+              The number of seconds since the start of the UNIX epoch.
+
+       <b>message_size</b>
+              The  number of bytes in the message header and body. This number
+              does not include message envelope information.  It  is  approxi-
+              mately  equal  to  the number of bytes that would be transmitted
+              via SMTP including the &lt;CR&gt;&lt;LF&gt; line endings.
+
+       <b>sender</b> The envelope sender address.
+
+       <b>recipients</b>
+              An array containing zero or more objects with members:
+
+              <b>address</b>
+                     One recipient address.
+
+              <b>delay_reason</b>
+                     If present, the reason  for  delayed  delivery.   Delayed
+                     recipients  may  have no delay reason, for example, while
+                     delivery is in progress, or after the system was  stopped
+                     before it could record the reason.
+
 <b>SECURITY</b>
-       This program is designed to run with set-group ID privileges,  so  that
+       This  program  is designed to run with set-group ID privileges, so that
        it can connect to Postfix daemon processes.
+
+<b>STANDARDS</b>
+       <a href="http://tools.ietf.org/html/rfc7159">RFC 7159</a> (JSON notation)
 
 <b>DIAGNOSTICS</b>
        Problems are logged to <b>syslogd</b>(8) and to the standard error stream.
 
 <b>ENVIRONMENT</b>
        MAIL_CONFIG
-              Directory  with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid exploitation
-              of set-group ID privileges, a non-standard directory is  allowed
+              Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid  exploitation
+              of  set-group ID privileges, a non-standard directory is allowed
               only if:
 
-              <b>o</b>      The  name is listed in the standard <a href="postconf.5.html"><b>main.cf</b></a> file with the
+              <b>o</b>      The name is listed in the standard <a href="postconf.5.html"><b>main.cf</b></a> file with  the
                      <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b> configuration parameter.
 
               <b>o</b>      The command is invoked by the super-user.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
-       gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
               A list of non-default Postfix configuration directories that may
-              be  specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line, or
+              be specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line,  or
               via the MAIL_CONFIG environment parameter.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
               figuration files.
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
@@ -118,7 +183,7 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               tion logfiles with mail that is queued to those destinations.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment parameters that a Postfix  process  will
+              The  list  of environment parameters that a Postfix process will
               import from a non-Postfix parent process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
@@ -128,12 +193,12 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The  mail  system  name that is prepended to the process name in
-              syslog records, so that "smtpd"  becomes,  for  example,  "post-
+              The mail system name that is prepended to the  process  name  in
+              syslog  records,  so  that  "smtpd" becomes, for example, "post-
               fix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
-              The  time  limit  for sending a trigger to a Postfix daemon (for
+              The time limit for sending a trigger to a  Postfix  daemon  (for
               example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon).
 
        Available in Postfix version 2.2 and later:
@@ -168,6 +233,11 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                   POSTQUEUE(1)
 </pre> </body> </html>

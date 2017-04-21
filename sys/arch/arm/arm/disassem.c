@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.34 2015/12/14 15:29:45 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.34.4.1 2017/04/21 16:53:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.34 2015/12/14 15:29:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.34.4.1 2017/04/21 16:53:22 bouyer Exp $");
 
 #include <sys/systm.h>
 
@@ -169,7 +169,7 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fe00070, 0x07e00050, "ubfx",	"dmir" },
     { 0xfff000f0, 0xe70000f0, "und",	"x" },		/* Special immediate? */
 
-    { 0x06000010, 0x06000010, "und",	"x" },		/* Remove when done with media */
+    { 0x0e000010, 0x06000010, "und",	"x" },		/* Remove when done with media */
 
     { 0x0d700000, 0x04200000, "strt",	"daW" },
     { 0x0d700000, 0x04300000, "ldrt",	"daW" },

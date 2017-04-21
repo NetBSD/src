@@ -1,9 +1,9 @@
-/*	$NetBSD: cyrus.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: cyrus.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: cyrus.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1151,6 +1154,7 @@ void *ldap_pvt_sasl_mutex_new(void)
 	if ( ldap_pvt_thread_mutex_init( mutex ) == 0 ) {
 		return mutex;
 	}
+	LDAP_FREE( mutex );
 #ifndef LDAP_DEBUG_R_SASL
 	assert( 0 );
 #endif /* !LDAP_DEBUG_R_SASL */

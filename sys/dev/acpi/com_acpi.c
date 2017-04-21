@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.33 2016/07/11 11:31:50 msaitoh Exp $ */
+/* $NetBSD: com_acpi.c,v 1.33.4.1 2017/04/21 16:53:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.33 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.33.4.1 2017/04/21 16:53:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,9 +151,9 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
-	asc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
+	asc->sc_ih = isa_intr_establish_xname(aa->aa_ic, irq->ar_irq,
 	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
-	    IPL_SERIAL, comintr, sc);
+	    IPL_SERIAL, comintr, sc, device_xname(sc->sc_dev));
 
 	if (!pmf_device_register(self, NULL, com_resume))
 		aprint_error_dev(self, "couldn't establish a power handler\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.123 2016/11/11 10:50:16 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.123.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.123 2016/11/11 10:50:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.123.2.1 2017/04/21 16:54:08 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -527,17 +527,19 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	}
 
 done:
-#ifdef DIAGNOSTIC
 	for (level = SINGLE; level <= TRIPLE; level++)
-		if (blks[UFS_NDADDR + level] != DIP(oip, ib[level]))
-			panic("itrunc1");
+		KASSERTMSG((blks[UFS_NDADDR + level] == DIP(oip, ib[level])),
+		    "itrunc1 blk mismatch: %jx != %jx",
+		    (uintmax_t)blks[UFS_NDADDR + level],
+		    (uintmax_t)DIP(oip, ib[level]));
 	for (i = 0; i < UFS_NDADDR; i++)
-		if (blks[i] != DIP(oip, db[i]))
-			panic("itrunc2");
-	if (length == 0 &&
-	    (!LIST_EMPTY(&ovp->v_cleanblkhd) || !LIST_EMPTY(&ovp->v_dirtyblkhd)))
-		panic("itrunc3");
-#endif /* DIAGNOSTIC */
+		KASSERTMSG((blks[i] == DIP(oip, db[i])),
+		    "itrunc2 blk mismatch: %jx != %jx",
+		    (uintmax_t)blks[i], (uintmax_t)DIP(oip, db[i]));
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_cleanblkhd)),
+	    "itrunc3: zero length and nonempty cleanblkhd");
+	KASSERTMSG((length != 0 || LIST_EMPTY(&ovp->v_dirtyblkhd)),
+	    "itrunc3: zero length and nonempty dirtyblkhd");
 
 out:
 	/*

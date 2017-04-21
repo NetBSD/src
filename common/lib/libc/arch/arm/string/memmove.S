@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.9 2015/03/26 13:34:51 justin Exp $	*/
+/*	$NetBSD: memmove.S,v 1.9.4.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ ENTRY(bcopy)
 	ands	r12, r0, #3
 	bne	.Lmemmove_fdestul	/* oh unaligned destination addr */
 	ands	r12, r1, #3
-	bne	.Lmemmove_fsrcul		/* oh unaligned source addr */
+	bne	.Lmemmove_fsrcul	/* oh unaligned source addr */
 
 .Lmemmove_ft8:
 	/* We have aligned source and destination */

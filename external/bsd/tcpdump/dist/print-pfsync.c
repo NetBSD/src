@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pfsync.c,v 1.3 2016/01/23 19:08:02 christos Exp $	*/
+/*	$NetBSD: print-pfsync.c,v 1.3.4.1 2017/04/21 16:52:35 bouyer Exp $	*/
 /*	$OpenBSD: print-pfsync.c,v 1.30 2007/05/31 04:16:26 mcbride Exp $	*/
 
 /*
@@ -31,18 +31,23 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/external/bsd/tcpdump/dist/print-pfsync.c,v 1.3 2016/01/23 19:08:02 christos Exp $";
+    "@(#) $Header: /cvsroot/src/external/bsd/tcpdump/dist/print-pfsync.c,v 1.3.4.1 2017/04/21 16:52:35 bouyer Exp $";
 #else
-__RCSID("$NetBSD: print-pfsync.c,v 1.3 2016/01/23 19:08:02 christos Exp $");
+__RCSID("$NetBSD: print-pfsync.c,v 1.3.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 #endif
 
-#define NETDISECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <net/pfvar.h>
+#include <net/if_pflog.h>
+
+#include <netdissect-stdinc.h>
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -72,13 +77,13 @@ struct rtentry;
 #include <string.h>
 
 #include "interface.h"
-#include "addrtoname.h"
+#include "netdissect.h"
 #include "pfctl_parser.h"
 #include "pfctl.h"
 
 const char *pfsync_acts[] = { PFSYNC_ACTIONS };
 
-static void pfsync_print(struct pfsync_header *, int);
+static void pfsync_print(netdissect_options *, struct pfsync_header *, int);
 
 u_int
 pfsync_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char *p)
@@ -92,31 +97,30 @@ pfsync_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_ch
 		goto out;
 	}
 
-	pfsync_print((struct pfsync_header *)p,
+	pfsync_print(ndo, (struct pfsync_header *)p,
 	    caplen - sizeof(struct pfsync_header));
 out:
-	if (xflag) {
-		default_print((const u_char *)h, caplen);
-	}
+	if (ndo->ndo_suppress_default_print)
+	    ND_DEFAULTPRINT((const u_char *)h, caplen);
 	//putchar('\n');
 
 	return 0;
 }
 
 void
-pfsync_ip_print(const u_char *bp, u_int len, const u_char *bp2 __unused)
+pfsync_ip_print(netdissect_options *ndo, const u_char *bp, u_int len, const u_char *bp2 __unused)
 {
 	struct pfsync_header *hdr = (struct pfsync_header *)bp;
 
 	if (len < PFSYNC_HDRLEN)
 		printf("[|pfsync]");
 	else
-		pfsync_print(hdr, (len - sizeof(struct pfsync_header)));
+		pfsync_print(ndo, hdr, (len - sizeof(struct pfsync_header)));
 	//putchar('\n');
 }
 
 static void
-pfsync_print(struct pfsync_header *hdr, int len)
+pfsync_print(netdissect_options *ndo, struct pfsync_header *hdr, int len)
 {
 	struct pfsync_state *s;
 	struct pfsync_state_upd *u;
@@ -128,24 +132,24 @@ pfsync_print(struct pfsync_header *hdr, int len)
 	int i, flags = 0, min, sec;
 	u_int64_t id;
 
-	if (eflag)
+	if (ndo->ndo_eflag)
 		printf("PFSYNCv%d count %d: ",
 		    hdr->version, hdr->count);
 
 	if (hdr->action < PFSYNC_ACT_MAX)
-		printf("%s %s:", (vflag == 0) ? "PFSYNC" : "", 
+		printf("%s %s:", (ndo->ndo_vflag == 0) ? "PFSYNC" : "", 
 				pfsync_acts[hdr->action]);
 	else
-		printf("%s %d?:", (vflag == 0) ? "PFSYNC" : "",
+		printf("%s %d?:", (ndo->ndo_vflag == 0) ? "PFSYNC" : "",
 				hdr->action);
 
-	if (!vflag) 
+	if (!ndo->ndo_vflag) 
 		return;
-	if (vflag)
+	if (ndo->ndo_vflag)
 		flags |= PF_OPT_VERBOSE;
-	if (vflag > 1)
+	if (ndo->ndo_vflag > 1)
 		flags |= PF_OPT_VERBOSE2;
-	if (!nflag)
+	if (!ndo->ndo_nflag)
 		flags |= PF_OPT_USEDNS;
 
 	switch (hdr->action) {
@@ -164,7 +168,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 
 			putchar('\n');
 			print_state(s, flags);
-			if (vflag > 1 && hdr->action == PFSYNC_ACT_UPD)
+			if (ndo->ndo_vflag > 1 && hdr->action == PFSYNC_ACT_UPD)
 				printf(" updates: %d", s->updates);
 		}
 		break;
@@ -174,7 +178,7 @@ pfsync_print(struct pfsync_header *hdr, int len)
 			memcpy(&id, &u->id, sizeof(id));
 			printf("\n\tid: %" PRIu64 " creatorid: %08x",
 			    be64toh(id), ntohl(u->creatorid));
-			if (vflag > 1)
+			if (ndo->ndo_vflag > 1)
 				printf(" updates: %d", u->updates);
 		}
 		break;

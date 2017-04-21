@@ -1,4 +1,4 @@
-/*	$NetBSD: net_component.c,v 1.6 2016/08/10 10:09:42 kre Exp $	*/
+/*	$NetBSD: net_component.c,v 1.6.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.6 2016/08/10 10:09:42 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.6.2.1 2017/04/21 16:54:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -36,13 +36,13 @@ __KERNEL_RCSID(0, "$NetBSD: net_component.c,v 1.6 2016/08/10 10:09:42 kre Exp $"
 
 #include <net/if.h>
 #include <net/if_llatbl.h>
+#include <net/if_l2tp.h>
 #include <net/route.h>
 
 #include <rump-sys/kern.h>
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
-
 	ifinit1();
 	ifinit();
 	lltableinit();

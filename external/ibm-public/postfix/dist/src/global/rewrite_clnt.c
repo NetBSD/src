@@ -1,4 +1,4 @@
-/*	$NetBSD: rewrite_clnt.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: rewrite_clnt.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -136,14 +136,14 @@ VSTRING *rewrite_clnt(const char *rule, const char *addr, VSTRING *result)
 	errno = 0;
 	count += 1;
 	if (attr_print(stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_STR, MAIL_ATTR_REQ, REWRITE_ADDR,
-		       ATTR_TYPE_STR, MAIL_ATTR_RULE, rule,
-		       ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
+		       SEND_ATTR_STR(MAIL_ATTR_REQ, REWRITE_ADDR),
+		       SEND_ATTR_STR(MAIL_ATTR_RULE, rule),
+		       SEND_ATTR_STR(MAIL_ATTR_ADDR, addr),
 		       ATTR_TYPE_END) != 0
 	    || vstream_fflush(stream)
 	    || attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_INT, MAIL_ATTR_FLAGS, &server_flags,
-			 ATTR_TYPE_STR, MAIL_ATTR_ADDR, result,
+			 RECV_ATTR_INT(MAIL_ATTR_FLAGS, &server_flags),
+			 RECV_ATTR_STR(MAIL_ATTR_ADDR, result),
 			 ATTR_TYPE_END) != 2) {
 	    if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		msg_warn("problem talking to service %s: %m",

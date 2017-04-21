@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.14 2016/07/07 06:28:20 matt Exp $
+#	$NetBSD: Makefile,v 1.14.4.1 2017/04/21 16:51:09 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	3072k
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
 DBG=		-Os
-.if !empty(MACHINE_ARCH:Mearmv7*)
+.if !empty(MACHINE_ARCH:Mearmv7*) && ${ACTIVE_CC} == "gcc"
 DBG+=		-mthumb -mthumb-interwork
 .endif
 

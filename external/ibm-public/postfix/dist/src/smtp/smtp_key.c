@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_key.c,v 1.1.1.1 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_key.c,v 1.1.1.1.14.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -148,7 +148,7 @@ static void smtp_key_append_uint(VSTRING *buffer, unsigned num,
 char   *smtp_key_prefix(VSTRING *buffer, const char *delim_na,
 			        SMTP_ITERATOR *iter, int flags)
 {
-    const char myname[] = "smtp_key_prefix";
+    static const char myname[] = "smtp_key_prefix";
     SMTP_STATE *state = iter->parent;	/* private member */
 
     /*

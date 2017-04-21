@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.1.1.4 2013/09/25 19:06:35 tron Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.1.1.4.12.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -48,7 +48,7 @@
 /* .IP namaddr
 /*	String of the form: "name[addr]:port".
 /* .IP rfc_addr
-/*      String of the form "ipv4addr" or "ipv6:ipv6addr" for use
+/*	String of the form "ipv4addr" or "ipv6:ipv6addr" for use
 /*	in Received: message headers.
 /* .IP dest_addr
 /*	Server address, used by the Dovecot authentication server.
@@ -159,7 +159,7 @@ static INET_PROTO_INFO *proto_info;
 static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 {
     const char *myname = "smtpd_peer_sockaddr_to_hostaddr";
-    struct sockaddr *sa = (struct sockaddr *) & (state->sockaddr);
+    struct sockaddr *sa = (struct sockaddr *) &(state->sockaddr);
     SOCKADDR_SIZE sa_length = state->sockaddr_len;
 
     /*
@@ -246,7 +246,7 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 		sa_length = res0->ai_addrlen;
 		if (sa_length > sizeof(state->sockaddr))
 		    sa_length = sizeof(state->sockaddr);
-		memcpy((char *) sa, res0->ai_addr, sa_length);
+		memcpy((void *) sa, res0->ai_addr, sa_length);
 		freeaddrinfo(res0);		/* 200412 */
 	    }
 
@@ -291,7 +291,7 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 
 static void smtpd_peer_sockaddr_to_hostname(SMTPD_STATE *state)
 {
-    struct sockaddr *sa = (struct sockaddr *) & (state->sockaddr);
+    struct sockaddr *sa = (struct sockaddr *) &(state->sockaddr);
     SOCKADDR_SIZE sa_length = state->sockaddr_len;
     MAI_HOSTNAME_STR client_name;
     int     aierr;
@@ -384,7 +384,7 @@ static void smtpd_peer_hostaddr_to_sockaddr(SMTPD_STATE *state)
 		  myname, MAI_STRERROR(aierr));
     if (res->ai_addrlen > sizeof(state->sockaddr))
 	msg_panic("%s: address length > struct sockaddr_storage", myname);
-    memcpy((char *) &(state->sockaddr), res->ai_addr, res->ai_addrlen);
+    memcpy((void *) &(state->sockaddr), res->ai_addr, res->ai_addrlen);
     state->sockaddr_len = res->ai_addrlen;
     freeaddrinfo(res);
 }
@@ -482,7 +482,7 @@ static void smtpd_peer_from_pass_attr(SMTPD_STATE *state)
 static void smtpd_peer_from_default(SMTPD_STATE *state)
 {
     SOCKADDR_SIZE sa_length = sizeof(state->sockaddr);
-    struct sockaddr *sa = (struct sockaddr *) & (state->sockaddr);
+    struct sockaddr *sa = (struct sockaddr *) &(state->sockaddr);
 
     /*
      * The "no client" routine provides surrogate information so that the
@@ -549,7 +549,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
     /*
      * Prepare for partial initialization after error.
      */
-    memset((char *) &(state->sockaddr), 0, sizeof(state->sockaddr));
+    memset((void *) &(state->sockaddr), 0, sizeof(state->sockaddr));
     state->sockaddr_len = 0;
     state->name = 0;
     state->reverse_name = 0;

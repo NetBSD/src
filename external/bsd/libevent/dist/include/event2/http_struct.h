@@ -1,5 +1,4 @@
-/*	$NetBSD: http_struct.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
-/*	$NetBSD: http_struct.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
+/*	$NetBSD: http_struct.h,v 1.1.1.2.4.1 2017/04/21 16:51:32 bouyer Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -26,8 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _EVENT2_HTTP_STRUCT_H_
-#define _EVENT2_HTTP_STRUCT_H_
+#ifndef EVENT2_HTTP_STRUCT_H_INCLUDED_
+#define EVENT2_HTTP_STRUCT_H_INCLUDED_
 
 /** @file event2/http_struct.h
 
@@ -41,10 +40,10 @@ extern "C" {
 #endif
 
 #include <event2/event-config.h>
-#ifdef _EVENT_HAVE_SYS_TYPES_H
+#ifdef EVENT__HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef _EVENT_HAVE_SYS_TIME_H
+#ifdef EVENT__HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 
@@ -122,11 +121,33 @@ struct {
 	 * the regular callback.
 	 */
 	void (*chunk_cb)(struct evhttp_request *, void *);
+
+	/*
+	 * Callback added for forked-daapd so they can collect ICY
+	 * (shoutcast) metadata from the http header. If return
+	 * int is negative the connection will be closed.
+	 */
+	int (*header_cb)(struct evhttp_request *, void *);
+
+	/*
+	 * Error callback - called when error is occured.
+	 * @see evhttp_request_error for error types.
+	 *
+	 * @see evhttp_request_set_error_cb()
+	 */
+	void (*error_cb)(enum evhttp_request_error, void *);
+
+	/*
+	 * Send complete callback - called when the request is actually
+	 * sent and completed.
+	 */
+	void (*on_complete_cb)(struct evhttp_request *, void *);
+	void *on_complete_cb_arg;
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _EVENT2_HTTP_STRUCT_H_ */
+#endif /* EVENT2_HTTP_STRUCT_H_INCLUDED_ */
 

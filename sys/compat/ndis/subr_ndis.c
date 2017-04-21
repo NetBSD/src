@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ndis.c,v 1.28 2014/03/25 16:23:58 christos Exp $	*/
+/*	$NetBSD: subr_ndis.c,v 1.28.14.1 2017/04/21 16:53:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.28 2014/03/25 16:23:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.28.14.1 2017/04/21 16:53:42 bouyer Exp $");
 #endif
 
 /*
@@ -3042,6 +3042,8 @@ NdisOpenFile(ndis_status *status, ndis_handle *filehandle, uint32_t *filelength,
 	char			*path;
 	linker_file_t		head, lf;
 	void			*kldstart, *kldend;
+	mount_iterator_t	*iter;
+	struct mount		*mp;
 
 	ndis_unicode_to_ascii(filename->us_buf,
 	    filename->us_len, &afilename);
@@ -3094,7 +3096,10 @@ NdisOpenFile(ndis_status *status, ndis_handle *filehandle, uint32_t *filelength,
 		return;
 	}
 
-	if (TAILQ_EMPTY(&mountlist)) {
+	mountlist_iterator_init(&iter);
+	mp = mountlist_iterator_next(iter);
+	mountlist_iterator_destroy(iter);
+	if (mp == NULL) {
 		ExFreePool(fh);
 		*status = NDIS_STATUS_FILE_NOT_FOUND;
 		printf("NDIS: could not find file %s in linker list\n",

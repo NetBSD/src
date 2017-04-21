@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.124 2015/08/14 01:23:17 knakahara Exp $
+$NetBSD: miidevs,v 1.124.4.1 2017/04/21 16:53:47 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -227,14 +227,17 @@ model yyINTEL I82562G		0x0031 i82562G 10/100 media interface
 model yyINTEL I82562EM		0x0032 i82562EM 10/100 media interface
 model yyINTEL I82562ET		0x0033 i82562ET 10/100 media interface
 model yyINTEL I82553		0x0035 i82553 10/100 media interface
+model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
 model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model INTEL I82577		0x0005 i82577 10/100/1000 media interface
 model INTEL I82579		0x0009 i82579 10/100/1000 media interface
 model INTEL I217		0x000a i217 10/100/1000 media interface
+model INTEL I82580		0x003a 82580 10/100/1000 media interface
+model INTEL I350		0x003b I350 10/100/1000 media interface
 model xxMARVELL I210		0x0000 I210 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
+model ATHEROS I82578		0x0004 Intel 82578 10/100/1000 media interface
 
-model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
 
 /* JMicron PHYs */
 model JMICRON JMC250		0x0021 JMC250 10/100/1000 media interface
@@ -262,7 +265,9 @@ model xxMARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
 model xxMARVELL E1145		0x000d Marvell 88E1145 Quad Gigabit PHY
 model xxMARVELL E6060		0x0010 Marvell 88E6060 6-Port 10/100 Fast Ethernet Switch
+model xxMARVELL I347		0x001c Intel I347-AT4 Gigabit PHY
 model xxMARVELL E1512		0x001d Marvell 88E1512 Gigabit PHY
+model xxMARVELL E1340M		0x001f Marvell 88E1340 Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1118		0x0022 Marvell 88E1118 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY

@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.13 2003/08/07 10:31:22 agc Exp $
+.\" $NetBSD: boot.8,v 1.13.84.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .\"
 .\"     @(#)boot_hp300.8        8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 29, 2003
+.Dd February 17, 2017
 .Dt BOOT 8 alpha
 .Os
 .Sh NAME
@@ -512,14 +512,14 @@ disk and tape bootstrap
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr alpha/mkbootimage 8 ,
+.Xr alpha/setnetbootinfo 8 ,
 .Xr diskless 8 ,
 .Xr init 8 ,
 .Xr installboot 8 ,
-.Xr mkbootimage 8 ,
 .Xr rc 8 ,
 .Xr reboot 8 ,
 .Xr savecore 8 ,
-.Xr setnetbootinfo 8 ,
 .Xr shutdown 8
 .Rs
 .%T "Alpha Architecture Reference Manual Third Edition"

@@ -1,4 +1,4 @@
-/*	$NetBSD: binhash.c,v 1.1.1.2 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: binhash.c,v 1.1.1.2.12.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -10,46 +10,46 @@
 /*
 /*	typedef	struct {
 /* .in +4
-/*		char	*key;
-/*		int	key_len;
-/*		char	*value;
+/*		void	*key;
+/*		ssize_t	key_len;
+/*		void	*value;
 /*		/* private fields... */
 /* .in -4
 /*	} BINHASH_INFO;
 /*
 /*	BINHASH	*binhash_create(size)
-/*	int	size;
+/*	ssize_t	size;
 /*
 /*	BINHASH_INFO *binhash_enter(table, key, key_len, value)
 /*	BINHASH	*table;
-/*	const char *key;
-/*	int	key_len;
-/*	char	*value;
+/*	const void *key;
+/*	ssize_t	key_len;
+/*	void	*value;
 /*
 /*	char	*binhash_find(table, key, key_len)
 /*	BINHASH	*table;
-/*	const char *key;
-/*	int	key_len;
+/*	const void *key;
+/*	ssize_t	key_len;
 /*
 /*	BINHASH_INFO *binhash_locate(table, key, key_len)
 /*	BINHASH	*table;
-/*	const char *key;
-/*	int	key_len;
+/*	const void *key;
+/*	ssize_t	key_len;
 /*
 /*	void	binhash_delete(table, key, key_len, free_fn)
 /*	BINHASH	*table;
-/*	const char *key;
-/*	int	key_len;
-/*	void	(*free_fn)(char *);
+/*	const void *key;
+/*	ssize_t	key_len;
+/*	void	(*free_fn)(void *);
 /*
 /*	void	binhash_free(table, free_fn)
 /*	BINHASH	*table;
-/*	void	(*free_fn)(char *);
+/*	void	(*free_fn)(void *);
 /*
 /*	void	binhash_walk(table, action, ptr)
 /*	BINHASH	*table;
-/*	void	(*action)(BINHASH_INFO *info, char *ptr);
-/*	char	*ptr;
+/*	void	(*action)(BINHASH_INFO *info, void *ptr);
+/*	void	*ptr;
 /*
 /*	BINHASH_INFO **binhash_list(table)
 /*	BINHASH	*table;
@@ -126,10 +126,10 @@
 
 /* binhash_hash - hash a string */
 
-static unsigned binhash_hash(const char *key, int len, unsigned size)
+static size_t binhash_hash(const void *key, ssize_t len, size_t size)
 {
-    unsigned long h = 0;
-    unsigned long g;
+    size_t  h = 0;
+    size_t  g;
 
     /*
      * From the "Dragon" book by Aho, Sethi and Ullman.
@@ -158,7 +158,7 @@ static unsigned binhash_hash(const char *key, int len, unsigned size)
 
 /* binhash_size - allocate and initialize hash table */
 
-static void binhash_size(BINHASH *table, unsigned size)
+static void binhash_size(BINHASH *table, size_t size)
 {
     BINHASH_INFO **h;
 
@@ -174,7 +174,7 @@ static void binhash_size(BINHASH *table, unsigned size)
 
 /* binhash_create - create initial hash table */
 
-BINHASH *binhash_create(int size)
+BINHASH *binhash_create(ssize_t size)
 {
     BINHASH *table;
 
@@ -189,7 +189,7 @@ static void binhash_grow(BINHASH *table)
 {
     BINHASH_INFO *ht;
     BINHASH_INFO *next;
-    unsigned old_size = table->size;
+    ssize_t old_size = table->size;
     BINHASH_INFO **h = table->data;
     BINHASH_INFO **old_entries = h;
 
@@ -201,12 +201,12 @@ static void binhash_grow(BINHASH *table)
 	    binhash_link(table, ht);
 	}
     }
-    myfree((char *) old_entries);
+    myfree((void *) old_entries);
 }
 
 /* binhash_enter - enter (key, value) pair */
 
-BINHASH_INFO *binhash_enter(BINHASH *table, const char *key, int key_len, char *value)
+BINHASH_INFO *binhash_enter(BINHASH *table, const void *key, ssize_t key_len, void *value)
 {
     BINHASH_INFO *ht;
 
@@ -222,11 +222,11 @@ BINHASH_INFO *binhash_enter(BINHASH *table, const char *key, int key_len, char *
 
 /* binhash_find - lookup value */
 
-char   *binhash_find(BINHASH *table, const char *key, int key_len)
+void   *binhash_find(BINHASH *table, const void *key, ssize_t key_len)
 {
     BINHASH_INFO *ht;
 
-#define	KEY_EQ(x,y,l) (x[0] == y[0] && memcmp(x,y,l) == 0)
+#define	KEY_EQ(x,y,l) (((unsigned char *) x)[0] == ((unsigned char *) y)[0] && memcmp(x,y,l) == 0)
 
     if (table != 0)
 	for (ht = table->data[binhash_hash(key, key_len, table->size)]; ht; ht = ht->next)
@@ -237,11 +237,9 @@ char   *binhash_find(BINHASH *table, const char *key, int key_len)
 
 /* binhash_locate - lookup entry */
 
-BINHASH_INFO *binhash_locate(BINHASH *table, const char *key, int key_len)
+BINHASH_INFO *binhash_locate(BINHASH *table, const void *key, ssize_t key_len)
 {
     BINHASH_INFO *ht;
-
-#define	KEY_EQ(x,y,l) (x[0] == y[0] && memcmp(x,y,l) == 0)
 
     if (table != 0)
 	for (ht = table->data[binhash_hash(key, key_len, table->size)]; ht; ht = ht->next)
@@ -252,13 +250,11 @@ BINHASH_INFO *binhash_locate(BINHASH *table, const char *key, int key_len)
 
 /* binhash_delete - delete one entry */
 
-void    binhash_delete(BINHASH *table, const char *key, int key_len, void (*free_fn) (char *))
+void    binhash_delete(BINHASH *table, const void *key, ssize_t key_len, void (*free_fn) (void *))
 {
     if (table != 0) {
 	BINHASH_INFO *ht;
 	BINHASH_INFO **h = table->data + binhash_hash(key, key_len, table->size);
-
-#define	KEY_EQ(x,y,l) (x[0] == y[0] && memcmp(x,y,l) == 0)
 
 	for (ht = *h; ht; ht = ht->next) {
 	    if (key_len == ht->key_len && KEY_EQ(key, ht->key, key_len)) {
@@ -272,20 +268,20 @@ void    binhash_delete(BINHASH *table, const char *key, int key_len, void (*free
 		myfree(ht->key);
 		if (free_fn)
 		    (*free_fn) (ht->value);
-		myfree((char *) ht);
+		myfree((void *) ht);
 		return;
 	    }
 	}
-	msg_panic("binhash_delete: unknown_key: \"%s\"", key);
+	msg_panic("binhash_delete: unknown_key: \"%s\"", (char *) key);
     }
 }
 
 /* binhash_free - destroy hash table */
 
-void    binhash_free(BINHASH *table, void (*free_fn) (char *))
+void    binhash_free(BINHASH *table, void (*free_fn) (void *))
 {
     if (table != 0) {
-	unsigned i = table->size;
+	ssize_t i = table->size;
 	BINHASH_INFO *ht;
 	BINHASH_INFO *next;
 	BINHASH_INFO **h = table->data;
@@ -296,21 +292,21 @@ void    binhash_free(BINHASH *table, void (*free_fn) (char *))
 		myfree(ht->key);
 		if (free_fn)
 		    (*free_fn) (ht->value);
-		myfree((char *) ht);
+		myfree((void *) ht);
 	    }
 	}
-	myfree((char *) table->data);
+	myfree((void *) table->data);
 	table->data = 0;
-	myfree((char *) table);
+	myfree((void *) table);
     }
 }
 
 /* binhash_walk - iterate over hash table */
 
-void    binhash_walk(BINHASH *table, void (*action) (BINHASH_INFO *, char *),
-		             char *ptr) {
+void    binhash_walk(BINHASH *table, void (*action) (BINHASH_INFO *, void *),
+		             void *ptr) {
     if (table != 0) {
-	unsigned i = table->size;
+	ssize_t i = table->size;
 	BINHASH_INFO **h = table->data;
 	BINHASH_INFO *ht;
 
@@ -327,8 +323,8 @@ BINHASH *table;
 {
     BINHASH_INFO **list;
     BINHASH_INFO *member;
-    int     count = 0;
-    int     i;
+    ssize_t count = 0;
+    ssize_t i;
 
     if (table != 0) {
 	list = (BINHASH_INFO **) mymalloc(sizeof(*list) * (table->used + 1));

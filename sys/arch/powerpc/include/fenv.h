@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2015/12/20 16:23:14 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.6.1 2017/04/21 16:53:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -32,13 +32,6 @@
 #define	_POWERPC_FENV_H_
 
 #include <sys/stdint.h>
-
-#ifndef	__fenv_static
-#define	__fenv_static	static
-#endif
-
-typedef	uint32_t	fenv_t;
-typedef	uint32_t	fexcept_t;
 
 /* Exception flags */
 #define	FE_INEXACT	0x02000000
@@ -77,6 +70,15 @@ typedef	uint32_t	fexcept_t;
 #define	_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
 			 FE_UPWARD | FE_TOWARDZERO)
 
+#ifndef _SOFT_FLOAT
+
+#ifndef	__fenv_static
+#define	__fenv_static	static
+#endif
+
+typedef	uint32_t	fenv_t;
+typedef	uint32_t	fexcept_t;
+
 #ifndef _KERNEL
 __BEGIN_DECLS
 
@@ -92,9 +94,45 @@ extern const fenv_t	__fe_dfl_env;
 #ifndef _SOFT_FLOAT
 #define	__mffs(__env)	__asm __volatile("mffs %0" : "=f" (*(__env)))
 #define	__mtfsf(__env)	__asm __volatile("mtfsf 255,%0" : : "f" (__env))
+
+static inline uint32_t
+__mfmsr(void)
+{
+	uint32_t __msr;
+
+	__asm volatile ("mfmsr %0" : "=r"(__msr));
+	return __msr;
+}
+
+static inline void
+__mtmsr(uint32_t __msr)
+{
+
+	__asm volatile ("mtmsr %0" : : "r"(__msr));
+}
+
+#define __MSR_FE_MASK	(0x00000800 | 0x00000100)
+#define __MSR_FE_DIS	(0)
+#define __MSR_FE_PREC	(0x00000800 | 0x00000100)
+
+static inline void
+__updatemsr(uint32_t __reg)
+{
+	uint32_t __msr;
+
+	__msr = __mfmsr() & ~__MSR_FE_MASK;
+	if (__reg != 0) {
+		__msr |= __MSR_FE_PREC;
+	} else {
+		__msr |= __MSR_FE_DIS;
+	}
+	__mtmsr(__msr);
+}
+
 #else
 #define	__mffs(__env)
 #define	__mtfsf(__env)
+#define __updatemsr(__reg)
 #endif
 
 union __fpscr {
@@ -201,11 +239,13 @@ __fenv_static inline int
 feholdexcept(fenv_t *__envp)
 {
 	union __fpscr __r;
+	uint32_t msr;
 
 	__mffs(&__r.__d);
 	*__envp = __r.__d;
 	__r.__bits.__reg &= ~(FE_ALL_EXCEPT | _ENABLE_MASK);
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
 
@@ -216,6 +256,7 @@ fesetenv(const fenv_t *__envp)
 
 	__r.__bits.__reg = *__envp;
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
 
@@ -228,14 +269,13 @@ feupdateenv(const fenv_t *__envp)
 	__r.__bits.__reg &= FE_ALL_EXCEPT;
 	__r.__bits.__reg |= *__envp;
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return (0);
 }
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-/* We currently provide no external definitions of the functions below. */
-
-static inline int
+__fenv_static inline int
 feenableexcept(int __mask)
 {
 	union __fpscr __r;
@@ -245,10 +285,11 @@ feenableexcept(int __mask)
 	__oldmask = __r.__bits.__reg;
 	__r.__bits.__reg |= (__mask & FE_ALL_EXCEPT) >> _FPUSW_SHIFT;
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
-static inline int
+__fenv_static inline int
 fedisableexcept(int __mask)
 {
 	union __fpscr __r;
@@ -258,10 +299,11 @@ fedisableexcept(int __mask)
 	__oldmask = __r.__bits.__reg;
 	__r.__bits.__reg &= ~((__mask & FE_ALL_EXCEPT) >> _FPUSW_SHIFT);
 	__mtfsf(__r.__d);
+	__updatemsr(__r.__bits.__reg);
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
-static inline int
+__fenv_static inline int
 fegetexcept(void)
 {
 	union __fpscr __r;
@@ -273,6 +315,8 @@ fegetexcept(void)
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
+
 #endif
+#endif	/* _SOFT_FLOAT */
 
 #endif	/* !_POWERPC_FENV_H_ */

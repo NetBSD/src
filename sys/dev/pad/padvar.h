@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.6 2016/02/26 13:17:04 nat Exp $ */
+/* $NetBSD: padvar.h,v 1.6.4.1 2017/04/21 16:53:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,6 @@ typedef struct pad_softc {
 
 	uint8_t		sc_swvol;
 	struct timeval	sc_last;
-	int		sc_bytes_count;
 } pad_softc_t;
 
 #endif /* !_SYS_DEV_PAD_PADVAR_H */

@@ -1,10 +1,10 @@
-/*	$NetBSD: dn2id.c,v 1.1.1.1 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: dn2id.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* dn2id.c - routines to deal with the dn2id index */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dn2id.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -348,7 +351,7 @@ mdb_dn2id(
 		cursor = mc;
 	} else {
 		rc = mdb_cursor_open( txn, dbi, &cursor );
-		if ( rc ) return rc;
+		if ( rc ) goto done;
 	}
 
 	for (;;) {
@@ -472,7 +475,7 @@ mdb_dn2sups(
 	key.mv_size = sizeof(ID);
 
 	rc = mdb_cursor_open( txn, dbi, &cursor );
-	if ( rc ) return rc;
+	if ( rc ) goto done;
 
 	for (;;) {
 		key.mv_data = &pid;
@@ -666,6 +669,11 @@ mdb_idscope(
 			ptr += data.mv_size - sizeof(ID);
 			memcpy( &id, ptr, sizeof(ID) );
 			if ( id == base ) {
+				if ( res[0] >= MDB_IDL_DB_SIZE-1 ) {
+					/* too many aliases in scope. Fallback to range */
+					MDB_IDL_RANGE( res, MDB_IDL_FIRST( ids ), MDB_IDL_LAST( ids ));
+					goto leave;
+				}
 				res[0]++;
 				res[res[0]] = ida;
 				copy = 0;
@@ -687,6 +695,7 @@ mdb_idscope(
 	if (!MDB_IDL_IS_RANGE( ids ))
 		ids[0] = idc;
 
+leave:
 	mdb_cursor_close( cursor );
 	return rc;
 }
@@ -701,7 +710,7 @@ mdb_idscopes(
 	struct mdb_info *mdb = (struct mdb_info *) op->o_bd->be_private;
 	MDB_dbi dbi = mdb->mi_dn2id;
 	MDB_val		key, data;
-	ID id;
+	ID id, prev;
 	ID2 id2;
 	char	*ptr;
 	int		rc = 0;
@@ -725,6 +734,7 @@ mdb_idscopes(
 		return MDB_SUCCESS;
 	}
 
+	isc->sctmp[0].mid = 0;
 	while (id) {
 		if ( !rc ) {
 			key.mv_data = &id;
@@ -744,16 +754,32 @@ mdb_idscopes(
 		isc->numrdns++;
 
 		if (!rc && id != isc->id) {
+			/* remember our chain of parents */
 			id2.mid = id;
 			id2.mval = data;
-			mdb_id2l_insert( isc->scopes, &id2 );
+			mdb_id2l_insert( isc->sctmp, &id2 );
 		}
 		ptr = data.mv_data;
 		ptr += data.mv_size - sizeof(ID);
+		prev = id;
 		memcpy( &id, ptr, sizeof(ID) );
+		/* If we didn't advance, some parent is missing */
+		if ( id == prev )
+			return MDB_NOTFOUND;
+
 		x = mdb_id2l_search( isc->scopes, id );
 		if ( x <= isc->scopes[0].mid && isc->scopes[x].mid == id ) {
 			if ( !isc->scopes[x].mval.mv_data ) {
+				/* This node is in scope, add parent chain to scope */
+				int i;
+				for ( i = 1; i <= isc->sctmp[0].mid; i++ ) {
+					rc = mdb_id2l_insert( isc->scopes, &isc->sctmp[i] );
+					if ( rc )
+						break;
+				}
+				/* check id again since inserts may have changed its position */
+				if ( isc->scopes[x].mid != id )
+					x = mdb_id2l_search( isc->scopes, id );
 				isc->nscope = x;
 				return MDB_SUCCESS;
 			}
@@ -762,6 +788,53 @@ mdb_idscopes(
 		}
 		if ( op->ors_scope == LDAP_SCOPE_ONELEVEL )
 			break;
+	}
+	return MDB_SUCCESS;
+}
+
+/* See if ID is a child of any of the scopes,
+ * return MDB_KEYEXIST if so.
+ */
+int
+mdb_idscopechk(
+	Operation *op,
+	IdScopes *isc )
+{
+	struct mdb_info *mdb = (struct mdb_info *) op->o_bd->be_private;
+	MDB_val		key, data;
+	ID id, prev;
+	char	*ptr;
+	int		rc = 0;
+	unsigned int x;
+
+	key.mv_size = sizeof(ID);
+
+	if ( !isc->mc ) {
+		rc = mdb_cursor_open( isc->mt, mdb->mi_dn2id, &isc->mc );
+		if ( rc ) return rc;
+	}
+
+	id = isc->id;
+
+	while (id) {
+		if ( !rc ) {
+			key.mv_data = &id;
+			rc = mdb_cursor_get( isc->mc, &key, &data, MDB_SET );
+			if ( rc )
+				return rc;
+		}
+
+		ptr = data.mv_data;
+		ptr += data.mv_size - sizeof(ID);
+		prev = id;
+		memcpy( &id, ptr, sizeof(ID) );
+		/* If we didn't advance, some parent is missing */
+		if ( id == prev )
+			return MDB_NOTFOUND;
+
+		x = mdb_id2l_search( isc->scopes, id );
+		if ( x <= isc->scopes[0].mid && isc->scopes[x].mid == id )
+			return MDB_KEYEXIST;
 	}
 	return MDB_SUCCESS;
 }
@@ -853,4 +926,47 @@ mdb_dn2id_walk(
 		}
 	}
 	return rc;
+}
+
+/* restore the nrdn/rdn pointers after a txn reset */
+void mdb_dn2id_wrestore (
+	Operation *op,
+	IdScopes *isc
+)
+{
+	MDB_val key, data;
+	diskNode *d;
+	int rc, n, nrlen;
+	char *ptr;
+
+	/* We only need to restore up to the n-1th element,
+	 * the nth element will be replaced anyway
+	 */
+	key.mv_size = sizeof(ID);
+	for ( n=0; n<isc->numrdns-1; n++ ) {
+		key.mv_data = &isc->scopes[n+1].mid;
+		rc = mdb_cursor_get( isc->mc, &key, &data, MDB_SET );
+		if ( rc )
+			continue;
+		/* we can't use this data directly since its nrlen
+		 * is missing the high bit setting, so copy it and
+		 * set it properly. we just copy enough to satisfy
+		 * mdb_dup_compare.
+		 */
+		d = data.mv_data;
+		nrlen = ((d->nrdnlen[0] & 0x7f) << 8) | d->nrdnlen[1];
+		ptr = op->o_tmpalloc( nrlen+2, op->o_tmpmemctx );
+		memcpy( ptr, data.mv_data, nrlen+2 );
+		key.mv_data = &isc->scopes[n].mid;
+		data.mv_data = ptr;
+		data.mv_size = 1;
+		*ptr |= 0x80;
+		mdb_cursor_get( isc->mc, &key, &data, MDB_GET_BOTH );
+		op->o_tmpfree( ptr, op->o_tmpmemctx );
+
+		/* now we're back to where we wanted to be */
+		d = data.mv_data;
+		isc->nrdns[n].bv_val = d->nrdn;
+		isc->rdns[n].bv_val = d->nrdn+isc->nrdns[n].bv_len+1;
+	}
 }

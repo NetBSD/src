@@ -1,6 +1,5 @@
-/*	$NetBSD: misc.c,v 1.14 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.107 2016/11/30 00:28:31 dtucker Exp $ */
-
+/*	$NetBSD: misc.c,v 1.14.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
+/* $OpenBSD: misc.c,v 1.109 2017/03/14 00:55:37 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -27,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.14 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -294,7 +293,7 @@ a2tun(const char *s, int *remote)
 long
 convtime(const char *s)
 {
-	long total, secs;
+	long total, secs, multiplier = 1;
 	const char *p;
 	char *endp;
 
@@ -321,23 +320,28 @@ convtime(const char *s)
 			break;
 		case 'm':
 		case 'M':
-			secs *= MINUTES;
+			multiplier = MINUTES;
 			break;
 		case 'h':
 		case 'H':
-			secs *= HOURS;
+			multiplier = HOURS;
 			break;
 		case 'd':
 		case 'D':
-			secs *= DAYS;
+			multiplier = DAYS;
 			break;
 		case 'w':
 		case 'W':
-			secs *= WEEKS;
+			multiplier = WEEKS;
 			break;
 		default:
 			return -1;
 		}
+		if (secs >= LONG_MAX / multiplier)
+			return -1;
+		secs *= multiplier;
+		if  (total >= LONG_MAX - secs)
+			return -1;
 		total += secs;
 		if (total < 0)
 			return -1;

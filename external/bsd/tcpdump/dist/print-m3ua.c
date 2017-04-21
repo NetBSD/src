@@ -24,23 +24,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-m3ua.c,v 1.2 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-m3ua.c,v 1.2.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Message Transfer Part 3 (MTP3) User Adaptation Layer (M3UA) printer */
+
+/* RFC 4666 */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 static const char tstr[] = " [|m3ua]";
-static const char cstr[] = " (corrupt)";
-
-/* RFC 4666 */
 
 #define M3UA_REL_1_0 1
 
@@ -223,7 +223,7 @@ tag_value_print(netdissect_options *ndo,
   case M3UA_PARAM_CORR_ID:
     /* buf and size don't include the header */
     if (size < 4)
-      goto corrupt;
+      goto invalid;
     ND_TCHECK2(*buf, size);
     ND_PRINT((ndo, "0x%08x", EXTRACT_32BITS(buf)));
     break;
@@ -234,8 +234,8 @@ tag_value_print(netdissect_options *ndo,
   }
   return;
 
-corrupt:
-  ND_PRINT((ndo, "%s", cstr));
+invalid:
+  ND_PRINT((ndo, "%s", istr));
   ND_TCHECK2(*buf, size);
   return;
 trunc:
@@ -264,7 +264,7 @@ m3ua_tags_print(netdissect_options *ndo,
 
   while (p < buf + size) {
     if (p + sizeof(struct m3ua_param_header) > buf + size)
-      goto corrupt;
+      goto invalid;
     ND_TCHECK2(*p, sizeof(struct m3ua_param_header));
     /* Parameter Tag */
     hdr_tag = EXTRACT_16BITS(p);
@@ -272,7 +272,7 @@ m3ua_tags_print(netdissect_options *ndo,
     /* Parameter Length */
     hdr_len = EXTRACT_16BITS(p + 2);
     if (hdr_len < sizeof(struct m3ua_param_header))
-      goto corrupt;
+      goto invalid;
     /* Parameter Value */
     align = (p + hdr_len - buf) % 4;
     align = align ? 4 - align : 0;
@@ -282,8 +282,8 @@ m3ua_tags_print(netdissect_options *ndo,
   }
   return;
 
-corrupt:
-  ND_PRINT((ndo, "%s", cstr));
+invalid:
+  ND_PRINT((ndo, "%s", istr));
   ND_TCHECK2(*buf, size);
   return;
 trunc:
@@ -310,7 +310,7 @@ m3ua_print(netdissect_options *ndo,
 
   /* size includes the header */
   if (size < sizeof(struct m3ua_common_header))
-    goto corrupt;
+    goto invalid;
   ND_TCHECK(*hdr);
   if (hdr->v != M3UA_REL_1_0)
     return;
@@ -334,8 +334,8 @@ m3ua_print(netdissect_options *ndo,
     m3ua_tags_print(ndo, buf + sizeof(struct m3ua_common_header), EXTRACT_32BITS(&hdr->len) - sizeof(struct m3ua_common_header));
   return;
 
-corrupt:
-  ND_PRINT((ndo, "%s", cstr));
+invalid:
+  ND_PRINT((ndo, "%s", istr));
   ND_TCHECK2(*buf, size);
   return;
 trunc:

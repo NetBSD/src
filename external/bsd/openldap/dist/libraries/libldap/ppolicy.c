@@ -1,9 +1,9 @@
-/*	$NetBSD: ppolicy.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: ppolicy.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004 Hewlett-Packard Company.
  * Portions Copyright 2004 Howard Chu, Symas Corp.
  * All rights reserved.
@@ -21,6 +21,9 @@
  * OpenLDAP Software, based on prior work by Neil Dunbar (HP).
  * This work was sponsored by the Hewlett-Packard Company.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ppolicy.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

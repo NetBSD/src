@@ -1,4 +1,4 @@
-/*	$NetBSD: mailbox.c,v 1.1.1.2 2013/01/02 18:59:15 tron Exp $	*/
+/*	$NetBSD: mailbox.c,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -82,7 +82,6 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     int     mail_copy_status;
     int     deliver_status;
     int     copy_flags;
-    long    end;
     struct stat st;
 
     /*
@@ -134,7 +133,9 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 	    msg_warn("specify \"%s = no\" to ignore mailbox ownership mismatch",
 		     VAR_STRICT_MBOX_OWNER);
 	} else {
-	    end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END);
+	    if (vstream_fseek(mp->fp, (off_t) 0, SEEK_END) < 0)
+		msg_fatal("%s: seek queue file %s: %m",
+			  myname, VSTREAM_PATH(mp->fp));
 	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
 					 copy_flags, "\n", why);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.77 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.77.12.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.77 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.77.12.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,12 +360,11 @@ fifo_poll(void *v)
 static int
 fifo_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode	*a_vp;
 		struct lwp	*a_l;
-	} */ *ap = v;
+	} */ *ap __unused = v;
 
-	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 

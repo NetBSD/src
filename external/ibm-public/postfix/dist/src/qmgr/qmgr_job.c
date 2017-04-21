@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_job.c,v 1.1.1.2 2014/07/06 19:27:55 tron Exp $	*/
+/*	$NetBSD: qmgr_job.c,v 1.1.1.2.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -106,7 +106,7 @@ static QMGR_JOB *qmgr_job_create(QMGR_MESSAGE *message, QMGR_TRANSPORT *transpor
     job = (QMGR_JOB *) mymalloc(sizeof(QMGR_JOB));
     job->message = message;
     QMGR_LIST_APPEND(message->job_list, job, message_peers);
-    htable_enter(transport->job_byname, message->queue_id, (char *) job);
+    htable_enter(transport->job_byname, message->queue_id, (void *) job);
     job->transport = transport;
     QMGR_LIST_INIT(job->transport_peers);
     QMGR_LIST_INIT(job->time_peers);
@@ -446,9 +446,9 @@ void    qmgr_job_free(QMGR_JOB *job)
     if (job->stack_level >= 0)
 	qmgr_job_unlink(job);
     QMGR_LIST_UNLINK(message->job_list, QMGR_JOB *, job, message_peers);
-    htable_delete(transport->job_byname, message->queue_id, (void (*) (char *)) 0);
-    htable_free(job->peer_byname, (void (*) (char *)) 0);
-    myfree((char *) job);
+    htable_delete(transport->job_byname, message->queue_id, (void (*) (void *)) 0);
+    htable_free(job->peer_byname, (void (*) (void *)) 0);
+    myfree((void *) job);
 }
 
 /* qmgr_job_count_slots - maintain the delivery slot counters */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.27 2017/01/07 15:05:08 kiyohara Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.27.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ struct sdhc_softc {
 	int (*sc_vendor_bus_width)(struct sdhc_softc *, int);
 	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
 	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
+	void (*sc_vendor_hw_reset)(struct sdhc_softc *, struct sdhc_host *);
 };
 
 /* Host controller functions called by the attachment driver. */
@@ -84,5 +85,11 @@ bool	sdhc_suspend(device_t, const pmf_qual_t *);
 bool	sdhc_resume(device_t, const pmf_qual_t *);
 bool	sdhc_shutdown(device_t, int);
 kmutex_t *sdhc_host_lock(struct sdhc_host *);
+uint8_t	sdhc_host_read_1(struct sdhc_host *, int);
+uint16_t sdhc_host_read_2(struct sdhc_host *, int);
+uint32_t sdhc_host_read_4(struct sdhc_host *, int);
+void	sdhc_host_write_1(struct sdhc_host *, int, uint8_t);
+void	sdhc_host_write_2(struct sdhc_host *, int, uint16_t);
+void	sdhc_host_write_4(struct sdhc_host *, int, uint32_t);
 
 #endif	/* _SDHCVAR_H_ */

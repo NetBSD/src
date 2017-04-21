@@ -1,4 +1,4 @@
-/*	$NetBSD: select.c,v 1.2 2013/04/11 16:56:41 christos Exp $	*/
+/*	$NetBSD: select.c,v 1.2.16.1 2017/04/21 16:51:32 bouyer Exp $	*/
 /*	$OpenBSD: select.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -29,13 +29,22 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: select.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
+__RCSID("$NetBSD: select.c,v 1.2.16.1 2017/04/21 16:51:32 bouyer Exp $");
+#include "evconfig-private.h"
+
+#ifdef EVENT__HAVE_SELECT
+
+#ifdef __APPLE__
+/* Apple wants us to define this if we might ever pass more than
+ * FD_SETSIZE bits to select(). */
+#define _DARWIN_UNLIMITED_SELECT
+#endif
 
 #include <sys/types.h>
-#ifdef _EVENT_HAVE_SYS_TIME_H
+#ifdef EVENT__HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef _EVENT_HAVE_SYS_SELECT_H
+#ifdef EVENT__HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 #include <sys/queue.h>
@@ -53,7 +62,7 @@ __RCSID("$NetBSD: select.c,v 1.2 2013/04/11 16:56:41 christos Exp $");
 #include "log-internal.h"
 #include "evmap-internal.h"
 
-#ifndef _EVENT_HAVE_FD_MASK
+#ifndef EVENT__HAVE_FD_MASK
 /* This type is mandatory, but Android doesn't define it. */
 typedef unsigned long fd_mask;
 #endif
@@ -113,7 +122,9 @@ select_init(struct event_base *base)
 		return (NULL);
 	}
 
-	evsig_init(base);
+	evsig_init_(base);
+
+	evutil_weakrand_seed_(&base->weakrand_seed, 0);
 
 	return (sop);
 }
@@ -180,7 +191,7 @@ select_dispatch(struct event_base *base, struct timeval *tv)
 	event_debug(("%s: select reports %d", __func__, res));
 
 	check_selectop(sop);
-	i = random() % nfds;
+	i = evutil_weakrand_range_(&base->weakrand_seed, nfds);
 	for (j = 0; j < nfds; ++j) {
 		if (++i >= nfds)
 			i = 0;
@@ -193,7 +204,7 @@ select_dispatch(struct event_base *base, struct timeval *tv)
 		if (res == 0)
 			continue;
 
-		evmap_io_active(base, i, res);
+		evmap_io_active_(base, i, res);
 	}
 	check_selectop(sop);
 
@@ -330,7 +341,9 @@ select_free_selectop(struct selectop *sop)
 static void
 select_dealloc(struct event_base *base)
 {
-	evsig_dealloc(base);
+	evsig_dealloc_(base);
 
 	select_free_selectop(base->evbase);
 }
+
+#endif /* EVENT__HAVE_SELECT */

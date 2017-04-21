@@ -1,4 +1,4 @@
-/*	$NetBSD: sshlogin.h,v 1.5 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: sshlogin.h,v 1.5.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: sshlogin.h,v 1.8 2006/08/03 03:34:42 deraadt Exp $ */
 
 /*

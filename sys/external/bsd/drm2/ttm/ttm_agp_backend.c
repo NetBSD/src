@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_agp_backend.c,v 1.5 2015/10/17 21:05:57 jmcneill Exp $	*/
+/*	$NetBSD: ttm_agp_backend.c,v 1.5.4.1 2017/04/21 16:54:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.5 2015/10/17 21:05:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.5.4.1 2017/04/21 16:54:00 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -78,9 +78,9 @@ int
 ttm_agp_tt_populate(struct ttm_tt *ttm)
 {
 
-	if (ttm->state != tt_unpopulated)
-		return 0;
-
+	KASSERTMSG((ttm->state == tt_unpopulated),
+	    "ttm_agp_tt_populate: ttm %p state is not tt_unpopulated: %d",
+	    ttm, (int)ttm->state);
 	return ttm_bus_dma_populate(container_of(ttm, struct ttm_dma_tt, ttm));
 }
 
@@ -88,6 +88,9 @@ void
 ttm_agp_tt_unpopulate(struct ttm_tt *ttm)
 {
 
+	KASSERTMSG((ttm->state == tt_unbound),
+	    "ttm_agp_tt_unpopulate: ttm %p state is not tt_unbound: %d",
+	    ttm, (int)ttm->state);
 	ttm_bus_dma_unpopulate(container_of(ttm, struct ttm_dma_tt, ttm));
 }
 

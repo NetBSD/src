@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.13 2016/11/30 01:36:38 christos Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.13.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.13 2016/11/30 01:36:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.13.2.1 2017/04/21 16:53:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ CFATTACH_DECL_NEW(ld_virtio, sizeof(struct ld_virtio_softc),
 static int
 ld_virtio_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct virtio_softc *va = aux;
+	struct virtio_attach_args *va = aux;
 
 	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_BLOCK)
 		return 1;
@@ -160,7 +160,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 	void *vaddr;
 
 	allocsize = sizeof(struct virtio_blk_req) * qsize;
-	r = bus_dmamem_alloc(sc->sc_virtio->sc_dmat, allocsize, 0, 0,
+	r = bus_dmamem_alloc(virtio_dmat(sc->sc_virtio), allocsize, 0, 0,
 			     &sc->sc_reqs_seg, 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -168,7 +168,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 				 "error code %d\n", allocsize, r);
 		goto err_none;
 	}
-	r = bus_dmamem_map(sc->sc_virtio->sc_dmat,
+	r = bus_dmamem_map(virtio_dmat(sc->sc_virtio),
 			   &sc->sc_reqs_seg, 1, allocsize,
 			   &vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
@@ -181,7 +181,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 	memset(vaddr, 0, allocsize);
 	for (i = 0; i < qsize; i++) {
 		struct virtio_blk_req *vr = &sc->sc_reqs[i];
-		r = bus_dmamap_create(sc->sc_virtio->sc_dmat,
+		r = bus_dmamap_create(virtio_dmat(sc->sc_virtio),
 				      offsetof(struct virtio_blk_req, vr_bp),
 				      1,
 				      offsetof(struct virtio_blk_req, vr_bp),
@@ -194,7 +194,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 					 "error code %d\n", r);
 			goto err_reqs;
 		}
-		r = bus_dmamap_load(sc->sc_virtio->sc_dmat, vr->vr_cmdsts,
+		r = bus_dmamap_load(virtio_dmat(sc->sc_virtio), vr->vr_cmdsts,
 				    &vr->vr_hdr,
 				    offsetof(struct virtio_blk_req, vr_bp),
 				    NULL, BUS_DMA_NOWAIT);
@@ -204,7 +204,7 @@ ld_virtio_alloc_reqs(struct ld_virtio_softc *sc, int qsize)
 					 "error code %d\n", r);
 			goto err_reqs;
 		}
-		r = bus_dmamap_create(sc->sc_virtio->sc_dmat,
+		r = bus_dmamap_create(virtio_dmat(sc->sc_virtio),
 				      ld->sc_maxxfer,
 				      (ld->sc_maxxfer / NBPG) +
 				      VIRTIO_BLK_MIN_SEGMENTS,
@@ -225,19 +225,19 @@ err_reqs:
 	for (i = 0; i < qsize; i++) {
 		struct virtio_blk_req *vr = &sc->sc_reqs[i];
 		if (vr->vr_cmdsts) {
-			bus_dmamap_destroy(sc->sc_virtio->sc_dmat,
+			bus_dmamap_destroy(virtio_dmat(sc->sc_virtio),
 					   vr->vr_cmdsts);
 			vr->vr_cmdsts = 0;
 		}
 		if (vr->vr_payload) {
-			bus_dmamap_destroy(sc->sc_virtio->sc_dmat,
+			bus_dmamap_destroy(virtio_dmat(sc->sc_virtio),
 					   vr->vr_payload);
 			vr->vr_payload = 0;
 		}
 	}
-	bus_dmamem_unmap(sc->sc_virtio->sc_dmat, sc->sc_reqs, allocsize);
+	bus_dmamem_unmap(virtio_dmat(sc->sc_virtio), sc->sc_reqs, allocsize);
 err_dmamem_alloc:
-	bus_dmamem_free(sc->sc_virtio->sc_dmat, &sc->sc_reqs_seg, 1);
+	bus_dmamem_free(virtio_dmat(sc->sc_virtio), &sc->sc_reqs_seg, 1);
 err_none:
 	return -1;
 }
@@ -249,10 +249,9 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct virtio_softc *vsc = device_private(parent);
 	uint32_t features;
-	char buf[256];
 	int qsize, maxxfersize, maxnsegs;
 
-	if (vsc->sc_child != NULL) {
+	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
 			      "something wrong...\n", device_xname(parent));
 		return;
@@ -261,28 +260,19 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
 
-	vsc->sc_child = self;
-	vsc->sc_ipl = IPL_BIO;
-	vsc->sc_vqs = &sc->sc_vq;
-	vsc->sc_nvqs = 1;
-	vsc->sc_config_change = NULL;
-	vsc->sc_intrhand = virtio_vq_intr;
-	vsc->sc_flags = 0;
+	virtio_child_attach_start(vsc, self, IPL_BIO, &sc->sc_vq,
+	    NULL, virtio_vq_intr, 0,
+	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
+	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE),
+	    VIRTIO_BLK_FLAG_BITS);
 
-	features = virtio_negotiate_features(vsc,
-					     (VIRTIO_BLK_F_SIZE_MAX |
-					      VIRTIO_BLK_F_SEG_MAX |
-					      VIRTIO_BLK_F_GEOMETRY |
-					      VIRTIO_BLK_F_RO |
-					      VIRTIO_BLK_F_BLK_SIZE));
+	features = virtio_features(vsc);
+
 	if (features & VIRTIO_BLK_F_RO)
 		sc->sc_readonly = 1;
 	else
 		sc->sc_readonly = 0;
 
-	snprintb(buf, sizeof(buf), VIRTIO_BLK_FLAG_BITS, features);
-	aprint_normal(": Features: %s\n", buf);
-	aprint_naive("\n");
 	if (features & VIRTIO_BLK_F_BLK_SIZE) {
 		ld->sc_secsize = virtio_read_device_config_4(vsc,
 					VIRTIO_BLK_CONFIG_BLK_SIZE);
@@ -332,6 +322,9 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	qsize = sc->sc_vq.vq_num;
 	sc->sc_vq.vq_done = ld_virtio_vq_done;
 
+	if (virtio_child_attach_finish(vsc) != 0)
+		goto err;
+
 	ld->sc_dv = self;
 	ld->sc_secperunit = virtio_read_device_config_8(vsc,
 				VIRTIO_BLK_CONFIG_CAPACITY);
@@ -350,7 +343,6 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 		goto err;
 
 	ld->sc_dump = ld_virtio_dump;
-	ld->sc_flush = NULL;
 	ld->sc_start = ld_virtio_start;
 
 	ld->sc_flags = LDF_ENABLED;
@@ -359,7 +351,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	return;
 
 err:
-	vsc->sc_child = (void*)1;
+	virtio_child_attach_failed(vsc);
 	return;
 }
 
@@ -385,7 +377,7 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	vr = &sc->sc_reqs[slot];
 	KASSERT(vr->vr_bp == NULL);
 
-	r = bus_dmamap_load(vsc->sc_dmat, vr->vr_payload,
+	r = bus_dmamap_load(virtio_dmat(vsc), vr->vr_payload,
 			    bp->b_data, bp->b_bcount, NULL,
 			    ((isread?BUS_DMA_READ:BUS_DMA_WRITE)
 			     |BUS_DMA_NOWAIT));
@@ -399,7 +391,7 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs +
 	    VIRTIO_BLK_MIN_SEGMENTS);
 	if (r != 0) {
-		bus_dmamap_unload(vsc->sc_dmat, vr->vr_payload);
+		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 		return r;
 	}
 
@@ -408,13 +400,13 @@ ld_virtio_start(struct ld_softc *ld, struct buf *bp)
 	vr->vr_hdr.ioprio = 0;
 	vr->vr_hdr.sector = bp->b_rawblkno * sc->sc_ld.sc_secsize / 512;
 
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
 			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_payload,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
 			0, bp->b_bcount,
 			isread?BUS_DMASYNC_PREREAD:BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			offsetof(struct virtio_blk_req, vr_status),
 			sizeof(uint8_t),
 			BUS_DMASYNC_PREREAD);
@@ -441,14 +433,14 @@ ld_virtio_vq_done1(struct ld_virtio_softc *sc, struct virtio_softc *vsc,
 
 	vr->vr_bp = NULL;
 
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
 			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_payload,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
 			0, bp->b_bcount,
 			(bp->b_flags & B_READ)?BUS_DMASYNC_POSTREAD
 					      :BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			sizeof(struct virtio_blk_req_hdr), sizeof(uint8_t),
 			BUS_DMASYNC_POSTREAD);
 
@@ -469,7 +461,7 @@ static int
 ld_virtio_vq_done(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct ld_virtio_softc *sc = device_private(vsc->sc_child);
+	struct ld_virtio_softc *sc = device_private(virtio_child(vsc));
 	int r = 0;
 	int slot;
 
@@ -506,7 +498,7 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 		return r;
 	}
 	vr = &sc->sc_reqs[slot];
-	r = bus_dmamap_load(vsc->sc_dmat, vr->vr_payload,
+	r = bus_dmamap_load(virtio_dmat(vsc), vr->vr_payload,
 			    data, blkcnt*ld->sc_secsize, NULL,
 			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 	if (r != 0)
@@ -515,7 +507,7 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	r = virtio_enqueue_reserve(vsc, vq, slot, vr->vr_payload->dm_nsegs + 
 	    VIRTIO_BLK_MIN_SEGMENTS);
 	if (r != 0) {
-		bus_dmamap_unload(vsc->sc_dmat, vr->vr_payload);
+		bus_dmamap_unload(virtio_dmat(vsc), vr->vr_payload);
 		return r;
 	}
 
@@ -524,13 +516,13 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	vr->vr_hdr.ioprio = 0;
 	vr->vr_hdr.sector = (daddr_t) blkno * ld->sc_secsize / 512;
 
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
 			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_payload,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
 			0, blkcnt*ld->sc_secsize,
 			BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			offsetof(struct virtio_blk_req, vr_status),
 			sizeof(uint8_t),
 			BUS_DMASYNC_PREREAD);
@@ -558,13 +550,13 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 			break;
 	}
 		
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			0, sizeof(struct virtio_blk_req_hdr),
 			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_payload,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_payload,
 			0, blkcnt*ld->sc_secsize,
 			BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_cmdsts,
+	bus_dmamap_sync(virtio_dmat(vsc), vr->vr_cmdsts,
 			offsetof(struct virtio_blk_req, vr_status),
 			sizeof(uint8_t),
 			BUS_DMASYNC_POSTREAD);
@@ -582,7 +574,7 @@ ld_virtio_detach(device_t self, int flags)
 {
 	struct ld_virtio_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;
-	bus_dma_tag_t dmat = sc->sc_virtio->sc_dmat;
+	bus_dma_tag_t dmat = virtio_dmat(sc->sc_virtio);
 	int r, i, qsize;
 
 	qsize = sc->sc_vq.vq_num;
@@ -603,6 +595,8 @@ ld_virtio_detach(device_t self, int flags)
 	bus_dmamem_free(dmat, &sc->sc_reqs_seg, 1);
 
 	ldenddetach(ld);
+
+	virtio_child_detach(sc->sc_virtio);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.c,v 1.4 2012/03/13 21:13:34 christos Exp $	*/
+/*	$NetBSD: extattr.c,v 1.4.18.1 2017/04/21 16:53:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 Robert N. M. Watson
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: extattr.c,v 1.4 2012/03/13 21:13:34 christos Exp $");
+__RCSID("$NetBSD: extattr.c,v 1.4.18.1 2017/04/21 16:53:09 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -150,7 +150,7 @@ extattr_copy_fd(int from_fd, int to_fd, int namespace)
 		}
 
 		if ((vlen = extattr_get_fd(from_fd, namespace, aname,
-				      aval, (size_t)vlen)) == -1)
+					   aval, (size_t)vlen)) == -1)
 			goto out;
 	
 		if (extattr_set_fd(to_fd, namespace, aname,
@@ -160,12 +160,9 @@ extattr_copy_fd(int from_fd, int to_fd, int namespace)
 
 	error = 0;
 out:
-	if (aval != NULL)
-		free(aval);
-	
-	if (alist != NULL)
-		free(alist);
-	
+	free(aval);
+	free(alist);
+
 	return error;
 }
 
@@ -222,7 +219,8 @@ extattr_copy_file(const char *from, const char *to, int namespace)
 			maxvlen = vlen;
 		}
 
-		if ((vlen = extattr_get_file(from, namespace, aname,							     aval, (size_t)vlen)) == -1)
+		if ((vlen = extattr_get_file(from, namespace, aname,
+						aval, (size_t)vlen)) == -1)
 			goto out;
 	
 		if (extattr_set_file(to, namespace, aname,
@@ -232,12 +230,9 @@ extattr_copy_file(const char *from, const char *to, int namespace)
 
 	error = 0;
 out:
-	if (aval != NULL)
-		free(aval);
-	
-	if (alist != NULL)
-		free(alist);
-	
+	free(aval);
+	free(alist);
+
 	return error;
 }
 
@@ -305,12 +300,9 @@ extattr_copy_link(const char *from, const char *to, int namespace)
 
 	error = 0;
 out:
-	if (aval != NULL)
-		free(aval);
-	
-	if (alist != NULL)
-		free(alist);
-	
+	free(aval);
+	free(alist);
+
 	return error;
 }
 

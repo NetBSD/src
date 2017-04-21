@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: header_opts.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _HEADER_OPTS_H_INCLUDED_
 #define _HEADER_OPTS_H_INCLUDED_
@@ -25,6 +25,7 @@ typedef struct {
   * Header types. If we reach 31, we must group the headers we need to
   * remember at the beginning, or we should use fd_set bit sets.
   */
+#define HDR_OTHER			0
 #define HDR_APPARENTLY_TO		1
 #define HDR_BCC				2
 #define HDR_CC				3

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_rcpt.c,v 1.1.1.2 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_rcpt.c,v 1.1.1.2.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -26,6 +26,9 @@
 /*	SMTP_STATE *state;
 /*
 /*	int	SMTP_RCPT_LEFT(state)
+/*	SMTP_STATE *state;
+/*
+/*	int	SMTP_RCPT_MARK_COUNT(state)
 /*	SMTP_STATE *state;
 /*
 /*	void	smtp_rcpt_done(state, resp, rcpt)
@@ -66,6 +69,9 @@
 /*	SMTP_RCPT_LEFT() returns the number of left_over recipients
 /*	(the total number of marked and non-marked recipients).
 /*
+/*	SMTP_RCPT_MARK_COUNT() returns the number of left_over
+/*	recipients that are marked.
+/*
 /*	smtp_rcpt_cleanup() cleans up the in-memory recipient list.
 /*	It removes the recipients marked DROP from the left-over
 /*	recipients, unmarks the left-over recipients, and enforces
@@ -91,8 +97,8 @@
 /*	This abstraction is less convenient when an SMTP client
 /*	must be able to deliver left-over recipients to a backup
 /*	host. It might be more natural to have an input list with
-/*      recipients to deliver, and an output list with left-over
-/*      recipients.
+/*	recipients to deliver, and an output list with left-over
+/*	recipients.
 /* LICENSE
 /* .ad
 /* .fi

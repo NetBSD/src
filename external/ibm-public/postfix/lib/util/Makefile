@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/07/06 19:53:05 tron Exp $
+#	$NetBSD: Makefile,v 1.7.10.1 2017/04/21 16:52:54 bouyer Exp $
 
 LIBISPRIVATE=	yes
 
@@ -14,9 +14,11 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	attr_scan_plain.c auto_clnt.c base64_code.c basename.c binhash.c \
 	chroot_uid.c cidr_match.c clean_env.c close_on_exec.c concatenate.c \
 	ctable.c dict.c dict_alloc.c dict_cdb.c dict_cidr.c dict_db.c \
-	dict_dbm.c dict_debug.c dict_env.c dict_ht.c dict_ni.c dict_nis.c \
+	dict_dbm.c dict_debug.c dict_env.c dict_ht.c dict_inline.c \
+	dict_ni.c dict_nis.c dict_pipe.c dict_random.c \
 	dict_nisplus.c dict_open.c dict_pcre.c dict_regexp.c dict_sdbm.c \
-	dict_static.c dict_tcp.c dict_unix.c dir_forest.c doze.c dummy_read.c \
+	dict_static.c dict_tcp.c dict_unix.c dict_union.c dict_utf8.c \
+	dir_forest.c doze.c dummy_read.c \
 	dummy_write.c duplex_pipe.c environ.c events.c exec_command.c \
 	fifo_listen.c fifo_trigger.c file_limit.c find_inet.c fsspace.c \
 	fullname.c get_domainname.c get_hostname.c hex_code.c hex_quote.c \
@@ -42,10 +44,12 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	write_buf.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c killme_after.c vstream_tweak.c edit_file.c \
 	inet_windowsize.c unix_pass_fd_fix.c dict_cache.c dict_thash.c \
-	ip_match.c nbbio.c valid_utf_8.c myrand.c base32_code.c dict_fail.c \
+	ip_match.c nbbio.c myrand.c base32_code.c dict_fail.c \
 	dict_surrogate.c dict_test.c msg_rate_delay.c warn_stat.c \
 	dict_sockmap.c line_number.c pass_accept.c pass_trigger.c \
-	recv_pass_attr.c slmdb.c dict_lmdb.c poll_fd.c timecmp.c
+	recv_pass_attr.c slmdb.c dict_lmdb.c poll_fd.c timecmp.c \
+	valid_utf8_string.c casefold.c strcasecmp_utf8.c balpar.c \
+	extpar.c valid_utf8_hostname.c argv_splitq.c midna_domain.c
 
 COPTS.unix_recv_fd.c = -Wno-stack-protector
 COPTS.unix_send_fd.c = -Wno-stack-protector

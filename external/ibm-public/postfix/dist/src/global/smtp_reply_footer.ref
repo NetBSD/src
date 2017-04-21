@@ -1,0 +1,15 @@
+./smtp_reply_footer: test "missing reply": pass
+./smtp_reply_footer: test "long smtp_code": pass
+./smtp_reply_footer: test "short smtp_code": pass
+./smtp_reply_footer: test "good+bad smtp_code": pass
+./smtp_reply_footer: test "1-line no dsn": pass
+./smtp_reply_footer: test "1-line no dsn": pass
+./smtp_reply_footer: test "2-line no dsn": pass
+./smtp_reply_footer: test "1-line with dsn": pass
+./smtp_reply_footer: test "2-line with dsn": pass
+./smtp_reply_footer: warning: truncated macro reference: " ${whatever"
+./smtp_reply_footer: test "bad macro": pass
+./smtp_reply_footer: warning: truncated macro reference: " ${whatever"
+./smtp_reply_footer: test "bad macroCRLF": pass
+./smtp_reply_footer: test "good macro": pass
+./smtp_reply_footer: test "good macroCRLF": pass

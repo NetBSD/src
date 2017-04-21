@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2016/07/15 19:40:42 christos Exp $
+# $NetBSD: Makefile,v 1.7.2.1 2017/04/21 16:52:02 bouyer Exp $
 
 LIBISPRIVATE=	yes
 
@@ -35,5 +35,10 @@ tbl_layout.c \
 tbl_opts.c
 
 MAN=	mandoc.3
+
+# XXX
+.if ${MACHINE} == "vax"
+COPTS.mdoc_macro.c+=-O0
+.endif
 
 .include <bsd.lib.mk>

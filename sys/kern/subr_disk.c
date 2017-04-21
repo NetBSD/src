@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.116 2016/01/06 00:22:30 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.116.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.116 2016/01/06 00:22:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.116.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -272,6 +272,16 @@ disk_destroy(struct disk *diskp)
 
 	mutex_destroy(&diskp->dk_openlock);
 	mutex_destroy(&diskp->dk_rawlock);
+}
+
+/*
+ * Mark the disk as having work queued for metrics collection.
+ */
+void
+disk_wait(struct disk *diskp)
+{
+
+	iostat_wait(diskp->dk_stats);
 }
 
 /*
@@ -573,7 +583,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		pi = data;
 		memset(pi, 0, sizeof(*pi));
 		pi->pi_secsize = dk->dk_geom.dg_secsize;
-		pi->pi_bsize = BLKDEV_IOSIZE;
+		pi->pi_bsize = MAX(BLKDEV_IOSIZE, pi->pi_secsize);
 
 		if (DISKPART(dev) == RAW_PART) {
 			pi->pi_size = dk->dk_geom.dg_secperunit;

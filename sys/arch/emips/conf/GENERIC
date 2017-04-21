@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.17 2016/12/09 22:50:10 nat Exp $
+# $NetBSD: GENERIC,v 1.17.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.17 $"
+#ident		"GENERIC-$Revision: 1.17.2.1 $"
 
 maxusers	64
 
@@ -91,6 +91,7 @@ file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1

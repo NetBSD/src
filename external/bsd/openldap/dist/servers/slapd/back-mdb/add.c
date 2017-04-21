@@ -1,10 +1,10 @@
-/*	$NetBSD: add.c,v 1.1.1.1 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* add.c - ldap mdb back-end add routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: add.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -39,6 +42,7 @@ mdb_add(Operation *op, SlapReply *rs )
 	ID eid, pid = 0;
 	mdb_op_info opinfo = {{{ 0 }}}, *moi = &opinfo;
 	int subentry;
+	int numads = mdb->mi_numads;
 
 	int		success;
 
@@ -403,6 +407,7 @@ txnReturn:
 		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.moi_oe, OpExtra, oe_next );
 		opinfo.moi_oe.oe_key = NULL;
 		if ( op->o_noop ) {
+			mdb->mi_numads = numads;
 			mdb_txn_abort( txn );
 			rs->sr_err = LDAP_X_NO_OPERATION;
 			txn = NULL;
@@ -412,6 +417,7 @@ txnReturn:
 		rs->sr_err = mdb_txn_commit( txn );
 		txn = NULL;
 		if ( rs->sr_err != 0 ) {
+			mdb->mi_numads = numads;
 			rs->sr_text = "txn_commit failed";
 			Debug( LDAP_DEBUG_ANY,
 				LDAP_XSTRING(mdb_add) ": %s : %s (%d)\n",
@@ -435,6 +441,7 @@ return_results:
 
 	if( moi == &opinfo ) {
 		if( txn != NULL ) {
+			mdb->mi_numads = numads;
 			mdb_txn_abort( txn );
 		}
 		if ( opinfo.moi_oe.oe_key ) {

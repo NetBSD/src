@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_haproxy.c,v 1.1.1.1 2013/09/25 19:06:35 tron Exp $	*/
+/*	$NetBSD: smtpd_haproxy.c,v 1.1.1.1.16.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -98,6 +98,14 @@ int     smtpd_peer_from_haproxy(SMTPD_STATE *state)
     VSTRING *escape_buf;
 
     /*
+     * While reading HAProxy handshake information, don't buffer input beyond
+     * the end-of-line. That would break the TLS wrappermode handshake.
+     */
+    vstream_control(state->client,
+		    VSTREAM_CTL_BUFSIZE, 1,
+		    VSTREAM_CTL_END);
+
+    /*
      * Note: the haproxy_srvr_parse() routine performs address protocol
      * checks, address and port syntax checks, and converts IPv4-in-IPv6
      * address string syntax (:ffff::1.2.3.4) to IPv4 syntax where permitted
@@ -144,6 +152,13 @@ int     smtpd_peer_from_haproxy(SMTPD_STATE *state)
 	 * Avoid surprises in the Dovecot authentication server.
 	 */
 	state->dest_addr = mystrdup(smtp_server_addr.buf);
+
+	/*
+	 * Enable normal buffering.
+	 */
+	vstream_control(state->client,
+			VSTREAM_CTL_BUFSIZE, VSTREAM_BUFSIZE,
+			VSTREAM_CTL_END);
 	return (0);
     }
 }

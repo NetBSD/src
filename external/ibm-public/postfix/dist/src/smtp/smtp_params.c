@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.1.1.5 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.1.1.5.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
     static const CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -31,11 +31,13 @@
 	VAR_SMTP_TLS_ECCERT_FILE, DEF_SMTP_TLS_ECCERT_FILE, &var_smtp_tls_eccert_file, 0, 0,
 	VAR_SMTP_TLS_ECKEY_FILE, DEF_SMTP_TLS_ECKEY_FILE, &var_smtp_tls_eckey_file, 0, 0,
 	VAR_SMTP_TLS_LOGLEVEL, DEF_SMTP_TLS_LOGLEVEL, &var_smtp_tls_loglevel, 0, 0,
+	VAR_SMTP_TLS_INSECURE_MX_POLICY, DEF_SMTP_TLS_INSECURE_MX_POLICY, &var_smtp_tls_insecure_mx_policy, 0, 0,
 #endif
 	VAR_SMTP_SASL_MECHS, DEF_SMTP_SASL_MECHS, &var_smtp_sasl_mechs, 0, 0,
 	VAR_SMTP_SASL_TYPE, DEF_SMTP_SASL_TYPE, &var_smtp_sasl_type, 1, 0,
 	VAR_SMTP_BIND_ADDR, DEF_SMTP_BIND_ADDR, &var_smtp_bind_addr, 0, 0,
 	VAR_SMTP_BIND_ADDR6, DEF_SMTP_BIND_ADDR6, &var_smtp_bind_addr6, 0, 0,
+	VAR_SMTP_VRFY_TGT, DEF_SMTP_VRFY_TGT, &var_smtp_vrfy_tgt, 1, 0,
 	VAR_SMTP_HELO_NAME, DEF_SMTP_HELO_NAME, &var_smtp_helo_name, 1, 0,
 	VAR_SMTP_HOST_LOOKUP, DEF_SMTP_HOST_LOOKUP, &var_smtp_host_lookup, 1, 0,
 	VAR_SMTP_DNS_SUPPORT, DEF_SMTP_DNS_SUPPORT, &var_smtp_dns_support, 0, 0,
@@ -60,6 +62,8 @@
 	VAR_SMTP_RESP_FILTER, DEF_SMTP_RESP_FILTER, &var_smtp_resp_filter, 0, 0,
 	VAR_SMTP_ADDR_PREF, DEF_SMTP_ADDR_PREF, &var_smtp_addr_pref, 1, 0,
 	VAR_SMTP_DNS_RES_OPT, DEF_SMTP_DNS_RES_OPT, &var_smtp_dns_res_opt, 0, 0,
+	VAR_SMTP_DSN_FILTER, DEF_SMTP_DSN_FILTER, &var_smtp_dsn_filter, 0, 0,
+	VAR_SMTP_DNS_RE_FILTER, DEF_SMTP_DNS_RE_FILTER, &var_smtp_dns_re_filter, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE smtp_time_table[] = {
@@ -75,6 +79,8 @@
 	VAR_SMTP_QUIT_TMOUT, DEF_SMTP_QUIT_TMOUT, &var_smtp_quit_tmout, 1, 0,
 	VAR_SMTP_PIX_THRESH, DEF_SMTP_PIX_THRESH, &var_smtp_pix_thresh, 0, 0,
 	VAR_SMTP_PIX_DELAY, DEF_SMTP_PIX_DELAY, &var_smtp_pix_delay, 1, 0,
+	VAR_QUEUE_RUN_DELAY, DEF_QUEUE_RUN_DELAY, &var_queue_run_delay, 1, 0,
+	VAR_MIN_BACKOFF_TIME, DEF_MIN_BACKOFF_TIME, &var_min_backoff_time, 1, 0,
 	VAR_SMTP_CACHE_CONNT, DEF_SMTP_CACHE_CONNT, &var_smtp_cache_conn, 1, 0,
 	VAR_SMTP_REUSE_TIME, DEF_SMTP_REUSE_TIME, &var_smtp_reuse_time, 1, 0,
 #ifdef USE_TLS
@@ -114,6 +120,7 @@
 	VAR_SMTP_TLS_BLK_EARLY_MAIL_REPLY, DEF_SMTP_TLS_BLK_EARLY_MAIL_REPLY, &var_smtp_tls_blk_early_mail_reply,
 	VAR_SMTP_TLS_FORCE_TLSA, DEF_SMTP_TLS_FORCE_TLSA, &var_smtp_tls_force_tlsa,
 #endif
+	VAR_SMTP_TLS_WRAPPER, DEF_SMTP_TLS_WRAPPER, &var_smtp_tls_wrappermode,
 	VAR_SMTP_SENDER_AUTH, DEF_SMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_SMTP_CNAME_OVERR, DEF_SMTP_CNAME_OVERR, &var_smtp_cname_overr,
 	VAR_SMTP_SASL_AUTH_SOFT_BOUNCE, DEF_SMTP_SASL_AUTH_SOFT_BOUNCE, &var_smtp_sasl_auth_soft_bounce,

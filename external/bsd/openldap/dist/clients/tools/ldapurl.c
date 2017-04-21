@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapurl.c,v 1.1.1.3 2014/05/28 09:58:22 tron Exp $	*/
+/*	$NetBSD: ldapurl.c,v 1.1.1.3.10.1 2017/04/21 16:52:21 bouyer Exp $	*/
 
 /* ldapurl -- a tool for generating LDAP URLs */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati, SysNet
  * All rights reserved.
  *
@@ -30,6 +30,9 @@
  * This work was originally developed by Pierangelo Masarati
  * for inclusion in OpenLDAP software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ldapurl.c,v 1.1.1.3.10.1 2017/04/21 16:52:21 bouyer Exp $");
 
 #include "portable.h"
 
@@ -161,6 +164,7 @@ do_uri_explode( const char *uri )
 			printf( "extension: %s\n", lud->lud_exts[i] );
 		}
 	}
+	ldap_free_urldesc( lud );
 
 	return 0;
 }

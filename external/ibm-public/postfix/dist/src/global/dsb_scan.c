@@ -1,4 +1,4 @@
-/*	$NetBSD: dsb_scan.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsb_scan.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -18,7 +18,7 @@
 /*	specified attribute scan routine. dsb_scan() is meant
 /*	to be passed as a call-back to attr_scan(), thusly:
 /*
-/*	... ATTR_TYPE_FUNC, dsb_scan, (void *) &dsbuf, ...
+/*	... RECV_ATTR_FUNC(dsb_scan, (void *) &dsbuf), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -58,13 +58,13 @@ int     dsb_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
      * be sanitized after all the ad-hoc DSN read/write code is replaced.
      */
     ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_STATUS, dsb->status,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_DTYPE, dsb->dtype,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_DTEXT, dsb->dtext,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_MTYPE, dsb->mtype,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_MNAME, dsb->mname,
-		  ATTR_TYPE_STR, MAIL_ATTR_DSN_ACTION, dsb->action,
-		  ATTR_TYPE_STR, MAIL_ATTR_WHY, dsb->reason,
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_STATUS, dsb->status),
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_DTYPE, dsb->dtype),
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_DTEXT, dsb->dtext),
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_MTYPE, dsb->mtype),
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_MNAME, dsb->mname),
+		  RECV_ATTR_STR(MAIL_ATTR_DSN_ACTION, dsb->action),
+		  RECV_ATTR_STR(MAIL_ATTR_WHY, dsb->reason),
 		  ATTR_TYPE_END);
     return (ret == 7 ? 1 : -1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.71 2014/04/05 12:32:27 justin Exp $	*/
+/*	$NetBSD: inode.c,v 1.71.12.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.71 2014/04/05 12:32:27 justin Exp $");
+__RCSID("$NetBSD: inode.c,v 1.71.12.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,8 +64,10 @@ __RCSID("$NetBSD: inode.c,v 1.71 2014/04/05 12:32:27 justin Exp $");
 static ino_t startinum;
 
 static int iblock(struct inodesc *, long, u_int64_t);
+#ifndef NO_FFS_EI
 static void swap_dinode1(union dinode *, int);
 static void swap_dinode2(union dinode *, int);
+#endif
 
 int
 ckinode(union dinode *dp, struct inodesc *idesc)
@@ -342,6 +344,7 @@ ginode(ino_t inumber)
 	return ((union dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
 }
 
+#ifndef NO_FFS_EI
 static void
 swap_dinode1(union dinode *dp, int n)
 {
@@ -385,6 +388,7 @@ swap_dinode2(union dinode *dp, int n)
 		}
 	}
 }
+#endif /* !NO_FFS_EI */
 
 /*
  * Special purpose version of ginode used to optimize first pass

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.2 2017/01/03 12:37:08 skrll Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.2.2.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.2 2017/01/03 12:37:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.2.2.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,7 +93,7 @@ static void	csb_write_4(struct tegra_xusb_softc * const, bus_size_t,
     uint32_t);
 	
 static void	tegra_xusb_init(struct tegra_xusb_softc * const);
-static void	tegra_xusb_load_fw(struct tegra_xusb_softc * const);
+static int	tegra_xusb_load_fw(struct tegra_xusb_softc * const);
 
 static int	xusb_mailbox_send(struct tegra_xusb_softc * const, uint32_t);
 
@@ -201,15 +201,6 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	struct clk * const pll_p_out0 = clk_get("pll_p_out0");
-	KASSERT(pll_p_out0 != NULL);
-
-	struct clk * const pll_u_48 = clk_get("pll_u_48");
-	KASSERT(pll_u_48 != NULL);
-
-	struct clk * const pll_u_480 = clk_get("pll_u_480");
-	KASSERT(pll_u_480 != NULL);
-
 	clk = fdtbus_clock_get(faa->faa_phandle, "pll_e");
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
@@ -217,9 +208,6 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	tegra_xusb_attach_check(sc, error, "failed to enable pll_e clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_host_src");
-	error = clk_set_parent(clk, pll_p_out0);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_host_src clock parent");
-	
 	rate = clk_get_rate(clk);
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
 	error = clk_set_rate(clk, 102000000);
@@ -231,9 +219,6 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	tegra_xusb_attach_check(sc, error, "failed to enable xusb_host_src clock");
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_falcon_src");
-	error = clk_set_parent(clk, pll_p_out0);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_falcon_src clock parent");
-
 	rate = clk_get_rate(clk);
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
 	error = clk_set_rate(clk, 204000000);
@@ -258,17 +243,14 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 	psc->sc_clk_ss_src = fdtbus_clock_get(faa->faa_phandle, "xusb_ss_src");
 	tegra_xusb_attach_check(sc, psc->sc_clk_ss_src == NULL,
 		"failed to get xusb_ss_src clock");
+
 	rate = clk_get_rate(psc->sc_clk_ss_src);
 	device_printf(sc->sc_dev, "xusb_ss_src rate %u\n", rate);
-
 	error = clk_set_rate(psc->sc_clk_ss_src, 2000000);
 	rate = clk_get_rate(psc->sc_clk_ss_src);
 	device_printf(sc->sc_dev, "xusb_ss_src rate %u error %d\n", rate,
 	    error);
 	tegra_xusb_attach_check(sc, error, "failed to get xusb_ss_src clock rate");
-
-	error = clk_set_parent(psc->sc_clk_ss_src, pll_u_480);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_ss_src clock parent");
 
 	rate = clk_get_rate(psc->sc_clk_ss_src);
 	device_printf(sc->sc_dev, "ss_src rate %u\n", rate);
@@ -291,9 +273,6 @@ tegra_xusb_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	clk = fdtbus_clock_get(faa->faa_phandle, "xusb_fs_src");
-	error = clk_set_parent(clk, pll_u_48);
-	tegra_xusb_attach_check(sc, error, "failed to set xusb_fs_src clock parent");
-
 	rate = clk_get_rate(clk);
 	error = clk_enable(clk); /* XXX set frequency */
 	device_printf(sc->sc_dev, "rate %u error %d\n", rate, error);
@@ -337,8 +316,11 @@ tegra_xusb_mountroot(device_t self)
 	val = bus_space_read_4(bst, ipfsh, 0x0);
 	device_printf(sc->sc_dev, "%s ipfs 0x0 = 0x%x\n", __func__, val);
 
-	tegra_xusb_load_fw(psc);
+	if (tegra_xusb_load_fw(psc) != 0)
+		return;
 	device_printf(sc->sc_dev, "post fw\n");
+
+	tegra_xusbpad_xhci_enable();
 
 	clk = fdtbus_clock_get(psc->sc_phandle, "xusb_falcon_src");
 	rate = clk_get_rate(clk);
@@ -373,6 +355,8 @@ tegra_xusb_mountroot(device_t self)
 	}
 
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+
+	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint);
 
 	error = xusb_mailbox_send(psc, 0x01000000);
 	if (error) {
@@ -577,7 +561,7 @@ fw_dma_free(struct tegra_xusb_softc * const psc, struct fw_dma * const p)
 #define FWHEADER_FWIMG_LEN 100
 #define FWHEADER__LEN 256
 
-static void
+static int
 tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 {
 	struct xhci_softc * const sc = &psc->sc_xhci;
@@ -594,8 +578,8 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 #else
 	if ((error = firmware_open("nvidia/tegra124", "xusb.bin", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "could not open firmware file %s: %d\n", "xusb.bin", error);
-		return;
+		    "couldn't load firmware from 'nvidia/tegra124/xusb.bin': %d\n", error);
+		return error;
 	}
 	firmware_size = firmware_get_size(fw);
 #endif
@@ -605,7 +589,7 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 #if !defined(TEGRA124_XUSB_BIN_STATIC)
 		firmware_close(fw);
 #endif
-		return;
+		return error;
 	}
 
 	firmware_image = psc->sc_fw_dma.addr;
@@ -619,7 +603,7 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 	if (error != 0) {
 		fw_dma_free(psc, &psc->sc_fw_dma);
 		firmware_close(fw);
-		return;
+		return error;
 	}
 	firmware_close(fw);
 #endif
@@ -731,6 +715,8 @@ tegra_xusb_load_fw(struct tegra_xusb_softc * const psc)
 	    XUSB_CSB_FALCON_CPUCTL_STARTCPU);
 	device_printf(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n",
 	    csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG));
+
+	return 0;
 }
 
 static uint32_t

@@ -1,10 +1,10 @@
-/*	$NetBSD: map.c,v 1.1.1.4 2014/05/28 09:58:50 tron Exp $	*/
+/*	$NetBSD: map.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* map.c - ldap backend mapping routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,9 @@
  * Changes in the original code are highlighted where required.
  * Credits for the original code go to the author, Howard Chu.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: map.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 

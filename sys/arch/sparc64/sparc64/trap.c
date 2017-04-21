@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.184 2016/07/07 06:55:38 msaitoh Exp $ */
+/*	$NetBSD: trap.c,v 1.184.4.1 2017/04/21 16:53:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.184.4.1 2017/04/21 16:53:37 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -729,15 +729,23 @@ badtrap:
 	case T_LDDF_ALIGN:
 	case T_STDF_ALIGN:
 		{
-		int64_t dsfsr, dsfar=0;
+		int64_t dsfsr = 0, dsfar = 0;
 #ifdef DEBUG
-		int64_t isfsr;
+		int64_t isfsr = 0;
 #endif
-		dsfsr = ldxa(SFSR, ASI_DMMU);
-		if (dsfsr & SFSR_FV)
-			dsfar = ldxa(SFAR, ASI_DMMU);
+		if (!CPU_ISSUN4V) {
+			dsfsr = ldxa(SFSR, ASI_DMMU);
+			if (dsfsr & SFSR_FV)
+				dsfar = ldxa(SFAR, ASI_DMMU);
+		} else {
+			paddr_t mmu_fsa_dfa = cpus->ci_mmufsa
+			  + offsetof(struct mmufsa, dfa);
+			dsfar = ldxa(mmu_fsa_dfa, ASI_PHYS_CACHED);
+		}
 #ifdef DEBUG
-		isfsr = ldxa(SFSR, ASI_IMMU);
+		if (!CPU_ISSUN4V) {
+			isfsr = ldxa(SFSR, ASI_IMMU);
+		}
 #endif
 		/* 
 		 * If we're busy doing copyin/copyout continue

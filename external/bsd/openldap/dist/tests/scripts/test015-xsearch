@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2014 The OpenLDAP Foundation.
+## Copyright 1998-2016 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -200,6 +200,19 @@ fi
 
 FILTER="(dc=example)"
 VRFILTER="((o:caseExactMatch:=Example, Inc.)(dc=example))"
+echo "        f=$FILTER mv=$VRFILTER ..."
+echo "#         f=$FILTER mv=$VRFILTER ..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	-E '!mv='"$VRFILTER" "$FILTER" >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+FILTER="(dc=example)"
+VRFILTER="((o={*)(dc=*))"
 echo "        f=$FILTER mv=$VRFILTER ..."
 echo "#         f=$FILTER mv=$VRFILTER ..." >> $SEARCHOUT
 $LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \

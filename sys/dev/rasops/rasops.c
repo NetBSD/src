@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.73 2015/04/18 11:23:58 mlelstv Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.73.4.1 2017/04/21 16:53:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.73 2015/04/18 11:23:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.73.4.1 2017/04/21 16:53:52 bouyer Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -325,8 +325,10 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	/* Need this to frob the setup below */
 	bpp = (ri->ri_depth == 15 ? 16 : ri->ri_depth);
 
-	if ((ri->ri_flg & RI_CFGDONE) != 0)
+	if ((ri->ri_flg & RI_CFGDONE) != 0) {
 		ri->ri_bits = ri->ri_origbits;
+		ri->ri_hwbits = ri->ri_hworigbits;
+	}
 
 	/* Don't care if the caller wants a hideously small console */
 	if (wantrows < 10)

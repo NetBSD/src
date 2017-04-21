@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.107 2016/10/02 14:17:07 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.107.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.107 2016/10/02 14:17:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.107.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1073,12 +1073,9 @@ stripintr(void *arg)
 {
 	struct strip_softc *sc = arg;
 	struct tty *tp = sc->sc_ttyp;
-	struct mbuf *m;
+	struct mbuf *m, *n;
 	int s, len;
 	u_char *pktstart;
-#ifdef INET
-	u_char c;
-#endif
 	u_char chdr[CHDR_LEN];
 
 	KASSERT(tp != NULL);
@@ -1088,9 +1085,6 @@ stripintr(void *arg)
 	 */
 	mutex_enter(softnet_lock);
 	for (;;) {
-#ifdef INET
-		struct ip *ip;
-#endif
 		struct mbuf *bpf_m;
 
 		/*
@@ -1143,6 +1137,7 @@ stripintr(void *arg)
 		} else
 			bpf_m = NULL;
 #ifdef INET
+		struct ip *ip;
 		if ((ip = mtod(m, struct ip *))->ip_p == IPPROTO_TCP) {
 			if (sc->sc_if.if_flags & SC_COMPRESS)
 				*mtod(m, u_char *) |=
@@ -1189,6 +1184,7 @@ stripintr(void *arg)
 			memcpy(chdr, pktstart, CHDR_LEN);
 		}
 #ifdef INET
+		u_char c;
 		if ((c = (*pktstart & 0xf0)) != (IPVERSION << 4)) {
 			if (c & 0x80)
 				c = TYPE_COMPRESSED_TCP;
@@ -1234,14 +1230,13 @@ stripintr(void *arg)
 		}
 		/*
 		 * If the packet will fit into a single
-		 * header mbuf, copy it into one, to save
-		 * memory.
+		 * header mbuf, try to copy it into one,
+		 * to save memory.
 		 */
-		if (m->m_pkthdr.len < MHLEN) {
-			struct mbuf *n;
+		if ((m->m_pkthdr.len < MHLEN) &&
+		    (n = m_gethdr(M_DONTWAIT, MT_DATA))) {
 			int pktlen;
 
-			MGETHDR(n, M_DONTWAIT, MT_DATA);
 			pktlen = m->m_pkthdr.len;
 			M_MOVE_PKTHDR(n, m);
 			memcpy(mtod(n, void *), mtod(m, void *), pktlen);

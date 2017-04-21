@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.79 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.79.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.79 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.79.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -247,6 +247,8 @@ ipflow_fastforward(struct mbuf *m)
 		goto out;
 
 	ifp = m_get_rcvif(m, &s);
+	if (__predict_false(ifp == NULL))
+		goto out_unref;
 	/*
 	 * Verify the IP header checksum.
 	 */

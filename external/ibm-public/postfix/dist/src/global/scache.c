@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: scache.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -87,8 +87,8 @@
 /*	How long the session should be cached.  When information
 /*	expires it is purged automatically.
 /* .IP endp_label
-/*      The transport name and the physical endpoint name under
-/*      which the session is stored and looked up.
+/*	The transport name and the physical endpoint name under
+/*	which the session is stored and looked up.
 /*
 /*	In the case of SMTP, the physical endpoint includes the numerical
 /*	IP address, address family information, and the numerical TCP port.
@@ -381,7 +381,7 @@ int     main(int unused_argc, char **unused_argv)
     vstream_fileno(VSTREAM_ERR) = 1;
 
     while (get_buffer(buf, VSTREAM_IN, interactive) != VSTREAM_EOF) {
-	argv = argv_split(STR(buf), " \t\r\n");
+	argv = argv_split(STR(buf), CHARS_SPACE);
 	if (argv->argc > 0 && argv->argv[0][0] != '#') {
 	    msg_verbose = verbose_level;
 	    for (ap = actions; ap->command != 0; ap++) {

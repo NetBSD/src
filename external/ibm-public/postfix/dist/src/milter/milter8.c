@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.8 2015/01/24 18:08:26 tron Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.8.4.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -70,6 +70,10 @@
 
 #ifndef SHUT_RDWR
 #define SHUT_RDWR	2
+#endif
+
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
 #endif
 
 /* Utility library. */
@@ -580,7 +584,7 @@ static int milter8_read_resp(MILTER8 *milter, int event, unsigned char *command,
     /*
      * Receive the packet length.
      */
-    if ((vstream_fread(milter->fp, (char *) &len, UINT32_SIZE))
+    if ((vstream_fread(milter->fp, (void *) &len, UINT32_SIZE))
 	!= UINT32_SIZE) {
 	smfic_name = str_name_code(smfic_table, event);
 	msg_warn("milter %s: can't read %s reply packet header: %m",
@@ -642,7 +646,7 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t *data_len, va_list ap)
 		return (milter8_comm_error(milter));
 	    }
 	    host_long_ptr = va_arg(ap, UINT32_TYPE *);
-	    if (vstream_fread(milter->fp, (char *) &net_long, UINT32_SIZE)
+	    if (vstream_fread(milter->fp, (void *) &net_long, UINT32_SIZE)
 		!= UINT32_SIZE) {
 		msg_warn("milter %s: EOF while reading network long: %m",
 			 milter->m.name);
@@ -663,7 +667,7 @@ static int vmilter8_read_data(MILTER8 *milter, ssize_t *data_len, va_list ap)
 	    buf = va_arg(ap, VSTRING *);
 	    VSTRING_RESET(buf);
 	    VSTRING_SPACE(buf, *data_len);
-	    if (vstream_fread(milter->fp, (char *) STR(buf), *data_len)
+	    if (vstream_fread(milter->fp, (void *) STR(buf), *data_len)
 		!= *data_len) {
 		msg_warn("milter %s: EOF while reading data: %m", milter->m.name);
 		return (milter8_comm_error(milter));
@@ -835,7 +839,7 @@ static int vmilter8_write_cmd(MILTER8 *milter, int command, ssize_t data_len,
     if ((pkt_len = 1 + data_len) < 1)
 	msg_panic("%s: bad packet length %d", myname, pkt_len);
     pkt_len = htonl(pkt_len);
-    (void) vstream_fwrite(milter->fp, (char *) &pkt_len, UINT32_SIZE);
+    (void) vstream_fwrite(milter->fp, (void *) &pkt_len, UINT32_SIZE);
     (void) VSTREAM_PUTC(command, milter->fp);
     while ((arg_type = va_arg(ap, int)) > 0) {
 	switch (arg_type) {
@@ -846,7 +850,7 @@ static int vmilter8_write_cmd(MILTER8 *milter, int command, ssize_t data_len,
 	case MILTER8_DATA_HLONG:
 	    host_long = va_arg(ap, UINT32_TYPE);
 	    net_long = htonl(host_long);
-	    (void) vstream_fwrite(milter->fp, (char *) &net_long, UINT32_SIZE);
+	    (void) vstream_fwrite(milter->fp, (void *) &net_long, UINT32_SIZE);
 	    break;
 
 	    /*
@@ -886,7 +890,7 @@ static int vmilter8_write_cmd(MILTER8 *milter, int command, ssize_t data_len,
 	     */
 	case MILTER8_DATA_NSHORT:
 	    net_short = va_arg(ap, unsigned);
-	    (void) vstream_fwrite(milter->fp, (char *) &net_short, UINT16_SIZE);
+	    (void) vstream_fwrite(milter->fp, (void *) &net_short, UINT16_SIZE);
 	    break;
 
 	    /*
@@ -1650,7 +1654,7 @@ static void milter8_connect(MILTER8 *milter)
      * don't want to take the risk that a future version will be more picky.
      */
     cp = saved_version = mystrdup(milter->protocol);
-    while ((name = mystrtok(&cp, " ,\t\r\n")) != 0) {
+    while ((name = mystrtok(&cp, CHARS_COMMA_SP)) != 0) {
 	int     mask;
 	int     vers;
 
@@ -1725,9 +1729,9 @@ static void milter8_connect(MILTER8 *milter)
     myfree(transport);
     milter->fp = vstream_fdopen(fd, O_RDWR);
     vstream_control(milter->fp,
-		    VSTREAM_CTL_DOUBLE,
-		    VSTREAM_CTL_TIMEOUT, milter->cmd_timeout,
-		    VSTREAM_CTL_END);
+		    CA_VSTREAM_CTL_DOUBLE,
+		    CA_VSTREAM_CTL_TIMEOUT(milter->cmd_timeout),
+		    CA_VSTREAM_CTL_END);
     /* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
     if (connect_fn == inet_connect)
 	vstream_tweak_tcp(milter->fp);
@@ -2569,9 +2573,9 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 	milter->state = MILTER8_STAT_MESSAGE;
 	VSTRING_RESET(milter->body);
 	vstream_control(milter->fp,
-			VSTREAM_CTL_DOUBLE,
-			VSTREAM_CTL_TIMEOUT, milter->msg_timeout,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_DOUBLE,
+			CA_VSTREAM_CTL_TIMEOUT(milter->msg_timeout),
+			CA_VSTREAM_CTL_END);
 
 	/*
 	 * XXX When the message (not MIME body part) does not end in CRLF
@@ -2604,9 +2608,9 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 	vstring_free(buf);
 	if (milter->fp)
 	    vstream_control(milter->fp,
-			    VSTREAM_CTL_DOUBLE,
-			    VSTREAM_CTL_TIMEOUT, milter->cmd_timeout,
-			    VSTREAM_CTL_END);
+			    CA_VSTREAM_CTL_DOUBLE,
+			    CA_VSTREAM_CTL_TIMEOUT(milter->cmd_timeout),
+			    CA_VSTREAM_CTL_END);
 	if (milter->state == MILTER8_STAT_MESSAGE
 	    || milter->state == MILTER8_STAT_ACCEPT_MSG)
 	    milter->state = MILTER8_STAT_ENVELOPE;
@@ -2662,22 +2666,22 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
 	vstream_fflush(milter->fp);
 
     if (attr_print(stream, ATTR_FLAG_MORE,
-		   ATTR_TYPE_STR, MAIL_ATTR_MILT_NAME, milter->m.name,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_VERS, milter->version,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_ACTS, milter->rq_mask,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_EVTS, milter->ev_mask,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_NPTS, milter->np_mask,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_STAT, milter->state,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_CONN, milter->conn_timeout,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_CMD, milter->cmd_timeout,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_MSG, milter->msg_timeout,
-		   ATTR_TYPE_STR, MAIL_ATTR_MILT_ACT, milter->def_action,
-		   ATTR_TYPE_INT, MAIL_ATTR_MILT_MAC, milter->m.macros != 0,
+		   SEND_ATTR_STR(MAIL_ATTR_MILT_NAME, milter->m.name),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_VERS, milter->version),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_ACTS, milter->rq_mask),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_EVTS, milter->ev_mask),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_NPTS, milter->np_mask),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_STAT, milter->state),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_CONN, milter->conn_timeout),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_CMD, milter->cmd_timeout),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_MSG, milter->msg_timeout),
+		   SEND_ATTR_STR(MAIL_ATTR_MILT_ACT, milter->def_action),
+		   SEND_ATTR_INT(MAIL_ATTR_MILT_MAC, milter->m.macros != 0),
 		   ATTR_TYPE_END) != 0
 	|| (milter->m.macros != 0
 	    && attr_print(stream, ATTR_FLAG_NONE,
-			  ATTR_TYPE_FUNC, milter_macros_print,
-			  (void *) milter->m.macros,
+			  SEND_ATTR_FUNC(milter_macros_print,
+					 (void *) milter->m.macros),
 			  ATTR_TYPE_END) != 0)
 	|| (milter->m.macros == 0
 	    && attr_print(stream, ATTR_FLAG_NONE,
@@ -2686,7 +2690,7 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
 	return (-1);
 #ifdef CANT_WRITE_BEFORE_SENDING_FD
     } else if (attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_STR, MAIL_ATTR_DUMMY, milter->buf,
+			 RECV_ATTR_STR(MAIL_ATTR_DUMMY, milter->buf),
 			 ATTR_TYPE_END) != 1) {
 	return (-1);
 #endif
@@ -2695,7 +2699,7 @@ static int milter8_send(MILTER *m, VSTREAM *stream)
 	return (-1);
 #ifdef MUST_READ_AFTER_SENDING_FD
     } else if (attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_STR, MAIL_ATTR_DUMMY, milter->buf,
+			 RECV_ATTR_STR(MAIL_ATTR_DUMMY, milter->buf),
 			 ATTR_TYPE_END) != 1) {
 	return (-1);
 #endif
@@ -2738,23 +2742,23 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
 	act_buf = vstring_alloc(10);
     }
     if (attr_scan(stream, ATTR_FLAG_STRICT | ATTR_FLAG_MORE,
-		  ATTR_TYPE_STR, MAIL_ATTR_MILT_NAME, name_buf,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_VERS, &version,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_ACTS, &rq_mask,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_EVTS, &ev_mask,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_NPTS, &np_mask,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_STAT, &state,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_CONN, &conn_timeout,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_CMD, &cmd_timeout,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_MSG, &msg_timeout,
-		  ATTR_TYPE_STR, MAIL_ATTR_MILT_ACT, act_buf,
-		  ATTR_TYPE_INT, MAIL_ATTR_MILT_MAC, &has_macros,
+		  RECV_ATTR_STR(MAIL_ATTR_MILT_NAME, name_buf),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_VERS, &version),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_ACTS, &rq_mask),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_EVTS, &ev_mask),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_NPTS, &np_mask),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_STAT, &state),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_CONN, &conn_timeout),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_CMD, &cmd_timeout),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_MSG, &msg_timeout),
+		  RECV_ATTR_STR(MAIL_ATTR_MILT_ACT, act_buf),
+		  RECV_ATTR_INT(MAIL_ATTR_MILT_MAC, &has_macros),
 		  ATTR_TYPE_END) < 10
 	|| (has_macros != 0
 	    && attr_scan(stream, ATTR_FLAG_STRICT,
-			 ATTR_TYPE_FUNC, milter_macros_scan,
-			 (void *) (macros =
-			     milter_macros_alloc(MILTER_MACROS_ALLOC_ZERO)),
+			 RECV_ATTR_FUNC(milter_macros_scan,
+					(void *) (macros =
+			    milter_macros_alloc(MILTER_MACROS_ALLOC_ZERO))),
 			 ATTR_TYPE_END) < 1)
 	|| (has_macros == 0
 	    && attr_scan(stream, ATTR_FLAG_STRICT,
@@ -2762,7 +2766,7 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
 	FREE_MACROS_AND_RETURN(0);
 #ifdef CANT_WRITE_BEFORE_SENDING_FD
     } else if (attr_print(stream, ATTR_FLAG_NONE,
-			  ATTR_TYPE_STR, MAIL_ATTR_DUMMY, "",
+			  SEND_ATTR_STR(MAIL_ATTR_DUMMY, ""),
 			  ATTR_TYPE_END) != 0
 	       || vstream_fflush(stream) != 0) {
 	FREE_MACROS_AND_RETURN(0);
@@ -2772,7 +2776,7 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
     } else {
 #ifdef MUST_READ_AFTER_SENDING_FD
 	(void) attr_print(stream, ATTR_FLAG_NONE,
-			  ATTR_TYPE_STR, MAIL_ATTR_DUMMY, "",
+			  SEND_ATTR_STR(MAIL_ATTR_DUMMY, ""),
 			  ATTR_TYPE_END);
 #endif
 #define NO_PROTOCOL	((char *) 0)
@@ -2784,7 +2788,7 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
 			    msg_timeout, NO_PROTOCOL, STR(act_buf), parent);
 	milter->fp = vstream_fdopen(fd, O_RDWR);
 	milter->m.macros = macros;
-	vstream_control(milter->fp, VSTREAM_CTL_DOUBLE, VSTREAM_CTL_END);
+	vstream_control(milter->fp, CA_VSTREAM_CTL_DOUBLE, CA_VSTREAM_CTL_END);
 	/* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
 	vstream_tweak_sock(milter->fp);
 	milter->version = version;
@@ -2816,7 +2820,7 @@ static void milter8_free(MILTER *m)
 	myfree(milter->def_reply);
     if (milter->m.macros)
 	milter_macros_free(milter->m.macros);
-    myfree((char *) milter);
+    myfree((void *) milter);
 }
 
 /* milter8_alloc - create MTA-side Sendmail 8 Milter instance */
@@ -2830,7 +2834,7 @@ static MILTER8 *milter8_alloc(const char *name, int conn_timeout,
     MILTER8 *milter;
 
     /*
-     * Fill in the structure.
+     * Fill in the structure. Note: all strings must be copied.
      */
     milter = (MILTER8 *) mymalloc(sizeof(*milter));
     milter->m.name = mystrdup(name);

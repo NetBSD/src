@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.2 2016/08/20 18:21:18 nakayama Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.2.6.1 2017/04/21 16:53:37 bouyer Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -969,6 +969,8 @@ vdsk_dring_alloc(int nentries)
 		goto unmap;
 #else
 	va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
+	if (va == 0)
+		goto free;
 #endif
 	vd->vd_desc = (struct vd_desc *)va;
 	vd->vd_nentries = nentries;
@@ -984,6 +986,9 @@ free:
 	bus_dmamem_free(t, &vd->vd_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, vd->vd_map);
+#else
+free:
+	kmem_free(vd, sizeof(struct vdsk_dring));
 #endif
 	return (NULL);
 }

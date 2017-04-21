@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.26 2015/06/09 08:13:17 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.26.4.1 2017/04/21 16:53:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -310,11 +310,11 @@ void	ucas_ras_check(trapframe_t *);
 
 /* vfp_init.c */
 void	vfp_attach(struct cpu_info *);
-void	vfp_discardcontext(bool);
-void	vfp_savecontext(void);
+void	vfp_discardcontext(lwp_t *, bool);
+void	vfp_savecontext(lwp_t *);
 void	vfp_kernel_acquire(void);
 void	vfp_kernel_release(void);
-bool	vfp_used_p(void);
+bool	vfp_used_p(const lwp_t *);
 extern const pcu_ops_t arm_vfp_ops;
 
 #endif	/* !_LOCORE */

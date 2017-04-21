@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.342 2016/12/01 02:09:03 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.342.2.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.342 2016/12/01 02:09:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.342.2.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4892,14 +4892,24 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 	char *dp;
 	size_t count, vmesize;
 
-	vme = NULL;
-	vmesize = *oldlenp;
-	count = 0;
-	if (oldp && *oldlenp > 1024 * 1024)
-		return E2BIG;
+	if (elem_size == 0 || elem_size > 2 * sizeof(*vme))
+		return EINVAL;
+
+	if (oldp) {
+		if (*oldlenp > 1024 * 1024)
+			return E2BIG;
+		count = *oldlenp / elem_size;
+		if (count == 0)
+			return ENOMEM;
+		vmesize = count * sizeof(*vme);
+	} else
+		vmesize = 0;
 
 	if ((error = proc_find_locked(l, &p, pid)) != 0)
 		return error;
+
+	vme = NULL;
+	count = 0;
 
 	if ((error = proc_vmspace_getref(p, &vm)) != 0)
 		goto out;
@@ -4912,7 +4922,7 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 		vme = kmem_alloc(vmesize, KM_SLEEP);
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
-		if (oldp && (dp - (char *)oldp) < *oldlenp + elem_size) {
+		if (oldp && (dp - (char *)oldp) < *oldlenp) {
 			error = fill_vmentry(l, p, &vme[count], map, entry);
 			if (error)
 				goto out;
@@ -4930,8 +4940,7 @@ out:
 		const u_int esize = min(sizeof(*vme), elem_size);
 		dp = oldp;
 		for (size_t i = 0; i < count; i++) {
-			if (oldp && (dp - (char *)oldp) < *oldlenp + elem_size)
-			{
+			if (oldp && (dp - (char *)oldp) < *oldlenp) {
 				error = sysctl_copyout(l, &vme[i], dp, esize);
 				if (error)
 					break;
@@ -4965,8 +4974,7 @@ sysctl_vmproc(SYSCTLFN_ARGS)
 		if (namelen != 3)
 			return EINVAL;
 		sysctl_unlock();
-		error = fill_vmentries(l, name[1], name[2],
-		    oldp, oldlenp);
+		error = fill_vmentries(l, name[1], name[2], oldp, oldlenp);
 		sysctl_relock();
 		return error;
 	default:

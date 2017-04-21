@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.66.4.1 2017/04/21 16:54:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.66.4.1 2017/04/21 16:54:17 bouyer Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -532,7 +532,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	if (debug & DEBUG_FS_CREATE_IMAGE)
 		printf("calling mkfs(\"%s\", ...)\n", image);
 
-	if (stampst.st_ino == 1)
+	if (stampst.st_ino)
 		tstamp = stampst.st_ctime;
 	else
 		tstamp = start_time.tv_sec;
@@ -646,7 +646,7 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 {
 	size_t slen;
 	void *membuf;
-	struct stat *st = stampst.st_ino == 1 ? &stampst : &cur->inode->st;
+	struct stat *st = stampst.st_ino ? &stampst : &cur->inode->st;
 
 	memset(dinp, 0, sizeof(*dinp));
 	dinp->di_mode = cur->inode->st.st_mode;
@@ -696,7 +696,7 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 {
 	size_t slen;
 	void *membuf;
-	struct stat *st = stampst.st_ino == 1 ? &stampst : &cur->inode->st;
+	struct stat *st = stampst.st_ino ? &stampst : &cur->inode->st;
 
 	memset(dinp, 0, sizeof(*dinp));
 	dinp->di_mode = cur->inode->st.st_mode;

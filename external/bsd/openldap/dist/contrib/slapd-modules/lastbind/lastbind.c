@@ -1,4 +1,4 @@
-/*	$NetBSD: lastbind.c,v 1.1.1.1 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: lastbind.c,v 1.1.1.1.14.1 2017/04/21 16:52:23 bouyer Exp $	*/
 
 /* lastbind.c - Record timestamp of the last successful bind to entries */
 /* $OpenLDAP$ */
@@ -17,6 +17,9 @@
 /* ACKNOWLEDGEMENTS:
  * This work is loosely derived from the ppolicy overlay.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: lastbind.c,v 1.1.1.1.14.1 2017/04/21 16:52:23 bouyer Exp $");
 
 #include "portable.h"
 
@@ -72,7 +75,7 @@ static ConfigTable lastbindcfg[] = {
 	{ "lastbind-precision", "seconds", 2, 2, 0,
 	  ARG_INT|ARG_OFFSET,
 	  (void *)offsetof(lastbind_info, timestamp_precision),
-	  "( OLcfgAt:5.1 "
+	  "( OLcfgCtAt:5.1 "
 	  "NAME 'olcLastBindPrecision' "
 	  "DESC 'Precision of authTimestamp attribute' "
 	  "SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
@@ -80,7 +83,7 @@ static ConfigTable lastbindcfg[] = {
 };
 
 static ConfigOCs lastbindocs[] = {
-	{ "( OLcfgOc:5.1 "
+	{ "( OLcfgCtOc:5.1 "
 	  "NAME 'olcLastBindConfig' "
 	  "DESC 'Last Bind configuration' "
 	  "SUP olcOverlayConfig "

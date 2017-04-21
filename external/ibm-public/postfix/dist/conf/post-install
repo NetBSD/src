@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: post-install,v 1.1.1.6 2014/07/06 19:27:40 tron Exp $
+#	$NetBSD: post-install,v 1.1.1.6.10.1 2017/04/21 16:52:45 bouyer Exp $
 #
 
 # To view the formatted manual page of this file, type:
@@ -42,8 +42,8 @@
 #	Arguments
 # .IP create-missing
 #	Create missing queue directories with ownerships and permissions
-#	according to the contents of $daemon_directory/postfix-files
-#	and optionally in $daemon_directory/postfix-files.d/*, using
+#	according to the contents of $meta_directory/postfix-files
+#	and optionally in $meta_directory/postfix-files.d/*, using
 #	the mail_owner and setgid_group parameter settings from the
 #	command line, process environment or from the installed
 #	main.cf file.
@@ -51,8 +51,8 @@
 #	This is required at Postfix start-up time.
 # .IP set-permissions
 #	Set all file/directory ownerships and permissions according to the
-#	contents of $daemon_directory/postfix-files and optionally
-#	in $daemon_directory/postfix-files.d/*, using the mail_owner
+#	contents of $meta_directory/postfix-files and optionally
+#	in $meta_directory/postfix-files.d/*, using the mail_owner
 #	and setgid_group parameter settings from the command line,
 #	process environment or from the installed main.cf file.
 #	Implies create-missing.
@@ -62,8 +62,8 @@
 #	settings after Postfix is already installed.
 # .IP upgrade-permissions
 #	Update ownership and permission of existing files/directories as
-#	specified in $daemon_directory/postfix-files and optionally
-#	in $daemon_directory/postfix-files.d/*, using the mail_owner
+#	specified in $meta_directory/postfix-files and optionally
+#	in $meta_directory/postfix-files.d/*, using the mail_owner
 #	and setgid_group parameter settings from the command line,
 #	process environment or from the installed main.cf file.
 #	Implies create-missing.
@@ -177,12 +177,21 @@
 #	This feature is obsolete as of Postfix 2.1.
 # .IP readme_directory
 #	The directory for the Postfix README files.
+# .IP shlib_directory
+#	The directory for the Postfix shared-library files, and for
+#	the Postfix dabatase plugin files with a relative pathname
+#	in the file dynamicmaps.cf.
+# .IP meta_directory
+#	The directory for non-executable files that are shared
+#	among multiple Postfix instances, such as postfix-files,
+#	dynamicmaps.cf, as well as the multi-instance template files
+#	main.cf.proto and master.cf.proto.
 # SEE ALSO
 #	postfix-install(1) Postfix primary installation script.
 # FILES
 #	$config_directory/main.cf, Postfix installation parameters.
-#	$daemon_directory/postfix-files, installation control file.
-#	$daemon_directory/postfix-files.d/*, optional control files.
+#	$meta_directory/postfix-files, installation control file.
+#	$meta_directory/postfix-files.d/*, optional control files.
 #	$config_directory/install.cf, obsolete configuration file.
 # LICENSE
 # .ad
@@ -207,7 +216,7 @@ debug=:
 MOST_PARAMETERS="command_directory daemon_directory data_directory
     html_directory mail_owner mailq_path manpage_directory
     newaliases_path queue_directory readme_directory sample_directory
-    sendmail_path setgid_group"
+    sendmail_path setgid_group shlib_directory meta_directory"
 NON_SHARED="config_directory queue_directory data_directory"
 
 USAGE="Usage: $0 [name=value] command
@@ -227,6 +236,8 @@ obsolete=; keep_list=;
 for arg
 do
     case $arg in
+	*[" 	"]*) echo $0: "Error: argument contains whitespace: '$arg'"
+		     exit 1;;
                 *=*) IFS= eval $arg; IFS="$BACKUP_IFS";;
      create-missing) create=1;;
 	  set-perm*) create=1; set_perms=1;;
@@ -289,8 +300,8 @@ do
     esac
 done
 
-test -f $daemon_directory/postfix-files || {
-    echo $0: Error: $daemon_directory/postfix-files is not a file. 1>&2
+test -f $meta_directory/postfix-files || {
+    echo $0: Error: $meta_directory/postfix-files is not a file. 1>&2
     exit 1
 }
 
@@ -363,7 +374,8 @@ case $setgid_group in
 esac
 
 for path in "$daemon_directory" "$command_directory" "$queue_directory" \
-    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory"
+    "$sendmail_path" "$newaliases_path" "$mailq_path" "$manpage_directory" \
+    "$meta_directory"
 do
    case "$path" in
    /*) ;;
@@ -371,7 +383,7 @@ do
    esac
 done
 
-for path in "$html_directory" "$readme_directory"
+for path in "$html_directory" "$readme_directory" "$shlib_directory"
 do
    case "$path" in
    /*) ;;
@@ -416,10 +428,37 @@ POSTCONF="$command_directory/postconf"
 
 # Save settings, allowing command line/environment override.
 
+# Undo MAIL_VERSION expansion at the end of a parameter value. If
+# someone really wants the expanded mail version in main.cf, then
+# we're sorry.
+
+# Confine side effects from mail_version unexpansion within a subshell.
+
+(case "$mail_version" in
+"") mail_version="`$POSTCONF -dhx mail_version`" || exit 1
+esac
+
+for name in $MOST_PARAMETERS
+do
+    eval junk=\$$name
+    case "$junk" in
+    *"$mail_version"*) 
+	case "$pattern" in
+	"") pattern=`echo "$mail_version" | sed 's/\./\\\\./g'` || exit 1
+	esac
+	val=`echo "$junk" | sed "s/$pattern"'$/${mail_version}/g'` || exit 1
+	eval ${name}='"$val"'
+    esac
+done
+
+# XXX Maybe update main.cf only with first install, upgrade, set
+# permissions, and what else? Should there be a warning otherwise?
+
 override=
 for name in $MOST_PARAMETERS
 do
-    eval test \"\$$name\" = \"`$POSTCONF -c $config_directory -h $name`\" || {
+    eval junk=\"\$$name\"
+    test "$junk" = "`$POSTCONF -c $config_directory -h $name`" || {
 	override=1
 	break
     }
@@ -440,14 +479,16 @@ test -n "$override" && {
 	"manpage_directory = $manpage_directory" \
 	"sample_directory = $sample_directory" \
 	"readme_directory = $readme_directory" \
+	"shlib_directory = $shlib_directory" \
+	"meta_directory = $meta_directory" \
     || exit 1
-}
+} || exit 0) || exit 1
 
-# Use file/directory status information in $daemon_directory/postfix-files.
+# Use file/directory status information in $meta_directory/postfix-files.
 
 test -n "$create" && {
-    postfix_files_d=$daemon_directory/postfix-files.d
-    for postfix_file in $daemon_directory/postfix-files \
+    postfix_files_d=$meta_directory/postfix-files.d
+    for postfix_file in $meta_directory/postfix-files \
 	`test -d $postfix_files_d && { find $postfix_files_d -type f | sort; }`
     do
 	exec <$postfix_file || exit 1

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.209 2017/01/09 19:51:31 christos Exp $
+# $NetBSD: postinstall,v 1.209.2.1 2017/04/21 16:54:18 bouyer Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -523,7 +523,7 @@ obsolete_paths()
 
 	failed=0
 	while read ofile; do
-		if ! file_exists_exact "${ofile}"; then
+		if ! ${file_exists_exact} "${ofile}"; then
 			continue
 		fi
 		ofile="${DEST_DIR}${ofile#.}"
@@ -534,6 +534,8 @@ obsolete_paths()
 		elif [ -d "${ofile}" ]; then
 			ftype="directory"
 			cmd="rmdir"
+		elif [ ! -e "${ofile}" ]; then
+			continue
 		fi
 		if [ "${op}" = "check" ]; then
 			msg "Remove obsolete ${ftype} ${ofile}"
@@ -883,10 +885,37 @@ do_dhcpcd()
 	failed=0
 
 	find_file_in_dirlist dhcpcd.conf "dhcpcd.conf" \
-	    "${SRC_DIR}/external/bsd/dhcpcd/dist" "${SRC_DIR}/etc" || return 1
+	    "${SRC_DIR}/external/bsd/dhcpcd/dist/src" \
+	    "${SRC_DIR}/etc" || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	populate_dir "$op" true "${dir}" "${DEST_DIR}/etc" 644 dhcpcd.conf
 	failed=$(( ${failed} + $? ))
+
+	check_dir "${op}" "${DEST_DIR}/var/db/dhcpcd" 755
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/dhcpcd.duid" \
+		"${DEST_DIR}/var/db/dhcpcd/duid"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/etc/dhcpcd.secret" \
+		"${DEST_DIR}/var/db/dhcpcd/secret"
+	failed=$(( ${failed} + $? ))
+
+	move_file "${op}" \
+		"${DEST_DIR}/var/db/dhcpcd-rdm.monotonic" \
+		"${DEST_DIR}/var/db/dhcpcd/rdm_monotonic"
+	failed=$(( ${failed} + $? ))
+
+	for lease in "${DEST_DIR}/var/db/dhcpcd-"*.lease*; do
+		[ -f "${lease}" ] || continue
+		new_lease=$(basename "${lease}" | ${SED} -e 's/dhcpcd-//')
+		new_lease="${DEST_DIR}/var/db/dhcpcd/${new_lease}"
+		move_file "${op}" "${lease}" "${new_lease}"
+		failed=$(( ${failed} + $? ))
+	done
 
 	return ${failed}
 }
@@ -2328,6 +2357,16 @@ main()
 	DIRMODE=false		# true if "-s" specified a directory
 	SOURCEMODE=false	# true if "-s" specified a source directory
 
+	case "$(uname -s)" in
+	Darwin)
+		# case sensitive match for case insensitive fs
+		file_exists_exact=file_exists_exact
+		;;
+	*)
+		file_exists_exact=:
+		;;
+	esac
+
 	while getopts s:x:d:m:a: ch; do
 		case "${ch}" in
 		s)
@@ -2363,6 +2402,7 @@ main()
 			if [ -d "${OPTARG}" ]; then
 				# arg refers to a directory.
 				XSRC_DIR="${OPTARG}"
+				XSRC_DIR_FIX="-x ${OPTARG} "
 			else
 				err 2 "Not a directory for -x option"
 			fi
@@ -2524,7 +2564,7 @@ main()
 			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
-    ${HOST_SH} ${0} ${SRC_ARGLIST} -d ${DEST_DIR:-/}$m fix${items_failed}
+    ${HOST_SH} ${0} ${SRC_ARGLIST} ${XSRC_DIR_FIX}-d ${DEST_DIR:-/}$m fix${items_failed}
 Note that this may overwrite local changes.
 _Fix_me_
 		    fi

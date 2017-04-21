@@ -1,4 +1,4 @@
-.\"	$NetBSD: canonical.5,v 1.1.1.2 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: canonical.5,v 1.1.1.2.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH CANONICAL 5 
 .ad
@@ -12,14 +12,14 @@ Postfix canonical table format
 .nf
 \fBpostmap /etc/postfix/canonical\fR
 
-\fBpostmap -q "\fIstring\fB" /etc/postfix/canonical\fR
+\fBpostmap \-q "\fIstring\fB" /etc/postfix/canonical\fR
 
-\fBpostmap -q - /etc/postfix/canonical <\fIinputfile\fR
+\fBpostmap \-q \- /etc/postfix/canonical <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
 The optional \fBcanonical\fR(5) table specifies an address mapping for
-local and non-local addresses. The mapping is used by the
+local and non\-local addresses. The mapping is used by the
 \fBcleanup\fR(8) daemon, before mail is stored into the
 queue.  The address mapping is recursive.
 
@@ -33,11 +33,11 @@ file after changing the corresponding text file.
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
-Alternatively, the table can be provided as a regular-expression
+Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In those cases, the lookups
+can be directed to TCP\-based server. In those cases, the lookups
 are done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
+"REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 
 By default the \fBcanonical\fR(5) mapping affects both message
 header addresses (i.e. addresses that appear inside messages)
@@ -49,7 +49,7 @@ NOTE: Postfix versions 2.2 and later rewrite message headers
 from remote SMTP clients only if the client matches the
 local_header_rewrite_clients parameter, or if the
 remote_header_rewrite_domain configuration parameter specifies
-a non-empty value. To get the behavior before Postfix 2.2,
+a non\-empty value. To get the behavior before Postfix 2.2,
 specify "local_header_rewrite_clients = static:all".
 
 Typically, one would use the \fBcanonical\fR(5) table to replace login
@@ -79,10 +79,10 @@ The input format for the \fBpostmap\fR(1) command is as follows:
 When \fIpattern\fR matches a mail address, replace it by the
 corresponding \fIaddress\fR.
 .IP "blank lines and comments"
-Empty lines and whitespace-only lines are ignored, as
-are lines whose first non-whitespace character is a `#'.
-.IP "multi-line text"
-A logical line starts with non-whitespace text. A line that
+Empty lines and whitespace\-only lines are ignored, as
+are lines whose first non\-whitespace character is a `#'.
+.IP "multi\-line text"
+A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .SH "TABLE SEARCH ORDER"
 .na
@@ -111,12 +111,12 @@ This form is useful for replacing login names by
 Replace other addresses in \fIdomain\fR by \fIaddress\fR.
 This form has the lowest precedence.
 .sp
-Note: @\fIdomain\fR is a wild-card. When this form is applied
+Note: @\fIdomain\fR is a wild\-card. When this form is applied
 to recipient addresses, the Postfix SMTP server accepts
 mail for any recipient in \fIdomain\fR, regardless of whether
 that recipient exists.  This may turn your mail system into
 a backscatter source: Postfix first accepts mail for
-non-existent recipients and then tries to return that mail
+non\-existent recipients and then tries to return that mail
 as "undeliverable" to the often forged sender address.
 .SH "RESULT ADDRESS REWRITING"
 .na
@@ -173,7 +173,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .ad
 .fi
 This section describes how the table lookups change when lookups
-are directed to a TCP-based server. For a description of the TCP
+are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
 This feature is not available up to and including Postfix version 2.4.
 
@@ -236,9 +236,9 @@ List of user names that are not subject to address masquerading.
 .IP \fBmydestination\fR
 List of domains that this mail system considers local.
 .IP \fBmyorigin\fR
-The domain that is appended to locally-posted mail.
+The domain that is appended to locally\-posted mail.
 .IP \fBowner_request_special\fR
-Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
+Give special treatment to \fBowner\-\fIxxx\fR and \fIxxx\fB\-request\fR
 addresses.
 .IP \fBremote_header_rewrite_domain\fR
 Don't rewrite message headers from remote clients at all
@@ -276,3 +276,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

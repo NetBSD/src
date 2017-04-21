@@ -18,13 +18,13 @@
 xcb_extension_t xcb_big_requests_id = { "BIG-REQUESTS", 0 };
 
 xcb_big_requests_enable_cookie_t
-xcb_big_requests_enable (xcb_connection_t *c  /**< */)
+xcb_big_requests_enable (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_big_requests_id,
-        /* opcode */ XCB_BIG_REQUESTS_ENABLE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_big_requests_id,
+        .opcode = XCB_BIG_REQUESTS_ENABLE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -42,13 +42,13 @@ xcb_big_requests_enable (xcb_connection_t *c  /**< */)
 }
 
 xcb_big_requests_enable_cookie_t
-xcb_big_requests_enable_unchecked (xcb_connection_t *c  /**< */)
+xcb_big_requests_enable_unchecked (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_big_requests_id,
-        /* opcode */ XCB_BIG_REQUESTS_ENABLE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_big_requests_id,
+        .opcode = XCB_BIG_REQUESTS_ENABLE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -66,9 +66,9 @@ xcb_big_requests_enable_unchecked (xcb_connection_t *c  /**< */)
 }
 
 xcb_big_requests_enable_reply_t *
-xcb_big_requests_enable_reply (xcb_connection_t                  *c  /**< */,
+xcb_big_requests_enable_reply (xcb_connection_t                  *c,
                                xcb_big_requests_enable_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */)
+                               xcb_generic_error_t              **e)
 {
     return (xcb_big_requests_enable_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }

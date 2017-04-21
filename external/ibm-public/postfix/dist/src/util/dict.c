@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.1.1.7 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: dict.c,v 1.1.1.7.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -44,12 +44,19 @@
 /*
 /*	int	dict_walk(action, context)
 /*	void	(*action)(dict_name, dict_handle, context)
-/*	char	*context;
+/*	void	*context;
 /*
 /*	int	dict_error(dict_name)
 /*	const char *dict_name;
 /*
 /*	const char *dict_changed_name()
+/*
+/*	void	DICT_OWNER_AGGREGATE_INIT(aggregate)
+/*	DICT_OWNER aggregate;
+/*
+/*	void	DICT_OWNER_AGGREGATE_UPDATE(aggregate, source)
+/*	DICT_OWNER aggregate;
+/*	DICT_OWNER source;
 /* AUXILIARY FUNCTIONS
 /*	int	dict_load_file_xt(dict_name, path)
 /*	const char *dict_name;
@@ -161,6 +168,43 @@
 /*
 /*	dict_flags_mask() returns the bitmask for the specified
 /*	comma/space-separated dictionary flag names.
+/* TRUST AND PROVENANCE
+/* .ad
+/* .fi
+/*	Each dictionary has an owner attribute that contains (status,
+/*	uid) information about the owner of a dictionary.  The
+/*	status is one of the following:
+/* .IP DICT_OWNER_TRUSTED
+/*	The dictionary is owned by a trusted user. The uid is zero,
+/*	and specifies a UNIX user ID.
+/* .IP DICT_OWNER_UNTRUSTED
+/*	The dictionary is owned by an untrusted user.  The uid is
+/*	non-zero, and specifies a UNIX user ID.
+/* .IP DICT_OWNER_UNKNOWN
+/*	The dictionary is owned by an unspecified user.  For example,
+/*	the origin is unauthenticated, or different parts of a
+/*	dictionary aggregate (see below) are owned by different
+/*	untrusted users.  The uid is non-zero and does not specify
+/*	a UNIX user ID.
+/* .PP
+/*	Note that dictionary ownership does not necessarily imply
+/*	ownership of lookup results. For example, a PCRE table may
+/*	be owned by the trusted root user, but the result of $number
+/*	expansion can contain data from an arbitrary remote SMTP
+/*	client.  See dict_open(3) for how to disallow $number
+/*	expansions with security-sensitive operations.
+/*
+/*	Two macros are available to help determine the provenance
+/*	and trustworthiness of a dictionary aggregate. The macros
+/*	are unsafe because they may evaluate arguments more than
+/*	once.
+/*
+/*	DICT_OWNER_AGGREGATE_INIT() initialize aggregate owner
+/*	attributes to the highest trust level.
+/*
+/*	DICT_OWNER_AGGREGATE_UPDATE() updates the aggregate owner
+/*	attributes with the attributes of the specified source, and
+/*	reduces the aggregate trust level as appropriate.
 /* SEE ALSO
 /*	htable(3)
 /* BUGS
@@ -278,7 +322,7 @@ void    dict_register(const char *dict_name, DICT *dict_info)
 	node = (DICT_NODE *) mymalloc(sizeof(*node));
 	node->dict = dict_info;
 	node->refcount = 0;
-	htable_enter(dict_table, dict_name, (char *) node);
+	htable_enter(dict_table, dict_name, (void *) node);
     } else if (dict_info != node->dict)
 	msg_fatal("%s: dictionary name exists: %s", myname, dict_name);
     node->refcount++;
@@ -297,14 +341,14 @@ DICT   *dict_handle(const char *dict_name)
 
 /* dict_node_free - dict_unregister() callback */
 
-static void dict_node_free(char *ptr)
+static void dict_node_free(void *ptr)
 {
     DICT_NODE *node = (DICT_NODE *) ptr;
     DICT   *dict = node->dict;
 
     if (dict->close)
 	dict->close(dict);
-    myfree((char *) node);
+    myfree((void *) node);
 }
 
 /* dict_unregister - break association with named dictionary */
@@ -434,7 +478,7 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
     char   *member;
     char   *val;
     const char *old;
-    int     old_lineno;
+    int     last_line;
     int     lineno;
     const char *err;
     struct stat st;
@@ -445,16 +489,15 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
      */
     DICT_FIND_FOR_UPDATE(dict, dict_name);
     buf = vstring_alloc(100);
-    old_lineno = lineno = 0;
+    last_line = 0;
 
     if (fstat(vstream_fileno(fp), &st) < 0)
 	msg_fatal("fstat %s: %m", VSTREAM_PATH(fp));
-    for ( /* void */ ; readlline(buf, fp, &lineno); old_lineno = lineno) {
+    while (readllines(buf, fp, &last_line, &lineno)) {
 	if ((err = split_nameval(STR(buf), &member, &val)) != 0)
-	    msg_fatal("%s, line %s: %s: \"%s\"",
+	    msg_fatal("%s, line %d: %s: \"%s\"",
 		      VSTREAM_PATH(fp),
-		      format_line_number((VSTRING *) 0,
-					 old_lineno + 1, lineno),
+		      lineno,
 		      err, STR(buf));
 	if (msg_verbose > 1)
 	    msg_info("%s: %s = %s", myname, member, val);
@@ -474,8 +517,9 @@ void    dict_load_fp(const char *dict_name, VSTREAM *fp)
 /* dict_eval_lookup - macro parser call-back routine */
 
 static const char *dict_eval_lookup(const char *key, int unused_type,
-				            char *dict_name)
+				            void *context)
 {
+    char   *dict_name = (char *) context;
     const char *pp = 0;
     DICT   *dict;
 
@@ -510,7 +554,7 @@ const char *dict_eval(const char *dict_name, const char *value, int recursive)
 
     status = mac_expand(buf, value,
 			recursive ? MAC_EXP_FLAG_RECURSE : MAC_EXP_FLAG_NONE,
-			DONT_FILTER, dict_eval_lookup, (char *) dict_name);
+			DONT_FILTER, dict_eval_lookup, (void *) dict_name);
     if (status & MAC_PARSE_ERROR)
 	msg_fatal("dictionary %s: macro processing error", dict_name);
     if (msg_verbose > 1) {
@@ -524,7 +568,7 @@ const char *dict_eval(const char *dict_name, const char *value, int recursive)
 
 /* dict_walk - iterate over all dictionaries in arbitrary order */
 
-void    dict_walk(DICT_WALK_ACTION action, char *ptr)
+void    dict_walk(DICT_WALK_ACTION action, void *ptr)
 {
     HTABLE_INFO **ht_info_list;
     HTABLE_INFO **ht;
@@ -533,7 +577,7 @@ void    dict_walk(DICT_WALK_ACTION action, char *ptr)
     ht_info_list = htable_list(dict_table);
     for (ht = ht_info_list; (h = *ht) != 0; ht++)
 	action(h->key, (DICT *) h->value, ptr);
-    myfree((char *) ht_info_list);
+    myfree((void *) ht_info_list);
 }
 
 /* dict_changed_name - see if any dictionary has changed */
@@ -562,7 +606,7 @@ const char *dict_changed_name(void)
 	    || st.st_nlink == 0)
 	    status = h->key;
     }
-    myfree((char *) ht_info_list);
+    myfree((void *) ht_info_list);
     return (status);
 }
 
@@ -595,6 +639,8 @@ static const NAME_MASK dict_mask[] = {
     "open_lock", DICT_FLAG_OPEN_LOCK,	/* permanent lock upon open */
     "bulk_update", DICT_FLAG_BULK_UPDATE,	/* bulk update if supported */
     "multi_writer", DICT_FLAG_MULTI_WRITER,	/* multi-writer safe */
+    "utf8_request", DICT_FLAG_UTF8_REQUEST,	/* request UTF-8 activation */
+    "utf8_active", DICT_FLAG_UTF8_ACTIVE,	/* UTF-8 is activated */
     0,
 };
 

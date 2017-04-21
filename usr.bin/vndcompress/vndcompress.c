@@ -1,4 +1,4 @@
-/*	$NetBSD: vndcompress.c,v 1.26 2017/01/10 21:15:54 christos Exp $	*/
+/*	$NetBSD: vndcompress.c,v 1.26.2.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vndcompress.c,v 1.26 2017/01/10 21:15:54 christos Exp $");
+__RCSID("$NetBSD: vndcompress.c,v 1.26.2.1 2017/04/21 16:54:16 bouyer Exp $");
 
 #include <sys/endian.h>
 #include <sys/stat.h>
@@ -438,7 +438,7 @@ compress_init(int argc, char **argv, const struct options *O,
 
 	int oflags;
 	if (!ISSET(O->flags, FLAG_r))
-		oflags = (O_WRONLY | O_TRUNC | O_CREAT); /* XXX O_EXCL?  */
+		oflags = (O_WRONLY | O_TRUNC | O_CREAT);
 	else if (!ISSET(O->flags, FLAG_R))
 		oflags = (O_RDWR | O_CREAT);
 	else
@@ -485,6 +485,7 @@ compress_init(int argc, char **argv, const struct options *O,
 	S->n_offsets = (S->n_blocks + 1);
 	__CTASSERT(MAX_N_OFFSETS == (MAX_N_BLOCKS + 1));
 	__CTASSERT(MAX_N_OFFSETS <= (SIZE_MAX / sizeof(uint64_t)));
+	__CTASSERT(CLOOP2_OFFSET_TABLE_OFFSET <= OFFTAB_MAX_FDPOS);
 	offtab_init(&S->offtab, S->n_offsets, window_size, S->cloop2_fd,
 	    CLOOP2_OFFSET_TABLE_OFFSET);
 
@@ -606,6 +607,9 @@ compress_restart(struct compress_state *S)
 	if (!offtab_prepare_get(&S->offtab, 0))
 		return false;
 	const uint64_t first_offset = offtab_get(&S->offtab, 0);
+	__CTASSERT(MAX_N_OFFSETS <= UINT64_MAX/sizeof(uint64_t));
+	__CTASSERT(sizeof(struct cloop2_header) <=
+	    (UINT64_MAX - MAX_N_OFFSETS*sizeof(uint64_t)));
 	const uint64_t expected = sizeof(struct cloop2_header) + 
 	    ((uint64_t)S->n_offsets * sizeof(uint64_t));
 	if (first_offset != expected) {

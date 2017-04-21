@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.1.1.4 2013/01/02 18:59:15 tron Exp $	*/
+/*	$NetBSD: verify.c,v 1.1.1.4.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -150,6 +150,13 @@
 /* .IP "\fBaddress_verify_sender_dependent_default_transport_maps ($sender_dependent_default_transport_maps)\fR"
 /*	Overrides the sender_dependent_default_transport_maps parameter
 /*	setting for address verification probes.
+/* SMTPUTF8 CONTROLS
+/* .ad
+/* .fi
+/*	Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
+/* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
+/*	Detect that a message requires SMTPUTF8 support for the specified
+/*	mail origin classes.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -199,6 +206,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -354,9 +366,9 @@ static void verify_update_service(VSTREAM *client_stream)
     long    updated;
 
     if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
-		  ATTR_TYPE_INT, MAIL_ATTR_ADDR_STATUS, &addr_status,
-		  ATTR_TYPE_STR, MAIL_ATTR_WHY, text,
+		  RECV_ATTR_STR(MAIL_ATTR_ADDR, addr),
+		  RECV_ATTR_INT(MAIL_ATTR_ADDR_STATUS, &addr_status),
+		  RECV_ATTR_STR(MAIL_ATTR_WHY, text),
 		  ATTR_TYPE_END) == 3) {
 	/* FIX 200501 IPv6 patch did not neuter ":" in address literals. */
 	translit(STR(addr), ":", "_");
@@ -364,7 +376,7 @@ static void verify_update_service(VSTREAM *client_stream)
 	    msg_warn("bad recipient status %d for recipient %s",
 		     addr_status, STR(addr));
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, VRFY_STAT_BAD,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, VRFY_STAT_BAD),
 		       ATTR_TYPE_END);
 	} else {
 
@@ -386,7 +398,7 @@ static void verify_update_service(VSTREAM *client_stream)
 		dict_cache_update(verify_map, STR(addr), STR(buf));
 	    }
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, VRFY_STAT_OK,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, VRFY_STAT_OK),
 		       ATTR_TYPE_END);
 	}
     }
@@ -395,9 +407,17 @@ static void verify_update_service(VSTREAM *client_stream)
     vstring_free(text);
 }
 
+/* verify_post_mail_fclose_action - callback */
+
+static void verify_post_mail_fclose_action(int unused_status,
+					           void *unused_context)
+{
+    /* no code here, we just need to avoid blocking in post_mail_fclose() */
+}
+
 /* verify_post_mail_action - callback */
 
-static void verify_post_mail_action(VSTREAM *stream, void *unused_context)
+static void verify_post_mail_action(VSTREAM *stream, void *context)
 {
 
     /*
@@ -405,7 +425,7 @@ static void verify_post_mail_action(VSTREAM *stream, void *unused_context)
      * deferred, or bounced.
      */
     if (stream != 0)
-	post_mail_fclose(stream);
+	post_mail_fclose_async(stream, verify_post_mail_fclose_action, context);
 }
 
 /* verify_query_service - query address status */
@@ -422,7 +442,7 @@ static void verify_query_service(VSTREAM *client_stream)
     char   *text;
 
     if (attr_scan(client_stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
+		  RECV_ATTR_STR(MAIL_ATTR_ADDR, addr),
 		  ATTR_TYPE_END) == 1) {
 	long    now = (long) time((time_t *) 0);
 
@@ -473,9 +493,9 @@ static void verify_query_service(VSTREAM *client_stream)
 	 * Respond to the client.
 	 */
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_INT, MAIL_ATTR_STATUS, VRFY_STAT_OK,
-		   ATTR_TYPE_INT, MAIL_ATTR_ADDR_STATUS, addr_status,
-		   ATTR_TYPE_STR, MAIL_ATTR_WHY, text,
+		   SEND_ATTR_INT(MAIL_ATTR_STATUS, VRFY_STAT_OK),
+		   SEND_ATTR_INT(MAIL_ATTR_ADDR_STATUS, addr_status),
+		   SEND_ATTR_STR(MAIL_ATTR_WHY, text),
 		   ATTR_TYPE_END);
 
 	/*
@@ -495,14 +515,15 @@ static void verify_query_service(VSTREAM *client_stream)
     (addr_status != DEL_RCPT_STAT_OK && updated + var_verify_neg_try < now)
 
 	if (now - probed > PROBE_TTL
-	    && (POSITIVE_REFRESH_NEEDED(addr_status, updated)
-		|| NEGATIVE_REFRESH_NEEDED(addr_status, updated))) {
+	       && (POSITIVE_REFRESH_NEEDED(addr_status, updated)
+		   || NEGATIVE_REFRESH_NEEDED(addr_status, updated))) {
 	    if (msg_verbose)
 		msg_info("PROBE %s status=%d probed=%ld updated=%ld",
 			 STR(addr), addr_status, now, updated);
 	    post_mail_fopen_async(make_verify_sender_addr(), STR(addr),
-				  INT_FILT_MASK_NONE,
+				  MAIL_SRC_MASK_VERIFY,
 				  DEL_REQ_FLAG_MTA_VRFY,
+				  SMTPUTF8_FLAG_NONE,
 				  (VSTRING *) 0,
 				  verify_post_mail_action,
 				  (void *) 0);
@@ -526,7 +547,7 @@ static void verify_query_service(VSTREAM *client_stream)
 /* verify_cache_validator - cache cleanup validator */
 
 static int verify_cache_validator(const char *addr, const char *raw_data,
-			            char *context)
+				          void *context)
 {
     VSTRING *get_buf = (VSTRING *) context;
     int     addr_status;
@@ -566,7 +587,7 @@ static void verify_service(VSTREAM *client_stream, char *unused_service,
      */
     if (attr_scan(client_stream,
 		  ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_REQ, request,
+		  RECV_ATTR_STR(MAIL_ATTR_REQ, request),
 		  ATTR_TYPE_END) == 1) {
 	if (STREQ(STR(request), VRFY_REQ_UPDATE)) {
 	    verify_update_service(client_stream);
@@ -575,7 +596,7 @@ static void verify_service(VSTREAM *client_stream, char *unused_service,
 	} else {
 	    msg_warn("unrecognized request: \"%s\", ignored", STR(request));
 	    attr_print(client_stream, ATTR_FLAG_NONE,
-		       ATTR_TYPE_INT, MAIL_ATTR_STATUS, VRFY_STAT_BAD,
+		       SEND_ATTR_INT(MAIL_ATTR_STATUS, VRFY_STAT_BAD),
 		       ATTR_TYPE_END);
 	}
     }
@@ -585,7 +606,7 @@ static void verify_service(VSTREAM *client_stream, char *unused_service,
 
 /* verify_dump - dump some statistics */
 
-static void verify_dump(void)
+static void verify_dump(char *unused_name, char **unused_argv)
 {
 
     /*
@@ -623,11 +644,11 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 	if (msg_verbose)
 	    cache_flags |= DICT_CACHE_FLAG_VERBOSE;
 	dict_cache_control(verify_map,
-			   DICT_CACHE_CTL_FLAGS, cache_flags,
-			   DICT_CACHE_CTL_INTERVAL, var_verify_scan_cache,
-			   DICT_CACHE_CTL_VALIDATOR, verify_cache_validator,
-			DICT_CACHE_CTL_CONTEXT, (char *) vstring_alloc(100),
-			   DICT_CACHE_CTL_END);
+			   CA_DICT_CACHE_CTL_FLAGS(cache_flags),
+			   CA_DICT_CACHE_CTL_INTERVAL(var_verify_scan_cache),
+			CA_DICT_CACHE_CTL_VALIDATOR(verify_cache_validator),
+		     CA_DICT_CACHE_CTL_CONTEXT((void *) vstring_alloc(100)),
+			   CA_DICT_CACHE_CTL_END);
     }
 }
 
@@ -674,7 +695,7 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
      * Start the cache cleanup thread after permanently dropping privileges.
      */
 #define VERIFY_DICT_OPEN_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_SYNC_UPDATE \
-	    | DICT_FLAG_OPEN_LOCK)
+	    | DICT_FLAG_OPEN_LOCK | DICT_FLAG_UTF8_REQUEST)
 
     saved_mask = umask(022);
     verify_map =
@@ -718,11 +739,11 @@ int     main(int argc, char **argv)
     MAIL_VERSION_STAMP_ALLOCATE;
 
     multi_server_main(argc, argv, verify_service,
-		      MAIL_SERVER_STR_TABLE, str_table,
-		      MAIL_SERVER_TIME_TABLE, time_table,
-		      MAIL_SERVER_PRE_INIT, pre_jail_init,
-		      MAIL_SERVER_POST_INIT, post_jail_init,
-		      MAIL_SERVER_SOLITARY,
-		      MAIL_SERVER_EXIT, verify_dump,
+		      CA_MAIL_SERVER_STR_TABLE(str_table),
+		      CA_MAIL_SERVER_TIME_TABLE(time_table),
+		      CA_MAIL_SERVER_PRE_INIT(pre_jail_init),
+		      CA_MAIL_SERVER_POST_INIT(post_jail_init),
+		      CA_MAIL_SERVER_SOLITARY,
+		      CA_MAIL_SERVER_EXIT(verify_dump),
 		      0);
 }

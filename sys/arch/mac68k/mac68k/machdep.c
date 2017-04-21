@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.349 2015/08/30 01:46:03 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.349.4.1 2017/04/21 16:53:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349 2015/08/30 01:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349.4.1 2017/04/21 16:53:30 bouyer Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -646,7 +646,7 @@ cpu_dumpconf(void)
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = 0;
-	for (i = 0; m->ram_segs[i].size && i < M68K_NPHYS_RAM_SEGS; i++)
+	for (i = 0; i < M68K_NPHYS_RAM_SEGS && m->ram_segs[i].size; i++)
 		dumpsize += btoc(m->ram_segs[i].size);
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.12.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.12.4.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,12 +116,14 @@ static struct clk *tegra124_clk_pllx = NULL;
 void
 tegra124_cpuinit(void)
 {
-	const int node = OF_finddevice("/i2c@0,7000d000");
-	if (node == -1) {
-		aprint_error("cpufreq: ERROR: couldn't find i2c@0,7000d000\n");
+	int i2c_node = OF_finddevice("/i2c@7000d000");
+	if (i2c_node == -1)
+		i2c_node = OF_finddevice("/i2c@0,7000d000"); /* old DTB */
+	if (i2c_node == -1) {
+		aprint_error("cpufreq: ERROR: couldn't find i2c@7000d000\n");
 		return;
 	}
-	i2c_tag_t ic = fdtbus_get_i2c_tag(node);
+	i2c_tag_t ic = fdtbus_get_i2c_tag(i2c_node);
 
 	/* Set VDD_CPU voltage to 1.4V */
 	const u_int target_mv = 1400;
@@ -141,7 +143,9 @@ tegra124_cpuinit(void)
 
 	tegra124_speedo_init();
 
-	tegra124_clk_pllx = clk_get("pll_x");
+	int cpu_node = OF_finddevice("/cpus/cpu@0");
+	if (cpu_node != -1)
+		tegra124_clk_pllx = fdtbus_clock_get(cpu_node, "pll_x");
 	if (tegra124_clk_pllx == NULL) {
 		aprint_error("cpufreq: ERROR: couldn't find pll_x\n");
 		return;
@@ -220,6 +224,9 @@ tegra124_cpufreq_set_rate(u_int rate)
 {
 	const u_int nrates = __arraycount(tegra124_cpufreq_rates);
 	const struct tegra124_cpufreq_rate *r = NULL;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int error;
 
 	if (tegra124_speedo_rate_ok(rate) == false)
 		return EINVAL;
@@ -233,7 +240,15 @@ tegra124_cpufreq_set_rate(u_int rate)
 	if (r == NULL)
 		return EINVAL;
 
-	return clk_set_rate(tegra124_clk_pllx, r->rate * 1000000);
+	error = clk_set_rate(tegra124_clk_pllx, r->rate * 1000000);
+	if (error == 0) {
+		rate = tegra124_cpufreq_get_rate();
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			ci->ci_data.cpu_cc_freq = rate * 1000000;
+		}
+	}
+
+	return error;
 }
 
 static u_int

@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_o.c,v 1.4 2014/05/28 10:12:43 tron Exp $	*/
+/*	$NetBSD: tls_o.c,v 1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* tls_o.c - Handle tls/ssl using OpenSSL */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,9 @@
  */
 /* ACKNOWLEDGEMENTS: Rewritten by Howard Chu
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tls_o.c,v 1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 

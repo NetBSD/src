@@ -21,17 +21,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-chdlc.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-chdlc.c,v 1.6.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Cisco HDLC printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "ethertype.h"
 #include "extract.h"
@@ -101,9 +102,9 @@ chdlc_print(netdissect_options *ndo, register const u_char *p, u_int length)
                 if (*(p+1) == 0x81 ||
                     *(p+1) == 0x82 ||
                     *(p+1) == 0x83)
-                    isoclns_print(ndo, p + 1, length - 1, length - 1);
+                    isoclns_print(ndo, p + 1, length - 1, ndo->ndo_snapend - p - 1);
                 else
-                    isoclns_print(ndo, p, length, length);
+                    isoclns_print(ndo, p, length, ndo->ndo_snapend - p);
                 break;
 	default:
                 if (!ndo->ndo_eflag)

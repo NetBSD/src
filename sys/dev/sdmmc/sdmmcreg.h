@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.22 2016/08/10 04:24:17 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.22.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -115,12 +115,13 @@
 #define SD_ARG_BUS_WIDTH_4		2
 
 /* EXT_CSD fields */
-#define EXT_CSD_BUS_WIDTH		183	/* WO */
-#define EXT_CSD_HS_TIMING		185	/* R/W */
-#define EXT_CSD_REV			192	/* RO */
-#define EXT_CSD_STRUCTURE		194	/* RO */
-#define EXT_CSD_CARD_TYPE		196	/* RO */
-#define EXT_CSD_SEC_COUNT		212	/* RO */
+#define EXT_CSD_RST_N_FUNCTION		162	/* R/W */
+#define EXT_CSD_BUS_WIDTH		183	/* W/E_P */
+#define EXT_CSD_HS_TIMING		185	/* R/W/E_P */
+#define EXT_CSD_REV			192	/* R */
+#define EXT_CSD_STRUCTURE		194	/* R */
+#define EXT_CSD_CARD_TYPE		196	/* R */
+#define EXT_CSD_SEC_COUNT		212	/* R */
 
 /* EXT_CSD field definitions */
 #define EXT_CSD_CMD_SET_NORMAL		(1U << 0)
@@ -131,6 +132,14 @@
 #define EXT_CSD_BUS_WIDTH_1		0	/* 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4		1	/* 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8		2	/* 8 bit mode */
+#define EXT_CSD_BUS_WIDTH_4_DDR		5	/* 4 bit mode (DDR) */
+#define EXT_CSD_BUS_WIDTH_8_DDR		6	/* 8 bit mode (DDR) */
+
+/* EXT_CSD_HS_TIMING */
+#define EXT_CSD_HS_TIMING_LEGACY	0
+#define EXT_CSD_HS_TIMING_HIGHSPEED	1
+#define EXT_CSD_HS_TIMING_HS200		2
+#define EXT_CSD_HS_TIMING_HS400		3
 
 /* EXT_CSD_STRUCTURE */
 #define EXT_CSD_STRUCTURE_VER_1_0	0	/* CSD Version No.1.0 */
@@ -138,19 +147,20 @@
 #define EXT_CSD_STRUCTURE_VER_1_2	2	/* Version 4.1-4.2-4.3 */
 
 /* EXT_CSD_CARD_TYPE */
-#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0)
-#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1)
-#define EXT_CSD_CARD_TYPE_F_52M_1_8V	(1 << 2)
-#define EXT_CSD_CARD_TYPE_F_52M_1_2V	(1 << 3)
-#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4)
-#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5)
-#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6)
-#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7)
-#define EXT_CSD_CARD_TYPE_26M		0x01
-#define EXT_CSD_CARD_TYPE_52M		0x03
-#define EXT_CSD_CARD_TYPE_52M_V18	0x07
-#define EXT_CSD_CARD_TYPE_52M_V12	0x0b
-#define EXT_CSD_CARD_TYPE_52M_V12_18	0x0f
+#define EXT_CSD_CARD_TYPE_F_26M		(1 << 0) /* HS 26 MHz */
+#define EXT_CSD_CARD_TYPE_F_52M		(1 << 1) /* HS 52 MHz */
+#define EXT_CSD_CARD_TYPE_F_DDR52_1_8V	(1 << 2) /* HS DDR 52 MHz 1.8V or 3V */
+#define EXT_CSD_CARD_TYPE_F_DDR52_1_2V	(1 << 3) /* HS DDR 52 MHz 1.2V */
+#define EXT_CSD_CARD_TYPE_F_HS200_1_8V	(1 << 4) /* HS200 SDR 200 MHz 1.8V */
+#define EXT_CSD_CARD_TYPE_F_HS200_1_2V	(1 << 5) /* HS200 SDR 200 MHz 1.2V */
+#define EXT_CSD_CARD_TYPE_F_HS400_1_8V	(1 << 6) /* HS400 DDR 200 MHz 1.8V */
+#define EXT_CSD_CARD_TYPE_F_HS400_1_2V	(1 << 7) /* HS400 DDR 200 MHz 1.2V */
+
+/* EXT_CSD_RST_N_FUNCTION */
+#define	EXT_CSD_RST_N_TMP_DISABLED	0x00
+#define	EXT_CSD_RST_N_PERM_ENABLED	0x01
+#define	EXT_CSD_RST_N_PERM_DISABLED	0x02
+#define	EXT_CSD_RST_N_MASK		0x03
 
 /* MMC_SWITCH access mode */
 #define MMC_SWITCH_MODE_CMD_SET		0x00	/* Change the command set */

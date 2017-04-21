@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_reply_footer.h,v 1.1.1.1 2011/03/02 19:32:18 tron Exp $	*/
+/*	$NetBSD: smtp_reply_footer.h,v 1.1.1.1.32.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _SMTP_REPLY_FOOTER_H_INCLUDED_
 #define _SMTP_REPLY_FOOTER_H_INCLUDED_
@@ -22,8 +22,8 @@
  /*
   * External interface.
   */
-extern int smtp_reply_footer(VSTRING *, ssize_t, char *, const char *,
-			             MAC_EXP_LOOKUP_FN, char *);
+extern int smtp_reply_footer(VSTRING *, ssize_t, const char *, const char *,
+			             MAC_EXP_LOOKUP_FN, void *);
 
 /* LICENSE
 /* .ad
@@ -34,6 +34,11 @@ extern int smtp_reply_footer(VSTRING *, ssize_t, char *, const char *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

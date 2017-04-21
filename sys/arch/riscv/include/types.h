@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.5 2016/01/23 22:31:20 christos Exp $ */
+/* $NetBSD: types.h,v 1.5.4.1 2017/04/21 16:53:34 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ typedef __int32_t	__register_t;
 
 //#define __HAVE_NEW_STYLE_BUS_H
 #define __HAVE_NO_BUS_DMA
+#define	__HAVE_COMPAT_NETBSD32
 
 //#if defined(_KERNEL)
 //#define __HAVE_RAS

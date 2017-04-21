@@ -1,4 +1,4 @@
-/*	$NetBSD: sequence.c,v 1.1.1.2 2014/04/24 12:45:29 pettai Exp $	*/
+/*	$NetBSD: sequence.c,v 1.1.1.2.10.1 2017/04/21 16:50:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan

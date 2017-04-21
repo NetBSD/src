@@ -1,4 +1,4 @@
-/*	$NetBSD: find_inet.c,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: find_inet.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -74,7 +74,7 @@ unsigned find_inet_addr(const char *host)
 	    msg_fatal("unexpected address family: %d", hp->h_addrtype);
 	if (hp->h_length != sizeof(addr))
 	    msg_fatal("unexpected address length %d", hp->h_length);
-	memcpy((char *) &addr, hp->h_addr, hp->h_length);
+	memcpy((void *) &addr, hp->h_addr, hp->h_length);
     }
     return (addr.s_addr);
 }

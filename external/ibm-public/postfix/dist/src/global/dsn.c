@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsn.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -20,7 +20,7 @@
 /* .in -4
 /*	} DSN;
 /*
-/*	DSN	*create(status, action, reason, dtype, dtext, mtype, mname)
+/*	DSN	*dsn_create(status, action, reason, dtype, dtext, mtype, mname)
 /*	const char *status;
 /*	const char *action;
 /*	const char *reason;
@@ -35,7 +35,7 @@
 /*	void	dsn_free(dsn)
 /*	DSN	*dsn;
 /*
-/*	DSN	*DSN_ASSIGN(dsn, status, action, reason, dtype, dtext, 
+/*	DSN	*DSN_ASSIGN(dsn, status, action, reason, dtype, dtext,
 /*						mtype, mname)
 /*	DSN	*dsn;
 /*	const char *status;
@@ -180,12 +180,12 @@ DSN    *dsn_create(const char *status, const char *action, const char *reason,
 
 void    dsn_free(DSN *dsn)
 {
-    myfree((char *) dsn->status);
-    myfree((char *) dsn->action);
-    myfree((char *) dsn->reason);
-    myfree((char *) dsn->dtype);
-    myfree((char *) dsn->dtext);
-    myfree((char *) dsn->mtype);
-    myfree((char *) dsn->mname);
-    myfree((char *) dsn);
+    myfree((void *) dsn->status);
+    myfree((void *) dsn->action);
+    myfree((void *) dsn->reason);
+    myfree((void *) dsn->dtype);
+    myfree((void *) dsn->dtext);
+    myfree((void *) dsn->mtype);
+    myfree((void *) dsn->mname);
+    myfree((void *) dsn);
 }

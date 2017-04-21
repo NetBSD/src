@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.35 2016/12/15 09:28:05 ozaki-r Exp $ */
+/* $NetBSD: i82596.c,v 1.35.2.1 2017/04/21 16:53:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.35 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.35.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -383,7 +383,7 @@ iee_intr(void *intarg)
 				(sc->sc_iee_cmd)(sc, IEE_SCB_CUC_EXE);
 			} else
 				/* Try to get deferred packets going. */
-				iee_start(ifp);
+				if_schedule_deferred_start(ifp);
 		}
 	}
 	if (IEE_SWAP32(SC_SCB(sc)->scb_crc_err) != sc->sc_crc_err) {
@@ -663,6 +663,7 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eth_addr);
 
 	aprint_normal(": Intel 82596%s address %s\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.194 2017/01/04 15:09:37 martin Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.194.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.194 2017/01/04 15:09:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.194.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1680,7 +1680,7 @@ timer:
 			opts = NULL;
 		error = ip_output(m, opts, ro,
 			(tp->t_mtudisc ? IP_MTUDISC : 0) |
-			(so->so_options & SO_DONTROUTE), NULL, so);
+			(so->so_options & SO_DONTROUTE), NULL, tp->t_inpcb);
 		break;
 	    }
 #endif
@@ -1694,7 +1694,7 @@ timer:
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,
-			NULL, so, NULL);
+			NULL, tp->t_in6pcb, NULL);
 		break;
 	    }
 #endif

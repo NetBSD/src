@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.11 2015/01/02 21:15:32 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.11.4.1 2017/04/21 16:51:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.75 2014/12/04 15:56:46 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.76 2015/04/09 20:01:41 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.11 2015/01/02 21:15:32 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.11.4.1 2017/04/21 16:51:24 bouyer Exp $");
 #endif
 #endif	/* lint */
 
@@ -116,7 +116,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 	struct stat tstatbuf;
 #endif
 
-	if (ms->flags & MAGIC_APPLE)
+	if (ms->flags & (MAGIC_APPLE|MAGIC_EXTENSION))
 		return 0;
 	if (fn == NULL)
 		return 0;

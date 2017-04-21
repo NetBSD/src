@@ -164,6 +164,18 @@
 #	parameter, expressed in the time unit specified by
 #	\fIsuffix\fR.  See above under \fBdelay_warning_time\fR for
 #	possible \fIsuffix\fR values.
+# .IP \fBmydomain\fR
+#	Expands into the value of the \fBmydomain\fR parameter.
+#	With "smtputf8_enable = yes", this replaces ACE labels
+#	(xn--mumble) with their UTF-8 equivalent.
+# .sp
+#	This feature is available in Postfix 3.0.
+# .IP \fBmyhostname\fR
+#	Expands into the value of the \fBmyhostname\fR parameter.
+#	With "smtputf8_enable = yes", this replaces ACE labels
+#	(xn--mumble) with their UTF-8 equivalent.
+# .sp
+#	This feature is available in Postfix 3.0.
 # .PP
 #	The usage and specification of template message text is
 #	subject to the following restrictions:
@@ -194,4 +206,9 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--

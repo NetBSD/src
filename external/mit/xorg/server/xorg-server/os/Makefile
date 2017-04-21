@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/08/14 03:43:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2017/04/21 16:53:00 bouyer Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -11,7 +11,8 @@ SRCS=	WaitFor.c access.c auth.c backtrace.c client.c connection.c \
 	oscolor.c osinit.c utils.c xdmauth.c \
 	xstrans.c xprintf.c log.c xdmcp.c busfault.c \
 	rpcauth.c xsha1.c \
-	reallocarray.c
+	reallocarray.c \
+	timingsafe_memcmp.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11 \

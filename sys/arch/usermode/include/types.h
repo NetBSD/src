@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.11 2016/01/23 22:31:20 christos Exp $ */
+/* $NetBSD: types.h,v 1.11.4.1 2017/04/21 16:53:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARCH_USERMODE_INCLUDE_TYPES_H
-#define _ARCH_USERMODE_INCLUDE_TYPES_H
+#ifndef _USERMODE_TYPES_H_
+#define _USERMODE_TYPES_H_
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -68,5 +68,6 @@ typedef long int	__register_t;
 
 #define __HAVE_CPU_DATA_FIRST
 #define __HAVE_MM_MD_KERNACC
+#define	__HAVE_COMPAT_NETBSD32
 
-#endif /* !_ARCH_USERMODE_INCLUDE_TYPES_H */
+#endif /* !_USERMODE_TYPES_H_ */

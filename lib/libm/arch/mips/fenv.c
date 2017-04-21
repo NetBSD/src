@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.2 2016/01/11 01:34:39 christos Exp $	*/
+/*	$NetBSD: fenv.c,v 1.2.4.1 2017/04/21 16:53:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -28,10 +28,29 @@
  * $FreeBSD: head/lib/msun/mips/fenv.c 226415 2011-10-16 05:37:56Z das $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2016/01/11 01:34:39 christos Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2.4.1 2017/04/21 16:53:11 bouyer Exp $");
+
+#include "namespace.h"
 
 #define	__fenv_static
-#include "fenv.h"
+#include <fenv.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 #if defined(__GNUC_GNU_INLINE__) && !defined(__lint__)
 #error "This file must be compiled with C99 'inline' semantics"
@@ -54,3 +73,6 @@ extern inline int fegetenv(fenv_t *__envp);
 extern inline int feholdexcept(fenv_t *__envp);
 extern inline int fesetenv(const fenv_t *__envp);
 extern inline int feupdateenv(const fenv_t *__envp);
+extern inline int feenableexcept(int __excepts);
+extern inline int fedisableexcept(int __excepts);
+extern inline int fegetexcept(void);

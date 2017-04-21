@@ -20,14 +20,20 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#define NETDISSECT_REWORKED
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-802_15_4.c,v 1.1.1.2.4.1 2017/04/21 16:52:34 bouyer Exp $");
+#endif
+
+/* \summary: IEEE 802.15.4 printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 
 #include "extract.h"
@@ -112,7 +118,7 @@ ieee802_15_4_if_print(netdissect_options *ndo,
 	if (ndo->ndo_vflag)
 		ND_PRINT((ndo,"seq %02x ", seq));
 	if (hdrlen == -1) {
-		ND_PRINT((ndo,"malformed! "));
+		ND_PRINT((ndo,"invalid! "));
 		return caplen;
 	}
 
@@ -139,7 +145,7 @@ ieee802_15_4_if_print(netdissect_options *ndo,
 		case 0x03:
 			panid = EXTRACT_LE_16BITS(p);
 			p += 2;
-			ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(p)));
+			ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(ndo, p)));
 			p += 8;
 			break;
 		}
@@ -165,7 +171,7 @@ ieee802_15_4_if_print(netdissect_options *ndo,
 				panid = EXTRACT_LE_16BITS(p);
 				p += 2;
 			}
-                        ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(p)));
+                        ND_PRINT((ndo,"%04x:%s ", panid, le64addr_string(ndo, p)));
 			p += 8;
 			break;
 		}

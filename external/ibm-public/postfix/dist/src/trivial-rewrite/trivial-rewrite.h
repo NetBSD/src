@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.h,v 1.1.1.2 2010/06/17 18:07:10 tron Exp $	*/
+/*	$NetBSD: trivial-rewrite.h,v 1.1.1.2.32.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -75,6 +75,7 @@ typedef struct {
 
 extern void resolve_init(void);
 extern int resolve_proto(RES_CONTEXT *, VSTREAM *);
+extern int resolve_class(const char *);
 
 /* LICENSE
 /* .ad

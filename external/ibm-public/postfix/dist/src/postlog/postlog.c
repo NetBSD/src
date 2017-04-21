@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.1.1.3 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postlog.c,v 1.1.1.3.16.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -9,7 +9,7 @@
 /* .fi
 /* .ad
 /*	\fBpostlog\fR [\fB-iv\fR] [\fB-c \fIconfig_dir\fR]
-/*	[\fB-p \fIpriority\fB] [\fB-t \fItag\fR] [\fItext...\fR]
+/*	[\fB-p \fIpriority\fR] [\fB-t \fItag\fR] [\fItext...\fR]
 /* DESCRIPTION
 /*	The \fBpostlog\fR(1) command implements a Postfix-compatible logging
 /*	interface for use in, for example, shell scripts.
@@ -28,9 +28,12 @@
 /*	instead of the default configuration directory.
 /* .IP \fB-i\fR
 /*	Include the process ID in the logging tag.
-/* .IP "\fB-p \fIpriority\fR"
-/*	Specifies the logging severity: \fBinfo\fR (default), \fBwarn\fR,
-/*	\fBerror\fR, \fBfatal\fR, or \fBpanic\fR.
+/* .IP "\fB-p \fIpriority\fR (default: \fBinfo\fR)"
+/*	Specifies the logging severity: \fBinfo\fR, \fBwarn\fR,
+/*	\fBerror\fR, \fBfatal\fR, or \fBpanic\fR. With Postfix 3.1
+/*	and later, the program will pause for 1 second after reporting
+/*	a \fBfatal\fR or \fBpanic\fR condition, just like other
+/*	Postfix programs.
 /* .IP "\fB-t \fItag\fR"
 /*	Specifies the logging tag, that is, the identifying name that
 /*	appears at the beginning of each logging record. A default tag
@@ -71,6 +74,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -172,7 +180,6 @@ MAIL_VERSION_STAMP_DECLARE;
 int     main(int argc, char **argv)
 {
     struct stat st;
-    char   *slash;
     int     fd;
     int     ch;
     const char *tag;
@@ -202,10 +209,7 @@ int     main(int argc, char **argv)
     /*
      * Set up diagnostics.
      */
-    if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
-	tag = mail_task(slash + 1);
-    else
-	tag = mail_task(argv[0]);
+    tag = mail_task(argv[0]);
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
     msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
@@ -218,10 +222,11 @@ int     main(int argc, char **argv)
     /*
      * Parse switches.
      */
+    tag = 0;
     while ((ch = GETOPT(argc, argv, "c:ip:t:v")) > 0) {
 	switch (ch) {
 	default:
-	    msg_fatal("usage: %s [-c config_dir] [-i] [-p priority] [-t tag] [-v] [text]", tag);
+	    msg_fatal("usage: %s [-c config_dir] [-i] [-p priority] [-t tag] [-v] [text]", argv[0]);
 	    break;
 	case 'c':
 	    if (setenv(CONF_ENV_PATH, optarg, 1) < 0)
@@ -243,26 +248,20 @@ int     main(int argc, char **argv)
     }
 
     /*
-     * Process the main.cf file. This overrides any logging facility that was
-     * specified with msg_syslog_init();
+     * Process the main.cf file. This may change the syslog_name setting and
+     * may require that mail_task() be re-evaluated.
      */
     mail_conf_read();
-    if (tag == 0 && strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0) {
-	if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
-	    tag = mail_task(slash + 1);
-	else
-	    tag = mail_task(argv[0]);
-    }
+    if (tag == 0)
+	tag = mail_task(argv[0]);
 
     /*
      * Re-initialize the logging, this time with the tag specified in main.cf
      * or on the command line.
      */
-    if (tag != 0) {
-	if (isatty(STDERR_FILENO))
-	    msg_vstream_init(tag, VSTREAM_ERR);
-	msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
-    }
+    if (isatty(STDERR_FILENO))
+	msg_vstream_init(tag, VSTREAM_ERR);
+    msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
 
     /*
      * Log the command line or log lines from standard input.
@@ -272,5 +271,11 @@ int     main(int argc, char **argv)
     } else {
 	log_stream(level, VSTREAM_IN);
     }
+
+    /*
+     * Consistency with msg(3) functions.
+     */
+    if (level >= MSG_FATAL)
+	sleep(1);
     exit(0);
 }

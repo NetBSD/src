@@ -1,5 +1,5 @@
-# $NetBSD: protocols,v 1.28 2015/11/18 16:16:36 christos Exp $
-# See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
+# $NetBSD: protocols,v 1.28.4.1 2017/04/21 16:51:17 bouyer Exp $
+# See also: protocols(5)
 #
 #    Last Updated
 #            2015-10-06
@@ -204,7 +204,7 @@ ipcomp       108 IPComp       # IP Payload Compression                      [RFC
 snp          109 SNP          # Sitara Networks Protocol                    [Manickam_R_Sridhar]
 compaq-peer  110 Compaq-Peer  # Compaq Peer Protocol                        [Victor_Volpe]
 ipx-in-ip    111 IPX-in-IP    # IPX in IP                                   [CJ_Lee]
-vrrp         112 VRRP         # Virtual Router Redundancy                   [RFC5798]
+vrrp         112 VRRP carp    # Virtual Router Redundancy                   [RFC5798]
 #                               Protocol
 pgm          113 PGM          # PGM Reliable Transport                      [Tony_Speakman]
 #                               Protocol
@@ -243,7 +243,9 @@ shim6        140 Shim6        # Shim6 Protocol                     Y        [RFC
 wesp         141 WESP         # Wrapped Encapsulating                       [RFC5840]
 #                               Security Payload
 rohc         142 ROHC         # Robust Header Compression                   [RFC5858]
-#    143-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
+#    143-239                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
+pfsync       240 PFSYNC       # PF Synchronization
+#    241-252                    Unassigned                                  [Internet_Assigned_Numbers_Authority]
 #      253                      Use for experimentation and        Y        [RFC3692]
 #                               testing
 #      254                      Use for experimentation and        Y        [RFC3692]

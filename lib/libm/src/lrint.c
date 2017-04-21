@@ -1,4 +1,4 @@
-/* $NetBSD: lrint.c,v 1.5 2015/07/09 06:17:13 nat Exp $ */
+/* $NetBSD: lrint.c,v 1.5.4.1 2017/04/21 16:53:11 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -46,6 +46,15 @@ TWO52[2]={
  -4.50359962737049600000e+15, /* 0xC3300000, 0x00000000 */
 };
 
+#ifdef __HAVE_68881__
+#include <m68k/fpreg.h>
+
+#define get_fpcr(__fpcr) \
+    __asm__ __volatile__ ("fmove%.l %!,%0" : "=dm" (__fpcr))
+#define set_fpcr(__fpcr) \
+    __asm__ __volatile__ ("fmove%.l %0,%!" : : "dm" (__fpcr))
+#endif
+
 RESTYPE
 LRINTNAME(double x)
 {
@@ -68,8 +77,20 @@ LRINTNAME(double x)
 	/* >= 2^52 is already an exact integer */
 	if (e < DBL_FRACBITS) {
 		/* round, using current direction */
+#ifdef __HAVE_68881__
+		int ofpcr, nfpcr;
+
+		/* For m68k hardfloat, use double-precision */
+		get_fpcr(ofpcr);
+		nfpcr = (ofpcr & ~FPCR_PREC) | FPCR_DBL;
+		set_fpcr(nfpcr);
+#endif
 		x += TWO52[s];
 		x -= TWO52[s];
+#ifdef __HAVE_68881__
+		__asm__ __volatile__ ("/* dummy %0 */" : : "f" (x));
+		set_fpcr(ofpcr);
+#endif
 	} else
 		return x;
 

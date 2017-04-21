@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.135 2015/10/03 09:31:29 hannken Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.135.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135 2015/10/03 09:31:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,11 +315,9 @@ lfs_bwrite(void *v)
 	} */ *ap = v;
 	struct buf *bp = ap->a_bp;
 
-#ifdef DIAGNOSTIC
-	if (VTOI(bp->b_vp)->i_lfs->lfs_ronly == 0 && (bp->b_flags & B_ASYNC)) {
-		panic("bawrite LFS buffer");
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((VTOI(bp->b_vp)->i_lfs->lfs_ronly ||
+		!(bp->b_flags & B_ASYNC)),
+	    "bawrite LFS buffer");
 	return lfs_bwrite_ext(bp, 0);
 }
 
@@ -385,10 +383,7 @@ lfs_availwait(struct lfs *fs, int fsb)
 #endif
 
 		lfs_wakeup_cleaner(fs);
-#ifdef DIAGNOSTIC
-		if (LFS_SEGLOCK_HELD(fs))
-			panic("lfs_availwait: deadlock");
-#endif
+		KASSERTMSG(!LFS_SEGLOCK_HELD(fs), "lfs_availwait: deadlock");
 		error = tsleep(&fs->lfs_availsleep, PCATCH | PUSER,
 			       "cleaner", 0);
 		if (error)
@@ -519,7 +514,8 @@ void
 lfs_flush(struct lfs *fs, int flags, int only_onefs)
 {
 	extern u_int64_t locked_fakequeue_count;
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	struct lfs *tfs;
 
 	KASSERT(mutex_owned(&lfs_lock));
@@ -540,20 +536,16 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_busy(fs->lfs_ivnode->v_mount, NULL))
+		if (vfs_busy(fs->lfs_ivnode->v_mount))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount, false, NULL);
+		vfs_unbusy(fs->lfs_ivnode->v_mount);
 	} else {
 		locked_fakequeue_count = 0;
-		mutex_enter(&mountlist_lock);
-		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-			if (vfs_busy(mp, &nmp)) {
-				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
-				continue;
-			}
+		mountlist_iterator_init(&iter);
+		while ((mp = mountlist_iterator_next(iter)) != NULL) {
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				tfs = VFSTOULFS(mp)->um_lfs;
@@ -561,9 +553,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
 			}
-			vfs_unbusy(mp, false, &nmp);
 		}
-		mutex_exit(&mountlist_lock);
+		mountlist_iterator_destroy(iter);
 	}
 	LFS_DEBUG_COUNTLOCKED("flush");
 	wakeup(&lfs_subsys_pages);
@@ -588,7 +579,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	int error;
 	struct lfs *fs;
 	struct inode *ip;
-	extern pid_t lfs_writer_daemon;
+	extern kcondvar_t lfs_writerd_cv;
 
 	error = 0;
 	ip = VTOI(vp);
@@ -665,7 +656,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * still might want to be flushed.
 		 */
 		++fs->lfs_pdflush;
-		wakeup(&lfs_writer_daemon);
+		cv_broadcast(&lfs_writerd_cv);
 	}
 
 	while (locked_queue_count + INOCOUNT(fs) >= LFS_WAIT_BUFS ||
@@ -717,12 +708,8 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
 	}
-#ifdef DIAGNOSTIC
-	if (vp == NULL)
-		panic("vp is NULL in lfs_newbuf");
-	if (bp == NULL)
-		panic("bp is NULL after malloc in lfs_newbuf");
-#endif
+	KASSERT(vp != NULL);
+	KASSERT(bp != NULL);
 
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
@@ -778,11 +765,9 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 		KASSERT(bp->b_iodone == NULL);
 		n++;
 		size += bp->b_bufsize;
-#ifdef DIAGNOSTIC
-		if (n > nbuf)
-			panic("lfs_countlocked: this can't happen: more"
-			      " buffers locked than exist");
-#endif
+		KASSERTMSG((n <= nbuf),
+		    "lfs_countlocked: this can't happen: more"
+		    " buffers locked than exist");
 	}
 	/*
 	 * Theoretically this function never really does anything.

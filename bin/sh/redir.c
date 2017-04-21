@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.48 2017/01/10 20:43:08 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.48.2.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.48 2017/01/10 20:43:08 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.48.2.1 2017/04/21 16:50:42 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: redir.c,v 1.48 2017/01/10 20:43:08 christos Exp $");
  */
 
 #include "main.h"
+#include "builtins.h"
 #include "shell.h"
 #include "nodes.h"
 #include "jobs.h"
@@ -64,6 +65,7 @@ __RCSID("$NetBSD: redir.c,v 1.48 2017/01/10 20:43:08 christos Exp $");
 #include "redir.h"
 #include "output.h"
 #include "memalloc.h"
+#include "mystring.h"
 #include "error.h"
 
 
@@ -306,7 +308,7 @@ openredirect(union node *redir, char memory[10], int flags)
 			    memory[redir->ndup.dupfd])
 				memory[fd] = 1;
 			else if (copyfd(redir->ndup.dupfd, fd,
-			    (flags&(REDIR_PUSH|REDIR_KEEP)) == REDIR_PUSH) < 0)
+			    (flags & REDIR_KEEP) == 0) < 0)
 				error("Redirect (from %d to %d) failed: %s",
 				    redir->ndup.dupfd, fd, strerror(errno));
 		} else
@@ -551,4 +553,221 @@ to_upper_fd(int fd)
 	 */
 	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	return fd;
+}
+
+static const struct flgnames {
+	const char *name;
+	uint32_t value;
+} nv[] = {
+#ifdef O_APPEND
+	{ "append",	O_APPEND 	},
+#endif
+#ifdef O_ASYNC
+	{ "async",	O_ASYNC		},
+#endif
+#ifdef O_SYNC
+	{ "sync",	O_SYNC		},
+#endif
+#ifdef O_NONBLOCK
+	{ "nonblock",	O_NONBLOCK	},
+#endif
+#ifdef O_FSYNC
+	{ "fsync",	O_FSYNC		},
+#endif
+#ifdef O_DSYNC
+	{ "dsync",	O_DSYNC		},
+#endif
+#ifdef O_RSYNC
+	{ "rsync",	O_RSYNC		},
+#endif
+#ifdef O_ALTIO
+	{ "altio",	O_ALT_IO	},
+#endif
+#ifdef O_DIRECT
+	{ "direct",	O_DIRECT	},
+#endif
+#ifdef O_NOSIGPIPE
+	{ "nosigpipe",	O_NOSIGPIPE	},
+#endif
+#ifdef O_CLOEXEC
+	{ "cloexec",	O_CLOEXEC	},
+#endif
+	{ 0, 0 }
+};
+#define ALLFLAGS (O_APPEND|O_ASYNC|O_SYNC|O_NONBLOCK|O_DSYNC|O_RSYNC|\
+    O_ALT_IO|O_DIRECT|O_NOSIGPIPE|O_CLOEXEC)
+
+static int
+getflags(int fd, int p)
+{
+	int c, f;
+
+	if ((c = fcntl(fd, F_GETFD)) == -1) {
+		if (!p)
+			return -1;
+		error("Can't get status for fd=%d (%s)", fd, strerror(errno));
+	}
+	if ((f = fcntl(fd, F_GETFL)) == -1) {
+		if (!p)
+			return -1;
+		error("Can't get flags for fd=%d (%s)", fd, strerror(errno));
+	}
+	if (c & FD_CLOEXEC)
+		f |= O_CLOEXEC;
+	return f & ALLFLAGS;
+}
+
+static void
+printone(int fd, int p, int verbose, int pfd)
+{
+	int f = getflags(fd, p);
+	const struct flgnames *fn;
+
+	if (f == -1)
+		return;
+
+	if (pfd)
+		outfmt(out1, "%d: ", fd);
+	for (fn = nv; fn->name; fn++) {
+		if (f & fn->value) {
+			outfmt(out1, "%s%s", verbose ? "+" : "", fn->name);
+			f &= ~fn->value;
+		} else if (verbose)
+			outfmt(out1, "-%s", fn->name);
+		else
+			continue;
+		if (f || (verbose && fn[1].name))
+			outfmt(out1, ",");
+	}
+	if (verbose && f)		/* f should be normally be 0 */
+		outfmt(out1, " +%#x", f);
+	outfmt(out1, "\n");
+}
+
+static void
+parseflags(char *s, int *p, int *n)
+{
+	int *v, *w;
+	const struct flgnames *fn;
+
+	*p = 0;
+	*n = 0;
+	for (s = strtok(s, ","); s; s = strtok(NULL, ",")) {
+		switch (*s++) {
+		case '+':
+			v = p;
+			w = n;
+			break;
+		case '-':
+			v = n;
+			w = p;
+			break;
+		default:
+			error("Missing +/- indicator before flag %s", s-1);
+		}
+			
+		for (fn = nv; fn->name; fn++)
+			if (strcmp(s, fn->name) == 0) {
+				*v |= fn->value;
+				*w &=~ fn->value;
+				break;
+			}
+		if (fn->name == 0)
+			error("Bad flag `%s'", s);
+	}
+}
+
+static void
+setone(int fd, int pos, int neg, int verbose)
+{
+	int f = getflags(fd, 1);
+	int n, cloexec;
+
+	if (f == -1)
+		return;
+
+	cloexec = -1;
+	if ((pos & O_CLOEXEC) && !(f & O_CLOEXEC))
+		cloexec = FD_CLOEXEC;
+	if ((neg & O_CLOEXEC) && (f & O_CLOEXEC))
+		cloexec = 0;
+
+	if (cloexec != -1 && fcntl(fd, F_SETFD, cloexec) == -1)
+		error("Can't set status for fd=%d (%s)", fd, strerror(errno));
+
+	pos &= ~O_CLOEXEC;
+	neg &= ~O_CLOEXEC;
+	f &= ~O_CLOEXEC;
+	n = f;
+	n |= pos;
+	n &= ~neg;
+	if (n != f && fcntl(fd, F_SETFL, n) == -1)
+		error("Can't set flags for fd=%d (%s)", fd, strerror(errno));
+	if (verbose)
+		printone(fd, 1, verbose, 1);
+}
+
+int
+fdflagscmd(int argc, char *argv[])
+{
+	char *num;
+	int verbose = 0, ch, pos = 0, neg = 0;
+	char *setflags = NULL;
+
+	optreset = 1; optind = 1; /* initialize getopt */
+	while ((ch = getopt(argc, argv, ":vs:")) != -1)
+		switch ((char)ch) {
+		case 'v':
+			verbose = 1;
+			break;
+		case 's':
+			if (setflags)
+				goto msg;
+			setflags = optarg;
+			break;
+		case '?':
+		default:
+		msg:
+			error("Usage: fdflags [-v] [-s <flags> fd] [fd...]");
+			/* NOTREACHED */
+		}
+
+	argc -= optind, argv += optind;
+
+	if (setflags)
+		parseflags(setflags, &pos, &neg);
+
+	if (argc == 0) {
+		int maxfd;
+
+		if (setflags)
+			goto msg;
+
+		/*
+		 * XXX  this has to go, maxfd might be 700 (or something)
+		 *
+		 * XXX  we should only ever operate on user defined fds
+		 * XXX  not on sh internal fds that might be open.
+		 * XXX  but for that we need to know their range (later)
+		 */
+		maxfd = fcntl(0, F_MAXFD);
+		if (maxfd == -1)
+			error("Can't get max fd (%s)", strerror(errno));
+		for (int i = 0; i <= maxfd; i++)
+			printone(i, 0, verbose, 1);
+		return 0;
+	}
+
+	while ((num = *argv++) != NULL) {
+		int fd = number(num);
+
+		if (strlen(num) > 5)
+			error("%s too big to be a file descriptor", num);
+
+		if (setflags)
+			setone(fd, pos, neg, verbose);
+		else
+			printone(fd, 1, verbose, argc > 1);
+	}
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.62 2016/12/15 09:35:24 ozaki-r Exp $ */
+/* $NetBSD: if_lmc.c,v 1.62.2.1 2017/04/21 16:53:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.62 2016/12/15 09:35:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.62.2.1 2017/04/21 16:53:47 bouyer Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -4294,7 +4294,7 @@ rxintr_cleanup(softc_t *sc)
     sc->status.cntrs.ipackets++;
 
     /* Berkeley Packet Filter */
-    LMC_BPF_MTAP(sc, first_mbuf); /* XXX not in softint */
+    LMC_BPF_MTAP(sc, first_mbuf);
 
     /* Give this good packet to the network stacks. */
     sc->quota--;
@@ -4446,7 +4446,7 @@ txintr_cleanup(softc_t *sc)
         sc->status.cntrs.opackets++;
 
         /* Berkeley Packet Filter */
-        LMC_BPF_MTAP(sc, m); /* XXX not in softint */
+        LMC_BPF_MTAP(sc, m);
 	}
 
       m_freem(m);

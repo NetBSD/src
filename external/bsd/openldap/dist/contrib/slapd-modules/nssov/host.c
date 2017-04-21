@@ -1,10 +1,10 @@
-/*	$NetBSD: host.c,v 1.1.1.4 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.4.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* host.c - host lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -52,7 +52,7 @@ NSSOV_CBPRIV(host,
 /* write a single host entry to the stream */
 static int write_host(nssov_host_cbp *cbp,Entry *entry)
 {
-	int32_t tmpint32,tmp2int32,tmp3int32;
+	int32_t tmpint32;
 	int numaddr,i,numname,dupname;
 	struct berval name,*names,*addrs;
 	Attribute *a;

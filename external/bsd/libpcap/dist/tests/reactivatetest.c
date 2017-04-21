@@ -1,4 +1,4 @@
-/*	$NetBSD: reactivatetest.c,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+/*	$NetBSD: reactivatetest.c,v 1.2.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -22,10 +22,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reactivatetest.c,v 1.2 2014/11/19 19:33:31 christos Exp $");
+__RCSID("$NetBSD: reactivatetest.c,v 1.2.4.1 2017/04/21 16:51:35 bouyer Exp $");
 
 #ifndef lint
-static const char copyright[] =
+static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
 #endif

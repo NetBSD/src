@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.127 2016/03/07 15:55:06 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.127.4.1 2017/04/21 16:53:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.127 2016/03/07 15:55:06 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.127.4.1 2017/04/21 16:53:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -631,6 +631,7 @@ mkfs(const char *fsys, int fi, int fo,
 		 */
 		zap_old_sblock(EXT2FS_SBOFF);
 
+#ifndef NO_APPLE_UFS
 		if (isappleufs) {
 			struct appleufslabel appleufs;
 			ffs_appleufs_set(&appleufs, appleufs_volname,
@@ -648,6 +649,7 @@ mkfs(const char *fsys, int fi, int fo,
 				    APPLEUFS_LABEL_SIZE, &appleufs);
 			}
 		}
+#endif
 	}
 
 	/*

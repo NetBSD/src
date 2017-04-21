@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.25 2017/01/11 20:43:03 roy Exp $	*/
+/*	$NetBSD: resize.c,v 1.25.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.25 2017/01/11 20:43:03 roy Exp $");
+__RCSID("$NetBSD: resize.c,v 1.25.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif
 #endif				/* not lint */
 
@@ -173,8 +173,14 @@ resizeterm(int nlines, int ncols)
 	 * know the correct draw order. */
 	clearok(curscr, TRUE);
 
-	/* We know how to repaint the ripoffs */
-	__ripoffresize(_cursesi_screen);
+	if (result == OK) {
+		/* We know how to repaint the ripoffs */
+		__ripoffresize(_cursesi_screen);
+
+		/* We do need to reposition our slks. */
+		__slk_resize(_cursesi_screen, ncols);
+		__slk_noutrefresh(_cursesi_screen);
+	}
 
 	return result;
 }
@@ -209,6 +215,11 @@ resize_term(int nlines, int ncols)
 	_cursesi_screen->COLS = ncols;
 	LINES = rlines;
 	COLS = ncols;
+
+	if (_cursesi_screen->slk_window != NULL &&
+	    __resizewin(_cursesi_screen->slk_window,
+		        _cursesi_screen->slk_window->reqy, ncols) == ERR)
+		return ERR;
 
 	  /* tweak the flags now that we have updated the LINES and COLS */
 	for (list = _cursesi_screen->winlistp; list != NULL; list = list->nextp) {

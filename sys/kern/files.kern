@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.13 2016/11/02 00:11:59 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.13.2.1 2017/04/21 16:54:02 bouyer Exp $
 
 #
 # kernel sources
@@ -113,6 +113,11 @@ file	kern/subr_interrupt.c		kern
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
+defflag	opt_kmem.h			KMEM_GUARD
+					KMEM_POISON
+					KMEM_REDZONE
+					KMEM_SIZE
+defparam opt_kmem.h			KMEM_GUARD_DEPTH
 file	kern/subr_kmem.c		kern
 file	kern/subr_kobj.c		kern
 file	kern/subr_kobj_vfs.c		kern

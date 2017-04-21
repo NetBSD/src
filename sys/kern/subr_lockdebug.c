@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.54 2015/09/29 01:44:57 ozaki-r Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.54.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.54 2015/09/29 01:44:57 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.54.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -99,8 +99,8 @@ int			ld_recurse;
 bool			ld_nomore;
 lockdebug_t		ld_prime[LD_BATCH];
 
-static void	lockdebug_abort1(lockdebug_t *, int, const char *,
-				 const char *, bool);
+static void	lockdebug_abort1(const char *, size_t, lockdebug_t *, int,
+    const char *, bool);
 static int	lockdebug_more(int);
 static void	lockdebug_init(void);
 static void	lockdebug_dump(lockdebug_t *, void (*)(const char *, ...)
@@ -190,14 +190,15 @@ lockdebug_unlock_cpus(void)
  *	Find a lockdebug structure by a pointer to a lock and return it locked.
  */
 static inline lockdebug_t *
-lockdebug_lookup(volatile void *lock, uintptr_t where)
+lockdebug_lookup(const char *func, size_t line, volatile void *lock,
+    uintptr_t where)
 {
 	lockdebug_t *ld;
 
 	ld = lockdebug_lookup1(lock);
 	if (ld == NULL) {
-		panic("lockdebug_lookup: uninitialized lock "
-		    "(lock=%p, from=%08"PRIxPTR")", lock, where);
+		panic("%s,%zu: uninitialized lock (lock=%p, from=%08"
+		    PRIxPTR ")", func, line, lock, where);
 	}
 	return ld;
 }
@@ -238,7 +239,8 @@ lockdebug_init(void)
  *	structure.
  */
 bool
-lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
+lockdebug_alloc(const char *func, size_t line, volatile void *lock,
+    lockops_t *lo, uintptr_t initaddr)
 {
 	struct cpu_info *ci;
 	lockdebug_t *ld;
@@ -253,7 +255,8 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	__cpu_simple_lock(&ld_mod_lk);
 	if ((ld = lockdebug_lookup1(lock)) != NULL) {
 		__cpu_simple_unlock(&ld_mod_lk);
-		lockdebug_abort1(ld, s, __func__, "already initialized", true);
+		lockdebug_abort1(func, line, ld, s, "already initialized",
+		    true);
 		return false;
 	}
 
@@ -288,7 +291,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	ci->ci_lkdebug_recurse--;
 
 	if (ld->ld_lock != NULL) {
-		panic("lockdebug_alloc: corrupt table ld %p", ld);
+		panic("%s,%zu: corrupt table ld %p", func, line, ld);
 	}
 
 	/* Initialise the structure. */
@@ -314,7 +317,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
  *	A lock is being destroyed, so release debugging resources.
  */
 void
-lockdebug_free(volatile void *lock)
+lockdebug_free(const char *func, size_t line, volatile void *lock)
 {
 	lockdebug_t *ld;
 	int s;
@@ -324,16 +327,18 @@ lockdebug_free(volatile void *lock)
 
 	s = splhigh();
 	__cpu_simple_lock(&ld_mod_lk);
-	ld = lockdebug_lookup(lock, (uintptr_t) __builtin_return_address(0));
+	ld = lockdebug_lookup(func, line, lock,
+	    (uintptr_t) __builtin_return_address(0));
 	if (ld == NULL) {
 		__cpu_simple_unlock(&ld_mod_lk);
-		panic("lockdebug_free: destroying uninitialized object %p"
-		    "(ld_lock=%p)", lock, ld->ld_lock);
+		panic("%s,%zu: destroying uninitialized object %p"
+		    "(ld_lock=%p)", func, line, lock, ld->ld_lock);
 		return;
 	}
 	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0) {
 		__cpu_simple_unlock(&ld_mod_lk);
-		lockdebug_abort1(ld, s, __func__, "is locked or in use", true);
+		lockdebug_abort1(func, line, ld, s, "is locked or in use",
+		    true);
 		return;
 	}
 	lockdebug_lock_cpus();
@@ -415,7 +420,8 @@ lockdebug_more(int s)
  *	Process the preamble to a lock acquire.
  */
 void
-lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
+lockdebug_wantlock(const char *func, size_t line,
+    volatile void *lock, uintptr_t where, int shared)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -429,7 +435,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 		return;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
+	if ((ld = lockdebug_lookup(func, line, lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -442,7 +448,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 	}
 	if (cpu_intr_p()) {
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
-			lockdebug_abort1(ld, s, __func__,
+			lockdebug_abort1(func, line, ld, s,
 			    "acquiring sleep lock from interrupt context",
 			    true);
 			return;
@@ -453,7 +459,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 	else
 		ld->ld_exwant++;
 	if (recurse) {
-		lockdebug_abort1(ld, s, __func__, "locking against myself",
+		lockdebug_abort1(func, line, ld, s, "locking against myself",
 		    true);
 		return;
 	}
@@ -467,8 +473,8 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
  *	Process a lock acquire operation.
  */
 void
-lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
-		 int shared)
+lockdebug_locked(const char *func, size_t line,
+    volatile void *lock, void *cvlock, uintptr_t where, int shared)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -478,7 +484,7 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
 		return;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
+	if ((ld = lockdebug_lookup(func, line, lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -489,8 +495,9 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
 		} else if (ld->ld_shares++ == 0) {
 			ld->ld_locked = (uintptr_t)cvlock;
 		} else if (cvlock != (void *)ld->ld_locked) {
-			lockdebug_abort1(ld, s, __func__, "multiple locks used"
-			    " with condition variable", true);
+			lockdebug_abort1(func, line, ld, s,
+			    "multiple locks used with condition variable",
+			    true);
 			return;
 		}
 	} else if (shared) {
@@ -500,7 +507,7 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
 		ld->ld_shwant--;
 	} else {
 		if ((ld->ld_flags & LD_LOCKED) != 0) {
-			lockdebug_abort1(ld, s, __func__, "already locked",
+			lockdebug_abort1(func, line, ld, s, "already locked",
 			    true);
 			return;
 		}
@@ -526,7 +533,8 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
  *	Process a lock release operation.
  */
 void
-lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
+lockdebug_unlocked(const char *func, size_t line,
+    volatile void *lock, uintptr_t where, int shared)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -536,7 +544,7 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		return;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
+	if ((ld = lockdebug_lookup(func, line, lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -548,12 +556,12 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		}
 	} else if (shared) {
 		if (l->l_shlocks == 0) {
-			lockdebug_abort1(ld, s, __func__,
+			lockdebug_abort1(func, line, ld, s,
 			    "no shared locks held by LWP", true);
 			return;
 		}
 		if (ld->ld_shares == 0) {
-			lockdebug_abort1(ld, s, __func__,
+			lockdebug_abort1(func, line, ld, s,
 			    "no shared holds on this lock", true);
 			return;
 		}
@@ -567,20 +575,20 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 			ld->ld_cpu = (uint16_t)-1;
 	} else {
 		if ((ld->ld_flags & LD_LOCKED) == 0) {
-			lockdebug_abort1(ld, s, __func__, "not locked", true);
+			lockdebug_abort1(func, line, ld, s, "not locked", true);
 			return;
 		}
 
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
 			if (ld->ld_lwp != curlwp) {
-				lockdebug_abort1(ld, s, __func__,
+				lockdebug_abort1(func, line, ld, s,
 				    "not held by current LWP", true);
 				return;
 			}
 			TAILQ_REMOVE(&l->l_ld_locks, ld, ld_chain);
 		} else {
 			if (ld->ld_cpu != (uint16_t)cpu_index(curcpu())) {
-				lockdebug_abort1(ld, s, __func__,
+				lockdebug_abort1(func, line, ld, s,
 				    "not held by current CPU", true);
 				return;
 			}
@@ -601,7 +609,8 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
  *	Process a wakeup on a condition variable.
  */
 void
-lockdebug_wakeup(volatile void *lock, uintptr_t where)
+lockdebug_wakeup(const char *func, size_t line, volatile void *lock,
+    uintptr_t where)
 {
 	lockdebug_t *ld;
 	int s;
@@ -611,7 +620,7 @@ lockdebug_wakeup(volatile void *lock, uintptr_t where)
 
 	s = splhigh();
 	/* Find the CV... */
-	if ((ld = lockdebug_lookup(lock, where)) == NULL) {
+	if ((ld = lockdebug_lookup(func, line, lock, where)) == NULL) {
 		splx(s);
 		return;
 	}
@@ -620,7 +629,7 @@ lockdebug_wakeup(volatile void *lock, uintptr_t where)
 	 * same interlock.
 	 */
 	if (ld->ld_shares != 0 && !mutex_owned((kmutex_t *)ld->ld_locked)) {
-		lockdebug_abort1(ld, s, __func__, "interlocking mutex not "
+		lockdebug_abort1(func, line, ld, s, "interlocking mutex not "
 		    "held during wakeup", true);
 		return;
 	}
@@ -635,7 +644,8 @@ lockdebug_wakeup(volatile void *lock, uintptr_t where)
  *	if we hold sleep locks.
  */
 void
-lockdebug_barrier(volatile void *spinlock, int slplocks)
+lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
+    int slplocks)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -651,7 +661,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 				continue;
 			}
 			__cpu_simple_lock(&ld->ld_spinlock);
-			lockdebug_abort1(ld, s, __func__,
+			lockdebug_abort1(func, line, ld, s,
 			    "spin lock held", true);
 			return;
 		}
@@ -662,7 +672,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 	}
 	if ((ld = TAILQ_FIRST(&l->l_ld_locks)) != NULL) {
 		__cpu_simple_lock(&ld->ld_spinlock);
-		lockdebug_abort1(ld, s, __func__, "sleep lock held", true);
+		lockdebug_abort1(func, line, ld, s, "sleep lock held", true);
 		return;
 	}
 	splx(s);
@@ -673,7 +683,8 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 			if (ld->ld_lwp == l)
 				lockdebug_dump(ld, printf);
 		}
-		panic("%s: holding %d shared locks", __func__, l->l_shlocks);
+		panic("%s,%zu: holding %d shared locks", func, line,
+		    l->l_shlocks);
 	}
 }
 
@@ -684,7 +695,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
  *	being freed.
  */
 void
-lockdebug_mem_check(const char *func, void *base, size_t sz)
+lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
 {
 	lockdebug_t *ld;
 	struct cpu_info *ci;
@@ -701,15 +712,15 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 		const uintptr_t lock = (uintptr_t)ld->ld_lock;
 
 		if ((uintptr_t)base > lock)
-			panic("%s: corrupt tree ld=%p, base=%p, sz=%zu",
-			    __func__, ld, base, sz);
+			panic("%s,%zu: corrupt tree ld=%p, base=%p, sz=%zu",
+			    func, line, ld, base, sz);
 		if (lock >= (uintptr_t)base + sz)
 			ld = NULL;
 	}
 	__cpu_simple_unlock(&ci->ci_data.cpu_ld_lock);
 	if (ld != NULL) {
 		__cpu_simple_lock(&ld->ld_spinlock);
-		lockdebug_abort1(ld, s, func,
+		lockdebug_abort1(func, line, ld, s,
 		    "allocation contains active lock", !cold);
 		return;
 	}
@@ -767,7 +778,7 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
  *	An error has been trapped - dump lock info and panic.
  */
 static void
-lockdebug_abort1(lockdebug_t *ld, int s, const char *func,
+lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 		 const char *msg, bool dopanic)
 {
 
@@ -782,15 +793,15 @@ lockdebug_abort1(lockdebug_t *ld, int s, const char *func,
 		return;
 	}
 
-	printf_nolog("%s error: %s: %s\n\n", ld->ld_lockops->lo_name,
-	    func, msg);
+	printf_nolog("%s error: %s,%zu: %s\n\n", ld->ld_lockops->lo_name,
+	    func, line, msg);
 	lockdebug_dump(ld, printf_nolog);
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
 	printf_nolog("\n");
 	if (dopanic)
-		panic("LOCKDEBUG: %s error: %s: %s", ld->ld_lockops->lo_name,
-		    func, msg);
+		panic("LOCKDEBUG: %s error: %s,%zu: %s",
+		    ld->ld_lockops->lo_name, func, line, msg);
 }
 
 #endif	/* LOCKDEBUG */
@@ -832,17 +843,17 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
  *	An error has been trapped - dump lock info and call panic().
  */
 void
-lockdebug_abort(volatile void *lock, lockops_t *ops, const char *func,
-		const char *msg)
+lockdebug_abort(const char *func, size_t line, volatile void *lock,
+    lockops_t *ops, const char *msg)
 {
 #ifdef LOCKDEBUG
 	lockdebug_t *ld;
 	int s;
 
 	s = splhigh();
-	if ((ld = lockdebug_lookup(lock, 
+	if ((ld = lockdebug_lookup(func, line, lock, 
 			(uintptr_t) __builtin_return_address(0))) != NULL) {
-		lockdebug_abort1(ld, s, func, msg, true);
+		lockdebug_abort1(func, line, ld, s, msg, true);
 		return;
 	}
 	splx(s);
@@ -854,16 +865,16 @@ lockdebug_abort(volatile void *lock, lockops_t *ops, const char *func,
 	 * is going down in flames.
 	 */
 	if (atomic_inc_uint_nv(&ld_panic) == 1) {
-		printf_nolog("%s error: %s: %s\n\n"
+		printf_nolog("%s error: %s,%zu: %s\n\n"
 		    "lock address : %#018lx\n"
 		    "current cpu  : %18d\n"
 		    "current lwp  : %#018lx\n",
-		    ops->lo_name, func, msg, (long)lock,
+		    ops->lo_name, func, line, msg, (long)lock,
 		    (int)cpu_index(curcpu()), (long)curlwp);
 		(*ops->lo_dump)(lock);
 		printf_nolog("\n");
 	}
 
-	panic("lock error: %s: %s: %s: lock %p cpu %d lwp %p",
-	    ops->lo_name, func, msg, lock, cpu_index(curcpu()), curlwp);
+	panic("lock error: %s: %s,%zu: %s: lock %p cpu %d lwp %p",
+	    ops->lo_name, func, line, msg, lock, cpu_index(curcpu()), curlwp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.351 2016/07/07 06:55:44 msaitoh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.351.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351 2016/07/07 06:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -128,8 +128,9 @@ extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
 
-pid_t lfs_writer_daemon = 0;
-lwpid_t lfs_writer_lid = 0;
+struct lwp * lfs_writer_daemon = NULL;
+kcondvar_t lfs_writerd_cv;
+
 int lfs_do_flush = 0;
 #ifdef LFS_KERNEL_RFW
 int lfs_do_rfw = 0;
@@ -163,7 +164,7 @@ struct vfsops lfs_vfsops = {
 	.vfs_mountroot = lfs_mountroot,
 	.vfs_snapshot = (void *)eopnotsupp,
 	.vfs_extattrctl = lfs_extattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -386,17 +387,17 @@ struct pool lfs_lbnentry_pool;
 static void
 lfs_writerd(void *arg)
 {
- 	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+ 	struct mount *mp;
  	struct lfs *fs;
 	struct vfsops *vfs = NULL;
  	int fsflags;
-	int skipc;
 	int lfsc;
 	int wrote_something = 0;
  
 	mutex_enter(&lfs_lock);
- 	lfs_writer_daemon = curproc->p_pid;
-	lfs_writer_lid = curlwp->l_lid;
+	KASSERTMSG(lfs_writer_daemon == NULL, "more than one LFS writer daemon");
+	lfs_writer_daemon = curlwp;
 	mutex_exit(&lfs_lock);
 
 	/* Take an extra reference to the LFS vfsops. */
@@ -406,9 +407,7 @@ lfs_writerd(void *arg)
  	for (;;) {
 		KASSERT(mutex_owned(&lfs_lock));
 		if (wrote_something == 0)
-			mtsleep(&lfs_writer_daemon, PVM, "lfswriter", hz/10 + 1,
-				&lfs_lock);
-
+			cv_timedwait(&lfs_writerd_cv, &lfs_lock, hz/10 + 1);
 		KASSERT(mutex_owned(&lfs_lock));
 		wrote_something = 0;
 
@@ -447,14 +446,9 @@ lfs_writerd(void *arg)
  		 * Look through the list of LFSs to see if any of them
  		 * have requested pageouts.
  		 */
- 		mutex_enter(&mountlist_lock);
+ 		mountlist_iterator_init(&iter);
 		lfsc = 0;
-		skipc = 0;
- 		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
- 			if (vfs_busy(mp, &nmp)) {
-				++skipc;
- 				continue;
- 			}
+		while ((mp = mountlist_iterator_next(iter)) != NULL) {
 			KASSERT(!mutex_owned(&lfs_lock));
  			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
  			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
@@ -469,7 +463,6 @@ lfs_writerd(void *arg)
 				if (lfs_sb_getnextseg(fs) < lfs_sb_getcurseg(fs) && fs->lfs_nowrap) {
 					/* Don't try to write if we're suspended */
 					mutex_exit(&lfs_lock);
-					vfs_unbusy(mp, false, &nmp);
 					continue;
 				}
 				if (LFS_STARVED_FOR_SEGS(fs)) {
@@ -477,7 +470,6 @@ lfs_writerd(void *arg)
 
 					DLOG((DLOG_FLUSH, "lfs_writerd: need cleaning before writing possible\n"));
 					lfs_wakeup_cleaner(fs);
-					vfs_unbusy(mp, false, &nmp);
 					continue;
 				}
 
@@ -504,22 +496,19 @@ lfs_writerd(void *arg)
 				mutex_exit(&lfs_lock);
  			}
 			KASSERT(!mutex_owned(&lfs_lock));
- 			vfs_unbusy(mp, false, &nmp);
  		}
-		if (lfsc + skipc == 0) {
+		if (lfsc == 0) {
 			mutex_enter(&lfs_lock);
-			lfs_writer_daemon = 0;
-			lfs_writer_lid = 0;
+			lfs_writer_daemon = NULL;
 			mutex_exit(&lfs_lock);
-			mutex_exit(&mountlist_lock);
+			mountlist_iterator_destroy(iter);
 			break;
 		}
- 		mutex_exit(&mountlist_lock);
+ 		mountlist_iterator_destroy(iter);
  
  		mutex_enter(&lfs_lock);
  	}
 	KASSERT(!mutex_owned(&lfs_lock));
-	KASSERT(!mutex_owned(&mountlist_lock));
 
 	/* Give up our extra reference so the module can be unloaded. */
 	mutex_enter(&vfs_list_lock);
@@ -557,6 +546,7 @@ lfs_init(void)
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
 	mutex_init(&lfs_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&lfs_writerd_cv, "lfswrite");
 	cv_init(&locked_queue_cv, "lfsbuf");
 	cv_init(&lfs_writing_cv, "lfsflush");
 }
@@ -572,6 +562,7 @@ lfs_done(void)
 {
 	ulfs_done();
 	mutex_destroy(&lfs_lock);
+	cv_destroy(&lfs_writerd_cv);
 	cv_destroy(&locked_queue_cv);
 	cv_destroy(&lfs_writing_cv);
 	pool_destroy(&lfs_inode_pool);
@@ -604,8 +595,8 @@ lfs_mountroot(void)
 		return (error);
 	}
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 	mountlist_append(mp);
@@ -613,7 +604,7 @@ lfs_mountroot(void)
 	fs = ump->um_lfs;
 	lfs_sb_setfsmnt(fs, mp->mnt_stat.f_mntonname);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	setrootfstime((time_t)lfs_sb_gettstamp(VFSTOULFS(mp)->um_lfs));
 	return (0);
 }
@@ -1097,6 +1088,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_pages = 0;
 	rw_init(&fs->lfs_fraglock);
 	rw_init(&fs->lfs_iflock);
+	cv_init(&fs->lfs_sleeperscv, "lfs_slp");
+	cv_init(&fs->lfs_diropscv, "lfs_dirop");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 
 	/* Set the file system readonly/modify bits. */
@@ -1296,7 +1289,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Start the pagedaemon-anticipating daemon */
 	mutex_enter(&lfs_lock);
-	if (lfs_writer_daemon == 0 && lfs_writer_lid == 0 &&
+	if (lfs_writer_daemon == NULL &&
 	    kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
@@ -1349,8 +1342,7 @@ lfs_unmount(struct mount *mp, int mntflags)
 	lfs_wakeup_cleaner(fs);
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_sleepers)
-		mtsleep(&fs->lfs_sleepers, PRIBIO + 1, "lfs_sleepers", 0,
-			&lfs_lock);
+		cv_wait(&fs->lfs_sleeperscv, &lfs_lock);
 	mutex_exit(&lfs_lock);
 
 #ifdef LFS_EXTATTR
@@ -1414,6 +1406,8 @@ lfs_unmount(struct mount *mp, int mntflags)
 	free(fs->lfs_suflags[1], M_SEGMENT);
 	free(fs->lfs_suflags, M_SEGMENT);
 	lfs_free_resblks(fs);
+	cv_destroy(&fs->lfs_sleeperscv);
+	cv_destroy(&fs->lfs_diropscv);
 	cv_destroy(&fs->lfs_stopcv);
 	rw_destroy(&fs->lfs_fraglock);
 	rw_destroy(&fs->lfs_iflock);
@@ -2319,16 +2313,10 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 				ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 	}
 
-#ifdef DIAGNOSTIC
-	if (vp->v_type == VNON) {
-# ifdef DEBUG
-		lfs_dump_dinode(fs, ip->i_din);
-# endif
-		panic("lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
-		      (unsigned long long)ip->i_number,
-		      (ip->i_mode & LFS_IFMT) >> 12);
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((vp->v_type != VNON),
+	    "lfs_vinit: ino %llu is type VNON! (ifmt=%o)\n",
+	    (unsigned long long)ip->i_number,
+	    (ip->i_mode & LFS_IFMT) >> 12);
 
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.

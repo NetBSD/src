@@ -1,10 +1,10 @@
-/*	$NetBSD: attr.c,v 1.1.1.5 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: attr.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* attr.c - routines for dealing with attributes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,9 @@
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: attr.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 

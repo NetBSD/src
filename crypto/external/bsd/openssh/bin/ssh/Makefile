@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/08/02 13:45:12 christos Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2017/04/21 16:50:56 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,8 @@ DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBHEIMBASE} ${LIBWIND}
 LDADD+=	-lkafs -lasn1 -lcrypt
 DPADD+=	${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
 
-LDADD+=	-lcom_err -lroken -lutil
-DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBUTIL}
+LDADD+=	-lcom_err -lroken -lsqlite3 -lutil
+DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBSQLITE3} ${LIBUTIL}
 .endif
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51 2016/12/17 15:23:08 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51 2016/12/17 15:23:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -61,9 +61,9 @@ static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] =
 int cpu_vendor;
 char cpu_brand_string[49];
 
-int x86_fpu_save = FPU_SAVE_FSAVE;
-unsigned int x86_fpu_save_size = 512;
-uint64_t x86_xsave_features = 0;
+int x86_fpu_save __read_mostly = FPU_SAVE_FSAVE;
+unsigned int x86_fpu_save_size __read_mostly = 512;
+uint64_t x86_xsave_features __read_mostly = 0;
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -551,7 +551,19 @@ cpu_probe_c3(struct cpu_info *ci)
 			}
 		    }
 
-		    /* Actually do the enables. */
+		    /*
+		     * Actually do the enables.  It's a little gross,
+		     * but per the PadLock programming guide, "Enabling
+		     * PadLock", condition 3, we must enable SSE too or
+		     * else the first use of RNG or ACE instructions
+		     * will generate a trap.
+		     *
+		     * We must do this early because of kernel RNG
+		     * initialization but it is safe without the full
+		     * FPU-detect as all these CPUs have SSE.
+		     */
+		    lcr4(rcr4() | CR4_OSFXSR);
+
 		    if (rng_enable) {
 			msr = rdmsr(MSR_VIA_RNG);
 			msr |= MSR_VIA_RNG_ENABLE;

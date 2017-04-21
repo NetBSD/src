@@ -202,6 +202,7 @@ described in the postconf(5) manual page. </p>
 	# (available with Postfix 2.10 and later).
 	reject_unauth_destination
 	reject_rbl_client zen.spamhaus.org,
+	reject_rhsbl_reverse_client dbl.spamhaus.org,
 	reject_rhsbl_helo dbl.spamhaus.org,
 	reject_rhsbl_sender dbl.spamhaus.org
 
@@ -214,7 +215,7 @@ described in the postconf(5) manual page. </p>
 
 <p> Each restriction list is evaluated from left to right until
 some restriction produces a result of PERMIT, REJECT or DEFER (try
-again later).  The end of the list is equivalent to a PERMIT result.
+again later).  The end of each list is equivalent to a PERMIT result.
 By placing a PERMIT restriction before a REJECT restriction you
 can make exceptions for specific clients or users. This is called
 whitelisting; the fourth example above allows mail from local

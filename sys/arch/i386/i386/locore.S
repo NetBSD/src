@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.144 2017/01/06 08:36:56 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.144.2.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.144 2017/01/06 08:36:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.144.2.1 2017/04/21 16:53:28 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -671,7 +671,7 @@ no_NOX:
 	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Skip the first MB. */
+	/* Skip the area below the kernel text. */
 	movl	$(KERNTEXTOFF - KERNBASE),%ecx
 	shrl	$PGSHIFT,%ecx
 	fillkpt_blank
