@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.441 2017/01/25 17:57:14 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.442 2017/04/21 15:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.441 2017/01/25 17:57:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.442 2017/04/21 15:10:34 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2531,7 +2531,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 
 	/* create LWP */
 	lwp_create(l1, p2, uaddr, 0, NULL, 0, spawn_return, spawn_data,
-	    &l2, l1->l_class);
+	    &l2, l1->l_class, &l1->l_sigmask, &l1->l_sigstk);
 	l2->l_ctxlink = NULL;	/* reset ucontext link */
 
 	/*

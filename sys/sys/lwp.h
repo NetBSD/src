@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.173 2017/04/08 00:25:50 kamil Exp $	*/
+/*	$NetBSD: lwp.h,v 1.174 2017/04/21 15:10:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -341,7 +341,8 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 uint64_t lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
-int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *);
+int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *, const sigset_t *,
+    const stack_t *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
@@ -422,8 +423,8 @@ lwp_eprio(lwp_t *l)
 	return MAX(l->l_auxprio, pri);
 }
 
-int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
-    void *, size_t, void (*)(void *), void *, lwp_t **, int);
+int lwp_create(lwp_t *, struct proc *, vaddr_t, int, void *, size_t,
+    void (*)(void *), void *, lwp_t **, int, const sigset_t *, const stack_t *);
 
 /*
  * XXX _MODULE
