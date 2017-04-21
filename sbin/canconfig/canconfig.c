@@ -1,4 +1,4 @@
-/*	$NetBSD: canconfig.c,v 1.1.2.3 2017/04/20 12:59:54 bouyer Exp $	*/
+/*	$NetBSD: canconfig.c,v 1.1.2.4 2017/04/21 13:05:15 bouyer Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: canconfig.c,v 1.1.2.3 2017/04/20 12:59:54 bouyer Exp $");
+__RCSID("$NetBSD: canconfig.c,v 1.1.2.4 2017/04/21 13:05:15 bouyer Exp $");
 #endif
 
 
@@ -327,6 +327,28 @@ status(int sock, const char *canifname)
 
 }
 
+static int
+valid_timings(struct can_link_timecaps *cltc, struct can_link_timings *clt)
+{
+	if (clt->clt_brp < cltc->cltc_brp_min ||
+	    clt->clt_brp > cltc->cltc_brp_max)
+		return 0;
+
+	if (clt->clt_prop < cltc->cltc_prop_min ||
+	    clt->clt_prop > cltc->cltc_prop_max)
+		return 0;
+
+	if (clt->clt_ps1 < cltc->cltc_ps1_min ||
+	    clt->clt_ps1 > cltc->cltc_ps1_max)
+		return 0;
+
+	if (clt->clt_ps2 < cltc->cltc_ps2_min ||
+	    clt->clt_ps2 > cltc->cltc_ps2_max)
+		return 0;
+
+	return 1;
+}
+
 static void
 show_timings(int sock, const char *canifname, const char *prefix)
 {
@@ -346,8 +368,8 @@ show_timings(int sock, const char *canifname, const char *prefix)
 	    0) < 0)
 		err(1, "unable to get can link mode");
 
-	humanize_number(hbuf, sizeof(hbuf), cltc.cltc_clock_freq, "Hz", 0,
-	    HN_AUTOSCALE | HN_NOSPACE | HN_DIVISOR_1000);
+	humanize_number(hbuf, sizeof(hbuf), cltc.cltc_clock_freq, "Hz",
+	    HN_AUTOSCALE, HN_NOSPACE | HN_DIVISOR_1000);
 
 	printf("%stiming caps:\n", prefix);
 	printf("%s  clock %s, brp [%d..%d]/%d, prop_seg [%d..%d]\n",
@@ -362,7 +384,21 @@ show_timings(int sock, const char *canifname, const char *prefix)
 	printf("%s  ", prefix);
 	printb("capabilities", cltc.cltc_linkmode_caps, CAN_IFFBITS);
 	printf("\n");
-	printf("%soperational timings:\n", prefix);
+	printf("%soperational timings:", prefix);
+	if (valid_timings(&cltc, &clt)) {
+		uint32_t tq, ntq, bps;
+		tq = ((uint64_t)clt.clt_brp * (uint64_t)1000000000) /
+		    cltc.cltc_clock_freq;
+		ntq = 1 + clt.clt_prop + clt.clt_ps1 + clt.clt_ps2;
+		printf(" %d time quanta of %dns",
+		    1 + clt.clt_prop + clt.clt_ps1 + clt.clt_ps2, tq);
+		bps = 1000000000 / (tq * ntq); 
+		humanize_number(hbuf, sizeof(hbuf), bps, "bps",
+		    HN_AUTOSCALE, HN_NOSPACE | HN_DIVISOR_1000);
+		printf(", %s", hbuf);
+	};
+	printf("\n");
+
 	printf("%s  brp %d, prop_seg %d, phase_seg1 %d, phase_seg2 %d, sjw %d\n",
 	    prefix,
 	    clt.clt_brp, clt.clt_prop, clt.clt_ps1, clt.clt_ps2, clt.clt_sjw);
