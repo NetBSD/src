@@ -2,7 +2,7 @@
 <!ENTITY mdash "&#8212;">
 <!ENTITY ouml "&#xf6;">]>
 <!--
- - Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,11 @@
   <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
     <para>
       This document summarizes changes since BIND 9.10.4:
+    </para>
+    <para>
+      BIND 9.10.4-P7 addresses the security issue described in
+      CVE-2017-3136, and updates the built in trusted keys for
+      the root zone.
     </para>
     <para>
       BIND 9.10.4-P6 addresses the security issue described in
@@ -64,8 +69,57 @@
     </para>
   </section>
 
+  <section xml:id="root_key"><info><title>New DNSSEC Root Key</title></info>
+    <para>
+      ICANN is in the process of introducing a new Key Signing Key (KSK) for
+      the global root zone. BIND has multiple methods for managing DNSSEC
+      trust anchors, with somewhat different behaviors. If the root
+      key is configured using the <command>managed-keys</command>
+      statement, or if the pre-configured root key is enabled by using
+      <command>dnssec-validation auto</command>, then BIND can keep
+      keys up to date automatically. Servers configured in this way
+      will roll seamlessly to the new key when it is published in
+      the root zone. However, keys configured using the
+      <command>trusted-keys</command> statement are not automatically
+      maintained. If your server is performing DNSSEC validation
+      and is configured using <command>trusted-keys</command>, you are
+      advised to change your configuration before the root zone begins
+      signing with the new KSK. This is currently scheduled for
+      October 11, 2017.
+    </para>
+    <para>
+      This release includes an updated version of the
+      <filename>bind.keys</filename> file containing the new root
+      key. This file can also be downloaded from
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	xlink:href="https://www.isc.org/bind-keys">
+	https://www.isc.org/bind-keys
+      </link>.
+    </para>
+  </section>
+
   <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
     <itemizedlist>
+      <listitem>
+	<para>
+	  'rndc ""' could trigger a assertion failure in named. This flaw
+	  is disclosed in (CVE-2017-3138). [RT #44924]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Some chaining (i.e., type CNAME or DNAME) responses to upstream
+	  queries could trigger assertion failures. This flaw is disclosed
+	  in CVE-2017-3137. [RT #44734]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>dns64</command> with <command>break-dnssec yes;</command>
+	  can result in an assertion failure. This flaw is disclosed in
+	  CVE-2017-3136. [RT #44653]
+	</para>
+      </listitem>
       <listitem>
 	<para>
 	  If a server is configured with a response policy zone (RPZ)
