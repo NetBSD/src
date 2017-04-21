@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.140 2017/01/09 03:09:05 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.141 2017/04/21 05:38:03 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.140 2017/01/09 03:09:05 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.141 2017/04/21 05:38:03 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1812,18 +1812,6 @@ _el_rl_tstp(EditLine *el __attribute__((__unused__)), int ch __attribute__((__un
 	return CC_NORM;
 }
 
-/*
- * Display list of strings in columnar format on readline's output stream.
- * 'matches' is list of strings, 'len' is number of strings in 'matches',
- * 'max' is maximum length of string in 'matches'.
- */
-void
-rl_display_match_list(char **matches, int len, int max)
-{
-
-	fn_display_match_list(e, matches, (size_t)len, (size_t)max);
-}
-
 static const char *
 /*ARGSUSED*/
 _rl_completion_append_character_function(const char *dummy
@@ -1835,6 +1823,19 @@ _rl_completion_append_character_function(const char *dummy
 	return buf;
 }
 
+
+/*
+ * Display list of strings in columnar format on readline's output stream.
+ * 'matches' is list of strings, 'len' is number of strings in 'matches',
+ * 'max' is maximum length of string in 'matches'.
+ */
+void
+rl_display_match_list(char **matches, int len, int max)
+{
+
+	fn_display_match_list(e, matches, (size_t)len, (size_t)max,
+		_rl_completion_append_character_function);
+}
 
 /*
  * complete word at current point
