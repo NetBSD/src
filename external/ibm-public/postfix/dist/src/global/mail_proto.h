@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_proto.h,v 1.1.1.5 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: mail_proto.h,v 1.1.1.5.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _MAIL_PROTO_H_INCLUDED_
 #define _MAIL_PROTO_H_INCLUDED_
@@ -62,6 +62,33 @@
 #define MAIL_SERVICE_SCACHE	"scache"
 #define MAIL_SERVICE_DNSBLOG	"dnsblog"
 #define MAIL_SERVICE_TLSPROXY	"tlsproxy"
+
+ /*
+  * Mail source classes. Used to specify policy decisions for content
+  * inspection and SMTPUTF8 detection.
+  */
+#define MAIL_SRC_NAME_SENDMAIL	"sendmail"	/* sendmail(1) */
+#define MAIL_SRC_NAME_SMTPD	"smtpd"	/* smtpd(8) */
+#define MAIL_SRC_NAME_QMQPD	"qmqpd"	/* qmqpd(8) */
+#define MAIL_SRC_NAME_FORWARD	"forward"	/* local(8) forward/alias */
+#define MAIL_SRC_NAME_BOUNCE	"bounce"/* bounce(8) */
+#define MAIL_SRC_NAME_NOTIFY	"notify"/* protocol etc. errors */
+#define MAIL_SRC_NAME_VERIFY	"verify"/* protocol etc. errors */
+#define MAIL_SRC_NAME_ALL	"all"	/* all sources */
+
+#define MAIL_SRC_MASK_SENDMAIL	(1<<0)	/* sendmail(1) */
+#define MAIL_SRC_MASK_SMTPD	(1<<1)	/* smtpd(8) */
+#define MAIL_SRC_MASK_QMQPD	(1<<2)	/* qmqpd(8) */
+#define MAIL_SRC_MASK_FORWARD	(1<<3)	/* local(8) forward/alias */
+#define MAIL_SRC_MASK_BOUNCE	(1<<4)	/* bounce(8) */
+#define MAIL_SRC_MASK_NOTIFY	(1<<5)	/* protocol etc. errors */
+#define MAIL_SRC_MASK_VERIFY	(1<<6)	/* protocol etc. errors */
+
+#define MAIL_SRC_MASK_ALL \
+	( MAIL_SRC_MASK_SENDMAIL | MAIL_SRC_MASK_SMTPD \
+	| MAIL_SRC_MASK_QMQPD |  MAIL_SRC_MASK_FORWARD \
+	| MAIL_SRC_MASK_BOUNCE | MAIL_SRC_MASK_NOTIFY \
+	| MAIL_SRC_MASK_VERIFY)
 
  /*
   * Well-known socket or FIFO directories. The main difference is in file
@@ -136,6 +163,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_STRESS	"stress"
 #define MAIL_ATTR_LOG_IDENT	"log_ident"
 #define MAIL_ATTR_RWR_CONTEXT	"rewrite_context"
+#define MAIL_ATTR_POL_CONTEXT	"policy_context"
 
 #define MAIL_ATTR_RWR_LOCAL	"local"
 #define MAIL_ATTR_RWR_REMOTE	"remote"
@@ -246,6 +274,7 @@ extern char *mail_pathname(const char *, const char *);
 #define MAIL_ATTR_DSN_RET	"ret_flags"	/* dsn full/headers */
 #define MAIL_ATTR_DSN_NOTIFY	"notify_flags"	/* dsn notify flags */
 #define MAIL_ATTR_DSN_ORCPT	"dsn_orig_rcpt"	/* dsn original recipient */
+#define MAIL_ATTR_SMTPUTF8	"smtputf8"	/* RFC6531 support */
 
  /*
   * TLSPROXY support.

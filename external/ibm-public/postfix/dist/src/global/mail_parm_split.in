@@ -1,0 +1,6 @@
+TZ PATH=/bin:/usr/bin XAUTHORITY
+TZ { LESS=-m -C -s -f -e } XAUTHORITY
+{ LESS=-m -C -s -f -e } TZ XAUTHORITY
+TZ XAUTHORITY { LESS=-m -C -s -f -e }
+TZ { LESS=-m -C -s -f -e  XAUTHORITY
+TZ { LESS=-m -C -s -f -e }x XAUTHORITY

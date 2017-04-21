@@ -1,9 +1,9 @@
-/*	$NetBSD: sets.c,v 1.1.1.5 2014/05/28 09:58:47 tron Exp $	*/
+/*	$NetBSD: sets.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sets.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -360,7 +363,7 @@ done:;
 
 done2:;
 	if ( LogTest( LDAP_DEBUG_ACL ) ) {
-		if ( BER_BVISNULL( set ) ) {
+		if ( !set || BER_BVISNULL( set ) ) {
 			Debug( LDAP_DEBUG_ACL, "  ACL set: empty\n", 0, 0, 0 );
 
 		} else {

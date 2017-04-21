@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.10 2011/07/10 21:18:47 matt Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.10.28.1 2017/04/21 16:53:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetmask.c,v 1.10 2011/07/10 21:18:47 matt Exp $");
+__RCSID("$NetBSD: fpsetmask.c,v 1.10.28.1 2017/04/21 16:53:08 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: fpsetmask.c,v 1.10 2011/07/10 21:18:47 matt Exp $");
 #include <sys/types.h>
 #include <ieeefp.h>
 #include <powerpc/fpu.h>
+#include <powerpc/psl.h>
 
 #ifdef __weak_alias
 __weak_alias(fpsetmask,_fpsetmask)
@@ -47,6 +48,24 @@ __weak_alias(fpsetmask,_fpsetmask)
 #define	MASKBITS	(FPSCR_XE|FPSCR_ZE|FPSCR_UE|FPSCR_OE|FPSCR_VE)
 #define	MASKSHFT	3
 
+static __inline uint32_t
+mfmsr(void)
+{
+	uint32_t msr;
+
+	__asm volatile ("mfmsr %0" : "=r"(msr));
+	return msr;
+}
+
+static __inline void
+mtmsr(uint32_t msr)
+{
+
+	__asm volatile ("mtmsr %0" : : "r"(msr));
+}
+
+#include <stdio.h>
+
 fp_except
 fpsetmask(fp_except mask)
 {
@@ -54,12 +73,20 @@ fpsetmask(fp_except mask)
 		double u_d;
 		uint64_t u_fpscr;
 	} ud;
-	fp_except old;
+	fp_except old, new;
+	uint32_t msr;
 
 	__asm volatile("mffs %0" : "=f"(ud.u_d));
 	old = ((uint32_t)ud.u_fpscr & MASKBITS) >> MASKSHFT;
 	ud.u_fpscr &= ~MASKBITS;
-	ud.u_fpscr |= ((uint32_t)mask << MASKSHFT) & MASKBITS;
+	new = ((uint32_t)mask << MASKSHFT) & MASKBITS;
+	ud.u_fpscr |= new;
 	__asm volatile("mtfsf 0xff,%0" :: "f"(ud.u_d));
+
+	msr = mfmsr();
+	msr = (msr & ~(PSL_FE0 | PSL_FE1)) |
+		(new ? PSL_FE_PREC : PSL_FE_DIS);
+	mtmsr(msr);
+
 	return (old);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcap_set_immediate_mode.3pcap,v 1.2 2014/11/19 19:33:30 christos Exp $
+.\"	$NetBSD: pcap_set_immediate_mode.3pcap,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 1994, 1996, 1997
@@ -20,7 +20,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP_SET_IMMEDIATE_MODE 3PCAP "8 May 2013"
+.TH PCAP_SET_IMMEDIATE_MODE 3PCAP "5 December 2013"
 .SH NAME
 pcap_set_immediate_mode \- set immediate mode for a not-yet-activated capture
 handle

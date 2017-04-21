@@ -1,4 +1,4 @@
-/*	$NetBSD: show.h,v 1.7 2003/08/07 09:05:38 agc Exp $	*/
+/*	$NetBSD: show.h,v 1.7.84.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995

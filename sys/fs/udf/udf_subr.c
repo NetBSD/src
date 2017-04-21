@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.138 2016/05/24 09:55:57 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.138.4.1 2017/04/21 16:54:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.138 2016/05/24 09:55:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.138.4.1 2017/04/21 16:54:02 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -6393,7 +6393,11 @@ udf_sync_pass(struct udf_mount *ump, kauth_cred_t cred, int pass, int *ndirty)
 static bool
 udf_sync_selector(void *cl, struct vnode *vp)
 {
-	struct udf_node *udf_node = VTOI(vp);
+	struct udf_node *udf_node;
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	udf_node = VTOI(vp);
 
 	if (vp->v_vflag & VV_SYSTEM)
 		return false;

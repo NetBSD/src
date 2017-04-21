@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.10 2016/10/25 09:15:55 pgoyette Exp $ */
+/* $NetBSD: hdafg.c,v 1.10.2.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10 2016/10/25 09:15:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.10.2.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1468,7 +1468,6 @@ hdafg_disable_useless(struct hdafg_softc *sc)
 	do {
 		done = 1;
 		/* Disable and mute controls for disabled widgets */
-		i = 0;
 		for (i = 0; i < sc->sc_nctls; i++) {
 			ctl = &sc->sc_ctls[i];
 			if (ctl->ctl_enable == false)
@@ -2790,7 +2789,6 @@ hdafg_assign_mixers(struct hdafg_softc *sc)
 		}
 	}
 	/* Treat unrequired as possible */
-	i = 0;
 	for (i = 0; i < sc->sc_nctls; i++) {
 		ctl = &sc->sc_ctls[i];
 		if (ctl->ctl_audiomask == 0)
@@ -3424,13 +3422,13 @@ hdafg_configure_encodings(struct hdafg_softc *sc)
 
 	sc->sc_pchan = sc->sc_rchan = 0;
 
-	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
+	for (i = 0; i < sc->sc_nassocs; i++) {
 		nchan = hdafg_assoc_count_channels(sc, &as[i],
 		    HDAUDIO_PINDIR_OUT);
 		if (nchan > sc->sc_pchan)
 			sc->sc_pchan = nchan;
 	}
-	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
+	for (i = 0; i < sc->sc_nassocs; i++) {
 		nchan = hdafg_assoc_count_channels(sc, &as[i],
 		    HDAUDIO_PINDIR_IN);
 		if (nchan > sc->sc_rchan)

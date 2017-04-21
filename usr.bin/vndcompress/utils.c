@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.5 2016/04/07 23:29:59 riastradh Exp $	*/
+/*	$NetBSD: utils.c,v 1.5.4.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: utils.c,v 1.5 2016/04/07 23:29:59 riastradh Exp $");
+__RCSID("$NetBSD: utils.c,v 1.5.4.1 2017/04/21 16:54:16 bouyer Exp $");
 
 #include <sys/types.h>
 
@@ -59,31 +59,23 @@ int	vsnprintf_ss(char *restrict, size_t, const char *restrict, va_list)
  * Read, returning partial data only at end of file.
  */
 ssize_t
-read_block(int fd, void *buffer, size_t n)
+read_block(int fd, void *buf, size_t len)
 {
-	char *p = buffer, *const end __diagused = (p + n);
-	size_t total_read = 0;
+	char *p = buf;
+	size_t n = len;
+	const char *const end __diagused = p + n;
+	ssize_t nread = 0;
 
-	while (n > 0) {
-		const ssize_t n_read = read(fd, p, n);
-		if (n_read == -1)
+	while (0 < n && (nread = read(fd, p, n)) != 0) {
+		if (nread == -1)
 			return -1;
-		assert(n_read >= 0);
-		if (n_read == 0)
-			break;
-
-		assert((size_t)n_read <= n);
-		n -= (size_t)n_read;
-
-		assert(p <= end);
-		assert(n_read <= (end - p));
-		p += (size_t)n_read;
-
-		assert((size_t)n_read <= (SIZE_MAX - total_read));
-		total_read += (size_t)n_read;
+		p += MIN(n, (size_t)nread);
+		n -= MIN(n, (size_t)nread);
+		assert(p + n == end);
 	}
 
-	return total_read;
+	assert(n == 0 || nread == 0); /* complete read or EOF */
+	return len - n;
 }
 
 /*
@@ -91,35 +83,29 @@ read_block(int fd, void *buffer, size_t n)
  * of file.
  */
 ssize_t
-pread_block(int fd, void *buffer, size_t n, off_t fdpos)
+pread_block(int fd, void *buf, size_t len, off_t fdpos)
 {
-	char *p = buffer, *const end __diagused = (p + n);
-	size_t total_read = 0;
+	char *p = buf;
+	size_t n = len;
+	const char *const end __diagused = p + n;
+	ssize_t nread = 0;
 
 	assert(0 <= fdpos);
-	assert(n <= (OFF_MAX - (uintmax_t)fdpos));
+	assert(n <= OFF_MAX - (uintmax_t)fdpos);
+	const off_t endpos __diagused = fdpos + n;
 
-	while (n > 0) {
-		assert(total_read <= n);
-		const ssize_t n_read = pread(fd, p, n, (fdpos + total_read));
-		if (n_read == -1)
+	while (0 < n && (nread = pread(fd, p, n, fdpos)) != 0) {
+		if (nread == -1)
 			return -1;
-		assert(n_read >= 0);
-		if (n_read == 0)
-			break;
-
-		assert((size_t)n_read <= n);
-		n -= (size_t)n_read;
-
-		assert(p <= end);
-		assert(n_read <= (end - p));
-		p += (size_t)n_read;
-
-		assert((size_t)n_read <= (SIZE_MAX - total_read));
-		total_read += (size_t)n_read;
+		fdpos += MIN(n, (size_t)nread);
+		p += MIN(n, (size_t)nread);
+		n -= MIN(n, (size_t)nread);
+		assert(p + n == end);
+		assert(fdpos + (off_t)n == endpos);
 	}
 
-	return total_read;
+	assert(n == 0 || nread == 0); /* complete read or EOF */
+	return len - n;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: postkick.c,v 1.1.1.2 2013/01/02 18:59:03 tron Exp $	*/
+/*	$NetBSD: postkick.c,v 1.1.1.2.16.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -73,6 +73,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */

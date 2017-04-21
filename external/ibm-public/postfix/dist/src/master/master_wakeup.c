@@ -1,4 +1,4 @@
-/*	$NetBSD: master_wakeup.c,v 1.1.1.2 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: master_wakeup.c,v 1.1.1.2.12.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -76,7 +76,7 @@
 
 /* master_wakeup_timer_event - wakeup event handler */
 
-static void master_wakeup_timer_event(int unused_event, char *context)
+static void master_wakeup_timer_event(int unused_event, void *context)
 {
     const char *myname = "master_wakeup_timer_event";
     MASTER_SERV *serv = (MASTER_SERV *) context;
@@ -148,7 +148,7 @@ static void master_wakeup_timer_event(int unused_event, char *context)
     /*
      * Schedule another wakeup event.
      */
-    event_request_timer(master_wakeup_timer_event, (char *) serv,
+    event_request_timer(master_wakeup_timer_event, (void *) serv,
 			serv->wakeup_time);
 }
 
@@ -163,7 +163,7 @@ void    master_wakeup_init(MASTER_SERV *serv)
     if (msg_verbose)
 	msg_info("%s: service %s time %d",
 		 myname, serv->name, serv->wakeup_time);
-    master_wakeup_timer_event(0, (char *) serv);
+    master_wakeup_timer_event(0, (void *) serv);
 }
 
 /* master_wakeup_cleanup - cancel wakeup timer */
@@ -180,5 +180,5 @@ void    master_wakeup_cleanup(MASTER_SERV *serv)
     if (msg_verbose)
 	msg_info("%s: service %s", myname, serv->name);
 
-    event_cancel_timer(master_wakeup_timer_event, (char *) serv);
+    event_cancel_timer(master_wakeup_timer_event, (void *) serv);
 }

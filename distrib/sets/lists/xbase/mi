@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.140 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: mi,v 1.140.2.1 2017/04/21 16:51:14 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -612,7 +612,7 @@
 ./usr/X11R7/lib/X11/xkb/README.config			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/README.enhancing		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/compat				base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/compat.dir			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/compat.dir			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/compat/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/accessx			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/basic			-unknown-	xorg
@@ -636,7 +636,7 @@
 ./usr/X11R7/lib/X11/xkb/compat/xtest			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compiled			base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/geometry			base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/geometry.dir			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/geometry.dir			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/geometry/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/amiga			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/ataritt		-unknown-	xorg
@@ -680,7 +680,7 @@
 ./usr/X11R7/lib/X11/xkb/geometry/typematrix		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/winbook		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes			base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/keycodes.dir			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/keycodes.dir			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/keycodes/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/aliases		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/amiga			-unknown-	xorg
@@ -829,7 +829,7 @@
 ./usr/X11R7/lib/X11/xkb/semantics/default		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/semantics/xtest			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols				base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/symbols.dir			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols.dir			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/README			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ad			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/af			-unknown-	xorg
@@ -990,8 +990,10 @@
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/fi	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/fr	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/gb	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/is	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/it	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/jp	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/latam	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/nl	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/no	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/pt	-unknown-	xorg
@@ -1205,7 +1207,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr/ataritt	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/yu			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/za			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/torture				base-x11-root	xorg
+./usr/X11R7/lib/X11/xkb/torture				base-x11-root	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/indicator		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/indicator1		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/indicator2		-unknown-	obsolete
@@ -1222,7 +1224,7 @@
 ./usr/X11R7/lib/X11/xkb/torture/sym_interp4		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/torture/types			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/types				base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/types.dir			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/types.dir			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/types/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/basic			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/cancel			-unknown-	xorg

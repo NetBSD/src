@@ -1,4 +1,4 @@
-/*	$NetBSD: base64_code.h,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: base64_code.h,v 1.1.1.2.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _BASE64_CODE_H_INCLUDED_
 #define _BASE64_CODE_H_INCLUDED_
@@ -22,7 +22,7 @@
   * External interface.
   */
 extern VSTRING *base64_encode_opt(VSTRING *, const char *, ssize_t, int);
-extern VSTRING *base64_decode_opt(VSTRING *, const char *, ssize_t, int);
+extern VSTRING *WARN_UNUSED_RESULT base64_decode_opt(VSTRING *, const char *, ssize_t, int);
 
 #define BASE64_FLAG_NONE	0
 #define BASE64_FLAG_APPEND	(1<<0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.134 2015/04/22 16:46:58 pooka Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.134.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.134 2015/04/22 16:46:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.134.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -394,6 +394,7 @@ statclock(struct clockframe *frame)
 	}
 
 	if (CLKF_USERMODE(frame)) {
+		KASSERT(p != NULL);
 		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0) {

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.102 2016/08/20 12:37:08 hannken Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.102.2.1 2017/04/21 16:54:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.102 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.102.2.1 2017/04/21 16:54:02 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -80,7 +80,7 @@ extern int prtactive;
 int
 udf_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool         *a_recycle;
 	} */ *ap = v;
@@ -92,7 +92,6 @@ udf_inactive(void *v)
 
 	if (udf_node == NULL) {
 		DPRINTF(NODE, ("udf_inactive: inactive NULL UDF node\n"));
-		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -115,14 +114,12 @@ udf_inactive(void *v)
 	*ap->a_recycle = false;
 	if ((refcnt == 0) && ((vp->v_vflag & VV_SYSTEM) == 0)) {
 		*ap->a_recycle = true;
-		VOP_UNLOCK(vp);
 		return 0;
 	}
 
 	/* write out its node */
 	if (udf_node->i_flags & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
 		udf_update(vp, NULL, NULL, NULL, 0);
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

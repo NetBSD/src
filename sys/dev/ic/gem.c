@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.107 2016/12/15 09:28:05 ozaki-r Exp $ */
+/*	$NetBSD: gem.c,v 1.107.2.1 2017/04/21 16:53:46 bouyer Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.107 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.107.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -577,6 +577,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, gem_ifflags_cb);
 
@@ -1740,7 +1741,7 @@ gem_tint(struct gem_softc *sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		sc->sc_if_flags = ifp->if_flags;
 		ifp->if_timer = SIMPLEQ_EMPTY(&sc->sc_txdirtyq) ? 0 : 5;
-		gem_start(ifp);
+		if_schedule_deferred_start(ifp);
 	}
 	DPRINTF(sc, ("%s: gem_tint: watchdog %d\n",
 		device_xname(sc->sc_dev), ifp->if_timer));

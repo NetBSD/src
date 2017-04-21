@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.h,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: monitor.h,v 1.8.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: monitor.h,v 1.20 2016/09/28 16:33:07 djm Exp $ */
 
 /*

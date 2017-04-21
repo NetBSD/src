@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.62 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.62.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.62 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.62.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif
 #endif					/* not lint */
 
@@ -203,8 +203,6 @@ static const struct tcdata tc[] = {
 /* Number of TC entries .... */
 static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
 
-int		ESCDELAY;	/* Delay in ms between keys for esc seq's */
-
 /* Key buffer */
 #define INBUF_SZ 16		/* size of key buffer - must be larger than
 				 * longest multi-key sequence */
@@ -342,7 +340,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
  * Delete the given key symbol from the key mappings for the screen.
  *
  */
-void
+static void
 delete_key_sequence(keymap_t *current, int key_type)
 {
 	key_entry_t *key;
@@ -379,7 +377,7 @@ delete_key_sequence(keymap_t *current, int key_type)
  * Add the sequence of characters given in sequence as the key mapping
  * for the given key symbol.
  */
-void
+static void
 add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 {
 	key_entry_t *tmp_key;
@@ -543,14 +541,13 @@ new_key(void)
  *
  */
 
-wchar_t
+static wchar_t
 inkey(int to, int delay)
 {
 	wchar_t		 k;
 	int              c, mapping;
 	keymap_t	*current = _cursesi_screen->base_keymap;
 	FILE            *infd = _cursesi_screen->infd;
-	int		escdelay = _cursesi_screen->ESCDELAY;
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
@@ -596,11 +593,11 @@ reread:
 		} else if (state == INKEY_ASSEMBLING) {
 			/* assembling a key sequence */
 			if (delay) {
-				if (__timeout(to ? (escdelay / 100) : delay)
+				if (__timeout(to ? (ESCDELAY / 100) : delay)
 				    == ERR)
 					return ERR;
 			} else {
-				if (to && (__timeout(escdelay / 100) == ERR))
+				if (to && (__timeout(ESCDELAY / 100) == ERR))
 					return ERR;
 			}
 
@@ -735,7 +732,9 @@ keyok(int key_type, bool flag)
 {
 	int result = ERR;
 
-	do_keyok(_cursesi_screen->base_keymap, key_type, true, flag, &result);
+	if (_cursesi_screen != NULL)
+		do_keyok(_cursesi_screen->base_keymap, key_type,
+		    true, flag, &result);
 	return result;
 }
 
@@ -780,7 +779,7 @@ int
 define_key(char *sequence, int symbol)
 {
 
-	if (symbol <= 0)
+	if (symbol <= 0 || _cursesi_screen == NULL)
 		return ERR;
 
 	if (sequence == NULL) {
@@ -809,10 +808,12 @@ wgetch(WINDOW *win)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wgetch: win(%p)\n", win);
 #endif
+	if (win == NULL)
+		return ERR;
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1
 	    && __echoit)
-		return (ERR);
+		return ERR;
 
 	if (is_wintouched(win))
 		wrefresh(win);
@@ -945,6 +946,8 @@ __unget(wint_t c)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "__unget(%x)\n", c);
 #endif
+	if (_cursesi_screen == NULL)
+		return ERR;
 	if (_cursesi_screen->unget_pos >= _cursesi_screen->unget_len) {
 		len = _cursesi_screen->unget_len + 32;
 		if ((p = realloc(_cursesi_screen->unget_list,
@@ -975,7 +978,9 @@ has_key(int key_type)
 {
 	int result = ERR;
 
-	do_keyok(_cursesi_screen->base_keymap, key_type, false, false, &result);
+	if (_cursesi_screen != NULL)
+		do_keyok(_cursesi_screen->base_keymap, key_type,
+		    false, false, &result);
 	return result;
 }
 
@@ -987,6 +992,8 @@ int
 set_escdelay(int escdelay)
 {
 
+	if (_cursesi_screen == NULL)
+		return ERR;
 	_cursesi_screen->ESCDELAY = escdelay;
 	ESCDELAY = escdelay;
 	return OK;

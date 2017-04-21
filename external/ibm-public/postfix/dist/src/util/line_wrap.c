@@ -1,4 +1,4 @@
-/*	$NetBSD: line_wrap.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: line_wrap.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -12,8 +12,8 @@
 /*	const char *buf;
 /*	int	len;
 /*	int	indent;
-/*	void	(*output_fn)(const char *str, int len, int indent, char *context);
-/*	char	*context;
+/*	void	(*output_fn)(const char *str, int len, int indent, void *context);
+/*	void	*context;
 /* DESCRIPTION
 /*	The \fBline_wrap\fR routine outputs the specified string via
 /*	the specified output function, and attempts to keep output lines
@@ -21,7 +21,7 @@
 /*	break long words that do not fit on a single line. Upon output,
 /*	trailing whitespace is stripped.
 /*
-/* Arguments
+/*	Arguments
 /* .IP string
 /*	The input, which cannot contain any newline characters.
 /* .IP len
@@ -38,7 +38,7 @@
 /* .sp
 /* .nf
 /* .na
-void print(const char *str, int len, int indent, char *context)
+void print(const char *str, int len, int indent, void *context)
 {
     VSTREAM *fp = (VSTREAM *) context;
 
@@ -76,7 +76,7 @@ void print(const char *str, int len, int indent, char *context)
 /* line_wrap - wrap long lines upon output */
 
 void    line_wrap(const char *str, int len, int indent, LINE_WRAP_FN output_fn,
-		          char *context)
+		          void *context)
 {
     const char *start_line;
     const char *word;

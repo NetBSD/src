@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.121 2016/10/16 10:24:58 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.121.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.121 2016/10/16 10:24:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.121.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -177,7 +177,7 @@ static void	tss_init(struct i386tss *, void *, void *);
 
 static void	cpu_init_idle_lwp(struct cpu_info *);
 
-uint32_t cpu_feature[7]; /* X86 CPUID feature bits */
+uint32_t cpu_feature[7] __read_mostly; /* X86 CPUID feature bits */
 			/* [0] basic features cpuid.1:%edx
 			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
 			 * [2] extended features cpuid:80000001:%edx
@@ -286,6 +286,9 @@ cpu_vm_init(struct cpu_info *ci)
 	uvm_page_recolor(ncolors);
 
 	pmap_tlb_cpu_init(ci);
+#ifndef __HAVE_DIRECT_MAP
+	pmap_vpage_cpu_init(ci);
+#endif
 }
 
 static void

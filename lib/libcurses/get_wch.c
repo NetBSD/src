@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.12 2017/01/06 13:53:18 roy Exp $ */
+/*   $NetBSD: get_wch.c,v 1.12.2.1 2017/04/21 16:53:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.12 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.12.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -91,7 +91,6 @@ inkey(wchar_t *wc, int to, int delay)
 				*working = &_cursesi_screen->cbuf_cur,
 				*end = &_cursesi_screen->cbuf_tail;
 	char		*inbuf = &_cursesi_screen->cbuf[ 0 ];
-	int		escdelay = _cursesi_screen->ESCDELAY;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "inkey (%p, %d, %d)\n", wc, to, delay);
@@ -140,11 +139,11 @@ inkey(wchar_t *wc, int to, int delay)
 		} else if (wstate == INKEY_ASSEMBLING) {
 			/* assembling a key sequence */
 			if (delay) {
-				if (__timeout(to ? (escdelay / 100) : delay)
+				if (__timeout(to ? (ESCDELAY / 100) : delay)
 						== ERR)
 					return ERR;
 			} else {
-				if (to && (__timeout(escdelay / 100) == ERR))
+				if (to && (__timeout(ESCDELAY / 100) == ERR))
 					return ERR;
 			}
 
@@ -190,11 +189,11 @@ inkey(wchar_t *wc, int to, int delay)
 		} else if (wstate == INKEY_WCASSEMBLING) {
 			/* assembling a wide-char sequence */
 			if (delay) {
-				if (__timeout(to ? (escdelay / 100) : delay)
+				if (__timeout(to ? (ESCDELAY / 100) : delay)
 						== ERR)
 					return ERR;
 			} else {
-				if (to && (__timeout(escdelay / 100) == ERR))
+				if (to && (__timeout(ESCDELAY / 100) == ERR))
 					return ERR;
 			}
 

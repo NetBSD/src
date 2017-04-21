@@ -1,10 +1,10 @@
-/*	$NetBSD: uuid.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: uuid.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* uuid.c -- Universally Unique Identifier routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -32,6 +32,9 @@
  * that LDAP cares about.  It generates a new uuid and returns it in
  * in string form.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: uuid.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
+
 #include "portable.h"
 
 #include <limits.h>

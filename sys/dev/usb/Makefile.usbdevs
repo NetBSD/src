@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.usbdevs,v 1.8 2016/10/26 01:03:23 pgoyette Exp $
+#	$NetBSD: Makefile.usbdevs,v 1.8.2.1 2017/04/21 16:53:53 bouyer Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is
 #
@@ -8,10 +8,10 @@
 
 # 4.) Ensure that the value of USB_MAX_STRING_LEN is at least as large as
 #     the values reported.  If necessary, update "src/sys/dev/usb/usb.h"
-#     and bump the kernel version in "src/sys/sys/param/h".
+#     and bump the kernel version in "src/sys/sys/param.h".
 # 5.) Commit "src/sys/dev/usb/usbdevs.h" and "src/sys/dev/usb/usbdevs_data.h";
 #     if you changed them, also commit "src/sys/dev/usb/usb.h" and
-#     "src/sys/sys/param/h".
+#     "src/sys/sys/param.h".
 
 
 .include <bsd.own.mk>

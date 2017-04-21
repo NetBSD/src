@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.13 2017/01/07 14:44:26 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.13.2.1 2017/04/21 16:53:47 bouyer Exp $	*/
 /*
  * Copyright (c) 2008, 2012, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.13 2017/01/07 14:44:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.13.2.1 2017/04/21 16:53:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1978,7 +1978,7 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	    "\177\020"
 	    "b\017RegAccProtect\0b\016DesSwp\0b\015DwrReqSwp\0b\014DrdResSwp\0",
 	    val);
-	printf(" Configuration    : 0x%s\n", buf);
+	printf(" Configuration    : %s\n", buf);
 	opmode = val & MVXORE_XEXCR_OM_MASK;
 	printf("    OperationMode : %s operation\n",
 	  opmode == MVXORE_XEXCR_OM_XOR ? "XOR calculate" :
@@ -2076,7 +2076,7 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 
 		snprintb(buf, sizeof(buf), "\177\020b\037Own\0b\036Success\0",
 		    desc->stat);
-		printf("  Status                  : 0x%s\n", buf);
+		printf("  Status                  : %s\n", buf);
 		if (desc->cmd & MVXORE_DESC_CMD_CRCLAST && post)
 			printf("  CRC-32 Result           : 0x%08x\n",
 			    desc->result);
@@ -2085,7 +2085,7 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 		    "b\007Src7Cmd\0b\006Src6Cmd\0b\005Src5Cmd\0b\004Src4Cmd\0"
 		    "b\003Src3Cmd\0b\002Src2Cmd\0b\001Src1Cmd\0b\000Src0Cmd\0",
 		    desc->cmd);
-		printf("  Command                 : 0x%s\n", buf);
+		printf("  Command                 : %s\n", buf);
 		printf("  Next Descriptor Address : 0x%08x\n", desc->nextda);
 		printf("  Byte Count              :   0x%06x\n", desc->bcnt);
 		printf("  Destination Address     : 0x%08x\n", desc->dstaddr);

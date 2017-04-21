@@ -1,4 +1,4 @@
-/*	$NetBSD: nflog.h,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+/*	$NetBSD: nflog.h,v 1.2.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2013, Petar Alilovic,
@@ -27,8 +27,8 @@
  * DAMAGE.
  */
 
-#ifndef _PCAP_NFLOG_H__
-#define _PCAP_NFLOG_H__
+#ifndef lib_pcap_nflog_h
+#define lib_pcap_nflog_h
 
 /*
  * Structure of an NFLOG header and TLV parts, as described at

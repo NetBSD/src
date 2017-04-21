@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.8 2016/09/03 12:05:36 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.8.2.1 2017/04/21 16:53:53 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -38,10 +38,10 @@
 
 #define	PCI_XHCI_FLADJ		0x61	/* RW frame length adjust */
 
-#define	PCI_XHCI_INTEL_XUSB2PR	0xD0    /* Intel USB2 Port Routing */
-#define	PCI_XHCI_INTEL_USB2PRM	0xD4    /* Intel USB2 Port Routing Mask */
-#define	PCI_XHCI_INTEL_USB3_PSSEN 0xD8  /* Intel USB3 Port SuperSpeed Enable */
-#define	PCI_XHCI_INTEL_USB3PRM	0xDC    /* Intel USB3 Port Routing Mask */
+#define	PCI_XHCI_INTEL_XUSB2PR	0xd0    /* Intel USB2 Port Routing */
+#define	PCI_XHCI_INTEL_USB2PRM	0xd4    /* Intel USB2 Port Routing Mask */
+#define	PCI_XHCI_INTEL_USB3_PSSEN 0xd8  /* Intel USB3 Port SuperSpeed Enable */
+#define	PCI_XHCI_INTEL_USB3PRM	0xdc    /* Intel USB3 Port Routing Mask */
 
 /* XHCI capability registers */
 #define	XHCI_CAPLENGTH		0x00	/* RO capability */
@@ -66,7 +66,7 @@
     (__SHIFTOUT((x), XHCI_HCS2_SPBUFHI) << 5) | \
     (__SHIFTOUT((x), XHCI_HCS2_SPBUFLO))
 
-#define	XHCI_HCSPARAMS3		0x0C	/* RO structual parameters 3 */
+#define	XHCI_HCSPARAMS3		0x0c	/* RO structual parameters 3 */
 #define	 XHCI_HCS3_U1_DEL(x)	((x) & 0xFF)
 #define	 XHCI_HCS3_U2_DEL(x)	(((x) >> 16) & 0xFFFF)
 
@@ -132,14 +132,14 @@
 #define	 XHCI_CRCR_LO_CRR	0x00000008	/* RW - command ring running */
 #define	 XHCI_CRCR_LO_MASK	0x0000000F
 
-#define	XHCI_CRCR_HI		0x1C	/* XHCI command ring control */
+#define	XHCI_CRCR_HI		0x1c	/* XHCI command ring control */
 #define	XHCI_DCBAAP		0x30	/* XHCI dev context BA pointer */
 #define	XHCI_DCBAAP_HI		0x34	/* XHCI dev context BA pointer */
 #define	XHCI_CONFIG		0x38
 #define	XHCI_CONFIG_SLOTS_MASK	0x000000FF	/* RW - number of device slots enabled */
 
 /* XHCI port status registers */
-#define	XHCI_PORTSC(n)		(0x3F0 + (0x10 * (n)))	/* XHCI port status */
+#define	XHCI_PORTSC(n)		(0x3f0 + (0x10 * (n)))	/* XHCI port status */
 #define	 XHCI_PS_CCS		0x00000001	/* RO - current connect status */
 #define	 XHCI_PS_PED		0x00000002	/* RW - port enabled / disabled */
 #define	 XHCI_PS_OCA		0x00000008	/* RO - over current active */
@@ -170,7 +170,7 @@
 #define	 XHCI_PS_WPR		0x80000000U	/* RW - warm port reset */
 #define	 XHCI_PS_CLEAR		0x80FF01FFU	/* command bits */
 
-#define	XHCI_PORTPMSC(n)	(0x3F4 + (0x10 * (n)))	/* XHCI status and control */
+#define	XHCI_PORTPMSC(n)	(0x3f4 + (0x10 * (n)))	/* XHCI status and control */
 #define	 XHCI_PM3_U1TO_GET(x)	(((x) >> 0) & 0xFF)	/* RW - U1 timeout */
 #define	 XHCI_PM3_U1TO_SET(x)	(((x) & 0xFF) << 0)	/* RW - U1 timeout */
 #define	 XHCI_PM3_U2TO_GET(x)	(((x) >> 8) & 0xFF)	/* RW - U2 timeout */
@@ -184,10 +184,10 @@
 #define	 XHCI_PM2_L1SLOT_SET(x)	(((x) & 0xFF) << 8)	/* RW - L1 device slot */
 #define	 XHCI_PM2_HLE		0x00010000		/* RW - hardware LPM enable */
 
-#define	XHCI_PORTLI(n)		(0x3F8 + (0x10 * (n)))	/* XHCI port link info */
+#define	XHCI_PORTLI(n)		(0x3f8 + (0x10 * (n)))	/* XHCI port link info */
 #define	 XHCI_PLI3_ERR_GET(x)	(((x) >> 0) & 0xFFFF)	/* RO - port link errors */
 
-#define	XHCI_PORTRSV(n)		(0x3FC + (0x10 * (n)))	/* XHCI port reserved */
+#define	XHCI_PORTRSV(n)		(0x3fc + (0x10 * (n)))	/* XHCI port reserved */
 
 /* XHCI runtime registers.  Offset given by XHCI_CAPLENGTH + XHCI_RTSOFF registers */
 #define	XHCI_MFINDEX		0x0000		/* RO - microframe index */
@@ -224,11 +224,9 @@
 #define	 XHCI_DB_SID_GET(x)	(((x) >> 16) & 0xFFFF)	/* RW - doorbell stream ID */
 #define	 XHCI_DB_SID_SET(x)	(((x) & 0xFFFF) << 16)	/* RW - doorbell stream ID */
 
-/* XHCI legacy support */
+/* 7 xHCI Extendeded capabilities */
 #define	XHCI_XECP_ID(x)		((x) & 0xFF)
 #define	XHCI_XECP_NEXT(x)	(((x) >> 8) & 0xFF)
-#define	XHCI_XECP_BIOS_SEM	0x0002
-#define	XHCI_XECP_OS_SEM	0x0003
 
 /* XHCI extended capability ID's */
 #define	XHCI_ID_USB_LEGACY	0x0001	/* USB Legacy Support */
@@ -241,6 +239,27 @@
 #define	XHCI_ID_USB_LOCAL_MEM	0x0006	/* Local Memory */
 #define	XHCI_ID_USB_DEBUG	0x000A	/* USB Debug Capability */
 #define	XHCI_ID_XMSG_IRQ	0x0011	/* Extended Message Interrupt */
+
+/* 7.1 xHCI legacy support */
+#define	XHCI_XECP_BIOS_SEM	0x0002
+#define	XHCI_XECP_OS_SEM	0x0003
+
+/* 7.2 xHCI Supported Protocol Capability */
+#define	XHCI_XECP_USBID 0x20425355
+
+#define	XHCI_XECP_SP_W0_MINOR_MASK	__BITS(23, 16)
+#define	XHCI_XECP_SP_W0_MINOR(x)	__SHIFTOUT((x), XHCI_XECP_SP_W0_MINOR_MASK)
+#define	XHCI_XECP_SP_W0_MAJOR_MASK	__BITS(31, 24)
+#define	XHCI_XECP_SP_W0_MAJOR(x)	__SHIFTOUT((x), XHCI_XECP_SP_W0_MAJOR_MASK)
+
+#define	XHCI_XECP_SP_W8_CPO_MASK	__BITS(7, 0)
+#define	XHCI_XECP_SP_W8_CPO(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_CPO_MASK)
+#define	XHCI_XECP_SP_W8_CPC_MASK	__BITS(15, 8)
+#define	XHCI_XECP_SP_W8_CPC(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_CPC_MASK)
+#define	XHCI_XECP_SP_W8_PD_MASK		__BITS(27, 16)
+#define	XHCI_XECP_SP_W8_PD(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_PD_MASK)
+#define	XHCI_XECP_SP_W8_PSIC_MASK	__BITS(31, 28)
+#define	XHCI_XECP_SP_W8_PSIC(x)		__SHIFTOUT((x), XHCI_XECP_SP_W8_PSIC_MASK)
 
 #define XHCI_PAGE_SIZE(sc) ((sc)->sc_pgsz)
 

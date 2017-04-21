@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_edit.c,v 1.1.1.3 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postconf_edit.c,v 1.1.1.3.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -197,7 +197,7 @@ void    pcf_edit_main(int mode, int argc, char **argv)
 	cvalue = (struct cvalue *) mymalloc(sizeof(*cvalue));
 	cvalue->value = edit_value;
 	cvalue->found = 0;
-	htable_enter(table, pattern, (char *) cvalue);
+	htable_enter(table, pattern, (void *) cvalue);
     }
 
     /*
@@ -236,7 +236,7 @@ void    pcf_edit_main(int mode, int argc, char **argv)
 	}
 	/* Copy or replace start of logical line. */
 	else {
-	    vstring_strncpy(key, cp, strcspn(cp, " \t\r\n="));
+	    vstring_strncpy(key, cp, strcspn(cp, CHARS_SPACE "="));
 	    cvalue = (struct cvalue *) htable_find(table, STR(key));
 	    if ((interesting = !!cvalue) != 0) {
 		if (cvalue->found++ == 1)
@@ -260,7 +260,7 @@ void    pcf_edit_main(int mode, int argc, char **argv)
 	    if (cvalue->found == 0)
 		vstream_fprintf(dst, "%s = %s\n", ht[0]->key, cvalue->value);
 	}
-	myfree((char *) ht_info);
+	myfree((void *) ht_info);
     }
 
     /*
@@ -342,10 +342,12 @@ void    pcf_edit_master(int mode, int argc, char **argv)
 	if (mode & PCF_EDIT_CONF) {
 	    if ((err = split_nameval(cp, &pattern, &req->edit_value)) != 0)
 		msg_fatal("%s: \"%s\"", err, req->raw_text);
+#if 0
 	    if ((mode & PCF_MASTER_PARAM)
 	    && req->edit_value[strcspn(req->edit_value, PCF_MASTER_BLANKS)])
 		msg_fatal("whitespace in parameter value: \"%s\"",
 			  req->raw_text);
+#endif
 	} else if (mode & (PCF_COMMENT_OUT | PCF_EDIT_EXCL)) {
 	    if (strchr(cp, '=') != 0)
 		msg_fatal("-X or -# requires names without value");
@@ -574,5 +576,5 @@ void    pcf_edit_master(int mode, int argc, char **argv)
 	argv_free(req->service_pattern);
 	myfree(req->parsed_text);
     }
-    myfree((char *) edit_reqs);
+    myfree((void *) edit_reqs);
 }

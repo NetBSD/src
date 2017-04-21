@@ -1,4 +1,4 @@
-/*	$NetBSD: sane_time.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sane_time.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -63,9 +63,8 @@
 time_t  sane_time(void)
 {
     time_t  now;
-    static time_t last_time,
-            last_real;
-    int     delta;
+    static time_t last_time, last_real;
+    long    delta;
     static int fraction;
     static int warned;
 

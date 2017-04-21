@@ -1,4 +1,4 @@
-.\"	$NetBSD: bufferio.9,v 1.16 2015/03/30 14:09:04 riastradh Exp $
+.\"	$NetBSD: bufferio.9,v 1.16.4.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -125,7 +125,7 @@ vnode lock between incrementing
 .Fa vp Ns Li "->v_numoutput"
 and submitting
 .Fa bp
-to a block device -- doing so will likely cause deadlock with the
+to a block device \(em doing so will likely cause deadlock with the
 syncer.
 .Pp
 Block I/O transfer completion may be notified by the
@@ -354,7 +354,7 @@ To be called by a user requesting the I/O transfer.
 .Pp
 May not be called if
 .Fa bp
-has a callback or is asynchronous -- that is, if
+has a callback or is asynchronous \(em that is, if
 .Fa bp Ns Li "->b_iodone"
 is set, or if
 .Dv B_ASYNC

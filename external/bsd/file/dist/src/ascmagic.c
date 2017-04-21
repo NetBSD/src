@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.7.4.1 2017/04/21 16:51:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.91 2014/11/28 02:46:39 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.97 2016/06/27 20:56:25 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.7.4.1 2017/04/21 16:51:24 bouyer Exp $");
 #endif
 #endif	/* lint */
 
@@ -85,9 +85,6 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes,
 	const char *code_mime = NULL;
 	const char *type = NULL;
 
-	if (ms->flags & MAGIC_APPLE)
-		return 0;
-
 	nbytes = trim_nuls(buf, nbytes);
 
 	/* If file doesn't look like any sort of text, give up. */
@@ -129,9 +126,6 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 	size_t last_line_end = (size_t)-1;
 	int has_long_lines = 0;
 
-	if (ms->flags & MAGIC_APPLE)
-		return 0;
-
 	nbytes = trim_nuls(buf, nbytes);
 
 	/* If we have fewer than 2 bytes, give up. */
@@ -153,10 +147,16 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 		    == NULL)
 			goto done;
 		if ((rv = file_softmagic(ms, utf8_buf,
-		    (size_t)(utf8_end - utf8_buf), 0, NULL,
+		    (size_t)(utf8_end - utf8_buf), NULL, NULL,
 		    TEXTTEST, text)) == 0)
 			rv = -1;
+		if ((ms->flags & (MAGIC_APPLE|MAGIC_EXTENSION))) {
+			rv = rv == -1 ? 0 : 1;
+			goto done;
+		}
 	}
+	if ((ms->flags & (MAGIC_APPLE|MAGIC_EXTENSION)))
+		return 0;
 
 	/* Now try to discover other details about the file. */
 	for (i = 0; i < ulen; i++) {
@@ -189,10 +189,10 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 	}
 
 	/* Beware, if the data has been truncated, the final CR could have
-	   been followed by a LF.  If we have HOWMANY bytes, it indicates
+	   been followed by a LF.  If we have ms->bytes_max bytes, it indicates
 	   that the data might have been truncated, probably even before
 	   this function was called. */
-	if (seen_cr && nbytes < HOWMANY)
+	if (seen_cr && nbytes < ms->bytes_max)
 		n_cr++;
 
 	if (strcmp(type, "binary") == 0) {

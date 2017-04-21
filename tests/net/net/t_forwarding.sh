@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.19 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.19.2.1 2017/04/21 16:54:13 bouyer Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,6 +47,7 @@ atf_test_case ipforwarding_v6 cleanup
 atf_test_case ipforwarding_fastforward_v4 cleanup
 atf_test_case ipforwarding_fastforward_v6 cleanup
 atf_test_case ipforwarding_misc cleanup
+atf_test_case ipforwarding_fragment_v4 cleanup
 
 ipforwarding_v4_head()
 {
@@ -75,6 +76,12 @@ ipforwarding_fastforward_v6_head()
 ipforwarding_misc_head()
 {
 	atf_set "descr" "Does IPv4 forwarding tests"
+	atf_set "require.progs" "rump_server"
+}
+
+ipforwarding_fragment_v4_head()
+{
+	atf_set "descr" "Tests for fragmented packet forwarding (IPv4)"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -148,6 +155,18 @@ setup_forwarder()
 			rump.sysctl net.inet.ip.forwarding
 		fi
 	fi
+}
+
+prepare_file()
+{
+	local file=$1
+	local data="0123456789"
+
+	touch $file
+	for i in `seq 1 512`
+	do
+		echo $data >> $file
+	done
 }
 
 setup()
@@ -398,6 +417,22 @@ test_hoplimit()
 	$DEBUG && rump.ifconfig -v shmif0
 }
 
+setup_mtu()
+{
+	local mtu=$1
+
+	export RUMP_SERVER=$SOCKFWD
+	atf_check -s exit:0 rump.ifconfig shmif0 mtu $mtu
+}
+
+disable_mtudisc()
+{
+	local mtu=$1
+
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.sysctl -w -q net.inet.ip.mtudisc=0
+}
+
 ipforwarding_v4_body()
 {
 	setup
@@ -487,6 +522,37 @@ ipforwarding_misc_body()
 	return 0
 }
 
+ipforwarding_fragment_v4_body()
+{
+	setup
+	test_setup
+
+	setup_forwarding
+	test_setup_forwarding
+
+	prepare_file $HTML_FILE
+	start_httpd $SOCKDST $IP4DST
+	$DEBUG && rump.netstat -a
+	setup_mtu 1000
+	disable_mtudisc
+
+	extract_new_packets bus1 > ./out
+	extract_new_packets bus2 > ./out
+
+	test_http_get $IP4DST
+
+	# Packets of MTU size sent from the server
+	extract_new_packets bus2 > ./out
+	atf_check -s exit:0 -o match:'length 1514' cat ./out
+
+	# The packets are fragmented down to 1000
+	extract_new_packets bus1 > ./out
+	atf_check -s exit:0 -o match:'length 1010' cat ./out
+	atf_check -s exit:0 -o match:'length 538' cat ./out
+
+	teardown_interfaces
+}
+
 ipforwarding_v4_cleanup()
 {
 	$DEBUG && dump
@@ -520,6 +586,13 @@ ipforwarding_misc_cleanup()
 	cleanup
 }
 
+ipforwarding_fragment_v4_cleanup()
+{
+	$DEBUG && dump
+	stop_httpd
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case ipforwarding_v4
@@ -527,4 +600,5 @@ atf_init_test_cases()
 	atf_add_test_case ipforwarding_fastforward_v4
 	atf_add_test_case ipforwarding_fastforward_v6
 	atf_add_test_case ipforwarding_misc
+	atf_add_test_case ipforwarding_fragment_v4
 }

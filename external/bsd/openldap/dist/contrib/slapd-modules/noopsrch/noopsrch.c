@@ -1,10 +1,10 @@
-/*	$NetBSD: noopsrch.c,v 1.1.1.1 2014/05/28 09:58:27 tron Exp $	*/
+/*	$NetBSD: noopsrch.c,v 1.1.1.1.14.1 2017/04/21 16:52:23 bouyer Exp $	*/
 
 /* noopsrch.c - LDAP Control that counts entries a search would return */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2014 The OpenLDAP Foundation.
+ * Copyright 2010-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,9 @@
  * This work was initially developed by Pierangelo Masarati for inclusion
  * in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: noopsrch.c,v 1.1.1.1.14.1 2017/04/21 16:52:23 bouyer Exp $");
 
 #include "portable.h"
 
@@ -141,9 +144,8 @@ noopsrch_response( Operation *op, SlapReply *rs )
 		ctrlsp[0] = ctrl;
 		ctrlsp[1] = NULL;
 		slap_add_ctrls( op, rs, ctrlsp );
-
-		return SLAP_CB_CONTINUE;
 	}
+	return SLAP_CB_CONTINUE;
 }
 
 static int

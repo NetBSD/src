@@ -1,10 +1,10 @@
-/*	$NetBSD: monitor.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: monitor.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* monitor.c - monitor ldap backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -22,6 +22,9 @@
  * in OpenLDAP Software and subsequently enhanced by Pierangelo
  * Masarati.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: monitor.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 

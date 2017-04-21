@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.9 2016/12/15 02:43:56 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.9.2.1 2017/04/21 16:54:13 bouyer Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -184,10 +184,65 @@ add_test()
 	atf_add_test_case "ipaddr_${name}"
 }
 
+test_alias_address()
+{
+	local ip=10.0.0.1
+	local net=10.0.0/24
+	local ip_a1=10.0.0.2
+
+	rump_server_start $SOCK_LOCAL
+	rump_server_add_iface $SOCK_LOCAL shmif0 $BUS
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	# Assign a primary address and an alias address
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip/24
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip_a1/24 alias
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	$DEBUG && rump.ifconfig shmif0
+	$DEBUG && rump.netstat -nr -f inet
+
+	atf_check -s exit:0 -o match:"inet $ip" rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:"inet $ip_a1" rump.ifconfig shmif0
+	check_route $ip 'link#2' UHl lo0
+	check_route $ip_a1 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
+
+	# Delete the primary address
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip delete
+
+	$DEBUG && rump.ifconfig shmif0
+	$DEBUG && rump.netstat -nr -f inet
+
+	atf_check -s exit:0 -o not-match:"inet $ip" rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:"inet $ip_a1" rump.ifconfig shmif0
+	check_route_no_entry $ip
+	check_route $ip_a1 'link#2' UHl lo0
+	check_route $net 'link#2' UC shmif0
+
+	# The alias address is now primary, so assigning a new address
+	# without 'alias' will overwrite the alias address
+	atf_check -s exit:0 rump.ifconfig shmif0 $ip/24
+
+	$DEBUG && rump.ifconfig shmif0
+	$DEBUG && rump.netstat -nr -f inet
+
+	atf_check -s exit:0 -o match:"inet $ip" rump.ifconfig shmif0
+	atf_check -s exit:0 -o not-match:"inet $ip_a1" rump.ifconfig shmif0
+	check_route $ip 'link#2' UHl lo0
+	check_route_no_entry $ip_a1
+	check_route $net 'link#2' UC shmif0
+
+	rump_server_destroy_ifaces
+}
+
 atf_init_test_cases()
 {
 
 	add_test same_address	"Assigning/deleting an IP address twice"
 	add_test same_address6	"Assigning/deleting an IPv6 address twice"
 	add_test auto_linklocal	"Assigning an IPv6 link-local address automatically"
+	add_test alias_address	"Tests of behaviors of alias addresses"
 }

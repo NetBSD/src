@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2012/08/14 02:55:00 christos Exp $
+#	$NetBSD: Makefile,v 1.12.20.1 2017/04/21 16:51:10 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	4096k
-MAKEFS_FLAGS=	-f 15
+MAKEFS_FLAGS+=	-f 15
 
 WARNS=		1
 DBG=		-Os

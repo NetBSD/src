@@ -1,26 +1,161 @@
-The stable Postfix release is called postfix-2.11.x where 2=major
-release number, 11=minor release number, x=patchlevel.  The stable
+This is the Postfix 3.1 (stable) release.
+
+The stable Postfix release is called postfix-3.1.x where 3=major
+release number, 1=minor release number, x=patchlevel.  The stable
 release never changes except for patches that address bugs or
 emergencies. Patches change the patchlevel and the release date.
 
 New features are developed in snapshot releases. These are called
-postfix-2.12-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+postfix-3.2-yyyymmdd where yyyymmdd is the release date (yyyy=year,
 mm=month, dd=day).  Patches are never issued for snapshot releases;
 instead, a new snapshot is released.
 
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
-If you upgrade from Postfix 2.9 or earlier, read RELEASE_NOTES-2.10
+If you upgrade from Postfix 2.11 or earlier, read RELEASE_NOTES-3.0
 before proceeding.
 
-Incompatible change with Postfix 2.11.6
----------------------------------------
+Workaround - UTF8 support in Postfix MySQL queries
+--------------------------------------------------
 
-As of the middle of 2015, all supported Postfix releases no longer
-enable "export" grade ciphers for opportunistic TLS, and no longer
-use the deprecated SSLv2 and SSLv3 protocols for mandatory or
-opportunistic TLS.
+Someone reported false "not found" errors with MySQL map queries
+that contain UTF8-encoded text. To avoid such errors, specify
+"option_group = client" in Postfix MySQL configuration files.  This
+will be the default setting with Postfix 3.2 and later.
+
+Major changes - address verification safety
+-------------------------------------------
+
+[Feature 20151227] The new address_verify_pending_request_limit
+parameter introduces a safety limit for the number of address
+verification probes in the active queue.  The default limit is 1/4
+of the active queue maximum size. The queue manager enforces the
+limit by tempfailing probe messages that exceed the limit. This
+design avoids dependencies on global counters that get out of sync
+after a process or system crash.
+
+Tempfailing verify requests is not as bad as one might think.  The
+Postfix verify cache proactively updates active addresses weeks
+before they expire. The address_verify_pending_request_limit affects
+only unknown addresses, and inactive addresses that have expired
+from the address verify cache (by default, after 31 days).
+
+Major changes - json support
+----------------------------
+
+[Feature 20151129] Machine-readable, JSON-formatted queue listing
+with "postqueue -j" (no "mailq" equivalent).  The output is a stream
+of JSON objects, one per queue file.  To simplify parsing, each
+JSON object is formatted as one text line followed by one newline
+character. See the postqueue(1) manpage for a detailed description
+of the output format.
+
+Major changes - milter support
+------------------------------
+
+[Feature 20150523] The milter_macro_defaults feature provides an
+optional list of macro name=value pairs. These specify default
+values for Milter macros when no value is available from the SMTP
+session context.
+
+For example, with "milter_macro_defaults = auth_type=TLS", the
+Postfix SMTP server will send an auth_type of "TLS" to a Milter,
+unless the remote client authenticates with SASL.
+
+This feature was originally implemented for a submission service
+that may authenticate clients with a TLS certificate, without having
+to make changes to the code that implements TLS support.
+
+Major changes - output rate control
+-----------------------------------
+
+[Feature 20150710] Destination-independent delivery rate delay
+
+Support to enforce a destination-independent delay between email
+deliveries.  The following example inserts 20 seconds of delay
+between all deliveries with the SMTP transport, limiting the delivery
+rate to at most three messages per minute.
+
+/etc/postfix/main.cf:
+    smtp_transport_rate_delay = 20s
+
+For details, see the description of default_transport_rate_delay
+and transport_transport_rate_delay in the postconf(5) manpage.
+
+Major changes - postscreen dnsbl
+--------------------------------
+
+[Feature 20150710] postscreen support for the TTL of DNSBL and DNSWL
+lookup results
+
+Historically, the default setting "postscreen_dnsbl_ttl = 1h" assumes
+that a "not found" result from a DNSBL server will be valid for one
+hour.  This may have been adequate five years ago when postscreen
+was first implemented, but nowadays, that one hour can result in
+missed opportunities to block new spambots.
+
+To address this, postscreen now respects the TTL of DNSBL "not
+found" replies, as well as the TTL of DNSWL replies (both "found"
+and "not found").  The TTL for a "not found" reply is determined
+according to RFC 2308 (the TTL of an SOA record in the reply).
+
+Support for DNSBL or DNSWL reply TTL values is controlled by two
+configuration parameters:
+
+postscreen_dnsbl_min_ttl (default: 60 seconds).
+
+    This parameter specifies a minimum for the amount of time that
+    a DNSBL or DNSWL result will be cached in the postscreen_cache_map.
+    This prevents an excessive number of postscreen cache updates
+    when a DNSBL or DNSWL server specifies a very small reply TTL.
+
+postscreen_dnsbl_max_ttl (default: $postscreen_dnsbl_ttl or 1 hour)
+
+    This parameter specifies a maximum for the amount of time that
+    a DNSBL or DNSWL result will be cached in the postscreen_cache_map.
+    This prevents cache pollution when a DNSBL or DNSWL server
+    specifies a very large reply TTL.
+
+The postscreen_dnsbl_ttl parameter is now obsolete, and has become
+the default value for the new postscreen_dnsbl_max_ttl parameter.
+
+Major changes - sasl auth safety
+--------------------------------
+
+[Feature 20151031] New "smtpd_client_auth_rate_limit" feature, to
+enforce an optional rate limit on AUTH commands per SMTP client IP
+address.  Similar to other smtpd_client_*_rate_limit features, this
+enforces a limit on the number of requests per $anvil_rate_time_unit.
+
+Major changes - smtpd policy
+----------------------------
+
+[Feature 20150913] New SMTPD policy service attribute "policy_context",
+with a corresponding "smtpd_policy_service_policy_context" configuration
+parameter.  Originally, this was implemented to share the same SMTPD
+policy service endpoint among multiple check_policy_service clients.
+
+Major changes - tls
+-------------------
+
+[Feature 20160207] A new "postfix tls" command to quickly enable
+opportunistic TLS in the Postfix SMTP client or server, and to
+manage SMTP server keys and certificates, including certificate
+signing requests and TLSA DNS records for DANE. See the postfix-tls(1)
+manpage for a detailed description.
+
+[Feature 20160103] The Postfix SMTP client by default enables DANE
+policies when an MX host has a (DNSSEC) secure TLSA DNS record,
+even if the MX DNS record was obtained with insecure lookups.  The
+existence of a secure TLSA record implies that the host wants to
+talk TLS and not plaintext. For details see the
+smtp_tls_dane_insecure_mx_policy configuration parameter.
+
+[Incompat 20150721] As of the middle of 2015, all supported Postfix
+releases no longer enable "export" grade ciphers for opportunistic
+TLS, and no longer use the deprecated SSLv2 and SSLv3 protocols for
+mandatory or opportunistic TLS.
 
 These changes are very unlikely to cause problems with server-to-server
 communication over the Internet, but they may result in interoperability
@@ -48,267 +183,12 @@ selective, use "-o name=value" parameter overrides on specific
 services in master.cf. Execute the command "postfix reload" to make
 the changes effective.
 
-Major changes - tls
--------------------
+[Incompat 20150719] The default Diffie-Hellman non-export prime was
+updated from 1024 to 2048 bits, because SMTP clients are starting
+to reject TLS handshakes with primes smaller than 2048 bits.
+
+Historically, this prime size is not negotiable, and each site needs
+to determine which prime size works best for the majority of its
+clients. See FORWARD_SECRECY_README for some hints in the quick-start
+section.
 
-[Documentation 20131218] The new FORWARD_SECRECY_README document
-conveniently presents all information about Postfix "perfect" forward
-secrecy support in one place: what forward secrecy is, how to tweak
-settings, and what you can expect to see when Postfix uses ciphers
-with forward secrecy.
-
-[Feature 20130602] Support for PKI-less TLS server certificate
-verification, where the CA public key or the server certificate is
-identified via DNSSEC lookup.
-
-This feature introduces new TLS security levels called "dane" and
-"dane-only" (DNS-based Authentication of Named Entities) that use
-DNSSEC to look up CA or server certificate information.  The details
-of DANE core protocols are still evolving, as are the details of
-how DANE should be used in the context of SMTP. Postfix implements
-what appears to be a "rational" subset of the DANE profiles that
-is suitable for SMTP.
-
-The problem with conventional PKI is that there are literally
-hundreds of organizations world-wide that can provide a certificate
-in anyone's name. There have been widely-published incidents in
-recent history where a certificate authority gave out an inappropriate
-certificate (e.g., a certificate in the name of Microsoft to someone
-who did not represent Microsoft), where a CA was compromised (e.g.,
-DigiNotar, Comodo), or where a CA made operational mistakes (e.g.,
-TURKTRUST).  Another concern is that a legitimate CA might be coerced
-to provide a certificate that allows its government to play
-man-in-the-middle on TLS traffic and observe the plaintext.
-
-Major changes - LMDB database support
--------------------------------------
-
-LMDB is a memory-mapped database that was originally developed as
-part of OpenLDAP. The Postfix LMDB driver was originally contributed
-by Howard Chu, LMDB's creator.
-
-LMDB can be used for all Postfix lookup tables and caches.  It is
-the first persistent Postfix database that can be shared among
-multiple writers such as postscreen daemons (Postfix already supported
-shared non-persistent memcached caches).  See lmdb_table(5) and
-LMDB_README for further information, including how to access Postfix
-LMDB databases with non-Postfix programs.
-
-Postfix currently requires LMDB version 0.9.11 or later. The minimum
-version may change over time in the light of deployment experience.
-
-Major changes - postscreen whitelisting
----------------------------------------
-
-[Feature 20130512] Allow a remote SMTP client to skip postscreen(8)
-tests based on its postscreen_dnsbl_sites score.
-
-Specify a negative "postscreen_dnsbl_whitelist_threshold" value to
-enable this feature.  When a client passes the threshold value
-without having failed other tests, all pending or disabled tests
-are flagged as completed.
-
-This feature can mitigate the email delays due to "after 220 greeting"
-protocol tests, which otherwise require that a client reconnects
-before it can deliver mail. Some providers such as Google don't
-retry from the same IP address. This can result in large email
-delivery delays.
-
-Major changes - recipient_delimiter
------------------------------------
-
-[Feature 20130405] The recipient_delimiter parameter can now specify
-a set of characters.  A user name is now separated from its address
-extension by the first character that matches the recipient_delimiter
-set.
-
-For example, specify "recipient_delimiter = +-" to support both the
-Postfix-style "+" and the qmail-style "-" extension delimiter.  
-
-As before, this implementation recognizes one delimiter character
-per email address, and one address extension per email address.
-
-Major changes - smtpd access control
-------------------------------------
-
-[Feature 20131031] The check_sasl_access feature can be used to
-block hijacked logins. Like other check_mumble_access features it
-queries a lookup table (in this case with the SASL login name), and
-it supports the same actions as any Postfix access(5) table.
-
-[Feature 20130924] The reject_known_sender_login_mismatch feature
-applies reject_sender_login_mismatch only to MAIL FROM addresses
-that are known in $smtpd_sender_login_maps.
-
-Major changes - MacOS X
------------------------
-
-[Feature 20130325] Full support for kqueue() event handling which
-scales better with large numbers of file handles, plus a workaround
-for timeout handling on file handles (such as /dev/urandom) that
-still do not correctly support poll().
-
-Major changes - master
-----------------------
-
-[Incompat 20131217] The master_service_disable parameter value
-syntax has changed: use "service/type" instead of "service.type".
-The new form is consistent with postconf(1) namespaces for master.cf.
-The old form is still supported to avoid breaking existing
-configurations.
-
-Major changes - milter
-----------------------
-
-[Feature 20131126] Support for ESMTP parameters "NOTIFY" and "ORCPT"
-in the SMFIR_ADDRCPT_PAR (add recipient with parameters) request.
-Credits: Andrew Ayer.
-
-Major changes - mysql
----------------------
-
-[Feature 20131117] MySQL client support for option_file, option_group,
-tls_cert_file, tls_key_file, tls_CAfile, tls_CApath, tls_verify_cert.
-Credits: Gareth Palmer.
-
-Major changes - postconf
-------------------------
-
-[Feature 20131217] Support for advanced master.cf query and update
-operations.  This was implemented primarily to support automated
-system management tools.
-
-The goal is to make all Postfix master.cf details accessible as
-lists of "name=value" pairs, where the names are organized into
-structured name spaces.  This allows other programs to query
-information or request updates, without having to worry about the
-exact layout of master.cf files.
-
-Managing master.cf service attributes
--------------------------------------
-
-First, an example that shows the smtp/inet service in the traditional
-form:
-
-    $ postconf -M smtp/inet
-    smtp       inet  n       -       n       -       -       smtpd
-
-Different variants of this command show different amounts of output.
-For example, "postconf -M smtp" enumerates all services that have
-a name "smtp" and any service type ("inet", "unix", etc.), and
-"postconf -M" enumerates all master.cf services.  
-
-General rule: each name component that is not present becomes a "*"
-wildcard.
-
-Coming back to the above example, the postconf -F option can now
-enumerate the smtp/inet service fields as follows:
-
-    $ postconf -F smtp/inet
-    smtp/inet/service = smtp
-    smtp/inet/type = inet
-    smtp/inet/private = n
-    smtp/inet/unprivileged = -
-    smtp/inet/chroot = n
-    smtp/inet/wakeup = -
-    smtp/inet/process_limit = -
-    smtp/inet/command = smtpd
-
-This form makes it very easy to change one field in master.cf.
-For example to turn on chroot on the smtp/inet service you use:
-
-    $ postconf -F smtp/inet/chroot=y
-    $ postfix reload
-
-Moreover, with "-F" you can specify "*" for service name or service
-type to get a wild-card match.  For example, to turn off chroot on
-all Postfix daemons, use this:
-
-    $ postconf -F '*/*/chroot=n'
-    $ postfix reload
-
-Managing master.cf service "-o parameter=value" settings
---------------------------------------------------------
-
-For a second example, let's look at the submission service.  This
-service typically has multiple "-o parameter=value" overrides. First
-the traditional view:
-
-    $ postconf -Mf submission
-    submission inet  n       -       n       -       -       smtpd
-        -o smtpd_tls_security_level=encrypt
-        -o smtpd_sasl_auth_enable=yes
-        ...
-
-The postconf -P option can now enumerate these parameters as follows:
-
-    $ postconf -P submission
-    submission/inet/smtpd_sasl_auth_enable = yes
-    submission/inet/smtpd_tls_security_level = encrypt
-    ...
-
-Again, this form makes it very easy to modify one parameter
-setting. For example, to change the smtpd_tls_security_level setting
-for the submission/inet service:
-
-    $ postconf -P 'submission/inet/smtpd_tls_security_level=may'
-
-You can create or remove a parametername=parametervalue setting:
-
-Create:
-    $ postconf -P 'submission/inet/parametername=parametervalue'
-
-Remove:
-    $ postconf -PX submission/inet/parametername
-
-Finally, always execute "postfix reload" after updating master.cf.
-
-Managing master.cf service entries
-----------------------------------
-
-Finally, adding master.cf entries is possible, but currently this
-does not yet have "advanced" support. It can only be done at the
-level of the traditional master.cf file format.
-
-Suppose that you need to configure a Postfix SMTP client that will
-handle slow email deliveries.  To implement this you need to clone
-the smtp/unix service settings and create a new delay/unix service.
-
-First, you would enumerate the smtp/unix service like this:
-
-    $ postconf -M smtp/unix
-    smtp      unix  -       -       n       -       -       smtp
-
-Then you would copy those fields (except the first field) by hand
-to create the delay/unix service:
-
-    $ postconf -M delay/unix="delay   unix   -   -   n   -   -   smtp"
-
-To combine the above steps in one command:
-
-    $ postconf -M delay/unix="`postconf -M smtp/unix|awk '{$1 = "delay"}'`"
-
-This is perhaps not super-convenient for manual cloning, but it
-should be sufficient for programmatic configuration management.
-
-Again, always execute "postfix reload" after updating master.cf.
-
-Deleting or commenting out master.cf entries
---------------------------------------------
-
-The -X (delete entry) and -# (comment out entry) options already
-exist for main.cf, and they now also work work for entire master.cf
-entries:
-
-Remove main.cf or master.cf entry:
-    $ postconf -X parametername
-    $ postconf -MX delay/unix
-
-Comment out main.cf or master.cf entry:
-    $ postconf -# parametername
-    $ postconf -M# delay/unix
-
-As with main.cf, there is no support to "undo" master.cf changes
-that are made with -X or -#.
-
-Again, always execute "postfix reload" after updating master.cf.

@@ -1,4 +1,4 @@
-/*	$NetBSD: code_calc.tab.c,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: code_calc.tab.c,v 1.1.1.3.4.1 2017/04/21 16:51:22 bouyer Exp $	*/
 
 typedef short YYINT;
 const YYINT calc_lhs[] = {                        -1,
@@ -84,7 +84,6 @@ const YYINT calc_check[] = {                      40,
 #ifndef YYDEBUG
 #define YYDEBUG 0
 #endif
-#if YYDEBUG
 const char *const calc_name[] = {
 
 "end-of-file",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -96,6 +95,7 @@ const char *const calc_name[] = {
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,"DIGIT","LETTER","UMINUS",0,0,0,0,0,"illegal-symbol",
 };
+#if YYDEBUG
 const char *const calc_rule[] = {
 "$accept : list",
 "list :",

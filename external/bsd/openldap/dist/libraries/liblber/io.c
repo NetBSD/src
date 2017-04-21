@@ -1,10 +1,10 @@
-/*	$NetBSD: io.c,v 1.1.1.5 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: io.c,v 1.1.1.5.10.1 2017/04/21 16:52:26 bouyer Exp $	*/
 
 /* io.c - ber general i/o routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@
  * This work was originally developed by the University of Michigan
  * (as part of U-MICH LDAP).
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: io.c,v 1.1.1.5.10.1 2017/04/21 16:52:26 bouyer Exp $");
 
 #include "portable.h"
 
@@ -658,7 +661,8 @@ ber_get_next(
 		ber_slen_t to_go;
 		
 		to_go = ber->ber_end - ber->ber_rwptr;
-		assert( to_go > 0 );
+		/* unsigned/signed overflow */
+		if (to_go<0) return LBER_DEFAULT;
 		
 		sock_errset(0);
 		res = ber_int_sb_read( sb, ber->ber_rwptr, to_go );
@@ -681,7 +685,7 @@ done:
 		return (ber->ber_tag);
 	}
 
-	assert( 0 ); /* ber structure is messed up ?*/
+	/* invalid input */
 	return LBER_DEFAULT;
 }
 

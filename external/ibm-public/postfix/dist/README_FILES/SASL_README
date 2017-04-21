@@ -975,12 +975,12 @@ authentication information:
 
     The mmmmeennccooddee command is part of the metamail software.
 
-  * Using Perl MMIIMMEE::::BBaassee6644:
+  * Using Perl MMIIMMEE::::BBaassee6644 (from http://www.cpan.org/):
 
         % ppeerrll --MMMMIIMMEE::::BBaassee6644 --ee \\
             ''pprriinntt eennccooddee__bbaassee6644((""\\00uusseerrnnaammee\\00ppaasssswwoorrdd""));;''
 
-    MIME::Base64 is available from http://www.cpan.org/.
+    If the username or password contain "@", you must specify "\@".
 
   * Using the ggeenn--aauutthh script:
 
@@ -1029,6 +1029,8 @@ username/password information.
 
     /etc/postfix/main.cf:
         smtp_sasl_auth_enable = yes
+        smtp_tls_security_level = encrypt
+        smtp_sasl_tls_security_options = noanonymous
         relayhost = [mail.isp.example]
         # Alternative form:
         # relayhost = [mail.isp.example]:submission
@@ -1037,6 +1039,10 @@ username/password information.
   * The smtp_sasl_auth_enable setting enables client-side authentication. We
     will configure the client's username and password information in the second
     part of the example.
+
+  * The smtp_tls_security_level setting ensures that the connection to the
+    remote smtp server will be encrypted, and smtp_sasl_tls_security_options
+    removes the prohibition on plaintext passwords.
 
   * The relayhost setting forces the Postfix SMTP to send all remote messages
     to the specified mail server instead of trying to deliver them directly to
@@ -1114,7 +1120,7 @@ final resort.
 
     /etc/postfix/sasl_passwd:
         # Per-sender authentication; see also /etc/postfix/sender_relay.
-        user1@example.com               username2:password2
+        user1@example.com               username1:password1
         user2@example.net               username2:password2
         # Login information for the default relayhost.
         [mail.isp.example]              username:password

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.64 2013/10/19 01:09:58 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.64.12.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.64 2013/10/19 01:09:58 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.64.12.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,11 +140,13 @@ bufinit(void)
 		errexit("cannot allocate buffer pool");
 	cgblk.b_un.b_buf = bufp;
 	initbarea(&cgblk);
+#ifndef NO_APPLE_UFS
 	bufp = malloc((unsigned int)APPLEUFS_LABEL_SIZE);
 	if (bufp == 0)
 		errexit("cannot allocate buffer pool");
 	appleufsblk.b_un.b_buf = bufp;
 	initbarea(&appleufsblk);
+#endif
 	bufhead.b_next = bufhead.b_prev = &bufhead;
 	bufcnt = MAXBUFSPACE / sblock->fs_bsize;
 	if (bufcnt < MINBUFS)
@@ -287,8 +289,10 @@ ckfini(int noint)
 		sbdirty();
 		flush(fswritefd, &sblk);
 	}
+#ifndef NO_APPLE_UFS
 	flush(fswritefd, &appleufsblk);
 	free(appleufsblk.b_un.b_buf);
+#endif
 	flush(fswritefd, &cgblk);
 	free(cgblk.b_un.b_buf);
 	for (bp = bufhead.b_prev; bp && bp != &bufhead; bp = nbp) {

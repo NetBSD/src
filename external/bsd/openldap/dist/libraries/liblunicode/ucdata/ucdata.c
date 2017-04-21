@@ -1,9 +1,9 @@
-/*	$NetBSD: ucdata.c,v 1.1.1.4 2014/05/28 09:58:44 tron Exp $	*/
+/*	$NetBSD: ucdata.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,9 @@
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* Id: ucdata.c,v 1.4 2001/01/02 18:46:20 mleisher Exp " */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ucdata.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 #include "ldap_config.h"

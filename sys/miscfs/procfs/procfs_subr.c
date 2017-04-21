@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.106 2014/11/10 18:46:34 maxv Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.106.6.1 2017/04/21 16:54:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.106 2014/11/10 18:46:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.106.6.1 2017/04/21 16:54:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,10 @@ procfs_rw(void *v)
 		error = procfs_doversion(curl, p, pfs, uio);
 		break;
 
+	case PFSauxv:
+		error = procfs_doauxv(curl, p, pfs, uio);
+		break;
+
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
 		error = procfs_machdep_rw(curl, l, pfs, uio);
@@ -351,7 +355,11 @@ static bool
 procfs_revoke_selector(void *arg, struct vnode *vp)
 {
 	struct proc *p = arg;
-	struct pfsnode *pfs = VTOPFS(vp);
+	struct pfsnode *pfs;
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	pfs = VTOPFS(vp);
 
 	return (pfs != NULL && pfs->pfs_pid == p->p_pid);
 }

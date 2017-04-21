@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2.10.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -354,10 +354,12 @@ common_path_init(const char *service,
 	return ENOMEM;
     s->fd = -1;
 
-    asprintf(&s->path, "/var/run/.heim_%s-%s", service, file);
+    if (asprintf(&s->path, "/var/run/.heim_%s-%s", service, file) == -1) {
+	free(s);
+	return ENOMEM;
+    }
 
     *ctx = s;
-
     return 0;
 }
 

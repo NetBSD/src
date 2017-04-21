@@ -1,10 +1,10 @@
-/*	$NetBSD: ctxcsn.c,v 1.1.1.4 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: ctxcsn.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* ctxcsn.c -- Context CSN Management Routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -16,6 +16,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ctxcsn.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -122,7 +125,7 @@ slap_graduate_commit_csn( Operation *op )
 			LDAP_TAILQ_REMOVE( be->be_pending_csn_list,
 				csne, ce_csn_link );
 			Debug( LDAP_DEBUG_SYNC, "slap_graduate_commit_csn: removing %p %s\n",
-				csne->ce_csn.bv_val, csne->ce_csn.bv_val, 0 );
+				csne, csne->ce_csn.bv_val, 0 );
 			if ( op->o_csn.bv_val == csne->ce_csn.bv_val ) {
 				BER_BVZERO( &op->o_csn );
 			}
@@ -188,7 +191,7 @@ slap_queue_csn(
 	pending = (struct slap_csn_entry *) ch_calloc( 1,
 			sizeof( struct slap_csn_entry ));
 
-	Debug( LDAP_DEBUG_SYNC, "slap_queue_csn: queing %p %s\n", csn->bv_val, csn->bv_val, 0 );
+	Debug( LDAP_DEBUG_SYNC, "slap_queue_csn: queueing %p %s\n", pending, csn->bv_val, 0 );
 
 	ldap_pvt_thread_mutex_lock( &be->be_pcl_mutex );
 

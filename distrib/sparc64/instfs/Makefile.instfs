@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.instfs,v 1.12 2010/02/11 09:06:50 roy Exp $
+#	$NetBSD: Makefile.instfs,v 1.12.34.1 2017/04/21 16:51:15 bouyer Exp $
 
 INSTFSDIR=	${.CURDIR}/../instfs
 
-MAKEFS_FLAGS=	-o bsize=16k,fsize=2k -f 15
+MAKEFS_FLAGS+=	-o bsize=16k,fsize=2k -f 15
 
 WARNS=		1
 DBG= 		-Os

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfg_parser.c,v 1.1.1.3 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: cfg_parser.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -122,7 +122,7 @@ static char *get_dict_str(const struct CFG_PARSER *parser,
     const char *strval;
     int     len;
 
-    if ((strval = (char *) dict_lookup(parser->name, name)) == 0)
+    if ((strval = dict_lookup(parser->name, name)) == 0)
 	strval = defval;
 
     len = strlen(strval);
@@ -146,7 +146,7 @@ static char *get_main_str(const struct CFG_PARSER *parser,
     if (buf == 0)
 	buf = vstring_alloc(15);
     vstring_sprintf(buf, "%s_%s", parser->name, name);
-    return ((char *) get_mail_conf_str(vstring_str(buf), defval, min, max));
+    return (get_mail_conf_str(vstring_str(buf), defval, min, max));
 }
 
 /* get integer from file */
@@ -159,7 +159,7 @@ static int get_dict_int(const struct CFG_PARSER *parser,
     int     intval;
     long    longval;
 
-    if ((strval = (char *) dict_lookup(parser->name, name)) != 0) {
+    if ((strval = dict_lookup(parser->name, name)) != 0) {
 	errno = 0;
 	intval = longval = strtol(strval, &end, 10);
 	if (*strval == 0 || *end != 0 || errno == ERANGE || longval != intval)
@@ -197,7 +197,7 @@ static int get_dict_bool(const struct CFG_PARSER *parser,
     const char *strval;
     int     intval;
 
-    if ((strval = (char *) dict_lookup(parser->name, name)) != 0) {
+    if ((strval = dict_lookup(parser->name, name)) != 0) {
 	if (strcasecmp(strval, CONFIG_BOOL_YES) == 0) {
 	    intval = 1;
 	} else if (strcasecmp(strval, CONFIG_BOOL_NO) == 0) {
@@ -239,7 +239,7 @@ CFG_PARSER *cfg_parser_alloc(const char *pname)
     if (*parser->name == '/' || *parser->name == '.') {
 	if (dict_load_file_xt(parser->name, parser->name) == 0) {
 	    myfree(parser->name);
-	    myfree((char *) parser);
+	    myfree((void *) parser);
 	    return (0);
 	}
 	parser->get_str = get_dict_str;
@@ -319,6 +319,6 @@ CFG_PARSER *cfg_parser_free(CFG_PARSER *parser)
 	    dict_unregister(parser->name);
     }
     myfree(parser->name);
-    myfree((char *) parser);
+    myfree((void *) parser);
     return (0);
 }

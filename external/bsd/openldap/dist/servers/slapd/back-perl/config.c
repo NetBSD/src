@@ -1,9 +1,9 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.
@@ -221,9 +221,11 @@ perl_cf(
 			XPUSHs( pb->pb_obj_ref );
 
 			/* Put all arguments on the perl stack */
-			for( args = 1; args < c->argc; args++ ) {
+			for( args = 1; args < c->argc; args++ )
 				XPUSHs(sv_2mortal(newSVpv(c->argv[args], 0)));
-			}
+
+			ber_str2bv( c->line + STRLENOF("perlModuleConfig "), 0, 0, &bv );
+			value_add_one( &pb->pb_module_config, &bv );
 
 			PUTBACK ;
 

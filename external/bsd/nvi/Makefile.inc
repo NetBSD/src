@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2015/11/29 17:09:33 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4.4.1 2017/04/21 16:52:20 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -7,4 +7,4 @@ DIST= ${NETBSDSRCDIR}/external/bsd/nvi/dist
 BINDIR=/usr/bin
 
 CWARNFLAGS.clang+=	-Wno-error=unused-const-variable
-VERSION=1.81.6-2013-11-20nb3
+VERSION=1.81.6-2013-11-20nb4

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.199.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,13 +62,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.199 2016/11/14 08:55:51 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.199.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
 #include "opt_compat_netbsd32.h"
+#endif
+
+#if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
+    && !defined(_RUMPKERNEL)
+#define COMPAT_NETBSD32
 #endif
 
 #include <sys/param.h>
@@ -2464,4 +2469,35 @@ out:
 #else
 	return 0;
 #endif
+}
+
+int
+proc_getauxv(struct proc *p, void **buf, size_t *len)
+{
+	struct ps_strings pss;
+	int error;
+	void *uauxv, *kauxv;
+
+	if ((error = copyin_psstrings(p, &pss)) != 0)
+		return error;
+
+	if (pss.ps_envstr == NULL)
+		return EIO;
+
+	size_t ptrsz = PROC_PTRSZ(p);
+	uauxv = (void *)((char *)pss.ps_envstr + (pss.ps_nenvstr + 1) * ptrsz);
+	size_t size = p->p_execsw->es_arglen;
+
+	kauxv = kmem_alloc(size, KM_SLEEP);
+
+	error = copyin_proc(p, uauxv, kauxv, size);
+	if (error) {
+		kmem_free(kauxv, size);
+		return error;
+	}
+
+	*buf = kauxv;
+	*len = size;
+
+	return 0;
 }

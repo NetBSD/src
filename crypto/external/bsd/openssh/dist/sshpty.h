@@ -1,4 +1,4 @@
-/*	$NetBSD: sshpty.h,v 1.6 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: sshpty.h,v 1.6.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: sshpty.h,v 1.13 2016/11/29 03:54:50 dtucker Exp $ */
 
 /*

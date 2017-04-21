@@ -1,4 +1,4 @@
-/*	$NetBSD: peekfd.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: peekfd.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -44,6 +44,10 @@
 #endif
 #include <unistd.h>
 
+#ifndef SHUT_RDWR
+#define SHUT_RDWR  2
+#endif
+
 /* Utility library. */
 
 #include "iostuff.h"
@@ -59,7 +63,23 @@ ssize_t peekfd(int fd)
 #ifdef FIONREAD
     int     count;
 
+#ifdef SUNOS5
+
+    /*
+     * With Solaris10, write_wait() hangs in poll() until timeout, when
+     * invoked after peekfd() has received an ECONNRESET error indication.
+     * This happens when a client sends QUIT and closes the connection
+     * immediately.
+     */
+    if (ioctl(fd, FIONREAD, (char *) &count) < 0) {
+	(void) shutdown(fd, SHUT_RDWR);
+	return (-1);
+    } else {
+	return (count);
+    }
+#else						/* SUNOS5 */
     return (ioctl(fd, FIONREAD, (char *) &count) < 0 ? -1 : count);
+#endif						/* SUNOS5 */
 #else
 #error "don't know how to look ahead"
 #endif

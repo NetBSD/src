@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_amdpmi.c,v 1.4 2013/11/15 08:47:55 msaitoh Exp $	*/
+/*	$NetBSD: tprof_amdpmi.c,v 1.4.14.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4 2013/11/15 08:47:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4.14.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4 2013/11/15 08:47:55 msaitoh Exp
 #include <x86/nmi.h>
 
 #include <machine/cpufunc.h>
-#include <machine/cputypes.h>	/* CPUVENDER_* */
+#include <machine/cputypes.h>	/* CPUVENDOR_* */
 #include <machine/cpuvar.h>	/* cpu_vendor */
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
@@ -73,16 +73,25 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_amdpmi.c,v 1.4 2013/11/15 08:47:55 msaitoh Exp
 				/* bit 42-63 reserved */
 
 /*
- * parameters
- *
- * XXX should not hardcode
- *
- * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/32559.pdf
- * http://developer.amd.com/Assets/Basic_Performance_Measurements.pdf
+ * Documents:
+ * http://support.amd.com/TechDocs/32559.pdf
+ * http://developer.amd.com/wordpress/media/2012/10/Basic_Performance_Measurements.pdf
  */
 
-static uint32_t event = 0x76;	/* CPU Clocks not Halted */
-static uint32_t unit = 0;
+/* Event flags - abbreviations as found in the documents */
+#define CPU_clocks__EVENT	0x76
+#define CPU_clocks__UNIT	0x00
+#define DC_refills_L2__EVENT	0x42
+#define DC_refills_L2__UNIT	0x1E
+#define DC_refills_sys__EVENT	0x43
+#define DC_refills_sys__UNIT	0x1E
+
+/*
+ * Hardcode your counter here. There is no detection, so make sure it is
+ * supported by your CPU family.
+ */
+static uint32_t event = CPU_clocks__EVENT;
+static uint32_t unit = CPU_clocks__UNIT;
 static int ctrno = 0;
 
 static uint64_t counter_val = 5000000;
@@ -174,11 +183,9 @@ tprof_amdpmi_estimate_freq(void)
 static int
 tprof_amdpmi_start(tprof_backend_cookie_t *cookie)
 {
-	struct cpu_info * const ci = curcpu();
 	uint64_t xc;
 
-	if (!(cpu_vendor == CPUVENDOR_AMD) ||
-	    CPUID_TO_FAMILY(ci->ci_signature) != 0xf) { /* XXX */
+	if (cpu_vendor != CPUVENDOR_AMD) {
 		return ENOTSUP;
 	}
 

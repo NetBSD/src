@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.161 2016/09/29 12:19:47 roy Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.161.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,13 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.161 2016/09/29 12:19:47 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.161.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -212,7 +213,7 @@ rip_input(struct mbuf *m, ...)
 #if defined(IPSEC)
 		/* check AH/ESP integrity. */
 		else if (ipsec_used &&
-		    ipsec4_in_reject_so(m, last->inp_socket)) {
+		    ipsec4_in_reject(m, last)) {
 			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			/* do not inject data to pcb */
 		}
@@ -227,7 +228,7 @@ rip_input(struct mbuf *m, ...)
 #if defined(IPSEC)
 	/* check AH/ESP integrity. */
 	if (ipsec_used && last != NULL
-	    && ipsec4_in_reject_so(m, last->inp_socket)) {
+	    && ipsec4_in_reject(m, last)) {
 		m_freem(m);
 		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		IP_STATDEC(IP_STAT_DELIVERED);
@@ -382,7 +383,7 @@ rip_output(struct mbuf *m, struct inpcb *inp)
 	 * will be stored in inp_errormtu.
 	 */
 	return ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	     inp->inp_socket);
+	     inp);
 }
 
 /*
@@ -806,7 +807,13 @@ rip_purgeif(struct socket *so, struct ifnet *ifp)
 	s = splsoftnet();
 	mutex_enter(softnet_lock);
 	in_pcbpurgeif0(&rawcbtable, ifp);
+#ifdef NET_MPSAFE
+	mutex_exit(softnet_lock);
+#endif
 	in_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
 	in_pcbpurgeif(&rawcbtable, ifp);
 	mutex_exit(softnet_lock);
 	splx(s);

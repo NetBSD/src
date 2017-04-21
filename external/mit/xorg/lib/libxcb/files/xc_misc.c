@@ -18,15 +18,15 @@
 xcb_extension_t xcb_xc_misc_id = { "XC-MISC", 0 };
 
 xcb_xc_misc_get_version_cookie_t
-xcb_xc_misc_get_version (xcb_connection_t *c  /**< */,
-                         uint16_t          client_major_version  /**< */,
-                         uint16_t          client_minor_version  /**< */)
+xcb_xc_misc_get_version (xcb_connection_t *c,
+                         uint16_t          client_major_version,
+                         uint16_t          client_minor_version)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xc_misc_id,
-        /* opcode */ XCB_XC_MISC_GET_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xc_misc_id,
+        .opcode = XCB_XC_MISC_GET_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -46,15 +46,15 @@ xcb_xc_misc_get_version (xcb_connection_t *c  /**< */,
 }
 
 xcb_xc_misc_get_version_cookie_t
-xcb_xc_misc_get_version_unchecked (xcb_connection_t *c  /**< */,
-                                   uint16_t          client_major_version  /**< */,
-                                   uint16_t          client_minor_version  /**< */)
+xcb_xc_misc_get_version_unchecked (xcb_connection_t *c,
+                                   uint16_t          client_major_version,
+                                   uint16_t          client_minor_version)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xc_misc_id,
-        /* opcode */ XCB_XC_MISC_GET_VERSION,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xc_misc_id,
+        .opcode = XCB_XC_MISC_GET_VERSION,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -74,21 +74,21 @@ xcb_xc_misc_get_version_unchecked (xcb_connection_t *c  /**< */,
 }
 
 xcb_xc_misc_get_version_reply_t *
-xcb_xc_misc_get_version_reply (xcb_connection_t                  *c  /**< */,
+xcb_xc_misc_get_version_reply (xcb_connection_t                  *c,
                                xcb_xc_misc_get_version_cookie_t   cookie  /**< */,
-                               xcb_generic_error_t              **e  /**< */)
+                               xcb_generic_error_t              **e)
 {
     return (xcb_xc_misc_get_version_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 xcb_xc_misc_get_xid_range_cookie_t
-xcb_xc_misc_get_xid_range (xcb_connection_t *c  /**< */)
+xcb_xc_misc_get_xid_range (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xc_misc_id,
-        /* opcode */ XCB_XC_MISC_GET_XID_RANGE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xc_misc_id,
+        .opcode = XCB_XC_MISC_GET_XID_RANGE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -106,13 +106,13 @@ xcb_xc_misc_get_xid_range (xcb_connection_t *c  /**< */)
 }
 
 xcb_xc_misc_get_xid_range_cookie_t
-xcb_xc_misc_get_xid_range_unchecked (xcb_connection_t *c  /**< */)
+xcb_xc_misc_get_xid_range_unchecked (xcb_connection_t *c)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xc_misc_id,
-        /* opcode */ XCB_XC_MISC_GET_XID_RANGE,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xc_misc_id,
+        .opcode = XCB_XC_MISC_GET_XID_RANGE,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -130,15 +130,15 @@ xcb_xc_misc_get_xid_range_unchecked (xcb_connection_t *c  /**< */)
 }
 
 xcb_xc_misc_get_xid_range_reply_t *
-xcb_xc_misc_get_xid_range_reply (xcb_connection_t                    *c  /**< */,
+xcb_xc_misc_get_xid_range_reply (xcb_connection_t                    *c,
                                  xcb_xc_misc_get_xid_range_cookie_t   cookie  /**< */,
-                                 xcb_generic_error_t                **e  /**< */)
+                                 xcb_generic_error_t                **e)
 {
     return (xcb_xc_misc_get_xid_range_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }
 
 int
-xcb_xc_misc_get_xid_list_sizeof (const void  *_buffer  /**< */)
+xcb_xc_misc_get_xid_list_sizeof (const void  *_buffer)
 {
     char *xcb_tmp = (char *)_buffer;
     const xcb_xc_misc_get_xid_list_reply_t *_aux = (xcb_xc_misc_get_xid_list_reply_t *)_buffer;
@@ -169,14 +169,14 @@ xcb_xc_misc_get_xid_list_sizeof (const void  *_buffer  /**< */)
 }
 
 xcb_xc_misc_get_xid_list_cookie_t
-xcb_xc_misc_get_xid_list (xcb_connection_t *c  /**< */,
-                          uint32_t          count  /**< */)
+xcb_xc_misc_get_xid_list (xcb_connection_t *c,
+                          uint32_t          count)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xc_misc_id,
-        /* opcode */ XCB_XC_MISC_GET_XID_LIST,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xc_misc_id,
+        .opcode = XCB_XC_MISC_GET_XID_LIST,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -195,14 +195,14 @@ xcb_xc_misc_get_xid_list (xcb_connection_t *c  /**< */,
 }
 
 xcb_xc_misc_get_xid_list_cookie_t
-xcb_xc_misc_get_xid_list_unchecked (xcb_connection_t *c  /**< */,
-                                    uint32_t          count  /**< */)
+xcb_xc_misc_get_xid_list_unchecked (xcb_connection_t *c,
+                                    uint32_t          count)
 {
     static const xcb_protocol_request_t xcb_req = {
-        /* count */ 2,
-        /* ext */ &xcb_xc_misc_id,
-        /* opcode */ XCB_XC_MISC_GET_XID_LIST,
-        /* isvoid */ 0
+        .count = 2,
+        .ext = &xcb_xc_misc_id,
+        .opcode = XCB_XC_MISC_GET_XID_LIST,
+        .isvoid = 0
     };
 
     struct iovec xcb_parts[4];
@@ -221,19 +221,19 @@ xcb_xc_misc_get_xid_list_unchecked (xcb_connection_t *c  /**< */,
 }
 
 uint32_t *
-xcb_xc_misc_get_xid_list_ids (const xcb_xc_misc_get_xid_list_reply_t *R  /**< */)
+xcb_xc_misc_get_xid_list_ids (const xcb_xc_misc_get_xid_list_reply_t *R)
 {
     return (uint32_t *) (R + 1);
 }
 
 int
-xcb_xc_misc_get_xid_list_ids_length (const xcb_xc_misc_get_xid_list_reply_t *R  /**< */)
+xcb_xc_misc_get_xid_list_ids_length (const xcb_xc_misc_get_xid_list_reply_t *R)
 {
     return R->ids_len;
 }
 
 xcb_generic_iterator_t
-xcb_xc_misc_get_xid_list_ids_end (const xcb_xc_misc_get_xid_list_reply_t *R  /**< */)
+xcb_xc_misc_get_xid_list_ids_end (const xcb_xc_misc_get_xid_list_reply_t *R)
 {
     xcb_generic_iterator_t i;
     i.data = ((uint32_t *) (R + 1)) + (R->ids_len);
@@ -243,9 +243,9 @@ xcb_xc_misc_get_xid_list_ids_end (const xcb_xc_misc_get_xid_list_reply_t *R  /**
 }
 
 xcb_xc_misc_get_xid_list_reply_t *
-xcb_xc_misc_get_xid_list_reply (xcb_connection_t                   *c  /**< */,
+xcb_xc_misc_get_xid_list_reply (xcb_connection_t                   *c,
                                 xcb_xc_misc_get_xid_list_cookie_t   cookie  /**< */,
-                                xcb_generic_error_t               **e  /**< */)
+                                xcb_generic_error_t               **e)
 {
     return (xcb_xc_misc_get_xid_list_reply_t *) xcb_wait_for_reply(c, cookie.sequence, e);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.59 2015/04/20 23:30:58 riastradh Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.59.4.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.59 2015/04/20 23:30:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.59.4.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,13 +301,12 @@ dead_rmdir(void *v)
 int
 dead_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
 
 	*ap->a_recycle = false;
-	VOP_UNLOCK(ap->a_vp);
 
 	return 0;
 }

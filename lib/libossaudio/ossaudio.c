@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.30 2014/09/09 10:45:18 nat Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.30.4.1 2017/04/21 16:53:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.30 2014/09/09 10:45:18 nat Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.30.4.1 2017/04/21 16:53:11 bouyer Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -411,11 +411,11 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat - (tmpinfo.play.seek
-		    + tmpinfo.blocksize - 1) / tmpinfo.blocksize;
+		bufinfo.fragments = (tmpinfo.hiwat * tmpinfo.blocksize -
+		    (tmpinfo.play.seek + tmpinfo.blocksize -1)) /
+		    tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize
-		    - tmpinfo.play.seek;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
@@ -424,11 +424,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 			return retval;
 		setblocksize(fd, &tmpinfo);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = tmpinfo.hiwat - (tmpinfo.record.seek +
-		    tmpinfo.blocksize - 1) / tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
-		bufinfo.bytes = tmpinfo.hiwat * tmpinfo.blocksize
-		    - tmpinfo.record.seek;
+		bufinfo.bytes = bufinfo.fragments * tmpinfo.blocksize;
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_NONBLOCK:
@@ -497,12 +495,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		*(struct count_info *)argp = cntinfo;
 		break;
 	case SNDCTL_SYSINFO:
-		strncpy(tmpsysinfo.product, "OSS/NetBSD", 31);
-		tmpsysinfo.product[31] = 0; 
-		strncpy(tmpsysinfo.version, version, 31); 
-		tmpsysinfo.version[31] = 0; 
-		strncpy(tmpsysinfo.license, license, 15);
-		tmpsysinfo.license[15] = 0; 
+		strlcpy(tmpsysinfo.product, "OSS/NetBSD",
+		    sizeof tmpsysinfo.product);
+		strlcpy(tmpsysinfo.version, version, sizeof tmpsysinfo.version);
+		strlcpy(tmpsysinfo.license, license, sizeof tmpsysinfo.license);
 		tmpsysinfo.versionnum = SOUND_VERSION;
 		memset(tmpsysinfo.options, 0, 8);
 		tmpsysinfo.numaudios = OSS_MAX_AUDIO_DEVS;
@@ -550,8 +546,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		if (idata & AUDIO_PROP_MMAP)
 			idat |= DSP_CAP_MMAP;
 		idat = PCM_CAP_INPUT | PCM_CAP_OUTPUT;
-		strncpy(tmpaudioinfo->name, tmpaudiodev.name, 64);
-		tmpaudioinfo->name[63] = 0;
+		strlcpy(tmpaudioinfo->name, tmpaudiodev.name,
+		    sizeof tmpaudioinfo->name);
 		tmpaudioinfo->busy = tmpinfo.play.open;
 		tmpaudioinfo->pid = -1;
 		tmpaudioinfo->caps = idat;
@@ -799,7 +795,7 @@ getdevinfo(int fd)
 				di->devmask |= 1 << dp->code;
 				if (mi.un.v.num_channels == 2)
 					di->stereomask |= 1 << dp->code;
-				strncpy(di->names[i], mi.label.name, 
+				strlcpy(di->names[i], mi.label.name,
 					sizeof di->names[i]);
 			}
 			break;
@@ -866,8 +862,8 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		omi = argp;
 		if (com == SOUND_MIXER_INFO)
 			omi->modify_counter = 1;
-		strncpy(omi->id, adev.name, sizeof omi->id);
-		strncpy(omi->name, adev.name, sizeof omi->name);
+		strlcpy(omi->id, adev.name, sizeof omi->id);
+		strlcpy(omi->name, adev.name, sizeof omi->name);
 		return 0;
 	case SOUND_MIXER_READ_RECSRC:
 		if (di->source == -1)

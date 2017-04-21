@@ -1,9 +1,9 @@
-/*	$NetBSD: saslauthz.c,v 1.1.1.4 2014/05/28 09:58:47 tron Exp $	*/
+/*	$NetBSD: saslauthz.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 2000 Mark Adamson, Carnegie Mellon.
  * All rights reserved.
  *
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: saslauthz.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1228,7 +1231,10 @@ is_dn:		bv.bv_len = uri->bv_len - (bv.bv_val - uri->bv_val);
 
 done:
 	if( rc != LDAP_SUCCESS ) {
-		if( *filter ) filter_free_x( op, *filter, 1 );
+		if( *filter ) {
+			filter_free_x( op, *filter, 1 );
+			*filter = NULL;
+		}
 		BER_BVZERO( base );
 		BER_BVZERO( fstr );
 	} else {

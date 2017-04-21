@@ -1,4 +1,4 @@
-/*	$NetBSD: tsearch-test.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: tsearch-test.c,v 1.1.1.2.10.1 2017/04/21 16:50:51 bouyer Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like

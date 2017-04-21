@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.14 2016/10/15 16:46:14 jdolecek Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.14.2.1 2017/04/21 16:53:39 bouyer Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.14 2016/10/15 16:46:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.14.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,7 +371,12 @@ acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 	uint32_t type;
 	int i, n;
 
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
+#ifndef XEN
+	if (lookup_bootinfo(BTINFO_EFIMEMMAP) != NULL)
+		bim = efi_get_e820memmap();
+	else
+#endif
+		bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim == NULL)
 		return false;
 
@@ -382,13 +387,16 @@ acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 		mapsize = bim->entry[i].size;
 		type = bim->entry[i].type;
 
-		aprint_debug("MCFG: MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
-		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		aprint_debug("MCFG: MEMMAP: 0x%016" PRIx64
+		    "-0x%016" PRIx64 ", size=0x%016" PRIx64
+		    ", type=%d(%s)\n",
 		    mapaddr, mapaddr + mapsize - 1, mapsize, type,
 		    (type == BIM_Memory) ?  "Memory" :
 		    (type == BIM_Reserved) ?  "Reserved" :
 		    (type == BIM_ACPI) ? "ACPI" :
 		    (type == BIM_NVS) ? "NVS" :
+		    (type == BIM_PMEM) ? "Persistent" :
+		    (type == BIM_PRAM) ? "Persistent (Legacy)" :
 		    "unknown");
 
 		switch (type) {

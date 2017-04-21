@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2016/11/08 03:05:36 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.61.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -180,16 +180,6 @@ struct pmap {
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
-/* 
- * flag to be used for kernel mappings: PG_u on Xen/amd64, 
- * 0 otherwise.
- */
-#if defined(XEN) && defined(__x86_64__)
-#define PG_k PG_u
-#else
-#define PG_k 0
-#endif
-
 /*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
@@ -277,6 +267,10 @@ int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
 u_int		x86_mmap_flags(paddr_t);
 
 bool		pmap_is_curpmap(struct pmap *);
+
+#ifndef __HAVE_DIRECT_MAP
+void		pmap_vpage_cpu_init(struct cpu_info *);
+#endif
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 

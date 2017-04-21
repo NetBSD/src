@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.2 2012/06/09 11:27:28 tron Exp $	*/
+/*	$NetBSD: xsasl_cyrus_server.c,v 1.1.1.2.18.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -49,6 +49,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -251,7 +256,7 @@ XSASL_SERVER_IMPL *xsasl_cyrus_server_init(const char *unused_server_type,
 
 static void xsasl_cyrus_server_done(XSASL_SERVER_IMPL *impl)
 {
-    myfree((char *) impl);
+    myfree((void *) impl);
     sasl_done();
 }
 
@@ -433,7 +438,7 @@ static void xsasl_cyrus_server_free(XSASL_SERVER *xp)
 	myfree(server->username);
     if (server->mechanism_list)
 	myfree(server->mechanism_list);
-    myfree((char *) server);
+    myfree((void *) server);
 }
 
 /* xsasl_cyrus_server_auth_response - encode server first/next response */
@@ -476,7 +481,13 @@ static int xsasl_cyrus_server_auth_response(int sasl_status,
 	if (sasl_status == SASL_NOUSER)		/* privacy */
 	    sasl_status = SASL_BADAUTH;
 	vstring_strcpy(reply, xsasl_cyrus_strerror(sasl_status));
-	return (XSASL_AUTH_FAIL);
+	switch (sasl_status) {
+	case SASL_TRYAGAIN:
+	case SASL_UNAVAIL:
+	    return XSASL_AUTH_TEMP;
+	default:
+	    return (XSASL_AUTH_FAIL);
+	}
     }
 }
 

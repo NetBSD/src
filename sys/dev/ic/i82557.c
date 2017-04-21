@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.146 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: i82557.c,v 1.146.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.146 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.146.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,6 +407,7 @@ fxp_attach(struct fxp_softc *sc)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -1120,7 +1121,7 @@ fxp_intr(void *arg)
 			/*
 			 * Try to get more packets going.
 			 */
-			fxp_start(ifp);
+			if_schedule_deferred_start(ifp);
 
 			if (sc->sc_txpending == 0) {
 				/*

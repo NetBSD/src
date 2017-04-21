@@ -1,5 +1,4 @@
-/*	$NetBSD: rpc_compat.h,v 1.1.1.2 2015/01/29 06:38:27 spz Exp $	*/
-/*	$NetBSD: rpc_compat.h,v 1.1.1.2 2015/01/29 06:38:27 spz Exp $	*/
+/*	$NetBSD: rpc_compat.h,v 1.1.1.2.4.1 2017/04/21 16:51:32 bouyer Exp $	*/
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -26,8 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _EVENT2_RPC_COMPAT_H_
-#define _EVENT2_RPC_COMPAT_H_
+#ifndef EVENT2_RPC_COMPAT_H_INCLUDED_
+#define EVENT2_RPC_COMPAT_H_INCLUDED_
 
 /** @file event2/rpc_compat.h
 
@@ -60,4 +59,4 @@ extern "C" {
 }
 #endif
 
-#endif /* _EVENT2_EVENT_COMPAT_H_ */
+#endif /* EVENT2_EVENT_COMPAT_H_INCLUDED_ */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.28 2014/10/27 16:21:59 wiz Exp $
+.\"	$NetBSD: core.5,v 1.28.4.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)core.5	8.3 (Berkeley) 12/11/93
 .\"
-.Dd July 8, 2002
+.Dd March 27, 2017
 .Dt CORE 5
 .Os
 .Sh NAME
@@ -139,7 +139,8 @@ information about the process.
 The first note in the note section has a note name of
 .Dq NetBSD-CORE
 and a note type of
-ELF_NOTE_NETBSD_CORE_PROCINFO (1), and contains the following
+.Dv ELF_NOTE_NETBSD_CORE_PROCINFO ( 1 ) ,
+and contains the following
 structure:
 .Bd -literal
 struct netbsd_elfcore_procinfo {
@@ -165,6 +166,7 @@ struct netbsd_elfcore_procinfo {
     uint32_t cpi_nlwps;        /* number of LWPs */
     int8_t   cpi_name[32];     /* copy of p->p_comm */
     /* Add version 2 fields below here. */
+    int32_t         cpi_siglwp;     /* LWP target of killing signal */
 };
 .Ed
 .Pp
@@ -225,7 +227,15 @@ Number of kernel-visible execution contexts (LWPs) of the process.
 .It cpi_name
 Process name, copied from the p_comm field of
 .Fa struct proc .
+.It cpi_siglwp
+LWP target of killing signal.
 .El
+.Pp
+The second note with name
+.Dq NetBSD-CORE
+is a note type of
+.Dv ELF_NOTE_NETBSD_CORE_AUXV ( 2 ) ,
+and contains an array of AuxInfo structures.
 .Pp
 The note section also contains additional notes for each
 kernel-visible execution context of the process (LWP).
@@ -387,6 +397,20 @@ ELF core file format was introduced in
 In releases previous to
 .Nx 1.6 ,
 ELF program images produced a.out-format core files.
+.Pp
+The
+.Dv cpi_siglwp
+member of the
+.Dv netbsd_elfcore_procinfo
+structure first appeared in
+.Nx 2.0 .
+However it retained the procinfo version 1,
+stored in
+.Dv cpi_version .
+.Pp
+.Dv ELF_NOTE_NETBSD_CORE_AUXV
+was added in
+.Nx 8.0 .
 .Sh BUGS
 There is no standard location or name for the
 CPU-dependent data structure stored in the

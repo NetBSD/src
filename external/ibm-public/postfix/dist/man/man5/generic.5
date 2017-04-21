@@ -1,4 +1,4 @@
-.\"	$NetBSD: generic.5,v 1.1.1.1 2009/06/23 10:08:33 tron Exp $
+.\"	$NetBSD: generic.5,v 1.1.1.1.36.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH GENERIC 5 
 .ad
@@ -12,9 +12,9 @@ Postfix generic table format
 .nf
 \fBpostmap /etc/postfix/generic\fR
 
-\fBpostmap -q "\fIstring\fB" /etc/postfix/generic\fR
+\fBpostmap \-q "\fIstring\fB" /etc/postfix/generic\fR
 
-\fBpostmap -q - /etc/postfix/generic <\fIinputfile\fR
+\fBpostmap \-q \- /etc/postfix/generic <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -47,11 +47,11 @@ text file.
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
-Alternatively, the table can be provided as a regular-expression
+Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In those case, the lookups
+can be directed to TCP\-based server. In those case, the lookups
 are done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
+"REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
 .na
 .nf
@@ -71,10 +71,10 @@ The input format for the \fBpostmap\fR(1) command is as follows:
 When \fIpattern\fR matches a mail address, replace it by the
 corresponding \fIresult\fR.
 .IP "blank lines and comments"
-Empty lines and whitespace-only lines are ignored, as
-are lines whose first non-whitespace character is a `#'.
-.IP "multi-line text"
-A logical line starts with non-whitespace text. A line that
+Empty lines and whitespace\-only lines are ignored, as
+are lines whose first non\-whitespace character is a `#'.
+.IP "multi\-line text"
+A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .SH "TABLE SEARCH ORDER"
 .na
@@ -150,7 +150,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .ad
 .fi
 This section describes how the table lookups change when lookups
-are directed to a TCP-based server. For a description of the TCP
+are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
 This feature is not available up to and including Postfix version 2.4.
 
@@ -189,7 +189,7 @@ Execute the command "\fBpostmap /etc/postfix/generic\fR"
 whenever the table is changed.  Instead of \fBhash\fR, some
 systems use \fBdbm\fR database files. To find out what
 tables your system supports use the command "\fBpostconf
--m\fR".
+\-m\fR".
 .SH BUGS
 .ad
 .fi
@@ -221,9 +221,9 @@ proxy agent or network address translator.
 .IP \fBmydestination\fR
 List of domains that this mail system considers local.
 .IP \fBmyorigin\fR
-The domain that is appended to locally-posted mail.
+The domain that is appended to locally\-posted mail.
 .IP \fBowner_request_special\fR
-Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
+Give special treatment to \fBowner\-\fIxxx\fR and \fIxxx\fB\-request\fR
 addresses.
 .SH "SEE ALSO"
 .na
@@ -249,9 +249,9 @@ STANDARD_CONFIGURATION_README, configuration examples
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 A genericstable feature appears in the Sendmail MTA.
 
 This feature is available in Postfix 2.2 and later.
@@ -262,3 +262,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

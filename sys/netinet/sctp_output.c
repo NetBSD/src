@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.9 2016/12/23 11:11:28 maya Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.9.2.1 2017/04/21 16:54:06 bouyer Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.9 2016/12/23 11:11:28 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.9.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2251,7 +2251,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 		}
 		ret = ip_output(m, inp->ip_inp.inp.inp_options,
 				ro, o_flgs, inp->ip_inp.inp.inp_moptions,
-                                (struct socket *)inp->sctp_socket);
+                                &inp->ip_inp.inp);
 		if ((rt) && (have_mtu) && (net) && (have_mtu > net->mtu)) {
 			rt->rt_ifp->if_mtu = have_mtu;
 		}
@@ -2449,7 +2449,7 @@ sctp_lowlevel_chunk_output(struct sctp_inpcb *inp,
 				 ro,
 				 o_flgs,
 				 ((struct in6pcb *)inp)->in6p_moptions,
-				 (struct socket *)inp->sctp_socket,
+				 (struct in6pcb *)inp,
 				 &ifp);
 		if (net) {
 			/* for link local this must be done */

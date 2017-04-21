@@ -187,11 +187,11 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
                      returns no results.
 
               <b>%[SUD]</b> The upper-case equivalents of the above expansions behave
-                     in the <b>query_filter</b> parameter identically to their lower-
-                     case  counter-parts.  With  the  <b>result_format</b>  parameter
-                     (previously  called  <b>result_filter</b>  see the COMPATIBILITY
-                     section and below), they expand to the corresponding com-
-                     ponents of input key rather than the result value.
+                     in   the  <b>query_filter</b>  parameter  identically  to  their
+                     lower-case counter-parts. With the <b>result_format</b>  parame-
+                     ter  (previously called <b>result_filter</b> see the COMPATIBIL-
+                     ITY section and below), they expand to the  corresponding
+                     components of input key rather than the result value.
 
                      The  above  %S,  %U  and %D expansions are available with
                      Postfix 2.2 and later.
@@ -269,11 +269,11 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
 
        <b>domain (default: no domain list)</b>
               This is a list of domain names, paths to files, or dictionaries.
-              When specified, only fully qualified search keys  with  a  *non-
-              empty*  localpart and a matching domain are eligible for lookup:
-              'user' lookups, bare domain lookups and  "@domain"  lookups  are
-              not  performed.  This can significantly reduce the query load on
-              the LDAP server.
+              When  specified,  only  fully  qualified  search  keys  with   a
+              *non-empty*  localpart  and  a  matching domain are eligible for
+              lookup:  'user'  lookups,  bare  domain  lookups  and  "@domain"
+              lookups  are  not  performed.  This can significantly reduce the
+              query load on the LDAP server.
 
                   domain = postfix.org, <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/searchdomains
 
@@ -320,9 +320,9 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               Postfix table.
 
               If an LDAP URL attribute-descriptor or the corresponding Postfix
-              LDAP  table  result  attribute (but not both) uses <a href="http://tools.ietf.org/html/rfc2255">RFC 2255</a> sub-
-              type options ("attr;option"), the attribute requested  from  the
-              LDAP  server  will  include  the  sub-type  option. In all other
+              LDAP  table  result  attribute  (but  not  both)  uses  <a href="http://tools.ietf.org/html/rfc2255">RFC 2255</a>
+              sub-type options ("attr;option"), the attribute  requested  from
+              the  LDAP  server will include the sub-type option. In all other
               cases, the URL attribute and  the  table  attribute  must  match
               exactly. Attributes with options in both the URL and the Postfix
               table are requested only when the options  are  identical.  LDAP
@@ -350,8 +350,8 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               This feature is available with Postfix 2.4 or later.
 
        <b>leaf_result_attribute (default: empty)</b>
-              When one or more special result attributes are found in  a  non-
-              terminal  (see  above)  LDAP  entry,  leaf result attributes are
+              When one or more  special  result  attributes  are  found  in  a
+              non-terminal  (see above) LDAP entry, leaf result attributes are
               excluded from the expansion of that entry. This is  useful  when
               expanding  groups  and  the desired mail address attribute(s) of
               the member objects obtained via DN or  URI  recursion  are  also
@@ -565,10 +565,10 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               cally when the TCP connection is opened).
 
        <b>tls_ca_cert_dir (No default; set either this or tls_ca_cert_file)</b>
-              Directory containing X509 Certificate Authority certificates  in
-              PEM  format  which are to be recognized by the client in SSL/TLS
-              connections. The files each contain  one  CA  certificate.   The
-              files  are  looked  up  by the CA subject name hash value, which
+              Directory containing X509 Certification  Authority  certificates
+              in  PEM  format  which  are  to  be  recognized by the client in
+              SSL/TLS connections. The files each contain one CA  certificate.
+              The files are looked up by the CA subject name hash value, which
               must hence be available. If more than one  CA  certificate  with
               the  same name hash value exist, the extension must be different
               (e.g. 9d66eef0.0, 9d66eef0.1 etc). The search  is  performed  in
@@ -577,7 +577,7 @@ LDAP_TABLE(5)                                                    LDAP_TABLE(5)
               OpenSSL distribution) to create the necessary links.
 
        <b>tls_ca_cert_file (No default; set either this or tls_ca_cert_dir)</b>
-              File  containing  the X509 Certificate Authority certificates in
+              File containing the X509 Certification Authority certificates in
               PEM format which are to be recognized by the client  in  SSL/TLS
               connections. This setting takes precedence over tls_ca_cert_dir.
 

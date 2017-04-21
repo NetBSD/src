@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.39 2016/06/20 02:25:03 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.39.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.39 2016/06/20 02:25:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.39.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.39 2016/06/20 02:25:03 dholland Ex
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
-#include <sys/fstrans.h>
 #include <sys/proc.h>
 #include <sys/kmem.h>
 
@@ -207,8 +206,6 @@ ulfs_lookup(void *v)
 		 */
 		cnp->cn_flags |= ISWHITEOUT;
 	}
-
-	fstrans_start(vdp->v_mount, FSTRANS_SHARED);
 
 	/*
 	 * Suppress search for slots unless creating
@@ -630,7 +627,6 @@ found:
 	error = 0;
 
 out:
-	fstrans_done(vdp->v_mount);
 	return error;
 }
 

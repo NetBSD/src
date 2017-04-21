@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.16 2016/12/15 09:28:02 ozaki-r Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.16.2.1 2017/04/21 16:53:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.16 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.16.2.1 2017/04/21 16:53:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -275,6 +275,7 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 	ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 	EMAC_WRITE(sc, EMAC_ENABLE_REG, RKEMAC_ENABLE_INTR);
@@ -401,7 +402,7 @@ rkemac_intr(void *priv)
 		ifp->if_oerrors++;
 
 	if (stat & (EMAC_STAT_TXINT|EMAC_STAT_RXINT))
-		rkemac_start(ifp);
+		if_schedule_deferred_start(ifp);
 
 	return 1;
 }

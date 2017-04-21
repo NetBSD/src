@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.7 2016/10/13 20:05:06 jdolecek Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.7.2.1 2017/04/21 16:53:52 bouyer Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.7 2016/10/13 20:05:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.7.2.1 2017/04/21 16:53:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,6 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
-	sc->sc_bus.ub_hcpriv = sc;
 
 	pci_aprint_devinfo(pa, "USB Controller");
 
@@ -219,8 +218,11 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	                          xhci_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/* Attach usb device. */
+	/* Attach usb buses. */
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
+
+ 	sc->sc_child2 = config_found(self, &sc->sc_bus2, usbctlprint);
+
 	return;
 
 fail:

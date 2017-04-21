@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_proxy.h,v 1.1.1.2 2013/01/02 18:58:57 tron Exp $	*/
+/*	$NetBSD: dict_proxy.h,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _DICT_PROXY_H_INCLUDED_
 #define _DICT_PROXY_H_INCLUDED_
@@ -39,6 +39,7 @@ extern DICT *dict_proxy_open(const char *, int, int);
 #define PROXY_STAT_RETRY	2	/* try lookup again later */
 #define PROXY_STAT_BAD		3	/* invalid request parameter */
 #define PROXY_STAT_DENY		4	/* table not approved for proxying */
+#define PROXY_STAT_CONFIG	5	/* DICT_ERR_CONFIG error */
 
 /* LICENSE
 /* .ad

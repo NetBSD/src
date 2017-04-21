@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.86 2016/12/15 09:28:06 ozaki-r Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.86.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.86 2016/12/15 09:28:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.86.2.1 2017/04/21 16:54:05 bouyer Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.86 2016/12/15 09:28:06 ozaki-r
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -174,6 +175,8 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	u_int8_t *bssid;
 	u_int16_t rxseq;
 	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+
+	KASSERT(!cpu_intr_p());
 
 	IASSERT(ni != NULL, ("null node"));
 	ni->ni_inact = ni->ni_inact_reload;
@@ -777,7 +780,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			len = m1->m_pkthdr.len;
 			IFQ_ENQUEUE(&ifp->if_snd, m1, error);
 			if (error) {
-				ifp->if_omcasts++;
+				ifp->if_oerrors++;
 				m = NULL;
 			}
 			ifp->if_obytes += len;

@@ -21,10 +21,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sunrpc.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-sunrpc.c,v 1.5.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Sun Remote Procedure Call printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -44,7 +45,7 @@ __RCSID("$NetBSD: print-sunrpc.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
  */
 #undef _XOPEN_SOURCE_EXTENDED
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #if defined(HAVE_GETRPCBYNUMBER) && defined(HAVE_RPC_RPC_H)
 #include <rpc/rpc.h>
@@ -56,14 +57,12 @@ __RCSID("$NetBSD: print-sunrpc.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 
 #include "ip.h"
-#ifdef INET6
 #include "ip6.h"
-#endif
 
 #include "rpc_auth.h"
 #include "rpc_msg.h"
@@ -176,13 +175,11 @@ sunrpcrequest_print(netdissect_options *ndo, register const u_char *bp,
 {
 	register const struct sunrpc_msg *rp;
 	register const struct ip *ip;
-#ifdef INET6
 	register const struct ip6_hdr *ip6;
-#endif
 	uint32_t x;
 	char srcid[20], dstid[20];	/*fits 32bit*/
 
-	rp = (struct sunrpc_msg *)bp;
+	rp = (const struct sunrpc_msg *)bp;
 
 	if (!ndo->ndo_nflag) {
 		snprintf(srcid, sizeof(srcid), "0x%x",
@@ -194,21 +191,19 @@ sunrpcrequest_print(netdissect_options *ndo, register const u_char *bp,
 		snprintf(dstid, sizeof(dstid), "0x%x", SUNRPC_PMAPPORT);
 	}
 
-	switch (IP_V((struct ip *)bp2)) {
+	switch (IP_V((const struct ip *)bp2)) {
 	case 4:
-		ip = (struct ip *)bp2;
+		ip = (const struct ip *)bp2;
 		ND_PRINT((ndo, "%s.%s > %s.%s: %d",
 		    ipaddr_string(ndo, &ip->ip_src), srcid,
 		    ipaddr_string(ndo, &ip->ip_dst), dstid, length));
 		break;
-#ifdef INET6
 	case 6:
-		ip6 = (struct ip6_hdr *)bp2;
+		ip6 = (const struct ip6_hdr *)bp2;
 		ND_PRINT((ndo, "%s.%s > %s.%s: %d",
 		    ip6addr_string(ndo, &ip6->ip6_src), srcid,
 		    ip6addr_string(ndo, &ip6->ip6_dst), dstid, length));
 		break;
-#endif
 	default:
 		ND_PRINT((ndo, "%s.%s > %s.%s: %d", "?", srcid, "?", dstid, length));
 		break;

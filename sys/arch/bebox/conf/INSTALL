@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.59 2016/12/13 20:42:16 christos Exp $
+#	$NetBSD: INSTALL,v 1.59.2.1 2017/04/21 16:53:24 bouyer Exp $
 #
 # First try for BeBox config file
 #
@@ -67,6 +67,8 @@ file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS
 
 # Filesystem options
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	WAPBL		# File system journaling support

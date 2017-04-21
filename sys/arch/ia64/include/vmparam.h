@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2016/08/06 21:13:30 martin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.2.1 2017/04/21 16:53:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -131,6 +131,9 @@
 #define	IA64_ID_PAGE_SIZE	(1 << IA64_ID_PAGE_SHIFT)
 #define	IA64_ID_PAGE_MASK	(IA64_ID_PAGE_SIZE-1)
 
+/* XXX freebsd uses
+#define IA64_BACKINGSTORE       (USRSTACK - (2 * MAXSSIZ) - PAGE_SIZE)
+*/
 #define	IA64_BACKINGSTORE	IA64_RR_BASE(4)
 
 #define	PAGE_SHIFT	14		/* 16K pages by default. */
@@ -143,6 +146,7 @@
 #define	VM_GATEWAY_SIZE		PAGE_SIZE
 #define	VM_MAXUSER_ADDRESS	(VM_MAX_ADDRESS + VM_GATEWAY_SIZE)
 #define	VM_MIN_KERNEL_ADDRESS	VM_MAXUSER_ADDRESS
+#define VM_INIT_KERNEL_ADDRESS  IA64_RR_BASE(IA64_VM_MINKERN_REGION + 1)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) (IA64_RR_BASE(6) - 1))
 
 #define VM_PHYSSEG_MAX		16		/* XXX: */

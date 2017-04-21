@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.4 2015/02/21 12:00:48 tron Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.4.4.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -134,6 +134,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -194,14 +199,48 @@ static const char pcf_valid_bool_types[] = "yn-";
 
 #define STR(x) vstring_str(x)
 
-/* pcf_normalize_options - bring options into canonical form */
+/* pcf_extract_field - extract text from {}, trim leading/trailing blanks */
 
-static void pcf_normalize_options(ARGV *argv)
+static void pcf_extract_field(ARGV *argv, int field, const char *parens)
+{
+    char   *arg = argv->argv[field];
+    char   *err;
+
+    if ((err = extpar(&arg, parens, EXTPAR_FLAG_STRIP)) != 0) {
+	msg_warn("%s: %s", MASTER_CONF_FILE, err);
+	myfree(err);
+    }
+    argv_replace_one(argv, field, arg);
+}
+
+/* pcf_normalize_nameval - normalize name = value from inside {} */
+
+static void pcf_normalize_nameval(ARGV *argv, int field)
+{
+    char   *arg = argv->argv[field];
+    char   *name;
+    char   *value;
+    const char *err;
+    char   *normalized;
+
+    if ((err = split_nameval(arg, &name, &value)) != 0) {
+	msg_warn("%s: %s: \"%s\"", MASTER_CONF_FILE, err, arg);
+    } else {
+	normalized = concatenate(name, "=", value, (char *) 0);
+	argv_replace_one(argv, field, normalized);
+	myfree(normalized);
+    }
+}
+
+/* pcf_normalize_daemon_args - bring daemon arguments into canonical form */
+
+static void pcf_normalize_daemon_args(ARGV *argv)
 {
     int     field;
     char   *arg;
     char   *cp;
     char   *junk;
+    int     extract_field;
 
     /*
      * Normalize options to simplify later processing.
@@ -229,11 +268,25 @@ static void pcf_normalize_options(ARGV *argv)
 	    argv_insert_one(argv, field + 1, arg + 2);
 	    arg[2] = 0;				/* XXX argv_replace_one() */
 	    field += 1;
+	    extract_field = (argv->argv[field][0] == CHARS_BRACE[0]);
 	} else if (argv->argv[field + 1] != 0) {
 	    /* Already in "-o" "name=value" form. */
 	    field += 1;
+	    extract_field = (argv->argv[field][0] == CHARS_BRACE[0]);
+	} else
+	    extract_field = 0;
+	/* Extract text inside {}, optionally convert to name=value. */
+	if (extract_field) {
+	    pcf_extract_field(argv, field, CHARS_BRACE);
+	    if (argv->argv[field - 1][1] == 'o')
+		pcf_normalize_nameval(argv, field);
 	}
     }
+    /* Normalize non-option arguments. */
+    for ( /* void */ ; argv->argv[field] != 0; field++)
+	/* Extract text inside {}. */
+	if (argv->argv[field][0] == CHARS_BRACE[0])
+	    pcf_extract_field(argv, field, CHARS_BRACE);
 }
 
 /* pcf_fix_fatal - fix multiline text before release */
@@ -304,7 +357,7 @@ void    pcf_free_master_entry(PCF_MASTER_ENT *masterp)
 	htable_free(masterp->valid_names, myfree);
     if (masterp->all_params)
 	dict_free(masterp->all_params);
-    myfree((char *) masterp);
+    myfree((void *) masterp);
 }
 
 /* pcf_parse_master_entry - parse one master line */
@@ -324,13 +377,13 @@ const char *pcf_parse_master_entry(PCF_MASTER_ENT *masterp, const char *buf)
      * 
      * XXX Do per-field sanity checks.
      */
-    argv = argv_split(buf, PCF_MASTER_BLANKS);
+    argv = argv_splitq(buf, PCF_MASTER_BLANKS, CHARS_BRACE);
     if (argv->argc < PCF_MASTER_MIN_FIELDS) {
 	argv_free(argv);			/* Coverity 201311 */
 	return ("bad field count");
     }
     pcf_check_master_entry(argv, buf);
-    pcf_normalize_options(argv);
+    pcf_normalize_daemon_args(argv);
     masterp->name_space =
 	concatenate(argv->argv[0], PCF_NAMESP_SEP_STR, argv->argv[1], (char *) 0);
     masterp->argv = argv;
@@ -349,7 +402,8 @@ void    pcf_read_master(int fail_on_open_error)
     VSTREAM *fp;
     const char *err;
     int     entry_count = 0;
-    int     line_count = 0;
+    int     line_count;
+    int     last_line = 0;
 
     /*
      * Sanity check.
@@ -379,8 +433,8 @@ void    pcf_read_master(int fail_on_open_error)
 	msg_warn("open %s: %m", path);
     } else {
 	buf = vstring_alloc(100);
-	while (readlline(buf, fp, &line_count) != 0) {
-	    pcf_master_table = (PCF_MASTER_ENT *) myrealloc((char *) pcf_master_table,
+	while (readllines(buf, fp, &last_line, &line_count) != 0) {
+	    pcf_master_table = (PCF_MASTER_ENT *) myrealloc((void *) pcf_master_table,
 			     (entry_count + 2) * sizeof(*pcf_master_table));
 	    if ((err = pcf_parse_master_entry(pcf_master_table + entry_count,
 					      STR(buf))) != 0)
@@ -409,6 +463,7 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
     int     line_len;
     int     field;
     int     in_daemon_options;
+    int     need_parens;
     static int column_goal[] = {
 	0,				/* service */
 	11,				/* type */
@@ -448,6 +503,7 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
     for ( /* void */ ; (arg = argv[field]) != 0; field++) {
 	arg_len = strlen(arg);
 	aval = 0;
+	need_parens = 0;
 	if (in_daemon_options) {
 
 	    /*
@@ -483,8 +539,12 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
 		/*
 		 * Keep option and value on the same line.
 		 */
-		arg_len += strlen(aval) + 1;
+		arg_len += strlen(aval) + 3;
+		if ((need_parens = aval[strcspn(aval, PCF_MASTER_BLANKS)]) != 0)
+		    arg_len += 2;
 	    }
+	} else {
+	    need_parens = arg[strcspn(arg, PCF_MASTER_BLANKS)];
 	}
 
 	/*
@@ -499,10 +559,18 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
 		line_len = PCF_INDENT_LEN;
 	    }
 	}
+	if (in_daemon_options == 0 && need_parens)
+	    ADD_TEXT("{", 1);
 	ADD_TEXT(arg, strlen(arg));
+	if (in_daemon_options == 0 && need_parens)
+	    ADD_TEXT("}", 1);
 	if (aval) {
-	    ADD_SPACE;
+	    ADD_TEXT(" ", 1);
+	    if (need_parens)
+		ADD_TEXT("{", 1);
 	    ADD_TEXT(aval, strlen(aval));
+	    if (need_parens)
+		ADD_TEXT("}", 1);
 	    field += 1;
 
 	    /* Force line wrap after option with value. */
@@ -567,7 +635,7 @@ void    pcf_show_master_entries(VSTREAM *fp, int mode, int argc, char **argv)
 		msg_warn("unmatched request: \"%s\"", req->raw_text);
 	    argv_free(req->service_pattern);
 	}
-	myfree((char *) field_reqs);
+	myfree((void *) field_reqs);
     }
 }
 
@@ -583,6 +651,7 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
     int     arg_len;
     int     line_len;
     int     in_daemon_options;
+    int     need_parens;
 
     /*
      * Show the field value, or the first value in the case of a multi-column
@@ -597,24 +666,29 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
 	ADD_TEXT(argv[1], strlen(argv[1]));
 	ADD_CHAR(PCF_NAMESP_SEP_STR);
 	ADD_TEXT(pcf_str_field_pattern(field), strlen(pcf_str_field_pattern(field)));
+    }
+    if ((mode & (PCF_HIDE_NAME | PCF_HIDE_VALUE)) == 0) {
 	ADD_TEXT(" = ", 3);
-	if (line_len + strlen(argv[field]) > PCF_LINE_LIMIT) {
+    }
+    if ((mode & PCF_HIDE_VALUE) == 0) {
+	if (line_len > 0 && line_len + strlen(argv[field]) > PCF_LINE_LIMIT) {
 	    vstream_fputs("\n" PCF_INDENT_TEXT, fp);
 	    line_len = PCF_INDENT_LEN;
 	}
+	ADD_TEXT(argv[field], strlen(argv[field]));
     }
-    ADD_TEXT(argv[field], strlen(argv[field]));
 
     /*
      * Format the daemon command-line options and non-option arguments. Here,
      * we have no data-dependent preference for column positions, but we do
      * have argument grouping preferences.
      */
-    if (field == PCF_MASTER_FLD_CMD) {
+    if (field == PCF_MASTER_FLD_CMD && (mode & PCF_HIDE_VALUE) == 0) {
 	in_daemon_options = 1;
 	for (field += 1; (arg = argv[field]) != 0; field++) {
 	    arg_len = strlen(arg);
 	    aval = 0;
+	    need_parens = 0;
 	    if (in_daemon_options) {
 
 		/*
@@ -641,7 +715,11 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
 		     * Keep option and value on the same line.
 		     */
 		    arg_len += strlen(aval) + 1;
+		    if ((need_parens = aval[strcspn(aval, PCF_MASTER_BLANKS)]) != 0)
+			arg_len += 2;
 		}
+	    } else {
+		need_parens = arg[strcspn(arg, PCF_MASTER_BLANKS)];
 	    }
 
 	    /*
@@ -656,10 +734,18 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
 		    line_len = PCF_INDENT_LEN;
 		}
 	    }
+	    if (in_daemon_options == 0 && need_parens)
+		ADD_TEXT("{", 1);
 	    ADD_TEXT(arg, strlen(arg));
+	    if (in_daemon_options == 0 && need_parens)
+		ADD_TEXT("}", 1);
 	    if (aval) {
 		ADD_SPACE;
+		if (need_parens)
+		    ADD_TEXT("{", 1);
 		ADD_TEXT(aval, strlen(aval));
+		if (need_parens)
+		    ADD_TEXT("}", 1);
 		field += 1;
 
 		/* Force line break after option with value. */
@@ -739,7 +825,7 @@ void    pcf_show_master_fields(VSTREAM *fp, int mode, int argc, char **argv)
 		msg_warn("unmatched request: \"%s\"", req->raw_text);
 	    argv_free(req->service_pattern);
 	}
-	myfree((char *) field_reqs);
+	myfree((void *) field_reqs);
     }
 }
 
@@ -754,7 +840,8 @@ void    pcf_edit_master_field(PCF_MASTER_ENT *masterp, int field,
      */
     if (field == PCF_MASTER_FLD_CMD) {
 	argv_truncate(masterp->argv, PCF_MASTER_FLD_CMD);
-	argv_split_append(masterp->argv, new_value, PCF_MASTER_BLANKS);
+	argv_splitq_append(masterp->argv, new_value, PCF_MASTER_BLANKS, CHARS_BRACE);
+	pcf_normalize_daemon_args(masterp->argv);
     }
 
     /*
@@ -777,15 +864,21 @@ static void pcf_print_master_param(VSTREAM *fp, int mode,
 				           const char *param_name,
 				           const char *param_value)
 {
-    if ((mode & PCF_SHOW_EVAL) != 0)
-	param_value = pcf_expand_parameter_value((VSTRING *) 0, mode,
-						 param_value, masterp);
-    if ((mode & PCF_HIDE_NAME) == 0) {
-	pcf_print_line(fp, mode, "%s%c%s = %s\n",
+    if (mode & PCF_HIDE_VALUE) {
+	pcf_print_line(fp, mode, "%s%c%s\n",
 		       masterp->name_space, PCF_NAMESP_SEP_CH,
-		       param_name, param_value);
+		       param_name);
     } else {
-	pcf_print_line(fp, mode, "%s\n", param_value);
+	if ((mode & PCF_SHOW_EVAL) != 0)
+	    param_value = pcf_expand_parameter_value((VSTRING *) 0, mode,
+						     param_value, masterp);
+	if ((mode & PCF_HIDE_NAME) == 0) {
+	    pcf_print_line(fp, mode, "%s%c%s = %s\n",
+			   masterp->name_space, PCF_NAMESP_SEP_CH,
+			   param_name, param_value);
+	} else {
+	    pcf_print_line(fp, mode, "%s\n", param_value);
+	}
     }
     if (msg_verbose)
 	vstream_fflush(fp);
@@ -906,7 +999,7 @@ void    pcf_show_master_params(VSTREAM *fp, int mode, int argc, char **argv)
 		msg_warn("unmatched request: \"%s\"", req->raw_text);
 	    argv_free(req->service_pattern);
 	}
-	myfree((char *) field_reqs);
+	myfree((void *) field_reqs);
     }
 }
 
@@ -956,7 +1049,7 @@ void    pcf_edit_master_param(PCF_MASTER_ENT *masterp, int mode,
 			aval = concatenate(param_name, "=",
 					   param_value, (char *) 0);
 			argv_replace_one(argv, field + 1, aval);
-			myfree((char *) aval);
+			myfree((void *) aval);
 			if (masterp->all_params)
 			    dict_put(masterp->all_params, param_name, param_value);
 			/* XXX Update parameter "used/defined" status. */
@@ -997,7 +1090,7 @@ void    pcf_edit_master_param(PCF_MASTER_ENT *masterp, int mode,
 	if (masterp->all_params)
 	    dict_put(masterp->all_params, param_name, param_value);
 	/* XXX May affect parameter "used/defined" status. */
-	myfree((char *) aval);
+	myfree((void *) aval);
 	param_match = 1;
     }
 }

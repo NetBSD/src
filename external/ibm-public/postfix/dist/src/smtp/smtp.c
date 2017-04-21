@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.9 2015/09/12 08:23:24 tron Exp $	*/
+/*	$NetBSD: smtp.c,v 1.9.4.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -57,20 +57,20 @@
 /* LMTP DESTINATION SYNTAX
 /* .ad
 /* .fi
-/*      LMTP destinations have the following form:
+/*	LMTP destinations have the following form:
 /* .IP \fBunix\fR:\fIpathname\fR
-/*      Connect to the local UNIX-domain server that is bound to the specified
-/*      \fIpathname\fR. If the process runs chrooted, an absolute pathname
-/*      is interpreted relative to the Postfix queue directory.
+/*	Connect to the local UNIX-domain server that is bound to the specified
+/*	\fIpathname\fR. If the process runs chrooted, an absolute pathname
+/*	is interpreted relative to the Postfix queue directory.
 /* .IP \fBinet\fR:\fIhostname\fR
 /* .IP \fBinet\fR:\fIhostname\fR:\fIport\fR
 /* .IP \fBinet\fR:[\fIaddress\fR]
 /* .IP \fBinet\fR:[\fIaddress\fR]:\fIport\fR
-/*      Connect to the specified TCP port on the specified local or
-/*      remote host. If no port is specified, connect to the port defined as
-/*      \fBlmtp\fR in \fBservices\fR(4).
-/*      If no such service is found, the \fBlmtp_tcp_port\fR configuration
-/*      parameter (default value of 24) will be used.
+/*	Connect to the specified TCP port on the specified local or
+/*	remote host. If no port is specified, connect to the port defined as
+/*	\fBlmtp\fR in \fBservices\fR(4).
+/*	If no such service is found, the \fBlmtp_tcp_port\fR configuration
+/*	parameter (default value of 24) will be used.
 /*	An IPv6 address must be formatted as [\fBipv6\fR:\fIaddress\fR].
 /* .PP
 /* SECURITY
@@ -98,6 +98,9 @@
 /*	RFC 3463 (Enhanced Status Codes)
 /*	RFC 4954 (AUTH command)
 /*	RFC 5321 (SMTP protocol)
+/*	RFC 6531 (Internationalized SMTP)
+/*	RFC 6533 (Internationalized Delivery Status Notifications)
+/*	RFC 7672 (SMTP security via opportunistic DANE TLS)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -197,8 +200,9 @@
 /* .PP
 /*	Available in Postfix version 2.2.9 and later:
 /* .IP "\fBsmtp_cname_overrides_servername (version dependent)\fR"
-/*	Allow DNS CNAME records to override the servername that the
-/*	Postfix SMTP client uses for logging, SASL password lookup, TLS
+/*	When the remote SMTP servername is a DNS CNAME, replace the
+/*	servername with the result from CNAME expansion for the purpose of
+/*	logging, SASL password lookup, TLS
 /*	policy decisions, or TLS certificate verification.
 /* .PP
 /*	Available in Postfix version 2.3 and later:
@@ -220,7 +224,7 @@
 /*	default setting "no", send no SASL authoriZation ID (authzid); send
 /*	only the SASL authentiCation ID (authcid) plus the authcid's password.
 /* .PP
-/*      Available in Postfix version 2.5 and later:
+/*	Available in Postfix version 2.5 and later:
 /* .IP "\fBsmtp_header_checks (empty)\fR"
 /*	Restricted \fBheader_checks\fR(5) tables for the Postfix SMTP client.
 /* .IP "\fBsmtp_mime_header_checks (empty)\fR"
@@ -253,6 +257,14 @@
 /*	Available in Postfix version 2.11 and later:
 /* .IP "\fBsmtp_dns_support_level (empty)\fR"
 /*	Level of DNS support in the Postfix SMTP client.
+/* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBsmtp_delivery_status_filter ($default_delivery_status_filter)\fR"
+/*	Optional filter for the \fBsmtp\fR(8) delivery agent to change the
+/*	delivery status code or explanatory text of successful or unsuccessful
+/*	deliveries.
+/* .IP "\fBsmtp_dns_reply_filter (empty)\fR"
+/*	Optional filter for Postfix SMTP client DNS lookup results.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -277,9 +289,7 @@
 /*	Enable SASL authentication in the Postfix SMTP client.
 /* .IP "\fBsmtp_sasl_password_maps (empty)\fR"
 /*	Optional Postfix SMTP client lookup tables with one username:password
-/*	entry
-/*	per remote hostname or domain, or sender address when sender-dependent
-/*	authentication is enabled.
+/*	entry per sender, remote hostname or next-hop domain.
 /* .IP "\fBsmtp_sasl_security_options (noplaintext, noanonymous)\fR"
 /*	Postfix SMTP client SASL security options; as of Postfix 2.3
 /*	the list of available
@@ -342,7 +352,7 @@
 /*	A file containing CA certificates of root CAs trusted to sign
 /*	either remote SMTP server certificates or intermediate CA certificates.
 /* .IP "\fBsmtp_tls_CApath (empty)\fR"
-/*	Directory with PEM format certificate authority certificates
+/*	Directory with PEM format Certification Authority certificates
 /*	that the Postfix SMTP client uses to verify a remote SMTP server
 /*	certificate.
 /* .IP "\fBsmtp_tls_cert_file (empty)\fR"
@@ -395,14 +405,14 @@
 /*	The number of pseudo-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
 /*	process requests from the \fBtlsmgr\fR(8) server in order to seed its
 /*	internal pseudo random number generator (PRNG).
-/* .IP "\fBtls_high_cipherlist (ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH)\fR"
-/*	The OpenSSL cipherlist for "HIGH" grade ciphers.
-/* .IP "\fBtls_medium_cipherlist (ALL:!EXPORT:!LOW:+RC4:@STRENGTH)\fR"
-/*	The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers.
-/* .IP "\fBtls_low_cipherlist (ALL:!EXPORT:+RC4:@STRENGTH)\fR"
-/*	The OpenSSL cipherlist for "LOW" or higher grade ciphers.
-/* .IP "\fBtls_export_cipherlist (ALL:+RC4:@STRENGTH)\fR"
-/*	The OpenSSL cipherlist for "EXPORT" or higher grade ciphers.
+/* .IP "\fBtls_high_cipherlist (see 'postconf -d' output)\fR"
+/*	The OpenSSL cipherlist for "high" grade ciphers.
+/* .IP "\fBtls_medium_cipherlist (see 'postconf -d' output)\fR"
+/*	The OpenSSL cipherlist for "medium" or higher grade ciphers.
+/* .IP "\fBtls_low_cipherlist (see 'postconf -d' output)\fR"
+/*	The OpenSSL cipherlist for "low" or higher grade ciphers.
+/* .IP "\fBtls_export_cipherlist (see 'postconf -d' output)\fR"
+/*	The OpenSSL cipherlist for "export" or higher grade ciphers.
 /* .IP "\fBtls_null_cipherlist (eNULL:!aNULL)\fR"
 /*	The OpenSSL cipherlist for "NULL" grade ciphers that provide
 /*	authentication without encryption.
@@ -455,6 +465,17 @@
 /*	RFC 6698 trust-anchor digest support in the Postfix TLS library.
 /* .IP "\fBtlsmgr_service_name (tlsmgr)\fR"
 /*	The name of the \fBtlsmgr\fR(8) service entry in master.cf.
+/* .PP
+/*	Available in Postfix version 3.0 and later:
+/* .IP "\fBsmtp_tls_wrappermode (no)\fR"
+/*	Request that the Postfix SMTP client connects using the
+/*	legacy SMTPS protocol instead of using the STARTTLS command.
+/* .PP
+/*	Available in Postfix version 3.1 and later:
+/* .IP "\fBsmtp_tls_dane_insecure_mx_policy (dane)\fR"
+/*	The TLS policy for MX hosts with "secure" TLSA records when the
+/*	nexthop destination security level is \fBdane\fR, but the MX
+/*	record was found via an "insecure" MX lookup.
 /* OBSOLETE STARTTLS CONTROLS
 /* .ad
 /* .fi
@@ -566,6 +587,16 @@
 /*	When SMTP connection caching is enabled, the number of times
 /*	that an SMTP session may be reused before it is closed, or zero (no
 /*	limit).
+/* SMTPUTF8 CONTROLS
+/* .ad
+/* .fi
+/*	Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
+/* .IP "\fBsmtputf8_enable (yes)\fR"
+/*	Enable preliminary SMTPUTF8 support for the protocols described
+/*	in RFC 6531..6533.
+/* .IP "\fBsmtputf8_autodetect_classes (sendmail, verify)\fR"
+/*	Detect that a message requires SMTPUTF8 support for the specified
+/*	mail origin classes.
 /* TROUBLE SHOOTING CONTROLS
 /* .ad
 /* .fi
@@ -643,7 +674,7 @@
 /*	An optional numerical network address that the Postfix SMTP client
 /*	should bind to when making an IPv6 connection.
 /* .IP "\fBsmtp_helo_name ($myhostname)\fR"
-/*	The hostname to send in the SMTP EHLO or HELO command.
+/*	The hostname to send in the SMTP HELO or EHLO command.
 /* .IP "\fBlmtp_lhlo_name ($myhostname)\fR"
 /*	The hostname to send in the LMTP LHLO command.
 /* .IP "\fBsmtp_host_lookup (dns)\fR"
@@ -665,6 +696,16 @@
 /*	Available with Postfix 2.3 and later:
 /* .IP "\fBsmtp_fallback_relay ($fallback_relay)\fR"
 /*	Optional list of relay hosts for SMTP destinations that can't be
+/*	found or that are unreachable.
+/* .PP
+/*	Available with Postfix 3.0 and later:
+/* .IP "\fBsmtp_address_verify_target (rcpt)\fR"
+/*	In the context of email address verification, the SMTP protocol
+/*	stage that determines whether an email address is deliverable.
+/* .PP
+/*	Available with Postfix 3.1 and later:
+/* .IP "\fBlmtp_fallback_relay (empty)\fR"
+/*	Optional list of relay hosts for LMTP destinations that can't be
 /*	found or that are unreachable.
 /* SEE ALSO
 /*	generic(5), output address rewriting
@@ -696,6 +737,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*
 /*	Command pipelining in cooperation with:
 /*	Jon Ribbens
@@ -797,8 +843,11 @@ char   *var_smtp_sasl_mechs;
 char   *var_smtp_sasl_type;
 char   *var_smtp_bind_addr;
 char   *var_smtp_bind_addr6;
+char   *var_smtp_vrfy_tgt;
 bool    var_smtp_rand_addr;
 int     var_smtp_pix_thresh;
+int     var_queue_run_delay;
+int     var_min_backoff_time;
 int     var_smtp_pix_delay;
 int     var_smtp_line_limit;
 char   *var_smtp_helo_name;
@@ -823,6 +872,7 @@ bool    var_smtp_use_tls;
 bool    var_smtp_enforce_tls;
 char   *var_smtp_tls_per_site;
 char   *var_smtp_tls_policy;
+bool    var_smtp_tls_wrappermode;
 
 #ifdef USE_TLS
 char   *var_smtp_sasl_tls_opts;
@@ -853,6 +903,7 @@ char   *var_smtp_tls_eccert_file;
 char   *var_smtp_tls_eckey_file;
 bool    var_smtp_tls_blk_early_mail_reply;
 bool    var_smtp_tls_force_tlsa;
+char   *var_smtp_tls_insecure_mx_policy;
 
 #endif
 
@@ -875,6 +926,8 @@ char   *var_smtp_dns_res_opt;
 char   *var_smtp_dns_support;
 bool    var_smtp_rec_deadline;
 bool    var_smtp_dummy_mail_auth;
+char   *var_smtp_dsn_filter;
+char   *var_smtp_dns_re_filter;
 
  /* Special handling of 535 AUTH errors. */
 char   *var_smtp_sasl_auth_cache_name;
@@ -903,6 +956,7 @@ HBC_CHECKS *smtp_body_checks;		/* limited body checks */
   * OpenSSL client state (opaque handle)
   */
 TLS_APPL_STATE *smtp_tls_ctx;
+int     smtp_tls_insecure_mx_policy;
 
 #endif
 
@@ -1017,10 +1071,26 @@ static void post_init(char *unused_name, char **unused_argv)
 	smtp_dns_support =
 	    name_code(dns_support, NAME_CODE_FLAG_NONE, var_smtp_dns_support);
 	if (smtp_dns_support == SMTP_DNS_INVALID)
-	    msg_fatal("invalid %s: \"%s\"", SMTP_X(DNS_SUPPORT),
+	    msg_fatal("invalid %s: \"%s\"", VAR_LMTP_SMTP(DNS_SUPPORT),
 		      var_smtp_dns_support);
 	var_disable_dns = (smtp_dns_support == SMTP_DNS_DISABLED);
     }
+
+#ifdef USE_TLS
+    if (smtp_mode) {
+	smtp_tls_insecure_mx_policy =
+	    tls_level_lookup(var_smtp_tls_insecure_mx_policy);
+	switch (smtp_tls_insecure_mx_policy) {
+	case TLS_LEV_MAY:
+	case TLS_LEV_ENCRYPT:
+	case TLS_LEV_DANE:
+	    break;
+	default:
+	    msg_fatal("invalid %s: \"%s\"", VAR_SMTP_TLS_INSECURE_MX_POLICY,
+		      var_smtp_tls_insecure_mx_policy);
+	}
+    }
+#endif
 
     /*
      * Select hostname lookup mechanisms.
@@ -1029,10 +1099,11 @@ static void post_init(char *unused_name, char **unused_argv)
 	smtp_host_lookup_mask = SMTP_HOST_FLAG_NATIVE;
     else
 	smtp_host_lookup_mask =
-	    name_mask(SMTP_X(HOST_LOOKUP), lookup_masks, var_smtp_host_lookup);
+	    name_mask(VAR_LMTP_SMTP(HOST_LOOKUP), lookup_masks,
+		      var_smtp_host_lookup);
     if (msg_verbose)
 	msg_info("host name lookup methods: %s",
-		 str_name_mask(SMTP_X(HOST_LOOKUP), lookup_masks,
+		 str_name_mask(VAR_LMTP_SMTP(HOST_LOOKUP), lookup_masks,
 			       smtp_host_lookup_mask));
 
     /*
@@ -1051,8 +1122,13 @@ static void post_init(char *unused_name, char **unused_argv)
     /*
      * Select DNS query flags.
      */
-    smtp_dns_res_opt = name_mask(SMTP_X(DNS_RES_OPT), dns_res_opt_masks,
+    smtp_dns_res_opt = name_mask(VAR_LMTP_SMTP(DNS_RES_OPT), dns_res_opt_masks,
 				 var_smtp_dns_res_opt);
+
+    /*
+     * Address verification.
+     */
+    smtp_vrfy_init();
 }
 
 /* pre_init - pre-jail initialization */
@@ -1080,7 +1156,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 	smtp_sasl_initialize();
 #else
 	msg_warn("%s is true, but SASL support is not compiled in",
-		 SMTP_X(SASL_ENABLE));
+		 VAR_LMTP_SMTP(SASL_ENABLE));
 #endif
 
     if (*var_smtp_tls_level != 0)
@@ -1125,10 +1201,10 @@ static void pre_init(char *unused_name, char **unused_argv)
 	 */
 	smtp_tls_ctx =
 	    TLS_CLIENT_INIT(&props,
-			    log_param = SMTP_X(TLS_LOGLEVEL),
+			    log_param = VAR_LMTP_SMTP(TLS_LOGLEVEL),
 			    log_level = var_smtp_tls_loglevel,
 			    verifydepth = var_smtp_tls_scert_vd,
-			    cache_type = X_SMTP(TLS_MGR_SCACHE),
+			    cache_type = LMTP_SMTP_SUFFIX(TLS_MGR_SCACHE),
 			    cert_file = var_smtp_tls_cert_file,
 			    key_file = var_smtp_tls_key_file,
 			    dcert_file = var_smtp_tls_dcert_file,
@@ -1153,13 +1229,15 @@ static void pre_init(char *unused_name, char **unused_argv)
      * Session cache domain list.
      */
     if (*var_smtp_cache_dest)
-	smtp_cache_dest = string_list_init(MATCH_FLAG_RETURN, var_smtp_cache_dest);
+	smtp_cache_dest = string_list_init(VAR_SMTP_CACHE_DEST,
+					   MATCH_FLAG_RETURN,
+					   var_smtp_cache_dest);
 
     /*
      * EHLO keyword filter.
      */
     if (*var_smtp_ehlo_dis_maps)
-	smtp_ehlo_dis_maps = maps_create(SMTP_X(EHLO_DIS_MAPS),
+	smtp_ehlo_dis_maps = maps_create(VAR_LMTP_SMTP(EHLO_DIS_MAPS),
 					 var_smtp_ehlo_dis_maps,
 					 DICT_FLAG_LOCK);
 
@@ -1167,7 +1245,7 @@ static void pre_init(char *unused_name, char **unused_argv)
      * PIX bug workarounds.
      */
     if (*var_smtp_pix_bug_maps)
-	smtp_pix_bug_maps = maps_create(SMTP_X(PIX_BUG_MAPS),
+	smtp_pix_bug_maps = maps_create(VAR_LMTP_SMTP(PIX_BUG_MAPS),
 					var_smtp_pix_bug_maps,
 					DICT_FLAG_LOCK);
 
@@ -1179,19 +1257,20 @@ static void pre_init(char *unused_name, char **unused_argv)
 	    ext_prop_mask(VAR_PROP_EXTENSION, var_prop_extension);
     if (*var_smtp_generic_maps)
 	smtp_generic_maps =
-	    maps_create(SMTP_X(GENERIC_MAPS), var_smtp_generic_maps,
-			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX);
+	    maps_create(VAR_LMTP_SMTP(GENERIC_MAPS), var_smtp_generic_maps,
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+			| DICT_FLAG_UTF8_REQUEST);
 
     /*
      * Header/body checks.
      */
     smtp_header_checks = hbc_header_checks_create(
-				      SMTP_X(HEAD_CHKS), var_smtp_head_chks,
-				      SMTP_X(MIME_CHKS), var_smtp_mime_chks,
-				      SMTP_X(NEST_CHKS), var_smtp_nest_chks,
+			       VAR_LMTP_SMTP(HEAD_CHKS), var_smtp_head_chks,
+			       VAR_LMTP_SMTP(MIME_CHKS), var_smtp_mime_chks,
+			       VAR_LMTP_SMTP(NEST_CHKS), var_smtp_nest_chks,
 						  smtp_hbc_callbacks);
     smtp_body_checks = hbc_body_checks_create(
-				      SMTP_X(BODY_CHKS), var_smtp_body_chks,
+			       VAR_LMTP_SMTP(BODY_CHKS), var_smtp_body_chks,
 					      smtp_hbc_callbacks);
 
     /*
@@ -1209,8 +1288,16 @@ static void pre_init(char *unused_name, char **unused_argv)
 	smtp_addr_pref = name_code(addr_pref_map, NAME_CODE_FLAG_NONE,
 				   var_smtp_addr_pref);
 	if (smtp_addr_pref < 0)
-	    msg_fatal("bad %s value: %s", SMTP_X(ADDR_PREF), var_smtp_addr_pref);
+	    msg_fatal("bad %s value: %s", VAR_LMTP_SMTP(ADDR_PREF),
+		      var_smtp_addr_pref);
     }
+
+    /*
+     * DNS reply filter.
+     */
+    if (*var_smtp_dns_re_filter)
+	dns_rr_filter_compile(VAR_LMTP_SMTP(DNS_RE_FILTER),
+			      var_smtp_dns_re_filter);
 }
 
 /* pre_accept - see if tables have changed */
@@ -1261,16 +1348,18 @@ int     main(int argc, char **argv)
      * Initialize with the LMTP or SMTP parameter name space.
      */
     single_server_main(argc, argv, smtp_service,
-		       MAIL_SERVER_TIME_TABLE, smtp_mode ?
-		       smtp_time_table : lmtp_time_table,
-		       MAIL_SERVER_INT_TABLE, smtp_mode ?
-		       smtp_int_table : lmtp_int_table,
-		       MAIL_SERVER_STR_TABLE, smtp_mode ?
-		       smtp_str_table : lmtp_str_table,
-		       MAIL_SERVER_BOOL_TABLE, smtp_mode ?
-		       smtp_bool_table : lmtp_bool_table,
-		       MAIL_SERVER_PRE_INIT, pre_init,
-		       MAIL_SERVER_POST_INIT, post_init,
-		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
+		       CA_MAIL_SERVER_TIME_TABLE(smtp_mode ?
+					 smtp_time_table : lmtp_time_table),
+		       CA_MAIL_SERVER_INT_TABLE(smtp_mode ?
+					   smtp_int_table : lmtp_int_table),
+		       CA_MAIL_SERVER_STR_TABLE(smtp_mode ?
+					   smtp_str_table : lmtp_str_table),
+		       CA_MAIL_SERVER_BOOL_TABLE(smtp_mode ?
+					 smtp_bool_table : lmtp_bool_table),
+		       CA_MAIL_SERVER_PRE_INIT(pre_init),
+		       CA_MAIL_SERVER_POST_INIT(post_init),
+		       CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
+		       CA_MAIL_SERVER_BOUNCE_INIT(VAR_SMTP_DSN_FILTER,
+						  &var_smtp_dsn_filter),
 		       0);
 }

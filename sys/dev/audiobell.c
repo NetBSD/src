@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.12 2016/12/13 20:18:32 christos Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.12.2.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 
 /*
@@ -32,25 +32,24 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.12 2016/12/13 20:18:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.12.2.1 2017/04/21 16:53:44 bouyer Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/null.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
+#include <sys/unistd.h>
 
 #include <dev/audio_if.h>
+#include <dev/audiovar.h>
 #include <dev/audiobellvar.h>
-
-extern dev_type_open(audioopen);
-extern dev_type_ioctl(audioioctl);
-extern dev_type_write(audiowrite);
-extern dev_type_close(audioclose);
 
 /* Convert a %age volume to an amount to add to u-law values */
 /* XXX Probably highly inaccurate -- should be regenerated */
@@ -143,20 +142,28 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 	struct audio_info ai;
 	struct uio auio;
 	struct iovec aiov;
+	struct file *fp;
 	int size, len, offset;
+
+	fp = NULL;
 	dev_t audio = AUDIO_DEVICE | device_unit((device_t)v);
 
 	/* The audio system isn't built for polling. */
 	if (poll) return;
 
 	/* If not configured, we can't beep. */
-	if (audioopen(audio, FWRITE, 0, NULL) != 0)
+	if (audiobellopen(audio, FWRITE, 0, NULL, &fp) != EMOVEFD || fp == NULL)
 		return;
 
-	if (audioioctl(audio, AUDIO_GETINFO, &ai, 0, NULL) != 0)
+	if (audiobellioctl(fp, AUDIO_GETINFO, &ai) != 0) {
+		audiobellclose(fp);
 		return;
+	}
 
 	buf = NULL;
+
+	if (ai.blocksize < 8192)
+		ai.blocksize = 8192;
 
 	len = period * 8;
 	size = min(len, ai.blocksize);
@@ -179,11 +186,11 @@ audiobell(void *v, u_int pitch, u_int period, u_int volume, int poll)
 		auio.uio_rw = UIO_WRITE;
 		UIO_SETUP_SYSSPACE(&auio);
 
-		audiowrite(audio, &auio, 0);
+		audiobellwrite(fp, NULL, &auio, NULL, 0);
 		len -= size;
 		offset += size;
 	}
 out:
 	if (buf != NULL) free(buf, M_TEMP);
-	audioclose(audio, FWRITE, 0, NULL);
+	audiobellclose(fp);
 }

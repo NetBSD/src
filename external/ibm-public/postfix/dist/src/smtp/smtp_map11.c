@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_map11.c,v 1.1.1.2 2013/01/02 18:59:07 tron Exp $	*/
+/*	$NetBSD: smtp_map11.c,v 1.1.1.2.16.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -64,7 +64,6 @@
 #include <dict.h>
 #include <argv.h>
 #include <tok822.h>
-#include <valid_hostname.h>
 
 /* Global library. */
 
@@ -145,7 +144,9 @@ int     main(int argc, char **argv)
     if (argc < 3)
 	msg_fatal("usage: %s maptype:mapname address...", argv[0]);
 
-    maps = maps_create(argv[1], argv[1], DICT_FLAG_FOLD_FIX);
+    util_utf8_enable = 1;
+    maps = maps_create(argv[1], argv[1], DICT_FLAG_FOLD_FIX
+		       | DICT_FLAG_UTF8_REQUEST);
     mail_params_init();
     if (chdir(var_queue_dir) < 0)
 	msg_fatal("chdir(%s): %m", var_queue_dir);

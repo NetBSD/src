@@ -1,4 +1,4 @@
-.\" $NetBSD: time_second.9,v 1.5 2011/03/13 05:03:21 jruoho Exp $
+.\" $NetBSD: time_second.9,v 1.5.30.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 13, 2008
+.Dd March 14, 2017
 .Dt TIME_SECOND 9
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Vt extern time_t time_second;
 .Vt extern time_t time_uptime;
 .In sys/kernel.h
-.Vt extern struct timeval boottime;
+.Vt extern struct timespec boottime;
 .Sh DESCRIPTION
 The
 .Va time_second
@@ -76,7 +76,7 @@ with
 The variable may be read and written without special precautions.
 .Pp
 All of these variables contain times
-expressed in seconds and microseconds since midnight (0 hour),
+expressed in seconds and nanoseconds since midnight (0 hour),
 January 1, 1970.
 .Pp
 The
@@ -103,6 +103,6 @@ and in an atomic manner.
 .Sh SEE ALSO
 .Xr clock_settime 2 ,
 .Xr ntp_adjtime 2 ,
-.Xr timeval 3 ,
+.Xr timespec 3 ,
 .Xr hardclock 9 ,
 .Xr hz 9

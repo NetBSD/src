@@ -1,9 +1,9 @@
-/*	$NetBSD: xmap.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: xmap.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -337,7 +337,11 @@ rewrite_xmap_apply(
 					&& ( p = strtok( NULL, "" ) ) ) {
 				val->bv_val = strdup( p );
 				if ( val->bv_val == NULL ) {
-					return REWRITE_ERR;
+#ifdef USE_REWRITE_LDAP_PVT_THREADS
+					ldap_pvt_thread_mutex_unlock( &map->lm_mutex );
+#endif /* USE_REWRITE_LDAP_PVT_THREADS */
+					rc = REWRITE_ERR;
+					goto rc_return;
 				}
 
 				val->bv_len = strlen( p );

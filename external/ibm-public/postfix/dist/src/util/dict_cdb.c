@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.c,v 1.1.1.3 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: dict_cdb.c,v 1.1.1.3.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -187,7 +187,7 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_CDBQ_OPEN_RETURN(d) { \
+#define DICT_CDBQ_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	myfree(cdb_path); \
 	return (__d); \
@@ -197,7 +197,7 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
 
     if ((fd = open(cdb_path, O_RDONLY)) < 0)
 	DICT_CDBQ_OPEN_RETURN(dict_surrogate(DICT_TYPE_CDB, path,
-					   O_RDONLY, dict_flags,
+					     O_RDONLY, dict_flags,
 					 "open database %s: %m", cdb_path));
 
     dict_cdbq = (DICT_CDBQ *) dict_alloc(DICT_TYPE_CDB,
@@ -344,7 +344,7 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_CDBM_OPEN_RETURN(d) { \
+#define DICT_CDBM_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	if (cdb_path) \
 	    myfree(cdb_path); \

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.87 2016/02/27 00:09:45 tls Exp $
+#	$NetBSD: files.x86,v 1.87.4.1 2017/04/21 16:53:39 bouyer Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -88,6 +88,7 @@ file 	arch/x86/x86/patch.c		machdep
 file	arch/x86/x86/platform.c		machdep
 file 	arch/x86/x86/pmap.c		machdep
 file 	arch/x86/x86/pmap_tlb.c		machdep
+file 	arch/x86/x86/pmc.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c	machdep
 file	arch/x86/x86/syscall.c		machdep

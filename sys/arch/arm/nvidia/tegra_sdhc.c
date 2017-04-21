@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.15 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.15.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.15 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.15.4.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,6 +108,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 			  SDHC_FLAG_NO_CLKBASE |
 			  SDHC_FLAG_NO_TIMEOUT |
 			  SDHC_FLAG_SINGLE_POWER_WRITE |
+			  SDHC_FLAG_NO_HS_BIT |
 			  SDHC_FLAG_USE_DMA |
 			  SDHC_FLAG_USE_ADMA2;
 	if (bus_width == 8) {
@@ -122,6 +123,14 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bsz = size;
+
+	/* XXX SDR104 requires a custom tuning method on Tegra K1 */
+	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
+	sc->sc.sc_caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	    SDHC_CAPABILITIES);
+	sc->sc.sc_caps2 = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	    SDHC_CAPABILITIES2);
+	sc->sc.sc_caps2 &= ~SDHC_SDR104_SUPP;
 
 	sc->sc_pin_power = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "power-gpios", GPIO_PIN_OUTPUT);

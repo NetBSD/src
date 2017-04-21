@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.4 2014/07/06 19:27:55 tron Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.4.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -223,6 +223,7 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_XFORWARD_PORT	(1<<18)
 #define SMTP_FEATURE_EARLY_TLS_MAIL_REPLY (1<<19)	/* CVE-2009-3555 */
 #define SMTP_FEATURE_XFORWARD_IDENT	(1<<20)
+#define SMTP_FEATURE_SMTPUTF8		(1<<21)	/* RFC 6531 */
 
  /*
   * Features that passivate under the endpoint.
@@ -291,6 +292,7 @@ extern unsigned smtp_dns_res_opt;	/* DNS query flags */
 #ifdef USE_TLS
 
 extern TLS_APPL_STATE *smtp_tls_ctx;	/* client-side TLS engine */
+extern int smtp_tls_insecure_mx_policy;	/* DANE post insecure MX? */
 
 #endif
 
@@ -324,7 +326,7 @@ typedef struct SMTP_SESSION {
 
     time_t  expire_time;		/* session reuse expiration time */
     int     reuse_count;		/* # of times reused (for logging) */
-    int     dead;			/* No further I/O allowed */
+    int     forbidden;			/* No further I/O allowed */
 
 #ifdef USE_SASL_AUTH
     char   *sasl_mechanism_list;	/* server mechanism list */
@@ -341,7 +343,6 @@ typedef struct SMTP_SESSION {
     TLS_SESS_STATE *tls_context;	/* TLS library session state */
     char   *tls_nexthop;		/* Nexthop domain for cert checks */
     int     tls_retry_plain;		/* Try plain when TLS handshake fails */
-    SMTP_TLS_POLICY *tls;		/* TEMPORARY */
 #endif
 
     SMTP_STATE *state;			/* back link */
@@ -367,6 +368,7 @@ extern int smtp_connect(SMTP_STATE *);
  /*
   * smtp_proto.c
   */
+extern void smtp_vrfy_init(void);
 extern int smtp_helo(SMTP_STATE *);
 extern int smtp_xfer(SMTP_STATE *);
 extern int smtp_rset(SMTP_STATE *);
@@ -418,7 +420,7 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
   * connections and other reasons why connections cannot be cached.
   */
 #define THIS_SESSION_IS_CACHED \
-	(!THIS_SESSION_IS_DEAD && session->expire_time > 0)
+	(!THIS_SESSION_IS_FORBIDDEN && session->expire_time > 0)
 
 #define THIS_SESSION_IS_EXPIRED \
 	(THIS_SESSION_IS_CACHED \
@@ -426,27 +428,27 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
 		|| (var_smtp_reuse_count > 0 \
 		    && session->reuse_count >= var_smtp_reuse_count)))
 
-#define THIS_SESSION_IS_BAD \
-	(!THIS_SESSION_IS_DEAD && session->expire_time < 0)
+#define THIS_SESSION_IS_THROTTLED \
+	(!THIS_SESSION_IS_FORBIDDEN && session->expire_time < 0)
 
-#define THIS_SESSION_IS_DEAD \
-	(session->dead != 0)
+#define THIS_SESSION_IS_FORBIDDEN \
+	(session->forbidden != 0)
 
  /* Bring the bad news. */
 
 #define DONT_CACHE_THIS_SESSION \
 	(session->expire_time = 0)
 
-#define DONT_CACHE_BAD_SESSION \
+#define DONT_CACHE_THROTTLED_SESSION \
 	(session->expire_time = -1)
 
-#define DONT_USE_DEAD_SESSION \
-	(session->dead = 1)
+#define DONT_USE_FORBIDDEN_SESSION \
+	(session->forbidden = 1)
 
  /* Initialization. */
 
 #define USE_NEWBORN_SESSION \
-	(session->dead = 0)
+	(session->forbidden = 0)
 
 #define CACHE_THIS_SESSION_UNTIL(when) \
 	(session->expire_time = (when))
@@ -454,6 +456,37 @@ extern HBC_CALL_BACKS smtp_hbc_callbacks[];
  /*
   * Encapsulate the following so that we don't expose details of of
   * connection management and error handling to the SMTP protocol engine.
+  */
+#ifdef USE_SASL_AUTH
+#define HAVE_SASL_CREDENTIALS \
+	(var_smtp_sasl_enable \
+	     && *var_smtp_sasl_passwd \
+	     && smtp_sasl_passwd_lookup(session))
+#else
+#define HAVE_SASL_CREDENTIALS	(0)
+#endif
+
+#define PREACTIVE_DELAY \
+	(session->state->request->msg_stats.active_arrival.tv_sec - \
+	 session->state->request->msg_stats.incoming_arrival.tv_sec)
+
+#define PLAINTEXT_FALLBACK_OK_AFTER_STARTTLS_FAILURE \
+	(session->tls_context == 0 \
+	    && state->tls->level == TLS_LEV_MAY \
+	    && PREACTIVE_DELAY >= var_min_backoff_time \
+	    && !HAVE_SASL_CREDENTIALS)
+
+#define PLAINTEXT_FALLBACK_OK_AFTER_TLS_SESSION_FAILURE \
+	(session->tls_context != 0 \
+	    && SMTP_RCPT_LEFT(state) > SMTP_RCPT_MARK_COUNT(state) \
+	    && state->tls->level == TLS_LEV_MAY \
+	    && PREACTIVE_DELAY >= var_min_backoff_time \
+	    && !HAVE_SASL_CREDENTIALS)
+
+ /*
+  * XXX The following will not retry recipients that were deferred while the
+  * SMTP_MISC_FLAG_FINAL_SERVER flag was already set. This includes the case
+  * when TLS fails in the middle of a delivery.
   */
 #define RETRY_AS_PLAINTEXT do { \
 	session->tls_retry_plain = 1; \
@@ -485,6 +518,11 @@ extern void smtp_chat_notify(SMTP_SESSION *);
      (resp))
 
 #define DSN_BY_LOCAL_MTA	((char *) 0)	/* DSN issued by local MTA */
+
+#define SMTP_RESP_SET_DSN(resp, _dsn) do { \
+	vstring_strcpy((resp)->dsn_buf, (_dsn)); \
+	(resp)->dsn = STR((resp)->dsn_buf); \
+    } while (0)
 
  /*
   * These operations implement a redundant mark-and-sweep algorithm that
@@ -524,21 +562,28 @@ extern void smtp_chat_notify(SMTP_SESSION *);
 
 #define SMTP_RCPT_LEFT(state) (state)->rcpt_left
 
+#define SMTP_RCPT_MARK_COUNT(state) ((state)->rcpt_drop + (state)->rcpt_keep)
+
 extern void smtp_rcpt_cleanup(SMTP_STATE *);
 extern void smtp_rcpt_done(SMTP_STATE *, SMTP_RESP *, RECIPIENT *);
 
  /*
   * smtp_trouble.c
   */
+#define SMTP_THROTTLE	1
+#define SMTP_NOTHROTTLE	0
 extern int smtp_sess_fail(SMTP_STATE *);
-extern int PRINTFLIKE(4, 5) smtp_site_fail(SMTP_STATE *, const char *,
-				             SMTP_RESP *, const char *,...);
-extern int PRINTFLIKE(4, 5) smtp_mesg_fail(SMTP_STATE *, const char *,
+extern int PRINTFLIKE(5, 6) smtp_misc_fail(SMTP_STATE *, int, const char *,
 				             SMTP_RESP *, const char *,...);
 extern void PRINTFLIKE(5, 6) smtp_rcpt_fail(SMTP_STATE *, RECIPIENT *,
 					          const char *, SMTP_RESP *,
 					            const char *,...);
 extern int smtp_stream_except(SMTP_STATE *, int, const char *);
+
+#define smtp_site_fail(state, mta, resp, ...) \
+	smtp_misc_fail((state), SMTP_THROTTLE, (mta), (resp), __VA_ARGS__)
+#define smtp_mesg_fail(state, mta, resp, ...) \
+	smtp_misc_fail((state), SMTP_NOTHROTTLE, (mta), (resp), __VA_ARGS__)
 
  /*
   * smtp_unalias.c
@@ -625,8 +670,8 @@ char   *smtp_key_prefix(VSTRING *, const char *, SMTP_ITERATOR *, int);
 
 extern int smtp_mode;
 
-#define SMTP_X(x) (smtp_mode ? VAR_SMTP_##x : VAR_LMTP_##x)
-#define X_SMTP(x) (smtp_mode ? x##_SMTP : x##_LMTP)
+#define VAR_LMTP_SMTP(x) (smtp_mode ? VAR_SMTP_##x : VAR_LMTP_##x)
+#define LMTP_SMTP_SUFFIX(x) (smtp_mode ? x##_SMTP : x##_LMTP)
 
 /* LICENSE
 /* .ad

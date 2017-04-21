@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mcreg.h,v 1.2 2015/11/21 16:48:33 jakllsch Exp $ */
+/* $NetBSD: tegra_mcreg.h,v 1.2.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -77,5 +77,13 @@
 
 #define MC_EMEM_CFG_0_EMEM_BOM		__BIT(31)
 #define MC_EMEM_CFG_0_EMEM_SIZE_MB	__BITS(13,0)
+
+#define MC_SMMU_TRANSLATION_ENABLE_0_REG	0x228
+#define MC_SMMU_AFIR_ENABLE	__BIT(14)
+#define MC_SMMU_TRANSLATION_ENABLE_1_REG	0x22c
+#define MC_SMMU_AFIW_ENABLE	__BIT(17)
+#define MC_SMMU_TRANSLATION_ENABLE_2_REG	0x230
+#define MC_SMMU_TRANSLATION_ENABLE_3_REG	0x234
+#define MC_SMMU_AFI_ASID_REG	0x238
 
 #endif /* _ARM_TEGRA_MCREG_H */

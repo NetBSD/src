@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_io.c,v 1.7 2013/01/09 08:49:44 he Exp $	*/
+/*	$NetBSD: alpha_pci_io.c,v 1.7.16.1 2017/04/21 16:53:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include <sys/param.h>
 
 #include <machine/alpha_cpu.h>
-#include <machine/bwx.h>
 #include <machine/sysarch.h>
 #include <machine/pio.h>
 
@@ -228,6 +227,7 @@ alpha_pci_io_swiz_outl(bus_addr_t ioaddr, uint32_t val)
  * these instructions.
  */
 __asm(".arch ev56");
+#include <machine/bwx.h>
 
 uint8_t
 alpha_pci_io_bwx_inb(bus_addr_t ioaddr)

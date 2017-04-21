@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.1.1.5 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.5.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* result.c - sock backend result reading function */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2014 The OpenLDAP Foundation.
+ * Copyright 2007-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,9 @@
  * This work was initially developed by Brian Candler for inclusion
  * in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: result.c,v 1.1.1.5.10.1 2017/04/21 16:52:30 bouyer Exp $");
 
 #include "portable.h"
 
@@ -50,6 +53,7 @@ sock_read_and_send_results(
 	char	line[BUFSIZ];
 	char	ebuf[128];
 
+	(void) fflush(fp);
 	/* read in the result and send it along */
 	buf = (char *) ch_malloc( BUFSIZ );
 	buf[0] = '\0';
@@ -78,6 +82,14 @@ sock_read_and_send_results(
 			continue;
 		}
 
+		if ( strncasecmp( line, "CONTINUE", 8 ) == 0 ) {
+			struct sockinfo	*si = (struct sockinfo *) op->o_bd->be_private;
+			/* Only valid when operating as an overlay! */
+			assert( si->si_ops != 0 );
+			rs->sr_err = SLAP_CB_CONTINUE;
+			goto skip;
+		}
+
 		len = strlen( line );
 		while ( bp + len + 1 - buf > bsize ) {
 			size_t offset = bp - buf;
@@ -92,13 +104,6 @@ sock_read_and_send_results(
 		if ( *line == '\n' ) {
 			if ( strncasecmp( buf, "RESULT", 6 ) == 0 ) {
 				break;
-			}
-			if ( strncasecmp( buf, "CONTINUE", 8 ) == 0 ) {
-				struct sockinfo	*si = (struct sockinfo *) op->o_bd->be_private;
-				/* Only valid when operating as an overlay! */
-				assert( si->si_ops != 0 );
-				rs->sr_err = SLAP_CB_CONTINUE;
-				goto skip;
 			}
 
 			if ( (rs->sr_entry = str2entry( buf )) == NULL ) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_print.c,v 1.1.1.3 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_proxy_print.c,v 1.1.1.3.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	routine. TLS_SESS_STATE() is meant to be passed as a call-back
 /*	to attr_print(), thusly:
 /*
-/*	... ATTR_TYPE_FUNC, tls_proxy_context_print, (void *) tls_context, ...
+/*	... SEND_ATTR_FUNC(tls_proxy_context_print, (void *) tls_context), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -63,24 +63,24 @@ int     tls_proxy_context_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
 #define STRING_OR_EMPTY(s) ((s) ? (s) : "")
 
     ret = print_fn(fp, flags | ATTR_FLAG_MORE,
-		   ATTR_TYPE_STR, MAIL_ATTR_PEER_CN,
-		   STRING_OR_EMPTY(tp->peer_CN),
-		   ATTR_TYPE_STR, MAIL_ATTR_ISSUER_CN,
-		   STRING_OR_EMPTY(tp->issuer_CN),
-		   ATTR_TYPE_STR, MAIL_ATTR_PEER_CERT_FPT,
-		   STRING_OR_EMPTY(tp->peer_cert_fprint),
-		   ATTR_TYPE_STR, MAIL_ATTR_PEER_PKEY_FPT,
-		   STRING_OR_EMPTY(tp->peer_pkey_fprint),
-		   ATTR_TYPE_INT, MAIL_ATTR_PEER_STATUS,
-		   tp->peer_status,
-		   ATTR_TYPE_STR, MAIL_ATTR_CIPHER_PROTOCOL,
-		   STRING_OR_EMPTY(tp->protocol),
-		   ATTR_TYPE_STR, MAIL_ATTR_CIPHER_NAME,
-		   STRING_OR_EMPTY(tp->cipher_name),
-		   ATTR_TYPE_INT, MAIL_ATTR_CIPHER_USEBITS,
-		   tp->cipher_usebits,
-		   ATTR_TYPE_INT, MAIL_ATTR_CIPHER_ALGBITS,
-		   tp->cipher_algbits,
+		   SEND_ATTR_STR(MAIL_ATTR_PEER_CN,
+				 STRING_OR_EMPTY(tp->peer_CN)),
+		   SEND_ATTR_STR(MAIL_ATTR_ISSUER_CN,
+				 STRING_OR_EMPTY(tp->issuer_CN)),
+		   SEND_ATTR_STR(MAIL_ATTR_PEER_CERT_FPT,
+				 STRING_OR_EMPTY(tp->peer_cert_fprint)),
+		   SEND_ATTR_STR(MAIL_ATTR_PEER_PKEY_FPT,
+				 STRING_OR_EMPTY(tp->peer_pkey_fprint)),
+		   SEND_ATTR_INT(MAIL_ATTR_PEER_STATUS,
+				 tp->peer_status),
+		   SEND_ATTR_STR(MAIL_ATTR_CIPHER_PROTOCOL,
+				 STRING_OR_EMPTY(tp->protocol)),
+		   SEND_ATTR_STR(MAIL_ATTR_CIPHER_NAME,
+				 STRING_OR_EMPTY(tp->cipher_name)),
+		   SEND_ATTR_INT(MAIL_ATTR_CIPHER_USEBITS,
+				 tp->cipher_usebits),
+		   SEND_ATTR_INT(MAIL_ATTR_CIPHER_ALGBITS,
+				 tp->cipher_algbits),
 		   ATTR_TYPE_END);
     return (ret);
 }

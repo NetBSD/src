@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.267 2017/01/13 14:34:58 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.267.2.1 2017/04/21 16:53:20 bouyer Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -31,6 +31,7 @@ REPROFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
 LINTFLAGS+=	-R${NETBSDSRCDIR}=/usr/src -R${X11SRCDIR}=/usr/xsrc
 
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj.*=/usr/obj/\1'
+REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj.*/(.*)=/usr/obj/\1/\2'
 
 CFLAGS+=	${REPROFLAGS}
 CXXFLAGS+=	${REPROFLAGS}
@@ -56,7 +57,7 @@ CFLAGS+=	-Wno-sign-compare
 # Don't suppress warnings coming from constructs in system headers.
 # Our system headers should be clean and we want to warn about things like:
 # isdigit((char)1)
-CFLAGS+=	-Wsystem-headers
+CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wsystem-headers :}
 CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 .if !defined(NOGCCERROR)
 # Set assembler warnings to be fatal
@@ -158,8 +159,11 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
+# sh3 defaults to soft-float and specifies hard-float a different way
+.if ${MACHINE_CPU} != "sh3"
 COPTS+=		${${ACTIVE_CC} == "gcc":? -msoft-float :}
 FOPTS+=		-msoft-float
+.endif
 .elif ${MACHINE_ARCH} == "coldfire"
 COPTS+=		-mhard-float
 FOPTS+=		-mhard-float
@@ -304,6 +308,11 @@ OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][dx]' -K '[$$][dx]\.*'
 # ARM big endian needs to preserve $a/$d/$t symbols for the linker.
 OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][adt]' -K '[$$][adt]\.*'
 .endif
+
+.if ${MKSTRIPSYM:Uyes} == "yes"
 OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x} ${OBJCOPYLIBFLAGS_EXTRA}
+.else
+OBJCOPYLIBFLAGS?=-X ${OBJCOPYLIBFLAGS_EXTRA}
+.endif
 
 .endif	# !defined(_BSD_SYS_MK_)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_test.c,v 1.1.1.3 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_test.c,v 1.1.1.3.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
  /*
   * Proof-of-concept test program. Create, update or read a database. Type
@@ -14,6 +14,10 @@
 #include <signal.h>
 #include <string.h>
 
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -23,6 +27,8 @@
 #include <msg_vstream.h>
 #include <vstring_vstream.h>
 #include <dict.h>
+#include <dict_lmdb.h>
+#include <dict_db.h>
 
 static NORETURN usage(char *myname)
 {
@@ -76,11 +82,20 @@ void    dict_test(int argc, char **argv)
 	dict_flags |= DICT_FLAG_LOCK;
     if ((dict_flags & (DICT_FLAG_DUP_WARN | DICT_FLAG_DUP_IGNORE)) == 0)
 	dict_flags |= DICT_FLAG_DUP_REPLACE;
+    dict_flags |= DICT_FLAG_UTF8_REQUEST;
     vstream_fflush(VSTREAM_OUT);
     dict_name = argv[optind];
     dict_allow_surrogate = 1;
+    util_utf8_enable = 1;
     dict = dict_open(dict_name, open_flags, dict_flags);
     dict_register(dict_name, dict);
+    vstream_printf("owner=%s (uid=%ld)\n",
+		   dict->owner.status == DICT_OWNER_TRUSTED ? "trusted" :
+		   dict->owner.status == DICT_OWNER_UNTRUSTED ? "untrusted" :
+		   dict->owner.status == DICT_OWNER_UNKNOWN ? "unspecified" :
+		   "error", (long) dict->owner.uid);
+    vstream_fflush(VSTREAM_OUT);
+
     while (vstring_fgets_nonl(inbuf, VSTREAM_IN)) {
 	bufp = vstring_str(inbuf);
 	if (!isatty(0)) {
@@ -118,8 +133,6 @@ void    dict_test(int argc, char **argv)
 	    if (dict_put(dict, key, value) != 0)
 		vstream_printf("%s: %s\n", key, dict->error ?
 			       "error" : "not updated");
-	    else
-		vstream_printf("%s=%s\n", key, value);
 	} else if (strcmp(cmd, "first") == 0 && !key && !value) {
 	    if (dict_seq(dict, DICT_SEQ_FUN_FIRST, &key, &value) == 0)
 		vstream_printf("%s=%s\n", key, value);

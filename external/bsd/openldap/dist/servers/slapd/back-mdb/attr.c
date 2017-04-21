@@ -1,10 +1,10 @@
-/*	$NetBSD: attr.c,v 1.1.1.1 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: attr.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* attr.c - backend routines for dealing with attributes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: attr.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -621,7 +624,7 @@ int mdb_ad_get( struct mdb_info *mdb, MDB_txn *txn, AttributeDescription *ad )
 	if ( rc == MDB_SUCCESS ) {
 		mdb->mi_adxs[ad->ad_index] = i;
 		mdb->mi_ads[i] = ad;
-		mdb->mi_numads++;
+		mdb->mi_numads = i;
 	} else {
 		Debug( LDAP_DEBUG_ANY,
 			"mdb_ad_get: mdb_put failed %s(%d)\n",

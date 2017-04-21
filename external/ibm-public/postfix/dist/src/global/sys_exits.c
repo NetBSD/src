@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_exits.c,v 1.1.1.2 2010/06/17 18:06:52 tron Exp $	*/
+/*	$NetBSD: sys_exits.c,v 1.1.1.2.32.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -108,7 +108,7 @@ static SYS_EXITS_DETAIL *sys_exits_fake(int code)
 
     vstring_sprintf(sys_exits_def_text, "unknown mail system error %d", code);
     sys_exits_default->text = vstring_str(sys_exits_def_text);
-    return(sys_exits_default);
+    return (sys_exits_default);
 }
 
 /* sys_exits_strerror - map exit status to error string */

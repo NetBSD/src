@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.2 2016/12/10 10:26:38 mlelstv Exp $
+#	$NetBSD: files.dev,v 1.2.2.1 2017/04/21 16:53:44 bouyer Exp $
 
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
@@ -12,6 +12,7 @@ file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
+file	dev/dkwedge/dkwedge_rdb.c	dkwedge_method_rdb
 file	dev/firmload.c			firmload
 file	dev/fss.c			fss
 file	dev/keylock.c			keylock

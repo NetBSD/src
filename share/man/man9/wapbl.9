@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.14 2016/05/08 10:13:01 wiz Exp $
+.\"	$NetBSD: wapbl.9,v 1.14.4.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,7 @@ Hence a consistent program-order view of the file system can be
 attained by resubmitting the writes that were successfully stored in
 the log using
 .Xr wapbl_replay 9 .
-This may not be the same state just before interruption -- writes in
+This may not be the same state just before interruption \(em writes in
 transactions that did not reach the disk will be excluded.
 .Pp
 For a file system to use
@@ -199,8 +199,8 @@ values are
 .Sq inodes
 or
 .Sq quaggas
-or anything else -- file systems may use this to list any objects keyed
-by
+or anything else \(em file systems may use this to list any objects
+keyed by
 .Vt ino_t
 value in the log.
 .Pp
@@ -436,7 +436,7 @@ and
 .Fn wapbl_end .
 .Pp
 There is no way to assert that the current transaction is not locked at
-all -- i.e., that the caller may acquire a shared lock on the
+all \(em i.e., that the caller may acquire a shared lock on the
 transaction with
 .Fn wapbl_begin
 without danger of deadlock.
@@ -472,8 +472,8 @@ This manifests as the well-known garbage-data-appended-after-crash bug
 in FFS: when appending to a file, the pages containing new data may not
 reach the disk before the inode update reporting its new size.
 After a crash, the inode update will be on disk, but the new data will
-not be -- instead, whatever garbage data in the free space will appear
-to have been appended to the file.
+not be \(em instead, whatever garbage data in the free space will
+appear to have been appended to the file.
 .Nm
 exacerbates the problem by increasing the throughput of metadata
 writes, because it can issue many metadata writes asynchronously that
@@ -500,9 +500,9 @@ and
 .Fn wapbl_unregister_inode .
 Consequently, for example, large writes appending to a file, which
 requires multiple disk block allocations and an inode update, must
-occur in a single transaction -- there is no way to roll back the disk
-block allocations if the write fails in the middle, e.g. because of a
-fault in the middle of the user buffer.
+occur in a single transaction \(em there is no way to roll back the
+disk block allocations if the write fails in the middle, e.g. because
+of a fault in the middle of the user buffer.
 .Pp
 .Fn wapbl_jlock_assert
 does not guarantee that the current thread has the current transaction

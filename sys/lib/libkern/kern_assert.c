@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_assert.c,v 1.3 2013/11/19 16:56:21 christos Exp $	*/
+/*	$NetBSD: kern_assert.c,v 1.3.14.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -50,4 +50,13 @@ kern_assert(const char *fmt, ...)
 	va_start(ap, fmt);
 	vpanic(fmt, ap);
 	va_end(ap);
+
+	/*
+	 * Force instructions at the return address of vpanic before
+	 * the next symbol, which otherwise the compiler may omit
+	 * because vpanic is marked noreturn.  This prevents seeing
+	 * whatever random symbol came after kern_assert in the linked
+	 * kernel in stack traces for assertion failures.
+	 */
+	asm volatile(".long 0");
 }

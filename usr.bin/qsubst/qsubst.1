@@ -1,4 +1,4 @@
-.\"	$NetBSD: qsubst.1,v 1.5 2014/03/18 18:20:45 riastradh Exp $
+.\"	$NetBSD: qsubst.1,v 1.5.12.1 2017/04/21 16:54:15 bouyer Exp $
 .\"
 .\" This file is in the public domain.
 .Dd September 4, 1999
@@ -49,12 +49,16 @@ Don't change this one or any others in this file, but instead simply go
 on to the next file.
 .It \&!
 Change the rest in this file without asking, then go on to the next
-file (at which point qsubst will start asking again).
+file (at which point
+.Nm
+will start asking again).
 .It \&?
 Print out the current filename and ask again.
 .El
 .Pp
-The first two arguments to qsubst are always the string to replace and
+The first two arguments to
+.Nm
+are always the string to replace and
 the string to replace it with.
 The options are as follows:
 .Bl -tag -width "-F filename" -compact -offset indent
@@ -99,7 +103,9 @@ lines of context below the line with the match when prompting the user.
 .It Fl f Ar filename
 The
 .Ar filename
-argument is one of the files qsubst should perform substitutions in.
+argument is one of the files
+.Nm
+should perform substitutions in.
 .It Fl F Ar filename
 .Nm
 reads
@@ -136,9 +142,13 @@ is limited to 512 characters; there is no limit on the size of
 .Ar str2 .
 Neither one may contain a NUL.
 .Pp
-NULs in the file may cause qsubst to make various mistakes.
+NULs in the file may cause
+.Nm
+to make various mistakes.
 .Pp
-If any other program modifies the file while qsubst is running, all
+If any other program modifies the file while
+.Nm
+is running, all
 bets are off.
 .Sh AUTHORS
 .An der Mouse Aq Mt mouse@rodents.montreal.qc.ca

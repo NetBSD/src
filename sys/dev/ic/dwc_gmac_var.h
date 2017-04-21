@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.6 2014/11/22 18:31:03 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.6.6.1 2017/04/21 16:53:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ struct dwc_gmac_tx_ring {
 	struct dwc_gmac_dev_dmadesc	*t_desc;    /* VA of TX ring start */
 	struct dwc_gmac_tx_data	t_data[AWGE_TX_RING_COUNT];
 	int				t_cur, t_next, t_queued;
+	kmutex_t			t_mtx;
 };
 
 struct dwc_gmac_rx_ring {
@@ -88,6 +89,11 @@ struct dwc_gmac_softc {
 	struct dwc_gmac_tx_ring sc_txq;
 	short sc_if_flags;			/* shadow of ether flags */
 	uint16_t sc_mii_clk;
+	bool sc_stopping;
+
+	kmutex_t *sc_lock;			/* lock for softc operations */
+
+	struct if_percpuq *sc_ipq;		/* softint-based input queues */
 };
 
 void dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t /*mii_clk*/);

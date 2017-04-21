@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.83 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.83.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.83 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.83.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -368,10 +368,13 @@ ip6_forward(struct mbuf *m, int srcrt)
 		if ((rt->rt_flags & (RTF_BLACKHOLE|RTF_REJECT)) == 0)
 #endif
 		{
+			char ip6bufs[INET6_ADDRSTRLEN];
+			char ip6bufd[INET6_ADDRSTRLEN];
+
 			printf("ip6_forward: outgoing interface is loopback. "
 			       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
-			       ip6_sprintf(&ip6->ip6_src),
-			       ip6_sprintf(&ip6->ip6_dst),
+			       IN6_PRINT(ip6bufs, &ip6->ip6_src),
+			       IN6_PRINT(ip6bufd, &ip6->ip6_dst),
 			       ip6->ip6_nxt, if_name(rcvif),
 			       if_name(rt->rt_ifp));
 		}
@@ -398,7 +401,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		goto freecopy;
 	ip6 = mtod(m, struct ip6_hdr *);
 
-	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
+	error = ip6_if_output(rt->rt_ifp, origifp, m, dst, rt);
 	if (error) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
 		IP6_STATINC(IP6_STAT_CANTFORWARD);

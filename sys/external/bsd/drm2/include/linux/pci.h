@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.22 2016/01/17 01:40:39 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.22.4.1 2017/04/21 16:53:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ struct pci_dev {
 	uint8_t			revision;
 	uint32_t		class;
 	bool			msi_enabled;
+	pci_intr_handle_t	*intr_handles;
 };
 
 static inline device_t
@@ -289,19 +290,28 @@ pci_write_config_byte(struct pci_dev *pdev, int reg, uint8_t value)
 	return 0;
 }
 
-/*
- * XXX pci msi
- */
 static inline int
 pci_enable_msi(struct pci_dev *pdev)
 {
-	return -ENOSYS;
+	const struct pci_attach_args *const pa = &pdev->pd_pa;
+
+	if (pci_msi_alloc_exact(pa, &pdev->intr_handles, 1))
+		return -EINVAL;
+
+	pdev->msi_enabled = 1;
+	return 0;
 }
 
 static inline void
 pci_disable_msi(struct pci_dev *pdev __unused)
 {
-	KASSERT(pdev->msi_enabled);
+	const struct pci_attach_args *const pa = &pdev->pd_pa;
+
+	if (pdev->intr_handles != NULL) {
+		pci_intr_release(pa->pa_pc, pdev->intr_handles, 1);
+		pdev->intr_handles = NULL;
+	}
+	pdev->msi_enabled = 0;
 }
 
 static inline void

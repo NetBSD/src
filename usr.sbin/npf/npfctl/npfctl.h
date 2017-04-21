@@ -1,7 +1,7 @@
-/*	$NetBSD: npfctl.h,v 1.43 2017/01/03 01:29:49 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.43.2.1 2017/04/21 16:54:18 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2017 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -127,7 +127,7 @@ npfvar_t *	npfctl_parse_tcpflag(const char *);
 npfvar_t *	npfctl_parse_table_id(const char *);
 npfvar_t * 	npfctl_parse_icmp(int, int, int);
 npfvar_t *	npfctl_parse_port_range(in_port_t, in_port_t);
-npfvar_t *	npfctl_parse_port_range_variable(const char *);
+npfvar_t *	npfctl_parse_port_range_variable(const char *, npfvar_t *);
 npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 		    unsigned long *);
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
@@ -204,7 +204,7 @@ void		npfctl_build_rule(uint32_t, const char *, sa_family_t,
 		    const char *, const char *);
 void		npfctl_build_natseg(int, int, const char *,
 		    const addr_port_t *, const addr_port_t *,
-		    const filt_opts_t *, unsigned);
+		    const opt_proto_t *, const filt_opts_t *, unsigned);
 void		npfctl_build_maprset(const char *, int, const char *);
 void		npfctl_build_table(const char *, u_int, const char *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.1.1.3 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: alias.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -66,10 +66,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
-
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
 
 /* Utility library. */
 
@@ -146,7 +142,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
      * a possible alias loop.
      */
     if (state.msg_attr.exp_from != 0
-	&& strcasecmp(state.msg_attr.exp_from, name) == 0)
+	&& strcasecmp_utf8(state.msg_attr.exp_from, name) == 0)
 	return (NO);
     if (state.level > 100) {
 	msg_warn("alias database loop for %s", name);

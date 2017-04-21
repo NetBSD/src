@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.217 2016/12/09 22:56:21 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.217.2.1 2017/04/21 16:54:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.217 2016/12/09 22:56:21 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.217.2.1 2017/04/21 16:54:14 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.217 2016/12/09 22:56:21 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.217.2.1 2017/04/21 16:54:14 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -131,6 +131,7 @@ __RCSID("$NetBSD: parse.c,v 1.217 2016/12/09 22:56:21 sjg Exp $");
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
@@ -527,7 +528,7 @@ loadfile(const char *path, int fd)
 		if (lf->buf != MAP_FAILED) {
 			/* succeeded */
 			if (lf->len == lf->maplen && lf->buf[lf->len - 1] != '\n') {
-				char *b = malloc(lf->len + 1);
+				char *b = bmake_malloc(lf->len + 1);
 				b[lf->len] = '\n';
 				memcpy(b, lf->buf, lf->len++);
 				munmap(lf->buf, lf->maplen);
@@ -548,9 +549,15 @@ loadfile(const char *path, int fd)
 	while (1) {
 		assert(bufpos <= lf->len);
 		if (bufpos == lf->len) {
+			if (lf->len > SIZE_MAX/2) {
+				errno = EFBIG;
+				Error("%s: file too large", path);
+				exit(1);
+			}
 			lf->len *= 2;
 			lf->buf = bmake_realloc(lf->buf, lf->len);
 		}
+		assert(bufpos < lf->len);
 		result = read(fd, lf->buf + bufpos, lf->len - bufpos);
 		if (result < 0) {
 			Error("%s: read error: %s", path, strerror(errno));
@@ -566,7 +573,11 @@ loadfile(const char *path, int fd)
 
 	/* truncate malloc region to actual length (maybe not useful) */
 	if (lf->len > 0) {
+		/* as for mmap case, ensure trailing \n */
+		if (lf->buf[lf->len - 1] != '\n')
+			lf->len++;
 		lf->buf = bmake_realloc(lf->buf, lf->len);
+		lf->buf[lf->len - 1] = '\n';
 	}
 
 done:
@@ -1081,15 +1092,15 @@ ParseDoSrc(int tOp, const char *src)
  *-----------------------------------------------------------------------
  */
 static int
-ParseFindMain(void *gnp, void *dummy)
+ParseFindMain(void *gnp, void *dummy MAKE_ATTR_UNUSED)
 {
     GNode   	  *gn = (GNode *)gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
 	mainNode = gn;
 	Targ_SetMain(gn);
-	return (dummy ? 1 : 1);
+	return 1;
     } else {
-	return (dummy ? 0 : 0);
+	return 0;
     }
 }
 
@@ -1127,10 +1138,10 @@ ParseAddDir(void *path, void *name)
  *-----------------------------------------------------------------------
  */
 static int
-ParseClearPath(void *path, void *dummy)
+ParseClearPath(void *path, void *dummy MAKE_ATTR_UNUSED)
 {
     Dir_ClearPath((Lst) path);
-    return(dummy ? 0 : 0);
+    return 0;
 }
 
 /*-
@@ -1667,10 +1678,12 @@ ParseDoDependency(char *line)
 	}
 	if (paths) {
 	    Lst_Destroy(paths, NULL);
+	    paths = NULL;
 	}
 	if (specType == ExPath)
 	    Dir_SetPATH();
     } else {
+	assert(paths == NULL);
 	while (*line) {
 	    /*
 	     * The targets take real sources, so we must beware of archive
@@ -1729,6 +1742,7 @@ ParseDoDependency(char *line)
     }
 
 out:
+    assert(paths == NULL);
     if (curTargs)
 	    Lst_Destroy(curTargs, NULL);
 }
@@ -2532,7 +2546,7 @@ ParseTraditionalInclude(char *line)
     if (*file == '\0') {
 	Parse_Error(PARSE_FATAL,
 		     "Filename missing from \"include\"");
-	return;
+	goto out;
     }
 
     for (file = all_files; !done; file = cp + 1) {
@@ -2547,6 +2561,7 @@ ParseTraditionalInclude(char *line)
 
 	Parse_include_file(file, FALSE, FALSE, silent);
     }
+out:
     free(all_files);
 }
 #endif
@@ -2597,6 +2612,7 @@ ParseGmakeExport(char *line)
      */
     value = Var_Subst(NULL, value, VAR_CMD, VARF_WANTRES);
     setenv(variable, value, 1);
+    free(value);
 }
 #endif
 

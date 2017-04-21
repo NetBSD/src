@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.195 2017/01/02 23:00:25 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.195.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.195 2017/01/02 23:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.195.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #include "arp.h"
 
@@ -297,19 +297,18 @@ in_socktrim(struct sockaddr_in *ap)
 /*
  *  Routine to take an Internet address and convert into a
  *  "dotted quad" representation for printing.
+ *  Caller has to make sure that buf is at least INET_ADDRSTRLEN long.
  */
 const char *
-in_fmtaddr(struct in_addr addr)
+in_fmtaddr(char *buf, struct in_addr addr)
 {
-	static char buf[sizeof("123.456.789.123")];
-
 	addr.s_addr = ntohl(addr.s_addr);
 
-	snprintf(buf, sizeof(buf), "%d.%d.%d.%d",
-		(addr.s_addr >> 24) & 0xFF,
-		(addr.s_addr >> 16) & 0xFF,
-		(addr.s_addr >>  8) & 0xFF,
-		(addr.s_addr >>  0) & 0xFF);
+	snprintf(buf, INET_ADDRSTRLEN, "%d.%d.%d.%d",
+	    (addr.s_addr >> 24) & 0xFF,
+	    (addr.s_addr >> 16) & 0xFF,
+	    (addr.s_addr >>  8) & 0xFF,
+	    (addr.s_addr >>  0) & 0xFF);
 	return buf;
 }
 
@@ -803,10 +802,12 @@ in_scrubaddr(struct in_ifaddr *ia)
 	in_scrubprefix(ia);
 	in_ifremlocal(&ia->ia_ifa);
 
+	mutex_enter(&in_ifaddr_lock);
 	if (ia->ia_allhosts != NULL) {
 		in_delmulti(ia->ia_allhosts);
 		ia->ia_allhosts = NULL;
 	}
+	mutex_exit(&in_ifaddr_lock);
 }
 
 /*
@@ -1133,7 +1134,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	s = splnet();
+	s = splsoftnet();
 	error = if_addr_init(ifp, &ia->ia_ifa, true);
 	splx(s);
 	/* Now clear the try tentative flag, it's job is done. */
@@ -1160,9 +1161,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia4_flags = newflags;
 	}
 
-	/* Add the local route to the address */
-	in_ifaddlocal(&ia->ia_ifa);
-
 	i = ia->ia_addr.sin_addr.s_addr;
 	if (ifp->if_flags & IFF_POINTOPOINT)
 		ia->ia_netmask = INADDR_BROADCAST;	/* default to /32 */
@@ -1186,11 +1184,10 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	ia->ia_net = i & ia->ia_netmask;
 	ia->ia_subnet = i & ia->ia_subnetmask;
 	in_socktrim(&ia->ia_sockmask);
+
 	/* re-calculate the "in_maxmtu" value */
 	in_setmaxmtu();
-	/*
-	 * Add route for the network.
-	 */
+
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		ia->ia_broadaddr.sin_addr.s_addr =
@@ -1205,17 +1202,25 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 			return (0);
 		flags |= RTF_HOST;
 	}
+
+	/* Add the local route to the address */
+	in_ifaddlocal(&ia->ia_ifa);
+
+	/* Add the prefix route for the address */
 	error = in_addprefix(ia, flags);
+
 	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
+	mutex_enter(&in_ifaddr_lock);
 	if ((ifp->if_flags & IFF_MULTICAST) != 0 && ia->ia_allhosts == NULL) {
 		struct in_addr addr;
 
 		addr.s_addr = INADDR_ALLHOSTS_GROUP;
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
+	mutex_exit(&in_ifaddr_lock);
 
 	if (hostIsNew &&
 	    ia->ia4_flags & IN_IFF_TENTATIVE &&

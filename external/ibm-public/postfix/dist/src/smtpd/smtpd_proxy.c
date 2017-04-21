@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.8 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.8.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -114,7 +114,7 @@
 /*	with the state->error_mask, state->err and proxy-buffer
 /*	fields given appropriate values.
 /*
-/* Arguments:
+/*	Arguments:
 /* .IP flags
 /*	Zero, or SMTPD_PROXY_FLAG_SPEED_ADJUST to buffer up the entire
 /*	message before contacting a before-queue content filter.
@@ -204,7 +204,6 @@
 #include <mail_params.h>
 #include <rec_type.h>
 #include <mail_proto.h>
-#include <mail_params.h>		/* null_format_string */
 #include <xtext.h>
 #include <record.h>
 #include <mail_queue.h>
@@ -235,7 +234,7 @@ static VSTREAM *smtpd_proxy_replay_stream;
   */
 static void smtpd_proxy_fake_server_reply(SMTPD_STATE *, int);
 static int smtpd_proxy_rdwr_error(SMTPD_STATE *, int);
-static int smtpd_proxy_cmd(SMTPD_STATE *, int, const char *,...);
+static int PRINTFLIKE(3, 4) smtpd_proxy_cmd(SMTPD_STATE *, int, const char *,...);
 static int smtpd_proxy_rec_put(VSTREAM *, int, const char *, ssize_t);
 
  /*
@@ -243,7 +242,6 @@ static int smtpd_proxy_rec_put(VSTREAM *, int, const char *, ssize_t);
   */
 #define STR(x)	vstring_str(x)
 #define LEN(x)	VSTRING_LEN(x)
-#define SMTPD_PROXY_CONN_FMT null_format_string
 #define STREQ(x, y)	(strcmp((x), (y)) == 0)
 
 /* smtpd_proxy_xforward_flush - flush forwarding information */
@@ -351,8 +349,9 @@ static int smtpd_proxy_connect(SMTPD_STATE *state)
     }
     proxy->service_stream = vstream_fdopen(fd, O_RDWR);
     /* Needed by our DATA-phase record emulation routines. */
-    vstream_control(proxy->service_stream, VSTREAM_CTL_CONTEXT,
-		    (char *) state, VSTREAM_CTL_END);
+    vstream_control(proxy->service_stream,
+		    CA_VSTREAM_CTL_CONTEXT((void *) state),
+		    CA_VSTREAM_CTL_END);
     /* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
     if (connect_fn == inet_connect)
 	vstream_tweak_tcp(proxy->service_stream);
@@ -366,7 +365,7 @@ static int smtpd_proxy_connect(SMTPD_STATE *state)
      * back a negative greeting banner: the proxy open is delayed to the
      * point that the client expects a MAIL FROM or RCPT TO reply.
      */
-    if (smtpd_proxy_cmd(state, SMTPD_PROX_WANT_OK, SMTPD_PROXY_CONN_FMT)) {
+    if (smtpd_proxy_cmd(state, SMTPD_PROX_WANT_OK, "%s", "")) {
 	smtpd_proxy_fake_server_reply(state, CLEANUP_STAT_PROXY);
 	smtpd_proxy_close(state);
 	return (-1);
@@ -629,8 +628,7 @@ static int smtpd_proxy_replay_send(SMTPD_STATE *state)
 	case REC_TYPE_FROM:
 	    if (expect == SMTPD_PROX_WANT_BAD)
 		msg_panic("%s: missing server reply type", myname);
-	    if (smtpd_proxy_cmd(state, expect, *STR(replay_buf) ? "%s" :
-				SMTPD_PROXY_CONN_FMT, STR(replay_buf)) < 0)
+	    if (smtpd_proxy_cmd(state, expect, "%s", STR(replay_buf)) < 0)
 		return (-1);
 	    expect = SMTPD_PROX_WANT_BAD;
 	    break;
@@ -654,7 +652,7 @@ static int smtpd_proxy_replay_send(SMTPD_STATE *state)
 
 /* smtpd_proxy_save_cmd - save SMTP command + expected response to replay log */
 
-static int smtpd_proxy_save_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
+static int PRINTFLIKE(3, 4) smtpd_proxy_save_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
 {
     va_list ap;
 
@@ -674,11 +672,8 @@ static int smtpd_proxy_save_cmd(SMTPD_STATE *state, int expect, const char *fmt,
     /*
      * The command can be omitted at the start of an SMTP session. This is
      * not documented as part of the official interface because it is used
-     * only internally to this module. Use an explicit null string in case
-     * the SMTPD_PROXY_CONN_FMT implementation details change.
+     * only internally to this module.
      */
-    if (fmt == SMTPD_PROXY_CONN_FMT)
-	fmt = "";
 
     /*
      * Save the command to the replay log, and send it to the before-queue
@@ -715,18 +710,18 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
     }
 
     /*
+     * Format the command.
+     */
+    va_start(ap, fmt);
+    vstring_vsprintf(proxy->request, fmt, ap);
+    va_end(ap);
+
+    /*
      * The command can be omitted at the start of an SMTP session. This is
      * not documented as part of the official interface because it is used
      * only internally to this module.
      */
-    if (fmt != SMTPD_PROXY_CONN_FMT) {
-
-	/*
-	 * Format the command.
-	 */
-	va_start(ap, fmt);
-	vstring_vsprintf(proxy->request, fmt, ap);
-	va_end(ap);
+    if (LEN(proxy->request) > 0) {
 
 	/*
 	 * Optionally log the command first, so that we can see in the log
@@ -809,7 +804,7 @@ static int smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
      */
     if (expect != SMTPD_PROX_WANT_ANY && expect != *STR(proxy->reply)) {
 	msg_warn("proxy %s rejected \"%s\": \"%s\"",
-		 proxy->service_name, fmt == SMTPD_PROXY_CONN_FMT ?
+		 proxy->service_name, LEN(proxy->request) == 0 ?
 		 "connection request" : STR(proxy->request),
 		 STR(proxy->reply));
 	if (*STR(proxy->reply) == SMTPD_PROX_WANT_OK
@@ -1001,8 +996,9 @@ static int smtpd_proxy_replay_setup(SMTPD_STATE *state)
     /*
      * Needed by our DATA-phase record emulation routines.
      */
-    vstream_control(smtpd_proxy_replay_stream, VSTREAM_CTL_CONTEXT,
-		    (char *) state, VSTREAM_CTL_END);
+    vstream_control(smtpd_proxy_replay_stream,
+		    CA_VSTREAM_CTL_CONTEXT((void *) state),
+		    CA_VSTREAM_CTL_END);
     return (0);
 }
 
@@ -1116,7 +1112,7 @@ void    smtpd_proxy_free(SMTPD_STATE *state)
 	vstring_free(proxy->request);
     if (proxy->reply != 0)
 	vstring_free(proxy->reply);
-    myfree((char *) proxy);
+    myfree((void *) proxy);
     state->proxy = 0;
 
     /*

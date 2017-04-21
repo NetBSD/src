@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.170 2014/07/29 20:39:16 apb Exp $
+# $NetBSD: rc,v 1.170.10.1 2017/04/21 16:51:17 bouyer Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -65,6 +65,7 @@ _rc_original_stdout_fd=7; export _rc_original_stdout_fd
 _rc_original_stderr_fd=8; export _rc_original_stderr_fd
 eval "exec ${_rc_original_stdout_fd}>&1"
 eval "exec ${_rc_original_stderr_fd}>&2"
+fdflags -s +cloexec 7 8
 
 #
 # rc_real_work
@@ -86,6 +87,7 @@ rc_real_work()
 	_rc_postprocessor_fd=9 ; export _rc_postprocessor_fd
 	_rc_pid=$$ ; export _rc_pid
 	eval "exec ${_rc_postprocessor_fd}>&1"
+	fdflags -s +cloexec 9
 
 	# Print a metadata line when we exit
 	#

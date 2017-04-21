@@ -1,4 +1,4 @@
-.\"     $NetBSD: pnozz.4,v 1.2 2004/03/31 21:59:34 wiz Exp $
+.\"     $NetBSD: pnozz.4,v 1.2.80.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from: OpenBSD: pnozz.4,v 1.20 2004/02/29 21:44:07 miod Exp
 .\"
-.Dd March 31, 2004
+.Dd February 17, 2017
 .Dt PNOZZ 4 sparc
 .Os
 .Sh NAME
@@ -48,15 +48,15 @@ video processor and an
 RAMDAC.
 .Pp
 If the
-.Xr tctrl 4
+.Xr sparc/tctrl 4
 device is also configured, the
 .Nm
 will be powered down when the lid of the laptop
 is closed or the screen is blanked.
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr sbus 4 ,
-.Xr tctrl 4
+.Xr sparc/intro 4 ,
+.Xr sparc/tctrl 4
 .Sh HISTORY
 Support for the
 .Nm

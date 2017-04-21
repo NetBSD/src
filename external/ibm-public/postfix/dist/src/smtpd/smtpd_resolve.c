@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_resolve.c,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_resolve.c,v 1.1.1.1.36.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -11,15 +11,17 @@
 /*	void	smtpd_resolve_init(cache_size)
 /*	int	cache_size;
 /*
-/*	const RESOLVE_REPLY *smtpd_resolve_addr(addr)
+/*	const RESOLVE_REPLY *smtpd_resolve_addr(sender, addr)
+/*	const char *sender;
 /*	const char *addr;
 /* DESCRIPTION
 /*	This module maintains a resolve client cache that persists
 /*	across SMTP sessions (not process life times). Addresses
 /*	are always resolved in local rewriting context.
 /*
-/*	smtpd_resolve_init() initializes the cache and must
-/*	called once before the cache can be used.
+/*	smtpd_resolve_init() initializes the cache and must be
+/*	called before the cache can be used. This function may also
+/*	be called to flush the cache after an address class update.
 /*
 /*	smtpd_resolve_addr() resolves one address or returns
 /*	a known result from cache.
@@ -27,6 +29,8 @@
 /*	Arguments:
 /* .IP cache_size
 /*	The requested cache size.
+/* .IP sender
+/*	The message sender, or null pointer.
 /* .IP addr
 /*	The address to resolve.
 /* DIAGNOSTICS
@@ -57,6 +61,7 @@
 #include <vstring.h>
 #include <ctable.h>
 #include <stringops.h>
+#include <split_at.h>
 
 /* Global library. */
 
@@ -71,19 +76,28 @@
 static CTABLE *smtpd_resolve_cache;
 
 #define STR(x) vstring_str(x)
+#define SENDER_ADDR_JOIN_CHAR '\n'
 
 /* resolve_pagein - page in an address resolver result */
 
-static void *resolve_pagein(const char *addr, void *unused_context)
+static void *resolve_pagein(const char *sender_plus_addr, void *unused_context)
 {
+    const char myname[] = "resolve_pagein";
     static VSTRING *query;
+    static VSTRING *junk;
+    static VSTRING *sender_buf;
     RESOLVE_REPLY *reply;
+    const char *sender;
+    const char *addr;
 
     /*
      * Initialize on the fly.
      */
-    if (query == 0)
+    if (query == 0) {
 	query = vstring_alloc(10);
+	junk = vstring_alloc(10);
+	sender_buf = vstring_alloc(10);
+    }
 
     /*
      * Initialize.
@@ -92,11 +106,21 @@ static void *resolve_pagein(const char *addr, void *unused_context)
     resolve_clnt_init(reply);
 
     /*
+     * Split the sender and address.
+     */
+    vstring_strcpy(junk, sender_plus_addr);
+    sender = STR(junk);
+    if ((addr = split_at(STR(junk), SENDER_ADDR_JOIN_CHAR)) == 0)
+	msg_panic("%s: bad search key: \"%s\"", myname, sender_plus_addr);
+
+    /*
      * Resolve the address.
      */
+    rewrite_clnt_internal(MAIL_ATTR_RWR_LOCAL, sender, sender_buf);
     rewrite_clnt_internal(MAIL_ATTR_RWR_LOCAL, addr, query);
-    resolve_clnt_query(STR(query), reply);
-    lowercase(STR(reply->recipient));		/* XXX */
+    resolve_clnt_query_from(STR(sender_buf), STR(query), reply);
+    vstring_strcpy(junk, STR(reply->recipient));
+    casefold(reply->recipient, STR(junk));	/* XXX */
 
     /*
      * Save the result.
@@ -120,10 +144,11 @@ void    smtpd_resolve_init(int cache_size)
 {
 
     /*
-     * Sanity check.
+     * Flush a pre-existing cache. The smtpd_check test program requires this
+     * after an address class change.
      */
     if (smtpd_resolve_cache)
-	msg_panic("smtpd_resolve_init: multiple initialization");
+	ctable_free(smtpd_resolve_cache);
 
     /*
      * Initialize the resolved address cache. Note: the cache persists across
@@ -133,10 +158,17 @@ void    smtpd_resolve_init(int cache_size)
 					resolve_pageout, (void *) 0);
 }
 
-/* smtpd_resolve_addr - resolve cached addres */
+/* smtpd_resolve_addr - resolve cached address */
 
-const RESOLVE_REPLY *smtpd_resolve_addr(const char *addr)
+const RESOLVE_REPLY *smtpd_resolve_addr(const char *sender, const char *addr)
 {
+    static VSTRING *sender_plus_addr_buf;
+
+    /*
+     * Initialize on the fly.
+     */
+    if (sender_plus_addr_buf == 0)
+	sender_plus_addr_buf = vstring_alloc(10);
 
     /*
      * Sanity check.
@@ -147,5 +179,9 @@ const RESOLVE_REPLY *smtpd_resolve_addr(const char *addr)
     /*
      * Reply from the read-through cache.
      */
-    return (const RESOLVE_REPLY *) ctable_locate(smtpd_resolve_cache, addr);
+    vstring_sprintf(sender_plus_addr_buf, "%s%c%s",
+		    sender ? sender : RESOLVE_NULL_FROM,
+		    SENDER_ADDR_JOIN_CHAR, addr);
+    return (const RESOLVE_REPLY *)
+	ctable_locate(smtpd_resolve_cache, STR(sender_plus_addr_buf));
 }

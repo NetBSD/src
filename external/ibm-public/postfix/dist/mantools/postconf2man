@@ -7,6 +7,9 @@
 # - Process input as blocks of text separated by one or more empty
 # (or all whitespace) lines. 
 #
+# - Process <nroffescape> pass-through requests for things that this
+# script cannot do automatically.
+#
 # Caution: this depends heavily on the postconf2html output format.
 
 #use Getopt::Std;
@@ -69,6 +72,8 @@ while(<>) {
     $block =~ s/\s*<\/dt>/"/g;
     $block =~ s/<tt>\s*//g;
     $block =~ s/\s*<\/tt>//g;
+    # Munge "-" here, so that we don't screw up ".in -4".
+    $block =~ s/-/\\-/g;
     $block =~ s/<blockquote>/\n.sp\n.in +4\n/g;
     $block =~ s/<\/blockquote>/\n.in -4\n/g;
     $block =~ s/\n<br>\s*/\n.br\n/g;
@@ -82,6 +87,7 @@ while(<>) {
     $block =~ s/&mdash;/-/g;
     $block =~ s/\s+\n/\n/g;
     $block =~ s/^\n//g;
+    $block =~ s/\s*<\s*nroffescape\s+([^ >]+)\s*>\s*/\n\1\n/g;
     $block =~ s/([a-z][_a-zA-Z0-9-]*)(\([0-9]\))/\\fB\1\\fR\2/g;
     print $block;
     $wantpp = !($block =~ /^\.(SH|IP)/);

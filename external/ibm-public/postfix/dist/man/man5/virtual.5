@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.5,v 1.1.1.2 2014/07/06 19:27:46 tron Exp $
+.\"	$NetBSD: virtual.5,v 1.1.1.2.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH VIRTUAL 5 
 .ad
@@ -12,9 +12,9 @@ Postfix virtual alias table format
 .nf
 \fBpostmap /etc/postfix/virtual\fR
 
-\fBpostmap -q "\fIstring\fB" /etc/postfix/virtual\fR
+\fBpostmap \-q "\fIstring\fB" /etc/postfix/virtual\fR
 
-\fBpostmap -q - /etc/postfix/virtual <\fIinputfile\fR
+\fBpostmap \-q \- /etc/postfix/virtual <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -53,11 +53,11 @@ file after changing the corresponding text file.
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
-Alternatively, the table can be provided as a regular-expression
+Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In those case, the lookups
+can be directed to TCP\-based server. In those case, the lookups
 are done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
+"REGULAR EXPRESSION TABLES" or "TCP\-BASED TABLES".
 .SH "CASE FOLDING"
 .na
 .nf
@@ -77,10 +77,10 @@ The input format for the \fBpostmap\fR(1) command is as follows:
 When \fIpattern\fR matches a mail address, replace it by the
 corresponding \fIaddress\fR.
 .IP "blank lines and comments"
-Empty lines and whitespace-only lines are ignored, as
-are lines whose first non-whitespace character is a `#'.
-.IP "multi-line text"
-A logical line starts with non-whitespace text. A line that
+Empty lines and whitespace\-only lines are ignored, as
+are lines whose first non\-whitespace character is a `#'.
+.IP "multi\-line text"
+A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .SH "TABLE SEARCH ORDER"
 .na
@@ -101,17 +101,17 @@ or $\fBproxy_interfaces\fR.
 .sp
 This functionality overlaps with functionality of the local
 \fIaliases\fR(5) database. The difference is that \fBvirtual\fR(5)
-mapping can be applied to non-local addresses.
+mapping can be applied to non\-local addresses.
 .IP "@\fIdomain address, address, ...\fR"
 Redirect mail for other users in \fIdomain\fR to \fIaddress\fR.
 This form has the lowest precedence.
 .sp
-Note: @\fIdomain\fR is a wild-card. With this form, the
+Note: @\fIdomain\fR is a wild\-card. With this form, the
 Postfix SMTP server accepts
 mail for any recipient in \fIdomain\fR, regardless of whether
 that recipient exists.  This may turn your mail system into
 a backscatter source: Postfix first accepts mail for
-non-existent recipients and then tries to return that mail
+non\-existent recipients and then tries to return that mail
 as "undeliverable" to the often forged sender address.
 .SH "RESULT ADDRESS REWRITING"
 .na
@@ -122,7 +122,7 @@ The lookup result is subject to address rewriting:
 .IP \(bu
 When the result has the form @\fIotherdomain\fR, the
 result becomes the same \fIuser\fR in \fIotherdomain\fR.
-This works only for the first address in a multi-address
+This works only for the first address in a multi\-address
 lookup result.
 .IP \(bu
 When "\fBappend_at_myorigin=yes\fR", append "\fB@$myorigin\fR"
@@ -158,10 +158,10 @@ delivery agent. With virtual mailbox domains, each recipient address
 can have its own mailbox.
 
 With a virtual alias domain, the virtual domain has its
-own user name space. Local (i.e. non-virtual) usernames are not
+own user name space. Local (i.e. non\-virtual) usernames are not
 visible in a virtual alias domain. In particular, local
 \fBaliases\fR(5) and local mailing lists are not visible as
-\fIlocalname@virtual-alias.domain\fR.
+\fIlocalname@virtual\-alias.domain\fR.
 
 Support for a virtual alias domain looks like:
 
@@ -171,17 +171,17 @@ Support for a virtual alias domain looks like:
 .fi
 
 Note: some systems use \fBdbm\fR databases instead of \fBhash\fR.
-See the output from "\fBpostconf -m\fR" for available database types.
+See the output from "\fBpostconf \-m\fR" for available database types.
 
 .nf
 /etc/postfix/virtual:
-    \fIvirtual-alias.domain     anything\fR (right-hand content does not matter)
-    \fIpostmaster@virtual-alias.domain  postmaster\fR
-    \fIuser1@virtual-alias.domain       address1\fR
-    \fIuser2@virtual-alias.domain       address2, address3\fR
+    \fIvirtual\-alias.domain    anything\fR (right\-hand content does not matter)
+    \fIpostmaster@virtual\-alias.domain postmaster\fR
+    \fIuser1@virtual\-alias.domain      address1\fR
+    \fIuser2@virtual\-alias.domain      address2, address3\fR
 .fi
 .sp
-The \fIvirtual-alias.domain anything\fR entry is required for a
+The \fIvirtual\-alias.domain anything\fR entry is required for a
 virtual alias domain. \fBWithout this entry, mail is rejected
 with "relay access denied", or bounces with
 "mail loops back to myself".\fR
@@ -190,8 +190,8 @@ Do not specify virtual alias domain names in the \fBmain.cf
 mydestination\fR or \fBrelay_domains\fR configuration parameters.
 
 With a virtual alias domain, the Postfix SMTP server
-accepts mail for \fIknown-user@virtual-alias.domain\fR, and rejects
-mail for \fIunknown-user\fR@\fIvirtual-alias.domain\fR as undeliverable.
+accepts mail for \fIknown\-user@virtual\-alias.domain\fR, and rejects
+mail for \fIunknown\-user\fR@\fIvirtual\-alias.domain\fR as undeliverable.
 
 Instead of specifying the virtual alias domain name via
 the \fBvirtual_alias_maps\fR table, you may also specify it via
@@ -225,7 +225,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .ad
 .fi
 This section describes how the table lookups change when lookups
-are directed to a TCP-based server. For a description of the TCP
+are directed to a TCP\-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
 This feature is not available up to and including Postfix version 2.4.
 
@@ -268,7 +268,7 @@ List of domains that this mail system considers local.
 .IP \fBmyorigin\fR
 The domain that is appended to any address that does not have a domain.
 .IP \fBowner_request_special\fR
-Give special treatment to \fBowner-\fIxxx\fR and \fIxxx\fB-request\fR
+Give special treatment to \fBowner\-\fIxxx\fR and \fIxxx\fB\-request\fR
 addresses.
 .IP \fBproxy_interfaces\fR
 Other interfaces that this machine receives mail on by way of a
@@ -305,3 +305,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

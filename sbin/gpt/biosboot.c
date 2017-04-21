@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.26 2016/06/09 19:04:43 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.26.4.1 2017/04/21 16:53:13 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.26 2016/06/09 19:04:43 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.26.4.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -298,7 +298,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 		start = dkw.dkw_offset;
 		size = dkw.dkw_size;
 		ngpt = gpt_open(dkw.dkw_parent, gpt->flags, gpt->verbose,
-		    gpt->mediasz, gpt->secsz);
+		    gpt->mediasz, gpt->secsz, gpt->timestamp);
 		if (ngpt == NULL)
 			goto cleanup;
 	}

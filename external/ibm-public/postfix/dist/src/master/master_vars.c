@@ -1,4 +1,4 @@
-/*	$NetBSD: master_vars.c,v 1.1.1.3 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: master_vars.c,v 1.1.1.3.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -85,7 +85,7 @@ void    master_vars_init(void)
     mail_conf_read();
     get_mail_conf_str_table(str_table);
     get_mail_conf_time_table(time_table);
-    path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
+    path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (void *) 0);
     fset_master_ent(path);
     myfree(path);
 

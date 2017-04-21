@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_surrogate.c,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: dict_surrogate.c,v 1.1.1.2.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -125,7 +125,7 @@ static void dict_surrogate_close(DICT *dict)
 {
     DICT_SURROGATE *dp = (DICT_SURROGATE *) dict;
 
-    myfree((char *) dp->reason);
+    myfree((void *) dp->reason);
     dict_free(dict);
 }
 

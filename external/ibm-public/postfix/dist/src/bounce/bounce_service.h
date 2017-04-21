@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_service.h,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: bounce_service.h,v 1.1.1.1.36.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -33,27 +33,27 @@ extern int bounce_append_service(int, char *, char *, RECIPIENT *, DSN *);
  /*
   * bounce_notify_service.c
   */
-extern int bounce_notify_service(int, char *, char *, char *, char *, char *, char *, int, BOUNCE_TEMPLATES *);
+extern int bounce_notify_service(int, char *, char *, char *, char *, int, char *, char *, int, BOUNCE_TEMPLATES *);
 
  /*
   * bounce_warn_service.c
   */
-extern int bounce_warn_service(int, char *, char *, char *, char *, char *, char *, int, BOUNCE_TEMPLATES *);
+extern int bounce_warn_service(int, char *, char *, char *, char *, int, char *, char *, int, BOUNCE_TEMPLATES *);
 
  /*
   * bounce_trace_service.c
   */
-extern int bounce_trace_service(int, char *, char *, char *, char *, char *, char *, int, BOUNCE_TEMPLATES *);
+extern int bounce_trace_service(int, char *, char *, char *, char *, int, char *, char *, int, BOUNCE_TEMPLATES *);
 
  /*
   * bounce_notify_verp.c
   */
-extern int bounce_notify_verp(int, char *, char *, char *, char *, char *, char *, int, char *, BOUNCE_TEMPLATES *);
+extern int bounce_notify_verp(int, char *, char *, char *, char *, int, char *, char *, int, char *, BOUNCE_TEMPLATES *);
 
  /*
   * bounce_one_service.c
   */
-extern int bounce_one_service(int, char *, char *, char *, char *, char *, int, RCPT_BUF *, DSN_BUF *, BOUNCE_TEMPLATES *);
+extern int bounce_one_service(int, char *, char *, char *, int, char *, char *, int, RCPT_BUF *, DSN_BUF *, BOUNCE_TEMPLATES *);
 
  /*
   * bounce_cleanup.c
@@ -86,12 +86,13 @@ typedef struct {
     DSN_BUF *dsn_buf;			/* delivery status info */
     BOUNCE_LOG *log_handle;		/* open logfile */
     char   *mail_name;			/* $mail_name, cooked */
+    int     smtputf8;			/* SMTPUTF8 requested */
 } BOUNCE_INFO;
 
  /* */
 
-extern BOUNCE_INFO *bounce_mail_init(const char *, const char *, const char *, const char *, const char *, BOUNCE_TEMPLATE *);
-extern BOUNCE_INFO *bounce_mail_one_init(const char *, const char *, const char *, const char *, RCPT_BUF *, DSN_BUF *, BOUNCE_TEMPLATE *);
+extern BOUNCE_INFO *bounce_mail_init(const char *, const char *, const char *, const char *, int, const char *, BOUNCE_TEMPLATE *);
+extern BOUNCE_INFO *bounce_mail_one_init(const char *, const char *, const char *, int, const char *, RCPT_BUF *, DSN_BUF *, BOUNCE_TEMPLATE *);
 extern void bounce_mail_free(BOUNCE_INFO *);
 extern int bounce_header(VSTREAM *, BOUNCE_INFO *, const char *, int);
 extern int bounce_boilerplate(VSTREAM *, BOUNCE_INFO *);

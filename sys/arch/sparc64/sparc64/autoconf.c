@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.208 2016/08/19 19:02:07 palle Exp $ */
+/*	$NetBSD: autoconf.c,v 1.208.2.1 2017/04/21 16:53:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.208 2016/08/19 19:02:07 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.208.2.1 2017/04/21 16:53:37 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -981,6 +981,8 @@ device_register(device_t dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
+	} else if (device_is_a(dev, "ld")) {
+		ofnode = device_ofnode(busdev);
 	} else if (device_is_a(dev, "vdsk")) {
 		struct cbus_attach_args *ca = aux;
 		ofnode = ca->ca_node;

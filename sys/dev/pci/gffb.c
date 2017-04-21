@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.11 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: gffb.c,v 1.11.4.1 2017/04/21 16:53:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.11 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.11.4.1 2017/04/21 16:53:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,9 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* no suspend/resume support yet */
-	pmf_device_register(sc->sc_dev, NULL, NULL);
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;

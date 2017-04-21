@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.87 2017/01/11 10:06:32 roy Exp $	*/
+/*	$NetBSD: refresh.c,v 1.87.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.87 2017/01/11 10:06:32 roy Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.87.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif
 #endif				/* not lint */
 
@@ -985,7 +985,7 @@ makech(int wy)
 				    "makech: line = %p, cep = %p, begx = %u\n",
 				    curscr->alines[wy]->line, cep, win->begx);
 #endif
-				if (((clsp - nlsp >= strlen(clr_eol) &&
+				if (((clsp - nlsp >= strlen(ce) &&
 				    clsp < win->maxx * __LDATASIZE) ||
 				    wy == win->maxy - 1) &&
 				    (!(lspc & __COLOR) ||
@@ -997,7 +997,7 @@ makech(int wy)
 					    (curscr->wattr & __COLOR)))
 						__set_color(curscr, lspc &
 						    __COLOR);
-					tputs(clr_eol, 0, __cputchar);
+					tputs(ce, 0, __cputchar);
 					_cursesi_screen->lx = wx + win->begx;
 					while (wx++ <= clsp) {
 						csp->attr = lspc;

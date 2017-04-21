@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.7 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.7.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -118,11 +118,11 @@
 /*	At this time, STARTTLS and LDAP SSL are only available if the
 /*	LDAP client library used is OpenLDAP.  Default is \fIno\fR.
 /* .IP tls_ca_cert_file
-/* 	File containing certificates for all of the X509 Certificate
-/* 	Authorities the client will recognize.  Takes precedence over
-/* 	tls_ca_cert_dir.
+/*	File containing certificates for all of the X509 Certification
+/*	Authorities the client will recognize.  Takes precedence over
+/*	tls_ca_cert_dir.
 /* .IP tls_ca_cert_dir
-/*	Directory containing X509 Certificate Authority certificates
+/*	Directory containing X509 Certification Authority certificates
 /*	in separate individual files.
 /* .IP tls_cert
 /*	File containing client's X509 certificate.
@@ -975,7 +975,7 @@ static void dict_ldap_conn_find(DICT_LDAP *dict_ldap)
 	conn = (LDAP_CONN *) mymalloc(sizeof(LDAP_CONN));
 	conn->conn_ld = 0;
 	conn->conn_refcount = 0;
-	dict_ldap->ht = binhash_enter(conn_hash, key, len, (char *) conn);
+	dict_ldap->ht = binhash_enter(conn_hash, key, len, (void *) conn);
     }
     ++DICT_LDAP_CONN(dict_ldap)->conn_refcount;
 
@@ -1342,7 +1342,8 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
     /*
      * Don't frustrate future attempts to make Postfix UTF-8 transparent.
      */
-    if (!valid_utf_8(name, strlen(name))) {
+    if ((dict->flags & DICT_FLAG_UTF8_ACTIVE) == 0
+	&& !valid_utf8_string(name, strlen(name))) {
 	if (msg_verbose)
 	    msg_info("%s: %s: Skipping lookup of non-UTF-8 key '%s'",
 		     myname, dict_ldap->parser->name, name);
@@ -1353,10 +1354,10 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      * Optionally fold the key.
      */
     if (dict->flags & DICT_FLAG_FOLD_FIX) {
-	if (dict->fold_buf == 0)
-	    dict->fold_buf = vstring_alloc(10);
-	vstring_strcpy(dict->fold_buf, name);
-	name = lowercase(vstring_str(dict->fold_buf));
+        if (dict->fold_buf == 0)
+            dict->fold_buf = vstring_alloc(10);
+        vstring_strcpy(dict->fold_buf, name);
+        name = lowercase(vstring_str(dict->fold_buf));
     }
 
     /*
@@ -1685,7 +1686,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int open_flags, int dict_flags)
 
     url_list = vstring_alloc(32);
     s = server_host;
-    while ((h = mystrtok(&s, " \t\n\r,")) != NULL) {
+    while ((h = mystrtok(&s, CHARS_COMMA_SP)) != NULL) {
 #if defined(LDAP_API_FEATURE_X_OPENLDAP)
 
 	/*
@@ -1817,14 +1818,14 @@ DICT   *dict_ldap_open(const char *ldapsource, int open_flags, int dict_flags)
 
     /* Order matters, first the terminal attributes: */
     attr = cfg_get_str(dict_ldap->parser, "terminal_result_attribute", "", 0, 0);
-    dict_ldap->result_attributes = argv_split(attr, " ,\t\r\n");
+    dict_ldap->result_attributes = argv_split(attr, CHARS_COMMA_SP);
     dict_ldap->num_terminal = dict_ldap->result_attributes->argc;
     myfree(attr);
 
     /* Order matters, next the leaf-only attributes: */
     attr = cfg_get_str(dict_ldap->parser, "leaf_result_attribute", "", 0, 0);
     if (*attr)
-	argv_split_append(dict_ldap->result_attributes, attr, " ,\t\r\n");
+	argv_split_append(dict_ldap->result_attributes, attr, CHARS_COMMA_SP);
     dict_ldap->num_leaf =
 	dict_ldap->result_attributes->argc - dict_ldap->num_terminal;
     myfree(attr);
@@ -1832,14 +1833,14 @@ DICT   *dict_ldap_open(const char *ldapsource, int open_flags, int dict_flags)
     /* Order matters, next the regular attributes: */
     attr = cfg_get_str(dict_ldap->parser, "result_attribute", "maildrop", 0, 0);
     if (*attr)
-	argv_split_append(dict_ldap->result_attributes, attr, " ,\t\r\n");
+	argv_split_append(dict_ldap->result_attributes, attr, CHARS_COMMA_SP);
     dict_ldap->num_attributes = dict_ldap->result_attributes->argc;
     myfree(attr);
 
     /* Order matters, finally the special attributes: */
     attr = cfg_get_str(dict_ldap->parser, "special_result_attribute", "", 0, 0);
     if (*attr)
-	argv_split_append(dict_ldap->result_attributes, attr, " ,\t\r\n");
+	argv_split_append(dict_ldap->result_attributes, attr, CHARS_COMMA_SP);
     myfree(attr);
 
     /*

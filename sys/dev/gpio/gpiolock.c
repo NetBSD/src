@@ -1,4 +1,4 @@
-/* $NetBSD: gpiolock.c,v 1.3 2009/12/06 22:33:44 dyoung Exp $ */
+/* $NetBSD: gpiolock.c,v 1.3.48.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
@@ -123,7 +123,8 @@ gpiolock_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 #endif
-	pmf_device_register(self, NULL, NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	aprint_normal("\n");
 	return;

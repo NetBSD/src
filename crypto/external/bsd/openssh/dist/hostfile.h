@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.h,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: hostfile.h,v 1.8.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: hostfile.h,v 1.24 2015/02/16 22:08:57 djm Exp $ */
 
 /*

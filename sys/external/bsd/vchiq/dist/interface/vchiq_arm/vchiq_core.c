@@ -2443,10 +2443,6 @@ vchiq_init_state(VCHIQ_STATE_T *state, VCHIQ_SLOT_ZERO_T *slot_zero,
 
 	_sema_init(&state->connect, 0);
 	lmutex_init(&state->mutex);
-	_sema_init(&state->trigger_event, 0);
-	_sema_init(&state->recycle_event, 0);
-	_sema_init(&state->sync_trigger_event, 0);
-	_sema_init(&state->sync_release_event, 0);
 
 	lmutex_init(&state->slot_mutex);
 	lmutex_init(&state->recycle_mutex);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.21 2007/12/25 18:33:42 perry Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.21.82.1 2017/04/21 16:53:52 bouyer Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -62,9 +62,10 @@ struct scsipi_rw_10 {
 	u_int8_t opcode;
 	u_int8_t byte2;
 #define	SRWB_RELADDR	0x01	/* obsolete */
-#define	SRWB_FUA_NV	0x02	/* force unit access non-volatile cache */
-#define	SRWB_FUA	0x08	/* force unit access */
-#define	SRWB_DPO	0x10	/* disable page out */
+#define	SRWB_FUA_NV	0x02	/* force unit access non-volatile cache (SCSI-3) */
+#define	SRWB_RESV2	0x04	/* reserved (SCSI-2) */
+#define	SRWB_FUA	0x08	/* force unit access volatile cache (SCSI-2) */
+#define	SRWB_DPO	0x10	/* disable page out (SCSI-2) */
 #define	SRWB_PROTECT(x) ((x) << 5)
 	u_int8_t addr[4];
 	u_int8_t reserved;
@@ -158,5 +159,8 @@ struct scsipi_capacity_descriptor {
 #define	SCSIPI_CAP_DESC_CODE_UNFORMATTED	0x1
 #define	SCSIPI_CAP_DESC_CODE_FORMATTED		0x2
 #define	SCSIPI_CAP_DESC_CODE_NONE		0x3
+
+/* defines for the device specific byte in the mode select/sense header */
+#define	SMH_DSP_DPOFUA		0x10
 
 #endif /* _DEV_SCSIPI_SCSIPI_DISK_H_ */

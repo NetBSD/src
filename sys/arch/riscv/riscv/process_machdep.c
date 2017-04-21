@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: process_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__RCSID("$NetBSD: process_machdep.c,v 1.1.6.1 2017/04/21 16:53:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ptrace.h>
@@ -63,19 +63,14 @@ process_read_fpregs(struct lwp *l, struct fpreg *fpregs, size_t *sz)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	if (l == curlwp) {
-		/* Is the process using the fpu? */
-		if (!fpu_valid_p()) {
-			memset(fpregs, 0, sizeof (*fpregs));
-			return 0;
-		}
-		fpu_save();
-	} else {
-		KASSERTMSG(l->l_pcu_cpu[PCU_FPU] == NULL,
-		    "%s: FPU of l (%p) active on %s",
-		     __func__, l, l->l_pcu_cpu[PCU_FPU]->ci_cpuname);
+	/* Is the process using the fpu? */
+	if (!fpu_valid_p(l)) {
+		memset(fpregs, 0, sizeof (*fpregs));
+		return 0;
 	}
+	fpu_save(l);
 	*fpregs = pcb->pcb_fpregs;
+
 	return 0;
 }
 
@@ -84,9 +79,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *fpregs, size_t sz)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	KASSERT(l == curlwp);
-	fpu_replace();
-
+	fpu_replace(l);
 	pcb->pcb_fpregs = *fpregs;
 
 	return 0;

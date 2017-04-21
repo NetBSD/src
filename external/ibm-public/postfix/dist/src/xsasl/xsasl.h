@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl.h,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: xsasl.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _XSASL_H_INCLUDED_
 #define _XSASL_H_INCLUDED_
@@ -123,6 +123,7 @@ extern ARGV *xsasl_client_types(void);
 #define XSASL_AUTH_DONE	3		/* Authentication completed */
 #define XSASL_AUTH_FORM	4		/* Cannot decode response */
 #define XSASL_AUTH_FAIL	5		/* Error */
+#define XSASL_AUTH_TEMP	6		/* Temporary error condition */
 
 /* LICENSE
 /* .ad
@@ -133,6 +134,11 @@ extern ARGV *xsasl_client_types(void);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 #endif

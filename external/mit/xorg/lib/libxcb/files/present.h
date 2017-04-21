@@ -71,24 +71,24 @@ typedef enum xcb_present_complete_mode_t {
  * @brief xcb_present_notify_t
  **/
 typedef struct xcb_present_notify_t {
-    xcb_window_t window; /**<  */
-    uint32_t     serial; /**<  */
+    xcb_window_t window;
+    uint32_t     serial;
 } xcb_present_notify_t;
 
 /**
  * @brief xcb_present_notify_iterator_t
  **/
 typedef struct xcb_present_notify_iterator_t {
-    xcb_present_notify_t *data; /**<  */
-    int                   rem; /**<  */
-    int                   index; /**<  */
+    xcb_present_notify_t *data;
+    int                   rem;
+    int                   index;
 } xcb_present_notify_iterator_t;
 
 /**
  * @brief xcb_present_query_version_cookie_t
  **/
 typedef struct xcb_present_query_version_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_present_query_version_cookie_t;
 
 /** Opcode for xcb_present_query_version. */
@@ -98,23 +98,23 @@ typedef struct xcb_present_query_version_cookie_t {
  * @brief xcb_present_query_version_request_t
  **/
 typedef struct xcb_present_query_version_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t major_version; /**<  */
-    uint32_t minor_version; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t major_version;
+    uint32_t minor_version;
 } xcb_present_query_version_request_t;
 
 /**
  * @brief xcb_present_query_version_reply_t
  **/
 typedef struct xcb_present_query_version_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t major_version; /**<  */
-    uint32_t minor_version; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t major_version;
+    uint32_t minor_version;
 } xcb_present_query_version_reply_t;
 
 /** Opcode for xcb_present_pixmap. */
@@ -124,24 +124,24 @@ typedef struct xcb_present_query_version_reply_t {
  * @brief xcb_present_pixmap_request_t
  **/
 typedef struct xcb_present_pixmap_request_t {
-    uint8_t             major_opcode; /**<  */
-    uint8_t             minor_opcode; /**<  */
-    uint16_t            length; /**<  */
-    xcb_window_t        window; /**<  */
-    xcb_pixmap_t        pixmap; /**<  */
-    uint32_t            serial; /**<  */
-    xcb_xfixes_region_t valid; /**<  */
-    xcb_xfixes_region_t update; /**<  */
-    int16_t             x_off; /**<  */
-    int16_t             y_off; /**<  */
-    xcb_randr_crtc_t    target_crtc; /**<  */
-    xcb_sync_fence_t    wait_fence; /**<  */
-    xcb_sync_fence_t    idle_fence; /**<  */
-    uint32_t            options; /**<  */
-    uint8_t             pad0[4]; /**<  */
-    uint64_t            target_msc; /**<  */
-    uint64_t            divisor; /**<  */
-    uint64_t            remainder; /**<  */
+    uint8_t             major_opcode;
+    uint8_t             minor_opcode;
+    uint16_t            length;
+    xcb_window_t        window;
+    xcb_pixmap_t        pixmap;
+    uint32_t            serial;
+    xcb_xfixes_region_t valid;
+    xcb_xfixes_region_t update;
+    int16_t             x_off;
+    int16_t             y_off;
+    xcb_randr_crtc_t    target_crtc;
+    xcb_sync_fence_t    wait_fence;
+    xcb_sync_fence_t    idle_fence;
+    uint32_t            options;
+    uint8_t             pad0[4];
+    uint64_t            target_msc;
+    uint64_t            divisor;
+    uint64_t            remainder;
 } xcb_present_pixmap_request_t;
 
 /** Opcode for xcb_present_notify_msc. */
@@ -151,15 +151,15 @@ typedef struct xcb_present_pixmap_request_t {
  * @brief xcb_present_notify_msc_request_t
  **/
 typedef struct xcb_present_notify_msc_request_t {
-    uint8_t      major_opcode; /**<  */
-    uint8_t      minor_opcode; /**<  */
-    uint16_t     length; /**<  */
-    xcb_window_t window; /**<  */
-    uint32_t     serial; /**<  */
-    uint8_t      pad0[4]; /**<  */
-    uint64_t     target_msc; /**<  */
-    uint64_t     divisor; /**<  */
-    uint64_t     remainder; /**<  */
+    uint8_t      major_opcode;
+    uint8_t      minor_opcode;
+    uint16_t     length;
+    xcb_window_t window;
+    uint32_t     serial;
+    uint8_t      pad0[4];
+    uint64_t     target_msc;
+    uint64_t     divisor;
+    uint64_t     remainder;
 } xcb_present_notify_msc_request_t;
 
 typedef uint32_t xcb_present_event_t;
@@ -168,9 +168,9 @@ typedef uint32_t xcb_present_event_t;
  * @brief xcb_present_event_iterator_t
  **/
 typedef struct xcb_present_event_iterator_t {
-    xcb_present_event_t *data; /**<  */
-    int                  rem; /**<  */
-    int                  index; /**<  */
+    xcb_present_event_t *data;
+    int                  rem;
+    int                  index;
 } xcb_present_event_iterator_t;
 
 /** Opcode for xcb_present_select_input. */
@@ -180,19 +180,19 @@ typedef struct xcb_present_event_iterator_t {
  * @brief xcb_present_select_input_request_t
  **/
 typedef struct xcb_present_select_input_request_t {
-    uint8_t             major_opcode; /**<  */
-    uint8_t             minor_opcode; /**<  */
-    uint16_t            length; /**<  */
-    xcb_present_event_t eid; /**<  */
-    xcb_window_t        window; /**<  */
-    uint32_t            event_mask; /**<  */
+    uint8_t             major_opcode;
+    uint8_t             minor_opcode;
+    uint16_t            length;
+    xcb_present_event_t eid;
+    xcb_window_t        window;
+    uint32_t            event_mask;
 } xcb_present_select_input_request_t;
 
 /**
  * @brief xcb_present_query_capabilities_cookie_t
  **/
 typedef struct xcb_present_query_capabilities_cookie_t {
-    unsigned int sequence; /**<  */
+    unsigned int sequence;
 } xcb_present_query_capabilities_cookie_t;
 
 /** Opcode for xcb_present_query_capabilities. */
@@ -202,21 +202,21 @@ typedef struct xcb_present_query_capabilities_cookie_t {
  * @brief xcb_present_query_capabilities_request_t
  **/
 typedef struct xcb_present_query_capabilities_request_t {
-    uint8_t  major_opcode; /**<  */
-    uint8_t  minor_opcode; /**<  */
-    uint16_t length; /**<  */
-    uint32_t target; /**<  */
+    uint8_t  major_opcode;
+    uint8_t  minor_opcode;
+    uint16_t length;
+    uint32_t target;
 } xcb_present_query_capabilities_request_t;
 
 /**
  * @brief xcb_present_query_capabilities_reply_t
  **/
 typedef struct xcb_present_query_capabilities_reply_t {
-    uint8_t  response_type; /**<  */
-    uint8_t  pad0; /**<  */
-    uint16_t sequence; /**<  */
-    uint32_t length; /**<  */
-    uint32_t capabilities; /**<  */
+    uint8_t  response_type;
+    uint8_t  pad0;
+    uint16_t sequence;
+    uint32_t length;
+    uint32_t capabilities;
 } xcb_present_query_capabilities_reply_t;
 
 /** Opcode for xcb_present_generic. */
@@ -226,13 +226,13 @@ typedef struct xcb_present_query_capabilities_reply_t {
  * @brief xcb_present_generic_event_t
  **/
 typedef struct xcb_present_generic_event_t {
-    uint8_t             response_type; /**<  */
-    uint8_t             extension; /**<  */
-    uint16_t            sequence; /**<  */
-    uint32_t            length; /**<  */
-    uint16_t            evtype; /**<  */
-    uint8_t             pad0[2]; /**<  */
-    xcb_present_event_t event; /**<  */
+    uint8_t             response_type;
+    uint8_t             extension;
+    uint16_t            sequence;
+    uint32_t            length;
+    uint16_t            evtype;
+    uint8_t             pad0[2];
+    xcb_present_event_t event;
 } xcb_present_generic_event_t;
 
 /** Opcode for xcb_present_configure_notify. */
@@ -242,24 +242,24 @@ typedef struct xcb_present_generic_event_t {
  * @brief xcb_present_configure_notify_event_t
  **/
 typedef struct xcb_present_configure_notify_event_t {
-    uint8_t             response_type; /**<  */
-    uint8_t             extension; /**<  */
-    uint16_t            sequence; /**<  */
-    uint32_t            length; /**<  */
-    uint16_t            event_type; /**<  */
-    uint8_t             pad0[2]; /**<  */
-    xcb_present_event_t event; /**<  */
-    xcb_window_t        window; /**<  */
-    int16_t             x; /**<  */
-    int16_t             y; /**<  */
-    uint16_t            width; /**<  */
-    uint16_t            height; /**<  */
-    int16_t             off_x; /**<  */
-    int16_t             off_y; /**<  */
-    uint32_t            full_sequence; /**<  */
-    uint16_t            pixmap_width; /**<  */
-    uint16_t            pixmap_height; /**<  */
-    uint32_t            pixmap_flags; /**<  */
+    uint8_t             response_type;
+    uint8_t             extension;
+    uint16_t            sequence;
+    uint32_t            length;
+    uint16_t            event_type;
+    uint8_t             pad0[2];
+    xcb_present_event_t event;
+    xcb_window_t        window;
+    int16_t             x;
+    int16_t             y;
+    uint16_t            width;
+    uint16_t            height;
+    int16_t             off_x;
+    int16_t             off_y;
+    uint32_t            full_sequence;
+    uint16_t            pixmap_width;
+    uint16_t            pixmap_height;
+    uint32_t            pixmap_flags;
 } xcb_present_configure_notify_event_t;
 
 /** Opcode for xcb_present_complete_notify. */
@@ -269,19 +269,19 @@ typedef struct xcb_present_configure_notify_event_t {
  * @brief xcb_present_complete_notify_event_t
  **/
 typedef struct xcb_present_complete_notify_event_t {
-    uint8_t             response_type; /**<  */
-    uint8_t             extension; /**<  */
-    uint16_t            sequence; /**<  */
-    uint32_t            length; /**<  */
-    uint16_t            event_type; /**<  */
-    uint8_t             kind; /**<  */
-    uint8_t             mode; /**<  */
-    xcb_present_event_t event; /**<  */
-    xcb_window_t        window; /**<  */
-    uint32_t            serial; /**<  */
-    uint64_t            ust; /**<  */
-    uint32_t            full_sequence; /**<  */
-    uint64_t            msc; /**<  */
+    uint8_t             response_type;
+    uint8_t             extension;
+    uint16_t            sequence;
+    uint32_t            length;
+    uint16_t            event_type;
+    uint8_t             kind;
+    uint8_t             mode;
+    xcb_present_event_t event;
+    xcb_window_t        window;
+    uint32_t            serial;
+    uint64_t            ust;
+    uint32_t            full_sequence;
+    uint64_t            msc;
 } XCB_PACKED xcb_present_complete_notify_event_t;
 
 /** Opcode for xcb_present_idle_notify. */
@@ -291,18 +291,18 @@ typedef struct xcb_present_complete_notify_event_t {
  * @brief xcb_present_idle_notify_event_t
  **/
 typedef struct xcb_present_idle_notify_event_t {
-    uint8_t             response_type; /**<  */
-    uint8_t             extension; /**<  */
-    uint16_t            sequence; /**<  */
-    uint32_t            length; /**<  */
-    uint16_t            event_type; /**<  */
-    uint8_t             pad0[2]; /**<  */
-    xcb_present_event_t event; /**<  */
-    xcb_window_t        window; /**<  */
-    uint32_t            serial; /**<  */
-    xcb_pixmap_t        pixmap; /**<  */
-    xcb_sync_fence_t    idle_fence; /**<  */
-    uint32_t            full_sequence; /**<  */
+    uint8_t             response_type;
+    uint8_t             extension;
+    uint16_t            sequence;
+    uint32_t            length;
+    uint16_t            event_type;
+    uint8_t             pad0[2];
+    xcb_present_event_t event;
+    xcb_window_t        window;
+    uint32_t            serial;
+    xcb_pixmap_t        pixmap;
+    xcb_sync_fence_t    idle_fence;
+    uint32_t            full_sequence;
 } xcb_present_idle_notify_event_t;
 
 /** Opcode for xcb_present_redirect_notify. */
@@ -312,33 +312,33 @@ typedef struct xcb_present_idle_notify_event_t {
  * @brief xcb_present_redirect_notify_event_t
  **/
 typedef struct xcb_present_redirect_notify_event_t {
-    uint8_t             response_type; /**<  */
-    uint8_t             extension; /**<  */
-    uint16_t            sequence; /**<  */
-    uint32_t            length; /**<  */
-    uint16_t            event_type; /**<  */
-    uint8_t             update_window; /**<  */
-    uint8_t             pad0; /**<  */
-    xcb_present_event_t event; /**<  */
-    xcb_window_t        event_window; /**<  */
-    xcb_window_t        window; /**<  */
-    xcb_pixmap_t        pixmap; /**<  */
-    uint32_t            serial; /**<  */
-    uint32_t            full_sequence; /**<  */
-    xcb_xfixes_region_t valid_region; /**<  */
-    xcb_xfixes_region_t update_region; /**<  */
-    xcb_rectangle_t     valid_rect; /**<  */
-    xcb_rectangle_t     update_rect; /**<  */
-    int16_t             x_off; /**<  */
-    int16_t             y_off; /**<  */
-    xcb_randr_crtc_t    target_crtc; /**<  */
-    xcb_sync_fence_t    wait_fence; /**<  */
-    xcb_sync_fence_t    idle_fence; /**<  */
-    uint32_t            options; /**<  */
-    uint8_t             pad1[4]; /**<  */
-    uint64_t            target_msc; /**<  */
-    uint64_t            divisor; /**<  */
-    uint64_t            remainder; /**<  */
+    uint8_t             response_type;
+    uint8_t             extension;
+    uint16_t            sequence;
+    uint32_t            length;
+    uint16_t            event_type;
+    uint8_t             update_window;
+    uint8_t             pad0;
+    xcb_present_event_t event;
+    xcb_window_t        event_window;
+    xcb_window_t        window;
+    xcb_pixmap_t        pixmap;
+    uint32_t            serial;
+    uint32_t            full_sequence;
+    xcb_xfixes_region_t valid_region;
+    xcb_xfixes_region_t update_region;
+    xcb_rectangle_t     valid_rect;
+    xcb_rectangle_t     update_rect;
+    int16_t             x_off;
+    int16_t             y_off;
+    xcb_randr_crtc_t    target_crtc;
+    xcb_sync_fence_t    wait_fence;
+    xcb_sync_fence_t    idle_fence;
+    uint32_t            options;
+    uint8_t             pad1[4];
+    uint64_t            target_msc;
+    uint64_t            divisor;
+    uint64_t            remainder;
 } XCB_PACKED xcb_present_redirect_notify_event_t;
 
 /**
@@ -350,7 +350,7 @@ typedef struct xcb_present_redirect_notify_event_t {
  * element. The member index is increased by sizeof(xcb_present_notify_t)
  */
 void
-xcb_present_notify_next (xcb_present_notify_iterator_t *i  /**< */);
+xcb_present_notify_next (xcb_present_notify_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -362,7 +362,7 @@ xcb_present_notify_next (xcb_present_notify_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_present_notify_end (xcb_present_notify_iterator_t i  /**< */);
+xcb_present_notify_end (xcb_present_notify_iterator_t i);
 
 /**
  *
@@ -373,9 +373,9 @@ xcb_present_notify_end (xcb_present_notify_iterator_t i  /**< */);
  *
  */
 xcb_present_query_version_cookie_t
-xcb_present_query_version (xcb_connection_t *c  /**< */,
-                           uint32_t          major_version  /**< */,
-                           uint32_t          minor_version  /**< */);
+xcb_present_query_version (xcb_connection_t *c,
+                           uint32_t          major_version,
+                           uint32_t          minor_version);
 
 /**
  *
@@ -389,9 +389,9 @@ xcb_present_query_version (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_present_query_version_cookie_t
-xcb_present_query_version_unchecked (xcb_connection_t *c  /**< */,
-                                     uint32_t          major_version  /**< */,
-                                     uint32_t          minor_version  /**< */);
+xcb_present_query_version_unchecked (xcb_connection_t *c,
+                                     uint32_t          major_version,
+                                     uint32_t          minor_version);
 
 /**
  * Return the reply
@@ -408,13 +408,13 @@ xcb_present_query_version_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_present_query_version_reply_t *
-xcb_present_query_version_reply (xcb_connection_t                    *c  /**< */,
+xcb_present_query_version_reply (xcb_connection_t                    *c,
                                  xcb_present_query_version_cookie_t   cookie  /**< */,
-                                 xcb_generic_error_t                **e  /**< */);
+                                 xcb_generic_error_t                **e);
 
 int
-xcb_present_pixmap_sizeof (const void  *_buffer  /**< */,
-                           uint32_t     notifies_len  /**< */);
+xcb_present_pixmap_sizeof (const void  *_buffer,
+                           uint32_t     notifies_len);
 
 /**
  *
@@ -428,23 +428,23 @@ xcb_present_pixmap_sizeof (const void  *_buffer  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
-                            xcb_window_t                window  /**< */,
-                            xcb_pixmap_t                pixmap  /**< */,
-                            uint32_t                    serial  /**< */,
-                            xcb_xfixes_region_t         valid  /**< */,
-                            xcb_xfixes_region_t         update  /**< */,
-                            int16_t                     x_off  /**< */,
-                            int16_t                     y_off  /**< */,
-                            xcb_randr_crtc_t            target_crtc  /**< */,
-                            xcb_sync_fence_t            wait_fence  /**< */,
-                            xcb_sync_fence_t            idle_fence  /**< */,
-                            uint32_t                    options  /**< */,
-                            uint64_t                    target_msc  /**< */,
-                            uint64_t                    divisor  /**< */,
-                            uint64_t                    remainder  /**< */,
-                            uint32_t                    notifies_len  /**< */,
-                            const xcb_present_notify_t *notifies  /**< */);
+xcb_present_pixmap_checked (xcb_connection_t           *c,
+                            xcb_window_t                window,
+                            xcb_pixmap_t                pixmap,
+                            uint32_t                    serial,
+                            xcb_xfixes_region_t         valid,
+                            xcb_xfixes_region_t         update,
+                            int16_t                     x_off,
+                            int16_t                     y_off,
+                            xcb_randr_crtc_t            target_crtc,
+                            xcb_sync_fence_t            wait_fence,
+                            xcb_sync_fence_t            idle_fence,
+                            uint32_t                    options,
+                            uint64_t                    target_msc,
+                            uint64_t                    divisor,
+                            uint64_t                    remainder,
+                            uint32_t                    notifies_len,
+                            const xcb_present_notify_t *notifies);
 
 /**
  *
@@ -455,23 +455,32 @@ xcb_present_pixmap_checked (xcb_connection_t           *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_present_pixmap (xcb_connection_t           *c  /**< */,
-                    xcb_window_t                window  /**< */,
-                    xcb_pixmap_t                pixmap  /**< */,
-                    uint32_t                    serial  /**< */,
-                    xcb_xfixes_region_t         valid  /**< */,
-                    xcb_xfixes_region_t         update  /**< */,
-                    int16_t                     x_off  /**< */,
-                    int16_t                     y_off  /**< */,
-                    xcb_randr_crtc_t            target_crtc  /**< */,
-                    xcb_sync_fence_t            wait_fence  /**< */,
-                    xcb_sync_fence_t            idle_fence  /**< */,
-                    uint32_t                    options  /**< */,
-                    uint64_t                    target_msc  /**< */,
-                    uint64_t                    divisor  /**< */,
-                    uint64_t                    remainder  /**< */,
-                    uint32_t                    notifies_len  /**< */,
-                    const xcb_present_notify_t *notifies  /**< */);
+xcb_present_pixmap (xcb_connection_t           *c,
+                    xcb_window_t                window,
+                    xcb_pixmap_t                pixmap,
+                    uint32_t                    serial,
+                    xcb_xfixes_region_t         valid,
+                    xcb_xfixes_region_t         update,
+                    int16_t                     x_off,
+                    int16_t                     y_off,
+                    xcb_randr_crtc_t            target_crtc,
+                    xcb_sync_fence_t            wait_fence,
+                    xcb_sync_fence_t            idle_fence,
+                    uint32_t                    options,
+                    uint64_t                    target_msc,
+                    uint64_t                    divisor,
+                    uint64_t                    remainder,
+                    uint32_t                    notifies_len,
+                    const xcb_present_notify_t *notifies);
+
+xcb_present_notify_t *
+xcb_present_pixmap_notifies (const xcb_present_pixmap_request_t *R);
+
+int
+xcb_present_pixmap_notifies_length (const xcb_present_pixmap_request_t *R);
+
+xcb_present_notify_iterator_t
+xcb_present_pixmap_notifies_iterator (const xcb_present_pixmap_request_t *R);
 
 /**
  *
@@ -485,12 +494,12 @@ xcb_present_pixmap (xcb_connection_t           *c  /**< */,
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_present_notify_msc_checked (xcb_connection_t *c  /**< */,
-                                xcb_window_t      window  /**< */,
-                                uint32_t          serial  /**< */,
-                                uint64_t          target_msc  /**< */,
-                                uint64_t          divisor  /**< */,
-                                uint64_t          remainder  /**< */);
+xcb_present_notify_msc_checked (xcb_connection_t *c,
+                                xcb_window_t      window,
+                                uint32_t          serial,
+                                uint64_t          target_msc,
+                                uint64_t          divisor,
+                                uint64_t          remainder);
 
 /**
  *
@@ -501,12 +510,12 @@ xcb_present_notify_msc_checked (xcb_connection_t *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_present_notify_msc (xcb_connection_t *c  /**< */,
-                        xcb_window_t      window  /**< */,
-                        uint32_t          serial  /**< */,
-                        uint64_t          target_msc  /**< */,
-                        uint64_t          divisor  /**< */,
-                        uint64_t          remainder  /**< */);
+xcb_present_notify_msc (xcb_connection_t *c,
+                        xcb_window_t      window,
+                        uint32_t          serial,
+                        uint64_t          target_msc,
+                        uint64_t          divisor,
+                        uint64_t          remainder);
 
 /**
  * Get the next element of the iterator
@@ -517,7 +526,7 @@ xcb_present_notify_msc (xcb_connection_t *c  /**< */,
  * element. The member index is increased by sizeof(xcb_present_event_t)
  */
 void
-xcb_present_event_next (xcb_present_event_iterator_t *i  /**< */);
+xcb_present_event_next (xcb_present_event_iterator_t *i);
 
 /**
  * Return the iterator pointing to the last element
@@ -529,7 +538,7 @@ xcb_present_event_next (xcb_present_event_iterator_t *i  /**< */);
  * last element.
  */
 xcb_generic_iterator_t
-xcb_present_event_end (xcb_present_event_iterator_t i  /**< */);
+xcb_present_event_end (xcb_present_event_iterator_t i);
 
 /**
  *
@@ -543,10 +552,10 @@ xcb_present_event_end (xcb_present_event_iterator_t i  /**< */);
  * saved for handling by xcb_request_check().
  */
 xcb_void_cookie_t
-xcb_present_select_input_checked (xcb_connection_t    *c  /**< */,
-                                  xcb_present_event_t  eid  /**< */,
-                                  xcb_window_t         window  /**< */,
-                                  uint32_t             event_mask  /**< */);
+xcb_present_select_input_checked (xcb_connection_t    *c,
+                                  xcb_present_event_t  eid,
+                                  xcb_window_t         window,
+                                  uint32_t             event_mask);
 
 /**
  *
@@ -557,10 +566,10 @@ xcb_present_select_input_checked (xcb_connection_t    *c  /**< */,
  *
  */
 xcb_void_cookie_t
-xcb_present_select_input (xcb_connection_t    *c  /**< */,
-                          xcb_present_event_t  eid  /**< */,
-                          xcb_window_t         window  /**< */,
-                          uint32_t             event_mask  /**< */);
+xcb_present_select_input (xcb_connection_t    *c,
+                          xcb_present_event_t  eid,
+                          xcb_window_t         window,
+                          uint32_t             event_mask);
 
 /**
  *
@@ -571,8 +580,8 @@ xcb_present_select_input (xcb_connection_t    *c  /**< */,
  *
  */
 xcb_present_query_capabilities_cookie_t
-xcb_present_query_capabilities (xcb_connection_t *c  /**< */,
-                                uint32_t          target  /**< */);
+xcb_present_query_capabilities (xcb_connection_t *c,
+                                uint32_t          target);
 
 /**
  *
@@ -586,8 +595,8 @@ xcb_present_query_capabilities (xcb_connection_t *c  /**< */,
  * placed in the event queue.
  */
 xcb_present_query_capabilities_cookie_t
-xcb_present_query_capabilities_unchecked (xcb_connection_t *c  /**< */,
-                                          uint32_t          target  /**< */);
+xcb_present_query_capabilities_unchecked (xcb_connection_t *c,
+                                          uint32_t          target);
 
 /**
  * Return the reply
@@ -604,13 +613,22 @@ xcb_present_query_capabilities_unchecked (xcb_connection_t *c  /**< */,
  * The returned value must be freed by the caller using free().
  */
 xcb_present_query_capabilities_reply_t *
-xcb_present_query_capabilities_reply (xcb_connection_t                         *c  /**< */,
+xcb_present_query_capabilities_reply (xcb_connection_t                         *c,
                                       xcb_present_query_capabilities_cookie_t   cookie  /**< */,
-                                      xcb_generic_error_t                     **e  /**< */);
+                                      xcb_generic_error_t                     **e);
 
 int
-xcb_present_redirect_notify_sizeof (const void  *_buffer  /**< */,
-                                    uint32_t     notifies_len  /**< */);
+xcb_present_redirect_notify_sizeof (const void  *_buffer,
+                                    uint32_t     notifies_len);
+
+xcb_present_notify_t *
+xcb_present_redirect_notify_notifies (const xcb_present_redirect_notify_event_t *R);
+
+int
+xcb_present_redirect_notify_notifies_length (const xcb_present_redirect_notify_event_t *R);
+
+xcb_present_notify_iterator_t
+xcb_present_redirect_notify_notifies_iterator (const xcb_present_redirect_notify_event_t *R);
 
 
 #ifdef __cplusplus

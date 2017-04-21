@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.175 2016/10/20 07:33:28 he Exp $
+# $NetBSD: HACKS,v 1.175.2.1 2017/04/21 16:51:16 bouyer Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -332,34 +332,10 @@ descr
 	Generate .hx files and copy it in the Makefiles if they changed.
 kcah
 
-hack	avoid gcc4 -O1 bug in loop optimize
-cdate	29 November 2008
-who	tsutsui
-file	src/sbin/ifconfig/Makefile	: 1.39
-pr	40036 40066
-descr
-	gcc -O1 seems to generate wrong code in loop optimize so that
-	ifconfig lo0 inet6 doesn't return error even if a kernel
-	doesn't have IPv6 support. (see the above PRs for details)
-	For workaround, specify -fno-loop-optimize on m68000,
-	which uses -O1 by default.
-kcah
-
-hack	MKPIE ldscript for /usr.sbin/crash
-cdate	22 April 2010
-who	christos
-file	src/usr.sbin/crash/Makefile	: 1.5
-file	src/usr.sbin/crash/ldscript.crash	: 1.1
-pr	N/A
-descr
-	fixed in binutils-2.20.1. Linking with MKPIE=yes causes overlapping
-	sections
-kcah
-
 hack	Disable fortification for /usr/bin/makeinfo
 cdata	24 Mar 2014
 who	tron
-file	src/gnu/usr.bin/texinfo/makeinfo/Makefile	: 1.8
+file	src/external/gpl2/texinfo/bin/makeinfo/Makefile	: 1.1
 pr	N/A
 descr
 	If "makeinfo" is compiled with "-D_FORTIFY_SOURCE=2" using GCC 4.8.3
@@ -551,6 +527,43 @@ port	vax
 		internal compiler error: in change_address_1, at emit-rtl.c:2019
 	kcah
 
+	hack	gcc 5.4 cc1 miscompile
+	date	Tue Feb 14 07:19:57 JST 2017
+	who	rin
+	pr	port-vax/51967
+	file	external/gpl3/gcc/usr.bin/backend/Makefile : 1.35
+	descr
+		cc1 aborts due to SIGILL when compiling the sample code attached
+		to the PR. As a workaround, compile dse.c with -O0.
+	kcah
+
+	hack	libssh miscompile
+	cdate	Tue Feb 14 17:58:06 JST 2017
+	mdate	Tue Feb 14 18:57:39 JST 2017
+	who	rin
+	file	crypto/external/bsd/openssh/lib/Makefile : 1.20
+	descr
+		poly1305.c and umac.c are miscompiled, which results in login
+		failure to/from external hosts via ssh.
+	kcah
+
+	hack	mandoc miscompile
+	date	Tue Feb 14 18:03:05 JST 2017
+	who	rin
+	file	external/bsd/mdocml/lib/libmandoc/Makefile : 1.8
+	descr
+		mandoc(1) receives SIGILL in in_line_argn() from mdoc_macro.c.
+	kcah
+
+	hack	libX11 miscompile
+	date	Thu Feb 16 10:00:22 JST 2017
+	who	rin
+	file	src/external/mit/xorg/lib/libX11/Makefile.libx11 : 1.18
+	descr
+		lcWrap.c is miscompiled, which results in input failure via XIM.
+		Besides, some clients, e.g., pkgsrc/x11/kterm, receive SIGSEGV.
+	kcah
+
 port	arm
 
 	hack	gcc-unsigned-compare
@@ -618,47 +631,6 @@ port	sh3
 		The in-tree GCC 4.1-based compiler generated too-far
 		pc-relative addresses.  Hack is to build with
 		-fno-loop-optimize.
-	kcah
-
-port	sh3eb
-	hack	gcc4.8.1
-	cdate	Thu Nov  7 16:31:23 EST 2013
-	who	christos
-	file	src/sys/rump/net/lib/libnetbt/Makefile	: 1.2
-	desrc
-		for profiling
-		compile l2cap_signal.c with -O0 to avoid:
-		./netbt/l2cap_signal.c:36:
-		/p/netbsd/cvsroot/src/sys/rump/net/lib/libnetbt/../../../../\
-		netbt/l2cap_signal.c: In function 'l2cap_recv_signal':
-		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
-		impossible reload
-		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
-	kcah
-
-port	sh3el
-	hack	gcc4.8.1
-	cdate	Fri Nov  8 19:27:01 EST 2013
-	who	christos
-	file	src/external/bsd/libevent/lib/libevent/Makefile	: 1.2
-	desrc
-		for profiling
-		compile evdns.c with -O0 to avoid:
-		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
-		impossible reload
-		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
-	kcah
-	
-	hack	gcc4.8.1
-	cdate	Fri Nov  8 19:34:48 EST 2013
-	who	christos
-	file	src/usr.sbin/racoon/Makefile	: 1.27
-	desrc
-		for profiling
-		compile ipsec_doi.c with -O0 to avoid:
-		./sh3/byte_swap.h:20:2: error: 'asm' operand requires \
-		impossible reload
-		  __asm volatile ("swap.b %1,%0" : "=r"(rval) : "r"(x));
 	kcah
 
 port	m68000
@@ -954,4 +926,24 @@ hack	avoid using labels in a 12-bit constant.
 who	matt
 file	crypto/external/bsd/openssl/lib/libcrypto/arch/arm/aes-armv4.S: 1.2
 descr	workaround for clang misassembling an instruction
+kcah
+
+port	sparc64
+hack	during profiling with -m32 (and ASLR) labels are not generated
+	consistently
+who	christos
+file	/cvsroot/src/crypto/external/bsd/heimdal/lib/libasn1/Makefile: 1.4
+desc 	asn1_krb5_asn1.po does not produce the same results during successive
+	compilation runs; it is bimodal. Turning optimization to -O0 fixes
+	the issue
+kcah
+
+port	ia64
+hack	ski emulator crashes
+who	scole
+file	/cvsroot/src/sys/external/bsd/acpica/dist/tables/tbxfload.c: 1.6
+desc
+	ski emulator crashes during acpi detection.  Added a check for
+	uninitialized index.  Submitted a request for change with upstream
+	mailing list, but never got a response
 kcah

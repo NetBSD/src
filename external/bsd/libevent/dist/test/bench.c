@@ -1,4 +1,4 @@
-/*	$NetBSD: bench.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $	*/
+/*	$NetBSD: bench.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $	*/
 /*
  * Copyright 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
@@ -36,14 +36,14 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bench.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
+__RCSID("$NetBSD: bench.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef _EVENT_HAVE_SYS_TIME_H
+#ifdef EVENT__HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
@@ -55,15 +55,19 @@ __RCSID("$NetBSD: bench.c,v 1.1.1.1 2013/04/11 16:43:32 christos Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifdef _EVENT_HAVE_UNISTD_H
+#ifdef EVENT__HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <errno.h>
 
+#ifdef _WIN32
+#include <getopt.h>
+#endif
+
 #include <event.h>
 #include <evutil.h>
 
-static int count, writes, fired;
+static int count, writes, fired, failures;
 static evutil_socket_t *pipes;
 static int num_pipes, num_active, num_writes;
 static struct event *events;
@@ -73,13 +77,20 @@ static void
 read_cb(evutil_socket_t fd, short which, void *arg)
 {
 	ev_intptr_t idx = (ev_intptr_t) arg, widx = idx + 1;
-	u_char ch;
+	unsigned char ch;
+	ev_ssize_t n;
 
-	count += recv(fd, (char*)&ch, sizeof(ch), 0);
+	n = recv(fd, (char*)&ch, sizeof(ch), 0);
+	if (n >= 0)
+		count += n;
+	else
+		failures++;
 	if (writes) {
 		if (widx >= num_pipes)
 			widx -= num_pipes;
-		send(pipes[2 * widx + 1], "e", 1, 0);
+		n = send(pipes[2 * widx + 1], "e", 1, 0);
+		if (n != 1)
+			failures++;
 		writes--;
 		fired++;
 	}
@@ -105,7 +116,7 @@ run_once(void)
 	space = num_pipes / num_active;
 	space = space * 2;
 	for (i = 0; i < num_active; i++, fired++)
-		send(pipes[i * space + 1], "e", 1, 0);
+		(void) send(pipes[i * space + 1], "e", 1, 0);
 
 	count = 0;
 	writes = num_writes;
@@ -128,14 +139,14 @@ run_once(void)
 int
 main(int argc, char **argv)
 {
-#ifndef WIN32
+#ifdef HAVE_SETRLIMIT 
 	struct rlimit rl;
 #endif
 	int i, c;
 	struct timeval *tv;
 	evutil_socket_t *cp;
 
-#ifdef WIN32
+#ifdef _WIN32
 	WSADATA WSAData;
 	WSAStartup(0x101, &WSAData);
 #endif
@@ -159,7 +170,7 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifndef WIN32
+#ifdef HAVE_SETRLIMIT
 	rl.rlim_cur = rl.rlim_max = num_pipes * 2 + 50;
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1) {
 		perror("setrlimit");

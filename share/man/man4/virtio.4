@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtio.4,v 1.5 2012/03/08 22:52:22 wiz Exp $
+.\"	$NetBSD: virtio.4,v 1.5.18.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 2011
+.Dd January 26, 2017
 .Dt VIRTIO 4
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Cd "ld* at virtio?"
 .Cd "vioif* at virtio?"
 .Cd "viomb* at virtio?"
+.Cd "viornd* at virtio?"
 .Sh DESCRIPTION
 .Nm
 defines an interface for efficient, standard and extensible I/O between the
@@ -54,12 +55,15 @@ A Disk device.
 An Ethernet device.
 .It Xr viomb 4
 A pseudo-device to release memory back to the hypervisor.
+.It Xr viornd 4
+An entropy source.
 .El
 .Sh SEE ALSO
 .Xr ld 4 ,
 .Xr pci 4 ,
 .Xr vioif 4 ,
-.Xr viomb 4
+.Xr viomb 4 ,
+.Xr viornd 4
 .Pp
 .Rs
 .%A Rusty Russell, IBM Corporation

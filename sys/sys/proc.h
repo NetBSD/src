@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.337 2017/01/14 06:36:52 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.337.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -538,12 +538,12 @@ void	syscall_intern(struct proc *);
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
-void	proc_stop(struct proc *, int, int);
 int	proc_uidmatch(kauth_cred_t, kauth_cred_t);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
+int	proc_getauxv(struct proc *, void **, size_t *);
 
 int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	proc_specific_key_delete(specificdata_key_t);
@@ -573,6 +573,8 @@ _proclist_skipmarker(struct proc *p0)
     sizeof(process_reg32) : sizeof(struct reg))
 #define PROC_FPREGSZ(p) (((p)->p_flag & PK_32) ? \
     sizeof(process_fpreg32) : sizeof(struct fpreg))
+#define PROC_DBREGSZ(p) (((p)->p_flag & PK_32) ? \
+    sizeof(process_dbreg32) : sizeof(struct dbreg))
 
 /*
  * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.

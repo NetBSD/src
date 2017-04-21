@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_other.c,v 1.1.1.2 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postconf_other.c,v 1.1.1.2.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -14,6 +14,9 @@
 /*
 /*	void	pcf_show_sasl(mode)
 /*	int	mode;
+/*
+/*	void	pcf_show_tls(what)
+/*	const char *what;
 /* DESCRIPTION
 /*	pcf_show_maps() lists the available map (lookup table)
 /*	types.
@@ -23,10 +26,16 @@
 /*	pcf_show_sasl() shows the available SASL authentication
 /*	plugin types.
 /*
+/*	pcf_show_tls() reports the "compile-version" or "run-version"
+/*	of the TLS library, or the supported public-key algorithms.
+/*
 /*	Arguments:
 /* .IP mode
 /*	Show server information if the PCF_SHOW_SASL_SERV flag is
 /*	set, otherwise show client information.
+/* .IP what
+/*	One of the literals "compile-version", "run-version" or
+/*	"public-key-algorithms".
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
 /* LICENSE
@@ -38,6 +47,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -49,6 +63,7 @@
 #include <vstream.h>
 #include <argv.h>
 #include <dict.h>
+#include <msg.h>
 
 /* Global library. */
 
@@ -57,6 +72,10 @@
 /* XSASL library. */
 
 #include <xsasl.h>
+
+/* TLS library. */
+
+#include <tls.h>
 
 /* Application-specific. */
 
@@ -100,4 +119,25 @@ void    pcf_show_sasl(int what)
     for (i = 0; i < sasl_argv->argc; i++)
 	vstream_printf("%s\n", sasl_argv->argv[i]);
     argv_free(sasl_argv);
+}
+
+/* pcf_show_tls - show TLS support */
+
+void    pcf_show_tls(const char *what)
+{
+#ifdef USE_TLS
+    if (strcmp(what, "compile-version") == 0)
+	vstream_printf("%s\n", tls_compile_version());
+    else if (strcmp(what, "run-version") == 0)
+	vstream_printf("%s\n", tls_run_version());
+    else if (strcmp(what, "public-key-algorithms") == 0) {
+	const char **cpp;
+
+	for (cpp = tls_pkey_algorithms(); *cpp; cpp++)
+	    vstream_printf("%s\n", *cpp);
+    } else {
+	msg_warn("unknown 'postconf -T' mode: %s", what);
+	exit(1);
+    }
+#endif						/* USE_TLS */
 }

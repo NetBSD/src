@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.26 2014/08/23 20:26:57 dholland Exp $
+# $NetBSD: GDIUM,v 1.26.6.1 2017/04/21 16:53:26 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.26 $"
+#ident 		"GDIUM-$Revision: 1.26.6.1 $"
 
 maxusers	16
 
@@ -87,6 +87,8 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
+#options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.14 2016/01/15 09:05:16 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.14.4.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"	From:
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 15, 2016
+.Dd February 17, 2017
 .Dt BOOT 8 amiga
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ When a bootable
 .Nx
 partition is created by means of HDTOOLBOX or another RDB editing program
 and a bootblock has been copied there by
-.Xr installboot 8
+.Xr amiga/installboot 8
 and the boot priority of the
 .Nx
 partition is either the highest or the
@@ -247,8 +247,8 @@ secondary bootstrap (installed)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
+.Xr amiga/installboot 8 ,
 .Xr fsck_ffs 8 ,
-.Xr installboot 8 ,
 .Xr newfs 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8

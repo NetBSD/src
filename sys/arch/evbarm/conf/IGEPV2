@@ -1,5 +1,5 @@
 #
-#	$NetBSD: IGEPV2,v 1.27 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: IGEPV2,v 1.27.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	IGEPv2 -- TI OMAP 3530 Eval Board Kernel
 #
@@ -36,7 +36,7 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 #file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
@@ -46,6 +46,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 #options 	SOFTDEP
@@ -135,9 +136,9 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
-options USB_DEBUG
-options OHCI_DEBUG
-options UHUB_DEBUG
+#options USB_DEBUG
+#options OHCI_DEBUG
+#options UHUB_DEBUG
 
 
 # Valid options for BOOT_ARGS:
@@ -210,6 +211,9 @@ omapgpio4	at obio2 addr 0x49056000 size 0x0400 intrbase 224 intr 33
 omapgpio5	at obio2 addr 0x49058000 size 0x0400 intrbase 256 intr 34
 
 gpio*		at omapgpio?
+
+# System Control Module
+omapscm0       at obio0 addr 0x48002000 size 0x1000
 
 # I2C Controller
 omapiic0	at obio0 addr 0x48070000 size 0x1000 intr 56	# I2C1

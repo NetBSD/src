@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.12 2011/05/16 10:05:23 drochner Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.12.40.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,15 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.12 2011/05/16 10:05:23 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.12.40.1 2017/04/21 16:54:06 bouyer Exp $");
 
 /*
  * IPsec-specific mbuf routines.
  */
-
-#ifdef __FreeBSD__
-#include "opt_param.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.12 2011/05/16 10:05:23 drochner Exp
 #include <netipsec/ipsec_var.h>
 #include <netipsec/ipsec_private.h>
 
-#include <netipsec/ipsec_osdep.h>
 #include <net/net_osdep.h>
 
 /*
@@ -69,7 +64,7 @@ m_clone(struct mbuf *m0)
 	struct mbuf *n, *mfirst, *mlast;
 	int len, off;
 
-	IPSEC_ASSERT(m0 != NULL, ("m_clone: null mbuf"));
+	KASSERT(m0 != NULL);
 
 	mprev = NULL;
 	for (m = m0; m != NULL; m = mprev->m_next) {
@@ -117,8 +112,7 @@ m_clone(struct mbuf *m0)
 		 * it anyway, we try to reduce the number of mbufs and
 		 * clusters so that future work is easier).
 		 */
-		IPSEC_ASSERT(m->m_flags & M_EXT,
-			("m_clone: m_flags 0x%x", m->m_flags));
+		KASSERTMSG(m->m_flags & M_EXT, "m_flags 0x%x", m->m_flags);
 		/* NB: we only coalesce into a cluster or larger */
 		if (mprev != NULL && (mprev->m_flags & M_EXT) &&
 		    m->m_len <= M_TRAILINGSPACE(mprev)) {
@@ -220,8 +214,8 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 	struct mbuf *m;
 	unsigned remain;
 
-	IPSEC_ASSERT(m0 != NULL, ("m_dmakespace: null mbuf"));
-	IPSEC_ASSERT(hlen < MHLEN, ("m_makespace: hlen too big: %u", hlen));
+	KASSERT(m0 != NULL);
+	KASSERTMSG(hlen < MHLEN, "hlen too big: %u", hlen);
 
 	for (m = m0; m && skip > m->m_len; m = m->m_next)
 		skip -= m->m_len;
@@ -337,7 +331,8 @@ m_pad(struct mbuf *m, int n)
 	m0 = m;
 
 	while (m0->m_len < len) {
-IPSEC_ASSERT(m0->m_next != NULL, ("m_pad: m0 null, len %u m_len %u", len, m0->m_len));/*XXX*/
+		KASSERTMSG(m0->m_next != NULL,
+		    "m0 null, len %u m_len %u", len, m0->m_len);/*XXX*/
 		len -= m0->m_len;
 		m0 = m0->m_next;
 	}

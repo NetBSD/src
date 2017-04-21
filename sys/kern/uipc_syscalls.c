@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.184 2016/12/03 22:28:16 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.184.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.184 2016/12/03 22:28:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.184.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.184 2016/12/03 22:28:16 christos
 extern const struct fileops socketops;
 
 static int	sockargs_sb(struct sockaddr_big *, const void *, socklen_t);
-static int	copyout_sockname_sb(struct sockaddr *, unsigned int *,
-		    int , struct sockaddr_big *);
 
 int
 sys___socket30(struct lwp *l, const struct sys___socket30_args *uap,
@@ -530,7 +528,7 @@ sys_sendmsg(struct lwp *l, const struct sys_sendmsg_args *uap,
 	    NULL, 0, retval);
 }
 
-static int
+int
 do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
     struct msghdr *mp, int flags, const void *kthdr, size_t ktsize,
     register_t *retsize)
@@ -922,7 +920,7 @@ copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 	return error;
 }
 
-static int
+int
 do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
     const void *ktrhdr, size_t ktsize, struct mbuf **from,
     struct mbuf **control, register_t *retsize)

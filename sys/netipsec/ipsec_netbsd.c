@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.38 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.38.4.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,10 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.38 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.38.4.1 2017/04/21 16:54:06 bouyer Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +504,8 @@ sysctl_net_ipsec_enabled(SYSCTLFN_ARGS)
 }
 
 /* XXX will need a different oid at parent */
-SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
+void
+sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *_ipsec;
 	int ipproto_ipsec;
@@ -702,6 +705,12 @@ SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 		       NULL, 0, &ipsec_used, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "crypto_support", NULL,
+		       NULL, 0, &crypto_support, 0,
+		       CTL_NET, PF_INET, ipproto_ipsec,
+		       CTL_CREATE, CTL_EOL);
 #ifdef IPSEC_DEBUG
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -721,8 +730,8 @@ SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 }
 
 #ifdef INET6
-SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
-	     "sysctl net.inet6.ipsec6 subtree setup")
+void
+sysctl_net_inet6_ipsec6_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_radiotap.9,v 1.15 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: ieee80211_radiotap.9,v 1.15.12.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>.
@@ -218,7 +218,7 @@ This bit is reserved for any future extensions to the
 structure.
 A driver sets
 .Dv IEEE80211_RADIOTAP_EXT
-to extend the it_present bitmap by another 64 bits.
+to extend the it_present bitmap by another 32 bits.
 The bitmap can be extended by multiples of 32 bits to 96, 128, 160
 bits or longer, by setting
 .Dv IEEE80211_RADIOTAP_EXT

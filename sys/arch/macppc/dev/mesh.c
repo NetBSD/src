@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.37 2016/07/15 22:10:47 macallan Exp $	*/
+/*	$NetBSD: mesh.c,v 1.37.2.1 2017/04/21 16:53:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.37 2016/07/15 22:10:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.37.2.1 2017/04/21 16:53:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -264,7 +264,7 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	intr_establish(sc->sc_irq, IST_EDGE, IPL_BIO, mesh_intr, sc);
 
 	/* Reset SCSI bus when halt. */
-	if (pmf_device_register1(self, NULL, NULL, mesh_shutdown))
+	if (!pmf_device_register1(self, NULL, NULL, mesh_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
@@ -343,7 +343,7 @@ mesh_intr(void *arg)
 
 	snprintb(buf1, sizeof buf1, MESH_STATUS0_BITMASK, status0);
 	snprintb(buf2, sizeof buf2, MESH_EXC_BITMASK, exception);
-	printf("mesh_intr status0 = 0x%s (%s), exc = 0x%s\n",
+	printf("mesh_intr status0 = %s (%s), exc = %s\n",
 	    buf1, scsi_phase[status0 & 7], buf2);
 }
 #endif

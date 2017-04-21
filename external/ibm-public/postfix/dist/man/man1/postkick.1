@@ -1,4 +1,4 @@
-.\"	$NetBSD: postkick.1,v 1.1.1.2 2013/01/02 18:58:44 tron Exp $
+.\"	$NetBSD: postkick.1,v 1.1.1.2.16.1 2017/04/21 16:52:45 bouyer Exp $
 .\"
 .TH POSTKICK 1 
 .ad
@@ -11,7 +11,7 @@ kick a Postfix service
 .na
 .nf
 .fi
-\fBpostkick\fR [\fB-c \fIconfig_dir\fR] [\fB-v\fR]
+\fBpostkick\fR [\fB\-c \fIconfig_dir\fR] [\fB\-v\fR]
 \fIclass service request\fR
 .SH DESCRIPTION
 .ad
@@ -22,11 +22,11 @@ This command makes Postfix private IPC accessible
 for use in, for example, shell scripts.
 
 Options:
-.IP "\fB-c\fR \fIconfig_dir\fR"
+.IP "\fB\-c\fR \fIconfig_dir\fR"
 Read the \fBmain.cf\fR configuration file in the named directory
 instead of the default configuration directory.
-.IP \fB-v\fR
-Enable verbose logging for debugging purposes. Multiple \fB-v\fR
+.IP \fB\-v\fR
+Enable verbose logging for debugging purposes. Multiple \fB\-v\fR
 options make the software increasingly verbose.
 .PP
 Arguments:
@@ -37,7 +37,7 @@ either \fBpublic\fR (accessible by any local user) or
 .IP \fIservice\fR
 The name of a local transport endpoint within the named class.
 .IP \fIrequest\fR
-A string. The list of valid requests is service-specific.
+A string. The list of valid requests is service\-specific.
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -68,7 +68,7 @@ configuration files.
 How long the \fBpostkick\fR(1) command waits for a request to enter the
 Postfix daemon process input buffer before giving up.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .SH "FILES"
 .na
 .nf
@@ -93,3 +93,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

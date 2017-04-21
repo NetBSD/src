@@ -1,10 +1,10 @@
-/*	$NetBSD: protocol.c,v 1.1.1.4 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: protocol.c,v 1.1.1.4.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* protocol.c - network protocol lookup routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -17,7 +17,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /*
-/* ACKNOWLEDGEMENTS:
+ * ACKNOWLEDGEMENTS:
  * This code references portions of the nss-ldapd package
  * written by Arthur de Jong. The nss-ldapd code was forked
  * from the nss-ldap library written by Luke Howard.
@@ -52,7 +52,7 @@ NSSOV_CBPRIV(protocol,
 
 static int write_protocol(nssov_protocol_cbp *cbp,Entry *entry)
 {
-	int32_t tmpint32,tmp2int32,tmp3int32;
+	int32_t tmpint32;
 	int i,numname,dupname,proto;
 	struct berval name,*names;
 	Attribute *a;

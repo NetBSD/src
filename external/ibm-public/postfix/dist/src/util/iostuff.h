@@ -1,4 +1,4 @@
-/*	$NetBSD: iostuff.h,v 1.1.1.3 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: iostuff.h,v 1.1.1.3.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _IOSTUFF_H_INCLUDED_
 #define _IOSTUFF_H_INCLUDED_
@@ -24,7 +24,7 @@ extern void set_file_limit(off_t);
 extern ssize_t peekfd(int);
 extern ssize_t write_buf(int, const char *, ssize_t, int);
 extern ssize_t timed_read(int, void *, size_t, int, void *);
-extern ssize_t timed_write(int, void *, size_t, int, void *);
+extern ssize_t timed_write(int, const void *, size_t, int, void *);
 extern void doze(unsigned);
 extern void rand_sleep(unsigned, unsigned);
 extern int duplex_pipe(int *);
@@ -64,10 +64,10 @@ extern void set_unix_pass_fd_fix(const char *);
 /* .fi
 /*	The Secure Mailer license must be distributed with this software.
 /* AUTHOR(S)
-/*      Wietse Venema
-/*      IBM T.J. Watson Research
-/*      P.O. Box 704
-/*      Yorktown Heights, NY 10598, USA
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
 /* CREATION DATE
 /*	Sat Jan 25 16:54:13 EST 1997
 /*--*/

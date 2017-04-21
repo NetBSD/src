@@ -1,9 +1,9 @@
-/*	$NetBSD: debug.c,v 1.1.1.4 2014/05/28 09:58:40 tron Exp $	*/
+/*	$NetBSD: debug.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: debug.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $");
 
 #include "portable.h"
 
@@ -35,6 +38,7 @@
 #include "ldap_pvt.h"
 
 static FILE *log_file = NULL;
+static int debug_lastc = '\n';
 
 int lutil_debug_file( FILE *file )
 {
@@ -48,6 +52,7 @@ void (lutil_debug)( int debug, int level, const char *fmt, ... )
 {
 	char buffer[4096];
 	va_list vl;
+	int len, off;
 
 	if ( !(level & debug ) ) return;
 
@@ -64,9 +69,17 @@ void (lutil_debug)( int debug, int level, const char *fmt, ... )
 	}
 #endif
 
-	sprintf(buffer, "%08x ", (unsigned) time(0L));
+	if (debug_lastc == '\n') {
+		sprintf(buffer, "%08x ", (unsigned) time(0L));
+		off = 9;
+	} else {
+		off = 0;
+	}
 	va_start( vl, fmt );
-	vsnprintf( buffer+9, sizeof(buffer)-9, fmt, vl );
+	len = vsnprintf( buffer+off, sizeof(buffer)-off, fmt, vl );
+	if (len > sizeof(buffer)-off)
+		len = sizeof(buffer)-off;
+	debug_lastc = buffer[len+off-1];
 	buffer[sizeof(buffer)-1] = '\0';
 	if( log_file != NULL ) {
 		fputs( buffer, log_file );

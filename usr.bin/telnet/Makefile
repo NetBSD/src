@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2012/08/10 12:10:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.50.18.1 2017/04/21 16:54:15 bouyer Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,8 +65,8 @@ LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DKRB5 -DFORWARD
-LDADD+= -lkrb5 -lasn1 -lcom_err -lroken
-DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
+LDADD+= -lkrb5 -lasn1 -lcom_err -lroken -lsqlite3
+DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBSQLITE3}
 .endif
 
 .if (${MKCRYPTO} != "no")

@@ -1,4 +1,4 @@
-/*	$NetBSD: recv_pass_attr.c,v 1.1.1.1 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: recv_pass_attr.c,v 1.1.1.1.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,7 @@
 /*	ssize_t	bufsize;
 /* DESCRIPTION
 /*	recv_pass_attr() receives named attributes over the specified
-/*	The result value is zero for success, -1 for error.
+/*	descriptor. The result value is zero for success, -1 for error.
 /*
 /*	Arguments:
 /* .IP fd
@@ -23,7 +23,7 @@
 /* .IP attr
 /*	Pointer to attribute list pointer. The target is set to
 /*	zero on error or when the received attribute list is empty,
-/*	ohterwise it is assigned a pointer to non-empty attribute
+/*	otherwise it is assigned a pointer to non-empty attribute
 /*	list.
 /* .IP timeout
 /*	The deadline for receiving all attributes.
@@ -68,14 +68,14 @@ int     recv_pass_attr(int fd, HTABLE **attr, int timeout, ssize_t bufsize)
      */
     fp = vstream_fdopen(fd, O_RDWR);
     vstream_control(fp,
-		    VSTREAM_CTL_BUFSIZE, bufsize,
-		    VSTREAM_CTL_TIMEOUT, timeout,
-		    VSTREAM_CTL_START_DEADLINE,
-		    VSTREAM_CTL_END);
-    (void) attr_scan(fp, ATTR_FLAG_NONE,
-		     ATTR_TYPE_HASH, *attr = htable_create(1),
-		     ATTR_TYPE_END);
-    stream_err = (vstream_feof(fp) || vstream_ferror(fp));
+		    CA_VSTREAM_CTL_BUFSIZE(bufsize),
+		    CA_VSTREAM_CTL_TIMEOUT(timeout),
+		    CA_VSTREAM_CTL_START_DEADLINE,
+		    CA_VSTREAM_CTL_END);
+    stream_err = (attr_scan(fp, ATTR_FLAG_NONE,
+			    ATTR_TYPE_HASH, *attr = htable_create(1),
+			    ATTR_TYPE_END) < 0
+		  || vstream_feof(fp) || vstream_ferror(fp));
     vstream_fdclose(fp);
 
     /*

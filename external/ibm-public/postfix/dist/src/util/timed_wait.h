@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_wait.h,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: timed_wait.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _TIMED_WAIT_H_INCLUDED_
 #define _TIMED_WAIT_H_INCLUDED_
@@ -16,7 +16,7 @@
  /*
   * External interface.
   */
-extern int timed_waitpid(pid_t, WAIT_STATUS_T *, int, int);
+extern int WARN_UNUSED_RESULT timed_waitpid(pid_t, WAIT_STATUS_T *, int, int);
 
 /* LICENSE
 /* .ad

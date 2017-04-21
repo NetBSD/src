@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.205 2016/04/22 05:34:58 riastradh Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.205.4.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.205 2016/04/22 05:34:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.205.4.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1087,7 +1087,7 @@ unionlookup:
 
 		KASSERT(searchdir != foundobj);
 
-		error = vfs_busy(mp, NULL);
+		error = vfs_busy(mp);
 		if (error != 0) {
 			vput(foundobj);
 			goto done;
@@ -1097,7 +1097,7 @@ unionlookup:
 		}
 		vput(foundobj);
 		error = VFS_ROOT(mp, &foundobj);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error) {
 			if (searchdir != NULL) {
 				vn_lock(searchdir, LK_EXCLUSIVE | LK_RETRY);

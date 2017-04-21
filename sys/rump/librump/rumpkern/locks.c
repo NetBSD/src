@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.72 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.72.4.1 2017/04/21 16:54:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.72 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.72.4.1 2017/04/21 16:54:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -61,18 +61,22 @@ static lockops_t rw_lockops = {
 	NULL
 };
 
-#define ALLOCK(lock, ops)		\
-    lockdebug_alloc(lock, ops, (uintptr_t)__builtin_return_address(0))
+#define ALLOCK(lock, ops)				\
+    lockdebug_alloc(__func__, __LINE__, lock, ops,	\
+    (uintptr_t)__builtin_return_address(0))
 #define FREELOCK(lock)			\
-    lockdebug_free(lock)
-#define WANTLOCK(lock, shar)	\
-    lockdebug_wantlock(lock, (uintptr_t)__builtin_return_address(0), shar)
-#define LOCKED(lock, shar)		\
-    lockdebug_locked(lock, NULL, (uintptr_t)__builtin_return_address(0), shar)
+    lockdebug_free(__func__, __LINE__, lock)
+#define WANTLOCK(lock, shar)				\
+    lockdebug_wantlock(__func__, __LINE__, lock,	\
+    (uintptr_t)__builtin_return_address(0), shar)
+#define LOCKED(lock, shar)				\
+    lockdebug_locked(__func__, __LINE__, lock, NULL,	\
+    (uintptr_t)__builtin_return_address(0), shar)
 #define UNLOCKED(lock, shar)		\
-    lockdebug_unlocked(lock, (uintptr_t)__builtin_return_address(0), shar)
+    lockdebug_unlocked(__func__, __LINE__, lock,	\
+    (uintptr_t)__builtin_return_address(0), shar)
 #define BARRIER(lock, slp)		\
-    lockdebug_barrier(lock, slp)
+    lockdebug_barrier(__func__, __LINE__, lock, slp)
 #else
 #define ALLOCK(a, b)
 #define FREELOCK(a)

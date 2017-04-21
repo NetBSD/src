@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* config.c - sock backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2014 The OpenLDAP Foundation.
+ * Copyright 2007-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,9 @@
  * This work was initially developed by Brian Candler for inclusion
  * in OpenLDAP Software. Dynamic config support by Howard Chu.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: config.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $");
 
 #include "portable.h"
 
@@ -359,12 +362,14 @@ sock_over_db_init(
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 	void *private = be->be_private;
+	void *cf_ocs = be->be_cf_ocs;
 	int rc;
 
 	be->be_private = NULL;
 	rc = sock_back_db_init( be, cr );
 	on->on_bi.bi_private = be->be_private;
 	be->be_private = private;
+	be->be_cf_ocs = cf_ocs;
 	return rc;
 }
 

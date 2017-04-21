@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.15 2014/11/09 14:40:54 nonaka Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.15.6.1 2017/04/21 16:53:47 bouyer Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
 
 /*-
@@ -1940,7 +1940,7 @@ static const char * const iwn_fw_errmsg[] = {
 	"NMI_INTERRUPT_DATA_ACTION_PT",
 	"NMI_TRM_HW_ER",
 	"NMI_INTERRUPT_TRM",
-	"NMI_INTERRUPT_BREAKPOINT"
+	"NMI_INTERRUPT_BREAKPOINT",
 	"DEBUG_0",
 	"DEBUG_1",
 	"DEBUG_2",

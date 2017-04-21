@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.30 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: MV2120,v 1.30.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -58,6 +58,7 @@ file-system 	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

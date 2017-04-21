@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.17 2014/09/10 21:04:08 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.17.4.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -497,7 +497,13 @@ auth_alg
 			p_alg_auth = $1;
 
 			p_key_auth_len = 0;
-			p_key_auth = NULL;
+			p_key_auth = "";
+			if (ipsec_check_keylen(SADB_EXT_SUPPORTED_AUTH,
+			    p_alg_auth,
+			    PFKEY_UNUNIT64(p_key_auth_len)) < 0) {
+				yyerror(ipsec_strerror());
+				return -1;
+			}
 		}
 	;
 

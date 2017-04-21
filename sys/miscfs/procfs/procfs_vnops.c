@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.194 2016/08/20 12:37:09 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.194.2.1 2017/04/21 16:54:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.194 2016/08/20 12:37:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.194.2.1 2017/04/21 16:54:04 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.194 2016/08/20 12:37:09 hannken E
 #include <sys/stat.h>
 #include <sys/ptrace.h>
 #include <sys/kauth.h>
+#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -159,6 +160,7 @@ static const struct proc_target {
 	{ DT_DIR, N(".."),	PFSroot,	NULL },
 	{ DT_DIR, N("fd"),	PFSfd,		NULL },
 	{ DT_REG, N("file"),	PFSfile,	procfs_validfile },
+	{ DT_REG, N("auxv"),	PFSauxv,	procfs_validauxv },
 	{ DT_REG, N("mem"),	PFSmem,		NULL },
 	{ DT_REG, N("regs"),	PFSregs,	procfs_validregs },
 	{ DT_REG, N("fpregs"),	PFSfpregs,	procfs_validfpregs },
@@ -412,7 +414,7 @@ procfs_close(void *v)
 int
 procfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -422,8 +424,6 @@ procfs_inactive(void *v)
 	mutex_enter(proc_lock);
 	*ap->a_recycle = (proc_find(pfs->pfs_pid) == NULL);
 	mutex_exit(proc_lock);
-
-	VOP_UNLOCK(vp);
 
 	return (0);
 }
@@ -735,13 +735,13 @@ procfs_getattr(void *v)
 	case PFSstat:
 	case PFSnote:
 	case PFSnotepg:
-	case PFSmap:
-	case PFSmaps:
 	case PFScmdline:
 	case PFSemul:
 	case PFSstatm:
-		if (pfs->pfs_type == PFSmap || pfs->pfs_type == PFSmaps)
-			vap->va_mode = S_IRUSR;
+
+	case PFSmap:
+	case PFSmaps:
+	case PFSauxv:
 		vap->va_nlink = 1;
 		vap->va_uid = kauth_cred_geteuid(procp->p_cred);
 		vap->va_gid = kauth_cred_getegid(procp->p_cred);
@@ -758,8 +758,20 @@ procfs_getattr(void *v)
 		vap->va_uid = vap->va_gid = 0;
 		break;
 
-	default:
+	case PFSproc:
+	case PFStask:
+	case PFSexe:
+	case PFSfile:
+	case PFSself:
+	case PFScurproc:
+	case PFScwd:
+	case PFSroot:
+	case PFSchroot:
+	case PFSfd:
 		break;
+
+	default:
+		panic("%s: %d/1", __func__, pfs->pfs_type);
 	}
 
 	/*
@@ -847,6 +859,11 @@ procfs_getattr(void *v)
 				    procp->p_vmspace->vm_ssize);
 		break;
 
+	case PFSauxv:
+		vap->va_bytes = vap->va_size = procp->p_execsw->es_arglen;
+		break;
+
+
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 	case PFSregs:
 		vap->va_bytes = vap->va_size = sizeof(struct reg);
@@ -913,7 +930,7 @@ procfs_getattr(void *v)
 #endif
 
 	default:
-		panic("procfs_getattr");
+		panic("%s: %d/2", __func__, pfs->pfs_type);
 	}
 
 	if (procp != NULL)

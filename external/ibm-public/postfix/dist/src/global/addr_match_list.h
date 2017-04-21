@@ -1,4 +1,4 @@
-/*	$NetBSD: addr_match_list.h,v 1.1.1.2 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: addr_match_list.h,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _ADDR_MATCH_LIST_H_INCLUDED_
 #define _ADDR_MATCH_LIST_H_INCLUDED_
@@ -23,8 +23,8 @@
   */
 #define ADDR_MATCH_LIST MATCH_LIST
 
-#define addr_match_list_init(f, p) \
-	match_list_init((f), (p), 1, match_hostaddr)
+#define addr_match_list_init(o, f, p) \
+	match_list_init((o), (f), (p), 1, match_hostaddr)
 #define addr_match_list_match(l, a) \
 	match_list_match((l), (a))
 #define addr_match_list_free	match_list_free

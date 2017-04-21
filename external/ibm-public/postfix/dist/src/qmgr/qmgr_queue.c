@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_queue.c,v 1.1.1.1 2009/06/23 10:08:53 tron Exp $	*/
+/*	$NetBSD: qmgr_queue.c,v 1.1.1.1.36.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -135,7 +135,7 @@ int     qmgr_queue_count;
 
 /* qmgr_queue_resume - resume delivery to destination */
 
-static void qmgr_queue_resume(int event, char *context)
+static void qmgr_queue_resume(int event, void *context)
 {
     QMGR_QUEUE *queue = (QMGR_QUEUE *) context;
     const char *myname = "qmgr_queue_resume";
@@ -165,8 +165,8 @@ static void qmgr_queue_resume(int event, char *context)
      * performance.
      * 
      * XXX Do not expose the blocker job logic here. Rate-limited queues are not
-     * a performance-critical feature. Here, too, there is no need to sacrifice
-     * code clarity for the sake of performance.
+     * a performance-critical feature. Here, too, there is no need to
+     * sacrifice code clarity for the sake of performance.
      */
     if (QMGR_QUEUE_READY(queue) && queue->todo.next == 0 && queue->busy.next == 0)
 	qmgr_queue_done(queue);
@@ -193,12 +193,12 @@ void    qmgr_queue_suspend(QMGR_QUEUE *queue, int delay)
      * queue in suspended state.
      */
     queue->window = QMGR_QUEUE_STAT_SUSPENDED;
-    event_request_timer(qmgr_queue_resume, (char *) queue, delay);
+    event_request_timer(qmgr_queue_resume, (void *) queue, delay);
 }
 
 /* qmgr_queue_unthrottle_wrapper - in case (char *) != (struct *) */
 
-static void qmgr_queue_unthrottle_wrapper(int unused_event, char *context)
+static void qmgr_queue_unthrottle_wrapper(int unused_event, void *context)
 {
     QMGR_QUEUE *queue = (QMGR_QUEUE *) context;
 
@@ -242,7 +242,7 @@ void    qmgr_queue_unthrottle(QMGR_QUEUE *queue)
      * Special case when this site was dead.
      */
     if (QMGR_QUEUE_THROTTLED(queue)) {
-	event_cancel_timer(qmgr_queue_unthrottle_wrapper, (char *) queue);
+	event_cancel_timer(qmgr_queue_unthrottle_wrapper, (void *) queue);
 	if (queue->dsn == 0)
 	    msg_panic("%s: queue %s: window 0 status 0", myname, queue->name);
 	dsn_free(queue->dsn);
@@ -361,7 +361,7 @@ void    qmgr_queue_throttle(QMGR_QUEUE *queue, DSN *dsn)
     if (QMGR_QUEUE_THROTTLED(queue)) {
 	queue->dsn = DSN_COPY(dsn);
 	event_request_timer(qmgr_queue_unthrottle_wrapper,
-			    (char *) queue, var_min_backoff_time);
+			    (void *) queue, var_min_backoff_time);
 	queue->dflags = 0;
     }
     QMGR_LOG_WINDOW(queue);
@@ -393,11 +393,11 @@ void    qmgr_queue_done(QMGR_QUEUE *queue)
      * Clean up this in-core queue.
      */
     QMGR_LIST_UNLINK(transport->queue_list, QMGR_QUEUE *, queue, peers);
-    htable_delete(transport->queue_byname, queue->name, (void (*) (char *)) 0);
+    htable_delete(transport->queue_byname, queue->name, (void (*) (void *)) 0);
     myfree(queue->name);
     myfree(queue->nexthop);
     qmgr_queue_count--;
-    myfree((char *) queue);
+    myfree((void *) queue);
 }
 
 /* qmgr_queue_create - create in-core queue for site */
@@ -429,7 +429,7 @@ QMGR_QUEUE *qmgr_queue_create(QMGR_TRANSPORT *transport, const char *name,
     queue->clog_time_to_warn = 0;
     queue->blocker_tag = 0;
     QMGR_LIST_APPEND(transport->queue_list, queue, peers);
-    htable_enter(transport->queue_byname, name, (char *) queue);
+    htable_enter(transport->queue_byname, name, (void *) queue);
     return (queue);
 }
 

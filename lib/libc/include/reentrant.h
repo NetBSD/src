@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.18 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.18.4.1 2017/04/21 16:53:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -278,38 +278,35 @@ __END_DECLS
 
 #else /* _REENTRANT */
 
-#ifndef __empty
-#define __empty do {} while (/*CONSTCOND*/0)
-#endif
-#define	mutex_init(m, a) __empty
-#define	mutex_lock(m) __empty
-#define	mutex_trylock(m) __empty
-#define	mutex_unlock(m)	__empty
-#define	mutex_destroy(m) __empty
+#define	mutex_init(m, a) __nothing
+#define	mutex_lock(m) __nothing
+#define	mutex_trylock(m) __nothing
+#define	mutex_unlock(m)	__nothing
+#define	mutex_destroy(m) __nothing
 
-#define	cond_init(c, t, a) __empty
-#define	cond_signal(c) __empty
-#define	cond_broadcast(c) __empty
-#define	cond_wait(c, m) __empty
-#define	cond_timedwait(c, m, t) __empty
-#define	cond_destroy(c) __empty
+#define	cond_init(c, t, a) __nothing
+#define	cond_signal(c) __nothing
+#define	cond_broadcast(c) __nothing
+#define	cond_wait(c, m) __nothing
+#define	cond_timedwait(c, m, t) __nothing
+#define	cond_destroy(c) __nothing
 
-#define	rwlock_init(l, a) __empty
-#define	rwlock_rdlock(l) __empty
-#define	rwlock_wrlock(l) __empty
-#define	rwlock_tryrdlock(l) __empty
-#define	rwlock_trywrlock(l) __empty
-#define	rwlock_unlock(l) __empty
-#define	rwlock_destroy(l) __empty
+#define	rwlock_init(l, a) __nothing
+#define	rwlock_rdlock(l) __nothing
+#define	rwlock_wrlock(l) __nothing
+#define	rwlock_tryrdlock(l) __nothing
+#define	rwlock_trywrlock(l) __nothing
+#define	rwlock_unlock(l) __nothing
+#define	rwlock_destroy(l) __nothing
 
 #define	thr_keycreate(k, d) /*LINTED*/0
-#define	thr_setspecific(k, p) __empty
+#define	thr_setspecific(k, p) __nothing
 #define	thr_getspecific(k) /*LINTED*/0
-#define	thr_keydelete(k) __empty
+#define	thr_keydelete(k) __nothing
 
-#define	mutexattr_init(ma) __empty
-#define	mutexattr_settype(ma, t) __empty
-#define	mutexattr_destroy(ma) __empty
+#define	mutexattr_init(ma) __nothing
+#define	mutexattr_settype(ma, t) __nothing
+#define	mutexattr_destroy(ma) __nothing
 
 static inline int
 thr_once(once_t *once_control, void (*routine)(void))
@@ -320,12 +317,12 @@ thr_once(once_t *once_control, void (*routine)(void))
 	}
 	return 0;
 }
-#define	thr_sigsetmask(f, n, o)	__empty
-#define	thr_self() __empty
-#define	thr_errno() __empty
+#define	thr_sigsetmask(f, n, o)	__nothing
+#define	thr_self() __nothing
+#define	thr_errno() __nothing
 #define	thr_curcpu()		((unsigned int)0)
 
-#define	FLOCKFILE(fp) __empty
-#define	FUNLOCKFILE(fp) __empty
+#define	FLOCKFILE(fp) __nothing
+#define	FUNLOCKFILE(fp) __nothing
 
 #endif /* _REENTRANT */

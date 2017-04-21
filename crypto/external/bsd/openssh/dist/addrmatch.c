@@ -1,4 +1,4 @@
-/*	$NetBSD: addrmatch.c,v 1.10 2016/12/25 00:07:46 christos Exp $	*/
+/*	$NetBSD: addrmatch.c,v 1.10.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
 /*	$OpenBSD: addrmatch.c,v 1.13 2016/09/21 16:55:42 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addrmatch.c,v 1.10 2016/12/25 00:07:46 christos Exp $");
+__RCSID("$NetBSD: addrmatch.c,v 1.10.2.1 2017/04/21 16:50:56 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

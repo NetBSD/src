@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.74 2014/12/08 16:16:45 msaitoh Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.74.4.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.74 2014/12/08 16:16:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.74.4.1 2017/04/21 16:53:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -267,8 +267,6 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(": using %s\n", device_xname(ec_singleton));
 		goto fail0;
 	}
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	if (!acpiec_parse_gpe_package(self, aa->aa_node->ad_handle,
 				      &gpe_handle, &gpebit))

@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.1.1.3 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postalias.c,v 1.1.1.3.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -7,7 +7,7 @@
 /*	Postfix alias database maintenance
 /* SYNOPSIS
 /* .fi
-/*	\fBpostalias\fR [\fB-Nfinoprsvw\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostalias\fR [\fB-Nfinoprsuvw\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
 /*		[\fIfile_type\fR:]\fIfile_name\fR ...
 /* DESCRIPTION
@@ -95,6 +95,10 @@
 /*	as the original input order.
 /*	This feature is available in Postfix version 2.2 and later,
 /*	and is not available for all database types.
+/* .IP \fB-u\fR
+/*	Disable UTF-8 support. UTF-8 support is enabled by default
+/*	when "smtputf8_enable = yes". It requires that keys and
+/*	values are valid UTF-8 strings.
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 /*	options make the software increasingly verbose.
@@ -178,6 +182,9 @@
 /* .IP "\fBdefault_database_type (see 'postconf -d' output)\fR"
 /*	The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
 /*	and \fBpostmap\fR(1) commands.
+/* .IP "\fBsmtputf8_enable (yes)\fR"
+/*	Enable preliminary SMTPUTF8 support for the protocols described
+/*	in RFC 6531..6533.
 /* .IP "\fBsyslog_facility (mail)\fR"
 /*	The syslog facility of Postfix logging.
 /* .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
@@ -210,6 +217,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -251,6 +263,7 @@
 /* Application-specific. */
 
 #define STR	vstring_str
+#define LEN	VSTRING_LEN
 
 #define POSTALIAS_FLAG_AS_OWNER	(1<<0)	/* open dest as owner of source */
 #define POSTALIAS_FLAG_SAVE_PERM	(1<<1)	/* copy access permission
@@ -265,6 +278,7 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
     VSTRING *line_buffer;
     MKMAP  *mkmap;
     int     lineno;
+    int     last_line;
     VSTRING *key_buffer;
     VSTRING *value_buffer;
     TOK822 *tok_list;
@@ -283,7 +297,7 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
     if ((open_flags & O_TRUNC) == 0) {
 	/* Incremental mode. */
 	source_fp = VSTREAM_IN;
-	vstream_control(source_fp, VSTREAM_CTL_PATH, "stdin", VSTREAM_CTL_END);
+	vstream_control(source_fp, CA_VSTREAM_CTL_PATH("stdin"), CA_VSTREAM_CTL_END);
     } else {
 	/* Create database. */
 	if (strcmp(map_type, DICT_TYPE_PROXY) == 0)
@@ -310,7 +324,6 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
 	&& (st.st_uid != geteuid() || st.st_gid != getegid()))
 	set_eugid(st.st_uid, st.st_gid);
 
-
     /*
      * Open the database, create it when it does not exist, truncate it when
      * it does exist, and lock out any spectators.
@@ -336,8 +349,20 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
 	/*
 	 * Add records to the database.
 	 */
-	lineno = 0;
-	while (readlline(line_buffer, source_fp, &lineno)) {
+	last_line = 0;
+	while (readllines(line_buffer, source_fp, &last_line, &lineno)) {
+
+	    /*
+	     * First some UTF-8 checks sans casefolding.
+	     */
+	    if ((mkmap->dict->flags & DICT_FLAG_UTF8_ACTIVE)
+		&& !allascii(STR(line_buffer))
+		&& !valid_utf8_string(STR(line_buffer), LEN(line_buffer))) {
+		msg_warn("%s, line %d: non-UTF-8 input \"%s\""
+			 " -- ignoring this line",
+			 VSTREAM_PATH(source_fp), lineno, STR(line_buffer));
+		continue;
+	    }
 
 	    /*
 	     * Tokenize the input, so that we do the right thing when a
@@ -510,7 +535,7 @@ static int postalias_queries(VSTREAM *in, char **maps, const int map_count,
     for (n = 0; n < map_count; n++)
 	if (dicts[n])
 	    dict_close(dicts[n]);
-    myfree((char *) dicts);
+    myfree((void *) dicts);
     vstring_free(keybuf);
 
     return (found);
@@ -592,7 +617,7 @@ static int postalias_deletes(VSTREAM *in, char **maps, const int map_count,
     for (n = 0; n < map_count; n++)
 	if (dicts[n])
 	    dict_close(dicts[n]);
-    myfree((char *) dicts);
+    myfree((void *) dicts);
     vstring_free(keybuf);
 
     return (found);
@@ -656,7 +681,7 @@ static void postalias_seq(const char *map_type, const char *map_name,
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s [-Nfinoprsvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
+    msg_fatal("usage: %s [-Nfinoprsuvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
 	      myname);
 }
 
@@ -671,7 +696,8 @@ int     main(int argc, char **argv)
     struct stat st;
     int     postalias_flags = POSTALIAS_FLAG_AS_OWNER | POSTALIAS_FLAG_SAVE_PERM;
     int     open_flags = O_RDWR | O_CREAT | O_TRUNC;
-    int     dict_flags = DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_FIX;
+    int     dict_flags = (DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_FIX
+			  | DICT_FLAG_UTF8_REQUEST);
     char   *query = 0;
     char   *delkey = 0;
     int     sequence = 0;
@@ -721,7 +747,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "Nc:d:finopq:rsvw")) > 0) {
+    while ((ch = GETOPT(argc, argv, "Nc:d:finopq:rsuvw")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -769,6 +795,9 @@ int     main(int argc, char **argv)
 		msg_fatal("specify only one of -s or -q or -d");
 	    sequence = 1;
 	    break;
+	case 'u':
+	    dict_flags &= ~DICT_FLAG_UTF8_REQUEST;
+	    break;
 	case 'v':
 	    msg_verbose++;
 	    break;
@@ -779,8 +808,8 @@ int     main(int argc, char **argv)
 	}
     }
     mail_conf_read();
-    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
-	msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
+    /* Re-evaluate mail_task() after reading main.cf. */
+    msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     mail_dict_init();
 
     /*

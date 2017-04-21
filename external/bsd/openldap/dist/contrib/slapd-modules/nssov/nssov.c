@@ -1,10 +1,10 @@
-/*	$NetBSD: nssov.c,v 1.1.1.4 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: nssov.c,v 1.1.1.4.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* nssov.c - nss-ldap overlay for slapd */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2014 The OpenLDAP Foundation.
+ * Copyright 2008-2016 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * Portions Copyright 2013 by Ted C. Cheng, Symas Corp.
  * All rights reserved.
@@ -48,7 +48,7 @@ AttributeDescription *nssov_pam_svc_ad;
 #define WRITEBUFFER_MAXSIZE 64*1024
 
 /* Find the given attribute's value in the RDN of the DN */
-int nssov_find_rdnval(struct berval *dn, AttributeDescription *ad, struct berval *value)
+void nssov_find_rdnval(struct berval *dn, AttributeDescription *ad, struct berval *value)
 {
 	struct berval rdn;
 	char *next;
@@ -144,7 +144,7 @@ int write_address(TFILE *fp,struct berval *addr)
 		/* write the address length */
 		WRITE_INT32(fp,sizeof(struct in_addr));
 		/* write the address itself (in network byte order) */
-		WRITE_TYPE(fp,ipv4addr,struct in_addr);
+		WRITE(fp,&ipv4addr,sizeof(struct in_addr));
 	}
 	else if (inet_pton(AF_INET6,addr->bv_val,&ipv6addr)>0)
 	{
@@ -153,7 +153,7 @@ int write_address(TFILE *fp,struct berval *addr)
 		/* write the address length */
 		WRITE_INT32(fp,sizeof(struct in6_addr));
 		/* write the address itself (in network byte order) */
-		WRITE_TYPE(fp,ipv6addr,struct in6_addr);
+		WRITE(fp,&ipv6addr,sizeof(struct in6_addr));
 	}
 	else
 	{
@@ -242,14 +242,14 @@ static int read_header(TFILE *fp,int32_t *action)
 {
   int32_t tmpint32;
   /* read the protocol version */
-  READ_TYPE(fp,tmpint32,int32_t);
+  READ_INT32(fp,tmpint32);
   if (tmpint32 != (int32_t)NSLCD_VERSION)
   {
     Debug( LDAP_DEBUG_TRACE,"nssov: wrong nslcd version id (%d)\n",(int)tmpint32,0,0);
     return -1;
   }
   /* read the request type */
-  READ(fp,action,sizeof(int32_t));
+  READ_INT32(fp,*action);
   return 0;
 }
 
@@ -257,34 +257,30 @@ int nssov_config(nssov_info *ni,TFILE *fp,Operation *op)
 {
 	int opt;
 	int32_t tmpint32;
-	struct berval *msg = BER_BVC("");
-	int rc = NSLCD_PAM_SUCCESS;
 
 	READ_INT32(fp,opt);
 
 	Debug(LDAP_DEBUG_TRACE, "nssov_config (%d)\n",opt,0,0);
 
+	WRITE_INT32(fp,NSLCD_VERSION);
+	WRITE_INT32(fp,NSLCD_ACTION_CONFIG_GET);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
+
 	switch (opt) {
 	case NSLCD_CONFIG_PAM_PASSWORD_PROHIBIT_MESSAGE:
-		/* request for pam password_prothibit_message */
+		/* request for pam password_prohibit_message */
 		/* nssov_pam prohibits password  */
 		if (!BER_BVISEMPTY(&ni->ni_pam_password_prohibit_message)) {
 			Debug(LDAP_DEBUG_TRACE,"nssov_config(): %s (%s)\n",
 				"password_prohibit_message",
 				ni->ni_pam_password_prohibit_message.bv_val,0);
-			msg = &ni->ni_pam_password_prohibit_message;
-			rc = NSLCD_PAM_PERM_DENIED;
+			WRITE_STRING(fp,ni->ni_pam_password_prohibit_message.bv_val);
 		}
-		/* fall through */
 	default:
+		/* all other config options are ignored */
 		break;
 	}
 
-done:;
-	WRITE_INT32(fp,NSLCD_VERSION);
-	WRITE_INT32(fp,NSLCD_ACTION_CONFIG_GET);
-	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
-	WRITE_BERVAL(fp,msg);
 	WRITE_INT32(fp,NSLCD_RESULT_END);
 	return 0;
 }
@@ -371,11 +367,11 @@ static void handleconnection(nssov_info *ni,int sock,Operation *op)
     case NSLCD_ACTION_SERVICE_ALL:      (void)nssov_service_all(ni,fp,op); break;
     case NSLCD_ACTION_SHADOW_BYNAME:    if (uid==0) (void)nssov_shadow_byname(ni,fp,op); break;
     case NSLCD_ACTION_SHADOW_ALL:       if (uid==0) (void)nssov_shadow_all(ni,fp,op); break;
-	case NSLCD_ACTION_PAM_AUTHC:		(void)pam_authc(ni,fp,op); break;
+	case NSLCD_ACTION_PAM_AUTHC:		(void)pam_authc(ni,fp,op,uid); break;
 	case NSLCD_ACTION_PAM_AUTHZ:		(void)pam_authz(ni,fp,op); break;
 	case NSLCD_ACTION_PAM_SESS_O:		if (uid==0) (void)pam_sess_o(ni,fp,op); break;
 	case NSLCD_ACTION_PAM_SESS_C:		if (uid==0) (void)pam_sess_c(ni,fp,op); break;
-	case NSLCD_ACTION_PAM_PWMOD:		(void)pam_pwmod(ni,fp,op); break;
+	case NSLCD_ACTION_PAM_PWMOD:		(void)pam_pwmod(ni,fp,op,uid); break;
 	case NSLCD_ACTION_CONFIG_GET:			(void)nssov_config(ni,fp,op); break;
     default:
       Debug( LDAP_DEBUG_ANY,"nssov: invalid request id: %d",(int)action,0,0);
@@ -412,10 +408,10 @@ static void *acceptconn(void *ctx, void *arg)
 			if ((errno==EINTR)||(errno==EAGAIN)||(errno==EWOULDBLOCK))
 			{
 				Debug( LDAP_DEBUG_TRACE,"nssov: accept() failed (ignored): %s",strerror(errno),0,0);
-				return;
+				return NULL;
 			}
 			Debug( LDAP_DEBUG_ANY,"nssov: accept() failed: %s",strerror(errno),0,0);
-			return;
+			return NULL;
 		}
 		/* make sure O_NONBLOCK is not inherited */
 		if ((j=fcntl(csock,F_GETFL,0))<0)
@@ -423,14 +419,14 @@ static void *acceptconn(void *ctx, void *arg)
 			Debug( LDAP_DEBUG_ANY,"nssov: fcntl(F_GETFL) failed: %s",strerror(errno),0,0);
 			if (close(csock))
 				Debug( LDAP_DEBUG_ANY,"nssov: problem closing socket: %s",strerror(errno),0,0);
-			return;
+			return NULL;
 		}
 		if (fcntl(csock,F_SETFL,j&~O_NONBLOCK)<0)
 		{
 			Debug( LDAP_DEBUG_ANY,"nssov: fcntl(F_SETFL,~O_NONBLOCK) failed: %s",strerror(errno),0,0);
 			if (close(csock))
 				Debug( LDAP_DEBUG_ANY,"nssov: problem closing socket: %s",strerror(errno),0,0);
-			return;
+			return NULL;
 		}
 	}
 	connection_fake_init( &conn, &opbuf, ctx );
@@ -441,6 +437,8 @@ static void *acceptconn(void *ctx, void *arg)
 
 	/* handle the connection */
 	handleconnection(ni,csock,op);
+
+	return NULL;
 }
 
 static slap_verbmasks nss_svcs[] = {
@@ -775,7 +773,6 @@ nssov_db_init(
 {
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	nssov_info *ni;
-	nssov_mapinfo *mi;
 	int rc;
 
 	rc = nssov_pam_init();
@@ -808,6 +805,7 @@ nssov_db_destroy(
 	BackendDB *be,
 	ConfigReply *cr )
 {
+	return 0;
 }
 
 static int
@@ -964,6 +962,7 @@ nssov_db_close(
 				strerror(errno),0,0);
 		}
 	}
+	return 0;
 }
 
 static slap_overinst nssov;

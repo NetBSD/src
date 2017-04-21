@@ -1,3 +1,5 @@
+/* $NetBSD: quota.h,v 1.6.28.1 2017/04/21 16:53:06 bouyer Exp $ */
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.

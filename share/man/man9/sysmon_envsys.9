@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.44 2013/03/15 19:32:31 njoly Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.44.16.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@ function to register the device.
 In case of errors during the initialization, the
 .Fn sysmon_envsys_destroy
 function should be used.
-This detachs all previously attached sensors and deallocates the
+This detaches all previously attached sensors and deallocates the
 .Em sysmon_envsys
 object.
 .Pp
@@ -123,7 +123,7 @@ driver to summarize the state of all battery sensors.
 .Pp
 Drivers can also call the
 .Fn sysmon_envsys_update_limits
-function when it is necessary to reinitialize a sensor's threshhold values.
+function when it is necessary to reinitialize a sensor's threshold values.
 This is used by the
 .Xr acpibat 4
 driver when a new battery is inserted.

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: print.c,v 1.1.1.2.10.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -971,7 +971,7 @@ hx509_validate_cert(hx509_context context,
 	    }
 	    validate_print(ctx,
 			   HX509_VALIDATE_F_VALIDATE|HX509_VALIDATE_F_VERBOSE,
-			   "checking extention: %s\n",
+			   "checking extension: %s\n",
 			   check_extension[j].name);
 	    (*check_extension[j].func)(ctx,
 				       &status,
@@ -979,7 +979,7 @@ hx509_validate_cert(hx509_context context,
 				       &t->extensions->val[i]);
 	}
     } else
-	validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "no extentions\n");
+	validate_print(ctx, HX509_VALIDATE_F_VERBOSE, "no extensions\n");
 
     if (status.isca) {
 	if (!status.haveSKI)

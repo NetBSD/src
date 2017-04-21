@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.49 2017/01/15 07:46:57 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.49.2.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,9 +68,16 @@
 
 #include <sys/condvar.h>
 #include <sys/proc.h>
+#include <sys/queue.h>
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
+
+/* Interfaces for audiobell. */
+int audiobellopen(dev_t, int, int, struct lwp *, struct file **);
+int audiobellclose(struct file *);
+int audiobellwrite(struct file *, off_t *, struct uio *, kauth_cred_t, int);
+int audiobellioctl(struct file *, u_long, void *);
 
 /*
  * Initial/default block duration is both configurable and patchable.
@@ -103,9 +110,14 @@ struct audio_ringbuffer {
 	bool mmapped;		/* device is mmap()-ed */
 };
 
-#ifndef VAUDIOCHANS
-#define VAUDIOCHANS 4096
-#endif
+struct audio_chan {
+	dev_t	dev;
+#define MIXER_INUSE	-2
+	struct virtual_channel	*vc;
+	int	chan;			/* virtual channel */
+	int	deschan;		/* desired channel for ioctls*/
+	SIMPLEQ_ENTRY(audio_chan) entries;
+};
 
 struct virtual_channel {
 	u_char			sc_open;	/* multiple use device */
@@ -159,6 +171,7 @@ struct au_mixer_ports {
 				   mixerout is selected, for dual case */
 };
 
+SIMPLEQ_HEAD(chan_queue, audio_chan);
 /*
  * Software state, per audio device.
  */
@@ -167,10 +180,7 @@ struct audio_softc {
 	void		*hw_hdl;	/* Hardware driver handle */
 	const struct audio_hw_if *hw_if; /* Hardware interface */
 	device_t	sc_dev;		/* Hardware device struct */
-	struct audio_pid
-			sc_audiopid[VAUDIOCHANS]; /* audio caller */
-	struct audio_pid
-			sc_despid[VAUDIOCHANS]; /* process to work with ioctls */
+	struct chan_queue sc_audiochan; /* queue of open chans */
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02
 
@@ -180,7 +190,6 @@ struct audio_softc {
 	pid_t		sc_async_audio;	/* process who wants audio SIGIO */
 	void		*sc_sih_rd;
 	void		*sc_sih_wr;
-	struct virtual_channel	*sc_vchan[VAUDIOCHANS];
 	struct	mixer_asyncs {
 		struct mixer_asyncs *next;
 		pid_t	pid;
@@ -215,7 +224,7 @@ struct audio_softc {
 	 * play_thread
 	 *    sc_pr
 	 *      |
-	 *  vchan[0]->sc_pustream
+	 *  vchan[0]->sc_pustream 	(First elemendt in sc_audiochan)
 	 *      |
 	 *  vchan[0]->sc_mpr
 	 *      |
@@ -281,12 +290,14 @@ struct audio_softc {
 	int		sc_channels;
 	int		sc_precision;
 	int		sc_iffreq;
-	bool		sc_saturate;
 	struct audio_info 	sc_ai;		/* Recent info for  dev sound */
 	bool			sc_aivalid;
 #define VAUDIO_NFORMATS	1
 	struct audio_format sc_format[VAUDIO_NFORMATS];
 	struct audio_params sc_vchan_params;
+
+	bool		sc_multiuser;
+	kauth_cred_t	sc_credentials;		/* audio user's credentials */
 };
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */

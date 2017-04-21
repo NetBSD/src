@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.33 2013/10/30 08:41:57 mrg Exp $ */
+/* $NetBSD: socketops.c,v 1.33.12.1 2017/04/21 16:54:17 bouyer Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -817,6 +817,12 @@ the_big_loop(void)
 	struct pollfd	pfd[MAX_POLL_FDS];
 	struct hello_socket *hs;
 	nfds_t pollsum;
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = {
+		RTM_NEWADDR, RTM_DELADDR,
+		RTM_ADD, RTM_DELETE, RTM_CHANGE,
+	};
+#endif
 
 	assert(MAX_POLL_FDS > 5);
 
@@ -835,6 +841,10 @@ the_big_loop(void)
 	route_socket = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
 	setsockopt(route_socket, SOL_SOCKET, SO_USELOOPBACK, &(int){0},
 		sizeof(int));
+#ifdef RO_MSGFILTER
+	setsockopt(route_socket, PF_ROUTE, RO_MSGFILTER, &msgfilter,
+		sizeof(msgfilter));
+#endif
 
 	sock_error = bind_current_routes();
 	if (sock_error != LDP_E_OK) {

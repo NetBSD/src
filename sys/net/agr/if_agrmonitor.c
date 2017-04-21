@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrmonitor.c,v 1.4 2008/03/24 09:14:52 yamt Exp $	*/
+/*	$NetBSD: if_agrmonitor.c,v 1.4.76.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrmonitor.c,v 1.4 2008/03/24 09:14:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrmonitor.c,v 1.4.76.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -45,12 +45,6 @@ agrport_monitor(struct agr_port *port)
 	struct agr_softc *sc = AGR_SC_FROM_PORT(port);
 	u_int media;
 	u_int status;
-
-	/*
-	 * XXX XXX
-	 * assuming that it's safe to use SIOCGIFMEDIA from callout handler.
-	 * maybe it's better to have a worker thread.
-	 */
 
 	media = IFM_ETHER | IFM_NONE;
 	status = IFM_AVALID;

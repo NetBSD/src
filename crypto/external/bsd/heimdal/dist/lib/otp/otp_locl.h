@@ -1,4 +1,4 @@
-/*	$NetBSD: otp_locl.h,v 1.1.1.2 2011/04/14 14:09:28 elric Exp $	*/
+/*	$NetBSD: otp_locl.h,v 1.1.1.2.32.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan

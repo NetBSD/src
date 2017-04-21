@@ -1,3 +1,5 @@
+/* $NetBSD: tgmath.h,v 1.1.50.1 2017/04/21 16:53:06 bouyer Exp $ */
+
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.

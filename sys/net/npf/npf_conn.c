@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.22 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.22.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -100,7 +100,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.22 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.22.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -723,10 +723,11 @@ npf_conn_expire(npf_conn_t *con)
  * npf_conn_pass: return true if connection is "pass" one, otherwise false.
  */
 bool
-npf_conn_pass(const npf_conn_t *con, npf_rproc_t **rp)
+npf_conn_pass(const npf_conn_t *con, npf_match_info_t *mi, npf_rproc_t **rp)
 {
 	KASSERT(con->c_refcnt > 0);
 	if (__predict_true(con->c_flags & CONN_PASS)) {
+		*mi = con->c_mi;
 		*rp = con->c_rproc;
 		return true;
 	}
@@ -738,7 +739,7 @@ npf_conn_pass(const npf_conn_t *con, npf_rproc_t **rp)
  * rule procedure with it.
  */
 void
-npf_conn_setpass(npf_conn_t *con, npf_rproc_t *rp)
+npf_conn_setpass(npf_conn_t *con, const npf_match_info_t *mi, npf_rproc_t *rp)
 {
 	KASSERT((con->c_flags & CONN_ACTIVE) == 0);
 	KASSERT(con->c_refcnt > 0);
@@ -751,6 +752,8 @@ npf_conn_setpass(npf_conn_t *con, npf_rproc_t *rp)
 	 */
 	atomic_or_uint(&con->c_flags, CONN_PASS);
 	con->c_rproc = rp;
+	if (rp)
+		con->c_mi = *mi;
 }
 
 /*

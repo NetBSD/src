@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.69 2016/09/24 13:40:55 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.69.2.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -461,7 +461,8 @@ gpt_gpt(gpt_t gpt, off_t lba, int found)
 }
 
 gpt_t
-gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
+gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz,
+    time_t timestamp)
 {
 	int mode, found;
 	off_t devsz;
@@ -477,6 +478,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
 	gpt->verbose = verbose;
 	gpt->mediasz = mediasz;
 	gpt->secsz = secsz;
+	gpt->timestamp = timestamp;
 
 	mode = (gpt->flags & GPT_READONLY) ? O_RDONLY : O_RDWR|O_EXCL;
 		

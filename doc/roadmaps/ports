@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.2 2017/01/13 13:40:44 reinoud Exp $
+$NetBSD: ports,v 1.2.2.1 2017/04/21 16:51:16 bouyer Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -10,7 +10,7 @@ The following elements, projects, and goals are considered strategic
 priorities for the project:
 
  1. EFI boot for x86
- 2. xhci support
+ 2. xhci support (done and will be in -8)
  3. Get arm64/aarch64 working
 
 The following elements, projects, and goals are not strategic
@@ -24,7 +24,7 @@ The following elements, projects, and goals are perhaps less pressing;
 this doesn't mean one shouldn't work on them but the expected payoff
 is perhaps less than for other things:
 
- 7. pdp10/risc36/odd-bitsize ports
+ [none presently]
 
 
 Explanations
@@ -44,14 +44,8 @@ it done, though it's not yet committed.
 
  2. xhci support
 
-xhci is also critical for new x86 hardware. Enough has been committed
-to be able to use USB on xhci machines; but (AIUI) the USB 3.0
-specific features mostly aren't implemented yet. We would like to get
-this pulled into -7
-
- - As of January 2017 ... who is working on this? XXX
- - Contact jakllsch (?) for further information.
-
+xhci is also critical for new x86 hardware. skrll@ says this is done;
+it will be -8.
 
  3. Get arm64/aarch64 working
 
@@ -88,19 +82,3 @@ We have some riscv code and a bit of or1k code, but neither is done.
 http://cheri-cpu.org
 There are a number of reasons to tackle this; it will serve as a code
 quality lever. Also there's already a FreeBSD port to steal from.
-
-
- 7. pdp10/risc36/odd-bitsize ports
-
-There's been a fair amount of loose talk over the years about doing a
-port to a machine that's got 9-bit bytes, or is word-addressed, or
-both. The PDP-10 is one such target; it's also been observed that a
-more modern architecture would probably be more likely to allow a
-vaguely performant FPGA implementation, and something tentatively
-called "risc36" was conceived.
-
-This is both a quixotic retrocomputing project and also a quixotic
-code quality project: making the NetBSD code base work on either
-word-addressed machines or 9-bit/36-bit machines or both would be good
-for it. However, it's also a rather large undertaking.
-

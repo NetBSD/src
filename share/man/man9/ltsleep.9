@@ -1,4 +1,4 @@
-.\"	$NetBSD: ltsleep.9,v 1.17 2014/03/22 11:35:03 wiz Exp $
+.\"	$NetBSD: ltsleep.9,v 1.17.12.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 1996, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,8 +78,9 @@ The function
 .Fn wakeup
 is used to notify sleeping processes of possible changes to the condition
 that caused them to go to sleep.
-Typically, an awakened process will -- after it has acquired a context
-again -- retry the action that blocked its operation to see if the
+Typically, an awakened process will \(em after it has acquired a
+context again \(em retry the action that blocked its operation to see
+if the
 .Dq blocking
 condition has cleared.
 .Pp

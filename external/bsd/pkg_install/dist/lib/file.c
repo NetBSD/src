@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.6 2011/02/18 22:32:30 aymeric Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.6.30.1 2017/04/21 16:52:33 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,13 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-#if HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
 #if HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
 #endif
-__RCSID("$NetBSD: file.c,v 1.1.1.6 2011/02/18 22:32:30 aymeric Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.6.30.1 2017/04/21 16:52:33 bouyer Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance

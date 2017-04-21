@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.22 2016/08/20 12:37:08 hannken Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.22.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.22 2016/08/20 12:37:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.22.2.1 2017/04/21 16:54:02 bouyer Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -499,8 +499,11 @@ v7fs_setattr(void *v)
 	/* File size change. */
 	if ((vap->va_size != VNOVAL) && (vp->v_type == VREG)) {
 		error = v7fs_datablock_size_change(fs, vap->va_size, inode);
-		if (error == 0)
+		if (error == 0) {
 			uvm_vnp_setsize(vp, vap->va_size);
+			v7node->update_mtime = true;
+			v7node->update_ctime = true;
+		}
 	}
 	uid_t uid = inode->uid;
 	gid_t gid = inode->gid;
@@ -1007,7 +1010,7 @@ v7fs_readdir(void *v)
 int
 v7fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 				    struct vnode *a_vp;
 				    bool *a_recycle;
 				    } */ *a = v;
@@ -1022,8 +1025,6 @@ v7fs_inactive(void *v)
 	} else {
 		*a->a_recycle = true;
 	}
-
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

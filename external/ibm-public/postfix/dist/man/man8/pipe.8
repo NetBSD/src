@@ -1,4 +1,4 @@
-.\"	$NetBSD: pipe.8,v 1.1.1.3 2014/07/06 19:27:46 tron Exp $
+.\"	$NetBSD: pipe.8,v 1.1.1.3.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH PIPE 8 
 .ad
@@ -20,7 +20,7 @@ This program expects to be run from the \fBmaster\fR(8) process
 manager.
 
 Message attributes such as sender address, recipient address and
-next-hop host name can be specified as command-line macros that are
+next\-hop host name can be specified as command\-line macros that are
 expanded before the external command is executed.
 
 The \fBpipe\fR(8) daemon updates queue files and marks recipients
@@ -35,8 +35,8 @@ appropriate.
 .fi
 Some destinations cannot handle more than one recipient per
 delivery request. Examples are pagers or fax machines.
-In addition, multi-recipient delivery is undesirable when
-prepending a \fBDelivered-to:\fR or \fBX-Original-To:\fR
+In addition, multi\-recipient delivery is undesirable when
+prepending a \fBDelivered\-to:\fR or \fBX\-Original\-To:\fR
 message header.
 
 To prevent Postfix from sending multiple recipients per delivery
@@ -48,7 +48,7 @@ request, specify
 
 in the Postfix \fBmain.cf\fR file, where \fItransport\fR
 is the name in the first column of the Postfix \fBmaster.cf\fR
-entry for the pipe-based delivery transport.
+entry for the pipe\-based delivery transport.
 .SH "COMMAND ATTRIBUTE SYNTAX"
 .na
 .nf
@@ -74,7 +74,7 @@ Delivery is deferred in case of failure.
 This feature is available as of Postfix 2.2.
 .IP "\fBeol=\fIstring\fR (optional, default: \fB\en\fR)"
 The output record delimiter. Typically one would use either
-\fB\er\en\fR or \fB\en\fR. The usual C-style backslash escape
+\fB\er\en\fR or \fB\en\fR. The usual C\-style backslash escape
 sequences are recognized: \fB\ea \eb \ef \en \er \et \ev
 \e\fIddd\fR (up to three octal digits) and \fB\e\e\fR.
 .IP "\fBflags=BDFORXhqu.>\fR (optional)"
@@ -86,13 +86,13 @@ Append a blank line at the end of each message. This is required
 by some mail user agents that recognize "\fBFrom \fR" lines only
 when preceded by a blank line.
 .IP \fBD\fR
-Prepend a "\fBDelivered-To: \fIrecipient\fR" message header with the
+Prepend a "\fBDelivered\-To: \fIrecipient\fR" message header with the
 envelope recipient address. Note: for this to work, the
 \fItransport\fB_destination_recipient_limit\fR must be 1
-(see SINGLE-RECIPIENT DELIVERY above for details).
+(see SINGLE\-RECIPIENT DELIVERY above for details).
 .sp
 The \fBD\fR flag also enforces loop detection (Postfix 2.5 and later):
-if a message already contains a \fBDelivered-To:\fR header
+if a message already contains a \fBDelivered\-To:\fR header
 with the same recipient address, then the message is
 returned as undeliverable. The address comparison is case
 insensitive.
@@ -103,14 +103,14 @@ Prepend a "\fBFrom \fIsender time_stamp\fR" envelope header to
 the message content.
 This is expected by, for example, \fBUUCP\fR software.
 .IP \fBO\fR
-Prepend an "\fBX-Original-To: \fIrecipient\fR" message header
+Prepend an "\fBX\-Original\-To: \fIrecipient\fR" message header
 with the recipient address as given to Postfix. Note: for this to
 work, the \fItransport\fB_destination_recipient_limit\fR must be 1
-(see SINGLE-RECIPIENT DELIVERY above for details).
+(see SINGLE\-RECIPIENT DELIVERY above for details).
 .sp
 This feature is available as of Postfix 2.0.
 .IP \fBR\fR
-Prepend a \fBReturn-Path:\fR message header with the envelope sender
+Prepend a \fBReturn\-Path:\fR message header with the envelope sender
 address.
 .IP \fBX\fR
 Indicate that the external command performs final delivery.
@@ -120,30 +120,30 @@ from "relayed" into "delivered".
 .sp
 This feature is available as of Postfix 2.5.
 .IP \fBh\fR
-Fold the command-line \fB$original_recipient\fR and
+Fold the command\-line \fB$original_recipient\fR and
 \fB$recipient\fR address domain part
-(text to the right of the right-most \fB@\fR character) to
-lower case; fold the entire command-line \fB$domain\fR and
+(text to the right of the right\-most \fB@\fR character) to
+lower case; fold the entire command\-line \fB$domain\fR and
 \fB$nexthop\fR host or domain information to lower case.
 This is recommended for delivery via \fBUUCP\fR.
 .IP \fBq\fR
-Quote white space and other special characters in the command-line
+Quote white space and other special characters in the command\-line
 \fB$sender\fR, \fB$original_recipient\fR and \fB$recipient\fR
 address localparts (text to the
-left of the right-most \fB@\fR character), according to an 8-bit
+left of the right\-most \fB@\fR character), according to an 8\-bit
 transparent version of RFC 822.
 This is recommended for delivery via \fBUUCP\fR or \fBBSMTP\fR.
 .sp
-The result is compatible with the address parsing of command-line
+The result is compatible with the address parsing of command\-line
 recipients by the Postfix \fBsendmail\fR(1) mail submission command.
 .sp
 The \fBq\fR flag affects only entire addresses, not the partial
 address information from the \fB$user\fR, \fB$extension\fR or
-\fB$mailbox\fR command-line macros.
+\fB$mailbox\fR command\-line macros.
 .IP \fBu\fR
-Fold the command-line \fB$original_recipient\fR and
+Fold the command\-line \fB$original_recipient\fR and
 \fB$recipient\fR address localpart (text to
-the left of the right-most \fB@\fR character) to lower case.
+the left of the right\-most \fB@\fR character) to lower case.
 This is recommended for delivery via \fBUUCP\fR.
 .IP \fB.\fR
 Prepend "\fB.\fR" to lines starting with "\fB.\fR". This is needed
@@ -152,35 +152,35 @@ by, for example, \fBBSMTP\fR software.
 Prepend "\fB>\fR" to lines starting with "\fBFrom \fR". This is expected
 by, for example, \fBUUCP\fR software.
 .RE
-.IP "\fBnull_sender\fR=\fIreplacement\fR (default: MAILER-DAEMON)"
+.IP "\fBnull_sender\fR=\fIreplacement\fR (default: MAILER\-DAEMON)"
 Replace the null sender address (typically used for delivery
 status notifications) with the specified text
-when expanding the \fB$sender\fR command-line macro, and
-when generating a From_ or Return-Path: message header.
+when expanding the \fB$sender\fR command\-line macro, and
+when generating a From_ or Return\-Path: message header.
 
-If the null sender replacement text is a non-empty string
+If the null sender replacement text is a non\-empty string
 then it is affected by the \fBq\fR flag for address quoting
-in command-line arguments.
+in command\-line arguments.
 
 The null sender replacement text may be empty; this form
 is recommended for content filters that feed mail back into
 Postfix. The empty sender address is not affected by the
-\fBq\fR flag for address quoting in command-line arguments.
+\fBq\fR flag for address quoting in command\-line arguments.
 .sp
-Caution: a null sender address is easily mis-parsed by
+Caution: a null sender address is easily mis\-parsed by
 naive software. For example, when the \fBpipe\fR(8) daemon
 executes a command such as:
 .sp
 .nf
-    \fIWrong\fR: command -f$sender -- $recipient
+    \fIWrong\fR: command \-f$sender \-\- $recipient
 .fi
 .IP
-the command will mis-parse the -f option value when the
+the command will mis\-parse the \-f option value when the
 sender address is a null string.  For correct parsing,
 specify \fB$sender\fR as an argument by itself:
 .sp
 .nf
-    \fIRight\fR: command -f $sender -- $recipient
+    \fIRight\fR: command \-f $sender \-\- $recipient
 .fi
 .IP
 This feature is available as of Postfix 2.3.
@@ -201,13 +201,17 @@ last command attribute.
 The command is executed directly, i.e. without interpretation of
 shell meta characters by a shell command interpreter.
 .sp
+Specify "{" and "}" around command arguments that contain
+whitespace (Postfix 3.0 and later). Whitespace
+after "{" and before "}" is ignored.
+.sp
 In the command argument vector, the following macros are recognized
 and replaced with corresponding information from the Postfix queue
 manager delivery request.
 .sp
 In addition to the form ${\fIname\fR}, the forms $\fIname\fR and
-$(\fIname\fR) are also recognized.  Specify \fB$$\fR where a single
-\fB$\fR is wanted.
+the deprecated form $(\fIname\fR) are also recognized.
+Specify \fB$$\fR where a single \fB$\fR is wanted.
 .RS
 .IP \fB${client_address}\fR
 This macro expands to the remote client network address.
@@ -242,8 +246,8 @@ This macro expands to the extension part of a recipient address.
 For example, with an address \fIuser+foo@domain\fR the extension is
 \fIfoo\fR.
 .sp
-A command-line argument that contains \fB${extension}\fR expands
-into as many command-line arguments as there are recipients.
+A command\-line argument that contains \fB${extension}\fR expands
+into as many command\-line arguments as there are recipients.
 .sp
 This information is modified by the \fBu\fR flag for case folding.
 .IP \fB${mailbox}\fR
@@ -251,21 +255,21 @@ This macro expands to the complete local part of a recipient address.
 For example, with an address \fIuser+foo@domain\fR the mailbox is
 \fIuser+foo\fR.
 .sp
-A command-line argument that contains \fB${mailbox}\fR
-expands to as many command-line arguments as there are recipients.
+A command\-line argument that contains \fB${mailbox}\fR
+expands to as many command\-line arguments as there are recipients.
 .sp
 This information is modified by the \fBu\fR flag for case folding.
 .IP \fB${nexthop}\fR
-This macro expands to the next-hop hostname.
+This macro expands to the next\-hop hostname.
 .sp
 This information is modified by the \fBh\fR flag for case folding.
 .IP \fB${original_recipient}\fR
 This macro expands to the complete recipient address before any
 address rewriting or aliasing.
 .sp
-A command-line argument that contains
+A command\-line argument that contains
 \fB${original_recipient}\fR expands to as many
-command-line arguments as there are recipients.
+command\-line arguments as there are recipients.
 .sp
 This information is modified by the \fBhqu\fR flags for quoting
 and case folding.
@@ -278,8 +282,8 @@ This feature is available as of Postfix 2.11.
 .IP \fB${recipient}\fR
 This macro expands to the complete recipient address.
 .sp
-A command-line argument that contains \fB${recipient}\fR
-expands to as many command-line arguments as there are recipients.
+A command\-line argument that contains \fB${recipient}\fR
+expands to as many command\-line arguments as there are recipients.
 .sp
 This information is modified by the \fBhqu\fR flags for quoting
 and case folding.
@@ -302,7 +306,7 @@ when the Postfix SMTP server received the message.
 This feature is available as of Postfix 2.2.
 .IP \fB${sender}\fR
 This macro expands to the envelope sender address. By default,
-the null sender address expands to MAILER-DAEMON; this can
+the null sender address expands to MAILER\-DAEMON; this can
 be changed with the \fBnull_sender\fR attribute, as described
 above.
 .sp
@@ -315,8 +319,8 @@ This macro expands to the username part of a recipient address.
 For example, with an address \fIuser+foo@domain\fR the username
 part is \fIuser\fR.
 .sp
-A command-line argument that contains \fB${user}\fR expands
-into as many command-line arguments as there are recipients.
+A command\-line argument that contains \fB${user}\fR expands
+into as many command\-line arguments as there are recipients.
 .sp
 This information is modified by the \fBu\fR flag for case folding.
 .RE
@@ -331,11 +335,17 @@ Command exit status codes are expected to
 follow the conventions defined in <\fBsysexits.h\fR>.
 Exit status 0 means normal successful completion.
 
-In the case of a non-zero exit status, a limited amount of
-command output is reported in an delivery status notification.
-When the output begins with a 4.X.X or 5.X.X enhanced status
-code, the status code takes precedence over the non-zero
-exit status (Postfix version 2.3 and later).
+In the case of a non\-zero exit status, a limited amount of
+command output is logged, and reported in a delivery status
+notification.  When the output begins with a 4.X.X or 5.X.X
+enhanced status code, the status code takes precedence over
+the non\-zero exit status (Postfix version 2.3 and later).
+
+After successful delivery (zero exit status) a limited
+amount of command output is logged, and reported in "success"
+delivery status notifications (Postfix 3.0 and later).
+This command output is not examined for the presence of an
+enhanced status code.
 
 Problems and transactions are logged to \fBsyslogd\fR(8).
 Corrupted message files are marked so that the queue manager
@@ -392,13 +402,13 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub-second delay values.
+sub\-second delay values.
 .IP "\fBexport_environment (see 'postconf -d' output)\fR"
 The list of environment variables that a Postfix process will export
-to non-Postfix processes.
+to non\-Postfix processes.
 .IP "\fBipc_timeout (3600s)\fR"
 The time limit for sending or receiving information over an internal
 communication channel.
@@ -411,12 +421,12 @@ for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
 The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBrecipient_delimiter (empty)\fR"
 The set of characters that can separate a user name from its
 extension (example: user+foo), or a .forward file name from its
@@ -426,6 +436,12 @@ The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
 The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
+.PP
+Available in Postfix version 3.0 and later:
+.IP "\fBpipe_delivery_status_filter ($default_delivery_status_filter)\fR"
+Optional filter for the \fBpipe\fR(8) delivery agent to change the
+delivery status code or explanatory text of successful or unsuccessful
+deliveries.
 .SH "SEE ALSO"
 .na
 .nf
@@ -448,3 +464,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.1.1.3 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: argv.h,v 1.1.1.3.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -36,6 +36,10 @@ extern ARGV *argv_free(ARGV *);
 extern ARGV *argv_split(const char *, const char *);
 extern ARGV *argv_split_count(const char *, const char *, ssize_t);
 extern ARGV *argv_split_append(ARGV *, const char *, const char *);
+
+extern ARGV *argv_splitq(const char *, const char *, const char *);
+extern ARGV *argv_splitq_count(const char *, const char *, const char *, ssize_t);
+extern ARGV *argv_splitq_append(ARGV *, const char *, const char *, const char *);
 
 #define ARGV_FAKE_BEGIN(fake_argv, arg) { \
 	ARGV fake_argv; \

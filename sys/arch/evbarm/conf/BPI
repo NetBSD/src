@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.20 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: BPI,v 1.20.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -22,7 +22,7 @@ options 	MULTIPROCESSOR
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1

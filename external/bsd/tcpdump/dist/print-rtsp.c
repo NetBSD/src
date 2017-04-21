@@ -11,21 +11,23 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header";
+__RCSID("$NetBSD: print-rtsp.c,v 1.1.1.1.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
+
+/* \summary: Real Time Streaming Protocol (RTSP) printer */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 static const char *rtspcmds[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.1.1.4 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.1.1.4.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -50,26 +50,26 @@
 /* .PP
 /*	Configuration parameters:
 /* .IP user
-/* 	Username for connecting to the database.
+/*	Username for connecting to the database.
 /* .IP password
 /*	Password for the above.
 /* .IP dbname
 /*	Name of the database.
 /* .IP domain
-/*      List of domains the queries should be restricted to.  If
-/*      specified, only FQDN addresses whose domain parts matching this
-/*      list will be queried against the SQL database.  Lookups for
-/*      partial addresses are also supressed.  This can significantly
-/*      reduce the query load on the server.
+/*	List of domains the queries should be restricted to.  If
+/*	specified, only FQDN addresses whose domain parts matching this
+/*	list will be queried against the SQL database.  Lookups for
+/*	partial addresses are also supressed.  This can significantly
+/*	reduce the query load on the server.
 /* .IP query
-/*      Query template, before the query is actually issued, variable
+/*	Query template, before the query is actually issued, variable
 /*	substitutions are performed. See mysql_table(5) for details. If
 /*	No query is specified, the legacy variables \fItable\fR,
 /*	\fIselect_field\fR, \fIwhere_field\fR and \fIadditional_conditions\fR
 /*	are used to construct the query template.
 /* .IP result_format
-/*      The format used to expand results from queries.  Substitutions
-/*      are performed as described in mysql_table(5). Defaults to returning
+/*	The format used to expand results from queries.  Substitutions
+/*	are performed as described in mysql_table(5). Defaults to returning
 /*	the lookup result unchanged.
 /* .IP expansion_limit
 /*	Limit (if any) on the total number of lookup result values. Lookups which
@@ -94,24 +94,24 @@
 /* .IP hosts
 /*	List of hosts to connect to.
 /* .IP option_file
-/*      Read options from the given file instead of the default my.cnf
-/*      location.
+/*	Read options from the given file instead of the default my.cnf
+/*	location.
 /* .IP option_group
-/*      Read options from the given group.
+/*	Read options from the given group.
 /* .IP tls_cert_file
-/*      File containing client's X509 certificate.
+/*	File containing client's X509 certificate.
 /* .IP tls_key_file
-/*      File containing the private key corresponding to \fItls_cert_file\fR.
+/*	File containing the private key corresponding to \fItls_cert_file\fR.
 /* .IP tls_CAfile
-/*      File containing certificates for all of the X509 Certificate
-/*      Authorities the client will recognize.  Takes precedence over
-/*      \fItls_CApath\fR.
+/*	File containing certificates for all of the X509 Certification
+/*	Authorities the client will recognize.  Takes precedence over
+/*	\fItls_CApath\fR.
 /* .IP tls_CApath
-/*      Directory containing X509 Certificate Authority certificates
-/*      in separate individual files.
+/*	Directory containing X509 Certification Authority certificates
+/*	in separate individual files.
 /* .IP tls_verify_cert
-/*      Verify that the server's name matches the common name of the
-/*      certficate.
+/*	Verify that the server's name matches the common name of the
+/*	certificate.
 /* .PP
 /*	For example, if you want the map to reference databases of
 /*	the name "your_db" and execute a query like this: select
@@ -133,9 +133,9 @@
 /* .br
 /*	where_field = alias
 /* .br
-/*	hosts = host1.some.domain\fR \fBhost2.some.domain
+/*	hosts = host1.some.domain host2.some.domain
 /* .IP additional_conditions
-/*      Backward compatibility when \fIquery\fR is not set, additional
+/*	Backward compatibility when \fIquery\fR is not set, additional
 /*	conditions to the WHERE clause.
 /* .IP hosts
 /*	List of hosts to connect to.
@@ -160,7 +160,7 @@
 /* .br
 /*	where_field = alias
 /* .br
-/*	hosts = host1.some.domain\fR \fBhost2.some.domain
+/*	hosts = host1.some.domain host2.some.domain
 /* .PP
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
@@ -351,9 +351,11 @@ static const char *dict_mysql_lookup(DICT *dict, const char *name)
 	    msg_info("%s: Skipping lookup of '%s'", myname, name);
 	return (0);
     }
-    if (domain_rc < 0)
+    if (domain_rc < 0) {
+	msg_warn("%s:%s 'domain' pattern match failed for '%s'",
+		 dict->type, dict->name, name);
 	DICT_ERR_VAL_RETURN(dict, domain_rc, (char *) 0);
-
+    }
 #define INIT_VSTR(buf, len) do { \
 	if (buf == 0) \
 	    buf = vstring_alloc(len); \
@@ -495,7 +497,7 @@ static HOST *dict_mysql_get_active(DICT_MYSQL *dict_mysql)
 
 /* dict_mysql_event - callback: close idle connections */
 
-static void dict_mysql_event(int unused_event, char *context)
+static void dict_mysql_event(int unused_event, void *context)
 {
     HOST   *host = (HOST *) context;
 
@@ -539,7 +541,7 @@ static MYSQL_RES *plmysql_query(DICT_MYSQL *dict_mysql,
 	    } else {
 		if (msg_verbose)
 		    msg_info("dict_mysql: successful query from host %s", host->hostname);
-		event_request_timer(dict_mysql_event, (char *) host, IDLE_CONN_INTV);
+		event_request_timer(dict_mysql_event, (void *) host, IDLE_CONN_INTV);
 		break;
 	    }
 	} else {
@@ -614,7 +616,7 @@ static void plmysql_down_host(HOST *host)
     host->db = 0;
     host->ts = time((time_t *) 0) + RETRY_CONN_INTV;
     host->stat = STATFAIL;
-    event_cancel_timer(dict_mysql_event, (char *) host);
+    event_cancel_timer(dict_mysql_event, (void *) host);
 }
 
 /* mysql_parse_config - parse mysql configuration file */
@@ -683,7 +685,7 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
 
     hosts = cfg_get_str(p, "hosts", "", 0, 0);
 
-    dict_mysql->hosts = argv_split(hosts, " ,\t\r\n");
+    dict_mysql->hosts = argv_split(hosts, CHARS_COMMA_SP);
     if (dict_mysql->hosts->argc == 0) {
 	argv_add(dict_mysql->hosts, "localhost", ARGV_END);
 	argv_terminate(dict_mysql->hosts);
@@ -841,16 +843,16 @@ static void plmysql_dealloc(PLMYSQL *PLDB)
     int     i;
 
     for (i = 0; i < PLDB->len_hosts; i++) {
-	event_cancel_timer(dict_mysql_event, (char *) (PLDB->db_hosts[i]));
+	event_cancel_timer(dict_mysql_event, (void *) (PLDB->db_hosts[i]));
 	if (PLDB->db_hosts[i]->db)
 	    mysql_close(PLDB->db_hosts[i]->db);
 	myfree(PLDB->db_hosts[i]->hostname);
 	if (PLDB->db_hosts[i]->name)
 	    myfree(PLDB->db_hosts[i]->name);
-	myfree((char *) PLDB->db_hosts[i]);
+	myfree((void *) PLDB->db_hosts[i]);
     }
-    myfree((char *) PLDB->db_hosts);
-    myfree((char *) (PLDB));
+    myfree((void *) PLDB->db_hosts);
+    myfree((void *) (PLDB));
 }
 
 #endif

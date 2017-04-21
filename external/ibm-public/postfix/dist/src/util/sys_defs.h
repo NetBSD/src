@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.8 2015/09/12 08:23:24 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.8.4.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -30,9 +30,10 @@
     || defined(FREEBSD8) || defined(FREEBSD9) || defined(FREEBSD10) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
-    || defined(OPENBSD5) \
+    || defined(OPENBSD5) || defined(OPENBSD6) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
     || defined(NETBSD4) || defined(NETBSD5) || defined(NETBSD6) \
+    || defined(NETBSD7) \
     || defined(EKKOBSD1) || defined(DRAGONFLY)
 #define SUPPORTED
 #include <sys/types.h>
@@ -61,11 +62,11 @@
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
 #if (defined(__NetBSD_Version__) && __NetBSD_Version__ > 299000900)
-# define USE_STATVFS
-# define STATVFS_IN_SYS_STATVFS_H
+#define USE_STATVFS
+#define STATVFS_IN_SYS_STATVFS_H
 #else
-# define USE_STATFS
-# define STATFS_IN_SYS_MOUNT_H
+#define USE_STATFS
+#define STATFS_IN_SYS_MOUNT_H
 #endif
 #define HAS_POSIX_REGEXP
 #define HAS_ST_GEN			/* struct stat contains inode
@@ -75,6 +76,7 @@
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
+#define HAS_DLOPEN
 #endif
 
 #ifdef FREEBSD2
@@ -182,34 +184,35 @@
     || defined(__DragonFly__) \
     || defined(USAGI_LIBINET6)
 #ifndef NO_IPV6
-# define HAS_IPV6
-# define HAVE_GETIFADDRS
+#define HAS_IPV6
+#endif
+#if !defined(NO_IPV6) || defined(__NetBSD__)
+#define HAVE_GETIFADDRS
+#endif
 #endif
 
 #if (defined(__FreeBSD_version) && __FreeBSD_version >= 300000) \
     || (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 103000000) \
     || (defined(OpenBSD) && OpenBSD >= 199700)	/* OpenBSD 2.0?? */ \
     || defined(__DragonFly__)
-# define USE_SYSV_POLL
+#define USE_SYSV_POLL
 #endif
 
 #ifndef NO_KQUEUE
-# if (defined(__FreeBSD_version) && __FreeBSD_version >= 410000) \
+#if (defined(__FreeBSD_version) && __FreeBSD_version >= 410000) \
     || (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 200000000) \
     || (defined(OpenBSD) && OpenBSD >= 200105)	/* OpenBSD 2.9 */ \
     || defined(__DragonFly__)
-#  define EVENTS_STYLE	EVENTS_STYLE_KQUEUE
-# endif
+#define EVENTS_STYLE	EVENTS_STYLE_KQUEUE
+#endif
 #endif
 
 #ifndef NO_POSIX_GETPW_R
-# if (defined(__FreeBSD_version) && __FreeBSD_version >= 510000) \
+#if (defined(__FreeBSD_version) && __FreeBSD_version >= 510000) \
     || (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 300000000) \
     || (defined(OpenBSD) && OpenBSD >= 200811)	/* OpenBSD 4.4 */
-#  define HAVE_POSIX_GETPW_R
-# endif
+#define HAVE_POSIX_GETPW_R
 #endif
-
 #endif
 
  /*
@@ -236,15 +239,12 @@
 #define USE_STATFS
 #define STATFS_IN_SYS_MOUNT_H
 #define HAS_POSIX_REGEXP
-#define NORETURN	void
-#define PRINTFLIKE(x,y)
-#define SCANFLIKE(x,y)
 #ifndef NO_NETINFO
-# define HAS_NETINFO
+#define HAS_NETINFO
 #endif
 #ifndef NO_IPV6
-# define HAS_IPV6
-# define HAVE_GETIFADDRS
+#define HAS_IPV6
+#define HAVE_GETIFADDRS
 #endif
 #define HAS_FUTIMES			/* XXX Guessing */
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
@@ -255,14 +255,15 @@
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t
 #ifndef NO_KQUEUE
-# define EVENTS_STYLE	EVENTS_STYLE_KQUEUE
-# define USE_SYSV_POLL_THEN_SELECT
+#define EVENTS_STYLE	EVENTS_STYLE_KQUEUE
+#define USE_SYSV_POLL_THEN_SELECT
 #endif
 #define USE_MAX_FILES_PER_PROC
 #ifndef NO_POSIX_GETPW_R
-# define HAVE_POSIX_GETPW_R
+#define HAVE_POSIX_GETPW_R
 #endif
-
+#define HAS_DLOPEN
+#define PREFERRED_RAND_SOURCE	"dev:/dev/urandom"
 #endif
 
  /*
@@ -355,7 +356,7 @@ extern int opterr;			/* XXX use <getopt.h> */
 #define BROKEN_WRITE_SELECT_ON_NON_BLOCKING_PIPE
 #define NO_MSGHDR_MSG_CONTROL
 #ifndef NO_IPV6
-# define HAS_IPV6
+#define HAS_IPV6
 #endif
 
 #endif
@@ -437,7 +438,7 @@ extern int opterr;
 #define HAS_NIS
 #ifndef NO_NISPLUS
 #define HAS_NISPLUS
-#endif	/* NO_NISPLUS */
+#endif					/* NO_NISPLUS */
 #endif
 #define USE_SYS_SOCKIO_H		/* Solaris 2.5, changed sys/ioctl.h */
 #define GETTIMEOFDAY(t)	gettimeofday(t)
@@ -458,28 +459,28 @@ extern int opterr;
 #define BROKEN_READ_SELECT_ON_TCP_SOCKET
 #define CANT_WRITE_BEFORE_SENDING_FD
 #ifndef NO_POSIX_REGEXP
-# define HAS_POSIX_REGEXP
+#define HAS_POSIX_REGEXP
 #endif
 #ifndef NO_IPV6
-# define HAS_IPV6
-# define HAS_SIOCGLIF
+#define HAS_IPV6
+#define HAS_SIOCGLIF
 #endif
 #ifndef NO_CLOSEFROM
-# define HAS_CLOSEFROM
+#define HAS_CLOSEFROM
 #endif
 #ifndef NO_DEV_URANDOM
-# define PREFERRED_RAND_SOURCE	"dev:/dev/urandom"
+#define PREFERRED_RAND_SOURCE	"dev:/dev/urandom"
 #endif
 #ifndef NO_FUTIMESAT
-# define HAS_FUTIMESAT
+#define HAS_FUTIMESAT
 #endif
 #define USE_SYSV_POLL
 #ifndef NO_DEVPOLL
-# define EVENTS_STYLE	EVENTS_STYLE_DEVPOLL
+#define EVENTS_STYLE	EVENTS_STYLE_DEVPOLL
 #endif
 #ifndef NO_POSIX_GETPW_R
-# define HAVE_POSIX_GETPW_R
-# define GETPW_R_NEEDS_POSIX_PTHREAD_SEMANTICS
+#define HAVE_POSIX_GETPW_R
+#define GETPW_R_NEEDS_POSIX_PTHREAD_SEMANTICS
 #endif
 
 /*
@@ -490,6 +491,8 @@ extern int opterr;
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
+
+#define HAS_DLOPEN
 #endif
 
  /*
@@ -614,7 +617,7 @@ extern int opterr;
 #define CMSG_LEN(len) (_CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
 #endif
 #ifndef NO_IPV6
-# define HAS_IPV6
+#define HAS_IPV6
 #endif
 #define BROKEN_AI_PASSIVE_NULL_HOST
 #define BROKEN_AI_NULL_SERVICE
@@ -748,7 +751,7 @@ extern int initgroups(const char *, int);
 
 #if defined(IRIX6)
 #ifndef NO_IPV6
-# define HAS_IPV6
+#define HAS_IPV6
 #endif
 #define HAS_POSIX_REGEXP
 #define PIPES_CANT_FIONREAD
@@ -782,55 +785,56 @@ extern int initgroups(const char *, int);
 #define STATFS_IN_SYS_VFS_H
 #define PREPEND_PLUS_TO_OPTSTRING
 #define HAS_POSIX_REGEXP
+#define HAS_DLOPEN
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/bin/mailq"
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
 #define NATIVE_COMMAND_DIR "/usr/sbin"
 #define NATIVE_DAEMON_DIR "/usr/libexec/postfix"
 #ifdef __GLIBC_PREREQ
-# define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) __GLIBC_PREREQ(maj, min)
+#define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) __GLIBC_PREREQ(maj, min)
 #else
-# define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) \
+#define HAVE_GLIBC_API_VERSION_SUPPORT(maj, min) \
     ((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min))
 #endif
 #if HAVE_GLIBC_API_VERSION_SUPPORT(2, 1)
-# define SOCKADDR_SIZE	socklen_t
-# define SOCKOPT_SIZE	socklen_t
+#define SOCKADDR_SIZE	socklen_t
+#define SOCKOPT_SIZE	socklen_t
 #endif
 #ifndef NO_IPV6
-# define HAS_IPV6
-# if HAVE_GLIBC_API_VERSION_SUPPORT(2, 4)
+#define HAS_IPV6
+#if HAVE_GLIBC_API_VERSION_SUPPORT(2, 4)
 /* Really 2.3.3 or later, but there's no __GLIBC_MICRO version macro. */
-#  define HAVE_GETIFADDRS
-# else
-#  define HAS_PROCNET_IFINET6
-#  define _PATH_PROCNET_IFINET6 "/proc/net/if_inet6"
-# endif
+#define HAVE_GETIFADDRS
+#else
+#define HAS_PROCNET_IFINET6
+#define _PATH_PROCNET_IFINET6 "/proc/net/if_inet6"
+#endif
 #endif
 #include <linux/version.h>
-#if !defined(KERNEL_VERSION) 
-# define KERNEL_VERSION(a,b,c) (LINUX_VERSION_CODE + 1)
+#if !defined(KERNEL_VERSION)
+#define KERNEL_VERSION(a,b,c) (LINUX_VERSION_CODE + 1)
 #endif
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,2,0)) \
 	|| (__GLIBC__ < 2)
-# define CANT_USE_SEND_RECV_MSG
-# define DEF_SMTP_CACHE_DEMAND	0
+#define CANT_USE_SEND_RECV_MSG
+#define DEF_SMTP_CACHE_DEMAND	0
 #else
-# define CANT_WRITE_BEFORE_SENDING_FD
+#define CANT_WRITE_BEFORE_SENDING_FD
 #endif
 #define PREFERRED_RAND_SOURCE	"dev:/dev/urandom"	/* introduced in 1.1 */
 #ifndef NO_EPOLL
-# define EVENTS_STYLE	EVENTS_STYLE_EPOLL	/* introduced in 2.5 */
+#define EVENTS_STYLE	EVENTS_STYLE_EPOLL	/* introduced in 2.5 */
 #endif
 #define USE_SYSV_POLL
 #ifndef NO_POSIX_GETPW_R
-# if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 1) \
+#if (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 1) \
 	|| (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 1) \
 	|| (defined(_BSD_SOURCE) && _BSD_SOURCE >= 1) \
 	|| (defined(_SVID_SOURCE) && _SVID_SOURCE >= 1) \
 	|| (defined(_POSIX_SOURCE) && _POSIX_SOURCE >= 1)
-#  define HAVE_POSIX_GETPW_R
-# endif
+#define HAVE_POSIX_GETPW_R
+#endif
 #endif
 
 #endif
@@ -916,17 +920,17 @@ extern int initgroups(const char *, int);
 #define SOCKADDR_SIZE	socklen_t
 #define SOCKOPT_SIZE	socklen_t
 #ifdef __FreeBSD_kernel__
-# define HAS_DUPLEX_PIPE
-# define HAS_ISSETUGID
+#define HAS_DUPLEX_PIPE
+#define HAS_ISSETUGID
 #endif
 #ifndef NO_IPV6
-# define HAS_IPV6
-# ifdef __FreeBSD_kernel__
-#  define HAVE_GETIFADDRS
-# else
-#  define HAS_PROCNET_IFINET6
-#  define _PATH_PROCNET_IFINET6 "/proc/net/if_inet6"
-# endif
+#define HAS_IPV6
+#ifdef __FreeBSD_kernel__
+#define HAVE_GETIFADDRS
+#else
+#define HAS_PROCNET_IFINET6
+#define _PATH_PROCNET_IFINET6 "/proc/net/if_inet6"
+#endif
 #endif
 #define CANT_USE_SEND_RECV_MSG
 #define DEF_SMTP_CACHE_DEMAND	0
@@ -968,6 +972,7 @@ extern int h_errno;			/* <netdb.h> imports too much stuff */
 #define USE_STATFS
 #define STATFS_IN_SYS_VFS_H
 #define HAS_POSIX_REGEXP
+#define HAS_DLOPEN
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/bin/mailq"
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
@@ -1007,6 +1012,7 @@ extern int h_errno;			/* <netdb.h> imports too much stuff */
 #define USE_STATFS
 #define STATFS_IN_SYS_VFS_H
 #define HAS_POSIX_REGEXP
+#define HAS_SHL_LOAD
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/bin/mailq"
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
@@ -1048,6 +1054,7 @@ extern int h_errno;
 #define USE_STATFS
 #define STATFS_IN_SYS_VFS_H
 #define HAS_POSIX_REGEXP
+#define HAS_SHL_LOAD
 #define NATIVE_SENDMAIL_PATH "/usr/bin/sendmail"
 #define NATIVE_MAILQ_PATH "/usr/bin/mailq"
 #define NATIVE_NEWALIAS_PATH "/usr/bin/newaliases"
@@ -1162,9 +1169,6 @@ typedef unsigned short mode_t;
 #define O_NONBLOCK	O_NDELAY
 #define WEXITSTATUS(x)	((x).w_retcode)
 #define WTERMSIG(x)	((x).w_termsig)
-#define NORETURN			/* the native compiler */
-#define PRINTFLIKE(x,y)
-#define SCANFLIKE(x,y)
 #endif
 
 #ifdef ReliantUnix543
@@ -1311,8 +1315,8 @@ extern int h_errno;
 #define DEF_DB_TYPE	NATIVE_DB_TYPE
 #endif
 
-#define CAST_CHAR_PTR_TO_INT(cptr)	((int) (long) (cptr))
-#define CAST_INT_TO_CHAR_PTR(ival)	((char *) (long) (ival))
+#define CAST_ANY_PTR_TO_INT(cptr)	((int) (long) (cptr))
+#define CAST_INT_TO_VOID_PTR(ival)	((void *) (long) (ival))
 
 #ifdef DUP2_DUPS_CLOSE_ON_EXEC
 /* dup2_pass_on_exec() can be found in util/sys_compat.c */
@@ -1376,6 +1380,14 @@ extern int inet_pton(int, const char *, void *);
   */
 #ifndef NO_WATCHDOG_PIPE
 #define USE_WATCHDOG_PIPE
+#endif
+
+ /*
+  * If we don't have defined a preferred random device above, but the system
+  * has /dev/urandom, then we use that.
+  */
+#if !defined(PREFERRED_RAND_SOURCE) && defined(HAS_DEV_URANDOM)
+#define PREFERRED_RAND_SOURCE	"dev:/dev/urandom"
 #endif
 
  /*
@@ -1554,14 +1566,25 @@ typedef int pid_t;
   * doubles.
   */
 #ifndef ALIGN_TYPE
-# if defined(__hpux) && defined(__ia64)
-#  define ALIGN_TYPE	__float80
-# elif defined(__ia64__)
-#  define ALIGN_TYPE	long double
-# else
-#  define ALIGN_TYPE	double
-# endif
+#if defined(__hpux) && defined(__ia64)
+#define ALIGN_TYPE	__float80
+#elif defined(__ia64__)
+#define ALIGN_TYPE	long double
+#else
+#define ALIGN_TYPE	double
 #endif
+#endif
+
+ /*
+  * Clang-style attribute tests.
+  * 
+  * XXX Without the unconditional test below, gcc 4.6 will barf on ``elif
+  * defined(__clang__) && __has_attribute(__whatever__)'' with error message
+  * ``missing binary operator before token "("''.
+  */
+#ifndef __has_attribute
+#define __has_attribute(x) 0
+#endif					/* __has_attribute */
 
  /*
   * Need to specify what functions never return, so that the compiler can
@@ -1575,12 +1598,12 @@ typedef int pid_t;
 #ifndef NORETURN
 #if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ >= 3
 #define NORETURN	void __attribute__((__noreturn__))
-#endif
-#endif
-
-#ifndef NORETURN
+#elif defined(__clang__) && __has_attribute(__noreturn__)
+#define NORETURN	void __attribute__((__noreturn__))
+#else
 #define NORETURN	void
 #endif
+#endif					/* NORETURN */
 
  /*
   * Turn on format string argument checking. This is more accurate than
@@ -1592,27 +1615,33 @@ typedef int pid_t;
 #ifndef PRINTFLIKE
 #if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ >= 3
 #define PRINTFLIKE(x,y) __attribute__ ((format (printf, (x), (y))))
+#elif defined(__clang__) && __has_attribute(__format__)
+#define PRINTFLIKE(x,y)	__attribute__ ((__format__ (__printf__, (x), (y))))
 #else
 #define PRINTFLIKE(x,y)
 #endif
-#endif
+#endif					/* PRINTFLIKE */
 
 #ifndef SCANFLIKE
 #if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ >= 3
 #define SCANFLIKE(x,y) __attribute__ ((format (scanf, (x), (y))))
+#elif defined(__clang__) && __has_attribute(__format__)
+#define SCANFLIKE(x,y) __attribute__ ((__format__ (__scanf__, (x), (y))))
 #else
 #define SCANFLIKE(x,y)
 #endif
-#endif
+#endif					/* SCANFLIKE */
 
  /*
   * Some gcc implementations don't grok these attributes with pointer to
   * function. Again, wild guess of what is supported. To override, specify
-  * #define PRINTPTRFLIKE  in the system-dependent sections above.
+  * #define PRINTFPTRLIKE  in the system-dependent sections above.
   */
 #ifndef PRINTFPTRLIKE
 #if (__GNUC__ >= 3)			/* XXX Rough estimate */
 #define PRINTFPTRLIKE(x,y) PRINTFLIKE(x,y)
+#elif defined(__clang__) && __has_attribute(__format__)
+#define PRINTFPTRLIKE(x,y) __attribute__ ((__format__ (__printf__, (x), (y))))
 #else
 #define PRINTFPTRLIKE(x,y)
 #endif
@@ -1630,6 +1659,28 @@ typedef int pid_t;
 #define EXPECTED(x)	(x)
 #define UNEXPECTED(x)	(x)
 #endif
+#endif
+
+ /*
+  * Warn about ignored function result values that must never be ignored.
+  * Typically, this is for error results from "read" functions that normally
+  * write to output parameters (for example, stat- or scanf-like functions)
+  * or from functions that have other useful side effects (for example,
+  * fseek- or rename-like functions).
+  * 
+  * DO NOT use this for functions that write to a stream; it is entirely
+  * legitimate to detect write errors with fflush() or fclose() only. On the
+  * other hand most (but not all) functions that read from a stream must
+  * never ignore result values.
+  * 
+  * XXX Prepending "(void)" won't shut up GCC. Clang behaves as expected.
+  */
+#if ((__GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ > 3)
+#define WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#elif defined(__clang__) && __has_attribute(warn_unused_result)
+#define WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#define WARN_UNUSED_RESULT
 #endif
 
  /*
@@ -1691,6 +1742,14 @@ typedef int pid_t;
 #define UINT16_SIZE	2
 
  /*
+  * For the sake of clarity.
+  */
+#ifndef HAVE_CONST_CHAR_STAR
+typedef const char *CONST_CHAR_STAR;
+
+#endif
+
+ /*
   * Safety. On some systems, ctype.h misbehaves with non-ASCII or negative
   * characters. More importantly, Postfix uses the ISXXX() macros to ensure
   * protocol compliance, so we have to rule out non-ASCII characters.
@@ -1713,6 +1772,13 @@ typedef int pid_t;
 #define ISUPPER(c)	(ISASCII(c) && isupper((unsigned char)(c)))
 #define TOLOWER(c)	(ISUPPER(c) ? tolower((unsigned char)(c)) : (c))
 #define TOUPPER(c)	(ISLOWER(c) ? toupper((unsigned char)(c)) : (c))
+
+ /*
+  * Character sets for parsing.
+  */
+#define CHARS_COMMA_SP	", \t\r\n"	/* list separator */
+#define CHARS_SPACE	" \t\r\n"	/* word separator */
+#define CHARS_BRACE	"{}"		/* grouping */
 
  /*
   * Scaffolding. I don't want to lose messages while the program is under

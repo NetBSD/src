@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2017/01/14 03:59:58 pgoyette Exp $
+# $NetBSD: Makefile,v 1.47.2.1 2017/04/21 16:54:11 bouyer Exp $
 
 MKMAN=	no
 
@@ -51,6 +51,13 @@ TESTS_C+=		t_pipe
 TESTS_C+=		t_pipe2
 TESTS_C+=		t_poll
 TESTS_C+=		t_posix_fallocate
+TESTS_C+=		t_ptrace
+TESTS_C+=		t_ptrace_wait
+TESTS_C+=		t_ptrace_wait3
+TESTS_C+=		t_ptrace_wait4
+TESTS_C+=		t_ptrace_wait6
+TESTS_C+=		t_ptrace_waitid
+TESTS_C+=		t_ptrace_waitpid
 TESTS_C+=		t_recvmmsg
 TESTS_C+=		t_revoke
 TESTS_C+=		t_select
@@ -82,14 +89,20 @@ TESTS_C+=		t_posix_fadvise
 LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
 
-CPPFLAGS.t_lwp_create.c += -D_KERNTYPES
+CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait3.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait4.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait6.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_waitid.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_waitpid.c	+= -D_KERNTYPES
 
 FILES=		truncate_test.root_owned
 FILESBUILD=	yes
-FILESDIR=	${TESTSDIR}
-FILESMODE=	0600
-FILESOWNER=	root
-FILESGRP=	wheel
+FILESDIR_truncate_test.root_owned=	${TESTSDIR}
+FILESMODE_truncate_test.root_owned=	0600
+FILESOWNER_truncate_test.root_owned=	root
+FILESGRP_truncate_test.root_owned=	wheel
 
 CLEANFILES=   truncate_test.root_owned
 truncate_test.root_owned:

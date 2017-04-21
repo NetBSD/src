@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.22 2015/07/02 08:33:31 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22.4.1 2017/04/21 16:53:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22 2015/07/02 08:33:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22.4.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ arm32_vfp_fpscr(struct lwp *l, const void *uap, register_t *retval)
 	 * Save the current VFP state (to make sure the FPSCR copy is
 	 * up to date).
 	 */
-	vfp_savecontext();
+	vfp_savecontext(l);
 #endif
 
 	retval[0] = pcb->pcb_vfp.vfp_fpscr;
@@ -125,7 +125,7 @@ arm32_fpu_used(struct lwp *l, const void *uap, register_t *retval)
 {
 	/* No args */
 #ifdef FPU_VFP
-	retval[0] = vfp_used_p();
+	retval[0] = vfp_used_p(l);
 #else
 	retval[0] = false;
 #endif

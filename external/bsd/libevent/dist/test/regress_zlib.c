@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_zlib.c,v 1.2 2013/04/11 16:56:42 christos Exp $	*/
+/*	$NetBSD: regress_zlib.c,v 1.2.20.1 2017/04/21 16:51:33 bouyer Exp $	*/
 /*
  * Copyright (c) 2008-2012 Niels Provos and Nick Mathewson
  *
@@ -28,17 +28,17 @@
 /* The old tests here need assertions to work. */
 #undef NDEBUG
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #include <windows.h>
 #endif
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_zlib.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
+__RCSID("$NetBSD: regress_zlib.c,v 1.2.20.1 2017/04/21 16:51:33 bouyer Exp $");
 
 #include <sys/types.h>
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: regress_zlib.c,v 1.2 2013/04/11 16:56:42 christos Exp $");
 #include "event2/bufferevent.h"
 
 #include "regress.h"
+#include "mm-internal.h"
 
 /* zlib 1.2.4 and 1.2.5 do some "clever" things with macros.  Instead of
    saying "(defined(FOO) ? FOO : 0)" they like to say "FOO-0", on the theory
@@ -98,6 +99,7 @@ zlib_deflate_free(void *ctx)
 	z_streamp p = ctx;
 
 	assert(deflateEnd(p) == Z_OK);
+	mm_free(p);
 }
 
 static void
@@ -106,6 +108,7 @@ zlib_inflate_free(void *ctx)
 	z_streamp p = ctx;
 
 	assert(inflateEnd(p) == Z_OK);
+	mm_free(p);
 }
 
 static int
@@ -143,14 +146,14 @@ zlib_input_filter(struct evbuffer *src, struct evbuffer *dst,
 		n = evbuffer_peek(src, -1, NULL, v_in, 1);
 		if (n) {
 			p->avail_in = v_in[0].iov_len;
-			p->next_in = v_in[0].iov_base;
+			p->next_in = (unsigned char *)v_in[0].iov_base;
 		} else {
 			p->avail_in = 0;
 			p->next_in = 0;
 		}
 
 		evbuffer_reserve_space(dst, 4096, v_out, 1);
-		p->next_out = v_out[0].iov_base;
+		p->next_out = (unsigned char *)v_out[0].iov_base;
 		p->avail_out = v_out[0].iov_len;
 
 		/* we need to flush zlib if we got a flush */
@@ -197,14 +200,14 @@ zlib_output_filter(struct evbuffer *src, struct evbuffer *dst,
 		n = evbuffer_peek(src, -1, NULL, v_in, 1);
 		if (n) {
 			p->avail_in = v_in[0].iov_len;
-			p->next_in = v_in[0].iov_base;
+			p->next_in = (unsigned char *)v_in[0].iov_base;
 		} else {
 			p->avail_in = 0;
 			p->next_in = 0;
 		}
 
 		evbuffer_reserve_space(dst, 4096, v_out, 1);
-		p->next_out = v_out[0].iov_base;
+		p->next_out = (unsigned char *)v_out[0].iov_base;
 		p->avail_out = v_out[0].iov_len;
 
 		/* we need to flush zlib if we got a flush */
@@ -278,7 +281,7 @@ test_bufferevent_zlib(void *arg)
 {
 	struct bufferevent *bev1=NULL, *bev2=NULL;
 	char buffer[8333];
-	z_stream z_input, z_output;
+	z_stream *z_input, *z_output;
 	int i, r;
 	evutil_socket_t xpair[2] = {-1, -1};
 	(void)arg;
@@ -296,18 +299,18 @@ test_bufferevent_zlib(void *arg)
 	bev1 = bufferevent_socket_new(NULL, xpair[0], 0);
 	bev2 = bufferevent_socket_new(NULL, xpair[1], 0);
 
-	memset(&z_output, 0, sizeof(z_output));
-	r = deflateInit(&z_output, Z_DEFAULT_COMPRESSION);
+	z_output = mm_calloc(sizeof(*z_output), 1);
+	r = deflateInit(z_output, Z_DEFAULT_COMPRESSION);
 	tt_int_op(r, ==, Z_OK);
-	memset(&z_input, 0, sizeof(z_input));
-	r = inflateInit(&z_input);
+	z_input = mm_calloc(sizeof(*z_input), 1);
+	r = inflateInit(z_input);
 	tt_int_op(r, ==, Z_OK);
 
 	/* initialize filters */
 	bev1 = bufferevent_filter_new(bev1, NULL, zlib_output_filter,
-	    BEV_OPT_CLOSE_ON_FREE, zlib_deflate_free, &z_output);
+	    BEV_OPT_CLOSE_ON_FREE, zlib_deflate_free, z_output);
 	bev2 = bufferevent_filter_new(bev2, zlib_input_filter,
-	    NULL, BEV_OPT_CLOSE_ON_FREE, zlib_inflate_free, &z_input);
+	    NULL, BEV_OPT_CLOSE_ON_FREE, zlib_inflate_free, z_input);
 	bufferevent_setcb(bev1, readcb, writecb, errorcb, NULL);
 	bufferevent_setcb(bev2, readcb, writecb, errorcb, NULL);
 

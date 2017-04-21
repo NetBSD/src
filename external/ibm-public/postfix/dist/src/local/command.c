@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.1.1.2 2010/06/17 18:06:53 tron Exp $	*/
+/*	$NetBSD: command.c,v 1.1.1.2.32.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -76,6 +76,7 @@
 #include <pipe_command.h>
 #include <mail_copy.h>
 #include <dsn_util.h>
+#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -195,7 +196,7 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
      * Evaluate the command execution directory. Defer delivery if expansion
      * fails.
      */
-    export_env = argv_split(var_export_environ, ", \t\r\n");
+    export_env = mail_parm_split(VAR_EXPORT_ENVIRON, var_export_environ);
     exec_dir = vstring_alloc(10);
     expand_status = local_expand(exec_dir, var_exec_directory,
 				 &state, &usr_attr, var_exec_exp_filter);
@@ -207,20 +208,20 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
 		 VAR_EXEC_DIRECTORY, var_exec_directory);
     } else {
 	cmd_status = pipe_command(state.msg_attr.fp, why,
-				  PIPE_CMD_UID, usr_attr.uid,
-				  PIPE_CMD_GID, usr_attr.gid,
-				  PIPE_CMD_COMMAND, command,
-				  PIPE_CMD_COPY_FLAGS, copy_flags,
-				  PIPE_CMD_SENDER, state.msg_attr.sender,
-			  PIPE_CMD_ORIG_RCPT, state.msg_attr.rcpt.orig_addr,
-			       PIPE_CMD_DELIVERED, state.msg_attr.delivered,
-				  PIPE_CMD_TIME_LIMIT, var_command_maxtime,
-				  PIPE_CMD_ENV, env->argv,
-				  PIPE_CMD_EXPORT, export_env->argv,
-				  PIPE_CMD_SHELL, var_local_cmd_shell,
-				  PIPE_CMD_CWD, *STR(exec_dir) ?
-				  STR(exec_dir) : (char *) 0,
-				  PIPE_CMD_END);
+				  CA_PIPE_CMD_UID(usr_attr.uid),
+				  CA_PIPE_CMD_GID(usr_attr.gid),
+				  CA_PIPE_CMD_COMMAND(command),
+				  CA_PIPE_CMD_COPY_FLAGS(copy_flags),
+				  CA_PIPE_CMD_SENDER(state.msg_attr.sender),
+		       CA_PIPE_CMD_ORIG_RCPT(state.msg_attr.rcpt.orig_addr),
+			    CA_PIPE_CMD_DELIVERED(state.msg_attr.delivered),
+				CA_PIPE_CMD_TIME_LIMIT(var_command_maxtime),
+				  CA_PIPE_CMD_ENV(env->argv),
+				  CA_PIPE_CMD_EXPORT(export_env->argv),
+				  CA_PIPE_CMD_SHELL(var_local_cmd_shell),
+				  CA_PIPE_CMD_CWD(*STR(exec_dir) ?
+						STR(exec_dir) : (char *) 0),
+				  CA_PIPE_CMD_END);
     }
     vstring_free(exec_dir);
     argv_free(export_env);
@@ -237,13 +238,8 @@ int     deliver_command(LOCAL_STATE state, USER_ATTR usr_attr, const char *comma
 	break;
     case PIPE_STAT_BOUNCE:
     case PIPE_STAT_DEFER:
-	if (STR(why->status)[0] == '4')
-	    deliver_status =
-		defer_append(BOUNCE_FLAGS(state.request),
-			     BOUNCE_ATTR(state.msg_attr));
-	else
-	    /* Account for possible owner- sender address override. */
-	    deliver_status = bounce_workaround(state);
+	/* Account for possible owner- sender address override. */
+	deliver_status = bounce_workaround(state);
 	break;
     case PIPE_STAT_CORRUPT:
 	deliver_status = DEL_STAT_DEFER;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.10 2016/12/13 20:42:17 christos Exp $
+#	$NetBSD: TEGRA,v 1.10.2.1 2017/04/21 16:53:26 bouyer Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -13,7 +13,7 @@ options 	MULTIPROCESSOR
 
 pseudo-device 	openfirm	# /dev/openfirm
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -34,10 +34,9 @@ armgtmr0	at armperiph?				# ARM Generic Timer
 
 # On-board I/O
 tegrafdt0	at mainbus?
-fdt0		at tegrafdt0 
-simplebus*	at fdt?
-fdt*		at simplebus?
+fdt*		at fdtbus?
 
+fclock*		at fdt?
 fregulator*	at fdt?
 gpiokeys*	at fdt?
 
@@ -156,8 +155,8 @@ nouveau*	at fdt?			# GPU
 tegrasoctherm*	at fdt?			# SOC_THERM
 
 # USB XHCI
-#xhci*		at fdt?			# XUSB
-#usb*		at xhci?
+xhci*		at fdt?			# XUSB
+usb*		at xhci?
 
 # USB 2.0
 tegrausbphy*	at fdt?			# USB PHY

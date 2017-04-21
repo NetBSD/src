@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.19 2015/10/29 00:15:48 mrg Exp $
+#	$NetBSD: ODROID-U,v 1.19.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	ODROID-U -- ODROID-U{2,3} series Exynos4x12(P) based kernel
 #
@@ -59,6 +59,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support

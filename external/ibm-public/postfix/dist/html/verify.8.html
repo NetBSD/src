@@ -62,8 +62,8 @@ VERIFY(8)                                                            VERIFY(8)
 
 <b>BUGS</b>
        Address verification probe messages add additional traffic to the  mail
-       queue.   Recipient  verification  may  cause an increased load on down-
-       stream servers in the case  of  a  dictionary  attack  or  a  flood  of
+       queue.    Recipient   verification  may  cause  an  increased  load  on
+       down-stream servers in the case of a dictionary attack or  a  flood  of
        backscatter  bounces.   Sender address verification may cause your site
        to be blacklisted by some providers.
 
@@ -162,17 +162,24 @@ VERIFY(8)                                                            VERIFY(8)
               Overrides the <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a>  parameter
               setting for address verification probes.
 
+<b>SMTPUTF8 CONTROLS</b>
+       Preliminary SMTPUTF8 support is introduced with Postfix 3.0.
+
+       <b><a href="postconf.5.html#smtputf8_autodetect_classes">smtputf8_autodetect_classes</a> (sendmail, verify)</b>
+              Detect  that  a message requires SMTPUTF8 support for the speci-
+              fied mail origin classes.
+
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process  may  take  to  handle  a
+              How  much  time  a  Postfix  daemon process may take to handle a
               request before it is terminated by a built-in watchdog timer.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
-              The  time  limit  for  sending  or receiving information over an
+              The time limit for sending  or  receiving  information  over  an
               internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
@@ -188,8 +195,8 @@ VERIFY(8)                                                            VERIFY(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system name that is prepended to the  process  name  in
-              syslog  records,  so  that  "smtpd" becomes, for example, "post-
+              The  mail  system  name that is prepended to the process name in
+              syslog records, so that "smtpd"  becomes,  for  example,  "post-
               fix/smtpd".
 
 <b>SEE ALSO</b>
@@ -212,6 +219,11 @@ VERIFY(8)                                                            VERIFY(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                      VERIFY(8)
 </pre> </body> </html>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.55 2016/04/29 02:17:25 christos Exp $
+#	$NetBSD: Makefile.amd64,v 1.55.4.1 2017/04/21 16:53:22 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -60,8 +60,8 @@ KERN_AS=	library
 ##
 ## (5) link settings
 ##
-TEXTADDR?=	0xffffffff80100000
-EXTRA_LINKFLAGS=	-z max-page-size=0x100000
+TEXTADDR?=	0xffffffff80200000
+EXTRA_LINKFLAGS=	-z max-page-size=0x200000
 LINKFLAGS_NORMAL=	-X
 KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript
 

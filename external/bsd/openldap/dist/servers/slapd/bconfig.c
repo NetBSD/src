@@ -1,10 +1,10 @@
-/*	$NetBSD: bconfig.c,v 1.1.1.5 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: bconfig.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* bconfig.c - the config backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,9 @@
  * This work was originally developed by Howard Chu for inclusion
  * in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bconfig.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -2959,9 +2962,9 @@ config_suffix(ConfigArgs *c)
 	if(tbe == c->be) {
 		Debug( LDAP_DEBUG_ANY, "%s: suffix already served by this backend!.\n",
 			c->log, 0, 0);
-		return 1;
 		free(pdn.bv_val);
 		free(ndn.bv_val);
+		return 1;
 	} else if(tbe) {
 		BackendDB *b2 = tbe;
 
@@ -3041,7 +3044,7 @@ config_rootpw(ConfigArgs *c) {
 	}
 
 	tbe = select_backend(&c->be->be_rootndn, 0);
-	if(tbe != c->be) {
+	if(tbe != c->be && !SLAP_DBHIDDEN( c->be )) {
 		snprintf( c->cr_msg, sizeof( c->cr_msg ), "<%s> can only be set when rootdn is under suffix",
 			c->argv[0] );
 		Debug(LDAP_DEBUG_ANY, "%s: %s\n",
@@ -3417,7 +3420,8 @@ loglevel2bvarray( int l, BerVarray *bva )
 	}
 
 	if ( l == 0 ) {
-		return value_add_one( bva, ber_bvstr( "0" ) );
+		struct berval bv = BER_BVC("0");
+		return value_add_one( bva, &bv );
 	}
 
 	return mask_to_verbs( loglevel_ops, l, bva );
@@ -3794,6 +3798,7 @@ config_tls_cleanup(ConfigArgs *c) {
 		int opt = 1;
 
 		ldap_pvt_tls_ctx_free( slap_tls_ctx );
+		slap_tls_ctx = NULL;
 
 		/* Force new ctx to be created */
 		rc = ldap_pvt_tls_set_option( slap_tls_ld, LDAP_OPT_X_TLS_NEWCTX, &opt );
@@ -3802,6 +3807,11 @@ config_tls_cleanup(ConfigArgs *c) {
 			ldap_pvt_tls_get_option( slap_tls_ld, LDAP_OPT_X_TLS_CTX, &slap_tls_ctx );
 			/* This is a no-op if it's already loaded */
 			load_extop( &slap_EXOP_START_TLS, 0, starttls_extop );
+		} else {
+			if ( rc == LDAP_NOT_SUPPORTED )
+				rc = LDAP_UNWILLING_TO_PERFORM;
+			else
+				rc = LDAP_OTHER;
 		}
 	}
 	return rc;
@@ -4674,7 +4684,7 @@ check_name_index( CfEntryInfo *parent, ConfigType ce_type, Entry *e,
 	if ( ce_type == Cft_Database )
 		nsibs--;
 
-	if ( index != nsibs ) {
+	if ( index != nsibs || isfrontend ) {
 		if ( gotindex ) {
 			if ( index < nsibs ) {
 				if ( tailindex ) return LDAP_NAMING_VIOLATION;
@@ -6574,7 +6584,12 @@ config_build_schema_inc( ConfigArgs *c, CfEntryInfo *ceparent,
 			bv.bv_len );
 		c->value_dn.bv_len += bv.bv_len;
 		c->value_dn.bv_val[c->value_dn.bv_len] ='\0';
-		rdnNormalize( 0, NULL, NULL, &c->value_dn, &rdn, NULL );
+		if ( rdnNormalize( 0, NULL, NULL, &c->value_dn, &rdn, NULL )) {
+			Debug( LDAP_DEBUG_ANY,
+				"config_build_schema_inc: invalid schema name \"%s\"\n",
+				bv.bv_val, 0, 0 );
+			return -1;
+		}
 
 		c->ca_private = cf;
 		e = config_build_entry( op, rs, ceparent, c, &rdn,
@@ -7210,22 +7225,6 @@ config_tool_entry_put( BackendDB *be, Entry *e, struct berval *text )
 					return NOID;
 				}
 			} else {
-				if ( !strncmp( e->e_nname.bv_val + 
-					STRLENOF( "olcDatabase" ), "=frontend",
-					STRLENOF( "=frontend" ) ) )
-				{
-					struct berval rdn, pdn, ndn;
-					dnParent( &e->e_nname, &pdn );
-					rdn.bv_val = ca.log;
-					rdn.bv_len = snprintf(rdn.bv_val, sizeof( ca.log ),
-						"%s=" SLAP_X_ORDERED_FMT "%s",
-						cfAd_database->ad_cname.bv_val, -1,
-						frontendDB->bd_info->bi_type );
-					build_new_dn( &ndn, &pdn, &rdn, NULL );
-					ber_memfree( e->e_name.bv_val );
-					e->e_name = ndn;
-					ber_bvreplace( &e->e_nname, &e->e_name );
-				}
 				entry_put_got_frontend++;
 				isFrontend = 1;
 			}

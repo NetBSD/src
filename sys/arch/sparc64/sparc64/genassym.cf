@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.79 2016/05/17 19:43:28 palle Exp $
+#	$NetBSD: genassym.cf,v 1.79.4.1 2017/04/21 16:53:37 bouyer Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ export SUN4U_TTE_P
 export SUN4U_TTE_EXEC
 export SUN4V_TLB_ACCESS
 export SUN4V_TLB_MODIFY
+export SUN4V_TLB_EXEC
 export SUN4V_TLB_W
 export SUN4V_TLB_TSB_LOCK
 
@@ -180,7 +181,7 @@ define	CI_TICK_IH	offsetof(struct cpu_info, ci_tick_ih)
 define	CI_CTXBUSY	offsetof(struct cpu_info, ci_ctxbusy)
 define	CI_TSB_DMMU	offsetof(struct cpu_info, ci_tsb_dmmu)
 define	CI_TSB_IMMU	offsetof(struct cpu_info, ci_tsb_immu)
-define	CI_MMFSA	offsetof(struct cpu_info, ci_mmfsa)
+define	CI_MMUFSA	offsetof(struct cpu_info, ci_mmufsa)
 define	CI_TSB_DESC	offsetof(struct cpu_info, ci_tsb_desc)
 define	CI_CPUMQ	offsetof(struct cpu_info, ci_cpumq)
 define	CI_DEVMQ	offsetof(struct cpu_info, ci_devmq)

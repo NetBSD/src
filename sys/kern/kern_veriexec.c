@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.11 2015/08/04 12:44:04 maxv Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.11.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.11 2015/08/04 12:44:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.11.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1363,20 +1363,15 @@ veriexec_file_dump(struct veriexec_file_entry *vfe, prop_array_t entries)
 int
 veriexec_dump(struct lwp *l, prop_array_t rarray)
 {
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-		/* If it fails, the file-system is [being] unmounted. */
-		if (vfs_busy(mp, &nmp) != 0)
-			continue;
-
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		fileassoc_table_run(mp, veriexec_hook,
 		    (fileassoc_cb_t)veriexec_file_dump, rarray);
-
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 
 	return (0);
 }
@@ -1384,24 +1379,19 @@ veriexec_dump(struct lwp *l, prop_array_t rarray)
 int
 veriexec_flush(struct lwp *l)
 {
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	int error = 0;
 
-	mutex_enter(&mountlist_lock);
-	for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
+	mountlist_iterator_init(&iter);
+	while ((mp = mountlist_iterator_next(iter)) != NULL) {
 		int lerror;
-
-		/* If it fails, the file-system is [being] unmounted. */
-		if (vfs_busy(mp, &nmp) != 0)
-			continue;
 
 		lerror = veriexec_table_delete(l, mp);
 		if (lerror && lerror != ENOENT)
 			error = lerror;
-
-		vfs_unbusy(mp, false, &nmp);
 	}
-	mutex_exit(&mountlist_lock);
+	mountlist_iterator_destroy(iter);
 
 	return (error);
 }

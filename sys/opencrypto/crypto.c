@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.48 2016/07/07 06:55:43 msaitoh Exp $ */
+/*	$NetBSD: crypto.c,v 1.48.4.1 2017/04/21 16:54:07 bouyer Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.48 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.48.4.1 2017/04/21 16:54:07 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -75,9 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.48 2016/07/07 06:55:43 msaitoh Exp $");
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
-kmutex_t crypto_q_mtx;
-kmutex_t crypto_ret_q_mtx;
-kcondvar_t cryptoret_cv;
+static kmutex_t crypto_q_mtx;
+static kmutex_t crypto_ret_q_mtx;
+static kcondvar_t cryptoret_cv;
 kmutex_t crypto_mtx;
 
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
@@ -119,45 +119,6 @@ static	TAILQ_HEAD(crprethead, cryptop) crp_ret_q =	/* callback queues */
 		TAILQ_HEAD_INITIALIZER(crp_ret_q);
 static	TAILQ_HEAD(krprethead, cryptkop) crp_ret_kq =
 		TAILQ_HEAD_INITIALIZER(crp_ret_kq);
-
-/*
- * XXX these functions are ghastly hacks for when the submission
- * XXX routines discover a request that was not CBIMM is already
- * XXX done, and must be yanked from the retq (where _done) put it
- * XXX as cryptoret won't get the chance.  The queue is walked backwards
- * XXX as the request is generally the last one queued.
- *
- *	 call with the lock held, or else.
- */
-int
-crypto_ret_q_remove(struct cryptop *crp)
-{
-	struct cryptop * acrp, *next;
-
-	TAILQ_FOREACH_REVERSE_SAFE(acrp, &crp_ret_q, crprethead, crp_next, next) {
-		if (acrp == crp) {
-			TAILQ_REMOVE(&crp_ret_q, crp, crp_next);
-			crp->crp_flags &= (~CRYPTO_F_ONRETQ);
-			return 1;
-		}
-	}
-	return 0;
-}
-
-int
-crypto_ret_kq_remove(struct cryptkop *krp)
-{
-	struct cryptkop * akrp, *next;
-
-	TAILQ_FOREACH_REVERSE_SAFE(akrp, &crp_ret_kq, krprethead, krp_next, next) {
-		if (akrp == krp) {
-			TAILQ_REMOVE(&crp_ret_kq, krp, krp_next);
-			krp->krp_flags &= (~CRYPTO_F_ONRETQ);
-			return 1;
-		}
-	}
-	return 0;
-}
 
 /*
  * Crypto op and desciptor data structures are allocated
@@ -306,14 +267,18 @@ crypto_destroy(bool exit_kthread)
 		mutex_spin_enter(&crypto_ret_q_mtx);
 
 		/* if we have any in-progress requests, don't unload */
-		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq))
+		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq)) {
+			mutex_spin_exit(&crypto_ret_q_mtx);
 			return EBUSY;
+		}
 
 		for (i = 0; i < crypto_drivers_num; i++)
 			if (crypto_drivers[i].cc_sessions != 0)
 				break;
-		if (i < crypto_drivers_num)
+		if (i < crypto_drivers_num) {
+			mutex_spin_exit(&crypto_ret_q_mtx);
 			return EBUSY;
+		}
 
 		/* kick the cryptoret thread and wait for it to exit */
 		crypto_exit_flag = 1;
@@ -414,6 +379,9 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 				(*sid) <<= 32;
 				(*sid) |= (lid & 0xffffffff);
 				crypto_drivers[hid].cc_sessions++;
+			} else {
+				DPRINTF(("%s: crypto_drivers[%d].cc_newsession() failed. error=%d\n",
+					__func__, hid, err));
 			}
 			goto done;
 			/*break;*/
@@ -982,11 +950,8 @@ crypto_invoke(struct cryptop *crp, int hint)
 		int (*process)(void *, struct cryptop *, int);
 		void *arg;
 
-		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP) {
-			mutex_exit(&crypto_mtx);
+		if (crypto_drivers[hid].cc_flags & CRYPTOCAP_F_CLEANUP)
 			crypto_freesession(crp->crp_sid);
-			mutex_enter(&crypto_mtx);
-		}
 		process = crypto_drivers[hid].cc_process;
 		arg = crypto_drivers[hid].cc_arg;
 
@@ -1123,19 +1088,20 @@ crypto_done(struct cryptop *crp)
 	} else {
 		mutex_spin_enter(&crypto_ret_q_mtx);
 		crp->crp_flags |= CRYPTO_F_DONE;
-
+#if 0
 		if (crp->crp_flags & CRYPTO_F_USER) {
-			/* the request has completed while
-			 * running in the user context
-			 * so don't queue it - the user
-			 * thread won't sleep when it sees
-			 * the CRYPTO_F_DONE flag.
-			 * This is an optimization to avoid
-			 * unecessary context switches.
+			/*
+			 * TODO:
+			 * If crp->crp_flags & CRYPTO_F_USER and the used
+			 * encryption driver does all the processing in
+			 * the same context, we can skip enqueueing crp_ret_q
+			 * and cv_signal(&cryptoret_cv).
 			 */
 			DPRINTF(("crypto_done[%u]: crp %p CRYPTO_F_USER\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp));
-		} else {
+		} else
+#endif
+		{
 			wasempty = TAILQ_EMPTY(&crp_ret_q);
 			DPRINTF(("crypto_done[%u]: queueing %p\n",
 				CRYPTO_SESID2LID(crp->crp_sid), crp));

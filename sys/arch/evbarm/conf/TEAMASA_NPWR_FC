@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.49 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.49.4.1 2017/04/21 16:53:26 bouyer Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -49,6 +49,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support

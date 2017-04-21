@@ -1,4 +1,4 @@
-.\"	$NetBSD: dk.4,v 1.6 2012/07/13 22:58:45 abs Exp $
+.\"	$NetBSD: dk.4,v 1.6.18.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" Jonathan A. Kollasch used vnd(4) as the template for this man page.
 .\"
-.Dd May 19, 2010
+.Dd February 26, 2017
 .Dt DK 4
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@ driver
 .Cd "options DKWEDGE_METHOD_BSDLABEL"
 .Cd "options DKWEDGE_METHOD_GPT"
 .Cd "options DKWEDGE_METHOD_MBR"
+.Cd "options DKWEDGE_METHOD_RDB"
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,6 +64,8 @@ Extensible Firmware Interface Globally Unique Identifier Partition Table
 .It Dv DKWEDGE_METHOD_MBR
 IBM PC-compatible Master Boot Record (MBR) partitioning detection method,
 with support for Extended MBRs.
+.It Dv DKWEDGE_METHOD_RDB
+Amiga Rigid Disk Block (RDB) partitioning detection method.
 .El
 .Sh FILES
 .Bl -tag -width /dev/XXrXdkX -compact

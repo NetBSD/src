@@ -7,7 +7,7 @@
 SMTP-SINK(1)                                                      SMTP-SINK(1)
 
 <b>NAME</b>
-       smtp-sink - multi-threaded SMTP/LMTP test server
+       smtp-sink - parallelized SMTP/LMTP test server
 
 <b>SYNOPSIS</b>
        <b>smtp-sink</b> [<i>options</i>] [<b>inet:</b>][<i>host</i>]:<i>port backlog</i>
@@ -24,9 +24,9 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
        delays,  this  mode  of operation can reduce the maximal performance by
        several orders of magnitude.
 
-       Connections can be accepted on IPv4 or  IPv6  endpoints,  or  on  UNIX-
-       domain  sockets.   IPv4  and IPv6 are the default.  This program is the
-       complement of the <a href="smtp-source.1.html"><b>smtp-source</b>(1)</a> program.
+       Connections  can  be  accepted  on  IPv4  or  IPv6  endpoints,  or   on
+       UNIX-domain  sockets.   IPv4 and IPv6 are the default.  This program is
+       the complement of the <a href="smtp-source.1.html"><b>smtp-source</b>(1)</a> program.
 
        Note: this is an unsupported test program. No attempt is made to  main-
        tain compatibility between successive versions.
@@ -102,12 +102,18 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               Use <i>hostname</i> in the SMTP greeting, in the HELO response, and  in
               the EHLO response. The default hostname is "smtp-sink".
 
+       <b>-H</b> <i>delay</i>
+              Delay  the  first  read  operation after receiving DATA (time in
+              seconds). Combine with a large test message and a small TCP win-
+              dow  size  (see  the  <b>-T</b>  option)  to  test  the  Postfix client
+              write_wait() implementation.
+
        <b>-L</b>     Enable LMTP instead of SMTP.
 
        <b>-m</b> <i>count</i> (default: 256)
               An upper bound on the maximal number of simultaneous connections
-              that <b>smtp-sink</b> will handle. This prevents the process from  run-
-              ning  out  of  file  descriptors.  Excess  connections will stay
+              that  <b>smtp-sink</b> will handle. This prevents the process from run-
+              ning out of  file  descriptors.  Excess  connections  will  stay
               queued in the TCP/IP stack.
 
        <b>-M</b> <i>count</i>
@@ -116,71 +122,73 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
        <b>-n</b> <i>count</i>
               Terminate after <i>count</i> sessions.
 
+       <b>-N</b>     Do not announce support for DSN.
+
        <b>-p</b>     Do not announce support for ESMTP command pipelining.
 
-       <b>-P</b>     Change the server greeting so that it appears to come through  a
+       <b>-P</b>     Change  the server greeting so that it appears to come through a
               CISCO PIX system. Implies <b>-e</b>.
 
        <b>-q</b> <i>command,command,...</i>
-              Disconnect  (without replying) after receiving one of the speci-
+              Disconnect (without replying) after receiving one of the  speci-
               fied commands.
-
-              Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL,  RCPT,
-              VRFY,  DATA,  ., RSET, NOOP, and QUIT. Separate command names by
-              white space or commas, and use quotes  to  protect  white  space
-              from the shell. Command names are case-insensitive.
-
-       <b>-Q</b> <i>command,command,...</i>
-              Send a 421 reply and disconnect after receiving one of the spec-
-              ified commands.
-
-              Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL,  RCPT,
-              VRFY,  DATA,  ., RSET, NOOP, and QUIT. Separate command names by
-              white space or commas, and use quotes  to  protect  white  space
-              from the shell. Command names are case-insensitive.
-
-       <b>-r</b> <i>command,command,...</i>
-              Reject  the  specified  commands  with  a soft (4xx) error code.
-              This option implies <b>-p</b>.
-
-              Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL,  RCPT,
-              VRFY,  DATA,  ., RSET, NOOP, and QUIT. Separate command names by
-              white space or commas, and use quotes  to  protect  white  space
-              from the shell. Command names are case-insensitive.
-
-       <b>-R</b> <i>root-directory</i>
-              Change  the  process  root  directory to the specified location.
-              This option requires super-user  privileges.  See  also  the  <b>-u</b>
-              option.
-
-       <b>-s</b> <i>command,command,...</i>
-              Log the named commands to syslogd.
 
               Examples  of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT,
               VRFY, DATA, ., RSET, NOOP, and QUIT. Separate command  names  by
               white  space  or  commas,  and use quotes to protect white space
               from the shell. Command names are case-insensitive.
 
+       <b>-Q</b> <i>command,command,...</i>
+              Send a 421 reply and disconnect after receiving one of the spec-
+              ified commands.
+
+              Examples  of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT,
+              VRFY, DATA, ., RSET, NOOP, and QUIT. Separate command  names  by
+              white  space  or  commas,  and use quotes to protect white space
+              from the shell. Command names are case-insensitive.
+
+       <b>-r</b> <i>command,command,...</i>
+              Reject the specified commands with  a  soft  (4xx)  error  code.
+              This option implies <b>-p</b>.
+
+              Examples  of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT,
+              VRFY, DATA, ., RSET, NOOP, and QUIT. Separate command  names  by
+              white  space  or  commas,  and use quotes to protect white space
+              from the shell. Command names are case-insensitive.
+
+       <b>-R</b> <i>root-directory</i>
+              Change the process root directory  to  the  specified  location.
+              This  option  requires  super-user  privileges.  See also the <b>-u</b>
+              option.
+
+       <b>-s</b> <i>command,command,...</i>
+              Log the named commands to syslogd.
+
+              Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL,  RCPT,
+              VRFY,  DATA,  ., RSET, NOOP, and QUIT. Separate command names by
+              white space or commas, and use quotes  to  protect  white  space
+              from the shell. Command names are case-insensitive.
+
        <b>-S start-string</b>
-              An optional string that is prepended to  each  message  that  is
-              written  to  a  dump  file (see the dump file format description
-              below). The following  C  escape  sequences  are  supported:  \a
-              (bell),  \b  (backslace),  \f (formfeed), \n (newline), \r (car-
-              riage return), \t (horizontal tab), \v (vertical tab), \<i>ddd</i>  (up
+              An  optional  string  that  is prepended to each message that is
+              written to a dump file (see the  dump  file  format  description
+              below).  The  following  C  escape  sequences  are supported: \a
+              (bell), \b (backspace), \f (formfeed), \n  (newline),  \r  (car-
+              riage  return), \t (horizontal tab), \v (vertical tab), \<i>ddd</i> (up
               to three octal digits) and \\ (the backslash character).
 
        <b>-t</b> <i>timeout</i> (default: 100)
-              Limit  the  time  for receiving a command or sending a response.
+              Limit the time for receiving a command or  sending  a  response.
               The time limit is specified in seconds.
 
        <b>-T</b> <i>windowsize</i>
-              Override the default TCP window size. To work around broken  TCP
+              Override  the default TCP window size. To work around broken TCP
               window scaling implementations, specify a value &gt; 0 and &lt; 65536.
 
        <b>-u</b> <i>username</i>
-              Switch to the specified user privileges after opening  the  net-
-              work  socket and optionally changing the process root directory.
-              This option is required when the process  runs  with  super-user
+              Switch  to  the specified user privileges after opening the net-
+              work socket and optionally changing the process root  directory.
+              This  option  is  required when the process runs with super-user
               privileges. See also the <b>-R</b> option.
 
        <b>-v</b>     Show the SMTP conversations.
@@ -189,27 +197,27 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
               Wait <i>delay</i> seconds before responding to a DATA command.
 
        <b>-W</b> <i>command:delay[:odds]</i>
-              Wait  <i>delay</i>  seconds  before  responding to <i>command</i>.  If <i>odds</i> is
-              also specified (a number between 1-99  inclusive),  wait  for  a
-              random  multiple of <i>delay</i>. The random multiplier is equal to the
+              Wait <i>delay</i> seconds before responding to  <i>command</i>.   If  <i>odds</i>  is
+              also  specified  (a  number  between 1-99 inclusive), wait for a
+              random multiple of <i>delay</i>. The random multiplier is equal to  the
               number of times the program needs to roll a dice with a range of
-              0..99  inclusive, before the dice produces a result greater than
+              0..99 inclusive, before the dice produces a result greater  than
               or equal to <i>odds</i>.
 
        [<b>inet:</b>][<i>host</i>]:<i>port</i>
-              Listen on network interface <i>host</i> (default:  any  interface)  TCP
-              port  <i>port</i>.  Both  <i>host</i>  and <i>port</i> may be specified in numeric or
+              Listen  on  network  interface <i>host</i> (default: any interface) TCP
+              port <i>port</i>. Both <i>host</i> and <i>port</i> may be  specified  in  numeric  or
               symbolic form.
 
        <b>unix:</b><i>pathname</i>
               Listen on the UNIX-domain socket at <i>pathname</i>.
 
        <i>backlog</i>
-              The maximum length the queue of pending connections, as  defined
+              The  maximum length the queue of pending connections, as defined
               by the <b>listen</b>(2) system call.
 
 <b>DUMP FILE FORMAT</b>
-       Each  dumped message contains a sequence of text lines, terminated with
+       Each dumped message contains a sequence of text lines, terminated  with
        the newline character. The sequence of information is as follows:
 
        <b>o</b>      The optional string specified with the <b>-S</b> option.
@@ -223,41 +231,41 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
        The format of the <b>smtp-sink</b> generated headers is as follows:
 
        <b>X-Client-Addr:</b> <i>text</i>
-              The client IP address without enclosing []. An IPv6  address  is
+              The  client  IP address without enclosing []. An IPv6 address is
               prefixed with "ipv6:". This record is always present.
 
        <b>X-Client-Proto:</b> <i>text</i>
-              The  client protocol: SMTP, ESMTP or LMTP. This record is always
+              The client protocol: SMTP, ESMTP or LMTP. This record is  always
               present.
 
        <b>X-Helo-Args:</b> <i>text</i>
-              The arguments of the last HELO or EHLO command before this  mail
-              delivery  transaction. This record is present only if the client
-              sent a recognizable HELO or EHLO command before  the  DATA  com-
+              The  arguments of the last HELO or EHLO command before this mail
+              delivery transaction. This record is present only if the  client
+              sent  a  recognizable  HELO or EHLO command before the DATA com-
               mand.
 
        <b>X-Mail-Args:</b> <i>text</i>
-              The  arguments of the MAIL command that started this mail deliv-
+              The arguments of the MAIL command that started this mail  deliv-
               ery transaction. This record is present exactly once.
 
        <b>X-Rcpt-Args:</b> <i>text</i>
-              The arguments of an  RCPT  command  within  this  mail  delivery
+              The  arguments  of  an  RCPT  command  within this mail delivery
               transaction. There is one record for each RCPT command, and they
               are in the order as sent by the client.
 
        <b>Received:</b> <i>text</i>
-              A message header for compatibility with  mail  processing  soft-
-              ware.  This  three-line header marks the end of the headers pro-
+              A  message  header  for compatibility with mail processing soft-
+              ware. This three-line header marks the end of the  headers  pro-
               vided by <b>smtp-sink</b>, and is formatted as follows:
 
-              <b>from</b> <i>helo</i> <b>([</b><i>addr</i><b>])</b>
-                     The HELO or EHLO command argument and client IP  address.
-                     If  the  client  did not send HELO or EHLO, the client IP
+              <b>from</b> <i>helo</i> ([<i>addr</i>])
+                     The  HELO or EHLO command argument and client IP address.
+                     If the client did not send HELO or EHLO,  the  client  IP
                      address is used instead.
 
               <b>by</b> <i>host</i> <b>(smtp-sink) with</b> <i>proto</i> <b>id</b> <i>random</i><b>;</b>
-                     The hostname specified with the  <b>-h</b>  option,  the  client
-                     protocol  (see <b>X-Client-Proto</b> above), and the pseudo-ran-
+                     The  hostname  specified  with  the <b>-h</b> option, the client
+                     protocol (see <b>X-Client-Proto</b> above), and the  pseudo-ran-
                      dom portion of the per-message capture file name.
 
               <i>time-stamp</i>
@@ -274,6 +282,11 @@ SMTP-SINK(1)                                                      SMTP-SINK(1)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                   SMTP-SINK(1)
 </pre> </body> </html>

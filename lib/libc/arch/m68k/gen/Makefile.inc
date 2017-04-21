@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2016/10/07 11:10:44 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.34.2.1 2017/04/21 16:53:07 bouyer Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -31,10 +31,10 @@ CPPFLAGS._lwp.c	+= -D_LIBC_SOURCE
 # 68000-based machines build with a libgcc that includes
 # much of the (soft)float and integer support that would 
 # otherwise be compiled here.
-.if	(${MACHINE_ARCH} == "m68000" || ${MKSOFTFLOAT} == "yes")
+.if	(${MACHINE_ARCH} == "m68000" || ${MKSOFTFLOAT} != "no")
 SRCS+=	compat_modf_ieee754.c			# generic ieee754 version
 SRCS+=	flt_rounds_softfloat.S
-.if ${MKSOFTFLOAT} != "yes"
+.if ${MKSOFTFLOAT} == "no"
 SRCS+=	fpfake.c
 .endif
 .endif

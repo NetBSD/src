@@ -1,4 +1,4 @@
-/*	$NetBSD: slmdb.c,v 1.1.1.1 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: slmdb.c,v 1.1.1.1.14.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -97,7 +97,7 @@
 /*	slmdb_control() specifies optional features. The result is
 /*	an LMDB status code (zero in case of success).
 /*
-/* Arguments:
+/*	Arguments:
 /* .IP slmdb
 /*	Pointer to caller-provided storage.
 /* .IP curr_limit
@@ -148,32 +148,32 @@
 /*	LMDB cursor operation.
 /* .IP request
 /*	The start of a list of (name, value) pairs, terminated with
-/*	SLMDB_CTL_END.  The following text enumerates the symbolic
-/*	request names and the corresponding value types.
+/*	CA_SLMDB_CTL_END.  The following text enumerates the symbolic
+/*	request names and the corresponding argument types.
 /* .RS
-/* .IP "SLMDB_CTL_LONGJMP_FN (void (*)(void *, int))
+/* .IP "CA_SLMDB_CTL_LONGJMP_FN(void (*)(void *, int))"
 /*	Call-back function pointer. The function is called to repeat
 /*	a failed bulk-mode transaction from the start. The arguments
 /*	are the application context and the setjmp() or sigsetjmp()
 /*	result value.
-/* .IP "SLMDB_CTL_NOTIFY_FN (void (*)(void *, int, ...))"
+/* .IP "CA_SLMDB_CTL_NOTIFY_FN(void (*)(void *, int, ...))"
 /*	Call-back function pointer. The function is called to report
 /*	succesful error recovery. The arguments are the application
 /*	context, the MDB error code, and additional arguments that
 /*	depend on the error code.  Details are given in the section
 /*	"ERROR RECOVERY".
-/* .IP "SLMDB_CTL_ASSERT_FN (void (*)(void *, const char *))"
+/* .IP "CA_SLMDB_CTL_ASSERT_FN(void (*)(void *, const char *))"
 /*	Call-back function pointer.  The function is called to
 /*	report an LMDB internal assertion failure. The arguments
 /*	are the application context, and text that describes the
 /*	problem.
-/* .IP "SLMDB_CTL_CB_CONTEXT (void *)"
+/* .IP "CA_SLMDB_CTL_CB_CONTEXT(void *)"
 /*	Application context that is passed in call-back function
 /*	calls.
-/* .IP "SLMDB_CTL_API_RETRY_LIMIT (int)"
+/* .IP "CA_SLMDB_CTL_API_RETRY_LIMIT(int)"
 /*	How many times to recover from LMDB errors within the
 /*	execution of a single slmdb(3) API call before giving up.
-/* .IP "SLMDB_CTL_BULK_RETRY_LIMIT (int)"
+/* .IP "CA_SLMDB_CTL_BULK_RETRY_LIMIT(int)"
 /*	How many times to recover from a bulk-mode transaction
 /*	before giving up.
 /* .RE

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2013/04/11 17:00:12 christos Exp $
+# $NetBSD: Makefile,v 1.2.14.1 2017/04/21 16:54:11 bouyer Exp $
 
 TESTSDIR=	${TESTSBASE}/lib/libevent
 
@@ -17,7 +17,7 @@ SRCS=		regress.c regress.gen.c regress_dns.c regress_http.c \
 		regress_rpc.c regress_main.c tinytest.c regress_testutils.c \
 		regress_minheap.c regress_util.c regress_thread.c \
 		regress_buffer.c regress_bufferevent.c regress_listener.c \
-		regress_zlib.c regress_et.c
+		regress_zlib.c regress_et.c regress_finalize.c
 
 .if ${MKCRYPTO} == "yes"
 SRCS+=		regress_ssl.c

@@ -5,7 +5,7 @@ Public domain.
 */
 
 #include "includes.h"
-__RCSID("$NetBSD: chacha.c,v 1.4 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: chacha.c,v 1.4.2.1 2017/04/21 16:50:56 bouyer Exp $");
 
 #include <stdio.h>	/* for NULL */
 #include "chacha.h"

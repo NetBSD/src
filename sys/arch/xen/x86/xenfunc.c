@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.15 2016/12/13 10:21:33 kamil Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.15.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.15 2016/12/13 10:21:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.15.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -70,7 +70,7 @@ lldt(u_short sel)
 		return;
 	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
 	if (sel == GSEL(GLDT_SEL, SEL_KPL))
-		xen_set_ldt((vaddr_t)ldt, NLDT);
+		xen_set_ldt((vaddr_t)ldtstore, NLDT);
 	else
 		xen_set_ldt(ci->ci_gdt[IDXSELN(sel)].ld.ld_base,
 		    ci->ci_gdt[IDXSELN(sel)].ld.ld_entries);

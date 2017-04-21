@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.20 2013/04/15 21:20:39 christos Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.20.14.1 2017/04/21 16:54:15 bouyer Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.20 2013/04/15 21:20:39 christos Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.20.14.1 2017/04/21 16:54:15 bouyer Exp $");
 #endif
 #endif /* not lint*/
 
@@ -70,52 +70,19 @@ struct alg {
 	int		a;
 	const char	*name;
 };
-static const struct alg aalgs[] = {
-	{ SADB_AALG_NONE,	"none", },
-	{ SADB_AALG_MD5HMAC,	"hmac-md5", },
-	{ SADB_AALG_SHA1HMAC,	"hmac-sha1", },
-	{ SADB_X_AALG_MD5,	"md5", },
-	{ SADB_X_AALG_SHA,	"sha", },
-	{ SADB_X_AALG_NULL,	"null", },
-	{ SADB_X_AALG_SHA2_256,	"hmac-sha2-256", },
-	{ SADB_X_AALG_SHA2_384,	"hmac-sha2-384", },
-	{ SADB_X_AALG_SHA2_512,	"hmac-sha2-512", },
-	{ SADB_X_AALG_AES_XCBC_MAC, "aes-xcbc-mac", },
-	{ SADB_X_AALG_AES128GMAC, "aes-128-gmac", },
-	{ SADB_X_AALG_AES192GMAC, "aes-192-gmac", },
-	{ SADB_X_AALG_AES256GMAC, "aes-256-gmac", },
-};
-static const struct alg espalgs[] = {
-	{ SADB_EALG_NONE,	"none", },
-	{ SADB_EALG_DESCBC,	"des-cbc", },
-	{ SADB_EALG_3DESCBC,	"3des-cbc", },
-	{ SADB_EALG_NULL,	"null", },
-	{ SADB_X_EALG_CAST128CBC, "cast128-cbc", },
-	{ SADB_X_EALG_BLOWFISHCBC, "blowfish-cbc", },
-	{ SADB_X_EALG_RIJNDAELCBC, "aes-cbc", },
-	{ SADB_X_EALG_CAMELLIACBC, "camellia-cbc", },
-	{ SADB_X_EALG_AESCTR,	"aes-ctr", },
-	{ SADB_X_EALG_AESGCM16,	"aes-gcm-16", },
-	{ SADB_X_EALG_AESGMAC, "aes-gmac", },
-};
-static const struct alg ipcompalgs[] = {
-	{ SADB_X_CALG_NONE,	"none", },
-	{ SADB_X_CALG_OUI,	"oui", },
-	{ SADB_X_CALG_DEFLATE,	"deflate", },
-	{ SADB_X_CALG_LZS,	"lzs", },
-};
-#define	N(a)	(sizeof(a)/sizeof(a[0]))
 
-static const char*
-algname(int a, const struct alg algs[], int nalgs)
+static const char *ahalgs[] = { AH_ALG_STR };
+static const char *espalgs[] = { ESP_ALG_STR };
+static const char *ipcompalgs[] = { IPCOMP_ALG_STR };
+
+static const char *
+algname(size_t a, const char *algs[], size_t nalgs)
 {
 	static char buf[80];
-	int i;
 
-	for (i = 0; i < nalgs; i++)
-		if (algs[i].a == a)
-			return algs[i].name;
-	snprintf(buf, sizeof(buf), "alg#%u", a);
+	if (a < nalgs)
+		return algs[a];
+	snprintf(buf, sizeof(buf), "alg#%zu", a);
 	return buf;
 }
 
@@ -135,8 +102,7 @@ fast_ipsec_stats(u_long off, const char *name)
 	uint64_t ipcs[IPCOMP_NSTATS];
 	uint64_t ipips[IPIP_NSTATS];
 	int status;
-	size_t slen;
-	int i;
+	size_t slen, i;
 
 	if (! use_sysctl) {
 		warnx("IPsec stats not available via KVM.");
@@ -220,7 +186,7 @@ fast_ipsec_stats(u_long off, const char *name)
 	for (i = 0; i < AH_ALG_MAX; i++)
 		if (ahstats[AH_STAT_HIST + i])
 			printf("\t\tah packets with %s: %"PRIu64"\n"
-				, algname(i, aalgs, N(aalgs))
+				, algname(i, ahalgs, __arraycount(ahalgs))
 				, ahstats[AH_STAT_HIST + i]
 			);
 	AHSTAT(ahstats[AH_STAT_IBYTES], "bytes received");
@@ -252,7 +218,7 @@ fast_ipsec_stats(u_long off, const char *name)
 	for (i = 0; i < ESP_ALG_MAX; i++)
 		if (espstats[ESP_STAT_HIST + i])
 			printf("\t\tesp packets with %s: %"PRIu64"\n"
-				, algname(i, espalgs, N(espalgs))
+				, algname(i, espalgs, __arraycount(espalgs))
 				, espstats[ESP_STAT_HIST + i]
 			);
 	ESPSTAT(espstats[ESP_STAT_IBYTES], "bytes received");
@@ -298,8 +264,8 @@ fast_ipsec_stats(u_long off, const char *name)
 	for (i = 0; i < IPCOMP_ALG_MAX; i++)
 		if (ipcs[IPCOMP_STAT_HIST + i])
 			printf("\t\tIPcomp packets with %s: %"PRIu64"\n"
-				, algname(i, ipcompalgs, N(ipcompalgs))
-				, ipcs[IPCOMP_STAT_HIST + i]
+			    , algname(i, ipcompalgs, __arraycount(ipcompalgs))
+			    , ipcs[IPCOMP_STAT_HIST + i]
 			);
 	IPCOMP(ipcs[IPCOMP_STAT_IBYTES],"input bytes");
 	IPCOMP(ipcs[IPCOMP_STAT_OBYTES],"output bytes");

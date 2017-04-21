@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.11 2017/01/11 09:08:59 hannken Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.11.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -76,13 +76,13 @@ struct vnode_impl {
 	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */
 	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m: vnodes for mount point */
 	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
-	krwlock_t vi_lock;			/* -: lock for this vnode */
+	krwlock_t *vi_lock;			/* -: lock for this vnode */
 	struct vcache_key vi_key;		/* c: vnode cache key */
 };
 typedef struct vnode_impl vnode_impl_t;
 
-#define VIMPL_TO_VNODE(vip)	((vnode_t *)(vip))
-#define VNODE_TO_VIMPL(vp)	((vnode_impl_t *)(vp))
+#define VIMPL_TO_VNODE(vip)	(&(vip)->vi_vnode)
+#define VNODE_TO_VIMPL(vp)	container_of((vp), struct vnode_impl, vi_vnode)
 
 /*
  * Vnode manipulation functions.

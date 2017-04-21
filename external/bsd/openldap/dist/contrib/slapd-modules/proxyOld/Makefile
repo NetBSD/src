@@ -1,7 +1,7 @@
 # $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 2005-2014 The OpenLDAP Foundation.
+# Copyright 2005-2016 The OpenLDAP Foundation.
 # Portions Copyright 2005 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -13,7 +13,7 @@
 # <http://www.OpenLDAP.org/license.html>.
 
 LDAP_SRC = ../../..
-LDAP_BUILD = ../../..
+LDAP_BUILD = $(LDAP_SRC)
 LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/slapd
 LDAP_LIB = $(LDAP_BUILD)/libraries/libldap_r/libldap_r.la \
 	$(LDAP_BUILD)/libraries/liblber/liblber.la

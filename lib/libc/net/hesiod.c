@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.28 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.28.4.1 2017/04/21 16:53:09 bouyer Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -51,7 +51,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.28 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.28.4.1 2017/04/21 16:53:09 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -152,10 +152,8 @@ hesiod_init(void **context)
 
 	serrno = errno;
 	if (ctx) {
-		if (ctx->lhs)
-			free(ctx->lhs);
-		if (ctx->rhs)
-			free(ctx->rhs);
+		free(ctx->lhs);
+		free(ctx->rhs);
 		free(ctx);
 	}
 	errno = serrno;
@@ -555,8 +553,7 @@ hes_to_bind(const char *name, const char *type)
 
 	if (init_context() < 0)
 		return NULL;
-	if (bindname)
-		free(bindname);
+
 	bindname = hesiod_to_bind(context, name, type);
 	if (!bindname)
 		translate_errors();

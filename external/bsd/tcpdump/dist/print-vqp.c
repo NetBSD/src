@@ -12,24 +12,23 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  *
- * support for the Cisco prop. VQP Protocol
- *
  * Original code by Carles Kishimoto <Carles.Kishimoto@bsc.es>
  */
 
+/* \summary: Cisco VLAN Query Protocol (VQP) printer */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vqp.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: print-vqp.c,v 1.4.4.1 2017/04/21 16:52:36 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 #include "addrtoname.h"
 

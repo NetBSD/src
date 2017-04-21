@@ -1,6 +1,6 @@
-#	$NetBSD: list.images,v 1.11 2016/01/30 00:52:11 tsutsui Exp $
+#	$NetBSD: list.images,v 1.11.4.1 2017/04/21 16:51:08 bouyer Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/atari/stand
+SRCDIRS	bin sbin usr.bin usr.sbin sys/arch/atari/stand
 LIBS	libhack.o -lprop -lrmt -lz -lutil -lcurses -lterminfo -ll -lm
 
 # init invokes the shell as -sh

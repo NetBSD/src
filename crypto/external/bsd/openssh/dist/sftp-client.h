@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-client.h,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: sftp-client.h,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: sftp-client.h,v 1.27 2015/05/08 06:45:13 djm Exp $ */
 
 /*

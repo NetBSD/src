@@ -1,8 +1,8 @@
-/*	$NetBSD: mtest6.c,v 1.1.1.1 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: mtest6.c,v 1.1.1.1.14.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* mtest6.c - memory-mapped database tester/toy */
 /*
- * Copyright 2011 Howard Chu, Symas Corp.
+ * Copyright 2011-2016 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,12 +15,16 @@
  */
 
 /* Tests for DB splits and merges */
-#define _XOPEN_SOURCE 500		/* srandom(), random() */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "lmdb.h"
+
+#define E(expr) CHECK((rc = (expr)) == MDB_SUCCESS, #expr)
+#define RES(err, expr) ((rc = expr) == (err) || (CHECK(!rc, #expr), 0))
+#define CHECK(test, msg) ((test) ? (void)0 : ((void)fprintf(stderr, \
+	"%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 
 char dkbuf[1024];
 
@@ -29,7 +33,7 @@ int main(int argc,char * argv[])
 	int i = 0, j = 0, rc;
 	MDB_env *env;
 	MDB_dbi dbi;
-	MDB_val key, data;
+	MDB_val key, data, sdata;
 	MDB_txn *txn;
 	MDB_stat mst;
 	MDB_cursor *cursor;
@@ -38,94 +42,100 @@ int main(int argc,char * argv[])
 	long kval;
 	char *sval;
 
-	srandom(time(NULL));
+	srand(time(NULL));
 
-	rc = mdb_env_create(&env);
-	rc = mdb_env_set_mapsize(env, 10485760);
-	rc = mdb_env_set_maxdbs(env, 4);
-	rc = mdb_env_open(env, "./testdb", MDB_FIXEDMAP|MDB_NOSYNC, 0664);
-	rc = mdb_txn_begin(env, NULL, 0, &txn);
-	rc = mdb_open(txn, "id2", MDB_CREATE|MDB_INTEGERKEY, &dbi);
-	rc = mdb_cursor_open(txn, dbi, &cursor);
-	rc = mdb_stat(txn, dbi, &mst);
+	E(mdb_env_create(&env));
+	E(mdb_env_set_mapsize(env, 10485760));
+	E(mdb_env_set_maxdbs(env, 4));
+	E(mdb_env_open(env, "./testdb", MDB_FIXEDMAP|MDB_NOSYNC, 0664));
+
+	E(mdb_txn_begin(env, NULL, 0, &txn));
+	E(mdb_dbi_open(txn, "id6", MDB_CREATE|MDB_INTEGERKEY, &dbi));
+	E(mdb_cursor_open(txn, dbi, &cursor));
+	E(mdb_stat(txn, dbi, &mst));
 
 	sval = calloc(1, mst.ms_psize / 4);
 	key.mv_size = sizeof(long);
 	key.mv_data = &kval;
-	data.mv_size = mst.ms_psize / 4 - 30;
-	data.mv_data = sval;
+	sdata.mv_size = mst.ms_psize / 4 - 30;
+	sdata.mv_data = sval;
 
 	printf("Adding 12 values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
 		kval = i*5;
 		sprintf(sval, "%08x", kval);
-		rc = mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE);
+		data = sdata;
+		(void)RES(MDB_KEYEXIST, mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE));
 	}
 	printf("Adding 12 more values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
 		kval = i*5+4;
 		sprintf(sval, "%08x", kval);
-		rc = mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE);
+		data = sdata;
+		(void)RES(MDB_KEYEXIST, mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE));
 	}
 	printf("Adding 12 more values, should yield 3 splits\n");
 	for (i=0;i<12;i++) {
 		kval = i*5+1;
 		sprintf(sval, "%08x", kval);
-		rc = mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE);
+		data = sdata;
+		(void)RES(MDB_KEYEXIST, mdb_cursor_put(cursor, &key, &data, MDB_NOOVERWRITE));
 	}
-	rc = mdb_cursor_get(cursor, &key, &data, MDB_FIRST);
+	E(mdb_cursor_get(cursor, &key, &data, MDB_FIRST));
 
 	do {
 		printf("key: %p %s, data: %p %.*s\n",
 			key.mv_data,  mdb_dkey(&key, dkbuf),
 			data.mv_data, (int) data.mv_size, (char *) data.mv_data);
 	} while ((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0);
+	CHECK(rc == MDB_NOTFOUND, "mdb_cursor_get");
 	mdb_cursor_close(cursor);
 	mdb_txn_commit(txn);
 
 #if 0
 	j=0;
 
-	for (i= count - 1; i > -1; i-= (random()%5)) {
+	for (i= count - 1; i > -1; i-= (rand()%5)) {
 		j++;
 		txn=NULL;
-		rc = mdb_txn_begin(env, NULL, 0, &txn);
+		E(mdb_txn_begin(env, NULL, 0, &txn));
 		sprintf(kval, "%03x", values[i & ~0x0f]);
 		sprintf(sval, "%03x %d foo bar", values[i], values[i]);
 		key.mv_size = sizeof(int);
 		key.mv_data = kval;
 		data.mv_size = sizeof(sval);
 		data.mv_data = sval;
-		rc = mdb_del(txn, dbi, &key, &data);
-		if (rc) {
+		if (RES(MDB_NOTFOUND, mdb_del(txn, dbi, &key, &data))) {
 			j--;
 			mdb_txn_abort(txn);
 		} else {
-			rc = mdb_txn_commit(txn);
+			E(mdb_txn_commit(txn));
 		}
 	}
 	free(values);
 	printf("Deleted %d values\n", j);
 
-	rc = mdb_env_stat(env, &mst);
-	rc = mdb_txn_begin(env, NULL, 1, &txn);
-	rc = mdb_cursor_open(txn, dbi, &cursor);
+	E(mdb_env_stat(env, &mst));
+	E(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
+	E(mdb_cursor_open(txn, dbi, &cursor));
 	printf("Cursor next\n");
 	while ((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0) {
 		printf("key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
+	CHECK(rc == MDB_NOTFOUND, "mdb_cursor_get");
 	printf("Cursor prev\n");
 	while ((rc = mdb_cursor_get(cursor, &key, &data, MDB_PREV)) == 0) {
 		printf("key: %.*s, data: %.*s\n",
 			(int) key.mv_size,  (char *) key.mv_data,
 			(int) data.mv_size, (char *) data.mv_data);
 	}
+	CHECK(rc == MDB_NOTFOUND, "mdb_cursor_get");
 	mdb_cursor_close(cursor);
-	mdb_close(txn, dbi);
-
 	mdb_txn_abort(txn);
+
+	mdb_dbi_close(env, dbi);
 #endif
 	mdb_env_close(env);
 

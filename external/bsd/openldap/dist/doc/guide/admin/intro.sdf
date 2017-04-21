@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2014 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2016 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Introduction to OpenLDAP Directory Services
 
@@ -265,17 +265,16 @@ LDAPv2 is disabled by default.
 H2: LDAP vs RDBMS
 
 This question is raised many times, in different forms. The most common, 
-however, is: {{Why doesn't OpenLDAP drop Berkeley DB and use a relational 
-database management system (RDBMS) instead?}} In general, expecting that the 
-sophisticated algorithms implemented by commercial-grade RDBMS would make 
-{{OpenLDAP}} be faster or somehow better and, at the same time, permitting 
-sharing of data with other applications.
+however, is: {{Why doesn't OpenLDAP use a relational database management
+ system (RDBMS) instead of an embedded key/value store like LMDB?}} In
+general, expecting that the sophisticated algorithms implemented by
+commercial-grade RDBMS would make {{OpenLDAP}} be faster or somehow better
+and, at the same time, permitting sharing of data with other applications.
 
 The short answer is that use of an embedded database and custom indexing system 
 allows OpenLDAP to provide greater performance and scalability without loss of 
-reliability. OpenLDAP uses Berkeley DB concurrent / transactional 
-database software. This is the same software used by leading commercial 
-directory software.
+reliability. OpenLDAP uses {{TERM:LMDB}} concurrent / transactional 
+database software.
 
 Now for the long answer. We are all confronted all the time with the choice 
 RDBMSes vs. directories. It is a hard choice and no simple answer exists.
@@ -331,7 +330,7 @@ indices for the first table. Index tables are not database indices, but are
 fully managed by the LDAP server-side implementation. However, the database 
 becomes unusable from SQL. And, thus, a fully fledged database system provides 
 little or no advantage. The full generality of the database is unneeded. 
-Much better to use something light and fast, like Berkeley DB. 
+Much better to use something light and fast, like {{TERM:LMDB}}.
 
 A completely different way to see this is to give up any hopes of implementing 
 the directory data model. In this case, LDAP is used as an access protocol to 
@@ -403,12 +402,16 @@ tags.
 
 {{B:Choice of database backends}}: {{slapd}} comes with a variety
 of different database backends you can choose from. They include
-{{TERM:BDB}}, a high-performance transactional database backend;
+{{TERM:MDB}}, a hierarchical high-performance transactional database backend;
+{{TERM:BDB}}, a high-performance transactional database backend (deprecated);
 {{TERM:HDB}}, a hierarchical high-performance transactional
-backend; {{SHELL}}, a backend interface to arbitrary shell scripts;
+backend (deprecated); {{SHELL}}, a backend interface to arbitrary shell scripts;
 and PASSWD, a simple backend interface to the {{passwd}}(5) file.
-The BDB and HDB backends utilize {{ORG:Oracle}} {{PRD:Berkeley
-DB}}.
+The MDB backend utilizes {{TERM:LMDB}}, a high performance replacement
+for {{ORG[expand]Oracle}}'s Berkeley DB.
+The BDB and HDB backends utilize {{ORG[expand]Oracle}} Berkeley DB. These
+backends have been deprecated as LMDB provides significantly higher read
+and write throughput and data reliability.
 
 {{B:Multiple database instances}}: {{slapd}} can be configured to
 serve multiple databases at the same time. This means that a single

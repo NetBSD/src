@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.77 2017/01/07 18:28:49 christos Exp $ */
+/* $NetBSD: scan.l,v 1.77.2.1 2017/04/21 16:54:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.77 2017/01/07 18:28:49 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.77.2.1 2017/04/21 16:54:16 bouyer Exp $");
 #endif
 
 #include <stdlib.h>
@@ -218,6 +218,7 @@ static	struct	kwtab {
 	{ "bounded",	T_AT_BOUNDED,	0,	0,	0,	  0,0,1,1,5 },
 	{ "break",	T_BREAK,	0,	0,	0,	  0,0,0,0,1 },
 	{ "buffer",	T_AT_BUFFER,	0,	0,	0,	  0,0,1,1,5 },
+	{ "builtin_offsetof", T_BUILTIN_OFFSETOF, 0, 0, 0,	  0,0,1,0,2 },
 	{ "case",	T_CASE,		0,	0,	0,	  0,0,0,0,1 },
 	{ "char",	T_TYPE,		0,	CHAR,	0,	  0,0,0,0,1 },
 	{ "cold",	T_AT_COLD,	0,	0,	0,	  0,0,1,1,5 },
@@ -1090,6 +1091,9 @@ directive(void)
 		continue;
 
 	if (!isdigit((unsigned char)c)) {
+		if (strncmp(cp, "pragma", 6) == 0
+		    && isspace((unsigned char)cp[6]))
+			return;
 	error:
 		/* undefined or invalid # directive */
 		warning(255);

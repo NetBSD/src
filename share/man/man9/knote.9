@@ -1,4 +1,4 @@
-.\"	$NetBSD: knote.9,v 1.15 2014/03/18 18:20:40 riastradh Exp $
+.\"	$NetBSD: knote.9,v 1.15.12.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ filter to record the activity.
 .Fn knote
 must not be called from interrupt contexts running at an interrupt
 priority level higher than
-.Fn splsched .
+.Xr splsched 9 .
 .Pp
 .Fn KNOTE
 is a macro that calls
@@ -104,6 +104,6 @@ and then in
 .Nx 2.0 .
 .Sh AUTHORS
 The
-.Fn kqueue
+.Xr kqueue 2
 system was written by
 .An Jonathan Lemon Aq Mt jlemon@FreeBSD.org .

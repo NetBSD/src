@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.157 2015/04/11 15:24:25 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.157.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.157 2015/04/11 15:24:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.157.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,7 +101,7 @@ assert_sleepable(void)
  */
 
 #define	_KERNEL_LOCK_ABORT(msg)						\
-    LOCKDEBUG_ABORT(kernel_lock, &_kernel_lock_ops, __func__, msg)
+    LOCKDEBUG_ABORT(__func__, __LINE__, kernel_lock, &_kernel_lock_ops, msg)
 
 #ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ASSERT(cond)					\

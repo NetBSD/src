@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2014/08/08 16:56:31 joerg Exp $
+#	$NetBSD: Makefile,v 1.29.12.1 2017/04/21 16:53:34 bouyer Exp $
 
 NOMAN= # defined
 
@@ -21,7 +21,7 @@ NEWVERSWHAT=	"BOOT"
 SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c devopen.c
 SRCS+= filesystem.c inkernel.c io.c tgets.c prf.c monitor.c
-SRCS+= kbd.c ns16550.c vers.c vreset.c vga.c 
+SRCS+= kbd.c ns16550.c vreset.c vga.c 
 SRCS+= pci.c sd.c siop.c
 
 CFLAGS= -Os -ffreestanding
@@ -53,19 +53,17 @@ LIBCRTEND=
 
 RELOC= 0x800000
 
-CLEANFILES+= vers.c machine powerpc ${PROG}.elf
+CLEANFILES+= machine powerpc ${PROG}.elf
 
 LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
-
-vers.c: ${.CURDIR}/../boot/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/../boot/version "prep" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}
 	${LD} -o ${PROG}.elf -N -T ${.CURDIR}/../boot/ld.script \
 		-Ttext ${RELOC} ${OBJS} ${LIBS}
 	${STRIP} -o ${PROG} ${PROG}.elf
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.h,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: mail_queue.h,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
@@ -145,6 +145,8 @@ extern int mail_queue_id_ok(const char *);
 	unsigned long _us_val; \
 	vstring_strncpy((bp), (zp) - MQID_LG_USEC_PAD, MQID_LG_USEC_PAD); \
 	MQID_LG_DECODE_USEC(STR(bp), _us_val, _error); \
+	if (_error) \
+	    _us_val = 0; \
 	(void) MQID_SH_ENCODE_USEC((bp), _us_val); \
     } while (0)
 

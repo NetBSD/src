@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon.c,v 1.1.1.5 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: daemon.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -25,6 +25,9 @@
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: daemon.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1380,7 +1383,10 @@ slap_open_listener(
 #endif /* LDAP_PF_LOCAL || SLAP_X_LISTENER_MOD */
 
 	ldap_free_urldesc( lud );
-	if ( err ) return -1;
+	if ( err ) {
+		slap_free_listener_addresses(sal);
+		return -1;
+	}
 
 	/* If we got more than one address returned, we need to make space
 	 * for it in the slap_listeners array.

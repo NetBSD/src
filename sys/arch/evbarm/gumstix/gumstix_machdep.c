@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.57 2016/10/20 09:53:08 skrll Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.57.2.1 2017/04/21 16:53:26 bouyer Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -206,13 +206,16 @@
 #endif
 
 /*
- * The range 0xc1000000 - 0xcfffffff is available for kernel VM space
- * Core-logic registers and I/O mappings occupy 0xfd000000 - 0xffffffff
+ * The range 0xc1000000 - 0xfd000000 is available for kernel VM space
+ * Core-logic registers and I/O mappings occupy
+ *
+ *    0xfd000000 - 0xfd800000	on gumstix
+ *    0xc0000000 - 0xc0400000	on overo, duovero and pepper
  */
 #ifndef KERNEL_VM_BASE
-#define	KERNEL_VM_BASE		0xc1000000
+#define	KERNEL_VM_BASE		0xc8000000
 #endif
-#define KERNEL_VM_SIZE		0x0f000000
+#define KERNEL_VM_SIZE		0x35000000
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
@@ -487,6 +490,9 @@ initarm(void *arg)
 	 */
 
 #if defined(CPU_XSCALE)
+	extern vaddr_t xscale_cache_clean_addr;
+	xscale_cache_clean_addr = 0xff000000U;
+
 	cpu_reset_address = NULL;
 #elif defined(OMAP2)
 	cpu_reset_address = omap_reset;

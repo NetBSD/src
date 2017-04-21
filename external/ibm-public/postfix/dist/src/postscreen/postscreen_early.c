@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_early.c,v 1.1.1.2 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: postscreen_early.c,v 1.1.1.2.10.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -89,15 +94,15 @@ static void psc_whitelist_non_dnsbl(PSC_STATE *state)
 		state->flags |= PSC_STATE_FLAG_BYTINDX_PASS(tindx);
 	    }
 	    /* Update expiration even if the test was completed or disabled. */
-	    if (state->expire_time[tindx] < now + var_psc_dnsbl_ttl)
-		state->expire_time[tindx] = now + var_psc_dnsbl_ttl;
+	    if (state->client_info->expire_time[tindx] < now + state->dnsbl_ttl)
+		state->client_info->expire_time[tindx] = now + state->dnsbl_ttl;
 	}
     }
 }
 
 /* psc_early_event - handle pre-greet, EOF, and DNSBL results. */
 
-static void psc_early_event(int event, char *context)
+static void psc_early_event(int event, void *context)
 {
     const char *myname = "psc_early_event";
     PSC_STATE *state = (PSC_STATE *) context;
@@ -166,12 +171,13 @@ static void psc_early_event(int event, char *context)
 		state->dnsbl_score =
 		    psc_dnsbl_retrieve(state->smtp_client_addr,
 				       &state->dnsbl_name,
-				       state->dnsbl_index);
+				       state->dnsbl_index,
+				       &state->dnsbl_ttl);
 		if (var_psc_dnsbl_wthresh < 0)
 		    psc_whitelist_non_dnsbl(state);
 	    }
 	    if (state->dnsbl_score < var_psc_dnsbl_thresh) {
-		state->dnsbl_stamp = event_time() + var_psc_dnsbl_ttl;
+		state->dnsbl_stamp = event_time() + state->dnsbl_ttl;
 		PSC_PASS_SESSION_STATE(state, "dnsbl test",
 				       PSC_STATE_FLAG_DNSBL_PASS);
 	    } else {
@@ -230,7 +236,8 @@ static void psc_early_event(int event, char *context)
 		&& (state->flags & PSC_STATE_FLAG_DNSBL_TODO))
 		(void) psc_dnsbl_retrieve(state->smtp_client_addr,
 					  &state->dnsbl_name,
-					  state->dnsbl_index);
+					  state->dnsbl_index,
+					  &state->dnsbl_ttl);
 	    /* XXX Wait for DNS replies to come in. */
 	    psc_hangup_event(state);
 	    return;
@@ -248,7 +255,8 @@ static void psc_early_event(int event, char *context)
 		&& (state->flags & PSC_STATE_FLAG_DNSBL_TODO))
 		(void) psc_dnsbl_retrieve(state->smtp_client_addr,
 					  &state->dnsbl_name,
-					  state->dnsbl_index);
+					  state->dnsbl_index,
+					  &state->dnsbl_ttl);
 	    PSC_DROP_SESSION_STATE(state, "521 5.5.1 Protocol error\r\n");
 	    return;
 	case PSC_ACT_ENFORCE:
@@ -287,7 +295,7 @@ static void psc_early_event(int event, char *context)
 
 /* psc_early_dnsbl_event - cancel pregreet timer if waiting for DNS only */
 
-static void psc_early_dnsbl_event(int unused_event, char *context)
+static void psc_early_dnsbl_event(int unused_event, void *context)
 {
     const char *myname = "psc_early_dnsbl_event";
     PSC_STATE *state = (PSC_STATE *) context;
@@ -300,7 +308,7 @@ static void psc_early_dnsbl_event(int unused_event, char *context)
      */
     state->dnsbl_score =
 	psc_dnsbl_retrieve(state->smtp_client_addr, &state->dnsbl_name,
-			   state->dnsbl_index);
+			   state->dnsbl_index, &state->dnsbl_ttl);
     if (var_psc_dnsbl_wthresh < 0)
 	psc_whitelist_non_dnsbl(state);
 
@@ -343,7 +351,7 @@ void    psc_early_tests(PSC_STATE *state)
     if ((state->flags & PSC_STATE_FLAG_DNSBL_TODO) != 0)
 	state->dnsbl_index =
 	    psc_dnsbl_request(state->smtp_client_addr, psc_early_dnsbl_event,
-			      (char *) state);
+			      (void *) state);
     else
 	state->dnsbl_index = -1;
     state->dnsbl_score = NO_DNSBL_SCORE;
@@ -353,9 +361,9 @@ void    psc_early_tests(PSC_STATE *state)
      */
     if ((state->flags & PSC_STATE_FLAG_PREGR_TODO) != 0)
 	PSC_READ_EVENT_REQUEST(vstream_fileno(state->smtp_client_stream),
-		       psc_early_event, (char *) state, PSC_EFF_GREET_WAIT);
+		       psc_early_event, (void *) state, PSC_EFF_GREET_WAIT);
     else
-	event_request_timer(psc_early_event, (char *) state, PSC_EFF_GREET_WAIT);
+	event_request_timer(psc_early_event, (void *) state, PSC_EFF_GREET_WAIT);
 }
 
 /* psc_early_init - initialize early tests */

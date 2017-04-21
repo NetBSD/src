@@ -1,6 +1,5 @@
-/*	$NetBSD: sshconnect1.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: sshconnect1.c,v 1.79 2016/09/19 07:52:42 natano Exp $ */
-
+/*	$NetBSD: sshconnect1.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
+/* $OpenBSD: sshconnect1.c,v 1.80 2017/03/10 03:53:11 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect1.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -984,7 +983,8 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 		cookie[i] = packet_get_char();
 
 	/* Get the public key. */
-	server_key = key_new(KEY_RSA1);
+	if ((server_key = key_new(KEY_RSA1)) == NULL)
+		fatal("%s: key_new(KEY_RSA1) failed", __func__);
 	bits = packet_get_int();
 	packet_get_bignum(server_key->rsa->e);
 	packet_get_bignum(server_key->rsa->n);
@@ -996,7 +996,8 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 		logit("Warning: This may be due to an old implementation of ssh.");
 	}
 	/* Get the host key. */
-	host_key = key_new(KEY_RSA1);
+	if ((host_key = key_new(KEY_RSA1)) == NULL)
+		fatal("%s: key_new(KEY_RSA1) failed", __func__);
 	bits = packet_get_int();
 	packet_get_bignum(host_key->rsa->e);
 	packet_get_bignum(host_key->rsa->n);

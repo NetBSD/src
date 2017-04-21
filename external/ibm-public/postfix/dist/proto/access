@@ -233,7 +233,7 @@
 #	If multiple BCC actions are specified within the same SMTP
 #	MAIL transaction, only the last action will be used.
 # .sp
-#	This feature is not part of the stable Postfix release.
+#	This feature is available in Postfix 3.0 and later.
 # \" .IP "\fBDELAY \fItime\fR"
 # \"	Place the message into the deferred queue, and delay the
 # \"	initial delivery attempt by \fItime\fR. The time value may
@@ -340,12 +340,19 @@
 #	This feature is available in Postfix 2.1 and later.
 # .IP "\fBREDIRECT \fIuser@domain\fR"
 #	After the message is queued, send the message to the specified
-#	address instead of the intended recipient(s).
+#	address instead of the intended recipient(s).  When multiple
+#	\fBREDIRECT\fR actions fire, only the last one takes effect.
 # .sp
-#	Note: this action overrides the FILTER action, and currently affects
-#	all recipients of the message.
+#	Note: this action overrides the FILTER action, and currently
+#	overrides all recipients of the message.
 # .sp
 #	This feature is available in Postfix 2.1 and later.
+# .IP "\fBINFO \fIoptional text...\fR
+#	Log an informational record with the optional text, together
+#	with client information and if available, with helo, sender,
+#	recipient and protocol information.
+# .sp
+#	This feature is available in Postfix 3.0 and later.
 # .IP "\fBWARN \fIoptional text...\fR
 #	Log a warning with the optional text, together with client information
 #	and if available, with helo, sender, recipient and protocol information.
@@ -462,4 +469,9 @@
 #	IBM T.J. Watson Research
 #	P.O. Box 704
 #	Yorktown Heights, NY 10598, USA
+#
+#	Wietse Venema
+#	Google, Inc.
+#	111 8th Avenue
+#	New York, NY 10011, USA
 #--

@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: pipe_command.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _PIPE_COMMAND_H_INCLUDED_
 #define _PIPE_COMMAND_H_INCLUDED_
@@ -18,6 +18,7 @@
   */
 #include <vstream.h>
 #include <vstring.h>
+#include <check_arg.h>
 
  /*
   * Global library.
@@ -26,7 +27,7 @@
 #include <dsn_buf.h>
 
  /*
-  * Request arguments.
+  * Legacy API: type-unchecked arguments, internal use.
   */
 #define PIPE_CMD_END		0	/* terminator */
 #define PIPE_CMD_COMMAND	1	/* command is string */
@@ -44,6 +45,32 @@
 #define PIPE_CMD_ORIG_RCPT	13	/* mail_copy() original recipient */
 #define PIPE_CMD_CWD		14	/* working directory */
 #define PIPE_CMD_CHROOT		15	/* chroot() before exec() */
+
+ /*
+  * Safer API: type-checked arguments, external use.
+  */
+#define CA_PIPE_CMD_END		PIPE_CMD_END
+#define CA_PIPE_CMD_COMMAND(v)	PIPE_CMD_COMMAND, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_ARGV(v)	PIPE_CMD_ARGV, CHECK_PPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_COPY_FLAGS(v) PIPE_CMD_COPY_FLAGS, CHECK_VAL(PIPE_CMD, int, (v))
+#define CA_PIPE_CMD_SENDER(v)	PIPE_CMD_SENDER, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_DELIVERED(v) PIPE_CMD_DELIVERED, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_UID(v)	PIPE_CMD_UID, CHECK_VAL(PIPE_CMD, uid_t, (v))
+#define CA_PIPE_CMD_GID(v)	PIPE_CMD_GID, CHECK_VAL(PIPE_CMD, gid_t, (v))
+#define CA_PIPE_CMD_TIME_LIMIT(v) PIPE_CMD_TIME_LIMIT, CHECK_VAL(PIPE_CMD, int, (v))
+#define CA_PIPE_CMD_ENV(v)	PIPE_CMD_ENV, CHECK_PPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_SHELL(v)	PIPE_CMD_SHELL, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_EOL(v)	PIPE_CMD_EOL, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_EXPORT(v)	PIPE_CMD_EXPORT, CHECK_PPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_ORIG_RCPT(v) PIPE_CMD_ORIG_RCPT, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_CWD(v)	PIPE_CMD_CWD, CHECK_CPTR(PIPE_CMD, char, (v))
+#define CA_PIPE_CMD_CHROOT(v)	PIPE_CMD_CHROOT, CHECK_CPTR(PIPE_CMD, char, (v))
+
+CHECK_VAL_HELPER_DCL(PIPE_CMD, uid_t);
+CHECK_VAL_HELPER_DCL(PIPE_CMD, int);
+CHECK_VAL_HELPER_DCL(PIPE_CMD, gid_t);
+CHECK_PPTR_HELPER_DCL(PIPE_CMD, char);
+CHECK_CPTR_HELPER_DCL(PIPE_CMD, char);
 
  /*
   * Command completion status.

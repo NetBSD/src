@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.34 2016/12/27 21:52:35 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.34.2.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -204,6 +204,7 @@ extern	tnode_t	*promote(op_t, int, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
 extern	void	cvtcon(op_t, int, type_t *, val_t *, val_t *);
 extern	tnode_t	*bldszof(type_t *);
+extern	tnode_t	*bldoffsetof(type_t *, sym_t *);
 extern	tnode_t	*bldalof(type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*funcarg(tnode_t *, tnode_t *);

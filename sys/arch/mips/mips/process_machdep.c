@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.37 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.37.14.1 2017/04/21 16:53:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.37 2014/01/04 00:10:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.37.14.1 2017/04/21 16:53:31 bouyer Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -144,7 +144,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs, size_t *regslen_p)
 		*regslen_p = sizeof(struct fpreg_oabi);
 #endif
 
-	fpu_save();
+	fpu_save(l);
 	memcpy(regs, &pcb->pcb_fpregs, sizeof(*regs));
 	return 0;
 }
@@ -156,7 +156,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs, size_t regslen)
 
 #ifndef NOFPU
 	/* to load FPA contents next time when FP insn is executed */
-	fpu_discard();
+	fpu_discard(l);
 #endif /* !NOFPU */
 
 #if defined(__mips_n32) || defined(__mips_n64)

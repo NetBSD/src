@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.7 2012/01/20 14:08:04 joerg Exp $	*/
+/*	$NetBSD: unix_recv_fd.c,v 1.7.26.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -74,7 +74,7 @@ int     unix_recv_fd(int fd)
     }       control_un;
     struct cmsghdr *cmptr;
 
-    memset((char *) &msg, 0, sizeof(msg));	/* Fix 200512 */
+    memset((void *) &msg, 0, sizeof(msg));	/* Fix 200512 */
     msg.msg_control = control_un.control;
     if (unix_pass_fd_fix & UNIX_PASS_FD_FIX_CMSG_LEN) {
 	msg.msg_controllen = CMSG_LEN(sizeof(newfd));	/* Fix 200506 */

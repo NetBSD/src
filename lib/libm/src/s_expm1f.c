@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_expm1f.c,v 1.10 2002/05/26 22:01:55 wiz Exp $");
+__RCSID("$NetBSD: s_expm1f.c,v 1.10.82.1 2017/04/21 16:53:11 bouyer Exp $");
 #endif
 
 #include "math.h"
@@ -46,7 +46,9 @@ expm1f(float x)
 	c = 0;
 	GET_FLOAT_WORD(hx,x);
 	xsb = hx&0x80000000;		/* sign bit of x */
+#ifdef DEAD_CODE
 	if(xsb==0) y=x; else y= -x;	/* y = |x| */
+#endif
 	hx &= 0x7fffffff;		/* high word of |x| */
 
     /* filter out huge and non-finite argument */

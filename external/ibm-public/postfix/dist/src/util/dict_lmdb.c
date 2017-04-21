@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_lmdb.c,v 1.1.1.1 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_lmdb.c,v 1.1.1.1.14.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,9 @@
 /* SYNOPSIS
 /*	#include <dict_lmdb.h>
 /*
-/*	size_t	dict_lmdb_map_size;
+/*	extern size_t dict_lmdb_map_size;
+/*
+/*	DEFINE_DICT_LMDB_MAP_SIZE;
 /*
 /*	DICT	*dict_lmdb_open(path, open_flags, dict_flags)
 /*	const char *name;
@@ -23,6 +25,10 @@
 /*	The dict_lmdb_map_size variable specifies the initial
 /*	database memory map size.  When a map becomes full its size
 /*	is doubled, and other programs pick up the size change.
+/*
+/*	This variable cannot be exported via the dict(3) API and
+/*	must therefore be defined in the calling program by invoking
+/*	the DEFINE_DICT_LMDB_MAP_SIZE macro at the global level.
 /* DIAGNOSTICS
 /*	Fatal errors: cannot open file, file write error, out of
 /*	memory.
@@ -117,8 +123,6 @@ typedef struct {
 	((int) (2 * sizeof(size_t) * CHAR_BIT))	/* Retries per bulk-mode
 						 * transaction */
 
-size_t  dict_lmdb_map_size = 8192;	/* Minimum size without SIGSEGV */
-
 /* #define msg_verbose 1 */
 
 /* dict_lmdb_lookup - find database entry */
@@ -129,7 +133,8 @@ static const char *dict_lmdb_lookup(DICT *dict, const char *name)
     MDB_val mdb_key;
     MDB_val mdb_value;
     const char *result = 0;
-    int     status, klen;
+    int     status;
+    ssize_t klen;
 
     dict->error = 0;
     klen = strlen(name);
@@ -232,7 +237,6 @@ static int dict_lmdb_update(DICT *dict, const char *name, const char *value)
 	name = lowercase(vstring_str(dict->fold_buf));
     }
     mdb_key.mv_data = (void *) name;
-
     mdb_value.mv_data = (void *) value;
     mdb_key.mv_size = strlen(name);
     mdb_value.mv_size = strlen(value);
@@ -303,7 +307,8 @@ static int dict_lmdb_delete(DICT *dict, const char *name)
 {
     DICT_LMDB *dict_lmdb = (DICT_LMDB *) dict;
     MDB_val mdb_key;
-    int     status = 1, klen;
+    int     status = 1;
+    ssize_t klen;
 
     dict->error = 0;
     klen = strlen(name);
@@ -431,6 +436,8 @@ static int dict_lmdb_sequence(DICT *dict, int function,
 	if (mdb_value.mv_data != 0 && mdb_value.mv_size > 0)
 	    *value = SCOPY(dict_lmdb->val_buf, mdb_value.mv_data,
 			   mdb_value.mv_size);
+	else
+	    *value = "";			/* XXX */
 	break;
 
 	/*
@@ -545,7 +552,7 @@ DICT   *dict_lmdb_open(const char *path, int open_flags, int dict_flags)
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_LMDB_OPEN_RETURN(d) { \
+#define DICT_LMDB_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	myfree(mdb_path); \
 	return (__d); \
@@ -676,14 +683,14 @@ DICT   *dict_lmdb_open(const char *path, int open_flags, int dict_flags)
      * memory corruption problem.
      */
     if (slmdb_control(&dict_lmdb->slmdb,
-		      SLMDB_CTL_API_RETRY_LIMIT, DICT_LMDB_API_RETRY_LIMIT,
-		      SLMDB_CTL_BULK_RETRY_LIMIT, DICT_LMDB_BULK_RETRY_LIMIT,
-		      SLMDB_CTL_LONGJMP_FN, dict_lmdb_longjmp,
-		      SLMDB_CTL_NOTIFY_FN, msg_verbose ?
-		      dict_lmdb_notify : (SLMDB_NOTIFY_FN) 0,
-		      SLMDB_CTL_ASSERT_FN, dict_lmdb_assert,
-		      SLMDB_CTL_CB_CONTEXT, (void *) dict_lmdb,
-		      SLMDB_CTL_END) != 0)
+		    CA_SLMDB_CTL_API_RETRY_LIMIT(DICT_LMDB_API_RETRY_LIMIT),
+		  CA_SLMDB_CTL_BULK_RETRY_LIMIT(DICT_LMDB_BULK_RETRY_LIMIT),
+		      CA_SLMDB_CTL_LONGJMP_FN(dict_lmdb_longjmp),
+		      CA_SLMDB_CTL_NOTIFY_FN(msg_verbose ?
+				    dict_lmdb_notify : (SLMDB_NOTIFY_FN) 0),
+		      CA_SLMDB_CTL_ASSERT_FN(dict_lmdb_assert),
+		      CA_SLMDB_CTL_CB_CONTEXT((void *) dict_lmdb),
+		      CA_SLMDB_CTL_END) != 0)
 	msg_panic("dict_lmdb_open: slmdb_control: %m");
 
     if (msg_verbose)

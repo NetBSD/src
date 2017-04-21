@@ -1,10 +1,10 @@
-/*	$NetBSD: rwmmap.c,v 1.1.1.4 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: rwmmap.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* rwmmap.c - rewrite/mapping routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2014 The OpenLDAP Foundation.
+ * Copyright 1999-2016 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -22,6 +22,9 @@
  * in OpenLDAP Software and subsequently enhanced by Pierangelo
  * Masarati.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rwmmap.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -217,7 +220,9 @@ rwm_map_attrnames(
 		return LDAP_NO_MEMORY;
 	}
 
-	for ( i = 0, j = 0; !BER_BVISNULL( &an[i].an_name ); i++ ) {
+	j = 0;
+	if ( an != NULL ) {
+	for ( i = 0; !BER_BVISNULL( &an[i].an_name ); i++ ) {
 		struct ldapmapping	*m;
 		int			at_drop_missing = 0,
 					oc_drop_missing = 0;
@@ -332,6 +337,7 @@ rwm_map_attrnames(
 				continue;
 			}
 		}
+	}
 	}
 
 	if ( op->o_bd->be_extra_anlist != NULL ) {

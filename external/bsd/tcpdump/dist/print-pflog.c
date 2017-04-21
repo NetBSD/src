@@ -21,10 +21,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pflog.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-pflog.c,v 1.6.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: OpenBSD packet filter log file printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -38,9 +39,9 @@ __RCSID("$NetBSD: print-pflog.c,v 1.6 2015/03/31 21:59:35 christos Exp $");
 #include <net/pfvar.h>
 #include <net/if_pflog.h>
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
+#include "netdissect.h"
 #include "extract.h"
 
 static const char tstr[] = "[|pflog]";
@@ -125,7 +126,7 @@ pflog_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h,
 	}
 
 #define MIN_PFLOG_HDRLEN	45
-	hdr = (struct pfloghdr *)p;
+	hdr = (const struct pfloghdr *)p;
 	if (hdr->length < MIN_PFLOG_HDRLEN) {
 		ND_PRINT((ndo, "[pflog: invalid header length!]"));
 		return (hdr->length);	/* XXX: not really */
@@ -138,7 +139,6 @@ pflog_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h,
 	}
 
 	/* print what we know */
-	hdr = (struct pfloghdr *)p;
 	ND_TCHECK(*hdr);
 	if (ndo->ndo_eflag)
 		pflog_print(ndo, hdr);

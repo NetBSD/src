@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.45 2014/11/28 08:28:17 uebayasi Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.45.6.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.45 2014/11/28 08:28:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.45.6.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.45 2014/11/28 08:28:17 uebayasi Ex
 #define	RW_DASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
-		rw_abort(rw, __func__, "assertion failed: " #cond);	\
+		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0);
 
 #else	/* LOCKDEBUG */
@@ -94,7 +94,7 @@ do {									\
 #define	RW_ASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
-		rw_abort(rw, __func__, "assertion failed: " #cond);	\
+		rw_abort(__func__, __LINE__, rw, "assertion failed: " #cond);\
 } while (/* CONSTCOND */ 0)
 
 #else
@@ -111,7 +111,7 @@ do {									\
 #define	RW_INHERITDEBUG(n, o)		/* nothing */
 #endif /* defined(LOCKDEBUG) */
 
-static void	rw_abort(krwlock_t *, const char *, const char *);
+static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
 static void	rw_dump(volatile void *);
 static lwp_t	*rw_owner(wchan_t);
 
@@ -183,13 +183,13 @@ rw_dump(volatile void *cookie)
  *	we ask the compiler to not inline it.
  */
 static void __noinline
-rw_abort(krwlock_t *rw, const char *func, const char *msg)
+rw_abort(const char *func, size_t line, krwlock_t *rw, const char *msg)
 {
 
 	if (panicstr != NULL)
 		return;
 
-	LOCKDEBUG_ABORT(rw, &rwlock_lockops, func, msg);
+	LOCKDEBUG_ABORT(func, line, rw, &rwlock_lockops, msg);
 }
 
 /*
@@ -338,7 +338,8 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			return;
 		}
 		if (__predict_false(RW_OWNER(rw) == curthread)) {
-			rw_abort(rw, __func__, "locking against myself");
+			rw_abort(__func__, __LINE__, rw,
+			    "locking against myself");
 		}
 		/*
 		 * If the lock owner is running on another CPU, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.24 2016/10/08 15:57:11 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.24.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.24 2016/10/08 15:57:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.24.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -169,6 +169,7 @@ static void	rt2860_switch_chan(struct rt2860_softc *,
 static int	rt2860_setup_beacon(struct rt2860_softc *);
 #endif
 static void	rt2860_enable_tsf_sync(struct rt2860_softc *);
+static void	rt2860_softintr(void *);
 
 static const struct {
 	uint32_t	reg;
@@ -253,6 +254,13 @@ rt2860_attach(void *xsc, int id)
 	    sc->mac_ver, sc->mac_rev, rt2860_get_rf(sc->rf_rev),
 	    sc->ntxchains, sc->nrxchains);
 
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, rt2860_softintr, sc);
+	if (sc->sc_soft_ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "could not establish softint\n");
+		error = EINVAL;
+		goto fail0;
+	}
+
 	/*
 	 * Allocate Tx (4 EDCAs + HCCA + Mgt) and Rx rings.
 	 */
@@ -285,6 +293,8 @@ rt2860_attach(void *xsc, int id)
 fail2:	rt2860_free_rx_ring(sc, &sc->rxq);
 fail1:	while (--qid >= 0)
 		rt2860_free_tx_ring(sc, &sc->txq[qid]);
+fail0:	softint_disestablish(sc->sc_soft_ih);
+	sc->sc_soft_ih = NULL;
 	return error;
 }
 
@@ -388,8 +398,12 @@ rt2860_attachhook(device_t self)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+	/* Use common softint-based if_input */
+	ifp->if_percpuq = if_percpuq_create(ifp);
+	if_register(ifp);
+
 	ic->ic_node_alloc = rt2860_node_alloc;
 	ic->ic_newassoc = rt2860_newassoc;
 #ifdef notyet
@@ -445,6 +459,11 @@ rt2860_detach(void *xsc)
 		rt2860_free_tx_ring(sc, &sc->txq[qid]);
 	rt2860_free_rx_ring(sc, &sc->rxq);
 	rt2860_free_tx_pool(sc);
+
+	if (sc->sc_soft_ih != NULL) {
+		softint_disestablish(sc->sc_soft_ih);
+		sc->sc_soft_ih = NULL;
+	}
 
 	if (sc->ucode != NULL)
 		free(sc->ucode, M_DEVBUF);
@@ -874,6 +893,7 @@ static void
 rt2860_updatestats(struct rt2860_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
 #ifndef IEEE80211_STA_ONLY
 	/*
@@ -896,12 +916,14 @@ rt2860_updatestats(struct rt2860_softc *sc)
 		}
 	}
 #endif
+	s = splnet();
 	if (ic->ic_opmode == IEEE80211_M_STA)
 		rt2860_iter_func(sc, ic->ic_bss);
 #ifndef IEEE80211_STA_ONLY
 	else
 		ieee80211_iterate_nodes(&ic->ic_sta, rt2860_iter_func, sc);
 #endif
+	splx(s);
 }
 
 static void
@@ -1227,6 +1249,9 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	struct ifnet *ifp = &sc->sc_if;
 	struct rt2860_tx_ring *ring = &sc->txq[qid];
 	uint32_t hw;
+	int s;
+
+	s = splnet();
 
 	rt2860_drain_stats_fifo(sc);
 
@@ -1258,6 +1283,8 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 		sc->qfullmsk &= ~(1 << qid);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	rt2860_start(ifp);
+
+	splx(s);
 }
 
 /*
@@ -1288,7 +1315,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 	struct mbuf *m, *m1;
 	uint32_t hw;
 	uint8_t ant, rssi;
-	int error;
+	int error, s;
 	struct rt2860_rx_radiotap_header *tap;
 	uint16_t phy;
 
@@ -1398,6 +1425,8 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		ant = rt2860_maxrssi_chain(sc, rxwi);
 		rssi = rxwi->rssi[ant];
 
+		s = splnet();
+
 		if (__predict_true(sc->sc_drvbpf == NULL))
 			goto skipbpf;
 
@@ -1445,6 +1474,8 @@ skipbpf:
 
 		/* node is no longer needed */
 		ieee80211_free_node(ni);
+
+		splx(s);
 
 skip:		rxd->sdl0 &= ~htole16(RT2860_RX_DDONE);
 
@@ -1494,13 +1525,16 @@ static void
 rt2860_gp_intr(struct rt2860_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
+	int s;
 
 	DPRINTFN(2, ("GP timeout state=%d\n", ic->ic_state));
 
+	s = splnet();
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ic);
 	else if (ic->ic_state == IEEE80211_S_RUN)
 		rt2860_updatestats(sc);
+	splx(s);
 }
 
 int
@@ -1514,6 +1548,22 @@ rt2860_intr(void *arg)
 		return 0;	/* device likely went away */
 	if (r == 0)
 		return 0;	/* not for us */
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+rt2860_softintr(void *arg)
+{
+	struct rt2860_softc *sc = arg;
+	uint32_t r;
+
+	r = RAL_READ(sc, RT2860_INT_STATUS);
+	if (__predict_false(r == 0xffffffff))
+		goto out;	/* device likely went away */
+	if (r == 0)
+		goto out;
 
 	/* acknowledge interrupts */
 	RAL_WRITE(sc, RT2860_INT_STATUS, r);
@@ -1555,7 +1605,9 @@ rt2860_intr(void *arg)
 	if (r & RT2860_MAC_INT_4)	/* GP timer */
 		rt2860_gp_intr(sc);
 
-	return 1;
+out:
+	/* enable interrupts */
+	RAL_WRITE(sc, RT2860_INT_MASK, 0x3fffc);
 }
 
 static int

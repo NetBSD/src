@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.36 2016/12/26 23:05:06 christos Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.36.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.36 2016/12/26 23:05:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.36.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -355,6 +355,7 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 	case (IPV6_VERSION >> 4): {
 		struct ip6_hdr *ip6;
 		struct ip6_ext *ip6e;
+		struct ip6_frag *ip6f;
 		size_t off, hlen;
 
 		ip6 = nbuf_ensure_contig(nbuf, sizeof(struct ip6_hdr));
@@ -387,8 +388,21 @@ npf_cache_ip(npf_cache_t *npc, nbuf_t *nbuf)
 				hlen = (ip6e->ip6e_len + 1) << 3;
 				break;
 			case IPPROTO_FRAGMENT:
+				ip6f = nbuf_ensure_contig(nbuf, sizeof(*ip6f));
+				if (ip6f == NULL)
+					return 0;
+				/*
+				 * We treat the first fragment as a regular
+				 * packet and then we pass the rest of the
+				 * fragments unconditionally. This way if
+				 * the first packet passes the rest will
+				 * be able to reassembled, if not they will
+				 * be ignored. We can do better later.
+				 */
+				if (ntohs(ip6f->ip6f_offlg & IP6F_OFF_MASK) != 0)
+					flags |= NPC_IPFRAG;
+
 				hlen = sizeof(struct ip6_frag);
-				flags |= NPC_IPFRAG;
 				break;
 			case IPPROTO_AH:
 				hlen = (ip6e->ip6e_len + 2) << 2;

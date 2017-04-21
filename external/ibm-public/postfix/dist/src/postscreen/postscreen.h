@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen.h,v 1.1.1.4 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: postscreen.h,v 1.1.1.4.10.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -57,6 +57,15 @@
 #define PSC_TINDX_BYTNAME(tname) (PSC_TINDX_ ## tname)
 
  /*
+  * Per-client shared state.
+  */
+typedef struct {
+    int     concurrency;		/* per-client */
+    int     pass_new_count;		/* per-client */
+    time_t  expire_time[PSC_TINDX_COUNT];	/* per-test expiration */
+} PSC_CLIENT_INFO;
+
+ /*
   * Per-session state.
   */
 typedef struct {
@@ -68,15 +77,15 @@ typedef struct {
     char   *smtp_client_port;		/* client port */
     char   *smtp_server_addr;		/* server address */
     char   *smtp_server_port;		/* server port */
-    int     client_concurrency;		/* per-client */
     const char *final_reply;		/* cause for hanging up */
     VSTRING *send_buf;			/* pending output */
     /* Test context. */
     struct timeval start_time;		/* start of current test */
     const char *test_name;		/* name of current test */
-    time_t  expire_time[PSC_TINDX_COUNT];	/* per-test expiration */
+    PSC_CLIENT_INFO *client_info;	/* shared client state */
     VSTRING *dnsbl_reply;		/* dnsbl reject text */
     int     dnsbl_score;		/* saved DNSBL score */
+    int     dnsbl_ttl;			/* saved DNSBL TTL */
     const char *dnsbl_name;		/* DNSBL name with largest weight */
     int     dnsbl_index;		/* dnsbl request index */
     const char *rcpt_reply;		/* how to reject recipients */
@@ -96,11 +105,14 @@ typedef struct {
   * Emulate legacy ad-hoc variables on top of indexable time stamps. This
   * avoids massive scar tissue during initial feature development.
   */
-#define pregr_stamp	expire_time[PSC_TINDX_PREGR]
-#define dnsbl_stamp	expire_time[PSC_TINDX_DNSBL]
-#define pipel_stamp	expire_time[PSC_TINDX_PIPEL]
-#define nsmtp_stamp	expire_time[PSC_TINDX_NSMTP]
-#define barlf_stamp	expire_time[PSC_TINDX_BARLF]
+#define pregr_stamp	client_info->expire_time[PSC_TINDX_PREGR]
+#define dnsbl_stamp	client_info->expire_time[PSC_TINDX_DNSBL]
+#define pipel_stamp	client_info->expire_time[PSC_TINDX_PIPEL]
+#define nsmtp_stamp	client_info->expire_time[PSC_TINDX_NSMTP]
+#define barlf_stamp	client_info->expire_time[PSC_TINDX_BARLF]
+
+ /* Minize the patch size for stable releases. */
+#define client_concurrency client_info->concurrency
 
  /*
   * Special expiration time values.
@@ -374,7 +386,6 @@ extern int psc_pipel_action;		/* PSC_ACT_DROP etc. */
 extern int psc_nsmtp_action;		/* PSC_ACT_DROP etc. */
 extern int psc_barlf_action;		/* PSC_ACT_DROP etc. */
 extern int psc_min_ttl;			/* Update with new tests! */
-extern int psc_max_ttl;			/* Update with new tests! */
 extern STRING_LIST *psc_forbid_cmds;	/* CONNECT GET POST */
 extern int psc_stress_greet_wait;	/* stressed greet wait */
 extern int psc_normal_greet_wait;	/* stressed greet wait */
@@ -482,8 +493,8 @@ const char *psc_maps_find(MAPS *, const char *, int);
   * postscreen_dnsbl.c
   */
 extern void psc_dnsbl_init(void);
-extern int psc_dnsbl_retrieve(const char *, const char **, int);
-extern int psc_dnsbl_request(const char *, void (*) (int, char *), char *);
+extern int psc_dnsbl_retrieve(const char *, const char **, int, int *);
+extern int psc_dnsbl_request(const char *, void (*) (int, void *), void *);
 
  /*
   * postscreen_tests.c
@@ -491,10 +502,13 @@ extern int psc_dnsbl_request(const char *, void (*) (int, char *), char *);
 #define PSC_INIT_TESTS(dst) do { \
 	time_t *_it_stamp_p; \
 	(dst)->flags = 0; \
-	for (_it_stamp_p = (dst)->expire_time; \
-	    _it_stamp_p < (dst)->expire_time + PSC_TINDX_COUNT; \
+	for (_it_stamp_p = (dst)->client_info->expire_time; \
+	    _it_stamp_p < (dst)->client_info->expire_time + PSC_TINDX_COUNT; \
 	    _it_stamp_p++) \
 	    *_it_stamp_p = PSC_TIME_STAMP_INVALID; \
+    } while (0)
+#define PSC_INIT_TEST_FLAGS_ONLY(dst) do { \
+	(dst)->flags = 0; \
     } while (0)
 #define PSC_BEGIN_TESTS(state, name) do { \
 	(state)->test_name = (name); \
@@ -502,6 +516,7 @@ extern int psc_dnsbl_request(const char *, void (*) (int, char *), char *);
     } while (0)
 extern void psc_new_tests(PSC_STATE *);
 extern void psc_parse_tests(PSC_STATE *, const char *, time_t);
+extern void psc_todo_tests(PSC_STATE *, time_t);
 extern char *psc_print_tests(VSTRING *, PSC_STATE *);
 extern char *psc_print_grey_key(VSTRING *, const char *, const char *,
 				        const char *, const char *);
@@ -553,7 +568,7 @@ extern void psc_starttls_open(PSC_STATE *, EVENT_NOTIFY_FN);
   */
 extern VSTRING *psc_expand_filter;
 extern void psc_expand_init(void);
-extern const char *psc_expand_lookup(const char *, int, char *);
+extern const char *psc_expand_lookup(const char *, int, void *);
 
  /*
   * postscreen_endpt.c
@@ -584,4 +599,9 @@ extern void psc_endpt_lookup(VSTREAM *, PSC_ENDPT_LOOKUP_FN);
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/

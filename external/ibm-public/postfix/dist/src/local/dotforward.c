@@ -1,4 +1,4 @@
-/*	$NetBSD: dotforward.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: dotforward.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -196,7 +196,7 @@ int     deliver_dotforward(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     next = saved_forward_path;
     lookup_status = -1;
 
-    while ((lhs = mystrtok(&next, ", \t\r\n")) != 0) {
+    while ((lhs = mystrtok(&next, CHARS_COMMA_SP)) != 0) {
 	expand_status = local_expand(path, lhs, &state, &usr_attr,
 				     var_fwd_exp_filter);
 	if ((expand_status & (MAC_PARSE_ERROR | MAC_PARSE_UNDEF)) == 0) {

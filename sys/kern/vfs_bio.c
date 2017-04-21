@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.267 2016/12/28 06:25:40 pgoyette Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.267.2.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.267 2016/12/28 06:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.267.2.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -206,7 +206,7 @@ BIOHIST_DEFINE(biohist);
 void
 biohist_init(void)
 {
- 
+
 	BIOHIST_INIT(biohist, BIOHIST_SIZE);
 }
 
@@ -1014,7 +1014,7 @@ brelsel(buf_t *bp, int set)
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(!cv_has_waiters(&bp->b_done));
 	KASSERT(bp->b_refcnt > 0);
-	
+
 	SET(bp->b_cflags, set);
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
@@ -1230,8 +1230,8 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 		if (allocbuf(bp, size, preserve)) {
 			mutex_enter(&bufcache_lock);
 			LIST_REMOVE(bp, b_hash);
+			brelsel(bp, BC_INVAL);
 			mutex_exit(&bufcache_lock);
-			brelse(bp, BC_INVAL);
 			return NULL;
 		}
 	}
@@ -1968,11 +1968,12 @@ getiobuf(struct vnode *vp, bool waitok)
 
 	buf_init(bp);
 
-	if ((bp->b_vp = vp) == NULL)
-		bp->b_objlock = &buffer_lock;
-	else
+	if ((bp->b_vp = vp) != NULL) {
 		bp->b_objlock = vp->v_interlock;
-	
+	} else {
+		KASSERT(bp->b_objlock == &buffer_lock);
+	}
+
 	return bp;
 }
 
@@ -2026,7 +2027,7 @@ nestiobuf_iodone(buf_t *bp)
 void
 nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 {
-	const int b_read = mbp->b_flags & B_READ;
+	const int b_pass = mbp->b_flags & (B_READ|B_MEDIA_FLAGS);
 	struct vnode *vp = mbp->b_vp;
 
 	KASSERT(mbp->b_bcount >= offset + size);
@@ -2034,14 +2035,14 @@ nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 	bp->b_dev = mbp->b_dev;
 	bp->b_objlock = mbp->b_objlock;
 	bp->b_cflags = BC_BUSY;
-	bp->b_flags = B_ASYNC | b_read;
+	bp->b_flags = B_ASYNC | b_pass;
 	bp->b_iodone = nestiobuf_iodone;
 	bp->b_data = (char *)mbp->b_data + offset;
 	bp->b_resid = bp->b_bcount = size;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_private = mbp;
 	BIO_COPYPRIO(bp, mbp);
-	if (!b_read && vp != NULL) {
+	if (BUF_ISWRITE(bp) && vp != NULL) {
 		mutex_enter(vp->v_interlock);
 		vp->v_numoutput++;
 		mutex_exit(vp->v_interlock);

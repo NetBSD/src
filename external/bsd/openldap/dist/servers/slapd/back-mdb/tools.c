@@ -1,10 +1,10 @@
-/*	$NetBSD: tools.c,v 1.1.1.1 2014/05/28 09:58:50 tron Exp $	*/
+/*	$NetBSD: tools.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* tools.c - tools for slap tools */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2011-2014 The OpenLDAP Foundation.
+ * Copyright 2011-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tools.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -52,7 +55,9 @@ typedef struct mdb_tool_idl_cache {
 #define MDB_TOOL_IDL_FLUSH(be, txn)
 #endif /* MDB_TOOL_IDL_CACHING */
 
-static MDB_txn *txn = NULL, *txi = NULL;
+MDB_txn *mdb_tool_txn = NULL;
+
+static MDB_txn *txi = NULL;
 static MDB_cursor *cursor = NULL, *idcursor = NULL;
 static MDB_cursor *mcp = NULL, *mcd = NULL;
 static MDB_val key, data;
@@ -174,17 +179,17 @@ int mdb_tool_entry_close(
 		mdb_cursor_close( cursor );
 		cursor = NULL;
 	}
-	if( txn ) {
+	if( mdb_tool_txn ) {
 		int rc;
-		MDB_TOOL_IDL_FLUSH( be, txn );
-		if (( rc = mdb_txn_commit( txn ))) {
+		MDB_TOOL_IDL_FLUSH( be, mdb_tool_txn );
+		if (( rc = mdb_txn_commit( mdb_tool_txn ))) {
 			Debug( LDAP_DEBUG_ANY,
 				LDAP_XSTRING(mdb_tool_entry_close) ": database %s: "
 				"txn_commit failed: %s (%d)\n",
 				be->be_suffix[0].bv_val, mdb_strerror(rc), rc );
 			return -1;
 		}
-		txn = NULL;
+		mdb_tool_txn = NULL;
 	}
 
 	if( nholes ) {
@@ -228,13 +233,13 @@ ID mdb_tool_entry_next(
 	mdb = (struct mdb_info *) be->be_private;
 	assert( mdb != NULL );
 
-	if ( !txn ) {
-		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, MDB_RDONLY, &txn );
+	if ( !mdb_tool_txn ) {
+		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, MDB_RDONLY, &mdb_tool_txn );
 		if ( rc )
 			return NOID;
-		rc = mdb_cursor_open( txn, mdb->mi_id2entry, &cursor );
+		rc = mdb_cursor_open( mdb_tool_txn, mdb->mi_id2entry, &cursor );
 		if ( rc ) {
-			mdb_txn_abort( txn );
+			mdb_txn_abort( mdb_tool_txn );
 			return NOID;
 		}
 	}
@@ -300,9 +305,9 @@ ID mdb_tool_dn2id_get(
 
 	mdb = (struct mdb_info *) be->be_private;
 
-	if ( !txn ) {
+	if ( !mdb_tool_txn ) {
 		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, (slapMode & SLAP_TOOL_READONLY) != 0 ?
-			MDB_RDONLY : 0, &txn );
+			MDB_RDONLY : 0, &mdb_tool_txn );
 		if ( rc )
 			return NOID;
 	}
@@ -312,7 +317,7 @@ ID mdb_tool_dn2id_get(
 	op.o_tmpmemctx = NULL;
 	op.o_tmpmfuncs = &ch_mfuncs;
 
-	rc = mdb_dn2id( &op, txn, NULL, dn, &id, NULL, NULL, NULL );
+	rc = mdb_dn2id( &op, mdb_tool_txn, NULL, dn, &id, NULL, NULL, NULL );
 	if ( rc == MDB_NOTFOUND )
 		return NOID;
 
@@ -357,13 +362,9 @@ mdb_tool_entry_get_int( BackendDB *be, ID id, Entry **ep )
 	op.o_tmpmemctx = NULL;
 	op.o_tmpmfuncs = &ch_mfuncs;
 	if ( slapMode & SLAP_TOOL_READONLY ) {
-		rc = mdb_id2name( &op, txn, &idcursor, id, &dn, &ndn );
+		rc = mdb_id2name( &op, mdb_tool_txn, &idcursor, id, &dn, &ndn );
 		if ( rc  ) {
 			rc = LDAP_OTHER;
-			if ( e ) {
-				mdb_entry_return( &op, e );
-				e = NULL;
-			}
 			goto done;
 		}
 		if ( tool_base != NULL ) {
@@ -375,7 +376,7 @@ mdb_tool_entry_get_int( BackendDB *be, ID id, Entry **ep )
 			}
 		}
 	}
-	rc = mdb_entry_decode( &op, &data, &e );
+	rc = mdb_entry_decode( &op, mdb_tool_txn, &data, &e );
 	e->e_id = id;
 	if ( !BER_BVISNULL( &dn )) {
 		e->e_name = dn;
@@ -399,19 +400,19 @@ mdb_tool_entry_get( BackendDB *be, ID id )
 	Entry *e = NULL;
 	int rc;
 
-	if ( !txn ) {
+	if ( !mdb_tool_txn ) {
 		struct mdb_info *mdb = (struct mdb_info *) be->be_private;
 		rc = mdb_txn_begin( mdb->mi_dbenv, NULL,
-			(slapMode & SLAP_TOOL_READONLY) ? MDB_RDONLY : 0, &txn );
+			(slapMode & SLAP_TOOL_READONLY) ? MDB_RDONLY : 0, &mdb_tool_txn );
 		if ( rc )
 			return NULL;
 	}
 	if ( !cursor ) {
 		struct mdb_info *mdb = (struct mdb_info *) be->be_private;
-		rc = mdb_cursor_open( txn, mdb->mi_id2entry, &cursor );
+		rc = mdb_cursor_open( mdb_tool_txn, mdb->mi_id2entry, &cursor );
 		if ( rc ) {
-			mdb_txn_abort( txn );
-			txn = NULL;
+			mdb_txn_abort( mdb_tool_txn );
+			mdb_tool_txn = NULL;
 			return NULL;
 		}
 	}
@@ -624,8 +625,8 @@ ID mdb_tool_entry_put(
 
 	mdb = (struct mdb_info *) be->be_private;
 
-	if ( !txn ) {
-		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
+	if ( !mdb_tool_txn ) {
+		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &mdb_tool_txn );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 				"txn_begin failed: %s (%d)",
@@ -635,7 +636,7 @@ ID mdb_tool_entry_put(
 				 text->bv_val, 0, 0 );
 			return NOID;
 		}
-		rc = mdb_cursor_open( txn, mdb->mi_id2entry, &idcursor );
+		rc = mdb_cursor_open( mdb_tool_txn, mdb->mi_id2entry, &idcursor );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 				"cursor_open failed: %s (%d)",
@@ -649,7 +650,7 @@ ID mdb_tool_entry_put(
 			ID dummy;
 			mdb_next_id( be, idcursor, &dummy );
 		}
-		rc = mdb_cursor_open( txn, mdb->mi_dn2id, &mcp );
+		rc = mdb_cursor_open( mdb_tool_txn, mdb->mi_dn2id, &mcp );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 				"cursor_open failed: %s (%d)",
@@ -659,7 +660,7 @@ ID mdb_tool_entry_put(
 				 text->bv_val, 0, 0 );
 			return NOID;
 		}
-		rc = mdb_cursor_open( txn, mdb->mi_dn2id, &mcd );
+		rc = mdb_cursor_open( mdb_tool_txn, mdb->mi_dn2id, &mcd );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 				"cursor_open failed: %s (%d)",
@@ -677,12 +678,12 @@ ID mdb_tool_entry_put(
 	op.o_tmpmfuncs = &ch_mfuncs;
 
 	/* add dn2id indices */
-	rc = mdb_tool_next_id( &op, txn, e, text, 0 );
+	rc = mdb_tool_next_id( &op, mdb_tool_txn, e, text, 0 );
 	if( rc != 0 ) {
 		goto done;
 	}
 
-	rc = mdb_tool_index_add( &op, txn, e );
+	rc = mdb_tool_index_add( &op, mdb_tool_txn, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"index_entry_add failed: err=%d", rc );
@@ -694,7 +695,7 @@ ID mdb_tool_entry_put(
 
 
 	/* id2entry index */
-	rc = mdb_id2entry_add( &op, txn, idcursor, e );
+	rc = mdb_id2entry_add( &op, mdb_tool_txn, idcursor, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"id2entry_add failed: err=%d", rc );
@@ -709,14 +710,15 @@ done:
 		mdb_writes++;
 		if ( mdb_writes >= mdb_writes_per_commit ) {
 			unsigned i;
-			MDB_TOOL_IDL_FLUSH( be, txn );
-			rc = mdb_txn_commit( txn );
+			MDB_TOOL_IDL_FLUSH( be, mdb_tool_txn );
+			rc = mdb_txn_commit( mdb_tool_txn );
 			for ( i=0; i<mdb->mi_nattrs; i++ )
 				mdb->mi_attrs[i]->ai_cursor = NULL;
 			mdb_writes = 0;
-			txn = NULL;
+			mdb_tool_txn = NULL;
 			idcursor = NULL;
 			if( rc != 0 ) {
+				mdb->mi_numads = 0;
 				snprintf( text->bv_val, text->bv_len,
 						"txn_commit failed: %s (%d)",
 						mdb_strerror(rc), rc );
@@ -729,8 +731,8 @@ done:
 
 	} else {
 		unsigned i;
-		mdb_txn_abort( txn );
-		txn = NULL;
+		mdb_txn_abort( mdb_tool_txn );
+		mdb_tool_txn = NULL;
 		idcursor = NULL;
 		for ( i=0; i<mdb->mi_nattrs; i++ )
 			mdb->mi_attrs[i]->ai_cursor = NULL;
@@ -896,10 +898,10 @@ done:
 			mdb_cursor_close( cursor );
 			txi = NULL;
 			/* Must close the read txn to allow old pages to be reclaimed. */
-			mdb_txn_abort( txn );
+			mdb_txn_abort( mdb_tool_txn );
 			/* and then reopen it so that tool_entry_next still works. */
-			mdb_txn_begin( mi->mi_dbenv, NULL, MDB_RDONLY, &txn );
-			mdb_cursor_open( txn, mi->mi_id2entry, &cursor );
+			mdb_txn_begin( mi->mi_dbenv, NULL, MDB_RDONLY, &mdb_tool_txn );
+			mdb_cursor_open( mdb_tool_txn, mi->mi_id2entry, &cursor );
 			key.mv_data = &id;
 			key.mv_size = sizeof(ID);
 			mdb_cursor_get( cursor, &key, NULL, MDB_SET );
@@ -954,8 +956,8 @@ ID mdb_tool_entry_modify(
 		mdb_cursor_close( cursor );
 		cursor = NULL;
 	}
-	if ( !txn ) {
-		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &txn );
+	if ( !mdb_tool_txn ) {
+		rc = mdb_txn_begin( mdb->mi_dbenv, NULL, 0, &mdb_tool_txn );
 		if( rc != 0 ) {
 			snprintf( text->bv_val, text->bv_len,
 				"txn_begin failed: %s (%d)",
@@ -973,7 +975,7 @@ ID mdb_tool_entry_modify(
 	op.o_tmpmfuncs = &ch_mfuncs;
 
 	/* id2entry index */
-	rc = mdb_id2entry_update( &op, txn, NULL, e );
+	rc = mdb_id2entry_update( &op, mdb_tool_txn, NULL, e );
 	if( rc != 0 ) {
 		snprintf( text->bv_val, text->bv_len,
 				"id2entry_update failed: err=%d", rc );
@@ -985,8 +987,9 @@ ID mdb_tool_entry_modify(
 
 done:
 	if( rc == 0 ) {
-		rc = mdb_txn_commit( txn );
+		rc = mdb_txn_commit( mdb_tool_txn );
 		if( rc != 0 ) {
+			mdb->mi_numads = 0;
 			snprintf( text->bv_val, text->bv_len,
 					"txn_commit failed: %s (%d)",
 					mdb_strerror(rc), rc );
@@ -997,7 +1000,7 @@ done:
 		}
 
 	} else {
-		mdb_txn_abort( txn );
+		mdb_txn_abort( mdb_tool_txn );
 		snprintf( text->bv_val, text->bv_len,
 			"txn_aborted! %s (%d)",
 			mdb_strerror(rc), rc );
@@ -1006,7 +1009,7 @@ done:
 			text->bv_val, 0, 0 );
 		e->e_id = NOID;
 	}
-	txn = NULL;
+	mdb_tool_txn = NULL;
 	idcursor = NULL;
 
 	return e->e_id;

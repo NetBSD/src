@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_number.3,v 1.10 2011/01/20 10:44:42 wiz Exp $
+.\"	$NetBSD: prop_number.3,v 1.10.34.1 2017/04/21 16:50:42 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@
 .Fn prop_number_equals_unsigned_integer "prop_number_t number" "uint64_t val"
 .Sh DESCRIPTION
 The
-.Nm prop_number
+.Fn prop_number
 family of functions operate on a numeric value property object type.
 Values are either signed or unsigned, and promoted to a 64-bit type
 .Pq int64_t or uint64_t , respectively .
@@ -205,6 +205,6 @@ is returned.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

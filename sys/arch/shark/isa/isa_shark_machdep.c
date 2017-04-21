@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.15 2012/10/27 17:18:10 chs Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.15.22.1 2017/04/21 16:53:36 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.15 2012/10/27 17:18:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.15.22.1 2017/04/21 16:53:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 void
 isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
-	panic("isa_intr_disestablish");
+
+	intr_release(arg);
 }
 
 /* isa_init() might eventually become the ISA attach routine */

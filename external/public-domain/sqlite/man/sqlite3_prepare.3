@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_PREPARE 3
 .Os
 .Sh NAME
@@ -8,7 +8,7 @@
 .Nm sqlite3_prepare16_v2
 .Nd Compiling An SQL Statement
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_prepare
 .Fa "sqlite3 *db"
 .Fa "const char *zSql"
@@ -16,7 +16,7 @@
 .Fa "sqlite3_stmt **ppStmt"
 .Fa "const char **pzTail     "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_prepare_v2
 .Fa "sqlite3 *db"
 .Fa "const char *zSql"
@@ -24,7 +24,7 @@
 .Fa "sqlite3_stmt **ppStmt"
 .Fa "const char **pzTail     "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_prepare16
 .Fa "sqlite3 *db"
 .Fa "const void *zSql"
@@ -32,7 +32,7 @@
 .Fa "sqlite3_stmt **ppStmt"
 .Fa "const void **pzTail     "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_prepare16_v2
 .Fa "sqlite3 *db"
 .Fa "const void *zSql"

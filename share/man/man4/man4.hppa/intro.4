@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.4,v 1.1 2014/02/24 07:23:40 skrll Exp $
+.\"	$NetBSD: intro.4,v 1.1.16.1 2017/04/21 16:53:17 bouyer Exp $
 .\"
 .\" $OpenBSD: intro.4,v 1.5 2004/04/16 21:23:08 jmc Exp $
 .\"
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 11, 2001
+.Dd February 17, 2017
 .Dt INTRO 4 hppa
 .Os
 .Sh NAME
@@ -212,23 +212,23 @@ the system.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Bl -tag -width le/lebuffer
-.It Xr asp 4
+.It Xr hppa/asp 4
 The ASP I/O controller; found in most of the older machines which
 don't have LASI or WAX.
 Includes GSC-bus controller, to which most of the devices are attached.
 Most of I/O is still on external chips though.
 .It Xr com 4
 The RS-232 ports.
-.It Xr cpu 4
+.It Xr hppa/cpu 4
 The Central Processor itself, makes sure the machine does something useful.
 .It Xr tlp 4
 .Tn DEC/Intel 21140, 21143, 21145
 and clone 10/100 Ethernet controller.
-.It Xr dino 4
+.It Xr hppa/dino 4
 The
 .Xr pci 4
 bridge on most of the newer systems.
-.It Xr harmony 4
+.It Xr hppa/harmony 4
 CS4215/AD1849 audio.
 .It Xr hil 4
 Human Interface Loop, sporting several input devices,
@@ -238,14 +238,14 @@ e.g. keyboards, mice, tablets and such.
 LAN controller.
 Found in every 700, either included in the MBA
 or on an external chip on mainboard.
-.It Xr lasi 4
+.It Xr hppa/lasi 4
 LSI?, found in almost all
 .Tn HP 9000/700
 workstations.
 Integrates most of the bus and I/O functions into one chip.
 .It Xr lpt 4
 The Centronics printer port.
-.It Xr mem 4
+.It Xr hppa/mem 4
 Memory files and memory controller.
 .It Xr mongoose 4
 The
@@ -265,9 +265,9 @@ PROM for things like initial console output and such.
 53C8xx SCSI I/O processor.
 .It Xr sti 4
 The system graphics driver.
-.It Xr wax 4
+.It Xr hppa/wax 4
 The other reincarnation of
-.Xr lasi 4
+.Xr hppa/lasi 4
 used for cheap
 .Tn ASIC
 implementations for add-on devices.

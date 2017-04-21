@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_rproc.c,v 1.15 2016/12/28 21:55:04 christos Exp $	*/
+/*	$NetBSD: npf_rproc.c,v 1.15.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -358,7 +358,8 @@ npf_rproc_assign(npf_rproc_t *rp, void *params)
  * => Reference on the rule procedure must be held.
  */
 bool
-npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, int *decision)
+npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, const npf_match_info_t *mi,
+    int *decision)
 {
 	const unsigned extcount = rp->rp_ext_count;
 
@@ -370,7 +371,7 @@ npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, int *decision)
 		const npf_ext_ops_t *extops = ext->ext_ops;
 
 		KASSERT(ext->ext_refcnt > 0);
-		if (!extops->proc(npc, rp->rp_ext_meta[i], decision)) {
+		if (!extops->proc(npc, rp->rp_ext_meta[i], mi, decision)) {
 			return false;
 		}
 

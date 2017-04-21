@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_mgr.c,v 1.1.1.2 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_mgr.c,v 1.1.1.2.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -88,15 +88,15 @@
 /* DIAGNOSTICS
 /*	All client functions return one of the following status codes:
 /* .IP TLS_MGR_STAT_OK
-/*      The request completed, and the requested operation was
+/*	The request completed, and the requested operation was
 /*	successful (for example, the requested session was found,
 /*	or the specified session was saved or removed).
 /* .IP TLS_MGR_STAT_ERR
-/*      The request completed, but the requested operation failed
+/*	The request completed, but the requested operation failed
 /*	(for example, the requested object was not found or the
 /*	specified session was not saved or removed).
 /* .IP TLS_MGR_STAT_FAIL
-/*      The request could not complete (the client could not
+/*	The request could not complete (the client could not
 /*	communicate with the tlsmgr(8) server).
 /* SEE ALSO
 /*	tlsmgr(8) TLS session and PRNG management
@@ -190,12 +190,12 @@ int     tls_mgr_seed(VSTRING *buf, int len)
      */
     if (attr_clnt_request(tls_mgr,
 			  ATTR_FLAG_NONE,	/* Request attributes */
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_REQ, TLS_MGR_REQ_SEED,
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_SIZE, len,
+			  SEND_ATTR_STR(TLS_MGR_ATTR_REQ, TLS_MGR_REQ_SEED),
+			  SEND_ATTR_INT(TLS_MGR_ATTR_SIZE, len),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply attributes */
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_STATUS, &status,
-			  ATTR_TYPE_DATA, TLS_MGR_ATTR_SEED, buf,
+			  RECV_ATTR_INT(TLS_MGR_ATTR_STATUS, &status),
+			  RECV_ATTR_DATA(TLS_MGR_ATTR_SEED, buf),
 			  ATTR_TYPE_END) != 2)
 	status = TLS_MGR_STAT_FAIL;
     return (status);
@@ -218,13 +218,13 @@ int     tls_mgr_policy(const char *cache_type, int *cachable, int *timeout)
      */
     if (attr_clnt_request(tls_mgr,
 			  ATTR_FLAG_NONE,	/* Request attributes */
-			ATTR_TYPE_STR, TLS_MGR_ATTR_REQ, TLS_MGR_REQ_POLICY,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
+			SEND_ATTR_STR(TLS_MGR_ATTR_REQ, TLS_MGR_REQ_POLICY),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_TYPE, cache_type),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply attributes */
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_STATUS, &status,
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_CACHABLE, cachable,
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_SESSTOUT, timeout,
+			  RECV_ATTR_INT(TLS_MGR_ATTR_STATUS, &status),
+			  RECV_ATTR_INT(TLS_MGR_ATTR_CACHABLE, cachable),
+			  RECV_ATTR_INT(TLS_MGR_ATTR_SESSTOUT, timeout),
 			  ATTR_TYPE_END) != 3)
 	status = TLS_MGR_STAT_FAIL;
     return (status);
@@ -248,13 +248,13 @@ int     tls_mgr_lookup(const char *cache_type, const char *cache_id,
      */
     if (attr_clnt_request(tls_mgr,
 			  ATTR_FLAG_NONE,	/* Request */
-			ATTR_TYPE_STR, TLS_MGR_ATTR_REQ, TLS_MGR_REQ_LOOKUP,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_ID, cache_id,
+			SEND_ATTR_STR(TLS_MGR_ATTR_REQ, TLS_MGR_REQ_LOOKUP),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_TYPE, cache_type),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_ID, cache_id),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply */
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_STATUS, &status,
-			  ATTR_TYPE_DATA, TLS_MGR_ATTR_SESSION, buf,
+			  RECV_ATTR_INT(TLS_MGR_ATTR_STATUS, &status),
+			  RECV_ATTR_DATA(TLS_MGR_ATTR_SESSION, buf),
 			  ATTR_TYPE_END) != 2)
 	status = TLS_MGR_STAT_FAIL;
     return (status);
@@ -278,13 +278,13 @@ int     tls_mgr_update(const char *cache_type, const char *cache_id,
      */
     if (attr_clnt_request(tls_mgr,
 			  ATTR_FLAG_NONE,	/* Request */
-			ATTR_TYPE_STR, TLS_MGR_ATTR_REQ, TLS_MGR_REQ_UPDATE,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_ID, cache_id,
-			  ATTR_TYPE_DATA, TLS_MGR_ATTR_SESSION, len, buf,
+			SEND_ATTR_STR(TLS_MGR_ATTR_REQ, TLS_MGR_REQ_UPDATE),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_TYPE, cache_type),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_ID, cache_id),
+			  SEND_ATTR_DATA(TLS_MGR_ATTR_SESSION, len, buf),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply */
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_STATUS, &status,
+			  RECV_ATTR_INT(TLS_MGR_ATTR_STATUS, &status),
 			  ATTR_TYPE_END) != 1)
 	status = TLS_MGR_STAT_FAIL;
     return (status);
@@ -307,12 +307,12 @@ int     tls_mgr_delete(const char *cache_type, const char *cache_id)
      */
     if (attr_clnt_request(tls_mgr,
 			  ATTR_FLAG_NONE,	/* Request */
-			ATTR_TYPE_STR, TLS_MGR_ATTR_REQ, TLS_MGR_REQ_DELETE,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_TYPE, cache_type,
-			  ATTR_TYPE_STR, TLS_MGR_ATTR_CACHE_ID, cache_id,
+			SEND_ATTR_STR(TLS_MGR_ATTR_REQ, TLS_MGR_REQ_DELETE),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_TYPE, cache_type),
+			  SEND_ATTR_STR(TLS_MGR_ATTR_CACHE_ID, cache_id),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply */
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_STATUS, &status,
+			  RECV_ATTR_INT(TLS_MGR_ATTR_STATUS, &status),
 			  ATTR_TYPE_END) != 1)
 	status = TLS_MGR_STAT_FAIL;
     return (status);
@@ -346,18 +346,18 @@ static TLS_TICKET_KEY *request_scache_key(unsigned char *keyname)
      */
     if (attr_clnt_request(tls_mgr,
 			  ATTR_FLAG_NONE,	/* Request */
-			ATTR_TYPE_STR, TLS_MGR_ATTR_REQ, TLS_MGR_REQ_TKTKEY,
-			  ATTR_TYPE_DATA, TLS_MGR_ATTR_KEYNAME, len, name,
+			SEND_ATTR_STR(TLS_MGR_ATTR_REQ, TLS_MGR_REQ_TKTKEY),
+			  SEND_ATTR_DATA(TLS_MGR_ATTR_KEYNAME, len, name),
 			  ATTR_TYPE_END,
 			  ATTR_FLAG_MISSING,	/* Reply */
-			  ATTR_TYPE_INT, TLS_MGR_ATTR_STATUS, &status,
-			  ATTR_TYPE_DATA, TLS_MGR_ATTR_KEYBUF, keybuf,
+			  RECV_ATTR_INT(TLS_MGR_ATTR_STATUS, &status),
+			  RECV_ATTR_DATA(TLS_MGR_ATTR_KEYBUF, keybuf),
 			  ATTR_TYPE_END) != 2
 	|| status != TLS_MGR_STAT_OK
 	|| LEN(keybuf) != sizeof(tmp))
 	return (0);
 
-    memcpy((char *) &tmp, STR(keybuf), sizeof(tmp));
+    memcpy((void *) &tmp, STR(keybuf), sizeof(tmp));
     return (tls_scache_key_rotate(&tmp));
 }
 
@@ -413,7 +413,7 @@ int     main(int unused_ac, char **av)
 	msg_fatal("chdir %s: %m", var_queue_dir);
 
     while (vstring_fgets_nonl(inbuf, VSTREAM_IN)) {
-	argv = argv_split(STR(inbuf), " \t\r\n");
+	argv = argv_split(STR(inbuf), CHARS_SPACE);
 	if (argv->argc == 0) {
 	    argv_free(argv);
 	    continue;

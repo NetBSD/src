@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.21 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: leo.c,v 1.21.12.1 2017/04/21 16:53:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.21 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.21.12.1 2017/04/21 16:53:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,9 +333,9 @@ leo_scroll(struct leo_softc *sc, int scroll)
 	if ((scroll < 0) || (scroll > 255))
 		return EINVAL;
         bus_space_write_1(sc->sc_iot, sc->sc_ioh, LEO_REG_MSBSCROLL,
-			  (scroll >> 6) && 0xff);
+			  (scroll >> 6) & 0xff);
         bus_space_write_1(sc->sc_iot, sc->sc_ioh, LEO_REG_LSBSCROLL,
-			  (scroll << 2) && 0xff);
+			  (scroll << 2) & 0xff);
 	return 0;
 }
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: abandon.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: abandon.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $	*/
 
 /* abandon.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,6 +18,9 @@
 /* Portions  Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: abandon.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $");
 
 #include "portable.h"
 
@@ -280,22 +283,28 @@ start_again:;
 	}
 
 	if ( lr != NULL ) {
+		LDAPConn *lc;
+		int freeconn = 0;
 		if ( sendabandon || lr->lr_status == LDAP_REQST_WRITING ) {
-			/* release ld_req_mutex while grabbing ld_conn_mutex to
-			 * prevent deadlock.
-			 */
-			LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
-			LDAP_MUTEX_LOCK( &ld->ld_conn_mutex );
-			ldap_free_connection( ld, lr->lr_conn, 0, 1 );
-			LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
-			LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
+			freeconn = 1;
+			lc = lr->lr_conn;
 		}
-
 		if ( origid == msgid ) {
 			ldap_free_request( ld, lr );
 
 		} else {
 			lr->lr_abandoned = 1;
+		}
+
+		if ( freeconn ) {
+			/* release ld_req_mutex while grabbing ld_conn_mutex to
+			 * prevent deadlock.
+			 */
+			LDAP_MUTEX_UNLOCK( &ld->ld_req_mutex );
+			LDAP_MUTEX_LOCK( &ld->ld_conn_mutex );
+			ldap_free_connection( ld, lc, 0, 1 );
+			LDAP_MUTEX_UNLOCK( &ld->ld_conn_mutex );
+			LDAP_MUTEX_LOCK( &ld->ld_req_mutex );
 		}
 	}
 

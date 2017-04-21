@@ -1,4 +1,4 @@
-/*	$NetBSD: etherent.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: etherent.c,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
@@ -22,15 +22,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: etherent.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: etherent.c,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <pcap-stdinc.h>
-#else /* WIN32 */
+#else /* _WIN32 */
 #if HAVE_INTTYPES_H
 #include <inttypes.h>
 #elif HAVE_STDINT_H
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: etherent.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 #include <sys/bitypes.h>
 #endif
 #include <sys/types.h>
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 #include <ctype.h>
 #include <memory.h>

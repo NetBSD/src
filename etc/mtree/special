@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.156 2017/01/07 22:37:22 christos Exp $
+#	$NetBSD: special,v 1.156.2.1 2017/04/21 16:51:17 bouyer Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -98,9 +98,9 @@
 ./etc/locate.conf		type=file mode=0644 optional
 ./etc/login.conf		type=file mode=0644 optional
 ./etc/mail			type=dir  mode=0755
+./etc/mail.rc			type=file mode=0644
 ./etc/mail/aliases		type=file mode=0644
 ./etc/mail/aliases.db		type=file mode=0644 optional tags=exclude
-./etc/mail.rc			type=file mode=0644
 ./etc/mailer.conf		type=file mode=0644
 ./etc/man.conf			type=file mode=0644
 ./etc/master.passwd		type=file mode=0600 tags=nodiff
@@ -123,9 +123,9 @@
 ./etc/netstart.local		type=file mode=0644 optional
 ./etc/networks			type=file mode=0644
 ./etc/newsyslog.conf		type=file mode=0644
+./etc/npf.conf			type=file mode=0644 optional
 ./etc/nsswitch.conf		type=file mode=0644
 ./etc/ntp.conf			type=file mode=0644 optional
-./etc/npf.conf			type=file mode=0644 optional
 ./etc/pam.conf			type=file mode=0644 optional
 ./etc/pam.d			type=dir  mode=0755
 ./etc/pam.d/display_manager	type=file mode=0644
@@ -176,8 +176,8 @@
 ./etc/profile			type=file mode=0644
 ./etc/protocols			type=file mode=0644
 ./etc/racoon			type=dir  mode=0755 optional
-./etc/racoon/racoon.conf	type=file mode=0644 optional
 ./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
+./etc/racoon/racoon.conf	type=file mode=0644 optional
 ./etc/rbootd.conf		type=file mode=0644 optional
 ./etc/rc			type=file mode=0644
 ./etc/rc.conf			type=file mode=0644
@@ -252,7 +252,7 @@
 ./etc/rc.d/nfslocking		type=file mode=0555
 ./etc/rc.d/npf			type=file mode=0555
 ./etc/rc.d/npfd			type=file mode=0555
-./etc/rc.d/nsd			type=file mode=0555
+./etc/rc.d/nsd			type=file mode=0555 optional
 ./etc/rc.d/ntpd			type=file mode=0555
 ./etc/rc.d/ntpdate		type=file mode=0555
 ./etc/rc.d/perusertmp		type=file mode=0555
@@ -276,11 +276,6 @@
 ./etc/rc.d/routed		type=file mode=0555
 ./etc/rc.d/rpcbind		type=file mode=0555
 ./etc/rc.d/rtadvd		type=file mode=0555
-./etc/saslc.d			type=dir  mode=0755
-./etc/saslc.d/postfix		type=dir  mode=0755
-./etc/saslc.d/postfix/mech	type=dir  mode=0755
-./etc/saslc.d/saslc		type=dir  mode=0755
-./etc/saslc.d/saslc/mech	type=dir  mode=0755
 ./etc/rc.d/rtclocaltime		type=file mode=0555
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
@@ -296,6 +291,7 @@
 ./etc/rc.d/timed		type=file mode=0555
 ./etc/rc.d/tpctl		type=file mode=0555
 ./etc/rc.d/ttys			type=file mode=0555
+./etc/rc.d/unbound		type=file mode=0555
 ./etc/rc.d/veriexec		type=file mode=0555
 ./etc/rc.d/virecover		type=file mode=0555
 ./etc/rc.d/wdogctl		type=file mode=0555
@@ -315,6 +311,11 @@
 ./etc/resolv.conf		type=file mode=0644 optional
 ./etc/rpc			type=file mode=0644
 ./etc/rtadvd.conf		type=file mode=0644 optional
+./etc/saslc.d			type=dir  mode=0755
+./etc/saslc.d/postfix		type=dir  mode=0755
+./etc/saslc.d/postfix/mech	type=dir  mode=0755
+./etc/saslc.d/saslc		type=dir  mode=0755
+./etc/saslc.d/saslc/mech	type=dir  mode=0755
 ./etc/security			type=file mode=0644
 ./etc/security.conf		type=file mode=0644
 ./etc/security.local		type=file mode=0644 optional

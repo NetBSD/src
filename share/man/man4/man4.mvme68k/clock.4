@@ -1,4 +1,4 @@
-.\" $NetBSD: clock.4,v 1.3 2008/04/30 13:10:56 martin Exp $
+.\" $NetBSD: clock.4,v 1.3.50.1 2017/04/21 16:53:17 bouyer Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 28, 1999
+.Dd February 17, 2017
 .Dt CLOCK 4 mvme68k
 .Os
 .Sh NAME
@@ -51,6 +51,6 @@ Both clock interrupts are set to 100Hz, with one used to provide
 the master kernel stats clock tick. The other is used for profiling
 purposes.
 .Sh SEE ALSO
-.Xr intro 4 ,
-.Xr pcc 4 ,
-.Xr pcctwo 4
+.Xr mvme68k/intro 4 ,
+.Xr mvme68k/pcc 4 ,
+.Xr mvme68k/pcctwo 4

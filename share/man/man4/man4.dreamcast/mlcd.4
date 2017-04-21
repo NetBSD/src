@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlcd.4,v 1.4 2008/04/30 13:10:55 martin Exp $
+.\"	$NetBSD: mlcd.4,v 1.4.50.1 2017/04/21 16:53:16 bouyer Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 17, 2002
+.Dd February 17, 2017
 .Dt MLCD 4 dreamcast
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ driver provides support for Maple bus monochrome LCDs
 Maple bus LCDs accept all
 .Xr ioctl 2
 calls described in
-.Xr maple 4 .
+.Xr dreamcast/maple 4 .
 .Sh FILES
 .Bl -tag -width /dev/mlcdX.XXX -compact
 .It Pa /dev/mlcd Ns Ar u . Ns Ar t
@@ -57,7 +57,7 @@ PT number
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr maple 4
+.Xr dreamcast/maple 4
 .Sh HISTORY
 The
 .Nm

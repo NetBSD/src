@@ -1,5 +1,8 @@
-#	$NetBSD: shlib_version,v 1.14 2014/10/10 00:48:18 christos Exp $
+#	$NetBSD: shlib_version,v 1.14.4.1 2017/04/21 16:53:10 bouyer Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
+# things we wish to do on next major version bump:
+# - remove compatibility cabs
+# - hide isinff
 major=0
 minor=11

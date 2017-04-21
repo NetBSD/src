@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.1.1.5 2014/05/28 09:58:47 tron Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* result.c - routines to send ldap results, errors, and referrals */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,9 @@
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: result.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -281,6 +284,22 @@ rs_entry2modifiable( Operation *op, SlapReply *rs, slap_overinst *on )
 	return 1;
 }
 
+/* Check for any callbacks that want to be informed about being blocked
+ * on output. These callbacks are expected to leave the callback list
+ * unmodified. Their result is ignored.
+ */
+static void
+slap_writewait_play(
+	Operation *op )
+{
+	slap_callback	*sc = op->o_callback;
+
+	for ( ; sc; sc = sc->sc_next ) {
+		if ( sc->sc_writewait )
+			sc->sc_writewait( op, sc );
+	}
+}
+
 static long send_ldap_ber(
 	Operation *op,
 	BerElement *ber )
@@ -350,6 +369,7 @@ static long send_ldap_ber(
 		}
 
 		/* wait for socket to be write-ready */
+		slap_writewait_play( op );
 		ldap_pvt_thread_mutex_lock( &conn->c_write2_mutex );
 		conn->c_writewaiter = 1;
 		slapd_set_write( conn->c_sd, 2 );

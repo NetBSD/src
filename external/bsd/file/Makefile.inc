@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2014/01/17 20:24:20 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.5.12.1 2017/04/21 16:51:23 bouyer Exp $
 
 WARNS=4
 DIST=${NETBSDSRCDIR}/external/bsd/file/dist
@@ -19,9 +19,5 @@ VERSION != ${TOOL_SED} -ne "s/^PACKAGE_VERSION='\([^']*\)'/\1/p" ${DIST}/configu
 CPPFLAGS+=	-DMAGIC='"${MAGIC}"' -DHAVE_CONFIG_H -DQUICK -DBUILTIN_ELF \
 		-DELFCORE -DVERSION='"${VERSION}"'
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/src
-
-.if ${ACTIVE_CC}=="gcc" && ${HAVE_GCC}=="48"
-CPPFLAGS.readelf.c	+= -Wno-error=maybe-uninitialized
-.endif
 
 .PATH:		${DIST}/src ${DIST}/doc

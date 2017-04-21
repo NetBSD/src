@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.21 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: bios32.c,v 1.21.4.1 2017/04/21 16:53:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.21 2015/11/22 13:41:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.21.4.1 2017/04/21 16:53:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.21 2015/11/22 13:41:24 maxv Exp $");
 #include <machine/segments.h>
 #include <machine/bios32.h>
 #include <x86/smbiosvar.h>
+#include <x86/efi.h>
 
 #include <uvm/uvm.h>
 
@@ -84,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.21 2015/11/22 13:41:24 maxv Exp $");
 
 struct bios32_entry bios32_entry;
 struct smbios_entry smbios_entry;
+
+static int smbios2_check_header(const uint8_t *);
+static void smbios2_map_kva(const uint8_t *);
+static int smbios3_check_header(const uint8_t *);
+static void smbios3_map_kva(const uint8_t *);
 
 /*
  * Initialize the BIOS32 interface.
@@ -132,59 +138,147 @@ bios32_init(void)
 	}
 #endif
 	uint8_t *p;
-	int i;
 
 	/* see if we have SMBIOS extentions */
+#ifndef XEN
+	if (efi_probe()) {
+		p = efi_getcfgtbl(&EFI_UUID_SMBIOS3);
+		if (p != NULL && smbios3_check_header(p)) {
+			smbios3_map_kva(p);
+			return;
+		}
+		p = efi_getcfgtbl(&EFI_UUID_SMBIOS);
+		if (p != NULL && smbios2_check_header(p)) {
+			smbios2_map_kva(p);
+			return;
+		}
+	}
+#endif
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
 	    p < (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
-		struct smbhdr * sh = (struct smbhdr *)p;
-		uint8_t chksum;
-		vaddr_t eva;
-		paddr_t pa, end;
-
-		if (sh->sig != BIOS32_MAKESIG('_', 'S', 'M', '_'))
-			continue;
-		i = sh->len;
-		for (chksum = 0; i--; )
-			chksum += p[i];
-		if (chksum != 0)
-			continue;
-		p += 0x10;
-		if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' &&
-		    p[3] != 'I' && p[4] != '_')
-			continue;
-		for (chksum = 0, i = 0xf; i--; )
-			chksum += p[i];
-		if (chksum != 0)
-			continue;
-
-		pa = trunc_page(sh->addr);
-		end = round_page(sh->addr + sh->size);
-		eva = uvm_km_alloc(kernel_map, end - pa, 0, UVM_KMF_VAONLY);
-		if (eva == 0)
-			break;
-
-		smbios_entry.addr = (uint8_t *)(eva +
-		    (sh->addr & PGOFSET));
-		smbios_entry.len = sh->size;
-		smbios_entry.mjr = sh->majrev;
-		smbios_entry.min = sh->minrev;
-		smbios_entry.count = sh->count;
-
-		for (; pa < end; pa+= NBPG, eva+= NBPG)
-#ifdef XEN
-			pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
-#else
-			pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
-#endif
-		pmap_update(pmap_kernel());
-
-		aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
-			    sh->majrev, sh->minrev, (u_long)sh->addr,
-			    sh->count);
-
-		break;
+		if (smbios3_check_header(p)) {
+			smbios3_map_kva(p);
+			return;
+		}
+		if (smbios2_check_header(p)) {
+			smbios2_map_kva(p);
+			return;
+		}
 	}
+}
+
+static int
+smbios2_check_header(const uint8_t *p)
+{
+	const struct smbhdr *sh = (const struct smbhdr *)p;
+	uint8_t chksum;
+	int i;
+
+	if (sh->sig != BIOS32_MAKESIG('_', 'S', 'M', '_'))
+		return 0;
+	i = sh->len;
+	for (chksum = 0; i--; )
+		chksum += p[i];
+	if (chksum != 0)
+		return 0;
+	p += 0x10;
+	if (p[0] != '_' || p[1] != 'D' || p[2] != 'M' ||
+	    p[3] != 'I' || p[4] != '_')
+		return 0;
+	for (chksum = 0, i = 0xf; i--; )
+		chksum += p[i];
+	if (chksum != 0)
+		return 0;
+
+	return 1;
+}
+
+static void
+smbios2_map_kva(const uint8_t *p)
+{
+	const struct smbhdr *sh = (const struct smbhdr *)p;
+	paddr_t pa, end;
+	vaddr_t eva;
+
+	pa = trunc_page(sh->addr);
+	end = round_page(sh->addr + sh->size);
+	eva = uvm_km_alloc(kernel_map, end - pa, 0, UVM_KMF_VAONLY);
+	if (eva == 0)
+		return;
+
+	smbios_entry.addr = (uint8_t *)(eva + (sh->addr & PGOFSET));
+	smbios_entry.len = sh->size;
+	smbios_entry.rev = 0;
+	smbios_entry.mjr = sh->majrev;
+	smbios_entry.min = sh->minrev;
+	smbios_entry.doc = 0;
+	smbios_entry.count = sh->count;
+
+	for (; pa < end; pa+= NBPG, eva+= NBPG)
+#ifdef XEN
+		pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
+#else
+		pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
+#endif
+	pmap_update(pmap_kernel());
+
+	aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		    sh->majrev, sh->minrev, (u_long)sh->addr,
+		    sh->count);
+}
+
+static int
+smbios3_check_header(const uint8_t *p)
+{
+	const struct smb3hdr *sh = (const struct smb3hdr *)p;
+	uint8_t chksum;
+	int i;
+
+	if (p[0] != '_' || p[1] != 'S' || p[2] != 'M' ||
+	    p[3] != '3' || p[4] != '_')
+		return 0;
+	i = sh->len;
+	for (chksum = 0; i--; )
+		chksum += p[i];
+	if (chksum != 0)
+		return 0;
+	if (sh->eprev != SMBIOS3_EPREV_3_0)
+		return 0;
+
+	return 1;
+}
+
+static void
+smbios3_map_kva(const uint8_t *p)
+{
+	const struct smb3hdr *sh = (const struct smb3hdr *)p;
+	paddr_t pa, end;
+	vaddr_t eva;
+
+	pa = trunc_page(sh->addr);
+	end = round_page(sh->addr + sh->size);
+	eva = uvm_km_alloc(kernel_map, end - pa, 0, UVM_KMF_VAONLY);
+	if (eva == 0)
+		return;
+
+	smbios_entry.addr = (uint8_t *)(eva + (sh->addr & PGOFSET));
+	smbios_entry.len = sh->size;
+	smbios_entry.rev = sh->eprev;
+	smbios_entry.mjr = sh->majrev;
+	smbios_entry.min = sh->minrev;
+	smbios_entry.doc = sh->docrev;
+	smbios_entry.count = UINT16_MAX;
+
+	for (; pa < end; pa += NBPG, eva += NBPG)
+#ifdef XEN
+		pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
+#else
+		pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
+#endif
+	pmap_update(pmap_kernel());
+
+	aprint_debug("SMBIOS rev. %d.%d.%d @ 0x%lx\n",
+		    sh->majrev, sh->minrev, sh->docrev, (u_long)sh->addr);
 }
 
 /*

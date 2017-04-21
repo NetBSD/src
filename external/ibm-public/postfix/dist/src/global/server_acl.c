@@ -1,4 +1,4 @@
-/*	$NetBSD: server_acl.c,v 1.1.1.1 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: server_acl.c,v 1.1.1.1.20.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -84,13 +84,13 @@
 #include <mail_params.h>
 #include <addr_match_list.h>
 #include <match_parent_style.h>
+#include <mynetworks.h>
 #include <server_acl.h>
 
 /* Application-specific. */
 
-#define SERVER_ACL_SEPARATORS	", \t\r\n"
-
 static ADDR_MATCH_LIST *server_acl_mynetworks;
+static ADDR_MATCH_LIST *server_acl_mynetworks_host;
 
 #define STR vstring_str
 
@@ -98,11 +98,18 @@ static ADDR_MATCH_LIST *server_acl_mynetworks;
 
 void    server_acl_pre_jail_init(const char *mynetworks, const char *origin)
 {
-    if (server_acl_mynetworks)
+    if (server_acl_mynetworks) {
 	addr_match_list_free(server_acl_mynetworks);
+	if (server_acl_mynetworks_host)
+	    addr_match_list_free(server_acl_mynetworks_host);
+    }
     server_acl_mynetworks =
-	addr_match_list_init(MATCH_FLAG_RETURN | match_parent_style(origin),
-			     mynetworks);
+	addr_match_list_init(origin, MATCH_FLAG_RETURN
+			     | match_parent_style(origin), mynetworks);
+    if (warn_compat_break_mynetworks_style)
+	server_acl_mynetworks_host =
+	    addr_match_list_init(origin, MATCH_FLAG_RETURN
+				 | match_parent_style(origin), mynetworks_host());
 }
 
 /* server_acl_parse - parse access list */
@@ -122,7 +129,7 @@ SERVER_ACL *server_acl_parse(const char *extern_acl, const char *origin)
      * chroot jail, while access lists are evaluated after entering the
      * chroot jail.
      */
-    while ((acl = mystrtok(&bp, SERVER_ACL_SEPARATORS)) != 0) {
+    while ((acl = mystrtokq(&bp, CHARS_COMMA_SP, CHARS_BRACE)) != 0) {
 	if (strchr(acl, ':') != 0) {
 	    if (strchr(origin, ':') != 0) {
 		msg_warn("table %s: lookup result \"%s\" is not allowed"
@@ -133,7 +140,8 @@ SERVER_ACL *server_acl_parse(const char *extern_acl, const char *origin)
 	    } else {
 		if (dict_handle(acl) == 0)
 		    dict_register(acl, dict_open(acl, O_RDONLY, DICT_FLAG_LOCK
-						 | DICT_FLAG_FOLD_FIX));
+						 | DICT_FLAG_FOLD_FIX
+						 | DICT_FLAG_UTF8_REQUEST));
 	    }
 	}
 	argv_add(intern_acl, acl, (char *) 0);
@@ -169,8 +177,16 @@ int     server_acl_eval(const char *client_addr, SERVER_ACL * intern_acl,
 	} else if (STREQ(acl, SERVER_ACL_NAME_PERMIT)) {
 	    return (SERVER_ACL_ACT_PERMIT);
 	} else if (STREQ(acl, SERVER_ACL_NAME_WL_MYNETWORKS)) {
-	    if (addr_match_list_match(server_acl_mynetworks, client_addr))
+	    if (addr_match_list_match(server_acl_mynetworks, client_addr)) {
+		if (warn_compat_break_mynetworks_style
+		    && !addr_match_list_match(server_acl_mynetworks_host,
+					      client_addr))
+		    msg_info("using backwards-compatible default setting "
+			     VAR_MYNETWORKS_STYLE "=%s to permit "
+			     "request from client \"%s\"",
+			     var_mynetworks_style, client_addr);
 		return (SERVER_ACL_ACT_PERMIT);
+	    }
 	    if (server_acl_mynetworks->error != 0) {
 		msg_warn("%s: %s: mynetworks lookup error -- ignoring the "
 			 "remainder of this access list", origin, acl);
@@ -181,7 +197,7 @@ int     server_acl_eval(const char *client_addr, SERVER_ACL * intern_acl,
 		msg_panic("%s: unexpected dictionary: %s", myname, acl);
 	    if ((dict_val = dict_get(dict, client_addr)) != 0) {
 		/* Fake up an ARGV to avoid lots of mallocs and frees. */
-		if (dict_val[strcspn(dict_val, ":" SERVER_ACL_SEPARATORS)] == 0) {
+		if (dict_val[strcspn(dict_val, ":" CHARS_COMMA_SP)] == 0) {
 		    ARGV_FAKE_BEGIN(fake_argv, dict_val);
 		    ret = server_acl_eval(client_addr, &fake_argv, acl);
 		    ARGV_FAKE_END;
@@ -265,7 +281,7 @@ int     main(void)
 	} else if (STREQ(cmd, VAR_SERVER_ACL)) {
 	    UPDATE_VAR(var_server_acl, value);
 	} else if (STREQ(cmd, "address")) {
-	    server_acl_pre_jail_init(var_mynetworks, VAR_SERVER_ACL);
+	    server_acl_pre_jail_init(var_mynetworks, VAR_MYNETWORKS);
 	    argv = server_acl_parse(var_server_acl, VAR_SERVER_ACL);
 	    ret = server_acl_eval(value, argv, VAR_SERVER_ACL);
 	    argv_free(argv);

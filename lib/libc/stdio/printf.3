@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.65 2015/11/19 10:03:26 pgoyette Exp $
+.\"	$NetBSD: printf.3,v 1.65.4.1 2017/04/21 16:53:09 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 .Sh NAME
 .Nm printf ,
 .Nm fprintf ,
-.Nm dprintf
+.Nm dprintf ,
 .Nm sprintf ,
 .Nm snprintf ,
 .Nm snprintf_ss ,
@@ -937,7 +937,7 @@ conversions, as well as other nonsensical combinations such as
 are not standard; such combinations should be avoided.
 .Pp
 The
-.Nm
+.Fn printf
 family of functions do not correctly handle multibyte characters in the
 .Fa format
 argument.

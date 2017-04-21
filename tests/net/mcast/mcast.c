@@ -1,4 +1,4 @@
-/*	$NetBSD: mcast.c,v 1.3 2015/05/28 10:19:17 ozaki-r Exp $	*/
+/*	$NetBSD: mcast.c,v 1.3.4.1 2017/04/21 16:54:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: mcast.c,v 1.3 2015/05/28 10:19:17 ozaki-r Exp $");
+__RCSID("$NetBSD: mcast.c,v 1.3.4.1 2017/04/21 16:54:12 bouyer Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -73,6 +73,7 @@ extern const char *__progname;
 #endif
 
 static int debug;
+static int nsleep;
 
 #define TOTAL 10
 #define PORT_V4MAPPED "6666"
@@ -338,6 +339,8 @@ receiver(const int fd, const char *host, const char *port, size_t n, bool conn,
 			    seq, msg.seq);
 	}
 
+	if (nsleep)
+		sleep(nsleep);
 	/* Tell I'm finished */
 	synchronize(fd, false);
 }
@@ -417,7 +420,7 @@ main(int argc, char *argv[])
 	n = TOTAL;
 	bug = conn = false;
 
-	while ((c = getopt(argc, argv, "46bcdmn:")) != -1)
+	while ((c = getopt(argc, argv, "46bcdmn:s:")) != -1)
 		switch (c) {
 		case '4':
 			host = HOST_V4;
@@ -443,8 +446,12 @@ main(int argc, char *argv[])
 		case 'n':
 			n = atoi(optarg);
 			break;
+		case 's':
+			nsleep = atoi(optarg);
+			break;
 		default:
-			fprintf(stderr, "Usage: %s [-cdm46] [-n <tot>]",
+			fprintf(stderr, "Usage: %s [-cdm46] [-n <tot>]"
+			    " [-s <sleep>]",
 			    getprogname());
 			return 1;
 		}

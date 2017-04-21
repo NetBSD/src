@@ -1,4 +1,4 @@
-/*	$NetBSD: readpass.c,v 1.8 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: readpass.c,v 1.8.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: readpass.c,v 1.51 2015/12/11 00:20:04 mmcc Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.8 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.8.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 

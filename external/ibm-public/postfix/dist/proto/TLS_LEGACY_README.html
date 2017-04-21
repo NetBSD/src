@@ -294,8 +294,8 @@ is correctly configured to supply its intermediate CA certificate). </p>
 </blockquote>
 
 <p> To verify a remote SMTP client certificate, the Postfix SMTP
-server needs to trust the certificates of the issuing certification
-authorities. These certificates in "pem" format can be stored in a
+server needs to trust the certificates of the issuing Certification
+Authorities. These certificates in "pem" format can be stored in a
 single $smtpd_tls_CAfile or in multiple files, one CA per file in
 the $smtpd_tls_CApath directory. If you use a directory, don't forget
 to create the necessary "hash" links with: </p>
@@ -839,8 +839,8 @@ is correctly configured to supply its intermediate CA certificate). </p>
 </blockquote>
 
 <p> To verify a remote SMTP server certificate, the Postfix SMTP
-client needs to trust the certificates of the issuing certification
-authorities. These certificates in "pem" format can be stored in a
+client needs to trust the certificates of the issuing Certification
+Authorities. These certificates in "pem" format can be stored in a
 single $smtp_tls_CAfile or in multiple files, one CA per file in
 the $smtp_tls_CApath directory. If you use a directory, don't forget
 to create the necessary "hash" links with: </p>
@@ -1032,7 +1032,7 @@ the certificate. </p>
 other attacks, mandatory certificate/peername verification is not
 viable as a default Internet mail delivery policy at this time.  A
 significant fraction of TLS enabled MTAs uses self-signed certificates,
-or certificates that are signed by a private certificate authority.
+or certificates that are signed by a private Certification Authority.
 On a machine that delivers mail to the Internet, if you set
 smtp_enforce_tls = yes, you should probably also set
 smtp_tls_enforce_peername = no.  You can use the per-site TLS
@@ -1395,9 +1395,9 @@ sign your own Postfix public key certificate, you get TLS encryption
 but no TLS authentication.  This is sufficient for testing, and
 for exchanging email with sites that you have no trust relationship
 with.  For real authentication, your Postfix public key certificate
-needs to be signed by a recognized Certificate Authority, and
+needs to be signed by a recognized Certification Authority, and
 Postfix needs to be configured with a list of public key certificates
-of Certificate Authorities, so that Postfix can verify the public key
+of Certification Authorities, so that Postfix can verify the public key
 certificates of remote hosts. </p>
 
 <p> In the examples below, user input is shown in <b><tt>bold</tt></b>
@@ -1405,7 +1405,7 @@ font, and a "<tt>#</tt>" prompt indicates a super-user shell. </p>
 
 <ul>
 
-<li> <p> Become your own Certificate Authority, so that you can
+<li> <p> Become your own Certification Authority, so that you can
 sign your own public keys. This example uses the CA.pl script that
 ships with OpenSSL.  By default, OpenSSL installs this as
 <tt>/usr/local/ssl/misc/CA.pl</tt>, but your mileage may vary. 

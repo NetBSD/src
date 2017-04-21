@@ -1,5 +1,4 @@
-/*	$NetBSD: bufferevent_ssl.h,v 1.1.1.2 2015/01/29 06:38:27 spz Exp $	*/
-/*	$NetBSD: bufferevent_ssl.h,v 1.1.1.2 2015/01/29 06:38:27 spz Exp $	*/
+/*	$NetBSD: bufferevent_ssl.h,v 1.1.1.2.4.1 2017/04/21 16:51:32 bouyer Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -25,14 +24,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _EVENT2_BUFFEREVENT_SSL_H_
-#define _EVENT2_BUFFEREVENT_SSL_H_
+#ifndef EVENT2_BUFFEREVENT_SSL_H_INCLUDED_
+#define EVENT2_BUFFEREVENT_SSL_H_INCLUDED_
 
 /** @file event2/bufferevent_ssl.h
 
     OpenSSL support for bufferevents.
  */
-
+#include <event2/visibility.h>
 #include <event2/event-config.h>
 #include <event2/bufferevent.h>
 #include <event2/util.h>
@@ -54,7 +53,7 @@ enum bufferevent_ssl_state {
 	BUFFEREVENT_SSL_ACCEPTING = 2
 };
 
-#if defined(_EVENT_HAVE_OPENSSL) || defined(_EVENT_IN_DOXYGEN)
+#if defined(EVENT__HAVE_OPENSSL) || defined(EVENT_IN_DOXYGEN_)
 /**
    Create a new SSL bufferevent to send its data over another bufferevent.
 
@@ -66,6 +65,7 @@ enum bufferevent_ssl_state {
    @param options One or more bufferevent_options
    @return A new bufferevent on success, or NULL on failure
 */
+EVENT2_EXPORT_SYMBOL
 struct bufferevent *
 bufferevent_openssl_filter_new(struct event_base *base,
     struct bufferevent *underlying,
@@ -83,6 +83,7 @@ bufferevent_openssl_filter_new(struct event_base *base,
    @param options One or more bufferevent_options
    @return A new bufferevent on success, or NULL on failure.
 */
+EVENT2_EXPORT_SYMBOL
 struct bufferevent *
 bufferevent_openssl_socket_new(struct event_base *base,
     evutil_socket_t fd,
@@ -90,14 +91,39 @@ bufferevent_openssl_socket_new(struct event_base *base,
     enum bufferevent_ssl_state state,
     int options);
 
+/** Control how to report dirty SSL shutdowns.
+
+    If the peer (or the network, or an attacker) closes the TCP
+    connection before closing the SSL channel, and the protocol is SSL >= v3,
+    this is a "dirty" shutdown.  If allow_dirty_shutdown is 0 (default),
+    this is reported as BEV_EVENT_ERROR.
+
+    If instead allow_dirty_shutdown=1, a dirty shutdown is reported as
+    BEV_EVENT_EOF.
+
+    (Note that if the protocol is < SSLv3, you will always receive
+    BEV_EVENT_EOF, since SSL 2 and earlier cannot distinguish a secure
+    connection close from a dirty one.  This is one reason (among many)
+    not to use SSL 2.)
+*/
+
+EVENT2_EXPORT_SYMBOL
+int bufferevent_openssl_get_allow_dirty_shutdown(struct bufferevent *bev);
+EVENT2_EXPORT_SYMBOL
+void bufferevent_openssl_set_allow_dirty_shutdown(struct bufferevent *bev,
+    int allow_dirty_shutdown);
+
 /** Return the underlying openssl SSL * object for an SSL bufferevent. */
+EVENT2_EXPORT_SYMBOL
 struct ssl_st *
 bufferevent_openssl_get_ssl(struct bufferevent *bufev);
 
 /** Tells a bufferevent to begin SSL renegotiation. */
+EVENT2_EXPORT_SYMBOL
 int bufferevent_ssl_renegotiate(struct bufferevent *bev);
 
 /** Return the most recent OpenSSL error reported on an SSL bufferevent. */
+EVENT2_EXPORT_SYMBOL
 unsigned long bufferevent_get_openssl_error(struct bufferevent *bev);
 
 #endif
@@ -106,4 +132,4 @@ unsigned long bufferevent_get_openssl_error(struct bufferevent *bev);
 }
 #endif
 
-#endif /* _EVENT2_BUFFEREVENT_SSL_H_ */
+#endif /* EVENT2_BUFFEREVENT_SSL_H_INCLUDED_ */

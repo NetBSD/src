@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1168.2.1 2017/01/15 20:27:33 bouyer Exp $
+#	$NetBSD: files,v 1.1168.2.2 2017/04/21 16:53:44 bouyer Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -90,6 +90,7 @@ defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
 				DKWEDGE_METHOD_GPT
 				DKWEDGE_METHOD_MBR
 				DKWEDGE_METHOD_APPLE
+				DKWEDGE_METHOD_RDB
 
 defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
 				VERIFIED_EXEC_FP_SHA256
@@ -119,6 +120,8 @@ defparam opt_pax.h		PAX_MPROTECT
 defflag	opt_fileassoc.h		FILEASSOC
 
 defflag	opt_gre.h		GRE_DEBUG
+
+defparam opt_l2tp.h		L2TP_ID_HASH_SIZE
 
 # Write Ahead Physical Block Logging
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
@@ -1214,7 +1217,7 @@ device	igsfb: wsemuldisplaydev, rasops8, vcons, videomode
 file	dev/ic/igsfb.c			igsfb			needs-flag
 file	dev/ic/igsfb_subr.c		igsfb
 
-device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
+device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode, glyphcache
 file	dev/ic/ct65550.c		chipsfb
 defflag	opt_chipsfb.h	CHIPSFB_DEBUG
 defflag	opt_chipsfb.h	CHIPSFB_WAIT
@@ -1436,6 +1439,7 @@ defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
 defpseudo carp:		ifnet, ether, arp
 defpseudodev etherip:	ifnet, ether, arp
+defpseudodev l2tp:	ifnet, ether, arp
 defpseudo canloop:	ifnet
 
 defpseudo sequencer

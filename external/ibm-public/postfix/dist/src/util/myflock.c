@@ -1,4 +1,4 @@
-/*	$NetBSD: myflock.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: myflock.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -129,7 +129,7 @@ int     myflock(int fd, int lock_style, int operation)
 		F_UNLCK, F_RDLCK, F_WRLCK
 	    };
 
-	    memset((char *) &lock, 0, sizeof(lock));
+	    memset((void *) &lock, 0, sizeof(lock));
 	    lock.l_type = lock_ops[operation & ~MYFLOCK_OP_NOWAIT];
 	    request = (operation & MYFLOCK_OP_NOWAIT) ? F_SETLK : F_SETLKW;
 	    while ((status = fcntl(fd, request, &lock)) < 0

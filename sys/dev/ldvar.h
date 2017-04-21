@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.28 2016/09/16 15:20:50 jdolecek Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.28.2.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct ld_softc {
 	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
 
 	int		(*sc_dump)(struct ld_softc *, void *, int, int);
-	int		(*sc_flush)(struct ld_softc *, int);
+	int		(*sc_ioctl)(struct ld_softc *, u_long, void *, int32_t, bool);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
 	int		(*sc_discard)(struct ld_softc *, off_t, off_t);
 };
@@ -67,9 +67,6 @@ struct ld_softc {
 /* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
-
-/* sc_flush() flags */
-#define	LDFL_POLL	0x001		/* poll for completion */
 
 int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *, const char *);

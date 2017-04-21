@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.94 2016/12/13 10:01:44 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.94.2.1 2017/04/21 16:53:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -124,6 +124,211 @@ typedef struct wiseman_rxdesc {
 #define	WRX_VLAN_ID(x)	((x) & 0x0fff)	/* VLAN identifier */
 #define	WRX_VLAN_CFI	(1U << 12)	/* Canonical Form Indicator */
 #define	WRX_VLAN_PRI(x)	(((x) >> 13) & 7)/* VLAN priority field */
+
+/* extended RX descriptor for 82574 */
+typedef union ext_rxdesc {
+	struct {
+		uint64_t erxd_addr;	/* Packet Buffer Address */
+		uint64_t erxd_dd;	/* 63:1 reserved, 0 DD */
+	} erx_data;
+	struct {
+		uint32_t erxc_mrq;	/*
+					 * 31:13 reserved
+					 * 12:8 Rx queue associated with the packet
+					 * 7:4 reserved 3:0 RSS Type
+					 */
+		uint32_t erxc_rsshash;	/* RSS Hash or {Fragment Checksum, IP identification } */
+		uint32_t erxc_err_stat;	/* 31:20 Extended Error, 19:0 Extened Status */
+		uint16_t erxc_pktlen;	/* PKT_LEN */
+		uint16_t erxc_vlan;	/* VLAN Tag */
+	} erx_ctx;
+} __packed ext_rxdesc_t;
+
+#define EXTRXD_DD_MASK		__BIT(0)
+
+/*
+ * erxc_rsshash is used for below 2 patterns
+ *     (1) Fragment Checksum and IP identification
+ *         - Fragment Checksum is valid
+ *           when RXCSUM.PCSD cleared and RXCSUM.IPPCSE bit is set
+ *         - IP identification is valid
+ *           when RXCSUM.PCSD cleared and RXCSUM.IPPCSE bit is set
+ *     (2) RSS Hash
+ *         when RXCSUM.PCSD bit is set
+ */
+#define EXTRXC_IP_ID_MASK	__BITS(15,0)
+#define EXTRXC_FRAG_CSUM_MASK	__BITS(31,16)
+#define EXTRXC_IP_ID(rsshash)	__SHIFTOUT(rsshash,ERXC_IP_ID_MASK)
+#define EXTRXC_FRAG_CSUM(rsshash) __SHIFTOUT(rsshash,ERXC_FRAG_CSUM_MASK)
+
+/* macros for nrxc_mrq */
+#define EXTRXC_RSS_TYPE_MASK		__BITS(3,0)
+/* __BITS(7,4) is reserved */
+#define EXTRXC_QUEUE_MASK		__BITS(12,8)
+/* __BITS(31,13) is reserved */
+#define EXTRXC_RSS_TYPE(mrq)	__SHIFTOUT(mrq,EXTRXC_RSS_TYPE_MASK)
+#define EXTRXC_QUEUE(mrq)	__SHIFTOUT(mrq,EXTRXC_QUEUE_MASK)
+
+#define EXTRXC_RSS_TYPE_NONE		0x0 /* No hash computation done. */
+#define EXTRXC_RSS_TYPE_TCP_IPV4	0x1
+#define EXTRXC_RSS_TYPE_IPV4		0x2
+#define EXTRXC_RSS_TYPE_TCP_IPV6	0x3
+#define EXTRXC_RSS_TYPE_IPV6_EX		0x4
+#define EXTRXC_RSS_TYPE_IPV6		0x5
+/*0x6:0xF is reserved. */
+
+#define EXTRXC_STATUS_MASK	__BITS(19,0)
+#define EXTRXC_ERROR_MASK	__BITS(31,20)
+#define EXTRXC_STATUS(err_stat)	__SHIFTOUT(err_stat,EXTRXC_STATUS_MASK)
+#define EXTRXC_ERROR(err_stat)	__SHIFTOUT(err_stat,EXTRXC_ERROR_MASK)
+
+/* 3:0 is reserved. */
+#define EXTRXC_ERROR_CE		__BIT(4) /* The same as WRX_ER_CE. */
+#define EXTRXC_ERROR_SE		__BIT(5) /* The same as WRX_ER_SE. */
+#define EXTRXC_ERROR_SEQ	__BIT(6) /* The same as WRX_ER_SEQ. */
+/* 7 is reserved. */
+#define EXTRXC_ERROR_CXE	__BIT(8) /* The same as WRX_ER_CXE. */
+#define EXTRXC_ERROR_TCPE	__BIT(9) /* The same as WRX_ER_TCPE. */
+#define EXTRXC_ERROR_IPE	__BIT(10) /* The same as WRX_ER_IPE. */
+#define EXTRXC_ERROR_RXE	__BIT(11) /* The same as WRX_ER_RXE. */
+
+#define EXTRXC_STATUS_DD		__BIT(0) /* The same as WRX_ST_DD. */
+#define EXTRXC_STATUS_EOP		__BIT(1) /* The same as WRX_ST_EOP. */
+/* 2 is reserved. */
+#define EXTRXC_STATUS_VP		__BIT(3) /* The same as WRX_ST_VP. */
+#define EXTRXC_STATUS_UDPCS		__BIT(4) /* UDP checksum calculated on packet. */
+#define EXTRXC_STATUS_TCPCS		__BIT(5) /* The same as WRX_ST_TCPCS. */
+#define EXTRXC_STATUS_IPCS		__BIT(6) /* The same as WRX_ST_IPCS. */
+/* 7 is reserved. */
+#define EXTRXC_STATUS_TST		__BIT(8) /* Time stamp taken. */
+#define EXTRXC_STATUS_IPIDV		__BIT(9) /* IP identification valid. */
+#define EXTRXC_STATUS_UDPV		__BIT(10) /* Valid UDP XSUM. */
+/* 14:11 is reserved. */
+#define EXTRXC_STATUS_ACK		__BIT(15) /* ACK packet indication. */
+#define EXTRXC_STATUS_PKTTYPE_MASK	__BITS(19,16)
+#define EXTRXC_STATUS_PKTTYPE(status)	__SHIFTOUT(status,EXTRXC_STATUS_PKTTYPE_MASK)
+
+/* advanced RX descriptor for 82575 and newer */
+typedef union nq_rxdesc {
+	struct {
+		uint64_t nrxd_paddr;	/* 63:1 Packet Buffer Address, 0 A0/NSE */
+		uint64_t nrxd_haddr;	/* 63:1 HEader Buffer Address, 0 DD */
+	} nqrx_data;
+	struct {
+		uint32_t nrxc_misc;	/*
+					 * 31: SPH, 30:21 HDR_LEN[9:0],
+					 * 20:19 HDR_LEN[11:10], 18:17 RSV,
+					 * 16:4 Packet Type 3:0 RSS Type
+					 */
+		uint32_t nrxc_rsshash;	/* RSS Hash or {Fragment Checksum, IP identification } */
+		uint32_t nrxc_err_stat;	/* 31:20 Extended Error, 19:0 Extened Status */
+		uint16_t nrxc_pktlen;	/* PKT_LEN */
+		uint16_t nrxc_vlan;	/* VLAN Tag */
+	} nqrx_ctx;
+} __packed nq_rxdesc_t;
+
+/* for nrxd_paddr macros */
+#define NQRXD_A0_MASK		__BIT(0)
+#define NQRXD_NSE_MASK		__BIT(0)
+#define NQRXD_ADDR_MASK		__BITS(63,1)
+/* for nrxd_haddr macros */
+#define NQRXD_DD_MASK		__BIT(0)
+
+/*
+ * nrxc_rsshash is used for below 2 patterns
+ *     (1) Fragment Checksum and IP identification
+ *         - Fragment Checksum is valid
+ *           when RXCSUM.PCSD cleared and RXCSUM.IPPCSE bit is set
+ *         - IP identification is valid
+ *           when RXCSUM.PCSD cleared and RXCSUM.IPPCSE bit is set
+ *     (2) RSS Hash
+ *         when RXCSUM.PCSD bit is set
+ */
+#define NQRXC_IP_ID_MASK	__BITS(15,0)
+#define NQRXC_FRAG_CSUM_MASK	__BITS(31,16)
+#define NQRXC_IP_ID(rsshash)	__SHIFTOUT(rsshash,NRXC_IP_ID_MASK)
+#define NQRXC_FRAG_CSUM(rsshash) __SHIFTOUT(rsshash,NRXC_FRAG_CSUM_MASK)
+
+/* macros for nrxc_misc */
+#define NQRXC_RSS_TYPE_MASK		__BITS(3,0)
+#define NQRXC_PKT_TYPE_ID_MASK		__BITS(11,4)
+#define NQRXC_PKT_TYPE_ETQF_INDEX_MASK	__BITS(11,4)
+#define NQRXC_PKT_TYPE_ETQF_VALID_MASK	__BIT(15)
+#define NQRXC_PKT_TYPE_VLAN_MASK 	__BIT(16)
+#define NQRXC_PKT_TYPE_MASK		__BITS(16,4)
+/* __BITS(18,17) is reserved */
+#define NQRXC_HDRLEN_HIGH_MASK		__BITS(20,19)
+#define NQRXC_HDRLEN_LOW_MASK		__BITS(30,21)
+#define NQRXC_SPH_MASK			__BIT(31)
+
+#define NQRXC_RSS_TYPE(misc)	__SHIFTOUT(misc,NQRXC_RSS_TYPE_MASK)
+#define NQRXC_PKT_TYPE_ID(pkttype) \
+		__SHIFTOUT(pkttype,NQRXC_PKT_TYPE_ID_MASK)
+#define NQRXC_PKT_TYPE(misc)	__SHIFTOUT(misc,NQRXC_PKT_TYPE_MASK)
+#define NQRXC_PKT_TYPE_ETQF_INDEX(pkttype) \
+		__SHIFTOUT(pkttype,NQRXC_PKT_TYPE_ETQF_INDEX_MASK)
+#define NQRXC_PKT_TYPE_ETQF_VALID NQRXC_PKT_TYPE_ETQF_VALID_MASK
+#define NQRXC_PKT_TYPE_VLAN	NQRXC_PKT_TYPE_VLAN_MASK
+#define NQRXC_HEADER_LEN(misc)	(__SHIFTOUT(misc,NQRXC_HDRLEN_LOW_MASK) \
+		| __SHIFTOUT(misc,NQRXC_HDRLEN_HIGH_MASK) << 10)
+#define NQRXC_SPH		NQRXC_SPH_MASK
+
+#define NQRXC_RSS_TYPE_NONE		0x0 /* No hash computation done. */
+#define NQRXC_RSS_TYPE_TCP_IPV4		0x1
+#define NQRXC_RSS_TYPE_IPV4		0x2
+#define NQRXC_RSS_TYPE_TCP_IPV6		0x3
+#define NQRXC_RSS_TYPE_IPV6_EX		0x4
+#define NQRXC_RSS_TYPE_IPV6		0x5
+#define NQRXC_RSS_TYPE_TCP_IPV6_EX	0x6
+#define NQRXC_RSS_TYPE_UDP_IPV4		0x7
+#define NQRXC_RSS_TYPE_UDP_IPV6		0x8
+#define NQRXC_RSS_TYPE_UDP_IPV6_EX	0x9
+/*0xA:0xF is reserved. */
+
+#define NQRXC_PKT_TYPE_IPV4		__BIT(0)
+#define NQRXC_PKT_TYPE_IPV4E		__BIT(1)
+#define NQRXC_PKT_TYPE_IPV6		__BIT(2)
+#define NQRXC_PKT_TYPE_IPV6E		__BIT(3)
+#define NQRXC_PKT_TYPE_TCP		__BIT(4)
+#define NQRXC_PKT_TYPE_UDP		__BIT(5)
+#define NQRXC_PKT_TYPE_SCTP		__BIT(6)
+#define NQRXC_PKT_TYPE_NFS		__BIT(7)
+
+#define NQRXC_STATUS_MASK	__BITS(19,0)
+#define NQRXC_ERROR_MASK	__BITS(31,20)
+#define NQRXC_STATUS(err_stat)	__SHIFTOUT(err_stat,NQRXC_STATUS_MASK)
+#define NQRXC_ERROR(err_stat)	__SHIFTOUT(err_stat,NQRXC_ERROR_MASK)
+
+/* 2:0 is reserved. */
+#define NQRXC_ERROR_HB0		__BIT(3) /* Header Buffer Overflow. */
+/* 6:4 is reserved. */
+/* 8:7 is reserved. */
+#define NQRXC_ERROR_L4E		__BIT(9) /* L4 error indication. */
+#define NQRXC_ERROR_IPE		__BIT(10) /* The same as WRX_ER_IPE. */
+#define NQRXC_ERROR_RXE		__BIT(11) /* The same as WRX_ER_RXE. */
+/* XXX Where is WRX_ER_CE, WRX_ER_SE, WRX_ER_SEQ, WRX_ER_CXE error? */
+
+#define NQRXC_STATUS_DD		__BIT(0) /* The same as WRX_ST_DD. */
+#define NQRXC_STATUS_EOP	__BIT(1) /* The same as WRX_ST_EOP. */
+/* 2 is reserved */
+#define NQRXC_STATUS_VP		__BIT(3) /* The same as WRX_ST_VP. */
+#define NQRXC_STATUS_UDPCS	__BIT(4) /* UDP checksum or IP payload checksum. */
+					 /* XXX in I210 spec, this bit is the same as WRX_ST_BPDU(is "???" comment) */
+#define NQRXC_STATUS_L4I	__BIT(5) /* L4 integrity check was done. */
+#define NQRXC_STATUS_IPCS	__BIT(6) /* The same as WRX_ST_IPCS. */
+#define NQRXC_STATUS_PIF	__BIT(7) /* The same as WRX_ST_PIF. */
+/* 8 is reserved */
+#define NQRXC_STATUS_VEXT	__BIT(9) /* First VLAN is found on a bouble VLAN packet. */
+#define NQRXC_STATUS_UDPV	__BIT(10) /* The packet contains a valid checksum field in a first fragment UDP IPv4 packet. */
+#define NQRXC_STATUS_LLINT	__BIT(11) /* The packet caused an immediate interrupt. */
+#define NQRXC_STATUS_STRIPCRC	__BIT(12) /* Ethernet CRC is stripped. */
+/* 14:13 is reserved */
+#define NQRXC_STATUS_TSIP	__BIT(15) /* Timestamp in packet. */
+#define NQRXC_STATUS_TS		__BIT(16) /* Time stamped packet. */
+/* 17 is reserved */
+#define NQRXC_STATUS_LB		__BIT(18) /* Sent by a local virtual machine (VM to VM switch indication). */
+#define NQRXC_STATUS_MC		__BIT(19) /* Packet received from Manageability Controller */
+					  /* "MBC" in i350 spec */
 
 /*
  * The Wiseman transmit descriptor.
@@ -539,6 +744,11 @@ struct livengood_tcpip_ctxdesc {
 #define	RCTL_RDMTS_1_4	RCTL_RDMTS(1)
 #define	RCTL_RDMTS_1_8	RCTL_RDMTS(2)
 #define	RCTL_RDMTS_MASK	RCTL_RDMTS(3)
+#define RCTL_DTYP_MASK	__BITS(11,10)	/* descriptor type. 82574 only */
+#define RCTL_DTYP(x)	__SHIFTIN(x,RCTL_DTYP_MASK)
+#define RCTL_DTYP_ONEBUF RCTL_DTYP(0)	/* use one buffer(not split header). */
+#define RCTL_DTYP_SPH	RCTL_DTYP(1)	/* split header buffer. */
+					/* RCTL_DTYP(2) and RCTL_DTYP(3) are reserved. */
 #define	RCTL_MO(x)	((x) << 12)	/* multicast offset */
 #define	RCTL_BAM	(1U << 15)	/* broadcast accept mode */
 #define	RCTL_RDMTS_HEX	__BIT(16)
@@ -841,7 +1051,12 @@ struct livengood_tcpip_ctxdesc {
 #define EITR_OTHER	0x80000000 /* Interrupt Cause Active */
 
 #define WMREG_EITR(x)	(0x01680 + (0x4 * (x)))
-#define EITR_ITR_INT_MASK	0x0000ffff
+#define EITR_ITR_INT_MASK	__BITS(14,2)
+#define EITR_COUNTER_MASK_82575	__BITS(31,16)
+#define EITR_CNT_INGR		__BIT(31) /* does not overwrite counter */
+
+#define WMREG_EITR_82574(x)	(0x000E8 + (0x4 * (x)))
+#define EITR_ITR_INT_MASK_82574	__BITS(15, 0)
 
 #define	WMREG_RXPBS	0x2404	/* Rx Packet Buffer Size  */
 #define RXPBS_SIZE_MASK_82576	0x0000007F
@@ -943,6 +1158,7 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_RFCTL_NFSRDIS	__BIT(7)  /* NFS Read Disable */
 #define WMREG_RFCTL_ACKDIS	__BIT(12) /* ACK Accelerate Disable */
 #define WMREG_RFCTL_ACKD_DIS	__BIT(13) /* ACK data Disable */
+#define WMREG_RFCTL_EXSTEN	__BIT(15) /* Extended status Enable. 82574 only. */
 #define WMREG_RFCTL_IPV6EXDIS	__BIT(16) /* IPv6 Extension Header Disable */
 #define WMREG_RFCTL_NEWIPV6EXDIS __BIT(17) /* New IPv6 Extension Header */
 
@@ -950,7 +1166,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WUC_APME		0x00000001 /* APM Enable */
 #define	WUC_PME_EN		0x00000002 /* PME Enable */
 
-#define	WMREG_WUFC	0x5808	/* Wakeup Filter COntrol */
+#define	WMREG_WUFC	0x5808	/* Wakeup Filter Control */
 #define WUFC_MAG		0x00000002 /* Magic Packet Wakeup Enable */
 #define WUFC_EX			0x00000004 /* Directed Exact Wakeup Enable */
 #define WUFC_MC			0x00000008 /* Directed Multicast Wakeup En */

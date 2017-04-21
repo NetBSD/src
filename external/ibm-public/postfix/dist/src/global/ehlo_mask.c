@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.c,v 1.1.1.2 2011/03/02 19:32:14 tron Exp $	*/
+/*	$NetBSD: ehlo_mask.c,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -20,6 +20,7 @@
 /*	#define EHLO_MASK_XFORWARD	(1<<9)
 /*	#define EHLO_MASK_ENHANCEDSTATUSCODES	(1<<10)
 /*	#define EHLO_MASK_DSN		(1<<11)
+/*	#define EHLO_MASK_SMTPUTF8	(1<<12)
 /*	#define EHLO_MASK_SILENT	(1<<15)
 /*
 /*	int	ehlo_mask(keyword_list)
@@ -77,6 +78,7 @@ static const NAME_MASK ehlo_mask_table[] = {
     "STARTTLS", EHLO_MASK_STARTTLS,
     "ENHANCEDSTATUSCODES", EHLO_MASK_ENHANCEDSTATUSCODES,
     "DSN", EHLO_MASK_DSN,
+    "EHLO_MASK_SMTPUTF8", EHLO_MASK_SMTPUTF8,
     "SILENT-DISCARD", EHLO_MASK_SILENT,	/* XXX In-band signaling */
     0,
 };

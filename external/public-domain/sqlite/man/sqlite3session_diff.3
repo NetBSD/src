@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3SESSION_DIFF 3
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ For each row (primary key) that exists in the to-table but not in the
 from-table, a DELETE record is added to the session object.
 .It
 For each row (primary key) that exists in both tables, but features
-different in each, an UPDATE record is added to the session.
+different non-PK values in each, an UPDATE record is added to the session.
 .El
 .Pp
 To clarify, if this function is called and then a changeset constructed

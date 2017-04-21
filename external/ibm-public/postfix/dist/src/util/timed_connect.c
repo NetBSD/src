@@ -1,4 +1,4 @@
-/*	$NetBSD: timed_connect.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: timed_connect.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@
 
 /* timed_connect - connect with deadline */
 
-int     timed_connect(int sock, struct sockaddr * sa, int len, int timeout)
+int     timed_connect(int sock, struct sockaddr *sa, int len, int timeout)
 {
     int     error;
     SOCKOPT_SIZE error_len;
@@ -99,7 +99,7 @@ int     timed_connect(int sock, struct sockaddr * sa, int len, int timeout)
      */
     error = 0;
     error_len = sizeof(error);
-    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (char *) &error, &error_len) < 0)
+    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *) &error, &error_len) < 0)
 	return (-1);
     if (error) {
 	errno = error;

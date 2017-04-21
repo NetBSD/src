@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2016/03/26 09:02:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.80.4.1 2017/04/21 16:54:13 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ MULTILIB_ARGS= --disable-multilib
 .endif
 
 .if ${MKSOFTFLOAT} != "no" && ${MACHINE_CPU} != "m68k" \
-    && ${MACHINE_CPU} != "or1k"
+    && ${MACHINE_CPU} != "or1k" && ${MACHINE_CPU} != "sh3"
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 

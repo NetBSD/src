@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_dbm.c,v 1.1.1.4 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_dbm.c,v 1.1.1.4.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -422,7 +422,7 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_DBM_OPEN_RETURN(d) { \
+#define DICT_DBM_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	if (dbm_path != 0) \
 	    myfree(dbm_path); \

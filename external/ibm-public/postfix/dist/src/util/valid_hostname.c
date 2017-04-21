@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.c,v 1.1.1.3 2013/09/25 19:06:38 tron Exp $	*/
+/*	$NetBSD: valid_hostname.c,v 1.1.1.3.12.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -31,9 +31,9 @@
 /*	valid_hostname() scrutinizes a hostname: the name should
 /*	be no longer than VALID_HOSTNAME_LEN characters, should
 /*	contain only letters, digits, dots and hyphens, no adjacent
-/*	dots and hyphens, no leading or trailing dots or hyphens,
-/*	no labels longer than VALID_LABEL_LEN characters, and it
-/*	should not be all numeric.
+/*	dots, no leading or trailing dots or hyphens, no labels
+/*	longer than VALID_LABEL_LEN characters, and it should not
+/*	be all numeric.
 /*
 /*	valid_hostaddr() requires that the input is a valid string
 /*	representation of an IPv4 or IPv6 network address as
@@ -42,8 +42,8 @@
 /*	valid_ipv4_hostaddr() and valid_ipv6_hostaddr() implement
 /*	protocol-specific address syntax checks. A valid IPv4
 /*	address is in dotted-quad decimal form. A valid IPv6 address
-/*      has 16-bit hexadecimal fields separated by ":", and does not
-/*      include the RFC 2821 style "IPv6:" prefix.
+/*	has 16-bit hexadecimal fields separated by ":", and does not
+/*	include the RFC 2821 style "IPv6:" prefix.
 /*
 /*	These routines operate silently unless the gripe parameter
 /*	specifies a non-zero value. The macros DO_GRIPE and DONT_GRIPE

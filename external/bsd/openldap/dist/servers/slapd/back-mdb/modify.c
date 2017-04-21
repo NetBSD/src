@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.1.1.1 2014/05/28 09:58:50 tron Exp $	*/
+/*	$NetBSD: modify.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* modify.c - mdb backend modify routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2014 The OpenLDAP Foundation.
+ * Copyright 2000-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,6 +15,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: modify.c,v 1.1.1.1.14.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -460,6 +463,7 @@ mdb_modify( Operation *op, SlapReply *rs )
 	LDAPControl **postread_ctrl = NULL;
 	LDAPControl *ctrls[SLAP_MAX_RESPONSE_CONTROLS];
 	int num_ctrls = 0;
+	int numads = mdb->mi_numads;
 
 #ifdef LDAP_X_TXN
 	int settle = 0;
@@ -669,12 +673,15 @@ txnReturn:
 		LDAP_SLIST_REMOVE( &op->o_extra, &opinfo.moi_oe, OpExtra, oe_next );
 		opinfo.moi_oe.oe_key = NULL;
 		if( op->o_noop ) {
+			mdb->mi_numads = numads;
 			mdb_txn_abort( txn );
 			rs->sr_err = LDAP_X_NO_OPERATION;
 			txn = NULL;
 			goto return_results;
 		} else {
 			rs->sr_err = mdb_txn_commit( txn );
+			if ( rs->sr_err )
+				mdb->mi_numads = numads;
 			txn = NULL;
 		}
 	}
@@ -717,6 +724,7 @@ done:
 
 	if( moi == &opinfo ) {
 		if( txn != NULL ) {
+			mdb->mi_numads = numads;
 			mdb_txn_abort( txn );
 		}
 		if ( opinfo.moi_oe.oe_key ) {

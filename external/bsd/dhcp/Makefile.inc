@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16 2016/01/10 20:10:44 christos Exp $
+# $NetBSD: Makefile.inc,v 1.16.4.1 2017/04/21 16:51:22 bouyer Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -38,9 +38,9 @@ LDADD+=-lpthread
 .if (${MKCRYPTO} != "no")
 .if (${MKKERBEROS} != "no")
 LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
-	-lcom_err  -lroken -lasn1 -lwind
+	-lcom_err  -lroken -lasn1 -lwind -lsqlite3
 DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
-	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND} ${LIBSQLITE3}
 .endif
 .if defined(PROG) && ${PROG} == "dhclient"
 LDADD+=-Wl,-Bdynamic

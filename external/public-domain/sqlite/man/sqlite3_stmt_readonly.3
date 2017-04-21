@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_STMT_READONLY 3
 .Os
 .Sh NAME
 .Nm sqlite3_stmt_readonly
 .Nd Determine If An SQL Statement Writes The Database
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_stmt_readonly
 .Fa "sqlite3_stmt *pStmt"
 .Fc
@@ -39,6 +39,10 @@ The ATTACH and DETACH statements also cause sqlite3_stmt_readonly()
 to return true since, while those statements change the configuration
 of a database connection, they do not make changes to the content of
 the database files on disk.
+The sqlite3_stmt_readonly() interface returns true for BEGIN since
+BEGIN merely sets internal flags, but the BEGIN IMMEDIATE
+and BEGIN EXCLUSIVE commands do touch the database and
+so sqlite3_stmt_readonly() returns false for those commands.
 .Sh SEE ALSO
 .Xr sqlite3_create_function 3 ,
 .Xr sqlite3_stmt 3 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: maps.c,v 1.1.1.3 2013/01/02 18:58:58 tron Exp $	*/
+/*	$NetBSD: maps.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -116,7 +116,8 @@ MAPS   *maps_create(const char *title, const char *map_names, int dict_flags)
     const char *myname = "maps_create";
     char   *temp;
     char   *bufp;
-    static char sep[] = " \t,\r\n";
+    static char sep[] = CHARS_COMMA_SP;
+    static char parens[] = CHARS_BRACE;
     MAPS   *maps;
     char   *map_type_name;
     VSTRING *map_type_name_flags;
@@ -140,7 +141,7 @@ MAPS   *maps_create(const char *title, const char *map_names, int dict_flags)
 
 #define OPEN_FLAGS	O_RDONLY
 
-	while ((map_type_name = mystrtok(&bufp, sep)) != 0) {
+	while ((map_type_name = mystrtokq(&bufp, sep, parens)) != 0) {
 	    vstring_sprintf(map_type_name_flags, "%s(%o,%s)",
 			    map_type_name, OPEN_FLAGS,
 			    dict_flags_str(dict_flags));
@@ -222,7 +223,7 @@ MAPS   *maps_free(MAPS *maps)
     }
     myfree(maps->title);
     argv_free(maps->argv);
-    myfree((char *) maps);
+    myfree((void *) maps);
     return (0);
 }
 

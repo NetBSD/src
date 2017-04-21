@@ -1,4 +1,4 @@
-/*	$NetBSD: user_acl.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: user_acl.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _USER_ACL_H_INCLUDED_
 #define _USER_ACL_H_INCLUDED_
@@ -27,7 +27,7 @@
  /*
   * External interface
   */
-extern const char *check_user_acl_byuid(char *, uid_t);
+extern const char *check_user_acl_byuid(const char *, const char *, uid_t);
 
 /* AUTHOR(S)
 /*	Wietse Venema

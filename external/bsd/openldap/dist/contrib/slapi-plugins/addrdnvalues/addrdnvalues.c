@@ -1,10 +1,10 @@
-/*	$NetBSD: addrdnvalues.c,v 1.1.1.4 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: addrdnvalues.c,v 1.1.1.4.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* addrdnvalues.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Copyright 2003-2004 PADL Software Pty Ltd.
  * All rights reserved.
  *

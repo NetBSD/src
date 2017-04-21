@@ -1,9 +1,9 @@
-/*	$NetBSD: dnssrv.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: dnssrv.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,6 +19,9 @@
  * locate LDAP servers using DNS SRV records.
  * Location code based on MIT Kerberos KDC location code.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dnssrv.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -176,6 +179,82 @@ int ldap_domain2dn(
 	return LDAP_SUCCESS;
 }
 
+#ifdef HAVE_RES_QUERY
+#define DNSBUFSIZ (64*1024)
+#define MAXHOST	254	/* RFC 1034, max length is 253 chars */
+typedef struct srv_record {
+    u_short priority;
+    u_short weight;
+    u_short port;
+    char hostname[MAXHOST];
+} srv_record;
+
+/* Linear Congruential Generator - we don't need
+ * high quality randomness, and we don't want to
+ * interfere with anyone else's use of srand().
+ *
+ * The PRNG here cycles thru 941,955 numbers.
+ */
+static float srv_seed;
+
+static void srv_srand(int seed) {
+	srv_seed = (float)seed / (float)RAND_MAX;
+}
+
+static float srv_rand() {
+	float val = 9821.0 * srv_seed + .211327;
+	srv_seed = val - (int)val;
+	return srv_seed;
+}
+
+static int srv_cmp(const void *aa, const void *bb){
+	srv_record *a=(srv_record *)aa;
+	srv_record *b=(srv_record *)bb;
+	int i = a->priority - b->priority;
+	if (i) return i;
+	return b->weight - a->weight;
+}
+
+static void srv_shuffle(srv_record *a, int n) {
+	int i, j, total = 0, r, p;
+
+	for (i=0; i<n; i++)
+		total += a[i].weight;
+
+	/* all weights are zero, do a straight Fisher-Yates shuffle */
+	if (!total) {
+		while (n) {
+			srv_record t;
+			i = srv_rand() * n--;
+			t = a[n];
+			a[n] = a[i];
+			a[i] = t;
+		}
+		return;
+	}
+
+	/* Do a shuffle per RFC2782 Page 4 */
+	p = n;
+	for (i=0; i<n-1; i++) {
+		r = srv_rand() * total;
+		for (j=0; j<p; j++) {
+			r -= a[j].weight;
+			if (r <= 0) {
+				if (j) {
+					srv_record t = a[0];
+					a[0] = a[j];
+					a[j] = t;
+				}
+				total -= a[0].weight;
+				a++;
+				p--;
+				break;
+			}
+		}
+	}
+}
+#endif /* HAVE_RES_QUERY */
+
 /*
  * Lookup and return LDAP servers for domain (using the DNS
  * SRV record _ldap._tcp.domain).
@@ -185,15 +264,16 @@ int ldap_domain2hostlist(
 	char **list )
 {
 #ifdef HAVE_RES_QUERY
-#define DNSBUFSIZ (64*1024)
     char *request;
     char *hostlist = NULL;
+    srv_record *hostent_head=NULL;
+    int i, j;
     int rc, len, cur = 0;
     unsigned char reply[DNSBUFSIZ];
+    int hostent_count=0;
 
 	assert( domain != NULL );
 	assert( list != NULL );
-
 	if( *domain == '\0' ) {
 		return LDAP_PARAM_ERROR;
 	}
@@ -225,8 +305,7 @@ int ldap_domain2hostlist(
 	unsigned char *p;
 	char host[DNSBUFSIZ];
 	int status;
-	u_short port;
-	/* int priority, weight; */
+	u_short port, priority, weight;
 
 	/* Parse out query */
 	p = reply;
@@ -265,36 +344,70 @@ int ldap_domain2hostlist(
 	    size = (p[0] << 8) | p[1];
 	    p += 2;
 	    if (type == T_SRV) {
-		int buflen;
 		status = dn_expand(reply, reply + len, p + 6, host, sizeof(host));
 		if (status < 0) {
 		    goto out;
 		}
-		/* ignore priority and weight for now */
-		/* priority = (p[0] << 8) | p[1]; */
-		/* weight = (p[2] << 8) | p[3]; */
+
+		/* Get priority weight and port */
+		priority = (p[0] << 8) | p[1];
+		weight = (p[2] << 8) | p[3];
 		port = (p[4] << 8) | p[5];
 
 		if ( port == 0 || host[ 0 ] == '\0' ) {
 		    goto add_size;
 		}
 
-		buflen = strlen(host) + STRLENOF(":65355 ");
-		hostlist = (char *) LDAP_REALLOC(hostlist, cur + buflen + 1);
-		if (hostlist == NULL) {
-		    rc = LDAP_NO_MEMORY;
+		hostent_head = (srv_record *) LDAP_REALLOC(hostent_head, (hostent_count+1)*(sizeof(srv_record)));
+		if(hostent_head==NULL){
+		    rc=LDAP_NO_MEMORY;
 		    goto out;
 		}
-		if (cur > 0) {
-		    /* not first time around */
-		    hostlist[cur++] = ' ';
-		}
-		cur += sprintf(&hostlist[cur], "%s:%hu", host, port);
+		hostent_head[hostent_count].priority=priority;
+		hostent_head[hostent_count].weight=weight;
+		hostent_head[hostent_count].port=port;
+		strncpy(hostent_head[hostent_count].hostname, host, MAXHOST-1);
+		hostent_head[hostent_count].hostname[MAXHOST-1] = '\0';
+		hostent_count++;
 	    }
 add_size:;
 	    p += size;
 	}
+	if (!hostent_head) goto out;
+    qsort(hostent_head, hostent_count, sizeof(srv_record), srv_cmp);
+
+	if (!srv_seed)
+		srv_srand(time(0L));
+
+	/* shuffle records of same priority */
+	j = 0;
+	priority = hostent_head[0].priority;
+	for (i=1; i<hostent_count; i++) {
+		if (hostent_head[i].priority != priority) {
+			priority = hostent_head[i].priority;
+			if (i-j > 1)
+				srv_shuffle(hostent_head+j, i-j);
+			j = i;
+		}
+	}
+	if (i-j > 1)
+		srv_shuffle(hostent_head+j, i-j);
+
+    for(i=0; i<hostent_count; i++){
+	int buflen;
+        buflen = strlen(hostent_head[i].hostname) + STRLENOF(":65535 ");
+        hostlist = (char *) LDAP_REALLOC(hostlist, cur+buflen+1);
+        if (hostlist == NULL) {
+            rc = LDAP_NO_MEMORY;
+            goto out;
+        }
+        if(cur>0){
+            hostlist[cur++]=' ';
+        }
+        cur += sprintf(&hostlist[cur], "%s:%hu", hostent_head[i].hostname, hostent_head[i].port);
     }
+    }
+
     if (hostlist == NULL) {
 	/* No LDAP servers found in DNS. */
 	rc = LDAP_UNAVAILABLE;
@@ -309,6 +422,9 @@ add_size:;
 
     if (request != NULL) {
 	LDAP_FREE(request);
+    }
+    if (hostent_head != NULL) {
+	LDAP_FREE(hostent_head);
     }
     if (rc != LDAP_SUCCESS && hostlist != NULL) {
 	LDAP_FREE(hostlist);

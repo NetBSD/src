@@ -1,4 +1,4 @@
-/*	$NetBSD: doxygen.c,v 1.1.1.1 2011/04/13 18:15:40 elric Exp $	*/
+/*	$NetBSD: doxygen.c,v 1.1.1.1.32.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_paragraph.c,v 1.3 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: v_paragraph.c,v 1.3.16.1 2017/04/21 16:52:20 bouyer Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: v_paragraph.c,v 10.10 2001/06/25 15:19:32 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:32 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: v_paragraph.c,v 1.3 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: v_paragraph.c,v 1.3.16.1 2017/04/21 16:52:20 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,8 +73,8 @@ int
 v_paragraphf(SCR *sp, VICMD *vp)
 {
 	enum { P_INTEXT, P_INBLANK } pstate;
-	size_t lastlen, len;
-	db_recno_t cnt, lastlno, lno;
+	size_t lastcno, cno, prevlen, len;
+	db_recno_t cnt, lastlno, prevlno, lno;
 	int isempty;
 	CHAR_T *p;
 	char *lp;
@@ -93,23 +93,31 @@ v_paragraphf(SCR *sp, VICMD *vp)
 	 * line itself remained.  If somebody complains, don't pause, don't
 	 * hesitate, just hit them.
 	 */
-	if (ISMOTION(vp)) {
-		if (vp->m_start.cno == 0)
+	if (db_last(sp, &lastlno))
+		return (1);
+	lno = vp->m_start.lno;
+	if (ISMOTION(vp) && lno != lastlno) {
+		if ((cno = vp->m_start.cno) == 0)
 			F_SET(vp, VM_LMODE);
 		else {
-			vp->m_stop = vp->m_start;
-			vp->m_stop.cno = 0;
-			if (nonblank(sp, vp->m_stop.lno, &vp->m_stop.cno))
+			if (nonblank(sp, lno, &len))
 				return (1);
-			if (vp->m_start.cno <= vp->m_stop.cno)
+			if (cno <= len)
 				F_SET(vp, VM_LMODE);
 		}
 	}
 
-	/* Figure out what state we're currently in. */
-	lno = vp->m_start.lno;
-	if (db_get(sp, lno, 0, &p, &len))
-		goto eof;
+	/*
+	 * Figure out what state we're currently in.  It also historically
+	 * worked on empty files, so we have to make it okay.
+	 */
+	if (db_eget(sp, lno, &p, &len, &isempty)) {
+		if (isempty) {
+			vp->m_stop = vp->m_final = vp->m_start;
+			return (0);
+		} else
+			return (1);
+	}
 
 	/*
 	 * If we start in text, we want to switch states
@@ -125,10 +133,12 @@ v_paragraphf(SCR *sp, VICMD *vp)
 	}
 
 	for (;;) {
-		lastlno = lno;
-		lastlen = len;
-		if (db_get(sp, ++lno, 0, &p, &len))
+		prevlno = lno;
+		prevlen = len;
+		if (++lno > lastlno)
 			goto eof;
+		if (db_get(sp, lno, 0, &p, &len))
+			return (1);
 		switch (pstate) {
 		case P_INTEXT:
 			INTEXT_CHECK;
@@ -150,8 +160,8 @@ v_paragraphf(SCR *sp, VICMD *vp)
 			 * to the start of the new "paragraph".
 			 */
 found:			if (ISMOTION(vp)) {
-				vp->m_stop.lno = lastlno;
-				vp->m_stop.cno = lastlen ? lastlen - 1 : 0;
+				vp->m_stop.lno = prevlno;
+				vp->m_stop.cno = prevlen ? prevlen - 1 : 0;
 				vp->m_final = vp->m_start;
 			} else {
 				vp->m_stop.lno = lno;
@@ -169,20 +179,12 @@ found:			if (ISMOTION(vp)) {
 	 * Adjust end of the range for motion commands; EOF is a movement
 	 * sink.  The } command historically moved to the end of the last
 	 * line, not the beginning, from any position before the end of the
-	 * last line.  It also historically worked on empty files, so we
-	 * have to make it okay.
+	 * last line.
 	 */
-eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
-		if (db_eget(sp, vp->m_start.lno, &p, &len, &isempty)) {
-			if (!isempty)
-				return (1);
-			vp->m_start.cno = 0;
-			return (0);
-		}
-		if (vp->m_start.cno == (len ? len - 1 : 0)) {
-			v_eof(sp, NULL);
-			return (1);
-		}
+eof:	lastcno = len ? len - 1 : 0;
+	if (vp->m_start.lno == lastlno && vp->m_start.cno == lastcno) {
+		v_eof(sp, NULL);
+		return (1);
 	}
 	/*
 	 * !!!
@@ -196,8 +198,8 @@ eof:	if (vp->m_start.lno == lno || vp->m_start.lno == lno - 1) {
 		F_CLR(vp, VM_RCM_MASK);
 		F_SET(vp, VM_RCM_SETFNB);
 	}
-	vp->m_stop.lno = lno - 1;
-	vp->m_stop.cno = len ? len - 1 : 0;
+	vp->m_stop.lno = lastlno;
+	vp->m_stop.cno = lastcno;
 	vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	return (0);
 }

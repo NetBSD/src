@@ -1,4 +1,4 @@
-/*	$NetBSD: destroy.c,v 1.1.1.1 2011/04/13 18:14:32 elric Exp $	*/
+/*	$NetBSD: destroy.c,v 1.1.1.1.32.1 2017/04/21 16:50:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan

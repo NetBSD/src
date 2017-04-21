@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.39 2010/02/16 19:21:30 rmind Exp $
+.\"	$NetBSD: spl.9,v 1.39.34.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Michael Long.
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 16, 2010
+.Dd April 6, 2017
 .Dt SPL 9
 .Os
 .Sh NAME
@@ -35,6 +35,9 @@
 .Nm spl0 ,
 .Nm splhigh ,
 .Nm splvm ,
+.Nm splbio ,
+.Nm splnet ,
+.Nm spltty ,
 .Nm splsched ,
 .Nm splsoftbio ,
 .Nm splsoftclock ,
@@ -52,6 +55,12 @@
 .Fn splsched void
 .Ft int
 .Fn splvm void
+.Ft int
+.Fn splbio void
+.Ft int
+.Fn splnet void
+.Ft int
+.Fn spltty void
 .Ft int
 .Fn splsoftbio void
 .Ft int
@@ -168,6 +177,15 @@ synchronization.
 A future release of the system may allow the automatic acquisition of
 .Dv kernel_lock
 to be disabled for individual interrupt handlers.
+.Pp
+.Fn splbio ,
+.Fn splnet ,
+and
+.Fn spltty
+are synonyms for
+.Fn splvm .
+Their use is deprecated; all new code should use
+.Fn splvm .
 .It Fn splsoftserial , IPL_SOFTSERIAL
 .Pp
 Blocks soft interrupts at the IPL_SOFTSERIAL symbolic level.

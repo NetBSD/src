@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152 2016/12/14 14:00:16 martin Exp $
+# $NetBSD: GENERIC,v 1.152.2.1 2017/04/21 16:53:24 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152 $"
+#ident 		"GENERIC-$Revision: 1.152.2.1 $"
 
 maxusers	32
 
@@ -99,6 +99,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

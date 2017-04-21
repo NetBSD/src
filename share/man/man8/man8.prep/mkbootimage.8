@@ -1,4 +1,4 @@
-.\" $NetBSD: mkbootimage.8,v 1.6 2011/04/28 16:36:15 wiz Exp $
+.\" $NetBSD: mkbootimage.8,v 1.6.30.1 2017/04/21 16:53:19 bouyer Exp $
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 30, 2008
+.Dd February 17, 2017
 .Dt MKBOOTIMAGE 8 prep
 .Os
 .Sh NAME
@@ -139,10 +139,10 @@ to create a new bootable image with com0 as the console:
 .Dl Ic mkbootimage -b /usr/mdec/boot_com0 -k /netbsd -r /dev/rsd0c boot.fs
 .Sh SEE ALSO
 .Xr dd 1 ,
-.Xr boot 8 ,
 .Xr bootpd 8 ,
 .Xr disklabel 8 ,
-.Xr fdisk 8
+.Xr fdisk 8 ,
+.Xr prep/boot 8
 .Sh HISTORY
 .Nm
 first appeared in

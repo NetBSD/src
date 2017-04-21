@@ -1,10 +1,10 @@
-/*	$NetBSD: time.c,v 1.1.1.4 2014/05/28 09:58:50 tron Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* time.c - deal with time subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2014 The OpenLDAP Foundation.
+ * Copyright 2001-2016 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * This work was initially developed by Pierangelo Masarati for inclusion
  * in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: time.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $");
 
 #include "portable.h"
 

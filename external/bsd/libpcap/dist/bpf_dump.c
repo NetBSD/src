@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_dump.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: bpf_dump.c,v 1.2.4.1 2017/04/21 16:51:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf_dump.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: bpf_dump.c,v 1.2.4.1 2017/04/21 16:51:33 bouyer Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -56,7 +56,10 @@ bpf_dump(const struct bpf_program *p, int option)
 	for (i = 0; i < n; ++insn, ++i) {
 #ifdef BDEBUG
 		extern int bids[];
-		printf(bids[i] > 0 ? "[%02d]" : " -- ", bids[i] - 1);
+		if (bids[i] > 0)
+			printf("[%02d]", bids[i] - 1);
+		else
+			printf(" -- ");
 #endif
 		puts(bpf_image(insn, i));
 	}

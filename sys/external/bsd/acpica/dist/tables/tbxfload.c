@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2016, Intel Corp.
+ * Copyright (C) 2000 - 2017, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,6 +163,17 @@ AcpiTbLoadNamespace (
 
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
 
+#ifdef __ia64__
+    /*
+     * For ia64 ski emulator
+     */
+    if (AcpiGbl_DsdtIndex == ACPI_INVALID_TABLE_INDEX)
+    {
+        Status = AE_NO_ACPI_TABLES;
+        goto UnlockAndExit;
+    }
+#endif
+    
     /*
      * Load the namespace. The DSDT is required, but any SSDT and
      * PSDT tables are optional. Verify the DSDT.
@@ -372,7 +383,7 @@ AcpiLoadTable (
     /* Install the table and load it into the namespace */
 
     ACPI_INFO (("Host-directed Dynamic ACPI Table Load:"));
-    Status = AcpiTbInstallAndLoadTable (Table, ACPI_PTR_TO_PHYSADDR (Table),
+    Status = AcpiTbInstallAndLoadTable (ACPI_PTR_TO_PHYSADDR (Table),
         ACPI_TABLE_ORIGIN_EXTERNAL_VIRTUAL, FALSE, &TableIndex);
     return_ACPI_STATUS (Status);
 }
@@ -459,39 +470,8 @@ AcpiUnloadParentTable (
             break;
         }
 
-        /* Ensure the table is actually loaded */
-
         (void) AcpiUtReleaseMutex (ACPI_MTX_TABLES);
-        if (!AcpiTbIsTableLoaded (i))
-        {
-            Status = AE_NOT_EXIST;
-            (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-            break;
-        }
-
-        /* Invoke table handler if present */
-
-        if (AcpiGbl_TableHandler)
-        {
-            (void) AcpiGbl_TableHandler (ACPI_TABLE_EVENT_UNLOAD,
-                AcpiGbl_RootTableList.Tables[i].Pointer,
-                AcpiGbl_TableHandlerContext);
-        }
-
-        /*
-         * Delete all namespace objects owned by this table. Note that
-         * these objects can appear anywhere in the namespace by virtue
-         * of the AML "Scope" operator. Thus, we need to track ownership
-         * by an ID, not simply a position within the hierarchy.
-         */
-        Status = AcpiTbDeleteNamespaceByOwner (i);
-        if (ACPI_FAILURE (Status))
-        {
-            break;
-        }
-
-        Status = AcpiTbReleaseOwnerId (i);
-        AcpiTbSetTableLoadedFlag (i, FALSE);
+        Status = AcpiTbUnloadTable (i);
         (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
         break;
     }

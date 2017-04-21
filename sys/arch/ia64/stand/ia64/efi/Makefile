@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2016/08/05 17:08:10 scole Exp $	
+#	$NetBSD: Makefile,v 1.4.2.1 2017/04/21 16:53:29 bouyer Exp $	
 
 S=	${.CURDIR}/../../../../..
-
-VERSIONFILE= ${.CURDIR}/version
 
 .include "../Makefile.booters"
 
@@ -20,8 +18,10 @@ CPPFLAGS+=	-DLOADER -DLIBKERN_OPTIMISE_SPACE -DHEAP_VARIABLE
 .PATH: ${.CURDIR}/../../common
 .include "${.CURDIR}/../../common/Makefile.inc"
 
+.include "${S}/conf/newvers_stand.mk"
+
 # need to do this after common stuff pulled in
-SRCS.loader.sym:=	start.S conf.c efimd.c vers.c main.c ${SRCS}
+SRCS.loader.sym:=	start.S conf.c efimd.c main.c ${SRCS}
 
 # XXX verify
 BINDIR?=	/usr/mdec
@@ -31,13 +31,9 @@ LDFLAGS=	-Wl,-T${LDSCRIPT} -shared -symbolic -nostdlib
 
 loader.sym: ${LDSCRIPT}
 
-CLEANFILES+=	vers.c ${OBJS}
+CLEANFILES+=	${OBJS}
 
 NEWVERSWHAT=	"EFI boot" ${MACHINE_ARCH}
-
-vers.c: ${VERSIONFILE} ${SOURCES}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 loader.efi: loader.sym
 	if [ `${OBJDUMP} -t loader.sym | fgrep '*UND*' | wc -l` != 0 ]; then \
@@ -59,5 +55,6 @@ DPADD=		${LIBEFI} ${LIBLIST}
 
 # Cross dependencies between LIBEFI and LIB(SA|KERN). Need to elaborate below.
 LDADD=		${LIBEFI} ${LIBLIST} ${LIBEFI} ${LIBLIST}
+
 
 .include <bsd.prog.mk>

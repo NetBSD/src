@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.1.1.2 2014/04/24 12:45:42 pettai Exp $	*/
+/*	$NetBSD: lock.c,v 1.1.1.2.10.1 2017/04/21 16:50:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2006 Kungliga Tekniska Högskolan
@@ -49,7 +49,10 @@ struct hx509_lock_data {
 };
 
 static struct hx509_lock_data empty_lock_data = {
-    { 0, NULL }
+    { 0, NULL },
+    NULL,
+    NULL,
+    NULL
 };
 
 hx509_lock _hx509_empty_lock = &empty_lock_data;

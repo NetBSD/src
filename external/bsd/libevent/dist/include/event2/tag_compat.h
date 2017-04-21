@@ -1,5 +1,4 @@
-/*	$NetBSD: tag_compat.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
-/*	$NetBSD: tag_compat.h,v 1.1.1.2 2015/01/29 06:38:28 spz Exp $	*/
+/*	$NetBSD: tag_compat.h,v 1.1.1.2.4.1 2017/04/21 16:51:32 bouyer Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -26,8 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _EVENT2_TAG_COMPAT_H_
-#define _EVENT2_TAG_COMPAT_H_
+#ifndef EVENT2_TAG_COMPAT_H_INCLUDED_
+#define EVENT2_TAG_COMPAT_H_INCLUDED_
 
 /** @file event2/tag_compat.h
 
@@ -48,4 +47,4 @@
 #define encode_int64(evbuf, number) evtag_encode_int64((evbuf), (number))
 /**@}*/
 
-#endif /* _EVENT2_TAG_H_ */
+#endif /* EVENT2_TAG_H_INCLUDED_ */

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.78 2017/01/11 09:08:58 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.78.2.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -511,7 +511,7 @@ and
 .Em v_holdcnt
 are zero, the vnode is cached.
 .It Fn vrele_async "vp"
-Will asychronously release the vnode in different context than the caller,
+Will asynchronously release the vnode in different context than the caller,
 sometime after the call.
 .It Fn vput "vp"
 Legacy convenience routine for unlocking and releasing

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.c,v 1.4 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: dict_sockmap.c,v 1.4.12.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -319,7 +319,7 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_SOCKMAP_OPEN_RETURN(d) { \
+#define DICT_SOCKMAP_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	if (saved_name != 0) \
 	    myfree(saved_name); \
@@ -331,14 +331,14 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
      */
     if (open_flags != O_RDONLY)
 	DICT_SOCKMAP_OPEN_RETURN(dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-					   open_flags, dict_flags,
+						open_flags, dict_flags,
 				  "%s:%s map requires O_RDONLY access mode",
-					   DICT_TYPE_SOCKMAP, mapname));
+						DICT_TYPE_SOCKMAP, mapname));
     if (dict_flags & DICT_FLAG_NO_UNAUTH)
 	DICT_SOCKMAP_OPEN_RETURN(dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-					   open_flags, dict_flags,
+						open_flags, dict_flags,
 		     "%s:%s map is not allowed for security-sensitive data",
-					   DICT_TYPE_SOCKMAP, mapname));
+						DICT_TYPE_SOCKMAP, mapname));
 
     /*
      * Separate the socketmap name from the socketmap server name.
@@ -346,9 +346,9 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
     saved_name = mystrdup(mapname);
     if ((sockmap = split_at_right(saved_name, ':')) == 0)
 	DICT_SOCKMAP_OPEN_RETURN(dict_surrogate(DICT_TYPE_SOCKMAP, mapname,
-					   open_flags, dict_flags,
+						open_flags, dict_flags,
 				    "%s requires server:socketmap argument",
-					   DICT_TYPE_SOCKMAP));
+						DICT_TYPE_SOCKMAP));
 
     /*
      * Use one reference-counted client handle for all socketmaps with the
@@ -361,7 +361,7 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
     if ((client_info = htable_locate(dict_sockmap_handles, saved_name)) == 0) {
 	ref_handle = (DICT_SOCKMAP_REFC_HANDLE *) mymalloc(sizeof(*ref_handle));
 	client_info = htable_enter(dict_sockmap_handles,
-				   saved_name, (char *) ref_handle);
+				   saved_name, (void *) ref_handle);
 	/* XXX Late initialization, so we can reuse macros for consistency. */
 	DICT_SOCKMAP_RH_REFCOUNT(client_info) = 1;
 	DICT_SOCKMAP_RH_HANDLE(client_info) =

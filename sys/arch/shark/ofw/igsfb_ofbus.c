@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.16 2015/06/30 03:52:54 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.16.4.1 2017/04/21 16:53:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.16 2015/06/30 03:52:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.16.4.1 2017/04/21 16:53:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,8 +133,17 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	stdout_ihandle = of_decode_int((void *)&stdout_ihandle);
 	stdout_phandle = OF_instance_to_package(stdout_ihandle);
 
-	if (stdout_phandle != igs_node)
+	if (stdout_phandle != igs_node) {
+		/*
+		 * If we aren't the boot console, the CyberPro probably
+		 * hasn't been brought up yet.  Bring it up now, it's
+		 * still early enough to do so.
+		 */
+		const int handle = OF_open("/vlbus/display");
+		if (handle != -1)
+			OF_close(handle);
 		return ENXIO;
+	}
 
 	/* ok, now setup and attach the console */
 	dc = &igsfb_console_dc;

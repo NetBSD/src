@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.50 2014/03/31 11:25:47 martin Exp $
+# $NetBSD: Makefile,v 1.50.12.1 2017/04/21 16:51:08 bouyer Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -10,6 +10,10 @@ all:	cdimages
 
 .if exists(site.conf)
 .include "site.conf"
+.endif
+
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 .endif
 
 .if !defined(RELEASE)
@@ -377,7 +381,8 @@ USE-FILE: .USE
 			cp `pwd -P`/${>:S/,link$//} $@;; \
 		*.tgz,*) \
 			echo "Extracting: $> --> $@..."; \
-			${TOOL_PAX} -rnz -f ${>:C/,.*$//} ${>:C/^.*,//} ; \
+			${TOOL_PAX} ${PAX_TIMESTAMP} -rnz \
+			-f ${>:C/,.*$//} ${>:C/^.*,//} ; \
 			cp ${>:C/^.*,//} $@; rm -rf ${>:C/^.*,//} ;; \
 		*.gz) echo "gunzip -c <$> >$@"; gunzip -c <$> >$@;; \
 		*) echo "Unknown archive method for $@"; false;; \

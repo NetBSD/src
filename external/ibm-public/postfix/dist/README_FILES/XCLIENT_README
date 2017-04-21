@@ -80,7 +80,8 @@ Note 1: syntactically valid NAME and HELO attribute-value elements can be up to
 255 characters long. The client must not send XCLIENT commands that exceed the
 512 character limit for SMTP commands. To avoid exceeding the limit the client
 should send the information in multiple XCLIENT commands; for example, send
-NAME and ADDR first, then HELO and PROTO.
+NAME and ADDR last, after HELO and PROTO. Once ADDR is sent, the client is
+usually no longer authorized to send XCLIENT commands.
 
 Note 2: [UNAVAILABLE], [TEMPUNAVAIL] and IPV6: may be specified in upper case,
 lower case or mixed case.

@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.63 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: igmp.c,v 1.63.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,10 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.63 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.63.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -541,8 +542,10 @@ igmp_fasttimo(void)
 		return;
 	}
 
+#ifndef NET_MPSAFE
 	/* XXX: Needed for ip_output(). */
 	mutex_enter(softnet_lock);
+#endif
 
 	in_multi_lock(RW_WRITER);
 	igmp_timers_on = false;
@@ -566,7 +569,9 @@ igmp_fasttimo(void)
 		inm = in_next_multi(&step);
 	}
 	in_multi_unlock();
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 }
 
 void
@@ -649,7 +654,9 @@ igmp_sendpkt(struct in_multi *inm, int type)
 	 * Note: IP_IGMP_MCAST indicates that in_multilock is held.
 	 * The caller must still acquire softnet_lock for ip_output().
 	 */
+#ifndef NET_MPSAFE
 	KASSERT(mutex_owned(softnet_lock));
+#endif
 	ip_output(m, NULL, NULL, IP_IGMP_MCAST, &imo, NULL);
 	IGMP_STATINC(IGMP_STAT_SND_REPORTS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ht.c,v 1.1.1.5 2013/09/25 19:06:36 tron Exp $	*/
+/*	$NetBSD: dict_ht.c,v 1.1.1.5.12.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -111,7 +111,7 @@ static int dict_ht_update(DICT *dict, const char *name, const char *value)
     if ((ht = htable_locate(dict_ht->table, name)) != 0) {
 	myfree(ht->value);
     } else {
-	ht = htable_enter(dict_ht->table, name, (char *) 0);
+	ht = htable_enter(dict_ht->table, name, (void *) 0);
     }
     ht->value = saved_value;
     DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_SUCCESS);

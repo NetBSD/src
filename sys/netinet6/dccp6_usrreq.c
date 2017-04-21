@@ -1,5 +1,5 @@
 /*	$KAME: dccp6_usrreq.c,v 1.13 2005/07/27 08:42:56 nishida Exp $	*/
-/*	$NetBSD: dccp6_usrreq.c,v 1.10 2016/12/13 08:29:03 ozaki-r Exp $ */
+/*	$NetBSD: dccp6_usrreq.c,v 1.10.2.1 2017/04/21 16:54:06 bouyer Exp $ */
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.10 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp6_usrreq.c,v 1.10.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -318,15 +318,17 @@ dccp6_purgeif(struct socket *so, struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	in6_pcbpurgeif0(&dccpbtable, ifp);
-	in6_purgeif(ifp);
-	in6_pcbpurgeif(&dccpbtable, ifp);
-#ifndef NET_MPSAFE
+#ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
+	in6_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
+	in6_pcbpurgeif(&dccpbtable, ifp);
+	mutex_exit(softnet_lock);
 	splx(s);
 
 	return 0;

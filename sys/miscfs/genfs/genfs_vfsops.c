@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vfsops.c,v 1.3 2009/11/30 10:59:20 pooka Exp $	*/
+/*	$NetBSD: genfs_vfsops.c,v 1.3.48.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.3 2009/11/30 10:59:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.3.48.1 2017/04/21 16:54:03 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 
@@ -69,4 +70,26 @@ void
 genfs_renamelock_exit(struct mount *mp)
 {
 	mutex_exit(&mp->mnt_renamelock);
+}
+
+int
+genfs_suspendctl(struct mount *mp, int cmd)
+{
+	int error __diagused;
+
+	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
+		return EOPNOTSUPP;
+
+	switch (cmd) {
+	case SUSPEND_SUSPEND:
+		return fstrans_setstate(mp, FSTRANS_SUSPENDED);
+
+	case SUSPEND_RESUME:
+		error = fstrans_setstate(mp, FSTRANS_NORMAL);
+		KASSERT(error == 0);
+		return 0;
+
+	default:
+		panic("%s: bogus command %d", __func__, cmd);
+	}
 }

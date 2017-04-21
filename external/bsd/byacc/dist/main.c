@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.12 2016/01/09 22:05:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12.4.1 2017/04/21 16:51:21 bouyer Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.12 2016/01/09 22:05:33 christos Exp $");
-/* Id: main.c,v 1.55 2015/07/11 00:34:19 tom Exp  */
+__RCSID("$NetBSD: main.c,v 1.12.4.1 2017/04/21 16:51:21 bouyer Exp $");
+/* Id: main.c,v 1.59 2017/02/02 00:44:38 tom Exp  */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -53,14 +53,14 @@ const char *myname = "yacc";
 int lineno;
 int outline;
 
-static char empty_string[] = "";
 static char default_file_prefix[] = "y";
 static int explicit_file_name;
 
 static char *file_prefix = default_file_prefix;
 
 char *code_file_name;
-char *input_file_name = empty_string;
+char *input_file_name;
+size_t input_file_name_len = 0;
 char *defines_file_name;
 char *externs_file_name;
 
@@ -388,7 +388,10 @@ getargs(int argc, char *argv[])
   no_more_options:;
     if (i + 1 != argc)
 	usage();
-    input_file_name = argv[i];
+    input_file_name_len = strlen(argv[i]);
+    input_file_name = TMALLOC(char, input_file_name_len + 1);
+    NO_SPACE(input_file_name);
+    strcpy(input_file_name, argv[i]);
 }
 
 void *
@@ -419,32 +422,46 @@ alloc_file_name(size_t len, const char *suffix)
     return result;
 }
 
+static char *
+find_suffix(char *name, const char *suffix)
+{
+    size_t len = strlen(name);
+    size_t slen = strlen(suffix);
+    if (len >= slen)
+    {
+	name += len - slen;
+	if (strcmp(name, suffix) == 0)
+	    return name;
+    }
+    return NULL;
+}
+
 static void
 create_file_names(void)
 {
     size_t len;
     const char *defines_suffix;
     const char *externs_suffix;
-    char *prefix;
+    char *suffix;
 
-    prefix = NULL;
+    suffix = NULL;
     defines_suffix = DEFINES_SUFFIX;
     externs_suffix = EXTERNS_SUFFIX;
 
     /* compute the file_prefix from the user provided output_file_name */
     if (output_file_name != 0)
     {
-	if (!(prefix = strstr(output_file_name, OUTPUT_SUFFIX))
-	    && (prefix = strstr(output_file_name, ".c")))
+	if (!(suffix = find_suffix(output_file_name, OUTPUT_SUFFIX))
+	    && (suffix = find_suffix(output_file_name, ".c")))
 	{
 	    defines_suffix = ".h";
 	    externs_suffix = ".i";
 	}
     }
 
-    if (prefix != NULL)
+    if (suffix != NULL)
     {
-	len = (size_t) (prefix - output_file_name);
+	len = (size_t) (suffix - output_file_name);
 	file_prefix = TMALLOC(char, len + 1);
 	NO_SPACE(file_prefix);
 	strncpy(file_prefix, output_file_name, len)[len] = 0;
@@ -470,23 +487,23 @@ create_file_names(void)
     {
 	if (explicit_file_name)
 	{
-	    char *suffix;
+	    char *xsuffix;
 	    defines_file_name = strdup(output_file_name);
 	    if (defines_file_name == 0)
 		no_space();
 	    /* does the output_file_name have a known suffix */
-            suffix = strrchr(output_file_name, '.');
-            if (suffix != 0 &&
-		(!strcmp(suffix, ".c") ||   /* good, old-fashioned C */
-                 !strcmp(suffix, ".C") ||   /* C++, or C on Windows */
-                 !strcmp(suffix, ".cc") ||  /* C++ */
-                 !strcmp(suffix, ".cxx") || /* C++ */
-                 !strcmp(suffix, ".cpp")))  /* C++ (Windows) */
+            xsuffix = strrchr(output_file_name, '.');
+            if (xsuffix != 0 &&
+		(!strcmp(xsuffix, ".c") ||   /* good, old-fashioned C */
+                 !strcmp(xsuffix, ".C") ||   /* C++, or C on Windows */
+                 !strcmp(xsuffix, ".cc") ||  /* C++ */
+                 !strcmp(xsuffix, ".cxx") || /* C++ */
+                 !strcmp(xsuffix, ".cpp")))  /* C++ (Windows) */
             {
                 strncpy(defines_file_name, output_file_name,
-                        suffix - output_file_name + 1);
-                defines_file_name[suffix - output_file_name + 1] = 'h';
-                defines_file_name[suffix - output_file_name + 2] = 0;
+                        xsuffix - output_file_name + 1);
+                defines_file_name[xsuffix - output_file_name + 1] = 'h';
+                defines_file_name[xsuffix - output_file_name + 2] = 0;
             } else {
                 fprintf(stderr,"%s: suffix of output file name %s"
                                " not recognized, no -d file generated.\n",
@@ -515,7 +532,7 @@ create_file_names(void)
 	CREATE_FILE_NAME(graph_file_name, GRAPH_SUFFIX);
     }
 
-    if (prefix != NULL)
+    if (suffix != NULL)
     {
 	FREE(file_prefix);
     }

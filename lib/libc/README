@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.6 2017/01/12 00:38:25 riastradh Exp $
+	$NetBSD: README,v 1.6.2.1 2017/04/21 16:53:06 bouyer Exp $
 
 libc: The C library.
 
@@ -209,13 +209,8 @@ compiled with the old signature, will continue to use the old symbol.
    The source file src/lib/libc/compat/gen/compat_time.c includes
    "namespace.h", <compat/include/time.h>, and <time.h>, but suppresses
    the normal declaration of `time' in <time.h> by defining
-   __LIBC12_SOURCE__.  Instead, <compat/include/time.h>
-   (src/lib/libc/compat/include/time.h) declares `time' with the
-   effective old signature:
-
-	int32_t	time(int32_t *);
-
-   Then compat_time.c defines `time' normally:
+   __LIBC12_SOURCE__ and thus gets it from <compat/include/time.h>
+   instead.  Then compat_time.c defines `time' normally:
 
 	int32_t
 	time(int32_t *t)

@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer_iocp.c,v 1.1.1.1 2013/04/11 16:43:25 christos Exp $	*/
+/*	$NetBSD: buffer_iocp.c,v 1.1.1.1.20.1 2017/04/21 16:51:31 bouyer Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -31,14 +31,15 @@
    This module implements overlapped read and write functions for evbuffer
    objects on Windows.
 */
+#include "event2/event-config.h"
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: buffer_iocp.c,v 1.1.1.1.20.1 2017/04/21 16:51:31 bouyer Exp $");
+#include "evconfig-private.h"
 
 #include "event2/buffer.h"
 #include "event2/buffer_compat.h"
 #include "event2/util.h"
 #include "event2/thread.h"
-#include "event2/event-config.h"
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: buffer_iocp.c,v 1.1.1.1 2013/04/11 16:43:25 christos Exp $");
 #include "util-internal.h"
 #include "evthread-internal.h"
 #include "evbuffer-internal.h"
@@ -90,13 +91,13 @@ pin_release(struct evbuffer_overlapped *eo, unsigned flag)
 	for (i = 0; i < eo->n_buffers; ++i) {
 		EVUTIL_ASSERT(chain);
 		next = chain->next;
-		_evbuffer_chain_unpin(chain, flag);
+		evbuffer_chain_unpin_(chain, flag);
 		chain = next;
 	}
 }
 
 void
-evbuffer_commit_read(struct evbuffer *evbuf, ev_ssize_t nBytes)
+evbuffer_commit_read_(struct evbuffer *evbuf, ev_ssize_t nBytes)
 {
 	struct evbuffer_overlapped *buf = upcast_evbuffer(evbuf);
 	struct evbuffer_chain **chainp;
@@ -131,13 +132,13 @@ evbuffer_commit_read(struct evbuffer *evbuf, ev_ssize_t nBytes)
 	evbuf->total_len += nBytes;
 	evbuf->n_add_for_cb += nBytes;
 
-	evbuffer_invoke_callbacks(evbuf);
+	evbuffer_invoke_callbacks_(evbuf);
 
-	_evbuffer_decref_and_unlock(evbuf);
+	evbuffer_decref_and_unlock_(evbuf);
 }
 
 void
-evbuffer_commit_write(struct evbuffer *evbuf, ev_ssize_t nBytes)
+evbuffer_commit_write_(struct evbuffer *evbuf, ev_ssize_t nBytes)
 {
 	struct evbuffer_overlapped *buf = upcast_evbuffer(evbuf);
 
@@ -147,11 +148,11 @@ evbuffer_commit_write(struct evbuffer *evbuf, ev_ssize_t nBytes)
 	evbuffer_drain(evbuf, nBytes);
 	pin_release(buf,EVBUFFER_MEM_PINNED_W);
 	buf->write_in_progress = 0;
-	_evbuffer_decref_and_unlock(evbuf);
+	evbuffer_decref_and_unlock_(evbuf);
 }
 
 struct evbuffer *
-evbuffer_overlapped_new(evutil_socket_t fd)
+evbuffer_overlapped_new_(evutil_socket_t fd)
 {
 	struct evbuffer_overlapped *evo;
 
@@ -159,7 +160,7 @@ evbuffer_overlapped_new(evutil_socket_t fd)
 	if (!evo)
 		return NULL;
 
-	TAILQ_INIT(&evo->buffer.callbacks);
+	LIST_INIT(&evo->buffer.callbacks);
 	evo->buffer.refcnt = 1;
 	evo->buffer.last_with_datap = &evo->buffer.first;
 
@@ -170,7 +171,7 @@ evbuffer_overlapped_new(evutil_socket_t fd)
 }
 
 int
-evbuffer_launch_write(struct evbuffer *buf, ev_ssize_t at_most,
+evbuffer_launch_write_(struct evbuffer *buf, ev_ssize_t at_most,
 		struct event_overlapped *ol)
 {
 	struct evbuffer_overlapped *buf_o = upcast_evbuffer(buf);
@@ -206,7 +207,7 @@ evbuffer_launch_write(struct evbuffer *buf, ev_ssize_t at_most,
 	for (i=0; i < MAX_WSABUFS && chain; ++i, chain=chain->next) {
 		WSABUF *b = &buf_o->buffers[i];
 		b->buf = (char*)( chain->buffer + chain->misalign );
-		_evbuffer_chain_pin(chain, EVBUFFER_MEM_PINNED_W);
+		evbuffer_chain_pin_(chain, EVBUFFER_MEM_PINNED_W);
 
 		if ((size_t)at_most > chain->off) {
 			/* XXXX Cast is safe for now, since win32 has no
@@ -223,7 +224,7 @@ evbuffer_launch_write(struct evbuffer *buf, ev_ssize_t at_most,
 	}
 
 	buf_o->n_buffers = i;
-	_evbuffer_incref(buf);
+	evbuffer_incref_(buf);
 	if (WSASend(buf_o->fd, buf_o->buffers, i, &bytesSent, 0,
 		&ol->overlapped, NULL)) {
 		int error = WSAGetLastError();
@@ -244,7 +245,7 @@ done:
 }
 
 int
-evbuffer_launch_read(struct evbuffer *buf, size_t at_most,
+evbuffer_launch_read_(struct evbuffer *buf, size_t at_most,
 		struct event_overlapped *ol)
 {
 	struct evbuffer_overlapped *buf_o = upcast_evbuffer(buf);
@@ -267,11 +268,11 @@ evbuffer_launch_read(struct evbuffer *buf, size_t at_most,
 	buf_o->n_buffers = 0;
 	memset(buf_o->buffers, 0, sizeof(buf_o->buffers));
 
-	if (_evbuffer_expand_fast(buf, at_most, MAX_WSABUFS) == -1)
+	if (evbuffer_expand_fast_(buf, at_most, MAX_WSABUFS) == -1)
 		goto done;
 	evbuffer_freeze(buf, 0);
 
-	nvecs = _evbuffer_read_setup_vecs(buf, at_most,
+	nvecs = evbuffer_read_setup_vecs_(buf, at_most,
 	    vecs, MAX_WSABUFS, &chainp, 1);
 	for (i=0;i<nvecs;++i) {
 		WSABUF_FROM_EVBUFFER_IOV(
@@ -284,12 +285,12 @@ evbuffer_launch_read(struct evbuffer *buf, size_t at_most,
 
 	npin=0;
 	for ( ; chain; chain = chain->next) {
-		_evbuffer_chain_pin(chain, EVBUFFER_MEM_PINNED_R);
+		evbuffer_chain_pin_(chain, EVBUFFER_MEM_PINNED_R);
 		++npin;
 	}
 	EVUTIL_ASSERT(npin == nvecs);
 
-	_evbuffer_incref(buf);
+	evbuffer_incref_(buf);
 	if (WSARecv(buf_o->fd, buf_o->buffers, nvecs, &bytesRead, &flags,
 		    &ol->overlapped, NULL)) {
 		int error = WSAGetLastError();
@@ -310,14 +311,14 @@ done:
 }
 
 evutil_socket_t
-_evbuffer_overlapped_get_fd(struct evbuffer *buf)
+evbuffer_overlapped_get_fd_(struct evbuffer *buf)
 {
 	struct evbuffer_overlapped *buf_o = upcast_evbuffer(buf);
 	return buf_o ? buf_o->fd : -1;
 }
 
 void
-_evbuffer_overlapped_set_fd(struct evbuffer *buf, evutil_socket_t fd)
+evbuffer_overlapped_set_fd_(struct evbuffer *buf, evutil_socket_t fd)
 {
 	struct evbuffer_overlapped *buf_o = upcast_evbuffer(buf);
 	EVBUFFER_LOCK(buf);

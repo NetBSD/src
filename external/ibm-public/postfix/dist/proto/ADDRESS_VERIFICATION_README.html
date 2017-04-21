@@ -75,9 +75,9 @@ verification probes</a>
 <h2><a name="how">How address verification works</a></h2>
 
 <p> A Postfix MTA verifies a sender or recipient address by probing
-the nearest
-MTA for that address, without actually delivering mail. The nearest
-MTA could be the Postfix MTA itself, or it could be a remote MTA
+the preferred MTAs
+for that address, without actually delivering mail. The preferred
+MTAs could include the Postfix MTA itself, or some remote MTAs
 (SMTP
 interruptus).  Probe messages are like normal mail, except that
 they are never delivered, deferred or bounced; probe messages are
@@ -198,12 +198,18 @@ details. </p>
 
 <ul>
 
-<li> <p> When verifying a remote address, Postfix probes the nearest
-MTA for that address, without actually delivering mail to it. If
-the nearest MTA accepts the address, then Postfix assumes that the
+<li> <p> Postfix assumes that a remote SMTP server will reject
+unknown addresses in reply to the RCPT TO command. However, some
+sites report this in reply to the DATA command. For such sites
+you may configure a workaround with the smtp_address_verify_target
+parameter (Postfix 3.0 and later). </p>
+
+<li> <p> When verifying a remote address, Postfix probes the preferred
+MTAs for that address, without actually delivering mail. If
+a preferred MTA accepts the address, then Postfix assumes that the
 address is deliverable. In reality, mail for a remote address can
-bounce AFTER the nearest MTA accepts the recipient address, or AFTER
-the nearest MTA accepts the message content. </p>
+bounce AFTER a preferred MTA accepts the recipient address, or AFTER
+a preferred MTA accepts the message content. </p>
 
 <li> <p> Some sites may blacklist you when you are probing them
 too often (a probe is an SMTP session that does not deliver mail),
@@ -219,16 +225,16 @@ the routing of address verification probes"</a>, for how to override
 mail routing and for possible limitations when you have to do this.
 </p>
 
-<li> <p> Postfix assumes that an address is undeliverable when the
-nearest MTA for the address rejects the probe, regardless of the
+<li> <p> Postfix assumes that an address is undeliverable when a
+preferred MTA for the address rejects the probe, regardless of the
 reason for rejection (client rejected, HELO rejected, MAIL FROM
-rejected, etc.).  Thus, Postfix rejects an address when the nearest
+rejected, etc.).  Thus, Postfix rejects an address when a preferred
 MTA for that address rejects mail from your machine for any reason.
 This is not a limitation, but it is mentioned here just in case
 people believe that it is a limitation. </p>
 
-<li> <p> Unfortunately, some sites do not reject
-unknown addresses in reply to the RCPT TO command, but report a
+<li> <p> Unfortunately, some sites do not reject unknown addresses
+in reply to the RCPT TO or DATA command, but instead report a
 delivery failure in response to end of DATA after a message is
 transferred.  Postfix address verification does not work with such
 sites. </p>
@@ -340,8 +346,8 @@ in forged email.  </p>
 
     # Default setting for Postfix 2.7 and later.
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
-    # Note 2: Avoid hash files here. Use btree instead.
-    address_verify_map = btree:/var/db/postfix/verify
+    # Note 2: Avoid hash files here. Use btree or lmdb instead.
+    address_verify_map = btree:/var/lib/postfix/verify
  
 /etc/postfix/sender_access:
     # Don't do this when you handle lots of email.
@@ -387,8 +393,8 @@ you can see what mail would be blocked: </p>
 
     # Default setting for Postfix 2.7 and later.
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
-    # Note 2: Avoid hash files here. Use btree instead.
-    address_verify_map = btree:/var/db/postfix/verify
+    # Note 2: Avoid hash files here. Use btree or lmdb instead.
+    address_verify_map = btree:/var/lib/postfix/verify
 </pre>
 </blockquote>
 
@@ -455,7 +461,7 @@ results are lost after "postfix reload" or "postfix stop". </p>
 <blockquote>
 <pre>
 # Example 1: Default setting for Postfix 2.7 and later.
-# Note: avoid hash files here. Use btree instead.
+# Note: avoid hash files here. Use btree or lmdb instead.
 /etc/postfix/main.cf:
     address_verify_map = btree:$data_directory/verify_cache
 

@@ -100,9 +100,9 @@ VIRTUAL(5)                                                          VIRTUAL(5)
               Note: @<i>domain</i> is a wild-card. With this form, the  Postfix  SMTP
               server  accepts  mail for any recipient in <i>domain</i>, regardless of
               whether that recipient exists.  This may turn your  mail  system
-              into  a  backscatter source: Postfix first accepts mail for non-
-              existent recipients and then tries to return that mail as "unde-
-              liverable" to the often forged sender address.
+              into  a  backscatter  source:  Postfix  first  accepts  mail for
+              non-existent recipients and then tries to return  that  mail  as
+              "undeliverable" to the often forged sender address.
 
 <b>RESULT ADDRESS REWRITING</b>
        The lookup result is subject to address rewriting:
@@ -150,10 +150,10 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        from "<b>postconf -m</b>" for available database types.
 
        /etc/postfix/virtual:
-           <i>virtual-alias.domain     anything</i> (right-hand content does not matter)
-           <i>postmaster@virtual-alias.domain  postmaster</i>
-           <i>user1@virtual-alias.domain       address1</i>
-           <i>user2@virtual-alias.domain       address2, address3</i>
+           <i>virtual-alias.domain    anything</i> (right-hand content does not matter)
+           <i>postmaster@virtual-alias.domain postmaster</i>
+           <i>user1@virtual-alias.domain      address1</i>
+           <i>user2@virtual-alias.domain      address2, address3</i>
 
        The <i>virtual-alias.domain anything</i> entry is required for a virtual alias
        domain.  <b>Without  this  entry,  mail  is  rejected  with  "relay access</b>
@@ -261,6 +261,11 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
+
+       Wietse Venema
+       Google, Inc.
+       111 8th Avenue
+       New York, NY 10011, USA
 
                                                                     VIRTUAL(5)
 </pre> </body> </html>

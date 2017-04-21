@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_tests.c,v 1.1.1.3 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: postscreen_tests.c,v 1.1.1.3.10.1 2017/04/21 16:52:50 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -15,6 +15,11 @@
 /*	PSC_STATE *state;
 /*
 /*	void	psc_parse_tests(state, stamp_text, time_value)
+/*	PSC_STATE *state;
+/*	const char *stamp_text;
+/*	time_t time_value;
+/*
+/*	void	psc_todo_tests(state, time_value)
 /*	PSC_STATE *state;
 /*	const char *stamp_text;
 /*	time_t time_value;
@@ -43,13 +48,18 @@
 /*	zeroes all the flags bits. These values are not meant to
 /*	be stored into the postscreen(8) cache.
 /*
-/*	psc_new_tests() sets all test expiration time stamps to
-/*	PSC_TIME_STAMP_NEW, and overwrites all flags bits. Only
-/*	enabled tests are flagged with PSC_STATE_FLAG_TODO; the
-/*	object is flagged with PSC_STATE_FLAG_NEW.
+/*	PSC_INIT_TEST_FLAGS_ONLY() zeroes all the flag bits.  It
+/*	should be used when the time stamps are already initialized.
 /*
-/*	psc_parse_tests() parses a cache file record and overwrites
-/*	all flags bits. Tests are considered "expired" when they
+/*	psc_new_tests() sets all test expiration time stamps to
+/*	PSC_TIME_STAMP_NEW, and invokes psc_todo_tests().
+/*
+/*	psc_parse_tests() parses a cache file record and invokes
+/*	psc_todo_tests().
+/*
+/*	psc_todo_tests() overwrites all per-session flag bits, and
+/*	populates the flags based on test expiration time stamp
+/*	information.  Tests are considered "expired" when they
 /*	would be expired at the specified time value. Only enabled
 /*	tests are flagged as "expired"; the object is flagged as
 /*	"new" if some enabled tests have "new" time stamps.
@@ -127,11 +137,6 @@ void    psc_new_tests(PSC_STATE *state)
 {
 
     /*
-     * We know this client is brand new.
-     */
-    state->flags = PSC_STATE_FLAG_NEW;
-
-    /*
      * Give all tests a PSC_TIME_STAMP_NEW time stamp, so that we can later
      * recognize cache entries that haven't passed all enabled tests. When we
      * write a cache entry to the database, any new-but-disabled tests will
@@ -144,19 +149,9 @@ void    psc_new_tests(PSC_STATE *state)
     state->barlf_stamp = PSC_TIME_STAMP_NEW;
 
     /*
-     * Don't flag disabled tests as "todo", because there would be no way to
-     * make those bits go away.
+     * Determine what tests need to be completed.
      */
-    if (PSC_PREGR_TEST_ENABLE())
-	state->flags |= PSC_STATE_FLAG_PREGR_TODO;
-    if (PSC_DNSBL_TEST_ENABLE())
-	state->flags |= PSC_STATE_FLAG_DNSBL_TODO;
-    if (var_psc_pipel_enable)
-	state->flags |= PSC_STATE_FLAG_PIPEL_TODO;
-    if (var_psc_nsmtp_enable)
-	state->flags |= PSC_STATE_FLAG_NSMTP_TODO;
-    if (var_psc_barlf_enable)
-	state->flags |= PSC_STATE_FLAG_BARLF_TODO;
+    psc_todo_tests(state, PSC_TIME_STAMP_NEW + 1);
 }
 
 /* psc_parse_tests - parse test results from cache */
@@ -167,35 +162,52 @@ void    psc_parse_tests(PSC_STATE *state,
 {
     const char *start = stamp_str;
     char   *cp;
-    time_t *time_stamps = state->expire_time;
+    time_t *time_stamps = state->client_info->expire_time;
     time_t *sp;
-
-    /*
-     * We don't know what tests have expired or have never passed.
-     */
-    state->flags = 0;
 
     /*
      * Parse the cache entry, and allow for older postscreen versions that
      * implemented fewer tests. We pretend that the newer tests were disabled
      * at the time that the cache entry was written.
-     * 
-     * Flag the cache entry as "new" when the cache entry has fields for all
-     * enabled tests, but the remote SMTP client has not yet passed all those
-     * tests.
      */
     for (sp = time_stamps; sp < time_stamps + PSC_TINDX_COUNT; sp++) {
 	*sp = strtoul(start, &cp, 10);
 	if (*start == 0 || (*cp != '\0' && *cp != ';') || errno == ERANGE)
 	    *sp = PSC_TIME_STAMP_DISABLED;
-	if (*sp == PSC_TIME_STAMP_NEW)
-	    state->flags |= PSC_STATE_FLAG_NEW;
 	if (msg_verbose)
 	    msg_info("%s -> %lu", start, (unsigned long) *sp);
 	if (*cp == ';')
 	    start = cp + 1;
 	else
 	    start = cp;
+    }
+
+    /*
+     * Determine what tests need to be completed.
+     */
+    psc_todo_tests(state, time_value);
+}
+
+/* psc_todo_tests - determine what tests to perform */
+
+void    psc_todo_tests(PSC_STATE *state, time_t time_value)
+{
+    time_t *time_stamps = state->client_info->expire_time;
+    time_t *sp;
+
+    /*
+     * Reset all per-session flags.
+     */
+    state->flags = 0;
+
+    /*
+     * Flag the tests as "new" when the cache entry has fields for all
+     * enabled tests, but the remote SMTP client has not yet passed all those
+     * tests.
+     */
+    for (sp = time_stamps; sp < time_stamps + PSC_TINDX_COUNT; sp++) {
+	if (*sp == PSC_TIME_STAMP_NEW)
+	    state->flags |= PSC_STATE_FLAG_NEW;
     }
 
     /*

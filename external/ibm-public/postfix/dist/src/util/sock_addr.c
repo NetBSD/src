@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_addr.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: sock_addr.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -108,8 +108,8 @@
 
 /* sock_addr_cmp_addr - compare addresses for equality */
 
-int     sock_addr_cmp_addr(const struct sockaddr * sa,
-			           const struct sockaddr * sb)
+int     sock_addr_cmp_addr(const struct sockaddr *sa,
+			           const struct sockaddr *sb)
 {
     if (sa->sa_family != sb->sa_family)
 	return (sa->sa_family - sb->sa_family);
@@ -123,8 +123,8 @@ int     sock_addr_cmp_addr(const struct sockaddr * sa,
 	return (SOCK_ADDR_IN_ADDR(sa).s_addr - SOCK_ADDR_IN_ADDR(sb).s_addr);
 #ifdef HAS_IPV6
     } else if (sa->sa_family == AF_INET6) {
-	return (memcmp((char *) &(SOCK_ADDR_IN6_ADDR(sa)),
-		       (char *) &(SOCK_ADDR_IN6_ADDR(sb)),
+	return (memcmp((void *) &(SOCK_ADDR_IN6_ADDR(sa)),
+		       (void *) &(SOCK_ADDR_IN6_ADDR(sb)),
 		       sizeof(SOCK_ADDR_IN6_ADDR(sa))));
 #endif
     } else {
@@ -135,8 +135,8 @@ int     sock_addr_cmp_addr(const struct sockaddr * sa,
 
 /* sock_addr_cmp_port - compare ports for equality */
 
-int     sock_addr_cmp_port(const struct sockaddr * sa,
-			           const struct sockaddr * sb)
+int     sock_addr_cmp_port(const struct sockaddr *sa,
+			           const struct sockaddr *sb)
 {
     if (sa->sa_family != sb->sa_family)
 	return (sa->sa_family - sb->sa_family);
@@ -155,7 +155,7 @@ int     sock_addr_cmp_port(const struct sockaddr * sa,
 
 /* sock_addr_in_loopback - determine if address is loopback */
 
-int sock_addr_in_loopback(const struct sockaddr * sa)
+int     sock_addr_in_loopback(const struct sockaddr *sa)
 {
     unsigned long inaddr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.101 2016/03/31 16:16:35 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.101.4.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.101 2016/03/31 16:16:35 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.101.4.1 2017/04/21 16:50:42 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: expand.c,v 1.101 2016/03/31 16:16:35 christos Exp $");
 #include "eval.h"
 #include "expand.h"
 #include "syntax.h"
+#include "arithmetic.h"
 #include "parser.h"
 #include "jobs.h"
 #include "options.h"
@@ -356,7 +357,7 @@ removerecordregions(int endoff)
 void
 expari(int flag)
 {
-	char *p, *start;
+	char *p, *q, *start;
 	intmax_t result;
 	int adjustment;
 	int begoff;
@@ -375,8 +376,23 @@ expari(int flag)
 	 * have to rescan starting from the beginning since CTLESC
 	 * characters have to be processed left to right.
 	 */
-/* SPACE_NEEDED is enough for all digits, plus possible "-", plus 2 (why?) */
-#define SPACE_NEEDED ((sizeof(intmax_t) * CHAR_BIT + 2) / 3 + 1 + 2)
+
+	/*
+	 * SPACE_NEEDED is enough for all possible digits (rounded up)
+	 * plus possible "-", and the terminating '\0', hence, plus 2
+	 *
+	 * The calculation produces the number of bytes needed to
+	 * represent the biggest possible value, in octal.  We only
+	 * generate decimal, which takes (often) less digits (never more)
+	 * so this is safe, if occasionally slightly wasteful.
+	 */
+#define SPACE_NEEDED ((sizeof(intmax_t) * CHAR_BIT + 2) / 3 + 2)
+	/*
+	 * Only need check for SPACE_NEEDED-2 as we have already
+	 * consumed (but will overwrite) 2 chars, the CTLARI, and the
+	 * flags (quoting) byte (if those had not already been seen,
+	 * we would not be here.)
+	 */
 	CHECKSTRSPACE((int)(SPACE_NEEDED - 2), expdest);
 	USTPUTC('\0', expdest);
 	start = stackblock();
@@ -398,7 +414,9 @@ expari(int flag)
 	removerecordregions(begoff);
 	if (quotes)
 		rmescapes(p+2);
+	q = grabstackstr(expdest);
 	result = arith(p+2);
+	ungrabstackstr(q, expdest);
 	fmtstr(p, SPACE_NEEDED, "%"PRIdMAX, result);
 
 	while (*p++)
@@ -756,8 +774,10 @@ again: /* jump here after setting a variable with ${var=text} */
 	case VSTRIMLEFTMAX:
 	case VSTRIMRIGHT:
 	case VSTRIMRIGHTMAX:
-		if (!set)
+		if (!set) {
+			set = 1;  /* allow argbackq to be advanced if needed */
 			break;
+		}
 		/*
 		 * Terminate the string and start recording the pattern
 		 * right after it
@@ -927,8 +947,13 @@ numvar:
 		sep = ifsval()[0];
 		for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 			STRTODEST(p);
-			if (*ap && sep)
+			if (!*ap)
+				break;
+			if (sep)
 				STPUTC(sep, expdest);
+			else if ((flag & (EXP_FULL|EXP_IN_QUOTES)) == EXP_FULL
+			    && !quoted && **ap != '\0')
+				STPUTC('\0', expdest);
 		}
 		break;
 	case '0':

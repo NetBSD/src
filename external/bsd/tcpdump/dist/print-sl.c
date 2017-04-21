@@ -21,18 +21,19 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sl.c,v 1.5 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: print-sl.c,v 1.5.4.1 2017/04/21 16:52:35 bouyer Exp $");
 #endif
 
-#define NETDISSECT_REWORKED
+/* \summary: Compressed Serial Line Internet Protocol printer */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <tcpdump-stdinc.h>
+#include <netdissect-stdinc.h>
 
-#include "interface.h"
-#include "extract.h"			/* must come after interface.h */
+#include "netdissect.h"
+#include "extract.h"
 
 #include "ip.h"
 #include "tcp.h"
@@ -72,19 +73,25 @@ sl_if_print(netdissect_options *ndo,
 		return (caplen);
 	}
 
+	caplen -= SLIP_HDRLEN;
 	length -= SLIP_HDRLEN;
 
-	ip = (struct ip *)(p + SLIP_HDRLEN);
+	ip = (const struct ip *)(p + SLIP_HDRLEN);
 
 	if (ndo->ndo_eflag)
 		sliplink_print(ndo, p, ip, length);
 
+	if (caplen < 1 || length < 1) {
+		ND_PRINT((ndo, "%s", tstr));
+		return (caplen + SLIP_HDRLEN);
+	}
+
 	switch (IP_V(ip)) {
 	case 4:
-	        ip_print(ndo, (u_char *)ip, length);
+	        ip_print(ndo, (const u_char *)ip, length);
 		break;
 	case 6:
-		ip6_print(ndo, (u_char *)ip, length);
+		ip6_print(ndo, (const u_char *)ip, length);
 		break;
 	default:
 		ND_PRINT((ndo, "ip v%d", IP_V(ip)));
@@ -108,14 +115,14 @@ sl_bsdos_if_print(netdissect_options *ndo,
 
 	length -= SLIP_HDRLEN;
 
-	ip = (struct ip *)(p + SLIP_HDRLEN);
+	ip = (const struct ip *)(p + SLIP_HDRLEN);
 
 #ifdef notdef
 	if (ndo->ndo_eflag)
 		sliplink_print(ndo, p, ip, length);
 #endif
 
-	ip_print(ndo, (u_char *)ip, length);
+	ip_print(ndo, (const u_char *)ip, length);
 
 	return (SLIP_HDRLEN);
 }
@@ -152,9 +159,9 @@ sliplink_print(netdissect_options *ndo,
 		 * Get it from the link layer since sl_uncompress_tcp()
 		 * has restored the IP header copy to IPPROTO_TCP.
 		 */
-		lastconn = ((struct ip *)&p[SLX_CHDR])->ip_p;
+		lastconn = ((const struct ip *)&p[SLX_CHDR])->ip_p;
 		hlen = IP_HL(ip);
-		hlen += TH_OFF((struct tcphdr *)&((int *)ip)[hlen]);
+		hlen += TH_OFF((const struct tcphdr *)&((const int *)ip)[hlen]);
 		lastlen[dir][lastconn] = length - (hlen << 2);
 		ND_PRINT((ndo, "utcp %d: ", lastconn));
 		break;
@@ -247,7 +254,7 @@ compressed_sl_print(netdissect_options *ndo,
 	 * 'length - hlen' is the amount of data in the packet.
 	 */
 	hlen = IP_HL(ip);
-	hlen += TH_OFF((struct tcphdr *)&((int32_t *)ip)[hlen]);
+	hlen += TH_OFF((const struct tcphdr *)&((const int32_t *)ip)[hlen]);
 	lastlen[dir][lastconn] = length - (hlen << 2);
 	ND_PRINT((ndo, " %d (%ld)", lastlen[dir][lastconn], (long)(cp - chdr)));
 }

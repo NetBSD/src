@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_j0.c,v 1.12 2007/08/20 16:01:38 drochner Exp $");
+__RCSID("$NetBSD: e_j0.c,v 1.12.58.1 2017/04/21 16:53:11 bouyer Exp $");
 #endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
@@ -277,13 +277,12 @@ pzero(double x)
 	double z,r,s;
 	int32_t ix;
 
-	p = q = 0;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
-	if(ix>=0x40200000)     {p = pR8; q= pS8;}
-	else if(ix>=0x40122E8B){p = pR5; q= pS5;}
-	else if(ix>=0x4006DB6D){p = pR3; q= pS3;}
-	else if(ix>=0x40000000){p = pR2; q= pS2;}
+	if(ix>=0x40200000)         {p = pR8; q= pS8;}
+	else if(ix>=0x40122E8B)    {p = pR5; q= pS5;}
+	else if(ix>=0x4006DB6D)    {p = pR3; q= pS3;}
+	else /*if(ix>=0x40000000)*/{p = pR2; q= pS2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*q[4]))));
@@ -375,13 +374,12 @@ qzero(double x)
 	double s,r,z;
 	int32_t ix;
 
-	p = q = 0;
 	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
-	if(ix>=0x40200000)     {p = qR8; q= qS8;}
-	else if(ix>=0x40122E8B){p = qR5; q= qS5;}
-	else if(ix>=0x4006DB6D){p = qR3; q= qS3;}
-	else if(ix>=0x40000000){p = qR2; q= qS2;}
+	if(ix>=0x40200000)         {p = qR8; q= qS8;}
+	else if(ix>=0x40122E8B)    {p = qR5; q= qS5;}
+	else if(ix>=0x4006DB6D)    {p = qR3; q= qS3;}
+	else /*if(ix>=0x40000000)*/{p = qR2; q= qS2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));

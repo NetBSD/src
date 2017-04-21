@@ -1,8 +1,8 @@
-/*	$NetBSD: err_inherit2.tab.c,v 1.1.1.3 2016/01/09 21:59:47 christos Exp $	*/
+/*	$NetBSD: err_inherit2.tab.c,v 1.1.1.3.4.1 2017/04/21 16:51:21 bouyer Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
-/* (use YYMAJOR/YYMINOR for ifdefs dependent of parser version) */
+/* (use YYMAJOR/YYMINOR for ifdefs dependent on parser version) */
 
 #define YYBYACC 1
 #define YYMAJOR 1

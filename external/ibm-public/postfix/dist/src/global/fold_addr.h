@@ -1,4 +1,4 @@
-/*	$NetBSD: fold_addr.h,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: fold_addr.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _FOLD_ADDR_H_INCLUDED_
 #define _FOLD_ADDR_H_INCLUDED_
@@ -21,7 +21,7 @@
 
 #define FOLD_ADDR_ALL	(FOLD_ADDR_USER | FOLD_ADDR_HOST)
 
-extern char *fold_addr(char *, int);
+extern char *fold_addr(VSTRING *, const char *, int);
 
 /* LICENSE
 /* .ad

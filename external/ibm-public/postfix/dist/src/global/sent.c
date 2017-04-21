@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: sent.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -21,8 +21,6 @@
 /*	message delivery record on request by the sender. The
 /*	flags argument determines the action.
 /*
-/*	vsent() implements an alternative interface.
-/*
 /*	Arguments:
 /* .IP flags
 /*	Zero or more of the following:
@@ -36,6 +34,7 @@
 /*	The message is a user-requested address expansion probe.
 /*	Update the message delivery record.
 /* .IP DEL_REQ_FLAG_RECORD
+/* .IP DEL_REQ_FLAG_REC_SENT
 /*	This is a normal message with logged delivery. Update the
 /*	the message delivery record.
 /* .RE .IP queue_id
@@ -81,6 +80,7 @@
 
 /* Global library. */
 
+#define DSN_INTERN
 #include <mail_params.h>
 #include <verify.h>
 #include <log_adhoc.h>
@@ -99,6 +99,7 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
 	             DSN *dsn)
 {
     DSN     my_dsn = *dsn;
+    DSN    *dsn_res;
     int     status;
 
     /*
@@ -108,6 +109,13 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
 	msg_warn("sent: ignoring dsn code \"%s\"", my_dsn.status);
 	my_dsn.status = "2.0.0";
     }
+
+    /*
+     * DSN filter (Postfix 3.0).
+     */
+    if (delivery_status_filter != 0
+     && (dsn_res = dsn_filter_lookup(delivery_status_filter, &my_dsn)) != 0)
+	my_dsn = *dsn_res;
 
     /*
      * MTA-requested address verification information is stored in the verify
@@ -134,10 +142,17 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
      * Normal mail delivery. May also send a delivery record to the user.
      */
     else {
+
+	/* Readability macros: record all deliveries, or the delayed ones. */
+#define REC_ALL_SENT(flags) (flags & DEL_REQ_FLAG_RECORD)
+#define REC_DLY_SENT(flags, rcpt) \
+	((flags & DEL_REQ_FLAG_REC_DLY_SENT) \
+	&& (rcpt->dsn_notify == 0 || (rcpt->dsn_notify & DSN_NOTIFY_DELAY)))
+
 	if (my_dsn.action == 0 || my_dsn.action[0] == 0)
 	    my_dsn.action = "delivered";
 
-	if (((flags & DEL_REQ_FLAG_RECORD) == 0
+	if (((REC_ALL_SENT(flags) == 0 && REC_DLY_SENT(flags, recipient) == 0)
 	  || trace_append(flags, id, stats, recipient, relay, &my_dsn) == 0)
 	    && ((recipient->dsn_notify & DSN_NOTIFY_SUCCESS) == 0
 	|| trace_append(flags, id, stats, recipient, relay, &my_dsn) == 0)) {
@@ -149,7 +164,7 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
 	    vstring_sprintf(junk, "%s: %s service failed",
 			    id, var_trace_service);
 	    my_dsn.reason = vstring_str(junk);
-	    my_dsn.status ="4.3.0";
+	    my_dsn.status = "4.3.0";
 	    status = defer_append(flags, id, stats, recipient, relay, &my_dsn);
 	    vstring_free(junk);
 	}

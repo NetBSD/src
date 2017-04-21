@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 303032 2016-07-19 17:31:48Z sbruno $*/
-/*$NetBSD: ixgbe_phy.c,v 1.10 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$NetBSD: ixgbe_phy.c,v 1.10.2.1 2017/04/21 16:53:52 bouyer Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -1535,7 +1535,7 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 				hw->phy.type = ixgbe_phy_sfp_intel;
 				break;
 			default:
-					hw->phy.type = ixgbe_phy_sfp_unknown;
+				hw->phy.type = ixgbe_phy_sfp_unknown;
 				break;
 			}
 		}

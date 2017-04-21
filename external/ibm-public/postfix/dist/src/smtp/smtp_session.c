@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_session.c,v 1.1.1.4 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_session.c,v 1.1.1.4.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -96,10 +96,6 @@
 #include <string.h>
 #include <netinet/in.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -169,7 +165,6 @@ SMTP_SESSION *smtp_session_alloc(VSTREAM *stream, SMTP_ITERATOR *iter,
     session->tls_context = 0;
     session->tls_retry_plain = 0;
     session->tls_nexthop = 0;
-    session->tls = 0;				/* TEMPORARY */
 #endif
     session->state = 0;
     debug_peer_check(host, addr);
@@ -209,7 +204,7 @@ void    smtp_session_free(SMTP_SESSION *session)
 #endif
 
     debug_peer_restore();
-    myfree((char *) session);
+    myfree((void *) session);
 }
 
 /* smtp_session_passivate - passivate an SMTP_SESSION object */

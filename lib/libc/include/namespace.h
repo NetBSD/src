@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.185 2017/01/13 14:41:27 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.185.2.1 2017/04/21 16:53:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -524,6 +524,7 @@
 #define pmap_rmtcall		_pmap_rmtcall
 #define pmap_set		_pmap_set
 #define pmap_unset		_pmap_unset
+#define paccept			_paccept
 #define pollts			_pollts
 #define popen			_popen
 #define posix2time		_posix2time

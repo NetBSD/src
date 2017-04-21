@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_data.3,v 1.7 2009/12/14 06:03:23 dholland Exp $
+.\"	$NetBSD: prop_data.3,v 1.7.34.1 2017/04/21 16:50:42 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
 .Sh DESCRIPTION
 The
-.Nm prop_data
+.Fn prop_data
 family of functions operate on an opaque data value property object type.
 .Bl -tag -width "xxxxx"
 .It Fn prop_data_create_data "const void *blob" "size_t len"
@@ -143,6 +143,6 @@ is returned.
 .Xr proplib 3
 .Sh HISTORY
 The
-.Nm proplib
+.Xr proplib 3
 property container object library first appeared in
 .Nx 4.0 .

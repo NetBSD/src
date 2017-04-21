@@ -1,0 +1,9 @@
+# $NetBSD: md.amd64,v 1.3.2.2 2017/04/21 16:51:14 bouyer Exp $
+./usr/tests/kernel/arch/x86/Atffile		tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/Kyuafile		tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait3	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait4	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait6	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_waitid	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_waitpid	tests-obsolete	obsolete

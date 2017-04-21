@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_host.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_addr_host.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -124,7 +124,7 @@ int     inet_addr_host(INET_ADDR_LIST *addr_list, const char *hostname)
 	freeaddrinfo(res0);
     }
     if (hname && hname != hostname)
-	myfree((char *) hname);
+	myfree((void *) hname);
 
     return (addr_list->used - initial_count);
 }

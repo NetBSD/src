@@ -1,4 +1,4 @@
-/*	$NetBSD: hand.c,v 1.2 2015/12/15 12:36:10 christos Exp $	*/
+/*	$NetBSD: hand.c,v 1.2.4.1 2017/04/21 16:54:00 bouyer Exp $	*/
 
 /*++
 
@@ -119,7 +119,7 @@ LibLocateHandleByDiskSignature (
     EFI_HANDLE            *BlockIoBuffer;
     EFI_DEVICE_PATH       *DevicePath;
     UINTN                 Index;
-    EFI_DEVICE_PATH       *Start, *Next, *DevPath;
+    EFI_DEVICE_PATH       *Start __unused, *Next, *DevPath;
     HARDDRIVE_DEVICE_PATH *HardDriveDevicePath;
     BOOLEAN               Match;
     BOOLEAN               PreviousNodeIsHardDriveDevicePath;

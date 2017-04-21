@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.71 2016/01/14 20:41:23 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.71.4.1 2017/04/21 16:53:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.71 2016/01/14 20:41:23 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.71.4.1 2017/04/21 16:53:09 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -405,6 +405,14 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	_DIAGASSERT(mbsrc != NULL || mblength == 0);
 	_DIAGASSERT(mbextra != NULL);
 
+	mbslength = (ssize_t)mblength;
+	/*
+	 * When inputing a single character, must also read in the
+	 * next character for nextc, the look-ahead character.
+	 */
+	if (mbslength == 1)
+		mbslength++;
+
 	/*
 	 * Input (mbsrc) is a char string considered to be multibyte
 	 * characters.  The input loop will read this string pulling
@@ -421,12 +429,12 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	/* Allocate space for the wide char strings */
 	psrc = pdst = extra = NULL;
 	mdst = NULL;
-	if ((psrc = calloc(mblength + 1, sizeof(*psrc))) == NULL)
+	if ((psrc = calloc(mbslength + 1, sizeof(*psrc))) == NULL)
 		return -1;
-	if ((pdst = calloc((4 * mblength) + 1, sizeof(*pdst))) == NULL)
+	if ((pdst = calloc((4 * mbslength) + 1, sizeof(*pdst))) == NULL)
 		goto out;
 	if (*mbdstp == NULL) {
-		if ((mdst = calloc((4 * mblength) + 1, sizeof(*mdst))) == NULL)
+		if ((mdst = calloc((4 * mbslength) + 1, sizeof(*mdst))) == NULL)
 			goto out;
 		*mbdstp = mdst;
 	}
@@ -449,13 +457,6 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	 * stop at NULs because we may be processing a block of data
 	 * that includes NULs.
 	 */
-	mbslength = (ssize_t)mblength;
-	/*
-	 * When inputing a single character, must also read in the
-	 * next character for nextc, the look-ahead character.
-	 */
-	if (mbslength == 1)
-		mbslength++;
 	while (mbslength > 0) {
 		/* Convert one multibyte character to wchar_t. */
 		if (!cerr)
@@ -481,6 +482,7 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	}
 	len = src - psrc;
 	src = psrc;
+
 	/*
 	 * In the single character input case, we will have actually
 	 * processed two characters, c and nextc.  Reset len back to

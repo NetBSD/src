@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2016/12/23 10:19:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.33.2.1 2017/04/21 16:54:16 bouyer Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -96,6 +96,11 @@ CLEANFILES+=	vers.c version
 SRCS+=	unsupported.c
 
 .endif				# }
+
+.if  ${MACHINE} == "sparc" \
+    || ${MACHINE} == "sparc64"
+COPTS.kern_timeout.c += -Wno-stack-protector
+.endif
 
 .include "../../compat/exec.mk"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.9 2014/06/13 11:26:37 joerg Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.9.10.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -83,6 +83,14 @@ drvswap(void)
 	last.fld = tmp;							\
 } while (/* CONSTCOND */0)
 
+#define DELTA(x) do {							\
+		timerclear(&tmp_timer);					\
+		timerset(&(cur.x), &tmp_timer);				\
+		timersub(&tmp_timer, &(last.x), &(cur.x));		\
+		timerclear(&(last.x));					\
+		timerset(&tmp_timer, &(last.x));			\
+} while (/* CONSTCOND */0)
+
 	for (i = 0; i < ndrive; i++) {
 		struct timeval	tmp_timer;
 
@@ -96,12 +104,10 @@ drvswap(void)
 		SWAP(rbytes[i]);
 		SWAP(wbytes[i]);
 
-		/* Delta Time. */
-		timerclear(&tmp_timer);
-		timerset(&(cur.time[i]), &tmp_timer);
-		timersub(&tmp_timer, &(last.time[i]), &(cur.time[i]));
-		timerclear(&(last.time[i]));
-		timerset(&tmp_timer, &(last.time[i]));
+		DELTA(wait[i]);
+		DELTA(time[i]);
+		DELTA(waitsum[i]);
+		DELTA(busysum[i]);
 	}
 }
 
@@ -135,6 +141,7 @@ cpuswap(void)
 
 	cur.cp_etime = etime;
 }
+#undef DELTA
 #undef SWAP
 
 /*
@@ -154,17 +161,28 @@ drvreadstats(void)
 	size = ndrive * sizeof(struct io_sysctl);
 	if (sysctl(mib, 3, drives, &size, NULL, 0) < 0)
 		err(1, "sysctl hw.iostats failed");
+
+#define COPYF(x,k) cur.x[k] = drives[k].x
+#define COPYT(x,k) do {							\
+		cur.x[k].tv_sec = drives[k].x##_sec;			\
+		cur.x[k].tv_usec = drives[k].x##_usec;			\
+} while (/* CONSTCOND */0)
+
 	for (i = 0; i < ndrive; i++) {
-		cur.rxfer[i] = drives[i].rxfer;
-		cur.wxfer[i] = drives[i].wxfer;
-		cur.seek[i] = drives[i].seek;
-		cur.rbytes[i] = drives[i].rbytes;
-		cur.wbytes[i] = drives[i].wbytes;
-		cur.time[i].tv_sec = drives[i].time_sec;
-		cur.time[i].tv_usec = drives[i].time_usec;
+
+		COPYF(rxfer, i);
+		COPYF(wxfer, i);
+		COPYF(seek, i);
+		COPYF(rbytes, i);
+		COPYF(wbytes, i);
+
+		COPYT(wait, i);
+		COPYT(time, i);
+		COPYT(waitsum, i);
+		COPYT(busysum, i);
 	}
 
-		mib[0] = CTL_KERN;
+	mib[0] = CTL_KERN;
 	mib[1] = KERN_TKSTAT;
 	mib[2] = KERN_TKSTAT_NIN;
 	size = sizeof(cur.tk_nin);
@@ -183,6 +201,8 @@ drvreadstats(void)
 	if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0)
 		(void)memset(cur.cp_time, 0, sizeof(cur.cp_time));
 }
+#undef COPYT
+#undef COPYF
 
 /*
  * Read collect statistics for tty i/o.
@@ -272,12 +292,18 @@ drvinit(int selected)
 
 	/* Allocate space for the statistics. */
 	cur.time = calloc(ndrive, sizeof(struct timeval));
+	cur.wait = calloc(ndrive, sizeof(struct timeval));
+	cur.waitsum = calloc(ndrive, sizeof(struct timeval));
+	cur.busysum = calloc(ndrive, sizeof(struct timeval));
 	cur.rxfer = calloc(ndrive, sizeof(u_int64_t));
 	cur.wxfer = calloc(ndrive, sizeof(u_int64_t));
 	cur.seek = calloc(ndrive, sizeof(u_int64_t));
 	cur.rbytes = calloc(ndrive, sizeof(u_int64_t));
 	cur.wbytes = calloc(ndrive, sizeof(u_int64_t));
 	last.time = calloc(ndrive, sizeof(struct timeval));
+	last.wait = calloc(ndrive, sizeof(struct timeval));
+	last.waitsum = calloc(ndrive, sizeof(struct timeval));
+	last.busysum = calloc(ndrive, sizeof(struct timeval));
 	last.rxfer = calloc(ndrive, sizeof(u_int64_t));
 	last.wxfer = calloc(ndrive, sizeof(u_int64_t));
 	last.seek = calloc(ndrive, sizeof(u_int64_t));
@@ -286,12 +312,16 @@ drvinit(int selected)
 	cur.select = calloc(ndrive, sizeof(int));
 	cur.name = calloc(ndrive, sizeof(char *));
 
-	if (cur.time == NULL || cur.rxfer == NULL ||
-	    cur.wxfer == NULL || cur.seek == NULL ||
-	    cur.rbytes == NULL || cur.wbytes == NULL ||
-	    last.time == NULL || last.rxfer == NULL ||
-	    last.wxfer == NULL || last.seek == NULL ||
-	    last.rbytes == NULL || last.wbytes == NULL ||
+	if (cur.time == NULL || cur.wait == NULL ||
+	    cur.waitsum == NULL || cur.busysum == NULL ||
+	    cur.rxfer == NULL || cur.wxfer == NULL ||
+	    cur.seek == NULL || cur.rbytes == NULL ||
+	    cur.wbytes == NULL ||
+	    last.time == NULL || last.wait == NULL ||
+	    last.waitsum == NULL || last.busysum == NULL ||
+	    last.rxfer == NULL || last.wxfer == NULL ||
+	    last.seek == NULL || last.rbytes == NULL ||
+	    last.wbytes == NULL ||
 	    cur.select == NULL || cur.name == NULL)
 		errx(1, "Memory allocation failure.");
 

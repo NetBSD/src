@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.533 2016/11/09 08:18:56 rin Exp $
+.\"	$NetBSD: main,v 1.533.2.1 2017/04/21 16:51:12 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1363,6 +1363,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta David Sainty Ta Mt dsainty@NetBSD.org
 .It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.org
+.It Ta Guilherme Salazar Ta Mt salazar@NetBSD.org
 .It Ta Curt Sampson Ta Mt cjs@NetBSD.org
 .It Ta Wilfredo Sanchez Ta Mt wsanchez@NetBSD.org
 .It Ta Ty Sarna Ta Mt tsarna@NetBSD.org

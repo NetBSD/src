@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.14 2016/10/31 23:51:20 christos Exp $ */
+/* $NetBSD: t_mutex.c,v 1.14.2.1 2017/04/21 16:54:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.14 2016/10/31 23:51:20 christos Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.14.2.1 2017/04/21 16:54:11 bouyer Exp $");
 
+#include <sys/time.h> /* For timespecadd */
+#include <inttypes.h> /* For UINT16_MAX */
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
@@ -146,9 +148,6 @@ ATF_TC(mutex2);
 ATF_TC_HEAD(mutex2, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes");
-#if defined(__powerpc__)
-	atf_tc_set_md_var(tc, "timeout", "40");
-#endif
 }
 ATF_TC_BODY(mutex2, tc)
 {
@@ -157,10 +156,6 @@ ATF_TC_BODY(mutex2, tc)
 	void *joinval;
 
 	printf("1: Mutex-test 2\n");
-
-#if defined(__powerpc__)
-	atf_tc_expect_timeout("PR port-powerpc/44387");
-#endif
 
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 	
@@ -186,14 +181,6 @@ ATF_TC_BODY(mutex2, tc)
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
-
-#if defined(__powerpc__)
-	/* XXX force a timeout in ppc case since an un-triggered race
-	   otherwise looks like a "failure" */
-	/* We sleep for longer than the timeout to make ATF not
-	   complain about unexpected success */
-	sleep(41);
-#endif
 }
 
 static void *
@@ -217,9 +204,6 @@ ATF_TC_HEAD(mutex3, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes using a static "
 	    "initializer");
-#if defined(__powerpc__)
-	atf_tc_set_md_var(tc, "timeout", "40");
-#endif
 }
 ATF_TC_BODY(mutex3, tc)
 {
@@ -228,10 +212,6 @@ ATF_TC_BODY(mutex3, tc)
 	void *joinval;
 
 	printf("1: Mutex-test 3\n");
-
-#if defined(__powerpc__)
-	atf_tc_expect_timeout("PR port-powerpc/44387");
-#endif
 
 	global_x = 0;
 	count = count2 = 10000000;
@@ -255,14 +235,6 @@ ATF_TC_BODY(mutex3, tc)
 	printf("1: Thread joined. X was %d. Return value (long) was %ld\n",
 		global_x, (long)joinval);
 	ATF_REQUIRE_EQ(global_x, 20000000);
-
-#if defined(__powerpc__)
-	/* XXX force a timeout in ppc case since an un-triggered race
-	   otherwise looks like a "failure" */
-	/* We sleep for longer than the timeout to make ATF not
-	   complain about unexpected success */
-	sleep(41);
-#endif
 }
 
 static void *
@@ -399,7 +371,6 @@ ATF_TC_BODY(mutex5, tc)
 	PTHREAD_REQUIRE(pthread_join(child, NULL));
 }
 
-static pthread_mutex_t mutex6;
 static int start = 0;
 static uintmax_t high_cnt = 0, low_cnt = 0, MAX_LOOP = 100000000;
 
@@ -427,9 +398,9 @@ high_prio(void* arg)
 		high_cnt = 0;
 		sleep(1);
 	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex6, &ts_lengthy));
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 	if (start == 0) start = 2;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex6));
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 
 	return 0;
 }
@@ -459,10 +430,10 @@ low_prio(void* arg)
 		low_cnt = 0;
 		sleep(1);
 	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex6, &ts_lengthy));
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 	if (start == 0)
 		start = 1;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex6));
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 
 	return 0;
 }
@@ -521,7 +492,8 @@ ATF_TC_BODY(mutex6, tc)
 	PTHREAD_REQUIRE(pthread_join(low, NULL));
 	PTHREAD_REQUIRE(pthread_join(high, NULL));
 	
-	ATF_REQUIRE_EQ(start, 1);
+	ATF_REQUIRE_EQ_MSG(start, 1, "start = %d, low_cnt =%ju, "
+	    "high_cnt = %ju\n", start, high_cnt, low_cnt);
 }
 
 ATF_TC(mutexattr1);
@@ -570,9 +542,16 @@ ATF_TC_BODY(mutexattr2, tc)
 	int min_prio = sched_get_priority_min(SCHED_FIFO);
 	for (int i = min_prio; i <= max_prio; i++) {
 		int prioceiling;
+		int protocol;
+
+		PTHREAD_REQUIRE(pthread_mutexattr_getprotocol(&mattr,
+		    &protocol));
+
+		printf("priority: %d\nprotocol: %d\n", i, protocol);
 		PTHREAD_REQUIRE(pthread_mutexattr_setprioceiling(&mattr, i));
 		PTHREAD_REQUIRE(pthread_mutexattr_getprioceiling(&mattr,
 		    &prioceiling));
+		printf("prioceiling: %d\n", prioceiling);
 		ATF_REQUIRE_EQ(i, prioceiling);
 	}
 }

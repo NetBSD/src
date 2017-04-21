@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2017/01/07 19:51:21 christos Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2017/04/21 16:52:03 bouyer Exp $
 
 SUBDIR=rc.d
 
-FILESDIR=               /etc/nsd
+FILESDIR=               /usr/share/examples/nsd
 FILESMODE=    644
 FILES=	nsd.conf
+FILESBUILD_nsd.conf=yes
 
 nsd.conf: nsd.conf.sample.in __subst
 CLEANFILES+= nsd.conf

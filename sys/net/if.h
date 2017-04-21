@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.233 2016/12/22 03:46:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.233.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,6 +231,7 @@ struct callout;
 struct krwlock;
 struct if_percpuq;
 struct if_deferred_start;
+struct in6_multi;
 
 typedef unsigned short if_index_t;
 
@@ -344,6 +345,8 @@ typedef struct ifnet {
 	struct psref_target     if_psref;
 	struct pslist_head	if_addr_pslist;
 	struct if_deferred_start	*if_deferred_start;
+	/* XXX should be protocol independent */
+	LIST_HEAD(, in6_multi) if_multiaddrs;
 #endif
 } ifnet_t;
  
@@ -971,7 +974,8 @@ struct	ifnet *if_get(const char *, struct psref *);
 ifnet_t *if_byindex(u_int);
 ifnet_t *if_get_byindex(u_int, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);
-void	if_acquire_NOMPSAFE(struct ifnet *, struct psref *);
+void	if_acquire(struct ifnet *, struct psref *);
+#define	if_release	if_put
 
 static inline if_index_t
 if_get_index(const struct ifnet *ifp)
@@ -1167,7 +1171,6 @@ __END_DECLS
 	} while (0)
 
 extern struct pslist_head ifnet_pslist;
-extern struct psref_class *ifnet_psref_class;
 extern kmutex_t ifnet_mtx;
 
 extern struct ifnet *lo0ifp;

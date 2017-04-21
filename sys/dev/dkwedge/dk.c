@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.93 2016/12/24 16:39:55 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.93.2.1 2017/04/21 16:53:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.93 2016/12/24 16:39:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.93.2.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -686,7 +686,7 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
 			mutex_exit(&pdk->dk_openlock);
 			return;
 		}
-		strcpy(dkw.dkw_parent, pdk->dk_name);
+		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 		strlcpy(dkw.dkw_devname, device_xname(sc->sc_dev),
 			sizeof(dkw.dkw_devname));
 		mutex_exit(&pdk->dk_openlock);
@@ -733,10 +733,11 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 			sizeof(dkw.dkw_devname));
 		memcpy(dkw.dkw_wname, sc->sc_wname, sizeof(dkw.dkw_wname));
 		dkw.dkw_wname[sizeof(dkw.dkw_wname) - 1] = '\0';
-		strcpy(dkw.dkw_parent, sc->sc_parent->dk_name);
+		strlcpy(dkw.dkw_parent, sc->sc_parent->dk_name,
+		    sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = sc->sc_offset;
 		dkw.dkw_size = sc->sc_size;
-		strcpy(dkw.dkw_ptype, sc->sc_ptype);
+		strlcpy(dkw.dkw_ptype, sc->sc_ptype, sizeof(dkw.dkw_ptype));
 
 		error = uiomove(&dkw, sizeof(dkw), &uio);
 		if (error)
@@ -1248,6 +1249,7 @@ dkstrategy(struct buf *bp)
 	/* Place it in the queue and start I/O on the unit. */
 	mutex_enter(&sc->sc_iolock);
 	sc->sc_iopend++;
+	disk_wait(&sc->sc_dk);
 	bufq_put(sc->sc_bufq, bp);
 	mutex_exit(&sc->sc_iolock);
 
@@ -1477,16 +1479,10 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	error = 0;
 	
 	switch (cmd) {
+	case DIOCGSTRATEGY:
+	case DIOCGCACHE:
 	case DIOCCACHESYNC:
-		/*
-		 * XXX Do we really need to care about having a writable
-		 * file descriptor here?
-		 */
-		if ((flag & FWRITE) == 0)
-			error = EBADF;
-		else
-			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
-					  cmd, data, flag,
+		error = VOP_IOCTL(sc->sc_parent->dk_rawvp, cmd, data, flag,
 					  l != NULL ? l->l_cred : NOCRED);
 		break;
 	case DIOCGWEDGEINFO:
@@ -1497,10 +1493,11 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			sizeof(dkw->dkw_devname));
 	    	memcpy(dkw->dkw_wname, sc->sc_wname, sizeof(dkw->dkw_wname));
 		dkw->dkw_wname[sizeof(dkw->dkw_wname) - 1] = '\0';
-		strcpy(dkw->dkw_parent, sc->sc_parent->dk_name);
+		strlcpy(dkw->dkw_parent, sc->sc_parent->dk_name,
+		    sizeof(dkw->dkw_parent));
 		dkw->dkw_offset = sc->sc_offset;
 		dkw->dkw_size = sc->sc_size;
-		strcpy(dkw->dkw_ptype, sc->sc_ptype);
+		strlcpy(dkw->dkw_ptype, sc->sc_ptype, sizeof(dkw->dkw_ptype));
 
 		break;
 	    }

@@ -1,10 +1,10 @@
-/*	$NetBSD: auditlog.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: auditlog.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* auditlog.c - log modifications for audit/history purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * This work was initially developed by Symas Corp. for inclusion in
  * OpenLDAP Software.  This work was sponsored by Hewlett-Packard.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: auditlog.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -202,20 +205,6 @@ auditlog_db_init(
 }
 
 static int
-auditlog_db_close(
-	BackendDB *be,
-	ConfigReply *cr
-)
-{
-	slap_overinst *on = (slap_overinst *)be->bd_info;
-	auditlog_data *ad = on->on_bi.bi_private;
-
-	free( ad->ad_logfile );
-	ad->ad_logfile = NULL;
-	return 0;
-}
-
-static int
 auditlog_db_destroy(
 	BackendDB *be,
 	ConfigReply *cr
@@ -225,6 +214,7 @@ auditlog_db_destroy(
 	auditlog_data *ad = on->on_bi.bi_private;
 
 	ldap_pvt_thread_mutex_destroy( &ad->ad_mutex );
+	free( ad->ad_logfile );
 	free( ad );
 	return 0;
 }
@@ -234,7 +224,6 @@ int auditlog_initialize() {
 
 	auditlog.on_bi.bi_type = "auditlog";
 	auditlog.on_bi.bi_db_init = auditlog_db_init;
-	auditlog.on_bi.bi_db_close = auditlog_db_close;
 	auditlog.on_bi.bi_db_destroy = auditlog_db_destroy;
 	auditlog.on_response = auditlog_response;
 

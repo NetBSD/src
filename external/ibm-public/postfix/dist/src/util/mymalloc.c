@@ -1,4 +1,4 @@
-/*	$NetBSD: mymalloc.c,v 1.1.1.3 2013/01/02 18:59:13 tron Exp $	*/
+/*	$NetBSD: mymalloc.c,v 1.1.1.3.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,15 +8,15 @@
 /* SYNOPSIS
 /*	#include <mymalloc.h>
 /*
-/*	char	*mymalloc(len)
+/*	void	*mymalloc(len)
 /*	ssize_t	len;
 /*
-/*	char	*myrealloc(ptr, len)
-/*	char	*ptr;
+/*	void	*myrealloc(ptr, len)
+/*	void	*ptr;
 /*	ssize_t	len;
 /*
 /*	void	myfree(ptr)
-/*	char	*ptr;
+/*	void	*ptr;
 /*
 /*	char	*mystrdup(str)
 /*	const char *str;
@@ -144,9 +144,9 @@ static const char empty_string[] = "";
 
 /* mymalloc - allocate memory or bust */
 
-char   *mymalloc(ssize_t len)
+void   *mymalloc(ssize_t len)
 {
-    char   *ptr;
+    void   *ptr;
     MBLOCK *real_ptr;
 
     /*
@@ -169,7 +169,7 @@ char   *mymalloc(ssize_t len)
 
 /* myrealloc - reallocate memory or bust */
 
-char   *myrealloc(char *ptr, ssize_t len)
+void   *myrealloc(void *ptr, ssize_t len)
 {
     MBLOCK *real_ptr;
     ssize_t old_len;
@@ -190,7 +190,7 @@ char   *myrealloc(char *ptr, ssize_t len)
     len += MYMALLOC_FUZZ;
 #endif
     CHECK_IN_PTR(ptr, real_ptr, old_len, "myrealloc");
-    if ((real_ptr = (MBLOCK *) realloc((char *) real_ptr, SPACE_FOR(len))) == 0)
+    if ((real_ptr = (MBLOCK *) realloc((void *) real_ptr, SPACE_FOR(len))) == 0)
 	msg_fatal("myrealloc: insufficient memory for %ld bytes: %m",
 		  (long) len);
     CHECK_OUT_PTR(ptr, real_ptr, len);
@@ -201,7 +201,7 @@ char   *myrealloc(char *ptr, ssize_t len)
 
 /* myfree - release memory */
 
-void    myfree(char *ptr)
+void    myfree(void *ptr)
 {
     MBLOCK *real_ptr;
     ssize_t len;
@@ -210,8 +210,8 @@ void    myfree(char *ptr)
     if (ptr != empty_string) {
 #endif
 	CHECK_IN_PTR(ptr, real_ptr, len, "myfree");
-	memset((char *) real_ptr, FILLER, SPACE_FOR(len));
-	free((char *) real_ptr);
+	memset((void *) real_ptr, FILLER, SPACE_FOR(len));
+	free((void *) real_ptr);
 #ifndef NO_SHARED_EMPTY_STRINGS
     }
 #endif
@@ -254,7 +254,7 @@ char   *mystrndup(const char *str, ssize_t len)
 
 /* mymemdup - copy memory */
 
-char   *mymemdup(const char *ptr, ssize_t len)
+char   *mymemdup(const void *ptr, ssize_t len)
 {
     if (ptr == 0)
 	msg_panic("mymemdup: null pointer argument");

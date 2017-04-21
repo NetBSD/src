@@ -126,6 +126,8 @@ same message repeatedly. </p>
 
 <li><a href="#remote_only">Configuring header/body checks for mail from outside users only</a>
 
+<li><a href="#mx_submission">Configuring different header/body checks for MX service and submission service</a>
+
 <li><a href="#domain_except">Configuring header/body checks for mail to some domains only</a>
 
 </ul>
@@ -209,7 +211,9 @@ header/body checks are requested by the source.  Examples of how
 to turn off header/body checks for mail received with smtpd(8),
 qmqpd(8) or pickup(8) are given below under "<a
 href="#remote_only">Configuring header/body checks for mail from
-outside users only</a>" and "<a href="#domain_except">Configuring
+outside users only</a>", "<a href="#mx_submission">Configuring
+different header/body checks for MX service and submission
+service</a>", and "<a href="#domain_except">Configuring
 header/body checks for mail to some domains only</a>".  </p>
 
 <h2><a name="limitations">Limitations of Postfix header/body checks </a></h2>
@@ -392,6 +396,61 @@ header/body filtering turned on via main.cf. </p>
 </pre>
 
 </ul>
+
+<h2><a name="mx_submission">Configuring different header/body checks for MX service and submission service</a></h2>
+
+<p> If authorized user submissions require different header/body
+checks than mail from remote MTAs, then this is possible as long
+as you have separate mail streams for authorized users and for MX
+service. </p>
+
+<p> The example below assumes that authorized users connect to TCP
+port 587 (submission) or 465 (smtps), and that remote MTAs connect
+to TCP port 25 (smtp). </p>
+
+<p> First, we define a few "user-defined" parameters that will
+override settings for the submission and smtps services. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    msa_cleanup_service_name = msa_cleanup
+    msa_header_checks = pcre:/etc/postfix/msa_header_checks
+    msa_body_checks = pcre:/etc/postfix/msa_body_checks
+</pre>
+</blockquote>
+
+<p> Next, we define msa_cleanup as a dedicated cleanup service that
+will be used only by the submission and smtps services.  This service
+uses the header_checks and body_checks overrides that were defined
+above. </p>
+
+<blockquote>
+<pre>
+/etc/postfix.master.cf:
+    # =================================================================
+    # service     type  private unpriv  chroot  wakeup  maxproc command
+    #                   (yes)   (yes)   (yes)   (never) (100)
+    # =================================================================
+    smtp          inet  n       -       n       -       -       smtpd
+    msa_cleanup   unix  n       -       n       -       0       cleanup
+        -o header_checks=$msa_header_checks
+        -o body_checks=$msa_body_checks
+    submission    inet  n       -       n       -       -       smtpd
+        -o cleanup_service_name=$msa_cleanup_service_name
+        -o syslog_name=postfix/submission
+        <i>...[see sample master.cf file for more]...</i>
+    smtps         inet  n       -       n       -       -       smtpd
+        -o cleanup_service_name=$msa_cleanup_service_name
+        -o syslog_name=postfix/smtps
+        -o smtpd_tls_wrappermode=yes
+        <i>...[see sample master.cf file for more]...</i>
+</pre>
+</blockquote>
+
+<p> By keeping the "msa_xxx" parameter settings in main.cf, you
+keep your master.cf file simple, and you minimize the amount
+of duplication. </p>
 
 <h2><a name="domain_except">Configuring header/body checks for mail to some domains only</a></h2>
 

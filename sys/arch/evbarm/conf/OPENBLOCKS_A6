@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.26 2016/11/26 13:59:45 christos Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.26.2.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -56,6 +56,7 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.34.4.1 2017/04/21 16:54:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.34 2016/06/24 19:24:11 christos Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.34.4.1 2017/04/21 16:54:17 bouyer Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -102,7 +102,11 @@ union {
 char *iobuf;
 int iobufsize;
 
-char writebuf[FFS_MAXBSIZE];
+union {
+	struct fs fs;
+	char pad[FFS_MAXBSIZE];
+} wb;
+#define writebuf wb.pad
 
 static int     Oflag;	   /* format as an 4.3BSD file system */
 static int64_t fssize;	   /* file system size */
@@ -120,6 +124,17 @@ static int     bbsize;	   /* boot block size */
 static int     sbsize;	   /* superblock size */
 static int     avgfilesize;	   /* expected average file size */
 static int     avgfpdir;	   /* expected number of files per directory */
+
+static void
+ffs_sb_copy(struct fs *o, const struct fs *i, size_t l, const fsinfo_t *fsopts)
+{
+	memcpy(o, i, l);
+	/* Zero out pointers */
+	o->fs_csp = NULL;
+	o->fs_maxcluster = NULL;
+	if (fsopts->needswap)
+		ffs_sb_swap(i, o);
+}
 
 struct fs *
 ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
@@ -508,9 +523,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 	 * Make a copy of the superblock into the buffer that we will be
 	 * writing out in each cylinder group.
 	 */
-	memcpy(writebuf, &sblock, sbsize);
-	if (fsopts->needswap)
-		ffs_sb_swap(&sblock, (struct fs*)writebuf);
+	ffs_sb_copy(&wb.fs, &sblock, sbsize, fsopts);
 	memcpy(iobuf, writebuf, SBLOCKSIZE);
 
 	printf("super-block backups (for fsck -b #) at:");
@@ -555,9 +568,7 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
 
-        memcpy(writebuf, &sblock, sbsize);
-	if (fsopts->needswap)
-		ffs_sb_swap(fs, (struct fs*)writebuf);
+	ffs_sb_copy(&wb.fs, &sblock, sbsize, fsopts);
 	ffs_wtfs(fs->fs_sblockloc / sectorsize, sbsize, writebuf, fsopts);
 
 	/* Write out the duplicate super blocks */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.32 2016/12/15 09:28:02 ozaki-r Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.32.2.1 2017/04/21 16:53:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.32 2016/12/15 09:28:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.32.2.1 2017/04/21 16:53:24 bouyer Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -332,6 +332,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
@@ -811,7 +812,7 @@ npe_txdone_finish(struct npe_softc *sc, const struct txdone *td)
 	ifp->if_opackets += td->count;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
-	npestart(ifp);
+	if_schedule_deferred_start(ifp);
 }
 
 /*

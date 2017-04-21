@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.8 2014/11/04 00:20:19 justin Exp $ */
+/* $NetBSD: t_sem.c,v 1.8.4.1 2017/04/21 16:54:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -86,8 +86,9 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.8 2014/11/04 00:20:19 justin Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.8.4.1 2017/04/21 16:54:11 bouyer Exp $");
 
+#include <sys/time.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>

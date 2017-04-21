@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.17 2017/01/12 13:53:11 roy Exp $ */
+/* $NetBSD: term.h,v 1.17.2.1 2017/04/21 16:53:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013 The NetBSD Foundation, Inc.
@@ -1933,8 +1933,8 @@ typedef struct {
 	/* We need to expose these so that the macros work */
 	const char *name;
 	const char *desc;
-	const signed char *flags;
-	const short *nums;
+	signed char *flags;
+	short *nums;
 	const char **strs;
 } TERMINAL;
 #endif

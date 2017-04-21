@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.3 2015/03/31 21:39:43 christos Exp $	*/
+/*	$NetBSD: usb.h,v 1.3.4.1 2017/04/21 16:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
@@ -33,8 +33,8 @@
  * By Paolo Abeni <paolo.abeni@email.it>
  */
 
-#ifndef _PCAP_USB_STRUCTS_H__
-#define _PCAP_USB_STRUCTS_H__
+#ifndef lib_pcap_usb_h
+#define lib_pcap_usb_h
 
 /*
  * possible transfer mode

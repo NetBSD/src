@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif-filter.c,v 1.1.1.2 2014/05/28 09:58:54 tron Exp $	*/
+/*	$NetBSD: ldif-filter.c,v 1.1.1.2.10.1 2017/04/21 16:52:32 bouyer Exp $	*/
 
 /* ldif-filter -- clean up LDIF testdata from stdin */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009-2014 The OpenLDAP Foundation.
+ * Copyright 2009-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,6 +16,9 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ldif-filter.c,v 1.1.1.2.10.1 2017/04/21 16:52:32 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -23,6 +26,9 @@
 #include <ac/stdlib.h>
 #include <ac/string.h>
 #include <ac/unistd.h>
+#ifdef _WIN32
+#include <fcntl.h>
+#endif
 
 #define DEFAULT_SPECS "ndb=a,null=n"
 
@@ -58,15 +64,21 @@ get_flags( const char *backend, const char *spec )
 {
 	size_t len = strlen( backend );
 	unsigned flags = DUMMY_FLAG;
-	const char *tmp;
+	const char *end, *tmp;
 
-	while ( '=' != *(spec += strncmp( spec, backend, len ) ? 0 : len) ) {
-		if ( (spec = strchr( spec, ',' )) == NULL ) {
+	for ( ;; spec = end + ( *end != '\0' )) {
+		if ( !*spec )
 			return 0;
+		end = spec + strcspn( spec, "," );
+		if ( !(tmp = memchr( spec, '=', end-spec )))
+			break;
+		if ( tmp-spec == len && !memcmp( spec, backend, len )) {
+			spec = tmp+1;
+			break;
 		}
-		++spec;
 	}
-	while ( *++spec && *spec != ',' ) {
+
+	for ( ; spec < end; spec++ ) {
 		if ( (tmp = strchr( spec_options, *spec )) == NULL ) {
 			usage();
 		}
@@ -235,6 +247,9 @@ main( int argc, char **argv )
 		backend = "";
 	}
 
+#ifdef _WIN32
+	_setmode(1, _O_BINARY);	/* don't convert \n to \r\n on stdout */
+#endif
 	flags = get_flags( backend, specs );
 	filter_stdin( flags ? flags : get_flags( backend, DEFAULT_SPECS ));
 	if ( fclose( stdout ) == EOF ) {

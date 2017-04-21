@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.17 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: ARMADAXP,v 1.17.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -50,6 +50,7 @@ file-system	PUFFS		# Pass-to-Userspace Framework File System
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
@@ -274,6 +275,9 @@ options 	PCI_NETBSD_CONFIGURE
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 pci*		at mvpex?
 pchb*		at pci? dev ? function ?	# PCI-Host bridges
+
+# PCI Serial-ATA Host Controller
+mvsata* 	at pci? dev ? function ?
 
 # PCI Ethernet
 wm*		at pci? dev ? function ?	# Intel 8254x gigabit

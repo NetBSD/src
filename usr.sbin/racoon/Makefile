@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2013/11/09 00:33:48 christos Exp $
+# $NetBSD: Makefile,v 1.27.12.1 2017/04/21 16:54:18 bouyer Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -47,9 +47,9 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DHAVE_GSSAPI
 LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lcom_err \
-	-lroken -lasn1
+	-lroken -lasn1 -lsqlite3
 DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBCOM_ERR} \
-	${LIBROKEN} ${LIBASN1}
+	${LIBROKEN} ${LIBASN1} ${LIBSQLITE3}
 .endif
 CPPFLAGS+=-DHAVE_OPENSSL_IDEA_H
 .if (${MKCRYPTO_RC5} != "no")
@@ -72,9 +72,4 @@ prsa_tok.c: ${DIST}/src/racoon/prsa_tok.l
 prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 48
-.if ${MACHINE_ARCH} == "sh3el"
-COPTS.ipsec_doi.c=	-O0
-.endif
-.endif
 .include <bsd.prog.mk>

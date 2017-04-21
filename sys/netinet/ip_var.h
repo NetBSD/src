@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.116 2016/12/08 05:16:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.116.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -157,8 +157,9 @@ struct ip_moptions {
 #define	IP_STAT_TOOLONG		27	/* ip length > max ip packet size */
 #define	IP_STAT_NOGIF		28	/* no match gif found */
 #define	IP_STAT_BADADDR		29	/* invalid address on header */
+#define	IP_STAT_NOL2TP		30	/* no match l2tp found */
 
-#define	IP_NSTATS		30
+#define	IP_NSTATS		31
 
 #ifdef _KERNEL
 
@@ -212,7 +213,7 @@ void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_optcopy(struct ip *, struct ip *);
 u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, struct mbuf *, struct route *, int,
-	    struct ip_moptions *, struct socket *);
+	    struct ip_moptions *, struct inpcb *);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 
 void	 ip_reass_init(void);
@@ -225,7 +226,7 @@ void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
 void	 ip_slowtimo(void);
 void	 ip_fasttimo(void);
 struct mbuf *
-	 ip_srcroute(void);
+	 ip_srcroute(struct mbuf *);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 void	 ip_statinc(u_int);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);

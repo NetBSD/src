@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.120 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.120.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.120 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.120.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,6 +426,7 @@ ex_config(struct ex_softc *sc)
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, macaddr);
 	ether_set_ifflags_cb(&sc->sc_ethercom, ex_ifflags_cb);
 
@@ -1418,8 +1419,8 @@ ex_intr(void *arg)
 	}
 
 	/* no more interrupts */
-	if (ret && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		ex_start(ifp);
+	if (ret)
+		if_schedule_deferred_start(ifp);
 	return ret;
 }
 

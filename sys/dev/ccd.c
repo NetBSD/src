@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.168 2016/11/20 02:35:19 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.168.2.1 2017/04/21 16:53:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.168 2016/11/20 02:35:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.168.2.1 2017/04/21 16:53:44 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -815,9 +815,10 @@ ccdstart(struct ccd_softc *cs)
 
 	KASSERT(mutex_owned(cs->sc_iolock));
 
-	disk_busy(&cs->sc_dkdev);
 	bp = bufq_get(cs->sc_bufq);
 	KASSERT(bp != NULL);
+
+	disk_busy(&cs->sc_dkdev);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -1181,6 +1182,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case CCDIOCCLR:
 	case DIOCGDINFO:
+	case DIOCGSTRATEGY:
+	case DIOCGCACHE:
 	case DIOCCACHESYNC:
 	case DIOCAWEDGE:
 	case DIOCDWEDGE:
@@ -1391,6 +1394,50 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		ccdput(cs);
 		/* Don't break, otherwise cs is read again. */
 		return 0;
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = (void *)data;
+
+		mutex_enter(cs->sc_iolock);
+		if (cs->sc_bufq != NULL)
+			strlcpy(dks->dks_name,
+			    bufq_getstrategyname(cs->sc_bufq),
+			    sizeof(dks->dks_name));
+		else
+			error = EINVAL;
+		mutex_exit(cs->sc_iolock);
+		dks->dks_paramlen = 0;
+		break;
+	    }
+
+	case DIOCGCACHE:
+	    {
+		int dkcache = 0;
+
+		/*
+		 * We pass this call down to all components and report
+		 * intersection of the flags returned by the components.
+		 * If any errors out, we return error. CCD components
+		 * can not change unless the device is unconfigured, so
+		 * device feature flags will remain static. RCE/WCE can change
+		 * of course, if set directly on underlying device.
+		 */
+		for (error = 0, i = 0; i < cs->sc_nccdisks; i++) {
+			error = VOP_IOCTL(cs->sc_cinfo[i].ci_vp, cmd, &j,
+				      flag, uc);
+			if (error)
+				break;
+
+			if (i == 0)
+				dkcache = j;
+			else
+				dkcache = DKCACHE_COMBINE(dkcache, j);
+		}
+
+		*((int *)data) = dkcache;
+		break;
+	    }
 
 	case DIOCCACHESYNC:
 		/*

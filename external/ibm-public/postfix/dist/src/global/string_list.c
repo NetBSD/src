@@ -1,4 +1,4 @@
-/*	$NetBSD: string_list.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: string_list.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	#include <string_list.h>
 /*
-/*	STRING_LIST *string_list_init(flags, pattern_list)
+/*	STRING_LIST *string_list_init(pname, flags, pattern_list)
+/*	const char *pname;
 /*	int	flags;
 /*	const char *pattern_list;
 /*
@@ -33,7 +34,8 @@
 /*	In order to reverse the result, precede a pattern with an
 /*	exclamation point (!).
 /*
-/*	string_list_init() performs initializations. The first argument
+/*	string_list_init() performs initializations. The pname
+/*	argument specifies error reporting context. The flags argument
 /*	is a bit-wise OR of zero or more of following:
 /* .IP MATCH_FLAG_RETURN
 /*	Request that string_list_match() logs a warning and returns
@@ -41,7 +43,7 @@
 /*	code, instead of raising a fatal error.
 /* .PP
 /*	Specify MATCH_FLAG_NONE to request none of the above.
-/*	The second argument specifies a list of string patterns.
+/*	The last argument specifies a list of string patterns.
 /*
 /*	string_list_match() matches the specified string against the
 /*	compiled pattern list.
@@ -77,12 +79,14 @@
 
 #ifdef TEST
 
-#include <msg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <msg.h>
 #include <vstream.h>
 #include <vstring.h>
 #include <msg_vstream.h>
+#include <dict.h>
+#include <stringops.h>			/* util_utf8_enable */
 
 static void usage(char *progname)
 {
@@ -108,7 +112,9 @@ int     main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = string_list_init(MATCH_FLAG_RETURN, argv[optind]);
+    dict_allow_surrogate = 1;
+    util_utf8_enable = 1;
+    list = string_list_init("command line", MATCH_FLAG_RETURN, argv[optind]);
     string = argv[optind + 1];
     vstream_printf("%s: %s\n", string, string_list_match(list, string) ?
 		   "YES" : list->error == 0 ? "NO" : "ERROR");

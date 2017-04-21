@@ -1,4 +1,4 @@
-/*	$NetBSD: ripoffline.c,v 1.2 2017/01/12 16:23:46 roy Exp $	*/
+/*	$NetBSD: ripoffline.c,v 1.2.2.1 2017/04/21 16:53:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ripoffline.c,v 1.2 2017/01/12 16:23:46 roy Exp $");
+__RCSID("$NetBSD: ripoffline.c,v 1.2.2.1 2017/04/21 16:53:10 bouyer Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -103,6 +103,8 @@ __ripoffscreen(SCREEN *screen, int *rtop)
 	*rtop = 0;
 	rip = screen->ripped;
 	for (i = 0, srip = ripoffs; i < nrips; i++, srip++) {
+		if (srip->nlines == 0)
+			continue;
 		nlines = srip->nlines < 0 ? -srip->nlines : srip->nlines;
 		w = __newwin(screen, nlines, 0,
 		    srip->nlines < 0 ? LINES - nlines : *rtop,
@@ -150,4 +152,24 @@ __ripoffresize(SCREEN *screen)
 		}
 		wnoutrefresh(rip->win);
 	}
+}
+
+/*
+ * __unripoffline --
+ *	Used by __slk_init to remove the ripoffline reservation it made
+ *	because the terminal natively supports soft label keys.
+ */
+int
+__unripoffline(int (*init)(WINDOW *, int))
+{
+	struct ripoff *rip;
+	int i, unripped = 0;
+
+	for (i = 0, rip = ripoffs; i < nrips; i++, rip++) {
+		if (rip->init == init) {
+			rip->nlines = 0;
+			unripped++;
+		}
+	}
+	return unripped;
 }

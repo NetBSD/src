@@ -1,4 +1,4 @@
-/*	$NetBSD: biff_notify.c,v 1.1.1.2 2012/08/10 12:35:46 tron Exp $	*/
+/*	$NetBSD: biff_notify.c,v 1.1.1.2.18.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -78,7 +78,7 @@ void    biff_notify(const char *text, ssize_t len)
 	}
 	sin.sin_family = hp->h_addrtype;
 	sin.sin_port = sp->s_port;
-	memcpy((char *) &sin.sin_addr, hp->h_addr_list[0], hp->h_length);
+	memcpy((void *) &sin.sin_addr, hp->h_addr_list[0], hp->h_length);
     }
 
     /*
@@ -95,6 +95,6 @@ void    biff_notify(const char *text, ssize_t len)
     /*
      * Biff!
      */
-    if (sendto(sock, text, len, 0, (struct sockaddr *) & sin, sizeof(sin)) != len)
+    if (sendto(sock, text, len, 0, (struct sockaddr *) &sin, sizeof(sin)) != len)
 	msg_warn("biff_notify: %m");
 }

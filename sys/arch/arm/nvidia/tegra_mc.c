@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mc.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_mc.c,v 1.5.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.5.4.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,7 +124,7 @@ tegra_mc_attach(device_t parent, device_t self, void *aux)
 	MC_WRITE(sc, MC_INTMASK_REG, MC_INT__ALL);
 }
 
-int
+static int
 tegra_mc_intr(void *v)
 {
 	struct tegra_mc_softc * const sc = v;

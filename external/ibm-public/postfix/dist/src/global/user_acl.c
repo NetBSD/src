@@ -1,4 +1,4 @@
-/*	$NetBSD: user_acl.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: user_acl.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,8 @@
 /* SYNOPSIS
 /*	#include <user_acl.h>
 /*
-/*	const char *check_user_acl_byuid(acl, uid)
+/*	const char *check_user_acl_byuid(pname, acl, uid)
+/*	const char *pname;
 /*	const char *acl;
 /*	uid_t	uid;
 /* DESCRIPTION
@@ -22,6 +23,8 @@
 /*	calls.
 /*
 /*	Arguments:
+/* .IP pname
+/*	The parameter name of the acl.
 /* .IP acl
 /*	Authorized user name list suitable for input to string_list_init(3).
 /* .IP uid
@@ -61,7 +64,7 @@
 
 /* check_user_acl_byuid - check user authorization */
 
-const char *check_user_acl_byuid(char *acl, uid_t uid)
+const char *check_user_acl_byuid(const char *pname, const char *acl, uid_t uid)
 {
     struct mypasswd *mypwd;
     STRING_LIST *list;
@@ -103,7 +106,7 @@ const char *check_user_acl_byuid(char *acl, uid_t uid)
 	name = mypwd->pw_name;
     }
 
-    list = string_list_init(MATCH_FLAG_NONE, acl);
+    list = string_list_init(pname, MATCH_FLAG_NONE, acl);
     if ((matched = string_list_match(list, name)) == 0) {
 	if (!who)
 	    who = vstring_alloc(10);

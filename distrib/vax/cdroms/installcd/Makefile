@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2015/05/28 09:51:31 martin Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2017/04/21 16:51:16 bouyer Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS=	${RELEASEDIR}/${MACHINE}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
@@ -12,15 +12,15 @@ SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRI
 # prepare mutliuser install environment
 image_md_pre:
 	${RM} -f cdrom/boot
-	${CP} ${DESTDIR}/usr/mdec/boot cdrom/boot
+	${INSTALL} ${COPY} -m 0444 ${DESTDIR}/usr/mdec/boot cdrom/boot
 	${RM} -f bootxx.${MACHINE}
-	${CP} ${DESTDIR}/usr/mdec/xxboot bootxx.${MACHINE}
+	${INSTALL} ${COPY} -m 0444 ${DESTDIR}/usr/mdec/xxboot bootxx.${MACHINE}
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/etc.rc cdrom/etc/rc
 	${INSTALL} ${COPY} -m 0555 ${.CURDIR}/install.sh cdrom/install.sh
-	${MKDIR} cdrom/mnt2 cdrom/targetroot
+	${MKDIR} ${MKDIRPERM} cdrom/mnt2 cdrom/targetroot
 	${INSTALL} ${COPY} ${SYSINSTDIR}/sysinstmsgs.?? cdrom/usr/share/sysinst/catalog/
 	${TOOL_GZIP} -d -f cdrom/netbsd.gz
 

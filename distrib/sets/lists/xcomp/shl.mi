@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.47 2016/12/15 12:56:52 kre Exp $
+#	$NetBSD: shl.mi,v 1.47.2.1 2017/04/21 16:51:14 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -89,10 +89,11 @@
 ./usr/X11R7/lib/libxcb-shape_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-shm_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-sync_pic.a			-unknown-	xorg,picinstall,compatx11file
-./usr/X11R7/lib/libxcb-xevie_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libxcb-xevie_pic.a			-unknown-	obsolete
 ./usr/X11R7/lib/libxcb-xf86dri_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-xfixes_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-xinerama_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libxcb-xinput_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-xkb_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-xtest_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxcb-xv_pic.a				-unknown-	xorg,picinstall,compatx11file

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.19 2016/09/18 16:36:02 christos Exp $
+#	$NetBSD: list,v 1.19.2.1 2017/04/21 16:51:08 bouyer Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -46,9 +46,11 @@ PROG	sbin/ahdilabel
 PROG	usr/sbin/loadkmap
 
 SPECIAL	installboot	srcdir	sys/arch/atari/stand/installboot
+SPECIAL	fsck_ffs	srcdir	distrib/utils/x_fsck_ffs
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
 SPECIAL	disklabel	srcdir	distrib/utils/x_disklabel
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	newfs		srcdir	distrib/utils/x_newfs
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount

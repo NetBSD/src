@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.4 2010/01/30 21:33:23 joerg Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.4.32.1 2017/04/21 16:52:33 bouyer Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: check.c,v 1.1.1.4 2010/01/30 21:33:23 joerg Exp $");
+__RCSID("$NetBSD: check.c,v 1.1.1.4.32.1 2017/04/21 16:52:33 bouyer Exp $");
 
 /*-
  * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.5 2015/10/25 21:44:16 mrg Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.5.4.1 2017/04/21 16:53:59 bouyer Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.5 2015/10/25 21:44:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.5.4.1 2017/04/21 16:53:59 bouyer Exp $");
 
 #include <core/client.h>
 #include <core/handle.h>
@@ -448,11 +448,15 @@ nvc0_fifo_recover_work(struct work_struct *work)
 	priv->mask = 0ULL;
 	spin_unlock_irqrestore(&priv->base.lock, flags);
 
-	for (todo = mask; engn = __ffs64(todo), todo; todo &= ~(1 << engn))
+	for (todo = mask;
+	     todo && (engn = __ffs64(todo), 1);
+	     todo &= ~(1 << engn))
 		engm |= 1 << nvc0_fifo_engidx(priv, engn);
 	nv_mask(priv, 0x002630, engm, engm);
 
-	for (todo = mask; engn = __ffs64(todo), todo; todo &= ~(1 << engn)) {
+	for (todo = mask;
+	     todo && (engn = __ffs64(todo), 1);
+	     todo &= ~(1 << engn)) {
 		if ((engine = (void *)nouveau_engine(priv, engn))) {
 			nv_ofuncs(engine)->fini(engine, false);
 			WARN_ON(nv_ofuncs(engine)->init(engine));

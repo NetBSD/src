@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil_clnt.h,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: anvil_clnt.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _ANVIL_CLNT_H_INCLUDED_
 #define _ANVIL_CLNT_H_INCLUDED_
@@ -36,6 +36,7 @@
 #define ANVIL_REQ_RCPT		"recipient"
 #define ANVIL_REQ_NTLS		"newtls"
 #define ANVIL_REQ_NTLS_STAT	"newtls_status"
+#define ANVIL_REQ_AUTH		"auth"
 #define ANVIL_REQ_LOOKUP	"lookup"
 #define ANVIL_ATTR_IDENT	"ident"
 #define ANVIL_ATTR_COUNT	"count"
@@ -43,6 +44,7 @@
 #define ANVIL_ATTR_MAIL		"mail"
 #define ANVIL_ATTR_RCPT		"rcpt"
 #define ANVIL_ATTR_NTLS		"newtls"
+#define ANVIL_ATTR_AUTH		"auth"
 #define ANVIL_ATTR_STATUS	"status"
 
 #define ANVIL_STAT_OK		0
@@ -59,7 +61,8 @@ extern int anvil_clnt_mail(ANVIL_CLNT *, const char *, const char *, int *);
 extern int anvil_clnt_rcpt(ANVIL_CLNT *, const char *, const char *, int *);
 extern int anvil_clnt_newtls(ANVIL_CLNT *, const char *, const char *, int *);
 extern int anvil_clnt_newtls_stat(ANVIL_CLNT *, const char *, const char *, int *);
-extern int anvil_clnt_lookup(ANVIL_CLNT *, const char *, const char *, int *, int *, int *, int *, int *);
+extern int anvil_clnt_auth(ANVIL_CLNT *, const char *, const char *, int *);
+extern int anvil_clnt_lookup(ANVIL_CLNT *, const char *, const char *, int *, int *, int *, int *, int *, int *);
 extern int anvil_clnt_disconnect(ANVIL_CLNT *, const char *, const char *);
 extern void anvil_clnt_free(ANVIL_CLNT *);
 

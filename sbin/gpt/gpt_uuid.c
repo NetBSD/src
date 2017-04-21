@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.13 2015/12/06 00:39:26 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.13.4.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.13 2015/12/06 00:39:26 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.13.4.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 
 #include <err.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: gpt_uuid.c,v 1.13 2015/12/06 00:39:26 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 #if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/endian.h>
@@ -247,13 +248,11 @@ gpt_uuid_create(gpt_type_t t, gpt_uuid_t u, uint16_t *b, size_t s)
 		utf8_to_utf16((const uint8_t *)gpt_nv[t].d, b, s / sizeof(*b));
 }
 
-int
-gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
+static int
+gpt_uuid_random(gpt_t gpt, void *v, size_t n)
 {
-	struct dce_uuid u;
 	int fd;
 	uint8_t *p;
-	size_t n;
 	ssize_t nread;
 
 	/* Randomly generate the content.  */
@@ -262,7 +261,7 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 		gpt_warn(gpt, "Can't open `/dev/urandom'");
 		return -1;
 	}
-	for (p = (void *)&u, n = sizeof u; n > 0; p += nread, n -= (size_t)nread) {
+	for (p = v;  n > 0; p += nread, n -= (size_t)nread) {
 		nread = read(fd, p, n);
 		if (nread < 0) {
 			gpt_warn(gpt, "Can't read `/dev/urandom'");
@@ -278,6 +277,37 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 		}
 	}
 	(void)close(fd);
+	return 0;
+out:
+	(void)close(fd);
+	return -1;
+}
+
+static int 
+gpt_uuid_tstamp(gpt_t gpt, void *v, size_t l)
+{
+	uint8_t *p;
+	// Perhaps use SHA?
+	uint32_t x = (uint32_t)gpt->timestamp;
+
+	for (p = v; l > 0; p += sizeof(x), l -= sizeof(x))
+		memcpy(p, &x, sizeof(x));
+
+	return 0;
+}
+
+int
+gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
+{
+	int rv;
+	struct dce_uuid u;
+	if (gpt->flags & GPT_TIMESTAMP)
+		rv = gpt_uuid_tstamp(gpt, &u, sizeof(u));
+	else
+		rv = gpt_uuid_random(gpt, &u, sizeof(u));
+
+	if (rv == -1)
+		return -1;
 
 	/* Set the version number to 4.  */
 	u.time_hi_and_version &= (uint16_t)~0xf000;
@@ -288,8 +318,5 @@ gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 	u.clock_seq_hi_and_reserved |= 0x80;
 
 	gpt_dce_to_uuid(&u, t);
-	close(fd);
 	return 0;
-out:
-	return -1;
 }

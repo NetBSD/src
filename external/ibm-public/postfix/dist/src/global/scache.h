@@ -1,15 +1,15 @@
-/*	$NetBSD: scache.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: scache.h,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _SCACHE_H_INCLUDED_
 #define _SCACHE_H_INCLUDED_
 
 /*++
 /* NAME
-/*      scache 3h
+/*	scache 3h
 /* SUMMARY
-/*      generic session cache API
+/*	generic session cache API
 /* SYNOPSIS
-/*      #include <scache.h>
+/*	#include <scache.h>
 /* DESCRIPTION
 /* .nf
 

@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 303890 2016-08-09 19:32:06Z dumbbell $*/
-/*$NetBSD: ixgbe.h,v 1.18 2016/12/05 08:50:29 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.18.2.1 2017/04/21 16:53:52 bouyer Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -69,9 +69,7 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-#if __FreeBSD_version >= 800000
-#include <sys/buf_ring.h>
-#endif
+#include <sys/pcq.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -107,6 +105,7 @@
 #include <sys/workqueue.h>
 #include <sys/cpu.h>
 #include <sys/interrupt.h>
+#include <sys/bitops.h>
 
 #ifdef PCI_IOV
 #include <sys/nv.h>
@@ -390,8 +389,8 @@ struct tx_ring {
 	ixgbe_dma_tag_t		*txtag;
 	char			mtx_name[16];
 #ifndef IXGBE_LEGACY_TX
-	struct buf_ring		*br;
-	void			*txq_si;
+	pcq_t			*txr_interq;
+	void			*txr_si;
 #endif
 #ifdef IXGBE_FDIR
 	u16			atr_sample;
@@ -404,6 +403,7 @@ struct tx_ring {
 	struct evcnt	   	no_tx_map_avail;
 	struct evcnt		no_desc_avail;
 	struct evcnt		total_packets;
+	struct evcnt		pcq_drops;
 };
 
 
@@ -435,7 +435,6 @@ struct rx_ring {
 	u32			packets;
 
 	/* Soft stats */
-	struct evcnt		rx_irq;
 	struct evcnt		rx_copies;
 	struct evcnt		rx_packets;
 	struct evcnt 		rx_bytes;
@@ -476,6 +475,7 @@ struct adapter {
 
 	device_t		dev;
 	struct ifnet		*ifp;
+	struct if_percpuq	*ipq;	/* softint-based input queues */
 
 	struct resource		*pci_mem;
 	struct resource		*msix_mem;
@@ -579,23 +579,18 @@ struct adapter {
 #endif
 
 	/* Misc stats maintained by the driver */
-	struct evcnt   		dropped_pkts;
 	struct evcnt   		mbuf_defrag_failed;
 	struct evcnt	   	mbuf_header_failed;
 	struct evcnt	   	mbuf_packet_failed;
 	struct evcnt	   	efbig_tx_dma_setup;
 	struct evcnt	   	efbig2_tx_dma_setup;
-	struct evcnt	   	m_defrag_failed;
 	struct evcnt	   	einval_tx_dma_setup;
 	struct evcnt	   	other_tx_dma_setup;
 	struct evcnt	   	eagain_tx_dma_setup;
 	struct evcnt	   	enomem_tx_dma_setup;
-	struct evcnt	   	watchdog_events;
 	struct evcnt	   	tso_err;
+	struct evcnt	   	watchdog_events;
 	struct evcnt		link_irq;
-	struct evcnt		morerx;
-	struct evcnt		moretx;
-	struct evcnt		txloops;
 	struct evcnt		handleq;
 	struct evcnt		req;
 
@@ -617,6 +612,7 @@ struct adapter {
 	u64			noproto;
 #endif
 	struct sysctllog	*sysctllog;
+	const struct sysctlnode *sysctltop;
 	ixgbe_extmem_head_t jcl_head;
 };
 
@@ -697,14 +693,20 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 	case ixgbe_phy_sfp_unknown:
 	case ixgbe_phy_sfp_passive_tyco:
 	case ixgbe_phy_sfp_passive_unknown:
+	case ixgbe_phy_sfp_unsupported:
 	case ixgbe_phy_qsfp_passive_unknown:
 	case ixgbe_phy_qsfp_active_unknown:
 	case ixgbe_phy_qsfp_intel:
 	case ixgbe_phy_qsfp_unknown:
 		return TRUE;
 	default:
-		return FALSE;
+		break;
 	}
+
+	if (hw->phy.sfp_type == ixgbe_sfp_type_not_present)
+		return TRUE;
+
+	return FALSE;
 }
 
 /* Workaround to make 8.0 buildable */
@@ -750,15 +752,13 @@ ixv_check_ether_addr(u8 *addr)
 
 /* Shared Prototypes */
 
-#ifdef IXGBE_LEGACY_TX
 void	ixgbe_start(struct ifnet *);
 void	ixgbe_start_locked(struct tx_ring *, struct ifnet *);
-#else /* ! IXGBE_LEGACY_TX */
+#ifndef IXGBE_LEGACY_TX
 int	ixgbe_mq_start(struct ifnet *, struct mbuf *);
 int	ixgbe_mq_start_locked(struct ifnet *, struct tx_ring *);
-void	ixgbe_qflush(struct ifnet *);
-void	ixgbe_deferred_mq_start(void *, int);
-#endif /* IXGBE_LEGACY_TX */
+void	ixgbe_deferred_mq_start(void *);
+#endif /* !IXGBE_LEGACY_TX */
 
 int	ixgbe_allocate_queues(struct adapter *);
 int	ixgbe_allocate_transmit_buffers(struct tx_ring *);

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.7 2016/01/05 21:53:48 marty Exp $ */
+/* $NetBSD: fdtvar.h,v 1.7.4.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -43,9 +43,6 @@ struct fdt_attach_args {
 	bus_space_tag_t faa_a4x_bst;
 	bus_dma_tag_t faa_dmat;
 	int faa_phandle;
-
-	const char **faa_init;
-	int faa_ninit;
 };
 
 /* flags for fdtbus_intr_establish */
@@ -166,5 +163,6 @@ bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
+bool		fdtbus_get_path(int, char *, size_t);
 
 #endif /* _DEV_FDT_FDTVAR_H */

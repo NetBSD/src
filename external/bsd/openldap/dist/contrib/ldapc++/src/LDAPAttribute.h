@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPAttribute.h,v 1.1.1.3 2014/05/28 09:58:26 tron Exp $	*/
+/*	$NetBSD: LDAPAttribute.h,v 1.1.1.3.10.1 2017/04/21 16:52:22 bouyer Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2014 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2016 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 

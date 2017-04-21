@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.123.2.1 2017/04/21 16:54:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.123.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.123 2016/12/27 01:31:06 christos Exp 
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+#include <sys/psref.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -621,24 +622,27 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		case PPPOE_TAG_ACNAME:
 			error = NULL;
 			if (sc != NULL && len > 0) {
-				error = malloc(len+1, M_TEMP, M_NOWAIT);
-				if (error) {
-					n = m_pulldown(m, off + sizeof(*pt),
-					    len, &noff);
-					if (n) {
-						strlcpy(error,
-						    mtod(n, char*) + noff,
-						    len);
-					}
-					printf("%s: connected to %s\n",
-					    devname, error);
+				error = malloc(len + 1, M_TEMP, M_NOWAIT);
+				if (error == NULL)
+					break;
+
+				n = m_pulldown(m, off + sizeof(*pt), len,
+				    &noff);
+				if (!n) {
+					m = NULL;
 					free(error, M_TEMP);
+					goto done;
 				}
+
+				strlcpy(error, mtod(n, char*) + noff, len + 1);
+				printf("%s: connected to %s\n", devname, error);
+				free(error, M_TEMP);
 			}
 			break;	/* ignored */
 		case PPPOE_TAG_HUNIQUE: {
 			struct ifnet *rcvif;
-			int s;
+			struct psref psref;
+
 			if (sc != NULL)
 				break;
 			n = m_pulldown(m, off + sizeof(*pt), len, &noff);
@@ -651,10 +655,12 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			hunique = mtod(n, uint8_t *) + noff;
 			hunique_len = len;
 #endif
-			rcvif = m_get_rcvif(m, &s);
-			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
-			    len, rcvif, RW_READER);
-			m_put_rcvif(rcvif, &s);
+			rcvif = m_get_rcvif_psref(m, &psref);
+			if (rcvif != NULL) {
+				sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
+				    len, rcvif, RW_READER);
+			}
+			m_put_rcvif_psref(rcvif, &psref);
 			if (sc != NULL) {
 				strlcpy(devname, sc->sc_sppp.pp_if.if_xname,
 				    sizeof(devname));
@@ -704,12 +710,15 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		if (err_msg) {
 			error = NULL;
 			if (errortag && len) {
-				error = malloc(len+1, M_TEMP, M_NOWAIT);
+				error = malloc(len + 1, M_TEMP,
+				    M_NOWAIT|M_ZERO);
 				n = m_pulldown(m, off + sizeof(*pt), len,
 				    &noff);
-				if (n && error) {
-					strlcpy(error, 
-					    mtod(n, char *) + noff, len);
+				if (!n) {
+					m = NULL;
+				} else if (error) {
+					strlcpy(error, mtod(n, char *) + noff,
+					    len + 1);
 				}
 			}
 			if (error) {
@@ -781,6 +790,9 @@ breakbreak:;
 #endif /* PPPOE_SERVER */
 	case PPPOE_CODE_PADR:
 #ifdef PPPOE_SERVER
+	    {
+		struct ifnet *rcvif;
+		struct psref psref;
 		/*
 		 * get sc from ac_cookie if IFF_PASSIVE
 		 */
@@ -789,10 +801,15 @@ breakbreak:;
 			printf("pppoe: received PADR but not includes ac_cookie\n");
 			goto done;
 		}
-		sc = pppoe_find_softc_by_hunique(ac_cookie,
-						 ac_cookie_len,
-						 m_get_rcvif_NOMPSAFE(m),
-						 RW_WRITER);
+
+		rcvif = m_get_rcvif_psref(m, &psref);
+		if (__predict_true(rcvif != NULL)) {
+			sc = pppoe_find_softc_by_hunique(ac_cookie,
+							 ac_cookie_len,
+							 rcvif,
+							 RW_WRITER);
+		}
+		m_put_rcvif_psref(rcvif, &psref);
 		if (sc == NULL) {
 			/* be quiet if there is not a single pppoe instance */
 			if (!LIST_EMPTY(&pppoe_softc_list))
@@ -830,6 +847,7 @@ breakbreak:;
 		sc->sc_sppp.pp_up(&sc->sc_sppp);
 		sppp_lock_exit(&sc->sc_sppp);
 		break;
+	    }
 #else
 		/* ignore, we are no access concentrator */
 		goto done;
@@ -930,11 +948,14 @@ breakbreak:;
 		break;
 	case PPPOE_CODE_PADT: {
 		struct ifnet *rcvif;
-		int s;
+		struct psref psref;
 
-		rcvif = m_get_rcvif(m, &s);
-		sc = pppoe_find_softc_by_session(session, rcvif, RW_WRITER);
-		m_put_rcvif(rcvif, &s);
+		rcvif = m_get_rcvif_psref(m, &psref);
+		if (__predict_true(rcvif != NULL)) {
+			sc = pppoe_find_softc_by_session(session, rcvif,
+			    RW_WRITER);
+		}
+		m_put_rcvif_psref(rcvif, &psref);
 		if (sc == NULL)
 			goto done;
 

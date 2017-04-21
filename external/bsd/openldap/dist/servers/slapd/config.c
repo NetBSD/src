@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2014/05/28 09:58:46 tron Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* config.c - configuration file handling routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,9 @@
  * software without specific prior written permission. This software
  * is provided ``as is'' without express or implied warranty.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: config.c,v 1.1.1.4.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -51,6 +54,14 @@
 #include "lutil.h"
 #include "lutil_ldap.h"
 #include "config.h"
+
+#ifdef _WIN32
+#define	LUTIL_ATOULX	lutil_atoullx
+#define	Z	"I"
+#else
+#define	LUTIL_ATOULX	lutil_atoulx
+#define	Z	"z"
+#endif
 
 #define ARGS_STEP	512
 
@@ -88,7 +99,7 @@ int slapi_plugins_used = 0;
 static int fp_getline(FILE *fp, ConfigArgs *c);
 static void fp_getline_init(ConfigArgs *c);
 
-static char	*strtok_quote(char *line, char *sep, char **quote_ptr);
+static char	*strtok_quote(char *line, char *sep, char **quote_ptr, int *inquote);
 static char *strtok_quote_ldif(char **line);
 
 ConfigArgs *
@@ -269,7 +280,7 @@ int config_check_vals(ConfigTable *Conf, ConfigArgs *c, int check_only ) {
 				break;
 			case ARG_ULONG:
 				assert( c->argc == 2 );
-				if ( lutil_atoulx( &ularg, c->argv[1], 0 ) != 0 ) {
+				if ( LUTIL_ATOULX( &ularg, c->argv[1], 0 ) != 0 ) {
 					snprintf( c->cr_msg, sizeof( c->cr_msg ),
 						"<%s> unable to parse \"%s\" as unsigned long",
 						c->argv[0], c->argv[1] );
@@ -381,7 +392,7 @@ int config_set_vals(ConfigTable *Conf, ConfigArgs *c) {
 			case ARG_INT: 		*(int*)ptr = c->value_int;			break;
 			case ARG_UINT: 		*(unsigned*)ptr = c->value_uint;			break;
 			case ARG_LONG:  	*(long*)ptr = c->value_long;			break;
-			case ARG_ULONG:  	*(unsigned long*)ptr = c->value_ulong;			break;
+			case ARG_ULONG:  	*(size_t*)ptr = c->value_ulong;			break;
 			case ARG_BER_LEN_T: 	*(ber_len_t*)ptr = c->value_ber_t;			break;
 			case ARG_STRING: {
 				char *cc = *(char**)ptr;
@@ -473,7 +484,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_INT:	c->value_int = *(int *)ptr; break;
 		case ARG_UINT:	c->value_uint = *(unsigned *)ptr; break;
 		case ARG_LONG:	c->value_long = *(long *)ptr; break;
-		case ARG_ULONG:	c->value_ulong = *(unsigned long *)ptr; break;
+		case ARG_ULONG:	c->value_ulong = *(size_t *)ptr; break;
 		case ARG_BER_LEN_T:	c->value_ber_t = *(ber_len_t *)ptr; break;
 		case ARG_STRING:
 			if ( *(char **)ptr )
@@ -492,7 +503,7 @@ config_get_vals(ConfigTable *cf, ConfigArgs *c)
 		case ARG_INT: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%d", c->value_int); break;
 		case ARG_UINT: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%u", c->value_uint); break;
 		case ARG_LONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%ld", c->value_long); break;
-		case ARG_ULONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%lu", c->value_ulong); break;
+		case ARG_ULONG: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%" Z "u", c->value_ulong); break;
 		case ARG_BER_LEN_T: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%ld", c->value_ber_t); break;
 		case ARG_ON_OFF: bv.bv_len = snprintf(bv.bv_val, sizeof( c->log ), "%s",
 			c->value_int ? "TRUE" : "FALSE"); break;
@@ -622,7 +633,7 @@ strtok_quote_ldif( char **line )
 	return beg;
 }
 
-static void
+void
 config_parse_ldif( ConfigArgs *c )
 {
 	char *next;
@@ -725,6 +736,7 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 		Debug(LDAP_DEBUG_ANY,
 		    "could not stat config file \"%s\": %s (%d)\n",
 		    fname, strerror(errno), errno);
+		ch_free( c->argv );
 		ch_free( c );
 		return(1);
 	}
@@ -734,6 +746,7 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 		Debug(LDAP_DEBUG_ANY,
 		    "regular file expected, got \"%s\"\n",
 		    fname, 0, 0 );
+		ch_free( c->argv );
 		ch_free( c );
 		return(1);
 	}
@@ -744,6 +757,7 @@ read_config_file(const char *fname, int depth, ConfigArgs *cf, ConfigTable *cft)
 		Debug(LDAP_DEBUG_ANY,
 		    "could not open config file \"%s\": %s (%d)\n",
 		    fname, strerror(errno), errno);
+		ch_free( c->argv );
 		ch_free( c );
 		return(1);
 	}
@@ -1347,9 +1361,8 @@ slap_keepalive_parse(
 			s = ++next;
 		}
 
-		if ( s == '\0' ) {
+		if ( *s == '\0' ) {
 			sk2.sk_interval = 0;
-			s++;
 
 		} else {
 			sk2.sk_interval = strtol( s, &next, 10 );
@@ -2005,7 +2018,7 @@ slap_client_connect( LDAP **ldp, slap_bindconf *sb )
 			"slap_client_connect: "
 			"URI=%s TLS context initialization failed (%d)\n",
 			sb->sb_uri.bv_val, rc, 0 );
-		return rc;
+		goto done;
 	}
 #endif
 
@@ -2125,7 +2138,7 @@ done:;
 
 
 static char *
-strtok_quote( char *line, char *sep, char **quote_ptr )
+strtok_quote( char *line, char *sep, char **quote_ptr, int *iqp )
 {
 	int		inquote;
 	char		*tmp;
@@ -2175,6 +2188,7 @@ strtok_quote( char *line, char *sep, char **quote_ptr )
 			break;
 		}
 	}
+	*iqp = inquote;
 
 	return( tmp );
 }
@@ -2260,24 +2274,27 @@ config_fp_parse_line(ConfigArgs *c)
 		"dbpasswd",  /* in back-sql */
 		NULL
 	};
+	static char *const raw[] = {
+		"attributetype", "objectclass", "ditcontentrule", "ldapsyntax", NULL };
 	char *quote_ptr;
 	int i = (int)(sizeof(hide)/sizeof(hide[0])) - 1;
+	int inquote = 0;
 
 	c->tline = ch_strdup(c->line);
-	token = strtok_quote(c->tline, " \t", &quote_ptr);
+	token = strtok_quote(c->tline, " \t", &quote_ptr, &inquote);
 
 	if(token) for(i = 0; hide[i]; i++) if(!strcasecmp(token, hide[i])) break;
 	if(quote_ptr) *quote_ptr = ' ';
-	Debug(LDAP_DEBUG_CONFIG, "line %d (%s%s)\n", c->lineno,
+	Debug(LDAP_DEBUG_CONFIG, "%s (%s%s)\n", c->log,
 		hide[i] ? hide[i] : c->line, hide[i] ? " ***" : "");
 	if(quote_ptr) *quote_ptr = '\0';
 
-	for(;; token = strtok_quote(NULL, " \t", &quote_ptr)) {
+	for(;; token = strtok_quote(NULL, " \t", &quote_ptr, &inquote)) {
 		if(c->argc >= c->argv_size) {
 			char **tmp;
 			tmp = ch_realloc(c->argv, (c->argv_size + ARGS_STEP) * sizeof(*c->argv));
 			if(!tmp) {
-				Debug(LDAP_DEBUG_ANY, "line %d: out of memory\n", c->lineno, 0, 0);
+				Debug(LDAP_DEBUG_ANY, "%s: out of memory\n", c->log, 0, 0);
 				return -1;
 			}
 			c->argv = tmp;
@@ -2288,6 +2305,13 @@ config_fp_parse_line(ConfigArgs *c)
 		c->argv[c->argc++] = token;
 	}
 	c->argv[c->argc] = NULL;
+	if (inquote) {
+		/* these directives parse c->line independently of argv tokenizing */
+		for(i = 0; raw[i]; i++) if (!strcasecmp(c->argv[0], raw[i])) return 0;
+
+		Debug(LDAP_DEBUG_ANY, "%s: unterminated quoted string \"%s\"\n", c->log, c->argv[c->argc-1], 0);
+		return -1;
+	}
 	return(0);
 }
 

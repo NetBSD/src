@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_command_client.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_command_client.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,7 @@
 /* Utility library. */
 
 #include <vstream.h>
+#include <msg.h>
 
 /* Global library. */
 
@@ -69,16 +70,26 @@ int     mail_command_client(const char *class, const char *name,...)
 
     /*
      * Talk a little protocol with the specified service.
+     * 
+     * This function is used for non-critical services where it is OK to back
+     * off after the first error. Log what communication stage failed, to
+     * facilitate trouble analysis.
      */
-    if ((stream = mail_connect(class, name, BLOCKING)) == 0)
+    if ((stream = mail_connect(class, name, BLOCKING)) == 0) {
+	msg_warn("connect to %s/%s: %m", class, name);
 	return (-1);
+    }
     va_start(ap, name);
     status = attr_vprint(stream, ATTR_FLAG_NONE, ap);
     va_end(ap);
-    if (status != 0
-	|| attr_scan(stream, ATTR_FLAG_STRICT,
-		     ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status, 0) != 1)
+    if (status != 0) {
+	msg_warn("write %s: %m", VSTREAM_PATH(stream));
 	status = -1;
+    } else if (attr_scan(stream, ATTR_FLAG_STRICT,
+			 RECV_ATTR_INT(MAIL_ATTR_STATUS, &status), 0) != 1) {
+	msg_warn("write/read %s: %m", VSTREAM_PATH(stream));
+	status = -1;
+    }
     (void) vstream_fclose(stream);
     return (status);
 }

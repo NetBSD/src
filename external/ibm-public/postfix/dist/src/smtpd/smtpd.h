@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.1.1.5 2013/09/25 19:06:35 tron Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.1.1.5.12.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -192,9 +192,11 @@ typedef struct {
 #define SMTPD_FLAG_HANGUP	   (1<<0)	/* 421/521 disconnect */
 #define SMTPD_FLAG_ILL_PIPELINING  (1<<1)	/* inappropriate pipelining */
 #define SMTPD_FLAG_AUTH_USED	   (1<<2)	/* don't reuse SASL state */
+#define SMTPD_FLAG_SMTPUTF8	   (1<<3)	/* RFC 6531/2 transaction */
 
  /* Security: don't reset SMTPD_FLAG_AUTH_USED. */
-#define SMTPD_MASK_MAIL_KEEP		~0	/* keep all after MAIL reset */
+#define SMTPD_MASK_MAIL_KEEP \
+	    ~(SMTPD_FLAG_SMTPUTF8)		/* Fix 20140706 */
 
 #define SMTPD_STATE_XFORWARD_INIT  (1<<0)	/* xforward preset done */
 #define SMTPD_STATE_XFORWARD_NAME  (1<<1)	/* client name received */

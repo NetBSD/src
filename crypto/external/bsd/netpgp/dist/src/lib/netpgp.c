@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.98 2016/06/28 16:34:40 christos Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.98.4.1 2017/04/21 16:50:56 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1411,7 +1411,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 				(unsigned)armored, (unsigned)cleartext,
 				overwrite);
 	}
-	pgp_forget(seckey, (unsigned)sizeof(*seckey));
+	pgp_forget(seckey, sizeof(*seckey));
 	return ret;
 }
 
@@ -1542,7 +1542,7 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	} else {
 		ret = 0;
 	}
-	pgp_forget(seckey, (unsigned)sizeof(*seckey));
+	pgp_forget(seckey, sizeof(*seckey));
 	return ret;
 }
 

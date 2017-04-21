@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.19 2016/09/27 03:33:32 pgoyette Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.19.2.1 2017/04/21 16:53:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.19 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.19.2.1 2017/04/21 16:53:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ static int	ld_twa_detach(device_t, int);
 static int	ld_twa_dobio(struct ld_twa_softc *, void *, size_t, daddr_t,
 			     struct buf *);
 static int	ld_twa_dump(struct ld_softc *, void *, int, int);
-static int	ld_twa_flush(struct ld_softc *, int);
+static int	ld_twa_flush(struct ld_softc *, bool);
+static int	ld_twa_ioctl(struct ld_softc *, u_long, void *, int32_t, bool);
 static void	ld_twa_handler(struct twa_request *);
 static int	ld_twa_match(device_t, cfdata_t, void *);
 static int	ld_twa_start(struct ld_softc *, struct buf *);
@@ -120,7 +121,7 @@ ld_twa_attach(device_t parent, device_t self, void *aux)
 	ld->sc_maxqueuecnt = twa->sc_units[sc->sc_hwunit].td_openings;
 	ld->sc_start = ld_twa_start;
 	ld->sc_dump = ld_twa_dump;
-	ld->sc_flush = ld_twa_flush;
+	ld->sc_ioctl = ld_twa_ioctl;
 	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
@@ -235,7 +236,7 @@ ld_twa_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 
 static int
-ld_twa_flush(struct ld_softc *ld, int flags)
+ld_twa_flush(struct ld_softc *ld, bool poll)
 {
 	int s, rv = 0;
 	struct twa_request *tr;
@@ -274,6 +275,24 @@ ld_twa_flush(struct ld_softc *ld, int flags)
 	splx(s);
 
 	return (rv);
+}
+
+static int
+ld_twa_ioctl(struct ld_softc *ld, u_long cmd, void *addr, int32_t flag, bool poll)
+{
+        int error;
+
+        switch (cmd) {
+        case DIOCCACHESYNC:
+		error = ld_twa_flush(ld, poll);
+		break;
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	return error;
 }
 
 static void

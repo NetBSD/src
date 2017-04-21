@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.66 2017/01/08 13:49:21 wiz Exp $
+.\"	$NetBSD: curses.3,v 1.66.2.1 2017/04/21 16:53:10 bouyer Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 5, 2017
+.Dd January 25, 2017
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -79,6 +79,7 @@ must be called before any of the other routines that deal with color are used.
 .It attroff Ta Xr curses_attributes 3
 .It attron Ta Xr curses_attributes 3
 .It attrset Ta Xr curses_attributes 3
+.It baudrate Ta Xr curses_tty 3
 .It beep Ta Xr curses_tty 3
 .It bkgd Ta Xr curses_background 3
 .It bkgdset Ta Xr curses_background 3
@@ -110,6 +111,7 @@ must be called before any of the other routines that deal with color are used.
 .It endwin Ta Xr curses_screen 3
 .It erase Ta Xr curses_clear 3
 .It erasechar Ta Xr curses_tty 3
+.It filter Ta Xr curses_screen 3
 .It flash Ta Xr curses_tty 3
 .It flushinp Ta Xr curses_tty 3
 .It flushok Ta Xr curses_refresh 3
@@ -134,9 +136,11 @@ must be called before any of the other routines that deal with color are used.
 .It has_colors Ta Xr curses_color 3
 .It has_ic Ta Xr curses_tty 3
 .It has_il Ta Xr curses_tty 3
+.It has_key Ta Xr curses_input 3
 .It hline Ta Xr curses_line 3
 .It idcok Ta Xr curses_tty 3
 .It idlok Ta Xr curses_tty 3
+.It immedok Ta Xr curses_refresh 3
 .It inch Ta Xr curses_inch 3
 .It inchnstr Ta Xr curses_inch 3
 .It inchstr Ta Xr curses_inch 3
@@ -149,7 +153,11 @@ must be called before any of the other routines that deal with color are used.
 .It insertln Ta Xr curses_insertln 3
 .It instr Ta Xr curses_inch 3
 .It intrflush Ta Xr curses_tty 3
+.It is_keypad Ta Xr curses_input 3
+.It is_leaveok Ta Xr curses_refresh 3
 .It is_linetouched Ta Xr curses_touch 3
+.It is_pad Ta Xr curses_pad 3
+.It is_term_resized Ta Xr curses_screen 3
 .It is_wintouched Ta Xr curses_touch 3
 .It isendwin Ta Xr curses_screen 3
 .It keyname Ta Xr curses_keyname 3
@@ -217,6 +225,7 @@ must be called before any of the other routines that deal with color are used.
 .It resetty Ta Xr curses_tty 3
 .It resize_term Ta Xr curses_screen 3
 .It resizeterm Ta Xr curses_screen 3
+.It ripoffline Ta Xr curses_Screen 3
 .It savetty Ta Xr curses_tty 3
 .It scanw Ta Xr curses_scanw 3
 .It scrl Ta Xr curses_scroll 3
@@ -227,9 +236,26 @@ must be called before any of the other routines that deal with color are used.
 .It set_term Ta Xr curses_screen 3
 .It setscrreg Ta Xr curses_scroll 3
 .It setterm Ta Xr curses_screen 3
+.It slk_attroff Ta Xr curses_slk 3
+.It slk_attr_off Ta Xr curses_slk 3
+.It slk_attron Ta Xr curses_slk 3
+.It slk_attr_on Ta Xr curses_slk 3
+.It slk_attrset Ta Xr curses_slk 3
+.It slk_attr_set Ta Xr curses_slk 3
+.It slk_clear Ta Xr curses_slk 3
+.It slk_color Ta Xr curses_slk 3
+.It slk_init Ta Xr curses_slk 3
+.It slk_label Ta Xr curses_slk 3
+.It slk_noutrefresh Ta Xr curses_slk 3
+.It slk_refresh Ta Xr curses_slk 3
+.It slk_restore Ta Xr curses_slk 3
+.It slk_set Ta Xr curses_slk 3
+.It slk_touch Ta Xr curses_slk 3
+.It slk_wset Ta Xr curses_slk 3
 .It standend Ta Xr curses_standout 3
 .It standout Ta Xr curses_standout 3
 .It start_color Ta Xr curses_color 3
+.It syncok Ta Xr curses_touch 3
 .It subpad Ta Xr curses_pad 3
 .It subwin Ta Xr curses_window 3
 .It termattrs Ta Xr curses_attributes 3
@@ -237,12 +263,14 @@ must be called before any of the other routines that deal with color are used.
 .It touchline Ta Xr curses_touch 3
 .It touchoverlap Ta Xr curses_touch 3
 .It touchwin Ta Xr curses_touch 3
+.It typeahead Ta Xr curses_tty 3
 .It unctrl Ta Xr curses_print 3
 .It underend Ta Xr curses_underscore 3
 .It underscore Ta Xr curses_underscore 3
 .It ungetch Ta Xr curses_input 3
 .It untouchwin Ta Xr curses_touch 3
 .It use_default_colors Ta Xr curses_default_colors 3
+.It use_env Ta Xr curses_screen 3
 .It vline Ta Xr curses_line 3
 .It waddch Ta Xr curses_addch 3
 .It waddchnstr Ta Xr curses_addchstr 3
@@ -264,6 +292,7 @@ must be called before any of the other routines that deal with color are used.
 .It wclrtobot Ta Xr curses_clear 3
 .It wclrtoeol Ta Xr curses_clear 3
 .It wcolor_set Ta Xr curses_attributes 3
+.It wcursyncup Ta Xr curses_cursor 3
 .It wdelch Ta Xr curses_delch 3
 .It wdeleteln Ta Xr curses_deleteln 3
 .It werase Ta Xr curses_clear 3
@@ -290,6 +319,8 @@ must be called before any of the other routines that deal with color are used.
 .It wsetscrreg Ta Xr curses_scroll 3
 .It wstandend Ta Xr curses_standout 3
 .It wstandout Ta Xr curses_standout 3
+.It wsyncup Ta Xr curses_touch 3
+.It wsyncdown Ta Xr curses_touch 3
 .It wtimeout Ta Xr curses_input 3
 .It wtouchln Ta Xr curses_touch 3
 .It wunderend Ta Xr curses_underscore 3
@@ -340,3 +371,6 @@ The Curses package appeared in
 .Bx 4.0 .
 .Sh AUTHORS
 .An Ken Arnold
+.An Julian Coleman
+.An Brett Lymn
+.An Roy Marples

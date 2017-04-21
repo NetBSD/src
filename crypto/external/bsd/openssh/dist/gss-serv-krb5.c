@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.9 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: gss-serv-krb5.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: gss-serv-krb5.c,v 1.8 2013/07/20 01:55:13 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv-krb5.c,v 1.9 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: gss-serv-krb5.c,v 1.9.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #ifdef GSSAPI
 #ifdef KRB5
 

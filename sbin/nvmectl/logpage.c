@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
+/*	$NetBSD: logpage.c,v 1.2.4.1 2017/04/21 16:53:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2013 EMC Corp.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.2.4.1 2017/04/21 16:53:14 bouyer Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 285796 2015-07-22 16:10:29Z jimharris $");
 #endif
@@ -51,6 +51,7 @@ __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 285796 2015-07-22 16:10:29Z 
 #include <unistd.h>
 
 #include "nvmectl.h"
+#include "bn.h"
 
 #define DEFAULT_SIZE	(4096)
 #define MAX_FW_SLOTS	(7)
@@ -136,6 +137,46 @@ print_log_error(void *buf, uint32_t size)
 	}
 }
 
+#define	METRIX_PREFIX_BUFSIZ	17
+#define	NO_METRIX_PREFIX_BUFSIZ	42
+
+static void
+print_bignum(const char *title, uint64_t v[2], const char *suffix)
+{
+	char buf[64];
+	uint8_t tmp[16];
+	uint64_t l = le64toh(v[0]);
+	uint64_t h = le64toh(v[1]);
+
+	tmp[ 0] = (h >> 56) & 0xff;
+	tmp[ 1] = (h >> 48) & 0xff;
+	tmp[ 2] = (h >> 40) & 0xff;
+	tmp[ 3] = (h >> 32) & 0xff;
+	tmp[ 4] = (h >> 24) & 0xff;
+	tmp[ 5] = (h >> 16) & 0xff;
+	tmp[ 6] = (h >> 8) & 0xff;
+	tmp[ 7] = h & 0xff;
+	tmp[ 8] = (l >> 56) & 0xff;
+	tmp[ 9] = (l >> 48) & 0xff;
+	tmp[10] = (l >> 40) & 0xff;
+	tmp[11] = (l >> 32) & 0xff;
+	tmp[12] = (l >> 24) & 0xff;
+	tmp[13] = (l >> 16) & 0xff;
+	tmp[14] = (l >> 8) & 0xff;
+	tmp[15] = l & 0xff;
+
+	buf[0] = '\0';
+	BIGNUM *bn = BN_bin2bn(tmp, __arraycount(tmp), NULL);
+	if (bn != NULL) {
+		humanize_bignum(buf, METRIX_PREFIX_BUFSIZ + strlen(suffix),
+		    bn, suffix, HN_AUTOSCALE, HN_DECIMAL);
+		BN_free(bn);
+	}
+	if (buf[0] == '\0')
+		snprintf(buf, sizeof(buf), "0x%016jx%016jx", h, l);
+	printf("%-31s %s\n", title, buf);
+}
+
 static void
 print_log_health(void *buf, uint32_t size __unused)
 {
@@ -173,40 +214,26 @@ print_log_health(void *buf, uint32_t size __unused)
 	printf("Percentage used:                %u\n",
 	    health->percentage_used);
 
-	/*
-	 * TODO: These are pretty ugly in hex. Is there a library that
-	 *	 will convert 128-bit unsigned values to decimal?
-	 */
-	printf("Data units (512 byte) read:     0x%016jx%016jx\n",
-	    health->data_units_read[1],
-	    health->data_units_read[0]);
-	printf("Data units (512 byte) written:  0x%016jx%016jx\n",
-	    health->data_units_written[1],
-	    health->data_units_written[0]);
-	printf("Host read commands:             0x%016jx%016jx\n",
-	    health->host_read_commands[1],
-	    health->host_read_commands[0]);
-	printf("Host write commands:            0x%016jx%016jx\n",
-	    health->host_write_commands[1],
-	    health->host_write_commands[0]);
-	printf("Controller busy time (minutes): 0x%016jx%016jx\n",
-	    health->controller_busy_time[1],
-	    health->controller_busy_time[0]);
-	printf("Power cycles:                   0x%016jx%016jx\n",
-	    health->power_cycles[1],
-	    health->power_cycles[0]);
-	printf("Power on hours:                 0x%016jx%016jx\n",
-	    health->power_on_hours[1],
-	    health->power_on_hours[0]);
-	printf("Unsafe shutdowns:               0x%016jx%016jx\n",
-	    health->unsafe_shutdowns[1],
-	    health->unsafe_shutdowns[0]);
-	printf("Media errors:                   0x%016jx%016jx\n",
-	    health->media_errors[1],
-	    health->media_errors[0]);
-	printf("No. error info log entries:     0x%016jx%016jx\n",
-	    health->num_error_info_log_entries[1],
-	    health->num_error_info_log_entries[0]);
+	print_bignum("Data units (512 byte) read:",
+	    health->data_units_read, "");
+	print_bignum("Data units (512 byte) written:",
+	    health->data_units_written, "");
+	print_bignum("Host read commands:",
+	    health->host_read_commands, "");
+	print_bignum("Host write commands:",
+	    health->host_write_commands, "");
+	print_bignum("Controller busy time (minutes):",
+	    health->controller_busy_time, "");
+	print_bignum("Power cycles:",
+	    health->power_cycles, "");
+	print_bignum("Power on hours:",
+	    health->power_on_hours, "");
+	print_bignum("Unsafe shutdowns:",
+	    health->unsafe_shutdowns, "");
+	print_bignum("Media errors:",
+	    health->media_errors, "");
+	print_bignum("No. error info log entries:",
+	    health->num_error_info_log_entries, "");
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.154.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.154.2.1 2017/04/21 16:54:08 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.154 2016/10/30 15:01:46 christos Exp
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/cprng.h>
-#include <sys/fstrans.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -227,15 +226,15 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 #endif
 
 	*bnp = 0;
-#ifdef DIAGNOSTIC
-	if (cred == NOCRED)
-		panic("%s: missing credential", __func__);
-	if ((u_int)size > fs->fs_bsize || ffs_fragoff(fs, size) != 0) {
-		panic("%s: bad size: dev = 0x%llx, bsize = %d, size = %d, "
-		    "fs = %s", __func__, (unsigned long long)ip->i_dev,
-		    fs->fs_bsize, size, fs->fs_fsmnt);
-	}
-#endif /* DIAGNOSTIC */
+
+	KASSERTMSG((cred != NOCRED), "missing credential");
+	KASSERTMSG(((u_int)size <= fs->fs_bsize),
+	    "bad size: dev = 0x%llx, bsize = %d, size = %d, fs = %s",
+	    (unsigned long long)ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
+	KASSERTMSG((ffs_fragoff(fs, size) == 0),
+	    "bad size: dev = 0x%llx, bsize = %d, size = %d, fs = %s",
+	    (unsigned long long)ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
+
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
 	if (freespace(fs, fs->fs_minfree) <= 0 &&
@@ -345,17 +344,24 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	}
 #endif
 
-#ifdef DIAGNOSTIC
-	if (cred == NOCRED)
-		panic("%s: missing credential", __func__);
-	if ((u_int)osize > fs->fs_bsize || ffs_fragoff(fs, osize) != 0 ||
-	    (u_int)nsize > fs->fs_bsize || ffs_fragoff(fs, nsize) != 0) {
-		panic("%s: bad size: dev = 0x%llx, bsize = %d, osize = %d, "
-		    "nsize = %d, fs = %s", __func__,
-		    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
-		    fs->fs_fsmnt);
-	}
-#endif /* DIAGNOSTIC */
+	KASSERTMSG((cred != NOCRED), "missing credential");
+	KASSERTMSG(((u_int)osize <= fs->fs_bsize),
+	    "bad size: dev=0x%llx, bsize=%d, osize=%d, nsize=%d, fs=%s",
+	    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
+	    fs->fs_fsmnt);
+	KASSERTMSG((ffs_fragoff(fs, osize) == 0),
+	    "bad size: dev=0x%llx, bsize=%d, osize=%d, nsize=%d, fs=%s",
+	    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
+	    fs->fs_fsmnt);
+	KASSERTMSG(((u_int)nsize <= fs->fs_bsize),
+	    "bad size: dev=0x%llx, bsize=%d, osize=%d, nsize=%d, fs=%s",
+	    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
+	    fs->fs_fsmnt);
+	KASSERTMSG((ffs_fragoff(fs, nsize) == 0),
+	    "bad size: dev=0x%llx, bsize=%d, osize=%d, nsize=%d, fs=%s",
+	    (unsigned long long)ip->i_dev, fs->fs_bsize, osize, nsize,
+	    fs->fs_fsmnt);
+
 	if (freespace(fs, fs->fs_minfree) <= 0 &&
 	    kauth_authorize_system(cred, KAUTH_SYSTEM_FS_RESERVEDSPACE, 0, NULL,
 	    NULL, NULL) != 0) {

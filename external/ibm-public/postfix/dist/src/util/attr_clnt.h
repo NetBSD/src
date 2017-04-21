@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_clnt.h,v 1.1.1.2 2014/07/06 19:27:57 tron Exp $	*/
+/*	$NetBSD: attr_clnt.h,v 1.1.1.2.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _ATTR_CLNT_H_INCLUDED_
 #define _ATTR_CLNT_H_INCLUDED_
@@ -33,10 +33,13 @@ typedef int (*ATTR_CLNT_SCAN_FN) (VSTREAM *, int, va_list);
 extern ATTR_CLNT *attr_clnt_create(const char *, int, int, int);
 extern int attr_clnt_request(ATTR_CLNT *, int,...);
 extern void attr_clnt_free(ATTR_CLNT *);
-extern void attr_clnt_control(ATTR_CLNT *, int, ...);
+extern void attr_clnt_control(ATTR_CLNT *, int,...);
 
 #define ATTR_CLNT_CTL_END	0
-#define ATTR_CLNT_CTL_PROTO	1
+#define ATTR_CLNT_CTL_PROTO	1	/* print/scan functions */
+#define ATTR_CLNT_CTL_REQ_LIMIT	2	/* requests per connection */
+#define ATTR_CLNT_CTL_TRY_LIMIT	3	/* attempts per request */
+#define ATTR_CLNT_CTL_TRY_DELAY	4	/* pause between requests */
 
 /* LICENSE
 /* .ad

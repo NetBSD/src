@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.51 2016/02/27 00:09:45 tls Exp $	*/
+/*	$NetBSD: types.h,v 1.51.4.1 2017/04/21 16:53:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_X86_64_MACHTYPES_H_
-#define	_X86_64_MACHTYPES_H_
+#ifndef	_X86_64_TYPES_H_
+#define	_X86_64_TYPES_H_
 
 #ifdef __x86_64__
 
@@ -95,6 +95,7 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE_INTR_CONTROL
 #define	__HAVE_CPU_RNG
+#define	__HAVE_COMPAT_NETBSD32
 
 #ifdef _KERNEL_OPT
 #define	__HAVE_RAS
@@ -117,4 +118,4 @@ typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 #endif	/*	__x86_64__	*/
 
-#endif	/* _X86_64_MACHTYPES_H_ */
+#endif	/* _X86_64_TYPES_H_ */

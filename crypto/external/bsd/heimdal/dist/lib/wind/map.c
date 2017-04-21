@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.1.1.1 2011/04/13 18:15:58 elric Exp $	*/
+/*	$NetBSD: map.c,v 1.1.1.1.32.1 2017/04/21 16:50:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -60,7 +60,7 @@ _wind_stringprep_map(const uint32_t *in, size_t in_len,
     unsigned o = 0;
 
     for (i = 0; i < in_len; ++i) {
-	struct translation ts = {in[i]};
+	struct translation ts = {in[i], 0, 0, 0};
 	const struct translation *s;
 
 	s = (const struct translation *)

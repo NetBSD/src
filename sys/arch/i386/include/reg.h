@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.19 2008/01/16 09:37:08 ad Exp $	*/
+/*	$NetBSD: reg.h,v 1.19.82.1 2017/04/21 16:53:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,6 +105,18 @@ struct xmmregs {
 	 * Fill this in with real info.
 	 */
 	char	__data[512];
+};
+
+/*
+ * Debug Registers
+ *
+ * DR0-DR3  Debug Address Registers
+ * DR4-DR5  Reserved
+ * DR6      Debug Status Register
+ * DR7      Debug Control Register
+ */
+struct dbreg {
+	int	dr[8];
 };
 
 #endif /* !_I386_REG_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.248 2016/10/14 17:29:29 macallan Exp $
+#	$NetBSD: Makefile,v 1.248.2.1 2017/04/21 16:53:06 bouyer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -25,7 +25,7 @@ SUBDIR+=	libarch \
 		libcompat libcrypt \
 		libintl libipsec libkvm libm \
 		libossaudio libpci libpmc libposix libprop libpthread \
-		libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
+		libpuffs libresolv librmt librpcsvc librt \
 		libtelnet libterminfo \
 		libusbhid libutil libwrap liby libz
 
@@ -83,10 +83,6 @@ SUBDIR+=	../external/gpl2/libmalloc
 .if (${MKGCC} != "no")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libobjc
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libgomp
-. if ${HAVE_GCC} == 48
-SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libmudflap
-SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libmudflapth
-. endif
 # Should probably move GMP, MPFR and MPC builds into the GCC >= 4.5
 # specific build area, but we get better parallelism this way.
 # We don't build compat versions of these.

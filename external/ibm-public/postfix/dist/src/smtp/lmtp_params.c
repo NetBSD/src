@@ -1,7 +1,8 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.5 2014/07/06 19:27:55 tron Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.5.10.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
     static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
+	VAR_LMTP_FALLBACK, DEF_LMTP_FALLBACK, &var_fallback_relay, 0, 0,
 	VAR_BESTMX_TRANSP, DEF_BESTMX_TRANSP, &var_bestmx_transp, 0, 0,
 	VAR_ERROR_RCPT, DEF_ERROR_RCPT, &var_error_rcpt, 1, 0,
 	VAR_LMTP_SASL_PASSWD, DEF_LMTP_SASL_PASSWD, &var_smtp_sasl_passwd, 0, 0,
@@ -35,6 +36,7 @@
 	VAR_LMTP_SASL_TYPE, DEF_LMTP_SASL_TYPE, &var_smtp_sasl_type, 1, 0,
 	VAR_LMTP_BIND_ADDR, DEF_LMTP_BIND_ADDR, &var_smtp_bind_addr, 0, 0,
 	VAR_LMTP_BIND_ADDR6, DEF_LMTP_BIND_ADDR6, &var_smtp_bind_addr6, 0, 0,
+	VAR_LMTP_VRFY_TGT, DEF_LMTP_VRFY_TGT, &var_smtp_vrfy_tgt, 1, 0,
 	VAR_LMTP_HELO_NAME, DEF_LMTP_HELO_NAME, &var_smtp_helo_name, 1, 0,
 	VAR_LMTP_HOST_LOOKUP, DEF_LMTP_HOST_LOOKUP, &var_smtp_host_lookup, 1, 0,
 	VAR_LMTP_DNS_SUPPORT, DEF_LMTP_DNS_SUPPORT, &var_smtp_dns_support, 0, 0,
@@ -59,6 +61,8 @@
 	VAR_LMTP_RESP_FILTER, DEF_LMTP_RESP_FILTER, &var_smtp_resp_filter, 0, 0,
 	VAR_LMTP_ADDR_PREF, DEF_LMTP_ADDR_PREF, &var_smtp_addr_pref, 1, 0,
 	VAR_LMTP_DNS_RES_OPT, DEF_LMTP_DNS_RES_OPT, &var_smtp_dns_res_opt, 0, 0,
+	VAR_LMTP_DSN_FILTER, DEF_LMTP_DSN_FILTER, &var_smtp_dsn_filter, 0, 0,
+	VAR_LMTP_DNS_RE_FILTER, DEF_LMTP_DNS_RE_FILTER, &var_smtp_dns_re_filter, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE lmtp_time_table[] = {
@@ -74,6 +78,8 @@
 	VAR_LMTP_QUIT_TMOUT, DEF_LMTP_QUIT_TMOUT, &var_smtp_quit_tmout, 1, 0,
 	VAR_LMTP_PIX_THRESH, DEF_LMTP_PIX_THRESH, &var_smtp_pix_thresh, 0, 0,
 	VAR_LMTP_PIX_DELAY, DEF_LMTP_PIX_DELAY, &var_smtp_pix_delay, 1, 0,
+	VAR_QUEUE_RUN_DELAY, DEF_QUEUE_RUN_DELAY, &var_queue_run_delay, 1, 0,
+	VAR_MIN_BACKOFF_TIME, DEF_MIN_BACKOFF_TIME, &var_min_backoff_time, 1, 0,
 	VAR_LMTP_CACHE_CONNT, DEF_LMTP_CACHE_CONNT, &var_smtp_cache_conn, 1, 0,
 	VAR_LMTP_REUSE_TIME, DEF_LMTP_REUSE_TIME, &var_smtp_reuse_time, 1, 0,
 #ifdef USE_TLS
@@ -110,6 +116,7 @@
 	VAR_LMTP_TLS_BLK_EARLY_MAIL_REPLY, DEF_LMTP_TLS_BLK_EARLY_MAIL_REPLY, &var_smtp_tls_blk_early_mail_reply,
 	VAR_LMTP_TLS_FORCE_TLSA, DEF_LMTP_TLS_FORCE_TLSA, &var_smtp_tls_force_tlsa,
 #endif
+	VAR_LMTP_TLS_WRAPPER, DEF_LMTP_TLS_WRAPPER, &var_smtp_tls_wrappermode,
 	VAR_LMTP_SENDER_AUTH, DEF_LMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_LMTP_CNAME_OVERR, DEF_LMTP_CNAME_OVERR, &var_smtp_cname_overr,
 	VAR_LMTP_SASL_AUTH_SOFT_BOUNCE, DEF_LMTP_SASL_AUTH_SOFT_BOUNCE, &var_smtp_sasl_auth_soft_bounce,

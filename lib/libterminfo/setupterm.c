@@ -1,4 +1,4 @@
-/* $NetBSD: setupterm.c,v 1.4 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: setupterm.c,v 1.4.14.1 2017/04/21 16:53:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,10 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: setupterm.c,v 1.4 2013/06/07 13:16:18 roy Exp $");
+__RCSID("$NetBSD: setupterm.c,v 1.4.14.1 2017/04/21 16:53:12 bouyer Exp $");
 
+#include <sys/ioctl.h>
 #include <assert.h>
 #include <err.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -39,6 +41,20 @@ __RCSID("$NetBSD: setupterm.c,v 1.4 2013/06/07 13:16:18 roy Exp $");
 #include <term_private.h>
 #include <term.h>
 
+/*
+ * use_env is really a curses function - POSIX mandates it's in curses.h
+ * But it has to live in terminfo because it must precede a call to setupterm().
+ */
+#include <curses.h>
+
+static bool __use_env = true;
+
+void
+use_env(bool value)
+{
+
+	__use_env = value;
+}
 #define reterr(code, msg)						      \
 	do {								      \
 		if (errret == NULL)					      \
@@ -64,6 +80,7 @@ int
 ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 {
 	int error;
+	struct winsize win;
 
 	_DIAGASSERT(nterm != NULL);
 
@@ -105,6 +122,25 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 		reterrarg(0, "%s: generic terminal", term);
 	if (t_hard_copy(*nterm))
 		reterrarg(1, "%s: hardcopy terminal", term);
+
+	/* If TIOCGWINSZ works, then set initial lines and columns. */
+	if (ioctl(fildes, TIOCGWINSZ, &win) != -1 &&
+	    win.ws_row != 0 && win.ws_col != 0)
+	{
+		t_lines(*nterm) = win.ws_row;
+		t_columns(*nterm) = win.ws_col;
+	}
+
+	/* POSIX 1003.2 requires that the environment override. */
+	if (__use_env) {
+		char *p;
+
+		if ((p = getenv("LINES")) != NULL)
+			t_lines(*nterm) = (int)strtol(p, NULL, 0);
+		if ((p = getenv("COLUMNS")) != NULL)
+			t_columns(*nterm) = (int)strtol(p, NULL, 0);
+	}
+
 	/* POSIX requires 1 for success */
 	if (errret)
 		*errret = 1;

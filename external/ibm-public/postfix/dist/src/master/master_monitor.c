@@ -1,4 +1,4 @@
-/*	$NetBSD: master_monitor.c,v 1.1.1.1 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: master_monitor.c,v 1.1.1.1.16.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -86,7 +86,7 @@ int     master_monitor(int time_limit)
     default:
 	/* Parent. Monitor the child in the foreground. */
 	close(pipes[1]);
-	switch (timed_read(pipes[0], buf, 1, time_limit, (char *) 0)) {
+	switch (timed_read(pipes[0], buf, 1, time_limit, (void *) 0)) {
 	default:
 	    /* The child process still runs, but something is wrong. */
 	    (void) kill(pid, SIGKILL);

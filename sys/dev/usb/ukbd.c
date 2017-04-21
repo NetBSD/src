@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.134 2016/11/25 12:50:13 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.134.2.1 2017/04/21 16:53:53 bouyer Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.134 2016/11/25 12:50:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.134.2.1 2017/04/21 16:53:53 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -719,7 +719,10 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	int s;
 	int nkeys, i, j;
 	int key;
-#define ADDKEY(c) ibuf[nkeys++] = (c)
+#define ADDKEY(c) do { \
+    KASSERT(nkeys < MAXKEYS); \
+    ibuf[nkeys++] = (c); \
+} while (0)
 
 #ifdef UKBD_DEBUG
 	/*
@@ -1001,7 +1004,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	sc->sc_flags &= ~FLAG_POLLING;
 	c = sc->sc_pollchars[0];
 	sc->sc_npollchar--;
-	memcpy(sc->sc_pollchars, sc->sc_pollchars+1,
+	memmove(sc->sc_pollchars, sc->sc_pollchars+1,
 	       sc->sc_npollchar * sizeof(uint16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;

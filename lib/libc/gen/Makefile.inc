@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.197 2017/01/12 00:38:01 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.197.2.1 2017/04/21 16:53:09 bouyer Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -13,7 +13,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	confstr.c ctermid.c ctype_.c \
 	dehumanize_number.c devname.c dirname.c disklabel.c err.c errx.c \
 	errc.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
-	extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
+	exect.c extattr.c fmtcheck.c fmtmsg.c fnmatch.c fstab.c ftok.c \
 	fts.c ftw.c getbsize.c getcap.c getcwd.c \
 	getdevmajor.c getdomainname.c getgrent.c \
 	getgrouplist.c getgroupmembership.c gethostname.c \

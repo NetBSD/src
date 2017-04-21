@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.73 2016/07/07 06:55:43 msaitoh Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.73.4.1 2017/04/21 16:54:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.73 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.73.4.1 2017/04/21 16:54:02 bouyer Exp $");
 #endif /* not lint */
 
 
@@ -118,7 +118,7 @@ struct vfsops udf_vfsops = {
 	.vfs_mountroot = udf_mountroot,
 	.vfs_snapshot = udf_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
@@ -441,6 +441,8 @@ udf_mount(struct mount *mp, const char *path,
 static bool
 udf_sanity_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	vprint("", vp);
 	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {

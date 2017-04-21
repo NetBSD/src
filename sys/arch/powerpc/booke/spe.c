@@ -1,4 +1,4 @@
-/*	$NetBSD: spe.c,v 1.8 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: spe.c,v 1.8.12.1 2017/04/21 16:53:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.8 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spe.c,v 1.8.12.1 2017/04/21 16:53:33 bouyer Exp $");
 
 #include "opt_altivec.h"
 
@@ -63,13 +63,13 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&vec_ops);
+	return pcu_valid_p(&vec_ops, l);
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	pcu_discard(&vec_ops, true);
+	pcu_discard(&vec_ops, l, true);
 }
 
 void
@@ -149,9 +149,7 @@ vec_restore_from_mcontext(lwp_t *l, const mcontext_t *mcp)
 	struct pcb * const pcb = lwp_getpcb(l);
 	const union __vr *vr = mcp->__vrf.__vrs;
 
-	KASSERT(l == curlwp);
-
-	vec_save();
+	vec_save(l);
 
 	/* grab the accumulator */
 	pcb->pcb_vr.vreg[8][0] = vr->__vr32[2];
@@ -175,12 +173,10 @@ vec_save_to_mcontext(lwp_t *l, mcontext_t *mcp, unsigned int *flagp)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	KASSERT(l == curlwp);
-
 	if (!vec_used_p(l))
 		return false;
 
-	vec_save();
+	vec_save(l);
 
 	mcp->__gregs[_REG_MSR] |= PSL_SPV;
 

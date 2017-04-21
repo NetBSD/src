@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.28 2016/09/02 08:52:12 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.28.2.1 2017/04/21 16:53:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -386,9 +386,7 @@ void cpu_fsgs_reload(struct lwp *, int, int);
 #define LSYSRETBASE_SEL	LUCODE32_SEL
 
 /*
- * Checks for valid user selectors. If USER_LDT ever gets implemented
- * for amd64, these must check the ldt length and SEL_UPL if a user
- * ldt is active.
+ * Checks for valid user selectors.
  */
 #define VALID_USER_DSEL32(s) \
     (((s) & 0xffff) == GSEL(GUDATA32_SEL, SEL_UPL) || \

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.30 2016/11/20 09:38:11 wiz Exp $
+.\"	$NetBSD: scsictl.8,v 1.30.2.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,7 +123,7 @@ a few years ago do not support this option.
 Identify the specified device, displaying the device's SCSI
 bus, target, and lun, as well as the device's vendor, product,
 and revision strings.
-.Cm It reassign Ar blkno Oo blkno Oo ... Oc Oc
+.It Cm reassign Ar blkno Oo blkno Oo ... Oc Oc
 Issues a
 .Li REASSIGN BLOCKS
 command to the device, adding the specified blocks to the

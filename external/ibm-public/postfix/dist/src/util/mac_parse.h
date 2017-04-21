@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_parse.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: mac_parse.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _MAC_PARSE_H_INCLUDED_
 #define _MAC_PARSE_H_INCLUDED_
@@ -10,8 +10,8 @@
 /*	locate macro references in string
 /* SYNOPSIS
 /*	#include <mac_parse.h>
- DESCRIPTION
- .nf
+/* DESCRIPTION
+/* .nf
 
  /*
   * Utility library.
@@ -30,9 +30,9 @@
 #define MAC_PARSE_UNDEF		(1<<1)
 #define MAC_PARSE_USER		2	/* start user definitions */
 
-typedef int (*MAC_PARSE_FN)(int, VSTRING *, char *);
+typedef int (*MAC_PARSE_FN) (int, VSTRING *, void *);
 
-extern int mac_parse(const char *, MAC_PARSE_FN, char *);
+extern int WARN_UNUSED_RESULT mac_parse(const char *, MAC_PARSE_FN, void *);
 
 /* LICENSE
 /* .ad

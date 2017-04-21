@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860var.h,v 1.3 2016/07/08 01:24:53 christos Exp $	*/
+/*	$NetBSD: rt2860var.h,v 1.3.4.1 2017/04/21 16:53:46 bouyer Exp $	*/
 /*	$OpenBSD: rt2860var.h,v 1.23 2016/03/21 21:16:30 stsp Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ struct rt2860_softc {
 	bus_dma_tag_t			sc_dmat;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
+	void				*sc_soft_ih;
 
 	struct ethercom			sc_ec;
 #define sc_if  sc_ec.ec_if

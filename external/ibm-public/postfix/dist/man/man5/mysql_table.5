@@ -1,4 +1,4 @@
-.\"	$NetBSD: mysql_table.5,v 1.1.1.4 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: mysql_table.5,v 1.1.1.4.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH MYSQL_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix MySQL client configuration
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" mysql:/etc/postfix/\fIfilename\fR
+\fBpostmap \-q "\fIstring\fB" mysql:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - mysql:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+\fBpostmap \-q \- mysql:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -24,10 +24,10 @@ Alternatively, lookup tables can be specified as MySQL databases.
 In order to use MySQL lookups, define a MySQL source as a lookup
 table in main.cf, for example:
 .nf
-    alias_maps = mysql:/etc/mysql-aliases.cf
+    alias_maps = mysql:/etc/mysql\-aliases.cf
 .fi
 
-The file /etc/postfix/mysql-aliases.cf has the same format as
+The file /etc/postfix/mysql\-aliases.cf has the same format as
 the Postfix main.cf file, and can specify the parameters
 described below.
 .SH "BACKWARDS COMPATIBILITY"
@@ -45,7 +45,7 @@ specified as "mysql:\fImysqlname\fR", the parameter "hosts"
 below would be defined in main.cf as "\fImysqlname\fR_hosts".
 
 Note: with this form, the passwords for the MySQL sources are
-written in main.cf, which is normally world-readable.  Support
+written in main.cf, which is normally world\-readable.  Support
 for this form will be removed in a future Postfix version.
 
 Normally, the SQL query is specified via a single \fBquery\fR
@@ -104,7 +104,7 @@ connections (default).  Example:
 The hosts are tried in random order, with all connections over
 UNIX domain sockets being tried before those over TCP.  The
 connections are automatically closed after being idle for about
-1 minute, and are re-opened as necessary. Postfix versions 2.0
+1 minute, and are re\-opened as necessary. Postfix versions 2.0
 and earlier do not randomize the host order.
 
 NOTE: if you specify localhost as a hostname (even if you
@@ -136,28 +136,28 @@ e.g.
 
 This parameter supports the following '%' expansions:
 .RS
-.IP "\fB\fB%%\fR\fR"
+.IP "\fB%%\fR"
 This is replaced by a literal '%' character.
-.IP "\fB\fB%s\fR\fR"
+.IP "\fB%s\fR"
 This is replaced by the input key.
 SQL quoting is used to make sure that the input key does not
 add unexpected metacharacters.
-.IP "\fB\fB%u\fR\fR"
+.IP "\fB%u\fR"
 When the input key is an address of the form user@domain, \fB%u\fR
 is replaced by the SQL quoted local part of the address.
 Otherwise, \fB%u\fR is replaced by the entire search string.
 If the localpart is empty, the query is suppressed and returns
 no results.
-.IP "\fB\fB%d\fR\fR"
+.IP "\fB%d\fR"
 When the input key is an address of the form user@domain, \fB%d\fR
 is replaced by the SQL quoted domain part of the address.
 Otherwise, the query is suppressed and returns no results.
-.IP "\fB\fB%[SUD]\fR\fR"
-The upper-case equivalents of the above expansions behave in the
-\fBquery\fR parameter identically to their lower-case counter-parts.
+.IP "\fB%[SUD]\fR"
+The upper\-case equivalents of the above expansions behave in the
+\fBquery\fR parameter identically to their lower\-case counter\-parts.
 With the \fBresult_format\fR parameter (see below), they expand the
 input key rather than the result value.
-.IP "\fB\fB%[1-9]\fR\fR"
+.IP "\fB%[1\-9]\fR"
 The patterns %1, %2, ... %9 are replaced by the corresponding
 most significant component of the input key's domain. If the
 input key is \fIuser@mail.example.com\fR, then %1 is \fBcom\fR,
@@ -169,8 +169,8 @@ no results.
 .IP
 The \fBdomain\fR parameter described below limits the input
 keys to addresses in matching domains. When the \fBdomain\fR
-parameter is non-empty, SQL queries for unqualified addresses
-or addresses in non-matching domains are suppressed
+parameter is non\-empty, SQL queries for unqualified addresses
+or addresses in non\-matching domains are suppressed
 and return no results.
 
 This parameter is available with Postfix 2.2. In prior releases
@@ -196,22 +196,22 @@ Format template applied to result attributes. Most commonly used
 to append (or prepend) text to the result. This parameter supports
 the following '%' expansions:
 .RS
-.IP "\fB\fB%%\fR\fR"
+.IP "\fB%%\fR"
 This is replaced by a literal '%' character.
-.IP "\fB\fB%s\fR\fR"
+.IP "\fB%s\fR"
 This is replaced by the value of the result attribute. When
 result is empty it is skipped.
 .IP "\fB%u\fR
 When the result attribute value is an address of the form
 user@domain, \fB%u\fR is replaced by the local part of the
 address. When the result has an empty localpart it is skipped.
-.IP "\fB\fB%d\fR\fR"
+.IP "\fB%d\fR"
 When a result attribute value is an address of the form
 user@domain, \fB%d\fR is replaced by the domain part of
 the attribute value. When the result is unqualified it
 is skipped.
-.IP "\fB\fB%[SUD1-9]\fR\fB"
-The upper-case and decimal digit expansions interpolate
+.IP "\fB%[SUD1\-9]\fR"
+The upper\-case and decimal digit expansions interpolate
 the parts of the input key rather than the result. Their
 behavior is identical to that described with \fBquery\fR,
 and in fact because the input key is known in advance, queries
@@ -236,7 +236,7 @@ NOTE: DO NOT put quotes around the result format!
 .IP "\fBdomain (default: no domain list)\fR"
 This is a list of domain names, paths to files, or
 dictionaries. When specified, only fully qualified search
-keys with a *non-empty* localpart and a matching domain
+keys with a *non\-empty* localpart and a matching domain
 are eligible for lookup: 'user' lookups, bare domain lookups
 and "@domain" lookups are not performed. This can significantly
 reduce the query load on the MySQL server.
@@ -266,6 +266,11 @@ This parameter is available with Postfix 2.11 and later.
 .IP "\fBoption_group\fR"
 Read options from the given group.
 .sp
+Postfix 3.1 and earlier don't read \fB[client]\fR option
+group settings unless a non\-empty \fBoption_file\fR or
+\fBoption_group\fR value are specified. To enable this,
+specify, for example, "\fBoption_group = client\fR".
+.sp
 This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_cert_file\fR"
 File containing client's X509 certificate.
@@ -276,19 +281,19 @@ File containing the private key corresponding to \fBtls_cert_file\fR.
 .sp
 This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_CAfile\fR"
-File containing certificates for all of the X509 Certificate
+File containing certificates for all of the X509 Certification
 Authorities the client will recognize.  Takes precedence over
 \fBtls_CApath\fR.
 .sp
 This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_CApath\fR"
-Directory containing X509 Certificate Authority certificates
+Directory containing X509 Certification Authority certificates
 in separate individual files.
 .sp
 This parameter is available with Postfix 2.11 and later.
 .IP "\fBtls_verify_cert (default: no)\fR"
 Verify that the server's name matches the common name in the
-certficate.
+certificate.
 .sp
 This parameter is available with Postfix 2.11 and later.
 .SH "OBSOLETE QUERY INTERFACE"
@@ -361,9 +366,9 @@ MYSQL_README, Postfix MYSQL client guide
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 MySQL support was introduced with Postfix version 1.0.
 .SH "AUTHOR(S)"
 .na
@@ -375,5 +380,5 @@ IC Group, Inc.
 Further enhancements by:
 Liviu Daia
 Institute of Mathematics of the Romanian Academy
-P.O. BOX 1-764
-RO-014700 Bucharest, ROMANIA
+P.O. BOX 1\-764
+RO\-014700 Bucharest, ROMANIA

@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.105 2014/03/18 18:20:40 riastradh Exp $
+.\" $NetBSD: kauth.9,v 1.105.12.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -1879,6 +1879,9 @@ for
 will be done.
 .It Ft kauth_cred_t Fn kauth_cred_get "void"
 Return the credentials associated with the current LWP.
+This does not change the reference count of the resulting
+.Ft kauth_cred_t
+object.
 .El
 .Ss Scope Management
 .Nm
@@ -1925,8 +1928,8 @@ It is enough for one listener to deny the request in order for the
 request to be denied; but all listeners are called during an authorization
 process none-the-less.
 All listeners are required to allow the request for it to be granted,
-and in a case where all listeners defer the request -- leaving the decision
-for other listeners -- the request is denied.
+and in a case where all listeners defer the request \(em leaving the
+decision for other listeners \(em the request is denied.
 .Pp
 The following KPI is provided for the management of listeners:
 .Bl -tag -width compact
@@ -1959,8 +1962,8 @@ the listener, possibly freeing any allocated data it used.
 .Pp
 The common method to do the above is by having a reference count to
 each listener.
-On entry to the listener, this reference count should be raised, and
-on exit -- lowered.
+On entry to the listener, this reference count should be raised; on
+exit, lowered.
 .Pp
 During the removal of a listener, first
 .Fn kauth_scope_unlisten

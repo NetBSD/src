@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.19 2007/12/14 21:15:58 pavel Exp $
+.\"	$NetBSD: hardware,v 1.19.58.1 2017/04/21 16:51:12 bouyer Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -35,7 +35,6 @@ CPUs
 .It
 362 (25 MHz 68030, up to 16 MB RAM, built-in SCSI)
 .br
-.Em "Framebuffer is unsupported, you must use a serial console"
 .It
 370 (33 MHz 68030, 64 KB L2 cache, up to 48 MB RAM)
 .br
@@ -47,7 +46,6 @@ CPUs
 .It
 382 (25 MHz 68040, up to 32 MB RAM, built-in SCSI)
 .br
-.Em "Framebuffer is unsupported, you must use a serial console"
 .It
 385 (33 MHz 68040, up to 128 MB RAM, built-in SCSI)
 .It
@@ -58,11 +56,14 @@ up to 128 MB RAM)
 .It
 425e (25 MHz 68040, built-in SCSI)
 .br
-.Em "The BootROM does not support serial console and"
+.Em "The BootROM does not support serial console."
+.Em "The"
 .Nx*M
-.Em "does not support the 425e framebuffer.  When the"
-.Nx
-.Em "kernel begins to boot it will default to using the serial port for console"
+.Em "bootloader and kernel will use the serial port for console if"
+.Ql SERVICE/NORMAL
+.Em "switch on the back panel is turned to"
+.Ql SERVICE
+.Em "potision."
 .It
 433s, 433t, 433dl (33 MHz 68040 with built-in SCSI, up to 128 MB RAM)
 .bullet)
@@ -173,6 +174,18 @@ Graphics Devices
 A1096A monochrome Hyperion (1280x1024, 1 bit)
 .It
 A1416A Kathmandu (a.k.a. Color VRX) (1280x1024 @ 60 hz, 8 bits, DIO-II)
+.It
+98705 Tigershark PersonalVRX DIO-II graphics device
+.br
+.Em "Untested"
+.It
+internal video on models 362/382 (A1474-69511 and A147x-69510)
+.br
+.Em "No X server support"
+.It
+425e built-in EVRX framebuffer
+.br
+.Em "No X server support"
 .bullet)
 .It
 HP-HIL devices
@@ -206,6 +219,11 @@ daughterboard)
 .It
 98625A and 98625B 'fast' HP-IB interface (DIO-I board or
 daughtercard for 98562)
+.It
+Apollo Domain keyboard and mouse on Series 400 workstations
+.It
+.Dq ARCOFI
+audio device on 425e
 .bullet)
 .bullet)
 .Pp
@@ -233,22 +251,13 @@ CPUs
 .It
 Graphics Devices
 .(bullet -compact
-SGC support (for 425e built-in EVRX framebuffer)
-.It
-SGC support (for some rare configurations of 4XXt and 4XXdl workstations)
+SGC support for some rare configurations of 4XXt and 4XXdl workstations
 .It
 98702 TurboVRX DIO-II graphics device
-.It
-98705 Tigershark PersonalVRX DIO-II graphics device
-.It
-internal video on models 362/382
 .bullet)
 .It
 Miscellaneous boards/interfaces
 .(bullet -compact
-domain keyboard and mouse, on Series 400 workstations.
-Needs wscons
-.It
 parallel port, on 345, 362, 375, 380, 382, 382, and Series 400 workstations
 .It
 EISA support, on Series 400 workstations
@@ -260,7 +269,5 @@ VME bus adapter, on Series 300 workstations
 98628A single port dcl (DIO-I board)
 .It
 98625C fast HP-IB option on models 345 and 375
-.It
-internal SCSI floppy drive on 362, 382, and 425e
 .bullet)
 .bullet)

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdb_copy.c,v 1.1.1.1 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: mdb_copy.c,v 1.1.1.1.14.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* mdb_copy.c - memory-mapped database backup tool */
 /*
- * Copyright 2012 Howard Chu, Symas Corp.
+ * Copyright 2012-2016 Howard Chu, Symas Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,16 +35,22 @@ int main(int argc,char * argv[])
 	MDB_env *env;
 	const char *progname = argv[0], *act;
 	unsigned flags = MDB_RDONLY;
+	unsigned cpflags = 0;
 
 	for (; argc > 1 && argv[1][0] == '-'; argc--, argv++) {
 		if (argv[1][1] == 'n' && argv[1][2] == '\0')
 			flags |= MDB_NOSUBDIR;
-		else
+		else if (argv[1][1] == 'c' && argv[1][2] == '\0')
+			cpflags |= MDB_CP_COMPACT;
+		else if (argv[1][1] == 'V' && argv[1][2] == '\0') {
+			printf("%s\n", MDB_VERSION_STRING);
+			exit(0);
+		} else
 			argc = 0;
 	}
 
 	if (argc<2 || argc>3) {
-		fprintf(stderr, "usage: %s [-n] srcpath [dstpath]\n", progname);
+		fprintf(stderr, "usage: %s [-V] [-c] [-n] srcpath [dstpath]\n", progname);
 		exit(EXIT_FAILURE);
 	}
 
@@ -60,14 +66,14 @@ int main(int argc,char * argv[])
 	act = "opening environment";
 	rc = mdb_env_create(&env);
 	if (rc == MDB_SUCCESS) {
-		rc = mdb_env_open(env, argv[1], flags, 0);
+		rc = mdb_env_open(env, argv[1], flags, 0600);
 	}
 	if (rc == MDB_SUCCESS) {
 		act = "copying";
 		if (argc == 2)
-			rc = mdb_env_copyfd(env, MDB_STDOUT);
+			rc = mdb_env_copyfd2(env, MDB_STDOUT, cpflags);
 		else
-			rc = mdb_env_copy(env, argv[2]);
+			rc = mdb_env_copy2(env, argv[2], cpflags);
 	}
 	if (rc)
 		fprintf(stderr, "%s: %s failed, error %d (%s)\n",

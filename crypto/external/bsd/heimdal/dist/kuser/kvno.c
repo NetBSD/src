@@ -1,4 +1,4 @@
-/*	$NetBSD: kvno.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: kvno.c,v 1.1.1.2.10.1 2017/04/21 16:50:44 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998 by the FundsXpress, INC.

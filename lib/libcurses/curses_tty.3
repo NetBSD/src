@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_tty.3,v 1.10 2016/12/31 22:47:01 roy Exp $
+.\"	$NetBSD: curses_tty.3,v 1.10.2.1 2017/04/21 16:53:10 bouyer Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,11 +30,12 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd December 31, 2016
+.Dd February 17, 2017
 .Dt CURSES_TTY 3
 .Os
 .Sh NAME
 .Nm curses_tty ,
+.Nm baudrate ,
 .Nm beep ,
 .Nm flash ,
 .Nm curs_set ,
@@ -73,6 +74,8 @@
 .Lb libcurses
 .Sh SYNOPSIS
 .In curses.h
+.Ft int
+.Fn baudrate "void"
 .Ft int
 .Fn beep "void"
 .Ft int
@@ -141,6 +144,11 @@
 .Fn resetty "void"
 .Sh DESCRIPTION
 These functions manipulate curses terminal settings.
+.Pp
+The
+.Fn baudrate
+function extrats the output speed of the terminal
+and returns it in bits per second.
 .Pp
 The
 .Fn beep
@@ -334,11 +342,6 @@ is a valid file descriptor, typeahead is enabled during refresh;
 Curses periodically checks
 .Ar filedes
 for input and aborts the refresh if any character is available.
-(This is the initial setting and the typeahead file descriptor corresponds
-to the input file associated with the screen created by
-.Fn initscr
-or
-.Fn newterm .
 The value of
 .Ar filedes
 need not be the file descriptor on which the refresh is occurring.

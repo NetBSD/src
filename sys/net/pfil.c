@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.c,v 1.31 2017/01/12 17:19:17 ryo Exp $	*/
+/*	$NetBSD: pfil.c,v 1.31.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2013 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -28,12 +28,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.31 2017/01/12 17:19:17 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfil.c,v 1.31.2.1 2017/04/21 16:54:05 bouyer Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
+#include <sys/psref.h>
 
 #include <net/if.h>
 #include <net/pfil.h>
@@ -51,16 +56,22 @@ typedef struct {
 typedef struct {
 	pfil_hook_t	hooks[MAX_HOOKS];
 	u_int		nhooks;
+	struct psref_target psref;
 } pfil_list_t;
+
+typedef struct {
+	pfil_list_t	*active;	/* lists[0] or lists[1] */
+	pfil_list_t	lists[2];
+} pfil_listset_t;
 
 CTASSERT(PFIL_IN == 1);
 CTASSERT(PFIL_OUT == 2);
 
 struct pfil_head {
-	pfil_list_t	ph_in;
-	pfil_list_t	ph_out;
-	pfil_list_t	ph_ifaddr;
-	pfil_list_t	ph_ifevent;
+	pfil_listset_t	ph_in;
+	pfil_listset_t	ph_out;
+	pfil_listset_t	ph_ifaddr;
+	pfil_listset_t	ph_ifevent;
 	int		ph_type;
 	void *		ph_key;
 	LIST_ENTRY(pfil_head) ph_list;
@@ -72,6 +83,25 @@ static const int pfil_flag_cases[] = {
 
 static LIST_HEAD(, pfil_head) pfil_head_list __read_mostly =
     LIST_HEAD_INITIALIZER(&pfil_head_list);
+
+static kmutex_t pfil_mtx __cacheline_aligned;
+static struct psref_class *pfil_psref_class __read_mostly;
+static pserialize_t pfil_psz;
+
+void
+pfil_init(void)
+{
+	mutex_init(&pfil_mtx, MUTEX_DEFAULT, IPL_NONE);
+	pfil_psz = pserialize_create();
+	pfil_psref_class = psref_class_create("pfil", IPL_SOFTNET);
+}
+
+static inline void
+pfil_listset_init(pfil_listset_t *pflistset)
+{
+	pflistset->active = &pflistset->lists[0];
+	psref_target_init(&pflistset->active->psref, pfil_psref_class);
+}
 
 /*
  * pfil_head_create: create and register a packet filter head.
@@ -88,6 +118,11 @@ pfil_head_create(int type, void *key)
 	ph->ph_type = type;
 	ph->ph_key = key;
 
+	pfil_listset_init(&ph->ph_in);
+	pfil_listset_init(&ph->ph_out);
+	pfil_listset_init(&ph->ph_ifaddr);
+	pfil_listset_init(&ph->ph_ifevent);
+
 	LIST_INSERT_HEAD(&pfil_head_list, ph, ph_list);
 	return ph;
 }
@@ -99,6 +134,12 @@ void
 pfil_head_destroy(pfil_head_t *pfh)
 {
 	LIST_REMOVE(pfh, ph_list);
+
+	psref_target_destroy(&pfh->ph_in.active->psref, pfil_psref_class);
+	psref_target_destroy(&pfh->ph_out.active->psref, pfil_psref_class);
+	psref_target_destroy(&pfh->ph_ifaddr.active->psref, pfil_psref_class);
+	psref_target_destroy(&pfh->ph_ifevent.active->psref, pfil_psref_class);
+
 	kmem_free(pfh, sizeof(pfil_head_t));
 }
 
@@ -117,7 +158,7 @@ pfil_head_get(int type, void *key)
 	return ph;
 }
 
-static pfil_list_t *
+static pfil_listset_t *
 pfil_hook_get(int dir, pfil_head_t *ph)
 {
 	switch (dir) {
@@ -134,23 +175,43 @@ pfil_hook_get(int dir, pfil_head_t *ph)
 }
 
 static int
-pfil_list_add(pfil_list_t *phlist, pfil_polyfunc_t func, void *arg, int flags)
+pfil_list_add(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg,
+              int flags)
 {
-	const u_int nhooks = phlist->nhooks;
+	u_int nhooks;
+	pfil_list_t *newlist, *oldlist;
 	pfil_hook_t *pfh;
 
+	mutex_enter(&pfil_mtx);
+
 	/* Check if we have a free slot. */
+	nhooks = phlistset->active->nhooks;
 	if (nhooks == MAX_HOOKS) {
+		mutex_exit(&pfil_mtx);
 		return ENOSPC;
 	}
 	KASSERT(nhooks < MAX_HOOKS);
 
+	if (phlistset->active == &phlistset->lists[0]) {
+		oldlist = &phlistset->lists[0];
+		newlist = &phlistset->lists[1];
+	} else{
+		oldlist = &phlistset->lists[1];
+		newlist = &phlistset->lists[0];
+	}
+
 	/* Make sure the hook is not already added. */
 	for (u_int i = 0; i < nhooks; i++) {
-		pfh = &phlist->hooks[i];
-		if (pfh->pfil_func == func && pfh->pfil_arg == arg)
+		pfh = &oldlist->hooks[i];
+		if (pfh->pfil_func == func && pfh->pfil_arg == arg) {
+			mutex_exit(&pfil_mtx);
 			return EEXIST;
+		}
 	}
+
+	/* create new pfil_list_t copied from old */
+	memcpy(newlist, oldlist, sizeof(pfil_list_t));
+	psref_target_init(&newlist->psref, pfil_psref_class);
 
 	/*
 	 * Finally, add the hook.  Note: for PFIL_IN we insert the hooks in
@@ -160,15 +221,29 @@ pfil_list_add(pfil_list_t *phlist, pfil_polyfunc_t func, void *arg, int flags)
 	if (flags & PFIL_IN) {
 		/* XXX: May want to revisit this later; */
 		size_t len = sizeof(pfil_hook_t) * nhooks;
-		pfh = &phlist->hooks[0];
-		memmove(&phlist->hooks[1], pfh, len);
+		pfh = &newlist->hooks[0];
+		memmove(&newlist->hooks[1], pfh, len);
 	} else {
-		pfh = &phlist->hooks[nhooks];
+		pfh = &newlist->hooks[nhooks];
 	}
-	phlist->nhooks++;
+	newlist->nhooks++;
 
 	pfh->pfil_func = func;
 	pfh->pfil_arg  = arg;
+
+	/* switch from oldlist to newlist */
+	membar_producer();
+	phlistset->active = newlist;
+#ifdef NET_MPSAFE
+	pserialize_perform(pfil_psz);
+#endif
+	mutex_exit(&pfil_mtx);
+
+	/* Wait for all readers */
+#ifdef NET_MPSAFE
+	psref_target_destroy(&oldlist->psref, pfil_psref_class);
+#endif
+
 	return 0;
 }
 
@@ -190,18 +265,18 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 
 	for (u_int i = 0; i < __arraycount(pfil_flag_cases); i++) {
 		const int fcase = pfil_flag_cases[i];
-		pfil_list_t *phlist;
+		pfil_listset_t *phlistset;
 
 		if ((flags & fcase) == 0) {
 			continue;
 		}
-		phlist = pfil_hook_get(fcase, ph);
-		error = pfil_list_add(phlist, (pfil_polyfunc_t)func, arg, flags);
-		if (error) {
+		phlistset = pfil_hook_get(fcase, ph);
+		error = pfil_list_add(phlistset, (pfil_polyfunc_t)func, arg,
+		    flags);
+		if (error && (error != EEXIST))
 			break;
-		}
 	}
-	if (error) {
+	if (error && (error != EEXIST)) {
 		pfil_remove_hook(func, arg, flags, ph);
 	}
 	return error;
@@ -217,35 +292,65 @@ pfil_add_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 int
 pfil_add_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
 {
-	pfil_list_t *phlist;
+	pfil_listset_t *phlistset;
 
 	KASSERT(func != NULL);
 	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
 
-	phlist = pfil_hook_get(flags, ph);
-	return pfil_list_add(phlist, (pfil_polyfunc_t)func, arg, flags);
+	phlistset = pfil_hook_get(flags, ph);
+	return pfil_list_add(phlistset, (pfil_polyfunc_t)func, arg, flags);
 }
 
 /*
  * pfil_list_remove: remove the hook from a specified list.
  */
 static int
-pfil_list_remove(pfil_list_t *phlist, pfil_polyfunc_t func, void *arg)
+pfil_list_remove(pfil_listset_t *phlistset, pfil_polyfunc_t func, void *arg)
 {
-	const u_int nhooks = phlist->nhooks;
+	u_int nhooks;
+	pfil_list_t *oldlist, *newlist;
 
+	mutex_enter(&pfil_mtx);
+
+	/* create new pfil_list_t copied from old */
+	if (phlistset->active == &phlistset->lists[0]) {
+		oldlist = &phlistset->lists[0];
+		newlist = &phlistset->lists[1];
+	} else{
+		oldlist = &phlistset->lists[1];
+		newlist = &phlistset->lists[0];
+	}
+	memcpy(newlist, oldlist, sizeof(*newlist));
+	psref_target_init(&newlist->psref, pfil_psref_class);
+
+	nhooks = newlist->nhooks;
 	for (u_int i = 0; i < nhooks; i++) {
-		pfil_hook_t *last, *pfh = &phlist->hooks[i];
+		pfil_hook_t *last, *pfh = &newlist->hooks[i];
 
 		if (pfh->pfil_func != func || pfh->pfil_arg != arg) {
 			continue;
 		}
-		if ((last = &phlist->hooks[nhooks - 1]) != pfh) {
+		if ((last = &newlist->hooks[nhooks - 1]) != pfh) {
 			memcpy(pfh, last, sizeof(pfil_hook_t));
 		}
-		phlist->nhooks--;
+		newlist->nhooks--;
+
+		/* switch from oldlist to newlist */
+		phlistset->active = newlist;
+		membar_producer();
+#ifdef NET_MPSAFE
+		pserialize_perform(pfil_psz);
+#endif
+		mutex_exit(&pfil_mtx);
+
+		/* Wait for all readers */
+#ifdef NET_MPSAFE
+		psref_target_destroy(&oldlist->psref, pfil_psref_class);
+#endif
+
 		return 0;
 	}
+	mutex_exit(&pfil_mtx);
 	return ENOENT;
 }
 
@@ -259,13 +364,13 @@ pfil_remove_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 
 	for (u_int i = 0; i < __arraycount(pfil_flag_cases); i++) {
 		const int fcase = pfil_flag_cases[i];
-		pfil_list_t *pflist;
+		pfil_listset_t *pflistset;
 
 		if ((flags & fcase) == 0) {
 			continue;
 		}
-		pflist = pfil_hook_get(fcase, ph);
-		(void)pfil_list_remove(pflist, (pfil_polyfunc_t)func, arg);
+		pflistset = pfil_hook_get(fcase, ph);
+		(void)pfil_list_remove(pflistset, (pfil_polyfunc_t)func, arg);
 	}
 	return 0;
 }
@@ -273,11 +378,11 @@ pfil_remove_hook(pfil_func_t func, void *arg, int flags, pfil_head_t *ph)
 int
 pfil_remove_ihook(pfil_ifunc_t func, void *arg, int flags, pfil_head_t *ph)
 {
-	pfil_list_t *pflist;
+	pfil_listset_t *pflistset;
 
 	KASSERT(flags == PFIL_IFADDR || flags == PFIL_IFNET);
-	pflist = pfil_hook_get(flags, ph);
-	(void)pfil_list_remove(pflist, (pfil_polyfunc_t)func, arg);
+	pflistset = pfil_hook_get(flags, ph);
+	(void)pfil_list_remove(pflistset, (pfil_polyfunc_t)func, arg);
 	return 0;
 }
 
@@ -288,14 +393,23 @@ int
 pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 {
 	struct mbuf *m = mp ? *mp : NULL;
+	pfil_listset_t *phlistset;
 	pfil_list_t *phlist;
+	struct psref psref;
+	int s, bound;
 	int ret = 0;
 
 	KASSERT(dir == PFIL_IN || dir == PFIL_OUT);
-	if (__predict_false((phlist = pfil_hook_get(dir, ph)) == NULL)) {
+	if (__predict_false((phlistset = pfil_hook_get(dir, ph)) == NULL)) {
 		return ret;
 	}
 
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
+	phlist = phlistset->active;
+	membar_datadep_consumer();
+	psref_acquire(&psref, &phlist->psref, pfil_psref_class);
+	pserialize_read_exit(s);
 	for (u_int i = 0; i < phlist->nhooks; i++) {
 		pfil_hook_t *pfh = &phlist->hooks[i];
 		pfil_func_t func = (pfil_func_t)pfh->pfil_func;
@@ -304,6 +418,8 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 		if (m == NULL || ret)
 			break;
 	}
+	psref_release(&psref, &phlist->psref, pfil_psref_class);
+	curlwp_bindx(bound);
 
 	if (mp) {
 		*mp = m;
@@ -311,26 +427,36 @@ pfil_run_hooks(pfil_head_t *ph, struct mbuf **mp, ifnet_t *ifp, int dir)
 	return ret;
 }
 
-void
-pfil_run_addrhooks(pfil_head_t *ph, u_long cmd, struct ifaddr *ifa)
+static void
+pfil_run_arg(pfil_listset_t *phlistset, u_long cmd, void *arg)
 {
-	pfil_list_t *phlist = &ph->ph_ifaddr;
+	pfil_list_t *phlist;
+	struct psref psref;
+	int s, bound;
 
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
+	phlist = phlistset->active;
+	membar_datadep_consumer();
+	psref_acquire(&psref, &phlist->psref, pfil_psref_class);
+	pserialize_read_exit(s);
 	for (u_int i = 0; i < phlist->nhooks; i++) {
 		pfil_hook_t *pfh = &phlist->hooks[i];
 		pfil_ifunc_t func = (pfil_ifunc_t)pfh->pfil_func;
-		(*func)(pfh->pfil_arg, cmd, (void *)ifa);
+		(*func)(pfh->pfil_arg, cmd, arg);
 	}
+	psref_release(&psref, &phlist->psref, pfil_psref_class);
+	curlwp_bindx(bound);
+}
+
+void
+pfil_run_addrhooks(pfil_head_t *ph, u_long cmd, struct ifaddr *ifa)
+{
+	pfil_run_arg(&ph->ph_ifaddr, cmd, ifa);
 }
 
 void
 pfil_run_ifhooks(pfil_head_t *ph, u_long cmd, struct ifnet *ifp)
 {
-	pfil_list_t *phlist = &ph->ph_ifevent;
-
-	for (u_int i = 0; i < phlist->nhooks; i++) {
-		pfil_hook_t *pfh = &phlist->hooks[i];
-		pfil_ifunc_t func = (pfil_ifunc_t)pfh->pfil_func;
-		(*func)(pfh->pfil_arg, cmd, (void *)ifp);
-	}
+	pfil_run_arg(&ph->ph_ifevent, cmd, ifp);
 }

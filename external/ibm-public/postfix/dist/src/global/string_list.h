@@ -1,4 +1,4 @@
-/*	$NetBSD: string_list.h,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: string_list.h,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _STRING_LIST_H_INCLUDED_
 #define _STRING_LIST_H_INCLUDED_
@@ -23,7 +23,8 @@
   */
 #define STRING_LIST	MATCH_LIST
 
-#define string_list_init(f, p)	match_list_init((f), (p), 1, match_string)
+#define string_list_init(o, f, p) \
+				match_list_init((o), (f), (p), 1, match_string)
 #define string_list_match	match_list_match
 #define string_list_free	match_list_free
 

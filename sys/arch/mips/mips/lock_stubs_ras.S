@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.8 2016/08/19 10:05:35 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.8.2.1 2017/04/21 16:53:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: lock_stubs_ras.S,v 1.8 2016/08/19 10:05:35 skrll Exp $")
+RCSID("$NetBSD: lock_stubs_ras.S,v 1.8.2.1 2017/04/21 16:53:31 bouyer Exp $")
 
 #include "assym.h"
 
@@ -103,7 +103,7 @@ RCSID("$NetBSD: lock_stubs_ras.S,v 1.8 2016/08/19 10:05:35 skrll Exp $")
 	.p2align LOG2_MIPS_LOCK_RAS_SIZE
 
 EXPORT(_lock_ras_start)
-STATIC_LEAF(ras_atomic_cas_noupdate)
+STATIC_LEAF_NOPROFILE(ras_atomic_cas_noupdate)
 	J_RA
 	 move	v0, t0
 END(ras_atomic_cas_noupdate)

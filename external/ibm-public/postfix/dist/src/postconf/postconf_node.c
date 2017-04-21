@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_node.c,v 1.1.1.3 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postconf_node.c,v 1.1.1.3.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -33,13 +33,13 @@
 /*	PCF_PARAM_TABLE *table;
 /*	const char *name;
 /*	int	flags;
-/*	char	*param_data;
-/*	const char *(*convert_fn)(char *);
+/*	void	*param_data;
+/*	const char *(*convert_fn)(void *);
 /*
 /*	PCF_PARAM_NODE *pcf_make_param_node(flags, param_data, convert_fn)
 /*	int	flags;
-/*	char	*param_data;
-/*	const char *(*convert_fn) (char *);
+/*	void	*param_data;
+/*	const char *(*convert_fn) (void *);
 /*
 /*	const char *pcf_convert_param_node(mode, name, node)
 /*	int	mode;
@@ -143,8 +143,8 @@ VSTRING *pcf_param_string_buf;
 
 /* pcf_make_param_node - make node for global parameter table */
 
-PCF_PARAM_NODE *pcf_make_param_node(int flags, char *param_data,
-				         const char *(*convert_fn) (char *))
+PCF_PARAM_NODE *pcf_make_param_node(int flags, void *param_data,
+				         const char *(*convert_fn) (void *))
 {
     PCF_PARAM_NODE *node;
 

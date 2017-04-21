@@ -1,4 +1,4 @@
-.\"	$NetBSD: iostat.8,v 1.24 2015/07/09 13:26:52 mrg Exp $
+.\"	$NetBSD: iostat.8,v 1.24.4.1 2017/04/21 16:54:17 bouyer Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl CdDITx
+.Op Fl CdDITxy
 .Op Fl c Ar count
 .Op Fl w Ar wait
 .Op Ar drives
@@ -127,6 +127,8 @@ This option overrides all other display options, and all
 disks are displayed unless specific disks
 are provided as arguments.
 Additionally, separate read and write statistics are displayed.
+.It Fl y
+Shows the extended statistics and additional queuing statistics.
 .El
 .Pp
 .Nm
@@ -172,6 +174,24 @@ Kilobytes transferred
 Disk transfers
 .It time
 Seconds spent in disk activity
+.Pp
+.El
+With the
+.Fl y
+flag, the following queuing measurements are added
+.Bl -tag -width indent -compact
+.It wait
+Number of I/O requests queued up
+.It actv
+Number of currently active I/O requests
+.It wsvc_t
+Average waiting time of an I/O request in milliseconds
+.It asvc_t
+Average duration of an I/O request in milliseconds
+.It wtime
+Seconds spent in the waiting queue.
+Queuing data might not be available from all drivers
+and is then shown as zeros.
 .El
 .It cpu
 .Bl -tag -width indent -compact
@@ -205,3 +225,7 @@ The
 .Fl x
 option was added in
 .Nx 1.4 .
+Collection of queueing values and the
+.Fl y
+option were added in
+.Nx 8.0 .

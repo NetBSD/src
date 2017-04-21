@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_build.c,v 1.43 2017/01/03 01:29:49 rmind Exp $	*/
+/*	$NetBSD: npf_build.c,v 1.43.2.1 2017/04/21 16:54:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011-2017 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.43 2017/01/03 01:29:49 rmind Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.43.2.1 2017/04/21 16:54:18 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -586,9 +586,9 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
  */
 static nl_nat_t *
 npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
-    const filt_opts_t *fopts, u_int flags)
+    const opt_proto_t *op, const filt_opts_t *fopts, u_int flags)
 {
-	const opt_proto_t op = { .op_proto = -1, .op_opts = NULL };
+	const opt_proto_t def_op = { .op_proto = -1, .op_opts = NULL };
 	fam_addr_mask_t *am = npfctl_get_singlefam(ap->ap_netaddr);
 	in_port_t port;
 	nl_nat_t *nat;
@@ -600,10 +600,13 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
 	} else {
 		port = 0;
 	}
+	if (!op) {
+		op = &def_op;
+	}
 
 	nat = npf_nat_create(type, flags, ifname, am->fam_family,
 	    &am->fam_addr, am->fam_mask, port);
-	npfctl_build_code(nat, am->fam_family, &op, fopts);
+	npfctl_build_code(nat, am->fam_family, op, fopts);
 	npf_nat_insert(npf_conf, nat, NPF_PRI_LAST);
 	return nat;
 }
@@ -613,7 +616,7 @@ npfctl_build_nat(int type, const char *ifname, const addr_port_t *ap,
  */
 void
 npfctl_build_natseg(int sd, int type, const char *ifname,
-    const addr_port_t *ap1, const addr_port_t *ap2,
+    const addr_port_t *ap1, const addr_port_t *ap2, const opt_proto_t *op,
     const filt_opts_t *fopts, u_int algo)
 {
 	fam_addr_mask_t *am1 = NULL, *am2 = NULL;
@@ -692,12 +695,12 @@ npfctl_build_natseg(int sd, int type, const char *ifname,
 	if (type & NPF_NATIN) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_to, ap2, sizeof(addr_port_t));
-		nt1 = npfctl_build_nat(NPF_NATIN, ifname, ap1, fopts, flags);
+		nt1 = npfctl_build_nat(NPF_NATIN, ifname, ap1, op, fopts, flags);
 	}
 	if (type & NPF_NATOUT) {
 		memset(&imfopts, 0, sizeof(filt_opts_t));
 		memcpy(&imfopts.fo_from, ap1, sizeof(addr_port_t));
-		nt2 = npfctl_build_nat(NPF_NATOUT, ifname, ap2, fopts, flags);
+		nt2 = npfctl_build_nat(NPF_NATOUT, ifname, ap2, op, fopts, flags);
 	}
 
 	if (algo == NPF_ALGO_NPT66) {

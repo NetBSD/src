@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.44 2016/09/15 21:45:37 jdolecek Exp $ */
+/* $NetBSD: rtwvar.h,v 1.44.2.1 2017/04/21 16:53:46 bouyer Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -464,6 +464,7 @@ struct rtw_softc {
 	struct rtw_regs		sc_regs;
 	bus_dma_tag_t		sc_dmat;
 	uint32_t		sc_flags;
+	void			*sc_soft_ih;
 
 	enum rtw_attach_state	sc_attach_state;
 	enum rtw_rfchipid	sc_rfchipid;

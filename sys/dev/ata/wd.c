@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.427 2016/11/20 02:35:19 pgoyette Exp $ */
+/*	$NetBSD: wd.c,v 1.427.2.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.427 2016/11/20 02:35:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.427.2.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -605,6 +605,7 @@ wdstrategy(struct buf *bp)
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
+	disk_wait(&wd->sc_dk);
 	bufq_put(wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.186 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.186.2.1 2017/04/21 16:54:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.186 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.186.2.1 2017/04/21 16:54:05 bouyer Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -288,7 +288,9 @@ static int rtcache_setdst_locked(struct route *, const struct sockaddr *);
 
 static void rtcache_ref(struct rtentry *, struct route *);
 
+#ifdef NET_MPSAFE
 static void rt_update_wait(void);
+#endif
 
 static bool rt_wait_ok(void);
 static void rt_wait_refcnt(const char *, struct rtentry *, int);
@@ -561,7 +563,9 @@ rtalloc1_locked(const struct sockaddr *dst, int report, bool wait_ok)
 	struct rtentry *rt;
 	int s;
 
+#ifdef NET_MPSAFE
 retry:
+#endif
 	s = splsoftnet();
 	rtbl = rt_gettable(dst->sa_family);
 	if (rtbl == NULL)
@@ -574,6 +578,7 @@ retry:
 	if (!ISSET(rt->rt_flags, RTF_UP))
 		goto miss;
 
+#ifdef NET_MPSAFE
 	if (ISSET(rt->rt_flags, RTF_UPDATING) &&
 	    /* XXX updater should be always able to acquire */
 	    curlwp != rt_update_global.lwp) {
@@ -596,6 +601,7 @@ retry:
 			RTCACHE_WLOCK();
 		goto retry;
 	}
+#endif /* NET_MPSAFE */
 
 	rt_ref(rt);
 	RT_REFCNT_TRACE(rt);
@@ -689,7 +695,9 @@ _rt_free(struct rtentry *rt)
 	 * Need to avoid a deadlock on rt_wait_refcnt of update
 	 * and a conflict on psref_target_destroy of update.
 	 */
+#ifdef NET_MPSAFE
 	rt_update_wait();
+#endif
 
 	RT_REFCNT_TRACE(rt);
 	KASSERTMSG(rt->rt_refcnt >= 0, "refcnt=%d", rt->rt_refcnt);
@@ -755,6 +763,7 @@ rt_free(struct rtentry *rt)
 	}
 }
 
+#ifdef NET_MPSAFE
 static void
 rt_update_wait(void)
 {
@@ -767,6 +776,7 @@ rt_update_wait(void)
 	}
 	mutex_exit(&rt_update_global.lock);
 }
+#endif
 
 int
 rt_update_prepare(struct rtentry *rt)
@@ -908,15 +918,27 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			 * Smash the current notion of the gateway to
 			 * this destination.  Should check about netmask!!!
 			 */
-			/*
-			 * FIXME NOMPAFE: the rtentry is updated with the existence
-			 * of refeferences of it.
-			 */
-			error = rt_setgate(rt, gateway);
+#ifdef NET_MPSAFE
+			KASSERT(!cpu_softintr_p());
+
+			error = rt_update_prepare(rt);
 			if (error == 0) {
-				rt->rt_flags |= RTF_MODIFIED;
-				flags |= RTF_MODIFIED;
+#endif
+				error = rt_setgate(rt, gateway);
+				if (error == 0) {
+					rt->rt_flags |= RTF_MODIFIED;
+					flags |= RTF_MODIFIED;
+				}
+#ifdef NET_MPSAFE
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
 			}
+#endif
 			stat = &rtstat.rts_newgateway;
 		}
 	} else
@@ -1002,9 +1024,17 @@ ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
 		int s;
 		struct rtentry *rt;
 
-		rt = rtalloc1(dst, 0);
+		/* XXX we cannot call rtalloc1 if holding the rt lock */
+		if (RT_LOCKED())
+			rt = rtalloc1_locked(gateway, 0, true);
+		else
+			rt = rtalloc1(gateway, 0);
 		if (rt == NULL)
 			return NULL;
+		if (rt->rt_flags & RTF_GATEWAY) {
+			rt_unref(rt);
+			return NULL;
+		}
 		/*
 		 * Just in case. May not need to do this workaround.
 		 * Revisit when working on rtentry MP-ification.
@@ -1137,7 +1167,7 @@ rt_getifa(struct rt_addrinfo *info, struct psref *psref)
 		return NULL;
 got:
 	if (ifa->ifa_getifa != NULL) {
-		/* FIXME NOMPSAFE */
+		/* FIXME ifa_getifa is NOMPSAFE */
 		ifa = (*ifa->ifa_getifa)(ifa, dst);
 		if (ifa == NULL)
 			return NULL;
@@ -1160,7 +1190,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	int error = 0, rc;
 	struct rtentry *rt;
 	rtbl_t *rtbl;
-	struct ifaddr *ifa = NULL, *ifa2 = NULL;
+	struct ifaddr *ifa = NULL;
 	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -1266,6 +1296,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 
 		ss = pserialize_read_enter();
 		if (info->rti_info[RTAX_IFP] != NULL) {
+			struct ifaddr *ifa2;
 			ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP]);
 			if (ifa2 != NULL)
 				rt->rt_ifp = ifa2->ifa_ifp;
@@ -1486,10 +1517,6 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		break;
 	case RTM_ADD:
 		/*
-		 * FIXME NOMPAFE: the rtentry is updated with the existence
-		 * of refeferences of it.
-		 */
-		/*
 		 * XXX it looks just reverting rt_ifa replaced by ifa_rtrequest
 		 * called via rtrequest1. Can we just prevent the replacement
 		 * somehow and remove the following code? And also doesn't
@@ -1498,14 +1525,30 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if (rt->rt_ifa != ifa) {
 			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
 				rt->rt_ifa);
-			if (rt->rt_ifa->ifa_rtrequest != NULL) {
-				rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt,
-				    &info);
+#ifdef NET_MPSAFE
+			KASSERT(!cpu_softintr_p());
+
+			error = rt_update_prepare(rt);
+			if (error == 0) {
+#endif
+				if (rt->rt_ifa->ifa_rtrequest != NULL) {
+					rt->rt_ifa->ifa_rtrequest(RTM_DELETE,
+					    rt, &info);
+				}
+				rt_replace_ifa(rt, ifa);
+				rt->rt_ifp = ifa->ifa_ifp;
+				if (ifa->ifa_rtrequest != NULL)
+					ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+#ifdef NET_MPSAFE
+				rt_update_finish(rt);
+			} else {
+				/*
+				 * If error != 0, the rtentry is being
+				 * destroyed, so doing nothing doesn't
+				 * matter.
+				 */
 			}
-			rt_replace_ifa(rt, ifa);
-			rt->rt_ifp = ifa->ifa_ifp;
-			if (ifa->ifa_rtrequest != NULL)
-				ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+#endif
 		}
 		rt_newmsg(cmd, rt);
 		rt_unref(rt);
@@ -1964,7 +2007,9 @@ rtcache_validate_locked(struct route *ro)
 {
 	struct rtentry *rt = NULL;
 
+#ifdef NET_MPSAFE
 retry:
+#endif
 	rt = ro->_ro_rt;
 	rtcache_invariants(ro);
 
@@ -1975,6 +2020,7 @@ retry:
 
 	RT_RLOCK();
 	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL) {
+#ifdef NET_MPSAFE
 		if (ISSET(rt->rt_flags, RTF_UPDATING)) {
 			if (rt_wait_ok()) {
 				RT_UNLOCK();
@@ -1987,6 +2033,7 @@ retry:
 				rt = NULL;
 			}
 		} else
+#endif
 			rtcache_ref(rt, ro);
 	} else
 		rt = NULL;

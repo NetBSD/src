@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.3 2008/04/30 13:10:58 martin Exp $
+.\" $NetBSD: boot.8,v 1.3.48.1 2017/04/21 16:53:19 bouyer Exp $
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 23, 2006
+.Dd February 17, 2017
 .Dt BOOT 8 prep
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ The prep firmware looks for a partition of type 0x41 (65) and
 expects the bootloader, immediately followed by the kernel, to be
 there.
 The
-.Xr mkbootimage 8
+.Xr prep/mkbootimage 8
 command needs to be used to generate this image.
 .Sh FILES
 .Bl -tag -width /usr/mdec/boot_com0xx -compact
@@ -80,7 +80,7 @@ system bootstrap with serial console
 .Xr halt 8 ,
 .Xr init 8 ,
 .Xr installboot 8 ,
-.Xr mkbootimage 8 ,
+.Xr prep/mkbootimage 8 ,
 .Xr rc 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8

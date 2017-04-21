@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.c,v 1.1.1.2 2014/04/24 12:45:52 pettai Exp $	*/
+/*	$NetBSD: dirent.c,v 1.1.1.2.10.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2009, Secure Endpoints Inc.
@@ -113,7 +113,7 @@ opendir(const char * path)
     struct _finddata_t fd;
     intptr_t           fd_handle;
     const char         *filespec;
-    char               path_buffer[1024];
+    char               path_buffer[1024]="";
 
     memset(&fd, 0, sizeof(fd));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: host_port.c,v 1.1.1.3 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: host_port.c,v 1.1.1.3.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -18,6 +18,9 @@
 /*	host_port() splits a string into substrings with the host
 /*	name or address, and the service name or port number.
 /*	The input string is modified.
+/*
+/*	Host/domain names are validated with valid_utf8_hostname(),
+/*	and host addresses are validated with valid_hostaddr().
 /*
 /*	The following input formats are understood (null means
 /*	a null pointer argument):
@@ -90,8 +93,8 @@
 
 #include <msg.h>
 #include <split_at.h>
-#include <stringops.h>
-#include <valid_hostname.h>
+#include <stringops.h>			/* XXX util_utf8_enable */
+#include <valid_utf8_hostname.h>
 
 /* Global library. */
 
@@ -156,7 +159,8 @@ const char *host_port(char *buf, char **host, char *def_host,
      * Final sanity checks. We're still sloppy, allowing bare numerical
      * network addresses instead of requiring proper [ipaddress] forms.
      */
-    if (*host != def_host && !valid_hostname(*host, DONT_GRIPE)
+    if (*host != def_host 
+	&& !valid_utf8_hostname(util_utf8_enable, *host, DONT_GRIPE)
 	&& !valid_hostaddr(*host, DONT_GRIPE))
 	return ("valid hostname or network address required");
     if (*port != def_service && ISDIGIT(**port) && !alldig(*port))

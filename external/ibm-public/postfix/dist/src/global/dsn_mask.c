@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_mask.c,v 1.1.1.2 2011/03/02 19:32:14 tron Exp $	*/
+/*	$NetBSD: dsn_mask.c,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -98,7 +98,7 @@ int     dsn_ret_code(const char *str)
 
 const char *dsn_ret_str(int code)
 {
-    const char *cp ;
+    const char *cp;
 
     if ((cp = str_name_code(dsn_ret_table, code)) == 0)
 	msg_panic("dsn_ret_str: unknown code %d", code);

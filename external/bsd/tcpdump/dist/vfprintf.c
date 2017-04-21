@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vfprintf.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.4.4.1 2017/04/21 16:52:36 bouyer Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: vfprintf.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "interface.h"
+#include "netdissect.h"
 
 /*
  * Stock 4.3 doesn't have vfprintf.

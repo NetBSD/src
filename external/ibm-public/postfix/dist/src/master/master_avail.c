@@ -1,4 +1,4 @@
-/*	$NetBSD: master_avail.c,v 1.1.1.4 2013/01/02 18:59:01 tron Exp $	*/
+/*	$NetBSD: master_avail.c,v 1.1.1.4.16.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -85,7 +85,7 @@
 
 /* master_avail_event - create child process to handle connection request */
 
-static void master_avail_event(int event, char *context)
+static void master_avail_event(int event, void *context)
 {
     MASTER_SERV *serv = (MASTER_SERV *) context;
     time_t  now;
@@ -169,7 +169,7 @@ void    master_avail_listen(MASTER_SERV *serv)
 	    msg_info("%s: enable events %s", myname, serv->name);
 	for (n = 0; n < serv->listen_fd_count; n++)
 	    event_enable_read(serv->listen_fd[n], master_avail_event,
-			      (char *) serv);
+			      (void *) serv);
 	serv->flags |= MASTER_FLAG_LISTEN;
     } else if (!listen_flag && MASTER_LISTENING(serv)) {
 	if (msg_verbose)
@@ -239,8 +239,8 @@ void    master_avail_less(MASTER_SERV *serv, MASTER_PROC *proc)
      * problems, the code below invokes no code in other master_XXX modules,
      * and modifies no data that is maintained by other master_XXX modules.
      * 
-     * This child is no longer available for servicing connection requests.
-     * When no child processes are available, start monitoring the service's
+     * This child is no longer available for servicing connection requests. When
+     * no child processes are available, start monitoring the service's
      * listen socket for new connection requests.
      */
     if (msg_verbose)

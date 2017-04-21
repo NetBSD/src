@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.92 2017/01/02 16:32:09 manu Exp $
+	$NetBSD: syscalls.master,v 1.92.2.1 2017/04/21 16:53:41 bouyer Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -756,7 +756,9 @@
 476	UNIMPL		signalfd
 477	UNIMPL		timerfd
 478	UNIMPL		eventfd
-479	UNIMPL		recvmmsg
+479	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
 480	UNIMPL		fallocate
 481	UNIMPL		timerfd_create
 482	UNIMPL		timerfd_settime
@@ -771,3 +773,24 @@
 491	UNIMPL		pwritev
 492	UNIMPL		rt_tgsigqueueinfo
 493	UNIMPL		perf_counter_open
+494	UNIMPL		fanotify_init
+495	UNIMPL		fanotify_mark
+496	UNIMPL		prlimit64
+497	UNIMPL		name_to_handle_at
+498	UNIMPL		open_by_handle_at
+499	UNIMPL		clock_adjtime
+500	UNIMPL		syncfs
+501	UNIMPL		setns
+502	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+503	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
+504	UNIMPL		process_vm_readv
+505	UNIMPL		process_vm_writev
+506	UNIMPL		kcmp
+507	UNIMPL		finit_module
+508	UNIMPL		sched_setattr
+509	UNIMPL		sched_getattr
+510	UNIMPL		renameat2

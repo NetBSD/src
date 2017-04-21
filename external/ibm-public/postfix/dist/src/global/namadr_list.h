@@ -1,4 +1,4 @@
-/*	$NetBSD: namadr_list.h,v 1.1.1.2 2013/01/02 18:58:59 tron Exp $	*/
+/*	$NetBSD: namadr_list.h,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _NAMADR_LIST_H_INCLUDED_
 #define _NAMADR_LIST_H_INCLUDED_
@@ -23,8 +23,8 @@
   */
 #define NAMADR_LIST MATCH_LIST
 
-#define namadr_list_init(f, p) \
-	match_list_init((f), (p), 2, match_hostname, match_hostaddr)
+#define namadr_list_init(o, f, p) \
+	match_list_init((o), (f), (p), 2, match_hostname, match_hostaddr)
 #define namadr_list_match	match_list_match
 #define namadr_list_free	match_list_free
 

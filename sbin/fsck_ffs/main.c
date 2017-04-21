@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.83 2015/06/16 23:58:30 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.83.4.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.83 2015/06/16 23:58:30 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.83.4.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,21 +96,30 @@ main(int argc, char *argv[])
 	skipclean = 1;
 	markclean = 1;
 	forceimage = 0;
+#ifndef NO_FFS_EI
 	endian = 0;
+#endif
+#ifndef NO_APPLE_UFS
 	isappleufs = 0;
+#endif
 	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npPqUyx:X")) != -1) {
 		switch (ch) {
+#ifndef NO_APPLE_UFS
 		case 'a':
 			isappleufs = 1;
 			break;
+#endif
 
+#ifndef NO_FFS_EI
 		case 'B':
 			if (strcmp(optarg, "be") == 0)
 				endian = BIG_ENDIAN;
 			else if (strcmp(optarg, "le") == 0)
 				endian = LITTLE_ENDIAN;
-			else usage();
+			else
+				usage();
 			break;
+#endif
 
 		case 'b':
 			skipclean = 0;
@@ -511,8 +520,15 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "usage: %s [-adFfPpqUX] [-B byteorder] [-b block] [-c level] "
-	    "[-m mode]\n"
+	    "usage: %s [-"
+#ifndef NO_APPLE_UFS
+	    "a"
+#endif
+	    "dFfPpqUX] "
+#ifndef NO_FFS_EI
+	    "[-B byteorder] "
+#endif
+	    "[-b block] [-c level] [-m mode]\n"
 	    "\t[-x snap-backup] [-y | -n] filesystem ...\n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);

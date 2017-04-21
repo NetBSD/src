@@ -1,4 +1,4 @@
-/*	$NetBSD: conflicts.c,v 1.1.1.4 2010/01/30 21:33:43 joerg Exp $	*/
+/*	$NetBSD: conflicts.c,v 1.1.1.4.32.1 2017/04/21 16:52:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Roland Illig <rillig@NetBSD.org>.
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: conflicts.c,v 1.1.1.4 2010/01/30 21:33:43 joerg Exp $");
+__RCSID("$NetBSD: conflicts.c,v 1.1.1.4.32.1 2017/04/21 16:52:33 bouyer Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>

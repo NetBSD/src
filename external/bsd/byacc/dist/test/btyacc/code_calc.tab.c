@@ -1,4 +1,4 @@
-/*	$NetBSD: code_calc.tab.c,v 1.1.1.3 2016/01/09 21:59:46 christos Exp $	*/
+/*	$NetBSD: code_calc.tab.c,v 1.1.1.3.4.1 2017/04/21 16:51:21 bouyer Exp $	*/
 
 #undef YYBTYACC
 #define YYBTYACC 0
@@ -18,12 +18,14 @@ const YYINT calc_defred[] = {                      1,
     0,    0,   18,    0,    6,    0,    0,    0,    0,    9,
    10,   11,
 };
+#if defined(YYDESTRUCT_CALL) || defined(YYSTYPE_TOSTRING)
 const YYINT calc_stos[] = {                        0,
   261,  256,  257,  258,   45,   40,  262,  263,  264,   10,
    61,  258,  263,  263,   10,  124,   38,   43,   45,   42,
    47,   37,  257,  263,   41,  263,  263,  263,  263,  263,
   263,  263,
 };
+#endif /* YYDESTRUCT_CALL || YYSTYPE_TOSTRING */
 const YYINT calc_dgoto[] = {                       1,
     7,    8,    9,
 };
@@ -127,7 +129,6 @@ const YYINT calc_ctable[] = {                     -1,
 #ifndef YYDEBUG
 #define YYDEBUG 0
 #endif
-#if YYDEBUG
 const char *const calc_name[] = {
 
 "$end",0,0,0,0,0,0,0,0,0,"'\\n'",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -140,6 +141,7 @@ const char *const calc_name[] = {
 0,0,"error","DIGIT","LETTER","UMINUS","$accept","list","stat","expr","number",
 "illegal-symbol",
 };
+#if YYDEBUG
 const char *const calc_rule[] = {
 "$accept : list",
 "list :",

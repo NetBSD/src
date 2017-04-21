@@ -1,17 +1,18 @@
-/*	$NetBSD: strlcpy-internal.h,v 1.1.1.2 2013/04/11 16:43:25 christos Exp $	*/
-#ifndef _STRLCPY_INTERNAL_H_
-#define _STRLCPY_INTERNAL_H_
+/*	$NetBSD: strlcpy-internal.h,v 1.1.1.2.16.1 2017/04/21 16:51:32 bouyer Exp $	*/
+#ifndef STRLCPY_INTERNAL_H_INCLUDED_
+#define STRLCPY_INTERNAL_H_INCLUDED_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "event2/event-config.h"
+#include "evconfig-private.h"
 
-#ifndef _EVENT_HAVE_STRLCPY
+#ifndef EVENT__HAVE_STRLCPY
 #include <string.h>
-size_t _event_strlcpy(char *dst, const char *src, size_t siz);
-#define strlcpy _event_strlcpy
+size_t event_strlcpy_(char *dst, const char *src, size_t siz);
+#define strlcpy event_strlcpy_
 #endif
 
 #ifdef __cplusplus

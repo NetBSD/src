@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_BIND_BLOB 3
 .Os
 .Sh NAME
@@ -16,7 +16,7 @@
 .Nm sqlite3_bind_zeroblob64
 .Nd Binding Values To Prepared Statements
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_blob
 .Fa "sqlite3_stmt*"
 .Fa "int"
@@ -24,7 +24,7 @@
 .Fa "int n"
 .Fa "void(*)(void*)"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_blob64
 .Fa "sqlite3_stmt*"
 .Fa "int"
@@ -32,30 +32,30 @@
 .Fa "sqlite3_uint64"
 .Fa "void(*)(void*)"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_double
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fa "double"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_int
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fa "int"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_int64
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fa "sqlite3_int64"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_null
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_text
 .Fa "sqlite3_stmt*"
 .Fa "int"
@@ -63,7 +63,7 @@
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_text16
 .Fa "sqlite3_stmt*"
 .Fa "int"
@@ -71,7 +71,7 @@
 .Fa "int"
 .Fa "void(*)(void*)"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_text64
 .Fa "sqlite3_stmt*"
 .Fa "int"
@@ -80,19 +80,19 @@
 .Fa "void(*)(void*)"
 .Fa "unsigned char encoding"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_value
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fa "const sqlite3_value*"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_zeroblob
 .Fa "sqlite3_stmt*"
 .Fa "int"
 .Fa "int n"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_bind_zeroblob64
 .Fa "sqlite3_stmt*"
 .Fa "int"

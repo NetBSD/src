@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.26 2012/03/04 11:52:32 wiz Exp $
+.\"	$NetBSD: ypclnt.3,v 1.26.18.1 2017/04/21 16:53:10 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm yp_order ,
 .Nm yp_unbind ,
 .Nm yperr_string ,
-.Nm ypprot_err
+.Nm ypprot_err ,
 .Nm yp_setbindtries
 .Nd Interface to the YP subsystem
 .Sh LIBRARY
@@ -277,7 +277,6 @@ function should return non-zero when it no longer wishes to process
 key-value pairs, at which time
 .Fn yp_all
 returns a value of 0, and is called with the following arguments:
-.Pp
 .Bd -literal -offset indent
 int foreach (
 	int instatus,

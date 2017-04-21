@@ -1,4 +1,4 @@
-/*	$NetBSD: format_tv.h,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: format_tv.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _FORMAT_TV_H_INCLUDED_
 #define _FORMAT_TV_H_INCLUDED_
@@ -21,7 +21,7 @@
  /*
   * External interface.
   */
-extern VSTRING *format_tv(VSTRING *, int, int, int, int);
+extern VSTRING *format_tv(VSTRING *, long, long, int, int);
 
 /* LICENSE
 /* .ad

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2017/01/11 12:02:30 joerg Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2017/04/21 16:52:02 bouyer Exp $
 
 LIB=	LLVMObject
 
@@ -10,6 +10,7 @@ SRCS+=	Archive.cpp \
 	ArchiveWriter.cpp \
 	Binary.cpp \
 	COFFObjectFile.cpp \
+	Decompressor.cpp \
 	ELF.cpp \
 	ELFObjectFile.cpp \
 	Error.cpp \

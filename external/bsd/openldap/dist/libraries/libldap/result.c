@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.1.1.5 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.5.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* result.c - wait for an ldap result */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,9 @@
  *	Referral ::= SEQUENCE OF LDAPURL	(one or more)
  *	LDAPURL ::= LDAPString			(limited to URL chars)
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: result.c,v 1.1.1.5.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 
@@ -275,7 +278,7 @@ wait4msg(
 #ifdef HAVE_GETTIMEOFDAY
 		gettimeofday( &start_time_tv, NULL );
 #else /* ! HAVE_GETTIMEOFDAY */
-		time( &start_time_tv.tv_sec );
+		start_time_tv.tv_sec = time( NULL );
 		start_time_tv.tv_usec = 0;
 #endif /* ! HAVE_GETTIMEOFDAY */
 	}
@@ -389,7 +392,7 @@ wait4msg(
 #ifdef HAVE_GETTIMEOFDAY
 			gettimeofday( &curr_time_tv, NULL );
 #else /* ! HAVE_GETTIMEOFDAY */
-			time( &curr_time_tv.tv_sec );
+			curr_time_tv.tv_sec = time( NULL );
 			curr_time_tv.tv_usec = 0;
 #endif /* ! HAVE_GETTIMEOFDAY */
 

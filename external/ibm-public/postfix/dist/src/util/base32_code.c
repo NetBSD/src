@@ -1,4 +1,4 @@
-/*	$NetBSD: base32_code.c,v 1.1.1.1 2013/01/02 18:59:11 tron Exp $	*/
+/*	$NetBSD: base32_code.c,v 1.1.1.1.20.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -148,7 +148,7 @@ VSTRING *base32_decode(VSTRING *result, const char *in, ssize_t len)
     if (un_b32 == 0) {
 	un_b32 = (unsigned char *) mymalloc(CHARS_PER_BYTE);
 	memset(un_b32, INVALID, CHARS_PER_BYTE);
-	for (cp = to_b32; cp < to_b32 + sizeof(to_b32); cp++)
+	for (cp = to_b32; cp < to_b32 + sizeof(to_b32) - 1; cp++)
 	    un_b32[*cp] = cp - to_b32;
     }
 

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 2017/01/02 16:32:09 manu Exp $
+	$NetBSD: syscalls.master,v 1.58.2.1 2017/04/21 16:53:41 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -516,7 +516,9 @@
 285	UNIMPL		fallocate
 286	UNIMPL		timerfd_settime
 287	UNIMPL		timerfd_gettime
-288	UNIMPL		accept4
+288	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
 289	UNIMPL		signalfd4
 290	UNIMPL		eventfd2
 291	UNIMPL		epoll_create1
@@ -527,7 +529,9 @@
 296	UNIMPL		pwritev
 297	UNIMPL		rt_tgsigqueueinfo
 298	UNIMPL		perf_counter_open
-299	UNIMPL		recvmmsg
+299	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
 300	UNIMPL		fanotify_init
 301	UNIMPL		fanotify_mark
 302	UNIMPL		prlimit64
@@ -535,7 +539,9 @@
 304	UNIMPL		open_by_handle_at
 305	UNIMPL		clock_adjtime
 306	UNIMPL		syncfs
-307	UNIMPL		sendmmsg
+307	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
 308	UNIMPL		setns
 309	UNIMPL		getcpu
 310	UNIMPL		process_vm_readv

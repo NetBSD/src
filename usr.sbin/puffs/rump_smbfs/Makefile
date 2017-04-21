@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2013/12/25 23:35:17 christos Exp $
+#	$NetBSD: Makefile,v 1.7.12.1 2017/04/21 16:54:18 bouyer Exp $
 #
 
 SMBROOT=${.CURDIR}/../../../external/bsd/smbfs
@@ -7,7 +7,7 @@ MOUNTNAME=	smbfs
 SRCS+=		smb_rumpops.c
 
 PROGDPLIBS+=	smb ${SMBROOT}/lib/libsmb
-LDADD+= 	-lrumpnet_sockin -lrumpnet
+LDADD+= 	-lrumpnet_sockin -lrumpnet_net -lrumpnet
 LDADD+=		-lrumpkern_crypto -lrumpdev_netsmb -lrumpdev
 
 ISRUMP=		# it is

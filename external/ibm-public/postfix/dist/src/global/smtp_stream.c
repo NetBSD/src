@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_stream.c,v 1.1.1.2 2013/01/02 18:59:00 tron Exp $	*/
+/*	$NetBSD: smtp_stream.c,v 1.1.1.2.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -184,7 +184,7 @@ static void smtp_timeout_reset(VSTREAM *stream)
      * sending body content one line at a time.
      */
     if (vstream_fstat(stream, VSTREAM_FLAG_DEADLINE))
-	vstream_control(stream, VSTREAM_CTL_START_DEADLINE, VSTREAM_CTL_END);
+	vstream_control(stream, CA_VSTREAM_CTL_START_DEADLINE, CA_VSTREAM_CTL_END);
 }
 
 /* smtp_longjmp - raise an exception */
@@ -217,12 +217,12 @@ void    smtp_stream_setup(VSTREAM *stream, int maxtime, int enable_deadline)
 		 myname, maxtime, enable_deadline);
 
     vstream_control(stream,
-		    VSTREAM_CTL_DOUBLE,
-		    VSTREAM_CTL_TIMEOUT, maxtime,
-		    enable_deadline ? VSTREAM_CTL_START_DEADLINE
-		    : VSTREAM_CTL_STOP_DEADLINE,
-		    VSTREAM_CTL_EXCEPT,
-		    VSTREAM_CTL_END);
+		    CA_VSTREAM_CTL_DOUBLE,
+		    CA_VSTREAM_CTL_TIMEOUT(maxtime),
+		    enable_deadline ? CA_VSTREAM_CTL_START_DEADLINE
+		    : CA_VSTREAM_CTL_STOP_DEADLINE,
+		    CA_VSTREAM_CTL_EXCEPT,
+		    CA_VSTREAM_CTL_END);
 }
 
 /* smtp_flush - flush stream */

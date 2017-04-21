@@ -1,4 +1,4 @@
-/*	$NetBSD: unescape.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: unescape.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -168,10 +168,7 @@ VSTRING *escape(VSTRING *result, const char *data, ssize_t len)
 		continue;
 	    }
 	}
-	if (ISDIGIT(*UCHAR(data)))
-	    vstring_sprintf_append(result, "\\%03d", ch);
-	else
-	    vstring_sprintf_append(result, "\\%d", ch);
+	vstring_sprintf_append(result, "\\%03o", ch);
     }
     VSTRING_TERMINATE(result);
     return (result);
@@ -197,11 +194,13 @@ int     main(int argc, char **argv)
 	while (vstring_fgets_nonl(in, VSTREAM_IN)) {
 	    unescape(out, vstring_str(in));
 	    vstream_fwrite(VSTREAM_OUT, vstring_str(out), VSTRING_LEN(out));
+	    VSTREAM_PUTC('\n', VSTREAM_OUT);
 	}
     } else {
-	while (vstring_fgets(in, VSTREAM_IN)) {
+	while (vstring_fgets_nonl(in, VSTREAM_IN)) {
 	    escape(out, vstring_str(in), VSTRING_LEN(in));
 	    vstream_fwrite(VSTREAM_OUT, vstring_str(out), VSTRING_LEN(out));
+	    VSTREAM_PUTC('\n', VSTREAM_OUT);
 	}
     }
     vstream_fflush(VSTREAM_OUT);

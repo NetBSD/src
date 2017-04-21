@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.1.1.2 2014/04/24 12:45:48 pettai Exp $	*/
+/*	$NetBSD: flush.c,v 1.1.1.2.10.1 2017/04/21 16:50:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("NetBSD");
+__RCSID("$NetBSD: flush.c,v 1.1.1.2.10.1 2017/04/21 16:50:49 bouyer Exp $");
 
 kadm5_ret_t
 kadm5_s_flush(void *server_handle)

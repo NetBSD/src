@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_thash.c,v 1.1.1.3 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_thash.c,v 1.1.1.3.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -43,125 +43,38 @@
 /* Utility library. */
 
 #include <msg.h>
-#include <mymalloc.h>
-#include <htable.h>
 #include <iostuff.h>
 #include <vstring.h>
 #include <stringops.h>
 #include <readlline.h>
 #include <dict.h>
+#include <dict_ht.h>
 #include <dict_thash.h>
-#include <warn_stat.h>
 
 /* Application-specific. */
 
-typedef struct {
-    DICT    dict;			/* generic members */
-    HTABLE *table;			/* in-memory hash */
-    HTABLE_INFO **info;			/* for iterator */
-    HTABLE_INFO **cursor;		/* ditto */
-} DICT_THASH;
-
 #define STR	vstring_str
-
-/* dict_thash_lookup - find database entry */
-
-static const char *dict_thash_lookup(DICT *dict, const char *name)
-{
-    DICT_THASH *dict_thash = (DICT_THASH *) dict;
-    const char *result = 0;
-
-    /*
-     * Optionally fold the key.
-     */
-    if (dict->flags & DICT_FLAG_FOLD_FIX) {
-	if (dict->fold_buf == 0)
-	    dict->fold_buf = vstring_alloc(10);
-	vstring_strcpy(dict->fold_buf, name);
-	name = lowercase(vstring_str(dict->fold_buf));
-    }
-
-    /*
-     * Look up the value.
-     */
-    result = htable_find(dict_thash->table, name);
-
-    DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, result);
-}
-
-/* dict_thash_sequence - traverse the dictionary */
-
-static int dict_thash_sequence(DICT *dict, int function,
-			               const char **key, const char **value)
-{
-    const char *myname = "dict_thash_sequence";
-    DICT_THASH *dict_thash = (DICT_THASH *) dict;
-
-    /*
-     * Determine and execute the seek function.
-     */
-    switch (function) {
-    case DICT_SEQ_FUN_FIRST:
-	if (dict_thash->info == 0)
-	    dict_thash->info = htable_list(dict_thash->table);
-	dict_thash->cursor = dict_thash->info;
-	break;
-    case DICT_SEQ_FUN_NEXT:
-	if (dict_thash->cursor[0])
-	    dict_thash->cursor += 1;
-	break;
-    default:
-	msg_panic("%s: invalid function: %d", myname, function);
-    }
-
-    /*
-     * Return the entry under the cursor.
-     */
-    if (dict_thash->cursor[0]) {
-	*key = dict_thash->cursor[0]->key;
-	*value = dict_thash->cursor[0]->value;
-	DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_SUCCESS);
-    } else {
-	*key = 0;
-	*value = 0;
-	DICT_ERR_VAL_RETURN(dict, DICT_ERR_NONE, DICT_STAT_FAIL);
-    }
-}
-
-/* dict_thash_close - disassociate from data base */
-
-static void dict_thash_close(DICT *dict)
-{
-    DICT_THASH *dict_thash = (DICT_THASH *) dict;
-
-    htable_free(dict_thash->table, myfree);
-    if (dict_thash->info)
-	myfree((char *) dict_thash->info);
-    if (dict->fold_buf)
-	vstring_free(dict->fold_buf);
-    dict_free(dict);
-}
+#define LEN	VSTRING_LEN
 
 /* dict_thash_open - open flat text data base */
 
 DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 {
-    DICT_THASH *dict_thash;
-    VSTREAM *fp = 0;
+    DICT   *dict;
+    VSTREAM *fp = 0;			/* DICT_THASH_OPEN_RETURN() */
     struct stat st;
     time_t  before;
     time_t  after;
-    VSTRING *line_buffer = 0;
+    VSTRING *line_buffer = 0;		/* DICT_THASH_OPEN_RETURN() */
     int     lineno;
+    int     last_line;
     char   *key;
     char   *value;
-    HTABLE *table;
-    HTABLE_INFO *ht;
 
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_THASH_OPEN_RETURN(d) { \
+#define DICT_THASH_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	if (fp != 0) \
 	    vstream_fclose(fp); \
@@ -188,19 +101,37 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	    DICT_THASH_OPEN_RETURN(dict_surrogate(DICT_TYPE_THASH, path,
 						  open_flags, dict_flags,
 					     "open database %s: %m", path));
-	}
+	    }
+
+	/*
+	 * Reuse the "internal" dictionary type.
+	 */
+	dict = dict_open3(DICT_TYPE_HT, path, open_flags, dict_flags);
+	dict_type_override(dict, DICT_TYPE_THASH);
+
 	if (line_buffer == 0)
 	    line_buffer = vstring_alloc(100);
-	lineno = 0;
-	table = htable_create(13);
-	while (readlline(line_buffer, fp, &lineno)) {
+	last_line = 0;
+	while (readllines(line_buffer, fp, &last_line, &lineno)) {
+
+	    /*
+	     * First some UTF-8 checks sans casefolding.
+	     */
+	    if ((dict->flags & DICT_FLAG_UTF8_ACTIVE)
+		&& allascii(STR(line_buffer)) == 0
+		&& valid_utf8_string(STR(line_buffer), LEN(line_buffer)) == 0) {
+		msg_warn("%s, line %d: non-UTF-8 input \"%s\""
+			 " -- ignoring this line",
+			 VSTREAM_PATH(fp), lineno, STR(line_buffer));
+		continue;
+	    }
 
 	    /*
 	     * Split on the first whitespace character, then trim leading and
 	     * trailing whitespace from key and value.
 	     */
 	    key = STR(line_buffer);
-	    value = key + strcspn(key, " \t\r\n");
+	    value = key + strcspn(key, CHARS_SPACE);
 	    if (*value)
 		*value++ = 0;
 	    while (ISSPACE(*value))
@@ -222,30 +153,30 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 			 " is this an alias file?", path, lineno);
 
 	    /*
-	     * Optionally fold the key.
-	     */
-	    if (dict_flags & DICT_FLAG_FOLD_FIX)
-		lowercase(key);
-
-	    /*
 	     * Store the value under the key. Handle duplicates
-	     * appropriately.
+	     * appropriately. XXX Move this into dict_ht, but 1) that map
+	     * ignores duplicates by default and we would have to check that
+	     * we won't break existing code that depends on such benavior; 2)
+	     * by inlining the checks here we can degrade gracefully instead
+	     * of terminating with a fatal error. See comment in dict_inline.c.
 	     */
-	    if ((ht = htable_locate(table, key)) != 0) {
+	    if (dict->lookup(dict, key) != 0) {
 		if (dict_flags & DICT_FLAG_DUP_IGNORE) {
 		     /* void */ ;
 		} else if (dict_flags & DICT_FLAG_DUP_REPLACE) {
-		    myfree(ht->value);
-		    ht->value = mystrdup(value);
+		    dict->update(dict, key, value);
 		} else if (dict_flags & DICT_FLAG_DUP_WARN) {
 		    msg_warn("%s, line %d: duplicate entry: \"%s\"",
 			     path, lineno, key);
 		} else {
-		    msg_fatal("%s, line %d: duplicate entry: \"%s\"",
-			      path, lineno, key);
+		    dict->close(dict);
+		    DICT_THASH_OPEN_RETURN(dict_surrogate(DICT_TYPE_THASH, path,
+						     open_flags, dict_flags,
+				     "%s, line %d: duplicate entry: \"%s\"",
+							path, lineno, key));
 		}
 	    } else {
-		htable_enter(table, key, mystrdup(value));
+		dict->update(dict, key, value);
 	    }
 	}
 
@@ -264,27 +195,14 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	/*
 	 * Yes, it is hot. Discard the result and read the file again.
 	 */
-	htable_free(table, myfree);
+	dict->close(dict);
 	if (msg_verbose > 1)
 	    msg_info("pausing to let file %s cool down", path);
 	doze(300000);
     }
 
-    /*
-     * Create the in-memory table.
-     */
-    dict_thash = (DICT_THASH *)
-	dict_alloc(DICT_TYPE_THASH, path, sizeof(*dict_thash));
-    dict_thash->dict.lookup = dict_thash_lookup;
-    dict_thash->dict.sequence = dict_thash_sequence;
-    dict_thash->dict.close = dict_thash_close;
-    dict_thash->dict.flags = dict_flags | DICT_FLAG_DUP_WARN | DICT_FLAG_FIXED;
-    if (dict_flags & DICT_FLAG_FOLD_FIX)
-	dict_thash->dict.fold_buf = vstring_alloc(10);
-    dict_thash->info = 0;
-    dict_thash->table = table;
-    dict_thash->dict.owner.uid = st.st_uid;
-    dict_thash->dict.owner.status = (st.st_uid != 0);
+    dict->owner.uid = st.st_uid;
+    dict->owner.status = (st.st_uid != 0);
 
-    DICT_THASH_OPEN_RETURN(DICT_DEBUG (&dict_thash->dict));
+    DICT_THASH_OPEN_RETURN(DICT_DEBUG (dict));
 }

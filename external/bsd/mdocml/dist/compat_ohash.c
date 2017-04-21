@@ -128,7 +128,7 @@ ohash_resize(struct ohash *h)
 void *
 ohash_remove(struct ohash *h, unsigned int i)
 {
-	void		*result = UNCONST(h->t[i].p);
+	void		*result = __UNCONST(h->t[i].p);
 
 	if (result == NULL || result == DELETED)
 		return NULL;
@@ -149,7 +149,7 @@ ohash_find(struct ohash *h, unsigned int i)
 	if (h->t[i].p == DELETED)
 		return NULL;
 	else
-		return UNCONST(h->t[i].p);
+		return __UNCONST(h->t[i].p);
 }
 
 void *
@@ -188,7 +188,7 @@ ohash_next(struct ohash *h, unsigned int *pos)
 {
 	for (; *pos < h->size; (*pos)++)
 		if (h->t[*pos].p != DELETED && h->t[*pos].p != NULL)
-			return UNCONST(h->t[(*pos)++].p);
+			return __UNCONST(h->t[(*pos)++].p);
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: store-test.c,v 1.1.1.2 2014/04/24 12:45:51 pettai Exp $	*/
+/*	$NetBSD: store-test.c,v 1.1.1.2.10.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Kungliga Tekniska Högskolan

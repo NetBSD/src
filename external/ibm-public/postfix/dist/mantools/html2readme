@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HTML2TEXT="html2text -style pretty -rcfile html2text.rc"
+HTML2TEXT="html2text -ascii -style pretty -rcfile html2text.rc"
 
 #case $# in
 # 0) $HTML2TEXT;;
@@ -18,6 +18,11 @@ $HTML2TEXT "$@" | sed '
 / -$/ {
 	N
 	s/ -\n  o/ -o/
+	b top
+}
+/^  \*$/ {
+	N
+	s/\*\n    /* /
 	b top
 }
 ' | awk '

@@ -1,10 +1,10 @@
-/*	$NetBSD: regress.gen.h,v 1.1.1.2 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: regress.gen.h,v 1.1.1.2.16.1 2017/04/21 16:51:33 bouyer Exp $	*/
 /*
- * Automatically generated from ./regress.rpc
+ * Automatically generated from ./test/regress.rpc
  */
 
-#ifndef ___REGRESS_RPC_
-#define ___REGRESS_RPC_
+#ifndef EVENT_RPCOUT___TEST_REGRESS_RPC_
+#define EVENT_RPCOUT___TEST_REGRESS_RPC_
 
 #include <event2/util.h> /* for ev_uint*_t */
 #include <event2/rpc.h>
@@ -205,4 +205,4 @@ int run_other_numbers_get(struct run *, int, ev_uint32_t *);
 ev_uint32_t * run_other_numbers_add(struct run *msg, const ev_uint32_t value);
 /* --- run done --- */
 
-#endif  /* ___REGRESS_RPC_ */
+#endif  /* EVENT_RPCOUT___TEST_REGRESS_RPC_ */

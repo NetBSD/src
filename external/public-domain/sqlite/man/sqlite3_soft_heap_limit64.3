@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_SOFT_HEAP_LIMIT64 3
 .Os
 .Sh NAME
 .Nm sqlite3_soft_heap_limit64
 .Nd Impose A Limit On Heap Size
 .Sh SYNOPSIS
-.Ft sqlite3_int64 SQLITE_STDCALL 
+.Ft sqlite3_int64 
 .Fo sqlite3_soft_heap_limit64
 .Fa "sqlite3_int64 N"
 .Fc
@@ -45,8 +45,8 @@ The page cache allocates from its own memory pool supplied by sqlite3_config(SQL
 rather than from the heap.
 .El
 .Pp
-Beginning with SQLite version 3.7.3, the soft heap limit is enforced
-regardless of whether or not the SQLITE_ENABLE_MEMORY_MANAGEMENT
+Beginning with SQLite version 3.7.3 (dateof:3.7.3),
+the soft heap limit is enforced regardless of whether or not the SQLITE_ENABLE_MEMORY_MANAGEMENT
 compile-time option is invoked.
 With SQLITE_ENABLE_MEMORY_MANAGEMENT,
 the soft heap limit is enforced on every memory allocation.

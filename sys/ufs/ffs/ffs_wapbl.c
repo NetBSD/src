@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.37 2016/11/10 22:19:23 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.37.2.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.37 2016/11/10 22:19:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.37.2.1 2017/04/21 16:54:08 bouyer Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -342,6 +342,19 @@ ffs_wapbl_start(struct mount *mp)
 			    &count, &blksize, &extradata);
 			if (error)
 				return error;
+
+			/*
+			 * Make sure we don't carry over any delayed write
+			 * buffers when updating to log. Need to turn off
+			 * async termporarily, to prevent ffs_sync() writes
+			 * themselves being turned into delayed writes.
+			 */
+			if (mp->mnt_flag & MNT_UPDATE) {
+				int saveflag = mp->mnt_flag & MNT_ASYNC;
+				mp->mnt_flag &= ~MNT_ASYNC;
+				ffs_sync(mp, MNT_WAIT, FSCRED);
+				mp->mnt_flag |= saveflag;
+			}
 
 			error = wapbl_start(&mp->mnt_wapbl, mp, devvp, off,
 			    count, blksize, mp->mnt_wapbl_replay,

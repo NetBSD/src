@@ -1,4 +1,4 @@
-.\"	$NetBSD: memcache_table.5,v 1.1.1.3 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: memcache_table.5,v 1.1.1.3.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH MEMCACHE_TABLE 5 
 .ad
@@ -10,9 +10,9 @@ Postfix memcache client configuration
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" memcache:/etc/postfix/\fIfilename\fR
+\fBpostmap \-q "\fIstring\fB" memcache:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - memcache:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+\fBpostmap \-q \- memcache:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
@@ -25,10 +25,10 @@ instances.  To use memcache lookups, define a memcache
 source as a lookup table in main.cf, for example:
 
 .nf
-    virtual_alias_maps = memcache:/etc/postfix/memcache-aliases.cf
+    virtual_alias_maps = memcache:/etc/postfix/memcache\-aliases.cf
 .fi
 
-The file /etc/postfix/memcache-aliases.cf has the same
+The file /etc/postfix/memcache\-aliases.cf has the same
 format as the Postfix main.cf file, and specifies the
 parameters described below.
 
@@ -46,7 +46,7 @@ The memcache server (note: singular) that Postfix will try
 to connect to.  For a TCP server specify "inet:" followed by
 a hostname or address, ":", and a port name or number.
 Specify an IPv6 address inside "[]".
-For a UNIX-domain server specify "unix:" followed by the
+For a UNIX\-domain server specify "unix:" followed by the
 socket pathname. Examples:
 
 .nf
@@ -56,7 +56,7 @@ socket pathname. Examples:
     memcache = unix:/path/to/socket
 .fi
 
-NOTE: to access a UNIX-domain socket with the proxymap(8)
+NOTE: to access a UNIX\-domain socket with the proxymap(8)
 server, the socket must be accessible by the unprivileged
 postfix user.
 .IP "\fBbackup (default: undefined)\fR"
@@ -67,7 +67,7 @@ information in the persistent database. Specify a Postfix
 "type:table" database. Examples:
 
 .nf
-    # Non-shared postscreen cache.
+    # Non\-shared postscreen cache.
     backup = btree:/var/lib/postfix/postscreen_cache_map
 
     # Shared postscreen cache for processes on the same host.
@@ -91,7 +91,7 @@ NOTE 3: When the backup database is accessed with "proxy:"
 lookups, the full backup database name (including the
 "proxy:" prefix) must be specified in the proxymap server's
 proxy_read_maps or proxy_write_maps setting (depending on
-whether the access is read-only or read-write).
+whether the access is read\-only or read\-write).
 .IP "\fBflags (default: 0)\fR"
 Optional flags that should be stored along with a memcache
 update. The flags are ignored when looking up information.
@@ -140,27 +140,27 @@ Examples:
 The \fBkey_format\fR parameter supports the following '%'
 expansions:
 .RS
-.IP "\fB\fB%%\fR\fR"
+.IP "\fB%%\fR"
 This is replaced by a literal '%' character.
-.IP "\fB\fB%s\fR\fR"
+.IP "\fB%s\fR"
 This is replaced by the memcache client input key.
-.IP "\fB\fB%u\fR\fR"
+.IP "\fB%u\fR"
 When the input key is an address of the form user@domain,
 \fB%u\fR is replaced by the SQL quoted local part of the
 address.  Otherwise, \fB%u\fR is replaced by the entire
 search string.  If the localpart is empty, a lookup is
 silently suppressed and returns no results (an update is
 skipped with a warning).
-.IP "\fB\fB%d\fR\fR"
+.IP "\fB%d\fR"
 When the input key is an address of the form user@domain,
 \fB%d\fR is replaced by the domain part of the address.
 Otherwise, a lookup is silently suppressed and returns no
 results (an update is skipped with a warning).
-.IP "\fB\fB%[SUD]\fR\fR"
-The upper-case equivalents of the above expansions behave
+.IP "\fB%[SUD]\fR"
+The upper\-case equivalents of the above expansions behave
 in the \fBkey_format\fR parameter identically to their
-lower-case counter-parts.
-.IP "\fB\fB%[1-9]\fR\fR"
+lower\-case counter\-parts.
+.IP "\fB%[1\-9]\fR"
 The patterns %1, %2, ... %9 are replaced by the corresponding
 most significant component of the input key's domain. If
 the input key is \fIuser@mail.example.com\fR, then %1 is
@@ -175,7 +175,7 @@ This feature can significantly reduce database server load.
 Specify a list of domain names, paths to files, or "type:table"
 databases.
 When specified, only fully qualified search keys with a
-*non-empty* localpart and a matching domain are eligible
+*non\-empty* localpart and a matching domain are eligible
 for lookup or update: bare 'user' lookups, bare domain
 lookups and "@domain" lookups are silently skipped (updates
 are skipped with a warning).  Example:
@@ -204,7 +204,7 @@ receiving a memcache reply.
 .SH BUGS
 .ad
 .fi
-The Postfix memcache client cannot be used for security-sensitive
+The Postfix memcache client cannot be used for security\-sensitive
 tables such as \fBalias_maps\fR (these may contain
 "\fI|command\fR and "\fI/file/name\fR" destinations), or
 \fBvirtual_uid_maps\fR, \fBvirtual_gid_maps\fR and
@@ -212,7 +212,7 @@ tables such as \fBalias_maps\fR (these may contain
 privileges or "\fI/file/name\fR" destinations).  In a typical
 deployment a memcache database is writable by any process
 that can talk to the memcache server; in contrast,
-security-sensitive tables must never be writable by the
+security\-sensitive tables must never be writable by the
 unprivileged Postfix user.
 
 The Postfix memcache client requires additional configuration
@@ -241,9 +241,9 @@ MEMCACHE_README, Postfix memcache client guide
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 .ad
 .fi
 Memcache support was introduced with Postfix version 2.9.
@@ -254,3 +254,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

@@ -1,4 +1,4 @@
-/*	$NetBSD: mk_priv.c,v 1.1.1.2 2014/04/24 12:45:50 pettai Exp $	*/
+/*	$NetBSD: mk_priv.c,v 1.1.1.2.10.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -137,10 +137,8 @@ krb5_mk_priv(krb5_context context,
 
     ret = krb5_data_copy(outbuf, buf + buf_size - len, len);
     if (ret) {
-	krb5_set_error_message(context, ENOMEM,
-			       N_("malloc: out of memory", ""));
 	free(buf);
-	return ENOMEM;
+	return krb5_enomem(context);
     }
     free (buf);
     if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE)

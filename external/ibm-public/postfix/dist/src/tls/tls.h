@@ -1,15 +1,15 @@
-/*	$NetBSD: tls.h,v 1.1.1.5 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.1.5.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
 
 /*++
 /* NAME
-/*      tls 3h
+/*	tls 3h
 /* SUMMARY
-/*      libtls internal interfaces
+/*	libtls internal interfaces
 /* SYNOPSIS
-/*      #include <tls.h>
+/*	#include <tls.h>
 /* DESCRIPTION
 /* .nf
 
@@ -46,20 +46,23 @@
 #define TLS_LEV_MAY		1	/* wildcard */
 #define TLS_LEV_ENCRYPT		2	/* encrypted connection */
 #define TLS_LEV_FPRINT		3	/* "peer" CA-less verification */
-#define TLS_LEV_DANE		4	/* Opportunistic TLSA policy */
-#define TLS_LEV_DANE_ONLY	5	/* Required TLSA policy */
-#define TLS_LEV_VERIFY		6	/* certificate verified */
-#define TLS_LEV_SECURE		7	/* "secure" verification */
+#define TLS_LEV_HALF_DANE	4	/* DANE TLSA MX host, insecure MX RR */
+#define TLS_LEV_DANE		5	/* Opportunistic TLSA policy */
+#define TLS_LEV_DANE_ONLY	6	/* Required TLSA policy */
+#define TLS_LEV_VERIFY		7	/* certificate verified */
+#define TLS_LEV_SECURE		8	/* "secure" verification */
 
 #define TLS_REQUIRED(l)		((l) > TLS_LEV_MAY)
 #define TLS_MUST_MATCH(l)	((l) > TLS_LEV_ENCRYPT)
-#define TLS_MUST_TRUST(l)	((l) >= TLS_LEV_DANE)
+#define TLS_MUST_TRUST(l)	((l) >= TLS_LEV_HALF_DANE)
 #define TLS_MUST_PKIX(l)	((l) >= TLS_LEV_VERIFY)
+#define TLS_OPPORTUNISTIC(l)	((l) == TLS_LEV_MAY || (l) == TLS_LEV_DANE)
+#define TLS_DANE_BASED(l)	\
+	((l) >= TLS_LEV_HALF_DANE && (l) <= TLS_LEV_DANE_ONLY)
+#define TLS_NEVER_SECURED(l)	((l) == TLS_LEV_HALF_DANE)
 
-extern const NAME_CODE tls_level_table[];
-
-#define tls_level_lookup(s) name_code(tls_level_table, NAME_CODE_FLAG_NONE, (s))
-#define str_tls_level(l) str_name_code(tls_level_table, (l))
+extern int tls_level_lookup(const char *);
+extern const char *str_tls_level(int);
 
 #ifdef USE_TLS
 
@@ -73,17 +76,36 @@ extern const NAME_CODE tls_level_table[];
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
+#include <openssl/crypto.h>		/* Legacy SSLEAY_VERSION_NUMBER */
+#include <openssl/opensslv.h>		/* OPENSSL_VERSION_NUMBER */
 #include <openssl/ssl.h>
 
  /* Appease indent(1) */
 #define x509_stack_t STACK_OF(X509)
-#define x509_extension_stack_t STACK_OF(X509_EXTENSION)
 #define general_name_stack_t STACK_OF(GENERAL_NAME)
 #define ssl_cipher_stack_t STACK_OF(SSL_CIPHER)
 #define ssl_comp_stack_t STACK_OF(SSL_COMP)
 
 #if (OPENSSL_VERSION_NUMBER < 0x00090700f)
 #error "need OpenSSL version 0.9.7 or later"
+#endif
+
+ /* Backwards compatibility with OpenSSL < 1.1.0 */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#define OpenSSL_version_num SSLeay
+#define OpenSSL_version SSLeay_version
+#define OPENSSL_VERSION SSLEAY_VERSION
+#define X509_up_ref(x) \
+	CRYPTO_add(&((x)->references), 1, CRYPTO_LOCK_X509)
+#define EVP_PKEY_up_ref(k) \
+	CRYPTO_add(&((k)->references), 1, CRYPTO_LOCK_EVP_PKEY)
+#define X509_STORE_CTX_get0_cert(ctx) ((ctx)->cert)
+#define X509_STORE_CTX_get0_untrusted(ctx) ((ctx)->untrusted)
+#define X509_STORE_CTX_set0_untrusted X509_STORE_CTX_set_chain
+#define X509_STORE_CTX_set0_trusted_stack X509_STORE_CTX_trusted_stack
+#define ASN1_STRING_get0_data ASN1_STRING_data
+#define X509_getm_notBefore X509_get_notBefore
+#define X509_getm_notAfter X509_get_notAfter
 #endif
 
 /* SSL_CIPHER_get_name() got constified in 0.9.7g */
@@ -106,6 +128,10 @@ extern const NAME_CODE tls_level_table[];
 #include <vstream.h>
 #include <name_mask.h>
 #include <name_code.h>
+
+ /*
+  * TLS library.
+  */
 #include <dns.h>
 
  /*
@@ -167,7 +193,7 @@ typedef struct TLS_DANE {
     TLS_CERTS *certs;			/* Full trust-anchor certificates */
     TLS_PKEYS *pkeys;			/* Full trust-anchor public keys */
     char   *base_domain;		/* Base domain of TLSA RRset */
-    int     flags;			/* Conflate cert and pkey digests */
+    int     flags;			/* Lookup status */
     time_t  expires;			/* Expiration time of this record */
     int     refs;			/* Reference count */
 } TLS_DANE;
@@ -237,11 +263,13 @@ typedef struct {
 #define TLS_CERT_FLAG_ALTNAME		(1<<1)
 #define TLS_CERT_FLAG_TRUSTED		(1<<2)
 #define TLS_CERT_FLAG_MATCHED		(1<<3)
+#define TLS_CERT_FLAG_SECURED		(1<<4)
 
 #define TLS_CERT_IS_PRESENT(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_PRESENT))
 #define TLS_CERT_IS_ALTNAME(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_ALTNAME))
 #define TLS_CERT_IS_TRUSTED(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_TRUSTED))
 #define TLS_CERT_IS_MATCHED(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_MATCHED))
+#define TLS_CERT_IS_SECURED(c) ((c) && ((c)->peer_status&TLS_CERT_FLAG_SECURED))
 
  /*
   * Opaque client context handle.
@@ -268,7 +296,6 @@ extern int tls_log_mask(const char *, const char *);
 #define TLS_LOG_DEBUG			(1<<7)
 #define TLS_LOG_TLSPKTS			(1<<8)
 #define TLS_LOG_ALLPKTS			(1<<9)
-#define TLS_LOG_SESSTKT			(1<<10)
 
  /*
   * Client and Server application contexts
@@ -292,30 +319,67 @@ extern void tls_free_app_context(TLS_APPL_STATE *);
  /*
   * tls_misc.c
   */
-
 extern void tls_param_init(void);
 
  /*
   * Protocol selection.
   */
 #define TLS_PROTOCOL_INVALID	(~0)	/* All protocol bits masked */
+
+#ifdef SSL_TXT_SSLV2
 #define TLS_PROTOCOL_SSLv2	(1<<0)	/* SSLv2 */
+#else
+#define SSL_TXT_SSLV2		"SSLv2"
+#define TLS_PROTOCOL_SSLv2	0	/* Unknown */
+#undef  SSL_OP_NO_SSLv2
+#define SSL_OP_NO_SSLv2		0L	/* Noop */
+#endif
+
+#ifdef SSL_TXT_SSLV3
 #define TLS_PROTOCOL_SSLv3	(1<<1)	/* SSLv3 */
+#else
+#define SSL_TXT_SSLV3		"SSLv3"
+#define TLS_PROTOCOL_SSLv3	0	/* Unknown */
+#undef  SSL_OP_NO_SSLv3
+#define SSL_OP_NO_SSLv3		0L	/* Noop */
+#endif
+
+#ifdef SSL_TXT_TLSV1
 #define TLS_PROTOCOL_TLSv1	(1<<2)	/* TLSv1 */
+#else
+#define SSL_TXT_TLSV1		"TLSv1"
+#define TLS_PROTOCOL_TLSv1	0	/* Unknown */
+#undef  SSL_OP_NO_TLSv1
+#define SSL_OP_NO_TLSv1		0L	/* Noop */
+#endif
+
 #ifdef SSL_TXT_TLSV1_1
 #define TLS_PROTOCOL_TLSv1_1	(1<<3)	/* TLSv1_1 */
 #else
+#define SSL_TXT_TLSV1_1		"TLSv1.1"
 #define TLS_PROTOCOL_TLSv1_1	0	/* Unknown */
 #undef  SSL_OP_NO_TLSv1_1
 #define SSL_OP_NO_TLSv1_1	0L	/* Noop */
 #endif
+
 #ifdef SSL_TXT_TLSV1_2
 #define TLS_PROTOCOL_TLSv1_2	(1<<4)	/* TLSv1_2 */
 #else
+#define SSL_TXT_TLSV1_2		"TLSv1.2"
 #define TLS_PROTOCOL_TLSv1_2	0	/* Unknown */
 #undef  SSL_OP_NO_TLSv1_2
 #define SSL_OP_NO_TLSv1_2	0L	/* Noop */
 #endif
+
+#ifdef SSL_TXT_TLSV1_3
+#define TLS_PROTOCOL_TLSv1_3	(1<<5)	/* TLSv1_3 */
+#else
+#define SSL_TXT_TLSV1_3		"TLSv1.3"
+#define TLS_PROTOCOL_TLSv1_3	0	/* Unknown */
+#undef  SSL_OP_NO_TLSv1_3
+#define SSL_OP_NO_TLSv1_3	0L	/* Noop */
+#endif
+
 #define TLS_KNOWN_PROTOCOLS \
 	( TLS_PROTOCOL_SSLv2 | TLS_PROTOCOL_SSLv3 | TLS_PROTOCOL_TLSv1 \
 	   | TLS_PROTOCOL_TLSv1_1 | TLS_PROTOCOL_TLSv1_2 )
@@ -324,7 +388,8 @@ extern void tls_param_init(void);
 	     | (((m) & TLS_PROTOCOL_SSLv3) ? SSL_OP_NO_SSLv3 : 0L) \
 	     | (((m) & TLS_PROTOCOL_TLSv1) ? SSL_OP_NO_TLSv1 : 0L) \
 	     | (((m) & TLS_PROTOCOL_TLSv1_1) ? SSL_OP_NO_TLSv1_1 : 0L) \
-	     | (((m) & TLS_PROTOCOL_TLSv1_2) ? SSL_OP_NO_TLSv1_2 : 0L))
+	     | (((m) & TLS_PROTOCOL_TLSv1_2) ? SSL_OP_NO_TLSv1_2 : 0L) \
+	     | (((m) & TLS_PROTOCOL_TLSv1_3) ? SSL_OP_NO_TLSv1_3 : 0L))
 
 /*
  * SSL options that are managed via dedicated Postfix features, rather than
@@ -480,6 +545,13 @@ extern TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *);
   */
 extern void tls_session_stop(TLS_APPL_STATE *, VSTREAM *, int, int, TLS_SESS_STATE *);
 
+ /*
+  * tls_misc.c
+  */
+extern const char *tls_compile_version(void);
+extern const char *tls_run_version(void);
+extern const char **tls_pkey_algorithms(void);
+
 #ifdef TLS_INTERNAL
 
 #include <vstring.h>
@@ -593,12 +665,12 @@ extern int tls_ext_seed(int);
 /* LICENSE
 /* .ad
 /* .fi
-/*      The Secure Mailer license must be distributed with this software.
+/*	The Secure Mailer license must be distributed with this software.
 /* AUTHOR(S)
-/*      Wietse Venema
-/*      IBM T.J. Watson Research
-/*      P.O. Box 704
-/*      Yorktown Heights, NY 10598, USA
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
 /*
 /*	Victor Duchovni
 /*	Morgan Stanley

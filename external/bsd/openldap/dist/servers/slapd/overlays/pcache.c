@@ -1,9 +1,9 @@
-/*	$NetBSD: pcache.c,v 1.1.1.5 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: pcache.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003-2009 Symas Corporation.
  * All rights reserved.
@@ -20,6 +20,9 @@
  * This work was initially developed by Apurva Kumar for inclusion
  * in OpenLDAP Software and subsequently rewritten by Howard Chu.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pcache.c,v 1.1.1.5.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -459,8 +462,13 @@ ftemp_attrs( struct berval *ftemp, struct berval *template,
 			*t1++ = *p1++;
 
 		p2 = strchr( p1, '=' );
-		if ( !p2 )
+		if ( !p2 ) {
+			if ( !descs ) {
+				ch_free( temp2 );
+				return -1;
+			}
 			break;
+		}
 		i = p2 - p1;
 		AC_MEMCPY( t1, p1, i );
 		t1 += i;
@@ -472,6 +480,7 @@ ftemp_attrs( struct berval *ftemp, struct berval *template,
 		ad = NULL;
 		i = slap_bv2ad( &bv, &ad, text );
 		if ( i ) {
+			ch_free( temp2 );
 			ch_free( descs );
 			return -1;
 		}
@@ -567,6 +576,7 @@ bottom:
 	}
 	if ( !t_cnt ) {
 		*text = "couldn't parse template";
+		ch_free(attrs);
 		return -1;
 	}
 	if ( !got_oc && !( set->flags & PC_GOT_OC )) {
@@ -4499,6 +4509,7 @@ pcache_db_init(
 	qm = (query_manager*)ch_malloc(sizeof(query_manager));
 
 	cm->db = *be;
+	cm->db.bd_info = NULL;
 	SLAP_DBFLAGS(&cm->db) |= SLAP_DBFLAG_NO_SCHEMA_CHECK;
 	cm->db.be_private = NULL;
 	cm->db.bd_self = &cm->db;
@@ -4784,7 +4795,7 @@ pcache_db_close(
 	cache_manager *cm = on->on_bi.bi_private;
 	query_manager *qm = cm->qm;
 	QueryTemplate *tm;
-	int i, rc = 0;
+	int rc = 0;
 
 	/* stop the thread ... */
 	if ( cm->cc_arg ) {
@@ -4794,6 +4805,7 @@ pcache_db_close(
 		}
 		ldap_pvt_runqueue_remove( &slapd_rq, cm->cc_arg );
 		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+		cm->cc_arg = NULL;
 	}
 
 	if ( cm->save_queries ) {
@@ -4865,10 +4877,35 @@ pcache_db_close(
 	cm->db.be_limits = NULL;
 	cm->db.be_acl = NULL;
 
-
 	if ( cm->db.bd_info->bi_db_close ) {
 		rc = cm->db.bd_info->bi_db_close( &cm->db, NULL );
 	}
+
+#ifdef PCACHE_MONITOR
+	if ( rc == LDAP_SUCCESS ) {
+		rc = pcache_monitor_db_close( be );
+	}
+#endif /* PCACHE_MONITOR */
+
+	return rc;
+}
+
+static int
+pcache_db_destroy(
+	BackendDB *be,
+	ConfigReply *cr
+)
+{
+	slap_overinst *on = (slap_overinst *)be->bd_info;
+	cache_manager *cm = on->on_bi.bi_private;
+	query_manager *qm = cm->qm;
+	QueryTemplate *tm;
+	int i;
+
+	if ( cm->db.be_private != NULL ) {
+		backend_stopdown_one( &cm->db );
+	}
+
 	while ( (tm = qm->templates) != NULL ) {
 		CachedQuery *qc, *qn;
 		qm->templates = tm->qmnext;
@@ -4905,29 +4942,6 @@ pcache_db_close(
 	}
 	free( qm->attr_sets );
 	qm->attr_sets = NULL;
-
-#ifdef PCACHE_MONITOR
-	if ( rc == LDAP_SUCCESS ) {
-		rc = pcache_monitor_db_close( be );
-	}
-#endif /* PCACHE_MONITOR */
-
-	return rc;
-}
-
-static int
-pcache_db_destroy(
-	BackendDB *be,
-	ConfigReply *cr
-)
-{
-	slap_overinst *on = (slap_overinst *)be->bd_info;
-	cache_manager *cm = on->on_bi.bi_private;
-	query_manager *qm = cm->qm;
-
-	if ( cm->db.be_private != NULL ) {
-		backend_stopdown_one( &cm->db );
-	}
 
 	ldap_pvt_thread_mutex_destroy( &qm->lru_mutex );
 	ldap_pvt_thread_mutex_destroy( &cm->cache_mutex );

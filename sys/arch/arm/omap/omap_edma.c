@@ -1,4 +1,4 @@
-/* $NetBSD: omap_edma.c,v 1.3 2016/07/09 15:04:06 kiyohara Exp $ */
+/* $NetBSD: omap_edma.c,v 1.3.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.3 2016/07/09 15:04:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.3.4.1 2017/04/21 16:53:23 bouyer Exp $");
 
 #include "opt_omap.h"
 
@@ -143,7 +143,7 @@ edma_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_iot = &omap_bs_tag;
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	if (bus_space_map(sc->sc_iot, mb->mb_iobase, mb->mb_iosize,
 	    0, &sc->sc_ioh) != 0) {
 		aprint_error(": couldn't map address spcae\n");
@@ -166,13 +166,13 @@ edma_attach(device_t parent, device_t self, void *aux)
 	edma_init(sc);
 
 	sc->sc_ih = intr_establish(mb->mb_intrbase + 0,
-	    IPL_SCHED, IST_LEVEL, edma_intr, sc);
+	    IPL_VM, IST_LEVEL | IST_MPSAFE, edma_intr, sc);
 	KASSERT(sc->sc_ih != NULL);
 
 	sc->sc_mperr_ih = intr_establish(mb->mb_intrbase + 1,
-	    IPL_SCHED, IST_LEVEL, edma_mperr_intr, sc);
+	    IPL_VM, IST_LEVEL, edma_mperr_intr, sc);
 	sc->sc_errint_ih = intr_establish(mb->mb_intrbase + 2,
-	    IPL_SCHED, IST_LEVEL, edma_errint_intr, sc);
+	    IPL_VM, IST_LEVEL, edma_errint_intr, sc);
 }
 
 /*

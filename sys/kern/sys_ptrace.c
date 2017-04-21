@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.3 2016/12/15 12:04:18 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.3.2.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.3 2016/12/15 12:04:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.3.2.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -169,7 +169,7 @@ static struct ptrace_methods native_ptm = {
 	.ptm_copyoutpiod = ptrace_copyoutpiod,
 	.ptm_doregs = process_doregs,
 	.ptm_dofpregs = process_dofpregs,
-	.ptm_dowatchpoint = process_dowatchpoint,
+	.ptm_dodbregs = process_dodbregs,
 };
 
 static const struct syscall_package ptrace_syscalls[] = {

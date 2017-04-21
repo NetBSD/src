@@ -1,4 +1,4 @@
-/*	$NetBSD: line_wrap.h,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: line_wrap.h,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _LINE_WRAP_H_INCLUDED_
 #define _LINE_WRAP_H_INCLUDED_
@@ -16,8 +16,8 @@
  /*
   * External interface.
   */
-typedef void (*LINE_WRAP_FN) (const char *, int, int, char *);
-extern void line_wrap(const char *, int, int, LINE_WRAP_FN, char *);
+typedef void (*LINE_WRAP_FN) (const char *, int, int, void *);
+extern void line_wrap(const char *, int, int, LINE_WRAP_FN, void *);
 
 /* LICENSE
 /* .ad

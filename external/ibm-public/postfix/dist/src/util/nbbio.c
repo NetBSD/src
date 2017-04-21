@@ -1,4 +1,4 @@
-/*	$NetBSD: nbbio.c,v 1.1.1.1 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: nbbio.c,v 1.1.1.1.32.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -12,7 +12,7 @@
 /*	int	fd;
 /*	ssize_t	bufsize;
 /*	const char *label;
-/*	void	(*action)(int event, char *context);
+/*	void	(*action)(int event, void *context);
 /*	char	*context;
 /*
 /*	void	nbbio_free(np)
@@ -153,7 +153,7 @@
 
 /* nbbio_event - non-blocking event handler */
 
-static void nbbio_event(int event, char *context)
+static void nbbio_event(int event, void *context)
 {
     const char *myname = "nbbio_event";
     NBBIO  *np = (NBBIO *) context;
@@ -275,8 +275,8 @@ void    nbbio_enable_read(NBBIO *np, int timeout)
     /*
      * Enable events.
      */
-    event_enable_read(np->fd, nbbio_event, (char *) np);
-    event_request_timer(nbbio_event, (char *) np, timeout);
+    event_enable_read(np->fd, nbbio_event, (void *) np);
+    event_request_timer(nbbio_event, (void *) np, timeout);
     np->flags |= NBBIO_FLAG_READ;
 }
 
@@ -302,8 +302,8 @@ void    nbbio_enable_write(NBBIO *np, int timeout)
     /*
      * Enable events.
      */
-    event_enable_write(np->fd, nbbio_event, (char *) np);
-    event_request_timer(nbbio_event, (char *) np, timeout);
+    event_enable_write(np->fd, nbbio_event, (void *) np);
+    event_request_timer(nbbio_event, (void *) np, timeout);
     np->flags |= NBBIO_FLAG_WRITE;
 }
 
@@ -313,7 +313,7 @@ void    nbbio_disable_readwrite(NBBIO *np)
 {
     np->flags &= ~NBBIO_MASK_ACTIVE;
     event_disable_readwrite(np->fd);
-    event_cancel_timer(nbbio_event, (char *) np);
+    event_cancel_timer(nbbio_event, (void *) np);
 }
 
 /* nbbio_slumber - disable read/write events, keep timer */
@@ -322,13 +322,13 @@ void    nbbio_slumber(NBBIO *np, int timeout)
 {
     np->flags &= ~NBBIO_MASK_ACTIVE;
     event_disable_readwrite(np->fd);
-    event_request_timer(nbbio_event, (char *) np, timeout);
+    event_request_timer(nbbio_event, (void *) np, timeout);
 }
 
 /* nbbio_create - create socket buffer */
 
 NBBIO  *nbbio_create(int fd, ssize_t bufsize, const char *label,
-		             NBBIO_ACTION action, char *context)
+		             NBBIO_ACTION action, void *context)
 {
     NBBIO  *np;
 
@@ -369,5 +369,5 @@ void    nbbio_free(NBBIO *np)
     myfree(np->label);
     myfree(np->read_buf);
     myfree(np->write_buf);
-    myfree((char *) np);
+    myfree((void *) np);
 }

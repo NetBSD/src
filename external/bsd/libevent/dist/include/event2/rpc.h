@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.3 2015/01/29 07:26:02 spz Exp $	*/
+/*	$NetBSD: rpc.h,v 1.3.4.1 2017/04/21 16:51:32 bouyer Exp $	*/
 /*
  * Copyright (c) 2006-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -25,8 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _EVENT2_RPC_H_
-#define _EVENT2_RPC_H_
+#ifndef EVENT2_RPC_H_INCLUDED_
+#define EVENT2_RPC_H_INCLUDED_
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,7 +77,7 @@ extern "C" {
 #define EVTAG_HAS(msg, member) \
 	((msg)->member##_set == 1)
 
-#ifndef _EVENT2_RPC_COMPAT_H_
+#ifndef EVENT2_RPC_COMPAT_H_INCLUDED_
 
 /**
    Assigns a value to the member in the message.
@@ -120,7 +120,7 @@ extern "C" {
 #define EVTAG_GET_WITH_LEN(msg, member, pvalue, plen)	\
 	(*(msg)->base->member##_get)((msg), (pvalue), (plen))
 
-#endif  /* _EVENT2_RPC_COMPAT_H_ */
+#endif  /* EVENT2_RPC_COMPAT_H_INCLUDED_ */
 
 /**
    Adds a value to an array.
@@ -273,8 +273,8 @@ void *evrpc_get_reply(struct evrpc_req_generic *req);
  * @param rpc_req the rpc request structure provided to the server callback
  */
 #define EVRPC_REQUEST_DONE(rpc_req) do { \
-  struct evrpc_req_generic *_req = (struct evrpc_req_generic *)(rpc_req); \
-  evrpc_request_done(_req);					\
+  struct evrpc_req_generic *req_ = (struct evrpc_req_generic *)(rpc_req); \
+  evrpc_request_done(req_);					\
 } while (/*CONSTCOND*/0)
 
 
@@ -455,7 +455,7 @@ enum EVRPC_HOOK_TYPE {
 	EVRPC_OUTPUT		/**< apply the function to an output hook */
 };
 
-#ifndef WIN32
+#ifndef _WIN32
 /** Deprecated alias for EVRPC_INPUT.  Not available on windows, where it
  * conflicts with platform headers. */
 #define INPUT EVRPC_INPUT
@@ -594,4 +594,4 @@ void evrpc_request_set_cb(struct evrpc_request_wrapper *ctx,
 }
 #endif
 
-#endif /* _EVENT2_RPC_H_ */
+#endif /* EVENT2_RPC_H_INCLUDED_ */

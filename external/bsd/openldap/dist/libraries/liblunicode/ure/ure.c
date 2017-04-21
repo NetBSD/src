@@ -1,9 +1,9 @@
-/*	$NetBSD: ure.c,v 1.1.1.4 2014/05/28 09:58:45 tron Exp $	*/
+/*	$NetBSD: ure.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,9 @@
  * THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 /* Id: ure.c,v 1.2 1999/09/21 15:47:43 mleisher Exp " */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ure.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 
@@ -418,7 +421,7 @@ _ure_prop_list(ucs2_t *pp, unsigned long limit, unsigned long *mask,
           b->error = _URE_INVALID_PROPERTY;
     }
 
-    if (n != 0)
+    if (b->error == _URE_OK && n != 0)
       m |= cclass_flags[n];
 
     /*

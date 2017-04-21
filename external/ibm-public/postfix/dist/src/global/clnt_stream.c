@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_stream.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: clnt_stream.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -103,7 +103,7 @@ static void clnt_stream_close(CLNT_STREAM *);
 
 /* clnt_stream_event - server-initiated disconnect or client-side timeout */
 
-static void clnt_stream_event(int unused_event, char *context)
+static void clnt_stream_event(int unused_event, void *context)
 {
     CLNT_STREAM *clnt_stream = (CLNT_STREAM *) context;
 
@@ -119,7 +119,7 @@ static void clnt_stream_event(int unused_event, char *context)
 
 /* clnt_stream_ttl_event - client-side expiration */
 
-static void clnt_stream_ttl_event(int event, char *context)
+static void clnt_stream_ttl_event(int event, void *context)
 {
 
     /*
@@ -161,10 +161,10 @@ static void clnt_stream_open(CLNT_STREAM *clnt_stream)
 					     clnt_stream->service);
     close_on_exec(vstream_fileno(clnt_stream->vstream), CLOSE_ON_EXEC);
     event_enable_read(vstream_fileno(clnt_stream->vstream), clnt_stream_event,
-		      (char *) clnt_stream);
-    event_request_timer(clnt_stream_event, (char *) clnt_stream,
+		      (void *) clnt_stream);
+    event_request_timer(clnt_stream_event, (void *) clnt_stream,
 			clnt_stream->timeout);
-    event_request_timer(clnt_stream_ttl_event, (char *) clnt_stream,
+    event_request_timer(clnt_stream_ttl_event, (void *) clnt_stream,
 			clnt_stream->ttl);
 }
 
@@ -185,8 +185,8 @@ static void clnt_stream_close(CLNT_STREAM *clnt_stream)
     if (msg_verbose)
 	msg_info("%s stream disconnect", clnt_stream->service);
     event_disable_readwrite(vstream_fileno(clnt_stream->vstream));
-    event_cancel_timer(clnt_stream_event, (char *) clnt_stream);
-    event_cancel_timer(clnt_stream_ttl_event, (char *) clnt_stream);
+    event_cancel_timer(clnt_stream_event, (void *) clnt_stream);
+    event_cancel_timer(clnt_stream_ttl_event, (void *) clnt_stream);
     (void) vstream_fclose(clnt_stream->vstream);
     clnt_stream->vstream = 0;
 }
@@ -219,7 +219,7 @@ VSTREAM *clnt_stream_access(CLNT_STREAM *clnt_stream)
 	clnt_stream_close(clnt_stream);
 	clnt_stream_open(clnt_stream);
     } else {
-	event_request_timer(clnt_stream_event, (char *) clnt_stream,
+	event_request_timer(clnt_stream_event, (void *) clnt_stream,
 			    clnt_stream->timeout);
     }
     return (clnt_stream->vstream);
@@ -252,5 +252,5 @@ void    clnt_stream_free(CLNT_STREAM *clnt_stream)
 	clnt_stream_close(clnt_stream);
     myfree(clnt_stream->class);
     myfree(clnt_stream->service);
-    myfree((char *) clnt_stream);
+    myfree((void *) clnt_stream);
 }

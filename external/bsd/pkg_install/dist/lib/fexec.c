@@ -1,4 +1,4 @@
-/*	$NetBSD: fexec.c,v 1.1.1.3 2009/08/06 16:55:26 joerg Exp $	*/
+/*	$NetBSD: fexec.c,v 1.1.1.3.32.1 2017/04/21 16:52:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include "lib.h"
 
-__RCSID("$NetBSD: fexec.c,v 1.1.1.3 2009/08/06 16:55:26 joerg Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.1.1.3.32.1 2017/04/21 16:52:33 bouyer Exp $");
 
 static int	vfcexec(const char *, int, const char *, va_list);
 

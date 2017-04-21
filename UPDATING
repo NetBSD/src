@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.277 2017/01/05 05:40:46 martin Exp $
+$NetBSD: UPDATING,v 1.277.2.1 2017/04/21 16:50:41 bouyer Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,24 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20170402:
+	a new version of dhcpcd has been imported, which does not support
+	update builds from the previous version. Remove your
+	external/bsd/dhcpcd object dir or build once without -u.
+
+20170211:
+	a new terminfo database has been imported.
+	The structure of it has changed slightly from prior versions and
+	an updated tic tool is required.
+	If you build.sh, don't use -u
+
+20170207:
+	various arch dependent libc/exect.S files were removed
+	Either remove the obj directories (lib/libc and compat/amd64/i386/lib
+	if it exists) or do a clean build.
+	(This is a bug in the make system, it should be corrected without
+	human intervention, but isn't.)
 
 20170104:
 	xinput build options have changed.

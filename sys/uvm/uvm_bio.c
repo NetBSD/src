@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.83 2015/05/27 19:43:40 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.83.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.83 2015/05/27 19:43:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.83.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -346,14 +346,18 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx access_type %d",
 	    va, ubc_offset, access_type, 0);
 
-#ifdef DIAGNOSTIC
 	if ((access_type & VM_PROT_WRITE) != 0) {
-		if (slot_offset < trunc_page(umap->writeoff) ||
-		    umap->writeoff + umap->writelen <= slot_offset) {
-			panic("ubc_fault: out of range write");
-		}
+#ifndef PRIxOFF		/* XXX */
+#define PRIxOFF "jx"	/* XXX */
+#endif			/* XXX */
+		KASSERTMSG((trunc_page(umap->writeoff) <= slot_offset),
+		    "out of range write: slot=%#"PRIxVSIZE" off=%#"PRIxOFF,
+		    slot_offset, (intmax_t)umap->writeoff);
+		KASSERTMSG((slot_offset < umap->writeoff + umap->writelen),
+		    "out of range write: slot=%#"PRIxVADDR
+		        " off=%#"PRIxOFF" len=%#"PRIxVSIZE,
+		    slot_offset, (intmax_t)umap->writeoff, umap->writelen);
 	}
-#endif
 
 	/* no umap locking needed since we have a ref on the umap */
 	uobj = umap->uobj;

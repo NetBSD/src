@@ -51,6 +51,17 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.10.4-P7
+
+	This version contains fixes for CVE-2017-3136 and CVE-2017-3137,
+	and updates the built in trusted keys for the root zone.
+
+BIND 9.10.4-P6
+
+	This version contains a fix for CVE-2017-3135, and a bug fix
+	for a regression in CNAME/DNAME caching that was introduced
+	in an earlier security release.
+
 BIND 9.10.4-P5
 
 	This version contains fixes for CVE-2016-9131, CVE-2016-9147,

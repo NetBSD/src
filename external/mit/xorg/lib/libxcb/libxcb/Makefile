@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2015/07/23 01:06:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2017/04/21 16:52:59 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -56,7 +56,6 @@ INCS=	\
 	xc_misc.h \
 	xcb.h \
 	xcbext.h \
-	xevie.h \
 	xf86dri.h \
 	xfixes.h \
 	xinerama.h \

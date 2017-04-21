@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.83 2016/08/19 10:19:45 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.83.2.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.83 2016/08/19 10:19:45 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.83.2.1 2017/04/21 16:54:16 bouyer Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3009,6 +3009,26 @@ bldszof(type_t *tp)
 #else
 	st = UINT;
 #endif
+	return getinode(st, tsize(tp) / CHAR_BIT);
+}
+
+/*
+ * Create a constant node for offsetof.
+ */
+tnode_t *
+bldoffsetof(type_t *tp, sym_t *sym)
+{
+	tspec_t	st;
+#if SIZEOF_IS_ULONG
+	st = ULONG;
+#else
+	st = UINT;
+#endif
+	tspec_t t = tp->t_tspec;
+	if (t != STRUCT && t != UNION)
+		error(111, "offsetof");
+		
+	// XXX: wrong size, no checking for sym fixme
 	return getinode(st, tsize(tp) / CHAR_BIT);
 }
 

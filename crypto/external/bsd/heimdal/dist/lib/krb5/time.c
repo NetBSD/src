@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.1 2011/04/13 18:15:38 elric Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.1.32.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan

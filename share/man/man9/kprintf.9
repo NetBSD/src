@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.33 2013/09/17 19:58:03 wiz Exp $
+.\"     $NetBSD: kprintf.9,v 1.33.12.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007, 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,19 +27,37 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 21, 2012
+.Dd February 1, 2017
 .Dt KPRINTF 9
 .Os
 .Sh NAME
 .Nm device_printf ,
 .Nm printf ,
+.Nm printf_nolog ,
 .Nm snprintf ,
 .Nm vprintf ,
 .Nm vsnprintf ,
 .Nm uprintf ,
 .Nm ttyprintf ,
+.Nm tprintf_open ,
 .Nm tprintf ,
-.Nm aprint
+.Nm tprintf_close ,
+.Nm aprint_normal ,
+.Nm aprint_naive ,
+.Nm aprint_verbose ,
+.Nm aprint_debug ,
+.Nm aprint_error ,
+.Nm aprint_normal_dev ,
+.Nm aprint_naive_dev ,
+.Nm aprint_verbose_dev ,
+.Nm aprint_debug_dev ,
+.Nm aprint_error_dev ,
+.Nm aprint_normal_ifnet ,
+.Nm aprint_naive_ifnet ,
+.Nm aprint_verbose_ifnet ,
+.Nm aprint_debug_ifnet ,
+.Nm aprint_error_ifnet ,
+.Nm aprint_get_error_count
 .Nd kernel formatted output conversion
 .Sh SYNOPSIS
 .In sys/systm.h

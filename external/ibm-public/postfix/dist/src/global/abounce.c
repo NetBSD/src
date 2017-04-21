@@ -1,4 +1,4 @@
-/*	$NetBSD: abounce.c,v 1.1.1.3 2013/01/02 18:58:56 tron Exp $	*/
+/*	$NetBSD: abounce.c,v 1.1.1.3.16.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,79 +8,85 @@
 /* SYNOPSIS
 /*	#include <abounce.h>
 /*
-/*	void	abounce_flush(flags, queue, id, encoding, sender,
+/*	void	abounce_flush(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
+/*	void	(*callback)(int status, void *context);
+/*	void	*context;
 /*
-/*	void	abounce_flush_verp(flags, queue, id, encoding, sender,
+/*	void	abounce_flush_verp(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret, verp, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
 /*	const char *verp;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
+/*	void	(*callback)(int status, void *context);
+/*	void	*context;
 /*
-/*	void	adefer_flush(flags, queue, id, encoding, sender,
+/*	void	adefer_flush(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
+/*	void	(*callback)(int status, void *context);
+/*	void	*context;
 /*
-/*	void	adefer_flush_verp(flags, queue, id, encoding, sender,
+/*	void	adefer_flush_verp(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret, verp, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
 /*	const char *verp;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
+/*	void	(*callback)(int status, void *context);
+/*	void	*context;
 /*
-/*	void	adefer_warn(flags, queue, id, encoding, sender,
+/*	void	adefer_warn(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
+/*	void	(*callback)(int status, void *context);
+/*	void	*context;
 /*
-/*	void	atrace_flush(flags, queue, id, encoding, sender,
+/*	void	atrace_flush(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
-/*	void	(*callback)(int status, char *context);
-/*	char	*context;
+/*	void	(*callback)(int status, void *context);
+/*	void	*context;
 /* DESCRIPTION
 /*	This module implements an asynchronous interface to the
 /*	bounce/defer/trace service for submitting sender notifications
@@ -134,6 +140,8 @@
 /*	file has the same name as the original message file.
 /* .IP encoding
 /*	The body content encoding: MAIL_ATTR_ENC_{7BIT,8BIT,NONE}.
+/* .IP smtputf8
+/*	The level of SMTPUTF8 support (to be defined).
 /* .IP sender
 /*	The sender envelope address.
 /* .IP dsn_envid
@@ -197,7 +205,7 @@ typedef struct {
     int     flags;			/* bounce options */
     char   *id;				/* queue ID for logging */
     ABOUNCE_FN callback;		/* application callback */
-    char   *context;			/* application context */
+    void   *context;			/* application context */
     VSTREAM *fp;			/* server I/O handle */
 } ABOUNCE;
 
@@ -236,12 +244,12 @@ static void abounce_done(ABOUNCE *ap, int status)
 		 "whatever");
     ap->callback(status, ap->context);
     myfree(ap->id);
-    myfree((char *) ap);
+    myfree((void *) ap);
 }
 
 /* abounce_event - resume pseudo thread after server reply event */
 
-static void abounce_event(int event, char *context)
+static void abounce_event(int event, void *context)
 {
     ABOUNCE *ap = (ABOUNCE *) context;
     int     status;
@@ -249,7 +257,7 @@ static void abounce_event(int event, char *context)
     ABOUNCE_EVENT_DISABLE(vstream_fileno(ap->fp), abounce_event, context);
     abounce_done(ap, (event != EVENT_TIME
 		      && attr_scan(ap->fp, ATTR_FLAG_STRICT,
-				   ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
+				   RECV_ATTR_INT(MAIL_ATTR_STATUS, &status),
 				   ATTR_TYPE_END) == 1) ? status : -1);
 }
 
@@ -259,12 +267,13 @@ static void abounce_request_verp(const char *class, const char *service,
 				         int command, int flags,
 				         const char *queue, const char *id,
 				         const char *encoding,
+				         int smtputf8,
 				         const char *sender,
 				         const char *dsn_envid,
 				         int dsn_ret,
 				         const char *verp,
 				         ABOUNCE_FN callback,
-				         char *context)
+				         void *context)
 {
     ABOUNCE *ap;
 
@@ -281,19 +290,20 @@ static void abounce_request_verp(const char *class, const char *service,
     ap->fp = mail_connect_wait(class, service);
 
     if (attr_print(ap->fp, ATTR_FLAG_NONE,
-		   ATTR_TYPE_INT, MAIL_ATTR_NREQ, command,
-		   ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-		   ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
-		   ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-		   ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
-		   ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
-		   ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
-		   ATTR_TYPE_STR, MAIL_ATTR_VERPDL, verp,
+		   SEND_ATTR_INT(MAIL_ATTR_NREQ, command),
+		   SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+		   SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
+		   SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+		   SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
+		   SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+		   SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
+		   SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
+		   SEND_ATTR_STR(MAIL_ATTR_VERPDL, verp),
 		   ATTR_TYPE_END) == 0
 	&& vstream_fflush(ap->fp) == 0) {
-	ABOUNCE_EVENT_ENABLE(vstream_fileno(ap->fp), abounce_event, 
-			     (char *) ap, ABOUNCE_TIMEOUT);
+	ABOUNCE_EVENT_ENABLE(vstream_fileno(ap->fp), abounce_event,
+			     (void *) ap, ABOUNCE_TIMEOUT);
     } else {
 	abounce_done(ap, -1);
     }
@@ -302,27 +312,28 @@ static void abounce_request_verp(const char *class, const char *service,
 /* abounce_flush_verp - asynchronous bounce flush */
 
 void    abounce_flush_verp(int flags, const char *queue, const char *id,
-			           const char *encoding, const char *sender,
-			           const char *dsn_envid, int dsn_ret,
-			           const char *verp, ABOUNCE_FN callback,
-			           char *context)
+			           const char *encoding, int smtputf8,
+			           const char *sender, const char *dsn_envid,
+			           int dsn_ret, const char *verp,
+			           ABOUNCE_FN callback,
+			           void *context)
 {
     abounce_request_verp(MAIL_CLASS_PRIVATE, var_bounce_service,
-			 BOUNCE_CMD_VERP, flags, queue, id, encoding,
+		      BOUNCE_CMD_VERP, flags, queue, id, encoding, smtputf8,
 		       sender, dsn_envid, dsn_ret, verp, callback, context);
 }
 
 /* adefer_flush_verp - asynchronous defer flush */
 
 void    adefer_flush_verp(int flags, const char *queue, const char *id,
-			          const char *encoding, const char *sender,
-			          const char *dsn_envid, int dsn_ret,
-			          const char *verp, ABOUNCE_FN callback,
-			          char *context)
+			          const char *encoding, int smtputf8,
+			          const char *sender, const char *dsn_envid,
+			          int dsn_ret, const char *verp,
+			          ABOUNCE_FN callback, void *context)
 {
     flags |= BOUNCE_FLAG_DELRCPT;
     abounce_request_verp(MAIL_CLASS_PRIVATE, var_defer_service,
-			 BOUNCE_CMD_VERP, flags, queue, id, encoding,
+		      BOUNCE_CMD_VERP, flags, queue, id, encoding, smtputf8,
 		       sender, dsn_envid, dsn_ret, verp, callback, context);
 }
 
@@ -331,9 +342,10 @@ void    adefer_flush_verp(int flags, const char *queue, const char *id,
 static void abounce_request(const char *class, const char *service,
 			            int command, int flags,
 			            const char *queue, const char *id,
-			            const char *encoding, const char *sender,
+			            const char *encoding, int smtputf8,
+			            const char *sender,
 			            const char *dsn_envid, int dsn_ret,
-			            ABOUNCE_FN callback, char *context)
+			            ABOUNCE_FN callback, void *context)
 {
     ABOUNCE *ap;
 
@@ -350,18 +362,19 @@ static void abounce_request(const char *class, const char *service,
     ap->fp = mail_connect_wait(class, service);
 
     if (attr_print(ap->fp, ATTR_FLAG_NONE,
-		   ATTR_TYPE_INT, MAIL_ATTR_NREQ, command,
-		   ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-		   ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
-		   ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-		   ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
-		   ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-		   ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
-		   ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
+		   SEND_ATTR_INT(MAIL_ATTR_NREQ, command),
+		   SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+		   SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
+		   SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+		   SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
+		   SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+		   SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+		   SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
+		   SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
 		   ATTR_TYPE_END) == 0
 	&& vstream_fflush(ap->fp) == 0) {
-	ABOUNCE_EVENT_ENABLE(vstream_fileno(ap->fp), abounce_event, 
-			     (char *) ap, ABOUNCE_TIMEOUT);
+	ABOUNCE_EVENT_ENABLE(vstream_fileno(ap->fp), abounce_event,
+			     (void *) ap, ABOUNCE_TIMEOUT);
     } else {
 	abounce_done(ap, -1);
     }
@@ -370,48 +383,49 @@ static void abounce_request(const char *class, const char *service,
 /* abounce_flush - asynchronous bounce flush */
 
 void    abounce_flush(int flags, const char *queue, const char *id,
-		              const char *encoding, const char *sender,
-		              const char *dsn_envid, int dsn_ret,
-		              ABOUNCE_FN callback, char *context)
+		              const char *encoding, int smtputf8,
+		              const char *sender, const char *dsn_envid,
+		              int dsn_ret, ABOUNCE_FN callback,
+		              void *context)
 {
     abounce_request(MAIL_CLASS_PRIVATE, var_bounce_service, BOUNCE_CMD_FLUSH,
-		    flags, queue, id, encoding, sender, dsn_envid, dsn_ret,
-		    callback, context);
+		    flags, queue, id, encoding, smtputf8, sender, dsn_envid,
+		    dsn_ret, callback, context);
 }
 
 /* adefer_flush - asynchronous defer flush */
 
 void    adefer_flush(int flags, const char *queue, const char *id,
-		             const char *encoding, const char *sender,
-		             const char *dsn_envid, int dsn_ret,
-		             ABOUNCE_FN callback, char *context)
+		             const char *encoding, int smtputf8,
+		             const char *sender, const char *dsn_envid,
+		             int dsn_ret, ABOUNCE_FN callback, void *context)
 {
     flags |= BOUNCE_FLAG_DELRCPT;
     abounce_request(MAIL_CLASS_PRIVATE, var_defer_service, BOUNCE_CMD_FLUSH,
-		    flags, queue, id, encoding, sender, dsn_envid, dsn_ret,
-		    callback, context);
+		    flags, queue, id, encoding, smtputf8, sender, dsn_envid,
+		    dsn_ret, callback, context);
 }
 
 /* adefer_warn - send copy of defer log to sender as warning bounce */
 
 void    adefer_warn(int flags, const char *queue, const char *id,
-		            const char *encoding, const char *sender,
-		            const char *dsn_envid, int dsn_ret,
-		            ABOUNCE_FN callback, char *context)
+		            const char *encoding, int smtputf8,
+		            const char *sender, const char *dsn_envid,
+		            int dsn_ret, ABOUNCE_FN callback, void *context)
 {
     abounce_request(MAIL_CLASS_PRIVATE, var_defer_service, BOUNCE_CMD_WARN,
-		    flags, queue, id, encoding, sender, dsn_envid, dsn_ret,
-		    callback, context);
+		    flags, queue, id, encoding, smtputf8, sender, dsn_envid,
+		    dsn_ret, callback, context);
 }
 
 /* atrace_flush - asynchronous trace flush */
 
 void    atrace_flush(int flags, const char *queue, const char *id,
-		             const char *encoding, const char *sender,
-		             const char *dsn_envid, int dsn_ret,
-		             ABOUNCE_FN callback, char *context)
+		             const char *encoding, int smtputf8,
+		             const char *sender, const char *dsn_envid,
+		             int dsn_ret, ABOUNCE_FN callback, void *context)
 {
     abounce_request(MAIL_CLASS_PRIVATE, var_trace_service, BOUNCE_CMD_TRACE,
-		    flags, queue, id, encoding, sender, dsn_envid, dsn_ret,
-		    callback, context);
+		    flags, queue, id, encoding, smtputf8, sender, dsn_envid,
+		    dsn_ret, callback, context);
 }

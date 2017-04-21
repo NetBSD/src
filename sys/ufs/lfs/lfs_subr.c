@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.86.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.86.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 {
 	struct lfs_res_blk *re;
 	void *r;
-	int i, s, start;
+	int i, start;
 	unsigned int h;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
@@ -224,9 +224,7 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 				r = re->p;
 				KASSERT(re->size >= size);
 				h = lfs_mhash(r);
-				s = splbio();
 				LIST_INSERT_HEAD(&fs->lfs_reshash[h], re, res);
-				splx(s);
 				mutex_exit(&lfs_lock);
 				return r;
 			}
@@ -246,37 +244,30 @@ lfs_malloc(struct lfs *fs, size_t size, int type)
 void
 lfs_free(struct lfs *fs, void *p, int type)
 {
-	int s;
 	unsigned int h;
 	res_t *re;
-#ifdef DEBUG
-	int i;
-#endif
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	h = lfs_mhash(p);
 	mutex_enter(&lfs_lock);
-	s = splbio();
 	LIST_FOREACH(re, &fs->lfs_reshash[h], res) {
 		if (re->p == p) {
 			KASSERT(re->inuse == 1);
 			LIST_REMOVE(re, res);
 			re->inuse = 0;
 			wakeup(&fs->lfs_resblk);
-			splx(s);
 			mutex_exit(&lfs_lock);
 			return;
 		}
 	}
-#ifdef DEBUG
-	for (i = 0; i < LFS_N_TOTAL; i++) {
-		if (fs->lfs_resblk[i].p == p)
-			panic("lfs_free: inconsistent reserved block");
+
+	for (int i = 0; i < LFS_N_TOTAL; i++) {
+		KDASSERTMSG(fs->lfs_resblk[i].p == p,
+		    "lfs_free: inconsistent reserved block");
 	}
-#endif
-	splx(s);
+
 	mutex_exit(&lfs_lock);
-	
+
 	/*
 	 * If we didn't find it, free it.
 	 */
@@ -317,9 +308,8 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	mutex_exit(&lfs_lock);
 	fs->lfs_cleanind = 0;
 
-#ifdef DEBUG
 	LFS_ENTER_LOG("seglock", __FILE__, __LINE__, 0, flags, curproc->p_pid);
-#endif
+
 	/* Drain fragment size changes out */
 	rw_enter(&fs->lfs_fraglock, RW_WRITER);
 
@@ -388,7 +378,7 @@ lfs_unmark_dirop(struct lfs *fs)
 static void
 lfs_auto_segclean(struct lfs *fs)
 {
-	int i, error, s, waited;
+	int i, error, waited;
 
 	ASSERT_SEGLOCK(fs);
 	/*
@@ -408,11 +398,9 @@ lfs_auto_segclean(struct lfs *fs)
 
 			/* Make sure the sb is written before we clean */
 			mutex_enter(&lfs_lock);
-			s = splbio();
 			while (waited == 0 && fs->lfs_sbactive)
 				mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs asb",
 					0, &lfs_lock);
-			splx(s);
 			mutex_exit(&lfs_lock);
 			waited = 1;
 
@@ -487,9 +475,8 @@ lfs_segunlock(struct lfs *fs)
 		 * to complete.
 		 */
 		if (!ckp) {
-#ifdef DEBUG
 			LFS_ENTER_LOG("segunlock_std", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
@@ -533,9 +520,9 @@ lfs_segunlock(struct lfs *fs)
 					lfs_auto_segclean(fs);
 			}
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
-#ifdef DEBUG
+
 			LFS_ENTER_LOG("segunlock_ckp", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
@@ -595,9 +582,9 @@ lfs_writer_leave(struct lfs *fs)
 	ASSERT_MAYBE_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
 	dowakeup = !(--fs->lfs_writer);
-	mutex_exit(&lfs_lock);
 	if (dowakeup)
-		wakeup(&fs->lfs_dirops);
+		cv_broadcast(&fs->lfs_diropscv);
+	mutex_exit(&lfs_lock);
 }
 
 /*

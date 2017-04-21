@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.1.1.4 2014/07/06 19:27:51 tron Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.1.1.4.10.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -30,7 +30,9 @@
 /*	char	*var_daemon_dir;
 /*	char	*var_data_dir;
 /*	char	*var_command_dir;
+/*	char	*var_meta_dir;
 /*	char	*var_queue_dir;
+/*	char	*var_shlib_dir;
 /*	int	var_use_limit;
 /*	int	var_idle_limit;
 /*	int	var_event_drain;
@@ -123,13 +125,27 @@
 /*	bool	var_multi_enable;
 /*	bool	var_long_queue_ids;
 /*	bool	var_daemon_open_fatal;
+/*	char	*var_dsn_filter;
+/*	int	var_smtputf8_enable
+/*	int	var_strict_smtputf8;
+/*	char	*var_smtputf8_autoclass;
+/*	int     var_compat_level;
+/*	char	*var_drop_hdrs;
 /*
 /*	void	mail_params_init()
 /*
 /*	const	char null_format_string[1];
+/*
+/*	int	warn_compat_break_app_dot_mydomain;
+/*	int	warn_compat_break_smtputf8_enable;
+/*	int	warn_compat_break_chroot;
+/*
+/*	int	warn_compat_break_relay_domains;
+/*	int	warn_compat_break_flush_domains;
+/*	int	warn_compat_break_mynetworks_style;
 /* DESCRIPTION
-/*	This module (actually the associated include file) define the names
-/*	and defaults of all mail configuration parameters.
+/*	This module (actually the associated include file) defines
+/*	the names and defaults of all mail configuration parameters.
 /*
 /*	mail_params_init() initializes the built-in parameters listed above.
 /*	These parameters are relied upon by library routines, so they are
@@ -139,6 +155,9 @@
 /*
 /*	null_format_string is a workaround for gcc compilers that complain
 /*	about empty or null format strings.
+/*
+/*	The warn_compat_XXX variables enable warnings for the use
+/*	of legacy default settings after an incompatible change.
 /* DIAGNOSTICS
 /*	Fatal errors: out of memory; null system or domain name.
 /* LICENSE
@@ -163,10 +182,6 @@
 #include <time.h>
 #include <ctype.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -178,12 +193,8 @@
 #include <safe_open.h>
 #include <mymalloc.h>
 #include <dict.h>
-#ifdef HAS_DB
 #include <dict_db.h>
-#endif
-#ifdef HAS_LMDB
 #include <dict_lmdb.h>
-#endif
 #include <inet_proto.h>
 #include <vstring_vstream.h>
 #include <iostuff.h>
@@ -223,7 +234,9 @@ char   *var_config_dir;
 char   *var_daemon_dir;
 char   *var_data_dir;
 char   *var_command_dir;
+char   *var_meta_dir;
 char   *var_queue_dir;
+char   *var_shlib_dir;
 int     var_use_limit;
 int     var_event_drain;
 int     var_idle_limit;
@@ -316,8 +329,29 @@ char   *var_multi_name;
 bool    var_multi_enable;
 bool    var_long_queue_ids;
 bool    var_daemon_open_fatal;
+bool    var_dns_ncache_ttl_fix;
+char   *var_dsn_filter;
+int     var_smtputf8_enable;
+int     var_strict_smtputf8;
+char   *var_smtputf8_autoclass;
+int     var_compat_level;
+char   *var_drop_hdrs;
 
 const char null_format_string[1] = "";
+
+ /*
+  * Compatibility level 2.
+  */
+int     warn_compat_break_relay_domains;
+int     warn_compat_break_flush_domains;
+int     warn_compat_break_mynetworks_style;
+
+ /*
+  * Compatibility level 1.
+  */
+int     warn_compat_break_app_dot_mydomain;
+int     warn_compat_break_smtputf8_enable;
+int     warn_compat_break_chroot;
 
 /* check_myhostname - lookup hostname and validate */
 
@@ -336,13 +370,21 @@ static const char *check_myhostname(void)
     /*
      * If the local machine name is not in FQDN form, try to append the
      * contents of $mydomain. Use a default domain as a final workaround.
+     * 
+     * DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - IT MAKES EVERY POSTFIX
+     * PROGRAM HANG WHEN DNS SERVICE IS UNAVAILABLE. IF YOU DON'T LIKE THE
+     * DEFAULT, THEN EDIT MAIN.CF.
      */
     name = get_hostname();
+    /* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
     if ((dot = strchr(name, '.')) == 0) {
+	/* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
 	if ((domain = mail_conf_lookup_eval(VAR_MYDOMAIN)) == 0)
 	    domain = DEF_MYDOMAIN;
+	/* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
 	name = concatenate(name, ".", domain, (char *) 0);
     }
+    /* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
     return (name);
 }
 
@@ -354,9 +396,16 @@ static const char *check_mydomainname(void)
 
     /*
      * Use a default domain when the hostname is not a FQDN ("foo").
+     * 
+     * DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - IT MAKES EVERY POSTFIX
+     * PROGRAM HANG WHEN DNS SERVICE IS UNAVAILABLE. IF YOU DON'T LIKE THE
+     * DEFAULT, THEN EDIT MAIN.CF.
      */
+    /* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
     if ((dot = strchr(var_myhostname, '.')) == 0)
+	/* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
 	return (DEF_MYDOMAIN);
+    /* DO NOT CALL GETHOSTBYNAME OR GETNAMEINFO HERE - EDIT MAIN.CF */
     return (dot + 1);
 }
 
@@ -519,11 +568,75 @@ static char *read_param_from_file(const char *path)
 
 #endif
 
+/* check_legacy_defaults - flag parameters that require safety-net logging */
+
+static void check_legacy_defaults(void)
+{
+
+    /*
+     * Basic idea: when an existing parameter default is changed, or a new
+     * parameter is introduced with incompatible default behavior, force
+     * Postfix to run with backwards-compatible default settings and log a
+     * warning when the backwards-compatible behavior is used.
+     * 
+     * Based on a review of Postfix logging the system administrator can decide
+     * whether or not to make backwards-compatible default settings permanent
+     * in main.cf or master.cf.
+     * 
+     * To turn off further warnings and deploy the new default settings, the
+     * system administrator should update the compatibility_level setting as
+     * recommended in the RELEASE_NOTES file.
+     * 
+     * Each incompatible change has its own flag variable, instead of bit in a
+     * shared variable. We don't want to rip up code when we need more flag
+     * bits.
+     */
+
+    /*
+     * Look for specific parameters whose default changed when the
+     * compatibility level changed to 2.
+     */
+    if (var_compat_level < 2) {
+	if (mail_conf_lookup(VAR_RELAY_DOMAINS) == 0) {
+	    warn_compat_break_relay_domains = 1;
+	    if (mail_conf_lookup(VAR_FFLUSH_DOMAINS) == 0)
+		warn_compat_break_flush_domains = 1;
+	}
+	if (mail_conf_lookup(VAR_MYNETWORKS) == 0
+	    && mail_conf_lookup(VAR_MYNETWORKS_STYLE) == 0)
+	    warn_compat_break_mynetworks_style = 1;
+    }
+
+    /*
+     * Look for specific parameters whose default changed when the
+     * compatibility level changed from 0 to 1.
+     */
+    if (var_compat_level < 1) {
+	if (mail_conf_lookup(VAR_APP_DOT_MYDOMAIN) == 0)
+	    warn_compat_break_app_dot_mydomain = 1;
+
+	/*
+	 * Not: #ifndef NO_EAI. They must configure SMTPUTF8_ENABLE=no if a
+	 * warning message is logged, so that they don't suddenly start to
+	 * lose mail after Postfix is built with EAI support.
+	 */
+	if (mail_conf_lookup(VAR_SMTPUTF8_ENABLE) == 0)
+	    warn_compat_break_smtputf8_enable = 1;
+	warn_compat_break_chroot = 1;
+    }
+}
+
 /* mail_params_init - configure built-in parameters */
 
 void    mail_params_init()
 {
+    static const CONFIG_INT_TABLE first_int_defaults[] = {
+	VAR_COMPAT_LEVEL, DEF_COMPAT_LEVEL, &var_compat_level, 0, 0,
+	0,
+    };
     static const CONFIG_STR_TABLE first_str_defaults[] = {
+	/* $mail_version may appear in other parameters. */
+	VAR_MAIL_VERSION, DEF_MAIL_VERSION, &var_mail_version, 1, 0,
 	VAR_SYSLOG_FACILITY, DEF_SYSLOG_FACILITY, &var_syslog_facility, 1, 0,
 	VAR_INET_PROTOCOLS, DEF_INET_PROTOCOLS, &var_inet_protocols, 0, 0,
 	VAR_MULTI_CONF_DIRS, DEF_MULTI_CONF_DIRS, &var_multi_conf_dirs, 0, 0,
@@ -535,6 +648,12 @@ void    mail_params_init()
     static const CONFIG_BOOL_TABLE first_bool_defaults[] = {
 	/* read and process the following before opening tables. */
 	VAR_DAEMON_OPEN_FATAL, DEF_DAEMON_OPEN_FATAL, &var_daemon_open_fatal,
+	VAR_DNS_NCACHE_TTL_FIX, DEF_DNS_NCACHE_TTL_FIX, &var_dns_ncache_ttl_fix,
+	0,
+    };
+    static const CONFIG_NBOOL_TABLE first_nbool_defaults[] = {
+	/* read and process the following before opening tables. */
+	VAR_SMTPUTF8_ENABLE, DEF_SMTPUTF8_ENABLE, &var_smtputf8_enable,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults[] = {
@@ -553,7 +672,9 @@ void    mail_params_init()
 	VAR_DAEMON_DIR, DEF_DAEMON_DIR, &var_daemon_dir, 1, 0,
 	VAR_DATA_DIR, DEF_DATA_DIR, &var_data_dir, 1, 0,
 	VAR_COMMAND_DIR, DEF_COMMAND_DIR, &var_command_dir, 1, 0,
+	VAR_META_DIR, DEF_META_DIR, &var_meta_dir, 1, 0,
 	VAR_QUEUE_DIR, DEF_QUEUE_DIR, &var_queue_dir, 1, 0,
+	VAR_SHLIB_DIR, DEF_SHLIB_DIR, &var_shlib_dir, 1, 0,
 	VAR_PID_DIR, DEF_PID_DIR, &var_pid_dir, 1, 0,
 	VAR_INET_INTERFACES, DEF_INET_INTERFACES, &var_inet_interfaces, 0, 0,
 	VAR_PROXY_INTERFACES, DEF_PROXY_INTERFACES, &var_proxy_interfaces, 0, 0,
@@ -561,7 +682,6 @@ void    mail_params_init()
 	VAR_DEFAULT_PRIVS, DEF_DEFAULT_PRIVS, &var_default_privs, 1, 0,
 	VAR_ALIAS_DB_MAP, DEF_ALIAS_DB_MAP, &var_alias_db_map, 0, 0,
 	VAR_MAIL_RELEASE, DEF_MAIL_RELEASE, &var_mail_release, 1, 0,
-	VAR_MAIL_VERSION, DEF_MAIL_VERSION, &var_mail_version, 1, 0,
 	VAR_DB_TYPE, DEF_DB_TYPE, &var_db_type, 1, 0,
 	VAR_HASH_QUEUE_NAMES, DEF_HASH_QUEUE_NAMES, &var_hash_queue_names, 1, 0,
 	VAR_RCPT_DELIM, DEF_RCPT_DELIM, &var_rcpt_delim, 0, 0,
@@ -591,6 +711,9 @@ void    mail_params_init()
 	VAR_INT_FILT_CLASSES, DEF_INT_FILT_CLASSES, &var_int_filt_classes, 0, 0,
 	/* multi_instance_wrapper may have dependencies but not dependents. */
 	VAR_MULTI_WRAPPER, DEF_MULTI_WRAPPER, &var_multi_wrapper, 0, 0,
+	VAR_DSN_FILTER, DEF_DSN_FILTER, &var_dsn_filter, 0, 0,
+	VAR_SMTPUTF8_AUTOCLASS, DEF_SMTPUTF8_AUTOCLASS, &var_smtputf8_autoclass, 1, 0,
+	VAR_DROP_HDRS, DEF_DROP_HDRS, &var_drop_hdrs, 0, 0,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults_2[] = {
@@ -652,10 +775,17 @@ void    mail_params_init()
 	VAR_CYRUS_SASL_AUTHZID, DEF_CYRUS_SASL_AUTHZID, &var_cyrus_sasl_authzid,
 	VAR_MULTI_ENABLE, DEF_MULTI_ENABLE, &var_multi_enable,
 	VAR_LONG_QUEUE_IDS, DEF_LONG_QUEUE_IDS, &var_long_queue_ids,
+	VAR_STRICT_SMTPUTF8, DEF_STRICT_SMTPUTF8, &var_strict_smtputf8,
 	0,
     };
     const char *cp;
-    INET_PROTO_INFO *proto_info;
+
+    /*
+     * Extract compatibility level first, so that we can determine what
+     * parameters of interest are left at their legacy defaults.
+     */
+    get_mail_conf_int_table(first_int_defaults);
+    check_legacy_defaults();
 
     /*
      * Extract syslog_facility early, so that from here on all errors are
@@ -677,10 +807,27 @@ void    mail_params_init()
 	dict_allow_surrogate = 0;
 
     /*
+     * Should we open tables with UTF8 support, or in the legacy 8-bit clean
+     * mode with ASCII-only casefolding?
+     */
+    get_mail_conf_nbool_table(first_nbool_defaults);
+
+    /*
+     * Report run-time versus compile-time discrepancies.
+     */
+#ifdef NO_EAI
+    if (var_smtputf8_enable)
+	msg_warn("%s is true, but EAI support is not compiled in",
+		 VAR_SMTPUTF8_ENABLE);
+    var_smtputf8_enable = 0;
+#endif
+    util_utf8_enable = var_smtputf8_enable;
+
+    /*
      * What protocols should we attempt to support? The result is stored in
      * the global inet_proto_table variable.
      */
-    proto_info = inet_proto_init(VAR_INET_PROTOCOLS, var_inet_protocols);
+    (void) inet_proto_init(VAR_INET_PROTOCOLS, var_inet_protocols);
 
     /*
      * Variables whose defaults are determined at runtime. Some sites use
@@ -724,12 +871,8 @@ void    mail_params_init()
     check_mail_owner();
     check_sgid_group();
     check_overlap();
-#ifdef HAS_DB
     dict_db_cache_size = var_db_read_buf;
-#endif
-#ifdef HAS_LMDB
     dict_lmdb_map_size = var_lmdb_map_size;
-#endif
     inet_windowsize = var_inet_windowsize;
 
     /*
@@ -769,18 +912,18 @@ void    mail_params_init()
     /*
      * I have seen this happen just too often.
      */
-    if (strcasecmp(var_myhostname, var_relayhost) == 0)
+    if (strcasecmp_utf8(var_myhostname, var_relayhost) == 0)
 	msg_fatal("%s and %s parameter settings must not be identical: %s",
 		  VAR_MYHOSTNAME, VAR_RELAYHOST, var_myhostname);
 
     /*
      * XXX These should be caught by a proper parameter parsing algorithm.
      */
-    if (var_myorigin[strcspn(var_myorigin, ", \t\r\n")])
+    if (var_myorigin[strcspn(var_myorigin, CHARS_COMMA_SP)])
 	msg_fatal("%s parameter setting must not contain multiple values: %s",
 		  VAR_MYORIGIN, var_myorigin);
 
-    if (var_relayhost[strcspn(var_relayhost, ", \t\r\n")])
+    if (var_relayhost[strcspn(var_relayhost, CHARS_COMMA_SP)])
 	msg_fatal("%s parameter setting must not contain multiple values: %s",
 		  VAR_RELAYHOST, var_relayhost);
 

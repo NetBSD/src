@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_scan.c,v 1.1.1.3 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_proxy_scan.c,v 1.1.1.3.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	routine.  tls_proxy_context_scan() is meant to be passed as
 /*	a call-back to attr_scan(), thusly:
 /*
-/*	... ATTR_TYPE_FUNC, tls_proxy_context_scan, (void *) tls_context, ...
+/*	... RECV_ATTR_FUNC(tls_proxy_context_scan, (void *) tls_context), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -71,18 +71,18 @@ int     tls_proxy_context_scan(ATTR_SCAN_MASTER_FN scan_fn, VSTREAM *fp,
      */
     memset(ptr, 0, sizeof(TLS_SESS_STATE));
     ret = scan_fn(fp, flags | ATTR_FLAG_MORE,
-		  ATTR_TYPE_STR, MAIL_ATTR_PEER_CN, peer_CN,
-		  ATTR_TYPE_STR, MAIL_ATTR_ISSUER_CN, issuer_CN,
-		  ATTR_TYPE_STR, MAIL_ATTR_PEER_CERT_FPT, peer_cert_fprint,
-		  ATTR_TYPE_STR, MAIL_ATTR_PEER_PKEY_FPT, peer_pkey_fprint,
-		  ATTR_TYPE_INT, MAIL_ATTR_PEER_STATUS,
-		  &tls_context->peer_status,
-		  ATTR_TYPE_STR, MAIL_ATTR_CIPHER_PROTOCOL, protocol,
-		  ATTR_TYPE_STR, MAIL_ATTR_CIPHER_NAME, cipher_name,
-		  ATTR_TYPE_INT, MAIL_ATTR_CIPHER_USEBITS,
-		  &tls_context->cipher_usebits,
-		  ATTR_TYPE_INT, MAIL_ATTR_CIPHER_ALGBITS,
-		  &tls_context->cipher_algbits,
+		  RECV_ATTR_STR(MAIL_ATTR_PEER_CN, peer_CN),
+		  RECV_ATTR_STR(MAIL_ATTR_ISSUER_CN, issuer_CN),
+		  RECV_ATTR_STR(MAIL_ATTR_PEER_CERT_FPT, peer_cert_fprint),
+		  RECV_ATTR_STR(MAIL_ATTR_PEER_PKEY_FPT, peer_pkey_fprint),
+		  RECV_ATTR_INT(MAIL_ATTR_PEER_STATUS,
+				&tls_context->peer_status),
+		  RECV_ATTR_STR(MAIL_ATTR_CIPHER_PROTOCOL, protocol),
+		  RECV_ATTR_STR(MAIL_ATTR_CIPHER_NAME, cipher_name),
+		  RECV_ATTR_INT(MAIL_ATTR_CIPHER_USEBITS,
+				&tls_context->cipher_usebits),
+		  RECV_ATTR_INT(MAIL_ATTR_CIPHER_ALGBITS,
+				&tls_context->cipher_algbits),
 		  ATTR_TYPE_END);
     tls_context->peer_CN = vstring_export(peer_CN);
     tls_context->issuer_CN = vstring_export(issuer_CN);

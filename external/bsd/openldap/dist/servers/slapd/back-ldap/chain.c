@@ -1,10 +1,10 @@
-/*	$NetBSD: chain.c,v 1.1.1.4 2014/05/28 09:58:49 tron Exp $	*/
+/*	$NetBSD: chain.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $	*/
 
 /* chain.c - chain LDAP operations */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2014 The OpenLDAP Foundation.
+ * Copyright 2003-2016 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *
@@ -21,6 +21,9 @@
  * in OpenLDAP Software.
  * This work was subsequently modified by Pierangelo Masarati.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: chain.c,v 1.1.1.4.10.1 2017/04/21 16:52:29 bouyer Exp $");
 
 #include "portable.h"
 
@@ -323,6 +326,10 @@ ldap_chain_cb_search_response( Operation *op, SlapReply *rs )
 
 		/* back-ldap tried to send result */
 		lb->lb_status = LDAP_CH_RES;
+		/* don't let other callbacks run, this isn't
+		 * the real result for this op.
+		 */
+		op->o_callback->sc_next = NULL;
 	}
 
 	return 0;
@@ -626,6 +633,11 @@ cleanup:;
 		}
 
 further_cleanup:;
+		if ( op->o_req_dn.bv_val == pdn.bv_val ) {
+			op->o_req_dn = odn;
+			op->o_req_ndn = ondn;
+		}
+
 		if ( free_dn ) {
 			op->o_tmpfree( pdn.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
@@ -650,9 +662,6 @@ further_cleanup:;
 
 		rc = rs2.sr_err;
 	}
-
-	op->o_req_dn = odn;
-	op->o_req_ndn = ondn;
 
 #ifdef LDAP_CONTROL_X_CHAINING_BEHAVIOR
 	(void)chaining_control_remove( op, &ctrls );
@@ -897,13 +906,15 @@ cleanup:;
 		}
 		
 further_cleanup:;
+		if ( op->o_req_dn.bv_val == pdn.bv_val ) {
+			op->o_req_dn = odn;
+			op->o_req_ndn = ondn;
+		}
+
 		if ( free_dn ) {
 			op->o_tmpfree( pdn.bv_val, op->o_tmpmemctx );
 			op->o_tmpfree( ndn.bv_val, op->o_tmpmemctx );
 		}
-
-		op->o_req_dn = odn;
-		op->o_req_ndn = ondn;
 
 		if ( tmp_oq_search.rs_filter != NULL ) {
 			filter_free_x( op, tmp_oq_search.rs_filter, 1 );
@@ -927,8 +938,6 @@ further_cleanup:;
 	(void)chaining_control_remove( op, &ctrls );
 #endif /* LDAP_CONTROL_X_CHAINING_BEHAVIOR */
 
-	op->o_req_dn = odn;
-	op->o_req_ndn = ondn;
 	rs->sr_type = REP_SEARCHREF;
 	rs->sr_entry = save_entry;
 	rs->sr_flags = save_flags;

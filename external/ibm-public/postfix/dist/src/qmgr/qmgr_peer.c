@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_peer.c,v 1.1.1.1 2009/06/23 10:08:53 tron Exp $	*/
+/*	$NetBSD: qmgr_peer.c,v 1.1.1.1.36.1 2017/04/21 16:52:51 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -29,8 +29,8 @@
 /* DESCRIPTION
 /*	These routines add/delete/manipulate per-job peers.
 /*	Each peer corresponds to a specific job and destination.
-/*      It is similar to per-transport queue structure, but groups
-/*      only the entries of the given job.
+/*	It is similar to per-transport queue structure, but groups
+/*	only the entries of the given job.
 /*
 /*	qmgr_peer_create() creates an empty peer structure for the named
 /*	job and destination. It is an error to call this function
@@ -85,7 +85,7 @@ QMGR_PEER *qmgr_peer_create(QMGR_JOB *job, QMGR_QUEUE *queue)
     peer->queue = queue;
     peer->job = job;
     QMGR_LIST_APPEND(job->peer_list, peer, peers);
-    htable_enter(job->peer_byname, queue->name, (char *) peer);
+    htable_enter(job->peer_byname, queue->name, (void *) peer);
     peer->refcount = 0;
     QMGR_LIST_INIT(peer->entry_list);
     return (peer);
@@ -108,8 +108,8 @@ void    qmgr_peer_free(QMGR_PEER *peer)
 	msg_panic("%s: entry list not empty: %s", myname, queue->name);
 
     QMGR_LIST_UNLINK(job->peer_list, QMGR_PEER *, peer, peers);
-    htable_delete(job->peer_byname, queue->name, (void (*) (char *)) 0);
-    myfree((char *) peer);
+    htable_delete(job->peer_byname, queue->name, (void (*) (void *)) 0);
+    myfree((void *) peer);
 }
 
 /* qmgr_peer_find - lookup peer associated with given job and queue */

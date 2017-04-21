@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.23 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.23.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.23 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.23.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 /*
  * The LAN9118 Family
@@ -274,6 +274,7 @@ lan9118_attach(struct lan9118_softc *sc)
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	callout_init(&sc->sc_tick, 0);
@@ -332,8 +333,7 @@ lan9118_intr(void *arg)
 			 lan9118_rxintr(sc);
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
-		lan9118_start(ifp);
+	if_schedule_deferred_start(ifp);
 
 	rnd_add_uint32(&sc->rnd_source, datum);
 

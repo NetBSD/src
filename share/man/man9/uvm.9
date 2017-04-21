@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.112 2017/01/05 09:55:01 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.112.2.1 2017/04/21 16:53:20 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -472,24 +472,24 @@ The flags can be any bitwise inclusive-or of:
 .It Dv UFP_ALL
 Zero pseudo-flag meaning return all pages.
 .It Dv UFP_NOWAIT
-Don't sleep -- yield
+Don't sleep \(em yield
 .Dv NULL
 for busy pages or for uncached pages for which allocation would sleep.
 .It Dv UFP_NOALLOC
-Don't allocate -- yield
+Don't allocate \(em yield
 .Dv NULL
 for uncached pages.
 .It Dv UFP_NOCACHE
-Don't use cached pages -- yield
+Don't use cached pages \(em yield
 .Dv NULL
 instead.
 .It Dv UFP_NORDONLY
-Don't yield read-only pages -- yield
+Don't yield read-only pages \(em yield
 .Dv NULL
 for pages marked
 .Dv PG_READONLY .
 .It Dv UFP_DIRTYONLY
-Don't yield clean pages -- stop early at the first clean one.
+Don't yield clean pages \(em stop early at the first clean one.
 As a side effect, mark yielded dirty pages clean.
 Caller must write them to permanent storage before unbusying.
 .It Dv UFP_BACKWARD

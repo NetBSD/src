@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-getad.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: fad-getad.c,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fad-getad.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+__RCSID("$NetBSD: fad-getad.c,v 1.2.4.1 2017/04/21 16:51:34 bouyer Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -149,7 +149,8 @@ get_sa_len(struct sockaddr *addr)
  * could be opened.
  */
 int
-pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
+pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf,
+    int (*check_usable)(const char *))
 {
 	pcap_if_t *devlist = NULL;
 	struct ifaddrs *ifap, *ifa;
@@ -173,11 +174,50 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 	 * those.
 	 */
 	if (getifaddrs(&ifap) != 0) {
-		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		(void)pcap_snprintf(errbuf, PCAP_ERRBUF_SIZE,
 		    "getifaddrs: %s", pcap_strerror(errno));
 		return (-1);
 	}
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		/*
+		 * If this entry has a colon followed by a number at
+		 * the end, we assume it's a logical interface.  Those
+		 * are just the way you assign multiple IP addresses to
+		 * a real interface on Linux, so an entry for a logical
+		 * interface should be treated like the entry for the
+		 * real interface; we do that by stripping off the ":"
+		 * and the number.
+		 *
+		 * XXX - should we do this only on Linux?
+		 */
+		p = strchr(ifa->ifa_name, ':');
+		if (p != NULL) {
+			/*
+			 * We have a ":"; is it followed by a number?
+			 */
+			q = p + 1;
+			while (isdigit((unsigned char)*q))
+				q++;
+			if (*q == '\0') {
+				/*
+				 * All digits after the ":" until the end.
+				 * Strip off the ":" and everything after
+				 * it.
+				 */
+			       *p = '\0';
+			}
+		}
+
+		/*
+		 * Can we capture on this device?
+		 */
+		if (!(*check_usable)(ifa->ifa_name)) {
+			/*
+			 * No.
+			 */
+			continue;
+		}
+
 		/*
 		 * "ifa_addr" was apparently null on at least one
 		 * interface on some system.  Therefore, we supply
@@ -228,39 +268,11 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 		}
 
 		/*
-		 * If this entry has a colon followed by a number at
-		 * the end, we assume it's a logical interface.  Those
-		 * are just the way you assign multiple IP addresses to
-		 * a real interface on Linux, so an entry for a logical
-		 * interface should be treated like the entry for the
-		 * real interface; we do that by stripping off the ":"
-		 * and the number.
-		 *
-		 * XXX - should we do this only on Linux?
-		 */
-		p = strchr(ifa->ifa_name, ':');
-		if (p != NULL) {
-			/*
-			 * We have a ":"; is it followed by a number?
-			 */
-			q = p + 1;
-			while (isdigit((unsigned char)*q))
-				q++;
-			if (*q == '\0') {
-				/*
-				 * All digits after the ":" until the end.
-				 * Strip off the ":" and everything after
-				 * it.
-				 */
-			       *p = '\0';
-			}
-		}
-
-		/*
 		 * Add information for this address to the list.
 		 */
 		if (add_addr_to_iflist(&devlist, ifa->ifa_name,
-		    ifa->ifa_flags, addr, addr_size, netmask, addr_size,
+		    if_flags_to_pcap_flags(ifa->ifa_name, ifa->ifa_flags),
+		    addr, addr_size, netmask, addr_size,
 		    broadaddr, broadaddr_size, dstaddr, dstaddr_size,
 		    errbuf) < 0) {
 			ret = -1;

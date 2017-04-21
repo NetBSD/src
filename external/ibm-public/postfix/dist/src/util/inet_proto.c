@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.c,v 1.1.1.2 2013/01/02 18:59:13 tron Exp $	*/
+/*	$NetBSD: inet_proto.c,v 1.1.1.2.16.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,7 @@
 /*		unsigned *dns_atype_list;/* TAAAA and/or TA */
 /*		unsigned char *sa_family_list;/* AF_INET6 and/or AF_INET */
 /* .in -4
-/* } INET_PROTO_INFO;
+/*	} INET_PROTO_INFO;
 /*
 /*	INET_PROTO_INFO *inet_proto_init(context, protocols)
 /*
@@ -171,10 +171,10 @@ static unsigned *make_unsigned_vector(int len,...)
 
 static void inet_proto_free(INET_PROTO_INFO *pf)
 {
-    myfree((char *) pf->ai_family_list);
-    myfree((char *) pf->dns_atype_list);
-    myfree((char *) pf->sa_family_list);
-    myfree((char *) pf);
+    myfree((void *) pf->ai_family_list);
+    myfree((void *) pf->dns_atype_list);
+    myfree((void *) pf->sa_family_list);
+    myfree((void *) pf);
 }
 
 /* inet_proto_init - convert protocol names to library inputs */

@@ -1,10 +1,10 @@
-/*	$NetBSD: deref.c,v 1.2 2015/02/07 17:58:23 christos Exp $	*/
+/*	$NetBSD: deref.c,v 1.2.4.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* deref.c - dereference overlay */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * This work was initially developed by Pierangelo Masarati
  * for inclusion in OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: deref.c,v 1.2.4.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcpt_print.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: rcpt_print.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -19,7 +19,7 @@
 /*	routine. rcpt_print() is meant to be passed as a call-back
 /*	to attr_print(), thusly:
 /*
-/*	... ATTR_TYPE_FUNC, rcpt_print, (void *) recipient, ...
+/*	... SEND_ATTR_FUNC(rcpt_print, (void *) recipient), ...
 /* DIAGNOSTICS
 /*	Fatal: out of memory.
 /* LICENSE
@@ -28,8 +28,10 @@
 /*	The Secure Mailer license must be distributed with this
 /*	software.
 /* AUTHOR(S)
-/*	Wietse Venema IBM T.J. Watson Research P.O. Box 704 Yorktown
-/*	Heights, NY 10598, USA
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
 /*--*/
 
 /* System library. */
@@ -61,11 +63,11 @@ int     rcpt_print(ATTR_PRINT_MASTER_FN print_fn, VSTREAM *fp,
      */
     ret =
 	print_fn(fp, flags | ATTR_FLAG_MORE,
-		 ATTR_TYPE_STR, MAIL_ATTR_ORCPT, rcpt->orig_addr,
-		 ATTR_TYPE_STR, MAIL_ATTR_RECIP, rcpt->address,
-		 ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, rcpt->offset,
-		 ATTR_TYPE_STR, MAIL_ATTR_DSN_ORCPT, rcpt->dsn_orcpt,
-		 ATTR_TYPE_INT, MAIL_ATTR_DSN_NOTIFY, rcpt->dsn_notify,
+		 SEND_ATTR_STR(MAIL_ATTR_ORCPT, rcpt->orig_addr),
+		 SEND_ATTR_STR(MAIL_ATTR_RECIP, rcpt->address),
+		 SEND_ATTR_LONG(MAIL_ATTR_OFFSET, rcpt->offset),
+		 SEND_ATTR_STR(MAIL_ATTR_DSN_ORCPT, rcpt->dsn_orcpt),
+		 SEND_ATTR_INT(MAIL_ATTR_DSN_NOTIFY, rcpt->dsn_notify),
 		 ATTR_TYPE_END);
     return (ret);
 }

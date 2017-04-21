@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.9 2016/12/08 01:12:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.9.2.1 2017/04/21 16:53:47 bouyer Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.9 2016/12/08 01:12:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.9.2.1 2017/04/21 16:53:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -174,6 +174,7 @@ static int	rtwn_init(struct ifnet *);
 static void	rtwn_init_task(void *);
 static void	rtwn_stop(struct ifnet *, int);
 static int	rtwn_intr(void *);
+static void	rtwn_softintr(void *);
 
 /* Aliases. */
 #define	rtwn_bb_write	rtwn_write_4
@@ -228,6 +229,7 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, rtwn_calib_to, sc);
 
+	sc->sc_soft_ih = softint_establish(SOFTINT_NET, rtwn_softintr, sc);
 	sc->init_task = softint_establish(SOFTINT_NET, rtwn_init_task, sc);
 
 	/* Power up the device */
@@ -359,7 +361,6 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	ieee80211_ifattach(ic);
 	/* Use common softint-based if_input */
 	ifp->if_percpuq = if_percpuq_create(ifp);
-	if_deferred_start_init(ifp, NULL);
 	if_register(ifp);
 
 	/* override default methods */
@@ -424,6 +425,8 @@ rtwn_detach(device_t self, int flags)
 
 	if (sc->init_task != NULL)
 		softint_disestablish(sc->init_task);
+	if (sc->sc_soft_ih != NULL)
+		softint_disestablish(sc->sc_soft_ih);
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
@@ -1214,8 +1217,11 @@ rtwn_calib_to(void *arg)
 {
 	struct rtwn_softc *sc = arg;
 	struct r92c_fw_cmd_rssi cmd;
+	int s;
 
 	DPRINTFN(3, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
+
+	s = splnet();
 
 	if (sc->sc_ic.ic_state != IEEE80211_S_RUN)
 		goto restart_timer;
@@ -1234,6 +1240,8 @@ rtwn_calib_to(void *arg)
 
  restart_timer:
 	callout_schedule(&sc->calib_to, mstohz(2000));
+
+	splx(s);
 }
 
 static void
@@ -1657,7 +1665,7 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc *rx_desc,
 	struct mbuf *m, *m1;
 	uint8_t rate;
 	int8_t rssi = 0;
-	int infosz, pktlen, shift, totlen, error;
+	int infosz, pktlen, shift, totlen, error, s;
 
 	DPRINTFN(3, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
@@ -1765,6 +1773,8 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc *rx_desc,
 		m_adj(m, shift);
 	wh = mtod(m, struct ieee80211_frame *);
 
+	s = splnet();
+
 	if (__predict_false(sc->sc_drvbpf != NULL)) {
 		struct rtwn_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -1806,6 +1816,8 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc *rx_desc,
 
 	/* Node is no longer needed. */
 	ieee80211_free_node(ni);
+
+	splx(s);
 }
 
 static int
@@ -1989,7 +2001,7 @@ rtwn_tx(struct rtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx_ring->cur = (tx_ring->cur + 1) % RTWN_TX_LIST_COUNT;
 	tx_ring->queued++;
 
-	if (tx_ring->queued >= (RTWN_TX_LIST_COUNT - 1))
+	if (tx_ring->queued > RTWN_TX_LIST_HIMARK)
 		sc->qfullmsk |= (1 << qid);
 
 	/* Kick TX. */
@@ -2006,10 +2018,12 @@ rtwn_tx_done(struct rtwn_softc *sc, int qid)
 	struct rtwn_tx_ring *tx_ring = &sc->tx_ring[qid];
 	struct rtwn_tx_data *tx_data;
 	struct r92c_tx_desc *tx_desc;
-	int i;
+	int i, s;
 
 	DPRINTFN(3, ("%s: %s: qid=%d\n", device_xname(sc->sc_dev), __func__,
 	    qid));
+
+	s = splnet();
 
 	bus_dmamap_sync(sc->sc_dmat, tx_ring->map,
 	    0, sizeof(*tx_desc) * RTWN_TX_LIST_COUNT,
@@ -2035,8 +2049,10 @@ rtwn_tx_done(struct rtwn_softc *sc, int qid)
 		tx_ring->queued--;
 	}
 
-	if (tx_ring->queued < (RTWN_TX_LIST_COUNT - 1))
+	if (tx_ring->queued < RTWN_TX_LIST_LOMARK)
 		sc->qfullmsk &= ~(1 << qid);
+
+	splx(s);
 }
 
 static void
@@ -3475,7 +3491,6 @@ rtwn_intr(void *xsc)
 {
 	struct rtwn_softc *sc = xsc;
 	uint32_t status;
-	int i;
 
 	if (!ISSET(sc->sc_flags, RTWN_FLAG_FW_LOADED))
 		return 0;
@@ -3486,6 +3501,24 @@ rtwn_intr(void *xsc)
 
 	/* Disable interrupts. */
 	rtwn_write_4(sc, R92C_HIMR, 0x00000000);
+
+	softint_schedule(sc->sc_soft_ih);
+	return 1;
+}
+
+static void
+rtwn_softintr(void *xsc)
+{
+	struct rtwn_softc *sc = xsc;
+	uint32_t status;
+	int i, s;
+
+	if (!ISSET(sc->sc_flags, RTWN_FLAG_FW_LOADED))
+		return;
+
+	status = rtwn_read_4(sc, R92C_HISR);
+	if (status == 0 || status == 0xffffffff)
+		goto out;
 
 	/* Ack interrupts. */
 	rtwn_write_4(sc, R92C_HISR, status);
@@ -3519,12 +3552,13 @@ rtwn_intr(void *xsc)
 		rtwn_tx_done(sc, RTWN_VO_QUEUE);
 	if ((status & RTWN_INT_ENABLE_TX) && sc->qfullmsk == 0) {
 		struct ifnet *ifp = GET_IFP(sc);
+		s = splnet();
 		ifp->if_flags &= ~IFF_OACTIVE;
-		if_schedule_deferred_start(ifp);
+		rtwn_start(ifp);
+		splx(s);
 	}
 
+ out:
 	/* Enable interrupts. */
 	rtwn_write_4(sc, R92C_HIMR, RTWN_INT_ENABLE);
-
-	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_dsp.c,v 1.4 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: mips_dsp.c,v 1.4.12.1 2017/04/21 16:53:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.4 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.4.12.1 2017/04/21 16:53:31 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -58,9 +58,9 @@ const pcu_ops_t mips_dsp_ops = {
 };
 
 void
-dsp_discard(void)
+dsp_discard(lwp_t *l)
 {
-	pcu_discard(&mips_dsp_ops, false);
+	pcu_discard(&mips_dsp_ops, l, false);
 }
 
 void
@@ -70,15 +70,15 @@ dsp_load(void)
 }
 
 void
-dsp_save(void)
+dsp_save(lwp_t *l)
 {
-	pcu_save(&mips_dsp_ops);
+	pcu_save(&mips_dsp_ops, l);
 }
 
 bool
-dsp_used_p(void)
+dsp_used_p(const lwp_t *l)
 {
-	return pcu_valid_p(&mips_dsp_ops);
+	return pcu_valid_p(&mips_dsp_ops, l);
 }
 
 void

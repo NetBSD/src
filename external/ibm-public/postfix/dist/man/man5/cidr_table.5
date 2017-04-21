@@ -1,4 +1,4 @@
-.\"	$NetBSD: cidr_table.5,v 1.1.1.2 2014/07/06 19:27:45 tron Exp $
+.\"	$NetBSD: cidr_table.5,v 1.1.1.2.10.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH CIDR_TABLE 5 
 .ad
@@ -10,24 +10,24 @@ format of Postfix CIDR tables
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -q "\fIstring\fB" cidr:/etc/postfix/\fIfilename\fR
+\fBpostmap \-q "\fIstring\fB" cidr:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -q - cidr:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
+\fBpostmap \-q \- cidr:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
 The Postfix mail system uses optional lookup tables.
 These tables are usually in \fBdbm\fR or \fBdb\fR format.
 Alternatively, lookup tables can be specified in CIDR
-(Classless Inter-Domain Routing) form. In this case, each
+(Classless Inter\-Domain Routing) form. In this case, each
 input is compared against a list of patterns. When a match
 is found, the corresponding result is returned and the search
 is terminated.
 
 To find out what types of lookup tables your Postfix system
-supports use the "\fBpostconf -m\fR" command.
+supports use the "\fBpostconf \-m\fR" command.
 
-To test lookup tables, use the "\fBpostmap -q\fR" command as
+To test lookup tables, use the "\fBpostmap \-q\fR" command as
 described in the SYNOPSIS above.
 .SH "TABLE FORMAT"
 .na
@@ -45,7 +45,7 @@ An IPv4 network address is a sequence of four decimal octets
 separated by ".", and an IPv6 network address is a sequence
 of three to eight hexadecimal octet pairs separated by ":".
 
-The \fInetwork_mask\fR is the number of high-order bits in
+The \fInetwork_mask\fR is the number of high\-order bits in
 the \fInetwork_address\fR that the search string must match.
 
 Before comparisons are made, lookup keys and table entries
@@ -60,10 +60,10 @@ IPv6 support is available in Postfix 2.2 and later.
 When a search string matches the specified network address,
 use the corresponding \fIresult\fR value.
 .IP "blank lines and comments"
-Empty lines and whitespace-only lines are ignored, as
-are lines whose first non-whitespace character is a `#'.
-.IP "multi-line text"
-A logical line starts with non-whitespace text. A line that
+Empty lines and whitespace\-only lines are ignored, as
+are lines whose first non\-whitespace character is a `#'.
+.IP "multi\-line text"
+A logical line starts with non\-whitespace text. A line that
 starts with whitespace continues a logical line.
 .SH "TABLE SEARCH ORDER"
 .na
@@ -101,9 +101,9 @@ Use "\fBpostconf readme_directory\fR" or
 .na
 .nf
 DATABASE_README, Postfix lookup table overview
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 CIDR table support was introduced with Postfix version 2.1.
 .SH "AUTHOR(S)"
 .na
@@ -119,3 +119,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

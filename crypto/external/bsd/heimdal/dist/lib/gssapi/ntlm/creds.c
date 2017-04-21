@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.2 2014/05/12 15:27:36 christos Exp $	*/
+/*	$NetBSD: creds.c,v 1.2.10.1 2017/04/21 16:50:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
 OM_uint32 GSSAPI_CALLCONV
 _gss_ntlm_inquire_cred
            (OM_uint32 * minor_status,
-            const gss_cred_id_t cred_handle,
+            gss_const_cred_id_t cred_handle,
             gss_name_t * name,
             OM_uint32 * lifetime,
             gss_cred_usage_t * cred_usage,

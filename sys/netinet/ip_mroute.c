@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.145 2017/01/11 13:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.145.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.145 2017/01/11 13:08:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.145.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1561,9 +1561,10 @@ static void
 expire_upcalls(void *v)
 {
 	int i;
-	int s;
 
-	s = splsoftnet();
+	/* XXX NOMPSAFE still need softnet_lock */
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		struct mfc *rt, *nrt;
@@ -1599,9 +1600,11 @@ expire_upcalls(void *v)
 		}
 	}
 
-	splx(s);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 	    expire_upcalls, NULL);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*

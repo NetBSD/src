@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.250 2016/12/12 20:41:49 riastradh Exp $
+$NetBSD: acronyms,v 1.250.2.1 2017/04/21 16:53:20 bouyer Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -32,6 +32,7 @@ AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
 AM	ante meridiem
+AMA	ask me anything
 AMOL	a mountain of love
 ASAIC	as soon as I can
 ASAP	as soon as possible
@@ -108,6 +109,7 @@ DM	dungeon master
 DMZ	demilitarized zone
 DND	do not disturb
 DNF	did not finish
+DNFT	do not feed troll
 DOA	dead on arrival
 DRY	don't repeat yourself
 DSTM	don't shoot the messenger
@@ -326,6 +328,7 @@ MYOB	mind your own business
 N/A	not {applicable,available}
 N/M	never mind
 NAFAIK	not as far as I know
+NB	nota bene
 NBD	no big deal
 NE1	anyone
 NEDM	not even Doom music

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.5 2015/10/22 23:17:08 jmcneill Exp $	*/
+/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.5.4.1 2017/04/21 16:53:59 bouyer Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,15 +25,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.5 2015/10/22 23:17:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.5.4.1 2017/04/21 16:53:59 bouyer Exp $");
 
 #include <subdev/mc.h>
 #include <core/option.h>
 
-#if defined(__NetBSD__) && defined(__arm__)
+#if defined(__NetBSD__)
+#include <drm/drmP.h>
+#if defined(__arm__)
 /* XXX nouveau platform kludge */
 #include <arm/nvidia/tegra_intr.h>
 #endif
+#endif	/* __NetBSD__ */
 
 static inline u32
 nouveau_mc_intr_mask(struct nouveau_mc *pmc)
@@ -114,7 +117,8 @@ _nouveau_mc_dtor(struct nouveau_object *object)
 	struct nouveau_mc *pmc = (void *)object;
 #if defined(__NetBSD__)
 	if (nv_device_is_pci(device)) {
-		pci_intr_disestablish(device->pdev->pd_pa.pa_pc, pmc->irq_cookie);
+		struct drm_device *dev = pci_get_drvdata(device->pdev);
+		(*dev->driver->bus->irq_uninstall)(dev, pmc->irq_cookie);
 #if defined(__arm__)
 	} else {
 		intr_disestablish(pmc->irq_cookie);
@@ -175,16 +179,12 @@ nouveau_mc_create_(struct nouveau_object *parent, struct nouveau_object *engine,
 
 #if defined(__NetBSD__)
 	if (nv_device_is_pci(device)) {
-		const pci_chipset_tag_t pc = device->pdev->pd_pa.pa_pc;
-		pci_intr_handle_t ih;
-
-		if (pci_intr_map(&device->pdev->pd_pa, &ih))
-			return -EIO;
-
-		pmc->irq_cookie = pci_intr_establish(pc, ih, IPL_VM,
-		    &nouveau_mc_intr, pmc);
-		if (pmc->irq_cookie == NULL)
-			return -EIO;
+		struct drm_device *dev = pci_get_drvdata(device->pdev);
+		ret = (*dev->driver->bus->irq_install)(dev, nouveau_mc_intr,
+		    IRQF_SHARED, "nouveau", pmc,
+		    (struct drm_bus_irq_cookie **)&pmc->irq_cookie);
+		if (ret < 0)
+			return ret;
 #if defined (__arm__)
 	} else {
 		pmc->irq_cookie = intr_establish(TEGRA_INTR_GPU,

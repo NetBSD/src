@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.36 2014/05/25 13:51:25 hannken Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.36.12.1 2017/04/21 16:54:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -90,6 +90,7 @@ int	layerfs_vget(struct mount *, ino_t, struct vnode **);
 int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
 int	layerfs_snapshot(struct mount *, struct vnode *, struct timespec *);
+int	layerfs_suspendctl(struct mount *, int);
 int	layerfs_renamelock_enter(struct mount *);
 void	layerfs_renamelock_exit(struct mount *);
 
@@ -98,7 +99,6 @@ int	layer_bypass(void *);
 int	layer_getattr(void *);
 int	layer_inactive(void *);
 int	layer_reclaim(void *);
-int	layer_lock(void *);
 int	layer_print(void *);
 int	layer_bmap(void *);
 int	layer_fsync(void *);
@@ -106,11 +106,15 @@ int	layer_lookup(void *);
 int	layer_setattr(void *);
 int	layer_access(void *);
 int	layer_open(void *);
+int	layer_close(void *);
 int	layer_remove(void *);
 int	layer_rename(void *);
 int	layer_revoke(void *);
 int	layer_rmdir(void *);
 int	layer_getpages(void *);
 int	layer_putpages(void *);
+#define layer_lock	genfs_lock
+#define layer_unlock	genfs_unlock
+#define layer_islocked	genfs_islocked
 
 #endif /* _MISCFS_GENFS_LAYER_EXTERN_H_ */

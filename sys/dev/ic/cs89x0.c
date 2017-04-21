@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.38 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.38.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.38 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.38.2.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -486,6 +486,7 @@ cs_attach(struct cs_softc *sc, u_int8_t *enaddr, int *media,
 
 	/* Attach the interface. */
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -1583,11 +1584,8 @@ cs_transmit_event(struct cs_softc *sc, u_int16_t txEvent)
 	/* Transmission is no longer in progress */
 	sc->sc_txbusy = FALSE;
 
-	/* If there is more to transmit */
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
-		/* Start the next transmission */
-		cs_start_output(ifp);
-	}
+	/* If there is more to transmit, start the next transmission */
+	if_schedule_deferred_start(ifp);
 }
 
 void

@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.314 2016/12/18 19:39:05 christos Exp $
+#	$NetBSD: build.sh,v 1.314.2.1 2017/04/21 16:50:41 bouyer Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -458,7 +458,8 @@ initdefaults()
 
 	[ -d usr.bin/make ] || cd "$(dirname $0)"
 	[ -d usr.bin/make ] ||
-	    bomb "build.sh must be run from the top source level"
+	    bomb "usr.bin/make not found; build.sh must be run from the top \
+level of source directory"
 	[ -f share/mk/bsd.own.mk ] ||
 	    bomb "src/share/mk is missing; please re-fetch the source tree"
 
@@ -1892,7 +1893,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.314 2016/12/18 19:39:05 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.314.2.1 2017/04/21 16:50:41 bouyer Exp $
 # with these arguments: ${_args}
 #
 
@@ -2193,15 +2194,17 @@ setup_mkrepro()
 	if [ ${MKREPRO-no} != "yes" ]; then
 		return
 	fi
-	buildtools
 	local dirs=${NETBSDSRCDIR-/usr/src}/
 	if [ ${MKX11-no} = "yes" ]; then
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
 	local cvslatest=$(print_tooldir_program cvslatest)
-	MKREPRO_TIMESTAMP=$(${cvslatest} ${dirs})
+	if [ ! -x "${cvslatest}" ]; then
+		buildtools
+	fi
+	MKREPRO_TIMESTAMP=$("${cvslatest}" ${dirs})
 	[ -n "${MKREPRO_TIMESTAMP}" ] || bomb "Failed to compute timestamp"
-	statusmsg2 "MKREPRO_TIMESTAMP" "$(date -r ${MKREPRO_TIMESTAMP})"
+	statusmsg2 "MKREPRO_TIMESTAMP" "$(TZ=UTC date -r ${MKREPRO_TIMESTAMP})"
 	export MKREPRO MKREPRO_TIMESTAMP
 }
 
@@ -2235,6 +2238,7 @@ main()
 	rebuildmake
 	validatemakeparams
 	createmakewrapper
+	setup_mkrepro
 
 	# Perform the operations.
 	#
@@ -2258,7 +2262,6 @@ main()
 			;;
 
 		build|distribution|release)
-			setup_mkrepro
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"

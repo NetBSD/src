@@ -1,6 +1,6 @@
-#	$NetBSD: std.marvell,v 1.3 2012/12/16 23:47:56 matt Exp $
+#	$NetBSD: std.marvell,v 1.3.22.1 2017/04/21 16:53:26 bouyer Exp $
 #
-# standard NetBSD/evbarm for MAEVELL options
+# standard NetBSD/evbarm for MARVELL options
 
 machine	evbarm arm
 include		"arch/evbarm/conf/std.evbarm"

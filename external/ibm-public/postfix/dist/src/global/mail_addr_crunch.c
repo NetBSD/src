@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_addr_crunch.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: mail_addr_crunch.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -103,7 +103,7 @@ ARGV   *mail_addr_crunch(const char *string, const char *extension)
 	argv_add(argv, STR(canon_addr), ARGV_END);
     }
     argv_terminate(argv);
-    myfree((char *) addr_list);
+    myfree((void *) addr_list);
     tok822_free_tree(tree);
     vstring_free(canon_addr);
     vstring_free(extern_addr);

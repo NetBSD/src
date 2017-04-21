@@ -1,4 +1,4 @@
-/*	$NetBSD: get_window_size.c,v 1.3 2014/04/24 13:45:34 pettai Exp $	*/
+/*	$NetBSD: get_window_size.c,v 1.3.10.1 2017/04/21 16:50:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan

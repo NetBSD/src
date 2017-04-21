@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.42 2016/12/12 10:09:52 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.42.2.1 2017/04/21 16:53:19 bouyer Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 29, 2014
+.Dd March 5, 2017
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nm disk_begindetach ,
 .Nm disk_detach ,
 .Nm disk_destroy ,
+.Nm disk_wait ,
 .Nm disk_busy ,
 .Nm disk_unbusy ,
 .Nm disk_isbusy ,
@@ -60,6 +61,8 @@
 .Fn disk_detach "struct disk *"
 .Ft void
 .Fn disk_destroy "struct disk *"
+.Ft void
+.Fn disk_wait "struct disk *"
 .Ft void
 .Fn disk_busy "struct disk *"
 .Ft void
@@ -102,7 +105,7 @@ struct disk {
 	 * Information required to be the parent of a disk wedge.
 	 */
 	kmutex_t	dk_rawlock;	/* lock on these fields */
-	u_int		dk_rawopens;	/* # of openes of rawvp */
+	u_int		dk_rawopens;	/* # of opens of rawvp */
 	struct vnode	*dk_rawvp;	/* vnode for the RAW_PART bdev */
 
 	kmutex_t	dk_openlock;	/* lock on these and openmask */
@@ -167,19 +170,28 @@ If the count drops below zero, panic.
 .It Fn disk_destroy
 Release resources used by the disk structure when it is no longer
 required.
+.It Fn disk_wait
+Disk timings are measured by counting the number of queued
+requests (wait counter) and requests issued to the hardware (busy counter)
+and keeping timestamp when the counters change.
+The time interval between
+two changes of a counter is accumulated into a total and also multiplied
+by the counter value and the accumulated into a sum.
+Both values can be
+used to determine how much time is spent in the driver queue or in-flight
+to the hardware as well as the average number of requests in either state.
+.Fn disk_wait
+increment the disk's wait counter and handles the accumulation.
 .It Fn disk_busy
-Increment the disk's
-.Dq busy counter .
-If this counter goes from 0 to 1, set the timestamp corresponding to
-this transfer.
+Decrements the disk's wait counter and increments the disk's
+.Dq busy counter ,
+and handles either accumulation.
+If the wait counter is still zero, it
+is assumed that the driver hasn't been updated to call
+.Fn disk_wait ,
+then only the values from the busy counter are available.
 .It Fn disk_unbusy
-Decrement a disk's busy counter.
-If the count drops below zero, panic.
-Get the current time, subtract it from the disk's timestamp, and add
-the difference to the disk's running total.
-Set the disk's timestamp to the current time.
-If the provided byte count is greater than 0, add it to the disk's
-running total and increment the number of transfers performed by the disk.
+Decrement the disk's busy counter and handles the accumulation.
 The third argument
 .Ar read
 specifies the direction of I/O;
@@ -212,6 +224,7 @@ The functions typically called by device drivers are
 .Fn disk_begindetach ,
 .Fn disk_detach ,
 .Fn disk_destroy ,
+.Fn disk_wait ,
 .Fn disk_busy ,
 .Fn disk_unbusy ,
 and
@@ -403,8 +416,9 @@ const struct dkdriver foodkdriver = {
 .Pp
 Once the disk is attached, metrics may be gathered on that disk.
 In order to gather metrics data, the driver must tell the framework when
-the disk starts and stops operations.
+the disk queues, starts and stops operations.
 This functionality is provided by the
+.Fn disk_wait ,
 .Fn disk_busy
 and
 .Fn disk_unbusy
@@ -413,6 +427,7 @@ Because
 .Nm struct disk
 is part of device driver private data it needs to be guarded.
 Mutual exclusion must be done by driver
+.Fn disk_wait ,
 .Fn disk_busy
 and
 .Fn disk_unbusy
@@ -423,8 +438,22 @@ routine should be called immediately before a command to the disk is
 sent, e.g.:
 .Bd -literal
 void
-foostart(sc)
-	struct foo_softc *sc;
+foostrategy(struct buf *bp)
+{
+	[ . . . ]
+
+	mutex_enter(\*[Am]sc-\*[Gt]sc_dk_mtx);
+	disk_wait(\*[Am]sc-\*[Gt]sc_dk);
+
+	/* Put buffer onto drive's transfer queue */
+
+	mutex_exit(\*[Am]sc-\*[Gt]sc_dk_mtx);
+
+	foostart(sc);
+}
+
+void
+foostart(struct foo_softc *sc)
 {
 	[ . . . ]
 
@@ -444,26 +473,15 @@ foostart(sc)
 }
 .Ed
 .Pp
-When
-.Fn disk_busy
-is called, a timestamp is taken if the disk's busy counter moves from
-0 to 1, indicating the disk has gone from an idle to non-idle state.
-At the end of a transaction, the
+The routine
 .Fn disk_unbusy
-routine should be called.
-This routine performs some consistency checks,
-such as ensuring that the calls to
+performs some consistency checks, such as ensuring that the calls to
 .Fn disk_busy
 and
 .Fn disk_unbusy
 are balanced.
-This routine also performs the actual metrics calculation.
-A timestamp is taken and the difference from the timestamp taken in
-.Fn disk_busy
-is added to the disk's total running time.
-The disk's timestamp is then updated in case there is more than one
-pending transfer on the disk.
-A byte count is also added to the disk's running total, and if greater than
+It also performs the final steps of the metrics calcuation.
+A byte count is added to the disk's running total, and if greater than
 zero, the number of transfers the disk has performed is incremented.
 The third argument
 .Ar read
@@ -506,6 +524,7 @@ foodone(xfer)
 is used to get status of disk device it returns true if device is
 currently busy and false if it is not.
 Like
+.Fn disk_wait ,
 .Fn disk_busy
 and
 .Fn disk_unbusy
@@ -552,4 +571,4 @@ The
 .Nx
 generic disk framework was architected and implemented by
 .An Jason R. Thorpe
-.Aq thorpej@NetBSD.org .
+.Aq Mt thorpej@NetBSD.org .

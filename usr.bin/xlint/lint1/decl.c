@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.67 2016/12/27 21:52:35 christos Exp $ */
+/* $NetBSD: decl.c,v 1.67.2.1 2017/04/21 16:54:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.67 2016/12/27 21:52:35 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.67.2.1 2017/04/21 16:54:16 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -256,7 +256,7 @@ addtype(type_t *tp)
 	tspec_t	t;
 #ifdef DEBUG
 	char buf[1024];
-	printf("addtype %s\n", tyname(buf, sizeof(buf), tp));
+	printf("%s: %s\n", __func__, tyname(buf, sizeof(buf), tp));
 #endif
 	if (tp->t_typedef) {
 		if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
@@ -355,6 +355,8 @@ addtype(type_t *tp)
 				dcs->d_terr = 1;
 			dcs->d_atyp = t;
 		}
+	} else if (t == PTR) {
+		dcs->d_type = tp;
 	} else {
 		/*
 		 * remember specifiers "void", "char", "int",
@@ -727,6 +729,10 @@ deftyp(void)
 	tp = dcs->d_type;
 	scl = dcs->d_scl;
 
+#ifdef DEBUG
+	char buf[1024];
+	printf("%s: %s\n", __func__, tyname(buf, sizeof(buf), tp));
+#endif
 	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && c == NOTSPEC &&
 	    tp == NULL)
 		dcs->d_notyp = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.18 2017/01/11 00:55:57 maya Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.18.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.18 2017/01/11 00:55:57 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.18.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2158,7 +2158,7 @@ vmxnet3_legacy_intr(void *xsc)
 
 	VMXNET3_TXQ_LOCK(txq);
 	vmxnet3_txq_eof(txq);
-	vmxnet3_start_locked(&sc->vmx_ethercom.ec_if);
+	if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	vmxnet3_enable_all_intrs(sc);
@@ -2180,7 +2180,7 @@ vmxnet3_txq_intr(void *xtxq)
 
 	VMXNET3_TXQ_LOCK(txq);
 	vmxnet3_txq_eof(txq);
-	vmxnet3_start_locked(&sc->vmx_ethercom.ec_if);
+	if_schedule_deferred_start(&sc->vmx_ethercom.ec_if);
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	vmxnet3_enable_intr(sc, txq->vxtxq_intr_idx);

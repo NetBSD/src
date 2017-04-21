@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.197 2015/06/22 06:24:17 matt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.197.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.197 2015/06/22 06:24:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.197.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1602,9 +1602,7 @@ uvm_fault_lower(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_page **pages)
 {
-#ifdef DIAGNOSTIC
-	struct vm_amap *amap = ufi->entry->aref.ar_amap;
-#endif
+	struct vm_amap *amap __diagused = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *uobjpage;
 	int error;
@@ -1822,11 +1820,14 @@ uvm_fault_lower_neighbor(
 	UVM_PAGE_OWN(pg, NULL);
 
 	KASSERT(mutex_owned(pg->uobject->vmobjlock));
-	(void) pmap_enter(ufi->orig_map->pmap, currva,
-	    VM_PAGE_TO_PHYS(pg),
+
+	const vm_prot_t mapprot = 
 	    readonly ? (flt->enter_prot & ~VM_PROT_WRITE) :
-	    flt->enter_prot & MASK(ufi->entry),
-	    PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0));
+	    flt->enter_prot & MASK(ufi->entry);
+	const u_int mapflags = 
+	    PMAP_CANFAIL | (flt->wire_mapping ? (mapprot | PMAP_WIRED) : 0);
+	(void) pmap_enter(ufi->orig_map->pmap, currva,
+	    VM_PAGE_TO_PHYS(pg), mapprot, mapflags);
 }
 
 /*

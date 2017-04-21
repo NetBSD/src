@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_STEP 3
 .Os
 .Sh NAME
 .Nm sqlite3_step
 .Nd Evaluate An SQL Statement
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_step
 .Fa "sqlite3_stmt*"
 .Fc
@@ -74,8 +74,9 @@ anything other than SQLITE_ROW before any subsequent invocation
 of sqlite3_step().
 Failure to reset the prepared statement using sqlite3_reset()
 would result in an SQLITE_MISUSE return from sqlite3_step().
-But after version 3.6.23.1, sqlite3_step() began calling sqlite3_reset()
-automatically in this circumstance rather than returning SQLITE_MISUSE.
+But after version 3.6.23.1 (dateof:3.6.23.1,
+sqlite3_step() began calling sqlite3_reset() automatically
+in this circumstance rather than returning SQLITE_MISUSE.
 This is not considered a compatibility break because any application
 that ever receives an SQLITE_MISUSE error is broken by definition.
 The SQLITE_OMIT_AUTORESET compile-time option

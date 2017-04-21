@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.h,v 1.3 2006/10/17 15:13:08 christos Exp $	*/
+/*	$NetBSD: drvstats.h,v 1.3.68.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -45,7 +45,10 @@ struct _drive {
 	u_int64_t	 *seek;	/* # of seeks (currently unused). */
 	u_int64_t	 *rbytes;	/* # of bytes read. */
 	u_int64_t	 *wbytes;	/* # of bytes written. */
-	struct timeval	 *time;	/* Time spent in disk i/o. */
+	struct timeval	 *time;		/* Time spent in disk i/o. */
+	struct timeval	 *wait;		/* Time spent in queue waiting. */
+	struct timeval   *busysum;	/* Time busy * queue length */
+	struct timeval   *waitsum;	/* Time waiting * queue length */
 	u_int64_t	  tk_nin;	/* TTY Chars in. */
 	u_int64_t	  tk_nout;	/* TTY Chars out. */
 	u_int64_t	  cp_time[CPUSTATES];	/* System timer ticks. */

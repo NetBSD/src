@@ -1,4 +1,4 @@
-/*	$NetBSD: slc-lex.l,v 1.1.1.2 2011/04/14 14:09:33 elric Exp $	*/
+/*	$NetBSD: slc-lex.l,v 1.1.1.2.32.1 2017/04/21 16:50:51 bouyer Exp $	*/
 
 %{
 /*

@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_BLOB_OPEN 3
 .Os
 .Sh NAME
 .Nm sqlite3_blob_open
 .Nd Open A BLOB For Incremental I/O
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_blob_open
 .Fa "sqlite3*"
 .Fa "const char *zDb"
@@ -70,6 +70,13 @@ Unless it returns SQLITE_MISUSE, this function sets the database connection
 error code and message accessible via sqlite3_errcode()
 and sqlite3_errmsg() and related functions.
 .Pp
+A BLOB referenced by sqlite3_blob_open() may be read using the sqlite3_blob_read()
+interface and modified by using sqlite3_blob_write().
+The BLOB handle can be moved to a different row of the same
+table using the sqlite3_blob_reopen() interface.
+However, the column, table, or database of a BLOB handle
+cannot be changed after the BLOB handle is opened.
+.Pp
 If the row that a BLOB handle points to is modified by an UPDATE,
 DELETE, or by ON CONFLICT side-effects then the BLOB
 handle is marked as "expired".
@@ -94,6 +101,7 @@ interface.
 .Pp
 To avoid a resource leak, every open BLOB handle should
 eventually be released by a call to sqlite3_blob_close().
+.Pp
 .Sh SEE ALSO
 .Xr sqlite3_blob 3 ,
 .Xr sqlite3 3 ,
@@ -101,6 +109,7 @@ eventually be released by a call to sqlite3_blob_close().
 .Xr sqlite3_blob_bytes 3 ,
 .Xr sqlite3_blob_close 3 ,
 .Xr sqlite3_blob_read 3 ,
+.Xr sqlite3_blob_reopen 3 ,
 .Xr sqlite3_blob_write 3 ,
 .Xr sqlite3_errcode 3 ,
 .Xr sqlite3_result_blob 3 ,

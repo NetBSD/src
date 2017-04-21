@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $ */
+/* $NetBSD: udf.c,v 1.17.4.1 2017/04/21 16:54:17 bouyer Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.17 2015/06/16 23:04:14 christos Exp $");
+__RCSID("$NetBSD: udf.c,v 1.17.4.1 2017/04/21 16:54:17 bouyer Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -290,9 +290,6 @@ udf_update_trackinfo(struct mmc_discinfo *di, struct mmc_trackinfo *ti)
 void
 udf_prep_opts(fsinfo_t *fsopts)
 {
-	struct tm *tm;
-	time_t now;
-
 	const option_t udf_options[] = {
 		OPT_STR('T', "disctype", "disc type (cdrom,dvdrom,bdrom,"
 			"dvdram,bdre,disk,cdr,dvdr,bdr,cdrw,dvdrw)"),
@@ -330,13 +327,16 @@ udf_prep_opts(fsinfo_t *fsopts)
 	context.max_udf = 0x201;	/* 0x250 and 0x260 are not ready */
 
 	/* use user's time zone as default */
-	(void)time(&now);
-	tm = localtime(&now);
 #ifdef HAVE_STRUCT_TM_TM_GMTOFF
-	context.gmtoff = tm->tm_gmtoff;
-#else
-	context.gmtoff = 0;
+	if (!stampst.st_ino)  {
+		struct tm tm;
+		time_t now;
+		(void)time(&now);
+		(void)localtime_r(&now, &tm);
+		context.gmtoff = tm.tm_gmtoff;
+	} else
 #endif
+		context.gmtoff = 0;
 
 	/* return info */
 	fsopts->fs_specific = NULL;

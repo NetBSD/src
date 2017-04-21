@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_prng_exch.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_prng_exch.c,v 1.1.1.1.36.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -138,7 +138,7 @@ void    tls_prng_exch_close(TLS_PRNG_SRC *eh)
     if (msg_verbose)
 	msg_info("%s: closed PRNG exchange file %s", myname, eh->name);
     myfree(eh->name);
-    myfree((char *) eh);
+    myfree((void *) eh);
 }
 
 #endif

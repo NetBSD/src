@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.63 2015/04/20 23:03:08 riastradh Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.63.4.1 2017/04/21 16:54:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.63 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.63.4.1 2017/04/21 16:54:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,11 +250,11 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 	 */
 	while (dvp != udvp && (dvp->v_type == VDIR) &&
 	       (mp = dvp->v_mountedhere)) {
-		if (vfs_busy(mp, NULL))
+		if (vfs_busy(mp))
 			continue;
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error) {
 			return (error);
 		}
@@ -616,6 +616,11 @@ union_open(void *v)
 			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, l);
 			if (error == 0)
 				error = VOP_OPEN(un->un_uppervp, mode, cred);
+			if (error == 0) {
+				mutex_enter(un->un_uppervp->v_interlock);
+				un->un_uppervp->v_writecount++;
+				mutex_exit(un->un_uppervp->v_interlock);
+			}
 			return (error);
 		}
 
@@ -640,6 +645,11 @@ union_open(void *v)
 		return ENXIO;
 
 	error = VOP_OPEN(tvp, mode, cred);
+	if (error == 0 && (ap->a_mode & FWRITE)) {
+		mutex_enter(tvp->v_interlock);
+		tvp->v_writecount++;
+		mutex_exit(tvp->v_interlock);
+	}
 
 	return (error);
 }
@@ -669,6 +679,12 @@ union_close(void *v)
 
 	KASSERT(vp != NULLVP);
 	ap->a_vp = vp;
+	if ((ap->a_fflag & FWRITE)) {
+		KASSERT(vp == un->un_uppervp);
+		mutex_enter(vp->v_interlock);
+		vp->v_writecount--;
+		mutex_exit(vp->v_interlock);
+	}
 	if (do_lock)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VCALL(vp, VOFFSET(vop_close), ap);
@@ -1048,8 +1064,13 @@ union_revoke(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	if (UPPERVP(vp))
+	if (UPPERVP(vp)) {
+		mutex_enter(UPPERVP(vp)->v_interlock);
+		KASSERT(vp->v_interlock == UPPERVP(vp)->v_interlock);
+		UPPERVP(vp)->v_writecount -= vp->v_writecount;
+		mutex_exit(UPPERVP(vp)->v_interlock);
 		VOP_REVOKE(UPPERVP(vp), ap->a_flags);
+	}
 	if (LOWERVP(vp))
 		VOP_REVOKE(LOWERVP(vp), ap->a_flags);
 	vgone(vp);	/* XXXAD?? */
@@ -1537,7 +1558,7 @@ union_abortop(void *v)
 int
 union_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		bool *a_recycle;
@@ -1567,7 +1588,6 @@ union_inactive(void *v)
 	}
 
 	*ap->a_recycle = ((un->un_cflags & UN_CACHED) == 0);
-	VOP_UNLOCK(vp);
 
 	return (0);
 }

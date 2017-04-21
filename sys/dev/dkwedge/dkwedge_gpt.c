@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.17 2016/04/28 00:35:24 christos Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.17.4.1 2017/04/21 16:53:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.17 2016/04/28 00:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.17.4.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,16 +239,16 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 
 		/* figure out the type */
 		ptype = gpt_ptype_guid_to_str(&ptype_guid);
-		strcpy(dkw.dkw_ptype, ptype);
+		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 
-		strcpy(dkw.dkw_parent, pdk->dk_name);
+		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = le64toh(ent->ent_lba_start);
 		dkw.dkw_size = le64toh(ent->ent_lba_end) - dkw.dkw_offset + 1;
 
 		/* XXX Make sure it falls within the disk's data area. */
 
 		if (ent->ent_name[0] == 0x0000)
-			strcpy(dkw.dkw_wname, ent_guid_str);
+			strlcpy(dkw.dkw_wname, ent_guid_str, sizeof(dkw.dkw_wname));
 		else {
 			c = dkw.dkw_wname;
 			r = sizeof(dkw.dkw_wname) - 1;
@@ -268,8 +268,8 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		if ((error = dkwedge_add(&dkw)) == EEXIST &&
 		    strcmp(dkw.dkw_wname, ent_guid_str) != 0) {
 			char orig[sizeof(dkw.dkw_wname)];
-			strcpy(orig, dkw.dkw_wname);
-			strcpy(dkw.dkw_wname, ent_guid_str);
+			strlcpy(orig, dkw.dkw_wname, sizeof(orig));
+			strlcpy(dkw.dkw_wname, ent_guid_str, sizeof(dkw.dkw_wname));
 			error = dkwedge_add(&dkw);
 			if (!error)
 				aprint_error("%s: wedge named '%s' already "

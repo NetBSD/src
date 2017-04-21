@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.82 2014/04/04 07:33:53 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.82.14.1 2017/04/21 16:53:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.82 2014/04/04 07:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.82.14.1 2017/04/21 16:53:24 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -301,12 +301,41 @@ initarm(void *arm_bootargs)
 	 */
 	process_kernel_args(ebsabootinfo.bt_args);
 
-	arm32_bootmem_init(ebsabootinfo.bt_memstart,
-	    ebsabootinfo.bt_memend - ebsabootinfo.bt_memstart,
+	psize_t ram_size = ebsabootinfo.bt_memend - ebsabootinfo.bt_memstart;
+	/*
+	 * If MEMSIZE specified less than what we really have, limit ourselves
+	 * to that.
+	*/
+#ifdef MEMSIZE
+	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
+		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
+	DPRINTF("ram_size = 0x%x\n", (int)ram_size);
+#else
+	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
+#endif
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+
+#ifndef PMAP_NEED_ALLOC_POOLPAGE
+	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
+		printf("%s: dropping RAM size from %luMB to %uMB\n",
+		    __func__, (unsigned long) (ram_size >> 20),
+		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
+		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
+        }
+#endif
+#else
+        const bool mapallmem_p = false;
+#endif
+
+	printf("ram_size = 0x%08lx\n", ram_size);
+
+	arm32_bootmem_init(ebsabootinfo.bt_memstart, ram_size,
 	    ebsabootinfo.bt_memstart);
 
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, cats_devmap,
-	    false);
+	    mapallmem_p);
 
 	printf("init subsystems: patch ");
 

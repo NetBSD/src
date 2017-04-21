@@ -27,12 +27,12 @@
 #        LDAP or SQL, the same lookups are  done  as  for  ordinary
 #        indexed files.
 # 
-#        Alternatively,  the  table  can  be provided as a regular-
-#        expression map where patterns are given as regular expres-
-#        sions,  or lookups can be directed to TCP-based server. In
-#        those cases, the lookups are done in a slightly  different
-#        way  as  described below under "REGULAR EXPRESSION TABLES"
-#        or "TCP-BASED TABLES".
+#        Alternatively,  the  table  can  be  provided  as  a regu-
+#        lar-expression map where patterns  are  given  as  regular
+#        expressions,  or  lookups  can  be  directed  to TCP-based
+#        server. In those cases, the lookups are done in a slightly
+#        different way as described below under "REGULAR EXPRESSION
+#        TABLES" or "TCP-BASED TABLES".
 # 
 #        By default the canonical(5) mapping affects  both  message
 #        header  addresses  (i.e. addresses that appear inside mes-
@@ -274,5 +274,10 @@
 #        IBM T.J. Watson Research
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
+# 
+#        Wietse Venema
+#        Google, Inc.
+#        111 8th Avenue
+#        New York, NY 10011, USA
 # 
 #                                                                   CANONICAL(5)

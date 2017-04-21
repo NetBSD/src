@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2016/12/15 06:48:14 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.188.2.1 2017/04/21 16:54:04 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,7 @@ SUBDIR+=	if_axen
 SUBDIR+=	if_faith
 SUBDIR+=	if_gif
 SUBDIR+=	if_gre
+SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
 SUBDIR+=	if_mpls
 SUBDIR+=	if_npflog
@@ -130,6 +131,7 @@ SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
 SUBDIR+=	swwdog
 SUBDIR+=	tmpfs
+SUBDIR+=	ualea
 SUBDIR+=	uatp
 SUBDIR+=	udf
 SUBDIR+=	umap
@@ -404,6 +406,7 @@ SUBDIR+=	twa
 SUBDIR+=	twe
 SUBDIR+=	viomb
 SUBDIR+=	virtio
+SUBDIR+=	vioscsi
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot

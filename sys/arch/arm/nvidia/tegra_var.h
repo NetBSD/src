@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.30 2016/03/26 08:42:07 skrll Exp $ */
+/* $NetBSD: tegra_var.h,v 1.30.4.1 2017/04/21 16:53:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -90,6 +90,7 @@ psize_t	tegra_mc_memsize(void);
 uint32_t tegra_fuse_read(u_int);
 
 void	tegra_xusbpad_sata_enable(void);
+void	tegra_xusbpad_xhci_enable(void);
 
 struct videomode;
 int	tegra_dc_port(device_t);

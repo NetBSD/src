@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.33 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.33.4.1 2017/04/21 16:54:05 bouyer Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.33 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.33.4.1 2017/04/21 16:54:05 bouyer Exp $");
 #endif
 
 /*
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.33 2016/07/07 06:55:43 msaitoh
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -917,6 +918,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ieee80211_node *ni;
 	enum ieee80211_state ostate;
+
+	KASSERT(!cpu_intr_p());
 
 	ostate = ic->ic_state;
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_STATE, "%s: %s -> %s\n", __func__,

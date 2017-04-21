@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.10 2017/01/14 21:18:40 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.10.2.1 2017/04/21 16:51:16 bouyer Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -130,3 +130,8 @@ christos and pgoyette.
     Whatever new mechanism we arrive at will probably require changes to
     installation procedures and bootstrap code, and will need to handle
     both the new and old mechanisms for compatability.
+
+    One additional option mentioned is to be able to specify, at boot
+    loader time, an alternate value for the os-release portion of the
+    default module path,  i.e. /stand/$MACHINE/$ALT-RELEASE/modules/
+

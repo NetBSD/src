@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.61 2016/01/26 23:28:06 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.61.4.1 2017/04/21 16:54:03 bouyer Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -100,6 +100,7 @@ awk_parser='
 	args_name=$1;
 	argc=0;
 	willmake=-1;
+	fstrans=0;
 	next;
 }
 # Last line of description
@@ -111,6 +112,12 @@ awk_parser='
 {
 	if ($1 == "VERSION") {
 		args_name=args_name "_v" $2;
+		next;
+	} else if ($1 == "FSTRANS=YES") {
+		fstrans = 1;
+		next;
+	} else if ($1 == "FSTRANS=NO") {
+		fstrans = -1;
 		next;
 	}
 
@@ -129,10 +136,6 @@ awk_parser='
 	    $3 == "WILLRELE") {
 		willrele[argc] = 1;
 		i++;
-	} else if ($2 == "WILLUNLOCK" ||
-		   $3 == "WILLUNLOCK") {
-		willrele[argc] = 2;
-		i++;
 	} else if ($2 == "WILLPUT" ||
 		   $3 == "WILLPUT") {
 		willrele[argc] = 3;
@@ -144,6 +147,8 @@ awk_parser='
 		willmake=argc;
 		i++;
 	}
+	if (argc == 0 && fstrans == 0 && lockstate[0] != 1)
+		fstrans = 1;
 
 	# XXX: replace non-portable types for rump.  We should really
 	# nuke the types from the kernel, but that is a battle for
@@ -305,6 +310,7 @@ echo '
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>'
+[ -z "${rump}" ] && echo '#include <sys/fstrans.h>'
 [ ! -z "${rump}" ] && echo '#include <rump/rumpvnode_if.h>'		\
 	&& echo '#include <rump-sys/kern.h>'
 
@@ -358,16 +364,15 @@ function offsets() {
 	vpnum = 0;
 	for (i=0; i<argc; i++) {
 		if (willrele[i]) {
-			if (willrele[i] == 2) {
-				word = "UNLOCK";
-			} else if (willrele[i] == 3) {
+			if (willrele[i] == 3) {
 				word = "PUT";
 			} else {
 				word = "RELE";
 			}
 			printf(" | VDESC_VP%s_WILL%s", vpnum, word);
-			vpnum++;
 		}
+		if (argtype[i] == "struct vnode *")
+			vpnum++;
 	}
 	print ",";
 	# vp offsets
@@ -397,6 +402,8 @@ function bodyrump() {
 function bodynorm() {
 	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n",
 		args_name);
+	if (fstrans == 1)
+		printf("\tstruct mount *mp = %s->v_mount;\n", argname[0]);
 	if (lockdebug) {
 		printf("#ifdef VNODE_LOCKDEBUG\n");
 		for (i=0; i<argc; i++) {
@@ -420,8 +427,12 @@ function bodynorm() {
 	}
 	printf("\tmpsafe = (%s->v_vflag & VV_MPSAFE);\n", argname[0]);
 	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
+	if (fstrans == 1)
+		printf("\tfstrans_start(mp, FSTRANS_SHARED);\n");
 	printf("\terror = (VCALL(%s, VOFFSET(%s), &a));\n",
 		argname[0], name);
+	if (fstrans == 1)
+		printf("\tfstrans_done(mp);\n");
 	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");

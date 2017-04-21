@@ -1,10 +1,10 @@
-/*	$NetBSD: add.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $	*/
 
 /* add.c */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,6 +18,9 @@
 /* Portions Copyright (c) 1990 Regents of the University of Michigan.
  * All rights reserved.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: add.c,v 1.1.1.4.10.1 2017/04/21 16:52:26 bouyer Exp $");
 
 #include "portable.h"
 
@@ -87,6 +90,96 @@ ldap_add( LDAP *ld, LDAP_CONST char *dn, LDAPMod **attrs )
 }
 
 
+BerElement *
+ldap_build_add_req(
+	LDAP *ld,
+	const char *dn,
+	LDAPMod **attrs,
+	LDAPControl **sctrls,
+	LDAPControl **cctrls,
+	ber_int_t	*msgidp )
+{
+	BerElement *ber;
+	int i, rc;
+
+	/* create a message to send */
+	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
+		return( NULL );
+	}
+
+	LDAP_NEXT_MSGID(ld, *msgidp);
+	rc = ber_printf( ber, "{it{s{", /* '}}}' */
+		*msgidp, LDAP_REQ_ADD, dn );
+
+	if ( rc == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	/* allow attrs to be NULL ("touch"; should fail...) */
+	if ( attrs ) {
+		/* for each attribute in the entry... */
+		for ( i = 0; attrs[i] != NULL; i++ ) {
+			if ( ( attrs[i]->mod_op & LDAP_MOD_BVALUES) != 0 ) {
+				int j;
+
+				if ( attrs[i]->mod_bvalues == NULL ) {
+					ld->ld_errno = LDAP_PARAM_ERROR;
+					ber_free( ber, 1 );
+					return( NULL );
+				}
+
+				for ( j = 0; attrs[i]->mod_bvalues[ j ] != NULL; j++ ) {
+					if ( attrs[i]->mod_bvalues[ j ]->bv_val == NULL ) {
+						ld->ld_errno = LDAP_PARAM_ERROR;
+						ber_free( ber, 1 );
+						return( NULL );
+					}
+				}
+
+				rc = ber_printf( ber, "{s[V]N}", attrs[i]->mod_type,
+				    attrs[i]->mod_bvalues );
+
+			} else {
+				if ( attrs[i]->mod_values == NULL ) {
+					ld->ld_errno = LDAP_PARAM_ERROR;
+					ber_free( ber, 1 );
+					return( NULL );
+				}
+
+				rc = ber_printf( ber, "{s[v]N}", attrs[i]->mod_type,
+				    attrs[i]->mod_values );
+			}
+			if ( rc == -1 ) {
+				ld->ld_errno = LDAP_ENCODING_ERROR;
+				ber_free( ber, 1 );
+				return( NULL );
+			}
+		}
+	}
+
+	if ( ber_printf( ber, /*{{*/ "N}N}" ) == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	/* Put Server Controls */
+	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	if ( ber_printf( ber, /*{*/ "N}" ) == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	return( ber );
+}
+
 /*
  * ldap_add_ext - initiate an ldap extended add operation.  Parameters:
  *
@@ -101,7 +194,7 @@ ldap_add( LDAP *ld, LDAP_CONST char *dn, LDAPMod **attrs )
  *	msgidp	Message ID pointer
  *
  * Example:
- *	LDAPMod	*attrs[] = { 
+ *	LDAPMod	*attrs[] = {
  *			{ 0, "cn", { "babs jensen", "babs", 0 } },
  *			{ 0, "sn", { "jensen", 0 } },
  *			{ 0, "objectClass", { "person", 0 } },
@@ -132,81 +225,9 @@ ldap_add_ext(
 	rc = ldap_int_client_controls( ld, cctrls );
 	if( rc != LDAP_SUCCESS ) return rc;
 
-	/* create a message to send */
-	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
-		ld->ld_errno = LDAP_NO_MEMORY;
+	ber = ldap_build_add_req( ld, dn, attrs, sctrls, cctrls, &id );
+	if( !ber )
 		return ld->ld_errno;
-	}
-
-	LDAP_NEXT_MSGID(ld, id);
-	rc = ber_printf( ber, "{it{s{", /* '}}}' */
-		id, LDAP_REQ_ADD, dn );
-
-	if ( rc == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
-
-	/* allow attrs to be NULL ("touch"; should fail...) */
-	if ( attrs ) {
-		/* for each attribute in the entry... */
-		for ( i = 0; attrs[i] != NULL; i++ ) {
-			if ( ( attrs[i]->mod_op & LDAP_MOD_BVALUES) != 0 ) {
-				int j;
-
-				if ( attrs[i]->mod_bvalues == NULL ) {
-					ld->ld_errno = LDAP_PARAM_ERROR;
-					ber_free( ber, 1 );
-					return ld->ld_errno;
-				}
-
-				for ( j = 0; attrs[i]->mod_bvalues[ j ] != NULL; j++ ) {
-					if ( attrs[i]->mod_bvalues[ j ]->bv_val == NULL ) {
-						ld->ld_errno = LDAP_PARAM_ERROR;
-						ber_free( ber, 1 );
-						return ld->ld_errno;
-					}
-				}
-
-				rc = ber_printf( ber, "{s[V]N}", attrs[i]->mod_type,
-				    attrs[i]->mod_bvalues );
-
-			} else {
-				if ( attrs[i]->mod_values == NULL ) {
-					ld->ld_errno = LDAP_PARAM_ERROR;
-					ber_free( ber, 1 );
-					return ld->ld_errno;
-				}
-
-				rc = ber_printf( ber, "{s[v]N}", attrs[i]->mod_type,
-				    attrs[i]->mod_values );
-			}
-			if ( rc == -1 ) {
-				ld->ld_errno = LDAP_ENCODING_ERROR;
-				ber_free( ber, 1 );
-				return ld->ld_errno;
-			}
-		}
-	}
-
-	if ( ber_printf( ber, /*{{*/ "N}N}" ) == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
-
-	/* Put Server Controls */
-	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
-
-	if ( ber_printf( ber, /*{*/ "N}" ) == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
 
 	/* send the message */
 	*msgidp = ldap_send_initial_request( ld, LDAP_REQ_ADD, dn, ber, id );

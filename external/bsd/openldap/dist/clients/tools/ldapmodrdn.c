@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapmodrdn.c,v 1.1.1.4 2014/05/28 09:58:20 tron Exp $	*/
+/*	$NetBSD: ldapmodrdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:21 bouyer Exp $	*/
 
 /* ldapmodrdn.c - generic program to modify an entry's RDN using LDAP */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -44,6 +44,9 @@
  *	Juan C Gomez
  */
 
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ldapmodrdn.c,v 1.1.1.4.10.1 2017/04/21 16:52:21 bouyer Exp $");
 
 #include "portable.h"
 

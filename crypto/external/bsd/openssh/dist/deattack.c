@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.5 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: deattack.c,v 1.5.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
 /* $OpenBSD: deattack.c,v 1.32 2015/01/20 23:14:00 deraadt Exp $ */
 /*
  * Cryptographic attack detector for ssh - source code
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: deattack.c,v 1.5 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: deattack.c,v 1.5.2.1 2017/04/21 16:50:56 bouyer Exp $");
 #include <sys/types.h>
 
 #include <string.h>

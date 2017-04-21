@@ -1,10 +1,10 @@
-/*	$NetBSD: translucent.c,v 1.1.1.4 2014/05/28 09:58:53 tron Exp $	*/
+/*	$NetBSD: translucent.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* translucent.c - translucent proxy module */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2005 Symas Corporation.
  * All rights reserved.
  *
@@ -20,6 +20,9 @@
  * This work was initially developed by Symas Corp. for inclusion in
  * OpenLDAP Software.  This work was sponsored by Hewlett-Packard.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: translucent.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -422,12 +425,12 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 	op->o_bd = &ov->db;
 	ov->db.be_acl = op->o_bd->be_acl;
 	rc = ov->db.bd_info->bi_entry_get_rw(op, &op->o_req_ndn, NULL, NULL, 0, &re);
+	op->o_bd = db;
 	if(rc != LDAP_SUCCESS || re == NULL ) {
 		send_ldap_error((op), rs, LDAP_NO_SUCH_OBJECT,
 			"attempt to modify nonexistent local record");
 		return(rs->sr_err);
 	}
-	op->o_bd = db;
 /*
 ** fetch entry from local backend;
 ** if it exists:
@@ -441,7 +444,7 @@ static int translucent_modify(Operation *op, SlapReply *rs) {
 **
 */
 
-	op->o_bd->bd_info = (BackendInfo *) on->on_info;
+	op->o_bd->bd_info = (BackendInfo *) on->on_info->oi_orig;
 	rc = be_entry_get_rw(op, &op->o_req_ndn, NULL, NULL, 0, &e);
 	op->o_bd->bd_info = (BackendInfo *) on;
 
@@ -488,7 +491,7 @@ release:
 			} else
 				entry_free(re);
 		}
-		op->o_bd->bd_info = (BackendInfo *) on->on_info;
+		op->o_bd->bd_info = (BackendInfo *) on->on_info->oi_orig;
 		be_entry_release_r(op, e);
 		op->o_bd->bd_info = (BackendInfo *) on;
 		if(erc == SLAP_CB_CONTINUE) {
@@ -664,7 +667,7 @@ static int translucent_pwmod(Operation *op, SlapReply *rs) {
 **	return CONTINUE;
 */
 
-	op->o_bd->bd_info = (BackendInfo *) on->on_info;
+	op->o_bd->bd_info = (BackendInfo *) on->on_info->oi_orig;
 	rc = be_entry_get_rw(op, &op->o_req_ndn, NULL, NULL, 0, &e);
 	op->o_bd->bd_info = (BackendInfo *) on;
 
@@ -678,7 +681,7 @@ static int translucent_pwmod(Operation *op, SlapReply *rs) {
 				entry_free(re);
 			}
 		}
-		op->o_bd->bd_info = (BackendInfo *) on->on_info;
+		op->o_bd->bd_info = (BackendInfo *) on->on_info->oi_orig;
 		be_entry_release_r(op, e);
 		op->o_bd->bd_info = (BackendInfo *) on;
 		return SLAP_CB_CONTINUE;
@@ -790,7 +793,7 @@ static int translucent_search_cb(Operation *op, SlapReply *rs) {
 	if ( rs->sr_type == REP_RESULT && ( tc->step & USE_LIST ))
 		return 0;
 
-	if(!op || !rs || rs->sr_type != REP_SEARCH || !rs->sr_entry)
+	if(rs->sr_type != REP_SEARCH || !rs->sr_entry)
 		return(SLAP_CB_CONTINUE);
 
 	Debug(LDAP_DEBUG_TRACE, "==> translucent_search_cb: %s\n",
@@ -1072,6 +1075,9 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 	struct berval fbv;
 	int rc = 0;
 
+	if ( op->o_managedsait > SLAP_CONTROL_IGNORED )
+		return SLAP_CB_CONTINUE;
+
 	Debug(LDAP_DEBUG_TRACE, "==> translucent_search: <%s> %s\n",
 		op->o_req_dn.bv_val, op->ors_filterstr.bv_val, 0);
 
@@ -1111,7 +1117,8 @@ static int translucent_search(Operation *op, SlapReply *rs) {
 			filter2bv_x( op, fr, &op->ors_filterstr );
 		}
 		rc = ov->db.bd_info->bi_op_search(op, rs);
-		op->ors_attrs = tc.attrs;
+		if ( op->ors_attrs == slap_anlist_all_attributes )
+			op->ors_attrs = tc.attrs;
 		op->o_bd = tc.db;
 		if ( fl ) {
 			op->o_tmpfree( op->ors_filterstr.bv_val, op->o_tmpmemctx );

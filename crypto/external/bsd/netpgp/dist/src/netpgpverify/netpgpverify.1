@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpverify.1,v 1.10 2016/09/12 16:54:31 abhinav Exp $
+.\" $NetBSD: netpgpverify.1,v 1.10.2.1 2017/04/21 16:50:56 bouyer Exp $
 .\"
 .\" Copyright (c) 2013,2014,2015 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -42,9 +42,9 @@ The
 implements digital signature verification.
 It is designed to be simple and standalone; no external libraries, except
 for
-.Xr libz 3
+.Xr libz
 and
-.Xr libbz2 3
+.Xr libbz2
 are used, in order to ensure maximum portability.
 .Pp
 It is completely rewritten from the version of the program that appeared in
@@ -128,7 +128,7 @@ Verification of a file's signature is best viewed using the following example:
 % netpgpverify -k pubring.gpg NetBSD-6.0_RC1_hashes.asc
 Good signature for NetBSD-6.0_RC1_hashes.asc made Thu Aug 23 11:47:50 2012
 signature     4096/RSA (Encrypt or Sign) 064973ac4c4a706e 2009-06-23
-fingerprint   ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e
+fingerprint   ddee 2bdb 9c98 a0d1 d4fb dbf7 0649 73ac 4c4a 706e 
 uid           NetBSD Security Officer <security-officer@NetBSD.org>
 %
 .Ed

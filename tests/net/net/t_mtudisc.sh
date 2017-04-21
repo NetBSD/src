@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.8 2016/12/21 01:16:18 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.8.2.1 2017/04/21 16:54:13 bouyer Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,7 +28,6 @@
 SOCKLOCAL=unix://commsock1
 SOCKGATEWAY=unix://commsock2
 SOCKREMOTE=unix://commsock3
-HTML_FILE=index.html
 
 DEBUG=${DEBUG:-false}
 
@@ -37,7 +36,7 @@ atf_test_case mtudisc_basic cleanup
 mtudisc_basic_head()
 {
 	atf_set "descr" "Tests for IPv4 Path MTU Dicorvery basic behavior"
-	atf_set "require.progs" "rump_server"
+	atf_set "require.progs" "rump_server nc"
 }
 
 setup_server()
@@ -57,7 +56,7 @@ setup_server()
 	$DEBUG && rump.ifconfig $if
 }
 
-prepare_download_file()
+prepare_file()
 {
 	local file=$1
 	local data="0123456789"
@@ -69,17 +68,6 @@ prepare_download_file()
 	done
 }
 
-do_http_get()
-{
-	local ip=$1
-	local ret=$2
-	local timeout=5
-
-	# get the webpage
-	atf_check -s exit:$ret env LD_PRELOAD=/usr/lib/librumphijack.so	\
-	    ftp -q $timeout -o ./out http://$ip/$HTML_FILE
-}
-
 mtudisc_basic_body()
 {
 	local pkt=
@@ -88,6 +76,10 @@ mtudisc_basic_body()
 	local gateway_remote_ip=10.0.1.1
 	local remote_ip=10.0.1.2
 	local prefixlen=24
+	local port=1234
+	local pid=
+	local file_send=./file.send
+	local file_recv=./file.recv
 
 	rump_server_start $SOCKLOCAL
 	rump_server_start $SOCKGATEWAY
@@ -96,9 +88,9 @@ mtudisc_basic_body()
 	#
 	# Setup servers
 	#
-	# [local server]                 [gateway server]          [remote server with httpd]
+	# [local server]                 [gateway server]          [remote server]
 	#       | 10.0.0.2        10.0.0.1 |          | 10.0.1.1       10.0.1.2 |
-	# shmif0(mtu=1500) ----- shmif1(mtu=1280)   shmif0(mtu=1500) ----- shmif0(mtu=1500)
+	# shmif0(mtu=1500) ----- shmif0(mtu=1500)   shmif1(mtu=1280) ----- shmif0(mtu=1500)
 	#
 
 	# Assign IP addresses
@@ -111,8 +103,7 @@ mtudisc_basic_body()
 	export RUMP_SERVER=$SOCKGATEWAY
 
 	# Set mtu of shmif0 to 1280
-	export RUMP_SERVER=$SOCKGATEWAY
-	atf_check -s exit:0 rump.ifconfig shmif0 mtu 1280
+	atf_check -s exit:0 rump.ifconfig shmif1 mtu 1280
 
 	# Enable IPv4 forwarding
 	atf_check -s exit:0 rump.sysctl -w -q net.inet.ip.forwarding=1
@@ -123,70 +114,103 @@ mtudisc_basic_body()
 	# Check default value
 	atf_check -s exit:0 -o match:"1" rump.sysctl -n net.inet.ip.mtudisc
 
-	# Start httpd daemon
-	prepare_download_file $HTML_FILE
-	start_httpd $SOCKREMOTE $remote_ip
-	$DEBUG && rump.netstat -a -f inet
-
-	# Teach the peer thar 10.0.0.2(local serer) is behind 10.0.1.1(gateway server)
+	# Teach the peer thar 10.0.0.2(local server) is behind 10.0.1.1(gateway server)
 	atf_check -s exit:0 -o ignore rump.route add $local_ip/32 $gateway_remote_ip
-
-	### Setup local server
-	export RUMP_SERVER=$SOCKLOCAL
-
-	# Teach the peer thar 10.0.1.2(remote serer) is behind 10.0.0.1(gateway server)
-	atf_check -s exit:0 -o ignore rump.route add $remote_ip/32 $gateway_local_ip
 
 	# Don't accept fragmented packets
 	atf_check -s exit:0 -o ignore rump.sysctl -w -q net.inet.ip.maxfragpackets=0
 
+	### Setup local server
+	export RUMP_SERVER=$SOCKLOCAL
+
+	# Teach the peer thar 10.0.1.2(remote server) is behind 10.0.0.1(gateway server)
+	atf_check -s exit:0 -o ignore rump.route add $remote_ip/32 $gateway_local_ip
+
 	#
 	# Test disabled path mtu discorvery
 	#
-	export RUMP_SERVER=$SOCKREMOTE
+	prepare_file $file_send
+
+	# Start nc server
+	start_nc_server $SOCKREMOTE $port $file_recv
+
+	export RUMP_SERVER=$SOCKLOCAL
 	atf_check -s exit:0 -o ignore rump.sysctl -w -q net.inet.ip.mtudisc=0
 
-	# Get the webpage (expect: failed)
-	export RUMP_SERVER=$SOCKLOCAL
-	do_http_get $remote_ip 1
+	# Send a file to the server
+	atf_check -s exit:0 $HIJACKING nc -N -w 3 $remote_ip $port < $file_send
 	$DEBUG && extract_new_packets bus2 > ./out
 	$DEBUG && cat ./out
+	stop_nc_server
+	atf_check -s not-exit:0 -o match:"differ" diff -q $file_send $file_recv
 
-	# Check path mtu size on remote server
-	export RUMP_SERVER=$SOCKREMOTE
+	# Check path mtu size on the local server
 	atf_check -s exit:0 \
-		-o match:"^10.0.0.2 +10.0.1.1 +UGHS +- +- +- +shmif0" \
-		rump.netstat -nr -f inet
+	    -o match:"^10.0.1.2 +10.0.0.1 +UGHS +- +- +- +shmif0" \
+	    rump.netstat -nr -f inet
 
 	#
 	# Test enabled path mtu discorvery
 	#
-	export RUMP_SERVER=$SOCKREMOTE
+	# Start nc server
+	start_nc_server $SOCKREMOTE $port $file_recv
+
+	export RUMP_SERVER=$SOCKLOCAL
 	atf_check -s exit:0 -o ignore rump.sysctl -w -q net.inet.ip.mtudisc=1
 
-	# Get the webpage (expect: success)
-	export RUMP_SERVER=$SOCKLOCAL
-	do_http_get $remote_ip 0
+	# Send a file to the server
+	atf_check -s exit:0 $HIJACKING nc -N -w 3 $remote_ip $port < $file_send
 	$DEBUG && extract_new_packets bus2 > ./out
 	$DEBUG && cat ./out
+	stop_nc_server
+	atf_check -s exit:0 diff -q $file_send $file_recv
 
-	# Check path mtu size on remote server
-	export RUMP_SERVER=$SOCKREMOTE
+	# Check path mtu size on the local server
 	atf_check -s exit:0 \
-		-o match:"^10.0.0.2 +10.0.1.1 +UGHS +- +- +1280 +shmif0" \
-		rump.netstat -nr -f inet
+	    -o match:"^10.0.1.2 +10.0.0.1 +UGHS +- +- +1280 +shmif0" \
+	    rump.netstat -nr -f inet
 
 	rump_server_destroy_ifaces
 }
 
 mtudisc_basic_cleanup()
 {
+
 	$DEBUG && dump
-	stop_httpd
+	stop_nc_server
+	cleanup
+}
+
+atf_test_case mtudisc_timeout cleanup
+mtudisc_timeout_head()
+{
+
+	atf_set "descr" "Tests for IPv4 Path MTU Dicorvery timeout behavior"
+	atf_set "require.progs" "rump_server nc"
+}
+
+mtudisc_timeout_body()
+{
+
+	rump_server_start $SOCKLOCAL
+
+	export RUMP_SERVER=$SOCKLOCAL
+	atf_check -s exit:0 -o match:'600 -> 600' \
+	    rump.sysctl -w net.inet.ip.mtudisctimeout=600
+
+	# TODO more tests
+}
+
+mtudisc_timeout_cleanup()
+{
+
+	$DEBUG && dump
 	cleanup
 }
 
 atf_init_test_cases()
 {
+
 	atf_add_test_case mtudisc_basic
+	atf_add_test_case mtudisc_timeout
 }

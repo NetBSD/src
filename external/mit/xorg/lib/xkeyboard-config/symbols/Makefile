@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2016/11/22 19:51:37 snj Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2017/04/21 16:53:00 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -30,8 +30,6 @@ FILES=	af al altwin am apl ara at au az \
 SUBDIR=		digital_vndr fujitsu_vndr hp_vndr jolla_vndr macintosh_vndr \
 		nec_vndr nokia_vndr sgi_vndr sharp_vndr sony_vndr sun_vndr \
 		xfree68_vndr
-
-XKBDIR=		1
 
 .include "../Makefile.xkbdata"
 

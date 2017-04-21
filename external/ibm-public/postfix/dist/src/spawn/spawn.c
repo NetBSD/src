@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: spawn.c,v 1.1.1.1.36.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -123,6 +123,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -159,6 +164,7 @@
 #include <mail_params.h>
 #include <mail_server.h>
 #include <mail_conf.h>
+#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -298,16 +304,16 @@ static void spawn_service(VSTREAM *client_stream, char *service, char **argv)
     /*
      * Execute the command.
      */
-    export_env = argv_split(var_export_environ, ", \t\r\n");
-    status = spawn_command(SPAWN_CMD_STDIN, vstream_fileno(client_stream),
-			   SPAWN_CMD_STDOUT, vstream_fileno(client_stream),
-			   SPAWN_CMD_STDERR, vstream_fileno(client_stream),
-			   SPAWN_CMD_UID, attr.uid,
-			   SPAWN_CMD_GID, attr.gid,
-			   SPAWN_CMD_ARGV, attr.argv,
-			   SPAWN_CMD_TIME_LIMIT, attr.time_limit,
-			   SPAWN_CMD_EXPORT, export_env->argv,
-			   SPAWN_CMD_END);
+    export_env = mail_parm_split(VAR_EXPORT_ENVIRON, var_export_environ);
+    status = spawn_command(CA_SPAWN_CMD_STDIN(vstream_fileno(client_stream)),
+			 CA_SPAWN_CMD_STDOUT(vstream_fileno(client_stream)),
+			 CA_SPAWN_CMD_STDERR(vstream_fileno(client_stream)),
+			   CA_SPAWN_CMD_UID(attr.uid),
+			   CA_SPAWN_CMD_GID(attr.gid),
+			   CA_SPAWN_CMD_ARGV(attr.argv),
+			   CA_SPAWN_CMD_TIME_LIMIT(attr.time_limit),
+			   CA_SPAWN_CMD_EXPORT(export_env->argv),
+			   CA_SPAWN_CMD_END);
     argv_free(export_env);
 
     /*
@@ -359,9 +365,9 @@ int     main(int argc, char **argv)
     MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, spawn_service,
-		       MAIL_SERVER_TIME_TABLE, time_table,
-		       MAIL_SERVER_POST_INIT, drop_privileges,
-		       MAIL_SERVER_PRE_ACCEPT, pre_accept,
-		       MAIL_SERVER_PRIVILEGED,
+		       CA_MAIL_SERVER_TIME_TABLE(time_table),
+		       CA_MAIL_SERVER_POST_INIT(drop_privileges),
+		       CA_MAIL_SERVER_PRE_ACCEPT(pre_accept),
+		       CA_MAIL_SERVER_PRIVILEGED,
 		       0);
 }

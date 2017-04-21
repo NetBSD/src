@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.70 2017/01/02 16:32:10 manu Exp $  
+	$NetBSD: syscalls.master,v 1.70.2.1 2017/04/21 16:53:42 bouyer Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -542,3 +542,69 @@
 320	UNIMPL		preadv
 321	UNIMPL		pwritev
 322	UNIMPL		rt_tgsigqueueinfo
+323	UNIMPL		fanotify_init
+324	UNIMPL		fanotify_mark
+325	UNIMPL		prlimit64
+326	UNIMPL		socket
+327	UNIMPL		bind
+328	UNIMPL		connect
+329	UNIMPL		listen
+330	UNIMPL		accept
+331	UNIMPL		getsockname
+332	UNIMPL		getpeername
+333	UNIMPL		socketpair
+334	UNIMPL		send
+335	UNIMPL		sendto
+336	UNIMPL		recv
+337	UNIMPL		recvfrom
+338	UNIMPL		shutdown
+339	UNIMPL		setsockopt
+340	UNIMPL		getsockopt
+341	UNIMPL		sendmsg
+342	UNIMPL		recvmsg
+343	STD		{ int|linux_sys||recvmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags, struct timespec *timeout); }
+344	STD		{ int|linux_sys||accept4(int s, \
+			    struct osockaddr *name, \
+			    int *anamelen, int flags); }
+345	UNIMPL		name_to_handle_at
+346	UNIMPL		open_by_handle_at
+347	UNIMPL		clock_adjtime
+348	UNIMPL		syncfs
+349	STD		{ int|linux_sys||sendmmsg(int s, \
+			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
+			    unsigned int flags); }
+350	UNIMPL		setns
+351	UNIMPL		process_vm_readv
+352	UNIMPL		process_vm_writev
+353	UNIMPL		finit_module
+354	UNIMPL		kcmp
+355	UNIMPL		sched_setattr
+356	UNIMPL		sched_getattr
+357	UNIMPL		renameat2
+358	UNIMPL		seccomp
+359	UNIMPL		getrandom
+360	UNIMPL		memfd_create
+361	UNIMPL		bpf
+362	UNIMPL		execveat
+363	UNIMPL		switch_endian
+364	UNIMPL		userfaultfd
+365	UNIMPL		membarrier
+366	UNIMPL
+367	UNIMPL
+368	UNIMPL
+369	UNIMPL
+370	UNIMPL
+371	UNIMPL
+372	UNIMPL
+373	UNIMPL
+374	UNIMPL
+375	UNIMPL
+376	UNIMPL
+377	UNIMPL
+378	UNIMPL		mlock2
+379	UNIMPL		copy_file_range
+380	UNIMPL		preadv2
+381	UNIMPL		pwritev2
+382	UNIMPL		kexec_file_load

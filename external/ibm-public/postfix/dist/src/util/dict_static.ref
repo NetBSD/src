@@ -1,0 +1,14 @@
+owner=trusted (uid=2147483647)
+> get foo
+foo=fooxx
+> get bar
+bar=fooxx
+./dict_open: error: bad static:name syntax: missing '}' in "{ foo xx "
+owner=trusted (uid=2147483647)
+./dict_open: error: bad static:name syntax: syntax error after '}' in "{ foo xx }x"
+owner=trusted (uid=2147483647)
+owner=trusted (uid=2147483647)
+> get foo
+foo=foo xx
+> get bar
+bar=foo xx

@@ -1,4 +1,4 @@
-/*	$NetBSD: afssysdefs.h,v 1.1.1.2 2011/04/14 14:09:18 elric Exp $	*/
+/*	$NetBSD: afssysdefs.h,v 1.1.1.2.32.1 2017/04/21 16:50:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan

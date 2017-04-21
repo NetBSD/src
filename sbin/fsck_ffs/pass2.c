@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.50 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: pass2.c,v 1.50.14.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.50 2013/06/09 17:57:09 dholland Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.50.14.1 2017/04/21 16:53:13 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,9 @@ pass2(void)
 	struct inodesc curino;
 	union dinode dino;
 	int i, maxblk;
+#ifndef NO_FFS_EI
 	unsigned ii;
+#endif
 	char pathbuf[MAXPATHLEN + 1];
 
 	rinfo = inoinfo(UFS_ROOTINO);
@@ -223,6 +225,7 @@ pass2(void)
 		(void)ckinode(&dino, &curino);
 	}
 
+#ifndef NO_FFS_EI
 	/*
 	 * Byte swapping in directory entries, if needed, has been done.
 	 * Now rescan dirs for pass2check()
@@ -252,6 +255,7 @@ pass2(void)
 			(void)ckinode(&dino, &curino);
 		}
 	}
+#endif /* !NO_FFS_EI */
 
 	/*
 	 * Now that the parents of all directories have been found,

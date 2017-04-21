@@ -1,4 +1,4 @@
-.\"	$NetBSD: virtual.8,v 1.1.1.2 2010/06/17 18:06:29 tron Exp $
+.\"	$NetBSD: virtual.8,v 1.1.1.2.32.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH VIRTUAL 8 
 .ad
@@ -18,11 +18,11 @@ The \fBvirtual\fR(8) delivery agent is designed for virtual mail
 hosting services. Originally based on the Postfix \fBlocal\fR(8)
 delivery
 agent, this agent looks up recipients with map lookups of their
-full recipient address, instead of using hard-coded unix password
+full recipient address, instead of using hard\-coded unix password
 file lookups of the address local part only.
 
 This delivery agent only delivers mail.  Other features such as
-mail forwarding, out-of-office notifications, etc., must be
+mail forwarding, out\-of\-office notifications, etc., must be
 configured via virtual_alias maps or via similar lookup mechanisms.
 .SH "MAILBOX LOCATION"
 .na
@@ -52,11 +52,11 @@ messages in one textfile.
 
 The \fBvirtual\fR(8) delivery agent prepends a "\fBFrom \fIsender
 time_stamp\fR" envelope header to each message, prepends a
-\fBDelivered-To:\fR message header with the envelope recipient
+\fBDelivered\-To:\fR message header with the envelope recipient
 address,
-prepends an \fBX-Original-To:\fR header with the recipient address as
+prepends an \fBX\-Original\-To:\fR header with the recipient address as
 given to Postfix,
-prepends a \fBReturn-Path:\fR message header with the
+prepends a \fBReturn\-Path:\fR message header with the
 envelope sender address, prepends a \fB>\fR character to lines
 beginning with "\fBFrom \fR", and appends an empty line.
 
@@ -71,13 +71,13 @@ mailbox to its original length.
 When the mailbox location ends in \fB/\fR, the message is delivered
 in qmail \fBmaildir\fR format. This format stores one message per file.
 
-The \fBvirtual\fR(8) delivery agent prepends a \fBDelivered-To:\fR
+The \fBvirtual\fR(8) delivery agent prepends a \fBDelivered\-To:\fR
 message header with the final envelope recipient address,
-prepends an \fBX-Original-To:\fR header with the recipient address as
+prepends an \fBX\-Original\-To:\fR header with the recipient address as
 given to Postfix, and prepends a
-\fBReturn-Path:\fR message header with the envelope sender address.
+\fBReturn\-Path:\fR message header with the envelope sender address.
 
-By definition, \fBmaildir\fR format does not require application-level
+By definition, \fBmaildir\fR format does not require application\-level
 file locking during mail delivery or retrieval.
 .SH "MAILBOX OWNERSHIP"
 .na
@@ -127,9 +127,9 @@ Finally, the recipient \fI@domain\fR is looked up.
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
-Alternatively, a table can be provided as a regular-expression
+Alternatively, a table can be provided as a regular\-expression
 map where patterns are given as regular expressions. In that case,
-only the full recipient address is given to the regular-expression
+only the full recipient address is given to the regular\-expression
 map.
 .SH "SECURITY"
 .na
@@ -202,10 +202,10 @@ match $virtual_mailbox_domains.
 The minimum user ID value that the \fBvirtual\fR(8) delivery agent accepts
 as a result from $virtual_uid_maps table lookup.
 .IP "\fBvirtual_uid_maps (empty)\fR"
-Lookup tables with the per-recipient user ID that the \fBvirtual\fR(8)
+Lookup tables with the per\-recipient user ID that the \fBvirtual\fR(8)
 delivery agent uses while writing to the recipient's mailbox.
 .IP "\fBvirtual_gid_maps (empty)\fR"
-Lookup tables with the per-recipient group ID for \fBvirtual\fR(8) mailbox
+Lookup tables with the per\-recipient group ID for \fBvirtual\fR(8) mailbox
 delivery.
 .PP
 Available in Postfix version 2.0 and later:
@@ -213,7 +213,7 @@ Available in Postfix version 2.0 and later:
 Postfix is final destination for the specified list of domains;
 mail is delivered via the $virtual_transport mail delivery transport.
 .IP "\fBvirtual_transport (virtual)\fR"
-The default mail delivery transport and next-hop destination for
+The default mail delivery transport and next\-hop destination for
 final delivery to domains listed with $virtual_mailbox_domains.
 .PP
 Available in Postfix version 2.5.3 and later:
@@ -225,7 +225,7 @@ Defer delivery when a mailbox file is not owned by its recipient.
 .ad
 .fi
 .IP "\fBvirtual_mailbox_lock (see 'postconf -d' output)\fR"
-How to lock a UNIX-style \fBvirtual\fR(8) mailbox before attempting
+How to lock a UNIX\-style \fBvirtual\fR(8) mailbox before attempting
 delivery.
 .IP "\fBdeliver_lock_attempts (20)\fR"
 The maximal number of attempts to acquire an exclusive lock on a
@@ -259,10 +259,10 @@ The default location of the Postfix main.cf and master.cf
 configuration files.
 .IP "\fBdaemon_timeout (18000s)\fR"
 How much time a Postfix daemon process may take to handle a
-request before it is terminated by a built-in watchdog timer.
+request before it is terminated by a built\-in watchdog timer.
 .IP "\fBdelay_logging_resolution_limit (2)\fR"
 The maximal number of digits after the decimal point when logging
-sub-second delay values.
+sub\-second delay values.
 .IP "\fBipc_timeout (3600s)\fR"
 The time limit for sending or receiving information over an internal
 communication channel.
@@ -272,17 +272,23 @@ for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
 The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
 The mail system name that is prepended to the process name in syslog
 records, so that "smtpd" becomes, for example, "postfix/smtpd".
+.PP
+Available in Postfix version 3.0 and later:
+.IP "\fBvirtual_delivery_status_filter ($default_delivery_status_filter)\fR"
+Optional filter for the \fBvirtual\fR(8) delivery agent to change the
+delivery status code or explanatory text of successful or unsuccessful
+deliveries.
 .SH "SEE ALSO"
 .na
 .nf
@@ -302,9 +308,9 @@ VIRTUAL_README, domain hosting howto
 .ad
 .fi
 The Secure Mailer license must be distributed with this software.
-.SH "HISTORY"
-.na
-.nf
+.SH HISTORY
+.ad
+.fi
 .ad
 .fi
 This delivery agent was originally based on the Postfix local delivery
@@ -312,7 +318,7 @@ agent. Modifications mainly consisted of removing code that either
 was not applicable or that was not safe in this context: aliases,
 ~user/.forward files, delivery to "|command" or to /file/name.
 
-The \fBDelivered-To:\fR message header appears in the \fBqmail\fR
+The \fBDelivered\-To:\fR message header appears in the \fBqmail\fR
 system by Daniel Bernstein.
 
 The \fBmaildir\fR structure appears in the \fBqmail\fR system
@@ -324,6 +330,11 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA
 
 Andrew McNamara
 andrewm@connect.com.au

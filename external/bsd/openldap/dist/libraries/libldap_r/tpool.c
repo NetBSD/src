@@ -1,9 +1,9 @@
-/*	$NetBSD: tpool.c,v 1.1.1.4 2014/05/28 09:58:42 tron Exp $	*/
+/*	$NetBSD: tpool.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  * top-level directory of the distribution or, alternatively, at
  * <http://www.OpenLDAP.org/license.html>.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tpool.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 
@@ -216,14 +219,22 @@ ldap_pvt_thread_pool_init (
 	if (pool == NULL) return(-1);
 
 	rc = ldap_pvt_thread_mutex_init(&pool->ltp_mutex);
-	if (rc != 0)
+	if (rc != 0) {
+fail1:
+		LDAP_FREE(pool);
 		return(rc);
+	}
 	rc = ldap_pvt_thread_cond_init(&pool->ltp_cond);
-	if (rc != 0)
-		return(rc);
+	if (rc != 0) {
+fail2:
+		ldap_pvt_thread_mutex_destroy(&pool->ltp_mutex);
+		goto fail1;
+	}
 	rc = ldap_pvt_thread_cond_init(&pool->ltp_pcond);
-	if (rc != 0)
-		return(rc);
+	if (rc != 0) {
+		ldap_pvt_thread_cond_destroy(&pool->ltp_cond);
+		goto fail2;
+	}
 
 	ldap_int_has_thread_pool = 1;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.13 2016/11/25 08:51:16 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.13.2.1 2017/04/21 16:54:12 bouyer Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,7 +64,7 @@ make_pkt_str()
 {
 	local target=$1
 	local sender=$2
-	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP (0x0806), length 42:"
+	pkt="> ff:ff:ff:ff:ff:ff, ethertype ARP \(0x0806\), length 42:"
 	pkt="$pkt Request who-has $target tell $sender, length 28"
 	echo $pkt
 }
@@ -78,6 +78,10 @@ dad_basic_body()
 
 	export RUMP_SERVER=$SOCKLOCAL
 
+	# Increase the number of trials, which makes the tests stable
+	atf_check -s exit:0 -o match:'3 -> 5' \
+	    rump.sysctl -w net.inet.ip.dad_count=5
+
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.1/24
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 alias
 	$DEBUG && rump.ifconfig shmif0
@@ -87,10 +91,9 @@ dad_basic_body()
 	$DEBUG && cat ./out
 
 	# The primary address doesn't start with tentative state
-	atf_check -s not-exit:0 -x "cat ./out |grep 10.0.0.1 |grep -iq tentative"
+	atf_check -s exit:0 -o not-match:'10\.0\.0\.1.+TENTATIVE' cat ./out
 	# The alias address starts with tentative state
-	# XXX we have no stable way to check this, so skip for now
-	#atf_check -s exit:0 -x "cat ./out |grep 10.0.0.2 |grep -iq tentative"
+	atf_check -s exit:0 -o match:'10\.0\.0\.2.+TENTATIVE' cat ./out
 
 	atf_check -s exit:0 sleep 2
 	extract_new_packets bus1 > ./out
@@ -98,23 +101,24 @@ dad_basic_body()
 
 	# Check DAD probe packets
 	pkt=$(make_pkt_str 10.0.0.2 0.0.0.0)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 	# No DAD for the primary address
 	pkt=$(make_pkt_str 10.0.0.1 0.0.0.0)
-	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o not-match:"$pkt" cat ./out
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
 	# Give a chance to send a DAD announce packet
-	atf_check -s exit:0 sleep 1
+	atf_check -s exit:0 sleep 2
 	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
 	pkt=$(make_pkt_str 10.0.0.2 10.0.0.2)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 	# The alias address left tentative
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.2 |grep -iq tentative"
+	atf_check -s exit:0 -o not-match:'10\.0\.0\.2.+TENTATIVE' \
+	    rump.ifconfig shmif0
 
 	#
 	# Add a new address on the fly
@@ -122,28 +126,29 @@ dad_basic_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.3/24 alias
 
 	# The new address starts with tentative state
-	# XXX we have no stable way to check this, so skip for now
-	#atf_check -s exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.3 |grep -iq tentative"
+	atf_check -s exit:0 -o match:'10\.0\.0\.3.+TENTATIVE' \
+	    rump.ifconfig shmif0
 
 	# Check DAD probe packets
 	atf_check -s exit:0 sleep 2
 	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 	pkt=$(make_pkt_str 10.0.0.3 0.0.0.0)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
 	# Give a chance to send a DAD announce packet
-	atf_check -s exit:0 sleep 1
+	atf_check -s exit:0 sleep 2
 	extract_new_packets bus1 > ./out
 	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
 	pkt=$(make_pkt_str 10.0.0.3 10.0.0.3)
-	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
+	atf_check -s exit:0 -o match:"$pkt" cat ./out
 	# The new address left tentative
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.3 |grep -iq tentative"
+	atf_check -s exit:0 -o not-match:'10\.0\.0\.3.+TENTATIVE' \
+	    rump.ifconfig shmif0
 
 	rump_server_destroy_ifaces
 }
@@ -163,21 +168,24 @@ dad_duplicated_body()
 	export RUMP_SERVER=$SOCKLOCAL
 
 	# The primary address isn't marked as duplicated
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip1 |grep -iq duplicated"
+	atf_check -s exit:0 -o not-match:"${localip1}.+DUPLICATED" \
+	    rump.ifconfig shmif0
 
 	#
 	# Add a new address duplicated with the peer server
 	#
 	atf_check -s exit:0 rump.ifconfig shmif0 inet $peerip alias
-	atf_check -s exit:0 sleep 1
+	atf_check -s exit:0 sleep 2
 
 	# The new address is marked as duplicated
-	atf_check -s exit:0 -x "rump.ifconfig shmif0 |grep $peerip |grep -iq duplicated"
+	atf_check -s exit:0 -o match:"${peerip}.+DUPLICATED" \
+	    rump.ifconfig shmif0
 
 	# A unique address isn't marked as duplicated
 	atf_check -s exit:0 rump.ifconfig shmif0 inet $localip2 alias
-	atf_check -s exit:0 sleep 1
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep $localip2 |grep -iq duplicated"
+	atf_check -s exit:0 sleep 2
+	atf_check -s exit:0 -o not-match:"${localip2}.+DUPLICATED" \
+	    rump.ifconfig shmif0
 
 	rump_server_destroy_ifaces
 }

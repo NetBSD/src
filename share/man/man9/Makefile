@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.401 2017/01/07 04:44:12 ozaki-r Exp $
+#       $NetBSD: Makefile,v 1.401.2.1 2017/04/21 16:53:19 bouyer Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -29,9 +29,9 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	in_getifa.9 \
 	in4_cksum.9 inittodr.9 interrupt_distribute.9 intro.9 ioasic.9 \
 	ioctl.9 ipkdb.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
-	kcpuset.9 kernhist.9 kmem.9 kpause.9 \
+	kcpuset.9 kernhist.9 klua_lock.9 klua_mod_register.9 kmem.9 kpause.9 \
 	kfilter_register.9 knote.9 \
-	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 ltsleep.9 \
+	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
 	LWP_CACHE_CREDS.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
@@ -258,7 +258,7 @@ MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 ioctl_copyin.9 copy.9 ioctl_copyout.9
 MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
-MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 proc_trampoline.9
+MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 lwp_trampoline.9
 MLINKS+=cpu_rootconf.9 setroot.9 \
         cpu_rootconf.9 rootconf.9
 MLINKS+=cpufreq.9 cpufreq_register.9 \
@@ -302,7 +302,8 @@ MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
-	extent.9 extent_print.9
+	extent.9 extent_print.9 extent.9 extent_alloc1.9 \
+	extent.9 extent_alloc_subregion1.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=file.9 closef.9 \
@@ -429,6 +430,9 @@ MLINKS+=kcpuset.9 kcpuset_create.9 \
 MLINKS+=kmem.9 kmem_alloc.9 \
 	kmem.9 kmem_free.9 \
 	kmem.9 kmem_zalloc.9 \
+	kmem.9 kmem_intr_alloc.9 \
+	kmem.9 kmem_intr_free.9 \
+	kmem.9 kmem_intr_zalloc.9 \
 	kmem.9 kmem_asprintf.9
 MAN+=	kpreempt.9
 MLINKS+=kpreempt.9 kpreempt_disable.9 \
@@ -896,6 +900,7 @@ MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 
 MLINKS+=ubc.9 ubc_alloc.9 ubc.9 ubc_release.9 ubc.9 ubc_uiomove.9
+MLINKS+=ubc.9 ubc_zerorange.9 ubc.9 ubc_purge.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.6 2003/08/07 11:25:33 agc Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.6.82.1 2017/04/21 16:54:17 bouyer Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -59,7 +59,7 @@ void ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 int ffs_balloc(struct inode *, off_t, int, struct buf **);
 
 	/* ffs_bswap.c */
-void ffs_sb_swap(struct fs*, struct fs *);
+void ffs_sb_swap(const struct fs*, struct fs *);
 void ffs_dinode1_swap(struct ufs1_dinode *, struct ufs1_dinode *);
 void ffs_dinode2_swap(struct ufs2_dinode *, struct ufs2_dinode *);
 void ffs_csum_swap(struct csum *, struct csum *, int);

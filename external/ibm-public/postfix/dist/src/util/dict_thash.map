@@ -12,3 +12,4 @@ attr_scan0.c 15454
 attr_scan64.c 17256
 attr_scan_plain.c 16924
 auto_clnt.c 9819
+ABCDEF 012345

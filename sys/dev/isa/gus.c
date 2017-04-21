@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.110 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: gus.c,v 1.110.4.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.110 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.110.4.1 2017/04/21 16:53:46 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1027,7 +1027,7 @@ gusattach(device_t parent, device_t self, void *aux)
 	printf(", %dKB memory\n", sc->sc_dsize);
 
 	/* A GUS MAX should always have a CODEC installed */
-	if ((sc->sc_revision >= 10) & !(HAS_CODEC(sc)))
+	if ((sc->sc_revision >= 10) && !(HAS_CODEC(sc)))
 		printf("%s: WARNING: did not attach CODEC on MAX\n",
 		    device_xname(sc->sc_dev));
 

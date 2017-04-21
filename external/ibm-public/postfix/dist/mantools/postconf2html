@@ -7,7 +7,10 @@
 # - Process input as text blocks separated by one or more empty
 # (or all whitespace) lines.
 #
-# - Skip text between <!-- and -->; each must be on a different line.
+# - Remove text between <!-- and -->; each may be on a different line.
+#
+# - Optionally remove <nroffescape> pass-through requests (unless
+#   the -n option is specified).
 #
 # - Don't touch blocks that start with `<' in column zero.
 #
@@ -18,13 +21,14 @@
 #
 # All other non-comment input is flagged as an error.
 
-#use Getopt::Std;
+use Getopt::Std;
 
-#$opt_h = undef;
-#$opt_v = undef;
-#getopts("hv");
+$opt_h = undef;
+$opt_v = undef;
+$opt_n = undef;
+getopts("hnv");
 
-#die "Usage: $0 [-hv]\n" if ($opt_h);
+die "Usage: $0 [-nv]\n" if ($opt_h);
 
 #push @ARGV, "/dev/null"; # XXX
 
@@ -47,6 +51,9 @@ while(<>) {
 	if ($comment && $_ =~ /-->/)
 	    { $comment = 0; $block =~ s/<!--.*-->//sg; }
     } while((($_ = <>) && /\S/) || $comment);
+
+    # Strip nroff escapes.
+    $block =~ s/<\s*nroffescape[^>]+>//g unless $opt_n;
 
     # Skip blanks after comment elimination.
     if ($block =~ /^\s/) {

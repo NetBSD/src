@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.4 2014/05/28 09:58:51 tron Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $	*/
 
 /* init.c - initialize relay backend */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2014 The OpenLDAP Foundation.
+ * Copyright 2004-2016 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -21,6 +21,9 @@
  * in OpenLDAP Software.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: init.c,v 1.1.1.4.10.1 2017/04/21 16:52:30 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -34,7 +37,7 @@ static ConfigDriver relay_back_cf;
 
 static ConfigTable relaycfg[] = {
 	{ "relay", "relay", 2, 2, 0,
-		ARG_MAGIC|ARG_DN,
+		ARG_MAGIC|ARG_DN|ARG_QUOTE,
 		relay_back_cf, "( OLcfgDbAt:5.1 "
 			"NAME 'olcRelay' "
 			"DESC 'Relay DN' "

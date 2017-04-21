@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtcheck.c,v 1.1.1.2 2015/01/02 20:34:27 christos Exp $	*/
+/*	$NetBSD: fmtcheck.c,v 1.1.1.2.4.1 2017/04/21 16:51:24 bouyer Exp $	*/
 
 /*	NetBSD: fmtcheck.c,v 1.8 2008/04/28 20:22:59 martin Exp 	*/
 
@@ -93,6 +93,23 @@ get_next_format_from_precision(const char **pf)
 		f++;
 		longdouble = 1;
 		break;
+#ifdef WIN32
+	case 'I':
+		f++;
+		if (!*f) RETURN(pf,f,FMTCHECK_UNKNOWN);
+		if (*f == '3' && f[1] == '2') {
+			f += 2;
+		} else if (*f == '6' && f[1] == '4') {
+			f += 2;
+			quad = 1;
+		}
+#ifdef _WIN64
+		else {
+			quad = 1;
+		}
+#endif
+		break;
+#endif
 	default:
 		break;
 	}

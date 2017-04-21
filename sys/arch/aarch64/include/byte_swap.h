@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.3 2014/10/29 01:33:39 dennis Exp $ */
+/* $NetBSD: byte_swap.h,v 1.3.6.1 2017/04/21 16:53:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -89,11 +89,11 @@ __byte_swap_u16_variable(uint16_t v)
 	if (!__builtin_constant_p(v)) {
 		uint32_t v32 = v;
 		__asm("rev16\t%w0, %w1" : "=r" (v32) : "0" (v32));
-		return v32;
+		return (uint16_t)v32;
 	}
 
 	v &= 0xffff;
-	v = (v >> 8) | (v << 8);
+	v = (uint16_t)((v >> 8) | (v << 8));
 
 	return v;
 }

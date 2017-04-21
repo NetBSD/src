@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.154 2016/12/13 08:29:03 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.154.2.1 2017/04/21 16:54:06 bouyer Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.154 2016/12/13 08:29:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.154.2.1 2017/04/21 16:54:06 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -514,7 +514,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		struct ifnet *ret_oifp = NULL;
 
 		error = ip6_output(m, optp, &in6p->in6p_route, 0,
-		    in6p->in6p_moptions, so, &ret_oifp);
+		    in6p->in6p_moptions, in6p, &ret_oifp);
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 			if (ret_oifp)
 				icmp6_ifoutstat_inc(ret_oifp, type, code);
@@ -935,15 +935,17 @@ static int
 rip6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 
-#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
-#endif
 	in6_pcbpurgeif0(&raw6cbtable, ifp);
-	in6_purgeif(ifp);
-	in6_pcbpurgeif(&raw6cbtable, ifp);
-#ifndef NET_MPSAFE
+#ifdef NET_MPSAFE
 	mutex_exit(softnet_lock);
 #endif
+	in6_purgeif(ifp);
+#ifdef NET_MPSAFE
+	mutex_enter(softnet_lock);
+#endif
+	in6_pcbpurgeif(&raw6cbtable, ifp);
+	mutex_exit(softnet_lock);
 
 	return 0;
 }

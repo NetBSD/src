@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.129 2017/01/10 20:43:08 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.129.2.1 2017/04/21 16:50:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.129 2017/01/10 20:43:08 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.129.2.1 2017/04/21 16:50:42 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1044,7 +1044,7 @@ normal_fork:
 		temp_path = 0;
 		if (!setjmp(jmploc.loc)) {
 			/* We need to ensure the command hash table isn't
-			 * corruped by temporary PATH assignments.
+			 * corrupted by temporary PATH assignments.
 			 * However we must ensure the 'local' command works!
 			 */
 			if (path != pathval() && (cmdentry.u.bltin == hashcmd ||

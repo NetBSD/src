@@ -1,4 +1,4 @@
-/*	$NetBSD: match_parent_style.c,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: match_parent_style.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -16,7 +16,7 @@
 /*	postfix lookup mechanisms.
 /*
 /*	match_parent_style() looks up "name" in the
-/*      parent_domain_matches_subdomain configuration parameter
+/*	parent_domain_matches_subdomain configuration parameter
 /*	and returns either MATCH_FLAG_PARENT (parent domain matches
 /*	subdomains) or MATCH_FLAG_NONE.
 /* DIAGNOSTICS
@@ -62,7 +62,8 @@ int     match_parent_style(const char *name)
      */
     if (match_par_dom_list == 0)
 	match_par_dom_list =
-	    string_list_init(MATCH_FLAG_NONE, var_par_dom_match);
+	    string_list_init(VAR_PAR_DOM_MATCH, MATCH_FLAG_NONE,
+			     var_par_dom_match);
 
     /*
      * Look up the parent domain matching policy.

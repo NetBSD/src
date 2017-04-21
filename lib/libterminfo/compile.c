@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.9 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: compile.c,v 1.9.14.1 2017/04/21 16:53:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.9 2013/06/07 13:16:18 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.9.14.1 2017/04/21 16:53:12 bouyer Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -323,6 +323,13 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 	last = '\0';
 	/* Convert escape codes */
 	while ((ch = *str++) != '\0') {
+		if (ch == '\n') {
+			/* Following a newline, strip leading whitespace from
+			 * capability strings. */
+			while (isspace((unsigned char)*str))
+				str++;
+			continue;
+		}
 		if (slash == 0 && ch == '\\') {
 			slash = 1;
 			continue;
@@ -340,7 +347,10 @@ encode_string(const char *term, const char *cap, TBUF *tbuf, const char *str,
 					ch = '\177';
 				else if ((ch &= 037) == 0)
 					ch = (char)128;
-			}
+			} else if (!isprint((unsigned char)ch))
+				dowarn(flags,
+				    "%s: %s: unprintable character",
+				    term, cap);
 			*p++ = ch;
 			last = ch;
 			continue;

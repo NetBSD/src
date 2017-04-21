@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.9 2015/12/02 01:09:49 christos Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.9.4.1 2017/04/21 16:53:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.9 2015/12/02 01:09:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.9.4.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,9 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 			    dp[i].mbrp_type);
 			continue;
 		}
-		strcpy(dkw.dkw_ptype, ptype);
+		strlcpy(dkw.dkw_ptype, ptype, sizeof(dkw.dkw_ptype));
 
-		strcpy(dkw.dkw_parent, a->pdk->dk_name);
+		strlcpy(dkw.dkw_parent, a->pdk->dk_name, sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = le32toh(dp[i].mbrp_start);
 		dkw.dkw_size = le32toh(dp[i].mbrp_size);
 

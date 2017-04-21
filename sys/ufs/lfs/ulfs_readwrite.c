@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.22 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.22.4.1 2017/04/21 16:54:09 bouyer Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.120 2015/04/12 22:48:38 riastradh Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.22 2016/06/20 03:36:09 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.22.4.1 2017/04/21 16:54:09 bouyer Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -110,8 +110,6 @@ READ(void *v)
 		return ffs_snapshot_read(vp, uio, ioflag);
 #endif /* !LFS_READWRITE */
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
 
@@ -132,7 +130,6 @@ READ(void *v)
 
  out:
 	error = ulfs_post_read_update(vp, ap->a_ioflag, error);
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -173,8 +170,6 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifndef LFS_READWRITE
 	KASSERT(!ISSET(ip->i_flags, (SF_SNAPSHOT | SF_SNAPINVAL)));
 #endif
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
@@ -223,7 +218,6 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
  out:
 	error = ulfs_post_read_update(vp, ioflag, error);
-	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -297,8 +291,6 @@ WRITE(void *v)
 #endif
 	if (uio->uio_resid == 0)
 		return (0);
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -451,7 +443,6 @@ WRITE(void *v)
 out:
 	error = ulfs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -495,8 +486,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #endif
 	if (uio->uio_resid == 0)
 		return 0;
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	resid = uio->uio_resid;
@@ -579,7 +568,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 
 	error = ulfs_post_write_update(vp, uio, ioflag, cred, osize, resid,
 	    extended, error);
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }

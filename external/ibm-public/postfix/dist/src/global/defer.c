@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: defer.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -16,23 +16,49 @@
 /*	const char *relay;
 /*	DSN	*dsn;
 /*
-/*	int	defer_flush(flags, queue, id, encoding, sender,
+/*	int	defer_flush(flags, queue, id, encoding, smtputf8, sender,
 /*				dsn_envid, dsn_ret)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
 /*
-/*	int	defer_warn(flags, queue, id, sender, dsn_envid, dsn_ret)
+/*	int	defer_warn(flags, queue, id, encoding, smtputf8, sender,
+				dsn_envid, dsn_ret)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
+/*	const char *encoding;
+/*	int	smtputf8;
 /*	const char *sender;
 /*	const char *dsn_envid;
 /*	int	dsn_ret;
+/*
+/*	int	defer_one(flags, queue, id, encoding, smtputf8, sender,
+/*				dsn_envid, ret, stats, recipient, relay, dsn)
+/*	int	flags;
+/*	const char *queue;
+/*	const char *id;
+/*	const char *encoding;
+/*	int	smtputf8;
+/*	const char *sender;
+/*	const char *dsn_envid;
+/*	int	dsn_ret;
+/*	MSG_STATS *stats;
+/*	RECIPIENT *rcpt;
+/*	const char *relay;
+/*	DSN	*dsn;
+/* INTERNAL API
+/*	int	defer_append_intern(flags, id, stats, rcpt, relay, dsn)
+/*	int	flags;
+/*	const char *id;
+/*	MSG_STATS *stats;
+/*	RECIPIENT *rcpt;
+/*	const char *relay;
 /* DESCRIPTION
 /*	This module implements a client interface to the defer service,
 /*	which maintains a per-message logfile with status records for
@@ -57,6 +83,11 @@
 /*	defer_warn() sends a warning message that the mail in
 /*	question has been deferred.  The defer log is not deleted,
 /*	and no recipients are deleted from the original queue file.
+/*
+/*	defer_one() implements dsn_filter(3) compatibility for the
+/*	bounce_one() routine.
+/*
+/*	defer_append_intern() is for use after the DSN filter.
 /*
 /*	Arguments:
 /* .IP flags
@@ -99,6 +130,8 @@
 /*	Delivery status. See dsn(3). The specified action is ignored.
 /* .IP encoding
 /*	The body content encoding: MAIL_ATTR_ENC_{7BIT,8BIT,NONE}.
+/* .IP smtputf8
+/*	The level of SMTPUTF8 support (to be defined).
 /* .IP sender
 /*	The sender envelope address.
 /* .IP dsn_envid
@@ -136,6 +169,7 @@
 
 /* Global library. */
 
+#define DSN_INTERN
 #include <mail_params.h>
 #include <mail_queue.h>
 #include <mail_proto.h>
@@ -156,9 +190,8 @@ int     defer_append(int flags, const char *id, MSG_STATS *stats,
 		             RECIPIENT *rcpt, const char *relay,
 		             DSN *dsn)
 {
-    const char *rcpt_domain;
     DSN     my_dsn = *dsn;
-    int     status;
+    DSN    *dsn_res;
 
     /*
      * Sanity check.
@@ -167,6 +200,28 @@ int     defer_append(int flags, const char *id, MSG_STATS *stats,
 	msg_warn("defer_append: ignoring dsn code \"%s\"", my_dsn.status);
 	my_dsn.status = "4.0.0";
     }
+
+    /*
+     * DSN filter (Postfix 3.0).
+     */
+    if (delivery_status_filter != 0
+    && (dsn_res = dsn_filter_lookup(delivery_status_filter, &my_dsn)) != 0) {
+	if (dsn_res->status[0] == '5')
+	    return (bounce_append_intern(flags, id, stats, rcpt, relay, dsn_res));
+	my_dsn = *dsn_res;
+    }
+    return (defer_append_intern(flags, id, stats, rcpt, relay, &my_dsn));
+}
+
+/* defer_append_intern - defer message delivery */
+
+int     defer_append_intern(int flags, const char *id, MSG_STATS *stats,
+			            RECIPIENT *rcpt, const char *relay,
+			            DSN *dsn)
+{
+    const char *rcpt_domain;
+    DSN     my_dsn = *dsn;
+    int     status;
 
     /*
      * MTA-requested address verification information is stored in the verify
@@ -204,11 +259,11 @@ int     defer_append(int flags, const char *id, MSG_STATS *stats,
 	my_dsn.action = "delayed";
 
 	if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
-			   ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND,
-				ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-				ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-				ATTR_TYPE_FUNC, rcpt_print, (void *) rcpt,
-				ATTR_TYPE_FUNC, dsn_print, (void *) &my_dsn,
+			   SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_APPEND),
+				SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+				SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+				SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
+				SEND_ATTR_FUNC(dsn_print, (void *) &my_dsn),
 				ATTR_TYPE_END) != 0)
 	    msg_warn("%s: %s service failure", id, var_defer_service);
 	log_adhoc(id, stats, rcpt, relay, &my_dsn, "deferred");
@@ -241,20 +296,22 @@ int     defer_append(int flags, const char *id, MSG_STATS *stats,
 /* defer_flush - flush the defer log and deliver to the sender */
 
 int     defer_flush(int flags, const char *queue, const char *id,
-		            const char *encoding, const char *sender,
-		            const char *dsn_envid, int dsn_ret)
+		            const char *encoding, int smtputf8,
+		            const char *sender, const char *dsn_envid,
+		            int dsn_ret)
 {
     flags |= BOUNCE_FLAG_DELRCPT;
 
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
-			    ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH,
-			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-			    ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
-			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, dsn_envid,
-			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
+			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_FLUSH),
+			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+			    SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
+			    SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+			    SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+			    SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, dsn_envid),
+			    SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
 			    ATTR_TYPE_END) == 0) {
 	return (0);
     } else {
@@ -266,19 +323,55 @@ int     defer_flush(int flags, const char *queue, const char *id,
  * do not flush the log */
 
 int     defer_warn(int flags, const char *queue, const char *id,
+		           const char *encoding, int smtputf8,
 		         const char *sender, const char *envid, int dsn_ret)
 {
     if (mail_command_client(MAIL_CLASS_PRIVATE, var_defer_service,
-			    ATTR_TYPE_INT, MAIL_ATTR_NREQ, BOUNCE_CMD_WARN,
-			    ATTR_TYPE_INT, MAIL_ATTR_FLAGS, flags,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
-			    ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
-			    ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
-			    ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, envid,
-			    ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, dsn_ret,
+			    SEND_ATTR_INT(MAIL_ATTR_NREQ, BOUNCE_CMD_WARN),
+			    SEND_ATTR_INT(MAIL_ATTR_FLAGS, flags),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUE, queue),
+			    SEND_ATTR_STR(MAIL_ATTR_QUEUEID, id),
+			    SEND_ATTR_STR(MAIL_ATTR_ENCODING, encoding),
+			    SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, smtputf8),
+			    SEND_ATTR_STR(MAIL_ATTR_SENDER, sender),
+			    SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, envid),
+			    SEND_ATTR_INT(MAIL_ATTR_DSN_RET, dsn_ret),
 			    ATTR_TYPE_END) == 0) {
 	return (0);
     } else {
 	return (-1);
     }
+}
+
+/* defer_one - defer mail for one recipient */
+
+int     defer_one(int flags, const char *queue, const char *id,
+		          const char *encoding, int smtputf8,
+		          const char *sender, const char *dsn_envid,
+		          int dsn_ret, MSG_STATS *stats, RECIPIENT *rcpt,
+		          const char *relay, DSN *dsn)
+{
+    DSN     my_dsn = *dsn;
+    DSN    *dsn_res;
+
+    /*
+     * Sanity check.
+     */
+    if (my_dsn.status[0] != '4' || !dsn_valid(my_dsn.status)) {
+	msg_warn("defer_one: ignoring dsn code \"%s\"", my_dsn.status);
+	my_dsn.status = "4.0.0";
+    }
+
+    /*
+     * DSN filter (Postfix 3.0).
+     */
+    if (delivery_status_filter != 0
+    && (dsn_res = dsn_filter_lookup(delivery_status_filter, &my_dsn)) != 0) {
+	if (dsn_res->status[0] == '5')
+	    return (bounce_one_intern(flags, queue, id, encoding, smtputf8,
+				      sender, dsn_envid, dsn_ret, stats,
+				      rcpt, relay, dsn_res));
+	my_dsn = *dsn_res;
+    }
+    return (defer_append_intern(flags, id, stats, rcpt, relay, &my_dsn));
 }

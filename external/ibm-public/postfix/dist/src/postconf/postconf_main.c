@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_main.c,v 1.1.1.3 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: postconf_main.c,v 1.1.1.3.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
@@ -148,13 +153,17 @@ static void pcf_print_parameter(VSTREAM *fp, int mode, const char *name,
      * or without the name= prefix.
      */
     if (value != 0) {
-	if ((mode & PCF_SHOW_EVAL) != 0 && PCF_RAW_PARAMETER(node) == 0)
-	    value = pcf_expand_parameter_value((VSTRING *) 0, mode, value,
-					       (PCF_MASTER_ENT *) 0);
-	if ((mode & PCF_HIDE_NAME) == 0) {
-	    pcf_print_line(fp, mode, "%s = %s\n", name, value);
+	if (mode & PCF_HIDE_VALUE) {
+	    pcf_print_line(fp, mode, "%s\n", name);
 	} else {
-	    pcf_print_line(fp, mode, "%s\n", value);
+	    if ((mode & PCF_SHOW_EVAL) != 0 && PCF_RAW_PARAMETER(node) == 0)
+		value = pcf_expand_parameter_value((VSTRING *) 0, mode, value,
+						   (PCF_MASTER_ENT *) 0);
+	    if ((mode & PCF_HIDE_NAME) == 0) {
+		pcf_print_line(fp, mode, "%s = %s\n", name, value);
+	    } else {
+		pcf_print_line(fp, mode, "%s\n", value);
+	    }
 	}
 	if (msg_verbose)
 	    vstream_fflush(fp);
@@ -186,13 +195,13 @@ void    pcf_show_parameters(VSTREAM *fp, int mode, int param_class, char **names
      */
     if (*names == 0) {
 	list = PCF_PARAM_TABLE_LIST(pcf_param_table);
-	qsort((char *) list, pcf_param_table->used, sizeof(*list),
+	qsort((void *) list, pcf_param_table->used, sizeof(*list),
 	      pcf_comp_names);
 	for (ht = list; *ht; ht++)
 	    if (param_class & PCF_PARAM_INFO_NODE(*ht)->flags)
 		pcf_print_parameter(fp, mode, PCF_PARAM_INFO_NAME(*ht),
 				    PCF_PARAM_INFO_NODE(*ht));
-	myfree((char *) list);
+	myfree((void *) list);
 	return;
     }
 

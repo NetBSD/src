@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.16 2016/12/14 03:30:30 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.16.2.1 2017/04/21 16:54:12 bouyer Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,14 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-server="rump_server -lrump -lrumpnet -lrumpnet_net -lrumpnet_netinet	\
-		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpdev	\
-		    -lrumpnet_pppoe"
-# pppoectl doesn't work with RUMPHIJACK=sysctl=yes
-HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so"
-
-SERVER=unix://commsock1
-CLIENT=unix://commsock2
+SERVER=unix://pppoe_server
+CLIENT=unix://pppoe_client
 
 SERVER_IP=10.3.3.1
 CLIENT_IP=10.3.3.3
@@ -53,12 +47,13 @@ setup()
 		eval $@
 	fi
 
-	atf_check -s exit:0 ${server} $SERVER
-	atf_check -s exit:0 ${server} $CLIENT
+	rump_server_start $SERVER netinet6 pppoe
+	rump_server_start $CLIENT netinet6 pppoe
+
+	rump_server_add_iface $SERVER shmif0 $BUS
+	rump_server_add_iface $CLIENT shmif0 $BUS
 
 	export RUMP_SERVER=$SERVER
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr $BUS
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
 	atf_check -s exit:0 rump.ifconfig pppoe0 create
@@ -73,8 +68,6 @@ setup()
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=$CLIENT
-	atf_check -s exit:0 rump.ifconfig shmif0 create
-	atf_check -s exit:0 rump.ifconfig shmif0 linkstr $BUS
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 
 	atf_check -s exit:0 rump.ifconfig pppoe0 create
@@ -84,13 +77,6 @@ setup()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	unset RUMP_SERVER
 }
-
-cleanup()
-{
-	env RUMP_SERVER=$SERVER rump.halt
-	env RUMP_SERVER=$CLIENT rump.halt
-}
-
 
 wait_for_session_established()
 {
@@ -240,6 +226,8 @@ pppoe_pap_body()
 
 pppoe_pap_cleanup()
 {
+
+	$DEBUG && dump
 	cleanup
 }
 
@@ -258,6 +246,8 @@ pppoe_chap_body()
 
 pppoe_chap_cleanup()
 {
+
+	$DEBUG && dump
 	cleanup
 }
 
@@ -386,6 +376,8 @@ pppoe6_pap_body()
 
 pppoe6_pap_cleanup()
 {
+
+	$DEBUG && dump
 	cleanup
 }
 
@@ -404,6 +396,8 @@ pppoe6_chap_body()
 
 pppoe6_chap_cleanup()
 {
+
+	$DEBUG && dump
 	cleanup
 }
 

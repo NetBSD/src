@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.1.1.2 2013/09/25 19:06:31 tron Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.1.1.2.12.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
@@ -126,12 +126,13 @@
   * 
   * See also: REC_TYPE_PTR_FORMAT below.
   */
-#define REC_TYPE_SIZE_FORMAT	"%15ld %15ld %15ld %15ld %15ld"
+#define REC_TYPE_SIZE_FORMAT	"%15ld %15ld %15ld %15ld %15ld %15ld"
 #define REC_TYPE_SIZE_CAST1	long	/* Vmailer extra offs - data offs */
 #define REC_TYPE_SIZE_CAST2	long	/* Postfix 1.0 data offset */
 #define REC_TYPE_SIZE_CAST3	long	/* Postfix 1.0 recipient count */
 #define REC_TYPE_SIZE_CAST4	long	/* Postfix 2.1 qmgr flags */
 #define REC_TYPE_SIZE_CAST5	long	/* Postfix 2.4 content length */
+#define REC_TYPE_SIZE_CAST6	long	/* Postfix 3.0 smtputf8 flags */
 
  /*
   * The warn record specifies when the next warning that the message was

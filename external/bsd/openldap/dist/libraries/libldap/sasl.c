@@ -1,9 +1,9 @@
-/*	$NetBSD: sasl.c,v 1.1.1.4 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: sasl.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sasl.c,v 1.1.1.4.10.1 2017/04/21 16:52:27 bouyer Exp $");
+
 #include "portable.h"
 
 #include <stdio.h>
@@ -45,6 +48,83 @@
 #include <ac/errno.h>
 
 #include "ldap-int.h"
+
+BerElement *
+ldap_build_bind_req(
+	LDAP			*ld,
+	LDAP_CONST char	*dn,
+	LDAP_CONST char	*mechanism,
+	struct berval	*cred,
+	LDAPControl		**sctrls,
+	LDAPControl		**cctrls,
+	ber_int_t		*msgidp )
+{
+	BerElement	*ber;
+	int rc;
+
+	if( mechanism == LDAP_SASL_SIMPLE ) {
+		if( dn == NULL && cred != NULL && cred->bv_len ) {
+			/* use default binddn */
+			dn = ld->ld_defbinddn;
+		}
+
+	} else if( ld->ld_version < LDAP_VERSION3 ) {
+		ld->ld_errno = LDAP_NOT_SUPPORTED;
+		return( NULL );
+	}
+
+	if ( dn == NULL ) {
+		dn = "";
+	}
+
+	/* create a message to send */
+	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
+		return( NULL );
+	}
+
+	LDAP_NEXT_MSGID( ld, *msgidp );
+	if( mechanism == LDAP_SASL_SIMPLE ) {
+		/* simple bind */
+		rc = ber_printf( ber, "{it{istON}" /*}*/,
+			*msgidp, LDAP_REQ_BIND,
+			ld->ld_version, dn, LDAP_AUTH_SIMPLE,
+			cred );
+		
+	} else if ( cred == NULL || cred->bv_val == NULL ) {
+		/* SASL bind w/o credentials */
+		rc = ber_printf( ber, "{it{ist{sN}N}" /*}*/,
+			*msgidp, LDAP_REQ_BIND,
+			ld->ld_version, dn, LDAP_AUTH_SASL,
+			mechanism );
+
+	} else {
+		/* SASL bind w/ credentials */
+		rc = ber_printf( ber, "{it{ist{sON}N}" /*}*/,
+			*msgidp, LDAP_REQ_BIND,
+			ld->ld_version, dn, LDAP_AUTH_SASL,
+			mechanism, cred );
+	}
+
+	if( rc == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	/* Put Server Controls */
+	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	if ( ber_printf( ber, /*{*/ "N}" ) == -1 ) {
+		ld->ld_errno = LDAP_ENCODING_ERROR;
+		ber_free( ber, 1 );
+		return( NULL );
+	}
+
+	return( ber );
+}
 
 /*
  * ldap_sasl_bind - bind to the ldap server (and X.500).
@@ -81,70 +161,9 @@ ldap_sasl_bind(
 	rc = ldap_int_client_controls( ld, cctrls );
 	if( rc != LDAP_SUCCESS ) return rc;
 
-	if( mechanism == LDAP_SASL_SIMPLE ) {
-		if( dn == NULL && cred != NULL && cred->bv_len ) {
-			/* use default binddn */
-			dn = ld->ld_defbinddn;
-		}
-
-	} else if( ld->ld_version < LDAP_VERSION3 ) {
-		ld->ld_errno = LDAP_NOT_SUPPORTED;
+	ber = ldap_build_bind_req( ld, dn, mechanism, cred, sctrls, cctrls, &id );
+	if( !ber )
 		return ld->ld_errno;
-	}
-
-	if ( dn == NULL ) {
-		dn = "";
-	}
-
-	/* create a message to send */
-	if ( (ber = ldap_alloc_ber_with_options( ld )) == NULL ) {
-		ld->ld_errno = LDAP_NO_MEMORY;
-		return ld->ld_errno;
-	}
-
-	assert( LBER_VALID( ber ) );
-
-	LDAP_NEXT_MSGID( ld, id );
-	if( mechanism == LDAP_SASL_SIMPLE ) {
-		/* simple bind */
-		rc = ber_printf( ber, "{it{istON}" /*}*/,
-			id, LDAP_REQ_BIND,
-			ld->ld_version, dn, LDAP_AUTH_SIMPLE,
-			cred );
-		
-	} else if ( cred == NULL || cred->bv_val == NULL ) {
-		/* SASL bind w/o credentials */
-		rc = ber_printf( ber, "{it{ist{sN}N}" /*}*/,
-			id, LDAP_REQ_BIND,
-			ld->ld_version, dn, LDAP_AUTH_SASL,
-			mechanism );
-
-	} else {
-		/* SASL bind w/ credentials */
-		rc = ber_printf( ber, "{it{ist{sON}N}" /*}*/,
-			id, LDAP_REQ_BIND,
-			ld->ld_version, dn, LDAP_AUTH_SASL,
-			mechanism, cred );
-	}
-
-	if( rc == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return( -1 );
-	}
-
-	/* Put Server Controls */
-	if( ldap_int_put_controls( ld, sctrls, ber ) != LDAP_SUCCESS ) {
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
-
-	if ( ber_printf( ber, /*{*/ "N}" ) == -1 ) {
-		ld->ld_errno = LDAP_ENCODING_ERROR;
-		ber_free( ber, 1 );
-		return ld->ld_errno;
-	}
-
 
 	/* send the message */
 	*msgidp = ldap_send_initial_request( ld, LDAP_REQ_BIND, dn, ber, id );

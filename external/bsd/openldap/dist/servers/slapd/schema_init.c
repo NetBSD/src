@@ -1,10 +1,10 @@
-/*	$NetBSD: schema_init.c,v 1.1.1.5 2014/05/28 09:58:47 tron Exp $	*/
+/*	$NetBSD: schema_init.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $	*/
 
 /* schema_init.c - init builtin schema */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -87,6 +87,9 @@
  *   intersection of the resulting entry ID sets.
  *   See the index_substr_* keywords in slapd.conf(5).
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: schema_init.c,v 1.1.1.5.10.1 2017/04/21 16:52:28 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1737,16 +1740,15 @@ UTF8StringValidate(
 	Syntax *syntax,
 	struct berval *in )
 {
-	ber_len_t count;
 	int len;
-	unsigned char *u = (unsigned char *)in->bv_val;
+	unsigned char *u = (unsigned char *)in->bv_val, *end = in->bv_val + in->bv_len;
 
 	if( BER_BVISEMPTY( in ) && syntax == slap_schema.si_syn_directoryString ) {
 		/* directory strings cannot be empty */
 		return LDAP_INVALID_SYNTAX;
 	}
 
-	for( count = in->bv_len; count > 0; count -= len, u += len ) {
+	for( ; u < end; u += len ) {
 		/* get the length indicated by the first byte */
 		len = LDAP_UTF8_CHARLEN2( u, len );
 
@@ -1784,7 +1786,7 @@ UTF8StringValidate(
 		if( LDAP_UTF8_OFFSET( (char *)u ) != len ) return LDAP_INVALID_SYNTAX;
 	}
 
-	if( count != 0 ) {
+	if( u > end ) {
 		return LDAP_INVALID_SYNTAX;
 	}
 
@@ -2638,8 +2640,10 @@ integerIndexer(
 				itmp.bv_len = maxstrlen;
 		}
 		rc = integerVal2Key( &values[i], &keys[i], &itmp, ctx );
-		if ( rc )
+		if ( rc ) {
+			slap_sl_free( keys, ctx );
 			goto func_leave;
+		}
 	}
 	*keysp = keys;
 func_leave:
@@ -2686,12 +2690,16 @@ integerFilter(
 	}
 
 	rc = integerVal2Key( value, keys, &iv, ctx );
-	if ( rc == 0 )
-		*keysp = keys;
 
 	if ( iv.bv_val != ibuf ) {
 		slap_sl_free( iv.bv_val, ctx );
 	}
+
+	if ( rc == 0 )
+		*keysp = keys;
+	else
+		slap_sl_free( keys, ctx );
+
 	return rc;
 }
 
@@ -3267,6 +3275,7 @@ serialNumberAndIssuerCheck(
 					}
 					if ( is->bv_val[is->bv_len+1] == '"' ) {
 						/* double dquote */
+						numdquotes++;
 						is->bv_len += 2;
 						continue;
 					}
@@ -3844,6 +3853,7 @@ issuerAndThisUpdateCheck(
 				}
 				if ( is->bv_val[is->bv_len+1] == '"' ) {
 					/* double dquote */
+					numdquotes++;
 					is->bv_len += 2;
 					continue;
 				}
@@ -4386,6 +4396,7 @@ serialNumberAndIssuerSerialCheck(
 						}
 						if ( is->bv_val[is->bv_len + 1] == '"' ) {
 							/* double dquote */
+							numdquotes++;
 							is->bv_len += 2;
 							continue;
 						}

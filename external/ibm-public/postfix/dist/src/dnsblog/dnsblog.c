@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsblog.c,v 1.1.1.3 2012/06/09 11:27:09 tron Exp $	*/
+/*	$NetBSD: dnsblog.c,v 1.1.1.3.18.1 2017/04/21 16:52:47 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -16,12 +16,13 @@
 /* .ad
 /* .fi
 /*	With each connection, the \fBdnsblog\fR(8) server receives
-/*	a DNS white/blacklist domain name, IP address, and an ID.
-/*	If the address is listed under the DNS white/blacklist, the
+/*	a DNS white/blacklist domain name, an IP address, and an ID.
+/*	If the IP address is listed under the DNS white/blacklist, the
 /*	\fBdnsblog\fR(8) server logs the match and replies with the
 /*	query arguments plus an address list with the resulting IP
-/*	addresses separated by whitespace.  Otherwise it replies
-/*	with the query arguments plus an empty address list.  Finally,
+/*	addresses, separated by whitespace, and the reply TTL.
+/*	Otherwise it replies with the query arguments plus an empty
+/*	address list and the reply TTL (-1 if unavailable).  Finally,
 /*	The \fBdnsblog\fR(8) server closes the connection.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
@@ -75,11 +76,17 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System library. */
 
 #include <sys_defs.h>
+#include <limits.h>
 
 /* Utility library. */
 
@@ -130,7 +137,8 @@ static VSTRING *result;
 
 /* static void dnsblog_query - query DNSBL for client address */
 
-static VSTRING *dnsblog_query(VSTRING *result, const char *dnsbl_domain,
+static VSTRING *dnsblog_query(VSTRING *result, int *result_ttl,
+			              const char *dnsbl_domain,
 			              const char *addr)
 {
     const char *myname = "dnsblog_query";
@@ -185,8 +193,16 @@ static VSTRING *dnsblog_query(VSTRING *result, const char *dnsbl_domain,
      * Tack on the RBL domain name and query the DNS for an A record.
      */
     vstring_strcat(query, dnsbl_domain);
-    dns_status = dns_lookup(STR(query), T_A, 0, &addr_list, (VSTRING *) 0, why);
+    dns_status = dns_lookup_x(STR(query), T_A, 0, &addr_list, (VSTRING *) 0,
+			      why, (int *) 0, DNS_REQ_FLAG_NCACHE_TTL);
+
+    /*
+     * We return the lowest TTL in the response from the A record(s) if
+     * found, or from the SOA record(s) if available. If the reply specifies
+     * no TTL, or if the query fails, we return a TTL of -1.
+     */
     VSTRING_RESET(result);
+    *result_ttl = -1;
     if (dns_status == DNS_OK) {
 	for (rr = addr_list; rr != 0; rr = rr->next) {
 	    if (dns_rr_to_pa(rr, &hostaddr) == 0) {
@@ -198,6 +214,9 @@ static VSTRING *dnsblog_query(VSTRING *result, const char *dnsbl_domain,
 		if (LEN(result) > 0)
 		    vstring_strcat(result, " ");
 		vstring_strcat(result, hostaddr.buf);
+		/* Grab the positive reply TTL. */
+		if (*result_ttl < 0 || *result_ttl > rr->ttl)
+		    *result_ttl = rr->ttl;
 	    }
 	}
 	dns_rr_free(addr_list);
@@ -205,6 +224,12 @@ static VSTRING *dnsblog_query(VSTRING *result, const char *dnsbl_domain,
 	if (msg_verbose)
 	    msg_info("%s: addr %s not listed by domain %s",
 		     myname, addr, dnsbl_domain);
+	/* Grab the negative reply TTL. */
+	for (rr = addr_list; rr != 0; rr = rr->next) {
+	    if (rr->type == T_SOA && (*result_ttl < 0 || *result_ttl > rr->ttl))
+		*result_ttl = rr->ttl;
+	}
+	dns_rr_free(addr_list);
     } else {
 	msg_warn("%s: lookup error for DNS query %s: %s",
 		 myname, STR(query), STR(why));
@@ -219,6 +244,7 @@ static void dnsblog_service(VSTREAM *client_stream, char *unused_service,
 			            char **argv)
 {
     int     request_id;
+    int     result_ttl;
 
     /*
      * Sanity check. This service takes no command-line arguments.
@@ -233,18 +259,19 @@ static void dnsblog_service(VSTREAM *client_stream, char *unused_service,
      */
     if (attr_scan(client_stream,
 		  ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
-		  ATTR_TYPE_STR, MAIL_ATTR_RBL_DOMAIN, rbl_domain,
-		  ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, addr,
-		  ATTR_TYPE_INT, MAIL_ATTR_LABEL, &request_id,
+		  RECV_ATTR_STR(MAIL_ATTR_RBL_DOMAIN, rbl_domain),
+		  RECV_ATTR_STR(MAIL_ATTR_ACT_CLIENT_ADDR, addr),
+		  RECV_ATTR_INT(MAIL_ATTR_LABEL, &request_id),
 		  ATTR_TYPE_END) == 3) {
-	(void) dnsblog_query(result, STR(rbl_domain), STR(addr));
+	(void) dnsblog_query(result, &result_ttl, STR(rbl_domain), STR(addr));
 	if (var_dnsblog_delay > 0)
 	    sleep(var_dnsblog_delay);
 	attr_print(client_stream, ATTR_FLAG_NONE,
-		   ATTR_TYPE_STR, MAIL_ATTR_RBL_DOMAIN, STR(rbl_domain),
-		   ATTR_TYPE_STR, MAIL_ATTR_ACT_CLIENT_ADDR, STR(addr),
-		   ATTR_TYPE_INT, MAIL_ATTR_LABEL, request_id,
-		   ATTR_TYPE_STR, MAIL_ATTR_RBL_ADDR, STR(result),
+		   SEND_ATTR_STR(MAIL_ATTR_RBL_DOMAIN, STR(rbl_domain)),
+		   SEND_ATTR_STR(MAIL_ATTR_ACT_CLIENT_ADDR, STR(addr)),
+		   SEND_ATTR_INT(MAIL_ATTR_LABEL, request_id),
+		   SEND_ATTR_STR(MAIL_ATTR_RBL_ADDR, STR(result)),
+		   SEND_ATTR_INT(MAIL_ATTR_TTL, result_ttl),
 		   ATTR_TYPE_END);
 	vstream_fflush(client_stream);
     }
@@ -279,8 +306,8 @@ int     main(int argc, char **argv)
     MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, dnsblog_service,
-		       MAIL_SERVER_TIME_TABLE, time_table,
-		       MAIL_SERVER_POST_INIT, post_jail_init,
-		       MAIL_SERVER_UNLIMITED,
+		       CA_MAIL_SERVER_TIME_TABLE(time_table),
+		       CA_MAIL_SERVER_POST_INIT(post_jail_init),
+		       CA_MAIL_SERVER_UNLIMITED,
 		       0);
 }

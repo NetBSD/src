@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_OPEN 3
 .Os
 .Sh NAME
@@ -7,17 +7,17 @@
 .Nm sqlite3_open_v2
 .Nd Opening A New Database Connection
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_open
 .Fa "const char *filename"
 .Fa "sqlite3 **ppDb          "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_open16
 .Fa "const void *filename"
 .Fa "sqlite3 **ppDb          "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_open_v2
 .Fa "const char *filename"
 .Fa "sqlite3 **ppDb"

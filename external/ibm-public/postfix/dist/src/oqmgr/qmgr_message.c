@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.5 2014/07/06 19:27:53 tron Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.5.10.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -10,6 +10,7 @@
 /*
 /*	int	qmgr_message_count;
 /*	int	qmgr_recipient_count;
+/*	int	qmgr_vrfy_pend_count;
 /*
 /*	QMGR_MESSAGE *qmgr_message_alloc(class, name, qflags, mode)
 /*	const char *class;
@@ -39,6 +40,13 @@
 /*	qmgr_recipient_count is a global counter for the total number
 /*	of in-core recipient structures (i.e. the sum of all recipients
 /*	in all in-core message structures).
+/*
+/*	qmgr_vrfy_pend_count is a global counter for the total
+/*	number of in-core message structures that are associated
+/*	with an address verification request. Requests that exceed
+/*	the address_verify_pending_limit are deferred immediately.
+/*	This is a backup mechanism for a more refined enforcement
+/*	mechanism in the verify(8) daemon.
 /*
 /*	qmgr_message_alloc() creates an in-core message structure
 /*	with sender and recipient information taken from the named queue
@@ -97,10 +105,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef STRCASECMP_IN_STRINGS_H
-#include <strings.h>
-#endif
-
 /* Utility library. */
 
 #include <msg.h>
@@ -142,6 +146,7 @@
 
 int     qmgr_message_count;
 int     qmgr_recipient_count;
+int     qmgr_vrfy_pend_count;
 
 /* qmgr_message_create - create in-core message structure */
 
@@ -170,6 +175,7 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->sender = 0;
     message->dsn_envid = 0;
     message->dsn_ret = 0;
+    message->smtputf8 = 0;
     message->filter_xport = 0;
     message->inspect_xport = 0;
     message->redirect_addr = 0;
@@ -518,10 +524,11 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    continue;
 	if (rec_type == REC_TYPE_SIZE) {
 	    if (message->data_offset == 0) {
-		if ((count = sscanf(start, "%ld %ld %d %d %ld",
+		if ((count = sscanf(start, "%ld %ld %d %d %ld %d",
 				 &message->data_size, &message->data_offset,
 				    &nrcpt, &message->rflags,
-				    &message->cont_length)) >= 3) {
+				    &message->cont_length,
+				    &message->smtputf8)) >= 3) {
 		    /* Postfix >= 1.0 (a.k.a. 20010228). */
 		    if (message->data_offset <= 0 || message->data_size <= 0) {
 			msg_warn("%s: invalid size record: %.100s",
@@ -709,11 +716,15 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	     * after the logfile is deleted.
 	     */
 	    else if (strcmp(name, MAIL_ATTR_TRACE_FLAGS) == 0) {
-		message->tflags = DEL_REQ_TRACE_FLAGS(atoi(value));
-		if (message->tflags == DEL_REQ_FLAG_RECORD)
-		    message->tflags_offset = curr_offset;
-		else
-		    message->tflags_offset = 0;
+		if (message->tflags == 0) {
+		    message->tflags = DEL_REQ_TRACE_FLAGS(atoi(value));
+		    if (message->tflags == DEL_REQ_FLAG_RECORD)
+			message->tflags_offset = curr_offset;
+		    else
+			message->tflags_offset = 0;
+		    if ((message->tflags & DEL_REQ_FLAG_MTA_VRFY) != 0)
+			qmgr_vrfy_pend_count++;
+		}
 	    }
 	    continue;
 	}
@@ -759,6 +770,16 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		     message->queue_id, orig_rcpt);
 	myfree(orig_rcpt);
     }
+
+    /*
+     * After sending a "delayed" warning, request sender notification when
+     * message delivery is completed. While "mail delayed" notifications are
+     * bad enough because they multiply the amount of email traffic, "delay
+     * cleared" notifications are even worse because they come in a sudden
+     * burst when the queue drains after a network outage.
+     */
+    if (var_dsn_delay_cleared && message->warn_time < 0)
+	message->tflags |= DEL_REQ_FLAG_REC_DLY_SENT;
 
     /*
      * Avoid clumsiness elsewhere in the program. When sending data across an
@@ -826,13 +847,13 @@ void    qmgr_message_update_warn(QMGR_MESSAGE *message)
 {
 
     /*
-     * XXX eventually this should let us schedule multiple warnings, right
-     * now it just allows for one.
+     * After the "mail delayed" warning, optionally send a "delay cleared"
+     * notification.
      */
     if (qmgr_message_open(message)
 	|| vstream_fseek(message->fp, message->warn_offset, SEEK_SET) < 0
 	|| rec_fprintf(message->fp, REC_TYPE_WARN, REC_TYPE_WARN_FORMAT,
-		       REC_TYPE_WARN_ARG(0)) < 0
+		       REC_TYPE_WARN_ARG(-1)) < 0
 	|| vstream_fflush(message->fp))
 	msg_fatal("update queue file %s: %m", VSTREAM_PATH(message->fp));
     qmgr_message_close(message);
@@ -901,20 +922,20 @@ static int qmgr_message_sort_compare(const void *p1, const void *p2)
     if (at1 != 0 && at2 == 0)
 	return (-1);
     if (at1 != 0 && at2 != 0
-	&& (result = strcasecmp(at1, at2)) != 0)
+	&& (result = strcasecmp_utf8(at1, at2)) != 0)
 	return (result);
 
     /*
      * Compare recipient address.
      */
-    return (strcasecmp(rcpt1->address, rcpt2->address));
+    return (strcasecmp_utf8(rcpt1->address, rcpt2->address));
 }
 
 /* qmgr_message_sort - sort message recipient addresses by domain */
 
 static void qmgr_message_sort(QMGR_MESSAGE *message)
 {
-    qsort((char *) message->rcpt_list.info, message->rcpt_list.len,
+    qsort((void *) message->rcpt_list.info, message->rcpt_list.len,
 	  sizeof(message->rcpt_list.info[0]), qmgr_message_sort_compare);
     if (msg_verbose) {
 	RECIPIENT_LIST list = message->rcpt_list;
@@ -1065,8 +1086,8 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	    at = strrchr(STR(reply.recipient), '@');
 	    len = (at ? (at - STR(reply.recipient))
 		   : strlen(STR(reply.recipient)));
-	    if (strncasecmp(STR(reply.recipient), var_double_bounce_sender,
-			    len) == 0
+	    if (strncasecmp_utf8(STR(reply.recipient),
+				 var_double_bounce_sender, len) == 0
 		&& !var_double_bounce_sender[len]) {
 		status = sent(message->tflags, message->queue_id,
 			      QMGR_MSG_STATS(&stats, message), recipient,
@@ -1091,7 +1112,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 */
 	if (*var_defer_xports && (message->qflags & QMGR_FLUSH_DFXP) == 0) {
 	    if (defer_xport_argv == 0)
-		defer_xport_argv = argv_split(var_defer_xports, " \t\r\n,");
+		defer_xport_argv = argv_split(var_defer_xports, CHARS_COMMA_SP);
 	    for (cpp = defer_xport_argv->argv; *cpp; cpp++)
 		if (strcmp(*cpp, STR(reply.transport)) == 0)
 		    break;
@@ -1100,6 +1121,14 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 			      "4.3.2 deferred transport");
 	    }
 	}
+
+	/*
+	 * Safety: defer excess address verification requests.
+	 */
+	if ((message->tflags & DEL_REQ_FLAG_MTA_VRFY) != 0
+	    && qmgr_vrfy_pend_count > var_vrfy_pend_limit)
+	    QMGR_REDIRECT(&reply, MAIL_SERVICE_RETRY,
+			  "4.3.2 Too many address verification requests");
 
 	/*
 	 * Look up or instantiate the proper transport.
@@ -1304,7 +1333,9 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
 	myfree(message->rewrite_context);
     recipient_list_free(&message->rcpt_list);
     qmgr_message_count--;
-    myfree((char *) message);
+    if ((message->tflags & DEL_REQ_FLAG_MTA_VRFY) != 0)
+	qmgr_vrfy_pend_count--;
+    myfree((void *) message);
 }
 
 /* qmgr_message_alloc - create in-core message structure */

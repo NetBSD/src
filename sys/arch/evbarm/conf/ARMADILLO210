@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.35 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: ARMADILLO210,v 1.35.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -41,6 +41,7 @@ file-system	NFS		# Network file system
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

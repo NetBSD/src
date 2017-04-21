@@ -1,4 +1,4 @@
-/*	$NetBSD: listen.h,v 1.1.1.3 2013/09/25 19:06:37 tron Exp $	*/
+/*	$NetBSD: listen.h,v 1.1.1.3.12.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 #ifndef _LISTEN_H_INCLUDED_
 #define _LISTEN_H_INCLUDED_
@@ -31,7 +31,7 @@ extern int inet_accept(int);
 extern int unix_accept(int);
 extern int stream_accept(int);
 
-extern int recv_pass_attr(int, HTABLE **, int, ssize_t);
+extern int WARN_UNUSED_RESULT recv_pass_attr(int, HTABLE **, int, ssize_t);
 extern int pass_accept(int);
 extern int pass_accept_attr(int, HTABLE **);
 

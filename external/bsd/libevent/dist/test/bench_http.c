@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_http.c,v 1.1.1.1 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: bench_http.c,v 1.1.1.1.20.1 2017/04/21 16:51:33 bouyer Exp $	*/
 /*
  * Copyright 2008-2012 Niels Provos and Nick Mathewson
  *
@@ -28,7 +28,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #else
 #include <sys/socket.h>
@@ -91,10 +91,10 @@ main(int argc, char **argv)
 	int i;
 	int c;
 	int use_iocp = 0;
-	unsigned short port = 8080;
+	ev_uint16_t port = 8080;
 	char *endptr = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
 	WSADATA WSAData;
 	WSAStartup(0x101, &WSAData);
 #else
@@ -136,10 +136,12 @@ main(int argc, char **argv)
 				exit(1);
 			}
 			break;
-#ifdef WIN32
+#ifdef _WIN32
 		case 'i':
 			use_iocp = 1;
+#ifdef EVTHREAD_USE_WINDOWS_THREADS_IMPLEMENTED
 			evthread_use_windows_threads();
+#endif
 			event_config_set_flag(cfg,EVENT_BASE_FLAG_STARTUP_IOCP);
 			break;
 #endif
@@ -170,10 +172,8 @@ main(int argc, char **argv)
 	evhttp_set_cb(http, "/ind", http_basic_cb, NULL);
 	fprintf(stderr, "/ind - basic content (memory copy)\n");
 
-#ifdef _EVENT2_EVENT_H_
 	evhttp_set_cb(http, "/ref", http_ref_cb, NULL);
 	fprintf(stderr, "/ref - basic content (reference)\n");
-#endif
 
 	fprintf(stderr, "Serving %d bytes on port %d using %s\n",
 	    (int)content_len, port,
@@ -181,11 +181,17 @@ main(int argc, char **argv)
 
 	evhttp_bind_socket(http, "0.0.0.0", port);
 
+#ifdef _WIN32
 	if (use_iocp) {
 		struct timeval tv={99999999,0};
 		event_base_loopexit(base, &tv);
 	}
+#endif
 	event_base_dispatch(base);
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
 
 	/* NOTREACHED */
 	return (0);

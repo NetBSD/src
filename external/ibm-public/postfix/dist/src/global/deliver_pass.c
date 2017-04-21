@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.1.1.2 2011/03/02 19:32:13 tron Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -83,7 +83,7 @@ static int deliver_pass_initial_reply(VSTREAM *stream)
     int     stat;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &stat,
+		  RECV_ATTR_INT(MAIL_ATTR_STATUS, &stat),
 		  ATTR_TYPE_END) != 1) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
 	stat = -1;
@@ -100,34 +100,35 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
     int     stat;
 
     attr_print(stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_INT, MAIL_ATTR_FLAGS, request->flags,
-	       ATTR_TYPE_STR, MAIL_ATTR_QUEUE, request->queue_name,
-	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, request->queue_id,
-	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, request->data_offset,
-	       ATTR_TYPE_LONG, MAIL_ATTR_SIZE, request->data_size,
-	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, nexthop,
-	       ATTR_TYPE_STR, MAIL_ATTR_ENCODING, request->encoding,
-	       ATTR_TYPE_STR, MAIL_ATTR_SENDER, request->sender,
-	       ATTR_TYPE_STR, MAIL_ATTR_DSN_ENVID, request->dsn_envid,
-	       ATTR_TYPE_INT, MAIL_ATTR_DSN_RET, request->dsn_ret,
-	       ATTR_TYPE_FUNC, msg_stats_print, (void *) &request->msg_stats,
+	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, request->flags),
+	       SEND_ATTR_STR(MAIL_ATTR_QUEUE, request->queue_name),
+	       SEND_ATTR_STR(MAIL_ATTR_QUEUEID, request->queue_id),
+	       SEND_ATTR_LONG(MAIL_ATTR_OFFSET, request->data_offset),
+	       SEND_ATTR_LONG(MAIL_ATTR_SIZE, request->data_size),
+	       SEND_ATTR_STR(MAIL_ATTR_NEXTHOP, nexthop),
+	       SEND_ATTR_STR(MAIL_ATTR_ENCODING, request->encoding),
+	       SEND_ATTR_INT(MAIL_ATTR_SMTPUTF8, request->smtputf8),
+	       SEND_ATTR_STR(MAIL_ATTR_SENDER, request->sender),
+	       SEND_ATTR_STR(MAIL_ATTR_DSN_ENVID, request->dsn_envid),
+	       SEND_ATTR_INT(MAIL_ATTR_DSN_RET, request->dsn_ret),
+	       SEND_ATTR_FUNC(msg_stats_print, (void *) &request->msg_stats),
     /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
-	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_NAME, request->client_name,
-	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_ADDR, request->client_addr,
-	     ATTR_TYPE_STR, MAIL_ATTR_LOG_CLIENT_PORT, request->client_port,
-	     ATTR_TYPE_STR, MAIL_ATTR_LOG_PROTO_NAME, request->client_proto,
-	       ATTR_TYPE_STR, MAIL_ATTR_LOG_HELO_NAME, request->client_helo,
+	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_NAME, request->client_name),
+	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_ADDR, request->client_addr),
+	     SEND_ATTR_STR(MAIL_ATTR_LOG_CLIENT_PORT, request->client_port),
+	     SEND_ATTR_STR(MAIL_ATTR_LOG_PROTO_NAME, request->client_proto),
+	       SEND_ATTR_STR(MAIL_ATTR_LOG_HELO_NAME, request->client_helo),
     /* XXX Should be encapsulated with ATTR_TYPE_FUNC. */
-	       ATTR_TYPE_STR, MAIL_ATTR_SASL_METHOD, request->sasl_method,
-	     ATTR_TYPE_STR, MAIL_ATTR_SASL_USERNAME, request->sasl_username,
-	       ATTR_TYPE_STR, MAIL_ATTR_SASL_SENDER, request->sasl_sender,
+	       SEND_ATTR_STR(MAIL_ATTR_SASL_METHOD, request->sasl_method),
+	     SEND_ATTR_STR(MAIL_ATTR_SASL_USERNAME, request->sasl_username),
+	       SEND_ATTR_STR(MAIL_ATTR_SASL_SENDER, request->sasl_sender),
     /* XXX Ditto if we want to pass TLS certificate info. */
-	       ATTR_TYPE_STR, MAIL_ATTR_LOG_IDENT, request->log_ident,
-	     ATTR_TYPE_STR, MAIL_ATTR_RWR_CONTEXT, request->rewrite_context,
-	       ATTR_TYPE_INT, MAIL_ATTR_RCPT_COUNT, 1,
+	       SEND_ATTR_STR(MAIL_ATTR_LOG_IDENT, request->log_ident),
+	     SEND_ATTR_STR(MAIL_ATTR_RWR_CONTEXT, request->rewrite_context),
+	       SEND_ATTR_INT(MAIL_ATTR_RCPT_COUNT, 1),
 	       ATTR_TYPE_END);
     attr_print(stream, ATTR_FLAG_NONE,
-	       ATTR_TYPE_FUNC, rcpt_print, (void *) rcpt,
+	       SEND_ATTR_FUNC(rcpt_print, (void *) rcpt),
 	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream)) {
@@ -146,8 +147,8 @@ static int deliver_pass_final_reply(VSTREAM *stream, DSN_BUF *dsb)
     int     stat;
 
     if (attr_scan(stream, ATTR_FLAG_STRICT,
-		  ATTR_TYPE_FUNC, dsb_scan, (void *) dsb,
-		  ATTR_TYPE_INT, MAIL_ATTR_STATUS, &stat,
+		  RECV_ATTR_FUNC(dsb_scan, (void *) dsb),
+		  RECV_ATTR_INT(MAIL_ATTR_STATUS, &stat),
 		  ATTR_TYPE_END) != 2) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
 	return (DELIVER_PASS_UNKNOWN);

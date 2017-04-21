@@ -1,9 +1,9 @@
-/*	$NetBSD: dds.c,v 1.1.1.4 2014/05/28 09:58:52 tron Exp $	*/
+/*	$NetBSD: dds.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2014 The OpenLDAP Foundation.
+ * Copyright 2005-2016 The OpenLDAP Foundation.
  * Portions Copyright 2005-2006 SysNet s.n.c.
  * All rights reserved.
  *
@@ -19,6 +19,9 @@
  * This work was initially developed by Pierangelo Masarati for inclusion
  * in OpenLDAP Software, sponsored by SysNet s.n.c.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dds.c,v 1.1.1.4.10.1 2017/04/21 16:52:31 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1742,18 +1745,6 @@ dds_db_open(
 		goto done;
 	}
 
-	/* ... if there are dynamic objects, delete those expired */
-	if ( di->di_num_dynamicObjects > 0 ) {
-		/* force deletion of expired entries... */
-		be->bd_info = (BackendInfo *)on->on_info;
-		rc = dds_expire( thrctx, di );
-		be->bd_info = (BackendInfo *)on;
-		if ( rc != LDAP_SUCCESS ) {
-			rc = 1;
-			goto done;
-		}
-	}
-
 	/* start expire task */
 	ldap_pvt_thread_mutex_lock( &slapd_rq.rq_mutex );
 	di->di_expire_task = ldap_pvt_runqueue_insert( &slapd_rq,
@@ -1786,6 +1777,7 @@ dds_db_close(
 		}
 		ldap_pvt_runqueue_remove( &slapd_rq, di->di_expire_task );
 		ldap_pvt_thread_mutex_unlock( &slapd_rq.rq_mutex );
+		di->di_expire_task = NULL;
 	}
 
 	(void)entry_info_unregister( dds_entry_info, (void *)di );

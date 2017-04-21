@@ -1,4 +1,4 @@
-/*	$NetBSD: nvtable.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: nvtable.c,v 1.1.1.1.36.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -117,7 +117,7 @@ NVTABLE_INFO *nvtable_update(NVTABLE * table, const char *key, const char *value
     if ((ht = htable_locate(table, key)) != 0) {
 	myfree(ht->value);
     } else {
-	ht = htable_enter(table, key, (char *) 0);
+	ht = htable_enter(table, key, (void *) 0);
     }
     ht->value = mystrdup(value);
     return (ht);

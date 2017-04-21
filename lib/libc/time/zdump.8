@@ -1,5 +1,5 @@
-.\"	$NetBSD: zdump.8,v 1.15 2016/10/07 15:29:42 christos Exp $
-.Dd October 6, 2016
+.\"	$NetBSD: zdump.8,v 1.15.2.1 2017/04/21 16:53:09 bouyer Exp $
+.Dd March 11, 2017
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -107,7 +107,7 @@ Fields are separated by single tabs.
 Dates are in
 .Dv yyyy-mm-dd
 format and times are in 24-hour
-.Dv hh:mm:ss
+.Dv hhmmss
 format where
 .Dv hh \*[Lt] 24 .
 Times are in local time immediately after the transition.
@@ -121,7 +121,8 @@ An isdst flag is omitted for standard time, and otherwise
 is a decimal integer that is unsigned and positive (typically 1) for
 daylight saving time and negative for unknown.
 .Pp
-In times and UT offsets, the seconds are omitted if they are zero, and
+In times and in UT offsets with absolute value less than 100 hours,
+the seconds are omitted if they are zero, and
 the minutes are also omitted if they are also zero.
 Positive UT offsets are east of Greenwich.  The UT offset \&-00 denotes a UT
 placeholder in areas where the actual offset is unspecified; by

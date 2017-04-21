@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.c,v 1.1.1.4 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_db.c,v 1.1.1.4.16.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -8,7 +8,9 @@
 /* SYNOPSIS
 /*	#include <dict_db.h>
 /*
-/*	int	dict_db_cache_size;
+/*	extern int dict_db_cache_size;
+/*
+/*	DEFINE_DICT_DB_CACHE_SIZE;
 /*
 /*	DICT	*dict_hash_open(path, open_flags, dict_flags)
 /*	const char *path;
@@ -28,6 +30,10 @@
 /*	I/O buffer size.  The default buffer size is adequate for reading.
 /*	For better performance while creating a large table, specify a large
 /*	buffer size before opening the file.
+/*
+/*	This variable cannot be exported via the dict(3) API and
+/*	must therefore be defined in the calling program by invoking
+/*	the DEFINE_DICT_DB_CACHE_SIZE macro at the global level.
 /*
 /*	Arguments:
 /* .IP path
@@ -127,17 +133,6 @@ typedef struct {
 
 #define SCOPY(buf, data, size) \
     vstring_str(vstring_strncpy(buf ? buf : (buf = vstring_alloc(10)), data, size))
-
- /*
-  * You can override the default dict_db_cache_size setting before calling
-  * dict_hash_open() or dict_btree_open(). This is done in mkmap_db_open() to
-  * set a larger memory pool for database (re)builds.
-  * 
-  * XXX This should be specified via the DICT interface so that it becomes an
-  * object property, instead of being specified by poking a global variable
-  * so that it becomes a class property.
-  */
-int     dict_db_cache_size = (128 * 1024);	/* 128K default memory pool */
 
 #define DICT_DB_NELM		4096
 
@@ -629,6 +624,7 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 #define LOCK_OPEN_FLAGS(f) ((f) & ~(O_CREAT|O_TRUNC))
 #define FREE_RETURN(e) do { \
 	DICT *_dict = (e); if (db) DICT_DB_CLOSE(db); \
+	if (lock_fd >= 0) (void) close(lock_fd); \
 	if (db_path) myfree(db_path); return (_dict); \
     } while (0)
 
@@ -695,7 +691,8 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	msg_fatal("set DB cache size %d: %m", dict_db_cache_size);
     if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
 	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
-#if DB_VERSION_MAJOR == 5 || (DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
+#if DB_VERSION_MAJOR == 6 || DB_VERSION_MAJOR == 5 || \
+	(DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
     if ((errno = db->open(db, 0, db_path, 0, type, db_flags, 0644)) != 0)
 	FREE_RETURN(dict_surrogate(class, path, open_flags, dict_flags,
 				   "open database %s: %m", db_path));
@@ -714,6 +711,7 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	    msg_fatal("unlock database %s for open: %m", db_path);
 	if (close(lock_fd) < 0)
 	    msg_fatal("close database %s: %m", db_path);
+	lock_fd = -1;
     }
     dict_db = (DICT_DB *) dict_alloc(class, db_path, sizeof(*dict_db));
     dict_db->dict.lookup = dict_db_lookup;
@@ -764,14 +762,14 @@ DICT   *dict_hash_open(const char *path, int open_flags, int dict_flags)
 #if DB_VERSION_MAJOR < 2
     HASHINFO tweak;
 
-    memset((char *) &tweak, 0, sizeof(tweak));
+    memset((void *) &tweak, 0, sizeof(tweak));
     tweak.nelem = DICT_DB_NELM;
     tweak.cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR == 2
     DB_INFO tweak;
 
-    memset((char *) &tweak, 0, sizeof(tweak));
+    memset((void *) &tweak, 0, sizeof(tweak));
     tweak.h_nelem = DICT_DB_NELM;
     tweak.db_cachesize = dict_db_cache_size;
 #endif
@@ -791,13 +789,13 @@ DICT   *dict_btree_open(const char *path, int open_flags, int dict_flags)
 #if DB_VERSION_MAJOR < 2
     BTREEINFO tweak;
 
-    memset((char *) &tweak, 0, sizeof(tweak));
+    memset((void *) &tweak, 0, sizeof(tweak));
     tweak.cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR == 2
     DB_INFO tweak;
 
-    memset((char *) &tweak, 0, sizeof(tweak));
+    memset((void *) &tweak, 0, sizeof(tweak));
     tweak.db_cachesize = dict_db_cache_size;
 #endif
 #if DB_VERSION_MAJOR > 2

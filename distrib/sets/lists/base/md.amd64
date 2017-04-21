@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.267 2015/09/26 01:46:14 christos Exp $
+# $NetBSD: md.amd64,v 1.267.4.1 2017/04/21 16:51:13 bouyer Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -30,6 +30,8 @@
 ./usr/mdec/biosboot_com0_57600.sym		base-obsolete		obsolete
 ./usr/mdec/biosboot_com0_9600.sym		base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/bootia32.efi				base-sysutil-bin
+./usr/mdec/bootx64.efi				base-sysutil-bin
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
 ./usr/mdec/bootxx_dosfs				base-obsolete		obsolete
 ./usr/mdec/bootxx_ext2fs			base-sysutil-bin

@@ -1,11 +1,11 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_TABLE_COLUMN_METADATA 3
 .Os
 .Sh NAME
 .Nm sqlite3_table_column_metadata
 .Nd Extract Metadata About A Column Of A Table
 .Sh SYNOPSIS
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_table_column_metadata
 .Fa "sqlite3 *db"
 .Fa "const char *zDbName"
@@ -27,7 +27,7 @@ values if the specified column exists.
 The sqlite3_table_column_metadata() interface returns SQLITE_ERROR
 and if the specified column does not exist.
 If the column-name parameter to sqlite3_table_column_metadata() is
-a NULL pointer, then this routine simply checks for the existance of
+a NULL pointer, then this routine simply checks for the existence of
 the table and returns SQLITE_OK if the table exists and SQLITE_ERROR
 if it does not.
 .Pp

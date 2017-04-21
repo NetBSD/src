@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.15 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.48 2016/07/15 05:01:58 dtucker Exp $ */
+/*	$NetBSD: log.c,v 1.15.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
+/* $OpenBSD: log.c,v 1.49 2017/03/10 03:15:58 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.15 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.15.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -431,7 +431,8 @@ do_log(LogLevel level, const char *fmt, va_list args)
 		tmp_handler(level, visbuf, log_handler_ctx);
 		log_handler = tmp_handler;
 	} else if (log_on_stderr) {
-		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", visbuf);
+		snprintf(msgbuf, sizeof msgbuf, "%.*s\r\n",
+		    (int)sizeof msgbuf - 3, visbuf);
 		(void)write(log_stderr_fd, msgbuf, strlen(msgbuf));
 	} else {
 #ifdef SYSLOG_DATA_INIT

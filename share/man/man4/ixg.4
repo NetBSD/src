@@ -1,4 +1,4 @@
-.\" $NetBSD: ixg.4,v 1.9 2016/12/28 05:03:32 msaitoh Exp $
+.\" $NetBSD: ixg.4,v 1.9.2.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 2001-2008, Intel Corporation
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/ixgbe.4,v 1.3 2010/12/19 23:54:31 yongari Exp $
 .\"
-.Dd December 28, 2016
+.Dd February 24, 2017
 .Dt IXG 4
 .Os
 .Sh NAME
@@ -112,8 +112,3 @@ by
 The hardware supports a maximum MTU of 16114 bytes, but the
 .Nx
 port of the driver supports only 9000 bytes.
-.Pp
-The hardware supports Receive-Side Scaling (RSS), however, these features are
-not enabled in the
-.Nx
-driver at this time.

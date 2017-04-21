@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.73 2016/12/12 11:49:27 nat Exp $
+.\"	$NetBSD: audio.4,v 1.73.2.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,11 +99,8 @@ and
 are identical.
 .Sh VIRTUAL CHANNELS
 Any process may open a sampling device at a given time.
-There is a constraint of
-.Em one
-device per process and file descriptors may
-.Em not
-be shared between processes.
+Any number of devices per process and file descriptors may be shared between
+processes.
 .Pp
 Virtual channels are converted to a common format, signed linear encoding,
 frequency channels and precision.
@@ -115,7 +112,7 @@ variables.
 .It hw.driverN.precision
 .It hw.driverN.frequency
 .It hw.driverN.channels
-.It hw.driverN.saturate
+.It hw.driverN.multiuser
 .El
 .Pp
 Where
@@ -129,26 +126,26 @@ These variables may only be changed when the sampling device is not in use.
 .Pp
 An additional
 .Xr sysctl 8
-variable controls how the samples are combined, hw.driverN.saturate.
+variable determines if multiple users are allowed to access the sampling
+device, hw.driverN.multiuser.
 .Pp
-By default it is set to true.
-This means that volumes are not adjusted for each channel to be mixed.
-All virtual channels will use the
-.Em maximum
-set master volume unless the virtual channel volume is lowered by the user.
+By default it is set to false.
+This means that the sampling device may be only used by
+.Em one
+user at a time.
+Other users (except root) attempting to open the sampling device will be
+denied.
 .Pp
-If set to false the channels are
-.Em divided
-evenly in volume with respect to the master volume.
+If set to true, all users may access the sampling device at any time.
 .Pp
 Each virtual channel has a corresponding mixer:
 .Bl -tag -width -compact
-.It outputs.dacN  Output volume
-.It inputs.micN   Recording volume
+.It vchan.dacN  Output volume
+.It vchan.micN  Recording volume
 .El
 .Pp
 Where N is the virtual channel number.
-e.g ouputs.dac0 controlling playback volume and outputs.mic0 controlling
+e.g vchan.dac0 controlling playback volume and vchan.mic0 controlling
 recording volume for the first virtual channel.
 .Pp
 On a half-duplex device, writes while recording is in progress will be
@@ -233,17 +230,10 @@ The following
 commands are supported on the sample devices:
 .Pp
 .Bl -tag -width indent
-.It Dv AUDIO_SETPROC (struct audio_pid)
-This command will select the audio device opened by pid.
-.Bd -literal
-struct audio_pid {
-        pid_t   pid;
-        lwpid_t lwpid;
-};
-.Ed
-.Pp
-Currently the lpwid value is
-.Em ignored .
+.It Dv AUDIO_GETCHAN (int)
+This command will return the audio channel in use.
+.It Dv AUDIO_SETCHAN (int)
+This command will select the audio channel for subsequent ioctl calls.
 .It Dv AUDIO_FLUSH
 This command stops all playback and recording, clears all queued
 buffers, resets error counters, and restarts recording and playback as
@@ -783,9 +773,9 @@ string values.
 .Xr bba 4
 .Ss USB
 .Xr uaudio 4
-.Sh BUGS
-.Xr mmap 2
-currently does not work and should be avoided.
 .Sh HISTORY
 Support for virtual channels and mixing first appeared in
 .Nx 8.0 .
+.Sh BUGS
+.Xr mmap 2
+currently does not work and should be avoided.

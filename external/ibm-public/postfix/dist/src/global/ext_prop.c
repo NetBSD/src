@@ -1,4 +1,4 @@
-/*	$NetBSD: ext_prop.c,v 1.1.1.1 2009/06/23 10:08:46 tron Exp $	*/
+/*	$NetBSD: ext_prop.c,v 1.1.1.1.36.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -21,10 +21,10 @@
 /* .IP "canonical (EXT_PROP_CANONICAL)"
 /*	Propagate unmatched address extensions to the right-hand side
 /*	of canonical table entries (not: regular expressions).
-/* .IP "virtual (EXT_PROP_VIRTUAL)
+/* .IP "virtual (EXT_PROP_VIRTUAL)"
 /*	Propagate unmatched address extensions to the right-hand side
 /*	of virtual table entries (not: regular expressions).
-/* .IP "alias (EXT_PROP_ALIAS)
+/* .IP "alias (EXT_PROP_ALIAS)"
 /*	Propagate unmatched address extensions to the right-hand side
 /*	of alias database entries.
 /* .IP "forward (EXT_PROP_FORWARD)"

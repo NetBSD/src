@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.3 2013/09/25 19:06:32 tron Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.3.12.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -173,6 +173,11 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	Google, Inc.
+/*	111 8th Avenue
+/*	New York, NY 10011, USA
 /*--*/
 
 /* System libraries. */
@@ -214,6 +219,7 @@
 #include <mail_conf.h>
 #include <open_lock.h>
 #include <inet_proto.h>
+#include <mail_parm_split.h>
 
 /* Application-specific. */
 
@@ -223,7 +229,7 @@ int     master_detach = 1;
 
 /* master_exit_event - exit for memory leak testing purposes */
 
-static void master_exit_event(int unused_event, char *unused_context)
+static void master_exit_event(int unused_event, void *unused_context)
 {
     msg_info("master exit time has arrived");
     exit(0);
@@ -335,7 +341,7 @@ int     main(int argc, char **argv)
 	    master_detach = 0;
 	    break;
 	case 'e':
-	    event_request_timer(master_exit_event, (char *) 0, atoi(optarg));
+	    event_request_timer(master_exit_event, (void *) 0, atoi(optarg));
 	    break;
 	case 'D':
 	    debug_me = 1;
@@ -430,7 +436,7 @@ int     main(int argc, char **argv)
      * Environment import filter, to enforce consistent behavior whether
      * Postfix is started by hand, or at system boot time.
      */
-    import_env = argv_split(var_import_environ, ", \t\r\n");
+    import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);
     clean_env(import_env->argv);
     argv_free(import_env);
 
@@ -521,7 +527,7 @@ int     main(int argc, char **argv)
      */
 #define MASTER_WATCHDOG_TIME	1000
 
-    watchdog = watchdog_create(MASTER_WATCHDOG_TIME, (WATCHDOG_FN) 0, (char *) 0);
+    watchdog = watchdog_create(MASTER_WATCHDOG_TIME, (WATCHDOG_FN) 0, (void *) 0);
     for (;;) {
 #ifdef HAS_VOLATILE_LOCKS
 	if (myflock(vstream_fileno(lock_fp), INTERNAL_LOCK,

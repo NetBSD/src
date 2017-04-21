@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.23 2016/05/01 04:22:50 nonaka Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.23.4.1 2017/04/21 16:53:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,9 +35,6 @@
  * Offsets for various AGP configuration registers.
  */
 #define AGP_APBASE		0x10
-
-#define AGP_STATUS		0x4
-#define AGP_COMMAND		0x8
 
 /*
  * Config registers for Intel AGP chipsets.

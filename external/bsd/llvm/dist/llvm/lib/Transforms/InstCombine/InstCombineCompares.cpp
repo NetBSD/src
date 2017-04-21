@@ -884,6 +884,10 @@ static Instruction *transformToIndexedCompare(GEPOperator *GEPLHS, Value *RHS,
   if (!GEPLHS->hasAllConstantIndices())
     return nullptr;
 
+  // Make sure the pointers have the same type.
+  if (GEPLHS->getType() != RHS->getType())
+    return nullptr;
+
   Value *PtrBase, *Index;
   std::tie(PtrBase, Index) = getAsConstantIndexedAddress(GEPLHS, DL);
 
@@ -1903,7 +1907,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
     return foldICmpShlOne(Cmp, Shl, C);
 
   // Check that the shift amount is in range. If not, don't perform undefined
-  // shifts. When the shift is visited it will be simplified.
+  // shifts. When the shift is visited, it will be simplified.
   unsigned TypeBits = C->getBitWidth();
   if (ShiftAmt->uge(TypeBits))
     return nullptr;
@@ -1923,7 +1927,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
       return new ICmpInst(Pred, X, LShrC);
 
     if (Shl->hasOneUse()) {
-      // Otherwise strength reduce the shift into an and.
+      // Otherwise, strength reduce the shift into an and.
       Constant *Mask = ConstantInt::get(Shl->getType(),
           APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt->getZExtValue()));
 
@@ -1951,7 +1955,7 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
   }
 
   // When the shift is nuw and pred is >u or <=u, comparison only really happens
-  // in the pre-shifted bits. Since InstSimplify canoncalizes <=u into <u, the
+  // in the pre-shifted bits. Since InstSimplify canonicalizes <=u into <u, the
   // <=u case can be further converted to match <u (see below).
   if (Shl->hasNoUnsignedWrap() &&
       (Pred == ICmpInst::ICMP_UGT || Pred == ICmpInst::ICMP_ULT)) {
@@ -1970,9 +1974,9 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
   // Transform (icmp pred iM (shl iM %v, N), C)
   // -> (icmp pred i(M-N) (trunc %v iM to i(M-N)), (trunc (C>>N))
   // Transform the shl to a trunc if (trunc (C>>N)) has no loss and M-N.
-  // This enables us to get rid of the shift in favor of a trunc which can be
+  // This enables us to get rid of the shift in favor of a trunc that may be
   // free on the target. It has the additional benefit of comparing to a
-  // smaller constant, which will be target friendly.
+  // smaller constant that may be more target-friendly.
   unsigned Amt = ShiftAmt->getLimitedValue(TypeBits - 1);
   if (Shl->hasOneUse() && Amt != 0 && C->countTrailingZeros() >= Amt &&
       DL.isLegalInteger(TypeBits - Amt)) {
@@ -4035,11 +4039,6 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
         Constant *CMinus1 = ConstantInt::get(Op0->getType(), *CmpC - 1);
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, CMinus1);
       }
-      // (x <u 2147483648) -> (x >s -1)  -> true if sign bit clear
-      if (CmpC->isMinSignedValue()) {
-        Constant *AllOnes = Constant::getAllOnesValue(Op0->getType());
-        return new ICmpInst(ICmpInst::ICMP_SGT, Op0, AllOnes);
-      }
     }
     break;
   }
@@ -4059,11 +4058,6 @@ Instruction *InstCombiner::foldICmpUsingKnownBits(ICmpInst &I) {
       if (*CmpC == Op0Max - 1)
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0,
                             ConstantInt::get(Op1->getType(), *CmpC + 1));
-
-      // (x >u 2147483647) -> (x <s 0)  -> true if sign bit set
-      if (CmpC->isMaxSignedValue())
-        return new ICmpInst(ICmpInst::ICMP_SLT, Op0,
-                            Constant::getNullValue(Op0->getType()));
     }
     break;
   }
@@ -4294,6 +4288,27 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if ((SI->getOperand(1) == Op0 && SI->getOperand(2) == Op1) ||
           (SI->getOperand(2) == Op0 && SI->getOperand(1) == Op1))
         return nullptr;
+
+  // FIXME: We only do this after checking for min/max to prevent infinite
+  // looping caused by a reverse canonicalization of these patterns for min/max.
+  // FIXME: The organization of folds is a mess. These would naturally go into
+  // canonicalizeCmpWithConstant(), but we can't move all of the above folds
+  // down here after the min/max restriction.
+  ICmpInst::Predicate Pred = I.getPredicate();
+  const APInt *C;
+  if (match(Op1, m_APInt(C))) {
+    // For i32: x >u 2147483647 -> x <s 0  -> true if sign bit set
+    if (Pred == ICmpInst::ICMP_UGT && C->isMaxSignedValue()) {
+      Constant *Zero = Constant::getNullValue(Op0->getType());
+      return new ICmpInst(ICmpInst::ICMP_SLT, Op0, Zero);
+    }
+
+    // For i32: x <u 2147483648 -> x >s -1  -> true if sign bit clear
+    if (Pred == ICmpInst::ICMP_ULT && C->isMinSignedValue()) {
+      Constant *AllOnes = Constant::getAllOnesValue(Op0->getType());
+      return new ICmpInst(ICmpInst::ICMP_SGT, Op0, AllOnes);
+    }
+  }
 
   if (Instruction *Res = foldICmpInstWithConstant(I))
     return Res;

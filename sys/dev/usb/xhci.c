@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.67 2016/09/03 12:07:41 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.67.2.1 2017/04/21 16:53:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.67 2016/09/03 12:07:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.67.2.1 2017/04/21 16:53:53 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -531,6 +531,36 @@ xhci_get_epstate(struct xhci_softc * const sc, struct xhci_slot * const xs,
 	return XHCI_EPCTX_0_EPSTATE_GET(le32toh(cp[0]));
 }
 
+static inline unsigned int
+xhci_ctlrport2bus(struct xhci_softc * const sc, unsigned int ctlrport)
+{
+	const unsigned int port = ctlrport - 1;
+	const uint8_t bit = __BIT(port % NBBY);
+
+	return __SHIFTOUT(sc->sc_ctlrportbus[port / NBBY], bit);
+}
+
+/*
+ * Return the roothub port for a controller port.  Both are 1..n.
+ */
+static inline unsigned int
+xhci_ctlrport2rhport(struct xhci_softc * const sc, unsigned int ctrlport)
+{
+
+	return sc->sc_ctlrportmap[ctrlport - 1];
+}
+
+/*
+ * Return the controller port for a bus roothub port.  Both are 1..n.
+ */
+static inline unsigned int
+xhci_rhport2ctlrport(struct xhci_softc * const sc, unsigned int bn,
+    unsigned int rhport)
+{
+
+	return sc->sc_rhportmap[bn][rhport - 1];
+}
+
 /* --- */
 
 void
@@ -548,11 +578,17 @@ xhci_detach(struct xhci_softc *sc, int flags)
 {
 	int rv = 0;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
+	if (sc->sc_child2 != NULL) {
+		rv = config_detach(sc->sc_child2, flags);
+		if (rv != 0)
+			return rv;
+	}
 
-	if (rv != 0)
-		return rv;
+	if (sc->sc_child != NULL) {
+		rv = config_detach(sc->sc_child, flags);
+		if (rv != 0)
+			return rv;
+	}
 
 	/* XXX unconfigure/free slots */
 
@@ -564,6 +600,7 @@ xhci_detach(struct xhci_softc *sc, int flags)
 	xhci_op_write_8(sc, XHCI_CRCR, 0);
 	xhci_ring_free(sc, &sc->sc_cr);
 	cv_destroy(&sc->sc_command_cv);
+	cv_destroy(&sc->sc_cmdbusy_cv);
 
 	xhci_rt_write_4(sc, XHCI_ERSTSZ(0), 0);
 	xhci_rt_write_8(sc, XHCI_ERSTBA(0), 0);
@@ -576,6 +613,14 @@ xhci_detach(struct xhci_softc *sc, int flags)
 	usb_freemem(&sc->sc_bus, &sc->sc_dcbaa_dma);
 
 	kmem_free(sc->sc_slots, sizeof(*sc->sc_slots) * sc->sc_maxslots);
+
+	kmem_free(sc->sc_ctlrportbus, 
+	    howmany(sc->sc_maxports * sizeof(uint8_t), NBBY));
+	kmem_free(sc->sc_ctlrportmap, sc->sc_maxports * sizeof(int));
+
+	for (size_t j = 0; j < __arraycount(sc->sc_rhportmap); j++) {
+		kmem_free(sc->sc_rhportmap[j], sc->sc_maxports * sizeof(int));
+	}
 
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
@@ -700,37 +745,79 @@ hexdump(const char *msg, const void *base, size_t len)
 #endif
 }
 
+/* 7.2 xHCI Support Protocol Capability */
+static void
+xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
+{
+	/* XXX Cache this lot */
+
+	const uint32_t w0 = xhci_read_4(sc, ecp);
+	const uint32_t w4 = xhci_read_4(sc, ecp + 4);
+	const uint32_t w8 = xhci_read_4(sc, ecp + 8);
+	const uint32_t wc = xhci_read_4(sc, ecp + 0xc);
+
+	aprint_debug_dev(sc->sc_dev,
+	    " SP: %08x %08x %08x %08x\n", w0, w4, w8, wc);
+
+	if (w4 != XHCI_XECP_USBID)
+		return;
+
+	const int major = XHCI_XECP_SP_W0_MAJOR(w0);
+	const int minor = XHCI_XECP_SP_W0_MINOR(w0);
+	const uint8_t cpo = XHCI_XECP_SP_W8_CPO(w8);
+	const uint8_t cpc = XHCI_XECP_SP_W8_CPC(w8);
+
+	const uint16_t mm = __SHIFTOUT(w0, __BITS(31, 16));
+	switch (mm) {
+	case 0x0200:
+	case 0x0300:
+	case 0x0301:
+		aprint_debug_dev(sc->sc_dev, " %s ports %d - %d\n",
+		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
+		break;
+	default:
+		aprint_debug_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
+		    major, minor);
+		return;
+	}
+
+	const size_t bus = (major == 3) ? 0 : 1;
+
+	/* Index arrays with 0..n-1 where ports are numbered 1..n */
+	for (size_t cp = cpo - 1; cp < cpo + cpc - 1; cp++) {
+		if (sc->sc_ctlrportmap[cp] != 0) {
+			aprint_error_dev(sc->sc_dev, "contoller port %zu "
+			    "already assigned", cp);
+			continue;
+		}
+
+		sc->sc_ctlrportbus[cp / NBBY] |=
+		    bus == 0 ? 0 : __BIT(cp % NBBY);
+
+		const size_t rhp = sc->sc_rhportcount[bus]++;
+
+		KASSERTMSG(sc->sc_rhportmap[bus][rhp] == 0,
+		    "bus %zu rhp %zu is %d", bus, rhp,
+		    sc->sc_rhportmap[bus][rhp]);
+
+		sc->sc_rhportmap[bus][rhp] = cp + 1;
+		sc->sc_ctlrportmap[cp] = rhp + 1;
+	}
+}
+
 /* Process extended capabilities */
 static void
 xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
 {
-	uint32_t ecp, ecr;
-
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	ecp = XHCI_HCC_XECP(hcc) * 4;
+	bus_size_t ecp = XHCI_HCC_XECP(hcc) * 4;
 	while (ecp != 0) {
-		ecr = xhci_read_4(sc, ecp);
-		aprint_debug_dev(sc->sc_dev, "ECR %x: %08x\n", ecp, ecr);
+		uint32_t ecr = xhci_read_4(sc, ecp);
+		aprint_debug_dev(sc->sc_dev, "ECR: 0x%08x\n", ecr);
 		switch (XHCI_XECP_ID(ecr)) {
 		case XHCI_ID_PROTOCOLS: {
-			uint32_t w4, w8, wc;
-			uint16_t w2;
-			w2 = (ecr >> 16) & 0xffff;
-			w4 = xhci_read_4(sc, ecp + 4);
-			w8 = xhci_read_4(sc, ecp + 8);
-			wc = xhci_read_4(sc, ecp + 0xc);
-			aprint_debug_dev(sc->sc_dev,
-			    " SP: %08x %08x %08x %08x\n", ecr, w4, w8, wc);
-			/* unused */
-			if (w4 == 0x20425355 && (w2 & 0xff00) == 0x0300) {
-				sc->sc_ss_port_start = (w8 >> 0) & 0xff;;
-				sc->sc_ss_port_count = (w8 >> 8) & 0xff;;
-			}
-			if (w4 == 0x20425355 && (w2 & 0xff00) == 0x0200) {
-				sc->sc_hs_port_start = (w8 >> 0) & 0xff;
-				sc->sc_hs_port_count = (w8 >> 8) & 0xff;
-			}
+			xhci_id_protocols(sc, ecp);
 			break;
 		}
 		case XHCI_ID_USB_LEGACY: {
@@ -816,8 +903,19 @@ xhci_init(struct xhci_softc *sc)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
+	/* Set up the bus struct for the usb 3 and usb 2 buses */
+	sc->sc_bus.ub_methods = &xhci_bus_methods;
+	sc->sc_bus.ub_pipesize = sizeof(struct xhci_pipe);
 	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_bus.ub_usedma = true;
+	sc->sc_bus.ub_hcpriv = sc;
+
+	sc->sc_bus2.ub_methods = &xhci_bus_methods;
+	sc->sc_bus2.ub_pipesize = sizeof(struct xhci_pipe);
+	sc->sc_bus2.ub_revision = USBREV_2_0;
+	sc->sc_bus2.ub_usedma = true;
+	sc->sc_bus2.ub_hcpriv = sc;
+	sc->sc_bus2.ub_dmatag = sc->sc_bus.ub_dmatag;
 
 	cap = xhci_read_4(sc, XHCI_CAPLENGTH);
 	caplength = XHCI_CAP_CAPLENGTH(cap);
@@ -860,10 +958,22 @@ xhci_init(struct xhci_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
 	aprint_debug_dev(sc->sc_dev, "xECP %x\n", XHCI_HCC_XECP(hcc) * 4);
 
-	/* print PSI and take ownership from BIOS */
+	/* default all ports to bus 0, i.e. usb 3 */
+	sc->sc_ctlrportbus = kmem_zalloc(
+	    howmany(sc->sc_maxports * sizeof(uint8_t), NBBY), KM_SLEEP);
+	sc->sc_ctlrportmap = kmem_zalloc(sc->sc_maxports * sizeof(int), KM_SLEEP);
+
+	/* controller port to bus roothub port map */
+	for (size_t j = 0; j < __arraycount(sc->sc_rhportmap); j++) {
+		sc->sc_rhportmap[j] = kmem_zalloc(sc->sc_maxports * sizeof(int), KM_SLEEP);
+	}
+
+	/*
+	 * Process all Extended Capabilities
+	 */
 	xhci_ecp(sc, hcc);
 
-	bsz = XHCI_PORTSC(sc->sc_maxports + 1);
+	bsz = XHCI_PORTSC(sc->sc_maxports);
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, caplength, bsz,
 	    &sc->sc_obh) != 0) {
 		aprint_error_dev(sc->sc_dev, "operational subregion failure\n");
@@ -1033,12 +1143,9 @@ xhci_init(struct xhci_softc *sc)
 	}
 
 	cv_init(&sc->sc_command_cv, "xhcicmd");
+	cv_init(&sc->sc_cmdbusy_cv, "xhcicmdq");
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
-
-	/* Set up the bus struct. */
-	sc->sc_bus.ub_methods = &xhci_bus_methods;
-	sc->sc_bus.ub_pipesize = sizeof(struct xhci_pipe);
 
 	struct xhci_erste *erst;
 	erst = KERNADDR(&sc->sc_eventst_dma, 0);
@@ -1698,24 +1805,28 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 
 /* Process roothub port status/change events and notify to uhub_intr. */
 static void
-xhci_rhpsc(struct xhci_softc * const sc, u_int port)
+xhci_rhpsc(struct xhci_softc * const sc, u_int ctlrport)
 {
-	struct usbd_xfer * const xfer = sc->sc_intrxfer;
-	uint8_t *p;
-
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "xhci%d: port %u status change", device_unit(sc->sc_dev),
-	    port, 0, 0);
+	   ctlrport, 0, 0);
+
+	if (ctlrport > sc->sc_maxports)
+		return;
+
+	const size_t bn = xhci_ctlrport2bus(sc, ctlrport);
+	const size_t rhp = xhci_ctlrport2rhport(sc, ctlrport);
+	struct usbd_xfer * const xfer = sc->sc_intrxfer[bn];
+
+	DPRINTFN(4, "xhci%d: bus %d bp %u xfer %p status change",
+	    device_unit(sc->sc_dev), bn, rhp, xfer);
 
 	if (xfer == NULL)
 		return;
 
-	if (port > sc->sc_maxports)
-		return;
-
-	p = xfer->ux_buf;
+	uint8_t *p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
-	p[port/NBBY] |= 1 << (port%NBBY);
+	p[rhp / NBBY] |= 1 << (rhp % NBBY);
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 	usb_transfer_complete(xfer);
@@ -1907,11 +2018,15 @@ xhci_event_cmd(struct xhci_softc * const sc, const struct xhci_trb * const trb)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	trb_0 = le64toh(trb->trb_0);
 	trb_2 = le32toh(trb->trb_2);
 	trb_3 = le32toh(trb->trb_3);
 
 	if (trb_0 == sc->sc_command_addr) {
+		sc->sc_resultpending = false;
+
 		sc->sc_result_trb.trb_0 = trb_0;
 		sc->sc_result_trb.trb_2 = trb_2;
 		sc->sc_result_trb.trb_3 = trb_3;
@@ -2171,9 +2286,9 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 	dd = &dev->ud_ddesc;
 
-	if ((depth == 0) && (port == 0)) {
-		KASSERT(bus->ub_devices[dev->ud_addr] == NULL);
-		bus->ub_devices[dev->ud_addr] = dev;
+	if (depth == 0 && port == 0) {
+		KASSERT(bus->ub_devices[USB_ROOTHUB_INDEX] == NULL);
+		bus->ub_devices[USB_ROOTHUB_INDEX] = dev;
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err) {
 			DPRINTFN(1, "get_initial_ddesc %u", err, 0, 0, 0);
@@ -2228,13 +2343,19 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		//hexdump("slot context", cp, sc->sc_ctxsz);
 		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(le32toh(cp[3]));
 		DPRINTFN(4, "device address %u", addr, 0, 0, 0);
-		/* XXX ensure we know when the hardware does something
-		   we can't yet cope with */
+		/*
+		 * XXX ensure we know when the hardware does something
+		 * we can't yet cope with
+		 */
 		KASSERTMSG(addr >= 1 && addr <= 127, "addr %d", addr);
 		dev->ud_addr = addr;
-		/* XXX dev->ud_addr not necessarily unique on bus */
-		KASSERT(bus->ub_devices[dev->ud_addr] == NULL);
-		bus->ub_devices[dev->ud_addr] = dev;
+
+		KASSERTMSG(bus->ub_devices[usb_addr2dindex(dev->ud_addr)] == NULL,
+		    "addr %d already allocated", dev->ud_addr);
+		/*
+		 * The root hub is given its own slot
+		 */
+		bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = dev;
 
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err) {
@@ -2284,12 +2405,11 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
 
-	if ((depth == 0) && (port == 0)) {
+	if (depth == 0 && port == 0) {
 		usbd_attach_roothub(parent, dev);
-		DPRINTFN(1, "root_hub %p", bus->ub_roothub, 0, 0, 0);
+		DPRINTFN(1, "root hub %p", dev, 0, 0, 0);
 		return USBD_NORMAL_COMPLETION;
 	}
-
 
 	err = usbd_probe_and_attach(parent, dev, port, dev->ud_addr);
  bad:
@@ -2496,8 +2616,9 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
-	KASSERT(sc->sc_command_addr == 0);
+	while (sc->sc_command_addr != 0)
+		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
+
 	/*
 	 * If enqueue pointer points at last of ring, it's Link TRB,
 	 * command TRB will be stored in 0th TRB.
@@ -2507,17 +2628,21 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	else
 		sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
 
+	sc->sc_resultpending = true;
+
 	mutex_enter(&cr->xr_lock);
 	xhci_ring_put(sc, cr, NULL, trb, 1);
 	mutex_exit(&cr->xr_lock);
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(0), 0);
 
-	if (cv_timedwait(&sc->sc_command_cv, &sc->sc_lock,
-	    MAX(1, mstohz(timeout))) == EWOULDBLOCK) {
-		xhci_abort_command(sc);
-		err = USBD_TIMEOUT;
-		goto timedout;
+	while (sc->sc_resultpending) {
+		if (cv_timedwait(&sc->sc_command_cv, &sc->sc_lock,
+		    MAX(1, mstohz(timeout))) == EWOULDBLOCK) {
+			xhci_abort_command(sc);
+			err = USBD_TIMEOUT;
+			goto timedout;
+		}
 	}
 
 	trb->trb_0 = sc->sc_result_trb.trb_0;
@@ -2541,7 +2666,10 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	}
 
 timedout:
+	sc->sc_resultpending = false;
 	sc->sc_command_addr = 0;
+	cv_broadcast(&sc->sc_cmdbusy_cv);
+
 	return err;
 }
 
@@ -2828,8 +2956,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
 	cp[0] = htole32(0);
 	cp[1] = htole32(XHCI_INCTX_1_ADD_MASK(dci));
-	if (dci == XHCI_DCI_EP_CONTROL)
-		cp[1] |= htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_SLOT));
+	cp[1] |= htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_SLOT));
 	cp[7] = htole32(0);
 
 	/* set up input slot context */
@@ -2928,6 +3055,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 static void
 xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 {
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct usbd_device *dev = pipe->up_dev;
 	struct usbd_port *up = dev->ud_powersrc;
 	struct usbd_device *hub;
@@ -2960,7 +3088,7 @@ xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 		    << ((dep - 1) * 4);
 	}
 	route = route >> 4;
-	DPRINTFN(4, "rhport %u Route %05x hub %p", rhport, route, hub, 0);
+	size_t bn = hub == sc->sc_bus.ub_roothub ? 0 : 1;
 
 	/* Locate port on upstream high speed hub */
 	for (adev = dev, hub = up->up_parent;
@@ -2975,15 +3103,20 @@ xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 				goto found;
 			}
 		}
-		panic("xhci_setup_route: cannot find HS port");
+		panic("%s: cannot find HS port", __func__);
 	found:
 		DPRINTFN(4, "high speed port %d", p, 0, 0, 0);
 	} else {
 		dev->ud_myhsport = NULL;
 	}
 
+	const size_t ctlrport = xhci_rhport2ctlrport(sc, bn, rhport);
+
+	DPRINTFN(4, "rhport %u ctlrport %u Route %05x hub %p", rhport,
+	    ctlrport, route, hub);
+
 	cp[0] |= XHCI_SCTX_0_ROUTE_SET(route);
-	cp[1] |= XHCI_SCTX_1_RH_PORT_SET(rhport);
+	cp[1] |= XHCI_SCTX_1_RH_PORT_SET(ctlrport);
 }
 
 /*
@@ -3222,6 +3355,8 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	if (sc->sc_dying)
 		return -1;
 
+	size_t bn = bus == &sc->sc_bus ? 0 : 1;
+
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
@@ -3264,13 +3399,15 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	/* Clear Port Feature request */
-	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(4, "UR_CLEAR_PORT_FEATURE port=%d feature=%d",
-			     index, value, 0, 0);
-		if (index < 1 || index > sc->sc_maxports) {
+	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER): {
+		const size_t cp = xhci_rhport2ctlrport(sc, bn, index);
+
+		DPRINTFN(4, "UR_CLEAR_PORT_FEAT bp=%d feat=%d bus=%d cp=%d",
+		    index, value, bn, cp);
+		if (index < 1 || index > sc->sc_rhportcount[bn]) {
 			return -1;
 		}
-		port = XHCI_PORTSC(index);
+		port = XHCI_PORTSC(cp);
 		v = xhci_op_read_4(sc, port);
 		DPRINTFN(4, "portsc=0x%08x", v, 0, 0, 0);
 		v &= ~XHCI_PS_CLEAR;
@@ -3308,6 +3445,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			return -1;
 		}
 		break;
+	}
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 		if (len == 0)
 			break;
@@ -3318,11 +3456,13 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 
 		totlen = min(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
-		hubd.bNbrPorts = sc->sc_maxports;
+		hubd.bNbrPorts = sc->sc_rhportcount[bn];
 		USETW(hubd.wHubCharacteristics, UHD_PWR_NO_SWITCH);
 		hubd.bPwrOn2PwrGood = 200;
-		for (i = 0, l = sc->sc_maxports; l > 0; i++, l -= 8)
-			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
+		for (i = 0, l = sc->sc_rhportcount[bn]; l > 0; i++, l -= 8) {
+			/* XXX can't find out? */
+			hubd.DeviceRemovable[i++] = 0;
+		}
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
 		totlen = min(totlen, hubd.bDescLength);
 		memcpy(buf, &hubd, totlen);
@@ -3335,16 +3475,19 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		totlen = len;
 		break;
 	/* Get Port Status request */
-	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
-		DPRINTFN(8, "get port status i=%d", index, 0, 0, 0);
-		if (index < 1 || index > sc->sc_maxports) {
+	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER): {
+		const size_t cp = xhci_rhport2ctlrport(sc, bn, index);
+
+		DPRINTFN(8, "get port status bn=%d i=%d cp=%zu", bn, index, cp,
+		    0);
+		if (index < 1 || index > sc->sc_rhportcount[bn]) {
 			return -1;
 		}
 		if (len != 4) {
 			return -1;
 		}
-		v = xhci_op_read_4(sc, XHCI_PORTSC(index));
-		DPRINTFN(4, "getrhportsc %d %08x", index, v, 0, 0);
+		v = xhci_op_read_4(sc, XHCI_PORTSC(cp));
+		DPRINTFN(4, "getrhportsc %d %08x", cp, v, 0, 0);
 		i = xhci_xspeed2psspeed(XHCI_PS_SPEED_GET(v));
 		if (v & XHCI_PS_CCS)	i |= UPS_CURRENT_CONNECT_STATUS;
 		if (v & XHCI_PS_PED)	i |= UPS_PORT_ENABLED;
@@ -3374,6 +3517,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		totlen = min(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
+	}
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
 		return -1;
 	case C(UR_SET_HUB_DEPTH, UT_WRITE_CLASS_DEVICE):
@@ -3384,12 +3528,15 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER): {
 		int optval = (index >> 8) & 0xff;
 		index &= 0xff;
-		if (index < 1 || index > sc->sc_maxports) {
+		if (index < 1 || index > sc->sc_rhportcount[bn]) {
 			return -1;
 		}
-		port = XHCI_PORTSC(index);
+
+		const size_t cp = xhci_rhport2ctlrport(sc, bn, index);
+
+		port = XHCI_PORTSC(cp);
 		v = xhci_op_read_4(sc, port);
-		DPRINTFN(4, "portsc=0x%08x", v, 0, 0, 0);
+		DPRINTFN(4, "index %d cp %d portsc=0x%08x", index, cp, v, 0);
 		v &= ~XHCI_PS_CLEAR;
 		switch (value) {
 		case UHF_PORT_ENABLE:
@@ -3424,8 +3571,9 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			if (XHCI_PS_SPEED_GET(v) < XHCI_PS_SPEED_SS) {
 				return -1;
 			}
-			port = XHCI_PORTPMSC(index);
+			port = XHCI_PORTPMSC(cp);
 			v = xhci_op_read_4(sc, port);
+			DPRINTFN(4, "index %d cp %d portpmsc=0x%08x", index, cp, v, 0);
 			v &= ~XHCI_PM3_U1TO_SET(0xff);
 			v |= XHCI_PM3_U1TO_SET(optval);
 			xhci_op_write_4(sc, port, v);
@@ -3434,8 +3582,9 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			if (XHCI_PS_SPEED_GET(v) < XHCI_PS_SPEED_SS) {
 				return -1;
 			}
-			port = XHCI_PORTPMSC(index);
+			port = XHCI_PORTPMSC(cp);
 			v = xhci_op_read_4(sc, port);
+			DPRINTFN(4, "index %d cp %d portpmsc=0x%08x", index, cp, v, 0);
 			v &= ~XHCI_PM3_U2TO_SET(0xff);
 			v |= XHCI_PM3_U2TO_SET(optval);
 			xhci_op_write_4(sc, port, v);
@@ -3484,6 +3633,7 @@ static usbd_status
 xhci_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
+	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
@@ -3491,7 +3641,7 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 		return USBD_IOERROR;
 
 	mutex_enter(&sc->sc_lock);
-	sc->sc_intrxfer = xfer;
+	sc->sc_intrxfer[bn] = xfer;
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
@@ -3501,13 +3651,14 @@ static void
 xhci_root_intr_abort(struct usbd_xfer *xfer)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
+	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
-	sc->sc_intrxfer = NULL;
+	sc->sc_intrxfer[bn] = NULL;
 
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
@@ -3517,12 +3668,14 @@ static void
 xhci_root_intr_close(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+	const struct usbd_xfer *xfer = pipe->up_intrxfer;
+	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	sc->sc_intrxfer = NULL;
+	sc->sc_intrxfer[bn] = NULL;
 }
 
 static void

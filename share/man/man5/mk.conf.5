@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.71 2015/07/23 08:03:26 mrg Exp $
+.\"	$NetBSD: mk.conf.5,v 1.71.4.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 7, 2015
+.Dd April 20, 2017
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -671,8 +671,6 @@ the entire built system will be statically linked.
 Platform dependent.
 As of this writing, all platforms except
 .Sy m68000
-and
-.Sy sh3
 default to
 .Dq yes .
 .Pp
@@ -784,6 +782,29 @@ Indicates whether RCS IDs, for use with
 .Xr ident 1 ,
 should be stripped from program binaries and shared libraries.
 .DFLTn
+.
+.It Sy MKSTRIPSYM
+.YorN
+Indicates whether all local symbols should be stripped from shared libraries.
+If
+.Dq yes ,
+strip all local symbols from shared libraries;
+the affect is equivalent to the
+.Fl x
+option of
+.Xr ld 1 .
+If
+.Dq no ,
+strip only temporary local symbols; the affect is equivalent
+to the
+.Fl X
+option of
+.Xr ld 1 .
+Keeping non-temporary local symbols
+such as static function names is useful on using DTrace for
+userland libraries and getting a backtrace from a rump kernel
+loading shared libraries.
+.DFLTy
 .
 .It Sy MKUNPRIVED
 .YorN

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.49 2011/03/06 17:08:16 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.49.30.1 2017/04/21 16:53:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -120,7 +120,9 @@ struct bufarea {
 		struct cg *b_cg;		/* cylinder group */
 		struct ufs1_dinode *b_dinode1;	/* UFS1 inode block */
 		struct ufs2_dinode *b_dinode2;	/* UFS2 inode block */
+#ifndef NO_APPLE_UFS
 		struct appleufslabel *b_appleufs;		/* Apple UFS volume label */
+#endif
 	} b_un;
 	char b_dirty;
 };
@@ -142,7 +144,9 @@ struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
 struct bufarea asblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
-struct bufarea appleufsblk;		/* Apple UFS volume label */
+#ifndef NO_APPLE_UFS
+struct bufarea appleufsblk;	/* Apple UFS volume label */
+#endif
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
 
@@ -280,12 +284,7 @@ char	usedsoftdep;		/* just fix soft dependency inconsistencies */
 int	preen;			/* just fix normal inconsistencies */
 int	quiet;			/* Don't print anything if clean */
 int	forceimage;		/* file system is an image file */
-int	doswap;			/* convert byte order */
-int	needswap;		/* need to convert byte order in memory */
 int	is_ufs2;		/* we're dealing with an UFS2 filesystem */
-int	do_blkswap;		/* need to do block addr byteswap */
-int	do_dirswap;		/* need to do dir entry byteswap */
-int	endian;			/* endian coversion */
 int	markclean;		/* mark file system clean when done */
 char	havesb;			/* superblock has been read */
 char	skipclean;		/* skip clean file systems if preening */
@@ -294,7 +293,33 @@ int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
 int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 char	resolved;		/* cleared if unresolved changes => not clean */
+
+#ifndef NO_FFS_EI
+int	endian;			/* endian coversion */
+int	doswap;			/* convert byte order */
+int	needswap;		/* need to convert byte order in memory */
+int	do_blkswap;		/* need to do block addr byteswap */
+int	do_dirswap;		/* need to do dir entry byteswap */
+#else
+/* Disable Endian-Independent FFS support for install media */
+#define	endian			(0)
+#define	doswap			(0)
+#define	needswap 		(0)
+#define	do_blkswap		(0)
+#define	do_dirswap		(0)
+#define	ffs_cg_swap(a, b, c)	__nothing
+#define	ffs_csum_swap(a, b, c)	__nothing
+#define	ffs_sb_swap(a, b)	__nothing
+#define	swap_dinode1(a, b)	__nothing
+#define	swap_dinode2(a, b)	__nothing
+#endif
+
+#ifndef NO_APPLE_UFS
 int	isappleufs;		/* filesystem is Apple UFS */
+#else
+/* Disable Apple UFS support for install media */
+#define	isappleufs		(0)
+#endif
 
 daddr_t maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
@@ -334,6 +359,7 @@ struct	ufs2_dinode ufs2_zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
+#ifndef NO_FFS_EI
 /* some inline functs to help the byte-swapping mess */
 static inline u_int16_t iswap16 (u_int16_t);
 static inline u_int32_t iswap32 (u_int32_t);
@@ -362,3 +388,8 @@ iswap64(u_int64_t x)
 		return bswap64(x);
 	else return x;
 }
+#else
+#define	iswap16(x) (x)
+#define	iswap32(x) (x)
+#define	iswap64(x) (x)
+#endif /* NO_FFS_EI */

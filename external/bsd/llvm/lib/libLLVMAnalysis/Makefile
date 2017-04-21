@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2017/01/11 12:02:28 joerg Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2017/04/21 16:52:01 bouyer Exp $
 
 LIB=	LLVMAnalysis
 
@@ -51,9 +51,9 @@ SRCS+=	AliasAnalysis.cpp \
 	Lint.cpp \
 	Loads.cpp \
 	LoopAccessAnalysis.cpp \
+	LoopAnalysisManager.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
-	LoopPassManager.cpp \
 	LoopUnrollAnalyzer.cpp \
 	MemDepPrinter.cpp \
 	MemDerefPrinter.cpp \

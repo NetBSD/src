@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.123 2016/05/12 13:15:43 kre Exp $
+.\"	$NetBSD: sh.1,v 1.123.4.1 2017/04/21 16:50:42 bouyer Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd May 9, 2016
+.Dd March 20, 2017
 .Dt SH 1
 .ds flags abCEeFfhnuvxIimpqV
 .Os
@@ -1235,13 +1235,23 @@ The format for arithmetic expansion is as follows:
 .Pp
 .Dl $((expression))
 .Pp
-The expression is treated as if it were in double quotes, except
-that a double quote inside the expression is not treated specially.
+The expression in an arithmetic expansion is treated as if it were in
+double quotes, except that a double quote character inside the expression
+is just a normal character (it quotes nothing.)
 The shell expands all tokens in the expression for parameter expansion,
-command substitution, and quote removal.
+command substitution, and quote removal (the only quoting character is
+the backslash
+.Sq \&\e ,
+and only when followed by another
+.Sq \&\e ,
+a dollar sign
+.Sq \&$ ,
+a backquote
+.Sq \&`
+or a newline.)
 .Pp
-Next, the shell treats this as an arithmetic expression and
-substitutes the value of the expression.
+Next, the shell evaluates the expanded result as an arithmetic expression
+and substitutes the calculated value of that expression.
 .Pp
 Arithmetic expressions use a syntax similar to that
 of the C language, and are evaluated using the
@@ -1250,11 +1260,44 @@ data type (this is an extension to
 .Tn POSIX ,
 which requires only
 .Ql long
-arithmetic).
+arithmetic.)
 Shell variables may be referenced by name inside an arithmetic
 expression, without needing a
 .Dq \&$
 sign.
+Variables that are not set, or which have an empty (null string) value,
+used this way evaluate as zero (that is,
+.Dq x
+in arithmetic, as an R-Value, is evaluated as
+.Dq ${x:-0} )
+unless the
+.Nm
+.Fl u
+flag is set, in which case a reference to an unset variable is an error.
+Note that unset variables used in the ${var} form expand to a null
+string, which might result in syntax errors.
+Referencing the value of a variable which is not numeric is an error.
+.Pp
+All of the C expression operators applicable to integers are supported,
+and operate as they would in a C expression, except the unary
+.Dq ++
+and
+.Dq --
+operators (in both prefix and postfix forms) and the
+.Dq \&,
+(comma) operator, which are currently not supported.
+.Pp
+It should not be necessary to state that the C operators which
+operate on, or produce, pointer types, are not supported.
+Those include unary
+.Dq \&*
+and
+.Dq \&&
+and the struct and array referencing binary operators:
+.Dq \&. ,
+.Dq \&->
+and
+.Dq \&[ .
 .Ss White Space Splitting (Field Splitting)
 After parameter expansion, command substitution, and
 arithmetic expansion the shell scans the results of
@@ -1562,7 +1605,7 @@ environment of subsequent commands.
 With
 .Fl n
 the specified names are un-exported.
-Variables can also be un-exported using the unset builtin command.
+Variables can also be un-exported using the unset built in command.
 With
 .Fl x
 (exclude) the specified names are marked not to be exported,
@@ -1658,12 +1701,12 @@ can be accessed are determined by the value of the
 variable.
 The value of first or last or both are one of the following:
 .Bl -tag -width 5n
-.It [+]number
+.It Oo Cm + Oc Ns Ar number
 A positive number representing a command number; command numbers can be
 displayed with the
 .Fl l
 option.
-.It Fl number
+.It Cm \- Ns Ar number
 A negative decimal number representing the command that was executed
 number of commands previously.
 For example, \-1 is the immediately previous command.
@@ -1685,6 +1728,28 @@ The number of previous commands that are accessible.
 .El
 .It fg Op Ar job
 Move the specified job or the current job to the foreground.
+.It fdflags Oo Fl v Oc Oo fd ... Oc
+.It fdflags Oo Fl v Oc Fl s Ar flags fd Oo ... Oc
+Get or set file descriptor flags.
+The
+.Fl v
+argument enables verbose printing, printing flags that are also off, and
+the flags of the file descriptor being set after setting.
+The
+.Fl s
+flag interprets the
+.Ar flags
+argument as a comma separated list of file descriptor flags, each preceded
+with a
+.Dq +
+or a
+.Dq -
+indicating to set or clear the respective flag.
+Valid flags are:
+append,async,sync,nonblock,fsync,dsync,rsync,direct,nosigpipe,cloexec.
+See
+.Xr fcntl 2
+for more information.
 .It getopts Ar optstring var
 The
 .Tn POSIX
@@ -1905,7 +1970,6 @@ variables.
 With the
 .Fl p
 option specified the output will be formatted suitably for non-interactive use.
-.Pp
 .It return [ Ar n ]
 Stop executing the current function or a dot command with return value of
 .Ar n
@@ -2103,7 +2167,6 @@ the current limit is displayed.
 Limits of an arbitrary process can be displayed or set using the
 .Xr sysctl 8
 utility.
-.Pp
 .It umask Op Ar mask
 Set the value of umask (see
 .Xr umask 2 )
@@ -2161,7 +2224,7 @@ its exit status will be greater than 128.
 Once waited upon, by specific process number or job-id,
 or by a
 .Ic wait
-with no argumentss,
+with no arguments,
 knowledge of the child is removed from the system,
 and it cannot be waited upon again.
 .El
@@ -2218,6 +2281,14 @@ in the buffer using the control key.
 uses the
 .Xr editline 3
 library.
+See
+.Xr editline 7
+for a list of the possible command bindings,
+and the default settings in
+.Ar emacs
+and
+.Ar vi
+modes.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev CDPATH
@@ -2334,6 +2405,7 @@ argument.
 .\" .Xr profile 4 ,
 .Xr editrc 5 ,
 .Xr passwd 5 ,
+.Xr editline 7 ,
 .Xr environ 7 ,
 .Xr nls 7 ,
 .Xr sysctl 8

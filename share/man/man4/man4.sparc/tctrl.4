@@ -1,4 +1,4 @@
-.\"     $NetBSD: tctrl.4,v 1.4 2005/07/18 14:55:06 wiz Exp $
+.\"     $NetBSD: tctrl.4,v 1.4.74.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" from: OpenBSD: tctrl.4,v 1.6 2003/06/23 09:34:53 miod Exp
 .\"
-.Dd March 31, 2004
+.Dd February 17, 2017
 .Dt TCTRL 4 sparc
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ driver provides control over many functions on the
 3 series laptops, via their TS102 chip.
 The microcontroller is used to power the TFT display down when the
 laptop lid is closed and when the screen is blanked by the
-.Xr pnozz 4
+.Xr sparc/pnozz 4
 driver.
 The
 .Nm tctrl
@@ -54,10 +54,10 @@ flag is set.
 Power button events are forwarded to
 .Xr powerd 8 .
 The PCMCIA part of the controller is supported by
-.Xr tslot 4 .
+.Xr sparc/tslot 4 .
 .Sh SEE ALSO
 .Xr reboot 2 ,
-.Xr intro 4 ,
-.Xr pnozz 4 ,
-.Xr tslot 4 ,
+.Xr sparc/intro 4 ,
+.Xr sparc/pnozz 4 ,
+.Xr sparc/tslot 4 ,
 .Xr powerd 8

@@ -12,7 +12,7 @@ DAEMONS	= man8/bounce.8 man8/defer.8 man8/cleanup.8 man8/error.8 man8/local.8 \
 COMMANDS= man1/postalias.1 man1/postcat.1 man1/postconf.1 man1/postfix.1 \
 	man1/postkick.1 man1/postlock.1 man1/postlog.1 man1/postdrop.1 \
 	man1/postmap.1 man1/postmulti.1 man1/postqueue.1 man1/postsuper.1 \
-	man1/sendmail.1 man1/mailq.1 man1/newaliases.1
+	man1/sendmail.1 man1/mailq.1 man1/newaliases.1 man1/postfix-tls.1
 CONFIG	= man5/access.5 man5/aliases.5 man5/canonical.5 man5/relocated.5 \
 	man5/transport.5 man5/virtual.5 man5/pcre_table.5 man5/regexp_table.5 \
 	man5/cidr_table.5 man5/tcp_table.5 man5/header_checks.5 \
@@ -200,6 +200,11 @@ man1/postfix.1: ../src/postfix/postfix.c
 	../mantools/fixman ../proto/postconf.proto $? >junk && \
 	    (cmp -s junk $? || mv junk $?) && rm -f junk
 	../mantools/srctoman $? >$@
+
+man1/postfix-tls.1: ../conf/postfix-tls-script
+	../mantools/fixman ../proto/postconf.proto $? >junk && \
+	    (cmp -s junk $? || mv junk $?) && rm -f junk
+	../mantools/srctoman - $? >$@
 
 man1/postkick.1: ../src/postkick/postkick.c
 	../mantools/fixman ../proto/postconf.proto $? >junk && \

@@ -1,4 +1,4 @@
-.Dd December 18, 2016
+.Dd March 11, 2017
 .Dt SQLITE3_BACKUP_INIT 3
 .Os
 .Sh NAME
@@ -9,27 +9,27 @@
 .Nm sqlite3_backup_pagecount
 .Nd Online Backup API.
 .Sh SYNOPSIS
-.Ft sqlite3_backup *SQLITE_STDCALL 
+.Ft sqlite3_backup *
 .Fo sqlite3_backup_init
 .Fa "sqlite3 *pDest"
 .Fa "const char *zDestName"
 .Fa "sqlite3 *pSource"
 .Fa "const char *zSourceName                "
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_backup_step
 .Fa "sqlite3_backup *p"
 .Fa "int nPage"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_backup_finish
 .Fa "sqlite3_backup *p"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_backup_remaining
 .Fa "sqlite3_backup *p"
 .Fc
-.Ft int SQLITE_STDCALL 
+.Ft int 
 .Fo sqlite3_backup_pagecount
 .Fa "sqlite3_backup *p"
 .Fc

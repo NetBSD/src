@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.49 2015/05/02 16:20:41 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.49.4.1 2017/04/21 16:53:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.49 2015/05/02 16:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.49.4.1 2017/04/21 16:53:22 bouyer Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -121,10 +121,14 @@ struct cpu_info cpu_info_store = {
 };
 
 #ifdef MULTIPROCESSOR
-struct cpu_info *cpu_info[MAXCPUS] = {
+#define	NCPUINFO	MAXCPUS
+#else
+#define	NCPUINFO	1
+#endif
+
+struct cpu_info *cpu_info[NCPUINFO] = {
 	[0] = &cpu_info_store
 };
-#endif
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 #if defined(FPU_VFP)
@@ -201,7 +205,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		l->l_md.md_flags |= MDLWP_NOALIGNFLT;
 #endif
 #ifdef FPU_VFP
-	vfp_discardcontext(false);
+	vfp_discardcontext(l, false);
 #endif
 }
 

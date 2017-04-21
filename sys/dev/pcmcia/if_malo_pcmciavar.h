@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmciavar.h,v 1.2 2014/05/12 02:26:19 christos Exp $	*/
+/*	$NetBSD: if_malo_pcmciavar.h,v 1.2.12.1 2017/04/21 16:53:52 bouyer Exp $	*/
 /*	$OpenBSD: if_malovar.h,v 1.27 2007/10/09 20:37:32 mglocker Exp $ */
 
 /*
@@ -367,6 +367,7 @@ struct malo_softc {
 	struct ethercom		 sc_ec;
 #define sc_if	sc_ec.ec_if
 	struct ieee80211com	 sc_ic;
+	void			*sc_soft_ih;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	int			 (*sc_newstate)

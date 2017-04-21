@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.c,v 1.1.1.2 2011/03/02 19:32:47 tron Exp $	*/
+/*	$NetBSD: vstring.c,v 1.1.1.2.30.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -133,15 +133,15 @@
 /*	is a null-terminated string of length zero.
 /*
 /*	vstring_ctl() gives additional control over VSTRING behavior.
-/*	The function takes a VSTRING pointer and a list of zero
-/*	or more (name,value) pairs. The expected value type
-/*	depends on the specified name. The value name codes are:
-/* .IP "VSTRING_CTL_MAXLEN (ssize_t)"
+/*	The function takes a VSTRING pointer and a list of zero or
+/*	more macros with zer or more arguments, terminated with
+/*	CA_VSTRING_CTL_END which has none.
+/* .IP "CA_VSTRING_CTL_MAXLEN(ssize_t len)"
 /*	Specifies a hard upper limit on a string's length. When the
 /*	length would be exceeded, the program simulates a memory
 /*	allocation problem (i.e. it terminates through msg_fatal()).
 /*	This fuctionality is currently unimplemented.
-/* .IP "VSTRING_CTL_END (no value)"
+/* .IP "CA_VSTRING_CTL_END (no argument)"
 /*	Specifies the end of the argument list. Forgetting to terminate
 /*	the argument list may cause the program to crash.
 /* .PP
@@ -304,7 +304,7 @@ static void vstring_extend(VBUF *bp, ssize_t incr)
     new_len = bp->len + (bp->len > incr ? bp->len : incr);
     if (new_len <= bp->len)
 	msg_fatal("vstring_extend: length overflow");
-    bp->data = (unsigned char *) myrealloc((char *) bp->data, new_len);
+    bp->data = (unsigned char *) myrealloc((void *) bp->data, new_len);
     bp->len = new_len;
     bp->ptr = bp->data + used;
     bp->cnt = bp->len - used;
@@ -365,8 +365,8 @@ VSTRING *vstring_alloc(ssize_t len)
 VSTRING *vstring_free(VSTRING *vp)
 {
     if (vp->vbuf.data)
-	myfree((char *) vp->vbuf.data);
-    myfree((char *) vp);
+	myfree((void *) vp->vbuf.data);
+    myfree((void *) vp);
     return (0);
 }
 
@@ -554,7 +554,7 @@ char   *vstring_export(VSTRING *vp)
 
     cp = (char *) vp->vbuf.data;
     vp->vbuf.data = 0;
-    myfree((char *) vp);
+    myfree((void *) vp);
     return (cp);
 }
 
@@ -567,9 +567,14 @@ VSTRING *vstring_import(char *str)
 
     vp = (VSTRING *) mymalloc(sizeof(*vp));
     len = strlen(str);
+    vp->vbuf.flags = 0;
+    vp->vbuf.len = 0;
     vp->vbuf.data = (unsigned char *) str;
     vp->vbuf.len = len + 1;
     VSTRING_AT_OFFSET(vp, len);
+    vp->vbuf.get_ready = vstring_buf_get_ready;
+    vp->vbuf.put_ready = vstring_buf_put_ready;
+    vp->vbuf.space = vstring_buf_space;
     vp->maxlen = 0;
     return (vp);
 }

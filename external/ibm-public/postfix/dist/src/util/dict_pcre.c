@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.c,v 1.1.1.4 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_pcre.c,v 1.1.1.4.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -173,7 +173,7 @@ typedef struct {
 
 /* dict_pcre_expand - replace $number with matched text */
 
-static int dict_pcre_expand(int type, VSTRING *buf, char *ptr)
+static int dict_pcre_expand(int type, VSTRING *buf, void *ptr)
 {
     DICT_PCRE_EXPAND_CONTEXT *ctxt = (DICT_PCRE_EXPAND_CONTEXT *) ptr;
     DICT_PCRE_MATCH_RULE *match_rule = ctxt->match_rule;
@@ -197,11 +197,11 @@ static int dict_pcre_expand(int type, VSTRING *buf, char *ptr)
 			dict_pcre->dict.name, match_rule->rule.lineno, ret);
 	}
 	if (*pp == 0) {
-	    myfree((char *) pp);
+	    myfree((void *) pp);
 	    return (MAC_PARSE_UNDEF);
 	}
 	vstring_strcat(dict_pcre->expansion_buf, pp);
-	myfree((char *) pp);
+	myfree((void *) pp);
 	return (MAC_PARSE_OK);
     }
 
@@ -225,35 +225,42 @@ static void dict_pcre_exec_error(const char *mapname, int lineno, int errval)
 	return;
     case PCRE_ERROR_NULL:
     case PCRE_ERROR_BADOPTION:
-	msg_fatal("pcre map %s, line %d: bad args to re_exec",
-		  mapname, lineno);
+	msg_warn("pcre map %s, line %d: bad args to re_exec",
+		 mapname, lineno);
+	return;
     case PCRE_ERROR_BADMAGIC:
     case PCRE_ERROR_UNKNOWN_NODE:
-	msg_fatal("pcre map %s, line %d: corrupt compiled regexp",
-		  mapname, lineno);
+	msg_warn("pcre map %s, line %d: corrupt compiled regexp",
+		 mapname, lineno);
+	return;
 #ifdef PCRE_ERROR_NOMEMORY
     case PCRE_ERROR_NOMEMORY:
-	msg_fatal("pcre map %s, line %d: out of memory",
-		  mapname, lineno);
+	msg_warn("pcre map %s, line %d: out of memory",
+		 mapname, lineno);
+	return;
 #endif
 #ifdef PCRE_ERROR_MATCHLIMIT
     case PCRE_ERROR_MATCHLIMIT:
-	msg_fatal("pcre map %s, line %d: matched text exceeds buffer limit",
-		  mapname, lineno);
+	msg_warn("pcre map %s, line %d: backtracking limit exceeded",
+		 mapname, lineno);
+	return;
 #endif
 #ifdef PCRE_ERROR_BADUTF8
     case PCRE_ERROR_BADUTF8:
-	msg_fatal("pcre map %s, line %d: bad UTF-8 sequence in search string",
-		  mapname, lineno);
+	msg_warn("pcre map %s, line %d: bad UTF-8 sequence in search string",
+		 mapname, lineno);
+	return;
 #endif
 #ifdef PCRE_ERROR_BADUTF8_OFFSET
     case PCRE_ERROR_BADUTF8_OFFSET:
-	msg_fatal("pcre map %s, line %d: bad UTF-8 start offset in search string",
-		  mapname, lineno);
+	msg_warn("pcre map %s, line %d: bad UTF-8 start offset in search string",
+		 mapname, lineno);
+	return;
 #endif
     default:
-	msg_fatal("pcre map %s, line %d: unknown re_exec error: %d",
-		  mapname, lineno, errval);
+	msg_warn("pcre map %s, line %d: unknown re_exec error: %d",
+		 mapname, lineno, errval);
+	return;
     }
 }
 
@@ -334,7 +341,7 @@ static const char *dict_pcre_lookup(DICT *dict, const char *lookup_string)
 	    ctxt.lookup_string = lookup_string;
 
 	    if (mac_parse(match_rule->replacement, dict_pcre_expand,
-			  (char *) &ctxt) & MAC_PARSE_ERROR)
+			  (void *) &ctxt) & MAC_PARSE_ERROR)
 		msg_fatal("pcre map %s, line %d: bad replacement syntax",
 			  dict->name, rule->lineno);
 
@@ -398,16 +405,16 @@ static void dict_pcre_close(DICT *dict)
 	case DICT_PCRE_OP_MATCH:
 	    match_rule = (DICT_PCRE_MATCH_RULE *) rule;
 	    if (match_rule->pattern)
-		myfree((char *) match_rule->pattern);
+		myfree((void *) match_rule->pattern);
 	    if (match_rule->hints)
 		DICT_PCRE_FREE_STUDY(match_rule->hints);
 	    if (match_rule->replacement)
-		myfree((char *) match_rule->replacement);
+		myfree((void *) match_rule->replacement);
 	    break;
 	case DICT_PCRE_OP_IF:
 	    if_rule = (DICT_PCRE_IF_RULE *) rule;
 	    if (if_rule->pattern)
-		myfree((char *) if_rule->pattern);
+		myfree((void *) if_rule->pattern);
 	    if (if_rule->hints)
 		DICT_PCRE_FREE_STUDY(if_rule->hints);
 	    break;
@@ -416,7 +423,7 @@ static void dict_pcre_close(DICT *dict)
 	default:
 	    msg_panic("dict_pcre_close: unknown operation %d", rule->op);
 	}
-	myfree((char *) rule);
+	myfree((void *) rule);
     }
     if (dict_pcre->expansion_buf)
 	vstring_free(dict_pcre->expansion_buf);
@@ -518,7 +525,7 @@ static int dict_pcre_get_pattern(const char *mapname, int lineno, char **bufp,
 
 /* dict_pcre_prescan - sanity check $number instances in replacement text */
 
-static int dict_pcre_prescan(int type, VSTRING *buf, char *context)
+static int dict_pcre_prescan(int type, VSTRING *buf, void *context)
 {
     DICT_PCRE_PRESCAN_CONTEXT *ctxt = (DICT_PCRE_PRESCAN_CONTEXT *) context;
     size_t  n;
@@ -575,7 +582,7 @@ static int dict_pcre_compile(const char *mapname, int lineno,
     if (error != 0) {
 	msg_warn("pcre map %s, line %d: error while studying regex: %s",
 		 mapname, lineno, error);
-	myfree((char *) engine->pattern);
+	myfree((void *) engine->pattern);
 	return (0);
     }
     return (1);
@@ -650,7 +657,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 	return (rval); \
     } while (0)
 
-	if (mac_parse(p, dict_pcre_prescan, (char *) &prescan_context)
+	if (mac_parse(p, dict_pcre_prescan, (void *) &prescan_context)
 	    & MAC_PARSE_ERROR) {
 	    msg_warn("pcre map %s, line %d: bad replacement syntax: "
 		     "skipping this rule", mapname, lineno);
@@ -688,7 +695,7 @@ static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
 		     "skipping this rule", mapname, lineno,
 		     (int) prescan_context.max_sub);
 	    if (engine.pattern)
-		myfree((char *) engine.pattern);
+		myfree((void *) engine.pattern);
 	    if (engine.hints)
 		DICT_PCRE_FREE_STUDY(engine.hints);
 	    CREATE_MATCHOP_ERROR_RETURN(0);
@@ -814,14 +821,15 @@ DICT   *dict_pcre_open(const char *mapname, int open_flags, int dict_flags)
     VSTRING *line_buffer = 0;
     DICT_PCRE_RULE *last_rule = 0;
     DICT_PCRE_RULE *rule;
-    int     lineno = 0;
+    int     last_line = 0;
+    int     lineno;
     int     nesting = 0;
     char   *p;
 
     /*
      * Let the optimizer worry about eliminating redundant code.
      */
-#define DICT_PCRE_OPEN_RETURN(d) { \
+#define DICT_PCRE_OPEN_RETURN(d) do { \
 	DICT *__d = (d); \
 	if (map_fp != 0) \
 	    vstream_fclose(map_fp); \
@@ -872,7 +880,7 @@ DICT   *dict_pcre_open(const char *mapname, int open_flags, int dict_flags)
     /*
      * Parse the pcre table.
      */
-    while (readlline(line_buffer, map_fp, &lineno)) {
+    while (readllines(line_buffer, map_fp, &last_line, &lineno)) {
 	p = vstring_str(line_buffer);
 	trimblanks(p, 0)[0] = 0;		/* Trim space at end */
 	if (*p == 0)

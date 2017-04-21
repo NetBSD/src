@@ -1,4 +1,4 @@
-# $NetBSD: md.ia64,v 1.2 2017/01/05 13:45:51 wiz Exp $
+# $NetBSD: md.ia64,v 1.2.2.1 2017/04/21 16:51:13 bouyer Exp $
 ./usr/include/gcc-4.8/ia64intrin.h	comp-obsolete			obsolete
 ./usr/include/gcc-4.8/tgmath.h		comp-obsolete			obsolete
 ./usr/include/gcc-5/ia64intrin.h	comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/ia64/elf_machdep.h	comp-c-include
 ./usr/include/ia64/endian.h		comp-c-include
 ./usr/include/ia64/endian_machdep.h	comp-c-include
+./usr/include/ia64/fenv.h		comp-c-include
 ./usr/include/ia64/float.h		comp-c-include
 ./usr/include/ia64/fpu.h		comp-c-include
 ./usr/include/ia64/frame.h		comp-c-include

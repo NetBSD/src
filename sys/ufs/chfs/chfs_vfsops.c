@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.15 2015/01/11 17:29:57 hannken Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.15.4.1 2017/04/21 16:54:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -801,7 +801,7 @@ struct vfsops chfs_vfsops = {
 	.vfs_done = chfs_done,
 	.vfs_snapshot = chfs_snapshot,
 	.vfs_extattrctl = vfs_stdextattrctl,
-	.vfs_suspendctl = (void *)eopnotsupp,
+	.vfs_suspendctl = genfs_suspendctl,
 	.vfs_renamelock_enter = genfs_renamelock_enter,
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,

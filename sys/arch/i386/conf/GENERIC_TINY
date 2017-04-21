@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.147 2017/01/07 11:21:05 flxd Exp $
+#	$NetBSD: GENERIC_TINY,v 1.147.2.1 2017/04/21 16:53:28 bouyer Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.

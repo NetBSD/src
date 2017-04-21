@@ -6,6 +6,7 @@
 ./dict_open: warning: pcre map dict_pcre.map, line 10: out of range replacement index "5": skipping this rule
 ./dict_open: warning: pcre map dict_pcre.map, line 17: $number found in negative match replacement text: skipping this rule
 ./dict_open: warning: pcre map dict_pcre.map, line 22: no regexp: skipping this rule
+owner=untrusted (uid=USER)
 > get true
 true: not found
 > get true1

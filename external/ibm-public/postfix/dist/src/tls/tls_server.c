@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.8 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.8.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -166,9 +166,27 @@
   */
 static const char server_session_id_context[] = "Postfix/TLS";
 
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL
+#define GET_SID(s, v, lptr)	((v) = SSL_SESSION_get_id((s), (lptr)))
+
+#else					/* Older OpenSSL releases */
+#define GET_SID(s, v, lptr) \
+    do { (v) = (s)->session_id; *(lptr) = (s)->session_id_length; } while (0)
+
+#endif					/* OPENSSL_VERSION_NUMBER */
+
+ /* OpenSSL 1.1.0 bitrot */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+typedef const unsigned char *session_id_t;
+
+#else
+typedef unsigned char *session_id_t;
+
+#endif
+
 /* get_server_session_cb - callback to retrieve session from server cache */
 
-static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
+static SSL_SESSION *get_server_session_cb(SSL *ssl, session_id_t session_id,
 					          int session_id_length,
 					          int *unused_copy)
 {
@@ -186,7 +204,7 @@ static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
 	buf = vstring_alloc(2 * (len + strlen(service))); \
 	hex_encode(buf, (char *) (id), (len)); \
 	vstring_sprintf_append(buf, "&s=%s", (service)); \
-	vstring_sprintf_append(buf, "&l=%ld", (long) SSLeay()); \
+	vstring_sprintf_append(buf, "&l=%ld", (long) OpenSSL_version_num()); \
     } while (0)
 
 
@@ -223,14 +241,16 @@ static void uncache_session(SSL_CTX *ctx, TLS_SESS_STATE *TLScontext)
 {
     VSTRING *cache_id;
     SSL_SESSION *session = SSL_get_session(TLScontext->con);
+    const unsigned char *sid;
+    unsigned int sid_length;
 
     SSL_CTX_remove_session(ctx, session);
 
     if (TLScontext->cache_type == 0)
 	return;
 
-    GEN_CACHE_ID(cache_id, session->session_id, session->session_id_length,
-		 TLScontext->serverid);
+    GET_SID(session, sid, &sid_length);
+    GEN_CACHE_ID(cache_id, sid, sid_length, TLScontext->serverid);
 
     if (TLScontext->log_mask & TLS_LOG_CACHE)
 	msg_info("%s: remove session %s from %s cache", TLScontext->namaddr,
@@ -248,12 +268,14 @@ static int new_server_session_cb(SSL *ssl, SSL_SESSION *session)
     VSTRING *cache_id;
     TLS_SESS_STATE *TLScontext;
     VSTRING *session_data;
+    const unsigned char *sid;
+    unsigned int sid_length;
 
     if ((TLScontext = SSL_get_ex_data(ssl, TLScontext_index)) == 0)
 	msg_panic("%s: null TLScontext in new session callback", myname);
 
-    GEN_CACHE_ID(cache_id, session->session_id, session->session_id_length,
-		 TLScontext->serverid);
+    GET_SID(session, sid, &sid_length);
+    GEN_CACHE_ID(cache_id, sid, sid_length, TLScontext->serverid);
 
     if (TLScontext->log_mask & TLS_LOG_CACHE)
 	msg_info("%s: save session %s to %s cache", TLScontext->namaddr,
@@ -294,13 +316,13 @@ static int ticket_cb(SSL *con, unsigned char name[], unsigned char iv[],
 		          EVP_CIPHER_CTX * ctx, HMAC_CTX * hctx, int create)
 {
     static const EVP_MD *sha256;
-    static const EVP_CIPHER *aes128;
+    static const EVP_CIPHER *ciph;
     TLS_TICKET_KEY *key;
     TLS_SESS_STATE *TLScontext = SSL_get_ex_data(con, TLScontext_index);
     int     timeout = ((int) SSL_CTX_get_timeout(SSL_get_SSL_CTX(con))) / 2;
 
     if ((!sha256 && (sha256 = EVP_sha256()) == 0)
-	|| (!aes128 && (aes128 = EVP_aes_128_cbc()) == 0)
+	|| (!ciph && (ciph = EVP_get_cipherbyname(var_tls_tkt_cipher)) == 0)
 	|| (key = tls_mgr_key(create ? 0 : name, timeout)) == 0
 	|| (create && RAND_bytes(iv, TLS_TICKET_IVLEN) <= 0))
 	return (create ? TLS_TKT_NOKEYS : TLS_TKT_STALE);
@@ -308,13 +330,13 @@ static int ticket_cb(SSL *con, unsigned char name[], unsigned char iv[],
     HMAC_Init_ex(hctx, key->hmac, TLS_TICKET_MACLEN, sha256, NOENGINE);
 
     if (create) {
-	EVP_EncryptInit_ex(ctx, aes128, NOENGINE, key->bits, iv);
-	memcpy((char *) name, (char *) key->name, TLS_TICKET_NAMELEN);
+	EVP_EncryptInit_ex(ctx, ciph, NOENGINE, key->bits, iv);
+	memcpy((void *) name, (void *) key->name, TLS_TICKET_NAMELEN);
 	if (TLScontext->log_mask & TLS_LOG_CACHE)
 	    msg_info("%s: Issuing session ticket, key expiration: %ld",
 		     TLScontext->namaddr, (long) key->tout);
     } else {
-	EVP_DecryptInit_ex(ctx, aes128, NOENGINE, key->bits, iv);
+	EVP_DecryptInit_ex(ctx, ciph, NOENGINE, key->bits, iv);
 	if (TLScontext->log_mask & TLS_LOG_CACHE)
 	    msg_info("%s: Decrypting session ticket, key expiration: %ld",
 		     TLScontext->namaddr, (long) key->tout);
@@ -357,6 +379,8 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
      */
     tls_check_version();
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
     /*
      * Initialize the OpenSSL library by the book! To start with, we must
      * initialize the algorithms. We want cleartext error messages instead of
@@ -364,6 +388,7 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
      */
     SSL_load_error_strings();
     OpenSSL_add_ssl_algorithms();
+#endif
 
     /*
      * First validate the protocols. If these are invalid, we can't continue.
@@ -418,13 +443,26 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
      * SSLv2), so we need to have the SSLv23 server here. If we want to limit
      * the protocol level, we can add an option to not use SSLv2/v3/TLSv1
      * later.
+     * 
+     * OpenSSL 1.1.0-dev deprecates SSLv23_server_method() in favour of
+     * TLS_client_method(), with the change in question signalled via a new
+     * TLS_ANY_VERSION macro.
      */
     ERR_clear_error();
-    if ((server_ctx = SSL_CTX_new(SSLv23_server_method())) == 0) {
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && defined(TLS_ANY_VERSION)
+    server_ctx = SSL_CTX_new(TLS_server_method());
+#else
+    server_ctx = SSL_CTX_new(SSLv23_server_method());
+#endif
+    if (server_ctx == 0) {
 	msg_warn("cannot allocate server SSL_CTX: disabling TLS support");
 	tls_print_errors();
 	return (0);
     }
+#ifdef SSL_SECOP_PEER
+    /* Backwards compatible security as a base for opportunistic TLS. */
+    SSL_CTX_set_security_level(server_ctx, 0);
+#endif
 
     /*
      * See the verify callback in tls_verify.c
@@ -459,7 +497,21 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
      */
 #ifdef SSL_OP_NO_TICKET
 #if !defined(OPENSSL_NO_TLSEXT) && OPENSSL_VERSION_NUMBER >= 0x0090808fL
-    ticketable = (scache_timeout > 0 && !(off & SSL_OP_NO_TICKET));
+    ticketable = (*var_tls_tkt_cipher && scache_timeout > 0
+		  && !(off & SSL_OP_NO_TICKET));
+    if (ticketable) {
+	const EVP_CIPHER *ciph;
+
+	if ((ciph = EVP_get_cipherbyname(var_tls_tkt_cipher)) == 0
+	    || EVP_CIPHER_mode(ciph) != EVP_CIPH_CBC_MODE
+	    || EVP_CIPHER_iv_length(ciph) != TLS_TICKET_IVLEN
+	    || EVP_CIPHER_key_length(ciph) < TLS_TICKET_IVLEN
+	    || EVP_CIPHER_key_length(ciph) > TLS_TICKET_KEYLEN) {
+	    msg_warn("%s: invalid value: %s; session tickets disabled",
+		     VAR_TLS_TKT_CIPHER, var_tls_tkt_cipher);
+	    ticketable = 0;
+	}
+    }
     if (ticketable)
 	SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, ticket_cb);
 #endif
@@ -473,12 +525,7 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
      * Global protocol selection.
      */
     if (protomask != 0)
-	SSL_CTX_set_options(server_ctx,
-		   ((protomask & TLS_PROTOCOL_TLSv1) ? SSL_OP_NO_TLSv1 : 0L)
-	     | ((protomask & TLS_PROTOCOL_TLSv1_1) ? SSL_OP_NO_TLSv1_1 : 0L)
-	     | ((protomask & TLS_PROTOCOL_TLSv1_2) ? SSL_OP_NO_TLSv1_2 : 0L)
-		 | ((protomask & TLS_PROTOCOL_SSLv3) ? SSL_OP_NO_SSLv3 : 0L)
-	       | ((protomask & TLS_PROTOCOL_SSLv2) ? SSL_OP_NO_SSLv2 : 0L));
+	SSL_CTX_set_options(server_ctx, TLS_SSL_OP_PROTOMASK(protomask));
 
     /*
      * Some sites may want to give the client less rope. On the other hand,
@@ -541,11 +588,17 @@ TLS_APPL_STATE *tls_server_init(const TLS_SERVER_INIT_PROPS *props)
     }
 
     /*
+     * 2015-12-05: Ephemeral RSA removed from OpenSSL 1.1.0-dev
+     */
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+
+    /*
      * According to OpenSSL documentation, a temporary RSA key is needed when
      * export ciphers are in use, because the certified key cannot be
      * directly used.
      */
     SSL_CTX_set_tmp_rsa_callback(server_ctx, tls_tmp_rsa_cb);
+#endif
 
     /*
      * Diffie-Hellman key generation parameters can either be loaded from
@@ -718,6 +771,11 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
 	tls_free_context(TLScontext);
 	return (0);
     }
+#ifdef SSL_SECOP_PEER
+    /* When authenticating the peer, use 80-bit plus OpenSSL security level */
+    if (props->requirecert)
+	SSL_set_security_level(TLScontext->con, 1);
+#endif
 
     /*
      * Before really starting anything, try to seed the PRNG a little bit
@@ -829,10 +887,10 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
 	if (TLScontext->log_mask & TLS_LOG_VERBOSE) {
 	    X509_NAME_oneline(X509_get_subject_name(peer),
 			      buf, sizeof(buf));
-	    msg_info("subject=%s", buf);
+	    msg_info("subject=%s", printable(buf, '?'));
 	    X509_NAME_oneline(X509_get_issuer_name(peer),
 			      buf, sizeof(buf));
-	    msg_info("issuer=%s", buf);
+	    msg_info("issuer=%s", printable(buf, '?'));
 	}
 	TLScontext->peer_CN = tls_peer_CN(peer, TLScontext);
 	TLScontext->issuer_CN = tls_issuer_CN(peer, TLScontext);
@@ -848,6 +906,22 @@ TLS_SESS_STATE *tls_server_post_accept(TLS_SESS_STATE *TLScontext)
 		     TLScontext->peer_pkey_fprint);
 	}
 	X509_free(peer);
+
+	/*
+	 * Give them a clue. Problems with trust chain verification are
+	 * logged when the session is first negotiated, before the session is
+	 * stored into the cache. We don't want mystery failures, so log the
+	 * fact the real problem is to be found in the past.
+	 */
+	if (!TLS_CERT_IS_TRUSTED(TLScontext)
+	    && (TLScontext->log_mask & TLS_LOG_UNTRUSTED)) {
+	    if (TLScontext->session_reused == 0)
+		tls_log_verify_error(TLScontext);
+	    else
+		msg_info("%s: re-using session with untrusted certificate, "
+			 "look for details earlier in the log",
+			 TLScontext->namaddr);
+	}
     } else {
 	TLScontext->peer_CN = mystrdup("");
 	TLScontext->issuer_CN = mystrdup("");

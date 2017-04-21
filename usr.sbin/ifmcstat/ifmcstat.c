@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.20 2017/01/10 05:43:27 ozaki-r Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.20.2.1 2017/04/21 16:54:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifmcstat.c,v 1.20 2017/01/10 05:43:27 ozaki-r Exp $");
+__RCSID("$NetBSD: ifmcstat.c,v 1.20.2.1 2017/04/21 16:54:16 bouyer Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -179,9 +179,9 @@ print_ether_mcast(u_short ifindex)
 static void
 print_inet6_mcast(u_short ifindex, const char *ifname)
 {
-	static int mcast_oids[4], kludge_oids[4];
+	static int mcast_oids[4];
 	const char *addr;
-	uint8_t *mcast_addrs, *kludge_addrs, *p, *last_p;
+	uint8_t *mcast_addrs, *p, *last_p;
 	uint32_t refcnt;
 	size_t len;
 
@@ -194,17 +194,7 @@ print_inet6_mcast(u_short ifindex, const char *ifname)
 			errx(1, "Wrong OID path for net.inet6.multicast");
 	}
 
-	if (kludge_oids[0] == 0) {
-		size_t oidlen = __arraycount(kludge_oids);
-		if (sysctlnametomib("net.inet6.multicast_kludge", kludge_oids,
-		    &oidlen) == -1)
-			errx(1, "net.inet6.multicast_kludge not found");
-		if (oidlen != 3)
-			errx(1, "Wrong OID path for net.inet6.multicast_kludge");
-	}
-
 	mcast_oids[3] = ifindex;
-	kludge_oids[3] = ifindex;
 
 	mcast_addrs = asysctl(mcast_oids, 4, &len);
 	if (mcast_addrs == NULL && len != 0) {
@@ -230,24 +220,4 @@ print_inet6_mcast(u_short ifindex, const char *ifname)
 		}
 	}
 	free(mcast_addrs);
-
-	kludge_addrs = asysctl(kludge_oids, 4, &len);
-	if (kludge_addrs == NULL && len != 0) {
-		warn("failed to read net.inet6.multicast_kludge");
-		return;
-	}
-	if (len) {
-		printf("\t(on kludge entry for %s)\n", ifname);
-		p = kludge_addrs;
-		while (len >= sizeof(struct in6_addr) + sizeof(uint32_t)) {
-			addr = inet6_n2a(p);
-			p += sizeof(struct in6_addr);
-			memcpy(&refcnt, p, sizeof(refcnt));
-			p += sizeof(refcnt);
-			printf("\t\tgroup %s refcount %" PRIu32 "\n", addr,
-			    refcnt);
-			len -= sizeof(struct in6_addr) + sizeof(uint32_t);
-		}
-	}
-	free(kludge_addrs);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.156.2.1 2017/04/17 20:34:59 bouyer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.156.2.2 2017/04/21 16:51:17 bouyer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -248,6 +248,7 @@
 ./usr/lib/lua
 ./usr/lib/lua/5.3
 ./usr/lib/pkgconfig
+./usr/lib/postfix
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
@@ -294,6 +295,7 @@
 ./usr/share/doc/reference/ref1
 ./usr/share/doc/reference/ref1/atf
 ./usr/share/doc/reference/ref1/bzip2
+./usr/share/doc/reference/ref1/dc
 ./usr/share/doc/reference/ref1/config
 ./usr/share/doc/reference/ref1/csh
 ./usr/share/doc/reference/ref1/ex
@@ -378,6 +380,7 @@
 ./usr/share/examples/lutok
 ./usr/share/examples/mount_portal
 ./usr/share/examples/npf
+./usr/share/examples/nsd
 ./usr/share/examples/openssl
 ./usr/share/examples/pf
 ./usr/share/examples/postfix
@@ -393,6 +396,7 @@
 ./usr/share/examples/tmux
 ./usr/share/examples/wpa_supplicant
 ./usr/share/examples/wsmoused
+./usr/share/examples/unbound
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle

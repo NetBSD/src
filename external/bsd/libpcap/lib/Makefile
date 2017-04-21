@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2014/11/19 19:33:31 christos Exp $	
+# $NetBSD: Makefile,v 1.12.4.1 2017/04/21 16:51:35 bouyer Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ USE_FORT?= yes	# network protocol library
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration
 
-CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H
+CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -I${.OBJDIR}
 
 .SUFFIXES: .3 .3pcap
 
@@ -123,6 +123,7 @@ ${i:S/manfile.in/5/}: ${i} __sed
 CPPFLAGS+=	-I${.CURDIR}/../include -I${.CURDIR} -I${SRCDIR}
 CPPFLAGS+=	-DYYBISON
 LPREFIX=	pcap_
+LFLAGS+=	--header-file=scanner.h
 YPREFIX=	pcap_
 YHEADER=	1
 
@@ -135,12 +136,13 @@ CPPFLAGS+=	-DINET6
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
 	inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
-	bpf_dump.c version.c sf-pcap-ng.c sf-pcap.c pcap-common.c
+	bpf_dump.c pcap_version.c sf-pcap-ng.c sf-pcap.c pcap-common.c \
+	fad-getad.c fad-helpers.c
 
 .PATH:	${NETBSDSRCDIR}/sys/net
 SRCS+=	bpf_filter.c
 
-INCS=		pcap/pcap.h pcap/namedb.h
+INCS=		pcap/pcap.h pcap/namedb.h pcap/export-defs.h
 INCSDIR=	/usr/include
 INCSYMLINKS+=   ../net/bpf.h ${INCSDIR}/pcap/bpf.h
 INCSYMLINKS+=	pcap/pcap.h ${INCSDIR}/pcap.h

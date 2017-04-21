@@ -1,4 +1,4 @@
-# $NetBSD: A64EMUL,v 1.6 2016/11/26 13:59:45 christos Exp $
+# $NetBSD: A64EMUL,v 1.6.2.1 2017/04/21 16:53:26 bouyer Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/evbarm64/conf/std.a64emul"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"A64EMUL-$Revision: 1.6 $"
+ident		"A64EMUL-$Revision: 1.6.2.1 $"
 
 maxusers 32
 
@@ -73,6 +73,7 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental

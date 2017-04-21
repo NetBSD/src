@@ -1,4 +1,4 @@
-.\"	$NetBSD: wm.4,v 1.31 2014/09/03 14:36:45 msaitoh Exp $
+.\"	$NetBSD: wm.4,v 1.31.4.1 2017/04/21 16:53:15 bouyer Exp $
 .\"
 .\" Copyright 2002, 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 3, 2014
+.Dd March 22, 2017
 .Dt WM 4
 .Os
 .Sh NAME
@@ -41,6 +41,9 @@
 .Nd Intel i8254x Gigabit Ethernet driver
 .Sh SYNOPSIS
 .Cd "wm* at pci? dev ? function ?"
+.Pp
+.Cd options WM_RX_PROCESS_LIMIT_DEFAULT
+.Cd options WM_RX_INTR_PROCESS_LIMIT_DEFAULT
 .Pp
 Configuration of PHYs may also be necessary.
 See
@@ -167,6 +170,55 @@ See
 for information on how to enable this feature.
 .\" .Sh DIAGNOSTICS
 .\" XXX to be done.
+.Sh OPTIONS
+.Bl -tag -width WM_RX_INTR_PROCESS_LIMIT_DEFAULT -offset 3n
+.It Dv WM_RX_PROCESS_LIMIT_DEFAULT
+The maximum number of received packets processed in each
+.Xr softint 9
+context.
+This option only affects multiqueue.
+The value range is from zero to
+.Dv UINT_MAX .
+The default value is 100.
+When you increase this value, both the receive latency and
+the receive throughput will increase.
+.It Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+The maximum number of received packets processed in each
+hardware interrupt context.
+This option only affects multiqueue.
+The value range is from zero to
+.Dv UINT_MAX .
+The default value is 0.
+When you increase this value, both the receive latency and
+the receive throughput will decrease.
+.It Dv WM_EVENT_COUNTERS
+Enable many event counters such as each Tx drop counter and Rx interrupt
+counter.
+Caution: If this flag is enabled, the number of evcnt entries increase
+very much.
+.It Dv WM_DISABLE_MSI
+If this option is set non-zero value, this driver does not use msi.
+The default value is 0.
+.It Dv WM_DISABLE_MSIX
+If this option is set non-zero value, this driver does not use msix.
+The default value is 0.
+.El
+.Pp
+Setting
+.Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+to zero means so-called polling mode, that is, once an interrupt occurs,
+the driver keep processing received packets until
+.Dv WM_RX_PROCESS_LIMIT_DEFAULT .
+Polling mode increases latency a little, however it suppresses
+performance degradation at high load very well.
+.Pp
+If you want to disable polling mode (to use traditional interrupt
+driven mode), you should set
+.Dv WM_RX_PROCESS_LIMIT_DEFAULT
+to zero and set
+.Dv WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+to
+.Dv UINT_MAX .
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,

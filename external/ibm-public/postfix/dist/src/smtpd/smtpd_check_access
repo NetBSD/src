@@ -31,6 +31,8 @@ ok@ok.domain		OK
 ok.domain		OK
 <>			550 Go away postmaster
 
+54.187.136.235		reject bizsat.net, gypsysoul.org spam
+
 blackholes.mail-abuse.org	$rbl_code client=$client
  client_address=$client_address
  client_name=$client_name helo_name=$helo_name 
@@ -39,7 +41,15 @@ blackholes.mail-abuse.org	$rbl_code client=$client
  rbl_code=$rbl_code rbl_domain=$rbl_domain rbl_txt=$rbl_txt rbl_what=$rbl_what
  rbl_class=$rbl_class
 
-dsn.rfc-ignorant.org	$rbl_code client=$client
+rhsbl.porcupine.org	$rbl_code client=$client
+ client_address=$client_address
+ client_name=$client_name helo_name=$helo_name 
+ sender=$sender sender_name=$sender_name  sender_domain=$sender_domain
+ recipient=$recipient recipient_name=$recipient_name recipient_domain=$recipient_domain
+ rbl_code=$rbl_code rbl_domain=$rbl_domain rbl_txt=$rbl_txt rbl_what=$rbl_what
+ rbl_class=$rbl_class
+
+dnswl.porcupine.org	$rbl_code client=$client
  client_address=$client_address
  client_name=$client_name helo_name=$helo_name 
  sender=$sender sender_name=$sender_name  sender_domain=$sender_domain
@@ -59,7 +69,7 @@ dunnotext@dunno.domain	dunno text
 64.94.110.11		reject Verisign wild-card
 topica.com		reject
 10.10.10.10		reject mail server 10.10.10.10
-spike.porcupine.org	reject name server spike.porcupine.org
+spike.porcupine.org	reject ns or mx server spike.porcupine.org
 241			reject class E subnet
 4.1.1_dsn reject 4.1.1 reject
 4.1.2_dsn reject 4.1.2 reject

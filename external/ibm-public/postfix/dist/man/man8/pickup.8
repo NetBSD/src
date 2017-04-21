@@ -1,4 +1,4 @@
-.\"	$NetBSD: pickup.8,v 1.1.1.2 2010/06/17 18:06:28 tron Exp $
+.\"	$NetBSD: pickup.8,v 1.1.1.2.32.1 2017/04/21 16:52:46 bouyer Exp $
 .\"
 .TH PICKUP 8 
 .ad
@@ -17,7 +17,7 @@ Postfix local mail pickup
 The \fBpickup\fR(8) daemon waits for hints that new mail has been
 dropped into the \fBmaildrop\fR directory, and feeds it into the
 \fBcleanup\fR(8) daemon.
-Ill-formatted files are deleted without notifying the originator.
+Ill\-formatted files are deleted without notifying the originator.
 This program expects to be run from the \fBmaster\fR(8) process
 manager.
 .SH "STANDARDS"
@@ -54,7 +54,7 @@ descriptor instead of file data, but then the already complex
 .nf
 .ad
 .fi
-As the \fBpickup\fR(8) daemon is a relatively long-running process, up
+As the \fBpickup\fR(8) daemon is a relatively long\-running process, up
 to an hour may pass before a \fBmain.cf\fR change takes effect.
 Use the command "\fBpostfix reload\fR" command to speed up a change.
 
@@ -69,7 +69,7 @@ The text below provides only a parameter summary. See
 After the message is queued, send the entire message to the
 specified \fItransport:destination\fR.
 .IP "\fBreceive_override_options (empty)\fR"
-Enable or disable recipient validation, built-in content
+Enable or disable recipient validation, built\-in content
 filtering, or address mapping.
 .SH "MISCELLANEOUS CONTROLS"
 .na
@@ -91,12 +91,12 @@ for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
 The maximal number of incoming connections that a Postfix daemon
 process will service before terminating voluntarily.
-.IP "\fBprocess_id (read-only)\fR"
+.IP "\fBprocess_id (read\-only)\fR"
 The process ID of a Postfix command or daemon process.
-.IP "\fBprocess_name (read-only)\fR"
+.IP "\fBprocess_name (read\-only)\fR"
 The process name of a Postfix command or daemon process.
 .IP "\fBqueue_directory (see 'postconf -d' output)\fR"
-The location of the Postfix top-level queue directory.
+The location of the Postfix top\-level queue directory.
 .IP "\fBsyslog_facility (mail)\fR"
 The syslog facility of Postfix logging.
 .IP "\fBsyslog_name (see 'postconf -d' output)\fR"
@@ -106,7 +106,7 @@ records, so that "smtpd" becomes, for example, "postfix/smtpd".
 .na
 .nf
 cleanup(8), message canonicalization
-sendmail(1), Sendmail-compatible interface
+sendmail(1), Sendmail\-compatible interface
 postdrop(1), mail posting agent
 postconf(5), configuration parameters
 master(5), generic daemon options
@@ -125,3 +125,8 @@ Wietse Venema
 IBM T.J. Watson Research
 P.O. Box 704
 Yorktown Heights, NY 10598, USA
+
+Wietse Venema
+Google, Inc.
+111 8th Avenue
+New York, NY 10011, USA

@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.70 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: IQ31244,v 1.70.4.1 2017/04/21 16:53:25 bouyer Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -48,6 +48,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
+#options 	DISKLABEL_EI	# disklabel Endian Independent support
 #options 	FFS_EI		# FFS Endian Independent support
 options 	NFSSERVER
 options 	WAPBL		# File system journaling support

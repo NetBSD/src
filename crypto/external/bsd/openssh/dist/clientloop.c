@@ -1,6 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.20 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.289 2016/09/30 09:19:13 markus Exp $ */
-
+/*	$NetBSD: clientloop.c,v 1.20.2.1 2017/04/21 16:50:56 bouyer Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.291 2017/03/10 05:01:13 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -62,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.20 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.20.2.1 2017/04/21 16:50:56 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -991,7 +990,7 @@ process_cmdline(void)
 			    CHANNEL_CANCEL_PORT_STATIC,
 			    &options.fwd_opts) > 0;
 		if (!ok) {
-			logit("Unkown port forwarding.");
+			logit("Unknown port forwarding.");
 			goto out;
 		}
 		logit("Canceled forwarding.");
@@ -2400,6 +2399,26 @@ client_global_hostkeys_private_confirm(int type, u_int32_t seq, void *_ctx)
 }
 
 /*
+ * Returns non-zero if the key is accepted by HostkeyAlgorithms.
+ * Made slightly less trivial by the multiple RSA signature algorithm names.
+ */
+static int
+key_accepted_by_hostkeyalgs(const struct sshkey *key)
+{
+	const char *ktype = sshkey_ssh_name(key);
+	const char *hostkeyalgs = options.hostkeyalgorithms != NULL ?
+	    options.hostkeyalgorithms : KEX_DEFAULT_PK_ALG;
+
+	if (key == NULL || key->type == KEY_UNSPEC)
+		return 0;
+	if (key->type == KEY_RSA &&
+	    (match_pattern_list("rsa-sha2-256", hostkeyalgs, 0) == 1 ||
+	    match_pattern_list("rsa-sha2-512", hostkeyalgs, 0) == 1))
+		return 1;
+	return match_pattern_list(ktype, hostkeyalgs, 0) == 1;
+}
+
+/*
  * Handle hostkeys-00@openssh.com global request to inform the client of all
  * the server's hostkeys. The keys are checked against the user's
  * HostkeyAlgorithms preference before they are accepted.
@@ -2445,10 +2464,7 @@ client_input_hostkeys(void)
 		    sshkey_type(key), fp);
 		free(fp);
 
-		/* Check that the key is accepted in HostkeyAlgorithms */
-		if (match_pattern_list(sshkey_ssh_name(key),
-		    options.hostkeyalgorithms ? options.hostkeyalgorithms :
-		    KEX_DEFAULT_PK_ALG, 0) != 1) {
+		if (!key_accepted_by_hostkeyalgs(key)) {
 			debug3("%s: %s key not permitted by HostkeyAlgorithms",
 			    __func__, sshkey_ssh_name(key));
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2015/12/13 15:02:19 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67.4.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,6 +132,16 @@ struct cpu_info {
 #endif
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
+
+#ifndef __HAVE_DIRECT_MAP
+#define VPAGE_SRC 0
+#define VPAGE_DST 1
+#define VPAGE_ZER 2
+#define VPAGE_PTP 3
+#define VPAGE_MAX 4
+	vaddr_t		vpage[VPAGE_MAX];
+	pt_entry_t	*vpage_pte[VPAGE_MAX];
+#endif
 
 	/* The following must be aligned for cmpxchg8b. */
 	struct {
@@ -502,7 +512,17 @@ void x86_bus_space_mallocok(void);
 #define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
 #define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
 #define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
-#define	CPU_MAXID		15	/* number of valid machdep ids */
+#define	CPU_FPU_SAVE		15	/* int: FPU Instructions layout
+					 * to use this, CPU_OSFXSR must be true
+					 * 0: FSAVE
+					 * 1: FXSAVE
+					 * 2: XSAVE
+					 * 3: XSAVEOPT
+					 */
+#define	CPU_FPU_SAVE_SIZE	16	/* int: FPU Instruction layout size */
+#define	CPU_XSAVE_FEATURES	17	/* quad: XSAVE features */
+
+#define	CPU_MAXID		18	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

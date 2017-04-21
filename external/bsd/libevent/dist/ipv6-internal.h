@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6-internal.h,v 1.1.1.1 2013/04/11 16:43:28 christos Exp $	*/
+/*	$NetBSD: ipv6-internal.h,v 1.1.1.1.20.1 2017/04/21 16:51:31 bouyer Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -28,14 +28,16 @@
 /* Internal use only: Fake IPv6 structures and values on platforms that
  * do not have them */
 
-#ifndef _EVENT_IPV6_INTERNAL_H
-#define _EVENT_IPV6_INTERNAL_H
+#ifndef IPV6_INTERNAL_H_INCLUDED_
+#define IPV6_INTERNAL_H_INCLUDED_
+
+#include "event2/event-config.h"
+#include "evconfig-private.h"
 
 #include <sys/types.h>
-#ifdef _EVENT_HAVE_SYS_SOCKET_H
+#ifdef EVENT__HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-#include "event2/event-config.h"
 #include "event2/util.h"
 
 #ifdef __cplusplus
@@ -48,17 +50,17 @@ extern "C" {
  * properly.
  */
 
-#ifndef _EVENT_HAVE_STRUCT_IN6_ADDR
+#ifndef EVENT__HAVE_STRUCT_IN6_ADDR
 struct in6_addr {
 	ev_uint8_t s6_addr[16];
 };
 #endif
 
-#ifndef _EVENT_HAVE_SA_FAMILY_T
+#ifndef EVENT__HAVE_SA_FAMILY_T
 typedef int sa_family_t;
 #endif
 
-#ifndef _EVENT_HAVE_STRUCT_SOCKADDR_IN6
+#ifndef EVENT__HAVE_STRUCT_SOCKADDR_IN6
 struct sockaddr_in6 {
 	/* This will fail if we find a struct sockaddr that doesn't have
 	 * sa_family as the first element. */

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.5 2015/12/22 21:42:11 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.5.6.1 2017/04/21 16:53:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.5 2015/12/22 21:42:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.5.6.1 2017/04/21 16:53:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,6 +141,19 @@ fdtbus_get_phandle_from_native(int phandle)
 		return -1;
 	}
 	return fdtbus_offset2phandle(off);
+}
+
+bool
+fdtbus_get_path(int phandle, char *buf, size_t buflen)
+{
+	const int off = fdtbus_phandle2offset(phandle);
+	if (off < 0) {
+		return false;
+	}
+	if (fdt_get_path(fdt_data, off, buf, (int)buflen) != 0) {
+		return false;
+	}
+	return true;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.23 2016/12/25 06:55:28 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.23.2.1 2017/04/21 16:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -464,12 +464,12 @@ void
 unref_session(session_t *session)
 {
 
-	mutex_enter(&iscsi_cleanup_mtx);
+	mutex_enter(&session->lock);
 	KASSERT(session != NULL);
 	KASSERT(session->refcount > 0);
 	if (--session->refcount == 0)
 		cv_broadcast(&session->sess_cv);
-	mutex_exit(&iscsi_cleanup_mtx);
+	mutex_exit(&session->lock);
 }
 
 
@@ -727,6 +727,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	if ((rc = get_socket(par->socket, &connection->sock)) != 0) {
 		DEBOUT(("Invalid socket %d\n", par->socket));
 
+		callout_destroy(&connection->timeout);
 		cv_destroy(&connection->idle_cv);
 		cv_destroy(&connection->ccb_cv);
 		cv_destroy(&connection->pdu_cv);
@@ -752,6 +753,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		DEBOUT(("Can't create rcv thread (rc %d)\n", rc));
 
 		release_socket(connection->sock);
+		callout_destroy(&connection->timeout);
 		cv_destroy(&connection->idle_cv);
 		cv_destroy(&connection->ccb_cv);
 		cv_destroy(&connection->pdu_cv);
@@ -784,6 +786,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		kpause("settle", false, 2 * hz, NULL);
 
 		release_socket(connection->sock);
+		callout_destroy(&connection->timeout);
 		cv_destroy(&connection->idle_cv);
 		cv_destroy(&connection->ccb_cv);
 		cv_destroy(&connection->pdu_cv);
@@ -808,11 +811,11 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		return -1;
 	}
 
-	mutex_enter(&session->lock);
+	mutex_enter(&iscsi_cleanup_mtx);
 	if (session->terminating) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBC(connection, 0, ("Session terminating\n"));
 		kill_connection(connection, rc, NO_LOGOUT, FALSE);
-		mutex_exit(&session->lock);
 		par->status = session->terminating;
 		return -1;
 	}
@@ -822,7 +825,7 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	session->total_connections++;
 	session->active_connections++;
 	session->mru_connection = connection;
-	mutex_exit(&session->lock);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	DEBC(connection, 5, ("Connection created successfully!\n"));
 	return 0;
@@ -1094,6 +1097,7 @@ login(iscsi_login_parameters_t *par, struct lwp *l, device_t dev)
 
 	if ((rc = create_connection(par, session, l)) != 0) {
 		if (rc > 0) {
+			destroy_ccbs(session);
 			cv_destroy(&session->ccb_cv);
 			cv_destroy(&session->sess_cv);
 			mutex_destroy(&session->lock);
@@ -1626,12 +1630,20 @@ handle_connection_error(connection_t *conn, uint32_t status, int dologout)
 }
 
 /*
- * add a connection to the cleanup list
+ * remove a connection from session and add to the cleanup list
  */
 void
 add_connection_cleanup(connection_t *conn)
 {
+	session_t *sess;
+
 	mutex_enter(&iscsi_cleanup_mtx);
+	if (conn->in_session) {
+		sess = conn->session;
+		conn->in_session = FALSE;
+		TAILQ_REMOVE(&sess->conn_list, conn, connections);
+		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
+	}
 	TAILQ_INSERT_TAIL(&iscsi_cleanupc_list, conn, connections);
 	iscsi_notify_cleanup();
 	mutex_exit(&iscsi_cleanup_mtx);
@@ -1666,7 +1678,7 @@ connection_timeout_start(connection_t *conn, int ticks)
 void                    
 connection_timeout_stop(connection_t *conn)
 {                                                
-	callout_halt(&conn->timeout, NULL);
+	callout_stop(&conn->timeout);
 	mutex_enter(&iscsi_cleanup_mtx);
 	if (conn->timedout == TOUT_QUEUED) {
 		TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, tchain);
@@ -1705,7 +1717,7 @@ ccb_timeout_start(ccb_t *ccb, int ticks)
 void
 ccb_timeout_stop(ccb_t *ccb)
 {
-	callout_halt(&ccb->timeout, NULL);
+	callout_stop(&ccb->timeout);
 	mutex_enter(&iscsi_cleanup_mtx);
 	if (ccb->timedout == TOUT_QUEUED) {
 		TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, tchain);
@@ -1762,8 +1774,9 @@ iscsi_cleanup_thread(void *par)
 
 			KASSERT(!conn->in_session);
 
-			callout_halt(&conn->timeout, NULL);
+			callout_halt(&conn->timeout, &iscsi_cleanup_mtx);
 			closef(conn->sock);
+			callout_destroy(&conn->timeout);
 			cv_destroy(&conn->idle_cv);
 			cv_destroy(&conn->ccb_cv);
 			cv_destroy(&conn->pdu_cv);
@@ -1810,6 +1823,7 @@ iscsi_cleanup_thread(void *par)
 			add_event(ISCSI_SESSION_TERMINATED, sess->id, 0, sess->terminating);
 			DEB(1, ("Cleanup: session ended %d\n", sess->id));
 
+			destroy_ccbs(sess);
 			cv_destroy(&sess->ccb_cv);
 			cv_destroy(&sess->sess_cv);
 			mutex_destroy(&sess->lock);

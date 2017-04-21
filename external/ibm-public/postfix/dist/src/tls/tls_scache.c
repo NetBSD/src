@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_scache.c,v 1.1.1.3 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_scache.c,v 1.1.1.3.10.1 2017/04/21 16:52:52 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -226,7 +226,7 @@ static VSTRING *tls_scache_encode(TLS_SCACHE *cp, const char *cache_id,
     /*
      * Clean up.
      */
-    myfree((char *) entry);
+    myfree((void *) entry);
 
     return (hex_data);
 }
@@ -483,10 +483,12 @@ TLS_SCACHE *tls_scache_open(const char *dbname, const char *cache_label,
      * opening a damaged file after some process terminated abnormally.
      */
 #ifdef SINGLE_UPDATER
-#define DICT_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_OPEN_LOCK)
+#define DICT_FLAGS (DICT_FLAG_DUP_REPLACE | DICT_FLAG_OPEN_LOCK \
+		    | DICT_FLAG_UTF8_REQUEST)
 #else
 #define DICT_FLAGS \
-	(DICT_FLAG_DUP_REPLACE | DICT_FLAG_LOCK | DICT_FLAG_SYNC_UPDATE)
+	(DICT_FLAG_DUP_REPLACE | DICT_FLAG_LOCK | DICT_FLAG_SYNC_UPDATE \
+	 | DICT_FLAG_UTF8_REQUEST)
 #endif
 
     dict = dict_open(dbname, O_RDWR | O_CREAT | O_TRUNC, DICT_FLAGS);
@@ -533,7 +535,7 @@ void    tls_scache_close(TLS_SCACHE *cp)
     myfree(cp->cache_label);
     if (cp->saved_cursor)
 	myfree(cp->saved_cursor);
-    myfree((char *) cp);
+    myfree((void *) cp);
 }
 
 /* tls_scache_key - find session ticket key for given key name */

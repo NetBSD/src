@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapsearch.c,v 1.1.1.4 2014/05/28 09:58:22 tron Exp $	*/
+/*	$NetBSD: ldapsearch.c,v 1.1.1.4.10.1 2017/04/21 16:52:21 bouyer Exp $	*/
 
 /* ldapsearch -- a tool for searching LDAP directories */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -37,6 +37,9 @@
  *   Mikhail Sahalaev
  *   Kurt D. Zeilenga
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ldapsearch.c,v 1.1.1.4.10.1 2017/04/21 16:52:21 bouyer Exp $");
 
 #include "portable.h"
 
@@ -1539,6 +1542,7 @@ static int dosearch(
 		}
 
 		ldap_msgfree( res );
+		fflush( stdout );
 	}
 
 done:

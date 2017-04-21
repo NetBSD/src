@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.h,v 1.1.1.2 2011/03/02 19:32:15 tron Exp $	*/
+/*	$NetBSD: mail_conf.h,v 1.1.1.2.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
@@ -62,6 +62,9 @@ extern int get_mail_conf_int2(const char *, const char *, int, int, int);
 extern long get_mail_conf_long2(const char *, const char *, long, long, long);
 extern int get_mail_conf_time2(const char *, const char *, int, int, int, int);
 extern int get_mail_conf_nint2(const char *, const char *, int, int, int);
+extern void check_mail_conf_str(const char *, const char *, int, int);
+extern void check_mail_conf_time(const char *, int, int, int);
+extern void check_mail_conf_int(const char *, int, int, int);
 
  /*
   * Lookup with function-call defaults.

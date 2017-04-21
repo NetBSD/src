@@ -28,13 +28,23 @@ Postfix normally does not enable LMDB support. To build Postfix with LMDB
 support, use something like:
 
     % make makefiles CCARGS="-DHAS_LMDB -I/usr/local/include" \
-        AUXLIBS="-L/usr/local/lib -llmdb"
+        AUXLIBS_LMDB="-L/usr/local/lib -llmdb"
     % make
+
+Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_LMDB. With Postfix
+3.0 and later, the old AUXLIBS variable still supports building a statically-
+loaded LMDB database client, but only the new AUXLIBS_LMDB variable supports
+building a dynamically-loaded or statically-loaded LMDB database client.
+
+    Failure to use the AUXLIBS_LMDB variable will defeat the purpose of dynamic
+    database client loading. Every Postfix executable file will have LMDB
+    database library dependencies. And that was exactly what dynamic database
+    client loading was meant to avoid.
 
 Solaris may need this:
 
     % make makefiles CCARGS="-DHAS_LMDB -I/usr/local/include" \
-        AUXLIBS="-R/usr/local/lib -L/usr/local/lib -llmdb"
+        AUXLIBS_LMDB="-R/usr/local/lib -L/usr/local/lib -llmdb"
     % make
 
 The exact pathnames depend on how LMDB was installed.
@@ -47,7 +57,7 @@ When building Postfix fails with:
 
 Add the "-lpthread" library to the "make makefiles" command.
 
-    % make makefiles .... AUXLIBS="... -lpthread"
+    % make makefiles .... AUXLIBS_LMDB="... -lpthread"
 
 CCoonnffiigguurriinngg LLMMDDBB sseettttiinnggss
 

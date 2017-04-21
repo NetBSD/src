@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.85 2015/12/19 22:29:23 christos Exp $
+# $NetBSD: maketars,v 1.85.4.1 2017/04/21 16:51:13 bouyer Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -201,8 +201,9 @@ for setname in ${lists}; do
 		# because we depend on it as an input.
 	else
 		${MTREE} -c -p "${dest}" -k all -R "${skipkeys}" \
-		    -O "${SDIR}/flist.${setname}" | ${MTREE} -C -k all > \
-		    "${setlistdir}/set.${setname}"
+		    -N "${etcdir}" -O "${SDIR}/flist.${setname}" \
+		    | ${MTREE} -C -k all -N "${etcdir}" \
+		    > "${setlistdir}/set.${setname}"
 	fi
 done
 if ${setfilesonly}; then		# exit after creating the set lists

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.105 2016/11/25 12:20:03 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.105.2.1 2017/04/21 16:53:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2016/11/25 12:20:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105.2.1 2017/04/21 16:53:39 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -171,7 +171,7 @@ struct cpu_info phycpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 struct cpu_info *phycpu_info_list = &phycpu_info_primary;
 
-uint32_t cpu_feature[7]; /* X86 CPUID feature bits
+uint32_t cpu_feature[7] __read_mostly; /* X86 CPUID feature bits
 			  *	[0] basic features %edx
 			  *	[1] basic features %ecx
 			  *	[2] extended features %edx
@@ -359,6 +359,9 @@ cpu_vm_init(struct cpu_info *ci)
 	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 	pmap_tlb_cpu_init(ci);
+#ifndef __HAVE_DIRECT_MAP
+	pmap_vpage_cpu_init(ci);
+#endif
 }
 
 static void
@@ -863,7 +866,7 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
 	return;
 }
 #else /* i386 */
-extern union descriptor *ldt;
+extern union descriptor *ldtstore;
 extern void Xsyscall(void);
 
 static void
@@ -941,7 +944,7 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
 	initctx->gdt_ents = gdt_ents;
 
 	/* LDT */
-	initctx->ldt_base = (unsigned long)ldt;
+	initctx->ldt_base = (unsigned long)ldtstore;
 	initctx->ldt_ents = NLDT;
 
 	/* Kernel context state */
@@ -1218,20 +1221,19 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	KASSERT(ci->ci_kpm_pdirpa != 0);
 
 #if defined(__x86_64__)
-	/*
-	 * Copy over the pmap_kernel() shadow L4 entries 
-	 */
+	extern pt_entry_t xpmap_pg_nx;
 
+	/* Copy over the pmap_kernel() shadow L4 entries */
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir, PAGE_SIZE);
 
 	/* Recursive kernel mapping */
 	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa)
-	    | PG_k | PG_V;
+	    | PG_V | xpmap_pg_nx;
 #elif defined(PAE)
-	/* Copy over the pmap_kernel() shadow L2 entries that map the kernel */
+	/* Copy over the pmap_kernel() shadow L2 entries */
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN,
 	    nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
-#endif /* __x86_64__ else PAE */
+#endif
 
 	/* Xen wants a RO pdir. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_kpm_pdir,
@@ -1242,7 +1244,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	 * Initialize L3 entry 3. This mapping is shared across all pmaps and is
 	 * static, ie: loading a new pmap will not update this entry.
 	 */
-	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
+	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_V;
 
 	/* Xen wants a RO L3. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_pae_l3_pdir,

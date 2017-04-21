@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.24 2016/12/25 00:07:47 christos Exp $	*/
-/* $OpenBSD: ssh.c,v 1.448 2016/12/06 07:48:01 djm Exp $ */
-
+/*	$NetBSD: ssh.c,v 1.24.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
+/* $OpenBSD: ssh.c,v 1.451 2017/03/10 04:07:20 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.24 2016/12/25 00:07:47 christos Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.24.2.1 2017/04/21 16:50:57 bouyer Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -661,11 +660,11 @@ main(int ac, char **av)
 			else if (strcmp(optarg, "kex") == 0)
 				cp = kex_alg_list('\n');
 			else if (strcmp(optarg, "key") == 0)
-				cp = sshkey_alg_list(0, 0, '\n');
+				cp = sshkey_alg_list(0, 0, 0, '\n');
 			else if (strcmp(optarg, "key-cert") == 0)
-				cp = sshkey_alg_list(1, 0, '\n');
+				cp = sshkey_alg_list(1, 0, 0, '\n');
 			else if (strcmp(optarg, "key-plain") == 0)
-				cp = sshkey_alg_list(0, 1, '\n');
+				cp = sshkey_alg_list(0, 1, 0, '\n');
 			else if (strcmp(optarg, "protocol-version") == 0) {
 #ifdef WITH_SSH1
 				cp = xstrdup("1\n2");
@@ -1084,7 +1083,7 @@ main(int ac, char **av)
 		options.proxy_use_fdpass = 0;
 		snprintf(port_s, sizeof(port_s), "%d", options.jump_port);
 		xasprintf(&options.proxy_command,
-		    "ssh%s%s%s%s%s%s%s%s%s%.*s -W %%h:%%p %s",
+		    "ssh%s%s%s%s%s%s%s%s%s%.*s -W '[%%h]:%%p' %s",
 		    /* Optional "-l user" argument if jump_user set */
 		    options.jump_user == NULL ? "" : " -l ",
 		    options.jump_user == NULL ? "" : options.jump_user,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: gio.4,v 1.20 2008/04/30 13:10:56 martin Exp $
+.\"	$NetBSD: gio.4,v 1.20.50.1 2017/04/21 16:53:17 bouyer Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 25, 2006
+.Dd February 17, 2017
 .Dt GIO 4 sgimips
 .Os
 .Sh NAME
@@ -42,11 +42,11 @@ The
 bus is a bus for connecting high-speed peripherals to the main memory and
 CPU.
 The devices themselves are typically (but not necessarily) connected to the
-.Xr hpc 4
+.Xr sgimips/hpc 4
 peripheral controller, and memory and CPU are accessed through the
-.Xr imc 4
+.Xr sgimips/imc 4
 (Indy Memory Controller) or
-.Xr pic 4
+.Xr sgimips/pic 4
 (Processor Interface Controller).
 The
 .Nm
@@ -54,13 +54,13 @@ bus is found on the Personal Iris 4D/3x, Indigo, Indy, Challenge S,
 Challenge M, and Indigo2 machines and exists in three incarnations:
 GIO32, GIO32-bis, and GIO64.
 .Sh SEE ALSO
-.Xr giopci 4 ,
-.Xr grtwo 4 ,
-.Xr hpc 4 ,
-.Xr imc 4 ,
-.Xr light 4 ,
-.Xr newport 4 ,
-.Xr pic 4
+.Xr sgimips/giopci 4 ,
+.Xr sgimips/grtwo 4 ,
+.Xr sgimips/hpc 4 ,
+.Xr sgimips/imc 4 ,
+.Xr sgimips/light 4 ,
+.Xr sgimips/newport 4 ,
+.Xr sgimips/pic 4
 .Sh HISTORY
 The
 .Nm
@@ -71,7 +71,7 @@ Challenge S systems may use only one
 .Nm
 DMA-capable expansion card, despite having two slots.
 Cards based on the
-.Xr hpc 4
+.Xr sgimips/hpc 4
 controller, such as the GIO32 scsi and E++ Ethernet adapters, must be
 placed in slot 1 (closest to the side of the case).
 All other cards must be placed in slot 0 (adjacent to the memory banks).
@@ -86,7 +86,7 @@ Refer to the PCB
 stencils to determine the association between physical connectors and slots.
 .Sh BUGS
 Systems employing the
-.Xr imc 4
+.Xr sgimips/imc 4
 may experience spurious SysAD bus parity errors when using expansion cards,
 which do not drive all data lines during a CPU PIO read.
 The only workaround is to disable SysAD parity checking when using such

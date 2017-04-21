@@ -1,9 +1,9 @@
-/*	$NetBSD: request.c,v 1.1.1.5 2014/05/28 09:58:41 tron Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.5.10.1 2017/04/21 16:52:27 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2014 The OpenLDAP Foundation.
+ * Copyright 1998-2016 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,9 @@
  * can be found in the file "build/LICENSE-2.0.1" in this distribution
  * of OpenLDAP Software.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: request.c,v 1.1.1.5.10.1 2017/04/21 16:52:27 bouyer Exp $");
 
 #include "portable.h"
 
@@ -130,7 +133,10 @@ ldap_send_initial_request(
 	if ( ber_sockbuf_ctrl( ld->ld_sb, LBER_SB_OPT_GET_FD, &sd ) == -1 ) {
 		/* not connected yet */
 		rc = ldap_open_defconn( ld );
-
+		if ( rc == 0 ) {
+			ber_sockbuf_ctrl( ld->ld_defconn->lconn_sb,
+				LBER_SB_OPT_GET_FD, &sd );
+		}
 	}
 	if ( ld->ld_defconn && ld->ld_defconn->lconn_status == LDAP_CONNST_CONNECTING )
 		rc = ldap_int_check_async_open( ld, sd );
@@ -487,6 +493,10 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc **srvlist, int use_ldsb,
 			if ( rc != -1 ) {
 				srv = *srvp;
 
+				/* If we fully connected, async is moot */
+				if ( rc == 0 )
+					async = 0;
+
 				if ( ld->ld_urllist_proc && ( !async || rc != -2 ) ) {
 					ld->ld_urllist_proc( ld, srvlist, srvp, ld->ld_urllist_params );
 				}
@@ -505,6 +515,13 @@ ldap_new_connection( LDAP *ld, LDAPURLDesc **srvlist, int use_ldsb,
 		}
 
 		lc->lconn_server = ldap_url_dup( srv );
+		if ( !lc->lconn_server ) {
+			if ( !use_ldsb )
+				ber_sockbuf_free( lc->lconn_sb );
+			LDAP_FREE( (char *)lc );
+			ld->ld_errno = LDAP_NO_MEMORY;
+			return( NULL );
+		}
 	}
 
 	lc->lconn_status = async ? LDAP_CONNST_CONNECTING : LDAP_CONNST_CONNECTED;
@@ -1436,6 +1453,7 @@ ldap_chase_referrals( LDAP *ld,
 		    id, sref, srv, &rinfo.ri_request );
 
 		if ( ber == NULL ) {
+			ldap_free_urllist( srv );
 			return -1 ;
 		}
 

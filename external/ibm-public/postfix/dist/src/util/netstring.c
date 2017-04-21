@@ -1,4 +1,4 @@
-/*	$NetBSD: netstring.c,v 1.1.1.3 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: netstring.c,v 1.1.1.3.10.1 2017/04/21 16:52:53 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -179,9 +179,9 @@
 void    netstring_setup(VSTREAM *stream, int timeout)
 {
     vstream_control(stream,
-		    VSTREAM_CTL_TIMEOUT, timeout,
-		    VSTREAM_CTL_EXCEPT,
-		    VSTREAM_CTL_END);
+		    CA_VSTREAM_CTL_TIMEOUT(timeout),
+		    CA_VSTREAM_CTL_EXCEPT,
+		    CA_VSTREAM_CTL_END);
 }
 
 /* netstring_except - process netstring stream exception */
@@ -400,7 +400,7 @@ static VSTREAM *child_stream;		/* child stream (full-duplex) */
 
 /* stdin_read_event - line-oriented event handler */
 
-static void stdin_read_event(int event, char *context)
+static void stdin_read_event(int event, void *context)
 {
     int     ch;
 
@@ -433,7 +433,7 @@ static void stdin_read_event(int event, char *context)
 
 /* child_read_event - netstring-oriented event handler */
 
-static void child_read_event(int event, char *context)
+static void child_read_event(int event, void *context)
 {
 
     /*
@@ -468,9 +468,9 @@ int     main(int argc, char **argv)
      * Run the specified command as a child process with stdin and stdout
      * connected to us.
      */
-    child_stream = vstream_popen(O_RDWR, VSTREAM_POPEN_ARGV, argv + 1,
-				 VSTREAM_POPEN_END);
-    vstream_control(child_stream, VSTREAM_CTL_DOUBLE, VSTREAM_CTL_END);
+    child_stream = vstream_popen(O_RDWR, CA_VSTREAM_POPEN_ARGV(argv + 1),
+				 CA_VSTREAM_POPEN_END);
+    vstream_control(child_stream, CA_VSTREAM_CTL_DOUBLE, CA_VSTREAM_CTL_END);
     netstring_setup(child_stream, 10);
 
     /*
@@ -485,9 +485,9 @@ int     main(int argc, char **argv)
      * or EOF. If there is activity on stdin, send a netstring to the child
      * when we have read an entire line, or terminate in case of EOF.
      */
-    event_enable_read(vstream_fileno(VSTREAM_IN), stdin_read_event, (char *) 0);
+    event_enable_read(vstream_fileno(VSTREAM_IN), stdin_read_event, (void *) 0);
     event_enable_read(vstream_fileno(child_stream), child_read_event,
-		      (char *) 0);
+		      (void *) 0);
 
     if ((err = vstream_setjmp(child_stream)) == 0) {
 	for (;;)

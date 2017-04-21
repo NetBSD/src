@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.264 2017/01/14 22:58:04 sjg Exp $
+.\"	$NetBSD: make.1,v 1.264.2.1 2017/04/21 16:54:14 bouyer Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 14, 2017
+.Dd February 1, 2017
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1204,6 +1204,10 @@ safely through recursive invocations of
 .Nm .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
+.It Cm \&:range[=count]
+The value is an integer sequence representing the words of the original
+value, or the supplied
+.Va count .
 .It Cm \&:gmtime[=utc]
 The value is a format string for
 .Xr strftime 3 ,
@@ -1421,6 +1425,27 @@ For example.
 .Pp
 However a single character variable is often more readable:
 .Dl ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}
+.It Cm \&:_[=var]
+Save the current variable value in
+.Ql $_
+or the named
+.Va var
+for later reference.
+Example usage:
+.Bd -literal -offset indent
+M_cmpv.units = 1 1000 1000000
+M_cmpv = S,., ,g:_:range:@i@+ $${_:[-$$i]} \&\\
+\\* $${M_cmpv.units:[$$i]}@:S,^,expr 0 ,1:sh
+
+.Dv .if ${VERSION:${M_cmpv}} < ${3.1.12:L:${M_cmpv}}
+
+.Ed
+Here
+.Ql $_
+is used to save the result of the
+.Ql :S
+modifier which is later referenced using the index values from
+.Ql :range .
 .It Cm \&:U Ns Ar newval
 If the variable is undefined
 .Ar newval

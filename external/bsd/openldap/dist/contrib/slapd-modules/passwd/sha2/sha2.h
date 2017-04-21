@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.h,v 1.1.1.2 2014/05/28 09:58:28 tron Exp $	*/
+/*	$NetBSD: sha2.h,v 1.1.1.2.10.1 2017/04/21 16:52:24 bouyer Exp $	*/
 
 /* $OpenLDAP$ */
 /*
@@ -37,6 +37,9 @@
 
 #ifndef __SHA2_H__
 #define __SHA2_H__
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sha2.h,v 1.1.1.2.10.1 2017/04/21 16:52:24 bouyer Exp $");
 
 #include "portable.h"
 
@@ -146,6 +149,25 @@ typedef SHA512_CTX SHA384_CTX;
 
 
 /*** SHA-256/384/512 Function Prototypes ******************************/
+/* avoid symbol clash with other crypto libs */
+#define SHA256_Init		pw_SHA256_Init
+#define SHA256_Update	pw_SHA256_Update
+#define SHA256_Final	pw_SHA256_Final
+#define SHA256_End		pw_SHA256_End
+#define SHA256_Data		pw_SHA256_Data
+
+#define SHA384_Init		pw_SHA384_Init
+#define SHA384_Update	pw_SHA384_Update
+#define SHA384_Final	pw_SHA384_Final
+#define SHA384_End		pw_SHA384_End
+#define SHA384_Data		pw_SHA384_Data
+
+#define SHA512_Init		pw_SHA512_Init
+#define SHA512_Update	pw_SHA512_Update
+#define SHA512_Final	pw_SHA512_Final
+#define SHA512_End		pw_SHA512_End
+#define SHA512_Data		pw_SHA512_Data
+
 #ifndef NOPROTO
 #ifdef SHA2_USE_INTTYPES_H
 

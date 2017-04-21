@@ -1,4 +1,4 @@
-/*	$NetBSD: session.h,v 1.6 2016/12/25 00:07:47 christos Exp $	*/
+/*	$NetBSD: session.h,v 1.6.2.1 2017/04/21 16:50:57 bouyer Exp $	*/
 /* $OpenBSD: session.h,v 1.33 2016/08/13 17:47:41 markus Exp $ */
 
 /*

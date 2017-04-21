@@ -27,9 +27,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: intro.4,v 1.10 2005/06/20 13:25:25 peter Exp $
+.\"	$NetBSD: intro.4,v 1.10.74.1 2017/04/21 16:53:18 bouyer Exp $
 .\"
-.Dd August 13, 1997
+.Dd February 17, 2017
 .Dt INTRO 4 sun3
 .Os
 .Sh NAME
@@ -87,15 +87,15 @@ To enable a device which did not autoconfigure,
 the system must be rebooted.
 .Pp
 The autoconfiguration system is described in
-.Xr autoconf 4 .
+.Xr sun3/autoconf 4 .
 A list of the supported devices is given below.
 .Sh SEE ALSO
 .Xr config 1 ,
-.Xr autoconf 4 ,
 .Xr cd 4 ,
 .Xr sd 4 ,
 .Xr ss 4 ,
-.Xr st 4
+.Xr st 4 ,
+.Xr sun3/autoconf 4
 .Sh SUPPORTED SYSTEMS
 The following Sun3 system architectures and models are supported:
 .Bl -tag -width eeprom
@@ -171,4 +171,4 @@ appeared in
 Large chunks of text carefully recycled (shamelessly appropriated)
 from
 .Nx Ns /pmax
-.Xr intro 4 .
+.Xr sun3/intro 4 .

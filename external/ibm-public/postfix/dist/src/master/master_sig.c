@@ -1,4 +1,4 @@
-/*	$NetBSD: master_sig.c,v 1.1.1.2 2011/03/02 19:32:21 tron Exp $	*/
+/*	$NetBSD: master_sig.c,v 1.1.1.2.30.1 2017/04/21 16:52:49 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -159,7 +159,7 @@ static void master_sigchld(int unused_sig)
 
 /* master_sig_event - called upon return from select() */
 
-static void master_sig_event(int unused_event, char *unused_context)
+static void master_sig_event(int unused_event, void *unused_context)
 {
     char    c[1];
 
@@ -243,7 +243,7 @@ void    master_sigsetup(void)
     non_blocking(SIG_PIPE_READ_FD, NON_BLOCKING);
     close_on_exec(SIG_PIPE_WRITE_FD, CLOSE_ON_EXEC);
     close_on_exec(SIG_PIPE_READ_FD, CLOSE_ON_EXEC);
-    event_enable_read(SIG_PIPE_READ_FD, master_sig_event, (char *) 0);
+    event_enable_read(SIG_PIPE_READ_FD, master_sig_event, (void *) 0);
 #endif
 
     /*

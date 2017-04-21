@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: audio,v 1.71 2014/05/14 23:30:28 christos Exp $
+# $File: audio,v 1.76 2016/11/02 23:06:32 christos Exp $
 # audio:  file(1) magic for sound formats (see also "iff")
 #
 # Jan Nicolai Langfeldt (janl@ifi.uio.no), Dan Quinlan (quinlan@yggdrasil.com),
@@ -300,7 +300,7 @@
 >>5	byte		&0x40	\b, extended header
 >>5	byte		&0x20	\b, experimental
 >>5	byte		&0x10	\b, footer present
->(6.I)	indirect	x	\b, contains: 
+>(6.I+10)	indirect	x	\b, contains: 
 
 # NSF (NES sound file) magic
 0	string		NESM\x1a	NES Sound File
@@ -312,6 +312,21 @@
 >122	byte&0x2	=1		dual PAL/NTSC
 >122	byte&0x1	=1		PAL
 >122	byte&0x1	=0		NTSC
+
+# NSFE (Extended NES sound file) magic
+# http://slickproductions.org/docs/NSF/nsfespec.txt 
+# From: David Pflug <david@pflug.email>
+0	string		NSFE		Extended NES Sound File
+>48	search/0x1000	auth
+>>&0	string		>\0		("%s"
+>>>&1	string		>\0		by %s
+>>>>&1	string		>\0		\b, copyright %s
+>>>>>&1	string		>\0		\b, ripped by %s
+>20	byte		x		\b), %d tracks,
+>18	byte&0x2	=1		dual PAL/NTSC
+>18     byte&0x2	=0
+>>18	byte&0x1	=1		PAL
+>>18	byte&0x1	=0		NTSC
 
 # Type: SNES SPC700 sound files
 # From: Josh Triplett <josh@freedesktop.org>
@@ -454,6 +469,8 @@
 >>20	byte&0xe		0xc		\b, 7 channels
 >>20	byte&0xe		0xe		\b, 8 channels
 # some common sample rates
+>>17	belong&0xfffff0		0x2ee000	\b, 192 kHz
+>>17	belong&0xfffff0		0x158880	\b, 88.2 kHz
 >>17	belong&0xfffff0		0x0ac440	\b, 44.1 kHz
 >>17	belong&0xfffff0		0x0bb800	\b, 48 kHz
 >>17	belong&0xfffff0		0x07d000	\b, 32 kHz
@@ -570,7 +587,7 @@
 0	string		SC68\ Music-file\ /\ (c)\ (BeN)jami	sc68 Atari ST music
 
 # musepak support From: "Jiri Pejchal" <jiri.pejchal@gmail.com>
-0       string          MP+     Musepack audio
+0       string          MP+     Musepack audio (MP+)
 !:mime	audio/x-musepack
 >3      byte            255     \b, SV pre8
 >3      byte&0xF        0x6     \b, SV 6
@@ -603,6 +620,9 @@
 >>27    byte            113     \b, Alpha 1.13
 >>27    byte            114     \b, Beta 1.14
 >>27    byte            115     \b, Alpha 1.15
+
+0       string          MPCK    Musepack audio (MPCK)
+!:mime	audio/x-musepack
 
 # IMY
 # from http://filext.com/detaillist.php?extdetail=IMY
@@ -699,4 +719,42 @@
 
 0	string	ZBOT
 >4	byte	0xc5	GVOX Encore music, version < 5.0
+
+# Summary:	Garmin Voice Processing Module (WAVE audios)
+# From:		Joerg Jenderek
+# URL:		http://www.garmin.com/
+# Reference:	http://turboccc.wikispaces.com/share/view/28622555
+# NOTE:		there exist 2 other Garmin VPM formats
+0		string	AUDIMG		
+# skip text files starting with string "AUDIMG"
+>13		ubyte		<13	Garmin Voice Processing Module
+!:mime	audio/x-vpm-wav-garmin
+!:ext	vpm
+# 3 bytes indicating the voice version (200,220)
+>>6		string		x	\b, version %3.3s
+# day of release (01-31)
+>>12		ubyte		x	\b, %.2d
+# month of release (01-12)
+>>13		ubyte		x	\b.%.2d
+# year of release (like 2006, 2007, 2008)
+>>14		uleshort	x	\b.%.4d
+# hour of release (0-23)
+>>11		ubyte		x	%.2d
+# minute of release (0-59)
+>>10		ubyte		x	\b:%.2d
+# second of release (0-59)
+>>9		ubyte		x	\b:%.2d
+# if you select a language like german on your garmin device
+# you can only select voice modules with correponding language byte ID like 1 
+>>18		ubyte		x	\b, language ID %d
+# pointer to 1st audio WAV sample
+>>16		uleshort	>0	
+>>>(16.s)	ulelong		>0	\b, at offset 0x%x
+# WAV length
+>>>>(16.s+4)	ulelong		>0	%d Bytes
+# look for magic
+>>>>>(&-8.l)	string		RIFF	
+# determine type by ./riff
+>>>>>>&-4	indirect	x	\b 
+# 2 - ~ 131 WAV samples following same way
 

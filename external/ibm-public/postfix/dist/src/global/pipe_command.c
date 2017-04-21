@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.3 2011/03/02 19:32:17 tron Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.3.30.1 2017/04/21 16:52:48 bouyer Exp $	*/
 
 /*++
 /* NAME
@@ -28,70 +28,71 @@
 /*	An open message queue file, positioned at the start of the actual
 /*	message content.
 /* .IP why
-/*	Delivery status information.
+/*	Delivery status information. The reason attribute may contain
+/*	a limited portion of command output, among other free text.
 /* .IP key
 /*	Specifies what value will follow. pipe_command() takes a list
-/*	of (key, value) arguments, terminated by PIPE_CMD_END. The
-/*	following is a listing of key codes together with the expected
-/*	value type.
+/*	of macros with arguments, terminated by CA_PIPE_CMD_END which
+/*	has no argument. The following is a listing of macros and
+/*	expected argument types.
 /* .RS
-/* .IP "PIPE_CMD_COMMAND (char *)"
+/* .IP "CA_PIPE_CMD_COMMAND(const char *)"
 /*	Specifies the command to execute as a string. The string is
 /*	passed to the shell when it contains shell meta characters
 /*	or when it appears to be a shell built-in command, otherwise
 /*	the command is executed without invoking a shell.
-/*	One of PIPE_CMD_COMMAND or PIPE_CMD_ARGV must be specified.
-/*	See also the PIPE_CMD_SHELL attribute below.
-/* .IP "PIPE_CMD_ARGV (char **)"
+/*	One of CA_PIPE_CMD_COMMAND or CA_PIPE_CMD_ARGV must be specified.
+/*	See also the CA_PIPE_CMD_SHELL attribute below.
+/* .IP "CA_PIPE_CMD_ARGV(char **)"
 /*	The command is specified as an argument vector. This vector is
 /*	passed without further inspection to the \fIexecvp\fR() routine.
-/*	One of PIPE_CMD_COMMAND or PIPE_CMD_ARGV must be specified.
-/* .IP "PIPE_CMD_CHROOT (char *)"
+/*	One of CA_PIPE_CMD_COMMAND or CA_PIPE_CMD_ARGV must be specified.
+/* .IP "CA_PIPE_CMD_CHROOT(const char *)"
 /*	Root and working directory for command execution. This takes
-/*	effect before PIPE_CMD_CWD. A null pointer means don't
+/*	effect before CA_PIPE_CMD_CWD. A null pointer means don't
 /*	change root and working directory anyway. Failure to change
 /*	directory causes mail delivery to be deferred.
-/* .IP "PIPE_CMD_CWD (char *)"
+/* .IP "CA_PIPE_CMD_CWD(const char *)"
 /*	Working directory for command execution, after changing process
-/*	privileges to PIPE_CMD_UID and PIPE_CMD_GID. A null pointer means
+/*	privileges to CA_PIPE_CMD_UID and CA_PIPE_CMD_GID. A null pointer means
 /*	don't change directory anyway. Failure to change directory
 /*	causes mail delivery to be deferred.
-/* .IP "PIPE_CMD_ENV (char **)"
+/* .IP "CA_PIPE_CMD_ENV(char **)"
 /*	Additional environment information, in the form of a null-terminated
 /*	list of name, value, name, value, ... elements. By default only the
 /*	command search path is initialized to _PATH_DEFPATH.
-/* .IP "PIPE_CMD_EXPORT (char **)"
+/* .IP "CA_PIPE_CMD_EXPORT(char **)"
 /*	Null-terminated array with names of environment parameters
 /*	that can be exported. By default, everything is exported.
-/* .IP "PIPE_CMD_COPY_FLAGS (int)"
+/* .IP "CA_PIPE_CMD_COPY_FLAGS(int)"
 /*	Flags that are passed on to the \fImail_copy\fR() routine.
 /*	The default flags value is 0 (zero).
-/* .IP "PIPE_CMD_SENDER (char *)"
+/* .IP "CA_PIPE_CMD_SENDER(const char *)"
 /*	The envelope sender address, which is passed on to the
 /*	\fImail_copy\fR() routine.
-/* .IP "PIPE_CMD_ORIG_RCPT (char *)"
+/* .IP "CA_PIPE_CMD_ORIG_RCPT(const char *)"
 /*	The original recipient envelope address, which is passed on
 /*	to the \fImail_copy\fR() routine.
-/* .IP "PIPE_CMD_DELIVERED (char *)"
+/* .IP "CA_PIPE_CMD_DELIVERED(const char *)"
 /*	The recipient envelope address, which is passed on to the
 /*	\fImail_copy\fR() routine.
-/* .IP "PIPE_CMD_EOL (char *)"
+/* .IP "CA_PIPE_CMD_EOL(const char *)"
 /*	End-of-line delimiter. The default is to use the newline character.
-/* .IP "PIPE_CMD_UID (uid_t)"
+/* .IP "CA_PIPE_CMD_UID(uid_t)"
 /*	The user ID to execute the command as. The default is
 /*	the user ID corresponding to the \fIdefault_privs\fR
 /*	configuration parameter. The user ID must be non-zero.
-/* .IP "PIPE_CMD_GID (gid_t)"
+/* .IP "CA_PIPE_CMD_GID(gid_t)"
 /*	The group ID to execute the command as. The default is
 /*	the group ID corresponding to the \fIdefault_privs\fR
 /*	configuration parameter. The group ID must be non-zero.
-/* .IP "PIPE_CMD_TIME_LIMIT (int)"
+/* .IP "CA_PIPE_CMD_TIME_LIMIT(int)"
 /*	The amount of time the command is allowed to run before it
-/*	is terminated with SIGKILL. A non-negative PIPE_CMD_TIME_LIMIT
+/*	is terminated with SIGKILL. A non-negative CA_PIPE_CMD_TIME_LIMIT
 /*	value must be specified.
-/* .IP "PIPE_CMD_SHELL (char *)"
+/* .IP "CA_PIPE_CMD_SHELL(const char *)"
 /*	The shell to use when executing the command specified with
-/*	PIPE_CMD_COMMAND. This shell is invoked regardless of the
+/*	CA_PIPE_CMD_COMMAND. This shell is invoked regardless of the
 /*	command content.
 /* .RE
 /* DIAGNOSTICS
@@ -308,7 +309,7 @@ static ssize_t pipe_command_write(int fd, void *buf, size_t len,
 
 /* pipe_command_read - read from command with time limit */
 
-static ssize_t pipe_command_read(int fd, void *buf, ssize_t len,
+static ssize_t pipe_command_read(int fd, void *buf, size_t len,
 				         int unused_timeout,
 				         void *unused_context)
 {
@@ -394,7 +395,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
     VSTREAM *cmd_in_stream;
     VSTREAM *cmd_out_stream;
     char    log_buf[VSTREAM_BUFSIZE + 1];
-    int     log_len;
+    ssize_t log_len;
     pid_t   pid;
     int     write_status;
     int     write_errno;
@@ -548,7 +549,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 	    execvp(args.argv[0], args.argv);
 	    msg_fatal("%s: execvp %s: %m", myname, args.argv[0]);
 	} else if (args.shell && *args.shell) {
-	    argv = argv_split(args.shell, " \t\r\n");
+	    argv = argv_split(args.shell, CHARS_SPACE);
 	    argv_add(argv, args.command, (char *) 0);
 	    argv_terminate(argv);
 	    execvp(argv->argv[0], argv->argv);
@@ -573,11 +574,11 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 	 * timeouts on all I/O from and to it.
 	 */
 	vstream_control(cmd_in_stream,
-			VSTREAM_CTL_WRITE_FN, pipe_command_write,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_WRITE_FN(pipe_command_write),
+			CA_VSTREAM_CTL_END);
 	vstream_control(cmd_out_stream,
-			VSTREAM_CTL_READ_FN, pipe_command_read,
-			VSTREAM_CTL_END);
+			CA_VSTREAM_CTL_READ_FN(pipe_command_read),
+			CA_VSTREAM_CTL_END);
 	pipe_command_timeout = 0;
 
 	/*
@@ -677,6 +678,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 	    vstring_sprintf_append(why->reason, ": \"%s\"", args.command);
 	    return (PIPE_STAT_BOUNCE);
 	} else {
+	    vstring_strcpy(why->reason, log_buf);
 	    return (PIPE_STAT_OK);
 	}
     }
