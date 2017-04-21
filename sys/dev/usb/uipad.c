@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.4 2016/12/04 10:12:35 skrll Exp $	*/
+/*	$NetBSD: uipad.c,v 1.5 2017/04/21 15:06:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.4 2016/12/04 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.5 2017/04/21 15:06:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -83,6 +83,18 @@ struct uipad_softc {
  */
 static const struct usb_devno uipad_devs[] = {
 	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_2 },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_3 },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPAD_MINI },
+#if 0
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3G },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3GS },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_4 },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_4_VZW },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_4S },
+	{ USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_5 },
+#endif
 };
 
 #define uipad_lookup(v, p) usb_lookup(uipad_devs, v, p)
