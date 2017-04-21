@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.89 2017/02/18 01:29:09 chs Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.90 2017/04/21 13:17:42 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.89 2017/02/18 01:29:09 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.90 2017/04/21 13:17:42 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -271,8 +271,10 @@ elf_check_header(Elf_Ehdr *eh)
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    eh->e_ident[EI_CLASS] != ELFCLASS) {
-		DPRINTF("bad magic %#x%x%x", eh->e_ident[0], eh->e_ident[1],
-		    eh->e_ident[2]);
+		DPRINTF("bad magic e_ident[EI_MAG0,EI_MAG3] %#x%x%x%x, "
+		    "e_ident[EI_CLASS] %#x", eh->e_ident[EI_MAG0],
+		    eh->e_ident[EI_MAG1], eh->e_ident[EI_MAG2],
+		    eh->e_ident[EI_MAG3], eh->e_ident[EI_CLASS]);
 		return ENOEXEC;
 	}
 
