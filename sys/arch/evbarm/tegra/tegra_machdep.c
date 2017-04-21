@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.38 2016/03/26 09:07:31 skrll Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.39 2017/04/21 21:13:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.38 2016/03/26 09:07:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.39 2017/04/21 21:13:04 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -157,7 +157,6 @@ static const struct pmap_devmap devmap[] = {
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 static struct boot_physmem bp_lowgig = {
-	.bp_start = TEGRA_EXTMEM_BASE / NBPG,
 	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
 	.bp_freelist = VM_FREELIST_ISADMA,
 	.bp_flags = 0
@@ -232,6 +231,8 @@ extern void cortex_mpstart(void);
 u_int
 initarm(void *arg)
 {
+	bus_addr_t memory_addr;
+	bus_size_t memory_size;
 	psize_t ram_size = 0;
 	DPRINT("initarm:");
 
@@ -305,7 +306,15 @@ initarm(void *arg)
 	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
 
-	ram_size = tegra_mc_memsize();
+	const int memory = OF_finddevice("/memory");
+	if (fdtbus_get_reg(memory, 0, &memory_addr, &memory_size) != 0)
+		panic("Cannot determine memory size");
+
+	DPRINTF("FDT memory node = %d, addr %llx, size %llu\n",
+	    memory, (unsigned long long)memory_addr,
+	    (unsigned long long)memory_size);
+
+	ram_size = memory_size;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	const bool mapallmem_p = true;
@@ -338,7 +347,7 @@ initarm(void *arg)
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = TEGRA_EXTMEM_BASE; /* DDR PHY addr */
+	bootconfig.dram[0].address = memory_addr;
 	bootconfig.dram[0].pages = ram_size / PAGE_SIZE;
 
 	KASSERT((armreg_pfr1_read() & ARM_PFR1_SEC_MASK) != 0);
@@ -361,6 +370,7 @@ initarm(void *arg)
 	evbarm_device_register = tegra_device_register;
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
+	bp_lowgig.bp_start = memory_addr / NBPG;
 	if (atop(ram_size) > bp_lowgig.bp_pages) {
 		arm_poolpage_vmfreelist = bp_lowgig.bp_freelist;
 		return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE,
