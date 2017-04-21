@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.82 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.83 2017/04/21 08:39:06 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.82 2017/04/20 08:46:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.83 2017/04/21 08:39:06 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -433,7 +433,7 @@ ipsec_getpolicy(const struct tdb_ident *tdbi, u_int dir)
  * NOTE: IPv6 mapped address concern is implemented here.
  */
 static struct secpolicy *
-ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
+ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
     int *error)
 {
 	struct inpcbpolicy *pcbsp = NULL;
@@ -442,21 +442,21 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
 	int af;
 
 	KASSERT(m != NULL);
-	KASSERT(inp != NULL);
+	KASSERT(inph != NULL);
 	KASSERT(error != NULL);
 	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
-	KASSERT(inp->inph_socket != NULL);
+	KASSERT(inph->inph_socket != NULL);
 
 	/* XXX FIXME inpcb/in6pcb  vs socket*/
-	af = inp->inph_af;
+	af = inph->inph_af;
 	KASSERTMSG(af == AF_INET || af == AF_INET6,
 	    "unexpected protocol family %u", af);
 
-	KASSERT(inp->inph_sp != NULL);
+	KASSERT(inph->inph_sp != NULL);
 	/* If we have a cached entry, and if it is still valid, use it. */
 	IPSEC_STATINC(IPSEC_STAT_SPDCACHELOOKUP);
-	currsp = ipsec_checkpcbcache(m, /*inpcb_hdr*/inp->inph_sp, dir);
+	currsp = ipsec_checkpcbcache(m, inph->inph_sp, dir);
 	if (currsp) {
 		*error = 0;
 		return currsp;
@@ -465,7 +465,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
 
 	switch (af) {
 	case AF_INET: {
-		struct inpcb *in4p = (struct inpcb *)inp;
+		struct inpcb *in4p = (struct inpcb *)inph;
 		/* set spidx in pcb */
 		*error = ipsec4_setspidx_inpcb(m, in4p);
 		pcbsp = in4p->inp_sp;
@@ -474,7 +474,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inp,
 
 #if defined(INET6)
 	case AF_INET6: {
-		struct in6pcb *in6p = (struct in6pcb *)inp;
+		struct in6pcb *in6p = (struct in6pcb *)inph;
 		/* set spidx in pcb */
 		*error = ipsec6_setspidx_in6pcb(m, in6p);
 		pcbsp = in6p->in6p_sp;
