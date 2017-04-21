@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.36 2017/04/20 21:50:50 christos Exp $	*/
+/*	$NetBSD: ln.c,v 1.37 2017/04/21 11:28:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/ln/ln.c 251261 2013-06-02 17:55:00Z eadler $");
 #endif
-__RCSID("$NetBSD: ln.c,v 1.36 2017/04/20 21:50:50 christos Exp $");
+__RCSID("$NetBSD: ln.c,v 1.37 2017/04/21 11:28:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -71,7 +71,7 @@ static int	wflag;			/* Warn if symlink target does not
 static char	linkch;
 
 static int	linkit(const char *, const char *, int);
-static void	usage(void);
+static __dead void	usage(void);
 
 int
 main(int argc, char *argv[])
@@ -352,12 +352,12 @@ linkit(const char *source, const char *target, int isdir)
 	return (0);
 }
 
-static void
+static __dead void
 usage(void)
 {
-	(void)fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: ln [-s [-F] | -L | -P] [-f | -i] [-hnv] source_file [target_file]",
-	    "       ln [-s [-F] | -L | -P] [-f | -i] [-hnv] source_file ... target_dir",
-	    "       link source_file target_file");
+	(void)fprintf(stderr, 
+	    "usage: %s [-s [-F] | -L | -P] [-f | -i] [-hnv] source_file [target_file]\n"
+	    "       %s [-s [-F] | -L | -P] [-f | -i] [-hnv] source_file ... target_dir\n"
+	    "       link source_file target_file\n", getprogname(), getprogname());
 	exit(1);
 }
