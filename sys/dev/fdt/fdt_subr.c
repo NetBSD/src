@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.7 2017/04/21 21:08:57 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.8 2017/04/21 23:35:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.7 2017/04/21 21:08:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.8 2017/04/21 23:35:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -215,4 +215,56 @@ fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 		*psize = size;
 
 	return 0;
+}
+
+const char *
+fdtbus_get_stdout_path(void)
+{
+	const int off = fdt_path_offset(fdtbus_get_data(), "/chosen");
+	if (off < 0)
+		return NULL;
+	
+	return fdt_getprop(fdtbus_get_data(), off, "stdout-path", NULL);
+}
+
+int
+fdtbus_get_stdout_phandle(void)
+{
+	const char *prop, *p;
+	int off, len;
+
+	prop = fdtbus_get_stdout_path();
+	if (prop == NULL)
+		return -1;
+
+	p = strchr(prop, ':');
+	len = p == NULL ? strlen(prop) : (p - prop);
+	if (*prop != '/') {
+		/* Alias */
+		prop = fdt_get_alias_namelen(fdtbus_get_data(), prop, len);
+		if (prop == NULL)
+			return -1;
+		len = strlen(prop);
+	}
+	off = fdt_path_offset_namelen(fdtbus_get_data(), prop, len);
+	if (off < 0)
+		return -1;
+
+	return fdtbus_offset2phandle(off);
+}
+
+int
+fdtbus_get_stdout_speed(void)
+{
+	const char *prop, *p;
+
+	prop = fdtbus_get_stdout_path();
+	if (prop == NULL)
+		return -1;
+
+	p = strchr(prop, ':');
+	if (p == NULL)
+		return -1;
+
+	return (int)strtoul(p + 1, NULL, 10);
 }
