@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.14 2017/04/16 12:29:40 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.15 2017/04/21 23:36:57 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -18,7 +18,10 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
+# CONSADDR is required for early init messages from VERBOSE_INIT_ARM.
+#options 	CONSADDR=0x70006300, CONSPEED=115200
+
 makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
@@ -87,7 +90,6 @@ athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
 com*		at fdt?			# UART
-options 	CONSADDR=0x70006300, CONSPEED=115200
 
 # I2C
 tegrai2c*	at fdt?			# I2C

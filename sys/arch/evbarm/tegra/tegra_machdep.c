@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.39 2017/04/21 21:13:04 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.40 2017/04/21 23:36:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.39 2017/04/21 21:13:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.40 2017/04/21 23:36:58 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -167,20 +167,14 @@ static struct boot_physmem bp_lowgig = {
 static void
 tegra_putchar(char c)
 {
+#ifdef CONSADDR
 	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
-	int timo = 150000;
 
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0) {
-		if (--timo == 0)
-			break;
-	}
+	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0)
+		;
 
 	uartaddr[com_data] = c;
-
-	while ((uartaddr[com_lsr] & LSR_TXRDY) == 0) {
-		if (--timo == 0)
-			break;
-	}
+#endif
 }
 static void
 tegra_putstr(const char *s)
@@ -251,6 +245,21 @@ initarm(void *arg)
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
+	/* Load FDT */
+	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
+	int error = fdt_check_header(fdt_addr_r);
+	if (error == 0) {
+		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		if (error != 0) {
+			DPRINT(" (fdt_move failed!)\n");
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		}
+		fdtbus_set_data(fdt_data);
+	} else {
+		DPRINT(" (fdt_check_header failed!)\n");
+		panic("fdt_check_header failed: %s", fdt_strerror(error));
+	}
+
 	DPRINT(" consinit");
 	consinit();
 
@@ -271,18 +280,6 @@ initarm(void *arg)
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
-
-	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
-	int error = fdt_check_header(fdt_addr_r);
-	if (error == 0) {
-		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
-		if (error != 0) {
-			panic("fdt_move failed: %s", fdt_strerror(error));
-		}
-		fdtbus_set_data(fdt_data);
-	} else {
-		panic("fdt_check_header failed: %s", fdt_strerror(error));
-	}
 
 	const u_int chip_id = tegra_chip_id();
 	switch (chip_id) {
@@ -383,12 +380,6 @@ initarm(void *arg)
 }
 
 #if NCOM > 0
-#ifndef CONSADDR
-#error Specify the address of the console UART with the CONSADDR option.
-#endif
-#ifndef CONSPEED
-#define CONSPEED 115200
-#endif
 #ifndef CONMODE
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
@@ -404,12 +395,38 @@ consinit(void)
 	consinit_called = true;
 
 #if NCOM > 0
+	bus_addr_t addr;
+	int speed;
+
+#ifdef CONSADDR
+	addr = CONSADDR;
+#else
+	const char *stdout_path = fdtbus_get_stdout_path();
+	if (stdout_path == NULL) {
+		DPRINT(" (can't find stdout-path!)\n");
+		panic("Cannot find console device");
+	}
+	DPRINT(" ");
+	DPRINT(stdout_path);
+	fdtbus_get_reg(fdtbus_get_stdout_phandle(), 0, &addr, NULL);
+#endif
+	DPRINT(" 0x");
+	DPRINTN((uint32_t)addr, 16);
+
+#ifdef CONSPEED
+	speed = CONSPEED;
+#else
+	speed = fdtbus_get_stdout_speed();
+	if (speed < 0)
+		speed = 115200;	/* default */
+#endif
+	DPRINT(" ");
+	DPRINTN((uint32_t)speed, 10);
+
 	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
 	const u_int freq = 408000000;	/* 408MHz PLLP_OUT0 */
-	if (comcnattach(bst, CONSADDR, CONSPEED, freq,
-			COM_TYPE_TEGRA, CONMODE)) {
+	if (comcnattach(bst, addr, speed, freq, COM_TYPE_TEGRA, CONMODE))
 		panic("Serial console cannot be initialized.");
-	}
 #else
 #error only COM console is supported
 #endif
