@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.52 2017/04/19 03:42:11 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.53 2017/04/21 08:38:18 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.52 2017/04/19 03:42:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.53 2017/04/21 08:38:18 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -91,8 +91,7 @@ key_output(struct mbuf *m, struct socket *so)
 	int len, error = 0;
 	int s;
 
-	if (m == 0)
-		panic("key_output: NULL pointer was passed");
+	KASSERT(m != NULL);
 
 	{
 		uint64_t *ps = PFKEY_STAT_GETREF();
@@ -116,8 +115,7 @@ key_output(struct mbuf *m, struct socket *so)
 		}
 	}
 
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("key_output: not M_PKTHDR ??");
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP))
 		kdebug_mbuf(m);
@@ -202,9 +200,8 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 	struct mbuf *m, *n, *mprev;
 	int tlen;
 
-	/* sanity check */
-	if (so == 0 || msg == 0)
-		panic("key_sendup: NULL pointer was passed");
+	KASSERT(so != NULL);
+	KASSERT(msg != NULL);
 
 	if (KEYDEBUG_ON(KEYDEBUG_KEY_DUMP)) {
 		printf("key_sendup: \n");
@@ -299,10 +296,8 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 	int error = 0;
 	int sbprio = 0; /* XXX should be a parameter */
 
-	if (m == NULL)
-		panic("key_sendup_mbuf: NULL pointer was passed");
-	if (so == NULL && target == KEY_SENDUP_ONE)
-		panic("key_sendup_mbuf: NULL pointer was passed");
+	KASSERT(m != NULL);
+	KASSERT(so != NULL);
 
 	/*
 	 * RFC 2367 says ACQUIRE and other kernel-generated messages
