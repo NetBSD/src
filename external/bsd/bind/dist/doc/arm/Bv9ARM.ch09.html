@@ -44,10 +44,11 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl class="toc">
-<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.4-P6</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#id-1.10.2">Release Notes for BIND Version 9.10.4-P8</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_download">Download</a></span></dt>
+<dt><span class="section"><a href="Bv9ARM.ch09.html#root_key">New DNSSEC Root Key</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_security">Security Fixes</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_features">New Features</a></span></dt>
 <dt><span class="section"><a href="Bv9ARM.ch09.html#relnotes_changes">Feature Changes</a></span></dt>
@@ -60,12 +61,17 @@
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id-1.10.2"></a>Release Notes for BIND Version 9.10.4-P6</h2></div></div></div>
+<a name="id-1.10.2"></a>Release Notes for BIND Version 9.10.4-P8</h2></div></div></div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_intro"></a>Introduction</h3></div></div></div>
 <p>
       This document summarizes changes since BIND 9.10.4:
+    </p>
+<p>
+      BIND 9.10.4-P7 addresses the security issue described in
+      CVE-2017-3136, and updates the built in trusted keys for
+      the root zone.
     </p>
 <p>
       BIND 9.10.4-P6 addresses the security issue described in
@@ -109,8 +115,51 @@
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
+<a name="root_key"></a>New DNSSEC Root Key</h3></div></div></div>
+<p>
+      ICANN is in the process of introducing a new Key Signing Key (KSK) for
+      the global root zone. BIND has multiple methods for managing DNSSEC
+      trust anchors, with somewhat different behaviors. If the root
+      key is configured using the <span class="command"><strong>managed-keys</strong></span>
+      statement, or if the pre-configured root key is enabled by using
+      <span class="command"><strong>dnssec-validation auto</strong></span>, then BIND can keep
+      keys up to date automatically. Servers configured in this way
+      will roll seamlessly to the new key when it is published in
+      the root zone. However, keys configured using the
+      <span class="command"><strong>trusted-keys</strong></span> statement are not automatically
+      maintained. If your server is performing DNSSEC validation
+      and is configured using <span class="command"><strong>trusted-keys</strong></span>, you are
+      advised to change your configuration before the root zone begins
+      signing with the new KSK. This is currently scheduled for
+      October 11, 2017.
+    </p>
+<p>
+      This release includes an updated version of the
+      <code class="filename">bind.keys</code> file containing the new root
+      key. This file can also be downloaded from
+      <a class="link" href="https://www.isc.org/bind-keys" target="_top">
+	https://www.isc.org/bind-keys
+      </a>.
+    </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
 <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem"><p>
+	  'rndc ""' could trigger a assertion failure in named. This flaw
+	  is disclosed in (CVE-2017-3138). [RT #44924]
+	</p></li>
+<li class="listitem"><p>
+	  Some chaining (i.e., type CNAME or DNAME) responses to upstream
+	  queries could trigger assertion failures. This flaw is disclosed
+	  in CVE-2017-3137. [RT #44734]
+	</p></li>
+<li class="listitem"><p>
+	  <span class="command"><strong>dns64</strong></span> with <span class="command"><strong>break-dnssec yes;</strong></span>
+	  can result in an assertion failure. This flaw is disclosed in
+	  CVE-2017-3136. [RT #44653]
+	</p></li>
 <li class="listitem"><p>
 	  If a server is configured with a response policy zone (RPZ)
 	  that rewrites an answer with local data, and is also configured
@@ -245,6 +294,6 @@
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P6</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P8</p>
 </body>
 </html>
