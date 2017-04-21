@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.59 2017/04/21 15:10:35 christos Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.60 2017/04/21 19:38:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.59 2017/04/21 15:10:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.60 2017/04/21 19:38:35 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
 		return ENOMEM;
 
 	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED, NULL, 0,
-	    p->p_emul->e_startlwp, arg, &l2, l->l_class, sigmask);
+	    p->p_emul->e_startlwp, arg, &l2, l->l_class, sigmask, &SS_INIT);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
 		return error;
