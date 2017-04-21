@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.335 2017/03/31 08:47:04 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.336 2017/04/21 15:10:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.335 2017/03/31 08:47:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.336 2017/04/21 15:10:35 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -347,9 +347,7 @@ siginit(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigstk.ss_flags = SS_DISABLE;
-	l->l_sigstk.ss_size = 0;
-	l->l_sigstk.ss_sp = 0;
+	l->l_sigstk = SS_INIT;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 
@@ -417,9 +415,7 @@ execsigs(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigstk.ss_flags = SS_DISABLE;
-	l->l_sigstk.ss_size = 0;
-	l->l_sigstk.ss_sp = 0;
+	l->l_sigstk = SS_INIT;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 	mutex_exit(p->p_lock);
