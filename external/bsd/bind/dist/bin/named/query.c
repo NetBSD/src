@@ -1,7 +1,7 @@
-/*	$NetBSD: query.c,v 1.16.2.6 2017/02/20 15:48:20 sborrill Exp $	*/
+/*	$NetBSD: query.c,v 1.16.2.6.2.1 2017/04/21 05:21:03 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -8221,6 +8221,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			result = query_dns64(client, &fname, rdataset,
 					     sigrdataset, dbuf,
 					     DNS_SECTION_ANSWER);
+			noqname = NULL;
 			dns_rdataset_disassociate(rdataset);
 			dns_message_puttemprdataset(client->message, &rdataset);
 			if (result == ISC_R_NOMORE) {
