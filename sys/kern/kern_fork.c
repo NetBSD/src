@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.201 2017/03/31 08:50:54 skrll Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.202 2017/04/21 15:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.201 2017/03/31 08:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.202 2017/04/21 15:10:34 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -434,7 +434,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
-	    l1->l_class);
+	    l1->l_class, &l1->l_sigmask, &l1->l_sigstk);
 
 	/*
 	 * Inherit l_private from the parent.
