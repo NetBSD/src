@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_can.c,v 1.1.2.4 2017/04/20 17:30:52 bouyer Exp $	*/
+/*	$NetBSD: awin_can.c,v 1.1.2.5 2017/04/21 13:08:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.4 2017/04/20 17:30:52 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_can.c,v 1.1.2.5 2017/04/21 13:08:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -168,7 +168,7 @@ awin_can_attach(device_t parent, device_t self, void *aux)
 	sc->sc_timecaps.cltc_brp_min = 1;
 	sc->sc_timecaps.cltc_brp_max = 64;
 	sc->sc_timecaps.cltc_brp_inc = 1;
-	sc->sc_timecaps.cltc_clock_freq = AWIN_REF_FREQ / 2;
+	sc->sc_timecaps.cltc_clock_freq = AWIN_REF_FREQ;
 	sc->sc_timecaps.cltc_linkmode_caps =
 	    CAN_LINKMODE_3SAMPLES | CAN_LINKMODE_LISTENONLY |
 	    CAN_LINKMODE_LOOPBACK;
@@ -274,13 +274,11 @@ awin_can_rx_intr(struct awin_can_softc *sc)
 		}
 	}
 	awin_can_write(sc, AWIN_CAN_CMD_REG, AWIN_CAN_CMD_REL_RX_BUF);
-	m->m_len = m->m_pkthdr.len =
-	    offsetof(struct can_frame, data[0]) + cf->can_dlc;
+	m->m_len = m->m_pkthdr.len = CAN_MTU;
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_len;
 	m_set_rcvif(m, ifp);
 	bpf_mtap(ifp, m);
-	printf("can_input1\n");
 	can_input(ifp, m);
 }
 
@@ -300,7 +298,6 @@ awin_can_tx_intr(struct awin_can_softc *sc)
 		ifp->if_opackets++;
 		can_mbuf_tag_clean(m);
 		m_set_rcvif(m, ifp);
-		printf("can_input2\n");
 		can_input(ifp, m); /* loopback */
 		sc->sc_m_transmit = NULL;
 		ifp->if_timer = 0;
@@ -503,6 +500,14 @@ awin_can_ifup(struct awin_can_softc * const sc)
 
 	awin_can_write(sc, AWIN_CAN_BUS_TIME_REG, reg);
 
+	/* set filters to accept all frames */
+	awin_can_write(sc, AWIN_CAN_ACPC, 0x00000000);
+	awin_can_write(sc, AWIN_CAN_ACPM, 0xffffffff);
+
+	/* clear errors counter */
+	awin_can_write(sc, AWIN_CAN_REC_REG, 0);
+
+	/* leave reset mode and enable interrupts */
 	awin_can_exit_reset(sc);
 	awin_can_write(sc, AWIN_CAN_INTE_REG,
 	    AWIN_CAN_INT_TX_FLAG | AWIN_CAN_INT_RX_FLAG | AWIN_CAN_INT_ALLERRS);
