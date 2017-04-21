@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.177 2017/04/21 09:01:52 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.178 2017/04/21 11:49:31 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.177 2017/04/21 09:01:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.178 2017/04/21 11:49:31 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2311,7 +2311,7 @@ static struct {
 	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
 	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
 	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap},
-	{ PCI_CAP_EA,		"Enhanced Allocation", NULL }
+	{ PCI_CAP_EA,		"Enhanced Allocation", NULL },
 	{ PCI_CAP_FPB,		"Flattening Portal Bridge", NULL }
 };
 
