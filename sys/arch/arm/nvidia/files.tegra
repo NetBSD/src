@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.30 2017/04/11 11:32:51 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.31 2017/04/21 23:35:29 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -141,7 +141,7 @@ attach	nouveau at fdt with tegra_nouveau
 file	arch/arm/nvidia/tegra_nouveau.c		tegra_nouveau
 
 # Console parameters
-defparam opt_tegra.h			CONADDR
+defparam opt_tegra.h			CONSADDR
 defparam opt_tegra.h			CONSPEED
 defparam opt_tegra.h			CONMODE
 
