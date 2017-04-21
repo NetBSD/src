@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.37 2017/04/21 11:28:35 christos Exp $	*/
+/*	$NetBSD: ln.c,v 1.38 2017/04/21 14:46:31 szptvlfn Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993, 1994
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/ln/ln.c 251261 2013-06-02 17:55:00Z eadler $");
 #endif
-__RCSID("$NetBSD: ln.c,v 1.37 2017/04/21 11:28:35 christos Exp $");
+__RCSID("$NetBSD: ln.c,v 1.38 2017/04/21 14:46:31 szptvlfn Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
