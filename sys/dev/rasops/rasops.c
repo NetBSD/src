@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.74 2017/02/23 12:16:30 nonaka Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.75 2017/04/22 15:05:02 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.74 2017/02/23 12:16:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.75 2017/04/22 15:05:02 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -208,7 +208,8 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		flags = WSFONT_FIND_BESTWIDTH | WSFONT_FIND_BITMAP;
 		if ((ri->ri_flg & RI_ENABLE_ALPHA) != 0)
 			flags |= WSFONT_FIND_ALPHA;
-
+		if ((ri->ri_flg & RI_PREFER_ALPHA) != 0)
+			flags |= WSFONT_PREFER_ALPHA;
 		cookie = wsfont_find(NULL,
 			ri->ri_width / wantcols,
 			0,
@@ -376,14 +377,14 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	if ((ri->ri_delta & 3) != 0)
 		panic("rasops_init: ri_delta not aligned on 32-bit boundary");
 #endif
+	ri->ri_origbits = ri->ri_bits;
+	ri->ri_hworigbits = ri->ri_hwbits;
+
 	/* Clear the entire display */
 	if ((ri->ri_flg & RI_CLEAR) != 0)
 		memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
 
 	/* Now centre our window if needs be */
-	ri->ri_origbits = ri->ri_bits;
-	ri->ri_hworigbits = ri->ri_hwbits;
-
 	if ((ri->ri_flg & RI_CENTER) != 0) {
 		ri->ri_bits += (((ri->ri_width * bpp >> 3) -
 		    ri->ri_emustride) >> 1) & ~3;
@@ -1727,7 +1728,7 @@ rasops_make_box_chars_alpha(struct rasops_info *ri)
 		}
 	}
 }
-
+ 
 /*
  * Return a colour map appropriate for the given struct rasops_info in the
  * same form used by rasops_cmap[]
