@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.15 2017/04/21 23:36:57 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.16 2017/04/22 21:50:13 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -97,6 +97,7 @@ iic*		at tegrai2c?
 titemp*		at iic?
 seeprom*	at iic?
 as3722pmic*	at iic?
+as3722reg*	at as3722pmic?
 
 # RTC
 tegrartc*	at fdt?			# RTC
