@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2017/03/02 20:11:19 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2017/04/22 20:19:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2017/03/02 20:11:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2017/04/22 20:19:53 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -502,7 +502,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 	if (uvm_physseg_valid_p(maybe_bank)) {
 		const uvm_physseg_t bank = maybe_bank;
-		
+
 		/*
 		 * There are enough pages here; steal them!
 		 */
