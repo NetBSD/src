@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.31 2017/04/21 23:35:29 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.32 2017/04/22 23:53:24 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -13,14 +13,18 @@ file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
-file	arch/arm/nvidia/tegra_soc.c
-file	arch/arm/nvidia/tegra_cpufreq.c
-file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
-
-# On-board I/O
+# Devicetree
 device	tegrafdt : bus_space_generic, fdtbus
 attach	tegrafdt at mainbus with tegra_fdt
 file	arch/arm/nvidia/tegra_fdt.c		tegra_fdt
+
+file	arch/arm/nvidia/tegra_soc.c
+file	arch/arm/nvidia/tegra_cpufreq.c
+
+# Tegra T124 (32-bit K1) support
+device	tegra124cpu
+attach	tegra124cpu at fdt with tegra124_cpu
+file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124 | tegra124_cpu
 
 # Interrupt controller
 device	tegralic

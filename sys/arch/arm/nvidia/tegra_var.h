@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.32 2017/04/21 21:13:04 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.33 2017/04/22 23:53:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,6 @@ u_int	tegra_chip_id(void);
 const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
 void	tegra_dma_bootstrap(psize_t);
-void	tegra_cpuinit(void);
 
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
@@ -103,10 +102,8 @@ struct tegra_cpufreq_func {
 	size_t (*get_available)(u_int *, size_t);
 };
 void	tegra_cpufreq_register(const struct tegra_cpufreq_func *);
-void	tegra_cpufreq_init(void);
 
 #if defined(SOC_TEGRA124)
-void	tegra124_cpuinit(void);
 void	tegra124_mpinit(void);
 #endif
 
