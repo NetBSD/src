@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.15 2017/04/17 00:43:42 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.16 2017/04/22 23:53:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.15 2017/04/17 00:43:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.16 2017/04/22 23:53:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.15 2017/04/17 00:43:42 jmcneill E
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/clk/clk.h>
-#include <dev/i2c/i2cvar.h>
 #include <dev/fdt/fdtvar.h>
 
 #include <arm/cpufunc.h>
@@ -71,6 +69,13 @@ static u_int	tegra124_cpufreq_set_rate(u_int);
 static u_int	tegra124_cpufreq_get_rate(void);
 static size_t	tegra124_cpufreq_get_available(u_int *, size_t);
 
+static int	tegra124_cpu_match(device_t, cfdata_t, void *);
+static void	tegra124_cpu_attach(device_t, device_t, void *);
+static void	tegra124_cpu_init_cpufreq(device_t);
+
+CFATTACH_DECL_NEW(tegra124_cpu, 0, tegra124_cpu_match, tegra124_cpu_attach,
+    NULL, NULL);
+
 static const struct tegra_cpufreq_func tegra124_cpufreq_func = {
 	.set_rate = tegra124_cpufreq_set_rate,
 	.get_rate = tegra124_cpufreq_get_rate,
@@ -82,16 +87,17 @@ static struct tegra124_cpufreq_rate {
 	u_int divm;
 	u_int divn;
 	u_int divp;
+	u_int uvol;
 } tegra124_cpufreq_rates[] = {
-	{ 2316, 1, 193, 0 },
-	{ 2100, 1, 175, 0 },
-	{ 1896, 1, 158, 0 },
-	{ 1692, 1, 141, 0 },
-	{ 1500, 1, 125, 0 },
-	{ 1296, 1, 108, 0 },
-	{ 1092, 1, 91, 0 },
-	{ 900, 1, 75, 0 },
-	{ 696, 1, 58, 0 }
+	{ 2316, 1, 193, 0, 1400000 },
+	{ 2100, 1, 175, 0, 1400000 },
+	{ 1896, 1, 158, 0, 1400000 },
+	{ 1692, 1, 141, 0, 1400000 },
+	{ 1500, 1, 125, 0, 1400000 },
+	{ 1296, 1, 108, 0, 1400000 },
+	{ 1092, 1, 91,  0, 1400000 },
+	{ 900,  1, 75,  0, 1400000 },
+	{ 696,  1, 58,  0, 1400000 }
 };
 
 static const u_int tegra124_cpufreq_max[] = {
@@ -112,42 +118,46 @@ static struct tegra124_speedo {
 };
 
 static struct clk *tegra124_clk_pllx = NULL;
+static struct fdtbus_regulator *tegra124_reg_vddcpu = NULL;
 
-void
-tegra124_cpuinit(void)
+static int
+tegra124_cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	int i2c_node = OF_finddevice("/i2c@7000d000");
-	if (i2c_node == -1)
-		i2c_node = OF_finddevice("/i2c@0,7000d000"); /* old DTB */
-	if (i2c_node == -1) {
-		aprint_error("cpufreq: ERROR: couldn't find i2c@7000d000\n");
-		return;
-	}
-	i2c_tag_t ic = fdtbus_get_i2c_tag(i2c_node);
+	const char * const compatible[] = { "nvidia,tegra124", NULL };
+	struct fdt_attach_args *faa = aux;
 
-	/* Set VDD_CPU voltage to 1.4V */
-	const u_int target_mv = 1400;
-	const u_int sd0_vsel = (target_mv - 600) / 10;
-	uint8_t data[2] = { 0x00, sd0_vsel };
+	if (OF_finddevice("/cpus") != faa->faa_phandle)
+		return 0;
 
-	iic_acquire_bus(ic, I2C_F_POLL);
-	const int error = iic_exec(ic, I2C_OP_WRITE_WITH_STOP, 0x40,
-	    NULL, 0, data, sizeof(data), I2C_F_POLL);
-	iic_release_bus(ic, I2C_F_POLL);
-	if (error) {
-		aprint_error("cpufreq: ERROR: couldn't set VDD_CPU: %d\n",
-		    error);
-		return;
-	}
-	delay(10000);
+	return of_match_compatible(OF_finddevice("/"), compatible);
+}
 
+static void
+tegra124_cpu_attach(device_t parent, device_t self, void *aux)
+{
+	aprint_naive("\n");
+	aprint_normal(": CPU complex\n");
+
+	config_defer(self, tegra124_cpu_init_cpufreq);
+}
+
+static void
+tegra124_cpu_init_cpufreq(device_t dev)
+{
 	tegra124_speedo_init();
 
 	int cpu_node = OF_finddevice("/cpus/cpu@0");
-	if (cpu_node != -1)
+	if (cpu_node != -1) {
 		tegra124_clk_pllx = fdtbus_clock_get(cpu_node, "pll_x");
+		tegra124_reg_vddcpu = fdtbus_regulator_acquire(cpu_node,
+		    "vdd-cpu-supply");
+	}
 	if (tegra124_clk_pllx == NULL) {
-		aprint_error("cpufreq: ERROR: couldn't find pll_x\n");
+		aprint_error_dev(dev, "couldn't find clock pll_x\n");
+		return;
+	}
+	if (tegra124_reg_vddcpu == NULL) {
+		aprint_error_dev(dev, "couldn't find voltage regulator\n");
 		return;
 	}
 
@@ -226,6 +236,7 @@ tegra124_cpufreq_set_rate(u_int rate)
 	const struct tegra124_cpufreq_rate *r = NULL;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
+	u_int cur_uvol;
 	int error;
 
 	if (tegra124_speedo_rate_ok(rate) == false)
@@ -240,12 +251,28 @@ tegra124_cpufreq_set_rate(u_int rate)
 	if (r == NULL)
 		return EINVAL;
 
+	error = fdtbus_regulator_get_voltage(tegra124_reg_vddcpu, &cur_uvol);
+	if (error != 0)
+		return error;
+
+	if (cur_uvol < r->uvol) {
+		error = fdtbus_regulator_set_voltage(tegra124_reg_vddcpu,
+		    r->uvol, r->uvol);
+		if (error != 0)
+			return error;
+	}
+
 	error = clk_set_rate(tegra124_clk_pllx, r->rate * 1000000);
 	if (error == 0) {
 		rate = tegra124_cpufreq_get_rate();
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			ci->ci_data.cpu_cc_freq = rate * 1000000;
 		}
+	}
+
+	if (cur_uvol > r->uvol) {
+		(void)fdtbus_regulator_set_voltage(tegra124_reg_vddcpu,
+		    r->uvol, r->uvol);
 	}
 
 	return error;
