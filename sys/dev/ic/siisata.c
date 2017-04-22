@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.7 2017/04/22 13:40:50 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.8 2017/04/22 14:08:38 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.7 2017/04/22 13:40:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.8 2017/04/22 14:08:38 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1640,11 +1640,12 @@ out:
 
 int
 siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
-    int slot)
+    int is)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_scsipi;
+	int slot = SIISATA_NON_NCQ_SLOT;
 
 	SIISATA_DEBUG_PRINT(
 	    ("%s: %s()\n", SIISATANAME(sc), __func__), DEBUG_INTR);
