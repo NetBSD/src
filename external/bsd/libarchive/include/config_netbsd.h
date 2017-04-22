@@ -606,7 +606,7 @@
 /* #undef HAVE_LIBCHARSET */
 
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
-#define HAVE_LIBCRYPTO 1
+/* #undef1 HAVE_LIBCRYPTO */
 
 /* Define to 1 if you have the `eay32' library (-leay32). */
 /* #undef HAVE_LIBEAY32 */
