@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.8 2017/04/22 23:46:29 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.9 2017/04/22 23:50:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.8 2017/04/22 23:46:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.9 2017/04/22 23:50:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,6 @@ struct as3722_softc {
 
 	struct sysmon_wdog sc_smw;
 	struct todr_chip_handle sc_todr;
-
-	uint8_t		sc_fuse[8];
 };
 
 #ifdef FDT
