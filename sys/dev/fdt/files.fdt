@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.9 2017/04/16 12:29:20 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.10 2017/04/22 13:24:20 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -30,4 +30,5 @@ file	dev/fdt/fdt_i2c.c			fdtbus
 file	dev/fdt/fdt_intr.c			fdtbus
 file	dev/fdt/fdt_regulator.c			fdtbus
 file	dev/fdt/fdt_reset.c			fdtbus
+file	dev/fdt/fdt_rtc.c			fdtbus
 file	dev/fdt/fdt_pinctrl.c			fdtbus
