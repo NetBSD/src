@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.51 2017/02/03 23:16:38 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.52 2017/04/22 15:54:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.51 2017/02/03 23:16:38 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.52 2017/04/22 15:54:53 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -761,6 +761,8 @@ fdflagscmd(int argc, char *argv[])
 	while ((num = *argv++) != NULL) {
 		int fd = number(num);
 
+		while (num[0] == '0' && num[1] != '\0')		/* skip 0's */
+			num++;
 		if (strlen(num) > 5)
 			error("%s too big to be a file descriptor", num);
 
