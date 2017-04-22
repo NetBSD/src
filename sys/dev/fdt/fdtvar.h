@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.10 2017/04/21 23:35:01 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.11 2017/04/22 13:24:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,8 @@
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/clk/clk.h>
+
+#include <dev/clock_subr.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -158,6 +160,8 @@ struct fdtbus_reset *fdtbus_reset_get_index(int, u_int);
 void		fdtbus_reset_put(struct fdtbus_reset *);
 int		fdtbus_reset_assert(struct fdtbus_reset *);
 int		fdtbus_reset_deassert(struct fdtbus_reset *);
+
+int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
 
 bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);
