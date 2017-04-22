@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fdt.c,v 1.4 2017/04/16 12:27:47 jmcneill Exp $ */
+/* $NetBSD: tegra_fdt.c,v 1.5 2017/04/22 23:53:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.4 2017/04/16 12:27:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.5 2017/04/22 23:53:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,4 @@ tegrafdt_attach(device_t parent, device_t self, void *aux)
 		.faa_phandle = OF_peer(0),
 	};
 	config_found(self, &faa, NULL);
-
-	tegra_cpuinit();
 }
