@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.18 2017/04/22 17:41:20 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.19 2017/04/22 21:50:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.18 2017/04/22 17:41:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.19 2017/04/22 21:50:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,7 @@ static void	tegra_sdhc_attach(device_t, device_t, void *);
 
 static int	tegra_sdhc_card_detect(struct sdhc_softc *);
 static int	tegra_sdhc_write_protect(struct sdhc_softc *);
+static int	tegra_sdhc_signal_voltage(struct sdhc_softc *, int);
 
 struct tegra_sdhc_softc {
 	struct sdhc_softc	sc;
@@ -70,6 +71,8 @@ struct tegra_sdhc_softc {
 	struct fdtbus_gpio_pin	*sc_pin_cd;
 	struct fdtbus_gpio_pin	*sc_pin_power;
 	struct fdtbus_gpio_pin	*sc_pin_wp;
+
+	struct fdtbus_regulator	*sc_reg_vqmmc;
 };
 
 CFATTACH_DECL_NEW(tegra_sdhc, sizeof(struct tegra_sdhc_softc),
@@ -154,6 +157,12 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 	}
 
+	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(faa->faa_phandle,
+	    "vqmmc-supply");
+	if (sc->sc_reg_vqmmc) {
+		sc->sc.sc_vendor_signal_voltage = tegra_sdhc_signal_voltage;
+	}
+
 	sc->sc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
 	if (sc->sc_clk == NULL) {
 		aprint_error(": couldn't get clock\n");
@@ -234,4 +243,31 @@ tegra_sdhc_write_protect(struct sdhc_softc *ssc)
 	KASSERT(sc->sc_pin_wp != NULL);
 
 	return fdtbus_gpio_read(sc->sc_pin_wp);
+}
+
+static int
+tegra_sdhc_signal_voltage(struct sdhc_softc *ssc, int signal_voltage)
+{
+	struct tegra_sdhc_softc *sc = device_private(ssc->sc_dev);
+	u_int uvol;
+	int error;
+
+	KASSERT(sc->sc_reg_vqmmc != NULL);
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		uvol = 3300000;
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		uvol = 1800000;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	error = fdtbus_regulator_set_voltage(sc->sc_reg_vqmmc, uvol, uvol);
+	if (error != 0)
+		return error;
+
+	return fdtbus_regulator_enable(sc->sc_reg_vqmmc);
 }
