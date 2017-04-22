@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_regulator.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
+/* $NetBSD: fdt_regulator.c,v 1.3 2017/04/22 21:47:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_regulator.c,v 1.3 2017/04/22 21:47:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,4 +130,27 @@ fdtbus_regulator_disable(struct fdtbus_regulator *reg)
 	struct fdtbus_regulator_controller *rc = reg->reg_rc;
 
 	return rc->rc_funcs->enable(rc->rc_dev, false);
+}
+
+int
+fdtbus_regulator_set_voltage(struct fdtbus_regulator *reg, u_int min_uvol,
+    u_int max_uvol)
+{
+	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+
+	if (rc->rc_funcs->set_voltage == NULL)
+		return EINVAL;
+
+	return rc->rc_funcs->set_voltage(rc->rc_dev, min_uvol, max_uvol);
+}
+
+int
+fdtbus_regulator_get_voltage(struct fdtbus_regulator *reg, u_int *puvol)
+{
+	struct fdtbus_regulator_controller *rc = reg->reg_rc;
+
+	if (rc->rc_funcs->set_voltage == NULL)
+		return EINVAL;
+
+	return rc->rc_funcs->get_voltage(rc->rc_dev, puvol);
 }
