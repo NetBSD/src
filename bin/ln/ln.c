@@ -1,4 +1,4 @@
-/*	$NetBSD: ln.c,v 1.38 2017/04/21 14:46:31 szptvlfn Exp $	*/
+/*	$NetBSD: ln.c,v 1.39 2017/04/22 12:22:31 kre Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/ln/ln.c 251261 2013-06-02 17:55:00Z eadler $");
 #endif
-__RCSID("$NetBSD: ln.c,v 1.38 2017/04/21 14:46:31 szptvlfn Exp $");
+__RCSID("$NetBSD: ln.c,v 1.39 2017/04/22 12:22:31 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -96,7 +96,9 @@ main(int argc, char *argv[])
 		argv += optind;
 		if (argc != 2)
 			usage();
-		exit(linkit(argv[0], argv[1], 0));
+		if (link(argv[0], argv[1]) == -1)
+			err(EXIT_FAILURE, NULL);
+		exit(EXIT_SUCCESS);
 	}
 
 	while ((ch = getopt(argc, argv, "FLPfhinsvw")) != -1)
