@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.7 2017/04/22 21:48:56 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.8 2017/04/22 23:46:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.7 2017/04/22 21:48:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.8 2017/04/22 23:46:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.7 2017/04/22 21:48:56 jmcneill Exp $");
 #endif
 
 #define AS3722_START_YEAR		2000
+
+#define AS3722_SD0_VOLTAGE_REG		0x00
 
 #define AS3722_GPIO0_CTRL_REG		0x08
 #define AS3722_GPIO0_CTRL_INVERT	__BIT(7)
@@ -102,23 +104,37 @@ struct as3722_softc {
 
 	struct sysmon_wdog sc_smw;
 	struct todr_chip_handle sc_todr;
+
+	uint8_t		sc_fuse[8];
 };
 
 #ifdef FDT
+static int	as3722reg_set_voltage_sd0(device_t, u_int, u_int);
+static int	as3722reg_get_voltage_sd0(device_t, u_int *);
+static int	as3722reg_set_voltage_ldo(device_t, u_int, u_int);
+static int	as3722reg_get_voltage_ldo(device_t, u_int *);
+
 static const struct as3722regdef {
 	const char	*name;
 	u_int		vsel_reg;
 	u_int		vsel_mask;
 	u_int		enable_reg;
 	u_int		enable_mask;
-	u_int		n_voltages;
+	int		(*set)(device_t, u_int, u_int);
+	int		(*get)(device_t, u_int *);
 } as3722regdefs[] = {
+	{ .name = "sd0",
+	  .vsel_reg = AS3722_SD0_VOLTAGE_REG,
+	  .vsel_mask = 0x7f,
+	  .set = as3722reg_set_voltage_sd0,
+	  .get = as3722reg_get_voltage_sd0 },
 	{ .name = "ldo6",
 	  .vsel_reg = AS3722_LDO6_VOLTAGE_REG,
 	  .vsel_mask = 0x7f,
 	  .enable_reg = AS3722_LDOCONTROL0_REG,
 	  .enable_mask = 0x40,
-	  .n_voltages = 0x80 },
+	  .set = as3722reg_set_voltage_ldo,
+	  .get = as3722reg_get_voltage_ldo },
 };
 
 struct as3722reg_softc {
@@ -513,6 +529,9 @@ as3722reg_enable(device_t dev, bool enable)
 	const int flags = (cold ? I2C_F_POLL : 0);
 	int error;
 
+	if (!regdef->enable_mask)
+		return enable ? 0 : EINVAL;
+
 	iic_acquire_bus(asc->sc_i2c, flags);
 	if (enable)
 		error = as3722_set_clear(asc, regdef->enable_reg,
@@ -526,7 +545,7 @@ as3722reg_enable(device_t dev, bool enable)
 }
 
 static int
-as3722reg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
+as3722reg_set_voltage_ldo(device_t dev, u_int min_uvol, u_int max_uvol)
 {
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
@@ -563,7 +582,7 @@ done:
 }
 
 static int
-as3722reg_get_voltage(device_t dev, u_int *puvol)
+as3722reg_get_voltage_ldo(device_t dev, u_int *puvol)
 {
 	struct as3722reg_softc *sc = device_private(dev);
 	struct as3722_softc *asc = device_private(device_parent(dev));
@@ -590,6 +609,82 @@ as3722reg_get_voltage(device_t dev, u_int *puvol)
 		return EINVAL;
 
 	return 0;
+}
+
+static int
+as3722reg_set_voltage_sd0(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t set_v = 0x00;
+	u_int uvol;
+	int error;
+
+	for (uint8_t v = 0x01; v <= 0x5a; v++) {
+		uvol = 600000 + (v * 10000);
+		if (uvol >= min_uvol && uvol <= max_uvol) {
+			set_v = v;
+			goto done;
+		}
+	}
+	if (set_v == 0)
+		return ERANGE;
+
+done:
+	iic_acquire_bus(asc->sc_i2c, flags);
+	error = as3722_set_clear(asc, regdef->vsel_reg, set_v,
+	    regdef->vsel_mask, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+
+	return error;
+}
+
+static int
+as3722reg_get_voltage_sd0(device_t dev, u_int *puvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t v;
+	int error;
+
+	iic_acquire_bus(asc->sc_i2c, flags);
+	error = as3722_read(asc, regdef->vsel_reg, &v, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+	if (error != 0)
+		return error;
+
+	v &= regdef->vsel_mask;
+
+	if (v == 0)
+		*puvol = 0;	/* DC/DC powered down */
+	else if (v >= 0x01 && v <= 0x5a)
+		*puvol = 600000 + (v * 10000);
+	else
+		return EINVAL;
+
+	return 0;
+}
+
+static int
+as3722reg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	const struct as3722regdef *regdef = sc->sc_regdef;
+
+	return regdef->set(dev, min_uvol, max_uvol);
+}
+
+static int
+as3722reg_get_voltage(device_t dev, u_int *puvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	const struct as3722regdef *regdef = sc->sc_regdef;
+
+	return regdef->get(dev, puvol);
 }
 #endif
 
