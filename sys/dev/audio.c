@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.326 2017/04/17 22:40:06 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.327 2017/04/22 10:37:51 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.326 2017/04/17 22:40:06 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327 2017/04/22 10:37:51 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3598,11 +3598,16 @@ audio_pint(void *v)
 		cv_broadcast(&sc->sc_wchan);
 	}
 
-	if (audio_stream_get_used(&sc->sc_pr.s) < blksize)
-		goto wake_mix;
-
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
 	    vc->sc_mpr.s.outp, blksize);
+
+	if (audio_stream_get_used(&sc->sc_pr.s) < blksize) {
+		audio_fill_silence(&vc->sc_pparams, vc->sc_mpr.s.inp,
+		    vc->sc_mpr.blksize);
+		vc->sc_mpr.s.inp = audio_stream_add_inp(&vc->sc_mpr.s,
+		    vc->sc_mpr.s.inp, blksize);
+		goto wake_mix;
+	}
 
 	mix_write(sc);
 
