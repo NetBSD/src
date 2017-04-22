@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.9 2017/04/19 21:42:39 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.10 2017/04/22 20:07:54 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.9 2017/04/19 21:42:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.10 2017/04/22 20:07:54 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -2249,7 +2249,7 @@ wdioctlstrategy(struct buf *bp)
 		printf("wdioctlstrategy: "
 		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
-		goto out;
+		goto out2;
 	}
 
 	ata_xfer_init(&xfer, true);
@@ -2342,6 +2342,7 @@ wdioctlstrategy(struct buf *bp)
 
 out:
 	ata_xfer_destroy(&xfer);
+out2:
 	bp->b_error = error;
 	if (error)
 		bp->b_resid = bp->b_bcount;
