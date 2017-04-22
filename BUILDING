@@ -717,12 +717,11 @@ BUILDING
 
      install-image
                    Create a bootable NetBSD installation disk image in the
-                   RELEASEDIR/RELEASEMACHINEDIR/installation/installimage
-                   directory.  The installation disk image is suitable for
-                   copying to bootable USB flash memory sticks, etc., for
-                   machines which are able to boot from such devices.  The
-                   file system in the bootable disk image will have a layout
-                   as described in release(7).
+                   RELEASEDIR/images directory.  The installation disk image
+                   is suitable for copying to bootable USB flash memory
+                   sticks, etc., for machines which are able to boot from such
+                   devices.  The file system in the bootable disk image will
+                   have a layout as described in release(7).
 
                    The installation image is bootable, and will automatically
                    run the sysinst(8) menu-based installation program, which
