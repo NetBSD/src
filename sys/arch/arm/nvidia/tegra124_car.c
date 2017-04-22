@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.10 2017/04/16 12:28:21 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.11 2017/04/22 17:40:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.10 2017/04/16 12:28:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.11 2017/04/22 17:40:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1204,6 +1204,16 @@ tegra124_car_clock_get_rate_fixed_div(struct tegra124_car_softc *sc,
 }
 
 static u_int
+tegra124_car_clock_calc_rate_frac_div(u_int rate, u_int raw_div)
+{
+	raw_div += 2;
+	rate *= 2;
+	rate += raw_div - 1;
+	rate /= raw_div;
+	return rate;
+}
+
+static u_int
 tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
     struct tegra_clk *tclk)
 {
@@ -1235,13 +1245,15 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	case CAR_CLKSRC_UARTC_REG:
 	case CAR_CLKSRC_UARTD_REG:
 		if (v & CAR_CLKSRC_UART_DIV_ENB) {
-			rate = parent_rate * 2 / (raw_div + 2);
+			rate = tegra124_car_clock_calc_rate_frac_div(
+			    parent_rate, raw_div);
 		} else {
 			rate = parent_rate;
 		}
 		break;
 	default:
-		rate = parent_rate * 2 / (raw_div + 2);
+		rate = tegra124_car_clock_calc_rate_frac_div(parent_rate,
+		    raw_div);
 		break;
 	}
 
@@ -1300,6 +1312,22 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 	case CAR_CLKSRC_I2C6_REG:
 		if (rate)
 			raw_div = parent_rate / rate - 1;
+		break;
+	case CAR_CLKSRC_SDMMC1_REG:
+	case CAR_CLKSRC_SDMMC2_REG:
+	case CAR_CLKSRC_SDMMC3_REG:
+	case CAR_CLKSRC_SDMMC4_REG:
+		if (rate) {
+			for (raw_div = 0x00; raw_div <= 0xff; raw_div++) {
+				u_int calc_rate =
+				    tegra124_car_clock_calc_rate_frac_div(
+					parent_rate, raw_div);
+				if (calc_rate <= rate)
+					break;
+			}
+			if (raw_div == 0x100)
+				return EINVAL;
+		}
 		break;
 	default:
 		if (rate)
