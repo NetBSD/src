@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.5 2016/07/23 19:14:36 jakllsch Exp $ */
+/* $NetBSD: as3722.c,v 1.6 2017/04/22 13:26:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_fdt.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.5 2016/07/23 19:14:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.6 2017/04/22 13:26:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,10 +40,18 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.5 2016/07/23 19:14:36 jakllsch Exp $");
 #include <sys/kmem.h>
 #include <sys/wdog.h>
 
+#include <dev/clock_subr.h>
+
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/as3722.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
+#define AS3722_START_YEAR		2000
 
 #define AS3722_GPIO0_CTRL_REG		0x08
 #define AS3722_GPIO0_CTRL_INVERT	__BIT(7)
@@ -66,6 +76,17 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.5 2016/07/23 19:14:36 jakllsch Exp $");
 #define AS3722_WATCHDOG_SIGNAL_PWM_DIV	__BITS(7,6)
 #define AS3722_WATCHDOG_SIGNAL_SW_SIG	__BIT(0)
 
+#define AS3722_RTC_CONTROL_REG		0x60
+#define AS3722_RTC_CONTROL_RTC_ON	__BIT(2)
+
+#define AS3722_RTC_SECOND_REG		0x61
+#define AS3722_RTC_MINUTE_REG		0x62
+#define AS3722_RTC_HOUR_REG		0x63
+#define AS3722_RTC_DAY_REG		0x64
+#define AS3722_RTC_MONTH_REG		0x65
+#define AS3722_RTC_YEAR_REG		0x66
+#define AS3722_RTC_ACCESS_REG		0x6f
+
 #define AS3722_ASIC_ID1_REG		0x90
 #define AS3722_ASIC_ID2_REG		0x91
 
@@ -73,8 +94,10 @@ struct as3722_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
+	int		sc_phandle;
 
 	struct sysmon_wdog sc_smw;
+	struct todr_chip_handle sc_todr;
 };
 
 #define AS3722_WATCHDOG_DEFAULT_PERIOD	10
@@ -82,8 +105,13 @@ struct as3722_softc {
 static int	as3722_match(device_t, cfdata_t, void *);
 static void	as3722_attach(device_t, device_t, void *);
 
+static void	as3722_wdt_attach(struct as3722_softc *);
 static int	as3722_wdt_setmode(struct sysmon_wdog *);
 static int	as3722_wdt_tickle(struct sysmon_wdog *);
+
+static void	as3722_rtc_attach(struct as3722_softc *);
+static int	as3722_rtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
+static int	as3722_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
 static int	as3722_read(struct as3722_softc *, uint8_t, uint8_t *, int);
 static int	as3722_write(struct as3722_softc *, uint8_t, uint8_t, int);
@@ -126,14 +154,23 @@ as3722_attach(device_t parent, device_t self, void *aux)
 {
 	struct as3722_softc * const sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+	sc->sc_phandle = ia->ia_cookie;
 
 	aprint_naive("\n");
 	aprint_normal(": AMS AS3722\n");
+
+	as3722_wdt_attach(sc);
+	as3722_rtc_attach(sc);
+}
+
+static void
+as3722_wdt_attach(struct as3722_softc *sc)
+{
+	int error;
 
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
 	error = as3722_write(sc, AS3722_GPIO0_CTRL_REG,
@@ -146,20 +183,47 @@ as3722_attach(device_t parent, device_t self, void *aux)
 	    __SHIFTIN(1, AS3722_WATCHDOG_CTRL_MODE), 0, I2C_F_POLL);
 	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
 
-	if (error)
-		aprint_error_dev(self, "couldn't setup watchdog\n");
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't setup watchdog\n");
+		return;
+	}
 
-	sc->sc_smw.smw_name = device_xname(self);
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = as3722_wdt_setmode;
 	sc->sc_smw.smw_tickle = as3722_wdt_tickle;
 	sc->sc_smw.smw_period = AS3722_WATCHDOG_DEFAULT_PERIOD;
 
-	aprint_normal_dev(self, "default watchdog period is %u seconds\n",
+	aprint_normal_dev(sc->sc_dev, "default watchdog period is %u seconds\n",
 	    sc->sc_smw.smw_period);
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		aprint_error_dev(self, "couldn't register with sysmon\n");
+		aprint_error_dev(sc->sc_dev, "couldn't register with sysmon\n");
+}
+
+static void
+as3722_rtc_attach(struct as3722_softc *sc)
+{
+	int error;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	error = as3722_set_clear(sc, AS3722_RTC_CONTROL_REG,
+	    AS3722_RTC_CONTROL_RTC_ON, 0, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't setup RTC\n");
+		return;
+	}
+
+	sc->sc_todr.todr_gettime_ymdhms = as3722_rtc_gettime;
+	sc->sc_todr.todr_settime_ymdhms = as3722_rtc_settime;
+	sc->sc_todr.cookie = sc;
+#ifdef FDT
+	fdtbus_todr_attach(sc->sc_dev, sc->sc_phandle, &sc->sc_todr);
+#else
+	todr_attach(&sc->sc_todr);
+#endif
 }
 
 static int
@@ -241,6 +305,69 @@ as3722_wdt_tickle(struct sysmon_wdog *smw)
 	iic_acquire_bus(sc->sc_i2c, flags);
 	error = as3722_set_clear(sc, AS3722_WATCHDOG_SIGNAL_REG,
 	    AS3722_WATCHDOG_SIGNAL_SW_SIG, 0, flags);
+	iic_release_bus(sc->sc_i2c, flags);
+
+	return error;
+}
+
+static int
+as3722_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct as3722_softc * const sc = tch->cookie;
+	uint8_t buf[6];
+	int error = 0;
+
+	const int flags = (cold ? I2C_F_POLL : 0);
+
+	iic_acquire_bus(sc->sc_i2c, flags);
+	error += as3722_read(sc, AS3722_RTC_SECOND_REG, &buf[0], flags);
+	error += as3722_read(sc, AS3722_RTC_MINUTE_REG, &buf[1], flags);
+	error += as3722_read(sc, AS3722_RTC_HOUR_REG, &buf[2], flags);
+	error += as3722_read(sc, AS3722_RTC_DAY_REG, &buf[3], flags);
+	error += as3722_read(sc, AS3722_RTC_MONTH_REG, &buf[4], flags);
+	error += as3722_read(sc, AS3722_RTC_YEAR_REG, &buf[5], flags);
+	iic_release_bus(sc->sc_i2c, flags);
+
+	if (error)
+		return error;
+
+	dt->dt_sec = bcdtobin(buf[0] & 0x7f);
+	dt->dt_min = bcdtobin(buf[1] & 0x7f);
+	dt->dt_hour = bcdtobin(buf[2] & 0x3f);
+	dt->dt_day = bcdtobin(buf[3] & 0x3f);
+	dt->dt_mon = bcdtobin(buf[4] & 0x1f) - 1;
+	dt->dt_year = AS3722_START_YEAR + bcdtobin(buf[5] & 0x7f);
+	dt->dt_wday = 0;
+
+	return 0;
+}
+
+static int
+as3722_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct as3722_softc * const sc = tch->cookie;
+	uint8_t buf[6];
+	int error = 0;
+
+	if (dt->dt_year < AS3722_START_YEAR)
+		return EINVAL;
+
+	buf[0] = bintobcd(dt->dt_sec) & 0x7f;
+	buf[1] = bintobcd(dt->dt_min) & 0x7f;
+	buf[2] = bintobcd(dt->dt_hour) & 0x3f;
+	buf[3] = bintobcd(dt->dt_day) & 0x3f;
+	buf[4] = bintobcd(dt->dt_mon + 1) & 0x1f;
+	buf[5] = bintobcd(dt->dt_year - AS3722_START_YEAR) & 0x7f;
+
+	const int flags = (cold ? I2C_F_POLL : 0);
+
+	iic_acquire_bus(sc->sc_i2c, flags);
+	error += as3722_write(sc, AS3722_RTC_SECOND_REG, buf[0], flags);
+	error += as3722_write(sc, AS3722_RTC_MINUTE_REG, buf[1], flags);
+	error += as3722_write(sc, AS3722_RTC_HOUR_REG, buf[2], flags);
+	error += as3722_write(sc, AS3722_RTC_DAY_REG, buf[3], flags);
+	error += as3722_write(sc, AS3722_RTC_MONTH_REG, buf[4], flags);
+	error += as3722_write(sc, AS3722_RTC_YEAR_REG, buf[5], flags);
 	iic_release_bus(sc->sc_i2c, flags);
 
 	return error;
