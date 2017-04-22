@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.6 2017/04/22 13:26:05 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.7 2017/04/22 21:48:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.6 2017/04/22 13:26:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.7 2017/04/22 21:48:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.6 2017/04/22 13:26:05 jmcneill Exp $");
 #define AS3722_GPIO0_CTRL_MODE		__BITS(2,0)
 #define AS3722_GPIO0_CTRL_MODE_PULLDOWN	5
 
+#define AS3722_LDO6_VOLTAGE_REG		0x16
+
 #define AS3722_RESET_CTRL_REG		0x36
 #define AS3722_RESET_CTRL_POWER_OFF	__BIT(1)
 #define AS3722_RESET_CTRL_FORCE_RESET	__BIT(0)
@@ -75,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.6 2017/04/22 13:26:05 jmcneill Exp $");
 #define AS3722_WATCHDOG_SIGNAL_REG	0x48
 #define AS3722_WATCHDOG_SIGNAL_PWM_DIV	__BITS(7,6)
 #define AS3722_WATCHDOG_SIGNAL_SW_SIG	__BIT(0)
+
+#define AS3722_LDOCONTROL0_REG		0x4e
 
 #define AS3722_RTC_CONTROL_REG		0x60
 #define AS3722_RTC_CONTROL_RTC_ON	__BIT(2)
@@ -100,6 +104,35 @@ struct as3722_softc {
 	struct todr_chip_handle sc_todr;
 };
 
+#ifdef FDT
+static const struct as3722regdef {
+	const char	*name;
+	u_int		vsel_reg;
+	u_int		vsel_mask;
+	u_int		enable_reg;
+	u_int		enable_mask;
+	u_int		n_voltages;
+} as3722regdefs[] = {
+	{ .name = "ldo6",
+	  .vsel_reg = AS3722_LDO6_VOLTAGE_REG,
+	  .vsel_mask = 0x7f,
+	  .enable_reg = AS3722_LDOCONTROL0_REG,
+	  .enable_mask = 0x40,
+	  .n_voltages = 0x80 },
+};
+
+struct as3722reg_softc {
+	device_t	sc_dev;
+	int		sc_phandle;
+	const struct as3722regdef *sc_regdef;
+};
+
+struct as3722reg_attach_args {
+	const struct as3722regdef *reg_def;
+	int		reg_phandle;
+};
+#endif
+
 #define AS3722_WATCHDOG_DEFAULT_PERIOD	10
 
 static int	as3722_match(device_t, cfdata_t, void *);
@@ -113,6 +146,26 @@ static void	as3722_rtc_attach(struct as3722_softc *);
 static int	as3722_rtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);
 static int	as3722_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 
+#ifdef FDT
+static void	as3722_regulator_attach(struct as3722_softc *);
+static int	as3722reg_match(device_t, cfdata_t, void *);
+static void	as3722reg_attach(device_t, device_t, void *);
+
+static int	as3722reg_acquire(device_t);
+static void	as3722reg_release(device_t);
+static int	as3722reg_enable(device_t, bool);
+static int	as3722reg_set_voltage(device_t, u_int, u_int);
+static int	as3722reg_get_voltage(device_t, u_int *);
+
+static struct fdtbus_regulator_controller_func as3722reg_funcs = {
+	.acquire = as3722reg_acquire,
+	.release = as3722reg_release,
+	.enable = as3722reg_enable,
+	.set_voltage = as3722reg_set_voltage,
+	.get_voltage = as3722reg_get_voltage,
+};
+#endif
+
 static int	as3722_read(struct as3722_softc *, uint8_t, uint8_t *, int);
 static int	as3722_write(struct as3722_softc *, uint8_t, uint8_t, int);
 static int	as3722_set_clear(struct as3722_softc *, uint8_t, uint8_t,
@@ -120,6 +173,11 @@ static int	as3722_set_clear(struct as3722_softc *, uint8_t, uint8_t,
 
 CFATTACH_DECL_NEW(as3722pmic, sizeof(struct as3722_softc),
     as3722_match, as3722_attach, NULL, NULL);
+
+#ifdef FDT
+CFATTACH_DECL_NEW(as3722reg, sizeof(struct as3722reg_softc),
+    as3722reg_match, as3722reg_attach, NULL, NULL);
+#endif
 
 static const char * as3722_compats[] = {
 	"ams,as3722",
@@ -165,6 +223,9 @@ as3722_attach(device_t parent, device_t self, void *aux)
 
 	as3722_wdt_attach(sc);
 	as3722_rtc_attach(sc);
+#ifdef FDT
+	as3722_regulator_attach(sc);
+#endif
 }
 
 static void
@@ -372,6 +433,165 @@ as3722_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 
 	return error;
 }
+
+#ifdef FDT
+static void
+as3722_regulator_attach(struct as3722_softc *sc)
+{
+	struct as3722reg_attach_args raa;
+	int phandle, child;
+
+	phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
+	if (phandle <= 0)
+		return;
+
+	for (int i = 0; i < __arraycount(as3722regdefs); i++) {
+		const struct as3722regdef *regdef = &as3722regdefs[i];
+		child = of_find_firstchild_byname(phandle, regdef->name);
+		if (child <= 0)
+			continue;
+		raa.reg_def = regdef;
+		raa.reg_phandle = child;
+		config_found(sc->sc_dev, &raa, NULL);
+	}
+}
+
+static int
+as3722reg_match(device_t parent, cfdata_t match, void *aux)
+{
+	return 1;
+}
+
+static void
+as3722reg_attach(device_t parent, device_t self, void *aux)
+{
+	struct as3722reg_softc *sc = device_private(self);
+	struct as3722reg_attach_args *raa = aux;
+	char *name = NULL;
+	int len;
+
+	sc->sc_dev = self;
+	sc->sc_phandle = raa->reg_phandle;
+	sc->sc_regdef = raa->reg_def;
+
+	fdtbus_register_regulator_controller(self, sc->sc_phandle,
+	    &as3722reg_funcs);
+
+	len = OF_getproplen(sc->sc_phandle, "regulator-name");
+	if (len > 0) {
+		name = kmem_zalloc(len, KM_SLEEP);
+		OF_getprop(sc->sc_phandle, "regulator-name", name, len);
+	}
+
+	aprint_naive("\n");
+	if (name)
+		aprint_normal(": %s\n", name);
+	else
+		aprint_normal("\n");
+
+	if (name)
+		kmem_free(name, len);
+}
+
+static int
+as3722reg_acquire(device_t dev)
+{
+	return 0;
+}
+
+static void
+as3722reg_release(device_t dev)
+{
+}
+
+static int
+as3722reg_enable(device_t dev, bool enable)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	int error;
+
+	iic_acquire_bus(asc->sc_i2c, flags);
+	if (enable)
+		error = as3722_set_clear(asc, regdef->enable_reg,
+		    regdef->enable_mask, 0, flags);
+	else
+		error = as3722_set_clear(asc, regdef->enable_reg,
+		    0, regdef->enable_mask, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+
+	return error;
+}
+
+static int
+as3722reg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t set_v = 0x00;
+	u_int uvol;
+	int error;
+
+	for (uint8_t v = 0x01; v <= 0x24; v++) {
+		uvol = 800000 + (v * 25000);
+		if (uvol >= min_uvol && uvol <= max_uvol) {
+			set_v = v;
+			goto done;
+		}
+	}
+	for (uint8_t v = 0x40; v <= 0x7f; v++) {
+		uvol = 1725000 + ((v - 0x40) * 25000);
+		if (uvol >= min_uvol && uvol <= max_uvol) {
+			set_v = v;
+			goto done;
+		}
+	}
+	if (set_v == 0)
+		return ERANGE;
+
+done:
+	iic_acquire_bus(asc->sc_i2c, flags);
+	error = as3722_set_clear(asc, regdef->vsel_reg, set_v,
+	    regdef->vsel_mask, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+
+	return error;
+}
+
+static int
+as3722reg_get_voltage(device_t dev, u_int *puvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t v;
+	int error;
+
+	iic_acquire_bus(asc->sc_i2c, flags);
+	error = as3722_read(asc, regdef->vsel_reg, &v, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+	if (error != 0)
+		return error;
+
+	v &= regdef->vsel_mask;
+
+	if (v == 0)
+		*puvol = 0;	/* LDO off */
+	else if (v >= 0x01 && v <= 0x24)
+		*puvol = 800000 + (v * 25000);
+	else if (v >= 0x40 && v <= 0x7f)
+		*puvol = 1725000 + ((v - 0x40) * 25000);
+	else
+		return EINVAL;
+
+	return 0;
+}
+#endif
 
 int
 as3722_poweroff(device_t dev)
