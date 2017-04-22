@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.123 2017/02/11 14:11:24 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.124 2017/04/22 04:29:31 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.123 2017/02/11 14:11:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.124 2017/04/22 04:29:31 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -879,11 +879,7 @@ cpu_hatch(void *v)
 	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
-#ifdef i386
-	i82489_writereg(LAPIC_TPRI, 0);
-#else
-	lcr8(0);
-#endif
+	lapic_write_tpri(0);
 	x86_enable_intr();
 	splx(s);
 	x86_errata();

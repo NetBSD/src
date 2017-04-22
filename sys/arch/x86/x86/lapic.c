@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.55 2017/04/22 04:24:26 nonaka Exp $	*/
+/*	$NetBSD: lapic.c,v 1.56 2017/04/22 04:29:31 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.55 2017/04/22 04:24:26 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.56 2017/04/22 04:29:31 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -89,6 +89,18 @@ struct pic local_pic = {
 	.pic_delroute = lapic_setup,
 };
 
+void
+lapic_write_tpri(uint32_t val)
+{
+
+	val &= LAPIC_TPRI_MASK;
+#ifdef i386
+	i82489_writereg(LAPIC_TPRI, val);
+#else
+	lcr8(val >> 4);
+#endif
+}
+
 static void
 lapic_map(paddr_t lapic_base)
 {
@@ -130,7 +142,7 @@ lapic_map(paddr_t lapic_base)
 	cpu_init_first();	/* catch up to changed cpu_number() */
 #endif
 
-	i82489_writereg(LAPIC_TPRI, 0);
+	lapic_write_tpri(0);
 	x86_enable_intr();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.17 2017/04/19 06:43:05 nonaka Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.18 2017/04/22 04:29:31 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,5 +103,7 @@ extern void lapic_set_lvt(void);
 extern void lapic_enable(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
 extern void lapic_initclocks(void);
+
+extern void lapic_write_tpri(uint32_t);
 
 #endif
