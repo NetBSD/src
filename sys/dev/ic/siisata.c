@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.5 2017/04/19 20:49:17 jdolecek Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.6 2017/04/22 13:19:28 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.5 2017/04/19 20:49:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.6 2017/04/22 13:19:28 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -538,7 +538,7 @@ siisata_intr_port(struct siisata_channel *schp)
 	/* clear some (ok, all) ints */
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_PIS), 0xffffffff);
 	if (xfer && xfer->c_intr)
-		xfer->c_intr(chp, xfer, slot);
+		xfer->c_intr(chp, xfer, 0);
 
 	return;
 }
@@ -850,7 +850,7 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    ata_c->bcount,
 	    (ata_c->flags & AT_READ) ? BUS_DMA_READ : BUS_DMA_WRITE)) { 
 		ata_c->flags |= AT_DF;
-		siisata_cmd_complete(chp, xfer, slot);
+		siisata_cmd_complete(chp, xfer, 0);
 		return;
 	}
 
@@ -914,12 +914,13 @@ siisata_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 }
 
 int
-siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
+siisata_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 #ifdef SIISATA_DEBUG
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 #endif
+	int slot = SIISATA_NON_NCQ_SLOT;
 
 	SIISATA_DEBUG_PRINT(
 	    ("%s: %s\n", SIISATANAME(sc), __func__), DEBUG_FUNCS|DEBUG_XFERS);
@@ -1121,12 +1122,13 @@ siisata_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer,
 }
 
 int
-siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
+siisata_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
 	struct ata_bio *ata_bio = &xfer->c_bio;
 	int drive = xfer->c_drive;
+	int slot = SIISATA_NON_NCQ_SLOT;
 
 	schp->sch_active_slots &= ~__BIT(slot);
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
@@ -1180,13 +1182,12 @@ siisata_timeout(void *v)
 {
 	struct ata_xfer *xfer = v;
 	struct ata_channel *chp = xfer->c_chp;
-	int slot = SIISATA_NON_NCQ_SLOT;
 	int s = splbio();
 	SIISATA_DEBUG_PRINT(("%s: %p\n", __func__, xfer), DEBUG_INTR);
 	siisata_device_reset(chp);
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		xfer->c_flags |= C_TIMEOU;
-		xfer->c_intr(chp, xfer, slot);
+		xfer->c_intr(chp, xfer, 0);
 	}
 	splx(s);
 }
