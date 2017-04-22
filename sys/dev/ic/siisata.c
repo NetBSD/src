@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.6 2017/04/22 13:19:28 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.7 2017/04/22 13:40:50 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.6 2017/04/22 13:19:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.7 2017/04/22 13:40:50 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1054,7 +1054,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	    (ata_bio->flags & ATA_READ) ? BUS_DMA_READ : BUS_DMA_WRITE)) {
 		ata_bio->error = ERR_DMA;
 		ata_bio->r_error = 0;
-		siisata_bio_complete(chp, xfer, slot);
+		siisata_bio_complete(chp, xfer, 0);
 		return;
 	}
 
