@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.17 2017/04/16 13:27:19 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.18 2017/04/22 17:41:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,12 @@
  * SUCH DAMAGE.
  */
 
+#define	TEGRA_SDHC_NO_SDR104
+
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.17 2017/04/16 13:27:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.18 2017/04/22 17:41:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,6 +126,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_bsz = size;
 
+#ifdef TEGRA_SDHC_NO_SDR104
 	/* XXX SDR104 requires a custom tuning method on Tegra K1 */
 	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
 	sc->sc.sc_caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
@@ -131,6 +134,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_caps2 = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 	    SDHC_CAPABILITIES2);
 	sc->sc.sc_caps2 &= ~SDHC_SDR104_SUPP;
+#endif
 
 	sc->sc_pin_power = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "power-gpios", GPIO_PIN_OUTPUT);
@@ -162,7 +166,11 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	fdtbus_reset_assert(sc->sc_rst);
+#ifdef TEGRA_SDHC_NO_SDR104
+	error = clk_set_rate(sc->sc_clk, 100000000);
+#else
 	error = clk_set_rate(sc->sc_clk, 204000000);
+#endif
 	if (error) {
 		aprint_error(": couldn't set frequency: %d\n", error);
 		return;
@@ -177,7 +185,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_clkbase = clk_get_rate(sc->sc_clk) / 1000;
 
 	aprint_naive("\n");
-	aprint_normal(": SDMMC\n");
+	aprint_normal(": SDMMC (%u kHz)\n", sc->sc.sc_clkbase);
 
 	if (sc->sc.sc_clkbase == 0) {
 		aprint_error_dev(self, "couldn't determine frequency\n");
