@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.54 2016/09/04 07:30:52 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.55 2017/04/22 20:32:35 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.54 2016/09/04 07:30:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.55 2017/04/22 20:32:35 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -410,7 +410,7 @@ mips_config_cache_prehistoric(void)
 
 		mips3_get_cache_config(csizebase);
 
-			/* no VCE support if there is no L2 cache */
+		/* no VCE support if there is no L2 cache */
 		if (mci->mci_picache_size > PAGE_SIZE)
 			mci->mci_icache_virtual_alias = true;
 		if (mci->mci_pdcache_size > PAGE_SIZE)
