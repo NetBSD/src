@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.99 2017/02/17 10:51:48 nonaka Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.100 2017/04/22 21:49:41 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.99 2017/02/17 10:51:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.100 2017/04/22 21:49:41 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1342,6 +1342,7 @@ static int
 sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
+	int error = 0;
 
 	if (hp->specver < SDHC_SPEC_VERS_300)
 		return EINVAL;
@@ -1349,19 +1350,32 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	mutex_enter(&hp->intr_lock);
 	switch (signal_voltage) {
 	case SDMMC_SIGNAL_VOLTAGE_180:
+		if (hp->sc->sc_vendor_signal_voltage != NULL) {
+			error = hp->sc->sc_vendor_signal_voltage(hp->sc,
+			    signal_voltage);
+			if (error != 0)
+				break;
+		}
 		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC))
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
 		break;
 	case SDMMC_SIGNAL_VOLTAGE_330:
 		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC))
 			HCLR2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		if (hp->sc->sc_vendor_signal_voltage != NULL) {
+			error = hp->sc->sc_vendor_signal_voltage(hp->sc,
+			    signal_voltage);
+			if (error != 0)
+				break;
+		}
 		break;
 	default:
-		return EINVAL;
+		error = EINVAL;
+		break;
 	}
 	mutex_exit(&hp->intr_lock);
 
-	return 0;
+	return error;
 }
 
 /*
