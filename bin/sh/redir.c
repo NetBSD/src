@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.52 2017/04/22 15:54:53 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.53 2017/04/22 16:02:39 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.52 2017/04/22 15:54:53 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.53 2017/04/22 16:02:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,6 +189,8 @@ redirect(union node *redir, int flags)
 	}
 	for (n = redir ; n ; n = n->nfile.next) {
 		fd = n->nfile.fd;
+		if (fd > max_user_fd)
+			max_user_fd = fd;
 		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
 		    n->ndup.dupfd == fd) {
 			/* redirect from/to same file descriptor */
@@ -738,22 +740,17 @@ fdflagscmd(int argc, char *argv[])
 		parseflags(setflags, &pos, &neg);
 
 	if (argc == 0) {
-		int maxfd;
+		int i;
 
 		if (setflags)
 			goto msg;
 
 		/*
-		 * XXX  this has to go, maxfd might be 700 (or something)
-		 *
 		 * XXX  we should only ever operate on user defined fds
 		 * XXX  not on sh internal fds that might be open.
 		 * XXX  but for that we need to know their range (later)
 		 */
-		maxfd = fcntl(0, F_MAXFD);
-		if (maxfd == -1)
-			error("Can't get max fd (%s)", strerror(errno));
-		for (int i = 0; i <= maxfd; i++)
+		for (i = 0; i <= max_user_fd; i++)
 			printone(i, 0, verbose, 1);
 		return 0;
 	}

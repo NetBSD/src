@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2016/05/09 21:03:10 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.68 2017/04/22 16:02:39 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.67 2016/05/09 21:03:10 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.68 2017/04/22 16:02:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,11 +77,13 @@ __RCSID("$NetBSD: main.c,v 1.67 2016/05/09 21:03:10 kre Exp $");
 #include "mystring.h"
 #include "exec.h"
 #include "cd.h"
+#include "redir.h"
 
 #define PROFILE 0
 
 int rootpid;
 int rootshell;
+int max_user_fd;
 #if PROFILE
 short profile_buf[16384];
 extern int etext();
@@ -110,6 +112,10 @@ main(int argc, char **argv)
 
 	uid = getuid();
 	gid = getgid();
+
+	max_user_fd = fcntl(0, F_MAXFD);
+	if (max_user_fd < 2)
+		max_user_fd = 2;
 
 	setlocale(LC_ALL, "");
 
