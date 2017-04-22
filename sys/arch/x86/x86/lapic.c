@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.54 2016/11/25 14:12:56 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.55 2017/04/22 04:24:26 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.54 2016/11/25 14:12:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.55 2017/04/22 04:24:26 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -103,12 +103,12 @@ lapic_map(paddr_t lapic_base)
 	 * is not present on the Pentium (is it?).
 	 */
 	if (CPUID_TO_FAMILY(curcpu()->ci_signature) >= 6) {
-		lapic_base = (paddr_t)rdmsr(LAPIC_MSR);
-		if ((lapic_base & LAPIC_MSR_ADDR) == 0) {
-			lapic_base |= LAPIC_BASE;
+		lapic_base = (paddr_t)rdmsr(MSR_APICBASE);
+		if ((lapic_base & APICBASE_PHYSADDR) == 0) {
+			lapic_base |= APICBASE_PHYSADDR;
 		}
-		wrmsr(LAPIC_MSR, lapic_base | LAPIC_MSR_ENABLE);
-		lapic_base &= LAPIC_MSR_ADDR;
+		wrmsr(MSR_APICBASE, lapic_base | APICBASE_EN);
+		lapic_base &= APICBASE_PHYSADDR;
 	}
 
 	x86_disable_intr();
