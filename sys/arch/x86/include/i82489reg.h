@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.14 2017/04/22 04:23:17 nonaka Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.15 2017/04/22 04:24:25 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -222,13 +222,3 @@
 #	define LEAPIC_LVTR_DSTAT	__BIT(12)	/* delivery state RO */
 #	define LEAPIC_LVTR_MSGTYPE	__BITS(10,8)	/* Message type */
 #	define LEAPIC_LVTR_VEC		__BITS(7,0)	/* the intr. vector */
-
-/*
- * Model specific registers
- */
-
-#define	LAPIC_MSR	0x001b
-#	define	LAPIC_MSR_BSP		0x00000100	/* boot processor */
-#	define	LAPIC_MSR_ENABLE_x2	0x00000400	/* x2APIC mode */
-#	define	LAPIC_MSR_ENABLE	0x00000800	/* software enable */
-#	define	LAPIC_MSR_ADDR		0xfffff000	/* physical address */

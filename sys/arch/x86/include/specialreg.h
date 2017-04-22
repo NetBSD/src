@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.96 2017/04/22 04:23:17 nonaka Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.97 2017/04/22 04:24:25 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -551,6 +551,10 @@
 #define MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_IA32_PLATFORM_ID	0x017
 #define MSR_APICBASE		0x01b
+#define 	APICBASE_BSP		0x00000100	/* boot processor */
+#define 	APICBASE_EXTD		0x00000400	/* x2APIC mode */
+#define 	APICBASE_EN		0x00000800	/* software enable */
+#define 	APICBASE_PHYSADDR	0xfffff000	/* physical address */
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
 #define MSR_TEST_CTL		0x033
