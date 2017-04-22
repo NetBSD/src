@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2017/04/22 20:19:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2017/04/22 20:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2017/04/22 20:19:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2017/04/22 20:20:19 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1732,8 +1732,8 @@ pmap_pvlist_check(struct vm_page_md *mdpg)
 #endif
 		}
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		// Assert there if there more than 1 color mapped, that they
-		// are uncached.
+		// Assert that if there is more than 1 color mapped, that the
+		// page is uncached.
 		KASSERTMSG(!pmap_md_virtual_cache_aliasing_p()
 		    || colors == 0 || (colors & (colors-1)) == 0
 		    || VM_PAGEMD_UNCACHED_P(mdpg), "colors=%#x uncached=%u",
