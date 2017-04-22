@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.11 2017/04/22 13:24:20 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.12 2017/04/22 21:47:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -96,6 +96,8 @@ struct fdtbus_regulator_controller_func {
 	int	(*acquire)(device_t);
 	void	(*release)(device_t);
 	int	(*enable)(device_t, bool);
+	int	(*set_voltage)(device_t, u_int, u_int);
+	int	(*get_voltage)(device_t, u_int *);
 };
 
 struct fdtbus_clock_controller_func {
@@ -151,6 +153,10 @@ struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);
 int		fdtbus_regulator_disable(struct fdtbus_regulator *);
+int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
+		    u_int, u_int);
+int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
+		    u_int *);
 
 struct clk *	fdtbus_clock_get(int, const char *);
 struct clk *	fdtbus_clock_get_index(int, u_int);
