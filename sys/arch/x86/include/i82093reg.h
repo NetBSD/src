@@ -1,4 +1,4 @@
-/* 	$NetBSD: i82093reg.h,v 1.4 2013/01/26 17:37:39 dyoung Exp $ */
+/* 	$NetBSD: i82093reg.h,v 1.5 2017/04/22 04:25:09 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 
 #define	IOAPIC_REG		0x0000
 #define IOAPIC_DATA		0x0010
+#define IOAPIC_EOI		0x0040
+#define		IOAPIC_EOI_MASK		0x000000ff
 
 /*
  * Internal I/O APIC registers.
