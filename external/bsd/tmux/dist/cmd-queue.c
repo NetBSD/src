@@ -113,7 +113,7 @@ cmdq_remove(struct cmdq_item *item)
 
 	TAILQ_REMOVE(item->queue, item, entry);
 
-	free((void *)item->name);
+	free(__UNCONST(item->name));
 	free(item);
 }
 
