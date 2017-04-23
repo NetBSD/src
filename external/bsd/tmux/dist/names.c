@@ -25,10 +25,12 @@
 
 #include "tmux.h"
 
-void	name_time_callback(int, short, void *);
-int	name_time_expired(struct window *, struct timeval *);
+static void	 name_time_callback(int, short, void *);
+static int	 name_time_expired(struct window *, struct timeval *);
 
-void
+static char	*format_window_name(struct window *);
+
+static void
 name_time_callback(__unused int fd, __unused short events, void *arg)
 {
 	struct window	*w = arg;
@@ -37,7 +39,7 @@ name_time_callback(__unused int fd, __unused short events, void *arg)
 	log_debug("@%u name timer expired", w->id);
 }
 
-int
+static int
 name_time_expired(struct window *w, struct timeval *tv)
 {
 	struct timeval	offset;
@@ -73,12 +75,15 @@ check_window_name(struct window *w)
 		if (!event_initialized(&w->name_event))
 			evtimer_set(&w->name_event, name_time_callback, w);
 		if (!evtimer_pending(&w->name_event, NULL)) {
-			log_debug("@%u name timer queued (%d left)", w->id, left);
+			log_debug("@%u name timer queued (%d left)", w->id,
+			    left);
 			timerclear(&next);
 			next.tv_usec = left;
 			event_add(&w->name_event, &next);
-		} else
-			log_debug("@%u name timer already queued (%d left)", w->id, left);
+		} else {
+			log_debug("@%u name timer already queued (%d left)",
+			    w->id, left);
+		}
 		return;
 	}
 	memcpy(&w->name_time, &tv, sizeof w->name_time);
@@ -112,13 +117,14 @@ default_window_name(struct window *w)
 	return (s);
 }
 
-char *
+static char *
 format_window_name(struct window *w)
 {
 	struct format_tree	*ft;
-	char			*fmt, *name;
+	const char		*fmt;
+	char			*name;
 
-	ft = format_create(NULL, 0);
+	ft = format_create(NULL, FORMAT_WINDOW|w->id, 0);
 	format_defaults_window(ft, w);
 	format_defaults_pane(ft, w->active);
 

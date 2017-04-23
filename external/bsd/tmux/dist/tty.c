@@ -21,6 +21,7 @@
 
 #include <netinet/in.h>
 
+#include <curses.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <resolv.h>
@@ -31,110 +32,52 @@
 
 #include "tmux.h"
 
-static int tty_log_fd = -1;
+static int	tty_log_fd = -1;
 
-void	tty_read_callback(struct bufferevent *, void *);
-void	tty_error_callback(struct bufferevent *, short, void *);
+static int	tty_client_ready(struct client *, struct window_pane *);
 
-static int tty_same_fg(const struct grid_cell *, const struct grid_cell *);
-static int tty_same_bg(const struct grid_cell *, const struct grid_cell *);
-static int tty_same_colours(const struct grid_cell *, const struct grid_cell *);
-static int tty_is_fg(const struct grid_cell *, int);
-static int tty_is_bg(const struct grid_cell *, int);
+static void	tty_set_italics(struct tty *);
+static int	tty_try_colour(struct tty *, int, const char *);
+static void	tty_force_cursor_colour(struct tty *, const char *);
+static void	tty_cursor_pane(struct tty *, const struct tty_ctx *, u_int,
+		    u_int);
+static void	tty_cursor_pane_unless_wrap(struct tty *,
+		    const struct tty_ctx *, u_int, u_int);
+static void	tty_invalidate(struct tty *);
+static void	tty_colours(struct tty *, const struct grid_cell *);
+static void	tty_check_fg(struct tty *, const struct window_pane *,
+		    struct grid_cell *);
+static void	tty_check_bg(struct tty *, const struct window_pane *,
+		    struct grid_cell *);
+static void	tty_colours_fg(struct tty *, const struct grid_cell *);
+static void	tty_colours_bg(struct tty *, const struct grid_cell *);
 
-void	tty_set_italics(struct tty *);
-int	tty_try_256(struct tty *, u_char, const char *);
-int	tty_try_rgb(struct tty *, const struct grid_cell_rgb *, const char *);
-
-void	tty_colours(struct tty *, const struct grid_cell *);
-void	tty_check_fg(struct tty *, struct grid_cell *);
-void	tty_check_bg(struct tty *, struct grid_cell *);
-void	tty_colours_fg(struct tty *, const struct grid_cell *);
-void	tty_colours_bg(struct tty *, const struct grid_cell *);
-
-int	tty_large_region(struct tty *, const struct tty_ctx *);
-int	tty_fake_bce(const struct tty *, const struct window_pane *);
-void	tty_redraw_region(struct tty *, const struct tty_ctx *);
-void	tty_emulate_repeat(struct tty *, enum tty_code_code, enum tty_code_code,
-	    u_int);
-void	tty_repeat_space(struct tty *, u_int);
-void	tty_cell(struct tty *, const struct grid_cell *,
-	    const struct window_pane *);
-void	tty_default_colours(struct grid_cell *, const struct window_pane *);
+static void	tty_region_pane(struct tty *, const struct tty_ctx *, u_int,
+		    u_int);
+static void	tty_region(struct tty *, u_int, u_int);
+static void	tty_margin_pane(struct tty *, const struct tty_ctx *);
+static void	tty_margin(struct tty *, u_int, u_int);
+static int	tty_large_region(struct tty *, const struct tty_ctx *);
+static int	tty_fake_bce(const struct tty *, const struct window_pane *,
+		    u_int);
+static void	tty_redraw_region(struct tty *, const struct tty_ctx *);
+static void	tty_emulate_repeat(struct tty *, enum tty_code_code,
+		    enum tty_code_code, u_int);
+static void	tty_repeat_space(struct tty *, u_int);
+static void	tty_cell(struct tty *, const struct grid_cell *,
+		    const struct window_pane *);
+static void	tty_default_colours(struct grid_cell *,
+		    const struct window_pane *);
+static void	tty_default_attributes(struct tty *, const struct window_pane *,
+		    u_int);
 
 #define tty_use_acs(tty) \
 	(tty_term_has((tty)->term, TTYC_ACSC) && !((tty)->flags & TTY_UTF8))
+#define tty_use_margin(tty) \
+	((tty)->term_type == TTY_VT420)
 
-#define tty_pane_full_width(tty, ctx) \
+#define tty_pane_full_width(tty, ctx)					\
 	((ctx)->xoff == 0 && screen_size_x((ctx)->wp->screen) >= (tty)->sx)
-
-static int
-tty_same_fg(const struct grid_cell *gc1, const struct grid_cell *gc2)
-{
-	int	flags1, flags2;
-
-	flags1 = (gc1->flags & (GRID_FLAG_FG256|GRID_FLAG_FGRGB));
-	flags2 = (gc2->flags & (GRID_FLAG_FG256|GRID_FLAG_FGRGB));
-
-	if (flags1 != flags2)
-	    return (0);
-
-	if (flags1 & GRID_FLAG_FGRGB) {
-		if (gc1->fg_rgb.r != gc2->fg_rgb.r)
-			return (0);
-		if (gc1->fg_rgb.g != gc2->fg_rgb.g)
-			return (0);
-		if (gc1->fg_rgb.b != gc2->fg_rgb.b)
-			return (0);
-		return (1);
-	}
-	return (gc1->fg == gc2->fg);
-}
-
-static int
-tty_same_bg(const struct grid_cell *gc1, const struct grid_cell *gc2)
-{
-	int	flags1, flags2;
-
-	flags1 = (gc1->flags & (GRID_FLAG_BG256|GRID_FLAG_BGRGB));
-	flags2 = (gc2->flags & (GRID_FLAG_BG256|GRID_FLAG_BGRGB));
-
-	if (flags1 != flags2)
-	    return (0);
-
-	if (flags1 & GRID_FLAG_BGRGB) {
-		if (gc1->bg_rgb.r != gc2->bg_rgb.r)
-			return (0);
-		if (gc1->bg_rgb.g != gc2->bg_rgb.g)
-			return (0);
-		if (gc1->bg_rgb.b != gc2->bg_rgb.b)
-			return (0);
-		return (1);
-	}
-	return (gc1->bg == gc2->bg);
-}
-
-static int
-tty_same_colours(const struct grid_cell *gc1, const struct grid_cell *gc2)
-{
-	return (tty_same_fg(gc1, gc2) && tty_same_bg(gc1, gc2));
-}
-
-static int
-tty_is_fg(const struct grid_cell *gc, int c)
-{
-	if (gc->flags & (GRID_FLAG_FG256|GRID_FLAG_FGRGB))
-		return (0);
-	return (gc->fg == c);
-}
-
-static int
-tty_is_bg(const struct grid_cell *gc, int c)
-{
-	if (gc->flags & (GRID_FLAG_BG256|GRID_FLAG_BGRGB))
-		return (0);
-	return (gc->bg == c);
-}
 
 void
 tty_create_log(void)
@@ -151,28 +94,26 @@ tty_create_log(void)
 int
 tty_init(struct tty *tty, struct client *c, int fd, char *term)
 {
-	char	*path;
-
 	if (!isatty(fd))
 		return (-1);
 
 	memset(tty, 0, sizeof *tty);
 
 	if (term == NULL || *term == '\0')
-		tty->termname = xstrdup("unknown");
+		tty->term_name = xstrdup("unknown");
 	else
-		tty->termname = xstrdup(term);
+		tty->term_name = xstrdup(term);
+
 	tty->fd = fd;
 	tty->client = c;
 
-	if ((path = ttyname(fd)) == NULL)
-		return (-1);
-	tty->path = xstrdup(path);
 	tty->cstyle = 0;
 	tty->ccolour = xstrdup("");
 
 	tty->flags = 0;
+
 	tty->term_flags = 0;
+	tty->term_type = TTY_UNKNOWN;
 
 	return (0);
 }
@@ -180,8 +121,9 @@ tty_init(struct tty *tty, struct client *c, int fd, char *term)
 int
 tty_resize(struct tty *tty)
 {
-	struct winsize	ws;
-	u_int		sx, sy;
+	struct client	*c = tty->client;
+	struct winsize	 ws;
+	u_int		 sx, sy;
 
 	if (ioctl(tty->fd, TIOCGWINSZ, &ws) != -1) {
 		sx = ws.ws_col;
@@ -194,29 +136,17 @@ tty_resize(struct tty *tty)
 		sx = 80;
 		sy = 24;
 	}
+	log_debug("%s: %s now %ux%u", __func__, c->name, sx, sy);
+
 	if (!tty_set_size(tty, sx, sy))
 		return (0);
-
-	tty->cx = UINT_MAX;
-	tty->cy = UINT_MAX;
-
-	tty->rupper = UINT_MAX;
-	tty->rlower = UINT_MAX;
-
-	/*
-	 * If the terminal has been started, reset the actual scroll region and
-	 * cursor position, as this may not have happened.
-	 */
-	if (tty->flags & TTY_STARTED) {
-		tty_cursor(tty, 0, 0);
-		tty_region(tty, 0, tty->sy - 1);
-	}
-
+	tty_invalidate(tty);
 	return (1);
 }
 
 int
-tty_set_size(struct tty *tty, u_int sx, u_int sy) {
+tty_set_size(struct tty *tty, u_int sx, u_int sy)
+{
 	if (sx == tty->sx && sy == tty->sy)
 		return (0);
 	tty->sx = sx;
@@ -224,20 +154,58 @@ tty_set_size(struct tty *tty, u_int sx, u_int sy) {
 	return (1);
 }
 
+static void
+tty_read_callback(__unused int fd, __unused short events, void *data)
+{
+	struct tty	*tty = data;
+	struct client	*c = tty->client;
+	size_t		 size = EVBUFFER_LENGTH(tty->in);
+	int		 nread;
+
+	nread = evbuffer_read(tty->in, tty->fd, -1);
+	if (nread == -1)
+		return;
+	log_debug("%s: read %d bytes (already %zu)", c->name, nread, size);
+
+	while (tty_keys_next(tty))
+		;
+}
+
+static void
+tty_write_callback(__unused int fd, __unused short events, void *data)
+{
+	struct tty	*tty = data;
+	struct client	*c = tty->client;
+	size_t		 size = EVBUFFER_LENGTH(tty->out);
+	int		 nwrite;
+
+	nwrite = evbuffer_write(tty->out, tty->fd);
+	if (nwrite == -1)
+		return;
+	log_debug("%s: wrote %d bytes (of %zu)", c->name, nwrite, size);
+
+	if (EVBUFFER_LENGTH(tty->out) != 0)
+		event_add(&tty->event_out, NULL);
+}
+
 int
 tty_open(struct tty *tty, char **cause)
 {
-	tty->term = tty_term_find(tty->termname, tty->fd, cause);
+	tty->term = tty_term_find(tty->term_name, tty->fd, cause);
 	if (tty->term == NULL) {
 		tty_close(tty);
 		return (-1);
 	}
 	tty->flags |= TTY_OPENED;
 
-	tty->flags &= ~(TTY_NOCURSOR|TTY_FREEZE|TTY_TIMER);
+	tty->flags &= ~(TTY_NOCURSOR|TTY_FREEZE);
 
-	tty->event = bufferevent_new(tty->fd, tty_read_callback, NULL,
-	    tty_error_callback, tty);
+	event_set(&tty->event_in, tty->fd, EV_PERSIST|EV_READ,
+	    tty_read_callback, tty);
+	tty->in = evbuffer_new();
+
+	event_set(&tty->event_out, tty->fd, EV_WRITE, tty_write_callback, tty);
+	tty->out = evbuffer_new();
 
 	tty_start_tty(tty);
 
@@ -247,56 +215,29 @@ tty_open(struct tty *tty, char **cause)
 }
 
 void
-tty_read_callback(__unused struct bufferevent *bufev, void *data)
-{
-	struct tty	*tty = data;
-
-	while (tty_keys_next(tty))
-		;
-}
-
-void
-tty_error_callback(__unused struct bufferevent *bufev, __unused short what,
-    __unused void *data)
-{
-}
-
-void
-tty_init_termios(int fd, struct termios *orig_tio, struct bufferevent *bufev)
+tty_start_tty(struct tty *tty)
 {
 	struct termios	tio;
 
-	if (fd == -1 || tcgetattr(fd, orig_tio) != 0)
-		return;
+	if (tty->fd != -1 && tcgetattr(tty->fd, &tty->tio) == 0) {
+		setblocking(tty->fd, 0);
+		event_add(&tty->event_in, NULL);
 
-	setblocking(fd, 0);
-
-	if (bufev != NULL)
-		bufferevent_enable(bufev, EV_READ|EV_WRITE);
-
-	memcpy(&tio, orig_tio, sizeof tio);
-	tio.c_iflag &= ~(IXON|IXOFF|ICRNL|INLCR|IGNCR|IMAXBEL|ISTRIP);
-	tio.c_iflag |= IGNBRK;
-	tio.c_oflag &= ~(OPOST|ONLCR|OCRNL|ONLRET);
-	tio.c_lflag &= ~(IEXTEN|ICANON|ECHO|ECHOE|ECHONL|ECHOCTL|
-	    ECHOPRT|ECHOKE|ISIG);
-	tio.c_cc[VMIN] = 1;
-	tio.c_cc[VTIME] = 0;
-	if (tcsetattr(fd, TCSANOW, &tio) == 0)
-		tcflush(fd, TCIOFLUSH);
-}
-
-void
-tty_start_tty(struct tty *tty)
-{
-	tty_init_termios(tty->fd, &tty->tio, tty->event);
+		memcpy(&tio, &tty->tio, sizeof tio);
+		tio.c_iflag &= ~(IXON|IXOFF|ICRNL|INLCR|IGNCR|IMAXBEL|ISTRIP);
+		tio.c_iflag |= IGNBRK;
+		tio.c_oflag &= ~(OPOST|ONLCR|OCRNL|ONLRET);
+		tio.c_lflag &= ~(IEXTEN|ICANON|ECHO|ECHOE|ECHONL|ECHOCTL|
+		    ECHOPRT|ECHOKE|ISIG);
+		tio.c_cc[VMIN] = 1;
+		tio.c_cc[VTIME] = 0;
+		if (tcsetattr(tty->fd, TCSANOW, &tio) == 0)
+			tcflush(tty->fd, TCIOFLUSH);
+	}
 
 	tty_putcode(tty, TTYC_SMCUP);
 
-	tty_putcode(tty, TTYC_SGR0);
-	memcpy(&tty->cell, &grid_default_cell, sizeof tty->cell);
-
-	tty_putcode(tty, TTYC_RMKX);
+	tty_putcode(tty, TTYC_SMKX);
 	if (tty_use_acs(tty))
 		tty_putcode(tty, TTYC_ENACS);
 	tty_putcode(tty, TTYC_CLEAR);
@@ -310,17 +251,11 @@ tty_start_tty(struct tty *tty)
 			tty->flags |= TTY_FOCUS;
 			tty_puts(tty, "\033[?1004h");
 		}
+		tty_puts(tty, "\033[c");
 	}
 
-	tty->cx = UINT_MAX;
-	tty->cy = UINT_MAX;
-
-	tty->rlower = UINT_MAX;
-	tty->rupper = UINT_MAX;
-
-	tty->mode = MODE_CURSOR;
-
 	tty->flags |= TTY_STARTED;
+	tty_invalidate(tty);
 
 	tty_force_cursor_colour(tty, "");
 
@@ -338,7 +273,8 @@ tty_stop_tty(struct tty *tty)
 		return;
 	tty->flags &= ~TTY_STARTED;
 
-	bufferevent_disable(tty->event, EV_READ|EV_WRITE);
+	event_del(&tty->event_in);
+	event_del(&tty->event_out);
 
 	/*
 	 * Be flexible about error handling and try not kill the server just
@@ -377,6 +313,8 @@ tty_stop_tty(struct tty *tty)
 		}
 	}
 
+	if (tty_use_margin(tty))
+		tty_raw(tty, "\033[?69l"); /* DECLRMM */
 	tty_raw(tty, tty_term_string(tty->term, TTYC_RMCUP));
 
 	setblocking(tty->fd, 1);
@@ -390,7 +328,10 @@ tty_close(struct tty *tty)
 	tty_stop_tty(tty);
 
 	if (tty->flags & TTY_OPENED) {
-		bufferevent_free(tty->event);
+		evbuffer_free(tty->in);
+		event_del(&tty->event_in);
+		evbuffer_free(tty->out);
+		event_del(&tty->event_out);
 
 		tty_term_free(tty->term);
 		tty_keys_free(tty);
@@ -410,8 +351,16 @@ tty_free(struct tty *tty)
 	tty_close(tty);
 
 	free(tty->ccolour);
-	free(tty->path);
-	free(tty->termname);
+	free(tty->term_name);
+}
+
+void
+tty_set_type(struct tty *tty, int type)
+{
+	tty->term_type = type;
+
+	if (tty_use_margin(tty))
+		tty_puts(tty, "\033[?69h"); /* DECLRMM */
 }
 
 void
@@ -471,59 +420,71 @@ tty_putcode_ptr2(struct tty *tty, enum tty_code_code code, const void *a,
 		tty_puts(tty, tty_term_ptr2(tty->term, code, a, b));
 }
 
+static void
+tty_add(struct tty *tty, const char *buf, size_t len)
+{
+	struct client	*c = tty->client;
+
+	evbuffer_add(tty->out, buf, len);
+	log_debug("%s: %.*s", c->name, (int)len, (const char *)buf);
+	tty->written += len;
+
+	if (tty_log_fd != -1)
+		write(tty_log_fd, buf, len);
+	if (tty->flags & TTY_STARTED)
+		event_add(&tty->event_out, NULL);
+}
+
 void
 tty_puts(struct tty *tty, const char *s)
 {
-	if (*s == '\0')
-		return;
-	bufferevent_write(tty->event, s, strlen(s));
-
-	if (tty_log_fd != -1)
-		write(tty_log_fd, s, strlen(s));
+	if (*s != '\0')
+		tty_add(tty, s, strlen(s));
 }
 
 void
 tty_putc(struct tty *tty, u_char ch)
 {
 	const char	*acs;
-	u_int		 sx;
 
 	if (tty->cell.attr & GRID_ATTR_CHARSET) {
 		acs = tty_acs_get(tty, ch);
 		if (acs != NULL)
-			bufferevent_write(tty->event, acs, strlen(acs));
+			tty_add(tty, acs, strlen(acs));
 		else
-			bufferevent_write(tty->event, &ch, 1);
+			tty_add(tty, &ch, 1);
 	} else
-		bufferevent_write(tty->event, &ch, 1);
+		tty_add(tty, &ch, 1);
 
 	if (ch >= 0x20 && ch != 0x7f) {
-		sx = tty->sx;
-		if (tty->term->flags & TERM_EARLYWRAP)
-			sx--;
-
-		if (tty->cx >= sx) {
+		if (tty->cx >= tty->sx) {
 			tty->cx = 1;
 			if (tty->cy != tty->rlower)
 				tty->cy++;
+
+			/*
+			 * On !xenl terminals, force the cursor position to
+			 * where we think it should be after a line wrap - this
+			 * means it works on sensible terminals as well.
+			 */
+			if (tty->term->flags & TERM_EARLYWRAP)
+				tty_putcode2(tty, TTYC_CUP, tty->cy, tty->cx);
 		} else
 			tty->cx++;
 	}
-
-	if (tty_log_fd != -1)
-		write(tty_log_fd, &ch, 1);
 }
 
 void
 tty_putn(struct tty *tty, const void *buf, size_t len, u_int width)
 {
-	bufferevent_write(tty->event, buf, len);
-	if (tty_log_fd != -1)
-		write(tty_log_fd, buf, len);
-	tty->cx += width;
+	tty_add(tty, buf, len);
+	if (tty->cx + width > tty->sx)
+		tty->cx = tty->cy = UINT_MAX;
+	else
+		tty->cx += width;
 }
 
-void
+static void
 tty_set_italics(struct tty *tty)
 {
 	const char	*s;
@@ -550,7 +511,7 @@ tty_set_title(struct tty *tty, const char *title)
 	tty_putcode(tty, TTYC_FSL);
 }
 
-void
+static void
 tty_force_cursor_colour(struct tty *tty, const char *ccolour)
 {
 	if (*ccolour == '\0')
@@ -600,28 +561,24 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 		if (mode & ALL_MOUSE_MODES) {
 			/*
 			 * Enable the SGR (1006) extension unconditionally, as
-			 * this is safe from misinterpretation. Do it in this
-			 * order, because in some terminals it's the last one
-			 * that takes effect and SGR is the preferred one.
+			 * it is safe from misinterpretation.
 			 */
 			tty_puts(tty, "\033[?1006h");
-			if (mode & MODE_MOUSE_BUTTON)
+			if (mode & MODE_MOUSE_ALL)
+				tty_puts(tty, "\033[?1003h");
+			else if (mode & MODE_MOUSE_BUTTON)
 				tty_puts(tty, "\033[?1002h");
 			else if (mode & MODE_MOUSE_STANDARD)
 				tty_puts(tty, "\033[?1000h");
 		} else {
-			if (tty->mode & MODE_MOUSE_BUTTON)
+			if (tty->mode & MODE_MOUSE_ALL)
+				tty_puts(tty, "\033[?1003l");
+			else if (tty->mode & MODE_MOUSE_BUTTON)
 				tty_puts(tty, "\033[?1002l");
 			else if (tty->mode & MODE_MOUSE_STANDARD)
 				tty_puts(tty, "\033[?1000l");
 			tty_puts(tty, "\033[?1006l");
 		}
-	}
-	if (changed & MODE_KKEYPAD) {
-		if (mode & MODE_KKEYPAD)
-			tty_putcode(tty, TTYC_SMKX);
-		else
-			tty_putcode(tty, TTYC_RMKX);
 	}
 	if (changed & MODE_BRACKETPASTE) {
 		if (mode & MODE_BRACKETPASTE)
@@ -632,7 +589,7 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 	tty->mode = mode;
 }
 
-void
+static void
 tty_emulate_repeat(struct tty *tty, enum tty_code_code code,
     enum tty_code_code code1, u_int n)
 {
@@ -644,11 +601,20 @@ tty_emulate_repeat(struct tty *tty, enum tty_code_code code,
 	}
 }
 
-void
+static void
 tty_repeat_space(struct tty *tty, u_int n)
 {
-	while (n-- > 0)
-		tty_putc(tty, ' ');
+	static char s[500];
+
+	if (*s != ' ')
+		memset(s, ' ', sizeof s);
+
+	while (n > sizeof s) {
+		tty_putn(tty, s, sizeof s, sizeof s);
+		n -= sizeof s;
+	}
+	if (n != 0)
+		tty_putn(tty, s, n, n);
 }
 
 /*
@@ -656,7 +622,7 @@ tty_repeat_space(struct tty *tty, u_int n)
  * probably several times now? Currently yes if it is more than 50% of the
  * pane.
  */
-int
+static int
 tty_large_region(__unused struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
@@ -668,17 +634,21 @@ tty_large_region(__unused struct tty *tty, const struct tty_ctx *ctx)
  * Return if BCE is needed but the terminal doesn't have it - it'll need to be
  * emulated.
  */
-int
-tty_fake_bce(const struct tty *tty, const struct window_pane *wp)
+static int
+tty_fake_bce(const struct tty *tty, const struct window_pane *wp, u_int bg)
 {
 	struct grid_cell	gc;
 
-	memcpy(&gc, &grid_default_cell, sizeof gc);
-	tty_default_colours(&gc, wp);
-
-	if (gc.bg == 8 && !(gc.flags & GRID_FLAG_BG256))
+	if (tty_term_flag(tty->term, TTYC_BCE))
 		return (0);
-	return (!tty_term_flag(tty->term, TTYC_BCE));
+
+	memcpy(&gc, &grid_default_cell, sizeof gc);
+	if (wp != NULL)
+		tty_default_colours(&gc, wp);
+
+	if (bg != 8 || gc.bg != 8)
+		return (1);
+	return (0);
 }
 
 /*
@@ -686,12 +656,12 @@ tty_fake_bce(const struct tty *tty, const struct window_pane *wp)
  * CSR not supported, or window is a pane that doesn't take up the full
  * width of the terminal.
  */
-void
+static void
 tty_redraw_region(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
-	u_int		 	 i;
+	u_int			 i;
 
 	/*
 	 * If region is large, schedule a window redraw. In most cases this is
@@ -722,51 +692,97 @@ void
 tty_draw_line(struct tty *tty, const struct window_pane *wp,
     struct screen *s, u_int py, u_int ox, u_int oy)
 {
-	struct grid_cell	 gc;
-	struct grid_line	*gl;
-	u_int			 i, sx;
-	int			 flags;
+	struct grid_cell	 gc, last;
+	u_int			 i, j, sx, width;
+	int			 flags, cleared = 0;
+	char			 buf[512];
+	size_t			 len;
 
-	flags = tty->flags & TTY_NOCURSOR;
+	flags = (tty->flags & TTY_NOCURSOR);
 	tty->flags |= TTY_NOCURSOR;
 	tty_update_mode(tty, tty->mode, s);
 
+	tty_region_off(tty);
+	tty_margin_off(tty);
+
 	sx = screen_size_x(s);
-	if (sx > s->grid->linedata[s->grid->hsize + py].cellsize)
-		sx = s->grid->linedata[s->grid->hsize + py].cellsize;
+	if (sx > s->grid->linedata[s->grid->hsize + py].cellused)
+		sx = s->grid->linedata[s->grid->hsize + py].cellused;
 	if (sx > tty->sx)
 		sx = tty->sx;
 
-	/*
-	 * Don't move the cursor to the start position if it will wrap there
-	 * itself.
-	 */
-	gl = NULL;
-	if (py != 0)
-		gl = &s->grid->linedata[s->grid->hsize + py - 1];
-	if (oy + py == 0 || gl == NULL || !(gl->flags & GRID_LINE_WRAPPED) ||
-	    tty->cx < tty->sx || ox != 0 ||
-	    (oy + py != tty->cy + 1 && tty->cy != s->rlower + oy))
+	if (screen_size_x(s) < tty->sx &&
+	    ox == 0 &&
+	    sx != screen_size_x(s) &&
+	    tty_term_has(tty->term, TTYC_EL1) &&
+	    !tty_fake_bce(tty, wp, 8)) {
+		tty_default_attributes(tty, wp, 8);
+		tty_cursor(tty, screen_size_x(s) - 1, oy + py);
+		tty_putcode(tty, TTYC_EL1);
+		cleared = 1;
+	}
+	if (sx != 0)
 		tty_cursor(tty, ox, oy + py);
+
+	memcpy(&last, &grid_default_cell, sizeof last);
+	len = 0;
+	width = 0;
 
 	for (i = 0; i < sx; i++) {
 		grid_view_get_cell(s->grid, i, py, &gc);
-		if (screen_check_selection(s, i, py)) {
-			gc.flags &= ~(GRID_FLAG_FG256|GRID_FLAG_BG256);
-			gc.flags |= s->sel.cell.flags &
-			    (GRID_FLAG_FG256|GRID_FLAG_BG256);
+		if (len != 0 &&
+		    (((~tty->flags & TTY_UTF8) &&
+		    (gc.data.size != 1 ||
+		    *gc.data.data >= 0x7f ||
+		    gc.data.width != 1)) ||
+		    (gc.attr & GRID_ATTR_CHARSET) ||
+		    gc.flags != last.flags ||
+		    gc.attr != last.attr ||
+		    gc.fg != last.fg ||
+		    gc.bg != last.bg ||
+		    (sizeof buf) - len < gc.data.size)) {
+			tty_attributes(tty, &last, wp);
+			tty_putn(tty, buf, len, width);
+
+			len = 0;
+			width = 0;
 		}
-		tty_cell(tty, &gc, wp);
+
+		if (gc.flags & GRID_FLAG_SELECTED)
+			screen_select_cell(s, &last, &gc);
+		else
+			memcpy(&last, &gc, sizeof last);
+		if (((~tty->flags & TTY_UTF8) &&
+		    (gc.data.size != 1 ||
+		    *gc.data.data >= 0x7f ||
+		    gc.data.width != 1)) ||
+		    (gc.attr & GRID_ATTR_CHARSET)) {
+			tty_attributes(tty, &last, wp);
+			if (~tty->flags & TTY_UTF8) {
+				for (j = 0; j < gc.data.width; j++)
+					tty_putc(tty, '_');
+			} else {
+				for (j = 0; j < gc.data.size; j++)
+					tty_putc(tty, gc.data.data[j]);
+			}
+		} else {
+			memcpy(buf + len, gc.data.data, gc.data.size);
+			len += gc.data.size;
+			width += gc.data.width;
+		}
+	}
+	if (len != 0) {
+		tty_attributes(tty, &last, wp);
+		tty_putn(tty, buf, len, width);
 	}
 
-	if (sx < tty->sx) {
-		tty_attributes(tty, &grid_default_cell, wp);
-
+	if (!cleared && sx < tty->sx) {
+		tty_default_attributes(tty, wp, 8);
 		tty_cursor(tty, ox + sx, oy + py);
 		if (sx != screen_size_x(s) &&
 		    ox + screen_size_x(s) >= tty->sx &&
 		    tty_term_has(tty->term, TTYC_EL) &&
-		    !tty_fake_bce(tty, wp))
+		    !tty_fake_bce(tty, wp, 8))
 			tty_putcode(tty, TTYC_EL);
 		else
 			tty_repeat_space(tty, screen_size_x(s) - sx);
@@ -776,12 +792,12 @@ tty_draw_line(struct tty *tty, const struct window_pane *wp,
 	tty_update_mode(tty, tty->mode, s);
 }
 
-int
+static int
 tty_client_ready(struct client *c, struct window_pane *wp)
 {
 	if (c->session == NULL || c->tty.term == NULL)
 		return (0);
-	if (c->flags & CLIENT_SUSPENDED)
+	if (c->flags & (CLIENT_REDRAW|CLIENT_SUSPENDED))
 		return (0);
 	if (c->tty.flags & TTY_FREEZE)
 		return (0);
@@ -801,9 +817,7 @@ tty_write(void (*cmdfn)(struct tty *, const struct tty_ctx *),
 	if (wp == NULL)
 		return;
 
-	if (wp->window->flags & WINDOW_REDRAW || wp->flags & PANE_REDRAW)
-		return;
-	if (!window_pane_visible(wp) || wp->flags & PANE_DROP)
+	if ((wp->flags & (PANE_REDRAW|PANE_DROP)) || !window_pane_visible(wp))
 		return;
 
 	TAILQ_FOREACH(c, &clients, entry) {
@@ -824,20 +838,19 @@ tty_cmd_insertcharacter(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 
-	if (!tty_pane_full_width(tty, ctx)) {
+	if (!tty_pane_full_width(tty, ctx) ||
+	    tty_fake_bce(tty, wp, ctx->bg) ||
+	    (!tty_term_has(tty->term, TTYC_ICH) &&
+	    !tty_term_has(tty->term, TTYC_ICH1))) {
 		tty_draw_pane(tty, wp, ctx->ocy, ctx->xoff, ctx->yoff);
 		return;
 	}
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
-	if (!tty_fake_bce(tty, wp) && (tty_term_has(tty->term, TTYC_ICH) ||
-	    tty_term_has(tty->term, TTYC_ICH1)))
-		tty_emulate_repeat(tty, TTYC_ICH, TTYC_ICH1, ctx->num);
-	else
-		tty_draw_pane(tty, wp, ctx->ocy, ctx->xoff, ctx->yoff);
+	tty_emulate_repeat(tty, TTYC_ICH, TTYC_ICH1, ctx->num);
 }
 
 void
@@ -845,52 +858,50 @@ tty_cmd_deletecharacter(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 
-	if (!tty_pane_full_width(tty, ctx) || tty_fake_bce(tty, wp) ||
+	if (!tty_pane_full_width(tty, ctx) ||
+	    tty_fake_bce(tty, wp, ctx->bg) ||
 	    (!tty_term_has(tty->term, TTYC_DCH) &&
 	    !tty_term_has(tty->term, TTYC_DCH1))) {
 		tty_draw_pane(tty, wp, ctx->ocy, ctx->xoff, ctx->yoff);
 		return;
 	}
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
-	if (tty_term_has(tty->term, TTYC_DCH) ||
-	    tty_term_has(tty->term, TTYC_DCH1))
-		tty_emulate_repeat(tty, TTYC_DCH, TTYC_DCH1, ctx->num);
+	tty_emulate_repeat(tty, TTYC_DCH, TTYC_DCH1, ctx->num);
 }
 
 void
 tty_cmd_clearcharacter(struct tty *tty, const struct tty_ctx *ctx)
 {
-	u_int	i;
-
 	tty_attributes(tty, &grid_default_cell, ctx->wp);
 
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
-	if (tty_term_has(tty->term, TTYC_ECH) && !tty_fake_bce(tty, ctx->wp))
+	if (tty_term_has(tty->term, TTYC_ECH) &&
+	    !tty_fake_bce(tty, ctx->wp, 8))
 		tty_putcode1(tty, TTYC_ECH, ctx->num);
-	else {
-		for (i = 0; i < ctx->num; i++)
-			tty_putc(tty, ' ');
-	}
+	else
+		tty_repeat_space(tty, ctx->num);
 }
 
 void
 tty_cmd_insertline(struct tty *tty, const struct tty_ctx *ctx)
 {
-	if (!tty_pane_full_width(tty, ctx) || tty_fake_bce(tty, ctx->wp) ||
+	if (!tty_pane_full_width(tty, ctx) ||
+	    tty_fake_bce(tty, ctx->wp, ctx->bg) ||
 	    !tty_term_has(tty->term, TTYC_CSR) ||
 	    !tty_term_has(tty->term, TTYC_IL1)) {
 		tty_redraw_region(tty, ctx);
 		return;
 	}
 
-	tty_attributes(tty, &grid_default_cell, ctx->wp);
+	tty_default_attributes(tty, ctx->wp, ctx->bg);
 
 	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_margin_off(tty);
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_emulate_repeat(tty, TTYC_IL, TTYC_IL1, ctx->num);
@@ -899,16 +910,18 @@ tty_cmd_insertline(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_deleteline(struct tty *tty, const struct tty_ctx *ctx)
 {
-	if (!tty_pane_full_width(tty, ctx) || tty_fake_bce(tty, ctx->wp) ||
+	if (!tty_pane_full_width(tty, ctx) ||
+	    tty_fake_bce(tty, ctx->wp, ctx->bg) ||
 	    !tty_term_has(tty->term, TTYC_CSR) ||
 	    !tty_term_has(tty->term, TTYC_DL1)) {
 		tty_redraw_region(tty, ctx);
 		return;
 	}
 
-	tty_attributes(tty, &grid_default_cell, ctx->wp);
+	tty_default_attributes(tty, ctx->wp, ctx->bg);
 
 	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_margin_off(tty);
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_emulate_repeat(tty, TTYC_DL, TTYC_DL1, ctx->num);
@@ -919,16 +932,18 @@ tty_cmd_clearline(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
+	u_int			 sx = screen_size_x(s);
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
 	tty_cursor_pane(tty, ctx, 0, ctx->ocy);
 
-	if (tty_pane_full_width(tty, ctx) && !tty_fake_bce(tty, wp) &&
+	if (tty_pane_full_width(tty, ctx) &&
+	    !tty_fake_bce(tty, wp, ctx->bg) &&
 	    tty_term_has(tty->term, TTYC_EL))
 		tty_putcode(tty, TTYC_EL);
 	else
-		tty_repeat_space(tty, screen_size_x(s));
+		tty_repeat_space(tty, sx);
 }
 
 void
@@ -936,25 +951,30 @@ tty_cmd_clearendofline(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
+	u_int			 sx = screen_size_x(s);
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	if (tty_pane_full_width(tty, ctx) &&
-	    tty_term_has(tty->term, TTYC_EL) && !tty_fake_bce(tty, wp))
+	    tty_term_has(tty->term, TTYC_EL) &&
+	    !tty_fake_bce(tty, wp, ctx->bg))
 		tty_putcode(tty, TTYC_EL);
 	else
-		tty_repeat_space(tty, screen_size_x(s) - ctx->ocx);
+		tty_repeat_space(tty, sx - ctx->ocx);
 }
 
 void
 tty_cmd_clearstartofline(struct tty *tty, const struct tty_ctx *ctx)
 {
-	tty_attributes(tty, &grid_default_cell, ctx->wp);
+	struct window_pane	*wp = ctx->wp;
 
-	if (ctx->xoff == 0 && tty_term_has(tty->term, TTYC_EL1) &&
-	    !tty_fake_bce(tty, ctx->wp)) {
+	tty_default_attributes(tty, wp, ctx->bg);
+
+	if (ctx->xoff == 0 &&
+	    tty_term_has(tty->term, TTYC_EL1) &&
+	    !tty_fake_bce(tty, ctx->wp, ctx->bg)) {
 		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 		tty_putcode(tty, TTYC_EL1);
 	} else {
@@ -969,7 +989,8 @@ tty_cmd_reverseindex(struct tty *tty, const struct tty_ctx *ctx)
 	if (ctx->ocy != ctx->orupper)
 		return;
 
-	if (!tty_pane_full_width(tty, ctx) || tty_fake_bce(tty, ctx->wp) ||
+	if (!tty_pane_full_width(tty, ctx) ||
+	    tty_fake_bce(tty, ctx->wp, 8) ||
 	    !tty_term_has(tty->term, TTYC_CSR) ||
 	    !tty_term_has(tty->term, TTYC_RI)) {
 		tty_redraw_region(tty, ctx);
@@ -979,6 +1000,7 @@ tty_cmd_reverseindex(struct tty *tty, const struct tty_ctx *ctx)
 	tty_attributes(tty, &grid_default_cell, ctx->wp);
 
 	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_margin_off(tty);
 	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->orupper);
 
 	tty_putcode(tty, TTYC_RI);
@@ -992,29 +1014,55 @@ tty_cmd_linefeed(struct tty *tty, const struct tty_ctx *ctx)
 	if (ctx->ocy != ctx->orlower)
 		return;
 
-	if (!tty_pane_full_width(tty, ctx) || tty_fake_bce(tty, wp) ||
+	if ((!tty_pane_full_width(tty, ctx) && !tty_use_margin(tty)) ||
+	    tty_fake_bce(tty, wp, 8) ||
 	    !tty_term_has(tty->term, TTYC_CSR)) {
-		if (tty_large_region(tty, ctx))
-			wp->flags |= PANE_REDRAW;
-		else
-			tty_redraw_region(tty, ctx);
+		tty_redraw_region(tty, ctx);
 		return;
 	}
-
-	/*
-	 * If this line wrapped naturally (ctx->num is nonzero), don't do
-	 * anything - the cursor can just be moved to the last cell and wrap
-	 * naturally.
-	 */
-	if (ctx->num && !(tty->term->flags & TERM_EARLYWRAP))
-		return;
 
 	tty_attributes(tty, &grid_default_cell, wp);
 
 	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
-	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+	tty_margin_pane(tty, ctx);
+
+	/*
+	 * If we want to wrap a pane, the cursor needs to be exactly on the
+	 * right of the region. But if the pane isn't on the right, it may be
+	 * off the edge - if so, move the cursor back to the right.
+	 */
+	if (ctx->xoff + ctx->ocx > tty->rright)
+		tty_cursor(tty, tty->rright, ctx->yoff + ctx->ocy);
+	else
+		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 
 	tty_putc(tty, '\n');
+}
+
+void
+tty_cmd_scrollup(struct tty *tty, const struct tty_ctx *ctx)
+{
+	struct window_pane	*wp = ctx->wp;
+	u_int			 i;
+
+	if ((!tty_pane_full_width(tty, ctx) && !tty_use_margin(tty)) ||
+	    tty_fake_bce(tty, wp, 8) ||
+	    !tty_term_has(tty->term, TTYC_CSR)) {
+		tty_redraw_region(tty, ctx);
+		return;
+	}
+
+	tty_attributes(tty, &grid_default_cell, wp);
+
+	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_margin_pane(tty, ctx);
+
+	if (ctx->num == 1 || !tty_term_has(tty->term, TTYC_INDN)) {
+		tty_cursor(tty, tty->rright, tty->rlower);
+		for (i = 0; i < ctx->num; i++)
+			tty_putc(tty, '\n');
+	} else
+		tty_putcode1(tty, TTYC_INDN, ctx->num);
 }
 
 void
@@ -1022,31 +1070,41 @@ tty_cmd_clearendofscreen(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
-	u_int		 	 i, j;
+	u_int			 i, j;
+	u_int			 sx = screen_size_x(s), sy = screen_size_y(s);
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
-	tty_region_pane(tty, ctx, 0, screen_size_y(s) - 1);
-	tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+	tty_region_pane(tty, ctx, 0, sy - 1);
+	tty_margin_off(tty);
 
 	if (tty_pane_full_width(tty, ctx) &&
-	    tty_term_has(tty->term, TTYC_EL) && !tty_fake_bce(tty, wp)) {
+	    ctx->yoff + wp->sy >= tty->sy - 1 &&
+	    status_at_line(tty->client) <= 0 &&
+	    tty_term_has(tty->term, TTYC_ED)) {
+		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+		tty_putcode(tty, TTYC_ED);
+	} else if (tty_pane_full_width(tty, ctx) &&
+	    tty_term_has(tty->term, TTYC_EL) &&
+	    !tty_fake_bce(tty, wp, ctx->bg)) {
+		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
 		tty_putcode(tty, TTYC_EL);
-		if (ctx->ocy != screen_size_y(s) - 1) {
+		if (ctx->ocy != sy - 1) {
 			tty_cursor_pane(tty, ctx, 0, ctx->ocy + 1);
-			for (i = ctx->ocy + 1; i < screen_size_y(s); i++) {
+			for (i = ctx->ocy + 1; i < sy; i++) {
 				tty_putcode(tty, TTYC_EL);
-				if (i == screen_size_y(s) - 1)
+				if (i == sy - 1)
 					continue;
 				tty_emulate_repeat(tty, TTYC_CUD, TTYC_CUD1, 1);
 				tty->cy++;
 			}
 		}
 	} else {
-		tty_repeat_space(tty, screen_size_x(s) - ctx->ocx);
-		for (j = ctx->ocy + 1; j < screen_size_y(s); j++) {
+		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
+		tty_repeat_space(tty, sx - ctx->ocx);
+		for (j = ctx->ocy + 1; j < sy; j++) {
 			tty_cursor_pane(tty, ctx, 0, j);
-			tty_repeat_space(tty, screen_size_x(s));
+			tty_repeat_space(tty, sx);
 		}
 	}
 }
@@ -1056,26 +1114,31 @@ tty_cmd_clearstartofscreen(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
-	u_int		 	 i, j;
+	u_int			 i, j;
+	u_int			 sx = screen_size_x(s), sy = screen_size_y(s);
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
-	tty_region_pane(tty, ctx, 0, screen_size_y(s) - 1);
-	tty_cursor_pane(tty, ctx, 0, 0);
+	tty_region_pane(tty, ctx, 0, sy - 1);
+	tty_margin_off(tty);
 
 	if (tty_pane_full_width(tty, ctx) &&
-	    tty_term_has(tty->term, TTYC_EL) && !tty_fake_bce(tty, wp)) {
+	    tty_term_has(tty->term, TTYC_EL) &&
+	    !tty_fake_bce(tty, wp, ctx->bg)) {
+		tty_cursor_pane(tty, ctx, 0, 0);
 		for (i = 0; i < ctx->ocy; i++) {
 			tty_putcode(tty, TTYC_EL);
 			tty_emulate_repeat(tty, TTYC_CUD, TTYC_CUD1, 1);
 			tty->cy++;
 		}
 	} else {
+		tty_cursor_pane(tty, ctx, 0, 0);
 		for (j = 0; j < ctx->ocy; j++) {
 			tty_cursor_pane(tty, ctx, 0, j);
-			tty_repeat_space(tty, screen_size_x(s));
+			tty_repeat_space(tty, sx);
 		}
 	}
+	tty_cursor_pane(tty, ctx, 0, ctx->ocy);
 	tty_repeat_space(tty, ctx->ocx + 1);
 }
 
@@ -1084,26 +1147,35 @@ tty_cmd_clearscreen(struct tty *tty, const struct tty_ctx *ctx)
 {
 	struct window_pane	*wp = ctx->wp;
 	struct screen		*s = wp->screen;
-	u_int		 	 i, j;
+	u_int			 i, j;
+	u_int			 sx = screen_size_x(s), sy = screen_size_y(s);
 
-	tty_attributes(tty, &grid_default_cell, wp);
+	tty_default_attributes(tty, wp, ctx->bg);
 
-	tty_region_pane(tty, ctx, 0, screen_size_y(s) - 1);
-	tty_cursor_pane(tty, ctx, 0, 0);
+	tty_region_pane(tty, ctx, 0, sy - 1);
+	tty_margin_off(tty);
 
 	if (tty_pane_full_width(tty, ctx) &&
-	    tty_term_has(tty->term, TTYC_EL) && !tty_fake_bce(tty, wp)) {
-		for (i = 0; i < screen_size_y(s); i++) {
+	    status_at_line(tty->client) <= 0 &&
+	    tty_term_has(tty->term, TTYC_ED)) {
+		tty_cursor_pane(tty, ctx, 0, 0);
+		tty_putcode(tty, TTYC_ED);
+	} else if (tty_pane_full_width(tty, ctx) &&
+	    tty_term_has(tty->term, TTYC_EL) &&
+	    !tty_fake_bce(tty, wp, ctx->bg)) {
+		tty_cursor_pane(tty, ctx, 0, 0);
+		for (i = 0; i < sy; i++) {
 			tty_putcode(tty, TTYC_EL);
-			if (i != screen_size_y(s) - 1) {
+			if (i != sy - 1) {
 				tty_emulate_repeat(tty, TTYC_CUD, TTYC_CUD1, 1);
 				tty->cy++;
 			}
 		}
 	} else {
-		for (j = 0; j < screen_size_y(s); j++) {
+		tty_cursor_pane(tty, ctx, 0, 0);
+		for (j = 0; j < sy; j++) {
 			tty_cursor_pane(tty, ctx, 0, j);
-			tty_repeat_space(tty, screen_size_x(s));
+			tty_repeat_space(tty, sx);
 		}
 	}
 }
@@ -1118,6 +1190,7 @@ tty_cmd_alignmenttest(struct tty *tty, const struct tty_ctx *ctx)
 	tty_attributes(tty, &grid_default_cell, wp);
 
 	tty_region_pane(tty, ctx, 0, screen_size_y(s) - 1);
+	tty_margin_off(tty);
 
 	for (j = 0; j < screen_size_y(s); j++) {
 		tty_cursor_pane(tty, ctx, 0, j);
@@ -1129,51 +1202,25 @@ tty_cmd_alignmenttest(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 {
-	struct window_pane	*wp = ctx->wp;
-	struct screen		*s = wp->screen;
-	u_int			 cx;
-	u_int			 width;
+	if (ctx->xoff + ctx->ocx > tty->sx - 1 && ctx->ocy == ctx->orlower) {
+		if (tty_pane_full_width(tty, ctx))
+			tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+		else
+			tty_margin_off(tty);
+	}
 
-	tty_region_pane(tty, ctx, ctx->orupper, ctx->orlower);
+	tty_cursor_pane_unless_wrap(tty, ctx, ctx->ocx, ctx->ocy);
 
-	/* Is the cursor in the very last position? */
-	width = ctx->cell->data.width;
-	if (ctx->ocx > wp->sx - width) {
-		if (ctx->xoff != 0 || wp->sx != tty->sx) {
-			/*
-			 * The pane doesn't fill the entire line, the linefeed
-			 * will already have happened, so just move the cursor.
-			 */
-			if (ctx->ocy != wp->yoff + wp->screen->rlower)
-				tty_cursor_pane(tty, ctx, 0, ctx->ocy + 1);
-			else
-				tty_cursor_pane(tty, ctx, 0, ctx->ocy);
-		} else if (tty->cx < tty->sx) {
-			/*
-			 * The cursor isn't in the last position already, so
-			 * move as far left as possible and redraw the last
-			 * cell to move into the last position.
-			 */
-			cx = screen_size_x(s) - ctx->last_cell.data.width;
-			tty_cursor_pane(tty, ctx, cx, ctx->ocy);
-			tty_cell(tty, &ctx->last_cell, wp);
-		}
-	} else
-		tty_cursor_pane(tty, ctx, ctx->ocx, ctx->ocy);
-
-	tty_cell(tty, ctx->cell, wp);
+	tty_cell(tty, ctx->cell, ctx->wp);
 }
 
 void
-tty_cmd_utf8character(struct tty *tty, const struct tty_ctx *ctx)
+tty_cmd_cells(struct tty *tty, const struct tty_ctx *ctx)
 {
-	struct window_pane	*wp = ctx->wp;
+	tty_cursor_pane_unless_wrap(tty, ctx, ctx->ocx, ctx->ocy);
 
-	/*
-	 * Cannot rely on not being a partial character, so just redraw the
-	 * whole line.
-	 */
-	tty_draw_pane(tty, wp, ctx->ocy, ctx->xoff, ctx->yoff);
+	tty_attributes(tty, ctx->cell, ctx->wp);
+	tty_putn(tty, ctx->ptr, ctx->num, ctx->num);
 }
 
 void
@@ -1197,28 +1244,20 @@ tty_cmd_setselection(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_rawstring(struct tty *tty, const struct tty_ctx *ctx)
 {
-	u_int	 i;
-	u_char	*str = ctx->ptr;
-
-	for (i = 0; i < ctx->num; i++)
-		tty_putc(tty, str[i]);
-
-	tty->cx = tty->cy = UINT_MAX;
-	tty->rupper = tty->rlower = UINT_MAX;
-
-	tty_attributes(tty, &grid_default_cell, ctx->wp);
-	tty_cursor(tty, 0, 0);
+	tty_add(tty, ctx->ptr, ctx->num);
+	tty_invalidate(tty);
 }
 
-void
+static void
 tty_cell(struct tty *tty, const struct grid_cell *gc,
     const struct window_pane *wp)
 {
 	u_int	i;
 
 	/* Skip last character if terminal is stupid. */
-	if (tty->term->flags & TERM_EARLYWRAP &&
-	    tty->cy == tty->sy - 1 && tty->cx == tty->sx - 1)
+	if ((tty->term->flags & TERM_EARLYWRAP) &&
+	    tty->cy == tty->sy - 1 &&
+	    tty->cx == tty->sx - 1)
 		return;
 
 	/* If this is a padding character, do nothing. */
@@ -1252,17 +1291,52 @@ tty_reset(struct tty *tty)
 {
 	struct grid_cell	*gc = &tty->cell;
 
-	if (memcmp(gc, &grid_default_cell, sizeof *gc) == 0)
-		return;
+	if (!grid_cells_equal(gc, &grid_default_cell)) {
+		if ((gc->attr & GRID_ATTR_CHARSET) && tty_use_acs(tty))
+			tty_putcode(tty, TTYC_RMACS);
+		tty_putcode(tty, TTYC_SGR0);
+		memcpy(gc, &grid_default_cell, sizeof *gc);
+	}
 
-	if ((gc->attr & GRID_ATTR_CHARSET) && tty_use_acs(tty))
-		tty_putcode(tty, TTYC_RMACS);
-	tty_putcode(tty, TTYC_SGR0);
-	memcpy(gc, &grid_default_cell, sizeof *gc);
+	memcpy(&tty->last_cell, &grid_default_cell, sizeof tty->last_cell);
+	tty->last_wp = -1;
+}
+
+static void
+tty_invalidate(struct tty *tty)
+{
+	memcpy(&tty->cell, &grid_default_cell, sizeof tty->cell);
+
+	memcpy(&tty->last_cell, &grid_default_cell, sizeof tty->last_cell);
+	tty->last_wp = -1;
+
+	tty->cx = tty->cy = UINT_MAX;
+
+	tty->rupper = tty->rleft = UINT_MAX;
+	tty->rlower = tty->rright = UINT_MAX;
+
+	if (tty->flags & TTY_STARTED) {
+		tty_putcode(tty, TTYC_SGR0);
+
+		tty->mode = ALL_MODES;
+		tty_update_mode(tty, MODE_CURSOR, NULL);
+
+		tty_cursor(tty, 0, 0);
+		tty_region_off(tty);
+		tty_margin_off(tty);
+	} else
+		tty->mode = MODE_CURSOR;
+}
+
+/* Turn off margin. */
+void
+tty_region_off(struct tty *tty)
+{
+	tty_region(tty, 0, tty->sy - 1);
 }
 
 /* Set region inside pane. */
-void
+static void
 tty_region_pane(struct tty *tty, const struct tty_ctx *ctx, u_int rupper,
     u_int rlower)
 {
@@ -1270,7 +1344,7 @@ tty_region_pane(struct tty *tty, const struct tty_ctx *ctx, u_int rupper,
 }
 
 /* Set region at absolute position. */
-void
+static void
 tty_region(struct tty *tty, u_int rupper, u_int rlower)
 {
 	if (tty->rlower == rlower && tty->rupper == rupper)
@@ -1291,11 +1365,68 @@ tty_region(struct tty *tty, u_int rupper, u_int rlower)
 		tty_cursor(tty, 0, tty->cy);
 
 	tty_putcode2(tty, TTYC_CSR, tty->rupper, tty->rlower);
-	tty_cursor(tty, 0, 0);
+	tty->cx = tty->cy = UINT_MAX;
+}
+
+/* Turn off margin. */
+void
+tty_margin_off(struct tty *tty)
+{
+	tty_margin(tty, 0, tty->sx - 1);
+}
+
+/* Set margin inside pane. */
+static void
+tty_margin_pane(struct tty *tty, const struct tty_ctx *ctx)
+{
+	tty_margin(tty, ctx->xoff, ctx->xoff + ctx->wp->sx - 1);
+}
+
+/* Set margin at absolute position. */
+static void
+tty_margin(struct tty *tty, u_int rleft, u_int rright)
+{
+	char s[64];
+
+	if (!tty_use_margin(tty))
+		return;
+	if (tty->rleft == rleft && tty->rright == rright)
+		return;
+
+	tty_putcode2(tty, TTYC_CSR, tty->rupper, tty->rlower);
+
+	tty->rleft = rleft;
+	tty->rright = rright;
+
+	if (rleft == 0 && rright == tty->sx - 1)
+		snprintf(s, sizeof s, "\033[s");
+	else
+		snprintf(s, sizeof s, "\033[%u;%us", rleft + 1, rright + 1);
+	tty_puts(tty, s);
+	tty->cx = tty->cy = UINT_MAX;
+}
+
+/*
+ * Move the cursor, unless it would wrap itself when the next character is
+ * printed.
+ */
+static void
+tty_cursor_pane_unless_wrap(struct tty *tty, const struct tty_ctx *ctx,
+    u_int cx, u_int cy)
+{
+	if (!tty_pane_full_width(tty, ctx) ||
+	    (tty->term->flags & TERM_EARLYWRAP) ||
+	    ctx->xoff + cx != 0 ||
+	    ctx->yoff + cy != tty->cy + 1 ||
+	    tty->cx < tty->sx ||
+	    tty->cy == tty->rlower)
+		tty_cursor_pane(tty, ctx, cx, cy);
+	else
+		log_debug("%s: will wrap at %u,%u", __func__, tty->cx, tty->cy);
 }
 
 /* Move cursor inside pane. */
-void
+static void
 tty_cursor_pane(struct tty *tty, const struct tty_ctx *ctx, u_int cx, u_int cy)
 {
 	tty_cursor(tty, ctx->xoff + cx, ctx->yoff + cy);
@@ -1343,7 +1474,7 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 		 */
 
 		/* To left edge. */
-		if (cx == 0)	{
+		if (cx == 0) {
 			tty_putc(tty, '\r');
 			goto out;
 		}
@@ -1371,6 +1502,11 @@ tty_cursor(struct tty *tty, u_int cx, u_int cy)
 			tty_putcode1(tty, TTYC_HPA, cx);
 			goto out;
 		} else if (change > 0 && tty_term_has(term, TTYC_CUB)) {
+			if (change == 2 && tty_term_has(term, TTYC_CUB1)) {
+				tty_putcode(tty, TTYC_CUB1);
+				tty_putcode(tty, TTYC_CUB1);
+				goto out;
+			}
 			tty_putcode1(tty, TTYC_CUB, change);
 			goto out;
 		} else if (change < 0 && tty_term_has(term, TTYC_CUF)) {
@@ -1433,10 +1569,23 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
     const struct window_pane *wp)
 {
 	struct grid_cell	*tc = &tty->cell, gc2;
-	u_char			 changed;
+	int			 changed;
 
+	/* Ignore cell if it is the same as the last one. */
+	if (wp != NULL &&
+	    (int)wp->id == tty->last_wp &&
+	    ~(wp->window->flags & WINDOW_STYLECHANGED) &&
+	    gc->attr == tty->last_cell.attr &&
+	    gc->fg == tty->last_cell.fg &&
+	    gc->bg == tty->last_cell.bg)
+		return;
+	tty->last_wp = (wp != NULL ? (int)wp->id : -1);
+	memcpy(&tty->last_cell, gc, sizeof tty->last_cell);
+
+	/* Copy cell and update default colours. */
 	memcpy(&gc2, gc, sizeof gc2);
-	tty_default_colours(&gc2, wp);
+	if (wp != NULL)
+		tty_default_colours(&gc2, wp);
 
 	/*
 	 * If no setab, try to use the reverse attribute as a best-effort for a
@@ -1454,8 +1603,8 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
 	}
 
 	/* Fix up the colours if necessary. */
-	tty_check_fg(tty, &gc2);
-	tty_check_bg(tty, &gc2);
+	tty_check_fg(tty, wp, &gc2);
+	tty_check_bg(tty, wp, &gc2);
 
 	/* If any bits are being cleared, reset everything. */
 	if (tc->attr & ~gc2.attr)
@@ -1490,18 +1639,20 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
 	}
 	if (changed & GRID_ATTR_HIDDEN)
 		tty_putcode(tty, TTYC_INVIS);
+	if (changed & GRID_ATTR_STRIKETHROUGH)
+		tty_putcode(tty, TTYC_SMXX);
 	if ((changed & GRID_ATTR_CHARSET) && tty_use_acs(tty))
 		tty_putcode(tty, TTYC_SMACS);
 }
 
-void
+static void
 tty_colours(struct tty *tty, const struct grid_cell *gc)
 {
 	struct grid_cell	*tc = &tty->cell;
-	int			 have_ax, fg_default, bg_default;
+	int			 have_ax;
 
 	/* No changes? Nothing is necessary. */
-	if (tty_same_colours(gc, tc))
+	if (gc->fg == tc->fg && gc->bg == tc->bg)
 		return;
 
 	/*
@@ -1510,9 +1661,7 @@ tty_colours(struct tty *tty, const struct grid_cell *gc)
 	 * case if only one is default need to fall onward to set the other
 	 * colour.
 	 */
-	fg_default = tty_is_fg(gc, 8);
-	bg_default = tty_is_bg(gc, 8);
-	if (fg_default || bg_default) {
+	if (gc->fg == 8 || gc->bg == 8) {
 		/*
 		 * If don't have AX but do have op, send sgr0 (op can't
 		 * actually be used because it is sometimes the same as sgr0
@@ -1524,61 +1673,68 @@ tty_colours(struct tty *tty, const struct grid_cell *gc)
 		if (!have_ax && tty_term_has(tty->term, TTYC_OP))
 			tty_reset(tty);
 		else {
-			if (fg_default && !tty_is_fg(tc, 8)) {
+			if (gc->fg == 8 && tc->fg != 8) {
 				if (have_ax)
 					tty_puts(tty, "\033[39m");
-				else if (!tty_is_fg(tc, 7))
+				else if (tc->fg != 7)
 					tty_putcode1(tty, TTYC_SETAF, 7);
 				tc->fg = 8;
-				tc->flags &= ~(GRID_FLAG_FG256|GRID_FLAG_FGRGB);
 			}
-			if (bg_default && !tty_is_bg(tc, 8)) {
+			if (gc->bg == 8 && tc->bg != 8) {
 				if (have_ax)
 					tty_puts(tty, "\033[49m");
-				else if (!tty_is_bg(tc, 0))
+				else if (tc->bg != 0)
 					tty_putcode1(tty, TTYC_SETAB, 0);
 				tc->bg = 8;
-				tc->flags &= ~(GRID_FLAG_BG256|GRID_FLAG_BGRGB);
 			}
 		}
 	}
 
 	/* Set the foreground colour. */
-	if (!fg_default && !tty_same_fg(gc, tc))
+	if (gc->fg != 8 && gc->fg != tc->fg)
 		tty_colours_fg(tty, gc);
 
 	/*
 	 * Set the background colour. This must come after the foreground as
 	 * tty_colour_fg() can call tty_reset().
 	 */
-	if (!bg_default && !tty_same_bg(gc, tc))
+	if (gc->bg != 8 && gc->bg != tc->bg)
 		tty_colours_bg(tty, gc);
 }
 
-void
-tty_check_fg(struct tty *tty, struct grid_cell *gc)
+static void
+tty_check_fg(struct tty *tty, const struct window_pane *wp,
+    struct grid_cell *gc)
 {
-	struct grid_cell_rgb	*rgb = &gc->fg_rgb;
-	u_int			 colours;
+	u_char	r, g, b;
+	u_int	colours;
+	int	c;
+
+	/* Perform substitution if this pane has a palette */
+	if ((~gc->flags & GRID_FLAG_NOPALETTE) &&
+	    (c = window_pane_get_palette(wp, gc->fg)) != -1)
+		gc->fg = c;
 
 	/* Is this a 24-bit colour? */
-	if (gc->flags & GRID_FLAG_FGRGB) {
+	if (gc->fg & COLOUR_FLAG_RGB) {
 		/* Not a 24-bit terminal? Translate to 256-colour palette. */
 		if (!tty_term_flag(tty->term, TTYC_TC)) {
-			gc->flags &= ~GRID_FLAG_FGRGB;
-			gc->flags |= GRID_FLAG_FG256;
-			gc->fg = colour_find_rgb(rgb->r, rgb->g, rgb->b);
-		}
-		else
+			colour_split_rgb(gc->fg, &r, &g, &b);
+			gc->fg = colour_find_rgb(r, g, b);
+		} else
 			return;
 	}
-	colours = tty_term_number(tty->term, TTYC_COLORS);
+
+	/* How many colours does this terminal have? */
+	if ((tty->term->flags|tty->term_flags) & TERM_256COLOURS)
+		colours = 256;
+	else
+		colours = tty_term_number(tty->term, TTYC_COLORS);
 
 	/* Is this a 256-colour colour? */
-	if (gc->flags & GRID_FLAG_FG256) {
+	if (gc->fg & COLOUR_FLAG_256) {
 		/* And not a 256 colour mode? */
-		if (!(tty->term->flags & TERM_256COLOURS) &&
-		    !(tty->term_flags & TERM_256COLOURS)) {
+		if (colours != 256) {
 			gc->fg = colour_256to16(gc->fg);
 			if (gc->fg & 8) {
 				gc->fg &= 7;
@@ -1588,7 +1744,6 @@ tty_check_fg(struct tty *tty, struct grid_cell *gc)
 					gc->attr |= GRID_ATTR_BRIGHT;
 			} else
 				gc->attr &= ~GRID_ATTR_BRIGHT;
-			gc->flags &= ~GRID_FLAG_FG256;
 		}
 		return;
 	}
@@ -1600,41 +1755,49 @@ tty_check_fg(struct tty *tty, struct grid_cell *gc)
 	}
 }
 
-void
-tty_check_bg(struct tty *tty, struct grid_cell *gc)
+static void
+tty_check_bg(struct tty *tty, const struct window_pane *wp,
+    struct grid_cell *gc)
 {
-	struct grid_cell_rgb	*rgb = &gc->bg_rgb;
-	u_int			 colours;
+	u_char	r, g, b;
+	u_int	colours;
+	int	c;
+
+	/* Perform substitution if this pane has a palette */
+	if ((~gc->flags & GRID_FLAG_NOPALETTE) &&
+	    (c = window_pane_get_palette(wp, gc->bg)) != -1)
+		gc->bg = c;
 
 	/* Is this a 24-bit colour? */
-	if (gc->flags & GRID_FLAG_BGRGB) {
+	if (gc->bg & COLOUR_FLAG_RGB) {
 		/* Not a 24-bit terminal? Translate to 256-colour palette. */
 		if (!tty_term_flag(tty->term, TTYC_TC)) {
-			gc->flags &= ~GRID_FLAG_BGRGB;
-			gc->flags |= GRID_FLAG_BG256;
-			gc->bg = colour_find_rgb(rgb->r, rgb->g, rgb->b);
-		}
-		else
+			colour_split_rgb(gc->bg, &r, &g, &b);
+			gc->bg = colour_find_rgb(r, g, b);
+		} else
 			return;
 	}
-	colours = tty_term_number(tty->term, TTYC_COLORS);
+
+	/* How many colours does this terminal have? */
+	if ((tty->term->flags|tty->term_flags) & TERM_256COLOURS)
+		colours = 256;
+	else
+		colours = tty_term_number(tty->term, TTYC_COLORS);
 
 	/* Is this a 256-colour colour? */
-	if (gc->flags & GRID_FLAG_BG256) {
+	if (gc->bg & COLOUR_FLAG_256) {
 		/*
 		 * And not a 256 colour mode? Translate to 16-colour
 		 * palette. Bold background doesn't exist portably, so just
 		 * discard the bold bit if set.
 		 */
-		if (!(tty->term->flags & TERM_256COLOURS) &&
-		    !(tty->term_flags & TERM_256COLOURS)) {
+		if (colours != 256) {
 			gc->bg = colour_256to16(gc->bg);
 			if (gc->bg & 8) {
 				gc->bg &= 7;
 				if (colours >= 16)
 					gc->fg += 90;
 			}
-			gc->flags &= ~GRID_FLAG_BG256;
 		}
 		return;
 	}
@@ -1644,182 +1807,172 @@ tty_check_bg(struct tty *tty, struct grid_cell *gc)
 		gc->bg -= 90;
 }
 
-void
+static void
 tty_colours_fg(struct tty *tty, const struct grid_cell *gc)
 {
 	struct grid_cell	*tc = &tty->cell;
-	u_char			 fg = gc->fg;
 	char			 s[32];
 
-	tc->flags &= ~(GRID_FLAG_FG256|GRID_FLAG_FGRGB);
-
-	/* Is this a 24-bit colour? */
-	if (gc->flags & GRID_FLAG_FGRGB) {
-		if (tty_try_rgb(tty, &gc->fg_rgb, "38") == 0)
-			goto save_fg;
-		/* Should not get here, already converted in tty_check_fg. */
-		return;
-	}
-
-	/* Is this a 256-colour colour? */
-	if (gc->flags & GRID_FLAG_FG256) {
-		if (tty_try_256(tty, fg, "38") == 0)
+	/* Is this a 24-bit or 256-colour colour? */
+	if (gc->fg & COLOUR_FLAG_RGB ||
+	    gc->fg & COLOUR_FLAG_256) {
+		if (tty_try_colour(tty, gc->fg, "38") == 0)
 			goto save_fg;
 		/* Should not get here, already converted in tty_check_fg. */
 		return;
 	}
 
 	/* Is this an aixterm bright colour? */
-	if (fg >= 90 && fg <= 97) {
-		xsnprintf(s, sizeof s, "\033[%dm", fg);
+	if (gc->fg >= 90 && gc->fg <= 97) {
+		xsnprintf(s, sizeof s, "\033[%dm", gc->fg);
 		tty_puts(tty, s);
 		goto save_fg;
 	}
 
 	/* Otherwise set the foreground colour. */
-	tty_putcode1(tty, TTYC_SETAF, fg);
+	tty_putcode1(tty, TTYC_SETAF, gc->fg);
 
 save_fg:
 	/* Save the new values in the terminal current cell. */
-	if (gc->flags & GRID_FLAG_FGRGB)
-		memcpy(&tc->fg_rgb, &gc->fg_rgb, sizeof tc->fg_rgb);
-	else
-		tc->fg = fg;
-	tc->flags &= ~(GRID_FLAG_FGRGB|GRID_FLAG_FG256);
-	tc->flags |= (gc->flags & (GRID_FLAG_FG256|GRID_FLAG_FGRGB));
+	tc->fg = gc->fg;
 }
 
-void
+static void
 tty_colours_bg(struct tty *tty, const struct grid_cell *gc)
 {
 	struct grid_cell	*tc = &tty->cell;
-	u_char			 bg = gc->bg;
 	char			 s[32];
 
-	/* Is this a 24-bit colour? */
-	if (gc->flags & GRID_FLAG_BGRGB) {
-		if (tty_try_rgb(tty, &gc->bg_rgb, "48") == 0)
-			goto save_bg;
-		/* Should not get here, already converted in tty_check_bg. */
-		return;
-	}
-
-	/* Is this a 256-colour colour? */
-	if (gc->flags & GRID_FLAG_BG256) {
-		if (tty_try_256(tty, bg, "48") == 0)
+	/* Is this a 24-bit or 256-colour colour? */
+	if (gc->bg & COLOUR_FLAG_RGB ||
+	    gc->bg & COLOUR_FLAG_256) {
+		if (tty_try_colour(tty, gc->bg, "48") == 0)
 			goto save_bg;
 		/* Should not get here, already converted in tty_check_bg. */
 		return;
 	}
 
 	/* Is this an aixterm bright colour? */
-	if (bg >= 90 && bg <= 97) {
-		xsnprintf(s, sizeof s, "\033[%dm", bg + 10);
+	if (gc->bg >= 90 && gc->bg <= 97) {
+		xsnprintf(s, sizeof s, "\033[%dm", gc->bg + 10);
 		tty_puts(tty, s);
 		goto save_bg;
 	}
 
 	/* Otherwise set the background colour. */
-	tty_putcode1(tty, TTYC_SETAB, bg);
+	tty_putcode1(tty, TTYC_SETAB, gc->bg);
 
 save_bg:
 	/* Save the new values in the terminal current cell. */
-	if (gc->flags & GRID_FLAG_BGRGB)
-		memcpy(&tc->bg_rgb, &gc->bg_rgb, sizeof tc->bg_rgb);
-	else
-		tc->bg = bg;
-	tc->flags &= ~(GRID_FLAG_BGRGB|GRID_FLAG_BG256);
-	tc->flags |= (gc->flags & (GRID_FLAG_BG256|GRID_FLAG_BGRGB));
+	tc->bg = gc->bg;
 }
 
-int
-tty_try_256(struct tty *tty, u_char colour, const char *type)
+static int
+tty_try_colour(struct tty *tty, int colour, const char *type)
 {
+	u_char	r, g, b;
 	char	s[32];
 
-	/*
-	 * If the user has specified -2 to the client, setaf and setab may not
-	 * work (or they may not want to use them), so send the usual sequence.
-	 */
-	if (tty->term_flags & TERM_256COLOURS)
-		goto fallback;
+	if (colour & COLOUR_FLAG_256) {
+		/*
+		 * If the user has specified -2 to the client, setaf and setab
+		 * may not work (or they may not want to use them), so send the
+		 * usual sequence.
+		 */
+		if (tty->term_flags & TERM_256COLOURS)
+			goto fallback_256;
 
-	/*
-	 * If the terminfo entry has 256 colours and setaf and setab exist,
-	 * assume that they work correctly.
-	 */
-	if (tty->term->flags & TERM_256COLOURS) {
-		if (*type == '3') {
-			if (!tty_term_has(tty->term, TTYC_SETAF))
-				goto fallback;
-			tty_putcode1(tty, TTYC_SETAF, colour);
-		} else {
-			if (!tty_term_has(tty->term, TTYC_SETAB))
-				goto fallback;
-			tty_putcode1(tty, TTYC_SETAB, colour);
+		/*
+		 * If the terminfo entry has 256 colours and setaf and setab
+		 * exist, assume that they work correctly.
+		 */
+		if (tty->term->flags & TERM_256COLOURS) {
+			if (*type == '3') {
+				if (!tty_term_has(tty->term, TTYC_SETAF))
+					goto fallback_256;
+				tty_putcode1(tty, TTYC_SETAF, colour & 0xff);
+			} else {
+				if (!tty_term_has(tty->term, TTYC_SETAB))
+					goto fallback_256;
+				tty_putcode1(tty, TTYC_SETAB, colour & 0xff);
+			}
+			return (0);
 		}
+		goto fallback_256;
+	}
+
+	if (colour & COLOUR_FLAG_RGB) {
+		if (!tty_term_flag(tty->term, TTYC_TC))
+			return (-1);
+
+		colour_split_rgb(colour & 0xffffff, &r, &g, &b);
+		xsnprintf(s, sizeof s, "\033[%s;2;%hhu;%hhu;%hhum", type,
+		    r, g, b);
+		tty_puts(tty, s);
 		return (0);
 	}
 
 	return (-1);
 
-fallback:
-	xsnprintf(s, sizeof s, "\033[%s;5;%hhum", type, colour);
+fallback_256:
+	xsnprintf(s, sizeof s, "\033[%s;5;%dm", type, colour & 0xff);
 	tty_puts(tty, s);
 	return (0);
 }
 
-int
-tty_try_rgb(struct tty *tty, const struct grid_cell_rgb *rgb, const char *type)
-{
-	char	s[32];
-
-	if (!tty_term_flag(tty->term, TTYC_TC))
-		return (-1);
-
-	xsnprintf(s, sizeof s, "\033[%s;2;%hhu;%hhu;%hhum", type, rgb->r,
-	    rgb->g, rgb->b);
-	tty_puts(tty, s);
-	return (0);
-}
-
-void
+static void
 tty_default_colours(struct grid_cell *gc, const struct window_pane *wp)
 {
-	const struct grid_cell        *agc, *pgc, *wgc;
+	struct window		*w = wp->window;
+	struct options		*oo = w->options;
+	const struct grid_cell	*agc, *pgc, *wgc;
+	int			 c;
 
-	if (wp == NULL)
-		return;
-
+	if (w->flags & WINDOW_STYLECHANGED) {
+		w->flags &= ~WINDOW_STYLECHANGED;
+		agc = options_get_style(oo, "window-active-style");
+		memcpy(&w->active_style, agc, sizeof w->active_style);
+		wgc = options_get_style(oo, "window-style");
+		memcpy(&w->style, wgc, sizeof w->style);
+	} else {
+		agc = &w->active_style;
+		wgc = &w->style;
+	}
 	pgc = &wp->colgc;
-	agc = options_get_style(wp->window->options, "window-active-style");
-	wgc = options_get_style(wp->window->options, "window-style");
 
-	if (gc->fg == 8 && !(gc->flags & GRID_FLAG_FG256)) {
-		if (pgc->fg != 8 || (pgc->flags & GRID_FLAG_FG256)) {
+	if (gc->fg == 8) {
+		if (pgc->fg != 8)
 			gc->fg = pgc->fg;
-			gc->flags |= (pgc->flags & GRID_FLAG_FG256);
-		} else if (wp == wp->window->active &&
-		    (agc->fg != 8 || (agc->flags & GRID_FLAG_FG256))) {
+		else if (wp == w->active && agc->fg != 8)
 			gc->fg = agc->fg;
-			gc->flags |= (agc->flags & GRID_FLAG_FG256);
-		} else {
+		else
 			gc->fg = wgc->fg;
-			gc->flags |= (wgc->flags & GRID_FLAG_FG256);
-		}
+
+		if (gc->fg != 8 &&
+		    (c = window_pane_get_palette(wp, gc->fg)) != -1)
+			gc->fg = c;
 	}
 
-	if (gc->bg == 8 && !(gc->flags & GRID_FLAG_BG256)) {
-		if (pgc->bg != 8 || (pgc->flags & GRID_FLAG_BG256)) {
+	if (gc->bg == 8) {
+		if (pgc->bg != 8)
 			gc->bg = pgc->bg;
-			gc->flags |= (pgc->flags & GRID_FLAG_BG256);
-		} else if (wp == wp->window->active &&
-		    (agc->bg != 8 || (agc->flags & GRID_FLAG_BG256))) {
+		else if (wp == w->active && agc->bg != 8)
 			gc->bg = agc->bg;
-			gc->flags |= (agc->flags & GRID_FLAG_BG256);
-		} else {
+		else
 			gc->bg = wgc->bg;
-			gc->flags |= (wgc->flags & GRID_FLAG_BG256);
-		}
+
+		if (gc->bg != 8 &&
+		    (c = window_pane_get_palette(wp, gc->bg)) != -1)
+			gc->bg = c;
 	}
+}
+
+static void
+tty_default_attributes(struct tty *tty, const struct window_pane *wp, u_int bg)
+{
+	static struct grid_cell gc;
+
+	memcpy(&gc, &grid_default_cell, sizeof gc);
+	gc.bg = bg;
+	tty_attributes(tty, &gc, wp);
 }
