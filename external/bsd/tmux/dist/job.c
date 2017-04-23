@@ -32,8 +32,8 @@
  * output.
  */
 
-void	job_callback(struct bufferevent *, short, void *);
-void	job_write_callback(struct bufferevent *, void *);
+static void	job_callback(struct bufferevent *, short, void *);
+static void	job_write_callback(struct bufferevent *, void *);
 
 /* All jobs list. */
 struct joblist	all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
@@ -52,12 +52,7 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (NULL);
 
-	env = environ_create();
-	environ_copy(global_environ, env);
-	if (s != NULL)
-		environ_copy(s->environ, env);
-	server_fill_environ(s, env);
-
+	env = environ_for_session(s);
 	switch (pid = fork()) {
 	case -1:
 		environ_free(env);
@@ -148,7 +143,7 @@ job_free(struct job *job)
 }
 
 /* Called when output buffer falls below low watermark (default is 0). */
-void
+static void
 job_write_callback(__unused struct bufferevent *bufev, void *data)
 {
 	struct job	*job = data;
@@ -164,7 +159,7 @@ job_write_callback(__unused struct bufferevent *bufev, void *data)
 }
 
 /* Job buffer error callback. */
-void
+static void
 job_callback(__unused struct bufferevent *bufev, __unused short events,
     void *data)
 {

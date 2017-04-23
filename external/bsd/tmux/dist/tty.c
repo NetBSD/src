@@ -452,9 +452,9 @@ tty_putc(struct tty *tty, u_char ch)
 		if (acs != NULL)
 			tty_add(tty, acs, strlen(acs));
 		else
-			tty_add(tty, &ch, 1);
+			tty_add(tty, (char *)&ch, 1);
 	} else
-		tty_add(tty, &ch, 1);
+		tty_add(tty, (char *)&ch, 1);
 
 	if (ch >= 0x20 && ch != 0x7f) {
 		if (tty->cx >= tty->sx) {
