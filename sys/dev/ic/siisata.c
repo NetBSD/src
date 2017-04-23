@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.9 2017/04/23 01:26:50 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.10 2017/04/23 14:25:02 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.9 2017/04/23 01:26:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.10 2017/04/23 14:25:02 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -624,7 +624,6 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct siisata_softc *sc = (struct siisata_softc *)chp->ch_atac;
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
-	struct ata_xfer *xfer;
 
 	SIISATA_DEBUG_PRINT(("%s: %s\n", SIISATANAME(sc), __func__),
 	    DEBUG_FUNCS);
@@ -640,9 +639,7 @@ siisata_reset_channel(struct ata_channel *chp, int flags)
 		DELAY(10);
 	PRWRITE(sc, PRX(chp->ch_channel, PRO_SERROR),
 	    PRREAD(sc, PRX(chp->ch_channel, PRO_SERROR)));
-	if ((xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, 0)) != NULL) { /* XXX slot */
-		(*xfer->c_kill_xfer)(chp, xfer, KILL_RESET);
-	}
+	ata_kill_active(chp, KILL_RESET);
 
 	return;
 }
