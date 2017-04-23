@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.16 2017/04/23 05:56:50 abhinav Exp $
+.\"     $NetBSD: file.9,v 1.17 2017/04/23 06:23:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -223,8 +223,8 @@ Free file entry
 The file entry was created in
 .Xr falloc 9 .
 .It Fn FILE_IS_USABLE "fp"
-Ensure that the file entry is usable by ensuring that the
-FIF_WANTCLOSE and FIF_LARVAL flags are not set in
+Ensure that the file entry is usable by ensuring that neither the
+FIF_WANTCLOSE flag nor the FIF_LARVAL flag is not set in
 .Em f_iflags .
 .It Fn FILE_USE "fp"
 Increment the reference count on file entry
