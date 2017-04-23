@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.18 2017/04/23 06:34:07 pgoyette Exp $
+.\"     $NetBSD: file.9,v 1.19 2017/04/23 11:37:29 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,13 +182,13 @@ member.
 Valid values include:
 .Pp
 .Bl -tag -offset indent -width FIF_WANTCLOSE -compact
-.It FIF_WANTCLOSE
+.It Dv FIF_WANTCLOSE
 If set, then the reference count on the file is zero, but there were
 multiple users of the file.
 This can happen if a file descriptor table is shared by multiple processes.
 This flag notifies potential users that the file is closing and will
 prevent them from adding additional uses to the file.
-.It FIF_LARVAL
+.It Dv FIF_LARVAL
 The file entry is not fully constructed (mature) and should not be used.
 .El
 .Pp
@@ -224,7 +224,10 @@ The file entry was created in
 .Xr falloc 9 .
 .It Fn FILE_IS_USABLE "fp"
 Ensure that the file entry is usable by ensuring that neither the
-FIF_WANTCLOSE flag nor the FIF_LARVAL flag is set in
+.Dv FIF_WANTCLOSE
+flag nor the
+.Dv FIF_LARVAL
+flag is set in
 .Em f_iflags .
 .It Fn FILE_USE "fp"
 Increment the reference count on file entry
@@ -232,13 +235,15 @@ Increment the reference count on file entry
 .It Fn FILE_UNUSE "fp" "l"
 Decrement the reference count on file entry
 .Fa fp .
-If the FIF_WANTCLOSE
+If the
+.Dv FIF_WANTCLOSE
 flag is set in
 .Em f_iflags ,
 the file entry is freed.
 .It Fn FILE_SET_MATURE "fp"
-Mark the file entry as being fully constructed (mature) by clearing
-the FIF_LARVAL flag in
+Mark the file entry as being fully constructed (mature) by clearing the
+.Dv FIF_LARVAL
+flag in
 .Em f_iflags .
 .El
 .Sh CODE REFERENCES
