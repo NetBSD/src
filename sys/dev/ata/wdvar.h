@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.43.4.4 2017/04/19 20:49:17 jdolecek Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.43.4.5 2017/04/23 01:21:04 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -68,8 +68,6 @@ struct wd_softc {
 	u_int sc_bscount;
 #endif
 	krndsource_t	rnd_source;
-
-	LIST_HEAD(, wd_ioctl) wi_head;
 
 	STAILQ_HEAD(, ata_xfer) xfer_restart;
 };
