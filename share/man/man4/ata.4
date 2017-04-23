@@ -1,4 +1,4 @@
-.\"	$NetBSD: ata.4,v 1.5 2011/04/28 23:45:15 pgoyette Exp $
+.\"	$NetBSD: ata.4,v 1.6 2017/04/23 14:34:22 jdolecek Exp $
 .\"
 .\" Copyright (c) 2003 Manuel Bouyer.
 .\"
@@ -22,7 +22,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 28, 2011
+.Dd April 23, 2017
 .Dt ATA 4
 .Os
 .Sh NAME
@@ -33,6 +33,8 @@
 .Cd "atabus* at wdc? channel ?"
 .Cd "atabus* at pciide? channel ?"
 .Cd "atabus* at ahcisata? channel ?"
+.Cd "atabus* at mvsata? channel ?"
+.Cd "atabus* at siisata? channel ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -45,6 +47,8 @@ drivers, for hardware which provides direct access to the ATA registers.
 .Xr ahcisata 4 ,
 .Xr atapi 4 ,
 .Xr intro 4 ,
+.Xr mvsata 4 ,
 .Xr pciide 4 ,
+.Xr siisata 4 ,
 .Xr wd 4 ,
 .Xr wdc 4
