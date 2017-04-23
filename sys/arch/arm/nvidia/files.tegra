@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.32 2017/04/22 23:53:24 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.33 2017/04/23 12:31:38 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -22,9 +22,10 @@ file	arch/arm/nvidia/tegra_soc.c
 file	arch/arm/nvidia/tegra_cpufreq.c
 
 # Tegra T124 (32-bit K1) support
+file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 device	tegra124cpu
 attach	tegra124cpu at fdt with tegra124_cpu
-file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124 | tegra124_cpu
+file	arch/arm/nvidia/tegra124_cpu.c		tegra124_cpu
 
 # Interrupt controller
 device	tegralic
