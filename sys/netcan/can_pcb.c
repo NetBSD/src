@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.c,v 1.1.2.3 2017/02/05 19:44:53 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.c,v 1.1.2.4 2017/04/23 21:05:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.1.2.3 2017/02/05 19:44:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can_pcb.c,v 1.1.2.4 2017/04/23 21:05:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,12 +106,14 @@ can_pcballoc(struct socket *so, void *v)
 	canp->canp_socket = so;
 	canp->canp_filters = can_init_filter;
 	canp->canp_nfilters = 1;
+	mutex_init(&canp->canp_mtx, MUTEX_DEFAULT, IPL_NET);
+	canp->canp_refcount = 1;
 
 	so->so_pcb = canp;
-	s = splnet();
+	mutex_enter(&canp->canp_mtx);
 	TAILQ_INSERT_HEAD(&table->canpt_queue, canp, canp_queue);
 	can_pcbstate(canp, CANP_ATTACHED);
-	splx(s);
+	mutex_exit(&canp->canp_mtx);
 	return (0);
 }
 
@@ -122,6 +124,7 @@ can_pcbbind(void *v, struct sockaddr_can *scan, struct lwp *l)
 
 	if (scan->can_family != AF_CAN)
 		return (EAFNOSUPPORT);
+	mutex_enter(&canp->canp_mtx);
 	if (scan->can_ifindex != 0) {
 		canp->canp_ifp = if_byindex(scan->can_ifindex);
 		if (canp->canp_ifp == NULL)
@@ -132,6 +135,7 @@ can_pcbbind(void *v, struct sockaddr_can *scan, struct lwp *l)
 		canp->canp_socket->so_state &= ~SS_ISCONNECTED;	/* XXX */
 	}
 	can_pcbstate(canp, CANP_BOUND);
+	mutex_exit(&canp->canp_mtx);
 	return 0;
 }
 
@@ -150,8 +154,10 @@ can_pcbconnect(void *v, struct sockaddr_can *scan)
 	if (scan->can_family != AF_CAN)
 		return (EAFNOSUPPORT);
 #if 0
+	mutex_enter(&canp->canp_mtx);
 	memcpy(&canp->canp_dst, scan, sizeof(struct sockaddr_can));
 	can_pcbstate(canp, CANP_CONNECTED);
+	mutex_exit(&canp->canp_mtx);
 	return 0;
 #endif
 	return EOPNOTSUPP;
@@ -162,7 +168,9 @@ can_pcbdisconnect(void *v)
 {
 	struct canpcb *canp = v;
 
-	can_pcbstate(canp, CANP_BOUND);
+	mutex_enter(&canp->canp_mtx);
+	can_pcbstate(canp, CANP_DETACHED);
+	mutex_exit(&canp->canp_mtx);
 	if (canp->canp_socket->so_state & SS_NOFDREF)
 		can_pcbdetach(canp);
 }
@@ -172,28 +180,51 @@ can_pcbdetach(void *v)
 {
 	struct canpcb *canp = v;
 	struct socket *so = canp->canp_socket;
-	int s;
 
 	KASSERT(mutex_owned(softnet_lock));
 	so->so_pcb = NULL;
-	s =  splnet();
-	can_pcbstate(canp, CANP_ATTACHED);
-	TAILQ_REMOVE(&canp->canp_table->canpt_queue, canp, canp_queue);
-	splx(s);
-	sofree(so); /* sofree drops the lock */
+	mutex_enter(&canp->canp_mtx);
+	can_pcbstate(canp, CANP_DETACHED);
 	can_pcbsetfilter(canp, NULL, 0);
-	pool_put(&canpcb_pool, canp);
+	mutex_exit(&canp->canp_mtx);
+	TAILQ_REMOVE(&canp->canp_table->canpt_queue, canp, canp_queue);
+	sofree(so); /* sofree drops the softnet_lock */
+	canp_unref(canp);
 	mutex_enter(softnet_lock);
+}
+
+void
+canp_ref(struct canpcb *canp)
+{
+	KASSERT(mutex_owned(&canp->canp_mtx));
+	canp->canp_refcount++;
+}
+
+void
+canp_unref(struct canpcb *canp)
+{
+	mutex_enter(&canp->canp_mtx);
+	canp->canp_refcount--;
+	KASSERT(canp->canp_refcount >= 0);
+	if (canp->canp_refcount > 0) {
+		mutex_exit(&canp->canp_mtx);
+		return;
+	}
+	mutex_exit(&canp->canp_mtx);
+	mutex_destroy(&canp->canp_mtx);
+	pool_put(&canpcb_pool, canp);
 }
 
 void
 can_setsockaddr(struct canpcb *canp, struct sockaddr_can *scan)
 {
 
+	mutex_enter(&canp->canp_mtx);
 	memset(scan, 0, sizeof (*scan));
 	scan->can_family = AF_CAN;
 	scan->can_len = sizeof(*scan);
 	scan->can_ifindex = canp->canp_ifp->if_index;
+	mutex_exit(&canp->canp_mtx);
 }
 
 int
@@ -201,6 +232,7 @@ can_pcbsetfilter(struct canpcb *canp, struct can_filter *fp, int nfilters)
 {
 
 	struct can_filter *newf;
+	KASSERT(mutex_owned(&canp->canp_mtx));
 
 	if (nfilters > 0) {
 		newf =
@@ -303,6 +335,7 @@ void
 can_pcbstate(struct canpcb *canp, int state)
 {
 	int ifindex = canp->canp_ifp ? canp->canp_ifp->if_index : 0;
+	KASSERT(mutex_owned(&canp->canp_mtx));
 
 	if (canp->canp_state > CANP_ATTACHED)
 		LIST_REMOVE(canp, canp_hash);
@@ -332,6 +365,7 @@ can_pcbfilter(struct canpcb *canp, struct mbuf *m)
 	struct can_frame *fmp;
 	struct can_filter *fip;
 
+	KASSERT(mutex_owned(&canp->canp_mtx));
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 	KASSERT(m->m_len == m->m_pkthdr.len);
 
