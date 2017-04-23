@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.30 2017/01/10 04:34:07 kamil Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.31 2017/04/23 13:52:57 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.30 2017/01/10 04:34:07 kamil Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.31 2017/04/23 13:52:57 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -182,7 +182,7 @@ create_db(sqlite3 *db)
 	    "CREATE TABLE IF NOT EXISTS mandb_meta(device, inode, mtime, "
 		"file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
 	    //mandb_links
-	    "CREATE TABLE IF NOT EXISTS mandb_links(link, target, section, "
+	    "CREATE TABLE IF NOT EXISTS mandb_links(link COLLATE NOCASE, target, section, "
 		"machine, md5_hash); ";
 
 	sqlite3_exec(db, sqlstr, NULL, NULL, &errmsg);
@@ -504,7 +504,7 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 	char *query;
 
 	if (args->machine)
-		easprintf(&machine_clause, "AND machine = \'%s\' ",
+		easprintf(&machine_clause, "AND mandb.machine = \'%s\' ",
 		    args->machine);
 
 
@@ -547,7 +547,7 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 			if (section_clause[section_clause_len - 1] == ',')
 				section_clause[section_clause_len - 1] = 0;
 			temp = section_clause;
-			easprintf(&section_clause, " AND section IN (%s)", temp);
+			easprintf(&section_clause, " AND mandb.section IN (%s)", temp);
 			free(temp);
 		}
 	}
@@ -577,6 +577,35 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 		section_clause ? section_clause : "",
 		limit_clause ? limit_clause : "");
 		free(wild);
+	} else if (strchr(args->search_str, ' ') == NULL) {
+		/*
+		 * If it's a single word query, we want to search in the
+		 * links table as well. If the link table contains an entry
+		 * for the queried keyword, we want to use that as the name of
+		 * the man page.
+		 * For example, for `apropos realloc` the output should be
+		 * realloc(3) and not malloc(3).
+		 */
+		query = sqlite3_mprintf(
+		    "SELECT section, name, name_desc, machine,"
+		    " snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
+		    " rank_func(matchinfo(mandb, \"pclxn\")) AS rank"
+		    " FROM mandb WHERE name NOT IN ("
+		    " SELECT target FROM mandb_links WHERE link=%Q AND"
+		    " mandb_links.section=mandb.section) AND mandb MATCH %Q %s %s"
+		    " UNION"
+		    " SELECT mandb.section, mandb_links.link AS name, mandb.name_desc,"
+		    " mandb.machine, '' AS snippet, 100.00 AS rank"
+		    " FROM mandb JOIN mandb_links ON mandb.name=mandb_links.target and"
+		    " mandb.section=mandb_links.section WHERE mandb_links.link=%Q"
+		    " %s %s"
+		    " ORDER BY rank DESC %s",
+		    snippet_args[0], snippet_args[1], snippet_args[2],
+		    args->search_str, args->search_str, section_clause ? section_clause : "",
+		    machine_clause ? machine_clause : "", args->search_str,
+		    machine_clause ? machine_clause : "",
+		    section_clause ? section_clause : "",
+		    limit_clause ? limit_clause : "");
 	} else {
 	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
 		" snippet(mandb, %Q, %Q, %Q, -1, 40 ),"
