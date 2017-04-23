@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.8 2017/04/22 14:08:38 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.9 2017/04/23 01:26:50 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.8 2017/04/22 14:08:38 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.9 2017/04/23 01:26:50 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1668,7 +1668,7 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 
 	ata_deactivate_xfer(chp, xfer);
 
-	if (!ata_waitdrain_xfer_check(chp, xfer)) {
+	if (ata_waitdrain_xfer_check(chp, xfer)) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		return 0; /* XXX verify */
 	}
