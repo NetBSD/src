@@ -12,6 +12,9 @@ mvsata, siisata - fix all 'XXX slot'
 
 test wd* at umass?, confirm the ata_channel kludge works
 
+is ata_exec_xfer() + POLL safe wrt. more outstanding I/Os? why is it waiting
+until xfer is head of queue? also layer violation with the ata_xfer_free() call
+
 NCQ PRIO/ICC handling
 ---------------------
 fix handling of ATA 'devices' value to be full 16-bit value, to prepare for
