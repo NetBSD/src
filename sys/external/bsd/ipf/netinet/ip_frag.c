@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.4 2017/01/13 15:17:00 christos Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.5 2017/04/23 19:09:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -87,7 +87,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.4 2017/01/13 15:17:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.5 2017/04/23 19:09:29 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -468,7 +468,7 @@ ipfr_frag_new(
 			  IPFR_CMPSZ)) {
 			RWLOCK_EXIT(lock);
 			FBUMPD(ifs_exists);
-			KFREE(fra);
+			KFREE(fran);
 			return NULL;
 		}
 
