@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
@@ -30,16 +31,10 @@ static int	utf8_width(wchar_t);
 void
 utf8_set(struct utf8_data *ud, u_char ch)
 {
-	u_int	i;
+	static const struct utf8_data empty = { { 0 }, 1, 1, 1 };
 
+	memcpy(ud, &empty, sizeof *ud);
 	*ud->data = ch;
-	ud->have = 1;
-	ud->size = 1;
-
-	ud->width = 1;
-
-	for (i = ud->size; i < sizeof ud->data; i++)
-		ud->data[i] = '\0';
 }
 
 /* Copy UTF-8 character. */
@@ -114,9 +109,29 @@ utf8_width(wchar_t wc)
 {
 	int	width;
 
+#ifdef HAVE_UTF8PROC
+	width = utf8proc_wcwidth(wc);
+#else
 	width = wcwidth(wc);
-	if (width < 0 || width > 0xff)
+#endif
+	if (width < 0 || width > 0xff) {
+		log_debug("Unicode %04lx, wcwidth() %d", (long)wc, width);
+
+#ifndef __OpenBSD__
+		/*
+		 * Many platforms (particularly and inevitably OS X) have no
+		 * width for relatively common characters (wcwidth() returns
+		 * -1); assume width 1 in this case. This will be wrong for
+		 * genuinely nonprintable characters, but they should be
+		 * rare. We may pass through stuff that ideally we would block,
+		 * but this is no worse than sending the same to the terminal
+		 * without tmux.
+		 */
+		if (width < 0)
+			return (1);
+#endif
 		return (-1);
+	}
 	return (width);
 }
 
@@ -124,8 +139,14 @@ utf8_width(wchar_t wc)
 enum utf8_state
 utf8_combine(const struct utf8_data *ud, wchar_t *wc)
 {
+#ifdef HAVE_UTF8PROC
+	switch (utf8proc_mbtowc(wc, ud->data, ud->size)) {
+#else
 	switch (mbtowc(wc, ud->data, ud->size)) {
+#endif
 	case -1:
+		log_debug("UTF-8 %.*s, mbtowc() %d", (int)ud->size, ud->data,
+		    errno);
 		mbtowc(NULL, NULL, MB_CUR_MAX);
 		return (UTF8_ERROR);
 	case 0:
@@ -142,7 +163,11 @@ utf8_split(wchar_t wc, struct utf8_data *ud)
 	char	s[MB_LEN_MAX];
 	int	slen;
 
+#ifdef HAVE_UTF8PROC
+	slen = utf8proc_wctomb(s, wc);
+#else
 	slen = wctomb(s, wc);
+#endif
 	if (slen <= 0 || slen > (int)sizeof ud->data)
 		return (UTF8_ERROR);
 
@@ -193,6 +218,20 @@ utf8_strvis(char *dst, const char *src, size_t len, int flag)
 	return (dst - start);
 }
 
+/* Same as utf8_strvis but allocate the buffer. */
+int
+utf8_stravis(char **dst, const char *src, int flag)
+{
+	char	*buf;
+	int	 len;
+
+	buf = xreallocarray(NULL, 4, strlen(src) + 1);
+	len = utf8_strvis(buf, src, strlen(src), flag);
+
+	*dst = xrealloc(buf, len + 1);
+	return (len);
+}
+
 /*
  * Sanitize a string, changing any UTF-8 characters to '_'. Caller should free
  * the returned string. Anything not valid printable ASCII or UTF-8 is
@@ -234,6 +273,33 @@ utf8_sanitize(const char *src)
 	dst = xreallocarray(dst, n + 1, sizeof *dst);
 	dst[n] = '\0';
 	return (dst);
+}
+
+/* Get UTF-8 buffer length. */
+size_t
+utf8_strlen(const struct utf8_data *s)
+{
+	size_t	i;
+
+	for (i = 0; s[i].size != 0; i++)
+		/* nothing */;
+	return (i);
+}
+
+/* Get UTF-8 string width. */
+u_int
+utf8_strwidth(const struct utf8_data *s, ssize_t n)
+{
+	ssize_t	i;
+	u_int	width;
+
+	width = 0;
+	for (i = 0; s[i].size != 0; i++) {
+		if (n != -1 && n == i)
+			break;
+		width += s[i].width;
+	}
+	return (width);
 }
 
 /*
