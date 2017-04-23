@@ -64,10 +64,9 @@ control_notify_window_layout_changed(struct window *w)
 {
 	struct client		*c;
 	struct session		*s;
-	struct format_tree	*ft;
 	struct winlink		*wl;
 	const char		*template;
-	char			*expanded;
+	char			*cp;
 
 	template = "%layout-change #{window_id} #{window_layout} "
 	    "#{window_visible_layout} #{window_flags}";
@@ -88,15 +87,12 @@ control_notify_window_layout_changed(struct window *w)
 		if (w->layout_root == NULL)
 			continue;
 
-		ft = format_create(NULL, 0);
 		wl = winlink_find_by_window(&s->windows, w);
 		if (wl != NULL) {
-			format_defaults(ft, c, NULL, wl, NULL);
-			expanded = format_expand(ft, template);
-			control_write(c, "%s", expanded);
-			free(expanded);
+			cp = format_single(NULL, template, c, NULL, wl, NULL);
+			control_write(c, "%s", cp);
+			free(cp);
 		}
-		format_free(ft);
 	}
 }
 
@@ -158,7 +154,7 @@ control_notify_window_renamed(struct window *w)
 }
 
 void
-control_notify_attached_session_changed(struct client *c)
+control_notify_client_session_changed(struct client *c)
 {
 	struct session	*s;
 
@@ -196,7 +192,7 @@ control_notify_session_created(__unused struct session *s)
 }
 
 void
-control_notify_session_close(__unused struct session *s)
+control_notify_session_closed(__unused struct session *s)
 {
 	struct client	*c;
 

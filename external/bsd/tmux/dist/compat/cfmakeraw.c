@@ -15,9 +15,12 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <string.h>
+#include <sys/types.h>
 
-#include "tmux.h"
+#include <string.h>
+#include <termios.h>
+
+#include "compat.h"
 
 void
 cfmakeraw(struct termios *tio)

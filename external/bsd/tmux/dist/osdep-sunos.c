@@ -16,7 +16,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <event.h>
@@ -29,7 +29,7 @@
 #include "tmux.h"
 
 char *
-osdep_get_name(int fd, char *tty)
+osdep_get_name(__unused int fd, char *tty)
 {
 	struct psinfo	 p;
 	struct stat	 st;

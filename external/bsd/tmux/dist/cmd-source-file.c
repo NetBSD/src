@@ -18,7 +18,10 @@
 
 #include <sys/types.h>
 
+#include <errno.h>
+#include <glob.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "tmux.h"
 
@@ -26,73 +29,70 @@
  * Sources a configuration file.
  */
 
-enum cmd_retval	cmd_source_file_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_source_file_exec(struct cmd *, struct cmdq_item *);
 
-void		cmd_source_file_done(struct cmd_q *);
+static enum cmd_retval	cmd_source_file_done(struct cmdq_item *, void *);
 
 const struct cmd_entry cmd_source_file_entry = {
 	.name = "source-file",
 	.alias = "source",
 
-	.args = { "", 1, 1 },
-	.usage = "path",
+	.args = { "q", 1, 1 },
+	.usage = "[-q] path",
 
 	.flags = 0,
 	.exec = cmd_source_file_exec
 };
 
-enum cmd_retval
-cmd_source_file_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args	*args = self->args;
-	struct cmd_q	*cmdq1;
-	char		*cause;
+	struct args		*args = self->args;
+	int			 quiet = args_has(args, 'q');
+	struct client		*c = item->client;
+	struct cmdq_item	*new_item;
+	enum cmd_retval		 retval;
+	char			*pattern, *tmp;
+	const char		*path = args->argv[0];
+	glob_t			 g;
+	u_int			 i;
 
-	cmdq1 = cmdq_new(cmdq->client);
-	cmdq1->emptyfn = cmd_source_file_done;
-	cmdq1->data = cmdq;
+	if (*path == '/')
+		pattern = xstrdup(path);
+	else {
+		utf8_stravis(&tmp, server_client_get_cwd(c), VIS_GLOB);
+		xasprintf(&pattern, "%s/%s", tmp, path);
+		free(tmp);
+	}
+	log_debug("%s: %s", __func__, pattern);
 
-	switch (load_cfg(args->argv[0], cmdq1, &cause)) {
-	case -1:
-		if (cfg_references == 0) {
-			cmdq_free(cmdq1);
-			cmdq_error(cmdq, "%s", cause);
-			free(cause);
-			return (CMD_RETURN_ERROR);
+	retval = CMD_RETURN_NORMAL;
+	if (glob(pattern, 0, NULL, &g) != 0) {
+		if (!quiet || errno != ENOENT) {
+			cmdq_error(item, "%s: %s", path, strerror(errno));
+			retval = CMD_RETURN_ERROR;
 		}
-		cfg_add_cause("%s", cause);
-		free(cause);
-		/* FALLTHROUGH */
-	case 0:
-		if (cfg_references == 0)
-			cfg_print_causes(cmdq);
-		cmdq_free(cmdq1);
-		return (CMD_RETURN_NORMAL);
+		free(pattern);
+		return (retval);
+	}
+	free(pattern);
+
+	for (i = 0; i < (u_int)g.gl_pathc; i++) {
+		if (load_cfg(g.gl_pathv[i], c, item, quiet) < 0)
+			retval = CMD_RETURN_ERROR;
+	}
+	if (cfg_finished) {
+		new_item = cmdq_get_callback(cmd_source_file_done, NULL);
+		cmdq_insert_after(item, new_item);
 	}
 
-	cmdq->references++;
-	cfg_references++;
-
-	cmdq_continue(cmdq1);
-	return (CMD_RETURN_WAIT);
+	globfree(&g);
+	return (retval);
 }
 
-void
-cmd_source_file_done(struct cmd_q *cmdq1)
+static enum cmd_retval
+cmd_source_file_done(struct cmdq_item *item, __unused void *data)
 {
-	struct cmd_q	*cmdq = cmdq1->data;
-
-	if (cmdq1->client_exit >= 0)
-		cmdq->client_exit = cmdq1->client_exit;
-
-	cmdq_free(cmdq1);
-
-	cfg_references--;
-
-	if (cmdq_free(cmdq))
-		return;
-
-	if (cfg_references == 0)
-		cfg_print_causes(cmdq);
-	cmdq_continue(cmdq);
+	cfg_print_causes(item);
+	return (CMD_RETURN_NORMAL);
 }
