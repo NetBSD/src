@@ -107,7 +107,7 @@ notify_callback(struct cmdq_item *item, void *data)
 	if (ne->fs.s != NULL)
 		session_unref(ne->fs.s);
 
-	free((void *)ne->name);
+	free(__UNCONST(ne->name));
 	free(ne);
 
 	return (CMD_RETURN_NORMAL);
