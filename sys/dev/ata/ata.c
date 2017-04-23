@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.6 2017/04/19 21:42:39 jdolecek Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.7 2017/04/23 01:30:30 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.6 2017/04/19 21:42:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.7 2017/04/23 01:30:30 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -1744,7 +1744,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	if (params.atap_sata_caps & SATA_NATIVE_CMDQ) {
 		if (atac->atac_cap & ATAC_CAP_NCQ)
 			drvp->drive_flags |= ATA_DRIVE_NCQ;
-		drvp->drv_openings = (params.atap_queuedepth & 0x0f) + 1;
+		drvp->drv_openings =
+		    (params.atap_queuedepth & WDC_QUEUE_DEPTH_MASK) + 1;
 		aprint_verbose("%s NCQ (%d tags)", sep, drvp->drv_openings);
 		sep = ",";
 	}
