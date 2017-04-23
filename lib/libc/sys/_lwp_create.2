@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.6 2017/04/21 15:04:10 christos Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.7 2017/04/23 11:38:53 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,13 +81,11 @@ documented below.
 .Sh ERRORS
 .Fn _lwp_create
 will fail and no LWP will be created if:
-.Bl -tag -width [EAGAIN]
+.Bl -tag -width 10n
 .It Bq Er EAGAIN
 The system-imposed limit on the total
 number of LWPs under execution would be exceeded.
 This limit is configuration-dependent.
-.It Bq Er ENOMEM
-There is insufficient swap space for the new LWP.
 .It Bq Er EFAULT
 The address pointed to by
 .Fa context
@@ -96,6 +94,8 @@ or
 is outside the process's allocated address space.
 .It Bq Er EINVAL
 The ucontext_t passed is invalid.
+.It Bq Er ENOMEM
+There is insufficient swap space for the new LWP.
 .El
 .Sh SEE ALSO
 .Xr _lwp_continue 2 ,
