@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2017/04/23 02:02:00 christos Exp $
+# $NetBSD: Makefile,v 1.19 2017/04/23 18:22:36 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -194,6 +194,7 @@ CPPFLAGS+=	\
 -DHAVE_SYS_TYPES_H=1 \
 -DHAVE_TREE_H=1 \
 -DHAVE_UNISTD_H=1 \
+-DHAVE_UTEMPTER=1 \
 -DHAVE_UTIL_H=1 \
 -DHAVE_VIS=1 \
 -DHAVE___PROGNAME=1 \
