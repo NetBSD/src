@@ -1,4 +1,4 @@
-/*	$NetBSD: can_pcb.h,v 1.1.2.3 2017/02/05 10:56:12 bouyer Exp $	*/
+/*	$NetBSD: can_pcb.h,v 1.1.2.4 2017/04/23 21:05:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct canpcb {
 	LIST_ENTRY(canpcb) canp_hash;
 	LIST_ENTRY(canpcb) canp_lhash;
 	TAILQ_ENTRY(canpcb) canp_queue;
+	kmutex_t 	canp_mtx;	/* protect states and refcount */
 	int		canp_state;
 	int		canp_flags;
 	struct		socket *canp_socket;	/* back pointer to socket */
@@ -56,6 +57,8 @@ struct canpcb {
 	struct		canpcbtable *canp_table;
 	struct		can_filter *canp_filters; /* filter array */
 	int		canp_nfilters; /* size of canp_filters */
+
+	int		canp_refcount;
 };
 
 LIST_HEAD(canpcbhead, canpcb);
@@ -71,9 +74,10 @@ struct canpcbtable {
 };
 
 /* states in canp_state: */
-#define	CANP_ATTACHED		0
-#define	CANP_BOUND		1
-#define	CANP_CONNECTED		2
+#define	CANP_DETACHED		0
+#define	CANP_ATTACHED		1
+#define	CANP_BOUND		2
+#define	CANP_CONNECTED		3
 
 /* flags in canp_flags: */
 #define CANP_NO_LOOPBACK	0x0001 /* local loopback disabled */
@@ -100,6 +104,10 @@ void	can_pcbstate(struct canpcb *, int);
 void	can_setsockaddr(struct canpcb *, struct sockaddr_can *);
 int	can_pcbsetfilter(struct canpcb *, struct can_filter *, int);
 bool	can_pcbfilter(struct canpcb *, struct mbuf *);
+
+/* refcount management */
+void	canp_ref(struct canpcb *);
+void	canp_unref(struct canpcb *);
 #endif
 
 #endif /* _NETCAN_CAN_PCB_H_ */

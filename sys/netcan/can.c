@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.1.2.12 2017/04/20 17:29:10 bouyer Exp $	*/
+/*	$NetBSD: can.c,v 1.1.2.13 2017/04/23 21:05:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.12 2017/04/20 17:29:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.1.2.13 2017/04/23 21:05:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,10 @@ can_output(struct mbuf *m, struct canpcb *canp)
 		ifp->if_oerrors++;
 		return ENOMEM;
 	}
-	*(struct socket **)(sotag + 1) = canp->canp_socket;
+	mutex_enter(&canp->canp_mtx);
+	canp_ref(canp);
+	mutex_exit(&canp->canp_mtx);
+	*(struct canpcb **)(sotag + 1) = canp;
 	m_tag_prepend(m, sotag);
 
 	if (m->m_len <= ifp->if_mtu) {
@@ -302,7 +305,6 @@ canintr(void)
 	struct sockaddr_can from;
 	struct canpcb   *canp;
 	struct m_tag	*sotag;
-	struct socket	*so;
 	struct canpcb	*sender_canp;
 
 	mutex_enter(softnet_lock);
@@ -319,13 +321,13 @@ canintr(void)
 #endif
 		sotag = m_tag_find(m, PACKET_TAG_SO, NULL);
 		if (sotag) {
-			so = *(struct socket **)(sotag + 1);
-			sender_canp = sotocanpcb(so);
+			sender_canp = *(struct canpcb **)(sotag + 1);
 			m_tag_delete(m, sotag);
+			KASSERT(sender_canp != NULL);
 			/* if the sender doesn't want loopback, don't do it */
-			if (sender_canp &&
-			    (sender_canp->canp_flags & CANP_NO_LOOPBACK) != 0) {
+			if ((sender_canp->canp_flags & CANP_NO_LOOPBACK) != 0) {
 				m_freem(m);
+				canp_unref(sender_canp);
 				continue;
 			}
 		} else {
@@ -340,19 +342,31 @@ canintr(void)
 		TAILQ_FOREACH(canp, &cbtable.canpt_queue, canp_queue) {
 			struct mbuf *mc;
 
+			mutex_enter(&canp->canp_mtx);
+			/* skip if we're detached */
+			if (canp->canp_state == CANP_DETACHED) {
+				mutex_exit(&canp->canp_mtx);
+				continue;
+			}
+
 			/* don't loop back to sockets on other interfaces */
 			if (canp->canp_ifp != NULL &&
 			    canp->canp_ifp->if_index != rcv_ifindex) {
+				mutex_exit(&canp->canp_mtx);
 				continue;
 			}
 			/* don't loop back to myself if I don't want it */
 			if (canp == sender_canp &&
-			    (canp->canp_flags & CANP_RECEIVE_OWN) == 0)
+			    (canp->canp_flags & CANP_RECEIVE_OWN) == 0) {
+				mutex_exit(&canp->canp_mtx);
 				continue;
+			}
 
 			/* skip if the accept filter doen't match this pkt */
-			if (!can_pcbfilter(canp, m))
+			if (!can_pcbfilter(canp, m)) {
+				mutex_exit(&canp->canp_mtx);
 				continue;
+			}
 
 			if (TAILQ_NEXT(canp, canp_queue) != NULL) {
 				/*
@@ -375,8 +389,12 @@ canintr(void)
 				m_freem(mc);
 			} else
 				sorwakeup(canp->canp_socket);
+			mutex_exit(&canp->canp_mtx);
 			if (m == NULL)
 				break;
+		}
+		if (sender_canp) {
+			canp_unref(sender_canp);
 		}
 		/* If it didn't go anywhere just delete it */
 		if (m) {
@@ -492,7 +510,6 @@ can_disconnect(struct socket *so)
 	/*soisdisconnected(so);*/
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 	can_pcbdisconnect(canp);
-	can_pcbstate(canp, CANP_BOUND);		/* XXX */
 	return 0;
 }
 
@@ -877,7 +894,9 @@ can_raw_setop(struct canpcb *canp, struct sockopt *sopt)
 		int nfilters = sopt->sopt_size / sizeof(struct can_filter);
 		if (sopt->sopt_size % sizeof(struct can_filter) != 0)
 			return EINVAL;
+		mutex_enter(&canp->canp_mtx);
 		error = can_pcbsetfilter(canp, sopt->sopt_data, nfilters);
+		mutex_exit(&canp->canp_mtx);
 		break;
 		}
 	default:
