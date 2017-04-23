@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.10 2017/04/22 20:07:54 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.11 2017/04/23 01:21:04 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.10 2017/04/22 20:07:54 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.11 2017/04/23 01:21:04 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -306,7 +306,6 @@ wdattach(device_t parent, device_t self, void *aux)
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
 #endif
-	LIST_INIT(&wd->wi_head);
 	STAILQ_INIT(&wd->xfer_restart);
 	wd->atabus = adev->adev_bustype;
 	wd->drvp = adev->adev_drv_data;
@@ -509,7 +508,6 @@ wddetach(device_t self, int flags)
 	}
 	sc->sc_bscount = 0;
 #endif
-	KASSERT(LIST_EMPTY(&sc->wi_head));
 
 	pmf_device_deregister(self);
 
@@ -1555,7 +1553,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 			wi->wi_bp.b_flags = 0;
 			wi->wi_bp.b_data = 0;
 			wi->wi_bp.b_bcount = 0;
-			wi->wi_bp.b_dev = 0;
+			wi->wi_bp.b_dev = dev;
 			wi->wi_bp.b_proc = l->l_proc;
 			wdioctlstrategy(&wi->wi_bp);
 			error1 = wi->wi_bp.b_error;
@@ -2148,10 +2146,6 @@ wi_get(struct wd_softc *wd)
 	wi->wi_softc = wd;
 	buf_init(&wi->wi_bp);
 
-	mutex_enter(&wd->sc_lock);
-	LIST_INSERT_HEAD(&wd->wi_head, wi, wi_list);
-	mutex_exit(&wd->sc_lock);
-
 	return (wi);
 }
 
@@ -2162,11 +2156,6 @@ wi_get(struct wd_softc *wd)
 void
 wi_free(struct wd_ioctl *wi)
 {
-	struct wd_softc *wd = wi->wi_softc;
-
-	mutex_enter(&wd->sc_lock);
-	LIST_REMOVE(wi, wi_list);
-	mutex_exit(&wd->sc_lock);
 	buf_destroy(&wi->wi_bp);
 	free(wi, M_TEMP);
 }
@@ -2178,17 +2167,7 @@ wi_free(struct wd_ioctl *wi)
 struct wd_ioctl *
 wi_find(struct buf *bp)
 {
-	struct wd_softc *wd =
-	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
-	struct wd_ioctl *wi;
-
-	mutex_enter(&wd->sc_lock);
-	LIST_FOREACH(wi, &wd->wi_head, wi_list) {
-		if (bp == &wi->wi_bp)
-			break;
-	}
-	mutex_exit(&wd->sc_lock);
-	return (wi);
+	return container_of(bp, struct wd_ioctl, wi_bp);
 }
 
 static uint
