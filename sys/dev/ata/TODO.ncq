@@ -8,14 +8,6 @@ test wd* at umass?, confirm the ata_channel kludge works
 is ata_exec_xfer() + POLL safe wrt. more outstanding I/Os? why is it waiting
 until xfer is head of queue? also layer violation with the ata_xfer_free() call
 
-NCQ PRIO/ICC handling
----------------------
-fix handling of ATA 'devices' value to be full 16-bit value, to prepare for
-the ICC/AUXILIARY support
-
-set PRIO/ICC for NCQ transfers for BPRIO_TIMECRITICAL/BPRIO_TIMELIMITED
-NCQ ICC - investigate and set/get the behaviour with timeouts (WDNC, RDNC)
-
 Other random notes (maybe do outside the NCQ branch):
 -----------------------------------------------------
 add support for the NCQ TRIM if supported by device?

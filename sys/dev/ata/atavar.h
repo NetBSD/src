@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.92.8.7 2017/04/20 20:14:42 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92.8.8 2017/04/24 22:20:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -50,6 +50,7 @@ struct ata_bio {
 #define	ATA_CORR	0x0040	/* transfer had a corrected error */
 #define	ATA_LBA48	0x0080	/* transfer uses 48-bit LBA addressing */
 #define	ATA_FUA		0x0100	/* transfer uses FUA */
+#define	ATA_PRIO_HIGH	0x0200	/* transfer has high priority */
 	daddr_t		blkno;	/* block addr */
 	daddr_t		blkdone;/* number of blks transferred */
 	daddr_t		nblks;	/* number of block currently transferring */
@@ -232,7 +233,8 @@ struct ata_drive_datas {
 #define	ATA_DRIVE_NOSTREAM	0x0040	/* no stream methods on this drive */
 #define ATA_DRIVE_ATAPIDSCW	0x0080	/* needs to wait for DSC in phase_complete */
 #define ATA_DRIVE_WFUA		0x0100	/* drive supports WRITE DMA FUA EXT */
-#define ATA_DRIVE_NCQ		0x0200	/* drive supports NCQ */
+#define ATA_DRIVE_NCQ		0x0200	/* drive supports NCQ feature set */
+#define ATA_DRIVE_NCQ_PRIO	0x0400	/* drive supports NCQ PRIO field */
 
 	uint8_t drive_type;
 #define	ATA_DRIVET_NONE		0
