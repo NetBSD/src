@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428 2017/03/05 23:07:12 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.429 2017/04/24 09:42:52 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428 2017/03/05 23:07:12 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.429 2017/04/24 09:42:52 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -344,6 +344,10 @@ wdattach(device_t parent, device_t self, void *aux)
 		char sbuf[sizeof(WD_QUIRK_FMT) + 64];
 		snprintb(sbuf, sizeof(sbuf), WD_QUIRK_FMT, wd->sc_quirks);
 		aprint_normal_dev(self, "quirks %s\n", sbuf);
+
+		if (wd->sc_quirks & WD_QUIRK_SPLIT_MOD15_WRITE) {
+			aprint_error_dev(self, "drive corrupts write transfers with certain controllers, consider replacing\n");
+		}
 	}
 
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
@@ -647,109 +651,9 @@ wdstart(void *arg)
 	}
 }
 
-static void
-wd_split_mod15_write(struct buf *bp)
-{
-	struct buf *obp = bp->b_private;
-	struct wd_softc *sc =
-	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
-	int s;
-
-	if (__predict_false(bp->b_error != 0)) {
-		/*
-		 * Propagate the error.  If this was the first half of
-		 * the original transfer, make sure to account for that
-		 * in the residual.
-		 */
-		if (bp->b_data == obp->b_data)
-			bp->b_resid += bp->b_bcount;
-		goto done;
-	}
-
-	/*
-	 * If this was the second half of the transfer, we're all done!
-	 */
-	if (bp->b_data != obp->b_data)
-		goto done;
-
-	/*
-	 * Advance the pointer to the second half and issue that command
-	 * using the same opening.
-	 */
-	bp->b_flags = obp->b_flags;
-	bp->b_oflags = obp->b_oflags;
-	bp->b_cflags = obp->b_cflags;
-	bp->b_data = (char *)bp->b_data + bp->b_bcount;
-	bp->b_blkno += (bp->b_bcount / DEV_BSIZE);
-	bp->b_rawblkno += (bp->b_bcount / sc->sc_blksize);
-	s = splbio();
-	wdstart1(sc, bp);
-	splx(s);
-	return;
-
- done:
-	obp->b_error = bp->b_error;
-	obp->b_resid = bp->b_resid;
-	s = splbio();
-	putiobuf(bp);
-	biodone(obp);
-	sc->openings++;
-	splx(s);
-	/* wddone() will call wdstart() */
-}
-
 void
 wdstart1(struct wd_softc *wd, struct buf *bp)
 {
-
-	/*
-	 * Deal with the "split mod15 write" quirk.  We just divide the
-	 * transfer in two, doing the first half and then then second half
-	 * with the same command opening.
-	 *
-	 * Note we MUST do this here, because we can't let insertion
-	 * into the bufq cause the transfers to be re-merged.
-	 */
-	if (__predict_false((wd->sc_quirks & WD_QUIRK_SPLIT_MOD15_WRITE) != 0 &&
-			    (bp->b_flags & B_READ) == 0 &&
-			    bp->b_bcount > 512 &&
-			    ((bp->b_bcount / 512) % 15) == 1)) {
-		struct buf *nbp;
-
-		/* already at splbio */
-		nbp = getiobuf(NULL, false);
-		if (__predict_false(nbp == NULL)) {
-			/* No memory -- fail the iop. */
-			bp->b_error = ENOMEM;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			wd->openings++;
-			return;
-		}
-
-		nbp->b_error = 0;
-		nbp->b_proc = bp->b_proc;
-		nbp->b_dev = bp->b_dev;
-
-		nbp->b_bcount = bp->b_bcount / 2;
-		nbp->b_bufsize = bp->b_bcount / 2;
-		nbp->b_data = bp->b_data;
-
-		nbp->b_blkno = bp->b_blkno;
-		nbp->b_rawblkno = bp->b_rawblkno;
-
-		nbp->b_flags = bp->b_flags;
-		nbp->b_oflags = bp->b_oflags;
-		nbp->b_cflags = bp->b_cflags;
-		nbp->b_iodone = wd_split_mod15_write;
-
-		/* Put ptr to orig buf in b_private and use new buf */
-		nbp->b_private = bp;
-
-		BIO_COPYPRIO(nbp, bp);
-
-		bp = nbp;
-	}
 
 	wd->sc_wdc_bio.blkno = bp->b_rawblkno;
 	wd->sc_wdc_bio.bcount = bp->b_bcount;
@@ -882,13 +786,8 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
-	/* XXX Yuck, but we don't want to increment openings in this case */
-	if (__predict_false(bp->b_iodone == wd_split_mod15_write))
-		biodone(bp);
-	else {
-		biodone(bp);
-		wd->openings++;
-	}
+	biodone(bp);
+	wd->openings++;
 	KASSERT(wd->sc_bp != NULL);
 	wd->sc_bp = NULL;
 	wdstart(wd);
