@@ -6,8 +6,6 @@ but cd, mkdir, stat and creating files wroks just fine - what do?
 - https://lists.freebsd.org/pipermail/freebsd-current/2011-September/027294.html
 - somewhat critical since we use QEMU for babylon builds
 
-ahci driver - fix error handling to iterate over all relevant xfers
-
 mvsata, siisata - fix all 'XXX slot' 
 
 test wd* at umass?, confirm the ata_channel kludge works
