@@ -1,11 +1,6 @@
 Bugs
 ----
 
-under QEMU, the mounted AHCI drive doesn't show directories for ls,
-but cd, mkdir, stat and creating files wroks just fine - what do?
-- https://lists.freebsd.org/pipermail/freebsd-current/2011-September/027294.html
-- somewhat critical since we use QEMU for babylon builds
-
 mvsata, siisata - fix all 'XXX slot' 
 
 test wd* at umass?, confirm the ata_channel kludge works

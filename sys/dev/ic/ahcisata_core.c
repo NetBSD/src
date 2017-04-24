@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.9 2017/04/24 10:21:15 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.10 2017/04/24 15:15:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.9 2017/04/24 10:21:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.10 2017/04/24 15:15:02 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1331,14 +1331,20 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	AHCIDEBUG_PRINT(("ahci_bio_complete bcount %ld",
 	    ata_bio->bcount), DEBUG_XFERS);
 	/* 
-	 * if it was a write, complete data buffer may have been transfered
+	 * If it was a write, complete data buffer may have been transfered
 	 * before error detection; in this case don't use cmdh_prdbc
 	 * as it won't reflect what was written to media. Assume nothing
 	 * was transfered and leave bcount as-is.
+	 * For queued commands, PRD Byte Count should not be used, and is
+	 * not required to be valid; in that case underflow is always illegal.
 	 */
-	if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
+	if ((xfer->c_flags & C_NCQ) != 0) {
+		ata_bio->bcount = 0;
+	} else {
+	    if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
 		ata_bio->bcount -=
 		    le32toh(achp->ahcic_cmdh[xfer->c_slot].cmdh_prdbc);
+	}
 	AHCIDEBUG_PRINT((" now %ld\n", ata_bio->bcount), DEBUG_XFERS);
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc, xfer);
 	atastart(chp);
