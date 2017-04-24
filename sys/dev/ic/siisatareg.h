@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.7 2011/11/02 16:03:01 jakllsch Exp $ */
+/* $NetBSD: siisatareg.h,v 1.8 2017/04/24 12:52:05 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -141,7 +141,7 @@ struct siisata_prb {
 #define GR_GC_DEVSEL		__BIT(19)
 #define GR_GC_STOP		__BIT(18)
 #define GR_GC_TRDY		__BIT(17)
-#define GR_GC_M66EN		__BIT(16)	
+#define GR_GC_M66EN		__BIT(16)
 #define GR_GC_PXIE_MASK		__BITS(SIISATA_MAX_PORTS - 1, 0)
 #define GR_GC_PXIE(n)		__SHIFTIN(__BIT(n), GR_GC_PXIE_MASK)
 
