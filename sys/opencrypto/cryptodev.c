@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.88 2017/04/07 12:17:57 knakahara Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.89 2017/04/24 03:29:37 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.88 2017/04/07 12:17:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89 2017/04/24 03:29:37 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.88 2017/04/07 12:17:57 knakahara Exp
 #include <opencrypto/xform.h>
 
 #include "ioconf.h"
+
+kmutex_t crypto_mtx;
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -2075,6 +2077,8 @@ cryptoattach(int num)
 {
 	crypto_init();
 
+	mutex_init(&crypto_mtx, MUTEX_DEFAULT, IPL_NONE);
+
 	pool_init(&fcrpl, sizeof(struct fcrypt), 0, 0, 0, "fcrpl",
 	    NULL, IPL_NET);	/* XXX IPL_NET ("splcrypto") */
 	pool_init(&csepl, sizeof(struct csession), 0, 0, 0, "csepl",
@@ -2108,6 +2112,8 @@ crypto_detach(device_t self, int num)
 
 	pool_destroy(&fcrpl);
 	pool_destroy(&csepl);
+
+	mutex_destroy(&crypto_mtx);
 
 	return 0;
 }
