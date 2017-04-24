@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.8 2017/04/21 23:35:01 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.9 2017/04/24 10:56:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.8 2017/04/21 23:35:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.9 2017/04/24 10:56:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -220,11 +220,18 @@ fdtbus_get_reg(int phandle, u_int index, bus_addr_t *paddr, bus_size_t *psize)
 const char *
 fdtbus_get_stdout_path(void)
 {
+	const char *prop;
+
 	const int off = fdt_path_offset(fdtbus_get_data(), "/chosen");
 	if (off < 0)
 		return NULL;
-	
-	return fdt_getprop(fdtbus_get_data(), off, "stdout-path", NULL);
+
+	prop = fdt_getprop(fdtbus_get_data(), off, "stdout-path", NULL);
+	if (prop != NULL)
+		return prop;
+
+	/* If the stdout-path property is not found, assume serial0 */
+	return "serial0:115200n8";
 }
 
 int
