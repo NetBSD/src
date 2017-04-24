@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.8 2017/04/20 19:24:25 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.9 2017/04/24 10:21:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.8 2017/04/20 19:24:25 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.9 2017/04/24 10:21:15 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -556,7 +556,7 @@ ahci_intr(void *v)
 static void
 ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 {
-	uint32_t is, tfd;
+	uint32_t is, tfd, active;
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ata_xfer *xfer;
 	int slot;
@@ -567,20 +567,25 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	    chp->ch_channel, is, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))),
 	    DEBUG_INTR);
 
+	active = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))
+		| AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
+
+	/* Complete all successful commands first */
+	for (slot=0; slot < sc->sc_ncmds; slot++) {
+		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
+			continue;
+		if ((active & (1 << slot)) == 0) {
+			xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
+			    slot);
+			xfer->c_intr(chp, xfer, 0);
+		}
+	}
+
+	/* Handle errors */
 	if (is & (AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 	    AHCI_P_IX_OFS | AHCI_P_IX_UFS)) {
-#if 1
-	printf("ahci_intr_port %s port %d is 0x%x CI 0x%x\n", AHCINAME(sc),
-	    chp->ch_channel, is, AHCI_READ(sc, AHCI_P_CI(chp->ch_channel)));
-#endif
-		slot = (AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))
-			& AHCI_P_CMD_CCS_MASK) >> AHCI_P_CMD_CCS_SHIFT;
-		/* XXX iterate */
-		if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-			return;
 		/* stop channel */
 		ahci_channel_stop(sc, chp, 0);
-		xfer = ata_queue_hwslot_to_xfer(chp->ch_queue, slot);
 		if (is & AHCI_P_IX_TFES) {
 			tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
 			chp->ch_error =
@@ -596,24 +601,20 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 			    AHCINAME(sc), chp->ch_channel,
 			    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
 		}
-		xfer->c_intr(chp, xfer, is);
+		/* complete all pending commands with error statuses */
+		for (slot=0; slot < sc->sc_ncmds; slot++) {
+			if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
+				continue;
+			if ((active & (1 << slot)) == 1) {
+				xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
+				    slot);
+				xfer->c_intr(chp, xfer, is);
+			}
+		}
 		/* if channel has not been restarted, do it now */
 		if ((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR)
 		    == 0)
 			ahci_channel_start(sc, chp, 0, 0);
-	} else {
-		uint32_t clear = AHCI_READ(sc, AHCI_P_CI(chp->ch_channel))
-			| AHCI_READ(sc, AHCI_P_SACT(chp->ch_channel));
-
-		for (slot=0; slot < sc->sc_ncmds; slot++) {
-			if ((achp->ahcic_cmds_active & (1 << slot)) == 0)
-				continue;
-			if ((clear & (1 << slot)) == 0) {
-				xfer = ata_queue_hwslot_to_xfer(chp->ch_queue,
-				    slot);
-				xfer->c_intr(chp, xfer, 0);
-			}
-		}
 	}
 }
 
