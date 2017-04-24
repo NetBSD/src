@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.8 2017/04/24 12:52:05 jakllsch Exp $ */
+/* $NetBSD: siisatareg.h,v 1.9 2017/04/24 12:53:28 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2010, 2011 Jonathan A. Kollasch.
@@ -247,6 +247,8 @@ struct siisata_prb {
 #define PR_PC_PMP_ENABLE	__BIT(13)
 #define PR_PC_AIA		__BIT(14)
 #define PR_PC_LED_ON		__BIT(15)
+#define PR_PS_ACTIVE_SLOT_MASK	__BITS(20,16)
+#define PR_PS_ACTIVE_SLOT(x)	__SHIFTOUT((x), PR_PS_ACTIVE_SLOT_MASK)
 #define PR_PC_OOB_BYPASS	__BIT(25)
 #define PR_PS_PORT_READY	__BIT(31)
 
