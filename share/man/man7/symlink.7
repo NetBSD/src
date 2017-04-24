@@ -1,4 +1,4 @@
-.\"	$NetBSD: symlink.7,v 1.24 2017/04/21 20:17:26 christos Exp $
+.\"	$NetBSD: symlink.7,v 1.25 2017/04/24 09:42:19 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ the system call
 would return a file descriptor to the file
 .Qq afile .
 .Pp
-There are twelve system calls that do not follow links, and which operate
+There are eleven system calls that do not follow links, and which operate
 on the symbolic link itself.
 They are:
 .Xr lchflags 2 ,
@@ -152,7 +152,7 @@ flag:
 .\" .Xr chflagsat 2 ,
 .Xr fchmodat 2 ,
 .Xr fchownat 2 ,
-.Xr fstatat 2
+.Xr fstatat 2 ,
 and
 .Xr utimensat 2 .
 .Pp
@@ -273,7 +273,7 @@ command follows symbolic links named as arguments if the
 option is specified,
 or if the
 .Fl F ,
-.Fl d
+.Fl d ,
 or
 .Fl l
 options are not specified.
@@ -306,7 +306,7 @@ The
 system differs from historical
 .Bx 4
 systems in that the
-.Nm chown ,
+.Nm chown
 and
 .Nm chgrp
 commands follow symbolic links specified on the command line.
@@ -321,7 +321,7 @@ The following commands either optionally or always traverse file trees:
 .Xr ls 1 ,
 .Xr pax 1 ,
 .Xr rm 1 ,
-.Xr tar 1
+.Xr tar 1 ,
 and
 .Xr chown 8 .
 .Pp
@@ -442,7 +442,7 @@ physical name space.
 .Pp
 For commands that do not by default do file tree traversals, the
 .Fl H ,
-.Fl L
+.Fl L ,
 and
 .Fl P
 flags are ignored if the
@@ -450,7 +450,7 @@ flags are ignored if the
 flag is not also specified.
 In addition, you may specify the
 .Fl H ,
-.Fl L
+.Fl L ,
 and
 .Fl P
 options more than once; the last one specified determines the
@@ -471,7 +471,7 @@ The
 .Nm rm
 command does not support the
 .Fl H ,
-.Fl L
+.Fl L ,
 or
 .Fl P
 options.
@@ -482,7 +482,7 @@ the
 command acts a little differently.
 If you do not specify the
 .Fl F ,
-.Fl d
+.Fl d ,
 or
 .Fl l
 options,
