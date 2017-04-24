@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.32 2017/04/24 13:19:50 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.33 2017/04/24 21:14:32 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.32 2017/04/24 13:19:50 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.33 2017/04/24 21:14:32 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -558,7 +558,7 @@ siisata_reset_drive(struct ata_drive_datas *drvp, int flags, uint32_t *sigp)
 		DELAY(10);
 
 	prb = schp->sch_prb[slot];
-	memset(prb, 0, sizeof(struct siisata_prb));
+	memset(prb, 0, SIISATA_CMD_SIZE);
 	prb->prb_control =
 	    htole16(PRB_CF_SOFT_RESET | PRB_CF_INTERRUPT_MASK);
 	KASSERT(drvp->drive <= PMP_PORT_CTL);
@@ -696,7 +696,7 @@ siisata_probe_drive(struct ata_channel *chp)
 		    & PR_PS_PORT_READY))
 			DELAY(10);
 		prb = schp->sch_prb[slot];
-		memset(prb, 0, sizeof(struct siisata_prb));
+		memset(prb, 0, SIISATA_CMD_SIZE);
 		prb->prb_control = htole16(PRB_CF_SOFT_RESET);
 		prb->prb_fis[rhd_c] = PMP_PORT_CTL;
 
@@ -836,13 +836,11 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_error = 0;
 
 	prb = schp->sch_prb[slot];
-	memset(prb, 0, sizeof(struct siisata_prb));
+	memset(prb, 0, SIISATA_CMD_SIZE);
 
 	satafis_rhd_construct_cmd(ata_c, prb->prb_fis);
 	KASSERT(xfer->c_drive <= PMP_PORT_CTL);
 	prb->prb_fis[rhd_c] |= xfer->c_drive;
-
-	memset(prb->prb_atapi, 0, sizeof(prb->prb_atapi));
 
 	if (ata_c->r_command == ATA_DATA_SET_MANAGEMENT) {
 		prb->prb_control |= htole16(PRB_CF_PROTOCOL_OVERRIDE);
@@ -1051,13 +1049,11 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_error = 0;
 
 	prb = schp->sch_prb[slot];
-	memset(prb, 0, sizeof(struct siisata_prb));
+	memset(prb, 0, SIISATA_CMD_SIZE);
 
 	satafis_rhd_construct_bio(xfer, prb->prb_fis);
 	KASSERT(xfer->c_drive <= PMP_PORT_CTL);
 	prb->prb_fis[rhd_c] |= xfer->c_drive;
-
-	memset(prb->prb_atapi, 0, sizeof(prb->prb_atapi));
 
 	if (siisata_dma_setup(chp, slot, ata_bio->databuf, ata_bio->bcount,
 	    (ata_bio->flags & ATA_READ) ? BUS_DMA_READ : BUS_DMA_WRITE)) {
@@ -1236,9 +1232,6 @@ siisata_dma_setup(struct ata_channel *chp, int slot, void *data,
 	bus_dmamap_sync(sc->sc_dmat, schp->sch_datad[slot], 0,
 	    schp->sch_datad[slot]->dm_mapsize,
 	    (op == BUS_DMA_READ) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-
-	/* make sure it's clean */
-	memset(prbp->prb_sge, 0, SIISATA_NSGE * sizeof(struct siisata_prb));
 
 	SIISATA_DEBUG_PRINT(("%s: %d segs, %ld count\n", __func__,
 	    schp->sch_datad[slot]->dm_nsegs, (long unsigned int) count),
@@ -1593,8 +1586,7 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_error = 0;
 
 	prbp = schp->sch_prb[slot];
-	memset(prbp, 0, sizeof(struct siisata_prb));
-
+	memset(prbp, 0, SIISATA_CMD_SIZE);
 
 	/* fill in direction for ATAPI command */
 	if ((sc_xfer->xs_control & XS_CTL_DATA_IN))
