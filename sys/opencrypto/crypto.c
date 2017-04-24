@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.55 2017/04/24 01:42:00 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.56 2017/04/24 02:04:55 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.55 2017/04/24 01:42:00 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.56 2017/04/24 02:04:55 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -85,7 +85,12 @@ kmutex_t crypto_mtx;
   #define register_swi(lvl, fn)  \
   softint_establish(SOFTINT_NET|SOFTINT_MPSAFE, (void (*)(void *))fn, NULL)
   #define unregister_swi(lvl, fn)  softint_disestablish(softintr_cookie)
-  #define setsoftcrypto(x) softint_schedule(x)
+  #define setsoftcrypto(x)			\
+	do{					\
+		kpreempt_disable();		\
+		softint_schedule(x);		\
+		kpreempt_enable();		\
+	}while(0)
 
 int crypto_ret_q_check(struct cryptop *);
 
@@ -718,9 +723,9 @@ crypto_unblock(u_int32_t driverid, int what)
 		needwakeup |= cap->cc_kqblocked;
 		cap->cc_kqblocked = 0;
 	}
+	mutex_spin_exit(&crypto_q_mtx);
 	if (needwakeup)
 		setsoftcrypto(softintr_cookie);
-	mutex_spin_exit(&crypto_q_mtx);
 
 	return 0;
 }
@@ -786,9 +791,9 @@ crypto_dispatch(struct cryptop *crp)
 		 * for batching.
 		 */
 		TAILQ_INSERT_TAIL(&crp_q, crp, crp_next);
+		mutex_spin_exit(&crypto_q_mtx);
 		if (wasempty) {
 			setsoftcrypto(softintr_cookie);
-			mutex_spin_exit(&crypto_q_mtx);
 			result = 0;
 			goto out_released;
 		}
