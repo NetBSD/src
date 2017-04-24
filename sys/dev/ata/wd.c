@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.12 2017/04/24 09:57:22 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.13 2017/04/24 14:07:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.12 2017/04/24 09:57:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.13 2017/04/24 14:07:29 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -826,9 +826,9 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_bio.retries > 0)
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
+	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	mutex_exit(&wd->sc_lock);
 	biodone(bp);
-	ata_free_xfer(wd->drvp->chnl_softc, xfer);
 	wdstart(wd);
 }
 
