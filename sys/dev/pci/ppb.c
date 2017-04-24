@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.57 2017/04/18 05:21:34 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.58 2017/04/24 23:01:45 chs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.57 2017/04/18 05:21:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.58 2017/04/24 23:01:45 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +351,9 @@ ppbdetach(device_t self, int flags)
 	struct ppb_softc *sc = device_private(self);
 	int rc;
 
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
 	/* Detach event counters */
 	evcnt_detach(&sc->sc_ev_intr);
 	evcnt_detach(&sc->sc_ev_abp);
@@ -360,8 +363,6 @@ ppbdetach(device_t self, int flags)
 	evcnt_detach(&sc->sc_ev_cc);
 	evcnt_detach(&sc->sc_ev_lacs);
 
-	if ((rc = config_detach_children(self, flags)) != 0)
-		return rc;
 	pmf_device_deregister(self);
 	return 0;
 }
