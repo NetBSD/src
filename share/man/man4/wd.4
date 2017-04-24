@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.17 2017/04/24 09:57:59 jdolecek Exp $
+.\"	$NetBSD: wd.4,v 1.18 2017/04/24 10:04:38 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -66,9 +66,9 @@ the software list does neither support sector replacement nor is it saved
 across reboots.
 .Sh NOTES
 Certain
-Seagate
+.Tn Seagate
 .Tn Barracuda
-drives sold around year 2003 have known firmware bug leading to corrupted
+drives sold around 2003 have a known firmware bug leading to corrupted
 write transfers for sector counts n*15 + 1, in combination with certain
 ATA controllers, most commonly
 .Tn Silicon Image
