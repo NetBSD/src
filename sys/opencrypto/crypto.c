@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.54 2017/04/07 12:17:57 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.55 2017/04/24 01:42:00 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.54 2017/04/07 12:17:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.55 2017/04/24 01:42:00 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -701,30 +701,28 @@ int
 crypto_unblock(u_int32_t driverid, int what)
 {
 	struct cryptocap *cap;
-	int needwakeup, err;
+	int needwakeup = 0;
 
 	mutex_spin_enter(&crypto_q_mtx);
 	cap = crypto_checkdriver(driverid);
-	if (cap != NULL) {
-		needwakeup = 0;
-		if (what & CRYPTO_SYMQ) {
-			needwakeup |= cap->cc_qblocked;
-			cap->cc_qblocked = 0;
-		}
-		if (what & CRYPTO_ASYMQ) {
-			needwakeup |= cap->cc_kqblocked;
-			cap->cc_kqblocked = 0;
-		}
-		err = 0;
-		if (needwakeup)
-			setsoftcrypto(softintr_cookie);
+	if (cap == NULL) {
 		mutex_spin_exit(&crypto_q_mtx);
-	} else {
-		err = EINVAL;
-		mutex_spin_exit(&crypto_q_mtx);
+		return EINVAL;
 	}
 
-	return err;
+	if (what & CRYPTO_SYMQ) {
+		needwakeup |= cap->cc_qblocked;
+		cap->cc_qblocked = 0;
+	}
+	if (what & CRYPTO_ASYMQ) {
+		needwakeup |= cap->cc_kqblocked;
+		cap->cc_kqblocked = 0;
+	}
+	if (needwakeup)
+		setsoftcrypto(softintr_cookie);
+	mutex_spin_exit(&crypto_q_mtx);
+
+	return 0;
 }
 
 /*
