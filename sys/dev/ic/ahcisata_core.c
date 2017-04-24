@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.10 2017/04/24 15:15:02 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.11 2017/04/24 18:22:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.10 2017/04/24 15:15:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.11 2017/04/24 18:22:31 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1339,7 +1339,8 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	 * not required to be valid; in that case underflow is always illegal.
 	 */
 	if ((xfer->c_flags & C_NCQ) != 0) {
-		ata_bio->bcount = 0;
+		if (ata_bio->error == NOERROR)
+			ata_bio->bcount = 0;
 	} else {
 	    if ((ata_bio->flags & ATA_READ) || ata_bio->error == NOERROR)
 		ata_bio->bcount -=
