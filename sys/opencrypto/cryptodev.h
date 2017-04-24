@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.30 2017/04/07 12:15:51 knakahara Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.31 2017/04/24 03:29:37 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -617,12 +617,6 @@ extern	int crypto_devallowsoft;	/* only use hardware crypto */
  * freed in crypto.c.
  */
 extern struct pool	cryptkop_pool;
-
-/*
- * Mutual exclusion and its unwelcome friends.
- */
-
-extern	kmutex_t	crypto_mtx;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).

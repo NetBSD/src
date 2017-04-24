@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.56 2017/04/24 02:04:55 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.57 2017/04/24 03:29:37 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.56 2017/04/24 02:04:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.57 2017/04/24 03:29:37 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.56 2017/04/24 02:04:55 knakahara Exp $"
 static kmutex_t crypto_q_mtx;
 static kmutex_t crypto_ret_q_mtx;
 static kcondvar_t cryptoret_cv;
-kmutex_t crypto_mtx;
 
 /* below are kludges for residual code wrtitten to FreeBSD interfaces */
   #define SWI_CRYPTO 17
@@ -99,6 +98,7 @@ int crypto_ret_q_check(struct cryptop *);
  * crypto_drivers table with crypto_get_driverid() and then registering
  * each algorithm they support with crypto_register() and crypto_kregister().
  */
+static kmutex_t crypto_drv_mtx;
 static	struct cryptocap *crypto_drivers;
 static	int crypto_drivers_num;
 static	void *softintr_cookie;
@@ -221,7 +221,7 @@ crypto_init0(void)
 {
 	int error;
 
-	mutex_init(&crypto_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&crypto_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&cryptoret_cv, "crypto_w");
@@ -301,8 +301,10 @@ crypto_destroy(bool exit_kthread)
 
 	unregister_swi(SWI_CRYPTO, cryptointr);
 
+	mutex_enter(&crypto_drv_mtx);
 	if (crypto_drivers != NULL)
 		free(crypto_drivers, M_CRYPTO_DATA);
+	mutex_exit(&crypto_drv_mtx);
 
 	pool_destroy(&cryptop_pool);
 	pool_destroy(&cryptodesc_pool);
@@ -312,13 +314,13 @@ crypto_destroy(bool exit_kthread)
 
 	mutex_destroy(&crypto_ret_q_mtx);
 	mutex_destroy(&crypto_q_mtx);
-	mutex_destroy(&crypto_mtx);
+	mutex_destroy(&crypto_drv_mtx);
 
 	return 0;
 }
 
 /*
- * Create a new session.  Must be called with crypto_mtx held.
+ * Create a new session.
  */
 int
 crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
@@ -327,7 +329,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 	u_int32_t hid, lid;
 	int err = EINVAL;
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 
 	if (crypto_drivers == NULL)
 		goto done;
@@ -393,13 +395,13 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 		}
 	}
 done:
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 	return err;
 }
 
 /*
  * Delete an existing session (or a reserved session on an unregistered
- * driver).  Must be called with crypto_mtx mutex held.
+ * driver).
  */
 int
 crypto_freesession(u_int64_t sid)
@@ -407,7 +409,7 @@ crypto_freesession(u_int64_t sid)
 	u_int32_t hid;
 	int err = 0;
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 
 	if (crypto_drivers == NULL) {
 		err = EINVAL;
@@ -442,7 +444,7 @@ crypto_freesession(u_int64_t sid)
 		memset(&crypto_drivers[hid], 0, sizeof(struct cryptocap));
 
 done:
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 	return err;
 }
 
@@ -458,7 +460,7 @@ crypto_get_driverid(u_int32_t flags)
 
 	(void)crypto_init();		/* XXX oh, this is foul! */
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 	for (i = 0; i < crypto_drivers_num; i++)
 		if (crypto_drivers[i].cc_process == NULL &&
 		    (crypto_drivers[i].cc_flags & CRYPTOCAP_F_CLEANUP) == 0 &&
@@ -469,7 +471,7 @@ crypto_get_driverid(u_int32_t flags)
 	if (i == crypto_drivers_num) {
 		/* Be careful about wrap-around. */
 		if (2 * crypto_drivers_num <= crypto_drivers_num) {
-			mutex_exit(&crypto_mtx);
+			mutex_exit(&crypto_drv_mtx);
 			printf("crypto: driver count wraparound!\n");
 			return -1;
 		}
@@ -477,7 +479,7 @@ crypto_get_driverid(u_int32_t flags)
 		newdrv = malloc(2 * crypto_drivers_num *
 		    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 		if (newdrv == NULL) {
-			mutex_exit(&crypto_mtx);
+			mutex_exit(&crypto_drv_mtx);
 			printf("crypto: no space to expand driver table!\n");
 			return -1;
 		}
@@ -498,7 +500,7 @@ crypto_get_driverid(u_int32_t flags)
 	if (bootverbose)
 		printf("crypto: assign driver %u, flags %u\n", i, flags);
 
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 
 	return i;
 }
@@ -523,7 +525,7 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
 	struct cryptocap *cap;
 	int err;
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL &&
@@ -552,7 +554,7 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
 	} else
 		err = EINVAL;
 
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 	return err;
 }
 
@@ -571,7 +573,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	struct cryptocap *cap;
 	int err;
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 
 	cap = crypto_checkdriver(driverid);
 	/* NB: algorithms are in the range [1..max] */
@@ -606,7 +608,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 	} else
 		err = EINVAL;
 
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 	return err;
 }
 
@@ -623,7 +625,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	u_int32_t ses;
 	struct cryptocap *cap;
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL &&
@@ -652,7 +654,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 	} else
 		err = EINVAL;
 
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 	return err;
 }
 
@@ -674,7 +676,7 @@ crypto_unregister_all(u_int32_t driverid)
 	u_int32_t ses;
 	struct cryptocap *cap;
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 	cap = crypto_checkdriver(driverid);
 	if (cap != NULL) {
 		for (i = CRYPTO_ALGORITHM_MIN; i <= CRYPTO_ALGORITHM_MAX; i++) {
@@ -694,7 +696,7 @@ crypto_unregister_all(u_int32_t driverid)
 	} else
 		err = EINVAL;
 
-	mutex_exit(&crypto_mtx);
+	mutex_exit(&crypto_drv_mtx);
 	return err;
 }
 
@@ -866,7 +868,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		return EINVAL;
 	}
 
-	mutex_enter(&crypto_mtx);
+	mutex_enter(&crypto_drv_mtx);
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
 		    crypto_devallowsoft == 0)
@@ -884,11 +886,11 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 
 		process = crypto_drivers[hid].cc_kprocess;
 		arg = crypto_drivers[hid].cc_karg;
-		mutex_exit(&crypto_mtx);
+		mutex_exit(&crypto_drv_mtx);
 		krp->krp_hid = hid;
 		error = (*process)(arg, krp, hint);
 	} else {
-		mutex_exit(&crypto_mtx);
+		mutex_exit(&crypto_drv_mtx);
 		error = ENODEV;
 	}
 
@@ -1158,10 +1160,10 @@ crypto_getfeat(int *featp)
 {
 	int hid, kalg, feat = 0;
 
-	mutex_enter(&crypto_mtx);
-
 	if (crypto_userasymcrypto == 0)
-		goto out;
+		return 0;
+
+	mutex_enter(&crypto_drv_mtx);
 
 	for (hid = 0; hid < crypto_drivers_num; hid++) {
 		if ((crypto_drivers[hid].cc_flags & CRYPTOCAP_F_SOFTWARE) &&
@@ -1175,8 +1177,8 @@ crypto_getfeat(int *featp)
 			    CRYPTO_ALG_FLAG_SUPPORTED) != 0)
 				feat |=  1 << kalg;
 	}
-out:
-	mutex_exit(&crypto_mtx);
+
+	mutex_exit(&crypto_drv_mtx);
 	*featp = feat;
 	return (0);
 }
