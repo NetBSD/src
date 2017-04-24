@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.12 2014/01/03 00:33:06 rkujawa Exp $ */
+/*	$NetBSD: efa.c,v 1.12.18.1 2017/04/24 08:48:45 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ efa_attach_channel(struct efa_softc *sc, int chnum)
 
 	sc->sc_ports[chnum].chan.ch_channel = chnum;
 	sc->sc_ports[chnum].chan.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_ports[chnum].chan.ch_queue = &sc->sc_ports[chnum].queue;
+	sc->sc_ports[chnum].chan.ch_queue = ata_queue_alloc(1);
 
 	if (!sc->sc_32bit_io)
 		efa_select_regset(sc, chnum, 0); /* Start in PIO0. */
