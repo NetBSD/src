@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.18 2012/07/31 15:50:34 bouyer Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.18.28.1 2017/04/24 08:29:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.18 2012/07/31 15:50:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.18.28.1 2017/04/24 08:29:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -191,7 +191,7 @@ njata32_attach(struct njata32_softc *sc)
 	sc->sc_wdc_chanarray[0] = &sc->sc_ch[0].ch_ata_channel;
 	sc->sc_ch[0].ch_ata_channel.ch_channel = 0;
 	sc->sc_ch[0].ch_ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
-	sc->sc_ch[0].ch_ata_channel.ch_queue = &sc->sc_wdc_chqueue;
+	sc->sc_ch[0].ch_ata_channel.ch_queue = ata_queue_alloc(1);
 	sc->sc_wdcdev.wdc_maxdrives = 2; /* max number of drives per channel */
 
 	/* map ATA registers */
@@ -264,6 +264,8 @@ njata32_detach(struct njata32_softc *sc, int flags)
 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_sgtpg,
 		    sizeof(struct njata32_dma_page));
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_sgt_seg, sc->sc_sgt_nsegs);
+
+		ata_queue_free(sc->sc_ch[0].ch_ata_channel.ch_queue);
 	}
 
 	return 0;
