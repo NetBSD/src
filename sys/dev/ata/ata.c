@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.132.8.7 2017/04/23 01:30:30 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.132.8.8 2017/04/24 22:20:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.7 2017/04/23 01:30:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.132.8.8 2017/04/24 22:20:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -1421,10 +1421,12 @@ ata_print_modes(struct ata_channel *chp)
 		    )
 			aprint_verbose(" (using DMA)");
 
-		if (drvp->drive_flags & ATA_DRIVE_NCQ)
-			aprint_verbose(", NCQ (%d tags)",
-			    chp->ch_queue->queue_openings);
-		else if (drvp->drive_flags & ATA_DRIVE_WFUA)
+		if (drvp->drive_flags & ATA_DRIVE_NCQ) {
+			aprint_verbose(", NCQ (%d tags)%s",
+			    chp->ch_queue->queue_openings,
+			    (drvp->drive_flags & ATA_DRIVE_NCQ_PRIO)
+			    ? " w/PRIO" : "");
+		} else if (drvp->drive_flags & ATA_DRIVE_WFUA)
 			aprint_verbose(", WRITE DMA FUA EXT");
 			
 #endif	/* NATA_DMA || NATA_PIOBM */
@@ -1748,6 +1750,11 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		    (params.atap_queuedepth & WDC_QUEUE_DEPTH_MASK) + 1;
 		aprint_verbose("%s NCQ (%d tags)", sep, drvp->drv_openings);
 		sep = ",";
+
+		if (params.atap_sata_caps & SATA_NCQ_PRIO) {
+			drvp->drive_flags |= ATA_DRIVE_NCQ_PRIO;
+			aprint_verbose(" w/PRIO");
+		}
 	}
 	if (drvp->drv_openings < chp->ch_queue->queue_openings)
 		ata_queue_downsize(chp->ch_queue, drvp->drv_openings);
@@ -1998,6 +2005,9 @@ atacmd_toncq(struct ata_xfer *xfer, uint8_t *cmd, uint16_t *count,
 
 	/* NCQ tag */
 	*count = (xfer->c_slot << 3);
+
+	if (xfer->c_bio.flags & ATA_PRIO_HIGH)
+		*count |= WDSC_PRIO_HIGH;
 
 	/* other device flags */
 	if (xfer->c_bio.flags & ATA_FUA)

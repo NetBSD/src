@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.43.18.1 2017/04/19 21:42:39 jdolecek Exp $	*/
+/*	$NetBSD: atareg.h,v 1.43.18.2 2017/04/24 22:20:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -245,6 +245,11 @@ atacmd_tostatq(int cmd32)
 
 #define WDSMART_CYL		0xc24f
 
+/* parameters uploaded to count register for NCQ */
+#define WDSC_PRIO_HIGH		__BIT(15)
+#define WDSC_PRIO_ISOCHRONOUS	__BIT(14)
+#define WDSC_PRIO_NORMAL	0x0000
+
 /* parameters uploaded to device/heads register */
 #define	WDSD_IBM		0xa0	/* forced to 512 byte sector, ecc */
 #define	WDSD_CHS		0x00	/* cylinder/head/sector addressing */
@@ -377,9 +382,11 @@ struct ataparams {
 #define SATA_SIGNAL_GEN1	0x02
 #define SATA_SIGNAL_GEN2	0x04
 #define SATA_SIGNAL_GEN3	0x08
-#define SATA_NATIVE_CMDQ	0x0100
-#define SATA_HOST_PWR_MGMT	0x0200
-#define SATA_PHY_EVNT_CNT	0x0400
+#define SATA_NATIVE_CMDQ	0x0100	/* supp. NCQ feature set */
+#define SATA_HOST_PWR_MGMT	0x0200	/* supp. host-init. pwr mngmt reqs */
+#define SATA_PHY_EVNT_CNT	0x0400	/* supp. SATA Phy Event Counters log */
+#define SATA_UNLOAD_W_NCQ	0x0800	/* supp. unload w/ NCQ commands act */
+#define SATA_NCQ_PRIO		0x1000	/* supp. NCQ priority information */
     uint16_t	atap_sata_reserved;	/* 77: */
     uint16_t	atap_sata_features_supp; /* 78: */
 #define SATA_NONZERO_OFFSETS	0x02

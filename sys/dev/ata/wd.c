@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.13 2017/04/24 14:07:29 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.14 2017/04/24 22:20:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.13 2017/04/24 14:07:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.14 2017/04/24 22:20:23 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -689,6 +689,10 @@ wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 	if (wd->drvp->drive_flags & ATA_DRIVE_NCQ) {
 		xfer->c_bio.flags |= ATA_LBA48;
 		xfer->c_flags |= C_NCQ;
+
+		if ((wd->drvp->drive_flags & ATA_DRIVE_NCQ_PRIO) &&
+		    BIO_GETPRIO(bp) == BPRIO_TIMECRITICAL)
+			xfer->c_bio.flags |= ATA_PRIO_HIGH;
 	}
 
 	if (wd->sc_flags & WDF_LBA)
