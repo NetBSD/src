@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.428.2.11 2017/04/23 01:21:04 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.428.2.12 2017/04/24 09:57:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.11 2017/04/23 01:21:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.428.2.12 2017/04/24 09:57:22 jdolecek Exp $");
 
 #include "opt_ata.h"
 
@@ -185,11 +185,6 @@ struct	wd_ioctl *wi_find(struct buf *);
 void	wi_free(struct wd_ioctl *);
 struct	wd_ioctl *wi_get(struct wd_softc *);
 void	wdioctlstrategy(struct buf *);
-
-struct wd_split_mod15_private {
-	struct buf *bp;
-	struct ata_xfer *xfer;
-};
 
 void  wdgetdefaultlabel(struct wd_softc *, struct disklabel *);
 void  wdgetdisklabel(struct wd_softc *);
@@ -349,6 +344,10 @@ wdattach(device_t parent, device_t self, void *aux)
 		char sbuf[sizeof(WD_QUIRK_FMT) + 64];
 		snprintb(sbuf, sizeof(sbuf), WD_QUIRK_FMT, wd->sc_quirks);
 		aprint_normal_dev(self, "quirks %s\n", sbuf);
+
+		if (wd->sc_quirks & WD_QUIRK_SPLIT_MOD15_WRITE) {
+			aprint_error_dev(self, "drive corrupts write transfers with certain controllers, consider replacing\n");
+		}
 	}
 
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
@@ -657,122 +656,11 @@ wdstart(struct wd_softc *wd)
 	mutex_exit(&wd->sc_lock);
 }
 
-static void
-wd_split_mod15_write(struct buf *bp)
-{
-	struct wd_split_mod15_private *m = bp->b_private;
-	struct buf *obp = m->bp;
-	struct ata_xfer *xfer = m->xfer;
-	struct wd_softc *wd =
-	    device_lookup_private(&wd_cd, DISKUNIT(obp->b_dev));
-
-	free(m, sizeof *m);
-
-	mutex_enter(&wd->sc_lock);
-	if (__predict_false(bp->b_error != 0)) {
-		/*
-		 * Propagate the error.  If this was the first half of
-		 * the original transfer, make sure to account for that
-		 * in the residual.
-		 */
-		if (bp->b_data == obp->b_data)
-			bp->b_resid += bp->b_bcount;
-		goto done;
-	}
-
-	/*
-	 * If this was the second half of the transfer, we're all done!
-	 */
-	if (bp->b_data != obp->b_data)
-		goto done;
-
-	/*
-	 * Advance the pointer to the second half and issue that command
-	 * using the same xfer.
-	 */
-	bp->b_flags = obp->b_flags;
-	bp->b_oflags = obp->b_oflags;
-	bp->b_cflags = obp->b_cflags;
-	bp->b_data = (char *)bp->b_data + bp->b_bcount;
-	bp->b_blkno += (bp->b_bcount / DEV_BSIZE);
-	bp->b_rawblkno += (bp->b_bcount / wd->sc_blksize);
-	memset(xfer, 0, sizeof(*xfer));
-	wdstart1(wd, bp, xfer);
-	mutex_exit(&wd->sc_lock);
-	return;
-
- done:
-	obp->b_error = bp->b_error;
-	obp->b_resid = bp->b_resid;
-	mutex_exit(&wd->sc_lock);
-
-	putiobuf(bp);
-	biodone(obp);
-	/* wddone() will call wdstart() */
-}
-
 void
 wdstart1(struct wd_softc *wd, struct buf *bp, struct ata_xfer *xfer)
 {
 	/* must be locked on entry */
 	KASSERT(mutex_owned(&wd->sc_lock));
-
-	/*
-	 * Deal with the "split mod15 write" quirk.  We just divide the
-	 * transfer in two, doing the first half and then then second half
-	 * with the same command opening.
-	 *
-	 * Note we MUST do this here, because we can't let insertion
-	 * into the bufq cause the transfers to be re-merged.
-	 */
-	if (__predict_false((wd->sc_quirks & WD_QUIRK_SPLIT_MOD15_WRITE) != 0 &&
-			    (bp->b_flags & B_READ) == 0 &&
-			    bp->b_bcount > 512 &&
-			    ((bp->b_bcount / 512) % 15) == 1)) {
-		struct buf *nbp;
-		struct wd_split_mod15_private *m;
-
-		m = malloc(sizeof *m, M_TEMP, M_NOWAIT);
-		if (m == NULL)
-			goto fail;
-
-		nbp = getiobuf(NULL, false);
-		if (__predict_false(nbp == NULL)) {
-			free(m, sizeof *m);
-fail:
-			/* No memory -- fail the iop. */
-			bp->b_error = ENOMEM;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
-			ata_free_xfer(wd->drvp->chnl_softc, xfer);
-			return;
-		}
-
-		nbp->b_error = 0;
-		nbp->b_proc = bp->b_proc;
-		nbp->b_dev = bp->b_dev;
-
-		nbp->b_bcount = bp->b_bcount / 2;
-		nbp->b_bufsize = bp->b_bcount / 2;
-		nbp->b_data = bp->b_data;
-
-		nbp->b_blkno = bp->b_blkno;
-		nbp->b_rawblkno = bp->b_rawblkno;
-
-		nbp->b_flags = bp->b_flags;
-		nbp->b_oflags = bp->b_oflags;
-		nbp->b_cflags = bp->b_cflags;
-		nbp->b_iodone = wd_split_mod15_write;
-
-		/* Put ptr to orig buf in b_private and use new buf */
-		m->bp = bp;
-		m->xfer = xfer;
-		nbp->b_private = m;
-
-		BIO_COPYPRIO(nbp, bp);
-
-		bp = nbp;
-	}
 
 	xfer->c_bio.blkno = bp->b_rawblkno;
 	xfer->c_bio.bcount = bp->b_bcount;
@@ -835,7 +723,7 @@ wddone(void *v, struct ata_xfer *xfer)
 {
 	struct wd_softc *wd = device_private(v);
 	const char *errmsg;
-	int do_perror = 0, finish;
+	int do_perror = 0;
 	struct buf *bp;
 
 	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
@@ -938,21 +826,10 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_bio.retries > 0)
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
-
-	/*
-	 * XXX Yuck, but we don't want to free the xfer in this case.
-	 * See wd_split_mod15_write() for details.
-	 */
-	finish = (bp->b_iodone != wd_split_mod15_write);
-
 	mutex_exit(&wd->sc_lock);
-
 	biodone(bp);
-
-	if (__predict_true(finish)) {
-		ata_free_xfer(wd->drvp->chnl_softc, xfer);
-		wdstart(wd);
-	}
+	ata_free_xfer(wd->drvp->chnl_softc, xfer);
+	wdstart(wd);
 }
 
 void
