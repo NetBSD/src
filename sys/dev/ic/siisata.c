@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.30.4.12 2017/04/24 13:09:37 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.30.4.13 2017/04/24 13:24:33 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.12 2017/04/24 13:09:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.30.4.13 2017/04/24 13:24:33 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1646,7 +1646,7 @@ siisata_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer,
 	SIISATA_DEBUG_PRINT(("%s: %s()\n", SIISATANAME(sc), __func__),
 	    DEBUG_INTR);
 
-	/* this comamnd is not active any more */
+	/* this command is not active any more */
 	schp->sch_active_slots &= ~__BIT(slot);
 	chp->ch_flags &= ~ATACH_IRQ_WAIT;
 	if (xfer->c_flags & C_TIMEOU) {
