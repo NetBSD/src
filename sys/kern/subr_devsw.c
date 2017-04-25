@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.15 2017/04/25 21:31:33 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.16 2017/04/25 21:36:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.15 2017/04/25 21:31:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.16 2017/04/25 21:36:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -452,6 +452,9 @@ bdevsw_lookup(dev_t dev)
 	if (bmajor < 0 || bmajor >= max_bdevsws)
 		return (NULL);
 
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
+
 	return (bdevsw[bmajor]);
 }
 
@@ -512,6 +515,9 @@ cdevsw_lookup(dev_t dev)
 	cmajor = major(dev);
 	if (cmajor < 0 || cmajor >= max_cdevsws)
 		return (NULL);
+
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
 
 	return (cdevsw[cmajor]);
 }
