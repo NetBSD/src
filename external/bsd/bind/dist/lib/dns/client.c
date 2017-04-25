@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.3.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: client.c,v 1.3.4.1.6.2 2017/04/25 20:53:48 snj Exp $	*/
 
 /*
- * Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.14 2011/03/12 04:59:47 tbox Exp  */
-
 #include <config.h>
 
 #include <stddef.h>
@@ -25,6 +23,7 @@
 #include <isc/app.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
+#include <isc/safe.h>
 #include <isc/sockaddr.h>
 #include <isc/socket.h>
 #include <isc/task.h>
@@ -1123,7 +1122,6 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 	UNLOCK(&rctx->lock);
 }
 
-
 static void
 suspend(isc_task_t *task, isc_event_t *event) {
 	isc_appctx_t *actx = event->ev_arg;
@@ -1436,6 +1434,13 @@ dns_client_destroyrestrans(dns_clientrestrans_t **transp) {
 
 	mctx = client->mctx;
 	dns_view_detach(&rctx->view);
+
+	/*
+	 * Wait for the lock in client_resfind to be released before
+	 * destroying the lock.
+	 */
+	LOCK(&rctx->lock);
+	UNLOCK(&rctx->lock);
 
 	LOCK(&client->lock);
 

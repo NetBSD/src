@@ -1,7 +1,7 @@
-/*        $NetBSD: dnssec-importkey.c,v 1.5.4.4 2015/11/17 19:55:02 bouyer Exp $      */
+/*        $NetBSD: dnssec-importkey.c,v 1.5.4.5 2017/04/25 20:53:25 snj Exp $      */
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -382,7 +382,7 @@ main(int argc, char **argv) {
 		      isc_result_totext(result));
 	isc_entropy_stopcallbacksources(ectx);
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 	dns_rdataset_init(&rdataset);
 

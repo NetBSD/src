@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.2.20.1 2014/12/26 03:08:29 msaitoh Exp $	*/
+/*	$NetBSD: strerror.c,v 1.2.20.2 2017/04/25 20:53:44 snj Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993

@@ -1,7 +1,7 @@
-/*	$NetBSD: isdn_20.c,v 1.2.6.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.2.6.1.6.2 2017/04/25 20:53:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,7 +32,7 @@ static inline isc_result_t
 fromtext_isdn(ARGS_FROMTEXT) {
 	isc_token_t token;
 
-	REQUIRE(type == 20);
+	REQUIRE(type == dns_rdatatype_isdn);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -61,7 +61,7 @@ static inline isc_result_t
 totext_isdn(ARGS_TOTEXT) {
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 20);
+	REQUIRE(rdata->type == dns_rdatatype_isdn);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(tctx);
@@ -76,7 +76,7 @@ totext_isdn(ARGS_TOTEXT) {
 
 static inline isc_result_t
 fromwire_isdn(ARGS_FROMWIRE) {
-	REQUIRE(type == 20);
+	REQUIRE(type == dns_rdatatype_isdn);
 
 	UNUSED(type);
 	UNUSED(dctx);
@@ -93,7 +93,7 @@ static inline isc_result_t
 towire_isdn(ARGS_TOWIRE) {
 	UNUSED(cctx);
 
-	REQUIRE(rdata->type == 20);
+	REQUIRE(rdata->type == dns_rdatatype_isdn);
 	REQUIRE(rdata->length != 0);
 
 	return (mem_tobuffer(target, rdata->data, rdata->length));
@@ -106,7 +106,7 @@ compare_isdn(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 20);
+	REQUIRE(rdata1->type == dns_rdatatype_isdn);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -119,7 +119,7 @@ static inline isc_result_t
 fromstruct_isdn(ARGS_FROMSTRUCT) {
 	dns_rdata_isdn_t *isdn = source;
 
-	REQUIRE(type == 20);
+	REQUIRE(type == dns_rdatatype_isdn);
 	REQUIRE(source != NULL);
 	REQUIRE(isdn->common.rdtype == type);
 	REQUIRE(isdn->common.rdclass == rdclass);
@@ -140,7 +140,7 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 	dns_rdata_isdn_t *isdn = target;
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 20);
+	REQUIRE(rdata->type == dns_rdatatype_isdn);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -196,7 +196,7 @@ freestruct_isdn(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_isdn(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 20);
+	REQUIRE(rdata->type == dns_rdatatype_isdn);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -209,7 +209,7 @@ static inline isc_result_t
 digest_isdn(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 20);
+	REQUIRE(rdata->type == dns_rdatatype_isdn);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -219,7 +219,7 @@ digest_isdn(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_isdn(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 20);
+	REQUIRE(type == dns_rdatatype_isdn);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -232,7 +232,7 @@ checkowner_isdn(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_isdn(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 20);
+	REQUIRE(rdata->type == dns_rdatatype_isdn);
 
 	UNUSED(rdata);
 	UNUSED(owner);

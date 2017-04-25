@@ -1,7 +1,7 @@
-/*	$NetBSD: sdlz.c,v 1.4.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.4.4.1.6.2 2017/04/25 20:53:49 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2005-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2005-2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -611,7 +611,7 @@ findnodeext(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
 	 * if the host (namestr) was not found, try to lookup a
 	 * "wildcard" host.
 	 */
-	if (result != ISC_R_SUCCESS && !create)
+	if (result == ISC_R_NOTFOUND && !create)
 		result = sdlz->dlzimp->methods->lookup(zonestr, "*",
 						       sdlz->dlzimp->driverarg,
 						       sdlz->dbdata, node,
@@ -619,7 +619,10 @@ findnodeext(dns_db_t *db, dns_name_t *name, isc_boolean_t create,
 
 	MAYBE_UNLOCK(sdlz->dlzimp);
 
-	if (result != ISC_R_SUCCESS && !isorigin && !create) {
+	if (result == ISC_R_NOTFOUND && (isorigin || create))
+		result = ISC_R_SUCCESS;
+
+	if (result != ISC_R_SUCCESS) {
 		destroynode(node);
 		return (result);
 	}
@@ -884,10 +887,11 @@ findext(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 		dns_name_getlabelsequence(name, nlabels - i, i, xname);
 		result = findnodeext(db, xname, ISC_FALSE,
 				     methods, clientinfo, &node);
-		if (result != ISC_R_SUCCESS) {
+		if (result == ISC_R_NOTFOUND) {
 			result = DNS_R_NXDOMAIN;
 			continue;
-		}
+		} else if (result != ISC_R_SUCCESS)
+			break;
 
 		/*
 		 * Look for a DNAME at the current label, unless this is
@@ -1195,9 +1199,9 @@ ispersistent(dns_db_t *db) {
 }
 
 static void
-overmem(dns_db_t *db, isc_boolean_t overmem) {
+overmem(dns_db_t *db, isc_boolean_t over) {
 	UNUSED(db);
-	UNUSED(overmem);
+	UNUSED(over);
 }
 
 static void
@@ -1810,12 +1814,10 @@ dns_sdlz_putrr(dns_sdlzlookup_t *lookup, const char *type, dns_ttl_t ttl,
 		rdatalist = isc_mem_get(mctx, sizeof(dns_rdatalist_t));
 		if (rdatalist == NULL)
 			return (ISC_R_NOMEMORY);
+		dns_rdatalist_init(rdatalist);
 		rdatalist->rdclass = lookup->sdlz->common.rdclass;
 		rdatalist->type = typeval;
-		rdatalist->covers = 0;
 		rdatalist->ttl = ttl;
-		ISC_LIST_INIT(rdatalist->rdata);
-		ISC_LINK_INIT(rdatalist, link);
 		ISC_LIST_APPEND(lookup->lists, rdatalist, link);
 	} else
 		if (rdatalist->ttl > ttl) {

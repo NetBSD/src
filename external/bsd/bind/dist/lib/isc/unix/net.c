@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.2.6.1.6.3 2015/11/17 19:55:11 bouyer Exp $	*/
+/*	$NetBSD: net.c,v 1.2.6.1.6.4 2017/04/25 20:53:55 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -105,10 +105,10 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 
 # if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
-# endif
 
-# if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+#  if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
+#  endif
 # endif
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
@@ -319,6 +319,7 @@ initialize_ipv6only(void) {
 #endif /* WANT_IPV6 */
 
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
+#ifdef WANT_IPV6
 static void
 try_ipv6pktinfo(void) {
 	int s, on;
@@ -370,6 +371,7 @@ initialize_ipv6pktinfo(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6pktinfo,
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
+#endif /* WANT_IPV6 */
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
@@ -414,12 +416,12 @@ getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
 		sysctlname_lowport = SYSCTL_V6PORTRANGE_LOW;
 		sysctlname_hiport = SYSCTL_V6PORTRANGE_HIGH;
 	}
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_low);
 	if (sysctlbyname(sysctlname_lowport, &port_low, &portlen,
 			 NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
 	}
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_high);
 	if (sysctlbyname(sysctlname_hiport, &port_high, &portlen,
 			 NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
@@ -453,12 +455,12 @@ getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
 		miblen = sizeof(mib_lo6) / sizeof(mib_lo6[0]);
 	}
 
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_low);
 	if (sysctl(mib_lo, miblen, &port_low, &portlen, NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
 	}
 
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_high);
 	if (sysctl(mib_hi, miblen, &port_high, &portlen, NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
 	}
@@ -477,11 +479,34 @@ getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
 isc_result_t
 isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high) {
 	int result = ISC_R_FAILURE;
+#if !defined(USE_SYSCTL_PORTRANGE) && defined(__linux)
+	FILE *fp;
+#endif
 
 	REQUIRE(low != NULL && high != NULL);
 
 #if defined(USE_SYSCTL_PORTRANGE)
 	result = getudpportrange_sysctl(af, low, high);
+#elif defined(__linux)
+
+	UNUSED(af);
+
+	/*
+	 * Linux local ports are address family agnostic.
+	 */
+	fp = fopen("/proc/sys/net/ipv4/ip_local_port_range", "r");
+	if (fp != NULL) {
+		int n;
+		unsigned int l, h;
+
+		n = fscanf(fp, "%u %u", &l, &h);
+		if (n == 2 && (l & ~0xffff) == 0 && (h & ~0xffff) == 0) {
+			*low = l;
+			*high = h;
+			result = ISC_R_SUCCESS;
+		}
+		fclose(fp);
+	}
 #else
 	UNUSED(af);
 #endif

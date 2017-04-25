@@ -1,7 +1,7 @@
-/*	$NetBSD: zt.c,v 1.3.4.2.2.2 2015/11/17 19:55:10 bouyer Exp $	*/
+/*	$NetBSD: zt.c,v 1.3.4.2.2.3 2017/04/25 20:53:50 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -398,16 +398,16 @@ freezezones(dns_zone_t *zone, void *uap) {
 			result = DNS_R_FROZEN;
 		if (result == ISC_R_SUCCESS)
 			result = dns_zone_flush(zone);
+		if (result == ISC_R_SUCCESS)
+			dns_zone_setupdatedisabled(zone, freeze);
 	} else {
 		if (frozen) {
-			result = dns_zone_load(zone);
+			result = dns_zone_loadandthaw(zone);
 			if (result == DNS_R_CONTINUE ||
 			    result == DNS_R_UPTODATE)
 				result = ISC_R_SUCCESS;
 		}
 	}
-	if (result == ISC_R_SUCCESS)
-		dns_zone_setupdatedisabled(zone, freeze);
 	view = dns_zone_getview(zone);
 	if (strcmp(view->name, "_bind") == 0 ||
 	    strcmp(view->name, "_default") == 0)

@@ -15,8 +15,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.56 2010/12/18 01:56:23 each Exp  */
-
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
 
@@ -132,6 +130,11 @@
  * IN6_IS_ADDR_* macros.
  */
 #undef ISC_PLATFORM_FIXIN6ISADDR
+
+/*! \brief
+ * Define if the system has struct sockaddr_storage.
+ */
+#define ISC_PLATFORM_HAVESOCKADDRSTORAGE 1
 
 /*! \brief
  * Define if the system supports kqueue multiplexing
@@ -281,10 +284,18 @@
 #endif
 
 /*
- * If the "atomic swap" operation is available on this architecture,
- * ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
+ * If the 32-bit "atomic swap" operation is available on this
+ * architecture, ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
  */
 #define ISC_PLATFORM_HAVEATOMICSTORE 1
+
+ /*
+ * If the 64-bit "atomic swap" operation is available on this
+ * architecture, ISC_PLATFORM_HAVEATOMICSTORE" will be defined.
+ */
+#ifdef __HAVE_ATOMIC64_OPS
+#define ISC_PLATFORM_HAVEATOMICSTOREQ 1
+#endif
 
 /*
  * If the "compare-and-exchange" operation is available on this architecture,

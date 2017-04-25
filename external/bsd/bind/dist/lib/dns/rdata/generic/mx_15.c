@@ -1,7 +1,7 @@
-/*	$NetBSD: mx_15.c,v 1.2.6.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.2.6.1.6.2 2017/04/25 20:53:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -55,7 +55,7 @@ fromtext_mx(ARGS_FROMTEXT) {
 	isc_buffer_t buffer;
 	isc_boolean_t ok;
 
-	REQUIRE(type == 15);
+	REQUIRE(type == dns_rdatatype_mx);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -79,7 +79,8 @@ fromtext_mx(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = ISC_TRUE;
 	if ((options & DNS_RDATA_CHECKNAMES) != 0)
@@ -100,7 +101,7 @@ totext_mx(ARGS_TOTEXT) {
 	char buf[sizeof("64000")];
 	unsigned short num;
 
-	REQUIRE(rdata->type == 15);
+	REQUIRE(rdata->type == dns_rdatatype_mx);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&name, NULL);
@@ -124,7 +125,7 @@ fromwire_mx(ARGS_FROMWIRE) {
 	dns_name_t name;
 	isc_region_t sregion;
 
-	REQUIRE(type == 15);
+	REQUIRE(type == dns_rdatatype_mx);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -147,7 +148,7 @@ towire_mx(ARGS_TOWIRE) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 15);
+	REQUIRE(rdata->type == dns_rdatatype_mx);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -172,7 +173,7 @@ compare_mx(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 15);
+	REQUIRE(rdata1->type == dns_rdatatype_mx);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -200,7 +201,7 @@ fromstruct_mx(ARGS_FROMSTRUCT) {
 	dns_rdata_mx_t *mx = source;
 	isc_region_t region;
 
-	REQUIRE(type == 15);
+	REQUIRE(type == dns_rdatatype_mx);
 	REQUIRE(source != NULL);
 	REQUIRE(mx->common.rdtype == type);
 	REQUIRE(mx->common.rdclass == rdclass);
@@ -219,7 +220,7 @@ tostruct_mx(ARGS_TOSTRUCT) {
 	dns_rdata_mx_t *mx = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 15);
+	REQUIRE(rdata->type == dns_rdatatype_mx);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -243,7 +244,7 @@ freestruct_mx(ARGS_FREESTRUCT) {
 	dns_rdata_mx_t *mx = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(mx->common.rdtype == 15);
+	REQUIRE(mx->common.rdtype == dns_rdatatype_mx);
 
 	if (mx->mctx == NULL)
 		return;
@@ -258,7 +259,7 @@ additionaldata_mx(ARGS_ADDLDATA) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 15);
+	REQUIRE(rdata->type == dns_rdatatype_mx);
 
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
@@ -273,7 +274,7 @@ digest_mx(ARGS_DIGEST) {
 	isc_region_t r1, r2;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 15);
+	REQUIRE(rdata->type == dns_rdatatype_mx);
 
 	dns_rdata_toregion(rdata, &r1);
 	r2 = r1;
@@ -288,7 +289,7 @@ digest_mx(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_mx(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 15);
+	REQUIRE(type == dns_rdatatype_mx);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -301,7 +302,7 @@ checknames_mx(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 15);
+	REQUIRE(rdata->type == dns_rdatatype_mx);
 
 	UNUSED(owner);
 

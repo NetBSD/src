@@ -1,7 +1,7 @@
-/*	$NetBSD: lwtest.c,v 1.2.6.1.6.1 2014/12/26 03:08:20 msaitoh Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.2.6.1.6.2 2017/04/25 20:53:36 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include <isc/net.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 #include <lwres/lwres.h>
@@ -768,6 +769,14 @@ main(void) {
 	test_getrrsetbyname("e.example1.", 1, 255, 1, 1, 0);
 	test_getrrsetbyname("e.example1.", 1, 46, 2, 0, 1);
 	test_getrrsetbyname("", 1, 1, 0, 0, 0);
+
+	test_getrrsetbyname("123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789", 1, 1, 0, 0, 0);
 
 	if (fails == 0)
 		printf("I:ok\n");

@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_api.c,v 1.3.4.2.2.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.3.4.2.2.2 2017/04/25 20:53:48 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -304,12 +304,15 @@ dst_context_create2(dst_key_t *key, isc_mem_t *mctx,
 	dctx = isc_mem_get(mctx, sizeof(dst_context_t));
 	if (dctx == NULL)
 		return (ISC_R_NOMEMORY);
-	dctx->key = key;
-	dctx->mctx = mctx;
+	memset(dctx, 0, sizeof(*dctx));
+	dst_key_attach(key, &dctx->key);
+	isc_mem_attach(mctx, &dctx->mctx);
 	dctx->category = category;
 	result = key->func->createctx(key, dctx);
 	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(mctx, dctx, sizeof(dst_context_t));
+		if (dctx->key != NULL)
+			dst_key_free(&dctx->key);
+		isc_mem_putanddetach(&dctx->mctx, dctx, sizeof(dst_context_t));
 		return (result);
 	}
 	dctx->magic = CTX_MAGIC;
@@ -326,8 +329,10 @@ dst_context_destroy(dst_context_t **dctxp) {
 	dctx = *dctxp;
 	INSIST(dctx->key->func->destroyctx != NULL);
 	dctx->key->func->destroyctx(dctx);
+	if (dctx->key != NULL)
+		dst_key_free(&dctx->key);
 	dctx->magic = 0;
-	isc_mem_put(dctx->mctx, dctx, sizeof(dst_context_t));
+	isc_mem_putanddetach(&dctx->mctx, dctx, sizeof(dst_context_t));
 	*dctxp = NULL;
 }
 
@@ -1003,9 +1008,6 @@ comparekeys(const dst_key_t *key1, const dst_key_t *key2,
 	if (key1 == key2)
 		return (ISC_TRUE);
 
-	if (key1 == NULL || key2 == NULL)
-		return (ISC_FALSE);
-
 	if (key1->key_alg != key2->key_alg)
 		return (ISC_FALSE);
 
@@ -1095,8 +1097,6 @@ dst_key_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 
 	if (key1 == key2)
 		return (ISC_TRUE);
-	if (key1 == NULL || key2 == NULL)
-		return (ISC_FALSE);
 	if (key1->key_alg == key2->key_alg &&
 	    key1->func->paramcompare != NULL &&
 	    key1->func->paramcompare(key1, key2) == ISC_TRUE)

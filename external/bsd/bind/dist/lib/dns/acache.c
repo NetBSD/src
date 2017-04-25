@@ -1,7 +1,7 @@
-/*	$NetBSD: acache.c,v 1.2.6.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: acache.c,v 1.2.6.1.6.2 2017/04/25 20:53:48 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -474,8 +474,7 @@ finddbent(dns_acache_t *acache, dns_db_t *db, dbentry_t **dbentryp) {
 	 * The caller must be holding the acache lock.
 	 */
 
-	bucket = isc_hash_calc((const unsigned char *)&db,
-			       sizeof(db), ISC_TRUE) % DBBUCKETS;
+	bucket = isc_hash_function(&db, sizeof(db), ISC_TRUE, NULL) % DBBUCKETS;
 
 	for (dbentry = ISC_LIST_HEAD(acache->dbbucket[bucket]);
 	     dbentry != NULL;
@@ -1266,8 +1265,7 @@ dns_acache_setdb(dns_acache_t *acache, dns_db_t *db) {
 	dbentry->db = NULL;
 	dns_db_attach(db, &dbentry->db);
 
-	bucket = isc_hash_calc((const unsigned char *)&db,
-			       sizeof(db), ISC_TRUE) % DBBUCKETS;
+	bucket = isc_hash_function(&db, sizeof(db), ISC_TRUE, NULL) % DBBUCKETS;
 
 	ISC_LIST_APPEND(acache->dbbucket[bucket], dbentry, link);
 
@@ -1355,8 +1353,8 @@ dns_acache_putdb(dns_acache_t *acache, dns_db_t *db) {
 	INSIST(ISC_LIST_EMPTY(dbentry->originlist) &&
 	       ISC_LIST_EMPTY(dbentry->referlist));
 
-	bucket = isc_hash_calc((const unsigned char *)&db,
-			       sizeof(db), ISC_TRUE) % DBBUCKETS;
+	bucket = isc_hash_function(&db, sizeof(db), ISC_TRUE, NULL) % DBBUCKETS;
+
 	ISC_LIST_UNLINK(acache->dbbucket[bucket], dbentry, link);
 	dns_db_detach(&dbentry->db);
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: app.c,v 1.4.6.1.6.3 2015/11/17 19:55:11 bouyer Exp $	*/
+/*	$NetBSD: app.c,v 1.4.6.1.6.4 2017/04/25 20:53:55 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -92,6 +92,7 @@ isc_result_t isc__app_onrun(isc_mem_t *mctx,
 					      void *arg);
 isc_result_t isc__app_ctxrun(isc_appctx_t *ctx);
 isc_result_t isc__app_run(void);
+isc_boolean_t isc__app_isrunning(void);
 isc_result_t isc__app_ctxshutdown(isc_appctx_t *ctx);
 isc_result_t isc__app_shutdown(void);
 isc_result_t isc__app_reload(void);
@@ -147,6 +148,7 @@ typedef struct isc__appctx {
 } isc__appctx_t;
 
 static isc__appctx_t isc_g_appctx;
+static isc_boolean_t is_running = ISC_FALSE;
 
 static struct {
 	isc_appmethods_t methods;
@@ -156,7 +158,8 @@ static struct {
 	 */
 #ifndef BIND9
 	void *run, *shutdown, *start, *onrun,
-	     *reload, *finish, *block, *unblock;
+	     *reload, *finish, *block, *unblock,
+	     *isrunning;
 #endif
 } appmethods = {
 	{
@@ -176,7 +179,7 @@ static struct {
 	(void *)isc__app_run, (void *)isc__app_shutdown,
 	(void *)isc__app_start, (void *)isc__app_onrun, (void *)isc__app_reload,
 	(void *)isc__app_finish, (void *)isc__app_block,
-	(void *)isc__app_unblock
+	(void *)isc__app_unblock, (void *)isc__app_isrunning
 #endif
 };
 
@@ -696,7 +699,16 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 					 strbuf);
 			return (ISC_R_UNEXPECTED);
 		}
-		result = sigsuspend(&sset);
+#ifdef HAVE_GPERFTOOLS_PROFILER
+		if (sigaddset(&sset, SIGALRM) != 0) {
+			isc__strerror(errno, strbuf, sizeof(strbuf));
+			UNEXPECTED_ERROR(__FILE__, __LINE__,
+					 "isc_app_run() sigsetops: %s",
+					 strbuf);
+			return (ISC_R_UNEXPECTED);
+		}
+#endif
+		(void)sigsuspend(&sset);
 #endif /* HAVE_SIGWAIT */
 
 		if (ctx->want_reload) {
@@ -723,7 +735,18 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 
 isc_result_t
 isc__app_run(void) {
-	return (isc__app_ctxrun((isc_appctx_t *)&isc_g_appctx));
+	isc_result_t result;
+
+	is_running = ISC_TRUE;
+	result = isc__app_ctxrun((isc_appctx_t *)&isc_g_appctx);
+	is_running = ISC_FALSE;
+
+	return (result);
+}
+
+ISC_APPFUNC_SCOPE isc_boolean_t
+isc__app_isrunning(void) {
+	return (is_running);
 }
 
 isc_result_t

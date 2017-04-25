@@ -1,4 +1,4 @@
-/*	$NetBSD: genrandom.c,v 1.2.6.1.6.1 2014/12/26 03:08:28 msaitoh Exp $	*/
+/*	$NetBSD: genrandom.c,v 1.2.6.1.6.2 2017/04/25 20:53:43 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")

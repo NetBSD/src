@@ -34,14 +34,11 @@ With the above requirements satisfied perform the following steps:
 2. Run: make
 3. Run: sudo make install # this will install dlz_bdbhpt_dynamic.so
    into /usr/lib/bind9/
-4. Add a DLZ statement similar to the example shown in
-   example/dlz.conf into your Bind configuration
+4. Add a DLZ statement similar to the example below into your
+   Bind configuration
 5. Ensure your BerkeleyDB home-directory exists and can be written to
    by the bind user
-6. If you're running an AppArmor enabled Bind, consider adding content
-   included within example/apparmor.d-local-usr.sbin.named within
-   /etc/apparmor.d/local/usr.sbin.named
-7. Use the included testing/bdbhpt-populate.pl script to provide some
+6. Use the included testing/bdbhpt-populate.pl script to provide some
    data for initial testing
 
 Usage

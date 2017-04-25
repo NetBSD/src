@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.4.4.2.2.3 2015/11/17 19:55:02 bouyer Exp $	*/
+/*	$NetBSD: config.c,v 1.4.4.2.2.4 2017/04/25 20:53:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -105,9 +105,9 @@ options {\n\
 	transfers-per-ns 2;\n\
 	transfers-in 10;\n\
 	transfers-out 10;\n\
-	treat-cr-as-space true;\n\
-	use-id-pool true;\n\
-	use-ixfr true;\n\
+#	treat-cr-as-space <obsolete>;\n\
+#	use-id-pool <obsolete>;\n\
+#	use-ixfr <obsolete>;\n\
 	edns-udp-size 4096;\n\
 	max-udp-size 4096;\n\
 	request-nsid false;\n\
@@ -158,7 +158,14 @@ options {\n\
 	dnssec-enable yes;\n\
 	dnssec-validation yes; \n\
 	dnssec-accept-expired no;\n\
-	clients-per-query 10;\n\
+"
+#ifdef ENABLE_FETCHLIMIT
+" 	fetches-per-server 0;\n\
+	fetches-per-zone 0;\n\
+	fetch-quota-params 100 0.1 0.3 0.7;\n\
+"
+#endif /* ENABLE_FETCHLIMIT */
+"	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
 	max-recursion-depth 7;\n\
 	max-recursion-queries 50;\n\
@@ -524,6 +531,13 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	REQUIRE(keysp != NULL && *keysp == NULL);
 	REQUIRE(countp != NULL);
 
+	/*
+	 * Get system defaults.
+	 */
+	result = ns_config_getport(config, &port);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
  newlist:
 	addrlist = cfg_tuple_get(list, "addresses");
 	portobj = cfg_tuple_get(list, "port");
@@ -536,10 +550,6 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			goto cleanup;
 		}
 		port = (in_port_t) val;
-	} else {
-		result = ns_config_getport(config, &port);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 	}
 
 	result = ISC_R_NOMEMORY;

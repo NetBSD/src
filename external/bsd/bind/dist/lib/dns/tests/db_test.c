@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: db_test.c,v 1.1.1.3.4.4 2015/11/17 19:55:10 bouyer Exp $ */
+/* $Id: db_test.c,v 1.1.1.3.4.5 2017/04/25 20:53:51 snj Exp $ */
 
 /*! \file */
 
@@ -52,16 +52,16 @@ ATF_TC_HEAD(getoriginnode, tc) {
 ATF_TC_BODY(getoriginnode, tc) {
 	dns_db_t *db = NULL;
 	dns_dbnode_t *node = NULL;
-	isc_mem_t *mctx = NULL;
+	isc_mem_t *mymctx = NULL;
 	isc_result_t result;
 
-	result = isc_mem_create(0, 0, &mctx);
+	result = isc_mem_create(0, 0, &mymctx);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = isc_hash_create(mctx, NULL, 256);
+	result = isc_hash_create(mymctx, NULL, 256);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
-	result = dns_db_create(mctx, "rbt", dns_rootname, dns_dbtype_zone,
+	result = dns_db_create(mymctx, "rbt", dns_rootname, dns_dbtype_zone,
 			    dns_rdataclass_in, 0, NULL, &db);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
@@ -74,7 +74,7 @@ ATF_TC_BODY(getoriginnode, tc) {
 	dns_db_detachnode(db, &node);
 
 	dns_db_detach(&db);
-	isc_mem_detach(&mctx);
+	isc_mem_detach(&mymctx);
 }
 
 /*

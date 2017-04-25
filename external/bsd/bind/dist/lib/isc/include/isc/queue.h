@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.1.1.1.2.4.2.1 2014/12/26 03:08:36 msaitoh Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.1.2.4.2.2 2017/04/25 20:53:54 snj Exp $	*/
 
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: queue.h,v 1.1.1.1.2.4.2.1 2014/12/26 03:08:36 msaitoh Exp $ */
+/* $Id: queue.h,v 1.1.1.1.2.4.2.2 2017/04/25 20:53:54 snj Exp $ */
 
 /*
  * This is a generic implementation of a two-lock concurrent queue.

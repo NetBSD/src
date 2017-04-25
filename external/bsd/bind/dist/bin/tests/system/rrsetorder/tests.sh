@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2006-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006-2008, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,9 @@
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
+
+DIGOPTS="+nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short"
+DIGCMD="$DIG $DIGOPTS -p 5300"
 
 status=0
 
@@ -34,8 +37,7 @@ if $test_fixed; then
     ret=0
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.1 fixed.example > dig.out.fixed || ret=1
+    $DIGCMD @10.53.0.1 fixed.example > dig.out.fixed || ret=1
     cmp -s dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -51,8 +53,7 @@ matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.1 cyclic.example > dig.out.cyclic || ret=1
+    $DIGCMD @10.53.0.1 cyclic.example > dig.out.cyclic || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
@@ -78,8 +79,7 @@ matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.1 cyclic2.example > dig.out.cyclic2 || ret=1
+    $DIGCMD @10.53.0.1 cyclic2.example > dig.out.cyclic2 || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
@@ -103,8 +103,7 @@ do
 done
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 9
 do
-$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	-p 5300 @10.53.0.1 random.example > dig.out.random || ret=1
+	$DIGCMD @10.53.0.1 random.example > dig.out.random || ret=1
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
@@ -131,8 +130,7 @@ if $test_fixed; then
     ret=0
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.2 fixed.example > dig.out.fixed || ret=1
+    $DIGCMD @10.53.0.2 fixed.example > dig.out.fixed || ret=1
     cmp -s dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -148,8 +146,7 @@ matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.2 cyclic.example > dig.out.cyclic || ret=1
+    $DIGCMD @10.53.0.2 cyclic.example > dig.out.cyclic || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
@@ -175,8 +172,7 @@ matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.2 cyclic2.example > dig.out.cyclic2 || ret=1
+    $DIGCMD @10.53.0.2 cyclic2.example > dig.out.cyclic2 || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
@@ -201,8 +197,7 @@ do
 done
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 9
 do
-$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	-p 5300 @10.53.0.2 random.example > dig.out.random || ret=1
+$DIGCMD @10.53.0.2 random.example > dig.out.random || ret=1
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
@@ -245,8 +240,7 @@ if $test_fixed; then
     ret=0
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.2 fixed.example > dig.out.fixed || ret=1
+    $DIGCMD @10.53.0.2 fixed.example > dig.out.fixed || ret=1
     cmp -s dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -262,8 +256,7 @@ matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.2 cyclic.example > dig.out.cyclic || ret=1
+    $DIGCMD @10.53.0.2 cyclic.example > dig.out.cyclic || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
@@ -289,8 +282,7 @@ matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.2 cyclic2.example > dig.out.cyclic2 || ret=1
+    $DIGCMD @10.53.0.2 cyclic2.example > dig.out.cyclic2 || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
@@ -315,8 +307,7 @@ do
 done
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 9
 do
-$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	-p 5300 @10.53.0.2 random.example > dig.out.random || ret=1
+	$DIGCMD @10.53.0.2 random.example > dig.out.random || ret=1
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do
@@ -343,8 +334,7 @@ if $test_fixed; then
     ret=0
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
     do
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.3 fixed.example > dig.out.fixed || ret=1
+    $DIGCMD @10.53.0.3 fixed.example > dig.out.fixed || ret=1
     cmp -s dig.out.fixed dig.out.fixed.good || ret=1
     done
     if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -357,14 +347,12 @@ fi
 echo "I: Checking order cyclic (cache + additional)"
 ret=0
 # prime acache
-$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.3 cyclic.example > dig.out.cyclic || ret=1
+$DIGCMD @10.53.0.3 cyclic.example > dig.out.cyclic || ret=1
 matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.3 cyclic.example > dig.out.cyclic || ret=1
+    $DIGCMD @10.53.0.3 cyclic.example > dig.out.cyclic || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic dig.out.$j
     else
@@ -387,14 +375,12 @@ status=`expr $status + $ret`
 echo "I: Checking order cyclic (cache)"
 ret=0
 # prime acache
-$DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.3 cyclic2.example > dig.out.cyclic2 || ret=1
+$DIGCMD @10.53.0.3 cyclic2.example > dig.out.cyclic2 || ret=1
 matches=0
 for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
 do
     j=`expr $i % 4`
-    $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	    -p 5300 @10.53.0.3 cyclic2.example > dig.out.cyclic2 || ret=1
+    $DIGCMD @10.53.0.3 cyclic2.example > dig.out.cyclic2 || ret=1
     if [ $i -le 4 ]; then
         cp dig.out.cyclic2 dig.out.$j
     else
@@ -419,8 +405,34 @@ do
 done
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 9
 do
+	$DIGCMD @10.53.0.3 random.example > dig.out.random || ret=1
+	match=0
+	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+	do
+		eval "cmp -s dig.out.random dig.out.random.good$j && match$j=1 match=1"
+		if [ $match -eq 1 ]; then break; fi
+	done
+	if [ $match -eq 0 ]; then ret=1; fi
+done
+match=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+do
+eval "match=\`expr \$match + \$match$i\`"
+done
+echo "I: Random selection return $match of 24 possible orders in 36 samples"
+if [ $match -lt 8 ]; then echo ret=1; fi
+if [ $ret != 0 ]; then echo "I:failed"; fi
+
+echo "I: Checking default order no match in rrset-order (random)"
+ret=0
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+do
+	eval match$i=0
+done
+for i in a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 9
+do
 $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
-	-p 5300 @10.53.0.3 random.example > dig.out.random || ret=1
+	-p 5300 @10.53.0.4 random.example > dig.out.random|| ret=1
 	match=0
 	for j in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
 	do

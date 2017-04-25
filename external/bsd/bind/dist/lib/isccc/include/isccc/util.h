@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.3.6.1.6.1 2014/12/26 03:08:37 msaitoh Exp $	*/
+/*	$NetBSD: util.h,v 1.3.6.1.6.2 2017/04/25 20:53:56 snj Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")

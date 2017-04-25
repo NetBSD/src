@@ -1,7 +1,7 @@
-/*	$NetBSD: cert_37.c,v 1.3.4.1 2012/06/05 21:15:11 bouyer Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.3.4.1.6.1 2017/04/25 20:53:50 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,7 +34,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	dns_secalg_t secalg;
 	dns_cert_t cert;
 
-	REQUIRE(type == 37);
+	REQUIRE(type == dns_rdatatype_cert);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -76,7 +76,7 @@ totext_cert(ARGS_TOTEXT) {
 	char buf[sizeof("64000 ")];
 	unsigned int n;
 
-	REQUIRE(rdata->type == 37);
+	REQUIRE(rdata->type == dns_rdatatype_cert);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(tctx);
@@ -125,7 +125,7 @@ static inline isc_result_t
 fromwire_cert(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(type == 37);
+	REQUIRE(type == dns_rdatatype_cert);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -144,7 +144,7 @@ static inline isc_result_t
 towire_cert(ARGS_TOWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 37);
+	REQUIRE(rdata->type == dns_rdatatype_cert);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(cctx);
@@ -160,7 +160,7 @@ compare_cert(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 37);
+	REQUIRE(rdata1->type == dns_rdatatype_cert);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -173,7 +173,7 @@ static inline isc_result_t
 fromstruct_cert(ARGS_FROMSTRUCT) {
 	dns_rdata_cert_t *cert = source;
 
-	REQUIRE(type == 37);
+	REQUIRE(type == dns_rdatatype_cert);
 	REQUIRE(source != NULL);
 	REQUIRE(cert->common.rdtype == type);
 	REQUIRE(cert->common.rdclass == rdclass);
@@ -193,7 +193,7 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	dns_rdata_cert_t *cert = target;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 37);
+	REQUIRE(rdata->type == dns_rdatatype_cert);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -224,7 +224,7 @@ freestruct_cert(ARGS_FREESTRUCT) {
 	dns_rdata_cert_t *cert = source;
 
 	REQUIRE(cert != NULL);
-	REQUIRE(cert->common.rdtype == 37);
+	REQUIRE(cert->common.rdtype == dns_rdatatype_cert);
 
 	if (cert->mctx == NULL)
 		return;
@@ -236,7 +236,7 @@ freestruct_cert(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_cert(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 37);
+	REQUIRE(rdata->type == dns_rdatatype_cert);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -249,7 +249,7 @@ static inline isc_result_t
 digest_cert(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 37);
+	REQUIRE(rdata->type == dns_rdatatype_cert);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -259,7 +259,7 @@ digest_cert(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_cert(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 37);
+	REQUIRE(type == dns_rdatatype_cert);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -272,7 +272,7 @@ checkowner_cert(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_cert(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 37);
+	REQUIRE(rdata->type == dns_rdatatype_cert);
 
 	UNUSED(rdata);
 	UNUSED(owner);

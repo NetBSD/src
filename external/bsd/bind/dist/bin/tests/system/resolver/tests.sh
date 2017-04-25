@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -63,7 +61,7 @@ if [ -x ${SAMPLE} ] ; then
     echo "I:checking handling of bogus referrals using dns_client"
     ret=0
     ${SAMPLE} -p 5300 -t a 10.53.0.1 www.example.com 2> sample.out || ret=1
-    grep "resolution failed: failure" sample.out > /dev/null || ret=1
+    egrep "resolution failed: (failure|SERVFAIL)" sample.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -387,7 +385,6 @@ grep "not subdomain of zone" ns1/named.run > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-#HERE <<<
 cp ns7/named2.conf ns7/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.7 -p 9953 reconfig 2>&1 | sed 's/^/I:ns7 /'
 
@@ -399,7 +396,6 @@ grep "status: NOERROR" dig.ns7.out.${n} > /dev/null || ret=1
 grep "ANSWER: 1" dig.ns7.out.${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
-#HERE >>>
 
 n=`expr $n + 1`
 echo "I:check that '-t aaaa' in .digrc does not have unexpected side effects ($n)"
@@ -415,5 +411,142 @@ grep ';1\.0\.0\.127\.in-addr\.arpa\..*IN.*PTR$' dig.out.3.${n} > /dev/null || re
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo "I:check that CNAME nameserver is logged correctly (${n})"
+ret=0
+$DIG soa all-cnames @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: SERVFAIL" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "skipping nameserver 'cname.tld' because it is a CNAME, while resolving 'all-cnames/SOA'" ns5/named.run > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that SOA query returns data for delegation-only apex (${n})"
+ret=0
+$DIG soa delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+n=`expr $n + 1`
+echo "I:check that NS query returns data for delegation-only apex (${n})"
+ret=0
+$DIG ns delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that A query returns data for delegation-only A apex (${n})"
+ret=0
+$DIG a delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that CDS query returns data for delegation-only apex (${n})"
+ret=0
+$DIG cds delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that AAAA query returns data for delegation-only AAAA apex (${n})"
+ret=0
+$DIG a delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+echo "I:check that DNSKEY query returns data for delegation-only apex (${n})"
+ret=0
+$DIG dnskey delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that CDNSKEY query returns data for delegation-only apex (${n})"
+ret=0
+$DIG cdnskey delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex A data (${n})"
+ret=0
+$DIG a a.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex CDS data (${n})"
+ret=0
+$DIG cds cds.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex AAAA data (${n})"
+ret=0
+$DIG aaaa aaaa.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex CDNSKEY data (${n})"
+ret=0
+$DIG cdnskey cdnskey.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check zero ttl not returned for learnt non zero ttl records (${n})"
+ret=0
+# use prefetch disabled server
+$DIG @10.53.0.7 -p 5300 non-zero.example.net txt > dig.out.1.${n} || ret=1
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+# sleep so we are in expire range
+sleep ${ttl1:-0}
+# look for ttl = 1, allow for one miss at getting zero ttl
+zerotonine="0 1 2 3 4 5 6 7 8 9"
+zerotonine="$zerotonine $zerotonine $zerotonine"
+for i in $zerotonine $zerotonine $zerotonine $zerotonine
+do
+	$DIG @10.53.0.7 -p 5300 non-zero.example.net txt > dig.out.2.${n} || ret=1
+	ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
+	test ${ttl2:-1} -eq 0 && break
+	test ${ttl2:-1} -ge ${ttl1:-0} && break
+	$PERL -e 'select(undef, undef, undef, 0.05);'
+done
+test ${ttl2:-1} -eq 0 && ret=1
+test ${ttl2:-1} -ge ${ttl1:-0} || break
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check zero ttl is returned for learnt zero ttl records (${n})"
+ret=0
+$DIG @10.53.0.7 -p 5300 zero.example.net txt > dig.out.1.${n} || ret=1
+ttl=`awk '/"A" "zero" "ttl"/ { print $2 }' dig.out.1.${n}`
+test ${ttl:-1} -eq 0 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 echo "I:exit status: $status"
 exit $status

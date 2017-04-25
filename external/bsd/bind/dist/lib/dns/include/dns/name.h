@@ -1,7 +1,7 @@
-/*	$NetBSD: name.h,v 1.5.6.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
+/*	$NetBSD: name.h,v 1.5.6.1.6.2 2017/04/25 20:53:50 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -991,10 +991,6 @@ dns_name_split(dns_name_t *name, unsigned int suffixlabels,
  *
  *\li	'suffix' is a valid name or NULL, and cannot be read-only.
  *
- *\li	If non-NULL, 'prefix' and 'suffix' must have dedicated buffers.
- *
- *\li	'prefix' and 'suffix' cannot point to the same buffer.
- *
  * Ensures:
  *
  *\li	On success:
@@ -1163,6 +1159,7 @@ dns_name_tostring(dns_name_t *source, char **target, isc_mem_t *mctx);
  * Returns:
  *
  *\li	ISC_R_SUCCESS
+ *\li	ISC_R_NOMEMORY
  *
  *\li	Any error that dns_name_totext() can return.
  */
@@ -1283,6 +1280,24 @@ dns_name_destroy(void);
  * Note: dns_name_settotextfilter(NULL); should be called for all
  * threads which have called dns_name_settotextfilter() with a
  * non-NULL argument prior to calling dns_name_destroy();
+ */
+
+isc_boolean_t
+dns_name_isdnssd(const dns_name_t *owner);
+/*%<
+ * Determine if the 'owner' is a DNS-SD prefix.
+ */
+
+isc_boolean_t
+dns_name_isrfc1918(const dns_name_t *owner);
+/*%<
+ * Determine if the 'name' is in the RFC 1918 reverse namespace.
+ */
+
+isc_boolean_t
+dns_name_isula(const dns_name_t *owner);
+/*%<
+ * Determine if the 'name' is in the ULA reverse namespace.
  */
 
 ISC_LANG_ENDDECLS

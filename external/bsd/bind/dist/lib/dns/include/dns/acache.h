@@ -1,4 +1,4 @@
-/*	$NetBSD: acache.h,v 1.2.6.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: acache.h,v 1.2.6.1.6.2 2017/04/25 20:53:50 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")

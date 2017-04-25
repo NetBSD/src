@@ -1,4 +1,4 @@
-/*	$NetBSD: several_tcs_helper.c,v 1.1.1.1.18.1 2014/12/26 03:08:41 msaitoh Exp $	*/
+/*	$NetBSD: several_tcs_helper.c,v 1.1.1.1.18.2 2017/04/25 20:53:59 snj Exp $	*/
 
 /*
  * Automated Testing Framework (atf)

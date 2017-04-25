@@ -1,7 +1,7 @@
-/*	$NetBSD: logconf.c,v 1.3.4.1.6.1 2014/12/26 03:08:09 msaitoh Exp $	*/
+/*	$NetBSD: logconf.c,v 1.3.4.1.6.2 2017/04/25 20:53:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 
 #include <isc/file.h>
 #include <isc/offset.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/stdio.h>
 #include <isc/string.h>

@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.1.1.1.12.2 2014/12/26 03:08:12 msaitoh Exp $
+# $Id: clean.sh,v 1.1.1.1.12.3 2017/04/25 20:53:29 snj Exp $
 
 #
 # Clean up after tests.

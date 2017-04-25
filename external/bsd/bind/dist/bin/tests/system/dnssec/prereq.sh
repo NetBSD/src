@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2006, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006, 2007, 2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -27,8 +27,6 @@ then
         echo "I:Net::DNS versions 0.69 to 0.70 have bugs that cause this test to fail: please update." >&2
         exit 1
     fi
-else
-    exit 1
 fi
 
 exec $SHELL ../testcrypto.sh

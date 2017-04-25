@@ -1,7 +1,7 @@
-/*	$NetBSD: proforma.c,v 1.2.6.1 2012/06/05 21:15:12 bouyer Exp $	*/
+/*	$NetBSD: proforma.c,v 1.2.6.1.6.1 2017/04/25 20:53:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,7 +28,7 @@ static inline isc_result_t
 fromtext_#(ARGS_FROMTEXT) {
 	isc_token_t token;
 
-	REQUIRE(type == #);
+	REQUIRE(type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdclass == #);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
@@ -40,7 +40,7 @@ fromtext_#(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_#(ARGS_TOTEXT) {
 
-	REQUIRE(rdata->type == #);
+	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata->rdclass == #);
 	REQUIRE(rdata->length != 0);	/* XXX */
 
@@ -50,7 +50,7 @@ totext_#(ARGS_TOTEXT) {
 static inline isc_result_t
 fromwire_#(ARGS_FROMWIRE) {
 
-	REQUIRE(type == #);
+	REQUIRE(type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdclass == #);
 
 	/* NONE or GLOBAL14 */
@@ -62,7 +62,7 @@ fromwire_#(ARGS_FROMWIRE) {
 static inline isc_result_t
 towire_#(ARGS_TOWIRE) {
 
-	REQUIRE(rdata->type == #);
+	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata->rdclass == #);
 	REQUIRE(rdata->length != 0);	/* XXX */
 
@@ -77,9 +77,9 @@ compare_#(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
 
-	REQUIRE(rdata1->type == rdata2->type);
+	REQUIRE(rdata1->type == dns_rdatatype_proforma.crdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == #);
+	REQUIRE(rdata1->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata1->rdclass == #);
 	REQUIRE(rdata1->length != 0);	/* XXX */
 	REQUIRE(rdata2->length != 0);	/* XXX */
@@ -93,10 +93,10 @@ static inline isc_result_t
 fromstruct_#(ARGS_FROMSTRUCT) {
 	dns_rdata_#_t *# = source;
 
-	REQUIRE(type == #);
+	REQUIRE(type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdclass == #);
 	REQUIRE(source != NULL);
-	REQUIRE(#->common.rdtype == type);
+	REQUIRE(#->common.rdtype == dns_rdatatype_proforma.ctype);
 	REQUIRE(#->common.rdclass == rdclass);
 
 	return (ISC_R_NOTIMPLEMENTED);
@@ -105,7 +105,7 @@ fromstruct_#(ARGS_FROMSTRUCT) {
 static inline isc_result_t
 tostruct_#(ARGS_TOSTRUCT) {
 
-	REQUIRE(rdata->type == #);
+	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata->rdclass == #);
 	REQUIRE(rdata->length != 0);	/* XXX */
 
@@ -117,14 +117,14 @@ freestruct_#(ARGS_FREESTRUCT) {
 	dns_rdata_#_t *# = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(#->common.rdtype == #);
+	REQUIRE(#->common.rdtype == dns_rdatatype_proforma.c#);
 	REQUIRE(#->common.rdclass == #);
 
 }
 
 static inline isc_result_t
 additionaldata_#(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == #);
+	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata->rdclass == #);
 
 	(void)add;
@@ -137,7 +137,7 @@ static inline isc_result_t
 digest_#(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == #);
+	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata->rdclass == #);
 
 	dns_rdata_toregion(rdata, &r);
@@ -148,7 +148,7 @@ digest_#(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_#(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == #);
+	REQUIRE(type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdclass == #);
 
 	UNUSED(name);
@@ -162,7 +162,7 @@ checkowner_#(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_#(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == #);
+	REQUIRE(rdata->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata->rdclass == #);
 
 	UNUSED(rdata);
@@ -177,9 +177,9 @@ casecompare_#(ARGS_COMPARE) {
 	isc_region_t r1;
 	isc_region_t r2;
 
-	REQUIRE(rdata1->type == rdata2->type);
+	REQUIRE(rdata1->type == dns_rdatatype_proforma.crdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == #);
+	REQUIRE(rdata1->type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdata1->rdclass == #);
 	REQUIRE(rdata1->length != 0);	/* XXX */
 	REQUIRE(rdata2->length != 0);	/* XXX */

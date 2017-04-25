@@ -1,7 +1,7 @@
-/*	$NetBSD: getaddrinfo.c,v 1.2.6.1.6.1 2014/12/26 03:08:35 msaitoh Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.2.6.1.6.2 2017/04/25 20:53:53 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -140,6 +140,7 @@
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/util.h>
+#include <isc/mutex.h>
 
 #include <dns/client.h>
 #include <dns/fixedname.h>
@@ -532,6 +533,7 @@ typedef struct gai_statehead {
 	int				ai_port;
 	isc_appctx_t			*actx;
 	dns_client_t			*dnsclient;
+	isc_mutex_t			list_lock;
 	ISC_LIST(struct gai_resstate)	resstates;
 	unsigned int			activestates;
 } gai_statehead_t;
@@ -859,6 +861,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 		 * and have any answer, we can stop now by canceling the
 		 * others.
 		 */
+		LOCK(&resstate->head->list_lock);
 		if (resstate == ISC_LIST_HEAD(resstate->head->resstates)) {
 			if ((resstate->trans4 != NULL &&
 			     resstate->trans4->ai_sentinel.ai_next != NULL) ||
@@ -890,6 +893,7 @@ process_answer(isc_task_t *task, isc_event_t *event) {
 						resstate, link);
 			}
 		}
+		UNLOCK(&resstate->head->list_lock);
 	}
 }
 
@@ -930,11 +934,19 @@ resolve_name(int family, const char *hostname, int flags,
 	head.ai_port = port;
 	head.actx = actx;
 	head.dnsclient = client;
+	result = isc_mutex_init(&head.list_lock);
+	if (result != ISC_R_SUCCESS) {
+		return (EAI_FAIL);
+	}
+
 	ISC_LIST_INIT(head.resstates);
 	result = make_resstates(mctx, hostname, &head, conf);
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
+		DESTROYLOCK(&head.list_lock);
 		return (EAI_FAIL);
+	}
 
+	LOCK(&head.list_lock);
 	for (resstate = ISC_LIST_HEAD(head.resstates);
 	     resstate != NULL; resstate = ISC_LIST_NEXT(resstate, link)) {
 		if (resstate->trans4 != NULL) {
@@ -968,6 +980,8 @@ resolve_name(int family, const char *hostname, int flags,
 				resstate->trans6->is_inprogress= ISC_FALSE;
 		}
 	}
+	UNLOCK(&head.list_lock);
+
 	if (!all_fail) {
 		/* Start all the events */
 		isc_app_ctxrun(actx);
@@ -1039,6 +1053,7 @@ resolve_name(int family, const char *hostname, int flags,
 	irs_context_destroy(&irsctx);
 #endif
 
+	DESTROYLOCK(&head.list_lock);
 	return (error);
 }
 
@@ -1125,10 +1140,8 @@ add_ipv4(const char *hostname, int flags, struct addrinfo **aip,
 	UNUSED(flags);
 
 	ai = ai_clone(*aip, AF_INET); /* don't use ai_clone() */
-	if (ai == NULL) {
-		_freeaddrinfo(*aip);
+	if (ai == NULL)
 		return (EAI_MEMORY);
-	}
 
 	*aip = ai;
 	ai->ai_socktype = socktype;
@@ -1248,11 +1261,8 @@ ai_clone(struct addrinfo *oai, int family) {
 	ai = ai_alloc(family, ((family == AF_INET6) ?
 	    sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in)));
 
-	if (ai == NULL) {
-		if (oai != NULL)
-			freeaddrinfo(oai);
+	if (ai == NULL)
 		return (NULL);
-	}
 	if (oai == NULL)
 		return (ai);
 

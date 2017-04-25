@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -51,6 +51,14 @@ n=`expr $n + 1`
 echo "I:test that the nameserver returns SERVFAIL for a missing master file ($n)"
 $DIG +tcp +all missing soa @10.53.0.2 -p 5300 > dig.out.$n 
 grep "status: SERVFAIL" dig.out.$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+ret=0
+n=`expr $n + 1`
+echo "I:test owner inheritence after "'$INCLUDE'" ($n)"
+$CHECKZONE -Dq example zone/inheritownerafterinclude.db > checkzone.out$n
+diff checkzone.out$n zone/inheritownerafterinclude.good || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

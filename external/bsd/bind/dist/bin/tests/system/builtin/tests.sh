@@ -1,4 +1,4 @@
-# Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,9 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # Id: tests.sh,v 1.3 2011/08/09 04:12:25 tbox Exp 
+
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 status=0
 n=0
@@ -47,14 +50,14 @@ n=`expr $n + 1`
 ret=0
 echo "I:Checking that default version works for rndc ($n)"
 $RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 status > rndc.status.ns1.$n 2>&1
-grep "^version: $VERSION " rndc.status.ns1.$n > /dev/null || ret=1
+grep "^version: BIND $VERSION " rndc.status.ns1.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
 ret=0
 echo "I:Checking that custom version works for rndc ($n)"
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 status > rndc.status.ns3.$n 2>&1
-grep "^version: $VERSION (this is a test of version) " rndc.status.ns3.$n > /dev/null || ret=1
+grep "^version: BIND $VERSION ${DESCRIPTION}${DESCRIPTION:+ }<id:.......> (this is a test of version)" rndc.status.ns3.$n > /dev/null || ret=1
 if [ $ret != 0 ] ; then echo I:failed; status=`expr $status + $ret`; fi
 
 n=`expr $n + 1`
