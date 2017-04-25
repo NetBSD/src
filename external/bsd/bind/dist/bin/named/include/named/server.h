@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.3.4.2 2014/12/25 17:54:01 msaitoh Exp $	*/
+/*	$NetBSD: server.h,v 1.3.4.3 2017/04/25 19:54:10 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -53,6 +51,7 @@ struct ns_server {
 	isc_quota_t		xfroutquota;
 	isc_quota_t		tcpquota;
 	isc_quota_t		recursionquota;
+
 	dns_acl_t		*blackholeacl;
 	char *			statsfile;	/*%< Statistics file name */
 	char *			dumpfile;	/*%< Dump file name */
@@ -132,7 +131,7 @@ enum {
 	dns_nsstatscounter_tsigin = 4,
 	dns_nsstatscounter_sig0in = 5,
 	dns_nsstatscounter_invalidsig = 6,
-	dns_nsstatscounter_tcp = 7,
+	dns_nsstatscounter_requesttcp = 7,
 
 	dns_nsstatscounter_authrej = 8,
 	dns_nsstatscounter_recurserej = 9,
@@ -167,16 +166,31 @@ enum {
 	dns_nsstatscounter_updatefail = 34,
 	dns_nsstatscounter_updatebadprereq = 35,
 
-	dns_nsstatscounter_rpz_rewrites = 36,
+	dns_nsstatscounter_recursclients = 36,
 
-#ifdef USE_RRL
-	dns_nsstatscounter_ratedropped = 37,
-	dns_nsstatscounter_rateslipped = 38,
+	dns_nsstatscounter_dns64 = 37,
 
-	dns_nsstatscounter_max = 39
-#else /* USE_RRL */
-	dns_nsstatscounter_max = 37
-#endif /* USE_RRL */
+	dns_nsstatscounter_ratedropped = 38,
+	dns_nsstatscounter_rateslipped = 39,
+
+	dns_nsstatscounter_rpz_rewrites = 40,
+
+	dns_nsstatscounter_udp = 41,
+	dns_nsstatscounter_tcp = 42,
+
+	dns_nsstatscounter_nsidopt = 43,
+	dns_nsstatscounter_expireopt = 44,
+	dns_nsstatscounter_otheropt = 45,
+	dns_nsstatscounter_ecsopt = 46,
+
+	dns_nsstatscounter_sitopt = 47,
+	dns_nsstatscounter_sitbadsize = 48,
+	dns_nsstatscounter_sitbadtime = 49,
+	dns_nsstatscounter_sitnomatch = 50,
+	dns_nsstatscounter_sitmatch = 51,
+	dns_nsstatscounter_sitnew = 52,
+
+	dns_nsstatscounter_max = 53
 };
 
 void
@@ -209,38 +223,41 @@ ns_server_flushonshutdown(ns_server_t *server, isc_boolean_t flush);
  */
 
 isc_result_t
-ns_server_reloadcommand(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_reloadcommand(ns_server_t *server, isc_lex_t *lex,
+			isc_buffer_t *text);
 /*%<
  * Act on a "reload" command from the command channel.
  */
 
 isc_result_t
-ns_server_reconfigcommand(ns_server_t *server, char *args);
+ns_server_reconfigcommand(ns_server_t *server);
 /*%<
  * Act on a "reconfig" command from the command channel.
  */
 
 isc_result_t
-ns_server_notifycommand(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_notifycommand(ns_server_t *server, isc_lex_t *lex,
+			isc_buffer_t *text);
 /*%<
  * Act on a "notify" command from the command channel.
  */
 
 isc_result_t
-ns_server_refreshcommand(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_refreshcommand(ns_server_t *server, isc_lex_t *lex,
+			 isc_buffer_t *text);
 /*%<
  * Act on a "refresh" command from the command channel.
  */
 
 isc_result_t
-ns_server_retransfercommand(ns_server_t *server, char *args,
+ns_server_retransfercommand(ns_server_t *server, isc_lex_t *lex,
 			    isc_buffer_t *text);
 /*%<
  * Act on a "retransfer" command from the command channel.
  */
 
 isc_result_t
-ns_server_togglequerylog(ns_server_t *server, char *args);
+ns_server_togglequerylog(ns_server_t *server, isc_lex_t *lex);
 /*%<
  * Enable/disable logging of queries.  (Takes "yes" or "no" argument,
  * but can also be used as a toggle for backward comptibility.)
@@ -256,25 +273,25 @@ ns_server_dumpstats(ns_server_t *server);
  * Dump the current cache to the dump file.
  */
 isc_result_t
-ns_server_dumpdb(ns_server_t *server, char *args);
+ns_server_dumpdb(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Dump the current security roots to the secroots file.
  */
 isc_result_t
-ns_server_dumpsecroots(ns_server_t *server, char *args);
+ns_server_dumpsecroots(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Change or increment the server debug level.
  */
 isc_result_t
-ns_server_setdebuglevel(ns_server_t *server, char *args);
+ns_server_setdebuglevel(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Flush the server's cache(s)
  */
 isc_result_t
-ns_server_flushcache(ns_server_t *server, char *args);
+ns_server_flushcache(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Flush a particular name from the server's cache.  If 'tree' is false,
@@ -282,7 +299,8 @@ ns_server_flushcache(ns_server_t *server, char *args);
  * flush all the names under the specified name.
  */
 isc_result_t
-ns_server_flushnode(ns_server_t *server, char *args, isc_boolean_t tree);
+ns_server_flushnode(ns_server_t *server, isc_lex_t *lex,
+		    isc_boolean_t tree);
 
 /*%
  * Report the server's status.
@@ -300,20 +318,21 @@ ns_server_tsiglist(ns_server_t *server, isc_buffer_t *text);
  * Delete a specific key (with optional view).
  */
 isc_result_t
-ns_server_tsigdelete(ns_server_t *server, char *command, isc_buffer_t *text);
+ns_server_tsigdelete(ns_server_t *server, isc_lex_t *lex,
+		     isc_buffer_t *text);
 
 /*%
  * Enable or disable updates for a zone.
  */
 isc_result_t
-ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
-		 isc_buffer_t *text);
+ns_server_freeze(ns_server_t *server, isc_boolean_t freeze,
+		 isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Dump zone updates to disk, optionally removing the journal file
  */
 isc_result_t
-ns_server_sync(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_sync(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Update a zone's DNSKEY set from the key repository.  If
@@ -323,7 +342,7 @@ ns_server_sync(ns_server_t *server, char *args, isc_buffer_t *text);
  * take place incrementally.
  */
 isc_result_t
-ns_server_rekey(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_rekey(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Dump the current recursive queries.
@@ -341,7 +360,7 @@ ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
  * Enable or disable dnssec validation.
  */
 isc_result_t
-ns_server_validation(ns_server_t *server, char *args);
+ns_server_validation(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Add a zone to a running process
@@ -353,11 +372,11 @@ ns_server_add_zone(ns_server_t *server, char *args, isc_buffer_t *text);
  * Deletes a zone from a running process
  */
 isc_result_t
-ns_server_del_zone(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_del_zone(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Lists the status of the signing records for a given zone.
  */
 isc_result_t
-ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_signing(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 #endif /* NAMED_SERVER_H */

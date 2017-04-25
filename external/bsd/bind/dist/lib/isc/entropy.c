@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy.c,v 1.2.6.1 2012/06/05 21:15:08 bouyer Exp $	*/
+/*	$NetBSD: entropy.c,v 1.2.6.2 2017/04/25 19:54:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,6 +42,7 @@
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/sha1.h>
 #include <isc/string.h>
@@ -318,7 +319,12 @@ entropypool_adddata(isc_entropy_t *ent, void *p, unsigned int len,
 	unsigned long addr;
 	isc_uint8_t *buf;
 
+	/* Silly MSVC in 64 bit mode complains here... */
+#ifdef _WIN64
+	addr = (unsigned long)((unsigned long long)p);
+#else
 	addr = (unsigned long)p;
+#endif
 	buf = p;
 
 	if ((addr & 0x03U) != 0U) {

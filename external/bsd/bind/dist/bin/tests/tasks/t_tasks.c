@@ -1,7 +1,7 @@
-/*	$NetBSD: t_tasks.c,v 1.3.4.2 2014/12/25 17:54:21 msaitoh Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.3.4.3 2017/04/25 19:54:22 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -987,6 +987,12 @@ t_tasks4(void) {
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_task_create failed %s\n",
 		       isc_result_totext(isc_result));
+		isc_result = isc_mutex_unlock(&T4_mx);
+		if (isc_result != ISC_R_SUCCESS) {
+			t_info("isc_mutex_unlock failed %s\n",
+			       isc_result_totext(isc_result));
+			++T4_nprobs;
+		}
 		DESTROYLOCK(&T4_mx);
 		(void) isc_condition_destroy(&T4_cv);
 		isc_taskmgr_destroy(&tmgr);
@@ -1001,6 +1007,12 @@ t_tasks4(void) {
 				   NULL, sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
+		isc_result = isc_mutex_unlock(&T4_mx);
+		if (isc_result != ISC_R_SUCCESS) {
+			t_info("isc_mutex_unlock failed %s\n",
+			       isc_result_totext(isc_result));
+			++T4_nprobs;
+		}
 		DESTROYLOCK(&T4_mx);
 		isc_task_destroy(&task);
 		(void) isc_condition_destroy(&T4_cv);

@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@ top_srcdir =	@top_srcdir@
 .NOTPARALLEL:
 .NO_PARALLEL:
 
-@BIND9_VERSION@
+VERSION=@BIND9_VERSION@
 
 @BIND9_MAKE_INCLUDES@
 
@@ -144,7 +144,8 @@ rdataset_test@EXEEXT@: rdataset_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 
 rdata_test@EXEEXT@: rdata_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
-			rdata_test.@O@ ${DNSLIBS} ${ISCLIBS} ${LIBS}
+			rdata_test.@O@ dnstest.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
 
 dispatch_test@EXEEXT@: dispatch_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
@@ -168,4 +169,4 @@ clean distclean::
 	rm -f ${TARGETS}
 	rm -f atf.out
 	rm -f testdata/master/master12.data testdata/master/master13.data \
-		testdata/master/master14.data 
+		testdata/master/master14.data

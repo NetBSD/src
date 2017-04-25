@@ -1,7 +1,7 @@
-/*	$NetBSD: spnego.c,v 1.3.4.2 2014/12/25 17:54:26 msaitoh Exp $	*/
+/*	$NetBSD: spnego.c,v 1.3.4.3 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2006-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file
  * \brief
@@ -148,6 +146,7 @@
 #include <isc/mem.h>
 #include <isc/once.h>
 #include <isc/random.h>
+#include <isc/safe.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/util.h>
@@ -374,7 +373,7 @@ gssapi_spnego_decapsulate(OM_uint32 *,
 /* mod_auth_kerb.c */
 
 static int
-cmp_gss_type(gss_buffer_t token, gss_OID oid)
+cmp_gss_type(gss_buffer_t token, gss_OID gssoid)
 {
 	unsigned char *p;
 	size_t len;
@@ -394,10 +393,10 @@ cmp_gss_type(gss_buffer_t token, gss_OID oid)
 	if (*p++ != 0x06)
 		return (GSS_S_DEFECTIVE_TOKEN);
 
-	if (((OM_uint32) *p++) != oid->length)
+	if (((OM_uint32) *p++) != gssoid->length)
 		return (GSS_S_DEFECTIVE_TOKEN);
 
-	return (memcmp(p, oid->elements, oid->length));
+	return (isc_safe_memcompare(p, gssoid->elements, gssoid->length));
 }
 
 /* accept_sec_context.c */
@@ -637,16 +636,18 @@ gss_accept_sec_context_spnego(OM_uint32 *minor_status,
 			return (GSS_S_DEFECTIVE_TOKEN);
 		}
 		if (mech_len == GSS_KRB5_MECH->length &&
-		    memcmp(GSS_KRB5_MECH->elements,
-			   mechbuf + sizeof(mechbuf) - mech_len,
-			   mech_len) == 0) {
+		    isc_safe_memequal(GSS_KRB5_MECH->elements,
+				      mechbuf + sizeof(mechbuf) - mech_len,
+				      mech_len))
+		{
 			found = 1;
 			break;
 		}
 		if (mech_len == GSS_MSKRB5_MECH->length &&
-		    memcmp(GSS_MSKRB5_MECH->elements,
-			   mechbuf + sizeof(mechbuf) - mech_len,
-			   mech_len) == 0) {
+		    isc_safe_memequal(GSS_MSKRB5_MECH->elements,
+				      mechbuf + sizeof(mechbuf) - mech_len,
+				      mech_len))
+		{
 			found = 1;
 			if (i == 0)
 				pref = GSS_MSKRB5_MECH;
@@ -717,7 +718,7 @@ gssapi_verify_mech_header(u_char ** str,
 	p += foo;
 	if (mech_len != mech->length)
 		return (GSS_S_BAD_MECH);
-	if (memcmp(p, mech->elements, mech->length) != 0)
+	if (!isc_safe_memequal(p, mech->elements, mech->length))
 		return (GSS_S_BAD_MECH);
 	p += mech_len;
 	*str = p;
@@ -1670,7 +1671,7 @@ spnego_reply(OM_uint32 *minor_status,
 		buf = input_token->value;
 		buf_size = input_token->length;
 	} else if ((size_t)mech_len == GSS_KRB5_MECH->length &&
-		   memcmp(GSS_KRB5_MECH->elements, p, mech_len) == 0)
+		   isc_safe_memequal(GSS_KRB5_MECH->elements, p, mech_len))
 		return (gss_init_sec_context(minor_status,
 					     initiator_cred_handle,
 					     context_handle,
@@ -1685,7 +1686,7 @@ spnego_reply(OM_uint32 *minor_status,
 					     ret_flags,
 					     time_rec));
 	else if ((size_t)mech_len == GSS_SPNEGO_MECH->length &&
-		 memcmp(GSS_SPNEGO_MECH->elements, p, mech_len) == 0) {
+		 isc_safe_memequal(GSS_SPNEGO_MECH->elements, p, mech_len)) {
 		ret = gssapi_spnego_decapsulate(minor_status,
 						input_token,
 						&buf,
@@ -1723,9 +1724,9 @@ spnego_reply(OM_uint32 *minor_status,
 			  resp.supportedMech,
 			  &oidlen);
 	if (ret || oidlen != GSS_KRB5_MECH->length ||
-	    memcmp(oidbuf + sizeof(oidbuf) - oidlen,
-		   GSS_KRB5_MECH->elements,
-		   oidlen) != 0) {
+	    !isc_safe_memequal(oidbuf + sizeof(oidbuf) - oidlen,
+			      GSS_KRB5_MECH->elements, oidlen))
+	{
 		free_NegTokenResp(&resp);
 		return GSS_S_BAD_MECH;
 	}

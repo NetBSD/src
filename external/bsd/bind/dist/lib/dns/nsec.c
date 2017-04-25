@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.c,v 1.3.4.3 2014/12/25 17:54:25 msaitoh Exp $	*/
+/*	$NetBSD: nsec.c,v 1.3.4.4 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -191,11 +191,10 @@ dns_nsec_build(dns_db_t *db, dns_dbversion_t *version, dns_dbnode_t *node,
 
 	RETERR(dns_nsec_buildrdata(db, version, node, target, data, &rdata));
 
+	dns_rdatalist_init(&rdatalist);
 	rdatalist.rdclass = dns_db_class(db);
 	rdatalist.type = dns_rdatatype_nsec;
-	rdatalist.covers = 0;
 	rdatalist.ttl = ttl;
-	ISC_LIST_INIT(rdatalist.rdata);
 	ISC_LIST_APPEND(rdatalist.rdata, &rdata, link);
 	RETERR(dns_rdatalist_tordataset(&rdatalist, &rdataset));
 	result = dns_db_addrdataset(db, node, version, 0, &rdataset,

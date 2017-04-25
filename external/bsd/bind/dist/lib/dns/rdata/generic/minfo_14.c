@@ -1,7 +1,7 @@
-/*	$NetBSD: minfo_14.c,v 1.2.6.1 2012/06/05 21:15:12 bouyer Exp $	*/
+/*	$NetBSD: minfo_14.c,v 1.2.6.2 2017/04/25 19:54:29 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,11 +34,14 @@ fromtext_minfo(ARGS_FROMTEXT) {
 	int i;
 	isc_boolean_t ok;
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(type);
 	UNUSED(rdclass);
 	UNUSED(callbacks);
+
+	if (origin == NULL)
+		origin = dns_rootname;
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
@@ -46,7 +49,6 @@ fromtext_minfo(ARGS_FROMTEXT) {
 					      ISC_FALSE));
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
-		origin = (origin != NULL) ? origin : dns_rootname;
 		RETTOK(dns_name_fromtext(&name, &buffer, origin,
 					 options, target));
 		ok = ISC_TRUE;
@@ -68,7 +70,7 @@ totext_minfo(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&rmail, NULL);
@@ -98,7 +100,7 @@ fromwire_minfo(ARGS_FROMWIRE) {
 	dns_name_t rmail;
 	dns_name_t email;
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -120,7 +122,7 @@ towire_minfo(ARGS_TOWIRE) {
 	dns_offsets_t roffsets;
 	dns_offsets_t eoffsets;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -151,7 +153,7 @@ compare_minfo(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 14);
+	REQUIRE(rdata1->type == dns_rdatatype_minfo);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -186,7 +188,7 @@ fromstruct_minfo(ARGS_FROMSTRUCT) {
 	dns_rdata_minfo_t *minfo = source;
 	isc_region_t region;
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 	REQUIRE(source != NULL);
 	REQUIRE(minfo->common.rdtype == type);
 	REQUIRE(minfo->common.rdclass == rdclass);
@@ -207,7 +209,7 @@ tostruct_minfo(ARGS_TOSTRUCT) {
 	dns_name_t name;
 	isc_result_t result;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -241,7 +243,7 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 	dns_rdata_minfo_t *minfo = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(minfo->common.rdtype == 14);
+	REQUIRE(minfo->common.rdtype == dns_rdatatype_minfo);
 
 	if (minfo->mctx == NULL)
 		return;
@@ -253,7 +255,7 @@ freestruct_minfo(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_minfo(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -268,7 +270,7 @@ digest_minfo(ARGS_DIGEST) {
 	dns_name_t name;
 	isc_result_t result;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -286,7 +288,7 @@ digest_minfo(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_minfo(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 14);
+	REQUIRE(type == dns_rdatatype_minfo);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -301,7 +303,7 @@ checknames_minfo(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 14);
+	REQUIRE(rdata->type == dns_rdatatype_minfo);
 
 	UNUSED(owner);
 

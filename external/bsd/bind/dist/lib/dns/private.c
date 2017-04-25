@@ -1,4 +1,4 @@
-/*	$NetBSD: private.c,v 1.3.4.3 2015/11/15 19:09:16 bouyer Exp $	*/
+/*	$NetBSD: private.c,v 1.3.4.4 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -20,10 +20,11 @@
 
 #include "config.h"
 
+#include <isc/base64.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/types.h>
-#include <isc/base64.h>
 
 #include <dns/nsec3.h>
 #include <dns/private.h>
@@ -308,7 +309,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 		unsigned char newbuf[DNS_NSEC3PARAM_BUFFERSIZE];
 		dns_rdata_t rdata = DNS_RDATA_INIT;
 		dns_rdata_nsec3param_t nsec3param;
-		isc_boolean_t remove, init, nonsec;
+		isc_boolean_t delete, init, nonsec;
 		isc_buffer_t b;
 
 		if (!dns_nsec3param_fromprivate(private, &rdata, nsec3buf,
@@ -317,7 +318,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		CHECK(dns_rdata_tostruct(&rdata, &nsec3param, NULL));
 
-		remove = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
+		delete = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_REMOVE) != 0);
 		init = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_INITIAL) != 0);
 		nonsec = ISC_TF((nsec3param.flags & DNS_NSEC3FLAG_NONSEC) != 0);
 
@@ -328,7 +329,7 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		if (init)
 			isc_buffer_putstr(buf, "Pending NSEC3 chain ");
-		else if (remove)
+		else if (delete)
 			isc_buffer_putstr(buf, "Removing NSEC3 chain ");
 		else
 			isc_buffer_putstr(buf, "Creating NSEC3 chain ");
@@ -341,18 +342,18 @@ dns_private_totext(dns_rdata_t *private, isc_buffer_t *buf) {
 
 		CHECK(dns_rdata_totext(&rdata, NULL, buf));
 
-		if (remove && !nonsec)
+		if (delete && !nonsec)
 			isc_buffer_putstr(buf, " / creating NSEC chain");
 	} else if (private->length == 5) {
 		unsigned char alg = private->data[0];
 		dns_keytag_t keyid = (private->data[2] | private->data[1] << 8);
 		char keybuf[BUFSIZ], algbuf[DNS_SECALG_FORMATSIZE];
-		isc_boolean_t remove = ISC_TF(private->data[3] != 0);
+		isc_boolean_t delete = ISC_TF(private->data[3] != 0);
 		isc_boolean_t complete = ISC_TF(private->data[4] != 0);
 
-		if (remove && complete)
+		if (delete && complete)
 			isc_buffer_putstr(buf, "Done removing signatures for ");
-		else if (remove)
+		else if (delete)
 			isc_buffer_putstr(buf, "Removing signatures for ");
 		else if (complete)
 			isc_buffer_putstr(buf, "Done signing with ");

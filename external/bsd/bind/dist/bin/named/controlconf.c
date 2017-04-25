@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.3.4.3 2014/12/25 17:54:01 msaitoh Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.3.4.4 2017/04/25 19:54:10 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -399,7 +399,7 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 	 * Limit exposure to replay attacks.
 	 */
 	_ctrl = isccc_alist_lookup(request, "_ctrl");
-	if (_ctrl == NULL) {
+	if (!isccc_alist_alistp(_ctrl)) {
 		log_invalid(&conn->ccmsg, ISC_R_FAILURE);
 		goto cleanup_request;
 	}
@@ -541,6 +541,10 @@ newconnection(controllistener_t *listener, isc_socket_t *sock) {
 
 	conn->sock = sock;
 	isccc_ccmsg_init(listener->mctx, sock, &conn->ccmsg);
+
+	/* Set a 32 KiB upper limit on incoming message. */
+	isccc_ccmsg_setmaxsize(&conn->ccmsg, 32768);
+
 	conn->ccmsg_valid = ISC_TRUE;
 	conn->sending = ISC_FALSE;
 	conn->timer = NULL;

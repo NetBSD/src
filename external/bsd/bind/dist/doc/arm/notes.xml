@@ -1,6 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">
+<!ENTITY ouml "&#xf6;">]>
 <!--
- - Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2017  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -15,118 +17,226 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<sect1 xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="noteversion.xml"/>
-  <sect2 id="relnotes_intro">
-    <title>Introduction</title>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0"><info/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
+  <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
     <para>
-      This document summarizes changes since BIND 9.9.7.
+      This document summarizes changes since BIND 9.9.9:
     </para>
     <para>
-      BIND 9.9.7-P2 addresses security issues described in
-      CVE-2015-5722 and CVE-2015-5986.
+      BIND 9.9.9-P7 addresses the security issue described in
+      CVE-2017-3136, and updates the built in trusted keys for
+      the root zone.
     </para>
     <para>
-      BIND 9.9.7-P2 addresses a security issue described in CVE-2015-5477.
+      BIND 9.9.9-P6 addresses the security issue described in
+      CVE-2017-3135, and fixes a regression introduced in a prior
+      security release.
     </para>
     <para>
-      BIND 9.9.7-P1 addresses a security issue described in CVE-2015-4620.
+      BIND 9.9.9-P5 addresses the security issues described in
+      CVE-2016-9131, CVE-2016-9147, CVE-2016-9444 and CVE-2016-9778.
     </para>
-  </sect2>
-  <sect2 id="relnotes_download">
-    <title>Download</title>
+    <para>
+      BIND 9.9.9-P4 addresses the security issue described in
+      CVE-2016-8864.
+    </para>
+    <para>
+      BIND 9.9.9-P3 addresses the security issue described in
+      CVE-2016-2776.
+    </para>
+    <para>
+      BIND 9.9.9-P2 addresses the security issue described in
+      CVE-2016-2775.
+    </para>
+    <para>
+      BIND 9.9.9-P1 addresses Windows installation issues and a race
+      condition in the rbt/rbtdb implementation resulting in named
+      exiting due to assertion failures being detected.
+    </para>
+
+  </section>
+
+  <section xml:id="relnotes_download"><info><title>Download</title></info>
     <para>
       The latest versions of BIND 9 software can always be found at
-      <ulink url="http://www.isc.org/downloads/"
-	>http://www.isc.org/downloads/</ulink>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/">http://www.isc.org/downloads/</link>.
       There you will find additional information about each release,
       source code, and pre-compiled versions for Microsoft Windows
       operating systems.
     </para>
-  </sect2>
-  <sect2 id="relnotes_security">
-    <title>Security Fixes</title>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  An incorrect boundary check in the OPENPGPKEY rdatatype
-	  could trigger an assertion failure. This flaw is disclosed
-	  in CVE-2015-5986. [RT #40286]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  A buffer accounting error could trigger an assertion failure
-	  when parsing certain malformed DNSSEC keys.
-	</para>
-	<para>
-	  This flaw was discovered by Hanno B&#xc3b6;eck of the Fuzzing
-	  Project, and is disclosed in CVE-2015-5722. [RT #40212]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  A specially crafted query could trigger an assertion failure
-	  in message.c.
-	</para>
-	<para>
-	  This flaw was discovered by Jonathan Foote, and is disclosed
-	  in CVE-2015-5477. [RT #39795]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  On servers configured to perform DNSSEC validation, an
-	  assertion failure could be triggered on answers from
-	  a specially configured server.
-	</para>
-	<para>
-	  This flaw was discovered by Breno Silveira Soares, and is
-	  disclosed in CVE-2015-4620. [RT #39795]
-	</para>
-      </listitem>
-    </itemizedlist>
-  </sect2>
-  <sect2 id="relnotes_features">
-    <title>New Features</title>
-    <itemizedlist>
-      <listitem>
-	<para>None</para>
-      </listitem>
-    </itemizedlist>
-  </sect2>
-  <sect2 id="relnotes_changes">
-    <title>Feature Changes</title>
-    <itemizedlist>
-      <listitem>
-	<para>None</para>
-      </listitem>
-    </itemizedlist>
-  </sect2>
-  <sect2 id="relnotes_bugs">
-    <title>Bug Fixes</title>
-    <itemizedlist>
-      <listitem>
-	<para>None</para>
-      </listitem>
-    </itemizedlist>
-  </sect2>
-  <sect2 id="end_of_life">
-    <title>End of Life</title>
+  </section>
+
+  <section xml:id="root_key"><info><title>New DNSSEC Root Key</title></info>
     <para>
-      The BIND 9.9 (Extended Support Version) will be supported until June, 2017.
-      <ulink url="https://www.isc.org/downloads/software-support-policy/"
-	>https://www.isc.org/downloads/software-support-policy/</ulink>
+      ICANN is in the process of introducing a new Key Signing Key (KSK) for
+      the global root zone. BIND has multiple methods for managing DNSSEC
+      trust anchors, with somewhat different behaviors. If the root
+      key is configured using the <command>managed-keys</command>
+      statement, or if the pre-configured root key is enabled by using
+      <command>dnssec-validation auto</command>, then BIND can keep
+      keys up to date automatically. Servers configured in this way
+      will roll seamlessly to the new key when it is published in
+      the root zone. However, keys configured using the
+      <command>trusted-keys</command> statement are not automatically
+      maintained. If your server is performing DNSSEC validation
+      and is configured using <command>trusted-keys</command>, you are
+      advised to change your configuration before the root zone begins
+      signing with the new KSK. This is currently scheduled for
+      October 11, 2017.
     </para>
-  </sect2>
-  <sect2 id="relnotes_thanks">
-    <title>Thank You</title>
+    <para>
+      This release includes an updated version of the
+      <filename>bind.keys</filename> file containing the new root
+      key. This file can also be downloaded from
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+	xlink:href="https://www.isc.org/bind-keys">
+	https://www.isc.org/bind-keys
+      </link>.
+    </para>
+  </section>
+
+  <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  'rndc ""' could trigger a assertion failure in named. This flaw
+	  is disclosed in (CVE-2017-3138). [RT #44924]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Some chaining (i.e., type CNAME or DNAME) responses to upstream
+	  queries could trigger assertion failures. This flaw is disclosed
+	  in CVE-2017-3137. [RT #44734]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>dns64</command> with <command>break-dnssec yes;</command>
+	  can result in an assertion failure. This flaw is disclosed in
+	  CVE-2017-3136. [RT #44653]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  If a server is configured with a response policy zone (RPZ)
+	  that rewrites an answer with local data, and is also configured
+	  for DNS64 address mapping, a NULL pointer can be read
+	  triggering a server crash.  This flaw is disclosed in
+	  CVE-2017-3135. [RT #44434]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> could mishandle authority sections
+	  with missing RRSIGs, triggering an assertion failure. This
+	  flaw is disclosed in CVE-2016-9444. [RT #43632]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> mishandled some responses where
+	  covering RRSIG records were returned without the requested
+	  data, resulting in an assertion failure. This flaw is
+	  disclosed in CVE-2016-9147. [RT #43548]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  <command>named</command> incorrectly tried to cache TKEY
+	  records which could trigger an assertion failure when there was
+	  a class mismatch. This flaw is disclosed in CVE-2016-9131.
+	  [RT #43522]
+        </para>
+      </listitem>
+      <listitem>
+	<para>
+	  It was possible to trigger assertions when processing
+	  responses containing answers of type DNAME. This flaw is
+	  disclosed in CVE-2016-8864. [RT #43465]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  It was possible to trigger an assertion when rendering a
+	  message using a specially crafted request. This flaw is
+	  disclosed in CVE-2016-2776. [RT #43139]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Calling <command>getrrsetbyname()</command> with a non-
+	  absolute name could trigger an infinite recursion bug in
+	  <command>lwresd</command> or <command>named</command> with
+	  <command>lwres</command> configured if, when combined with
+	  a search list entry from <filename>resolv.conf</filename>,
+	  the resulting name is too long.  This flaw is disclosed in
+	  CVE-2016-2775. [RT #42694]
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  None.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_port"><info><title>Porting Changes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  None.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+       <listitem>
+ 	<para>
+	  A synthesized CNAME record appearing in a response before the
+	  associated DNAME could be cached, when it should not have been.
+	  This was a regression introduced while addressing CVE-2016-8864.
+	  [RT #44318]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Windows installs were failing due to triggering UAC without
+	  the installation binary being signed.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A race condition in rbt/rbtdb was leading to INSISTs being
+	  triggered.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="end_of_life"><info><title>End of Life</title></info>
+    <para>
+      BIND 9.9 (Extended Support Version) will be supported until
+      December, 2017.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/software-support-policy/">https://www.isc.org/downloads/software-support-policy/</link>
+    </para>
+  </section>
+
+  <section xml:id="relnotes_thanks"><info><title>Thank You</title></info>
     <para>
       Thank you to everyone who assisted us in making this release possible.
       If you would like to contribute to ISC to assist us in continuing to
       make quality open source software, please visit our donations page at
-      <ulink url="http://www.isc.org/donate/"
-	>http://www.isc.org/donate/</ulink>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/donate/">http://www.isc.org/donate/</link>.
     </para>
-  </sect2>
-</sect1>
+  </section>
+</section>

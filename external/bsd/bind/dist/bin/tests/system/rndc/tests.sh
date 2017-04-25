@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -272,6 +272,36 @@ $RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf querylog >/dev/null 2>&1 || re
 $DIG @10.53.0.3 -p 5300 -c ch -t txt foo9876.bind > /dev/null || ret 1
 grep "query logging is now off" ns3/named.run > /dev/null || ret=1
 grep "query: foo9876.bind CH TXT" ns3/named.run > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with a token containing a space"
+ret=0
+$RNDC -s 10.53.0.4 -p 9953 -c ../common/rndc.conf flush '"view with a space"' 2>&1 > rndc.output || ret=1
+grep "not found" rndc.output > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:test 'rndc reconfig' with a broken config"
+ret=0
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reconfig > /dev/null || ret=1
+sleep 1
+mv ns3/named.conf ns3/named.conf.save
+echo "error error error" >> ns3/named.conf
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reconfig > rndc.output 2>&1 && ret=1
+grep "rndc: 'reconfig' failed: unexpected token" rndc.output > /dev/null || ret=1
+mv ns3/named.conf.save ns3/named.conf
+sleep 1
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reconfig > /dev/null || ret=1
+sleep 1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check 'rndc \"\"' is handled ($n)"
+ret=0
+$RNDCCMD "" > rndc.out.test$n 2>&1 && ret=1
+grep "rndc: '' failed: failure" rndc.out.test$n > /dev/null
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

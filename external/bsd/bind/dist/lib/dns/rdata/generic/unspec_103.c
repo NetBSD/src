@@ -1,7 +1,7 @@
-/*	$NetBSD: unspec_103.c,v 1.2.6.1 2012/06/05 21:15:12 bouyer Exp $	*/
+/*	$NetBSD: unspec_103.c,v 1.2.6.2 2017/04/25 19:54:29 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,7 +27,7 @@
 static inline isc_result_t
 fromtext_unspec(ARGS_FROMTEXT) {
 
-	REQUIRE(type == 103);
+	REQUIRE(type == dns_rdatatype_unspec);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -41,7 +41,7 @@ fromtext_unspec(ARGS_FROMTEXT) {
 static inline isc_result_t
 totext_unspec(ARGS_TOTEXT) {
 
-	REQUIRE(rdata->type == 103);
+	REQUIRE(rdata->type == dns_rdatatype_unspec);
 
 	UNUSED(tctx);
 
@@ -52,7 +52,7 @@ static inline isc_result_t
 fromwire_unspec(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(type == 103);
+	REQUIRE(type == dns_rdatatype_unspec);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -67,7 +67,7 @@ fromwire_unspec(ARGS_FROMWIRE) {
 static inline isc_result_t
 towire_unspec(ARGS_TOWIRE) {
 
-	REQUIRE(rdata->type == 103);
+	REQUIRE(rdata->type == dns_rdatatype_unspec);
 
 	UNUSED(cctx);
 
@@ -81,7 +81,7 @@ compare_unspec(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 103);
+	REQUIRE(rdata1->type == dns_rdatatype_unspec);
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
@@ -92,7 +92,7 @@ static inline isc_result_t
 fromstruct_unspec(ARGS_FROMSTRUCT) {
 	dns_rdata_unspec_t *unspec = source;
 
-	REQUIRE(type == 103);
+	REQUIRE(type == dns_rdatatype_unspec);
 	REQUIRE(source != NULL);
 	REQUIRE(unspec->common.rdtype == type);
 	REQUIRE(unspec->common.rdclass == rdclass);
@@ -109,7 +109,7 @@ tostruct_unspec(ARGS_TOSTRUCT) {
 	dns_rdata_unspec_t *unspec = target;
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 103);
+	REQUIRE(rdata->type == dns_rdatatype_unspec);
 	REQUIRE(target != NULL);
 
 	unspec->common.rdclass = rdata->rdclass;
@@ -131,7 +131,7 @@ freestruct_unspec(ARGS_FREESTRUCT) {
 	dns_rdata_unspec_t *unspec = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(unspec->common.rdtype == 103);
+	REQUIRE(unspec->common.rdtype == dns_rdatatype_unspec);
 
 	if (unspec->mctx == NULL)
 		return;
@@ -143,7 +143,7 @@ freestruct_unspec(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_unspec(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 103);
+	REQUIRE(rdata->type == dns_rdatatype_unspec);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -156,7 +156,7 @@ static inline isc_result_t
 digest_unspec(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 103);
+	REQUIRE(rdata->type == dns_rdatatype_unspec);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -166,7 +166,7 @@ digest_unspec(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_unspec(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 103);
+	REQUIRE(type == dns_rdatatype_unspec);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -179,7 +179,7 @@ checkowner_unspec(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_unspec(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 103);
+	REQUIRE(rdata->type == dns_rdatatype_unspec);
 
 	UNUSED(rdata);
 	UNUSED(owner);

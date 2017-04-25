@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.3.4.4 2015/11/15 19:09:09 bouyer Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.3.4.5 2017/04/25 19:54:09 snj Exp $	*/
 
 /*
  * Copyright (C) 2008-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -240,7 +240,7 @@ logkey(dns_rdata_t *rdata)
 
 static void
 emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
-     dns_rdata_t *rdata)
+     isc_boolean_t cds, dns_rdata_t *rdata)
 {
 	isc_result_t result;
 	unsigned char buf[DNS_DS_BUFFERSIZE];
@@ -304,9 +304,12 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 	isc_buffer_usedregion(&classb, &r);
 	printf("%.*s", (int)r.length, r.base);
 
-	if (lookaside == NULL)
-		printf(" DS ");
-	else
+	if (lookaside == NULL) {
+		if (cds)
+			printf(" CDS ");
+		else
+			printf(" DS ");
+	} else
 		printf(" DLV ");
 
 	isc_buffer_usedregion(&textb, &r);
@@ -334,6 +337,7 @@ usage(void) {
 			"(SHA-1, SHA-256, GOST or SHA-384)\n");
 	fprintf(stderr, "    -1: use SHA-1\n");
 	fprintf(stderr, "    -2: use SHA-256\n");
+	fprintf(stderr, "    -C: print CDS record\n");
 	fprintf(stderr, "    -l: add lookaside zone and print DLV records\n");
 	fprintf(stderr, "    -s: read keyset from keyset-<dnsname> file\n");
 	fprintf(stderr, "    -c class: rdata class for DS set (default: IN)\n");
@@ -354,6 +358,7 @@ main(int argc, char **argv) {
 	char		*endp;
 	int		ch;
 	unsigned int	dtype = DNS_DSDIGEST_SHA1;
+	isc_boolean_t	cds = ISC_FALSE;
 	isc_boolean_t	both = ISC_TRUE;
 	isc_boolean_t	usekeyset = ISC_FALSE;
 	isc_boolean_t	showall = ISC_FALSE;
@@ -376,8 +381,8 @@ main(int argc, char **argv) {
 
 	isc_commandline_errprint = ISC_FALSE;
 
-	while ((ch = isc_commandline_parse(argc, argv,
-					   "12Aa:c:d:Ff:K:l:sT:v:hV")) != -1) {
+#define OPTIONS "12Aa:Cc:d:Ff:K:l:sT:v:hV"
+	while ((ch = isc_commandline_parse(argc, argv, OPTIONS)) != -1) {
 		switch (ch) {
 		case '1':
 			dtype = DNS_DSDIGEST_SHA1;
@@ -393,6 +398,12 @@ main(int argc, char **argv) {
 		case 'a':
 			algname = isc_commandline_argument;
 			both = ISC_FALSE;
+			break;
+		case 'C':
+			if (lookaside != NULL)
+				fatal("lookaside and CDS are mutually"
+				      " exclusive");
+			cds = ISC_TRUE;
 			break;
 		case 'c':
 			classname = isc_commandline_argument;
@@ -410,6 +421,9 @@ main(int argc, char **argv) {
 			filename = isc_commandline_argument;
 			break;
 		case 'l':
+			if (cds)
+				fatal("lookaside and CDS are mutually"
+				      " exclusive");
 			lookaside = isc_commandline_argument;
 			if (strlen(lookaside) == 0U)
 				fatal("lookaside must be a non-empty string");
@@ -528,11 +542,11 @@ main(int argc, char **argv) {
 
 			if (both) {
 				emit(DNS_DSDIGEST_SHA1, showall, lookaside,
-				     &rdata);
+				     cds, &rdata);
 				emit(DNS_DSDIGEST_SHA256, showall, lookaside,
-				     &rdata);
+				     cds, &rdata);
 			} else
-				emit(dtype, showall, lookaside, &rdata);
+				emit(dtype, showall, lookaside, cds, &rdata);
 		}
 	} else {
 		unsigned char key_buf[DST_KEY_MAXSIZE];
@@ -541,10 +555,12 @@ main(int argc, char **argv) {
 			DST_KEY_MAXSIZE, &rdata);
 
 		if (both) {
-			emit(DNS_DSDIGEST_SHA1, showall, lookaside, &rdata);
-			emit(DNS_DSDIGEST_SHA256, showall, lookaside, &rdata);
+			emit(DNS_DSDIGEST_SHA1, showall, lookaside, cds,
+			     &rdata);
+			emit(DNS_DSDIGEST_SHA256, showall, lookaside, cds,
+			     &rdata);
 		} else
-			emit(dtype, showall, lookaside, &rdata);
+			emit(dtype, showall, lookaside, cds, &rdata);
 	}
 
 	if (dns_rdataset_isassociated(&rdataset))

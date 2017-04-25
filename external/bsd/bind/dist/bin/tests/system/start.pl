@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2004-2008, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2008, 2010-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -68,6 +68,7 @@ my $NAMED = $ENV{'NAMED'};
 my $LWRESD = $ENV{'LWRESD'};
 my $DIG = $ENV{'DIG'};
 my $PERL = $ENV{'PERL'};
+my $PYTHON = $ENV{'PYTHON'};
 
 # Start the server(s)
 
@@ -151,7 +152,17 @@ sub start_server {
 
 	if ($server =~ /^ns/) {
 		$cleanup_files = "{*.jnl,*.bk,*.st,named.run}";
-		$command = "$NAMED ";
+		if ($ENV{'USE_VALGRIND'}) {
+			$command = "valgrind -q --gen-suppressions=all --num-callers=48 --fullpath-after= --log-file=named-$server-valgrind-%p.log ";
+			if ($ENV{'USE_VALGRIND'} eq 'helgrind') {
+				$command .= "--tool=helgrind ";
+			} else {
+				$command .= "--tool=memcheck --track-origins=yes --leak-check=full ";
+			}
+			$command .= "$NAMED -m none -M external ";
+		} else {
+			$command = "$NAMED ";
+		}
 		if ($options) {
 			$command .= "$options";
 		} elsif (-e $args_file) {
@@ -189,7 +200,17 @@ sub start_server {
 		$pid_file = "named.pid";
 	} elsif ($server =~ /^lwresd/) {
 		$cleanup_files = "{lwresd.run}";
-		$command = "$LWRESD ";
+		if ($ENV{'USE_VALGRIND'}) {
+			$command = "valgrind -q --gen-suppressions=all --num-callers=48 --fullpath-after= --log-file=lwresd-valgrind-%p.log ";
+			if ($ENV{'USE_VALGRIND'} eq 'helgrind') {
+				$command .= "--tool=helgrind ";
+			} else {
+				$command .= "--tool=memcheck --track-origins=yes --leak-check=full ";
+			}
+			$command .= "$LWRESD -m none -M external ";
+		} else {
+			$command = "$LWRESD ";
+		}
 		if ($options) {
 			$command .= "$options";
 		} else {
@@ -206,7 +227,9 @@ sub start_server {
 		$pid_file = "lwresd.pid";
 	} elsif ($server =~ /^ans/) {
 		$cleanup_files = "{ans.run}";
-                if (-e "$testdir/$server/ans.pl") {
+                if (-e "$testdir/$server/ans.py") {
+                        $command = "$PYTHON ans.py 10.53.0.$' 5300";
+                } elsif (-e "$testdir/$server/ans.pl") {
                         $command = "$PERL ans.pl";
                 } else {
                         $command = "$PERL $topdir/ans.pl 10.53.0.$'";

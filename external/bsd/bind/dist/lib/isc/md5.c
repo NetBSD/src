@@ -1,7 +1,7 @@
-/*	$NetBSD: md5.c,v 1.2.6.3 2015/11/15 19:09:18 bouyer Exp $	*/
+/*	$NetBSD: md5.c,v 1.2.6.4 2017/04/25 19:54:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,6 +59,8 @@ isc_md5_invalidate(isc_md5_t *ctx) {
 
 void
 isc_md5_update(isc_md5_t *ctx, const unsigned char *buf, unsigned int len) {
+	if (len == 0U)
+		return;
 	RUNTIME_CHECK(EVP_DigestUpdate(ctx,
 				       (const void *) buf,
 				       (size_t) len) == 1);

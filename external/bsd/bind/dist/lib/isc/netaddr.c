@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.c,v 1.3.4.2 2014/12/25 17:54:29 msaitoh Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.3.4.3 2017/04/25 19:54:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -416,6 +416,22 @@ isc_netaddr_issitelocal(isc_netaddr_t *na) {
 		return (ISC_FALSE);
 	case AF_INET6:
 		return (ISC_TF(IN6_IS_ADDR_SITELOCAL(&na->type.in6)));
+	default:
+		return (ISC_FALSE);
+	}
+}
+
+#ifndef IN_ZERONET
+#define IN_ZERONET(x) (((x) & htonl(0xff000000U)) == 0)
+#endif
+
+isc_boolean_t
+isc_netaddr_isnetzero(isc_netaddr_t *na) {
+	switch (na->family) {
+	case AF_INET:
+		return (ISC_TF(IN_ZERONET(na->type.in.s_addr)));
+	case AF_INET6:
+		return (ISC_FALSE);
 	default:
 		return (ISC_FALSE);
 	}

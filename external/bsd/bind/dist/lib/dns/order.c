@@ -1,7 +1,7 @@
-/*	$NetBSD: order.c,v 1.2.6.1 2012/06/05 21:15:00 bouyer Exp $	*/
+/*	$NetBSD: order.c,v 1.2.6.2 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,7 @@ struct dns_order {
 	ISC_LIST(dns_order_ent_t)	ents;
 	isc_mem_t			*mctx;
 };
-	
+
 #define DNS_ORDER_MAGIC ISC_MAGIC('O','r','d','r')
 #define DNS_ORDER_VALID(order)	ISC_MAGIC_VALID(order, DNS_ORDER_MAGIC)
 
@@ -64,7 +64,7 @@ dns_order_create(isc_mem_t *mctx, dns_order_t **orderp) {
 	order = isc_mem_get(mctx, sizeof(*order));
 	if (order == NULL)
 		return (ISC_R_NOMEMORY);
-	
+
 	ISC_LIST_INIT(order->ents);
 
 	/* Implicit attach. */
@@ -90,7 +90,7 @@ dns_order_add(dns_order_t *order, dns_name_t *name,
 
 	REQUIRE(DNS_ORDER_VALID(order));
 	REQUIRE(mode == DNS_RDATASETATTR_RANDOMIZE ||
-	        mode == DNS_RDATASETATTR_FIXEDORDER ||
+		mode == DNS_RDATASETATTR_FIXEDORDER ||
 		mode == 0 /* DNS_RDATASETATTR_CYCLIC */ );
 
 	ent = isc_mem_get(order->mctx, sizeof(*ent));
@@ -110,7 +110,7 @@ dns_order_add(dns_order_t *order, dns_name_t *name,
 
 static inline isc_boolean_t
 match(dns_name_t *name1, dns_name_t *name2) {
-	
+
 	if (dns_name_iswildcard(name2))
 		return(dns_name_matcheswildcard(name1, name2));
 	return (dns_name_equal(name1, name2));
@@ -134,7 +134,7 @@ dns_order_find(dns_order_t *order, dns_name_t *name,
 		if (match(name, dns_fixedname_name(&ent->name)))
 			return (ent->mode);
 	}
-	return (0);
+	return (DNS_RDATASETATTR_RANDOMIZE);
 }
 
 void

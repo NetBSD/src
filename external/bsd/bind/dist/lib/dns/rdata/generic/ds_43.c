@@ -1,7 +1,7 @@
-/*	$NetBSD: ds_43.c,v 1.3.4.2 2012/12/15 05:40:03 riz Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.3.4.3 2017/04/25 19:54:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,12 +33,10 @@
 #include <dns/ds.h>
 
 static inline isc_result_t
-fromtext_ds(ARGS_FROMTEXT) {
+generic_fromtext_ds(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char c;
 	int length;
-
-	REQUIRE(type == 43);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -97,12 +95,20 @@ fromtext_ds(ARGS_FROMTEXT) {
 }
 
 static inline isc_result_t
-totext_ds(ARGS_TOTEXT) {
+fromtext_ds(ARGS_FROMTEXT) {
+
+	REQUIRE(type == dns_rdatatype_ds);
+
+	return (generic_fromtext_ds(rdclass, type, lexer, origin, options,
+				    target, callbacks));
+}
+
+static inline isc_result_t
+generic_totext_ds(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000 ")];
 	unsigned int n;
 
-	REQUIRE(rdata->type == 43);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(tctx);
@@ -150,10 +156,16 @@ totext_ds(ARGS_TOTEXT) {
 }
 
 static inline isc_result_t
-fromwire_ds(ARGS_FROMWIRE) {
-	isc_region_t sr;
+totext_ds(ARGS_TOTEXT) {
 
-	REQUIRE(type == 43);
+	REQUIRE(rdata->type == dns_rdatatype_ds);
+
+	return (generic_totext_ds(rdata, tctx, target));
+}
+
+static inline isc_result_t
+generic_fromwire_ds(ARGS_FROMWIRE) {
+	isc_region_t sr;
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -195,10 +207,19 @@ fromwire_ds(ARGS_FROMWIRE) {
 }
 
 static inline isc_result_t
+fromwire_ds(ARGS_FROMWIRE) {
+
+	REQUIRE(type == dns_rdatatype_ds);
+
+	return (generic_fromwire_ds(rdclass, type, source, dctx, options,
+				    target));
+}
+
+static inline isc_result_t
 towire_ds(ARGS_TOWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 43);
+	REQUIRE(rdata->type == dns_rdatatype_ds);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(cctx);
@@ -214,7 +235,7 @@ compare_ds(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 43);
+	REQUIRE(rdata1->type == dns_rdatatype_ds);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -224,13 +245,16 @@ compare_ds(ARGS_COMPARE) {
 }
 
 static inline isc_result_t
-fromstruct_ds(ARGS_FROMSTRUCT) {
+generic_fromstruct_ds(ARGS_FROMSTRUCT) {
 	dns_rdata_ds_t *ds = source;
 
-	REQUIRE(type == 43);
 	REQUIRE(source != NULL);
 	REQUIRE(ds->common.rdtype == type);
 	REQUIRE(ds->common.rdclass == rdclass);
+
+	UNUSED(type);
+	UNUSED(rdclass);
+
 	switch (ds->digest_type) {
 	case DNS_DSDIGEST_SHA1:
 		REQUIRE(ds->length == ISC_SHA1_DIGESTLENGTH);
@@ -246,9 +270,6 @@ fromstruct_ds(ARGS_FROMSTRUCT) {
 		break;
 	}
 
-	UNUSED(type);
-	UNUSED(rdclass);
-
 	RETERR(uint16_tobuffer(ds->key_tag, target));
 	RETERR(uint8_tobuffer(ds->algorithm, target));
 	RETERR(uint8_tobuffer(ds->digest_type, target));
@@ -257,17 +278,23 @@ fromstruct_ds(ARGS_FROMSTRUCT) {
 }
 
 static inline isc_result_t
-tostruct_ds(ARGS_TOSTRUCT) {
+fromstruct_ds(ARGS_FROMSTRUCT) {
+
+	REQUIRE(type == dns_rdatatype_ds);
+
+	return (generic_fromstruct_ds(rdclass, type, source, target));
+}
+
+static inline isc_result_t
+generic_tostruct_ds(ARGS_TOSTRUCT) {
 	dns_rdata_ds_t *ds = target;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 43);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
-
-	ds->common.rdclass = rdata->rdclass;
-	ds->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ds->common, link);
+	REQUIRE(ds->common.rdtype == rdata->type);
+	REQUIRE(ds->common.rdclass == rdata->rdclass);
+	REQUIRE(!ISC_LINK_LINKED(&ds->common, link));
 
 	dns_rdata_toregion(rdata, &region);
 
@@ -287,12 +314,26 @@ tostruct_ds(ARGS_TOSTRUCT) {
 	return (ISC_R_SUCCESS);
 }
 
+static inline isc_result_t
+tostruct_ds(ARGS_TOSTRUCT) {
+	dns_rdata_ds_t *ds = target;
+
+	REQUIRE(rdata->type == dns_rdatatype_ds);
+	REQUIRE(target != NULL);
+
+	ds->common.rdclass = rdata->rdclass;
+	ds->common.rdtype = rdata->type;
+	ISC_LINK_INIT(&ds->common, link);
+
+	return (generic_tostruct_ds(rdata, target, mctx));
+}
+
 static inline void
 freestruct_ds(ARGS_FREESTRUCT) {
 	dns_rdata_ds_t *ds = source;
 
 	REQUIRE(ds != NULL);
-	REQUIRE(ds->common.rdtype == 43);
+	REQUIRE(ds->common.rdtype == dns_rdatatype_ds);
 
 	if (ds->mctx == NULL)
 		return;
@@ -304,7 +345,7 @@ freestruct_ds(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_ds(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 43);
+	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -317,7 +358,7 @@ static inline isc_result_t
 digest_ds(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 43);
+	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -327,7 +368,7 @@ digest_ds(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_ds(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 43);
+	REQUIRE(type == dns_rdatatype_ds);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -340,7 +381,7 @@ checkowner_ds(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_ds(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 43);
+	REQUIRE(rdata->type == dns_rdatatype_ds);
 
 	UNUSED(rdata);
 	UNUSED(owner);

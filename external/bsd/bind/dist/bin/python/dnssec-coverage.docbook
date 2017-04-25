@@ -1,8 +1,5 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,9 +14,14 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<refentry id="man.dnssec-coverage">
+<!-- Converted by db4-upgrade version 1.0 -->
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="man.dnssec-coverage">
+  <info>
+    <date>2013-03-21</date>
+  </info>
   <refentryinfo>
-    <date>March 21, 2013</date>
+    <corpname>ISC</corpname>
+    <corpauthor>Internet Systems Consortium, Inc.</corpauthor>
   </refentryinfo>
 
   <refmeta>
@@ -37,25 +39,26 @@
     <copyright>
       <year>2013</year>
       <year>2014</year>
+      <year>2015</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>dnssec-coverage</command>
-      <arg><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
-      <arg><option>-f <replaceable class="parameter">file</replaceable></option></arg>
-      <arg><option>-d <replaceable class="parameter">DNSKEY TTL</replaceable></option></arg>
-      <arg><option>-m <replaceable class="parameter">max TTL</replaceable></option></arg>
-      <arg><option>-r <replaceable class="parameter">interval</replaceable></option></arg>
-      <arg><option>-c <replaceable class="parameter">compilezone path</replaceable></option></arg>
-      <arg choice="opt">zone</arg>
+      <arg choice="opt" rep="norepeat"><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">DNSKEY TTL</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-m <replaceable class="parameter">max TTL</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">interval</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">compilezone path</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat">zone</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsect1>
-    <title>DESCRIPTION</title>
+  <refsection><info><title>DESCRIPTION</title></info>
+
     <para><command>dnssec-coverage</command>
       verifies that the DNSSEC keys for a given zone or a set of zones
       have timing metadata set properly to ensure no future lapses in DNSSEC
@@ -81,10 +84,10 @@
       accurate if all the zones that have keys in a given repository
       share the same TTL parameters.)
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>OPTIONS</title>
+  <refsection><info><title>OPTIONS</title></info>
+
 
     <variablelist>
       <varlistentry>
@@ -196,10 +199,10 @@
         </listitem>
       </varlistentry>
     </variablelist>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>SEE ALSO</title>
+  <refsection><info><title>SEE ALSO</title></info>
+
     <para>
       <citerefentry>
         <refentrytitle>dnssec-checkds</refentrytitle><manvolnum>8</manvolnum>
@@ -214,16 +217,6 @@
         <refentrytitle>dnssec-signzone</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>
     </para>
-  </refsect1>
+  </refsection>
 
-  <refsect1>
-    <title>AUTHOR</title>
-    <para><corpauthor>Internet Systems Consortium</corpauthor>
-    </para>
-  </refsect1>
-
-</refentry><!--
- - Local variables:
- - mode: sgml
- - End:
--->
+</refentry>

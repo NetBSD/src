@@ -1,7 +1,7 @@
-/*	$NetBSD: interfacemgr.c,v 1.3.4.3 2015/11/15 19:09:09 bouyer Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.3.4.4 2017/04/25 19:54:10 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -304,7 +304,7 @@ ns_interface_listenudp(ns_interface_t *ifp) {
 	return (ISC_R_SUCCESS);
 
  addtodispatch_failure:
-	for (i = disp - 1; i <= 0; i--) {
+	for (i = disp - 1; i >= 0; i--) {
 		dns_dispatch_changeattributes(ifp->udpdispatch[i], 0,
 					      DNS_DISPATCHATTR_NOLISTEN);
 		dns_dispatch_detach(&(ifp->udpdispatch[i]));

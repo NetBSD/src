@@ -1,7 +1,7 @@
-/*	$NetBSD: tsig.c,v 1.3.4.3 2015/11/15 19:09:17 bouyer Exp $	*/
+/*	$NetBSD: tsig.c,v 1.3.4.4 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1135,9 +1135,6 @@ dns_tsig_sign(dns_message_t *msg) {
 		goto cleanup_rdatalist;
 	datalist->rdclass = dns_rdataclass_any;
 	datalist->type = dns_rdatatype_tsig;
-	datalist->covers = 0;
-	datalist->ttl = 0;
-	ISC_LIST_INIT(datalist->rdata);
 	ISC_LIST_APPEND(datalist->rdata, rdata, link);
 	dns_rdataset_init(dataset);
 	RUNTIME_CHECK(dns_rdatalist_tordataset(datalist, dataset)
@@ -1345,6 +1342,8 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	}
 
 	if (tsig.siglen > 0) {
+		isc_uint16_t addcount_n;
+
 		sig_r.base = tsig.signature;
 		sig_r.length = tsig.siglen;
 
@@ -1380,7 +1379,8 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 		 * Decrement the additional field counter.
 		 */
 		memmove(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
-		addcount = htons((isc_uint16_t)(ntohs(addcount) - 1));
+		addcount_n = ntohs(addcount);
+		addcount = htons((isc_uint16_t)(addcount_n - 1));
 		memmove(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
 
 		/*
@@ -1619,8 +1619,11 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	 * Decrement the additional field counter if necessary.
 	 */
 	if (has_tsig) {
+		isc_uint16_t addcount_n;
+
 		memmove(&addcount, &header[DNS_MESSAGE_HEADERLEN - 2], 2);
-		addcount = htons((isc_uint16_t)(ntohs(addcount) - 1));
+		addcount_n = ntohs(addcount);
+		addcount = htons((isc_uint16_t)(addcount_n - 1));
 		memmove(&header[DNS_MESSAGE_HEADERLEN - 2], &addcount, 2);
 	}
 

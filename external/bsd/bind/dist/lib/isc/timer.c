@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.c,v 1.4.4.2 2014/12/25 17:54:29 msaitoh Exp $	*/
+/*	$NetBSD: timer.c,v 1.4.4.3 2017/04/25 19:54:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,6 +30,7 @@
 #include <isc/mem.h>
 #include <isc/msgs.h>
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/thread.h>
 #include <isc/time.h>

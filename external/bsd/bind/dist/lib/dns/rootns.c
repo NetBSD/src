@@ -1,7 +1,7 @@
-/*	$NetBSD: rootns.c,v 1.2.6.3 2015/11/15 19:09:17 bouyer Exp $	*/
+/*	$NetBSD: rootns.c,v 1.2.6.4 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -72,8 +72,8 @@ static char root_ns[] =
 "F.ROOT-SERVERS.NET.     3600000 IN      A       192.5.5.241\n"
 "F.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:2F::F\n"
 "G.ROOT-SERVERS.NET.     3600000 IN      A       192.112.36.4\n"
-"H.ROOT-SERVERS.NET.     3600000 IN      A       128.63.2.53\n"
-"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::803F:235\n"
+"H.ROOT-SERVERS.NET.     3600000 IN      A       198.97.190.53\n"
+"H.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:1::53\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      A       192.36.148.17\n"
 "I.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7fe::53\n"
 "J.ROOT-SERVERS.NET.     3600000 IN      A       192.58.128.30\n"
@@ -81,7 +81,7 @@ static char root_ns[] =
 "K.ROOT-SERVERS.NET.     3600000 IN      A       193.0.14.129\n"
 "K.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:7FD::1\n"
 "L.ROOT-SERVERS.NET.     3600000 IN      A       199.7.83.42\n"
-"L.ROOT-SERVERS.NET.     604800  IN      AAAA    2001:500:3::42\n"
+"L.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:500:9f::42\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      A       202.12.27.33\n"
 "M.ROOT-SERVERS.NET.     3600000 IN      AAAA    2001:DC3::35\n";
 
