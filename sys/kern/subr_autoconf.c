@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.8 2017/03/20 06:57:47 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.9 2017/04/25 09:03:03 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.8 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.9 2017/04/25 09:03:03 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2252,8 +2252,9 @@ void
 device_acquire(device_t dv)
 {
 
-	if (dv->dv_localcnt != NULL)
-		localcount_acquire(dv->dv_localcnt);
+	KASSERTMSG(dv->dv_localcnt != NULL, "%s: device %s has no localcnt!",
+	    __func__, dv->dv_cfdriver->cd_name)
+	localcount_acquire(dv->dv_localcnt);
 }
 
 /*
