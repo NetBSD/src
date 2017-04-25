@@ -1,4 +1,4 @@
-/*	$NetBSD: dbversion_test.c,v 1.1.1.1.2.4 2015/11/15 19:09:17 bouyer Exp $	*/
+/*	$NetBSD: dbversion_test.c,v 1.1.1.1.2.5 2017/04/25 19:54:29 snj Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -425,7 +425,7 @@ subtract(isc_assertioncallback_t callback) {
 	result = dns_db_subtractrdataset(db1, node, VERSION(callback),
 					 &rdataset, 0, NULL);
 	if (callback != NULL)
-		atf_tc_fail("dns_db_dns_db_subtractrdataset did not assert");
+		atf_tc_fail("dns_db_subtractrdataset did not assert");
 	ATF_REQUIRE_EQ(result, DNS_R_UNCHANGED);
 
 	dns_db_detachnode(db1, &node);

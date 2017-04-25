@@ -1,7 +1,7 @@
-/*	$NetBSD: zone_test.c,v 1.2.6.2 2014/12/25 17:54:03 msaitoh Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.2.6.3 2017/04/25 19:54:12 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,7 @@
 #include <isc/app.h>
 #include <isc/commandline.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/string.h>
 #include <isc/task.h>

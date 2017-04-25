@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.3.4.3 2015/11/15 19:09:09 bouyer Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.3.4.4 2017/04/25 19:54:09 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,6 +33,7 @@
 #include <isc/hash.h>
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -422,15 +423,27 @@ configure_view(const char *vclass, const char *view, const cfg_obj_t *config,
 	return (result);
 }
 
+static isc_result_t
+config_getclass(const cfg_obj_t *classobj, dns_rdataclass_t defclass,
+		dns_rdataclass_t *classp)
+{
+	isc_textregion_t r;
+
+	if (!cfg_obj_isstring(classobj)) {
+		*classp = defclass;
+		return (ISC_R_SUCCESS);
+	}
+	DE_CONST(cfg_obj_asstring(classobj), r.base);
+	r.length = strlen(r.base);
+	return (dns_rdataclass_fromtext(classp, &r));
+}
 
 /*% load zones from the configuration */
 static isc_result_t
 load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx) {
 	const cfg_listelt_t *element;
-	const cfg_obj_t *classobj;
 	const cfg_obj_t *views;
 	const cfg_obj_t *vconfig;
-	const char *vclass;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
 
@@ -441,17 +454,24 @@ load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx) {
 	     element != NULL;
 	     element = cfg_list_next(element))
 	{
+		const cfg_obj_t *classobj;
+		dns_rdataclass_t viewclass;
 		const char *vname;
+		char buf[sizeof("CLASS65535")];
 
-		vclass = "IN";
 		vconfig = cfg_listelt_value(element);
-		if (vconfig != NULL) {
-			classobj = cfg_tuple_get(vconfig, "class");
-			if (cfg_obj_isstring(classobj))
-				vclass = cfg_obj_asstring(classobj);
-		}
+		if (vconfig == NULL)
+			continue;
+
+		classobj = cfg_tuple_get(vconfig, "class");
+		CHECK(config_getclass(classobj, dns_rdataclass_in,
+					 &viewclass));
+		if (dns_rdataclass_ismeta(viewclass))
+			CHECK(ISC_R_FAILURE);
+
+		dns_rdataclass_format(viewclass, buf, sizeof(buf));
 		vname = cfg_obj_asstring(cfg_tuple_get(vconfig, "name"));
-		tresult = configure_view(vclass, vname, config, vconfig, mctx);
+		tresult = configure_view(buf, vname, config, vconfig, mctx);
 		if (tresult != ISC_R_SUCCESS)
 			result = tresult;
 	}
@@ -461,6 +481,8 @@ load_zones_fromconfig(const cfg_obj_t *config, isc_mem_t *mctx) {
 		if (tresult != ISC_R_SUCCESS)
 			result = tresult;
 	}
+
+cleanup:
 	return (result);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: util.h,v 1.6.4.1 2012/06/05 21:15:28 bouyer Exp $	*/
+/*	$NetBSD: util.h,v 1.6.4.2 2017/04/25 19:54:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -57,6 +57,8 @@
 
 #define ISC_MAX(a, b)  ((a) > (b) ? (a) : (b))
 #define ISC_MIN(a, b)  ((a) < (b) ? (a) : (b))
+
+#define ISC_CLAMP(v, x, y) ((v) < (x) ? (x) : ((v) > (y) ? (y) : (v)))
 
 /*%
  * Use this to remove the const qualifier of a variable to assign it to
@@ -205,6 +207,17 @@
 #define INSERTBEFORE(li, b, e, ln)	ISC_LIST_INSERTBEFORE(li, b, e, ln)
 #define INSERTAFTER(li, a, e, ln)	ISC_LIST_INSERTAFTER(li, a, e, ln)
 #define APPENDLIST(list1, list2, link)	ISC_LIST_APPENDLIST(list1, list2, link)
+
+/*%
+ * Performance
+ */
+#ifdef HAVE_BUILTIN_EXPECT
+#define ISC_LIKELY(x)            __builtin_expect(!!(x), 1)
+#define ISC_UNLIKELY(x)          __builtin_expect(!!(x), 0)
+#else
+#define ISC_LIKELY(x)            (x)
+#define ISC_UNLIKELY(x)          (x)
+#endif
 
 /*
  * Assertions

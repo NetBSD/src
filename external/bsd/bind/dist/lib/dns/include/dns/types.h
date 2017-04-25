@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.3.4.2 2014/12/25 17:54:26 msaitoh Exp $	*/
+/*	$NetBSD: types.h,v 1.3.4.3 2017/04/25 19:54:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -129,6 +129,7 @@ typedef struct dns_tsec				dns_tsec_t;
 typedef struct dns_tsig_keyring			dns_tsig_keyring_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef isc_uint32_t				dns_ttl_t;
+typedef struct dns_update_state			dns_update_state_t;
 typedef struct dns_validator			dns_validator_t;
 typedef struct dns_view				dns_view_t;
 typedef ISC_LIST(dns_view_t)			dns_viewlist_t;

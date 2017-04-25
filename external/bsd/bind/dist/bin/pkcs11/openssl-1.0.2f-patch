@@ -1,8 +1,14 @@
-Index: openssl/Configure
-diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
---- openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1	Fri Jan  2 14:55:31 2015
-+++ openssl/Configure	Fri Jan  2 14:56:42 2015
-@@ -10,7 +10,7 @@
+commit e17a25c1bc3a72e9649cb7561c803fe332acbca7
+Author: Evan Hunt <each@isc.org>
+Date:   Thu Jan 28 13:22:59 2016 -0800
+
+    updated
+
+diff --git a/Configure b/Configure
+index 4a715dc..8d86ee1 100755
+--- a/Configure
++++ b/Configure
+@@ -10,7 +10,7 @@ use strict;
  
  # see INSTALL for instructions.
  
@@ -11,7 +17,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  
  # Options:
  #
-@@ -23,6 +23,12 @@
+@@ -23,6 +23,12 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
  #               default).  This needn't be set in advance, you can
  #               just as well use "make INSTALL_PREFIX=/whatever install".
  #
@@ -24,25 +30,56 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  # --with-krb5-dir  Declare where Kerberos 5 lives.  The libraries are expected
  #		to live in the subdirectory lib/ and the header files in
  #		include/.  A value is required.
-@@ -352,7 +358,7 @@
- "linux-armv4",	"gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+@@ -398,31 +404,30 @@ my %table=(
+ #
+ #       ./Configure linux-armv4 -march=armv6 -D__ARM_MAX_ARCH__=8
+ #
+-"linux-armv4",	"gcc: -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-aarch64","gcc: -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"linux-armv4",	"gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"linux-aarch64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ # Configure script adds minimally required -march for assembly support,
+ # if no -march was specified at command line. mips32 and mips64 below
+ # refer to contemporary MIPS Architecture specifications, MIPS32 and
+ # MIPS64, rather than to kernel bitness.
+-"linux-mips32",	"gcc:-mabi=32 -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-mips64",   "gcc:-mabi=n32 -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:n32:dlfcn:linux-shared:-fPIC:-mabi=n32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::32",
+-"linux64-mips64",   "gcc:-mabi=64 -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:64:dlfcn:linux-shared:-fPIC:-mabi=64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-mips32",	"gcc:-mabi=32 -DTERMIO -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"linux-mips64",   "gcc:-mabi=n32 -DTERMIO -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:n32:dlfcn:linux-shared:-fPIC:-mabi=n32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::32",
++"linux64-mips64",   "gcc:-mabi=64 -DTERMIO -O3 -Wall -DBN_DIV3W::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:64:dlfcn:linux-shared:-fPIC:-mabi=64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
  #### IA-32 targets...
- "linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2 -no_cpprt::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
--"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-ia32-icc",	"icc:-DL_ENDIAN -O2::-D_REENTRANT::-ldl -no_cpprt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-elf",	"gcc:-DL_ENDIAN -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-aout",	"gcc:-DL_ENDIAN -O3 -fomit-frame-pointer -march=i486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out",
++"linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2::-D_REENTRANT::-ldl -no_cpprt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 +"linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT -pthread::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out",
++"linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out",
  ####
- "linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-@@ -360,7 +366,7 @@
+-"linux-generic64","gcc:-O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-ppc64",	"gcc:-m64 -DB_ENDIAN -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:${ppc64_asm}:linux64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+-"linux-ppc64le","gcc:-m64 -DL_ENDIAN -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:$ppc64_asm:linux64le:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::",
++"linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"linux-ppc64",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:${ppc64_asm}:linux64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-ppc64le","gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:$ppc64_asm:linux64le:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::",
  "linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "linux-ia64-icc","icc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
--"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+-"linux-ia64-icc","icc:-DL_ENDIAN -O2 -Wall::-D_REENTRANT::-ldl -no_cpprt:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+-"linux-x86_64-clang",	"clang: -m64 -DL_ENDIAN -O3 -Wall -Wextra $clang_disabled_warnings -Qunused-arguments::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+-"debug-linux-x86_64-clang",	"clang: -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -m64 -DL_ENDIAN -g -Wall -Wextra $clang_disabled_warnings -Qunused-arguments::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+-"linux-x86_64-icc", "icc:-DL_ENDIAN -O2::-D_REENTRANT::-ldl -no_cpprt:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+-"linux-x32",	"gcc:-mx32 -DL_ENDIAN -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-mx32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::x32",
+-"linux64-s390x",	"gcc:-m64 -DB_ENDIAN -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${s390x_asm}:64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-ia64-icc","icc:-DL_ENDIAN -DTERMIO -O2 -Wall::-D_REENTRANT::-ldl -no_cpprt:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 +"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT -pthread::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
- "linux64-s390x",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${s390x_asm}:64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-x86_64-clang",	"clang: -m64 -DL_ENDIAN -DTERMIO -O3 -Weverything $clang_disabled_warnings -Qunused-arguments::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-x86_64-icc", "icc:-DL_ENDIAN -DTERMIO -O2::-D_REENTRANT::-ldl -no_cpprt:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-x32",	"gcc:-mx32 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-mx32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::x32",
++"linux64-s390x",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${s390x_asm}:64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
  #### So called "highgprs" target for z/Architecture CPUs
  # "Highgprs" is kernel feature first implemented in Linux 2.6.32, see
-@@ -657,6 +663,10 @@
+ # /proc/cpuinfo. The idea is to preserve most significant bits of
+@@ -720,6 +725,10 @@ my $idx_ranlib = $idx++;
  my $idx_arflags = $idx++;
  my $idx_multilib = $idx++;
  
@@ -53,11 +90,12 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  my $prefix="";
  my $libdir="";
  my $openssldir="";
-@@ -877,6 +887,14 @@
- 				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
- 				$flags.=$_." ";
- 				}
-+			elsif (/^--pk11-libname=(.*)$/)
+@@ -938,7 +947,15 @@ PROCESS_ARGS:
+ 			}
+ 		elsif (/^[-+]/)
+ 			{
+-			if (/^--prefix=(.*)$/)
++			if (/^--pk11-libname=(.*)$/)
 +				{
 +				$pk11_libname=$1;
 +				}
@@ -65,10 +103,11 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
 +				{
 +				$pk11_flavor=$1;
 +				}
- 			elsif (/^--prefix=(.*)$/)
++			elsif (/^--prefix=(.*)$/)
  				{
  				$prefix=$1;
-@@ -1044,6 +1062,22 @@
+ 				}
+@@ -1109,6 +1126,22 @@ if ($target eq "LIST") {
  	exit 0;
  }
  
@@ -91,7 +130,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  if ($target =~ m/^CygWin32(-.*)$/) {
  	$target = "Cygwin".$1;
  }
-@@ -1121,6 +1155,25 @@
+@@ -1186,6 +1219,25 @@ foreach (sort @experimental)
  	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
  	}
  
@@ -117,7 +156,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
  
  $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
-@@ -1210,6 +1263,8 @@
+@@ -1283,6 +1335,8 @@ my $no_user_cflags=0;
  if ($flags ne "")	{ $cflags="$flags$cflags"; }
  else			{ $no_user_cflags=1;       }
  
@@ -126,7 +165,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  # Kerberos settings.  The flavor must be provided from outside, either through
  # the script "config" or manually.
  if (!$no_krb5)
-@@ -1599,6 +1654,7 @@
+@@ -1692,6 +1746,7 @@ while (<IN>)
  	s/^VERSION=.*/VERSION=$version/;
  	s/^MAJOR=.*/MAJOR=$major/;
  	s/^MINOR=.*/MINOR=$minor/;
@@ -134,11 +173,11 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
  	s/^SHLIB_VERSION_NUMBER=.*/SHLIB_VERSION_NUMBER=$shlib_version_number/;
  	s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$shlib_version_history/;
  	s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$shlib_major/;
-Index: openssl/Makefile.org
-diff -u openssl/Makefile.org:1.5.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Makefile.org:1.10
---- openssl/Makefile.org:1.5.2.1.2.1.2.1.2.1.2.1.2.1	Mon Apr 14 12:42:45 2014
-+++ openssl/Makefile.org	Mon Apr 14 12:44:20 2014
-@@ -26,6 +26,9 @@
+diff --git a/Makefile.org b/Makefile.org
+index 76fdbdf..178740c 100644
+--- a/Makefile.org
++++ b/Makefile.org
+@@ -26,6 +26,9 @@ HERE=.
  INSTALL_PREFIX=
  INSTALLTOP=/usr/local/ssl
  
@@ -148,10 +187,11 @@ diff -u openssl/Makefile.org:1.5.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Makefile.org:1.
  # Do not edit this manually. Use Configure --openssldir=DIR do change this!
  OPENSSLDIR=/usr/local/ssl
  
-Index: openssl/README.pkcs11
-diff -u /dev/null openssl/README.pkcs11:1.8
---- /dev/null	Fri Jan  2 14:59:07 2015
-+++ openssl/README.pkcs11	Fri Oct  4 14:16:43 2013
+diff --git a/README.pkcs11 b/README.pkcs11
+new file mode 100644
+index 0000000..aab67cb
+--- /dev/null
++++ b/README.pkcs11
 @@ -0,0 +1,266 @@
 +ISC modified
 +============
@@ -419,113 +459,169 @@ diff -u /dev/null openssl/README.pkcs11:1.8
 +
 +Latest version should be always available on http://blogs.sun.com/janp.
 +
-Index: openssl/crypto/opensslconf.h
-diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1.10.1 openssl/crypto/opensslconf.h:1.8
---- openssl/crypto/opensslconf.h:1.6.2.1.4.1.10.1	Fri Jan  2 14:55:34 2015
-+++ openssl/crypto/opensslconf.h	Fri Jan  2 14:56:43 2015
-@@ -41,6 +41,9 @@
- 
- #endif /* OPENSSL_DOING_MAKEDEPEND */
- 
-+#ifndef OPENSSL_THREADS
-+# define OPENSSL_THREADS
-+#endif
- #ifndef OPENSSL_NO_DYNAMIC_ENGINE
- # define OPENSSL_NO_DYNAMIC_ENGINE
- #endif
-@@ -82,6 +85,8 @@
- # endif
- #endif
- 
-+#define OPENSSL_CPUID_OBJ
+diff --git a/apps/md4.c b/apps/md4.c
+new file mode 100644
+index 0000000..c9fab66
+--- /dev/null
++++ b/apps/md4.c
+@@ -0,0 +1,121 @@
++/* crypto/md4/md4.c */
++/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
++ * All rights reserved.
++ *
++ * This package is an SSL implementation written
++ * by Eric Young (eay@cryptsoft.com).
++ * The implementation was written so as to conform with Netscapes SSL.
++ *
++ * This library is free for commercial and non-commercial use as long as
++ * the following conditions are aheared to.  The following conditions
++ * apply to all code found in this distribution, be it the RC4, RSA,
++ * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
++ * included with this distribution is covered by the same copyright terms
++ * except that the holder is Tim Hudson (tjh@cryptsoft.com).
++ *
++ * Copyright remains Eric Young's, and as such any Copyright notices in
++ * the code are not to be removed.
++ * If this package is used in a product, Eric Young should be given attribution
++ * as the author of the parts of the library used.
++ * This can be in the form of a textual message at program startup or
++ * in documentation (online or textual) provided with the package.
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. All advertising materials mentioning features or use of this software
++ *    must display the following acknowledgement:
++ *    "This product includes cryptographic software written by
++ *     Eric Young (eay@cryptsoft.com)"
++ *    The word 'cryptographic' can be left out if the rouines from the library
++ *    being used are not cryptographic related :-).
++ * 4. If you include any Windows specific code (or a derivative thereof) from
++ *    the apps directory (application code) you must include an acknowledgement:
++ *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
++ *
++ * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
++ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
++ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
++ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
++ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
++ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
++ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
++ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
++ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
++ * SUCH DAMAGE.
++ *
++ * The licence and distribution terms for any publically available version or
++ * derivative of this code cannot be changed.  i.e. this code cannot simply be
++ * copied and put under another distribution licence
++ * [including the GNU Public Licence.]
++ */
 +
- /* crypto/opensslconf.h.in */
- 
- /* Generate 80386 code? */
-@@ -128,7 +133,7 @@
-  * This enables code handling data aligned at natural CPU word
-  * boundary. See crypto/rc4/rc4_enc.c for further details.
-  */
--#undef RC4_CHUNK
-+#define RC4_CHUNK unsigned long
- #endif
- #endif
- 
-@@ -136,7 +141,7 @@
- /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
-  * %20 speed up (longs are 8 bytes, int's are 4). */
- #ifndef DES_LONG
--#define DES_LONG unsigned long
-+#define DES_LONG unsigned int
- #endif
- #endif
- 
-@@ -147,9 +152,9 @@
- /* Should we define BN_DIV2W here? */
- 
- /* Only one for the following should be defined */
--#undef SIXTY_FOUR_BIT_LONG
-+#define SIXTY_FOUR_BIT_LONG
- #undef SIXTY_FOUR_BIT
--#define THIRTY_TWO_BIT
-+#undef THIRTY_TWO_BIT
- #endif
- 
- #if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
-@@ -161,7 +166,7 @@
- 
- #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
- #define CONFIG_HEADER_BF_LOCL_H
--#undef BF_PTR
-+#define BF_PTR2
- #endif /* HEADER_BF_LOCL_H */
- 
- #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
-@@ -191,7 +196,7 @@
- /* Unroll the inner loop, this sometimes helps, sometimes hinders.
-  * Very mucy CPU dependant */
- #ifndef DES_UNROLL
--#undef DES_UNROLL
-+#define DES_UNROLL
- #endif
- 
- /* These default values were supplied by
-Index: openssl/crypto/bio/bss_file.c
-diff -u openssl/crypto/bio/bss_file.c:1.6.2.1 openssl/crypto/bio/bss_file.c:1.6
---- openssl/crypto/bio/bss_file.c:1.6.2.1	Sun Jan 15 16:09:44 2012
-+++ openssl/crypto/bio/bss_file.c	Mon Jun 13 17:13:31 2011
-@@ -168,7 +168,7 @@
- 		{
- 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
- 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
--		if (errno == ENOENT)
-+		if ((errno == ENOENT) || ((*mode == 'r') && (errno == EACCES)))
- 			BIOerr(BIO_F_BIO_NEW_FILE,BIO_R_NO_SUCH_FILE);
- 		else
- 			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
-Index: openssl/crypto/engine/Makefile
-diff -u openssl/crypto/engine/Makefile:1.8.2.1.4.1 openssl/crypto/engine/Makefile:1.9
---- openssl/crypto/engine/Makefile:1.8.2.1.4.1	Tue Jun 19 15:30:00 2012
-+++ openssl/crypto/engine/Makefile	Tue Jun 19 16:18:00 2012
-@@ -22,13 +22,15 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <openssl/md4.h>
++
++#define BUFSIZE 1024*16
++
++void do_fp(FILE *f);
++void pt(unsigned char *md);
++#if !defined(_OSD_POSIX) && !defined(__DJGPP__)
++int read(int, void *, unsigned int);
++#endif
++
++int main(int argc, char **argv)
++{
++    int i, err = 0;
++    FILE *IN;
++
++    if (argc == 1) {
++        do_fp(stdin);
++    } else {
++        for (i = 1; i < argc; i++) {
++            IN = fopen(argv[i], "r");
++            if (IN == NULL) {
++                perror(argv[i]);
++                err++;
++                continue;
++            }
++            printf("MD4(%s)= ", argv[i]);
++            do_fp(IN);
++            fclose(IN);
++        }
++    }
++    exit(err);
++}
++
++void do_fp(FILE *f)
++{
++    MD4_CTX c;
++    unsigned char md[MD4_DIGEST_LENGTH];
++    int fd;
++    int i;
++    static unsigned char buf[BUFSIZE];
++
++    fd = fileno(f);
++    MD4_Init(&c);
++    for (;;) {
++        i = read(fd, buf, sizeof buf);
++        if (i <= 0)
++            break;
++        MD4_Update(&c, buf, (unsigned long)i);
++    }
++    MD4_Final(&(md[0]), &c);
++    pt(md);
++}
++
++void pt(unsigned char *md)
++{
++    int i;
++
++    for (i = 0; i < MD4_DIGEST_LENGTH; i++)
++        printf("%02x", md[i]);
++    printf("\n");
++}
+diff --git a/crypto/bio/bss_file.c b/crypto/bio/bss_file.c
+index bfba93e..fab03cb 100644
+--- a/crypto/bio/bss_file.c
++++ b/crypto/bio/bss_file.c
+@@ -174,7 +174,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
+     if (file == NULL) {
+         SYSerr(SYS_F_FOPEN, get_last_sys_error());
+         ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
+-        if (errno == ENOENT)
++        if ((errno == ENOENT) || ((*mode == 'r') && (errno == EACCES)))
+             BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
+         else
+             BIOerr(BIO_F_BIO_NEW_FILE, ERR_R_SYS_LIB);
+diff --git a/crypto/engine/Makefile b/crypto/engine/Makefile
+index 426388e..c0d2291 100644
+--- a/crypto/engine/Makefile
++++ b/crypto/engine/Makefile
+@@ -22,13 +22,15 @@ LIBSRC= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
  	tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c \
  	tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c \
  	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c \
--	eng_rsax.c eng_rdrand.c
-+	eng_rsax.c eng_rdrand.c \
+-	eng_rdrand.c
++	eng_rdrand.c \
 +	hw_pk11.c hw_pk11_pub.c hw_pk11so.c hw_pk11so_pub.c
  LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
  	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
  	tb_rsa.o tb_dsa.o tb_ecdsa.o tb_dh.o tb_ecdh.o tb_rand.o tb_store.o \
  	tb_cipher.o tb_digest.o tb_pkmeth.o tb_asnmth.o \
  	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o \
--	eng_rsax.o eng_rdrand.o
-+	eng_rsax.o eng_rdrand.o \
+-	eng_rdrand.o
++	eng_rdrand.o \
 +	hw_pk11.o hw_pk11_pub.o hw_pk11so.o hw_pk11so_pub.o
  
  SRC= $(LIBSRC)
  
-@@ -294,6 +296,83 @@
+@@ -282,6 +284,83 @@ eng_table.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
  eng_table.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
  eng_table.o: ../../include/openssl/x509_vfy.h ../cryptlib.h eng_int.h
  eng_table.o: eng_table.c
@@ -609,10 +705,11 @@ diff -u openssl/crypto/engine/Makefile:1.8.2.1.4.1 openssl/crypto/engine/Makefil
  tb_asnmth.o: ../../e_os.h ../../include/openssl/asn1.h
  tb_asnmth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
  tb_asnmth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-Index: openssl/crypto/engine/cryptoki.h
-diff -u /dev/null openssl/crypto/engine/cryptoki.h:1.4
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/cryptoki.h	Thu Dec 18 00:14:12 2008
+diff --git a/crypto/engine/cryptoki.h b/crypto/engine/cryptoki.h
+new file mode 100644
+index 0000000..367f839
+--- /dev/null
++++ b/crypto/engine/cryptoki.h
 @@ -0,0 +1,103 @@
 +/*
 + * CDDL HEADER START
@@ -717,30 +814,30 @@ diff -u /dev/null openssl/crypto/engine/cryptoki.h:1.4
 +#endif
 +
 +#endif	/* _CRYPTOKI_H */
-Index: openssl/crypto/engine/eng_all.c
-diff -u openssl/crypto/engine/eng_all.c:1.5.2.1.4.1 openssl/crypto/engine/eng_all.c:1.6
---- openssl/crypto/engine/eng_all.c:1.5.2.1.4.1	Tue Jun 19 15:30:00 2012
-+++ openssl/crypto/engine/eng_all.c	Tue Jun 19 16:18:00 2012
-@@ -119,6 +119,14 @@
- #if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
- 	ENGINE_load_capi();
- #endif
+diff --git a/crypto/engine/eng_all.c b/crypto/engine/eng_all.c
+index 48ad0d2..e56885f 100644
+--- a/crypto/engine/eng_all.c
++++ b/crypto/engine/eng_all.c
+@@ -119,6 +119,14 @@ void ENGINE_load_builtin_engines(void)
+ # if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
+     ENGINE_load_capi();
+ # endif
 +#ifndef OPENSSL_NO_HW_PKCS11
 +#ifndef OPENSSL_NO_HW_PKCS11CA
-+	ENGINE_load_pk11ca();
++    ENGINE_load_pk11ca();
 +#endif
 +#ifndef OPENSSL_NO_HW_PKCS11SO
-+	ENGINE_load_pk11so();
++    ENGINE_load_pk11so();
 +#endif
 +#endif
  #endif
- 	ENGINE_register_all_complete();
- 	}
-Index: openssl/crypto/engine/engine.h
-diff -u openssl/crypto/engine/engine.h:1.5.2.1.4.1 openssl/crypto/engine/engine.h:1.6
---- openssl/crypto/engine/engine.h:1.5.2.1.4.1	Tue Jun 19 15:30:00 2012
-+++ openssl/crypto/engine/engine.h	Tue Jun 19 16:18:00 2012
-@@ -343,6 +343,12 @@
+     ENGINE_register_all_complete();
+ }
+diff --git a/crypto/engine/engine.h b/crypto/engine/engine.h
+index bd7b591..fa8390e 100644
+--- a/crypto/engine/engine.h
++++ b/crypto/engine/engine.h
+@@ -405,6 +405,12 @@ void ENGINE_load_sureware(void);
  void ENGINE_load_ubsec(void);
  void ENGINE_load_padlock(void);
  void ENGINE_load_capi(void);
@@ -750,13 +847,14 @@ diff -u openssl/crypto/engine/engine.h:1.5.2.1.4.1 openssl/crypto/engine/engine.
 +#ifndef OPENSSL_NO_HW_PKCS11SO
 +void ENGINE_load_pk11so(void);
 +#endif
- #ifndef OPENSSL_NO_GMP
+ #  ifndef OPENSSL_NO_GMP
  void ENGINE_load_gmp(void);
- #endif
-Index: openssl/crypto/engine/hw_pk11.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.33
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11.c	Fri Oct  4 14:07:41 2013
+ #  endif
+diff --git a/crypto/engine/hw_pk11.c b/crypto/engine/hw_pk11.c
+new file mode 100644
+index 0000000..1c01582
+--- /dev/null
++++ b/crypto/engine/hw_pk11.c
 @@ -0,0 +1,4010 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -4768,10 +4866,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.33
 +#endif	/* OPENSSL_NO_HW_PK11CA */
 +#endif	/* OPENSSL_NO_HW_PK11 */
 +#endif	/* OPENSSL_NO_HW */
-Index: openssl/crypto/engine/hw_pk11_err.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.5
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11_err.c	Tue Jun 14 00:43:26 2011
+diff --git a/crypto/engine/hw_pk11_err.c b/crypto/engine/hw_pk11_err.c
+new file mode 100644
+index 0000000..fdbea45
+--- /dev/null
++++ b/crypto/engine/hw_pk11_err.c
 @@ -0,0 +1,288 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -5061,10 +5160,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.5
 +	(void) BIO_snprintf(tmp_buf, sizeof (tmp_buf), "%lx", rv);
 +	ERR_add_error_data(2, "PK11 CK_RV=0X", tmp_buf);
 +}
-Index: openssl/crypto/engine/hw_pk11_err.h
-diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.13
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11_err.h	Fri Oct  4 14:04:20 2013
+diff --git a/crypto/engine/hw_pk11_err.h b/crypto/engine/hw_pk11_err.h
+new file mode 100644
+index 0000000..32b2213
+--- /dev/null
++++ b/crypto/engine/hw_pk11_err.h
 @@ -0,0 +1,440 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -5506,10 +5606,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.13
 +extern CK_FUNCTION_LIST_PTR pFuncList;
 +
 +#endif /* HW_PK11_ERR_H */
-Index: openssl/crypto/engine/hw_pk11_pub.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.42
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11_pub.c	Fri Oct  4 14:27:06 2013
+diff --git a/crypto/engine/hw_pk11_pub.c b/crypto/engine/hw_pk11_pub.c
+new file mode 100644
+index 0000000..db2ac8d
+--- /dev/null
++++ b/crypto/engine/hw_pk11_pub.c
 @@ -0,0 +1,3556 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -9067,10 +9168,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.42
 +#endif	/* OPENSSL_NO_HW_PK11CA */
 +#endif	/* OPENSSL_NO_HW_PK11 */
 +#endif	/* OPENSSL_NO_HW */
-Index: openssl/crypto/engine/hw_pk11ca.h
-diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.4
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11ca.h	Wed Jun 15 21:12:20 2011
+diff --git a/crypto/engine/hw_pk11ca.h b/crypto/engine/hw_pk11ca.h
+new file mode 100644
+index 0000000..813b1ed
+--- /dev/null
++++ b/crypto/engine/hw_pk11ca.h
 @@ -0,0 +1,32 @@
 +/* Redefine all pk11/PK11 external symbols to pk11ca/PK11CA */
 +
@@ -9104,10 +9206,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.4
 +#define pFuncList			pk11ca_pFuncList
 +#define pk11_pin			pk11ca_pin
 +#define ENGINE_load_pk11		ENGINE_load_pk11ca
-Index: openssl/crypto/engine/hw_pk11so.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.8
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11so.c	Fri Oct  4 14:05:16 2013
+diff --git a/crypto/engine/hw_pk11so.c b/crypto/engine/hw_pk11so.c
+new file mode 100644
+index 0000000..a7b88a9
+--- /dev/null
++++ b/crypto/engine/hw_pk11so.c
 @@ -0,0 +1,1775 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -10884,10 +10987,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.8
 +#endif	/* OPENSSL_NO_HW_PK11SO */
 +#endif	/* OPENSSL_NO_HW_PK11 */
 +#endif	/* OPENSSL_NO_HW */
-Index: openssl/crypto/engine/hw_pk11so.h
-diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.4
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11so.h	Wed Jun 15 21:12:20 2011
+diff --git a/crypto/engine/hw_pk11so.h b/crypto/engine/hw_pk11so.h
+new file mode 100644
+index 0000000..5002935
+--- /dev/null
++++ b/crypto/engine/hw_pk11so.h
 @@ -0,0 +1,32 @@
 +/* Redefine all pk11/PK11 external symbols to pk11so/PK11SO */
 +
@@ -10921,10 +11025,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.4
 +#define pFuncList			pk11so_pFuncList
 +#define pk11_pin			pk11so_pin
 +#define ENGINE_load_pk11		ENGINE_load_pk11so
-Index: openssl/crypto/engine/hw_pk11so_pub.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.10
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/hw_pk11so_pub.c	Fri Oct  4 14:05:38 2013
+diff --git a/crypto/engine/hw_pk11so_pub.c b/crypto/engine/hw_pk11so_pub.c
+new file mode 100644
+index 0000000..03e3eee
+--- /dev/null
++++ b/crypto/engine/hw_pk11so_pub.c
 @@ -0,0 +1,1642 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -12568,13 +12673,14 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.10
 +#endif	/* OPENSSL_NO_HW_PK11SO */
 +#endif	/* OPENSSL_NO_HW_PK11 */
 +#endif	/* OPENSSL_NO_HW */
-Index: openssl/crypto/engine/pkcs11.h
-diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/pkcs11.h	Wed Oct 24 23:27:09 2007
+diff --git a/crypto/engine/pkcs11.h b/crypto/engine/pkcs11.h
+new file mode 100644
+index 0000000..225ccae
+--- /dev/null
++++ b/crypto/engine/pkcs11.h
 @@ -0,0 +1,299 @@
 +/* pkcs11.h include file for PKCS #11. */
-+/* $Revision: 1.1.1.1.4.2 $ */
++/* Revision: 1.1.1.1  */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -12872,13 +12978,14 @@ diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
 +#endif
 +
 +#endif
-Index: openssl/crypto/engine/pkcs11f.h
-diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/pkcs11f.h	Wed Oct 24 23:27:09 2007
+diff --git a/crypto/engine/pkcs11f.h b/crypto/engine/pkcs11f.h
+new file mode 100644
+index 0000000..889e7b6
+--- /dev/null
++++ b/crypto/engine/pkcs11f.h
 @@ -0,0 +1,912 @@
 +/* pkcs11f.h include file for PKCS #11. */
-+/* $Revision: 1.1.1.1.4.2 $ */
++/* Revision: 1.1.1.1  */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -13789,13 +13896,14 @@ diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
 +  CK_VOID_PTR pRserved   /* reserved.  Should be NULL_PTR */
 +);
 +#endif
-Index: openssl/crypto/engine/pkcs11t.h
-diff -u /dev/null openssl/crypto/engine/pkcs11t.h:1.2
---- /dev/null	Fri Jan  2 14:59:08 2015
-+++ openssl/crypto/engine/pkcs11t.h	Sat Aug 30 11:58:07 2008
+diff --git a/crypto/engine/pkcs11t.h b/crypto/engine/pkcs11t.h
+new file mode 100644
+index 0000000..0430bc8
+--- /dev/null
++++ b/crypto/engine/pkcs11t.h
 @@ -0,0 +1,1885 @@
 +/* pkcs11t.h include file for PKCS #11. */
-+/* $Revision: 1.1.1.1.4.2 $ */
++/* Revision: 1.2  */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -15679,21 +15787,93 @@ diff -u /dev/null openssl/crypto/engine/pkcs11t.h:1.2
 +typedef CK_ARIA_CBC_ENCRYPT_DATA_PARAMS CK_PTR CK_ARIA_CBC_ENCRYPT_DATA_PARAMS_PTR;
 +
 +#endif
-Index: openssl/util/libeay.num
-diff -u openssl/util/libeay.num:1.8.2.1.4.1.2.1.4.1 openssl/util/libeay.num:1.12
---- openssl/util/libeay.num:1.8.2.1.4.1.2.1.4.1	Mon Apr 14 12:42:50 2014
-+++ openssl/util/libeay.num	Mon Apr 14 12:44:22 2014
-@@ -4312,3 +4312,5 @@
- BIO_s_datagram_sctp                     4680	EXIST::FUNCTION:DGRAM,SCTP
- BIO_dgram_is_sctp                       4681	EXIST::FUNCTION:SCTP
- BIO_dgram_sctp_notification_cb          4682	EXIST::FUNCTION:SCTP
-+ENGINE_load_pk11ca                      4683	EXIST::FUNCTION:HW_PKCS11CA,ENGINE
-+ENGINE_load_pk11so                      4683	EXIST::FUNCTION:HW_PKCS11SO,ENGINE
-Index: openssl/util/mk1mf.pl
-diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1 openssl/util/mk1mf.pl:1.11
---- openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1	Fri Jan  2 14:55:51 2015
-+++ openssl/util/mk1mf.pl	Fri Jan  2 14:56:55 2015
-@@ -114,6 +114,8 @@
+diff --git a/crypto/opensslconf.h b/crypto/opensslconf.h
+index b4d522e..5bb616b 100644
+--- a/crypto/opensslconf.h
++++ b/crypto/opensslconf.h
+@@ -47,6 +47,9 @@ extern "C" {
+ 
+ #endif /* OPENSSL_DOING_MAKEDEPEND */
+ 
++#ifndef OPENSSL_THREADS
++# define OPENSSL_THREADS
++#endif
+ #ifndef OPENSSL_NO_DYNAMIC_ENGINE
+ # define OPENSSL_NO_DYNAMIC_ENGINE
+ #endif
+@@ -94,6 +97,8 @@ extern "C" {
+ # endif
+ #endif
+ 
++#define OPENSSL_CPUID_OBJ
++
+ /* crypto/opensslconf.h.in */
+ 
+ /* Generate 80386 code? */
+@@ -140,7 +145,7 @@ extern "C" {
+  * This enables code handling data aligned at natural CPU word
+  * boundary. See crypto/rc4/rc4_enc.c for further details.
+  */
+-#undef RC4_CHUNK
++#define RC4_CHUNK unsigned long
+ #endif
+ #endif
+ 
+@@ -148,7 +153,7 @@ extern "C" {
+ /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
+  * %20 speed up (longs are 8 bytes, int's are 4). */
+ #ifndef DES_LONG
+-#define DES_LONG unsigned long
++#define DES_LONG unsigned int
+ #endif
+ #endif
+ 
+@@ -159,9 +164,9 @@ extern "C" {
+ /* Should we define BN_DIV2W here? */
+ 
+ /* Only one for the following should be defined */
+-#undef SIXTY_FOUR_BIT_LONG
++#define SIXTY_FOUR_BIT_LONG
+ #undef SIXTY_FOUR_BIT
+-#define THIRTY_TWO_BIT
++#undef THIRTY_TWO_BIT
+ #endif
+ 
+ #if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
+@@ -173,7 +178,7 @@ extern "C" {
+ 
+ #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
+ #define CONFIG_HEADER_BF_LOCL_H
+-#undef BF_PTR
++#define BF_PTR2
+ #endif /* HEADER_BF_LOCL_H */
+ 
+ #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
+@@ -203,7 +208,7 @@ extern "C" {
+ /* Unroll the inner loop, this sometimes helps, sometimes hinders.
+  * Very mucy CPU dependant */
+ #ifndef DES_UNROLL
+-#undef DES_UNROLL
++#define DES_UNROLL
+ #endif
+ 
+ /* These default values were supplied by
+diff --git a/util/libeay.num b/util/libeay.num
+index 7f7487d..ecf09fe 100755
+--- a/util/libeay.num
++++ b/util/libeay.num
+@@ -4413,4 +4413,5 @@ ECDSA_METHOD_get_app_data               4770	EXIST::FUNCTION:ECDSA
+ X509_VERIFY_PARAM_add1_host             4771	EXIST::FUNCTION:
+ EC_GROUP_get_mont_data                  4772	EXIST::FUNCTION:EC
+ i2d_re_X509_tbs                         4773	EXIST::FUNCTION:
+-EVP_PKEY_asn1_set_item                  4774	EXIST::FUNCTION:
++ENGINE_load_pk11ca                      4774	EXIST::FUNCTION:HW_PKCS11CA,ENGINE
++ENGINE_load_pk11so                      4774	EXIST::FUNCTION:HW_PKCS11SO,ENGINE
+diff --git a/util/mk1mf.pl b/util/mk1mf.pl
+index 99652af..4c792d4 100755
+--- a/util/mk1mf.pl
++++ b/util/mk1mf.pl
+@@ -122,6 +122,8 @@ and [options] can be one of
  	no-ecdh					- No ECDH
  	no-engine				- No engine
  	no-hw					- No hw
@@ -15702,7 +15882,7 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1 openssl/util/mk1mf.pl:1.11
  	nasm 					- Use NASM for x86 asm
  	nw-nasm					- Use NASM x86 asm for NetWare
  	nw-mwasm				- Use Metrowerks x86 asm for NetWare
-@@ -278,6 +280,8 @@
+@@ -287,6 +289,8 @@ $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
  $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
  $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
  $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
@@ -15711,7 +15891,7 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1 openssl/util/mk1mf.pl:1.11
  $cflags.=" -DOPENSSL_FIPS"    if $fips;
  $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
  $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
-@@ -345,6 +349,9 @@
+@@ -359,6 +363,9 @@ for (;;)
  		$dir=$val;
  		}
  
@@ -15721,7 +15901,7 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1 openssl/util/mk1mf.pl:1.11
  	if ($key eq "KRB5_INCLUDES")
  		{ $cflags .= " $val";}
  
-@@ -1131,6 +1138,8 @@
+@@ -1214,6 +1221,8 @@ sub read_options
  		"no-gost" => \$no_gost,
  		"no-engine" => \$no_engine,
  		"no-hw" => \$no_hw,
@@ -15730,11 +15910,11 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1 openssl/util/mk1mf.pl:1.11
  		"no-rsax" => 0,
  		"just-ssl" =>
  			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
-Index: openssl/util/mkdef.pl
-diff -u openssl/util/mkdef.pl:1.7.2.1.4.1.10.1 openssl/util/mkdef.pl:1.10
---- openssl/util/mkdef.pl:1.7.2.1.4.1.10.1	Fri Jan  2 14:55:51 2015
-+++ openssl/util/mkdef.pl	Fri Jan  2 14:56:55 2015
-@@ -96,7 +96,7 @@
+diff --git a/util/mkdef.pl b/util/mkdef.pl
+index c57c7f7..9eeafd9 100755
+--- a/util/mkdef.pl
++++ b/util/mkdef.pl
+@@ -96,7 +96,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
  			 # External "algorithms"
  			 "FP_API", "STDIO", "SOCK", "KRB5", "DGRAM",
  			 # Engines
@@ -15743,7 +15923,7 @@ diff -u openssl/util/mkdef.pl:1.7.2.1.4.1.10.1 openssl/util/mkdef.pl:1.10
  			 # RFC3779
  			 "RFC3779",
  			 # TLS
-@@ -137,6 +137,7 @@
+@@ -141,6 +141,7 @@ my $no_cast; my $no_whirlpool; my $no_camellia; my $no_seed;
  my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
  my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
  my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
@@ -15751,7 +15931,7 @@ diff -u openssl/util/mkdef.pl:1.7.2.1.4.1.10.1 openssl/util/mkdef.pl:1.10
  my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
  my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
  my $no_jpake; my $no_srp; my $no_ssl2; my $no_ec2m; my $no_nistp_gcc; 
-@@ -242,6 +243,8 @@
+@@ -248,6 +249,8 @@ foreach (@ARGV, split(/ /, $options))
  	elsif (/^no-sctp$/)	{ $no_sctp=1; }
  	elsif (/^no-srtp$/)	{ $no_srtp=1; }
  	elsif (/^no-unit-test$/){ $no_unit_test=1; }
@@ -15760,7 +15940,7 @@ diff -u openssl/util/mkdef.pl:1.7.2.1.4.1.10.1 openssl/util/mkdef.pl:1.10
  	}
  
  
-@@ -1196,6 +1199,8 @@
+@@ -1203,6 +1206,8 @@ sub is_valid
  			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
  			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
  			if ($keyword eq "HW" && $no_hw) { return 0; }
@@ -15769,13 +15949,13 @@ diff -u openssl/util/mkdef.pl:1.7.2.1.4.1.10.1 openssl/util/mkdef.pl:1.10
  			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
  			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
  			if ($keyword eq "GMP" && $no_gmp) { return 0; }
-Index: openssl/util/pl/VC-32.pl
-diff -u openssl/util/pl/VC-32.pl:1.7.2.1.4.1.2.1.4.1 openssl/util/pl/VC-32.pl:1.10
---- openssl/util/pl/VC-32.pl:1.7.2.1.4.1.2.1.4.1	Mon Apr 14 12:42:50 2014
-+++ openssl/util/pl/VC-32.pl	Mon Apr 14 12:44:22 2014
-@@ -48,7 +48,7 @@
+diff --git a/util/pl/VC-32.pl b/util/pl/VC-32.pl
+index 0f5547f..8999977 100644
+--- a/util/pl/VC-32.pl
++++ b/util/pl/VC-32.pl
+@@ -47,7 +47,7 @@ if ($FLAVOR =~ /WIN64/)
+     $base_cflags= " $mf_cflag";
      my $f = $shlib || $fips ?' /MD':' /MT';
-     $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
      $opt_cflags=$f.' /Ox';
 -    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
 +    $dbg_cflags=$f.'d /Od /Zi -DDEBUG -D_DEBUG';

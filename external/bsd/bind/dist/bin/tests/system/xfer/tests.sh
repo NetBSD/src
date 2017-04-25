@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -235,7 +235,7 @@ $SENDCMD < ans5/goodaxfr
 sleep 1
 
 # Initially, ns4 is not authoritative for anything.
-# Now that ans is up and running with the right data, we make it
+# Now that ans is up and running with the right data, we make ns4
 # a slave for nil.
 
 cat <<EOF >>ns4/named.conf
@@ -246,8 +246,9 @@ zone "nil" {
 };
 EOF
 
-$RNDCCMD reload | sed 's/^/I:ns4 /'
+cur=`awk 'END {print NR}' ns4/named.run`
 
+$RNDCCMD reload | sed 's/^/I:ns4 /'
 
 for i in 0 1 2 3 4 5 6 7 8 9
 do
@@ -255,6 +256,12 @@ do
 	grep SOA dig.out.ns4 > /dev/null && break
 	sleep 1
 done
+
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: success" > /dev/null || {
+    echo "I: failed: expected status was not logged"
+    status=1
+}
+cur=`awk 'END {print NR}' ns4/named.run`
 
 $DIGCMD nil. TXT | grep 'initial AXFR' >/dev/null || {
     echo "I:failed"
@@ -270,6 +277,12 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: expected a TSIG or SIG(0)" > /dev/null || {
+    echo "I: failed: expected status was not logged"
+    status=1
+}
+cur=`awk 'END {print NR}' ns4/named.run`
+
 $DIGCMD nil. TXT | grep 'unsigned AXFR' >/dev/null && {
     echo "I:failed"
     status=1
@@ -283,6 +296,12 @@ sleep 1
 $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
+
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: tsig verify failure" > /dev/null || {
+    echo "I: failed: expected status was not logged"
+    status=1
+}
+cur=`awk 'END {print NR}' ns4/named.run`
 
 $DIGCMD nil. TXT | grep 'bad keydata AXFR' >/dev/null && {
     echo "I:failed"
@@ -298,6 +317,12 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
+sed -n "$cur,\$p" < ns4/named.run | grep "Transfer status: expected a TSIG or SIG(0)" > /dev/null || {
+    echo "I: failed: expected status was not logged"
+    status=1
+}
+cur=`awk 'END {print NR}' ns4/named.run`
+
 $DIGCMD nil. TXT | grep 'partially signed AXFR' >/dev/null && {
     echo "I:failed"
     status=1
@@ -312,6 +337,12 @@ $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
 
+sed -n "$cur,\$p" < ns4/named.run | grep "tsig key 'tsig_key': key name and algorithm do not match" > /dev/null || {
+    echo "I: failed: expected status was not logged"
+    status=1
+}
+cur=`awk 'END {print NR}' ns4/named.run`
+
 $DIGCMD nil. TXT | grep 'unknown key AXFR' >/dev/null && {
     echo "I:failed"
     status=1
@@ -325,6 +356,12 @@ sleep 1
 $RNDCCMD retransfer nil | sed 's/^/I:ns4 /'
 
 sleep 2
+
+sed -n "$cur,\$p" < ns4/named.run | grep "tsig key 'tsig_key': key name and algorithm do not match" > /dev/null || {
+    echo "I: failed: expected status was not logged"
+    status=1
+}
+cur=`awk 'END {print NR}' ns4/named.run`
 
 $DIGCMD nil. TXT | grep 'incorrect key AXFR' >/dev/null && {
     echo "I:failed"

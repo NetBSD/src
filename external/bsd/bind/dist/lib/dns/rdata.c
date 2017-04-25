@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata.c,v 1.3.4.5 2015/11/15 19:09:17 bouyer Exp $	*/
+/*	$NetBSD: rdata.c,v 1.3.4.6 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -220,10 +220,103 @@ static isc_result_t
 unknown_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	       isc_buffer_t *target);
 
+static inline isc_result_t
+generic_fromtext_key(ARGS_FROMTEXT);
+
+static inline isc_result_t
+generic_totext_key(ARGS_TOTEXT);
+
+static inline isc_result_t
+generic_fromwire_key(ARGS_FROMWIRE);
+
+static inline isc_result_t
+generic_fromstruct_key(ARGS_FROMSTRUCT);
+
+static inline isc_result_t
+generic_tostruct_key(ARGS_TOSTRUCT);
+
+static inline void
+generic_freestruct_key(ARGS_FREESTRUCT);
+
+static isc_result_t
+generic_fromtext_txt(ARGS_FROMTEXT);
+
+static isc_result_t
+generic_totext_txt(ARGS_TOTEXT);
+
+static isc_result_t
+generic_fromwire_txt(ARGS_FROMWIRE);
+
+static isc_result_t
+generic_fromstruct_txt(ARGS_FROMSTRUCT);
+
+static isc_result_t
+generic_tostruct_txt(ARGS_TOSTRUCT);
+
+static void
+generic_freestruct_txt(ARGS_FREESTRUCT);
+
+static isc_result_t
+generic_txt_first(dns_rdata_txt_t *txt);
+
+static isc_result_t
+generic_txt_next(dns_rdata_txt_t *txt);
+
+static isc_result_t
+generic_txt_current(dns_rdata_txt_t *txt, dns_rdata_txt_string_t *string);
+
+static isc_result_t
+generic_totext_ds(ARGS_TOTEXT);
+
+static isc_result_t
+generic_tostruct_ds(ARGS_TOSTRUCT);
+
+static isc_result_t
+generic_fromtext_ds(ARGS_FROMTEXT);
+
+static isc_result_t
+generic_fromwire_ds(ARGS_FROMWIRE);
+
+static isc_result_t
+generic_fromstruct_ds(ARGS_FROMSTRUCT);
+
+static isc_result_t
+generic_fromtext_tlsa(ARGS_FROMTEXT);
+
+static isc_result_t
+generic_totext_tlsa(ARGS_TOTEXT);
+
+static isc_result_t
+generic_fromwire_tlsa(ARGS_FROMWIRE);
+
+static isc_result_t
+generic_fromstruct_tlsa(ARGS_FROMSTRUCT);
+
+static isc_result_t
+generic_tostruct_tlsa(ARGS_TOSTRUCT);
+
+static void
+generic_freestruct_tlsa(ARGS_FREESTRUCT);
+
 /*% INT16 Size */
 #define NS_INT16SZ	2
 /*% IPv6 Address Size */
 #define NS_LOCATORSZ	8
+
+/*
+ * Active Diretory gc._msdcs.<forest> prefix.
+ */
+static unsigned char gc_msdcs_data[]  = "\002gc\006_msdcs";
+static unsigned char gc_msdcs_offset [] = { 0, 3 };
+
+static const dns_name_t gc_msdcs = {
+	DNS_NAME_MAGIC,
+	gc_msdcs_data, 10, 2,
+	DNS_NAMEATTR_READONLY,
+	gc_msdcs_offset, NULL,
+	{(void *)-1, (void *)-1},
+	{NULL, NULL}
+};
 
 /*%
  *	convert presentation level address to network order binary form.
@@ -315,15 +408,169 @@ name_duporclone(dns_name_t *source, isc_mem_t *mctx, dns_name_t *target) {
 
 static inline void *
 mem_maybedup(isc_mem_t *mctx, void *source, size_t length) {
-	void *new;
+	void *copy;
 
 	if (mctx == NULL)
 		return (source);
-	new = isc_mem_allocate(mctx, length);
-	if (new != NULL)
-		memmove(new, source, length);
+	copy = isc_mem_allocate(mctx, length);
+	if (copy != NULL)
+		memmove(copy, source, length);
 
-	return (new);
+	return (copy);
+}
+
+static inline isc_result_t
+typemap_fromtext(isc_lex_t *lexer, isc_buffer_t *target,
+		 isc_boolean_t allow_empty)
+{
+	isc_token_t token;
+	unsigned char bm[8*1024]; /* 64k bits */
+	dns_rdatatype_t covered, max_used;
+	int octet;
+	unsigned int max_octet, newend, end;
+	int window;
+	isc_boolean_t first = ISC_TRUE;
+
+	max_used = 0;
+	bm[0] = 0;
+	end = 0;
+
+	do {
+		RETERR(isc_lex_getmastertoken(lexer, &token,
+					      isc_tokentype_string, ISC_TRUE));
+		if (token.type != isc_tokentype_string)
+			break;
+		RETTOK(dns_rdatatype_fromtext(&covered,
+					      &token.value.as_textregion));
+		if (covered > max_used) {
+			newend = covered / 8;
+			if (newend > end) {
+				memset(&bm[end + 1], 0, newend - end);
+				end = newend;
+			}
+			max_used = covered;
+		}
+		bm[covered/8] |= (0x80>>(covered%8));
+		first = ISC_FALSE;
+	} while (1);
+	isc_lex_ungettoken(lexer, &token);
+	if (!allow_empty && first)
+		return (DNS_R_FORMERR);
+
+	for (window = 0; window < 256 ; window++) {
+		if (max_used < window * 256)
+			break;
+
+		max_octet = max_used - (window * 256);
+		if (max_octet >= 256)
+			max_octet = 31;
+		else
+			max_octet /= 8;
+
+		/*
+		 * Find if we have a type in this window.
+		 */
+		for (octet = max_octet; octet >= 0; octet--) {
+			if (bm[window * 32 + octet] != 0)
+				break;
+		}
+		if (octet < 0)
+			continue;
+		RETERR(uint8_tobuffer(window, target));
+		RETERR(uint8_tobuffer(octet + 1, target));
+		RETERR(mem_tobuffer(target, &bm[window * 32], octet + 1));
+	}
+	return (ISC_R_SUCCESS);
+}
+
+static inline isc_result_t
+typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
+	       isc_buffer_t *target)
+{
+	unsigned int i, j, k;
+	unsigned int window, len;
+	isc_boolean_t first = ISC_FALSE;
+
+	for (i = 0; i < sr->length; i += len) {
+		if (tctx != NULL &&
+		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
+			RETERR(str_totext(tctx->linebreak, target));
+			first = ISC_TRUE;
+		}
+		INSIST(i + 2 <= sr->length);
+		window = sr->base[i];
+		len = sr->base[i + 1];
+		INSIST(len > 0 && len <= 32);
+		i += 2;
+		INSIST(i + len <= sr->length);
+		for (j = 0; j < len; j++) {
+			dns_rdatatype_t t;
+			if (sr->base[i + j] == 0)
+				continue;
+			for (k = 0; k < 8; k++) {
+				if ((sr->base[i + j] & (0x80 >> k)) == 0)
+					continue;
+				t = window * 256 + j * 8 + k;
+				if (!first)
+					RETERR(str_totext(" ", target));
+				first = ISC_FALSE;
+				if (dns_rdatatype_isknown(t)) {
+					RETERR(dns_rdatatype_totext(t, target));
+				} else {
+					char buf[sizeof("TYPE65535")];
+					sprintf(buf, "TYPE%u", t);
+					RETERR(str_totext(buf, target));
+				}
+			}
+		}
+	}
+	return (ISC_R_SUCCESS);
+}
+
+static isc_result_t
+typemap_test(isc_region_t *sr, isc_boolean_t allow_empty) {
+	unsigned int window, lastwindow = 0;
+	unsigned int len;
+	isc_boolean_t first = ISC_TRUE;
+	unsigned int i;
+
+	for (i = 0; i < sr->length; i += len) {
+		/*
+		 * Check for overflow.
+		 */
+		if (i + 2 > sr->length)
+			RETERR(DNS_R_FORMERR);
+		window = sr->base[i];
+		len = sr->base[i + 1];
+		i += 2;
+		/*
+		 * Check that bitmap windows are in the correct order.
+		 */
+		if (!first && window <= lastwindow)
+			RETERR(DNS_R_FORMERR);
+		/*
+		 * Check for legal lengths.
+		 */
+		if (len < 1 || len > 32)
+			RETERR(DNS_R_FORMERR);
+		/*
+		 * Check for overflow.
+		 */
+		if (i + len > sr->length)
+			RETERR(DNS_R_FORMERR);
+		/*
+		 * The last octet of the bitmap must be non zero.
+		 */
+		if (sr->base[i + len - 1] == 0)
+			RETERR(DNS_R_FORMERR);
+		lastwindow = window;
+		first = ISC_FALSE;
+	}
+	if (i != sr->length)
+		return (DNS_R_EXTRADATA);
+	if (!allow_empty && first)
+		RETERR(DNS_R_FORMERR);
+	return (ISC_R_SUCCESS);
 }
 
 static const char hexdigits[] = "0123456789abcdef";
@@ -838,6 +1085,7 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
 	isc_boolean_t use_default = ISC_FALSE;
+	unsigned int cur;
 
 	REQUIRE(rdata != NULL);
 	REQUIRE(tctx->origin == NULL ||
@@ -851,10 +1099,17 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 		return (ISC_R_SUCCESS);
 	}
 
+	cur = isc_buffer_usedlength(target);
+
 	TOTEXTSWITCH
 
-	if (use_default)
+	if (use_default || (result == ISC_R_NOTIMPLEMENTED)) {
+		unsigned int u = isc_buffer_usedlength(target);
+
+		INSIST(u >= cur);
+		isc_buffer_subtract(target, u - cur);
 		result = unknown_totext(rdata, tctx, target);
+	}
 
 	return (result);
 }
@@ -1399,7 +1654,7 @@ multitxt_fromtext(isc_textregion_t *source, isc_buffer_t *target) {
 		}
 		if (escape)
 			return (DNS_R_SYNTAX);
-		isc_buffer_add(target, t - t0);
+		isc_buffer_add(target, (unsigned int)(t - t0));
 	} while (n != 0);
 	return (ISC_R_SUCCESS);
 }
@@ -1569,6 +1824,9 @@ static isc_result_t
 mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 	isc_region_t tr;
 
+	if (length == 0U)
+		return (ISC_R_SUCCESS);
+
 	isc_buffer_availableregion(target, &tr);
 	if (length > tr.length)
 		return (ISC_R_NOSPACE);
@@ -1580,7 +1838,7 @@ mem_tobuffer(isc_buffer_t *target, void *base, unsigned int length) {
 
 static int
 hexvalue(char value) {
-	char *s;
+	const char *s;
 	unsigned char c;
 
 	c = (unsigned char)value;
@@ -1596,7 +1854,7 @@ hexvalue(char value) {
 
 static int
 decvalue(char value) {
-	char *s;
+	const char *s;
 
 	/*
 	 * isascii() is valid for full range of int values, no need to
@@ -1654,7 +1912,7 @@ static isc_result_t	byte_btoa(int c, isc_buffer_t *, struct state *state);
  */
 static isc_result_t
 byte_atob(int c, isc_buffer_t *target, struct state *state) {
-	char *s;
+	const char *s;
 	if (c == 'z') {
 		if (bcount != 0)
 			return(DNS_R_SYNTAX);
@@ -1750,8 +2008,12 @@ atob_tobuffer(isc_lex_t *lexer, isc_buffer_t *target) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      ISC_FALSE));
-	if ((token.value.as_ulong % 4) != 0U)
-		isc_buffer_subtract(target,  4 - (token.value.as_ulong % 4));
+	if ((token.value.as_ulong % 4) != 0U) {
+		unsigned long padding = 4 - (token.value.as_ulong % 4);
+		if (isc_buffer_usedlength(target) < padding)
+			return (DNS_R_SYNTAX);
+		isc_buffer_subtract(target, padding);
+	}
 
 	/*
 	 * Checksum.

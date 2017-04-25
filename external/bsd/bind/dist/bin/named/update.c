@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.4.4.3 2015/11/15 19:09:09 bouyer Exp $	*/
+/*	$NetBSD: update.c,v 1.4.4.4 2017/04/25 19:54:10 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -3018,6 +3018,19 @@ update_action(isc_task_t *task, isc_event_t *event) {
 			result = DNS_R_REFUSED;
 			goto failure;
 		}
+	}
+	if (! ISC_LIST_EMPTY(diff.tuples)) {
+		result = dns_zone_cdscheck(zone, db, ver);
+		if (result == DNS_R_BADCDS || result == DNS_R_BADCDNSKEY) {
+			update_log(client, zone, LOGLEVEL_PROTOCOL,
+				   "update rejected: bad %s RRset",
+				   result == DNS_R_BADCDS ? "CDS" : "CDNSKEY");
+			result = DNS_R_REFUSED;
+			goto failure;
+		}
+		if (result != ISC_R_SUCCESS)
+			goto failure;
+
 	}
 
 	/*

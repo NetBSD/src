@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.2.6.2 2014/12/25 17:54:31 msaitoh Exp $	*/
+/*	$NetBSD: ifiter_sysctl.c,v 1.2.6.3 2017/04/25 19:54:33 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,8 @@
 
 #include <net/route.h>
 #include <net/if_dl.h>
+
+#include <isc/print.h>
 
 /* XXX what about Alpha? */
 #ifdef sgi

@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.3.4.2 2014/12/25 17:54:01 msaitoh Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.3.4.3 2017/04/25 19:54:10 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -137,6 +137,7 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, isc_uint32_t ttl) {
 	dns_rdataset_t rds;
 	dns_rdata_t rd = DNS_RDATA_INIT;
 
+	dns_rdatalist_init(&rdl);
 	rdl.type = rdata->type;
 	rdl.rdclass = rdata->rdclass;
 	rdl.ttl = ttl;
@@ -145,8 +146,6 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, isc_uint32_t ttl) {
 		rdl.covers = dns_rdata_covers(rdata);
 	else
 		rdl.covers = dns_rdatatype_none;
-	ISC_LIST_INIT(rdl.rdata);
-	ISC_LINK_INIT(&rdl, link);
 	dns_rdataset_init(&rds);
 	dns_rdata_init(&rd);
 	dns_rdata_clone(rdata, &rd);
@@ -1249,6 +1248,7 @@ sendstream(xfrout_ctx_t *xfr) {
 	dns_rdataset_t *msgrds = NULL;
 	dns_compress_t cctx;
 	isc_boolean_t cleanup_cctx = ISC_FALSE;
+	isc_boolean_t is_tcp;
 
 	int n_rrs;
 
@@ -1256,7 +1256,8 @@ sendstream(xfrout_ctx_t *xfr) {
 	isc_buffer_clear(&xfr->txlenbuf);
 	isc_buffer_clear(&xfr->txbuf);
 
-	if ((xfr->client->attributes & NS_CLIENTATTR_TCP) == 0) {
+	is_tcp = ISC_TF((xfr->client->attributes & NS_CLIENTATTR_TCP) != 0);
+	if (!is_tcp) {
 		/*
 		 * In the UDP case, we put the response data directly into
 		 * the client message.
@@ -1422,8 +1423,6 @@ sendstream(xfrout_ctx_t *xfr) {
 			msgrdl->covers = dns_rdata_covers(rdata);
 		else
 			msgrdl->covers = dns_rdatatype_none;
-		ISC_LINK_INIT(msgrdl, link);
-		ISC_LIST_INIT(msgrdl->rdata);
 		ISC_LIST_APPEND(msgrdl->rdata, msgrdata, link);
 
 		result = dns_message_gettemprdataset(msg, &msgrds);
@@ -1447,9 +1446,17 @@ sendstream(xfrout_ctx_t *xfr) {
 
 		if (! xfr->many_answers)
 			break;
+		/*
+		 * At this stage, at least 1 RR has been rendered into
+		 * the message. Check if we want to clamp this message
+		 * here (TCP only). 20480 was set as an upper limit to
+		 * improve message compression.
+		 */
+		if ((isc_buffer_usedlength(&xfr->buf) >= 20480) && is_tcp)
+			break;
 	}
 
-	if ((xfr->client->attributes & NS_CLIENTATTR_TCP) != 0) {
+	if (is_tcp) {
 		CHECK(dns_compress_init(&cctx, -1, xfr->mctx));
 		dns_compress_setsensitive(&cctx, ISC_TRUE);
 		cleanup_cctx = ISC_TRUE;

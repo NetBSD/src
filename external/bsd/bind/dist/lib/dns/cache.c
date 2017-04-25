@@ -1,7 +1,7 @@
-/*	$NetBSD: cache.c,v 1.3.4.2 2014/12/25 17:54:25 msaitoh Exp $	*/
+/*	$NetBSD: cache.c,v 1.3.4.3 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1127,29 +1127,41 @@ cleaner_shutdown_action(isc_task_t *task, isc_event_t *event) {
 
 isc_result_t
 dns_cache_flush(dns_cache_t *cache) {
-	dns_db_t *db = NULL;
+	dns_db_t *db = NULL, *olddb;
+	dns_dbiterator_t *dbiterator = NULL, *olddbiterator = NULL;
 	isc_result_t result;
 
 	result = cache_create_db(cache, &db);
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
+	result = dns_db_createiterator(db, ISC_FALSE, &dbiterator);
+	if (result != ISC_R_SUCCESS) {
+		dns_db_detach(&db);
+		return (result);
+	}
+
 	LOCK(&cache->lock);
 	LOCK(&cache->cleaner.lock);
 	if (cache->cleaner.state == cleaner_s_idle) {
-		if (cache->cleaner.iterator != NULL)
-			dns_dbiterator_destroy(&cache->cleaner.iterator);
-		(void) dns_db_createiterator(db, ISC_FALSE,
-					     &cache->cleaner.iterator);
+		olddbiterator = cache->cleaner.iterator;
+		cache->cleaner.iterator = dbiterator;
+		dbiterator = NULL;
 	} else {
 		if (cache->cleaner.state == cleaner_s_busy)
 			cache->cleaner.state = cleaner_s_done;
 		cache->cleaner.replaceiterator = ISC_TRUE;
 	}
-	dns_db_detach(&cache->db);
+	olddb = cache->db;
 	cache->db = db;
 	UNLOCK(&cache->cleaner.lock);
 	UNLOCK(&cache->lock);
+
+	if (dbiterator != NULL)
+		dns_dbiterator_destroy(&dbiterator);
+	if (olddbiterator != NULL)
+		dns_dbiterator_destroy(&olddbiterator);
+	dns_db_detach(&olddb);
 
 	return (ISC_R_SUCCESS);
 }
@@ -1189,9 +1201,15 @@ static isc_result_t
 cleartree(dns_db_t *db, dns_name_t *name) {
 	isc_result_t result, answer = ISC_R_SUCCESS;
 	dns_dbiterator_t *iter = NULL;
-	dns_dbnode_t *node = NULL;
+	dns_dbnode_t *node = NULL, *top = NULL;
 	dns_fixedname_t fnodename;
 	dns_name_t *nodename;
+
+	/*
+	 * Create the node if it doesn't exist so dns_dbiterator_seek()
+	 * can find it.  We will continue even if this fails.
+	 */
+	(void)dns_db_findnode(db, name, ISC_TRUE, &top);
 
 	dns_fixedname_init(&fnodename);
 	nodename = dns_fixedname_name(&fnodename);
@@ -1201,6 +1219,8 @@ cleartree(dns_db_t *db, dns_name_t *name) {
 		goto cleanup;
 
 	result = dns_dbiterator_seek(iter, name);
+	if (result == DNS_R_PARTIALMATCH)
+		result = dns_dbiterator_next(iter);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
@@ -1235,6 +1255,8 @@ cleartree(dns_db_t *db, dns_name_t *name) {
 		dns_db_detachnode(db, &node);
 	if (iter != NULL)
 		dns_dbiterator_destroy(&iter);
+	if (top != NULL)
+		dns_db_detachnode(db, &top);
 
 	return (answer);
 }
@@ -1252,7 +1274,7 @@ dns_cache_flushnode(dns_cache_t *cache, dns_name_t *name,
 	dns_dbnode_t *node = NULL;
 	dns_db_t *db = NULL;
 
-	if (dns_name_equal(name, dns_rootname))
+	if (tree && dns_name_equal(name, dns_rootname))
 		return (dns_cache_flush(cache));
 
 	LOCK(&cache->lock);

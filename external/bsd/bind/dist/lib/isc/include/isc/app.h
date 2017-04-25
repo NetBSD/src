@@ -1,7 +1,7 @@
-/*	$NetBSD: app.h,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
+/*	$NetBSD: app.h,v 1.2.6.3 2017/04/25 19:54:32 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -203,6 +203,16 @@ isc_app_run(void);
  * Returns:
  *\li	ISC_R_SUCCESS			Shutdown has been requested.
  *\li	ISC_R_RELOAD			Reload has been requested.
+ */
+
+isc_boolean_t
+isc_app_isrunning(void);
+/*!<
+ * \brief Return if the ISC library application is running.
+ *
+ * Returns:
+ *\li	ISC_TRUE    App is running.
+ *\li	ISC_FALSE   App is not running.
  */
 
 isc_result_t

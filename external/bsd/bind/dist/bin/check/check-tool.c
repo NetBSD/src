@@ -1,7 +1,7 @@
-/*	$NetBSD: check-tool.c,v 1.2.6.3 2014/12/25 17:53:59 msaitoh Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.2.6.4 2017/04/25 19:54:09 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -35,6 +35,7 @@
 #include <isc/mem.h>
 #include <isc/netdb.h>
 #include <isc/net.h>
+#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/stdio.h>
 #include <isc/string.h>

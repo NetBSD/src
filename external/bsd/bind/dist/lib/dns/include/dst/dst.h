@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.3.4.4 2015/11/15 19:09:17 bouyer Exp $	*/
+/*	$NetBSD: dst.h,v 1.3.4.5 2017/04/25 19:54:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

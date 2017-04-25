@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-async.c,v 1.2.6.2 2014/12/25 17:54:28 msaitoh Exp $	*/
+/*	$NetBSD: sample-async.c,v 1.2.6.3 2017/04/25 19:54:31 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,7 @@
 #include <isc/buffer.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/sockaddr.h>
 #include <isc/task.h>

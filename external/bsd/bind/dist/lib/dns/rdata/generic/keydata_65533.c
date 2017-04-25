@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.3.4.4 2015/11/15 19:09:17 bouyer Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.3.4.5 2017/04/25 19:54:29 snj Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -35,7 +35,7 @@ fromtext_keydata(ARGS_FROMTEXT) {
 	dns_keyflags_t flags;
 	isc_uint32_t refresh, addhd, removehd;
 
-	REQUIRE(type == 65533);
+	REQUIRE(type == dns_rdatatype_keydata);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -100,11 +100,11 @@ totext_keydata(ARGS_TOTEXT) {
 	char buf[sizeof("64000")];
 	unsigned int flags;
 	unsigned char algorithm;
-	unsigned long refresh, add, remove;
+	unsigned long refresh, add, delete;
 	char algbuf[DNS_NAME_FORMATSIZE];
 	const char *keyinfo;
 
-	REQUIRE(rdata->type == 65533);
+	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	if ((tctx->flags & DNS_STYLEFLAG_KEYDATA) == 0 || rdata->length < 16)
 		return (unknown_totext(rdata, tctx, target));
@@ -124,9 +124,9 @@ totext_keydata(ARGS_TOTEXT) {
 	RETERR(str_totext(" ", target));
 
 	/* remove hold-down */
-	remove = uint32_fromregion(&sr);
+	delete = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	RETERR(dns_time32_totext(remove, target));
+	RETERR(dns_time32_totext(delete, target));
 	RETERR(str_totext(" ", target));
 
 	/* flags */
@@ -208,7 +208,7 @@ totext_keydata(ARGS_TOTEXT) {
 			isc_time_formathttptimestamp(&t, rbuf, sizeof(rbuf));
 			RETERR(str_totext(rbuf, target));
 
-			if (add == 0) {
+			if (add == 0U) {
 				RETERR(str_totext(tctx->linebreak, target));
 				RETERR(str_totext("; no trust", target));
 			} else {
@@ -226,11 +226,11 @@ totext_keydata(ARGS_TOTEXT) {
 				RETERR(str_totext(abuf, target));
 			}
 
-			if (remove != 0) {
+			if (delete != 0U) {
 				RETERR(str_totext(tctx->linebreak, target));
 				RETERR(str_totext("; removal pending: ",
 						  target));
-				isc_time_set(&t, remove, 0);
+				isc_time_set(&t, delete, 0);
 				isc_time_formathttptimestamp(&t, dbuf,
 							     sizeof(dbuf));
 				RETERR(str_totext(dbuf, target));
@@ -245,7 +245,7 @@ static inline isc_result_t
 fromwire_keydata(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(type == 65533);
+	REQUIRE(type == dns_rdatatype_keydata);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -261,7 +261,7 @@ static inline isc_result_t
 towire_keydata(ARGS_TOWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 65533);
+	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	UNUSED(cctx);
 
@@ -276,7 +276,7 @@ compare_keydata(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 65533);
+	REQUIRE(rdata1->type == dns_rdatatype_keydata);
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
@@ -287,7 +287,7 @@ static inline isc_result_t
 fromstruct_keydata(ARGS_FROMSTRUCT) {
 	dns_rdata_keydata_t *keydata = source;
 
-	REQUIRE(type == 65533);
+	REQUIRE(type == dns_rdatatype_keydata);
 	REQUIRE(source != NULL);
 	REQUIRE(keydata->common.rdtype == type);
 	REQUIRE(keydata->common.rdclass == rdclass);
@@ -322,7 +322,7 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 	dns_rdata_keydata_t *keydata = target;
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 65533);
+	REQUIRE(rdata->type == dns_rdatatype_keydata);
 	REQUIRE(target != NULL);
 
 	keydata->common.rdclass = rdata->rdclass;
@@ -382,7 +382,7 @@ freestruct_keydata(ARGS_FREESTRUCT) {
 	dns_rdata_keydata_t *keydata = (dns_rdata_keydata_t *) source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(keydata->common.rdtype == 65533);
+	REQUIRE(keydata->common.rdtype == dns_rdatatype_keydata);
 
 	if (keydata->mctx == NULL)
 		return;
@@ -394,7 +394,7 @@ freestruct_keydata(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_keydata(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 65533);
+	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -407,7 +407,7 @@ static inline isc_result_t
 digest_keydata(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 65533);
+	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -417,7 +417,7 @@ digest_keydata(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_keydata(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 65533);
+	REQUIRE(type == dns_rdatatype_keydata);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -430,7 +430,7 @@ checkowner_keydata(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_keydata(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 65533);
+	REQUIRE(rdata->type == dns_rdatatype_keydata);
 
 	UNUSED(rdata);
 	UNUSED(owner);

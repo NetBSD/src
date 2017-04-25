@@ -1,0 +1,48 @@
+
+Installation
+------------
+
+Queryparse requires the dnspython and pcapy python modules.  Pcapy depends 
+upon the pcap library.
+
+Libpcap may be obtained from http://www.tcpdump.org/
+Dnspython may be obtained from http://www.dnspython.org/
+Pcapy may be obtained from http://oss.coresecurity.com/projects/pcapy.html
+
+Ensure queryparse is somewhere in your path.
+
+
+Usage
+-----
+queryparse -i <input file> -o <output file>
+
+  -i <input file>: the tcpdump file that will be parsed to locate DNS
+                   queries.  
+
+  -o <output file>: the file to which you wish to save the queries parsed
+                    from <input file>.  When complete, this file is suitable
+                    for use as input to dnsperf.
+
+  -r                Keep packets whose RD flag is not set.
+                    Use this flag when parsing captures from authoritative 
+                    servers.  When parsing captures from caching servers,
+                    do not use this flag unless you also want to parse the
+                    queries the server itself is sending.
+
+  -R                Parse response packets (QR=1), instead of query packets
+                    (QR=0). 
+                    
+
+Queryparse takes as input a packet capture file as created by tcpdump (or any
+other program that can save data in pcap format).  It parses every UDP packet,
+looking for DNS queries.  When it finds a potential query, it makes every
+effort to parse it as a valid query.
+
+Once queryparse has finished, it will print a set of statistics regarding
+the capture file to STDOUT.
+
+
+NOTE: Currently, queryparse will correctly handle packets contained in either 
+Ethernet frames or Cisco HDLC frames.  It is not guaranteed to work with other 
+framing formats.
+

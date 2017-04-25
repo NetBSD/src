@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -64,9 +64,10 @@ RANDFILE=$TOP/bin/tests/system/random.data
 # v6synth
 SUBDIRS="acl additional allow_query addzone autosign builtin
 	 cacheclean case checkconf @CHECKDS@ checknames checkzone
-	 @COVERAGE@ database dlv dlvauto dlz dlzexternal dname dns64
-	 dnssec ecdsa emptyzones filter-aaaa formerr forward glue
-	 gost ixfr inline legacy limits logfileconfig lwresd masterfile
+	 @COVERAGE@ database digdelv dlv dlvauto dlz dlzexternal dname dns64
+	 dnssec ecdsa emptyzones
+         fetchlimit filter-aaaa formerr forward glue gost ixfr inline
+         legacy limits logfileconfig lwresd masterfile
 	 masterformat metadata notify nslookup nsupdate pending pkcs11
 	 reclimit redirect resolver rndc rpz rrl rrsetorder rsabigexponent
 	 smartsign sortlist spf staticstub stub tkey tsig tsiggss
@@ -75,6 +76,12 @@ SUBDIRS="acl additional allow_query addzone autosign builtin
 
 # Use the CONFIG_SHELL detected by configure for tests
 SHELL=@SHELL@
+
+# CURL will be empty if no program was found by configure
+CURL=@CURL@
+
+# XMLLINT will be empty if no program was found by configure
+XMLLINT=@XMLLINT@
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
@@ -90,6 +97,14 @@ else
 	TESTSOCK6=false
 fi
 
+if grep "^#define WANT_IPV6 1" $TOP/config.h > /dev/null 2>&1 ; then
+	TESTSOCK6="$TESTSOCK6"
+else
+	TESTSOCK6=false
+fi
+
+. ${TOP}/version
+
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
        PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT ARPANAME SAMPLE NSLOOKUP
+       JOURNALPRINT ARPANAME SAMPLE NSLOOKUP DESCRIPTION

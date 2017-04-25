@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4.4.3 2015/11/15 19:09:10 bouyer Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.4.4 2017/04/25 19:54:12 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,6 +34,7 @@
 #include <isc/log.h>
 #include <isc/net.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/random.h>
 #include <isc/socket.h>
 #include <isc/stdtime.h>
@@ -105,7 +106,7 @@ command is one of the following:\n\
 		Add zone to given view. Requires new-zone-file option.\n\
   delzone zone [class [view]]\n\
 		Removes zone from given view. Requires new-zone-file option.\n\
-  dumpdb [-all|-cache|-zones] [view ...]\n\
+  dumpdb [-all|-cache|-zones|-adb|-bad|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
   flush 	Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\
@@ -250,8 +251,8 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 	DO("parse message", isccc_cc_fromwire(&source, &response, &secret));
 
 	data = isccc_alist_lookup(response, "_data");
-	if (data == NULL)
-		fatal("no data section in response");
+	if (!isccc_alist_alistp(data))
+		fatal("bad or missing data section in response");
 	result = isccc_cc_lookupstring(data, "err", &errormsg);
 	if (result == ISC_R_SUCCESS) {
 		failed = ISC_TRUE;
@@ -314,8 +315,8 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 	DO("parse message", isccc_cc_fromwire(&source, &response, &secret));
 
 	_ctrl = isccc_alist_lookup(response, "_ctrl");
-	if (_ctrl == NULL)
-		fatal("_ctrl section missing");
+	if (!isccc_alist_alistp(_ctrl))
+		fatal("bad or missing ctrl section in response");
 	nonce = 0;
 	if (isccc_cc_lookupuint32(_ctrl, "_nonce", &nonce) != ISC_R_SUCCESS)
 		nonce = 0;

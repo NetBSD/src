@@ -1,4 +1,4 @@
-/*	$NetBSD: nslookup.c,v 1.3.4.4 2015/11/15 19:09:09 bouyer Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.3.4.5 2017/04/25 19:54:09 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -587,7 +587,7 @@ version(void) {
 
 static void
 setoption(char *opt) {
-	if (strncasecmp(opt, "all", 4) == 0) {
+	if (strncasecmp(opt, "all", 3) == 0) {
 		show_settings(ISC_TRUE, ISC_FALSE);
 	} else if (strncasecmp(opt, "class=", 6) == 0) {
 		if (testclass(&opt[6]))

@@ -1,7 +1,7 @@
-/*	$NetBSD: herror.c,v 1.3.4.2 2014/12/25 17:54:32 msaitoh Exp $	*/
+/*	$NetBSD: herror.c,v 1.3.4.3 2017/04/25 19:54:34 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -76,6 +76,8 @@ static const char rcsid[] =
 #include <config.h>
 
 #include <stdio.h>
+
+#include <isc/print.h>
 
 #include <lwres/netdb.h>
 #include <lwres/platform.h>

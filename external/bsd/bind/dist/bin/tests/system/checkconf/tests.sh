@@ -1,4 +1,4 @@
-# Copyright (C) 2005, 2007, 2010-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2010-2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -51,6 +51,15 @@ ret=0
 	$CHECKCONF $bad > /dev/null 2>&1
 if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
+done
+
+for good in good-*.conf
+do
+	ret=0
+	echo "I: checking that named-checkconf detects no error in $good"
+	$CHECKCONF $good > /dev/null 2>&1
+	if [ $? != 0 ]; then echo "I:failed"; ret=1; fi
+	status=`expr $status + $ret`
 done
 
 echo "I: checking that named-checkconf -z catches missing hint file"
@@ -160,6 +169,30 @@ $CHECKCONF -z altdb.conf > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 
+echo "I: checking that named-checkconf -z fails on view with ANY class"
+ret=0
+$CHECKCONF -z view-class-any1.conf > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z fails on view with CLASS255 class"
+ret=0
+$CHECKCONF -z view-class-any2.conf > /dev/null 2>&1 && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z passes on view with IN class"
+ret=0
+$CHECKCONF -z view-class-in1.conf > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: checking that named-checkconf -z passes on view with CLASS1 class"
+ret=0
+$CHECKCONF -z view-class-in2.conf > /dev/null 2>&1 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
 echo "I: check that check-names fails as configured"
 ret=0
 $CHECKCONF -z check-names-fail.conf > checkconf.out1 2>&1 && ret=1
@@ -205,6 +238,13 @@ ret=0
 $CHECKCONF -z check-srv-cname-fail.conf > checkconf.out6 2>&1 && ret=1
 grep "SRV.* is a CNAME (illegal)" checkconf.out6 > /dev/null || ret=1
 grep "zone check-mx-cname/IN: loaded serial" < checkconf.out6 > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
+status=`expr $status + $ret`
+
+echo "I: check that named-checkconf -p properly print a port range"
+ret=0
+$CHECKCONF -p portrange-good.conf > checkconf.out7 2>&1 || ret=1
+grep "range 8610 8614;" checkconf.out7 > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; ret=1; fi
 status=`expr $status + $ret`
 

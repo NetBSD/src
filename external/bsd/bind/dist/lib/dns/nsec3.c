@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3.c,v 1.4.4.4 2015/11/15 19:09:16 bouyer Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.4.4.5 2017/04/25 19:54:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2006, 2008-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <isc/log.h>
 #include <isc/string.h>
 #include <isc/util.h>
+#include <isc/safe.h>
 
 #include <dst/dst.h>
 
@@ -1343,7 +1344,7 @@ dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version, dns_name_t *name,
 	CHECK(dns_db_createiterator(db, DNS_DB_NSEC3ONLY, &dbit));
 
 	result = dns_dbiterator_seek(dbit, hashname);
-	if (result == ISC_R_NOTFOUND)
+	if (result == ISC_R_NOTFOUND || result == DNS_R_PARTIALMATCH)
 		goto success;
 	if (result != ISC_R_SUCCESS)
 		goto failure;
@@ -1448,7 +1449,7 @@ dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version, dns_name_t *name,
 					 &empty, origin, hash, iterations,
 					 salt, salt_length));
 		result = dns_dbiterator_seek(dbit, hashname);
-		if (result == ISC_R_NOTFOUND)
+		if (result == ISC_R_NOTFOUND || result == DNS_R_PARTIALMATCH)
 			goto success;
 		if (result != ISC_R_SUCCESS)
 			goto failure;
@@ -1931,7 +1932,7 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, dns_name_t* name,
 	 * Work out what this NSEC3 covers.
 	 * Inside (<0) or outside (>=0).
 	 */
-	scope = memcmp(owner, nsec3.next, nsec3.next_length);
+	scope = isc_safe_memcompare(owner, nsec3.next, nsec3.next_length);
 
 	/*
 	 * Prepare to compute all the hashes.
@@ -1956,7 +1957,7 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, dns_name_t* name,
 			return (ISC_R_IGNORE);
 		}
 
-		order = memcmp(hash, owner, length);
+		order = isc_safe_memcompare(hash, owner, length);
 		if (first && order == 0) {
 			/*
 			 * The hashes are the same.

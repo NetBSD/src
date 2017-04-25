@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: safe_test.c,v 1.3.2.2 2014/12/25 17:54:30 msaitoh Exp $ */
+/* $Id: safe_test.c,v 1.3.2.3 2017/04/25 19:54:32 snj Exp $ */
 
 /* ! \file */
 
@@ -28,25 +28,46 @@
 #include <isc/safe.h>
 #include <isc/util.h>
 
-ATF_TC(isc_safe_memcmp);
-ATF_TC_HEAD(isc_safe_memcmp, tc) {
-	atf_tc_set_md_var(tc, "descr", "safe memcmp()");
+ATF_TC(isc_safe_memequal);
+ATF_TC_HEAD(isc_safe_memequal, tc) {
+	atf_tc_set_md_var(tc, "descr", "safe memequal()");
 }
-ATF_TC_BODY(isc_safe_memcmp, tc) {
+ATF_TC_BODY(isc_safe_memequal, tc) {
 	UNUSED(tc);
 
-	ATF_CHECK(isc_safe_memcmp("test", "test", 4));
-	ATF_CHECK(!isc_safe_memcmp("test", "tesc", 4));
-	ATF_CHECK(isc_safe_memcmp("\x00\x00\x00\x00", "\x00\x00\x00\x00", 4));
-	ATF_CHECK(!isc_safe_memcmp("\x00\x00\x00\x00", "\x00\x00\x00\x01", 4));
-	ATF_CHECK(!isc_safe_memcmp("\x00\x00\x00\x02", "\x00\x00\x00\x00", 4));
+	ATF_CHECK(isc_safe_memequal("test", "test", 4));
+	ATF_CHECK(!isc_safe_memequal("test", "tesc", 4));
+	ATF_CHECK(isc_safe_memequal("\x00\x00\x00\x00",
+				    "\x00\x00\x00\x00", 4));
+	ATF_CHECK(!isc_safe_memequal("\x00\x00\x00\x00",
+				     "\x00\x00\x00\x01", 4));
+	ATF_CHECK(!isc_safe_memequal("\x00\x00\x00\x02",
+				     "\x00\x00\x00\x00", 4));
+}
+
+ATF_TC(isc_safe_memcompare);
+ATF_TC_HEAD(isc_safe_memcompare, tc) {
+	atf_tc_set_md_var(tc, "descr", "safe memcompare()");
+}
+ATF_TC_BODY(isc_safe_memcompare, tc) {
+	UNUSED(tc);
+
+	ATF_CHECK(isc_safe_memcompare("test", "test", 4) == 0);
+	ATF_CHECK(isc_safe_memcompare("test", "tesc", 4) > 0);
+	ATF_CHECK(isc_safe_memcompare("test", "tesy", 4) < 0);
+	ATF_CHECK(isc_safe_memcompare("\x00\x00\x00\x00",
+				      "\x00\x00\x00\x00", 4) == 0);
+	ATF_CHECK(isc_safe_memcompare("\x00\x00\x00\x00",
+				      "\x00\x00\x00\x01", 4) < 0);
+	ATF_CHECK(isc_safe_memcompare("\x00\x00\x00\x02",
+				      "\x00\x00\x00\x00", 4) > 0);
 }
 
 /*
  * Main
  */
 ATF_TP_ADD_TCS(tp) {
-	ATF_TP_ADD_TC(tp, isc_safe_memcmp);
+	ATF_TP_ADD_TC(tp, isc_safe_memequal);
+	ATF_TP_ADD_TC(tp, isc_safe_memcompare);
 	return (atf_no_error());
 }
-

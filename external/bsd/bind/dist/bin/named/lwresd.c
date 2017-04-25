@@ -1,7 +1,7 @@
-/*	$NetBSD: lwresd.c,v 1.2.6.2 2014/12/25 17:54:01 msaitoh Exp $	*/
+/*	$NetBSD: lwresd.c,v 1.2.6.3 2017/04/25 19:54:10 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -604,7 +604,7 @@ listener_copysock(ns_lwreslistener_t *oldlistener,
 
 static isc_result_t
 listener_startclients(ns_lwreslistener_t *listener) {
-	ns_lwdclientmgr_t *cm;
+	ns_lwdclientmgr_t *cm, *next;
 	unsigned int i;
 	isc_result_t result;
 
@@ -628,6 +628,7 @@ listener_startclients(ns_lwreslistener_t *listener) {
 	LOCK(&listener->lock);
 	cm = ISC_LIST_HEAD(listener->cmgrs);
 	while (cm != NULL) {
+		next = ISC_LIST_NEXT(cm, link);
 		result = ns_lwdclient_startrecv(cm);
 		if (result != ISC_R_SUCCESS)
 			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
@@ -635,7 +636,7 @@ listener_startclients(ns_lwreslistener_t *listener) {
 				      "could not start lwres "
 				      "client handler: %s",
 				      isc_result_totext(result));
-		cm = ISC_LIST_NEXT(cm, link);
+		cm = next;
 	}
 	UNLOCK(&listener->lock);
 
