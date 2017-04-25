@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.177 2017/04/20 08:45:09 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.178 2017/04/25 05:44:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.177 2017/04/20 08:45:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.178 2017/04/25 05:44:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -211,6 +211,7 @@ in_pcballoc(struct socket *so, void *v)
 			pool_put(&inpcb_pool, inp);
 			return error;
 		}
+		inp->inp_sp->sp_inph = (struct inpcb_hdr *)inp;
 	}
 #endif
 	so->so_pcb = inp;
