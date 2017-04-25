@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.308 2017/04/20 09:18:05 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.309 2017/04/25 17:11:47 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.308 2017/04/20 09:18:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.309 2017/04/25 17:11:47 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2667,7 +2667,7 @@ bge_blockinit(struct bge_softc *sc)
 		/*
 		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
 		 * Bits 15-2 : Maximum RX frame size
-		 * Bit 1     : 1 = Ring Disabled, 0 = Ring ENabled
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
 		 * Bit 0     : Reserved
 		 */
 		rcb->bge_maxlen_flags =
