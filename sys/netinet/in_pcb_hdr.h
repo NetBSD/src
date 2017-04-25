@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb_hdr.h,v 1.11 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: in_pcb_hdr.h,v 1.12 2017/04/25 05:44:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -84,6 +84,7 @@ struct inpcb_hdr {
 };
 
 #define	sotoinpcb_hdr(so)	((struct inpcb_hdr *)(so)->so_pcb)
+#define	inph_locked(inph)	(solocked((inph)->inph_socket))
 
 LIST_HEAD(inpcbhead, inpcb_hdr);
 
