@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.16 2017/04/25 21:36:41 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.17 2017/04/25 21:53:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.16 2017/04/25 21:36:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.17 2017/04/25 21:53:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -877,7 +877,7 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	 * with attach/detach.
 	 */
 	mutex_enter(&device_lock);
-	d = bdevsw_lookup(dev);
+	d = bdevsw_lookup_acquire(dev);
 	mutex_exit(&device_lock);
 	if (d == NULL)
 		return ENXIO;
@@ -885,6 +885,7 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	bdevsw_release(dev);
 
 	return rv;
 }
@@ -895,12 +896,13 @@ bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	const struct bdevsw *d;
 	int rv, mpflag;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_close)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	bdevsw_release(dev);
 
 	return rv;
 }
@@ -916,7 +918,7 @@ bdev_strategy(struct buf *bp)
 
 	SDT_PROBE1(io, kernel, , start, bp);
 
-	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
+	if ((d = bdevsw_lookup_acquire(bp->b_dev)) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_resid = bp->b_bcount;
 		biodone_vfs(bp); /* biodone() iff vfs present */
@@ -926,6 +928,7 @@ bdev_strategy(struct buf *bp)
 	DEV_LOCK(d);
 	(*d->d_strategy)(bp);
 	DEV_UNLOCK(d);
+	bdevsw_release(bp->b_dev);
 }
 
 int
@@ -934,12 +937,13 @@ bdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	const struct bdevsw *d;
 	int rv, mpflag;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_ioctl)(dev, cmd, data, flag, l);
 	DEV_UNLOCK(d);
+	bdevsw_release(dev);
 
 	return rv;
 }
@@ -969,20 +973,28 @@ int
 bdev_flags(dev_t dev)
 {
 	const struct bdevsw *d;
+	int rv;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return 0;
-	return d->d_flag & ~D_TYPEMASK;
+	rv = d->d_flag & ~D_TYPEMASK;
+	bdevsw_release();
+
+	return rv;
 }
 
 int
 bdev_type(dev_t dev)
 {
 	const struct bdevsw *d;
+	int rv;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return D_OTHER;
-	return d->d_flag & D_TYPEMASK;
+	rv = d->d_flag & D_TYPEMASK;
+	bdevsw_release(dev);
+
+	return rv;
 }
 
 int
@@ -991,7 +1003,7 @@ bdev_size(dev_t dev)
 	const struct bdevsw *d;
 	int rv, mpflag = 0;
 
-	if ((d = bdevsw_lookup(dev)) == NULL ||
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL ||
 	    d->d_psize == NULL)
 		return -1;
 
@@ -1004,7 +1016,7 @@ bdev_size(dev_t dev)
 	rv = (*d->d_psize)(dev);
 	if ((boothowto & RB_DUMP) == 0)
 		DEV_UNLOCK(d);
-
+	bdevsw_release(dev);
 	return rv;
 }
 
@@ -1014,12 +1026,13 @@ bdev_discard(dev_t dev, off_t pos, off_t len)
 	const struct bdevsw *d;
 	int rv, mpflag;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_discard)(dev, pos, len);
 	DEV_UNLOCK(d);
+	bdevsw_release(dev);
 
 	return rv;
 }
@@ -1035,7 +1048,7 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	 * with attach/detach.
 	 */
 	mutex_enter(&device_lock);
-	d = cdevsw_lookup(dev);
+	d = cdevsw_lookup_acquire(dev);
 	mutex_exit(&device_lock);
 	if (d == NULL)
 		return ENXIO;
@@ -1043,6 +1056,7 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1053,12 +1067,13 @@ cdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_close)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1069,12 +1084,13 @@ cdev_read(dev_t dev, struct uio *uio, int flag)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_read)(dev, uio, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1085,12 +1101,13 @@ cdev_write(dev_t dev, struct uio *uio, int flag)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_write)(dev, uio, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1101,12 +1118,13 @@ cdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_ioctl)(dev, cmd, data, flag, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1117,27 +1135,32 @@ cdev_stop(struct tty *tp, int flag)
 	const struct cdevsw *d;
 	int mpflag;
 
-	if ((d = cdevsw_lookup(tp->t_dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(tp->t_dev)) == NULL)
 		return;
 
 	DEV_LOCK(d);
 	(*d->d_stop)(tp, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(tp->t_dev);
 }
 
 struct tty *
 cdev_tty(dev_t dev)
 {
 	const struct cdevsw *d;
+	struct tty *rv;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return NULL;
 
 	/* XXX Check if necessary. */
 	if (d->d_tty == NULL)
-		return NULL;
+		rv = NULL;
+	else
+		rv= (*d->d_tty)(dev);
+	cdevsw_release(dev);
 
-	return (*d->d_tty)(dev);
+	return rv;
 }
 
 int
@@ -1146,12 +1169,13 @@ cdev_poll(dev_t dev, int flag, lwp_t *l)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return POLLERR;
 
 	DEV_LOCK(d);
 	rv = (*d->d_poll)(dev, flag, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1163,12 +1187,13 @@ cdev_mmap(dev_t dev, off_t off, int flag)
 	paddr_t rv;
 	int mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return (paddr_t)-1LL;
 
 	DEV_LOCK(d);
 	rv = (*d->d_mmap)(dev, off, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1179,12 +1204,13 @@ cdev_kqfilter(dev_t dev, struct knote *kn)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_kqfilter)(dev, kn);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1195,12 +1221,13 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_discard)(dev, pos, len);
 	DEV_UNLOCK(d);
+	cdevsw_release(dev);
 
 	return rv;
 }
@@ -1209,20 +1236,30 @@ int
 cdev_flags(dev_t dev)
 {
 	const struct cdevsw *d;
+	int rv;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
-		return 0;
-	return d->d_flag & ~D_TYPEMASK;
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
+		rv = 0;
+	else
+		rv = d->d_flag & ~D_TYPEMASK;
+	cdevsw_release(dev);
+
+	return rv;
 }
 
 int
 cdev_type(dev_t dev)
 {
 	const struct cdevsw *d;
+	int rv;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
-		return D_OTHER;
-	return d->d_flag & D_TYPEMASK;
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
+		rv = D_OTHER;
+	else
+		rv = d->d_flag & D_TYPEMASK;
+	cdevsw_release(dev);
+
+	return rv;
 }
 
 /*
