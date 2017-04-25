@@ -1,7 +1,7 @@
-/*	$NetBSD: uri_256.c,v 1.1.1.1.4.1.4.1 2014/12/31 11:59:00 msaitoh Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.1.1.1.4.1.4.2 2017/04/25 22:01:56 snj Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@ static inline isc_result_t
 fromtext_uri(ARGS_FROMTEXT) {
 	isc_token_t token;
 
-	REQUIRE(type == 256);
+	REQUIRE(type == dns_rdatatype_uri);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -72,7 +72,7 @@ totext_uri(ARGS_TOTEXT) {
 
 	UNUSED(tctx);
 
-	REQUIRE(rdata->type == 256);
+	REQUIRE(rdata->type == dns_rdatatype_uri);
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &region);
@@ -104,7 +104,7 @@ static inline isc_result_t
 fromwire_uri(ARGS_FROMWIRE) {
 	isc_region_t region;
 
-	REQUIRE(type == 256);
+	REQUIRE(type == dns_rdatatype_uri);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -129,7 +129,7 @@ static inline isc_result_t
 towire_uri(ARGS_TOWIRE) {
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 256);
+	REQUIRE(rdata->type == dns_rdatatype_uri);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(cctx);
@@ -146,7 +146,7 @@ compare_uri(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 256);
+	REQUIRE(rdata1->type == dns_rdatatype_uri);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -178,7 +178,7 @@ static inline isc_result_t
 fromstruct_uri(ARGS_FROMSTRUCT) {
 	dns_rdata_uri_t *uri = source;
 
-	REQUIRE(type == 256);
+	REQUIRE(type == dns_rdatatype_uri);
 	REQUIRE(source != NULL);
 	REQUIRE(uri->common.rdtype == type);
 	REQUIRE(uri->common.rdclass == rdclass);
@@ -208,7 +208,7 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	dns_rdata_uri_t *uri = target;
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 256);
+	REQUIRE(rdata->type == dns_rdatatype_uri);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -251,7 +251,7 @@ freestruct_uri(ARGS_FREESTRUCT) {
 	dns_rdata_uri_t *uri = (dns_rdata_uri_t *) source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(uri->common.rdtype == 256);
+	REQUIRE(uri->common.rdtype == dns_rdatatype_uri);
 
 	if (uri->mctx == NULL)
 		return;
@@ -263,7 +263,7 @@ freestruct_uri(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_uri(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 256);
+	REQUIRE(rdata->type == dns_rdatatype_uri);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -276,7 +276,7 @@ static inline isc_result_t
 digest_uri(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 256);
+	REQUIRE(rdata->type == dns_rdatatype_uri);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -286,7 +286,7 @@ digest_uri(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_uri(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 256);
+	REQUIRE(type == dns_rdatatype_uri);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -299,7 +299,7 @@ checkowner_uri(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_uri(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 256);
+	REQUIRE(rdata->type == dns_rdatatype_uri);
 
 	UNUSED(rdata);
 	UNUSED(owner);

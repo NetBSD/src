@@ -1,7 +1,7 @@
-/*	$NetBSD: keygen.c,v 1.2.6.1.4.1 2014/12/31 11:58:28 msaitoh Exp $	*/
+/*	$NetBSD: keygen.c,v 1.2.6.1.4.2 2017/04/25 22:01:26 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,7 @@
 #include <isc/file.h>
 #include <isc/keyboard.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/string.h>
 

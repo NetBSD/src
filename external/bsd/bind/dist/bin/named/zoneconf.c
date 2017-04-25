@@ -1,7 +1,7 @@
-/*	$NetBSD: zoneconf.c,v 1.3.4.1.4.3 2015/11/17 19:31:08 bouyer Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.3.4.1.4.4 2017/04/25 22:01:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -711,6 +711,8 @@ configure_staticstub(const cfg_obj_t *zconfig, dns_zone_t *zone,
 				    sizeof(*rdata) + region.length);
 		}
 	}
+
+	INSIST(dbversion == NULL);
 
 	return (result);
 }

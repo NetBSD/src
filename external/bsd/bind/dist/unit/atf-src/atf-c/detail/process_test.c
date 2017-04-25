@@ -1,4 +1,4 @@
-/*	$NetBSD: process_test.c,v 1.1.1.1.10.1 2014/12/31 11:59:11 msaitoh Exp $	*/
+/*	$NetBSD: process_test.c,v 1.1.1.1.10.2 2017/04/25 22:02:03 snj Exp $	*/
 
 /*
  * Automated Testing Framework (atf)

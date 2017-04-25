@@ -1,4 +1,4 @@
-/*	$NetBSD: app_api.c,v 1.2.6.1.4.1 2014/12/31 11:59:03 msaitoh Exp $	*/
+/*	$NetBSD: app_api.c,v 1.2.6.1.4.2 2017/04/25 22:01:58 snj Exp $	*/
 
 /*
  * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
@@ -244,5 +244,13 @@ isc_app_unblock(void) {
 		return;
 
 	isc__app_unblock();
+}
+
+isc_boolean_t
+isc_app_isrunning(void) {
+	if (isc_bind9)
+		return(isc__app_isrunning());
+
+	return (ISC_R_NOTIMPLEMENTED);
 }
 

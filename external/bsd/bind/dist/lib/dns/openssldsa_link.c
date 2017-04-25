@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.3.4.1.4.3 2015/11/17 19:31:14 bouyer Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.3.4.1.4.4 2017/04/25 22:01:53 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,8 +30,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #ifdef OPENSSL
 #ifndef USE_EVP
@@ -82,6 +80,8 @@ openssldsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 	UNUSED(key);
 
 	sha1ctx = isc_mem_get(dctx->mctx, sizeof(isc_sha1_t));
+	if (sha1ctx == NULL)
+		return (ISC_R_NOMEMORY);
 	isc_sha1_init(sha1ctx);
 	dctx->ctxdata.sha1ctx = sha1ctx;
 	return (ISC_R_SUCCESS);
@@ -139,6 +139,7 @@ openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 	DSA *dsa = key->keydata.dsa;
 	isc_region_t r;
 	DSA_SIG *dsasig;
+	unsigned int klen;
 #if USE_EVP
 	EVP_MD_CTX *evp_md_ctx = dctx->ctxdata.evp_md_ctx;
 	EVP_PKEY *pkey;
@@ -190,6 +191,7 @@ openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 					       ISC_R_FAILURE));
 	}
 	free(sigbuf);
+
 #elif 0
 	/* Only use EVP for the Digest */
 	if (!EVP_DigestFinal_ex(evp_md_ctx, digest, &siglen)) {
@@ -211,11 +213,17 @@ openssldsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 					       "DSA_do_sign",
 					       DST_R_SIGNFAILURE));
 #endif
-	*r.base++ = (key->key_size - 512)/64;
+
+	klen = (key->key_size - 512)/64;
+	if (klen > 255)
+		return (ISC_R_FAILURE);
+	*r.base = klen;
+	isc_region_consume(&r, 1);
+
 	BN_bn2bin_fixed(dsasig->r, r.base, ISC_SHA1_DIGESTLENGTH);
-	r.base += ISC_SHA1_DIGESTLENGTH;
+	isc_region_consume(&r, ISC_SHA1_DIGESTLENGTH);
 	BN_bn2bin_fixed(dsasig->s, r.base, ISC_SHA1_DIGESTLENGTH);
-	r.base += ISC_SHA1_DIGESTLENGTH;
+	isc_region_consume(&r, ISC_SHA1_DIGESTLENGTH);
 	DSA_SIG_free(dsasig);
 	isc_buffer_add(sig, ISC_SHA1_DIGESTLENGTH * 2 + 1);
 
@@ -341,7 +349,7 @@ progress_cb(int p, int n, BN_GENCB *cb)
 
 	UNUSED(n);
 
-	u.dptr = cb->arg;
+	u.dptr = BN_GENCB_get_arg(cb);
 	if (u.fptr != NULL)
 		u.fptr(p);
 	return (1);
@@ -354,7 +362,10 @@ openssldsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	unsigned char rand_array[ISC_SHA1_DIGESTLENGTH];
 	isc_result_t result;
 #if OPENSSL_VERSION_NUMBER > 0x00908000L
-	BN_GENCB cb;
+	BN_GENCB *cb;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	BN_GENCB _cb;
+#endif
 	union {
 		void *dptr;
 		void (*fptr)(int);
@@ -375,22 +386,30 @@ openssldsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	dsa = DSA_new();
 	if (dsa == NULL)
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-
+	cb = BN_GENCB_new();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+	if (cb == NULL) {
+		DSA_free(dsa);
+		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+	}
+#endif
 	if (callback == NULL) {
-		BN_GENCB_set_old(&cb, NULL, NULL);
+		BN_GENCB_set_old(cb, NULL, NULL);
 	} else {
 		u.fptr = callback;
-		BN_GENCB_set(&cb, &progress_cb, u.dptr);
+		BN_GENCB_set(cb, &progress_cb, u.dptr);
 	}
 
 	if (!DSA_generate_parameters_ex(dsa, key->key_size, rand_array,
 					ISC_SHA1_DIGESTLENGTH,  NULL, NULL,
-					&cb))
+					cb))
 	{
 		DSA_free(dsa);
+		BN_GENCB_free(cb);
 		return (dst__openssl_toresult2("DSA_generate_parameters_ex",
 					       DST_R_OPENSSLFAILURE));
 	}
+	BN_GENCB_free(cb);
 #else
 	dsa = DSA_generate_parameters(key->key_size, rand_array,
 				      ISC_SHA1_DIGESTLENGTH, NULL, NULL,
@@ -448,15 +467,16 @@ openssldsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 	if (r.length < (unsigned int) dnslen)
 		return (ISC_R_NOSPACE);
 
-	*r.base++ = t;
+	*r.base = t;
+	isc_region_consume(&r, 1);
 	BN_bn2bin_fixed(dsa->q, r.base, ISC_SHA1_DIGESTLENGTH);
-	r.base += ISC_SHA1_DIGESTLENGTH;
+	isc_region_consume(&r, ISC_SHA1_DIGESTLENGTH);
 	BN_bn2bin_fixed(dsa->p, r.base, key->key_size/8);
-	r.base += p_bytes;
+	isc_region_consume(&r, p_bytes);
 	BN_bn2bin_fixed(dsa->g, r.base, key->key_size/8);
-	r.base += p_bytes;
+	isc_region_consume(&r, p_bytes);
 	BN_bn2bin_fixed(dsa->pub_key, r.base, key->key_size/8);
-	r.base += p_bytes;
+	isc_region_consume(&r, p_bytes);
 
 	isc_buffer_add(data, dnslen);
 
@@ -481,29 +501,30 @@ openssldsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		return (ISC_R_NOMEMORY);
 	dsa->flags &= ~DSA_FLAG_CACHE_MONT_P;
 
-	t = (unsigned int) *r.base++;
+	t = (unsigned int) *r.base;
+	isc_region_consume(&r, 1);
 	if (t > 8) {
 		DSA_free(dsa);
 		return (DST_R_INVALIDPUBLICKEY);
 	}
 	p_bytes = 64 + 8 * t;
 
-	if (r.length < 1 + ISC_SHA1_DIGESTLENGTH + 3 * p_bytes) {
+	if (r.length < ISC_SHA1_DIGESTLENGTH + 3 * p_bytes) {
 		DSA_free(dsa);
 		return (DST_R_INVALIDPUBLICKEY);
 	}
 
 	dsa->q = BN_bin2bn(r.base, ISC_SHA1_DIGESTLENGTH, NULL);
-	r.base += ISC_SHA1_DIGESTLENGTH;
+	isc_region_consume(&r, ISC_SHA1_DIGESTLENGTH);
 
 	dsa->p = BN_bin2bn(r.base, p_bytes, NULL);
-	r.base += p_bytes;
+	isc_region_consume(&r, p_bytes);
 
 	dsa->g = BN_bin2bn(r.base, p_bytes, NULL);
-	r.base += p_bytes;
+	isc_region_consume(&r, p_bytes);
 
 	dsa->pub_key = BN_bin2bn(r.base, p_bytes, NULL);
-	r.base += p_bytes;
+	isc_region_consume(&r, p_bytes);
 
 	key->key_size = p_bytes * 8;
 

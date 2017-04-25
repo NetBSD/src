@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr.h,v 1.2.6.1 2012/06/05 21:15:29 bouyer Exp $	*/
+/*	$NetBSD: netaddr.h,v 1.2.6.1.4.1 2017/04/25 22:01:59 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -155,6 +155,12 @@ isc_boolean_t
 isc_netaddr_issitelocal(isc_netaddr_t *na);
 /*%<
  * Returns #ISC_TRUE if the address is a site local address.
+ */
+
+isc_boolean_t
+isc_netaddr_isnetzero(isc_netaddr_t *na);
+/*%<
+ * Returns #ISC_TRUE if the address is in net zero.
  */
 
 void

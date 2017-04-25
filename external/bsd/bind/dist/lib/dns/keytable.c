@@ -1,7 +1,7 @@
-/*	$NetBSD: keytable.c,v 1.5.6.1.4.3 2015/11/17 19:31:14 bouyer Exp $	*/
+/*	$NetBSD: keytable.c,v 1.5.6.1.4.4 2017/04/25 22:01:53 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/util.h>
@@ -277,16 +278,17 @@ dns_keytable_deletekeynode(dns_keytable_t *keytable, dst_key_t *dstkey) {
 	}
 
 	knode = node->data;
-	if (knode->next == NULL &&
-	    (knode->key == NULL ||
-	     dst_key_compare(knode->key, dstkey) == ISC_TRUE)) {
+	if (knode->next == NULL && knode->key != NULL &&
+	    dst_key_compare(knode->key, dstkey) == ISC_TRUE)
+	{
 		result = dns_rbt_deletenode(keytable->table, node, ISC_FALSE);
 		goto finish;
 	}
 
 	kprev = (dns_keynode_t **)(void *)&node->data;
 	while (knode != NULL) {
-		if (dst_key_compare(knode->key, dstkey) == ISC_TRUE)
+		if (knode->key != NULL &&
+		    dst_key_compare(knode->key, dstkey) == ISC_TRUE)
 			break;
 		kprev = &knode->next;
 		knode = knode->next;

@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014, 2016, 2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ digcmd () {
     # Default to +noauth and @$ns3
     # Also default to -bX where X is the @value so that OS X will choose
     #      the right IP source address.
-    digcmd_args=`echo "+noadd +time=1 +tries=1 -p 5300 $*" |   \
+    digcmd_args=`echo "+noadd +time=2 +tries=1 -p 5300 $*" |   \
 	   sed -e "/@/!s/.*/& @$ns3/"                          \
 	       -e '/-b/!s/@\([^ ]*\)/@\1 -b\1/'                \
 	       -e '/+n?o?auth/!s/.*/+noauth &/'`
@@ -326,7 +326,7 @@ nxdomain a0-1.tld2 +dnssec @$ns6           # 18 simple DO=1 without sigs
 nxdomain a0-1s-cname.tld2s  +dnssec @$ns6  # 19
 
 end_group
-ckstats $ns3 ns3 42
+ckstats $ns3 ns3 45
 ckstats $ns5 ns5 0
 ckstats $ns6 ns6 0
 
@@ -347,7 +347,7 @@ addr 14.14.14.14 a5-4.tld2		# 13 prefer QNAME to IP
 nochange a5-4.tld2	    +norecurse	# 14 check that RD=1 is required
 nochange a4-4.tld2			# 15 PASSTHRU
 nxdomain c2.crash2.tld3			# 16 assert in rbtdb.c
-ckstats $ns3 ns3 51
+ckstats $ns3 ns3 54
 nxdomain a7-1.tld2			# 17 slave policy zone (RT34450)
 cp ns2/blv2.tld2.db.in ns2/bl.tld2.db
 $RNDCCMD 10.53.0.2 reload bl.tld2
@@ -370,7 +370,7 @@ do
 	sleep 1
 done
 nxdomain a7-1.tld2			# 19 slave policy zone (RT34450)
-ckstats $ns3 ns3 53
+ckstats $ns3 ns3 56
 end_group
 
 # check that IP addresses for previous group were deleted from the radix tree
@@ -525,7 +525,7 @@ else
     echo "I:performance not checked; queryperf not available"
 fi
 
-ckstats $ns3 ns3 79
+ckstats $ns3 ns3 82
 
 # restart the main test RPZ server to see if that creates a core file
 if test -z "$HAVE_CORE"; then
@@ -546,6 +546,10 @@ echo "I:checking that ttl values are not zeroed when qtype is '*'"
 $DIG +noall +answer -p 5300 @$ns3 any a3-2.tld2 > dig.out.any
 ttl=`awk '/a3-2 tld2 text/ {print $2}' dig.out.any`
 if test ${ttl:=0} -eq 0; then setret I:failed; fi
+
+echo "I:checking rpz with delegation fails correctly"
+$DIG -p 5300 @$ns3 ns example.com > dig.out.delegation
+grep "status: SERVFAIL" dig.out.delegation > /dev/null || setret "I:failed"
 
 echo "I:exit status: $status"
 exit $status

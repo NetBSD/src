@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -23,12 +23,14 @@ SYSTEMTESTTOP=.
 . $SYSTEMTESTTOP/conf.sh
 
 stopservers=true
+clean=true
 
 case $1 in
-   --keep) stopservers=false; shift ;;
+   --keep|-k) stopservers=false; shift ;;
+   --noclean|-n) clean=false; shift ;;
 esac
 
-test $# -gt 0 || { echo "usage: $0 [--keep] test-directory" >&2; exit 1; }
+test $# -gt 0 || { echo "usage: $0 [--keep|--noclean] test-directory" >&2; exit 1; }
 
 test=$1
 shift
@@ -87,7 +89,7 @@ then
 fi
 
 # Start name servers running
-$PERL start.pl $test || exit 1
+$PERL start.pl $test || { echo "E:$test:`date`"; exit 1; }
 
 # Run the tests
 ( cd $test ; $SHELL tests.sh )
@@ -113,11 +115,18 @@ if [ $status != 0 ]; then
 else
 	echo "R:PASS"
 
-	# Clean up.
-        rm -f $SYSTEMTESTTOP/random.data
-	if test -f $test/clean.sh
+	if $clean
 	then
-	   ( cd $test && $SHELL clean.sh "$@" )
+		rm -f $SYSTEMTESTTOP/random.data
+		if test -f $test/clean.sh
+		then
+			( cd $test && $SHELL clean.sh "$@" )
+		fi
+		if test -d ../../../.git
+		then
+			git status -su $test |
+			sed -n 's/^?? \(.*\)/I:file \1 not removed/p'
+		fi
 	fi
 fi
 

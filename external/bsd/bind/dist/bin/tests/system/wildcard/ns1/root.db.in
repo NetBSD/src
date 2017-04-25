@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: root.db.in,v 1.1.1.1.14.2 2014/12/31 11:58:50 msaitoh Exp $
+; $Id: root.db.in,v 1.1.1.1.14.3 2017/04/25 22:01:43 snj Exp $
 
 $TTL 120
 @	SOA a.root-servers.nil hostmaster.root-servers.nil 1 1800 900 604800 86400

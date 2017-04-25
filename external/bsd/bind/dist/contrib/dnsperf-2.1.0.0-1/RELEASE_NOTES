@@ -1,0 +1,183 @@
+Nominum dnsperf 2.1.0.0
+Release Notes
+************************
+ 
+December 15, 2015
+
+In addition to various bug fixes, the following new capabilities
+were added in this release:
+
+ - The -C option was added to resperf. This option enables the local
+   server to act as multiple clients.  By default, the local server
+   acts as a single client.
+
+ - the -T option was added to dnsperf. This option separates the
+   number of clients from the number of threads and allows more
+   clients to be simulated effectively.  Note that using this option
+   impacts CPU and memory, so we recommend limiting the number of
+   threads.
+
+
+-----------------------
+Nominum dnsperf 2.0.0.0
+March 1, 2012
+ 
+In the dnsperf command, the following changes occurred:
+
+ - The socket buffer size is no longer set to 32 kilobytes by default.
+
+ - A new -c clients option was added to enable the server to act as 
+   multiple clients. Each client uses the same source IP address with a 
+   unique source port. Use the "clients" argument to specify the number of 
+   clients represented by the server. We recommend limiting the number of 
+   clients represented by the server because the dnsperf process uses two  
+   threads for each client (one thread for sent packets and one for 
+   received packets), which impacts CPU and memory. 
+
+ - Example query files are no longer included with the dnsperf program.  
+   Nominum provides a sample query file that is available for download at:
+   ftp://ftp.nominum.com/pub/nominum/dnsperf/data/
+
+ - Latency reporting improved. When the -v (verbose mode) option is 
+   configured with the dnsperf command, the command output now includes 
+   latency measurements and the DNS RCODE of each response. This enables 
+   users to create their own latency graphs.
+
+ - Performance was enhanced on modern operating systems so that faster 
+   name servers can be tested.
+
+ - The dnsperf command output is enhanced to display more information in a 
+   compact format.
+
+The following options were removed from the dnsperf command:
+
+ - The -A option for displaying command line arguments passed to the 
+   dnsperf tool in the final statistics output. Now, the dnsperf command
+   output always displays command line arguments.
+
+ - The -T option for printing a histogram showing response latency after 
+   completing a test run. Now, the -v option enables users to include 
+   latency measurements in the dnsperf command output.
+
+ - The -H option for configuring the number of buckets for which response 
+   latency is displayed. Now, the -v option enables users to include
+   latency measurements in the dnsperf command output.
+
+ - The -1 option for configuring the dnsperf tool to run through the input 
+   file exactly one time. (Now, you use the -n 1 option to configure the 
+   dnsperf tool to run through the input file one time.)
+
+ - The -c option for including the number of responses received (for 
+   each DNS RCODE) in the final statistics output. Now, DNS RCODE responses 
+   are always reported.
+
+In the resperf command, the following changes occurred:
+ 
+ - The socket buffer size is no longer set to 32 kilobytes by default.
+
+ - The -A option, which displayed command line arguments passed to the 
+   resperf tool in the final statistics output, was removed. Now, the 
+   resperf command output always displays command line arguments.
+
+
+-----------------------
+Nominum dnsperf 1.0.2.0
+December 22, 2011
+
+This release adds support for RHEL6-64 and for Solaris 10 x86-64.
+
+Some new configuration options have been added. You can now specify:
+
+	- the local port from which to send requests
+	- the local address from which to send requests
+	- the maximum number of runs through the input file, up
+	  to the timeout limit.
+	- when using TSIG, algorithms other than hmac-md5 can be used.
+
+One default has been changed:
+
+	- The maximum number of outstanding requests now defaults
+	  to 100.
+
+A new example query file for IPv6, queryfile-example-ipv6, is now
+included with the distribution.
+
+
+-----------------------
+Nominum dnsperf 1.0.1.0
+January 10, 2008
+
+This release makes binary builds of dnsperf available in addition to
+the source code version previously released.
+
+This release of dnsperf includes a sample query file containing
+100,000 queries to help with performance testing.  This query file is
+useful for checking latencies or a continuous dnsperf run. In the
+binary distribution, this file is found at:
+
+	/usr/local/nom/examples/dnsperf/queryfile-example-100thousand
+
+In the source distribution, it is at:
+
+	./examples/queryfile-example-100thousand
+
+where "." is the directory made by extracting the source tarball.
+
+Nominum recommends using a query file with at least 3 million queries
+for a full resperf run as described in the man page; we make such a
+file available for download at:
+
+ftp://ftp.nominum.com/pub/nominum/dnsperf/data/queryfile-example-3million.gz
+
+The following fix is included in the source distribution:
+
+ - 20996: makefile.in does not allow overriding mandir
+
+   The --mandir argument to configure, which allows the user to
+   specify the location man pages are installed, was incorrectly
+   ignored.
+
+"queryparse" is a contributed program available in the source
+distribution of dnsperf. It can be found at contrib/queryparse/.
+The following changes were made to that program:
+
+ - 19717: contrib/queryparse includes outgoing queries
+
+   The queryparse script had no way of distinguishing between incoming
+   queries and outgoing queries when applied to a traffic trace from a
+   caching server. This was addressed by adding a new flag (-r) that,
+   when included in the command line, will keep queries with
+   RD=0. Otherwise, it will default to discarding them.
+   
+ - The ability to parse responses instead of queries was added.
+
+ - A check was added to avoid short packets.
+
+ - Logic was added to detect link type and correctly set the initial
+   offset to handle both Ethernet and Cisco HDLC frames.
+
+ - Queryparse now uses pcapy instead of the btk python libcap module.
+
+Note that announcements of new releases of dnsperf are sent to the
+mailing list: dnsperf-announce@nominum.com.  To be added to the
+mailing list, send a message to dnsperf-announce-request@nominum.com
+with "subscribe" as the subject.
+
+Known Issues:
+
+  - None.
+
+-----------------------
+Nominum dnsperf 1.0.0.1
+December 21, 2006
+
+This release addresses the following issue in the dnsperf program:
+
+  - 18838/18782: dnsperf slow down issue
+
+    Because of an error in how timeout checking was being done, queries
+    were rarely timing out, so the number of valid queries in flight kept
+    dropping.  This error has been corrected.
+
+
+

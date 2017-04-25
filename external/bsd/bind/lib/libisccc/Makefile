@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.16.1 2014/12/31 11:59:15 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.1.16.2 2017/04/25 22:02:05 snj Exp $
 
 LIB=isccc
 

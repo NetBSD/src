@@ -14,6 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: clean.sh,v 1.1.1.2.6.2 2014/12/31 11:58:35 msaitoh Exp $
+# $Id: clean.sh,v 1.1.1.2.6.3 2017/04/25 22:01:32 snj Exp $
 
 rm -f checkds.*

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sockaddr.c,v 1.2.6.1.4.1 2014/12/31 11:58:33 msaitoh Exp $	*/
+/*	$NetBSD: t_sockaddr.c,v 1.2.6.1.4.2 2017/04/25 22:01:31 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")

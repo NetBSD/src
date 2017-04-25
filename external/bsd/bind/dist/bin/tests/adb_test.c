@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_test.c,v 1.2.6.1.4.1 2014/12/31 11:58:31 msaitoh Exp $	*/
+/*	$NetBSD: adb_test.c,v 1.2.6.1.4.2 2017/04/25 22:01:29 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,7 @@
 #include <isc/buffer.h>
 #include <isc/entropy.h>
 #include <isc/hash.h>
+#include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/task.h>
 #include <isc/timer.h>

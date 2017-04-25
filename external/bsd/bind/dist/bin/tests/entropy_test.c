@@ -1,7 +1,7 @@
-/*	$NetBSD: entropy_test.c,v 1.2.6.1 2012/06/05 21:15:19 bouyer Exp $	*/
+/*	$NetBSD: entropy_test.c,v 1.2.6.1.4.1 2017/04/25 22:01:29 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,25 +28,26 @@
 
 #include <isc/entropy.h>
 #include <isc/mem.h>
-#include <isc/util.h>
+#include <isc/print.h>
 #include <isc/string.h>
+#include <isc/util.h>
 
 static void
 hex_dump(const char *msg, void *data, unsigned int length) {
-        unsigned int len;
+	unsigned int len;
 	unsigned char *base;
 	isc_boolean_t first = ISC_TRUE;
 
 	base = data;
 
-        printf("DUMP of %d bytes:  %s\n\t", length, msg);
-        for (len = 0; len < length; len++) {
-                if (len % 16 == 0 && !first)
+	printf("DUMP of %d bytes:  %s\n\t", length, msg);
+	for (len = 0; len < length; len++) {
+		if (len % 16 == 0 && !first)
 			printf("\n\t");
-                printf("%02x ", base[len]);
+		printf("%02x ", base[len]);
 		first = ISC_FALSE;
-        }
-        printf("\n");
+	}
+	printf("\n");
 }
 
 static void

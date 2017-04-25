@@ -1,4 +1,4 @@
-/*	$NetBSD: bdb.c,v 1.2.6.1.4.1 2014/12/31 11:58:55 msaitoh Exp $	*/
+/*	$NetBSD: bdb.c,v 1.2.6.1.4.2 2017/04/25 22:01:47 snj Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.

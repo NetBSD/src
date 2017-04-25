@@ -1,5 +1,5 @@
 #! /bin/sh
-# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2017  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1996-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -667,6 +667,9 @@ SO_CFLAGS
 SO
 BIND9_CONFIGARGS
 BIND9_SRCID
+BIND9_VERSIONSHORT
+BIND9_VERSIONSTRING
+BIND9_MAJOR
 BIND9_VERSION
 BIND9_DESCRIPTION
 BIND9_PRODUCT
@@ -682,8 +685,8 @@ ATFLIBS
 ATFBIN
 ATFBUILD
 IDNLIBS
-XSLT_DB2LATEX_ADMONITIONS
-XSLT_DB2LATEX_STYLE
+XSLT_DBLATEX_FASTBOOK
+XSLT_DBLATEX_STYLE
 XSLT_DOCBOOK_MAKETOC_XHTML
 XSLT_DOCBOOK_MAKETOC_HTML
 XSLT_DOCBOOK_CHUNKTOC_XHTML
@@ -693,10 +696,12 @@ XSLT_DOCBOOK_CHUNK_HTML
 XSLT_DOCBOOK_STYLE_MAN
 XSLT_DOCBOOK_STYLE_XHTML
 XSLT_DOCBOOK_STYLE_HTML
+CURL
 DOXYGEN
 XMLLINT
 XSLTPROC
 W3M
+DBLATEX
 PDFLATEX
 LATEX
 ISC_ARCH_DIR
@@ -704,6 +709,7 @@ ISC_PLATFORM_USEMACASM
 ISC_PLATFORM_USESTDASM
 ISC_PLATFORM_USEOSFASM
 ISC_PLATFORM_USEGCCASM
+ISC_PLATFORM_HAVEATOMICSTOREQ
 ISC_PLATFORM_HAVEATOMICSTORE
 ISC_PLATFORM_HAVECMPXCHG
 ISC_PLATFORM_HAVEXADDQ
@@ -724,9 +730,11 @@ USE_ISC_SPNEGO
 ISC_EXTRA_SRCS
 ISC_EXTRA_OBJS
 LWRES_PLATFORM_NEEDVSNPRINTF
-ISC_PLATFORM_NEEDVSNPRINTF
 LWRES_PLATFORM_NEEDSPRINTF
+ISC_PLATFORM_NEEDVSNPRINTF
 ISC_PLATFORM_NEEDSPRINTF
+ISC_PLATFORM_NEEDFPRINTF
+ISC_PLATFORM_NEEDPRINTF
 READLINE_LIB
 ISC_PLATFORM_NEEDSTRCASESTR
 ISC_PLATFORM_NEEDSTRLCAT
@@ -765,6 +773,7 @@ ISC_IPV6_C
 ISC_ISCIPV6_O
 ISC_IPV6_O
 ISC_IPV6_H
+ISC_PLATFORM_HAVESOCKADDRSTORAGE
 ISC_PLATFORM_FIXIN6ISADDR
 ISC_PLATFORM_HAVEIN6PKTINFO
 LWRES_PLATFORM_NEEDIN6ADDRLOOPBACK
@@ -956,6 +965,7 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_libbind
+enable_warn_shadow
 enable_warn_error
 enable_developer
 with_python
@@ -977,6 +987,7 @@ with_libxml2
 enable_largefile
 with_purify
 with_libtool
+with_gperftools_profiler
 enable_backtrace
 enable_symtable
 enable_exportlib
@@ -994,6 +1005,7 @@ enable_atomic
 enable_fixed_rrset
 enable_rpz_nsip
 enable_rpz_nsdname
+enable_fetchlimit
 enable_filter_aaaa
 with_docbook_xsl
 with_idn
@@ -1001,6 +1013,7 @@ with_libiconv
 with_iconv
 with_idnlib
 with_atf
+enable_querytrace
 with_dlopen
 with_dlz_postgres
 with_dlz_mysql
@@ -1643,6 +1656,7 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-libbind	  deprecated
+  --enable-warn-shadow	  turn on -Wshadow when compiling
   --enable-warn-error	  turn on -Werror when compiling
   --enable-developer      enable developer build settings
   --enable-newstats       use the new statistics
@@ -1671,8 +1685,10 @@ Optional Features:
 			  [default=no]
   --disable-rpz-nsip	  disable rpz-nsip rules [default=enabled]
   --disable-rpz-nsdname	  disable rpz-nsdname rules [default=enabled]
+  --enable-fetchlimit     enable recursive fetch limits [default=no]
   --enable-filter-aaaa    enable filtering of AAAA records over IPv4
 			  [default=no]
+  --enable-querytrace     enable very verbose query trace logging [default=no]
   --enable-full-report	  report values of all configure options
 
 Optional Packages:
@@ -1695,6 +1711,7 @@ Optional Packages:
   --with-libxml2=PATH     Build with libxml2 library yes|no|path
   --with-purify=PATH      use Rational purify
   --with-libtool          use GNU libtool
+  --with-gperftools-profiler  use gperftools CPU profiler
   --with-export-libdir=PATH
 			  installation directory for the export library
 			  [EPREFIX/lib/bind9]
@@ -1702,7 +1719,7 @@ Optional Packages:
 			  installation directory for the header files of the
 			  export library [PREFIX/include/bind9]
   --with-kame=PATH	  use Kame IPv6 default path /usr/local/v6
-  --with-readline=LIBSPEC    specify readline library default -lreadline
+  --with-readline=LIBSPEC    specify readline library default auto
 
   --with-docbook-xsl=PATH Specify path for Docbook-XSL stylesheets
   --with-idn=MPREFIX      enable IDN support using idnkit default PREFIX
@@ -1717,13 +1734,13 @@ Optional Packages:
 			       (Required to use MySQL with DLZ)
   --with-dlz-bdb=PATH   Build with Berkeley DB DLZ driver yes|no|path.
 			       (Required to use Berkeley DB with DLZ)
-  --with-dlz-filesystem=PATH   Build with filesystem DLZ driver yes|no.
+  --with-dlz-filesystem=ARG    Build with filesystem DLZ driver yes|no.
 			       (Required to use file system driver with DLZ)
   --with-dlz-ldap=PATH   Build with LDAP DLZ driver yes|no|path.
 			       (Required to use LDAP with DLZ)
   --with-dlz-odbc=PATH   Build with ODBC DLZ driver yes|no|path.
 			       (Required to use ODBC with DLZ)
-  --with-dlz-stub=PATH   Build with stub DLZ driver yes|no.
+  --with-dlz-stub=ARG    Build with stub DLZ driver yes|no.
 			       (Required to use stub driver with DLZ)
   --with-make-clean      Run "make clean" at end of configure [yes|no].
 
@@ -11387,6 +11404,12 @@ It is available from http://www.isc.org as a separate download." "$LINENO" 5
 		;;
 esac
 
+# Check whether --enable-warn_shadow was given.
+if test "${enable_warn_shadow+set}" = set; then :
+  enableval=$enable_warn_shadow;
+fi
+
+
 # Check whether --enable-warn_error was given.
 if test "${enable_warn_error+set}" = set; then :
   enableval=$enable_warn_error;
@@ -11402,6 +11425,7 @@ case "$enable_developer" in
 yes)
 	STD_CDEFINES="$STD_CDEFINES -DISC_LIST_CHECKINIT=1"
 	test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
+	test "${enable_querytrace+set}" = set || enable_querytrace=yes
 	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
 	test "${enable_rrl+set}" = set || enable_rrl=yes
@@ -11415,7 +11439,9 @@ yes)
 		;;
 	esac
 	test "${enable_symtable+set}" = set || enable_symtable=all
+	test "${enable_fetchlimit+set}" = set || enable_fetchlimit=yes
 	test "${enable_warn_error+set}" = set || enable_warn_error=yes
+	test "${enable_warn_shadow+set}" = set || enable_warn_shadow=yes
 	;;
 esac
 #
@@ -11677,7 +11703,7 @@ fi
   test -n "$PYTHON" && break
 done
 
-				if test "X$PYTHON" == "X"; then
+				if test "X$PYTHON" = "X"; then
 					continue;
 				fi
 				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
@@ -11692,7 +11718,7 @@ $as_echo "not found" >&6; }
 				unset ac_cv_path_PYTHON
 				unset PYTHON
 			done
-			if test "X$PYTHON" == "X"
+			if test "X$PYTHON" = "X"
 			then
 				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for python support" >&5
 $as_echo_n "checking for python support... " >&6; }
@@ -12857,6 +12883,20 @@ fi
 done
 
 
+# BSDI doesn't have ftello fseeko
+for ac_func in ftello fseeko
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+
 #
 # UnixWare 7.1.1 with the feature supplement to the UDK compiler
 # is reported to not support "static inline" (RT #1212).
@@ -13023,6 +13063,43 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
+
+#
+# check for uname library routine
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uname" >&5
+$as_echo_n "checking for uname... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/utsname.h>
+#include <stdio.h>
+
+int
+main ()
+{
+
+struct utsname uts;
+uname(&uts);
+printf("running on %s %s %s for %s\n",
+       uts.sysname, uts.release, uts.version, uts.machine);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+         $as_echo "#define HAVE_UNAME 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: uname is not correctly supported" >&5
+$as_echo "$as_me: WARNING: uname is not correctly supported" >&2;}
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 #
 # check for GCC noreturn attribute
@@ -13692,6 +13769,8 @@ $as_echo_n "checking whether linking with OpenSSL requires -ldl... " >&6; }
 /* end confdefs.h.  */
 
 #include <openssl/err.h>
+#include <openssl/dso.h>
+
 int
 main ()
 {
@@ -13709,6 +13788,7 @@ else
 /* end confdefs.h.  */
 
 #include <openssl/err.h>
+#include <openssl/dso.h>
 
 int
 main ()
@@ -13756,12 +13836,17 @@ else
 int main() {
 	if ((OPENSSL_VERSION_NUMBER >= 0x009070cfL &&
 	     OPENSSL_VERSION_NUMBER < 0x00908000L) ||
-	     OPENSSL_VERSION_NUMBER >= 0x0090804fL)
+	     (OPENSSL_VERSION_NUMBER >= 0x0090804fL &&
+	     OPENSSL_VERSION_NUMBER < 0x10002000L) ||
+	     OPENSSL_VERSION_NUMBER >= 0x1000205fL)
 		return (0);
 	printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
 		OPENSSL_VERSION_NUMBER);
 	printf("Require OPENSSL_VERSION_NUMBER 0x009070cf or greater (0.9.7l)\n"
-	       "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n\n");
+	       "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x1000000f or greater (1.0.0)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x1000100f or greater (1.0.1)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x1000205f or greater (1.0.2e)\n\n");
 	return (1);
 }
 
@@ -14011,6 +14096,44 @@ case $want_openssl_hash in
 		fi
 		ISC_PLATFORM_OPENSSLHASH="#define ISC_PLATFORM_OPENSSLHASH 1"
 		ISC_OPENSSL_INC="$DST_OPENSSL_INC"
+		ISC_OPENSSL_LIBS="$DST_OPENSSL_LIBS"
+		saved_cflags="$CFLAGS"
+		save_libs="$LIBS"
+		CFLAGS="$CFLAGS $ISC_OPENSSL_INC"
+		LIBS="$LIBS $ISC_OPENSSL_LIBS"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking HMAC_Init() return type" >&5
+$as_echo_n "checking HMAC_Init() return type... " >&6; }
+		cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+		#include <openssl/hmac.h>
+int
+main ()
+{
+
+		HMAC_CTX ctx;
+		int n = HMAC_Init(&ctx, NULL, 0, NULL);
+		n += HMAC_Update(&ctx, NULL, 0);
+		n += HMAC_Final(&ctx, NULL, NULL);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: int" >&5
+$as_echo "int" >&6; }
+
+$as_echo "#define HMAC_RETURN_INT 1" >>confdefs.h
+
+else
+
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: void" >&5
+$as_echo "void" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+		CFLAGS="$saved_cflags"
+		LIBS="$save_libs"
 		;;
 	no)
 		ISC_PLATFORM_OPENSSLHASH="#undef ISC_PLATFORM_OPENSSLHASH"
@@ -15435,8 +15558,14 @@ case "$use_libxml2" in
 			libxml2_cflags=`xml2-config --cflags`
 			;;
 		*)
-			libxml2_libs=
-			libxml2_cflags=
+			if test "$use_libxml2" = "yes" ; then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+				as_fn_error $? "required libxml2 version not available" "$LINENO" 5
+			else
+				libxml2_libs=
+				libxml2_cflags=
+			fi
 			;;
 		esac
 		;;
@@ -15596,7 +15725,7 @@ if test "X$GCC" = "Xyes"; then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if \"$CC\" supports -fno-strict-aliasing" >&5
 $as_echo_n "checking if \"$CC\" supports -fno-strict-aliasing... " >&6; }
 	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -fno-strict-aliasing"
+	CFLAGS="$CFLAGS -Werror -fno-strict-aliasing"
 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -15629,7 +15758,7 @@ $as_echo "no" >&6; }
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if \"$CC\" supports -fno-delete-null-pointer-checks" >&5
 $as_echo_n "checking if \"$CC\" supports -fno-delete-null-pointer-checks... " >&6; }
 	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -fno-delete-null-pointer-checks"
+	CFLAGS="$CFLAGS -Werror -fno-delete-null-pointer-checks"
 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -15662,6 +15791,9 @@ $as_echo "no" >&6; }
 		BACKTRACECFLAGS="$BACKTRACECFLAGS -Wl,+vnocompatwarnings"
 		;;
 	esac
+	if test "X$enable_warn_shadow" = Xyes; then
+		STD_CWARNINGS="$STD_CWARNINGS -Wshadow"
+	fi
 	if test "X$enable_warn_error" = Xyes; then
 		STD_CWARNINGS="$STD_CWARNINGS -Werror"
 	fi
@@ -15981,6 +16113,35 @@ case $use_libtool in
 		;;
 esac
 
+
+#
+# Google/Great Performance Tools CPU Profiler
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use gperftools profiler" >&5
+$as_echo_n "checking whether to use gperftools profiler... " >&6; }
+
+# Check whether --with-gperftools-profiler was given.
+if test "${with_gperftools_profiler+set}" = set; then :
+  withval=$with_gperftools_profiler; use_profiler="$withval"
+else
+  use_profiler="no"
+fi
+
+
+case $use_profiler in
+	yes)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_GPERFTOOLS_PROFILER 1" >>confdefs.h
+
+		LIBS="$LIBS -lprofiler"
+		;;
+	*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		;;
+esac
 
 #
 # enable/disable dumping stack backtrace.  Also check if the system supports
@@ -16463,6 +16624,36 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 		ISC_IPV6_C="ipv6.c"
 		;;
 esac
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct sockaddr_storage" >&5
+$as_echo_n "checking for struct sockaddr_storage... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+$isc_netinetin6_hack
+$isc_netinet6in6_hack
+
+int
+main ()
+{
+struct sockaddr_storage storage; return (0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+ISC_PLATFORM_HAVESOCKADDRSTORAGE="#define ISC_PLATFORM_HAVESOCKADDRSTORAGE 1"
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+ISC_PLATFORM_HAVESOCKADDRSTORAGE="#undef ISC_PLATFORM_HAVESOCKADDRSTORAGE"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
 
 
 
@@ -17001,6 +17192,9 @@ if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: socklen_t for buflen; u_int for flags" >&5
 $as_echo "socklen_t for buflen; u_int for flags" >&6; }
 
+$as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
+
+
 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
 
 
@@ -17026,6 +17220,34 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: size_t for buflen; int for flags" >&5
 $as_echo "size_t for buflen; int for flags" >&6; }
+	 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
+
+	 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T size_t" >>confdefs.h
+
+	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+int getnameinfo(const struct sockaddr *, size_t, char *,
+		size_t, char *, size_t, int);
+int
+main ()
+{
+ return (0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: size_t for buflen; int for flags" >&5
+$as_echo "size_t for buflen; int for flags" >&6; }
+	 $as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T size_t" >>confdefs.h
+
 	 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T size_t" >>confdefs.h
 
 	 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
@@ -17033,10 +17255,14 @@ $as_echo "size_t for buflen; int for flags" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not match any subspecies; assume standard definition" >&5
 $as_echo "not match any subspecies; assume standard definition" >&6; }
+$as_echo "#define IRS_GETNAMEINFO_SOCKLEN_T socklen_t" >>confdefs.h
+
 $as_echo "#define IRS_GETNAMEINFO_BUFLEN_T socklen_t" >>confdefs.h
 
 $as_echo "#define IRS_GETNAMEINFO_FLAGS_T int" >>confdefs.h
 
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -17273,18 +17499,69 @@ fi
 if test "${with_readline+set}" = set; then :
   withval=$with_readline; readline="$withval"
 else
-  readline="-lreadline"
+  readline="auto"
 fi
 
 case "$readline" in
 no)	;;
+yes|auto)
+	saved_LIBS="$LIBS"
+	for readline in -ledit -lreadline
+	do
+		LIBS="$readline"
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline with $readline" >&5
+$as_echo "$as_me: checking for readline with $readline" >&6;}
+		for ac_func in readline
+do :
+  ac_fn_c_check_func "$LINENO" "readline" "ac_cv_func_readline"
+if test "x$ac_cv_func_readline" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_READLINE 1
+_ACEOF
+
+fi
+done
+
+		if test "$ac_cv_func_readline" = "yes"
+		then
+			READLINE_LIB="$readline"
+			break
+		fi
+		for lib in -lterminfo -ltermcap -lncurses -lcurses
+		do
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline with $readline $lib" >&5
+$as_echo "$as_me: checking for readline with $readline $lib" >&6;}
+			unset ac_cv_func_readline
+			LIBS="$readline $lib"
+			for ac_func in readline
+do :
+  ac_fn_c_check_func "$LINENO" "readline" "ac_cv_func_readline"
+if test "x$ac_cv_func_readline" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_READLINE 1
+_ACEOF
+
+fi
+done
+
+			if test "$ac_cv_func_readline" = "yes"
+			then
+				READLINE_LIB="$readline $lib"
+				break
+			fi
+		done
+		if test "$ac_cv_func_readline" = "yes"
+		then
+			break
+		fi
+	done
+	LIBS="$saved_LIBS"
+	;;
 *)
-	if test "x$readline" = "xyes"
-	then
-		readline=-lreadline
-	fi
 	saved_LIBS="$LIBS"
 	LIBS="$readline"
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline with $readline" >&5
+$as_echo "$as_me: checking for readline with $readline" >&6;}
 	for ac_func in readline
 do :
   ac_fn_c_check_func "$LINENO" "readline" "ac_cv_func_readline"
@@ -17299,6 +17576,30 @@ done
 	if test "$ac_cv_func_readline" = "yes"
 	then
 		READLINE_LIB="$readline"
+	else
+		for lib in -lterminfo -ltermcap -lncurses -lcurses
+		do
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for readline with $readline $lib" >&5
+$as_echo "$as_me: checking for readline with $readline $lib" >&6;}
+			unset ac_cv_func_readline
+			LIBS="$readline $lib"
+			for ac_func in readline
+do :
+  ac_fn_c_check_func "$LINENO" "readline" "ac_cv_func_readline"
+if test "x$ac_cv_func_readline" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_READLINE 1
+_ACEOF
+
+fi
+done
+
+			if test "$ac_cv_func_readline" = "yes"
+			then
+				READLINE_LIB="$readline $lib"
+				break
+			fi
+		done
 	fi
 	LIBS="$saved_LIBS"
 	;;
@@ -17306,8 +17607,14 @@ esac
 
 ISC_PRINT_OBJS=
 ISC_PRINT_SRCS=
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking sprintf" >&5
-$as_echo_n "checking sprintf... " >&6; }
+ISC_PLATFORM_NEEDPRINTF='#undef ISC_PLATFORM_NEEDPRINTF'
+ISC_PLATFORM_NEEDFPRINTF='#undef ISC_PLATFORM_NEEDFPRINTF'
+ISC_PLATFORM_NEEDSPRINTF='#undef ISC_PLATFORM_NEEDSPRINTF'
+ISC_PLATFORM_NEEDVSNPRINTF='#undef ISC_PLATFORM_NEEDVSNPRINTF'
+LWRES_PLATFORM_NEEDVSNPRINTF='#undef LWRES_PLATFORM_NEEDVSNPRINTF'
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking sprintf return type" >&5
+$as_echo_n "checking sprintf return type... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -17322,25 +17629,22 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: char *" >&5
+$as_echo "char *" >&6; }
 ISC_PRINT_OBJS="print.$O"
 ISC_PRINT_SRCS="print.c"
 ISC_PLATFORM_NEEDSPRINTF="#define ISC_PLATFORM_NEEDSPRINTF"
 LWRES_PLATFORM_NEEDSPRINTF="#define LWRES_PLATFORM_NEEDSPRINTF"
 
 else
-  ISC_PLATFORM_NEEDSPRINTF="#undef ISC_PLATFORM_NEEDSPRINTF"
- LWRES_PLATFORM_NEEDSPRINTF="#undef LWRES_PLATFORM_NEEDSPRINTF"
-
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: int" >&5
+$as_echo "int" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-
-
 ac_fn_c_check_func "$LINENO" "vsnprintf" "ac_cv_func_vsnprintf"
 if test "x$ac_cv_func_vsnprintf" = xyes; then :
-  ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"
-	 LWRES_PLATFORM_NEEDVSNPRINTF="#undef LWRES_PLATFORM_NEEDVSNPRINTF"
+
 else
   ISC_PRINT_OBJS="print.$O"
 	 ISC_PRINT_SRCS="print.c"
@@ -17349,19 +17653,61 @@ else
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking printf for %z support" >&5
+$as_echo_n "checking printf for %z support... " >&6; }
+if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming target platform supports %z" >&5
+$as_echo "assuming target platform supports %z" >&6; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+main() {
+        size_t j = 0;
+        char buf[100];
+        buf[0] = 0;
+        sprintf(buf, "%zu", j);
+        exit(strcmp(buf, "0") != 0);
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	ISC_PRINT_OBJS="print.$O"
+	ISC_PRINT_SRCS="print.c"
+        ISC_PLATFORM_NEEDPRINTF='#define ISC_PLATFORM_NEEDPRINTF 1'
+        ISC_PLATFORM_NEEDFPRINTF='#define ISC_PLATFORM_NEEDFPRINTF 1'
+        ISC_PLATFORM_NEEDFSRINTF='#define ISC_PLATFORM_NEEDSPRINTF 1'
+	ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
+	LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+
+
+
+
+
+
 
 ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS $ISC_PRINT_OBJS"
 ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS $ISC_PRINT_SRCS"
+
+
 
 ac_fn_c_check_func "$LINENO" "strerror" "ac_cv_func_strerror"
 if test "x$ac_cv_func_strerror" = xyes; then :
   $as_echo "#define HAVE_STRERROR 1" >>confdefs.h
 
 fi
-
-
-
-
 
 #
 # Use our own SPNEGO implementation?
@@ -17443,6 +17789,7 @@ fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
+
 
 
 
@@ -18030,7 +18377,9 @@ esac
 case $ac_cv_have_if_nametoindex in
 yes)
 	ISC_PLATFORM_HAVEIFNAMETOINDEX="#define ISC_PLATFORM_HAVEIFNAMETOINDEX 1"
+
 	$as_echo "#define HAVE_IF_NAMETOINDEX 1" >>confdefs.h
+
 
 	;;
 *)
@@ -18136,9 +18485,10 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 esac
 
 ISC_PLATFORM_USEOSFASM="#undef ISC_PLATFORM_USEOSFASM"
+ISC_PLATFORM_USEGCCASM="#undef ISC_PLATFORM_USEGCCASM"
+ISC_PLATFORM_USESTDASM="#undef ISC_PLATFORM_USESTDASM"
+ISC_PLATFORM_USEMACASM="#undef ISC_PLATFORM_USEMACASM"
 if test "$use_atomic" = "yes"; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking architecture type for atomic operations" >&5
-$as_echo_n "checking architecture type for atomic operations... " >&6; }
 	have_atomic=yes		# set default
 	case "$host" in
 	i[3456]86-*)
@@ -18242,6 +18592,8 @@ _ACEOF
 		arch=noatomic
 	;;
 	esac
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking architecture type for atomic operations" >&5
+$as_echo_n "checking architecture type for atomic operations... " >&6; }
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $arch" >&5
 $as_echo "$arch" >&6; }
 fi
@@ -18371,17 +18723,21 @@ if test "$have_atomic" = "yes"; then
 	ISC_PLATFORM_HAVEXADD="#define ISC_PLATFORM_HAVEXADD 1"
 	ISC_PLATFORM_HAVECMPXCHG="#define ISC_PLATFORM_HAVECMPXCHG 1"
 	ISC_PLATFORM_HAVEATOMICSTORE="#define ISC_PLATFORM_HAVEATOMICSTORE 1"
+	if test "$have_xaddq" = "yes"; then
+		ISC_PLATFORM_HAVEXADDQ="#define ISC_PLATFORM_HAVEXADDQ 1"
+		ISC_PLATFORM_HAVEATOMICSTOREQ="#define ISC_PLATFORM_HAVEATOMICSTOREQ 1"
+	else
+		ISC_PLATFORM_HAVEXADDQ="#undef ISC_PLATFORM_HAVEXADDQ"
+		ISC_PLATFORM_HAVEATOMICSTOREQ="#undef ISC_PLATFORM_HAVEATOMICSTOREQ"
+	fi
 else
 	ISC_PLATFORM_HAVEXADD="#undef ISC_PLATFORM_HAVEXADD"
 	ISC_PLATFORM_HAVECMPXCHG="#undef ISC_PLATFORM_HAVECMPXCHG"
 	ISC_PLATFORM_HAVEATOMICSTORE="#undef ISC_PLATFORM_HAVEATOMICSTORE"
+	ISC_PLATFORM_HAVEXADDQ="#undef ISC_PLATFORM_HAVEXADDQ"
+	ISC_PLATFORM_HAVEATOMICSTOREQ="#undef ISC_PLATFORM_HAVEATOMICSTOREQ"
 fi
 
-if test "$have_xaddq" = "yes"; then
-	ISC_PLATFORM_HAVEXADDQ="#define ISC_PLATFORM_HAVEXADDQ 1"
-else
-	ISC_PLATFORM_HAVEXADDQ="#undef ISC_PLATFORM_HAVEXADDQ"
-fi
 
 
 
@@ -18395,6 +18751,45 @@ fi
 
 ISC_ARCH_DIR=$arch
 
+
+#
+# Check for __builtin_expect
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler support for __builtin_expect" >&5
+$as_echo_n "checking compiler support for __builtin_expect... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+        return (__builtin_expect(1, 1) ? 1 : 0);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+        have_builtin_expect=yes
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+        have_builtin_expect=no
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+if test "$have_builtin_expect" = "yes"; then
+
+$as_echo "#define HAVE_BUILTIN_EXPECT 1" >>confdefs.h
+
+fi
 
 #
 # Activate "rrset-order fixed" or not?
@@ -18463,7 +18858,29 @@ $as_echo "#define ENABLE_RPZ_NSDNAME 1" >>confdefs.h
 esac
 
 #
-# Activate "filter-aaaa-on-v4" or not?
+# Activate recursive fetch limits
+#
+# Check whether --enable-fetchlimit was given.
+if test "${enable_fetchlimit+set}" = set; then :
+  enableval=$enable_fetchlimit; enable_fetchlimit="$enableval"
+else
+  enable_fetchlimit="no"
+fi
+
+case "$enable_fetchlimit" in
+	yes)
+
+$as_echo "#define ENABLE_FETCHLIMIT 1" >>confdefs.h
+
+		;;
+	no)
+		;;
+	*)
+		;;
+esac
+
+#
+# Activate "filter-aaaa" or not?
 #
 # Check whether --enable-filter-aaaa was given.
 if test "${enable_filter_aaaa+set}" = set; then :
@@ -18619,6 +19036,54 @@ fi
   test -n "$PDFLATEX" && break
 done
 test -n "$PDFLATEX" || PDFLATEX="pdflatex"
+
+
+
+for ac_prog in dblatex
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_DBLATEX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $DBLATEX in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_DBLATEX="$DBLATEX" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_DBLATEX="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+DBLATEX=$ac_cv_path_DBLATEX
+if test -n "$DBLATEX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $DBLATEX" >&5
+$as_echo "$DBLATEX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$DBLATEX" && break
+done
+test -n "$DBLATEX" || DBLATEX="dblatex"
 
 
 
@@ -18816,6 +19281,53 @@ fi
 
 
 #
+# Look for curl
+#
+
+# Extract the first word of "curl", so it can be a program name with args.
+set dummy curl; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_CURL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $CURL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_CURL="$CURL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_CURL="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_CURL" && ac_cv_path_CURL="curl"
+  ;;
+esac
+fi
+CURL=$ac_cv_path_CURL
+if test -n "$CURL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CURL" >&5
+$as_echo "$CURL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+
+#
 # Subroutine for searching for an ordinary file (e.g., a stylesheet)
 # in a number of directories:
 #
@@ -18850,7 +19362,7 @@ case "$docbook_path" in
 auto)
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: auto" >&5
 $as_echo "auto" >&6; }
-	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook /usr/share/xsl/docbook /opt/local/share/xsl/docbook-xsl"
+	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /opt/local/share/xsl/docbook-xsl /usr/share/xml/docbook/stylesheet/docbook-xsl"
 	;;
 *)
 	docbook_xsl_trees="$withval"
@@ -19072,65 +19584,54 @@ fi
 
 
 #
-# Same dance for db2latex
+# Same dance for dblatex
 #
-# No idea where this lives except on FreeBSD.
-#
+dblatex_xsl_trees="/usr/local/share/xml/docbook/stylesheet/dblatex /usr/pkg/share/xml/docbook/stylesheet/dblatex /usr/share/xml/docbook/stylesheet/dblatex"
 
-db2latex_xsl_trees="/usr/local/share"
-
-#
-# Look for stylesheets we need.
-#
-
-
-XSLT_DB2LATEX_STYLE=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for db2latex/xsl/docbook.xsl" >&5
-$as_echo_n "checking for db2latex/xsl/docbook.xsl... " >&6; }
-for d in $db2latex_xsl_trees
+XSLT_DBLATEX_STYLE=""
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsl/docbook.xsl" >&5
+$as_echo_n "checking for xsl/docbook.xsl... " >&6; }
+for d in $dblatex_xsl_trees
 do
-	f=$d/db2latex/xsl/docbook.xsl
+	f=$d/xsl/docbook.xsl
 	if test -f $f
 	then
-		XSLT_DB2LATEX_STYLE=$f
+		XSLT_DBLATEX_STYLE=$f
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $f" >&5
 $as_echo "$f" >&6; }
 		break
 	fi
 done
-if test "X$XSLT_DB2LATEX_STYLE" = "X"
+if test "X$XSLT_DBLATEX_STYLE" = "X"
 then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
 $as_echo "\"not found\"" >&6; };
-	XSLT_DB2LATEX_STYLE=db2latex/xsl/docbook.xsl
+	XSLT_DBLATEX_STYLE=xsl/docbook.xsl
 fi
 
 
 
-#
-# Look for "admonition" image directory.  Can't use NOM_PATH_FILE()
-# because it's a directory, so just do the same things, inline.
-#
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for db2latex/xsl/figures" >&5
-$as_echo_n "checking for db2latex/xsl/figures... " >&6; }
-for d in $db2latex_xsl_trees
+XSLT_DBLATEX_FASTBOOK=""
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsl/latex_book_fast.xsl" >&5
+$as_echo_n "checking for xsl/latex_book_fast.xsl... " >&6; }
+for d in $dblatex_xsl_trees
 do
-	dd=$d/db2latex/xsl/figures
-	if test -d $dd
+	f=$d/xsl/latex_book_fast.xsl
+	if test -f $f
 	then
-		XSLT_DB2LATEX_ADMONITIONS=$dd
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $dd" >&5
-$as_echo "$dd" >&6; }
+		XSLT_DBLATEX_FASTBOOK=$f
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $f" >&5
+$as_echo "$f" >&6; }
 		break
 	fi
 done
-if test "X$XSLT_DB2LATEX_ADMONITIONS" = "X"
+if test "X$XSLT_DBLATEX_FASTBOOK" = "X"
 then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
-	XSLT_DB2LATEX_ADMONITIONS=db2latex/xsl/figures
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
+$as_echo "\"not found\"" >&6; };
+	XSLT_DBLATEX_FASTBOOK=xsl/latex_book_fast.xsl
 fi
+
 
 
 #
@@ -19289,6 +19790,36 @@ done
 
 
 #
+# was --enable-querytrace specified?
+#
+# Check whether --enable-querytrace was given.
+if test "${enable_querytrace+set}" = set; then :
+  enableval=$enable_querytrace; want_querytrace="$enableval"
+else
+  want_querytrace="no"
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable query trace logging" >&5
+$as_echo_n "checking whether to enable query trace logging... " >&6; }
+case "$want_querytrace" in
+yes)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define WANT_QUERYTRACE 1" >>confdefs.h
+
+	;;
+no)
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	;;
+*)
+	as_fn_error $? "\"--enable-querytrace requires yes or no\"" "$LINENO" 5
+	;;
+esac
+
+#
 # Substitutions
 #
 
@@ -19327,7 +19858,13 @@ BIND9_PRODUCT="PRODUCT=\"${PRODUCT}\""
 
 BIND9_DESCRIPTION="DESCRIPTION=\"${DESCRIPTION}\""
 
-BIND9_VERSION="VERSION=${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}"
+BIND9_VERSION="${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}"
+
+BIND9_MAJOR="MAJOR=${MAJORVER}.${MINORVER}"
+
+BIND9_VERSIONSTRING="${PRODUCT} ${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}${DESCRIPTION:+ }${DESCRIPTION}"
+
+BIND9_VERSIONSHORT="${PRODUCT} ${MAJORVER}.${MINORVER}${PATCHVER:+.}${PATCHVER}${RELEASETYPE}${RELEASEVER}${EXTENSIONS}"
 
 
 BIND9_SRCID="SRCID=unset"
@@ -19500,7 +20037,18 @@ if test "$dlopen" = "yes"; then
 				SO_LD="ld"
 			fi
 			;;
-		*-freebsd*|*-openbsd*|*-netbsd*)
+		*-freebsd*|*-openbsd*)
+			SO_CFLAGS="-fpic"
+			elf=`${CC} -dM -E - < /dev/null | grep __ELF__`
+			if test "$use_libtool" = "yes"; then
+				SO_LDFLAGS="-Xcompiler -shared"
+				SO_LD="${CC}"
+			else
+				SO_LDFLAGS="-shared"
+				SO_LD="${CC}"
+			fi
+			;;
+		*-netbsd*)
 			SO_CFLAGS="-fpic"
 			SO_LDFLAGS="-Bshareable -x"
 			SO_LD="ld"
@@ -20505,7 +21053,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/builtin/Makefile bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/filter-aaaa/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rrl/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/check-secure-delegation.pl contrib/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/export/Makefile lib/export/dns/Makefile lib/export/dns/include/Makefile lib/export/dns/include/dns/Makefile lib/export/dns/include/dst/Makefile lib/export/irs/Makefile lib/export/irs/include/Makefile lib/export/irs/include/irs/Makefile lib/export/isc/$thread_dir/Makefile lib/export/isc/$thread_dir/include/Makefile lib/export/isc/$thread_dir/include/isc/Makefile lib/export/isc/Makefile lib/export/isc/include/Makefile lib/export/isc/include/isc/Makefile lib/export/isc/nls/Makefile lib/export/isc/unix/Makefile lib/export/isc/unix/include/Makefile lib/export/isc/unix/include/isc/Makefile lib/export/isccfg/Makefile lib/export/isccfg/include/Makefile lib/export/isccfg/include/isccfg/Makefile lib/export/samples/Makefile lib/export/samples/Makefile-postinstall lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile unit/Makefile unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/builtin/Makefile bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/fetchlimit/Makefile bin/tests/system/filter-aaaa/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/statistics/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rrl/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/check-secure-delegation.pl contrib/zone-edit.sh doc/Makefile doc/arm/Makefile doc/arm/noteversion.xml doc/arm/pkgversion.xml doc/arm/releaseinfo.xml doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/tex/Makefile doc/tex/armstyle.sty doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-manpage.xsl doc/xsl/isc-notes-html.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/export/Makefile lib/export/dns/Makefile lib/export/dns/include/Makefile lib/export/dns/include/dns/Makefile lib/export/dns/include/dst/Makefile lib/export/irs/Makefile lib/export/irs/include/Makefile lib/export/irs/include/irs/Makefile lib/export/isc/$thread_dir/Makefile lib/export/isc/$thread_dir/include/Makefile lib/export/isc/$thread_dir/include/isc/Makefile lib/export/isc/Makefile lib/export/isc/include/Makefile lib/export/isc/include/isc/Makefile lib/export/isc/nls/Makefile lib/export/isc/unix/Makefile lib/export/isc/unix/include/Makefile lib/export/isc/unix/include/isc/Makefile lib/export/isccfg/Makefile lib/export/isccfg/include/Makefile lib/export/isccfg/include/isccfg/Makefile lib/export/samples/Makefile lib/export/samples/Makefile-postinstall lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile unit/Makefile unit/unittest.sh"
 
 
 #
@@ -21550,9 +22098,11 @@ do
     "bin/tests/system/dlz/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlz/prereq.sh" ;;
     "bin/tests/system/dlzexternal/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/Makefile" ;;
     "bin/tests/system/dlzexternal/ns1/named.conf") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/ns1/named.conf" ;;
+    "bin/tests/system/fetchlimit/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/fetchlimit/Makefile" ;;
     "bin/tests/system/filter-aaaa/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/filter-aaaa/Makefile" ;;
     "bin/tests/system/inline/checkdsa.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/inline/checkdsa.sh" ;;
     "bin/tests/system/lwresd/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/lwresd/Makefile" ;;
+    "bin/tests/system/statistics/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/statistics/Makefile" ;;
     "bin/tests/system/rpz/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rpz/Makefile" ;;
     "bin/tests/system/rrl/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rrl/Makefile" ;;
     "bin/tests/system/rsabigexponent/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/rsabigexponent/Makefile" ;;
@@ -21567,15 +22117,20 @@ do
     "contrib/zone-edit.sh") CONFIG_FILES="$CONFIG_FILES contrib/zone-edit.sh" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "doc/arm/Makefile") CONFIG_FILES="$CONFIG_FILES doc/arm/Makefile" ;;
+    "doc/arm/noteversion.xml") CONFIG_FILES="$CONFIG_FILES doc/arm/noteversion.xml" ;;
+    "doc/arm/pkgversion.xml") CONFIG_FILES="$CONFIG_FILES doc/arm/pkgversion.xml" ;;
+    "doc/arm/releaseinfo.xml") CONFIG_FILES="$CONFIG_FILES doc/arm/releaseinfo.xml" ;;
     "doc/doxygen/Doxyfile") CONFIG_FILES="$CONFIG_FILES doc/doxygen/Doxyfile" ;;
     "doc/doxygen/Makefile") CONFIG_FILES="$CONFIG_FILES doc/doxygen/Makefile" ;;
     "doc/doxygen/doxygen-input-filter") CONFIG_FILES="$CONFIG_FILES doc/doxygen/doxygen-input-filter" ;;
     "doc/misc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/misc/Makefile" ;;
+    "doc/tex/Makefile") CONFIG_FILES="$CONFIG_FILES doc/tex/Makefile" ;;
+    "doc/tex/armstyle.sty") CONFIG_FILES="$CONFIG_FILES doc/tex/armstyle.sty" ;;
     "doc/xsl/Makefile") CONFIG_FILES="$CONFIG_FILES doc/xsl/Makefile" ;;
     "doc/xsl/isc-docbook-chunk.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-docbook-chunk.xsl" ;;
     "doc/xsl/isc-docbook-html.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-docbook-html.xsl" ;;
-    "doc/xsl/isc-docbook-latex.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-docbook-latex.xsl" ;;
     "doc/xsl/isc-manpage.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-manpage.xsl" ;;
+    "doc/xsl/isc-notes-html.xsl") CONFIG_FILES="$CONFIG_FILES doc/xsl/isc-notes-html.xsl" ;;
     "isc-config.sh") CONFIG_FILES="$CONFIG_FILES isc-config.sh" ;;
     "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/bind9/Makefile") CONFIG_FILES="$CONFIG_FILES lib/bind9/Makefile" ;;
@@ -22936,7 +23491,10 @@ fi
 
 case "$make_clean" in
 yes)
-	make clean
+	if test "$no_create" != "yes"
+	then
+		make clean
+	fi
 	;;
 esac
 
@@ -22954,6 +23512,8 @@ $use_threads && echo "    Multiprocessing support (--enable-threads)"
 
 test "$enable_rrl" = "yes" && \
     echo "    Response Rate Limiting (--enable-rrl)"
+test "$enable_fetchlimit" = "yes" && \
+    echo "    Recursive fetch limits for DoS attack mitigation (--enable-fetchlimit)"
 test "$use_gssapi" = "no" || echo "    GSS-API (--with-gssapi)"
 test "$use_pkcs11" = "no" || echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
 test "$enable_newstats" = "yes" && \
@@ -22968,6 +23528,8 @@ test "$want_symtable" = "minimal" && \
     echo "    Use symbol table for backtrace, named only (--enable-symtable)"
 test "$want_symtable" = "yes" -o "$want_symtable" = "all" && \
     echo "    Use symbol table for backtrace, all binaries (--enable-symtable=all)"
+test "$want_querytrace" = "yes" && \
+    echo "    Very verbose query trace logging (--enable-querytrace)"
 test "$atf" = "no" || echo "    Automated Testing Framework (--with-atf)"
 
 # these lines are only printed if run with --enable-full-report
@@ -23008,6 +23570,8 @@ test "$enable_ipv6" = "no" -o "$found_ipv6" = "no" && \
 	echo "    IPv6 support (--enable-ipv6)"
 test "$enable_rrl" = "yes" || \
     echo "    Response Rate Limiting (--enable-rrl)"
+test "$enable_fetchlimit" = "no" && \
+        echo "    Recursive fetch limits for DoS attack mitigation (--enable-fetchlimit)"
 test "$use_gssapi" = "no" && echo "    GSS-API (--with-gssapi)"
 test "$use_pkcs11" = "no" && echo "    PKCS#11/Cryptoki support (--with-pkcs11)"
 test "X$enable_newstats" = "X" && echo "    New statistics (--enable-newstats)"
@@ -23015,6 +23579,8 @@ test "$enable_fixed" = "yes" || \
     echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
 test "$want_backtrace" = "yes" || \
     echo "    Print backtrace on crash (--enable-backtrace)"
+test "$want_querytrace" = "yes" || \
+    echo "    Very verbose query trace logging (--enable-querytrace)"
 test "$atf" = "no" && echo "    Automated Testing Framework (--with-atf)"
 test "X$USE_OPENSSL" = "X" && \
 	echo "    OpenSSL cryptography/DNSSEC (--with-openssl)"
@@ -23029,6 +23595,10 @@ if test "X$ac_unrecognized_opts" != "X"; then
     echo
     echo "Unrecognized options:"
     echo "    $ac_unrecognized_opts"
+fi
+if test "$enable_full_report" != "yes"; then
+    echo "------------------------------------------------------------------------"
+    echo "For more detail, use --enable-full-report."
 fi
 echo "========================================================================"
 
@@ -23047,15 +23617,16 @@ WARNING         Your OpenSSL crypto library may be vulnerable to        WARNING
 WARNING         one or more of the the following known security         WARNING
 WARNING         flaws:                                                  WARNING
 WARNING                                                                 WARNING
-WARNING         CAN-2002-0659, CAN-2006-4339, CVE-2006-2937 and         WARNING
-WARNING         CVE-2006-2940.                                          WARNING
+WARNING         CAN-2002-0659, CAN-2006-4339, CVE-2006-2937,            WARNING
+WARNING         CVE-2006-2940 and CVE-2015-3193.                        WARNING
 WARNING                                                                 WARNING
 WARNING         It is recommended that you upgrade to OpenSSL           WARNING
-WARNING         version 0.9.8d/0.9.7l (or greater).                     WARNING
+WARNING         version 1.0.2e/1.0.1/1.0.0/0.9.9/0.9.8d/0.9.7l          WARNING
+WARNING         (or greater).                                           WARNING
 WARNING                                                                 WARNING
 WARNING         You can disable this warning by specifying:             WARNING
 WARNING                                                                 WARNING
-WARNING               --disable-openssl-version-check          	        WARNING
+WARNING               --disable-openssl-version-check                   WARNING
 WARNING                                                                 WARNING
 WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING

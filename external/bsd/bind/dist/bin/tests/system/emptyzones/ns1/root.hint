@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: root.hint,v 1.1.1.1.14.2 2014/12/31 11:58:40 msaitoh Exp $
+; $Id: root.hint,v 1.1.1.1.14.3 2017/04/25 22:01:35 snj Exp $
 
 $TTL 999999
 .			 IN NS	a.root-servers.nil.

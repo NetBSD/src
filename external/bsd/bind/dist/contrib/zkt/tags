@@ -1,0 +1,442 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.6	//
+CONF_ALGO	zconf.c	/^	CONF_ALGO,$/;"	e	enum:__anon2	file:
+CONF_BOOL	zconf.c	/^	CONF_BOOL,$/;"	e	enum:__anon2	file:
+CONF_COMMENT	zconf.c	/^	CONF_COMMENT,$/;"	e	enum:__anon2	file:
+CONF_END	zconf.c	/^	CONF_END = 0,$/;"	e	enum:__anon2	file:
+CONF_FACILITY	zconf.c	/^	CONF_FACILITY,$/;"	e	enum:__anon2	file:
+CONF_INT	zconf.c	/^	CONF_INT,$/;"	e	enum:__anon2	file:
+CONF_LEVEL	zconf.c	/^	CONF_LEVEL,$/;"	e	enum:__anon2	file:
+CONF_NSEC3	zconf.c	/^	CONF_NSEC3,$/;"	e	enum:__anon2	file:
+CONF_SERIAL	zconf.c	/^	CONF_SERIAL,$/;"	e	enum:__anon2	file:
+CONF_STRING	zconf.c	/^	CONF_STRING,$/;"	e	enum:__anon2	file:
+CONF_TIMEINT	zconf.c	/^	CONF_TIMEINT,$/;"	e	enum:__anon2	file:
+CONF_VERSION	zconf.c	/^	CONF_VERSION,$/;"	e	enum:__anon2	file:
+ISCOMMENT	zconf.c	68;"	d	file:
+ISDELIM	zconf.c	70;"	d	file:
+ISTRUE	zconf.c	66;"	d	file:
+KEYGEN_COMPMODE	dki.c	231;"	d	file:
+KEYGEN_COMPMODE	dki.c	233;"	d	file:
+KEYSET_FILE_PFX	zkt-signer.c	747;"	d	file:
+KeyWords	ncparse.c	/^static struct KeyWords {$/;"	s	file:
+MAXFNAME	log.c	98;"	d	file:
+STRCONFIG_DELIMITER	zconf.c	632;"	d	file:
+TAINTEDCHARS	misc.c	60;"	d	file:
+TOK_DELEGATION	ncparse.c	59;"	d	file:
+TOK_DIR	ncparse.c	49;"	d	file:
+TOK_FILE	ncparse.c	62;"	d	file:
+TOK_FORWARD	ncparse.c	58;"	d	file:
+TOK_HINT	ncparse.c	57;"	d	file:
+TOK_INCLUDE	ncparse.c	50;"	d	file:
+TOK_MASTER	ncparse.c	54;"	d	file:
+TOK_SLAVE	ncparse.c	55;"	d	file:
+TOK_STRING	ncparse.c	48;"	d	file:
+TOK_STUB	ncparse.c	56;"	d	file:
+TOK_TYPE	ncparse.c	53;"	d	file:
+TOK_UNKNOWN	ncparse.c	64;"	d	file:
+TOK_VIEW	ncparse.c	60;"	d	file:
+TOK_ZONE	ncparse.c	52;"	d	file:
+a	domaincmp.c	/^         char    *a;$/;"	m	struct:__anon1	file:
+add2zonelist	zkt-signer.c	/^static	int	add2zonelist (const char *dir, const char *view, const char *zone, const char *file)$/;"	f	file:
+addkeydb	zfparse.c	/^int	addkeydb (const char *file, const char *keydbfile)$/;"	f
+age2str	misc.c	/^char	*age2str (time_t sec)$/;"	f
+ageflag	zkt-keyman.c	/^int	ageflag = 0;$/;"	v
+ageflag	zkt-ls.c	/^int	ageflag = 0;$/;"	v
+allflag	zkt-conf.c	/^static	int	allflag = 0;$/;"	v	file:
+b	domaincmp.c	/^         char    *b;$/;"	m	struct:__anon1	file:
+bind94_dynzone	zkt-signer.c	130;"	d	file:
+bind96_dynzone	zkt-signer.c	131;"	d	file:
+bold_off	tcap.c	/^static	const	char	*bold_off = "";$/;"	v	file:
+bold_on	tcap.c	/^static	const	char	*bold_on = "";$/;"	v	file:
+bool2str	zconf.c	/^static	const char	*bool2str (int val)$/;"	f	file:
+check_keydb_timestamp	zkt-signer.c	/^static	int	check_keydb_timestamp (dki_t *keylist, time_t reftime)$/;"	f	file:
+checkconfig	zconf.c	/^int	checkconfig (const zconf_t *z)$/;"	f
+cmdln	zconf.c	73;"	d	file:
+cmpfile	misc.c	/^int	cmpfile (const char *file1, const char *file2)$/;"	f
+colortab	tcap.c	/^static	char	colortab[8][31+1];$/;"	v	file:
+compversion	zconf.c	/^static	int	compversion;$/;"	v	file:
+config	zconf.c	/^static	zconf_t	*config;$/;"	v	file:
+config	zkt-signer.c	/^static	zconf_t	*config;$/;"	v	file:
+confpara	zconf.c	/^static	zconf_para_t	confpara[] = {$/;"	v	file:
+copy_keyset	zkt-signer.c	/^static	void	copy_keyset (const char *dir, const char *domain, const zconf_t *conf)$/;"	f	file:
+copyfile	misc.c	/^int	copyfile (const char *fromfile, const char *tofile, const char *dnskeyfile)$/;"	f
+copyzonefile	misc.c	/^int	copyzonefile (const char *fromfile, const char *tofile, const char *dnskeyfile)$/;"	f
+create_parent_file	rollover.c	/^static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_t *dkp)$/;"	f	file:
+create_parent_file	zkt-keyman.c	/^static	int	create_parent_file (const char *fname, int phase, int ttl, const dki_t *dkp)$/;"	f	file:
+createkey	zkt-keyman.c	/^static	void	createkey (const char *keyname, const dki_t *list, const zconf_t *conf)$/;"	f	file:
+ctype_t	zconf.c	/^} ctype_t;$/;"	t	typeref:enum:__anon2	file:
+def	zconf.c	/^static	zconf_t	def = {$/;"	v	file:
+dirflag	zkt-keyman.c	/^static	int	dirflag = 0;$/;"	v	file:
+dirflag	zkt-ls.c	/^static	int	dirflag = 0;$/;"	v	file:
+dirname	zkt-signer.c	/^static	const	char	*dirname = NULL;$/;"	v	file:
+dist_and_reload	nscomm.c	/^int	dist_and_reload (const zone_t *zp, int what)$/;"	f
+dki_add	dki.c	/^dki_t	*dki_add (dki_t **list, dki_t *new)$/;"	f
+dki_age	dki.c	/^int	dki_age (const dki_t *dkp, time_t curr)$/;"	f
+dki_algo	dki.c	/^time_t	dki_algo (const dki_t *dkp)$/;"	f
+dki_algo2sstr	dki.c	/^char	*dki_algo2sstr (int algo)$/;"	f
+dki_algo2str	dki.c	/^char	*dki_algo2str (int algo)$/;"	f
+dki_allcmp	dki.c	/^int	dki_allcmp (const dki_t *a, const dki_t *b)$/;"	f
+dki_alloc	dki.c	/^static	dki_t	*dki_alloc ()$/;"	f	file:
+dki_cmp	dki.c	/^int	dki_cmp (const dki_t *a, const dki_t *b)$/;"	f
+dki_destroy	dki.c	/^dki_t	*dki_destroy (dki_t *dkp)$/;"	f
+dki_estr	dki.c	/^static	char	dki_estr[255+1];$/;"	v	file:
+dki_exptime	dki.c	/^time_t	dki_exptime (const dki_t *dkp)$/;"	f
+dki_find	dki.c	/^const dki_t	*dki_find (const dki_t *list, int ksk, int status, int no)$/;"	f
+dki_findalgo	dki.c	/^const dki_t	*dki_findalgo (const dki_t *list, int ksk, int alg, int status, int no)$/;"	f
+dki_free	dki.c	/^void	dki_free (dki_t *dkp)$/;"	f
+dki_freelist	dki.c	/^void	dki_freelist (dki_t **listp)$/;"	f
+dki_gentime	dki.c	/^time_t	dki_gentime (const dki_t *dkp)$/;"	f
+dki_geterrstr	dki.c	/^const	char	*dki_geterrstr ()$/;"	f
+dki_getflag	dki.c	/^dk_flag_t	dki_getflag (const dki_t *dkp, time_t curr)$/;"	f
+dki_isactive	dki.c	/^int	dki_isactive (const dki_t *dkp)$/;"	f
+dki_isdepreciated	dki.c	/^int	dki_isdepreciated (const dki_t *dkp)$/;"	f
+dki_isksk	dki.c	/^int	dki_isksk (const dki_t *dkp)$/;"	f
+dki_ispublished	dki.c	/^int	dki_ispublished (const dki_t *dkp)$/;"	f
+dki_isrevoked	dki.c	/^int	dki_isrevoked (const dki_t *dkp)$/;"	f
+dki_lifetime	dki.c	/^time_t	dki_lifetime (const dki_t *dkp)$/;"	f
+dki_lifetimedays	dki.c	/^ushort	dki_lifetimedays (const dki_t *dkp)$/;"	f
+dki_namecmp	dki.c	/^int	dki_namecmp (const dki_t *a, const dki_t *b)$/;"	f
+dki_new	dki.c	/^dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsize, const char *rfile, int lf_days)$/;"	f
+dki_prt_comment	dki.c	/^int	dki_prt_comment (const dki_t *dkp, FILE *fp)$/;"	f
+dki_prt_dnskey	dki.c	/^int	dki_prt_dnskey (const dki_t *dkp, FILE *fp)$/;"	f
+dki_prt_dnskey_raw	dki.c	/^int	dki_prt_dnskey_raw (const dki_t *dkp, FILE *fp)$/;"	f
+dki_prt_dnskeyttl	dki.c	/^int	dki_prt_dnskeyttl (const dki_t *dkp, FILE *fp, int ttl)$/;"	f
+dki_prt_trustedkey	dki.c	/^int	dki_prt_trustedkey (const dki_t *dkp, FILE *fp)$/;"	f
+dki_read	dki.c	/^dki_t	*dki_read (const char *dirname, const char *filename)$/;"	f
+dki_readdir	dki.c	/^int	dki_readdir (const char *dir, dki_t **listp, int recursive)$/;"	f
+dki_readfile	dki.c	/^static	int	dki_readfile (FILE *fp, dki_t *dkp)$/;"	f	file:
+dki_remove	dki.c	/^dki_t	*dki_remove (dki_t *dkp)$/;"	f
+dki_revnamecmp	dki.c	/^int	dki_revnamecmp (const dki_t *a, const dki_t *b)$/;"	f
+dki_search	dki.c	/^const dki_t	*dki_search (const dki_t *list, int tag, const char *name)$/;"	f
+dki_setexptime	dki.c	/^time_t	dki_setexptime (dki_t *dkp, time_t sec)$/;"	f
+dki_setflag	dki.c	/^dk_flag_t	dki_setflag (dki_t *dkp, dk_flag_t flag)$/;"	f
+dki_setlifetime	dki.c	/^ushort	dki_setlifetime (dki_t *dkp, int days)$/;"	f
+dki_setstat	dki.c	/^static	int	dki_setstat (dki_t *dkp, int status, int preserve_time)$/;"	f	file:
+dki_setstatus	dki.c	/^int	dki_setstatus (dki_t *dkp, int status)$/;"	f
+dki_setstatus_preservetime	dki.c	/^int	dki_setstatus_preservetime (dki_t *dkp, int status)$/;"	f
+dki_status	dki.c	/^dk_status_t	dki_status (const dki_t *dkp)$/;"	f
+dki_statusstr	dki.c	/^const	char	*dki_statusstr (const dki_t *dkp)$/;"	f
+dki_tadd	dki.c	/^dki_t	*dki_tadd (dki_t **tree, dki_t *new, int sub_before)$/;"	f
+dki_tagcmp	dki.c	/^int	dki_tagcmp (const dki_t *a, const dki_t *b)$/;"	f
+dki_tfree	dki.c	/^void	dki_tfree (dki_t **tree)$/;"	f
+dki_time	dki.c	/^time_t	dki_time (const dki_t *dkp)$/;"	f
+dki_timecmp	dki.c	/^int	dki_timecmp (const dki_t *a, const dki_t *b)$/;"	f
+dki_tsearch	dki.c	/^const dki_t	*dki_tsearch (const dki_t *tree, int tag, const char *name)$/;"	f
+dki_unsetflag	dki.c	/^dk_flag_t	dki_unsetflag (dki_t *dkp, dk_flag_t flag)$/;"	f
+dki_writeinfo	dki.c	/^static	int	dki_writeinfo (const dki_t *dkp, const char *path)$/;"	f	file:
+domain_canonicdup	misc.c	/^char	*domain_canonicdup (const char *s)$/;"	f
+domaincmp	domaincmp.c	/^int     domaincmp (const char *a, const char *b)$/;"	f
+domaincmp_dir	domaincmp.c	/^int     domaincmp_dir (const char *a, const char *b, int subdomain_above)$/;"	f
+dosigning	zkt-signer.c	/^static	int	dosigning (zone_t *zonelist, zone_t *zp)$/;"	f	file:
+dupconfig	zconf.c	/^zconf_t	*dupconfig (const zconf_t *conf)$/;"	f
+dyn_update_freeze	nscomm.c	/^int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)$/;"	f
+dynamic_zone	zkt-signer.c	/^static	int	dynamic_zone = 0;	\/* dynamic zone ? *\/$/;"	v	file:
+error	misc.c	/^void error (char *fmt, ...)$/;"	f
+ex	domaincmp.c	/^} ex[] = {$/;"	v	typeref:struct:__anon1	file:
+exptimeflag	zkt-keyman.c	/^int	exptimeflag = 0;$/;"	v
+exptimeflag	zkt-ls.c	/^int	exptimeflag = 0;$/;"	v
+extern	dki.c	59;"	d	file:
+extern	dki.c	61;"	d	file:
+extern	domaincmp.c	43;"	d	file:
+extern	domaincmp.c	45;"	d	file:
+extern	log.c	55;"	d	file:
+extern	log.c	57;"	d	file:
+extern	misc.c	56;"	d	file:
+extern	misc.c	58;"	d	file:
+extern	ncparse.c	44;"	d	file:
+extern	ncparse.c	46;"	d	file:
+extern	nscomm.c	45;"	d	file:
+extern	nscomm.c	47;"	d	file:
+extern	rollover.c	57;"	d	file:
+extern	rollover.c	59;"	d	file:
+extern	soaserial.c	53;"	d	file:
+extern	soaserial.c	55;"	d	file:
+extern	tcap.c	31;"	d	file:
+extern	tcap.c	33;"	d	file:
+extern	zconf.c	61;"	d	file:
+extern	zconf.c	63;"	d	file:
+extern	zfparse.c	58;"	d	file:
+extern	zfparse.c	60;"	d	file:
+extern	zkt.c	49;"	d	file:
+extern	zkt.c	51;"	d	file:
+extern	zone.c	53;"	d	file:
+extern	zone.c	55;"	d	file:
+fatal	misc.c	/^void fatal (char *fmt, ...)$/;"	f
+file_age	misc.c	/^int	file_age (const char *fname)$/;"	f
+file_mtime	misc.c	/^time_t	file_mtime (const char *fname)$/;"	f
+fileexist	misc.c	/^int	fileexist (const char *name)$/;"	f
+filesize	misc.c	/^size_t	filesize (const char *name)$/;"	f
+first	zconf.c	74;"	d	file:
+force	zkt-signer.c	/^static	int	force = 0;$/;"	v	file:
+freeconfig	zconf.c	/^zconf_t	*freeconfig (zconf_t *conf)$/;"	f
+genkey	rollover.c	/^static	dki_t	*genkey (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)$/;"	f	file:
+genkey2	rollover.c	/^static	dki_t	*genkey2 (dki_t **listp, const char *dir, const char *domain, int ksk, const zconf_t *conf, int status)$/;"	f	file:
+gensalt	misc.c	/^int	gensalt (char *salt, size_t saltsize, int saltbits, unsigned int seed)$/;"	f
+get_exptime	rollover.c	/^static	time_t	get_exptime (dki_t *key, const zconf_t *z)$/;"	f	file:
+get_parent_phase	rollover.c	/^static	int	get_parent_phase (const char *file)$/;"	f	file:
+get_parent_phase	zkt-keyman.c	/^static	int	get_parent_phase (const char *file)$/;"	f	file:
+get_ttl	zfparse.c	/^static	long	get_ttl (const char *s)$/;"	f	file:
+getdefconfname	misc.c	/^const	char	*getdefconfname (const char *view)$/;"	f
+getnameappendix	misc.c	/^const	char	*getnameappendix (const char *progname, const char *basename)$/;"	f
+gettok	ncparse.c	/^static	int	gettok (FILE *fp, char *val, size_t valsize)$/;"	f	file:
+goto_labelstart	domaincmp.c	48;"	d	file:
+headerflag	zkt-keyman.c	/^int	headerflag = 1;$/;"	v
+headerflag	zkt-ls.c	/^int	headerflag = 1;$/;"	v
+html	tcap.c	/^static	int	html = 0;$/;"	v	file:
+in_strarr	misc.c	/^int	in_strarr (const char *str, char *const arr[], int cnt)$/;"	f
+inc_errstr	soaserial.c	/^const	char	*inc_errstr (int err)$/;"	f
+inc_serial	soaserial.c	/^int	inc_serial (const char *fname, int use_unixtime)$/;"	f
+inc_soa_serial	soaserial.c	/^static	int	inc_soa_serial (FILE *fp, int use_unixtime)$/;"	f	file:
+is1	tcap.c	/^static	const	char	*is1 = "";$/;"	v	file:
+is2	tcap.c	/^static	const	char	*is2 = "";$/;"	v	file:
+is_defined	zkt-signer.c	132;"	d	file:
+is_directory	misc.c	/^int	is_directory (const char *name)$/;"	f
+is_dotfilename	misc.c	/^int	is_dotfilename (const char *name)$/;"	f
+is_exec_ok	misc.c	/^int	is_exec_ok (const char *prog)$/;"	f
+is_keyfilename	misc.c	/^int	is_keyfilename (const char *name)$/;"	f
+is_multiline_rr	zfparse.c	/^static	const	char	*is_multiline_rr (int *multi_line_rr, const char *p)$/;"	f	file:
+is_parentdirsigned	rollover.c	/^static	int	is_parentdirsigned (const zone_t *zonelist, const zone_t *zp)$/;"	f	file:
+is_soa_rr	soaserial.c	/^static	int	is_soa_rr (const char *line)$/;"	f	file:
+iscmdline	zconf.c	77;"	d	file:
+iscompatible	zconf.c	78;"	d	file:
+isinlist	strlist.c	/^int	isinlist (const char *str, const char *list)$/;"	f
+isparentdomain	domaincmp.c	/^int	isparentdomain (const char *child, const char *parent, int level)$/;"	f
+issubdomain	domaincmp.c	/^int	issubdomain (const char *child, const char *parent)$/;"	f
+italic_off	tcap.c	/^static	const	char	*italic_off = "";$/;"	v	file:
+italic_on	tcap.c	/^static	const	char	*italic_on = "";$/;"	v	file:
+ksk5011status	rollover.c	/^int	ksk5011status (dki_t **listp, const char *dir, const char *domain, const zconf_t *z)$/;"	f
+ksk_roll	zkt-keyman.c	/^static	void	ksk_roll (const char *keyname, int phase, const dki_t *list, const zconf_t *conf)$/;"	f	file:
+kskdomain	zkt-keyman.c	/^static	char	*kskdomain = "";$/;"	v	file:
+kskflag	zkt-keyman.c	/^int	kskflag = 1;$/;"	v
+kskflag	zkt-ls.c	/^int	kskflag = 1;$/;"	v
+kskrollover	rollover.c	/^static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)$/;"	f	file:
+kskstatus	rollover.c	/^int	kskstatus (zone_t *zonelist, zone_t *zp)$/;"	f
+kw	ncparse.c	/^} kw[] = {$/;"	v	typeref:struct:KeyWords	file:
+label	zconf.c	/^	char	*label;		\/* the name of the paramter *\/$/;"	m	struct:__anon3	file:
+labellist	zkt-keyman.c	/^char	*labellist = NULL;$/;"	v
+labellist	zkt-ls.c	/^char	*labellist = NULL;$/;"	v
+last	zconf.c	75;"	d	file:
+level	log.c	/^	lg_lvl_t	level;$/;"	m	struct:__anon4	file:
+lg_args	log.c	/^void	lg_args (lg_lvl_t level, int argc, char * const argv[])$/;"	f
+lg_close	log.c	/^int	lg_close ()$/;"	f
+lg_errcnt	log.c	/^static	long	lg_errcnt;$/;"	v	file:
+lg_fileopen	log.c	/^static	FILE	*lg_fileopen (const char *path, const char *name)$/;"	f	file:
+lg_fp	log.c	/^static	FILE	*lg_fp;$/;"	v	file:
+lg_fpsave	log.c	/^static	FILE	*lg_fpsave;$/;"	v	file:
+lg_geterrcnt	log.c	/^long	lg_geterrcnt ()$/;"	f
+lg_lvl2str	log.c	/^const	char	*lg_lvl2str (lg_lvl_t level)$/;"	f
+lg_lvl2syslog	log.c	/^lg_lvl_t	lg_lvl2syslog (lg_lvl_t level)$/;"	f
+lg_mesg	log.c	/^void	lg_mesg (int priority, char *fmt, ...)$/;"	f
+lg_minfilelevel	log.c	/^static	int	lg_minfilelevel;$/;"	v	file:
+lg_minsyslevel	log.c	/^static	int	lg_minsyslevel;$/;"	v	file:
+lg_open	log.c	/^int	lg_open (const char *progname, const char *facility, const char *syslevel, const char *path, const char *file, const char *filelevel)$/;"	f
+lg_progname	log.c	/^static	const char	*lg_progname;$/;"	v	file:
+lg_reseterrcnt	log.c	/^long	lg_reseterrcnt ()$/;"	f
+lg_seterrcnt	log.c	/^long	lg_seterrcnt (long value)$/;"	f
+lg_str2lvl	log.c	/^lg_lvl_t	lg_str2lvl (const char *name)$/;"	f
+lg_str2syslog	log.c	/^int	lg_str2syslog (const char *facility)$/;"	f
+lg_symtbl_t	log.c	/^} lg_symtbl_t;$/;"	t	typeref:struct:__anon4	file:
+lg_syslogging	log.c	/^static	int	lg_syslogging;$/;"	v	file:
+lg_zone_end	log.c	/^int	lg_zone_end ()$/;"	f
+lg_zone_start	log.c	/^int	lg_zone_start (const char *dir, const char *domain)$/;"	f
+lifetime	zkt-keyman.c	/^int	lifetime = 0;$/;"	v
+lifetime	zkt-ls.c	/^int	lifetime = 0;$/;"	v
+lifetimeflag	zkt-keyman.c	/^int	lifetimeflag = 0;$/;"	v
+lifetimeflag	zkt-ls.c	/^int	lifetimeflag = 0;$/;"	v
+linkfile	misc.c	/^int	linkfile (const char *fromfile, const char *tofile)$/;"	f
+list_dnskey	zkt.c	/^static	void	list_dnskey (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
+list_key	zkt.c	/^static	void	list_key (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
+list_trustedkey	zkt.c	/^static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
+ljustflag	zkt-keyman.c	/^int	ljustflag = 0;$/;"	v
+ljustflag	zkt-ls.c	/^int	ljustflag = 0;$/;"	v
+loadconfig	zconf.c	/^zconf_t	*loadconfig (const char *filename, zconf_t *z)$/;"	f
+loadconfig_fromstr	zconf.c	/^zconf_t	*loadconfig_fromstr (const char *str, zconf_t *z)$/;"	f
+logfile	zkt-signer.c	/^static	const	char	*logfile = NULL;$/;"	v	file:
+logflush	misc.c	/^void logflush ()$/;"	f
+logmesg	misc.c	/^void logmesg (char *fmt, ...)$/;"	f
+long_options	zkt-conf.c	/^static struct option long_options[] = {$/;"	v	typeref:struct:option	file:
+long_options	zkt-keyman.c	/^static struct option long_options[] = {$/;"	v	typeref:struct:option	file:
+long_options	zkt-ls.c	/^static struct option long_options[] = {$/;"	v	typeref:struct:option	file:
+long_options	zkt-signer.c	/^static struct option long_options[] = {$/;"	v	typeref:struct:option	file:
+lopt_usage	zkt-conf.c	306;"	d	file:
+lopt_usage	zkt-conf.c	309;"	d	file:
+lopt_usage	zkt-keyman.c	334;"	d	file:
+lopt_usage	zkt-keyman.c	337;"	d	file:
+lopt_usage	zkt-ls.c	314;"	d	file:
+lopt_usage	zkt-ls.c	317;"	d	file:
+lopt_usage	zkt-signer.c	341;"	d	file:
+lopt_usage	zkt-signer.c	344;"	d	file:
+loptstr	zkt-conf.c	307;"	d	file:
+loptstr	zkt-conf.c	310;"	d	file:
+loptstr	zkt-keyman.c	335;"	d	file:
+loptstr	zkt-keyman.c	338;"	d	file:
+loptstr	zkt-ls.c	315;"	d	file:
+loptstr	zkt-ls.c	318;"	d	file:
+loptstr	zkt-signer.c	342;"	d	file:
+loptstr	zkt-signer.c	345;"	d	file:
+main	domaincmp.c	/^main (int argc, char *argv[])$/;"	f
+main	log.c	/^int	main (int argc, char *argv[])$/;"	f
+main	misc.c	/^main (int argc, char *argv[])$/;"	f
+main	ncparse.c	/^main (int argc, char *argv[])$/;"	f
+main	soaserial.c	/^main (int argc, char *argv[])$/;"	f
+main	strlist.c	/^main (int argc, char *argv[])$/;"	f
+main	tcap.c	/^main (int argc, const char *argv[])$/;"	f
+main	zconf.c	/^main (int argc, char *argv[])$/;"	f
+main	zfparse.c	/^int	main (int argc, char *argv[])$/;"	f
+main	zkt-conf.c	/^int	main (int argc, char *argv[])$/;"	f
+main	zkt-keyman.c	/^int	main (int argc, char *argv[])$/;"	f
+main	zkt-ls.c	/^int	main (int argc, char *argv[])$/;"	f
+main	zkt-signer.c	/^int	main (int argc, char *const argv[])$/;"	f
+main	zkt-soaserial.c	/^int	main (int argc, char *argv[])$/;"	f
+maxcolor	tcap.c	/^static	int	maxcolor;$/;"	v	file:
+name	ncparse.c	/^	char	*name;$/;"	m	struct:KeyWords	file:
+namedconf	zkt-signer.c	/^static	const	char	*namedconf = NULL;$/;"	v	file:
+new_keysetfiles	zkt-signer.c	/^static	int	new_keysetfiles (const char *dir, time_t zone_signing_time)$/;"	f	file:
+noexec	zkt-signer.c	/^static	int	noexec = 0;$/;"	v	file:
+origin	zkt-signer.c	/^static	const	char	*origin = NULL;$/;"	v	file:
+parent	zkt.c	/^const	dki_t	*parent;$/;"	v
+parse_namedconf	ncparse.c	/^int	parse_namedconf (const char *filename, const char *chroot_dir, char *dir, size_t dirsize, int (*func) ())$/;"	f
+parseconfigline	zconf.c	/^static	void	parseconfigline (char *buf, unsigned int line, zconf_t *z)$/;"	f	file:
+parsedir	zkt-signer.c	/^static	int	parsedir (const char *dir, zone_t **zp, const zconf_t *conf)$/;"	f	file:
+parsedirectory	zkt-keyman.c	/^static	int	parsedirectory (const char *dir, dki_t **listp)$/;"	f	file:
+parsedirectory	zkt-ls.c	/^static	int	parsedirectory (const char *dir, dki_t **listp, int sub_before)$/;"	f	file:
+parsefile	zkt-keyman.c	/^static	void	parsefile (const char *file, dki_t **listp)$/;"	f	file:
+parsefile	zkt-ls.c	/^static	void	parsefile (const char *file, dki_t **listp, int sub_before)$/;"	f	file:
+parsetag	zkt-keyman.c	/^static	const char *parsetag (const char *str, int *tagp)$/;"	f	file:
+parseurl	misc.c	/^void	parseurl (char *url, char **proto, char **host, char **port, char **para)$/;"	f
+parsezonefile	zfparse.c	/^int	parsezonefile (const char *file, long *pminttl, long *pmaxttl, const char *keydbfile)$/;"	f
+pathflag	zkt-keyman.c	/^int	pathflag = 0;$/;"	v
+pathflag	zkt-ls.c	/^int	pathflag = 0;$/;"	v
+pathname	misc.c	/^char	*pathname (char *path, size_t size, const char *dir, const char *file, const char *ext)$/;"	f
+prepstrlist	strlist.c	/^char	*prepstrlist (const char *str, const char *delim)$/;"	f
+printconfig	zconf.c	/^int	printconfig (const char *fname, const zconf_t *z)$/;"	f
+printconfigdiff	zconf.c	/^int	printconfigdiff (const char *fname, const zconf_t *ref, const zconf_t *z)$/;"	f
+printconfigline	zconf.c	/^static	void	printconfigline (FILE *fp, zconf_para_t *cp)$/;"	f	file:
+printkeyinfo	zkt.c	/^static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)$/;"	f	file:
+printserial	zkt-soaserial.c	/^static	void	printserial (const char *fname, unsigned long serial)$/;"	f	file:
+printzone	ncparse.c	/^int	printzone (const char *dir, const char *view, const char *zone, const char *file)$/;"	f
+progname	domaincmp.c	/^const char	*progname;$/;"	v
+progname	log.c	/^const char *progname;$/;"	v
+progname	misc.c	/^const char *progname;$/;"	v
+progname	ncparse.c	/^char	*progname;$/;"	v
+progname	soaserial.c	/^const char *progname;$/;"	v
+progname	tcap.c	/^static	const char	*progname;$/;"	v	file:
+progname	zconf.c	/^const char *progname;$/;"	v
+progname	zfparse.c	/^const char *progname;$/;"	v
+progname	zkt-conf.c	/^const	char	*progname;$/;"	v
+progname	zkt-keyman.c	/^const	char	*progname;$/;"	v
+progname	zkt-ls.c	/^const	char	*progname;$/;"	v
+progname	zkt-signer.c	/^const	char	*progname;$/;"	v
+progname	zkt-soaserial.c	/^static	const char *progname;$/;"	v	file:
+put	tcap.c	/^static	int	put (int c)$/;"	f	file:
+r1	tcap.c	/^static	const	char	*r1 = "";$/;"	v	file:
+r2	tcap.c	/^static	const	char	*r2 = "";$/;"	v	file:
+read_serial_fromfile	zkt-soaserial.c	/^static	int	read_serial_fromfile (const char *fname, unsigned long *serial)$/;"	f	file:
+recflag	zkt-keyman.c	/^static	int	recflag = RECURSIVE;$/;"	v	file:
+recflag	zkt-ls.c	/^static	int	recflag = RECURSIVE;$/;"	v	file:
+register_key	zkt-signer.c	/^static	void	register_key (dki_t *list, const zconf_t *z)$/;"	f	file:
+reload_zone	nscomm.c	/^int	reload_zone (const char *domain, const zconf_t *z)$/;"	f
+reloadflag	zkt-signer.c	/^static	int	reloadflag = 0;$/;"	v	file:
+res	domaincmp.c	/^         int     res;$/;"	m	struct:__anon1	file:
+searchitem	zkt.c	/^static	int	searchitem;$/;"	v	file:
+searchkw	ncparse.c	/^static	int	searchkw (const char *keyword)$/;"	f	file:
+searchresult	zkt.c	/^static	const	dki_t	*searchresult;$/;"	v	file:
+serialtime	soaserial.c	/^static	ulong	serialtime (time_t sec)$/;"	f	file:
+set_all_varptr	zconf.c	/^static	void set_all_varptr (zconf_t *cp, const zconf_t *cp2)$/;"	f	file:
+set_bind94_dynzone	zkt-signer.c	128;"	d	file:
+set_bind96_dynzone	zkt-signer.c	129;"	d	file:
+set_keylifetime	zkt.c	/^static	void	set_keylifetime (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
+set_varptr	zconf.c	/^static	int set_varptr (char *entry, void *ptr, const void *ptr2)$/;"	f	file:
+setconfigpar	zconf.c	/^int	setconfigpar (zconf_t *config, char *entry, const void *pval)$/;"	f
+setconfigversion	zconf.c	/^void	setconfigversion (int version)$/;"	f
+setglobalflags	zkt-keyman.c	/^static	void	setglobalflags (zconf_t *config)$/;"	f	file:
+setglobalflags	zkt-ls.c	/^static	void	setglobalflags (zconf_t *config)$/;"	f	file:
+setminmax	zfparse.c	/^static	void	setminmax (long *pmin, long val, long *pmax)$/;"	f	file:
+short_options	zkt-conf.c	73;"	d	file:
+short_options	zkt-keyman.c	88;"	d	file:
+short_options	zkt-ls.c	92;"	d	file:
+short_options	zkt-ls.c	94;"	d	file:
+short_options	zkt-signer.c	68;"	d	file:
+short_options	zkt-signer.c	70;"	d	file:
+sign_zone	zkt-signer.c	/^static	int	sign_zone (const zone_t *zp)$/;"	f	file:
+skiplabel	zfparse.c	/^static	const	char	*skiplabel (const char *s)$/;"	f	file:
+skipws	zfparse.c	/^static	const	char	*skipws (const char *s)$/;"	f	file:
+sopt_usage	zkt-conf.c	304;"	d	file:
+sopt_usage	zkt-keyman.c	332;"	d	file:
+sopt_usage	zkt-ls.c	312;"	d	file:
+sopt_usage	zkt-signer.c	339;"	d	file:
+splitpath	misc.c	/^const	char	*splitpath (char *path, size_t psize, const char *filename)$/;"	f
+start_timer	misc.c	/^time_t	start_timer ()$/;"	f
+stop_timer	misc.c	/^time_t	stop_timer (time_t start)$/;"	f
+str	log.c	/^	const	char	*str;$/;"	m	struct:__anon4	file:
+str_chop	misc.c	/^char	*str_chop (char *str, char c)$/;"	f
+str_delspace	misc.c	/^char	*str_delspace (char *s)$/;"	f
+str_untaint	misc.c	/^char	*str_untaint (char *str)$/;"	f
+strfindstr	soaserial.c	/^static	const	char	*strfindstr (const char *str, const char *search)$/;"	f	file:
+subdomain_before_parent	zkt-ls.c	/^int	subdomain_before_parent = 1;$/;"	v
+symtbl	log.c	/^static	lg_symtbl_t	symtbl[] = {$/;"	v	file:
+syslog_level	log.c	/^	int		syslog_level;$/;"	m	struct:__anon4	file:
+tag_search	zkt.c	/^static	void	tag_search (const dki_t **nodep, const VISIT which, int depth)$/;"	f	file:
+tc_attr	tcap.c	/^int	tc_attr (FILE *fp, tc_att_t attr, int on)$/;"	f
+tc_color	tcap.c	/^static	int	tc_color (FILE *fp, int color)$/;"	f	file:
+tc_end	tcap.c	/^int	tc_end (FILE *fp, const char *term)$/;"	f
+tc_init	tcap.c	/^int	 tc_init (FILE *fp, const char *term)$/;"	f
+tc_outfp	tcap.c	/^static	FILE	*tc_outfp;$/;"	v	file:
+tc_printattr	tcap.c	/^static	int	tc_printattr (FILE *fp, const char *attstr)$/;"	f	file:
+term	zkt-ls.c	/^static	const	char	*term = NULL;$/;"	v	file:
+testflag	zkt-conf.c	/^static	int	testflag = 0;$/;"	v	file:
+time2isostr	misc.c	/^char	*time2isostr (time_t sec, int precision)$/;"	f
+time2str	misc.c	/^char	*time2str (time_t sec, int precision)$/;"	f
+timeflag	zkt-keyman.c	/^int	timeflag = 1;$/;"	v
+timeflag	zkt-ls.c	/^int	timeflag = 1;$/;"	v
+timeint2str	zconf.c	/^const char	*timeint2str (unsigned long val)$/;"	f
+timestr	zkt-soaserial.c	/^static	char	*timestr (time_t sec)$/;"	f	file:
+timestr2time	misc.c	/^time_t	timestr2time (const char *timestr)$/;"	f
+tok	ncparse.c	/^	int	tok;$/;"	m	struct:KeyWords	file:
+tok2str	ncparse.c	/^static	const char	*tok2str (int  tok)$/;"	f	file:
+touch	misc.c	/^int	touch (const char *fname, time_t sec)$/;"	f
+trustedkeyflag	zkt-ls.c	/^static	int	trustedkeyflag = 0;$/;"	v	file:
+type	zconf.c	/^	ctype_t	type;		\/* the parameter type *\/$/;"	m	struct:__anon3	file:
+unprepstrlist	strlist.c	/^char	*unprepstrlist (char *list, char delimc)$/;"	f
+usage	zkt-conf.c	/^static	void    usage (char *mesg)$/;"	f	file:
+usage	zkt-keyman.c	/^static	void    usage (char *mesg, zconf_t *cp)$/;"	f	file:
+usage	zkt-ls.c	/^static	void    usage (char *mesg, zconf_t *cp)$/;"	f	file:
+usage	zkt-signer.c	/^static	void	usage (char *mesg, zconf_t *conf)$/;"	f	file:
+usage	zkt-soaserial.c	/^static	void	usage (const char *msg)$/;"	f	file:
+used_since	zconf.c	/^	short	used_since;	\/* compability (from version; 0 == command line) *\/$/;"	m	struct:__anon3	file:
+used_till	zconf.c	/^	short	used_till;	\/* compability (to version) *\/$/;"	m	struct:__anon3	file:
+var	zconf.c	/^	void	*var;		\/* pointer to the parameter variable *\/$/;"	m	struct:__anon3	file:
+var2	zconf.c	/^	const void	*var2;	\/* pointer to a second parameter variable *\/$/;"	m	struct:__anon3	file:
+verbmesg	misc.c	/^void	verbmesg (int verblvl, const zconf_t *conf, char *fmt, ...)$/;"	f
+verbose	zkt-signer.c	/^static	int	verbose = 0;$/;"	v	file:
+view	zkt-conf.c	/^static	const	char	*view = "";$/;"	v	file:
+view	zkt-keyman.c	/^static	const	char	*view = "";$/;"	v	file:
+view	zkt-ls.c	/^static	const	char	*view = "";$/;"	v	file:
+viewname	zkt-signer.c	/^static	const	char	*viewname = NULL;$/;"	v	file:
+writeflag	zkt-conf.c	/^static	int	writeflag = 0;$/;"	v	file:
+writekeyfile	zkt-signer.c	/^static	int	writekeyfile (const char *fname, const dki_t *list, int key_ttl)$/;"	f	file:
+zconf_para_t	zconf.c	/^} zconf_para_t;$/;"	t	typeref:struct:__anon3	file:
+zkt_list_dnskeys	zkt.c	/^void	zkt_list_dnskeys (const dki_t *data)$/;"	f
+zkt_list_keys	zkt.c	/^void	zkt_list_keys (const dki_t *data)$/;"	f
+zkt_list_trustedkeys	zkt.c	/^void	zkt_list_trustedkeys (const dki_t *data)$/;"	f
+zkt_search	zkt.c	/^const	dki_t	*zkt_search (const dki_t *data, int searchtag, const char *keyname)$/;"	f
+zkt_setkeylifetime	zkt.c	/^void	zkt_setkeylifetime (dki_t *data)$/;"	f
+zone_add	zone.c	/^zone_t	*zone_add (zone_t **list, zone_t *new)$/;"	f
+zone_alloc	zone.c	/^static	zone_t	*zone_alloc ()$/;"	f	file:
+zone_cmp	zone.c	/^static	int	zone_cmp (const zone_t *a, const zone_t *b)$/;"	f	file:
+zone_estr	zone.c	/^static	char	zone_estr[255+1];$/;"	v	file:
+zone_free	zone.c	/^void	zone_free (zone_t *zp)$/;"	f
+zone_freelist	zone.c	/^void	zone_freelist (zone_t **listp)$/;"	f
+zone_geterrstr	zone.c	/^const	char	*zone_geterrstr ()$/;"	f
+zone_new	zone.c	/^zone_t	*zone_new (zone_t **zp, const char *zone, const char *dir, const char *file, const char *signed_ext, const zconf_t *cp)$/;"	f
+zone_print	zone.c	/^int	zone_print (const char *mesg, const zone_t *z)$/;"	f
+zone_readdir	zone.c	/^int	zone_readdir (const char *dir, const char *zone, const char *zfile, zone_t **listp, const zconf_t *conf, int dyn_zone)$/;"	f
+zone_search	zone.c	/^const zone_t	*zone_search (const zone_t *list, const char *zone)$/;"	f
+zonelist	zkt-signer.c	/^static	zone_t	*zonelist = NULL;	\/* must be static global because add2zonelist use it *\/$/;"	v	file:
+zskflag	zkt-keyman.c	/^int	zskflag = 1;$/;"	v
+zskflag	zkt-ls.c	/^int	zskflag = 1;$/;"	v
+zskstatus	rollover.c	/^int	zskstatus (dki_t **listp, const char *dir, const char *domain, const zconf_t *z)$/;"	f

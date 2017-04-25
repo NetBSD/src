@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.7.4.1.4.3 2015/11/17 19:31:08 bouyer Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.7.4.1.4.4 2017/04/25 22:01:27 snj Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,6 +43,7 @@
 #include <isc/commandline.h>
 #include <isc/entropy.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/util.h>
@@ -233,7 +234,7 @@ main(int argc, char **argv) {
 	int		dbits = 0;
 	dns_ttl_t	ttl = 0;
 	isc_boolean_t	use_default = ISC_FALSE, use_nsec3 = ISC_FALSE;
-	isc_stdtime_t	publish = 0, activate = 0, revoke = 0;
+	isc_stdtime_t	publish = 0, activate = 0, revokekey = 0;
 	isc_stdtime_t	inactive = 0, delete = 0;
 	isc_stdtime_t	now;
 	int		prepub = -1;
@@ -418,7 +419,7 @@ main(int argc, char **argv) {
 			if (setrev || unsetrev)
 				fatal("-R specified more than once");
 
-				revoke = strtotime(isc_commandline_argument,
+				revokekey = strtotime(isc_commandline_argument,
 					   now, now, &setrev);
 			unsetrev = !setrev;
 			break;
@@ -478,7 +479,7 @@ main(int argc, char **argv) {
 		fatal("could not initialize dst: %s",
 		      isc_result_totext(ret));
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 	if (predecessor == NULL) {
 		if (prepub == -1)
@@ -542,6 +543,9 @@ main(int argc, char **argv) {
 			if (alg == DST_ALG_DH)
 				options |= DST_TYPE_KEY;
 		}
+
+		if (!dst_algorithm_supported(alg))
+			fatal("unsupported algorithm: %d", alg);
 
 		if (use_nsec3 &&
 		    alg != DST_ALG_NSEC3DSA && alg != DST_ALG_NSEC3RSASHA1 &&
@@ -710,8 +714,13 @@ main(int argc, char **argv) {
 			fatal("invalid DSS key size: %d", size);
 		break;
 	case DST_ALG_ECCGOST:
+		size = 256;
+		break;
 	case DST_ALG_ECDSA256:
+		size = 256;
+		break;
 	case DST_ALG_ECDSA384:
+		size = 384;
 		break;
 	case DST_ALG_HMACMD5:
 		options |= DST_TYPE_KEY;
@@ -939,7 +948,7 @@ main(int argc, char **argv) {
 						"was used. Revoking a ZSK is "
 						"legal, but undefined.\n",
 						program);
-				dst_key_settime(key, DST_TIME_REVOKE, revoke);
+				dst_key_settime(key, DST_TIME_REVOKE, revokekey);
 			}
 
 			if (setinact)

@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata_test.c,v 1.3.4.1.4.1 2014/12/31 11:58:31 msaitoh Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.3.4.1.4.2 2017/04/25 22:01:30 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 #include <isc/commandline.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
