@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.55 2017/04/22 22:36:00 abhinav Exp $
+.\"	$NetBSD: queue.3,v 1.56 2017/04/25 06:08:24 abhinav Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -406,7 +406,7 @@ _CONCAT:-:-:+:+:+
 .TE
 .Sh SINGLY-LINKED LISTS
 A singly-linked list is headed by a structure defined by the
-.Nm SLIST_HEAD
+.Fn SLIST_HEAD
 macro.
 This structure contains a single pointer to the first element
 on the list.
@@ -438,28 +438,28 @@ and
 are user selectable.)
 .Pp
 The macro
-.Nm SLIST_HEAD_INITIALIZER
+.Fn SLIST_HEAD_INITIALIZER
 evaluates to an initializer for the list
 .Fa head .
 .Pp
 The macro
-.Nm SLIST_ENTRY
+.Fn SLIST_ENTRY
 declares a structure that connects the elements in
 the list.
 .Pp
 The macro
-.Nm SLIST_FIRST
+.Fn SLIST_FIRST
 returns the first element in the list or NULL if the list is empty.
 .Pp
 The macro
-.Nm SLIST_EMPTY
+.Fn SLIST_EMPTY
 evaluates to true if there are no elements in the list.
 .Pp
 The macro
-.Nm SLIST_NEXT
+.Fn SLIST_NEXT
 returns the next element in the list.
 .Pp
-.Nm SLIST_FOREACH
+.Fn SLIST_FOREACH
 traverses the list referenced by
 .Fa head
 in the forward direction, assigning each element in
@@ -473,45 +473,45 @@ to hold the next element, so
 may be freed or removed from the list.
 .Pp
 The macro
-.Nm SLIST_INIT
+.Fn SLIST_INIT
 initializes the list referenced by
 .Fa head .
 .Pp
 The macro
-.Nm SLIST_INSERT_HEAD
+.Fn SLIST_INSERT_HEAD
 inserts the new element
 .Fa elm
 at the head of the list.
 .Pp
 The macro
-.Nm SLIST_INSERT_AFTER
+.Fn SLIST_INSERT_AFTER
 inserts the new element
 .Fa elm
 after the element
 .Fa listelm .
 .Pp
 The macro
-.Nm SLIST_REMOVE
+.Fn SLIST_REMOVE
 removes the element
 .Fa elm
 from the list.
 .Pp
 The macro
-.Nm SLIST_REMOVE_HEAD
+.Fn SLIST_REMOVE_HEAD
 removes the first element from the head of the list.
 For optimum efficiency,
 elements being removed from the head of the list should explicitly use
 this macro instead of the generic
-.Nm SLIST_REMOVE
+.Fn SLIST_REMOVE
 macro.
 .Pp
 The macro
-.Nm SLIST_REMOVE_AFTER
+.Fn SLIST_REMOVE_AFTER
 removes the element after the one specified.
 For optimum efficiency,
 elements being removed after a specified one should explicitly use
 this macro instead of the generic
-.Nm SLIST_REMOVE
+.Fn SLIST_REMOVE
 .Sh SINGLY-LINKED LIST EXAMPLE
 .Bd -literal
 SLIST_HEAD(slisthead, entry) head =
@@ -549,7 +549,7 @@ while (!SLIST_EMPTY(\*[Am]head)) {           /* List Deletion. */
 .Ed
 .Sh LISTS
 A list is headed by a structure defined by the
-.Nm LIST_HEAD
+.Fn LIST_HEAD
 macro.
 This structure contains a single pointer to the first element
 on the list.
@@ -581,12 +581,12 @@ and
 are user selectable.)
 .Pp
 The macro
-.Nm LIST_ENTRY
+.Fn LIST_ENTRY
 declares a structure that connects the elements in
 the list.
 .Pp
 The macro
-.Nm LIST_HEAD_INITIALIZER
+.Fn LIST_HEAD_INITIALIZER
 provides a value which can be used to initialize a list head at
 compile time, and is used at the point that the list head
 variable is declared, like:
@@ -595,23 +595,23 @@ struct HEADNAME head = LIST_HEAD_INITIALIZER(head);
 .Ed
 .Pp
 The macro
-.Nm LIST_FIRST
+.Fn LIST_FIRST
 returns the first element of the list
 .Fa head .
 .Pp
 The macro
-.Nm LIST_EMPTY
+.Fn LIST_EMPTY
 returns true if the list
 .Fa head
 has no elements.
 .Pp
 The macro
-.Nm LIST_NEXT
+.Fn LIST_NEXT
 returns the element after the element
 .Fa elm .
 .Pp
 The macro
-.Nm LIST_FOREACH
+.Fn LIST_FOREACH
 traverses the list referenced by
 .Fa head
 in the forward direction, assigning each element in turn to
@@ -624,38 +624,38 @@ to hold the next element, so
 may be freed or removed from the list.
 .Pp
 The macro
-.Nm LIST_INIT
+.Fn LIST_INIT
 initializes the list referenced by
 .Fa head .
 .Pp
 The macro
-.Nm LIST_INSERT_AFTER
+.Fn LIST_INSERT_AFTER
 inserts the new element
 .Fa elm
 after the element
 .Fa listelm .
 .Pp
 The macro
-.Nm LIST_INSERT_BEFORE
+.Fn LIST_INSERT_BEFORE
 inserts the new element
 .Fa elm
 before the element
 .Fa listelm .
 .Pp
 The macro
-.Nm LIST_INSERT_HEAD
+.Fn LIST_INSERT_HEAD
 inserts the new element
 .Fa elm
 at the head of the list.
 .Pp
 The macro
-.Nm LIST_REMOVE
+.Fn LIST_REMOVE
 removes the element
 .Fa elm
 from the list.
 .Pp
 The macro
-.Nm LIST_REPLACE
+.Fn LIST_REPLACE
 replaces the element
 .Fa elm
 with
@@ -663,7 +663,7 @@ with
 in the list.
 .Pp
 The macro
-.Nm LIST_MOVE
+.Fn LIST_MOVE
 moves the list headed by
 .Fa head1
 onto the list headed by
@@ -700,7 +700,7 @@ if (LIST_EMPTY(\*[Am]head))			/* Test for emptiness. */
 .Ed
 .Sh SIMPLE QUEUES
 A simple queue is headed by a structure defined by the
-.Nm SIMPLEQ_HEAD
+.Fn SIMPLEQ_HEAD
 macro.
 This structure contains a pair of pointers,
 one to the first element in the simple queue and the other to
@@ -733,12 +733,12 @@ and
 are user selectable.)
 .Pp
 The macro
-.Nm SIMPLEQ_ENTRY
+.Fn SIMPLEQ_ENTRY
 declares a structure that connects the elements in
 the simple queue.
 .Pp
 The macro
-.Nm SIMPLEQ_HEAD_INITIALIZER
+.Fn SIMPLEQ_HEAD_INITIALIZER
 provides a value which can be used to initialize a simple queue head at
 compile time, and is used at the point that the simple queue head
 variable is declared, like:
@@ -747,29 +747,29 @@ struct HEADNAME head = SIMPLEQ_HEAD_INITIALIZER(head);
 .Ed
 .Pp
 The macro
-.Nm SIMPLEQ_FIRST
+.Fn SIMPLEQ_FIRST
 returns the first element of the simple queue
 .Fa head .
 .Pp
 The macro
-.Nm SIMPLEQ_EMPTY
+.Fn SIMPLEQ_EMPTY
 returns true if the simple queue
 .Fa head
 has no elements.
 .Pp
 The macro
-.Nm SIMPLEQ_NEXT
+.Fn SIMPLEQ_NEXT
 returns the element after the element
 .Fa elm .
 .Pp
 The macro
-.Nm SIMPLEQ_LAST
+.Fn SIMPLEQ_LAST
 returns the last item on the tail queue.
 If the tail queue is empty the return value is
 .Dv NULL .
 .Pp
 The macro
-.Nm SIMPLEQ_FOREACH
+.Fn SIMPLEQ_FOREACH
 traverses the tail queue referenced by
 .Fa head
 in the forward direction, assigning each element
@@ -783,55 +783,55 @@ to hold the next element, so
 may be freed or removed from the list.
 .Pp
 The macro
-.Nm SIMPLEQ_INIT
+.Fn SIMPLEQ_INIT
 initializes the simple queue referenced by
 .Fa head .
 .Pp
 The macro
-.Nm SIMPLEQ_INSERT_HEAD
+.Fn SIMPLEQ_INSERT_HEAD
 inserts the new element
 .Fa elm
 at the head of the simple queue.
 .Pp
 The macro
-.Nm SIMPLEQ_INSERT_TAIL
+.Fn SIMPLEQ_INSERT_TAIL
 inserts the new element
 .Fa elm
 at the end of the simple queue.
 .Pp
 The macro
-.Nm SIMPLEQ_INSERT_AFTER
+.Fn SIMPLEQ_INSERT_AFTER
 inserts the new element
 .Fa elm
 after the element
 .Fa listelm .
 .Pp
 The macro
-.Nm SIMPLEQ_REMOVE_HEAD
+.Fn SIMPLEQ_REMOVE_HEAD
 removes the first element from the head of the simple queue.
 For optimum efficiency,
 elements being removed from the head of the queue should explicitly use
 this macro instead of the generic
-.Nm SIMPLEQ_REMOVE
+.Fn SIMPLEQ_REMOVE
 macro.
 .Pp
 The macro
-.Nm SIMPLEQ_REMOVE_AFTER
+.Fn SIMPLEQ_REMOVE_AFTER
 removes the element after the one specified from the simple queue.
 For optimum efficiency,
 elements being removed after specified elements should explicitly use
 this macro instead of the generic
-.Nm SIMPLEQ_REMOVE
+.Fn SIMPLEQ_REMOVE
 macro.
 .Pp
 The macro
-.Nm SIMPLEQ_REMOVE
+.Fn SIMPLEQ_REMOVE
 removes
 .Fa elm
 from the simple queue.
 .Pp
 The macro
-.Nm SIMPLEQ_CONCAT
+.Fn SIMPLEQ_CONCAT
 concatenates the tail queue headed by
 .Fa head2
 onto the end of the one headed by
@@ -868,7 +868,7 @@ if (SIMPLEQ_EMPTY(\*[Am]head))		/* Test for emptiness. */
 .Ed
 .Sh TAIL QUEUES
 A tail queue is headed by a structure defined by the
-.Nm TAILQ_HEAD
+.Fn TAILQ_HEAD
 macro.
 This structure contains a pair of pointers,
 one to the first element in the tail queue and the other to
@@ -902,12 +902,12 @@ and
 are user selectable.)
 .Pp
 The macro
-.Nm TAILQ_ENTRY
+.Fn TAILQ_ENTRY
 declares a structure that connects the elements in
 the tail queue.
 .Pp
 The macro
-.Nm TAILQ_HEAD_INITIALIZER
+.Fn TAILQ_HEAD_INITIALIZER
 provides a value which can be used to initialize a tail queue head at
 compile time, and is used at the point that the tail queue head
 variable is declared, like:
@@ -916,39 +916,39 @@ struct HEADNAME head = TAILQ_HEAD_INITIALIZER(head);
 .Ed
 .Pp
 The macro
-.Nm TAILQ_FIRST
+.Fn TAILQ_FIRST
 returns the first element of the tail queue
 .Fa head .
 .Pp
 The macro
-.Nm TAILQ_NEXT
+.Fn TAILQ_NEXT
 returns the element after the element
 .Fa elm .
 .Pp
 The macro
-.Nm TAILQ_LAST
+.Fn TAILQ_LAST
 returns the last item on the tail queue.
 If the tail queue is empty the return value is
 .Dv NULL .
 .Pp
 The macro
-.Nm TAILQ_PREV
+.Fn TAILQ_PREV
 returns the previous item on the tail queue, from the one specified.
 If the tail queue is empty the return value is
 .Dv NULL .
 .Pp
 The macro
-.Nm TAILQ_EMPTY
+.Fn TAILQ_EMPTY
 returns true if the tail queue
 .Fa head
 has no elements.
 .Pp
 The macros
-.Nm TAILQ_FOREACH ,
-.Nm TAILQ_FOREACH_REVERSE ,
-.Nm TAILQ_FOREACH_SAFE ,
+.Fn TAILQ_FOREACH ,
+.Fn TAILQ_FOREACH_REVERSE ,
+.Fn TAILQ_FOREACH_SAFE ,
 and
-.Nm TAILQ_FOREACH_REVERSE_SAFE
+.Fn TAILQ_FOREACH_REVERSE_SAFE
 traverse the tail queue referenced by
 .Fa head
 in the forward or reverse direction direction, assigning each element in turn to
@@ -961,44 +961,44 @@ to hold the next element, so
 may be freed or removed from the list.
 .Pp
 The macro
-.Nm TAILQ_INIT
+.Fn TAILQ_INIT
 initializes the tail queue referenced by
 .Fa head .
 .Pp
 The macro
-.Nm TAILQ_INSERT_HEAD
+.Fn TAILQ_INSERT_HEAD
 inserts the new element
 .Fa elm
 at the head of the tail queue.
 .Pp
 The macro
-.Nm TAILQ_INSERT_TAIL
+.Fn TAILQ_INSERT_TAIL
 inserts the new element
 .Fa elm
 at the end of the tail queue.
 .Pp
 The macro
-.Nm TAILQ_INSERT_AFTER
+.Fn TAILQ_INSERT_AFTER
 inserts the new element
 .Fa elm
 after the element
 .Fa listelm .
 .Pp
 The macro
-.Nm TAILQ_INSERT_BEFORE
+.Fn TAILQ_INSERT_BEFORE
 inserts the new element
 .Fa elm
 before the element
 .Fa listelm .
 .Pp
 The macro
-.Nm TAILQ_REMOVE
+.Fn TAILQ_REMOVE
 removes the element
 .Fa elm
 from the tail queue.
 .Pp
 The macro
-.Nm TAILQ_REPLACE
+.Fn TAILQ_REPLACE
 replaces the element
 .Fa elm
 with the
@@ -1006,7 +1006,7 @@ with the
 one specified in the tail queue.
 .Pp
 The macro
-.Nm TAILQ_CONCAT
+.Fn TAILQ_CONCAT
 concatenates the tail queue headed by
 .Fa head2
 onto the end of the one headed by
@@ -1049,24 +1049,24 @@ if (TAILQ_EMPTY(\*[Am]head))			/* Test for emptiness. */
 .Ed
 .Sh SINGLY LINKED TAIL QUEUES
 The macros prefixed with
-.Dq Nm STAILQ_
-.Nm ( STAILQ_HEAD ,
-.Nm STAILQ_HEAD_INITIALIZER ,
-.Nm STAILQ_ENTRY ,
-.Nm STAILQ_FOREACH ,
-.Nm STAILQ_FOREACH_SAFE ,
-.Nm STAILQ_FIRST ,
-.Nm STAILQ_EMPTY ,
-.Nm STAILQ_NEXT ,
-.Nm STAILQ_LAST ,
-.Nm STAILQ_INIT ,
-.Nm STAILQ_INSERT_HEAD ,
-.Nm STAILQ_INSERT_TAIL ,
-.Nm STAILQ_INSERT_AFTER ,
-.Nm STAILQ_REMOVE_HEAD ,
-.Nm STAILQ_REMOVE ,
+.Do Nm STAILQ_ Dc (
+.Fn STAILQ_HEAD ,
+.Fn STAILQ_HEAD_INITIALIZER ,
+.Fn STAILQ_ENTRY ,
+.Fn STAILQ_FOREACH ,
+.Fn STAILQ_FOREACH_SAFE ,
+.Fn STAILQ_FIRST ,
+.Fn STAILQ_EMPTY ,
+.Fn STAILQ_NEXT ,
+.Fn STAILQ_LAST ,
+.Fn STAILQ_INIT ,
+.Fn STAILQ_INSERT_HEAD ,
+.Fn STAILQ_INSERT_TAIL ,
+.Fn STAILQ_INSERT_AFTER ,
+.Fn STAILQ_REMOVE_HEAD ,
+.Fn STAILQ_REMOVE ,
 and
-.Nm STAILQ_CONCAT )
+.Fn STAILQ_CONCAT )
 are functionally identical to these simple queue functions,
 and are provided for compatibility with
 .Fx .
