@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.c,v 1.5.4.1 2012/06/05 21:15:06 bouyer Exp $	*/
+/*	$NetBSD: rwlock.c,v 1.5.4.1.4.1 2017/04/25 22:01:58 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -30,6 +30,7 @@
 #include <isc/magic.h>
 #include <isc/msgs.h>
 #include <isc/platform.h>
+#include <isc/print.h>
 #include <isc/rwlock.h>
 #include <isc/util.h>
 

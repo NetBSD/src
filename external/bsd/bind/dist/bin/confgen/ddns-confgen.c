@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns-confgen.c,v 1.3.4.1.4.1 2014/12/31 11:58:27 msaitoh Exp $	*/
+/*	$NetBSD: ddns-confgen.c,v 1.3.4.1.4.2 2017/04/25 22:01:26 snj Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-Copyright (C) 2004, 2010, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2004, 2010, 2011, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 Copyright (C) 2000, 2001  Internet Software Consortium.
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
@@ -59,4 +59,9 @@ The tests can be run individually like this:
 
 To run all the tests, just type "make test".
 
-Id: README,v 1.16 2011/01/13 04:59:24 tbox Exp 
+When running system tests, named and lwresd can be run under
+Valgrind. The output from Valgrind are sent to per-process files that
+can be reviewed after the test has completed. To enable this, set the
+USE_VALGRIND environment variable to "helgrind" to run the Helgrind
+tool, or any other value to run the Memcheck tool. To use "helgrind"
+effectively, build BIND with --disable-atomic.

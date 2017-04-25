@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstest.c,v 1.3.4.1.4.1 2014/12/31 11:58:32 msaitoh Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.3.4.1.4.2 2017/04/25 22:01:30 snj Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007, 2009-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")

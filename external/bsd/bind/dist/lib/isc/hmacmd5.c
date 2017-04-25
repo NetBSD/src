@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacmd5.c,v 1.2.6.1.4.3 2015/11/17 19:31:16 bouyer Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.2.6.1.4.4 2017/04/25 22:01:58 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -41,7 +41,12 @@ void
 isc_hmacmd5_init(isc_hmacmd5_t *ctx, const unsigned char *key,
 		 unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Init(ctx, (const void *) key,
+				(int) len, EVP_md5()) == 1);
+#else
 	HMAC_Init(ctx, (const void *) key, (int) len, EVP_md5());
+#endif
 }
 
 void
@@ -53,12 +58,20 @@ void
 isc_hmacmd5_update(isc_hmacmd5_t *ctx, const unsigned char *buf,
 		   unsigned int len)
 {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Update(ctx, buf, (int) len) == 1);
+#else
 	HMAC_Update(ctx, buf, (int) len);
+#endif
 }
 
 void
 isc_hmacmd5_sign(isc_hmacmd5_t *ctx, unsigned char *digest) {
+#ifdef HMAC_RETURN_INT
+	RUNTIME_CHECK(HMAC_Final(ctx, digest, NULL) == 1);
+#else
 	HMAC_Final(ctx, digest, NULL);
+#endif
 	HMAC_CTX_cleanup(ctx);
 }
 
@@ -148,5 +161,5 @@ isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_MD5_DIGESTLENGTH);
 	isc_hmacmd5_sign(ctx, newdigest);
-	return (isc_safe_memcmp(digest, newdigest, len));
+	return (isc_safe_memequal(digest, newdigest, len));
 }

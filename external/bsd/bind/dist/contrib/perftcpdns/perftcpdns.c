@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1354,10 +1354,11 @@ connecting(void *dummy)
 		} else {
 			/* wait until */
 			ret = clock_nanosleep(CLOCK_REALTIME, 0, &ts, NULL);
-			if (ret < 0) {
-				if (errno == EINTR)
+			if (ret != 0) {
+				if (ret == EINTR)
 					continue;
-				perror("clock_nanosleep");
+				fprintf(stderr, "clock_nanosleep: %s\n",
+					strerror(ret));
 				fatal = 1;
 				(void) pthread_kill(master, SIGTERM);
 				break;

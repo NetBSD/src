@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hashes.c,v 1.2.8.1.4.1 2014/12/31 11:58:32 msaitoh Exp $	*/
+/*	$NetBSD: t_hashes.c,v 1.2.8.1.4.2 2017/04/25 22:01:30 snj Exp $	*/
 
 /*
  * Copyright (C) 2010, 2013  Internet Systems Consortium, Inc. ("ISC")

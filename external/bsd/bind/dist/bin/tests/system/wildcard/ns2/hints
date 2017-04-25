@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; $Id: hints,v 1.1.1.1.14.2 2014/12/31 11:58:51 msaitoh Exp $
+; $Id: hints,v 1.1.1.1.14.3 2017/04/25 22:01:44 snj Exp $
 
 . 0 NS ns.root-servers.nil.
 ns.root-servers.nil. 0 A 10.53.0.1

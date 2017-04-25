@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.5.4.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.5.4.1.4.2 2017/04/25 22:01:54 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -109,6 +109,7 @@ struct dns_xfrin_ctx {
 	int			sends;		/*%< Send in progress */
 	int			recvs;	  	/*%< Receive in progress */
 	isc_boolean_t		shuttingdown;
+	isc_result_t		shutdown_result;
 
 	dns_name_t 		name; 		/*%< Name of zone to transfer */
 	dns_rdataclass_t 	rdclass;
@@ -293,6 +294,9 @@ axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 
 	dns_difftuple_t *tuple = NULL;
 
+	if (rdata->rdclass != xfr->rdclass)
+		return(DNS_R_BADCLASS);
+
 	CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op,
 				   name, ttl, rdata, &tuple));
@@ -378,8 +382,11 @@ ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 	     dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata)
 {
 	isc_result_t result;
-
 	dns_difftuple_t *tuple = NULL;
+
+	if (rdata->rdclass != xfr->rdclass)
+		return(DNS_R_BADCLASS);
+
 	if (op == DNS_DIFFOP_ADD)
 		CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op,
@@ -659,7 +666,8 @@ dns_xfrin_create2(dns_zone_t *zone, dns_rdatatype_t xfrtype,
 	CHECK(xfrin_start(xfr));
 
 	xfr->done = done;
-	xfr->refcount++;
+	if (xfr->done != NULL)
+		xfr->refcount++;
 	*xfrp = xfr;
 
  failure:
@@ -764,6 +772,7 @@ xfrin_fail(dns_xfrin_ctx_t *xfr, isc_result_t result, const char *msg) {
 		xfr->done = NULL;
 	}
 	xfr->shuttingdown = ISC_TRUE;
+	xfr->shutdown_result = result;
 	maybe_free(xfr);
 }
 
@@ -804,6 +813,7 @@ xfrin_create(isc_mem_t *mctx,
 	xfr->sends = 0;
 	xfr->recvs = 0;
 	xfr->shuttingdown = ISC_FALSE;
+	xfr->shutdown_result = ISC_R_UNSET;
 
 	dns_name_init(&xfr->name, NULL);
 	xfr->rdclass = rdclass;
@@ -1213,6 +1223,8 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 	msg->tsigctx = xfr->tsigctx;
 	xfr->tsigctx = NULL;
 
+	dns_message_setclass(msg, xfr->rdclass);
+
 	if (xfr->nmsg > 0)
 		msg->tcp_continuation = 1;
 
@@ -1220,10 +1232,17 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 				   DNS_MESSAGEPARSE_PRESERVEORDER);
 
 	if (result != ISC_R_SUCCESS || msg->rcode != dns_rcode_noerror ||
+	    msg->opcode != dns_opcode_query ||msg->rdclass != xfr->rdclass ||
 	    (xfr->checkid && msg->id != xfr->id)) {
-		if (result == ISC_R_SUCCESS)
+		if (result == ISC_R_SUCCESS && msg->rcode != dns_rcode_noerror)
 			result = ISC_RESULTCLASS_DNSRCODE + msg->rcode; /*XXX*/
-		if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR)
+		else if (result == ISC_R_SUCCESS &&
+			 msg->opcode != dns_opcode_query)
+			result = DNS_R_UNEXPECTEDOPCODE;
+		else if (result == ISC_R_SUCCESS &&
+			 msg->rdclass != xfr->rdclass)
+			result = DNS_R_BADCLASS;
+		else if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR)
 			result = DNS_R_UNEXPECTEDID;
 		if (xfr->reqtype == dns_rdatatype_axfr ||
 		    xfr->reqtype == dns_rdatatype_soa)
@@ -1367,6 +1386,7 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 		 * point, thus maybe_free() should succeed.
 		 */
 		xfr->shuttingdown = ISC_TRUE;
+		xfr->shutdown_result = ISC_R_SUCCESS;
 		maybe_free(xfr);
 		break;
 	default:
@@ -1405,6 +1425,7 @@ static void
 maybe_free(dns_xfrin_ctx_t *xfr) {
 	isc_uint64_t msecs;
 	isc_uint64_t persec;
+	const char *result_str;
 
 	REQUIRE(VALID_XFRIN(xfr));
 
@@ -1412,6 +1433,16 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	    xfr->connects != 0 || xfr->sends != 0 ||
 	    xfr->recvs != 0)
 		return;
+
+	INSIST(! xfr->shuttingdown || xfr->shutdown_result != ISC_R_UNSET);
+
+	/* If we're called through dns_xfrin_detach() and are not
+	 * shutting down, we can't know what the transfer status is as
+	 * we are only called when the last reference is lost.
+	 */
+	result_str = (xfr->shuttingdown ?
+		      isc_result_totext(xfr->shutdown_result) : "unknown");
+	xfrin_log(xfr, ISC_LOG_INFO, "Transfer status: %s", result_str);
 
 	/*
 	 * Calculate the length of time the transfer took,

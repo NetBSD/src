@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.4.4.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.4.4.1.4.2 2017/04/25 22:01:54 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")

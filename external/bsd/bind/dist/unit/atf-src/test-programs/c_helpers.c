@@ -1,4 +1,4 @@
-/*	$NetBSD: c_helpers.c,v 1.1.1.1.10.1 2014/12/31 11:59:14 msaitoh Exp $	*/
+/*	$NetBSD: c_helpers.c,v 1.1.1.1.10.2 2017/04/25 22:02:04 snj Exp $	*/
 
 /*
  * Automated Testing Framework (atf)

@@ -1,7 +1,7 @@
-/*	$NetBSD: driver.c,v 1.1.1.1.4.1.4.1 2014/12/31 11:58:38 msaitoh Exp $	*/
+/*	$NetBSD: driver.c,v 1.1.1.1.4.1.4.2 2017/04/25 22:01:34 snj Exp $	*/
 
 /*
- * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

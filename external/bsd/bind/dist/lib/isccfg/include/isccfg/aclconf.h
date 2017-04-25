@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.h,v 1.3.4.1.4.1 2014/12/31 11:59:08 msaitoh Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.3.4.1.4.2 2017/04/25 22:02:01 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")

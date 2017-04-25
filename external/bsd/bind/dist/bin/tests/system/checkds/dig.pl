@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# $Id: dig.pl,v 1.1.1.1.12.2 2014/12/31 11:58:36 msaitoh Exp $
+# $Id: dig.pl,v 1.1.1.1.12.3 2017/04/25 22:01:32 snj Exp $
 
 my $arg;
 my $ext;

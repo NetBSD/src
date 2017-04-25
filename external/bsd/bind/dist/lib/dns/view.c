@@ -1,7 +1,7 @@
-/*	$NetBSD: view.c,v 1.3.4.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
+/*	$NetBSD: view.c,v 1.3.4.1.4.2 2017/04/25 22:01:53 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -673,7 +671,8 @@ req_shutdown(isc_task_t *task, isc_event_t *event) {
 isc_result_t
 dns_view_createresolver(dns_view_t *view,
 			isc_taskmgr_t *taskmgr,
-			unsigned int ntasks, unsigned int ndisp,
+			unsigned int ntasks,
+			unsigned int ndisp,
 			isc_socketmgr_t *socketmgr,
 			isc_timermgr_t *timermgr,
 			unsigned int options,
@@ -1273,10 +1272,16 @@ dns_view_findzonecut2(dns_view_t *view, dns_name_t *name, dns_name_t *fname,
 		result = dns_db_findzonecut(db, name, options, now, NULL,
 					    fname, rdataset, sigrdataset);
 		if (result == ISC_R_SUCCESS) {
+#ifdef BIND9
 			if (zfname != NULL &&
 			    (!dns_name_issubdomain(fname, zfname) ||
-			     (dns_zone_staticstub &&
-			      dns_name_equal(fname, zfname)))) {
+			     (dns_zone_gettype(zone) == dns_zone_staticstub &&
+			      dns_name_equal(fname, zfname))))
+#else
+			if (zfname != NULL &&
+			    !dns_name_issubdomain(fname, zfname))
+#endif
+			{
 				/*
 				 * We found a zonecut in the cache, but our
 				 * zone delegation is better.
@@ -1790,14 +1795,29 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
 	isc_buffer_init(&buffer, data, sizeof(data));
 	dns_rdata_fromstruct(&rdata, dnskey->common.rdclass,
 			     dns_rdatatype_dnskey, dnskey, &buffer);
+
 	result = dns_dnssec_keyfromrdata(keyname, &rdata, mctx, &key);
 	if (result != ISC_R_SUCCESS)
 		return;
+
 	result = dns_view_getsecroots(view, &sr);
 	if (result == ISC_R_SUCCESS) {
-		dns_keytable_deletekeynode(sr, key);
+		result = dns_keytable_deletekeynode(sr, key);
+
+		/*
+		 * If key was found in secroots, then it was a
+		 * configured trust anchor, and we want to fail
+		 * secure. If there are no other configured keys,
+		 * then leave a null key so that we can't validate
+		 * anymore.
+		 */
+
+		if (result == ISC_R_SUCCESS)
+			dns_keytable_marksecure(sr, keyname);
+
 		dns_keytable_detach(&sr);
 	}
+
 	dst_key_free(&key);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: opt_41.c,v 1.3.4.1.4.3 2015/11/17 19:31:15 bouyer Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.3.4.1.4.4 2017/04/25 22:01:55 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -36,7 +36,7 @@ fromtext_opt(ARGS_FROMTEXT) {
 	 * OPT records do not have a text format.
 	 */
 
-	REQUIRE(type == 41);
+	REQUIRE(type == dns_rdatatype_opt);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -61,7 +61,7 @@ totext_opt(ARGS_TOTEXT) {
 	 * OPT records do not have a text format.
 	 */
 
-	REQUIRE(rdata->type == 41);
+	REQUIRE(rdata->type == dns_rdatatype_opt);
 
 	dns_rdata_toregion(rdata, &r);
 	while (r.length > 0) {
@@ -103,7 +103,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 	isc_uint16_t length;
 	unsigned int total;
 
-	REQUIRE(type == 41);
+	REQUIRE(type == dns_rdatatype_opt);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -130,7 +130,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 			isc_uint8_t addrbytes;
 
 			if (length < 4)
-				return (DNS_R_FORMERR);
+				return (DNS_R_OPTERR);
 			family = uint16_fromregion(&sregion);
 			isc_region_consume(&sregion, 2);
 			addrlen = uint8_fromregion(&sregion);
@@ -140,16 +140,25 @@ fromwire_opt(ARGS_FROMWIRE) {
 			switch (family) {
 			case 1:
 				if (addrlen > 32U || scope > 32U)
-					return (DNS_R_FORMERR);
+					return (DNS_R_OPTERR);
 				break;
 			case 2:
 				if (addrlen > 128U || scope > 128U)
-					return (DNS_R_FORMERR);
+					return (DNS_R_OPTERR);
 				break;
+			default:
+				return (DNS_R_OPTERR);
 			}
 			addrbytes = (addrlen + 7) / 8;
 			if (addrbytes + 4 != length)
-				return (DNS_R_FORMERR);
+				return (DNS_R_OPTERR);
+
+			if (addrbytes != 0U && (addrlen % 8) != 0) {
+				isc_uint8_t bits = ~0 << (8 - (addrlen % 8));
+				bits &= sregion.base[addrbytes - 1];
+				if (bits != sregion.base[addrbytes - 1])
+					return (DNS_R_OPTERR);
+			}
 			isc_region_consume(&sregion, addrbytes);
 			break;
 		}
@@ -158,8 +167,13 @@ fromwire_opt(ARGS_FROMWIRE) {
 			 * Request has zero length.  Response is 32 bits.
 			 */
 			if (length != 0 && length != 4)
-				return (DNS_R_FORMERR);
-		isc_region_consume(&sregion, length);
+				return (DNS_R_OPTERR);
+			isc_region_consume(&sregion, length);
+			break;
+		case DNS_OPT_COOKIE:
+			if (length != 8 && (length < 16 || length > 40))
+				return (DNS_R_OPTERR);
+			isc_region_consume(&sregion, length);
 			break;
 		default:
 			isc_region_consume(&sregion, length);
@@ -182,7 +196,7 @@ fromwire_opt(ARGS_FROMWIRE) {
 static inline isc_result_t
 towire_opt(ARGS_TOWIRE) {
 
-	REQUIRE(rdata->type == 41);
+	REQUIRE(rdata->type == dns_rdatatype_opt);
 
 	UNUSED(cctx);
 
@@ -196,7 +210,7 @@ compare_opt(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 41);
+	REQUIRE(rdata1->type == dns_rdatatype_opt);
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
@@ -209,7 +223,7 @@ fromstruct_opt(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 	isc_uint16_t length;
 
-	REQUIRE(type == 41);
+	REQUIRE(type == dns_rdatatype_opt);
 	REQUIRE(source != NULL);
 	REQUIRE(opt->common.rdtype == type);
 	REQUIRE(opt->common.rdclass == rdclass);
@@ -239,7 +253,7 @@ tostruct_opt(ARGS_TOSTRUCT) {
 	dns_rdata_opt_t *opt = target;
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 41);
+	REQUIRE(rdata->type == dns_rdatatype_opt);
 	REQUIRE(target != NULL);
 
 	opt->common.rdclass = rdata->rdclass;
@@ -262,7 +276,7 @@ freestruct_opt(ARGS_FREESTRUCT) {
 	dns_rdata_opt_t *opt = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(opt->common.rdtype == 41);
+	REQUIRE(opt->common.rdtype == dns_rdatatype_opt);
 
 	if (opt->mctx == NULL)
 		return;
@@ -274,7 +288,7 @@ freestruct_opt(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_opt(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 41);
+	REQUIRE(rdata->type == dns_rdatatype_opt);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -290,7 +304,7 @@ digest_opt(ARGS_DIGEST) {
 	 * OPT records are not digested.
 	 */
 
-	REQUIRE(rdata->type == 41);
+	REQUIRE(rdata->type == dns_rdatatype_opt);
 
 	UNUSED(rdata);
 	UNUSED(digest);
@@ -302,7 +316,7 @@ digest_opt(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_opt(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 41);
+	REQUIRE(type == dns_rdatatype_opt);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -314,7 +328,7 @@ checkowner_opt(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_opt(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 41);
+	REQUIRE(rdata->type == dns_rdatatype_opt);
 
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -326,6 +340,65 @@ checknames_opt(ARGS_CHECKNAMES) {
 static inline int
 casecompare_opt(ARGS_COMPARE) {
 	return (compare_opt(rdata1, rdata2));
+}
+
+isc_result_t
+dns_rdata_opt_first(dns_rdata_opt_t *opt) {
+
+	REQUIRE(opt != NULL);
+	REQUIRE(opt->common.rdtype == dns_rdatatype_opt);
+	REQUIRE(opt->options != NULL || opt->length == 0);
+
+	if (opt->length == 0)
+		return (ISC_R_NOMORE);
+
+	opt->offset = 0;
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_rdata_opt_next(dns_rdata_opt_t *opt) {
+	isc_region_t r;
+	isc_uint16_t length;
+
+	REQUIRE(opt != NULL);
+	REQUIRE(opt->common.rdtype == dns_rdatatype_opt);
+	REQUIRE(opt->options != NULL && opt->length != 0);
+	REQUIRE(opt->offset < opt->length);
+
+	INSIST(opt->offset + 4 <= opt->length);
+	r.base = opt->options + opt->offset + 2;
+	r.length = opt->length - opt->offset - 2;
+	length = uint16_fromregion(&r);
+	INSIST(opt->offset + 4 + length <= opt->length);
+	opt->offset = opt->offset + 4 + length;
+	if (opt->offset == opt->length)
+		return (ISC_R_NOMORE);
+	return (ISC_R_SUCCESS);
+}
+
+isc_result_t
+dns_rdata_opt_current(dns_rdata_opt_t *opt, dns_rdata_opt_opcode_t *opcode) {
+	isc_region_t r;
+
+	REQUIRE(opt != NULL);
+	REQUIRE(opcode != NULL);
+	REQUIRE(opt->common.rdtype == dns_rdatatype_opt);
+	REQUIRE(opt->options != NULL);
+	REQUIRE(opt->offset < opt->length);
+
+	INSIST(opt->offset + 4 <= opt->length);
+	r.base = opt->options + opt->offset;
+	r.length = opt->length - opt->offset;
+
+	opcode->opcode = uint16_fromregion(&r);
+	isc_region_consume(&r, 2);
+	opcode->length = uint16_fromregion(&r);
+	isc_region_consume(&r, 2);
+	opcode->data = r.base;
+	INSIST(opt->offset + 4 + opcode->length <= opt->length);
+
+	return (ISC_R_SUCCESS);
 }
 
 #endif	/* RDATA_GENERIC_OPT_41_C */

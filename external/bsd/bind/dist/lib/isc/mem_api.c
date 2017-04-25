@@ -1,4 +1,4 @@
-/*     $NetBSD: mem_api.c,v 1.2.6.1.4.1 2014/12/31 11:59:03 msaitoh Exp $   */
+/*     $NetBSD: mem_api.c,v 1.2.6.1.4.2 2017/04/25 22:01:58 snj Exp $   */
 
 /*
  * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")

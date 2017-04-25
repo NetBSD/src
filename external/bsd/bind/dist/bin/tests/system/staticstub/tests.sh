@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -162,7 +162,7 @@ n=`expr $n + 1`
 # Note: for a short term workaround we use ::1, assuming it's configured and
 # usable for our tests.  We should eventually use the test ULA and available
 # checks introduced in change 2916.
-if $PERL ../testsock6.pl ::1 2> /dev/null
+if $TESTSOCK6 ../testsock6.pl ::1 2> /dev/null
 then
     echo "I:checking IPv6 static-stub address ($n)"
     ret=0
@@ -200,6 +200,16 @@ sed 's/SERVER_CONFIG_PLACEHOLDER/server-addresses { 10.53.0.4; };/' ns2/named.co
 $RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload 2>&1 | sed 's/^/I:ns2 /'
 $DIG +tcp data2.example.org. @10.53.0.2 txt -p 5300 > dig.out.ns2.test$n || ret=1
 grep "2nd example org data" dig.out.ns2.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:checking static-stub of a undelegated tld resolves after DS query ($n)"
+ret=0
+$DIG undelegated. @10.53.0.2 ds -p 5300 > dig.out.ns2.ds.test$n
+$DIG undelegated. @10.53.0.2 soa -p 5300 > dig.out.ns2.soa.test$n
+grep "status: NXDOMAIN" dig.out.ns2.ds.test$n > /dev/null || ret=1
+grep "status: NOERROR" dig.out.ns2.soa.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

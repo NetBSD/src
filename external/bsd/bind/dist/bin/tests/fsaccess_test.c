@@ -1,7 +1,7 @@
-/*	$NetBSD: fsaccess_test.c,v 1.2.6.1.4.1 2014/12/31 11:58:31 msaitoh Exp $	*/
+/*	$NetBSD: fsaccess_test.c,v 1.2.6.1.4.2 2017/04/25 22:01:29 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,6 +31,7 @@
 #include <sys/stat.h>		/* Non-portable. */
 
 #include <isc/fsaccess.h>
+#include <isc/print.h>
 #include <isc/result.h>
 
 #define PATH "/tmp/fsaccess"

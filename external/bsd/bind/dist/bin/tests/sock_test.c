@@ -1,7 +1,7 @@
-/*	$NetBSD: sock_test.c,v 1.2.6.1.4.1 2014/12/31 11:58:31 msaitoh Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.2.6.1.4.2 2017/04/25 22:01:30 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -63,7 +63,8 @@ my_send(isc_task_t *task, isc_event_t *event) {
 		isc_task_shutdown(task);
 	}
 
-	isc_mem_put(mctx, dev->region.base, dev->region.length);
+	if (dev->region.base != NULL)
+		isc_mem_put(mctx, dev->region.base, dev->region.length);
 
 	isc_event_free(&event);
 }
@@ -98,8 +99,8 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 	if (dev->result != ISC_R_SUCCESS) {
 		isc_socket_detach(&sock);
 
-		isc_mem_put(mctx, dev->region.base,
-			    dev->region.length);
+		if (dev->region.base != NULL)
+			isc_mem_put(mctx, dev->region.base, dev->region.length);
 		isc_event_free(&event);
 
 		isc_task_shutdown(task);
@@ -114,8 +115,11 @@ my_recv(isc_task_t *task, isc_event_t *event) {
 		sprintf(buf, "\r\nReceived: %.*s\r\n\r\n",
 			(int)dev->n, (char *)region.base);
 		region.base = isc_mem_get(mctx, strlen(buf) + 1);
-		region.length = strlen(buf) + 1;
-		strcpy((char *)region.base, buf);  /* strcpy is safe */
+		if (region.base != NULL) {
+			region.length = strlen(buf) + 1;
+			strcpy((char *)region.base, buf);  /* strcpy is safe */
+		} else
+			region.length = 0;
 		isc_socket_send(sock, &region, task, my_send, event->ev_arg);
 	} else {
 		region = dev->region;
@@ -145,6 +149,8 @@ my_http_get(isc_task_t *task, isc_event_t *event) {
 	if (dev->result != ISC_R_SUCCESS) {
 		isc_socket_detach(&sock);
 		isc_task_shutdown(task);
+		if (dev->region.base != NULL)
+			isc_mem_put(mctx, dev->region.base, dev->region.length);
 		isc_event_free(&event);
 		return;
 	}
@@ -181,8 +187,11 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 	strcpy(buf, "GET / HTTP/1.1\r\nHost: www.flame.org\r\n"
 	       "Connection: Close\r\n\r\n");
 	region.base = isc_mem_get(mctx, strlen(buf) + 1);
-	region.length = strlen(buf) + 1;
-	strcpy((char *)region.base, buf);  /* This strcpy is safe. */
+	if (region.base != NULL) {
+		region.length = strlen(buf) + 1;
+		strcpy((char *)region.base, buf);  /* This strcpy is safe. */
+	} else
+		region.length = 0;
 
 	isc_socket_send(sock, &region, task, my_http_get, event->ev_arg);
 

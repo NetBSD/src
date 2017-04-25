@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-settime.c,v 1.3.4.1.4.3 2015/11/17 19:31:08 bouyer Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.3.4.1.4.4 2017/04/25 22:01:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -110,8 +110,8 @@ printtime(dst_key_t *key, int type, const char *tag, isc_boolean_t epoch,
 	} else if (epoch) {
 		fprintf(stream, "%d\n", (int) when);
 	} else {
-		time_t time = when;
-		output = ctime(&time);
+		time_t timet = when;
+		output = ctime(&timet);
 		fprintf(stream, "%s", output);
 	}
 }
@@ -124,7 +124,8 @@ main(int argc, char **argv) {
 #else
 	const char	*engine = NULL;
 #endif
-	char		*filename = NULL, *directory = NULL;
+	const char 	*filename = NULL;
+	char		*directory = NULL;
 	char		newname[1024];
 	char		keystr[DST_KEY_FORMATSIZE];
 	char		*endp, *p;
@@ -164,7 +165,7 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 	dns_result_register();
 
@@ -335,7 +336,6 @@ main(int argc, char **argv) {
 	isc_entropy_stopcallbacksources(ectx);
 
 	if (predecessor != NULL) {
-		char keystr[DST_KEY_FORMATSIZE];
 		int major, minor;
 
 		if (prepub == -1)
@@ -402,7 +402,6 @@ main(int argc, char **argv) {
 					"inactive.\n", program);
 
 		changed = setpub = setact = ISC_TRUE;
-		dst_key_free(&prevkey);
 	} else {
 		if (prepub < 0)
 			prepub = 0;
@@ -593,6 +592,8 @@ main(int argc, char **argv) {
 		printf("%s\n", newname);
 	}
 
+	if (prevkey != NULL)
+		dst_key_free(&prevkey);
 	dst_key_free(&key);
 	dst_lib_destroy();
 	isc_hash_destroy();
