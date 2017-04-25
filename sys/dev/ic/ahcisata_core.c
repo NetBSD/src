@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.57.6.11 2017/04/24 18:22:31 jdolecek Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57.6.12 2017/04/25 20:55:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.11 2017/04/24 18:22:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57.6.12 2017/04/25 20:55:05 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1429,7 +1429,7 @@ ahci_timeout(void *v)
 {
 	struct ata_xfer *xfer = v;
 	struct ata_channel *chp = xfer->c_chp;
-	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	struct ahci_channel *achp __diagused = (struct ahci_channel *)chp;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	int s;
 
