@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.83 2017/04/21 08:39:06 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.84 2017/04/25 05:44:11 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.83 2017/04/21 08:39:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84 2017/04/25 05:44:11 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -214,6 +214,7 @@ ipsec_checkpcbcache(struct mbuf *m, struct inpcbpolicy *pcbsp, int dir)
 	KASSERT(IPSEC_DIR_IS_VALID(dir));
 	KASSERT(pcbsp != NULL);
 	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
+	KASSERT(inph_locked(pcbsp->sp_inph));
 
 	/* SPD table change invalidate all the caches. */
 	if (ipsec_spdgen != pcbsp->sp_cache[dir].cachegen) {
@@ -270,6 +271,7 @@ ipsec_fillpcbcache(struct inpcbpolicy *pcbsp, struct mbuf *m,
 
 	KASSERT(IPSEC_DIR_IS_INOROUT(dir));
 	KASSERT(dir < sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]));
+	KASSERT(inph_locked(pcbsp->sp_inph));
 
 	if (pcbsp->sp_cache[dir].cachesp)
 		KEY_FREESP(&pcbsp->sp_cache[dir].cachesp);
@@ -313,6 +315,8 @@ ipsec_invalpcbcache(struct inpcbpolicy *pcbsp, int dir)
 {
 	int i;
 
+	KASSERT(inph_locked(pcbsp->sp_inph));
+
 	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
 		if (dir != IPSEC_DIR_ANY && i != dir)
 			continue;
@@ -331,6 +335,8 @@ void
 ipsec_pcbconn(struct inpcbpolicy *pcbsp)
 {
 
+	KASSERT(inph_locked(pcbsp->sp_inph));
+
 	pcbsp->sp_cacheflags |= IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
 }
@@ -338,6 +344,8 @@ ipsec_pcbconn(struct inpcbpolicy *pcbsp)
 void
 ipsec_pcbdisconn(struct inpcbpolicy *pcbsp)
 {
+
+	KASSERT(inph_locked(pcbsp->sp_inph));
 
 	pcbsp->sp_cacheflags &= ~IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
@@ -447,6 +455,7 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, struct inpcb_hdr *inph,
 	KASSERTMSG(IPSEC_DIR_IS_INOROUT(dir), "invalid direction %u", dir);
 
 	KASSERT(inph->inph_socket != NULL);
+	KASSERT(inph_locked(inph));
 
 	/* XXX FIXME inpcb/in6pcb  vs socket*/
 	af = inph->inph_af;

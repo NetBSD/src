@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.43 2017/04/20 08:46:07 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.44 2017/04/25 05:44:11 ozaki-r Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -130,6 +130,7 @@ struct inpcbpolicy {
 	} sp_cache[3];			/* XXX 3 == IPSEC_DIR_MAX */
 	int sp_cacheflags;
 #define	IPSEC_PCBSP_CONNECTED	1
+	struct inpcb_hdr *sp_inph;	/* back pointer */
 };
 
 #define	IPSEC_PCB_SKIP_IPSEC(inpp, dir)					\
