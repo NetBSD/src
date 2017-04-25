@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.14 2017/01/07 08:56:49 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.15 2017/04/25 21:31:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.14 2017/01/07 08:56:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.15 2017/04/25 21:31:33 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -300,13 +300,14 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	if (bdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
+	KASSERTMSG(devsw->d_localcount != NULL, "%s: bdev for major %d has "
+	    "no localcount", __func__, *devmajor);
+	localcount_init(devsw->d_localcount);
+
 	/* ensure visibility of the bdevsw */
 	membar_producer();
 
 	bdevsw[*devmajor] = devsw;
-	KASSERTMSG(devsw->d_localcount != NULL, "%s: bdev for major %d has "
-	    "no localcount", __func__, *devmajor);
-	localcount_init(devsw->d_localcount);
 
 	return (0);
 }
@@ -353,13 +354,14 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
+	KASSERTMSG(devsw->d_localcount != NULL, "%s: cdev for major %d has "
+	    "no localcount", __func__, *devmajor);
+	localcount_init(devsw->d_localcount);
+
 	/* ensure visibility of the cdevsw */
 	membar_producer();
 
 	cdevsw[*devmajor] = devsw;
-	KASSERTMSG(devsw->d_localcount != NULL, "%s: cdev for major %d has "
-	    "no localcount", __func__, *devmajor);
-	localcount_init(devsw->d_localcount);
 
 	return (0);
 }
