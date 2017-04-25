@@ -1,7 +1,7 @@
-/*	$NetBSD: dispatch.c,v 1.4.4.1.6.3 2015/11/17 19:55:09 bouyer Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.4.4.1.6.4 2017/04/25 20:53:48 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1161,7 +1161,7 @@ free_sevent(isc_event_t *ev) {
 }
 
 static inline isc_socketevent_t *
-allocate_sevent(dns_dispatch_t *disp, isc_socket_t *socket,
+allocate_sevent(dns_dispatch_t *disp, isc_socket_t *sock,
 		isc_eventtype_t type, isc_taskaction_t action, const void *arg)
 {
 	isc_socketevent_t *ev;
@@ -1172,7 +1172,7 @@ allocate_sevent(dns_dispatch_t *disp, isc_socket_t *socket,
 		return (NULL);
 	DE_CONST(arg, deconst_arg);
 	ISC_EVENT_INIT(ev, sizeof(*ev), 0, NULL, type,
-		       action, deconst_arg, socket,
+		       action, deconst_arg, sock,
 		       free_sevent, disp->sepool);
 	ev->result = ISC_R_UNSET;
 	ISC_LINK_INIT(ev, ev_link);
@@ -1711,7 +1711,7 @@ static isc_result_t
 startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 	isc_result_t res;
 	isc_region_t region;
-	isc_socket_t *socket;
+	isc_socket_t *sock;
 
 	if (disp->shutting_down == 1)
 		return (ISC_R_SUCCESS);
@@ -1730,10 +1730,10 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 		return (ISC_R_SUCCESS);
 
 	if (dispsock != NULL)
-		socket = dispsock->socket;
+		sock = dispsock->socket;
 	else
-		socket = disp->socket;
-	INSIST(socket != NULL);
+		sock = disp->socket;
+	INSIST(sock != NULL);
 
 	switch (disp->socktype) {
 		/*
@@ -1747,7 +1747,7 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 		if (dispsock != NULL) {
 			isc_task_t *dt = dispsock->task;
 			isc_socketevent_t *sev =
-				allocate_sevent(disp, socket,
+				allocate_sevent(disp, sock,
 						ISC_SOCKEVENT_RECVDONE,
 						udp_exrecv, dispsock);
 			if (sev == NULL) {
@@ -1755,7 +1755,7 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 				return (ISC_R_NOMEMORY);
 			}
 
-			res = isc_socket_recv2(socket, &region, 1, dt, sev, 0);
+			res = isc_socket_recv2(sock, &region, 1, dt, sev, 0);
 			if (res != ISC_R_SUCCESS) {
 				free_buffer(disp, region.base, region.length);
 				return (res);
@@ -1763,7 +1763,7 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 		} else {
 			isc_task_t *dt = disp->task[0];
 			isc_socketevent_t *sev =
-				allocate_sevent(disp, socket,
+				allocate_sevent(disp, sock,
 						ISC_SOCKEVENT_RECVDONE,
 						udp_shrecv, disp);
 			if (sev == NULL) {
@@ -1771,7 +1771,7 @@ startrecv(dns_dispatch_t *disp, dispsocket_t *dispsock) {
 				return (ISC_R_NOMEMORY);
 			}
 
-			res = isc_socket_recv2(socket, &region, 1, dt, sev, 0);
+			res = isc_socket_recv2(sock, &region, 1, dt, sev, 0);
 			if (res != ISC_R_SUCCESS) {
 				free_buffer(disp, region.base, region.length);
 				disp->shutdown_why = res;
@@ -3040,6 +3040,8 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 	if (result != ISC_R_SUCCESS)
 		return (result);
 
+	disp->socktype = isc_sockettype_udp;
+
 	if ((attributes & DNS_DISPATCHATTR_EXCLUSIVE) == 0) {
 		result = get_udpsocket(mgr, disp, sockmgr, localaddr, &sock,
 				       dup_socket);
@@ -3089,7 +3091,6 @@ dispatch_createudp(dns_dispatchmgr_t *mgr, isc_socketmgr_t *sockmgr,
 		isc_mempool_setname(disp->portpool, "disp_portpool");
 		isc_mempool_setfreemax(disp->portpool, 128);
 	}
-	disp->socktype = isc_sockettype_udp;
 	disp->socket = sock;
 	disp->local = *localaddr;
 
@@ -3235,6 +3236,17 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 			  dns_messageid_t *idp, dns_dispentry_t **resp,
 			  isc_socketmgr_t *sockmgr)
 {
+	return (dns_dispatch_addresponse3(disp, 0, dest, task, action, arg,
+					  idp, resp, sockmgr));
+}
+
+isc_result_t
+dns_dispatch_addresponse3(dns_dispatch_t *disp, unsigned int options,
+			  isc_sockaddr_t *dest, isc_task_t *task,
+			  isc_taskaction_t action, void *arg,
+			  dns_messageid_t *idp, dns_dispentry_t **resp,
+			  isc_socketmgr_t *sockmgr)
+{
 	dns_dispentry_t *res;
 	unsigned int bucket;
 	in_port_t localport = 0;
@@ -3322,9 +3334,13 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	}
 
 	/*
-	 * Try somewhat hard to find an unique ID.
+	 * Try somewhat hard to find an unique ID unless FIXEDID is set
+	 * in which case we use the id passed in via *idp.
 	 */
 	LOCK(&qid->lock);
+	if ((options & DNS_DISPATCHOPT_FIXEDID) != 0)
+		id = *idp;
+	else
 	id = (dns_messageid_t)dispatch_random(DISP_ARC4CTX(disp));
 	ok = ISC_FALSE;
 	i = 0;
@@ -3334,6 +3350,8 @@ dns_dispatch_addresponse2(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 			ok = ISC_TRUE;
 			break;
 		}
+		if ((disp->attributes & DNS_DISPATCHATTR_FIXEDID) != 0)
+			break;
 		id += qid->qid_increment;
 		id &= 0x0000ffff;
 	} while (i++ < 64);
@@ -3421,7 +3439,7 @@ dns_dispatch_addresponse(dns_dispatch_t *disp, isc_sockaddr_t *dest,
 	REQUIRE(VALID_DISPATCH(disp));
 	REQUIRE((disp->attributes & DNS_DISPATCHATTR_EXCLUSIVE) == 0);
 
-	return (dns_dispatch_addresponse2(disp, dest, task, action, arg,
+	return (dns_dispatch_addresponse3(disp, 0, dest, task, action, arg,
 					  idp, resp, NULL));
 }
 

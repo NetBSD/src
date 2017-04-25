@@ -1,7 +1,7 @@
-/*	$NetBSD: message.h,v 1.2.6.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
+/*	$NetBSD: message.h,v 1.2.6.1.6.2 2017/04/25 20:53:50 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #ifndef DNS_MESSAGE_H
 #define DNS_MESSAGE_H 1
@@ -106,12 +104,14 @@
 #define DNS_MESSAGEEXTFLAG_DO		0x8000U
 
 /*%< EDNS0 extended OPT codes */
-#define DNS_OPT_NSID		0x0003		/*%< NSID opt code */
-#define DNS_OPT_CLIENT_SUBNET	0x0008		/*%< client subnet opt code */
-#define DNS_OPT_EXPIRE		0x0009		/*%< EXPIRE opt code */
+#define DNS_OPT_NSID		3		/*%< NSID opt code */
+#define DNS_OPT_CLIENT_SUBNET	8		/*%< client subnet opt code */
+#define DNS_OPT_EXPIRE		9		/*%< EXPIRE opt code */
+#define DNS_OPT_COOKIE		10		/*%< COOKIE opt code */
+#define DNS_OPT_PAD		12		/*%< PAD opt code */
 
 /*%< The number of EDNS options we know about. */
-#define DNS_EDNSOPTIONS	3
+#define DNS_EDNSOPTIONS	4
 
 #define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD|DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
@@ -195,7 +195,7 @@ struct dns_message {
 	dns_messageid_t			id;
 	unsigned int			flags;
 	dns_rcode_t			rcode;
-	unsigned int			opcode;
+	dns_opcode_t			opcode;
 	dns_rdataclass_t		rdclass;
 
 	/* 4 real, 1 pseudo */
@@ -217,6 +217,8 @@ struct dns_message {
 	unsigned int			verify_attempted : 1;
 	unsigned int			free_query : 1;
 	unsigned int			free_saved : 1;
+	unsigned int			tkey : 1;
+	unsigned int			rdclass_set : 1;
 
 	unsigned int			opt_reserved;
 	unsigned int			sig_reserved;
@@ -1379,6 +1381,15 @@ dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
  * \li	 ISC_R_NOMEMORY
  * \li	 ISC_R_NOSPACE
  * \li	 other.
+ */
+
+void
+dns_message_setclass(dns_message_t *msg, dns_rdataclass_t rdclass);
+/*%<
+ * Set the expected class of records in the response.
+ *
+ * Requires:
+ * \li   msg be a valid message with parsing intent.
  */
 
 ISC_LANG_ENDDECLS

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,14 @@ echo "I:no questions"
 $PERL formerr.pl -a 10.53.0.1 -p 5300 noquestions > noquestions.out
 ans=`grep got: noquestions.out`
 if [ "${ans}" != "got: 000080010000000000000000" ];
+then
+	echo "I:failed"; status=`expr $status + 1`;
+fi
+
+echo "I:bad OPT option"
+$PERL formerr.pl -a 10.53.0.1 -p 5300 badoptoption > badoptoption.out
+ans=`grep got: badoptoption.out`
+if [ "${ans}" != "got: 00008001000100000000000100000100020000291000000000000000" ];
 then
 	echo "I:failed"; status=`expr $status + 1`;
 fi

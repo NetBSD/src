@@ -1,4 +1,4 @@
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,9 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+rm -f badoptoption.out 
 rm -f nametoolong.out 
-rm -f twoquestions.out 
 rm -f noquestions.out 
+rm -f twoquestions.out 
+rm -f ns*/named.run
+rm -f ns*/named.memstats

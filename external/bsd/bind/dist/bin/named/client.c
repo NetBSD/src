@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.4.4.2.2.3 2015/11/17 19:55:02 bouyer Exp $	*/
+/*	$NetBSD: client.c,v 1.4.4.2.2.4 2017/04/25 20:53:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 #include <config.h>
 
 #include <isc/formatcheck.h>
@@ -27,6 +25,7 @@
 #include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/queue.h>
+#include <isc/random.h>
 #include <isc/stats.h>
 #include <isc/stdio.h>
 #include <isc/string.h>
@@ -114,6 +113,7 @@
  * a separate context in this case would simply waste memory.
  */
 #endif
+
 
 /*% nameserver client manager structure */
 struct ns_clientmgr {
@@ -330,12 +330,12 @@ exit_check(ns_client_t *client) {
 		 * We are trying to abort request processing.
 		 */
 		if (client->nsends > 0) {
-			isc_socket_t *socket;
+			isc_socket_t *sock;
 			if (TCP_CLIENT(client))
-				socket = client->tcpsocket;
+				sock = client->tcpsocket;
 			else
-				socket = client->udpsocket;
-			isc_socket_cancel(socket, client->task,
+				sock = client->udpsocket;
+			isc_socket_cancel(sock, client->task,
 					  ISC_SOCKCANCEL_SEND);
 		}
 
@@ -534,6 +534,17 @@ exit_check(ns_client_t *client) {
 		INSIST(client->recursionquota == NULL);
 		INSIST(!ISC_QLINK_LINKED(client, ilink));
 
+		if (manager != NULL) {
+			LOCK(&manager->listlock);
+			ISC_LIST_UNLINK(manager->clients, client, link);
+			LOCK(&manager->lock);
+			if (manager->exiting &&
+			    ISC_LIST_EMPTY(manager->clients))
+				destroy_manager = ISC_TRUE;
+			UNLOCK(&manager->lock);
+			UNLOCK(&manager->listlock);
+		}
+
 		ns_query_free(client);
 		isc_mem_put(client->mctx, client->recvbuf, RECV_BUFFER_SIZE);
 		isc_event_free((isc_event_t **)&client->sendevent);
@@ -551,16 +562,6 @@ exit_check(ns_client_t *client) {
 		}
 
 		dns_message_destroy(&client->message);
-		if (manager != NULL) {
-			LOCK(&manager->listlock);
-			ISC_LIST_UNLINK(manager->clients, client, link);
-			LOCK(&manager->lock);
-			if (manager->exiting &&
-			    ISC_LIST_EMPTY(manager->clients))
-				destroy_manager = ISC_TRUE;
-			UNLOCK(&manager->lock);
-			UNLOCK(&manager->listlock);
-		}
 
 		/*
 		 * Detaching the task must be done after unlinking from
@@ -581,6 +582,13 @@ exit_check(ns_client_t *client) {
 			isc_mem_stats(client->mctx, stderr);
 			INSIST(0);
 		}
+
+		/*
+		 * Destroy the fetchlock mutex that was created in
+		 * ns_query_init().
+		 */
+		DESTROYLOCK(&client->query.fetchlock);
+
 		isc_mem_putanddetach(&client->mctx, client, sizeof(*client));
 	}
 
@@ -822,16 +830,16 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 	isc_result_t result;
 	isc_region_t r;
 	isc_sockaddr_t *address;
-	isc_socket_t *socket;
+	isc_socket_t *sock;
 	isc_netaddr_t netaddr;
 	int match;
 	unsigned int sockflags = ISC_SOCKFLAG_IMMEDIATE;
 
 	if (TCP_CLIENT(client)) {
-		socket = client->tcpsocket;
+		sock = client->tcpsocket;
 		address = NULL;
 	} else {
-		socket = client->udpsocket;
+		sock = client->udpsocket;
 		address = &client->peeraddr;
 
 		isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
@@ -855,7 +863,7 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 
 	CTRACE("sendto");
 
-	result = isc_socket_sendto2(socket, &r, client->task,
+	result = isc_socket_sendto2(sock, &r, client->task,
 				    address, pktinfo,
 				    client->sendevent, sockflags);
 	if (result == ISC_R_SUCCESS || result == ISC_R_INPROGRESS) {
@@ -945,6 +953,12 @@ ns_client_send(ns_client_t *client) {
 		if (client->view->preferred_glue == dns_rdatatype_a)
 			preferred_glue = DNS_MESSAGERENDER_PREFER_A;
 		else if (client->view->preferred_glue == dns_rdatatype_aaaa)
+			preferred_glue = DNS_MESSAGERENDER_PREFER_AAAA;
+	}
+	if (preferred_glue == 0) {
+		if (isc_sockaddr_pf(&client->peeraddr) == AF_INET)
+			preferred_glue = DNS_MESSAGERENDER_PREFER_A;
+		else
 			preferred_glue = DNS_MESSAGERENDER_PREFER_AAAA;
 	}
 
@@ -1165,10 +1179,15 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 		isc_boolean_t wouldlog;
 		char log_buf[DNS_RRL_LOG_BUF_LEN];
 		dns_rrl_result_t rrl_result;
+		int loglevel;
 
 		INSIST(rcode != dns_rcode_noerror &&
 		       rcode != dns_rcode_nxdomain);
-		wouldlog = isc_log_wouldlog(ns_g_lctx, DNS_RRL_LOG_DROP);
+		if (ns_g_server->log_queries)
+			loglevel = DNS_RRL_LOG_DROP;
+		else
+			loglevel = ISC_LOG_DEBUG(1);
+		wouldlog = isc_log_wouldlog(ns_g_lctx, loglevel);
 		rrl_result = dns_rrl(client->view, &client->peeraddr,
 				     TCP_CLIENT(client),
 				     dns_rdataclass_in, dns_rdatatype_none,
@@ -1183,9 +1202,9 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 			 */
 			if (wouldlog) {
 				ns_client_log(client,
-					      NS_LOGCATEGORY_QUERY_EERRORS,
+					      NS_LOGCATEGORY_QUERY_ERRORS,
 					      NS_LOGMODULE_CLIENT,
-					      DNS_RRL_LOG_DROP,
+					      loglevel,
 					      "%s", log_buf);
 			}
 			/*
@@ -1285,7 +1304,6 @@ client_addopt(ns_client_t *client) {
 	    (ns_g_server->server_id != NULL ||
 	     ns_g_server->server_usehostname)) {
 		if (ns_g_server->server_usehostname) {
-			isc_result_t result;
 			result = ns_os_gethostname(nsid, sizeof(nsid));
 			if (result != ISC_R_SUCCESS) {
 				goto no_nsid;
@@ -1641,7 +1659,7 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	}
 	if (TCP_CLIENT(client))
 		isc_stats_increment(ns_g_server->nsstats,
-				    dns_nsstatscounter_tcp);
+				    dns_nsstatscounter_requesttcp);
 
 	/*
 	 * It's a request.  Parse it.
@@ -1652,6 +1670,13 @@ client_request(isc_task_t *task, isc_event_t *event) {
 		 * Parsing the request failed.  Send a response
 		 * (typically FORMERR or SERVFAIL).
 		 */
+		if (result == DNS_R_OPTERR)
+			(void)client_addopt(client);
+
+		ns_client_log(client, NS_LOGCATEGORY_CLIENT,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(1),
+			      "message parsing failed: %s",
+			      isc_result_totext(result));
 		ns_client_error(client, result);
 		goto cleanup;
 	}
@@ -1679,8 +1704,18 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	/*
 	 * Deal with EDNS.
 	 */
+	if (ns_g_noedns)
+		opt = NULL;
+	else
 	opt = dns_message_getopt(client->message);
 	if (opt != NULL) {
+		/*
+		 * Are we dropping all EDNS queries?
+		 */
+		if (ns_g_dropedns) {
+			ns_client_next(client, ISC_R_SUCCESS);
+			goto cleanup;
+		}
 		result = process_opt(client, opt);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
@@ -2762,7 +2797,7 @@ void
 ns_client_logv(ns_client_t *client, isc_logcategory_t *category,
 	       isc_logmodule_t *module, int level, const char *fmt, va_list ap)
 {
-	char msgbuf[2048];
+	char msgbuf[4096];
 	char peerbuf[ISC_SOCKADDR_FORMATSIZE];
 	char signerbuf[DNS_NAME_FORMATSIZE], qnamebuf[DNS_NAME_FORMATSIZE];
 	const char *viewname = "";

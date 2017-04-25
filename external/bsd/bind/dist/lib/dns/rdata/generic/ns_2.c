@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_2.c,v 1.2.6.1 2012/06/05 21:15:11 bouyer Exp $	*/
+/*	$NetBSD: ns_2.c,v 1.2.6.1.6.1 2017/04/25 20:53:51 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@ fromtext_ns(ARGS_FROMTEXT) {
 	isc_buffer_t buffer;
 	isc_boolean_t ok;
 
-	REQUIRE(type == 2);
+	REQUIRE(type == dns_rdatatype_ns);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -44,7 +44,8 @@ fromtext_ns(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = ISC_TRUE;
 	if ((options & DNS_RDATA_CHECKNAMES) != 0)
@@ -63,7 +64,7 @@ totext_ns(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 2);
+	REQUIRE(rdata->type == dns_rdatatype_ns);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&name, NULL);
@@ -81,7 +82,7 @@ static inline isc_result_t
 fromwire_ns(ARGS_FROMWIRE) {
 	dns_name_t name;
 
-	REQUIRE(type == 2);
+	REQUIRE(type == dns_rdatatype_ns);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -98,7 +99,7 @@ towire_ns(ARGS_TOWIRE) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 2);
+	REQUIRE(rdata->type == dns_rdatatype_ns);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -119,7 +120,7 @@ compare_ns(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 2);
+	REQUIRE(rdata1->type == dns_rdatatype_ns);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -140,7 +141,7 @@ fromstruct_ns(ARGS_FROMSTRUCT) {
 	dns_rdata_ns_t *ns = source;
 	isc_region_t region;
 
-	REQUIRE(type == 2);
+	REQUIRE(type == dns_rdatatype_ns);
 	REQUIRE(source != NULL);
 	REQUIRE(ns->common.rdtype == type);
 	REQUIRE(ns->common.rdclass == rdclass);
@@ -158,7 +159,7 @@ tostruct_ns(ARGS_TOSTRUCT) {
 	dns_rdata_ns_t *ns = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 2);
+	REQUIRE(rdata->type == dns_rdatatype_ns);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -194,7 +195,7 @@ additionaldata_ns(ARGS_ADDLDATA) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 2);
+	REQUIRE(rdata->type == dns_rdatatype_ns);
 
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
@@ -208,7 +209,7 @@ digest_ns(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 2);
+	REQUIRE(rdata->type == dns_rdatatype_ns);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -220,7 +221,7 @@ digest_ns(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_ns(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 2);
+	REQUIRE(type == dns_rdatatype_ns);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -235,7 +236,7 @@ checknames_ns(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 2);
+	REQUIRE(rdata->type == dns_rdatatype_ns);
 
 	UNUSED(owner);
 

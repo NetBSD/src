@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.3.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: acl.c,v 1.3.4.1.6.2 2017/04/25 20:53:48 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")

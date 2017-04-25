@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.2.6.1.6.1 2014/12/26 03:08:35 msaitoh Exp $	*/
+/*	$NetBSD: context.c,v 1.2.6.1.6.2 2017/04/25 20:53:53 snj Exp $	*/
 
 /*
  * Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")

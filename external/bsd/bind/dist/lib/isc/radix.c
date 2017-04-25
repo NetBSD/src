@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.3.4.1.6.3 2015/11/17 19:55:11 bouyer Exp $	*/
+/*	$NetBSD: radix.c,v 1.3.4.1.6.4 2017/04/25 20:53:54 snj Exp $	*/
 
 /*
  * Copyright (C) 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -280,6 +280,9 @@ isc_radix_search(isc_radix_tree_t *radix, isc_radix_node_t **target,
 
 	while (cnt-- > 0) {
 		node = stack[cnt];
+
+		if (prefix->bitlen < node->bit)
+			continue;
 
 		if (_comp_with_mask(isc_prefix_tochar(node->prefix),
 				    isc_prefix_tochar(prefix),

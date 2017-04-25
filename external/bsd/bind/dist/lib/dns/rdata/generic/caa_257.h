@@ -17,7 +17,7 @@
 #ifndef GENERIC_CAA_257_H
 #define GENERIC_CAA_257_H 1
 
-/* $Id: caa_257.h,v 1.1.1.3.6.2 2014/12/26 03:08:33 msaitoh Exp $ */
+/* $Id: caa_257.h,v 1.1.1.3.6.3 2017/04/25 20:53:50 snj Exp $ */
 
 typedef struct dns_rdata_caa {
 	dns_rdatacommon_t	common;

@@ -1,4 +1,4 @@
-/*	$NetBSD: portlist.c,v 1.2.6.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: portlist.c,v 1.2.6.1.6.2 2017/04/25 20:53:49 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")

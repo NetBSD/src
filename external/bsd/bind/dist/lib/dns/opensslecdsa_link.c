@@ -1,7 +1,7 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.2.2.2.2.3 2015/11/17 19:55:09 bouyer Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.2.2.2.2.4 2017/04/25 20:53:49 snj Exp $	*/
 
 /*
- * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #include <config.h>
 
@@ -161,9 +159,9 @@ opensslecdsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 					       "ECDSA_do_sign",
 					       DST_R_SIGNFAILURE));
 	BN_bn2bin_fixed(ecdsasig->r, r.base, siglen / 2);
-	r.base += siglen / 2;
+	isc_region_consume(&r, siglen / 2);
 	BN_bn2bin_fixed(ecdsasig->s, r.base, siglen / 2);
-	r.base += siglen / 2;
+	isc_region_consume(&r, siglen / 2);
 	ECDSA_SIG_free(ecdsasig);
 	isc_buffer_add(sig, siglen);
 	ret = ISC_R_SUCCESS;
@@ -297,10 +295,13 @@ opensslecdsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	UNUSED(unused);
 	UNUSED(callback);
 
-	if (key->key_alg == DST_ALG_ECDSA256)
+	if (key->key_alg == DST_ALG_ECDSA256) {
 		group_nid = NID_X9_62_prime256v1;
-	else
+		key->key_size = DNS_KEY_ECDSA256SIZE * 4;
+	} else {
 		group_nid = NID_secp384r1;
+		key->key_size = DNS_KEY_ECDSA384SIZE * 4;
+	}
 
 	eckey = EC_KEY_new_by_curve_name(group_nid);
 	if (eckey == NULL)
@@ -435,6 +436,7 @@ opensslecdsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	isc_buffer_forward(data, len);
 	key->keydata.pkey = pkey;
+	key->key_size = len * 4;
 	ret = ISC_R_SUCCESS;
 
  err:
@@ -583,6 +585,10 @@ opensslecdsa_parse(dst_key_t *key, isc_lex_t *lexer, dst_key_t *pub) {
 		DST_RET (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 	}
 	key->keydata.pkey = pkey;
+	if (key->key_alg == DST_ALG_ECDSA256)
+		key->key_size = DNS_KEY_ECDSA256SIZE * 4;
+	else
+		key->key_size = DNS_KEY_ECDSA384SIZE * 4;
 	ret = ISC_R_SUCCESS;
 
  err:

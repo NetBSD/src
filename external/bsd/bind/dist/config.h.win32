@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2006-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: config.h.win32,v 1.28 2011/10/30 23:39:39 marka Exp  */
 
 /*
  * win32 configuration file
@@ -180,7 +178,9 @@
  * WIN32 specials until some other way of dealing with these is decided.
  */
 
+#if _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
 #if _MSC_VER <= 1400
 #define vsnprintf _vsnprintf
 #endif
@@ -329,6 +329,9 @@ typedef __int64 off_t;
 /* Define if your OpenSSL version supports GOST. */
 @HAVE_OPENSSL_GOST@
 
+/* HMAC_*() return ints */
+@HMAC_RETURN_INT@
+
 /* Define to 1 if you have the `readline' function. */
 @HAVE_READLINE@
 
@@ -352,6 +355,9 @@ typedef __int64 off_t;
 
 /* From enable developer */
 @ISC_LIST_CHECKINIT@
+
+/* Verbose query trace logging */
+@WANT_QUERYTRACE@
 
 /* Avoid warnings with strlen() */
 #ifdef _WIN64

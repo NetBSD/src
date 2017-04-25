@@ -1,7 +1,7 @@
-/*	$NetBSD: lex.c,v 1.2.6.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
+/*	$NetBSD: lex.c,v 1.2.6.1.6.2 2017/04/25 20:53:53 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,6 +43,7 @@ typedef struct inputsource {
 	isc_boolean_t			is_file;
 	isc_boolean_t			need_close;
 	isc_boolean_t			at_eof;
+	isc_boolean_t			last_was_eol;
 	isc_buffer_t *			pushback;
 	unsigned int			ignored;
 	void *				input;
@@ -95,9 +96,10 @@ isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp) {
 	/*
 	 * Create a lexer.
 	 */
-
 	REQUIRE(lexp != NULL && *lexp == NULL);
-	REQUIRE(max_token > 0U);
+
+	if (max_token == 0U)
+		max_token = 1;
 
 	lex = isc_mem_get(mctx, sizeof(*lex));
 	if (lex == NULL)
@@ -204,6 +206,7 @@ new_source(isc_lex_t *lex, isc_boolean_t is_file, isc_boolean_t need_close,
 	source->is_file = is_file;
 	source->need_close = need_close;
 	source->at_eof = ISC_FALSE;
+	source->last_was_eol = lex->last_was_eol;
 	source->input = input;
 	source->name = isc_mem_strdup(lex->mctx, name);
 	if (source->name == NULL) {
@@ -291,6 +294,7 @@ isc_lex_close(isc_lex_t *lex) {
 		return (ISC_R_NOMORE);
 
 	ISC_LIST_UNLINK(lex->sources, source, link);
+	lex->last_was_eol = source->last_was_eol;
 	if (source->is_file) {
 		if (source->need_close)
 			(void)fclose((FILE *)(source->input));

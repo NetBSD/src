@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_test.c,v 1.2.6.1.6.1 2014/12/26 03:08:11 msaitoh Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.2.6.1.6.2 2017/04/25 20:53:28 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")

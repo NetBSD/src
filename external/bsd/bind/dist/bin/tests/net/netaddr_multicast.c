@@ -1,7 +1,7 @@
-/*	$NetBSD: netaddr_multicast.c,v 1.2.6.1 2012/06/05 21:15:39 bouyer Exp $	*/
+/*	$NetBSD: netaddr_multicast.c,v 1.2.6.1.6.1 2017/04/25 20:53:28 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 
 #include <isc/net.h>
 #include <isc/netaddr.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>

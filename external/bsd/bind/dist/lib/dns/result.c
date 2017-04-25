@@ -1,7 +1,7 @@
-/*	$NetBSD: result.c,v 1.3.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: result.c,v 1.3.4.1.6.2 2017/04/25 20:53:49 snj Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -164,7 +164,12 @@ static const char *text[DNS_R_NRESULTS] = {
 	"broken trust chain",		       /*%< 106 DNS_R_BROKENCHAIN */
 	"expired",			       /*%< 107 DNS_R_EXPIRED */
 	"not dynamic",			       /*%< 108 DNS_R_NOTDYNAMIC */
-	"bad EUI"			       /*%< 109 DNS_R_BADEUI */
+	"bad EUI",			       /*%< 109 DNS_R_BADEUI */
+
+	"covered by negative trust anchor",    /*%< 110 DNS_R_NTACOVERED */
+	"bad CDS",			       /*%< 111 DNS_R_BADCSD */
+	"bad CDNSKEY",			       /*%< 112 DNS_R_BADCDNSKEY */
+	"malformed OPT option"		       /*%< 113 DNS_R_OPTERR */
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {
@@ -240,6 +245,7 @@ dns_result_torcode(isc_result_t result) {
 		 */
 		return ((dns_rcode_t)((result) & 0xFFF));
 	}
+
 	/*
 	 * Try to supply an appropriate rcode.
 	 */
@@ -269,6 +275,7 @@ dns_result_torcode(isc_result_t result) {
 	case DNS_R_TSIGERRORSET:
 	case DNS_R_UNKNOWN:
 	case DNS_R_NAMETOOLONG:
+	case DNS_R_OPTERR:
 		rcode = dns_rcode_formerr;
 		break;
 	case DNS_R_DISALLOWED:

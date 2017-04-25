@@ -1,4 +1,4 @@
-/*	$NetBSD: t_resolver.c,v 1.4.4.2.2.1 2014/12/26 03:08:12 msaitoh Exp $	*/
+/*	$NetBSD: t_resolver.c,v 1.4.4.2.2.2 2017/04/25 20:53:29 snj Exp $	*/
 
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")

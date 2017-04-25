@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.3.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: ttl.c,v 1.3.4.1.6.2 2017/04/25 20:53:49 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")

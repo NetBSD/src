@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.3.4.2.2.1 2014/12/26 03:08:36 msaitoh Exp $	*/
+/*	$NetBSD: namespace.h,v 1.3.4.2.2.2 2017/04/25 20:53:54 snj Exp $	*/
 
 /*
- * Copyright (C) 2009-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

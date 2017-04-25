@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_ntoa.c,v 1.2.20.1 2014/12/26 03:08:30 msaitoh Exp $	*/
+/*	$NetBSD: loc_ntoa.c,v 1.2.20.2 2017/04/25 20:53:45 snj Exp $	*/
 
 /* Stolen from BIND */
 

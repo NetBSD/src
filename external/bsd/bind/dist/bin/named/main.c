@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.8.4.1.6.3 2015/11/17 19:55:02 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.8.4.1.6.4 2017/04/25 20:53:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -53,6 +53,10 @@
 
 #include <dlz/dlz_dlopen_driver.h>
 
+#ifdef HAVE_GPERFTOOLS_PROFILER
+#include <gperftools/profiler.h>
+#endif
+
 /*
  * Defining NS_MAIN provides storage declarations (rather than extern)
  * for variables in named/globals.h.
@@ -74,6 +78,7 @@
 
 #ifdef OPENSSL
 #include <openssl/opensslv.h>
+#include <openssl/crypto.h>
 #endif
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
@@ -96,6 +101,10 @@
 #ifndef BACKTRACE_MAXFRAME
 #define BACKTRACE_MAXFRAME 128
 #endif
+
+extern unsigned int dns_zone_mkey_hour;
+extern unsigned int dns_zone_mkey_day;
+extern unsigned int dns_zone_mkey_month;
 
 static isc_boolean_t	want_stats = ISC_FALSE;
 static char		program_name[ISC_DIR_NAMEMAX] = "named";
@@ -291,11 +300,13 @@ static void
 lwresd_usage(void) {
 	fprintf(stderr,
 		"usage: lwresd [-4|-6] [-c conffile | -C resolvconffile] "
-		"[-d debuglevel]\n"
-		"              [-f|-g] [-n number_of_cpus] [-p port] "
-		"[-P listen-port] [-s]\n"
-		"              [-t chrootdir] [-u username] [-i pidfile]\n"
-		"              [-m {usage|trace|record|size|mctx}]\n");
+		"[-d debuglevel] [-f|-g]\n"
+		"              [-i pidfile] [-n number_of_cpus] "
+		"[-p port] [-P listen-port]\n"
+		"              [-s] [-S sockets] [-t chrootdir] [-u username] "
+		"[-U listeners]\n"
+		"              [-m {usage|trace|record|size|mctx}]\n"
+		"usage: lwresd [-v|-V]\n");
 }
 
 static void
@@ -308,8 +319,10 @@ usage(void) {
 		"usage: named [-4|-6] [-c conffile] [-d debuglevel] "
 		"[-E engine] [-f|-g]\n"
 		"             [-n number_of_cpus] [-p port] [-s] "
-		"[-t chrootdir] [-u username]\n"
-		"             [-m {usage|trace|record|size|mctx}]\n");
+		"[-S sockets] [-t chrootdir]\n"
+		"             [-u username] [-U listeners] "
+		"[-m {usage|trace|record|size|mctx}]\n"
+		"usage: named [-v|-V]\n");
 }
 
 static void
@@ -374,6 +387,7 @@ static struct flag_def {
 	const char *name;
 	unsigned int value;
 } mem_debug_flags[] = {
+	{ "none", 0},
 	{ "trace",  ISC_MEM_DEBUGTRACE },
 	{ "record", ISC_MEM_DEBUGRECORD },
 	{ "usage", ISC_MEM_DEBUGUSAGE },
@@ -384,6 +398,8 @@ static struct flag_def {
 
 static void
 set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
+	isc_boolean_t clear = ISC_FALSE;
+
 	for (;;) {
 		const struct flag_def *def;
 		const char *end = strchr(arg, ',');
@@ -394,16 +410,21 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 		for (def = defs; def->name != NULL; def++) {
 			if (arglen == (int)strlen(def->name) &&
 			    memcmp(arg, def->name, arglen) == 0) {
+				if (def->value == 0)
+					clear = ISC_TRUE;
 				*ret |= def->value;
 				goto found;
 			}
 		}
 		ns_main_earlyfatal("unrecognized flag '%.*s'", arglen, arg);
 	 found:
-		if (*end == '\0')
+		if (clear || (*end == '\0'))
 			break;
 		arg = end + 1;
 	}
+
+	if (clear)
+		*ret = 0;
 }
 
 static void
@@ -411,31 +432,31 @@ parse_command_line(int argc, char *argv[]) {
 	int ch;
 	int port;
 	const char *p;
-	isc_boolean_t disable6 = ISC_FALSE;
-	isc_boolean_t disable4 = ISC_FALSE;
 
 	save_command_line(argc, argv);
 
-	/* PLEASE keep options synchronized when main is hooked! */
-#define CMDLINE_FLAGS "46c:C:d:E:fFgi:lm:n:N:p:P:sS:t:T:U:u:vVx:"
+	/*
+	 * NS_MAIN_ARGS is defined in main.h, so that it can be used
+	 * both by named and by ntservice hooks.
+	 */
 	isc_commandline_errprint = ISC_FALSE;
-	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, NS_MAIN_ARGS)) != -1) {
 		switch (ch) {
 		case '4':
-			if (disable4)
+			if (ns_g_disable4)
 				ns_main_earlyfatal("cannot specify -4 and -6");
 			if (isc_net_probeipv4() != ISC_R_SUCCESS)
 				ns_main_earlyfatal("IPv4 not supported by OS");
 			isc_net_disableipv6();
-			disable6 = ISC_TRUE;
+			ns_g_disable6 = ISC_TRUE;
 			break;
 		case '6':
-			if (disable6)
+			if (ns_g_disable6)
 				ns_main_earlyfatal("cannot specify -4 and -6");
 			if (isc_net_probeipv6() != ISC_R_SUCCESS)
 				ns_main_earlyfatal("IPv6 not supported by OS");
 			isc_net_disableipv4();
-			disable4 = ISC_TRUE;
+			ns_g_disable4 = ISC_TRUE;
 			break;
 		case 'c':
 			ns_g_conffile = isc_commandline_argument;
@@ -470,6 +491,10 @@ parse_command_line(int argc, char *argv[]) {
 			break;
 		case 'l':
 			ns_g_lwresdonly = ISC_TRUE;
+			break;
+		case 'M':
+			if (strcmp(isc_commandline_argument, "external") == 0)
+				isc_mem_defaultflags = 0;
 			break;
 		case 'm':
 			set_flags(isc_commandline_argument, mem_debug_flags,
@@ -524,10 +549,50 @@ parse_command_line(int argc, char *argv[]) {
 				maxudp = 512;
 			else if (!strcmp(isc_commandline_argument, "maxudp1460"))
 				maxudp = 1460;
+			else if (!strcmp(isc_commandline_argument, "dropedns"))
+				ns_g_dropedns = ISC_TRUE;
+			else if (!strcmp(isc_commandline_argument, "noedns"))
+				ns_g_noedns = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument,
+					  "maxudp=", 7))
+				maxudp = atoi(isc_commandline_argument + 7);
 			else if (!strcmp(isc_commandline_argument, "nosyslog"))
 				ns_g_nosyslog = ISC_TRUE;
 			else if (!strcmp(isc_commandline_argument, "nonearest"))
 				ns_g_nonearest = ISC_TRUE;
+			else if (!strncmp(isc_commandline_argument,
+					  "mkeytimers=", 11))
+			{
+				p = strtok(isc_commandline_argument + 11, "/");
+				if (p == NULL)
+					ns_main_earlyfatal("bad mkeytimer");
+				dns_zone_mkey_hour = atoi(p);
+				if (dns_zone_mkey_hour == 0)
+					ns_main_earlyfatal("bad mkeytimer");
+
+				p = strtok(NULL, "/");
+				if (p == NULL) {
+					dns_zone_mkey_day =
+						(24 * dns_zone_mkey_hour);
+					dns_zone_mkey_month =
+						(30 * dns_zone_mkey_day);
+					break;
+				}
+				dns_zone_mkey_day = atoi(p);
+				if (dns_zone_mkey_day < dns_zone_mkey_hour)
+					ns_main_earlyfatal("bad mkeytimer");
+
+				p = strtok(NULL, "/");
+				if (p == NULL) {
+					dns_zone_mkey_month =
+						(30 * dns_zone_mkey_day);
+					break;
+				}
+				dns_zone_mkey_month = atoi(p);
+				if (dns_zone_mkey_month < dns_zone_mkey_day)
+					ns_main_earlyfatal("bad mkeytimer");
+			} else if (!strcmp(isc_commandline_argument, "notcp"))
+				ns_g_notcp = ISC_TRUE;
 			else
 				fprintf(stderr, "unknown -T flag '%s\n",
 					isc_commandline_argument);
@@ -541,16 +606,17 @@ parse_command_line(int argc, char *argv[]) {
 			ns_g_username = isc_commandline_argument;
 			break;
 		case 'v':
-			printf("%s %s", ns_g_product, ns_g_version);
-			if (*ns_g_description != 0)
-				printf(" %s", ns_g_description);
-			printf("\n");
+			printf("%s %s%s%s <id:%s>\n",
+			       ns_g_product, ns_g_version,
+			       (*ns_g_description != '\0') ? " " : "",
+			       ns_g_description, ns_g_srcid);
 			exit(0);
 		case 'V':
-			printf("%s %s", ns_g_product, ns_g_version);
-			if (*ns_g_description != 0)
-				printf(" %s", ns_g_description);
-			printf(" <id:%s> built by %s with %s\n", ns_g_srcid,
+			printf("%s %s%s%s <id:%s>\n", ns_g_product, ns_g_version,
+			       (*ns_g_description != '\0') ? " " : "",
+			       ns_g_description, ns_g_srcid);
+			printf("running on %s\n", ns_os_uname());
+			printf("built by %s with %s\n",
 			       ns_g_builder, ns_g_configargs);
 #ifdef __clang__
 			printf("compiled by CLANG %s\n", __VERSION__);
@@ -570,12 +636,16 @@ parse_command_line(int argc, char *argv[]) {
 			printf("compiled by Solaris Studio %x\n", __SUNPRO_C);
 #endif
 #ifdef OPENSSL
-			printf("using OpenSSL version: %s\n",
+			printf("compiled with OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
+			printf("linked to OpenSSL version: %s\n",
+			       SSLeay_version(SSLEAY_VERSION));
 #endif
 #ifdef HAVE_LIBXML2
-			printf("using libxml2 version: %s\n",
+			printf("compiled with libxml2 version: %s\n",
 			       LIBXML_DOTTED_VERSION);
+			printf("linked to libxml2 version: %s\n",
+			       xmlParserVersion);
 #endif
 			exit(0);
 		case 'F':
@@ -585,7 +655,7 @@ parse_command_line(int argc, char *argv[]) {
 			usage();
 			if (isc_commandline_option == '?')
 				exit(0);
-			p = strchr(CMDLINE_FLAGS, isc_commandline_option);
+			p = strchr(NS_MAIN_ARGS, isc_commandline_option);
 			if (p == NULL || *++p != ':')
 			ns_main_earlyfatal("unknown option '-%c'",
 					   isc_commandline_option);
@@ -614,6 +684,8 @@ create_managers(void) {
 	isc_result_t result;
 	unsigned int socks;
 
+	INSIST(ns_g_cpus_detected > 0);
+
 #ifdef ISC_PLATFORM_USETHREADS
 	if (ns_g_cpus == 0)
 		ns_g_cpus = ns_g_cpus_detected;
@@ -630,10 +702,8 @@ create_managers(void) {
 	if (ns_g_udpdisp == 0) {
 		if (ns_g_cpus_detected == 1)
 			ns_g_udpdisp = 1;
-		else if (ns_g_cpus_detected < 4)
-			ns_g_udpdisp = 2;
 		else
-			ns_g_udpdisp = ns_g_cpus_detected / 2;
+			ns_g_udpdisp = ns_g_cpus_detected - 1;
 	}
 	if (ns_g_udpdisp > ns_g_cpus)
 		ns_g_udpdisp = ns_g_cpus;
@@ -695,10 +765,6 @@ create_managers(void) {
 static void
 destroy_managers(void) {
 	ns_lwresd_shutdown();
-
-	isc_entropy_detach(&ns_g_entropy);
-	if (ns_g_fallbackentropy != NULL)
-		isc_entropy_detach(&ns_g_fallbackentropy);
 
 	/*
 	 * isc_taskmgr_destroy() will block until all tasks have exited,
@@ -844,8 +910,13 @@ setup(void) {
 				   isc_result_totext(result));
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
-		      ISC_LOG_NOTICE, "starting %s %s%s", ns_g_product,
-		      ns_g_version, saved_command_line);
+		      ISC_LOG_NOTICE, "starting %s %s%s%s <id:%s>%s",
+		      ns_g_product, ns_g_version,
+		      *ns_g_description ? " " : "", ns_g_description,
+		      ns_g_srcid, saved_command_line);
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
+		      ISC_LOG_NOTICE, "running on %s", ns_os_uname());
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
@@ -963,6 +1034,10 @@ cleanup(void) {
 	destroy_managers();
 
 	ns_server_destroy(&ns_g_server);
+
+	isc_entropy_detach(&ns_g_entropy);
+	if (ns_g_fallbackentropy != NULL)
+		isc_entropy_detach(&ns_g_fallbackentropy);
 
 	ns_builtin_deinit();
 
@@ -1082,15 +1157,19 @@ main(int argc, char *argv[]) {
 	char *instance = NULL;
 #endif
 
+#ifdef HAVE_GPERFTOOLS_PROFILER
+	(void) ProfilerStart(NULL);
+#endif
+
 	/*
 	 * Record version in core image.
 	 * strings named.core | grep "named version:"
 	 */
 	strlcat(version,
 #if defined(NO_VERSION_DATE) || !defined(__DATE__)
-		"named version: BIND 9.9.6-P1 <489c6c10>",
+		"named version: BIND 9.9.7-P3 <464a99d>",
 #else
-		"named version: BIND 9.9.6-P1 <489c6c10> (" __DATE__ ")",
+		"named version: BIND 9.9.7-P3 <464a99d> (" __DATE__ ")",
 #endif
 		sizeof(version));
 	result = isc_file_progname(*argv, program_name, sizeof(program_name));
@@ -1197,6 +1276,10 @@ main(int argc, char *argv[]) {
 	ns_os_closedevnull();
 
 	ns_os_shutdown();
+
+#ifdef HAVE_GPERFTOOLS_PROFILER
+	ProfilerStop();
+#endif
 
 	return (0);
 }

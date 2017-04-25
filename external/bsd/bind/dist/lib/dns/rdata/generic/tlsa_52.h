@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.h,v 1.1.1.1.2.2.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
+/*	$NetBSD: tlsa_52.h,v 1.1.1.1.2.2.6.2 2017/04/25 20:53:51 snj Exp $	*/
 
 /*
  * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (C) 2004-2008, 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2008, 2010-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -68,6 +68,7 @@ my $NAMED = $ENV{'NAMED'};
 my $LWRESD = $ENV{'LWRESD'};
 my $DIG = $ENV{'DIG'};
 my $PERL = $ENV{'PERL'};
+my $PYTHON = $ENV{'PYTHON'};
 
 # Start the server(s)
 
@@ -104,14 +105,28 @@ if ($server) {
 sub check_ports {
 	my $server = shift;
 	my $options = "";
+	my $port = 5300;
+	my $file = "";
+
+	$file = $testdir . "/" . $server . "/named.port" if ($server);
 
 	if ($server && $server =~ /(\d+)$/) {
 		$options = "-i $1";
 	}
 
+	if ($file ne "" && -e $file) {
+		open(FH, "<", $file);
+		while(my $line=<FH>) {
+			chomp $line;
+			$port = $line;
+			last;
+		}
+		close FH;
+	}
+
 	my $tries = 0;
 	while (1) {
-		my $return = system("$PERL $topdir/testsock.pl -p 5300 $options");
+		my $return = system("$PERL $topdir/testsock.pl -p $port $options");
 		last if ($return == 0);
 		if (++$tries > 4) {
 			print "$0: could not bind to server addresses, still running?\n";
@@ -137,7 +152,17 @@ sub start_server {
 
 	if ($server =~ /^ns/) {
 		$cleanup_files = "{*.jnl,*.bk,*.st,named.run}";
-		$command = "$NAMED ";
+		if ($ENV{'USE_VALGRIND'}) {
+			$command = "valgrind -q --gen-suppressions=all --num-callers=48 --fullpath-after= --log-file=named-$server-valgrind-%p.log ";
+			if ($ENV{'USE_VALGRIND'} eq 'helgrind') {
+				$command .= "--tool=helgrind ";
+			} else {
+				$command .= "--tool=memcheck --track-origins=yes --leak-check=full ";
+			}
+			$command .= "$NAMED -m none -M external ";
+		} else {
+			$command = "$NAMED ";
+		}
 		if ($options) {
 			$command .= "$options";
 		} elsif (-e $args_file) {
@@ -161,8 +186,12 @@ sub start_server {
 				if (-e "$testdir/$server/named.nosoa");
 			$command .= "-T noaa " 
 				if (-e "$testdir/$server/named.noaa");
+			$command .= "-T dropedns "
+				if (-e "$testdir/$server/named.dropedns");
 			$command .= "-c named.conf -d 99 -g -U 4";
 		}
+		$command .= " -T notcp"
+			if (-e "$testdir/$server/named.notcp");
 		if ($restart) {
 			$command .= " >>named.run 2>&1 &";
 		} else {
@@ -171,7 +200,17 @@ sub start_server {
 		$pid_file = "named.pid";
 	} elsif ($server =~ /^lwresd/) {
 		$cleanup_files = "{lwresd.run}";
-		$command = "$LWRESD ";
+		if ($ENV{'USE_VALGRIND'}) {
+			$command = "valgrind -q --gen-suppressions=all --num-callers=48 --fullpath-after= --log-file=lwresd-valgrind-%p.log ";
+			if ($ENV{'USE_VALGRIND'} eq 'helgrind') {
+				$command .= "--tool=helgrind ";
+			} else {
+				$command .= "--tool=memcheck --track-origins=yes --leak-check=full ";
+			}
+			$command .= "$LWRESD -m none -M external ";
+		} else {
+			$command = "$LWRESD ";
+		}
 		if ($options) {
 			$command .= "$options";
 		} else {
@@ -188,7 +227,9 @@ sub start_server {
 		$pid_file = "lwresd.pid";
 	} elsif ($server =~ /^ans/) {
 		$cleanup_files = "{ans.run}";
-                if (-e "$testdir/$server/ans.pl") {
+                if (-e "$testdir/$server/ans.py") {
+                        $command = "$PYTHON ans.py 10.53.0.$' 5300";
+                } elsif (-e "$testdir/$server/ans.pl") {
                         $command = "$PERL ans.pl";
                 } else {
                         $command = "$PERL $topdir/ans.pl 10.53.0.$'";
@@ -249,11 +290,26 @@ sub start_server {
 sub verify_server {
 	my $server = shift;
 	my $n = $server;
+	my $port = 5300;
+	my $tcp = "+tcp";
+
 	$n =~ s/^ns//;
+
+	if (-e "$testdir/$server/named.port") {
+		open(FH, "<", "$testdir/$server/named.port");
+		while(my $line=<FH>) {
+			chomp $line;
+			$port = $line;
+			last;
+		}
+		close FH;
+	}
+
+	$tcp = "" if (-e "$testdir/$server/named.notcp");
 
 	my $tries = 0;
 	while (1) {
-		my $return = system("$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p 5300 version.bind. chaos txt \@10.53.0.$n > dig.out");
+		my $return = system("$DIG $tcp +noadd +nosea +nostat +noquest +nocomm +nocmd +noedns -p $port version.bind. chaos txt \@10.53.0.$n > dig.out");
 		last if ($return == 0);
 		if (++$tries >= 30) {
 			print `grep ";" dig.out > /dev/null`;

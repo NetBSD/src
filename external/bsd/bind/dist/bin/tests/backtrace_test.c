@@ -1,7 +1,7 @@
-/*	$NetBSD: backtrace_test.c,v 1.2.6.1.6.1 2014/12/26 03:08:11 msaitoh Exp $	*/
+/*	$NetBSD: backtrace_test.c,v 1.2.6.1.6.2 2017/04/25 20:53:27 snj Exp $	*/
 
 /*
- * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <isc/backtrace.h>
+#include <isc/print.h>
 #include <isc/result.h>
 
 const char *expected_symbols[] = {

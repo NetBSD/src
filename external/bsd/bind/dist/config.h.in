@@ -1,6 +1,6 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -150,6 +150,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if threads need PTHREAD_SCOPE_SYSTEM */
 #undef NEED_PTHREAD_SCOPE_SYSTEM
 
+/* Define to 1 if you have the uname library function. */
+#undef HAVE_UNAME
+
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
@@ -169,6 +172,10 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to enable "rrset-order fixed" syntax. */
 #undef DNS_RDATASET_FIXED
 
+/* Define to enable the "fetches-per-server" and "fetches-per-zone" options.
+   */
+#undef ENABLE_FETCHLIMIT
+
 /* Define to enable rpz-nsdname rules. */
 #undef ENABLE_RPZ_NSDNAME
 
@@ -186,6 +193,9 @@ int sigwait(const unsigned int *set, int *sig);
    instead. Don't use 'offsetof (struct s, d[0])', as this doesn't work with
    MSVC and with C++ compilers. */
 #undef FLEXIBLE_ARRAY_MEMBER
+
+/* Define to 1 if the compiler supports __builtin_expect. */
+#undef HAVE_BUILTIN_EXPECT
 
 /* Define to 1 if you have the `chroot' function. */
 #undef HAVE_CHROOT
@@ -217,6 +227,15 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the `fseeko' function. */
+#undef HAVE_FSEEKO
+
+/* Define to 1 if you have the `ftello' function. */
+#undef HAVE_FTELLO
+
+/* Define to use gperftools CPU profiler. */
+#undef HAVE_GPERFTOOLS_PROFILER
+
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #undef HAVE_GSSAPI_GSSAPI_H
 
@@ -229,7 +248,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 #undef HAVE_GSSAPI_KRB5_H
 
-/* Define to 1 if you have the `if_nametoindex' function. */
+/* Define to 1 if you have the if_nametoindex function. */
 #undef HAVE_IF_NAMETOINDEX
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -391,6 +410,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
 
+/* HMAC_*() return ints */
+#undef HMAC_RETURN_INT
+
 /* return type of gai_strerror */
 #undef IRS_GAISTRERROR_RETURN_T
 
@@ -399,6 +421,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to the flags type used by getnameinfo(3). */
 #undef IRS_GETNAMEINFO_FLAGS_T
+
+/* Define to the sockaddr length type used by getnameinfo(3). */
+#undef IRS_GETNAMEINFO_SOCKLEN_T
 
 /* Define to allow building of objects for dlopen(). */
 #undef ISC_DLZ_DLOPEN
@@ -454,6 +479,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Enable DNS Response Rate Limiting */
 #undef USE_RRL
+
+/* Define to enable very verbose query trace logging. */
+#undef WANT_QUERYTRACE
 
 /* define if idnkit support is to be included. */
 #undef WITH_IDN

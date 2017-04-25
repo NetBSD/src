@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-verify.c,v 1.2.2.2.2.3 2015/11/17 19:55:02 bouyer Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.2.2.2.2.4 2017/04/25 20:53:25 snj Exp $	*/
 
 /*
- * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -274,7 +274,7 @@ main(int argc, char *argv[]) {
 
 	rdclass = strtoclass(classname);
 
-	setup_logging(verbose, mctx, &log);
+	setup_logging(mctx, &log);
 
 	argc -= isc_commandline_index;
 	argv += isc_commandline_index;

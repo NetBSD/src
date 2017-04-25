@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2005, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@ rm -f ns1/large.db ns1/large.db.raw
 rm -f dig.out.*
 rm -f dig.out
 rm -f */named.memstats
+rm -f */named.run
 rm -f ns2/example.db
 rm -f ns2/transfer.db.*
 rm -f ns2/formerly-text.db
