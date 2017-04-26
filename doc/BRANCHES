@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.338 2017/03/15 06:17:39 snj Exp $
+#	$NetBSD: BRANCHES,v 1.339 2017/04/26 07:51:23 pgoyette Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -879,13 +879,18 @@ Notes:		Used as experiment sandbox and if successful hopefully one day
 Branch:		pgoyette-localcount
 Description:	Implement localcount reference counting as proposed by
 		riastradh@
-Status:		Active
+Status:		Terminated
 Start Date:	Fri Jul 15 2016
-End Date:
+End Date:	Wed Apr 26 2017
 Base Tag:	pgoyette-localcount-base
 Maintainer:	pgoyette
 Scope:		src/sys/
-Notes:
+Notes:		Abandoned - there seems to have been some CVS "pilot
+		error during one of the sync-with-head and now there
+		are an unknown number of commits missing from an
+		unknown number of files from an unknown time period.
+		The work will be salvaged as much as possible, and
+		applied to a new clean branch.
 
 
 ########################################################################
