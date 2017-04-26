@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.8 2017/04/16 12:24:57 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.9 2017/04/26 01:51:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.8 2017/04/16 12:24:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.9 2017/04/26 01:51:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.8 2017/04/16 12:24:57 jmcneill Exp $");
 #include <dev/ofw/openfirm.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include "locators.h"
 
 #define	FDT_MAX_PATH	256
 
@@ -64,8 +66,9 @@ struct fdt_softc {
 
 static int	fdt_match(device_t, cfdata_t, void *);
 static void	fdt_attach(device_t, device_t, void *);
+static int	fdt_scan_submatch(device_t, cfdata_t, const int *, void *);
 static void	fdt_scan_bus(struct fdt_softc *);
-static void	fdt_scan(struct fdt_softc *);
+static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
 
@@ -159,17 +162,31 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	if (OF_finddevice("/") != faa->faa_phandle)
 		return;
 
+	aprint_debug_dev(sc->sc_dev, "  order   phandle   bus    path\n");
+	aprint_debug_dev(sc->sc_dev, "  =====   =======   ===    ====\n");
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+		char buf[FDT_MAX_PATH];
+		const char *path = buf;
+		if (!fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
+			path = node->n_name;
+		aprint_debug_dev(sc->sc_dev, "   %04x   0x%04x    %s   %s\n",
+		    node->n_order & 0xffff, node->n_phandle,
+		    device_xname(node->n_bus), path);
+	}
+
 	/* Scan devices */
-	fdt_scan(sc);
+	for (int pass = 1; pass <= FDTCF_PASS_DEFAULT; pass++)
+		fdt_scan(sc, pass);
 }
 
 static void
 fdt_init_attach_args(struct fdt_softc *sc, struct fdt_node *node,
-    struct fdt_attach_args *faa)
+    bool quiet, struct fdt_attach_args *faa)
 {
 	*faa = sc->sc_faa;
 	faa->faa_phandle = node->n_phandle;
 	faa->faa_name = node->n_name;
+	faa->faa_quiet = quiet;
 }
 
 static void
@@ -185,7 +202,7 @@ fdt_scan_bus(struct fdt_softc *sc)
 		if (node->n_dev != NULL)
 			continue;
 
-		fdt_init_attach_args(sc, node, &faa);
+		fdt_init_attach_args(sc, node, true, &faa);
 
 		/*
 		 * Only attach busses to nodes where this driver is the best
@@ -202,22 +219,37 @@ fdt_scan_bus(struct fdt_softc *sc)
 	}
 }
 
+static int
+fdt_scan_submatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
+{
+	if (locs[FDTCF_PASS] != FDTCF_PASS_DEFAULT &&
+	    locs[FDTCF_PASS] != cf->cf_loc[FDTCF_PASS])
+		return 0;
+
+	return config_stdsubmatch(parent, cf, locs, aux);
+}
+
 static void
-fdt_scan(struct fdt_softc *sc)
+fdt_scan(struct fdt_softc *sc, int pass)
 {
 	struct fdt_node *node;
 	struct fdt_attach_args faa;
+	const int locs[FDTCF_NLOCS] = {
+		[FDTCF_PASS] = pass
+	};
+	bool quiet = pass != FDTCF_PASS_DEFAULT;
 
 	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
 		if (node->n_dev != NULL)
 			continue;
 
-		fdt_init_attach_args(sc, node, &faa);
+		fdt_init_attach_args(sc, node, quiet, &faa);
 
 		/*
 		 * Attach the device.
 		 */
-		node->n_dev = config_found(node->n_bus, &faa, fdt_print);
+		node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
+		    &faa, fdt_print, fdt_scan_submatch);
 	}
 }
 
@@ -257,6 +289,9 @@ fdt_print(void *aux, const char *pnp)
 	const struct fdt_attach_args * const faa = aux;
 	char buf[FDT_MAX_PATH];
 	const char *name = buf;
+
+	if (faa->faa_quiet)
+		return QUIET;
 
 	/* Skip "not configured" for nodes w/o compatible property */
 	if (OF_getproplen(faa->faa_phandle, "compatible") <= 0)
