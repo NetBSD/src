@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 2015/08/22 12:12:47 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 2017/04/26 22:41:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.37 2015/08/22 12:12:47 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.38 2017/04/26 22:41:53 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,6 +404,7 @@ dotrap(void)
 {
 	int i;
 	int savestatus;
+	char *tr;
 
 	for (;;) {
 		for (i = 1 ; ; i++) {
@@ -414,7 +415,9 @@ dotrap(void)
 		}
 		gotsig[i - 1] = 0;
 		savestatus=exitstatus;
-		evalstring(trap[i], 0);
+		tr = savestr(trap[i]);		/* trap code may free trap[i] */
+		evalstring(tr, 0);
+		ckfree(tr);
 		exitstatus=savestatus;
 	}
 done:
