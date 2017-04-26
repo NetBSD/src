@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.59 2017/04/26 03:54:37 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.60 2017/04/26 08:00:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.59 2017/04/26 03:54:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.60 2017/04/26 08:00:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,9 @@ static int	ppbmatch(device_t, cfdata_t, void *);
 static void	ppbattach(device_t, device_t, void *);
 static int	ppbdetach(device_t, int);
 static void	ppbchilddet(device_t, device_t);
+#ifdef PPB_USEINTR
 static int	ppb_intr(void *);
+#endif
 static bool	ppb_resume(device_t, const pmf_qual_t *);
 static bool	ppb_suspend(device_t, const pmf_qual_t *);
 
@@ -203,8 +205,10 @@ ppbattach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
+#ifdef PPB_USEINTR
 	char const *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
+#endif
 	pcireg_t busdata, reg;
 
 	pci_aprint_devinfo(pa, NULL);
@@ -237,6 +241,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_pciecapoff, &reg) && (reg & PCIE_XCAP_SI)) {
+#ifdef PPB_USEINTR
 #if 0
 		/*
 		 * XXX Initialize workqueue or something else for
@@ -304,6 +309,17 @@ ppbattach(device_t parent, device_t self, void *aux)
 			pci_conf_write(pc, pa->pa_tag,
 			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
 		}
+#else
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR);
+		if (reg & PCIE_SLCSR_NOTIFY_MASK) {
+			aprint_debug_dev(self,
+			    "disabling notification events\n");
+			reg &= ~PCIE_SLCSR_NOTIFY_MASK;
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    sc->sc_pciecapoff + PCIE_SLCSR, reg);
+		}
+#endif /* PPB_USEINTR */
 	}
 
 	if (!pmf_device_register(self, ppb_suspend, ppb_resume))
@@ -327,6 +343,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 
+#ifdef PPB_USEINTR
 	/* Attach event counters */
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
 	    device_xname(sc->sc_dev), "Interrupt");
@@ -342,6 +359,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 	    device_xname(sc->sc_dev), "Command Completed");
 	evcnt_attach_dynamic(&sc->sc_ev_lacs, EVCNT_TYPE_MISC, NULL,
 	    device_xname(sc->sc_dev), "Data Link Layer State Changed");
+#endif
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
@@ -349,13 +367,16 @@ ppbattach(device_t parent, device_t self, void *aux)
 static int
 ppbdetach(device_t self, int flags)
 {
+#ifdef PPB_USEINTR
 	struct ppb_softc *sc = device_private(self);
 	pcireg_t slcsr;
+#endif
 	int rc;
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
 
+#ifdef PPB_USEINTR
 	/* Detach event counters */
 	evcnt_detach(&sc->sc_ev_intr);
 	evcnt_detach(&sc->sc_ev_abp);
@@ -377,6 +398,7 @@ ppbdetach(device_t self, int flags)
 		pci_intr_disestablish(sc->sc_pc, sc->sc_intrhand);
 		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
 	}
+#endif
 
 	pmf_device_deregister(self);
 	return 0;
@@ -418,6 +440,7 @@ ppbchilddet(device_t self, device_t child)
 	/* we keep no references to child devices, so do nothing */
 }
 
+#ifdef PPB_USEINTR
 static int
 ppb_intr(void *arg)
 {
@@ -482,3 +505,4 @@ ppb_intr(void *arg)
 
 	return 0;
 }
+#endif /* PPB_USEINTR */
