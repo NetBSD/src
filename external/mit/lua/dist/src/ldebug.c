@@ -1,4 +1,4 @@
-/*	$NetBSD: ldebug.c,v 1.8 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: ldebug.c,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: ldebug.c,v 2.121 2016/10/19 12:32:10 roberto Exp 
