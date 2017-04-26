@@ -1,4 +1,4 @@
-/*	$NetBSD: lundump.c,v 1.6 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: lundump.c,v 1.7 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: lundump.c,v 2.44 2015/11/02 16:09:30 roberto Exp 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.h,v 1.8 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: lobject.h,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: lobject.h,v 2.117 2016/08/01 19:51:24 roberto Exp 
