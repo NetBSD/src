@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.76 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.76.4.1 2017/04/26 14:50:51 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1285,27 +1285,6 @@ NENTRY(lwp_trampoline)
 	call	*%r12
 	jmp	.Lsyscall_checkast
 END(lwp_trampoline)
-
-/*
- * oosyscall()
- *
- * Old call gate entry for syscall. only needed if we're
- * going to support running old i386 NetBSD 1.0 or ibcs2 binaries, etc,
- * on NetBSD/amd64.
- * The 64bit call gate can't request that arguments be copied from the
- * user stack (which the i386 code uses to get a gap for the flags).
- * push/pop are <read>:<modify_sp>:<write> cycles.
- */
-IDTVEC(oosyscall)
-	/* Set rflags in trap frame. */
-	pushq	(%rsp)		# move user's %eip
-	pushq	16(%rsp)	# and %cs
-	popq	8(%rsp)
-	pushfq
-	popq	16(%rsp)
-	pushq	$7		# size of instruction for restart
-	jmp	osyscall1
-IDTVEC_END(oosyscall)
 
 /*
  * osyscall()
