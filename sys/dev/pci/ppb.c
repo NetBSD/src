@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.58 2017/04/24 23:01:45 chs Exp $	*/
+/*	$NetBSD: ppb.c,v 1.59 2017/04/26 03:54:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.58 2017/04/24 23:01:45 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.59 2017/04/26 03:54:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.58 2017/04/24 23:01:45 chs Exp $");
 
 #define	PCIE_SLCSR_NOTIFY_MASK					\
 	(PCIE_SLCSR_ABE | PCIE_SLCSR_PFE | PCIE_SLCSR_MSE |	\
-	 PCIE_SLCSR_PDE | PCIE_SLCSR_CCE | PCIE_SLCSR_HPE)
+	 PCIE_SLCSR_PDE | PCIE_SLCSR_CCE | PCIE_SLCSR_HPE |	\
+	 PCIE_SLCSR_DLLSCE)
 
 static const char pcie_linkspeed_strings[4][5] = {
 	"1.25", "2.5", "5.0", "8.0",
@@ -349,6 +350,7 @@ static int
 ppbdetach(device_t self, int flags)
 {
 	struct ppb_softc *sc = device_private(self);
+	pcireg_t slcsr;
 	int rc;
 
 	if ((rc = config_detach_children(self, flags)) != 0)
@@ -362,6 +364,19 @@ ppbdetach(device_t self, int flags)
 	evcnt_detach(&sc->sc_ev_pdc);
 	evcnt_detach(&sc->sc_ev_cc);
 	evcnt_detach(&sc->sc_ev_lacs);
+
+	/* Clear any pending events and disable interrupt */
+	slcsr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	      sc->sc_pciecapoff + PCIE_SLCSR);
+	slcsr &= ~PCIE_SLCSR_NOTIFY_MASK;
+	pci_conf_write(sc->sc_pc, sc->sc_tag,
+		sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
+
+	/* Disestablish the interrupt handler */
+	if (sc->sc_intrhand != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_intrhand);
+		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
+	}
 
 	pmf_device_deregister(self);
 	return 0;
