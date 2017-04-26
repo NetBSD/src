@@ -857,7 +857,7 @@ unionfs_fsync(void *v)
 static int
 unionfs_remove(void *v)
 {
-	struct vop_remove_args *ap = v;
+	struct vop_remove_v2_args *ap = v;
 	int		error;
 	struct unionfs_node *dunp;
 	struct unionfs_node *unp;
@@ -877,8 +877,10 @@ unionfs_remove(void *v)
 	lvp = unp->un_lowervp;
 	cnp = ap->a_cnp;
 
-	if (udvp == NULLVP)
+	if (udvp == NULLVP) {
+		vput(ap->a_vp);
 		return (EROFS);
+	}
 
 	if (uvp != NULLVP) {
 		ump = MOUNTTOUNIONFSMOUNT(ap->a_vp->v_mount);
@@ -1206,7 +1208,7 @@ unionfs_mkdir(void *v)
 static int
 unionfs_rmdir(void *v)
 {
-	struct vop_rmdir_args *ap = v;
+	struct vop_rmdir_v2_args *ap = v;
 	int		error;
 	struct unionfs_node *dunp;
 	struct unionfs_node *unp;
@@ -1226,8 +1228,10 @@ unionfs_rmdir(void *v)
 	uvp = unp->un_uppervp;
 	lvp = unp->un_lowervp;
 
-	if (udvp == NULLVP)
+	if (udvp == NULLVP) {
+		vput(ap->a_vp);
 		return (EROFS);
+	}
 
 	if (udvp == uvp)
 		return (EOPNOTSUPP);

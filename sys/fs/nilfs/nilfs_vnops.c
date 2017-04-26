@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.34 2017/04/11 14:24:59 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.35 2017/04/26 03:02:48 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.34 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.35 2017/04/26 03:02:48 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -1404,7 +1404,7 @@ out_unlocked:
 int
 nilfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1435,7 +1435,6 @@ nilfs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -1445,7 +1444,7 @@ nilfs_remove(void *v)
 int
 nilfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1462,8 +1461,7 @@ nilfs_rmdir(void *v)
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == nilfs_node) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 
@@ -1472,7 +1470,6 @@ nilfs_rmdir(void *v)
 	refcnt = 2; /* XXX */
 	if (refcnt > 1) {
 		/* NOT empty */
-		vput(dvp);
 		vput(vp);
 		return ENOTEMPTY;
 	}
@@ -1486,8 +1483,7 @@ nilfs_rmdir(void *v)
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing file\n"));
 
-	/* unput the nodes and exit */
-	vput(dvp);
+	/* put the node and exit */
 	vput(vp);
 
 	return error;
