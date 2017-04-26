@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.103 2017/04/11 14:25:00 riastradh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.104 2017/04/26 03:02:48 riastradh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.103 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.104 2017/04/26 03:02:48 riastradh Exp $");
 #endif /* not lint */
 
 
@@ -1941,7 +1941,7 @@ udf_readlink(void *v)
 int
 udf_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1972,7 +1972,6 @@ udf_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	return error;
 }
@@ -1982,7 +1981,7 @@ udf_remove(void *v)
 int
 udf_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1999,8 +1998,7 @@ udf_rmdir(void *v)
 
 	/* don't allow '.' to be deleted */
 	if (dir_node == udf_node) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 
@@ -2017,7 +2015,6 @@ udf_rmdir(void *v)
 	dirhash_put(udf_node->dir_hash);
 
 	if (!isempty) {
-		vput(dvp);
 		vput(vp);
 		return ENOTEMPTY;
 	}
@@ -2040,8 +2037,7 @@ udf_rmdir(void *v)
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing dir\n"));
 
-	/* unput the nodes and exit */
-	vput(dvp);
+	/* put the node and exit */
 	vput(vp);
 
 	return error;

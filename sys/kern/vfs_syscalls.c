@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.512 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.513 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.512 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.513 2017/04/26 03:02:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2696,6 +2696,7 @@ do_sys_unlinkat(struct lwp *l, int fdat, const char *arg, int flags,
 			goto abort;
 		} else {
 			error = VOP_RMDIR(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+			vput(nd.ni_dvp);
 			goto out;
 		}
 	}
@@ -2719,6 +2720,7 @@ do_sys_unlinkat(struct lwp *l, int fdat, const char *arg, int flags,
 	(void)fileassoc_file_delete(vp);
 #endif /* FILEASSOC */
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	vput(nd.ni_dvp);
 	goto out;
 
 abort:

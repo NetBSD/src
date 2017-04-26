@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.104 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.105 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.104 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.105 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1071,7 +1071,7 @@ int
 coda_remove(void *v)
 {
 /* true args */
-    struct vop_remove_args *ap = v;
+    struct vop_remove_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;
@@ -1124,14 +1124,13 @@ coda_remove(void *v)
     CODADEBUG(CODA_REMOVE, myprintf(("in remove result %d\n",error)); )
 
     /*
-     * Unlock parent and child (avoiding double if ".").
+     * Unlock and release child (avoiding double if ".").
      */
     if (dvp == vp) {
 	vrele(vp);
     } else {
 	vput(vp);
     }
-    vput(dvp);
 
     return(error);
 }
@@ -1377,7 +1376,7 @@ int
 coda_rmdir(void *v)
 {
 /* true args */
-    struct vop_rmdir_args *ap = v;
+    struct vop_rmdir_v2_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *dcp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;
@@ -1429,8 +1428,7 @@ coda_rmdir(void *v)
     CODADEBUG(CODA_RMDIR, myprintf(("in rmdir result %d\n", error)); )
 
 exit:
-    /* vput both vnodes */
-    vput(dvp);
+    /* unlock and release child */
     if (dvp == vp) {
 	vrele(vp);
     } else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.61 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.62 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.61 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.62 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -508,7 +508,7 @@ sysvbfs_write(void *arg)
 int
 sysvbfs_remove(void *arg)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
@@ -523,8 +523,10 @@ sysvbfs_remove(void *arg)
 
 	DPRINTF("%s: delete %s\n", __func__, ap->a_cnp->cn_nameptr);
 
-	if (vp->v_type == VDIR)
+	if (vp->v_type == VDIR) {
+		vrele(vp);
 		return EPERM;
+	}
 
 	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr, true)) != 0)
 		DPRINTF("%s: bfs_file_delete failed.\n", __func__);
@@ -535,7 +537,6 @@ sysvbfs_remove(void *arg)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 
 	if (err == 0) {
 		bnode->removed = 1;

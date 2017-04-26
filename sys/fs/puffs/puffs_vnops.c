@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.209 2017/04/11 14:24:59 riastradh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.210 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.209 2017/04/11 14:24:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.210 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1829,7 +1829,7 @@ callremove(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 int
 puffs_vnop_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -1853,7 +1853,8 @@ puffs_vnop_remove(void *v)
 	    PUFFS_VN_REMOVE, VPTOPNC(dvp));
 
 	puffs_msg_enqueue(pmp, park_remove);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
+	vref(dvp);		/* hang onto caller's reference at end */
+	REFPN(dpn);
 	if (dvp == vp)
 		REFPN(pn);
 	else
@@ -1952,7 +1953,7 @@ callrmdir(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 int
 puffs_vnop_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -1975,7 +1976,9 @@ puffs_vnop_rmdir(void *v)
 	    PUFFS_VN_RMDIR, VPTOPNC(dvp));
 
 	puffs_msg_enqueue(pmp, park_rmdir);
-	REFPN_AND_UNLOCKVP(dvp, dpn);
+	vref(dvp);		/* hang onto caller's reference at end */
+	KASSERTMSG((dvp != vp), "rmdir .");
+	REFPN(dpn);
 	REFPN_AND_UNLOCKVP(vp, pn);
 	error = puffs_msg_wait2(pmp, park_rmdir, dpn, pn);
 

@@ -4975,7 +4975,7 @@ zfs_netbsd_create(void *v)
 static int
 zfs_netbsd_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -5002,13 +5002,6 @@ zfs_netbsd_remove(void *v)
 	    0);
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-
-	/*
-	 * Unlock and release dvp because the VOP_REMOVE protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
-
 	return (error);
 }
 
@@ -5048,7 +5041,7 @@ zfs_netbsd_mkdir(void *v)
 static int
 zfs_netbsd_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -5075,12 +5068,6 @@ zfs_netbsd_rmdir(void *v)
 	    NULL, 0);
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-
-	/*
-	 * Unlock and release dvp because the VOP_RMDIR protocol is insane.
-	 */
-	VOP_UNLOCK(dvp);
-	VN_RELE(dvp);
 	return error;
 }
 

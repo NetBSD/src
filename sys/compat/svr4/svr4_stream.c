@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.87 2016/09/13 07:01:08 martin Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.88 2017/04/26 03:02:48 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.87 2016/09/13 07:01:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.88 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -328,6 +328,7 @@ clean_pipe(struct lwp *l, const char *path)
 		goto bad;
 
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	vput(nd.ni_dvp);
 	pathbuf_destroy(pb);
 	return error;
 

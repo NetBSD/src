@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.313 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.314 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.313 2017/04/11 14:25:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.314 2017/04/26 03:02:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1083,7 +1083,7 @@ out:
 int
 lfs_remove(void *v)
 {
-	struct vop_remove_args	/* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1104,7 +1104,6 @@ lfs_remove(void *v)
 			vrele(vp);
 		else
 			vput(vp);
-		vput(dvp);
 		return error;
 	}
 	error = ulfs_remove(ap);
@@ -1127,7 +1126,7 @@ lfs_remove(void *v)
 int
 lfs_rmdir(void *v)
 {
-	struct vop_rmdir_args	/* {
+	struct vop_rmdir_v2_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
@@ -1145,10 +1144,9 @@ lfs_rmdir(void *v)
 	ip = VTOI(vp);
 	if ((error = lfs_set_dirop(ap->a_dvp, ap->a_vp)) != 0) {
 		if (ap->a_dvp == vp)
-			vrele(ap->a_dvp);
+			vrele(vp);
 		else
-			vput(ap->a_dvp);
-		vput(vp);
+			vput(vp);
 		return error;
 	}
 	error = ulfs_rmdir(ap);

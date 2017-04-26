@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.62 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.63 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.62 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.63 2017/04/26 03:02:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,8 +609,8 @@ layer_inactive(void *v)
 int
 layer_remove(void *v)
 {
-	struct vop_remove_args /* {
-		struct vonde		*a_dvp;
+	struct vop_remove_v2_args /* {
+		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
 	} */ *ap = v;
@@ -660,7 +660,7 @@ layer_rename(void *v)
 int
 layer_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
