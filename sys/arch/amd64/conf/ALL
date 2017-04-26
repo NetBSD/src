@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.56 2017/04/18 19:09:12 riastradh Exp $
+# $NetBSD: ALL,v 1.57 2017/04/26 18:20:01 christos Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.56 $"
+#ident		"ALL-$Revision: 1.57 $"
 
 maxusers	64		# estimated number of users
 
@@ -40,6 +40,13 @@ viac7temp*	at cpu?		# VIA C7 temperature sensor
 vmt0		at cpu0		# VMware Tools
 
 options 	PMC	# performance-monitoring counters support
+
+# Beep when it is safe to power down the system (requires sysbeep)
+options 	BEEP_ONHALT
+# Some tunable details of the above feature (default values used below)
+options 	BEEP_ONHALT_COUNT=3	# Times to beep
+options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
+options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
 
 options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 
@@ -95,13 +102,6 @@ options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Beep when it is safe to power down the system (requires sysbeep)
-options 	BEEP_ONHALT
-# Some tunable details of the above feature (default values used below)
-options 	BEEP_ONHALT_COUNT=3	# Times to beep
-options 	BEEP_ONHALT_PITCH=1500	# Default frequency (in Hz)
-options 	BEEP_ONHALT_PERIOD=250	# Default duration (in msecs)
-
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
 options 	BUFQ_READPRIO
@@ -109,9 +109,11 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+				# XXX to be commented out on release branch
 options 	DEBUG		# expensive debugging checks/support
 options 	LOCKDEBUG	# expensive locking checks/support
 options 	DDB		# in-kernel debugger
+options 	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
@@ -119,6 +121,7 @@ options 	KGDB		# remote debugger
 options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #options 	IPKDB		# IP Kernel Debugger
 #options 	IPKDBKEY="\"Pass_phrase_to_debug_over_network\""
+makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 makeoptions	DEBUG="-g"	# compile full symbol table
 options 	SYSCALL_STATS	# per syscall counts
 options 	SYSCALL_TIMES	# per syscall times
@@ -128,14 +131,15 @@ options 	UVMHIST		# kernhist for uvm subsystem
 options 	BIOHIST		# kernhist for buff I/O
 
 # Compatibility options
-#options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
-#options 	COMPAT_09	# NetBSD 0.9,
-#options 	COMPAT_10	# NetBSD 1.0,
-#options 	COMPAT_11	# NetBSD 1.1,
-#options 	COMPAT_12	# NetBSD 1.2 (and 386BSD and BSDI),
-#options 	COMPAT_13	# NetBSD 1.3 (and 386BSD and BSDI),
-#options 	COMPAT_14	# NetBSD 1.4,
-#options 	COMPAT_15	# NetBSD 1.5,
+options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
+options 	EXEC_AOUT	# required by binaries from before 1.5
+options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# NetBSD 1.2 (and 386BSD and BSDI),
+options 	COMPAT_13	# NetBSD 1.3 (and 386BSD and BSDI),
+options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
@@ -148,11 +152,11 @@ options 	COMPAT_44	# 4.4BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-options 	COMPAT_NETBSD32 # NetBSD 32-bit
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
+options 	COMPAT_NETBSD32 # NetBSD 32-bit
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_LINUX32	# binary compatibility with Linux 32-bit
+options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 options 	COMPAT_NDIS	# NDIS network driver
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -160,8 +164,8 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
-#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options 	DKWEDGE_METHOD_APPLE	# Support Apple partitions as wedges
 options 	DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
 
@@ -308,8 +312,6 @@ options 	PCDISPLAY_SOFTCURSOR
 options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
-# issue VGA BIOS POST on resume
-options 	VGA_POST
 # console scrolling support.
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
@@ -348,12 +350,16 @@ ipmi0		at mainbus?
 
 # This option can be used to retrieve CPU and APIC information.
 # that I/O APICs can be used if ACPI is enabled below.
-options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-options 	ACPI_SCANPCI	# find PCI roots using ACPI
+options 	ACPI_SCANPCI		# find PCI roots using ACPI
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
+options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
+options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+options 	VGA_POST		# in-kernel support for VGA POST
 
 acpi0		at mainbus0
-
-options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 
 # ACPI devices
 apm*		at acpi?		# ACPI apm emulation
@@ -394,27 +400,24 @@ lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
+sdhc*		at acpi?		# SD Host Controller
+sony*		at acpi?		# Sony Notebook Controller
+spic*		at acpi?		# Sony Programmable I/O Controller
+wsmouse*	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
-#tpm*		at acpi?		# ACPI TPM (Experimental)
+tpm*		at acpi?		# ACPI TPM (Experimental)
 ug*		at acpi?		# Abit uGuru Hardware monitor
+valz*		at acpi?		# Toshiba Dynabook hotkeys
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
+sdhc*		at acpi?		# SD Host Controller
+sony*		at acpi?		# Sony Notebook Controller
 wmidell*	at acpiwmibus?		# Dell WMI mappings
 wmieeepc*	at acpiwmibus?		# Asus Eee PC WMI mappings
 wmihp*		at acpiwmibus?		# HP WMI mappings
 wmimsi* 	at acpiwmibus?		# MSI WMI mappings
 wss*		at acpi?		# NeoMagic 256AV in wss mode
 ym*		at acpi?		# Yamaha OPL3-SA[23] audio
-
-# Sony Vaio jog dial
-spic*		at acpi?		# Sony Programmable I/O Controller
-wsmouse*	at spic?
-
-# Sony LCD brightness etc.
-sony*		at acpi?		# Sony Miscellaneous Controller
-
-# Toshiba Libretto devices
-vald* at acpi?
 
 # Apple System Management Controller devices
 applesmcfan*	at applesmcbus?
@@ -438,23 +441,11 @@ options 	PCIBIOS_SHARP_MM20_FIXUP # this code makes the Sharp MM 20
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
-# PCI fixups, for both PCIBIOS and ACPI
-options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
-options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
-options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
-
 # Temperatures
 amdnb_misc* at pci?			# AMD NB Misc Configuration
 amdtemp* at amdnb_misc? 		# AMD CPU Temperature sensors
 
 # PCI bridges
-amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
-hpet*	at amdpcib?
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
-					# watchdog, gpio, SpeedStep and HPET
-hpet0	at ichlpcib?			# High Precision Event Timer
-fwhrng* at ichlpcib?			# Intel 82802 FWH Random Number Generator
-tco*	at ichlpcib?			# TCO watchdog timer
 rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 options 	AGP_X86
@@ -463,17 +454,28 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
+amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+hpet*	at amdpcib?
+
 pwdog*	at pci? dev ? function ?	# QUANCOM PWDOG1
+
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
+					# watchdog, gpio, Speedstep and HPET
+fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
+hpet*	at ichlpcib?
+tco*	at ichlpcib?		# TCO watch dog timer
+
+aapic*	at pci? dev ? function ?	# AMD 8131 IO apic
 
 agp*	at pchb?
 
-
 # ISA bus support
+isa0	at mainbus?
+isa0	at pcib?
 isa0	at amdpcib?
 isa0	at ichlpcib?
 isa0	at rdcpcib?
-isa0	at mainbus?
-isa0	at pcib?
+isa0	at rdcpcib?
 
 # IBM 4810 BSP cash drawer port
 ibmcd*	at pci? dev ? function ?
@@ -499,6 +501,10 @@ options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
+genfb*		at pci? dev ? function ?
+options 	VCONS_DRAW_INTR
+wsdisplay*	at vga? console ?
+wsdisplay*	at wsemuldisplaydev?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
@@ -515,7 +521,6 @@ tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
 unichromefb*	at pci? dev ? function ?	# VIA Unichrome framebuffer console
 voodoofb*	at pci? dev ? function ?
 wcfb*	at pci? dev ? function ?
-wsdisplay*	at wsemuldisplaydev?
 
 # DRI legacy drivers
 #i915drm*	at drm?		# Intel i915, i945 DRM driver
@@ -597,6 +602,28 @@ lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
 # Hardware monitors
+
+amdnb_misc* at pci?			# AMD NB Misc Configuration
+amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
+
+# Winbond LPC Super I/O
+wbsio*	at isa? port 0x2e
+wbsio*	at isa? port 0x4e
+
+# IBM Hawk Integrated Systems Management Processor
+ibmhawk0	at iic? addr 0x37
+
+# LM7[89] and compatible hardware monitors
+# Use flags to select temp sensor type (see lm(4) man page for details)
+lm0	at isa?	port 0x290 flags 0x0	# other common ports: 0x280, 0x310
+lm*	at wbsio?
+
+# SMSC LPC47B397 hardware monitor functions
+smsc0	at isa? port 0x02e
+
+# SMSC LPC47M192 hardware monitor
+smscmon*	at iic? addr 0x2c
+smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -706,6 +733,9 @@ iic*		at gpioiic?
 
 # Keylock support
 gpiolock*	at gpio?
+
+# Pulsing GPIO pins in software
+gpiopwm*	at gpio?
 
 # Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
 soekrisgpio0	at isa? port 0x680
@@ -907,9 +937,9 @@ wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 # PCI network interfaces
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
-an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 athn*	at pci? dev ? function ?	# Atheros AR9k (802.11a/g/n)
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
@@ -935,7 +965,9 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
-jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
+ixv*	at pci? dev ? function ?	# Intel 8259x 10G virtual function
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
+hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -952,6 +984,7 @@ ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
+rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
@@ -1071,6 +1104,8 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
+xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
+					# xhci is at best experimental
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
@@ -1088,6 +1123,7 @@ slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
+usb*	at xhci?
 usb*	at ehci?
 usb*	at ohci?
 usb*	at slhci?
@@ -1179,9 +1215,11 @@ cir*	at irmce?
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
+axen*	at uhub? port ?		# ASIX AX88178a/AX88179 based adapters
 cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#mos*	at uhub? port ?		# Moschip MCS7730/MCS7830/MCS7832 based adapters
 udav*	at uhub? port ?		# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 urndis* at uhub? port ? 	# Microsoft RNDIS specification
@@ -1411,10 +1449,14 @@ radio*	at sf2r?
 
 # Video capture devices
 
-pseye*	at uhub?		# Sony PLAYSTATION(R) Eye webcam
-uvideo* at uhub?		# USB Video Class capture devices
-auvitek* at uhub?		# Auvitek AU0828 video capture devices
-emdtv*	at uhub?		# Empia EM28xx video capture devices
+auvitek* at uhub?			# Auvitek AU0828 USB TV
+coram*	at pci? dev ? function ?	# Conexant CX23885 PCI-E TV
+cxdtv*	at pci? dev ? function ?	# Conexant CX2388[0-3] PCI TV
+emdtv*	at uhub?			# Empia EM28xx USB TV
+cir*	at emdtv?
+pseye*	at uhub?			# Sony PLAYSTATION(R) Eye webcam
+uvideo* at uhub?			# USB Video Class capture devices
+
 video*	at videobus?
 dtv*	at dtvbus?
 
@@ -1514,6 +1556,8 @@ virtio* at pci? dev ? function ?	# Virtio PCI device
 viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
 
 # Flash subsystem
 flash* at flashbus?
@@ -1659,9 +1703,11 @@ options 	VERIFIED_EXEC_FP_SHA512
 options 	VERIFIED_EXEC_FP_SHA1
 options 	VERIFIED_EXEC_FP_MD5
 
-options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
-options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
-#options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
+options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
+options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 
 #
 # NetBSD: GENERIC_ISDN,v 1.16 2010/01/03 03:53:34 dholland Exp
