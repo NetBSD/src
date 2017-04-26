@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78.4.1 2017/03/25 16:57:39 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.78.4.2 2017/04/26 14:52:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.4.1 2017/03/25 16:57:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.4.2 2017/04/26 14:52:50 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -222,7 +222,6 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	struct pcb *pcb;
 	extern char fusuintrfailure[], kcopy_fault[];
-	extern char IDTVEC(oosyscall)[];
 	extern char IDTVEC(osyscall)[];
 	extern char IDTVEC(syscall32)[];
 #ifndef XEN
@@ -647,8 +646,7 @@ faultcommon:
 
 	case T_TRCTRAP:
 		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
-		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
+		if (frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
 		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
 			frame->tf_rflags &= ~PSL_T;
 			return;
