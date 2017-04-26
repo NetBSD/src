@@ -1,5 +1,7 @@
+/*	$NetBSD: llimits.h,v 1.1.1.11 2017/04/26 12:30:30 mbalmer Exp $	*/
+
 /*
-** $Id: llimits.h,v 1.1.1.10 2017/04/26 11:38:37 mbalmer Exp $
+** Id: llimits.h,v 1.141 2015/11/19 19:16:22 roberto Exp 
 ** Limits, basic types, and some other 'installation-dependent' definitions
 ** See Copyright Notice in lua.h
 */

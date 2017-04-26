@@ -1,5 +1,7 @@
+/*	$NetBSD: lstrlib.c,v 1.1.1.11 2017/04/26 12:30:34 mbalmer Exp $	*/
+
 /*
-** $Id: lstrlib.c,v 1.1.1.10 2017/04/26 11:38:38 mbalmer Exp $
+** Id: lstrlib.c,v 1.254 2016/12/22 13:08:50 roberto Exp 
 ** Standard library for string operations and pattern-matching
 ** See Copyright Notice in lua.h
 */

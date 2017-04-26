@@ -1,5 +1,7 @@
+/*	$NetBSD: lstring.h,v 1.1.1.11 2017/04/26 12:30:31 mbalmer Exp $	*/
+
 /*
-** $Id: lstring.h,v 1.1.1.10 2017/04/26 11:38:37 mbalmer Exp $
+** Id: lstring.h,v 1.61 2015/11/03 15:36:01 roberto Exp 
 ** String table (keep all strings handled by Lua)
 ** See Copyright Notice in lua.h
 */

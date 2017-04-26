@@ -1,5 +1,7 @@
+/*	$NetBSD: lapi.h,v 1.1.1.10 2017/04/26 12:30:30 mbalmer Exp $	*/
+
 /*
-** $Id: lapi.h,v 1.1.1.9 2017/04/26 11:38:37 mbalmer Exp $
+** Id: lapi.h,v 2.9 2015/03/06 19:49:50 roberto Exp 
 ** Auxiliary functions from Lua API
 ** See Copyright Notice in lua.h
 */

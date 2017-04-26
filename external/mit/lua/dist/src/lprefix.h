@@ -1,5 +1,7 @@
+/*	$NetBSD: lprefix.h,v 1.1.1.6 2017/04/26 12:30:30 mbalmer Exp $	*/
+
 /*
-** $Id: lprefix.h,v 1.1.1.5 2017/04/26 11:38:37 mbalmer Exp $
+** Id: lprefix.h,v 1.2 2014/12/29 16:54:13 roberto Exp 
 ** Definitions for Lua code that must come before any other header file
 ** See Copyright Notice in lua.h
 */

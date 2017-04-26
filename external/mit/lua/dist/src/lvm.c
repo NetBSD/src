@@ -1,5 +1,7 @@
+/*	$NetBSD: lvm.c,v 1.1.1.11 2017/04/26 12:30:28 mbalmer Exp $	*/
+
 /*
-** $Id: lvm.c,v 1.1.1.10 2017/04/26 11:38:37 mbalmer Exp $
+** Id: lvm.c,v 2.268 2016/02/05 19:59:14 roberto Exp 
 ** Lua virtual machine
 ** See Copyright Notice in lua.h
 */

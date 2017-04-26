@@ -1,5 +1,7 @@
+/*	$NetBSD: lualib.h,v 1.1.1.8 2017/04/26 12:30:30 mbalmer Exp $	*/
+
 /*
-** $Id: lualib.h,v 1.1.1.7 2017/04/26 11:38:37 mbalmer Exp $
+** Id: lualib.h,v 1.45 2017/01/12 17:14:26 roberto Exp 
 ** Lua standard libraries
 ** See Copyright Notice in lua.h
 */

@@ -1,5 +1,7 @@
+/*	$NetBSD: lopcodes.c,v 1.1.1.9 2017/04/26 12:30:29 mbalmer Exp $	*/
+
 /*
-** $Id: lopcodes.c,v 1.1.1.8 2017/04/26 11:38:37 mbalmer Exp $
+** Id: lopcodes.c,v 1.55 2015/01/05 13:48:33 roberto Exp 
 ** Opcodes for Lua virtual machine
 ** See Copyright Notice in lua.h
 */
