@@ -1,7 +1,7 @@
-/*	$NetBSD: ltable.h,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: ltable.h,v 1.6 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
-** Id: ltable.h,v 2.21 2015/11/03 15:47:30 roberto Exp 
+** Id: ltable.h,v 2.23 2016/12/22 13:08:50 roberto Exp 
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */
@@ -17,7 +17,7 @@
 #define gnext(n)	((n)->i_key.nk.next)
 
 
-/* 'const' to avoid wrong writings that can mess up field 'next' */ 
+/* 'const' to avoid wrong writings that can mess up field 'next' */
 #define gkey(n)		cast(const TValue*, (&(n)->i_key.tvk))
 
 /*
@@ -27,6 +27,14 @@
 #define wgkey(n)		(&(n)->i_key.nk)
 
 #define invalidateTMcache(t)	((t)->flags = 0)
+
+
+/* true when 't' is using 'dummynode' as its hash part */
+#define isdummy(t)		((t)->lastfree == NULL)
+
+
+/* allocated size for hash nodes */
+#define allocsizenode(t)	(isdummy(t) ? 0 : sizenode(t))
 
 
 /* returns the key, given the value of a table entry */
@@ -53,7 +61,7 @@ LUAI_FUNC int luaH_getn (Table *t);
 
 #if defined(LUA_DEBUG)
 LUAI_FUNC Node *luaH_mainposition (const Table *t, const TValue *key);
-LUAI_FUNC int luaH_isdummy (Node *n);
+LUAI_FUNC int luaH_isdummy (const Table *t);
 #endif
 
 
