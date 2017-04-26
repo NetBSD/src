@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.116 2017/04/20 06:27:08 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.117 2017/04/26 07:17:38 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.116 2017/04/20 06:27:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.117 2017/04/26 07:17:38 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -285,10 +285,6 @@ SYSCTL_INT(_net_key, KEYCTL_PREFERED_OLDSA,	prefered_oldsa, CTLFLAG_RW,\
 	&key_prefered_oldsa,	0,	"");
 #endif /* SYSCTL_INT */
 
-#ifndef LIST_FOREACH
-#define LIST_FOREACH(elm, head, field)                                     \
-	for (elm = LIST_FIRST(head); elm; elm = LIST_NEXT(elm, field))
-#endif
 #define __LIST_CHAINED(elm) \
 	(!((elm)->chain.le_next == NULL && (elm)->chain.le_prev == NULL))
 #define LIST_INSERT_TAIL(head, elm, type, field) \
