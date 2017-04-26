@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.20 2012/01/09 15:25:13 drochner Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.21 2017/04/26 03:19:49 ozaki-r Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -761,7 +761,7 @@ str_upperspec(ulp, p1, p2)
 
 	ent = getprotobynumber((int)ulp);
 	if (ent)
-		printf("%s", ent->p_name);
+		printf("%u(%s)", ulp, ent->p_name);
 	else
 		printf("%u", ulp);
 
