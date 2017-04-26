@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.5 2017/01/14 20:47:41 christos Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.5 2017/01/14 20:47:41 christos Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $");
 
 #include <atf-c.h>
 
@@ -85,8 +85,16 @@ static struct gl_dir d[] = {
 	{ "a/b", b, __arraycount(b), 0 },
 };
 
+static const char *glob_range[] = {
+	"a/b/x", "a/b/y", "a/b/z",
+};
+
+static const char *glob_range_not[] = {
+	"a/b/w",
+};
+
 static const char *glob_star[] = {
-    "a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z",
+	"a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z",
 };
 
 static const char *glob_star_not[] = {
@@ -192,7 +200,9 @@ run(const char *p, int flags, const char **res, size_t len)
 {
 	glob_t gl;
 	size_t i;
+	int e;
 
+	DPRINTF(("pattern %s\n", p));
 	memset(&gl, 0, sizeof(gl));
 	gl.gl_opendir = gl_opendir;
 	gl.gl_readdir = gl_readdir;
@@ -200,18 +210,63 @@ run(const char *p, int flags, const char **res, size_t len)
 	gl.gl_stat = gl_stat;
 	gl.gl_lstat = gl_lstat;
 
-	RZ(glob(p, GLOB_ALTDIRFUNC | flags, NULL, &gl));
+	switch ((e = glob(p, GLOB_ALTDIRFUNC | flags, NULL, &gl))) {
+	case 0:
+		break;
+	case GLOB_NOSPACE:
+		fprintf(stderr, "Malloc call failed.\n");
+		goto bad;
+	case GLOB_ABORTED:
+		fprintf(stderr, "Unignored error.\n");
+		goto bad;
+	case GLOB_NOMATCH:
+		fprintf(stderr, "No match, and GLOB_NOCHECK was not set.\n");
+		goto bad;
+	case GLOB_NOSYS:
+		fprintf(stderr, "Implementation does not support function.\n");
+		goto bad;
+	default:
+		fprintf(stderr, "Unknown error %d.\n", e);
+		goto bad;
+	}
 
 	for (i = 0; i < gl.gl_pathc; i++)
 		DPRINTF(("%s\n", gl.gl_pathv[i]));
 
 	ATF_CHECK(len == gl.gl_pathc);
-	for (i = 0; i < gl.gl_pathc; i++)
+	for (i = 0; i < gl.gl_pathc && i < len; i++)
 		ATF_CHECK_STREQ(gl.gl_pathv[i], res[i]);
 
 	globfree(&gl);
+	return;
+bad:
+	ATF_REQUIRE_MSG(e == 0, "No match for `%s'", p);
 }
 
+
+ATF_TC(glob_range);
+ATF_TC_HEAD(glob_range, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test glob(3) range");
+}
+
+ATF_TC_BODY(glob_range, tc)
+{
+	run("a/b/[x-z]", 0, glob_range, __arraycount(glob_range));
+}
+
+ATF_TC(glob_range_not);
+ATF_TC_HEAD(glob_range_not, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test glob(3) ! range");
+}
+
+ATF_TC_BODY(glob_range_not, tc)
+{
+	run("a/b/[!x-z]", 0, glob_range_not, __arraycount(glob_range_not));
+}
 
 ATF_TC(glob_star);
 ATF_TC_HEAD(glob_star, tc)
@@ -262,6 +317,8 @@ ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, glob_star);
 	ATF_TP_ADD_TC(tp, glob_star_not);
+	ATF_TP_ADD_TC(tp, glob_range);
+	ATF_TP_ADD_TC(tp, glob_range_not);
 /*
  * Remove this test for now - the GLOB_NOCHECK return value has been
  * re-defined to return a modified pattern in revision 1.33 of glob.c
