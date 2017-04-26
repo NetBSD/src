@@ -1,4 +1,4 @@
-/*	$NetBSD: lparser.h,v 1.6 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: lparser.h,v 1.7 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: lparser.h,v 1.76 2015/12/30 18:16:13 roberto Exp 

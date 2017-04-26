@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.8 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: lua.h,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: lua.h,v 1.332 2016/12/22 15:51:20 roberto Exp 
@@ -38,7 +38,6 @@
 	"  Copyright (c) 2016-2016, Lourival Vieira Neto <lneto@NetBSD.org>." \
 	"  Copyright (C) 1994-2017 Lua.org, PUC-Rio"
 #endif /* _KERNEL */
->>>>>>> 1.1.1.11
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
 

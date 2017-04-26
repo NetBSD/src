@@ -1,4 +1,4 @@
-/*	$NetBSD: lopcodes.c,v 1.6 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: lopcodes.c,v 1.7 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: lopcodes.c,v 1.55 2015/01/05 13:48:33 roberto Exp 
