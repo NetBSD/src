@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.39 2017/04/21 05:18:07 snj Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.40 2017/04/26 14:58:53 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -1863,4 +1863,18 @@ external/bsd/bind/dist/version                  up to 1.24
 
 	Update BIND to 9.10.4-P8.
 	[spz, ticket #1404]
+
+sys/arch/amd64/amd64/locore.S			1.122 (via patch)
+sys/arch/amd64/amd64/machdep.c			1.254 (via patch)
+sys/arch/amd64/amd64/trap.c			1.95 (via patch)
+
+	Remove the call gate on amd64, it is useless and vulnerable.
+	[bsiegert, ticket #1397]
+
+sys/arch/amd64/amd64/trap.c			1.96
+
+	Restore the ability to run netbsd 1.0 32-bit executables
+	by checking for the relevant lcall instruction in the trap handler
+	and treating it as a syscall.
+	[chs, ticket #1410]
 
