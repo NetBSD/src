@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1245.2.5 2017/04/26 02:53:13 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1245.2.6 2017/04/26 05:52:48 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
