@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.31 2017/04/11 14:25:01 riastradh Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.32 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1032,9 +1032,9 @@ chfs_fsync(void *v)
 int
 chfs_remove(void *v)
 {
-	struct vnode *dvp = ((struct vop_remove_args *) v)->a_dvp;
-	struct vnode *vp = ((struct vop_remove_args *) v)->a_vp;
-	struct componentname *cnp = (((struct vop_remove_args *) v)->a_cnp);
+	struct vnode *dvp = ((struct vop_remove_v2_args *) v)->a_dvp;
+	struct vnode *vp = ((struct vop_remove_v2_args *) v)->a_vp;
+	struct componentname *cnp = (((struct vop_remove_v2_args *) v)->a_cnp);
 	dbg("remove\n");
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -1056,7 +1056,6 @@ chfs_remove(void *v)
 	    parent, cnp->cn_nameptr, cnp->cn_namelen);
 
 out:
-	vput(dvp);
 	vput(vp);
 
 	return error;
@@ -1195,9 +1194,9 @@ chfs_mkdir(void *v)
 int
 chfs_rmdir(void *v)
 {
-	struct vnode *dvp = ((struct vop_rmdir_args *) v)->a_dvp;
-	struct vnode *vp = ((struct vop_rmdir_args *) v)->a_vp;
-	struct componentname *cnp = ((struct vop_rmdir_args *) v)->a_cnp;
+	struct vnode *dvp = ((struct vop_rmdir_v2_args *) v)->a_dvp;
+	struct vnode *vp = ((struct vop_rmdir_v2_args *) v)->a_vp;
+	struct componentname *cnp = ((struct vop_rmdir_v2_args *) v)->a_cnp;
 	dbg("rmdir()\n");
 
 	KASSERT(VOP_ISLOCKED(dvp));
@@ -1226,7 +1225,6 @@ chfs_rmdir(void *v)
 	    parent, cnp->cn_nameptr, cnp->cn_namelen);
 
 out:
-	vput(dvp);
 	vput(vp);
 
 	return error;

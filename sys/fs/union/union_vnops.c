@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.66 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.67 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.66 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.67 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1153,7 +1153,7 @@ union_seek(void *v)
 int
 union_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1170,24 +1170,18 @@ union_remove(void *v)
 		struct vnode *dvp = dun->un_uppervp;
 		struct vnode *vp = un->un_uppervp;
 
-		/*
-		 * Account for VOP_REMOVE to vrele dvp and vp.
-		 * Note: VOP_REMOVE will unlock dvp and vp.
-		 */
-		vref(dvp);
+		/* Account for VOP_REMOVE to vrele vp.  */
 		vref(vp);
 		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_REMOVE(dvp, vp, cnp);
 		if (!error)
 			union_removed_upper(un);
-		vrele(ap->a_dvp);
 		vrele(ap->a_vp);
 	} else {
 		error = union_mkwhiteout(
 			MOUNTTOUNIONMOUNT(UNIONTOV(dun)->v_mount),
 			dun->un_uppervp, ap->a_cnp, un);
-		vput(ap->a_dvp);
 		vput(ap->a_vp);
 	}
 
@@ -1417,7 +1411,7 @@ union_mkdir(void *v)
 int
 union_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1432,7 +1426,6 @@ union_rmdir(void *v)
 
 	error = union_check_rmdir(un, cnp->cn_cred);
 	if (error) {
-		vput(ap->a_dvp);
 		vput(ap->a_vp);
 		return error;
 	}
@@ -1441,24 +1434,18 @@ union_rmdir(void *v)
 		struct vnode *dvp = dun->un_uppervp;
 		struct vnode *vp = un->un_uppervp;
 
-		/*
-		 * Account for VOP_RMDIR to vrele dvp and vp.
-		 * Note: VOP_RMDIR will unlock dvp and vp.
-		 */
-		vref(dvp);
+		/* Account for VOP_RMDIR to vrele vp.  */
 		vref(vp);
 		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_RMDIR(dvp, vp, ap->a_cnp);
 		if (!error)
 			union_removed_upper(un);
-		vrele(ap->a_dvp);
 		vrele(ap->a_vp);
 	} else {
 		error = union_mkwhiteout(
 			MOUNTTOUNIONMOUNT(UNIONTOV(dun)->v_mount),
 			dun->un_uppervp, ap->a_cnp, un);
-		vput(ap->a_dvp);
 		vput(ap->a_vp);
 	}
 

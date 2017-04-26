@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.24 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.25 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.24 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.25 2017/04/26 03:02:49 riastradh Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -680,7 +680,7 @@ v7fs_fsync(void *v)
 int
 v7fs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 				  struct vnodeop_desc *a_desc;
 				  struct vnode * a_dvp;
 				  struct vnode * a_vp;
@@ -717,7 +717,6 @@ out:
 		vrele(vp); /* v_usecount-- of unlocked vp */
 	else
 		vput(vp); /* unlock vp and then v_usecount-- */
-	vput(dvp);
 
 	return error;
 }
@@ -865,7 +864,7 @@ v7fs_mkdir(void *v)
 int
 v7fs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 				 struct vnode		*a_dvp;
 				 struct vnode		*a_vp;
 				 struct componentname	*a_cnp;
@@ -895,7 +894,6 @@ v7fs_rmdir(void *v)
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 out:
 	vput(vp);
-	vput(dvp);
 
 	return error;
 }
