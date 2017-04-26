@@ -1,4 +1,4 @@
-/*	$NetBSD: vnduncompress.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $	*/
+/*	$NetBSD: vnduncompress.c,v 1.11.12.1 2017/04/26 02:53:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: vnduncompress.c,v 1.11 2014/01/25 15:31:06 riastradh Exp $");
+__RCSID("$NetBSD: vnduncompress.c,v 1.11.12.1 2017/04/26 02:53:35 pgoyette Exp $");
 
 #include <sys/endian.h>
 
@@ -70,7 +70,6 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 		err(1, "open(%s)", cloop2_pathname);
 
 	const int image_fd = open(image_pathname,
-	    /* XXX O_EXCL, not O_TRUNC */
 	    (O_WRONLY | O_CREAT | O_TRUNC), 0777);
 	if (image_fd == -1)
 		err(1, "open(%s)", image_pathname);
@@ -135,6 +134,7 @@ vnduncompress(int argc, char **argv, const struct options *O __unused)
 	}
 
 	/* Initialize the offset table and start reading it in.  */
+	__CTASSERT(CLOOP2_OFFSET_TABLE_OFFSET <= OFFTAB_MAX_FDPOS);
 	offtab_init(&offtab, n_offsets, window_size, cloop2_fd,
 	    CLOOP2_OFFSET_TABLE_OFFSET);
 	offtab_reset_read(&offtab, &err1, &errx1);

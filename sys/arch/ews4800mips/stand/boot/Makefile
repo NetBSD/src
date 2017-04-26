@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.8.1 2016/11/04 14:49:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.19.8.2 2017/04/26 02:53:02 pgoyette Exp $
 
 WARNS		?= 1
 NOMAN		=
@@ -50,13 +50,7 @@ SRCS		+= ga.c
 # ../../ews4800mips
 SRCS		+= pdinfo.c vtoc.c
 
-.PHONY: vers.c
-vers.c: version
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version ${MACHINE}
-
-SRCS+=	vers.c
-CLEANFILES+= vers.c
+.include "${S}/conf/newvers_stand.mk"
 
 TEXTADDR	= 0xa0a00000
 LINKFLAGS	= -T ${S}/arch/mips/conf/stand.ldscript -Ttext ${TEXTADDR} \

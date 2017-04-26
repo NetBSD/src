@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.171.2.5 2017/03/20 06:57:50 pgoyette Exp $	*/
+/*	$NetBSD: route.c,v 1.171.2.6 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171.2.5 2017/03/20 06:57:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171.2.6 2017/04/26 02:53:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1026,11 +1026,15 @@ ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
 
 		/* XXX we cannot call rtalloc1 if holding the rt lock */
 		if (RT_LOCKED())
-			rt = rtalloc1_locked(dst, 0, true);
+			rt = rtalloc1_locked(gateway, 0, true);
 		else
-			rt = rtalloc1(dst, 0);
+			rt = rtalloc1(gateway, 0);
 		if (rt == NULL)
 			return NULL;
+		if (rt->rt_flags & RTF_GATEWAY) {
+			rt_unref(rt);
+			return NULL;
+		}
 		/*
 		 * Just in case. May not need to do this workaround.
 		 * Revisit when working on rtentry MP-ification.
@@ -1186,7 +1190,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	int error = 0, rc;
 	struct rtentry *rt;
 	rtbl_t *rtbl;
-	struct ifaddr *ifa = NULL, *ifa2 = NULL;
+	struct ifaddr *ifa = NULL;
 	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -1292,6 +1296,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 
 		ss = pserialize_read_enter();
 		if (info->rti_info[RTAX_IFP] != NULL) {
+			struct ifaddr *ifa2;
 			ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP]);
 			if (ifa2 != NULL)
 				rt->rt_ifp = ifa2->ifa_ifp;

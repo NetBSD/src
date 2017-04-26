@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.37.2.1 2017/03/20 06:57:07 pgoyette Exp $
+.\"     $NetBSD: namei.9,v 1.37.2.2 2017/04/26 02:52:58 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006, 2017 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -850,7 +850,7 @@ The control flow within the
 portions of
 .Pa vfs_lookup.c
 is as follows.
-.Bl -tag
+.Bl -tag -width namei_tryemulrootXX
 .It Fn namei
 does a complete path lookup by calling
 .Fn namei_init ,

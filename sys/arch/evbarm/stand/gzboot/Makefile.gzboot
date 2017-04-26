@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.34.2.1 2017/03/20 06:57:13 pgoyette Exp $
+#	$NetBSD: Makefile.gzboot,v 1.34.2.2 2017/04/26 02:53:02 pgoyette Exp $
 
 NOMAN=  # defined
 
@@ -14,8 +14,6 @@ PROG=	${BASE}.bin
 WARNS=	1
 
 NEWVERSWHAT=	"Gzip Boot"
-VERSIONFILE=	${EVBARM_STAND}/gzboot/version
-
 BINMODE=644
 
 DBG=	-Os
@@ -59,9 +57,8 @@ COPTS+=	-fno-unwind-tables
 CWARNFLAGS+= -Werror
 CWARNFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
-CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+CLEANFILES+= ${STARTFILE} ${BASE}.list
 CLEANFILES+= ${PROGSYM}
-SRCS+= vers.c
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -87,10 +84,7 @@ DIRECT_LDFLAGS= -M -T ${LDSCRIPT} --fix-v4bx
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 
-.PHONY: vers.c
-vers.c: ${VERSIONFILE}
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.ALLSRC} '${PLATFORM}' ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${PROGSYM}
 	${OBJCOPY} -O binary ${PROGSYM} ${.TARGET}

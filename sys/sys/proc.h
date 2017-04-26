@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.331.2.2 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.331.2.3 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -534,12 +534,12 @@ void	syscall_intern(struct proc *);
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
-void	proc_stop(struct proc *, int, int);
 int	proc_uidmatch(kauth_cred_t, kauth_cred_t);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
 void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
+int	proc_getauxv(struct proc *, void **, size_t *);
 
 int	proc_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	proc_specific_key_delete(specificdata_key_t);

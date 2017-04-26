@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.21.2.1 2017/01/07 08:56:05 pgoyette Exp $
+.\"     $NetBSD: parsedate.3,v 1.21.2.2 2017/04/26 02:52:57 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 7, 2015
+.Dd March 22, 2017
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -393,9 +393,21 @@ otherwise
 years less than 100 mean 1900 +
 .Fa year .
 .It 3
+The
+.Fn parsedate
+function accepts
+.Dq "12 am"
+where
+.Dq "12 midnight"
+is correct, and similarly
+.Dq "12 pm"
+for
+.Dq "12 noon" .
+The correct forms are also accepted.
+.It 4
 There are various weird cases that are hard to explain,
 but are nevertheless considered correct.
-.It 4
+.It 5
 It is very hard to specify years BC,
 and in any case,
 conversions of times before the
@@ -405,4 +417,16 @@ but late 16th century is a rough guide)
 are suspicious at best,
 and depending upon context,
 often just plain wrong.
+.It 6
+Despite what is stated above,
+.Dq next
+is actually 2.
+The input
+.Dq "next January" ,
+instead of producing a timestamp for January of the
+following year, produces one for January 2nd, of the
+current year.
+Use caution with
+.Dq next
+it rarely does what humans expect.
 .El

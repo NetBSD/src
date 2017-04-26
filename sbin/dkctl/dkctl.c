@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.23.2.1 2017/03/20 06:57:01 pgoyette Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.23.2.2 2017/04/26 02:52:57 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.23.2.1 2017/03/20 06:57:01 pgoyette Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.23.2.2 2017/04/26 02:52:57 pgoyette Exp $");
 #endif
 
 #include <sys/param.h>
@@ -307,6 +307,16 @@ disk_getcache(int argc, char *argv[])
 
 	printf("%s: cache parameters are %ssavable\n", dvname,
 	    (bits & DKCACHE_SAVE) ? "" : "not ");
+
+#ifdef DKCACHE_FUA
+	printf("%s: cache Force Unit Access (FUA) %ssupported\n", dvname,
+	    (bits & DKCACHE_FUA) ? "" : "not ");
+#endif /* DKCACHE_FUA */
+
+#ifdef DKCACHE_DPO
+	printf("%s: cache Disable Page Out (DPO) %ssupported\n", dvname,
+	    (bits & DKCACHE_DPO) ? "" : "not ");
+#endif /* DKCACHE_DPO */
 }
 
 static void

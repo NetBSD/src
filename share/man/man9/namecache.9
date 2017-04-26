@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.19.8.1 2017/03/20 06:57:07 pgoyette Exp $
+.\"     $NetBSD: namecache.9,v 1.19.8.2 2017/04/26 02:52:58 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,7 +105,7 @@ case, and are almost never of interest.
 Each
 .Em namecache
 entry can appear on two hash chains in addition to
-.Va nshashtbl :
+.Va nchashtbl :
 .Em ncvhashtbl
 (the name cache directory hash chain), and
 .Em nclruhead

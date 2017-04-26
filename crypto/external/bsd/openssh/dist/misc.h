@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.9.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: misc.h,v 1.9.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: misc.h,v 1.61 2016/11/30 00:28:31 dtucker Exp $ */
 
 /*

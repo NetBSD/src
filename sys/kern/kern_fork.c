@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.195.2.2 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.195.2.3 2017/04/26 02:53:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.195.2.2 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.195.2.3 2017/04/26 02:53:26 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -434,7 +434,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
-	    l1->l_class);
+	    l1->l_class, &l1->l_sigmask, &l1->l_sigstk);
 
 	/*
 	 * Inherit l_private from the parent.
@@ -499,6 +499,17 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
+
+	/* if we are being traced, give the owner a chance to interfere */
+	if (p2->p_slflag & PSL_TRACED) {
+		ksiginfo_t ksi;
+
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_CHLD;
+		ksi.ksi_lid = l2->l_lid;
+		kpsignal(p2, &ksi, NULL);
+	}
 
 	/*
 	 * Update stats now that we know the fork was successful.

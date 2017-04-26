@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.30 2015/04/20 06:50:13 wiz Exp $
+.\"     $NetBSD: buffercache.9,v 1.30.2.1 2017/04/26 02:52:58 pgoyette Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -101,7 +101,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd March 28, 2015
+.Dd April 11, 2017
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -253,7 +253,7 @@ Unlike
 .Fn bdwrite
 won't start any I/O.
 It only marks the buffer as dirty
-.Pq Dv B_DELWRI
+.Pq Dv BO_DELWRI
 and unbusy it.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn getblk "vp" "blkno" "size" "slpflag" "slptimeo"

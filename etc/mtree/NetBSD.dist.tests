@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.127.2.5 2017/03/20 06:52:12 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.127.2.6 2017/04/26 02:52:18 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -45,10 +45,6 @@
 ./usr/libdata/debug/usr/tests/include/sys
 ./usr/libdata/debug/usr/tests/ipf
 ./usr/libdata/debug/usr/tests/kernel
-./usr/libdata/debug/usr/tests/kernel/arch
-./usr/libdata/debug/usr/tests/kernel/arch/amd64
-./usr/libdata/debug/usr/tests/kernel/arch/i386
-./usr/libdata/debug/usr/tests/kernel/arch/x86
 ./usr/libdata/debug/usr/tests/kernel/kqueue
 ./usr/libdata/debug/usr/tests/kernel/kqueue/read
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
@@ -228,10 +224,6 @@
 ./usr/tests/ipf/input
 ./usr/tests/ipf/regress
 ./usr/tests/kernel
-./usr/tests/kernel/arch
-./usr/tests/kernel/arch/amd64
-./usr/tests/kernel/arch/i386
-./usr/tests/kernel/arch/x86
 ./usr/tests/kernel/kqueue
 ./usr/tests/kernel/kqueue/read
 ./usr/tests/kernel/kqueue/write
@@ -344,6 +336,7 @@
 ./usr/tests/net/if_tun
 ./usr/tests/net/if_vlan
 ./usr/tests/net/in_cksum
+./usr/tests/net/ipsec
 ./usr/tests/net/mcast
 ./usr/tests/net/mpls
 ./usr/tests/net/net

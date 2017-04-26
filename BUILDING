@@ -9,9 +9,9 @@ REQUIREMENTS
      same NetBSD architecture) or cross compiling (on another architecture or
      OS).
 
-     This source tree contains a special subtree, ``tools'', which uses the
-     host system to create a build toolchain for the target architecture.  The
-     host system must have at least C and C++ compilers in order to create the
+     This source tree contains a special subtree, "tools", which uses the host
+     system to create a build toolchain for the target architecture.  The host
+     system must have at least C and C++ compilers in order to create the
      toolchain (make is not required); all other tools are created as part of
      the NetBSD build process.  (See the environment variables section below
      if you need to override or manually select your compilers.)
@@ -45,9 +45,9 @@ FILES
      crypto/dist/, dist/, gnu/dist/
                     Sources imported verbatim from third parties, without
                     mangling the existing build structure.  Other source trees
-                    in bin through usr.sbin use the NetBSD make(1)
-                    ``reachover'' Makefile semantics when building these
-                    programs for a native host.
+                    in bin through usr.sbin use the NetBSD make(1) "reachover"
+                    Makefile semantics when building these programs for a
+                    native host.
 
      external, sys/external
                     Sources and build infrastructure for components imported
@@ -68,7 +68,7 @@ FILES
 
      sys/           NetBSD kernel sources.
 
-     tools/         ``Reachover'' build structure for the host build tools.
+     tools/         "Reachover" build structure for the host build tools.
                     This has a special method of determining out-of-date
                     status.
 
@@ -78,11 +78,11 @@ FILES
                     during the build.
 
      external/mit/xorg/
-                    ``Reachover'' build structure for modular Xorg; the source
+                    "Reachover" build structure for modular Xorg; the source
                     is in X11SRCDIR.
 
-     extsrc/        ``Reachover'' build structure for externally added
-                    programs and libraries; the source is in EXTSRCSRCDIR.
+     extsrc/        "Reachover" build structure for externally added programs
+                    and libraries; the source is in EXTSRCSRCDIR.
 
    Build tree layout
      The NetBSD build tree is described in hier(7), and the release layout is
@@ -96,14 +96,14 @@ CONFIGURATION
                        suitable for use during the build.  The NetBSD build
                        system requires a modern Bourne-like shell with POSIX-
                        compliant features, and also requires support for the
-                       ``local'' keyword to declare local variables in shell
+                       "local" keyword to declare local variables in shell
                        functions (which is a widely-implemented but non-
                        standardised feature).
 
                        Depending on the host system, a suitable shell may be
                        /bin/sh, /usr/xpg4/bin/sh, /bin/ksh (provided it is a
-                       variant of ksh that supports the ``local'' keyword,
-                       such as ksh88, but not ksh93), or /usr/local/bin/bash.
+                       variant of ksh that supports the "local" keyword, such
+                       as ksh88, but not ksh93), or /usr/local/bin/bash.
 
                        Most parts of the build require HOST_SH to be an
                        absolute path; however, build.sh allows it to be a
@@ -114,9 +114,9 @@ CONFIGURATION
 
      HOST_CXX          Path name to C++ compiler used to create the toolchain.
 
-     MACHINE           Machine type, e.g., ``macppc''.
+     MACHINE           Machine type, e.g., "macppc".
 
-     MACHINE_ARCH      Machine architecture, e.g., ``powerpc''.
+     MACHINE_ARCH      Machine architecture, e.g., "powerpc".
 
      MAKE              Path name to invoke make(1) as.
 
@@ -162,7 +162,7 @@ CONFIGURATION
                  configuration file in order to set additional build
                  parameters, such as compiler flags.  It will also be used as
                  part of the kernel version string, which can be printed by
-                 ``uname -v''.
+                 "uname -v".
 
                  Default: Unset.
 
@@ -171,9 +171,9 @@ CONFIGURATION
                  will be stored in the buildinfo variable in any kernels that
                  are built.  When such kernels are booted, the sysctl(7)
                  kern.buildinfo variable will report this value.  The string
-                 may contain backslash escape sequences, such as ``\\''
-                 (representing a backslash character) and ``\n'' (representing
-                 a newline).
+                 may contain backslash escape sequences, such as "\\"
+                 (representing a backslash character) and "\n" (representing a
+                 newline).
 
                  Default: Unset.
 
@@ -192,11 +192,10 @@ CONFIGURATION
                  /usr/lib, and so forth.  This pathname must be an absolute
                  path, and should not end with a slash (/) character.  (For
                  installation into the system's root directory, set DESTDIR to
-                 an empty string, not to ``/'').  The directory must reside on
-                 a file system which supports long file names and hard links.
+                 an empty string, not to "/").  The directory must reside on a
+                 file system which supports long file names and hard links.
 
-                 Default: Empty string if USETOOLS is ``yes''; unset
-                 otherwise.
+                 Default: Empty string if USETOOLS is "yes"; unset otherwise.
 
                  Note: build.sh will provide a default of destdir.MACHINE (in
                  the top-level .OBJDIR) unless run in `expert' mode.
@@ -211,7 +210,7 @@ CONFIGURATION
      MAKECONF    The name of the make(1) configuration file.  Only settable in
                  the process environment.
 
-                 Default: ``/etc/mk.conf''
+                 Default: "/etc/mk.conf"
 
      MAKEVERBOSE
                  Level of verbosity of status messages.  Supported values:
@@ -229,149 +228,148 @@ CONFIGURATION
 
                  3    In addition to the above, all commands performed by
                       make(1) are displayed, even if they would ordinarily
-                      have been hidden through use of the ``@'' prefix in the
+                      have been hidden through use of the "@" prefix in the
                       relevant makefile.
 
                  4    In addition to the above, commands executed by make(1)
-                      are traced through use of the sh(1) ``-x'' flag.
+                      are traced through use of the sh(1) "-x" flag.
 
                  Default: 2
 
-     MKCATPAGES  Can be set to ``yes'' or ``no''.  Indicates whether
-                 preformatted plaintext manual pages will be created during a
-                 build.
+     MKCATPAGES  Can be set to "yes" or "no".  Indicates whether preformatted
+                 plaintext manual pages will be created during a build.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKCROSSGDB  Can be set to ``yes'' or ``no''.  Create a cross-gdb as a
-                 host tool.
+     MKCROSSGDB  Can be set to "yes" or "no".  Create a cross-gdb as a host
+                 tool.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKCRYPTO    Can be set to ``yes'' or ``no''.  Indicates whether
-                 cryptographic code will be included in a build; provided for
-                 the benefit of countries that do not allow strong
-                 cryptography.  Will not affect use of the standard low-
-                 security password encryption system, crypt(3).
+     MKCRYPTO    Can be set to "yes" or "no".  Indicates whether cryptographic
+                 code will be included in a build; provided for the benefit of
+                 countries that do not allow strong cryptography.  Will not
+                 affect use of the standard low-security password encryption
+                 system, crypt(3).
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKDEBUG     Can be set to ``yes'' or ``no''.  Indicates whether debug
+     MKDEBUG     Can be set to "yes" or "no".  Indicates whether debug
                  information should be generated for all userland binaries
                  compiled.  The result is collected as an additional debug.tgz
                  and xdebug.tgz set and installed in /usr/libdata/debug.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKDEBUGLIB  Can be set to ``yes'' or ``no''.  Indicates whether debug
+     MKDEBUGLIB  Can be set to "yes" or "no".  Indicates whether debug
                  information (see MKDEBUG) should also be generated for all
                  libraries build.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
+     MKDOC       Can be set to "yes" or "no".  Indicates whether system
                  documentation destined for DESTDIR/usr/share/doc will be
                  installed during a build.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKEXTSRC    Can be set to ``yes'' or ``no''.  Indicates whether extsrc is
+     MKEXTSRC    Can be set to "yes" or "no".  Indicates whether extsrc is
                  built from EXTSRCSRCDIR.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKHTML      Can be set to ``yes'' or ``no''.  Indicates whether
-                 preformatted HTML manual pages will be built and installed
+     MKHTML      Can be set to "yes" or "no".  Indicates whether preformatted
+                 HTML manual pages will be built and installed
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKHOSTOBJ   Can be set to ``yes'' or ``no''.  If set to ``yes'', then for
+     MKHOSTOBJ   Can be set to "yes" or "no".  If set to "yes", then for
                  programs intended to be run on the compile host, the name,
                  release, and architecture of the host operating system will
                  be suffixed to the name of the object directory created by
-                 ``make obj''.  (This allows multiple host systems to compile
-                 NetBSD for a single target.)  If set to ``no'', then programs
+                 "make obj".  (This allows multiple host systems to compile
+                 NetBSD for a single target.)  If set to "no", then programs
                  built to be run on the compile host will use the same object
                  directory names as programs built to be run on the target.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKINFO      Can be set to ``yes'' or ``no''.  Indicates whether GNU Info
+     MKINFO      Can be set to "yes" or "no".  Indicates whether GNU Info
                  files, used for the documentation for most of the compilation
                  tools, will be created and installed during a build.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKKDEBUG    Can be set to ``yes'' or ``no''.  Force generation of full-
-                 debug symbol versions of all kernels compiled.  Alongside of
-                 the netbsd kernel file, an unstripped version netbsd.gdb is
+     MKKDEBUG    Can be set to "yes" or "no".  Force generation of full-debug
+                 symbol versions of all kernels compiled.  Alongside of the
+                 netbsd kernel file, an unstripped version netbsd.gdb is
                  created.  This is useful if a cross-gdb is built as well (see
                  MKCROSSGDB).
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKKMOD      Can be set to ``yes'' or ``no''.  Indicates whether kernel
+     MKKMOD      Can be set to "yes" or "no".  Indicates whether kernel
                  modules are built and installed.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKLINT      Can be set to ``yes'' or ``no''.  Indicates whether lint(1)
-                 will be run against portions of the NetBSD source code during
-                 the build, and whether lint libraries will be installed into
+     MKLINT      Can be set to "yes" or "no".  Indicates whether lint(1) will
+                 be run against portions of the NetBSD source code during the
+                 build, and whether lint libraries will be installed into
                  DESTDIR/usr/libdata/lint.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKMAN       Can be set to ``yes'' or ``no''.  Indicates whether manual
-                 pages will be installed during a build.
+     MKMAN       Can be set to "yes" or "no".  Indicates whether manual pages
+                 will be installed during a build.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKNLS       Can be set to ``yes'' or ``no''.  Indicates whether Native
+     MKNLS       Can be set to "yes" or "no".  Indicates whether Native
                  Language System locale zone files will be compiled and
                  installed during a build.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKOBJ       Can be set to ``yes'' or ``no''.  Indicates whether object
-                 directories will be created when running ``make obj''.  If
-                 set to ``no'', then all built files will be located inside
-                 the regular source tree.
+     MKOBJ       Can be set to "yes" or "no".  Indicates whether object
+                 directories will be created when running "make obj".  If set
+                 to "no", then all built files will be located inside the
+                 regular source tree.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-                 Note that setting MKOBJ to ``no'' is not recommended and may
+                 Note that setting MKOBJ to "no" is not recommended and may
                  cause problems when updating the tree with cvs(1).
 
-     MKPIC       Can be set to ``yes'' or ``no''.  Indicates whether shared
+     MKPIC       Can be set to "yes" or "no".  Indicates whether shared
                  objects and libraries will be created and installed during a
-                 build.  If set to ``no'', the entire built system will be
+                 build.  If set to "no", the entire built system will be
                  statically linked.
 
                  Default: Platform dependent.  As of this writing, all
-                 platforms except m68000 default to ``yes''.
+                 platforms except sh3 default to "yes".
 
      MKPICINSTALL
-                 Can be set to ``yes'' or ``no''.  Indicates whether the ar(1)
+                 Can be set to "yes" or "no".  Indicates whether the ar(1)
                  format libraries (lib*_pic.a), used to generate shared
                  libraries, are installed during a build.
 
-                 Default: ``yes''
+                 Default: "yes"
 
-     MKPROFILE   Can be set to ``yes'' or ``no''.  Indicates whether profiled
+     MKPROFILE   Can be set to "yes" or "no".  Indicates whether profiled
                  libraries (lib*_p.a) will be built and installed during a
                  build.
 
-                 Default: ``yes''; however, some platforms turn off MKPROFILE
-                 by default at times due to toolchain problems with profiled
+                 Default: "yes"; however, some platforms turn off MKPROFILE by
+                 default at times due to toolchain problems with profiled
                  code.
 
-     MKREPRO     Can be set to ``yes'' or ``no''.  Create reproducible builds.
+     MKREPRO     Can be set to "yes" or "no".  Create reproducible builds.
                  This enables different switches to make two builds from the
                  same source tree result in the same build results.
 
-                 Default: ``no'' This may be set to ``yes'' by giving build.sh
-                 the -P option.
+                 Default: "no" This may be set to "yes" by giving build.sh the
+                 -P option.
 
      MKREPRO_TIMESTAMP
                  Unix timestamp.  When MKREPRO is set, the timestamp of all
@@ -381,22 +379,34 @@ CONFIGURATION
                  source tree timestamp using cvslatest(1) by giving build.sh
                  the -P option.
 
-     MKSHARE     Can be set to ``yes'' or ``no''.  Indicates whether files
+     MKSHARE     Can be set to "yes" or "no".  Indicates whether files
                  destined to reside in DESTDIR/usr/share will be built and
-                 installed during a build.  If set to ``no'', then all of
+                 installed during a build.  If set to "no", then all of
                  MKCATPAGES, MKDOC, MKINFO, MKMAN, and MKNLS will be set to
-                 ``no'' unconditionally.
+                 "no" unconditionally.
 
-                 Default: ``yes''
+                 Default: "yes"
 
      MKSTRIPIDENT
-                 Can be set to ``yes'' or ``no''.  Indicates whether RCS IDs,
-                 for use with ident(1), should be stripped from program
-                 binaries and shared libraries.
+                 Can be set to "yes" or "no".  Indicates whether RCS IDs, for
+                 use with ident(1), should be stripped from program binaries
+                 and shared libraries.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an
+     MKSTRIPSYM  Can be set to "yes" or "no".  Indicates whether all local
+                 symbols should be stripped from shared libraries.  If "yes",
+                 strip all local symbols from shared libraries; the affect is
+                 equivalent to the -x option of ld(1).  If "no", strip only
+                 temporary local symbols; the affect is equivalent to the -X
+                 option of ld(1).  Keeping non-temporary local symbols such as
+                 static function names is useful on using DTrace for userland
+                 libraries and getting a backtrace from a rump kernel loading
+                 shared libraries.
+
+                 Default: "yes"
+
+     MKUNPRIVED  Can be set to "yes" or "no".  Indicates whether an
                  unprivileged install will occur.  The user, group,
                  permissions, and file flags, will not be set on the installed
                  items; instead the information will be appended to a file
@@ -404,20 +414,20 @@ CONFIGURATION
                  during the generation of the distribution tar files to ensure
                  that the appropriate file ownership is stored.
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKUPDATE    Can be set to ``yes'' or ``no''.  Indicates whether all
-                 install operations intended to write to DESTDIR will compare
-                 file timestamps before installing, and skip the install phase
-                 if the destination files are up-to-date.  This also has
+     MKUPDATE    Can be set to "yes" or "no".  Indicates whether all install
+                 operations intended to write to DESTDIR will compare file
+                 timestamps before installing, and skip the install phase if
+                 the destination files are up-to-date.  This also has
                  implications on full builds (see next subsection).
 
-                 Default: ``no''
+                 Default: "no"
 
-     MKX11       Can be set to ``yes'' or ``no''.  Indicates whether X11 is
-                 built from X11SRCDIR.
+     MKX11       Can be set to "yes" or "no".  Indicates whether X11 is built
+                 from X11SRCDIR.
 
-                 Default: ``no''
+                 Default: "no"
 
      TOOLDIR     Directory to hold the host tools, once built.  If specified,
                  must be an absolute path.  This directory should be unique to
@@ -430,8 +440,8 @@ CONFIGURATION
                  Default: Unset.
 
      USETOOLS    Indicates whether the tools specified by TOOLDIR should be
-                 used as part of a build in progress.  Must be set to ``yes''
-                 if cross-compiling.
+                 used as part of a build in progress.  Must be set to "yes" if
+                 cross-compiling.
 
                  yes    Use the tools from TOOLDIR.
 
@@ -447,9 +457,9 @@ CONFIGURATION
                         may cause build or runtime problems when building the
                         whole NetBSD source tree.
 
-                 Default: ``yes'', unless TOOLCHAIN_MISSING is set to ``yes''.
+                 Default: "yes", unless TOOLCHAIN_MISSING is set to "yes".
 
-                 USETOOLS is also set to ``no'' when using <bsd.*.mk> outside
+                 USETOOLS is also set to "no" when using <bsd.*.mk> outside
                  the NetBSD source tree.
 
      X11SRCDIR   Directory containing the modular Xorg source.  If specified,
@@ -460,29 +470,29 @@ CONFIGURATION
                  /usr/xsrc.
 
    "make" variables for full builds
-     These variables only affect the top level ``Makefile'' and do not affect
+     These variables only affect the top level "Makefile" and do not affect
      manually building subtrees of the NetBSD source code.
 
-     INSTALLWORLDDIR  Location for the ``make installworld'' target to install
+     INSTALLWORLDDIR  Location for the "make installworld" target to install
                       to.  If specified, must be an absolute path.
 
-                      Default: ``/''
+                      Default: "/"
 
-     MKOBJDIRS        Can be set to ``yes'' or ``no''.  Indicates whether
-                      object directories will be created automatically (via a
-                      ``make obj'' pass) at the start of a build.
+     MKOBJDIRS        Can be set to "yes" or "no".  Indicates whether object
+                      directories will be created automatically (via a "make
+                      obj" pass) at the start of a build.
 
-                      Default: ``no''
+                      Default: "no"
 
-                      If using build.sh, the default is ``yes''.  This may be
-                      set back to ``no'' by giving build.sh the -o option.
+                      If using build.sh, the default is "yes".  This may be
+                      set back to "no" by giving build.sh the -o option.
 
-     MKUPDATE         Can be set to ``yes'' or ``no''.  If set, then in
-                      addition to the effects described for MKUPDATE=yes
-                      above, this implies the effects of NOCLEANDIR (i.e.,
-                      ``make cleandir'' is avoided).
+     MKUPDATE         Can be set to "yes" or "no".  If set, then in addition
+                      to the effects described for MKUPDATE=yes above, this
+                      implies the effects of NOCLEANDIR (i.e., "make cleandir"
+                      is avoided).
 
-                      Default: ``no''
+                      Default: "no"
 
                       If using build.sh, this may be set by giving the -u
                       option.
@@ -492,7 +502,7 @@ CONFIGURATION
 
                       Default: Unset.
 
-     NOCLEANDIR       If set, avoids the ``make cleandir'' phase of a full
+     NOCLEANDIR       If set, avoids the "make cleandir" phase of a full
                       build.  This has the effect of allowing only changed
                       files in a source tree to be recompiled.  This can speed
                       up builds when updating only a few files in the tree.
@@ -501,7 +511,7 @@ CONFIGURATION
 
                       See also MKUPDATE.
 
-     NODISTRIBDIRS    If set, avoids the ``make distrib-dirs'' phase of a full
+     NODISTRIBDIRS    If set, avoids the "make distrib-dirs" phase of a full
                       build.  This skips running mtree(8) on DESTDIR, useful
                       on systems where building as an unprivileged user, or
                       where it is known that the system-wide mtree files have
@@ -509,7 +519,7 @@ CONFIGURATION
 
                       Default: Unset.
 
-     NOINCLUDES       If set, avoids the ``make includes'' phase of a full
+     NOINCLUDES       If set, avoids the "make includes" phase of a full
                       build.  This has the effect of preventing make(1) from
                       thinking that some programs are out-of-date simply
                       because the system include files have changed.  However,
@@ -520,7 +530,7 @@ CONFIGURATION
                       Default: Unset.
 
      RELEASEDIR       If set, specifies the directory to which a release(7)
-                      layout will be written at the end of a ``make release''.
+                      layout will be written at the end of a "make release".
                       If specified, must be an absolute path.
 
                       Default: Unset.
@@ -540,7 +550,7 @@ BUILDING
      -m dir     Specify the default directory for searching for system
                 Makefile segments, mainly the <bsd.*.mk> files.  When building
                 any full NetBSD source tree, this should be set to the
-                ``share/mk'' directory in the source tree.  This is set
+                "share/mk" directory in the source tree.  This is set
                 automatically when building from the top level, or when using
                 build.sh.
 
@@ -558,15 +568,15 @@ BUILDING
    "make" targets
      These default targets may be built by running make(1) in any subtree of
      the NetBSD source code.  It is recommended that none of these be used
-     from the top level Makefile; as a specific exception, ``make obj'' and
-     ``make cleandir'' are useful in that context.
+     from the top level Makefile; as a specific exception, "make obj" and
+     "make cleandir" are useful in that context.
 
      all        Build programs, libraries, and preformatted documentation.
 
      clean      Remove program and library object code files.
 
      cleandir   Same as clean, but also remove preformatted documentation,
-                dependency files generated by ``make depend'', and any other
+                dependency files generated by "make depend", and any other
                 files known to be created at build time.
 
      depend     Create dependency files (.depend) containing more detailed
@@ -574,7 +584,7 @@ BUILDING
                 files.  Allows programs to be recompiled automatically when a
                 dependency changes.
 
-     dependall  Does a ``make depend'' immediately followed by a ``make all''.
+     dependall  Does a "make depend" immediately followed by a "make all".
                 This improves cache locality of the build since both passes
                 read the source files in their entirety.
 
@@ -605,12 +615,12 @@ BUILDING
                    orders portions of the source tree such that prerequisites
                    will be built in the proper order.
 
-     distribution  Do a ``make build'', and then install a full distribution
+     distribution  Do a "make build", and then install a full distribution
                    (which does not include a kernel) into DESTDIR, including
                    files in DESTDIR/dev, DESTDIR/etc, DESTDIR/root and
                    DESTDIR/var.
 
-     buildworld    As per ``make distribution'', except that it ensures that
+     buildworld    As per "make distribution", except that it ensures that
                    DESTDIR is not the root directory.
 
      installworld  Install the distribution from DESTDIR to INSTALLWORLDDIR,
@@ -620,9 +630,9 @@ BUILDING
 
                    The INSTALLSETS environment variable may be set to a space-
                    separated list of distribution sets to be installed.  By
-                   default, all sets except ``etc'' and ``xetc'' are
-                   installed, so most files in INSTALLWORLDDIR/etc will not be
-                   installed or modified.
+                   default, all sets except "etc" and "xetc" are installed, so
+                   most files in INSTALLWORLDDIR/etc will not be installed or
+                   modified.
 
                    Note: Before performing this operation with
                    INSTALLWORLDDIR=/, it is highly recommended that you
@@ -633,20 +643,20 @@ BUILDING
 
      sets          Create distribution sets from DESTDIR into
                    RELEASEDIR/RELEASEMACHINEDIR/binary/sets.  Should be run
-                   after ``make distribution'', as ``make build'' alone does
-                   not install all of the required files.
+                   after "make distribution", as "make build" alone does not
+                   install all of the required files.
 
      sourcesets    Create source sets of the source tree into
                    RELEASEDIR/source/sets.
 
      syspkgs       Create syspkgs from DESTDIR into
                    RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.  Should be run
-                   after ``make distribution'', as ``make build'' alone does
-                   not install all of the required files.
+                   after "make distribution", as "make build" alone does not
+                   install all of the required files.
 
-     release       Do a ``make distribution'', build kernels, distribution
-                   media, and install sets (this as per ``make sets''), and
-                   then package the system into a standard release layout as
+     release       Do a "make distribution", build kernels, distribution
+                   media, and install sets (this as per "make sets"), and then
+                   package the system into a standard release layout as
                    described by release(7).  This requires that RELEASEDIR be
                    set (see above).
 
@@ -661,13 +671,13 @@ BUILDING
                    tools that may be useful in repairing a damaged NetBSD
                    installation.
 
-                   Before ``make iso-image'' is attempted, RELEASEDIR must be
-                   populated by ``make release'' or equivalent.
+                   Before "make iso-image" is attempted, RELEASEDIR must be
+                   populated by "make release" or equivalent.
 
                    Note that other, smaller, CD-ROM images may be created in
                    the RELEASEDIR/RELEASEMACHINEDIR/installation/cdrom
-                   directory by ``make release''.  These smaller images
-                   usually contain the same tools as the larger images in
+                   directory by "make release".  These smaller images usually
+                   contain the same tools as the larger images in
                    RELEASEDIR/images, but do not contain additional content
                    such as the distribution sets.
 
@@ -689,14 +699,14 @@ BUILDING
                    tools that may be useful in repairing a damaged NetBSD
                    installation.
 
-                   Before ``make iso-image-source'' is attempted, RELEASEDIR
-                   must be populated by ``make sourcesets release'' or
+                   Before "make iso-image-source" is attempted, RELEASEDIR
+                   must be populated by "make sourcesets release" or
                    equivalent.
 
                    Note that other, smaller, CD-ROM images may be created in
                    the RELEASEDIR/RELEASEMACHINEDIR/installation/cdrom
-                   directory by ``make release''.  These smaller images
-                   usually contain the same tools as the larger images in
+                   directory by "make release".  These smaller images usually
+                   contain the same tools as the larger images in
                    RELEASEDIR/images, but do not contain additional content
                    such as the distribution sets.
 
@@ -707,12 +717,11 @@ BUILDING
 
      install-image
                    Create a bootable NetBSD installation disk image in the
-                   RELEASEDIR/RELEASEMACHINEDIR/installation/installimage
-                   directory.  The installation disk image is suitable for
-                   copying to bootable USB flash memory sticks, etc., for
-                   machines which are able to boot from such devices.  The
-                   file system in the bootable disk image will have a layout
-                   as described in release(7).
+                   RELEASEDIR/images directory.  The installation disk image
+                   is suitable for copying to bootable USB flash memory
+                   sticks, etc., for machines which are able to boot from such
+                   devices.  The file system in the bootable disk image will
+                   have a layout as described in release(7).
 
                    The installation image is bootable, and will automatically
                    run the sysinst(8) menu-based installation program, which
@@ -720,10 +729,10 @@ BUILDING
                    image also contains tools that may be useful in repairing a
                    damaged NetBSD installation.
 
-                   Before ``make install-image'' is attempted, RELEASEDIR must
-                   be populated by ``make release'' or equivalent.  The build
-                   must have been performed with MKUNPRIVED=yes because ``make
-                   install-image'' relies on information in DESTDIR/METALOG.
+                   Before "make install-image" is attempted, RELEASEDIR must
+                   be populated by "make release" or equivalent.  The build
+                   must have been performed with MKUNPRIVED=yes because "make
+                   install-image" relies on information in DESTDIR/METALOG.
 
      live-image    Create NetBSD live images in the RELEASEDIR/images
                    directory.  The live image contains all necessary files to
@@ -736,17 +745,17 @@ BUILDING
                    to boot NetBSD from a USB flash memory stick on a real
                    machine, without the need for installation.
 
-                   Before ``make live-image'' is attempted, RELEASEDIR must be
-                   populated by ``make release'' or equivalent.  The build
-                   must have been performed with MKUNPRIVED=yes because ``make
-                   install-image'' relies on information in DESTDIR/METALOG.
+                   Before "make live-image" is attempted, RELEASEDIR must be
+                   populated by "make release" or equivalent.  The build must
+                   have been performed with MKUNPRIVED=yes because "make
+                   install-image" relies on information in DESTDIR/METALOG.
 
      regression-tests
                    Can only be run after building the regression tests in the
-                   directory ``regress''.  Runs those compiled regression
-                   tests on the local host.  Note that most tests are now
-                   managed instead using atf(7); this target should probably
-                   run those as well but currently does not.
+                   directory "regress".  Runs those compiled regression tests
+                   on the local host.  Note that most tests are now managed
+                   instead using atf(7); this target should probably run those
+                   as well but currently does not.
 
    The "build.sh" script
      This script file is a shell script designed to build the entire NetBSD
@@ -776,9 +785,9 @@ BUILDING
      of sh found in PATH.
 
      All cross-compile builds, and most native builds, of the entire system
-     should make use of build.sh rather than just running ``make''.  This way,
+     should make use of build.sh rather than just running "make".  This way,
      the make(1) program will be bootstrapped properly, in case the host
-     system has an older or incompatible ``make'' program.
+     system has an older or incompatible "make" program.
 
      When compiling the entire system via build.sh, many make(1) variables are
      set for you in order to help encapsulate the build process.  In the list
@@ -787,34 +796,33 @@ BUILDING
 
      The following operations are supported by build.sh:
 
-     build         Build the system as per ``make build''.  Before the main
-                   part of the build commences, this command runs the obj
-                   operation (unless the -o option is given), ``make
-                   cleandir'' (unless the -u option is given), and the tools
-                   operation.
+     build         Build the system as per "make build".  Before the main part
+                   of the build commences, this command runs the obj operation
+                   (unless the -o option is given), "make cleandir" (unless
+                   the -u option is given), and the tools operation.
 
-     distribution  Build a full distribution as per ``make distribution''.
-                   This command first runs the build operation.
+     distribution  Build a full distribution as per "make distribution".  This
+                   command first runs the build operation.
 
-     release       Build a full release as per ``make release''.  This command
+     release       Build a full release as per "make release".  This command
                    first runs the distribution operation.
 
      makewrapper   Create the nbmake-MACHINE wrapper.  This operation is
                    automatically performed for any of the other operations.
 
-     cleandir      Perform ``make cleandir''.
+     cleandir      Perform "make cleandir".
 
-     obj           Perform ``make obj''.
+     obj           Perform "make obj".
 
      tools         Build and install the host tools from src/tools.  This
-                   command will first run ``make obj'' and ``make cleandir''
-                   in the tools subdirectory unless the -o or -u options
+                   command will first run "make obj" and "make cleandir" in
+                   the tools subdirectory unless the -o or -u options
                    (respectively) are given.
 
-     install=idir  Install the contents of DESTDIR to idir, using ``make
-                   installworld''.  Note that files that are part of the
-                   ``etc'' or ``xetc'' sets will not be installed, unless
-                   overridden by the INSTALLSETS environment variable.
+     install=idir  Install the contents of DESTDIR to idir, using "make
+                   installworld".  Note that files that are part of the "etc"
+                   or "xetc" sets will not be installed, unless overridden by
+                   the INSTALLSETS environment variable.
 
      kernel=kconf  Build a new kernel.  The kconf argument is the name of a
                    configuration file suitable for use by config(1).  If kconf
@@ -828,7 +836,7 @@ BUILDING
                    tools command first unless it is certain that the tools
                    already exist and are up to date.
 
-                   This command will run ``make cleandir'' on the kernel in
+                   This command will run "make cleandir" on the kernel in
                    question first unless the -u option is given.
 
      kernel.gdb=kconf
@@ -851,31 +859,31 @@ BUILDING
                    Install a gzip(1)ed copy of the kernel previously built by
                    kernel=kconf into
                    RELEASEDIR/RELEASEMACHINEDIR/binary/kernel, usually as
-                   netbsd-kconf.gz, although the ``netbsd'' prefix is
-                   determined from the ``config'' directives in kconf.
+                   netbsd-kconf.gz, although the "netbsd" prefix is determined
+                   from the "config" directives in kconf.
 
-     sets          Perform ``make sets''.
+     sets          Perform "make sets".
 
-     sourcesets    Perform ``make sourcesets''.
+     sourcesets    Perform "make sourcesets".
 
-     syspkgs       Perform ``make syspkgs''.
+     syspkgs       Perform "make syspkgs".
 
-     iso-image     Perform ``make iso-image''.
+     iso-image     Perform "make iso-image".
 
      iso-image-source
-                   Perform ``make iso-image-source''.
+                   Perform "make iso-image-source".
 
      install-image
-                   Perform ``make install-image''.
+                   Perform "make install-image".
 
-     live-image    Perform ``make live-image''.
+     live-image    Perform "make live-image".
 
      list-arch     Prints a list of valid MACHINE and MACHINE_ARCH settings,
                    the default MACHINE_ARCH for each MACHINE, and aliases for
                    MACHINE/MACHINE_ARCH pairs, and then exits.  The -m or -a
                    options (or both) may be used to specify glob patterns that
                    will be used to narrow the list of results; for example,
-                   ``build.sh -m 'evm*' -a '*arm*' list-arch'' will list all
+                   "build.sh -m 'evm*' -a '*arm*' list-arch" will list all
                    known MACHINE/MACHINE_ARCH values in which either MACHINE
                    or ALIAS matches the pattern `evb*', and MACHINE_ARCH
                    matches the pattern `*arm*'.
@@ -888,16 +896,16 @@ BUILDING
 
      -B buildid
                Set the value of BUILDID to buildid.  This will also append the
-               build identifier to the name of the ``make'' wrapper script so
+               build identifier to the name of the "make" wrapper script so
                that the resulting name is of the form
-               ``nbmake-MACHINE-BUILDID''.
+               "nbmake-MACHINE-BUILDID".
 
      -C cdextras
                Append cdextras to the CDEXTRA variable, which is a space-
                separated list of files or directories that will be added to
-               the CD-ROM image that may be create by the ``iso-image'' or
-               ``iso-image-source'' operations.  Files will be added to the
-               root of the CD-ROM image, whereas directories will be copied
+               the CD-ROM image that may be create by the "iso-image" or
+               "iso-image-source" operations.  Files will be added to the root
+               of the CD-ROM image, whereas directories will be copied
                recursively.  If relative paths are specified, they will be
                converted to absolute paths before being used.  Multiple paths
                may be specified via multiple -C options, or via a single
@@ -927,18 +935,18 @@ BUILDING
                Use lower values on machines with limited memory or I/O
                bandwidth.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.  See ``-O
-               obj'' for more information.
+     -M obj    Set MAKEOBJDIRPREFIX to obj.  Unsets MAKEOBJDIR.  See "-O obj"
+               for more information.
 
                For instance, if the source directory is /usr/src, a setting of
-               ``-M /usr/obj'' will place build-time files under
+               "-M /usr/obj" will place build-time files under
                /usr/obj/usr/src/bin, /usr/obj/usr/src/lib,
                /usr/obj/usr/src/usr.bin, and so forth.
 
                If a relative path is specified, it will be converted to an
                absolute path before being used.  build.sh imposes the
                restriction that the argument to the -M option must not begin
-               with a ``$'' (dollar sign) character; otherwise it would be too
+               with a "$" (dollar sign) character; otherwise it would be too
                difficult to determine whether the value is an absolute or a
                relative path.  If the directory does not already exist,
                build.sh will create it.
@@ -958,25 +966,24 @@ BUILDING
                MACHINE and MACHINE_ARCH settings.
 
      -N noiselevel
-               Set the ``noisyness'' level of the build, by setting
-               MAKEVERBOSE to noiselevel.
+               Set the "noisyness" level of the build, by setting MAKEVERBOSE
+               to noiselevel.
 
      -n        Show the commands that would be executed by build.sh, but do
-               not make any changes.  This is similar in concept to ``make
-               -n''.
+               not make any changes.  This is similar in concept to "make -n".
 
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
                place the built object files under obj.  Unsets
                MAKEOBJDIRPREFIX.
 
-               For instance, a setting of ``-O /usr/obj'' will place build-
-               time files under /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin,
-               and so forth.
+               For instance, a setting of "-O /usr/obj" will place build-time
+               files under /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin, and
+               so forth.
 
                If a relative path is specified, it will be converted to an
                absolute path before being used.  build.sh imposes the
                restriction that the argument to the -O option must not contain
-               a ``$'' (dollar sign) character.  If the directory does not
+               a "$" (dollar sign) character.  If the directory does not
                already exist, build.sh will create it.
 
                In normal use, exactly one of the -M or -O options should be
@@ -989,7 +996,7 @@ BUILDING
 
                Note that placing the obj directory location outside of the
                default source tree hierarchy makes it easier to manually clear
-               out old files in the event the ``make cleandir'' operation is
+               out old files in the event the "make cleandir" operation is
                unable to do so.  (See CAVEATS below.)
 
                Note also that use of one of -M or -O is the only means of
@@ -997,8 +1004,8 @@ BUILDING
                source tree without cleaning between builds (in which case, one
                would specify distinct obj locations for each).
 
-     -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
-               automatically set to ``yes''.  This default is opposite to the
+     -o        Set the value of MKOBJDIRS to "no".  Otherwise, it will be
+               automatically set to "yes".  This default is opposite to the
                behaviour when not using build.sh.
 
      -R rel    Set the value of RELEASEDIR to rel.  If a relative path is
@@ -1014,8 +1021,8 @@ BUILDING
 
      -T tools  Set the value of TOOLDIR to tools.  If a relative path is
                specified, it will be converted to an absolute path before
-               being used.  If set, the bootstrap ``make'' will only be
-               rebuilt if the source files for make(1) have changed.
+               being used.  If set, the bootstrap "make" will only be rebuilt
+               if the source files for make(1) have changed.
 
      -U        Set MKUNPRIVED=yes.
 
@@ -1056,7 +1063,7 @@ BUILDING
      subtrees on a cross-compile host.
 
      nbmake-MACHINE can be invoked in lieu of make(1), and will instead call
-     the up-to-date version of ``nbmake'' installed into TOOLDIR/bin with
+     the up-to-date version of "nbmake" installed into TOOLDIR/bin with
      several key variables pre-set, including MACHINE, MACHINE_ARCH, and
      TOOLDIR.  nbmake-MACHINE will also set variables specified with -V, and
      unset variables specified with -Z.
@@ -1086,9 +1093,9 @@ EXAMPLES
 
           Using unprivileged mode, build a complete release to DESTDIR and
           RELEASEDIR directories that build.sh selects (and will display).
-          MKUPDATE=yes (-u) is set to prevent the ``make cleandir'', so that
-          if this is run after example 2, it doesn't need to redo that portion
-          of the release build.
+          MKUPDATE=yes (-u) is set to prevent the "make cleandir", so that if
+          this is run after example 2, it doesn't need to redo that portion of
+          the release build.
 
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j instead.
@@ -1107,8 +1114,8 @@ HISTORY
 
 CAVEATS
      After significant updates to third-party components in the source tree,
-     the ``make cleandir'' operation may be insufficient to clean out old
-     files in object directories.  Instead, one may have to manually remove
-     the files.  Consult the UPDATING file for notices concerning this.
+     the "make cleandir" operation may be insufficient to clean out old files
+     in object directories.  Instead, one may have to manually remove the
+     files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                         February 20, 2017                        NetBSD
+NetBSD                          April 13, 2017                          NetBSD

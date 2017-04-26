@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.7 2016/11/04 14:49:15 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.8 2017/04/26 02:53:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.7 2016/11/04 14:49:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.8 2017/04/26 02:53:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -189,6 +189,7 @@ static void InitBP(struct buf *, struct vnode *, unsigned,
 struct raid_softc;
 static void raidinit(struct raid_softc *);
 static int raiddoaccess(RF_Raid_t *raidPtr, struct buf *bp);
+static int rf_get_component_caches(RF_Raid_t *raidPtr, int *);
 
 static int raid_match(device_t, cfdata_t, void *);
 static void raid_attach(device_t, device_t, void *);
@@ -1790,6 +1791,10 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 */
 	
 	switch (cmd) {
+	case DIOCGCACHE:
+		retcode = rf_get_component_caches(raidPtr, (int *)data);
+		break;
+
 	case DIOCCACHESYNC:
 		retcode = rf_sync_component_caches(raidPtr);
 		break;
@@ -3680,6 +3685,50 @@ rf_set_geometry(struct raid_softc *rs, RF_Raid_t *raidPtr)
 	dg->dg_ntracks = 4 * raidPtr->numCol;
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
+}
+
+/*
+ * Get cache info for all the components (including spares).
+ * Returns intersection of all the cache flags of all disks, or first
+ * error if any encountered.
+ * XXXfua feature flags can change as spares are added - lock down somehow
+ */
+static int
+rf_get_component_caches(RF_Raid_t *raidPtr, int *data)
+{
+	int c;
+	int error;
+	int dkwhole = 0, dkpart;
+	
+	for (c = 0; c < raidPtr->numCol + raidPtr->numSpare; c++) {
+		/*
+		 * Check any non-dead disk, even when currently being
+		 * reconstructed.
+		 */
+		if (!RF_DEAD_DISK(raidPtr->Disks[c].status)
+		    || raidPtr->Disks[c].status == rf_ds_reconstructing) {
+			error = VOP_IOCTL(raidPtr->raid_cinfo[c].ci_vp,
+			    DIOCGCACHE, &dkpart, FREAD, NOCRED);
+			if (error) {
+				if (error != ENODEV) {
+					printf("raid%d: get cache for component %s failed\n",
+					    raidPtr->raidid,
+					    raidPtr->Disks[c].devname);
+				}
+
+				return error;
+			}
+
+			if (c == 0)
+				dkwhole = dkpart;
+			else
+				dkwhole = DKCACHE_COMBINE(dkwhole, dkpart);
+		}
+	}
+
+	*data = dkwhole;
+
+	return 0;
 }
 
 /* 

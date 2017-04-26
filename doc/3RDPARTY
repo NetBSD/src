@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1344.2.5 2017/03/20 06:52:12 pgoyette Exp $
+#	$NetBSD: 3RDPARTY,v 1.1344.2.6 2017/04/26 02:52:17 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -114,8 +114,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.4-P6/BSD	9.11.0-P3/MPL
-Current Vers:	9.10.4-P6/BSD
+Version:	9.10.4-P8/BSD	9.11.0-P3/MPL
+Current Vers:	9.10.4-P8/BSD
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -334,8 +334,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	6.11.4
-Current Vers:	6.11.5 (not needed for NetBSD)
+Version:	7.0.0-beta3
+Current Vers:	7.0.0-beta3
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/dhcpcd/
 Home Page:	http://roy.marples.name/projects/dhcpcd/
@@ -344,7 +344,6 @@ License:	BSD (2-clause)
 Location:	external/bsd/dhcpcd/dist
 Notes:
 Please submit all changes to the author.
-The distribution doesn't include the Linux specific bits or build system.
 
 Package:       drm
 Version:       Linux 3.15
@@ -711,8 +710,8 @@ for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	2.8.4
-Current Vers:	2.8.5 (legacy) / 3.2.0 (stable)
+Version:	3.3.2pre
+Current Vers:	3.3.1
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/downloads
 Home Page: 	http://libarchive.github.com/
@@ -808,8 +807,8 @@ under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	Lua
-Version:	Lua 5.3.2
-Current Vers:	Lua 5.3.2
+Version:	Lua 5.3.3
+Current Vers:	Lua 5.3.4
 Maintainer:	PUC Rio
 Home Page:	http://www.lua.org/
 Mailing List:
@@ -956,8 +955,8 @@ and ndbootd-raw.c.  Restore saved config.h, and force it to define
 HAVE_STRICT_ALIGNMENT.  Fix RCS IDs, import.
 
 Package:	ntp
-Version:	4.2.8p9
-Current Vers:	4.2.8p9
+Version:	4.2.8p10
+Current Vers:	4.2.8p10
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
@@ -1031,8 +1030,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	7.4
-Current Vers:	7.4 / portable 7.4p1
+Version:	7.5
+Current Vers:	7.5 / portable 7.5p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -1146,8 +1145,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20120221
-Current Vers:	20120221
+Version:	20170419
+Current Vers:	20170419
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org/
 Mailing List:	tech-pkg@NetBSD.org
@@ -1286,7 +1285,7 @@ original.
 
 Package:	sqlite
 Version:	3.17.0
-Current Vers:	3.17.0
+Current Vers:	3.18.0
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
 Responsible:	joerg
@@ -1373,8 +1372,8 @@ perhaps this implementation should be kept anyway for historical
 purposes.
 
 Package:	tmux
-Version:	2.2
-Current Vers:	2.3
+Version:	2.4
+Current Vers:	2.4
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
@@ -1412,8 +1411,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2017a / tzdata2017a
-Current Vers:	tzcode2017a / tzdata2017a
+Version:	tzcode2017b / tzdata2017b
+Current Vers:	tzcode2017b / tzdata2017b
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1690,3 +1689,16 @@ Mailing List:	https://sourceforge.net/projects/gnu-efi/
 Responsible:
 License:	BSD-like (3-clause)
 Location:	sys/external/bsd/gnu-efi
+
+Package:	dc
+Version:	20170410
+Current Vers:	20170410
+Maintainer:	The OpenBSD Project
+Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/dc
+Home Page:	http://www.openbsd.org/
+Mailing List:	
+License:	BSD
+Responsible:	christos
+Location:	usr.bin/dc
+Notes:
+		Uses OpenSSL's bignum

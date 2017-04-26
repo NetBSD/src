@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymodes.c,v 1.4.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: ttymodes.c,v 1.4.2.3 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: ttymodes.c,v 1.30 2016/05/04 14:22:33 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,7 +45,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ttymodes.c,v 1.4.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: ttymodes.c,v 1.4.2.3 2017/04/26 02:52:15 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <errno.h>

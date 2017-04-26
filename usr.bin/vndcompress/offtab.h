@@ -1,4 +1,4 @@
-/*	$NetBSD: offtab.h,v 1.2 2014/01/22 06:15:22 riastradh Exp $	*/
+/*	$NetBSD: offtab.h,v 1.2.14.1 2017/04/26 02:53:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "common.h"
+
 struct offtab {
 	uint32_t	ot_n_offsets;
 	uint32_t	ot_window_size;
@@ -53,6 +55,10 @@ struct offtab {
 		OFFTAB_MODE_WRITE,
 	}		ot_mode;
 };
+
+#define	OFFTAB_MAX_FDPOS						      \
+	((off_t)(MIN(OFF_MAX, UINT64_MAX) -				      \
+	    (off_t)MAX_N_OFFSETS*sizeof(uint64_t)))
 
 void		offtab_init(struct offtab *, uint32_t, uint32_t, int, off_t);
 void		offtab_destroy(struct offtab *);

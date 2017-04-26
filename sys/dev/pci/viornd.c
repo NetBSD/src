@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.9.2.1 2017/01/07 08:56:40 pgoyette Exp $ */
+/* 	$NetBSD: viornd.c,v 1.9.2.2 2017/04/26 02:53:22 pgoyette Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ viornd_get(size_t bytes, void *priv)
 		goto out;
 	}
 
-        bus_dmamap_sync(vsc->sc_dmat, sc->sc_dmamap, 0, VIORND_BUFSIZE,
+        bus_dmamap_sync(virtio_dmat(vsc), sc->sc_dmamap, 0, VIORND_BUFSIZE,
             BUS_DMASYNC_PREREAD);
 	if (virtio_enqueue_prep(vsc, vq, &slot)) {
 		goto out;
@@ -119,43 +119,32 @@ out:
 int
 viornd_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct virtio_softc *va = aux;
+	struct virtio_attach_args *va = aux;
+
 	if (va->sc_childdevid == PCI_PRODUCT_VIRTIO_ENTROPY)
 		return 1;
+
 	return 0;
 }
 
 void
-viornd_attach( device_t parent, device_t self, void *aux)
+viornd_attach(device_t parent, device_t self, void *aux)
 {
 	struct viornd_softc *sc = device_private(self);
 	struct virtio_softc *vsc = device_private(parent);
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	int error;
-	uint32_t features;
-	char buf[256];
 
-	vsc->sc_vqs = &sc->sc_vq;
-	vsc->sc_nvqs = 1;
-	vsc->sc_config_change = NULL;
-	if (vsc->sc_child != NULL)
+	if (virtio_child(vsc) != NULL)
 		panic("already attached to something else");
-	vsc->sc_child = self;
-	vsc->sc_ipl = IPL_NET;
-	vsc->sc_intrhand = virtio_vq_intr;
-	sc->sc_virtio = vsc;
+
 	sc->sc_dev = self;
-
-	features = virtio_negotiate_features(vsc, 0);
-	snprintb(buf, sizeof(buf), VIRTIO_COMMON_FLAG_BITS, features);
-	aprint_normal(": Features: %s\n", buf);
-	aprint_naive("\n");
-
+	sc->sc_virtio = vsc;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
-	error = bus_dmamem_alloc(vsc->sc_dmat, 
+	error = bus_dmamem_alloc(virtio_dmat(vsc), 
 				 VIRTIO_PAGE_SIZE, 0, 0, segs, 1, &nsegs,
 				 BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 	if (error) {
@@ -164,14 +153,14 @@ viornd_attach( device_t parent, device_t self, void *aux)
 		goto alloc_failed;
 	}
 
-	error = bus_dmamem_map(vsc->sc_dmat, segs, nsegs, VIORND_BUFSIZE,
+	error = bus_dmamem_map(virtio_dmat(vsc), segs, nsegs, VIORND_BUFSIZE,
 			       &sc->sc_buf, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't map dmamem: %d\n", error);
 		goto map_failed;
 	}
 
-	error = bus_dmamap_create(vsc->sc_dmat, VIORND_BUFSIZE, 1,
+	error = bus_dmamap_create(virtio_dmat(vsc), VIORND_BUFSIZE, 1,
 				  VIORND_BUFSIZE, 0,
 				  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 				  &sc->sc_dmamap);
@@ -181,7 +170,7 @@ viornd_attach( device_t parent, device_t self, void *aux)
 		goto create_failed;
 	}
 
-	error = bus_dmamap_load(vsc->sc_dmat, sc->sc_dmamap,
+	error = bus_dmamap_load(virtio_dmat(vsc), sc->sc_dmamap,
 	    			sc->sc_buf, VIORND_BUFSIZE, NULL,
 				BUS_DMA_NOWAIT|BUS_DMA_READ);
 	if (error) {
@@ -190,6 +179,10 @@ viornd_attach( device_t parent, device_t self, void *aux)
 		goto load_failed;
 	}
 
+	virtio_child_attach_start(vsc, self, IPL_NET, &sc->sc_vq,
+	    NULL, virtio_vq_intr, 0,
+	    0, VIRTIO_COMMON_FLAG_BITS);
+
 	error = virtio_alloc_vq(vsc, &sc->sc_vq, 0, VIORND_BUFSIZE, 1,
 	    "Entropy request");
 	if (error) {
@@ -197,25 +190,31 @@ viornd_attach( device_t parent, device_t self, void *aux)
 				 error);
 		goto vio_failed;
 	}
-
 	sc->sc_vq.vq_done = viornd_vq_done;
-	virtio_start_vq_intr(vsc, &sc->sc_vq);
+
+	if (virtio_child_attach_finish(vsc) != 0) {
+		virtio_free_vq(vsc, &sc->sc_vq);
+		goto vio_failed;
+	}
+
 	rndsource_setcb(&sc->sc_rndsource, viornd_get, sc);
 	rnd_attach_source(&sc->sc_rndsource, device_xname(sc->sc_dev),
 			  RND_TYPE_RNG,
 			  RND_FLAG_COLLECT_VALUE|RND_FLAG_HASCB);
 	viornd_get(VIORND_BUFSIZE, sc);
+
 	return;
+
 vio_failed:
-	bus_dmamap_unload(vsc->sc_dmat, sc->sc_dmamap);
+	bus_dmamap_unload(virtio_dmat(vsc), sc->sc_dmamap);
 load_failed:
-	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_dmamap);
+	bus_dmamap_destroy(virtio_dmat(vsc), sc->sc_dmamap);
 create_failed:
-	bus_dmamem_unmap(vsc->sc_dmat, sc->sc_buf, VIORND_BUFSIZE);
+	bus_dmamem_unmap(virtio_dmat(vsc), sc->sc_buf, VIORND_BUFSIZE);
 map_failed:
-	bus_dmamem_free(vsc->sc_dmat, segs, nsegs);
+	bus_dmamem_free(virtio_dmat(vsc), segs, nsegs);
 alloc_failed:
-	vsc->sc_child = (void *)1;	/* XXX bare constant 1 */
+	virtio_child_attach_failed(vsc);
 	return;
 }
 
@@ -223,7 +222,7 @@ int
 viornd_vq_done(struct virtqueue *vq)
 {
 	struct virtio_softc *vsc = vq->vq_owner;
-	struct viornd_softc *sc = device_private(vsc->sc_child);
+	struct viornd_softc *sc = device_private(virtio_child(vsc));
 	int slot, len;
 
 	mutex_enter(&sc->sc_mutex);
@@ -235,7 +234,7 @@ viornd_vq_done(struct virtqueue *vq)
 
 	sc->sc_active = false;
 
-	bus_dmamap_sync(vsc->sc_dmat, sc->sc_dmamap, 0, VIORND_BUFSIZE,
+	bus_dmamap_sync(virtio_dmat(vsc), sc->sc_dmamap, 0, VIORND_BUFSIZE,
 	    BUS_DMASYNC_POSTREAD);
 	if (len > VIORND_BUFSIZE) {
 		aprint_error_dev(sc->sc_dev,

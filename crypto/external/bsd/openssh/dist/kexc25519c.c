@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: kexc25519c.c,v 1.3.4.2 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: kexc25519c.c,v 1.3.4.3 2017/04/26 02:52:14 pgoyette Exp $");
 
 #include <sys/types.h>
 

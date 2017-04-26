@@ -1,4 +1,4 @@
-/*	cpu.h,v 1.45.4.7 2008/01/28 18:20:39 matt Exp	*/
+/*	$NetBSD: cpu.h,v 1.90.2.2 2017/04/26 02:53:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -230,10 +230,9 @@ curcpu(void)
 #endif
 
 #define CPU_INFO_ITERATOR	int
-#if defined(MULTIPROCESSOR)
+#if defined(_MODULE) || defined(MULTIPROCESSOR)
 extern struct cpu_info *cpu_info[];
 #define cpu_number()		(curcpu()->ci_index)
-void cpu_boot_secondary_processors(void);
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, ci = cpu_info[0]; cii < ncpu && (ci = cpu_info[cii]) != NULL; cii++
@@ -243,6 +242,10 @@ void cpu_boot_secondary_processors(void);
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+#if defined(MULTIPROCESSOR)
+void cpu_boot_secondary_processors(void);
 #endif
 
 #define	LWP0_CPU_INFO	(&cpu_info_store)

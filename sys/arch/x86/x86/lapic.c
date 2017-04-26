@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.51.2.3 2017/01/07 08:56:28 pgoyette Exp $	*/
+/*	$NetBSD: lapic.c,v 1.51.2.4 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.51.2.3 2017/01/07 08:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.51.2.4 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -89,6 +89,18 @@ struct pic local_pic = {
 	.pic_delroute = lapic_setup,
 };
 
+void
+lapic_write_tpri(uint32_t val)
+{
+
+	val &= LAPIC_TPRI_MASK;
+#ifdef i386
+	i82489_writereg(LAPIC_TPRI, val);
+#else
+	lcr8(val >> 4);
+#endif
+}
+
 static void
 lapic_map(paddr_t lapic_base)
 {
@@ -103,12 +115,12 @@ lapic_map(paddr_t lapic_base)
 	 * is not present on the Pentium (is it?).
 	 */
 	if (CPUID_TO_FAMILY(curcpu()->ci_signature) >= 6) {
-		lapic_base = (paddr_t)rdmsr(LAPIC_MSR);
-		if ((lapic_base & LAPIC_MSR_ADDR) == 0) {
-			lapic_base |= LAPIC_BASE;
+		lapic_base = (paddr_t)rdmsr(MSR_APICBASE);
+		if ((lapic_base & APICBASE_PHYSADDR) == 0) {
+			lapic_base |= APICBASE_PHYSADDR;
 		}
-		wrmsr(LAPIC_MSR, lapic_base | LAPIC_MSR_ENABLE);
-		lapic_base &= LAPIC_MSR_ADDR;
+		wrmsr(MSR_APICBASE, lapic_base | APICBASE_EN);
+		lapic_base &= APICBASE_PHYSADDR;
 	}
 
 	x86_disable_intr();
@@ -130,7 +142,7 @@ lapic_map(paddr_t lapic_base)
 	cpu_init_first();	/* catch up to changed cpu_number() */
 #endif
 
-	i82489_writereg(LAPIC_TPRI, 0);
+	lapic_write_tpri(0);
 	x86_enable_intr();
 }
 

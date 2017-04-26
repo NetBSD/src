@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.41.2.1 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.41.2.2 2017/04/26 02:53:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.41.2.1 2017/01/07 08:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.41.2.2 2017/04/26 02:53:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

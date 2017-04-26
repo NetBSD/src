@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.13.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.13.2.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: ssh-add.c,v 1.128 2016/02/15 09:47:49 dtucker Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.13.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.13.2.2 2017/04/26 02:52:15 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 

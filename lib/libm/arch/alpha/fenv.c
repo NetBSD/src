@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.1.2.2 2016/09/14 03:04:16 pgoyette Exp $	*/
+/*	$NetBSD: fenv.c,v 1.1.2.3 2017/04/26 02:52:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -28,15 +28,22 @@
  * $FreeBSD: src/lib/msun/alpha/fenv.c,v 1.2 2005/03/16 19:03:44 das Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1.2.2 2016/09/14 03:04:16 pgoyette Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.1.2.3 2017/04/26 02:52:55 pgoyette Exp $");
 
-#ifdef __weak_alias
-#define feenableexcept _feenableexcept
-#define fedisableexcept _fedisableexcept
-#define fegetexcept _fegetexcept
-#endif
+#include "namespace.h"
+
 #include <machine/sysarch.h>
 #include <fenv.h>
+
+#ifdef __weak_alias
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(feupdateenv,_feupdateenv)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(fegetexcept,_fegetexcept)
+#endif
 
 const fenv_t __fe_dfl_env = 0x680e000000000000ULL;
 
@@ -111,12 +118,6 @@ feupdateenv(const fenv_t *envp)
 	feraiseexcept((oldr.__bits >> _FPUSW_SHIFT) & FE_ALL_EXCEPT);
 	return 0; 
 }
-
-#ifdef __weak_alias
-__weak_alias(feenableexcept, _feenableexcept);
-__weak_alias(fedisableexcept, _fedisableexcept);
-__weak_alias(fegetexcept, _fegetexcept);
-#endif
 
 int
 feenableexcept(int mask)

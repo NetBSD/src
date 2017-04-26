@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.73.2.2 2017/03/20 06:57:47 pgoyette Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.73.2.3 2017/04/26 02:53:26 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.73.2.2 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.73.2.3 2017/04/26 02:53:26 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -448,6 +448,8 @@ udf_mount(struct mount *mp, const char *path,
 static bool
 udf_sanity_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	vprint("", vp);
 	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {

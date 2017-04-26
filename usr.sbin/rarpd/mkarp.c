@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.11 2016/04/04 07:37:08 ozaki-r Exp $ */
+/*	$NetBSD: mkarp.c,v 1.11.2.1 2017/04/26 02:53:36 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.11 2016/04/04 07:37:08 ozaki-r Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.11.2.1 2017/04/26 02:53:36 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,10 @@ mkarp(u_char *haddr, u_int32_t ipaddr)
 	struct sockaddr_inarp sin_m;
 	struct sockaddr_dl sdl_m;
 
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = { RTM_GET, RTM_ADD };
+#endif
+
 	sin = &sin_m;
 	rtm = &(m_rtmsg.m_rtm);
 
@@ -158,6 +162,11 @@ mkarp(u_char *haddr, u_int32_t ipaddr)
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
 		err(1, "socket");
+#ifdef RO_MSGFILTER
+	if (setsockopt(s, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) < 0)
+		warn("RO_MSGFILTER");
+#endif
 
 	rtm->rtm_flags = 0;
 

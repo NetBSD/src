@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.h,v 1.12.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: clientloop.h,v 1.12.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: clientloop.h,v 1.33 2016/09/30 09:19:13 markus Exp $ */
 
 /*

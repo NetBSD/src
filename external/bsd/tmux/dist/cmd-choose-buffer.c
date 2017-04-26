@@ -30,7 +30,8 @@
 #define CHOOSE_BUFFER_TEMPLATE						\
 	"#{buffer_name}: #{buffer_size} bytes: #{buffer_sample}"
 
-enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_choose_buffer_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_choose_buffer_entry = {
 	"choose-buffer", NULL,
@@ -40,11 +41,12 @@ const struct cmd_entry cmd_choose_buffer_entry = {
 	cmd_choose_buffer_exec
 };
 
-enum cmd_retval
-cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_choose_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = self->args;
-	struct client			*c;
+	struct client			*c = item->state.c;
+	struct winlink			*wl = item->state.tflag.wl;
 	struct window_choose_data	*cdata;
 	struct winlink			*wl;
 	struct paste_buffer		*pb;
@@ -53,8 +55,8 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	u_int				 idx;
 	int				 utf8flag;
 
-	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
-		cmdq_error(cmdq, "no client available");
+	if (c == NULL) {
+		cmdq_error(item, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
 

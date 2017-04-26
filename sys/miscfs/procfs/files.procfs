@@ -1,8 +1,9 @@
-#	$NetBSD: files.procfs,v 1.9.4.1 2016/11/04 14:49:17 pgoyette Exp $
+#	$NetBSD: files.procfs,v 1.9.4.2 2017/04/26 02:53:28 pgoyette Exp $
 
 deffs	PROCFS:	PTRACE_HOOKS
 
 define	procfs: vfs
+file	miscfs/procfs/procfs_auxv.c	procfs
 file	miscfs/procfs/procfs_cmdline.c	procfs
 file	miscfs/procfs/procfs_ctl.c	procfs
 file	miscfs/procfs/procfs_fd.c	procfs

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.18.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
+/*	$NetBSD: fil.c,v 1.18.2.2 2017/04/26 02:53:25 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -138,7 +138,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.18.2.1 2016/08/06 00:19:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.18.2.2 2017/04/26 02:53:25 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -2723,7 +2723,7 @@ ipf_firewall(fr_info_t *fin, u_32_t *passp)
 	 * If the rule has "keep frag" and the packet is actually a fragment,
 	 * then create a fragment state entry.
 	 */
-	if ((pass & (FR_KEEPFRAG|FR_KEEPSTATE)) == FR_KEEPFRAG) {
+	if (pass & FR_KEEPFRAG) {
 		if (fin->fin_flx & FI_FRAG) {
 			if (ipf_frag_new(softc, fin, pass) == -1) {
 				LBUMP(ipf_stats[out].fr_bnfr);

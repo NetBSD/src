@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.5 2012/05/21 14:15:16 martin Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.5.14.1 2017/04/26 02:52:54 pgoyette Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 13, 2003
+.Dd April 21, 2017
 .Dt _LWP_CREATE 2
 .Os
 .Sh NAME
@@ -47,6 +47,8 @@ The
 .Fa context
 argument specifies the initial execution context for the new LWP including
 signal mask, stack, and machine registers.
+The signal stack of the newly created light-weight process is reset to
+disabled.
 If this context specifies invalid register values (for example priviledge
 escalation by setting machine dependend bits forbidden for user processes),
 or does not specify cpu register values (uc_flags does not have the
@@ -79,13 +81,11 @@ documented below.
 .Sh ERRORS
 .Fn _lwp_create
 will fail and no LWP will be created if:
-.Bl -tag -width [EAGAIN]
+.Bl -tag -width 10n
 .It Bq Er EAGAIN
 The system-imposed limit on the total
 number of LWPs under execution would be exceeded.
 This limit is configuration-dependent.
-.It Bq Er ENOMEM
-There is insufficient swap space for the new LWP.
 .It Bq Er EFAULT
 The address pointed to by
 .Fa context
@@ -94,6 +94,8 @@ or
 is outside the process's allocated address space.
 .It Bq Er EINVAL
 The ucontext_t passed is invalid.
+.It Bq Er ENOMEM
+There is insufficient swap space for the new LWP.
 .El
 .Sh SEE ALSO
 .Xr _lwp_continue 2 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.13.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: scp.c,v 1.13.2.3 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: scp.c,v 1.187 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.13.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: scp.c,v 1.13.2.3 2017/04/26 02:52:15 pgoyette Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>

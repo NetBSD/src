@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.12.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.12.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: auth-options.c,v 1.72 2016/11/30 02:57:40 djm Exp $ */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.12.2.2 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.12.2.3 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 

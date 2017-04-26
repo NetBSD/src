@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.37.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: namei.src,v 1.37.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -207,7 +207,7 @@ NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
  *      -       stable after initialization
  *      L       namecache_lock
  *      C       struct nchcpu::cpu_lock
- *      L/C     insert/delete needs L and C, read needs L or any C,
+ *      L/C     insert needs L, read needs L or any C,
  *              must hold L and all C after (or during) delete before free
  *      N       struct namecache::nc_lock
  */

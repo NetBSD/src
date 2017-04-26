@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.32 2015/04/20 23:03:08 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.32.2.1 2017/04/26 02:53:25 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.32 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.32.2.1 2017/04/26 02:53:25 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -70,7 +70,7 @@ extern int prtactive;
 int
 nilfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool         *a_recycle;
 	} */ *ap = v;
@@ -90,7 +90,6 @@ nilfs_inactive(void *v)
 	 * referenced anymore in a directory we ought to free up the resources
 	 * on disc if applicable.
 	 */
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

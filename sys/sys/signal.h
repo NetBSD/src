@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.70.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
+/*	$NetBSD: signal.h,v 1.70.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -170,6 +170,10 @@ struct	sigaction {
 
 #if defined(_NETBSD_SOURCE)
 typedef	void (*sig_t)(int);	/* type of signal function */
+
+#define SS_INIT 		/* Initializer for stack_t */ \
+    ((stack_t) { .ss_sp = NULL, .ss_flags = SS_DISABLE,  .ss_size = 0 })
+
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \

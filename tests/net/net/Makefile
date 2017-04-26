@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14.2.2 2017/01/07 08:56:56 pgoyette Exp $
+# $NetBSD: Makefile,v 1.14.2.3 2017/04/26 02:53:34 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,7 +13,7 @@ TESTS_C+=	t_pktinfo
 TESTS_C+=	t_raw
 
 .for name in forwarding ipaddress ipv6address ipv6_lifetime mtudisc mtudisc6 \
-    ping6_opts
+    ping_opts ping6_opts
 TESTS_SH+=		t_${name}
 TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh
 .endfor

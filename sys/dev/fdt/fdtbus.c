@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.2.4.1 2017/03/20 06:57:27 pgoyette Exp $ */
+/* $NetBSD: fdtbus.c,v 1.2.4.2 2017/04/26 02:53:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.2.4.1 2017/03/20 06:57:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.2.4.2 2017/04/26 02:53:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,34 +40,69 @@ __KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.2.4.1 2017/03/20 06:57:27 pgoyette Exp 
 
 #include <dev/fdt/fdtvar.h>
 
+#define	FDT_MAX_PATH	256
+
+struct fdt_node {
+	device_t	n_bus;
+	device_t	n_dev;
+	int		n_phandle;
+	char		*n_name;
+
+	u_int		n_order;
+
+	TAILQ_ENTRY(fdt_node) n_nodes;
+};
+
+static TAILQ_HEAD(, fdt_node) fdt_nodes =
+    TAILQ_HEAD_INITIALIZER(fdt_nodes);
+
+struct fdt_softc {
+	device_t	sc_dev;
+	int		sc_phandle;
+	struct fdt_attach_args sc_faa;
+};
+
 static int	fdt_match(device_t, cfdata_t, void *);
 static void	fdt_attach(device_t, device_t, void *);
-static void	fdt_scan(device_t, const struct fdt_attach_args *, const char *);
-static bool	fdt_is_init(const struct fdt_attach_args *, const char *);
-
-CFATTACH_DECL_NEW(fdt, 0,
-    fdt_match, fdt_attach, NULL, NULL);
+static void	fdt_scan_bus(struct fdt_softc *);
+static void	fdt_scan(struct fdt_softc *);
+static void	fdt_add_node(struct fdt_node *);
+static u_int	fdt_get_order(int);
 
 static int	fdt_print(void *, const char *);
+
+static const char * const fdtbus_compatible[] =
+    { "simple-bus", NULL };
+
+CFATTACH_DECL_NEW(fdt, sizeof(struct fdt_softc),
+    fdt_match, fdt_attach, NULL, NULL);
 
 static int
 fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const struct fdt_attach_args *faa = aux;
+	int match;
 
-	if (!OF_child(faa->faa_phandle))
-		return 0;
+	match = of_match_compatible(faa->faa_phandle, fdtbus_compatible);
+	if (match)
+		return match;
 
-	return 1;
+	return OF_finddevice("/") == faa->faa_phandle;
 }
 
 static void
 fdt_attach(device_t parent, device_t self, void *aux)
 {
+	struct fdt_softc *sc = device_private(self);
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
-	char *model;
-	int len, n;
+	struct fdt_node *node;
+	char *model, *name, *status;
+	int len, child;
+
+	sc->sc_dev = self;
+	sc->sc_phandle = phandle;
+	sc->sc_faa = *faa;
 
 	aprint_naive("\n");
 	len = OF_getproplen(phandle, "model");
@@ -83,28 +118,7 @@ fdt_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("\n");
 	}
 
-	for (n = 0; n < faa->faa_ninit; n++) {
-		fdt_scan(self, faa, faa->faa_init[n]);
-	}
-	fdt_scan(self, faa, NULL);
-}
-
-static void
-fdt_scan(device_t self, const struct fdt_attach_args *faa, const char *devname)
-{
-	const int phandle = faa->faa_phandle;
-	int len, child;
-	char *name, *status;
-
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		struct fdt_attach_args nfaa = *faa;
-		nfaa.faa_phandle = child;
-
-		/* Only attach to nodes with a compatible property */
-		len = OF_getproplen(child, "compatible");
-		if (len <= 0)
-			continue;
-
 		/* If there is a "status" property, make sure it is "okay" */
 		len = OF_getproplen(child, "status");
 		if (len > 0) {
@@ -119,43 +133,139 @@ fdt_scan(device_t self, const struct fdt_attach_args *faa, const char *devname)
 			}
 		}
 
-		/* Attach the device */
 		len = OF_getproplen(child, "name");
 		if (len <= 0) {
 			continue;
 		}
 		name = kmem_zalloc(len, KM_SLEEP);
-		if (OF_getprop(child, "name", name, len) == len) {
-			nfaa.faa_name = name;
-			if ((devname != NULL && strcmp(name, devname) == 0) ||
-			    (devname == NULL && !fdt_is_init(faa, name))) {
-				config_found(self, &nfaa, fdt_print);
-			}
+		if (OF_getprop(child, "name", name, len) != len) {
+			continue;
 		}
-		kmem_free(name, len);
+
+		/* Add the node to our device list */
+		node = kmem_alloc(sizeof(*node), KM_SLEEP);
+		node->n_bus = self;
+		node->n_dev = NULL;
+		node->n_phandle = child;
+		node->n_name = name;
+		node->n_order = fdt_get_order(node->n_phandle);
+		fdt_add_node(node);
+	}
+
+	/* Scan and attach all known busses in the tree. */
+	fdt_scan_bus(sc);
+
+	/* Only the root bus should scan for devices */
+	if (OF_finddevice("/") != faa->faa_phandle)
+		return;
+
+	/* Scan devices */
+	fdt_scan(sc);
+}
+
+static void
+fdt_init_attach_args(struct fdt_softc *sc, struct fdt_node *node,
+    struct fdt_attach_args *faa)
+{
+	*faa = sc->sc_faa;
+	faa->faa_phandle = node->n_phandle;
+	faa->faa_name = node->n_name;
+}
+
+static void
+fdt_scan_bus(struct fdt_softc *sc)
+{
+	struct fdt_node *node;
+	struct fdt_attach_args faa;
+	cfdata_t cf;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+		if (node->n_bus != sc->sc_dev)
+			continue;
+		if (node->n_dev != NULL)
+			continue;
+
+		fdt_init_attach_args(sc, node, &faa);
+
+		/*
+		 * Only attach busses to nodes where this driver is the best
+		 * match.
+		 */
+		cf = config_search_loc(NULL, node->n_bus, NULL, NULL, &faa);
+		if (cf == NULL || strcmp(cf->cf_name, "fdt") != 0)
+			continue;
+
+		/*
+		 * Attach the bus.
+		 */
+		node->n_dev = config_found(node->n_bus, &faa, fdt_print);
 	}
 }
 
-static bool
-fdt_is_init(const struct fdt_attach_args *faa, const char *devname)
+static void
+fdt_scan(struct fdt_softc *sc)
 {
-	u_int n;
+	struct fdt_node *node;
+	struct fdt_attach_args faa;
 
-	for (n = 0; n < faa->faa_ninit; n++) {
-		if (strcmp(faa->faa_init[n], devname) == 0)
-			return true;
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes) {
+		if (node->n_dev != NULL)
+			continue;
+
+		fdt_init_attach_args(sc, node, &faa);
+
+		/*
+		 * Attach the device.
+		 */
+		node->n_dev = config_found(node->n_bus, &faa, fdt_print);
+	}
+}
+
+static void
+fdt_add_node(struct fdt_node *new_node)
+{
+	struct fdt_node *node;
+
+	TAILQ_FOREACH(node, &fdt_nodes, n_nodes)
+		if (node->n_order > new_node->n_order) {
+			TAILQ_INSERT_BEFORE(node, new_node, n_nodes);
+			return;
+		}
+	TAILQ_INSERT_TAIL(&fdt_nodes, new_node, n_nodes);
+}
+
+static u_int
+fdt_get_order(int phandle)
+{
+	u_int val = UINT_MAX;
+	int child;
+
+	of_getprop_uint32(phandle, "phandle", &val);
+
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		u_int child_val = fdt_get_order(child);
+		if (child_val < val)
+			val = child_val;
 	}
 
-	return false;
+	return val;
 }
 
 static int
 fdt_print(void *aux, const char *pnp)
 {
 	const struct fdt_attach_args * const faa = aux;
+	char buf[FDT_MAX_PATH];
+	const char *name = buf;
+
+	/* Skip "not configured" for nodes w/o compatible property */
+	if (OF_getproplen(faa->faa_phandle, "compatible") <= 0)
+		return QUIET;
 
 	if (pnp) {
-		aprint_normal("%s at %s", faa->faa_name, pnp);
+		if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
+			name = faa->faa_name;
+		aprint_normal("%s at %s", name, pnp);
 	}
 
 	return UNCONF;

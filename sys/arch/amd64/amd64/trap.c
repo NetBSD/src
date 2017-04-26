@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83.2.3 2017/03/20 06:57:09 pgoyette Exp $	*/
+/*	$NetBSD: trap.c,v 1.83.2.4 2017/04/26 02:52:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,12 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83.2.3 2017/03/20 06:57:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83.2.4 2017/04/26 02:52:59 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_xen.h"
 #include "opt_dtrace.h"
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +91,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83.2.3 2017/03/20 06:57:09 pgoyette Exp $
 #include <sys/ucontext.h>
 
 #include <uvm/uvm_extern.h>
+
+#ifdef COMPAT_NETBSD32
+#include <sys/exec.h>
+#include <compat/netbsd32/netbsd32_exec.h>
+#endif
 
 #include <machine/cpufunc.h>
 #include <x86/fpu.h>
@@ -222,7 +229,6 @@ trap(struct trapframe *frame)
 	struct proc *p;
 	struct pcb *pcb;
 	extern char fusuintrfailure[], kcopy_fault[];
-	extern char IDTVEC(oosyscall)[];
 	extern char IDTVEC(osyscall)[];
 	extern char IDTVEC(syscall32)[];
 #ifndef XEN
@@ -404,6 +410,27 @@ kernelfault:
 #endif
 
 	case T_PROTFLT|T_USER:		/* protection fault */
+#if defined(COMPAT_NETBSD32) && defined(COMPAT_10)
+	{
+		static const char lcall[7] = { 0x9a, 0, 0, 0, 0, 7, 0 };
+		const size_t sz = sizeof(lcall);
+		char tmp[sz];
+
+		/* Check for the oosyscall lcall instruction. */
+		if (p->p_emul == &emul_netbsd32 &&
+		    frame->tf_rip < VM_MAXUSER_ADDRESS32 - sz &&
+		    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
+		    memcmp(tmp, lcall, sz) == 0) {
+
+			/* Advance past the lcall. */
+			frame->tf_rip += sz;
+
+			/* Do the syscall. */
+			p->p_md.md_syscall(frame);
+			goto out;
+		}
+	}
+#endif
 	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
@@ -692,8 +719,7 @@ faultcommon:
 			break;
 
 		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
-		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
+		if (frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
 		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
 			frame->tf_rflags &= ~PSL_T;
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.41 2015/03/30 03:51:50 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.41.2.1 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,14 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.41 2015/03/30 03:51:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.41.2.1 2017/04/26 02:53:29 pgoyette Exp $");
 
 /*
  * IPsec output processing.
  */
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
 #endif
 
 #include <sys/param.h>
@@ -57,11 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.41 2015/03/30 03:51:50 ozaki-r Ex
 #include <netinet/ip_var.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_ecn.h>
-#ifdef INET6
-#  ifdef __FreeBSD__
-#  include <netinet6/ip6_ecn.h>
-#  endif
-#endif
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -88,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.41 2015/03/30 03:51:50 ozaki-r Ex
 #include <netipsec/key.h>
 #include <netipsec/keydb.h>
 #include <netipsec/key_debug.h>
-#include <netipsec/ipsec_osdep.h>
 
 #include <net/net_osdep.h>		/* ovbcopy() in ipsec6_encapsulate() */
 
@@ -117,11 +110,6 @@ ipsec_register_done(struct mbuf *m, int * error)
 static int
 ipsec_reinject_ipstack(struct mbuf *m, int af)
 {
-#ifdef INET
-#ifdef __FreeBSD__
-	struct ip *ip;
-#endif /* __FreeBSD_ */
-#endif /* INET */
 #if defined(INET) || defined(INET6)
 	int rv;
 #endif
@@ -129,12 +117,6 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 	switch (af) {
 #ifdef INET
 	case AF_INET:
-#ifdef __FreeBSD__
-		ip = mtod(m, struct ip *);
-		/* FreeBSD ip_output() expects ip_len, ip_off in host endian */
-		ip->ip_len = ntohs(ip->ip_len);
-		ip->ip_off = ntohs(ip->ip_off);
-#endif /* __FreeBSD_ */
 		KERNEL_LOCK(1, NULL);
 		rv = ip_output(m, NULL, NULL, IP_RAWOUTPUT|IP_NOIPNEWID,
 		    NULL, NULL);
@@ -178,11 +160,11 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
 
-	IPSEC_ASSERT(m != NULL, ("ipsec_process_done: null mbuf"));
-	IPSEC_ASSERT(isr != NULL, ("ipsec_process_done: null ISR"));
+	KASSERT(m != NULL);
+	KASSERT(isr != NULL);
 	sav = isr->sav;
-	IPSEC_ASSERT(sav != NULL, ("ipsec_process_done: null SA"));
-	IPSEC_ASSERT(sav->sah != NULL, ("ipsec_process_done: null SAH"));
+	KASSERT(sav != NULL);
+	KASSERT(sav->sah != NULL);
 
 	saidx = &sav->sah->saidx;
 
@@ -333,8 +315,8 @@ do {									\
 	struct secasvar *sav;
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_nextisr");
-	IPSEC_ASSERT(af == AF_INET || af == AF_INET6,
-		("ipsec_nextisr: invalid address family %u", af));
+	KASSERTMSG(af == AF_INET || af == AF_INET6,
+	    "invalid address family %u", af);
 again:
 	/*
 	 * Craft SA index to search for proper SA.  Note that
@@ -413,9 +395,9 @@ again:
 	sav = isr->sav;
 	/* sav may be NULL here if we have an USE rule */
 	if (sav == NULL) {		
-		IPSEC_ASSERT(ipsec_get_reqlevel(isr) == IPSEC_LEVEL_USE,
-			("ipsec_nextisr: no SA found, but required; level %u",
-			ipsec_get_reqlevel(isr)));
+		KASSERTMSG(ipsec_get_reqlevel(isr) == IPSEC_LEVEL_USE,
+		    "no SA found, but required; level %u",
+		    ipsec_get_reqlevel(isr));
 		isr = isr->next;
 		/* 
 		 * No more rules to apply, return NULL isr and no error 
@@ -455,7 +437,7 @@ again:
 	}
 	return isr;
 bad:
-	IPSEC_ASSERT(*error != 0, ("ipsec_nextisr: error return w/ no error code"));
+	KASSERTMSG(*error != 0, "error return w/ no error code");
 	return NULL;
 #undef IPSEC_OSTAT
 }
@@ -477,8 +459,8 @@ ipsec4_process_packet(
 	struct ip *ip;
 	int s, error, i, off;
 
-	IPSEC_ASSERT(m != NULL, ("ipsec4_process_packet: null mbuf"));
-	IPSEC_ASSERT(isr != NULL, ("ipsec4_process_packet: null isr"));
+	KASSERT(m != NULL);
+	KASSERT(isr != NULL);
 
 	s = splsoftnet();			/* insure SA contents don't change */
 
@@ -518,10 +500,7 @@ ipsec4_process_packet(
 				break;
 			default:		/* propagate to outer header */
 				setdf = ip->ip_off;
-#ifndef __FreeBSD__
-		/* On FreeBSD, ip_off and ip_len assumed in host endian. */
 				setdf = ntohs(setdf);
-#endif
 				setdf = htons(setdf & IP_DF);
 				break;
 			}
@@ -583,7 +562,7 @@ ipsec4_process_packet(
 					goto bad;
 				}
 				ip = mtod(m, struct ip *);
-				ip->ip_off |= IP_OFF_CONVERT(IP_DF);
+				ip->ip_off |= htons(IP_DF);
 			}
 		}
 	}
@@ -715,8 +694,8 @@ ipsec6_process_packet(
 	int s, error, i, off;
 	union sockaddr_union *dst;
 
-	IPSEC_ASSERT(m != NULL, ("ipsec6_process_packet: null mbuf"));
-	IPSEC_ASSERT(isr != NULL, ("ipsec6_process_packet: null isr"));
+	KASSERT(m != NULL);
+	KASSERT(isr != NULL);
 
 	s = splsoftnet();   /* insure SA contents don't change */
 

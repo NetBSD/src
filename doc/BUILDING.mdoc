@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.115.2.1 2017/03/20 06:52:12 pgoyette Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.115.2.2 2017/04/26 02:52:18 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd February 20, 2017
+.Dd April 13, 2017
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -697,6 +697,29 @@ Indicates whether RCS IDs, for use with
 should be stripped from program binaries and shared libraries.
 .DFLTn
 .
+.It Sy MKSTRIPSYM
+.YorN
+Indicates whether all local symbols should be stripped from shared libraries.
+If
+.Dq yes ,
+strip all local symbols from shared libraries;
+the affect is equivalent to the
+.Fl x
+option of
+.Xr  ld 1 .
+If
+.Dq no ,
+strip only temporary local symbols; the affect is equivalent
+to the
+.Fl X
+option of
+.Xr ld 1 .
+Keeping non-temporary local symbols
+such as static function names is useful on using DTrace for
+userland libraries and getting a backtrace from a rump kernel
+loading shared libraries.
+.DFLTy
+.
 .It Sy MKUNPRIVED
 .YorN
 Indicates whether an unprivileged install will occur.
@@ -1265,7 +1288,7 @@ but which can be installed from
 Create a bootable
 .Nx
 installation disk image in the
-.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /installation/installimage
+.Sy RELEASEDIR Ns Pa /images
 directory.
 The installation disk image is suitable for copying to
 bootable USB flash memory sticks, etc., for machines which

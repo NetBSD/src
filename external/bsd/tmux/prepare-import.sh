@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: prepare-import.sh,v 1.4 2014/07/24 15:16:26 christos Exp $
+# $NetBSD: prepare-import.sh,v 1.4.6.1 2017/04/26 02:52:51 pgoyette Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -12,12 +12,6 @@
 set -e
 
 ProgName=${0##*/}
-
-CLEAN_PATTERNS=
-CLEAN_PATTERNS="${CLEAN_PATTERNS} [A-Z]*"
-CLEAN_PATTERNS="${CLEAN_PATTERNS} aclocal.m4"
-CLEAN_PATTERNS="${CLEAN_PATTERNS} etc"
-CLEAN_PATTERNS="${CLEAN_PATTERNS} configure*"
 
 err() {
 	echo "${ProgName}:" "${@}" 1>&2
@@ -56,7 +50,6 @@ get_distname() {
 
 cleanup_dist() {
 	log "Removing unnecessary files from dist"
-	( cd dist && rm -rf ${CLEAN_PATTERNS} )
 	find dist -name .deps -exec rm -fr {} +
 	find dist -name .dirstamp -exec rm -f {} +
 }

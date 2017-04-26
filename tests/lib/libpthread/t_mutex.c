@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.9.2.4 2017/03/20 06:57:59 pgoyette Exp $ */
+/* $NetBSD: t_mutex.c,v 1.9.2.5 2017/04/26 02:53:33 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.9.2.4 2017/03/20 06:57:59 pgoyette Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.9.2.5 2017/04/26 02:53:33 pgoyette Exp $");
 
 #include <sys/time.h> /* For timespecadd */
 #include <inttypes.h> /* For UINT16_MAX */
@@ -371,7 +371,6 @@ ATF_TC_BODY(mutex5, tc)
 	PTHREAD_REQUIRE(pthread_join(child, NULL));
 }
 
-static pthread_mutex_t mutex6;
 static int start = 0;
 static uintmax_t high_cnt = 0, low_cnt = 0, MAX_LOOP = 100000000;
 
@@ -399,9 +398,9 @@ high_prio(void* arg)
 		high_cnt = 0;
 		sleep(1);
 	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex6, &ts_lengthy));
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 	if (start == 0) start = 2;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex6));
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 
 	return 0;
 }
@@ -431,10 +430,10 @@ low_prio(void* arg)
 		low_cnt = 0;
 		sleep(1);
 	}
-	PTHREAD_REQUIRE(mutex_lock(&mutex6, &ts_lengthy));
+	PTHREAD_REQUIRE(mutex_lock(&mutex, &ts_lengthy));
 	if (start == 0)
 		start = 1;
-	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex6));
+	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 
 	return 0;
 }
@@ -493,7 +492,8 @@ ATF_TC_BODY(mutex6, tc)
 	PTHREAD_REQUIRE(pthread_join(low, NULL));
 	PTHREAD_REQUIRE(pthread_join(high, NULL));
 	
-	ATF_REQUIRE_EQ(start, 1);
+	ATF_REQUIRE_EQ_MSG(start, 1, "start = %d, low_cnt =%ju, "
+	    "high_cnt = %ju\n", start, high_cnt, low_cnt);
 }
 
 ATF_TC(mutexattr1);

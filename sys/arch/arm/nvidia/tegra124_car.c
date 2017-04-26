@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.2.4.2 2017/03/20 06:57:11 pgoyette Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.2.4.3 2017/04/26 02:53:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2.4.2 2017/03/20 06:57:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2.4.3 2017/04/26 02:53:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -568,14 +568,31 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_H("fuse", "clk_m", CAR_DEV_H_FUSE),
 	CLK_GATE_U("soc_therm", "div_soc_therm", CAR_DEV_U_SOC_THERM),
 	CLK_GATE_V("tsensor", "div_tsensor", CAR_DEV_V_TSENSOR),
-	CLK_GATE_SIMPLE("watchdog", "clk_m", CAR_RST_SOURCE_REG,
-		CAR_RST_SOURCE_WDT_EN|CAR_RST_SOURCE_WDT_SYS_RST_EN),
 	CLK_GATE_L("host1x", "div_host1x", CAR_DEV_L_HOST1X),
 	CLK_GATE_L("disp1", "mux_disp1", CAR_DEV_L_DISP1),
 	CLK_GATE_L("disp2", "mux_disp2", CAR_DEV_L_DISP2),
 	CLK_GATE_H("hdmi", "div_hdmi", CAR_DEV_H_HDMI),
 	CLK_GATE_SIMPLE("pll_p_out5", "div_pllp_out5",
 		CAR_PLLP_OUTC_REG, CAR_PLLP_OUTC_OUT5_CLKEN),
+	CLK_GATE_U("xusb_host", "xusb_host_src", CAR_DEV_U_XUSB_HOST),
+	CLK_GATE_W("xusb_ss", "xusb_ss_src", CAR_DEV_W_XUSB_SS),
+	CLK_GATE_X("gpu", "pll_ref", CAR_DEV_X_GPU),
+};
+
+struct tegra124_init_parent {
+	const char *clock;
+	const char *parent;
+} tegra124_init_parents[] = {
+	{ "sata_oob",		"pll_p_out0" },
+	{ "sata",		"pll_p_out0" },
+	{ "hda",		"pll_p_out0" },
+	{ "hda2codec_2x",	"pll_p_out0" },
+	{ "soc_therm",		"pll_p_out0" },
+	{ "tsensor",		"clk_m" },
+	{ "xusb_host_src",	"pll_p_out0" },
+	{ "xusb_falcon_src",	"pll_p_out0" },
+	{ "xusb_ss_src",	"pll_u_480" },
+	{ "xusb_fs_src",	"pll_u_48" },
 };
 
 struct tegra124_car_rst {
@@ -613,6 +630,8 @@ struct tegra124_car_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 
+	struct clk_domain	sc_clkdom;
+
 	u_int			sc_clock_cells;
 	u_int			sc_reset_cells;
 
@@ -622,6 +641,9 @@ struct tegra124_car_softc {
 
 static void	tegra124_car_init(struct tegra124_car_softc *);
 static void	tegra124_car_utmip_init(struct tegra124_car_softc *);
+static void	tegra124_car_xusb_init(struct tegra124_car_softc *);
+static void	tegra124_car_watchdog_init(struct tegra124_car_softc *);
+static void	tegra124_car_parent_init(struct tegra124_car_softc *);
 
 static void	tegra124_car_rnd_attach(device_t);
 static void	tegra124_car_rnd_callback(size_t, void *);
@@ -653,7 +675,7 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, n;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -675,7 +697,10 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
 
-	clk_backend_register("tegra124", &tegra124_car_clock_funcs, sc);
+	sc->sc_clkdom.funcs = &tegra124_car_clock_funcs;
+	sc->sc_clkdom.priv = sc;
+	for (n = 0; n < __arraycount(tegra124_car_clocks); n++)
+		tegra124_car_clocks[n].base.domain = &sc->sc_clkdom;
 
 	fdtbus_register_clock_controller(self, phandle,
 	    &tegra124_car_fdtclock_funcs);
@@ -690,7 +715,35 @@ tegra124_car_attach(device_t parent, device_t self, void *aux)
 static void
 tegra124_car_init(struct tegra124_car_softc *sc)
 {
+	tegra124_car_parent_init(sc);
 	tegra124_car_utmip_init(sc);
+	tegra124_car_xusb_init(sc);
+	tegra124_car_watchdog_init(sc);
+}
+
+static void
+tegra124_car_parent_init(struct tegra124_car_softc *sc)
+{
+	struct clk *clk, *clk_parent;
+	int error;
+	u_int n;
+
+	for (n = 0; n < __arraycount(tegra124_init_parents); n++) {
+		clk = clk_get(&sc->sc_clkdom, tegra124_init_parents[n].clock);
+		KASSERT(clk != NULL);
+		clk_parent = clk_get(&sc->sc_clkdom,
+		    tegra124_init_parents[n].parent);
+		KASSERT(clk_parent != NULL);
+
+		error = clk_set_parent(clk, clk_parent);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't set '%s' parent to '%s': %d\n",
+			    clk->name, clk_parent->name, error);
+		}
+		clk_put(clk_parent);
+		clk_put(clk);
+	}
 }
 
 static void
@@ -724,6 +777,62 @@ tegra124_car_utmip_init(struct tegra124_car_softc *sc)
 	    CAR_UTMIP_PLL_CFG1_PLLU_POWERDOWN |
 	    CAR_UTMIP_PLL_CFG1_PLL_ENABLE_POWERDOWN);
 
+}
+
+static void
+tegra124_car_xusb_init(struct tegra124_car_softc *sc)
+{
+	const bus_space_tag_t bst = sc->sc_bst;
+	const bus_space_handle_t bsh = sc->sc_bsh;
+	uint32_t val;
+
+	/* XXX do this all better */
+
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_XUSB);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_MISC_REG,
+	    0, CAR_PLLREFE_MISC_IDDQ);
+	val = __SHIFTIN(25, CAR_PLLREFE_BASE_DIVN) |
+	    __SHIFTIN(1, CAR_PLLREFE_BASE_DIVM);
+	bus_space_write_4(bst, bsh, CAR_PLLREFE_BASE_REG, val);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_MISC_REG,
+	    0, CAR_PLLREFE_MISC_LOCK_OVERRIDE);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_BASE_REG,
+	    CAR_PLLREFE_BASE_ENABLE, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_MISC_REG,
+	    CAR_PLLREFE_MISC_LOCK_ENABLE, 0);
+
+	do {
+		delay(2);
+		val = bus_space_read_4(bst, bsh, CAR_PLLREFE_MISC_REG);
+	} while ((val & CAR_PLLREFE_MISC_LOCK) == 0);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG,
+	    CAR_PLLE_MISC_IDDQ_SWCTL, CAR_PLLE_MISC_IDDQ_OVERRIDE);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_BASE_REG,
+	    CAR_PLLE_BASE_ENABLE, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG,
+	    CAR_PLLE_MISC_LOCK_ENABLE, 0);
+
+	do {
+		delay(2);
+		val = bus_space_read_4(bst, bsh, CAR_PLLE_MISC_REG);
+	} while ((val & CAR_PLLE_MISC_LOCK) == 0);
+
+	tegra_reg_set_clear(bst, bsh, CAR_CLKSRC_XUSB_SS_REG,
+	    CAR_CLKSRC_XUSB_SS_HS_CLK_BYPASS, 0);
+}
+
+static void
+tegra124_car_watchdog_init(struct tegra124_car_softc *sc)
+{
+	const bus_space_tag_t bst = sc->sc_bst;
+	const bus_space_handle_t bsh = sc->sc_bsh;
+
+	/* Enable watchdog timer reset for system */
+	tegra_reg_set_clear(bst, bsh, CAR_RST_SOURCE_REG,
+	    CAR_RST_SOURCE_WDT_EN|CAR_RST_SOURCE_WDT_SYS_RST_EN, 0);
 }
 
 static void
@@ -1037,6 +1146,16 @@ tegra124_car_clock_get_rate_fixed_div(struct tegra124_car_softc *sc,
 }
 
 static u_int
+tegra124_car_clock_calc_rate_frac_div(u_int rate, u_int raw_div)
+{
+	raw_div += 2;
+	rate *= 2;
+	rate += raw_div - 1;
+	rate /= raw_div;
+	return rate;
+}
+
+static u_int
 tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
     struct tegra_clk *tclk)
 {
@@ -1060,13 +1179,15 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	case CAR_CLKSRC_UARTC_REG:
 	case CAR_CLKSRC_UARTD_REG:
 		if (v & CAR_CLKSRC_UART_DIV_ENB) {
-			div = raw_div * 2;
+			rate = tegra124_car_clock_calc_rate_frac_div(
+			    parent_rate, raw_div);
 		} else {
 			div = 2;
 		}
 		break;
 	default:
-		div = raw_div * 2;
+		rate = tegra124_car_clock_calc_rate_frac_div(parent_rate,
+		    raw_div);
 		break;
 	}
 
@@ -1113,12 +1234,35 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 			v &= ~CAR_CLKSRC_SATA_AUX_CLK_ENB;
 		}
 		break;
-	}
-
-	if (rate) {
-		raw_div = (parent_rate * 2) / rate - 2;
-	} else {
-		raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
+	case CAR_CLKSRC_I2C1_REG:
+	case CAR_CLKSRC_I2C2_REG:
+	case CAR_CLKSRC_I2C3_REG:
+	case CAR_CLKSRC_I2C4_REG:
+	case CAR_CLKSRC_I2C5_REG:
+	case CAR_CLKSRC_I2C6_REG:
+		if (rate)
+			raw_div = parent_rate / rate - 1;
+		break;
+	case CAR_CLKSRC_SDMMC1_REG:
+	case CAR_CLKSRC_SDMMC2_REG:
+	case CAR_CLKSRC_SDMMC3_REG:
+	case CAR_CLKSRC_SDMMC4_REG:
+		if (rate) {
+			for (raw_div = 0x00; raw_div <= 0xff; raw_div++) {
+				u_int calc_rate =
+				    tegra124_car_clock_calc_rate_frac_div(
+					parent_rate, raw_div);
+				if (calc_rate <= rate)
+					break;
+			}
+			if (raw_div == 0x100)
+				return EINVAL;
+		}
+		break;
+	default:
+		if (rate)
+			raw_div = (parent_rate * 2) / rate - 2;
+		break;
 	}
 
 	v &= ~tdiv->bits;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.102.2.3 2017/03/20 06:57:06 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.102.2.4 2017/04/26 02:52:58 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 17, 2016
+.Dd March 25, 2017
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -964,7 +964,7 @@ structures is returned,
 whose size depends on the current number of such objects in the system.
 The third and fourth level numeric names are as follows:
 .Bl -column "KERN_PROC_SESSION" "Fourth level is:" -offset indent
-.It Sy Third level name Ta Sy Fourth level is:
+.It Sy Third level name Ta Sy Fourth level is :
 .It KERN_PROC_ALL	None
 .It KERN_PROC_GID	A group ID
 .It KERN_PROC_PID	A process ID
@@ -1347,7 +1347,7 @@ The fourth level name is an address family, which may be set to 0 to
 select all address families.
 The fifth and sixth level names are as follows:
 .Bl -column "Fifth level name" "Sixth level is:" -offset indent
-.It Sy Fifth level name Ta Sy Sixth level is:
+.It Sy Fifth level name Ta Sy Sixth level is :
 .It NET_RT_FLAGS	rtflags
 .It NET_RT_DUMP	None
 .It NET_RT_IFLIST	None
@@ -2124,6 +2124,7 @@ points to the current process, or the PID of the target process.
 .It proc.pid.stopfork	int	yes
 .It proc.pid.stopexec	int	yes
 .It proc.pid.stopexit	int	yes
+.It proc.pid.paxflags	int	no
 .El
 .Bl -tag -width "123456"
 .It Li proc.pid.corename ( Dv PROC_PID_CORENAME )
@@ -2203,38 +2204,38 @@ Both are of type integer.
 If non zero, the process' children will be stopped after
 .Xr fork 2
 calls.
-The children is created in the SSTOP state and is never scheduled
+The children are created in the SSTOP state and are never scheduled
 for running before being stopped.
-This feature helps attaching a process with a debugger such as
+This feature enables attaching to a process with a debugger such as
 .Xr gdb 1
-before it had the opportunity to actually do anything.
+before the process has the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children, and it also
-apply to emulation specific system calls that fork a new process, such as
+applies to emulation specific system calls that fork a new process, such as
 .Fn sproc
 or
 .Fn clone .
 .It Li proc.pid.stopexec ( Dv PROC_PID_STOPEXEC )
-If non zero, the process will be stopped on next
+If non zero, the process will be stopped on the next
 .Xr exec 3
 call.
 The process created by
 .Xr exec 3
 is created in the SSTOP state and is never scheduled for running
 before being stopped.
-This feature helps attaching a process with a debugger such as
+This feature enables attaching to a process with a debugger such as
 .Xr gdb 1
-before it had the opportunity to actually do anything.
+before the process has the opportunity to actually do anything.
 .Pp
 This value is inherited by the process's children.
 .It Li proc.pid.stopexit ( Dv PROC_PID_STOPEXIT )
-If non zero, the process will be stopped on when it has cause to exit,
+If non zero, the process will be stopped when it has cause to exit,
 either by way of calling
 .Xr exit 3 ,
 .Xr _exit 2 ,
 or by the receipt of a specific signal.
 The process is stopped before any of its resources or vm space is
-released allowing examination of the termination state of a process
+released allowing examination of the termination state of the process
 before it disappears.
 This feature can be used to examine the final conditions of the
 process's vmspace via
@@ -2244,6 +2245,10 @@ or its resource settings with
 before it disappears.
 .Pp
 This value is also inherited by the process's children.
+.It Li proc.pid.paxflags ( Dv PROC_PID_PAXFLAGS )
+This read-only variable returns the current value of the process's pax
+flags (see
+.Xr paxctl 8 ) .
 .El
 .Ss The user.* subtree ( Dv CTL_USER )
 The string and integer information available for the

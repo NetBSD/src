@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.1.4.2 2017/03/20 06:57:15 pgoyette Exp $	*/
+/*	$NetBSD: eficons.c,v 1.1.4.3 2017/04/26 02:53:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -209,9 +209,6 @@ bi_framebuffer(void)
 	EFI_STATUS status;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 	struct btinfo_framebuffer fb;
-	UINT64 res, bestres = 0;
-	UINTN sz;
-	UINT32 i;
 	INT32 bestmode = -1;
 
 	if (efi_gop == NULL) {
@@ -222,7 +219,12 @@ bi_framebuffer(void)
 	if (efi_gop_mode >= 0) {
 		bestmode = efi_gop_mode;
 	} else {
-		/* XXX EDID? EFI_EDID_DISCOVERD_PROTOCOL */
+#if 0
+		UINT64 res, bestres = 0;
+		UINTN sz;
+		UINT32 i;
+
+		/* XXX EDID? EFI_EDID_DISCOVERED_PROTOCOL */
 		for (i = 0; i < efi_gop->Mode->MaxMode; i++) {
 			status = uefi_call_wrapper(efi_gop->QueryMode, 4,
 			    efi_gop, i, &sz, &info);
@@ -237,6 +239,7 @@ bi_framebuffer(void)
 				bestres = res;
 			}
 		}
+#endif
 	}
 	if (bestmode >= 0) {
 		status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
@@ -496,24 +499,27 @@ static void
 eficons_init_video(void)
 {
 	EFI_STATUS status;
-	UINTN cols, rows, dim = 0;
-	INT32 i, best = -1;
+	UINTN cols, rows;
+	INT32 i, best, mode80x25, mode100x31;
 
 	/*
 	 * Setup text mode
 	 */
 	uefi_call_wrapper(ST->ConOut->Reset, 2, ST->ConOut, TRUE);
 
+	mode80x25 = mode100x31 = -1;
 	for (i = 0; i < ST->ConOut->Mode->MaxMode; i++) {
 		status = uefi_call_wrapper(ST->ConOut->QueryMode, 4,
 		    ST->ConOut, i, &cols, &rows);
 		if (EFI_ERROR(status))
 			continue;
-		if (dim < cols * rows) {
-			dim = cols * rows;
-			best = i;
-		}
+
+		if (mode80x25 < 0 && cols == 80 && rows == 25)
+			mode80x25 = i;
+		else if (mode100x31 < 0 && cols == 100 && rows == 31)
+			mode100x31 = i;
 	}
+	best = mode100x31 >= 0 ? mode100x31 : mode80x25 >= 0 ? mode80x25 : -1;
 	if (best >= 0)
 		uefi_call_wrapper(ST->ConOut->SetMode, 2, ST->ConOut, best);
 	uefi_call_wrapper(ST->ConOut->EnableCursor, 2, ST->ConOut, TRUE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.1 2011/05/20 21:42:49 nakayama Exp $	*/
+/*	$NetBSD: fenv.c,v 1.1.26.1 2017/04/26 02:52:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -24,10 +24,29 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2011/05/20 21:42:49 nakayama Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.1.26.1 2017/04/26 02:52:56 pgoyette Exp $");
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <fenv.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 /* Load floating-point state register (32bits) */
 #define	__ldfsr(__r)	__asm__	__volatile__		\

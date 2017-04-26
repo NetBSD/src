@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1.4.1 2017/03/20 06:57:18 pgoyette Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.4.2 2017/04/26 02:53:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -32,13 +32,6 @@
 #define	_POWERPC_FENV_H_
 
 #include <sys/stdint.h>
-
-#ifndef	__fenv_static
-#define	__fenv_static	static
-#endif
-
-typedef	uint32_t	fenv_t;
-typedef	uint32_t	fexcept_t;
 
 /* Exception flags */
 #define	FE_INEXACT	0x02000000
@@ -76,6 +69,15 @@ typedef	uint32_t	fexcept_t;
 #define	FE_DOWNWARD	0x0003
 #define	_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
 			 FE_UPWARD | FE_TOWARDZERO)
+
+#ifndef _SOFT_FLOAT
+
+#ifndef	__fenv_static
+#define	__fenv_static	static
+#endif
+
+typedef	uint32_t	fenv_t;
+typedef	uint32_t	fexcept_t;
 
 #ifndef _KERNEL
 __BEGIN_DECLS
@@ -273,9 +275,7 @@ feupdateenv(const fenv_t *__envp)
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-/* We currently provide no external definitions of the functions below. */
-
-static inline int
+__fenv_static inline int
 feenableexcept(int __mask)
 {
 	union __fpscr __r;
@@ -289,7 +289,7 @@ feenableexcept(int __mask)
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
-static inline int
+__fenv_static inline int
 fedisableexcept(int __mask)
 {
 	union __fpscr __r;
@@ -303,7 +303,7 @@ fedisableexcept(int __mask)
 	return ((__oldmask & _ENABLE_MASK) << _FPUSW_SHIFT);
 }
 
-static inline int
+__fenv_static inline int
 fegetexcept(void)
 {
 	union __fpscr __r;
@@ -315,6 +315,8 @@ fegetexcept(void)
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
+
 #endif
+#endif	/* _SOFT_FLOAT */
 
 #endif	/* !_POWERPC_FENV_H_ */

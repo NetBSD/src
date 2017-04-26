@@ -16,7 +16,7 @@
 
 /* $OpenBSD: cipher-chachapoly.c,v 1.8 2016/08/03 05:41:57 djm Exp $ */
 #include "includes.h"
-__RCSID("$NetBSD: cipher-chachapoly.c,v 1.3.4.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: cipher-chachapoly.c,v 1.3.4.2 2017/04/26 02:52:14 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <stdarg.h> /* needed for log.h */

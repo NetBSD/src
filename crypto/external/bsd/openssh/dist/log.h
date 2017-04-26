@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.9.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: log.h,v 1.9.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: log.h,v 1.21 2016/07/15 05:01:58 dtucker Exp $ */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fatal.c,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: fatal.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: fatal.c,v 1.7 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: fatal.c,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: fatal.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <stdarg.h>

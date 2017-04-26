@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.31 2015/04/23 23:23:00 pgoyette Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.31.2.1 2017/04/26 02:53:12 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.31 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.31.2.1 2017/04/26 02:53:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,7 @@ nsclpcsio_isa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	aprint_normal(": NSC PC87366 rev. 0x%d ",
+	aprint_normal(": NSC PC87366 rev. %d ",
 	    nsread(sc->sc_iot, sc->sc_ioh, SIO_REG_SRID));
 
 	/* Configure all supported logical devices */

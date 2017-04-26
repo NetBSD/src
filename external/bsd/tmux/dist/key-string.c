@@ -25,7 +25,7 @@
 int	key_string_search_table(const char *);
 int	key_string_get_modifiers(const char **);
 
-const struct {
+static const struct {
 	const char     *string;
 	int	 	key;
 } key_string_table[] = {
@@ -95,6 +95,12 @@ const struct {
 	KEYC_MOUSE_STRING(MOUSEDRAG3, MouseDrag3),
 	KEYC_MOUSE_STRING(WHEELUP, WheelUp),
 	KEYC_MOUSE_STRING(WHEELDOWN, WheelDown),
+	KEYC_MOUSE_STRING(DOUBLECLICK1, DoubleClick1),
+	KEYC_MOUSE_STRING(DOUBLECLICK2, DoubleClick2),
+	KEYC_MOUSE_STRING(DOUBLECLICK3, DoubleClick3),
+	KEYC_MOUSE_STRING(TRIPLECLICK1, TripleClick1),
+	KEYC_MOUSE_STRING(TRIPLECLICK2, TripleClick2),
+	KEYC_MOUSE_STRING(TRIPLECLICK3, TripleClick3),
 };
 
 /* Find key string in table. */
@@ -131,6 +137,9 @@ key_string_get_modifiers(const char **string)
 		case 's':
 			modifiers |= KEYC_SHIFT;
 			break;
+		default:
+			*string = NULL;
+			return (0);
 		}
 		*string += 2;
 	}
@@ -142,14 +151,24 @@ int
 key_string_lookup_string(const char *string)
 {
 	static const char	*other = "!#()+,-.0123456789:;<=>?'\r\t";
-	int			 key, modifiers;
-	u_short			 u;
-	int			 size;
+	key_code		 key;
+	u_int			 u;
+	key_code		 modifiers;
+	struct utf8_data	 ud;
+	u_int			 i;
+	enum utf8_state		 more;
+	wchar_t			 wc;
+
+	/* Is this no key? */
+	if (strcasecmp(string, "None") == 0)
+		return (KEYC_NONE);
 
 	/* Is this a hexadecimal value? */
 	if (string[0] == '0' && string[1] == 'x') {
-	        if (sscanf(string + 2, "%hx%n", &u, &size) != 1 || size > 4)
-	                return (KEYC_NONE);
+	        if (sscanf(string + 2, "%x", &u) != 1)
+	                return (KEYC_UNKNOWN);
+		if (u > 0x1fffff)
+	                return (KEYC_UNKNOWN);
 	        return (u);
 	}
 
@@ -160,8 +179,8 @@ key_string_lookup_string(const char *string)
 		string++;
 	}
 	modifiers |= key_string_get_modifiers(&string);
-	if (string[0] == '\0')
-		return (KEYC_NONE);
+	if (string == NULL || string[0] == '\0')
+		return (KEYC_UNKNOWN);
 
 	/* Is this a standard ASCII key? */
 	if (string[1] == '\0') {
@@ -197,17 +216,35 @@ key_string_lookup_string(const char *string)
 const char *
 key_string_lookup_key(int key)
 {
-	static char	out[24];
-	char		tmp[8];
-	u_int		i;
+	static char		out[32];
+	char			tmp[8];
+	u_int			i;
+	struct utf8_data	ud;
+	size_t			off;
 
 	*out = '\0';
 
 	/* Handle no key. */
 	if (key == KEYC_NONE)
-		return ("<NONE>");
+		return ("None");
+
+	/* Handle special keys. */
+	if (key == KEYC_UNKNOWN)
+		return ("Unknown");
+	if (key == KEYC_FOCUS_IN)
+		return ("FocusIn");
+	if (key == KEYC_FOCUS_OUT)
+		return ("FocusOut");
 	if (key == KEYC_MOUSE)
-		return ("<MOUSE>");
+		return ("Mouse");
+	if (key == KEYC_DRAGGING)
+		return ("Dragging");
+	if (key == KEYC_MOUSEMOVE_PANE)
+		return ("MouseMovePane");
+	if (key == KEYC_MOUSEMOVE_STATUS)
+		return ("MouseMoveStatus");
+	if (key == KEYC_MOUSEMOVE_BORDER)
+		return ("MouseMoveBorder");
 
 	/*
 	 * Special case: display C-@ as C-Space. Could do this below in
@@ -235,6 +272,16 @@ key_string_lookup_key(int key)
 	if (i != nitems(key_string_table)) {
 		strlcat(out, key_string_table[i].string, sizeof out);
 		return (out);
+	}
+
+	/* Is this a UTF-8 key? */
+	if (key > 127 && key < KEYC_BASE) {
+		if (utf8_split(key, &ud) == UTF8_DONE) {
+			off = strlen(out);
+			memcpy(out + off, ud.data, ud.size);
+			out[off + ud.size] = '\0';
+			return (out);
+		}
 	}
 
 	/* Invalid keys are errors. */

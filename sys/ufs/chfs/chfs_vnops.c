@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.28 2015/04/20 23:03:09 riastradh Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.28.2.1 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,7 +43,6 @@
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 #include <sys/buf.h>
-#include <sys/fstrans.h>
 #include <sys/vnode.h>
 
 #include "chfs.h"
@@ -653,8 +652,6 @@ chfs_read(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
-
 	if (uio->uio_offset >= ip->size)
 		goto out;
 
@@ -737,7 +734,6 @@ out:
 		ip->iflag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
 			if (error) {
-				fstrans_done(vp->v_mount);
 				return error;
 			}
 			error = chfs_update(vp, NULL, NULL, UPDATE_WAIT);
@@ -745,7 +741,6 @@ out:
 	}
 
 	dbg("[END]\n");
-	fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -832,8 +827,6 @@ chfs_write(void *v)
 	}
 	if (uio->uio_resid == 0)
 		return (0);
-
-	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -1003,7 +996,6 @@ out:
 
 
 	KASSERT(vp->v_size == ip->size);
-	fstrans_done(vp->v_mount);
 
 	mutex_enter(&chmp->chm_lock_mountfields);
 	error = chfs_write_flash_vnode(chmp, ip, ALLOC_NORMAL);
@@ -1460,7 +1452,7 @@ chfs_readlink(void *v)
 int
 chfs_inactive(void *v)
 {
-	struct vnode *vp = ((struct vop_inactive_args *) v)->a_vp;
+	struct vnode *vp = ((struct vop_inactive_v2_args *) v)->a_vp;
 	struct chfs_inode *ip = VTOI(vp);
 	struct chfs_vnode_cache *chvc;
 	dbg("inactive | vno: %llu\n", (unsigned long long)ip->ino);
@@ -1471,12 +1463,10 @@ chfs_inactive(void *v)
 	if (ip->ino) {
 		chvc = ip->chvc;
 		if (chvc->nlink)
-			*((struct vop_inactive_args *) v)->a_recycle = 0;
+			*((struct vop_inactive_v2_args *) v)->a_recycle = 0;
 	} else {
-		*((struct vop_inactive_args *) v)->a_recycle = 1;
+		*((struct vop_inactive_v2_args *) v)->a_recycle = 1;
 	}
-
-	VOP_UNLOCK(vp);
 
 	return 0;
 }

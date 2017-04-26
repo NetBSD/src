@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1530.2.3 2017/03/20 06:52:09 pgoyette Exp $
+# $NetBSD: mi,v 1.1530.2.4 2017/04/26 02:52:17 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -12,7 +12,7 @@
 ./usr/share/info/cpp.info			man-util-info		gcccmds,info
 ./usr/share/info/cvs.info			man-cvs-info		cvs,info
 ./usr/share/info/cvsclient.info			man-cvs-info		cvs,info
-./usr/share/info/dc.info			man-util-info		info
+./usr/share/info/dc.info			man-obsolete		obsolete
 ./usr/share/info/diff.info			man-util-info		info
 ./usr/share/info/dir				man-info-share		info
 ./usr/share/info/flex.info			man-computil-info	info
@@ -1066,6 +1066,7 @@
 ./usr/share/man/cat4/evbarm/bcmgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/cpsw.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/epgpio.0		man-sys-catman		.cat
+./usr/share/man/cat4/evbarm/gxio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopwdog.0		man-sys-catman		.cat
@@ -1805,6 +1806,7 @@
 ./usr/share/man/cat4/twe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/u3g.0			man-sys-catman		.cat
+./usr/share/man/cat4/ualea.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uark.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uatp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uaudio.0			man-sys-catman		.cat
@@ -4167,6 +4169,7 @@
 ./usr/share/man/html4/evbarm/bcmgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/cpsw.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/epgpio.html	man-sys-htmlman		html
+./usr/share/man/html4/evbarm/gxio.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopaau.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopwdog.html	man-sys-htmlman		html
@@ -4832,6 +4835,7 @@
 ./usr/share/man/html4/twe.html			man-sys-htmlman		html
 ./usr/share/man/html4/txp.html			man-sys-htmlman		html
 ./usr/share/man/html4/u3g.html			man-sys-htmlman		html
+./usr/share/man/html4/ualea.html		man-sys-htmlman		html
 ./usr/share/man/html4/uark.html		man-sys-htmlman		html
 ./usr/share/man/html4/uatp.html		man-sys-htmlman		html
 ./usr/share/man/html4/uaudio.html		man-sys-htmlman		html
@@ -7040,6 +7044,7 @@
 ./usr/share/man/man4/evbarm/bcmgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/cpsw.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/epgpio.4		man-sys-man		.man
+./usr/share/man/man4/evbarm/gxio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopwdog.4		man-sys-man		.man
@@ -7779,6 +7784,7 @@
 ./usr/share/man/man4/twe.4			man-sys-man		.man
 ./usr/share/man/man4/txp.4			man-sys-man		.man
 ./usr/share/man/man4/u3g.4			man-sys-man		.man
+./usr/share/man/man4/ualea.4			man-sys-man		.man
 ./usr/share/man/man4/uark.4			man-sys-man		.man
 ./usr/share/man/man4/uatp.4			man-sys-man		.man
 ./usr/share/man/man4/uaudio.4			man-sys-man		.man

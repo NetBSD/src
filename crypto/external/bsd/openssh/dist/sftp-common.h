@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.h,v 1.5.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: sftp-common.h,v 1.5.2.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: sftp-common.h,v 1.12 2015/01/14 13:54:13 djm Exp $ */
 
 /*

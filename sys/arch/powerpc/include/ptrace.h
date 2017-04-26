@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12 2015/09/15 15:49:03 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12.2.1 2017/04/26 02:53:06 pgoyette Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -10,12 +10,15 @@
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 #define	PT_GETVECREGS	(PT_FIRSTMACH + 5)
 #define	PT_SETVECREGS	(PT_FIRSTMACH + 6)
+#define	PT_SETSTEP	(PT_FIRSTMACH + 7)
+#define	PT_CLEARSTEP	(PT_FIRSTMACH + 8)
 
 #define	PT_MACHDEP_STRINGS				\
 	"PT_STEP",					\
 	"PT_GETREGS",		"PT_SETREGS",		\
 	"PT_GETFPREGS",		"PT_SETFPREGS",		\
-	"PT_GETVECREGS",	"PT_SETVECREGS",
+	"PT_GETVECREGS",	"PT_SETVECREGS",	\
+	"PT_SETSTEP",		"PT_CLEARSTEP",
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->pc

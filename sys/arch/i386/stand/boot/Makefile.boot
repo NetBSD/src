@@ -1,19 +1,15 @@
-# $NetBSD: Makefile.boot,v 1.69 2016/01/23 22:29:29 christos Exp $
+# $NetBSD: Makefile.boot,v 1.69.2.1 2017/04/26 02:53:03 pgoyette Exp $
 
 S=	${.CURDIR}/../../../../..
 
 NOMAN=
 PROG?= boot
 NEWVERSWHAT?= "BIOS Boot"
-VERSIONFILE?= ${.CURDIR}/../version
 
 AFLAGS.biosboot.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= biosboot.S boot2.c conf.c devopen.c exec.c
 SRCS= ${SOURCES}
-.if !make(depend)
-SRCS+= vers.c
-.endif
 
 PIE_CFLAGS=
 PIE_AFLAGS=
@@ -124,10 +120,10 @@ cleanlibdir:
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
 
-CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.sym vers.c
+CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.sym
 
-vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+VERSIONMACHINE=x86
+.include "${S}/conf/newvers_stand.mk"
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_rtc.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_rtc.c,v 1.2.2.1 2017/04/26 02:53:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_rtc.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_rtc.c,v 1.2.2.1 2017/04/26 02:53:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,7 +104,7 @@ tegra_rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_gettime = tegra_rtc_gettime;
 	sc->sc_todr.todr_settime = tegra_rtc_settime;
 	sc->sc_todr.cookie = sc;
-	todr_attach(&sc->sc_todr);
+	fdtbus_todr_attach(self, faa->faa_phandle, &sc->sc_todr);
 }
 
 static int

@@ -26,14 +26,22 @@
  * Detach a client.
  */
 
-enum cmd_retval	 cmd_detach_client_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_detach_client_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_detach_client_entry = {
-	"detach-client", "detach",
-	"as:t:P", 0, 0,
-	"[-P] [-a] [-s target-session] " CMD_TARGET_CLIENT_USAGE,
-	CMD_READONLY,
-	cmd_detach_client_exec
+	.name = "detach-client",
+	.alias = "detach",
+
+	.args = { "aE:s:t:P", 0, 0 },
+	.usage = "[-aP] [-E shell-command] "
+	         "[-s target-session] " CMD_TARGET_CLIENT_USAGE,
+
+	.sflag = CMD_SESSION,
+	.tflag = CMD_CLIENT,
+
+	.flags = CMD_READONLY,
+	.exec = cmd_detach_client_exec
 };
 
 const struct cmd_entry cmd_suspend_client_entry = {
@@ -44,13 +52,14 @@ const struct cmd_entry cmd_suspend_client_entry = {
 	cmd_detach_client_exec
 };
 
-enum cmd_retval
-cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_detach_client_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
-	struct client	*c, *cloop;
+	struct client	*c = item->state.c, *cloop;
 	struct session	*s;
 	enum msgtype	 msgtype;
+	const char	*cmd = args_get(args, 'E');
 
 	if (self->entry == &cmd_suspend_client_entry) {
 		if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
@@ -67,16 +76,14 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		msgtype = MSG_DETACH;
 
 	if (args_has(args, 's')) {
-		s = cmd_find_session(cmdq, args_get(args, 's'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
-
+		s = item->state.sflag.s;
 		TAILQ_FOREACH(cloop, &clients, entry) {
-			if (cloop->session != s)
-				continue;
-			server_write_client(cloop, msgtype,
-			    cloop->session->name,
-			    strlen(cloop->session->name) + 1);
+			if (cloop->session == s) {
+				if (cmd != NULL)
+					server_client_exec(cloop, cmd);
+				else
+					server_client_detach(cloop, msgtype);
+			}
 		}
 		return (CMD_RETURN_STOP);
 	}
@@ -87,16 +94,19 @@ cmd_detach_client_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	if (args_has(args, 'a')) {
 		TAILQ_FOREACH(cloop, &clients, entry) {
-			if (cloop->session == NULL || cloop == c)
-				continue;
-			server_write_client(cloop, msgtype,
-			    cloop->session->name,
-			    strlen(cloop->session->name) + 1);
+			if (cloop->session != NULL && cloop != c) {
+				if (cmd != NULL)
+					server_client_exec(cloop, cmd);
+				else
+					server_client_detach(cloop, msgtype);
+			}
 		}
 		return (CMD_RETURN_NORMAL);
 	}
 
-	server_write_client(c, msgtype, c->session->name,
-	    strlen(c->session->name) + 1);
+	if (cmd != NULL)
+		server_client_exec(c, cmd);
+	else
+		server_client_detach(c, msgtype);
 	return (CMD_RETURN_STOP);
 }

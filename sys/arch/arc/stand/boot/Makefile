@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2014/01/16 01:15:33 christos Exp $
+# $NetBSD: Makefile,v 1.15.10.1 2017/04/26 02:53:00 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -38,18 +38,6 @@ LDSCRIPT=  ${S}/arch/mips/conf/stand.ldscript
 TEXTADDR=  0x80f00000
 LD+=		-m elf32ltsmip
 
-# if there is a 'version' file, add rule for vers.c and add it to SRCS
-# and CLEANFILES
-.if exists(version)
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version ${MACHINE}
-
-SRCS+=	vers.c
-CLEANFILES+= vers.c
-.endif
-
 ### find out what to use for libsa
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
@@ -78,6 +66,8 @@ ${PROG}: ${OBJS} ${LIBS}
 	    ${PROG}.elf ${.TARGET}
 
 CLEANFILES+=	${PROG}.elf ${PROG}.map
+
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>

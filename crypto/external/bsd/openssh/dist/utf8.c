@@ -1,5 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.3.2.3 2017/01/07 08:53:42 pgoyette Exp $	*/
-/* $OpenBSD: utf8.c,v 1.3 2016/05/30 12:57:21 schwarze Exp $ */
+/*	$NetBSD: utf8.c,v 1.3.2.4 2017/04/26 02:52:15 pgoyette Exp $	*/
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -17,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: utf8.c,v 1.3.2.3 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.3.2.4 2017/04/26 02:52:15 pgoyette Exp $");
 /*
  * Utility functions for multibyte-character handling,
  * in particular to sanitize untrusted strings for terminal output.
@@ -55,7 +54,8 @@ dangerous_locale(void) {
 	char	*loc;
 
 	loc = nl_langinfo(CODESET);
-	return strcmp(loc, "US-ASCII") && strcmp(loc, "UTF-8");
+	return strcmp(loc, "US-ASCII") != 0 && strcmp(loc, "UTF-8") != 0 &&
+	    strcmp(loc, "ANSI_X3.4-1968") != 0;
 }
 
 static int
@@ -111,6 +111,7 @@ vasnmprintf(char **str, size_t maxsz, int *wp, const char *fmt, va_list ap)
 	sz = strlen(src) + 1;
 	if ((dst = malloc(sz)) == NULL) {
 		free(src);
+		ret = -1;
 		goto fail;
 	}
 

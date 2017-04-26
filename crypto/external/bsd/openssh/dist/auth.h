@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.12.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: auth.h,v 1.12.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: auth.h,v 1.89 2016/08/13 17:47:41 markus Exp $ */
 
 /*

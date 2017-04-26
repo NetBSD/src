@@ -5,7 +5,7 @@
  * Copied from nacl-20110221/crypto_verify/32/ref/verify.c
  */
 #include "includes.h"
-__RCSID("$NetBSD: verify.c,v 1.3.4.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: verify.c,v 1.3.4.2 2017/04/26 02:52:15 pgoyette Exp $");
 
 #include "crypto_api.h"
 

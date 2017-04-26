@@ -62,9 +62,12 @@ control_notify_window_layout_changed(struct window *w)
 {
 	struct client		*c;
 	struct session		*s;
-	struct format_tree	*ft;
 	struct winlink		*wl;
 	const char		*template;
+	char			*cp;
+
+	template = "%layout-change #{window_id} #{window_layout} "
+	    "#{window_visible_layout} #{window_flags}";
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c) || c->session == NULL)
@@ -83,13 +86,12 @@ control_notify_window_layout_changed(struct window *w)
 			continue;
 		template = "%layout-change #{window_id} #{window_layout}";
 
-		ft = format_create();
 		wl = winlink_find_by_window(&s->windows, w);
 		if (wl != NULL) {
-			format_defaults(ft, c, NULL, wl, NULL);
-			control_write(c, "%s", format_expand(ft, template));
+			cp = format_single(NULL, template, c, NULL, wl, NULL);
+			control_write(c, "%s", cp);
+			free(cp);
 		}
-		format_free(ft);
 	}
 }
 
@@ -151,7 +153,7 @@ control_notify_window_renamed(struct window *w)
 }
 
 void
-control_notify_attached_session_changed(struct client *c)
+control_notify_client_session_changed(struct client *c)
 {
 	struct session	*s;
 
@@ -189,7 +191,7 @@ control_notify_session_created(unused struct session *s)
 }
 
 void
-control_notify_session_close(unused struct session *s)
+control_notify_session_closed(__unused struct session *s)
 {
 	struct client	*c;
 

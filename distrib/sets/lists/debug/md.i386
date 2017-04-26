@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.9.2.1 2017/03/20 06:52:08 pgoyette Exp $
+# $NetBSD: md.i386,v 1.9.2.2 2017/04/26 02:52:16 pgoyette Exp $
 ./usr/lib/libi386_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libm387_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libpmc_g.a				comp-obsolete		obsolete
@@ -17,9 +17,9 @@
 ./usr/libdata/debug/usr/sbin/bad144.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ipwctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/ndiscvt.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-kernel-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-kernel-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-kernel-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait6.debug	tests-kernel-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitid.debug	tests-kernel-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitpid.debug	tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait3.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait4.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_wait6.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitid.debug	tests-obsolete	obsolete
+./usr/libdata/debug/usr/tests/kernel/arch/x86/t_ptrace_waitpid.debug	tests-obsolete	obsolete

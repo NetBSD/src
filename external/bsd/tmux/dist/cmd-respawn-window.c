@@ -27,7 +27,8 @@
  * Respawn a window (restart the command). Kill existing if -k given.
  */
 
-enum cmd_retval	 cmd_respawn_window_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_respawn_window_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_respawn_window_entry = {
 	"respawn-window", "respawnw",
@@ -37,12 +38,13 @@ const struct cmd_entry cmd_respawn_window_entry = {
 	cmd_respawn_window_exec
 };
 
-enum cmd_retval
-cmd_respawn_window_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct winlink		*wl;
-	struct window		*w;
+	struct session		*s = item->state.tflag.s;
+	struct winlink		*wl = item->state.tflag.wl;
+	struct window		*w = wl->window;
 	struct window_pane	*wp;
 	struct session		*s;
 	struct environ		 env;
@@ -58,16 +60,11 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->fd == -1)
 				continue;
-			cmdq_error(cmdq,
-			    "window still active: %s:%d", s->name, wl->idx);
+			cmdq_error(item, "window still active: %s:%d", s->name,
+			    wl->idx);
 			return (CMD_RETURN_ERROR);
 		}
 	}
-
-	environ_init(&env);
-	environ_copy(&global_environ, &env);
-	environ_copy(&s->environ, &env);
-	server_fill_environ(s, &env);
 
 	wp = TAILQ_FIRST(&w->panes);
 	TAILQ_REMOVE(&w->panes, wp, entry);
@@ -77,21 +74,23 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	window_pane_resize(wp, w->sx, w->sy);
 
 	path = NULL;
-	if (cmdq->client != NULL && cmdq->client->session == NULL)
-		envent = environ_find(&cmdq->client->environ, "PATH");
+	if (item->client != NULL && item->client->session == NULL)
+		envent = environ_find(item->client->environ, "PATH");
 	else
 		envent = environ_find(&s->environ, "PATH");
 	if (envent != NULL)
 		path = envent->value;
 
-	if (window_pane_spawn(wp, args->argc, args->argv, path, NULL, -1, &env,
+	env = environ_for_session(s);
+	if (window_pane_spawn(wp, args->argc, args->argv, path, NULL, NULL, env,
 	    s->tio, &cause) != 0) {
-		cmdq_error(cmdq, "respawn window failed: %s", cause);
+		cmdq_error(item, "respawn window failed: %s", cause);
 		free(cause);
 		environ_free(&env);
 		server_destroy_pane(wp);
 		return (CMD_RETURN_ERROR);
 	}
+	environ_free(env);
 	layout_init(w, wp);
 	window_pane_reset_mode(wp);
 	screen_reinit(&wp->base);
@@ -101,6 +100,5 @@ cmd_respawn_window_exec(struct cmd *self, struct cmd_q *cmdq)
 	recalculate_sizes();
 	server_redraw_window(w);
 
-	environ_free(&env);
 	return (CMD_RETURN_NORMAL);
 }

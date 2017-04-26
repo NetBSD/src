@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.38.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: syslog.h,v 1.38.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -82,7 +82,7 @@ CODE prioritynames[] = {
 	{ "info",	LOG_INFO },
 	{ "none",	INTERNAL_NOPRI },	/* INTERNAL */
 	{ "notice",	LOG_NOTICE },
-	{ "panic", 	LOG_EMERG },		/* DEPRECATED */
+	{ "panic",	LOG_EMERG },		/* DEPRECATED */
 	{ "warn",	LOG_WARNING },		/* DEPRECATED */
 	{ "warning",	LOG_WARNING },
 	{ NULL,		-1 }
@@ -122,13 +122,13 @@ CODE prioritynames[] = {
 CODE facilitynames[] = {
 	{ "auth",	LOG_AUTH },
 	{ "authpriv",	LOG_AUTHPRIV },
-	{ "cron", 	LOG_CRON },
+	{ "cron",	LOG_CRON },
 	{ "daemon",	LOG_DAEMON },
 	{ "ftp",	LOG_FTP },
 	{ "kern",	LOG_KERN },
 	{ "lpr",	LOG_LPR },
 	{ "mail",	LOG_MAIL },
-	{ "mark", 	INTERNAL_MARK },	/* INTERNAL */
+	{ "mark",	INTERNAL_MARK },	/* INTERNAL */
 	{ "news",	LOG_NEWS },
 	{ "security",	LOG_AUTH },		/* DEPRECATED */
 	{ "syslog",	LOG_SYSLOG },
@@ -168,6 +168,8 @@ CODE facilitynames[] = {
 #define	LOG_NDELAY	0x08	/* don't delay open */
 #define	LOG_NOWAIT	0x10	/* don't wait for console forks: DEPRECATED */
 #define	LOG_PERROR	0x20	/* log to stderr as well */
+#define LOG_PTRIM	0x40	/* trim tag and pid from messages to stderr */
+#define LOG_NLOG	0x80	/* don't write to the system log */
 
 #ifndef _KERNEL
 
@@ -179,10 +181,10 @@ struct syslog_data {
 	int	log_connected;
 	int	log_opened;
 	int	log_stat;
-	const char 	*log_tag;
+	const char	*log_tag;
 	char	log_hostname[256];	/* MAXHOSTNAMELEN */
-	int 	log_fac;
-	int 	log_mask;
+	int	log_fac;
+	int	log_mask;
 };
 
 #define SYSLOG_DATA_INIT { \

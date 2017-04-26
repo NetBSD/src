@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.6 2013/09/14 12:16:11 martin Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.6.10.1 2017/04/26 02:53:25 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -100,7 +100,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.6 2013/09/14 12:16:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.6.10.1 2017/04/26 02:53:25 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 1.1.1.2 2012/07/22 13:45:37 darrenr Exp";
@@ -3341,7 +3341,8 @@ ipf_state_check(fr_info_t *fin, u_32_t *passp)
 	 * If this packet is a fragment and the rule says to track fragments,
 	 * then create a new fragment cache entry.
 	 */
-	if ((fin->fin_flx & FI_FRAG) && FR_ISPASS(is->is_pass))
+	if (fin->fin_flx & FI_FRAG && FR_ISPASS(is->is_pass) &&
+	   is->is_pass & FR_KEEPFRAG)
 		(void) ipf_frag_new(softc, fin, is->is_pass);
 
 	/*

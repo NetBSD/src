@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.174.2.2 2017/03/20 06:52:12 pgoyette Exp $
+# $NetBSD: HACKS,v 1.174.2.3 2017/04/26 02:52:18 pgoyette Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -936,4 +936,14 @@ file	/cvsroot/src/crypto/external/bsd/heimdal/lib/libasn1/Makefile: 1.4
 desc 	asn1_krb5_asn1.po does not produce the same results during successive
 	compilation runs; it is bimodal. Turning optimization to -O0 fixes
 	the issue
+kcah
+
+port	ia64
+hack	ski emulator crashes
+who	scole
+file	/cvsroot/src/sys/external/bsd/acpica/dist/tables/tbxfload.c: 1.6
+desc
+	ski emulator crashes during acpi detection.  Added a check for
+	uninitialized index.  Submitted a request for change with upstream
+	mailing list, but never got a response
 kcah

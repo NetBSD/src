@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.8.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: cipher.c,v 1.8.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: cipher.c,v 1.102 2016/08/03 05:41:57 djm Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.8.2.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.8.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <string.h>

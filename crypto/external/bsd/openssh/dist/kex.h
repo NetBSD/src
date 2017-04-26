@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.h,v 1.12.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: kex.h,v 1.12.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: kex.h,v 1.81 2016/09/28 21:44:52 djm Exp $ */
 
 /*

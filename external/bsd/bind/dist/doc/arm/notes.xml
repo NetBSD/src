@@ -1,8 +1,6 @@
-<!DOCTYPE book [
-<!ENTITY mdash "&#8212;">
-<!ENTITY ouml "&#xf6;">]>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
- - Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,198 +15,152 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<section xmlns="http://docbook.org/ns/docbook" version="5.0"><info/>
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
-  <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
+<sect1 xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="noteversion.xml"/>
+  <sect2 id="relnotes_intro">
+    <title>Introduction</title>
     <para>
-      This document summarizes changes since BIND 9.10.4:
+      This document summarizes changes since BIND 9.10.2:
     </para>
     <para>
-      BIND 9.10.4-P6 addresses the security issue described in
-      CVE-2017-3135, and fixes a regression introduced in a prior
-      security release.
+      BIND 9.10.2-P2 addresses a security issue described in
+      CVE-2015-4620.
     </para>
     <para>
-      BIND 9.10.4-P5 addresses the security issues described in
-      CVE-2016-9131, CVE-2016-9147, CVE-2016-9444 and CVE-2016-9778.
+      BIND 9.10.2-P1 addressed several bugs that have been identified
+      in the BIND 9.10 implementation of response-policy zones (RPZ).
+      The bugs are in code which optimizes searching through multiple
+      policy zones. In some cases, they can cause RPZ to behave
+      inefficiently by searching for query matches in more policy
+      zones than are strictly necessary, or to behave unpredictably
+      by failing to search a policy zone that should have been
+      searched.  In the worst case, they can lead to assertion
+      failures, terminating <command>named</command>.
     </para>
-    <para>
-      BIND 9.10.4-P4 addresses the security issue described in
-      CVE-2016-8864.
-    </para>
-    <para>
-      BIND 9.10.4-P3 addresses the security issue described in
-      CVE-2016-2776 and addresses an interoperability issue with
-      ECS clients.
-    </para>
-    <para>
-      BIND 9.10.4-P2 addresses the security issue described in
-      CVE-2016-2775.
-    </para>
-    <para>
-      BIND 9.10.4-P1 addresses Windows installation issues, the %z
-      modifier is not supported under Windows and a race condition
-      in the rbt/rbtdb implementation resulting in named exiting
-      due to assertion failures being detected.
-    </para>
-
-  </section>
-
-  <section xml:id="relnotes_download"><info><title>Download</title></info>
+  </sect2>
+  <sect2 id="relnotes_download">
+    <title>Download</title>
     <para>
       The latest versions of BIND 9 software can always be found at
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/">http://www.isc.org/downloads/</link>.
+      <ulink url="http://www.isc.org/downloads/"
+	>http://www.isc.org/downloads/</ulink>.
       There you will find additional information about each release,
       source code, and pre-compiled versions for Microsoft Windows
       operating systems.
     </para>
-  </section>
-
-  <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
+  </sect2>
+  <sect2 id="relnotes_security">
+    <title>Security Fixes</title>
     <itemizedlist>
       <listitem>
 	<para>
-	  If a server is configured with a response policy zone (RPZ)
-	  that rewrites an answer with local data, and is also configured
-	  for DNS64 address mapping, a NULL pointer can be read
-	  triggering a server crash.  This flaw is disclosed in
-	  CVE-2017-3135. [RT #44434]
+	  On servers configured to perform DNSSEC validation an
+	  assertion failure could be triggered on answers from
+	  a specially configured server.
 	</para>
-      </listitem>
+        <para>
+	  This flaw was discovered by Breno Silveira Soares, and is
+	  disclosed in CVE-2015-4620. [RT #39795]
+        </para>
+      </listitem> 
+    </itemizedlist>
+  </sect2>
+  <sect2 id="relnotes_features">
+    <title>New Features</title>
+    <itemizedlist>
       <listitem>
-	<para>
-	  <command>named</command> could mishandle authority sections
-	  with missing RRSIGs, triggering an assertion failure. This
-	  flaw is disclosed in CVE-2016-9444. [RT #43632]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  <command>named</command> mishandled some responses where
-	  covering RRSIG records were returned without the requested
-	  data, resulting in an assertion failure. This flaw is
-	  disclosed in CVE-2016-9147. [RT #43548]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  <command>named</command> incorrectly tried to cache TKEY
-	  records which could trigger an assertion failure when there was
-	  a class mismatch. This flaw is disclosed in CVE-2016-9131.
-	  [RT #43522]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  It was possible to trigger assertions when processing
-	  responses containing answers of type DNAME. This flaw is
-	  disclosed in CVE-2016-8864. [RT #43465]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  It was possible to trigger a assertion when rendering a
-	  message using a specially crafted request. This flaw is
-	  disclosed in CVE-2016-2776. [RT #43139]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Calling <command>getrrsetbyname()</command> with a non
-	  absolute name could trigger an infinite recursion bug in
-	  <command>lwresd</command> or <command>named</command> with
-	  <command>lwres</command> configured if, when combined with
-	  a search list entry from <filename>resolv.conf</filename>,
-	  the resulting name is too long.  This flaw is disclosed in
-	  CVE-2016-2775. [RT #42694]
-	</para>
+	<para>None</para>
       </listitem>
     </itemizedlist>
-
-  </section>
-
-  <section xml:id="relnotes_features"><info><title>New Features</title></info>
+  </sect2>
+  <sect2 id="relnotes_changes">
+    <title>Feature Changes</title>
+    <itemizedlist>
+      <listitem>
+	<para>None</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+  <sect2 id="relnotes_bugs">
+    <title>Bug Fixes</title>
     <itemizedlist>
       <listitem>
 	<para>
-	  None.
+	  Asynchronous zone loads were not handled correctly when the
+	  zone load was already in progress; this could trigger a crash
+	  in zt.c. [RT #37573]
 	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Several bugs have been fixed in the RPZ implementation:
+	</para>
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      Policy zones that did not specifically require recursion
+	      could be treated as if they did; consequently, setting
+	      <command>qname-wait-recurse no;</command> was
+	      sometimes ineffective.  This has been corrected.
+	      In most configurations, behavioral changes due to this
+	      fix will not be noticeable. [RT #39229]
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      The server could crash if policy zones were updated (e.g.
+	      via <command>rndc reload</command> or an incoming zone
+	      transfer) while RPZ processing was still ongoing for an
+	      active query. [RT #39415]
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      On servers with one or more policy zones configured as
+	      slaves, if a policy zone updated during regular operation
+	      (rather than at startup) using a full zone reload, such as
+	      via AXFR, a bug could allow the RPZ summary data to fall out
+	      of sync, potentially leading to an assertion failure in
+	      rpz.c when further incremental updates were made to the
+	      zone, such as via IXFR. [RT #39567]
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      The server could match a shorter prefix than what was
+	      available in CLIENT-IP policy triggers, and so, an
+	      unexpected action could be taken. This has been
+	      corrected. [RT #39481]
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      The server could crash if a reload of an RPZ zone was
+	      initiated while another reload of the same zone was
+	      already in progress. [RT #39649]
+	    </para>
+	  </listitem>
+        </itemizedlist>
       </listitem>
     </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  None.
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_port"><info><title>Porting Changes</title></info>
-    <itemizedlist>
-      <listitem>
-	<para>
-	  None.
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
-    <itemizedlist>
-       <listitem>
- 	<para>
-	  A synthesized CNAME record appearing in a response before the
-	  associated DNAME could be cached, when it should not have been.
-	  This was a regression introduced while addressing CVE-2016-8864.
-	  [RT #44318]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Fixed a crash when calling <command>rndc stats</command> on some
-	  Windows builds: some Visual Studio compilers generate code that
-	  crashes when the "%z" printf() format specifier is used. [RT #42380]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  ECS clients with the option set to 0.0.0.0/0/0 or ::/0/0
-	  were incorrectly getting a FORMERR response.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Windows installs were failing due to triggering UAC without
-	  the installation binary being signed.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  A race condition in rbt/rbtdb was leading to INSISTs being
-	  triggered.
-	</para>
-      </listitem>
-    </itemizedlist>
-  </section>
-
-  <section xml:id="end_of_life"><info><title>End of Life</title></info>
+  </sect2>
+  <sect2 id="end_of_life">
+    <title>End of Life</title>
     <para>
       The end of life for BIND 9.10 is yet to be determined but
       will not be before BIND 9.12.0 has been released for 6 months.
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/software-support-policy/">https://www.isc.org/downloads/software-support-policy/</link>
+      <ulink url="https://www.isc.org/downloads/software-support-policy/"
+        >https://www.isc.org/downloads/software-support-policy/</ulink>
     </para>
-  </section>
-
-  <section xml:id="relnotes_thanks"><info><title>Thank You</title></info>
+  </sect2>
+  <sect2 id="relnotes_thanks">
+    <title>Thank You</title>
     <para>
       Thank you to everyone who assisted us in making this release possible.
       If you would like to contribute to ISC to assist us in continuing to
       make quality open source software, please visit our donations page at
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/donate/">http://www.isc.org/donate/</link>.
+      <ulink url="http://www.isc.org/donate/"
+	>http://www.isc.org/donate/</ulink>.
     </para>
-  </section>
-</section>
+  </sect2>
+</sect1>

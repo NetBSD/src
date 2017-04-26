@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.416.2.3 2017/03/20 06:57:29 pgoyette Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.416.2.4 2017/04/26 02:53:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.416.2.3 2017/03/20 06:57:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.416.2.4 2017/04/26 02:53:12 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -173,6 +173,16 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
  */
 #define WM_MAX_NQUEUEINTR	16
 #define WM_MAX_NINTR		(WM_MAX_NQUEUEINTR + 1)
+
+#ifndef WM_DISABLE_MSI
+#define	WM_DISABLE_MSI 0
+#endif
+#ifndef WM_DISABLE_MSIX
+#define	WM_DISABLE_MSIX 0
+#endif
+
+int wm_disable_msi = WM_DISABLE_MSI;
+int wm_disable_msix = WM_DISABLE_MSIX;
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
@@ -478,9 +488,13 @@ struct wm_softc {
 
 	void *sc_ihs[WM_MAX_NINTR];	/*
 					 * interrupt cookie.
-					 * legacy and msi use sc_ihs[0].
+					 * - legacy and msi use sc_ihs[0] only
+					 * - msix use sc_ihs[0] to sc_ihs[nintrs-1]
 					 */
-	pci_intr_handle_t *sc_intrs;	/* legacy and msi use sc_intrs[0] */
+	pci_intr_handle_t *sc_intrs;	/*
+					 * legacy and msi use sc_intrs[0] only
+					 * msix use sc_intrs[0] to sc_ihs[nintrs-1]
+					 */
 	int sc_nintrs;			/* number of interrupts */
 
 	int sc_link_intr_idx;		/* index of MSI-X tables */
@@ -687,6 +701,9 @@ static void	wm_rxdrain(struct wm_rxqueue *);
 static void	wm_rss_getkey(uint8_t *);
 static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
+static inline bool	wm_is_using_msix(struct wm_softc *);
+static inline bool	wm_is_using_multiqueue(struct wm_softc *);
+static int	wm_softint_establish(struct wm_softc *, int, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
@@ -723,8 +740,8 @@ static int	wm_alloc_txrx_queues(struct wm_softc *);
 static void	wm_free_txrx_queues(struct wm_softc *);
 static int	wm_init_txrx_queues(struct wm_softc *);
 /* Start */
-static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
-    uint32_t *, uint8_t *);
+static int	wm_tx_offload(struct wm_softc *, struct wm_txqueue *,
+    struct wm_txsoft *, uint32_t *, uint8_t *);
 static inline int	wm_select_txqueue(struct ifnet *, struct mbuf *);
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
@@ -1841,6 +1858,17 @@ wm_attach(device_t parent, device_t self, void *aux)
 	counts[PCI_INTR_TYPE_MSIX] = sc->sc_nqueues + 1;
 	counts[PCI_INTR_TYPE_MSI] = 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
+	/* overridden by disable flags */
+	if (wm_disable_msi != 0) {
+		counts[PCI_INTR_TYPE_MSI] = 0;
+		if (wm_disable_msix != 0) {
+			max_type = PCI_INTR_TYPE_INTX;
+			counts[PCI_INTR_TYPE_MSIX] = 0;
+		}
+	} else if (wm_disable_msix != 0) {
+		max_type = PCI_INTR_TYPE_MSI;
+		counts[PCI_INTR_TYPE_MSIX] = 0;
+	}
 
 alloc_retry:
 	if (pci_intr_alloc(pa, &sc->sc_intrs, counts, max_type) != 0) {
@@ -2575,11 +2603,22 @@ alloc_retry:
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
-		if (sc->sc_nqueues > 1)
+		/*
+		 * When the number of CPUs is one and the controller can use
+		 * MSI-X, wm(4) use MSI-X but *does not* use multiqueue.
+		 * That is, wm(4) use two interrupts, one is used for Tx/Rx
+		 * and the other is used for link status changing.
+		 * In this situation, wm_nq_transmit() is disadvantageous
+		 * because of wm_select_txqueue() and pcq(9) overhead.
+		 */
+		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_nq_transmit;
 	} else {
 		ifp->if_start = wm_start;
-		if (sc->sc_nqueues > 1)
+		/*
+		 * wm_transmit() has the same disadvantage as wm_transmit().
+		 */
+		if (wm_is_using_multiqueue(sc))
 			ifp->if_transmit = wm_transmit;
 	}
 	ifp->if_watchdog = wm_watchdog;
@@ -2890,7 +2929,7 @@ wm_watchdog(struct ifnet *ifp)
 
 	/*
 	 * There are still some upper layer processing which call
-	 * ifp->if_start(). e.g. ALTQ
+	 * ifp->if_start(). e.g. ALTQ or one CPU system
 	 */
 	/* Try to get more packets going. */
 	ifp->if_start(ifp);
@@ -2969,7 +3008,7 @@ wm_tick(void *arg)
 	}
 
 	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += 0ULL + /* ensure quad_t */
+	ifp->if_ierrors += 0ULL /* ensure quad_t */
 	    + CSR_READ(sc, WMREG_CRCERRS)
 	    + CSR_READ(sc, WMREG_ALGNERRC)
 	    + CSR_READ(sc, WMREG_SYMERRC)
@@ -4101,7 +4140,7 @@ wm_reset(struct wm_softc *sc)
 
 	/* Clear interrupt */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
@@ -4348,7 +4387,7 @@ wm_reset(struct wm_softc *sc)
 	/* Clear any pending interrupt events. */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	reg = CSR_READ(sc, WMREG_ICR);
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
@@ -4646,6 +4685,20 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		sc->sc_nqueues = ncpu;
 }
 
+static inline bool
+wm_is_using_msix(struct wm_softc *sc)
+{
+
+	return (sc->sc_nintrs > 1);
+}
+
+static inline bool
+wm_is_using_multiqueue(struct wm_softc *sc)
+{
+
+	return (sc->sc_nqueues > 1);
+}
+
 static int
 wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
 {
@@ -4903,7 +4956,7 @@ wm_itrs_writereg(struct wm_softc *sc, struct wm_queue *wmq)
 			eitr |= EITR_CNT_INGR;
 
 		CSR_WRITE(sc, WMREG_EITR(wmq->wmq_intr_idx), eitr);
-	} else if (sc->sc_type == WM_T_82574 && sc->sc_nintrs > 1) {
+	} else if (sc->sc_type == WM_T_82574 && wm_is_using_msix(sc)) {
 		/*
 		 * 82574 has both ITR and EITR. SET EITR when we use
 		 * the multi queue function with MSI-X.
@@ -5195,8 +5248,8 @@ wm_init_locked(struct ifnet *ifp)
 		reg |= RXCSUM_IPV6OFL | RXCSUM_TUOFL;
 	CSR_WRITE(sc, WMREG_RXCSUM, reg);
 
-	/* Set up MSI-X */
-	if (sc->sc_nintrs > 1) {
+	/* Set registers about MSI-X */
+	if (wm_is_using_msix(sc)) {
 		uint32_t ivar;
 		struct wm_queue *wmq;
 		int qid, qintr_idx;
@@ -5309,7 +5362,7 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_IVAR_MISC, ivar);
 		}
 
-		if (sc->sc_nqueues > 1) {
+		if (wm_is_using_multiqueue(sc)) {
 			wm_init_rss(sc);
 
 			/*
@@ -5328,7 +5381,7 @@ wm_init_locked(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
 	    ICR_RXO | ICR_RXT0;
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		uint32_t mask;
 		struct wm_queue *wmq;
 
@@ -5596,7 +5649,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 	 */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 	sc->sc_icr = 0;
-	if (sc->sc_nintrs > 1) {
+	if (wm_is_using_msix(sc)) {
 		if (sc->sc_type != WM_T_82574) {
 			CSR_WRITE(sc, WMREG_EIMC, 0xffffffffU);
 			CSR_WRITE(sc, WMREG_EIAC, 0);
@@ -6393,7 +6446,7 @@ wm_init_txrx_queues(struct wm_softc *sc)
 		 * polling mode is less than default value.
 		 * More tuning and AIM are required.
 		 */
-		if (sc->sc_nqueues > 1)
+		if (wm_is_using_multiqueue(sc))
 			wmq->wmq_itr = 50;
 		else
 			wmq->wmq_itr = sc->sc_itr_init;
@@ -6420,10 +6473,9 @@ wm_init_txrx_queues(struct wm_softc *sc)
  *	specified packet.
  */
 static int
-wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
-    uint8_t *fieldsp)
+wm_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
+    struct wm_txsoft *txs, uint32_t *cmdp, uint8_t *fieldsp)
 {
-	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
 	uint32_t ipcs, tucs, cmd, cmdlen, seg;
@@ -6458,7 +6510,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	}
 
 	if ((m0->m_pkthdr.csum_flags &
-	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4)) != 0) {
+	    (M_CSUM_TSOv4 | M_CSUM_UDPv4 | M_CSUM_TCPv4 | M_CSUM_IPv4)) != 0) {
 		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 	} else {
 		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
@@ -6591,6 +6643,13 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	}
 
+	/*
+	 * We don't have to write context descriptor for every packet
+	 * except for 82574. For 82574, we must write context descriptor
+	 * for every packet when we use two descriptor queues.
+	 * It would be overhead to write context descriptor for every packet,
+	 * however it does not cause problems.
+	 */
 	/* Fill in the context descriptor. */
 	t = (struct livengood_tcpip_ctxdesc *)
 	    &txq->txq_descs[txq->txq_next];
@@ -6878,7 +6937,7 @@ wm_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		    (M_CSUM_TSOv4 | M_CSUM_TSOv6 |
 		    M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 		    M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
-			if (wm_tx_offload(sc, txs, &cksumcmd,
+			if (wm_tx_offload(sc, txq, txs, &cksumcmd,
 					  &cksumfields) != 0) {
 				/* Error message already displayed. */
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -7192,6 +7251,14 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
 		*fieldsp |= NQTXD_FIELDS_TUXSM;
 	}
 
+	/*
+	 * We don't have to write context descriptor for every packet to
+	 * NEWQUEUE controllers, that is 82575, 82576, 82580, I350, I354,
+	 * I210 and I211. It is enough to write once per a Tx queue for these
+	 * controllers.
+	 * It would be overhead to write context descriptor for every packet,
+	 * however it does not cause problems.
+	 */
 	/* Fill in the context descriptor. */
 	txq->txq_nq_descs[txq->txq_next].nqrx_ctx.nqtxc_vl_len =
 	    htole32(vl_len);
@@ -7595,12 +7662,12 @@ wm_deferred_start_locked(struct wm_txqueue *txq)
 	}
 
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-		/* XXX need for ALTQ */
+		/* XXX need for ALTQ or one CPU system */
 		if (qid == 0)
 			wm_nq_start_locked(ifp);
 		wm_nq_transmit_locked(ifp, txq);
 	} else {
-		/* XXX need for ALTQ */
+		/* XXX need for ALTQ or one CPU system */
 		if (qid == 0)
 			wm_start_locked(ifp);
 		wm_transmit_locked(ifp, txq);
@@ -8256,6 +8323,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 static void
 wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t status;
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
@@ -8288,10 +8356,12 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 				      WMREG_OLD_FCRTL : WMREG_FCRTL,
 				      sc->sc_fcrtl);
 			sc->sc_tbi_linkup = 1;
+			if_link_state_change(ifp, LINK_STATE_UP);
 		} else {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 			    device_xname(sc->sc_dev)));
 			sc->sc_tbi_linkup = 0;
+			if_link_state_change(ifp, LINK_STATE_DOWN);
 		}
 		/* Update LED */
 		wm_tbi_serdes_set_linkled(sc);
@@ -8310,6 +8380,7 @@ wm_linkintr_tbi(struct wm_softc *sc, uint32_t icr)
 static void
 wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	uint32_t pcs_adv, pcs_lpab, reg;
@@ -8321,11 +8392,17 @@ wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
 		/* Check PCS */
 		reg = CSR_READ(sc, WMREG_PCS_LSTS);
 		if ((reg & PCS_LSTS_LINKOK) != 0) {
+			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> up\n",
+				device_xname(sc->sc_dev)));
 			mii->mii_media_status |= IFM_ACTIVE;
 			sc->sc_tbi_linkup = 1;
+			if_link_state_change(ifp, LINK_STATE_UP);
 		} else {
+			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
+				device_xname(sc->sc_dev)));
 			mii->mii_media_status |= IFM_NONE;
 			sc->sc_tbi_linkup = 0;
+			if_link_state_change(ifp, LINK_STATE_DOWN);
 			wm_tbi_serdes_set_linkled(sc);
 			return;
 		}

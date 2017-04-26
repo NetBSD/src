@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -81,16 +81,9 @@ sub reply_handler {
 	    push @ans, $rr;
 	}
 	$rcode = "NOERROR";
-    } elsif ($qname eq "indirect1.example.org" ||
-	     $qname eq "indirect2.example.org" ||
-	     $qname eq "indirect3.example.org" ||
-	     $qname eq "indirect4.example.org" ||
-	     $qname eq "indirect5.example.org" ||
-	     $qname eq "indirect6.example.org" ||
-	     $qname eq "indirect7.example.org" ||
-	     $qname eq "indirect8.example.org") {
+    } elsif ($qname eq "indirect.example.org") {
 	if (! $send_response) {
-	    my $rr = new Net::DNS::RR("$qname 86400 $qclass NS ns1.1.example.org");
+	    my $rr = new Net::DNS::RR("indirect.example.org 86400 $qclass NS ns1.1.example.org");
 	    push @auth, $rr;
 	} elsif ($qtype eq "A") {
 	    my ($ttl, $rdata) = (3600, $localaddr);

@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173.2.5 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173.2.6 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -483,3 +483,18 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	sqlite3: Import 3.17.0. [christos 20170311]
 	libc: Update to tzcode2017a. [christos 20170311]
 	mdocml: Import 1.14.1. [christos 20170318]
+	sh(1): Arithmetic parser imported from dash (via FreeBSD)
+		adding support for all required operators, as well
+		as being smaller and faster.  [kre 20170320]
+	zoneinfo: Import tzdata2017b.  [kre 20170321]
+	dhcpcd(8): Import dhcpcd-7.0.0-beta2 [roy 20170402]
+	ptrace(2): Add operations to single step specified threads:
+		PT_SETSTEP and PT_CLEARSTEP [kamil 20170408]
+	route(4): Add RO_MSGFILTER [roy 20170411]
+	dc(1): Import from OpenBSD (replaced GPL version) [christos 20170410]
+	bind: Import version 9.10.4-P8. [christos 20170413]
+	ntp: Import ntp 4.2.8p10. [christos 20170413]
+	dhcpcd: Import dhcpcd 7.0.0-beta3 [roy 20170414]
+	OpenSSH: Imported 7.5. [christos 20170418]
+	tmux(1): Import of tmux 2.4 [christos 20170423]
+	libc: Update to tzcode2017b. [christos 20170425]

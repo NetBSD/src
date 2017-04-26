@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.32 2016/03/03 21:38:55 nat Exp $	*/
+/*	$NetBSD: screen.c,v 1.32.2.1 2017/04/26 02:52:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -212,10 +212,11 @@ scr_set(void)
 	 * We made it.  We are now in screen mode, modulo TIstr
 	 * (which we will fix immediately).
 	 */
-	if (enter_ca_mode)
-		putstr(enter_ca_mode);
-	if (cursor_invisible)
-		putstr(cursor_invisible);
+	const char *tstr;
+	if ((tstr = enter_ca_mode) != NULL)
+		putstr(tstr);
+	if ((tstr = cursor_invisible) != NULL)
+		putstr(tstr);
 	if (tstp != SIG_IGN)
 		(void) signal(SIGTSTP, scr_stop);
 	if (ttou != SIG_IGN)
@@ -239,15 +240,16 @@ scr_end(void)
 	sigaddset(&nsigset, SIGTTOU);
 	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 	/* move cursor to last line */
-	if (cursor_to_ll)
-		putstr(cursor_to_ll);
+	const char *tstr;
+	if ((tstr = cursor_to_ll) != NULL)
+		putstr(tstr);
 	else
 		moveto(Rows - 1, 0);
 	/* exit screen mode */
-	if (exit_ca_mode)
-		putstr(exit_ca_mode);
-	if (cursor_normal)
-		putstr(cursor_normal);
+	if ((tstr = exit_ca_mode) != NULL)
+		putstr(tstr);
+	if ((tstr = cursor_normal) != NULL)
+		putstr(tstr);
 	(void) fflush(stdout);
 	(void) tcsetattr(0, TCSADRAIN, &oldtt);
 	isset = 0;

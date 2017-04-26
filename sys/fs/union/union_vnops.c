@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.63.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.63.2.2 2017/04/26 02:53:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.63.2.1 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.63.2.2 2017/04/26 02:53:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,11 +250,11 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 	 */
 	while (dvp != udvp && (dvp->v_type == VDIR) &&
 	       (mp = dvp->v_mountedhere)) {
-		if (vfs_busy(mp, NULL))
+		if (vfs_busy(mp))
 			continue;
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		if (error) {
 			return (error);
 		}
@@ -1558,7 +1558,7 @@ union_abortop(void *v)
 int
 union_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		bool *a_recycle;
@@ -1588,7 +1588,6 @@ union_inactive(void *v)
 	}
 
 	*ap->a_recycle = ((un->un_cflags & UN_CACHED) == 0);
-	VOP_UNLOCK(vp);
 
 	return (0);
 }

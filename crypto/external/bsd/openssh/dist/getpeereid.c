@@ -1,4 +1,4 @@
-/*	$NetBSD: getpeereid.c,v 1.3.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: getpeereid.c,v 1.3.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002 Damien Miller.  All rights reserved.
@@ -28,7 +28,7 @@
 #include "getpeereid.h"
 #include <unistd.h>
 
-__RCSID("$NetBSD: getpeereid.c,v 1.3.2.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: getpeereid.c,v 1.3.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 
 #if defined(SO_PEERCRED)
 int

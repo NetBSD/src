@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.61 2016/03/22 08:25:22 mrg Exp $
+# $NetBSD: Makefile.booters,v 1.61.2.1 2017/04/26 02:53:06 pgoyette Exp $
 
 NOMAN=		# defined
 
@@ -71,8 +71,9 @@ CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 PROG=		${SECONDARY_PROG}
 LOAD_ADDRESS=	${SECONDARY_LOAD_ADDRESS}
 CPPFLAGS+=	-DSECONDARY_BOOTBLOCK
-SRCS+=	vers.c
-CLEANFILES+= vers.c
+
+.include "${S}/conf/newvers_stand.mk"
+
 .else
 # XXX ?
 .endif
@@ -104,10 +105,6 @@ SAMISCMAKEFLAGS+=SA_INCLUDE_NET=yes
 LIBSA=		${SALIB}
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
-
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    -N ${.CURDIR}/version "pmax"
 
 ${PROG}: ${OBJS} ${LIBS}
 	${LD} -Map ${PROG}.map -N -x -Ttext ${LOAD_ADDRESS} \

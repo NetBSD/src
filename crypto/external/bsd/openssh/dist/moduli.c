@@ -1,4 +1,4 @@
-/*	$NetBSD: moduli.c,v 1.8.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: moduli.c,v 1.8.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: moduli.c,v 1.31 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  * Second step: test primes' safety (processor intensive)
  */
 #include "includes.h"
-__RCSID("$NetBSD: moduli.c,v 1.8.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: moduli.c,v 1.8.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.396.2.5 2017/03/20 06:57:07 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.396.2.6 2017/04/26 02:52:58 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -29,9 +29,9 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	in_getifa.9 \
 	in4_cksum.9 inittodr.9 interrupt_distribute.9 intro.9 ioasic.9 \
 	ioctl.9 ipkdb.9 ipi.9 isa.9 isapnp.9 itimerfix.9 kauth.9 kcopy.9 \
-	kcpuset.9 kernhist.9 kmem.9 kpause.9 \
+	kcpuset.9 kernhist.9 klua_lock.9 klua_mod_register.9 kmem.9 kpause.9 \
 	kfilter_register.9 knote.9 \
-	kprintf.9 kthread.9 linedisc.9 localcount.9 lock.9 log.9 ltsleep.9 \
+	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
 	LWP_CACHE_CREDS.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
@@ -306,7 +306,8 @@ MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_alloc.9 extent.9 extent_alloc_subregion.9 \
 	extent.9 extent_alloc_region.9 extent.9 extent_free.9 \
-	extent.9 extent_print.9
+	extent.9 extent_print.9 extent.9 extent_alloc1.9 \
+	extent.9 extent_alloc_subregion1.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=file.9 closef.9 \
@@ -908,6 +909,7 @@ MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 
 MLINKS+=ubc.9 ubc_alloc.9 ubc.9 ubc_release.9 ubc.9 ubc_uiomove.9
+MLINKS+=ubc.9 ubc_zerorange.9 ubc.9 ubc_purge.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
 	uvm.9 uvm_swap_init.9 uvm.9 uvm_fault.9 \
 	uvm.9 uvm_vnp_setsize.9 \

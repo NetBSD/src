@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.4 2017/03/20 06:57:09 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.5 2017/04/26 02:52:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.4 2017/03/20 06:57:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.5 2017/04/26 02:52:59 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -170,7 +170,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.4 2017/03/20 06:57:09 pgoyette E
 #include <machine/gdt.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/pmc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -1464,7 +1463,6 @@ typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
-extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 static void
@@ -1657,10 +1655,14 @@ init_x86_64(paddr_t first_avail)
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
-	/* make ldt gates and memory segments */
-	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
-	    GSEL(GCODE_SEL, SEL_KPL));
+#ifndef XEN
+	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
+	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
+#endif
+
+	/*
+	 * Make LDT memory segments.
+	 */
 	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
 	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
 	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
@@ -1691,18 +1693,8 @@ init_x86_64(paddr_t first_avail)
 	set_mem_segment(ldt_segp, 0, x86_btop(VM_MAXUSER_ADDRESS32) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
-	/*
-	 * Other entries.
-	 */
-	memcpy((struct gate_descriptor *)(ldtstore + LSOL26CALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
-	memcpy((struct gate_descriptor *)(ldtstore + LBSDICALLS_SEL),
-	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    sizeof (struct gate_descriptor));
-
-	/* exceptions */
-	for (x = 0; x < 32; x++) {
+	/* CPU-specific IDT exceptions. */
+	for (x = 0; x < NCPUIDT; x++) {
 #ifndef XEN
 		idt_vec_reserve(x);
 		switch (x) {
@@ -1794,8 +1786,6 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
-
-	pmc_init();
 
 	pcb->pcb_dbregs = NULL;
 

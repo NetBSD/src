@@ -1,6 +1,6 @@
 /* OPENBSD BASED ON : include/netdb.h */
 
-/* $NetBSD: getrrsetbyname.h,v 1.3.2.1 2017/01/07 08:53:41 pgoyette Exp $ */
+/* $NetBSD: getrrsetbyname.h,v 1.3.2.2 2017/04/26 02:52:14 pgoyette Exp $ */
 /* $OpenBSD: getrrsetbyname.c,v 1.4 2001/08/16 18:16:43 ho Exp $ */
 
 /*

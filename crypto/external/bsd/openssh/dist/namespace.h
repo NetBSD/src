@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.5.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: namespace.h,v 1.5.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 #ifndef _SSH_NAMESPACE_H_
 #define _SSH_NAMESPACE_H_
 #define addargs		ssh_addargs

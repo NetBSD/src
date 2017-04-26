@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.7.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.7.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: progressmeter.c,v 1.45 2016/06/30 05:17:05 dtucker Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.7.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.7.2.3 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>

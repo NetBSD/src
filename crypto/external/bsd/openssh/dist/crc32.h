@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.h,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: crc32.h,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: crc32.h,v 1.15 2006/03/25 22:22:43 djm Exp $ */
 
 /*

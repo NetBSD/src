@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.63 2016/06/08 04:25:31 kre Exp $
+#	$NetBSD: airport,v 1.63.2.1 2017/04/26 02:52:58 pgoyette Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -7598,6 +7598,7 @@ THR:Theran (Qualeh Morgeh Airport), Iran
 THT:Tamchakett, Mauritania
 THU:Thule (Air Base), Greenland
 THV:York Airport, PA, USA
+THX:Turukhansk, Krasnoyarsk Krai, Russia
 THY:Thohoyandou, Venda, South Africa
 THZ:Tahoua, Niger
 TIA:Tirana, Albania

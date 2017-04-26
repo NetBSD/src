@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.1.2.2 2017/03/20 06:57:51 pgoyette Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.1.2.3 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.1.2.2 2017/03/20 06:57:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.1.2.3 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.1.2.2 2017/03/20 06:57:51 pgoyette Ex
 #ifdef ALTQ
 #include <altq/altq.h>
 #endif
-
-#include <net/if_vlanvar.h>
 
 /* TODO: IP_TCPMSS support */
 #undef IP_TCPMSS
@@ -309,12 +307,6 @@ in6_l2tp_input(struct mbuf **mp, int *offp, int proto)
 		m_freem(m);
 		goto out;
 	}
-
-	if (sess_id != var->lv_my_sess_id) {
-		m_freem(m);
-		goto out;
-	}
-
 	m_adj(m, off + sizeof(uint32_t));
 
 	if (var->lv_use_cookie == L2TP_COOKIE_ON) {

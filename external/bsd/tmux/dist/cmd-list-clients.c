@@ -29,22 +29,27 @@
  */
 
 #define LIST_CLIENTS_TEMPLATE					\
-	"#{client_tty}: #{session_name} "			\
+	"#{client_name}: #{session_name} "			\
 	"[#{client_width}x#{client_height} #{client_termname}]"	\
 	"#{?client_utf8, (utf8),} #{?client_readonly, (ro),}"
 
-enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_list_clients_entry = {
-	"list-clients", "lsc",
-	"F:t:", 0, 0,
-	"[-F format] " CMD_TARGET_SESSION_USAGE,
-	CMD_READONLY,
-	cmd_list_clients_exec
+	.name = "list-clients",
+	.alias = "lsc",
+
+	.args = { "F:t:", 0, 0 },
+	.usage = "[-F format] " CMD_TARGET_SESSION_USAGE,
+
+	.tflag = CMD_SESSION,
+
+	.flags = CMD_READONLY|CMD_AFTERHOOK,
+	.exec = cmd_list_clients_exec
 };
 
-enum cmd_retval
-cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_list_clients_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args 		*args = self->args;
 	struct client		*c;
@@ -54,11 +59,9 @@ cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
 	u_int			 idx;
 	char			*line;
 
-	if (args_has(args, 't')) {
-		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
-	} else
+	if (args_has(args, 't'))
+		s = item->state.tflag.s;
+	else
 		s = NULL;
 
 	if ((template = args_get(args, 'F')) == NULL)
@@ -69,12 +72,12 @@ cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (c->session == NULL || (s != NULL && s != c->session))
 			continue;
 
-		ft = format_create();
+		ft = format_create(item, FORMAT_NONE, 0);
 		format_add(ft, "line", "%u", idx);
 		format_defaults(ft, c, NULL, NULL, NULL);
 
 		line = format_expand(ft, template);
-		cmdq_print(cmdq, "%s", line);
+		cmdq_print(item, "%s", line);
 		free(line);
 
 		format_free(ft);

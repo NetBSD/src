@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.347.2.2 2017/03/20 06:57:51 pgoyette Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.347.2.3 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.347.2.2 2017/03/20 06:57:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.347.2.3 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1484,7 +1484,7 @@ findpcb:
 #ifdef INET6
 			else if (in6p &&
 			    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0
-			    && ipsec6_in_reject_so(m, in6p->in6p_socket)) {
+			    && ipsec6_in_reject(m, in6p)) {
 				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 				goto drop;
 			}
@@ -1835,7 +1835,8 @@ findpcb:
 					switch (af) {
 #ifdef INET
 					case AF_INET:
-						if (!ipsec4_in_reject_so(m, so))
+						KASSERT(sotoinpcb(so) == inp);
+						if (!ipsec4_in_reject(m, inp))
 							break;
 						IPSEC_STATINC(
 						    IPSEC_STAT_IN_POLVIO);
@@ -1844,7 +1845,8 @@ findpcb:
 #endif
 #ifdef INET6
 					case AF_INET6:
-						if (!ipsec6_in_reject_so(m, so))
+						KASSERT(sotoin6pcb(so) == in6p);
+						if (!ipsec6_in_reject(m, in6p))
 							break;
 						IPSEC6_STATINC(
 						    IPSEC_STAT_IN_POLVIO);
@@ -4004,7 +4006,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		if (inp) {
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
-			inp->inp_options = ip_srcroute();
+			inp->inp_options = ip_srcroute(m);
 			in_pcbstate(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
@@ -4341,7 +4343,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		/*
 		 * Remember the IP options, if any.
 		 */
-		ipopts = ip_srcroute();
+		ipopts = ip_srcroute(m);
 		break;
 #endif
 	default:

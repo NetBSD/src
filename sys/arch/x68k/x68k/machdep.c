@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193.2.2 2017/01/07 08:56:28 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193.2.3 2017/04/26 02:53:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.2.2 2017/01/07 08:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.2.3 2017/04/26 02:53:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -693,7 +693,7 @@ cpu_dumpconf(void)
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = 0;
-	for (i = 0; m->ram_segs[i].size && i < M68K_NPHYS_RAM_SEGS; i++)
+	for (i = 0; i < M68K_NPHYS_RAM_SEGS && m->ram_segs[i].size; i++)
 		dumpsize += btoc(m->ram_segs[i].size);
 	/*
 	 * Check to see if we will fit.  Note we always skip the

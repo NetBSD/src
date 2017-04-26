@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.221.2.5 2017/03/20 06:57:49 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.221.2.6 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.

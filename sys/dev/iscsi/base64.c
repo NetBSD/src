@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.1 2011/10/23 21:15:02 agc Exp $	*/
+/*	$NetBSD: base64.c,v 1.1.34.1 2017/04/26 02:53:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@ base64_encode(const void *data, int size, uint8_t * buffer)
 	*p++ = '0';
 	*p++ = 'b';
 
-	i = 0;
 	for (i = 0; i < size;) {
 		c = q[i++];
 		c *= 256;

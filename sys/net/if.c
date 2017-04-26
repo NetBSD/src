@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.354.2.5 2017/03/20 06:57:49 pgoyette Exp $	*/
+/*	$NetBSD: if.c,v 1.354.2.6 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.5 2017/03/20 06:57:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.6 2017/04/26 02:53:29 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -138,9 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.5 2017/03/20 06:57:49 pgoyette Exp $"
 #include <net/pfil.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifndef IPSEC
 #include <netinet/ip_encap.h>
-#endif
 #include <net/bpf.h>
 
 #ifdef INET6
@@ -292,7 +290,7 @@ ifinit(void)
 
 	if_sysctl_setup(NULL);
 
-#if (defined(INET) || defined(INET6)) && !defined(IPSEC)
+#if (defined(INET) || defined(INET6))
 	encapinit();
 #endif
 
@@ -3209,6 +3207,8 @@ static int
 if_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, error;
+	size_t pktlen = m->m_pkthdr.len;
+	bool mcast = (m->m_flags & M_MCAST) != 0;
 
 	s = splnet();
 
@@ -3218,8 +3218,8 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len;;
-	if (m->m_flags & M_MCAST)
+	ifp->if_obytes += pktlen;
+	if (mcast)
 		ifp->if_omcasts++;
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)

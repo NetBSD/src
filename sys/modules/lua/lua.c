@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.18.2.1 2017/03/20 06:57:49 pgoyette Exp $ */
+/*	$NetBSD: lua.c,v 1.18.2.2 2017/04/26 02:53:28 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -401,8 +401,8 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (pb == NULL)
 					return ENOMEM;
 				NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, pb);
-				pathbuf_destroy(pb);
 				error = vn_open(&nd, FREAD, 0);
+				pathbuf_destroy(pb);
 				if (error) {
 					if (lua_verbose)
 						device_printf(sc->sc_dev,

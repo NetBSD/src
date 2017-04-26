@@ -1,3 +1,5 @@
+/* $NetBSD: quota.h,v 1.6.24.1 2017/04/26 02:52:54 pgoyette Exp $ */
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.

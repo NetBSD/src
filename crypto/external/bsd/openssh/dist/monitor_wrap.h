@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.h,v 1.10.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: monitor_wrap.h,v 1.10.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: monitor_wrap.h,v 1.32 2016/09/28 16:33:07 djm Exp $ */
 
 /*

@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.23.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.292 2016/09/12 03:29:16 dtucker Exp $ */
-
+/*	$NetBSD: ssh-keygen.c,v 1.23.2.3 2017/04/26 02:52:15 pgoyette Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.299 2017/03/10 04:26:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.23.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.23.2.3 2017/04/26 02:52:15 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -32,6 +31,7 @@ __RCSID("$NetBSD: ssh-keygen.c,v 1.23.2.2 2017/01/07 08:53:42 pgoyette Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <locale.h>
 
 #include "xmalloc.h"
 #include "sshkey.h"
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: ssh-keygen.c,v 1.23.2.2 2017/01/07 08:53:42 pgoyette Exp $");
 #include "atomicio.h"
 #include "krl.h"
 #include "digest.h"
+#include "utf8.h"
 
 #ifdef ENABLE_PKCS11
 #include "ssh-pkcs11.h"
@@ -833,7 +834,7 @@ fingerprint_one_key(const struct sshkey *public, const char *comment)
 	ra = sshkey_fingerprint(public, fingerprint_hash, SSH_FP_RANDOMART);
 	if (fp == NULL || ra == NULL)
 		fatal("%s: sshkey_fingerprint failed", __func__);
-	printf("%u %s %s (%s)\n", sshkey_size(public), fp,
+	mprintf("%u %s %s (%s)\n", sshkey_size(public), fp,
 	    comment ? comment : "no comment", sshkey_type(public));
 	if (log_level >= SYSLOG_LEVEL_VERBOSE)
 		printf("%s\n", ra);
@@ -1070,6 +1071,7 @@ known_hosts_hash(struct hostkey_foreach_line *l, void *_ctx)
 	struct known_hosts_ctx *ctx = (struct known_hosts_ctx *)_ctx;
 	char *hashed, *cp, *hosts, *ohosts;
 	int has_wild = l->hosts && strcspn(l->hosts, "*?!") != strlen(l->hosts);
+	int was_hashed = l->hosts && l->hosts[0] == HASH_DELIM;
 
 	switch (l->status) {
 	case HKF_STATUS_OK:
@@ -1078,11 +1080,10 @@ known_hosts_hash(struct hostkey_foreach_line *l, void *_ctx)
 		 * Don't hash hosts already already hashed, with wildcard
 		 * characters or a CA/revocation marker.
 		 */
-		if ((l->match & HKF_MATCH_HOST_HASHED) != 0 ||
-		    has_wild || l->marker != MRK_NONE) {
+		if (was_hashed || has_wild || l->marker != MRK_NONE) {
 			fprintf(ctx->out, "%s\n", l->line);
 			if (has_wild && !find_host) {
-				logit("%s:%ld: ignoring host name "
+				logit("%s:%lu: ignoring host name "
 				    "with wildcard: %.64s", l->path,
 				    l->linenum, l->hosts);
 			}
@@ -1094,6 +1095,7 @@ known_hosts_hash(struct hostkey_foreach_line *l, void *_ctx)
 		 */
 		ohosts = hosts = xstrdup(l->hosts);
 		while ((cp = strsep(&hosts, ",")) != NULL && *cp != '\0') {
+			lowercase(cp);
 			if ((hashed = host_hash(cp, NULL, 0)) == NULL)
 				fatal("hash_host failed");
 			fprintf(ctx->out, "%s %s\n", hashed, l->rawkey);
@@ -1104,7 +1106,7 @@ known_hosts_hash(struct hostkey_foreach_line *l, void *_ctx)
 	case HKF_STATUS_INVALID:
 		/* Retain invalid lines, but mark file as invalid. */
 		ctx->invalid = 1;
-		logit("%s:%ld: invalid line", l->path, l->linenum);
+		logit("%s:%lu: invalid line", l->path, l->linenum);
 		/* FALLTHROUGH */
 	default:
 		fprintf(ctx->out, "%s\n", l->line);
@@ -1138,14 +1140,14 @@ known_hosts_find_delete(struct hostkey_foreach_line *l, void *_ctx)
 				 */
 				ctx->found_key = 1;
 				if (!quiet)
-					printf("# Host %s found: line %ld\n",
+					printf("# Host %s found: line %lu\n",
 					    ctx->host, l->linenum);
 			}
 			return 0;
 		} else if (find_host) {
 			ctx->found_key = 1;
 			if (!quiet) {
-				printf("# Host %s found: line %ld %s\n",
+				printf("# Host %s found: line %lu %s\n",
 				    ctx->host,
 				    l->linenum, l->marker == MRK_CA ? "CA" :
 				    (l->marker == MRK_REVOKE ? "REVOKED" : ""));
@@ -1154,7 +1156,7 @@ known_hosts_find_delete(struct hostkey_foreach_line *l, void *_ctx)
 				known_hosts_hash(l, ctx);
 			else if (print_fingerprint) {
 				fp = sshkey_fingerprint(l->key, fptype, rep);
-				printf("%s %s %s %s\n", ctx->host,
+				mprintf("%s %s %s %s\n", ctx->host,
 				    sshkey_type(l->key), fp, l->comment);
 				free(fp);
 			} else
@@ -1165,7 +1167,7 @@ known_hosts_find_delete(struct hostkey_foreach_line *l, void *_ctx)
 		/* Retain non-matching hosts when deleting */
 		if (l->status == HKF_STATUS_INVALID) {
 			ctx->invalid = 1;
-			logit("%s:%ld: invalid line", l->path, l->linenum);
+			logit("%s:%lu: invalid line", l->path, l->linenum);
 		}
 		fprintf(ctx->out, "%s\n", l->line);
 	}
@@ -1305,7 +1307,7 @@ do_change_passphrase(struct passwd *pw)
 		fatal("Failed to load key %s: %s", identity_file, ssh_err(r));
 	}
 	if (comment)
-		printf("Key has comment '%s'\n", comment);
+		mprintf("Key has comment '%s'\n", comment);
 
 	/* Ask the new passphrase (twice). */
 	if (identity_new_passphrase) {
@@ -1430,7 +1432,10 @@ do_change_comment(struct passwd *pw)
 		sshkey_free(private);
 		exit(1);
 	}
-	printf("Key now has comment '%s'\n", comment);
+	if (comment)
+		printf("Key now has comment '%s'\n", comment);
+	else
+		printf("Key now has no comment\n");
 
 	if (identity_comment) {
 		strlcpy(new_comment, identity_comment, sizeof(new_comment));
@@ -2192,11 +2197,17 @@ do_check_krl(struct passwd *pw, int argc, char **argv)
 }
 #endif
 
+#ifdef WITH_SSH1
+# define RSA1_USAGE " | rsa1"
+#else
+# define RSA1_USAGE ""
+#endif
+
 __dead static void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ssh-keygen [-q] [-b bits] [-t dsa | ecdsa | ed25519 | rsa | rsa1]\n"
+	    "usage: ssh-keygen [-q] [-b bits] [-t dsa | ecdsa | ed25519 | rsa%s]\n"
 	    "                  [-N new_passphrase] [-C comment] [-f output_keyfile]\n"
 	    "       ssh-keygen -p [-P old_passphrase] [-N new_passphrase] [-f keyfile]\n"
 	    "       ssh-keygen -i [-m key_format] [-f input_keyfile]\n"
@@ -2204,7 +2215,7 @@ usage(void)
 	    "       ssh-keygen -y [-f input_keyfile]\n"
 	    "       ssh-keygen -c [-P passphrase] [-C comment] [-f keyfile]\n"
 	    "       ssh-keygen -l [-v] [-E fingerprint_hash] [-f input_keyfile]\n"
-	    "       ssh-keygen -B [-f input_keyfile]\n");
+	    "       ssh-keygen -B [-f input_keyfile]\n", RSA1_USAGE);
 #ifdef ENABLE_PKCS11
 	fprintf(stderr,
 	    "       ssh-keygen -D pkcs11\n");
@@ -2262,6 +2273,8 @@ main(int argc, char **argv)
 
 	OpenSSL_add_all_algorithms();
 	log_init(argv[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
+
+	setlocale(LC_CTYPE, "");
 
 	/* we need this for the home * directory.  */
 	pw = getpwuid(getuid());

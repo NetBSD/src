@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.8 2012/01/11 14:39:08 drochner Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.8.28.1 2017/04/26 02:53:29 pgoyette Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -31,9 +31,11 @@
 /* TCP MD5 Signature Option (RFC2385) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.8 2012/01/11 14:39:08 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.8.28.1 2017/04/26 02:53:29 pgoyette Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,16 +166,9 @@ static struct xformsw tcpsignature_xformsw = {
 	NULL
 };
 
-INITFN void
+void
 tcpsignature_attach(void)
 {
 
 	xform_register(&tcpsignature_xformsw);
 }
-
-#ifdef __FreeBSD__
-SYSINIT(tcpsignature_xform_init, SI_SUB_DRIVERS, SI_ORDER_FIRST,
-    tcpsignature_attach, NULL)
-
-#endif
-

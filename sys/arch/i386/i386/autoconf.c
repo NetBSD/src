@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.100.10.1 2016/11/04 14:49:01 pgoyette Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.100.10.2 2017/04/26 02:53:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100.10.1 2016/11/04 14:49:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.100.10.2 2017/04/26 02:53:03 pgoyette Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_intrdebug.h"
@@ -131,6 +131,6 @@ cpu_configure(void)
 
 	spl0();
 #if NLAPIC > 0
-	i82489_writereg(LAPIC_TPRI, 0);
+	lapic_write_tpri(0);
 #endif
 }

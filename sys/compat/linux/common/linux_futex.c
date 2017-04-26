@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.34 2016/05/20 13:54:34 chs Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.34.2.1 2017/04/26 02:53:10 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.34 2016/05/20 13:54:34 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.34.2.1 2017/04/26 02:53:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -112,7 +112,8 @@ static int futex_wake(struct futex *, int, struct futex *, int);
 static int futex_atomic_op(lwp_t *, int, void *);
 
 int
-linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t *retval)
+linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
+	register_t *retval)
 {
 	/* {
 		syscallarg(int *) uaddr;
@@ -134,11 +135,15 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		}
 		linux_to_native_timespec(&ts, &lts);
 	}
-	return linux_do_futex(l, uap, retval, &ts);
+	return linux_do_futex(l, uap, &ts, retval);
 }
 
+/*
+ * Note: TS can't be const because ts2timo destroys it.
+ */
 int
-linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t *retval, struct timespec *ts)
+linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap,
+	struct timespec *ts, register_t *retval)
 {
 	/* {
 		syscallarg(int *) uaddr;
@@ -196,12 +201,13 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 			if (error != ETIMEDOUT)
 				return error;
 			/*
-			 * If the user process requests a non null timeout,
-			 * make sure we do not turn it into an infinite
-			 * timeout because tout is 0.
+			 * If the user process requests a non null
+			 * timeout, make sure we do not turn it into
+			 * an infinite timeout because tout is 0.
 			 *
-			 * We use a minimal timeout of 1/hz. Maybe it would make
-			 * sense to just return ETIMEDOUT without sleeping.
+			 * We use a minimal timeout of 1/hz. Maybe it
+			 * would make sense to just return ETIMEDOUT
+			 * without sleeping.
 			 */
 			if (SCARG(uap, timeout) != NULL)
 				tout = 1;

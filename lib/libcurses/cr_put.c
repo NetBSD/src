@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.31.24.1 2017/01/07 08:56:03 pgoyette Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.31.24.2 2017/04/26 02:52:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.31.24.1 2017/01/07 08:56:03 pgoyette Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.31.24.2 2017/04/26 02:52:54 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -344,8 +344,10 @@ dontcr:while (outline < destline) {
 		if (__NONL || __pfast == 0)
 			outcol = 0;
 	}
+#ifdef notdef
 	if (back_tab)
 		k = (int) strlen(back_tab);
+#endif
 	while (outcol > destcol) {
 		if (plodcnt < 0)
 			goto out;

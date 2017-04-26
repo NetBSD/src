@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53.2.1 2016/11/04 14:48:57 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.53.2.2 2017/04/26 02:53:00 pgoyette Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -47,7 +47,7 @@ SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o memcmp.o memset.o strerror.o strncmp.o
 SOBJS += libstubs.o
 
-OBJS=	$(SOBJS) $(COBJS)
+OBJS+=	$(SOBJS) $(COBJS)
 
 #XX#DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -DDYNAMIC_CRC_TABLE -DNOBYFOUR -UBYFOUR 
 DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER 
@@ -68,7 +68,10 @@ DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 realall: ${FILES}
 
-CLEANFILES += boot.amiga x.out xxstart.o libboot.a vers.c
+CLEANFILES += boot.amiga x.out xxstart.o libboot.a
+
+VERSIONFLAGS+=-n
+.include "${S}/conf/newvers_stand.mk"
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>
@@ -125,12 +128,6 @@ xxstart.o: ${.CURDIR}/bbstart.s
 libboot.a: ${OBJS}
 	${_MKTARGET_BUILD}
 	${AR} crs $@ $> && ${RANLIB} $@
-
-vers.o: vers.c
-vers.c:	${.CURDIR}/version
-	${_MKTARGET_CREATE}
-	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh \
-	    ${${MKREPRO} == "yes" :?:-D} -N ${.CURDIR}/version "amiga"
 
 # make sure these are built:
 

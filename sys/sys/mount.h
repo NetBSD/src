@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.219.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: mount.h,v 1.219.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -105,11 +105,9 @@ struct vattr;
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
- * array of operations and an instance record.  The file systems are
- * put on a doubly linked list.
+ * array of operations and an instance record.
  */
 struct mount {
-	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
@@ -418,15 +416,17 @@ void	vfs_sync_all(struct lwp *);
 bool	vfs_unmountall(struct lwp *);	    /* unmount file systems */
 bool	vfs_unmountall1(struct lwp *, bool, bool);
 bool	vfs_unmount_forceone(struct lwp *);
-int 	vfs_busy(struct mount *, struct mount **);
+int 	vfs_busy(struct mount *);
+int 	vfs_trybusy(struct mount *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
-void	vfs_unbusy(struct mount *, bool, struct mount **);
+void	vfs_unbusy(struct mount *);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
 struct vfsops *vfs_getopsbyname(const char *);
 void	vfs_delref(struct vfsops *);
-void	vfs_destroy(struct mount *);
+void	vfs_ref(struct mount *);
+void	vfs_rele(struct mount *);
 struct mount *vfs_mountalloc(struct vfsops *, struct vnode *);
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *);
@@ -466,10 +466,8 @@ extern time_t	metadelay;
 void	vfs_syncer_add_to_worklist(struct mount *);
 void	vfs_syncer_remove_from_worklist(struct mount *);
 
-extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
-extern  kmutex_t mountlist_lock;
 extern	kmutex_t vfs_list_lock;
 
 void	vfs_mount_sysinit(void);
@@ -494,7 +492,15 @@ void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
 
 int	usermount_common_policy(struct mount *, u_long);
+
+typedef struct mount_iterator mount_iterator_t; /* Opaque. */
+void	mountlist_iterator_init(mount_iterator_t **);
+void	mountlist_iterator_destroy(mount_iterator_t *);
+struct mount *mountlist_iterator_next(mount_iterator_t *);
+struct mount *mountlist_iterator_trynext(mount_iterator_t *);
+struct mount *_mountlist_next(struct mount *);
 void	mountlist_append(struct mount *);
+void	mountlist_remove(struct mount *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

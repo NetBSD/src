@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.39.10.1 2016/07/26 03:24:17 pgoyette Exp $	*/
+/*	$NetBSD: snapper.c,v 1.39.10.2 2017/04/26 02:53:04 pgoyette Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.39.10.1 2016/07/26 03:24:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.39.10.2 2017/04/26 02:53:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -2051,7 +2051,7 @@ snapper_init(struct snapper_softc *sc, int node)
 	char fcr[32];
 
 	snprintb(fcr, sizeof(fcr),  FCR3C_BITMASK, obio_read_4(KEYLARGO_FCR1));
-	printf("FCR(0x3c) 0x%s\n", fcr);
+	printf("FCR(0x3c) %s\n", fcr);
 #endif
 	headphone_detect_intr = -1;
 

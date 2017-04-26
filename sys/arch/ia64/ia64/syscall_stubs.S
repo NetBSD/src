@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall_stubs.S,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: syscall_stubs.S,v 1.3.44.1 2017/04/26 02:53:04 pgoyette Exp $	*/
 
 	/*-
  * Copyright (c) 2002, 2003 Marcel Moolenaar
@@ -33,7 +33,6 @@
 
 
 #include <machine/asm.h>
-#include <machine/vmparam.h>
 #undef VM_MAX_ADDRESS
 
 #include "assym.h"

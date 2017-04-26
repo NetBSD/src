@@ -1,8 +1,8 @@
-# $NetBSD: XEN3_DOM0,v 1.119.2.3 2017/03/20 06:57:09 pgoyette Exp $
+# $NetBSD: XEN3_DOM0,v 1.119.2.4 2017/04/26 02:52:59 pgoyette Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
-#options 	MULTIPROCESSOR	# (experimental)
+#options 	MULTIPROCESSOR	# (not yet - dom0 stuff is not MP-safe)
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -369,6 +369,7 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet

@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.47.2.3 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.47.2.4 2017/04/26 02:53:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.47.2.3 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.47.2.4 2017/04/26 02:53:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -403,30 +403,18 @@ coredump_note_procinfo(struct lwp *l, struct note_state *ns)
 static int
 coredump_note_auxv(struct lwp *l, struct note_state *ns)
 {
-	struct ps_strings pss;
 	int error;
-	struct proc *p = l->l_proc;
-	void *uauxv, *kauxv;
+	size_t len;
+	void *kauxv;
 
-	if ((error = copyin_psstrings(p, &pss)) != 0)
+	if ((error = proc_getauxv(l->l_proc, &kauxv, &len)) != 0)
 		return error;
 
-	if (pss.ps_envstr == NULL)
-		return EIO;
-
-	size_t ptrsz = PROC_PTRSZ(p);
-	uauxv = (void *)((char *)pss.ps_envstr + (pss.ps_nenvstr + 1) * ptrsz);
-	size_t len = p->p_execsw->es_arglen;
-
-	kauxv = kmem_alloc(len, KM_SLEEP);
-	error = copyin_proc(p, uauxv, kauxv, len);
-	if (error == 0) {
-		ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_AUXV,
-		    ELF_NOTE_NETBSD_CORE_NAME, kauxv, len);
-	}
+	ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_AUXV,
+	    ELF_NOTE_NETBSD_CORE_NAME, kauxv, len);
 	
 	kmem_free(kauxv, len);
-	return error;
+	return 0;
 }
 
 static int

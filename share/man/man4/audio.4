@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.72.24.2 2017/03/20 06:57:03 pgoyette Exp $
+.\"	$NetBSD: audio.4,v 1.72.24.3 2017/04/26 02:52:58 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,6 @@ variables.
 .It hw.driverN.precision
 .It hw.driverN.frequency
 .It hw.driverN.channels
-.It hw.driverN.saturate
 .It hw.driverN.multiuser
 .El
 .Pp
@@ -124,20 +123,6 @@ hw.hdafg0.channels, hw.hdafg0.precision, hw.hdafg0.frequency.
 .Pp
 For best results, values close to the underlying hardware should be chosen.
 These variables may only be changed when the sampling device is not in use.
-.Pp
-An additional
-.Xr sysctl 8
-variable controls how the samples are combined, hw.driverN.saturate.
-.Pp
-By default it is set to true.
-This means that volumes are not adjusted for each channel to be mixed.
-All virtual channels will use the
-.Em maximum
-set master volume unless the virtual channel volume is lowered by the user.
-.Pp
-If set to false the channels are
-.Em divided
-evenly in volume with respect to the master volume.
 .Pp
 An additional
 .Xr sysctl 8
@@ -245,7 +230,9 @@ The following
 commands are supported on the sample devices:
 .Pp
 .Bl -tag -width indent
-.It Dv AUDIO_SETPROC (int)
+.It Dv AUDIO_GETCHAN (int)
+This command will return the audio channel in use.
+.It Dv AUDIO_SETCHAN (int)
 This command will select the audio channel for subsequent ioctl calls.
 .It Dv AUDIO_FLUSH
 This command stops all playback and recording, clears all queued

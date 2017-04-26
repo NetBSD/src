@@ -1,3 +1,5 @@
+/* $NetBSD: tgmath.h,v 1.1.46.1 2017/04/26 02:52:54 pgoyette Exp $ */
+
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.

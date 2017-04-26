@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.15 2016/03/08 08:04:48 joerg Exp $
+# $NetBSD: t_gpt.sh,v 1.15.2.1 2017/04/26 02:53:34 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -293,6 +293,10 @@ migrate_disklabel_head() {
 }
 
 migrate_disklabel_body() {
+	if [ $( sysctl -n kern.rawpartition ) -ne 3 ]; then
+		atf_skip "This test is specific to architectures using MBR"
+	fi
+
 	prepare
 	silence fdisk -fi "$disk"
 	silence fdisk -fu0s "169/63/$((size / 10))" "$disk"

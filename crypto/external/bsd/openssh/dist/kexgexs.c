@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgexs.c,v 1.10.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: kexgexs.c,v 1.10.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: kexgexs.c,v 1.30 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.10.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.10.2.3 2017/04/26 02:52:14 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <stdio.h>

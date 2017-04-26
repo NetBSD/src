@@ -7,7 +7,7 @@ Derived from public domain code by D. J. Bernstein.
 */
 
 #include "includes.h"
-__RCSID("$NetBSD: smult_curve25519_ref.c,v 1.3.4.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: smult_curve25519_ref.c,v 1.3.4.2 2017/04/26 02:52:15 pgoyette Exp $");
 
 int crypto_scalarmult_curve25519(unsigned char *, const unsigned char *, const unsigned char *);
 

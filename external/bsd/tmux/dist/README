@@ -1,0 +1,73 @@
+Welcome to tmux!
+
+tmux is a "terminal multiplexer", it enables a number of terminals (or windows)
+to be accessed and controlled from a single terminal. tmux is intended to be a
+simple, modern, BSD-licensed alternative to programs such as GNU screen.
+
+This release runs on OpenBSD, FreeBSD, NetBSD, Linux, OS X and Solaris.
+
+tmux depends on libevent 2.x. Download it from:
+
+	http://libevent.org
+
+It also depends on ncurses, available from:
+
+	http://invisible-island.net/ncurses/
+
+To build and install tmux from a release tarball, use:
+
+	$ ./configure && make
+	$ sudo make install
+
+tmux can use the utempter library to update utmp(5), if it is installed - run
+configure with --enable-utempter to enable this.
+
+To get and build the latest from version control:
+
+	$ git clone https://github.com/tmux/tmux.git
+	$ cd tmux
+	$ sh autogen.sh
+	$ ./configure && make
+
+For more information see http://git-scm.com. Patches should be sent by email to
+the mailing list at tmux-users@googlegroups.com.
+
+For documentation on using tmux, see the tmux.1 manpage. It can be viewed from
+the source tree with:
+
+	$ nroff -mdoc tmux.1|less
+
+Some common questions are answered in the FAQ file, a rough todo list is in the
+TODO file and an example configuration in example_tmux.conf.
+
+A vim(1) syntax file is available at:
+
+	https://github.com/ericpruitt/tmux.vim
+	https://raw.githubusercontent.com/ericpruitt/tmux.vim/master/vim/syntax/tmux.vim
+
+And a bash(1) completion file at:
+
+	https://github.com/imomaliev/tmux-bash-completion
+
+For debugging, running tmux with -v or -vv will generate server and client log
+files in the current directory.
+
+tmux mailing lists are available. For general discussion and bug reports:
+
+	https://groups.google.com/forum/#!forum/tmux-users
+
+And for Git commit emails:
+
+	https://groups.google.com/forum/#!forum/tmux-git
+
+Subscribe by sending an email to <tmux-users+subscribe@googlegroups.com>.
+
+Bug reports, feature suggestions and especially code contributions are most
+welcome. Please send by email to:
+
+	tmux-users@googlegroups.com
+
+This file and the CHANGES, FAQ, SYNCING and TODO files are licensed under the
+ISC license. All other files have a license and copyright notice at their start.
+
+-- Nicholas Marriott <nicholas.marriott@gmail.com>

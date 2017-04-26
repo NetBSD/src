@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.1.2.2 2017/03/20 06:57:50 pgoyette Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.1.2.3 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.1.2.2 2017/03/20 06:57:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.1.2.3 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.1.2.2 2017/03/20 06:57:50 pgoyette Exp
 
 #include <net/if_l2tp.h>
 
-#if NVLAN > 0
 #include <net/if_vlanvar.h>
-#endif
 
 /* TODO: IP_TCPMSS support */
 #undef IP_TCPMSS
@@ -112,6 +110,7 @@ static struct {
 static struct {
 	kmutex_t lock;
 	struct pslist_head *lists;
+	u_long mask;
 } l2tp_hash __cacheline_aligned = {
 	.lists = NULL,
 };
@@ -142,7 +141,7 @@ static int	l2tp_set_tunnel(struct ifnet *, struct sockaddr *,
 		    struct sockaddr *);
 static void	l2tp_delete_tunnel(struct ifnet *);
 
-static int	id_hash_func(uint32_t);
+static int	id_hash_func(uint32_t, u_long);
 
 static void	l2tp_variant_update(struct l2tp_softc *, struct l2tp_variant *);
 static int	l2tp_set_session(struct l2tp_softc *, uint32_t, uint32_t);
@@ -218,6 +217,8 @@ l2tpdetach(void)
 	pserialize_destroy(l2tp_psz);
 	mutex_destroy(&l2tp_hash.lock);
 
+	mutex_destroy(&l2tp_softcs.lock);
+
 	return error;
 }
 
@@ -262,6 +263,7 @@ l2tpattach0(struct l2tp_softc *sc)
 	sc->l2tp_ec.ec_if.if_addrlen = 0;
 	sc->l2tp_ec.ec_if.if_mtu    = L2TP_MTU;
 	sc->l2tp_ec.ec_if.if_flags  = IFF_POINTOPOINT|IFF_MULTICAST|IFF_SIMPLEX;
+	sc->l2tp_ec.ec_if.if_extflags  = IFEF_OUTPUT_MPSAFE|IFEF_START_MPSAFE;
 	sc->l2tp_ec.ec_if.if_ioctl  = l2tp_ioctl;
 	sc->l2tp_ec.ec_if.if_output = l2tp_output;
 	sc->l2tp_ec.ec_if.if_type   = IFT_L2TP;
@@ -296,11 +298,19 @@ l2tp_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 static int
 l2tp_clone_destroy(struct ifnet *ifp)
 {
+	struct l2tp_variant *var;
 	struct l2tp_softc *sc = container_of(ifp, struct l2tp_softc,
 	    l2tp_ec.ec_if);
 
 	l2tp_clear_session(sc);
 	l2tp_delete_tunnel(&sc->l2tp_ec.ec_if);
+	/*
+	 * To avoid for l2tp_transmit() to access sc->l2tp_var after free it.
+	 */
+	mutex_enter(&sc->l2tp_lock);
+	var = sc->l2tp_var;
+	l2tp_variant_update(sc, NULL);
+	mutex_exit(&sc->l2tp_lock);
 
 	mutex_enter(&l2tp_softcs.lock);
 	LIST_REMOVE(sc, l2tp_list);
@@ -313,7 +323,7 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	percpu_foreach(sc->l2tp_ro_percpu, l2tp_ro_fini_pc, NULL);
 	percpu_free(sc->l2tp_ro_percpu, sizeof(struct l2tp_ro));
 
-	kmem_free(sc->l2tp_var, sizeof(struct l2tp_variant));
+	kmem_free(var, sizeof(struct l2tp_variant));
 	mutex_destroy(&sc->l2tp_lock);
 	kmem_free(sc, sizeof(struct l2tp_softc));
 
@@ -993,24 +1003,23 @@ l2tp_delete_tunnel(struct ifnet *ifp)
 	kmem_free(ovar, sizeof(*ovar));
 }
 
-static int id_hash_func(uint32_t id)
+static int
+id_hash_func(uint32_t id, u_long mask)
 {
 	uint32_t hash;
 
 	hash = (id >> 16) ^ id;
 	hash = (hash >> 4) ^ hash;
 
-	return hash & (L2TP_ID_HASH_SIZE - 1);
+	return hash & mask;
 }
 
 static void
 l2tp_hash_init(void)
 {
-	u_long mask;
 
 	l2tp_hash.lists = hashinit(L2TP_ID_HASH_SIZE, HASH_PSLIST, true,
-	    &mask);
-	KASSERT(mask == (L2TP_ID_HASH_SIZE - 1));
+	    &l2tp_hash.mask);
 }
 
 static int
@@ -1020,19 +1029,19 @@ l2tp_hash_fini(void)
 
 	mutex_enter(&l2tp_hash.lock);
 
-	for (i = 0; i < L2TP_ID_HASH_SIZE; i++) {
+	for (i = 0; i < l2tp_hash.mask + 1; i++) {
 		if (PSLIST_WRITER_FIRST(&l2tp_hash.lists[i], struct l2tp_softc,
 			l2tp_hash) != NULL) {
 			mutex_exit(&l2tp_hash.lock);
 			return EBUSY;
 		}
 	}
-	for (i = 0; i < L2TP_ID_HASH_SIZE; i++)
+	for (i = 0; i < l2tp_hash.mask + 1; i++)
 		PSLIST_DESTROY(&l2tp_hash.lists[i]);
 
 	mutex_exit(&l2tp_hash.lock);
 
-	hashdone(l2tp_hash.lists, HASH_PSLIST, L2TP_ID_HASH_SIZE - 1);
+	hashdone(l2tp_hash.lists, HASH_PSLIST, l2tp_hash.mask);
 
 	return 0;
 }
@@ -1066,7 +1075,7 @@ l2tp_set_session(struct l2tp_softc *sc, uint32_t my_sess_id,
 	l2tp_variant_update(sc, nvar);
 	mutex_exit(&sc->l2tp_lock);
 
-	idx = id_hash_func(nvar->lv_my_sess_id);
+	idx = id_hash_func(nvar->lv_my_sess_id, l2tp_hash.mask);
 	if ((ifp->if_flags & IFF_DEBUG) != 0)
 		log(LOG_DEBUG, "%s: add hash entry: sess_id=%" PRIu32 ", idx=%" PRIu32 "\n",
 		    sc->l2tp_ec.ec_if.if_xname, nvar->lv_my_sess_id, idx);
@@ -1115,7 +1124,7 @@ l2tp_lookup_session_ref(uint32_t id, struct psref *psref)
 	int s;
 	struct l2tp_softc *sc;
 
-	idx = id_hash_func(id);
+	idx = id_hash_func(id, l2tp_hash.mask);
 
 	s = pserialize_read_enter();
 	PSLIST_READER_FOREACH(sc, &l2tp_hash.lists[idx], struct l2tp_softc,
@@ -1157,10 +1166,13 @@ l2tp_variant_update(struct l2tp_softc *sc, struct l2tp_variant *nvar)
 	 * In the manual of atomic_swap_ptr(3), there is no mention if 2nd
 	 * argument is rewrite or not. So, use sc->l2tp_var instead of nvar.
 	 */
-	if (sc->l2tp_var->lv_psrc != NULL && sc->l2tp_var->lv_pdst != NULL)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
+	if (sc->l2tp_var != NULL) {
+		if (sc->l2tp_var->lv_psrc != NULL
+		    && sc->l2tp_var->lv_pdst != NULL)
+			ifp->if_flags |= IFF_RUNNING;
+		else
+			ifp->if_flags &= ~IFF_RUNNING;
+	}
 }
 
 static int
@@ -1252,9 +1264,7 @@ l2tp_set_state(struct l2tp_softc *sc, int state)
 	mutex_exit(&sc->l2tp_lock);
 
 #ifdef NOTYET
-#if NVLAN > 0
 	vlan_linkstate_notify(ifp, ifp->if_link_state);
-#endif
 #endif
 }
 

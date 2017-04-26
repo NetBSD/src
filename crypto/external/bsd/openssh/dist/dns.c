@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.12.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: dns.c,v 1.12.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: dns.c,v 1.35 2015/08/20 22:32:42 deraadt Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.12.2.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: dns.c,v 1.12.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 

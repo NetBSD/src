@@ -1,4 +1,5 @@
-#	$NetBSD: build.sh,v 1.310.2.2 2017/03/20 06:51:32 pgoyette Exp $
+#! /usr/bin/env sh
+#	$NetBSD: build.sh,v 1.310.2.3 2017/04/26 02:52:13 pgoyette Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1892,7 +1893,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.310.2.2 2017/03/20 06:51:32 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.310.2.3 2017/04/26 02:52:13 pgoyette Exp $
 # with these arguments: ${_args}
 #
 
@@ -2193,15 +2194,17 @@ setup_mkrepro()
 	if [ ${MKREPRO-no} != "yes" ]; then
 		return
 	fi
-	buildtools
 	local dirs=${NETBSDSRCDIR-/usr/src}/
 	if [ ${MKX11-no} = "yes" ]; then
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
 	local cvslatest=$(print_tooldir_program cvslatest)
-	MKREPRO_TIMESTAMP=$(${cvslatest} ${dirs})
+	if [ ! -x "${cvslatest}" ]; then
+		buildtools
+	fi
+	MKREPRO_TIMESTAMP=$("${cvslatest}" ${dirs})
 	[ -n "${MKREPRO_TIMESTAMP}" ] || bomb "Failed to compute timestamp"
-	statusmsg2 "MKREPRO_TIMESTAMP" "$(date -r ${MKREPRO_TIMESTAMP})"
+	statusmsg2 "MKREPRO_TIMESTAMP" "$(TZ=UTC date -r ${MKREPRO_TIMESTAMP})"
 	export MKREPRO MKREPRO_TIMESTAMP
 }
 
@@ -2235,6 +2238,7 @@ main()
 	rebuildmake
 	validatemakeparams
 	createmakewrapper
+	setup_mkrepro
 
 	# Perform the operations.
 	#
@@ -2258,7 +2262,6 @@ main()
 			;;
 
 		build|distribution|release)
-			setup_mkrepro
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"

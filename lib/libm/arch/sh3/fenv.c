@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.1.2.2 2016/09/14 03:04:16 pgoyette Exp $	*/
+/*	$NetBSD: fenv.c,v 1.1.2.3 2017/04/26 02:52:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,10 +29,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1.2.2 2016/09/14 03:04:16 pgoyette Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.1.2.3 2017/04/26 02:52:56 pgoyette Exp $");
+
+#include "namespace.h"
 
 #define	__fenv_static
-#include "fenv.h"
+#include <fenv.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 #if defined(__GNUC_GNU_INLINE__) && !defined(__lint__)
 #error "This file must be compiled with C99 'inline' semantics"

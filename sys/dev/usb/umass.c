@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.156.2.1 2017/01/07 08:56:42 pgoyette Exp $	*/
+/*	$NetBSD: umass.c,v 1.156.2.2 2017/04/26 02:53:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.156.2.1 2017/01/07 08:56:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.156.2.2 2017/04/26 02:53:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -795,6 +795,8 @@ umass_detach(device_t self, int flags)
 	int rv = 0, i;
 
 	DPRINTFM(UDMASS_USB, "sc %p detached", sc, 0, 0, 0);
+
+	sc->sc_dying = true;
 
 	pmf_device_deregister(self);
 

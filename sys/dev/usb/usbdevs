@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.715.2.3 2017/03/20 06:57:38 pgoyette Exp $
+$NetBSD: usbdevs,v 1.715.2.4 2017/04/26 02:53:23 pgoyette Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ vendor SAMSUNG		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor JVC		0x04f1	JVC
 vendor CHICONY		0x04f2	Chicony Electronics
+vendor ELAN		0x04f3  ELAN Microelectronics
 vendor BROTHER		0x04f9	Brother Industries
 vendor DALLAS		0x04fa	Dallas Semiconductor
 vendor AIPTEK2		0x04fc	AIPTEK International
@@ -483,6 +484,7 @@ vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor CYBERTAN		0x129b	CyberTAN Technology
 vendor HUAWEI		0x12d1	Huawei Technologies
+vendor ARANEUS		0x12d8	Araneus Information Systems Oy
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -759,6 +761,9 @@ product AGFA SNAPSCANE20	0x2091	SnapScan e20
 product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
+
+/* Araneus products */
+product ARANEUS ALEA		0x0001	Alea I/II TRNG
 
 /* Aincomm products */
 product AINCOMM AWU2000B	0x1001	AWU2000B

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.367.2.1 2017/03/20 06:57:08 pgoyette Exp $
+#	$NetBSD: bsd.lib.mk,v 1.367.2.2 2017/04/26 02:52:59 pgoyette Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -577,6 +577,11 @@ _LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
+.if ${MKSTRIPSYM:Uyes} == "yes"
+_LIBLDOPTS+=	-Wl,-x
+.else
+_LIBLDOPTS+=	-Wl,-X
+.endif
 
 # gcc -shared now adds -lc automatically. For libraries other than libc and
 # libgcc* we add as a dependency the installed shared libc. For libc and
@@ -627,7 +632,8 @@ ${_LIB.so.full}: ${_LIB.so.link} ${_LIB.so.debug}
 	${_MKTARGET_CREATE}
 	(  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
 		--add-gnu-debuglink=${_LIB.so.debug} \
-		${_LIB.so.link} ${_LIB.so.full} \
+		${_LIB.so.link} ${_LIB.so.full}.tmp && \
+		mv -f ${_LIB.so.full}.tmp ${_LIB.so.full} \
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.link}: ${_MAINLIBDEPS}
 .else # aka no MKDEBUG
@@ -635,10 +641,14 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .endif
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} \
-	    ${_LDFLAGS.${_LIB}} -o ${.TARGET} ${_LIBLDOPTS} \
+	${LIBCC} ${LDLIBC} -shared ${SHLIB_SHFLAGS} \
+	    ${_LDFLAGS.${_LIB}} -o ${.TARGET}.tmp ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${_LDADD.${_LIB}}
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}.tmp
+.endif
+	mv -f ${.TARGET}.tmp ${.TARGET}
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
@@ -651,9 +661,6 @@ ${_LIB.so.full}: ${_MAINLIBDEPS}
 .endif
 	${HOST_LN} -sf ${_LIB.so.full} ${_LIB.so}.tmp
 	mv -f ${_LIB.so}.tmp ${_LIB.so}
-.if ${MKSTRIPIDENT} != "no"
-	${OBJCOPY} -R .ident ${.TARGET}
-.endif
 
 .if !empty(LOBJS)							# {
 LLIBS?=		-lc

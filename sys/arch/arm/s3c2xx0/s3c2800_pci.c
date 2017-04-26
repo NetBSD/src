@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.22 2015/10/02 05:22:50 msaitoh Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.22.2.1 2017/04/26 02:53:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.22 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.22.2.1 2017/04/26 02:53:01 pgoyette Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -208,6 +208,7 @@ struct arm32_pci_chipset sspci_chipset = {
 	s3c2800_pci_intr_map,
 	s3c2800_pci_intr_string,
 	s3c2800_pci_intr_evcnt,
+	NULL,		/* intr_setattr */
 	s3c2800_pci_intr_establish,
 	s3c2800_pci_intr_disestablish,
 #ifdef __HAVE_PCI_CONF_HOOK

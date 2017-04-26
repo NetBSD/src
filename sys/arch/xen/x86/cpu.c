@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.104.2.2 2017/03/20 06:57:23 pgoyette Exp $	*/
+/*	$NetBSD: cpu.c,v 1.104.2.3 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104.2.2 2017/03/20 06:57:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104.2.3 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1228,7 +1228,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 
 	/* Recursive kernel mapping */
 	ci->ci_kpm_pdir[PDIR_SLOT_PTE] = xpmap_ptom_masked(ci->ci_kpm_pdirpa)
-	    | PG_k | PG_V | xpmap_pg_nx;
+	    | PG_V | xpmap_pg_nx;
 #elif defined(PAE)
 	/* Copy over the pmap_kernel() shadow L2 entries */
 	memcpy(ci->ci_kpm_pdir, pmap_kernel()->pm_pdir + PDIR_SLOT_KERN,
@@ -1244,7 +1244,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	 * Initialize L3 entry 3. This mapping is shared across all pmaps and is
 	 * static, ie: loading a new pmap will not update this entry.
 	 */
-	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_k | PG_V;
+	ci->ci_pae_l3_pdir[3] = xpmap_ptom_masked(ci->ci_kpm_pdirpa) | PG_V;
 
 	/* Xen wants a RO L3. */
 	pmap_protect(pmap_kernel(), (vaddr_t)ci->ci_pae_l3_pdir,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.1.2.4 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.1.2.5 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.1.2.4 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.1.2.5 2017/04/26 02:53:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -229,6 +229,8 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 
 #ifdef PT_STEP
 	case PT_STEP:
+	case PT_SETSTEP:
+	case PT_CLEARSTEP:
 #endif
 	case PT_CONTINUE:
 	case PT_KILL:
@@ -452,6 +454,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case  PT_DUMPCORE:
 #ifdef PT_STEP
 	case  PT_STEP:
+	case  PT_SETSTEP:
+	case  PT_CLEARSTEP:
 #endif
 	case  PT_SET_EVENT_MASK:
 	case  PT_GET_EVENT_MASK:
@@ -532,6 +536,8 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	switch (req) {
 #ifdef PT_STEP
 	case PT_STEP:
+	case PT_SETSTEP:
+	case PT_CLEARSTEP:
 #endif
 	case PT_CONTINUE:
 	case PT_DETACH:
@@ -797,13 +803,18 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		 * the requested thread, and clear it for other threads.
 		 */
 		LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
-			if (lt != lt2) {
+			if (ISSET(lt2->l_pflag, LP_SINGLESTEP)) {
+				lwp_lock(lt2);
+				process_sstep(lt2, 1);
+				lwp_unlock(lt2);
+			} else if (lt != lt2) {
 				lwp_lock(lt2);
 				process_sstep(lt2, 0);
 				lwp_unlock(lt2);
 			}
 		}
-		error = process_sstep(lt, req == PT_STEP);
+		error = process_sstep(lt,
+		    ISSET(lt->l_pflag, LP_SINGLESTEP) || req == PT_STEP);
 		if (error)
 			break;
 #endif
@@ -818,6 +829,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 
 			/* not being traced any more */
 			t->p_opptr = NULL;
+
+			/* clear single step */
+			LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
+				CLR(lt2->l_pflag, LP_SINGLESTEP);
+			}
+			CLR(lt->l_pflag, LP_SINGLESTEP);
 		}
 	sendsig:
 		t->p_fpid = 0;
@@ -861,6 +878,36 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 		SET(t->p_slflag, PSL_SYSCALLEMU);
 		break;
+
+#ifdef PT_STEP
+	case  PT_SETSTEP:
+		write = 1;
+
+	case  PT_CLEARSTEP:
+		/* write = 0 done above. */
+
+		tmp = data;
+		if (tmp != 0 && t->p_nlwps > 1) {
+			lwp_delref(lt);
+			mutex_enter(t->p_lock);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				mutex_exit(t->p_lock);
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			mutex_exit(t->p_lock);
+		}
+
+		if (ISSET(lt->l_flag, LW_SYSTEM))
+			error = EINVAL;
+		else if (write)
+			SET(lt->l_pflag, LP_SINGLESTEP);
+		else
+			CLR(lt->l_pflag, LP_SINGLESTEP);
+		break;
+#endif
 
 	case  PT_KILL:
 		/* just send the process a KILL signal. */

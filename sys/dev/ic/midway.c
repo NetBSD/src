@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.97.2.2 2017/03/20 06:57:28 pgoyette Exp $	*/
+/*	$NetBSD: midway.c,v 1.97.2.3 2017/04/26 02:53:11 pgoyette Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.97.2.2 2017/03/20 06:57:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.97.2.3 2017/04/26 02:53:11 pgoyette Exp $");
 
 #include "opt_natm.h"
 
@@ -2592,7 +2592,7 @@ EN_INTR_TYPE en_intr(void *arg)
     char sbuf[256];
 
     snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
-    printf("%s: interrupt=0x%s\n", device_xname(sc->sc_dev), sbuf);
+    printf("%s: interrupt=%s\n", device_xname(sc->sc_dev), sbuf);
   }
 #endif
 
@@ -2604,7 +2604,7 @@ EN_INTR_TYPE en_intr(void *arg)
     char sbuf[256];
 
     snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
-    printf("%s: unexpected interrupt=0x%s, resetting card\n",
+    printf("%s: unexpected interrupt=%s, resetting card\n",
            device_xname(sc->sc_dev), sbuf);
 #ifdef EN_DEBUG
 #ifdef DDB
@@ -3318,7 +3318,7 @@ int en_dump(int unit, int level)
       continue;
 
     snprintb(sbuf, sizeof(sbuf), END_BITS, level);
-    printf("dumping device %s at level 0x%s\n", device_xname(sc->sc_dev), sbuf);
+    printf("dumping device %s at level %s\n", device_xname(sc->sc_dev), sbuf);
 
     if (sc->dtq_us == 0) {
       printf("<hasn't been en_init'd yet>\n");
@@ -3366,13 +3366,13 @@ int en_dump(int unit, int level)
       printf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
 
       snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTSTAT));
-      printf("interrupt status = 0x%s\n", ybuf);
+      printf("interrupt status = %s\n", ybuf);
 
       snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTENA));
-      printf("interrupt enable = 0x%s\n", ybuf);
+      printf("interrupt enable = %s\n", ybuf);
 
       snprintb(ybuf, sizeof(ybuf), MID_MCSRBITS, EN_READ(sc, MID_MAST_CSR));
-      printf("mcsr = 0x%s\n", ybuf);
+      printf("mcsr = %s\n", ybuf);
 
       printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),
 			MID_SL_A2REG(sc->hwslistp));

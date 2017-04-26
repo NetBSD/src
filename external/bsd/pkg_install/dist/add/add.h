@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.1.1.7 2011/02/18 22:32:27 aymeric Exp $ */
+/* $NetBSD: add.h,v 1.1.1.7.26.1 2017/04/26 02:52:50 pgoyette Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 

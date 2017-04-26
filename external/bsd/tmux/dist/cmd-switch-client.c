@@ -27,7 +27,8 @@
  * Switch client to a different session.
  */
 
-enum cmd_retval	 cmd_switch_client_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_switch_client_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_switch_client_entry = {
 	"switch-client", "switchc",
@@ -37,16 +38,15 @@ const struct cmd_entry cmd_switch_client_entry = {
 	cmd_switch_client_exec
 };
 
-enum cmd_retval
-cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c;
-	struct session		*s = NULL;
-	struct winlink		*wl = NULL;
-	struct window 		*w = NULL;
-	struct window_pane	*wp = NULL;
-	const char		*tflag, *tablename, *update;
+	struct cmd_state	*state = &item->state;
+	struct client		*c = state->c;
+	struct session		*s = item->state.tflag.s;
+	struct window_pane	*wp;
+	const char		*tablename;
 	struct key_table	*table;
 
 	if ((c = cmd_find_client(cmdq, args_get(args, 'c'), 0)) == NULL)
@@ -63,7 +63,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (tablename != NULL) {
 		table = key_bindings_get_table(tablename, 0);
 		if (table == NULL) {
-			cmdq_error(cmdq, "table %s doesn't exist", tablename);
+			cmdq_error(item, "table %s doesn't exist", tablename);
 			return (CMD_RETURN_ERROR);
 		}
 		table->references++;
@@ -74,42 +74,23 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	tflag = args_get(args, 't');
 	if (args_has(args, 'n')) {
 		if ((s = session_next_session(c->session)) == NULL) {
-			cmdq_error(cmdq, "can't find next session");
+			cmdq_error(item, "can't find next session");
 			return (CMD_RETURN_ERROR);
 		}
 	} else if (args_has(args, 'p')) {
 		if ((s = session_previous_session(c->session)) == NULL) {
-			cmdq_error(cmdq, "can't find previous session");
+			cmdq_error(item, "can't find previous session");
 			return (CMD_RETURN_ERROR);
 		}
 	} else if (args_has(args, 'l')) {
 		if (c->last_session != NULL && session_alive(c->last_session))
 			s = c->last_session;
 		if (s == NULL) {
-			cmdq_error(cmdq, "can't find last session");
+			cmdq_error(item, "can't find last session");
 			return (CMD_RETURN_ERROR);
 		}
 	} else {
-		if (tflag == NULL) {
-			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
-				return (CMD_RETURN_ERROR);
-		} else if (tflag[strcspn(tflag, ":.")] != '\0') {
-			if ((wl = cmd_find_pane(cmdq, tflag, &s, &wp)) == NULL)
-				return (CMD_RETURN_ERROR);
-		} else {
-			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
-				return (CMD_RETURN_ERROR);
-			w = window_find_by_id_str(tflag);
-			if (w == NULL) {
-				wp = window_pane_find_by_id_str(tflag);
-				if (wp != NULL)
-					w = wp->window;
-			}
-			if (w != NULL)
-				wl = winlink_find_by_window(&s->windows, w);
-		}
-
-		if (cmdq->client == NULL)
+		if (item->client == NULL)
 			return (CMD_RETURN_NORMAL);
 
 		if (wl != NULL) {
@@ -119,14 +100,14 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		}
 	}
 
-	if (c != NULL && !args_has(args, 'E')) {
-		update = options_get_string(&s->options, "update-environment");
-		environ_update(update, &c->environ, &s->environ);
-	}
+	if (!args_has(args, 'E'))
+		environ_update(s->options, c->environ, s->environ);
 
 	if (c->session != NULL && c->session != s)
 		c->last_session = c->session;
 	c->session = s;
+	if (!item->repeat)
+		server_client_set_key_table(c, NULL);
 	status_timer_start(c);
 	session_update_activity(s, NULL);
 	gettimeofday(&s->last_attached_time, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.57.2.1 2017/01/07 08:56:26 pgoyette Exp $	*/
+/*	$NetBSD: ffb.c,v 1.57.2.2 2017/04/26 02:53:07 pgoyette Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.57.2.1 2017/01/07 08:56:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.57.2.2 2017/04/26 02:53:07 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -695,6 +695,7 @@ ffb_ras_eraserows(void *cookie, int row, int n, long attr)
 		FBC_WRITE(sc, FFB_FBC_BX, 0);
 		FBC_WRITE(sc, FFB_FBC_BH, ri->ri_height);
 		FBC_WRITE(sc, FFB_FBC_BW, ri->ri_width);
+		ri->ri_flg &= ~RI_CURSOR;
 	} else {
 		row *= ri->ri_font->fontheight;
 		FBC_WRITE(sc, FFB_FBC_BY, ri->ri_yorigin + row);
@@ -722,6 +723,7 @@ ffb_ras_erasecols(void *cookie, int row, int col, int n, long attr)
 		n = ri->ri_cols - col;
 	if (n <= 0)
 		return;
+
 	n *= ri->ri_font->fontwidth;
 	col *= ri->ri_font->fontwidth;
 	row *= ri->ri_font->fontheight;
@@ -1215,7 +1217,8 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
-	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_PREFER_ALPHA |
+		     RI_FULLCLEAR;
 
 	/*
 	 * we can't accelerate copycols() so instead of falling back to

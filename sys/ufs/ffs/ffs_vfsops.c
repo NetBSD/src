@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.339.2.6 2017/03/20 06:57:54 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.339.2.7 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.6 2017/03/20 06:57:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.7 2017/04/26 02:53:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -377,8 +377,8 @@ ffs_mountroot(void)
 	 */
 	mp->mnt_flag |= MNT_FORCE;
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 	mp->mnt_flag &= ~MNT_FORCE;
@@ -388,7 +388,7 @@ ffs_mountroot(void)
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	setrootfstime((time_t)fs->fs_time);
 	return (0);
 }
@@ -1848,6 +1848,8 @@ ffs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct ffs_sync_ctx *c = cl;
 	struct inode *ip;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	ip = VTOI(vp);
 	/*

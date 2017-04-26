@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.29.24.1 2017/03/20 06:56:57 pgoyette Exp $
+.\"	$NetBSD: syslog.3,v 1.29.24.2 2017/04/26 02:52:54 pgoyette Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)syslog.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 3, 2010
+.Dd March 22, 2017
 .Dt SYSLOG 3
 .Os
 .Sh NAME
@@ -295,6 +295,10 @@ immediately.
 Normally the open is delayed until the first message is logged.
 Useful for programs that need to manage the order in which file
 descriptors are allocated.
+.It Dv LOG_NLOG
+Stops syslog from writing to the system log.
+Only useful with
+.Dv LOG_PERROR .
 .It Dv LOG_PERROR
 Write the message to standard error output as well to the system log.
 .It Dv LOG_PID
@@ -302,6 +306,9 @@ Log the process id with each message: useful for identifying
 instantiations of daemons.
 (This PID is placed within brackets
 between the ident and the message.)
+.It Dv LOG_PTRIM
+Trim anything syslog added to the message before writing to
+standard error output.
 .El
 .Pp
 The

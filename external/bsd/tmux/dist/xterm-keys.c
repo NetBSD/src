@@ -40,15 +40,17 @@
  * We accept any but always output the latter (it comes first in the table).
  */
 
-int	xterm_keys_match(const char *, const char *, size_t, size_t *, u_int *);
-int	xterm_keys_modifiers(const char *, size_t, size_t *, u_int *);
+static int	xterm_keys_match(const char *, const char *, size_t, size_t *,
+		    key_code *);
+static int	xterm_keys_modifiers(const char *, size_t, size_t *,
+		    key_code *);
 
 struct xterm_keys_entry {
 	int		 key;
 	const char	*template;
 };
 
-const struct xterm_keys_entry xterm_keys_table[] = {
+static const struct xterm_keys_entry xterm_keys_table[] = {
 	{ KEYC_F1,	"\033[1;_P" },
 	{ KEYC_F1,	"\033O1;_P" },
 	{ KEYC_F1,	"\033O_P" },
@@ -113,7 +115,7 @@ const struct xterm_keys_entry xterm_keys_table[] = {
  * Match key against buffer, treating _ as a wildcard. Return -1 for no match,
  * 0 for match, 1 if the end of the buffer is reached (need more data).
  */
-int
+static int
 xterm_keys_match(const char *template, const char *buf, size_t len,
     size_t *size, u_int *modifiers)
 {
@@ -147,8 +149,9 @@ xterm_keys_match(const char *template, const char *buf, size_t len,
 }
 
 /* Find modifiers from buffer. */
-int
-xterm_keys_modifiers(const char *buf, size_t len, size_t *pos, u_int *modifiers)
+static int
+xterm_keys_modifiers(const char *buf, size_t len, size_t *pos,
+    key_code *modifiers)
 {
 	u_int	flags;
 

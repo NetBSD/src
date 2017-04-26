@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.127.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.127.2.2 2017/04/26 02:53:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.127.2.1 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.127.2.2 2017/04/26 02:53:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1035,7 +1035,7 @@ tmpfs_readlink(void *v)
 int
 tmpfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -1054,7 +1054,6 @@ tmpfs_inactive(void *v)
 	} else {
 		*ap->a_recycle = false;
 	}
-	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -1166,9 +1165,6 @@ tmpfs_getpages(void *v)
 	KASSERT(vp->v_type == VREG);
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	node = VP_TO_TMPFS_NODE(vp);
-	uobj = node->tn_spec.tn_reg.tn_aobj;
-
 	/*
 	 * Currently, PGO_PASTEOF is not supported.
 	 */
@@ -1184,6 +1180,12 @@ tmpfs_getpages(void *v)
 
 	if ((flags & PGO_LOCKED) != 0)
 		return EBUSY;
+
+	if (vdead_check(vp, VDEAD_NOWAIT) != 0)
+		return ENOENT;
+
+	node = VP_TO_TMPFS_NODE(vp);
+	uobj = node->tn_spec.tn_reg.tn_aobj;
 
 	if ((flags & PGO_NOTIMESTAMP) == 0) {
 		u_int tflags = 0;

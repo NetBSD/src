@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36.2.1 2016/11/04 14:49:05 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.36.2.2 2017/04/26 02:53:07 pgoyette Exp $
 
 .include <bsd.init.mk>
 
@@ -13,7 +13,7 @@ WARNS?=		2
 KLINK_MACHINE=	sparc64
 
 PROG?=		ofwboot
-SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
+SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c
 SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c isfloppy.c
 .if ${MACHINE_ARCH} == "sparc64"
 SRCS+=		hvcall.S
@@ -86,14 +86,10 @@ SAMISCCPPFLAGS+= -DCOMPAT_SOLARIS_UFS
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
+.include "${S}/conf/newvers_stand.mk"
+
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
-
-vers.c: version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
-
-CLEANFILES+= vers.c
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}

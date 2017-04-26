@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.12 2010/08/24 12:05:01 christos Exp $
+.\"	$NetBSD: getmntopts.3,v 1.12.28.1 2017/04/26 02:52:57 pgoyette Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,10 @@
 .Dt GETMNTOPTS 3
 .Os
 .Sh NAME
-.Nm getmntopts
+.Nm getmntopts ,
+.Nm getmntoptstr ,
+.Nm getmntoptnum ,
+.Nm freemntopts
 .Nd scan mount options
 .Sh LIBRARY
 .Lb libutil
@@ -181,7 +184,7 @@ returns
 .Pp
 The
 .Fn getmntoptnum
-returns the long value of the named option, if such a value was set in the
+function returns the long value of the named option, if such a value was set in the
 option string.
 If the value was not set, or could not be converted from a string to a
 long, then if the external integer value
@@ -197,7 +200,7 @@ returns \-1.
 .Pp
 The
 .Fn freemntopts
-frees the storage used by
+function frees the storage used by
 .Fn getmntopts .
 .Sh RETURN VALUES
 .Fn getmntopts

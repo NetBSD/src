@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.41 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.41.2.1 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.41 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.41.2.1 2017/04/26 02:53:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -211,7 +211,7 @@ aio_procinit(struct proc *p)
 		return EAGAIN;
 	}
 	error = lwp_create(curlwp, p, uaddr, 0, NULL, 0, aio_worker,
-	    NULL, &l, curlwp->l_class);
+	    NULL, &l, curlwp->l_class, &curlwp->l_sigmask, &curlwp->l_sigstk);
 	if (error != 0) {
 		uvm_uarea_free(uaddr);
 		aio_exit(p, aio);

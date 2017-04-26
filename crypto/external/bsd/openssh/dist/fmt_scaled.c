@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_scaled.c,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: fmt_scaled.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /*	$OpenBSD: fmt_scaled.c,v 1.9 2007/03/20 03:42:52 tedu Exp $	*/
 
 /*

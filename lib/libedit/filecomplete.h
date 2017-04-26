@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.h,v 1.10 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: filecomplete.h,v 1.10.2.1 2017/04/26 02:52:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,8 @@ int fn_complete(EditLine *,
     const wchar_t *, const wchar_t *, const char *(*)(const char *), size_t,
     int *, int *, int *, int *);
 
-void fn_display_match_list(EditLine *, char **, size_t, size_t);
+void fn_display_match_list(EditLine *, char **, size_t, size_t,
+	const char *(*)(const char *));
 char *fn_tilde_expand(const char *);
 char *fn_filename_completion_function(const char *, int);
 

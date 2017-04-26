@@ -1466,9 +1466,8 @@ unionfs_readlink(void *v)
 static int
 unionfs_inactive(void *v)
 {
-	struct vop_inactive_args *ap = v;
+	struct vop_inactive_v2_args *ap = v;
 	*ap->a_recycle = true;
-	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 

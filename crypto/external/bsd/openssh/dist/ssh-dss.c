@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.8.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.8.2.3 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: ssh-dss.c,v 1.35 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.8.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.8.2.3 2017/04/26 02:52:15 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>

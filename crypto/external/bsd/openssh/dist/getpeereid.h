@@ -1,4 +1,4 @@
-/*	$NetBSD: getpeereid.h,v 1.3.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: getpeereid.h,v 1.3.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* Id: bsd-getpeereid.h,v 1.1 2002/09/12 00:33:02 djm Exp */
 
 #ifndef _BSD_GETPEEREID_H

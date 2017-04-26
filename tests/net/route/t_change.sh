@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.4.12.2 2017/01/07 08:56:56 pgoyette Exp $
+#	$NetBSD: t_change.sh,v 1.4.12.3 2017/04/26 02:53:34 pgoyette Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -292,6 +292,77 @@ route_change_ifp_ifa_cleanup()
 	env RUMP_SERVER=unix://commsock rump.halt
 }
 
+atf_test_case route_change_flags cleanup
+route_change_flags_head()
+{
+
+	atf_set "descr" "Change flags of a route"
+	atf_set "require.progs" "rump_server"
+}
+
+route_change_flags_body()
+{
+
+	atf_check -s exit:0 ${netserver} ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus
+	atf_check -s exit:0 rump.ifconfig shmif0 10.0.0.10/24 up
+
+	check_route 10.0.0/24 '' UC shmif0
+	# Set reject flag
+	atf_check -s exit:0 -o ignore \
+	    rump.route change -net 10.0.0.0/24 -reject
+	check_route 10.0.0/24 '' URCS shmif0
+	# Clear reject flag
+	atf_check -s exit:0 -o ignore \
+	    rump.route change -net 10.0.0.0/24 -noreject
+	check_route 10.0.0/24 '' UCS shmif0
+
+	# TODO other flags
+}
+
+route_change_flags_cleanup()
+{
+
+	env RUMP_SERVER=unix://commsock rump.halt
+}
+
+atf_test_case route_change_default_flags cleanup
+route_change_default_flags_head()
+{
+
+	atf_set "descr" "Change flags of the default route"
+	atf_set "require.progs" "rump_server"
+}
+
+route_change_default_flags_body()
+{
+
+	atf_check -s exit:0 ${netserver} ${RUMP_SERVER}
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus
+	atf_check -s exit:0 rump.ifconfig shmif0 10.0.0.10/24 up
+
+	atf_check -s exit:0 -o ignore rump.route add default 10.0.0.1
+	check_route default 10.0.0.1 UGS shmif0
+	# Set reject flag
+	atf_check -s exit:0 -o ignore rump.route change default -reject
+	check_route default 10.0.0.1 UGRS shmif0
+	# Clear reject flag
+	atf_check -s exit:0 -o ignore rump.route change default -noreject
+	check_route default 10.0.0.1 UGS shmif0
+
+	# TODO other flags
+}
+
+route_change_default_flags_cleanup()
+{
+
+	env RUMP_SERVER=unix://commsock rump.halt
+}
+
 atf_init_test_cases()
 {
 
@@ -300,4 +371,6 @@ atf_init_test_cases()
 	atf_add_test_case route_change_ifa
 	atf_add_test_case route_change_ifp
 	atf_add_test_case route_change_ifp_ifa
+	atf_add_test_case route_change_flags
+	atf_add_test_case route_change_default_flags
 }

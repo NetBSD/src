@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/06/14 20:47:43 agc Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2017/04/26 02:52:13 pgoyette Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -9,7 +9,7 @@ SRCS+= pgpsum.c rsa.c
 
 SRCS+= bzlib.c zlib.c
 
-SRCS+= md5c.c rmd160.c sha1.c sha2.c tiger.c
+SRCS+= md5c.c rmd160.c sha1.c sha2.c
 
 CPPFLAGS+=-I${.CURDIR} -I${EXTDIST}/src/netpgpverify
 COPTS.libverify.c+= -Wno-format-nonliteral

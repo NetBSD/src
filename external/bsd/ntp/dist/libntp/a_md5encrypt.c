@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.6.2.1 2017/01/07 08:54:05 pgoyette Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.6.2.2 2017/04/26 02:52:42 pgoyette Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -13,7 +13,6 @@
 #include "ntp.h"
 #include "ntp_md5.h"	/* provides OpenSSL digest API */
 #include "isc/string.h"
-#include "libssl_compat.h"
 /*
  * MD5authencrypt - generate message digest
  *

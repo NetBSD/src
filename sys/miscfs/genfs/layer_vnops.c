@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.58.8.1 2017/03/20 06:57:48 pgoyette Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.58.8.2 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.58.8.1 2017/03/20 06:57:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.58.8.2 2017/04/26 02:53:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,7 @@ layer_fsync(void *v)
 int
 layer_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -602,7 +602,7 @@ layer_inactive(void *v)
 	 * like they do in the name lookup cache code.
 	 * That's too much work for now.
 	 */
-	VOP_UNLOCK(vp);
+
 	return 0;
 }
 
@@ -742,48 +742,6 @@ layer_reclaim(void *v)
 	vrele(lowervp);
 
 	return 0;
-}
-
-int
-layer_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct vnode *lowervp = LAYERVPTOLOWERVP(vp);
-	int flags = ap->a_flags;
-	int error;
-
-	if (ISSET(flags, LK_NOWAIT)) {
-		error = VOP_LOCK(lowervp, flags);
-		if (error)
-			return error;
-		if (mutex_tryenter(vp->v_interlock)) {
-			error = vdead_check(vp, VDEAD_NOWAIT);
-			mutex_exit(vp->v_interlock);
-		} else
-			error = EBUSY;
-		if (error)
-			VOP_UNLOCK(lowervp);
-		return error;
-	}
-
-	error = VOP_LOCK(lowervp, flags);
-	if (error)
-		return error;
-
-	mutex_enter(vp->v_interlock);
-	error = vdead_check(vp, VDEAD_NOWAIT);
-	if (error) {
-		VOP_UNLOCK(lowervp);
-		error = vdead_check(vp, 0);
-		KASSERT(error == ENOENT);
-	}
-	mutex_exit(vp->v_interlock);
-
-	return error;
 }
 
 /*

@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.61.2.1 2017/03/20 06:57:48 pgoyette Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.61.2.2 2017/04/26 02:53:27 pgoyette Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -135,10 +135,6 @@ awk_parser='
 	if ($2 == "WILLRELE" ||
 	    $3 == "WILLRELE") {
 		willrele[argc] = 1;
-		i++;
-	} else if ($2 == "WILLUNLOCK" ||
-		   $3 == "WILLUNLOCK") {
-		willrele[argc] = 2;
 		i++;
 	} else if ($2 == "WILLPUT" ||
 		   $3 == "WILLPUT") {
@@ -368,16 +364,15 @@ function offsets() {
 	vpnum = 0;
 	for (i=0; i<argc; i++) {
 		if (willrele[i]) {
-			if (willrele[i] == 2) {
-				word = "UNLOCK";
-			} else if (willrele[i] == 3) {
+			if (willrele[i] == 3) {
 				word = "PUT";
 			} else {
 				word = "RELE";
 			}
 			printf(" | VDESC_VP%s_WILL%s", vpnum, word);
-			vpnum++;
 		}
+		if (argtype[i] == "struct vnode *")
+			vpnum++;
 	}
 	print ",";
 	# vp offsets

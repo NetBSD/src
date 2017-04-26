@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.9 2015/12/13 22:55:05 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.9.2.1 2017/04/26 02:53:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
 #include <arm/nvidia/tegra_reg.h>
 #include <evbarm/tegra/platform.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.9 2015/12/13 22:55:05 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.9.2.1 2017/04/26 02:53:02 pgoyette Exp $")
 
-#if defined(VERBOSE_INIT_ARM)
+#if defined(VERBOSE_INIT_ARM) && defined(CONSADDR)
 #define	XPUTC(n)	mov r0, n; bl xputc
 #if KERNEL_BASE_VOFFSET == 0
 #define	XPUTC2(n)	mov r0, n; bl xputc

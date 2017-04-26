@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.9.2.1 2017/01/07 08:56:28 pgoyette Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.9.2.2 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.9.2.1 2017/01/07 08:56:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.9.2.2 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
+#include "ioapic.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,6 +163,13 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 	pci_intr_handle_t *vectors;
 	int error, i;
 
+#if NIOAPIC > 0
+	if (nioapics == 0) {
+		DPRINTF(("no IOAPIC.\n"));
+		return ENODEV;
+	}
+#endif
+
 	if ((pa->pa_flags & PCI_FLAGS_MSI_OKAY) == 0) {
 		DPRINTF(("PCI host bridge does not support MSI.\n"));
 		return ENODEV;
@@ -243,6 +251,13 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	struct pic *msix_pic;
 	pci_intr_handle_t *vectors;
 	int error, i;
+
+#if NIOAPIC > 0
+	if (nioapics == 0) {
+		DPRINTF(("no IOAPIC.\n"));
+		return ENODEV;
+	}
+#endif
 
 	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0) {
 		DPRINTF(("PCI host bridge does not support MSI-X.\n"));

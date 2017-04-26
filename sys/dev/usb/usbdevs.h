@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.707.2.3 2017/03/20 06:57:38 pgoyette Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.707.2.4 2017/04/26 02:53:23 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.729 2017/03/05 19:21:17 snj Exp
+ *	NetBSD: usbdevs,v 1.732 2017/04/18 19:09:12 riastradh Exp
  */
 
 /*
@@ -159,6 +159,7 @@
 #define	USB_VENDOR_ANNABOOKS	0x04ed		/* Annabooks */
 #define	USB_VENDOR_JVC	0x04f1		/* JVC */
 #define	USB_VENDOR_CHICONY	0x04f2		/* Chicony Electronics */
+#define	USB_VENDOR_ELAN	0x04f3		/* ELAN Microelectronics */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries */
 #define	USB_VENDOR_DALLAS	0x04fa		/* Dallas Semiconductor */
 #define	USB_VENDOR_AIPTEK2	0x04fc		/* AIPTEK International */
@@ -490,6 +491,7 @@
 #define	USB_VENDOR_BELKIN2	0x1293		/* Belkin Components */
 #define	USB_VENDOR_CYBERTAN	0x129b		/* CyberTAN Technology */
 #define	USB_VENDOR_HUAWEI	0x12d1		/* Huawei Technologies */
+#define	USB_VENDOR_ARANEUS	0x12d8		/* Araneus Information Systems Oy */
 #define	USB_VENDOR_AINCOMM	0x12fd		/* Aincomm */
 #define	USB_VENDOR_MOBILITY	0x1342		/* Mobility */
 #define	USB_VENDOR_DICKSMITH	0x1371		/* Dick Smith Electronics */
@@ -766,6 +768,9 @@
 #define	USB_PRODUCT_AGFA_SNAPSCANE25	0x2095		/* SnapScan e25 */
 #define	USB_PRODUCT_AGFA_SNAPSCANE26	0x2097		/* SnapScan e26 */
 #define	USB_PRODUCT_AGFA_SNAPSCANE52	0x20fd		/* SnapScan e52 */
+
+/* Araneus products */
+#define	USB_PRODUCT_ARANEUS_ALEA	0x0001		/* Alea I/II TRNG */
 
 /* Aincomm products */
 #define	USB_PRODUCT_AINCOMM_AWU2000B	0x1001		/* AWU2000B */
