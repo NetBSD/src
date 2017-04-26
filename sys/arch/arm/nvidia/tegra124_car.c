@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.11 2017/04/22 17:40:47 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.12 2017/04/26 01:43:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.11 2017/04/22 17:40:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.12 2017/04/26 01:43:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -651,6 +651,7 @@ struct tegra124_init_parent {
 	{ "xusb_falcon_src",	"pll_p_out0" },
 	{ "xusb_ss_src",	"pll_u_480" },
 	{ "xusb_fs_src",	"pll_u_48" },
+	{ "host1x",		"pll_p_out0" },
 };
 
 struct tegra124_car_rst {
