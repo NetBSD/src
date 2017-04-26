@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.49.2.3 2017/04/26 02:53:22 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.49.2.4 2017/04/26 02:57:17 pgoyette Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,11 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< piixpm.c
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.49.2.3 2017/04/26 02:53:22 pgoyette Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.49.2.3 2017/04/26 02:53:22 pgoyette Exp $");
->>>>>>> 1.52
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.49.2.4 2017/04/26 02:57:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
