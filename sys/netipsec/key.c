@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.117 2017/04/26 07:17:38 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.118 2017/04/26 08:36:32 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.117 2017/04/26 07:17:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.118 2017/04/26 08:36:32 ozaki-r Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1878,9 +1878,9 @@ key_spdadd(struct socket *so, struct mbuf *m,
 	}
 
 	/* policy requests are mandatory when action is ipsec. */
-        if (mhp->msg->sadb_msg_type != SADB_X_SPDSETIDX
-	 && xpl0->sadb_x_policy_type == IPSEC_POLICY_IPSEC
-	 && mhp->extlen[SADB_X_EXT_POLICY] <= sizeof(*xpl0)) {
+	if (mhp->msg->sadb_msg_type != SADB_X_SPDSETIDX &&
+	    xpl0->sadb_x_policy_type == IPSEC_POLICY_IPSEC &&
+	    mhp->extlen[SADB_X_EXT_POLICY] <= sizeof(*xpl0)) {
 		ipseclog((LOG_DEBUG, "key_spdadd: some policy requests part required.\n"));
 		return key_senderror(so, m, EINVAL);
 	}
@@ -2287,8 +2287,8 @@ key_spdget(struct socket *so, struct mbuf *m,
 	}
 
 	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq,
-                                         mhp->msg->sadb_msg_pid);
-    KEY_FREESP(&sp); /* ref gained by key_getspbyid */
+	    mhp->msg->sadb_msg_pid);
+	KEY_FREESP(&sp); /* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
 		return key_sendup_mbuf(so, n, KEY_SENDUP_ONE);
@@ -3815,23 +3815,23 @@ key_porttosaddr(union sockaddr_union *saddr, u_int16_t port)
 static int
 key_checksalen(const union sockaddr_union *saddr)
 {
-        switch (saddr->sa.sa_family) {
-        case AF_INET:
-                if (saddr->sa.sa_len != sizeof(struct sockaddr_in))
-                        return -1;
-                break;
+	switch (saddr->sa.sa_family) {
+	case AF_INET:
+		if (saddr->sa.sa_len != sizeof(struct sockaddr_in))
+			return -1;
+		break;
 #ifdef INET6
-        case AF_INET6:
-                if (saddr->sa.sa_len != sizeof(struct sockaddr_in6))
-                        return -1;
-                break;
+	case AF_INET6:
+		if (saddr->sa.sa_len != sizeof(struct sockaddr_in6))
+			return -1;
+		break;
 #endif
-        default:
-                printf("%s: unexpected sa_family %d\n", __func__,
-                    saddr->sa.sa_family);
-                return -1;
-                break;
-        }
+	default:
+		printf("%s: unexpected sa_family %d\n", __func__,
+		    saddr->sa.sa_family);
+			return -1;
+		break;
+	}
 	return 0;
 }
 
@@ -4977,7 +4977,7 @@ key_getspi(struct socket *so, struct mbuf *m,
 			acq->created = time_uptime;
 			acq->count = 0;
 		}
-    	}
+	}
 #endif
 
     {
