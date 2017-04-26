@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.317.2.4 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: sd.c,v 1.317.2.5 2017/04/26 02:53:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317.2.4 2017/01/07 08:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317.2.5 2017/04/26 02:53:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -656,6 +656,7 @@ sd_diskstart(device_t dev, struct buf *bp)
 	struct scsipi_generic *cmdp;
 	struct scsipi_xfer *xs;
 	int error, flags, nblks, cmdlen;
+	int cdb_flags;
 
 	mutex_enter(chan_mtx(chan));
 
@@ -700,12 +701,27 @@ sd_diskstart(device_t dev, struct buf *bp)
 		nblks = howmany(bp->b_bcount, sd->params.blksize);
 
 	/*
+	 * Pass FUA and/or DPO if requested. Must be done before CDB
+	 * selection, as 6-byte CDB doesn't support the flags.
+	 */
+	cdb_flags = 0;
+
+	if (bp->b_flags & B_MEDIA_FUA)
+		cdb_flags |= SRWB_FUA;
+
+	if (bp->b_flags & B_MEDIA_DPO)
+		cdb_flags |= SRWB_DPO;
+
+	/*
 	 * Fill out the scsi command.  Use the smallest CDB possible
-	 * (6-byte, 10-byte, or 16-byte).
+	 * (6-byte, 10-byte, or 16-byte). If we need FUA or DPO,
+	 * need to use 10-byte or bigger, as the 6-byte doesn't support
+	 * the flags.
 	 */
 	if (((bp->b_rawblkno & 0x1fffff) == bp->b_rawblkno) &&
 	    ((nblks & 0xff) == nblks) &&
-	    !(periph->periph_quirks & PQUIRK_ONLYBIG)) {
+	    !(periph->periph_quirks & PQUIRK_ONLYBIG) &&
+	    !cdb_flags) {
 		/* 6-byte CDB */
 		memset(&cmd_small, 0, sizeof(cmd_small));
 		cmd_small.opcode = (bp->b_flags & B_READ) ?
@@ -733,6 +749,9 @@ sd_diskstart(device_t dev, struct buf *bp)
 		cmdlen = sizeof(cmd16);
 		cmdp = (struct scsipi_generic *)&cmd16;
 	}
+
+	if (cdb_flags)
+		cmdp->bytes[0] = cdb_flags;
 
 	/*
 	 * Figure out what flags to use.
@@ -1798,20 +1817,25 @@ sd_getcache(struct sd_softc *sd, int *bitsp)
 	int error, bits = 0;
 	int big;
 	union scsi_disk_pages *pages;
+	uint8_t dev_spec;
 
+	/* only SCSI-2 and later supported */
 	if (periph->periph_version < 2)
 		return (EOPNOTSUPP);
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
-	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big);
+	    sizeof(scsipi_sense.pages.caching_params), 8, XS_CTL_SILENT, &big);
 	if (error)
 		return (error);
 
-	if (big)
+	if (big) {
 		pages = (void *)(&scsipi_sense.header.big + 1);
-	else
+		dev_spec = scsipi_sense.header.big.dev_spec;
+	} else {
 		pages = (void *)(&scsipi_sense.header.small + 1);
+		dev_spec = scsipi_sense.header.small.dev_spec;
+	}
 
 	if ((pages->caching_params.flags & CACHING_RCD) == 0)
 		bits |= DKCACHE_READ;
@@ -1820,10 +1844,17 @@ sd_getcache(struct sd_softc *sd, int *bitsp)
 	if (pages->caching_params.pg_code & PGCODE_PS)
 		bits |= DKCACHE_SAVE;
 
+	/*
+	 * Support for FUA/DPO, defined starting with SCSI-2. Use only
+	 * if device claims to support it, according to the MODE SENSE.
+	 */
+	if (ISSET(dev_spec, SMH_DSP_DPOFUA))
+		bits |= DKCACHE_FUA | DKCACHE_DPO;
+
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_mode_sense(sd, SMS_DBD, &scsipi_sense,
 	    sizeof(scsipi_sense.pages.caching_params),
-	    SMS_PCTRL_CHANGEABLE|8, 0, &big);
+	    SMS_PCTRL_CHANGEABLE|8, XS_CTL_SILENT, &big);
 	if (error == 0) {
 		if (big)
 			pages = (void *)(&scsipi_sense.header.big + 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.36.40.1 2017/01/07 08:56:27 pgoyette Exp $	*/
+/*	$NetBSD: ka650.c,v 1.36.40.2 2017/04/26 02:53:08 pgoyette Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.36.40.1 2017/01/07 08:56:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.36.40.2 2017/04/26 02:53:08 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ ka650_mchk(void *cmcf)
 	    mcf->mc65_mrvaddr, mcf->mc65_istate1, mcf->mc65_istate2,
 	    mcf->mc65_pc, mcf->mc65_psl);
 	snprintb(sbuf, sizeof(sbuf), DMASER_BITS, ka650merr_ptr->merr_dser);
-	printf("dmaser=0x%s qbear=0x%x dmaear=0x%x\n", sbuf,
+	printf("dmaser=%s qbear=0x%x dmaear=0x%x\n", sbuf,
 	    (int)ka650merr_ptr->merr_qbear,
 	    (int)ka650merr_ptr->merr_dear);
 	ka650merr_ptr->merr_dser = DSER_CLEAR;

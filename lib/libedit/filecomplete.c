@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.43.2.1 2016/11/04 14:48:53 pgoyette Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.43.2.2 2017/04/26 02:52:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.43.2.1 2016/11/04 14:48:53 pgoyette Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.43.2.2 2017/04/26 02:52:55 pgoyette Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -354,10 +354,13 @@ _fn_qsort_string_compare(const void *i1, const void *i2)
  * num, so the strings are matches[1] *through* matches[num-1].
  */
 void
-fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
+fn_display_match_list(EditLine * el, char **matches, size_t num, size_t width,
+    const char *(*app_func) (const char *))
 {
 	size_t line, lines, col, cols, thisguy;
 	int screenwidth = el->el_terminal.t_size.h;
+	if (app_func == NULL)
+		app_func = append_char_function;
 
 	/* Ignore matches[0]. Avoid 1-based array logic below. */
 	matches++;
@@ -385,8 +388,11 @@ fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 			thisguy = line + col * lines;
 			if (thisguy >= num)
 				break;
-			(void)fprintf(el->el_outfile, "%s%-*s",
-			    col == 0 ? "" : " ", (int)width, matches[thisguy]);
+			(void)fprintf(el->el_outfile, "%s%s%s",
+			    col == 0 ? "" : " ", matches[thisguy],
+				append_char_function(matches[thisguy]));
+			(void)fprintf(el->el_outfile, "%-*s",
+				(int) (width - strlen(matches[thisguy])), "");
 		}
 		(void)fprintf(el->el_outfile, "\n");
 	}
@@ -533,7 +539,7 @@ fn_complete(EditLine *el,
 				 * add 1 to matches_num for the call.
 				 */
 				fn_display_match_list(el, matches,
-				    matches_num+1, maxlen);
+				    matches_num+1, maxlen, app_func);
 			}
 			retval = CC_REDISPLAY;
 		} else if (matches[0][0]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.14.34.2 2017/01/07 08:56:28 pgoyette Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.14.34.3 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,12 +95,6 @@ extern void Xrecurse_lapic_ltimer(void);
 #define LAPIC_PIN_LVINT1	4
 #define LAPIC_PIN_LVERR		5
 
-extern void Xintr_lapic0(void);
-extern void Xintr_lapic2(void);
-extern void Xintr_lapic3(void);
-extern void Xintr_lapic4(void);
-extern void Xintr_lapic5(void);
-
 
 struct cpu_info;
 
@@ -109,5 +103,7 @@ extern void lapic_set_lvt(void);
 extern void lapic_enable(void);
 extern void lapic_calibrate_timer(struct cpu_info *ci);
 extern void lapic_initclocks(void);
+
+extern void lapic_write_tpri(uint32_t);
 
 #endif

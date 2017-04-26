@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.36.10.2 2017/03/20 06:57:17 pgoyette Exp $	*/
+/*	$NetBSD: mesh.c,v 1.36.10.3 2017/04/26 02:53:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.36.10.2 2017/03/20 06:57:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.36.10.3 2017/04/26 02:53:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -343,7 +343,7 @@ mesh_intr(void *arg)
 
 	snprintb(buf1, sizeof buf1, MESH_STATUS0_BITMASK, status0);
 	snprintb(buf2, sizeof buf2, MESH_EXC_BITMASK, exception);
-	printf("mesh_intr status0 = 0x%s (%s), exc = 0x%s\n",
+	printf("mesh_intr status0 = %s (%s), exc = %s\n",
 	    buf1, scsi_phase[status0 & 7], buf2);
 }
 #endif

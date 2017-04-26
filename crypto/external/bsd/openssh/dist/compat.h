@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.7.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: compat.h,v 1.7.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: compat.h,v 1.48 2015/05/26 23:23:40 dtucker Exp $ */
 
 /*

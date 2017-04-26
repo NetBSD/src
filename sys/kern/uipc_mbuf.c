@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.168.2.2 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.168.2.3 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.168.2.2 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.168.2.3 2017/04/26 02:53:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1759,7 +1759,7 @@ nextchain:
 	    (int)M_READONLY(m));
 	if ((m->m_flags & M_PKTHDR) != 0) {
 		snprintb(buf, sizeof(buf), M_CSUM_BITS, m->m_pkthdr.csum_flags);
-		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
+		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=%s, csum_data=0x%"
 		    PRIx32 ", segsz=%u\n",
 		    m->m_pkthdr.len, m_get_rcvif_NOMPSAFE(m),
 		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);

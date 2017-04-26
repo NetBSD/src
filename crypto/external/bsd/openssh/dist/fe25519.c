@@ -6,7 +6,7 @@
  * Copied from supercop-20130419/crypto_sign/ed25519/ref/fe25519.c
  */
 #include "includes.h"
-__RCSID("$NetBSD: fe25519.c,v 1.3.4.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: fe25519.c,v 1.3.4.2 2017/04/26 02:52:14 pgoyette Exp $");
 
 #define WINDOWSIZE 1 /* Should be 1,2, or 4 */
 #define WINDOWMASK ((1<<WINDOWSIZE)-1)

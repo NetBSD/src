@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.56.2.1 2017/01/07 08:56:22 pgoyette Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.56.2.2 2017/04/26 02:53:06 pgoyette Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.56.2.1 2017/01/07 08:56:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.56.2.2 2017/04/26 02:53:06 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -342,15 +342,15 @@ mb8795_rint(struct mb8795_softc *sc)
 		snprintb(sbuf, sizeof(sbuf), MB8795_RXSTAT_BITS,
 		    MB_READ_REG(sc, MB8795_RXSTAT));
 				
-		printf("rxstat = 0x%s\n", sbuf);
+		printf("rxstat = %s\n", sbuf);
 
 		snprintb(sbuf, sizeof(sbuf), MB8795_RXMASK_BITS,
 		    MB_READ_REG(sc, MB8795_RXMASK));
-		printf("rxmask = 0x%s\n", sbuf);
+		printf("rxmask = %s\n", sbuf);
 
 		snprintb(sbuf, sizeof(sbuf), MB8795_RXMODE_BITS,
 		    MB_READ_REG(sc, MB8795_RXMODE));
-		printf("rxmode = 0x%s\n", sbuf);
+		printf("rxmode = %s\n", sbuf);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.7 2016/02/17 19:54:11 christos Exp $ */
+/* $NetBSD: fenv.c,v 1.7.2.1 2017/04/26 02:52:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.7 2016/02/17 19:54:11 christos Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.7.2.1 2017/04/26 02:52:55 pgoyette Exp $");
+
+#include "namespace.h"
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -35,6 +37,23 @@ __RCSID("$NetBSD: fenv.c,v 1.7 2016/02/17 19:54:11 christos Exp $");
 #include <fenv.h>
 #include <stddef.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 /* Load x87 Control Word */
 #define	__fldcw(__cw)		__asm__ __volatile__	\

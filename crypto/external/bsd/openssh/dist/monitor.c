@@ -1,6 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.18.2.3 2017/03/20 06:51:53 pgoyette Exp $	*/
-/* $OpenBSD: monitor.c,v 1.166 2016/09/28 16:33:06 djm Exp $ */
-
+/*	$NetBSD: monitor.c,v 1.18.2.4 2017/04/26 02:52:14 pgoyette Exp $	*/
+/* $OpenBSD: monitor.c,v 1.167 2017/02/03 23:05:57 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -28,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.18.2.3 2017/03/20 06:51:53 pgoyette Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.18.2.4 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -255,6 +254,7 @@ monitor_permit_authentications(int permit)
 void
 monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 {
+	struct ssh *ssh = active_state;	/* XXX */
 	struct mon_table *ent;
 	int authenticated = 0, partial = 0;
 
@@ -326,6 +326,7 @@ monitor_child_preauth(Authctxt *_authctxt, struct monitor *pmonitor)
 
 	debug("%s: %s has been authenticated by privileged process",
 	    __func__, authctxt->user);
+	ssh_packet_set_log_preamble(ssh, "user %s", authctxt->user);
 
 	mm_get_keystate(pmonitor);
 
@@ -662,6 +663,7 @@ mm_answer_sign(int sock, Buffer *m)
 int
 mm_answer_pwnamallow(int sock, Buffer *m)
 {
+	struct ssh *ssh = active_state;	/* XXX */
 	char *username;
 	struct passwd *pwent;
 	int allowed = 0;
@@ -702,6 +704,8 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 	buffer_put_cstring(m, pwent->pw_shell);
 
  out:
+	ssh_packet_set_log_preamble(ssh, "%suser %s",
+	    authctxt->valid ? "authenticating" : "invalid ", authctxt->user);
 	buffer_put_string(m, &options, sizeof(options));
 
 #define M_CP_STROPT(x) do { \

@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2016  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2017  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -383,7 +383,7 @@ nxdomain a0-1s-cname.tld2s  +dnssec @$ns6  # 19
 drop a3-8.tld2 any @$ns6                   # 20 drop
 
 end_group
-ckstatsrange $ns3 test1 ns3 22 25
+ckstatsrange $ns3 test1 ns3 22 28
 ckstats $ns5 test1 ns5 0
 ckstats $ns6 test1 ns6 0
 

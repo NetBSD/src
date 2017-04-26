@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.263.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.263.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.263.2.1 2017/03/20 06:57:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.263.2.2 2017/04/26 02:53:31 pgoyette Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -484,9 +484,12 @@ static bool
 lfs_writevnodes_selector(void *cl, struct vnode *vp)
 {
 	struct lfs_writevnodes_ctx *c = cl;
-	struct inode *ip = VTOI(vp);
+	struct inode *ip;
 	int op = c->op;
 
+	KASSERT(mutex_owned(vp->v_interlock));
+
+	ip = VTOI(vp);
 	if (ip == NULL || vp->v_type == VNON)
 		return false;
 	if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
@@ -727,9 +730,9 @@ lfs_segwrite(struct mount *mp, int flags)
 		int loopcount = 0;
 #endif
 		do {
-#ifdef DEBUG
+
 			LFS_ENTER_LOG("pretend", __FILE__, __LINE__, 0, 0, curproc->p_pid);
-#endif
+
 			mutex_enter(&lfs_lock);
 			fs->lfs_flags &= ~LFS_IFDIRTY;
 			mutex_exit(&lfs_lock);
@@ -1301,12 +1304,10 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, kmutex_t *mptr)
 	int j, blksinblk;
 
 	ASSERT_SEGLOCK(sp->fs);
-	/*
-	 * If full, finish this segment.  We may be doing I/O, so
-	 * release and reacquire the splbio().
-	 */
 	KASSERTMSG((sp->vp != NULL),
 	    "lfs_gatherblock: Null vp in segment");
+
+	/* If full, finish this segment. */
 	fs = sp->fs;
 	blksinblk = howmany(bp->b_bcount, lfs_sb_getbsize(fs));
 	if (sp->sum_bytes_left < sizeof(int32_t) * blksinblk ||
@@ -2383,7 +2384,6 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct buf *bp;
 	struct vnode *devvp = VTOI(fs->lfs_ivnode)->i_devvp;
-	int s;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	if (fs->lfs_is64) {
@@ -2397,13 +2397,11 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	 * So, block here if a superblock write is in progress.
 	 */
 	mutex_enter(&lfs_lock);
-	s = splbio();
 	while (fs->lfs_sbactive) {
 		mtsleep(&fs->lfs_sbactive, PRIBIO+1, "lfs sb", 0,
 			&lfs_lock);
 	}
 	fs->lfs_sbactive = daddr;
-	splx(s);
 	mutex_exit(&lfs_lock);
 
 	/* Set timestamp of this version of the superblock */
@@ -2569,7 +2567,11 @@ lfs_cluster_aiodone(struct buf *bp)
 
 		tbp->b_flags &= ~B_GATHERED;
 
-		LFS_BCLEAN_LOG(fs, tbp);
+#ifdef DEBUG
+		if ((tbp)->b_vp == (fs)->lfs_ivnode)
+			LFS_ENTER_LOG("clear", __FILE__, __LINE__,
+			    tbp->b_lblkno, tbp->b_flags, curproc->p_pid);
+#endif
 
 		mutex_enter(&bufcache_lock);
 		if (tbp->b_iodone == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.61.2.1 2017/01/07 08:56:51 pgoyette Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.61.2.2 2017/04/26 02:53:29 pgoyette Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.61.2.1 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.61.2.2 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -161,12 +161,16 @@ struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
 static bool encap_head_updating = false;
 #endif
 
+static bool encap_initialized = false;
 /*
  * must be done before other encap interfaces initialization.
  */
 void
 encapinit(void)
 {
+
+	if (encap_initialized)
+		return;
 
 	encaptab.psz = pserialize_create();
 	encaptab.elem_class = psref_class_create("encapelem", IPL_SOFTNET);
@@ -176,6 +180,8 @@ encapinit(void)
 	mutex_init(&encap_whole.lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&encap_whole.cv, "ip_encap cv");
 	encap_whole.busy = NULL;
+
+	encap_initialized = true;
 }
 
 void
@@ -267,8 +273,6 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 #endif
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
 		struct psref elem_psref;
-
-		membar_datadep_consumer();
 
 		if (ep->af != AF_INET)
 			continue;
@@ -435,8 +439,6 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 #endif
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
 		struct psref elem_psref;
-
-		membar_datadep_consumer();
 
 		if (ep->af != AF_INET6)
 			continue;
@@ -672,8 +674,6 @@ encap_attach(int af, int proto,
 	/* check if anyone have already attached with exactly same config */
 	pss = pserialize_read_enter();
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
-		membar_datadep_consumer();
-
 		if (ep->af != af)
 			continue;
 		if (ep->proto != proto)
@@ -914,8 +914,6 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
 		struct psref elem_psref;
 
-		membar_datadep_consumer();
-
 		if (ep->af != AF_INET6)
 			continue;
 		if (ep->proto >= 0 && ep->proto != nxt)
@@ -953,8 +951,6 @@ encap_detach(const struct encaptab *cookie)
 	KASSERT(encap_lock_held());
 
 	PSLIST_WRITER_FOREACH(p, &encap_table, struct encaptab, chain) {
-		membar_datadep_consumer();
-
 		if (p == ep) {
 			error = encap_remove(p);
 			if (error)

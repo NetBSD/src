@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.15.2.2 2017/03/20 06:57:14 pgoyette Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.15.2.3 2017/04/26 02:53:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -88,6 +88,8 @@
 #define	PT_SETXMMREGS		(PT_FIRSTMACH + 6)
 #define	PT_GETDBREGS		(PT_FIRSTMACH + 7)
 #define	PT_SETDBREGS		(PT_FIRSTMACH + 8)
+#define	PT_SETSTEP		(PT_FIRSTMACH + 9)
+#define	PT_CLEARSTEP		(PT_FIRSTMACH + 10)
 
 #define PT_MACHDEP_STRINGS \
 	"PT_STEP", \
@@ -98,7 +100,9 @@
 	"PT_GETXMMREGS", \
 	"PT_SETXMMREGS", \
 	"PT_GETDBREGS", \
-	"PT_SETDBREGS",
+	"PT_SETDBREGS", \
+	"PT_SETSTEP", \
+	"PT_CLEARSTEP",
 
 
 #include <machine/reg.h>

@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: blowfish.c,v 1.2.4.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: blowfish.c,v 1.2.4.2 2017/04/26 02:52:14 pgoyette Exp $");
 
 #if !defined(HAVE_BCRYPT_PBKDF) && (!defined(HAVE_BLOWFISH_INITSTATE) || \
     !defined(HAVE_BLOWFISH_EXPAND0STATE) || !defined(HAVE_BLF_ENC))

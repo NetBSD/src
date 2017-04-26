@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.125.2.1 2017/03/20 06:58:09 pgoyette Exp $	*/
+/*	$NetBSD: pstat.c,v 1.125.2.2 2017/04/26 02:53:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.125.2.1 2017/03/20 06:58:09 pgoyette Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.125.2.2 2017/04/26 02:53:36 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,19 +85,23 @@ __RCSID("$NetBSD: pstat.c,v 1.125.2.1 2017/03/20 06:58:09 pgoyette Exp $");
 #include "swapctl.h"
 
 struct nlist nl[] = {
-#define	V_MOUNTLIST	0
-	{ "_mountlist", 0, 0, 0, 0 },	/* address of head of mount list. */
-#define	V_NUMV		1
+#define	V_LRU_FREE_LIST	0
+	{ "_lru_free_list", 0, 0, 0, 0 },	/* address of lru free list. */
+#define	V_LRU_HOLD_LIST	1
+	{ "_lru_hold_list", 0, 0, 0, 0 },	/* address of lru hold list. */
+#define	V_LRU_VRELE_LIST	2
+	{ "_lru_vrele_list", 0, 0, 0, 0 },	/* address of lru vrele list. */
+#define	V_NUMV		3
 	{ "_numvnodes", 0, 0, 0, 0 },
-#define	V_NEXT_OFFSET	2
-	{ "_vnode_offset_next_by_mount", 0, 0, 0, 0 },
-#define	FNL_NFILE	3
+#define	V_NEXT_OFFSET	4
+	{ "_vnode_offset_next_by_lru", 0, 0, 0, 0 },
+#define	FNL_NFILE	5
 	{ "_nfiles", 0, 0, 0, 0 },
-#define FNL_MAXFILE	4
+#define FNL_MAXFILE	6
 	{ "_maxfiles", 0, 0, 0, 0 },
-#define TTY_NTTY	5
+#define TTY_NTTY	7
 	{ "_tty_count", 0, 0, 0, 0 },
-#define TTY_TTYLIST	6
+#define TTY_TTYLIST	8
 	{ "_ttylist", 0, 0, 0, 0 },
 #define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
 	{ "", 0, 0, 0, 0 }
@@ -742,12 +746,21 @@ loadvnodes(int *avnodes)
 /*
  * simulate what a running kernel does in in kinfo_vnode
  */
+static int
+vnode_cmp(const void *p1, const void *p2)
+{
+	const char *s1 = (const char *)p1;
+	const char *s2 = (const char *)p2;
+	const struct vnode *v1 = (const struct vnode *)(s1 + VPTRSZ);
+	const struct vnode *v2 = (const struct vnode *)(s2 + VPTRSZ);
+
+	return (v2->v_mount - v1->v_mount);
+}
+
 char *
 kinfo_vnodes(int *avnodes)
 {
-	struct mntlist mlist;
-	struct mount *mp, mount;
-	struct vnode *vp, vnode;
+	int i;
 	char *beg, *bp, *ep;
 	int numvnodes, next_offset;
 
@@ -757,11 +770,13 @@ kinfo_vnodes(int *avnodes)
 	beg = bp;
 	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_NEXT_OFFSET, next_offset);
-	KGET(V_MOUNTLIST, mlist);
-	mp = TAILQ_FIRST(&mlist);
-	while (mp != NULL) {
-		KGET2(mp, &mount, sizeof(mount), "mount entry");
-		vp = (struct vnode *)TAILQ_FIRST(&mount.mnt_vnodelist);
+
+	for (i = V_LRU_FREE_LIST; i <= V_LRU_VRELE_LIST; i++) {
+		TAILQ_HEAD(vnodelst, vnode) lru_head;
+		struct vnode *vp, vnode;
+
+		KGET(i, lru_head);
+		vp = TAILQ_FIRST(&lru_head);
 		while (vp != NULL) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
 			if (bp + VPTRSZ + VNODESZ > ep)
@@ -773,9 +788,10 @@ kinfo_vnodes(int *avnodes)
 			bp += VNODESZ;
 			KGET2((char *)vp + next_offset, &vp, sizeof(vp), "nvp");
 		}
-		mp = TAILQ_NEXT(&mount, mnt_list);
 	}
 	*avnodes = (bp - beg) / (VPTRSZ + VNODESZ);
+	/* Sort by mount like we get it from sysctl. */
+	qsort(beg, *avnodes, VPTRSZ + VNODESZ, vnode_cmp);
 	return (beg);
 }
 

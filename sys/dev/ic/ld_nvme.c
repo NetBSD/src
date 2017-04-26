@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.1.4.2 2017/03/20 06:57:28 pgoyette Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.1.4.3 2017/04/26 02:53:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.1.4.2 2017/03/20 06:57:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.1.4.3 2017/04/26 02:53:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,15 @@ static int
 ld_nvme_start(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
+	int flags = BUF_ISWRITE(bp) ? 0 : NVME_NS_CTX_F_READ;
+
+	if (bp->b_flags & B_MEDIA_FUA)
+		flags |= NVME_NS_CTX_F_FUA;
 
 	return nvme_ns_dobio(sc->sc_nvme, sc->sc_nsid, sc,
 	    bp, bp->b_data, bp->b_bcount,
 	    sc->sc_ld.sc_secsize, bp->b_rawblkno,
-	    BUF_ISWRITE(bp) ? 0 : NVME_NS_CTX_F_READ,
+	    flags,
 	    ld_nvme_biodone);
 }
 
@@ -221,7 +225,11 @@ ld_nvme_getcache(struct ld_softc *ld, int *addr)
 	int error;
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
-	*addr = 0;
+	/*
+	 * DPO not supported, Dataset Management (DSM) field doesn't specify
+	 * the same semantics.
+	 */ 
+	*addr = DKCACHE_FUA;
 
 	if (!nvme_has_volatile_write_cache(sc->sc_nvme)) {
 		/* cache simply not present */

@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.93.2.1 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: namei.h,v 1.93.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.40 2017/03/19 10:21:02 riastradh Exp 
+ *   from: NetBSD: namei.src,v 1.41 2017/03/21 10:20:12 riastradh Exp 
  */
 
 /*
@@ -215,7 +215,7 @@ struct nameidata {
  *      -       stable after initialization
  *      L       namecache_lock
  *      C       struct nchcpu::cpu_lock
- *      L/C     insert/delete needs L and C, read needs L or any C,
+ *      L/C     insert needs L, read needs L or any C,
  *              must hold L and all C after (or during) delete before free
  *      N       struct namecache::nc_lock
  */

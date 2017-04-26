@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.14 2016/07/14 10:19:06 msaitoh Exp $ */
+/*	$NetBSD: wcfb.c,v 1.14.2.1 2017/04/26 02:53:22 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.14 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.14.2.1 2017/04/26 02:53:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,10 @@ struct wcfb_softc {
 	bus_space_tag_t sc_regt, sc_wtft;
 	bus_space_tag_t sc_iot;
 
-	bus_space_handle_t sc_fbh, sc_wtfh;
+	bus_space_handle_t sc_fbh;
 	bus_space_handle_t sc_regh;
-	bus_addr_t sc_fb, sc_reg, sc_wtf;
-	bus_size_t sc_fbsize, sc_regsize, sc_wtfsize;
+	bus_addr_t sc_fb, sc_reg;
+	bus_size_t sc_fbsize, sc_regsize;
 
 	int sc_width, sc_height, sc_stride;
 	int sc_locked;
@@ -85,11 +85,11 @@ struct wcfb_softc {
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_dpms;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
-	uint32_t sc_fb0off, sc_fb1off;
+	uint32_t sc_fb0off, sc_fb1off, sc_fb8size;
 
 	void (*copycols)(void *, int, int, int, int);
 	void (*erasecols)(void *, int, int, int, long);
@@ -165,7 +165,6 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	uint32_t		reg;
 	unsigned long		defattr;
 	bool			is_console = 0;
-	void 			*wtf;
 	uint32_t		sub;
 
 	sc->sc_dev = self;
@@ -188,22 +187,17 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 		    device_xname(sc->sc_dev));
 	}
 
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
+	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
+	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 	    &sc->sc_memt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
 		aprint_error("%s: failed to map framebuffer.\n",
 		    device_xname(sc->sc_dev));
 	}
 
-	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_MEM, BUS_SPACE_MAP_LINEAR,
-	    &sc->sc_wtft, &sc->sc_wtfh, &sc->sc_wtf, &sc->sc_wtfsize)) {
-		aprint_error("%s: failed to map wtf.\n",
-		    device_xname(sc->sc_dev));
-	}
-	wtf = bus_space_vaddr(sc->sc_wtft, sc->sc_wtfh);
-	memset(wtf, 0, 0x100000);
-
 	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
-
+#ifdef DEBUG
+	memset(sc->sc_fbaddr, 0, sc->sc_fbsize);
+#endif
 	sc->sc_fb0off =
 	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
 	        WC_FB8_ADDR0) - sc->sc_fb;
@@ -212,6 +206,7 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
 	        WC_FB8_ADDR1) - sc->sc_fb;
 	sc->sc_fb1 = sc->sc_fbaddr + sc->sc_fb1off;
+	sc->sc_fb8size = 2 * (sc->sc_fb1off - sc->sc_fb0off);
 
 	sub = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_SUBSYS_ID_REG);
 	aprint_normal("subsys: %08x\n", sub);
@@ -256,7 +251,20 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 
 	/* make sure video output is on */
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_DPMS_STATE, WC_DPMS_ON);
+	sc->sc_dpms = WSDISPLAYIO_VIDEO_ON;
 
+#if 0
+	/* testing & debugging voodoo */
+	memset(sc->sc_fb0, 0x01, 0x00100000);
+	memset(sc->sc_fb1, 0x00, 0x00100000);
+	wcfb_rop_wait(sc);
+	wcfb_rop_jfb(sc, 0, 0, 0, 0, 600, 600, WC_ROP_SET, 0xffffffff);
+	wcfb_rop_wait(sc);
+	delay(4000000);
+	bus_space_write_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR1,
+	    bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_FB8_ADDR0));
+	delay(8000000);
+#endif
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
 		0, 0,
@@ -336,10 +344,72 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
+wcfb_putcmap(struct wcfb_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_char *r, *g, *b;
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+
+	for (i = 0; i < count; i++) {
+		wcfb_putpalreg(sc, index, *r, *g, *b);
+		index++;
+		r++, g++, b++;
+	}
+	return 0;
+}
+
+static int
+wcfb_getcmap(struct wcfb_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+
+	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+static int
 wcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
-	struct wcfb_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct wcfb_softc *sc = vd->cookie;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -356,21 +426,60 @@ wcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
 		    sc->sc_pcitag, data);
 
-	case WSDISPLAYIO_SMODE: {
-		/*int new_mode = *(int*)data, i;*/
+	case WSDISPLAYIO_SVIDEO: {
+		int new_mode = *(int*)data;
+		if (new_mode != sc->sc_dpms) {
+			sc->sc_dpms = new_mode;
+			bus_space_write_4(sc->sc_regt, sc->sc_regh,
+			     WC_DPMS_STATE,
+			     (new_mode == WSDISPLAYIO_VIDEO_ON) ?
+			      WC_DPMS_ON : WC_DPMS_STANDBY);
+		}
 		}
 		return 0;
-	}
 
+	case WSDISPLAYIO_GVIDEO:
+		*(int*)data = sc->sc_dpms;
+		return 0;
+
+	case WSDISPLAYIO_GETCMAP:
+		return wcfb_getcmap(sc,
+		    (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_PUTCMAP:
+		return wcfb_putcmap(sc,
+		    (struct wsdisplay_cmap *)data);
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+
+		fbi->fbi_fbsize = sc->sc_fb8size;
+		fbi->fbi_fboffset = 0;
+		fbi->fbi_width = sc->sc_width;
+		fbi->fbi_height = sc->sc_height;
+		fbi->fbi_bitsperpixel = 8;
+		fbi->fbi_stride = sc->sc_stride;
+		fbi->fbi_pixeltype = WSFB_CI;
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 256;
+		fbi->fbi_flags = WSFB_VRAM_IS_SPLIT;
+		return 0;
+		}
+	}
 	return EPASSTHROUGH;
 }
 
 static paddr_t
 wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	struct wcfb_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct wcfb_softc *sc = vd->cookie;
 
-	/* no point in allowing a wsfb map if we can't provide one */
+	/* XXX in theory the order is not fixed... */
+
+	if (offset < sc->sc_fb8size)
+		return bus_space_mmap(sc->sc_memt, sc->sc_fb + sc->sc_fb0off,
+		    offset, prot,
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 	/*
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
@@ -382,13 +491,7 @@ wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return -1;
 	}
 
-#ifdef WSFB_FAKE_VGA_FB
-	if ((offset >= 0xa0000) && (offset < 0xbffff)) {
-
-		return bus_space_mmap(sc->sc_memt, sc->sc_gen.sc_fboffset,
-		   offset - 0xa0000, prot, BUS_SPACE_MAP_LINEAR);
-	}
-#endif
+	/* may want to mmap() registers at some point */
 
 	return -1;
 }
@@ -626,7 +729,7 @@ wcfb_bitblt(struct wcfb_softc *sc, int sx, int sy, int dx, int dy, int w,
 		 int h, uint32_t rop)
 {
 	wcfb_rop_wait(sc);
-	wcfb_rop_jfb(sc, sx, sy, dx, dy, w, h, rop, 0xff);
+	wcfb_rop_jfb(sc, sx, sy, dx, dy, w, h, rop, 0x0f);
 }
 
 static void
@@ -634,19 +737,17 @@ wcfb_rectfill(struct wcfb_softc *sc, int x, int y, int w, int h, int bg)
 {
 	int32_t mask;
 
+	/* clear everything just in case... */
+	wcfb_rop_wait(sc);
+	wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_CLEAR, 0xffffffff);
+
 	/* pixels to set... */
-	mask = 0xff & bg;
+	mask = 0x0f & bg;
 	if (mask != 0) {
 		wcfb_rop_wait(sc);
 		wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_SET, mask);
 	}
 
-	/* pixels to clear... */
-	mask = 0xff & ~bg;
-	if (mask != 0) {
-		wcfb_rop_wait(sc);
-		wcfb_rop_jfb(sc, x, y, x, y, w, h, WC_ROP_CLEAR, mask);
-	}
 }
 
 void

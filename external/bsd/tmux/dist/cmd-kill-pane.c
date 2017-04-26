@@ -26,7 +26,7 @@
  * Kill pane.
  */
 
-enum cmd_retval	 cmd_kill_pane_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_kill_pane_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_kill_pane_entry = {
 	"kill-pane", "killp",
@@ -36,23 +36,15 @@ const struct cmd_entry cmd_kill_pane_entry = {
 	cmd_kill_pane_exec
 };
 
-enum cmd_retval
-cmd_kill_pane_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_kill_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
-	struct winlink		*wl;
-	struct window_pane	*loopwp, *tmpwp, *wp;
+	struct winlink		*wl = item->state.tflag.wl;
+	struct window_pane	*loopwp, *tmpwp, *wp = item->state.tflag.wp;
 
 	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), NULL, &wp)) == NULL)
 		return (CMD_RETURN_ERROR);
 	server_unzoom_window(wl->window);
-
-	if (window_count_panes(wl->window) == 1) {
-		/* Only one pane, kill the window. */
-		server_kill_window(wl->window);
-		recalculate_sizes();
-		return (CMD_RETURN_NORMAL);
-	}
 
 	if (args_has(self->args, 'a')) {
 		TAILQ_FOREACH_SAFE(loopwp, &wl->window->panes, entry, tmpwp) {
@@ -61,11 +53,17 @@ cmd_kill_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 			layout_close_pane(loopwp);
 			window_remove_pane(wl->window, loopwp);
 		}
+		server_redraw_window(wl->window);
+		return (CMD_RETURN_NORMAL);
+	}
+
+	if (window_count_panes(wl->window) == 1) {
+		server_kill_window(wl->window);
+		recalculate_sizes();
 	} else {
 		layout_close_pane(wp);
 		window_remove_pane(wl->window, wp);
+		server_redraw_window(wl->window);
 	}
-	server_redraw_window(wl->window);
-
 	return (CMD_RETURN_NORMAL);
 }

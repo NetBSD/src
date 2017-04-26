@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: crc32.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: crc32.c,v 1.11 2006/04/22 18:29:33 stevesk Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: crc32.c,v 1.4.2.1 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: crc32.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include "crc32.h"
 

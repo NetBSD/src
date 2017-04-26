@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.8.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: krl.c,v 1.8.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -16,10 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: krl.c,v 1.8.2.1 2017/01/07 08:53:42 pgoyette Exp $");
-
-/* $OpenBSD: krl.c,v 1.38 2016/09/12 01:22:38 deraadt Exp $ */
+/* $OpenBSD: krl.c,v 1.39 2017/03/10 07:18:32 dtucker Exp $ */
 
 #include "includes.h"
 #include <sys/param.h>	/* MIN */
@@ -1097,7 +1094,7 @@ ssh_krl_from_blob(struct sshbuf *buf, struct ssh_krl **krlp,
 			break;
 		case KRL_SECTION_SIGNATURE:
 			/* Handled above, but still need to stay in synch */
-			sshbuf_reset(sect);
+			sshbuf_free(sect);
 			sect = NULL;
 			if ((r = sshbuf_skip_string(copy)) != 0)
 				goto out;
@@ -1296,7 +1293,8 @@ ssh_krl_file_contains_key(const char *path, const struct sshkey *key)
 	debug2("%s: checking KRL %s", __func__, path);
 	r = ssh_krl_check_key(krl, key);
  out:
-	close(fd);
+	if (fd != -1)
+		close(fd);
 	sshbuf_free(krlbuf);
 	ssh_krl_free(krl);
 	if (r != 0)

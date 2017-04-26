@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.27 2014/10/04 13:27:24 hannken Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.27.4.1 2017/04/26 02:53:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27 2014/10/04 13:27:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27.4.1 2017/04/26 02:53:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ filecore_loadvnode(struct mount *mp, struct vnode *vp,
 int
 filecore_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -227,7 +227,7 @@ filecore_inactive(void *v)
 	 */
 	ip->i_flag = 0;
 	*ap->a_recycle = (filecore_staleinode(ip) != 0);
-	VOP_UNLOCK(vp);
+
 	return error;
 }
 

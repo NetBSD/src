@@ -1,11 +1,10 @@
-# $NetBSD: Makefile.efiboot,v 1.7.2.2 2017/03/20 06:57:15 pgoyette Exp $
+# $NetBSD: Makefile.efiboot,v 1.7.2.3 2017/04/26 02:53:03 pgoyette Exp $
 
 S=		${.CURDIR}/../../../../..
 
 NOMAN=		# defined
 PROG?=		boot.efi
 NEWVERSWHAT?=	"EFI Boot"
-VERSIONFILE?=	${.CURDIR}/../version
 
 AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
@@ -16,9 +15,6 @@ LIBI386SRCS+= panic.c parseutils.c pread.c
 LIBI386SRCS+= eficons.c efidelay.c efidisk.c efidisk_ll.c efigetsecs.c
 LIBI386SRCS+= efimemory.c
 SRCS= ${SOURCES} ${EXTRA_SOURCES} ${LIBI386SRCS}
-.if !make(depend)
-SRCS+= vers.c
-.endif
 
 PIE_CFLAGS=
 PIE_LDFLAGS=
@@ -107,10 +103,8 @@ cleanlibdir:
 
 LIBLIST= ${LIBGNUEFI} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBSA}
 
-CLEANFILES+= vers.c
-
-vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.efiboot
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+VERSIONMACHINE=x86
+.include "${S}/conf/newvers_stand.mk"
 
 CLEANFILES+=	${PROG}.so ${PROG}.tmp
 

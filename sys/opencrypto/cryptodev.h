@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.28.2.1 2017/03/20 06:57:52 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.28.2.2 2017/04/26 02:53:30 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -473,6 +473,7 @@ struct cryptop {
 #define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 #define	CRYPTO_F_USER		0x0100	/* Request is in user context */
 #define	CRYPTO_F_MORE		0x0200	/* more data to follow */
+#define	CRYPTO_F_DQRETQ		0x0400	/* Dequeued from crp_ret_{,k}q */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -616,12 +617,6 @@ extern	int crypto_devallowsoft;	/* only use hardware crypto */
  * freed in crypto.c.
  */
 extern struct pool	cryptkop_pool;
-
-/*
- * Mutual exclusion and its unwelcome friends.
- */
-
-extern	kmutex_t	crypto_mtx;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).

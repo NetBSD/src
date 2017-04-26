@@ -32,26 +32,31 @@
  * Open pipe to redirect pane output. If already open, close first.
  */
 
-enum cmd_retval	 cmd_pipe_pane_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_pipe_pane_exec(struct cmd *, struct cmdq_item *);
 
-void	cmd_pipe_pane_error_callback(struct bufferevent *, short, void *);
+static void cmd_pipe_pane_error_callback(struct bufferevent *, short, void *);
 
 const struct cmd_entry cmd_pipe_pane_entry = {
-	"pipe-pane", "pipep",
-	"ot:", 0, 1,
-	"[-o] " CMD_TARGET_PANE_USAGE " [command]",
-	0,
-	cmd_pipe_pane_exec
+	.name = "pipe-pane",
+	.alias = "pipep",
+
+	.args = { "ot:", 0, 1 },
+	.usage = "[-o] " CMD_TARGET_PANE_USAGE " [command]",
+
+	.tflag = CMD_PANE,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_pipe_pane_exec
 };
 
-enum cmd_retval
-cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c;
-	struct session		*s;
-	struct winlink		*wl;
-	struct window_pane	*wp;
+	struct client		*c = item->state.c;
+	struct window_pane	*wp = item->state.tflag.wp;
+	struct session		*s = item->state.tflag.s;
+	struct winlink		*wl = item->state.tflag.wl;
 	char			*cmd;
 	int			 old_fd, pipe_fd[2], null_fd;
 	struct format_tree	*ft;
@@ -83,12 +88,12 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	/* Open the new pipe. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pipe_fd) != 0) {
-		cmdq_error(cmdq, "socketpair error: %s", strerror(errno));
+		cmdq_error(item, "socketpair error: %s", strerror(errno));
 		return (CMD_RETURN_ERROR);
 	}
 
 	/* Expand the command. */
-	ft = format_create();
+	ft = format_create(item, FORMAT_NONE, 0);
 	format_defaults(ft, c, s, wl, wp);
 	cmd = format_expand_time(ft, args->argv[0], time(NULL));
 	format_free(ft);
@@ -96,7 +101,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	/* Fork the child. */
 	switch (fork()) {
 	case -1:
-		cmdq_error(cmdq, "fork error: %s", strerror(errno));
+		cmdq_error(item, "fork error: %s", strerror(errno));
 
 		free(cmd);
 		return (CMD_RETURN_ERROR);
@@ -140,9 +145,9 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 }
 
-void
-cmd_pipe_pane_error_callback(
-    unused struct bufferevent *bufev, unused short what, void *data)
+static void
+cmd_pipe_pane_error_callback(__unused struct bufferevent *bufev,
+    __unused short what, void *data)
 {
 	struct window_pane	*wp = data;
 

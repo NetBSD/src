@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh_api.h,v 1.2.4.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: ssh_api.h,v 1.2.4.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: ssh_api.h,v 1.1 2015/01/19 20:30:23 markus Exp $ */
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.

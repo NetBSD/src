@@ -1,4 +1,4 @@
-.\"	$NetBSD: ubc.9,v 1.9 2016/06/01 08:17:12 wiz Exp $
+.\"	$NetBSD: ubc.9,v 1.9.2.1 2017/04/26 02:52:58 pgoyette Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2016
+.Dd April 6, 2017
 .Dt UBC 9
 .Os
 .Sh NAME
@@ -40,6 +40,9 @@
 .Ft int
 .Fn ubc_uiomove "struct uvm_object *uobj" "struct uio *uio" "vsize_t todo" \
  "int advice" "int flags"
+.Ft void
+.Fn ubc_zerorange "struct uvm_bject *uobj" "off_t off" "size_t len" \
+ "int flags"
 .Ft void
 .Fn ubc_purge "struct uvm_object *uobj"
 .Sh DESCRIPTION
@@ -81,9 +84,9 @@ Makes sense only for write.
 .Pp
 Once the mapping is created, it must be accessed only by methods that can
 handle faults, such as
-.Fn uiomove
+.Xr uiomove 9
 or
-.Fn kcopy .
+.Xr kcopy 9 .
 Page faults on the mapping will result in the object's pager
 method being called to resolve the fault.
 .Pp
@@ -117,6 +120,13 @@ Additionally, the flag
 can be provided to indicate that it is acceptable to return if an error
 occurs mid-transfer.
 .Pp
+.Fn ubc_zerorange
+sets a range of bytes in a UVM object to zero.
+The
+.Fa flags
+parameter takes the same arguments as
+.Fn ubc_release .
+.Pp
 .Fn ubc_purge
 disassociates all UBC structures from an empty UVM object,
 specified by
@@ -127,6 +137,7 @@ The
 subsystem is implemented within the file
 .Pa sys/uvm/uvm_bio.c .
 .Sh SEE ALSO
+.Xr kcopy 9 ,
 .Xr pmap 9 ,
 .Xr uiomove 9 ,
 .Xr uvm 9 ,

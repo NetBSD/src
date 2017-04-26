@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.135.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.135.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135.2.1 2017/03/20 06:57:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.135.2.2 2017/04/26 02:53:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,8 @@ void
 lfs_flush(struct lfs *fs, int flags, int only_onefs)
 {
 	extern u_int64_t locked_fakequeue_count;
-	struct mount *mp, *nmp;
+	mount_iterator_t *iter;
+	struct mount *mp;
 	struct lfs *tfs;
 
 	KASSERT(mutex_owned(&lfs_lock));
@@ -535,20 +536,16 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_busy(fs->lfs_ivnode->v_mount, NULL))
+		if (vfs_busy(fs->lfs_ivnode->v_mount))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount, false, NULL);
+		vfs_unbusy(fs->lfs_ivnode->v_mount);
 	} else {
 		locked_fakequeue_count = 0;
-		mutex_enter(&mountlist_lock);
-		for (mp = TAILQ_FIRST(&mountlist); mp != NULL; mp = nmp) {
-			if (vfs_busy(mp, &nmp)) {
-				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
-				continue;
-			}
+		mountlist_iterator_init(&iter);
+		while ((mp = mountlist_iterator_next(iter)) != NULL) {
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				tfs = VFSTOULFS(mp)->um_lfs;
@@ -556,9 +553,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
 			}
-			vfs_unbusy(mp, false, &nmp);
 		}
-		mutex_exit(&mountlist_lock);
+		mountlist_iterator_destroy(iter);
 	}
 	LFS_DEBUG_COUNTLOCKED("flush");
 	wakeup(&lfs_subsys_pages);
@@ -583,7 +579,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	int error;
 	struct lfs *fs;
 	struct inode *ip;
-	extern pid_t lfs_writer_daemon;
+	extern kcondvar_t lfs_writerd_cv;
 
 	error = 0;
 	ip = VTOI(vp);
@@ -660,7 +656,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * still might want to be flushed.
 		 */
 		++fs->lfs_pdflush;
-		wakeup(&lfs_writer_daemon);
+		cv_broadcast(&lfs_writerd_cv);
 	}
 
 	while (locked_queue_count + INOCOUNT(fs) >= LFS_WAIT_BUFS ||

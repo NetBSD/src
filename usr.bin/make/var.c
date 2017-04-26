@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.208.2.1 2017/03/20 06:58:04 pgoyette Exp $	*/
+/*	$NetBSD: var.c,v 1.208.2.2 2017/04/26 02:53:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.208.2.1 2017/03/20 06:58:04 pgoyette Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.208.2.2 2017/04/26 02:53:35 pgoyette Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.208.2.1 2017/03/20 06:58:04 pgoyette Exp $");
+__RCSID("$NetBSD: var.c,v 1.208.2.2 2017/04/26 02:53:35 pgoyette Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1182,7 +1182,7 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 static Boolean
 VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
-	void *dummy)
+	void *dummy MAKE_ATTR_UNUSED)
 {
     char *slash;
 
@@ -1203,7 +1203,7 @@ VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	    Buf_AddByte(buf, vpstate->varSpace);
 	Buf_AddByte(buf, '.');
     }
-    return(dummy ? TRUE : TRUE);
+    return TRUE;
 }
 
 /*-
@@ -1230,7 +1230,7 @@ VarHead(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 static Boolean
 VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
-	void *dummy)
+	void *dummy MAKE_ATTR_UNUSED)
 {
     char *slash;
 
@@ -1246,7 +1246,7 @@ VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     } else {
 	Buf_AddBytes(buf, strlen(word), word);
     }
-    return (dummy ? TRUE : TRUE);
+    return TRUE;
 }
 
 /*-
@@ -1272,7 +1272,7 @@ VarTail(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 static Boolean
 VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	  char *word, Boolean addSpace, Buffer *buf,
-	  void *dummy)
+	  void *dummy MAKE_ATTR_UNUSED)
 {
     char *dot;
 
@@ -1286,7 +1286,7 @@ VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	dot[-1] = '.';
 	addSpace = TRUE;
     }
-    return (dummy ? addSpace : addSpace);
+    return addSpace;
 }
 
 /*-
@@ -1313,7 +1313,7 @@ VarSuffix(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 static Boolean
 VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
 	char *word, Boolean addSpace, Buffer *buf,
-	void *dummy)
+	void *dummy MAKE_ATTR_UNUSED)
 {
     char *dot;
 
@@ -1329,7 +1329,7 @@ VarRoot(GNode *ctx MAKE_ATTR_UNUSED, Var_Parse_State *vpstate,
     } else {
 	Buf_AddBytes(buf, strlen(word), word);
     }
-    return (dummy ? TRUE : TRUE);
+    return TRUE;
 }
 
 /*-
@@ -1837,8 +1837,8 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
                 Buf_AddByte(buf, ' ');
             Buf_AddBytes(buf, (slen = strlen(s)), s);
             addSpace = (slen > 0 && s[slen - 1] != '\n');
-            free(s);
         }
+	free(s);
     }
     return addSpace;
 }

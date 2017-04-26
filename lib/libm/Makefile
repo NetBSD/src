@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.177.2.3 2017/03/20 06:56:59 pgoyette Exp $
+#  $NetBSD: Makefile,v 1.177.2.4 2017/04/26 02:52:55 pgoyette Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -57,8 +57,9 @@ LINTFLAGS += -g
 .PATH: ${.CURDIR}/arch/aarch64
 ARCH_SRCS = e_sqrt.S e_sqrtf.S s_fabsf.S
 ARCH_SRCS+= s_fma.S s_fmaf.S s_fmax.S s_fmaxf.S s_fmin.S s_fminf.S
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
+.if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS+= fenv.c
+.endif
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${LIBC_MACHINE_ARCH} == "alpha")
@@ -67,8 +68,10 @@ ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .elif (${LIBC_MACHINE_CPU} == "arm")
 .PATH.c: ${.CURDIR}/arch/arm
-COMMON_SRCS+= fenv.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c
+.if ${MKSOFTFLOAT} == "no"
+COMMON_SRCS+= fenv.c
+.endif
+COMMON_SRCS+= s_nexttowardf.c s_nearbyint.c s_rintl.c
 .for f in fenv.c lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COPTS.$f +=	-mfpu=vfp
 .endfor
@@ -82,9 +85,7 @@ ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_ARCH} == "hppa")
 .PATH.c: ${.CURDIR}/arch/hppa
-COMMON_SRCS+= fenv.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
+COMMON_SRCS+= fenv.c s_nexttowardf.c s_nearbyint.c s_rintl.c
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
@@ -92,9 +93,8 @@ COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${LIBC_MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
-COMMON_SRCS+= fenv.c s_nexttowardf.c \
-	s_nearbyint.c s_rintl.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
+COMMON_SRCS+= fenv.c
+COMMON_SRCS+= s_nexttowardf.c s_nearbyint.c s_rintl.c
 .ifndef _COMPAT_M32_MK_
 COMMON_SRCS+= s_nexttoward.c
 .endif
@@ -139,7 +139,7 @@ ARCH_SRCS += s_ceil.S s_copysign.S s_finite.S s_floor.S s_rint.S
 COPTS+=-m68040
 ARCH_SRCS = s_copysign.S s_finite.S
 .else
-.if (${MKSOFTFLOAT} != "yes")
+.if (${MKSOFTFLOAT} == "no")
 .PATH:	${.CURDIR}/arch/mc68881 ${.CURDIR}/arch/m68k
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
@@ -163,9 +163,8 @@ WARNS?=5
 .elif (${LIBC_MACHINE_CPU} == "riscv")
 .PATH:	${.CURDIR}/arch/riscv
 
-COMMON_SRCS += fenv.c
-
 .if ${MKSOFTFLOAT} == "no"
+COMMON_SRCS += fenv.c
 ARCH_SRCS = e_sqrt.S e_sqrtf.S
 ARCH_SRCS += s_copysign.S s_copysignf.S
 ARCH_SRCS += s_fabs.S s_fabsf.S
@@ -175,12 +174,19 @@ ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
 .elif (${LIBC_MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
+.if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
+.endif
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
+.if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
+.endif
+.elif (${LIBC_MACHINE_CPU} == "sh3")
+.PATH:	${.CURDIR}/arch/sh3
+.if ${MKSOFTFLOAT} == "no"
+COMMON_SRCS += fenv.c
+.endif
 .endif
 
 WARNS?=5
@@ -199,6 +205,27 @@ CPPFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 COPTS+=	-fno-strict-aliasing
 .endif
 CPPFLAGS+=-DLIBM_SCCS
+
+.if (${MKSOFTFLOAT} != "no" || ${MACHINE_ARCH} == "m68000")
+.PATH:	${.CURDIR}/softfloat
+.include "${.CURDIR}/../libc/libcincludes.mk"
+CPPFLAGS+=	-I${ARCHDIR}/softfloat
+COMMON_SRCS += \
+	feclearexcept.c \
+	fedisableexcept.c \
+	feenableexcept.c \
+	fegetenv.c \
+	fegetexcept.c \
+	fegetexceptflag.c \
+	fegetround.c \
+	feholdexcept.c \
+	feraiseexcept.c \
+	fesetenv.c \
+	fesetexceptflag.c \
+	fesetround.c \
+	fetestexcept.c \
+	feupdateenv.c
+.endif
 
 LIB=	m
 COMMON_SRCS+= b_exp.c b_log.c b_tgamma.c \

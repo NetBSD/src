@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.15 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.15.2.1 2017/04/26 02:53:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,12 @@
  * SUCH DAMAGE.
  */
 
+#define	TEGRA_SDHC_NO_SDR104
+
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.15 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.15.2.1 2017/04/26 02:53:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +54,7 @@ static void	tegra_sdhc_attach(device_t, device_t, void *);
 
 static int	tegra_sdhc_card_detect(struct sdhc_softc *);
 static int	tegra_sdhc_write_protect(struct sdhc_softc *);
+static int	tegra_sdhc_signal_voltage(struct sdhc_softc *, int);
 
 struct tegra_sdhc_softc {
 	struct sdhc_softc	sc;
@@ -68,6 +71,8 @@ struct tegra_sdhc_softc {
 	struct fdtbus_gpio_pin	*sc_pin_cd;
 	struct fdtbus_gpio_pin	*sc_pin_power;
 	struct fdtbus_gpio_pin	*sc_pin_wp;
+
+	struct fdtbus_regulator	*sc_reg_vqmmc;
 };
 
 CFATTACH_DECL_NEW(tegra_sdhc, sizeof(struct tegra_sdhc_softc),
@@ -108,6 +113,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 			  SDHC_FLAG_NO_CLKBASE |
 			  SDHC_FLAG_NO_TIMEOUT |
 			  SDHC_FLAG_SINGLE_POWER_WRITE |
+			  SDHC_FLAG_NO_HS_BIT |
 			  SDHC_FLAG_USE_DMA |
 			  SDHC_FLAG_USE_ADMA2;
 	if (bus_width == 8) {
@@ -122,6 +128,16 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bsz = size;
+
+#ifdef TEGRA_SDHC_NO_SDR104
+	/* XXX SDR104 requires a custom tuning method on Tegra K1 */
+	sc->sc.sc_flags |= SDHC_FLAG_HOSTCAPS;
+	sc->sc.sc_caps = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	    SDHC_CAPABILITIES);
+	sc->sc.sc_caps2 = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	    SDHC_CAPABILITIES2);
+	sc->sc.sc_caps2 &= ~SDHC_SDR104_SUPP;
+#endif
 
 	sc->sc_pin_power = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "power-gpios", GPIO_PIN_OUTPUT);
@@ -141,6 +157,12 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 	}
 
+	sc->sc_reg_vqmmc = fdtbus_regulator_acquire(faa->faa_phandle,
+	    "vqmmc-supply");
+	if (sc->sc_reg_vqmmc) {
+		sc->sc.sc_vendor_signal_voltage = tegra_sdhc_signal_voltage;
+	}
+
 	sc->sc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
 	if (sc->sc_clk == NULL) {
 		aprint_error(": couldn't get clock\n");
@@ -153,7 +175,11 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	fdtbus_reset_assert(sc->sc_rst);
+#ifdef TEGRA_SDHC_NO_SDR104
+	error = clk_set_rate(sc->sc_clk, 100000000);
+#else
 	error = clk_set_rate(sc->sc_clk, 204000000);
+#endif
 	if (error) {
 		aprint_error(": couldn't set frequency: %d\n", error);
 		return;
@@ -168,7 +194,7 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_clkbase = clk_get_rate(sc->sc_clk) / 1000;
 
 	aprint_naive("\n");
-	aprint_normal(": SDMMC\n");
+	aprint_normal(": SDMMC (%u kHz)\n", sc->sc.sc_clkbase);
 
 	if (sc->sc.sc_clkbase == 0) {
 		aprint_error_dev(self, "couldn't determine frequency\n");
@@ -217,4 +243,31 @@ tegra_sdhc_write_protect(struct sdhc_softc *ssc)
 	KASSERT(sc->sc_pin_wp != NULL);
 
 	return fdtbus_gpio_read(sc->sc_pin_wp);
+}
+
+static int
+tegra_sdhc_signal_voltage(struct sdhc_softc *ssc, int signal_voltage)
+{
+	struct tegra_sdhc_softc *sc = device_private(ssc->sc_dev);
+	u_int uvol;
+	int error;
+
+	KASSERT(sc->sc_reg_vqmmc != NULL);
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		uvol = 3300000;
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		uvol = 1800000;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	error = fdtbus_regulator_set_voltage(sc->sc_reg_vqmmc, uvol, uvol);
+	if (error != 0)
+		return error;
+
+	return fdtbus_regulator_enable(sc->sc_reg_vqmmc);
 }

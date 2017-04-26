@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.94.2.2 2017/03/20 06:57:22 pgoyette Exp $	*/
+/*	$NetBSD: intr.c,v 1.94.2.3 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94.2.2 2017/03/20 06:57:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94.2.3 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.94.2.2 2017/03/20 06:57:22 pgoyette Exp $
 #include <sys/atomic.h>
 #include <sys/xcall.h>
 #include <sys/interrupt.h>
+#include <sys/reboot.h> /* for AB_VERBOSE */
 
 #include <sys/kauth.h>
 #include <sys/conf.h>
@@ -1081,12 +1082,11 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	(*pic->pic_hwunmask)(pic, pin);
 	mutex_exit(&cpu_lock);
 
-#ifdef INTRDEBUG
-	printf("allocated pic %s type %s pin %d level %d to %s slot %d "
-	    "idt entry %d\n",
-	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    device_xname(ci->ci_dev), slot, idt_vec);
-#endif
+	if (bootverbose || cpu_index(ci) != 0)
+		aprint_verbose("allocated pic %s type %s pin %d level %d to %s slot %d "
+		    "idt entry %d\n",
+		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
+		    device_xname(ci->ci_dev), slot, idt_vec);
 
 	return (ih);
 }
@@ -1168,11 +1168,9 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	/* If the source is free we can drop it now. */
 	intr_source_free(ci, ih->ih_slot, pic, idtvec);
 
-#ifdef INTRDEBUG
-	printf("%s: remove slot %d (pic %s pin %d vec %d)\n",
+	DPRINTF(("%s: remove slot %d (pic %s pin %d vec %d)\n",
 	    device_xname(ci->ci_dev), ih->ih_slot, pic->pic_name,
-	    ih->ih_pin, idtvec);
-#endif
+	    ih->ih_pin, idtvec));
 }
 
 static int

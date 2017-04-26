@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.36.8.1 2017/03/20 06:57:48 pgoyette Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.36.8.2 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -99,7 +99,6 @@ int	layer_bypass(void *);
 int	layer_getattr(void *);
 int	layer_inactive(void *);
 int	layer_reclaim(void *);
-int	layer_lock(void *);
 int	layer_print(void *);
 int	layer_bmap(void *);
 int	layer_fsync(void *);
@@ -114,5 +113,8 @@ int	layer_revoke(void *);
 int	layer_rmdir(void *);
 int	layer_getpages(void *);
 int	layer_putpages(void *);
+#define layer_lock	genfs_lock
+#define layer_unlock	genfs_unlock
+#define layer_islocked	genfs_islocked
 
 #endif /* _MISCFS_GENFS_LAYER_EXTERN_H_ */

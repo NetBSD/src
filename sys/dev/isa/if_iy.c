@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.97.2.2 2017/01/07 08:56:32 pgoyette Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.97.2.3 2017/04/26 02:53:12 pgoyette Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.97.2.2 2017/01/07 08:56:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.97.2.3 2017/04/26 02:53:12 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -407,14 +407,14 @@ iystop(struct iy_softc *sc)
 		snprintb(sbuf, sizeof(sbuf),
 		    "\020\6MAX_COL\7HRT_BEAT\010TX_DEF\011UND_RUN"
 		    "\012JERR\013LST_CRS\014LTCOL\016TX_OK\020COLL", v);
-		printf("0x%s", sbuf);
+		printf("%s", sbuf);
 
 		p = le16toh(bus_space_read_stream_2(iot, ioh, MEM_PORT_REG));
 		printf(" 0x%04x", p);
 
 		v = le16toh(bus_space_read_stream_2(iot, ioh, MEM_PORT_REG));
 		snprintb(sbuf, sizeof(sbuf), "\020\020Ch", v);
-		printf(" 0x%s\n", sbuf);
+		printf(" %s\n", sbuf);
 
 	} while (v & 0x8000);
 #endif
@@ -499,7 +499,7 @@ iyinit(struct iy_softc *sc)
 		snprintb(sbuf, sizeof(sbuf),
 		    "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC",
 		    temp);
-		printf("%s: media select was 0x%s ", device_xname(sc->sc_dev),
+		printf("%s: media select was %s ", device_xname(sc->sc_dev),
 		    sbuf);
 	}
 #endif
@@ -540,7 +540,7 @@ iyinit(struct iy_softc *sc)
 		snprintb(sbuf, sizeof(sbuf),
 		    "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC",
 		    temp);
-		printf("changed to 0x%s\n", sbuf);
+		printf("changed to %s\n", sbuf);
 	}
 #endif
 
@@ -1141,7 +1141,7 @@ iy_intr_tx(struct iy_softc *sc)
 			    "\011UND_RUN\012JERR\013LST_CRS"
 			    "\014LTCOL\016TX_OK\020COLL", txstat2);
 
-			printf("txstat 0x%x stat2 0x%s next 0x%x len 0x%x\n",
+			printf("txstat 0x%x stat2 %s next 0x%x len 0x%x\n",
 			       txstatus, sbuf, txnext, txlen);
 		}
 #endif

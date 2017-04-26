@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cpufreq.c,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $ */
+/* $NetBSD: tegra_cpufreq.c,v 1.3.2.2 2017/04/26 02:53:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.3.2.1 2017/01/07 08:56:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.3.2.2 2017/04/26 02:53:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,20 +59,13 @@ static char 	tegra_cpufreq_available[TEGRA_CPUFREQ_MAX * 5];
 void
 tegra_cpufreq_register(const struct tegra_cpufreq_func *cf)
 {
-	KASSERT(cpufreq_func == NULL);
-	cpufreq_func = cf;
-}
-
-void
-tegra_cpufreq_init(void)
-{
 	const struct sysctlnode *node, *cpunode, *freqnode;
 	u_int availfreq[TEGRA_CPUFREQ_MAX];
 	size_t nfreq;
 	int error;
 
-	if (cpufreq_func == NULL)
-		return;
+	KASSERT(cpufreq_func == NULL);
+	cpufreq_func = cf;
 
 	nfreq = cpufreq_get_available(availfreq, TEGRA_CPUFREQ_MAX);
 	if (nfreq == 0)

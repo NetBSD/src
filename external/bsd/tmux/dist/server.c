@@ -42,25 +42,21 @@
 
 struct clients	 clients;
 
-int		 server_fd;
-int		 server_shutdown;
-struct event	 server_ev_accept;
+struct tmuxproc		*server_proc;
+static int		 server_fd;
+static int		 server_exit;
+static struct event	 server_ev_accept;
 
-struct session		*marked_session;
-struct winlink		*marked_winlink;
-struct window		*marked_window;
-struct window_pane	*marked_window_pane;
-struct layout_cell	*marked_layout_cell;
+struct cmd_find_state	 marked_pane;
 
-int	server_create_socket(void);
-void	server_loop(void);
-int	server_should_shutdown(void);
-void	server_send_shutdown(void);
-void	server_accept_callback(int, short, void *);
-void	server_signal_callback(int, short, void *);
-void	server_child_signal(void);
-void	server_child_exited(pid_t, int);
-void	server_child_stopped(pid_t, int);
+static int	server_create_socket(void);
+static int	server_loop(void);
+static void	server_send_exit(void);
+static void	server_accept(int, short, void *);
+static void	server_signal(int);
+static void	server_child_signal(void);
+static void	server_child_exited(pid_t, int);
+static void	server_child_stopped(pid_t, int);
 
 /* Set marked pane. */
 void
@@ -123,7 +119,7 @@ server_check_marked(void)
 }
 
 /* Create server socket. */
-int
+static int
 server_create_socket(void)
 {
 	struct sockaddr_un	sa;
@@ -177,27 +173,17 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 	}
 	close(pair[0]);
 
-	/*
-	 * Must daemonise before loading configuration as the PID changes so
-	 * $TMUX would be wrong for sessions created in the config file.
-	 */
-	if (daemon(1, 0) != 0)
-		fatal("daemon failed");
-
-	/* event_init() was called in our parent, need to reinit. */
-	clear_signals(0);
-	if (event_reinit(base) != 0)
-		fatal("event_reinit failed");
-
-	logfile("server");
-	log_debug("server started, pid %ld", (long) getpid());
+	if (log_get_level() > 3)
+		tty_create_log();
+	if (pledge("stdio rpath wpath cpath fattr unix getpw recvfd proc exec "
+	    "tty ps", NULL) != 0)
+		fatal("pledge failed");
 
 	RB_INIT(&windows);
 	RB_INIT(&all_window_panes);
 	TAILQ_INIT(&clients);
 	RB_INIT(&sessions);
-	TAILQ_INIT(&session_groups);
-	mode_key_init_trees();
+	RB_INIT(&session_groups);
 	key_bindings_init();
 	utf8_build();
 
@@ -229,24 +215,20 @@ server_start(struct event_base *base, int lockfd, char *lockfile)
 	exit(0);
 }
 
-/* Main server loop. */
-void
+/* Server loop callback. */
+static int
 server_loop(void)
 {
-	while (!server_should_shutdown()) {
-		log_debug("event dispatch enter");
-		event_loop(EVLOOP_ONCE);
-		log_debug("event dispatch exit");
-
-		server_client_loop();
-	}
-}
-
-/* Check if the server should exit (no more clients or sessions). */
-int
-server_should_shutdown(void)
-{
 	struct client	*c;
+	u_int		 items;
+
+	do {
+		items = cmdq_next(NULL);
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (c->flags & CLIENT_IDENTIFIED)
+				items += cmdq_next(c);
+		}
+	} while (items != 0);
 
 	if (!options_get_number(&global_options, "exit-unattached")) {
 		if (!RB_EMPTY(&sessions))
@@ -269,9 +251,9 @@ server_should_shutdown(void)
 	return (1);
 }
 
-/* Shutdown the server by killing all clients and windows. */
-void
-server_send_shutdown(void)
+/* Exit the server by killing all clients and windows. */
+static void
+server_send_exit(void)
 {
 	struct client	*c, *c1;
 	struct session	*s, *s1;
@@ -312,7 +294,7 @@ server_update_socket(void)
 
 		if (stat(socket_path, &sb) != 0)
 			return;
-		mode = sb.st_mode;
+		mode = sb.st_mode & ACCESSPERMS;
 		if (n != 0) {
 			if (mode & S_IRUSR)
 				mode |= S_IXUSR;
@@ -327,8 +309,8 @@ server_update_socket(void)
 }
 
 /* Callback for server socket. */
-void
-server_accept_callback(int fd, short events, unused void *data)
+static void
+server_accept(int fd, short events, __unused void *data)
 {
 	struct sockaddr_storage	sa;
 	socklen_t		slen = sizeof sa;
@@ -380,8 +362,8 @@ server_add_accept(int timeout)
 }
 
 /* Signal handler. */
-void
-server_signal_callback(int sig, unused short events, unused void *data)
+static void
+server_signal(int sig)
 {
 	int	fd;
 
@@ -407,7 +389,7 @@ server_signal_callback(int sig, unused short events, unused void *data)
 }
 
 /* Handle SIGCHLD. */
-void
+static void
 server_child_signal(void)
 {
 	int	 status;
@@ -430,7 +412,7 @@ server_child_signal(void)
 }
 
 /* Handle exited children. */
-void
+static void
 server_child_exited(pid_t pid, int status)
 {
 	struct window		*w, *w1;
@@ -456,7 +438,7 @@ server_child_exited(pid_t pid, int status)
 }
 
 /* Handle stopped children. */
-void
+static void
 server_child_stopped(pid_t pid, int status)
 {
 	struct window		*w;

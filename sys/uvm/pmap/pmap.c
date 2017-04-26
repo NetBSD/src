@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18.2.4 2017/03/20 06:57:54 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18.2.5 2017/04/26 02:53:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.2.4 2017/03/20 06:57:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.2.5 2017/04/26 02:53:32 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -502,7 +502,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 	if (uvm_physseg_valid_p(maybe_bank)) {
 		const uvm_physseg_t bank = maybe_bank;
-		
+
 		/*
 		 * There are enough pages here; steal them!
 		 */
@@ -1729,8 +1729,8 @@ pmap_pvlist_check(struct vm_page_md *mdpg)
 #endif
 		}
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		// Assert there if there more than 1 color mapped, that they
-		// are uncached.
+		// Assert that if there is more than 1 color mapped, that the
+		// page is uncached.
 		KASSERTMSG(!pmap_md_virtual_cache_aliasing_p()
 		    || colors == 0 || (colors & (colors-1)) == 0
 		    || VM_PAGEMD_UNCACHED_P(mdpg), "colors=%#x uncached=%u",

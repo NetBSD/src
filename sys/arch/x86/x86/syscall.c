@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2016/07/07 06:55:40 msaitoh Exp $	*/
+/*	$NetBSD: syscall.c,v 1.14.2.1 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14.2.1 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,18 +65,6 @@ child_return(void *arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
-	struct proc *p = l->l_proc;
-
-	if (p->p_slflag & PSL_TRACED) {
-		ksiginfo_t ksi;
-
-		mutex_enter(proc_lock);
-                KSI_INIT_EMPTY(&ksi);
-                ksi.ksi_signo = SIGTRAP;
-                ksi.ksi_lid = l->l_lid;
-                kpsignal(p, &ksi, NULL);
-		mutex_exit(proc_lock);
-	}
 
 	X86_TF_RAX(tf) = 0;
 	X86_TF_RFLAGS(tf) &= ~PSL_C;

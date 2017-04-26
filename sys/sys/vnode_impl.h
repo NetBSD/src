@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.2.2.4 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.2.2.5 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct vnode_impl {
 	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */
 	TAILQ_ENTRY(vnode_impl) vi_mntvnodes;	/* m: vnodes for mount point */
 	SLIST_ENTRY(vnode_impl) vi_hash;	/* c: vnode cache list */
-	krwlock_t vi_lock;			/* -: lock for this vnode */
+	krwlock_t *vi_lock;			/* -: lock for this vnode */
 	struct vcache_key vi_key;		/* c: vnode cache key */
 };
 typedef struct vnode_impl vnode_impl_t;

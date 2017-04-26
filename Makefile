@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.317 2016/01/14 02:51:25 christos Exp $
+#	$NetBSD: Makefile,v 1.317.2.1 2017/04/26 02:52:13 pgoyette Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -136,7 +136,7 @@ _SRC_TOP_OBJ_=
 # _SUBDIR is used to set SUBDIR, after removing directories that have
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
-_SUBDIR=	tools lib include gnu external crypto/external bin games
+_SUBDIR=	tools lib include external crypto/external bin games
 _SUBDIR+=	libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share sys etc tests compat
 _SUBDIR+=	.WAIT rescue .WAIT distrib regress
@@ -249,7 +249,6 @@ BUILDTARGETS+=	do-obsolete
 
 .ORDER:		${BUILDTARGETS}
 includes-lib:	.PHONY includes-include includes-sys
-includes-gnu:	.PHONY includes-lib
 
 #
 # Record the values of variables that might affect the build.

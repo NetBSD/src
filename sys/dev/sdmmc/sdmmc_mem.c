@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.51.2.1 2017/03/20 06:57:38 pgoyette Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.51.2.2 2017/04/26 02:53:23 pgoyette Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.51.2.1 2017/03/20 06:57:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.51.2.2 2017/04/26 02:53:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -743,9 +743,6 @@ static int
 sdmmc_mem_execute_tuning(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int timing = -1;
-
-	if (!ISSET(sc->sc_flags, SMF_UHS_MODE))
-		return 0;
 
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
 		if (!ISSET(sc->sc_flags, SMF_UHS_MODE))

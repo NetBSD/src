@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.166.2.5 2017/03/20 06:57:50 pgoyette Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.166.2.6 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.5 2017/03/20 06:57:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.6 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,6 +192,8 @@ in_pcballoc(struct socket *so, void *v)
 	struct inpcb *inp;
 	int s;
 
+	KASSERT(so->so_proto->pr_domain->dom_family == AF_INET);
+
 	inp = pool_get(&inpcb_pool, PR_NOWAIT);
 	if (inp == NULL)
 		return (ENOBUFS);
@@ -209,6 +211,7 @@ in_pcballoc(struct socket *so, void *v)
 			pool_put(&inpcb_pool, inp);
 			return error;
 		}
+		inp->inp_sp->sp_inph = (struct inpcb_hdr *)inp;
 	}
 #endif
 	so->so_pcb = inp;

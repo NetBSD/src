@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.2.2.2 2017/03/20 06:57:28 pgoyette Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.2.2.3 2017/04/26 02:53:11 pgoyette Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -64,6 +64,7 @@ struct nvme_ccb {
 	uint16_t	nnc_flags;
 #define	NVME_NS_CTX_F_READ	__BIT(0)
 #define	NVME_NS_CTX_F_POLL	__BIT(1)
+#define	NVME_NS_CTX_F_FUA	__BIT(2)
 
 	struct buf	*nnc_buf;
 	daddr_t		nnc_blkno;

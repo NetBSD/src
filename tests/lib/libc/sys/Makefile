@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42.2.3 2017/03/20 06:57:59 pgoyette Exp $
+# $NetBSD: Makefile,v 1.42.2.4 2017/04/26 02:53:33 pgoyette Exp $
 
 MKMAN=	no
 
@@ -51,6 +51,13 @@ TESTS_C+=		t_pipe
 TESTS_C+=		t_pipe2
 TESTS_C+=		t_poll
 TESTS_C+=		t_posix_fallocate
+TESTS_C+=		t_ptrace
+TESTS_C+=		t_ptrace_wait
+TESTS_C+=		t_ptrace_wait3
+TESTS_C+=		t_ptrace_wait4
+TESTS_C+=		t_ptrace_wait6
+TESTS_C+=		t_ptrace_waitid
+TESTS_C+=		t_ptrace_waitpid
 TESTS_C+=		t_recvmmsg
 TESTS_C+=		t_revoke
 TESTS_C+=		t_select
@@ -82,7 +89,13 @@ TESTS_C+=		t_posix_fadvise
 LDADD.t_posix_fadvise+= -lrumpvfs -lrump -lrumpuser -lrump -lpthread
 .endif
 
-CPPFLAGS.t_lwp_create.c += -D_KERNTYPES
+CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait3.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait4.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_wait6.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_waitid.c	+= -D_KERNTYPES
+CPPFLAGS.t_ptrace_waitpid.c	+= -D_KERNTYPES
 
 FILES=		truncate_test.root_owned
 FILESBUILD=	yes

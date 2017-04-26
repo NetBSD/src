@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.162.2.7 2017/03/20 06:57:49 pgoyette Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.162.2.8 2017/04/26 02:53:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.7 2017/03/20 06:57:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.8 2017/04/26 02:53:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1087,15 +1087,14 @@ out:
 int
 spec_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
-	KASSERT(vp->v_mount == dead_rootmount);
+	KASSERT(ap->a_vp->v_mount == dead_rootmount);
 	*ap->a_recycle = true;
-	VOP_UNLOCK(vp);
+
 	return 0;
 }
 

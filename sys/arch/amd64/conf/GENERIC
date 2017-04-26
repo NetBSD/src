@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.435.2.3 2017/03/20 06:57:09 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.435.2.4 2017/04/26 02:52:59 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.435.2.3 $"
+#ident		"GENERIC-$Revision: 1.435.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -1059,6 +1059,9 @@ ucom*	at u3g?
 # USB generic serial port (e.g., data over cellular)
 ugensa* at uhub? port ?
 ucom*	at ugensa?
+
+# Araneus Alea I/II TRNG
+#ualea* at uhub? port ? configuration ? interface ?
 
 # IrDA and Consumer Ir devices
 

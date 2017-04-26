@@ -1,4 +1,4 @@
-$NetBSD: TODO.ptrace,v 1.9.2.3 2017/03/20 06:52:12 pgoyette Exp $
+$NetBSD: TODO.ptrace,v 1.9.2.4 2017/04/26 02:52:18 pgoyette Exp $
 
 Items we (currently) plan to finish in the ptrace(2) field:
 
@@ -23,16 +23,10 @@ Items we (currently) plan to finish in the ptrace(2) field:
    in all ports
  - add proper implementation of PTRACE_VFORK for vfork(2)-like events
  - add ATF tests for SIGCHLD
- - research support PT_SYSCALL & PT_STEP combined like in Linux
  - fix more calls for netbsd32 compat
  - research ipkdb(4)
  - research kgdb(4)
  - check 64-bit debugger on 64-bit kernel tracing capabilities of 32-bit tracee
- - GDB Remote Protocol expects a case with a step with a signal to be sent,
-   this is currently unsupported on NetBSD
- - support QPassSignals (PT_SET_SIGPASS/PT_GET_SIGPASS) in the kernel, a way to
-   stop routing a set of signals to tracer as they are uninteresting - GDB and
-   LLDB expect this feature
 
 and of course: fix as many bugs as possible.
 

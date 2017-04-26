@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.17 2017/04/25 21:53:06 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.18 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.17 2017/04/25 21:53:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.18 2017/04/26 02:53:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -721,7 +721,7 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_name2blk: too short buffer");
+				printf("%s: too short buffer", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';
@@ -769,7 +769,7 @@ devsw_name2chr(const char *name, char *devname, size_t devnamelen)
 		if (devname != NULL) {
 #ifdef DEVSW_DEBUG
 			if (strlen(conv->d_name) >= devnamelen)
-				printf("devsw_name2chr: too short buffer");
+				printf("%s: too short buffer", __func__);
 #endif /* DEVSW_DEBUG */
 			strncpy(devname, conv->d_name, devnamelen);
 			devname[devnamelen - 1] = '\0';

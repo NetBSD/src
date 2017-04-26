@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.21 2016/05/12 13:31:37 kre Exp $	*/
+/*	$NetBSD: redir.h,v 1.21.2.1 2017/04/26 02:52:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,3 +47,5 @@ int fd0_redirected_p(void);
 void clearredir(int);
 int movefd(int, int);
 int to_upper_fd(int);
+
+int max_user_fd;		/* highest fd used by user */

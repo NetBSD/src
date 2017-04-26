@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.225.2.5 2017/03/20 06:57:49 pgoyette Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.225.2.6 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225.2.5 2017/03/20 06:57:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225.2.6 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,23 +246,14 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET
 	case AF_INET:
-#ifndef NET_MPSAFE
-		KERNEL_LOCK(1, NULL);
-#endif
 		if (m->m_flags & M_BCAST)
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if ((error = arpresolve(ifp, rt, m, dst, edst,
 		    sizeof(edst))) != 0) {
-#ifndef NET_MPSAFE
-			KERNEL_UNLOCK_ONE(NULL);
-#endif
 			return error == EWOULDBLOCK ? 0 : error;
 		}
-#ifndef NET_MPSAFE
-		KERNEL_UNLOCK_ONE(NULL);
-#endif
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);

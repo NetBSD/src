@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.4.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: msg.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: msg.c,v 1.16 2015/01/15 09:40:00 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: msg.c,v 1.4.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: msg.c,v 1.4.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 

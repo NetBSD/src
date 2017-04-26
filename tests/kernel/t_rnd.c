@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.9.2.1 2017/03/20 06:57:57 pgoyette Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.9.2.2 2017/04/26 02:53:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.9.2.1 2017/03/20 06:57:57 pgoyette Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.9.2.2 2017/04/26 02:53:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: t_rnd.c,v 1.9.2.1 2017/03/20 06:57:57 pgoyette Exp $");
 #include <sys/rndio.h>
 
 #include <atf-c.h>
+#include <unistd.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -98,10 +99,15 @@ ATF_TC_BODY(read_random, tc)
 {
 	char buf[128];
 	int fd;
+	unsigned i;
 
 	rump_init();
-	RL(fd = rump_sys_open("/dev/random", O_RDONLY));
-	RL(rump_sys_read(fd, buf, sizeof(buf)));
+	for (i = 0; i < 1000; i++) {
+		alarm(2);
+		RL(fd = rump_sys_open("/dev/random", RUMP_O_RDONLY));
+		RL(rump_sys_read(fd, buf, sizeof(buf)));
+		RZ(rump_sys_close(fd));
+	}
 }
 
 ATF_TP_ADD_TCS(tp)

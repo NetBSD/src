@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.207 2015/12/16 08:01:19 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.207.2.1 2017/04/26 02:53:08 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.207 2015/12/16 08:01:19 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.207.2.1 2017/04/26 02:53:08 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -980,6 +980,13 @@ device_register(device_t dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
+	} else if (device_is_a(dev, "ld")) {
+		ofnode = device_ofnode(busdev);
+	} else if (device_is_a(dev, "vdsk")) {
+		struct cbus_attach_args *ca = aux;
+		ofnode = ca->ca_node;
+		/* Ensure that the devices ofnode is stored for later use */
+		device_setofnode(dev, ofnode);
 	}
 
 	if (busdev == NULL)

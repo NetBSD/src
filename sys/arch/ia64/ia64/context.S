@@ -1,4 +1,4 @@
-/*	$NetBSD: context.S,v 1.5.16.2 2017/01/07 08:56:19 pgoyette Exp $	*/
+/*	$NetBSD: context.S,v 1.5.16.3 2017/04/26 02:53:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Marcel Moolenaar
@@ -806,93 +806,9 @@ ENTRY(restore_high_fp, 1)
 END(restore_high_fp)
 
 /*
- * lwp_t *
- * cpu_switchto(lwp_t *oldlwp, lwp_t *newlwp, bool returning)
- *
- * Switch to the specified next LWP
- *   in0 is oldlwp
- *   in1 is newlwp
- */
-ENTRY(cpu_switchto, 3)
-{	.mmi
-	alloc		loc0=ar.pfs,3,2,2,0
-
-	/*
-	 * Save old context, unless the LWP is exiting.
-	 */
-	cmp.eq		p6,p0=r0,in0		// p6 = (in0 == 0)
-	add		r14=PC_CURLWP,r13	// r14 = &ci->ci_curlwp
-	;;
-}
-{	.mii
-	add		r2=L_PCB,in0		// r2 = lwp_getpcb(&oldlwp)
-	add		r3=L_PCB,in1		// r3 = lwp_getpcb(&newlwp)
-	mov		loc1=rp			// save rp (loc1 = rp)
-	;;
-}
-{	.mmi
-	st8		[r14]=in1		// ci->ci_curlwp = newlwp
-	mov		r9=in0			// r9 = oldlwp
-	nop		0
-	;;
-}
-{	.mmb
-	nop		0
-	/*
-	 * Switch to new context, if p6 == true.
-	 * We assume to return to restorectx_return_here for swapped context.
-	 */
-(p6)	ld8		out0=[r3]		// out0 = pcb of &newlwp
-(p6)	br.call.sptk.many rp=restorectx		// if (p6) restorectx(out0)
-	;;
-}
-{	.mmb
-	/*
-	 * Swap to new context.
-	 */
-	ld8		out0=[r2]
-	ld8		out1=[r3]
-	br.call.sptk.many rp=swapctx
-	;;
-}
-	/*
-	 * XXX seems to be a bug here...
-	 *
-	 * swapctx() and restorectx() (which is called by swapctx())
-	 * both adjust the bspstore (and hence bsp) registers.  When
-	 * returning to "restorectx_return_here:" the bspstore can
-	 * be greater than bsp, a state known as an "Incomplete Register Frame".
-	 *
-	 * That is not necessarily fatal in itself, but apparently the RSE
-	 * engine sets bsp=bspstore to adjust, which re-syncs the stacked
-	 * registers (r32-r127).  This clobbers our local registers below
-	 * (loc0 and loc1) on the br return from swapctx(), and you get all
-	 * kind of mysterious exceptions depeding on what gets restored from
-	 * the backing store.
-	 *
-	 * Not sure of a proper fix is yet or how cpu_switchto should/can
-	 * be interacting with restorectx()/swapctx()
-	 * 
-	 */
-restorectx_return_here:
-{	.mib
-	mov		r8=r9			// r8(ret0) = oldlwp
-	mov		rp=loc1
-	nop		0
-	;;
-}
-{	.mib
-	nop		0
-	mov		ar.pfs=loc0
-	br.ret.sptk.many rp
-	;;
-}
-END(cpu_switchto)
-
-/*
  * lwp_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_switch().
+ * Arrange for a function to be invoked neatly, after a cpu_switchto().
  *
  * Invokes fork_exit() passing in three arguments: a callout function, an
  * argument to the callout, and a trapframe pointer.  For child processes

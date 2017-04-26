@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.5.2.1 2017/03/20 06:57:18 pgoyette Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.5.2.2 2017/04/26 02:53:06 pgoyette Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -20,6 +20,9 @@ typedef int fp_except;
 
 /* adjust for FP_* and FE_* value differences */ 
 #define	__FPE(x) ((x) >> 25)
+#define	__FEE(x) ((x) << 25)
+#define	__FPR(x) ((x))
+#define	__FER(x) ((x))
 
 #define FP_X_IMP	__FPE(FE_INEXACT)	/* imprecise (loss of precision) */
 #define FP_X_DZ		__FPE(FE_DIVBYZERO)	/* divide-by-zero exception */
@@ -28,10 +31,10 @@ typedef int fp_except;
 #define FP_X_INV	__FPE(FE_INVALID)	/* invalid operation exception */
 
 typedef enum {
-    FP_RN=FE_TONEAREST,		/* round to nearest representable number */
-    FP_RZ=FE_TOWARDZERO,	/* round to zero (truncate) */
-    FP_RP=FE_UPWARD,		/* round toward positive infinity */
-    FP_RM=FE_DOWNWARD		/* round toward negative infinity */
+    FP_RN=__FPR(FE_TONEAREST),	/* round to nearest representable number */
+    FP_RZ=__FPR(FE_TOWARDZERO),	/* round to zero (truncate) */
+    FP_RP=__FPR(FE_UPWARD),	/* round toward positive infinity */
+    FP_RM=__FPR(FE_DOWNWARD)	/* round toward negative infinity */
 } fp_rnd;
 
 #endif /* !_ISOC99_SOURCE */

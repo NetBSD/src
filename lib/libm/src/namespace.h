@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.13 2014/11/14 14:53:17 joerg Exp $ */
+/* $NetBSD: namespace.h,v 1.13.2.1 2017/04/26 02:52:56 pgoyette Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -73,3 +73,18 @@
 
 #define erfl	_erfl
 #define erfcl	_erfcl
+
+#define feclearexcept _feclearexcept
+#define fedisableexcept _fedisableexcept
+#define feenableexcept _feenableexcept
+#define fegetenv _fegetenv
+#define fegetexcept _fegetexcept
+#define fegetexceptflag _fegetexceptflag
+#define fegetround _fegetround
+#define feholdexcept _feholdexcept
+#define feraiseexcept _feraiseexcept
+#define fesetenv _fesetenv
+#define fesetexceptflag _fesetexceptflag
+#define fesetround _fesetround
+#define fetestexcept _fetestexcept
+#define feupdateenv _feupdateenv

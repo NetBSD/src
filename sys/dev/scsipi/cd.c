@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.331.2.4 2017/01/07 08:56:41 pgoyette Exp $	*/
+/*	$NetBSD: cd.c,v 1.331.2.5 2017/04/26 02:53:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.331.2.4 2017/01/07 08:56:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.331.2.5 2017/04/26 02:53:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,8 +431,11 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 	    XS_CTL_IGNORE_MEDIA_CHANGE);
 	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("cdopen: scsipi_prevent, error=%d\n", error));
-	if (error)
+	if (error) {
+		if (part == RAW_PART)
+			goto out;
 		goto bad;
+	}
 
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0) {
 		int param_error;
@@ -451,6 +454,8 @@ cd_firstopen(device_t self, dev_t dev, int flag, int fmt)
 	}
 
 	periph->periph_flags |= PERIPH_OPEN;
+
+out:
 	return 0;
 
 bad2:
@@ -462,7 +467,6 @@ bad2:
 bad:
 	scsipi_adapter_delref(adapt);
 	return error;
-
 }
 
 /*

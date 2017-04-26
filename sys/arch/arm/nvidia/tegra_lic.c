@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_lic.c,v 1.3 2016/01/05 21:53:48 marty Exp $ */
+/* $NetBSD: tegra_lic.c,v 1.3.2.1 2017/04/26 02:53:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.3 2016/01/05 21:53:48 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.3.2.1 2017/04/26 02:53:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.3 2016/01/05 21:53:48 marty Exp $");
 #include <arm/cortex/gic_intr.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#define	LIC_CPU_IER_CLR_REG	0x28
+#define	LIC_CPU_IEP_CLASS_REG	0x2c
 
 static int	tegra_lic_match(device_t, cfdata_t, void *);
 static void	tegra_lic_attach(device_t, device_t, void *);
@@ -80,7 +83,11 @@ tegra_lic_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_lic_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
-	int error;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error, index;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -94,6 +101,27 @@ tegra_lic_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": LIC\n");
+
+	bst = faa->faa_bst;
+	for (index = 0; ; index++) {
+		error = fdtbus_get_reg(faa->faa_phandle, index, &addr, &size);
+		if (error != 0)
+			break;
+		error = bus_space_map(bst, addr, size, 0, &bsh);
+		if (error) {
+			aprint_error_dev(self, "can't map IC#%d: %d\n",
+			    index, error);
+			continue;
+		}
+
+		/* Clear interrupt enable for CPU */
+		bus_space_write_4(bst, bsh, LIC_CPU_IER_CLR_REG, 0xffffffff);
+
+		/* Route to IRQ */
+		bus_space_write_4(bst, bsh, LIC_CPU_IEP_CLASS_REG, 0);
+
+		bus_space_unmap(bst, bsh, size);
+	}
 }
 
 static void *
@@ -133,7 +161,7 @@ tegra_lic_intrstr(device_t dev, u_int *specifier, char *buf,
 	const u_int intr = be32toh(specifier[1]);
 	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
 
-	snprintf(buf, buflen, "LIC irq %d", irq);
+	snprintf(buf, buflen, "irq %d", irq);
 
 	return true;
 }

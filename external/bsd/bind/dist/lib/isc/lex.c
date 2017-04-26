@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.7 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.7.2.1 2017/04/26 02:52:22 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -96,9 +96,10 @@ isc_lex_create(isc_mem_t *mctx, size_t max_token, isc_lex_t **lexp) {
 	/*
 	 * Create a lexer.
 	 */
-
 	REQUIRE(lexp != NULL && *lexp == NULL);
-	REQUIRE(max_token > 0U);
+
+	if (max_token == 0U)
+		max_token = 1;
 
 	lex = isc_mem_get(mctx, sizeof(*lex));
 	if (lex == NULL)

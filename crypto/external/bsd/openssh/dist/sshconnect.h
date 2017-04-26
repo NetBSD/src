@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.h,v 1.7.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: sshconnect.h,v 1.7.2.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: sshconnect.h,v 1.29 2015/11/15 22:26:49 jcs Exp $ */
 
 /*

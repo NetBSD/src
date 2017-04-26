@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-rsa.c,v 1.9.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: ssh-rsa.c,v 1.9.2.3 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: ssh-rsa.c,v 1.60 2016/09/12 23:39:34 djm Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-rsa.c,v 1.9.2.2 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: ssh-rsa.c,v 1.9.2.3 2017/04/26 02:52:15 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>

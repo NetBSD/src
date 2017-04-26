@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.9.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: dh.c,v 1.9.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: dh.c,v 1.62 2016/12/15 21:20:41 dtucker Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.9.2.2 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: dh.c,v 1.9.2.3 2017/04/26 02:52:14 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN */
 #include <openssl/bn.h>

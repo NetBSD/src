@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.18 2013/08/18 05:07:19 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.18.10.1 2017/04/26 02:53:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -100,14 +100,16 @@ struct sigframe_siginfo {
 	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
 #ifdef _KERNEL
 __BEGIN_DECLS
 void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 void *getframe(struct lwp *, int, int *);
 __END_DECLS
-#define lwp_trapframe(l)		((l)->l_md.md_tf)
 #define lwp_settrapframe(l, tf)		((l)->l_md.md_tf = (tf))
 #endif
+#define lwp_trapframe(l)		((l)->l_md.md_tf)
+#endif /* _KERNEL || _KMEMUSER */
 
 #endif /* _LOCORE */
 

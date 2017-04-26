@@ -1,4 +1,4 @@
-/*	$NetBSD: xsyslog.c,v 1.2.4.2 2017/03/20 06:56:57 pgoyette Exp $	*/
+/*	$NetBSD: xsyslog.c,v 1.2.4.3 2017/04/26 02:52:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: xsyslog.c,v 1.2.4.2 2017/03/20 06:56:57 pgoyette Exp $");
+__RCSID("$NetBSD: xsyslog.c,v 1.2.4.3 2017/04/26 02:52:54 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -154,6 +154,8 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 	struct iovec iov[7];	/* prog + [ + pid + ]: + fmt + crlf */
 	int opened, iovcnt;
 
+	iovcnt = opened = 0;
+
 #define INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
 	if (pri & ~(LOG_PRIMASK|LOG_FACMASK)) {
@@ -203,7 +205,6 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 	(*fun->unlock)(data);
 
 	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
-		iovcnt = 0;
 		iov[iovcnt].iov_base = p;
 		iov[iovcnt].iov_len = prlen - 1;
 		iovcnt++;
@@ -301,10 +302,23 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 
 	/* Output to stderr if requested. */
 	if (data->log_stat & LOG_PERROR) {
+		struct iovec *piov;
+		int piovcnt;
+
 		iov[iovcnt].iov_base = __UNCONST(CRLF + 1);
 		iov[iovcnt].iov_len = 1;
-		(void)writev(STDERR_FILENO, iov, iovcnt + 1);
+		if (data->log_stat & LOG_PTRIM) {
+			piov = &iov[iovcnt - 1];
+			piovcnt = 2;
+		} else {
+			piov = iov;
+			piovcnt = iovcnt + 1;
+		}
+		(void)writev(STDERR_FILENO, piov, piovcnt);
 	}
+
+	if (data->log_stat & LOG_NLOG)
+		goto out;
 
 	/* Get connected, output the message to the local logger. */
 	(*fun->lock)(data);
@@ -345,6 +359,7 @@ _vxsyslogp_r(int pri, struct syslog_fun *fun,
 		(void)close(fd);
 	}
 
+out:
 	if (!(*fun->unlock)(data) && opened)
 		_closelog_unlocked_r(data);
 }

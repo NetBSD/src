@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.62.2.2 2017/03/20 06:57:39 pgoyette Exp $	*/
+/*	$NetBSD: xhci.c,v 1.62.2.3 2017/04/26 02:53:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.62.2.2 2017/03/20 06:57:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.62.2.3 2017/04/26 02:53:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2954,8 +2954,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
 	cp[0] = htole32(0);
 	cp[1] = htole32(XHCI_INCTX_1_ADD_MASK(dci));
-	if (dci == XHCI_DCI_EP_CONTROL)
-		cp[1] |= htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_SLOT));
+	cp[1] |= htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_SLOT));
 	cp[7] = htole32(0);
 
 	/* set up input slot context */

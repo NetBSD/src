@@ -1,16 +1,20 @@
-# $NetBSD: Makefile,v 1.31.2.2 2017/01/07 08:53:48 pgoyette Exp $
+# $NetBSD: Makefile,v 1.31.2.3 2017/04/26 02:52:25 pgoyette Exp $
 #
 
 WARNS?=		6
 USE_FORT?=	yes	# network client (local server)
 
 .include <bsd.init.mk>
+.include "../../Makefile.inc"
 
 PROG=		dhcpcd
-SRCS=		common.c control.c dhcpcd.c duid.c eloop.c
-SRCS+=		if.c if-options.c script.c
+SRCS=		common.c control.c dhcpcd.c duid.c eloop.c logerr.c
+SRCS+=		if.c if-options.c route.c sa.c script.c
 SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		if-bsd.c
+
+# Need to generate this for dependencies
+DPSRCS+=	dhcpcd-embedded.h dhcpcd-embedded.c
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
@@ -26,8 +30,8 @@ SRCS+=		auth.c hmac_md5.c
 .endif
 
 .if (${USE_INET} != "no")
-CPPFLAGS+=	-DINET
-SRCS+=		arp.c dhcp.c ipv4.c
+CPPFLAGS+=	-DARP -DINET
+SRCS+=		arp.c bpf.c dhcp.c ipv4.c
 .if !defined(SMALLPROG)
 CPPFLAGS+=	-DIPV4LL
 SRCS+=		ipv4ll.c
@@ -43,42 +47,19 @@ CPPFLAGS+=	-DDHCP6
 SRCS+=		dhcp6.c
 .endif
 
-DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
-CPPFLAGS+=	-I${DIST} -I${.OBJDIR}
+CPPFLAGS+=	-I${SRCDIR}/include -I${DIST}/src -I${.OBJDIR}
 
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
 
-.PATH: ${DIST} ${DIST}/crypt ${LIBC_NET}
-
-SCRIPTS=			dhcpcd-run-hooks
-SCRIPTSDIR_dhcpcd-run-hooks=	/libexec
+.PATH: ${DIST}/src ${DIST}/src/crypt ${LIBC_NET}
 
 CONFIGFILES=			dhcpcd.conf
 FILESDIR_dhcpcd.conf=		/etc
 FILESMODE_dhcpcd.conf=		644	# -rw-r--r--
 
-HOOKS=			01-test 02-dump 20-resolv.conf 30-hostname
-HOOKS+=			50-ntp.conf
-
-FILES=			${HOOKS:C,^,${DIST}/dhcpcd-hooks/,}
-FILESDIR=		/libexec/dhcpcd-hooks
-
-EGHOOKS=		10-wpa_supplicant 15-timezone 29-lookup-hostname
-EGHOOKS+=		50-ypbind
-
-.if ${MKSHARE} != "no"
-EGFILES=		${EGHOOKS:C,^,${DIST}/dhcpcd-hooks/,}
-FILES+=			${EGFILES}
-.for f in ${EGFILES}
-FILESDIR_${f}=		/usr/share/examples/dhcpcd/hooks
-.endfor
-.endif
-
-MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
-
-CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 \
-			dhcpcd-run-hooks dhcpcd-run-hooks.8
+MAN=			dhcpcd.conf.5 dhcpcd.8 
+CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 
 
 dhcpcd-embedded.h:	genembedh ${DHCPCD_DEFS} dhcpcd-embedded.h.in
 	${HOST_SH} ${.ALLSRC} $^ > $@
@@ -86,22 +67,11 @@ dhcpcd-embedded.h:	genembedh ${DHCPCD_DEFS} dhcpcd-embedded.h.in
 dhcpcd-embedded.c:	genembedc ${DHCPCD_DEFS} dhcpcd-embedded.c.in
 	${HOST_SH} ${.ALLSRC} $^ > $@
 
-if-options.c:		dhcpcd-embedded.h
-
 CLEANFILES+=		dhcpcd-embedded.c dhcpcd-embedded.h
 
-.for f in dhcpcd-run-hooks dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
+.for f in dhcpcd.conf.5 dhcpcd.8
 ${f}:	${f}.in
-	${TOOL_SED} -e 's:@SYSCONFDIR@:/etc:g' -e 's:@DBDIR@:/var/db:g' \
-	    -e 's:@LIBDIR@:/lib:g' \
-	    -e 's:@RUNDIR@:/var/run:g' \
-	    -e 's:@HOOKDIR@:/libexec/dhcpcd-hooks:g' \
-	    -e 's:@SCRIPT@:/libexec/dhcpcd-run-hooks:g' \
-	    -e 's:@SERVICEEXISTS@::g' \
-	    -e 's:@SERVICECMD@::g' \
-	    -e 's:@SERVICESTATUS@::g' \
-	    -e 's:@STATUSARG@::g' \
-	    ${DIST}/${f}.in > $@
+	${TOOL_SED} ${SED_SYS} ${DIST}/src/${f}.in > $@
 .endfor
 
 # XXXGCC5

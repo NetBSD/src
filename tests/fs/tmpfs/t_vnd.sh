@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.8.26.1 2016/08/06 00:19:11 pgoyette Exp $
+# $NetBSD: t_vnd.sh,v 1.8.26.2 2017/04/26 02:53:32 pgoyette Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,6 +28,10 @@
 # Verifies that vnd works with files stored in tmpfs.
 #
 
+vnddev=vnd3
+rawpart=$( sysctl -n kern.rawpartition | tr '01234' 'abcde' )
+vnd=/dev/${vnddev}${rawpart}
+
 atf_test_case basic cleanup
 basic_head() {
 	atf_set "descr" "Verifies that vnd works with files stored in tmpfs"
@@ -38,12 +42,12 @@ basic_body() {
 
 	atf_check -s eq:0 -o ignore -e ignore \
 	    dd if=/dev/zero of=disk.img bs=1m count=10
-	atf_check -s eq:0 -o empty -e empty vndconfig /dev/vnd3 disk.img
+	atf_check -s eq:0 -o empty -e empty vndconfig -c ${vnddev} disk.img
 
-	atf_check -s eq:0 -o ignore -e ignore newfs /dev/rvnd3a
+	atf_check -s eq:0 -o ignore -e ignore newfs -I ${vnd}
 
 	atf_check -s eq:0 -o empty -e empty mkdir mnt
-	atf_check -s eq:0 -o empty -e empty mount /dev/vnd3a mnt
+	atf_check -s eq:0 -o empty -e empty mount ${vnd} mnt
 
 	echo "Creating test files"
 	for f in $(jot -w %u 100 | uniq); do
@@ -58,7 +62,7 @@ basic_body() {
 	done
 
 	atf_check -s eq:0 -o empty -e empty umount mnt
-	atf_check -s eq:0 -o empty -e empty vndconfig -u /dev/vnd3
+	atf_check -s eq:0 -o empty -e empty vndconfig -u ${vnddev}
 
 	test_unmount
 	touch done
@@ -66,7 +70,7 @@ basic_body() {
 basic_cleanup() {
 	if [ ! -f done ]; then
 		umount mnt 2>/dev/null 1>&2
-		vndconfig -u /dev/vnd3 2>/dev/null 1>&2
+		vndconfig -u ${vnddev} 2>/dev/null 1>&2
 	fi
 }
 

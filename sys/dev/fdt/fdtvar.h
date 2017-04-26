@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.7 2016/01/05 21:53:48 marty Exp $ */
+/* $NetBSD: fdtvar.h,v 1.7.2.1 2017/04/26 02:53:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,8 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/clk/clk.h>
 
+#include <dev/clock_subr.h>
+
 #include <dev/ofw/openfirm.h>
 
 struct fdt_attach_args {
@@ -43,9 +45,6 @@ struct fdt_attach_args {
 	bus_space_tag_t faa_a4x_bst;
 	bus_dma_tag_t faa_dmat;
 	int faa_phandle;
-
-	const char **faa_init;
-	int faa_ninit;
 };
 
 /* flags for fdtbus_intr_establish */
@@ -97,6 +96,8 @@ struct fdtbus_regulator_controller_func {
 	int	(*acquire)(device_t);
 	void	(*release)(device_t);
 	int	(*enable)(device_t, bool);
+	int	(*set_voltage)(device_t, u_int, u_int);
+	int	(*get_voltage)(device_t, u_int *);
 };
 
 struct fdtbus_clock_controller_func {
@@ -152,6 +153,10 @@ struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);
 int		fdtbus_regulator_disable(struct fdtbus_regulator *);
+int		fdtbus_regulator_set_voltage(struct fdtbus_regulator *,
+		    u_int, u_int);
+int		fdtbus_regulator_get_voltage(struct fdtbus_regulator *,
+		    u_int *);
 
 struct clk *	fdtbus_clock_get(int, const char *);
 struct clk *	fdtbus_clock_get_index(int, u_int);
@@ -162,9 +167,16 @@ void		fdtbus_reset_put(struct fdtbus_reset *);
 int		fdtbus_reset_assert(struct fdtbus_reset *);
 int		fdtbus_reset_deassert(struct fdtbus_reset *);
 
+int		fdtbus_todr_attach(device_t, int, todr_chip_handle_t);
+
 bool		fdtbus_set_data(const void *);
 const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
+bool		fdtbus_get_path(int, char *, size_t);
+
+const char *	fdtbus_get_stdout_path(void);
+int		fdtbus_get_stdout_phandle(void);
+int		fdtbus_get_stdout_speed(void);
 
 #endif /* _DEV_FDT_FDTVAR_H */

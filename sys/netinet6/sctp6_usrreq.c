@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.6.2.3 2017/01/07 08:56:51 pgoyette Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.6.2.4 2017/04/26 02:53:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.6.2.3 2017/01/07 08:56:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.6.2.4 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -235,7 +235,7 @@ sctp_skip_csum:
 	/*
 	 * Check AH/ESP integrity.
 	 */
-	if (ipsec_used && ipsec6_in_reject_so(m, in6p->sctp_socket)) {
+	if (ipsec_used && ipsec6_in_reject(m, (struct in6pcb *)in6p_ip)) {
 /* XXX */
 #if 0
 		/* FIX ME: need to find right stat */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1.4.1 2017/03/20 06:57:17 pgoyette Exp $	*/
+/*	$NetBSD: fenv.h,v 1.1.4.2 2017/04/26 02:53:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -33,14 +33,6 @@
 
 #include <sys/stdint.h>
 
-#ifndef	__fenv_static
-#define	__fenv_static	static
-#endif
-
-typedef	uint32_t 	fpu_control_t __attribute__((__mode__(__SI__)));
-typedef	fpu_control_t	fenv_t;
-typedef	fpu_control_t	fexcept_t;
-
 /* Exception flags */
 #define	FE_INEXACT	0x0004
 #define	FE_UNDERFLOW	0x0008
@@ -57,6 +49,17 @@ typedef	fpu_control_t	fexcept_t;
 #define	FE_DOWNWARD	0x0003
 #define	_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
 			 FE_UPWARD | FE_TOWARDZERO)
+
+#ifndef __mips_soft_float
+
+#ifndef	__fenv_static
+#define	__fenv_static	static
+#endif
+
+typedef	uint32_t 	fpu_control_t __attribute__((__mode__(__SI__)));
+typedef	fpu_control_t	fenv_t;
+typedef	fpu_control_t	fexcept_t;
+
 __BEGIN_DECLS
 
 /* Default floating-point environment */
@@ -200,9 +203,7 @@ feupdateenv(const fenv_t *__envp)
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-/* We currently provide no external definitions of the functions below. */
-
-static inline int
+__fenv_static inline int
 feenableexcept(int __excepts)
 {
 	fenv_t __old_fpsr, __new_fpsr;
@@ -215,7 +216,7 @@ feenableexcept(int __excepts)
 	return __old_fpsr;
 }
 
-static inline int
+__fenv_static inline int
 fedisableexcept(int __excepts)
 {
 	fenv_t __old_fpsr, __new_fpsr;
@@ -228,7 +229,7 @@ fedisableexcept(int __excepts)
 	return __old_fpsr;
 }
 
-static inline int
+__fenv_static inline int
 fegetexcept(void)
 {
 	fenv_t __fpsr;
@@ -240,5 +241,7 @@ fegetexcept(void)
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
 __END_DECLS
+
+#endif /* __mips_soft_float */
 
 #endif	/* !_FENV_H_ */

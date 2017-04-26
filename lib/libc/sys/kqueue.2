@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.35.2.1 2017/01/07 08:56:03 pgoyette Exp $
+.\"	$NetBSD: kqueue.2,v 1.35.2.2 2017/04/26 02:52:54 pgoyette Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -38,7 +38,8 @@
 .Sh NAME
 .Nm kqueue ,
 .Nm kqueue1 ,
-.Nm kevent
+.Nm kevent ,
+.Nm EV_SET
 .Nd kernel event notification mechanism
 .Sh LIBRARY
 .Lb libc
@@ -76,7 +77,7 @@ Multiple events which trigger the filter do not result in multiple
 kevents being placed on the kqueue; instead, the filter will aggregate
 the events into a single struct kevent.
 Calling
-.Fn close
+.Xr close 2
 on a file descriptor will remove any kevents that reference the descriptor.
 .Pp
 .Fn kqueue
@@ -84,20 +85,21 @@ creates a new kernel event queue and returns a descriptor.
 .Pp
 The
 .Fn kqueue1
-also allows to set the following
+function also allows to set the following
 .Fa flags
 on the returned file descriptor:
 .Bl -column O_NONBLOCK -offset indent
 .It Dv O_CLOEXEC
 Set the close on exec property.
 .It Dv O_NONBLOCK
-Sets non-blocking I/O.
+Set non-blocking I/O.
 .It Dv O_NOSIGPIPE
 Return
 .Er EPIPE
 instead of raising
 .Dv SIGPIPE .
 .El
+.Pp
 The queue is not inherited by a child created with
 .Xr fork 2 .
 .\" However, if
@@ -131,7 +133,8 @@ If
 is a
 .No non- Ns Dv NULL
 pointer, it specifies a maximum interval to wait
-for an event, which will be interpreted as a struct timespec.
+for an event, which will be interpreted as a
+.Li struct timespec .
 If
 .Fa timeout
 is a
@@ -144,7 +147,7 @@ To effect a poll, the
 argument should be
 .No non- Ns Dv NULL ,
 pointing to a zero-valued
-.Va timespec
+.Xr timespec 3
 structure.
 The same array may be used for the
 .Fa changelist
@@ -302,7 +305,7 @@ on the descriptor type.
 .Bl -tag -width 2n
 .It Sockets
 Sockets which have previously been passed to
-.Fn listen
+.Xr listen 2
 return when there is an incoming connection pending.
 .Va data
 contains the size of the listen backlog (i.e., the number of
@@ -395,7 +398,7 @@ and returns when one or more of the requested events occurs on the descriptor.
 The events to monitor are:
 .Bl -tag -width XXNOTE_RENAME
 .It NOTE_DELETE
-.Fn unlink
+.Xr unlink 2
 was called on the file referenced by the descriptor.
 .It NOTE_WRITE
 A write occurred on the file referenced by the descriptor.
@@ -430,14 +433,14 @@ The exit code of the process is stored in
 .Va data .
 .It NOTE_FORK
 The process has called
-.Fn fork .
+.Xr fork 2 .
 .It NOTE_EXEC
 The process has executed a new process via
 .Xr execve 2
 or similar call.
 .It NOTE_TRACK
 Follow a process across
-.Fn fork
+.Xr fork 2
 calls.
 The parent process will return with NOTE_TRACK set in the
 .Va fflags
@@ -457,9 +460,9 @@ contains the events which triggered the filter.
 Takes the signal number to monitor as the identifier and returns
 when the given signal is delivered to the current process.
 This coexists with the
-.Fn signal
+.Xr signal 3
 and
-.Fn sigaction
+.Xr sigaction 2
 facilities, and has a lower precedence.
 The filter will record
 all attempts to deliver a signal to a process, even if the signal has
@@ -632,13 +635,17 @@ The specified process to attach to does not exist.
 .\" .Xr aio_error 2 ,
 .\" .Xr aio_read 2 ,
 .\" .Xr aio_return 2 ,
+.Xr fork 2 ,
 .Xr ioctl 2 ,
+.Xr listen 2 ,
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
 .Xr sigaction 2 ,
+.Xr unlink 2 ,
 .Xr write 2 ,
 .Xr signal 3 ,
+.Xr timespec 3 ,
 .Xr kfilter_register 9 ,
 .Xr knote 9
 .Rs

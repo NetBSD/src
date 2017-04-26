@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.50.2.1 2017/03/20 06:57:11 pgoyette Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.50.2.2 2017/04/26 02:53:01 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -546,9 +546,9 @@ vfp_state_load(lwp_t *l, u_int flags)
 
 	if (fregs->vfp_fpexc & VFP_FPEXC_EX) {
 		/* Need to restore the exception handling state.  */
-		armreg_fpinst2_write(fregs->vfp_fpinst2);
+		armreg_fpinst_write(fregs->vfp_fpinst);
 		if (fregs->vfp_fpexc & VFP_FPEXC_FP2V)
-			armreg_fpinst_write(fregs->vfp_fpinst);
+			armreg_fpinst2_write(fregs->vfp_fpinst2);
 	}
 }
 

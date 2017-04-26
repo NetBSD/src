@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.15.2.1 2017/04/26 02:53:31 pgoyette Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.15.2.1 2017/04/26 02:53:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
-#include <sys/fstrans.h>
 #include <sys/kmem.h>
 
 #include <ufs/lfs/lfs.h>
@@ -80,18 +79,15 @@ extern int prtactive;
 int
 ulfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		struct bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *transmp;
 	mode_t mode;
 	int error = 0;
 
-	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -128,8 +124,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp);
-	fstrans_done(transmp);
+
 	return (error);
 }
 

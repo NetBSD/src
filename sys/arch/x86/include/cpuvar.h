@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.47.2.1 2017/03/20 06:57:22 pgoyette Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.47.2.2 2017/04/26 02:53:09 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@ struct cpufeature_attach_args {
 #endif /* defined(_KERNEL_OPT) */
 
 int x86_ipi(int, int, int);
-void x86_self_ipi(int);
 int x86_ipi_init(int);
 int x86_ipi_startup(int, int);
 void x86_errata(void);

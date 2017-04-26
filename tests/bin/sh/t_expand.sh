@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.8.2.1 2017/03/20 06:57:55 pgoyette Exp $
+# $NetBSD: t_expand.sh,v 1.8.2.2 2017/04/26 02:53:32 pgoyette Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -557,7 +557,7 @@ dollar_star_with_empty_ifs_body() {
 	check 'IFS=""; set -- a "b c"; set -- "$*" ; echo $# "$*"' \
 							'1 ab c'	0  #14
 
-	results			'PR bin/52090 expect 7 of 14 subtests to fail'
+	results	  # FIXED: 'PR bin/52090 expect 7 of 14 subtests to fail'
 }
 
 atf_test_case dollar_star_in_word_empty_ifs
@@ -599,7 +599,7 @@ dollar_star_in_word_empty_ifs_body() {
 	check 'IFS="";set -- a "b c";set -- "${xXx:-$*}";echo $# "${xXx:-$*}"' \
 								'1 ab c'  0  #14
 
-	results		'PR bin/52090 expect 7 of 14 subtests to fail'
+	results	  # FIXED: 'PR bin/52090 expect 7 of 14 subtests to fail'
 }
 
 atf_test_case dollar_star_in_quoted_word
@@ -659,7 +659,7 @@ dollar_star_in_quoted_word_body() {
 	check 'IFS="";set -- a "b c";set -- ${xXx:-"$*"};echo $# ${xXx:-$*}' \
 								'1 ab c'  0  #26
 
-	results		 'PR bin/52090 - 2 of 26 subtests expected to fail'
+	results	  # FIXED: 'PR bin/52090 - 2 of 26 subtests expected to fail'
 }
 
 atf_init_test_cases() {

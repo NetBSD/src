@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.148.2.3 2017/03/20 06:57:30 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.148.2.4 2017/04/26 02:53:13 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.148.2.3 2017/03/20 06:57:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.148.2.4 2017/04/26 02:53:13 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -778,7 +778,7 @@ pci_conf_print_common(
 	onoff("Interrupt disable", rval, PCI_COMMAND_INTERRUPT_DISABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
-	onoff("Immediate Readness", rval, PCI_STATUS_IMMD_READNESS);
+	onoff("Immediate Readiness", rval, PCI_STATUS_IMMD_READNESS);
 	onoff2("Interrupt status", rval, PCI_STATUS_INT_STATUS, "active",
 	    "inactive");
 	onoff("Capability List support", rval, PCI_STATUS_CAPLIST_SUPPORT);
@@ -1894,11 +1894,11 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 
 		/* Slot Control Register */
 		reg = regs[o2i(capoff + PCIE_SLCSR)];
-		printf("    Slot Control Register: %04x\n", reg & 0xffff);
+		printf("    Slot Control Register: 0x%04x\n", reg & 0xffff);
 		onoff("Attention Button Pressed Enabled", reg, PCIE_SLCSR_ABE);
 		onoff("Power Fault Detected Enabled", reg, PCIE_SLCSR_PFE);
 		onoff("MRL Sensor Changed Enabled", reg, PCIE_SLCSR_MSE);
-		onoff("Presense Detect Changed Enabled", reg, PCIE_SLCSR_PDE);
+		onoff("Presence Detect Changed Enabled", reg, PCIE_SLCSR_PDE);
 		onoff("Command Completed Interrupt Enabled", reg,
 		    PCIE_SLCSR_CCE);
 		onoff("Hot-Plug Interrupt Enabled", reg, PCIE_SLCSR_HPE);
@@ -1907,13 +1907,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		case 0x0:
 			printf("reserved\n");
 			break;
-		case 0x1:
+		case PCIE_SLCSR_IND_ON:
 			printf("on\n");
 			break;
-		case 0x2:
+		case PCIE_SLCSR_IND_BLINK:
 			printf("blink\n");
 			break;
-		case 0x3:
+		case PCIE_SLCSR_IND_OFF:
 			printf("off\n");
 			break;
 		}
@@ -1922,13 +1922,13 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		case 0x0:
 			printf("reserved\n");
 			break;
-		case 0x1:
+		case PCIE_SLCSR_IND_ON:
 			printf("on\n");
 			break;
-		case 0x2:
+		case PCIE_SLCSR_IND_BLINK:
 			printf("blink\n");
 			break;
-		case 0x3:
+		case PCIE_SLCSR_IND_OFF:
 			printf("off\n");
 			break;
 		}
@@ -1946,7 +1946,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Attention Button Pressed", reg, PCIE_SLCSR_ABP);
 		onoff("Power Fault Detected", reg, PCIE_SLCSR_PFD);
 		onoff("MRL Sensor Changed", reg, PCIE_SLCSR_MSC);
-		onoff("Presense Detect Changed", reg, PCIE_SLCSR_PDC);
+		onoff("Presence Detect Changed", reg, PCIE_SLCSR_PDC);
 		onoff("Command Completed", reg, PCIE_SLCSR_CC);
 		onoff("MRL Open", reg, PCIE_SLCSR_MS);
 		onoff("Card Present in slot", reg, PCIE_SLCSR_PDS);
@@ -1958,7 +1958,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	if (check_rootport == true) {
 		/* Root Control Register */
 		reg = regs[o2i(capoff + PCIE_RCR)];
-		printf("    Root Control Register: %04x\n", reg & 0xffff);
+		printf("    Root Control Register: 0x%04x\n", reg & 0xffff);
 		onoff("SERR on Correctable Error Enable", reg,
 		    PCIE_RCR_SERR_CER);
 		onoff("SERR on Non-Fatal Error Enable", reg,
@@ -2013,7 +2013,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	printf("      TPH Completer Supported: ");
 	switch (__SHIFTOUT(reg, PCIE_DCAP2_TPH_COMP)) {
 	case 0:
-		printf("Not supportted\n");
+		printf("Not supported\n");
 		break;
 	case 1:
 		printf("TPH\n");
@@ -2086,7 +2086,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	pci_print_pcie_compl_timeout(reg & PCIE_DCSR2_COMPT_VAL);
 	onoff("Completion Timeout Disabled", reg, PCIE_DCSR2_COMPT_DIS);
 	onoff("ARI Forwarding Enabled", reg, PCIE_DCSR2_ARI_FWD);
-	onoff("AtomicOp Rquester Enabled", reg, PCIE_DCSR2_ATOM_REQ);
+	onoff("AtomicOp Requester Enabled", reg, PCIE_DCSR2_ATOM_REQ);
 	onoff("AtomicOp Egress Blocking", reg, PCIE_DCSR2_ATOM_EBLK);
 	onoff("IDO Request Enabled", reg, PCIE_DCSR2_IDO_REQ);
 	onoff("IDO Completion Enabled", reg, PCIE_DCSR2_IDO_COMP);
@@ -2239,7 +2239,7 @@ pci_conf_print_sata_cap(const pcireg_t *regs, int capoff)
 
 	printf("\n  Serial ATA Capability Register\n");
 
-	reg = regs[o2i(capoff + PCI_MSIX_CTL)];
+	reg = regs[o2i(capoff + PCI_SATA_REV)];
 	printf("    Revision register: 0x%04x\n", (reg >> 16) & 0xff);
 	printf("      Revision: %u.%u\n",
 	    (unsigned int)__SHIFTOUT(reg, PCI_SATA_REV_MAJOR),
@@ -2281,6 +2281,9 @@ pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
 	onoff("Transaction Pending", reg, PCI_AFSR_TP);
 }
 
+/* XXX pci_conf_print_ea_cap */
+/* XXX pci_conf_print_fpb_cap */
+
 static struct {
 	pcireg_t cap;
 	const char *name;
@@ -2308,7 +2311,8 @@ static struct {
 	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
 	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
 	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap},
-	{ PCI_CAP_EA,		"Enhanced Allocation", NULL }
+	{ PCI_CAP_EA,		"Enhanced Allocation", NULL },
+	{ PCI_CAP_FPB,		"Flattening Portal Bridge", NULL }
 };
 
 static int
@@ -2447,7 +2451,7 @@ pci_conf_print_aer_cap_control(pcireg_t reg, bool *tlp_prefix_log)
 	onoff("ECRC Generation Capable", reg, PCI_AER_ECRC_GEN_CAPABLE);
 	onoff("ECRC Generation Enable", reg, PCI_AER_ECRC_GEN_ENABLE);
 	onoff("ECRC Check Capable", reg, PCI_AER_ECRC_CHECK_CAPABLE);
-	onoff("ECRC Check Enab", reg, PCI_AER_ECRC_CHECK_ENABLE);
+	onoff("ECRC Check Enable", reg, PCI_AER_ECRC_CHECK_ENABLE);
 	onoff("Multiple Header Recording Capable", reg,
 	    PCI_AER_MULT_HDR_CAPABLE);
 	onoff("Multiple Header Recording Enable", reg,PCI_AER_MULT_HDR_ENABLE);
@@ -2675,7 +2679,7 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		parbsel = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT);
 		printf("        Port Arbitration Select: 0x%x\n", parbsel);
 		n = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_VC_ID);
-		printf("        VC ID %d\n", n);
+		printf("        VC ID: %d\n", n);
 		onoff("  VC Enable", reg, PCI_VC_RESOURCE_CTL_VC_ENABLE);
 
 		reg = regs[o2i(extcapoff + PCI_VC_RESOURCE_STA(i))] >> 16;
@@ -3097,11 +3101,14 @@ pci_conf_print_sriov_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("    System Page Sizes register: 0x%08x\n", reg);
 	printf("      Page Size: ");
 	if (reg != 0) {
+		int bitpos = ffs(reg) -1;
+
+		/* Assume only one bit is set. */
 #ifdef _KERNEL
-		format_bytes(buf, sizeof(buf), 1LL << (ffs(reg) + 12));
+		format_bytes(buf, sizeof(buf), 1LL << (bitpos + 12));
 #else
-		humanize_number(buf, sizeof(buf), 1LL << (ffs(reg) + 12), "B",
-		    HN_AUTOSCALE, 0);
+		humanize_number(buf, sizeof(buf), 1LL << (bitpos + 12),
+		    "B", HN_AUTOSCALE, 0);
 #endif
 		printf("%s", buf);
 	} else {
@@ -3522,7 +3529,145 @@ pci_conf_print_lnr_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("      LNR Registration Limit: %u\n", num);
 }
 
-/* XXX pci_conf_print_dpc_cap */
+static void
+pci_conf_print_dpc_pio(pcireg_t r)
+{
+	onoff("Cfg Request received UR Completion", r,PCI_DPC_RPPIO_CFGUR_CPL);
+	onoff("Cfg Request received CA Completion", r,PCI_DPC_RPPIO_CFGCA_CPL);
+	onoff("Cfg Request Completion Timeout", r, PCI_DPC_RPPIO_CFG_CTO);
+	onoff("I/O Request received UR Completion", r, PCI_DPC_RPPIO_IOUR_CPL);
+	onoff("I/O Request received CA Completion", r, PCI_DPC_RPPIO_IOCA_CPL);
+	onoff("I/O Request Completion Timeout", r, PCI_DPC_RPPIO_IO_CTO);
+	onoff("Mem Request received UR Completion", r,PCI_DPC_RPPIO_MEMUR_CPL);
+	onoff("Mem Request received CA Completion", r,PCI_DPC_RPPIO_MEMCA_CPL);
+	onoff("Mem Request Completion Timeout", r, PCI_DPC_RPPIO_MEM_CTO);
+}
+
+static void
+pci_conf_print_dpc_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t reg, cap, ctl, stat, errsrc;
+	const char *trigstr;
+	bool rpext;
+
+	printf("\n  Downstream Port Containment\n");
+
+	reg = regs[o2i(extcapoff + PCI_DPC_CCR)];
+	cap = reg & 0xffff;
+	ctl = reg >> 16;
+	rpext = (reg & PCI_DPCCAP_RPEXT) ? true : false;
+	printf("    DPC Capability register: 0x%04x\n", cap);
+	printf("      DPC Interrupt Message Number: %02x\n",
+	    (unsigned int)(cap & PCI_DPCCAP_IMSGN));
+	onoff("RP Extensions for DPC", reg, PCI_DPCCAP_RPEXT);
+	onoff("Poisoned TLP Egress Blocking Supported", reg,
+	    PCI_DPCCAP_POISONTLPEB);
+	onoff("DPC Software Triggering Supported", reg, PCI_DPCCAP_SWTRIG);
+	printf("      RP PIO Log Size: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPCCAP_RPPIOLOGSZ));
+	onoff("DL_Active ERR_COR Signaling Supported", reg,
+	    PCI_DPCCAP_DLACTECORS);
+	printf("    DPC Control register: 0x%04x\n", ctl);
+	switch (__SHIFTOUT(reg, PCI_DPCCTL_TIRGEN)) {
+	case 0:
+		trigstr = "disabled";
+		break;
+	case 1:
+		trigstr = "enabled(ERR_FATAL)";
+		break;
+	case 2:
+		trigstr = "enabled(ERR_NONFATAL or ERR_FATAL)";
+		break;
+	default:
+		trigstr = "(reserverd)";
+		break;
+	}
+	printf("      DPC Trigger Enable: %s\n", trigstr);
+	printf("      DPC Completion Control: %s Completion Status\n",
+	    (reg & PCI_DPCCTL_COMPCTL)
+	    ? "Unsupported Request(UR)" : "Completer Abort(CA)");
+	onoff("DPC Interrupt Enable", reg, PCI_DPCCTL_IE);
+	onoff("DPC ERR_COR Enable", reg, PCI_DPCCTL_ERRCOREN);
+	onoff("Poisoned TLP Egress Blocking Enable", reg,
+	    PCI_DPCCTL_POISONTLPEB);
+	onoff("DPC Software Trigger", reg, PCI_DPCCTL_SWTRIG);
+	onoff("DL_Active ERR_COR Enable", reg, PCI_DPCCTL_DLACTECOR);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_STATESID)];
+	stat = reg & 0xffff;
+	errsrc = reg >> 16;
+	printf("    DPC Status register: 0x%04x\n", stat);
+	onoff("DPC Trigger Status", reg, PCI_DPCSTAT_TSTAT);
+	switch (__SHIFTOUT(reg, PCI_DPCSTAT_TREASON)) {
+	case 0:
+		trigstr = "an unmasked uncorrectable error";
+		break;
+	case 1:
+		trigstr = "receiving an ERR_NONFATAL";
+		break;
+	case 2:
+		trigstr = "receiving an ERR_FATAL";
+		break;
+	case 3:
+		trigstr = "DPC Trigger Reason Extension field";
+		break;
+	}
+	printf("      DPC Trigger Reason: Due to %s\n", trigstr);
+	onoff("DPC Interrupt Status", reg, PCI_DPCSTAT_ISTAT);
+	if (rpext)
+		onoff("DPC RP Busy", reg, PCI_DPCSTAT_RPBUSY);
+	switch (__SHIFTOUT(reg, PCI_DPCSTAT_TREASON)) {
+	case 0:
+		trigstr = "Due to RP PIO error";
+		break;
+	case 1:
+		trigstr = "Due to the DPC Software trigger bit";
+		break;
+	default:
+		trigstr = "(reserved)";
+		break;
+	}
+	printf("      DPC Trigger Reason Extension: %s\n", trigstr);
+	if (rpext)
+		printf("      RP PIO First Error Pointer: %02x\n",
+		    (unsigned int)__SHIFTOUT(reg, PCI_DPCSTAT_RPPIOFEP));
+	printf("    DPC Error Source ID register: 0x%04x\n", errsrc);
+
+	if (!rpext)
+		return;
+	/*
+	 * All of the following registers are implemented by a device which has
+	 * RP Extensions for DPC
+	 */
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_STAT)];
+	printf("    RP PIO Status Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_MASK)];
+	printf("    RP PIO Mask Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_SEVE)];
+	printf("    RP PIO Severity Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_SYSERR)];
+	printf("    RP PIO SysError Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPC_RPPIO_EXCPT)];
+	printf("    RP PIO Exception Register: 0x%04x\n", reg);
+	pci_conf_print_dpc_pio(reg);
+
+	printf("    RP PIO Header Log Register: start from 0x%03x\n",
+	    extcapoff + PCI_DPC_RPPIO_HLOG);
+	printf("    RP PIO ImpSpec Log Register: start from 0x%03x\n",
+	    extcapoff + PCI_DPC_RPPIO_IMPSLOG);
+	printf("    RP PIO TPL Prefix Log Register: start from 0x%03x\n",
+	    extcapoff + PCI_DPC_RPPIO_TLPPLOG);
+}
+
 
 static int
 pci_conf_l1pm_cap_tposcale(unsigned char scale)
@@ -3642,6 +3787,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
 /* XXX pci_conf_print_vf_resizbar_cap */
+/* XXX pci_conf_print_hierarchyid_cap */
 
 #undef	MS
 #undef	SM
@@ -3711,7 +3857,7 @@ static struct {
 	{ PCI_EXTCAP_LN_REQ,	"LN Requester",
 	  pci_conf_print_lnr_cap },
 	{ PCI_EXTCAP_DPC,	"Downstream Port Containment",
-	  NULL },
+	  pci_conf_print_dpc_cap },
 	{ PCI_EXTCAP_L1PM,	"L1 PM Substates",
 	  pci_conf_print_l1pm_cap },
 	{ PCI_EXTCAP_PTM,	"Precision Time Management",
@@ -3725,6 +3871,8 @@ static struct {
 	{ PCI_EXTCAP_DESIGVNDSP, "Designated Vendor-Specific",
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
+	  NULL },
+	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 };
 
@@ -3871,14 +4019,16 @@ pci_conf_print_type0(
 #endif
 	}
 
-	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
+	printf("    Cardbus CIS Pointer: 0x%08x\n",
+	    regs[o2i(PCI_CARDBUS_CIS_REG)]);
 
 	rval = regs[o2i(PCI_SUBSYS_ID_REG)];
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
 	/* XXX */
-	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
+	printf("    Expansion ROM Base Address: 0x%08x\n",
+	    regs[o2i(PCI_MAPREG_ROM)]);
 
 	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		printf("    Capability list pointer: 0x%02x\n",
@@ -3889,8 +4039,8 @@ pci_conf_print_type0(
 	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
 
 	rval = regs[o2i(PCI_INTERRUPT_REG)];
-	printf("    Maximum Latency: 0x%02x\n", (rval >> 24) & 0xff);
-	printf("    Minimum Grant: 0x%02x\n", (rval >> 16) & 0xff);
+	printf("    Maximum Latency: 0x%02x\n", PCI_MAX_LAT(rval));
+	printf("    Minimum Grant: 0x%02x\n", PCI_MIN_GNT(rval));
 	printf("    Interrupt pin: 0x%02x ", PCI_INTERRUPT_PIN(rval));
 	switch (PCI_INTERRUPT_PIN(rval)) {
 	case PCI_INTERRUPT_PIN_NONE:
@@ -4173,7 +4323,7 @@ pci_conf_print_type2(
 		break;
 	}
 	printf("\n");
-	rval = (regs[o2i(0x3c)] >> 16) & 0xffff;
+	rval = (regs[o2i(PCI_BRIDGE_CONTROL_REG)] >> 16) & 0xffff;
 	printf("    Bridge control register: 0x%04x\n", rval);
 	onoff("Parity error response", rval, __BIT(0));
 	onoff("SERR# enable", rval, __BIT(1));

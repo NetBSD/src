@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.102 2015/04/20 23:03:07 riastradh Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.102.2.1 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.102 2015/04/20 23:03:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.102.2.1 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -827,7 +827,7 @@ int
 coda_inactive(void *v)
 {
 /* true args */
-    struct vop_inactive_args *ap = v;
+    struct vop_inactive_v2_args *ap = v;
     vnode_t *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
     kauth_cred_t cred __unused = NULL;
@@ -837,7 +837,6 @@ coda_inactive(void *v)
 
     if (IS_CTL_VP(vp)) {
 	MARK_INT_SAT(CODA_INACTIVE_STATS);
-	VOP_UNLOCK(vp);
 	return 0;
     }
 
@@ -857,7 +856,6 @@ coda_inactive(void *v)
 	printf("%s: %p ovp != NULL\n", __func__, vp);
 #endif
     /* XXX Do we need to VOP_CLOSE container vnodes? */
-    VOP_UNLOCK(vp);
     if (!IS_UNMOUNTING(cp))
 	*ap->a_recycle = true;
 

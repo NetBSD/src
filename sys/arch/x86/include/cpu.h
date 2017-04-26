@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67.2.1 2017/03/20 06:57:22 pgoyette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67.2.2 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -512,7 +512,17 @@ void x86_bus_space_mallocok(void);
 #define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
 #define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
 #define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
-#define	CPU_MAXID		15	/* number of valid machdep ids */
+#define	CPU_FPU_SAVE		15	/* int: FPU Instructions layout
+					 * to use this, CPU_OSFXSR must be true
+					 * 0: FSAVE
+					 * 1: FXSAVE
+					 * 2: XSAVE
+					 * 3: XSAVEOPT
+					 */
+#define	CPU_FPU_SAVE_SIZE	16	/* int: FPU Instruction layout size */
+#define	CPU_XSAVE_FEATURES	17	/* quad: XSAVE features */
+
+#define	CPU_MAXID		18	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

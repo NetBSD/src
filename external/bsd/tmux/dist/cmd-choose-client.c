@@ -28,14 +28,15 @@
  */
 
 #define CHOOSE_CLIENT_TEMPLATE					\
-	"#{client_tty}: #{session_name} "			\
+	"#{client_name}: #{session_name} "			\
 	"[#{client_width}x#{client_height} #{client_termname}]"	\
 	"#{?client_utf8, (utf8),}#{?client_readonly, (ro),} "	\
 	"(last used #{client_activity_string})"
 
-enum cmd_retval	 cmd_choose_client_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_choose_client_exec(struct cmd *,
+			    struct cmdq_item *);
 
-void	cmd_choose_client_callback(struct window_choose_data *);
+static void	cmd_choose_client_callback(struct window_choose_data *);
 
 const struct cmd_entry cmd_choose_client_entry = {
 	"choose-client", NULL,
@@ -49,20 +50,20 @@ struct cmd_choose_client_data {
 	struct client	*client;
 };
 
-enum cmd_retval
-cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_choose_client_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = self->args;
-	struct client			*c;
+	struct client			*c = item->state.c;
 	struct client			*c1;
 	struct window_choose_data	*cdata;
-	struct winlink			*wl;
+	struct winlink			*wl = item->state.tflag.wl;
 	const char			*template;
 	char				*action;
 	u_int			 	 idx, cur;
 
-	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
-		cmdq_error(cmdq, "no client available");
+	if (c == NULL) {
+		cmdq_error(item, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -82,9 +83,9 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	cur = idx = 0;
 	TAILQ_FOREACH(c1, &clients, entry) {
-		if (c1->session == NULL || c1->tty.path == NULL)
+		if (c1->session == NULL)
 			continue;
-		if (c1 == cmdq->client)
+		if (c1 == item->client)
 			cur = idx;
 
 		cdata = window_choose_data_create(TREE_OTHER, c, c->session);
@@ -94,7 +95,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		format_add(cdata->ft, "line", "%u", idx);
 		format_defaults(cdata->ft, c1, NULL, NULL, NULL);
 
-		cdata->command = cmd_template_replace(action, c1->tty.path, 1);
+		cdata->command = cmd_template_replace(action, c1->name, 1);
 
 		window_choose_add(wl->window->active, cdata);
 
@@ -108,7 +109,7 @@ cmd_choose_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	return (CMD_RETURN_NORMAL);
 }
 
-void
+static void
 cmd_choose_client_callback(struct window_choose_data *cdata)
 {
 	struct client  	*c;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.31 2015/01/24 15:44:32 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.31.2.1 2017/04/26 02:53:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2015/01/24 15:44:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31.2.1 2017/04/26 02:53:00 pgoyette Exp $");
 
 #include <sys/proc.h>
 #include <arm/armreg.h>
@@ -86,6 +86,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 		db_expr_t count, const char *modif,
 		void (*pr)(const char *, ...))
 {
+	struct trapframe *tf = NULL;
 	uint32_t	*frame, *lastframe;
 	const char	*cp = modif;
 	char c;
@@ -140,6 +141,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 			}
 			(*pr)("lid %d ", l.l_lid);
 			pcb = lwp_getpcb(&l);
+			tf = lwp_trapframe(&l);
 #ifndef _KERNEL
 			struct pcb pcbb;
 			db_read_bytes((db_addr_t)pcb, sizeof(*pcb),
@@ -258,6 +260,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 				break;
 			}
 		} else if (INKERNEL((int)lastframe)) {
+			if (trace_thread) {
+				(*pr)("--- tf %p ---\n", tf);
+			}
 			/* switch from user to kernel */
 			if (kernel_only)
 				break;	/* kernel stack only */

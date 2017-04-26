@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191.2.1 2017/01/07 08:56:26 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.191.2.2 2017/04/26 02:53:07 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.191.2.1 $"
+#ident		"GENERIC-$Revision: 1.191.2.2 $"
 
 maxusers	64
 
@@ -422,6 +422,15 @@ twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
 ld*	at cac? unit ?			# logical disk devices
 ld*	at twe? unit ?
 ld*	at mlx? unit ?
+
+# Virtio devices
+virtio* at pci? dev ? function ?	# Virtio PCI device
+# the baloon driver can not work on machines with non-4k pages
+#viomb*	at virtio?			# Virtio memory balloon device
+ld*	at virtio?			# Virtio disk device
+vioif*	at virtio?			# Virtio network device
+viornd* at virtio?			# Virtio entropy device
+vioscsi* at virtio?			# Virtio SCSI device
 
 ## Floppy controller and drive found on SPARCstations.
 
@@ -1023,6 +1032,6 @@ options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 # XXX: there is no PLT format for sparc64 that cooperates with
 # MPROTECT, so disable it for now
-options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
-options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+# options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+# options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

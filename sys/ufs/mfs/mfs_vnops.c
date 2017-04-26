@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.56 2015/01/14 11:21:31 hannken Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.56.2.1 2017/04/26 02:53:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.56 2015/01/14 11:21:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.56.2.1 2017/04/26 02:53:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ mfs_close(void *v)
 int
 mfs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;

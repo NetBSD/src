@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.16 2012/03/17 20:01:14 christos Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.16.14.1 2017/04/26 02:52:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: humanize_number.c,v 1.16 2012/03/17 20:01:14 christos Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.16.14.1 2017/04/26 02:52:54 pgoyette Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -76,9 +76,9 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 	}
 
 #define	SCALE2PREFIX(scale)	(&prefixes[(scale) << 1])
-	maxscale = 7;
+	maxscale = 6;
 
-	if ((size_t)scale >= maxscale &&
+	if ((size_t)scale > maxscale &&
 	    (scale & (HN_AUTOSCALE | HN_GETSCALE)) == 0)
 		return (-1);
 

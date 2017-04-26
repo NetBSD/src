@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.4.2.1 2017/03/20 06:57:16 pgoyette Exp $	*/
+/*	$NetBSD: fenv.h,v 1.4.2.2 2017/04/26 02:53:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -36,10 +36,6 @@
 #include <m68k/float.h>
 #include <m68k/fpreg.h>
 
-#ifndef __fenv_static   
-#define __fenv_static   static
-#endif
-
 /* Exception bits, from FPSR */
 #define	FE_INEXACT	FPSR_AINEX
 #define	FE_DIVBYZERO	FPSR_ADZ
@@ -59,7 +55,11 @@
 #define _ROUND_MASK	\
     (FE_TONEAREST | FE_TOWARDZERO | FE_DOWNWARD | FE_UPWARD)
 
-#if !defined(__mc68010__) && !defined(__mcoldfire__)
+#if defined(__HAVE_68881__)
+
+#ifndef __fenv_static
+#define __fenv_static   static
+#endif
 
 typedef uint32_t fexcept_t;
 
@@ -261,9 +261,7 @@ feupdateenv(const fenv_t *__envp)
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
-/* We currently provide no external definitions of the functions below. */
-
-static inline int
+__fenv_static inline int
 feenableexcept(int __mask)
 {
 	fexcept_t __fpcr, __oldmask;
@@ -276,7 +274,7 @@ feenableexcept(int __mask)
 	return __oldmask;
 }
 
-static inline int
+__fenv_static inline int
 fedisableexcept(int __mask)
 {
 	fexcept_t __fpcr, __oldmask;
@@ -289,7 +287,7 @@ fedisableexcept(int __mask)
 	return __oldmask;
 }
 
-static inline int
+__fenv_static inline int
 fegetexcept(void)
 {
 	fexcept_t __fpcr;
@@ -303,6 +301,6 @@ fegetexcept(void)
 
 __END_DECLS
 
-#endif /* !__m68010__ && !__mcoldfire__ */
+#endif /* __HAVE_68881__ */
 
 #endif /* _M68K_FENV_H_ */

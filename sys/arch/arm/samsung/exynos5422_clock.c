@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.4 2015/12/26 22:57:09 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.4.4.1 2017/04/26 02:53:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.4 2015/12/26 22:57:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.4.4.1 2017/04/26 02:53:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -433,6 +433,8 @@ struct exynos5422_clock_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+
+	struct clk_domain	sc_clkdom;
 };
 
 static void	exynos5422_clock_print_header(void);
@@ -483,7 +485,11 @@ exynos5422_clock_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Exynos5422 Clock Controller\n");
 
-	clk_backend_register("exynos5422", &exynos5422_clock_funcs, sc);
+	sc->sc_clkdom.funcs = &exynos5422_clock_funcs;
+	sc->sc_clkdom.priv = sc;
+	for (u_int n = 0; n < __arraycount(exynos5422_clocks); n++) {
+		exynos5422_clocks[n].base.domain = &sc->sc_clkdom;
+	}
 
 	fdtbus_register_clock_controller(self, faa->faa_phandle,
 	    &exynos5422_car_fdtclock_funcs);

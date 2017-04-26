@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.231.2.1 2017/03/20 06:56:58 pgoyette Exp $
+#	$NetBSD: Makefile.inc,v 1.231.2.2 2017/04/26 02:52:54 pgoyette Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -324,6 +324,8 @@ MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
+MLINKS+=kqueue.2 kqueue1.2
+MLINKS+=kqueue.2 EV_SET.2
 MLINKS+=_ksem.2 _ksem_open.2
 MLINKS+=_ksem.2 _ksem_close.2
 MLINKS+=_ksem.2 _ksem_init.2

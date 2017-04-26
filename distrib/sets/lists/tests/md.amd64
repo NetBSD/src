@@ -1,9 +1,9 @@
-# $NetBSD: md.amd64,v 1.2.2.2 2017/03/20 06:52:09 pgoyette Exp $
-./usr/tests/kernel/arch/x86/Atffile		tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/arch/x86/Kyuafile		tests-kernel-tests	compattestfile,atf,kyua
-./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/arch/x86/t_ptrace_wait3	tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/arch/x86/t_ptrace_wait4	tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/arch/x86/t_ptrace_wait6	tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/arch/x86/t_ptrace_waitid	tests-kernel-tests	compattestfile,atf
-./usr/tests/kernel/arch/x86/t_ptrace_waitpid	tests-kernel-tests	compattestfile,atf
+# $NetBSD: md.amd64,v 1.2.2.3 2017/04/26 02:52:17 pgoyette Exp $
+./usr/tests/kernel/arch/x86/Atffile		tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/Kyuafile		tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait3	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait4	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_wait6	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_waitid	tests-obsolete	obsolete
+./usr/tests/kernel/arch/x86/t_ptrace_waitpid	tests-obsolete	obsolete

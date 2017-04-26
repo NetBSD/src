@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.c,v 1.7.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: sftp-common.c,v 1.7.2.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: sftp-common.c,v 1.29 2016/09/12 01:22:38 deraadt Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-common.c,v 1.7.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.7.2.2 2017/04/26 02:52:15 pgoyette Exp $");
 
 #include <sys/param.h>	/* MAX */
 #include <sys/types.h>

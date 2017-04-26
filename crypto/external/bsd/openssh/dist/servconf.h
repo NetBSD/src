@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.13.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: servconf.h,v 1.13.2.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: servconf.h,v 1.123 2016/11/30 03:00:05 djm Exp $ */
 
 /*

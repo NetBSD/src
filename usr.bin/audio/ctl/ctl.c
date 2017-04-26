@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.40.8.2 2017/03/20 06:58:03 pgoyette Exp $	*/
+/*	$NetBSD: ctl.c,v 1.40.8.3 2017/04/26 02:53:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ctl.c,v 1.40.8.2 2017/03/20 06:58:03 pgoyette Exp $");
+__RCSID("$NetBSD: ctl.c,v 1.40.8.3 2017/04/26 02:53:34 pgoyette Exp $");
 #endif
 
 
@@ -291,8 +291,8 @@ getinfo(int fd)
 {
 	int pos, i;
 
-	if (channel >= 0 && ioctl(fd, AUDIO_SETPROC, &channel) < 0)
-		err(1, "AUDIO_SETPROC");
+	if (channel >= 0 && ioctl(fd, AUDIO_SETCHAN, &channel) < 0)
+		err(1, "AUDIO_SETCHAN");
 
 	if (ioctl(fd, AUDIO_GETDEV, &adev) < 0)
 		err(1, "AUDIO_GETDEV");
@@ -440,8 +440,8 @@ audioctl_write(int fd, int argc, char *argv[])
 {
 	struct field *p;
 
-	if (channel >= 0 && ioctl(fd, AUDIO_SETPROC, &channel) < 0)
-		err(1, "AUDIO_SETPROC");
+	if (channel >= 0 && ioctl(fd, AUDIO_SETCHAN, &channel) < 0)
+		err(1, "AUDIO_SETCHAN");
 
 	AUDIO_INITINFO(&info);
 	while (argc--) {

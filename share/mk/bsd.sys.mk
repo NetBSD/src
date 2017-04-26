@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.260.2.2 2017/03/20 06:57:08 pgoyette Exp $
+#	$NetBSD: bsd.sys.mk,v 1.260.2.3 2017/04/26 02:52:59 pgoyette Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -159,8 +159,11 @@ COPTS+=	${${ACTIVE_CC} == "gcc":? --param ssp-buffer-size=1 :}
 .endif
 
 .if ${MKSOFTFLOAT:Uno} != "no"
+# sh3 defaults to soft-float and specifies hard-float a different way
+.if ${MACHINE_CPU} != "sh3"
 COPTS+=		${${ACTIVE_CC} == "gcc":? -msoft-float :}
 FOPTS+=		-msoft-float
+.endif
 .elif ${MACHINE_ARCH} == "coldfire"
 COPTS+=		-mhard-float
 FOPTS+=		-mhard-float
@@ -305,6 +308,11 @@ OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][dx]' -K '[$$][dx]\.*'
 # ARM big endian needs to preserve $a/$d/$t symbols for the linker.
 OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][adt]' -K '[$$][adt]\.*'
 .endif
+
+.if ${MKSTRIPSYM:Uyes} == "yes"
 OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x} ${OBJCOPYLIBFLAGS_EXTRA}
+.else
+OBJCOPYLIBFLAGS?=-X ${OBJCOPYLIBFLAGS_EXTRA}
+.endif
 
 .endif	# !defined(_BSD_SYS_MK_)

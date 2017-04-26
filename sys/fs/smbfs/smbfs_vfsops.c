@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.104.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.104.2.2 2017/04/26 02:53:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.104.2.1 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.104.2.2 2017/04/26 02:53:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,6 +397,8 @@ static bool
 smbfs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct smbnode *np;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	np = VTOSMB(vp);
 	if (np == NULL)

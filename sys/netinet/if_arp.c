@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.217.2.5 2017/03/20 06:57:50 pgoyette Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.217.2.6 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217.2.5 2017/03/20 06:57:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217.2.6 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -132,9 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217.2.5 2017/03/20 06:57:50 pgoyette Ex
 #if NCARP > 0
 #include <netinet/ip_carp.h>
 #endif
-
-#define SIN(s) ((struct sockaddr_in *)s)
-#define SRP(s) ((struct sockaddr_inarp *)s)
 
 /*
  * ARP trailer negotiation.  Trailer protocol is not IP specific,

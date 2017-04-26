@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.118.2.3 2017/03/20 06:57:46 pgoyette Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.118.2.4 2017/04/26 02:53:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118.2.3 2017/03/20 06:57:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118.2.4 2017/04/26 02:53:25 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -247,22 +247,22 @@ msdosfs_mountroot(void)
 	args.dirmask = 0777;
 
 	if ((error = msdosfs_mountfs(rootvp, mp, l, &args)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		return (error);
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
 		(void)msdosfs_unmount(mp, 0);
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
 		vrele(rootvp);
 		return (error);
 	}
 
 	mountlist_append(mp);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (0);
 }
 
@@ -977,6 +977,8 @@ msdosfs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct msdosfs_sync_ctx *c = cl;
 	struct denode *dep;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	dep = VTODE(vp);
 	if (c->waitfor == MNT_LAZY || vp->v_type == VNON ||

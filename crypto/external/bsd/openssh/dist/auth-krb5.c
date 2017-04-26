@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.8.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.8.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: auth-krb5.c,v 1.22 2016/05/04 14:22:33 markus Exp $ */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-krb5.c,v 1.8.2.2 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: auth-krb5.c,v 1.8.2.3 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <pwd.h>
 #include <stdarg.h>

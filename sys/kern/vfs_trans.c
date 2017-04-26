@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.34.2.1 2017/03/20 06:57:48 pgoyette Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.34.2.2 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.34.2.1 2017/03/20 06:57:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.34.2.2 2017/04/26 02:53:27 pgoyette Exp $");
 
 /*
  * File system transaction operations.
@@ -179,7 +179,7 @@ fstrans_mount_dtor(struct mount *mp)
 	mutex_exit(&fstrans_mount_lock);
 
 	kmem_free(fmi, sizeof(*fmi));
-	vfs_destroy(mp);
+	vfs_rele(mp);
 }
 
 /*
@@ -191,7 +191,7 @@ fstrans_mount(struct mount *mp)
 	int error;
 	struct fstrans_mount_info *newfmi;
 
-	error = vfs_busy(mp, NULL);
+	error = vfs_busy(mp);
 	if (error)
 		return error;
 	newfmi = kmem_alloc(sizeof(*newfmi), KM_SLEEP);
@@ -205,7 +205,8 @@ fstrans_mount(struct mount *mp)
 	mp->mnt_iflag |= IMNT_HAS_TRANS;
 	mutex_exit(&fstrans_mount_lock);
 
-	vfs_unbusy(mp, true, NULL);
+	vfs_ref(mp);
+	vfs_unbusy(mp);
 
 	return 0;
 }
@@ -329,15 +330,26 @@ int
 _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 {
 	int s;
+	struct mount *lmp;
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 
-	if ((mp = fstrans_normalize_mount(mp)) == NULL)
+	if ((lmp = fstrans_normalize_mount(mp)) == NULL)
 		return 0;
 
 	ASSERT_SLEEPABLE();
 
-	if ((fli = fstrans_get_lwp_info(mp, true)) == NULL)
+	/*
+	 * Allocate per lwp info for layered file systems to
+	 * get a reference to the mount.  No need to increment
+	 * the reference counter here.
+	 */
+	for (lmp = mp; lmp->mnt_lower; lmp = lmp->mnt_lower) {
+		fli = fstrans_get_lwp_info(lmp, true);
+		KASSERT(fli != NULL);
+	}
+
+	if ((fli = fstrans_get_lwp_info(lmp, true)) == NULL)
 		return 0;
 
 	if (fli->fli_trans_cnt > 0) {
@@ -348,7 +360,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	}
 
 	s = pserialize_read_enter();
-	fmi = mp->mnt_transinfo;
+	fmi = lmp->mnt_transinfo;
 	if (__predict_true(grant_lock(fmi->fmi_state, lock_type))) {
 		fli->fli_trans_cnt = 1;
 		fli->fli_lock_type = lock_type;
@@ -383,9 +395,8 @@ fstrans_done(struct mount *mp)
 
 	if ((mp = fstrans_normalize_mount(mp)) == NULL)
 		return;
-	if ((fli = fstrans_get_lwp_info(mp, true)) == NULL)
-		return;
-
+	fli = fstrans_get_lwp_info(mp, false);
+	KASSERT(fli != NULL);
 	KASSERT(fli->fli_trans_cnt > 0);
 
 	if (fli->fli_trans_cnt > 1) {
@@ -861,7 +872,7 @@ fstrans_dump(int full)
 				fstrans_print_lwp(p, l, full == 1);
 
 	printf("Fstrans state by mount:\n");
-	TAILQ_FOREACH(mp, &mountlist, mnt_list)
+	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp))
 		fstrans_print_mount(mp, full == 1);
 }
 #endif /* defined(DDB) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.147.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.147.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.147.2.1 2017/03/20 06:57:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.147.2.2 2017/04/26 02:53:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -228,15 +228,6 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	if (length < 0)
 		return (EINVAL);
 
-	/*
-	 * Just return and not update modification times.
-	 */
-	if (oip->i_size == length) {
-		/* still do a uvm_vnp_setsize() as writesize may be larger */
-		uvm_vnp_setsize(ovp, length);
-		return (0);
-	}
-
 	fs = oip->i_lfs;
 
 	if (ovp->v_type == VLNK &&
@@ -252,6 +243,8 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
 	if (oip->i_size == length) {
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
@@ -580,11 +573,11 @@ done:
 	oip->i_size = length;
 	lfs_dino_setsize(fs, oip->i_din, oip->i_size);
 	oip->i_lfs_effnblks -= blocksreleased;
+
+	mutex_enter(&lfs_lock);
 	lfs_dino_setblocks(fs, oip->i_din,
 	    lfs_dino_getblocks(fs, oip->i_din) - real_released);
-	mutex_enter(&lfs_lock);
 	lfs_sb_addbfree(fs, blocksreleased);
-	mutex_exit(&lfs_lock);
 
 	KASSERTMSG((oip->i_size != 0 ||
 		lfs_dino_getblocks(fs, oip->i_din) == 0),
@@ -599,7 +592,6 @@ done:
 	/*
 	 * If we truncated to zero, take us off the paging queue.
 	 */
-	mutex_enter(&lfs_lock);
 	if (oip->i_size == 0 && oip->i_flags & IN_PAGING) {
 		oip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, oip, i_lfs_pchain);
@@ -864,7 +856,7 @@ static int
 lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int error;
+	int error = 0;
 	struct lfs *fs;
 	voff_t off;
 
@@ -887,10 +879,9 @@ restart:
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
-		if (error != 0) {
-			mutex_exit(&bufcache_lock);
-			return (error);
-		}
+		if (error)
+			goto exit;
+
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
@@ -909,10 +900,9 @@ restart:
 		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
-		if (error != 0) {
-			mutex_exit(&bufcache_lock);
-			return (error);
-		}
+		if (error)
+			goto exit;
+
 		mutex_enter(bp->b_objlock);
 		if (bp->b_oflags & BO_DELWRI) {
 			bp->b_oflags &= ~BO_DELWRI;
@@ -923,8 +913,9 @@ restart:
 		LFS_UNLOCK_BUF(bp);
 		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
+exit:
 	mutex_exit(&bufcache_lock);
 
-	return (0);
+	return error;
 }
 

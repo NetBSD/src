@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.57.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.57.2.2 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.57.2.1 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.57.2.2 2017/04/26 02:53:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,8 @@ lwp_sys_init(void)
 }
 
 int
-do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp)
+do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
+    const sigset_t *sigmask, const stack_t *sigstk)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
@@ -84,8 +85,8 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp)
 	if (__predict_false(uaddr == 0))
 		return ENOMEM;
 
-	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED,
-	    NULL, 0, p->p_emul->e_startlwp, arg, &l2, l->l_class);
+	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED, NULL, 0,
+	    p->p_emul->e_startlwp, arg, &l2, l->l_class, sigmask, &SS_INIT);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
 		return error;
@@ -152,7 +153,10 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	if (error)
 		goto fail;
 
-	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid);
+	const sigset_t *sigmask = newuc->uc_flags & _UC_SIGMASK ?
+	    &newuc->uc_sigmask : &l->l_sigmask;
+	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid, sigmask,
+	    &SS_INIT);
 	if (error)
 		goto fail;
 

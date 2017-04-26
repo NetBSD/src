@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.82.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.82.2.2 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82.2.1 2016/08/06 00:19:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82.2.2 2017/04/26 02:53:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 int
 ext2fs_inactive(void *v)
 {
-	struct vop_inactive_args /* {
+	struct vop_inactive_v2_args /* {
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
@@ -223,8 +223,8 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
-	VOP_UNLOCK(vp);
-	return (error);
+
+	return error;
 }
 
 

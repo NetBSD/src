@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.9.2.1 2017/01/07 08:54:06 pgoyette Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.9.2.2 2017/04/26 02:52:43 pgoyette Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -2114,13 +2114,15 @@ save_ltc(
 	clockprocT * const pp,
 	const char * const tc)
 {
-	size_t len;
-
-	len = (tc) ? strlen(tc) : 0;
-	if (len >= sizeof(pp->a_lastcode))
-		len = sizeof(pp->a_lastcode) - 1;
+	size_t len = 0;
+	
+	if (tc) {
+		len = strlen(tc);
+		if (len >= sizeof(pp->a_lastcode))
+			len = sizeof(pp->a_lastcode) - 1;
+		memcpy(pp->a_lastcode, tc, len);
+	}
 	pp->lencode = (u_short)len;
-	memcpy(pp->a_lastcode, tc, len);
 	pp->a_lastcode[len] = '\0';
 }
 

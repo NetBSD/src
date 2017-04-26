@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.88 2015/10/10 22:33:31 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.88.2.1 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.88 2015/10/10 22:33:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.88.2.1 2017/04/26 02:53:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -275,13 +275,23 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 					lfs_iblock_set(fs, ibp->b_data, indirs[i].in_off,
 						UNWRITTEN);
 				idaddr = lfs_iblock_get(fs, ibp->b_data, indirs[i].in_off);
-#ifdef DEBUG
+
 				if (vp == fs->lfs_ivnode) {
 					LFS_ENTER_LOG("balloc", __FILE__,
 						__LINE__, indirs[i].in_lbn,
 						ibp->b_flags, curproc->p_pid);
 				}
-#endif
+				/*
+				 * Write out the updated indirect block. Note
+				 * that this writes it out even if we didn't
+				 * modify it - ultimately because the final
+				 * block didn't exist we'll need to write a
+				 * new version of all the blocks that lead to
+				 * it. Hopefully all that gets in before any
+				 * actual disk I/O so we don't end up writing
+				 * any of them twice... this is currently not
+				 * very clear.
+				 */
 				if ((error = VOP_BWRITE(ibp->b_vp, ibp)))
 					return error;
 			}
@@ -332,13 +342,13 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
 			lfs_iblock_set(fs, ibp->b_data, idp->in_off, UNWRITTEN);
-#ifdef DEBUG
+
 			if (vp == fs->lfs_ivnode) {
 				LFS_ENTER_LOG("balloc", __FILE__,
 					__LINE__, idp->in_lbn,
 					ibp->b_flags, curproc->p_pid);
 			}
-#endif
+
 			VOP_BWRITE(ibp->b_vp, ibp);
 		}
 	} else if (bpp && !(bp->b_oflags & (BO_DONE|BO_DELWRI))) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.758.2.4 2017/03/20 06:57:14 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.758.2.5 2017/04/26 02:53:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.758.2.4 2017/03/20 06:57:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.758.2.5 2017/04/26 02:53:03 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -135,7 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.758.2.4 2017/03/20 06:57:14 pgoyette E
 #include <machine/intr.h>
 #include <machine/kcore.h>
 #include <machine/pio.h>
-#include <machine/pmc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -1014,7 +1013,7 @@ initgdt(union descriptor *tgdt)
 		pt_entry_t pte;
 
 		pte = pmap_pa2pte((vaddr_t)gdtstore - KERNBASE);
-		pte |= PG_k | PG_RO | xpmap_pg_nx | PG_V;
+		pte |= PG_RO | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)gdtstore, pte,
 		    UVMF_INVLPG) < 0) {
@@ -1218,7 +1217,7 @@ init386(paddr_t first_avail)
 		pt_entry_t pte;
 
 		pte = pmap_pa2pte((vaddr_t)tmpgdt - KERNBASE);
-		pte |= PG_k | PG_RW | xpmap_pg_nx | PG_V;
+		pte |= PG_RW | xpmap_pg_nx | PG_V;
 
 		if (HYPERVISOR_update_va_mapping((vaddr_t)tmpgdt, pte, UVMF_INVLPG) < 0) {
 			panic("tmpgdt page relaim RW update failed.\n");
@@ -1404,8 +1403,6 @@ init386(paddr_t first_avail)
 	}
 
 	rw_init(&svr4_fasttrap_lock);
-
-	pmc_init();
 
 	pcb->pcb_dbregs = NULL;
 

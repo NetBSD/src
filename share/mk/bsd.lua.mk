@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.7 2014/07/19 18:38:34 lneto Exp $
+#	$NetBSD: bsd.lua.mk,v 1.7.6.1 2017/04/26 02:52:59 pgoyette Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -128,6 +128,13 @@ CLEANFILES+=${LUA_OBJS.${_M}} ${LUA_LOBJ.${_M}} ${LUA_TARG.${_M}}
 DPSRCS+=${LUA_SRCS.${_M}}
 SRCS+=${LUA_SRCS.${_M}}
 
+LUA_LDOPTS=	-Wl,--warn-shared-textrel
+.if ${MKSTRIPSYM:Uyes} == "yes"
+LUA_LDOPTS+=	-Wl,-x
+.else
+LUA_LDOPTS+=	-Wl,-X
+.endif
+
 .NOPATH:		${LUA_OBJS.${_M}} ${LUA_LOBJ.${_M}} ${LUA_TARG.${_M}}
 .if ${MKLINT} != "no"
 ${LUA_TARG.${_M}}:	${LUA_LOBJ.${_M}}
@@ -137,8 +144,7 @@ lua-all:		${LUA_TARG.${_M}}
 ${LUA_TARG.${_M}}:	${LUA_OBJS.${_M}} ${DPADD} ${DPADD.${_M}}
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
-	${CC} -Wl,--warn-shared-textrel \
-	    -Wl,-x -shared ${LUA_OBJS.${_M}} \
+	${CC} ${LUA_LDOPTS} -shared ${LUA_OBJS.${_M}} \
 	    -Wl,-soname,${LUA_NAME.${_M}} -o ${.TARGET} \
 	    ${LDADD} ${LDADD.${_M}} ${LDFLAGS} ${LDFLAGS.${_M}}
 

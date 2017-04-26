@@ -26,25 +26,27 @@
  * Rename a window.
  */
 
-enum cmd_retval	 cmd_rename_window_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_rename_window_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_rename_window_entry = {
-	"rename-window", "renamew",
-	"t:", 1, 1,
-	CMD_TARGET_WINDOW_USAGE " new-name",
-	0,
-	cmd_rename_window_exec
+	.name = "rename-window",
+	.alias = "renamew",
+
+	.args = { "t:", 1, 1 },
+	.usage = CMD_TARGET_WINDOW_USAGE " new-name",
+
+	.tflag = CMD_WINDOW,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_rename_window_exec
 };
 
-enum cmd_retval
-cmd_rename_window_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_rename_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
-	struct session	*s;
-	struct winlink	*wl;
-
-	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
-		return (CMD_RETURN_ERROR);
+	struct winlink	*wl = item->state.tflag.wl;
 
 	window_set_name(wl->window, args->argv[0]);
 	options_set_number(&wl->window->options, "automatic-rename", 0);

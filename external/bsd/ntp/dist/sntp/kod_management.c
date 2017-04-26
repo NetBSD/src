@@ -1,4 +1,4 @@
-/*	$NetBSD: kod_management.c,v 1.7 2016/01/08 21:35:40 christos Exp $	*/
+/*	$NetBSD: kod_management.c,v 1.7.2.1 2017/04/26 02:52:46 pgoyette Exp $	*/
 
 #include <config.h>
 #include <string.h>
@@ -248,6 +248,7 @@ kod_init_kod_db(
 
 	rewind(db_s);
 
+	/* Allocate the array of pointers to the struct kod_entry items */
 	kod_db = eallocarray(kod_db_cnt, sizeof(kod_db[0]));
 
 	/* Read contents of file */
@@ -267,7 +268,8 @@ kod_init_kod_db(
 			continue;
 		}
 
-		kod_db[b] = emalloc(sizeof(*kod_db[b]));
+		/* Allocate this struct kod_entry item */
+		kod_db[b] = emalloc(sizeof(*kod_db[0]));
 
 		if (3 != sscanf(fbuf, "%llx %4s %254s", &ull,
 		    kod_db[b]->type, kod_db[b]->hostname)) {

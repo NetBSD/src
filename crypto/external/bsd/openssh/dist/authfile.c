@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.13.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: authfile.c,v 1.13.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: authfile.c,v 1.122 2016/11/25 23:24:45 djm Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.13.2.2 2017/01/07 08:53:41 pgoyette Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.13.2.3 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>

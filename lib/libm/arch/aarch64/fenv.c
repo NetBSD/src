@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.2 2014/12/27 17:52:45 martin Exp $ */
+/* $NetBSD: fenv.c,v 1.2.2.1 2017/04/26 02:52:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2014/12/27 17:52:45 martin Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2.2.1 2017/04/26 02:52:55 pgoyette Exp $");
+
+#include "namespace.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,6 +43,23 @@ __RCSID("$NetBSD: fenv.c,v 1.2 2014/12/27 17:52:45 martin Exp $");
 #include <inttypes.h>
 
 #include <aarch64/armreg.h>
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
+#endif
 
 const fenv_t __fe_dfl_env = {
 	.__fpsr = 0,
@@ -87,35 +106,12 @@ feraiseexcept(int excepts)
 #ifndef lint
 	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
-#ifdef __SOFTFP__
-	excepts &= fpgetsticky();
-
-	if (excepts) {
-		siginfo_t info;
-		memset(&info, 0, sizeof info);
-		info.si_signo = SIGFPE;
-		info.si_pid = getpid();
-		info.si_uid = geteuid();
-		if (excepts & FE_UNDERFLOW)
-			info.si_code = FPE_FLTUND;
-		else if (excepts & FE_OVERFLOW)
-			info.si_code = FPE_FLTOVF;
-		else if (excepts & FE_DIVBYZERO)
-			info.si_code = FPE_FLTDIV;
-		else if (excepts & FE_INVALID)
-			info.si_code = FPE_FLTINV;
-		else if (excepts & FE_INEXACT)
-			info.si_code = FPE_FLTRES;
-		sigqueueinfo(getpid(), &info);
-	}
-#else
 	unsigned int fpsr = reg_fpsr_read();
 	fpsr = (fpsr & ~FPSR_CSUM) | __SHIFTIN(excepts, FPSR_CSUM);
 	reg_fpsr_write(fpsr);
 	unsigned int fpcr = reg_fpcr_read();
 	fpcr = (fpcr & ~FPCR_ESUM) | __SHIFTIN(excepts, FPCR_ESUM);
 	reg_fpcr_write(fpcr);
-#endif
 	return 0;
 }
 

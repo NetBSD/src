@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.86.2.4 2017/03/20 06:52:09 pgoyette Exp $
+# $NetBSD: mi,v 1.86.2.5 2017/04/26 02:52:17 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -350,6 +350,8 @@
 ./@MODULEDIR@/twe/twe.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/uatp				base-kernel-modules	kmod
 ./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ualea				base-kernel-modules	kmod
+./@MODULEDIR@/ualea/ualea.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
 ./@MODULEDIR@/udf/udf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/umap				base-kernel-modules	kmod

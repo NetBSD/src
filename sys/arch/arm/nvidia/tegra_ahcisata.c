@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.9 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.9.2.1 2017/04/26 02:53:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.9 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.9.2.1 2017/04/26 02:53:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -284,26 +284,13 @@ static int
 tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *sc)
 {
 	device_t self = sc->sc.sc_atac.atac_dev;
-	struct clk *pll_p_out0;
 	int error;
-
-	pll_p_out0 = clk_get("pll_p_out0");
-	if (pll_p_out0 == NULL) {
-		aprint_error_dev(self, "couldn't find pll_p_out0\n");
-		return ENOENT;
-	}
 
 	/* Assert resets */
 	fdtbus_reset_assert(sc->sc_rst_sata);
 	fdtbus_reset_assert(sc->sc_rst_sata_cold);
 
-	/* Set SATA_OOB clock source to PLLP, 204MHz */
-	error = clk_set_parent(sc->sc_clk_sata_oob, pll_p_out0);
-	if (error) {
-		aprint_error_dev(self, "couldn't set sata-oob parent: %d\n",
-		    error);
-		return error;
-	}
+	/* Set SATA_OOB clock source to 204MHz */
 	error = clk_set_rate(sc->sc_clk_sata_oob, 204000000);
 	if (error) {
 		aprint_error_dev(self, "couldn't set sata-oob rate: %d\n",
@@ -311,12 +298,7 @@ tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *sc)
 		return error;
 	}
 
-	/* Set SATA clock source to PLLP, 102MHz */
-	error = clk_set_parent(sc->sc_clk_sata, pll_p_out0);
-	if (error) {
-		aprint_error_dev(self, "couldn't set sata parent: %d\n", error);
-		return error;
-	}
+	/* Set SATA clock source to 102MHz */
 	error = clk_set_rate(sc->sc_clk_sata, 102000000);
 	if (error) {
 		aprint_error_dev(self, "couldn't set sata rate: %d\n", error);

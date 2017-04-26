@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.17.30.1 2017/03/20 06:58:05 pgoyette Exp $	*/
+/*	$NetBSD: pmc.c,v 1.17.30.2 2017/04/26 02:53:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pmc.c,v 1.17.30.1 2017/03/20 06:58:05 pgoyette Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.17.30.2 2017/04/26 02:53:35 pgoyette Exp $");
 #endif
 
 #include <inttypes.h>
@@ -105,47 +105,6 @@ typedef struct {
 	const pmc_name2val_t *pmc_names;
 	size_t size;
 } pmc_name2val_cpu_t;
-
-static const pmc_name2val_t i586_names[] = {
-	{ "tlb-data-miss",		PMC5_DATA_TLB_MISS,		0 },
-	{ "tlb-ins-miss",		PMC5_INST_TLB_MISS,		0 },
-	{ "l1cache-ins-miss",		PMC5_INST_CACHE_MISS,		0 },
-	{ "l1cache-data-miss",		PMC5_DATA_RW_MISS,		0 },
-	{ "l1cache-data-miss-read",	PMC5_DATA_READ_MISS,		0 },
-	{ "l1cache-data-miss-write",	PMC5_DATA_WRITE_MISS,		0 },
-	{ "l1cache-writeback",		PMC5_DATA_LINES_WBACK,		0 },
-	{ "l1cache-writeback-hit",	PMC5_WRITE_M_E,			0 },
-	{ "l2cache-data-snoop",		PMC5_DATA_CACHE_SNOOP,		0 },
-	{ "l2cache-data-snoop-hit",	PMC5_DATA_CACHE_SNOOP_HIT,	0 },
-	{ "mem-read",			PMC5_DATA_READ,			0 },
-	{ "mem-write",			PMC5_DATA_WRITE,		0 },
-	{ "mem-access",			PMC5_DATA_RW,			0 },
-	{ "mem-access-both-pipes",	PMC5_MEM_ACCESS_BOTH_PIPES,	0 },
-	{ "mem-bank-conflicts",		PMC5_BANK_CONFLICTS,		0 },
-	{ "mem-misalign-ref",		PMC5_MISALIGNED_DATA,		0 },
-	{ "mem-uncached-read",		PMC5_NONCACHE_MEM_READ,		0 },
-	{ "seg-load-any",		PMC5_SEGMENT_REG_LOAD,		0 },
-	{ "branch",			PMC5_BRANCHES,			0 },
-	{ "branch-btb-hit",		PMC5_BTB_HITS,			0 },
-	{ "branch-taken",		PMC5_BRANCH_TAKEN,		0 },
-	{ "ins-read",			PMC5_INST_READ,			0 },
-	{ "ins-pipeline-flush",		PMC5_PIPELINE_FLUSH,		0 },
-	{ "ins-executed",		PMC5_INST_EXECUTED,		0 },
-	{ "ins-executed-vpipe",		PMC5_INST_EXECUTED_V_PIPE,	0 },
-	{ "ins-stall-agi",		PMC5_AGI_STALL,			0 },
-	{ "ins-stall-write",		PMC5_WRITE_BACKUP_STALL,	0 },
-	{ "ins-stall-data",		PMC5_DATA_READ_STALL,		0 },
-	{ "ins-stall-writeline",	PMC5_WRITE_E_M_STALL,		0 },
-	{ "bus-utilization",		PMC5_BUS_UTILIZATION,		0 },
-	{ "bus-locked",			PMC5_LOCKED_BUS,		0 },
-	{ "bus-io-cycle",		PMC5_IO_CYCLE,			0 },
-	{ "fpu-flops",			PMC5_FLOPS,			0 },
-	{ "int-hw",			PMC5_HARDWARE_INTR,		0 },
-	{ "break-match0",		PMC5_BP0_MATCH,			0 },
-	{ "break-match1",		PMC5_BP1_MATCH,			0 },
-	{ "break-match2",		PMC5_BP2_MATCH,			0 },
-	{ "break-match3",		PMC5_BP3_MATCH,			0 },
-};
 
 static const pmc_name2val_t i686_names[] = {
 	{ "mem-refs",			PMC6_DATA_MEM_REFS,		0 },
@@ -395,8 +354,6 @@ static const pmc_name2val_t f10h_names[] = {
 };
 
 static const pmc_name2val_cpu_t pmc_cpus[] = {
-	{ PMC_TYPE_I586, i586_names,
-	  sizeof(i586_names) / sizeof(pmc_name2val_t) },
 	{ PMC_TYPE_I686, i686_names,
 	  sizeof(i686_names) / sizeof(pmc_name2val_t) },
 	{ PMC_TYPE_K7, k7_names,

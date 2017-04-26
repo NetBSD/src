@@ -27,25 +27,27 @@
  * Paste paste buffer if present.
  */
 
-enum cmd_retval	 cmd_paste_buffer_exec(struct cmd *, struct cmd_q *);
-
-void	cmd_paste_buffer_filter(struct window_pane *,
-	    const char *, size_t, const char *, int);
+static enum cmd_retval	cmd_paste_buffer_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_paste_buffer_entry = {
-	"paste-buffer", "pasteb",
-	"db:prs:t:", 0, 0,
-	"[-dpr] [-s separator] " CMD_BUFFER_USAGE " " CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_paste_buffer_exec
+	.name = "paste-buffer",
+	.alias = "pasteb",
+
+	.args = { "db:prs:t:", 0, 0 },
+	.usage = "[-dpr] [-s separator] " CMD_BUFFER_USAGE " "
+		 CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_paste_buffer_exec
 };
 
-enum cmd_retval
-cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_paste_buffer_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct window_pane	*wp;
-	struct session		*s;
+	struct window_pane	*wp = item->state.tflag.wp;
 	struct paste_buffer	*pb;
 	const char		*sepstr, *bufname, *bufdata, *bufend, *line;
 	size_t			 seplen, bufsize;
@@ -63,7 +65,7 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	else {
 		pb = paste_get_name(bufname);
 		if (pb == NULL) {
-			cmdq_error(cmdq, "no buffer %s", bufname);
+			cmdq_error(item, "no buffer %s", bufname);
 			return (CMD_RETURN_ERROR);
 		}
 	}

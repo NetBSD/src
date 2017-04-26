@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.10.2.1 2017/01/07 08:54:06 pgoyette Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.10.2.2 2017/04/26 02:52:43 pgoyette Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -746,8 +746,8 @@ jjy_receive ( struct recvbuf *rbufp )
 		}
 
 		iCopyLen = ( iLen <= sizeof(sLogText)-1 ? iLen : sizeof(sLogText)-1 ) ;
-		strncpy( sLogText, pBuf, iCopyLen ) ;
-		sLogText[iCopyLen] = 0 ;
+		memcpy( sLogText, pBuf, iCopyLen ) ;
+		sLogText[iCopyLen] = '\0' ;
 		jjy_write_clockstats( peer, JJY_CLOCKSTATS_MARK_RECEIVE, sLogText ) ;
 
 		switch ( up->unittype ) {
@@ -2691,7 +2691,7 @@ jjy_start_telephone ( int unit, struct peer *peer, struct jjyunit *up )
 
 	char	sLog [ 80 ], sFirstThreeDigits [ 4 ] ;
 	int	iNumberOfDigitsOfPhoneNumber, iCommaCount, iCommaPosition ;
-	size_t i;
+	size_t  i ;
 	size_t	iFirstThreeDigitsCount ;
 
 	jjy_write_clockstats( peer, JJY_CLOCKSTATS_MARK_JJY, "Refclock: Telephone JJY" ) ;

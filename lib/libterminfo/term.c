@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.19.2.1 2017/01/07 08:56:05 pgoyette Exp $ */
+/* $NetBSD: term.c,v 1.19.2.2 2017/04/26 02:52:56 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.19.2.1 2017/01/07 08:56:05 pgoyette Exp $");
+__RCSID("$NetBSD: term.c,v 1.19.2.2 2017/04/26 02:52:56 pgoyette Exp $");
 
 #include <sys/stat.h>
 
@@ -86,14 +86,13 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	if (ver != 1)
 		goto out;
 
-
-	if (allocset(&term->flags, 0, TIFLAGMAX + 1, sizeof(*term->flags)) == -1)
+	if (allocset(&term->flags, 0, TIFLAGMAX+1, sizeof(*term->flags)) == -1)
 		return -1;
 
-	if (allocset(&term->nums, -1, TINUMMAX + 1, sizeof(*term->nums)) == -1)
+	if (allocset(&term->nums, -1, TINUMMAX+1, sizeof(*term->nums)) == -1)
 		return -1;
 
-	if (allocset(&term->strs, 0, TISTRMAX + 1, sizeof(*term->strs)) == -1)
+	if (allocset(&term->strs, 0, TISTRMAX+1, sizeof(*term->strs)) == -1)
 		return -1;
 
 	if (term->_arealen != caplen) {
@@ -293,7 +292,7 @@ _ti_dbgetterm(TERMINAL *term, const char *path, const char *name, int flags)
 	cdbr_close(db);
 	return r;
 
- fail:
+fail:
 	cdbr_close(db);
 	return 0;
 }
@@ -368,9 +367,10 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	_ti_database = NULL;
 	r = 0;
 
-	if ((e = getenv("TERMINFO")) != NULL && *e != '\0')
+	if ((e = getenv("TERMINFO")) != NULL && *e != '\0') {
 		if (e[0] == '/')
 			return _ti_dbgetterm(term, e, name, flags);
+	}
 
 	c = NULL;
 	if (e == NULL && (c = getenv("TERMCAP")) != NULL) {
@@ -422,7 +422,6 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 		r = _ti_dbgettermp(term, _PATH_TERMINFO, name, flags);
 
 	return r;
-
 }
 
 int

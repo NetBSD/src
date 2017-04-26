@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.185.2.1 2017/03/20 06:57:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.185.2.2 2017/04/26 02:53:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.185.2.1 2017/03/20 06:57:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.185.2.2 2017/04/26 02:53:26 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -760,8 +760,9 @@ lwp_find_free_lid(lwpid_t try_lid, lwp_t * new_lwp, proc_t *p)
  */
 int
 lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
-	   void *stack, size_t stacksize, void (*func)(void *), void *arg,
-	   lwp_t **rnewlwpp, int sclass)
+    void *stack, size_t stacksize, void (*func)(void *), void *arg,
+    lwp_t **rnewlwpp, int sclass, const sigset_t *sigmask,
+    const stack_t *sigstk)
 {
 	struct lwp *l2, *isfree;
 	turnstile_t *ts;
@@ -904,8 +905,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	} else
 		l2->l_prflag = 0;
 
-	l2->l_sigstk = l1->l_sigstk;
-	l2->l_sigmask = l1->l_sigmask;
+	l2->l_sigstk = *sigstk;
+	l2->l_sigmask = *sigmask;
 	TAILQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.h,v 1.6.2.2 2017/01/07 08:53:41 pgoyette Exp $	*/
+/*	$NetBSD: dh.h,v 1.6.2.3 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: dh.h,v 1.15 2016/05/02 10:26:04 djm Exp $ */
 
 /*

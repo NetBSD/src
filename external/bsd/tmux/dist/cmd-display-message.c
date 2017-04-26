@@ -32,25 +32,32 @@
 	"#{window_name}, current pane #{pane_index} "	\
 	"- (%H:%M %d-%b-%y)"
 
-enum cmd_retval	 cmd_display_message_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_display_message_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_display_message_entry = {
-	"display-message", "display",
-	"c:pt:F:", 0, 1,
-	"[-p] [-c target-client] [-F format] " CMD_TARGET_PANE_USAGE
-	" [message]",
-	0,
-	cmd_display_message_exec
+	.name = "display-message",
+	.alias = "display",
+
+	.args = { "c:pt:F:", 0, 1 },
+	.usage = "[-p] [-c target-client] [-F format] "
+		 CMD_TARGET_PANE_USAGE " [message]",
+
+	.cflag = CMD_CLIENT_CANFAIL,
+	.tflag = CMD_PANE,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_display_message_exec
 };
 
-enum cmd_retval
-cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c;
-	struct session		*s;
-	struct winlink		*wl;
-	struct window_pane	*wp;
+	struct client		*c = item->state.c;
+	struct session		*s = item->state.tflag.s;
+	struct winlink		*wl = item->state.tflag.wl;
+	struct window_pane	*wp = item->state.tflag.wp;
 	const char		*template;
 	char			*msg;
 	struct format_tree	*ft;
@@ -69,7 +76,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	if (args_has(args, 'F') && args->argc != 0) {
-		cmdq_error(cmdq, "only one of -F or argument must be given");
+		cmdq_error(item, "only one of -F or argument must be given");
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -91,7 +98,7 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (template == NULL)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 
-	ft = format_create();
+	ft = format_create(item, FORMAT_NONE, 0);
 	format_defaults(ft, c, s, wl, wp);
 
 	t = time(NULL);
@@ -100,10 +107,11 @@ cmd_display_message_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	msg = format_expand(ft, out);
 	if (args_has(self->args, 'p'))
-		cmdq_print(cmdq, "%s", msg);
-	else
+		cmdq_print(item, "%s", msg);
+	else if (c != NULL)
 		status_message_set(c, "%s", msg);
 	free(msg);
+
 	format_free(ft);
 
 	return (CMD_RETURN_NORMAL);

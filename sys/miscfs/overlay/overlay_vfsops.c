@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.63.4.1 2017/03/20 06:57:49 pgoyette Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.63.4.2 2017/04/26 02:53:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.63.4.1 2017/03/20 06:57:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.63.4.2 2017/04/26 02:53:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,9 +149,6 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	nmp = kmem_zalloc(sizeof(struct overlay_mount), KM_SLEEP);
 
 	mp->mnt_data = nmp;
-	nmp->ovm_vfs = lowerrootvp->v_mount;
-	if (nmp->ovm_vfs->mnt_flag & MNT_LOCAL)
-		mp->mnt_flag |= MNT_LOCAL;
 
 	/*
 	 * Make sure that the mount point is sufficiently initialized
@@ -185,16 +182,21 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	vp->v_vflag |= VV_ROOT;
 	nmp->ovm_rootvp = vp;
-	mp->mnt_lower = nmp->ovm_vfs;
 	VOP_UNLOCK(vp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	if (error)
+		return error;
+
+	mp->mnt_lower = lowerrootvp->v_mount;
+	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
+		mp->mnt_flag |= MNT_LOCAL;
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
-	return error;
+	return 0;
 }
 
 /*

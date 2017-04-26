@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.19 2010/07/02 03:16:01 rmind Exp $	*/
+/*	$NetBSD: null.h,v 1.19.40.1 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -83,7 +83,6 @@ struct null_args {
 struct null_mount {
 	struct	layer_mount	lm;	/* generic layerfs mount stuff */
 };
-#define	nullm_vfs		lm.layerm_vfs
 #define	nullm_rootvp		lm.layerm_rootvp
 #define	nullm_export		lm.layerm_export
 #define	nullm_flags		lm.layerm_flags

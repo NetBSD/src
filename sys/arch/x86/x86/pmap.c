@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.6 2017/03/20 06:57:22 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.7 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.6 2017/03/20 06:57:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.7 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -977,7 +977,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	} else
 #endif /* DOM0OPS */
 		npte = pmap_pa2pte(pa);
-	npte |= protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
+	npte |= protection_codes[prot] | PG_V | pmap_pg_g;
 	npte |= pmap_pat_flags(flags);
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 #if defined(DIAGNOSTIC)
@@ -1014,8 +1014,9 @@ pmap_emap_enter(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		npte = pmap_pa2pte(pa);
 
 	npte = pmap_pa2pte(pa);
-	npte |= protection_codes[prot] | PG_k | PG_V;
+	npte |= protection_codes[prot] | PG_V;
 	pmap_pte_set(pte, npte);
+	pmap_pte_flush();
 }
 
 /*
@@ -1054,6 +1055,8 @@ pmap_emap_remove(vaddr_t sva, vsize_t len)
 		pte = (va < VM_MIN_KERNEL_ADDRESS) ? vtopte(va) : kvtopte(va);
 		pmap_pte_set(pte, 0);
 	}
+
+	pmap_pte_flush();
 }
 
 __strict_weak_alias(pmap_kenter_ma, pmap_kenter_pa);
@@ -1350,7 +1353,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	memset((void *)(xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
 	HYPERVISOR_update_va_mapping(xen_dummy_user_pgd + KERNBASE,
-	    pmap_pa2pte(xen_dummy_user_pgd) | PG_k | PG_V | pmap_pg_nx,
+	    pmap_pa2pte(xen_dummy_user_pgd) | PG_V | pmap_pg_nx,
 	    UVMF_INVLPG);
 	/* Pin as L4 */
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
@@ -2110,7 +2113,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 * This pdir will NEVER be active in kernel mode, so mark
 	 * recursive entry invalid.
 	 */
-	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_k;
+	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa);
 
 	/*
 	 * PDP constructed this way won't be for the kernel, hence we
@@ -3077,8 +3080,7 @@ pmap_zero_page(paddr_t pa)
 	pt_entry_t *zpte;
 	vaddr_t zerova;
 
-	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U |
-	    PG_k;
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U;
 
 	kpreempt_disable();
 
@@ -3124,8 +3126,7 @@ pmap_pageidlezero(paddr_t pa)
 	vaddr_t zerova;
 	bool rv;
 
-	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U |
-	    PG_k;
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U;
 
 	ci = curcpu();
 	zerova = ci->vpage[VPAGE_ZER];
@@ -3172,7 +3173,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pt_entry_t *srcpte, *dstpte;
 	vaddr_t srcva, dstva;
 
-	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_k;
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U;
 
 	kpreempt_disable();
 
@@ -3214,10 +3215,9 @@ pmap_map_ptp(struct vm_page *ptp)
 	KASSERT(kpreempt_disabled());
 
 #ifndef XEN
-	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_M |
-	    PG_k;
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_M;
 #else
-	const pd_entry_t pteflags = PG_V | pmap_pg_nx | PG_U | PG_M | PG_k;
+	const pd_entry_t pteflags = PG_V | pmap_pg_nx | PG_U | PG_M;
 #endif
 
 	ci = curcpu();
@@ -4081,9 +4081,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
-		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
-	else
-		npte |= PG_k;
+		panic("PTE space accessed");	/* XXXmaxv: no longer needed? */
+
 	if (pmap == pmap_kernel())
 		npte |= pmap_pg_g;
 	if (flags & VM_PROT_ALL) {
@@ -4279,7 +4278,7 @@ pmap_get_physpage(void)
 #endif
 		kpreempt_disable();
 		pmap_pte_set(early_zero_pte, pmap_pa2pte(pa) | PG_V |
-		    PG_RW | pmap_pg_nx | PG_k);
+		    PG_RW | pmap_pg_nx);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
@@ -4337,7 +4336,7 @@ pmap_alloc_level(vaddr_t kva, long *needed_ptps)
 
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pa = pmap_get_physpage();
-			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
+			pte = pmap_pa2pte(pa) | PG_V | PG_RW;
 			pmap_pte_set(&pdep[i], pte);
 
 #if defined(XEN) && (defined(PAE) || defined(__x86_64__))

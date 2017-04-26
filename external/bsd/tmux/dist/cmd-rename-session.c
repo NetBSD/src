@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "tmux.h"
 
@@ -26,30 +27,39 @@
  * Change session name.
  */
 
-enum cmd_retval	 cmd_rename_session_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_rename_session_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_rename_session_entry = {
-	"rename-session", "rename",
-	"t:", 1, 1,
-	CMD_TARGET_SESSION_USAGE " new-name",
-	0,
-	cmd_rename_session_exec
+	.name = "rename-session",
+	.alias = "rename",
+
+	.args = { "t:", 1, 1 },
+	.usage = CMD_TARGET_SESSION_USAGE " new-name",
+
+	.tflag = CMD_SESSION,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_rename_session_exec
 };
 
-enum cmd_retval
-cmd_rename_session_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_rename_session_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
-	struct session	*s;
+	struct session	*s = item->state.tflag.s;
 	const char	*newname;
 
 	newname = args->argv[0];
+	if (strcmp(newname, s->name) == 0)
+		return (CMD_RETURN_NORMAL);
+
 	if (!session_check_name(newname)) {
-		cmdq_error(cmdq, "bad session name: %s", newname);
+		cmdq_error(item, "bad session name: %s", newname);
 		return (CMD_RETURN_ERROR);
 	}
 	if (session_find(newname) != NULL) {
-		cmdq_error(cmdq, "duplicate session: %s", newname);
+		cmdq_error(item, "duplicate session: %s", newname);
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -62,7 +72,7 @@ cmd_rename_session_exec(struct cmd *self, struct cmd_q *cmdq)
 	RB_INSERT(sessions, &sessions, s);
 
 	server_status_session(s);
-	notify_session_renamed(s);
+	notify_session("session-renamed", s);
 
 	return (CMD_RETURN_NORMAL);
 }

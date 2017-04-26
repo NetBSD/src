@@ -1,4 +1,4 @@
-/*	$NetBSD: session.h,v 1.4.2.2 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: session.h,v 1.4.2.3 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: session.h,v 1.33 2016/08/13 17:47:41 markus Exp $ */
 
 /*

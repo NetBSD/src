@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.21.2.1 2017/03/20 06:56:55 pgoyette Exp $	*/
+/*	$NetBSD: fenv.h,v 1.21.2.2 2017/04/26 02:52:54 pgoyette Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,12 +29,7 @@
 
 #include <sys/featuretest.h>
 
-#if !defined(__aarch64__) && !defined(__arm__) && !defined(__i386__) \
-    && !defined(__ia64__) \
-    && !defined(__hppa__) && !defined(__powerpc__) && !defined(__mips__) \
-    && !defined(__or1k__) && !defined(__riscv__) && !defined(__sparc__) \
-    && !defined(__x86_64__) \
-    && !(defined(__m68k__) && !(defined(__mc68010__) || defined(__mcoldfire__)))
+#if defined(__vax__)
 # ifndef __TEST_FENV
 #  error	"fenv.h is currently not supported for this architecture"
 # endif
@@ -44,6 +39,42 @@ typedef int fenv_t;
 # define __HAVE_FENV
 # include <machine/fenv.h>
 #endif
+
+#if \
+	(defined(__arm__) && defined(__SOFTFP__)) || \
+	(defined(__m68k__) && !defined(__HAVE_68881__)) || \
+	defined(__mips_soft_float) || \
+	(defined(__powerpc__) && defined(_SOFT_FLOAT)) || \
+	(defined(__sh__) && !defined(__SH_FPU_ANY__)) || \
+	0
+
+/*
+ * Common definitions for softfloat.
+ */
+
+#ifndef __HAVE_FENV_SOFTFLOAT_DEFS
+
+typedef int fexcept_t;
+
+typedef struct {
+	int	__flags;
+	int	__mask;
+	int	__round;
+} fenv_t;
+
+#define __FENV_GET_FLAGS(__envp)	(__envp)->__flags
+#define __FENV_GET_MASK(__envp)		(__envp)->__mask
+#define __FENV_GET_ROUND(__envp)	(__envp)->__round
+#define __FENV_SET_FLAGS(__envp, __val) \
+	(__envp)->__flags = (__val)
+#define __FENV_SET_MASK(__envp, __val) \
+	(__envp)->__mask = (__val)
+#define __FENV_SET_ROUND(__envp, __val) \
+	(__envp)->__round = (__val)
+
+#endif /* __FENV_GET_FLAGS */
+
+#endif /* softfloat */
 
 __BEGIN_DECLS
 

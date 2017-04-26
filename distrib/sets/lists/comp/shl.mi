@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.292.2.3 2017/03/20 06:52:08 pgoyette Exp $
+# $NetBSD: shl.mi,v 1.292.2.4 2017/04/26 02:52:16 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -169,6 +169,7 @@
 ./usr/lib/librumpdev_scsipi_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_scsitest_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpdev_ualea_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpdev_ugenhc_pic.a		comp-c-piclib		picinstall,rump
@@ -225,6 +226,7 @@
 ./usr/lib/librumpnet_netbt_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_netinet6_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib		picinstall,rump
+./usr/lib/librumpnet_netipsec_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_netmpls_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_npf_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpnet_pic.a			comp-c-piclib		compatfile,picinstall,rump

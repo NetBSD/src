@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.3.2.2 2017/03/20 06:57:22 pgoyette Exp $	*/
+/*	$NetBSD: pmc.c,v 1.3.2.3 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3.2.2 2017/03/20 06:57:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3.2.3 2017/04/26 02:53:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,21 +82,61 @@ __KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.3.2.2 2017/03/20 06:57:22 pgoyette Exp $")
 #include <machine/pmc.h>
 #include <machine/cpu_counter.h>
 #include <machine/cputypes.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
+
+#include <x86/nmi.h>
+
+#define NEVENTS_SAMPLE	500000
 
 typedef struct {
 	bool running;
 	uint32_t evtmsr;	/* event selector MSR */
 	uint64_t evtval;	/* event selector value */
 	uint32_t ctrmsr;	/* counter MSR */
-	uint64_t ctrval;	/* initial counter value */
+	uint64_t ctrinitval;	/* initial counter value */
+	uint64_t ctrmaxval;	/* maximal counter value */
+	uint64_t ctrmask;
 } pmc_state_t;
+
+static nmi_handler_t *pmc_nmi_handle;
+static uint32_t pmc_lapic_image[MAXCPUS];
 
 static x86_pmc_cpuval_t pmc_val_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
 static kmutex_t pmc_lock;
 
 static pmc_state_t pmc_state[PMC_NCOUNTERS];
-static int pmc_ncounters __read_mostly;
+static uint32_t pmc_ncounters __read_mostly;
 static int pmc_type __read_mostly;
+
+static int
+pmc_nmi(const struct trapframe *tf, void *dummy)
+{
+	struct cpu_info *ci = curcpu();
+	pmc_state_t *pmc;
+	size_t i;
+
+	if (pmc_type == PMC_TYPE_NONE) {
+		return 0;
+	}
+	for (i = 0; i < pmc_ncounters; i++) {
+		pmc = &pmc_state[i];
+		if (!pmc->running) {
+			continue;
+		}
+		/* XXX make sure it really comes from this PMC */
+		break;
+	}
+	if (i == pmc_ncounters) {
+		return 0;
+	}
+
+	/* Count the overflow, and restart the counter */
+	pmc_val_cpus[cpu_index(ci)].overfl++;
+	wrmsr(pmc->ctrmsr, pmc->ctrinitval);
+
+	return 1;
+}
 
 static void
 pmc_read_cpu(void *arg1, void *arg2)
@@ -105,8 +145,36 @@ pmc_read_cpu(void *arg1, void *arg2)
 	struct cpu_info *ci = curcpu();
 
 	pmc_val_cpus[cpu_index(ci)].ctrval =
-	    rdmsr(pmc->ctrmsr) & 0xffffffffffULL;
+	    (rdmsr(pmc->ctrmsr) & pmc->ctrmask) - pmc->ctrinitval;
+}
+
+static void
+pmc_apply_cpu(void *arg1, void *arg2)
+{
+	pmc_state_t *pmc = (pmc_state_t *)arg1;
+	bool start = (bool)arg2;
+	struct cpu_info *ci = curcpu();
+
+	if (start) {
+		pmc_lapic_image[cpu_index(ci)] = i82489_readreg(LAPIC_PCINT);
+		i82489_writereg(LAPIC_PCINT, LAPIC_DLMODE_NMI);
+	}
+
+	wrmsr(pmc->ctrmsr, pmc->ctrinitval);
+	switch (pmc_type) {
+	case PMC_TYPE_I686:
+	case PMC_TYPE_K7:
+	case PMC_TYPE_F10H:
+		wrmsr(pmc->evtmsr, pmc->evtval);
+		break;
+	}
+
+	pmc_val_cpus[cpu_index(ci)].ctrval = 0;
 	pmc_val_cpus[cpu_index(ci)].overfl = 0;
+
+	if (!start) {
+		i82489_writereg(LAPIC_PCINT, pmc_lapic_image[cpu_index(ci)]);
+	}
 }
 
 static void
@@ -119,36 +187,14 @@ pmc_read(pmc_state_t *pmc)
 }
 
 static void
-pmc_apply_cpu(void *arg1, void *arg2)
-{
-	pmc_state_t *pmc = (pmc_state_t *)arg1;
-	struct cpu_info *ci = curcpu();
-
-	wrmsr(pmc->ctrmsr, pmc->ctrval);
-	switch (pmc_type) {
-	case PMC_TYPE_I586:
-		wrmsr(MSR_CESR, pmc_state[0].evtval |
-		    (pmc_state[1].evtval << 16));
-		break;
-
-	case PMC_TYPE_I686:
-	case PMC_TYPE_K7:
-	case PMC_TYPE_F10H:
-		wrmsr(pmc->evtmsr, pmc->evtval);
-		break;
-	}
-
-	pmc_val_cpus[cpu_index(ci)].ctrval = 0;
-	pmc_val_cpus[cpu_index(ci)].overfl = 0;
-}
-
-static void
-pmc_apply(pmc_state_t *pmc)
+pmc_apply(pmc_state_t *pmc, bool start)
 {
 	uint64_t xc;
 
-	xc = xc_broadcast(0, pmc_apply_cpu, pmc, NULL);
+	xc = xc_broadcast(0, pmc_apply_cpu, pmc, (void *)start);
 	xc_wait(xc);
+
+	pmc->running = start;
 }
 
 static void
@@ -156,26 +202,17 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 {
 	uint64_t event, unit;
 
-	pmc->running = true;
-
 	/*
 	 * Initialize the counter MSR.
 	 */
-	pmc->ctrval = args->val;
+	pmc->ctrinitval = pmc->ctrmaxval - NEVENTS_SAMPLE;
 
 	/*
 	 * Initialize the event MSR.
 	 */
 	switch (pmc_type) {
-	case PMC_TYPE_I586:
-		pmc->evtval = args->event |
-		    ((args->flags & PMC_SETUP_KERNEL) ? PMC5_CESR_OS : 0) |
-		    ((args->flags & PMC_SETUP_USER) ? PMC5_CESR_USR : 0) |
-		    ((args->flags & PMC_SETUP_EDGE) ? PMC5_CESR_E : 0);
-		break;
-
 	case PMC_TYPE_I686:
-		pmc->evtval = args->event | PMC6_EVTSEL_EN |
+		pmc->evtval = args->event | PMC6_EVTSEL_EN | PMC6_EVTSEL_INT |
 		    (args->unit << PMC6_EVTSEL_UNIT_SHIFT) |
 		    ((args->flags & PMC_SETUP_KERNEL) ? PMC6_EVTSEL_OS : 0) |
 		    ((args->flags & PMC_SETUP_USER) ? PMC6_EVTSEL_USR : 0) |
@@ -188,7 +225,7 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 		event = (args->event & K7_EVTSEL_EVENT);
 		unit = (args->unit << K7_EVTSEL_UNIT_SHIFT) &
 		    K7_EVTSEL_UNIT;
-		pmc->evtval = event | unit | K7_EVTSEL_EN |
+		pmc->evtval = event | unit | K7_EVTSEL_EN | K7_EVTSEL_INT |
 		    ((args->flags & PMC_SETUP_KERNEL) ? K7_EVTSEL_OS : 0) |
 		    ((args->flags & PMC_SETUP_USER) ? K7_EVTSEL_USR : 0) |
 		    ((args->flags & PMC_SETUP_EDGE) ? K7_EVTSEL_E : 0) |
@@ -204,7 +241,7 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 		     F10H_EVTSEL_EVENT_SHIFT_HIGH);
 		unit = (args->unit << F10H_EVTSEL_UNIT_SHIFT) &
 		    F10H_EVTSEL_UNIT_MASK;
-		pmc->evtval = event | unit | F10H_EVTSEL_EN |
+		pmc->evtval = event | unit | F10H_EVTSEL_EN | F10H_EVTSEL_INT |
 		    ((args->flags & PMC_SETUP_KERNEL) ? F10H_EVTSEL_OS : 0) |
 		    ((args->flags & PMC_SETUP_USER) ? F10H_EVTSEL_USR : 0) |
 		    ((args->flags & PMC_SETUP_EDGE) ? F10H_EVTSEL_EDGE : 0) |
@@ -216,16 +253,15 @@ pmc_start(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 	/*
 	 * Apply the changes.
 	 */
-	pmc_apply(pmc);
+	pmc_apply(pmc, true);
 }
 
 static void
 pmc_stop(pmc_state_t *pmc, struct x86_pmc_startstop_args *args)
 {
-	pmc->running = false;
 	pmc->evtval = 0;
-	pmc->ctrval = 0;
-	pmc_apply(pmc);
+	pmc->ctrinitval = 0;
+	pmc_apply(pmc, false);
 }
 
 void
@@ -233,63 +269,55 @@ pmc_init(void)
 {
 	const char *cpu_vendorstr;
 	struct cpu_info *ci;
+	size_t i;
 
 	pmc_type = PMC_TYPE_NONE;
+
+	if (cpu_class != CPUCLASS_686)
+		return;
 
 	ci = curcpu();
 	cpu_vendorstr = (char *)ci->ci_vendor;
 
-	switch (cpu_class) {
-	case CPUCLASS_586:
-		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
-			pmc_type = PMC_TYPE_I586;
-			pmc_ncounters = 2;
-			pmc_state[0].ctrmsr = MSR_CTR0;
-			pmc_state[1].ctrmsr = MSR_CTR1;
-			break;
+	if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
+		/* Right now we're missing Pentium 4 support. */
+		if (cpuid_level == -1 ||
+		    CPUID_TO_FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
+			return;
+		pmc_type = PMC_TYPE_I686;
+		pmc_ncounters = 2;
+		for (i = 0; i < pmc_ncounters; i++) {
+			pmc_state[i].evtmsr = MSR_EVNTSEL0 + i;
+			pmc_state[i].ctrmsr = MSR_PERFCTR0 + i;
+			pmc_state[i].ctrmaxval = (UINT64_C(1) << 40) - 1;
+			pmc_state[i].ctrmask = 0xFFFFFFFFFFULL;
 		}
-
-	case CPUCLASS_686:
-		if (strncmp(cpu_vendorstr, "GenuineIntel", 12) == 0) {
-			/* Right now we're missing Pentium 4 support. */
-			if (cpuid_level == -1 ||
-			    CPUID_TO_FAMILY(ci->ci_signature) == CPU_FAMILY_P4)
-				break;
-			pmc_type = PMC_TYPE_I686;
-			pmc_ncounters = 2;
-			pmc_state[0].evtmsr = MSR_EVNTSEL0;
-			pmc_state[0].ctrmsr = MSR_PERFCTR0;
-			pmc_state[1].evtmsr = MSR_EVNTSEL1;
-			pmc_state[1].ctrmsr = MSR_PERFCTR1;
-		} else if (strncmp(cpu_vendorstr, "AuthenticAMD", 12) == 0) {
-			if (CPUID_TO_FAMILY(ci->ci_signature) == 0x10) {
-				pmc_type = PMC_TYPE_F10H;
-				pmc_ncounters = 4;
-				pmc_state[0].evtmsr = MSR_F10H_EVNTSEL0;
-				pmc_state[0].ctrmsr = MSR_F10H_PERFCTR0;
-				pmc_state[1].evtmsr = MSR_F10H_EVNTSEL1;
-				pmc_state[1].ctrmsr = MSR_F10H_PERFCTR1;
-				pmc_state[2].evtmsr = MSR_F10H_EVNTSEL2;
-				pmc_state[2].ctrmsr = MSR_F10H_PERFCTR2;
-				pmc_state[3].evtmsr = MSR_F10H_EVNTSEL3;
-				pmc_state[3].ctrmsr = MSR_F10H_PERFCTR3;
-			} else {
-				/* XXX: make sure it is at least K7 */
-				pmc_type = PMC_TYPE_K7;
-				pmc_ncounters = 4;
-				pmc_state[0].evtmsr = MSR_K7_EVNTSEL0;
-				pmc_state[0].ctrmsr = MSR_K7_PERFCTR0;
-				pmc_state[1].evtmsr = MSR_K7_EVNTSEL1;
-				pmc_state[1].ctrmsr = MSR_K7_PERFCTR1;
-				pmc_state[2].evtmsr = MSR_K7_EVNTSEL2;
-				pmc_state[2].ctrmsr = MSR_K7_PERFCTR2;
-				pmc_state[3].evtmsr = MSR_K7_EVNTSEL3;
-				pmc_state[3].ctrmsr = MSR_K7_PERFCTR3;
+	} else if (strncmp(cpu_vendorstr, "AuthenticAMD", 12) == 0) {
+		if (CPUID_TO_FAMILY(ci->ci_signature) == 0x10) {
+			pmc_type = PMC_TYPE_F10H;
+			pmc_ncounters = 4;
+			for (i = 0; i < pmc_ncounters; i++) {
+				pmc_state[i].evtmsr = MSR_F10H_EVNTSEL0 + i;
+				pmc_state[i].ctrmsr = MSR_F10H_PERFCTR0 + i;
+				pmc_state[i].ctrmaxval =
+				    (UINT64_C(1) << 48) - 1;
+				pmc_state[i].ctrmask = 0xFFFFFFFFFFFFULL;
+			}
+		} else {
+			/* XXX: make sure it is at least K7 */
+			pmc_type = PMC_TYPE_K7;
+			pmc_ncounters = 4;
+			for (i = 0; i < pmc_ncounters; i++) {
+				pmc_state[i].evtmsr = MSR_K7_EVNTSEL0 + i;
+				pmc_state[i].ctrmsr = MSR_K7_PERFCTR0 + i;
+				pmc_state[i].ctrmaxval =
+				    (UINT64_C(1) << 48) - 1;
+				pmc_state[i].ctrmask = 0xFFFFFFFFFFFFULL;
 			}
 		}
-		break;
 	}
 
+	pmc_nmi_handle = nmi_establish(pmc_nmi, NULL);
 	mutex_init(&pmc_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 

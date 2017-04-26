@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.258 2015/10/23 01:58:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.258.2.1 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.258 2015/10/23 01:58:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.258.2.1 2017/04/26 02:53:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -1955,6 +1955,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	const struct sysctlnode *root, *pnode;
 	struct sysctlnode nnode, onode, *dnode;
 	size_t sz;
+	const struct sysctlnode *snode __diagused;
 
 	/*
 	 * where are we putting this?
@@ -2111,6 +2112,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 */
 		pnode = root;
 		error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
+		snode = pnode;
 
 		/*
 		 * manual scan of last layer so that aliased nodes
@@ -2131,6 +2133,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 * not expecting an error here, but...
 		 */
 		if (error == 0) {
+			KASSERTMSG(pnode->sysctl_parent == snode,
+			    "sysctl parent mis-match");
 			if (log != NULL)
 				sysctl_log_add(log, pnode);
 			if (cnode != NULL)

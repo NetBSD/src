@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.193.2.3 2017/03/20 06:57:53 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.193.2.4 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.193.2.3 2017/03/20 06:57:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.193.2.4 2017/04/26 02:53:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -263,9 +263,9 @@ ext2fs_mountroot(void)
 	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp)) != 0) {
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
-		return (error);
+		vfs_unbusy(mp);
+		vfs_rele(mp);
+		return error;
 	}
 	mountlist_append(mp);
 	ump = VFSTOUFS(mp);
@@ -279,7 +279,7 @@ ext2fs_mountroot(void)
 		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
 	}
 	(void)ext2fs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
 	return (0);
 }
@@ -875,6 +875,8 @@ static bool
 ext2fs_sync_selector(void *cl, struct vnode *vp)
 {
 	struct inode *ip;
+
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	ip = VTOI(vp);
 	/*

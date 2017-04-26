@@ -30,7 +30,8 @@
  * Attach existing session to the current terminal.
  */
 
-enum cmd_retval	cmd_attach_session_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_attach_session_exec(struct cmd *,
+			    struct cmdq_item *);
 
 const struct cmd_entry cmd_attach_session_entry = {
 	"attach-session", "attach",
@@ -41,22 +42,17 @@ const struct cmd_entry cmd_attach_session_entry = {
 };
 
 enum cmd_retval
-cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
+cmd_attach_session(struct cmdq_item *item, int dflag, int rflag,
     const char *cflag, int Eflag)
 {
-	struct session		*s;
-	struct client		*c = cmdq->client, *c_loop;
-	struct winlink		*wl = NULL;
-	struct window		*w = NULL;
-	struct window_pane	*wp = NULL;
-	const char		*update;
+	struct session		*s = item->state.tflag.s;
+	struct client		*c = item->client, *c_loop;
+	struct winlink		*wl = item->state.tflag.wl;
+	struct window_pane	*wp = item->state.tflag.wp;
 	char			*cause;
-	int			 fd;
-	struct format_tree	*ft;
-	char			*cp;
 
 	if (RB_EMPTY(&sessions)) {
-		cmdq_error(cmdq, "no sessions");
+		cmdq_error(item, "no sessions");
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -82,7 +78,7 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 	if (c == NULL)
 		return (CMD_RETURN_NORMAL);
 	if (server_client_check_nested(c)) {
-		cmdq_error(cmdq, "sessions should be nested with care, "
+		cmdq_error(item, "sessions should be nested with care, "
 		    "unset $TMUX to force");
 		return (CMD_RETURN_ERROR);
 	}
@@ -94,21 +90,8 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 	}
 
 	if (cflag != NULL) {
-		ft = format_create();
-		format_defaults(ft, cmd_find_client(cmdq, NULL, 1), s,
-		    NULL, NULL);
-		cp = format_expand(ft, cflag);
-		format_free(ft);
-
-		fd = open(cp, O_RDONLY|O_DIRECTORY);
-		free(cp);
-		if (fd == -1) {
-			cmdq_error(cmdq, "bad working directory: %s",
-			    strerror(errno));
-			return (CMD_RETURN_ERROR);
-		}
-		close(s->cwd);
-		s->cwd = fd;
+		free(__UNCONST(s->cwd));
+		s->cwd = format_single(item, cflag, c, s, wl, wp);
 	}
 
 	if (c->session != NULL) {
@@ -125,27 +108,24 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 				    strlen(c_loop->session->name) + 1);
 			}
 		}
-
-		if (!Eflag) {
-			update = options_get_string(&s->options,
-			    "update-environment");
-			environ_update(update, &c->environ, &s->environ);
-		}
+		if (!Eflag)
+			environ_update(s->options, c->environ, s->environ);
 
 		c->session = s;
+		if (!item->repeat)
+			server_client_set_key_table(c, NULL);
 		status_timer_start(c);
-		notify_attached_session_changed(c);
+		notify_client("client-session-changed", c);
 		session_update_activity(s, NULL);
 		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 	} else {
 		if (server_client_open(c, &cause) != 0) {
-			cmdq_error(cmdq, "open terminal failed: %s", cause);
+			cmdq_error(item, "open terminal failed: %s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
-
 		if (rflag)
 			c->flags |= CLIENT_READONLY;
 
@@ -153,23 +133,21 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 			server_write_session(s, MSG_DETACH, s->name,
 			    strlen(s->name) + 1);
 		}
-
-		if (!Eflag) {
-			update = options_get_string(&s->options,
-			    "update-environment");
-			environ_update(update, &c->environ, &s->environ);
-		}
+		if (!Eflag)
+			environ_update(s->options, c->environ, s->environ);
 
 		c->session = s;
 		status_timer_start(c);
-		notify_attached_session_changed(c);
+		notify_client("client-session-changed", c);
 		session_update_activity(s, NULL);
 		gettimeofday(&s->last_attached_time, NULL);
 		server_redraw_client(c);
 		s->curw->flags &= ~WINLINK_ALERTFLAGS;
 
-		server_write_ready(c);
-		cmdq->client_exit = 0;
+		if (~c->flags & CLIENT_CONTROL)
+			proc_send(c->peer, MSG_READY, -1, NULL, 0);
+		notify_client("client-attached", c);
+		c->flags |= CLIENT_ATTACHED;
 	}
 	recalculate_sizes();
 	server_update_socket();
@@ -177,12 +155,11 @@ cmd_attach_session(struct cmd_q *cmdq, const char *tflag, int dflag, int rflag,
 	return (CMD_RETURN_NORMAL);
 }
 
-enum cmd_retval
-cmd_attach_session_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_attach_session_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args	*args = self->args;
 
-	return (cmd_attach_session(cmdq, args_get(args, 't'),
-	    args_has(args, 'd'), args_has(args, 'r'), args_get(args, 'c'),
-	    args_has(args, 'E')));
+	return (cmd_attach_session(item, args_has(args, 'd'),
+	    args_has(args, 'r'), args_get(args, 'c'), args_has(args, 'E')));
 }

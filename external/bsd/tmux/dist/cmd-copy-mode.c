@@ -24,34 +24,44 @@
  * Enter copy or clock mode.
  */
 
-enum cmd_retval	 cmd_copy_mode_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_copy_mode_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_copy_mode_entry = {
-	"copy-mode", NULL,
-	"Met:u", 0, 0,
-	"[-Meu] " CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_copy_mode_exec
+	.name = "copy-mode",
+	.alias = NULL,
+
+	.args = { "Met:u", 0, 0 },
+	.usage = "[-Mu] " CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_copy_mode_exec
 };
 
 const struct cmd_entry cmd_clock_mode_entry = {
-	"clock-mode", NULL,
-	"t:", 0, 0,
-	CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_copy_mode_exec
+	.name = "clock-mode",
+	.alias = NULL,
+
+	.args = { "t:", 0, 0 },
+	.usage = CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_copy_mode_exec
 };
 
-enum cmd_retval
-cmd_copy_mode_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c = cmdq->client;
+	struct client		*c = item->client;
 	struct session		*s;
-	struct window_pane	*wp;
+	struct window_pane	*wp = item->state.tflag.wp;
 
 	if (args_has(args, 'M')) {
-		if ((wp = cmd_mouse_pane(&cmdq->item->mouse, &s, NULL)) == NULL)
+		if ((wp = cmd_mouse_pane(&item->mouse, &s, NULL)) == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (c == NULL || c->session != s)
 			return (CMD_RETURN_NORMAL);
@@ -71,10 +81,10 @@ cmd_copy_mode_exec(struct cmd *self, struct cmd_q *cmdq)
 	if (args_has(args, 'M')) {
 		if (wp->mode != NULL && wp->mode != &window_copy_mode)
 			return (CMD_RETURN_NORMAL);
-		window_copy_start_drag(c, &cmdq->item->mouse);
+		window_copy_start_drag(c, &item->mouse);
 	}
 	if (wp->mode == &window_copy_mode && args_has(self->args, 'u'))
-		window_copy_pageup(wp);
+		window_copy_pageup(wp, 0);
 
 	return (CMD_RETURN_NORMAL);
 }

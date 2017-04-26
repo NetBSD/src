@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.87.2.3 2017/03/20 06:57:22 pgoyette Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.87.2.4 2017/04/26 02:53:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -551,6 +551,10 @@
 #define	MSR_CTR1		0x013	/* P5 only (trap on P6) */
 #define MSR_IA32_PLATFORM_ID	0x017
 #define MSR_APICBASE		0x01b
+#define 	APICBASE_BSP		0x00000100	/* boot processor */
+#define 	APICBASE_EXTD		0x00000400	/* x2APIC mode */
+#define 	APICBASE_EN		0x00000800	/* software enable */
+#define 	APICBASE_PHYSADDR	0xfffff000	/* physical address */
 #define MSR_EBL_CR_POWERON	0x02a
 #define MSR_EBC_FREQUENCY_ID	0x02c	/* PIV only */
 #define	MSR_TEST_CTL		0x033
@@ -660,6 +664,30 @@
 #define MSR_MC4_ADDR		0x412
 #define MSR_MC4_MISC		0x413
 				/* 0x480 - 0x490 VMX */
+#define MSR_X2APIC_BASE		0x800	/* 0x800 - 0xBFF */
+#define  MSR_X2APIC_ID			0x002	/* x2APIC ID. (RO) */
+#define  MSR_X2APIC_VERS		0x003	/* Version. (RO) */
+#define  MSR_X2APIC_TPRI		0x008	/* Task Prio. (RW) */
+#define  MSR_X2APIC_PPRI		0x00a	/* Processor prio. (RO) */
+#define  MSR_X2APIC_EOI			0x00b	/* End Int. (W) */
+#define  MSR_X2APIC_LDR			0x00d	/* Logical dest. (RO) */
+#define  MSR_X2APIC_SVR			0x00f	/* Spurious intvec (RW) */
+#define  MSR_X2APIC_ISR			0x010	/* In-Service Status (RO) */
+#define  MSR_X2APIC_TMR			0x018	/* Trigger Mode (RO) */
+#define  MSR_X2APIC_IRR			0x020	/* Interrupt Req (RO) */
+#define  MSR_X2APIC_ESR			0x028	/* Err status. (RW) */
+#define  MSR_X2APIC_LVT_CMCI		0x02f	/* LVT CMCI (RW) */
+#define  MSR_X2APIC_ICRLO		0x030	/* Int. cmd. (RW64) */
+#define  MSR_X2APIC_LVTT		0x032	/* Loc.vec.(timer) (RW) */
+#define  MSR_X2APIC_TMINT		0x033	/* Loc.vec (Thermal) (RW) */
+#define  MSR_X2APIC_PCINT		0x034	/* Loc.vec (Perf Mon) (RW) */
+#define  MSR_X2APIC_LVINT0		0x035	/* Loc.vec (LINT0) (RW) */
+#define  MSR_X2APIC_LVINT1		0x036	/* Loc.vec (LINT1) (RW) */
+#define  MSR_X2APIC_LVERR		0x037	/* Loc.vec (ERROR) (RW) */
+#define  MSR_X2APIC_ICR_TIMER		0x038	/* Initial count (RW) */
+#define  MSR_X2APIC_CCR_TIMER		0x039	/* Current count (RO) */
+#define  MSR_X2APIC_DCR_TIMER		0x03e	/* Divisor config (RW) */
+#define  MSR_X2APIC_SELF_IPI		0x03f	/* SELF IPI (W) */
 
 /*
  * VIA "Nehemiah" MSRs

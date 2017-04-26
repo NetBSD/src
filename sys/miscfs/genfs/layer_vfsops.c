@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.46.2.1 2017/03/20 06:57:48 pgoyette Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.46.2.2 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.46.2.1 2017/03/20 06:57:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.46.2.2 2017/04/26 02:53:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -127,7 +127,7 @@ layerfs_start(struct mount *mp, int flags)
 {
 
 #ifdef notyet
-	return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags);
+	return VFS_START(mp->mnt_lower, flags);
 #else
 	return 0;
 #endif
@@ -156,7 +156,7 @@ int
 layerfs_quotactl(struct mount *mp, struct quotactl_args *args)
 {
 
-	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, args);
+	return VFS_QUOTACTL(mp->mnt_lower, args);
 }
 
 int
@@ -169,7 +169,7 @@ layerfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	if (sbuf == NULL) {
 		return ENOMEM;
 	}
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf);
+	error = VFS_STATVFS(mp->mnt_lower, sbuf);
 	if (error) {
 		goto done;
 	}
@@ -223,6 +223,9 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 	mutex_obj_hold(lowervp->v_interlock);
 	uvm_obj_setlock(&vp->v_uobj, lowervp->v_interlock);
 
+	/* Share the lock with the lower node. */
+	vshare_lock(vp, lowervp);
+
 	vp->v_tag = lmp->layerm_tag;
 	vp->v_type = lowervp->v_type;
 	vp->v_op = lmp->layerm_vnodeop_p;
@@ -246,7 +249,7 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, ino, &vp);
+	error = VFS_VGET(mp->mnt_lower, ino, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -273,7 +276,7 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 	struct vnode *vp;
 	int error;
 
-	error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, fidp, &vp);
+	error = VFS_FHTOVP(mp->mnt_lower, fidp, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -378,12 +381,12 @@ int
 layerfs_renamelock_enter(struct mount *mp)
 {
 
-	return VFS_RENAMELOCK_ENTER(MOUNTTOLAYERMOUNT(mp)->layerm_vfs);
+	return VFS_RENAMELOCK_ENTER(mp->mnt_lower);
 }
 
 void
 layerfs_renamelock_exit(struct mount *mp)
 {
 
-	VFS_RENAMELOCK_EXIT(MOUNTTOLAYERMOUNT(mp)->layerm_vfs);
+	VFS_RENAMELOCK_EXIT(mp->mnt_lower);
 }

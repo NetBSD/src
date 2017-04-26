@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.28.2.1 2016/11/04 14:48:58 pgoyette Exp $
+#	$NetBSD: files.tegra,v 1.28.2.2 2017/04/26 02:53:00 pgoyette Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -13,14 +13,19 @@ file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/arm32/armv7_generic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
-file	arch/arm/nvidia/tegra_soc.c
-file	arch/arm/nvidia/tegra_cpufreq.c
-file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
-
-# On-board I/O
+# Devicetree
 device	tegrafdt : bus_space_generic, fdtbus
 attach	tegrafdt at mainbus with tegra_fdt
 file	arch/arm/nvidia/tegra_fdt.c		tegra_fdt
+
+file	arch/arm/nvidia/tegra_soc.c
+file	arch/arm/nvidia/tegra_cpufreq.c
+
+# Tegra T124 (32-bit K1) support
+file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
+device	tegra124cpu
+attach	tegra124cpu at fdt with tegra124_cpu
+file	arch/arm/nvidia/tegra124_cpu.c		tegra124_cpu
 
 # Interrupt controller
 device	tegralic
@@ -66,6 +71,7 @@ file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
 device	tegraxusbpad
 attach	tegraxusbpad at fdt with tegra_xusbpad
 file	arch/arm/nvidia/tegra_xusbpad.c		tegra_xusbpad
+defflag	opt_tegra.h				TEGRA_XUSBPAD_DEBUG
 
 # UART
 attach	com at fdt with tegra_com
@@ -140,7 +146,7 @@ attach	nouveau at fdt with tegra_nouveau
 file	arch/arm/nvidia/tegra_nouveau.c		tegra_nouveau
 
 # Console parameters
-defparam opt_tegra.h			CONADDR
+defparam opt_tegra.h			CONSADDR
 defparam opt_tegra.h			CONSPEED
 defparam opt_tegra.h			CONMODE
 

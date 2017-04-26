@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.22 2015/12/21 17:17:02 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.22.2.1 2017/04/26 02:53:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.22 2015/12/21 17:17:02 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.22.2.1 2017/04/26 02:53:35 pgoyette Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -902,8 +902,7 @@ unzip(const char *fn)
 		    file_count != 1 ? "s" : "");
 	}
 
-	ac(archive_read_close(a));
-	(void)archive_read_finish(a);
+	ac(archive_read_free(a));
 
 	if (t_opt) {
 		if (error_count > 0) {

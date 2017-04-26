@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_timer.c,v 1.4 2015/12/24 12:47:38 jmcneill Exp $ */
+/* $NetBSD: tegra_timer.c,v 1.4.2.1 2017/04/26 02:53:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_timer.c,v 1.4 2015/12/24 12:47:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_timer.c,v 1.4.2.1 2017/04/26 02:53:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,6 @@ struct tegra_timer_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
-	struct clk		*sc_clk_watchdog;
 
 	struct sysmon_wdog	sc_smw;
 };
@@ -94,9 +93,6 @@ tegra_timer_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
-	sc->sc_clk_watchdog = fdtbus_clock_get(faa->faa_phandle, "watchdog");
-	if (sc->sc_clk_watchdog == NULL)
-		sc->sc_clk_watchdog = clk_get("watchdog");
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
@@ -109,21 +105,19 @@ tegra_timer_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Timers\n");
 
-	if (sc->sc_clk_watchdog) {
-		sc->sc_smw.smw_name = device_xname(self);
-		sc->sc_smw.smw_cookie = sc;
-		sc->sc_smw.smw_setmode = tegra_timer_wdt_setmode;
-		sc->sc_smw.smw_tickle = tegra_timer_wdt_tickle;
-		sc->sc_smw.smw_period = TEGRA_TIMER_WDOG_PERIOD_DEFAULT;
+	sc->sc_smw.smw_name = device_xname(self);
+	sc->sc_smw.smw_cookie = sc;
+	sc->sc_smw.smw_setmode = tegra_timer_wdt_setmode;
+	sc->sc_smw.smw_tickle = tegra_timer_wdt_tickle;
+	sc->sc_smw.smw_period = TEGRA_TIMER_WDOG_PERIOD_DEFAULT;
 
-		aprint_normal_dev(self,
-		    "default watchdog period is %u seconds\n",
-		    sc->sc_smw.smw_period);
+	aprint_normal_dev(self,
+	    "default watchdog period is %u seconds\n",
+	    sc->sc_smw.smw_period);
 
-		if (sysmon_wdog_register(&sc->sc_smw) != 0) {
-			aprint_error_dev(self,
-			    "couldn't register with sysmon\n");
-		}
+	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
+		aprint_error_dev(self,
+		    "couldn't register with sysmon\n");
 	}
 }
 
@@ -134,7 +128,6 @@ tegra_timer_wdt_setmode(struct sysmon_wdog *smw)
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		TIMER_SET_CLEAR(sc, TMR1_PTV_REG, 0, TMR_PTV_EN);
-		return clk_disable(sc->sc_clk_watchdog);
 	} else {
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
 			sc->sc_smw.smw_period = TEGRA_TIMER_WDOG_PERIOD_DEFAULT;
@@ -147,8 +140,9 @@ tegra_timer_wdt_setmode(struct sysmon_wdog *smw)
 		TIMER_WRITE(sc, TMR1_PTV_REG,
 		    TMR_PTV_EN | TMR_PTV_PER | __SHIFTIN(tval, TMR_PTV_VAL));
 		TIMER_WRITE(sc, TMR1_PCR_REG, TMR_PCR_INTR_CLR);
-		return clk_enable(sc->sc_clk_watchdog);
 	}
+
+	return 0;
 }
 
 static int

@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.37.2.3 2017/03/20 06:56:58 pgoyette Exp $
+.\"	$NetBSD: ptrace.2,v 1.37.2.4 2017/04/26 02:52:54 pgoyette Exp $
 .\"
 .\" This file is in the public domain.
-.Dd February 23, 2017
+.Dd April 7, 2017
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ such as
 .Xr execv 3
 .Pc ,
 it will stop before executing the first instruction of the new image and emit
-.Dv SIGRAP
+.Dv SIGTRAP
 with
 .Dv si_code
 set to
@@ -145,7 +145,7 @@ debug registers must not be exposed in mcontext
 userland must not be allowed to set a trap on the kernel
 .El
 .Pp
-A debugger might reuse a port specific symbols,
+A debugger might reuse port specific symbols,
 to help writing portable code as described in the port specific part of the
 .In sys/ptrace.h
 header.
@@ -404,9 +404,17 @@ argument should contain
 .Dq Li "sizeof(struct ptrace_lwpinfo)" .
 .It Dv PT_SYSCALL
 Stops a process before and after executing each system call.
+Otherwise this operation is the same as
+.Dv PT_CONTINUE .
 .It Dv PT_SYSCALLEMU
 Intercept and ignore a system call before it has been executed, for use with
 .Dv PT_SYSCALL .
+This operation shall be called for syscall entry trap from
+.Dv PT_SYSCALL .
+To resume execution after intercepting the system call,
+another
+.Dv PT_SYSCALL
+shall be used.
 .It Dv PT_SET_EVENT_MASK
 This request can be used to specify which events in the traced process
 should be reported to the tracing process.
@@ -419,7 +427,6 @@ typedef struct ptrace_event {
 } ptrace_event_t;
 .Ed
 .Pp
-Where
 .Fa pe_set_event
 is the set of events to be reported.
 This set is formed by OR'ing together the following values:
@@ -535,11 +542,10 @@ argument should be set to
 .Li sizeof(struct ptrace_siginfo) .
 .Pp
 In order to pass faked signal to the tracee,
-the signal type must match the signal passed to process with
-.Dv PT_CONTINUE ,
-.Dv PT_DETACH
+the signal type must match the signal passed to the process with
+.Dv PT_CONTINUE
 or
-.Dv PT_STEP .
+.Dv PT_SYSCALL .
 .It Dv PT_GET_SIGINFO
 This request can be used to determine signal information that was received by
 a debugger
@@ -628,6 +634,10 @@ If the
 .Fa data
 argument is less than zero, it contains the negative of the LWP ID of
 the thread to be stepped, and only that thread executes.
+.It Dv PT_SETSTEP
+This request will turn on single stepping of the specified process.
+.It Dv PT_CLEARSTEP
+This request will turn off single stepping of the specified process.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
 .Dq Li "struct reg"

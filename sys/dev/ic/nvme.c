@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.3.2.2 2017/03/20 06:57:28 pgoyette Exp $	*/
+/*	$NetBSD: nvme.c,v 1.3.2.3 2017/04/26 02:53:11 pgoyette Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.3.2.2 2017/03/20 06:57:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.3.2.3 2017/04/26 02:53:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,6 +726,9 @@ nvme_ns_io_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 	}
 
 	htolem64(&sqe->slba, ccb->nnc_blkno);
+
+	if (ISSET(ccb->nnc_flags, NVME_NS_CTX_F_FUA))
+		htolem16(&sqe->ioflags, NVM_SQE_IO_FUA);
 
 	/* guaranteed by upper layers, but check just in case */
 	KASSERT((ccb->nnc_datasize % ccb->nnc_secsize) == 0);

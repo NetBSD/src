@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.172 2016/07/03 14:24:59 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.172.2.1 2017/04/26 02:53:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -255,6 +255,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 #define	LP_MUSTJOIN	0x00000100 /* Must join kthread on exit */
 #define	LP_VFORKWAIT	0x00000200 /* Waiting at vfork() for a child */
+#define	LP_SINGLESTEP	0x00000400 /* Single step thread in ptrace(2) */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
@@ -340,7 +341,8 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 uint64_t lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
-int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *);
+int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *, const sigset_t *,
+    const stack_t *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
@@ -421,8 +423,8 @@ lwp_eprio(lwp_t *l)
 	return MAX(l->l_auxprio, pri);
 }
 
-int lwp_create(lwp_t *, struct proc *, vaddr_t, int,
-    void *, size_t, void (*)(void *), void *, lwp_t **, int);
+int lwp_create(lwp_t *, struct proc *, vaddr_t, int, void *, size_t,
+    void (*)(void *), void *, lwp_t **, int, const sigset_t *, const stack_t *);
 
 /*
  * XXX _MODULE

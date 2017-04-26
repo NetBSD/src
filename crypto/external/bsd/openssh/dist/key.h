@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.11.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: key.h,v 1.11.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: key.h,v 1.50 2016/09/12 23:31:27 djm Exp $ */
 
 /*

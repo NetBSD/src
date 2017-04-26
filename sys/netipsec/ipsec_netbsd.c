@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.38.2.1 2017/03/20 06:57:52 pgoyette Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.38.2.2 2017/04/26 02:53:29 pgoyette Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,10 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.38.2.1 2017/03/20 06:57:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.38.2.2 2017/04/26 02:53:29 pgoyette Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +504,8 @@ sysctl_net_ipsec_enabled(SYSCTLFN_ARGS)
 }
 
 /* XXX will need a different oid at parent */
-SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
+void
+sysctl_net_inet_ipsec_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *_ipsec;
 	int ipproto_ipsec;
@@ -727,8 +730,8 @@ SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 }
 
 #ifdef INET6
-SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
-	     "sysctl net.inet6.ipsec6 subtree setup")
+void
+sysctl_net_inet6_ipsec6_setup(struct sysctllog **clog)
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,

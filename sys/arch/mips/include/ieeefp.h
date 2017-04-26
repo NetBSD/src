@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.8.2.1 2017/03/20 06:57:17 pgoyette Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.8.2.2 2017/04/26 02:53:05 pgoyette Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -20,6 +20,9 @@ typedef unsigned int fp_except;
 
 /* adjust for FP_* and FE_* value differences */ 
 #define	__FPE(x) ((x) >> 2)
+#define	__FEE(x) ((x) << 2)
+#define	__FPR(x) ((x))
+#define	__FER(x) ((x))
 
 #define FP_X_IMP	__FPE(FE_INEXACT)	/* imprecise (loss of precision) */
 #define FP_X_UFL	__FPE(FE_UNDERFLOW)	/* underflow exception */

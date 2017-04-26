@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.10 2016/05/01 23:32:00 christos Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.10.2.1 2017/04/26 02:52:42 pgoyette Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -252,7 +252,7 @@ auth_moremem(
 	i = (keycount > 0)
 		? keycount
 		: MEMINC;
-	sk = emalloc_zero(i * sizeof(*sk) + MOREMEM_EXTRA_ALLOC);
+	sk = eallocarrayxz(i, sizeof(*sk), MOREMEM_EXTRA_ALLOC);
 #ifdef DEBUG
 	base = sk;
 #endif

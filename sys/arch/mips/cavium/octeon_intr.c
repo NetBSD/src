@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.6.2.2 2017/01/07 08:56:21 pgoyette Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.6.2.3 2017/04/26 02:53:05 pgoyette Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.6.2.2 2017/01/07 08:56:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.6.2.3 2017/04/26 02:53:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -333,9 +333,10 @@ octeon_intr_init(struct cpu_info *ci)
 #endif
 
 	if (ci->ci_dev)
-	aprint_verbose_dev(ci->ci_dev,
-	    "enabling intr masks %#"PRIx64"/%#"PRIx64"/%#"PRIx64"\n",
-	    cpu->cpu_int0_enable0, cpu->cpu_int1_enable0, cpu->cpu_int2_enable0);
+		aprint_verbose_dev(ci->ci_dev,
+		    "enabling intr masks %#"PRIx64"/%#"PRIx64"/%#"PRIx64"\n",
+		    cpu->cpu_int0_enable0, cpu->cpu_int1_enable0,
+		    cpu->cpu_int2_enable0);
 
 	mips3_sd(cpu->cpu_int0_en0, cpu->cpu_int0_enable0);
 	mips3_sd(cpu->cpu_int1_en0, cpu->cpu_int1_enable0);

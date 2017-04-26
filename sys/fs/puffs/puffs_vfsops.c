@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.118.2.1 2017/03/20 06:57:46 pgoyette Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.118.2.2 2017/04/26 02:53:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.118.2.1 2017/03/20 06:57:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.118.2.2 2017/04/26 02:53:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -511,6 +511,9 @@ puffs_vfsop_statvfs(struct mount *mp, struct statvfs *sbp)
 static bool
 pageflush_selector(void *cl, struct vnode *vp)
 {
+
+	KASSERT(mutex_owned(vp->v_interlock));
+
 	return vp->v_type == VREG &&
 	    !(LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj));
 }

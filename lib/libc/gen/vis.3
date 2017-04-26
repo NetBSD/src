@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.45 2016/06/08 15:00:04 wiz Exp $
+.\"	$NetBSD: vis.3,v 1.45.2.1 2017/04/26 02:52:54 pgoyette Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd January 14, 2015
+.Dd April 22, 2017
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -242,6 +242,8 @@ except space, tab, and newline are encoded (see
 The following flags
 alter this:
 .Bl -tag -width VIS_WHITEX
+.It Dv VIS_DQ
+Also encode double quotes
 .It Dv VIS_GLOB
 Also encode the magic characters
 .Ql ( * ,

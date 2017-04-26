@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.153.2.1 2017/03/20 06:52:12 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.153.2.2 2017/04/26 02:52:18 pgoyette Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -293,6 +293,7 @@
 ./usr/share/doc/reference/ref1
 ./usr/share/doc/reference/ref1/atf
 ./usr/share/doc/reference/ref1/bzip2
+./usr/share/doc/reference/ref1/dc
 ./usr/share/doc/reference/ref1/config
 ./usr/share/doc/reference/ref1/csh
 ./usr/share/doc/reference/ref1/ex

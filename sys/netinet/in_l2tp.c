@@ -1,4 +1,4 @@
-/*	$NetBSD: in_l2tp.c,v 1.1.2.2 2017/03/20 06:57:50 pgoyette Exp $	*/
+/*	$NetBSD: in_l2tp.c,v 1.1.2.3 2017/04/26 02:53:29 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.1.2.2 2017/03/20 06:57:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_l2tp.c,v 1.1.2.3 2017/04/26 02:53:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -311,11 +311,6 @@ in_l2tp_input(struct mbuf *m, int off, int proto)
 	}
 
 	if (var->lv_state != L2TP_STATE_UP) {
-		m_freem(m);
-		goto out;
-	}
-
-	if (sess_id != var->lv_my_sess_id) {
 		m_freem(m);
 		goto out;
 	}

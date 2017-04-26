@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.61.2.2 2017/03/20 06:57:48 pgoyette Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.61.2.3 2017/04/26 02:53:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.61.2.2 2017/03/20 06:57:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.61.2.3 2017/04/26 02:53:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,11 +428,11 @@ startover:
 	mutex_exit(uobj->vmobjlock);
 	error = genfs_getpages_read(vp, pgs, npages, startoffset, diskeof,
 	    async, memwrite, blockalloc, glocked);
-	if (error == 0 && async)
-		goto out_err_free;
 	if (!glocked) {
 		genfs_node_unlock(vp);
 	}
+	if (error == 0 && async)
+		goto out_err_free;
 	mutex_enter(uobj->vmobjlock);
 
 	/*
@@ -508,6 +508,10 @@ out_err:
 
 /*
  * genfs_getpages_read: Read the pages in with VOP_BMAP/VOP_STRATEGY.
+ *
+ * "glocked" (which is currently not actually used) tells us not whether
+ * the genfs_node is locked on entry (it always is) but whether it was
+ * locked on entry to genfs_getpages.
  */
 static int
 genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
@@ -714,9 +718,6 @@ loopdone:
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
-		if (!glocked) {
-			genfs_node_unlock(vp);
-		}
 		return 0;
 	}
 	if (bp != NULL) {
@@ -890,7 +891,7 @@ retry:
 		if (pagedaemon) {
 			/* Pagedaemon must not sleep here. */
 			trans_mp = vp->v_mount;
-			error = fstrans_start_nowait(trans_mp, FSTRANS_LAZY);
+			error = fstrans_start_nowait(trans_mp, FSTRANS_SHARED);
 			if (error) {
 				mutex_exit(slock);
 				return error;
@@ -903,7 +904,7 @@ retry:
 			 */
 			mutex_exit(slock);
 			trans_mp = vp->v_mount;
-			fstrans_start(trans_mp, FSTRANS_LAZY);
+			fstrans_start(trans_mp, FSTRANS_SHARED);
 			if (vp->v_mount != trans_mp) {
 				fstrans_done(trans_mp);
 				trans_mp = NULL;

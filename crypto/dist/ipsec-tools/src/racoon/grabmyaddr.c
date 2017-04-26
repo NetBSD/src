@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.34 2014/06/14 22:39:36 christos Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.34.6.1 2017/04/26 02:52:13 pgoyette Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -827,6 +827,9 @@ static int
 kernel_open_socket()
 {
 	int fd;
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = { RTM_NEWADDR, RTM_DELADDR };
+#endif
 
 	fd = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (fd < 0) {
@@ -835,6 +838,13 @@ kernel_open_socket()
 			strerror(errno));
 		return -1;
 	}
+#ifdef RO_MSGFILTER
+	if (setsockopt(fd, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) < 0)
+		plog(LLV_WARNING, LOCATION, NULL,
+		     "setsockopt(RO_MSGFILER) failed: %s",
+		     strerror(errno));
+#endif
 	close_on_exec(fd);
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		plog(LLV_WARNING, LOCATION, NULL,

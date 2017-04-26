@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.16.2.3 2017/03/20 06:51:53 pgoyette Exp $
-#	$OpenBSD: sshd_config,v 1.100 2016/08/15 12:32:04 naddy Exp $
+#	$NetBSD: sshd_config,v 1.16.2.4 2017/04/26 02:52:15 pgoyette Exp $
+#	$OpenBSD: sshd_config,v 1.101 2017/03/14 07:19:07 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nchan.c,v 1.6.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: nchan.c,v 1.6.2.2 2017/04/26 02:52:14 pgoyette Exp $	*/
 /* $OpenBSD: nchan.c,v 1.63 2010/01/26 01:28:35 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: nchan.c,v 1.6.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.6.2.2 2017/04/26 02:52:14 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>

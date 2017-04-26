@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.110.2.1 2017/03/20 06:57:54 pgoyette Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.110.2.2 2017/04/26 02:53:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.110.2.1 2017/03/20 06:57:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.110.2.2 2017/04/26 02:53:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -215,9 +215,9 @@ mfs_mountroot(void)
 	mfsp->mfs_refcnt = 1;
 	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		vfs_unbusy(mp, false, NULL);
+		vfs_unbusy(mp);
 		bufq_free(mfsp->mfs_buflist);
-		vfs_destroy(mp);
+		vfs_rele(mp);
 		kmem_free(mfsp, sizeof(*mfsp));
 		return (error);
 	}
@@ -227,7 +227,7 @@ mfs_mountroot(void)
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 	return (0);
 }
 
@@ -375,14 +375,14 @@ mfs_start(struct mount *mp, int flags)
 	 * Add a reference to the mfsnode to prevent it disappearing in
 	 * this routine.
 	 */
-	if ((error = vfs_busy(mp, NULL)) != 0)
+	if ((error = vfs_busy(mp)) != 0)
 		return error;
 	vp = VFSTOUFS(mp)->um_devvp;
 	mfsp = VTOMFS(vp);
 	mutex_enter(&mfs_lock);
 	mfsp->mfs_refcnt++;
 	mutex_exit(&mfs_lock);
-	vfs_unbusy(mp, false, NULL);
+	vfs_unbusy(mp);
 
 	base = mfsp->mfs_baseoff;
 	mutex_enter(&mfs_lock);

@@ -26,7 +26,7 @@
  * Swap one window with another.
  */
 
-enum cmd_retval	cmd_swap_window_exec(struct cmd *, struct cmd_q *);
+static enum cmd_retval	cmd_swap_window_exec(struct cmd *, struct cmdq_item *);
 
 const struct cmd_entry cmd_swap_window_entry = {
 	"swap-window", "swapw",
@@ -36,37 +36,42 @@ const struct cmd_entry cmd_swap_window_entry = {
 	cmd_swap_window_exec
 };
 
-enum cmd_retval
-cmd_swap_window_exec(struct cmd *self, struct cmd_q *cmdq)
+static enum cmd_retval
+cmd_swap_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
 	const char		*target_src, *target_dst;
 	struct session		*src, *dst;
 	struct session_group	*sg_src, *sg_dst;
 	struct winlink		*wl_src, *wl_dst;
-	struct window		*w;
+	struct window		*w_src, *w_dst;
 
-	target_src = args_get(args, 's');
-	if ((wl_src = cmd_find_window_marked(cmdq, target_src, &src)) == NULL)
-		return (CMD_RETURN_ERROR);
-	target_dst = args_get(args, 't');
-	if ((wl_dst = cmd_find_window(cmdq, target_dst, &dst)) == NULL)
-		return (CMD_RETURN_ERROR);
+	wl_src = item->state.sflag.wl;
+	src = item->state.sflag.s;
+	sg_src = session_group_contains(src);
 
-	sg_src = session_group_find(src);
-	sg_dst = session_group_find(dst);
-	if (src != dst &&
-	    sg_src != NULL && sg_dst != NULL && sg_src == sg_dst) {
-		cmdq_error(cmdq, "can't move window, sessions are grouped");
+	wl_dst = item->state.tflag.wl;
+	dst = item->state.tflag.s;
+	sg_dst = session_group_contains(dst);
+
+	if (src != dst && sg_src != NULL && sg_dst != NULL &&
+	    sg_src == sg_dst) {
+		cmdq_error(item, "can't move window, sessions are grouped");
 		return (CMD_RETURN_ERROR);
 	}
 
 	if (wl_dst->window == wl_src->window)
 		return (CMD_RETURN_NORMAL);
 
-	w = wl_dst->window;
-	wl_dst->window = wl_src->window;
-	wl_src->window = w;
+	w_dst = wl_dst->window;
+	TAILQ_REMOVE(&w_dst->winlinks, wl_dst, wentry);
+	w_src = wl_src->window;
+	TAILQ_REMOVE(&w_src->winlinks, wl_src, wentry);
+
+	wl_dst->window = w_src;
+	TAILQ_INSERT_TAIL(&w_src->winlinks, wl_dst, wentry);
+	wl_src->window = w_dst;
+	TAILQ_INSERT_TAIL(&w_dst->winlinks, wl_src, wentry);
 
 	if (!args_has(self->args, 'd')) {
 		session_select(dst, wl_dst->idx);

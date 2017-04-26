@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf.c,v 1.5.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: sshbuf.c,v 1.5.2.2 2017/04/26 02:52:15 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <signal.h>

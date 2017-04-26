@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.8.2.1 2017/01/07 08:53:42 pgoyette Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.8.2.2 2017/04/26 02:52:15 pgoyette Exp $	*/
 /* $OpenBSD: uuencode.c,v 1.28 2015/04/24 01:36:24 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: uuencode.c,v 1.8.2.1 2017/01/07 08:53:42 pgoyette Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.8.2.2 2017/04/26 02:52:15 pgoyette Exp $");
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <resolv.h>

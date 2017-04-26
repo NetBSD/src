@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.31.2.2 2017/03/20 06:57:48 pgoyette Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.31.2.3 2017/04/26 02:53:27 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -318,7 +318,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		goto freephdr;
 	}
 
-	for (first = 1, i = 0; i < elf->e_phnum; i++) {
+	first = 1;
+	for (i = 0; i < elf->e_phnum; i++) {
 		internalize_phdr(elf->e_ident[EI_DATA], &phdr[i]);
 
 #ifndef MD_LOADSEG /* Allow processor ABI specific segment loads */
@@ -428,7 +429,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		/*
 		 * First load the section names section.
 		 */
-		if (boot_load_ctf && (elf->e_shstrndx != 0)) {
+		if (boot_load_ctf && (elf->e_shstrndx != SHN_UNDEF)) {
 			Elf_Off shstroff = shp[elf->e_shstrndx].sh_offset;
 			shstrsz = shp[elf->e_shstrndx].sh_size;
 			if (flags & LOAD_SYM) {
@@ -468,7 +469,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * string table that isn't referenced by a symbol
 		 * table.
 		 */
-		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		first = 1;
+		for (i = 1; i < elf->e_shnum; i++) {
 			if (i == elf->e_shstrndx) {
 				/* already loaded this section */
 				continue;
@@ -477,8 +479,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 			case SHT_PROGBITS:
 				if (boot_load_ctf && shstr) {
 					/* got a CTF section? */
-					if (strncmp(".SUNW_ctf",
-					    &shstr[shp[i].sh_name], 10) == 0) {
+					if (strncmp(&shstr[shp[i].sh_name],
+						    ".SUNW_ctf", 10) == 0) {
 						goto havesym;
 					}
 				}
@@ -487,7 +489,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				shp[i].sh_offset = 0;
 				break;
 			case SHT_STRTAB:
-				for (j = 0; j < elf->e_shnum; j++)
+				for (j = 1; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
 					    shp[j].sh_link == (unsigned int)i)
 						goto havesym;
@@ -566,10 +568,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				PROGRESS(("]"));
 		}
 		DEALLOC(shp, sz);
-	}
-
-	if (shstr) {
-	    DEALLOC(shstr, shstrsz);
+		if (shstr)
+			DEALLOC(shstr, shstrsz);
 	}
 
 	/*

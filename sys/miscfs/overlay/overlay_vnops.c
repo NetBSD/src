@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vnops.c,v 1.21.4.1 2017/03/20 06:57:49 pgoyette Exp $	*/
+/*	$NetBSD: overlay_vnops.c,v 1.21.4.2 2017/04/26 02:53:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: overlay_vnops.c,v 1.21.4.1 2017/03/20 06:57:49 pgoyette Exp $
+ *	$Id: overlay_vnops.c,v 1.21.4.2 2017/04/26 02:53:28 pgoyette Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.21.4.1 2017/03/20 06:57:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vnops.c,v 1.21.4.2 2017/04/26 02:53:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,8 @@ const struct vnodeopv_entry_desc overlay_vnodeop_entries[] = {
 	{ &vop_inactive_desc, layer_inactive },
 	{ &vop_reclaim_desc,  layer_reclaim },
 	{ &vop_lock_desc,     layer_lock },
+	{ &vop_unlock_desc,   layer_unlock },
+	{ &vop_islocked_desc, layer_islocked },
 	{ &vop_print_desc,    layer_print },
 	{ &vop_remove_desc,   layer_remove },
 	{ &vop_rename_desc,   layer_rename },

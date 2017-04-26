@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/01/17 04:40:10 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2017/04/26 02:53:04 pgoyette Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
 NOMAN= # defined
@@ -59,9 +59,6 @@ PROG=   boot
 
 NEWVERSWHAT=	"${PROG}"
 
-SRCS+=          vers.c
-CLEANFILES+=    vers.c
-
 ### find out what to use for libkern
 KERN_AS=	library
 .include "${S}/lib/libkern/Makefile.inc"
@@ -77,10 +74,7 @@ SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes SA_ENABLE_LS_OP=yes
 
 LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 
-.PHONY: vers.c
-vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
+.include "${S}/conf/newvers_stand.mk"
 
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
