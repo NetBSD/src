@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.13 2017/04/16 12:22:18 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.14 2017/04/26 01:42:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.13 2017/04/16 12:22:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.14 2017/04/26 01:42:46 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -290,7 +290,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	int error;
 
 	if (sc->sc_clk_dc[index] == NULL ||
-	    sc->sc_clk_dc_parent[index] == NULL ||
+	    sc->sc_clk_hdmi_parent == NULL ||
 	    sc->sc_rst_dc[index] == NULL) {
 		DRM_ERROR("no clocks configured for crtc %d\n", index);
 		return -EIO;
@@ -344,9 +344,9 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	tegra_pmc_power(pmc_partid, true);
 	tegra_pmc_remove_clamping(pmc_partid);
 
-	/* Set parent clock */
+	/* Set parent clock to the HDMI parent (ignoring DC parent in DT!) */
 	error = clk_set_parent(sc->sc_clk_dc[index],
-	    sc->sc_clk_dc_parent[index]);
+	    sc->sc_clk_hdmi_parent);
 	if (error) {
 		DRM_ERROR("failed to set crtc %d clock parent: %d\n",
 		    index, error);
@@ -363,7 +363,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	/* Leave reset */
 	fdtbus_reset_deassert(sc->sc_rst_dc[index]);
 
-	crtc->clk_parent = sc->sc_clk_dc_parent[index];
+	crtc->clk_parent = sc->sc_clk_hdmi_parent;
 
 	DC_WRITE(crtc, DC_CMD_INT_ENABLE_REG, DC_CMD_INT_V_BLANK);
 
