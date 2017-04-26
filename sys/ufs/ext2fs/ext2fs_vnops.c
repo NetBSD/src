@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.125 2016/08/15 18:38:10 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.126 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.125 2016/08/15 18:38:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.126 2017/04/26 03:02:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ext2fs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -590,7 +590,6 @@ ext2fs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return error;
 }
 
@@ -787,7 +786,7 @@ out:
 int
 ext2fs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -810,8 +809,7 @@ ext2fs_rmdir(void *v)
 	 * No rmdir "." please.
 	 */
 	if (dp == ip) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return EINVAL;
 	}
 	/*
@@ -845,8 +843,6 @@ ext2fs_rmdir(void *v)
 	dp->i_flag |= IN_CHANGE;
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
-	vput(dvp);
-	dvp = NULL;
 	/*
 	 * Truncate inode.  The only stuff left
 	 * in the directory is "." and "..".  The
@@ -863,8 +859,6 @@ ext2fs_rmdir(void *v)
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
-	if (dvp)
-		vput(dvp);
 	vput(vp);
 	return error;
 }

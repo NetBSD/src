@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.147 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.148 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.147 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.148 2017/04/26 03:02:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -983,7 +983,7 @@ rump_vop_mkdir(void *v)
 static int
 rump_vop_rmdir(void *v)
 {
-        struct vop_rmdir_args /* {
+        struct vop_rmdir_v2_args /* {
                 struct vnode *a_dvp;
                 struct vnode *a_vp;
                 struct componentname *a_cnp;
@@ -1015,16 +1015,14 @@ rump_vop_rmdir(void *v)
 	rn->rn_va.va_nlink = 0;
 
 out:
-	vput(dvp);
 	vput(vp);
-
 	return rv;
 }
 
 static int
 rump_vop_remove(void *v)
 {
-        struct vop_remove_args /* {
+        struct vop_remove_v2_args /* {
                 struct vnode *a_dvp;
                 struct vnode *a_vp;
                 struct componentname *a_cnp;
@@ -1043,9 +1041,7 @@ rump_vop_remove(void *v)
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 	rn->rn_va.va_nlink = 0;
 
-	vput(dvp);
 	vput(vp);
-
 	return rv;
 }
 

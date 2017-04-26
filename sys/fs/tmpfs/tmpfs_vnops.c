@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.131 2017/04/11 14:25:00 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.132 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.131 2017/04/11 14:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.132 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -652,7 +652,7 @@ tmpfs_fsync(void *v)
 int
 tmpfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -716,12 +716,11 @@ tmpfs_remove(void *v)
 	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 	error = 0;
 out:
-	/* Drop the references and unlock the vnodes. */
-	vput(vp);
+	/* Drop the reference and unlock the node. */
 	if (dvp == vp) {
-		vrele(dvp);
+		vrele(vp);
 	} else {
-		vput(dvp);
+		vput(vp);
 	}
 	return error;
 }
@@ -813,7 +812,7 @@ tmpfs_mkdir(void *v)
 int
 tmpfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
@@ -898,8 +897,8 @@ tmpfs_rmdir(void *v)
 	KASSERT(node->tn_size == 0);
 	KASSERT(node->tn_links == 0);
 out:
-	/* Release the nodes. */
-	vput(dvp);
+	/* Release the node. */
+	KASSERT(dvp != vp);
 	vput(vp);
 	return error;
 }
