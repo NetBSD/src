@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.4.62.1 2017/04/26 02:53:07 pgoyette Exp $ */
+/* $NetBSD: ieeefp.h,v 1.4.62.2 2017/04/26 02:57:17 pgoyette Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -32,14 +32,11 @@ typedef int fexcept_t;
 #if defined(_NETBSD_SOURCE)
 
 typedef int fp_except;
-<<<<<<< ieeefp.h
-=======
 
 #ifdef	__SH_FPU_ANY__
 
 /* hardfloat */
 
->>>>>>> 1.7
 #define	FP_X_INV	FE_INVALID	/* invalid operation exception */
 #define	FP_X_DNML	FE_DENORMAL	/* denormalization exception */
 #define	FP_X_DZ		FE_DIVBYZERO	/* divide-by-zero exception */
