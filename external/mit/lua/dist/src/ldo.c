@@ -1,4 +1,4 @@
-/*	$NetBSD: ldo.c,v 1.7 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: ldo.c,v 1.8 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: ldo.c,v 2.157 2016/12/13 15:52:21 roberto Exp 

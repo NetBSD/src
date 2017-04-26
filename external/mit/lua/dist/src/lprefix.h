@@ -1,4 +1,4 @@
-/*	$NetBSD: lprefix.h,v 1.5 2017/04/26 12:49:34 mbalmer Exp $	*/
+/*	$NetBSD: lprefix.h,v 1.6 2017/04/26 13:17:33 mbalmer Exp $	*/
 
 /*
 ** Id: lprefix.h,v 1.2 2014/12/29 16:54:13 roberto Exp 
