@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.12 2017/04/22 21:47:41 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.13 2017/04/26 01:51:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -45,6 +45,7 @@ struct fdt_attach_args {
 	bus_space_tag_t faa_a4x_bst;
 	bus_dma_tag_t faa_dmat;
 	int faa_phandle;
+	int faa_quiet;
 };
 
 /* flags for fdtbus_intr_establish */

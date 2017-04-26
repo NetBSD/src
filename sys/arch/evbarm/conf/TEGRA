@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.17 2017/04/22 23:53:24 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.18 2017/04/26 01:51:52 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -42,28 +42,28 @@ fdt*		at fdtbus?
 # CPU frequency scaling
 tegra124cpu*	at fdt?
 
-fclock*		at fdt?
-fregulator*	at fdt?
+fclock*		at fdt? pass 4
+fregulator*	at fdt? pass 4
 gpiokeys*	at fdt?
 
 # Interrupt controller
-tegralic*	at fdt?			# LIC
-gic*		at fdt?			# GIC
+tegralic*	at fdt? pass 1		# LIC
+gic*		at fdt? pass 1		# GIC
 
 # Memory controller
-tegramc*	at fdt?			# MC
+tegramc*	at fdt?	pass 4		# MC
 
 # FUSE controller
-tegrafuse*	at fdt?			# FUSE
+tegrafuse*	at fdt? pass 4		# FUSE
 
 # Power management controller
-tegrapmc*	at fdt?			# PMC
+tegrapmc*	at fdt? pass 4		# PMC
 
 # Clock and Reset controller
-tegra124car*	at fdt?			# CAR
+tegra124car*	at fdt? pass 3		# CAR
 
 # GPIO controller
-tegragpio*	at fdt?			# GPIO
+tegragpio*	at fdt? pass 2		# GPIO
 gpio*		at gpiobus?
 
 # Timers
