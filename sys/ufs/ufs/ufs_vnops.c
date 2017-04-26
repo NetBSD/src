@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.236 2017/03/18 05:39:06 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.237 2017/04/26 03:02:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.236 2017/03/18 05:39:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.237 2017/04/26 03:02:49 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -714,7 +714,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ufs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
@@ -752,7 +752,6 @@ ufs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
-	vput(dvp);
 	return (error);
 }
 
@@ -1047,7 +1046,7 @@ ufs_mkdir(void *v)
 int
 ufs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
@@ -1073,10 +1072,9 @@ ufs_rmdir(void *v)
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
 		if (dp == ip)
-			vrele(dvp);
+			vrele(vp);
 		else
-			vput(dvp);
-		vput(vp);
+			vput(vp);
 		return (EINVAL);
 	}
 
@@ -1138,7 +1136,6 @@ ufs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
-	vput(dvp);
 	return (error);
 }
 
