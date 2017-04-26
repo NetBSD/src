@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.57 2017/04/24 03:29:37 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.58 2017/04/26 03:29:36 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.57 2017/04/24 03:29:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.58 2017/04/26 03:29:36 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -774,6 +774,13 @@ crypto_dispatch(struct cryptop *crp)
 				TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
 				cryptostats.cs_blocks++;
 				mutex_spin_exit(&crypto_q_mtx);
+
+				/*
+				 * The crp is enqueued to crp_q, that is,
+				 * no error occurs. So, this function should
+				 * not return error.
+				 */
+				result = 0;
 			}
 			goto out_released;
 		} else {
@@ -836,6 +843,13 @@ crypto_kdispatch(struct cryptkop *krp)
 			TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 			cryptostats.cs_kblocks++;
 			mutex_spin_exit(&crypto_q_mtx);
+
+			/*
+			 * The krp is enqueued to crp_kq, that is,
+			 * no error occurs. So, this function should
+			 * not return error.
+			 */
+			result = 0;
 		}
 	} else {
 		/*
