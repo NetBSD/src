@@ -1,7 +1,7 @@
-/*	$NetBSD: ltm.c,v 1.6 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: ltm.c,v 1.7 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
-** Id: ltm.c,v 2.37 2016/02/26 19:20:15 roberto Exp 
+** Id: ltm.c,v 2.38 2016/12/22 13:08:50 roberto Exp 
 ** Tag methods
 ** See Copyright Notice in lua.h
 */
@@ -19,7 +19,7 @@
 #include "lua.h"
 
 #include "ldebug.h"
-#include "ldo.h" 
+#include "ldo.h"
 #include "lobject.h"
 #include "lstate.h"
 #include "lstring.h"

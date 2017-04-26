@@ -1,7 +1,7 @@
-/*	$NetBSD: lopcodes.h,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lopcodes.h,v 1.6 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
-** Id: lopcodes.h,v 1.148 2014/10/25 11:50:46 roberto Exp 
+** Id: lopcodes.h,v 1.149 2016/07/19 17:12:21 roberto Exp 
 ** Opcodes for Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -141,7 +141,9 @@ enum OpMode {iABC, iABx, iAsBx, iAx};  /* basic instruction format */
 /* gets the index of the constant */
 #define INDEXK(r)	((int)(r) & ~BITRK)
 
+#if !defined(MAXINDEXRK)  /* (for debugging only) */
 #define MAXINDEXRK	(BITRK - 1)
+#endif
 
 /* code a constant index as a RK value */
 #define RKASK(x)	((x) | BITRK)

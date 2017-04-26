@@ -1,4 +1,4 @@
-/*	$NetBSD: llimits.h,v 1.7 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: llimits.h,v 1.8 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
 ** Id: llimits.h,v 1.141 2015/11/19 19:16:22 roberto Exp 

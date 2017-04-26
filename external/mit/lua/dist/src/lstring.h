@@ -1,4 +1,4 @@
-/*	$NetBSD: lstring.h,v 1.6 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lstring.h,v 1.7 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
 ** Id: lstring.h,v 1.61 2015/11/03 15:36:01 roberto Exp 

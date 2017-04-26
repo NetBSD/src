@@ -1,4 +1,4 @@
-/*	$NetBSD: ltm.h,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: ltm.h,v 1.6 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
 ** Id: ltm.h,v 2.22 2016/02/26 19:20:15 roberto Exp 

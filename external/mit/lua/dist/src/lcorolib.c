@@ -1,4 +1,4 @@
-/*	$NetBSD: lcorolib.c,v 1.4 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lcorolib.c,v 1.5 2017/04/26 12:49:34 mbalmer Exp $	*/
 
 /*
 ** Id: lcorolib.c,v 1.10 2016/04/11 19:19:55 roberto Exp 
