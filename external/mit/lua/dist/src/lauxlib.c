@@ -1,4 +1,4 @@
-/*	$NetBSD: lauxlib.c,v 1.9 2017/04/26 13:17:33 mbalmer Exp $	*/
+/*	$NetBSD: lauxlib.c,v 1.10 2017/04/26 13:53:18 mbalmer Exp $	*/
 
 /*
 ** Id: lauxlib.c,v 1.289 2016/12/20 18:37:00 roberto Exp 
@@ -829,10 +829,14 @@ LUALIB_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
   else {
     switch (lua_type(L, idx)) {
       case LUA_TNUMBER: {
+#ifndef _KERNEL
         if (lua_isinteger(L, idx))
+#endif
           lua_pushfstring(L, "%I", (LUAI_UACINT)lua_tointeger(L, idx));
+#ifndef _KERNEL
         else
           lua_pushfstring(L, "%f", (LUAI_UACNUMBER)lua_tonumber(L, idx));
+#endif
         break;
       }
       case LUA_TSTRING:
@@ -1052,8 +1056,10 @@ LUALIB_API void luaL_checkversion_ (lua_State *L, lua_Number ver, size_t sz) {
     luaL_error(L, "core and library have incompatible numeric types");
   if (v != lua_version(NULL))
     luaL_error(L, "multiple Lua VMs detected");
+#ifndef _KERNEL
   else if (*v != ver)
     luaL_error(L, "version mismatch: app. needs %f, Lua core provides %f",
                   (LUAI_UACNUMBER)ver, (LUAI_UACNUMBER)*v);
+#endif
 }
 
