@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.10 2012/01/09 15:25:13 drochner Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.11 2017/04/26 03:16:06 ozaki-r Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -133,7 +133,7 @@ kdebug_sadb(base)
 
 	while (tlen > 0) {
 		printf("sadb_ext{ len=%u type=%u }\n",
-		    ext->sadb_ext_len, ext->sadb_ext_type);
+		    PFKEY_UNUNIT64(ext->sadb_ext_len), ext->sadb_ext_type);
 
 		if (ext->sadb_ext_len == 0) {
 			printf("kdebug_sadb: invalid ext_len=0 was passed.\n");
