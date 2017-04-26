@@ -1,7 +1,5 @@
-/*	$NetBSD: luac.c,v 1.1.1.8 2016/09/08 01:14:16 salazar Exp $	*/
-
 /*
-** Id: luac.c,v 1.75 2015/03/12 01:58:27 lhf Exp 
+** $Id: luac.c,v 1.1.1.9 2017/04/26 11:38:37 mbalmer Exp $
 ** Lua compiler (saves bytecodes to files; also lists bytecodes)
 ** See Copyright Notice in lua.h
 */
@@ -208,7 +206,7 @@ int main(int argc, char* argv[])
 }
 
 /*
-** Id: luac.c,v 1.75 2015/03/12 01:58:27 lhf Exp 
+** $Id: luac.c,v 1.1.1.9 2017/04/26 11:38:37 mbalmer Exp $
 ** print bytecodes
 ** See Copyright Notice in lua.h
 */

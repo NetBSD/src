@@ -1,7 +1,5 @@
-/*	$NetBSD: lzio.h,v 1.1.1.8 2016/09/08 01:14:18 salazar Exp $	*/
-
 /*
-** Id: lzio.h,v 1.31 2015/09/08 15:41:05 roberto Exp 
+** $Id: lzio.h,v 1.1.1.9 2017/04/26 11:38:37 mbalmer Exp $
 ** Buffered streams
 ** See Copyright Notice in lua.h
 */

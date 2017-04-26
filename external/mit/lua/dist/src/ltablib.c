@@ -1,7 +1,5 @@
-/*	$NetBSD: ltablib.c,v 1.1.1.9 2016/09/08 01:14:18 salazar Exp $	*/
-
 /*
-** Id: ltablib.c,v 1.93 2016/02/25 19:41:54 roberto Exp 
+** $Id: ltablib.c,v 1.1.1.10 2017/04/26 11:38:37 mbalmer Exp $
 ** Library for Table Manipulation
 ** See Copyright Notice in lua.h
 */

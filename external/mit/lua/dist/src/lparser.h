@@ -1,7 +1,5 @@
-/*	$NetBSD: lparser.h,v 1.1.1.7 2016/09/08 01:14:17 salazar Exp $	*/
-
 /*
-** Id: lparser.h,v 1.76 2015/12/30 18:16:13 roberto Exp 
+** $Id: lparser.h,v 1.1.1.8 2017/04/26 11:38:38 mbalmer Exp $
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */

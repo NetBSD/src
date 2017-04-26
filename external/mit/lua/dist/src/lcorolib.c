@@ -1,7 +1,5 @@
-/*	$NetBSD: lcorolib.c,v 1.1.1.5 2016/09/08 01:14:16 salazar Exp $	*/
-
 /*
-** Id: lcorolib.c,v 1.10 2016/04/11 19:19:55 roberto Exp 
+** $Id: lcorolib.c,v 1.1.1.6 2017/04/26 11:38:37 mbalmer Exp $
 ** Coroutine Library
 ** See Copyright Notice in lua.h
 */

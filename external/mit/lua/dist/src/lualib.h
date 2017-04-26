@@ -1,7 +1,5 @@
-/*	$NetBSD: lualib.h,v 1.1.1.6 2016/09/08 01:14:16 salazar Exp $	*/
-
 /*
-** Id: lualib.h,v 1.44 2014/02/06 17:32:33 roberto Exp 
+** $Id: lualib.h,v 1.1.1.7 2017/04/26 11:38:37 mbalmer Exp $
 ** Lua standard libraries
 ** See Copyright Notice in lua.h
 */
@@ -12,6 +10,9 @@
 
 #include "lua.h"
 
+
+/* version suffix for environment variable names */
+#define LUA_VERSUFFIX          "_" LUA_VERSION_MAJOR "_" LUA_VERSION_MINOR
 
 
 LUAMOD_API int (luaopen_base) (lua_State *L);

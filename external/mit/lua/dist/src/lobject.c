@@ -1,7 +1,5 @@
-/*	$NetBSD: lobject.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
-
 /*
-** Id: lobject.c,v 2.111 2016/05/20 14:07:48 roberto Exp 
+** $Id: lobject.c,v 1.1.1.10 2017/04/26 11:38:37 mbalmer Exp $
 ** Some generic functions over Lua objects
 ** See Copyright Notice in lua.h
 */
@@ -282,7 +280,7 @@ static const char *l_str2d (const char *s, lua_Number *result) {
   endptr = l_str2dloc(s, result, mode);  /* try to convert */
   if (endptr == NULL) {  /* failed? may be a different locale */
     char buff[L_MAXLENNUM + 1];
-    char *pdot = strchr(s, '.');
+    const char *pdot = strchr(s, '.');
     if (strlen(s) > L_MAXLENNUM || pdot == NULL)
       return NULL;  /* string too long or no dot; fail */
     strcpy(buff, s);  /* copy string to buffer */
@@ -396,7 +394,7 @@ static void pushstr (lua_State *L, const char *str, size_t l) {
 
 
 /*
-** this function handles only '%d', '%c', '%f', '%p', and '%s' 
+** this function handles only '%d', '%c', '%f', '%p', and '%s'
    conventional formats, plus Lua-specific '%I' and '%U'
 */
 const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {

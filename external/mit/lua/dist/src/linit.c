@@ -1,7 +1,5 @@
-/*	$NetBSD: linit.c,v 1.1.1.7 2016/09/08 01:14:17 salazar Exp $	*/
-
 /*
-** Id: linit.c,v 1.38 2015/01/05 13:48:33 roberto Exp 
+** $Id: linit.c,v 1.1.1.8 2017/04/26 11:38:37 mbalmer Exp $
 ** Initialization of libraries for lua.c and other clients
 ** See Copyright Notice in lua.h
 */
@@ -20,10 +18,10 @@
 ** open the library, which is already linked to the application.
 ** For that, do the following code:
 **
-**  luaL_getsubtable(L, LUA_REGISTRYINDEX, "_PRELOAD");
+**  luaL_getsubtable(L, LUA_REGISTRYINDEX, LUA_PRELOAD_TABLE);
 **  lua_pushcfunction(L, luaopen_modname);
 **  lua_setfield(L, -2, modname);
-**  lua_pop(L, 1);  // remove _PRELOAD table
+**  lua_pop(L, 1);  // remove PRELOAD table
 */
 
 #include "lprefix.h"

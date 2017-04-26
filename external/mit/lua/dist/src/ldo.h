@@ -1,7 +1,5 @@
-/*	$NetBSD: ldo.h,v 1.1.1.9 2016/09/08 01:14:18 salazar Exp $	*/
-
 /*
-** Id: ldo.h,v 2.29 2015/12/21 13:02:14 roberto Exp 
+** $Id: ldo.h,v 1.1.1.10 2017/04/26 11:38:37 mbalmer Exp $
 ** Stack and Call structure of Lua
 ** See Copyright Notice in lua.h
 */
