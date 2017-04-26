@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.69 2017/04/11 14:25:02 riastradh Exp $	*/
+/*	$NetBSD: p2k.c,v 1.70 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -1026,8 +1026,11 @@ do_nukenode(struct p2k_node *p2n_dir, struct p2k_node *p2n,
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rump_pub_vp_incref(vp);
 	rv = nukefn(dvp, vp, cn);
-	assert(RUMP_VOP_ISLOCKED(dvp) == 0);
+	assert(dvp != vp);
+	assert(RUMP_VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	assert(RUMP_VOP_ISLOCKED(vp) == 0);
+	rump_pub_vp_rele(dvp);
+	RUMP_VOP_UNLOCK(dvp);
 	freecn(cn);
 
 	return rv;

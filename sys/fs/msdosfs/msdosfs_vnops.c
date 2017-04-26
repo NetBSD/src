@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.97 2017/03/01 10:41:28 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.98 2017/04/26 03:02:48 riastradh Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.97 2017/03/01 10:41:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.98 2017/04/26 03:02:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,7 +715,7 @@ msdosfs_update(struct vnode *vp, const struct timespec *acc,
 int
 msdosfs_remove(void *v)
 {
-	struct vop_remove_args /* {
+	struct vop_remove_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -739,7 +739,7 @@ msdosfs_remove(void *v)
 	else
 		vput(ap->a_vp);	/* causes msdosfs_inactive() to be called
 				 * via vrele() */
-	vput(ap->a_dvp);
+
 	return (error);
 }
 
@@ -1266,7 +1266,7 @@ bad2:
 int
 msdosfs_rmdir(void *v)
 {
-	struct vop_rmdir_args /* {
+	struct vop_rmdir_v2_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
@@ -1283,8 +1283,7 @@ msdosfs_rmdir(void *v)
 	 * No rmdir "." please.
 	 */
 	if (dp == ip) {
-		vrele(dvp);
-		vput(vp);
+		vrele(vp);
 		return (EINVAL);
 	}
 	/*
@@ -1316,8 +1315,6 @@ msdosfs_rmdir(void *v)
 	 */
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
-	vput(dvp);
-	dvp = NULL;
 	/*
 	 * Truncate the directory that is being deleted.
 	 */
@@ -1325,8 +1322,6 @@ msdosfs_rmdir(void *v)
 	cache_purge(vp);
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
-	if (dvp)
-		vput(dvp);
 	vput(vp);
 	return (error);
 }
