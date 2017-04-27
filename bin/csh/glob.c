@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.27 2013/07/16 17:47:43 christos Exp $ */
+/* $NetBSD: glob.c,v 1.28 2017/04/27 18:50:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.27 2013/07/16 17:47:43 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.28 2017/04/27 18:50:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ static Char **libglob(Char **);
 static Char **globexpand(Char **);
 static int globbrace(Char *, Char *, Char ***);
 static void expbrace(Char ***, Char ***, size_t);
-static int pmatch(Char *, Char *);
+static int pmatch(const Char *, const Char *);
 static void pword(void);
 static void psave(int);
 static void backeval(Char *, int);
@@ -818,56 +818,74 @@ Gmatch(Char *string, Char *pattern)
 } 
 
 static int
-pmatch(Char *string, Char *pattern)
+pmatch(const Char *name, const Char *pat)
 {
     int match, negate_range;
-    Char patternc, rangec, stringc;
+    Char patc, namec, c;
+    const Char *nameNext, *nameStart, *nameEnd, *patNext;
 
-    for (;; ++string) {
-	stringc = *string & TRIM;
-	patternc = *pattern++;
-	switch (patternc) {
+    nameNext = nameStart = name;
+    patNext = pat;
+    nameEnd = NULL;
+
+    for (;;) {
+	namec = *name & TRIM;
+	if (namec == 0)
+	    nameEnd = name;
+	patc = *pat;
+	switch (patc) {
 	case 0:
-	    return (stringc == 0);
-	case '?':
-	    if (stringc == 0)
-		return (0);
+	    if (namec == 0)
+		return 1;
 	    break;
+	case '?':
+	    if (namec == 0)
+		break;
+	    pat++;
+	    name++;
+	    continue;
 	case '*':
-	    if (!*pattern)
-		return (1);
-	    while (*string)
-		if (Gmatch(string++, pattern))
-		    return (1);
-	    return (0);
+	    while ((pat[1] & TRIM) == '*')
+		pat++;
+	    patNext = pat;
+	    nameNext = name + 1;
+	    pat++;
+	    continue;
 	case '[':
 	    match = 0;
-	    if ((negate_range = (*pattern == '^')) != 0)
-		pattern++;
-	    while ((rangec = *pattern++) != '\0') {
-		if (rangec == ']')
-		    break;
-		if (match)
-		    continue;
-		if (rangec == '-' && *(pattern-2) != '[' && *pattern  != ']') {
-		    match = (stringc <= (*pattern & TRIM) &&
-			      (*(pattern-2) & TRIM) <= stringc);
-		    pattern++;
-		}
-		else 
-		    match = (stringc == (rangec & TRIM));
+	    if (namec == 0)
+		break;
+	    pat++;
+	    name++;
+	    if ((negate_range = (*pat == '^')) != 0)
+		pat++;
+	    while ((c = *pat++) != ']') {
+		c &= TRIM;
+		if (*pat == '-') {
+		    if (c <= namec && namec <= (pat[1] & TRIM))
+			match = 1;
+		    pat += 2;
+		} else if (c == namec)
+		    match = 1;
+		else if (c == 0)
+		    stderror(ERR_NAME | ERR_MISSING, ']');
 	    }
-	    if (rangec == 0)
-		stderror(ERR_NAME | ERR_MISSING, ']');
 	    if (match == negate_range)
-		return (0);
-	    break;
+		break;
+	    continue;
 	default:
-	    if ((patternc & TRIM) != stringc)
-		return (0);
-	    break;
-
+	    if ((patc & TRIM) != namec)
+		break;
+	    pat++;
+	    name++;
+	    continue;
 	}
+	if (nameNext != nameStart && (nameEnd == NULL || nameNext <= nameEnd)) {
+	    pat = patNext;
+	    name = nameNext;
+	    continue;
+	}
+	return 0;
     }
 }
 
