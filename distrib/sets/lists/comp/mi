@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2125 2017/04/20 13:11:03 joerg Exp $
+#	$NetBSD: mi,v 1.2126 2017/04/27 11:02:14 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5125,7 +5125,7 @@
 ./usr/share/man/cat3/archive_entry_free.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_gid.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_gname.0	comp-c-catman		.cat
-./usr/share/man/cat3/archive_entry_gname_w.0	comp-obsolete		obsolete
+./usr/share/man/cat3/archive_entry_gname_w.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_hardlink.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_hardlink_w.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_ino.0	comp-c-catman		.cat
@@ -5169,7 +5169,7 @@
 ./usr/share/man/cat3/archive_entry_set_nlink.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/archive_entry_set_pathname.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_set_perm.0	comp-c-catman		.cat
-./usr/share/man/cat3/archive_entry_set_rdev.0	comp-obsolete		obsolete
+./usr/share/man/cat3/archive_entry_set_rdev.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_set_rdevmajor.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_set_rdevminor.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_set_size.0	comp-c-catman		.cat
@@ -5186,7 +5186,7 @@
 ./usr/share/man/cat3/archive_entry_time.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_uid.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_uname.0	comp-c-catman		.cat
-./usr/share/man/cat3/archive_entry_uname_w.0	comp-obsolete		obsolete
+./usr/share/man/cat3/archive_entry_uname_w.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_unset_atime.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_unset_birthtime.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_entry_unset_ctime.0	comp-c-catman		.cat
@@ -5324,7 +5324,7 @@
 ./usr/share/man/cat3/archive_write_finish_entry.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_format.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_free.0	comp-c-catman		.cat
-./usr/share/man/cat3/archive_write_get_bytes_in_last_block.0	comp-obsolete		obsolete
+./usr/share/man/cat3/archive_write_get_bytes_in_last_block.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_get_bytes_per_block.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_header.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_new.0	comp-c-catman		.cat
@@ -12745,7 +12745,7 @@
 ./usr/share/man/html3/archive_entry_free.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_gid.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_gname.html	comp-c-htmlman		html
-./usr/share/man/html3/archive_entry_gname_w.html	comp-obsolete		obsolete
+./usr/share/man/html3/archive_entry_gname_w.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_hardlink.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_hardlink_w.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_ino.html	comp-c-htmlman		html
@@ -12789,7 +12789,7 @@
 ./usr/share/man/html3/archive_entry_set_nlink.html	comp-obsolete		obsolete
 ./usr/share/man/html3/archive_entry_set_pathname.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_set_perm.html	comp-c-htmlman		html
-./usr/share/man/html3/archive_entry_set_rdev.html	comp-obsolete		obsolete
+./usr/share/man/html3/archive_entry_set_rdev.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_set_rdevmajor.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_set_rdevminor.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_set_size.html	comp-c-htmlman		html
@@ -12806,7 +12806,7 @@
 ./usr/share/man/html3/archive_entry_time.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_uid.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_uname.html	comp-c-htmlman		html
-./usr/share/man/html3/archive_entry_uname_w.html	comp-obsolete		obsolete
+./usr/share/man/html3/archive_entry_uname_w.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_unset_atime.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_unset_birthtime.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_entry_unset_ctime.html	comp-c-htmlman		html
@@ -12944,7 +12944,7 @@
 ./usr/share/man/html3/archive_write_finish_entry.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_write_format.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_write_free.html	comp-c-htmlman		html
-./usr/share/man/html3/archive_write_get_bytes_in_last_block.html	comp-obsolete		obsolete
+./usr/share/man/html3/archive_write_get_bytes_in_last_block.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_write_get_bytes_per_block.html	comp-c-htmlman		html
 ./usr/share/man/html3/archive_write_header.html comp-c-htmlman		html
 ./usr/share/man/html3/archive_write_new.html	comp-c-htmlman		html
@@ -20166,7 +20166,7 @@
 ./usr/share/man/man3/archive_entry_free.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_gid.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_gname.3	comp-c-man		.man
-./usr/share/man/man3/archive_entry_gname_w.3	comp-obsolete		obsolete
+./usr/share/man/man3/archive_entry_gname_w.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_hardlink.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_hardlink_w.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_ino.3	comp-c-man		.man
@@ -20210,7 +20210,7 @@
 ./usr/share/man/man3/archive_entry_set_nlink.3	comp-obsolete		obsolete
 ./usr/share/man/man3/archive_entry_set_pathname.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_set_perm.3	comp-c-man		.man
-./usr/share/man/man3/archive_entry_set_rdev.3	comp-obsolete		obsolete
+./usr/share/man/man3/archive_entry_set_rdev.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_set_rdevmajor.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_set_rdevminor.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_set_size.3	comp-c-man		.man
@@ -20227,7 +20227,7 @@
 ./usr/share/man/man3/archive_entry_time.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_uid.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_uname.3	comp-c-man		.man
-./usr/share/man/man3/archive_entry_uname_w.3	comp-obsolete		obsolete
+./usr/share/man/man3/archive_entry_uname_w.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_unset_atime.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_unset_birthtime.3	comp-c-man		.man
 ./usr/share/man/man3/archive_entry_unset_ctime.3	comp-c-man		.man
@@ -20365,7 +20365,7 @@
 ./usr/share/man/man3/archive_write_finish_entry.3	comp-c-man		.man
 ./usr/share/man/man3/archive_write_format.3	comp-c-man		.man
 ./usr/share/man/man3/archive_write_free.3	comp-c-man		.man
-./usr/share/man/man3/archive_write_get_bytes_in_last_block.3	comp-obsolete		obsolete
+./usr/share/man/man3/archive_write_get_bytes_in_last_block.3	comp-c-man		.man
 ./usr/share/man/man3/archive_write_get_bytes_per_block.3	comp-c-man		.man
 ./usr/share/man/man3/archive_write_header.3	comp-c-man		.man
 ./usr/share/man/man3/archive_write_new.3	comp-c-man		.man
