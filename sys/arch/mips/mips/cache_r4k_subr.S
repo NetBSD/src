@@ -37,7 +37,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: cache_r4k_subr.S,v 1.2 2016/07/11 16:15:36 matt Exp $")
+RCSID("$NetBSD: cache_r4k_subr.S,v 1.3 2017/04/27 19:40:55 skrll Exp $")
 
 #include <mips/cache_r4k.h>
 
@@ -83,7 +83,7 @@ STATIC_LEAF_NOPROFILE(OPNAME(doop))
 	and	v1, a0, LINE_SIZE - 1		# get offset in cache line
 	xor	a0, v1				# align start to cache line
 	PTR_ADDU a1, v1				# add offset to size
-	PTR_ADDU a1, LINE_SIZE - 1		# size is now rouned
+	PTR_ADDU a1, LINE_SIZE - 1		# size is now rounded
 	PTR_SRL	t0, a1, LINE_SHIFT		# get # of cache lines
 
 	beqz	t0, 3f				# bail if t0 is 0 (no lines)
