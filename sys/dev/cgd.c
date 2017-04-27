@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114.4.1 2017/04/27 05:36:35 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.114.4.2 2017/04/27 11:58:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.2 2017/04/27 11:58:58 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -388,8 +388,7 @@ cgd_spawn(int unit, device_t *self)
 	if (config_attach_pseudo(cf) == NULL)
 		return NULL;
 
-	*self = device_lookup_acquire(&cgd_cd, unit);
-	if (self == NULL)
+	if ((*self = device_lookup_acquire(&cgd_cd, unit)) == NULL)
 		return NULL;
 	else {
 		/*
@@ -451,8 +450,8 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			    "unable to detach instance\n");
 			return error;
 		}
-	} else
-		device_release(self);
+	}
+	device_release(self);
 	return 0;
 }
 
@@ -788,8 +787,10 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case CGDIOCCLR:
 		if (DK_BUSY(&cs->sc_dksc, pmask))
-			return EBUSY;
-		return cgd_ioctl_clr(cs, l);
+			error = EBUSY;
+		else
+			error = cgd_ioctl_clr(cs, l);
+		break;
 	case DIOCGCACHE:
 	case DIOCCACHESYNC:
 		if (!DK_ATTACHED(dksc))
