@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.15 2017/04/05 20:15:49 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.16 2017/04/27 17:07:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.15 2017/04/05 20:15:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.16 2017/04/27 17:07:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_nvme_start;
 	ld->sc_dump = ld_nvme_dump;
 	ld->sc_ioctl = ld_nvme_ioctl;
-	ld->sc_flags = LDF_ENABLED;
+	ld->sc_flags = LDF_ENABLED | LDF_NO_RND;
 	ldattach(ld, "fcfs");
 }
 
