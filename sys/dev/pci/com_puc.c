@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.23 2014/05/23 14:16:39 msaitoh Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.24 2017/04/27 10:01:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.23 2014/05/23 14:16:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.24 2017/04/27 10:01:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,10 @@ com_puc_attach(device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(sc->sc_regs, aa->t, aa->h, aa->a);
 	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
 
-	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
-	    comintr, sc);
+	intrstr = pci_intr_string(aa->pc, aa->intrhandle, intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish_xname(aa->pc, aa->intrhandle,
+	    IPL_SERIAL, comintr, sc, device_xname(self));
 	if (psc->sc_ih == NULL) {
 		aprint_error("couldn't establish interrupt");
 		if (intrstr != NULL)
