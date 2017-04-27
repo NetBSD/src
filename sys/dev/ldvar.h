@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.29 2017/02/27 21:32:33 jdolecek Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.30 2017/04/27 17:07:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ struct ld_softc {
 /* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
 #define	LDF_DRAIN	0x020		/* maxqueuecnt has changed; drain */
+#define	LDF_NO_RND	0x040		/* do not attach rnd source */
 
 int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *, const char *);

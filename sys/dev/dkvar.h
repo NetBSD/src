@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.28 2016/12/22 13:42:14 mlelstv Exp $ */
+/* $NetBSD: dkvar.h,v 1.29 2017/04/27 17:07:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ struct dk_softc {
 #define DKF_KLABEL      0x00400000 /* keep label on close */
 #define DKF_VLABEL      0x00800000 /* label is valid */
 #define DKF_SLEEP       0x80000000 /* dk_start/dk_done may sleep */
+#define DKF_NO_RND	0x01000000 /* do not attach as rnd source */
 
 /* Mask of flags that dksubr.c understands, other flags are fair game */
 #define DK_FLAGMASK	0xffff0000

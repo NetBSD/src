@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.100 2017/02/27 21:32:33 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.101 2017/04/27 17:07:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.100 2017/02/27 21:32:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.101 2017/04/27 17:07:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,9 @@ ldattach(struct ld_softc *sc, const char *default_strategy)
 	    ld_fake_geometry(sc);
 
 	sc->sc_disksize512 = sc->sc_secperunit * sc->sc_secsize / DEV_BSIZE;
+
+	if (sc->sc_flags & LDF_NO_RND)
+		dksc->sc_flags |= DKF_NO_RND;
 
 	/* Attach dk and disk subsystems */
 	dk_attach(dksc);
