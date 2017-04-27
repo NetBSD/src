@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.7 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: devnull.c,v 1.7.8.1 2017/04/27 05:36:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7.8.1 2017/04/27 05:36:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
+#include <sys/localcount.h>
 
 #include <rump-sys/vfs.h>
 
@@ -46,6 +47,7 @@ static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);
 
 static struct cdevsw null_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = rump_devnullopen,
 	.d_close = nullclose,
 	.d_read = rump_devnullrw,

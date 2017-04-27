@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.98 2016/11/25 12:56:29 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.98.6.1 2017/04/27 05:36:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.98 2016/11/25 12:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.98.6.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.98 2016/11/25 12:56:29 skrll Exp $");
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
+#include <sys/localcount.h>
 
 #include <machine/vmparam.h>	/* PAGE_SIZE */
 
@@ -134,6 +135,7 @@ dev_type_read(ulptread);
 dev_type_ioctl(ulptioctl);
 
 const struct cdevsw ulpt_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ulptopen,
 	.d_close = ulptclose,
 	.d_read = ulptread,

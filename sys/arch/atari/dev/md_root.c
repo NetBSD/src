@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.33 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: md_root.c,v 1.33.54.1 2017/04/27 05:36:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.33 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.33.54.1 2017/04/27 05:36:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ loaddisk(struct md_conf *md, dev_t ld_dev, struct lwp *lwp)
 	struct disklabel	dl;
 	struct read_info	rs;
 
-	bdp = bdevsw_lookup(ld_dev);
+	bdp = bdevsw_lookup_acquire(ld_dev);
 	if (bdp == NULL)
 		return ENXIO;
 
@@ -182,6 +182,7 @@ loaddisk(struct md_conf *md, dev_t ld_dev, struct lwp *lwp)
 	 */
 	if ((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0) {
 		putiobuf(buf);
+		bdevsw_release(bdp);
 		return error;
 	}
 	if (bdp->d_ioctl(ld_dev, DIOCGDINFO, (void *)&dl, FREAD, lwp) == 0) {
@@ -199,6 +200,7 @@ loaddisk(struct md_conf *md, dev_t ld_dev, struct lwp *lwp)
 
 	bdp->d_close(ld_dev, FREAD | FNONBLOCK, 0, lwp);
 	putiobuf(buf);
+	bdevsw_release(bdp);
 	return error;
 }
 

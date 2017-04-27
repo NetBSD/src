@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.171 2017/04/12 06:43:56 martin Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.171.2.1 2017/04/27 05:36:38 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.171 2017/04/12 06:43:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.171.2.1 2017/04/27 05:36:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -505,6 +505,8 @@ spec_open(void *v)
 	u_int gen;
 	const char *name;
 	struct partinfo pi;
+	const struct bdevsw *bdev = NULL;
+	const struct cdevsw *cdev = NULL;
 	
 	l = curlwp;
 	vp = ap->a_vp;
@@ -554,8 +556,6 @@ spec_open(void *v)
 			vp->v_vflag |= VV_ISTTY;
 		VOP_UNLOCK(vp);
 		do {
-			const struct cdevsw *cdev;
-
 			gen = module_gen;
 			error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 			if (error != ENXIO)
@@ -563,7 +563,7 @@ spec_open(void *v)
 			
 			/* Check if we already have a valid driver */
 			mutex_enter(&device_lock);
-			cdev = cdevsw_lookup(dev);
+			cdev = cdevsw_lookup_acquire(dev);
 			mutex_exit(&device_lock);
 			if (cdev != NULL)
 				break;
@@ -603,8 +603,6 @@ spec_open(void *v)
 		sd->sd_bdevvp = vp;
 		mutex_exit(&device_lock);
 		do {
-			const struct bdevsw *bdev;
-
 			gen = module_gen;
 			error = bdev_open(dev, ap->a_mode, S_IFBLK, l);
 			if (error != ENXIO)
@@ -612,7 +610,7 @@ spec_open(void *v)
 
 			/* Check if we already have a valid driver */
 			mutex_enter(&device_lock);
-			bdev = bdevsw_lookup(dev);
+			bdev = bdevsw_lookup_acquire(dev);
 			mutex_exit(&device_lock);
 			if (bdev != NULL)
 				break;
@@ -656,15 +654,22 @@ spec_open(void *v)
 	mutex_exit(&device_lock);
 
 	if (cdev_type(dev) != D_DISK || error != 0)
-		return error;
+		goto out;
 
-	
 	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
 	error = (*ioctl)(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, curlwp);
 	if (error == 0)
 		uvm_vnp_setsize(vp, (voff_t)pi.pi_secsize * pi.pi_size);
 
-	return 0;
+	error = 0;
+
+ out:
+	if (cdev != NULL)
+		cdevsw_release(cdev);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
+
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vfsops.c,v 1.15 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: v7fs_vfsops.c,v 1.15.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.15 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vfsops.c,v 1.15.2.1 2017/04/27 05:36:37 pgoyette Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -84,6 +84,7 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct vnode *devvp = NULL;
 	int error = 0;
 	bool update = mp->mnt_flag & MNT_UPDATE;
+	const struct bdevsw *bdev;
 
 	DPRINTF("mnt_flag=%x %s\n", mp->mnt_flag, update ? "update" : "");
 
@@ -107,6 +108,7 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EINVAL;
 	}
 
+	bdev = NULL;
 	if (args->fspec != NULL) {
 		/* Look up the name and verify that it's sane. */
 		error = namei_simple_user(args->fspec,
@@ -121,7 +123,8 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+			else if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev))
+						== NULL)
 				error = ENXIO;
 		} else {
 			KDASSERT(v7fsmount);
@@ -164,12 +167,16 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (error) {
 		vrele(devvp);
+		if (bdev != NULL)
+			bdevsw_release(bdev);
 		return error;
 	}
 
 	if (!update) {
 		if ((error = v7fs_openfs(devvp, mp, l))) {
 			vrele(devvp);
+			if (bdev != NULL)
+				bdevsw_release(bdev);
 			return error;
 		}
 
@@ -177,6 +184,8 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			v7fs_closefs(devvp, mp);
 			VOP_UNLOCK(devvp);
 			vrele(devvp);
+			if (bdev != NULL)
+				bdevsw_release(bdev);
 			return error;
 		}
 		VOP_UNLOCK(devvp);
@@ -184,8 +193,11 @@ v7fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		/* XXX: r/w -> read only */
 	}
 
-	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
+	error =  set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
+	return error;
 }
 
 static int

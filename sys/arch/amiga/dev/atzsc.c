@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.43 2012/10/27 17:17:27 chs Exp $ */
+/*	$NetBSD: atzsc.c,v 1.43.28.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.43 2012/10/27 17:17:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atzsc.c,v 1.43.28.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,9 +388,11 @@ atzsc_dump(void)
 	int i;
 
 	for (i = 0; i < atzsc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&atzsc_cd, i);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&atzsc_cd, i);
+		if (sc != NULL) {
 			sbic_dump(sc);
+			device_release(sc->sc_dev);
+		}
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.88 2014/11/15 19:20:01 christos Exp $	*/
+/*	$NetBSD: dcm.c,v 1.88.10.1 2017/04/27 05:36:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.88 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.88.10.1 2017/04/27 05:36:32 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 
@@ -368,6 +368,9 @@ dcmattach(device_t parent, device_t self, void *aux)
 	int brd = device_unit(self);
 	int scode = da->da_scode;
 	int i, mbits, code;
+#ifdef KGDB
+	const struct cdevsw *cdev;
+#endif
 
 	sc->sc_dev = self;
 	sc->sc_flags = 0;
@@ -460,7 +463,7 @@ dcmattach(device_t parent, device_t self, void *aux)
 		aprint_normal("\n");
 
 #ifdef KGDB
-	if (cdevsw_lookup(kgdb_dev) == &dcm_cdevsw &&
+	if ((cdev = cdevsw_lookup_acquire(kgdb_dev)) == &dcm_cdevsw &&
 	    DCMBOARD(DCMUNIT(kgdb_dev)) == brd) {
 		if (dcmconsole == DCMUNIT(kgdb_dev))	/* XXX fixme */
 			kgdb_dev = NODEV; /* can't debug over console port */
@@ -484,6 +487,7 @@ dcmattach(device_t parent, device_t self, void *aux)
 		/* end could be replaced */
 #endif /* KGDB_CHEAT */
 	}
+	cdevsw_release(cdev);
 #endif /* KGDB */
 }
 

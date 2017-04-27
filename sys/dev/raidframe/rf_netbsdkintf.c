@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolecek Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.349.4.1 2017/04/27 05:36:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349.4.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349 2017/04/05 20:30:55 jdolece
 #include <sys/reboot.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/localcount.h>
 
 #include <prop/proplib.h>
 
@@ -218,6 +219,7 @@ static dev_type_dump(raiddump);
 static dev_type_size(raidsize);
 
 const struct bdevsw raid_bdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = raidopen,
 	.d_close = raidclose,
 	.d_strategy = raidstrategy,
@@ -229,6 +231,7 @@ const struct bdevsw raid_bdevsw = {
 };
 
 const struct cdevsw raid_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = raidopen,
 	.d_close = raidclose,
 	.d_read = raidread,
@@ -751,7 +754,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		goto out;
 	}
 
-	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
+	bdev = bdevsw_lookup_acquire(raidPtr->Disks[dumpto].dev);
 	if (bdev == NULL) {
 		error = ENXIO;
 		goto out;
@@ -759,7 +762,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 
 	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
 				blkno, va, nblk * raidPtr->bytesPerSector);
-	
+	bdevsw_release(bdev);
 out:
 	raidunlock(rs);
 		
@@ -3814,7 +3817,9 @@ static int
 raid_modcmd_init(void)
 {
 	int error;
+#ifdef _MODULE
 	int bmajor, cmajor;
+#endif
 
 	mutex_init(&raid_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_enter(&raid_lock);
@@ -3826,15 +3831,15 @@ raid_modcmd_init(void)
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 #endif
 
+#ifdef _MODULE
 	bmajor = cmajor = -1;
 	error = devsw_attach("raid", &raid_bdevsw, &bmajor,
 	    &raid_cdevsw, &cmajor);
-	if (error != 0 && error != EEXIST) {
+	if (error != 0) {
 		aprint_error("%s: devsw_attach failed %d\n", __func__, error);
 		mutex_exit(&raid_lock);
 		return error;
 	}
-#ifdef _MODULE
 	error = config_cfdriver_attach(&raid_cd);
 	if (error != 0) {
 		aprint_error("%s: config_cfdriver_attach failed %d\n",
@@ -3908,17 +3913,15 @@ raid_modcmd_fini(void)
 		mutex_exit(&raid_lock);
 		return error;
 	}
-#endif
 	error = devsw_detach(&raid_bdevsw, &raid_cdevsw);
 	if (error != 0) {
 		aprint_error("%s: cannot detach devsw\n",__func__);
-#ifdef _MODULE
 		config_cfdriver_attach(&raid_cd);
-#endif
 		config_cfattach_attach(raid_cd.cd_name, &raid_ca);
 		mutex_exit(&raid_lock);
 		return error;
 	}
+#endif
 	rf_BootRaidframe(false);
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 	rf_destroy_mutex2(rf_sparet_wait_mutex);

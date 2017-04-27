@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.44 2012/10/27 17:17:26 chs Exp $ */
+/*	$NetBSD: afsc.c,v 1.44.28.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.44 2012/10/27 17:17:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.44.28.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,9 +226,10 @@ afsc_dump(void)
 	int i;
 
 	for (i = 0; i < afsc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&afsc_cd, i);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&afsc_cd, i);
+		if (sc != NULL) {
 			siop_dump(sc);
+			device_release(sc->sc_dev);
 	}
 }
 #endif

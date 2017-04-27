@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2017/04/02 08:31:10 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.4.1 2017/04/27 05:36:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2017/04/02 08:31:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7.4.1 2017/04/27 05:36:32 pgoyette Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1765,6 +1765,7 @@ cpu_dump(void)
 	kcore_seg_t	*segp;
 	cpu_kcore_hdr_t	*cpuhdrp __unused;
 	const struct bdevsw *bdev;
+	int err;
 
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp)) / sizeof (long)];
@@ -1780,11 +1781,13 @@ cpu_dump(void)
 	 */
 	/* nothing for now */
 
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return (-1);
 
-	return (*bdev->d_dump)(dumpdev, dumplo, (void *)buf, dbtob(1));
+	err = (*bdev->d_dump)(dumpdev, dumplo, (void *)buf, dbtob(1));
+	bdevsw_release(bdev);
+	return err;
 }
 
 /*
@@ -1804,7 +1807,7 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return;
 
@@ -1814,6 +1817,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
@@ -1824,6 +1828,7 @@ dumpsys(void)
 	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("area unavailable\n");
 		return;
 	}
@@ -1864,6 +1869,7 @@ dumpsys(void)
 	case 0:		printf("succeeded\n");			break;
 	default:	printf("error %d\n", error);		break;
 	}
+	bdevsw_release(bdev);
 }
 
 void

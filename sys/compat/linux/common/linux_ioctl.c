@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.58 2014/03/23 06:03:38 dholland Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.58.20.1 2017/04/27 05:36:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.58 2014/03/23 06:03:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.58.20.1 2017/04/27 05:36:35 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -158,6 +158,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 		struct vnode *vp;
 		struct vattr va;
 		extern const struct cdevsw sequencer_cdevsw;
+		const struct cdevsw *cdev = NULL;
 
 		if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 			return EBADF;
@@ -167,18 +168,23 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 			vn_lock(vp, LK_SHARED | LK_RETRY);
 			error = VOP_GETATTR(vp, &va, l->l_cred);
 			VOP_UNLOCK(vp);
-			if (error == 0 &&
-			    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw)
-				is_sequencer = true;
+			if (error == 0) {
+				cdev = cdevsw_lookup_acquire(va.va_rdev);
+				if (cdev == &sequencer_cdevsw)
+					is_sequencer = true;
+			}
 		}
 		if (is_sequencer) {
-			error = oss_ioctl_sequencer(l, (const void *)LINUX_TO_OSS(uap),
-						   retval);
+			error = oss_ioctl_sequencer(l,
+					(const void *)LINUX_TO_OSS(uap),
+					retval);
 		}
 		else {
 			error = linux_ioctl_termios(l, uap, retval);
 		}
 		fd_putfile(SCARG(uap, fd));
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 #else
 		error = linux_ioctl_termios(l, uap, retval);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bppcsc.c,v 1.3 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: bppcsc.c,v 1.3.28.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.3 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.3.28.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,9 +208,11 @@ bppcsc_dump(void)
 	int i;
 
 	for (i = 0; i < bppcsc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&bppcsc_cd, i);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&bppcsc_cd, i);
+		if (sc != NULL) {
 			siop_dump(sc);
+			device_release(sc->sc_dev);
+		}
 	}
 }
 #endif

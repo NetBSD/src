@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.107 2017/04/17 08:32:00 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.107.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.107 2017/04/17 08:32:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.107.2.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +167,7 @@ ntfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int		err = 0, flags;
 	struct vnode	*devvp;
 	struct ntfs_args *args = data;
+	const struct bdevsw *bdev = NULL;
 
 	if (args == NULL)
 		return EINVAL;
@@ -213,7 +214,7 @@ ntfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		err = ENOTBLK;
 		goto fail;
 	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+	if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL) {
 		err = ENXIO;
 		goto fail;
 	}
@@ -285,10 +286,14 @@ ntfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * This code is common to root and non-root mounts
 	 */
 	(void)VFS_STATVFS(mp, &mp->mnt_stat);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return (err);
 
 fail:
 	vrele(devvp);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return (err);
 }
 

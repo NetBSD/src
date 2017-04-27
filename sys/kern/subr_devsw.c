@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.37 2017/04/25 08:46:38 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.37.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37 2017/04/25 08:46:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -85,6 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37 2017/04/25 08:46:38 pgoyette Exp
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/sdt.h>
+#include <sys/atomic.h>
+#include <sys/condvar.h>
+#include <sys/localcount.h>
+#include <sys/pserialize.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -107,7 +111,9 @@ static int bdevsw_attach(const struct bdevsw *, devmajor_t *);
 static int cdevsw_attach(const struct cdevsw *, devmajor_t *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
-kmutex_t device_lock;
+kmutex_t	device_lock;
+kcondvar_t	device_cv;
+pserialize_t	device_psz = NULL;
 
 void (*biodone_vfs)(buf_t *) = (void *)nullop;
 
@@ -118,6 +124,14 @@ devsw_init(void)
 	KASSERT(sys_bdevsws < MAXDEVSW - 1);
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&device_cv, "devsw");
+}
+
+void
+devsw_detach_init(void)
+{
+
+	device_psz = pserialize_create();
 }
 
 int
@@ -134,6 +148,17 @@ devsw_attach(const char *devname,
 		return (EINVAL);
 
 	mutex_enter(&device_lock);
+
+	if (bdev != NULL) {
+		KASSERTMSG(bdev->d_localcount != NULL,
+		    "%s: bdev %s has no d_localcount", __func__, devname);
+		KASSERTMSG(bdev->d_localcount != cdev->d_localcount,
+		    "%s: bdev and cdev for %s have same d_localcount",
+		    __func__, devname);
+	}
+	if (cdev != NULL)
+		KASSERTMSG(cdev->d_localcount != NULL,
+		    "%s: cdev %s has no d_localcount", __func__, devname);
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		conv = &devsw_conv[i];
@@ -160,8 +185,14 @@ devsw_attach(const char *devname,
 			goto fail;
 		}
 
-		if (bdev != NULL)
+		/* use membar_producer() to ensure visibility of the xdevsw */
+		if (bdev != NULL) {
+			localcount_init(bdev->d_localcount);
+			membar_producer();
 			bdevsw[*bmajor] = bdev;
+		}
+		localcount_init(cdev->d_localcount);
+		membar_producer();
 		cdevsw[*cmajor] = cdev;
 
 		mutex_exit(&device_lock);
@@ -269,6 +300,13 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	if (bdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
+	KASSERTMSG(devsw->d_localcount != NULL, "%s: bdev for major %d has "
+	    "no localcount", __func__, *devmajor);
+	localcount_init(devsw->d_localcount);
+
+	/* ensure visibility of the bdevsw */
+	membar_producer();
+
 	bdevsw[*devmajor] = devsw;
 
 	return (0);
@@ -316,33 +354,75 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
+	KASSERTMSG(devsw->d_localcount != NULL, "%s: cdev for major %d has "
+	    "no localcount", __func__, *devmajor);
+	localcount_init(devsw->d_localcount);
+
+	/* ensure visibility of the cdevsw */
+	membar_producer();
+
 	cdevsw[*devmajor] = devsw;
 
 	return (0);
 }
 
+/*
+ * First, look up both bdev and cdev indices, and remove the
+ * {b,c]devsw[] entries so no new references can be taken.  Then
+ * drain any existing references.
+ */
+
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int i;
+	int i, j;
 
 	KASSERT(mutex_owned(&device_lock));
 
+	i = max_bdevsws;
 	if (bdev != NULL) {
 		for (i = 0 ; i < max_bdevsws ; i++) {
 			if (bdevsw[i] != bdev)
 				continue;
-			bdevsw[i] = NULL;
+
+			KASSERTMSG(bdev->d_localcount != NULL,
+			    "%s: no bdev localcount for major %d", __func__, i);
 			break;
 		}
 	}
+	j = max_cdevsws;
 	if (cdev != NULL) {
-		for (i = 0 ; i < max_cdevsws ; i++) {
-			if (cdevsw[i] != cdev)
+		for (j = 0 ; j < max_cdevsws ; j++) {
+			if (cdevsw[j] != cdev)
 				continue;
-			cdevsw[i] = NULL;
+
+			KASSERTMSG(cdev->d_localcount != NULL,
+			    "%s: no cdev localcount for major %d", __func__, j);
 			break;
 		}
+	}
+	if (i < max_bdevsws)
+		bdevsw[i] = NULL;
+	if (j < max_cdevsws )
+		cdevsw[j] = NULL;
+
+	/* Wait for all current readers to finish with the devsw's */
+	pserialize_perform(device_psz);
+
+	/*
+	 * No new accessors can reach the bdev and cdev via the
+	 * {b,c}devsw[] arrays, so no new references can be
+	 * acquired.  Wait for all existing references to drain,
+	 * and then destroy.
+	 */
+
+	if (i < max_bdevsws && bdev->d_localcount != NULL) {
+		localcount_drain(bdev->d_localcount, &device_cv, &device_lock);
+		localcount_fini(bdev->d_localcount);
+	}
+	if (j < max_cdevsws && cdev->d_localcount != NULL ) {
+		localcount_drain(cdev->d_localcount, &device_cv, &device_lock);
+		localcount_fini(cdev->d_localcount);
 	}
 }
 
@@ -372,7 +452,52 @@ bdevsw_lookup(dev_t dev)
 	if (bmajor < 0 || bmajor >= max_bdevsws)
 		return (NULL);
 
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
+
 	return (bdevsw[bmajor]);
+}
+
+const struct bdevsw *
+bdevsw_lookup_acquire(dev_t dev)
+{
+	devmajor_t bmajor;
+	const struct bdevsw *bdev = NULL;
+	int s;
+
+	if (dev == NODEV)
+		return (NULL);
+	bmajor = major(dev);
+	if (bmajor < 0 || bmajor >= max_bdevsws)
+		return (NULL);
+
+	/* Start a read transaction to block localcount_drain() */
+	s = pserialize_read_enter();
+
+	/* Get the struct bdevsw pointer */
+	bdev = bdevsw[bmajor];
+	if (bdev == NULL)
+		goto out;
+
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
+
+	/* If the devsw is not statically linked, acquire a reference */
+	if (bdev->d_localcount != NULL)
+		localcount_acquire(bdev->d_localcount);
+
+ out:	pserialize_read_exit(s);
+
+	return bdev;
+}
+
+void
+bdevsw_release(const struct bdevsw *bd)
+{
+
+	KASSERT(bd != NULL);
+	if (bd->d_localcount != NULL)
+		localcount_release(bd->d_localcount, &device_cv, &device_lock);
 }
 
 /*
@@ -391,7 +516,52 @@ cdevsw_lookup(dev_t dev)
 	if (cmajor < 0 || cmajor >= max_cdevsws)
 		return (NULL);
 
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
+
 	return (cdevsw[cmajor]);
+}
+
+const struct cdevsw *
+cdevsw_lookup_acquire(dev_t dev)
+{
+	devmajor_t cmajor;
+	const struct cdevsw *cdev = NULL;
+	int s;
+
+	if (dev == NODEV)
+		return (NULL);
+	cmajor = major(dev);
+	if (cmajor < 0 || cmajor >= max_cdevsws)
+		return (NULL);
+
+	/* Start a read transaction to block localcount_drain() */
+	s = pserialize_read_enter();
+
+	/* Get the struct bdevsw pointer */
+	cdev = cdevsw[cmajor];
+	if (cdev == NULL)
+		goto out;
+
+	/* Wait for the content of the struct cdevsw to become visible */
+	membar_datadep_consumer();
+
+	/* If the devsw is not statically linked, acquire a reference */
+	if (cdev->d_localcount != NULL)
+		localcount_acquire(cdev->d_localcount);
+
+ out:	pserialize_read_exit(s);
+
+	return cdev;
+}
+
+void
+cdevsw_release(const struct cdevsw *cd)
+{
+
+	KASSERT(cd != NULL);
+	if (cd->d_localcount != NULL)
+		localcount_release(cd->d_localcount, &device_cv, &device_lock);
 }
 
 /*
@@ -707,7 +877,7 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	 * with attach/detach.
 	 */
 	mutex_enter(&device_lock);
-	d = bdevsw_lookup(dev);
+	d = bdevsw_lookup_acquire(dev);
 	mutex_exit(&device_lock);
 	if (d == NULL)
 		return ENXIO;
@@ -715,6 +885,7 @@ bdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	bdevsw_release(d);
 
 	return rv;
 }
@@ -725,12 +896,13 @@ bdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	const struct bdevsw *d;
 	int rv, mpflag;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_close)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	bdevsw_release(d);
 
 	return rv;
 }
@@ -746,7 +918,7 @@ bdev_strategy(struct buf *bp)
 
 	SDT_PROBE1(io, kernel, , start, bp);
 
-	if ((d = bdevsw_lookup(bp->b_dev)) == NULL) {
+	if ((d = bdevsw_lookup_acquire(bp->b_dev)) == NULL) {
 		bp->b_error = ENXIO;
 		bp->b_resid = bp->b_bcount;
 		biodone_vfs(bp); /* biodone() iff vfs present */
@@ -756,6 +928,7 @@ bdev_strategy(struct buf *bp)
 	DEV_LOCK(d);
 	(*d->d_strategy)(bp);
 	DEV_UNLOCK(d);
+	bdevsw_release(d);
 }
 
 int
@@ -764,12 +937,13 @@ bdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	const struct bdevsw *d;
 	int rv, mpflag;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_ioctl)(dev, cmd, data, flag, l);
 	DEV_UNLOCK(d);
+	bdevsw_release(d);
 
 	return rv;
 }
@@ -799,20 +973,30 @@ int
 bdev_flags(dev_t dev)
 {
 	const struct bdevsw *d;
+	int rv;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return 0;
-	return d->d_flag & ~D_TYPEMASK;
+
+	rv = d->d_flag & ~D_TYPEMASK;
+	bdevsw_release(d);
+
+	return rv;
 }
 
 int
 bdev_type(dev_t dev)
 {
 	const struct bdevsw *d;
+	int rv;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return D_OTHER;
-	return d->d_flag & D_TYPEMASK;
+
+	rv = d->d_flag & D_TYPEMASK;
+	bdevsw_release(d);
+
+	return rv;
 }
 
 int
@@ -821,9 +1005,13 @@ bdev_size(dev_t dev)
 	const struct bdevsw *d;
 	int rv, mpflag = 0;
 
-	if ((d = bdevsw_lookup(dev)) == NULL ||
-	    d->d_psize == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return -1;
+
+	if (d->d_psize == NULL) {
+		bdevsw_release(d);
+		return -1;
+	}
 
 	/*
 	 * Don't to try lock the device if we're dumping.
@@ -834,7 +1022,7 @@ bdev_size(dev_t dev)
 	rv = (*d->d_psize)(dev);
 	if ((boothowto & RB_DUMP) == 0)
 		DEV_UNLOCK(d);
-
+	bdevsw_release(d);
 	return rv;
 }
 
@@ -844,12 +1032,13 @@ bdev_discard(dev_t dev, off_t pos, off_t len)
 	const struct bdevsw *d;
 	int rv, mpflag;
 
-	if ((d = bdevsw_lookup(dev)) == NULL)
+	if ((d = bdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_discard)(dev, pos, len);
 	DEV_UNLOCK(d);
+	bdevsw_release(d);
 
 	return rv;
 }
@@ -865,7 +1054,7 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	 * with attach/detach.
 	 */
 	mutex_enter(&device_lock);
-	d = cdevsw_lookup(dev);
+	d = cdevsw_lookup_acquire(dev);
 	mutex_exit(&device_lock);
 	if (d == NULL)
 		return ENXIO;
@@ -873,6 +1062,7 @@ cdev_open(dev_t dev, int flag, int devtype, lwp_t *l)
 	DEV_LOCK(d);
 	rv = (*d->d_open)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -883,12 +1073,13 @@ cdev_close(dev_t dev, int flag, int devtype, lwp_t *l)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_close)(dev, flag, devtype, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -899,12 +1090,13 @@ cdev_read(dev_t dev, struct uio *uio, int flag)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_read)(dev, uio, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -915,12 +1107,13 @@ cdev_write(dev_t dev, struct uio *uio, int flag)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_write)(dev, uio, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -931,12 +1124,13 @@ cdev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_ioctl)(dev, cmd, data, flag, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -947,27 +1141,32 @@ cdev_stop(struct tty *tp, int flag)
 	const struct cdevsw *d;
 	int mpflag;
 
-	if ((d = cdevsw_lookup(tp->t_dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(tp->t_dev)) == NULL)
 		return;
 
 	DEV_LOCK(d);
 	(*d->d_stop)(tp, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 }
 
 struct tty *
 cdev_tty(dev_t dev)
 {
 	const struct cdevsw *d;
+	struct tty *rv;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return NULL;
 
 	/* XXX Check if necessary. */
 	if (d->d_tty == NULL)
-		return NULL;
+		rv = NULL;
+	else
+		rv= (*d->d_tty)(dev);
+	cdevsw_release(d);
 
-	return (*d->d_tty)(dev);
+	return rv;
 }
 
 int
@@ -976,12 +1175,13 @@ cdev_poll(dev_t dev, int flag, lwp_t *l)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return POLLERR;
 
 	DEV_LOCK(d);
 	rv = (*d->d_poll)(dev, flag, l);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -993,12 +1193,13 @@ cdev_mmap(dev_t dev, off_t off, int flag)
 	paddr_t rv;
 	int mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return (paddr_t)-1LL;
 
 	DEV_LOCK(d);
 	rv = (*d->d_mmap)(dev, off, flag);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -1009,12 +1210,13 @@ cdev_kqfilter(dev_t dev, struct knote *kn)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_kqfilter)(dev, kn);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -1025,12 +1227,13 @@ cdev_discard(dev_t dev, off_t pos, off_t len)
 	const struct cdevsw *d;
 	int rv, mpflag;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return ENXIO;
 
 	DEV_LOCK(d);
 	rv = (*d->d_discard)(dev, pos, len);
 	DEV_UNLOCK(d);
+	cdevsw_release(d);
 
 	return rv;
 }
@@ -1039,20 +1242,30 @@ int
 cdev_flags(dev_t dev)
 {
 	const struct cdevsw *d;
+	int rv;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return 0;
-	return d->d_flag & ~D_TYPEMASK;
+
+	rv = d->d_flag & ~D_TYPEMASK;
+	cdevsw_release(d);
+
+	return rv;
 }
 
 int
 cdev_type(dev_t dev)
 {
 	const struct cdevsw *d;
+	int rv;
 
-	if ((d = cdevsw_lookup(dev)) == NULL)
+	if ((d = cdevsw_lookup_acquire(dev)) == NULL)
 		return D_OTHER;
-	return d->d_flag & D_TYPEMASK;
+
+	rv = d->d_flag & D_TYPEMASK;
+	cdevsw_release(d);
+
+	return rv;
 }
 
 /*

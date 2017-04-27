@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.274 2016/10/01 04:42:54 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.274.6.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.274 2016/10/01 04:42:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.274.6.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3042,9 +3042,10 @@ tty_try_xonxoff(struct tty *tp, unsigned char c)
 	if (c == tp->t_cc[VSTOP] && tp->t_cc[VSTOP] != _POSIX_VDISABLE) {
 	    if ((tp->t_state & TS_TTSTOP) == 0) {
 		tp->t_state |= TS_TTSTOP;
-		cdev = cdevsw_lookup(tp->t_dev);
+		cdev = cdevsw_lookup_acquire(tp->t_dev);
 		if (cdev != NULL)
 			(*cdev->d_stop)(tp, 0);
+		cdevsw_release(cdev);
 	    }
 	    return 0;
 	}

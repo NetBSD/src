@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.28 2017/02/23 23:13:27 nat Exp $ */
+/* $NetBSD: pad.c,v 1.28.4.1 2017/04/27 05:36:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28 2017/02/23 23:13:27 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28.4.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28 2017/02/23 23:13:27 nat Exp $");
 #include <sys/module.h>
 #include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/localcount.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -132,6 +133,7 @@ dev_type_close(pad_close);
 dev_type_read(pad_read);
 
 const struct cdevsw pad_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = pad_open,
 	.d_close = pad_close,
 	.d_read = pad_read,

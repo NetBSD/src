@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.138 2016/12/10 22:36:28 christos Exp $ */
+/* $NetBSD: wskbd.c,v 1.138.6.1 2017/04/27 05:36:36 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.138 2016/12/10 22:36:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.138.6.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.138 2016/12/10 22:36:28 christos Exp $")
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -299,6 +300,7 @@ dev_type_poll(wskbdpoll);
 dev_type_kqfilter(wskbdkqfilter);
 
 const struct cdevsw wskbd_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = wskbdopen,
 	.d_close = wskbdclose,
 	.d_read = wskbdread,

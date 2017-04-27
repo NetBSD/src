@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.8.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.8.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include "ioconf.h"
 
@@ -112,6 +113,7 @@ dev_type_ioctl(ptyioctl);
 dev_type_tty(ptytty);
 
 const struct cdevsw ptc_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptcopen,
 	.d_close = ptcclose,
 	.d_read = ptcread,
@@ -127,6 +129,7 @@ const struct cdevsw ptc_cdevsw = {
 };
 
 const struct cdevsw pts_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptsopen,
 	.d_close = ptsclose,
 	.d_read = ptsread,
@@ -148,6 +151,7 @@ const struct cdevsw pts_cdevsw = {
  */
 
 const struct cdevsw ptc_ultrix_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptcopen,
 	.d_close = ptcclose,
 	.d_read = ptcread,
@@ -163,6 +167,7 @@ const struct cdevsw ptc_ultrix_cdevsw = {
 };
 
 const struct cdevsw pts_ultrix_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptsopen,
 	.d_close = ptsclose,
 	.d_read = ptsread,
@@ -1043,6 +1048,12 @@ ptytty(dev_t dev)
 int
 ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+/*
+ * XXX	We really should use device_lookup_acquire(...) to lock the
+ * XXX	device before fetching its softc pointer. Acquiring the
+ * XXX	cdevsw prevents the driver from being detached, but doesn't
+ * XXX	prevent the specific instance/unit from disappearing.
+ */
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 	const struct cdevsw *cdev;
@@ -1088,14 +1099,15 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 #endif
 
-	cdev = cdevsw_lookup(dev);
-	if (cdev != NULL && cdev->d_open == ptcopen)
+	cdev = cdevsw_lookup_acquire(dev);
+	if (cdev != NULL && cdev->d_open == ptcopen) {
 		switch (cmd) {
 #ifndef NO_DEV_PTM
 		case TIOCGRANTPT:
-			if ((error = pty_getmp(l, &mp)) != 0)
-				return error;
-			return pty_grant_slave(l, dev, mp);
+			if ((error = pty_getmp(l, &mp)) == 0)
+				error = pty_grant_slave(l, dev, mp);
+			cdevsw_release(cdev);
+			return error;
 #endif
 
 		case TIOCGPGRP:
@@ -1104,6 +1116,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * in that case, tp must be the controlling terminal.
 			 */
 			*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : 0;
+			cdevsw_release(cdev);
 			return 0;
 
 		case TIOCPKT:
@@ -1113,6 +1126,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				pti->pt_flags |= PF_PKT;
 			} else
 				pti->pt_flags &= ~PF_PKT;
+			cdevsw_release(cdev);
 			return 0;
 
 		case TIOCUCNTL:
@@ -1122,6 +1136,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				pti->pt_flags |= PF_UCNTL;
 			} else
 				pti->pt_flags &= ~PF_UCNTL;
+			cdevsw_release(cdev);
 			return 0;
 
 		case TIOCREMOTE:
@@ -1132,6 +1147,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_spin_enter(&tty_lock);
 			ttyflush(tp, FREAD|FWRITE);
 			mutex_spin_exit(&tty_lock);
+			cdevsw_release(cdev);
 			return 0;
 
 		case TIOCSETP:
@@ -1155,15 +1171,18 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			tp->t_state |= TS_SIGINFO;
 			ttysig(tp, TTYSIG_PG1, sig);
 			mutex_spin_exit(&tty_lock);
+			error = 0;
+			cdevsw_release(cdev);
 			return 0;
 
 		case FIONREAD:
 			mutex_spin_enter(&tty_lock);
 			*(int *)data = tp->t_outq.c_cc;
 			mutex_spin_exit(&tty_lock);
+			cdevsw_release(cdev);
 			return 0;
 		}
-
+	}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error == EPASSTHROUGH)
 		 error = ttioctl(tp, cmd, data, flag, l);
@@ -1174,6 +1193,7 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				pti->pt_ucntl = (u_char)cmd;
 				ptcwakeup(tp, FREAD);
 			}
+			cdevsw_release(cdev);
 			return 0;
 		}
 	}
@@ -1215,5 +1235,6 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			ptcwakeup(tp, FREAD);
 		}
 	}
+	cdevsw_release(cdev);
 	return error;
 }

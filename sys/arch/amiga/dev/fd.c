@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.96 2015/04/26 15:15:19 mlelstv Exp $ */
+/*	$NetBSD: fd.c,v 1.96.8.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96.8.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,10 +478,14 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	if (FDPART(dev) >= FDMAXPARTS)
 		return(ENXIO);
 
-	if ((sc = getsoftc(fd_cd, FDUNIT(dev))) == NULL)
+	if ((sc = getsoftc(fd_cd, FDUNIT(dev))) == NULL) {
+		device_release(sc->sc_dev);
 		return(ENXIO);
-	if (sc->flags & FDF_NOTRACK0)
+	}
+	if (sc->flags & FDF_NOTRACK0) {
+		device_release(sc->sc_dev)
 		return(ENXIO);
+	}
 	if (sc->cachep == NULL)
 		sc->cachep = malloc(MAXTRKSZ, M_DEVBUF, M_WAITOK);
 
@@ -538,6 +542,7 @@ done:
 	 */
 	if (error && wasopen == 0)
 		sc->openpart = -1;
+	device_release(sc->sc_dev);
 	return(error);
 }
 
@@ -561,6 +566,7 @@ fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	}
 	sc->openpart = -1;
 	splx(s);
+	device_release(sc->sc_dev);
 	return(0);
 }
 
@@ -572,51 +578,66 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	sc = getsoftc(fd_cd, FDUNIT(dev));
 
-	if ((sc->flags & FDF_HAVELABEL) == 0)
+	if ((sc->flags & FDF_HAVELABEL) == 0) {
+		device_release(sc->sc_dev);
 		return(EBADF);
-
+	}
 	error = disk_ioctl(&sc->dkdev, dev, cmd, addr, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(sc->sc_dev);
 		return error;
-
+	}
+	error = 0;
 	switch (cmd) {
 	case DIOCSBAD:
-		return(EINVAL);
+		error = EINVAL;
+		break;
 	case DIOCSRETRIES:
 		if (*(int *)addr < 0)
-			return(EINVAL);
-		sc->retries = *(int *)addr;
-		return(0);
+			error = EINVAL;
+		else
+			sc->retries = *(int *)addr;
+		break;
 	case DIOCSSTEP:
-		if (*(int *)addr < FDSTEPDELAY)
-			return(EINVAL);
-		sc->dkdev.dk_label->d_trkseek = sc->stepdelay = *(int *)addr;
-		return(0);
+		if (*(int *)addr < FDSTEPDELAY) {
+			error = EINVAL;
+		else
+			sc->dkdev.dk_label->d_trkseek = sc->stepdelay =
+			    *(int *)addr;
+		break;
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
-			return(EBADF);
-		return(fdsetdisklabel(sc, (struct disklabel *)addr));
+			error = EBADF;
+		else
+			error = fdsetdisklabel(sc, (struct disklabel *)addr);
+		break;
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
-			return(EBADF);
-		if ((error = fdsetdisklabel(sc, (struct disklabel *)addr)) != 0)
-			return(error);
-		wlab = sc->wlabel;
-		sc->wlabel = 1;
-		error = fdputdisklabel(sc, dev);
-		sc->wlabel = wlab;
-		return(error);
+			error = EBADF;
+		else {
+			error = fdsetdisklabel(sc, (struct disklabel *)addr));
+			if (error == 0) {
+				wlab = sc->wlabel;
+				sc->wlabel = 1;
+				error = fdputdisklabel(sc, dev);
+				sc->wlabel = wlab;
+			}
+		}
+		break;
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			return(EBADF);
-		sc->wlabel = *(int *)addr;
-		return(0);
+			error = EBADF;
+		else
+			sc->wlabel = *(int *)addr;
+		break;
 	case DIOCGDEFLABEL:
 		fdgetdefaultlabel(sc, (struct disklabel *)addr, FDPART(dev));
-		return(0);
+		break;
 	default:
-		return(ENOTTY);
+		error = ENOTTY;
 	}
+	device_release(sc->sc_dev);
+	return error;
 }
 
 int
@@ -694,10 +715,12 @@ fdstrategy(struct buf *bp)
 	bufq_put(sc->bufq, bp);
 	fdstart(sc);
 	splx(s);
+	device_release(sc->sc_dev);
 	return;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+	device_release(sc->sc_dev);
 }
 
 /*
@@ -1623,7 +1646,7 @@ fdfindwork(int unit)
 			i = -1;
 			continue;
 		}
-		if ((sc = device_lookup_private(&fd_cd, i)) == NULL)
+		if ((sc = device_lookup_private_acquire(&fd_cd, i)) == NULL)
 			continue;
 
 		/*
@@ -1644,8 +1667,10 @@ fdfindwork(int unit)
 			 * if we now have DMA unit must have needed
 			 * flushing, quit
 			 */
-			if (fdc_indma)
+			if (fdc_indma) {
+				device_release(sc->sc_dev);
 				return;
+			}
 		}
 		/*
 		 * if we have no start unit and the current unit has
@@ -1653,9 +1678,13 @@ fdfindwork(int unit)
 		 */
 		if (ssc == NULL && bufq_peek(sc->bufq) != NULL)
 			ssc = sc;
+		else
+			device_release(sc->sc_dev);
 	}
-	if (ssc)
+	if (ssc) {
 		fdstart(ssc);
+		device_release(ssc->sc_dev);
+	}
 }
 
 /*
@@ -1682,6 +1711,7 @@ fdminphys(struct buf *bp)
 	printf(" after %ld\n", bp->b_bcount);
 #endif
 	minphys(bp);
+	device_release(sc->sc_dev);
 }
 
 /*

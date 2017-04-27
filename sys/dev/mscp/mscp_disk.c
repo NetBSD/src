@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.89 2016/03/29 04:55:53 mlelstv Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.89.8.1 2017/04/27 05:36:35 pgoyette Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89 2016/03/29 04:55:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.89.8.1 2017/04/27 05:36:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1129,6 +1129,9 @@ ra_putonline(dev_t dev, struct ra_softc *ra)
 {
 	struct	disklabel *dl;
 	const char *msg;
+#if NRACD
+	const struct cdevsw *cdev;
+#endif
 
 	if (rx_putonline(ra) != MSCP_DONE)
 		return MSCP_FAILED;
@@ -1144,10 +1147,15 @@ ra_putonline(dev_t dev, struct ra_softc *ra)
 		ra->ra_state = DK_OPEN;
 	}
 #if NRACD
-	else if (cdevsw_lookup(dev) == &racd_cdevsw) {
-		dl->d_partitions[0].p_offset = 0;
-		dl->d_partitions[0].p_size = dl->d_secperunit;
-		dl->d_partitions[0].p_fstype = FS_ISO9660;
+	else {
+		cdev = cdevsw_lookup_acquire(dev);
+		if (cdev == &racd_cdevsw) {
+			dl->d_partitions[0].p_offset = 0;
+			dl->d_partitions[0].p_size = dl->d_secperunit;
+			dl->d_partitions[0].p_fstype = FS_ISO9660;
+		}
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 	}
 #endif /* NRACD */
 	else {
@@ -1159,7 +1167,14 @@ ra_putonline(dev_t dev, struct ra_softc *ra)
 	return MSCP_DONE;
 }
 
-
+/* XXX
+ *	This code needs to be restructured to deal with the localcount(9)
+ *	referencing counting on {b,c}devsw.  Since we're returning the
+ *	softc address here, we need to use cdevsw_lookup_acquire() to
+ *	keep a reference to the device.  So all callers need to be able
+ *	to determine which device's cdevsw needs to be released later on.
+ * XXX
+ */
 static inline struct ra_softc *
 mscp_device_lookup(dev_t dev)
 {

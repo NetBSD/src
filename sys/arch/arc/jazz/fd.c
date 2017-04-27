@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.8.1 2017/04/27 05:36:32 pgoyette Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.8.1 2017/04/27 05:36:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,8 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 void
 fdstrategy(struct buf *bp)
 {
-	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(bp->b_dev));
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(bp->b_dev));
 	int sz;
 	int s;
 
@@ -491,6 +492,7 @@ fdstrategy(struct buf *bp)
 	}
 #endif
 	splx(s);
+	device_release(fd->sc_dev);
 	return;
 
  done:
@@ -651,32 +653,39 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct fd_softc *fd;
 	const struct fd_type *type;
 
-	fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+	fd = device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 	if (fd == NULL)
 		return ENXIO;
 
 	type = fd_dev_to_type(fd, dev);
-	if (type == NULL)
+	if (type == NULL) {
+		device_release(fd->sc_dev);
 		return ENXIO;
+	}
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
-	    memcmp(fd->sc_type, type, sizeof(*type)))
+	    memcmp(fd->sc_type, type, sizeof(*type))) {
+		device_release(fd->sc_dev);
 		return EBUSY;
+	}
 
 	fd->sc_type_copy = *type;
 	fd->sc_type = &fd->sc_type_copy;
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
+	device_release(fd->sc_dev);
 	return 0;
 }
 
 int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
+	device_release(fd->sc_dev);
 	return 0;
 }
 
@@ -1078,10 +1087,12 @@ fdcretry(struct fdc_softc *fdc)
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct fd_softc *fd = device_lookup_private(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 	struct disklabel buffer;
 	int error;
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		memset(&buffer, 0, sizeof(buffer));
@@ -1094,13 +1105,13 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
-		return 0;
+		break;
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		/* XXX do something */
-		return 0;
+		break;
 
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
@@ -1109,18 +1120,17 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		error = setdisklabel(&buffer, (struct disklabel *)addr,
 		    0, NULL);
 		if (error)
-			return error;
+			break;
 
 		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
-		return error;
+		break;
 
 	default:
-		return ENOTTY;
+		error = ENOTTY;
 	}
 
-#ifdef DIAGNOSTIC
-	panic("%s: impossible", __func__);
-#endif
+	device_release(fd->sc_dev;
+	return error;
 }
 
 /*

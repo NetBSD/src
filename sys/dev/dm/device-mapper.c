@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.38 2016/07/11 11:31:50 msaitoh Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.38.8.1 2017/04/27 05:36:35 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -77,7 +78,9 @@ static void dm_attach(device_t, device_t, void *);
 static int dm_match(device_t, cfdata_t, void *);
 
 /* ***Variable-definitions*** */
+
 const struct bdevsw dm_bdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = dmopen,
 	.d_close = dmclose,
 	.d_strategy = dmstrategy,
@@ -89,6 +92,7 @@ const struct bdevsw dm_bdevsw = {
 };
 
 const struct cdevsw dm_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = dmopen,
 	.d_close = dmclose,
 	.d_read = dmread,

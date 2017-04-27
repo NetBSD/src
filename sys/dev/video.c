@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.32 2014/07/25 08:10:35 dholland Exp $ */
+/* $NetBSD: video.c,v 1.32.18.1 2017/04/27 05:36:35 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.32 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.32.18.1 2017/04/27 05:36:35 pgoyette Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1611,7 +1611,7 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	DPRINTF(("videoopen\n"));
 
-	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
+	sc = device_private(device_lookup_acquire(&video_cd, VIDEOUNIT(dev)));
 	if (sc == NULL) {
 		DPRINTF(("videoopen: failed to get softc for unit %d\n",
 			VIDEOUNIT(dev)));
@@ -1620,6 +1620,7 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	
 	if (sc->sc_dying) {
 		DPRINTF(("videoopen: dying\n"));
+		device_release(sc->sc_dev);
 		return EIO;
 	}
 
@@ -1629,8 +1630,10 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 		 flags, sc, sc->hw_dev));
 
 	hw = sc->hw_if;
-	if (hw == NULL)
+	if (hw == NULL) {
+		device_release(sc->sc_dev);
 		return ENXIO;
+	}
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
 
@@ -1638,8 +1641,10 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	if (hw->open != NULL) {
 		err = hw->open(sc->hw_softc, flags);
-		if (err)
+		if (err) {
+			device_release(sc->sc_dev);
 			return err;
+		}
 	}
 
 	/* set up input stream.  TODO: check flags to determine if
@@ -1648,9 +1653,12 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	if (hw->get_format != NULL) {
 		err = hw->get_format(sc->hw_softc, &vs->vs_format);
-		if (err != 0)
+		if (err != 0) {
+			device_release(sc->sc_dev);
 			return err;
+		}
 	}
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -1661,15 +1669,17 @@ videoclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct video_softc *sc;
 	const struct video_hw_if *hw;
 
-	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
+	sc = device_private(device_lookup_acquire(&video_cd, VIDEOUNIT(dev)));
 	if (sc == NULL)
 		return ENXIO;
 
 	DPRINTF(("videoclose: sc=%p\n", sc));
 
 	hw = sc->hw_if;
-	if (hw == NULL)
+	if (hw == NULL) {
+		device_release(sc->sc_dev);
 		return ENXIO;
+	}
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
 
@@ -1684,6 +1694,7 @@ videoclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	sc->sc_open = 0;
 	sc->sc_opencnt--;
 	
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -1699,12 +1710,14 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	size_t len;
 	off_t offset;
 
-	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
+	sc = device_private(device_lookup_acquire(&video_cd, VIDEOUNIT(dev)));
 	if (sc == NULL)
 		return ENXIO;
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		device_release(sc->sc_dev);
 		return EIO;
+	}
 
 	vs = &sc->sc_stream_in;
 
@@ -1713,13 +1726,17 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 		err = video_stream_setup_bufs(vs,
 					      VIDEO_STREAM_METHOD_READ,
 					      VIDEO_NUM_BUFS);
-		if (err != 0)
-			return err;
+		if (err == 0)
+			err = video_stream_on(sc, vs->vs_type);
 
-		err = video_stream_on(sc, vs->vs_type);
-		if (err != 0)
+		if (err != 0) {
+			device_release(sc->sc_dev);
+			return err;
+		}
+
 			return err;
 	} else if (vs->vs_method != VIDEO_STREAM_METHOD_READ) {
+		device_release(sc->sc_dev);
 		return EBUSY;
 	}
 
@@ -1729,6 +1746,7 @@ retry:
 	if (SIMPLEQ_EMPTY(&vs->vs_egress)) {
 		if (vs->vs_flags & O_NONBLOCK) {
 			mutex_exit(&vs->vs_lock);
+			device_release(sc->sc_dev);
 			return EAGAIN;
 		}
 		
@@ -1738,6 +1756,7 @@ retry:
 					  &vs->vs_lock);
 			if (err != 0) {
 				mutex_exit(&vs->vs_lock);
+				device_release(sc->sc_dev);
 				return EINTR;
 			}
 		}
@@ -1762,8 +1781,10 @@ retry:
 
 	if (scatter_io_init(&vs->vs_data, offset, len, &sio)) {
 		err = scatter_io_uiomove(&sio, uio);
-		if (err == EFAULT)
+		if (err == EFAULT) {
+			device_release(sc->sc_dev);
 			return EFAULT;
+		}
 		vs->vs_bytesread += (len - sio.sio_resid);
 	} else {
 		DPRINTF(("video: invalid read\n"));
@@ -1780,6 +1801,7 @@ retry:
 		vs->vs_bytesread = 0;
 	}
 
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -1861,19 +1883,23 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	v4l2_std_id *stdid;
 	enum v4l2_buf_type *typep;
 	int *ip;
+	int error;
 #ifndef _LP64
 	struct v4l2_buffer bufspace;
-	int error;
 #endif
 
-	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
+	sc = device_private(device_lookup_acquire(&video_cd, VIDEOUNIT(dev)));
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		device_release(sc->sc_dev);
 		return EIO;
+	}
 
 	hw = sc->hw_if;
-	if (hw == NULL)
+	if (hw == NULL) {
+		device_release(sc->sc_dev);
 		return ENXIO;
+	}
 
 	switch (cmd) {
 	case VIDIOC_QUERYCAP:
@@ -1896,128 +1922,164 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (hw->set_audio != NULL && hw->get_audio != NULL &&
 		    hw->enum_audio != NULL)
 			cap->capabilities |= V4L2_CAP_AUDIO;
-		return 0;
+		break;
 	case VIDIOC_ENUM_FMT:
 		/* TODO: for now, just enumerate one default format */
 		fmtdesc = data;
 		if (fmtdesc->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return EINVAL;
-		return video_enum_format(sc, fmtdesc);
+			error = EINVAL;
+		else
+			error = video_enum_format(sc, fmtdesc);
+		break;
 	case VIDIOC_G_FMT:
 		fmt = data;
-		return video_get_format(sc, fmt);
+		error = video_get_format(sc, fmt);
+		break;
 	case VIDIOC_S_FMT:
 		fmt = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return video_set_format(sc, fmt);
+			error = EPERM;
+		else
+			error = video_set_format(sc, fmt);
+		break;
 	case VIDIOC_TRY_FMT:
 		fmt = data;
-		return video_try_format(sc, fmt);
+		error = video_try_format(sc, fmt);
+		break;
 	case VIDIOC_ENUMSTD:
 		std = data;
-		return video_enum_standard(sc, std);
+		error = video_enum_standard(sc, std);
+		break;
 	case VIDIOC_G_STD:
 		stdid = data;
-		return video_get_standard(sc, stdid);
+		error = video_get_standard(sc, stdid);
+		break;
 	case VIDIOC_S_STD:
 		stdid = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return video_set_standard(sc, *stdid);
+			error = EPERM;
+		else
+			error = video_set_standard(sc, *stdid);
+		break;
 	case VIDIOC_ENUMINPUT:
 		input = data;
-		return video_enum_input(sc, input);
+		error = video_enum_input(sc, input);
+		break;
 	case VIDIOC_G_INPUT:
 		ip = data;
-		return video_get_input(sc, ip);
+		error = video_get_input(sc, ip);
+		break;
 	case VIDIOC_S_INPUT:
 		ip = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return video_set_input(sc, *ip);
+			error = EPERM;
+		else
+			error = video_set_input(sc, *ip);
+		break;
 	case VIDIOC_ENUMAUDIO:
 		audio = data;
-		return video_enum_audio(sc, audio);
+		error = video_enum_audio(sc, audio);
+		break;
 	case VIDIOC_G_AUDIO:
 		audio = data;
-		return video_get_audio(sc, audio);
+		error = video_get_audio(sc, audio);
+		break;
 	case VIDIOC_S_AUDIO:
 		audio = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return video_set_audio(sc, audio);
+			error = EPERM;
+		else
+			error = video_set_audio(sc, audio);
+		break;
 	case VIDIOC_G_TUNER:
 		tuner = data;
-		return video_get_tuner(sc, tuner);
+		error = video_get_tuner(sc, tuner);
+		break;
 	case VIDIOC_S_TUNER:
 		tuner = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return video_set_tuner(sc, tuner);
+			error = EPERM;
+		else
+			error = video_set_tuner(sc, tuner);
+		break;
 	case VIDIOC_G_FREQUENCY:
 		freq = data;
-		return video_get_frequency(sc, freq);
+		error = video_get_frequency(sc, freq);
+		break;
 	case VIDIOC_S_FREQUENCY:
 		freq = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return video_set_frequency(sc, freq);
+			error = EPERM;
+		else
+			error = video_set_frequency(sc, freq);
+		break;
 	case VIDIOC_QUERYCTRL:
 		query = data;
-		return (video_query_control(sc, query));
+		error = (video_query_control(sc, query));
+		break;
 	case VIDIOC_G_CTRL:
 		control = data;
-		return (video_get_control(sc, control));
+		error = (video_get_control(sc, control));
+		break;
 	case VIDIOC_S_CTRL:
 		control = data;
 		if ((flag & FWRITE) == 0)
-			return EPERM;
-		return (video_set_control(sc, control));
+			error = EPERM;
+		else
+			error = (video_set_control(sc, control));
+		break;
 	case VIDIOC_REQBUFS:
 		reqbufs = data;
-		return (video_request_bufs(sc, reqbufs));
+		error = (video_request_bufs(sc, reqbufs));
+		break;
 	case VIDIOC_QUERYBUF:
 		buf = data;
-		return video_query_buf(sc, buf);
+		error = video_query_buf(sc, buf);
+		break;
 #ifndef _LP64
 	case VIDIOC_QUERYBUF50:
 		buf50tobuf(data, buf = &bufspace);
-		if ((error = video_query_buf(sc, buf)) != 0)
-			return error;
-		buftobuf50(data, buf);
-		return 0;
+		if ((error = video_query_buf(sc, buf)) == 0)
+			buftobuf50(data, buf);
+		break;
 #endif
 	case VIDIOC_QBUF:
 		buf = data;
-		return video_queue_buf(sc, buf);
+		error = video_queue_buf(sc, buf);
+		break;
 #ifndef _LP64
 	case VIDIOC_QBUF50:
 		buf50tobuf(data, buf = &bufspace);
-		return video_queue_buf(sc, buf);
+		error = video_queue_buf(sc, buf);
+		break;
 #endif
 	case VIDIOC_DQBUF:
 		buf = data;
-		return video_dequeue_buf(sc, buf);
+		error = video_dequeue_buf(sc, buf);
+		break;
 #ifndef _LP64
 	case VIDIOC_DQBUF50:
 		buf50tobuf(data, buf = &bufspace);
-		if ((error = video_dequeue_buf(sc, buf)) != 0)
-			return error;
-		buftobuf50(data, buf);
-		return 0;
+		if ((error = video_dequeue_buf(sc, buf)) == 0)
+			buftobuf50(data, buf);
+		break;
 #endif
 	case VIDIOC_STREAMON:
 		typep = data;
-		return video_stream_on(sc, *typep);
+		error = video_stream_on(sc, *typep);
+		break;
 	case VIDIOC_STREAMOFF:
 		typep = data;
-		return video_stream_off(sc, *typep);
+		error = video_stream_off(sc, *typep);
+		break;
 	default:
 		DPRINTF(("videoioctl: invalid cmd %s (%lx)\n",
 			 video_ioctl_str(cmd), cmd));
-		return EINVAL;
+		error = EINVAL;
+		break;
 	}
+	device_release(sc->sc_dev);
+	return error;
 }
 
 #ifdef VIDEO_DEBUG
@@ -2209,23 +2271,28 @@ videopoll(dev_t dev, int events, struct lwp *l)
 	struct video_stream *vs;
 	int err, revents = 0;
 
-	sc = device_private(device_lookup(&video_cd, VIDEOUNIT(dev)));
+	sc = device_private(device_lookup_acquire(&video_cd, VIDEOUNIT(dev)));
 	vs = &sc->sc_stream_in;
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		device_release(sc->sc_dev);
 		return (POLLHUP);
+	}
 
 	/* userspace has chosen read() method */
 	if (vs->vs_method == VIDEO_STREAM_METHOD_NONE) {
 		err = video_stream_setup_bufs(vs,
 					      VIDEO_STREAM_METHOD_READ,
 					      VIDEO_NUM_BUFS);
-		if (err != 0)
+		if (err != 0) {
+			device_release(sc->sc_dev);
 			return POLLERR;
-
+		}
 		err = video_stream_on(sc, vs->vs_type);
-		if (err != 0)
+		if (err != 0) {
+			device_release(sc->sc_dev);
 			return POLLERR;
+		}
 	}
 
 	mutex_enter(&vs->vs_lock);
@@ -2235,6 +2302,7 @@ videopoll(dev_t dev, int events, struct lwp *l)
 		selrecord(l, &vs->vs_sel);
 	mutex_exit(&vs->vs_lock);
 
+	device_release(sc->sc_dev);
 	return (revents);
 }
 
@@ -2244,15 +2312,19 @@ videommap(dev_t dev, off_t off, int prot)
 {
 	struct video_softc *sc;
 	struct video_stream *vs;
-	/* paddr_t pa; */
+	paddr_t pa;
 
-	sc = device_lookup_private(&video_cd, VIDEOUNIT(dev));
-	if (sc->sc_dying)
+	sc = device_private(device_lookup_acquire(&video_cd, VIDEOUNIT(dev)));
+	if (sc->sc_dying) {
+		device_release(sc->sc_dev);
 		return -1;
+	}
 
 	vs = &sc->sc_stream_in;
 	
-	return scatter_buf_map(&vs->vs_data, off);
+	pa = scatter_buf_map(&vs->vs_data, off);
+	device_release(sc->sc_dev);
+	return pa;
 }
 
 

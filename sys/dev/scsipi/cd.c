@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.340 2017/04/08 13:50:23 mlelstv Exp $	*/
+/*	$NetBSD: cd.c,v 1.340.4.1 2017/04/27 05:36:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340 2017/04/08 13:50:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340.4.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.340 2017/04/08 13:50:23 mlelstv Exp $");
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/rndsource.h>
+#include <sys/localcount.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -208,6 +209,7 @@ static dev_type_dump(cddump);
 static dev_type_size(cdsize);
 
 const struct bdevsw cd_bdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = cdopen,
 	.d_close = cdclose,
 	.d_strategy = cdstrategy,
@@ -219,6 +221,7 @@ const struct bdevsw cd_bdevsw = {
 };
 
 const struct cdevsw cd_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = cdopen,
 	.d_close = cdclose,
 	.d_read = cdread,

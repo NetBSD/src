@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.14 2017/04/12 20:05:54 christos Exp $
+#	$NetBSD: files.kern,v 1.14.2.1 2017/04/27 05:36:37 pgoyette Exp $
 
 #
 # kernel sources
@@ -121,6 +121,7 @@ defparam opt_kmem.h			KMEM_GUARD_DEPTH
 file	kern/subr_kmem.c		kern
 file	kern/subr_kobj.c		kern
 file	kern/subr_kobj_vfs.c		kern
+file	kern/subr_localcount.c		kern
 file	kern/subr_lockdebug.c		kern
 file	kern/subr_log.c			kern
 file	kern/subr_lwp_specificdata.c	kern
