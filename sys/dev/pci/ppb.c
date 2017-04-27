@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.60 2017/04/26 08:00:03 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.61 2017/04/27 04:44:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.60 2017/04/26 08:00:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.61 2017/04/27 04:44:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,10 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.60 2017/04/26 08:00:03 msaitoh Exp $");
 #include <dev/pci/ppbvar.h>
 #include <dev/pci/pcidevs.h>
 
-#define	PCIE_SLCSR_NOTIFY_MASK					\
+#define	PCIE_SLCSR_ENABLE_MASK					\
 	(PCIE_SLCSR_ABE | PCIE_SLCSR_PFE | PCIE_SLCSR_MSE |	\
 	 PCIE_SLCSR_PDE | PCIE_SLCSR_CCE | PCIE_SLCSR_HPE |	\
 	 PCIE_SLCSR_DLLSCE)
+
+#define	PCIE_SLCSR_STATCHG_MASK					\
+	(PCIE_SLCSR_ABP | PCIE_SLCSR_PFD | PCIE_SLCSR_MSC |	\
+	 PCIE_SLCSR_PDC | PCIE_SLCSR_CC | PCIE_SLCSR_LACS)
 
 static const char pcie_linkspeed_strings[4][5] = {
 	"1.25", "2.5", "5.0", "8.0",
@@ -241,14 +245,24 @@ ppbattach(device_t parent, device_t self, void *aux)
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_pciecapoff, &reg) && (reg & PCIE_XCAP_SI)) {
+		/*
+		 * First, disable all interrupts because BIOS might
+		 * enable them.
+		 */
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    sc->sc_pciecapoff + PCIE_SLCSR);
+		if (reg & PCIE_SLCSR_ENABLE_MASK) {
+			reg &= ~PCIE_SLCSR_ENABLE_MASK;
+			pci_conf_write(sc->sc_pc, sc->sc_tag,
+			    sc->sc_pciecapoff + PCIE_SLCSR, reg);
+		}
 #ifdef PPB_USEINTR
 #if 0
 		/*
 		 * XXX Initialize workqueue or something else for
 		 * HotPlug support.
 		 */
-#endif
-
+#endif	
 		if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0) == 0)
 			sc->sc_intrhand = pci_intr_establish_xname(pc,
 			    sc->sc_pihp[0], IPL_BIO, ppb_intr, sc,
@@ -268,17 +282,24 @@ ppbattach(device_t parent, device_t self, void *aux)
 			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
 
 			/* Enable interrupt. */
+			val = 0;
 			slcap = pci_conf_read(pc, pa->pa_tag,
 			    sc->sc_pciecapoff + PCIE_SLCAP);
-			val = 0;
 			if (slcap & PCIE_SLCAP_ABP)
 				val |= PCIE_SLCSR_ABE;
 			if (slcap & PCIE_SLCAP_PCP)
 				val |= PCIE_SLCSR_PFE;
 			if (slcap & PCIE_SLCAP_MSP)
 				val |= PCIE_SLCSR_MSE;
+#if 0
+			/*
+			 * XXX Disable for a while because setting
+			 * PCIE_SLCSR_CCE makes break device access on
+			 * some environment.
+			 */
 			if ((slcap & PCIE_SLCAP_NCCS) == 0)
 				val |= PCIE_SLCSR_CCE;
+#endif
 			/* Attention indicator off by default */
 			if (slcap & PCIE_SLCAP_AIP) {
 				val |= __SHIFTIN(PCIE_SLCSR_IND_OFF,
@@ -308,16 +329,6 @@ ppbattach(device_t parent, device_t self, void *aux)
 			slcsr = val;
 			pci_conf_write(pc, pa->pa_tag,
 			    sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
-		}
-#else
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    sc->sc_pciecapoff + PCIE_SLCSR);
-		if (reg & PCIE_SLCSR_NOTIFY_MASK) {
-			aprint_debug_dev(self,
-			    "disabling notification events\n");
-			reg &= ~PCIE_SLCSR_NOTIFY_MASK;
-			pci_conf_write(sc->sc_pc, sc->sc_tag,
-			    sc->sc_pciecapoff + PCIE_SLCSR, reg);
 		}
 #endif /* PPB_USEINTR */
 	}
@@ -389,7 +400,7 @@ ppbdetach(device_t self, int flags)
 	/* Clear any pending events and disable interrupt */
 	slcsr = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	      sc->sc_pciecapoff + PCIE_SLCSR);
-	slcsr &= ~PCIE_SLCSR_NOTIFY_MASK;
+	slcsr &= ~PCIE_SLCSR_ENABLE_MASK;
 	pci_conf_write(sc->sc_pc, sc->sc_tag,
 		sc->sc_pciecapoff + PCIE_SLCSR, slcsr);
 
@@ -448,13 +459,21 @@ ppb_intr(void *arg)
 	device_t dev = sc->sc_dev;
 	pcireg_t reg;
 
-	sc->sc_ev_intr.ev_count++;
 	reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    sc->sc_pciecapoff + PCIE_SLCSR);
 
+	/*
+	 * Not me. This check is only required for INTx.
+	 * ppb_intr() would be spilted int ppb_intr_legacy() and ppb_intr_msi()
+	 */
+	if ((reg & PCIE_SLCSR_STATCHG_MASK) == 0)
+		return 0;
+		
 	/* Clear interrupts. */
 	pci_conf_write(sc->sc_pc, sc->sc_tag,
 	    sc->sc_pciecapoff + PCIE_SLCSR, reg);
+
+	sc->sc_ev_intr.ev_count++;
 
 	/* Attention Button Pressed */
 	if (reg & PCIE_SLCSR_ABP) {
@@ -503,6 +522,6 @@ ppb_intr(void *arg)
 			device_printf(dev, "Data Link Layer State Changed\n");
 	}
 
-	return 0;
+	return 1;
 }
 #endif /* PPB_USEINTR */
