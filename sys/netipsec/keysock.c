@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.53 2017/04/21 08:38:18 ozaki-r Exp $	*/
+/*	$NetBSD: keysock.c,v 1.54 2017/04/27 09:43:52 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.53 2017/04/21 08:38:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.54 2017/04/27 09:43:52 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -297,7 +297,7 @@ key_sendup_mbuf(struct socket *so, struct mbuf *m,
 	int sbprio = 0; /* XXX should be a parameter */
 
 	KASSERT(m != NULL);
-	KASSERT(so != NULL);
+	KASSERT(so != NULL || target != KEY_SENDUP_ONE);
 
 	/*
 	 * RFC 2367 says ACQUIRE and other kernel-generated messages
