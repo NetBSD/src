@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.78.6.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.78.6.2 2017/04/27 23:18:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.2 2017/04/27 23:18:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -294,7 +294,7 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		sc = device_private(self);
 		if (sc == NULL) {
 			mutex_exit(&md_device_lock);
-			device_release(sc->sc_dev);
+			device_release(self);
 			return ENOMEM;
 		}
 	}
@@ -450,7 +450,6 @@ mdstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto done;
 	}
-	mutex_enter(&sc->sc_lock);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -497,8 +496,6 @@ mdstrategy(struct buf *bp)
 		bp->b_error = EIO;
 		break;
 	}
-	mutex_exit(&sc->sc_lock);
-
 	mutex_exit(&sc->sc_lock);
 
  done:
