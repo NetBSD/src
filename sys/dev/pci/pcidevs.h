@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1278 2017/04/19 06:54:14 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1279 2017/04/27 03:57:37 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1286 2017/04/19 06:53:52 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1287 2017/04/27 03:57:17 msaitoh Exp
  */
 
 /*
@@ -5639,8 +5639,20 @@
 #define	PCI_PRODUCT_PEAK_PCAN	0x0001		/* PCAN CAN Controller */
 
 /* Pericom Semiconductor products */
-#define	PCI_PRODUCT_PERICOM_P17C9X110	0xe110		/* P17C9X110 PCIe to PCI Bridge */
-#define	PCI_PRODUCT_PERICOM_P17C9X	0xe111		/* P17C9X PCIe to PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C21P100	0x01a7		/* PI7C21P100 PCIX-PCIX */
+#define	PCI_PRODUCT_PERICOM_PI7C9X20303UL	0x0303		/* PI7C9X20303UL 3port 3lane PCIe switch */
+#define	PCI_PRODUCT_PERICOM_PI7C9X20505GP	0x0505		/* PI7C9X20505GP 5port 5lane PCIe switch */
+#define	PCI_PRODUCT_PERICOM_PI7C9X20508GP	0x0508		/* PI7C9X20508GP 5port 8lane PCIe switch */
+#define	PCI_PRODUCT_PERICOM_PI7C9X2G404SL	0x2404		/* PI7C9X2G404SL 4port 4lane PCIe Gen2 switch */
+#define	PCI_PRODUCT_PERICOM_PI7C8140A	0x8140		/* PI7C8140A 2 port PCI-PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C8148	0x8148		/* PI7C8148 Asynchronous 2 port PCI-PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C8152	0x8152		/* PI7C8152 2 port PCI-PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C8154	0x8154		/* PI7C8154 Asynchronous 2 port PCI-PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C9X20303SL	0xa303		/* PI7C9X20303SL 3port 3lane PCIe switch */
+#define	PCI_PRODUCT_PERICOM_PI7C9X20404SL	0xa404		/* PI7C9X20303SL 4port 4lane PCIe switch */
+#define	PCI_PRODUCT_PERICOM_PI7C9X110	0xe110		/* PI7C9X110 PCIe to PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C9X111SL	0xe111		/* PI7C9X111SL PCIe to PCI Reverse Bridge */
+#define	PCI_PRODUCT_PERICOM_PI7C9X130	0xe130		/* PI7C9X130 PCIE-PCIX Reverse Bridge */
 
 /* Phobos products */
 #define	PCI_PRODUCT_PHOBOS_P1000	0x1000		/* P1000 Gigabit Ethernet */
