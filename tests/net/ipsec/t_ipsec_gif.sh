@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_gif.sh,v 1.1 2017/04/27 06:52:45 ozaki-r Exp $
+#	$NetBSD: t_ipsec_gif.sh,v 1.2 2017/04/27 10:17:12 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -61,14 +61,15 @@ make_gif_pktstr()
 
 test_ipsec4_gif()
 {
-	local proto=$1
-	local algo=$2
+	local mode=$1
+	local proto=$2
+	local algo=$3
 	local ip_local=10.0.1.2
 	local ip_gw_local=10.0.1.1
-	local ip_gw_local_tun=20.0.0.1
-	local ip_gw_local_gif=20.1.0.1
-	local ip_gw_remote_gif=20.1.0.2
-	local ip_gw_remote_tun=20.0.0.2
+	local ip_gwlo_tun=20.0.0.1
+	local ip_gwlo_gif=20.1.0.1
+	local ip_gwre_gif=20.1.0.2
+	local ip_gwre_tun=20.0.0.2
 	local ip_gw_remote=10.0.2.1
 	local ip_remote=10.0.2.2
 	local subnet_local=10.0.1.0
@@ -103,27 +104,27 @@ test_ipsec4_gif()
 
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_local/24
-	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_local_tun/24
+	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gwlo_tun/24
 	atf_check -s exit:0 rump.ifconfig gif0 create
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    tunnel $ip_gw_local_tun $ip_gw_remote_tun
+	    tunnel $ip_gwlo_tun $ip_gwre_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    inet $ip_gw_local_gif/32 $ip_gw_remote_gif
+	    inet $ip_gwlo_gif/32 $ip_gwre_gif
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
 	atf_check -s exit:0 -o ignore \
-	    rump.route -n add -net $subnet_remote $ip_gw_remote_gif
+	    rump.route -n add -net $subnet_remote $ip_gwre_gif
 
 	export RUMP_SERVER=$SOCK_TUN_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_gw_remote/24
-	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gw_remote_tun/24
+	atf_check -s exit:0 rump.ifconfig shmif1 $ip_gwre_tun/24
 	atf_check -s exit:0 rump.ifconfig gif0 create
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    tunnel $ip_gw_remote_tun $ip_gw_local_tun
+	    tunnel $ip_gwre_tun $ip_gwlo_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    inet $ip_gw_remote_gif/32 $ip_gw_local_gif
+	    inet $ip_gwre_gif/32 $ip_gwlo_gif
 	atf_check -s exit:0 rump.sysctl -q -w net.inet.ip.forwarding=1
 	atf_check -s exit:0 -o ignore \
-	    rump.route -n add -net $subnet_local $ip_gw_local_gif
+	    rump.route -n add -net $subnet_local $ip_gwlo_gif
 
 	export RUMP_SERVER=$SOCK_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 $ip_remote/24
@@ -138,74 +139,114 @@ test_ipsec4_gif()
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
 
 	extract_new_packets $BUS_TUNNEL > $outfile
-	str="$ip_gw_local_tun > $ip_gw_remote_tun:"
+	str="$ip_gwlo_tun > $ip_gwre_tun:"
 	str="$str $ip_local > $ip_remote: ICMP echo request,"
 	str="$str .+ \(ipip-proto-4\)"
 	atf_check -s exit:0 -o match:"$str" cat $outfile
-	str="$ip_gw_remote_tun > $ip_gw_local_tun:"
+	str="$ip_gwre_tun > $ip_gwlo_tun:"
 	str="$str $ip_remote > $ip_local: ICMP echo reply,"
 	str="$str .+ \(ipip-proto-4\)"
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 
-	export RUMP_SERVER=$SOCK_TUN_LOCAL
-	# from https://www.netbsd.org/docs/network/ipsec/
-	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tun $ip_gw_remote_tun $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tun $ip_gw_local_tun $proto 10001 $opt $algo $key;
-	spdadd $subnet_local/24 $subnet_remote/24 any -P out ipsec
-	    $proto/tunnel/$ip_gw_local_tun-$ip_gw_remote_tun/require;
-	spdadd $subnet_remote/24 $subnet_local/24 any -P in ipsec
-	    $proto/tunnel/$ip_gw_remote_tun-$ip_gw_local_tun/require;
-	EOF
-	$DEBUG && cat $tmpfile
-	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_local_tun $ip_gw_remote_tun" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_remote_tun $ip_gw_local_tun" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+	if [ $mode = tunnel ]; then
+		export RUMP_SERVER=$SOCK_TUN_LOCAL
+		# from https://www.netbsd.org/docs/network/ipsec/
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $subnet_local/24 $subnet_remote/24 any -P out ipsec
+		    $proto/tunnel/$ip_gwlo_tun-$ip_gwre_tun/require;
+		spdadd $subnet_remote/24 $subnet_local/24 any -P in ipsec
+		    $proto/tunnel/$ip_gwre_tun-$ip_gwlo_tun/require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+		$DEBUG && $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
+		    $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
+		    $HIJACKING setkey -D
+		# TODO: more detail checks
 
-	export RUMP_SERVER=$SOCK_TUN_REMOTE
-	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tun $ip_gw_remote_tun $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tun $ip_gw_local_tun $proto 10001 $opt $algo $key;
-	spdadd $subnet_remote/24 $subnet_local/24 any -P out ipsec
-	    $proto/tunnel/$ip_gw_remote_tun-$ip_gw_local_tun/require;
-	spdadd $subnet_local/24 $subnet_remote/24 any -P in ipsec
-	    $proto/tunnel/$ip_gw_local_tun-$ip_gw_remote_tun/require;
-	EOF
-	$DEBUG && cat $tmpfile
-	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
-	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_local_tun $ip_gw_remote_tun" \
-	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_remote_tun $ip_gw_local_tun" \
-	    $HIJACKING setkey -D
-	# TODO: more detail checks
+		export RUMP_SERVER=$SOCK_TUN_REMOTE
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $subnet_remote/24 $subnet_local/24 any -P out ipsec
+		    $proto/tunnel/$ip_gwre_tun-$ip_gwlo_tun/require;
+		spdadd $subnet_local/24 $subnet_remote/24 any -P in ipsec
+		    $proto/tunnel/$ip_gwlo_tun-$ip_gwre_tun/require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+		$DEBUG && $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
+		    $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
+		    $HIJACKING setkey -D
+		# TODO: more detail checks
+	else # transport mode
+		export RUMP_SERVER=$SOCK_TUN_LOCAL
+		# from https://www.netbsd.org/docs/network/ipsec/
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $ip_gwlo_tun/32 $ip_gwre_tun/32 any -P out ipsec
+		    $proto/transport//require;
+		spdadd $ip_gwre_tun/32 $ip_gwlo_tun/32 any -P in ipsec
+		    $proto/transport//require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+		$DEBUG && $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
+		    $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
+		    $HIJACKING setkey -D
+		# TODO: more detail checks
+
+		export RUMP_SERVER=$SOCK_TUN_REMOTE
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $ip_gwre_tun/32 $ip_gwlo_tun/32 any -P out ipsec
+		    $proto/transport//require;
+		spdadd $ip_gwlo_tun/32 $ip_gwre_tun/32 any -P in ipsec
+		    $proto/transport//require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+		$DEBUG && $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
+		    $HIJACKING setkey -D
+		atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
+		    $HIJACKING setkey -D
+		# TODO: more detail checks
+	fi
 
 	export RUMP_SERVER=$SOCK_LOCAL
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -n -w 3 $ip_remote
 
 	extract_new_packets $BUS_TUNNEL > $outfile
-	str=$(make_gif_pktstr $ip_gw_local_tun $ip_gw_remote_tun \
+	str=$(make_gif_pktstr $ip_gwlo_tun $ip_gwre_tun \
 	    $ip_local $ip_remote $proto ipv4)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
-	str=$(make_gif_pktstr $ip_gw_remote_tun $ip_gw_local_tun \
+	str=$(make_gif_pktstr $ip_gwre_tun $ip_gwlo_tun \
 	    $ip_remote $ip_local $proto ipv4)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 }
 
 test_ipsec6_gif()
 {
-	local proto=$1
-	local algo=$2
+	local mode=$1
+	local proto=$2
+	local algo=$3
 	local ip_local=fd00:1::2
 	local ip_gw_local=fd00:1::1
-	local ip_gw_local_tun=fc00::1
-	local ip_gw_local_gif=fc01::1
-	local ip_gw_remote_gif=fc01::2
-	local ip_gw_remote_tun=fc00::2
+	local ip_gwlo_tun=fc00::1
+	local ip_gwlo_gif=fc01::1
+	local ip_gwre_gif=fc01::2
+	local ip_gwre_tun=fc00::2
 	local ip_gw_remote=fd00:2::1
 	local ip_remote=fd00:2::2
 	local subnet_local=fd00:1::
@@ -240,27 +281,27 @@ test_ipsec6_gif()
 
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_local/64
-	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_local_tun/64
+	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gwlo_tun/64
 	atf_check -s exit:0 rump.ifconfig gif0 create
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    tunnel $ip_gw_local_tun $ip_gw_remote_tun
+	    tunnel $ip_gwlo_tun $ip_gwre_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    inet6 $ip_gw_local_gif/128 $ip_gw_remote_gif
+	    inet6 $ip_gwlo_gif/128 $ip_gwre_gif
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
 	atf_check -s exit:0 -o ignore \
-	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gw_local_gif
+	    rump.route -n add -inet6 -net $subnet_remote/64 $ip_gwlo_gif
 
 	export RUMP_SERVER=$SOCK_TUN_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_gw_remote/64
-	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gw_remote_tun/64
+	atf_check -s exit:0 rump.ifconfig shmif1 inet6 $ip_gwre_tun/64
 	atf_check -s exit:0 rump.ifconfig gif0 create
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    tunnel $ip_gw_remote_tun $ip_gw_local_tun
+	    tunnel $ip_gwre_tun $ip_gwlo_tun
 	atf_check -s exit:0 rump.ifconfig gif0 \
-	    inet6 $ip_gw_remote_gif/128 $ip_gw_local_gif
+	    inet6 $ip_gwre_gif/128 $ip_gwlo_gif
 	atf_check -s exit:0 rump.sysctl -q -w net.inet6.ip6.forwarding=1
 	atf_check -s exit:0 -o ignore \
-	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gw_remote_gif
+	    rump.route -n add -inet6 -net $subnet_local/64 $ip_gwre_gif
 
 	export RUMP_SERVER=$SOCK_REMOTE
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip_remote
@@ -275,47 +316,78 @@ test_ipsec6_gif()
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote
 
 	extract_new_packets $BUS_TUNNEL > $outfile
-	str="$ip_gw_local_tun > $ip_gw_remote_tun:"
+	str="$ip_gwlo_tun > $ip_gwre_tun:"
 	str="$str $ip_local > $ip_remote: ICMP6, echo request"
 	atf_check -s exit:0 -o match:"$str" cat $outfile
-	str="$ip_gw_remote_tun > $ip_gw_local_tun:"
+	str="$ip_gwre_tun > $ip_gwlo_tun:"
 	str="$str $ip_remote > $ip_local: ICMP6, echo reply,"
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 
+	if [ $mode = tunnel ]; then
+		export RUMP_SERVER=$SOCK_TUN_LOCAL
+		# from https://www.netbsd.org/docs/network/ipsec/
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $subnet_local/64 $subnet_remote/64 any -P out ipsec
+		    $proto/tunnel/$ip_gwlo_tun-$ip_gwre_tun/require;
+		spdadd $subnet_remote/64 $subnet_local/64 any -P in ipsec
+		    $proto/tunnel/$ip_gwre_tun-$ip_gwlo_tun/require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+
+		export RUMP_SERVER=$SOCK_TUN_REMOTE
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $subnet_remote/64 $subnet_local/64 any -P out ipsec
+		    $proto/tunnel/$ip_gwre_tun-$ip_gwlo_tun/require;
+		spdadd $subnet_local/64 $subnet_remote/64 any -P in ipsec
+		    $proto/tunnel/$ip_gwlo_tun-$ip_gwre_tun/require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+	else # transport mode
+		export RUMP_SERVER=$SOCK_TUN_LOCAL
+		# from https://www.netbsd.org/docs/network/ipsec/
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $ip_gwlo_tun/128 $ip_gwre_tun/128 any -P out ipsec
+		    $proto/transport//require;
+		spdadd $ip_gwre_tun/128 $ip_gwlo_tun/128 any -P in ipsec
+		    $proto/transport//require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+
+		export RUMP_SERVER=$SOCK_TUN_REMOTE
+		cat > $tmpfile <<-EOF
+		add $ip_gwlo_tun $ip_gwre_tun $proto 10000 $opt $algo $key;
+		add $ip_gwre_tun $ip_gwlo_tun $proto 10001 $opt $algo $key;
+		spdadd $ip_gwre_tun/128 $ip_gwlo_tun/128 any -P out ipsec
+		    $proto/transport//require;
+		spdadd $ip_gwlo_tun/128 $ip_gwre_tun/128 any -P in ipsec
+		    $proto/transport//require;
+		EOF
+		$DEBUG && cat $tmpfile
+		atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
+	fi
+
 	export RUMP_SERVER=$SOCK_TUN_LOCAL
-	# from https://www.netbsd.org/docs/network/ipsec/
-	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tun $ip_gw_remote_tun $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tun $ip_gw_local_tun $proto 10001 $opt $algo $key;
-	spdadd $subnet_local/64 $subnet_remote/64 any -P out ipsec
-	    $proto/tunnel/$ip_gw_local_tun-$ip_gw_remote_tun/require;
-	spdadd $subnet_remote/64 $subnet_local/64 any -P in ipsec
-	    $proto/tunnel/$ip_gw_remote_tun-$ip_gw_local_tun/require;
-	EOF
-	$DEBUG && cat $tmpfile
-	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
 	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_local_tun $ip_gw_remote_tun" \
+	atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
 	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_remote_tun $ip_gw_local_tun" \
+	atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
 	    $HIJACKING setkey -D
 	# TODO: more detail checks
 
 	export RUMP_SERVER=$SOCK_TUN_REMOTE
-	cat > $tmpfile <<-EOF
-	add $ip_gw_local_tun $ip_gw_remote_tun $proto 10000 $opt $algo $key;
-	add $ip_gw_remote_tun $ip_gw_local_tun $proto 10001 $opt $algo $key;
-	spdadd $subnet_remote/64 $subnet_local/64 any -P out ipsec
-	    $proto/tunnel/$ip_gw_remote_tun-$ip_gw_local_tun/require;
-	spdadd $subnet_local/64 $subnet_remote/64 any -P in ipsec
-	    $proto/tunnel/$ip_gw_local_tun-$ip_gw_remote_tun/require;
-	EOF
-	$DEBUG && cat $tmpfile
-	atf_check -s exit:0 -o empty $HIJACKING setkey -c < $tmpfile
 	$DEBUG && $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_local_tun $ip_gw_remote_tun" \
+	atf_check -s exit:0 -o match:"$ip_gwlo_tun $ip_gwre_tun" \
 	    $HIJACKING setkey -D
-	atf_check -s exit:0 -o match:"$ip_gw_remote_tun $ip_gw_local_tun" \
+	atf_check -s exit:0 -o match:"$ip_gwre_tun $ip_gwlo_tun" \
 	    $HIJACKING setkey -D
 	# TODO: more detail checks
 
@@ -323,10 +395,10 @@ test_ipsec6_gif()
 	atf_check -s exit:0 -o ignore rump.ping6 -c 1 -n -X 3 $ip_remote
 
 	extract_new_packets $BUS_TUNNEL > $outfile
-	str=$(make_gif_pktstr $ip_gw_local_tun $ip_gw_remote_tun \
+	str=$(make_gif_pktstr $ip_gwlo_tun $ip_gwre_tun \
 	    $ip_local $ip_remote $proto ipv6)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
-	str=$(make_gif_pktstr $ip_gw_remote_tun $ip_gw_local_tun \
+	str=$(make_gif_pktstr $ip_gwre_tun $ip_gwlo_tun \
 	    $ip_remote $ip_local $proto ipv6)
 	atf_check -s exit:0 -o match:"$str" cat $outfile
 }
@@ -334,26 +406,28 @@ test_ipsec6_gif()
 test_ipsec_gif_common()
 {
 	local ipproto=$1
-	local proto=$2
-	local algo=$3
+	local mode=$2
+	local proto=$3
+	local algo=$4
 
 	if [ $ipproto = ipv4 ]; then
-		test_ipsec4_gif $proto $algo
+		test_ipsec4_gif $mode $proto $algo
 	else
-		test_ipsec6_gif $proto $algo
+		test_ipsec6_gif $mode $proto $algo
 	fi
 }
 
 add_test_ipsec_gif()
 {
 	local ipproto=$1
-	local proto=$2
-	local algo=$3
+	local mode=$2
+	local proto=$3
+	local algo=$4
 	local _algo=$(echo $algo | sed 's/-//g')
 	local name= desc=
 
-	name="ipsec_gif_${ipproto}_${proto}_${_algo}"
-	desc="Tests of IPsec ($ipproto) tunnel mode (gif) with $proto ($algo)"
+	name="ipsec_gif_${ipproto}_${mode}_${proto}_${_algo}"
+	desc="Tests of gif/IPsec ($ipproto) ${mode} mode with $proto ($algo)"
 
 	atf_test_case ${name} cleanup
 	eval "								\
@@ -362,7 +436,7 @@ add_test_ipsec_gif()
 	        atf_set \"require.progs\" \"rump_server\" \"setkey\";	\
 	    };								\
 	    ${name}_body() {						\
-	        test_ipsec_gif_common $ipproto $proto $algo;		\
+	        test_ipsec_gif_common $ipproto $mode $proto $algo;	\
 	        rump_server_destroy_ifaces;				\
 	    };								\
 	    ${name}_cleanup() {						\
@@ -378,12 +452,16 @@ atf_init_test_cases()
 	local algo=
 
 	for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
-		add_test_ipsec_gif ipv4 esp $algo
-		add_test_ipsec_gif ipv6 esp $algo
+		add_test_ipsec_gif ipv4 tunnel esp $algo
+		add_test_ipsec_gif ipv6 tunnel esp $algo
+		add_test_ipsec_gif ipv4 transport esp $algo
+		add_test_ipsec_gif ipv6 transport esp $algo
 	done
 
 	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
-		add_test_ipsec_gif ipv4 ah $algo
-		add_test_ipsec_gif ipv6 ah $algo
+		add_test_ipsec_gif ipv4 tunnel ah $algo
+		add_test_ipsec_gif ipv6 tunnel ah $algo
+		add_test_ipsec_gif ipv4 transport ah $algo
+		add_test_ipsec_gif ipv6 transport ah $algo
 	done
 }
