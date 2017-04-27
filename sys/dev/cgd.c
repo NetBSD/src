@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114.4.2 2017/04/27 11:58:58 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.114.4.3 2017/04/27 12:07:23 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.2 2017/04/27 11:58:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.3 2017/04/27 12:07:23 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -448,8 +448,8 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		if ((error = cgd_destroy(cs->sc_dksc.sc_dev)) != 0) {
 			aprint_error_dev(dksc->sc_dev,
 			    "unable to detach instance\n");
-			return error;
 		}
+		return error;
 	}
 	device_release(self);
 	return 0;
