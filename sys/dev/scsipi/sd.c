@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.324 2017/04/10 18:20:43 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.324.4.1 2017/04/27 05:36:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.324 2017/04/10 18:20:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.324.4.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -160,6 +160,7 @@ static dev_type_dump(sddump);
 static dev_type_size(sdsize);
 
 const struct bdevsw sd_bdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = sdopen,
 	.d_close = sdclose,
 	.d_strategy = sdstrategy,
@@ -171,6 +172,7 @@ const struct bdevsw sd_bdevsw = {
 };
 
 const struct cdevsw sd_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = sdopen,
 	.d_close = sdclose,
 	.d_read = sdread,

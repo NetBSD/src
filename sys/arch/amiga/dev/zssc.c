@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.45 2012/10/27 17:17:32 chs Exp $ */
+/*	$NetBSD: zssc.c,v 1.45.28.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.45 2012/10/27 17:17:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.45.28.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,14 +195,19 @@ zssc_dmaintr(void *arg)
 void
 zssc_dump(void)
 {
+	device_t self;
 	extern struct cfdriver zssc_cd;
 	struct siop_softc *sc;
 	int i;
 
 	for (i = 0; i < zssc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&zssc_cd, i);
+		self = device_lookup_acquire(&zssc_cd, i);
+		if (self == NULL)
+			continue;
+		sc = device_private(self);
 		if (sc != NULL)
 			siop_dump(sc);
+		device_release(self);
 	}
 }
 #endif

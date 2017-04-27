@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.40 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.40.18.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.40 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.40.18.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.40 2014/07/25 08:10:40 dholland Exp $"
 #include <sys/file.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 /* XXXSMP */
 #define cttyvp(p) ((p)->p_lflag & PL_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
@@ -157,6 +158,7 @@ cttykqfilter(dev_t dev, struct knote *kn)
 }
 
 const struct cdevsw ctty_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = cttyopen,
 	.d_close = nullclose,
 	.d_read = cttyread,

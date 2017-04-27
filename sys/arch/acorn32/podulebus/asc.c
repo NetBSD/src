@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.20 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: asc.c,v 1.20.10.1 2017/04/27 05:36:31 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,7 +98,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.20 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.20.10.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -339,9 +339,11 @@ asc_dump(void)
 	struct asc_softc *sc;
 
 	for (i = 0; i < asc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&asc_cd, i);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&asc_cd, i);
+		if (sc != NULL) {
 			sbic_dump(&sc->sc_softc);
+			device_release(sc->sc_dev);
+		}
 	}
 }
 

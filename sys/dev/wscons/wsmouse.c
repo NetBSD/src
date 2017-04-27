@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.66 2014/07/25 08:10:39 dholland Exp $ */
+/* $NetBSD: wsmouse.c,v 1.66.18.1 2017/04/27 05:36:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.66 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.66.18.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.66 2014/07/25 08:10:39 dholland Exp $"
 #include <sys/vnode.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
+#include <sys/localcount.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
@@ -203,6 +204,7 @@ dev_type_poll(wsmousepoll);
 dev_type_kqfilter(wsmousekqfilter);
 
 const struct cdevsw wsmouse_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = wsmouseopen,
 	.d_close = wsmouseclose,
 	.d_read = wsmouseread,

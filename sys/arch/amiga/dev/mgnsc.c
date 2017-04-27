@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.46 2012/10/27 17:17:30 chs Exp $ */
+/*	$NetBSD: mgnsc.c,v 1.46.28.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.46 2012/10/27 17:17:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgnsc.c,v 1.46.28.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,9 +212,11 @@ mgnsc_dump(void)
 	int i;
 
 	for (i = 0; i < mgnsc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&mgnsc_cd, i);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&mgnsc_cd, i);
+		if (sc != NULL) {
 			siop_dump(sc);
+			device_release(sc->sc_dev);
+		}
 	}
 }
 #endif

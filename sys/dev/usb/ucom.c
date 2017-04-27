@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.118 2016/12/14 15:11:29 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.118.6.1 2017/04/27 05:36:36 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118 2016/12/14 15:11:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118.6.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118 2016/12/14 15:11:29 skrll Exp $");
 #include <sys/sysctl.h>
 #include <sys/timepps.h>
 #include <sys/rndsource.h>
+#include <sys/localcount.h>
 
 #include <dev/usb/usb.h>
 
@@ -205,6 +206,7 @@ dev_type_tty(ucomtty);
 dev_type_poll(ucompoll);
 
 const struct cdevsw ucom_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ucomopen,
 	.d_close = ucomclose,
 	.d_read = ucomread,

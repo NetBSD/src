@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.191 2014/12/16 11:23:11 jklos Exp $	 */
+/* $NetBSD: machdep.c,v 1.191.8.1 2017/04/27 05:36:34 pgoyette Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2014/12/16 11:23:11 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191.8.1 2017/04/27 05:36:34 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -415,7 +415,7 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return;
 	/*
@@ -425,6 +425,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
@@ -454,6 +455,7 @@ dumpsys(void)
 		printf("succeeded\n");
 		break;
 	}
+	bdevsw_release(bdev);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.41 2015/12/07 20:01:43 christos Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.41.8.1 2017/04/27 05:36:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41 2015/12/07 20:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41.8.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41 2015/12/07 20:01:43 christos Ex
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/localcount.h>
 
 #include "ioconf.h"
 
@@ -69,6 +70,7 @@ static struct selinfo		drvctl_rdsel;
 dev_type_open(drvctlopen);
 
 const struct cdevsw drvctl_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = drvctlopen,
 	.d_close = nullclose,
 	.d_read = nullread,

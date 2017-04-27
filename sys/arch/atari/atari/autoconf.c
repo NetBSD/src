@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 2014/03/24 18:39:57 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65.20.1 2017/04/27 05:36:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2014/03/24 18:39:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65.20.1 2017/04/27 05:36:32 pgoyette Exp $");
 
 #include "opt_md.h"
 
@@ -256,25 +256,31 @@ findroot(void)
 			maj = devsw_name2blk(genericconf[i]->cd_name, NULL, 0);
 			if (maj == -1)
 				continue;
-			bdev = bdevsw_lookup(makedev(maj, 0));
+			bdev = bdevsw_lookup_acquire(makedev(maj, 0));
+			if (bdev == NULL) {
 #ifdef DIAGNOSTIC
-			if (bdev == NULL)
 				panic("findroot: impossible");
 #endif
-			if (bdev == NULL ||
-			    bdev->d_strategy != dkp->dk_driver->d_strategy)
 				continue;
+			}
+			if (bdev->d_strategy != dkp->dk_driver->d_strategy) {
+				bdevsw_release(bdev);
+				continue;
+			}
 
 			/* Open disk; forces read of disklabel. */
 			if ((*bdev->d_open)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &lwp0))
+			    unit, 0), FREAD|FNONBLOCK, 0, &lwp0)) {
+				bdevsw_release(bdev);
 				continue;
+			}
 			(void)(*bdev->d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &lwp0);
 			
 			pp = &dkp->dk_label->d_partitions[booted_partition];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
 				booted_device = devs[unit];
+				bdevsw_release(bdev);
 				return;
 			}
 		}

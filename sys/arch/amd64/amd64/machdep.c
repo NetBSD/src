@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2017/03/24 17:09:36 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255.4.1 2017/04/27 05:36:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2017/03/24 17:09:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.4.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -949,12 +949,13 @@ dump_header_flush(void)
 	size_t to_write;
 	int error;
 
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	to_write = roundup(dump_headerbuf_ptr - dump_headerbuf, dbtob(1));
 	error = bdev->d_dump(dumpdev, dump_header_blkno,
 	    dump_headerbuf, to_write);
 	dump_header_blkno += btodb(to_write);
 	dump_headerbuf_ptr = dump_headerbuf;
+	bdevsw_release(bdev);
 	return error;
 }
 
@@ -1043,8 +1044,9 @@ cpu_dump(void)
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
+	int err;
 
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
 
@@ -1065,7 +1067,9 @@ cpu_dump(void)
 	/*
 	 * Write out the memory segment descriptors.
 	 */
-	return dump_seg_iter(dump_header_addseg);
+	err = dump_seg_iter(dump_header_addseg);
+	bdevsw_release(bdev);
+	return err;
 }
 
 /*
@@ -1095,7 +1099,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 
 	if (dumpdev == NODEV)
 		return ENODEV;
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL || bdev->d_psize == NULL)
 		return ENODEV;
 
@@ -1120,19 +1124,24 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 		pmap_kremove_local(dumpspace, n);
-		if (error)
+		if (error) {
+			bdevsw_release(bdev);
 			return error;
+		}
 		maddr += n;
 		blkno += btodb(n);		/* XXX? */
 
 #if 0	/* XXX this doesn't work.  grr. */
 		/* operator aborting dump? */
-		if (sget() != NULL)
+		if (sget() != NULL) {
+			bdevsw_release(bdev);
 			return EINTR;
+		}
 #endif
 	}
 	dump_header_blkno = blkno;
 
+	bdevsw_release(bdev);
 	return 0;
 }
 
@@ -1146,9 +1155,13 @@ dodumpsys(void)
 	if (dumpdev == NODEV)
 		return;
 
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
+	bdev = bdevsw_lookup_acquire(dumpdev);
+	if (bdev == NULL)
 		return;
+	if (bdev->d_psize == NULL) {
+		bdevsw_release(bdev);
+		return;
+	}
 	/*
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
@@ -1161,6 +1174,7 @@ dodumpsys(void)
 	    (unsigned long long)minor(dumpdev), dumplo, dumpsize);
 
 	if (dumplo <= 0 || dumpsize <= 0) {
+		bdevsw_release(bdev);
 		printf(" not possible\n");
 		return;
 	}
@@ -1168,6 +1182,7 @@ dodumpsys(void)
 	psize = bdev_size(dumpdev);
 	printf("\ndump ");
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("area unavailable\n");
 		return;
 	}
@@ -1240,6 +1255,7 @@ err:
 		break;
 	}
 failed:
+	bdevsw_release(bdev);
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }

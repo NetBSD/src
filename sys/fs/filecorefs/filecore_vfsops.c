@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.81 2017/04/17 08:32:00 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.81.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.81 2017/04/17 08:32:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.81.2.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -225,6 +225,7 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct filecore_args *args = data;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
+	const struct bdevsw *bdev;
 
 	if (args == NULL)
 		return EINVAL;
@@ -262,7 +263,7 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+	if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}
@@ -275,6 +276,7 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(VREAD));
 	VOP_UNLOCK(devvp);
 	if (error) {
+		bdevsw_release(bdev);
 		vrele(devvp);
 		return (error);
 	}
@@ -288,12 +290,15 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			vrele(devvp);
 	}
 	if (error) {
+		bdevsw_release(bdev);
 		vrele(devvp);
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
-	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	bdevsw_release(bdev);
+	return error;
 }
 
 /*

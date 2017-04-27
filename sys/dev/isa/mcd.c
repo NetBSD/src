@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: mcd.c,v 1.116.8.1 2017/04/27 05:36:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116.8.1 2017/04/27 05:36:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,12 +312,14 @@ mcdattach(device_t parent, device_t self, void *aux)
 int
 mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
 	int error, part;
 	struct mcd_softc *sc;
 
-	sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
-	if (sc == NULL)
+	if (self == NULL)
 		return ENXIO;
+
+	sc = device_private(self);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -389,6 +391,7 @@ mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask = sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	mutex_exit(&sc->sc_lock);
+	device_release(self);
 	return 0;
 
 bad2:
@@ -404,17 +407,23 @@ bad:
 
 bad3:
 	mutex_exit(&sc->sc_lock);
+	device_release(self);
 	return error;
 }
 
 int
 mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct mcd_softc *sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc;
 	int part = MCDPART(dev);
 
 	MCD_TRACE("close: partition=%d\n", part);
 
+	if (self == NULL)
+		return ENXIO;
+
+	sc = device_private(self);
 	mutex_enter(&sc->sc_lock);
 
 	switch (fmt) {
@@ -437,18 +446,20 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	}
 
 	mutex_exit(&sc->sc_lock);
+	device_release(self);
 	return 0;
 }
 
 void
 mcdstrategy(struct buf *bp)
 {
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
 	struct mcd_softc *sc;
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
 
-	sc = device_lookup_private(&mcd_cd, MCDUNIT(bp->b_dev));
+	sc = device_private(self);
 	lp = sc->sc_dk.dk_label;
 
 	/* Test validity. */
@@ -498,11 +509,13 @@ mcdstrategy(struct buf *bp)
 	splx(s);
 	if (!sc->active)
 		mcdstart(sc);
+	device_release(self);
 	return;
 
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+	device_release(self);
 }
 
 void
@@ -571,7 +584,8 @@ mcdwrite(dev_t dev, struct uio *uio, int flags)
 int
 mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct mcd_softc *sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc = device_private(self);
 	int error;
 	int part;
 #ifdef __HAVE_OLD_DISKLABEL
@@ -580,12 +594,16 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	MCD_TRACE("ioctl: cmd=0x%lx\n", cmd);
 
-	if ((sc->flags & MCDF_LOADED) == 0)
+	if ((sc->flags & MCDF_LOADED) == 0) {
+		device_release(self);
 		return EIO;
+	}
 
 	error = disk_ioctl(&sc->sc_dk, dev, cmd, addr, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return error;
+	}
 
 	part = MCDPART(dev);
 	switch (cmd) {
@@ -598,8 +616,10 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	{
 		struct disklabel *lp;
 
-		if ((flag & FWRITE) == 0)
-			return EBADF;
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			break;
+		}
 
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
@@ -621,15 +641,17 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 		sc->flags &= ~MCDF_LABELLING;
 		mutex_exit(&sc->sc_lock);
-		return error;
+		break;
 	}
 
 	case DIOCWLABEL:
-		return EBADF;
+		error = EBADF;
+		break;
 
 	case DIOCGDEFLABEL:
 		mcdgetdefaultlabel(sc, addr);
-		return 0;
+		error = 0;
+		break;
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDEFLABEL:
@@ -637,15 +659,19 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		return 0;
+		error = 0;
+		break;
 #endif
 
 	case CDIOCPLAYTRACKS:
-		return mcd_playtracks(sc, addr);
+		error = mcd_playtracks(sc, addr);
+		break;
 	case CDIOCPLAYMSF:
-		return mcd_playmsf(sc, addr);
+		error = mcd_playmsf(sc, addr);
+		break;
 	case CDIOCPLAYBLOCKS:
-		return mcd_playblocks(sc, addr);
+		error = mcd_playblocks(sc, addr);
+		break;
 	case CDIOCREADSUBCHANNEL: {
 		struct cd_sub_channel_info info;
 		error = mcd_read_subchannel(sc, addr, &info);
@@ -653,32 +679,36 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			struct ioc_read_subchannel *ch = addr;
 			error = copyout(&info, ch->data, ch->data_len);
 		}
-		return error;
+		braek;
 	}
 	case CDIOCREADSUBCHANNEL_BUF:
-		return mcd_read_subchannel(sc, addr,
+		error = mcd_read_subchannel(sc, addr,
 		    &((struct ioc_read_subchannel_buf *)addr)->info);
+		break;
 	case CDIOREADTOCHEADER:
-		return mcd_toc_header(sc, addr);
+		error = mcd_toc_header(sc, addr);
+		break;
 	case CDIOREADTOCENTRYS: {
 		struct cd_toc_entry entries[MCD_MAXTOCS];
 		struct ioc_read_toc_entry *te = addr;
 		int count;
 		if (te->data_len > sizeof entries)
-			return EINVAL;
-		error = mcd_toc_entries(sc, te, entries, &count);
+			error = EINVAL;
+		else
+			error = mcd_toc_entries(sc, te, entries, &count);
 		if (error == 0)
 			/* Copy the data back. */
 			error = copyout(entries, te->data, min(te->data_len,
 					count * sizeof(struct cd_toc_entry)));
-		return error;
+		break;
 	}
 	case CDIOREADTOCENTRIES_BUF: {
 		struct ioc_read_toc_entry_buf *te = addr;
 		int count;
 		if (te->req.data_len > sizeof te->entry)
 			return EINVAL;
-		return mcd_toc_entries(sc, &te->req, te->entry, &count);
+		error = mcd_toc_entries(sc, &te->req, te->entry, &count);
+		break;
 	}
 	case CDIOCSETPATCH:
 	case CDIOCGETVOL:
@@ -688,15 +718,20 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case CDIOCSETMUTE:
 	case CDIOCSETLEFT:
 	case CDIOCSETRIGHT:
-		return EINVAL;
+		error = EINVAL;
+		break;
 	case CDIOCRESUME:
-		return mcd_resume(sc);
+		error = mcd_resume(sc);
+		break;
 	case CDIOCPAUSE:
-		return mcd_pause(sc);
+		error = mcd_pause(sc);
+		break;
 	case CDIOCSTART:
-		return EINVAL;
+		error = EINVAL;
+		break;
 	case CDIOCSTOP:
-		return mcd_stop(sc);
+		error = mcd_stop(sc);
+		break;
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
 			/*
@@ -708,38 +743,46 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			    sc->sc_dk.dk_openmask) {
 				error = mcd_setlock(sc, MCD_LK_UNLOCK);
 				if (error)
-					return (error);
+					break;
 			} else {
-				return (EBUSY);
+				error = EBUSY;
+				break;
 			}
 		}
 		/* FALLTHROUGH */
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case ODIOCEJECT:
-		return mcd_eject(sc);
+		error = mcd_eject(sc);
+		break;
 	case CDIOCALLOW:
-		return mcd_setlock(sc, MCD_LK_UNLOCK);
+		error = mcd_setlock(sc, MCD_LK_UNLOCK);
+		break;
 	case CDIOCPREVENT:
-		return mcd_setlock(sc, MCD_LK_LOCK);
+		error = mcd_setlock(sc, MCD_LK_LOCK);
+		break;
 	case DIOCLOCK:
-		return mcd_setlock(sc,
+		error = mcd_setlock(sc,
 		    (*(int *)addr) ? MCD_LK_LOCK : MCD_LK_UNLOCK);
+		break;
 	case CDIOCSETDEBUG:
 		sc->debug = 1;
-		return 0;
+		error = 0;
+		break;
 	case CDIOCCLRDEBUG:
 		sc->debug = 0;
-		return 0;
+		error = 0;
+		break;
 	case CDIOCRESET:
-		return mcd_hard_reset(sc);
+		error = mcd_hard_reset(sc);
+		break;
 
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
 
-#ifdef DIAGNOSTIC
-	panic("mcdioctl: impossible");
-#endif
+	device_release(self);
+	return error;
 }
 
 void

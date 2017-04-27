@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.63 2016/10/02 14:17:07 christos Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.63.6.1 2017/04/27 05:36:38 pgoyette Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,10 +93,9 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.63 2016/10/02 14:17:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.63.6.1 2017/04/27 05:36:38 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
-#include "ppp.h"
 #include "opt_ppp.h"
 #endif
 #define VJC
@@ -674,7 +673,7 @@ pppsyncstart(struct ppp_softc *sc)
 			len += n->m_len;
 
 		/* call device driver IOCTL to transmit a frame */
-		cdev = cdevsw_lookup(tp->t_dev);
+		cdev = cdevsw_lookup_acquire(tp->t_dev);
 		if (cdev == NULL ||
 		    (*cdev->d_ioctl)(tp->t_dev, TIOCXMTFRAME, (void *)&m,
 				     0, 0)) {
@@ -684,6 +683,8 @@ pppsyncstart(struct ppp_softc *sc)
 		}
 		sc->sc_outm = m = NULL;
 		sc->sc_stats.ppp_obytes += len;
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 	}
 }
 

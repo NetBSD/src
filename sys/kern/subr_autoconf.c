@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.252.4.1 2017/04/27 05:36:37 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252 2017/03/20 01:24:06 riastrad
 #include <sys/devmon.h>
 #include <sys/cpu.h>
 #include <sys/sysctl.h>
+#include <sys/localcount.h>
 
 #include <sys/disk.h>
 
@@ -235,6 +236,7 @@ static struct {
 static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
 static kcondvar_t config_misc_cv;
+static kcondvar_t config_drain_cv;
 
 static bool detachall = false;
 
@@ -353,6 +355,7 @@ config_init(void)
 
 	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&config_misc_cv, "cfgmisc");
+	cv_init(&config_drain_cv, "cfgdrain");
 
 	callout_init(&config_twiddle_ch, CALLOUT_MPSAFE);
 
@@ -575,7 +578,6 @@ config_cfdriver_attach(struct cfdriver *cd)
 		if (STREQ(lcd->cd_name, cd->cd_name))
 			return EEXIST;
 	}
-
 	LIST_INIT(&cd->cd_attach);
 	LIST_INSERT_HEAD(&allcfdrivers, cd, cd_list);
 
@@ -600,7 +602,6 @@ config_cfdriver_detach(struct cfdriver *cd)
 		}
 	}
 	config_alldevs_exit(&af);
-
 	if (rc != 0)
 		return rc;
 
@@ -1248,6 +1249,7 @@ config_devfree(device_t dev)
 {
 	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
 
+	localcount_fini(&dev->dv_localcnt);
 	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
 	if (priv)
@@ -1272,6 +1274,10 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 
 	/* Remove from cfdriver's array. */
 	cd->cd_devs[dev->dv_unit] = NULL;
+
+	/* Now wait for references to drain - no new refs are possible */
+	localcount_drain(&dev->dv_localcnt, &config_drain_cv,
+	    &alldevs.lock);
 
 	/*
 	 * If the device now has no units in use, unlink its softc array.
@@ -1404,8 +1410,8 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		printf("%s has not been converted to device_t\n", cd->cd_name);
 #endif
 	}
-	if (dev == NULL)
-		panic("config_devalloc: memory allocation for device_t failed");
+	KASSERTMSG(dev, "%s: memory allocation for %s device_t failed",
+	    __func__, cd->cd_name);
 
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
@@ -1415,6 +1421,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	dev->dv_activity_handlers = NULL;
 	dev->dv_private = dev_private;
 	dev->dv_flags = ca->ca_flags;	/* inherit flags from class */
+	localcount_init(&dev->dv_localcnt);
 
 	myunit = config_unit_alloc(dev, cd, cf);
 	if (myunit == -1) {
@@ -2231,6 +2238,18 @@ config_alldevs_exit(struct alldevs_foray *af)
 }
 
 /*
+ * device_acquire:
+ *
+ *	Acquire a reference to the device.
+ */
+void
+device_acquire(device_t dv)
+{
+
+	localcount_acquire(&dv->dv_localcnt);
+}
+
+/*
  * device_lookup:
  *
  *	Look up a device instance for a given driver.
@@ -2251,6 +2270,43 @@ device_lookup(cfdriver_t cd, int unit)
 }
 
 /*
+ * device_lookup_acquire:
+ *
+ *	Look up a device instance for a given driver and
+ *	hold a reference to the device.
+ */
+device_t
+device_lookup_acquire(cfdriver_t cd, int unit)
+{
+	device_t dv;
+
+	mutex_enter(&alldevs.lock);
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		dv = NULL;
+	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
+		dv = NULL;
+	if (dv != NULL)
+		device_acquire(dv);
+	mutex_exit(&alldevs.lock);
+
+	return dv;
+}
+
+/*
+ * device_release:
+ *
+ *	Release the reference that was created by an earlier call to
+ *	device_acquire() or device_lookup_acquire().
+ */
+void
+device_release(device_t dv)
+{
+
+	localcount_release(&dv->dv_localcnt, &config_drain_cv,
+	    &alldevs.lock);
+}
+
+/*
  * device_lookup_private:
  *
  *	Look up a softc instance for a given driver.
@@ -2260,6 +2316,31 @@ device_lookup_private(cfdriver_t cd, int unit)
 {
 
 	return device_private(device_lookup(cd, unit));
+}
+
+/*
+ * device_lookup_private_acquire:
+ *
+ *	Look up the softc and acquire a reference to the device so it
+ *	won't disappear.  Note that the caller must ensure that it is
+ *	capable of calling device_release() at some later point in
+ *	time, thus the returned private data must contain some data
+ *	to locate the original device.  Thus the private data must be
+ *	present, not NULL!  If this cannot be guaranteed, the caller
+ *	should use device_lookup_acquire() in order to retain the
+ *	device_t pointer.
+ */
+void *
+device_lookup_private_acquire(cfdriver_t cd, int unit)
+{
+	device_t dv;
+	void *p;
+
+	dv = device_lookup_acquire(cd, unit);
+	p = device_private(dv);
+	KASSERTMSG(p != NULL || dv == NULL,
+	    "%s: device %s has no private data", __func__, cd->cd_name);
+	return p;
 }
 
 /*
@@ -2296,6 +2377,23 @@ device_find_by_driver_unit(const char *name, int unit)
 	if ((cd = config_cfdriver_lookup(name)) == NULL)
 		return NULL;
 	return device_lookup(cd, unit);
+}
+
+/*
+ * device_find_by_driver_unit_acquire:
+ *
+ *	Returns the device of the given driver name and unit or
+ *	NULL if it doesn't exist.  If driver is found, it's
+ *	reference count is incremented so it won't go away.
+ */
+device_t
+device_find_by_driver_unit_acquire(const char *name, int unit)
+{
+	struct cfdriver *cd;
+
+	if ((cd = config_cfdriver_lookup(name)) == NULL)
+		return NULL;
+	return device_lookup_acquire(cd, unit);
 }
 
 /*

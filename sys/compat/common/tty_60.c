@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_60.c,v 1.4 2015/10/22 15:18:25 christos Exp $	*/
+/*	$NetBSD: tty_60.c,v 1.4.8.1 2017/04/27 05:36:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4 2015/10/22 15:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_60.c,v 1.4.8.1 2017/04/27 05:36:34 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -67,24 +67,28 @@ static int
 compat_60_ptmget_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
-	int ret;
+	int ret = 0;
 	u_long newcmd;
 	struct ptmget pg;
-	const struct cdevsw *cd = cdevsw_lookup(dev);
+	const struct cdevsw *cd = cdevsw_lookup_acquire(dev);
 
-	if (cd == NULL || cd->d_ioctl == NULL)
+	if (cd == NULL)
 		return ENXIO;
+	if (cd->d_ioctl == NULL) {
+		cdevsw_release(cd);
+		return ENXIO;
+	}
 
 	switch (cmd) {
 	case COMPAT_60_TIOCPTMGET:  newcmd = TIOCPTMGET; break;
 	case COMPAT_60_TIOCPTSNAME: newcmd = TIOCPTSNAME; break;
-	default: return ENOTTY;
+	default: ret = ENOTTY;
 	}
-
-	ret = (cd->d_ioctl)(dev, newcmd, &pg, flag, l);
-	if (ret != 0)
-		return ret;
-	ret = ptmget_to_ptmget60(&pg, data);
+	if (ret == 0)
+		ret = (cd->d_ioctl)(dev, newcmd, &pg, flag, l);
+	if (ret == 0)
+		ret = ptmget_to_ptmget60(&pg, data);
+	cdevsw_release(cd);
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.58.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58.2.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1412,7 +1412,9 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 {
 	vnode_t *bvp;
 	dev_t dev;
-	int d_type;
+	int d_type, ret;
+	const struct cdevsw *cdev = NULL;
+	const struct bdevsw *bdev = NULL;
 
 	bvp = NULL;
 	d_type = D_OTHER;
@@ -1422,10 +1424,8 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 
 	switch (vp->v_type) {
 	case VCHR: {
-		const struct cdevsw *cdev;
-
 		dev = vp->v_rdev;
-		cdev = cdevsw_lookup(dev);
+		cdev = cdevsw_lookup_acquire(dev);
 		if (cdev != NULL) {
 			dev_t blkdev;
 
@@ -1438,18 +1438,14 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 				}
 			}
 		}
-
 		break;
 		}
 
 	case VBLK: {
-		const struct bdevsw *bdev;
-
 		dev = vp->v_rdev;
-		bdev = bdevsw_lookup(dev);
+		bdev = bdevsw_lookup_acquire(dev);
 		if (bdev != NULL)
 			d_type = (bdev->d_flag & D_TYPEMASK);
-
 		bvp = vp;
 
 		break;
@@ -1459,8 +1455,10 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 		break;
 	}
 
-	if (d_type != D_DISK)
-		return EINVAL;
+	if (d_type != D_DISK) {
+		ret = EINVAL;
+		goto out;
+	}
 
 	if (bvpp != NULL)
 		*bvpp = bvp;
@@ -1470,10 +1468,18 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	 * XXX: not only if this specific slice is mounted, but
 	 * XXX: if it's on a disk with any other mounted slice.
 	 */
-	if (vfs_mountedon(bvp))
-		return EBUSY;
+	if (vfs_mountedon(bvp) != 0)
+		ret = EBUSY;
+	else
+		ret = 0;
 
-	return 0;
+ out:
+	if (bdev != NULL)
+		bdevsw_release(bdev);
+	if (cdev != NULL)
+		cdevsw_release(cdev);
+
+	return ret;
 }
 
 /*

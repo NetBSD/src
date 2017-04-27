@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.30.6.1 2017/04/27 05:36:36 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.30.6.1 2017/04/27 05:36:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $");
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -209,6 +210,7 @@ pcimmap(dev_t dev, off_t offset, int prot)
 }
 
 const struct cdevsw pci_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = pciopen,
 	.d_close = nullclose,
 	.d_read = noread,

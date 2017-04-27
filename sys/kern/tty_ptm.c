@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37.8.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.8.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
 
 #ifdef NO_DEV_PTM
 const struct cdevsw ptm_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = noopen,
 	.d_close = noclose,
 	.d_read = noread,
@@ -83,7 +85,7 @@ const struct cdevsw ptm_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_TTY
 };
-#else
+#else	/* NO_DEV_PTM */
 
 static struct ptm_pty *ptm;
 int pts_major, ptc_major;
@@ -427,6 +429,7 @@ bad2:
 }
 
 const struct cdevsw ptm_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptmopen,
 	.d_close = ptmclose,
 	.d_read = noread,

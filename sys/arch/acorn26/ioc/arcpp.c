@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.15 2015/08/30 04:16:18 dholland Exp $ */
+/* $NetBSD: arcpp.c,v 1.15.8.1 2017/04/27 05:36:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.15 2015/08/30 04:16:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.15.8.1 2017/04/27 05:36:31 pgoyette Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -192,7 +192,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	bus_space_handle_t ioh;
 	int error, s;
 
-	sc = device_lookup_private(&arcpp_cd, ARCPPUNIT(dev));
+	sc = device_lookup_private_acquire(&arcpp_cd, ARCPPUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -218,11 +218,13 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error == EWOULDBLOCK) {
 		sc->sc_state = 0;
 		splx(s);
+		device_release(sc->sc_dev);
 		return EBUSY;
 	}
 	if (error) {
 		sc->sc_state = 0;
 		splx(s);
+		device_release(sc->sc_dev);
 		return error;
 	}
 
@@ -234,6 +236,7 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	arcppintr(sc);
 	splx(s);
 
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -243,7 +246,8 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct arcpp_softc *sc = device_lookup_private(&arcpp_cd, ARCPPUNIT(dev));
+	struct arcpp_softc *sc =
+	    device_lookup_private_acquire(&arcpp_cd, ARCPPUNIT(dev));
 
 	if (sc->sc_count)
 		(void) arcpppushbytes(sc);
@@ -253,6 +257,7 @@ arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 	sc->sc_state = 0;
 	free(sc->sc_inbuf, M_DEVBUF);
 
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -279,7 +284,8 @@ arcpppushbytes(struct arcpp_softc *sc)
 int
 arcppwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct arcpp_softc *sc = device_lookup_private(&arcpp_cd, ARCPPUNIT(dev));
+	struct arcpp_softc *sc =
+	    device_lookup_private_acquire(&arcpp_cd, ARCPPUNIT(dev));
 	size_t n;
 	int error = 0;
 
@@ -294,9 +300,11 @@ arcppwrite(dev_t dev, struct uio *uio, int flags)
 			 */
 			uio->uio_resid += sc->sc_count;
 			sc->sc_count = 0;
+			device_release(sc->sc_dev);
 			return error;
 		}
 	}
+	device_release(sc->sc_dev);
 	return 0;
 }
 

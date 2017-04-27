@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.86 2017/04/04 07:36:38 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.86.4.1 2017/04/27 05:36:34 pgoyette Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.86 2017/04/04 07:36:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.86.4.1 2017/04/27 05:36:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     }
     dev = dvp->v_rdev;
     vrele(dvp);
-    cdev = cdevsw_lookup(dev);
+    cdev = cdevsw_lookup_acquire(dev);
     if (cdev == NULL) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
@@ -224,11 +224,13 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     if (cdev != &vcoda_cdevsw)
     {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
+	cdevsw_release(cdev);
 	return(ENXIO);
     }
 
     if (minor(dev) >= NVCODA) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
+	cdevsw_release(cdev);
 	return(ENXIO);
     }
 
@@ -239,6 +241,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 
     if (!VC_OPEN(&mi->mi_vcomm)) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
+	cdevsw_release(cdev);
 	return(ENODEV);
     }
 
@@ -280,8 +283,10 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     else
 	MARK_INT_SAT(CODA_MOUNT_STATS);
 
-    return set_statvfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE,
+    error = set_statvfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE,
 	vfsp->mnt_op->vfs_name, vfsp, l);
+    cdevsw_release(cdev);
+    return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.21 2009/05/16 16:55:24 cegger Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.21.54.1 2017/04/27 05:36:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.21 2009/05/16 16:55:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.21.54.1 2017/04/27 05:36:33 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 
@@ -141,10 +141,14 @@ zs_kgdb_init(void)
 	volatile struct zschan *zc;
 	int channel, promzs_unit;
 	extern const struct cdevsw zstty_cdevsw;
+	const struct cdevsw *cdev;
 
 	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
-	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
+	if ((cdev = cdevsw_lookup_acquire(kgdb_dev)) != &zstty_cdevsw) {
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 		return;
+	}
 
 	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */
 	promzs_unit = (kgdb_dev & 2) ? 2 : 0;
@@ -171,6 +175,7 @@ zs_kgdb_init(void)
 
 	/* Store the getc/putc functions and arg. */
 	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
+	cdevsw_release(cdev);
 }
 
 /*

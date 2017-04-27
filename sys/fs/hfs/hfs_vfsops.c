@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.34 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.34.4.1 2017/04/27 05:36:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.34.4.1 2017/04/27 05:36:37 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -200,6 +200,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	int error = 0;
 	int update;
 	mode_t accessmode;
+	const struct bdevsw *bdev;
 
 	if (args == NULL)
 		return EINVAL;
@@ -227,6 +228,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 #endif
 
 	/* Check arguments */
+	bdev = NULL;
 	if (args->fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
@@ -242,7 +244,8 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+			else if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev))
+					== NULL)
 				error = ENXIO;
 		} else {
 			/*
@@ -320,9 +323,13 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 #endif /* HFS_DEBUG */
 
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return error;
 
 error:
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	vrele(devvp);
 	return error;
 }

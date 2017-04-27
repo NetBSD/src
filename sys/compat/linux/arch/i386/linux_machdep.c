@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.163 2017/02/05 10:42:22 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.163.4.1 2017/04/27 05:36:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.163 2017/02/05 10:42:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.163.4.1 2017/04/27 05:36:35 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -653,23 +653,28 @@ linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 dev_t
 linux_fakedev(dev_t dev, int raw)
 {
+	dev_t ret;
 	extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
-	const struct cdevsw *cd = cdevsw_lookup(dev);
+	const struct cdevsw *cd = cdevsw_lookup_acquire(dev);
 
 	if (raw) {
 #if (NWSDISPLAY > 0)
 		extern const struct cdevsw wsdisplay_cdevsw;
-		if (cd == &wsdisplay_cdevsw)
+		if (cd == &wsdisplay_cdevsw) {
+			cdevsw_release(cd);
 			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+		}
 #endif
 	}
 
 	if (cd == &ptc_cdevsw)
-		return makedev(LINUX_PTC_MAJOR, minor(dev));
-	if (cd == &pts_cdevsw)
-		return makedev(LINUX_PTS_MAJOR, minor(dev));
-
-	return dev;
+		ret = makedev(LINUX_PTC_MAJOR, minor(dev));
+	else if (cd == &pts_cdevsw)
+		ret = makedev(LINUX_PTS_MAJOR, minor(dev));
+	else
+		ret = dev;
+	cdevsw_release(cd);
+	return ret;
 }
 
 #if (NWSDISPLAY > 0)

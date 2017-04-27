@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.10 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.10.78.1 2017/04/27 05:36:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.10 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.10.78.1 2017/04/27 05:36:34 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 
@@ -131,10 +131,14 @@ zs_kgdb_init(void)
 	volatile struct zschan *zc;
 	int channel, promzs_unit;
 	extern const struct cdevsw zstty_cdevsw;
+	const struct cdevsw *cdev;
 
 	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
-	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
+	if ((cdev = cdevsw_lookup_acquire(kgdb_dev)) != &zstty_cdevsw) {
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 		return;
+	}
 
 	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */
 	promzs_unit = (kgdb_dev & 2) ? 2 : 0;
@@ -146,6 +150,7 @@ zs_kgdb_init(void)
 	memset((void *)&cs, 0, sizeof(cs));
 	zsd = zs_find_prom(promzs_unit);
 	if (zsd == NULL) {
+		cdevsw_release(cdev);
 		printf("zs_kgdb_init: zs not mapped.\n");
 		return;
 	}
@@ -161,6 +166,7 @@ zs_kgdb_init(void)
 
 	/* Store the getc/putc functions and arg. */
 	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
+	cdevsw_release(cdev);
 }
 
 /*
