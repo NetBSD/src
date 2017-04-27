@@ -1,4 +1,4 @@
-#	$NetBSD: algorithms.sh,v 1.1 2017/04/14 02:56:49 ozaki-r Exp $
+#	$NetBSD: algorithms.sh,v 1.2 2017/04/27 06:50:42 ozaki-r Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -27,6 +27,7 @@
 
 ESP_ENCRYPTION_ALGORITHMS="des-cbc 3des-cbc null blowfish-cbc cast128-cbc \
     des-deriv rijndael-cbc aes-ctr camellia-cbc aes-gcm-16 aes-gmac"
+ESP_ENCRYPTION_ALGORITHMS_MINIMUM="null aes-ctr"
 
 # Valid key lengths of ESP encription algorithms
 #    des-cbc         64
@@ -72,6 +73,7 @@ invalid_keys_aesgmac="152 168 216 232 280 296"
 
 AH_AUTHENTICATION_ALGORITHMS="hmac-md5 hmac-sha1 keyed-md5 keyed-sha1 null \
     hmac-sha256 hmac-sha384 hmac-sha512 hmac-ripemd160 aes-xcbc-mac"
+AH_AUTHENTICATION_ALGORITHMS_MINIMUM="null hmac-sha512"
 
 # Valid key lengths of AH authentication algorithms
 #    hmac-md5        128
