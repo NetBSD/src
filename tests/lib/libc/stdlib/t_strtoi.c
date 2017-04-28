@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtoi.c,v 1.1 2015/05/01 14:17:56 christos Exp $	*/
+/*	$NetBSD: t_strtoi.c,v 1.2 2017/04/28 19:01:01 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 /*
- * Created by Kamil Rytarowski, vesed on ID:
+ * Created by Kamil Rytarowski, based on ID:
  * NetBSD: t_strtol.c,v 1.5 2011/06/14 02:45:58 jruoho Exp
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtoi.c,v 1.1 2015/05/01 14:17:56 christos Exp $");
+__RCSID("$NetBSD: t_strtoi.c,v 1.2 2017/04/28 19:01:01 kamil Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
