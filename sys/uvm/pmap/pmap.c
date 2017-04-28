@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2017/04/22 20:20:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2017/04/28 10:12:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2017/04/22 20:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2017/04/28 10:12:35 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1297,7 +1297,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		} else {
 			UVMHIST_LOG(*histp,
 			    "va=%#"PRIxVADDR" pg %p: no syncicache cached %d",
-			    va, pg, "no", pte_cached_p(npte));
+			    va, pg, pte_cached_p(npte), 0);
 		}
 	} else if (pg != NULL && (prot & VM_PROT_EXECUTE)) {
 		KASSERT(mdpg != NULL);
