@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2017/04/28 10:12:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2017/04/28 17:04:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2017/04/28 10:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2017/04/28 17:04:33 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -664,8 +664,6 @@ void
 pmap_activate(struct lwp *l)
 {
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-#define LNAME(l) \
-	((l)->l_name ? (l)->l_name : (l)->l_proc->p_comm)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	UVMHIST_LOG(pmaphist, "(l=%p pmap=%p)", l, pmap, 0, 0);
