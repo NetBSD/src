@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.138 2017/01/29 18:30:33 maya Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.138.4.1 2017/04/28 03:46:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138 2017/01/29 18:30:33 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138.4.1 2017/04/28 03:46:57 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138 2017/01/29 18:30:33 maya Exp $");
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/localcount.h>
 #include <sys/lwp.h>
 #include <sys/mbuf.h>
 #include <sys/module.h>
@@ -98,6 +99,7 @@ static dev_type_poll(tunpoll);
 static dev_type_kqfilter(tunkqfilter);
 
 const struct cdevsw tun_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = tunopen,
 	.d_close = tunclose,
 	.d_read = tunread,
