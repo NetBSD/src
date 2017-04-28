@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.97.4.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.97.4.2 2017/04/28 06:00:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.97.4.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.97.4.2 2017/04/28 06:00:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,8 +173,7 @@ fss_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Caller must hold a reference to the device's localcount.  The
- * reference is released upon successful exit.
+ * Caller must hold a reference to the device's localcount.
  */
 static int
 fss_detach(device_t self, int flags)
@@ -197,7 +196,6 @@ fss_detach(device_t self, int flags)
 	disk_destroy(sc->sc_dkdev);
 	free(sc->sc_dkdev, M_DEVBUF);
 
-	device_release(self);
 	return 0;
 }
 
@@ -285,12 +283,11 @@ restart:
 	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
 	mutex_exit(&sc->sc_slock);
 	cf = device_cfdata(sc->sc_dev);
-	error = config_detach(sc->sc_dev, DETACH_QUIET);
+	error = config_detach_release(sc->sc_dev, DETACH_QUIET);
 	if (! error)
 		free(cf, M_DEVBUF);
 	mutex_exit(&fss_device_lock);
 
-	/* device_release() was called by fss_detach() from config_detach() */
 	return error;
 }
 

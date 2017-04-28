@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.149.8.1 2017/04/27 05:36:38 pgoyette Exp $ */
+/* $NetBSD: device.h,v 1.149.8.2 2017/04/28 06:00:33 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -469,6 +469,7 @@ bool ifattr_match(const char *, const char *);
 device_t config_attach_pseudo(cfdata_t);
 
 int	config_detach(device_t, int);
+int	config_detach_release(device_t, int);
 int	config_detach_children(device_t, int flags);
 bool	config_detach_all(int);
 int	config_deactivate(device_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.78.6.2 2017/04/27 23:18:21 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.78.6.3 2017/04/28 06:00:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.2 2017/04/27 23:18:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.3 2017/04/28 06:00:33 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -216,7 +216,6 @@ md_detach(device_t self, int flags)
 	if (rc != 0)
 		return rc;
 
-	device_release(self);
 	pmf_device_deregister(self);
 	disk_detach(&sc->sc_dkdev);
 	disk_destroy(&sc->sc_dkdev);
@@ -384,12 +383,11 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	mutex_enter(&md_device_lock);
 	cf = device_cfdata(sc->sc_dev);
-	error = config_detach(sc->sc_dev, DETACH_QUIET);
+	error = config_detach_release(sc->sc_dev, DETACH_QUIET);
 	if (! error)
 		free(cf, M_DEVBUF);
 	mutex_exit(&md_device_lock);
-	if (error)
-		device_release(sc->sc_dev);
+
 	return error;
 }
 
