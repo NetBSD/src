@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.37.2.2 2017/04/28 02:36:10 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.37.2.3 2017/04/28 03:41:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.2 2017/04/28 02:36:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.3 2017/04/28 03:41:26 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -151,19 +151,18 @@ devsw_attach(const char *devname,
 
 	if (bdev != NULL) {
 		if (bdev->d_localcount == NULL) {
-			aprint_normal("%s: %s's bdevsw has no localcount",
+			printf("%s: %s's bdevsw has no localcount",
 			    __func__, devname);
 			return EINVAL;
 		}
 		if (bdev->d_localcount == cdev->d_localcount) {
-			aprint_normal("%s: %s uses same localcount for both "
-			    cdevsw and bdevsw", __func__, devname);
+			printf("%s: %s uses same localcount for both "
+			    "cdevsw and bdevsw", __func__, devname);
 			return EINVAL;
 		}
 	}
-	if (cdev != NULL) {
-		aprint_normal("%s: %s's cdevsw has no localcount",
-		    __func__, devname);
+	if (cdev == NULL) {
+		printf("%s: %s's cdevsw has no localcount", __func__, devname);
 		return EINVAL;
 	}
 
@@ -308,8 +307,7 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 		return (EEXIST);
 
 	if (devsw->d_localcount == NULL) {
-		aprint_normal("%s: %s's bdevsw has no localcount",
-		    __func__, devname);
+		printf("%s: bdevsw has no localcount", __func__);
 		return EINVAL;
 	}
 	localcount_init(devsw->d_localcount);
@@ -365,8 +363,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 		return (EEXIST);
 
 	if (devsw->d_localcount == NULL) {
-		aprint_normal("%s: %s's cdevsw has no localcount",
-		    __func__, devname);
+		printf("%s: cdevsw has no localcount", __func__);
 		return EINVAL;
 	}
 	localcount_init(devsw->d_localcount);
