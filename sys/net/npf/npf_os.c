@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_os.c,v 1.6 2017/01/27 17:25:34 ryo Exp $	*/
+/*	$NetBSD: npf_os.c,v 1.6.6.1 2017/04/28 02:13:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2016 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6 2017/01/27 17:25:34 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6.6.1 2017/04/28 02:13:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.6 2017/01/27 17:25:34 ryo Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/localcount.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/socketvar.h>
@@ -92,6 +93,7 @@ static int	npf_dev_poll(dev_t, int, lwp_t *);
 static int	npf_dev_read(dev_t, struct uio *, int);
 
 const struct cdevsw npf_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = npf_dev_open,
 	.d_close = npf_dev_close,
 	.d_read = npf_dev_read,
