@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.37.2.1 2017/04/27 05:36:37 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.37.2.2 2017/04/28 02:36:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.37.2.2 2017/04/28 02:36:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -150,15 +150,22 @@ devsw_attach(const char *devname,
 	mutex_enter(&device_lock);
 
 	if (bdev != NULL) {
-		KASSERTMSG(bdev->d_localcount != NULL,
-		    "%s: bdev %s has no d_localcount", __func__, devname);
-		KASSERTMSG(bdev->d_localcount != cdev->d_localcount,
-		    "%s: bdev and cdev for %s have same d_localcount",
-		    __func__, devname);
+		if (bdev->d_localcount == NULL) {
+			aprint_normal("%s: %s's bdevsw has no localcount",
+			    __func__, devname);
+			return EINVAL;
+		}
+		if (bdev->d_localcount == cdev->d_localcount) {
+			aprint_normal("%s: %s uses same localcount for both "
+			    cdevsw and bdevsw", __func__, devname);
+			return EINVAL;
+		}
 	}
-	if (cdev != NULL)
-		KASSERTMSG(cdev->d_localcount != NULL,
-		    "%s: cdev %s has no d_localcount", __func__, devname);
+	if (cdev != NULL) {
+		aprint_normal("%s: %s's cdevsw has no localcount",
+		    __func__, devname);
+		return EINVAL;
+	}
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		conv = &devsw_conv[i];
@@ -300,8 +307,11 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	if (bdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	KASSERTMSG(devsw->d_localcount != NULL, "%s: bdev for major %d has "
-	    "no localcount", __func__, *devmajor);
+	if (devsw->d_localcount == NULL) {
+		aprint_normal("%s: %s's bdevsw has no localcount",
+		    __func__, devname);
+		return EINVAL;
+	}
 	localcount_init(devsw->d_localcount);
 
 	/* ensure visibility of the bdevsw */
@@ -354,8 +364,11 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	KASSERTMSG(devsw->d_localcount != NULL, "%s: cdev for major %d has "
-	    "no localcount", __func__, *devmajor);
+	if (devsw->d_localcount == NULL) {
+		aprint_normal("%s: %s's cdevsw has no localcount",
+		    __func__, devname);
+		return EINVAL;
+	}
 	localcount_init(devsw->d_localcount);
 
 	/* ensure visibility of the cdevsw */
