@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.328 2017/04/26 11:32:04 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.329 2017/04/28 06:59:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.328 2017/04/26 11:32:04 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.329 2017/04/28 06:59:49 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1284,14 +1284,16 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	}
 
 #ifdef AUDIO_DEBUG
-	printf("%s: HW-buffer=%p pustream=%p\n",
-	       __func__, &vc->sc_mpr.s, vc->sc_pustream);
-	for (i = 0; i < pfilters->req_size; i++) {
-		char num[100];
-		snprintf(num, 100, "[%d]", i);
-		audio_print_params(num, &vc->sc_pstreams[i].param);
+	if (audiodebug) {
+		printf("%s: HW-buffer=%p pustream=%p\n",
+		       __func__, &vc->sc_mpr.s, vc->sc_pustream);
+		for (i = 0; i < pfilters->req_size; i++) {
+			char num[100];
+			snprintf(num, 100, "[%d]", i);
+			audio_print_params(num, &vc->sc_pstreams[i].param);
+		}
+		audio_print_params("[HW]", &vc->sc_mpr.s.param);
 	}
-	audio_print_params("[HW]", &vc->sc_mpr.s.param);
 #endif /* AUDIO_DEBUG */
 
 	return 0;
@@ -1363,13 +1365,15 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 	HW_UNLOCK(vc);
 
 #ifdef AUDIO_DEBUG
-	printf("%s: HW-buffer=%p pustream=%p\n",
-	       __func__, &vc->sc_mrr.s, vc->sc_rustream);
-	audio_print_params("[HW]", &vc->sc_mrr.s.param);
-	for (i = 0; i < rfilters->req_size; i++) {
-		char num[100];
-		snprintf(num, 100, "[%d]", i);
-		audio_print_params(num, &vc->sc_rstreams[i].param);
+	if (audiodebug) {
+		printf("%s: HW-buffer=%p pustream=%p\n",
+		       __func__, &vc->sc_mrr.s, vc->sc_rustream);
+		audio_print_params("[HW]", &vc->sc_mrr.s.param);
+		for (i = 0; i < rfilters->req_size; i++) {
+			char num[100];
+			snprintf(num, 100, "[%d]", i);
+			audio_print_params(num, &vc->sc_rstreams[i].param);
+		}
 	}
 #endif /* AUDIO_DEBUG */
 
