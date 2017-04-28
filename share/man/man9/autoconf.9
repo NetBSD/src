@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.30 2013/03/13 00:09:21 riastradh Exp $
+.\"     $NetBSD: autoconf.9,v 1.30.20.1 2017/04/28 06:00:33 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 2012
+.Dd April 28, 2017
 .Dt AUTOCONF 9
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Nm config_attach_pseudo ,
 .Nm config_detach ,
 .Nm config_detach_children ,
+.Nm config_detach_release ,
 .Nm config_deactivate ,
 .Nm config_defer ,
 .Nm config_interrupts ,
@@ -83,6 +84,8 @@
 .Fn config_detach "device_t dev" "int flags"
 .Ft int
 .Fn config_detach_children "device_t dev" "int flags"
+.Ft int
+.Fn config_detach_release "device_t dev" "int flags"
 .Ft int
 .Fn config_deactivate "device_t dev"
 .Ft int
@@ -340,7 +343,13 @@ The content of that object is similar to what is returned by
 .Fn config_search_loc
 for regular devices.
 .It Fn config_detach "dev" "flags"
-Called by the parent to detach the child device.
+.It Fn config_detach_release "dev" "flags"
+Called by the parent to acquire a reference to and detach the child device.
+If the parent has already acquired a reference to the child via
+.Fn device_acquire ,
+it should call
+.Fn config_detach_release .
+In either case, the reference is released.
 The second argument
 .Em flags
 contains detachment flags.

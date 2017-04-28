@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.259.4.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.259.4.2 2017/04/28 06:00:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.2 2017/04/28 06:00:33 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -334,7 +334,7 @@ vnd_destroy(device_t dev)
 	cfdata_t cf;
 
 	cf = device_cfdata(dev);
-	error = config_detach(dev, DETACH_QUIET);
+	error = config_detach_release(dev, DETACH_QUIET);
 	if (error)
 		return error;
 	free(cf, M_DEVBUF);
@@ -499,12 +499,11 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 		if ((error = vnd_destroy(sc->sc_dev)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to detach instance\n");
-			device_release(self);
 		}
 		return error;
-	}
+	} else
+		device_release(self);
 
-	device_release(self);
 	return 0;
 }
 

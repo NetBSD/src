@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114.4.3 2017/04/27 12:07:23 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.114.4.4 2017/04/28 06:00:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.3 2017/04/27 12:07:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.4 2017/04/28 06:00:33 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -337,8 +337,7 @@ cgd_attach(device_t parent, device_t self, void *aux)
 
 
 /*
- * The caller must hold a reference to the device's localcount.  the
- * reference is released if the device is available for detach.
+ * The caller must hold a reference to the device's localcount.
  */
 static int
 cgd_detach(device_t self, int flags)
@@ -358,7 +357,6 @@ cgd_detach(device_t self, int flags)
 	disk_destroy(&dksc->sc_dkdev);
 	mutex_destroy(&sc->sc_lock);
 
-	device_release(self);
 	return 0;
 }
 
@@ -407,7 +405,7 @@ cgd_destroy(device_t dev)
 	cfdata_t cf;
 
 	cf = device_cfdata(dev);
-	error = config_detach(dev, DETACH_QUIET);
+	error = config_detach_release(dev, DETACH_QUIET);
 	if (error == 0)
 		free(cf, M_DEVBUF);
 

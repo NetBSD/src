@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.252.4.1 2017/04/27 05:36:37 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.252.4.2 2017/04/28 06:00:33 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.2 2017/04/28 06:00:33 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1275,6 +1275,12 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 	/* Remove from cfdriver's array. */
 	cd->cd_devs[dev->dv_unit] = NULL;
 
+	/*
+	 * Release the reference that was held by (the caller of)
+	 * config_detach_release()
+	 */
+	device_release(dev);
+
 	/* Now wait for references to drain - no new refs are possible */
 	localcount_drain(&dev->dv_localcnt, &config_drain_cv,
 	    &alldevs.lock);
@@ -1714,6 +1720,17 @@ config_dump_garbage(struct devicelist *garbage)
 }
 
 /*
+ * Acquire a reference to a device, and then detach it.
+ */
+int
+config_detach(device_t dev, int flags)
+{
+
+	device_acquire(dev);
+	return config_detach_release(dev, flags);
+}
+
+/*
  * Detach a device.  Optionally forced (e.g. because of hardware
  * removal) and quiet.  Returns zero if successful, non-zero
  * (an error code) otherwise.
@@ -1721,9 +1738,14 @@ config_dump_garbage(struct devicelist *garbage)
  * Note that this code wants to be run from a process context, so
  * that the detach can sleep to allow processes which have a device
  * open to run and unwind their stacks.
+ *
+ * Also note that this code requires that the caller have acquired
+ * a reference to the device; callers that have not been updated
+ * for localcount should instead call config_detach().  The reference
+ * is released in all cases.
  */
 int
-config_detach(device_t dev, int flags)
+config_detach_release(device_t dev, int flags)
 {
 	struct alldevs_foray af;
 	struct cftable *ct;
@@ -1752,6 +1774,7 @@ config_detach(device_t dev, int flags)
 		printf("%s: %s is already detached\n", __func__,
 		    device_xname(dev));
 #endif /* DIAGNOSTIC */
+		device_release(dev);
 		return ENOENT;
 	}
 	alldevs.nwrite++;
