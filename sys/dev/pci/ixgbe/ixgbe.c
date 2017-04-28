@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/if_ix.c 302384 2016-07-07 03:39:18Z sbruno $*/
-/*$NetBSD: ixgbe.c,v 1.80 2017/03/03 04:37:05 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.81 2017/04/28 10:24:45 msaitoh Exp $*/
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4490,7 +4490,7 @@ ixgbe_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 		rate = 0;
 	node.sysctl_data = &rate;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error)
+	if (error || newp == NULL)
 		return error;
 	reg &= ~0xfff; /* default, no limitation */
 	ixgbe_max_interrupt_rate = 0;
