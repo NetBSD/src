@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.259.4.2 2017/04/28 06:00:33 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.259.4.3 2017/04/28 23:16:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.2 2017/04/28 06:00:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.3 2017/04/28 23:16:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -276,8 +276,7 @@ vnd_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * The caller must hold a reference to the device's localcount.  the
- * reference is released if the device is available for detach.
+ * The caller must hold a reference to the device's localcount. 
  */
 static int
 vnd_detach(device_t self, int flags)
@@ -295,7 +294,6 @@ vnd_detach(device_t self, int flags)
 	bufq_free(sc->sc_tab);
 	disk_destroy(&sc->sc_dkdev);
 
-	device_release(self);
 	return 0;
 }
 
