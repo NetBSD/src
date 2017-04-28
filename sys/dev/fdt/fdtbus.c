@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.9 2017/04/26 01:51:52 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.10 2017/04/28 10:37:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.9 2017/04/26 01:51:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.10 2017/04/28 10:37:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,18 +290,20 @@ fdt_print(void *aux, const char *pnp)
 	char buf[FDT_MAX_PATH];
 	const char *name = buf;
 
-	if (faa->faa_quiet)
+	if (pnp && faa->faa_quiet)
 		return QUIET;
 
 	/* Skip "not configured" for nodes w/o compatible property */
-	if (OF_getproplen(faa->faa_phandle, "compatible") <= 0)
+	if (pnp && OF_getproplen(faa->faa_phandle, "compatible") <= 0)
 		return QUIET;
 
-	if (pnp) {
-		if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
-			name = faa->faa_name;
+	if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
+		name = faa->faa_name;
+
+	if (pnp)
 		aprint_normal("%s at %s", name, pnp);
-	}
+	else
+		aprint_debug(" (%s)", name);
 
 	return UNCONF;
 }
