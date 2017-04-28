@@ -67,6 +67,10 @@
 #include <sys/callb.h>
 #include <sys/taskq.h>
 
+#ifdef __NetBSD__
+#include <sys/localcount.h>
+#endif
+
 #include "zfs_namecheck.h"
 #include "zfs_prop.h"
 #include "zfs_deleg.h"
@@ -4563,6 +4567,7 @@ nb_zfsdev_ioctl(dev_t dev, u_long cmd, void *argp, int flag, lwp_t *l)
 }
 
 const struct bdevsw zfs_bdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = nb_zvol_bopen,
 	.d_close = nb_zvol_bclose,
 	.d_strategy = zvol_strategy,
@@ -4573,6 +4578,7 @@ const struct bdevsw zfs_bdevsw = {
 };
 
 const struct cdevsw zfs_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = nb_zvol_copen,
 	.d_close = nb_zvol_cclose,
 	.d_read = nb_zvol_read,
