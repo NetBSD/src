@@ -37,7 +37,6 @@
 #if defined(__FreeBSD__)
 #include <sys/limits.h>
 #elif   defined(__NetBSD__)
-#include <sys/localcount.h>
 #include <sys/module.h>
 #endif
 #include "drmP.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.57.8.1 2017/04/29 09:17:58 pgoyette Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.57.8.2 2017/04/29 10:19:31 pgoyette Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.57.8.1 2017/04/29 09:17:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.57.8.2 2017/04/29 10:19:31 pgoyette Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -68,7 +68,6 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/select.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/atomic.h>
 #include <sys/module.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.13.8.1 2017/04/29 09:17:59 pgoyette Exp $	*/
+/*	$NetBSD: tprof.c,v 1.13.8.2 2017/04/29 10:19:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.13.8.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.13.8.2 2017/04/29 10:19:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
 #include <sys/cpu.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/callout.h>
 #include <sys/kmem.h>

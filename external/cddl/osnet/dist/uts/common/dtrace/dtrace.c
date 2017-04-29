@@ -78,9 +78,6 @@
 #include <sys/time.h>
 #endif
 #include <sys/stat.h>
-#ifdef __NetBSD__
-#include <sys/localcount.h>
-#endif
 #include <sys/conf.h>
 #include <sys/systm.h>
 #if defined(sun)

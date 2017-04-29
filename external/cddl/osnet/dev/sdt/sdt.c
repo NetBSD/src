@@ -39,15 +39,12 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.18.4.1 2017/04/29 09:17:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.18.4.2 2017/04/29 10:19:31 pgoyette Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#ifdef __NetBSD__
-#include <sys/localcount.h>
-#endif
 #include <sys/conf.h>
 #ifdef __FreeBSD__
 #include <sys/eventhandler.h>

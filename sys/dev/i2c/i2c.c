@@ -40,13 +40,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.54.6.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.54.6.2 2017/04/29 10:19:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/event.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>

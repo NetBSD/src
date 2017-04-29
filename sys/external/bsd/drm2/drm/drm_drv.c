@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.17.8.1 2017/04/29 09:17:59 pgoyette Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.17.8.2 2017/04/29 10:19:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.17.8.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.17.8.2 2017/04/29 10:19:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/file.h>

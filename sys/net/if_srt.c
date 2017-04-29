@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.26.4.1 2017/04/29 09:17:59 pgoyette Exp $ */
+/* $NetBSD: if_srt.c,v 1.26.4.2 2017/04/29 10:19:32 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26.4.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26.4.2 2017/04/29 10:19:32 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -25,7 +25,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26.4.1 2017/04/29 09:17:59 pgoyette Exp
 #include <sys/param.h>		/* sys/mbuf.h */
 #include <netinet/in_systm.h>	/* netinet/ip.h */
 
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>

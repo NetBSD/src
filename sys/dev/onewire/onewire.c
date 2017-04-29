@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.16.18.1 2017/04/29 09:17:59 pgoyette Exp $ */
+/* $NetBSD: onewire.c,v 1.16.18.2 2017/04/29 10:19:32 pgoyette Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16.18.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16.18.2 2017/04/29 10:19:32 pgoyette Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -26,7 +26,6 @@ __KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16.18.1 2017/04/29 09:17:59 pgoyette E
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
