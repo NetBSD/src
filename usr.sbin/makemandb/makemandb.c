@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.47 2017/04/20 13:11:35 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.48 2017/04/29 14:43:09 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.47 2017/04/20 13:11:35 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.48 2017/04/29 14:43:09 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1120,12 +1120,6 @@ mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
 
 	if (n->type == ROFFT_TEXT) {
 		mdoc_parse_section(n->sec, n->string, rec);
-	} else if (mdocs[n->tok] == pmdoc_Nm && rec->name != NULL) {
-		/*
-		 * When encountering a .Nm macro, substitute it
-		 * with its previously cached value of the argument.
-		 */
-		mdoc_parse_section(n->sec, rec->name, rec);
 	} else if (mdocs[n->tok] == pmdoc_Xr) {
 		/*
 		 * When encountering other inline macros,
