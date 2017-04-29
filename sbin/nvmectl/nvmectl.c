@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
+/*	$NetBSD: nvmectl.c,v 1.3 2017/04/29 00:06:40 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,9 +28,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nvmectl.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
+__RCSID("$NetBSD: nvmectl.c,v 1.3 2017/04/29 00:06:40 nonaka Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 295087 2016-01-30 22:48:06Z imp $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 314229 2017-02-25 00:09:12Z imp $");
 #endif
 #endif
 
@@ -52,13 +52,7 @@ __FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 295087 2016-01-30 22:48:
 
 #include "nvmectl.h"
 
-typedef void (*nvme_fn_t)(int argc, char *argv[]);
-
-static struct nvme_function {
-	const char	*name;
-	nvme_fn_t	fn;
-	const char	*usage;
-} funcs[] = {
+static struct nvme_function funcs[] = {
 	{"devlist",	devlist,	DEVLIST_USAGE},
 	{"identify",	identify,	IDENTIFY_USAGE},
 #ifdef PERFTEST_USAGE
@@ -72,21 +66,40 @@ static struct nvme_function {
 	{"firmware",	firmware,	FIRMWARE_USAGE},
 #endif
 	{"power",	power,		POWER_USAGE},
+	{"wdc",		wdc,		WDC_USAGE},
 	{NULL,		NULL,		NULL},
 };
 
-__dead static void
-usage(void)
+void
+gen_usage(struct nvme_function *f)
 {
-	struct nvme_function *f;
 
-	f = funcs;
 	fprintf(stderr, "usage:\n");
 	while (f->name != NULL) {
 		fprintf(stderr, "%s", f->usage);
 		f++;
 	}
 	exit(1);
+}
+
+void
+dispatch(int argc, char *argv[], struct nvme_function *tbl)
+{
+	struct nvme_function *f = tbl;
+
+	if (argv[1] == NULL) {
+		gen_usage(tbl);
+		return;
+	}
+
+	while (f->name != NULL) {
+		if (strcmp(argv[1], f->name) == 0)
+			f->fn(argc-1, &argv[1]);
+		f++;
+	}
+
+	fprintf(stderr, "Unknown command: %s\n", argv[1]);
+	gen_usage(tbl);
 }
 
 static void
@@ -269,19 +282,11 @@ nvme_strvis(u_char *dst, int dlen, const u_char *src, int slen)
 int
 main(int argc, char *argv[])
 {
-	struct nvme_function *f;
 
 	if (argc < 2)
-		usage();
+		gen_usage(funcs);
 
-	f = funcs;
-	while (f->name != NULL) {
-		if (strcmp(argv[1], f->name) == 0)
-			f->fn(argc-1, &argv[1]);
-		f++;
-	}
-
-	usage();
+	dispatch(argc, argv, funcs);
 
 	return (0);
 }
