@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2017/04/26 22:41:53 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2017/04/29 15:12:21 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.38 2017/04/26 22:41:53 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.39 2017/04/29 15:12:21 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,19 @@ trapcmd(int argc, char **argv)
 	char *action;
 	char **ap;
 	int signo;
+	int errs = 0;
+
+	ap = argv + 1;
+
+	if (argc == 2 && strcmp(*ap, "-l") == 0) {
+		printsignals();
+		return 0;
+	}
+
+	if (argc > 1 && strcmp(*ap, "--") == 0) {
+		argc--;
+		ap++;
+	}
 
 	if (argc <= 1) {
 		for (signo = 0 ; signo <= NSIG ; signo++)
@@ -147,37 +160,33 @@ trapcmd(int argc, char **argv)
 			}
 		return 0;
 	}
-	ap = argv + 1;
 
 	action = NULL;
 
-	if (strcmp(*ap, "--") == 0)
-		if (*++ap == NULL)
-			return 0;
-
-	if (signame_to_signum(*ap) == -1) {
-		if ((*ap)[0] == '-') {
-			if ((*ap)[1] == '\0')
-				ap++;
-			else if ((*ap)[1] == 'l' && (*ap)[2] == '\0') {
-				printsignals();
-				return 0;
-			}
-			else
-				error("bad option %s\n", *ap);
-		}
+	if (!is_number(*ap)) {
+		if ((*ap)[0] == '-' && (*ap)[1] == '\0')
+			ap++;			/* reset to default */
 		else
-			action = *ap++;
+			action = *ap++;		/* can be '' for "ignore" */
+		argc--;
 	}
 
-	while (*ap) {
-		if (is_number(*ap))
-			signo = number(*ap);
-		else
-			signo = signame_to_signum(*ap);
+	if (argc < 2) {		/* there must be at least 1 condition */
+		out2str("Usage: trap [-l]\n"
+			"       trap action condition ...\n"
+			"       trap N condition ...\n");
+		return 2;
+	}
 
-		if (signo < 0 || signo > NSIG)
-			error("%s: bad trap", *ap);
+
+	while (*ap) {
+		signo = signame_to_signum(*ap);
+
+		if (signo < 0 || signo > NSIG) {
+			/* This is not a fatal error, so sayeth posix */
+			outfmt(out2, "trap: '%s' bad condition\n", *ap);
+			errs = 1;
+		}
 
 		INTOFF;
 		if (action)
@@ -193,7 +202,7 @@ trapcmd(int argc, char **argv)
 		INTON;
 		ap++;
 	}
-	return 0;
+	return errs;
 }
 
 
