@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.48 2017/04/29 14:43:09 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.49 2017/04/29 16:49:51 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.48 2017/04/29 14:43:09 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.49 2017/04/29 16:49:51 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1108,8 +1108,7 @@ pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
 /*
  *  Called from pmdoc_Sh to parse body of a .Sh macro. It calls
  *  mdoc_parse_section to append the data to the section specific buffer.
- *  Two special macros which may occur inside the body of Sh are .Nm and .Xr and
- *  they need special handling, thus the separate if branches for them.
+ *  The .Xr macro needs special handling, thus the separate if branch for it.
  */
 static void
 mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
