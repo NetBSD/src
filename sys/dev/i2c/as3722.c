@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.10 2017/04/29 19:56:59 jakllsch Exp $ */
+/* $NetBSD: as3722.c,v 1.11 2017/04/29 20:43:48 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.10 2017/04/29 19:56:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.11 2017/04/29 20:43:48 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,16 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.10 2017/04/29 19:56:59 jakllsch Exp $")
 #define AS3722_ASIC_ID1_REG		0x90
 #define AS3722_ASIC_ID2_REG		0x91
 
+#define AS3722_FUSE7_REG		0xa7
+#define AS3722_FUSE7_SD0_V_MINUS_200MV	__BIT(4)
+
 struct as3722_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 	int		sc_phandle;
+	int		sc_flags;
+#define AS3722_FLAG_SD0_V_MINUS_200MV 0x01
 
 	struct sysmon_wdog sc_smw;
 	struct todr_chip_handle sc_todr;
@@ -468,6 +473,20 @@ as3722_regulator_attach(struct as3722_softc *sc)
 {
 	struct as3722reg_attach_args raa;
 	int phandle, child;
+	int error;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t tmp;
+
+	iic_acquire_bus(sc->sc_i2c, flags);
+	error = as3722_read(sc, AS3722_FUSE7_REG, &tmp, flags);
+	iic_release_bus(sc->sc_i2c, flags);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to read Fuse7: %d\n", error);
+		return;
+	}
+
+	if (tmp & AS3722_FUSE7_SD0_V_MINUS_200MV)
+		sc->sc_flags |= AS3722_FLAG_SD0_V_MINUS_200MV;
 
 	phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
 	if (phandle <= 0)
@@ -634,11 +653,21 @@ as3722reg_set_voltage_sd0(device_t dev, u_int min_uvol, u_int max_uvol)
 	u_int uvol;
 	int error;
 
-	for (uint8_t v = 0x01; v <= 0x5a; v++) {
-		uvol = 600000 + (v * 10000);
-		if (uvol >= min_uvol && uvol <= max_uvol) {
-			set_v = v;
-			goto done;
+	if (asc->sc_flags & AS3722_FLAG_SD0_V_MINUS_200MV) {
+		for (uint8_t v = 0x01; v <= 0x6e; v++) {
+			uvol = 400000 + (v * 10000);
+			if (uvol >= min_uvol && uvol <= max_uvol) {
+				set_v = v;
+				goto done;
+			}
+		}
+	} else {
+		for (uint8_t v = 0x01; v <= 0x5a; v++) {
+			uvol = 600000 + (v * 10000);
+			if (uvol >= min_uvol && uvol <= max_uvol) {
+				set_v = v;
+				goto done;
+			}
 		}
 	}
 	if (set_v == 0)
@@ -671,14 +700,23 @@ as3722reg_get_voltage_sd0(device_t dev, u_int *puvol)
 
 	v &= regdef->vsel_mask;
 
-	if (v == 0)
+	if (v == 0) {
 		*puvol = 0;	/* DC/DC powered down */
-	else if (v >= 0x01 && v <= 0x5a)
-		*puvol = 600000 + (v * 10000);
-	else
-		return EINVAL;
+		return 0;
+	}
+	if (asc->sc_flags & AS3722_FLAG_SD0_V_MINUS_200MV) {
+		if (v >= 0x01 && v <= 0x6e) {
+			*puvol = 400000 + (v * 10000);
+			return 0;
+		}
+	} else {
+		if (v >= 0x01 && v <= 0x5a) {
+			*puvol = 600000 + (v * 10000);
+			return 0;
+		}
+	}
 
-	return 0;
+	return EINVAL;
 }
 
 static int
