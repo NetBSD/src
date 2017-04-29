@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.9 2017/04/22 23:50:13 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.10 2017/04/29 19:56:59 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.9 2017/04/22 23:50:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.10 2017/04/29 19:56:59 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.9 2017/04/22 23:50:13 jmcneill Exp $");
 
 #define AS3722_SD0_VOLTAGE_REG		0x00
 
+#define AS3722_SD4_VOLTAGE_REG		0x04
+
 #define AS3722_GPIO0_CTRL_REG		0x08
 #define AS3722_GPIO0_CTRL_INVERT	__BIT(7)
 #define AS3722_GPIO0_CTRL_IOSF		__BITS(6,3)
@@ -79,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.9 2017/04/22 23:50:13 jmcneill Exp $");
 #define AS3722_WATCHDOG_SIGNAL_REG	0x48
 #define AS3722_WATCHDOG_SIGNAL_PWM_DIV	__BITS(7,6)
 #define AS3722_WATCHDOG_SIGNAL_SW_SIG	__BIT(0)
+
+#define AS3722_SDCONTROL_REG		0x4d
+#define AS3722_SDCONTROL_SD4_ENABLE	__BIT(4)
 
 #define AS3722_LDOCONTROL0_REG		0x4e
 
@@ -109,6 +114,8 @@ struct as3722_softc {
 #ifdef FDT
 static int	as3722reg_set_voltage_sd0(device_t, u_int, u_int);
 static int	as3722reg_get_voltage_sd0(device_t, u_int *);
+static int	as3722reg_set_voltage_sd4(device_t, u_int, u_int);
+static int	as3722reg_get_voltage_sd4(device_t, u_int *);
 static int	as3722reg_set_voltage_ldo(device_t, u_int, u_int);
 static int	as3722reg_get_voltage_ldo(device_t, u_int *);
 
@@ -126,6 +133,13 @@ static const struct as3722regdef {
 	  .vsel_mask = 0x7f,
 	  .set = as3722reg_set_voltage_sd0,
 	  .get = as3722reg_get_voltage_sd0 },
+	{ .name = "sd4",
+	  .vsel_reg = AS3722_SD4_VOLTAGE_REG,
+	  .vsel_mask = 0x7f,
+	  .enable_reg = AS3722_SDCONTROL_REG,
+	  .enable_mask = AS3722_SDCONTROL_SD4_ENABLE,
+	  .set = as3722reg_set_voltage_sd4,
+	  .get = as3722reg_get_voltage_sd4 },
 	{ .name = "ldo6",
 	  .vsel_reg = AS3722_LDO6_VOLTAGE_REG,
 	  .vsel_mask = 0x7f,
@@ -661,6 +675,83 @@ as3722reg_get_voltage_sd0(device_t dev, u_int *puvol)
 		*puvol = 0;	/* DC/DC powered down */
 	else if (v >= 0x01 && v <= 0x5a)
 		*puvol = 600000 + (v * 10000);
+	else
+		return EINVAL;
+
+	return 0;
+}
+
+static int
+as3722reg_set_voltage_sd4(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t set_v = 0x00;
+	u_int uvol;
+	int error;
+
+
+	for (uint8_t v = 0x01; v <= 0x40; v++) {
+		uvol = 600000 + (v * 12500);
+		if (uvol >= min_uvol && uvol <= max_uvol) {
+			set_v = v;
+			goto done;
+		}
+	}
+	for (uint8_t v = 0x41; v <= 0x70; v++) {
+		uvol = 1400000 + ((v - 0x40) * 25000);
+		if (uvol >= min_uvol && uvol <= max_uvol) {
+			set_v = v;
+			goto done;
+		}
+	}
+	for (uint8_t v = 0x71; v <= 0x7f; v++) {
+		uvol = 2600000 + ((v - 0x70) * 50000);
+		if (uvol >= min_uvol && uvol <= max_uvol) {
+			set_v = v;
+			goto done;
+		}
+	}
+	if (set_v == 0)
+		return ERANGE;
+
+done:
+	iic_acquire_bus(asc->sc_i2c, flags);
+	error = as3722_set_clear(asc, regdef->vsel_reg, set_v,
+	    regdef->vsel_mask, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+
+	return error;
+}
+
+static int
+as3722reg_get_voltage_sd4(device_t dev, u_int *puvol)
+{
+	struct as3722reg_softc *sc = device_private(dev);
+	struct as3722_softc *asc = device_private(device_parent(dev));
+	const struct as3722regdef *regdef = sc->sc_regdef;
+	const int flags = (cold ? I2C_F_POLL : 0);
+	uint8_t v;
+	int error;
+
+	iic_acquire_bus(asc->sc_i2c, flags);
+	error = as3722_read(asc, regdef->vsel_reg, &v, flags);
+	iic_release_bus(asc->sc_i2c, flags);
+	if (error != 0)
+		return error;
+
+	v &= regdef->vsel_mask;
+
+	if (v == 0)
+		*puvol = 0;	/* DC/DC powered down */
+	else if (v >= 0x01 && v <= 0x40)
+		*puvol = 600000 + (v * 12500);
+	else if (v >= 0x41 && v <= 0x70)
+		*puvol = 1400000 + (v - 0x40) * 25000;
+	else if (v >= 0x71 && v <= 0x7f)
+		*puvol = 2600000 + (v - 0x70) * 50000;
 	else
 		return EINVAL;
 
