@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.h,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: nvme.h,v 1.2 2017/04/29 00:06:40 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -25,13 +25,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sys/dev/nvme/nvme.h 296617 2016-03-10 17:13:10Z mav $
+ * $FreeBSD: head/sys/dev/nvme/nvme.h 314888 2017-03-07 23:02:59Z imp $
  */
 
 #ifndef __NVME_H__
 #define __NVME_H__
 
-#define	NVME_MAX_XFER_SIZE	MAXPHYS
+/* Cap nvme to 1MB transfers driver explodes with larger sizes */
+#define NVME_MAX_XFER_SIZE		(MAXPHYS < (1<<20) ? MAXPHYS : (1<<20))
 
 /* Get/Set Features */
 #define	NVME_FEAT_ARBITRATION				0x01
@@ -60,6 +61,19 @@
 #define	NVME_LOG_CHANGED_NAMESPACE_LIST			0x04
 #define	NVME_LOG_COMMAND_EFFECTS_LOG			0x05
 #define	NVME_LOG_RESERVATION_NOTIFICATION		0x80
+/*
+ * The following are Intel Specific log pages, but they seem
+ * to be widely implemented.
+ */
+#define	INTEL_LOG_READ_LAT_LOG				0xc1
+#define	INTEL_LOG_WRITE_LAT_LOG				0xc2
+#define	INTEL_LOG_TEMP_STATS				0xc5
+#define	INTEL_LOG_ADD_SMART				0xca
+#define	INTEL_LOG_DRIVE_MKT_NAME			0xdd
+/*
+ * HGST log page, with lots ofs sub pages.
+ */
+#define	HGST_INFO_LOG					0xc1
 
 /* Error Information Log (Log Identifier 01h) */
 struct nvme_error_information_entry {
@@ -101,9 +115,9 @@ struct nvme_health_information_page {
 	uint64_t		unsafe_shutdowns[2];
 	uint64_t		media_errors[2];
 	uint64_t		num_error_info_log_entries[2];
-	uint32_t		warning_composite_temperature_time;
-	uint32_t		critical_composite_temperature_time;
-	uint16_t		temperature_sensor[8];
+	uint32_t		warning_temp_time;
+	uint32_t		error_temp_time;
+	uint16_t		temp_sensor[8];
 
 	uint8_t			reserved[296];
 } __packed __aligned(4);
@@ -124,6 +138,18 @@ struct nvme_firmware_page {
 	uint64_t		revision[7];	/* revisions for 7 slots */
 
 	uint8_t			reserved[448];
+} __packed __aligned(4);
+
+struct intel_log_temp_stats {
+	uint64_t	current;
+	uint64_t	overtemp_flag_last;
+	uint64_t	overtemp_flag_life;
+	uint64_t	max_temp;
+	uint64_t	min_temp;
+	uint64_t	_rsvd[5];
+	uint64_t	max_oper_temp;
+	uint64_t	min_oper_temp;
+	uint64_t	est_offset;
 } __packed __aligned(4);
 
 /* Commands Supported and Effects (Log Identifier 05h) */
