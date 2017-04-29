@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.22 2017/02/27 06:47:00 chs Exp $	*/
+/*	$NetBSD: fbt.c,v 1.22.2.1 2017/04/29 09:17:58 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -35,6 +35,9 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#ifdef __NetBSD
+#include <sys/localcount.h>
+#endif
 #include <sys/conf.h>
 #include <sys/cpuvar.h>
 #include <sys/fcntl.h>
@@ -152,6 +155,9 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 #define	FBT_PROBETAB_SIZE	0x8000		/* 32k entries -- 128K total */
 
 static const struct cdevsw fbt_cdevsw = {
+#ifdef __NetBSD__
+	DEVSW_MODULE_INIT
+#endif
 	.d_open		= fbt_open,
 	.d_close	= noclose,
 	.d_read		= noread,

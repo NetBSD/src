@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.51 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.51.8.1 2017/04/29 09:17:59 pgoyette Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.51 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.51.8.1 2017/04/29 09:17:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.51 2015/08/20 14:40:18 christos Exp $
 #include <sys/rwlock.h>
 #include <uvm/uvm_extern.h>
 #ifdef __NetBSD__
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
@@ -170,6 +171,7 @@ void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
 #ifdef __NetBSD__
 const struct cdevsw pf_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = pfopen,
 	.d_close = pfclose,
 	.d_read = noread,

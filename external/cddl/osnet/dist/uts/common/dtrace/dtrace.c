@@ -78,6 +78,9 @@
 #include <sys/time.h>
 #endif
 #include <sys/stat.h>
+#ifdef __NetBSD__
+#include <sys/localcount.h>
+#endif
 #include <sys/conf.h>
 #include <sys/systm.h>
 #if defined(sun)
@@ -15338,6 +15341,9 @@ static dev_type_open(dtrace_open);
 /* Pseudo Device Entry points */
 /* Just opens, clones to the fileops below */
 const struct cdevsw dtrace_cdevsw = {
+#ifdef __NetBSD__
+	DEVSW_MODULE_INIT
+#endif
 	.d_open		= dtrace_open,
 	.d_close	= noclose,
 	.d_read		= noread,

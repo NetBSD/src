@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.6 2017/01/06 09:32:08 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.6.10.1 2017/04/29 09:17:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,12 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6 2017/01/06 09:32:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6.10.1 2017/04/29 09:17:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
+#include <sys/localcount.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/module.h>
@@ -68,6 +69,7 @@ dev_type_write(spkrwrite);
 dev_type_ioctl(spkrioctl);
 
 const struct cdevsw spkr_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = spkropen,
 	.d_close = spkrclose,
 	.d_read = noread,

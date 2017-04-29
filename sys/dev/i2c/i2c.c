@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $	*/
+/*	$nETbsD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,12 +40,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.54.6.1 2017/04/29 09:17:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/event.h>
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
@@ -83,6 +84,7 @@ int iic_refcnt;
 ONCE_DECL(iic_once);
 
 const struct cdevsw iic_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = iic_open,
 	.d_close = iic_close,
 	.d_read = noread,
