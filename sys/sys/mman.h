@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.50 2016/06/01 00:46:44 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.51 2017/04/29 01:17:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -70,14 +70,7 @@ typedef	__off_t		off_t;		/* file offset */
  */
 #define	MAP_SHARED	0x0001	/* share changes */
 #define	MAP_PRIVATE	0x0002	/* changes are private */
-
-#ifdef _KERNEL
-/*
- * Deprecated flag; these are treated as MAP_PRIVATE internally by
- * the kernel.
- */
-#define	MAP_COPY	0x0004	/* "copy" region at mmap time */
-#endif
+	/* old MAP_COPY	0x0004	   "copy" region at mmap time */
 
 /*
  * Other flags
