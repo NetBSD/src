@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.11 2017/04/29 12:38:26 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.12 2017/04/29 12:49:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.11 2017/04/29 12:38:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.12 2017/04/29 12:49:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,6 @@ static void	fdt_scan_bus(struct fdt_softc *);
 static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
-
-static int	fdt_print(void *, const char *);
 
 static const char * const fdtbus_compatible[] =
     { "simple-bus", NULL };
@@ -203,7 +201,7 @@ fdt_scan_bus(struct fdt_softc *sc)
 		/*
 		 * Attach the bus.
 		 */
-		node->n_dev = config_found(node->n_bus, &faa, fdt_print);
+		node->n_dev = config_found(node->n_bus, &faa, fdtbus_print);
 	}
 }
 
@@ -237,7 +235,7 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		 * Attach the device.
 		 */
 		node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
-		    &faa, fdt_print, fdt_scan_submatch);
+		    &faa, fdtbus_print, fdt_scan_submatch);
 	}
 }
 
@@ -271,8 +269,8 @@ fdt_get_order(int phandle)
 	return val;
 }
 
-static int
-fdt_print(void *aux, const char *pnp)
+int
+fdtbus_print(void *aux, const char *pnp)
 {
 	const struct fdt_attach_args * const faa = aux;
 	char buf[FDT_MAX_PATH];
