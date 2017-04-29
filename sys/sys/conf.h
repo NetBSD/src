@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.151.6.1 2017/04/27 05:36:38 pgoyette Exp $	*/
+/*	$NetBSD: conf.h,v 1.151.6.2 2017/04/29 10:19:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,6 +44,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/localcount.h>
 #include <sys/device_if.h>
 
 struct buf;
@@ -68,7 +69,6 @@ struct vnode;
 /*
  * Block device switch table
  */
-struct localcount;
 
 struct bdevsw {
 	int		(*d_open)(dev_t, int, int, struct lwp *);

@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.4.8.1 2017/04/29 09:17:59 pgoyette Exp $ */
+/* $NetBSD: hdaudio.c,v 1.4.8.2 2017/04/29 10:19:31 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.8.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.8.2 2017/04/29 10:19:31 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>

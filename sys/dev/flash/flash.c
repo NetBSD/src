@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.12.18.1 2017/04/29 09:17:59 pgoyette Exp $	*/
+/*	$NetBSD: flash.c,v 1.12.18.2 2017/04/29 10:19:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.12.18.1 2017/04/29 09:17:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.12.18.2 2017/04/29 10:19:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.12.18.1 2017/04/29 09:17:59 pgoyette Exp
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/kmem.h>
 #include <sys/uio.h>

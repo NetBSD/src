@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.35.6.2 2017/04/29 09:17:58 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.35.6.3 2017/04/29 10:19:31 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.6.2 2017/04/29 09:17:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.6.3 2017/04/29 10:19:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.35.6.2 2017/04/29 09:17:58 pgoyette E
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/localcount.h>
 #include <sys/device.h>
 #include <sys/time.h>
 #include <sys/conf.h>

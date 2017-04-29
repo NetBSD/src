@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.20.2.1 2017/04/29 09:17:59 pgoyette Exp $ */
+/*	$NetBSD: lua.c,v 1.20.2.2 2017/04/29 10:19:32 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -33,7 +33,6 @@
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/condvar.h>
 #include <sys/device.h>

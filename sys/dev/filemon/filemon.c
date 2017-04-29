@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.28.8.1 2017/04/29 09:17:58 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.28.8.2 2017/04/29 10:19:31 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,12 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.28.8.1 2017/04/29 09:17:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.28.8.2 2017/04/29 10:19:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
-#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
