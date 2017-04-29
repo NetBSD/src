@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.349.4.1 2017/04/27 05:36:36 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.349.4.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349.4.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349.4.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.349.4.1 2017/04/27 05:36:36 pgo
 #include <sys/reboot.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
-#include <sys/localcount.h>
 
 #include <prop/proplib.h>
 

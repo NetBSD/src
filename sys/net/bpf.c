@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.216.4.1 2017/04/27 05:36:38 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.216.4.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.4.1 2017/04/27 05:36:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.4.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.216.4.1 2017/04/27 05:36:38 pgoyette Exp $
 #include <sys/syslog.h>
 #include <sys/percpu.h>
 #include <sys/pserialize.h>
-#include <sys/localcount.h>
 #include <sys/lwp.h>
 
 #include <net/if.h>

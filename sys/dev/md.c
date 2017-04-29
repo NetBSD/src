@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.78.6.3 2017/04/28 06:00:33 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.78.6.4 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.3 2017/04/28 06:00:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.4 2017/04/29 11:12:14 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78.6.3 2017/04/28 06:00:33 pgoyette Exp $")
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
-#include <sys/localcount.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -196,8 +195,7 @@ md_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Caller must hold a reference to the device's localcount.  The reference
- * is released if detach is successful.
+ * Caller must hold a reference to the device's localcount.
  */
 static int
 md_detach(device_t self, int flags)

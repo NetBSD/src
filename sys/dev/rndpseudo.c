@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.35.8.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.35.8.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35.8.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35.8.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35.8.1 2017/04/27 05:36:35 pgoyette 
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/localcount.h>
 
 #include <dev/rnd_private.h>
 

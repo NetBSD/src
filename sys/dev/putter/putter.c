@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.35.18.1 2017/04/27 05:36:36 pgoyette Exp $	*/
+/*	$NetBSD: putter.c,v 1.35.18.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.35.18.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.35.18.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.35.18.1 2017/04/27 05:36:36 pgoyette Ex
 #include <sys/socketvar.h>
 #include <sys/module.h>
 #include <sys/kauth.h>
-#include <sys/localcount.h>
 
 #include <dev/putter/putter_sys.h>
 

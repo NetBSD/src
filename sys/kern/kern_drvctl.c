@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.41.8.1 2017/04/27 05:36:37 pgoyette Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.41.8.2 2017/04/29 11:12:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41.8.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41.8.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41.8.1 2017/04/27 05:36:37 pgoyett
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
-#include <sys/localcount.h>
 
 #include "ioconf.h"
 

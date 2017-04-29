@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.327.2.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.327.2.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -179,7 +179,6 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.1 2017/04/27 05:36:35 pgoyette Exp
 #include <sys/intr.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
-#include <sys/localcount.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>

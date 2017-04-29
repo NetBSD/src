@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.118.6.1 2017/04/27 05:36:36 pgoyette Exp $	*/
+/*	$NetBSD: ucom.c,v 1.118.6.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118.6.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118.6.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.118.6.1 2017/04/27 05:36:36 pgoyette Exp 
 #include <sys/sysctl.h>
 #include <sys/timepps.h>
 #include <sys/rndsource.h>
-#include <sys/localcount.h>
 
 #include <dev/usb/usb.h>
 

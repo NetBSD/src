@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37.8.1 2017/04/27 05:36:37 pgoyette Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37.8.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.8.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.8.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.8.1 2017/04/27 05:36:37 pgoyette Ex
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
-#include <sys/localcount.h>
 
 #include <miscfs/specfs/specdev.h>
 

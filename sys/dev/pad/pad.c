@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.28.4.1 2017/04/27 05:36:36 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.28.4.2 2017/04/29 11:12:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28.4.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28.4.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.28.4.1 2017/04/27 05:36:36 pgoyette Exp $"
 #include <sys/module.h>
 #include <sys/atomic.h>
 #include <sys/time.h>
-#include <sys/localcount.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>

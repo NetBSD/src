@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142.8.1 2017/04/27 05:36:37 pgoyette Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.8.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.8.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.8.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.8.1 2017/04/27 05:36:37 pgoyette E
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
-#include <sys/localcount.h>
 
 #include "ioconf.h"
 

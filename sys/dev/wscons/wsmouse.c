@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.66.18.1 2017/04/27 05:36:36 pgoyette Exp $ */
+/* $NetBSD: wsmouse.c,v 1.66.18.2 2017/04/29 11:12:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.66.18.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.66.18.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.66.18.1 2017/04/27 05:36:36 pgoyette E
 #include <sys/vnode.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
-#include <sys/localcount.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
