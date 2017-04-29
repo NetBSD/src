@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114.4.5 2017/04/29 08:55:37 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.114.4.6 2017/04/29 10:50:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.5 2017/04/29 08:55:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.6 2017/04/29 10:50:46 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.5 2017/04/29 08:55:37 pgoyette Exp $
 #include <sys/vnode.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
-#include <sys/localcount.h>
 
 #include <dev/dkvar.h>
 #include <dev/cgdvar.h>

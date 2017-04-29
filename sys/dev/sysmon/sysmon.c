@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.28.8.1 2017/04/27 05:36:36 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.28.8.2 2017/04/29 10:50:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28.8.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28.8.2 2017/04/29 10:50:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28.8.1 2017/04/27 05:36:36 pgoyette Exp
 #include <sys/mutex.h>
 #include <sys/device.h>
 #include <sys/once.h>
-#include <sys/localcount.h>
 
 #include <dev/sysmon/sysmonvar.h>
 

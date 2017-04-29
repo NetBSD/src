@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.259.4.3 2017/04/28 23:16:14 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.259.4.4 2017/04/29 10:50:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.3 2017/04/28 23:16:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.4 2017/04/29 10:50:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.259.4.3 2017/04/28 23:16:14 pgoyette Exp $
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
-#include <sys/localcount.h>
 
 #include <net/zlib.h>
 
