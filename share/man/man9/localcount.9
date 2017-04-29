@@ -1,4 +1,4 @@
-.\"	$NetBSD: localcount.9,v 1.1.6.1 2017/04/27 05:36:31 pgoyette Exp $
+.\"	$NetBSD: localcount.9,v 1.1.6.2 2017/04/29 06:33:37 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016
 .\" All rights reserved.
@@ -62,7 +62,7 @@ atomic memory operations, and (unlike
 .Nm
 references can be held across sleeps and can migrate between CPUs.
 Draining a
-.Nm localcount
+.Nm
 requires more expensive interprocessor synchronization than
 .Xr atomic_ops 3
 (similar to
