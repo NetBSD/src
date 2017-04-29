@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.19 2017/04/29 01:15:40 christos Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.20 2017/04/29 13:25:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.19 2017/04/29 01:15:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.20 2017/04/29 13:25:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ compat_43_sys_mmap(struct lwp *l, const struct compat_43_sys_mmap_args *uap, reg
 		 * and ld.so did not turn it on. We take care of this on amd64
 		 * in compat32.
 		 */
-		SCARGS(&nargs, prot) |= PROT_EXEC;
+		SCARG(&nargs, prot) |= PROT_EXEC;
 #endif
 	}
 	if (SCARG(uap, flags) & OMAP_FIXED)
