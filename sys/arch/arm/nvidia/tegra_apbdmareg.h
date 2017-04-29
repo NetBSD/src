@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdmareg.h,v 1.1 2017/04/29 11:01:51 jmcneill Exp $ */
+/* $NetBSD: tegra_apbdmareg.h,v 1.2 2017/04/29 11:47:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -56,7 +56,7 @@
 /*
  * APB DMA channel registers
  */
-#define	APBDMACHAN_CSR_REG(n)		(0x00 + ((n) * 0x40))
+#define	APBDMACHAN_CSR_REG(n)		(0x1000 + ((n) * 0x40))
 #define	 APBDMACHAN_CSR_ENB		__BIT(31)
 #define	 APBDMACHAN_CSR_IE_EOC		__BIT(30)
 #define	 APBDMACHAN_CSR_HOLD		__BIT(29)
@@ -64,12 +64,12 @@
 #define	 APBDMACHAN_CSR_ONCE		__BIT(27)
 #define	 APBDMACHAN_CSR_FLOW		__BIT(21)
 #define	 APBDMACHAN_CSR_REQ_SEL		__BITS(20,16)
-#define	APBDMACHAN_STA_REG(n)		(0x04 + ((n) * 0x40))
-#define	APBDMACHAN_DMA_BYTE_STA_REG(n)	(0x08 + ((n) * 0x40))
-#define	APBDMACHAN_CSRE_REG(n)		(0x0c + ((n) * 0x40))
-#define	APBDMACHAN_AHB_PTR_REG(n)	(0x10 + ((n) * 0x40))
+#define	APBDMACHAN_STA_REG(n)		(0x1004 + ((n) * 0x40))
+#define	APBDMACHAN_DMA_BYTE_STA_REG(n)	(0x1008 + ((n) * 0x40))
+#define	APBDMACHAN_CSRE_REG(n)		(0x100c + ((n) * 0x40))
+#define	APBDMACHAN_AHB_PTR_REG(n)	(0x1010 + ((n) * 0x40))
 #define	 APBDMACHAN_AHB_PTR_MASK	__BITS(31,2)
-#define	APBDMACHAN_AHB_SEQ_REG(n)	(0x14 + ((n) * 0x40))
+#define	APBDMACHAN_AHB_SEQ_REG(n)	(0x1014 + ((n) * 0x40))
 #define	 APBDMACHAN_AHB_SEQ_INTR_ENB	__BIT(31)
 #define	 APBDMACHAN_AHB_SEQ_BUS_WIDTH	__BITS(30,28)
 #define	  APBDMACHAN_AHB_SEQ_BUS_WIDTH_32	2
@@ -88,9 +88,9 @@
 #define	  APBDMACHAN_AHB_SEQ_WRAP_512		5
 #define	  APBDMACHAN_AHB_SEQ_WRAP_1024		6
 #define	  APBDMACHAN_AHB_SEQ_WRAP_2048		7
-#define	APBDMACHAN_APB_PTR_REG(n)	(0x18 + ((n) * 0x40))
+#define	APBDMACHAN_APB_PTR_REG(n)	(0x1018 + ((n) * 0x40))
 #define	 APBDMACHAN_APB_PTR_MASK	__BITS(31,2)
-#define	APBDMACHAN_APB_SEQ_REG(n)	(0x1c + ((n) * 0x40))
+#define	APBDMACHAN_APB_SEQ_REG(n)	(0x101c + ((n) * 0x40))
 #define	 APBDMACHAN_APB_SEQ_BUS_WIDTH	__BITS(30,28)
 #define	  APBDMACHAN_APB_SEQ_BUS_WIDTH_8	0
 #define	  APBDMACHAN_APB_SEQ_BUS_WIDTH_16	1
@@ -105,8 +105,7 @@
 #define	  APBDMACHAN_APB_SEQ_WRAP_16		5
 #define	  APBDMACHAN_APB_SEQ_WRAP_32		6
 #define	  APBDMACHAN_APB_SEQ_WRAP_64		7
-#define	APBDMACHAN_WCOUNT_REG(n)	(0x20 + ((n) * 0x40))
-#define	APBDMACHAN_WORD_REG(n)		(0x24 + ((n) * 0x40))
-
+#define	APBDMACHAN_WCOUNT_REG(n)	(0x1020 + ((n) * 0x40))
+#define	APBDMACHAN_WORD_REG(n)		(0x1024 + ((n) * 0x40))
 
 #endif /* _ARM_TEGRA_APBDMAREG_H */
