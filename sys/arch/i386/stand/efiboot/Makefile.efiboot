@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.8 2017/04/08 19:53:21 christos Exp $
+# $NetBSD: Makefile.efiboot,v 1.9 2017/04/29 00:05:35 nonaka Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -10,7 +10,7 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 
 SOURCES?= start.S conf.c devopen.c efiboot.c self_reloc.c
 LIBI386SRCS= boot.c biosdisk.c bootinfo.c bootinfo_biosgeom.c
-LIBI386SRCS+= bootmenu.c boot_params.S diskbuf.c exec.c menuutils.c
+LIBI386SRCS+= bootmenu.c diskbuf.c exec.c menuutils.c
 LIBI386SRCS+= panic.c parseutils.c pread.c
 LIBI386SRCS+= eficons.c efidelay.c efidisk.c efidisk_ll.c efigetsecs.c
 LIBI386SRCS+= efimemory.c
