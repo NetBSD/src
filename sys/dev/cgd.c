@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.114.4.4 2017/04/28 06:00:33 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.114.4.5 2017/04/29 08:55:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.4 2017/04/28 06:00:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.114.4.5 2017/04/29 08:55:37 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -449,6 +449,8 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		}
 		return error;
 	}
+
+	/* Unit is still attached - just return */
 	device_release(self);
 	return 0;
 }
