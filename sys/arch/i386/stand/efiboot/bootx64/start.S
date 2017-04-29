@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2017/01/24 11:09:14 nonaka Exp $	*/
+/*	$NetBSD: start.S,v 1.2 2017/04/29 00:05:35 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 1999 Hewlett-Packard Co.
@@ -39,6 +39,7 @@
  */
 
 #include <machine/asm.h>
+#include <sys/bootblock.h>
 
 	.text
 	.align 16
@@ -77,3 +78,18 @@ _start:
 	.long   0
 	.long   10
 	.word   0
+
+	/* boot parameters */
+	.text
+	.code16
+	.align 512
+.Lfake_bootxx:
+	jmp	1f
+	.balign 4
+	.long	X86_BOOT_MAGIC_EFI	/* checked by installboot */
+	.globl _C_LABEL(boot_params)
+_C_LABEL(boot_params):			/* space for patchable variables */
+	.long	1f - boot_params	/* length of this data area */
+#include <boot_params.S>
+	. = .Lfake_bootxx + 0x80	/* Space for patching unknown params */
+1:
