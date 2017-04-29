@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootx64.c,v 1.2 2017/02/11 10:23:39 nonaka Exp $	*/
+/*	$NetBSD: efibootx64.c,v 1.3 2017/04/29 00:05:35 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -29,8 +29,6 @@
 #include "efiboot.h"
 
 #include <sys/bootblock.h>
-
-struct x86_boot_params boot_params;
 
 void startprog64_start(physaddr_t, physaddr_t, physaddr_t, u_long,
     void *, physaddr_t);
