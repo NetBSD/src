@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.10 2017/04/28 10:37:41 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.11 2017/04/29 12:38:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.10 2017/04/28 10:37:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.11 2017/04/29 12:38:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct fdt_node *node;
-	char *model, *name, *status;
+	char *model, *name;
 	int len, child;
 
 	sc->sc_dev = self;
@@ -122,28 +122,16 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		/* If there is a "status" property, make sure it is "okay" */
-		len = OF_getproplen(child, "status");
-		if (len > 0) {
-			status = kmem_zalloc(len, KM_SLEEP);
-			int alen __diagused = OF_getprop(child, "status", status, len);
-			KASSERT(alen == len);
-			const bool okay_p = strcmp(status, "okay") == 0 ||
-					    strcmp(status, "ok") == 0;
-			kmem_free(status, len);
-			if (!okay_p) {
-				continue;
-			}
-		}
+		if (!fdtbus_status_okay(child))
+			continue;
 
 		len = OF_getproplen(child, "name");
-		if (len <= 0) {
+		if (len <= 0)
 			continue;
-		}
+
 		name = kmem_zalloc(len, KM_SLEEP);
-		if (OF_getprop(child, "name", name, len) != len) {
+		if (OF_getprop(child, "name", name, len) != len)
 			continue;
-		}
 
 		/* Add the node to our device list */
 		node = kmem_alloc(sizeof(*node), KM_SLEEP);
