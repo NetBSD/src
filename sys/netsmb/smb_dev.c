@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.49.6.1 2017/04/27 05:36:38 pgoyette Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.49.6.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.49.6.1 2017/04/27 05:36:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.49.6.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.49.6.1 2017/04/27 05:36:38 pgoyette Ex
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
-#include <sys/localcount.h>
 
 #include <miscfs/specfs/specdev.h> /* XXX */
 

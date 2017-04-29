@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.33.6.1 2017/04/27 05:36:38 pgoyette Exp $	*/
+/*	$NetBSD: npf.c,v 1.33.6.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.33.6.1 2017/04/27 05:36:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.33.6.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.33.6.1 2017/04/27 05:36:38 pgoyette Exp $"
 #include <sys/conf.h>
 #include <sys/kmem.h>
 #include <sys/percpu.h>
-#include <sys/localcount.h>
 #endif
 
 #include "npf_impl.h"

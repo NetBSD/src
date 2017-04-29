@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.100.4.1 2017/04/27 05:36:35 pgoyette Exp $	*/
+/*	$NetBSD: ld.c,v 1.100.4.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.100.4.1 2017/04/27 05:36:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.100.4.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.100.4.1 2017/04/27 05:36:35 pgoyette Exp $"
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mutex.h>
-#include <sys/localcount.h>
 #include <sys/module.h>
 #include <sys/reboot.h>
 

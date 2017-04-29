@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.7.8.1 2017/04/27 05:36:36 pgoyette Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.7.8.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.8.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.8.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.8.1 2017/04/27 05:36:36 pgoyette Exp
 #include <sys/kmem.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
-#include <sys/localcount.h>
 
 #include <dev/pud/pud_sys.h>
 

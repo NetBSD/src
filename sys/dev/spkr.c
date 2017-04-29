@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.6.10.1 2017/04/29 09:17:58 pgoyette Exp $	*/
+/*	$NetBSD: spkr.c,v 1.6.10.2 2017/04/29 11:12:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,13 +43,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6.10.1 2017/04/29 09:17:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.6.10.2 2017/04/29 11:12:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/localcount.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/module.h>

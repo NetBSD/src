@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.64.8.1 2017/04/27 05:36:38 pgoyette Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.64.8.2 2017/04/29 11:12:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64.8.1 2017/04/27 05:36:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64.8.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64.8.1 2017/04/27 05:36:38 pgoyette Ex
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/cprng.h>
-#include <sys/localcount.h>
 
 #include <rump-sys/kern.h>
 #include <rump-sys/vfs.h>

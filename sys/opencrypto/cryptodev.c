@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.89.2.1 2017/04/27 05:36:38 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.89.2.2 2017/04/29 11:12:15 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89.2.1 2017/04/27 05:36:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89.2.2 2017/04/29 11:12:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.89.2.1 2017/04/27 05:36:38 pgoyette 
 #include <sys/atomic.h>
 #include <sys/stat.h>
 #include <sys/module.h>
-#include <sys/localcount.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
