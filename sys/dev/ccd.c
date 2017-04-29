@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.171.4.1 2017/04/29 09:17:58 pgoyette Exp $	*/
+/*	$NetBSD: ccd.c,v 1.171.4.2 2017/04/29 10:50:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.171.4.1 2017/04/29 09:17:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.171.4.2 2017/04/29 10:50:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.171.4.1 2017/04/29 09:17:58 pgoyette Exp $
 #include <sys/module.h>
 #include <sys/namei.h>
 #include <sys/stat.h>
-#include <sys/localcount.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>

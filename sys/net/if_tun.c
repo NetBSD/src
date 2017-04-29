@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.138.4.1 2017/04/28 03:46:57 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.138.4.2 2017/04/29 10:50:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138.4.1 2017/04/28 03:46:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138.4.2 2017/04/29 10:50:46 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.138.4.1 2017/04/28 03:46:57 pgoyette Ex
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
-#include <sys/localcount.h>
 #include <sys/lwp.h>
 #include <sys/mbuf.h>
 #include <sys/module.h>
