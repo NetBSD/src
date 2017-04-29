@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.16 2014/07/25 08:10:38 dholland Exp $ */
+/* $NetBSD: onewire.c,v 1.16.18.1 2017/04/29 09:17:59 pgoyette Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16.18.1 2017/04/29 09:17:59 pgoyette Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -26,6 +26,7 @@ __KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.16 2014/07/25 08:10:38 dholland Exp $"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -80,6 +81,7 @@ CFATTACH_DECL_NEW(onewire, sizeof(struct onewire_softc),
 	onewire_match, onewire_attach, onewire_detach, onewire_activate);
 
 const struct cdevsw onewire_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = noopen,
 	.d_close = noclose,
 	.d_read = noread,

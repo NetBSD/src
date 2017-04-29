@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.13 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: tprof.c,v 1.13.8.1 2017/04/29 09:17:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.13 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.13.8.1 2017/04/29 09:17:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
 #include <sys/cpu.h>
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/callout.h>
 #include <sys/kmem.h>
@@ -642,6 +643,7 @@ tprof_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 const struct cdevsw tprof_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = tprof_open,
 	.d_close = tprof_close,
 	.d_read = tprof_read,

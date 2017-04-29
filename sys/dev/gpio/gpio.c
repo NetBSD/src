@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.58 2016/05/11 18:33:40 bouyer Exp $ */
+/* $NetBSD: gpio.c,v 1.58.8.1 2017/04/29 09:17:59 pgoyette Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.58 2016/05/11 18:33:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.58.8.1 2017/04/29 09:17:59 pgoyette Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -28,6 +28,7 @@ __KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.58 2016/05/11 18:33:40 bouyer Exp $");
 #include <sys/param.h>
 #include <sys/callout.h>
 #include <sys/systm.h>
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
@@ -100,6 +101,7 @@ dev_type_ioctl(gpioioctl);
 dev_type_ioctl(gpioioctl_locked);
 
 const struct cdevsw gpio_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = gpioopen,
 	.d_close = gpioclose,
 	.d_read = noread,

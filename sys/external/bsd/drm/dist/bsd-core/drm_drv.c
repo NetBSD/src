@@ -37,6 +37,7 @@
 #if defined(__FreeBSD__)
 #include <sys/limits.h>
 #elif   defined(__NetBSD__)
+#include <sys/localcount.h>
 #include <sys/module.h>
 #endif
 #include "drmP.h"
@@ -304,6 +305,7 @@ devclass_t drm_devclass;
 struct drm_device *drm_units[DRM_MAXUNITS];
 
 struct cdevsw drm_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = drm_open,
 	.d_close = drm_close,
 	.d_read = drm_read,

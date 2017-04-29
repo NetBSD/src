@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.28 2016/01/11 01:37:36 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.28.8.1 2017/04/29 09:17:58 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,11 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.28 2016/01/11 01:37:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.28.8.1 2017/04/29 09:17:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -52,6 +53,7 @@ MODULE(MODULE_CLASS_DRIVER, filemon, NULL);
 static dev_type_open(filemon_open);
 
 struct cdevsw filemon_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = filemon_open,
 	.d_close = noclose,
 	.d_read = noread,

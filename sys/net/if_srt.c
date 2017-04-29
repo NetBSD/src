@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.26 2017/02/14 03:05:06 ozaki-r Exp $ */
+/* $NetBSD: if_srt.c,v 1.26.4.1 2017/04/29 09:17:59 pgoyette Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26 2017/02/14 03:05:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26.4.1 2017/04/29 09:17:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -25,6 +25,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.26 2017/02/14 03:05:06 ozaki-r Exp $");
 #include <sys/param.h>		/* sys/mbuf.h */
 #include <netinet/in_systm.h>	/* netinet/ip.h */
 
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
@@ -526,6 +527,7 @@ srt_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 const struct cdevsw srt_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = srt_open,
 	.d_close = srt_close,
 	.d_read = nullread,

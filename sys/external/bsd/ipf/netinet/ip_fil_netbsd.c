@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.22.4.1 2017/04/27 05:36:36 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.22.4.2 2017/04/29 09:17:59 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.22.4.1 2017/04/27 05:36:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.22.4.2 2017/04/29 09:17:59 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -23,6 +23,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM)
+# if (__NetBSD_Version__ >= 799007100)
+#   include <sys/localcount.h>
+# endif
 # if (__NetBSD_Version__ >= 799003000)
 #   ifdef _KERNEL_OPT
 #    include "opt_ipsec.h"
@@ -141,7 +144,7 @@ static  int     ipfpoll(dev_t, int events, PROC_T *);
 static	void	ipf_timer_func(void *ptr);
 
 const struct cdevsw ipl_cdevsw = {
-#if	(__NetBSD_Version__ >= 799007000)
+#if	(__NetBSD_Version__ >= 799007100)
 	DEVSW_MODULE_INIT
 #endif
 	.d_open = ipfopen,

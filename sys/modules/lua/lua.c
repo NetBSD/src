@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.20 2017/04/16 17:45:12 riastradh Exp $ */
+/*	$NetBSD: lua.c,v 1.20.2.1 2017/04/29 09:17:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
+#include <sys/localcount.h>
 #include <sys/conf.h>
 #include <sys/condvar.h>
 #include <sys/device.h>
@@ -94,6 +95,7 @@ dev_type_close(luaclose);
 dev_type_ioctl(luaioctl);
 
 const struct cdevsw lua_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = luaopen,
 	.d_close = luaclose,
 	.d_read = noread,
