@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.79 2016/05/07 20:07:47 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.80 2017/04/29 15:14:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.79 2016/05/07 20:07:47 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.80 2017/04/29 15:14:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,13 @@ tcsetpgrp(int fd, pid_tpgrp)
 }
 #endif
 
+static void
+ttyfd_change(int from, int to)
+{
+	if (ttyfd == from)
+		ttyfd = to;
+}
+
 /*
  * Turn job control on and off.
  *
@@ -150,10 +157,10 @@ setjobctl(int on)
 		return;
 	if (on) {
 #if defined(FIOCLEX) || defined(FD_CLOEXEC)
-		int err;
 		int i;
+
 		if (ttyfd != -1)
-			close(ttyfd);
+			sh_close(ttyfd);
 		if ((ttyfd = open("/dev/tty", O_RDWR)) == -1) {
 			for (i = 0; i < 3; i++) {
 				if (isatty(i) && (ttyfd = dup(i)) != -1)
@@ -163,24 +170,14 @@ setjobctl(int on)
 				goto out;
 		}
 		ttyfd = to_upper_fd(ttyfd);	/* Move to a high fd */
-#ifdef FIOCLEX
-		err = ioctl(ttyfd, FIOCLEX, 0);
-#elif FD_CLOEXEC
-		err = fcntl(ttyfd, F_SETFD,
-		    fcntl(ttyfd, F_GETFD, 0) | FD_CLOEXEC);
-#endif
-		if (err == -1) {
-			close(ttyfd);
-			ttyfd = -1;
-			goto out;
-		}
+		register_sh_fd(ttyfd, ttyfd_change);
 #else
 		out2str("sh: Need FIOCLEX or FD_CLOEXEC to support job control");
 		goto out;
 #endif
 		do { /* while we are in the background */
 			if ((initialpgrp = tcgetpgrp(ttyfd)) < 0) {
-out:
+ out:
 				out2str("sh: can't access tty; job control turned off\n");
 				mflag = 0;
 				return;
@@ -217,7 +214,7 @@ out:
 		if (tcsetpgrp(ttyfd, initialpgrp) == -1)
 			error("Cannot set tty process group (%s) at %d",
 			    strerror(errno), __LINE__);
-		close(ttyfd);
+		sh_close(ttyfd);
 		ttyfd = -1;
 		setsignal(SIGTSTP, 0);
 		setsignal(SIGTTOU, 0);
@@ -1312,7 +1309,7 @@ cmdtxt(union node *n)
 		goto until;
 	case NUNTIL:
 		cmdputs("until ");
-until:
+ until:
 		cmdtxt(n->nbinary.ch1);
 		cmdputs("; do ");
 		cmdtxt(n->nbinary.ch2);
@@ -1366,7 +1363,7 @@ until:
 		p = "<&";  i = 0;  goto redir;
 	case NFROMTO:
 		p = "<>";  i = 0;  goto redir;
-redir:
+ redir:
 		if (n->nfile.fd != i)
 			cmdputi(n->nfile.fd);
 		cmdputs(p);
