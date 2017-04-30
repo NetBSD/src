@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.32 2017/04/27 08:02:24 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.33 2017/04/30 14:49:26 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.32 2017/04/27 08:02:24 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.33 2017/04/30 14:49:26 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -503,12 +503,21 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 	char *section_clause = NULL;
 	char *limit_clause = NULL;
 	char *machine_clause = NULL;
-	char *query;
+	char *query = NULL;
 
-	if (args->machine)
-		easprintf(&machine_clause, "AND mandb.machine = \'%s\' ",
-		    args->machine);
+	if (args->machine) {
+		machine_clause = sqlite3_mprintf("AND mandb.machine=%Q", args->machine);
+		if (machine_clause == NULL)
+			goto RETURN;
+	}
 
+	if (args->nrec >= 0) {
+		/* Use the provided number of records and offset */
+		limit_clause = sqlite3_mprintf(" LIMIT %d OFFSET %d",
+		    args->nrec, args->offset);
+		if (limit_clause == NULL)
+			goto RETURN;
+	}
 
 	/* We want to build a query of the form: "select x,y,z from mandb where
 	 * mandb match :query [AND (section LIKE '1' OR section LIKE '2' OR...)]
@@ -552,12 +561,6 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 			easprintf(&section_clause, " AND mandb.section IN (%s)", temp);
 			free(temp);
 		}
-	}
-
-	if (args->nrec >= 0) {
-		/* Use the provided number of records and offset */
-		easprintf(&limit_clause, " LIMIT %d OFFSET %d",
-		    args->nrec, args->offset);
 	}
 
 	if (snippet_args == NULL) {
@@ -623,6 +626,7 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 		limit_clause ? limit_clause : "");
 	}
 
+RETURN:
 	free(machine_clause);
 	free(section_clause);
 	free(limit_clause);
