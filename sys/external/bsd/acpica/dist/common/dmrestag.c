@@ -693,8 +693,10 @@ AcpiGetTagPathname (
     AcpiPsInitOp (IndexOp, AML_INT_NAMEPATH_OP);
     IndexOp->Common.Value.String = InternalPath;
 
-    /* We will need the tag later. Cheat by putting it in the Node field */
-
+    /*
+     * We will need the tag later. Cheat by putting it in the Node field.
+     * Note, Tag is a const that is part of a lookup table.
+     */
     IndexOp->Common.Node = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, Tag);
     return (InternalPath);
 }
