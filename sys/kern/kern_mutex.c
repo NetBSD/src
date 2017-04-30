@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.64 2017/01/26 04:11:56 christos Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.64.4.1 2017/04/30 04:56:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.64 2017/01/26 04:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.64.4.1 2017/04/30 04:56:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -828,6 +828,24 @@ mutex_owner(kmutex_t *mtx)
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
+}
+
+/*
+ * mutex_ownable:
+ *
+ *	When compiled with LOCKDEBUG defined, ensure that the
+ *	mutex is available.  We cannot use !mutex_owned()
+ *	since that won't work correctly for spin mutexes.
+ */
+int
+mutex_ownable(kmutex_t *mtx)
+{
+
+#ifdef LOCKDEBUG
+	mutex_enter(mtx);
+	mutex_exit(mtx);
+#endif
+	return 1;
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2125.2.2 2017/04/28 06:00:33 pgoyette Exp $
+#	$NetBSD: mi,v 1.2125.2.3 2017/04/30 04:56:55 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10836,6 +10836,7 @@
 ./usr/share/man/cat9/mutex_enter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_exit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/mutex_ownable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_owned.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_spin_enter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_spin_exit.0		comp-sys-catman		.cat
@@ -18278,6 +18279,7 @@
 ./usr/share/man/html9/mutex_enter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_exit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_init.html		comp-sys-htmlman	html
+./usr/share/man/html9/mutex_ownable.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_owned.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_spin_enter.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_spin_exit.html	comp-sys-htmlman	html
@@ -25876,6 +25878,7 @@
 ./usr/share/man/man9/mutex_enter.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_exit.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_init.9		comp-sys-man		.man
+./usr/share/man/man9/mutex_ownable.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_owned.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_spin_enter.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_spin_exit.9		comp-sys-man		.man

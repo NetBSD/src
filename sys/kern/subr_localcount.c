@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_localcount.c,v 1.1.6.1 2017/04/27 05:36:37 pgoyette Exp $	*/
+/*	$NetBSD: subr_localcount.c,v 1.1.6.2 2017/04/30 04:56:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.1.6.1 2017/04/27 05:36:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_localcount.c,v 1.1.6.2 2017/04/30 04:56:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/localcount.h>
@@ -229,6 +229,7 @@ localcount_release(struct localcount *lc, kcondvar_t *cv, kmutex_t *interlock)
 	 */
 	s = splsoftserial();
 
+	KASSERT(mutex_ownable(interlock));
 	if (__predict_false(lc->lc_totalp != NULL)) {
 		/*
 		 * Slow path -- wake localcount_drain in case this is
