@@ -1,4 +1,4 @@
-/*	$NetBSD: sortinfo.c,v 1.5 2015/12/21 16:17:09 christos Exp $	*/
+/*	$NetBSD: sortinfo.c,v 1.6 2017/04/30 13:45:06 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sortinfo.c,v 1.5 2015/12/21 16:17:09 christos Exp $");
+__RCSID("$NetBSD: sortinfo.c,v 1.6 2017/04/30 13:45:06 abhinav Exp $");
 
 /*
  * Sort a texinfo(1) directory file.
@@ -153,6 +153,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
+	free(line);
 	qsort(slist, nsections, sizeof(*slist), compsection);
 	for (i = 0; i < nsections; i++) {
 		s = &slist[i];
