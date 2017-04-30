@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.132 2017/04/29 15:26:44 kre Exp $
+.\"	$NetBSD: sh.1,v 1.133 2017/04/30 16:02:48 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -334,7 +334,7 @@ When off,
 the file system is searched for commands each time the function is invoked.
 (Not implemented.)
 .It Fl p Em nopriv
-Do not attempt to reset effective uid if it does not match uid.
+Do not attempt to reset effective UID if it does not match UID.
 This is not set by default to help avoid incorrect usage by setuid
 root programs via
 .Xr system 3
@@ -2059,7 +2059,7 @@ If the first
 .Ar signal
 is specified in its numeric form, then
 .Ar action
-can be ommitted to achieve the same effect.
+can be omitted to achieve the same effect.
 This archaic,
 but still standard,
 form should not be relied upon, use the explicit
