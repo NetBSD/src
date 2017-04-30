@@ -56,7 +56,7 @@
 
 /* Constants */
 
-#define LINES_IN_LEGAL_HEADER               105 /* See above */
+#define LINES_IN_LEGAL_HEADER               115+36 /* intel+dual license. See legal header above at module start */
 #define LEGAL_HEADER_SIGNATURE              " * 2.1. This is your license from Intel Corp. under its intellectual property"
 #define LINES_IN_LINUX_HEADER               34
 #define LINUX_HEADER_SIGNATURE              " * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS"
