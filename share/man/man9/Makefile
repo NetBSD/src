@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.409 2017/04/15 13:52:51 kamil Exp $
+#       $NetBSD: Makefile,v 1.410 2017/04/30 12:30:00 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -278,7 +278,8 @@ MLINKS+=ctod.9 dtoc.9 \
 	ctod.9 btodb.9
 MLINKS+=curproc.9 curcpu.9 curproc.9 curlwp.9
 MLINKS+=delay.9 DELAY.9
-MLINKS+=devsw_attach.9 devsw_detach.9 \
+MLINKS+=devsw_attach.9 devsw.9 \
+	devsw_attach.9 devsw_detach.9 \
 	devsw_attach.9 bdevsw_lookup.9 \
 	devsw_attach.9 cdevsw_lookup.9 \
 	devsw_attach.9 bdevsw_lookup_major.9 \
