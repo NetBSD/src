@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.106 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: twe.c,v 1.106.6.1 2017/04/30 10:17:26 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.106 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.106.6.1 2017/04/30 10:17:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1908,6 +1908,7 @@ done:
 }
 
 const struct cdevsw twe_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = tweopen,
 	.d_close = tweclose,
 	.d_read = noread,

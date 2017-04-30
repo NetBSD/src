@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $ */
+/*	$NetBSD: twa.c,v 1.55.6.1 2017/04/30 10:17:26 pgoyette Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55.6.1 2017/04/30 10:17:26 pgoyette Exp $");
 
 //#define TWA_DEBUG
 
@@ -2287,6 +2287,7 @@ fw_passthru_done:
 }
 
 const struct cdevsw twa_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = twaopen,
 	.d_close = twaclose,
 	.d_read = noread,
