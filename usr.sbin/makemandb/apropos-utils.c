@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.35 2017/04/30 15:27:24 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.36 2017/04/30 16:56:30 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.35 2017/04/30 15:27:24 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.36 2017/04/30 16:56:30 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -89,10 +89,8 @@ lower(char *str)
 	assert(str);
 	int i = 0;
 	char c;
-	while (str[i] != '\0') {
-		c = tolower((unsigned char) str[i]);
-		str[i++] = c;
-	}
+	while ((c = str[i]) != '\0')
+		str[i++] = tolower((unsigned char) c);
 	return str;
 }
 
