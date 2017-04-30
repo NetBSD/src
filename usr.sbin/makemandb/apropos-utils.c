@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.34 2017/04/30 14:53:58 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.35 2017/04/30 15:27:24 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.34 2017/04/30 14:53:58 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.35 2017/04/30 15:27:24 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -111,31 +111,34 @@ void
 concat2(char **dst, const char *src, size_t srclen)
 {
 	size_t totallen, dstlen;
+	char *mydst = *dst;
 	assert(src != NULL);
 
 	/*
 	 * If destination buffer dst is NULL, then simply
 	 * strdup the source buffer
 	 */
-	if (*dst == NULL) {
-		*dst = estrndup(src, srclen);
+	if (mydst == NULL) {
+		mydst = estrndup(src, srclen);
+		*dst = mydst;
 		return;
 	}
 
-	dstlen = strlen(*dst);
+	dstlen = strlen(mydst);
 	/*
 	 * NUL Byte and separator space
 	 */
 	totallen = dstlen + srclen + 2;
 
-	*dst = erealloc(*dst, totallen);
+	mydst = erealloc(mydst, totallen);
 
 	/* Append a space at the end of dst */
-	(*dst)[dstlen++] = ' ';
+	mydst[dstlen++] = ' ';
 
 	/* Now, copy src at the end of dst */
-	memcpy(*dst + dstlen, src, srclen);
-	(*dst)[dstlen + srclen] = '\0';
+	memcpy(mydst + dstlen, src, srclen);
+	mydst[dstlen + srclen] = '\0';
+	*dst = mydst;
 }
 
 void
