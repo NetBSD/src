@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2016/11/11 21:09:21 christos Exp $
+# $NetBSD: Makefile,v 1.14 2017/04/30 23:18:07 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -81,6 +81,9 @@ SRCS+= \
 	aslwalks.c \
 	aslxref.c \
 	aslxrefout.c \
+	cvcompiler.c \
+	cvdisasm.c \
+	cvparser.c \
 	dtcompile.c \
 	dtexpress.c \
 	dtfield.c \
@@ -234,7 +237,6 @@ SRCS+= \
 	utosi.c \
 	utownerid.c \
 	utpredef.c \
-	utprint.c \
 	utresrc.c \
 	utstate.c \
 	utstring.c \
@@ -242,6 +244,8 @@ SRCS+= \
 	utuuid.c \
 	utxface.c \
 	utxferror.c
+
+#	utprint.c 
 
 .PATH: ${TOPDIR}/../os_specific/service_layers
 SRCS+=	osunixxf.c
