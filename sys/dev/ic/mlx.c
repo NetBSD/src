@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.65 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: mlx.c,v 1.65.6.1 2017/04/30 10:27:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.65 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.65.6.1 2017/04/30 10:27:16 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "ld.h"
@@ -132,6 +132,7 @@ dev_type_close(mlxclose);
 dev_type_ioctl(mlxioctl);
 
 const struct cdevsw mlx_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = mlxopen,
 	.d_close = mlxclose,
 	.d_read = noread,
