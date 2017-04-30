@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.49 2017/04/29 16:49:51 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.50 2017/04/30 08:41:18 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.49 2017/04/29 16:49:51 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.50 2017/04/30 08:41:18 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -519,7 +519,7 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 
 		while ((dirp = readdir(dp)) != NULL) {
 			/* Avoid . and .. entries in a directory */
-			if (strncmp(dirp->d_name, ".", 1)) {
+			if (dirp->d_name[0] != '.') {
 				easprintf(&buf, "%s/%s", file, dirp->d_name);
 				traversedir(parent, buf, db, mp);
 				free(buf);
