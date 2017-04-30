@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.252.4.2 2017/04/28 06:00:33 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.252.4.3 2017/04/30 05:18:53 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.2 2017/04/28 06:00:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.252.4.3 2017/04/30 05:18:53 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1277,9 +1277,13 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 
 	/*
 	 * Release the reference that was held by (the caller of)
-	 * config_detach_release()
+	 * config_detach_release().  Note that since device_release()
+	 * might need to acquire the alldevs.lock mutex, we need to
+	 * release and then reacquire the mutex.
 	 */
+	mutex_exit(&alldevs.lock);
 	device_release(dev);
+	mutex_enter(&alldevs.lock);
 
 	/* Now wait for references to drain - no new refs are possible */
 	localcount_drain(&dev->dv_localcnt, &config_drain_cv,
@@ -1866,6 +1870,8 @@ out:
 		}
 	}
 	config_alldevs_exit(&af);
+	if (rv != 0)
+		device_release(dev);
 
 	return rv;
 }
