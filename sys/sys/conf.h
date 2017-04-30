@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.151.6.2 2017/04/29 10:19:32 pgoyette Exp $	*/
+/*	$NetBSD: conf.h,v 1.151.6.3 2017/04/30 05:16:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,8 +44,10 @@
  */
 
 #include <sys/queue.h>
-#include <sys/localcount.h>
 #include <sys/device_if.h>
+#ifdef _KERNEL
+#include <sys/localcount.h>
+#endif
 
 struct buf;
 struct knote;
