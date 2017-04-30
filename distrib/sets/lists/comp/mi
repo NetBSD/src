@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2126 2017/04/27 11:02:14 joerg Exp $
+#	$NetBSD: mi,v 1.2127 2017/04/30 12:30:55 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10426,6 +10426,7 @@
 ./usr/share/man/cat9/deviter_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_next.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter_release.0		comp-sys-catman		.cat
+./usr/share/man/cat9/devsw.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/devsw_attach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/devsw_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/disk.0			comp-sys-catman		.cat
@@ -17874,6 +17875,7 @@
 ./usr/share/man/html9/deviter_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_next.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter_release.html	comp-sys-htmlman	html
+./usr/share/man/html9/devsw.html		comp-sys-htmlman	html
 ./usr/share/man/html9/devsw_attach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/devsw_detach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/disk.html			comp-sys-htmlman	html
@@ -25462,6 +25464,7 @@
 ./usr/share/man/man9/deviter_init.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_next.9		comp-sys-man		.man
 ./usr/share/man/man9/deviter_release.9		comp-sys-man		.man
+./usr/share/man/man9/devsw.9			comp-sys-man		.man
 ./usr/share/man/man9/devsw_attach.9		comp-sys-man		.man
 ./usr/share/man/man9/devsw_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/disk.9			comp-sys-man		.man
