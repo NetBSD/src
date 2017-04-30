@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.429 2017/04/24 09:42:52 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.429.2.1 2017/04/30 10:27:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.429 2017/04/24 09:42:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.429.2.1 2017/04/30 10:27:16 pgoyette Exp $");
 
 #include "opt_ata.h"
 
@@ -143,6 +143,7 @@ dev_type_size(wdsize);
 static dev_type_discard(wddiscard);
 
 const struct bdevsw wd_bdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = wdopen,
 	.d_close = wdclose,
 	.d_strategy = wdstrategy,
@@ -154,6 +155,7 @@ const struct bdevsw wd_bdevsw = {
 };
 
 const struct cdevsw wd_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = wdopen,
 	.d_close = wdclose,
 	.d_read = wdread,

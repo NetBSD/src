@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.26 2017/04/05 20:15:49 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.26.4.1 2017/04/30 10:27:16 pgoyette Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.26 2017/04/05 20:15:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.26.4.1 2017/04/30 10:27:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1690,6 +1690,7 @@ dev_type_close(nvmeclose);
 dev_type_ioctl(nvmeioctl);
 
 const struct cdevsw nvme_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = nvmeopen,
 	.d_close = nvmeclose,
 	.d_read = noread,
