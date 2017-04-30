@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.26 2013/09/04 10:17:58 skrll Exp $
+.\"	$NetBSD: mutex.9,v 1.26.16.1 2017/04/30 04:56:55 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Nm mutex_destroy ,
 .Nm mutex_enter ,
 .Nm mutex_exit ,
+.Nm mutex_ownable ,
 .Nm mutex_owned ,
 .Nm mutex_spin_enter ,
 .Nm mutex_spin_exit ,
@@ -51,6 +52,8 @@
 .Fn mutex_enter "kmutex_t *mtx"
 .Ft void
 .Fn mutex_exit "kmutex_t *mtx"
+.Ft int
+.Fn mutex_ownable "kmutex_t *mtx"
 .Ft int
 .Fn mutex_owned "kmutex_t *mtx"
 .Ft void
@@ -172,6 +175,18 @@ if it is not already equal or higher.
 Release a mutex.
 The mutex must have been previously acquired by the caller.
 Mutexes may be released out of order as needed.
+.It Fn mutex_ownable "mtx"
+.Pp
+When compiled with LOCKDEBUG (see
+.Xr options 4 ) ,
+ensure that the current process can successfully acquire mtx.
+If mtx is already owned by the current process, the system will panic
+with a "locking against myself" error.
+.Pp
+This function is needed because
+.Fn mutex_owned
+does not differentiate if a spin mutex is owned by the current process
+vs owned by another process.
 .It Fn mutex_owned "mtx"
 .Pp
 For adaptive mutexes, return non-zero if the current LWP holds the mutex.
