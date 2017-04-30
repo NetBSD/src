@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.33 2017/04/30 14:49:26 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.34 2017/04/30 14:53:58 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.33 2017/04/30 14:49:26 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.34 2017/04/30 14:53:58 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -520,12 +520,14 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 	}
 
 	/* We want to build a query of the form: "select x,y,z from mandb where
-	 * mandb match :query [AND (section LIKE '1' OR section LIKE '2' OR...)]
-	 * ORDER BY rank DESC..."
+	 * mandb match :query [AND (section IN ('1', '2')]
+	 * ORDER BY rank DESC [LIMIT 10 OFFSET 0]"
 	 * NOTES:
-	 *   1. The portion in square brackets is optional, it will be there
-	 *      only if the user has specified an option on the command line
+	 *   1. The portion in first pair of square brackets is optional.
+	 *      It will be there only if the user has specified an option
 	 *      to search in one or more specific sections.
+	 *   2. The LIMIT portion will be there if the user has specified
+	 *      a limit using the -n option.
 	 */
 	char *sections_str = args->sec_nums;
 	char *temp;
