@@ -1,4 +1,4 @@
-/* $NetBSD: tputs.c,v 1.3 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: tputs.c,v 1.4 2017/05/01 19:09:22 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tputs.c,v 1.3 2013/06/07 13:16:18 roy Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.4 2017/05/01 19:09:22 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -93,7 +93,7 @@ _ti_outputdelay(int delay, short os, char pc,
 }
 
 static int
-_ti_puts(int dodelay, int os, int pc,
+_ti_puts(int dodelay, short os, char pc,
     const char *str, int affcnt, int (*outc)(int, void *), void *args)
 {
 	int taildelay, delay, mand;
