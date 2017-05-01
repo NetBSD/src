@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2129 2017/05/01 23:08:11 pgoyette Exp $
+#	$NetBSD: mi,v 1.2130 2017/05/01 23:33:07 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -25784,7 +25784,6 @@
 ./usr/share/man/man9/le64enc.9			comp-sys-man		.man
 ./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
-./usr/share/man/man9/localcount.9		comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
 ./usr/share/man/man9/locking.9			comp-sys-man		.man
 ./usr/share/man/man9/lockinit.9			comp-sys-man		.man
