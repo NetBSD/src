@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.410 2017/04/30 12:30:00 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.411 2017/05/01 21:36:01 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -32,7 +32,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	kcpuset.9 kernhist.9 klua_lock.9 klua_mod_register.9 kmem.9 kpause.9 \
 	kfilter_register.9 knote.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 locking.9 log.9 ltsleep.9 \
-	LWP_CACHE_CREDS.9 \
+	localcount.9 LWP_CACHE_CREDS.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
 	memmove.9 memset.9 \
@@ -119,6 +119,7 @@ MLINKS+=autoconf.9 config_search_loc.9 \
 	autoconf.9 config_attach_pseudo.9 \
 	autoconf.9 config_detach.9 \
 	autoconf.9 config_detach_children.9 \
+	autoconf.9 config_detach_release.9 \
 	autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9 \
 	autoconf.9 config_interrupts.9 \
@@ -516,6 +517,7 @@ MLINKS+=module.9 module_autoload.9 \
 MLINKS+=mstohz.9 hztoms.9
 MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
 	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9 \
+	mutex.9 mutex_ownable.9 \
 	mutex.9 mutex_spin_enter.9 mutex.9 mutex_spin_exit.9
 MLINKS+=m_tag.9 m_tag_copy.9 \
 	m_tag.9 m_tag_copy_chain.9 \
