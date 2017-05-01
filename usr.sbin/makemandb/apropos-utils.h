@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.h,v 1.11 2016/04/13 11:48:29 christos Exp $	*/
+/*	$NetBSD: apropos-utils.h,v 1.12 2017/05/01 05:28:00 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -73,7 +73,7 @@ enum man_sec {
 
 typedef struct query_args {
 	const char *search_str;		// user query
-	char *sec_nums;		// Section in which to do the search
+	char **sections;		// Sections in which to do the search
 	int nrec;			// number of records to fetch
 	int offset;		//From which position to start processing the records
 	int legacy;
