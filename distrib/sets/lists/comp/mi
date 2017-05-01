@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2127 2017/04/30 12:30:55 pgoyette Exp $
+#	$NetBSD: mi,v 1.2128 2017/05/01 21:36:33 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2873,6 +2873,7 @@
 ./usr/include/sys/ksyms.h			comp-c-include
 ./usr/include/sys/ktrace.h			comp-c-include
 ./usr/include/sys/lkm.h				comp-obsolete		obsolete
+./usr/include/sys/localcount.h			comp-c-include
 ./usr/include/sys/localedef.h			comp-c-include
 ./usr/include/sys/lock.h			comp-c-include
 ./usr/include/sys/lockf.h			comp-c-include
@@ -10312,6 +10313,7 @@
 ./usr/share/man/cat9/config_defer.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_detach_children.0	comp-sys-catman		.cat
+./usr/share/man/cat9/config_detach_release.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/config_finalize_register.0 comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/config_found_ia.0		comp-sys-catman		.cat
@@ -10741,6 +10743,7 @@
 ./usr/share/man/cat9/le64enc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/localcount.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/locking.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockinit.0			comp-sys-catman		.cat
@@ -10834,6 +10837,7 @@
 ./usr/share/man/cat9/mutex_enter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_exit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/mutex_ownable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_owned.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_spin_enter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mutex_spin_exit.0		comp-sys-catman		.cat
@@ -17775,6 +17779,7 @@
 ./usr/share/man/html9/config_defer.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_detach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_detach_children.html	comp-sys-htmlman	html
+./usr/share/man/html9/config_detach_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_finalize_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/config_found.html		comp-sys-htmlman	html
 ./usr/share/man/html9/config_found_ia.html	comp-sys-htmlman	html
@@ -18183,6 +18188,7 @@
 ./usr/share/man/html9/le64enc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
+./usr/share/man/html9/localcount.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
 ./usr/share/man/html9/locking.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lockinit.html		comp-sys-htmlman	html
@@ -18275,6 +18281,7 @@
 ./usr/share/man/html9/mutex_enter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_exit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_init.html		comp-sys-htmlman	html
+./usr/share/man/html9/mutex_ownable.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_owned.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_spin_enter.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mutex_spin_exit.html	comp-sys-htmlman	html
@@ -25350,6 +25357,7 @@
 ./usr/share/man/man9/config_defer.9		comp-sys-man		.man
 ./usr/share/man/man9/config_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/config_detach_children.9	comp-sys-man		.man
+./usr/share/man/man9/config_detach_release.9	comp-sys-man		.man
 ./usr/share/man/man9/config_finalize_register.9 comp-sys-man		.man
 ./usr/share/man/man9/config_found.9		comp-sys-man		.man
 ./usr/share/man/man9/config_found_ia.9		comp-sys-man		.man
@@ -25779,6 +25787,7 @@
 ./usr/share/man/man9/le64enc.9			comp-sys-man		.man
 ./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
+./usr/share/man/man9/localcount.9		comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
 ./usr/share/man/man9/locking.9			comp-sys-man		.man
 ./usr/share/man/man9/lockinit.9			comp-sys-man		.man
@@ -25872,6 +25881,7 @@
 ./usr/share/man/man9/mutex_enter.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_exit.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_init.9		comp-sys-man		.man
+./usr/share/man/man9/mutex_ownable.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_owned.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_spin_enter.9		comp-sys-man		.man
 ./usr/share/man/man9/mutex_spin_exit.9		comp-sys-man		.man
