@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.4 2017/02/11 10:23:39 nonaka Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.5 2017/05/01 13:03:01 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -55,6 +55,7 @@ void efi_cleanup(void);
 
 /* eficons.c */
 int cninit(void);
+void consinit(int, int, int);
 void command_text(char *);
 void command_gop(char *);
 
