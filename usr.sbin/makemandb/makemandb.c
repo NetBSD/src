@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.52 2017/05/01 06:43:56 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.53 2017/05/01 06:56:00 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.52 2017/05/01 06:43:56 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.53 2017/05/01 06:56:00 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1832,16 +1832,17 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
  *  1: If the hash exists in the database.
  */
 static int
-check_md5(const char *file, sqlite3 *db, char **md5sum, void *buf, size_t buflen)
+check_md5(const char *file, sqlite3 *db, char **md5, void *buf, size_t buflen)
 {
 	int rc = 0;
 	int idx = -1;
 	char *sqlstr = NULL;
+	char *mymd5;
 	sqlite3_stmt *stmt = NULL;
+	*md5 = NULL;
 
 	assert(file != NULL);
-	*md5sum = MD5Data(buf, buflen, NULL);
-	if (*md5sum == NULL) {
+	if ((mymd5 = MD5Data(buf, buflen, NULL)) == NULL) {
 		if (mflags.verbosity)
 			warn("md5 failed: %s", file);
 		return -1;
@@ -1851,23 +1852,22 @@ check_md5(const char *file, sqlite3 *db, char **md5sum, void *buf, size_t buflen
 	rc = sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
 		free(sqlstr);
-		free(*md5sum);
-		*md5sum = NULL;
+		free(mymd5);
 		return -1;
 	}
 
 	idx = sqlite3_bind_parameter_index(stmt, ":md5_hash");
-	rc = sqlite3_bind_text(stmt, idx, *md5sum, -1, NULL);
+	rc = sqlite3_bind_text(stmt, idx, mymd5, -1, NULL);
 	if (rc != SQLITE_OK) {
 		if (mflags.verbosity)
 			warnx("%s", sqlite3_errmsg(db));
 		sqlite3_finalize(stmt);
 		free(sqlstr);
-		free(*md5sum);
-		*md5sum = NULL;
+		free(mymd5);
 		return -1;
 	}
 
+	*md5 = mymd5;
 	if (sqlite3_step(stmt) == SQLITE_ROW) {
 		sqlite3_finalize(stmt);
 		free(sqlstr);
