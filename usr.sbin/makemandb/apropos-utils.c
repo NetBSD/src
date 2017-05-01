@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.36 2017/04/30 16:56:30 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.37 2017/05/01 05:28:00 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.36 2017/04/30 16:56:30 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.37 2017/05/01 05:28:00 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -530,38 +530,14 @@ generate_search_query(query_args *args, const char *snippet_args[3])
 	 *   2. The LIMIT portion will be there if the user has specified
 	 *      a limit using the -n option.
 	 */
-	char *sections_str = args->sec_nums;
-	char *temp;
-	if (sections_str) {
-		while (*sections_str) {
-			size_t len = strcspn(sections_str, " ");
-			char *sec = sections_str;
-			if (sections_str[len] == 0) {
-				sections_str += len;
-			} else {
-				sections_str[len] = 0;
-				sections_str += len + 1;
-			}
-			easprintf(&temp, "\'%s\',", sec);
-
-			if (section_clause) {
-				concat(&section_clause, temp);
-				free(temp);
-			} else {
-				section_clause = temp;
-			}
-		}
-		if (section_clause) {
-			/*
-			 * At least one section requested, add glue for query.
-			 * Before doing that, remove the comma at the end of
-			 * section_clause
-			 */
-			size_t section_clause_len = strlen(section_clause);
-			if (section_clause[section_clause_len - 1] == ',')
-				section_clause[section_clause_len - 1] = 0;
-			temp = section_clause;
-			easprintf(&section_clause, " AND mandb.section IN (%s)", temp);
+	if (args->sections && args->sections[0]) {
+		concat(&section_clause, " AND mandb.section IN (");
+		for (size_t i = 0; args->sections[i]; i++) {
+			char *temp;
+			char c = args->sections[i + 1]? ',': ')';
+			if ((temp = sqlite3_mprintf("%Q%c", args->sections[i], c)) == NULL)
+				goto RETURN;
+			concat(&section_clause, temp);
 			free(temp);
 		}
 	}
