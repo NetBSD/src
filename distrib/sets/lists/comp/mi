@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2128 2017/05/01 21:36:33 pgoyette Exp $
+#	$NetBSD: mi,v 1.2129 2017/05/01 23:08:11 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2873,7 +2873,6 @@
 ./usr/include/sys/ksyms.h			comp-c-include
 ./usr/include/sys/ktrace.h			comp-c-include
 ./usr/include/sys/lkm.h				comp-obsolete		obsolete
-./usr/include/sys/localcount.h			comp-c-include
 ./usr/include/sys/localedef.h			comp-c-include
 ./usr/include/sys/lock.h			comp-c-include
 ./usr/include/sys/lockf.h			comp-c-include
@@ -10743,7 +10742,6 @@
 ./usr/share/man/cat9/le64enc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/localcount.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/locking.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockinit.0			comp-sys-catman		.cat
@@ -18188,7 +18186,6 @@
 ./usr/share/man/html9/le64enc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
-./usr/share/man/html9/localcount.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
 ./usr/share/man/html9/locking.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lockinit.html		comp-sys-htmlman	html
