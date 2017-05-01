@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2017/03/12 05:33:48 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2017/05/01 13:03:01 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,6 +30,7 @@
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
+#include <machine/limits.h>
 
 #include "bootcfg.h"
 #include "bootmod.h"
@@ -340,7 +341,7 @@ command_help(char *arg)
 	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
 	       "dev [xd[N[x]]:]\n"
-	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "consdev {pc|com[0123][,{speed}]|com,{ioport}[,{speed}]}\n"
 	       "devpath\n"
 	       "efivar\n"
 	       "gop [{modenum|list}]\n"
@@ -436,12 +437,77 @@ command_dev(char *arg)
 	default_devname = savedevname;
 }
 
-/* ARGSUSED */
+static const struct cons_devs {
+	const char	*name;
+	u_int		tag;
+	int		ioport;
+} cons_devs[] = {
+	{ "pc",		CONSDEV_PC,   0 },
+	{ "com0",	CONSDEV_COM0, 0 },
+	{ "com1",	CONSDEV_COM1, 0 },
+	{ "com2",	CONSDEV_COM2, 0 },
+	{ "com3",	CONSDEV_COM3, 0 },
+	{ "com0kbd",	CONSDEV_COM0KBD, 0 },
+	{ "com1kbd",	CONSDEV_COM1KBD, 0 },
+	{ "com2kbd",	CONSDEV_COM2KBD, 0 },
+	{ "com3kbd",	CONSDEV_COM3KBD, 0 },
+	{ "com",	CONSDEV_COM0, -1 },
+	{ "auto",	CONSDEV_AUTO, 0 },
+	{ NULL,		0 }
+};
+
 void
 command_consdev(char *arg)
 {
+	const struct cons_devs *cdp;
+	char *sep, *sep2 = NULL;
+	int ioport, speed = 0;
 
-	/* XXX not implemented yet */
+	sep = strchr(arg, ',');
+	if (sep != NULL) {
+		*sep++ = '\0';
+		sep2 = strchr(sep, ',');
+		if (sep != NULL)
+			*sep2++ = '\0';
+	}
+
+	for (cdp = cons_devs; cdp->name; cdp++) {
+		if (strcmp(arg, cdp->name) == 0) {
+			ioport = cdp->ioport;
+			if (cdp->tag == CONSDEV_PC || cdp->tag == CONSDEV_AUTO) {
+				if (sep != NULL || sep2 != NULL)
+					goto error;
+			} else {
+				/* com? */
+				if (ioport == -1) {
+					if (sep != NULL) {
+						u_long t = strtoul(sep, NULL, 0);
+						if (t > INT_MAX)
+							goto error;
+						ioport = (int)t;
+					}
+					if (sep2 != NULL) {
+						speed = atoi(sep2);
+						if (speed < 0)
+							goto error;
+					}
+				} else {
+					if (sep != NULL) {
+						speed = atoi(sep);
+						if (speed < 0)
+							goto error;
+					}
+					if (sep2 != NULL)
+						goto error;
+				}
+			}
+			consinit(cdp->tag, ioport, speed);
+			print_banner();
+			return;
+		}
+	}
+error:
+	printf("invalid console device.\n");
 }
 
 #ifndef SMALL
