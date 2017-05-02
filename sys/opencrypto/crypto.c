@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.58 2017/04/26 03:29:36 knakahara Exp $ */
+/*	$NetBSD: crypto.c,v 1.59 2017/05/02 03:17:43 knakahara Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.58 2017/04/26 03:29:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.59 2017/05/02 03:17:43 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -739,8 +739,12 @@ crypto_unblock(u_int32_t driverid, int what)
 int
 crypto_dispatch(struct cryptop *crp)
 {
-	u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
+	u_int32_t hid;
 	int result;
+
+	KASSERT(crp != NULL);
+
+	hid = CRYPTO_SESID2HID(crp->crp_sid);
 
 	mutex_spin_enter(&crypto_q_mtx);
 	DPRINTF(("crypto_dispatch: crp %p, alg %d\n",
@@ -825,6 +829,8 @@ crypto_kdispatch(struct cryptkop *krp)
 	struct cryptocap *cap;
 	int result;
 
+	KASSERT(krp != NULL);
+
 	mutex_spin_enter(&crypto_q_mtx);
 	cryptostats.cs_kops++;
 
@@ -873,9 +879,9 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 	u_int32_t hid;
 	int error;
 
+	KASSERT(krp != NULL);
+
 	/* Sanity checks. */
-	if (krp == NULL)
-		return EINVAL;
 	if (krp->krp_callback == NULL) {
 		cv_destroy(&krp->krp_cv);
 		pool_put(&cryptkop_pool, krp);
@@ -947,13 +953,13 @@ crypto_invoke(struct cryptop *crp, int hint)
 {
 	u_int32_t hid;
 
+	KASSERT(crp != NULL);
+
 #ifdef CRYPTO_TIMING
 	if (crypto_timing)
 		crypto_tstat(&cryptostats.cs_invoke, &crp->crp_tstamp);
 #endif
 	/* Sanity checks. */
-	if (crp == NULL)
-		return EINVAL;
 	if (crp->crp_callback == NULL) {
 		return EINVAL;
 	}
@@ -1063,6 +1069,8 @@ crypto_done(struct cryptop *crp)
 {
 	int wasempty;
 
+	KASSERT(crp != NULL);
+
 	if (crp->crp_etype != 0)
 		cryptostats.cs_errs++;
 #ifdef CRYPTO_TIMING
@@ -1144,6 +1152,8 @@ void
 crypto_kdone(struct cryptkop *krp)
 {
 	int wasempty;
+
+	KASSERT(krp != NULL);
 
 	if (krp->krp_status != 0)
 		cryptostats.cs_kerrs++;
