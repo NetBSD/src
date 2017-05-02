@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.38 2017/02/08 23:26:24 rin Exp $
+# $NetBSD: Makefile,v 1.39 2017/05/02 20:12:10 christos Exp $
 # Build a smaller ifconfig (i.e. for boot media)
 
 NOMAN=		# defined
+SMALLPROG=1
 
 .include <bsd.own.mk>
 
