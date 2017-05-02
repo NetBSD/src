@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.18 2017/04/26 01:51:52 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.18.2.1 2017/05/02 03:19:17 pgoyette Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -52,6 +52,9 @@ gic*		at fdt? pass 1		# GIC
 
 # Memory controller
 tegramc*	at fdt?	pass 4		# MC
+
+# DMA controller
+tegraapbdma*	at fdt? pass 4		# APB DMA
 
 # FUSE controller
 tegrafuse*	at fdt? pass 4		# FUSE

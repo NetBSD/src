@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.20 2017/03/20 11:26:07 kre Exp $	*/
+/*	$NetBSD: expand.h,v 1.20.2.1 2017/05/02 03:19:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,6 +63,5 @@ union node;
 void expandhere(union node *, int);
 void expandarg(union node *, struct arglist *, int);
 void expari(int);
-int patmatch(char *, char *, int);
 void rmescapes(char *);
 int casematch(union node *, char *);

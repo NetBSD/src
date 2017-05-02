@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.51 2016/06/01 05:11:52 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.51.6.1 2017/05/02 03:19:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.51 2016/06/01 05:11:52 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.51.6.1 2017/05/02 03:19:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -428,6 +428,24 @@ setinputfile(const char *fname, int push)
 	INTON;
 }
 
+/*
+ * When a shell fd needs to be altered (when the user wants to use
+ * the same fd - rare, but happens - we need to locate the ref to
+ * the fd, and update it.  This happens via a callback.
+ * This is the callback func for fd's used for shell input
+ */
+static void
+input_fd_swap(int from, int to)
+{
+	struct parsefile *pf;
+
+	pf = parsefile;
+	while (pf != NULL) {		/* don't need to stop at basepf */
+		if (pf->fd == from)
+			pf->fd = to;
+		pf = pf->prev;
+	}
+}
 
 /*
  * Like setinputfile, but takes an open file descriptor.  Call this with
@@ -437,13 +455,14 @@ setinputfile(const char *fname, int push)
 void
 setinputfd(int fd, int push)
 {
+	register_sh_fd(fd, input_fd_swap);
 	(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
 	if (push) {
 		pushfile();
 		parsefile->buf = ckmalloc(BUFSIZ);
 	}
 	if (parsefile->fd > 0)
-		close(parsefile->fd);
+		sh_close(parsefile->fd);
 	parsefile->fd = fd;
 	if (parsefile->buf == NULL)
 		parsefile->buf = ckmalloc(BUFSIZ);
@@ -502,7 +521,7 @@ popfile(void)
 
 	INTOFF;
 	if (pf->fd >= 0)
-		close(pf->fd);
+		sh_close(pf->fd);
 	if (pf->buf)
 		ckfree(pf->buf);
 	while (pf->strpush)
@@ -551,7 +570,7 @@ closescript(int vforked)
 		return;
 	popallfiles();
 	if (parsefile->fd > 0) {
-		close(parsefile->fd);
+		sh_close(parsefile->fd);
 		parsefile->fd = 0;
 	}
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.9 2017/04/24 10:56:03 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.9.2.1 2017/05/02 03:19:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.9 2017/04/24 10:56:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.9.2.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -274,4 +274,16 @@ fdtbus_get_stdout_speed(void)
 		return -1;
 
 	return (int)strtoul(p + 1, NULL, 10);
+}
+
+bool
+fdtbus_status_okay(int phandle)
+{
+	const int off = fdtbus_phandle2offset(phandle);
+
+	const char *prop = fdt_getprop(fdtbus_get_data(), off, "status", NULL);
+	if (prop == NULL)
+		return true;
+
+	return strncmp(prop, "ok", 2) == 0;
 }

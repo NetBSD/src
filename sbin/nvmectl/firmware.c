@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: firmware.c,v 1.1.6.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2013 EMC Corp.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: firmware.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: firmware.c,v 1.1.6.1 2017/05/02 03:19:16 pgoyette Exp $");
 #if 0
-__FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 258071 2013-11-12 21:14:19Z jimharris $");
+__FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 313188 2017-02-04 05:52:50Z imp $");
 #endif
 #endif
 
@@ -121,7 +121,7 @@ update_firmware(int fd, uint8_t *payload, int32_t payload_size)
 	off = 0;
 	resid = payload_size;
 
-	if ((chunk = malloc(NVME_MAX_XFER_SIZE)) == NULL)
+	if ((chunk = aligned_alloc(PAGE_SIZE, NVME_MAX_XFER_SIZE)) == NULL)
 		errx(1, "unable to malloc %d bytes", NVME_MAX_XFER_SIZE);
 
 	while (resid > 0) {

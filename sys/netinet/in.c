@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.199 2017/03/17 17:26:20 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.199.4.1 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.199 2017/03/17 17:26:20 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.199.4.1 2017/05/02 03:19:22 pgoyette Exp $");
 
 #include "arp.h"
 
@@ -2077,16 +2077,24 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 
 	lle = in_lltable_find_dst(llt, sin->sin_addr);
 	if (lle == NULL) {
-#ifdef DIAGNOSTIC
-		log(LOG_INFO, "interface address is missing from cache = %p  in delete\n", lle);
+#ifdef DEBUG
+		char buf[64];
+		sockaddr_format(l3addr, buf, sizeof(buf));
+		log(LOG_INFO, "%s: cache for %s is not found\n",
+		    __func__, buf);
 #endif
 		return (ENOENT);
 	}
 
 	LLE_WLOCK(lle);
 	lle->la_flags |= LLE_DELETED;
-#ifdef DIAGNOSTIC
-	log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+#ifdef DEBUG
+	{
+		char buf[64];
+		sockaddr_format(l3addr, buf, sizeof(buf));
+		log(LOG_INFO, "%s: cache for %s (%p) is deleted\n",
+		    __func__, buf, lle);
+	}
 #endif
 	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
 		llentry_free(lle);

@@ -1,7 +1,7 @@
-/*	$NetBSD: lua.h,v 1.7 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lua.h,v 1.7.4.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*
-** Id: lua.h,v 1.331 2016/05/30 15:53:28 roberto Exp 
+** Id: lua.h,v 1.332 2016/12/22 15:51:20 roberto Exp 
 ** Lua - A Scripting Language
 ** Lua.org, PUC-Rio, Brazil (http://www.lua.org)
 ** See Copyright Notice at the end of this file
@@ -24,19 +24,19 @@
 #define LUA_VERSION_MINOR	"3"
 #define LUA_VERSION_NUM		503
 #ifndef _KERNEL
-#define LUA_VERSION_RELEASE	"3"
+#define LUA_VERSION_RELEASE	"4"
 #else /* _KERNEL */
-#define LUA_VERSION_RELEASE	"3 (kernel)"
+#define LUA_VERSION_RELEASE	"4 (kernel)"
 #endif /* _KERNEL */
 
 #define LUA_VERSION	"Lua " LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #define LUA_RELEASE	LUA_VERSION "." LUA_VERSION_RELEASE
 #ifndef _KERNEL
-#define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2016 Lua.org, PUC-Rio"
+#define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2017 Lua.org, PUC-Rio"
 #else /* _KERNEL */
 #define LUA_COPYRIGHT	LUA_RELEASE \
 	"  Copyright (c) 2016-2016, Lourival Vieira Neto <lneto@NetBSD.org>." \
-	"  Copyright (C) 1994-2016 Lua.org, PUC-Rio"
+	"  Copyright (C) 1994-2017 Lua.org, PUC-Rio"
 #endif /* _KERNEL */
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
@@ -494,9 +494,9 @@ struct lua_Debug {
 
 /******************************************************************************
 #ifdef _KERNEL
-* Copyright (c) 2016-2016, Lourival Vieira Neto <lneto@NetBSD.org>.
+* Copyright (c) 2016-2017, Lourival Vieira Neto <lneto@NetBSD.org>.
 #endif
-* Copyright (C) 1994-2016 Lua.org, PUC-Rio.
+* Copyright (C) 1994-2017 Lua.org, PUC-Rio.
 *
 * Permission is hereby granted, free of charge, to any person obtaining
 * a copy of this software and associated documentation files (the

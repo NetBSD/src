@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.27 2015/12/16 19:33:39 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.27.8.1 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.27 2015/12/16 19:33:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.27.8.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,11 +445,10 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 }
 
 /*
- * Get the value of a boolean property. If the property is present,
- * return true. Otherwise, return false.
+ * Returns true if the specified property is present.
  */
 bool
-of_getprop_bool(int node, const char *prop)
+of_hasprop(int node, const char *prop)
 {
 	return OF_getproplen(node, prop) >= 0;
 }

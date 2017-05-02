@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.131 2017/04/14 08:48:01 abhinav Exp $
+.\"	$NetBSD: sh.1,v 1.131.2.1 2017/05/02 03:19:14 pgoyette Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd March 20, 2017
+.Dd April 29, 2017
 .Dt SH 1
 .ds flags abCEeFfhnuvxIimpqV
 .Os
@@ -334,7 +334,7 @@ When off,
 the file system is searched for commands each time the function is invoked.
 (Not implemented.)
 .It Fl p Em nopriv
-Do not attempt to reset effective uid if it does not match uid.
+Do not attempt to reset effective UID if it does not match UID.
 This is not set by default to help avoid incorrect usage by setuid
 root programs via
 .Xr system 3
@@ -2037,7 +2037,8 @@ positional parameters (
 .Dq $# )
 before the shift.
 .It trap Oo Fl l Oc
-.It trap Oo Ar action Oc Ar signal ...
+.It trap Ar action signal ...
+.It trap Ar N signal ...
 Cause the shell to parse and execute action when any of the specified
 signals are received.
 The signals are specified by signal number or as the name of the signal.
@@ -2051,9 +2052,20 @@ the action is executed when the shell exits.
 may be null, which cause the specified signals to be ignored.
 With
 .Ar action
-omitted or set to
+set to
 .Sq -
 the specified signals are set to their default action.
+If the first
+.Ar signal
+is specified in its numeric form, then
+.Ar action
+can be omitted to achieve the same effect.
+This archaic,
+but still standard,
+form should not be relied upon, use the explicit
+.Sq -
+action.
+.Pp
 When the shell forks off a subshell, it resets trapped (but not ignored)
 signals to the default action.
 On non-interactive shells, the
@@ -2077,21 +2089,31 @@ Examples:
 .Pp
 .Dl trap
 .Pp
-List trapped signals and their corresponding action
+List trapped signals and their corresponding action.
 .Pp
 .Dl trap -l
 .Pp
-Print a list of valid signals
+Print a list of valid signals.
 .Pp
 .Dl trap '' INT QUIT tstp 30
 .Pp
-Ignore signals INT QUIT TSTP USR1
+Ignore signals INT QUIT TSTP USR1.
 .Pp
 .Dl trap date INT
 .Pp
 Run the
 .Dq date
-command (print the date) upon receiving signal INT
+command (print the date) upon receiving signal INT.
+.Pp
+.Dl trap HUP INT
+.Pp
+Run the
+.Dq HUP
+command upon receiving signal INT.
+.Pp
+.Dl trap 1 2
+.Pp
+Reset the actions for signals 1 (HUP) and 2 (INT) to their defaults.
 .It type Op Ar name ...
 Interpret each name as a command and print the resolution of the command
 search.

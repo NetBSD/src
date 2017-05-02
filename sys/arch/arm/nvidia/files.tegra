@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.33 2017/04/23 12:31:38 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.33.2.1 2017/05/02 03:19:16 pgoyette Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -67,6 +67,11 @@ device	tegrampio
 attach	tegrampio at fdt with tegra_mpio
 file	arch/arm/nvidia/tegra_mpio.c		tegra_mpio
 
+# APB DMA
+device	tegraapbdma
+attach	tegraapbdma at fdt with tegra_apbdma
+file	arch/arm/nvidia/tegra_apbdma.c		tegra_apbdma
+
 # XUSB PADCTL
 device	tegraxusbpad
 attach	tegraxusbpad at fdt with tegra_xusbpad
@@ -99,6 +104,7 @@ file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 # XUSB (USB 3.0)
 attach	xhci at fdt with tegra_xusb
 file	arch/arm/nvidia/tegra_xusb.c		tegra_xusb
+defflag	opt_tegra.h				TEGRA_XUSB_DEBUG
 
 # SDMMC
 attach	sdhc at fdt with tegra_sdhc

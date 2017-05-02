@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.11 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lvm.c,v 1.11.4.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*
 ** Id: lvm.c,v 2.268 2016/02/05 19:59:14 roberto Exp 

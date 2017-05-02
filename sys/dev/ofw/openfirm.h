@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.33 2015/12/16 19:33:39 jmcneill Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.33.8.1 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -120,7 +120,8 @@ char	*of_get_mode_string(char *, int);
 
 void	of_enter_i2c_devs(prop_dictionary_t, int, size_t, int);
 
-bool	of_getprop_bool(int, const char *);
+bool	of_hasprop(int, const char *);
+#define of_getprop_bool	of_hasprop
 int	of_getprop_uint32(int, const char *, uint32_t *);
 
 #endif /*_OPENFIRM_H_*/

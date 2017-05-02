@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.21 2016/05/22 19:26:04 abhinav Exp $	*/
+/*	$NetBSD: apropos.c,v 1.21.6.1 2017/05/02 03:19:23 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.21 2016/05/22 19:26:04 abhinav Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.21.6.1 2017/05/02 03:19:23 pgoyette Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: apropos.c,v 1.21 2016/05/22 19:26:04 abhinav Exp $");
 #include "apropos-utils.h"
 
 typedef struct apropos_flags {
-	char *sec_nums;
+	char **sections;
 	int nresults;
 	int pager;
 	int no_context;
@@ -59,21 +59,29 @@ typedef struct callback_data {
 	apropos_flags *aflags;
 } callback_data;
 
-static const unsigned int sections_args_length = 16;
-
 static char *remove_stopwords(const char *);
 static int query_callback(void *, const char * , const char *, const char *,
 	const char *, size_t);
 __dead static void usage(void);
 
 #define _PATH_PAGER	"/usr/bin/more -s"
+#define SECTIONS_ARGS_LENGTH 4;
 
 static void
 parseargs(int argc, char **argv, struct apropos_flags *aflags)
 {
 	int ch;
-	char sec[2] = {0, 0};
+	size_t sections_offset = 0;
+	size_t sections_size = 0;
+	char **sections = NULL;
+	char *section;
 	aflags->manconf = MANCONF;
+
+#define RESIZE_SECTIONS(newsize) \
+	if (sections == NULL || sections_offset > sections_size - 1) { \
+		sections_size += newsize; \
+		sections = erealloc(sections, sections_size * sizeof(*sections)); \
+	}
 
 	while ((ch = getopt(argc, argv, "123456789C:hilMmn:PprS:s:")) != -1) {
 		switch (ch) {
@@ -86,17 +94,11 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 		case '7':
 		case '8':
 		case '9':
-			/*
-			 *Generate a space separated list of all the
-			 * requested sections
-			 */
-			sec[0] = (char) ch ;
-			if (aflags->sec_nums == NULL) {
-				aflags->sec_nums =
-				    emalloc(sections_args_length);
-				memcpy(aflags->sec_nums, sec, 2);
-			} else
-				concat2(&aflags->sec_nums, sec, 1);
+			section = emalloc(2);
+			section[0] = ch;
+			section[1] = 0;
+			RESIZE_SECTIONS(SECTIONS_ARGS_LENGTH)
+			sections[sections_offset++] = section;
 			break;
 		case 'C':
 			aflags->manconf = optarg;
@@ -134,21 +136,19 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 			aflags->machine = optarg;
 			break;
 		case 's':
-			if (aflags->sec_nums == NULL) {
-				size_t arglen = strlen(optarg);
-				aflags->sec_nums =
-				    arglen > sections_args_length
-					? emalloc(arglen + 1)
-					: emalloc(sections_args_length);
-				memcpy(aflags->sec_nums, optarg, arglen + 1);
-			} else
-				concat(&aflags->sec_nums, optarg);
+			RESIZE_SECTIONS(SECTIONS_ARGS_LENGTH)
+			sections[sections_offset++] = estrdup(optarg);
 			break;
 		case '?':
 		default:
 			usage();
 		}
 	}
+	if (sections) {
+		RESIZE_SECTIONS(1)
+		sections[sections_offset] = NULL;
+	}
+	aflags->sections = sections;
 }
 
 int
@@ -159,12 +159,13 @@ main(int argc, char *argv[])
 	char *errmsg = NULL;
 	char *str;
 	int rc = 0;
+	size_t i;
 	int s;
 	callback_data cbdata;
 	cbdata.out = stdout;		// the default output stream
 	cbdata.count = 0;
 	apropos_flags aflags;
-	aflags.sec_nums = NULL;
+	aflags.sections = NULL;
 	cbdata.aflags = &aflags;
 	sqlite3 *db;
 	setprogname(argv[0]);
@@ -203,7 +204,6 @@ main(int argc, char *argv[])
 	str = NULL;
 	while (argc--)
 		concat(&str, *argv++);
-	/* Eliminate any stopwords from the query */
 	query = remove_stopwords(lower(str));
 
 	/*
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	}
 
 	args.search_str = query;
-	args.sec_nums = aflags.sec_nums;
+	args.sections = aflags.sections;
 	args.legacy = aflags.legacy;
 	args.nrec = aflags.nresults ? aflags.nresults : -1;
 	args.offset = 0;
@@ -251,7 +251,13 @@ main(int argc, char *argv[])
 		fprintf(cbdata.out, "</table>\n</body>\n</html>\n");
 
 	free(query);
-	free(aflags.sec_nums);
+
+	if (aflags.sections) {
+		for(i = 0; aflags.sections[i]; i++)
+			free(aflags.sections[i]);
+		free(aflags.sections);
+	}
+
 	close_db(db);
 	if (errmsg) {
 		warnx("%s", errmsg);

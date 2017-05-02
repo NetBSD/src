@@ -1,4 +1,4 @@
-/*	$NetBSD: lfunc.h,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lfunc.h,v 1.5.4.1 2017/05/02 03:19:15 pgoyette Exp $	*/
 
 /*
 ** Id: lfunc.h,v 2.15 2015/01/13 15:49:11 roberto Exp 

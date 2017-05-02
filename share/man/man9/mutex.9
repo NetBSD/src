@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.26.16.1 2017/04/30 04:56:55 pgoyette Exp $
+.\"	$NetBSD: mutex.9,v 1.26.16.2 2017/05/02 03:19:16 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,6 +187,9 @@ This function is needed because
 .Fn mutex_owned
 does not differentiate if a spin mutex is owned by the current process
 vs owned by another process.
+.Fn mutex_ownable
+is reasonably heavy-weight, and should only be used with
+.Xr KDASSERT 9 .
 .It Fn mutex_owned "mtx"
 .Pp
 For adaptive mutexes, return non-zero if the current LWP holds the mutex.

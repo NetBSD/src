@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.59 2017/04/22 15:07:49 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.59.2.1 2017/05/02 03:19:17 pgoyette Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.59 2017/04/22 15:07:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.59.2.1 2017/05/02 03:19:17 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,7 +125,6 @@ void	ffb_ras_init(struct ffb_softc *);
 void	ffb_ras_copyrows(void *, int, int, int);
 void	ffb_ras_erasecols(void *, int, int, int, long int);
 void	ffb_ras_eraserows(void *, int, int, long int);
-void	ffb_ras_do_cursor(struct rasops_info *);
 void	ffb_ras_fill(struct ffb_softc *);
 void	ffb_ras_invert(struct ffb_softc *);
 static void	ffb_ras_setfg(struct ffb_softc *, int32_t);
@@ -1087,20 +1086,44 @@ ffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 		case 1: {
 			uint8_t *data8 = data;
 			uint32_t reg;
-			for (i = 0; i < he; i++) {
+			if (attr & WSATTR_UNDERLINE) {				
+				for (i = 0; i < he - 2; i++) {
+					reg = *data8;
+					FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
+					data8++;
+				}
+				FBC_WRITE(sc, FFB_FBC_FONT, 0xff000000);
+				data8++;
 				reg = *data8;
 				FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
-				data8++;
+			} else {
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
+					data8++;
+				}
 			}
 			break;
 		}
 		case 2: {
 			uint16_t *data16 = data;
 			uint32_t reg;
-			for (i = 0; i < he; i++) {
+			if (attr & WSATTR_UNDERLINE) {				
+				for (i = 0; i < he - 2; i++) {
+					reg = *data16;
+					FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
+					data16++;
+				}
+				FBC_WRITE(sc, FFB_FBC_FONT, 0xffff0000);
+				data16++;
 				reg = *data16;
 				FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
-				data16++;
+			} else {
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
+					data16++;
+				}
 			}
 			break;
 		}
@@ -1149,7 +1172,7 @@ ffb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	FBC_WRITE(sc, FFB_FBC_BW, wi);
 
 	/* if we draw a space we're done */
-	if (c == ' ') return;
+	if (c == ' ') goto out;
 
 	/* now enable alpha blending */
 	ffb_ras_setfg(sc, fg);
@@ -1186,7 +1209,16 @@ ffb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			ddest++;
 		}
 		dest += 2048;
-	} 
+	}
+out:
+	/* check if we need to draw an underline */
+	if (attr & WSATTR_UNDERLINE) {
+		dest =  sc->sc_sfb32 + ((y + he - 2) << 11) + x;
+		for (i = 0; i < wi; i++) {
+			*dest = 0xa0000000;
+			dest++;
+		}
+	}
 }
 
 int
@@ -1198,11 +1230,11 @@ ffb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
 		bg = WS_DEFAULT_BG;
 	}
 	if (flags & WSATTR_REVERSE) {
-		*attrp = (bg & 0xff) << 24 | (fg & 0xff) << 16 | 
-		    (flags & 0xff);
+		*attrp = (bg & 0xff) << 24 | (fg & 0xff) << 16;
 	} else
-		*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16 | 
-		    (flags & 0xff);
+		*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16;
+	if (flags & WSATTR_UNDERLINE)
+		*attrp |= WSATTR_UNDERLINE;
 	return 0;
 }
 
@@ -1217,8 +1249,7 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
-	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_PREFER_ALPHA |
-		     RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	/*
 	 * we can't accelerate copycols() so instead of falling back to
@@ -1239,7 +1270,7 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bpos = 16;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
 

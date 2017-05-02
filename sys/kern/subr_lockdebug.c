@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.55 2017/01/26 04:11:56 christos Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.55.4.1 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.55 2017/01/26 04:11:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.55.4.1 2017/05/02 03:19:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -417,7 +417,9 @@ lockdebug_more(int s)
 /*
  * lockdebug_wantlock:
  *
- *	Process the preamble to a lock acquire.
+ *	Process the preamble to a lock acquire.  The "shared"
+ *	parameter controls which ld_{ex,sh}want counter is
+ *	updated; a negative value of shared updates neither.
  */
 void
 lockdebug_wantlock(const char *func, size_t line,
@@ -454,9 +456,9 @@ lockdebug_wantlock(const char *func, size_t line,
 			return;
 		}
 	}
-	if (shared)
+	if (shared > 0)
 		ld->ld_shwant++;
-	else
+	else if (shared == 0)
 		ld->ld_exwant++;
 	if (recurse) {
 		lockdebug_abort1(func, line, ld, s, "locking against myself",

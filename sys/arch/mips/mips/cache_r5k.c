@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.19 2016/10/10 07:37:56 skrll Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.19.6.1 2017/05/02 03:19:17 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.19 2016/10/10 07:37:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.19.6.1 2017/05/02 03:19:17 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -134,7 +134,7 @@ r5k_picache_sync_range_index(vaddr_t va, vsize_t size)
 
 	/*
 	 * If we are going to flush more than is in a way (or the stride
-	 * need for that way), we are flushing everything.
+	 * needed for that way), we are flushing everything.
 	 */
 	if (size >= way_size) {
 		r5k_picache_sync_all();

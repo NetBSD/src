@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.327.2.2 2017/04/29 11:12:14 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.327.2.3 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.2 2017/04/29 11:12:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.327.2.3 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -650,8 +650,6 @@ bad_rec:
 		    "failed\n", __func__);
 	}
 
-	sc->sc_pr.blksize = vc->sc_mpr.blksize;
-	sc->sc_rr.blksize = vc->sc_mrr.blksize;
 	sc->sc_sih_rd = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
 	    audio_softintr_rd, sc);
 	sc->sc_sih_wr = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
@@ -1287,14 +1285,16 @@ audio_setup_pfilters(struct audio_softc *sc, const audio_params_t *pp,
 	}
 
 #ifdef AUDIO_DEBUG
-	printf("%s: HW-buffer=%p pustream=%p\n",
-	       __func__, &vc->sc_mpr.s, vc->sc_pustream);
-	for (i = 0; i < pfilters->req_size; i++) {
-		char num[100];
-		snprintf(num, 100, "[%d]", i);
-		audio_print_params(num, &vc->sc_pstreams[i].param);
+	if (audiodebug) {
+		printf("%s: HW-buffer=%p pustream=%p\n",
+		       __func__, &vc->sc_mpr.s, vc->sc_pustream);
+		for (i = 0; i < pfilters->req_size; i++) {
+			char num[100];
+			snprintf(num, 100, "[%d]", i);
+			audio_print_params(num, &vc->sc_pstreams[i].param);
+		}
+		audio_print_params("[HW]", &vc->sc_mpr.s.param);
 	}
-	audio_print_params("[HW]", &vc->sc_mpr.s.param);
 #endif /* AUDIO_DEBUG */
 
 	return 0;
@@ -1366,13 +1366,15 @@ audio_setup_rfilters(struct audio_softc *sc, const audio_params_t *rp,
 	HW_UNLOCK(vc);
 
 #ifdef AUDIO_DEBUG
-	printf("%s: HW-buffer=%p pustream=%p\n",
-	       __func__, &vc->sc_mrr.s, vc->sc_rustream);
-	audio_print_params("[HW]", &vc->sc_mrr.s.param);
-	for (i = 0; i < rfilters->req_size; i++) {
-		char num[100];
-		snprintf(num, 100, "[%d]", i);
-		audio_print_params(num, &vc->sc_rstreams[i].param);
+	if (audiodebug) {
+		printf("%s: HW-buffer=%p pustream=%p\n",
+		       __func__, &vc->sc_mrr.s, vc->sc_rustream);
+		audio_print_params("[HW]", &vc->sc_mrr.s.param);
+		for (i = 0; i < rfilters->req_size; i++) {
+			char num[100];
+			snprintf(num, 100, "[%d]", i);
+			audio_print_params(num, &vc->sc_rstreams[i].param);
+		}
 	}
 #endif /* AUDIO_DEBUG */
 
@@ -1986,6 +1988,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 	if (vc == NULL) {
 		chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
 		vc = chan->vc;
+		sc->sc_pr.blksize = vc->sc_mrr.blksize;
+		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 	}
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", vc->sc_mode));
@@ -2001,6 +2005,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 				return error;
 		}
 	}
+	if (vc == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc)
+		sc->sc_rr.blksize = vc->sc_mrr.blksize;
 
 	if (audio_can_playback(sc) || (vc->sc_open & AUOPEN_WRITE)) {
 		audio_init_ringbuffer(sc, &vc->sc_mpr,
@@ -2014,6 +2020,8 @@ audio_initbufs(struct audio_softc *sc, struct virtual_channel *vc)
 				return error;
 		}
 	}
+	if (vc == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc)
+		sc->sc_pr.blksize = vc->sc_mpr.blksize;
 
 #ifdef AUDIO_INTR_TIME
 #define double u_long
@@ -2156,9 +2164,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 				return error;
 			}
 		}
+		audio_initbufs(sc, NULL);
 		audio_init_ringbuffer(sc, &sc->sc_pr, AUMODE_PLAY);
 		audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
-		audio_initbufs(sc, NULL);
 		sc->schedule_wih = false;
 		sc->schedule_rih = false;
 		sc->sc_eof = 0;
@@ -2191,8 +2199,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		mode |= AUMODE_PLAY | AUMODE_PLAY_ALL;
 	}
 
-	vc->sc_mrr.blksize = sc->sc_rr.blksize;
 	vc->sc_mpr.blksize = sc->sc_pr.blksize;
+	vc->sc_mrr.blksize = sc->sc_rr.blksize;
 
 	/*
 	 * Multiplex device: /dev/audio (MU-Law) and /dev/sound (linear)
@@ -3597,7 +3605,7 @@ audio_pint(void *v)
 	struct audio_softc *sc;
 	struct audio_chan *chan;
 	struct virtual_channel *vc;
-	int blksize;
+	int blksize, cc, used;
 
 	sc = v;
 	chan = SIMPLEQ_FIRST(&sc->sc_audiochan);
@@ -3616,10 +3624,16 @@ audio_pint(void *v)
 	    vc->sc_mpr.s.outp, blksize);
 
 	if (audio_stream_get_used(&sc->sc_pr.s) < blksize) {
-		audio_fill_silence(&vc->sc_pparams, vc->sc_mpr.s.inp,
-		    vc->sc_mpr.blksize);
-		vc->sc_mpr.s.inp = audio_stream_add_inp(&vc->sc_mpr.s,
-		    vc->sc_mpr.s.inp, blksize);
+		used = blksize;
+		while (used > 0) {
+			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+			if (cc > used)
+				cc = used;
+			audio_fill_silence(&vc->sc_pparams, vc->sc_mpr.s.inp, cc);
+			vc->sc_mpr.s.inp = audio_stream_add_inp(&vc->sc_mpr.s,
+			    vc->sc_mpr.s.inp, cc);
+			used -= cc;
+		}
 		goto wake_mix;
 	}
 
@@ -3800,8 +3814,10 @@ audio_mix(void *v)
 	inp = cb->s.inp;
 	cc = blksize - (inp - cb->s.start) % blksize;
 	if (sc->sc_writeme == false)
-		audio_pint_silence(sc, cb, inp, cc, vc);
-	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, blksize);
+		audio_fill_silence(&vc->sc_mpr.s.param, inp, cc);
+	else
+		cc = blksize;
+	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cc);
 	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
@@ -4103,9 +4119,6 @@ audio_set_vchan_defaults(struct audio_softc *sc, u_int mode,
 
 	if (error == 0)
 		error = audiosetinfo(sc, &ai, true, vc);
-
-	sc->sc_pr.blksize = vc->sc_mpr.blksize;
-	sc->sc_rr.blksize = vc->sc_mrr.blksize;
 
 	return error;
 }
@@ -4446,7 +4459,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 	int error;
 	int np, nr;
 	unsigned int blks;
-	int oldpblksize, oldrblksize;
 	u_int gain;
 	bool rbus, pbus;
 	bool cleared, modechange, pausechange;
@@ -4524,9 +4536,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		return error;
 	if (np > 0 && (error = audio_check_params(&pp)))
 		return error;
-
-	oldpblksize = vc->sc_mpr.blksize;
-	oldrblksize = vc->sc_mrr.blksize;
 
 	setmode = 0;
 	if (nr > 0) {
@@ -4712,55 +4721,27 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai, bool reset,
 		pausechange = true;
 	}
 
-	if (SPECIFIED(ai->blocksize)) {
-		int pblksize, rblksize;
-
-		/* Block size specified explicitly. */
-		if (ai->blocksize == 0) {
-			if (!cleared) {
-				audio_clear_intr_unlocked(sc, vc);
-				cleared = true;
-			}
-			vc->sc_blkset = false;
-			audio_calc_blksize(sc, AUMODE_RECORD, vc);
-			audio_calc_blksize(sc, AUMODE_PLAY, vc);
-		} else {
-			vc->sc_blkset = true;
-			/* check whether new blocksize changes actually */
-			if (hw->round_blocksize == NULL) {
-				if (!cleared) {
-					audio_clear_intr_unlocked(sc, vc);
-					cleared = true;
-				}
-				vc->sc_mpr.blksize = ai->blocksize;
-				vc->sc_mrr.blksize = ai->blocksize;
-			} else {
-				pblksize = hw->round_blocksize(sc->hw_hdl,
-				    ai->blocksize, AUMODE_PLAY,
-				    &vc->sc_mpr.s.param);
-				rblksize = hw->round_blocksize(sc->hw_hdl,
-				    ai->blocksize, AUMODE_RECORD,
-				    &vc->sc_mrr.s.param);
-				if ((pblksize != vc->sc_mpr.blksize &&
-				    pblksize > sc->sc_pr.blksize)
-				    || (rblksize != vc->sc_mrr.blksize &&
-				    rblksize > sc->sc_rr.blksize)) {
-					if (!cleared) {
-					    audio_clear_intr_unlocked(sc, vc);
-					    cleared = true;
-					}
-					vc->sc_mpr.blksize = pblksize;
-					vc->sc_mrr.blksize = rblksize;
-				}
-			}
-		}
-	}
-
 	if (SPECIFIED(ai->mode)) {
 		if (vc->sc_mode & AUMODE_PLAY)
 			audio_init_play(sc, vc);
 		if (vc->sc_mode & AUMODE_RECORD)
 			audio_init_record(sc, vc);
+	}
+
+	if (vc == SIMPLEQ_FIRST(&sc->sc_audiochan)->vc) {
+		if (!cleared) {
+			audio_clear_intr_unlocked(sc, vc);
+			cleared = true;
+		}
+		vc->sc_blkset = false;
+		audio_calc_blksize(sc, AUMODE_RECORD, vc);
+		audio_calc_blksize(sc, AUMODE_PLAY, vc);
+		sc->sc_pr.blksize = vc->sc_mpr.blksize;
+		sc->sc_rr.blksize = vc->sc_mrr.blksize;
+	} else {
+		vc->sc_blkset = true;
+		vc->sc_mpr.blksize = sc->sc_pr.blksize;
+		vc->sc_mrr.blksize = sc->sc_rr.blksize;
 	}
 
 	if (hw->commit_settings && sc->sc_opens == 0) {
@@ -4779,9 +4760,7 @@ cleanup:
 		init_error = (pausechange == 1 && reset == 0) ? 0 :
 		    audio_initbufs(sc, vc);
 		if (init_error) goto err;
-		if (vc->sc_mpr.blksize != oldpblksize ||
-		    vc->sc_mrr.blksize != oldrblksize ||
-		    vc->sc_pustream != oldpus ||
+		if (reset || vc->sc_pustream != oldpus ||
 		    vc->sc_rustream != oldrus)
 			audio_calcwater(sc, vc);
 		if ((vc->sc_mode & AUMODE_PLAY) &&

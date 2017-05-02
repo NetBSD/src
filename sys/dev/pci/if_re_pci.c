@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.46 2017/04/19 00:20:02 jmcneill Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.46.2.1 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.46 2017/04/19 00:20:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.46.2.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -240,8 +240,11 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	    t->rtk_basetype == RTK_8101E)
 		sc->sc_quirk |= RTKQ_PCIE;
 
+#if 0
+	/* This causes watchdog timeouts on some chips/systems. */
 	if (t->rtk_basetype == RTK_8168)
 		sc->sc_quirk |= RTKQ_IM_HW;
+#endif
 
 	if (pci_dma64_available(pa) && (sc->sc_quirk & RTKQ_PCIE))
 		sc->sc_dmat = pa->pa_dmat64;

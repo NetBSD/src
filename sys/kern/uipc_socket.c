@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.252 2016/10/13 19:10:23 uwe Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.252.6.1 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.252 2016/10/13 19:10:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.252.6.1 2017/05/02 03:19:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -295,7 +295,8 @@ sopendfree_thread(void *v)
 
 			for (; m != NULL; m = next) {
 				next = m->m_next;
-				KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0);
+				KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) ==
+				    0);
 				KASSERT(m->m_ext.ext_refcnt == 0);
 
 				rv += m->m_ext.ext_size;
@@ -648,7 +649,7 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 	short	oldopt, oldqlimit;
 
 	solock(so);
-	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING | 
+	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING |
 	    SS_ISDISCONNECTING)) != 0) {
 		sounlock(so);
 		return EINVAL;
@@ -786,7 +787,7 @@ soabort(struct socket *so)
 {
 	u_int refs;
 	int error;
-	
+
 	KASSERT(solocked(so));
 	KASSERT(so->so_head == NULL);
 
@@ -1065,8 +1066,8 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
 			if (flags & MSG_OOB) {
-				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(so,
-				    top, control);
+				error = (*so->so_proto->pr_usrreqs->pr_sendoob)(
+				    so, top, control);
 			} else {
 				error = (*so->so_proto->pr_usrreqs->pr_send)(so,
 				    top, addr, control, l);
@@ -1407,7 +1408,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				 */
 				if (dom->dom_dispose != NULL &&
 				    type == SCM_RIGHTS) {
-				    	sounlock(so);
+					sounlock(so);
 					(*dom->dom_dispose)(cm);
 					solock(so);
 				}
@@ -1721,22 +1722,22 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		KASSERT(solocked(so));
 		break;
 
-  	case SO_LINGER:
- 		error = sockopt_get(sopt, &l, sizeof(l));
+	case SO_LINGER:
+		error = sockopt_get(sopt, &l, sizeof(l));
 		solock(so);
- 		if (error)
- 			break;
- 		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
- 		    l.l_linger > (INT_MAX / hz)) {
+		if (error)
+			break;
+		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
+		    l.l_linger > (INT_MAX / hz)) {
 			error = EDOM;
 			break;
 		}
- 		so->so_linger = l.l_linger;
- 		if (l.l_onoff)
- 			so->so_options |= SO_LINGER;
- 		else
- 			so->so_options &= ~SO_LINGER;
-   		break;
+		so->so_linger = l.l_linger;
+		if (l.l_onoff)
+			so->so_options |= SO_LINGER;
+		else
+			so->so_options &= ~SO_LINGER;
+		break;
 
 	case SO_DEBUG:
 	case SO_KEEPALIVE:
@@ -1915,7 +1916,7 @@ so_setsockopt(struct lwp *l, struct socket *so, int level, int name,
 
 	return error;
 }
- 
+
 /*
  * internal get SOL_SOCKET options
  */
@@ -2092,7 +2093,7 @@ sockopt_destroy(struct sockopt *sopt)
 /*
  * set sockopt value
  *	- value is copied into sockopt
- * 	- memory is allocated when necessary, will not sleep
+ *	- memory is allocated when necessary, will not sleep
  */
 int
 sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
@@ -2244,7 +2245,7 @@ filt_soread(struct knote *kn, long hint)
 		rv = 1;
 	else if (kn->kn_sfflags & NOTE_LOWAT)
 		rv = (kn->kn_data >= kn->kn_sdata);
-	else 
+	else
 		rv = (kn->kn_data >= so->so_rcv.sb_lowat);
 	if (hint != NOTE_SUBMIT)
 		sounlock(so);

@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.64 2016/06/16 15:10:58 abhinav Exp $	*/
+/*	$NetBSD: man.c,v 1.64.6.1 2017/05/02 03:19:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.64 2016/06/16 15:10:58 abhinav Exp $");
+__RCSID("$NetBSD: man.c,v 1.64.6.1 2017/05/02 03:19:23 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 	/*
 	 * [2] section can now only be non-null if the user asked for
 	 *     a section and that section's elements did not have 
-         *     absolute paths.  in this case we use the section's
+	 *     absolute paths.  in this case we use the section's
 	 *     elements to override _subdir from the config file.
 	 *
 	 * after this step, we are done processing "m.section"...
@@ -428,7 +428,7 @@ main(int argc, char **argv)
 		
 	/*
 	 * normal case - we display things in a single command, so
-         * build a list of things to display.  first compute total
+	 * build a list of things to display.  first compute total
 	 * length of buffer we will need so we can malloc it.
 	 */
 	for (ap = pg.gl_pathv, len = m.pagerlen + 1; *ap != NULL; ++ap) {
