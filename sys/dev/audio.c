@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.331 2017/05/02 06:37:11 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.332 2017/05/02 07:25:50 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.331 2017/05/02 06:37:11 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.332 2017/05/02 07:25:50 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3604,7 +3604,7 @@ audio_pint(void *v)
 	vc = chan->vc;
 	blksize = vc->sc_mpr.blksize;
 
-	if (sc->sc_dying == true || sc->sc_opens == 0)
+	if (sc->sc_dying == true || sc->sc_trigger_started == false)
 		return;
 
 	if (vc->sc_draining == true) {
@@ -3838,7 +3838,7 @@ audio_rint(void *v)
 
 	KASSERT(mutex_owned(sc->sc_intr_lock));
 
-	if (sc->sc_dying == true || sc->sc_recopens == 0)
+	if (sc->sc_dying == true || sc->sc_rec_started == false)
 		return;
 
 	blksize = audio_stream_get_used(&sc->sc_rr.s);
