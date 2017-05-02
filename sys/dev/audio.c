@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.329 2017/04/28 06:59:49 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.330 2017/05/02 06:25:05 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.329 2017/04/28 06:59:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.330 2017/05/02 06:25:05 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1661,6 +1661,9 @@ audioread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return error;
 
+	if (fp->f_flag & O_NONBLOCK)
+		ioflag |= IO_NDELAY;
+
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
@@ -1696,6 +1699,9 @@ audiowrite(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 
 	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return error;
+
+	if (fp->f_flag & O_NONBLOCK)
+		ioflag |= IO_NDELAY;
 
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
