@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.330 2017/05/02 06:25:05 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.331 2017/05/02 06:37:11 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.330 2017/05/02 06:25:05 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.331 2017/05/02 06:37:11 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -3616,6 +3616,7 @@ audio_pint(void *v)
 	    vc->sc_mpr.s.outp, blksize);
 
 	if (audio_stream_get_used(&sc->sc_pr.s) < blksize) {
+		DPRINTFN(3, ("HW RING - INSERT SILENCE\n"));
 		used = blksize;
 		while (used > 0) {
 			cc = sc->sc_pr.s.end - sc->sc_pr.s.inp;
@@ -3805,9 +3806,10 @@ audio_mix(void *v)
 	cb = &sc->sc_pr;
 	inp = cb->s.inp;
 	cc = blksize - (inp - cb->s.start) % blksize;
-	if (sc->sc_writeme == false)
+	if (sc->sc_writeme == false) {
+		DPRINTFN(3, ("MIX RING EMPTY - INSERT SILENCE\n"));
 		audio_fill_silence(&vc->sc_mpr.s.param, inp, cc);
-	else
+	} else
 		cc = blksize;
 	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cc);
 	mutex_exit(sc->sc_intr_lock);
