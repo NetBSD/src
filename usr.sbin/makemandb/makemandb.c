@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.53 2017/05/01 06:56:00 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.54 2017/05/02 13:54:08 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.53 2017/05/01 06:56:00 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.54 2017/05/02 13:54:08 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -450,9 +450,10 @@ main(int argc, char *argv[])
 	while ((len = getline(&line, &linesize, file)) != -1) {
 		/* Replace the new line character at the end of string with '\0' */
 		line[len - 1] = '\0';
-		char *pdir = dirname(line);
+		char *pdir = estrdup(dirname(line));
 		/* Traverse the man page directories and parse the pages */
 		traversedir(pdir, line, db, mp);
+		free(pdir);
 	}
 	free(line);
 
