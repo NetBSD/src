@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.339 2017/04/26 07:51:23 pgoyette Exp $
+#	$NetBSD: BRANCHES,v 1.339.2.1 2017/05/02 03:19:15 pgoyette Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -876,6 +876,22 @@ Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
 
+Branch:		prg-localcount2
+Description:	Implement localcount reference counting as proposed by
+		riastradh@ - supersedes abandonded pgoyette-localcount
+Status:		Active
+Start Date:	Wed Apr 26 2017
+End Date:	
+Base Tag:	prg-localcount2-base
+Maintainer:	pgoyette
+Scope:		src/sys/
+Notes:		
+
+
+########################################################################
+# Individual developers' branches (Terminated):
+########################################################################
+
 Branch:		pgoyette-localcount
 Description:	Implement localcount reference counting as proposed by
 		riastradh@
@@ -891,11 +907,6 @@ Notes:		Abandoned - there seems to have been some CVS "pilot
 		unknown number of files from an unknown time period.
 		The work will be salvaged as much as possible, and
 		applied to a new clean branch.
-
-
-########################################################################
-# Individual developers' branches (Terminated):
-########################################################################
 
 Branch:		bouyer-scsipi
 Description:	Integration of atapi support

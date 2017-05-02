@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.73.4.2 2017/04/30 07:07:56 pgoyette Exp $	*/
+/*	$NetBSD: locks.c,v 1.73.4.3 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.73.4.2 2017/04/30 07:07:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.73.4.3 2017/05/02 03:19:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -187,8 +187,7 @@ mutex_ownable(kmutex_t *mtx)
 {
 
 #ifdef LOCKDEBUG
-	mutex_enter(mtx);
-	mutex_exit(mtx);
+	WANTLOCK(mtx, -1);
 #endif
 	return 1;
 }

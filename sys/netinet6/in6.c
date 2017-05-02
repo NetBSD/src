@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.244 2017/03/02 09:48:20 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.244.4.1 2017/05/02 03:19:22 pgoyette Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.244 2017/03/02 09:48:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.244.4.1 2017/05/02 03:19:22 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2550,13 +2550,25 @@ in6_lltable_delete(struct lltable *llt, u_int flags,
 
 	lle = in6_lltable_find_dst(llt, &sin6->sin6_addr);
 
-	if (lle == NULL)
+	if (lle == NULL) {
+#ifdef DEBUG
+		char buf[64];
+		sockaddr_format(l3addr, buf, sizeof(buf));
+		log(LOG_INFO, "%s: cache for %s is not found\n",
+		    __func__, buf);
+#endif
 		return ENOENT;
+	}
 
 	LLE_WLOCK(lle);
 	lle->la_flags |= LLE_DELETED;
-#ifdef DIAGNOSTIC
-	log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+#ifdef DEBUG
+	{
+		char buf[64];
+		sockaddr_format(l3addr, buf, sizeof(buf));
+		log(LOG_INFO, "%s: cache for %s (%p) is deleted\n",
+		    __func__, buf, lle);
+	}
 #endif
 	if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
 		llentry_free(lle);

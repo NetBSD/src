@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.9 2017/04/26 01:51:52 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.9.2.1 2017/05/02 03:19:18 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.9 2017/04/26 01:51:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.9.2.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,6 @@ static void	fdt_scan(struct fdt_softc *, int);
 static void	fdt_add_node(struct fdt_node *);
 static u_int	fdt_get_order(int);
 
-static int	fdt_print(void *, const char *);
-
 static const char * const fdtbus_compatible[] =
     { "simple-bus", NULL };
 
@@ -100,7 +98,7 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct fdt_node *node;
-	char *model, *name, *status;
+	char *model, *name;
 	int len, child;
 
 	sc->sc_dev = self;
@@ -122,28 +120,16 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		/* If there is a "status" property, make sure it is "okay" */
-		len = OF_getproplen(child, "status");
-		if (len > 0) {
-			status = kmem_zalloc(len, KM_SLEEP);
-			int alen __diagused = OF_getprop(child, "status", status, len);
-			KASSERT(alen == len);
-			const bool okay_p = strcmp(status, "okay") == 0 ||
-					    strcmp(status, "ok") == 0;
-			kmem_free(status, len);
-			if (!okay_p) {
-				continue;
-			}
-		}
+		if (!fdtbus_status_okay(child))
+			continue;
 
 		len = OF_getproplen(child, "name");
-		if (len <= 0) {
+		if (len <= 0)
 			continue;
-		}
+
 		name = kmem_zalloc(len, KM_SLEEP);
-		if (OF_getprop(child, "name", name, len) != len) {
+		if (OF_getprop(child, "name", name, len) != len)
 			continue;
-		}
 
 		/* Add the node to our device list */
 		node = kmem_alloc(sizeof(*node), KM_SLEEP);
@@ -215,7 +201,7 @@ fdt_scan_bus(struct fdt_softc *sc)
 		/*
 		 * Attach the bus.
 		 */
-		node->n_dev = config_found(node->n_bus, &faa, fdt_print);
+		node->n_dev = config_found(node->n_bus, &faa, fdtbus_print);
 	}
 }
 
@@ -249,7 +235,7 @@ fdt_scan(struct fdt_softc *sc, int pass)
 		 * Attach the device.
 		 */
 		node->n_dev = config_found_sm_loc(node->n_bus, "fdt", locs,
-		    &faa, fdt_print, fdt_scan_submatch);
+		    &faa, fdtbus_print, fdt_scan_submatch);
 	}
 }
 
@@ -283,25 +269,27 @@ fdt_get_order(int phandle)
 	return val;
 }
 
-static int
-fdt_print(void *aux, const char *pnp)
+int
+fdtbus_print(void *aux, const char *pnp)
 {
 	const struct fdt_attach_args * const faa = aux;
 	char buf[FDT_MAX_PATH];
 	const char *name = buf;
 
-	if (faa->faa_quiet)
+	if (pnp && faa->faa_quiet)
 		return QUIET;
 
 	/* Skip "not configured" for nodes w/o compatible property */
-	if (OF_getproplen(faa->faa_phandle, "compatible") <= 0)
+	if (pnp && OF_getproplen(faa->faa_phandle, "compatible") <= 0)
 		return QUIET;
 
-	if (pnp) {
-		if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
-			name = faa->faa_name;
+	if (!fdtbus_get_path(faa->faa_phandle, buf, sizeof(buf)))
+		name = faa->faa_name;
+
+	if (pnp)
 		aprint_normal("%s at %s", name, pnp);
-	}
+	else
+		aprint_debug(" (%s)", name);
 
 	return UNCONF;
 }

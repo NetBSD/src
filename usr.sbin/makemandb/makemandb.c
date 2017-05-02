@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.47 2017/04/20 13:11:35 joerg Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.47.2.1 2017/05/02 03:19:23 pgoyette Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.47 2017/04/20 13:11:35 joerg Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.47.2.1 2017/05/02 03:19:23 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -96,7 +96,7 @@ typedef	void (*proff_nf)(const struct roff_node *n, mandb_rec *);
 static void append(secbuff *sbuff, const char *src);
 static void init_secbuffs(mandb_rec *);
 static void free_secbuffs(mandb_rec *);
-static int check_md5(const char *, sqlite3 *, const char *, char **, void *, size_t);
+static int check_md5(const char *, sqlite3 *, char **, void *, size_t);
 static void cleanup(mandb_rec *);
 static void set_section(const struct roff_man *, mandb_rec *);
 static void set_machine(const struct roff_man *, mandb_rec *);
@@ -331,7 +331,7 @@ main(int argc, char *argv[])
 {
 	FILE *file;
 	const char *sqlstr, *manconf = NULL;
-	char *line, *command, *parent;
+	char *line, *command;
 	char *errmsg;
 	int ch;
 	struct mparse *mp;
@@ -450,12 +450,9 @@ main(int argc, char *argv[])
 	while ((len = getline(&line, &linesize, file)) != -1) {
 		/* Replace the new line character at the end of string with '\0' */
 		line[len - 1] = '\0';
-		parent = estrdup(line);
-		char *pdir = estrdup(dirname(parent));
-		free(parent);
+		char *pdir = dirname(line);
 		/* Traverse the man page directories and parse the pages */
 		traversedir(pdir, line, db, mp);
-		free(pdir);
 	}
 	free(line);
 
@@ -519,7 +516,7 @@ traversedir(const char *parent, const char *file, sqlite3 *db,
 
 		while ((dirp = readdir(dp)) != NULL) {
 			/* Avoid . and .. entries in a directory */
-			if (strncmp(dirp->d_name, ".", 1)) {
+			if (dirp->d_name[0] != '.') {
 				easprintf(&buf, "%s/%s", file, dirp->d_name);
 				traversedir(parent, buf, db, mp);
 				free(buf);
@@ -807,8 +804,7 @@ update_db(sqlite3 *db, struct mparse *mp, mandb_rec *rec)
 			err_count++;
 			continue;
 		}
-		md5_status = check_md5(file, db, "mandb_meta", &md5sum, buf,
-		    buflen);
+		md5_status = check_md5(file, db, &md5sum, buf, buflen);
 		assert(md5sum != NULL);
 		if (md5_status == -1) {
 			if (mflags.verbosity)
@@ -1108,8 +1104,7 @@ pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
 /*
  *  Called from pmdoc_Sh to parse body of a .Sh macro. It calls
  *  mdoc_parse_section to append the data to the section specific buffer.
- *  Two special macros which may occur inside the body of Sh are .Nm and .Xr and
- *  they need special handling, thus the separate if branches for them.
+ *  The .Xr macro needs special handling, thus the separate if branch for it.
  */
 static void
 mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
@@ -1120,12 +1115,6 @@ mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
 
 	if (n->type == ROFFT_TEXT) {
 		mdoc_parse_section(n->sec, n->string, rec);
-	} else if (mdocs[n->tok] == pmdoc_Nm && rec->name != NULL) {
-		/*
-		 * When encountering a .Nm macro, substitute it
-		 * with its previously cached value of the argument.
-		 */
-		mdoc_parse_section(n->sec, rec->name, rec);
 	} else if (mdocs[n->tok] == pmdoc_Xr) {
 		/*
 		 * When encountering other inline macros,
@@ -1832,7 +1821,7 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
 /*
  * check_md5--
  *  Generates the md5 hash of the file and checks if it already doesn't exist
- *  in the table (passed as the 3rd parameter).
+ *  in the table.
  *  This function is being used to avoid hardlinks.
  *  On successful completion it will also set the value of the fourth parameter
  *  to the md5 hash of the file (computed previously). It is the responsibility
@@ -1843,44 +1832,42 @@ insert_into_db(sqlite3 *db, mandb_rec *rec)
  *  1: If the hash exists in the database.
  */
 static int
-check_md5(const char *file, sqlite3 *db, const char *table, char **md5sum,
-    void *buf, size_t buflen)
+check_md5(const char *file, sqlite3 *db, char **md5, void *buf, size_t buflen)
 {
 	int rc = 0;
 	int idx = -1;
 	char *sqlstr = NULL;
+	char *mymd5;
 	sqlite3_stmt *stmt = NULL;
+	*md5 = NULL;
 
 	assert(file != NULL);
-	*md5sum = MD5Data(buf, buflen, NULL);
-	if (*md5sum == NULL) {
+	if ((mymd5 = MD5Data(buf, buflen, NULL)) == NULL) {
 		if (mflags.verbosity)
 			warn("md5 failed: %s", file);
 		return -1;
 	}
 
-	easprintf(&sqlstr, "SELECT * FROM %s WHERE md5_hash = :md5_hash",
-	    table);
+	easprintf(&sqlstr, "SELECT * FROM mandb_meta WHERE md5_hash = :md5_hash");
 	rc = sqlite3_prepare_v2(db, sqlstr, -1, &stmt, NULL);
 	if (rc != SQLITE_OK) {
 		free(sqlstr);
-		free(*md5sum);
-		*md5sum = NULL;
+		free(mymd5);
 		return -1;
 	}
 
 	idx = sqlite3_bind_parameter_index(stmt, ":md5_hash");
-	rc = sqlite3_bind_text(stmt, idx, *md5sum, -1, NULL);
+	rc = sqlite3_bind_text(stmt, idx, mymd5, -1, NULL);
 	if (rc != SQLITE_OK) {
 		if (mflags.verbosity)
 			warnx("%s", sqlite3_errmsg(db));
 		sqlite3_finalize(stmt);
 		free(sqlstr);
-		free(*md5sum);
-		*md5sum = NULL;
+		free(mymd5);
 		return -1;
 	}
 
+	*md5 = mymd5;
 	if (sqlite3_step(stmt) == SQLITE_ROW) {
 		sqlite3_finalize(stmt);
 		free(sqlstr);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvme.4,v 1.9 2016/10/22 07:36:36 wiz Exp $
+.\"	$NetBSD: nvme.4,v 1.9.4.1 2017/05/02 03:19:16 pgoyette Exp $
 .\"	$OpenBSD: nvme.4,v 1.2 2016/04/14 11:53:37 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 21, 2016
+.Dd April 27, 2017
 .Dt NVME 4
 .Os
 .Sh NAME
@@ -133,17 +133,9 @@ Generation 3 slot.
 Such cards do not even probe when plugged
 into older generation slot.
 .Pp
-The driver also attaches and works fine for emulated
+The driver was also tested and confirmed working fine for emulated
 .Nm
-devices under QEMU and
+devices under QEMU 2.8.0 and
 .Tn Oracle
-.Tn VirtualBox .
-However, there seems to be some broken interaction between
 .Tn VirtualBox
-5.1.6
-and the driver, the emulated
-.Nm
-controller responds to commands only the first time it is attached,
-after reboot or module reload it stops responding.
-The virtual machine must be completely powered off
-(or even killed) to fix this.
+5.1.20.

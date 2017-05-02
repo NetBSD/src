@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.309 2017/04/25 17:11:47 snj Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.309.2.1 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.309 2017/04/25 17:11:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.309.2.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3751,8 +3751,8 @@ alloc_retry:
 	intrstr = pci_intr_string(pc, sc->bge_pihp[0], intrbuf,
 	    sizeof(intrbuf));
 	DPRINTFN(5, ("pci_intr_establish\n"));
-	sc->bge_intrhand = pci_intr_establish(pc, sc->bge_pihp[0], IPL_NET,
-	    bge_intr, sc);
+	sc->bge_intrhand = pci_intr_establish_xname(pc, sc->bge_pihp[0],
+	    IPL_NET, bge_intr, sc, device_xname(sc->bge_dev));
 	if (sc->bge_intrhand == NULL) {
 		intr_type = pci_intr_type(pc, sc->bge_pihp[0]);
 		aprint_error_dev(sc->bge_dev,"unable to establish %s\n",

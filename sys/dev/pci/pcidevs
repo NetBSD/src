@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1286 2017/04/19 06:53:52 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1286.2.1 2017/05/02 03:19:18 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5632,8 +5632,20 @@ product PCTECH RZ1000	0x1000	RZ1000
 product PEAK PCAN	0x0001	PCAN CAN Controller
 
 /* Pericom Semiconductor products */
-product PERICOM P17C9X110	0xe110	P17C9X110 PCIe to PCI Bridge
-product PERICOM P17C9X	0xe111	P17C9X PCIe to PCI Bridge
+product PERICOM PI7C21P100	0x01a7	PI7C21P100 PCIX-PCIX
+product PERICOM PI7C9X20303UL	0x0303	PI7C9X20303UL 3port 3lane PCIe switch
+product PERICOM PI7C9X20505GP	0x0505	PI7C9X20505GP 5port 5lane PCIe switch
+product PERICOM PI7C9X20508GP	0x0508	PI7C9X20508GP 5port 8lane PCIe switch
+product PERICOM PI7C9X2G404SL	0x2404	PI7C9X2G404SL 4port 4lane PCIe Gen2 switch
+product PERICOM PI7C8140A	0x8140	PI7C8140A 2 port PCI-PCI Bridge
+product PERICOM PI7C8148	0x8148	PI7C8148 Asynchronous 2 port PCI-PCI Bridge
+product PERICOM PI7C8152	0x8152	PI7C8152 2 port PCI-PCI Bridge
+product PERICOM PI7C8154	0x8154	PI7C8154 Asynchronous 2 port PCI-PCI Bridge
+product PERICOM PI7C9X20303SL	0xa303	PI7C9X20303SL 3port 3lane PCIe switch
+product PERICOM PI7C9X20404SL	0xa404	PI7C9X20303SL 4port 4lane PCIe switch
+product PERICOM PI7C9X110	0xe110	PI7C9X110 PCIe to PCI Bridge
+product PERICOM PI7C9X111SL	0xe111	PI7C9X111SL PCIe to PCI Reverse Bridge
+product PERICOM PI7C9X130	0xe130	PI7C9X130 PCIE-PCIX Reverse Bridge
 
 /* Phobos products */
 product PHOBOS P1000	0x1000	P1000 Gigabit Ethernet

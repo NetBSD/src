@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.64.4.1 2017/04/30 04:56:55 pgoyette Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.64.4.2 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.64.4.1 2017/04/30 04:56:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.64.4.2 2017/05/02 03:19:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.64.4.1 2017/04/30 04:56:55 pgoyette
 #define	MUTEX_WANTLOCK(mtx)					\
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), 0)
+#define	MUTEX_TESTLOCK(mtx)					\
+    LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
+        (uintptr_t)__builtin_return_address(0), -1)
 #define	MUTEX_LOCKED(mtx)					\
     LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx), NULL,		\
         (uintptr_t)__builtin_return_address(0), 0)
@@ -833,17 +836,16 @@ mutex_owner(kmutex_t *mtx)
 /*
  * mutex_ownable:
  *
- *	When compiled with LOCKDEBUG defined, ensure that the
- *	mutex is available.  We cannot use !mutex_owned()
- *	since that won't work correctly for spin mutexes.
+ *	When compiled with DEBUG and LOCKDEBUG defined, ensure that
+ *	the mutex is available.  We cannot use !mutex_owned() since
+ *	that won't work correctly for spin mutexes.
  */
 int
 mutex_ownable(kmutex_t *mtx)
 {
 
 #ifdef LOCKDEBUG
-	mutex_enter(mtx);
-	mutex_exit(mtx);
+	MUTEX_TESTLOCK(mtx);
 #endif
 	return 1;
 }

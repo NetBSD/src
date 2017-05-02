@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.205 2016/10/19 09:44:01 skrll Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.205.6.1 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.205 2016/10/19 09:44:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.205.6.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.205 2016/10/19 09:44:01 skrll 
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+
+#include <compat/sys/mman.h>
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
@@ -1521,8 +1523,11 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 	 * Ancient kernel on x86 did not obey PROT_EXEC on i386 at least
 	 * and ld.so did not turn it on!
 	 */
-	if (SCARG(&ua, flags) & MAP_COPY)
+	if (SCARG(&ua, flags) & COMPAT_MAP_COPY) {
+		SCARG(&ua, flags) = MAP_PRIVATE
+		    | (SCARG(&ua, flags) & ~COMPAT_MAP_COPY);
 		SCARG(&ua, prot) |= PROT_EXEC;
+	}
 #endif
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOX_UAP(PAD, long);

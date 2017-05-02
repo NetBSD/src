@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.88 2016/07/14 18:16:51 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.88.8.1 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.88 2016/07/14 18:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.88.8.1 2017/05/02 03:19:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -868,21 +868,19 @@ kevent1(register_t *retval, int fd,
 			kevp->flags &= ~EV_SYSFLAGS;
 			/* register each knote */
 			error = kqueue_register(kq, kevp);
-			if (error || (kevp->flags & EV_RECEIPT)) {
-				if (nevents != 0) {
-					kevp->flags = EV_ERROR;
-					kevp->data = error;
-					error = (*keops->keo_put_events)
-					    (keops->keo_private, kevp,
-					    eventlist, nerrors, 1);
-					if (error)
-						goto done;
-					nevents--;
-					nerrors++;
-				} else {
-					goto done;
-				}
-			}
+			if (!error && !(kevp->flags & EV_RECEIPT))
+				continue;
+			if (nevents == 0)
+				goto done;
+			kevp->flags = EV_ERROR;
+			kevp->data = error;
+			error = (*keops->keo_put_events)
+				(keops->keo_private, kevp,
+				 eventlist, nerrors, 1);
+			if (error)
+				goto done;
+			nevents--;
+			nerrors++;
 		}
 		nchanges -= n;	/* update the results */
 		ichange += n;

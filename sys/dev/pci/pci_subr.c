@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.178 2017/04/21 11:49:31 kre Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.178.2.1 2017/05/02 03:19:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.178 2017/04/21 11:49:31 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.178.2.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1689,6 +1689,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		break;
 	case PCIE_XCAP_TYPE_PCI2PCIE:	/* 0x8 */
 		printf("PCI/PCI-X to PCI Express Bridge\n");
+		check_slot = true;
 		break;
 	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");

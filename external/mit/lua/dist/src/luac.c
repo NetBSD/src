@@ -1,4 +1,4 @@
-/*	$NetBSD: luac.c,v 1.7 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: luac.c,v 1.7.4.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*
 ** Id: luac.c,v 1.75 2015/03/12 01:58:27 lhf Exp 

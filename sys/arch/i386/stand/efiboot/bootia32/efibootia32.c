@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.2 2017/02/21 10:53:37 nonaka Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.2.8.1 2017/05/02 03:19:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -29,8 +29,6 @@
 #include "efiboot.h"
 
 #include <sys/bootblock.h>
-
-struct x86_boot_params boot_params;
 
 void startprog32_start(physaddr_t, uint32_t, uint32_t *, physaddr_t,
     physaddr_t, physaddr_t, u_long, void *);

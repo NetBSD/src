@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2017/04/09 20:51:55 christos Exp $
+#	$NetBSD: Makefile,v 1.41.4.1 2017/05/02 03:19:17 pgoyette Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -40,15 +40,16 @@ SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\
 boot.net: boot.${RELOC_DEFAULT}
 	(printf ${SUN_MAGIC_HEADER}; cat ${.ALLSRC} ) > ${.TARGET}
 
+
+.include "${S}/conf/newvers_stand.mk"
+
+.include <bsd.prog.mk>
+
 bootjs.net: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -S -o ${.TARGET} ${LINKFLAGS} -Ttext 300000 ${OBJS} \
 	    ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${.TARGET}
 CLEANFILES+=	bootjs.net.map
-
-.include "${S}/conf/newvers_stand.mk"
-
-.include <bsd.prog.mk>
 
 .for RELOC in ${RELOCS}
 boot.${RELOC}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}

@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.4 2016/07/11 06:14:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.4.8.1 2017/05/02 03:19:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,8 +761,8 @@ ismt_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pa->pa_pc, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->sc_pihp[0], IPL_BIO,
-	    ismt_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, sc->sc_pihp[0],
+	    IPL_BIO, ismt_intr, sc, device_xname(self));
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->pcidev, "unable to establish %s\n",
 		    (pci_intr_type(pa->pa_pc, sc->sc_pihp[0])

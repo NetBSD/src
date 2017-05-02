@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1438 2017/04/25 13:20:41 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1438.2.1 2017/05/02 03:19:15 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -40,8 +40,8 @@
 #
 
 Package:	acpica
-Version:	20170119
-Current Vers:	20170119
+Version:	20170303
+Current Vers:	20170303
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
@@ -807,7 +807,7 @@ under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	Lua
-Version:	Lua 5.3.3
+Version:	Lua 5.3.4
 Current Vers:	Lua 5.3.4
 Maintainer:	PUC Rio
 Home Page:	http://www.lua.org/

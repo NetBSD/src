@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.49 2016/03/31 16:16:35 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.49.6.1 2017/05/02 03:19:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.49 2016/03/31 16:16:35 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.49.6.1 2017/05/02 03:19:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -497,6 +497,10 @@ print_quoted(const char *p)
 {
 	const char *q;
 
+	if (p[0] == '\0') {
+		out1fmt("''");
+		return;
+	}
 	if (strcspn(p, "|&;<>()$`\\\"' \t\n*?[]#~=%") == strlen(p)) {
 		out1fmt("%s", p);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.35 2015/11/08 16:49:20 christos Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.35.8.1 2017/05/02 03:19:20 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.35 2015/11/08 16:49:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.35.8.1 2017/05/02 03:19:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 	int i, j, offset, boffset = 0, start = -1;
 
 	mask = 0x00ff00ff;	/* background and flags */
-	cmp = -1;		/* never match anything */
+	cmp = 0xffffffff;	/* never match anything */
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 
@@ -474,11 +474,12 @@ vcons_redraw_screen(struct vcons_screen *scr)
 					} else if (acmp != last_a) {
 						/*
 						 * different attr, need to
-						 * flush 
+						 * flush & restart 
 						 */
 						vd->erasecols(ri, i, start,
 						    j - start, last_a);
-						start = -1;
+						start = j;
+						last_a = acmp;
 					}
 				} else {
 					if (start != -1) {

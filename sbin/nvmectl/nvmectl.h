@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.2.6.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.h 295087 2016-01-30 22:48:06Z imp $
+ * $FreeBSD: head/sbin/nvmecontrol/nvmecontrol.h 314230 2017-02-25 00:09:16Z imp $
  */
 
 #ifndef __NVMECTL_H__
@@ -35,6 +35,14 @@
 
 #include <dev/ic/nvmeio.h>
 #include "nvme.h"
+
+typedef void (*nvme_fn_t)(int argc, char *argv[]);
+
+struct nvme_function {
+	const char	*name;
+	nvme_fn_t	fn;
+	const char	*usage;
+};
 
 #define NVME_CTRLR_PREFIX	"nvme"
 #define NVME_NS_PREFIX		"ns"
@@ -47,9 +55,9 @@
 
 #if 0
 #define PERFTEST_USAGE							       \
-"       nvmectl perftest <-n num_threads> <-o read|write>\n"	               \
+"       nvmectl perftest <-n num_threads> <-o read|write>\n"		       \
 "                        <-s size_in_bytes> <-t time_in_seconds>\n"	       \
-"                        <-i intr|wait> [-f refthread] [-p]\n"	               \
+"                        <-i intr|wait> [-f refthread] [-p]\n"		       \
 "                        <namespace id>\n"
 #endif
 
@@ -59,7 +67,8 @@
 #endif
 
 #define LOGPAGE_USAGE							       \
-"       nvmectl logpage <-p page_id> [-x] <controller id|namespace id>\n"  \
+"       nvmectl logpage <-p page_id> [-b] [-v vendor] [-x] "		       \
+    "<controller id|namespace id>\n"
 
 #if 0
 #define FIRMWARE_USAGE							       \
@@ -69,19 +78,23 @@
 #define POWER_USAGE							       \
 "       nvmectl power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
 
+#define WDC_USAGE							       \
+"       nvmecontrol wdc (cap-diag|drive-log|get-crash-dump|purge|purge-montior)\n"
+
 void devlist(int, char *[]) __dead;
 void identify(int, char *[]) __dead;
 #ifdef PERFTEST_USAGE
-void perftest(int, char *[]);
+void perftest(int, char *[]) __dead;
 #endif
 #ifdef RESET_USAGE
-void reset(int, char *[]);
+void reset(int, char *[]) __dead;
 #endif
 void logpage(int, char *[]) __dead;
 #ifdef FIRMWARE_USAGE
-void firmware(int, char *[]);
+void firmware(int, char *[]) __dead;
 #endif
 void power(int, char *[]) __dead;
+void wdc(int, char *[]) __dead;
 
 int open_dev(const char *, int *, int, int);
 void parse_ns_str(const char *, char *, int *);
@@ -89,6 +102,8 @@ void read_controller_data(int, struct nvm_identify_controller *);
 void read_namespace_data(int, int, struct nvm_identify_namespace *);
 void print_hex(void *, uint32_t);
 void read_logpage(int, uint8_t, int, void *, uint32_t);
+void gen_usage(struct nvme_function *) __dead;
+void dispatch(int argc, char *argv[], struct nvme_function *f);
 void nvme_strvis(uint8_t *, int, const uint8_t *, int);
 
 #endif	/* __NVMECTL_H__ */

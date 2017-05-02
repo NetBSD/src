@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.15 2017/04/22 04:24:25 nonaka Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.15.2.1 2017/05/02 03:19:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #	define LAPIC_VERSION_LVT_MASK	0x00ff0000
 #	define LAPIC_VERSION_LVT_SHIFT	16
 #	define LAPIC_VERSION_DIRECTED_EOI 0x01000000
+#	define LAPIC_VERSION_EXTAPIC_SPACE 0x80000000
 
 #define LAPIC_TPRI		0x080	/* Task Prio. RW */
 #	define LAPIC_TPRI_MASK		0x000000ff

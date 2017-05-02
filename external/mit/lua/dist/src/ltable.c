@@ -1,7 +1,7 @@
-/*	$NetBSD: ltable.c,v 1.7 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: ltable.c,v 1.7.4.1 2017/05/02 03:19:15 pgoyette Exp $	*/
 
 /*
-** Id: ltable.c,v 2.117 2015/11/19 19:16:22 roberto Exp 
+** Id: ltable.c,v 2.118 2016/11/07 12:38:35 roberto Exp 
 ** Lua tables (hash)
 ** See Copyright Notice in lua.h
 */
@@ -77,8 +77,6 @@
 
 
 #define dummynode		(&dummynode_)
-
-#define isdummy(n)		((n) == dummynode)
 
 static const Node dummynode_ = {
   {NILCONSTANT},  /* value */
@@ -316,14 +314,14 @@ static void setarrayvector (lua_State *L, Table *t, unsigned int size) {
 
 
 static void setnodevector (lua_State *L, Table *t, unsigned int size) {
-  int lsize;
   if (size == 0) {  /* no elements to hash part? */
     t->node = cast(Node *, dummynode);  /* use common 'dummynode' */
-    lsize = 0;
+    t->lsizenode = 0;
+    t->lastfree = NULL;  /* signal that it is using dummy node */
   }
   else {
     int i;
-    lsize = luaO_ceillog2(size);
+    int lsize = luaO_ceillog2(size);
     if (lsize > MAXHBITS)
       luaG_runerror(L, "table overflow");
     size = twoto(lsize);
@@ -334,9 +332,9 @@ static void setnodevector (lua_State *L, Table *t, unsigned int size) {
       setnilvalue(wgkey(n));
       setnilvalue(gval(n));
     }
+    t->lsizenode = cast_byte(lsize);
+    t->lastfree = gnode(t, size);  /* all positions are free */
   }
-  t->lsizenode = cast_byte(lsize);
-  t->lastfree = gnode(t, size);  /* all positions are free */
 }
 
 
@@ -345,7 +343,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int nasize,
   unsigned int i;
   int j;
   unsigned int oldasize = t->sizearray;
-  int oldhsize = t->lsizenode;
+  int oldhsize = allocsizenode(t);
   Node *nold = t->node;  /* save old hash ... */
   if (nasize > oldasize)  /* array part must grow? */
     setarrayvector(L, t, nasize);
@@ -362,7 +360,7 @@ void luaH_resize (lua_State *L, Table *t, unsigned int nasize,
     luaM_reallocvector(L, t->array, oldasize, nasize, TValue);
   }
   /* re-insert elements from hash part */
-  for (j = twoto(oldhsize) - 1; j >= 0; j--) {
+  for (j = oldhsize - 1; j >= 0; j--) {
     Node *old = nold + j;
     if (!ttisnil(gval(old))) {
       /* doesn't need barrier/invalidate cache, as entry was
@@ -370,13 +368,13 @@ void luaH_resize (lua_State *L, Table *t, unsigned int nasize,
       setobjt2t(L, luaH_set(L, t, gkey(old)), gval(old));
     }
   }
-  if (!isdummy(nold))
-    luaM_freearray(L, nold, cast(size_t, twoto(oldhsize))); /* free old hash */
+  if (oldhsize > 0)  /* not the dummy node? */
+    luaM_freearray(L, nold, cast(size_t, oldhsize)); /* free old hash */
 }
 
 
 void luaH_resizearray (lua_State *L, Table *t, unsigned int nasize) {
-  int nsize = isdummy(t->node) ? 0 : sizenode(t);
+  int nsize = allocsizenode(t);
   luaH_resize(L, t, nasize, nsize);
 }
 
@@ -422,7 +420,7 @@ Table *luaH_new (lua_State *L) {
 
 
 void luaH_free (lua_State *L, Table *t) {
-  if (!isdummy(t->node))
+  if (!isdummy(t))
     luaM_freearray(L, t->node, cast(size_t, sizenode(t)));
   luaM_freearray(L, t->array, t->sizearray);
   luaM_free(L, t);
@@ -430,10 +428,12 @@ void luaH_free (lua_State *L, Table *t) {
 
 
 static Node *getfreepos (Table *t) {
-  while (t->lastfree > t->node) {
-    t->lastfree--;
-    if (ttisnil(gkey(t->lastfree)))
-      return t->lastfree;
+  if (!isdummy(t)) {
+    while (t->lastfree > t->node) {
+      t->lastfree--;
+      if (ttisnil(gkey(t->lastfree)))
+        return t->lastfree;
+    }
   }
   return NULL;  /* could not find a free place */
 }
@@ -456,7 +456,7 @@ TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key) {
 #ifndef _KERNEL
   else if (ttisfloat(key)) {
     lua_Integer k;
-    if (luaV_tointeger(key, &k, 0)) {  /* index is int? */
+    if (luaV_tointeger(key, &k, 0)) {  /* does index fit in an integer? */
       setivalue(&aux, k);
       key = &aux;  /* insert it as an integer */
     }
@@ -465,7 +465,7 @@ TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key) {
   }
 #endif /* _KERNEL */
   mp = mainposition(t, key);
-  if (!ttisnil(gval(mp)) || isdummy(mp)) {  /* main position is taken? */
+  if (!ttisnil(gval(mp)) || isdummy(t)) {  /* main position is taken? */
     Node *othern;
     Node *f = getfreepos(t);  /* get a free place */
     if (f == NULL) {  /* cannot find a free place? */
@@ -473,7 +473,7 @@ TValue *luaH_newkey (lua_State *L, Table *t, const TValue *key) {
       /* whatever called 'newkey' takes care of TM cache */
       return luaH_set(L, t, key);  /* insert key into grown table */
     }
-    lua_assert(!isdummy(f));
+    lua_assert(!isdummy(t));
     othern = mainposition(t, gkey(mp));
     if (othern != mp) {  /* is colliding node out of its main position? */
       /* yes; move colliding node into free position */
@@ -665,7 +665,7 @@ int luaH_getn (Table *t) {
     return i;
   }
   /* else must find a boundary in hash part */
-  else if (isdummy(t->node))  /* hash part is empty? */
+  else if (isdummy(t))  /* hash part is empty? */
     return j;  /* that is easy... */
   else return unbound_search(t, j);
 }
@@ -678,6 +678,6 @@ Node *luaH_mainposition (const Table *t, const TValue *key) {
   return mainposition(t, key);
 }
 
-int luaH_isdummy (Node *n) { return isdummy(n); }
+int luaH_isdummy (const Table *t) { return isdummy(t); }
 
 #endif

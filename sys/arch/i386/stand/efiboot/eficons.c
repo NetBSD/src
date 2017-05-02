@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.3 2017/03/24 01:25:36 nonaka Exp $	*/
+/*	$NetBSD: eficons.c,v 1.3.6.1 2017/05/02 03:19:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -34,6 +34,8 @@
 #include "bootinfo.h"
 #include "vbe.h"
 
+extern struct x86_boot_params boot_params;
+
 struct btinfo_console btinfo_console;
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *efi_gop;
@@ -46,6 +48,68 @@ static int keybuf_write = 0;
 static void eficons_init_video(void);
 static void efi_switch_video_to_text_mode(void);
 
+static int
+getcomaddr(int idx)
+{
+	static const short comioport[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+
+	if (idx < __arraycount(comioport))
+		return comioport[idx];
+	return 0;
+}
+
+/*
+ * XXX only pass console parameters to kernel.
+ */
+void
+consinit(int dev, int ioport, int speed)
+{
+	int iodev;
+
+#if defined(CONSPEED)
+	btinfo_console.speed = CONSPEED;
+#else
+	btinfo_console.speed = 9600;
+#endif
+
+	switch (dev) {
+	case CONSDEV_AUTO:
+		/* XXX comport */
+		goto nocom;
+
+	case CONSDEV_COM0:
+	case CONSDEV_COM1:
+	case CONSDEV_COM2:
+	case CONSDEV_COM3:
+		iodev = dev;
+comport:
+		btinfo_console.addr = ioport;
+		if (btinfo_console.addr == 0) {
+			btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
+			if (btinfo_console.addr == 0)
+				goto nocom;
+		}
+		if (speed != 0)
+			btinfo_console.speed = speed;
+		break;
+
+	case CONSDEV_COM0KBD:
+	case CONSDEV_COM1KBD:
+	case CONSDEV_COM2KBD:
+	case CONSDEV_COM3KBD:
+		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
+		goto comport;	/* XXX kbd */
+
+	case CONSDEV_PC:
+	default:
+nocom:
+		iodev = CONSDEV_PC;
+		break;
+	}
+
+	strlcpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
+}
+
 int
 cninit(void)
 {
@@ -53,10 +117,8 @@ cninit(void)
 	efi_switch_video_to_text_mode();
 	eficons_init_video();
 
-	/* XXX serial console */
-	btinfo_console.devname[0] = 'p';
-	btinfo_console.devname[1] = 'c';
-	btinfo_console.devname[2] = 0;
+	consinit(boot_params.bp_consdev, boot_params.bp_consaddr,
+	    boot_params.bp_conspeed);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.28 2016/03/07 14:47:25 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.28.6.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.28 2016/03/07 14:47:25 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.28.6.1 2017/05/02 03:19:16 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -623,7 +623,7 @@ readDosDirSection(int f, struct bootblock *boot, struct fatEntry *fat,
 			dirent.name[8] = '\0';
 			for (k = 7; k >= 0 && dirent.name[k] == ' '; k--)
 				dirent.name[k] = '\0';
-			if (dirent.name[k] != '\0')
+			if (k < 0 || dirent.name[k] != '\0')
 				k++;
 			if (dirent.name[0] == SLOT_E5)
 				dirent.name[0] = 0xe5;

@@ -1,7 +1,7 @@
-/*	$NetBSD: lutf8lib.c,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lutf8lib.c,v 1.5.4.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*
-** Id: lutf8lib.c,v 1.15 2015/03/28 19:16:55 roberto Exp 
+** Id: lutf8lib.c,v 1.16 2016/12/22 13:08:50 roberto Exp 
 ** Standard library for UTF-8 manipulation
 ** See Copyright Notice in lua.h
 */
@@ -198,7 +198,7 @@ static int byteoffset (lua_State *L) {
     lua_pushinteger(L, posi + 1);
   else  /* no such character */
     lua_pushnil(L);
-  return 1;  
+  return 1;
 }
 
 

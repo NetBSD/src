@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.53 2017/04/22 16:02:39 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.53.2.1 2017/05/02 03:19:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.53 2017/04/22 16:02:39 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.53.2.1 2017/05/02 03:19:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,18 @@ STATIC int openhere(const union node *);
 STATIC int copyfd(int, int, int);
 STATIC void find_big_fd(void);
 
+
+struct shell_fds {		/* keep track of internal shell fds */
+	struct shell_fds *nxt;
+	void (*cb)(int, int);
+	int fd;
+};
+
+STATIC struct shell_fds *sh_fd_list;
+
+STATIC void renumber_sh_fd(struct shell_fds *);
+STATIC struct shell_fds *sh_fd(int);
+
 STATIC const struct renamelist *
 is_renamed(const struct renamelist *rl, int fd)
 {
@@ -191,6 +203,7 @@ redirect(union node *redir, int flags)
 		fd = n->nfile.fd;
 		if (fd > max_user_fd)
 			max_user_fd = fd;
+		renumber_sh_fd(sh_fd(fd));
 		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
 		    n->ndup.dupfd == fd) {
 			/* redirect from/to same file descriptor */
@@ -505,8 +518,12 @@ STATIC void
 find_big_fd(void)
 {
 	int i, fd;
+	static int last_start = 6;
 
-	for (i = (1 << 10); i >= 10; i >>= 1) {
+	if (last_start < 10)
+		last_start++;
+
+	for (i = (1 << last_start); i >= 10; i >>= 1) {
 		if ((fd = fcntl(0, F_DUPFD, i - 1)) >= 0) {
 			close(fd);
 			break;
@@ -514,9 +531,7 @@ find_big_fd(void)
 	}
 
 	fd = (i / 5) * 4;
-	if ((i - fd) > 100)
-		fd = i - 100;
-	else if (fd < 10)
+	if (fd < 10)
 		fd = 10;
 
 	big_sh_fd = fd;
@@ -543,7 +558,7 @@ to_upper_fd(int fd)
 				close(fd);
 			return i;
 		}
-		if (errno != EMFILE)
+		if (errno != EMFILE && errno != EINVAL)
 			break;
 		find_big_fd();
 	} while (big_sh_fd > 10);
@@ -555,6 +570,85 @@ to_upper_fd(int fd)
 	 */
 	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	return fd;
+}
+
+void
+register_sh_fd(int fd, void (*cb)(int, int))
+{
+	struct shell_fds *fp;
+
+	fp = ckmalloc(sizeof (struct shell_fds));
+	if (fp != NULL) {
+		fp->nxt = sh_fd_list;
+		sh_fd_list = fp;
+
+		fp->fd = fd;
+		fp->cb = cb;
+	}
+}
+
+void
+sh_close(int fd)
+{
+	struct shell_fds **fpp, *fp;
+
+	fpp = &sh_fd_list;
+	while ((fp = *fpp) != NULL) {
+		if (fp->fd == fd) {
+			*fpp = fp->nxt;
+			ckfree(fp);
+			break;
+		}
+		fpp = &fp->nxt;
+	}
+	(void)close(fd);
+}
+
+STATIC struct shell_fds *
+sh_fd(int fd)
+{
+	struct shell_fds *fp;
+
+	for (fp = sh_fd_list; fp != NULL; fp = fp->nxt)
+		if (fp->fd == fd)
+			return fp;
+	return NULL;
+}
+
+STATIC void
+renumber_sh_fd(struct shell_fds *fp)
+{
+	int to;
+
+	if (fp == NULL)
+		return;
+
+#ifndef	F_DUPFD_CLOEXEC
+#define	F_DUPFD_CLOEXEC	F_DUPFD
+#define	CLOEXEC(fd)	(fcntl((fd), F_SETFD, fcntl((fd),F_GETFD) | FD_CLOEXEC))
+#else
+#define	CLOEXEC(fd)
+#endif
+
+	to = fcntl(fp->fd, F_DUPFD_CLOEXEC, big_sh_fd);
+	if (to == -1)
+		to = fcntl(fp->fd, F_DUPFD_CLOEXEC, big_sh_fd/2);
+	if (to == -1)
+		to = fcntl(fp->fd, F_DUPFD_CLOEXEC, fp->fd + 1);
+	if (to == -1)
+		to = fcntl(fp->fd, F_DUPFD_CLOEXEC, 10);
+	if (to == -1)
+		to = fcntl(fp->fd, F_DUPFD_CLOEXEC, 3);
+	if (to == -1)
+		error("insufficient file descriptors available");
+	CLOEXEC(to);
+
+	if (fp->fd == to)	/* impossible? */
+		return;
+
+	(*fp->cb)(fp->fd, to);
+	(void)close(fp->fd);
+	fp->fd = to;
 }
 
 static const struct flgnames {
@@ -603,6 +697,13 @@ static int
 getflags(int fd, int p)
 {
 	int c, f;
+
+	if (sh_fd(fd) != NULL) {
+		if (!p)
+			return -1;
+		error("Can't get status for fd=%d (%s)", fd,
+		    "Bad file descriptor");			/*XXX*/
+	}
 
 	if ((c = fcntl(fd, F_GETFD)) == -1) {
 		if (!p)

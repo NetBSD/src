@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_cpu.c,v 1.1 2017/04/23 12:31:38 jmcneill Exp $ */
+/* $NetBSD: tegra124_cpu.c,v 1.1.4.1 2017/05/02 03:19:16 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.1 2017/04/23 12:31:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_cpu.c,v 1.1.4.1 2017/05/02 03:19:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,15 +88,15 @@ static struct tegra124_cpufreq_rate {
 	u_int divp;
 	u_int uvol;
 } tegra124_cpufreq_rates[] = {
-	{ 2316, 1, 193, 0, 1400000 },
-	{ 2100, 1, 175, 0, 1400000 },
-	{ 1896, 1, 158, 0, 1400000 },
-	{ 1692, 1, 141, 0, 1400000 },
-	{ 1500, 1, 125, 0, 1400000 },
-	{ 1296, 1, 108, 0, 1400000 },
-	{ 1092, 1, 91,  0, 1400000 },
-	{ 900,  1, 75,  0, 1400000 },
-	{ 696,  1, 58,  0, 1400000 }
+	{ 2316, 1, 193, 0, 1360000 },
+	{ 2100, 1, 175, 0, 1260000 },
+	{ 1896, 1, 158, 0, 1180000 },
+	{ 1692, 1, 141, 0, 1100000 },
+	{ 1500, 1, 125, 0, 1020000 },
+	{ 1296, 1, 108, 0, 960000 },
+	{ 1092, 1, 91,  0, 900000 },
+	{ 900,  1, 75,  0, 840000 },
+	{ 696,  1, 58,  0, 800000 }
 };
 
 static const u_int tegra124_cpufreq_max[] = {

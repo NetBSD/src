@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.15 2011/11/21 15:11:45 wiz Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.15.30.1 2017/05/02 03:19:16 pgoyette Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 4, 1995
+.Dd April 30, 2017
 .Dt COMPAT_FREEBSD 8
 .Os
 .Sh NAME
@@ -375,17 +375,8 @@ distribution is available on a lot of ftp sites.
 Sometimes the files are unpacked, and you can get the individual
 files you need, but mostly they are stored in distribution sets,
 usually consisting of subdirectories with gzipped tar files in them.
-The primary ftp sites for the distributions are:
-.Bl -item -compact -offset indent
-.It
-.Pa ftp.freebsd.org:/pub/FreeBSD
-.El
-.Pp
-Mirror sites are described on:
-.Bl -item -compact -offset indent
-.It
-.Pa ftp.freebsd.org:/pub/FreeBSD/MIRROR.SITES
-.El
+The ftp site for the distributions is:
+.Lk ftp://ftp.FreeBSD.org/pub/FreeBSD
 .Pp
 This distribution consists of a number of tar-ed and gzipped files,
 Normally, they're controlled by an install program, but you can

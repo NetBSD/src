@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.6 2014/02/21 07:53:53 maxv Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.6.20.1 2017/05/02 03:19:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -75,10 +75,12 @@ struct linux32_extra_stack_data {
 };      
 #define LINUX32_ELF_AUX_ARGSIZ sizeof(struct linux32_extra_stack_data)
 
-#endif
+#else
 
 #define LINUX32_ELF_AUX_ARGSIZ \
-	(howmany(LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)) + LINUX32_RANDOM_BYTES)
+    (LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info) + LINUX32_RANDOM_BYTES)
+
+#endif
 
 #ifdef _KERNEL
 int linux32_exec_setup_stack(struct lwp *, struct exec_package *);

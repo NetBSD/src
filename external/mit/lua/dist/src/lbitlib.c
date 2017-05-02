@@ -1,4 +1,4 @@
-/*	$NetBSD: lbitlib.c,v 1.4 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lbitlib.c,v 1.4.4.1 2017/05/02 03:19:15 pgoyette Exp $	*/
 
 /*
 ** Id: lbitlib.c,v 1.30 2015/11/11 19:08:09 roberto Exp 

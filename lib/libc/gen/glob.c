@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.36 2016/09/04 18:27:08 joerg Exp $	*/
+/*	$NetBSD: glob.c,v 1.36.4.1 2017/05/02 03:19:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.36 2016/09/04 18:27:08 joerg Exp $");
+__RCSID("$NetBSD: glob.c,v 1.36.4.1 2017/05/02 03:19:16 pgoyette Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -936,39 +936,45 @@ nospace:
 
 
 /*
- * pattern matching function for filenames.  Each occurrence of the *
- * pattern causes a recursion level.
+ * pattern matching function for filenames.
  */
 static int
 match(const Char *name, const Char *pat, const Char *patend)
 {
 	int ok, negate_range;
 	Char c, k;
+	const Char *patNext, *nameNext, *nameStart, *nameEnd;
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(pat != NULL);
 	_DIAGASSERT(patend != NULL);
+	patNext = pat;
+	nameStart = nameNext = name;
+	nameEnd = NULL;
 
-	while (pat < patend) {
-		c = *pat++;
+	while (pat < patend || *name) {
+		c = *pat;
+		if (*name == EOS)
+			nameEnd = name;
 		switch (c & M_MASK) {
 		case M_ALL:
-			while (pat < patend && (*pat & M_MASK) == M_ALL)
-				pat++;	/* eat consecutive '*' */
-			if (pat == patend)
-				return 1;
-			for (; !match(name, pat, patend); name++)
-				if (*name == EOS)
-					return 0;
-			return 1;
+			while (pat[1] == '*') pat++;
+			patNext = pat;
+			nameNext = name + 1;
+			pat++;
+			continue;
 		case M_ONE:
-			if (*name++ == EOS)
-				return 0;
-			break;
+			if (*name == EOS)
+				break;
+			pat++;
+			name++;
+			continue;
 		case M_SET:
 			ok = 0;
-			if ((k = *name++) == EOS)
-				return 0;
+			if ((k = *name) == EOS)
+				break;
+			pat++;
+			name++;
 			if ((negate_range = ((*pat & M_MASK) == M_NOT)) != EOS)
 				++pat;
 			while (((c = *pat++) & M_MASK) != M_END)
@@ -979,15 +985,24 @@ match(const Char *name, const Char *pat, const Char *patend)
 				} else if (c == k)
 					ok = 1;
 			if (ok == negate_range)
-				return 0;
-			break;
+				break;
+			continue;
 		default:
-			if (*name++ != c)
-				return 0;
-			break;
+			if (*name != c)
+				break;
+			pat++;
+			name++;
+			continue;
 		}
+		if (nameNext != nameStart
+		    && (nameEnd == NULL || nameNext <= nameEnd)) {
+			pat = patNext;
+			name = nameNext;
+			continue;
+		}
+		return 0;
 	}
-	return *name == EOS;
+	return 1;
 }
 
 /* Free allocated data belonging to a glob_t structure. */

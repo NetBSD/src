@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.84 2017/04/25 05:44:11 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.84.2.1 2017/05/02 03:19:22 pgoyette Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84 2017/04/25 05:44:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.84.2.1 2017/05/02 03:19:22 pgoyette Exp $");
 
 /*
  * IPsec controller part.
@@ -2379,8 +2379,7 @@ ipsec6_input(struct mbuf *m)
 	} else {
 		/* XXX error stat??? */
 		error = EINVAL;
-		DPRINTF(("ip6_input: no SP, packet"
-		    " discarded\n"));/*XXX*/
+		DPRINTF(("%s: no SP, packet discarded\n", __func__));/*XXX*/
 	}
 	splx(s);
 

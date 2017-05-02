@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.20 2017/01/11 20:53:52 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.20.4.1 2017/05/02 03:19:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.20 2017/01/11 20:53:52 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.20.4.1 2017/05/02 03:19:16 pgoyette Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -200,7 +200,7 @@ numname(const char *key)
 	uint32_t idx;
 
 	idx = _t_numhash((const unsigned char *)key, strlen(key));
-	if (idx < __arraycount(_ti_cap_numids) && 
+	if (idx < __arraycount(_ti_cap_numids) &&
 	    strcmp(key, _ti_cap_numids[idx].id) == 0)
 		return _ti_numid(_ti_cap_numids[idx].ti);
 	return key;
@@ -254,7 +254,7 @@ printchar(char **dst, const char **src)
 		case '2':
 		case '3':
 			v = 0;
-			while (isdigit((unsigned char) **src))	
+			while (isdigit((unsigned char) **src))
 				v = 8 * v + ((unsigned char) *(*src)++ - '0');
 			(*src)--;
 			break;

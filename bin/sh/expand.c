@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.104 2017/03/20 11:48:01 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.104.2.1 2017/05/02 03:19:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.104 2017/03/20 11:48:01 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.104.2.1 2017/05/02 03:19:14 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: expand.c,v 1.104 2017/03/20 11:48:01 kre Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <wctype.h>
+#include <wchar.h>
 
 /*
  * Routines to expand arguments to commands.  We have to deal with
@@ -112,8 +113,9 @@ STATIC void expmeta(char *, char *);
 STATIC void addfname(char *);
 STATIC struct strlist *expsort(struct strlist *);
 STATIC struct strlist *msort(struct strlist *, int);
-STATIC int pmatch(char *, char *, int);
+STATIC int patmatch(const char *, const char *, int);
 STATIC char *cvtnum(int, char *);
+static int collate_range_cmp(wchar_t, wchar_t);
 
 /*
  * Expand shell variables and backquotes inside a here document.
@@ -128,6 +130,18 @@ expandhere(union node *arg, int fd)
 	xwrite(fd, stackblock(), expdest - stackblock());
 }
 
+
+static int
+collate_range_cmp(wchar_t c1, wchar_t c2)
+{
+	wchar_t s1[2], s2[2];
+
+	s1[0] = c1;
+	s1[1] = L'\0';
+	s2[0] = c2;
+	s2[1] = L'\0';
+	return (wcscoll(s1, s2));
+}
 
 /*
  * Perform variable substitution and command substitution on an argument,
@@ -1399,7 +1413,7 @@ msort(struct strlist *list, int len)
  * pointer is stored into *end.
  */
 static int
-match_charclass(char *p, wchar_t chr, char **end)
+match_charclass(const char *p, wchar_t chr, const char **end)
 {
 	char name[20];
 	char *nameend;
@@ -1427,35 +1441,29 @@ match_charclass(char *p, wchar_t chr, char **end)
  * Returns true if the pattern matches the string.
  */
 
-int
-patmatch(char *pattern, char *string, int squoted)
-{
-#ifdef notdef
-	if (pattern[0] == '!' && pattern[1] == '!')
-		return 1 - pmatch(pattern + 2, string);
-	else
-#endif
-		return pmatch(pattern, string, squoted);
-}
-
-
 STATIC int
-pmatch(char *pattern, char *string, int squoted)
+patmatch(const char *pattern, const char *string, int squoted)
 {
-	char *p, *q, *end;
+	const char *p, *q, *end;
+	const char *bt_p, *bt_q;
 	char c;
+	wchar_t wc, wc2;
 
 	p = pattern;
 	q = string;
+	bt_p = NULL;
+	bt_q = NULL;
 	for (;;) {
 		switch (c = *p++) {
 		case '\0':
-			goto breakloop;
+			if (*q != '\0')
+				goto backtrack;
+			return 1;
 		case CTLESC:
 			if (squoted && *q == CTLESC)
 				q++;
 			if (*q++ != *p++)
-				return 0;
+				goto backtrack;
 			break;
 		case CTLQUOTEMARK:
 			continue;
@@ -1482,17 +1490,19 @@ pmatch(char *pattern, char *string, int squoted)
 					q++;
 				}
 			}
-			do {
-				if (pmatch(p, q, squoted))
-					return 1;
-				if (squoted && *q == CTLESC)
-					q++;
-			} while (*q++ != '\0');
-			return 0;
+			/*
+			 * First try the shortest match for the '*' that
+			 * could work. We can forget any earlier '*' since
+			 * there is no way having it match more characters
+			 * can help us, given that we are already here.
+			 */
+			bt_p = p;
+			bt_q = q;
+			break;
 		case '[': {
-			char *endp;
+			const char *savep, *saveq, *endp;
 			int invert, found;
-			char chr;
+			unsigned char chr;
 
 			endp = p;
 			if (*endp == '!')
@@ -1508,20 +1518,25 @@ pmatch(char *pattern, char *string, int squoted)
 					break;
 			}
 			invert = 0;
-			if (*p == '!') {
+			savep = p, saveq = q;
+			invert = 0;
+			if (*p == '!' || *p == '^') {
 				invert++;
 				p++;
 			}
 			found = 0;
-			chr = *q++;
-			if (squoted && chr == CTLESC)
-				chr = *q++;
-			if (chr == '\0')
+			if (*q == '\0')
 				return 0;
+			chr = (unsigned char)*q++;
 			c = *p++;
 			do {
 				if (c == CTLQUOTEMARK)
 					continue;
+				if (c == '\0') {
+					p = savep, q = saveq;
+					c = '[';
+					goto dft;
+				}
 				if (c == '[' && *p == ':') {
 					found |= match_charclass(p, chr, &end);
 					if (end != NULL)
@@ -1529,36 +1544,46 @@ pmatch(char *pattern, char *string, int squoted)
 				}
 				if (c == CTLESC)
 					c = *p++;
+				wc = (unsigned char)c;
 				if (*p == '-' && p[1] != ']') {
 					p++;
-					while (*p == CTLQUOTEMARK)
-						p++;
 					if (*p == CTLESC)
 						p++;
-					if (chr >= c && chr <= *p)
+					wc2 = (unsigned char)*p++;
+					if (   collate_range_cmp(chr, wc) >= 0
+					    && collate_range_cmp(chr, wc2) <= 0
+					   )
 						found = 1;
-					p++;
 				} else {
-					if (chr == c)
+					if (chr == wc)
 						found = 1;
 				}
 			} while ((c = *p++) != ']');
 			if (found == invert)
-				return 0;
+				goto backtrack;
 			break;
 		}
 dft:	        default:
 			if (squoted && *q == CTLESC)
 				q++;
-			if (*q++ != c)
+			if (*q++ == c)
+				break;
+backtrack:
+			/*
+			 * If we have a mismatch (other than hitting the end
+			 * of the string), go back to the last '*' seen and
+			 * have it match one additional character.
+			 */
+			if (bt_p == NULL)
 				return 0;
+			if (*bt_q == '\0')
+				return 0;
+			bt_q++;
+			p = bt_p;
+			q = bt_q;
 			break;
 		}
 	}
-breakloop:
-	if (*q != '\0')
-		return 0;
-	return 1;
 }
 
 

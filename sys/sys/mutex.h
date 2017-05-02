@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.20.52.1 2017/04/30 04:56:55 pgoyette Exp $	*/
+/*	$NetBSD: mutex.h,v 1.20.52.2 2017/05/02 03:19:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.

@@ -1,7 +1,7 @@
-/*	$NetBSD: lobject.h,v 1.7 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lobject.h,v 1.7.4.1 2017/05/02 03:19:15 pgoyette Exp $	*/
 
 /*
-** Id: lobject.h,v 2.116 2015/11/03 18:33:10 roberto Exp 
+** Id: lobject.h,v 2.117 2016/08/01 19:51:24 roberto Exp 
 ** Type definitions for Lua objects
 ** See Copyright Notice in lua.h
 */
@@ -421,7 +421,7 @@ typedef struct LocVar {
 typedef struct Proto {
   CommonHeader;
   lu_byte numparams;  /* number of fixed parameters */
-  lu_byte is_vararg;  /* 2: declared vararg; 1: uses vararg */
+  lu_byte is_vararg;
   lu_byte maxstacksize;  /* number of registers needed by this function */
   int sizeupvalues;  /* size of 'upvalues' */
   int sizek;  /* size of 'k' */
