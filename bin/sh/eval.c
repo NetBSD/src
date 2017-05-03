@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.132 2017/05/03 00:47:29 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.133 2017/05/03 05:49:54 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.132 2017/05/03 00:47:29 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.133 2017/05/03 05:49:54 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,8 @@ evalcmd(int argc, char **argv)
                         p = grabstackstr(concat);
                 }
                 evalstring(p, builtin_flags & EV_TESTED);
-        }
+        } else
+		exitstatus = 0;
         return exitstatus;
 }
 
