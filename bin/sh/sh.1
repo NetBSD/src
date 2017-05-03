@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.133 2017/04/30 16:02:48 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.134 2017/05/03 00:43:22 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2348,14 +2348,19 @@ The current line number in the script or function.
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
 .Ev MAILPATH .
-.It Ev MAILCHECK
-The frequency in seconds that the shell checks for the arrival of mail
-in the files specified by the
-.Ev MAILPATH
-or the
-.Ev MAIL
-file.
-If set to 0, the check will occur at each prompt.
+The check occurs just before PS1 is written,
+immediately after reporting jobs which have changed status,
+in interactive shells only.
+New mail is considered to have arrived if the monitored file
+has increased in size since the last check.
+.\" .It Ev MAILCHECK
+.\" The frequency in seconds that the shell checks for the arrival of mail
+.\" in the files specified by the
+.\" .Ev MAILPATH
+.\" or the
+.\" .Ev MAIL
+.\" file.
+.\" If set to 0, the check will occur at each prompt.
 .It Ev MAILPATH
 A colon
 .Dq \&:
