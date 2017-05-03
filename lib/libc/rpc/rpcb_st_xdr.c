@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_st_xdr.c,v 1.10 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: rpcb_st_xdr.c,v 1.11 2017/05/03 21:39:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -42,11 +42,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.10 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: rpcb_st_xdr.c,v 1.11 2017/05/03 21:39:27 christos Exp $");
 #endif
 
 #include "namespace.h"
 #include <rpc/rpc.h>
+#include <rpc/rpc_com.h>
 
 #include <assert.h>
 
@@ -80,7 +81,7 @@ xdr_rpcbs_addrlist(XDR *xdrs, rpcbs_addrlist *objp)
 	    if (!xdr_int(xdrs, &objp->failure)) {
 		return (FALSE);
 	    }
-	    if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
+	    if (!xdr_string(xdrs, &objp->netid, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	    }
 
@@ -132,7 +133,7 @@ xdr_rpcbs_rmtcalllist(XDR *xdrs, rpcbs_rmtcalllist *objp)
 		IXDR_PUT_INT32(buf, objp->failure);
 		IXDR_PUT_INT32(buf, objp->indirect);
 	}
-	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->netid, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
@@ -170,7 +171,7 @@ xdr_rpcbs_rmtcalllist(XDR *xdrs, rpcbs_rmtcalllist *objp)
 		objp->failure = (int)IXDR_GET_INT32(buf);
 		objp->indirect = (int)IXDR_GET_INT32(buf);
 	}
-	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->netid, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,
@@ -198,7 +199,7 @@ xdr_rpcbs_rmtcalllist(XDR *xdrs, rpcbs_rmtcalllist *objp)
 	if (!xdr_int(xdrs, &objp->indirect)) {
 		return (FALSE);
 	}
-	if (!xdr_string(xdrs, &objp->netid, (u_int)~0)) {
+	if (!xdr_string(xdrs, &objp->netid, RPC_MAXDATASIZE)) {
 		return (FALSE);
 	}
 	if (!xdr_pointer(xdrs, (char **)(void *)&objp->next,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.29 2013/04/05 03:17:38 dholland Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.30 2017/05/03 21:39:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.29 2013/04/05 03:17:38 dholland Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.30 2017/05/03 21:39:27 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -644,6 +644,9 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 
 	switch (af) {
 	case AF_INET:
+		if (nbuf->len < sizeof(*sinp)) {
+			return NULL;
+		}
 		sinp = nbuf->buf;
 		if (inet_ntop(af, &sinp->sin_addr, namebuf,
 		    (socklen_t)sizeof namebuf) == NULL)
@@ -655,6 +658,9 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 		break;
 #ifdef INET6
 	case AF_INET6:
+		if (nbuf->len < sizeof(*sin6)) {
+			return NULL;
+		}
 		sin6 = nbuf->buf;
 		if (inet_ntop(af, &sin6->sin6_addr, namebuf6,
 		    (socklen_t)sizeof namebuf6) == NULL)
@@ -690,7 +696,8 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 #endif
 	struct sockaddr_un *sun;
 
-	_DIAGASSERT(uaddr != NULL);
+	if (uaddr == NULL)
+		return NULL;
 
 	addrstr = strdup(uaddr);
 	if (addrstr == NULL)
