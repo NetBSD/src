@@ -1,4 +1,4 @@
-/*	$NetBSD: input.h,v 1.16 2017/05/03 04:11:30 kre Exp $	*/
+/*	$NetBSD: input.h,v 1.17 2017/05/03 04:13:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ extern int parsenleft;		/* number of characters left in input buffer */
 extern char *parsenextc;	/* next character in input buffer */
 extern int init_editline;	/* 0 == not setup, 1 == OK, -1 == failed */
 
-strust alias;
+struct alias;
 
 char *pfgets(char *, int);
 int pgetc(void);

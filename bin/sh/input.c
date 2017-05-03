@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.53 2017/05/03 04:11:30 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.54 2017/05/03 04:13:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.53 2017/05/03 04:11:30 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.54 2017/05/03 04:13:53 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,7 +341,7 @@ pungetc(void)
  * We handle aliases this way.
  */
 void
-pushstring(char *s, int len, strust alias *ap)
+pushstring(char *s, int len, struct alias *ap)
 {
 	struct strpush *sp;
 
