@@ -1,4 +1,4 @@
-/*	$NetBSD: t_kern.c,v 1.4 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_kern.c,v 1.5 2017/05/03 12:09:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <regex.h>
 
 #include "h_macros.h"
 #include "../kernspace/kernspace.h"
@@ -56,6 +57,8 @@ locktest(const atf_tc_t *tc, enum locktest lt, int needld, const char *expect)
 	extern const int rump_lockdebug;
 	int pipetti[2];
 	int status;
+	ssize_t len;
+	regex_t preg;
 
 	if (needld && !rump_lockdebug)
 		atf_tc_skip("test requires LOCKDEBUG kernel");
@@ -76,9 +79,27 @@ locktest(const atf_tc_t *tc, enum locktest lt, int needld, const char *expect)
 		if (rump_lockdebug) {
 			char buf[8192];
 
-			ATF_REQUIRE(read(pipetti[0], buf, sizeof(buf)) > 0);
-			if (strncmp(buf, expect, strlen(expect)) != 0)
+			len = read(pipetti[0], buf, sizeof(buf) - 1);
+			ATF_REQUIRE(len > 0);
+			buf[len] = '\0';
+			/*
+			 * We use regex matching here, since the rump
+			 * kernel messages include routine names and line
+			 * numbers which may not remain constant.
+			 */
+			if ((status = regcomp(&preg, expect, REG_BASIC)) != 0) {
+				regerror(status, &preg, buf, sizeof(buf));
+				printf("regcomp error: %s\n", buf);
+				atf_tc_fail("regcomp failed");
+			}
+			if ((status = regexec(&preg, buf, 0, NULL, 0)) != 0) {
+				printf("expected: \"%s\"\n", expect);
+				printf("received: \"%s\"\n", buf);
+				regerror(status, &preg, buf, sizeof(buf));
+				printf("regexec error: %s\n", buf);
 				atf_tc_fail("unexpected output");
+			}
+			regfree(&preg);
 		}
 		break;
 	case -1:
@@ -87,21 +108,21 @@ locktest(const atf_tc_t *tc, enum locktest lt, int needld, const char *expect)
 }
 
 LOCKFUN(DESTROYHELD, "destroy lock while held", 0,
-    "mutex error: lockdebug_free: is locked or in use");
+    "mutex error: mutex_destroy,.*: is locked or in use");
 LOCKFUN(DOUBLEFREE, "free lock twice", 0,
-    "panic: lockdebug_lookup: uninitialized lock");
+    "panic: mutex_destroy,.*: uninitialized lock");
 LOCKFUN(DOUBLEINIT, "init lock twice", 1,
-    "mutex error: lockdebug_alloc: already initialized");
+    "mutex error: mutex_init,.*: already initialized");
 LOCKFUN(MEMFREE, "free memory active lock is in", 1,
-    "mutex error: kmem_intr_free: allocation contains active lock");
+    "mutex error: kmem_intr_free,.*: allocation contains active lock");
 LOCKFUN(MTX, "locking-against-self mutex", 0,
-    "mutex error: lockdebug_wantlock: locking against myself");
+    "mutex error: mutex_enter,.*: locking against myself");
 LOCKFUN(RWDOUBLEX, "locking-against-self exclusive rwlock", 0,
-    "rwlock error: lockdebug_wantlock: locking against myself");
+    "rwlock error: rw_enter,.*: locking against myself");
 LOCKFUN(RWRX, "rw: first shared, then exclusive", 1,
-    "rwlock error: lockdebug_wantlock: locking against myself");
+    "rwlock error: rw_enter,.*: locking against myself");
 LOCKFUN(RWXR, "rw: first execusive, then shared", 0,
-    "rwlock error: lockdebug_wantlock: locking against myself");
+    "rwlock error: rw_enter,.*: locking against myself");
 
 ATF_TP_ADD_TCS(tp)
 {
