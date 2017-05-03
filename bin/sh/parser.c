@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.120 2016/06/01 02:47:05 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.121 2017/05/03 04:51:04 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.120 2016/06/01 02:47:05 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.121 2017/05/03 04:51:04 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,6 +119,7 @@ STATIC int noexpand(char *);
 STATIC void synexpect(int, const char *) __dead;
 STATIC void synerror(const char *) __dead;
 STATIC void setprompt(int);
+STATIC int pgetc_linecont(void);
 
 
 static const char EOFhere[] = "EOF reading here (<<) document";
@@ -1005,17 +1006,17 @@ xxreadtoken(void)
 			RETURN(TEOF);
 
 		case '&':
-			if (pgetc() == '&')
+			if (pgetc_linecont() == '&')
 				RETURN(TAND);
 			pungetc();
 			RETURN(TBACKGND);
 		case '|':
-			if (pgetc() == '|')
+			if (pgetc_linecont() == '|')
 				RETURN(TOR);
 			pungetc();
 			RETURN(TPIPE);
 		case ';':
-			if (pgetc() == ';')
+			if (pgetc_linecont() == ';')
 				RETURN(TENDCASE);
 			pungetc();
 			RETURN(TSEMI);
@@ -1281,7 +1282,7 @@ parsebackq(VSS *const stack, char * const in,
 				setprompt(2);
 				needprompt = 0;
 			}
-			switch (pc = pgetc()) {
+			switch (pc = pgetc_linecont()) {
 			case '`':
 				goto done;
 
@@ -1405,7 +1406,7 @@ parseredir(const char *out,  int c)
 	if (c == '>') {
 		if (fd < 0)
 			fd = 1;
-		c = pgetc();
+		c = pgetc_linecont();
 		if (c == '>')
 			np->type = NAPPEND;
 		else if (c == '|')
@@ -1419,7 +1420,7 @@ parseredir(const char *out,  int c)
 	} else {	/* c == '<' */
 		if (fd < 0)
 			fd = 0;
-		switch (c = pgetc()) {
+		switch (c = pgetc_linecont()) {
 		case '<':
 			if (sizeof (struct nfile) != sizeof (struct nhere)) {
 				np = stalloc(sizeof(struct nhere));
@@ -1429,7 +1430,7 @@ parseredir(const char *out,  int c)
 			heredoc = stalloc(sizeof(struct heredoc));
 			heredoc->here = np;
 			heredoc->startline = plinno;
-			if ((c = pgetc()) == '-') {
+			if ((c = pgetc_linecont()) == '-') {
 				heredoc->striptabs = 1;
 			} else {
 				heredoc->striptabs = 0;
@@ -1623,7 +1624,7 @@ readtoken1(int firstc, char const *syn, int magicq)
 				USTPUTC(c, out);
 				--parenlevel;
 			} else {
-				if (pgetc() == ')') {
+				if (pgetc_linecont() == ')') {
 					if (--arinest == 0) {
 						TS_POP();
 						USTPUTC(CTLENDARI, out);
@@ -1707,12 +1708,12 @@ parsesub: {
 	int i;
 	int linno;
 
-	c = pgetc();
+	c = pgetc_linecont();
 	if (c != '(' && c != OPENBRACE && !is_name(c) && !is_special(c)) {
 		USTPUTC('$', out);
 		pungetc();
 	} else if (c == '(') {	/* $(command) or $((arith)) */
-		if (pgetc() == '(') {
+		if (pgetc_linecont() == '(') {
 			PARSEARITH();
 		} else {
 			pungetc();
@@ -1725,7 +1726,7 @@ parsesub: {
 		subtype = VSNORMAL;
 		flags = 0;
 		if (c == OPENBRACE) {
-			c = pgetc();
+			c = pgetc_linecont();
 			if (c == '#') {
 				if ((c = pgetc()) == CLOSEBRACE)
 					c = '#';
@@ -1739,7 +1740,7 @@ parsesub: {
 			p = out;
 			do {
 				STPUTC(c, out);
-				c = pgetc();
+				c = pgetc_linecont();
 			} while (is_in_name(c));
 			if (out - p == 6 && strncmp(p, "LINENO", 6) == 0) {
 				/* Replace the variable name with the
@@ -1756,12 +1757,12 @@ parsesub: {
 		} else if (is_digit(c)) {
 			do {
 				USTPUTC(c, out);
-				c = pgetc();
+				c = pgetc_linecont();
 			} while (subtype != VSNORMAL && is_digit(c));
 		}
 		else if (is_special(c)) {
 			USTPUTC(c, out);
-			c = pgetc();
+			c = pgetc_linecont();
 		}
 		else {
 badsub:
@@ -1774,7 +1775,7 @@ badsub:
 			switch (c) {
 			case ':':
 				flags |= VSNUL;
-				c = pgetc();
+				c = pgetc_linecont();
 				/*FALLTHROUGH*/
 			default:
 				p = strchr(types, c);
@@ -1788,7 +1789,7 @@ badsub:
 					int cc = c;
 					subtype = c == '#' ? VSTRIMLEFT :
 							     VSTRIMRIGHT;
-					c = pgetc();
+					c = pgetc_linecont();
 					if (c == cc)
 						subtype++;
 					else
@@ -1956,6 +1957,34 @@ setprompt(int which)
 	if (!el)
 #endif
 		out2str(getprompt(NULL));
+}
+
+/*
+ * handle getting the next character, while ignoring \ \n
+ * (which is a little tricky as we only have one char of pushback
+ * and we need that one elsewhere).
+ */
+STATIC int
+pgetc_linecont(void)
+{
+	int c;
+
+	while ((c = pgetc_macro()) == '\\') {
+		c = pgetc();
+		if (c == '\n') {
+			plinno++;
+			if (doprompt)
+				setprompt(2);
+			else
+				setprompt(0);
+		} else {
+			pungetc();
+			/* Allow the backslash to be pushed back. */
+			pushstring("\\", 1, NULL);
+			return (pgetc());
+		}
+	}
+	return (c);
 }
 
 /*
