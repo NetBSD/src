@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.724 2017/04/18 19:10:58 riastradh Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.725 2017/05/03 15:20:27 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.732 2017/04/18 19:09:12 riastradh Exp
+ *	NetBSD: usbdevs,v 1.733 2017/05/03 15:14:27 jnemeth Exp
  */
 
 /*
@@ -4448,6 +4448,8 @@ static const uint16_t usb_products[] = {
 	    8474, 6344, 4869, 5661, 0,
 	    USB_VENDOR_TPLINK, USB_PRODUCT_TPLINK_RTL8192CU, 
 	    5081, 0,
+	    USB_VENDOR_TPLINK, USB_PRODUCT_TPLINK_RTL8188EU, 
+	    5091, 0,
 	    USB_VENDOR_TREK, USB_PRODUCT_TREK_THUMBDRIVE, 
 	    18679, 0,
 	    USB_VENDOR_TREK, USB_PRODUCT_TREK_THUMBDRIVE_8MB, 
@@ -5447,7 +5449,7 @@ static const char usb_words[] = { "."
 	    "USB2.0\0" /* 6 refs @ 5069 */
 	    "WL54\0" /* 1 refs @ 5076 */
 	    "RTL8192CU\0" /* 24 refs @ 5081 */
-	    "RTL8188EU\0" /* 2 refs @ 5091 */
+	    "RTL8188EU\0" /* 3 refs @ 5091 */
 	    "RTL8188CU\0" /* 21 refs @ 5101 */
 	    "XX10\0" /* 1 refs @ 5111 */
 	    "BWU613\0" /* 1 refs @ 5116 */
