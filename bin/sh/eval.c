@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.131 2017/04/22 15:53:17 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.132 2017/05/03 00:47:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.131 2017/04/22 15:53:17 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.132 2017/05/03 00:47:29 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1143,10 +1143,7 @@ parent:	/* parent process gets here (if we forked) */
 
 out:
 	if (lastarg)
-		/* dsl: I think this is intended to be used to support
-		 * '_' in 'vi' command mode during line editing...
-		 * However I implemented that within libedit itself.
-		 */
+		/* implement $_ for whatever use that really is */
 		setvar("_", lastarg, 0);
 	popstackmark(&smark);
 }
