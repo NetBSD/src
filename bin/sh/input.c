@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.55 2017/05/03 04:51:04 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.56 2017/05/03 06:20:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.55 2017/05/03 04:51:04 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.56 2017/05/03 06:20:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ preadbuffer(void)
 #endif
 	char savec;
 
-	if (parsefile->strpush) {
+	while (parsefile->strpush) {
 		popstring();
 		if (--parsenleft >= 0)
 			return (*parsenextc++);
