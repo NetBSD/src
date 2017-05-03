@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.3 2017/04/29 00:06:40 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.4 2017/05/03 01:37:16 christos Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -102,8 +102,7 @@ void read_controller_data(int, struct nvm_identify_controller *);
 void read_namespace_data(int, int, struct nvm_identify_namespace *);
 void print_hex(void *, uint32_t);
 void read_logpage(int, uint8_t, int, void *, uint32_t);
-void gen_usage(struct nvme_function *) __dead;
-void dispatch(int argc, char *argv[], struct nvme_function *f);
+__dead void dispatch(int argc, char *argv[], struct nvme_function *f);
 void nvme_strvis(uint8_t *, int, const uint8_t *, int);
 
 #endif	/* __NVMECTL_H__ */
