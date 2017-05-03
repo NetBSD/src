@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.54 2017/05/03 04:13:53 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.55 2017/05/03 04:51:04 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.54 2017/05/03 04:13:53 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.55 2017/05/03 04:51:04 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: input.c,v 1.54 2017/05/03 04:13:53 kre Exp $");
 MKINIT
 struct strpush {
 	struct strpush *prev;	/* preceding string on stack */
-	char *prevstring;
+	const char *prevstring;
 	int prevnleft;
 	int prevlleft;
 	struct alias *ap;	/* if push was associated with an alias */
@@ -89,7 +89,7 @@ struct parsefile {
 	int fd;			/* file descriptor (or -1 if string) */
 	int nleft;		/* number of chars left in this line */
 	int lleft;		/* number of chars left in this buffer */
-	char *nextc;		/* next char in buffer */
+	const char *nextc;	/* next char in buffer */
 	char *buf;		/* input buffer */
 	struct strpush *strpush; /* for pushing strings at this level */
 	struct strpush basestrpush; /* so pushing one is fast */
@@ -99,7 +99,7 @@ struct parsefile {
 int plinno = 1;			/* input line number */
 int parsenleft;			/* copy of parsefile->nleft */
 MKINIT int parselleft;		/* copy of parsefile->lleft */
-char *parsenextc;		/* copy of parsefile->nextc */
+const char *parsenextc;		/* copy of parsefile->nextc */
 MKINIT struct parsefile basepf;	/* top level input file */
 MKINIT char basebuf[BUFSIZ];	/* buffer for top level input file */
 struct parsefile *parsefile = &basepf;	/* current input file */
@@ -262,7 +262,9 @@ again:
 		}
 	}
 
-	q = p = parsenextc;
+		/* p = (not const char *)parsenextc; */
+	p = parsefile->buf + (parsenextc - parsefile->buf);
+	q = p;
 
 	/* delete nul characters */
 #ifndef SMALL
@@ -341,7 +343,7 @@ pungetc(void)
  * We handle aliases this way.
  */
 void
-pushstring(char *s, int len, struct alias *ap)
+pushstring(const char *s, int len, struct alias *ap)
 {
 	struct strpush *sp;
 
