@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdma.c,v 1.1 2017/04/29 11:01:51 jmcneill Exp $ */
+/* $NetBSD: tegra_apbdma.c,v 1.2 2017/05/03 12:38:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.1 2017/04/29 11:01:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.2 2017/05/03 12:38:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,7 +189,7 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 	struct tegra_apbdma_chan *ch;
 	char intrstr[128];
 
-	if (len != 1)
+	if (len != 4)
 		return NULL;
 
 	const u_int n = be32dec(data);
