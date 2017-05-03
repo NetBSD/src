@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_apbdma.c,v 1.2 2017/05/03 12:38:39 jmcneill Exp $ */
+/* $NetBSD: tegra_apbdma.c,v 1.3 2017/05/03 13:13:12 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.2 2017/05/03 12:38:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_apbdma.c,v 1.3 2017/05/03 13:13:12 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,7 @@ struct tegra_apbdma_chan {
 	void			*ch_ih;
 	void			(*ch_cb)(void *);
 	void			*ch_cbarg;
+	u_int			ch_req;
 };
 
 struct tegra_apbdma_softc {
@@ -187,18 +188,23 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 {
 	struct tegra_apbdma_softc *sc = device_private(dev);
 	struct tegra_apbdma_chan *ch;
+	u_int n;
 	char intrstr[128];
 
 	if (len != 4)
 		return NULL;
 
-	const u_int n = be32dec(data);
-	if (n >= TEGRA_APBDMA_NCHAN)
+	const u_int req = be32dec(data);
+	if (req > __SHIFTOUT_MASK(APBDMACHAN_CSR_REQ_SEL))
 		return NULL;
 
-	ch = &sc->sc_chan[n];
-	if (ch->ch_ih != NULL) {
-		aprint_error_dev(dev, "dma channel %u is in use\n", n);
+	for (n = 0; n < TEGRA_APBDMA_NCHAN; n++) {
+		ch = &sc->sc_chan[n];
+		if (ch->ch_ih == NULL)
+			break;
+	}
+	if (n >= TEGRA_APBDMA_NCHAN) {
+		aprint_error_dev(dev, "no free DMA channel\n");
 		return NULL;
 	}
 
@@ -218,6 +224,7 @@ tegra_apbdma_acquire(device_t dev, const void *data, size_t len,
 
 	ch->ch_cb = cb;
 	ch->ch_cbarg = cbarg;
+	ch->ch_req = req;
 
 	/* Unmask interrupts for this channel */
 	APBDMA_WRITE(sc, APBDMA_IRQ_MASK_SET_REG, __BIT(n));
@@ -270,11 +277,7 @@ tegra_apbdma_transfer(device_t dev, void *priv, struct fdtbus_dma_req *req)
 	if ((req->dreq_segs[0].ds_len & 3) != 0)
 		return EINVAL;
 
-	/* REQ_SEL is between 0 and 31 */
-	if (req->dreq_sel < 0 || req->dreq_sel > 31)
-		return EINVAL;
-
-	csr |= __SHIFTIN(req->dreq_sel, APBDMACHAN_CSR_REQ_SEL);
+	csr |= __SHIFTIN(ch->ch_req, APBDMACHAN_CSR_REQ_SEL);
 
 	/*
 	 * Set DMA transfer direction.
