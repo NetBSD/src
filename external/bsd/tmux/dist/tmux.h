@@ -1977,7 +1977,7 @@ void printflike(3, 4) screen_write_puts(struct screen_write_ctx *,
 	     const struct grid_cell *, const char *, ...);
 void printflike(4, 5) screen_write_nputs(struct screen_write_ctx *,
 	     ssize_t, const struct grid_cell *, const char *, ...);
-void	 screen_write_vnputs(struct screen_write_ctx *, ssize_t,
+void printflike(4, 0) screen_write_vnputs(struct screen_write_ctx *, ssize_t,
 	     const struct grid_cell *, const char *, va_list);
 void	 screen_write_putc(struct screen_write_ctx *, const struct grid_cell *,
 	     u_char);
