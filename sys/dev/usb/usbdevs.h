@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.723 2017/04/18 19:10:58 riastradh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.724 2017/05/03 15:20:27 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.732 2017/04/18 19:09:12 riastradh Exp
+ *	NetBSD: usbdevs,v 1.733 2017/05/03 15:14:27 jnemeth Exp
  */
 
 /*
@@ -3267,6 +3267,7 @@
 
 /* TP-Link products */
 #define	USB_PRODUCT_TPLINK_RTL8192CU	0x0100		/* RTL8192CU */
+#define	USB_PRODUCT_TPLINK_RTL8188EU	0x010c		/* RTL8188EU */
 
 /* Trek Technology products */
 #define	USB_PRODUCT_TREK_THUMBDRIVE	0x1111		/* ThumbDrive */
