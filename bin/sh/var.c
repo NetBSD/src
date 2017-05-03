@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.50 2017/04/29 15:12:21 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.51 2017/05/03 00:39:40 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.50 2017/04/29 15:12:21 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.51 2017/05/03 00:39:40 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,13 +430,13 @@ environment(void)
 	nenv = 0;
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
-			if (vp->flags & VEXPORT)
+			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT)
 				nenv++;
 	}
 	ep = env = stalloc((nenv + 1) * sizeof *env);
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next)
-			if (vp->flags & VEXPORT)
+			if ((vp->flags & (VEXPORT|VUNSET)) == VEXPORT)
 				*ep++ = vp->text;
 	}
 	*ep = NULL;
@@ -607,7 +607,7 @@ exportcmd(int argc, char **argv)
 	int xflg = 0;
 	int res;
 	int c;
-
+	int f;
 
 	while ((c = nextopt("npx")) != '\0') {
 		switch (c) {
@@ -643,6 +643,7 @@ exportcmd(int argc, char **argv)
 
 	res = 0;
 	while ((name = *argptr++) != NULL) {
+		f = flag;
 		if ((p = strchr(name, '=')) != NULL) {
 			p++;
 		} else {
@@ -658,10 +659,11 @@ exportcmd(int argc, char **argv)
 						vp->flags &= ~VEXPORT;
 				}
 				continue;
-			}
+			} else
+				f |= VUNSET;
 		}
 		if (!nflg)
-			setvar(name, p, flag);
+			setvar(name, p, f);
 	}
 	return res;
 }
