@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.121 2017/05/03 04:51:04 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.122 2017/05/03 21:36:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.121 2017/05/03 04:51:04 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.122 2017/05/03 21:36:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -806,8 +806,10 @@ slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 				 * for the epfmark - everything saved literally.
 				 */
 				STPUTC(c, out);
-				if (c == '\n')
+				if (c == '\n') {
+					plinno++;
 					break;
+				}
 				continue;
 			}
 			/*
@@ -822,14 +824,17 @@ slurp_heredoc(char *const eofmark, const int striptabs, const int sq)
 			 */
 			if (c == '\\') {		/* A backslash */
 				c = pgetc();		/* followed by */
-				if (c == '\n')		/* a newline?  */
-					continue;	/* y:drop both */
+				if (c == '\n') {	/* a newline?  */
+					plinno++;
+					continue;	/*    :drop both */
+				}
 				STPUTC('\\', out);	/* else keep \ */
 			}
 			STPUTC(c, out);			/* keep the char */
-			if (c == '\n')			/* at end of line */
+			if (c == '\n') {		/* at end of line */
+				plinno++;
 				break;			/* look for eofmark */
-
+			}
 		} while ((c = pgetc()) != PEOF);
 
 		/*
