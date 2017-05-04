@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.28 2017/05/04 13:53:36 roy Exp $ */
+/* $NetBSD: tic.c,v 1.29 2017/05/04 14:07:33 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.28 2017/05/04 13:53:36 roy Exp $");
+__RCSID("$NetBSD: tic.c,v 1.29 2017/05/04 14:07:33 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -483,6 +483,7 @@ main(int argc, char **argv)
 	size_t buflen;
 	ssize_t len;
 	TBUF tbuf;
+	struct term *term;
 
 	cflag = sflag = 0;
 	ofile = NULL;
@@ -578,7 +579,6 @@ main(int argc, char **argv)
 		fprintf(stderr, "%zu entries and %zu aliases written to %s\n",
 		    nterm, nalias, dbname);
 
-#ifdef __VALGRIND__
 	if (ofile == NULL)
 		free(dbname);
 	while ((term = STAILQ_FIRST(&terms)) != NULL) {
@@ -588,7 +588,6 @@ main(int argc, char **argv)
 		free(term);
 	}
 	hdestroy1(free, NULL);
-#endif
 
 	return EXIT_SUCCESS;
 }
