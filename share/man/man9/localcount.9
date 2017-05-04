@@ -1,4 +1,4 @@
-.\"	$NetBSD: localcount.9,v 1.1.6.2 2017/04/29 06:33:37 pgoyette Exp $
+.\"	$NetBSD: localcount.9,v 1.1.6.3 2017/05/04 04:28:42 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016
 .\" All rights reserved.
@@ -87,11 +87,12 @@ such as xyzread for a device xyz(4), and short-term fast operations, such as
 .Pp
 Currently,
 .Nm
-is used within the autoconfigure (
-.Xr autoconf 9 )
-and character and block device switch (
-.Xr cdevsw_attach 9 )
-subsystems.
+is used within the autoconfigure and character- and block- device switch
+subsystems (see
+.Xr autoconf 9
+and
+.Xr cdevsw_attach 9
+respectively).
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn localcount_init "lc"
@@ -179,8 +180,9 @@ The localcount primitives first appeared in
 .Nm
 was designed by
 .An -nosplit
-.An Taylor R. Campbell
-and implemented by
+.An Taylor R. Campbell ,
+who also provided a draft implementation.
+The implementation was completed, tested, and integrated by
 .An Paul Goyette .
 .Sh CAVEATS
 The
