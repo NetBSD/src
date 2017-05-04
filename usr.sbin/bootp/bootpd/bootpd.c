@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.26 2014/03/29 22:45:31 joerg Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.27 2017/05/04 16:26:09 sevan Exp $");
 #endif
 
 /*
@@ -115,7 +115,6 @@ PRIVATE void handle_reply(void);
 PRIVATE void handle_request(void);
 PRIVATE void sendreply(int forward, int32 dest_override);
 __dead PRIVATE void usage(void);
-int main(int, char **);
 
 /*
  * IP port numbers for client and server obtained from /etc/services
