@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2014/10/14 16:35:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2017/05/04 16:26:10 sevan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,6 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
-int main(int, char **);
 static void select_language(void);
 __dead static void usage(void);
 __dead static void miscsighandler(int);

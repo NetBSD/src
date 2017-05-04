@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.17 2008/05/26 12:15:42 drochner Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.18 2017/05/04 16:26:10 sevan Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -42,7 +42,6 @@
 #define DEFDEV "/dev/ttyEcfg"
 
 static void usage(void) __dead;
-int main(int, char **);
 
 static void
 usage(void)
