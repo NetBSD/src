@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.122 2017/05/03 21:36:16 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.123 2017/05/04 04:37:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.122 2017/05/03 21:36:16 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.123 2017/05/04 04:37:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,10 +469,12 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 
 			checkkwd = 2;
 			if ((t = readtoken()) != TESAC) {
-				if (t != TENDCASE) {
+				if (t != TENDCASE && t != TCASEFALL) {
 					noalias = 0;
 					synexpect(TENDCASE, 0);
 				} else {
+					if (t == TCASEFALL)
+						cp->type = NCLISTCONT;
 					noalias = 1;
 					checkkwd = 2;
 					readtoken();
@@ -1021,10 +1023,15 @@ xxreadtoken(void)
 			pungetc();
 			RETURN(TPIPE);
 		case ';':
-			if (pgetc_linecont() == ';')
+			switch (pgetc_linecont()) {
+			case ';':
 				RETURN(TENDCASE);
-			pungetc();
-			RETURN(TSEMI);
+			case '&':
+				RETURN(TCASEFALL);
+			default:
+				pungetc();
+				RETURN(TSEMI);
+			}
 		case '(':
 			RETURN(TLP);
 		case ')':
