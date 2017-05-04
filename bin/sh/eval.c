@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.133 2017/05/03 05:49:54 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.134 2017/05/04 04:37:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.133 2017/05/03 05:49:54 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.134 2017/05/04 04:37:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -456,7 +456,7 @@ out:
 STATIC void
 evalcase(union node *n, int flags)
 {
-	union node *cp;
+	union node *cp, *ncp;
 	union node *patp;
 	struct arglist arglist;
 	struct stackmark smark;
@@ -465,18 +465,26 @@ evalcase(union node *n, int flags)
 	setstackmark(&smark);
 	arglist.lastp = &arglist.list;
 	expandarg(n->ncase.expr, &arglist, EXP_TILDE);
-	for (cp = n->ncase.cases ; cp && evalskip == 0 ; cp = cp->nclist.next) {
-		for (patp = cp->nclist.pattern ; patp ; patp = patp->narg.next) {
+	for (cp = n->ncase.cases; cp && evalskip == 0; cp = cp->nclist.next) {
+		for (patp = cp->nclist.pattern; patp; patp = patp->narg.next) {
 			if (casematch(patp, arglist.list->text)) {
-				if (evalskip == 0) {
-					evaltree(cp->nclist.body, flags);
+				while (cp != NULL && evalskip == 0 &&
+				    nflag == 0) {
+					if (cp->type == NCLISTCONT)
+						ncp = cp->nclist.next;
+					else
+						ncp = NULL;
+					evaltree(cp->nclist.body,
+					    ncp ? (flags & ~EV_EXIT) | EV_MORE
+						: flags );
 					status = exitstatus;
+					cp = ncp;
 				}
 				goto out;
 			}
 		}
 	}
-out:
+ out:
 	exitstatus = status;
 	popstackmark(&smark);
 }

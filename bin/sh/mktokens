@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.12 2008/10/25 22:18:15 apb Exp $
+#	$NetBSD: mktokens,v 1.13 2017/05/04 04:37:51 kre Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -51,6 +51,7 @@ TPIPE	0	"|"
 TLP	0	"("
 TRP	1	")"
 TENDCASE 1	";;"
+TCASEFALL 1	";&"
 TENDBQUOTE 1	"`"
 TREDIR	0	redirection
 TWORD	0	word

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.81 2017/05/03 21:31:03 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.82 2017/05/04 04:37:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.81 2017/05/03 21:31:03 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.82 2017/05/04 04:37:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1336,7 +1336,14 @@ cmdtxt(union node *n)
 			cmdtxt(np->nclist.pattern);
 			cmdputs(") ");
 			cmdtxt(np->nclist.body);
-			cmdputs(";; ");
+			switch (n->type) {	/* switch (not if) for later */
+			case NCLISTCONT:
+				cmdputs(";& ");
+				break;
+			default:
+				cmdputs(";; ");
+				break;
+			}
 		}
 		cmdputs("esac");
 		break;
