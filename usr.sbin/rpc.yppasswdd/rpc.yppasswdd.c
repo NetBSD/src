@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.17 2011/08/31 16:24:59 plunky Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.18 2017/05/04 16:26:09 sevan Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.17 2011/08/31 16:24:59 plunky Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.18 2017/05/04 16:26:09 sevan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: rpc.yppasswdd.c,v 1.17 2011/08/31 16:24:59 plunky Exp $");
 int	noshell, nogecos, nopw;
 char	make_arg[_POSIX2_LINE_MAX] = "make";
 
-int	main(int, char *[]);
 void	yppasswddprog_1(struct svc_req *, SVCXPRT *);
 __dead static void	usage(void);
 
