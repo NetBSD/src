@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.20 2011/08/21 08:59:50 christos Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.21 2017/05/04 16:26:09 sevan Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.20 2011/08/21 08:59:50 christos Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.21 2017/05/04 16:26:09 sevan Exp $");
 #endif
 
 static const char usage[] =
@@ -121,7 +121,6 @@ short secs;						/* How long client has waited */
 
 
 extern int getether(char *, char *);
-int main(int, char **);
 void send_request(int);
 
 /*

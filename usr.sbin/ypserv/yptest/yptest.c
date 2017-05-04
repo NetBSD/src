@@ -1,4 +1,4 @@
-/*	$NetBSD: yptest.c,v 1.9 2009/10/20 00:51:15 snj Exp $	 */
+/*	$NetBSD: yptest.c,v 1.10 2017/05/04 16:26:10 sevan Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yptest.c,v 1.9 2009/10/20 00:51:15 snj Exp $");
+__RCSID("$NetBSD: yptest.c,v 1.10 2017/05/04 16:26:10 sevan Exp $");
 #endif
 
 #include <sys/types.h>
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: yptest.c,v 1.9 2009/10/20 00:51:15 snj Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-int	main(int, char *[]);
 static	int yptest_foreach(int, char *, int, char *, int, char *);
 
 int

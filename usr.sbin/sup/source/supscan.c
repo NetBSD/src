@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.23 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.24 2017/05/04 16:26:10 sevan Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -161,7 +161,6 @@ void usage(void);
 int init(int, char **);
 static SCAN_COLLECTION *getscancoll(char *, char *, char *);
 int localhost(char *);
-int main(int, char **);
 
 /*************************************
  ***    M A I N   R O U T I N E    ***

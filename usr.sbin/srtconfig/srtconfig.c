@@ -1,4 +1,4 @@
-/* $NetBSD: srtconfig.c,v 1.3 2009/04/18 14:02:42 lukem Exp $ */
+/* $NetBSD: srtconfig.c,v 1.4 2017/05/04 16:26:09 sevan Exp $ */
 /* This file is in the public domain. */
 
 #include <stdio.h>
@@ -278,7 +278,6 @@ static void do_debug(void)
   }
 }
 
-int main(int, char **);
 int main(int ac, char **av)
 {
  handleargs(ac,av);
