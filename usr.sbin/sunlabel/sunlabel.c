@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.24 2013/10/19 17:16:38 christos Exp $ */
+/* $NetBSD: sunlabel.c,v 1.25 2017/05/04 16:29:08 sevan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.24 2013/10/19 17:16:38 christos Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.25 2017/05/04 16:29:08 sevan Exp $");
 #endif
 
 #include <stdio.h>
@@ -186,8 +186,6 @@ static void chval_ascii(const char *, struct field *);
 static int print_int(struct field *, int);
 static void chval_int(const char *, struct field *);
 static void update_spc(void);
-
-int  main(int, char **);
 
 /* The fields themselves. */
 static struct field fields[] = 
