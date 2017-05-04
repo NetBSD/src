@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.12 2016/04/01 19:59:08 christos Exp $ */
+/* $NetBSD: curterm.c,v 1.13 2017/05/04 09:42:23 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.12 2016/04/01 19:59:08 christos Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.13 2017/05/04 09:42:23 roy Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -70,7 +70,7 @@ _ti_setospeed(TERMINAL *term)
 		os = cfgetospeed(&termios);
 		for (i = 0; i < __arraycount(bauds); i++)
 			if (bauds[i] == os) {
-				term->_ospeed = i;
+				term->_ospeed = (short)i;
 				break;
 			}
 	}

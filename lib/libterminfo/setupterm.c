@@ -1,4 +1,4 @@
-/* $NetBSD: setupterm.c,v 1.7 2017/03/23 00:55:39 roy Exp $ */
+/* $NetBSD: setupterm.c,v 1.8 2017/05/04 09:42:23 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: setupterm.c,v 1.7 2017/03/23 00:55:39 roy Exp $");
+__RCSID("$NetBSD: setupterm.c,v 1.8 2017/05/04 09:42:23 roy Exp $");
 
 #include <sys/ioctl.h>
 #include <assert.h>
@@ -127,8 +127,8 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 	if (ioctl(fildes, TIOCGWINSZ, &win) != -1 &&
 	    win.ws_row != 0 && win.ws_col != 0)
 	{
-		t_lines(*nterm) = win.ws_row;
-		t_columns(*nterm) = win.ws_col;
+		t_lines(*nterm) = (short)win.ws_row;
+		t_columns(*nterm) = (short)win.ws_col;
 	}
 
 	/* POSIX 1003.2 requires that the environment override. */
@@ -136,9 +136,9 @@ ti_setupterm(TERMINAL **nterm, const char *term, int fildes, int *errret)
 		char *p;
 
 		if ((p = getenv("LINES")) != NULL)
-			t_lines(*nterm) = (int)strtol(p, NULL, 0);
+			t_lines(*nterm) = (short)strtol(p, NULL, 0);
 		if ((p = getenv("COLUMNS")) != NULL)
-			t_columns(*nterm) = (int)strtol(p, NULL, 0);
+			t_columns(*nterm) = (short)strtol(p, NULL, 0);
 	}
 
 	/* POSIX requires 1 for success */
