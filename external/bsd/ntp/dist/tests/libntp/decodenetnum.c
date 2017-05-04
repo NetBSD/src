@@ -1,4 +1,4 @@
-/*	$NetBSD: decodenetnum.c,v 1.1.1.3.2.3 2016/05/08 22:02:14 snj Exp $	*/
+/*	$NetBSD: decodenetnum.c,v 1.1.1.3.2.4 2017/05/04 06:04:04 snj Exp $	*/
 
 #include "config.h"
 #include "ntp_stdlib.h"
@@ -68,9 +68,9 @@ test_IPv6AddressOnly(void)
 
 	const struct in6_addr address = {
 		0x20, 0x01, 0x0d, 0xb8,
-        0x85, 0xa3, 0x08, 0xd3,
-        0x13, 0x19, 0x8a, 0x2e,
-        0x03, 0x70, 0x73, 0x34
+		0x85, 0xa3, 0x08, 0xd3,
+		0x13, 0x19, 0x8a, 0x2e,
+		0x03, 0x70, 0x73, 0x34
 	};
 
 	const char *str = "2001:0db8:85a3:08d3:1319:8a2e:0370:7334";
@@ -85,9 +85,9 @@ test_IPv6AddressOnly(void)
 	TEST_ASSERT_TRUE(IsEqual(expected, actual));
 
 #else
-
+	
 	TEST_IGNORE_MESSAGE("IPV6 disabled in build, skipping.");
-
+	
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 }
 
@@ -99,9 +99,9 @@ test_IPv6AddressWithPort(void)
 
 	const struct in6_addr address = {
 		0x20, 0x01, 0x0d, 0xb8,
-        0x85, 0xa3, 0x08, 0xd3,
-        0x13, 0x19, 0x8a, 0x2e,
-        0x03, 0x70, 0x73, 0x34
+		0x85, 0xa3, 0x08, 0xd3,
+		0x13, 0x19, 0x8a, 0x2e,
+		0x03, 0x70, 0x73, 0x34
 	};
 
 	const char *str = "[2001:0db8:85a3:08d3:1319:8a2e:0370:7334]:3000";

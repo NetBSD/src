@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.h,v 1.1.1.1.2.1 2014/12/25 02:34:32 snj Exp $	*/
+/*	$NetBSD: ntp_intres.h,v 1.1.1.1.2.2 2017/05/04 06:03:55 snj Exp $	*/
 
 /*
  * ntp_intres.h - client interface to blocking-worker name resolution.
@@ -11,6 +11,9 @@
 #ifdef WORKER
 #define	INITIAL_DNS_RETRY	2	/* seconds between queries */
 
+/* flags for extended addrinfo version */
+#define GAIR_F_IGNDNSERR	0x0001	/* ignore DNS errors */
+
 /*
  * you call getaddrinfo_sometime(name, service, &hints, retry, callback_func, context);
  * later (*callback_func)(rescode, gai_errno, context, name, service, hints, ai_result) is called.
@@ -21,6 +24,9 @@ typedef void	(*gai_sometime_callback)
 extern int	getaddrinfo_sometime(const char *, const char *,
 				     const struct addrinfo *, int,
 				     gai_sometime_callback, void *);
+extern int	getaddrinfo_sometime_ex(const char *, const char *,
+				     const struct addrinfo *, int,
+				     gai_sometime_callback, void *, u_int);
 /*
  * In gai_sometime_callback routines, the resulting addrinfo list is
  * only available until the callback returns.  To hold on to the list

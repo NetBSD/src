@@ -1,4 +1,4 @@
-/*	$NetBSD: t-ntp_signd.c,v 1.1.1.1.2.3 2016/05/08 22:02:14 snj Exp $	*/
+/*	$NetBSD: t-ntp_signd.c,v 1.1.1.1.2.4 2017/05/04 06:04:05 snj Exp $	*/
 
 #include "config.h"
 
@@ -62,7 +62,7 @@ read(int fd, void * buf, size_t len)
 static int
 isGE(int a,int b)
 { 
-	if(a >= b) {return 1;}
+	if (a >= b) {return 1;}
 	else {return 0;}
 }
 
@@ -106,11 +106,11 @@ test_write_all(void)
 {
 	int fd = ux_socket_connect("/socket");
 
-	TEST_ASSERT_TRUE(isGE(fd,0));
+	TEST_ASSERT_TRUE(isGE(fd, 0));
 
 	char * str = "TEST123";
 	int temp = write_all(fd, str,strlen(str));
-	TEST_ASSERT_EQUAL(strlen(str),temp);
+	TEST_ASSERT_EQUAL(strlen(str), temp);
 
 	(void)close(fd);
 	return;
@@ -167,7 +167,7 @@ test_send_via_ntp_signd(void)
 	struct recvbuf *rbufp = (struct recvbuf *) malloc(sizeof(struct recvbuf));
 	int	xmode = 1;
 	keyid_t	xkeyid = 12345; 
-	int flags =0;
+	int	flags = 0;
 	struct pkt  *xpkt = (struct pkt *) malloc(sizeof(struct pkt)); //defined in ntp.h
 
 	TEST_ASSERT_NOT_NULL(rbufp);

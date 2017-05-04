@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.2.2 2015/11/07 22:26:23 snj Exp $
+# $NetBSD: Makefile,v 1.5.2.3 2017/05/04 06:03:46 snj Exp $
 
 USE_FORT?= yes	# network client/server
 
@@ -45,5 +45,6 @@ SRCS+= \
        evlog.c \
        kqueue.c \
        signal.c \
+
 
 .include <bsd.prog.mk>

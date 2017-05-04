@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.6.2.3 2016/05/08 22:02:10 snj Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.6.2.4 2017/05/04 06:03:57 snj Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -37,7 +37,7 @@
 #  include <pthread.h>
 # endif
 # if defined(linux)
-# define NEED_PTHREAD_WARMUP
+#  define NEED_PTHREAD_WARMUP
 # endif
 #endif
 
@@ -232,8 +232,10 @@ static	RETSIGTYPE	no_debug	(int);
 # endif	/* !DEBUG */
 #endif	/* !SIM && !SYS_WINNT */
 
+#ifndef WORK_FORK
 int	saved_argc;
 char **	saved_argv;
+#endif
 
 #ifndef SIM
 int		ntpdmain		(int, char **);
@@ -305,9 +307,9 @@ my_pthread_warmup_worker(
 static void
 my_pthread_warmup(void)
 {
-	pthread_t thread;
+	pthread_t 	thread;
 	pthread_attr_t	thr_attr;
-	int       rc;
+	int       	rc;
 	
 	pthread_attr_init(&thr_attr);
 #if defined(HAVE_PTHREAD_ATTR_GETSTACKSIZE) && \
@@ -1383,7 +1385,7 @@ int scmp_sc[] = {
  */
 static void
 finish_safe(
-	int sig
+	int	sig
 	)
 {
 	const char *sig_desc;

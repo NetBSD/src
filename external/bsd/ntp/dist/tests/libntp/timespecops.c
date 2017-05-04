@@ -1,4 +1,4 @@
-/*	$NetBSD: timespecops.c,v 1.1.1.3.2.3 2016/05/08 22:02:14 snj Exp $	*/
+/*	$NetBSD: timespecops.c,v 1.1.1.3.2.4 2017/05/04 06:04:05 snj Exp $	*/
 
 #include "config.h"
 
@@ -12,14 +12,14 @@
 #include <string.h>
 
 
-#define TEST_ASSERT_EQUAL_timespec(a, b) { \
-    TEST_ASSERT_EQUAL_MESSAGE(a.tv_sec, b.tv_sec, "Field tv_sec"); \
+#define TEST_ASSERT_EQUAL_timespec(a, b) {				\
+    TEST_ASSERT_EQUAL_MESSAGE(a.tv_sec, b.tv_sec, "Field tv_sec");	\
     TEST_ASSERT_EQUAL_MESSAGE(a.tv_nsec, b.tv_nsec, "Field tv_nsec");	\
 }
 
 
-#define TEST_ASSERT_EQUAL_l_fp(a, b) { \
-    TEST_ASSERT_EQUAL_MESSAGE(a.l_i, b.l_i, "Field l_i"); \
+#define TEST_ASSERT_EQUAL_l_fp(a, b) {					\
+    TEST_ASSERT_EQUAL_MESSAGE(a.l_i, b.l_i, "Field l_i");		\
     TEST_ASSERT_EQUAL_UINT_MESSAGE(a.l_uf, b.l_uf, "Field l_uf");	\
 }
 
@@ -65,10 +65,10 @@ void test_FromLFPrelNeg(void);
 void test_LFProundtrip(void);
 void test_ToString(void);
 
-const bool timespec_isValid(struct timespec V);
+const bool	timespec_isValid(struct timespec V);
 struct timespec timespec_init(time_t hi, long lo);
-l_fp l_fp_init(int32 i, u_int32 f);
-bool AssertFpClose(const l_fp m, const l_fp n, const l_fp limit);
+l_fp		l_fp_init(int32 i, u_int32 f);
+bool		AssertFpClose(const l_fp m, const l_fp n, const l_fp limit);
 bool		AssertTimespecClose(const struct timespec m,
 				    const struct timespec n,
 				    const struct timespec limit);
@@ -97,7 +97,7 @@ timespec_isValid(struct timespec V)
 struct timespec
 timespec_init(time_t hi, long lo)
 {
-	struct timespec V;	
+	struct timespec V;
 
 	V.tv_sec = hi;
 	V.tv_nsec = lo;
@@ -130,7 +130,7 @@ AssertFpClose(const l_fp m, const l_fp n, const l_fp limit)
 		diff = n;
 		L_SUB(&diff, &m);
 	}
-	if (L_ISGEQ(&limit, &diff)){
+	if (L_ISGEQ(&limit, &diff)) {
 		return TRUE;
 	}
 	else {
@@ -587,7 +587,7 @@ test_Helpers2(void)
 			for (i = -4; i < 5; ++i) {
 				y = x;
 				y.tv_nsec += i;
-				if (i >= -2 && i <= 2){
+				if (i >= -2 && i <= 2) {
 					TEST_ASSERT_TRUE(AssertTimespecClose(x, y, limit));
 				}
 				else

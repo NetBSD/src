@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.9.2.4 2016/05/08 22:02:10 snj Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9.2.5 2017/05/04 06:03:57 snj Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -481,7 +481,7 @@ ntpd_addremove_io_fd(
 
 #ifdef HAVE_SIGNALED_IO
 	if (!remove_it)
-	init_socket_sig(fd);
+		init_socket_sig(fd);
 #endif /* not HAVE_SIGNALED_IO */
 
 	maintain_activefds(fd, remove_it);
@@ -518,13 +518,17 @@ io_open_sockets(void)
 /*
  * function to dump the contents of the interface structure
  * for debugging use only.
+ * We face a dilemma here -- sockets are FDs under POSIX and
+ * actually HANDLES under Windows. So we use '%lld' as format
+ * and cast the value to 'long long'; this should not hurt
+ * with UNIX-like systems and does not truncate values on Win64.
  */
 void
 interface_dump(const endpt *itf)
 {
 	printf("Dumping interface: %p\n", itf);
-	printf("fd = %d\n", itf->fd);
-	printf("bfd = %d\n", itf->bfd);
+	printf("fd = %lld\n", (long long)itf->fd);
+	printf("bfd = %lld\n", (long long)itf->bfd);
 	printf("sin = %s,\n", stoa(&itf->sin));
 	sockaddr_dump(&itf->sin);
 	printf("bcast = %s,\n", stoa(&itf->bcast));
@@ -572,11 +576,11 @@ sockaddr_dump(const sockaddr_u *psau)
 static void
 print_interface(const endpt *iface, const char *pfx, const char *sfx)
 {
-	printf("%sinterface #%d: fd=%d, bfd=%d, name=%s, flags=0x%x, ifindex=%u, sin=%s",
+	printf("%sinterface #%d: fd=%lld, bfd=%lld, name=%s, flags=0x%x, ifindex=%u, sin=%s",
 	       pfx,
 	       iface->ifnum,
-	       iface->fd,
-	       iface->bfd,
+	       (long long)iface->fd,
+	       (long long)iface->bfd,
 	       iface->name,
 	       iface->flags,
 	       iface->ifindex,
@@ -2604,7 +2608,7 @@ io_setbclient(void)
 {
 #ifdef OPEN_BCAST_SOCKET
 	struct interface *	interf;
-	int			nif;
+	unsigned int		nif;
 
 	nif = 0;
 	set_reuseaddr(1);
@@ -2674,18 +2678,17 @@ io_setbclient(void)
 			break;
 
 		default:
-				msyslog(LOG_INFO,
-					"failed to listen for broadcasts to %s on interface #%d %s",
-					stoa(&interf->bcast), interf->ifnum, interf->name);
+			msyslog(LOG_INFO,
+				"failed to listen for broadcasts to %s on interface #%d %s",
+				stoa(&interf->bcast), interf->ifnum, interf->name);
 			break;
 		}
 	}
 	set_reuseaddr(0);
-	if (nif > 0) {
+	if (nif != 0) {
 		broadcast_client_enabled = ISC_TRUE;
 		DPRINTF(1, ("io_setbclient: listening to %d broadcast addresses\n", nif));
-	}
-	else if (!nif) {
+	} else {
 		broadcast_client_enabled = ISC_FALSE;
 		msyslog(LOG_ERR,
 			"Unable to listen for broadcasts, no broadcast interfaces available");
@@ -3097,7 +3100,7 @@ open_socket(
 		    fcntl(fd, F_GETFL, 0)));
 #endif /* SYS_WINNT || VMS */
 
-#if defined (HAVE_IO_COMPLETION_PORT)
+#if defined(HAVE_IO_COMPLETION_PORT)
 /*
  * Add the socket to the completion port
  */
@@ -3225,7 +3228,7 @@ sendpkt(
  */
 static char *
 fdbits(
-	int count,
+	int		count,
 	const fd_set*	set
 	)
 {
@@ -3328,15 +3331,6 @@ fetch_timestamp(
 	)
 {
 	struct cmsghdr *	cmsghdr;
-#ifdef HAVE_BINTIME
-	struct bintime *	btp;
-#endif
-#ifdef HAVE_TIMESTAMPNS
-	struct timespec *	tsp;
-#endif
-#ifdef HAVE_TIMESTAMP
-	struct timeval *	tvp;
-#endif
 	unsigned long		ticks;
 	double			fuzz;
 	l_fp			lfpfuzz;
@@ -3363,49 +3357,58 @@ fetch_timestamp(
 			{
 #ifdef HAVE_BINTIME
 			case SCM_BINTIME:
-				btp = (struct bintime *)CMSG_DATA(cmsghdr);
-				/*
-				 * bintime documentation is at http://phk.freebsd.dk/pubs/timecounter.pdf
-				 */
-				nts.l_i = btp->sec + JAN_1970;
-				nts.l_uf = (u_int32)(btp->frac >> 32);
-				if (sys_tick > measured_tick &&
-				    sys_tick > 1e-9) {
-					ticks = (unsigned long)(nts.l_uf / (unsigned long)(sys_tick * FRAC));
-					nts.l_uf = (unsigned long)(ticks * (unsigned long)(sys_tick * FRAC));
+				{
+					struct bintime	pbt;
+					memcpy(&pbt, CMSG_DATA(cmsghdr), sizeof(pbt));
+					/*
+					 * bintime documentation is at http://phk.freebsd.dk/pubs/timecounter.pdf
+					 */
+					nts.l_i = pbt.sec + JAN_1970;
+					nts.l_uf = (u_int32)(pbt.frac >> 32);
+					if (sys_tick > measured_tick &&
+					    sys_tick > 1e-9) {
+						ticks = (unsigned long)(nts.l_uf / (unsigned long)(sys_tick * FRAC));
+						nts.l_uf = (unsigned long)(ticks * (unsigned long)(sys_tick * FRAC));
+					}
+					DPRINTF(4, ("fetch_timestamp: system bintime network time stamp: %ld.%09lu\n",
+						    pbt.sec, (unsigned long)((nts.l_uf / FRAC) * 1e9)));
 				}
-                                DPRINTF(4, ("fetch_timestamp: system bintime network time stamp: %ld.%09lu\n",
-                                            btp->sec, (unsigned long)((nts.l_uf / FRAC) * 1e9)));
 				break;
 #endif  /* HAVE_BINTIME */
 #ifdef HAVE_TIMESTAMPNS
 			case SCM_TIMESTAMPNS:
-				tsp = UA_PTR(struct timespec, CMSG_DATA(cmsghdr));
-				if (sys_tick > measured_tick &&
-				    sys_tick > 1e-9) {
-					ticks = (unsigned long)((tsp->tv_nsec * 1e-9) /
-						       sys_tick);
-					tsp->tv_nsec = (long)(ticks * 1e9 *
-							      sys_tick);
+				{
+					struct timespec	pts;
+					memcpy(&pts, CMSG_DATA(cmsghdr), sizeof(pts));
+					if (sys_tick > measured_tick &&
+					    sys_tick > 1e-9) {
+						ticks = (unsigned long)((pts.tv_nsec * 1e-9) /
+									sys_tick);
+						pts.tv_nsec = (long)(ticks * 1e9 *
+								     sys_tick);
+					}
+					DPRINTF(4, ("fetch_timestamp: system nsec network time stamp: %ld.%09ld\n",
+						    pts.tv_sec, pts.tv_nsec));
+					nts = tspec_stamp_to_lfp(pts);
 				}
-				DPRINTF(4, ("fetch_timestamp: system nsec network time stamp: %ld.%09ld\n",
-					    tsp->tv_sec, tsp->tv_nsec));
-				nts = tspec_stamp_to_lfp(*tsp);
 				break;
 #endif	/* HAVE_TIMESTAMPNS */
 #ifdef HAVE_TIMESTAMP
 			case SCM_TIMESTAMP:
-				tvp = (struct timeval *)CMSG_DATA(cmsghdr);
-				if (sys_tick > measured_tick &&
-				    sys_tick > 1e-6) {
-					ticks = (unsigned long)((tvp->tv_usec * 1e-6) /
-						       sys_tick);
-					tvp->tv_usec = (long)(ticks * 1e6 *
-							      sys_tick);
+				{
+					struct timeval	ptv;
+					memcpy(&ptv, CMSG_DATA(cmsghdr), sizeof(ptv));
+					if (sys_tick > measured_tick &&
+					    sys_tick > 1e-6) {
+						ticks = (unsigned long)((ptv.tv_usec * 1e-6) /
+									sys_tick);
+						ptv.tv_usec = (long)(ticks * 1e6 *
+								    sys_tick);
+					}
+					DPRINTF(4, ("fetch_timestamp: system usec network time stamp: %jd.%06ld\n",
+						    (intmax_t)ptv.tv_sec, (long)ptv.tv_usec));
+					nts = tval_stamp_to_lfp(ptv);
 				}
-				DPRINTF(4, ("fetch_timestamp: system usec network time stamp: %jd.%06ld\n",
-					    (intmax_t)tvp->tv_sec, (long)tvp->tv_usec));
-				nts = tval_stamp_to_lfp(*tvp);
 				break;
 #endif  /* HAVE_TIMESTAMP */
 			}
@@ -3617,7 +3620,7 @@ io_handler(void)
 	/* make select() wake up after one second */
 	{
 		struct timeval t1;
-		t1.tv_sec = 1;
+		t1.tv_sec  = 1;
 		t1.tv_usec = 0;
 		nfound = select(maxactivefd + 1,
 				&rdfdes, NULL, NULL,
@@ -3669,7 +3672,7 @@ input_handler(
 	int		n;
 	struct timeval	tvzero;
 	fd_set		fds;
-
+	
 	++handler_calls;
 
 	/*
@@ -3691,11 +3694,11 @@ input_handler(
 #endif /* HAVE_SIGNALED_IO */
 
 
-	/*
+/*
  * Try to sanitize the global FD set
  *
  * SIGNAL HANDLER CONTEXT if HAVE_SIGNALED_IO, ordinary userspace otherwise
-	 */
+ */
 static int/*BOOL*/
 sanitize_fdset(
 	int	errc
@@ -3704,14 +3707,14 @@ sanitize_fdset(
 	int j, b, maxscan;
 
 #  ifndef HAVE_SIGNALED_IO
-		/*
-		 * extended FAU debugging output
-		 */
+	/*
+	 * extended FAU debugging output
+	 */
 	if (errc != EINTR) {
-			msyslog(LOG_ERR,
-				"select(%d, %s, 0L, 0L, &0.0) error: %m",
-				maxactivefd + 1,
-				fdbits(maxactivefd, &activefds));
+		msyslog(LOG_ERR,
+			"select(%d, %s, 0L, 0L, &0.0) error: %m",
+			maxactivefd + 1,
+			fdbits(maxactivefd, &activefds));
 	}
 #   endif
 	
@@ -3720,23 +3723,23 @@ sanitize_fdset(
 
 	/* if we have oviously bad FDs, try to sanitize the FD set. */
 	for (j = 0, maxscan = 0; j <= maxactivefd; j++) {
-			if (FD_ISSET(j, &activefds)) {
-				if (-1 != read(j, &b, 0)) {
+		if (FD_ISSET(j, &activefds)) {
+			if (-1 != read(j, &b, 0)) {
 				maxscan = j;
-					continue;
-				}
-#		    ifndef HAVE_SIGNALED_IO
-				msyslog(LOG_ERR,
-					"Removing bad file descriptor %d from select set",
-					j);
-#		    endif
-				FD_CLR(j, &activefds);
+				continue;
 			}
+#		    ifndef HAVE_SIGNALED_IO
+			msyslog(LOG_ERR,
+				"Removing bad file descriptor %d from select set",
+				j);
+#		    endif
+			FD_CLR(j, &activefds);
 		}
+	}
 	if (maxactivefd != maxscan)
 		maxactivefd = maxscan;
 	return TRUE;
-	}
+}
 
 /*
  * scan the known FDs (clocks, servers, ...) for presence in a 'fd_set'. 
@@ -3777,38 +3780,38 @@ input_handler_scan(
 	/*
 	 * Check out the reference clocks first, if any
 	 */
-
-		for (rp = refio; rp != NULL; rp = rp->next) {
-			fd = rp->fd;
-
+	
+	for (rp = refio; rp != NULL; rp = rp->next) {
+		fd = rp->fd;
+		
 		if (!FD_ISSET(fd, pfds))
-				continue;
-			buflen = read_refclock_packet(fd, rp, ts);
-			/*
+			continue;
+		buflen = read_refclock_packet(fd, rp, ts);
+		/*
 		 * The first read must succeed after select() indicates
 		 * readability, or we've reached a permanent EOF.
 		 * http://bugs.ntp.org/1732 reported ntpd munching CPU
 		 * after a USB GPS was unplugged because select was
 		 * indicating EOF but ntpd didn't remove the descriptor
-			 * from the activefds set.
-			 */
-			if (buflen < 0 && EAGAIN != errno) {
-				saved_errno = errno;
-				clk = refnumtoa(&rp->srcclock->srcadr);
-				errno = saved_errno;
-				msyslog(LOG_ERR, "%s read: %m", clk);
-				maintain_activefds(fd, TRUE);
-			} else if (0 == buflen) {
-				clk = refnumtoa(&rp->srcclock->srcadr);
-				msyslog(LOG_ERR, "%s read EOF", clk);
-				maintain_activefds(fd, TRUE);
-			} else {
-				/* drain any remaining refclock input */
-				do {
-					buflen = read_refclock_packet(fd, rp, ts);
-				} while (buflen > 0);
-			}
+		 * from the activefds set.
+		 */
+		if (buflen < 0 && EAGAIN != errno) {
+			saved_errno = errno;
+			clk = refnumtoa(&rp->srcclock->srcadr);
+			errno = saved_errno;
+			msyslog(LOG_ERR, "%s read: %m", clk);
+			maintain_activefds(fd, TRUE);
+		} else if (0 == buflen) {
+			clk = refnumtoa(&rp->srcclock->srcadr);
+			msyslog(LOG_ERR, "%s read EOF", clk);
+			maintain_activefds(fd, TRUE);
+		} else {
+			/* drain any remaining refclock input */
+			do {
+				buflen = read_refclock_packet(fd, rp, ts);
+			} while (buflen > 0);
 		}
+	}
 #endif /* REFCLOCK */
 
 	/*
@@ -4422,7 +4425,7 @@ io_closeclock(
 #	    endif
 		close_and_delete_fd_from_list(rio->fd);
 		purge_recv_buffers_for_fd(rio->fd);
-	rio->fd = -1;
+		rio->fd = -1;
 	}
 
 	UNBLOCKIO();
@@ -4795,6 +4798,50 @@ init_async_notifications()
 #else
 	int fd = socket(PF_ROUTE, SOCK_RAW, 0);
 #endif
+#ifdef RO_MSGFILTER
+	unsigned char msgfilter[] = {
+#ifdef RTM_NEWADDR
+		RTM_NEWADDR,
+#endif
+#ifdef RTM_DELADDR
+		RTM_DELADDR,
+#endif
+#ifdef RTM_ADD
+		RTM_ADD,
+#endif
+#ifdef RTM_DELETE
+		RTM_DELETE,
+#endif
+#ifdef RTM_REDIRECT
+		RTM_REDIRECT,
+#endif
+#ifdef RTM_CHANGE
+		RTM_CHANGE,
+#endif
+#ifdef RTM_LOSING
+		RTM_LOSING,
+#endif
+#ifdef RTM_IFINFO
+		RTM_IFINFO,
+#endif
+#ifdef RTM_IFANNOUNCE
+		RTM_IFANNOUNCE,
+#endif
+#ifdef RTM_NEWLINK
+		RTM_NEWLINK,
+#endif
+#ifdef RTM_DELLINK
+		RTM_DELLINK,
+#endif
+#ifdef RTM_NEWROUTE
+		RTM_NEWROUTE,
+#endif
+#ifdef RTM_DELROUTE
+		RTM_DELROUTE,
+#endif
+	};
+#endif /* !RO_MSGFILTER */
+
 	if (fd < 0) {
 		msyslog(LOG_ERR,
 			"unable to open routing socket (%m) - using polled interface update");
@@ -4814,6 +4861,11 @@ init_async_notifications()
 			"bind failed on routing socket (%m) - using polled interface update");
 		return;
 	}
+#endif
+#ifdef RO_MSGFILTER
+	if (setsockopt(fd, PF_ROUTE, RO_MSGFILTER,
+	    &msgfilter, sizeof(msgfilter)) == -1)
+		msyslog(LOG_ERR, "RO_MSGFILTER: %m");
 #endif
 	make_socket_nonblocking(fd);
 #if defined(HAVE_SIGNALED_IO)

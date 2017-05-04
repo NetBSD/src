@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.3.2.2 2016/05/08 22:02:11 snj Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.3.2.3 2017/05/04 06:03:58 snj Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by
@@ -2110,7 +2110,7 @@ reset(
 		if (sreset[i].flag == 0) {
 			fprintf(fp, "Flag %s unknown\n",
 				pcmd->argval[res].string);
-			err++;
+			err = 1;
 		} else {
 			rflags.flags |= sreset[i].flag;
 		}

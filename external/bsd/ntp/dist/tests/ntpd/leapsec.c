@@ -1,4 +1,4 @@
-/*	$NetBSD: leapsec.c,v 1.1.1.1.2.3 2016/05/08 22:02:14 snj Exp $	*/
+/*	$NetBSD: leapsec.c,v 1.1.1.1.2.4 2017/05/04 06:04:05 snj Exp $	*/
 
 //#include "ntpdtest.h"
 #include "config.h"
@@ -316,7 +316,7 @@ IsEqual(const struct calendar expected, const struct calendar actual)
 	} else {
 		char *p_exp = CalendarToString(expected);
 		char *p_act = CalendarToString(actual);
-			
+
 		printf("expected: %s but was %s", p_exp, p_act);
 
 		free(p_exp);
@@ -488,11 +488,11 @@ test_loadFileExpire(void)
 void
 test_loadFileTTL(void)
 {
-	const char *cp = leap1;
-	int rc;
-	leap_table_t * pt = leapsec_get_table(0);
-	time_t         pivot = 0x70000000u;
-	const uint32_t limit = 3610569600u;
+	const char     *cp = leap1;
+	int		rc;
+	leap_table_t  * pt = leapsec_get_table(0);
+	time_t		pivot = 0x70000000u;
+	const uint32_t	limit = 3610569600u;
 
 	rc =   leapsec_load(pt, stringreader, &cp, FALSE)
 	    && leapsec_set_table(pt);
@@ -500,16 +500,16 @@ test_loadFileTTL(void)
 
 	// exactly 1 day to live
 	rc = leapsec_daystolive(limit - 86400, &pivot);
-	TEST_ASSERT_EQUAL( 1, rc);	
+	TEST_ASSERT_EQUAL( 1, rc);
 	// less than 1 day to live
 	rc = leapsec_daystolive(limit - 86399, &pivot);
-	TEST_ASSERT_EQUAL( 0, rc);	
+	TEST_ASSERT_EQUAL( 0, rc);
 	// hit expiration exactly
 	rc = leapsec_daystolive(limit, &pivot);
-	TEST_ASSERT_EQUAL( 0, rc);	
+	TEST_ASSERT_EQUAL( 0, rc);
 	// expired since 1 sec
 	rc = leapsec_daystolive(limit + 1, &pivot);
-	TEST_ASSERT_EQUAL(-1, rc);	
+	TEST_ASSERT_EQUAL(-1, rc);
 
 	return;
 }
@@ -525,7 +525,7 @@ test_lsQueryPristineState(void)
 {
 	int            rc;
 	leap_result_t  qr;
-	
+
 	rc = leapsec_query(&qr, lsec2012, NULL);
 	TEST_ASSERT_EQUAL(FALSE, rc);
 	TEST_ASSERT_EQUAL(0,             qr.warped   );
@@ -693,7 +693,7 @@ test_qryJumpFarAhead(void)
 	int            rc;
 	leap_result_t  qr;
 	int            last, idx;
-	int 		mode;
+	int		mode;
 
 	for (mode=0; mode < 2; ++mode) {
 		leapsec_ut_pristine();
@@ -712,10 +712,10 @@ test_qryJumpFarAhead(void)
 // ----------------------------------------------------------------------
 // Forward jump into the next transition window
 void test_qryJumpAheadToTransition(void) {
-	int            rc;
-	leap_result_t  qr;
-	int            last, idx;
-	int 		mode;
+	int		rc;
+	leap_result_t	qr;
+	int		last, idx;
+	int		mode;
 
 	for (mode=0; mode < 2; ++mode) {
 		leapsec_ut_pristine();
@@ -738,10 +738,10 @@ void test_qryJumpAheadToTransition(void) {
 void
 test_qryJumpAheadOverTransition(void)
 {
-	int            rc;
-	leap_result_t  qr;
-	int            last, idx;
-	int 		mode;
+	int		rc;
+	leap_result_t	qr;
+	int		last, idx;
+	int		mode;
 
 	for (mode=0; mode < 2; ++mode) {
 		leapsec_ut_pristine();
@@ -785,7 +785,7 @@ test_addDynamic(void)
 	rc = setup_load_table(leap2, FALSE);
 	TEST_ASSERT_EQUAL(1, rc);
 
-	int 		idx;
+	int		idx;
 
 	for (idx=1; insns[idx]; ++idx) {
 		rc = leapsec_add_dyn(TRUE, insns[idx] - 20*SECSPERDAY - 100, NULL);
@@ -884,7 +884,7 @@ FAILtest_addFixedExtend(void)
 		    NULL);
 		TEST_ASSERT_EQUAL(TRUE, rc);
 	}
-	
+
 	// try to extend the expiration of the last entry
 	rc = leapsec_add_fix(
 	    insns[last].of,
@@ -892,7 +892,7 @@ FAILtest_addFixedExtend(void)
 	    insns[last].tt + 128*SECSPERDAY,
 	    NULL);
 	TEST_ASSERT_EQUAL(TRUE, rc);
-	
+
 	// try to extend the expiration of the last entry with wrong offset
 	rc = leapsec_add_fix(
 	    insns[last].of+1,
@@ -934,7 +934,7 @@ FAILtest_setFixedExtend(void)
 		    NULL);
 		TEST_ASSERT_EQUAL(TRUE, rc);
 	}
-	
+
 	rc = leapsec_query(&qr, insns[0].tt - 86400, NULL);
 	TEST_ASSERT_EQUAL(28, qr.tai_offs);
 
@@ -963,7 +963,7 @@ FAILtest_setFixedExtend(void)
 void test_taiEmptyTable(void) {
 	int rc;
 
-	rc = leapsec_autokey_tai(35, lsec2015-30*86400, NULL);	
+	rc = leapsec_autokey_tai(35, lsec2015-30*86400, NULL);
 	TEST_ASSERT_EQUAL(TRUE, rc);
 
 	rc = leapsec_autokey_tai(35, lsec2015-29*86400, NULL);
@@ -1002,7 +1002,7 @@ test_taiTableDynamic(void)
 	leapsec_query_era(&era, lsec2015+10, NULL);
 	TEST_ASSERT_EQUAL(1, era.taiof);
 
-	rc = leapsec_autokey_tai(35, lsec2015-19*86400, NULL);	
+	rc = leapsec_autokey_tai(35, lsec2015-19*86400, NULL);
 	TEST_ASSERT_EQUAL(TRUE, rc);
 
 	rc = leapsec_autokey_tai(35, lsec2015-19*86400, NULL);
@@ -1026,7 +1026,7 @@ test_taiTableDynamicDeadZone(void)
 	rc = leapsec_add_dyn(TRUE, lsec2015-20*SECSPERDAY, NULL);
 	TEST_ASSERT_EQUAL(TRUE, rc);
 
-	rc = leapsec_autokey_tai(35, lsec2015-5, NULL);	
+	rc = leapsec_autokey_tai(35, lsec2015-5, NULL);
 	TEST_ASSERT_EQUAL(FALSE, rc);
 
 	rc = leapsec_autokey_tai(35, lsec2015+5, NULL);
@@ -1344,7 +1344,7 @@ test_lsEmptyTableDumb(void)
 	time_t pivot;
 	pivot = lsec2012;
 	//	const 
-	//time_t   pivot(lsec2012);		
+	//time_t   pivot(lsec2012);
 	const uint32_t t0 = lsec2012 - 10;
 	const uint32_t tE = lsec2012 + 10;
 
@@ -1368,13 +1368,13 @@ test_lsEmptyTableElectric(void)
 {
 	int            rc;
 	leap_result_t  qr;
-	
+
 	leapsec_electric(1);
 	TEST_ASSERT_EQUAL(1, leapsec_electric(-1));
 
 	//const 
 	time_t   pivot;//(lsec2012);
-	pivot = lsec2012;	
+	pivot = lsec2012;
 	const uint32_t t0 = lsec2012 - 10;
 	const uint32_t tE = lsec2012 + 10;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevalops.c,v 1.1.1.3.2.3 2016/05/08 22:02:14 snj Exp $	*/
+/*	$NetBSD: timevalops.c,v 1.1.1.3.2.4 2017/05/04 06:04:05 snj Exp $	*/
 
 #include "config.h"
 
@@ -13,8 +13,8 @@
 #include "unity.h"
 
 
-#define TEST_ASSERT_EQUAL_timeval(a, b) { \
-    TEST_ASSERT_EQUAL_MESSAGE(a.tv_sec, b.tv_sec, "Field tv_sec"); \
+#define TEST_ASSERT_EQUAL_timeval(a, b) {				\
+    TEST_ASSERT_EQUAL_MESSAGE(a.tv_sec, b.tv_sec, "Field tv_sec");	\
     TEST_ASSERT_EQUAL_MESSAGE(a.tv_usec, b.tv_usec, "Field tv_usec");	\
 }
 
@@ -122,7 +122,7 @@ AssertTimevalClose(const struct timeval m, const struct timeval n, const struct 
 	{
 		printf("m_expr which is %ld.%lu \nand\nn_expr which is %ld.%lu\nare not close; diff=%ld.%luusec\n", m.tv_sec, m.tv_usec, n.tv_sec, n.tv_usec, diff.tv_sec, diff.tv_usec); 
 		//I don't have variables m_expr and n_expr in unity, those are command line arguments which only getst has!!!
-		
+
 		return FALSE;
 	}
 }
@@ -140,7 +140,7 @@ AssertFpClose(const l_fp m, const l_fp n, const l_fp limit)
 		diff = n;
 		L_SUB(&diff, &m);
 	}
-	if (L_ISGEQ(&limit, &diff)){
+	if (L_ISGEQ(&limit, &diff)) {
 		return TRUE;
 	}
 	else {
@@ -240,7 +240,7 @@ test_Normalise(void)
 
 	for (ns = -2000000000; ns <= 2000000000; ns += 10000000) {
 		struct timeval x = timeval_init(0, ns);
-		
+
 		x = normalize_tval(x);
 		TEST_ASSERT_TRUE(timeval_isValid(x));
 	}
@@ -576,16 +576,16 @@ test_Helpers2(void)
 {
 	struct timeval limit = timeval_init(0, 2);
 	struct timeval x, y;
-	long i;	
+	long i;
 
-	for (x.tv_sec = -2; x.tv_sec < 3; x.tv_sec++){
+	for (x.tv_sec = -2; x.tv_sec < 3; x.tv_sec++) {
 		for (x.tv_usec = 1;
 		     x.tv_usec < 1000000;
 		     x.tv_usec += 499999) {
 			for (i = -4; i < 5; ++i) {
 				y = x;
 				y.tv_usec += i;
-				if (i >= -2 && i <= 2){
+				if (i >= -2 && i <= 2) {
 					TEST_ASSERT_TRUE(AssertTimevalClose(x, y, limit));//ASSERT_PRED_FORMAT2(isClose, x, y);
 				}
 				else {
@@ -610,7 +610,7 @@ test_Helpers2(void)
 void
 test_ToLFPbittest(void)
 {
-	l_fp lfpClose =  l_fp_init(0, 1);	
+	l_fp lfpClose =  l_fp_init(0, 1);
 
 	u_int32 i = 0;
 	for (i = 0; i < 1000000; ++i) {
@@ -714,7 +714,7 @@ void
 test_FromLFPrelPos(void)
 {
 	struct timeval timevalClose = timeval_init(0, 1);
-	int i = 0;	
+	int i = 0;
 
 	for (i = 0; i < COUNTOF(fdata); ++i) {
 		l_fp a = l_fp_init(1, fdata[i].frac);
