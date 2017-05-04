@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.h,v 1.724 2017/05/03 15:20:27 jnemeth Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.725 2017/05/04 14:21:01 hauke Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1783,6 +1783,7 @@
 #define	USB_PRODUCT_HP_P1100	0x3102		/* Photosmart P1100 */
 #define	USB_PRODUCT_HP_V125W	0x3307		/* v125w */
 #define	USB_PRODUCT_HP_6127	0x3504		/* Deskjet 6127 */
+#define	USB_PRODUCT_HP_UN2430	0x371d		/* Sierra un2430 WWAN/GPS Module */
 #define	USB_PRODUCT_HP_HN210E	0x811c		/* Ethernet HN210E */
 
 /* HP products */
