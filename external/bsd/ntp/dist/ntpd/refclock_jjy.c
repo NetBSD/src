@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.4.16.3 2016/05/08 21:55:49 snj Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.4.16.4 2017/05/04 06:01:02 snj Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -108,6 +108,10 @@
 /*  2015/05/15							      */
 /*    [Add]    Support the SEIKO TIME SYSTEMS TDC-300		      */
 /*								      */
+/*  2016/05/08							      */
+/*    [Fix]    C-DEX JST2000                                          */
+/*             Thanks to Mr. Kuramatsu for the report and the patch.  */
+/*								      */
 /**********************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -151,8 +155,8 @@
  */
 
 struct jjyRawDataBreak {
-	const char	*pString ;
-	int 	iLength ;
+	const char *	pString ;
+	int 		iLength ;
 } ;
 
 #define	MAX_TIMESTAMP	6
@@ -742,8 +746,8 @@ jjy_receive ( struct recvbuf *rbufp )
 		}
 
 		iCopyLen = ( iLen <= sizeof(sLogText)-1 ? iLen : sizeof(sLogText)-1 ) ;
-		strncpy( sLogText, pBuf, iCopyLen ) ;
-		sLogText[iCopyLen] = 0 ;
+		memcpy( sLogText, pBuf, iCopyLen ) ;
+		sLogText[iCopyLen] = '\0' ;
 		jjy_write_clockstats( peer, JJY_CLOCKSTATS_MARK_RECEIVE, sLogText ) ;
 
 		switch ( up->unittype ) {
@@ -1158,11 +1162,11 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 
 	char *		pBuf ;
 	char		sLog [ 100 ] ;
-	int 	iLen ;
-	int 	rc ;
+	int 		iLen ;
+	int 		rc ;
 
-	const char *pCmd ;
-	int 	iCmdLen ;
+	const char *	pCmd ;
+	int 		iCmdLen ;
 
 	/* Initialize pointers  */
 
@@ -1362,8 +1366,8 @@ jjy_poll_tristate_jjy01  ( int unit, struct peer *peer )
 	struct refclockproc *pp ;
 	struct jjyunit	    *up ;
 
-	const char *pCmd ;
-	int 	iCmdLen ;
+	const char *	pCmd ;
+	int 		iCmdLen ;
 
 	pp = peer->procptr;
 	up = pp->unitptr ;
@@ -1501,9 +1505,9 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 		return JJY_RECEIVE_ERROR ;
 	}
 
-	/* JYYMMDD HHMMSSS */
+	/* JYYMMDDWHHMMSSS */
 
-	rc = sscanf ( pBuf, "J%2d%2d%2d %2d%2d%2d%1d",
+	rc = sscanf ( pBuf, "J%2d%2d%2d%*1d%2d%2d%2d%1d",
 		      &up->year, &up->month, &up->day,
 		      &up->hour, &up->minute, &up->second,
 		      &up->msecond ) ;
@@ -2015,11 +2019,11 @@ jjy_receive_tristate_gpsclock01 ( struct recvbuf *rbufp )
 
 	char *		pBuf ;
 	char		sLog [ 100 ] ;
-	int 	iLen ;
-	int 	rc ;
+	int 		iLen ;
+	int 		rc ;
 
-	const char	*pCmd ;
-	int 	iCmdLen ;
+	const char *	pCmd ;
+	int 		iCmdLen ;
 
 	/* Initialize pointers */
 
@@ -2243,8 +2247,8 @@ jjy_poll_tristate_gpsclock01 ( int unit, struct peer *peer )
 	struct refclockproc *pp ;
 	struct jjyunit	    *up ;
 
-	const char	*pCmd ;
-	int 	iCmdLen ;
+	const char *	pCmd ;
+	int		iCmdLen ;
 
 	pp = peer->procptr ;
 	up = pp->unitptr ;
@@ -2580,7 +2584,7 @@ static	int 	teljjy_bye_ignore	( struct peer *peer, struct refclockproc *, struct
 static	int 	teljjy_bye_disc 	( struct peer *peer, struct refclockproc *, struct jjyunit * ) ;
 static	int 	teljjy_bye_modem	( struct peer *peer, struct refclockproc *, struct jjyunit * ) ;
 
-static int ( *pTeljjyHandler [ ] [ 5 ] ) (struct peer *, struct refclockproc *, struct jjyunit *) =
+static int ( *pTeljjyHandler [ ] [ 5 ] ) ( struct peer *, struct refclockproc *, struct jjyunit *) =
 {               	/*STATE_IDLE           STATE_DAILOUT       STATE_LOGIN           STATE_CONNECT       STATE_BYE        */
 /* NULL       */	{ teljjy_idle_ignore , teljjy_dial_ignore, teljjy_login_ignore, teljjy_conn_ignore, teljjy_bye_ignore },
 /* START      */	{ teljjy_idle_dialout, teljjy_dial_ignore, teljjy_login_ignore, teljjy_conn_ignore, teljjy_bye_ignore },
@@ -2687,7 +2691,7 @@ jjy_start_telephone ( int unit, struct peer *peer, struct jjyunit *up )
 
 	char	sLog [ 80 ], sFirstThreeDigits [ 4 ] ;
 	int	iNumberOfDigitsOfPhoneNumber, iCommaCount, iCommaPosition ;
-	size_t i;
+	size_t  i ;
 	size_t	iFirstThreeDigitsCount ;
 
 	jjy_write_clockstats( peer, JJY_CLOCKSTATS_MARK_JJY, "Refclock: Telephone JJY" ) ;
@@ -3218,8 +3222,8 @@ static int
 teljjy_login_login ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	const char	*pCmd ;
-	int	iCmdLen ;
+	const char *	pCmd ;
+	int		iCmdLen ;
 
 	DEBUG_TELJJY_PRINTF( "teljjy_login_login" ) ;
 
@@ -3295,8 +3299,8 @@ static int
 teljjy_conn_send ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	const char	*pCmd ;
-	int	i, iLen, iNextClockState ;
+	const char *	pCmd ;
+	int		i, iLen, iNextClockState ;
 
 	DEBUG_TELJJY_PRINTF( "teljjy_conn_send" ) ;
 
@@ -3532,7 +3536,7 @@ static int
 teljjy_conn_silent ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	const char	*pCmd ;
+	const char *	pCmd ;
 
 	DEBUG_TELJJY_PRINTF( "teljjy_conn_silent" ) ;
 
@@ -3998,11 +4002,11 @@ static int
 modem_init_resp00 ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	const char	*pCmd;
-	char    cBuf [ 46 ] ;
-	int	iCmdLen ;
-	int	iErrorCorrection, iSpeakerSwitch, iSpeakerVolume ;
-	int	iNextModemState = STAY_MODEM_STATE ;
+	const char *	pCmd ;
+	char		cBuf [ 46 ] ;
+	int		iCmdLen ;
+	int		iErrorCorrection, iSpeakerSwitch, iSpeakerVolume ;
+	int		iNextModemState = STAY_MODEM_STATE ;
 
 	DEBUG_MODEM_PRINTF( "modem_init_resp00" ) ;
 
@@ -4257,8 +4261,8 @@ static int
 modem_esc_escape ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	const char	*pCmd ;
-	int	iCmdLen ;
+	const char *	pCmd ;
+	int		iCmdLen ;
 
 	DEBUG_MODEM_PRINTF( "modem_esc_escape" ) ;
 
@@ -4323,8 +4327,8 @@ static int
 modem_esc_disc ( struct peer *peer, struct refclockproc *pp, struct jjyunit *up )
 {
 
-	const char	*pCmd ;
-	int	iCmdLen ;
+	const char *	pCmd ;
+	int		iCmdLen ;
 
 	DEBUG_MODEM_PRINTF( "modem_esc_disc" ) ;
 
@@ -4355,9 +4359,9 @@ static void
 jjy_write_clockstats ( struct peer *peer, int iMark, const char *pData )
 {
 
-	char	sLog [ 100 ] ;
-	const char	*pMark ;
-	int 	iMarkLen, iDataLen ;
+	char		sLog [ 100 ] ;
+	const char *	pMark ;
+	int 		iMarkLen, iDataLen ;
 
 	switch ( iMark ) {
 	case JJY_CLOCKSTATS_MARK_JJY :

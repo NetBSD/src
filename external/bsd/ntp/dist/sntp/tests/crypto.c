@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.3.4.3 2016/05/08 21:55:52 snj Exp $	*/
+/*	$NetBSD: crypto.c,v 1.1.1.3.4.4 2017/05/04 06:01:08 snj Exp $	*/
 
 #include "config.h"
 #include "unity.h"
@@ -81,7 +81,7 @@ test_VerifyCorrectMD5(void)
 	    "sometestdata"			/* Data */
 	    "\0\0\0\0"				/* Key-ID (unused) */
 	    "\xc7\x58\x99\xdd\x99\x32\x0f\x71"	/* MAC */
-		"\x2b\x7b\xfe\x4f\xa2\x32\xcf\xac";
+	    "\x2b\x7b\xfe\x4f\xa2\x32\xcf\xac";
 	const int PKT_LEN = 12;
 
 	struct key md5;
@@ -104,7 +104,7 @@ test_VerifySHA1(void)
 	    "sometestdata"				/* Data */
 	    "\0\0\0\0"					/* Key-ID (unused) */
 	    "\xad\x07\xde\x36\x39\xa6\x77\xfa\x5b\xce"	/* MAC */
-		"\x2d\x8a\x7d\x06\x96\xe6\x0c\xbc\xed\xe1";
+	    "\x2d\x8a\x7d\x06\x96\xe6\x0c\xbc\xed\xe1";
 	const int PKT_LEN = 12;
 
 	struct key sha1;

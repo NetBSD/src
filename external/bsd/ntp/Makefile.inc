@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.16.2 2015/11/07 22:46:07 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.11.16.3 2017/05/04 06:00:50 snj Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -15,8 +15,8 @@ WARNS?=	4
 
 .include <bsd.own.mk>
 
-IDIST:=		${NETBSDSRCDIR}/external/bsd/ntp/dist
-NTP_SRCDIR:=	${NETBSDSRCDIR}/external/bsd/ntp
+IDIST=		${NETBSDSRCDIR}/external/bsd/ntp/dist
+NTP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/ntp
 NTP_HTMLDIR=	/usr/share/doc/html
 
 SYSCONFDIR=/etc
@@ -58,7 +58,7 @@ version.c: ${LIBNTP}/libntp.a ${.CURDIR}/../../scripts/mkver ${.CURDIR}/../../im
 .endif # defined(PROG)
 
 .if ${MKCRYPTO:Uno} != "no"
-CPPFLAGS+=-DOPENSSL
+CPPFLAGS+=-DOPENSSL -DAUTOKEY -DUSE_OPENSSL_CRYPTO_RAND
 .endif
 
 .if ${MKINET6:Uno} != "no"

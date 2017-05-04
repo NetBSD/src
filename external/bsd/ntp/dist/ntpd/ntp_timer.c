@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.1.1.2.16.3 2016/05/08 21:55:48 snj Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.1.1.2.16.4 2017/05/04 06:01:01 snj Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -557,7 +557,7 @@ check_leapsec(
 #ifdef LEAP_SMEAR
 	leap_smear.enabled = leap_smear_intv != 0;
 #endif
-	if (reset)	{
+	if (reset) {
 		lsprox = LSPROX_NOWARN;
 		leapsec_reset_frame();
 		memset(&lsdata, 0, sizeof(lsdata));
@@ -664,10 +664,10 @@ check_leapsec(
 		sys_tai = lsdata.tai_offs;
 	  } else {
 #ifdef AUTOKEY
-		update_autokey = (sys_tai != (u_int)lsdata.tai_offs);
+		  update_autokey = (sys_tai != (u_int)lsdata.tai_offs);
 #endif
-		lsprox  = lsdata.proximity;
-		sys_tai = lsdata.tai_offs;
+		  lsprox  = lsdata.proximity;
+		  sys_tai = lsdata.tai_offs;
 	  }
 	}
 

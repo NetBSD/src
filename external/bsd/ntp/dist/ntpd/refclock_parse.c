@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.5.8.3 2016/05/08 21:55:49 snj Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.5.8.4 2017/05/04 06:01:02 snj Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2266,8 +2266,8 @@ local_input(
 							if (debug > 3)
 							{
 								printf(
-								       "parse: local_receive: fd %d PPSAPI seq %ld - PPS %s\n",
-								       rbufp->fd,
+								       "parse: local_receive: fd %ld PPSAPI seq %ld - PPS %s\n",
+								       (long)rbufp->fd,
 								       (long)pps_info.assert_sequence + (long)pps_info.clear_sequence,
 								       lfptoa(&parse->parseio.parse_dtime.parse_ptime.fp, 6));
 							}
@@ -2279,8 +2279,8 @@ local_input(
 							if (debug > 3)
 							{
 								printf(
-								       "parse: local_receive: fd %d PPSAPI seq assert %ld, seq clear %ld - NO PPS event\n",
-								       rbufp->fd,
+								       "parse: local_receive: fd %ld PPSAPI seq assert %ld, seq clear %ld - NO PPS event\n",
+								       (long)rbufp->fd,
 								       (long)pps_info.assert_sequence, (long)pps_info.clear_sequence);
 							}
 						}
@@ -2293,8 +2293,8 @@ local_input(
 						if (debug > 3)
 						{
 							printf(
-							       "parse: local_receive: fd %d PPSAPI time_pps_fetch errno = %d\n",
-							       rbufp->fd,
+							       "parse: local_receive: fd %ld PPSAPI time_pps_fetch errno = %d\n",
+							       (long)rbufp->fd,
 							       errno);
 						}
 					}
@@ -3677,8 +3677,7 @@ parse_control(
 			}
 		}
 
-		tt = ap(start, LEN_STATES, tt,
-		    "; running time: %s\"", l_mktime(sum));
+		ap(start, LEN_STATES, tt, "; running time: %s\"", l_mktime(sum));
 
 		tt = add_var(&out->kv_list, 32, RO);
 		snprintf(tt, 32,  "refclock_id=\"%s\"", parse->parse_type->cl_id);
@@ -4228,17 +4227,15 @@ parse_process(
 
 static void
 mk_utcinfo(
-	   char *t,  // pointer to the output string buffer
-	   int swnt,
-	   int swnlsf,
+	   char *t,  /* pointer to the output string buffer */
+	   uint16_t wnt,
+	   uint16_t wnlsf,
 	   int dn,
 	   int dtls,
 	   int dtlsf,
-	   int size  // size of the output string buffer
+	   int size  /* size of the output string buffer */
 	   )
 {
-	unsigned int wnt = swnt;
-	unsigned int wnlsf = swnlsf;
 	/*
 	 * The week number transmitted by the GPS satellites for the leap date
 	 * is truncated to 8 bits only. If the nearest leap second date is off
@@ -4252,32 +4249,37 @@ mk_utcinfo(
 	{
 		time_t t_ls;
 		struct tm *tm;
-		int n = 0;
+		int nc;
 
 		if (wnlsf < GPSWRAP)
 			wnlsf += GPSWEEKS;
-
-		if (wnt < GPSWRAP)
-			wnt += GPSWEEKS;
+		/* 'wnt' not used here: would need the same treatment as 'wnlsf */
 
 		t_ls = (time_t) wnlsf * SECSPERWEEK
 			+ (time_t) dn * SECSPERDAY
 			+ GPS_SEC_BIAS - 1;
 
 		tm = gmtime( &t_ls );
-		if (tm == NULL)  // gmtime() failed
+		if (tm == NULL)  /* gmtime() failed */
 		{
 			snprintf( t, size, "** (gmtime() failed in mk_utcinfo())" );
 			return;
 		}
 
-		n += snprintf( t, size, "UTC offset transition from %is to %is due to leap second %s",
+		nc = snprintf( t, size, "UTC offset transition from %is to %is due to leap second %s",
 				dtls, dtlsf, ( dtls < dtlsf ) ? "insertion" : "deletion" );
-		n += snprintf( t + n, size - n, " at UTC midnight at the end of %s, %04i-%02i-%02i",
+		if (nc < 0)
+			nc = strlen(t);
+		else if (nc > size)
+			nc = size;
+		
+		snprintf( t + nc, size - nc, " at UTC midnight at the end of %s, %04i-%02i-%02i",
 				daynames[tm->tm_wday], tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday );
 	}
 	else
+	{
 		snprintf( t, size, "UTC offset parameter: %is, no leap second announced.\n", dtls );
+	}
 
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refnumtoa.c,v 1.1.1.3.4.3 2016/05/08 21:55:52 snj Exp $	*/
+/*	$NetBSD: refnumtoa.c,v 1.1.1.3.4.4 2017/05/04 06:01:08 snj Exp $	*/
 
 #include "config.h"
 
@@ -38,7 +38,7 @@ test_LocalClock(void) {
 	sockaddr_u address;
 	address.sa4.sin_family = AF_INET;
 	address.sa4.sin_addr.s_addr = htonl(addr);
-	
+
 	char stringStart[100]= "";
 
 	strcat(stringStart, clockname(REFCLK_LOCALCLOCK));
@@ -47,7 +47,7 @@ test_LocalClock(void) {
 	char * expected = stringStart;
 
 	TEST_ASSERT_EQUAL_STRING(expected, refnumtoa(&address));
-#else	
+#else
 	TEST_IGNORE_MESSAGE("REFCLOCK NOT DEFINED, SKIPPING TEST");
 #endif	/* REFCLOCK */
 }
@@ -63,16 +63,16 @@ test_UnknownId(void) {
 	sockaddr_u address;
 	address.sa4.sin_family = AF_INET;
 	address.sa4.sin_addr.s_addr = htonl(addr);
-	
+
 	char stringStart[100]= "REFCLK(";
-	char value[100] ;	
+	char value[100] ;
 	snprintf(value, sizeof(value), "%d", UNUSED_REFCLOCK_ID);
 	strcat(stringStart,value);
 	strcat(stringStart,",4)");
 	char * expected = stringStart;
 
 	TEST_ASSERT_EQUAL_STRING(expected, refnumtoa(&address));
-#else 	
+#else
 	TEST_IGNORE_MESSAGE("REFCLOCK NOT DEFINED, SKIPPING TEST");
 #endif	/* REFCLOCK */
 }

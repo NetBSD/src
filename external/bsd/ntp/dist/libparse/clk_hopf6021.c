@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_hopf6021.c,v 1.1.1.1.22.3 2016/05/08 21:55:48 snj Exp $	*/
+/*	$NetBSD: clk_hopf6021.c,v 1.1.1.1.22.4 2017/05/04 06:01:00 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_hopf6021.c,v 4.10 2004/11/14 15:29:41 kardel RELEASE_20050508_A
@@ -115,13 +115,10 @@ static struct format hopf6021_fmt =
 
 #define OFFS(x) format->field_offsets[(x)].offset
 #define STOI(x, y) Stoi(&buffer[OFFS(x)], y, format->field_offsets[(x)].length)
-#define hexval(x) (('0' <= (x) && (x) <= '9') ? (x) - '0' : \
-		   ('a' <= (x) && (x) <= 'f') ? (x) - 'a' + 10 : \
-		   ('A' <= (x) && (x) <= 'F') ? (x) - 'A' + 10 : \
-		   -1)
 
 static parse_cvt_fnc_t cvt_hopf6021;
 static parse_inp_fnc_t inp_hopf6021;
+static unsigned char   hexval(unsigned char);
 
 clockformat_t clock_hopf6021 =
 {
@@ -162,40 +159,40 @@ cvt_hopf6021(
 		return CVT_FAIL|CVT_BADFMT;
 	}
 
-	clock_time->usecond   = 0;
-	clock_time->utcoffset = 0;
+	clock_time->usecond = 0;
+	clock_time->flags   = 0;
 
-	status = (u_char) hexval(buffer[OFFS(O_FLAGS)]);
-	weekday= (u_char) hexval(buffer[OFFS(O_WDAY)]);
+	status  = hexval(buffer[OFFS(O_FLAGS)]);
+	weekday = hexval(buffer[OFFS(O_WDAY)]);
 
 	if ((status == 0xFF) || (weekday == 0xFF))
 	{
 		return CVT_FAIL|CVT_BADFMT;
 	}
 
-	clock_time->flags  = 0;
-
 	if (weekday & HOPF_UTC)
 	{
-		clock_time->flags |= PARSEB_UTC;
+		clock_time->flags     |= PARSEB_UTC;
+		clock_time->utcoffset  = 0;
+	}
+	else if (status & HOPF_DST)
+	{
+		clock_time->flags     |= PARSEB_DST;
+		clock_time->utcoffset  = -2*60*60; /* MET DST */
 	}
 	else
 	{
-		if (status & HOPF_DST)
-		{
-			clock_time->flags     |= PARSEB_DST;
-			clock_time->utcoffset  = -2*60*60; /* MET DST */
-		}
-		else
-		{
-			clock_time->utcoffset  = -1*60*60; /* MET */
-		}
+		clock_time->utcoffset  = -1*60*60; /* MET */
 	}
 
-	clock_time->flags |= (status & HOPF_DSTWARN)  ? PARSEB_ANNOUNCE : 0;
-
+	if (status & HOPF_DSTWARN)
+	{
+		clock_time->flags |= PARSEB_ANNOUNCE;
+	}
+	
 	switch (status & HOPF_MODE)
 	{
+	    default:	/* dummy: we cover all 4 cases. */
 	    case HOPF_INVALID:  /* Time/Date invalid */
 		clock_time->flags |= PARSEB_POWERUP;
 		break;
@@ -207,9 +204,6 @@ cvt_hopf6021(
 	    case HOPF_RADIO:    /* Radio clock */
 	    case HOPF_RADIOHP:  /* Radio clock high precision */
 		break;
-
-	    default:
-		return CVT_FAIL|CVT_BADFMT;
 	}
 
 	return CVT_OK;
@@ -244,6 +238,30 @@ inp_hopf6021(
 	default:
 		return parse_addchar(parseio, ch);
 	}
+}
+
+/*
+ * convert a hex-digit to numeric value
+ */
+static unsigned char
+hexval(
+	unsigned char ch
+	)
+{
+	unsigned int dv;
+	
+	if ((dv = ch - '0') >= 10u)
+	{
+		if ((dv -= 'A'-'0') < 6u || (dv -= 'a'-'A') < 6u)
+		{
+			dv += 10;
+		}
+		else
+		{
+			dv = 0xFF;
+		}
+	}
+	return (unsigned char)dv;
 }
 
 #else /* not (REFCLOCK && CLOCK_PARSE && CLOCK_HOPF6021) */

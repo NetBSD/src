@@ -1,4 +1,4 @@
-/*	$NetBSD: numtohost.c,v 1.1.1.3.4.3 2016/05/08 21:55:52 snj Exp $	*/
+/*	$NetBSD: numtohost.c,v 1.1.1.3.4.4 2017/05/04 06:01:08 snj Exp $	*/
 
 #include "config.h"
 
@@ -28,6 +28,6 @@ test_LoopbackNetNonResolve(void) {
 	 */
 
 	const u_int32 input = 127*256*256*256 + 1*256 + 1; // 127.0.1.1
-	
+
 	TEST_ASSERT_EQUAL_STRING("127.0.1.1", numtohost(htonl(input)));
 }
