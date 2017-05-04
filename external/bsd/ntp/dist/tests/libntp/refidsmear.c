@@ -1,4 +1,4 @@
-/*	$NetBSD: refidsmear.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
+/*	$NetBSD: refidsmear.c,v 1.1.1.3.6.4 2017/05/04 05:53:55 snj Exp $	*/
 
 #include "config.h"
 
@@ -59,7 +59,7 @@ rtol(uint32_t r, char *es)
 
 	l = convertRefIDToLFP(htonl(r));
 	as = lfptoa(&l, 8);
-	
+
 	//printf("refid %#x, smear %s\n", r, as);
 
 	TEST_ASSERT_NOT_NULL_MESSAGE(as, msg);

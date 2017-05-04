@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.2.8.2 2016/05/08 21:51:00 snj Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.1.1.2.8.3 2017/05/04 05:53:47 snj Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -20,15 +20,15 @@
  */
 size_t
 MD5authencrypt(
-	int	type,		/* hash algorithm */
+	int		type,	/* hash algorithm */
 	const u_char *	key,	/* key pointer */
-	u_int32 *pkt,		/* packet pointer */
+	u_int32 *	pkt,	/* packet pointer */
 	size_t		length	/* packet length */
 	)
 {
 	u_char	digest[EVP_MAX_MD_SIZE];
 	u_int	len;
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 
 	/*
 	 * Compute digest of key concatenated with packet. Note: the
@@ -36,18 +36,20 @@ MD5authencrypt(
 	 * was creaded.
 	 */
 	INIT_SSL();
-#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
-	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(type))) {
+	ctx = EVP_MD_CTX_new();
+	if (!(ctx && EVP_DigestInit(ctx, EVP_get_digestbynid(type)))) {
 		msyslog(LOG_ERR,
 		    "MAC encrypt: digest init failed");
+		EVP_MD_CTX_free(ctx);
 		return (0);
 	}
-#else
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
-#endif
-	EVP_DigestUpdate(&ctx, key, cache_secretsize);
-	EVP_DigestUpdate(&ctx, (u_char *)pkt, length);
-	EVP_DigestFinal(&ctx, digest, &len);
+	EVP_DigestUpdate(ctx, key, cache_secretsize);
+	EVP_DigestUpdate(ctx, (u_char *)pkt, length);
+	EVP_DigestFinal(ctx, digest, &len);
+	EVP_MD_CTX_free(ctx);
+	/* If the MAC is longer than the MAX then truncate it. */
+	if (len > MAX_MAC_LEN - 4)
+	    len = MAX_MAC_LEN - 4;
 	memmove((u_char *)pkt + length + 4, digest, len);
 	return (len + 4);
 }
@@ -60,16 +62,16 @@ MD5authencrypt(
  */
 int
 MD5authdecrypt(
-	int	type,		/* hash algorithm */
+	int		type,	/* hash algorithm */
 	const u_char *	key,	/* key pointer */
-	u_int32	*pkt,		/* packet pointer */
+	u_int32	*	pkt,	/* packet pointer */
 	size_t		length,	/* packet length */
 	size_t		size	/* MAC size */
 	)
 {
 	u_char	digest[EVP_MAX_MD_SIZE];
 	u_int	len;
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 
 	/*
 	 * Compute digest of key concatenated with packet. Note: the
@@ -77,24 +79,26 @@ MD5authdecrypt(
 	 * was created.
 	 */
 	INIT_SSL();
-#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
-	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(type))) {
+	ctx = EVP_MD_CTX_new();
+	if (!(ctx && EVP_DigestInit(ctx, EVP_get_digestbynid(type)))) {
 		msyslog(LOG_ERR,
 		    "MAC decrypt: digest init failed");
+		EVP_MD_CTX_free(ctx);
 		return (0);
 	}
-#else
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
-#endif
-	EVP_DigestUpdate(&ctx, key, cache_secretsize);
-	EVP_DigestUpdate(&ctx, (u_char *)pkt, length);
-	EVP_DigestFinal(&ctx, digest, &len);
+	EVP_DigestUpdate(ctx, key, cache_secretsize);
+	EVP_DigestUpdate(ctx, (u_char *)pkt, length);
+	EVP_DigestFinal(ctx, digest, &len);
+	EVP_MD_CTX_free(ctx);
+	/* If the MAC is longer than the MAX then truncate it. */
+	if (len > MAX_MAC_LEN - 4)
+	    len = MAX_MAC_LEN - 4;
 	if (size != (size_t)len + 4) {
 		msyslog(LOG_ERR,
 		    "MAC decrypt: MAC length error");
 		return (0);
 	}
-	return !isc_tsmemcmp(digest, (const char *)pkt + length + 4, len);
+	return !isc_tsmemcmp(digest, (u_char *)pkt + length + 4, len);
 }
 
 /*
@@ -108,7 +112,7 @@ addr2refid(sockaddr_u *addr)
 {
 	u_char		digest[20];
 	u_int32		addr_refid;
-	EVP_MD_CTX	ctx;
+	EVP_MD_CTX	*ctx;
 	u_int		len;
 
 	if (IS_IPV4(addr))
@@ -116,24 +120,23 @@ addr2refid(sockaddr_u *addr)
 
 	INIT_SSL();
 
-#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
-	EVP_MD_CTX_init(&ctx);
+	ctx = EVP_MD_CTX_new();
+	EVP_MD_CTX_init(ctx);
 #ifdef EVP_MD_CTX_FLAG_NON_FIPS_ALLOW
 	/* MD5 is not used as a crypto hash here. */
-	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+	EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 #endif
-	if (!EVP_DigestInit_ex(&ctx, EVP_md5(), NULL)) {
+	if (!EVP_DigestInit_ex(ctx, EVP_md5(), NULL)) {
 		msyslog(LOG_ERR,
 		    "MD5 init failed");
+		EVP_MD_CTX_free(ctx);	/* pedantic... but safe */
 		exit(1);
 	}
-#else
-	EVP_DigestInit(&ctx, EVP_md5());
-#endif
 
-	EVP_DigestUpdate(&ctx, (u_char *)PSOCK_ADDR6(addr),
+	EVP_DigestUpdate(ctx, (u_char *)PSOCK_ADDR6(addr),
 	    sizeof(struct in6_addr));
-	EVP_DigestFinal(&ctx, digest, &len);
+	EVP_DigestFinal(ctx, digest, &len);
+	EVP_MD_CTX_free(ctx);
 	memcpy(&addr_refid, digest, sizeof(addr_refid));
 	return (addr_refid);
 }

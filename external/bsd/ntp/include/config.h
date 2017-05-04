@@ -8,7 +8,8 @@
 /* #undef ADJTIME_IS_ACCURATE */
 
 /* Support NTP Autokey protocol? */
-#define AUTOKEY 1
+/* in the Makefile */
+/* #undef AUTOKEY */
 
 /* why not HAVE_P_S? */
 /* #undef CALL_PTHREAD_SETCONCURRENCY */
@@ -289,7 +290,7 @@
 #define DFLT_RLIMIT_MEMLOCK 32
 
 /* Default number of 4k pages for RLIMIT_STACK */
-#define DFLT_RLIMIT_STACK 64
+#define DFLT_RLIMIT_STACK 128
 
 /* Directory separator character, usually / or \\ */
 #define DIR_SEP '/'
@@ -1459,7 +1460,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p7"
+#define PACKAGE_STRING "ntp 4.2.8p9"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1468,7 +1469,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p7"
+#define PACKAGE_VERSION "4.2.8p9"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1509,7 +1510,7 @@
 /* Do we want the SCO clock hacks? */
 /* #undef SCO5_CLOCK */
 
-/* The size of `char*', as computed by sizeof. */
+/* The size of `char *', as computed by sizeof. */
 #ifdef _LP64
 #define SIZEOF_CHAR_P 8
 #else
@@ -1611,7 +1612,8 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_FSETOWNCTTY */
 
 /* Use OpenSSL's crypto random functions */
-#define USE_OPENSSL_CRYPTO_RAND 1
+/* In Makefile */
+/* #undef USE_OPENSSL_CRYPTO_RAND */
 
 /* OK to use snprintb()? */
 #define USE_SNPRINTB 1
@@ -1623,7 +1625,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p7"
+#define VERSION "4.2.8p9"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */
@@ -1637,15 +1639,15 @@ typedef unsigned int	uintptr_t;
 #ifndef __NetBSD__
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined AC_APPLE_UNIVERSAL_BUILD
 # if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
 # endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
+# else
+#  ifndef WORDS_BIGENDIAN
+ /* #  undef WORDS_BIGENDIAN */
+#  endif
 # endif
-#endif
 #else
 # include <sys/endian.h>
 # if _BYTE_ORDER == _BIG_ENDIAN

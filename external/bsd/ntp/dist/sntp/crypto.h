@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.2.8.2 2016/05/08 21:51:04 snj Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.2.8.3 2017/05/04 05:53:52 snj Exp $	*/
 
 #ifndef CRYPTO_H
 #define CRYPTO_H
@@ -19,11 +19,11 @@
 /* #include "sntp-opts.h" */
 
 struct key {
-	struct key *next;
-	int key_id;
-	int key_len;
-	char type[10];
-	char key_seq[64];
+	struct key *	next;
+	int		key_id;
+	int		key_len;
+	char		type[10];
+	char		key_seq[64];
 };
 
 extern	int	auth_init(const char *keyfile, struct key **keys);

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyFile.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
+/*	$NetBSD: keyFile.c,v 1.1.1.3.6.4 2017/05/04 05:53:54 snj Exp $	*/
 
 #include "config.h"
 #include "fileHandlingTest.h"
@@ -24,23 +24,23 @@ CompareKeys(
 	struct key	actual
 	)
 {
-	if (expected.key_id != actual.key_id){
+	if (expected.key_id != actual.key_id) {
 		printf("Expected key_id: %d but was: %d\n",
 		       expected.key_id, actual.key_id);
 		return FALSE;
 	}
-	if (expected.key_len != actual.key_len){
+	if (expected.key_len != actual.key_len) {
 		printf("Expected key_len: %d but was: %d\n",
 		       expected.key_len, actual.key_len);
 		return FALSE;
 	}
-	if (strcmp(expected.type, actual.type) != 0){
+	if (strcmp(expected.type, actual.type) != 0) {
 		printf("Expected key_type: %s but was: %s\n",
 		       expected.type, actual.type);
 		return FALSE;
 
 	}
-	if (memcmp(expected.key_seq, actual.key_seq, expected.key_len) != 0){
+	if (memcmp(expected.key_seq, actual.key_seq, expected.key_len) != 0) {
 		printf("Key mismatch!\n");
 		return FALSE;		
 	}
@@ -51,13 +51,13 @@ CompareKeys(
 bool
 CompareKeysAlternative(
 	int		key_id,
-	       int key_len,
-	       const char* type,
-	       const char* key_seq,
+	int		key_len,
+	const char *	type,
+	const char *	key_seq,
 	struct key	actual
 	)
 {
-	struct key temp;
+	struct key	temp;
 
 	temp.key_id = key_id;
 	temp.key_len = key_len;
@@ -71,7 +71,7 @@ CompareKeysAlternative(
 void
 test_ReadEmptyKeyFile(void)
 {
-	struct key* keys = NULL;
+	struct key *	keys = NULL;
 	const char *	path = CreatePath("key-test-empty", INPUT_DIR);
 
 	TEST_ASSERT_NOT_NULL(path);
@@ -85,7 +85,7 @@ test_ReadEmptyKeyFile(void)
 void
 test_ReadASCIIKeys(void)
 {
-	struct key* keys = NULL;
+	struct key *	keys = NULL;
 	struct key *	result = NULL;
 	const char *	path = CreatePath("key-test-ascii", INPUT_DIR);
 
@@ -109,7 +109,7 @@ test_ReadASCIIKeys(void)
 void
 test_ReadHexKeys(void)
 {
-	struct key* keys = NULL;
+	struct key *	keys = NULL;
 	struct key *	result = NULL;
 	const char *	path = CreatePath("key-test-hex", INPUT_DIR);
 	char 		data1[15];
@@ -144,7 +144,7 @@ test_ReadHexKeys(void)
 void
 test_ReadKeyFileWithComments(void)
 {
-	struct key* keys = NULL;
+	struct key *	keys = NULL;
 	struct key *	result = NULL;
 	const char *	path = CreatePath("key-test-comments", INPUT_DIR);
 	char 		data[15];
@@ -170,7 +170,7 @@ test_ReadKeyFileWithComments(void)
 void
 test_ReadKeyFileWithInvalidHex(void)
 {
-	struct key* keys = NULL;
+	struct key *	keys = NULL;
 	struct key *	result = NULL;
 	const char *	path = CreatePath("key-test-invalid-hex", INPUT_DIR);
 	char 		data[15];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.7.8.4 2016/05/08 21:51:01 snj Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.7.8.5 2017/05/04 05:53:48 snj Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -669,7 +669,7 @@ list_peers(
 	struct req_pkt *inpkt
 	)
 {
-	struct info_peer_list *ip;
+	struct info_peer_list *	ip;
 	const struct peer *	pp;
 
 	ip = (struct info_peer_list *)prepare_pkt(srcadr, inter, inpkt,
@@ -678,26 +678,26 @@ list_peers(
 		if (IS_IPV6(&pp->srcadr)) {
 			if (!client_v6_capable)
 				continue;			
-				ip->addr6 = SOCK_ADDR6(&pp->srcadr);
-				ip->v6_flag = 1;
+			ip->addr6 = SOCK_ADDR6(&pp->srcadr);
+			ip->v6_flag = 1;
 		} else {
 			ip->addr = NSRCADR(&pp->srcadr);
 			if (client_v6_capable)
 				ip->v6_flag = 0;
 		}
 
-			ip->port = NSRCPORT(&pp->srcadr);
-			ip->hmode = pp->hmode;
-			ip->flags = 0;
-			if (pp->flags & FLAG_CONFIG)
-				ip->flags |= INFO_FLAG_CONFIG;
-			if (pp == sys_peer)
-				ip->flags |= INFO_FLAG_SYSPEER;
-			if (pp->status == CTL_PST_SEL_SYNCCAND)
-				ip->flags |= INFO_FLAG_SEL_CANDIDATE;
-			if (pp->status >= CTL_PST_SEL_SYSPEER)
-				ip->flags |= INFO_FLAG_SHORTLIST;
-			ip = (struct info_peer_list *)more_pkt();
+		ip->port = NSRCPORT(&pp->srcadr);
+		ip->hmode = pp->hmode;
+		ip->flags = 0;
+		if (pp->flags & FLAG_CONFIG)
+			ip->flags |= INFO_FLAG_CONFIG;
+		if (pp == sys_peer)
+			ip->flags |= INFO_FLAG_SYSPEER;
+		if (pp->status == CTL_PST_SEL_SYNCCAND)
+			ip->flags |= INFO_FLAG_SEL_CANDIDATE;
+		if (pp->status >= CTL_PST_SEL_SYSPEER)
+			ip->flags |= INFO_FLAG_SHORTLIST;
+		ip = (struct info_peer_list *)more_pkt();
 	}	/* for pp */
 
 	flush_pkt();
@@ -716,7 +716,7 @@ list_peers_sum(
 {
 	struct info_peer_summary *	ips;
 	const struct peer *		pp;
-	l_fp ltmp;
+	l_fp 				ltmp;
 
 	DPRINTF(3, ("wants peer list summary\n"));
 
@@ -731,12 +731,12 @@ list_peers_sum(
 		if (IS_IPV6(&pp->srcadr)) {
 			if (!client_v6_capable)
 				continue;
-				ips->srcadr6 = SOCK_ADDR6(&pp->srcadr);
-				ips->v6_flag = 1;
-				if (pp->dstadr)
-					ips->dstadr6 = SOCK_ADDR6(&pp->dstadr->sin);
-				else
-					ZERO(ips->dstadr6);
+			ips->srcadr6 = SOCK_ADDR6(&pp->srcadr);
+			ips->v6_flag = 1;
+			if (pp->dstadr)
+				ips->dstadr6 = SOCK_ADDR6(&pp->dstadr->sin);
+			else
+				ZERO(ips->dstadr6);
 		} else {
 			ips->srcadr = NSRCADR(&pp->srcadr);
 			if (client_v6_capable)
@@ -759,31 +759,31 @@ list_peers_sum(
 			}
 		}
 		
-			ips->srcport = NSRCPORT(&pp->srcadr);
-			ips->stratum = pp->stratum;
-			ips->hpoll = pp->hpoll;
-			ips->ppoll = pp->ppoll;
-			ips->reach = pp->reach;
-			ips->flags = 0;
-			if (pp == sys_peer)
-				ips->flags |= INFO_FLAG_SYSPEER;
-			if (pp->flags & FLAG_CONFIG)
-				ips->flags |= INFO_FLAG_CONFIG;
-			if (pp->flags & FLAG_REFCLOCK)
-				ips->flags |= INFO_FLAG_REFCLOCK;
-			if (pp->flags & FLAG_PREFER)
-				ips->flags |= INFO_FLAG_PREFER;
-			if (pp->flags & FLAG_BURST)
-				ips->flags |= INFO_FLAG_BURST;
-			if (pp->status == CTL_PST_SEL_SYNCCAND)
-				ips->flags |= INFO_FLAG_SEL_CANDIDATE;
-			if (pp->status >= CTL_PST_SEL_SYSPEER)
-				ips->flags |= INFO_FLAG_SHORTLIST;
-			ips->hmode = pp->hmode;
-			ips->delay = HTONS_FP(DTOFP(pp->delay));
-			DTOLFP(pp->offset, &ltmp);
-			HTONL_FP(&ltmp, &ips->offset);
-			ips->dispersion = HTONS_FP(DTOUFP(SQRT(pp->disp)));
+		ips->srcport = NSRCPORT(&pp->srcadr);
+		ips->stratum = pp->stratum;
+		ips->hpoll = pp->hpoll;
+		ips->ppoll = pp->ppoll;
+		ips->reach = pp->reach;
+		ips->flags = 0;
+		if (pp == sys_peer)
+			ips->flags |= INFO_FLAG_SYSPEER;
+		if (pp->flags & FLAG_CONFIG)
+			ips->flags |= INFO_FLAG_CONFIG;
+		if (pp->flags & FLAG_REFCLOCK)
+			ips->flags |= INFO_FLAG_REFCLOCK;
+		if (pp->flags & FLAG_PREFER)
+			ips->flags |= INFO_FLAG_PREFER;
+		if (pp->flags & FLAG_BURST)
+			ips->flags |= INFO_FLAG_BURST;
+		if (pp->status == CTL_PST_SEL_SYNCCAND)
+			ips->flags |= INFO_FLAG_SEL_CANDIDATE;
+		if (pp->status >= CTL_PST_SEL_SYSPEER)
+			ips->flags |= INFO_FLAG_SHORTLIST;
+		ips->hmode = pp->hmode;
+		ips->delay = HTONS_FP(DTOFP(pp->delay));
+		DTOLFP(pp->offset, &ltmp);
+		HTONL_FP(&ltmp, &ips->offset);
+		ips->dispersion = HTONS_FP(DTOUFP(SQRT(pp->disp)));
 
 		ips = (struct info_peer_summary *)more_pkt();
 	}	/* for pp */
@@ -1425,24 +1425,24 @@ do_unconf(
 
 	/* now do two runs: first a dry run, then a busy one */
 	for (loops = 0; loops != 2; ++loops) {
-	items = INFO_NITEMS(inpkt->err_nitems);
-	datap = inpkt->u.data;
-	while (items-- > 0) {
+		items = INFO_NITEMS(inpkt->err_nitems);
+		datap = inpkt->u.data;
+		while (items-- > 0) {
 			/* copy from request to local */
-		ZERO(temp_cp);
-		memcpy(&temp_cp, datap, item_sz);
+			ZERO(temp_cp);
+			memcpy(&temp_cp, datap, item_sz);
 			/* get address structure */
 			ZERO_SOCK(&peeraddr);
-		if (client_v6_capable && temp_cp.v6_flag) {
-			AF(&peeraddr) = AF_INET6;
-			SOCK_ADDR6(&peeraddr) = temp_cp.peeraddr6;
-		} else {
-			AF(&peeraddr) = AF_INET;
-			NSRCADR(&peeraddr) = temp_cp.peeraddr;
-		}
-		SET_PORT(&peeraddr, NTP_PORT);
+			if (client_v6_capable && temp_cp.v6_flag) {
+				AF(&peeraddr) = AF_INET6;
+				SOCK_ADDR6(&peeraddr) = temp_cp.peeraddr6;
+			} else {
+				AF(&peeraddr) = AF_INET;
+				NSRCADR(&peeraddr) = temp_cp.peeraddr;
+			}
+			SET_PORT(&peeraddr, NTP_PORT);
 #ifdef ISC_PLATFORM_HAVESALEN
-		peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
+			peeraddr.sa.sa_len = SOCKLEN(&peeraddr);
 #endif
 			DPRINTF(1, ("searching for %s\n",
 				    stoa(&peeraddr)));
@@ -1461,11 +1461,11 @@ do_unconf(
 				return;
 			} else if (loops && p) {
 				/* Item found in busy run -- remove! */
-		peer_clear(p, "GONE");
-		unpeer(p);
+				peer_clear(p, "GONE");
+				unpeer(p);
 			}
-		datap += item_sz;
-	}
+			datap += item_sz;
+		}
 	}
 
 	/* report success */
@@ -1650,13 +1650,13 @@ list_restrict4(
 			break;
 	
 	while (pir && popRestriction(&rpad, &res)) {
-	pir->addr = htonl(res->u.v4.addr);
-	if (client_v6_capable) 
-		pir->v6_flag = 0;
-	pir->mask = htonl(res->u.v4.mask);
-	pir->count = htonl(res->count);
-	pir->flags = htons(res->flags);
-	pir->mflags = htons(res->mflags);
+		pir->addr = htonl(res->u.v4.addr);
+		if (client_v6_capable) 
+			pir->v6_flag = 0;
+		pir->mask = htonl(res->u.v4.mask);
+		pir->count = htonl(res->count);
+		pir->flags = htons(res->flags);
+		pir->mflags = htons(res->mflags);
 		pir = (struct info_restrict *)more_pkt();
 	}
 	flushRestrictionStack(&rpad);
@@ -1682,12 +1682,12 @@ list_restrict6(
 			break;
 
 	while (pir && popRestriction(&rpad, &res)) {
-	pir->addr6 = res->u.v6.addr; 
-	pir->mask6 = res->u.v6.mask;
-	pir->v6_flag = 1;
-	pir->count = htonl(res->count);
-	pir->flags = htons(res->flags);
-	pir->mflags = htons(res->mflags);
+		pir->addr6 = res->u.v6.addr; 
+		pir->mask6 = res->u.v6.mask;
+		pir->v6_flag = 1;
+		pir->count = htonl(res->count);
+		pir->flags = htons(res->flags);
+		pir->mflags = htons(res->mflags);
 		pir = (struct info_restrict *)more_pkt();
 	}
 	flushRestrictionStack(&rpad);
@@ -2305,8 +2305,8 @@ static void
 set_keyid_checked(
 	keyid_t        *into,
 	const char     *what,
-	sockaddr_u *srcadr,
-	endpt *inter,
+	sockaddr_u     *srcadr,
+	endpt          *inter,
 	struct req_pkt *inpkt
 	)
 {
@@ -2678,7 +2678,7 @@ fill_info_if_stats(void *data, interface_info_t *interface_info)
 	struct info_if_stats **ifsp = (struct info_if_stats **)data;
 	struct info_if_stats *ifs = *ifsp;
 	endpt *ep = interface_info->ep;
-	
+
 	if (NULL == ifs)
 		return;
 	

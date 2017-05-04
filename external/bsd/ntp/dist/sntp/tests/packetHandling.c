@@ -1,4 +1,4 @@
-/*	$NetBSD: packetHandling.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
+/*	$NetBSD: packetHandling.c,v 1.1.1.3.6.4 2017/05/04 05:53:54 snj Exp $	*/
 
 #include "config.h"
 #include "ntp_debug.h"
@@ -48,8 +48,8 @@ LfpEquality(
 void
 test_GenerateUnauthenticatedPacket(void)
 {
-	struct pkt testpkt;
-	struct timeval xmt;
+	struct pkt	testpkt;
+	struct timeval	xmt;
 	l_fp		expected_xmt, actual_xmt;
 
 	GETTIMEOFDAY(&xmt, NULL);
@@ -76,7 +76,7 @@ test_GenerateAuthenticatedPacket(void)
 {
 	static const int EXPECTED_PKTLEN = LEN_PKT_NOMAC + MAX_MD5_LEN;
 	
-	struct key testkey;
+	struct key	testkey;
 	struct pkt	testpkt;
 	struct timeval	xmt;
 	l_fp		expected_xmt, actual_xmt;
@@ -116,7 +116,7 @@ test_GenerateAuthenticatedPacket(void)
 void
 test_OffsetCalculationPositiveOffset(void)
 {
-	struct pkt rpkt;
+	struct pkt	rpkt;
 	l_fp		reftime, tmp;
 	struct timeval	dst;
 	double		offset, precision, synch_distance;
@@ -162,7 +162,7 @@ test_OffsetCalculationPositiveOffset(void)
 void
 test_OffsetCalculationNegativeOffset(void)
 {
-	struct pkt rpkt;
+	struct pkt	rpkt;
 	l_fp		reftime, tmp;
 	struct timeval	dst;
 	double		offset, precision, synch_distance;
@@ -208,7 +208,7 @@ test_OffsetCalculationNegativeOffset(void)
 void
 test_HandleUnusableServer(void)
 {
-	struct pkt		rpkt;
+	struct pkt	rpkt;
 	sockaddr_u	host;
 	int		rpktl;
 
@@ -222,7 +222,7 @@ test_HandleUnusableServer(void)
 void
 test_HandleUnusablePacket(void)
 {
-	struct pkt		rpkt;
+	struct pkt	rpkt;
 	sockaddr_u	host;
 	int		rpktl;
 
@@ -236,7 +236,7 @@ test_HandleUnusablePacket(void)
 void
 test_HandleServerAuthenticationFailure(void)
 {
-	struct pkt		rpkt;
+	struct pkt	rpkt;
 	sockaddr_u	host;
 	int		rpktl;
 
@@ -253,8 +253,8 @@ test_HandleKodDemobilize(void)
 	static const char *	HOSTNAME = "192.0.2.1";
 	static const char *	REASON = "DENY";
 	struct pkt		rpkt;
-	sockaddr_u	host;
-	int		rpktl;
+	sockaddr_u		host;
+	int			rpktl;
 	struct kod_entry *	entry;
 
 	rpktl = KOD_DEMOBILIZE;
@@ -277,7 +277,7 @@ test_HandleKodDemobilize(void)
 void
 test_HandleKodRate(void)
 {
-	struct 	pkt		rpkt;
+	struct 	pkt	rpkt;
 	sockaddr_u	host;
 	int		rpktl;
 
@@ -291,7 +291,7 @@ test_HandleKodRate(void)
 void
 test_HandleCorrectPacket(void)
 {
-	struct pkt		rpkt;
+	struct pkt	rpkt;
 	sockaddr_u	host;
 	int		rpktl;
 	l_fp		now;

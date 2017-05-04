@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.3.8.3 2016/05/08 21:51:00 snj Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.3.8.4 2017/05/04 05:53:46 snj Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -323,6 +323,8 @@ extern	void	parse_cmdline_opts(int *, char ***);
 
 /* ntp_config.c */
 extern char const *	progname;
+extern int saved_argc;
+extern char **saved_argv;
 extern char	*sys_phone[];		/* ACTS phone numbers */
 #if defined(HAVE_SCHED_SETSCHEDULER)
 extern int	config_priority_override;
@@ -485,15 +487,17 @@ extern int	sys_bclient;		/* we set our time to broadcasts */
 extern double	sys_bdelay; 		/* broadcast client default delay */
 extern int	sys_authenticate;	/* requre authentication for config */
 extern l_fp	sys_authdelay;		/* authentication delay */
+extern u_char	sys_bcpollbstep;	/* broadcast poll backstep gate */
 extern u_long 	sys_epoch;		/* last clock update time */
 extern keyid_t	sys_private;		/* private value for session seed */
 extern int	sys_manycastserver;	/* respond to manycast client pkts */
+extern int	sys_maxclock;		/* maximum survivors */
 extern int	sys_minclock;		/* minimum survivors */
 extern int	sys_minsane;		/* minimum candidates */
 extern int	sys_floor;		/* cluster stratum floor */
 extern int	sys_ceiling;		/* cluster stratum ceiling */
 extern u_char	sys_ttl[MAX_TTL];	/* ttl mapping vector */
-extern int	sys_ttlmax;		/* max ttl mapping vector index */
+extern u_int	sys_ttlmax;		/* max ttl mapping vector index */
 
 /*
  * Statistics counters

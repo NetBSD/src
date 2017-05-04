@@ -1,4 +1,4 @@
-/*	$NetBSD: t-log.c,v 1.1.1.1.6.3 2016/05/08 21:51:05 snj Exp $	*/
+/*	$NetBSD: t-log.c,v 1.1.1.1.6.4 2017/05/04 05:53:54 snj Exp $	*/
 
 #include "config.h"
 #include "unity.h"
@@ -37,12 +37,12 @@ void
 testOpenLogfileTest(void)
 {
 	sntp_init_logging("TEST_PROGNAME2"); //this name is consistent through the entire program unless changed
-	open_logfile("testLogfile.log"); 
+	open_logfile("testLogfile.log");
 	//open_logfile("/var/log/syslog"); //this gives me "Permission Denied" when i do %m
-	
+
 	msyslog(LOG_ERR, "Cannot open log file %s","abcXX");
 	//cleanup_log(); //unnecessary  after log.c fix!
-	
+
 	return;
 }
 
@@ -61,7 +61,7 @@ testWriteInCustomLogfile(void)
 	open_logfile("testLogfile2.log"); // ./ causing issues
 	//sntp_init_logging(testName);
 
-	
+
 	msyslog(LOG_ERR, "%s", testString);
 	FILE * f = fopen("testLogfile2.log","r");
 	char line[256];
@@ -69,19 +69,19 @@ testWriteInCustomLogfile(void)
 	TEST_ASSERT_TRUE( f != NULL);
 
 	//should be only 1 line
- 	while (fgets(line, sizeof(line), f)) {
-        	printf("%s", line); 
-    	}
-	
+	while (fgets(line, sizeof(line), f)) {
+		printf("%s", line);
+	}
+
 
 	char* x = strstr(line,testName);
-	
+
 	TEST_ASSERT_TRUE( x != NULL);
 
 	x = strstr(line,testString);
 	TEST_ASSERT_TRUE( x != NULL);
 	//cleanup_log();
-	fclose(f); //using this will also cause segfault, because at the end, log.c will  call (using atexit(func) function) cleanup_log(void)-> fclose(syslog_file); 
+	fclose(f); //using this will also cause segfault, because at the end, log.c will  call (using atexit(func) function) cleanup_log(void)-> fclose(syslog_file);
 	//After the 1st fclose, syslog_file = NULL, and is never reset -> hopefully fixed by editing log.c
 	//TEST_ASSERT_EQUAL_STRING(testString,line); //doesn't work, line is dynamic because the process name is random.
 
