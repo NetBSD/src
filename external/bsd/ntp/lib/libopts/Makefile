@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.8.1 2014/12/25 02:28:20 snj Exp $
+#	$NetBSD: Makefile,v 1.5.8.2 2017/05/04 05:53:56 snj Exp $
 
 LIBISPRIVATE=yes
 
@@ -22,5 +22,6 @@ COPTS.libopts.c+=	-Wno-error
 .else
 COPTS.libopts.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-contains-nul :}
 .endif
+COPTS.libopts.c+=	${${ACTIVE_CC} == "clang":? -Wno-format :}
 
 .include <bsd.lib.mk>

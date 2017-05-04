@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
+/*	$NetBSD: statestr.c,v 1.1.1.1.14.3 2017/05/04 05:53:47 snj Exp $	*/
 
 /*
  * pretty printing of status information
@@ -357,13 +357,12 @@ decode_bitflags(
 
 	for (b = 0; b < tab_ct; b++) {
 		if (tab[b].code & bits) {
-			rc = snprintf(pch, (lim - pch), "%s%s", sep,
+			size_t avail = lim - pch;
+			rc = snprintf(pch, avail, "%s%s", sep,
 				      tab[b].string);
-			if (rc < 0)
+			if ((size_t)rc >= avail)
 				goto toosmall;
-			pch += (u_int)rc;
-			if (pch >= lim)
-				goto toosmall;
+			pch += rc;
 			sep = sep2;
 		}
 	}

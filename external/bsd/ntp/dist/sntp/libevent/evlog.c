@@ -1,4 +1,4 @@
-/*	$NetBSD: evlog.c,v 1.1.6.2 2015/11/08 00:16:04 snj Exp $	*/
+/*	$NetBSD: evlog.c,v 1.1.6.3 2017/05/04 05:53:53 snj Exp $	*/
 
 /*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.2.8.3 2016/05/08 21:51:01 snj Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.2.8.4 2017/05/04 05:53:48 snj Exp $	*/
 
 /*
  * ntp_restrict.c - determine host restrictions
@@ -168,7 +168,7 @@ alloc_res4(void)
 	if (res != NULL)
 		return res;
 
-	rl = emalloc_zero(count * cb);
+	rl = eallocarray(count, cb);
 	/* link all but the first onto free list */
 	res = (void *)((char *)rl + (count - 1) * cb);
 	for (i = count - 1; i > 0; i--) {
@@ -194,7 +194,7 @@ alloc_res6(void)
 	if (res != NULL)
 		return res;
 
-	rl = emalloc_zero(count * cb);
+	rl = eallocarray(count, cb);
 	/* link all but the first onto free list */
 	res = (void *)((char *)rl + (count - 1) * cb);
 	for (i = count - 1; i > 0; i--) {

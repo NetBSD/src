@@ -1,4 +1,4 @@
-/*	$NetBSD: buftvtots.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
+/*	$NetBSD: buftvtots.c,v 1.1.1.3.6.4 2017/05/04 05:53:55 snj Exp $	*/
 
 #include "config.h"
 #include "ntp_types.h"
@@ -69,7 +69,7 @@ test_IllegalMicroseconds(void)
 {
 #ifndef SYS_WINNT
 	const struct timeval input = {0, 1100000}; /* > 999 999 microseconds. */
-	
+
 	l_fp actual;
 
 	TEST_ASSERT_FALSE(buftvtots((const char*)(&input), &actual));

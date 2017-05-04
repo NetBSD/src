@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.8.8.3 2016/05/08 21:51:02 snj Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.8.8.4 2017/05/04 05:53:49 snj Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -36,6 +36,7 @@
 #include "openssl/evp.h"
 #include "openssl/objects.h"
 #include "openssl/err.h"
+#include "libssl_compat.h"
 #endif
 #include <ssl_applink.c>
 
@@ -503,7 +504,7 @@ ntpqmain(
 	    builtins[icmd].desc[0] = "md5";
 	    my_easprintf(&msg,
 			 "set key type to use for authenticated requests (%s)",
-		list);
+			 list);
 #endif
 	    builtins[icmd].comment = msg;
 	    free(list);
@@ -756,9 +757,9 @@ openhost(
 		    sizeof(hostaddr)) == -1)
 #else
 	   (connect(sockfd, (struct sockaddr *)ai->ai_addr,
-		    ai->ai_addrlen) == -1)
+		ai->ai_addrlen) == -1)
 #endif /* SYS_VXWORKS */
-	    {
+	{
 		error("connect");
 		freeaddrinfo(ai);
 		return 0;
@@ -777,31 +778,42 @@ dump_hex_printable(
 	size_t		len
 	)
 {
-	const char *	cdata;
-	const char *	rowstart;
-	size_t		idx;
-	size_t		rowlen;
-	u_char		uch;
+	/* every line shows at most 16 bytes, so we need a buffer of
+	 *   4 * 16 (2 xdigits, 1 char, one sep for xdigits)
+	 * + 2 * 1  (block separators)
+	 * + <LF> + <NUL>
+	 *---------------
+	 *  68 bytes
+	 */
+	static const char s_xdig[16] = "0123456789ABCDEF";
 
-	cdata = data;
-	while (len > 0) {
-		rowstart = cdata;
-		rowlen = min(16, len);
-		for (idx = 0; idx < rowlen; idx++) {
-			uch = *(cdata++);
-			printf("%02x ", uch);
-		}
-		for ( ; idx < 16 ; idx++)
-			printf("   ");
-		cdata = rowstart;
-		for (idx = 0; idx < rowlen; idx++) {
-			uch = *(cdata++);
-			printf("%c", (isprint(uch))
-					 ? uch
-					 : '.');
-		}
-		printf("\n");
+	char lbuf[68];
+	int  ch, rowlen;
+	const u_char * cdata = data;
+	char *xptr, *pptr;
+
+	while (len) {
+		memset(lbuf, ' ', sizeof(lbuf));
+		xptr = lbuf;
+		pptr = lbuf + 3*16 + 2;
+
+		rowlen = (len > 16) ? 16 : (int)len;
 		len -= rowlen;
+		
+		do {
+			ch = *cdata++;
+			
+			*xptr++ = s_xdig[ch >> 4  ];
+			*xptr++ = s_xdig[ch & 0x0F];
+			if (++xptr == lbuf + 3*8)
+				++xptr;
+
+			*pptr++ = isprint(ch) ? (char)ch : '.';
+		} while (--rowlen);
+
+		*pptr++ = '\n';
+		*pptr   = '\0';
+		fputs(lbuf, stdout);
 	}
 }
 
@@ -863,6 +875,9 @@ getresponse(
 	uint32_t tospan;	/* timeout span (max delay) */
 	uint32_t todiff;	/* current delay */
 
+	memset(offsets, 0, sizeof(offsets));
+	memset(counts , 0, sizeof(counts ));
+	
 	/*
 	 * This is pretty tricky.  We may get between 1 and MAXFRAG packets
 	 * back in response to the request.  We peel the data out of
@@ -895,7 +910,7 @@ getresponse(
 		tospan = (uint32_t)tvo.tv_sec + (tvo.tv_usec != 0);
 
 		FD_SET(sockfd, &fds);
-		n = select(sockfd + 1, &fds, NULL, NULL, &tvo);
+		n = select(sockfd+1, &fds, NULL, NULL, &tvo);
 		if (n == -1) {
 #if !defined(SYS_WINNT) && defined(EINTR)
 			/* Windows does not know about EINTR (until very
@@ -923,10 +938,12 @@ getresponse(
 		todiff = (((uint32_t)time(NULL)) - tobase) & 0x7FFFFFFFu;
 		if ((n > 0) && (todiff > tospan)) {
 			n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
-			n = 0; /* faked timeout return from 'select()'*/
+			n -= n; /* faked timeout return from 'select()',
+				 * execute RMW cycle on 'n'
+				 */
 		}
 		
-		if (n == 0) {
+		if (n <= 0) {
 			/*
 			 * Timed out.  Return what we have
 			 */
@@ -961,7 +978,7 @@ getresponse(
 		}
 
 		n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
-		if (n == -1) {
+		if (n < 0) {
 			warning("read");
 			return -1;
 		}
@@ -1065,7 +1082,7 @@ getresponse(
 
 		if (n < shouldbesize) {
 			printf("Response packet claims %u octets payload, above %ld received\n",
-			       count, (long)n - CTL_HEADER_LEN);
+			       count, (long)(n - CTL_HEADER_LEN));
 			return ERR_INCOMPLETE;
 		}
 
@@ -1193,12 +1210,15 @@ getresponse(
 		 */
 		memcpy((char *)pktdata + offset, &rpkt.u, count);
 		tobase = (uint32_t)time(NULL);
-
+		
 		/*
 		 * If we've seen the last fragment, look for holes in the sequence.
 		 * If there aren't any, we're done.
 		 */
-	  maybe_final:
+#if !defined(SYS_WINNT) && defined(EINTR)
+		maybe_final:
+#endif
+
 		if (seenlastfrag && offsets[0] == 0) {
 			for (f = 1; f < numfrags; f++)
 				if (offsets[f-1] + counts[f-1] !=
@@ -1339,7 +1359,7 @@ show_error_msg(
 	if (numhosts > 1)
 		fprintf(stderr, "server=%s ", currenthost);
 
-	switch(m6resp) {
+	switch (m6resp) {
 
 	case CERR_BADFMT:
 		fprintf(stderr,
@@ -1516,7 +1536,7 @@ static int
 abortcmd(void)
 {
 	if (current_output == stdout)
-	    (void) fflush(stdout);
+		(void) fflush(stdout);
 	putc('\n', stderr);
 	(void) fflush(stderr);
 	if (jump) {
@@ -3581,7 +3601,7 @@ static void list_md_fn(const EVP_MD *m, const char *from, const char *to, void *
     size_t len, n;
     const char *name, *cp, **seen;
     struct hstate *hstate = arg;
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
     u_int digest_len;
     u_char digest[EVP_MAX_MD_SIZE];
 
@@ -3612,8 +3632,10 @@ static void list_md_fn(const EVP_MD *m, const char *from, const char *to, void *
      * Keep this consistent with keytype_from_text() in ssl_init.c.
      */
 
-    EVP_DigestInit(&ctx, EVP_get_digestbyname(name));
-    EVP_DigestFinal(&ctx, digest, &digest_len);
+    ctx = EVP_MD_CTX_new();
+    EVP_DigestInit(ctx, EVP_get_digestbyname(name));
+    EVP_DigestFinal(ctx, digest, &digest_len);
+    EVP_MD_CTX_free(ctx);
     if (digest_len > (MAX_MAC_LEN - sizeof(keyid_t)))
         return;
 

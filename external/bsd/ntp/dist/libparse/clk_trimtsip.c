@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_trimtsip.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
+/*	$NetBSD: clk_trimtsip.c,v 1.1.1.1.14.3 2017/05/04 05:53:47 snj Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_trimtsip.c,v 4.19 2009/11/01 10:47:49 kardel RELEASE_20091101_A
@@ -252,10 +252,10 @@ cvt_trimtsip(
 		    {
 		    case CMD_RCURTIME:
 			    {			/* GPS time */
-				    l_fp secs;
-				    unsigned int   week = getshort((unsigned char *)&mb(4));
-				    l_fp utcoffset;
-				    l_fp gpstime;
+				    l_fp  secs;
+				    u_int week = getshort((unsigned char *)&mb(4));
+				    l_fp  utcoffset;
+				    l_fp  gpstime;
 
 				    bp = &mb(0);
 				    if (fetch_ieee754(&bp, IEEE_SINGLE, &secs, trim_offsets) != IEEE_OK)

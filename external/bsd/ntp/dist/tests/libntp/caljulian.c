@@ -1,4 +1,4 @@
-/*	$NetBSD: caljulian.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
+/*	$NetBSD: caljulian.c,v 1.1.1.3.6.4 2017/05/04 05:53:55 snj Exp $	*/
 
 #include "config.h"
 
@@ -64,7 +64,7 @@ IsEqual(const struct calendar expected, const struct calendar actual)
 		return TRUE;
 	} else {
 		char *p_exp, *p_act;
-			
+
 		p_exp = CalendarToString(expected);
 		p_act = CalendarToString(actual);
 		printf("expected: %s but was %s", p_exp, p_act);
