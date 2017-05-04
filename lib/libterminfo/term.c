@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.21 2017/04/20 08:34:23 roy Exp $ */
+/* $NetBSD: term.c,v 1.22 2017/05/04 09:42:23 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.21 2017/04/20 08:34:23 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.22 2017/05/04 09:42:23 roy Exp $");
 
 #include <sys/stat.h>
 
@@ -73,7 +73,7 @@ allocset(void *pp, int init, size_t nelem, size_t elemsize)
 static int
 _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 {
-	uint8_t ver;
+	char ver;
 	uint16_t ind, num;
 	size_t len;
 	TERMUSERDEF *ud;
@@ -147,7 +147,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		for (; num != 0; num--) {
 			ind = le16dec(cap);
 			cap += sizeof(uint16_t);
-			term->nums[ind] = le16dec(cap);
+			term->nums[ind] = (short)le16dec(cap);
 			if (flags == 0 && !VALID_NUMERIC(term->nums[ind]))
 				term->nums[ind] = ABSENT_NUMERIC;
 			cap += sizeof(uint16_t);
@@ -205,7 +205,7 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				break;
 			case 'n':
 				ud->flag = ABSENT_BOOLEAN;
-				ud->num = le16dec(cap);
+				ud->num = (short)le16dec(cap);
 				if (flags == 0 &&
 				    !VALID_NUMERIC(ud->num))
 					ud->num = ABSENT_NUMERIC;
@@ -309,7 +309,7 @@ _ti_dbgettermp(TERMINAL *term, const char *path, const char *name, int flags)
 	do {
 		for (p = path; *path != '\0' && *path != ':'; path++)
 			continue;
-		l = path - p;
+		l = (size_t)(path - p);
 		if (l != 0 && l + 1 < sizeof(pathbuf)) {
 			memcpy(pathbuf, p, l);
 			pathbuf[l] = '\0';
@@ -341,7 +341,7 @@ ticcmp(const TIC *tic, const char *name)
 		if (s == NULL)
 			l = strlen(alias);
 		else
-			l = s - alias;
+			l = (size_t)(s - alias);
 		if (len == l && memcmp(alias, name, l) == 0)
 			return 0;
 		if (s == NULL)
