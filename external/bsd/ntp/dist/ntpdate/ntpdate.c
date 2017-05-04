@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.3.2.3 2016/05/08 22:02:10 snj Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.3.2.4 2017/05/04 06:03:58 snj Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -957,6 +957,8 @@ clock_filter(
 	register int i, j;
 	int ord[NTP_SHIFT];
 
+	INSIST((0 < sys_samples) && (sys_samples <= NTP_SHIFT));
+	
 	/*
 	 * Sort indices into increasing delay order
 	 */

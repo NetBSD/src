@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.4.2.3 2016/05/08 22:02:11 snj Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.4.2.4 2017/05/04 06:03:58 snj Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -2038,16 +2038,16 @@ peers(
 	if (drefid == REFID_HASH) {
 		apeers(pcmd, fp);
 	} else {
-	int af = 0;
+		int af = 0;
 
-	if (pcmd->nargs == 1) {
-		if (pcmd->argval->ival == 6)
-			af = AF_INET6;
-		else
-			af = AF_INET;
+		if (pcmd->nargs == 1) {
+			if (pcmd->argval->ival == 6)
+				af = AF_INET6;
+			else
+				af = AF_INET;
+		}
+		dopeers(0, fp, af);
 	}
-	dopeers(0, fp, af);
-}
 }
 
 
@@ -3616,11 +3616,13 @@ reslist(
 				if (NULL == val) {
 					row.flagstr[0] = '\0';
 					comprende = TRUE;
-				} else {
-					len = strlen(val);
+				} else if ((len = strlen(val)) < sizeof(row.flagstr)) {
 					memcpy(row.flagstr, val, len);
 					row.flagstr[len] = '\0';
 					comprende = TRUE;
+				} else {
+					 /* no flags, and still !comprende */
+					row.flagstr[0] = '\0';
 				}
 			}
 			break;

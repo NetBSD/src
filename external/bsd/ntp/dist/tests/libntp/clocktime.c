@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktime.c,v 1.1.1.3.2.3 2016/05/08 22:02:14 snj Exp $	*/
+/*	$NetBSD: clocktime.c,v 1.1.1.3.2.4 2017/05/04 06:04:04 snj Exp $	*/
 
 #include "config.h"
 
@@ -32,8 +32,8 @@ void test_AlwaysInLimit(void);
 void
 setUp()
 {
-    ntpcal_set_timefunc(timefunc);
-    settime(2000, 1, 1, 0, 0, 0);
+	ntpcal_set_timefunc(timefunc);
+	settime(2000, 1, 1, 0, 0, 0);
 
 	return;
 }
@@ -41,7 +41,7 @@ setUp()
 void
 tearDown()
 {
-    ntpcal_set_timefunc(NULL);
+	ntpcal_set_timefunc(NULL);
 
 	return;
 }
@@ -59,7 +59,7 @@ test_CurrentYear(void)
 
 	const int yday=175, hour=12, minute=50, second=0, tzoff=0;
 
-	u_long yearstart=0;
+	u_long yearstart = 0;
 	u_int32 actual;
 
 	TEST_ASSERT_TRUE(clocktime(yday, hour, minute, second, tzoff,
@@ -186,7 +186,7 @@ test_NoReasonableConversion(void)
 {
 	/* Timestamp is: 2010-01-02 11:00:00Z */
 	const u_int32 timestamp = 3471418800UL;
-	
+
 	const int yday=100, hour=12, minute=0, second=0, tzoff=0;
 	u_long yearstart = 0;
 	u_int32 actual;
@@ -202,7 +202,7 @@ int/*BOOL*/
 isLE(u_int32 diff,u_int32 actual)
 {
 
-	if(diff <= actual){
+	if (diff <= actual) {
 		return TRUE;
 	}
 	else return FALSE;

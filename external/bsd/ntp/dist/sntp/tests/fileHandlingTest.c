@@ -1,4 +1,4 @@
-/*	$NetBSD: fileHandlingTest.c,v 1.1.1.1.2.3 2016/05/08 22:02:13 snj Exp $	*/
+/*	$NetBSD: fileHandlingTest.c,v 1.1.1.1.2.4 2017/05/04 06:04:04 snj Exp $	*/
 
 
 #include "config.h"
@@ -16,7 +16,7 @@ CreatePath(
 	enum DirectoryType 	argument
 	)
 {
-	const char srcdir[] = SRCDIR_DEF;//"@abs_srcdir@/data/";
+	const char 	srcdir[] = SRCDIR_DEF;//"@abs_srcdir@/data/";
 	size_t		plen = sizeof(srcdir) + strlen(filename) + 1;
 	char * 		path = emalloc(plen);
 	ssize_t		retc;

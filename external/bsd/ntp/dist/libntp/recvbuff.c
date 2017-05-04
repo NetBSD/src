@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.1.1.1.8.3 2016/05/08 22:02:09 snj Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.1.1.1.8.4 2017/05/04 06:03:56 snj Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -87,7 +87,7 @@ create_buffers(int nbufs)
 	buffer_shortfall = 0;
 
 #ifndef DEBUG
-	bufp = emalloc_zero(abuf * sizeof(*bufp));
+	bufp = eallocarray(abuf, sizeof(*bufp));
 #endif
 
 	for (i = 0; i < abuf; i++) {
@@ -159,14 +159,14 @@ void
 freerecvbuf(recvbuf_t *rb)
 {
 	if (rb) {
-	LOCK();
-	rb->used--;
-	if (rb->used != 0)
-		msyslog(LOG_ERR, "******** freerecvbuff non-zero usage: %d *******", rb->used);
-	LINK_SLIST(free_recv_list, rb, link);
-	free_recvbufs++;
-	UNLOCK();
-}
+		LOCK();
+		rb->used--;
+		if (rb->used != 0)
+			msyslog(LOG_ERR, "******** freerecvbuff non-zero usage: %d *******", rb->used);
+		LINK_SLIST(free_recv_list, rb, link);
+		free_recvbufs++;
+		UNLOCK();
+	}
 }
 
 	

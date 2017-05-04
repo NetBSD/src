@@ -108,6 +108,7 @@ am__aclocal_m4_deps = $(top_srcdir)/sntp/libopts/m4/libopts.m4 \
 	$(top_srcdir)/sntp/m4/ntp_dir_sep.m4 \
 	$(top_srcdir)/sntp/m4/ntp_facilitynames.m4 \
 	$(top_srcdir)/sntp/m4/ntp_googletest.m4 \
+	$(top_srcdir)/sntp/m4/ntp_harden.m4 \
 	$(top_srcdir)/sntp/m4/ntp_ipv6.m4 \
 	$(top_srcdir)/sntp/m4/ntp_lib_m.m4 \
 	$(top_srcdir)/sntp/m4/ntp_libevent.m4 \
@@ -133,7 +134,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES = mkver
+CONFIG_CLEAN_FILES = genAuthors mkver
 CONFIG_CLEAN_VPATH_FILES =
 SCRIPTS = $(noinst_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -156,7 +157,8 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
-am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/mkver.in
+am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/genAuthors.in \
+	$(srcdir)/mkver.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
@@ -184,10 +186,6 @@ CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CPPFLAGS_LIBEVENT = @CPPFLAGS_LIBEVENT@
 CPPFLAGS_NTP = @CPPFLAGS_NTP@
-CXX = @CXX@
-CXXCPP = @CXXCPP@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DCFD = @DCFD@
 DEFS = @DEFS@
@@ -240,6 +238,7 @@ LN_S = @LN_S@
 LSCF = @LSCF@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MAKE_ADJTIMED = @MAKE_ADJTIMED@
 MAKE_CHECK_LAYOUT = @MAKE_CHECK_LAYOUT@
@@ -303,6 +302,9 @@ NTPTRACE_DL = @NTPTRACE_DL@
 NTPTRACE_DS = @NTPTRACE_DS@
 NTPTRACE_MS = @NTPTRACE_MS@
 NTPTRACE_NI = @NTPTRACE_NI@
+NTP_HARD_CFLAGS = @NTP_HARD_CFLAGS@
+NTP_HARD_CPPFLAGS = @NTP_HARD_CPPFLAGS@
+NTP_HARD_LDFLAGS = @NTP_HARD_LDFLAGS@
 NTP_KEYGEN_DB = @NTP_KEYGEN_DB@
 NTP_KEYGEN_DL = @NTP_KEYGEN_DL@
 NTP_KEYGEN_DS = @NTP_KEYGEN_DS@
@@ -376,7 +378,6 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -427,7 +428,7 @@ top_srcdir = @top_srcdir@
 run_ag = cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../sntp/include -L ../sntp/ag-tpl
 
-noinst_SCRIPTS = mkver
+noinst_SCRIPTS = genAuthors mkver
 NULL = 
 EXTRA_DIST = \
 	check--help		\
@@ -473,6 +474,8 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
+genAuthors: $(top_builddir)/config.status $(srcdir)/genAuthors.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 mkver: $(top_builddir)/config.status $(srcdir)/mkver.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 

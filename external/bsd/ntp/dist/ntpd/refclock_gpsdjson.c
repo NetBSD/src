@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.4.8.4 2016/05/08 22:02:10 snj Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.4.8.5 2017/05/04 06:03:58 snj Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -951,7 +951,7 @@ add_clock_sample(
 	pp->lastref = stamp;
 	if (pp->coderecv == pp->codeproc)
 		refclock_report(peer, CEVNT_NOMINAL);
-	refclock_process_offset(pp, stamp, recvt, 0.0);
+	refclock_process_offset(pp, stamp, recvt, pp->fudgetime1);
 }
 
 /* ------------------------------------------------------------------ */
@@ -1511,9 +1511,9 @@ process_version(
 	 * using JSON data and selecting the GPS device name we created
 	 * from our unit number. We have an old a newer version that
 	 * request PPS (and TOFF) transmission.
- */
+	 */
 	snprintf(up->buffer, sizeof(up->buffer),
-	    "?WATCH={\"device\":\"%s\",\"enable\":true,\"json\":true%s};\r\n",
+		 "?WATCH={\"device\":\"%s\",\"enable\":true,\"json\":true%s};\r\n",
 		 up->device, (up->pf_toff ? ",\"pps\":true" : ""));
 	buf = up->buffer;
 	len = strlen(buf);
@@ -2114,13 +2114,15 @@ save_ltc(
 	clockprocT * const pp,
 	const char * const tc)
 {
-	size_t len;
-
-	len = (tc) ? strlen(tc) : 0;
-	if (len >= sizeof(pp->a_lastcode))
-		len = sizeof(pp->a_lastcode) - 1;
+	size_t len = 0;
+	
+	if (tc) {
+		len = strlen(tc);
+		if (len >= sizeof(pp->a_lastcode))
+			len = sizeof(pp->a_lastcode) - 1;
+		memcpy(pp->a_lastcode, tc, len);
+	}
 	pp->lencode = (u_short)len;
-	memcpy(pp->a_lastcode, tc, len);
 	pp->a_lastcode[len] = '\0';
 }
 

@@ -34,14 +34,20 @@ run_unity =	cd $(srcdir) && ruby ../unity/auto/generate_test_runner.rb
 check_PROGRAMS =			\
 	test-crypto			\
 	test-keyFile			\
-	test-kodDatabase		\
-	test-kodFile			\
 	test-log			\
 	test-networking			\
 	test-packetHandling		\
 	test-packetProcessing		\
 	test-utilities			\
 	$(NULL)
+
+if BUILD_TEST_KODDATABASE
+check_PROGRAMS += test-kodDatabase
+endif
+
+if BUILD_TEST_KODFILE
+check_PROGRAMS += test-kodFile
+endif
 
 noinst_HEADERS =		\
 	sntptest.h		\
@@ -91,6 +97,7 @@ LDADD =						\
 	$(NULL)
 
 AM_CFLAGS  = $(CFLAGS_NTP)
+AM_CFLAGS += $(NTP_HARD_CFLAGS)
 
 AM_CPPFLAGS  = $(SNTP_INCS)
 AM_CPPFLAGS += -I$(srcdir)/..
@@ -101,8 +108,10 @@ AM_CPPFLAGS += $(CPPFLAGS_NTP)
 AM_CPPFLAGS += -DUNITY_INCLUDE_CONFIG_H
 #AM_CPPFLAGS += -I$(top_srcdir)/sntp/unity
 AM_CPPFLAGS += -I$(top_srcdir)/unity
+AM_CPPFLAGS += $(NTP_HARD_CPPFLAGS)
 
-AM_LDFLAGS = $(LDFLAGS_NTP)
+AM_LDFLAGS  = $(LDFLAGS_NTP)
+AM_LDFLAGS += $(NTP_HARD_LDFLAGS)
 
 BUILT_SOURCES +=				\
 	$(srcdir)/run-crypto.c			\

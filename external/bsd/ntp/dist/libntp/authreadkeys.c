@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.2.8.3 2016/05/08 22:02:09 snj Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.2.8.4 2017/05/04 06:03:56 snj Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -239,7 +239,7 @@ authreadkeys(
 				  keyno);
 			keytype = 0;
 		} else {
-		keytype = KEY_TYPE_MD5;
+			keytype = KEY_TYPE_MD5;
 		}
 #endif	/* !OPENSSL */
 

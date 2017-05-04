@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.3.2.2 2015/11/07 22:26:34 snj Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.3.2.3 2017/05/04 06:03:55 snj Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
@@ -354,7 +354,7 @@ extern	int	buftvtots	(const char *, l_fp *);
 extern	char *	fptoa		(s_fp, short);
 extern	char *	fptoms		(s_fp, short);
 extern	int	hextolfp	(const char *, l_fp *);
-extern  void	gpstolfp	(int, int, unsigned long, l_fp *);
+extern  void	gpstolfp	(u_int, u_int, unsigned long, l_fp *);
 extern	int	mstolfp		(const char *, l_fp *);
 extern	char *	prettydate	(l_fp *);
 extern	char *	gmprettydate	(l_fp *);
