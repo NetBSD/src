@@ -1,4 +1,4 @@
-/* $NetBSD: tic.c,v 1.27 2017/01/10 21:15:23 christos Exp $ */
+/* $NetBSD: tic.c,v 1.28 2017/05/04 13:53:36 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tic.c,v 1.27 2017/01/10 21:15:23 christos Exp $");
+__RCSID("$NetBSD: tic.c,v 1.28 2017/05/04 13:53:36 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -527,7 +527,7 @@ main(int argc, char **argv)
 	hcreate(HASH_SIZE);
 
 	buf = tbuf.buf = NULL;
-	buflen = tbuf.buflen = tbuf.bufpos = 0;	
+	buflen = tbuf.buflen = tbuf.bufpos = 0;
 	while ((len = getline(&buf, &buflen, f)) != -1) {
 		/* Skip comments */
 		if (*buf == '#')
@@ -539,9 +539,9 @@ main(int argc, char **argv)
 			continue;
 		}
 		/*
-		  If the first char is space not a space then we have a
-		  new entry, so process it.
-		*/
+		 * If the first char is space not a space then we have a
+		 * new entry, so process it.
+		 */
 		if (!isspace((unsigned char)*buf) && tbuf.bufpos != 0)
 			process_entry(&tbuf, flags);
 
