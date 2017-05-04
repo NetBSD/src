@@ -1,4 +1,4 @@
-/*	$NetBSD: unity_fixture.c,v 1.1.1.2.4.2 2015/11/07 22:46:26 snj Exp $	*/
+/*	$NetBSD: unity_fixture.c,v 1.1.1.2.4.3 2017/05/04 06:01:08 snj Exp $	*/
 
 //- Copyright (c) 2010 James Grenning and Contributed to Unity Project
 /* ==========================================
@@ -19,10 +19,6 @@ int (*outputChar)(int) = putchar;
 
 int verbose = 0;
 
-void setUp(void);
-void tearDown(void);
-void setUp(void)    { /*does nothing*/ }
-void tearDown(void) { /*does nothing*/ }
 
 static void announceTestRun(unsigned int runNumber)
 {

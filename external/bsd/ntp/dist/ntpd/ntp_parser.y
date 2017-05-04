@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.5.16.3 2016/05/08 21:55:48 snj Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.5.16.4 2017/05/04 06:01:01 snj Exp $	*/
 
 /* ntp_parser.y
  *
@@ -80,6 +80,7 @@
 %token	<Integer>	T_Automax
 %token	<Integer>	T_Average
 %token	<Integer>	T_Bclient
+%token	<Integer>	T_Bcpollbstep
 %token	<Integer>	T_Beacon
 %token	<Integer>	T_Broadcast
 %token	<Integer>	T_Broadcastclient
@@ -192,6 +193,7 @@
 %token	<Integer>	T_NtpSignDsocket
 %token	<Integer>	T_Orphan
 %token	<Integer>	T_Orphanwait
+%token	<Integer>	T_PCEdigest
 %token	<Integer>	T_Panic
 %token	<Integer>	T_Peer
 %token	<Integer>	T_Peerstats
@@ -646,19 +648,20 @@ tos_option
 	;
 
 tos_option_int_keyword
-	:	T_Ceiling
+	:	T_Bcpollbstep
+	|	T_Beacon
+	|	T_Ceiling
 	|	T_Floor
+	|	T_Maxclock
+	|	T_Minclock
+	|	T_Minsane
 	|	T_Orphan
 	|	T_Orphanwait
-	|	T_Minsane
-	|	T_Beacon
 	;
 
 tos_option_dbl_keyword
 	:	T_Mindist
 	|	T_Maxdist
-	|	T_Minclock
-	|	T_Maxclock
 	;
 
 
@@ -802,7 +805,7 @@ access_control_command
 						  lex_current()->curpos.nline);
 			APPEND_G_FIFO(cfgt.restrict_opts, rn);
 		}
-	|	T_Restrict ip_address T_Mask ip_address ac_flag_list
+	|	T_Restrict address T_Mask ip_address ac_flag_list
 		{
 			restrict_node *rn;
 
@@ -1087,6 +1090,7 @@ system_option_flag_keyword
 
 system_option_local_flag_keyword
 	:	T_Mode7
+	|	T_PCEdigest
 	|	T_Stats
 	|	T_UEcrypto
 	|	T_UEcryptonak

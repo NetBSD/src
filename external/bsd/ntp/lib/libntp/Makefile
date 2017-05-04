@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.16.2 2016/05/08 21:55:53 snj Exp $
+#	$NetBSD: Makefile,v 1.5.16.3 2017/05/04 06:01:09 snj Exp $
 
 LIBISPRIVATE=yes
 
@@ -42,6 +42,7 @@ icom.c \
 iosignal.c \
 is_ip_address.c \
 lib_strbuf.c \
+libssl_compat.c \
 machines.c \
 mktime.c \
 modetoa.c \

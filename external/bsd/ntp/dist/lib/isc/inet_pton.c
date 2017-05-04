@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.3.16.2 2016/05/08 21:55:47 snj Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.3.16.3 2017/05/04 06:01:00 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -173,7 +173,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 				colonp = tp;
 				continue;
 			}
-			if (tp + NS_INT16SZ > endp)
+			if (NS_INT16SZ > endp - tp)
 				return (0);
 			*tp++ = (unsigned char) (val >> 8) & 0xff;
 			*tp++ = (unsigned char) val & 0xff;
@@ -181,7 +181,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 			val = 0;
 			continue;
 		}
-		if (ch == '.' && ((tp + NS_INADDRSZ) <= endp) &&
+		if (ch == '.' && (NS_INADDRSZ <= endp - tp) &&
 		    inet_pton4(curtok, tp) > 0) {
 			tp += NS_INADDRSZ;
 			seen_xdigits = 0;
@@ -190,7 +190,7 @@ inet_pton6(const char *src, unsigned char *dst) {
 		return (0);
 	}
 	if (seen_xdigits) {
-		if (tp + NS_INT16SZ > endp)
+		if (NS_INT16SZ > endp - tp)
 			return (0);
 		*tp++ = (unsigned char) (val >> 8) & 0xff;
 		*tp++ = (unsigned char) val & 0xff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.2.22.3 2016/05/08 21:55:47 snj Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.2.22.4 2017/05/04 06:01:00 snj Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -252,7 +252,7 @@ auth_moremem(
 	i = (keycount > 0)
 		? keycount
 		: MEMINC;
-	sk = emalloc_zero(i * sizeof(*sk) + MOREMEM_EXTRA_ALLOC);
+	sk = eallocarrayxz(i, sizeof(*sk), MOREMEM_EXTRA_ALLOC);
 #ifdef DEBUG
 	base = sk;
 #endif
@@ -500,14 +500,14 @@ authhavekey(
 	authkeyuncached++;
 	sk = auth_findkey(id);
 	if ((sk == NULL) || (sk->type == 0)) {
-				authkeynotfound++;
-				return FALSE;
-			}
+		authkeynotfound++;
+		return FALSE;
+	}
 
 	/*
 	 * If the key is not trusted, the key is not considered found.
 	 */
-	if (!(KEY_TRUSTED & sk->flags)) {
+	if ( ! (KEY_TRUSTED & sk->flags)) {
 		authnokey++;
 		return FALSE;
 	}
@@ -667,12 +667,12 @@ MD5auth_setkey(
 	sk = auth_findkey(keyno);
 	if (sk != NULL && keyno == sk->keyid) {
 			/* TALOS-CAN-0054: make sure we have a new buffer! */
-			if (NULL != sk->secret) {
-				memset(sk->secret, 0, sk->secretsize);
-				free(sk->secret);
-			}
+		if (NULL != sk->secret) {
+			memset(sk->secret, 0, sk->secretsize);
+			free(sk->secret);
+		}
 		sk->secret = emalloc(secretsize + 1);
-			sk->type = (u_short)keytype;
+		sk->type = (u_short)keytype;
 		sk->secretsize = secretsize;
 		/* make sure access lists don't leak here! */
 		if (ka != sk->keyacclist) {
@@ -680,15 +680,15 @@ MD5auth_setkey(
 			sk->keyacclist = ka;
 		}
 #ifndef DISABLE_BUG1243_FIX
-			memcpy(sk->secret, key, secretsize);
+		memcpy(sk->secret, key, secretsize);
 #else
 		/* >MUST< use 'strncpy()' here! See above! */
 		strncpy((char *)sk->secret, (const char *)key,
-				secretsize);
+			secretsize);
 #endif
 		authcache_flush_id(keyno);
-			return;
-		}
+		return;
+	}
 
 	/*
 	 * Need to allocate new structure.  Do it.

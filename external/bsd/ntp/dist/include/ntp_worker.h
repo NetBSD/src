@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_worker.h,v 1.2.2.3 2016/05/08 21:55:47 snj Exp $	*/
+/*	$NetBSD: ntp_worker.h,v 1.2.2.4 2017/05/04 06:00:59 snj Exp $	*/
 
 /*
  * ntp_worker.h
@@ -62,14 +62,14 @@ typedef sema_type	*sem_ref;
 #if defined(WORK_FORK)
 
 typedef struct blocking_child_tag {
-	int	reusable;
-	int	pid;
-	int	req_write_pipe;		/* parent */
-	int	resp_read_pipe;
-	void *	resp_read_ctx;
-	int	req_read_pipe;		/* child */
-	int	resp_write_pipe;
-	int	ispipe;
+	int		reusable;
+	int		pid;
+	int		req_write_pipe;		/* parent */
+	int		resp_read_pipe;
+	void *		resp_read_ctx;
+	int		req_read_pipe;		/* child */
+	int		resp_write_pipe;
+	int		ispipe;	
 	volatile u_int	resp_ready_seen;	/* signal/scan */
 	volatile u_int	resp_ready_done;	/* consumer/mainloop */
 } blocking_child;
@@ -77,7 +77,7 @@ typedef struct blocking_child_tag {
 #elif defined(WORK_THREAD)
 
 typedef struct blocking_child_tag {
-/*
+	/*
 	 * blocking workitems and blocking_responses are
 	 * dynamically-sized one-dimensional arrays of pointers to
 	 * blocking worker requests and responses.
@@ -90,7 +90,7 @@ typedef struct blocking_child_tag {
 	 * creation/destruction) functions and functions just testing a
 	 * handle are safe because these are only changed by the main
 	 * thread when no worker is running on the same data structure.
- */
+	 */
 	int			reusable;
 	sem_ref			accesslock;	/* shared access lock */
 	thr_ref			thread_ref;	/* thread 'handle' */
@@ -117,10 +117,10 @@ typedef struct blocking_child_tag {
 	 * Both employ the queue above for the actual data transfer.
 	 */
 #ifdef WORK_PIPE
-	int			resp_read_pipe;	/* parent */
-	int			resp_write_pipe;/* child */
+	int			resp_read_pipe;		/* parent */
+	int			resp_write_pipe;	/* child */
 	int			ispipe;
-	void *			resp_read_ctx;	/* child */
+	void *			resp_read_ctx;		/* child */
 #else
 	sem_ref			responses_pending;	/* signalling */
 #endif
@@ -145,7 +145,7 @@ extern	u_int	available_blocking_child_slot(void);
 extern	int	queue_blocking_request(blocking_work_req, void *,
 				       size_t, blocking_work_callback,
 				       void *);
-extern	int	queue_blocking_response(blocking_child *, 
+extern	int	queue_blocking_response(blocking_child *,
 					blocking_pipe_header *, size_t,
 					const blocking_pipe_header *);
 extern	void	process_blocking_resp(blocking_child *);

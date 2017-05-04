@@ -1,4 +1,4 @@
-/*	$NetBSD: work_thread.c,v 1.2.2.3 2016/05/08 21:55:47 snj Exp $	*/
+/*	$NetBSD: work_thread.c,v 1.2.2.4 2017/05/04 06:01:00 snj Exp $	*/
 
 /*
  * work_thread.c - threads implementation for blocking worker child.
@@ -41,7 +41,7 @@
  * system-defined minimum stack size, we have to adjust accordingly.
  */
 #ifndef THREAD_MINSTACKSIZE
-#define THREAD_MINSTACKSIZE	(64U * 1024)
+# define THREAD_MINSTACKSIZE	(64U * 1024)
 #endif
 #ifndef __sun
 #if defined(PTHREAD_STACK_MIN) && THREAD_MINSTACKSIZE < PTHREAD_STACK_MIN
@@ -143,7 +143,7 @@ worker_sleep(
 	}
 # endif
 	until.tv_sec += seconds;
-		rc = wait_for_sem(c->wake_scheduled_sleep, &until);
+	rc = wait_for_sem(c->wake_scheduled_sleep, &until);
 	if (0 == rc)
 		return -1;
 	if (-1 == rc && ETIMEDOUT == errno)
@@ -189,7 +189,7 @@ ensure_workitems_empty_slot(
 	**
 	** Return if the buffer is currently empty.
 	*/
-
+	
 	static const size_t each =
 	    sizeof(blocking_children[0]->workitems[0]);
 
@@ -199,14 +199,14 @@ ensure_workitems_empty_slot(
 
 	slots_used = c->head_workitem - c->tail_workitem;
 	if (slots_used >= c->workitems_alloc) {
-	new_alloc = c->workitems_alloc + WORKITEMS_ALLOC_INC;
+		new_alloc  = c->workitems_alloc + WORKITEMS_ALLOC_INC;
 		c->workitems = erealloc(c->workitems, new_alloc * each);
 		for (sidx = c->workitems_alloc; sidx < new_alloc; ++sidx)
 		    c->workitems[sidx] = NULL;
 		c->tail_workitem   = 0;
 		c->head_workitem   = c->workitems_alloc;
-	c->workitems_alloc = new_alloc;
-}
+		c->workitems_alloc = new_alloc;
+	}
 	INSIST(NULL == c->workitems[c->head_workitem % c->workitems_alloc]);
 	return (0 == slots_used);
 }
@@ -229,20 +229,20 @@ ensure_workresp_empty_slot(
 	static const size_t each =
 	    sizeof(blocking_children[0]->responses[0]);
 
-	size_t		new_alloc;
+	size_t	new_alloc;
 	size_t  slots_used;
 	size_t	sidx;
 
 	slots_used = c->head_response - c->tail_response;
 	if (slots_used >= c->responses_alloc) {
-	new_alloc = c->responses_alloc + RESPONSES_ALLOC_INC;
+		new_alloc  = c->responses_alloc + RESPONSES_ALLOC_INC;
 		c->responses = erealloc(c->responses, new_alloc * each);
 		for (sidx = c->responses_alloc; sidx < new_alloc; ++sidx)
 		    c->responses[sidx] = NULL;
 		c->tail_response   = 0;
 		c->head_response   = c->responses_alloc;
-	c->responses_alloc = new_alloc;
-}
+		c->responses_alloc = new_alloc;
+	}
 	INSIST(NULL == c->responses[c->head_response % c->responses_alloc]);
 	return (0 == slots_used);
 }
@@ -259,7 +259,7 @@ queue_req_pointer(
 	)
 {
 	size_t qhead;
-
+	
 	/* >>>> ACCESS LOCKING STARTS >>>> */
 	wait_for_sem(c->accesslock, NULL);
 	ensure_workitems_empty_slot(c);
@@ -362,7 +362,7 @@ send_blocking_resp_internal(
 {
 	size_t	qhead;
 	int	empty;
-
+	
 	/* >>>> ACCESS LOCKING STARTS >>>> */
 	wait_for_sem(c->accesslock, NULL);
 	empty = ensure_workresp_empty_slot(c);
@@ -375,11 +375,11 @@ send_blocking_resp_internal(
 	/* queue consumer wake-up notification */
 	if (empty)
 	{
-#ifdef WORK_PIPE
-	write(c->resp_write_pipe, "", 1);
-#else
+#	    ifdef WORK_PIPE
+		write(c->resp_write_pipe, "", 1);
+#	    else
 		tickle_sem(c->responses_pending);
-#endif
+#	    endif
 	}
 	return 0;
 }
@@ -748,7 +748,7 @@ prepare_child_sems(
 {
 	if (NULL == worker_memlock)
 		worker_memlock = create_sema(&worker_mmutex, 1, 1);
-
+	
 	c->accesslock           = create_sema(&c->sem_table[0], 1, 1);
 	c->workitems_pending    = create_sema(&c->sem_table[1], 0, 0);
 	c->wake_scheduled_sleep = create_sema(&c->sem_table[2], 0, 1);
@@ -813,14 +813,14 @@ wait_for_sem(
 	int rc = -1;
 
 	if (sem) do {
-	if (NULL == timeout)
-		rc = sem_wait(sem);
-	else
-		rc = sem_timedwait(sem, timeout);
+			if (NULL == timeout)
+				rc = sem_wait(sem);
+			else
+				rc = sem_timedwait(sem, timeout);
 		} while (rc == -1 && errno == EINTR);
 	else
 		errno = EINVAL;
-
+		
 	return rc;
 }
 #endif
@@ -879,7 +879,7 @@ cleanup_after_child(
 {
 	DEBUG_INSIST(!c->reusable);
 	
-#ifdef SYS_WINNT
+#   ifdef SYS_WINNT
 	/* The thread was not created in detached state, so we better
 	 * clean up.
 	 */
@@ -888,7 +888,7 @@ cleanup_after_child(
 		INSIST(CloseHandle(c->thread_ref->thnd));
 		c->thread_ref->thnd = NULL;
 	}
-#endif
+#   endif
 	c->thread_ref = NULL;
 
 	/* remove semaphores and (if signalling vi IO) pipes */
@@ -897,7 +897,7 @@ cleanup_after_child(
 	c->workitems_pending    = delete_sema(c->workitems_pending);
 	c->wake_scheduled_sleep = delete_sema(c->wake_scheduled_sleep);
 
-#ifdef WORK_PIPE
+#   ifdef WORK_PIPE
 	DEBUG_INSIST(-1 != c->resp_read_pipe);
 	DEBUG_INSIST(-1 != c->resp_write_pipe);
 	(*addremove_io_fd)(c->resp_read_pipe, c->ispipe, TRUE);
@@ -905,11 +905,11 @@ cleanup_after_child(
 	close(c->resp_read_pipe);
 	c->resp_write_pipe = -1;
 	c->resp_read_pipe = -1;
-#else
+#   else
 	DEBUG_INSIST(NULL != c->responses_pending);
 	(*addremove_io_semaphore)(c->responses_pending->shnd, TRUE);
 	c->responses_pending = delete_sema(c->responses_pending);
-#endif
+#   endif
 
 	/* Is it necessary to check if there are pending requests and
 	 * responses? If so, and if there are, what to do with them?

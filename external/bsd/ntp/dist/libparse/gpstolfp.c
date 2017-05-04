@@ -1,4 +1,4 @@
-/*	$NetBSD: gpstolfp.c,v 1.1.1.1.22.2 2015/11/07 22:46:16 snj Exp $	*/
+/*	$NetBSD: gpstolfp.c,v 1.1.1.1.22.3 2017/05/04 06:01:00 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/gpstolfp.c,v 4.8 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -41,13 +41,12 @@
 
 void
 gpstolfp(
-	 int sweeks,
-	 int days,
+	 u_int weeks,
+	 u_int days,
 	 unsigned long  seconds,
 	 l_fp * lfp
 	 )
 {
-  unsigned int weeks = sweeks;
   if (weeks < GPSWRAP)
     {
       weeks += GPSWEEKS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.h,v 1.1.1.1.22.1 2014/12/25 02:13:01 snj Exp $	*/
+/*	$NetBSD: ntp_crypto.h,v 1.1.1.1.22.2 2017/05/04 06:00:59 snj Exp $	*/
 
 /*
  * ntp_crypto.h - definitions for cryptographic operations
@@ -26,6 +26,7 @@
 invalidsyntax: AUTOKEY should be defined only if OPENSSL is.
 #endif
 
+#include "openssl/bn.h"
 #include "openssl/evp.h"
 #include "ntp_calendar.h"	/* for fields in the cert_info structure */
 
