@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.333 2017/05/05 00:38:50 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.334 2017/05/05 05:46:49 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.333 2017/05/05 00:38:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.334 2017/05/05 05:46:49 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5473,12 +5473,10 @@ mix_write(void *arg)
 		cc = used;
 		cc1 = vc->sc_pustream->end - tocopy;
 		cc2 = sc->sc_pr.s.end - orig;
-		if (cc2 < cc1)
-			cc = cc2;
-		else
+		if (cc > cc1)
 			cc = cc1;
-		if (cc > used)
-			cc = used;
+		if (cc > cc2)
+			cc = cc2;
 		memcpy(tocopy, orig, cc);
 		orig += cc;
 		tocopy += cc;
@@ -5571,12 +5569,12 @@ mix_write(void *arg)
 				else if (orig[m] < 0 && tomix[m] < 0)	\
 					result -= product / MINVAL;	\
 				orig[m] = result;			\
-									\
-				if (&orig[m] >= (type *)sc->sc_pr.s.end)\
-					orig = (type *)sc->sc_pr.s.start;\
-				if (&tomix[m] >= (type *)cb->s.end)	\
-					tomix = (type *)cb->s.start;	\
 			}						\
+									\
+			if (&orig[m] >= (type *)sc->sc_pr.s.end)	\
+				orig = (type *)sc->sc_pr.s.start;	\
+			if (&tomix[m] >= (type *)cb->s.end)		\
+				tomix = (type *)cb->s.start;		\
 									\
 			resid -= cc;					\
 		}							\
