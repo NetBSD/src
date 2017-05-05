@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.179 2017/03/24 12:49:43 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.180 2017/05/05 14:23:47 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -406,6 +406,7 @@ EDGE	explicit data graph execution
 EDID	extended display identification data
 EDO	extended data out
 EDS	electronical data sheet
+EEE	energy efficient ethernet
 EEPROM	electrically erasable programmable read only memory
 EFI	extensible firmware interface
 EFL	emitter follower logic
@@ -756,6 +757,7 @@ MIC	message integrity {check,code}
 MID	mobile Internet device
 MIDI	musical instrument digital interface
 MIF	management information format
+MII	media independent interface
 MIM	man in the middle
 MIMD	multiple instruction, multiple data
 MIME	Multipurpose Internet Mail Extensions
@@ -1064,6 +1066,7 @@ RFI	radio frequency interference
 RFO	request for ownership
 RGB	red green blue
 RGBA	red green blue alpha
+RGMII	reduced gigabit media independent interface
 RH	read hit
 RHEL	Red Hat Enterprise Linux
 RHL	Red Hat Linux
@@ -1160,6 +1163,7 @@ SFI	software fault isolation
 SFTP	SSH File Transfer Protocol
 SFTP	Serial File Transfer Protocol
 SFTP	Simple File Transfer Protocol
+SGMII	serial gigabit media independent interface
 SGRAM	synchronous graphics random access memory
 SHA	secure hash algorithm
 SIDH	supersingular isogeny Diffie-Hellman
