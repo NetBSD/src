@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.332 2017/05/02 07:25:50 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.333 2017/05/05 00:38:50 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.332 2017/05/02 07:25:50 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.333 2017/05/05 00:38:50 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -5571,12 +5571,12 @@ mix_write(void *arg)
 				else if (orig[m] < 0 && tomix[m] < 0)	\
 					result -= product / MINVAL;	\
 				orig[m] = result;			\
-			}						\
 									\
-			if (&orig[m] >= (type *)sc->sc_pr.s.end)	\
-				orig = (type *)sc->sc_pr.s.start;	\
-			if (&tomix[m] >= (type *)cb->s.end)		\
-				tomix = (type *)cb->s.start;		\
+				if (&orig[m] >= (type *)sc->sc_pr.s.end)\
+					orig = (type *)sc->sc_pr.s.start;\
+				if (&tomix[m] >= (type *)cb->s.end)	\
+					tomix = (type *)cb->s.start;	\
+			}						\
 									\
 			resid -= cc;					\
 		}							\
