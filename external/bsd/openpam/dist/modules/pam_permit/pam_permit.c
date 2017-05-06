@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_permit.c,v 1.6 2014/10/24 18:27:13 christos Exp $	*/
+/*	$NetBSD: pam_permit.c,v 1.7 2017/05/06 19:50:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_permit.c 648 2013-03-05 17:54:27Z des 
+ * $OpenPAM: pam_permit.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
