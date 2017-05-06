@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.53 2017/04/17 22:40:06 nat Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.54 2017/05/06 00:13:25 nat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ struct audio_softc {
 	 *  userland
 	 */
 	struct audio_ringbuffer	sc_rr;		/* Record ring */
+	ulong		sc_last_drops;		/* Drops from mix ring */
 
 	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
 	struct	au_mixer_ports sc_inports, sc_outports;
