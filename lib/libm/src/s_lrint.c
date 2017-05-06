@@ -1,8 +1,6 @@
-/* $NetBSD: lroundf.c,v 1.3 2008/04/26 23:49:50 christos Exp $ */
-
 /*-
- * Copyright (c) 2004
- *	Matthias Drochner. All rights reserved.
+ * Copyright (c) 2005 David Schultz <das@FreeBSD.ORG>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,55 +24,41 @@
  * SUCH DAMAGE.
  */
 
-#include <math.h>
-#include <sys/ieee754.h>
-#include <machine/limits.h>
-#include "math_private.h"
+#include "namespace.h"
 
-#ifndef LROUNDNAME
-#define LROUNDNAME lroundf
-#define RESTYPE long int
-#define RESTYPE_MIN LONG_MIN
-#define RESTYPE_MAX LONG_MAX
+#include <sys/cdefs.h>
+#include <fenv.h>
+#include <math.h>
+
+#ifndef stype
+#ifdef __FreeBSD__
+__FBSDID("$FreeBSD: head/lib/msun/src/s_lrint.c 140088 2005-01-11 23:12:55Z das $");
+#else
+__RCSID("$NetBSD: s_lrint.c,v 1.1 2017/05/06 18:03:24 christos Exp $");
+#endif
+#define stype		double
+#define	roundit		rint
+#define dtype		long
+#define	fn		lrint
 #endif
 
-#define RESTYPE_BITS (sizeof(RESTYPE) * 8)
-
-RESTYPE
-LROUNDNAME(float x)
+/*
+ * C99 says we should not raise a spurious inexact exception when an
+ * invalid exception is raised.  Unfortunately, the set of inputs
+ * that overflows depends on the rounding mode when 'dtype' has more
+ * significant bits than 'stype'.  Hence, we bend over backwards for the
+ * sake of correctness; an MD implementation could be more efficient.
+ */
+dtype
+fn(stype x)
 {
-	u_int32_t i0;
-	int e, s, shift;
-	RESTYPE res;
+	fenv_t env;
+	dtype d;
 
-	GET_FLOAT_WORD(i0, x);
-	e = i0 >> SNG_FRACBITS;
-	s = (uint32_t)e >> SNG_EXPBITS;
-	e = (e & 0xff) - SNG_EXP_BIAS;
-
-	/* 1.0 x 2^-1 is the smallest number which can be rounded to 1 */
-	if (e < -1)
-		return (0);
-	/* 1.0 x 2^31 (or 2^63) is already too large */
-	if (e >= (int)RESTYPE_BITS - 1)
-		return (s ? RESTYPE_MIN : RESTYPE_MAX); /* ??? unspecified */
-
-	/* >= 2^23 is already an exact integer */
-	if (e < SNG_FRACBITS) {
-		/* add 0.5, extraction below will truncate */
-		x += (s ? -0.5 : 0.5);
-	}
-
-	GET_FLOAT_WORD(i0, x);
-	e = ((i0 >> SNG_FRACBITS) & 0xff) - SNG_EXP_BIAS;
-	i0 &= 0x7fffff;
-	i0 |= (1 << SNG_FRACBITS);
-
-	shift = e - SNG_FRACBITS;
-	if (shift >=0)
-		res = (shift < 32 ? (RESTYPE)i0 << shift : 0);
-	else
-		res = (shift > -32 ? i0 >> -shift : 0);
-
-	return (s ? -res : res);
+	feholdexcept(&env);
+	d = (dtype)roundit(x);
+	if (fetestexcept(FE_INVALID))
+		feclearexcept(FE_INEXACT);
+	feupdateenv(&env);
+	return (d);
 }
