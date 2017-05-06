@@ -1,4 +1,4 @@
-.\"	$NetBSD: mremap.2,v 1.4 2011/04/28 12:00:55 wiz Exp $
+.\"	$NetBSD: mremap.2,v 1.5 2017/05/06 21:34:51 joerg Exp $
 .\"
 .\" Copyright (c) 2007 Thomas Klausner and Joerg Sonnenberger
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd February 14, 2008
+.Dd April 28, 2017
 .Dt MREMAP 2
 .Os
 .Sh NAME
@@ -82,6 +82,9 @@ Otherwise,
 and
 .Ar newp
 are used as hints for the position, factoring in the given alignment.
+.It Dv MAP_REMAPDUP
+Duplicate the mapping.
+Both address ranges reference the same pages, but can have different protection flags.
 .El
 .Sh RETURN VALUES
 .Fn mremap
