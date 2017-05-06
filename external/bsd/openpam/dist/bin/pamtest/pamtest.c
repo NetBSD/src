@@ -1,4 +1,4 @@
-/*	$NetBSD: pamtest.c,v 1.6 2014/10/24 18:27:12 christos Exp $	*/
+/*	$NetBSD: pamtest.c,v 1.7 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pamtest.c 685 2013-07-11 16:33:34Z des 
+ * $OpenPAM: pamtest.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
