@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.76 2016/05/22 14:26:09 christos Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.77 2017/05/06 21:34:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.76 2016/05/22 14:26:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.77 2017/05/06 21:34:51 joerg Exp $");
 
 #include "opt_pax.h"
 
@@ -180,8 +180,11 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 		return EINVAL;
 
 	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, 0, UVM_PROT_ALL);
+	if ((prot & maxprot) != prot)
+		return EACCES;
+	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+		return error;
 
 	/*
 	 * check the file system's opinion about mmapping the file
@@ -260,8 +263,11 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 		return error;
 
 	prot = cmd->ev_prot;
-	maxprot = VM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, 0, UVM_PROT_ALL);
+	if ((prot & maxprot) != prot)
+		return EACCES;
+	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+		return error;
 
 #ifdef PMAP_NEED_PROCWR
 	/*
@@ -318,8 +324,11 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
 	cmd->ev_len += diff;
 
 	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
+	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, 0, UVM_PROT_ALL);
+	if ((prot & maxprot) != prot)
+		return EACCES;
+	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+		return error;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
