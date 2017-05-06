@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.410 2017/04/18 20:02:50 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.411 2017/05/06 21:46:31 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4936,9 +4936,8 @@ rft_user:
 	bgu,pt	%xcc, 3b				! Next one?
 	 dec	8*16, %g5
 
-	rdpr	%ver, %g5
 	stb	%g0, [%g6 + PCB_NSAVED]			! Clear them out so we won't do this again
-	and	%g5, CWP, %g5
+	GET_MAXCWP %g5
 	add	%g5, %g7, %g4
 	dec	1, %g5					! NWINDOWS-1-1
 	wrpr	%g5, 0, %cansave
