@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.334 2017/05/05 05:46:49 nat Exp $	*/
+/*	$NetBSD: audio.c,v 1.335 2017/05/06 00:13:25 nat Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.334 2017/05/05 05:46:49 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.335 2017/05/06 00:13:25 nat Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2161,6 +2161,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		audio_init_ringbuffer(sc, &sc->sc_rr, AUMODE_RECORD);
 		sc->schedule_wih = false;
 		sc->schedule_rih = false;
+		sc->sc_last_drops = 0;
 		sc->sc_eof = 0;
 		vc->sc_rbus = false;
 		sc->sc_async_audio = 0;
@@ -3607,10 +3608,12 @@ audio_pint(void *v)
 	if (sc->sc_dying == true || sc->sc_trigger_started == false)
 		return;
 
-	if (vc->sc_draining == true) {
+	if (vc->sc_draining == true && sc->sc_pr.drops !=
+						sc->sc_last_drops) {
 		vc->sc_mpr.drops += blksize;
 		cv_broadcast(&sc->sc_wchan);
 	}
+	sc->sc_last_drops = sc->sc_pr.drops;
 
 	vc->sc_mpr.s.outp = audio_stream_add_outp(&vc->sc_mpr.s,
 	    vc->sc_mpr.s.outp, blksize);
@@ -3646,7 +3649,7 @@ audio_mix(void *v)
 	struct audio_ringbuffer *cb;
 	stream_fetcher_t *fetcher;
 	uint8_t *inp;
-	int cc, used, blksize;
+	int cc, cc1, used, blksize;
 	
 	sc = v;
 
@@ -3809,9 +3812,19 @@ audio_mix(void *v)
 	if (sc->sc_writeme == false) {
 		DPRINTFN(3, ("MIX RING EMPTY - INSERT SILENCE\n"));
 		audio_fill_silence(&vc->sc_mpr.s.param, inp, cc);
+		sc->sc_pr.drops += cc;
 	} else
 		cc = blksize;
 	cb->s.inp = audio_stream_add_inp(&cb->s, cb->s.inp, cc);
+	cc = blksize;
+	cc1 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
+	if (cc1 < cc) {
+		memset(sc->sc_pr.s.inp, 0, cc1);
+		cc -= cc1;
+		memset(sc->sc_pr.s.start, 0, cc);
+	} else
+		memset(sc->sc_pr.s.inp, 0, cc);
+
 	mutex_exit(sc->sc_intr_lock);
 
 	kpreempt_disable();
@@ -5493,15 +5506,6 @@ mix_write(void *arg)
 	vc->sc_pustream->inp = audio_stream_add_inp(vc->sc_pustream,
 	    inp, blksize);
 
-	cc = blksize;
-	cc2 = sc->sc_pr.s.end - sc->sc_pr.s.inp;
-	if (cc2 < cc) {
-		memset(sc->sc_pr.s.inp, 0, cc2);
-		cc -= cc2;
-		memset(sc->sc_pr.s.start, 0, cc);
-	} else
-		memset(sc->sc_pr.s.inp, 0, cc);
-
 	sc->sc_pr.s.outp = audio_stream_add_outp(&sc->sc_pr.s,
 	    sc->sc_pr.s.outp, blksize);
 
@@ -5819,13 +5823,15 @@ audio_play_thread(void *v)
 			mutex_exit(sc->sc_intr_lock);
 			kthread_exit(0);
 		}
-		mutex_exit(sc->sc_intr_lock);
 
 		while (audio_stream_get_used(&sc->sc_pr.s) < sc->sc_pr.blksize) {
+			mutex_exit(sc->sc_intr_lock);
 			mutex_enter(sc->sc_lock);
 			audio_mix(sc);
 			mutex_exit(sc->sc_lock);
+			mutex_enter(sc->sc_intr_lock);
 		}
+		mutex_exit(sc->sc_intr_lock);
 	}
 }
 
