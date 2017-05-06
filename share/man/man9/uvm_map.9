@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm_map.9,v 1.6 2014/09/12 21:06:25 riastradh Exp $
+.\"	$NetBSD: uvm_map.9,v 1.7 2017/05/06 21:34:51 joerg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -48,6 +48,9 @@ virtual address space management interface
 .Ft int
 .Fn uvm_map_protect "struct vm_map *map" "vaddr_t start" "vaddr_t end" \
 "vm_prot_t new_prot" "bool set_max"
+.Ft int
+.Fn uvm_map_protect_user "struct lwp *l" "vaddr_t start" "vaddr_t end" \
+"vm_prot_t new_prot"
 .Ft int
 .Fn uvm_deallocate "struct vm_map *map" "vaddr_t start" "vsize_t size"
 .Ft struct vmspace *
@@ -307,6 +310,12 @@ if
 .Fa set_max
 is true.
 This function returns a standard UVM return value.
+.Pp
+.Fn uvm_map_protect_user
+verifies that the new permissions honor PAX restrictions if applicable
+and forwards to
+.Fn uvm_map_protect
+on passing.
 .Pp
 .Fn uvm_deallocate
 deallocates kernel memory in map

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.18 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.19 2017/05/06 21:34:52 joerg Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.18 2015/11/26 13:15:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.19 2017/05/06 21:34:52 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -120,6 +120,7 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	vaddr_t align = 0;
 	int error = 0;
 	const bool fixed = (flags & MAP_FIXED) != 0;
+	const bool duplicate = (flags & MAP_REMAPDUP) != 0;
 
 	if (fixed) {
 		newva = *newvap;
@@ -165,7 +166,8 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	 * check the easy cases first.
 	 */
 
-	if ((!fixed || newva == oldva) && newmap == oldmap &&
+	if (!duplicate &&
+	    (!fixed || newva == oldva) && newmap == oldmap &&
 	    (align == 0 || (oldva & (align - 1)) == 0)) {
 		vaddr_t va;
 
@@ -240,7 +242,7 @@ extend:
 	 * remove original entries unless we did in-place extend.
 	 */
 
-	if (oldva != newva || oldmap != newmap) {
+	if (!duplicate && (oldva != newva || oldmap != newmap)) {
 		uvm_unmap(oldmap, oldva, oldva + oldsize);
 	}
 done:
@@ -278,7 +280,7 @@ sys_mremap(struct lwp *l, const struct sys_mremap_args *uap, register_t *retval)
 	newva = (vaddr_t)SCARG(uap, new_address);
 	newsize = (vsize_t)(SCARG(uap, new_size));
 
-	if ((flags & ~(MAP_FIXED | MAP_ALIGNMENT_MASK)) != 0) {
+	if ((flags & ~(MAP_FIXED | MAP_REMAPDUP | MAP_ALIGNMENT_MASK)) != 0) {
 		error = EINVAL;
 		goto done;
 	}
