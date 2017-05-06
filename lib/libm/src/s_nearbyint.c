@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nearbyint.c,v 1.3 2013/02/11 02:45:27 christos Exp $	*/
+/*	$NetBSD: s_nearbyint.c,v 1.4 2017/05/06 18:02:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.ORG>
@@ -30,8 +30,10 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_nearbyint.c,v 1.2 2008/01/14 02:12:06 das Exp $");
 #else
-__RCSID("$NetBSD: s_nearbyint.c,v 1.3 2013/02/11 02:45:27 christos Exp $");
+__RCSID("$NetBSD: s_nearbyint.c,v 1.4 2017/05/06 18:02:52 christos Exp $");
 #endif
+
+#include "namespace.h"
 
 #include <machine/ieee.h>
 #include <fenv.h>
