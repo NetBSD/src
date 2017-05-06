@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.48 2015/02/27 16:18:00 christos Exp $
+.\"	$NetBSD: mmap.2,v 1.49 2017/05/06 21:34:51 joerg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd February 27, 2015
+.Dd April 27, 2017
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -85,8 +85,14 @@ Pages may be read.
 .It Dv PROT_WRITE
 Pages may be written.
 .It Dv PROT_NONE
-Pages may not be accessed.
+Placeholder when requesting no access permission.
 .El
+As a NetBSD extension,
+.Dv PROT_MPROTECT
+can be used to request additional permissions for later use with
+.Fn mprotect 2 .
+This is necessary for switching pages between writeable and executable
+when PAX mprotect restrictions are in place.
 .Pp
 .Bf -symbolic
 Note that, due to hardware limitations, on some platforms
@@ -238,6 +244,7 @@ was specified as part of the
 parameter and
 .Fa fd
 was not open for reading.
+.Pp
 The flags
 .Dv MAP_SHARED
 and
@@ -249,6 +256,8 @@ and
 parameters and
 .Fa fd
 was not open for writing.
+.Pp
+PAX mprotect restrictions prohibit the requested protection.
 .It Bq Er EBADF
 .Fa fd
 is not a valid open file descriptor.
@@ -265,6 +274,7 @@ was specified and the
 .Fa addr
 parameter was not page aligned or was outside of the
 valid address range for a process.
+.Pp
 .Dv MAP_ANON was specified and
 .Fa fd
 was not \-1.
@@ -276,6 +286,7 @@ did not reference a regular or character special file.
 was specified and the
 .Fa addr
 parameter wasn't available.
+.Pp
 .Dv MAP_ANON
 was specified and insufficient memory was available.
 .It Bq Er EOVERFLOW
