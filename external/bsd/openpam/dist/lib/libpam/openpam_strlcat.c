@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_strlcat.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_strlcat.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 Dag-Erling Smørgrav
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_strlcat.c 648 2013-03-05 17:54:27Z des 
+ * $OpenPAM: openpam_strlcat.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_strlcat.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+__RCSID("$NetBSD: openpam_strlcat.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
 
 #ifndef HAVE_STRLCAT
 

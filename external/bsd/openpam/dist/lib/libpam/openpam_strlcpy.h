@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_strlcpy.h,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_strlcpy.h,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_strlcpy.h 648 2013-03-05 17:54:27Z des 
+ * $OpenPAM: openpam_strlcpy.h 938 2017-04-30 21:34:42Z des $
  */
 
 #ifndef OPENPAM_STRLCPY_H_INCLUDED

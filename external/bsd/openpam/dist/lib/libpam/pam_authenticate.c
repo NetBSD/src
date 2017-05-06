@@ -1,8 +1,8 @@
-/*	$NetBSD: pam_authenticate.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: pam_authenticate.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2017 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: pam_authenticate.c 648 2013-03-05 17:54:27Z des 
+ * $OpenPAM: pam_authenticate.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_authenticate.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+__RCSID("$NetBSD: pam_authenticate.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
 
 #include <sys/param.h>
 
@@ -65,7 +65,7 @@ pam_authenticate(pam_handle_t *pamh,
 
 	ENTER();
 	if (flags & ~(PAM_SILENT|PAM_DISALLOW_NULL_AUTHTOK))
-		RETURNC(PAM_SYMBOL_ERR);
+		RETURNC(PAM_BAD_CONSTANT);
 	r = openpam_dispatch(pamh, PAM_SM_AUTHENTICATE, flags);
 	pam_set_item(pamh, PAM_AUTHTOK, NULL);
 	RETURNC(r);
@@ -77,7 +77,7 @@ pam_authenticate(pam_handle_t *pamh,
  *	=openpam_dispatch
  *	=pam_sm_authenticate
  *	!PAM_IGNORE
- *	PAM_SYMBOL_ERR
+ *	PAM_BAD_CONSTANT
  */
 
 /**
@@ -97,5 +97,5 @@ pam_authenticate(pam_handle_t *pamh,
  *		Fail if the user's authentication token is null.
  *
  * If any other bits are set, =pam_authenticate will return
- * =PAM_SYMBOL_ERR.
+ * =PAM_BAD_CONSTANT.
  */
