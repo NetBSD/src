@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.811 2017/04/20 13:11:03 joerg Exp $
+# $NetBSD: shl.mi,v 1.812 2017/05/06 19:54:41 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -423,7 +423,7 @@
 ./usr/lib/libp2k.so.2.0				base-puffs-shlib	compatfile,rump
 ./usr/lib/libpam.so				base-sys-shlib		compatfile,pam
 ./usr/lib/libpam.so.4				base-sys-shlib		compatfile,pam
-./usr/lib/libpam.so.4.0				base-sys-shlib		compatfile,pam
+./usr/lib/libpam.so.4.1				base-sys-shlib		compatfile,pam
 ./usr/lib/libpanel.so				base-sys-shlib		compatfile
 ./usr/lib/libpanel.so.1				base-sys-shlib		compatfile
 ./usr/lib/libpanel.so.1.0			base-sys-shlib		compatfile
