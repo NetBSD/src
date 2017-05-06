@@ -1,8 +1,8 @@
-/*	$NetBSD: openpam_load.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_load.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2011 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2013 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_load.c 664 2013-03-17 10:56:15Z des 
+ * $OpenPAM: openpam_load.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_load.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+__RCSID("$NetBSD: openpam_load.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
 
 #include <dlfcn.h>
 #include <stdlib.h>
@@ -89,6 +89,7 @@ openpam_load_module(const char *modulename)
 static void
 openpam_release_module(pam_module_t *module)
 {
+
 	if (module == NULL)
 		return;
 	if (module->dlh == NULL)
@@ -109,6 +110,7 @@ openpam_release_module(pam_module_t *module)
 static void
 openpam_destroy_chain(pam_chain_t *chain)
 {
+
 	if (chain == NULL)
 		return;
 	openpam_destroy_chain(chain->next);
