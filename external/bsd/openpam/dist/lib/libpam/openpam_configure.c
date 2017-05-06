@@ -1,8 +1,8 @@
-/*	$NetBSD: openpam_configure.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2014 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2015 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_configure.c 796 2014-06-03 21:30:08Z des 
+ * $OpenPAM: openpam_configure.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_configure.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+__RCSID("$NetBSD: openpam_configure.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
 
 #include <sys/param.h>
 
@@ -415,6 +415,10 @@ openpam_load_chain(pam_handle_t *pamh,
 	for (path = openpam_policy_path; *path != NULL; ++path) {
 		/* construct filename */
 		len = strlcpy(filename, *path, sizeof filename);
+		if (len >= sizeof filename) {
+			errno = ENAMETOOLONG;
+			RETURNN(-1);
+		}
 		if (filename[len - 1] == '/') {
 			len = strlcat(filename, service, sizeof filename);
 			if (len >= sizeof filename) {
@@ -468,8 +472,10 @@ openpam_configure(pam_handle_t *pamh,
 	for (fclt = 0; fclt < PAM_NUM_FACILITIES; ++fclt) {
 		if (pamh->chains[fclt] != NULL)
 			continue;
-		if (openpam_load_chain(pamh, PAM_OTHER, fclt) < 0)
-			goto load_err;
+		if (OPENPAM_FEATURE(FALLBACK_TO_OTHER)) {
+			if (openpam_load_chain(pamh, PAM_OTHER, fclt) < 0)
+				goto load_err;
+		}
 	}
 #ifdef __NetBSD__
 	/*

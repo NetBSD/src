@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_dlfunc.h,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: openpam_dlfunc.h,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Dag-Erling Smørgrav
@@ -12,6 +12,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -25,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: openpam_dlfunc.h 660 2013-03-11 15:08:52Z des 
+ * $OpenPAM: openpam_dlfunc.h 938 2017-04-30 21:34:42Z des $
  */
 
 #ifndef OPENPAM_DLFCN_H_INCLUDED
