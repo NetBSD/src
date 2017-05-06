@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.51 2017/04/29 01:17:47 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.52 2017/05/06 21:34:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -64,6 +64,16 @@ typedef	__off_t		off_t;		/* file offset */
 #define	PROT_WRITE	0x02	/* pages can be written */
 #define	PROT_EXEC	0x04	/* pages can be executed */
 
+#ifdef _NETBSD_SOURCE
+/*
+ * PAX mprotect prohibits setting protection bits
+ * missing from the original mmap call unless explicitly
+ * requested with PROT_MPROTECT.
+ */
+#define        PROT_MPROTECT(x)                ((x) << 3)
+#define        PROT_MPROTECT_EXTRACT(x)        (((x) >> 3) & 0x7)
+#endif
+
 /*
  * Flags contain sharing type and options.
  * Sharing types; choose one.
@@ -75,6 +85,7 @@ typedef	__off_t		off_t;		/* file offset */
 /*
  * Other flags
  */
+#define	MAP_REMAPDUP	 0x0004	/* mremap only: duplicate the mapping */
 #define	MAP_FIXED	 0x0010	/* map addr must be exactly as requested */
 #define	MAP_RENAME	 0x0020	/* Sun: rename private pages to file */
 #define	MAP_NORESERVE	 0x0040	/* Sun: don't reserve needed swap area */
