@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.97 2017/05/07 04:59:19 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.98 2017/05/07 05:48:01 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2544,6 +2544,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current ASID.
 	mfc0	ta0, MIPS_COP_0_TLB_WIRED
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
+	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 	move	ta2, zero
 	li	ta3, 1
 	move	v0, zero			# start at zero ASIDs
@@ -2610,6 +2611,7 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 
 	LONG_S	t2, 0(ta2)			# save the updated value.
 5:
+	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	_MTC0	a3, MIPS_COP_0_TLB_HI		# restore ASID
 	COP0_SYNC
 
