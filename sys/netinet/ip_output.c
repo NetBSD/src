@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.276 2017/03/05 11:07:46 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.277 2017/05/07 16:41:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.276 2017/03/05 11:07:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.277 2017/05/07 16:41:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -611,13 +611,18 @@ sendit:
 
 	/*
 	 * search for the source address structure to
-	 * maintain output statistics.
+	 * maintain output statistics, and verify address
+	 * validity
 	 */
 	KASSERT(ia == NULL);
 	ia = in_get_ia_psref(ip->ip_src, &psref_ia);
 
-	/* Ensure we only send from a valid address. */
-	if ((ia != NULL || (flags & IP_FORWARDING) == 0) &&
+	/*
+	 * Ensure we only send from a valid address.
+	 * A NULL address is valid because the packet could be
+	 * generated from a packet filter.
+	 */
+	if (ia != NULL && (flags & IP_FORWARDING) == 0 &&
 	    (error = ip_ifaddrvalid(ia)) != 0)
 	{
 		ARPLOG(LOG_ERR,
@@ -1939,9 +1944,6 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 static int
 ip_ifaddrvalid(const struct in_ifaddr *ia)
 {
-
-	if (ia == NULL)
-		return -1;
 
 	if (ia->ia_addr.sin_addr.s_addr == INADDR_ANY)
 		return 0;
