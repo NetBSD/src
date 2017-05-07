@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.171 2017/05/07 11:48:39 martin Exp $	*/
+/*	$NetBSD: vm.c,v 1.172 2017/05/07 14:20:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.171 2017/05/07 11:48:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.172 2017/05/07 14:20:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -720,7 +720,15 @@ uvm_map(struct vm_map *map, vaddr_t *startp, vsize_t size,
     uvm_flag_t flags)
 {
 
-	return EOPNOTSUPP;
+	*startp = (vaddr_t)rump_hypermalloc(size, align, true, "uvm_map");
+	return *startp != 0 ? 0 : ENOMEM;
+}
+
+void
+uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
+{
+
+	rump_hyperfree((void*)start, end-start);
 }
 
 
