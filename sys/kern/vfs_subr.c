@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.463 2017/04/17 08:34:27 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.464 2017/05/07 08:26:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.463 2017/04/17 08:34:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.464 2017/05/07 08:26:58 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -781,10 +781,7 @@ sched_sync(void *arg)
 				continue;
 			}
 			mp->mnt_synclist_slot = sync_delay_slot(sync_delay(mp));
-			if (fstrans_start_nowait(mp, FSTRANS_SHARED) == 0) {
-				VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
-				fstrans_done(mp);
-			}
+			VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
 		}
 		mountlist_iterator_destroy(iter);
 
