@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_dsp.c,v 1.5 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: mips_dsp.c,v 1.6 2017/05/07 05:45:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.5 2017/03/16 16:13:20 chs Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: mips_dsp.c,v 1.6 2017/05/07 05:45:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
