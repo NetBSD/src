@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.170 2016/07/20 17:03:50 christos Exp $	*/
+/*	$NetBSD: vm.c,v 1.171 2017/05/07 11:48:39 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.170 2016/07/20 17:03:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.171 2017/05/07 11:48:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -713,6 +713,16 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 	return EOPNOTSUPP;
 }
+
+int
+uvm_map(struct vm_map *map, vaddr_t *startp, vsize_t size,
+    struct uvm_object *uobj, voff_t uoffset, vsize_t align,
+    uvm_flag_t flags)
+{
+
+	return EOPNOTSUPP;
+}
+
 
 /*
  * UVM km
