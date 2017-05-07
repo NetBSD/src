@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.77 2017/05/06 21:34:51 joerg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.78 2017/05/07 22:54:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.77 2017/05/06 21:34:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.78 2017/05/07 22:54:54 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -155,6 +155,19 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
  *	appropriate for handling demand-paged text and data segments.
  */
 
+static int
+vmcmd_get_prot(struct lwp *l, const struct exec_vmcmd *cmd, vm_prot_t *prot,
+    vm_prot_t *maxprot)
+{
+
+	*prot = cmd->ev_prot;
+	*maxprot = PAX_MPROTECT_MAXPROTECT(l, *prot, 0, UVM_PROT_ALL);
+
+	if ((*prot & *maxprot) != *prot)
+		return EACCES;
+	return PAX_MPROTECT_VALIDATE(l, *prot);
+}
+
 int
 vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 {
@@ -179,11 +192,7 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (cmd->ev_len & PAGE_MASK)
 		return EINVAL;
 
-	prot = cmd->ev_prot;
-	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, 0, UVM_PROT_ALL);
-	if ((prot & maxprot) != prot)
-		return EACCES;
-	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
 		return error;
 
 	/*
@@ -262,11 +271,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (error)
 		return error;
 
-	prot = cmd->ev_prot;
-	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, 0, UVM_PROT_ALL);
-	if ((prot & maxprot) != prot)
-		return EACCES;
-	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
 		return error;
 
 #ifdef PMAP_NEED_PROCWR
@@ -323,11 +328,7 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
 	cmd->ev_addr -= diff;			/* required by uvm_map */
 	cmd->ev_len += diff;
 
-	prot = cmd->ev_prot;
-	maxprot = PAX_MPROTECT_MAXPROTECT(l, prot, 0, UVM_PROT_ALL);
-	if ((prot & maxprot) != prot)
-		return EACCES;
-	if ((error = PAX_MPROTECT_VALIDATE(l, prot)))
+	if ((error = vmcmd_get_prot(l, cmd, &prot, &maxprot)) != 0)
 		return error;
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
