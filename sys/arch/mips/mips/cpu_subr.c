@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.31 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.32 2017/05/07 04:14:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.31 2017/03/16 16:13:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.32 2017/05/07 04:14:20 skrll Exp $");
 
-#include "opt_ddb.h"
 #include "opt_cputype.h"
+#include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_multiprocessor.h"
 
