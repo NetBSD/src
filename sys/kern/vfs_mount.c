@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.59 2017/05/07 08:21:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.58 2017/04/17 08:34:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.59 2017/05/07 08:21:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -351,9 +351,6 @@ vfs_trybusy(struct mount *mp)
  * Unbusy a busy filesystem.
  *
  * Every successful vfs_busy() call must be undone by a vfs_unbusy() call.
- *
- * => If keepref is true, preserve reference added by vfs_busy().
- * => If nextp != NULL, acquire mountlist_lock.
  */
 void
 vfs_unbusy(struct mount *mp)
