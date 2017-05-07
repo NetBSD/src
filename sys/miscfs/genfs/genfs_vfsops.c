@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vfsops.c,v 1.5 2017/03/30 09:12:21 hannken Exp $	*/
+/*	$NetBSD: genfs_vfsops.c,v 1.6 2017/05/07 08:25:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.5 2017/03/30 09:12:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.6 2017/05/07 08:25:54 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -75,18 +75,30 @@ genfs_renamelock_exit(struct mount *mp)
 int
 genfs_suspendctl(struct mount *mp, int cmd)
 {
-	int error __diagused;
+	int error;
+	int error2 __diagused;
 
 	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
 		return EOPNOTSUPP;
 
 	switch (cmd) {
 	case SUSPEND_SUSPEND:
-		return fstrans_setstate(mp, FSTRANS_SUSPENDED);
+		error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
+		if (error == 0) {
+			mutex_enter(&mp->mnt_unmounting);
+			if ((mp->mnt_iflag & IMNT_GONE) != 0)
+				error = ENOENT;
+			mutex_exit(&mp->mnt_unmounting);
+			if (error) {
+				error2 = fstrans_setstate(mp, FSTRANS_NORMAL);
+				KASSERT(error2 == 0);
+			}
+		}
+		return error;
 
 	case SUSPEND_RESUME:
-		error = fstrans_setstate(mp, FSTRANS_NORMAL);
-		KASSERT(error == 0);
+		error2 = fstrans_setstate(mp, FSTRANS_NORMAL);
+		KASSERT(error2 == 0);
 		return 0;
 
 	default:
