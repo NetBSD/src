@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.9 2016/09/19 22:05:05 christos Exp $
+# $NetBSD: Makefile.inc,v 1.10 2017/05/07 22:01:54 christos Exp $
 
 .PATH: ${.CURDIR}/complex
 
@@ -17,6 +17,7 @@ MLINKS+= ${i:Ncatrig*:Ncephes_*:S/.c/.3/} ${i:Ncatrig*:Ncephes_*:S/.c/l.3/}
 .endfor
 
 .for i in ${CATRIG_SRCS}
+SRCS+=	${i:S/.c/l.c/}
 MAN+= ${i:S/.c/.3/}
 MLINKS+= ${i:S/.c/.3/} ${i:S/.c/f.3/}
 MLINKS+= ${i:S/.c/.3/} ${i:S/.c/l.3/}
