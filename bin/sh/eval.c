@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.134 2017/05/04 04:37:51 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.135 2017/05/07 10:37:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.134 2017/05/04 04:37:51 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.135 2017/05/07 10:37:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1231,6 +1231,8 @@ breakcmd(int argc, char **argv)
 {
 	int n = argc > 1 ? number(argv[1]) : 1;
 
+	if (n <= 0)
+		error("invalid count: %d", n);
 	if (n > loopnest)
 		n = loopnest;
 	if (n > 0) {
