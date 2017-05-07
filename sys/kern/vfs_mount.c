@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.60 2017/05/07 08:24:20 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.61 2017/05/07 08:26:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.60 2017/05/07 08:24:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.61 2017/05/07 08:26:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -324,12 +324,19 @@ _vfs_busy(struct mount *mp, bool wait)
 	KASSERT(mp->mnt_refcnt > 0);
 
 	if (wait) {
+		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_unmounting);
-	} else if (!mutex_tryenter(&mp->mnt_unmounting)) {
-		return EBUSY;
+	} else {
+		if (fstrans_start_nowait(mp, FSTRANS_SHARED))
+			return EBUSY;
+		if (!mutex_tryenter(&mp->mnt_unmounting)) {
+			fstrans_done(mp);
+			return EBUSY;
+		}
 	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		mutex_exit(&mp->mnt_unmounting);
+		fstrans_done(mp);
 		return ENOENT;
 	}
 	++mp->mnt_busynest;
@@ -368,6 +375,7 @@ vfs_unbusy(struct mount *mp)
 	KASSERT(mp->mnt_busynest != 0);
 	mp->mnt_busynest--;
 	mutex_exit(&mp->mnt_unmounting);
+	fstrans_done(mp);
 	vfs_rele(mp);
 }
 
