@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.96 2016/11/19 09:05:50 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.97 2017/05/07 04:59:19 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2049,7 +2049,7 @@ END(MIPSX(tlb_get_asid))
  *	None.
  *
  * Side effects:
- *	PID set in the entry hi register.
+ *	ASID set in the entry hi register.
  *
  *--------------------------------------------------------------------------
  */
@@ -2104,7 +2104,7 @@ LEAF(MIPSX(tlb_update_addr))
 	and	a0, a0, v0
 	or	a0, a0, a1			# Merge ASID
 #endif
-	_MFC0	ta1, MIPS_COP_0_TLB_HI		# Save current PID
+	_MFC0	ta1, MIPS_COP_0_TLB_HI		# Save current ASID
 	_MTC0	a0, MIPS_COP_0_TLB_HI		# Init high reg
 	COP0_SYNC
 #if (PGSHIFT & 1) == 0
@@ -2188,7 +2188,7 @@ LEAF(MIPSX(tlb_update_addr))
 	nop
 #endif
 7:
-	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore PID
+	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore ASID
 	COP0_SYNC
 #ifdef MIPS3
 	nop					# required for QED5230
@@ -2225,7 +2225,7 @@ LEAF(MIPSX(tlb_read_entry))
 #ifdef MIPS3
 	nop
 #endif
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# Get current PID
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Get current ASID
 
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	COP0_SYNC
@@ -2244,7 +2244,7 @@ LEAF(MIPSX(tlb_read_entry))
 	_MFC0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	_MFC0	ta0, MIPS_COP_0_TLB_LO0		# See what we got
 	_MFC0	ta1, MIPS_COP_0_TLB_LO1		# See what we got
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID
 	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
@@ -2368,7 +2368,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 
 	add	a2, 1				# bias for sltu
 
-	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current PID.
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current ASID.
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
 	INT_L	t2, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
@@ -2409,7 +2409,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	bne	t1, t2, 1b
 	 nop
 
-	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID.
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore ASID.
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 
@@ -2541,7 +2541,7 @@ END(MIPSX(tlb_invalidate_all))
  * ASIDs present.
  */
 LEAF_NOPROFILE(MIPSX(tlb_record_asids))
-	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current PID.
+	_MFC0	a3, MIPS_COP_0_TLB_HI		# Save the current ASID.
 	mfc0	ta0, MIPS_COP_0_TLB_WIRED
 	INT_L	ta1, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
 	move	ta2, zero
@@ -2831,7 +2831,7 @@ LEAF(MIPSX(tlb_write_entry))
 	REG_L	a2, TLBMASK_LO0(a1)		# fetch tlb->tlb_lo0
 	REG_L	a3, TLBMASK_LO1(a1)		# fetch tlb->tlb_lo1
 	mfc0	ta2, MIPS_COP_0_TLB_PG_MASK	# Save current page mask.
-	_MFC0	ta1, MIPS_COP_0_TLB_HI		# Save the current PID.
+	_MFC0	ta1, MIPS_COP_0_TLB_HI		# Save the current ASID.
 
 	_MTC0	a2, MIPS_COP_0_TLB_LO0		# Set up entry low0.
 	_MTC0	a3, MIPS_COP_0_TLB_LO1		# Set up entry low1.
@@ -2857,7 +2857,7 @@ LEAF(MIPSX(tlb_write_entry))
 	nop
 #endif
 
-	_MTC0	ta1, MIPS_COP_0_TLB_HI		# Restore the PID.
+	_MTC0	ta1, MIPS_COP_0_TLB_HI		# Restore the ASID.
 	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# Restore page mask.
 	COP0_SYNC
 
