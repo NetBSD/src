@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2017/04/29 15:12:21 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 2017/05/07 15:01:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.39 2017/04/29 15:12:21 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.40 2017/05/07 15:01:18 kre Exp $");
 #endif
 #endif /* not lint */
 
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "shell.h"
 #include "main.h"
@@ -75,12 +76,13 @@ __RCSID("$NetBSD: trap.c,v 1.39 2017/04/29 15:12:21 kre Exp $");
 #define S_RESET 5		/* temporary - to reset a hard ignored sig */
 
 
-char *trap[NSIG+1];		/* trap handler commands */
+char *trap[NSIG];		/* trap handler commands */
 MKINIT char sigmode[NSIG];	/* current value of signal */
 static volatile char gotsig[NSIG];/* indicates specified signal received */
 volatile int pendingsigs;	/* indicates some signal received */
 
 static int getsigaction(int, sig_t *);
+STATIC const char *trap_signame(int);
 
 /*
  * return the signal number described by `p' (as a number or a name)
@@ -108,6 +110,25 @@ signame_to_signum(const char *p)
 }
 
 /*
+ * return the name of a signal used by the "trap" command
+ */
+STATIC const char *
+trap_signame(int signo)
+{
+	static char nbuf[12];
+	const char *p = NULL;
+
+	if (signo == 0)
+		return "EXIT";
+	if (signo > 0 && signo < NSIG)
+		p = sys_signame[signo];
+	if (p != NULL)
+		return p;
+	(void)snprintf(nbuf, sizeof nbuf, "%d", signo);
+	return nbuf;
+}
+
+/*
  * Print a list of valid signal names
  */
 static void
@@ -118,7 +139,7 @@ printsignals(void)
 	out1str("EXIT ");
 
 	for (n = 1; n < NSIG; n++) {
-		out1fmt("%s", sys_signame[n]);
+		out1fmt("%s", trap_signame(n));
 		if ((n == NSIG/2) ||  n == (NSIG - 1))
 			out1str("\n");
 		else
@@ -137,12 +158,31 @@ trapcmd(int argc, char **argv)
 	char **ap;
 	int signo;
 	int errs = 0;
+	int printonly = 0;
 
 	ap = argv + 1;
 
 	if (argc == 2 && strcmp(*ap, "-l") == 0) {
 		printsignals();
 		return 0;
+	}
+	if (argc == 2 && strcmp(*ap, "-") == 0) {
+		for (signo = 0; signo < NSIG; signo++) {
+			if (trap[signo] == NULL)
+				continue;
+			INTOFF;
+			ckfree(trap[signo]);
+			trap[signo] = NULL;
+			if (signo != 0)
+				setsignal(signo, 0);
+			INTON;
+		}
+		return 0;
+	}
+	if (argc >= 2 && strcmp(*ap, "-p") == 0) {
+		printonly = 1;
+		ap++;
+		argc--;
 	}
 
 	if (argc > 1 && strcmp(*ap, "--") == 0) {
@@ -151,19 +191,58 @@ trapcmd(int argc, char **argv)
 	}
 
 	if (argc <= 1) {
-		for (signo = 0 ; signo <= NSIG ; signo++)
-			if (trap[signo] != NULL) {
-				out1fmt("trap -- ");
-				print_quoted(trap[signo]);
-				out1fmt(" %s\n",
-				    (signo) ? sys_signame[signo] : "EXIT");
+		int count;
+
+		if (printonly) {
+			for (count = 0, signo = 0 ; signo < NSIG ; signo++)
+				if (trap[signo] == NULL) {
+					if (count == 0)
+						out1str("trap -- -");
+					out1fmt(" %s", trap_signame(signo));
+					/* oh! unlucky 13 */
+					if (++count >= 13) {
+						out1str("\n");
+						count = 0;
+					}
+				}
+			if (count)
+				out1str("\n");
+		}
+
+		for (count = 0, signo = 0 ; signo < NSIG ; signo++)
+			if (trap[signo] != NULL && trap[signo][0] == '\0') {
+				if (count == 0)
+					out1str("trap -- ''");
+				out1fmt(" %s", trap_signame(signo));
+				/*
+				 * the prefix is 10 bytes, with 4 byte
+				 * signal names (common) we have room in
+				 * the 70 bytes left on a normal line for
+				 * 70/(4+1) signals, that's 14, but to
+				 * allow for the occasional longer sig name
+				 * we output one less...
+				 */
+				if (++count >= 13) {
+					out1str("\n");
+					count = 0;
+				}
 			}
+		if (count)
+			out1str("\n");
+
+		for (signo = 0 ; signo < NSIG ; signo++)
+			if (trap[signo] != NULL && trap[signo][0] != '\0') {
+				out1str("trap -- ");
+				print_quoted(trap[signo]);
+				out1fmt(" %s\n", trap_signame(signo));
+			}
+
 		return 0;
 	}
 
 	action = NULL;
 
-	if (!is_number(*ap)) {
+	if (!printonly && !is_number(*ap)) {
 		if ((*ap)[0] == '-' && (*ap)[1] == '\0')
 			ap++;			/* reset to default */
 		else
@@ -173,6 +252,7 @@ trapcmd(int argc, char **argv)
 
 	if (argc < 2) {		/* there must be at least 1 condition */
 		out2str("Usage: trap [-l]\n"
+			"       trap -p [condition ...]\n"
 			"       trap action condition ...\n"
 			"       trap N condition ...\n");
 		return 2;
@@ -182,10 +262,23 @@ trapcmd(int argc, char **argv)
 	while (*ap) {
 		signo = signame_to_signum(*ap);
 
-		if (signo < 0 || signo > NSIG) {
+		if (signo < 0 || signo >= NSIG) {
 			/* This is not a fatal error, so sayeth posix */
 			outfmt(out2, "trap: '%s' bad condition\n", *ap);
 			errs = 1;
+			ap++;
+			continue;
+		}
+		ap++;
+
+		if (printonly) {
+			out1str("trap -- ");
+			if (trap[signo] == NULL)
+				out1str("-");
+			else
+				print_quoted(trap[signo]);
+			out1fmt(" %s\n", trap_signame(signo));
+			continue;
 		}
 
 		INTOFF;
@@ -200,7 +293,6 @@ trapcmd(int argc, char **argv)
 		if (signo != 0)
 			setsignal(signo, 0);
 		INTON;
-		ap++;
 	}
 	return errs;
 }
@@ -218,7 +310,7 @@ clear_traps(int vforked)
 {
 	char **tp;
 
-	for (tp = trap ; tp <= &trap[NSIG] ; tp++) {
+	for (tp = trap ; tp < &trap[NSIG] ; tp++) {
 		if (*tp && **tp) {	/* trap not NULL or SIG_IGN */
 			INTOFF;
 			if (!vforked) {
@@ -397,7 +489,7 @@ onsig(int signo)
 		onint();
 		return;
 	}
-	gotsig[signo - 1] = 1;
+	gotsig[signo] = 1;
 	pendingsigs++;
 }
 
@@ -417,20 +509,20 @@ dotrap(void)
 
 	for (;;) {
 		for (i = 1 ; ; i++) {
-			if (gotsig[i - 1])
+			if (i >= NSIG) {
+				pendingsigs = 0;
+				return;
+			}
+			if (gotsig[i])
 				break;
-			if (i >= NSIG)
-				goto done;
 		}
-		gotsig[i - 1] = 0;
+		gotsig[i] = 0;
 		savestatus=exitstatus;
 		tr = savestr(trap[i]);		/* trap code may free trap[i] */
 		evalstring(tr, 0);
 		ckfree(tr);
 		exitstatus=savestatus;
 	}
-done:
-	pendingsigs = 0;
 }
 
 int
@@ -438,8 +530,8 @@ lastsig(void)
 {
 	int i;
 
-	for (i = NSIG; i > 0; i--)
-		if (gotsig[i - 1])
+	for (i = NSIG; --i > 0; )
+		if (gotsig[i])
 			return i;
 	return SIGINT;	/* XXX */
 }
