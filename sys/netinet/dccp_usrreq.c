@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.13 2017/03/03 07:13:06 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.14 2017/05/07 20:08:02 rjs Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.13 2017/03/03 07:13:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.14 2017/05/07 20:08:02 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -926,11 +926,7 @@ dccp_input(struct mbuf *m, ...)
 	}
 
 	if (dh->dh_type == DCCP_TYPE_DATA || dh->dh_type == DCCP_TYPE_DATAACK) {
-#if defined(__FreeBSD__) && __FreeBSD_version >= 503000
-		if (so->so_rcv.sb_state & SBS_CANTRCVMORE) 
-#else
 		if (so->so_state & SS_CANTRCVMORE) 
-#endif
 		{
 			DCCP_DEBUG((LOG_INFO, "state & SS_CANTRCVMORE...!\n"));
 			m_freem(m);
@@ -1577,13 +1573,7 @@ again:
 	/*
 	 * Set up checksum 
 	 */
-#ifdef __FreeBSD__
-	m->m_pkthdr.csum_flags = CSUM_IP; /* Do not allow the network card to calculate the checksum */
-#elif defined(__NetBSD__)
 	m->m_pkthdr.csum_flags = 0;
-#else
-	m->m_pkthdr.csum = 0;
-#endif
 
 	dh->dh_sum = 0;
 #ifdef INET6
