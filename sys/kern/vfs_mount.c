@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.59 2017/05/07 08:21:08 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.60 2017/05/07 08:24:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.59 2017/05/07 08:21:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.60 2017/05/07 08:24:20 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -148,6 +148,8 @@ struct mount *
 vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 {
 	struct mount *mp;
+	int error __diagused;
+	extern struct vfsops dead_vfsops;
 
 	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
 	if (mp == NULL)
@@ -161,6 +163,10 @@ vfs_mountalloc(struct vfsops *vfsops, vnode_t *vp)
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_vnodecovered = vp;
 	mount_initspecific(mp);
+	if (vfsops != &dead_vfsops) {
+		error = fstrans_mount(mp);
+		KASSERT(error == 0);
+	}
 
 	mutex_enter(&mountgen_lock);
 	mp->mnt_gen = mountgen++;
@@ -735,11 +741,6 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 		return ENOMEM;
 	}
 
-	if ((error = fstrans_mount(mp)) != 0) {
-		vfs_rele(mp);
-		return error;
-	}
-
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
 
 	/*
@@ -1271,8 +1272,6 @@ done:
 
 		mp->mnt_flag |= MNT_ROOTFS;
 		mp->mnt_op->vfs_refcount++;
-		error = fstrans_mount(mp);
-		KASSERT(error == 0);
 
 		/*
 		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to

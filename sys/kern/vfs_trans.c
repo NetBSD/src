@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.44 2017/05/07 08:23:28 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.45 2017/05/07 08:24:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.44 2017/05/07 08:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.45 2017/05/07 08:24:20 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -188,12 +188,8 @@ fstrans_mount_dtor(struct mount *mp)
 int
 fstrans_mount(struct mount *mp)
 {
-	int error;
 	struct fstrans_mount_info *newfmi;
 
-	error = vfs_busy(mp);
-	if (error)
-		return error;
 	newfmi = kmem_alloc(sizeof(*newfmi), KM_SLEEP);
 	newfmi->fmi_state = FSTRANS_NORMAL;
 	newfmi->fmi_ref_cnt = 1;
@@ -206,7 +202,6 @@ fstrans_mount(struct mount *mp)
 	mutex_exit(&fstrans_mount_lock);
 
 	vfs_ref(mp);
-	vfs_unbusy(mp);
 
 	return 0;
 }
