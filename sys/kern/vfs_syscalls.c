@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.514 2017/05/07 08:25:54 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.515 2017/05/07 08:26:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.514 2017/05/07 08:25:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.515 2017/05/07 08:26:58 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -641,7 +641,6 @@ do_sys_sync(struct lwp *l)
 
 	mountlist_iterator_init(&iter);
 	while ((mp = mountlist_iterator_next(iter)) != NULL) {
-		fstrans_start(mp, FSTRANS_SHARED);
 		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
@@ -651,7 +650,6 @@ do_sys_sync(struct lwp *l)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_exit(&mp->mnt_updating);
-		fstrans_done(mp);
 	}
 	mountlist_iterator_destroy(iter);
 #ifdef DEBUG
