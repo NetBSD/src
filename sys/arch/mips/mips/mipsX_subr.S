@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.98 2017/05/07 05:48:01 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.99 2017/05/07 05:50:39 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2366,8 +2366,6 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
 
-	add	a2, 1				# bias for sltu
-
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# Save the current ASID.
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
@@ -2381,19 +2379,19 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	sll	ta0, t1, PGSHIFT | 1		# PAGE_SHIFT | 1
 	tlbr					# obtain an entry
 	COP0_SYNC
-	_MFC0	a0, MIPS_COP_0_TLB_LO1
+	_MFC0	ta1, MIPS_COP_0_TLB_LO1
 	MFC0_HAZARD
-	and	a0, MIPS3_PG_G			# check to see it has G bit
-	bnez	a0, 2f				# yep, skip this one.
+	and	ta1, MIPS3_PG_G			# check to see it has G bit
+	bnez	ta1, 2f				# yep, skip this one.
 	 nop
-	_MFC0	a0, MIPS_COP_0_TLB_HI		# get VA and ASID
+	_MFC0	ta1, MIPS_COP_0_TLB_HI		# get VA and ASID
 	MFC0_HAZARD
-	and	a0, MIPS3_PG_ASID		# focus on ASID
-	sltu	a3, a0, a1			# asid < base?
+	and	ta1, MIPS3_PG_ASID		# focus on ASID
+	sltu	a3, ta1, a0			# asid < base?
 	bnez	a3, 2f				# yes, skip this entry.
 	 nop
-	sltu	a3, a0, a2			# asid < limit
-	beqz	a3, 2f				# nope, skip this entry.
+	sltu	a3, a1, ta1			# limit < asid
+	bnez	a3, 2f				# yes, skip this entry.
 	 nop
 	PTR_ADDU ta0, v0
 
