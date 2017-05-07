@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.43 2017/04/17 08:32:01 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.44 2017/05/07 08:23:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.43 2017/04/17 08:32:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.44 2017/05/07 08:23:28 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -293,13 +293,16 @@ fstrans_get_lwp_info(struct mount *mp, bool do_alloc)
 	}
 
 	/*
-	 * Attach the entry to the mount.
+	 * Attach the entry to the mount if its mnt_transinfo is valid.
 	 */
 	mutex_enter(&fstrans_mount_lock);
 	fmi = mp->mnt_transinfo;
-	KASSERT(fmi != NULL);
-	fli->fli_mount = mp;
-	fmi->fmi_ref_cnt += 1;
+	if (__predict_true(fmi != NULL)) {
+		fli->fli_mount = mp;
+		fmi->fmi_ref_cnt += 1;
+	} else {
+		fli = NULL;
+	}
 	mutex_exit(&fstrans_mount_lock);
 
 	return fli;
@@ -346,7 +349,6 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	 */
 	for (lmp = mp; lmp->mnt_lower; lmp = lmp->mnt_lower) {
 		fli = fstrans_get_lwp_info(lmp, true);
-		KASSERT(fli != NULL);
 	}
 
 	if ((fli = fstrans_get_lwp_info(lmp, true)) == NULL)
@@ -395,8 +397,8 @@ fstrans_done(struct mount *mp)
 
 	if ((mp = fstrans_normalize_mount(mp)) == NULL)
 		return;
-	fli = fstrans_get_lwp_info(mp, false);
-	KASSERT(fli != NULL);
+	if ((fli = fstrans_get_lwp_info(mp, false)) == NULL)
+		return;
 	KASSERT(fli->fli_trans_cnt > 0);
 
 	if (fli->fli_trans_cnt > 1) {
