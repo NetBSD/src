@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.170 2017/04/20 13:11:04 joerg Exp $
+# $NetBSD: shl.mi,v 1.171 2017/05/07 00:43:01 htodd Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
@@ -151,7 +151,7 @@
 ./usr/libdata/debug/usr/lib/libopcodes.so.8.0.debug		comp-c-debug	debug,compatfile,binutils=227
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug			comp-puffs-debug	debug,compatfile,rump
-./usr/libdata/debug/usr/lib/libpam.so.4.0.debug			comp-sys-debug	debug,compatfile,pam
+./usr/libdata/debug/usr/lib/libpam.so.4.1.debug			comp-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/libpanel.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpcap.so.6.0.debug		comp-net-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpci.so.2.2.debug			comp-sys-debug	debug,compatfile
