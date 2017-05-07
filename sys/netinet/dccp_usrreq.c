@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.14 2017/05/07 20:08:02 rjs Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.15 2017/05/07 21:24:37 rjs Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.14 2017/05/07 20:08:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.15 2017/05/07 21:24:37 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1815,6 +1815,7 @@ dccp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct inpcb *inp;
 	int error;
+	int s;
 	struct sockaddr_in *sin = (struct sockaddr_in *)nam;
 
 	DCCP_DEBUG((LOG_INFO, "Entering dccp_bind!\n"));
@@ -1832,7 +1833,9 @@ dccp_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		return EAFNOSUPPORT;
 	}
 	INP_LOCK(inp);
+	s = splsoftnet();
 	error = in_pcbbind(inp, sin, l);
+	splx(s);
 	INP_UNLOCK(inp);
 	INP_INFO_WUNLOCK(&dccpbinfo);
 	return error;
