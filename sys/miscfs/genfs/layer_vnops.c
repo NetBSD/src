@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.63 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.64 2017/05/07 08:21:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.63 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.64 2017/05/07 08:21:57 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,15 +693,8 @@ layer_revoke(void *v)
 	 * We will most likely end up in vclean which uses the v_usecount
 	 * to determine if a vnode is active.  Take an extra reference on
 	 * the lower vnode so it will always close and inactivate.
-	 * Remove our writecount from the lower vnode.
 	 */
 	vref(lvp);
-
-	mutex_enter(vp->v_interlock);
-	KASSERT(vp->v_interlock == lvp->v_interlock);
-	lvp->v_writecount -= vp->v_writecount;
-	mutex_exit(vp->v_interlock);
-
 	error = LAYERFS_DO_BYPASS(vp, ap);
 	vrele(lvp);
 
@@ -734,6 +727,12 @@ layer_reclaim(void *v)
 		 */
 		lmp->layerm_rootvp = NULL;
 	}
+
+	mutex_enter(vp->v_interlock);
+	KASSERT(vp->v_interlock == lowervp->v_interlock);
+	lowervp->v_writecount -= vp->v_writecount;
+	mutex_exit(vp->v_interlock);
+
 	/* After this assignment, this node will not be re-used. */
 	xp->layer_lowervp = NULL;
 	kmem_free(vp->v_data, lmp->layerm_size);
