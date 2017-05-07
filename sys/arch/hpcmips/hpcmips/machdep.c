@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2017/05/07 12:20:50 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 2017/05/07 12:22:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2017/05/07 12:20:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2017/05/07 12:22:22 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -427,7 +427,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		u_int32_t sp;
 		__asm volatile("move %0, $29" : "=r"(sp));
 		KDASSERT(sp > KERNBASE + 0x400);
-		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400));
+		memset((void *)(KERNBASE + 0x400), 0, sp - (KERNBASE + 0x400) - 64);
 	}
 
 	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
