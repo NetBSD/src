@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1279 2017/04/27 03:57:37 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1280 2017/05/08 07:38:56 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1287 2017/04/27 03:57:17 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1288 2017/05/08 07:34:33 msaitoh Exp
  */
 
 /*
@@ -5922,6 +5922,7 @@
 #define	PCI_PRODUCT_RICOH_Rx5C478	0x0478		/* 5C478 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C551	0x0551		/* 5C551 PCI-CardBus Bridge/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5C552	0x0552		/* 5C552 PCI-CardBus Bridge/Firewire */
+#define	PCI_PRODUCT_RICOH_RL5C576	0x0576		/* R5C576 SD Card Controller */
 #define	PCI_PRODUCT_RICOH_Rx5C592	0x0592		/* 5C592 PCI-CardBus Bridge/MS/SD/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5C593	0x0593		/* 5C593 PCI-CardBus Bridge/MS/SD/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5C821	0x0821		/* 5C821 PCI-CardBus Bridge/MS/SD/MMC/SC */
@@ -6172,14 +6173,18 @@
 #define	PCI_PRODUCT_SIS_968	0x0968		/* 968 Host Bridge */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE Controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 Host Bridge */
+#define	PCI_PRODUCT_SIS_6300	0x6300		/* 630 AGP VGA */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
-#define	PCI_PRODUCT_SIS_6325	0x6325		/* 6325 AGP VGA */
+#define	PCI_PRODUCT_SIS_6325	0x6325		/* 650 AGP VGA */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
+#define	PCI_PRODUCT_SIS_6330	0x6330		/* 6330 VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB Host Controller */
 #define	PCI_PRODUCT_SIS_7002	0x7002		/* 7002 USB 2.0 Host Controller */
 #define	PCI_PRODUCT_SIS_7012_AC	0x7012		/* 7012 AC-97 Sound */
+#define	PCI_PRODUCT_SIS_7013	0x7013		/* 7013 Modem */
 #define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Sound */
+#define	PCI_PRODUCT_SIS_7019	0x7019		/* 7019 Audio */
 #define	PCI_PRODUCT_SIS_7502	0x7502		/* 7502 HD audio */
 
 /* Silicon Motion products */
