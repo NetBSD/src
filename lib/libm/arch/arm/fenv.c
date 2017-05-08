@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.8 2017/05/08 08:21:56 martin Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.9 2017/05/08 09:25:03 martin Exp $");
 
 #include "namespace.h"
 
@@ -41,6 +41,23 @@ __RCSID("$NetBSD: fenv.c,v 1.8 2017/05/08 08:21:56 martin Exp $");
 
 #ifdef __SOFTFP__
 #error This fenv implementation is only for hardfloat.
+#endif
+
+#ifdef __weak_alias
+__weak_alias(feclearexcept,_feclearexcept)
+__weak_alias(fedisableexcept,_fedisableexcept)
+__weak_alias(feenableexcept,_feenableexcept)
+__weak_alias(fegetenv,_fegetenv)
+__weak_alias(fegetexcept,_fegetexcept)
+__weak_alias(fegetexceptflag,_fegetexceptflag)
+__weak_alias(fegetround,_fegetround)
+__weak_alias(feholdexcept,_feholdexcept)
+__weak_alias(feraiseexcept,_feraiseexcept)
+__weak_alias(fesetenv,_fesetenv)
+__weak_alias(fesetexceptflag,_fesetexceptflag)
+__weak_alias(fesetround,_fesetround)
+__weak_alias(fetestexcept,_fetestexcept)
+__weak_alias(feupdateenv,_feupdateenv)
 #endif
 
 #include <arm/armreg.h>
